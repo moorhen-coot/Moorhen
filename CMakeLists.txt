@@ -1,0 +1,17 @@
+cmake_minimum_required(VERSION 3.13)
+project(ccp4_wasm)
+
+add_subdirectory(ccp4)
+add_subdirectory(fftw)
+add_subdirectory(rfftw)
+add_subdirectory(mmdb2)
+add_subdirectory(clipper/minimol)
+add_subdirectory(clipper/core)
+add_subdirectory(clipper/ccp4)
+add_subdirectory(clipper/contrib)
+add_subdirectory(clipper/cns)
+add_subdirectory(clipper/mmdb)
+add_subdirectory(clipper/cif)
+add_subdirectory(clipper/phs)
+add_subdirectory(example)
+

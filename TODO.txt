@@ -1,0 +1,9 @@
+- Create an MMDBManager DONE
+- Read a file DONE
+- Wrap fftw DONE
+- Wrap clipper DONE
+- Read an MTZ DONE
+- Do a SF calculation DONE
+* Make a repository
+* Put all the above in a browser
+* Wrap RDKit, ...,  ?
