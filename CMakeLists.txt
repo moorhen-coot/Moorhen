@@ -14,4 +14,5 @@ add_subdirectory(clipper/mmdb)
 add_subdirectory(clipper/cif)
 add_subdirectory(clipper/phs)
 add_subdirectory(example)
+add_subdirectory(web_example)
 
