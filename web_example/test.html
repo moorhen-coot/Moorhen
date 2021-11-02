@@ -12,9 +12,47 @@
         console.log("hello");
         Module._log_example();
         console.log("I called it, I think ....");
+
+        //Do something like this from https://stackoverflow.com/questions/23997312/how-do-i-read-a-user-specified-file-in-an-emscripten-compiled-library ?
+        // Assuming data contains the base64 encoded fileData,
+        // you want the file to be present at "." location with name as myFileName
+        //Module['FS_createDataFile'](".", myFileName, atob(data), true, true);
+
+        const selectedFile = document.getElementById('pdb_input').files[0];
+        const cifSelectedFile = document.getElementById('cif_input').files[0];
+        console.log(selectedFile.name);
+        var r = new FileReader();
+        var r_cif = new FileReader();
+        r.onload = function(e) {
+            var contents = e.target.result;
+            //console.log(contents);
+            try {
+                Module['FS_createDataFile'](".", selectedFile.name, contents, true, true);
+            } catch(e) {
+            }
+            var result = Module.ccall('mmdb2_example','number',['string'],[selectedFile.name]);
+            r_cif.onload = function(e2){
+                var contents2 = e2.target.result;
+                try {
+                    Module['FS_createDataFile'](".", cifSelectedFile.name, contents2, true, true);
+                } catch(e) {
+                }
+                var result = Module.ccall('initialize_cif_pdb','number',['string','string','number','number'],[cifSelectedFile.name,selectedFile.name,0,0.75]);
+            }
+
+            r_cif.readAsText(cifSelectedFile);
+
+        }
+        r.readAsText(selectedFile);
+        
+
     }
     </script>
-    <input type="button" value="Hello" onclick="foo()"></input>
+    <span>PDB file</span>
+    <input type="file" id="pdb_input">
+    <span>CIF file</span>
+    <input type="file" id="cif_input">
+    <input type="button" value="Load" onclick="foo()"></input>
   </body>
 </html>
 

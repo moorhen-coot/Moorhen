@@ -28,7 +28,7 @@
 
 extern "C" {
 
-void initialize_cif_pdb(const char* cif_file_name_cp, const char* pdb_file_name_cp, int is_diff_map, float rate){
+int initialize_cif_pdb(const char* cif_file_name_cp, const char* pdb_file_name_cp, int is_diff_map, float rate){
     std::string cif_file_name = std::string(cif_file_name_cp);
     clipper::HKL_info mydata;
     clipper::CIFfile cif; 
@@ -146,6 +146,8 @@ void initialize_cif_pdb(const char* cif_file_name_cp, const char* pdb_file_name_
 
     std::cout << "Min and max of map from CIF file (make_map_from_pdb_mmcif): " << min << " and " << max << std::endl; 
 
+    return 0;
+
 
 }
 
@@ -155,11 +157,11 @@ void log_example(){
 });
 }
 
-void mmdb2_example(const char *filename){
+int mmdb2_example(const char *filename){
     mmdb::InitMatType();
     mmdb::Manager *molHnd = new mmdb::Manager();
 
-    printf("Reading a PDB file\n");
+    printf("Reading a PDB file: %s\n",filename);
     int RC = molHnd->ReadCoorFile(filename);
     assert(RC==0);
 
@@ -171,6 +173,7 @@ void mmdb2_example(const char *filename){
     molHnd->GetSelIndex(selHnd,SelAtoms,nAtoms);
 
     printf("Selected %d atoms\n",nAtoms);
+    return nAtoms;
 }
 
 void clipper_example(const char *mtz_file_name_cp){
