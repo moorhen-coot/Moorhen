@@ -44,12 +44,12 @@ int initialize_cif_pdb(const char* cif_file_name_cp, const char* pdb_file_name_c
 
     cif.close_read(); 
 
-    std::cout << "Read " << mydata.num_reflections() << " from CIF file (pdb,mmcif)." << std::endl; 
+    std::cout << "Read " << mydata.num_reflections() << " from CIF file (pdb,mmcif)." << std::endl;  std::cout.flush();
 
     clipper::MMDBManager mmdb;
     mmdb.SetFlag( mmdb::MMDBF_AutoSerials | mmdb::MMDBF_IgnoreDuplSeqNum );
-    std::cout << "pdb file " << pdb_file_name_cp << "\n";
-    mmdb.ReadPDBASCII( pdb_file_name_cp );
+    std::cout << "pdb file " << pdb_file_name_cp << "\n"; std::cout.flush();
+    mmdb.ReadCoorFile( pdb_file_name_cp );
 
     clipper::mmdb::PPCAtom psel;
     int hndl, nsel;
@@ -58,7 +58,7 @@ int initialize_cif_pdb(const char* cif_file_name_cp, const char* pdb_file_name_c
     mmdb.GetSelIndex( hndl, psel, nsel );
     clipper::MMDBAtom_list atoms( psel, nsel );
 
-    std::cout << "Selected " << nsel << " atoms\n"; 
+    std::cout << "Selected " << nsel << " atoms\n";  std::cout.flush();
 
     mmdb.DeleteSelection( hndl );
 
@@ -77,7 +77,7 @@ int initialize_cif_pdb(const char* cif_file_name_cp, const char* pdb_file_name_c
         sfc( fc, atoms );
         bulkfrc = bulkscl = 0.0;
     }
-    std::cout << "Calculated structure factors " << bulkfrc << " " << bulkscl << std::endl; 
+    std::cout << "Calculated structure factors " << bulkfrc << " " << bulkscl << std::endl;  std::cout.flush();
 
     // now do sigmaa calc
     int freeflag = 1;
@@ -97,13 +97,13 @@ int initialize_cif_pdb(const char* cif_file_name_cp, const char* pdb_file_name_c
     int n_param = 20;
     clipper::SFweight_spline<float> sfw( n_refln, n_param );
     bool fl = sfw( fb, fd, phiw, myfsigf, fc, flag );
-    std::cout << "Done sigmaa calc" << std::endl; 
+    std::cout << "Done sigmaa calc" << std::endl;  std::cout.flush();
 
     // calc abcd
     clipper::HKL_data<clipper::data32::ABCD> abcd( mydata );
     abcd.compute( phiw, clipper::data32::Compute_abcd_from_phifom() );
 
-    std::cout << "initializing map..."; 
+    std::cout << "initializing map...";  std::cout.flush();
     clipper::Xmap<float> xmap;
 
     xmap.init(mydata.spacegroup(), mydata.cell(), 
@@ -111,15 +111,15 @@ int initialize_cif_pdb(const char* cif_file_name_cp, const char* pdb_file_name_c
                 mydata.cell(), 
                 mydata.resolution(),
                 rate));
-    std::cout << "done."<< std::endl; 
+    std::cout << "done."<< std::endl;  std::cout.flush();
 
-    std::cout << "doing fft..." ; 
+    std::cout << "doing fft..." ;  std::cout.flush();
     xmap.fft_from( fb );       // generate sigmaA map 20050804
-    std::cout << "done." << std::endl;
+    std::cout << "done." << std::endl; std::cout.flush();
 
     clipper::Map_stats stats(xmap);
 
-    std::cout << "Mean and sigma of map from CIF file (make_map_from_pdb_mmcif): " << stats.mean() << " and " << stats.std_dev() << std::endl; 
+    std::cout << "Mean and sigma of map from CIF file (make_map_from_pdb_mmcif): " << stats.mean() << " and " << stats.std_dev() << std::endl;  std::cout.flush();
 
     float mean = stats.mean();
     float std_dev = stats.std_dev();
@@ -144,7 +144,7 @@ int initialize_cif_pdb(const char* cif_file_name_cp, const char* pdb_file_name_c
     float min = minsx;
     float max = maxsx;
 
-    std::cout << "Min and max of map from CIF file (make_map_from_pdb_mmcif): " << min << " and " << max << std::endl; 
+    std::cout << "Min and max of map from CIF file (make_map_from_pdb_mmcif): " << min << " and " << max << std::endl;  std::cout.flush();
 
     return 0;
 
@@ -170,7 +170,7 @@ int mmdb2_example(const char *filename){
     return nAtoms;
 }
 
-void clipper_example(const char *mtz_file_name_cp){
+int clipper_example(const char *mtz_file_name_cp){
     clipper::CCP4MTZfile mtzin;
 
     printf("Reading an MTZ file\n");
@@ -248,6 +248,7 @@ void clipper_example(const char *mtz_file_name_cp){
     float max = maxsx;
 
     std::cout << "Min: " << min << ", Max: " << max << std::endl;
+    return 0;
 }
 
 }

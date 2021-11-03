@@ -9,21 +9,25 @@
     <script async type="text/javascript" src="web_example.js"></script>
     <script>
 function foo(){
-    console.log("hello");
-        console.log("I called log example, I think ....");
-
-        //Do something like this from https://stackoverflow.com/questions/23997312/how-do-i-read-a-user-specified-file-in-an-emscripten-compiled-library ?
-        // Assuming data contains the base64 encoded fileData,
-        // you want the file to be present at "." location with name as myFileName
-        //Module['FS_createDataFile'](".", myFileName, atob(data), true, true);
 
         const selectedFile = document.getElementById('pdb_input').files[0];
         const cifSelectedFile = document.getElementById('cif_input').files[0];
+        const mtzSelectedFile = document.getElementById('mtz_input').files[0];
         var r = new FileReader();
         var r_cif = new FileReader();
+        var r_mtz = new FileReader();
+        r_mtz.onload = function(e) {
+            var contents = e.target.result;
+            try {
+                Module['FS_createDataFile'](".", mtzSelectedFile.name, contents, true, true);
+            } catch(e) {
+            }
+
+            var result = Module.ccall('clipper_example','number',['string'],[mtzSelectedFile.name]);
+        }
+        if(mtzSelectedFile) r_mtz.readAsBinaryString(mtzSelectedFile);
         r.onload = function(e) {
             var contents = e.target.result;
-            //console.log(contents);
             try {
                 Module['FS_createDataFile'](".", selectedFile.name, contents, true, true);
             } catch(e) {
@@ -51,11 +55,20 @@ function foo(){
 
     }
     </script>
+    <h2>Input</h2>
+    <p>All inputs are optional.
+    <ul>
+    <li>If a PDB is provided then a simple count of CA is done.
+    <li>If a PDB and SF CIF are provided then a map is calculated from the 2 and the CA count is done as well.
+    <li>If an MTZ file is provided then a map is calculated.
+    </ul>
     <div>
     <span>PDB file</span>
     <input type="file" id="pdb_input">
     <span>CIF file</span>
     <input type="file" id="cif_input">
+    <span>MTZ file</span>
+    <input type="file" id="mtz_input">
     <input type="button" value="Load" onclick="foo()"></input>
     </div>
     <div style="width:96%; left-margin:3%; top-margin:20px;">
