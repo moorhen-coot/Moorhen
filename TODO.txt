@@ -4,6 +4,7 @@
 - Wrap clipper DONE
 - Read an MTZ DONE
 - Do a SF calculation DONE
-* Put all the above in a browser
-o Make a repository (This is a git repo, but has no remote server).
+- Put all the above in a browser
+* Wrap ssm
+o Make a repository (This is a git repo, but has no remote server, license issues?).
 * Wrap RDKit, ...,  ?
