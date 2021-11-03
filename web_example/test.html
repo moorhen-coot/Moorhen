@@ -37,7 +37,10 @@
                     Module['FS_createDataFile'](".", cifSelectedFile.name, contents2, true, true);
                 } catch(e) {
                 }
+                var startTime = performance.now();
                 var result = Module.ccall('initialize_cif_pdb','number',['string','string','number','number'],[cifSelectedFile.name,selectedFile.name,0,0.75]);
+                var endTime = performance.now();
+                console.log(`Call to doSomething took ${endTime - startTime} milliseconds`);
             }
 
             r_cif.readAsText(cifSelectedFile);
