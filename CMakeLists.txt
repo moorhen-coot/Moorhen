@@ -13,6 +13,7 @@ add_subdirectory(clipper/cns)
 add_subdirectory(clipper/mmdb)
 add_subdirectory(clipper/cif)
 add_subdirectory(clipper/phs)
+add_subdirectory(ssm)
 add_subdirectory(example)
 add_subdirectory(web_example)
 
