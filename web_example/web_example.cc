@@ -151,12 +151,6 @@ int initialize_cif_pdb(const char* cif_file_name_cp, const char* pdb_file_name_c
 
 }
 
-void log_example(){
-    EM_ASM({
-  console.log('Hello, world!!');
-});
-}
-
 int mmdb2_example(const char *filename){
     mmdb::InitMatType();
     mmdb::Manager *molHnd = new mmdb::Manager();

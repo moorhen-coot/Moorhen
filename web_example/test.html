@@ -8,10 +8,9 @@
     <h2>An example...</h2>
     <script async type="text/javascript" src="web_example.js"></script>
     <script>
-    function foo(){
-        console.log("hello");
-        Module._log_example();
-        console.log("I called it, I think ....");
+function foo(){
+    console.log("hello");
+        console.log("I called log example, I think ....");
 
         //Do something like this from https://stackoverflow.com/questions/23997312/how-do-i-read-a-user-specified-file-in-an-emscripten-compiled-library ?
         // Assuming data contains the base64 encoded fileData,
@@ -20,7 +19,6 @@
 
         const selectedFile = document.getElementById('pdb_input').files[0];
         const cifSelectedFile = document.getElementById('cif_input').files[0];
-        console.log(selectedFile.name);
         var r = new FileReader();
         var r_cif = new FileReader();
         r.onload = function(e) {
@@ -30,7 +28,9 @@
                 Module['FS_createDataFile'](".", selectedFile.name, contents, true, true);
             } catch(e) {
             }
+
             var result = Module.ccall('mmdb2_example','number',['string'],[selectedFile.name]);
+
             r_cif.onload = function(e2){
                 var contents2 = e2.target.result;
                 try {
@@ -43,19 +43,28 @@
                 console.log(`Call to doSomething took ${endTime - startTime} milliseconds`);
             }
 
-            r_cif.readAsText(cifSelectedFile);
+            if(cifSelectedFile) r_cif.readAsText(cifSelectedFile);
 
         }
-        r.readAsText(selectedFile);
+        if(selectedFile) r.readAsText(selectedFile);
         
 
     }
     </script>
+    <div>
     <span>PDB file</span>
     <input type="file" id="pdb_input">
     <span>CIF file</span>
     <input type="file" id="cif_input">
     <input type="button" value="Load" onclick="foo()"></input>
+    </div>
+    <div style="width:96%; left-margin:3%; top-margin:20px;">
+<textarea id="output" rows=8 style="width:100%;"></textarea>
+    </div>
+<script>
+var Module={preRun:[],postRun:[],print:function(){var e=document.getElementById("output");return e&&(e.value=""),function(t){arguments.length>1&&(t=Array.prototype.slice.call(arguments).join(" ")),console.log(t),e&&(e.value+=t+"\n",e.scrollTop=e.scrollHeight)}}(),printErr:function(e){arguments.length>1&&(e=Array.prototype.slice.call(arguments).join(" ")),console.error(e)}};
+</script>
+ 
   </body>
 </html>
 
