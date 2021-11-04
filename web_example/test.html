@@ -3,9 +3,15 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <style>
+    body {
+         font-family: Arial, Helvetica, sans-serif;
+    }
+    .btn { margin: 5px 5px 5px 5px; }
+    </style>
   <head>
   <body>
-    <h2>An example...</h2>
+    <h2>Example of wrapping CCP4 libraries (and dependencies) to Web Assembly with emscripten</h2>
     <script async type="text/javascript" src="web_example.js"></script>
     <script>
 function foo(){
@@ -24,6 +30,7 @@ function foo(){
             }
 
             var result = Module.ccall('clipper_example','number',['string'],[mtzSelectedFile.name]);
+
         }
         if(mtzSelectedFile) r_mtz.readAsBinaryString(mtzSelectedFile);
         r.onload = function(e) {
@@ -58,24 +65,30 @@ function foo(){
     <h2>Input</h2>
     <p>All inputs are optional.
     <ul>
-    <li>If a PDB is provided then a simple count of CA is done.
-    <li>If a PDB and SF CIF are provided then a map is calculated from the 2 and the CA count is done as well.
+    <li>If a coordinate is provided then a simple count of CA is done.
+    <li>If a coordinate file and structure factor file are provided then a map is calculated from the 2 and the CA count is done as well.
     <li>If an MTZ file is provided then a map is calculated.
     </ul>
     <div>
-    <span>PDB file</span>
-    <input type="file" id="pdb_input">
-    <span>CIF file</span>
-    <input type="file" id="cif_input">
+    <span>Coordinate file</span>
+    <input type="file" id="pdb_input" class="btn"><br />
+    <span>Structure factor file</span>
+    <input type="file" id="cif_input" class="btn"><br />
     <span>MTZ file</span>
-    <input type="file" id="mtz_input">
-    <input type="button" value="Load" onclick="foo()"></input>
+    <input type="file" id="mtz_input" class="btn"><br />
+    <input type="button" class="btn" value="Load" onclick="foo()"></input>
     </div>
     <div style="width:96%; left-margin:3%; top-margin:20px;">
-<textarea id="output" rows=8 style="width:100%;"></textarea>
+    <pre id="output" style="border:1px solid green; height:200px;overflow-x:auto; overflow-y:scroll;"></pre>
     </div>
 <script>
-var Module={preRun:[],postRun:[],print:function(){var e=document.getElementById("output");return e&&(e.value=""),function(t){arguments.length>1&&(t=Array.prototype.slice.call(arguments).join(" ")),console.log(t),e&&(e.value+=t+"\n",e.scrollTop=e.scrollHeight)}}(),printErr:function(e){arguments.length>1&&(e=Array.prototype.slice.call(arguments).join(" ")),console.error(e)}};
+var Module={preRun:[],postRun:[],
+print:function(){var e=document.getElementById("output");return e&&(e.innerHTML=""),function(t){arguments.length>1&&(t=Array.prototype.slice.call(arguments).join(" ")),console.log(t),e&&(e.innerHTML+=t+"\n",e.scrollTop=e.scrollHeight)}}(),
+printErr:function(){var e=document.getElementById("output");return e&&(e.innerHTML=""),function(t){arguments.length>1&&(t=Array.prototype.slice.call(arguments).join(" ")),console.log(t),e&&(e.innerHTML+=t+"\n",e.scrollTop=e.scrollHeight)}}()
+};
+        Module['onRuntimeInitialized'] = function(){
+            document.getElementById("output").innerHTML = "";
+        }
 </script>
  
   </body>

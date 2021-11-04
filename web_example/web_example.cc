@@ -12,6 +12,7 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
 
 #include <emscripten.h>
 
@@ -151,6 +152,14 @@ int initialize_cif_pdb(const char* cif_file_name_cp, const char* pdb_file_name_c
 
 }
 
+int multiply(int i1, int i2){
+    std::vector<int> a;
+    std::cout << "Using a vector" << std::endl;
+    a.push_back(i1);
+    a.push_back(i2);
+    return a[0]*a[1];
+}
+
 int mmdb2_example(const char *filename){
     mmdb::InitMatType();
     mmdb::Manager *molHnd = new mmdb::Manager();
@@ -174,6 +183,8 @@ int clipper_example(const char *mtz_file_name_cp){
     clipper::CCP4MTZfile mtzin;
 
     printf("Reading an MTZ file\n");
+    fprintf(stderr,"This is testing that fprintf(stderr,...) works\n");
+    std::cerr << "This is testing that std::cerr << ... works " << std::endl;
 
     std::string mtz_file_name = std::string(mtz_file_name_cp);
 
