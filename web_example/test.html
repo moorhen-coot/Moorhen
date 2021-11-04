@@ -29,7 +29,7 @@ function foo(){
             } catch(e) {
             }
 
-            var result = Module.ccall('clipper_example','number',['string'],[mtzSelectedFile.name]);
+            var result = Module.clipper_example(mtzSelectedFile.name);
 
         }
         if(mtzSelectedFile) r_mtz.readAsBinaryString(mtzSelectedFile);
@@ -40,7 +40,7 @@ function foo(){
             } catch(e) {
             }
 
-            var result = Module.ccall('mmdb2_example','number',['string'],[selectedFile.name]);
+            var result = Module.mmdb2_example(selectedFile.name);
 
             r_cif.onload = function(e2){
                 var contents2 = e2.target.result;
@@ -49,7 +49,7 @@ function foo(){
                 } catch(e) {
                 }
                 var startTime = performance.now();
-                var result = Module.ccall('initialize_cif_pdb','number',['string','string','number','number'],[cifSelectedFile.name,selectedFile.name,0,0.75]);
+                var result = Module.initialize_cif_pdb(cifSelectedFile.name,selectedFile.name,0,0.75);
                 var endTime = performance.now();
                 console.log(`Call to doSomething took ${endTime - startTime} milliseconds`);
             }

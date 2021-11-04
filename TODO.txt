@@ -8,6 +8,7 @@
 - Wrap ssm DONE
 - Use optimization DONE
 - Log to HTML element rather than/as well as console.log DONE
+- Use embind to expose methods/objects better DONE
 * Make calls asynchronous. Web workers?
 o Make a repository (This is a git repo, but has no remote server, license issues?).
 * Wrap RDKit, ...,  ?

@@ -15,6 +15,7 @@
 #include <vector>
 
 #include <emscripten.h>
+#include <emscripten/bind.h>
 
 #include "mmdb_manager.h"
 
@@ -27,10 +28,9 @@
 #include "clipper/clipper-contrib.h"
 #include "clipper/cns/cns_map_io.h"
 
-extern "C" {
+using namespace emscripten;
 
-int initialize_cif_pdb(const char* cif_file_name_cp, const char* pdb_file_name_cp, int is_diff_map, float rate){
-    std::string cif_file_name = std::string(cif_file_name_cp);
+int initialize_cif_pdb(const std::string& cif_file_name, const std::string& pdb_file_name, int is_diff_map, float rate){
     clipper::HKL_info mydata;
     clipper::CIFfile cif; 
 
@@ -49,7 +49,8 @@ int initialize_cif_pdb(const char* cif_file_name_cp, const char* pdb_file_name_c
 
     clipper::MMDBManager mmdb;
     mmdb.SetFlag( mmdb::MMDBF_AutoSerials | mmdb::MMDBF_IgnoreDuplSeqNum );
-    std::cout << "pdb file " << pdb_file_name_cp << "\n"; std::cout.flush();
+    std::cout << "pdb file " << pdb_file_name << "\n"; std::cout.flush();
+    const char* pdb_file_name_cp = pdb_file_name.c_str();
     mmdb.ReadCoorFile( pdb_file_name_cp );
 
     clipper::mmdb::PPCAtom psel;
@@ -160,12 +161,14 @@ int multiply(int i1, int i2){
     return a[0]*a[1];
 }
 
-int mmdb2_example(const char *filename){
+int mmdb2_example(const std::string &filename){
     mmdb::InitMatType();
     mmdb::Manager *molHnd = new mmdb::Manager();
 
-    printf("Reading a PDB file: %s\n",filename);
-    int RC = molHnd->ReadCoorFile(filename);
+    const char *filename_cp = filename.c_str();
+
+    printf("Reading a PDB file: %s\n",filename_cp);
+    int RC = molHnd->ReadCoorFile(filename_cp);
     assert(RC==0);
 
     int selHnd = molHnd->NewSelection();
@@ -179,14 +182,12 @@ int mmdb2_example(const char *filename){
     return nAtoms;
 }
 
-int clipper_example(const char *mtz_file_name_cp){
+int clipper_example(const std::string& mtz_file_name){
     clipper::CCP4MTZfile mtzin;
 
     printf("Reading an MTZ file\n");
     fprintf(stderr,"This is testing that fprintf(stderr,...) works\n");
     std::cerr << "This is testing that std::cerr << ... works " << std::endl;
-
-    std::string mtz_file_name = std::string(mtz_file_name_cp);
 
     float rate = 0.75;
 
@@ -262,4 +263,9 @@ int clipper_example(const char *mtz_file_name_cp){
     return 0;
 }
 
+EMSCRIPTEN_BINDINGS(my_module) {
+    function("initialize_cif_pdb",&initialize_cif_pdb);
+    function("multiply",&multiply);
+    function("mmdb2_example",&mmdb2_example);
+    function("clipper_example",&clipper_example);
 }
