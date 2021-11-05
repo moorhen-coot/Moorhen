@@ -31,6 +31,9 @@
 using namespace emscripten;
 
 int initialize_cif_pdb(const std::string& cif_file_name, const std::string& pdb_file_name, int is_diff_map, float rate){
+    std::cout << cif_file_name << std::endl;
+    std::cout << pdb_file_name << std::endl;
+
     clipper::HKL_info mydata;
     clipper::CIFfile cif; 
 

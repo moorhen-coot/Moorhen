@@ -13,55 +13,6 @@
   <body>
     <h2>Example of wrapping CCP4 libraries (and dependencies) to Web Assembly with emscripten</h2>
     <script async type="text/javascript" src="web_example.js"></script>
-    <script>
-function foo(){
-
-        const selectedFile = document.getElementById('pdb_input').files[0];
-        const cifSelectedFile = document.getElementById('cif_input').files[0];
-        const mtzSelectedFile = document.getElementById('mtz_input').files[0];
-        var r = new FileReader();
-        var r_cif = new FileReader();
-        var r_mtz = new FileReader();
-        r_mtz.onload = function(e) {
-            var contents = e.target.result;
-            try {
-                Module['FS_createDataFile'](".", mtzSelectedFile.name, contents, true, true);
-            } catch(e) {
-            }
-
-            var result = Module.clipper_example(mtzSelectedFile.name);
-
-        }
-        if(mtzSelectedFile) r_mtz.readAsBinaryString(mtzSelectedFile);
-        r.onload = function(e) {
-            var contents = e.target.result;
-            try {
-                Module['FS_createDataFile'](".", selectedFile.name, contents, true, true);
-            } catch(e) {
-            }
-
-            var result = Module.mmdb2_example(selectedFile.name);
-
-            r_cif.onload = function(e2){
-                var contents2 = e2.target.result;
-                try {
-                    Module['FS_createDataFile'](".", cifSelectedFile.name, contents2, true, true);
-                } catch(e) {
-                }
-                var startTime = performance.now();
-                var result = Module.initialize_cif_pdb(cifSelectedFile.name,selectedFile.name,0,0.75);
-                var endTime = performance.now();
-                console.log(`Call to doSomething took ${endTime - startTime} milliseconds`);
-            }
-
-            if(cifSelectedFile) r_cif.readAsText(cifSelectedFile);
-
-        }
-        if(selectedFile) r.readAsText(selectedFile);
-        
-
-    }
-    </script>
     <h2>Input</h2>
     <p>All inputs are optional.
     <ul>
@@ -76,12 +27,13 @@ function foo(){
     <input type="file" id="cif_input" class="btn"><br />
     <span>MTZ file</span>
     <input type="file" id="mtz_input" class="btn"><br />
-    <input type="button" class="btn" value="Load" onclick="foo()"></input>
+    <input type="button" class="btn" value="Load" id="load"></input>
     </div>
     <div style="width:96%; left-margin:3%; top-margin:20px;">
     <pre id="output" style="border:1px solid green; height:200px;overflow-x:auto; overflow-y:scroll;"></pre>
     </div>
 <script>
+/*
 var Module={preRun:[],postRun:[],
 print:function(){var e=document.getElementById("output");return e&&(e.innerHTML=""),function(t){arguments.length>1&&(t=Array.prototype.slice.call(arguments).join(" ")),console.log(t),e&&(e.innerHTML+=t+"\n",e.scrollTop=e.scrollHeight)}}(),
 printErr:function(){var e=document.getElementById("output");return e&&(e.innerHTML=""),function(t){arguments.length>1&&(t=Array.prototype.slice.call(arguments).join(" ")),console.log(t),e&&(e.innerHTML+=t+"\n",e.scrollTop=e.scrollHeight)}}()
@@ -89,8 +41,57 @@ printErr:function(){var e=document.getElementById("output");return e&&(e.innerHT
         Module['onRuntimeInitialized'] = function(){
             document.getElementById("output").innerHTML = "";
         }
+*/
 </script>
- 
+  <script>
+
+     window.onload = function() {
+         let myWorkerPDB = new Worker('pdb_worker.js');
+         let myWorkerMTZ = new Worker('mtz_worker.js');
+         let myWorkerSF = new Worker('cif_pdb_worker.js');
+         let loadButton = document.getElementById("load");
+         loadButton.onclick = function() {
+             const selectedFile = document.getElementById('pdb_input').files[0];
+             const cifSelectedFile = document.getElementById('cif_input').files[0];
+             const mtzSelectedFile = document.getElementById('mtz_input').files[0];
+             var r = new FileReader();
+             var r_cif = new FileReader();
+             var r_mtz = new FileReader();
+             r_mtz.onload = function(e) {
+                 let contents = e.target.result;
+                 myWorkerMTZ.onmessage = function(e) {
+                     let result = document.getElementById("output");
+                     result.innerHTML += e.data + "<br />";
+                 }
+                 myWorkerMTZ.postMessage([btoa(contents), mtzSelectedFile]);
+
+             }
+             if(mtzSelectedFile) r_mtz.readAsBinaryString(mtzSelectedFile);
+             r.onload = function(e) {
+                 let contents = e.target.result;
+
+                 myWorkerPDB.onmessage = function(e) {
+                     let result = document.getElementById("output");
+                     result.innerHTML += e.data + "<br />";
+                 }
+                 myWorkerPDB.postMessage([contents, selectedFile]);
+                 r_cif.onload = function(e2) {
+                     let contents2 = e2.target.result;
+
+                     myWorkerSF.onmessage = function(e) {
+                         let result = document.getElementById("output");
+                         result.innerHTML += e.data + "<br />";
+                     }
+                     myWorkerSF.postMessage([contents, selectedFile, contents2, cifSelectedFile]);
+                 }
+                 if(cifSelectedFile) r_cif.readAsText(cifSelectedFile);
+
+             }
+             if(selectedFile) r.readAsText(selectedFile);
+         }
+     }
+
+  </script>
   </body>
 </html>
 
