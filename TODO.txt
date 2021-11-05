@@ -9,10 +9,7 @@
 - Use optimization DONE
 - Log to HTML element rather than/as well as console.log DONE
 - Use embind to expose methods/objects better DONE
-* Make calls asynchronous. Web workers?
-  * Put example calls inside web worker scripts (one each)
-  * Change logging inside them to send message back to main thread
-  * Main thread receives logs and updates div.
+- Make calls asynchronous. Web workers DONE
 o Make a repository (This is a git repo, but has no remote server).
 * Wrap gsl?
 * Wrap RDKit, ...,  ?

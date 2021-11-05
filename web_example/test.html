@@ -32,17 +32,6 @@
     <div style="width:96%; left-margin:3%; top-margin:20px;">
     <pre id="output" style="border:1px solid green; height:200px;overflow-x:auto; overflow-y:scroll;"></pre>
     </div>
-<script>
-/*
-var Module={preRun:[],postRun:[],
-print:function(){var e=document.getElementById("output");return e&&(e.innerHTML=""),function(t){arguments.length>1&&(t=Array.prototype.slice.call(arguments).join(" ")),console.log(t),e&&(e.innerHTML+=t+"\n",e.scrollTop=e.scrollHeight)}}(),
-printErr:function(){var e=document.getElementById("output");return e&&(e.innerHTML=""),function(t){arguments.length>1&&(t=Array.prototype.slice.call(arguments).join(" ")),console.log(t),e&&(e.innerHTML+=t+"\n",e.scrollTop=e.scrollHeight)}}()
-};
-        Module['onRuntimeInitialized'] = function(){
-            document.getElementById("output").innerHTML = "";
-        }
-*/
-</script>
   <script>
 
      window.onload = function() {
@@ -61,7 +50,14 @@ printErr:function(){var e=document.getElementById("output");return e&&(e.innerHT
                  let contents = e.target.result;
                  myWorkerMTZ.onmessage = function(e) {
                      let result = document.getElementById("output");
-                     result.innerHTML += e.data + "<br />";
+                     if(e.data[0]==="output"){
+                         result.innerHTML += e.data[1] + "<br />";
+                     }
+                     if(e.data[0]==="result"){
+                         result.innerHTML += "<b>Result: " + e.data[1] + "</b><br />";
+                         //This is then where we decide upon the action
+                     }
+                     result.scrollTop = result.scrollHeight;
                  }
                  myWorkerMTZ.postMessage([btoa(contents), mtzSelectedFile]);
 
@@ -72,7 +68,14 @@ printErr:function(){var e=document.getElementById("output");return e&&(e.innerHT
 
                  myWorkerPDB.onmessage = function(e) {
                      let result = document.getElementById("output");
-                     result.innerHTML += e.data + "<br />";
+                     if(e.data[0]==="output"){
+                         result.innerHTML += e.data[1] + "<br />";
+                     }
+                     if(e.data[0]==="result"){
+                         result.innerHTML += "<b>Result: " + e.data[1] + "</b><br />";
+                         //This is then where we decide upon the action
+                     }
+                     result.scrollTop = result.scrollHeight;
                  }
                  myWorkerPDB.postMessage([contents, selectedFile]);
                  r_cif.onload = function(e2) {
@@ -80,7 +83,14 @@ printErr:function(){var e=document.getElementById("output");return e&&(e.innerHT
 
                      myWorkerSF.onmessage = function(e) {
                          let result = document.getElementById("output");
-                         result.innerHTML += e.data + "<br />";
+                         if(e.data[0]==="output"){
+                             result.innerHTML += e.data[1] + "<br />";
+                         }
+                         if(e.data[0]==="result"){
+                             result.innerHTML += "<b>Result: " + e.data[1] + "</b><br />";
+                             //This is then where we decide upon the action
+                         }
+                         result.scrollTop = result.scrollHeight;
                      }
                      myWorkerSF.postMessage([contents, selectedFile, contents2, cifSelectedFile]);
                  }
