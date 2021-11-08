@@ -15,7 +15,12 @@
    emcmake cmake .
    emmake make
 
-4. Run the example:
+4. To run the command line example:
 
    cd example
    node ccp4_example.js
+
+5. To run the web example, put the contents of the `web_example` directory on a web server. This can be a full-scale web server, or a simple one, e.g:
+
+   cd web_example
+   python3 -m http.server 7800 &

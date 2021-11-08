@@ -10,7 +10,12 @@
 - Log to HTML element rather than/as well as console.log DONE
 - Use embind to expose methods/objects better DONE
 - Make calls asynchronous. Web workers DONE
+- Wrap gsl, I think this more or less works out of the box with:
+    autoreconf -i
+    emconfigure ./configure
+    emmake make LDFLAGS=-all-static
+
+  After that we can use gsl-2.7/.libs/libgsl.a DONE
 o Make a repository (This is a git repo, but has no remote server).
-* Wrap gsl?
 * Wrap RDKit, ...,  ?
 * Wrap Coot
