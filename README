@@ -24,3 +24,5 @@
 
    cd web_example
    python3 -m http.server 7800 &
+
+   And then point web browser at http://localhost:7800/test.html .

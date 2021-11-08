@@ -6,16 +6,19 @@
 - Do a SF calculation DONE
 - Put all the above in a browser DONE
 - Wrap ssm DONE
-- Use optimization DONE
+- Use optimization (-O2) DONE
 - Log to HTML element rather than/as well as console.log DONE
 - Use embind to expose methods/objects better DONE
 - Make calls asynchronous. Web workers DONE
-- Wrap gsl, I think this more or less works out of the box with:
+o Wrap gsl, I think this more or less works out of the box with:
     autoreconf -i
     emconfigure ./configure
     emmake make LDFLAGS=-all-static
 
   After that we can use gsl-2.7/.libs/libgsl.a DONE
+
+  Need to test this.
+
 o Make a repository (This is a git repo, but has no remote server).
-* Wrap RDKit, ...,  ?
+* Test RDKit: https://github.com/rdkit/rdkit/tree/master/Code/MinimalLib
 * Wrap Coot
