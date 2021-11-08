@@ -19,6 +19,7 @@ o Wrap gsl, I think this more or less works out of the box with:
 
   Need to test this.
 
+* Wrap a class, e.g. clipper:XMap<float>.
 o Make a repository (This is a git repo, but has no remote server).
 * Test RDKit: https://github.com/rdkit/rdkit/tree/master/Code/MinimalLib
 * Wrap Coot
