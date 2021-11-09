@@ -20,6 +20,7 @@
 #include "mmdb_manager.h"
 
 #include "clipper/clipper.h"
+#include "clipper/core/cell.h"
 #include "clipper/clipper-ccp4.h"
 #include "clipper/core/clipper_precision.h"
 #include "clipper/clipper-cif.h"
@@ -185,7 +186,11 @@ int mmdb2_example(const std::string &filename){
     return nAtoms;
 }
 
-int clipper_example(const std::string& mtz_file_name){
+void clipperMapReceiveTest(const clipper::Xmap<float> &xmap){
+    std::cout << "Hello from clipperMapReceiveTest" << std::endl;
+}
+
+clipper::Xmap<float> clipper_example(const std::string& mtz_file_name){
     clipper::CCP4MTZfile mtzin;
 
     printf("Reading an MTZ file\n");
@@ -263,12 +268,45 @@ int clipper_example(const std::string& mtz_file_name){
     float max = maxsx;
 
     std::cout << "Min: " << min << ", Max: " << max << std::endl;
-    return 0;
+    return xmap;
 }
 
 EMSCRIPTEN_BINDINGS(my_module) {
     function("initialize_cif_pdb",&initialize_cif_pdb);
     function("multiply",&multiply);
     function("mmdb2_example",&mmdb2_example);
+    class_<clipper::Cell_descr>("Cell_descr")
+    .constructor<const clipper::ftype&, const clipper::ftype&, const clipper::ftype&, const clipper::ftype&, const clipper::ftype&, const clipper::ftype&>()
+    .function("a", &clipper::Cell_descr::a)
+    .function("b", &clipper::Cell_descr::b)
+    .function("c", &clipper::Cell_descr::c)
+    .function("alpha", &clipper::Cell_descr::alpha)
+    .function("beta", &clipper::Cell_descr::beta)
+    .function("gamma", &clipper::Cell_descr::gamma)
+    .function("alpha_deg", &clipper::Cell_descr::alpha_deg)
+    .function("beta_deg", &clipper::Cell_descr::beta_deg)
+    .function("gamma_deg", &clipper::Cell_descr::gamma_deg)
+    .function("format", &clipper::Cell_descr::format)
+    ;
+    class_<clipper::Cell, base<clipper::Cell_descr>>("Cell")
+    .constructor()
+    .constructor<const clipper::Cell_descr &>()
+    .function("a_star", &clipper::Cell::a_star)
+    .function("b_star", &clipper::Cell::b_star)
+    .function("c_star", &clipper::Cell::c_star)
+    .function("alpha_star", &clipper::Cell::alpha_star)
+    .function("beta_star", &clipper::Cell::beta_star)
+    .function("gamma_star", &clipper::Cell::gamma_star)
+    .function("descr", &clipper::Cell::descr)
+    .function("is_null", &clipper::Cell::is_null)
+    .function("init", &clipper::Cell::init)
+    ;
+    class_<clipper::Xmap_base>("Xmap_base")
+    .function("cell", &clipper::Xmap_base::cell)
+    ;
+    class_<clipper::Xmap<float>, base<clipper::Xmap_base>>("Xmap_float")
+    .constructor()
+    ;
     function("clipper_example",&clipper_example);
+    function("clipperMapReceiveTest",&clipperMapReceiveTest);
 }
