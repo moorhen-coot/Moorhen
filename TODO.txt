@@ -25,7 +25,10 @@ o Wrap gsl, I think this more or less works out of the box with:
   - Wrap Xmap<float> DONE
 
   Only issue unresolved is passing this from Web Worker to main thread
-  (or other worker), the returned xmpa is cast to Object in postMessage.
+  (or other worker), the returned xmap is cast to Object in postMessage.
+  This implies: all uses of custom objects is done in same thread; or
+  objects are communicated between threads by serializing/deserializing
+  if necessary.
 
 o Make a repository (This is a git repo, but has no remote server).
 * Test RDKit: https://github.com/rdkit/rdkit/tree/master/Code/MinimalLib
