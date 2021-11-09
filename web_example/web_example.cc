@@ -31,7 +31,39 @@
 
 using namespace emscripten;
 
-int initialize_cif_pdb(const std::string& cif_file_name, const std::string& pdb_file_name, int is_diff_map, float rate){
+void printMapStats(clipper::Xmap<float> &xmap){
+    clipper::Map_stats stats(xmap);
+
+    std::cout << "Mean and sigma of map: " << stats.mean() << " and " << stats.std_dev() << std::endl;  std::cout.flush();
+
+    float mean = stats.mean();
+    float std_dev = stats.std_dev();
+
+    clipper::Xmap<float>::Map_reference_index im;
+    clipper::ftype64 w, x, sx;
+    sx = 0.0;
+    clipper::ftype64 minsx = 1.0e8;
+    clipper::ftype64 maxsx = -1.0e8;
+    for ( im = xmap.first(); !im.last(); im.next() ) {
+        w = 1.0 / clipper::ftype64( xmap.multiplicity( im.coord() ) );
+        x = clipper::ftype64( xmap[im] );
+        if ( !std::isnan(x) ) {
+            sx = w*x;
+            if(sx>maxsx)
+                maxsx = sx;
+            if(sx<minsx)
+                minsx = sx;
+        }
+    }
+
+    float min = minsx;
+    float max = maxsx;
+
+    std::cout << "Min: " << min << ", Max: " << max << std::endl;
+    
+}
+
+clipper::Xmap<float> initialize_cif_pdb(const std::string& cif_file_name, const std::string& pdb_file_name, int is_diff_map, float rate){
     std::cout << cif_file_name << std::endl;
     std::cout << pdb_file_name << std::endl;
 
@@ -123,37 +155,7 @@ int initialize_cif_pdb(const std::string& cif_file_name, const std::string& pdb_
     xmap.fft_from( fb );       // generate sigmaA map 20050804
     std::cout << "done." << std::endl; std::cout.flush();
 
-    clipper::Map_stats stats(xmap);
-
-    std::cout << "Mean and sigma of map from CIF file (make_map_from_pdb_mmcif): " << stats.mean() << " and " << stats.std_dev() << std::endl;  std::cout.flush();
-
-    float mean = stats.mean();
-    float std_dev = stats.std_dev();
-
-    clipper::Xmap<float>::Map_reference_index im;
-    clipper::ftype64 w, x, sx;
-    sx = 0.0;
-    clipper::ftype64 minsx = 1.0e8;
-    clipper::ftype64 maxsx = -1.0e8;
-    for ( im = xmap.first(); !im.last(); im.next() ) {
-        w = 1.0 / clipper::ftype64( xmap.multiplicity( im.coord() ) );
-        x = clipper::ftype64( xmap[im] );
-        if ( !std::isnan(x) ) {
-            sx = w*x;
-            if(sx>maxsx)
-                maxsx = sx;
-            if(sx<minsx)
-                minsx = sx;
-        }
-    }
-
-    float min = minsx;
-    float max = maxsx;
-
-    std::cout << "Min and max of map from CIF file (make_map_from_pdb_mmcif): " << min << " and " << max << std::endl;  std::cout.flush();
-
-    return 0;
-
+    return xmap;
 
 }
 
@@ -184,10 +186,6 @@ int mmdb2_example(const std::string &filename){
 
     printf("Selected %d atoms\n",nAtoms);
     return nAtoms;
-}
-
-void clipperMapReceiveTest(const clipper::Xmap<float> &xmap){
-    std::cout << "Hello from clipperMapReceiveTest" << std::endl;
 }
 
 clipper::Xmap<float> clipper_example(const std::string& mtz_file_name){
@@ -247,27 +245,6 @@ clipper::Xmap<float> clipper_example(const std::string& mtz_file_name){
     xmap.fft_from( fphidata );                  // generate map
     std::cout << "done fft..." << std::endl;
 
-    clipper::Xmap<float>::Map_reference_index im;
-    clipper::ftype64 w, x, sx;
-    sx = 0.0;
-    clipper::ftype64 minsx = 1.0e8;
-    clipper::ftype64 maxsx = -1.0e8;
-    for ( im = xmap.first(); !im.last(); im.next() ) {
-        w = 1.0 / clipper::ftype64( xmap.multiplicity( im.coord() ) );
-        x = clipper::ftype64( xmap[im] );
-        if ( !std::isnan(x) ) {
-            sx = w*x;
-            if(sx>maxsx)
-                maxsx = sx;
-            if(sx<minsx)
-                minsx = sx;
-        }
-    }
-
-    float min = minsx;
-    float max = maxsx;
-
-    std::cout << "Min: " << min << ", Max: " << max << std::endl;
     return xmap;
 }
 
@@ -308,5 +285,5 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .constructor()
     ;
     function("clipper_example",&clipper_example);
-    function("clipperMapReceiveTest",&clipperMapReceiveTest);
+    function("printMapStats",&printMapStats);
 }

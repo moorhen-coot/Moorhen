@@ -18,5 +18,10 @@ onmessage = function(e) {
     }
 
     var result = Module.clipper_example(selectedFile.name);
+    console.log("In the worker...");
+    console.log(result);
+    console.log(result.cell());
+    console.log(result.cell().a());
+    Module.printMapStats(result);
     postMessage(["result",result]);
 }

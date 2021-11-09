@@ -18,6 +18,7 @@ onmessage = function(e) {
     }
 
     var result = Module.initialize_cif_pdb(cifSelectedFile.name,selectedFile.name,0,0.75);
+    Module.printMapStats(result);
     
     postMessage(["result",result]);
 }
