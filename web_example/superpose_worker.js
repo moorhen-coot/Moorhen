@@ -24,7 +24,14 @@ onmessage = function(e) {
     sels.push_back("dummy");
     sels.push_back("dummy");
     var result = Module.superpose(files,sels);
-    Module.printMapStats(result);
     
+    /*
+    //Testing, belongs elsewhere
+    var bessel = Module.gsl_sf_bessel_J0(5.0);
+    var hg = Module.gsl_cdf_hypergeometric_P(4, 7, 19, 13);
+    console.log(bessel);
+    console.log(hg);
+    */
+
     postMessage(["result",result]);
 }

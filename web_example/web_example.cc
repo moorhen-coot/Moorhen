@@ -29,6 +29,9 @@
 #include "clipper/clipper-contrib.h"
 #include "clipper/cns/cns_map_io.h"
 
+#include "gsl/gsl_sf_bessel.h"
+#include "gsl/gsl_cdf.h"
+
 using namespace emscripten;
 int superpose_main(const std::vector<std::string> &files, const std::vector<std::string> &selections);
 
@@ -289,4 +292,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
     function("clipper_example",&clipper_example);
     function("printMapStats",&printMapStats);
     function("superpose",&superpose_main);
+    function("gsl_sf_bessel_J0",&gsl_sf_bessel_J0);
+    function("gsl_cdf_hypergeometric_P",&gsl_cdf_hypergeometric_P);
 }

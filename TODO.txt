@@ -11,16 +11,15 @@
 - Use embind to expose methods/objects better DONE
 - Make calls asynchronous. Web workers DONE
 - Make web superpose example DONE
-o Wrap gsl, I think this more or less works out of the box with:
+- Wrap gsl, I think this more or less works out of the box with:
     autoreconf -i
-    emconfigure ./configure
+    emconfigure ./configure --prefix=<somewhere>
     emmake make LDFLAGS=-all-static
+    emmake make install
 
-  After that we can use gsl-2.7/.libs/libgsl.a DONE
+  After that we can use <somewhere>/lib/libgsl.a DONE
 
-  Need to test using this.
-
-* Wrap a class, e.g. clipper:XMap<float>.
+- Wrap a class, e.g. clipper:XMap<float>.
   - Wrap Cell DONE
   - Wrap Cell_descr DONE
   - Wrap Xmap<float> DONE
