@@ -30,6 +30,9 @@
   objects are communicated between threads by serializing/deserializing
   if necessary.
 
+- Test RDKit: https://github.com/rdkit/rdkit/tree/master/Code/MinimalLib
+  Works as expected. No idea if functionality is sufficient for Coot's needs.
+
 o Make a repository (This is a git repo, but has no remote server).
-* Test RDKit: https://github.com/rdkit/rdkit/tree/master/Code/MinimalLib
+
 * Wrap Coot
