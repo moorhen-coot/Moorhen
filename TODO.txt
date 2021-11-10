@@ -10,7 +10,7 @@
 - Log to HTML element rather than/as well as console.log DONE
 - Use embind to expose methods/objects better DONE
 - Make calls asynchronous. Web workers DONE
-* Make web superpose example.
+- Make web superpose example DONE
 o Wrap gsl, I think this more or less works out of the box with:
     autoreconf -i
     emconfigure ./configure

@@ -30,6 +30,7 @@
 #include "clipper/cns/cns_map_io.h"
 
 using namespace emscripten;
+int superpose_main(const std::vector<std::string> &files, const std::vector<std::string> &selections);
 
 void printMapStats(clipper::Xmap<float> &xmap){
     clipper::Map_stats stats(xmap);
@@ -249,6 +250,7 @@ clipper::Xmap<float> clipper_example(const std::string& mtz_file_name){
 }
 
 EMSCRIPTEN_BINDINGS(my_module) {
+    register_vector<std::string>("VectorString");
     function("initialize_cif_pdb",&initialize_cif_pdb);
     function("multiply",&multiply);
     function("mmdb2_example",&mmdb2_example);
@@ -286,4 +288,5 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     function("clipper_example",&clipper_example);
     function("printMapStats",&printMapStats);
+    function("superpose",&superpose_main);
 }

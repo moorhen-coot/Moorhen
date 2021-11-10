@@ -17,12 +17,15 @@
     <p>All inputs are optional.
     <ul>
     <li>If a coordinate is provided then a simple count of CA is done.
-    <li>If a coordinate file and structure factor file are provided then a map is calculated from the 2 and the CA count is done as well.
+    <li>If a coordinate file and structure factor file are provided then a map is calculated from them (and the CA count is done as well).
+    <li>If 2 coordinate files are provided then superpose is run using them (and the CA count is done as well).
     <li>If an MTZ file is provided then a map is calculated.
     </ul>
     <div>
     <span>Coordinate file</span>
     <input type="file" id="pdb_input" class="btn"><br />
+    <span>Second coordinate file (will be superposed with first)</span>
+    <input type="file" id="pdb_input2" class="btn"><br />
     <span>Structure factor file</span>
     <input type="file" id="cif_input" class="btn"><br />
     <span>MTZ file</span>
@@ -38,12 +41,15 @@
          let myWorkerPDB = new Worker('pdb_worker.js');
          let myWorkerMTZ = new Worker('mtz_worker.js');
          let myWorkerSF = new Worker('cif_pdb_worker.js');
+         let myWorkerSSM = new Worker('superpose_worker.js');
          let loadButton = document.getElementById("load");
          loadButton.onclick = function() {
              const selectedFile = document.getElementById('pdb_input').files[0];
+             const selectedFile2 = document.getElementById('pdb_input2').files[0];
              const cifSelectedFile = document.getElementById('cif_input').files[0];
              const mtzSelectedFile = document.getElementById('mtz_input').files[0];
              var r = new FileReader();
+             var r2 = new FileReader();
              var r_cif = new FileReader();
              var r_mtz = new FileReader();
              r_mtz.onload = function(e) {
@@ -96,7 +102,25 @@
                      }
                      myWorkerSF.postMessage([contents, selectedFile, contents2, cifSelectedFile]);
                  }
+                 r2.onload = function(e3) {
+                     let contents2 = e3.target.result;
+
+                     myWorkerSSM.onmessage = function(e) {
+                         let result = document.getElementById("output");
+                         if(e.data[0]==="output"){
+                             result.innerHTML += e.data[1] + "<br />";
+                         }
+                         if(e.data[0]==="result"){
+                             result.innerHTML += "<b>Result: " + e.data[1] + "</b><br />";
+                             //This is then where we decide upon the action
+                         }
+                         result.scrollTop = result.scrollHeight;
+                     }
+                     myWorkerSSM.postMessage([contents, selectedFile, contents2, selectedFile2]);
+                 }
+                 
                  if(cifSelectedFile) r_cif.readAsText(cifSelectedFile);
+                 if(selectedFile2) r2.readAsText(selectedFile2);
 
              }
              if(selectedFile) r.readAsText(selectedFile);
