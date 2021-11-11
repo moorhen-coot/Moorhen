@@ -171,9 +171,13 @@ int multiply(int i1, int i2){
     return a[0]*a[1];
 }
 
-int mmdb2_example(const std::string &filename){
+std::vector<std::string> mmdb2_example(const std::string &filename){
+
+    std::vector<std::string> ligandTypes;
+
     mmdb::InitMatType();
     mmdb::Manager *molHnd = new mmdb::Manager();
+
 
     const char *filename_cp = filename.c_str();
 
@@ -184,12 +188,24 @@ int mmdb2_example(const std::string &filename){
     int selHnd = molHnd->NewSelection();
     molHnd->SelectAtoms(selHnd, 0,"*",mmdb::ANY_RES,"*",mmdb::ANY_RES,"*","*","CA","C","*",mmdb::SKEY_NEW);
 
-    mmdb::Atom** SelAtoms;
+    mmdb::Atom** SelAtoms=0;
     int nAtoms;
     molHnd->GetSelIndex(selHnd,SelAtoms,nAtoms);
 
+    int selHndLigand = molHnd->NewSelection();
+    molHnd->Select(selHndLigand,mmdb::STYPE_RESIDUE,"/*/*/*",mmdb::SKEY_NEW);
+    molHnd->Select(selHndLigand,mmdb::STYPE_RESIDUE,"/*/*/(GLY,ALA,VAL,PRO,SER,THR,LEU,ILE,CYS,ASP,GLU,ASN,GLN,ARG,LYS,MET,MSE,HIS,PHE,TYR,TRP,HCS,ALO,PDD,UNK,DA,DC,DG,DT,A,G,I,U,T,C,YG,PSU,Ad,Cd,Gd,Td,ADE,CYT,GUA,INO,THY,URA,AMP,ADP,ATP,CMP,CDP,CTP,GMP,GDP,GTP,TMP,TDP,TTP,HOH,H2O,WAT,SOL,DOD,D2O,CL,AR,CA,CD,CO,CR,CU,FE,GD,HG,IR,K,MG,MN,NA,UR,ZN,SUL)",mmdb::SKEY_XOR);
+    mmdb::Residue** SelResLigand=0;
+    int nResLigand;
+    molHnd->GetSelIndex(selHndLigand,SelResLigand,nResLigand);
+    printf("  Selected %d ligand residues\n",nResLigand);
+    for(int ires=0;ires<nResLigand;ires++){
+        printf("    %s\n",SelResLigand[ires]->name);
+        ligandTypes.push_back(std::string(SelResLigand[ires]->name));
+    }
+
     printf("Selected %d atoms\n",nAtoms);
-    return nAtoms;
+    return ligandTypes;
 }
 
 clipper::Xmap<float> clipper_example(const std::string& mtz_file_name){

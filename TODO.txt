@@ -31,7 +31,13 @@
   if necessary.
 
 - Test RDKit: https://github.com/rdkit/rdkit/tree/master/Code/MinimalLib
-  Works as expected. No idea if functionality is sufficient for Coot's needs.
+  Works as expected. No idea if functionality is sufficient for Coot's needs. DONE
+
+* Display an svg/canvas ligand representation
+  o Get ligand atoms from PDB. How do we return this? Some kind of map?
+  * Read cif dictionary. Need code - Stuart's mgMiniMol can probably do it.
+  * Combine xyz from PDB with dictionary to create mol block.
+  * Render mol in svg/canvas.
 
 o Make a repository (This is a git repo, but has no remote server).
 
