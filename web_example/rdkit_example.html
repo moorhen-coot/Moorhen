@@ -2,9 +2,10 @@
 <html lang="en-us">
 <head>
     <!-- Load the RDKit JS file -->
-    <script src="https://unpkg.com/@rdkit/rdkit/Code/MinimalLib/dist/RDKit_minimal.js"></script>
+    <script src="RDKit_minimal.js"></script>
   </head>
   <body>
+  <h2>RDKit example</h2>
     <!-- Instantiate the WASM module. The inline script below could live elsewhere inside your application code. -->
     <script>
         window.initRDKitModule()
@@ -16,16 +17,16 @@
                  * You can use it anywhere.
                  */
                  console.log("RDKit is loaded");
-                 var smiles = "CC(=O)Oc1ccccc1C(=O)O";
+                 var smiles = "CC(=O)Oc1ncncc1C(=O)O";
                  var mol = RDKit.get_mol(smiles);
+                 var smarts = "Oc1[c,n][c,n][c,n][c,n]c1";
+                 var qmol = RDKit.get_qmol(smarts);
+                 var mdetails = mol.get_substruct_match(qmol);
                  var dest = document.getElementById("example-1-output");
-                 var svg = mol.get_svg();
+                 var svg = mol.get_svg_with_highlights(mdetails);
                  dest.outerHTML = "<div id='drawing'>" + svg + "</div>";
                  var canvas = document.getElementById("canvas-1");
                  var canvas2 = document.getElementById("canvas-2");
-                 var smarts = "Oc1[c,n]cccc1";
-                 var qmol = RDKit.get_qmol(smarts);
-                 var mdetails = mol.get_substruct_match(qmol);
                  mol.draw_to_canvas(canvas, -1, -1);
                  mol.draw_to_canvas_with_highlights(canvas2, mdetails);
             })
@@ -37,6 +38,6 @@
     </script>
     <div id="example-1-output"></div>
     <canvas id="canvas-1"></canvas>
-    <canvas id="canvas-2"></canvas>
+    <canvas id="canvas-2" height="200"></canvas>
   </body>
 </html>
