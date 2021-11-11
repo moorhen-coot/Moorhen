@@ -1,6 +1,15 @@
-var Module={preRun:[],postRun:[],print:function(){return function(t){postMessage(["output",t]);}}(),printErr:function(){return function(t){postMessage(["output",t]);}}()}
+var CCP4Module;
 
 importScripts('web_example.js');
+
+createCCP4Module({print(t){postMessage(["output",t])},printErr(t){postMessage(["output",t]);}})
+    .then(function(CCP4Mod) {
+             CCP4Module = CCP4Mod;
+            })
+.catch((e) => {
+        console.log("CCP4 problem :(");
+        console.log(e);
+        });
 
 onmessage = function(e) {
     var contents = e.data[0];
@@ -9,26 +18,26 @@ onmessage = function(e) {
     var selectedFile2 = e.data[3];
 
     try {
-        Module['FS_createDataFile'](".", selectedFile.name, contents, true, true);
+        CCP4Module.FS_createDataFile(".", selectedFile.name, contents, true, true);
     } catch(e) {
     }
     try {
-        Module['FS_createDataFile'](".", selectedFile2.name, contents2, true, true);
+        CCP4Module.FS_createDataFile(".", selectedFile2.name, contents2, true, true);
     } catch(e) {
     }
 
-    var files = new Module.VectorString();
-    var sels = new Module.VectorString();
+    var files = new CCP4Module.VectorString();
+    var sels = new CCP4Module.VectorString();
     files.push_back(selectedFile.name);
     files.push_back(selectedFile2.name);
     sels.push_back("dummy");
     sels.push_back("dummy");
-    var result = Module.superpose(files,sels);
+    var result = CCP4Module.superpose(files,sels);
     
     /*
     //Testing, belongs elsewhere
-    var bessel = Module.gsl_sf_bessel_J0(5.0);
-    var hg = Module.gsl_cdf_hypergeometric_P(4, 7, 19, 13);
+    var bessel = CCP4Module.gsl_sf_bessel_J0(5.0);
+    var hg = CCP4Module.gsl_cdf_hypergeometric_P(4, 7, 19, 13);
     console.log(bessel);
     console.log(hg);
     */

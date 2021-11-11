@@ -1,6 +1,15 @@
-var Module={preRun:[],postRun:[],print:function(){return function(t){postMessage(["output",t]);}}(),printErr:function(){return function(t){postMessage(["output",t]);}}()}
+var CCP4Module;
 
 importScripts('web_example.js');
+
+createCCP4Module({print(t){postMessage(["output",t])},printErr(t){postMessage(["output",t]);}})
+    .then(function(CCP4Mod) {
+             CCP4Module = CCP4Mod;
+            })
+.catch((e) => {
+        console.log("CCP4 problem :(");
+        console.log(e);
+        });
 
 onmessage = function(e) {
     var byteCharacters = atob(e.data[0]);
@@ -13,15 +22,15 @@ onmessage = function(e) {
     const byteArray = new Uint8Array(byteNumbers);
 
     try {
-        Module['FS_createDataFile'](".", selectedFile.name, byteArray, true, true);
+        CCP4Module.FS_createDataFile(".", selectedFile.name, byteArray, true, true);
     } catch(e) {
     }
 
-    var result = Module.clipper_example(selectedFile.name);
+    var result = CCP4Module.clipper_example(selectedFile.name);
     console.log("In the worker...");
     console.log(result);
     console.log(result.cell());
     console.log(result.cell().a());
-    Module.printMapStats(result);
+    CCP4Module.printMapStats(result);
     postMessage(["result",result]);
 }
