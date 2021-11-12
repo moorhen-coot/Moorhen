@@ -34,6 +34,7 @@
     </div>
     <div style="width:96%; left-margin:3%; top-margin:20px;">
     <pre id="output" style="border:1px solid green; height:200px;overflow-x:auto; overflow-y:scroll;"></pre>
+    <div id="example-1-output"></div>
     </div>
   <script>
 
@@ -80,8 +81,14 @@
                          result.innerHTML += e.data[1] + "<br />";
                      }
                      if(e.data[0]==="result"){
-                         result.innerHTML += "<b>Result: " + e.data[1] + "</b><br />";
+                         result.innerHTML += "<b>Result: " + Object.keys(e.data[1]) + "</b><br />";
                          //This is then where we decide upon the action
+                         let dest = document.getElementById("example-1-output");
+                         dest.innerHTML = "";
+                         for(let ilig=0;ilig<Object.keys(e.data[1]).length;ilig++){
+                             let svg = e.data[1][Object.keys(e.data[1])[ilig]];
+                             dest.innerHTML += svg + Object.keys(e.data[1])[ilig];
+                         }
                      }
                      result.scrollTop = result.scrollHeight;
                  }
