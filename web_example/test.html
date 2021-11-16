@@ -68,7 +68,7 @@
                      }
                      result.scrollTop = result.scrollHeight;
                  }
-                 myWorkerMTZ.postMessage([btoa(contents), mtzSelectedFile]);
+                 myWorkerMTZ.postMessage([btoa(contents), mtzSelectedFile.name]);
 
              }
              if(mtzSelectedFile) r_mtz.readAsBinaryString(mtzSelectedFile);
@@ -92,7 +92,7 @@
                      }
                      result.scrollTop = result.scrollHeight;
                  }
-                 myWorkerPDB.postMessage([contents, selectedFile]);
+                 myWorkerPDB.postMessage([contents, selectedFile.name]);
                  r_cif.onload = function(e2) {
                      let contents2 = e2.target.result;
 
@@ -107,7 +107,7 @@
                          }
                          result.scrollTop = result.scrollHeight;
                      }
-                     myWorkerSF.postMessage([contents, selectedFile, contents2, cifSelectedFile]);
+                     myWorkerSF.postMessage([contents, selectedFile.name, contents2, cifSelectedFile.name]);
                  }
                  r2.onload = function(e3) {
                      let contents2 = e3.target.result;
@@ -123,7 +123,7 @@
                          }
                          result.scrollTop = result.scrollHeight;
                      }
-                     myWorkerSSM.postMessage([contents, selectedFile, contents2, selectedFile2]);
+                     myWorkerSSM.postMessage([contents, selectedFile.name, contents2, selectedFile2.name]);
                  }
                  
                  if(cifSelectedFile) r_cif.readAsText(cifSelectedFile);

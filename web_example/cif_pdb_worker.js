@@ -13,20 +13,20 @@ createCCP4Module({print(t){postMessage(["output",t])},printErr(t){postMessage(["
 
 onmessage = function(e) {
     var contents = e.data[0];
-    var selectedFile = e.data[1];
+    var selectedFileName = e.data[1];
     var contents2 = e.data[2];
-    var cifSelectedFile = e.data[3];
+    var cifSelectedFilNamee = e.data[3];
 
     try {
-        CCP4Module.FS_createDataFile(".", selectedFile.name, contents, true, true);
+        CCP4Module.FS_createDataFile(".", selectedFileName, contents, true, true);
     } catch(e) {
     }
     try {
-        CCP4Module.FS_createDataFile(".", cifSelectedFile.name, contents2, true, true);
+        CCP4Module.FS_createDataFile(".", cifSelectedFileName, contents2, true, true);
     } catch(e) {
     }
 
-    var result = CCP4Module.initialize_cif_pdb(cifSelectedFile.name,selectedFile.name,0,0.75);
+    var result = CCP4Module.initialize_cif_pdb(cifSelectedFileName,selectedFileName,0,0.75);
     CCP4Module.printMapStats(result);
     
     postMessage(["result",result]);

@@ -39,6 +39,8 @@
   - Construct mol block from dictionary DONE
   - Render mol as svg in div DONE
 
+- Incorporate into react app (with servername tweak). DONE
+
 o Make a repository (This is a git repo, but has no remote server).
 
 * Wrap Coot

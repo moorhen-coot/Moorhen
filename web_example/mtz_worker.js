@@ -13,7 +13,7 @@ createCCP4Module({print(t){postMessage(["output",t])},printErr(t){postMessage(["
 
 onmessage = function(e) {
     var byteCharacters = atob(e.data[0]);
-    var selectedFile = e.data[1];
+    var selectedFileName = e.data[1];
 
     const byteNumbers = new Array(byteCharacters.length);
     for (let i = 0; i < byteCharacters.length; i++) {
@@ -22,11 +22,11 @@ onmessage = function(e) {
     const byteArray = new Uint8Array(byteNumbers);
 
     try {
-        CCP4Module.FS_createDataFile(".", selectedFile.name, byteArray, true, true);
+        CCP4Module.FS_createDataFile(".", selectedFileName, byteArray, true, true);
     } catch(e) {
     }
 
-    var result = CCP4Module.clipper_example(selectedFile.name);
+    var result = CCP4Module.clipper_example(selectedFileName);
     console.log("In the worker...");
     console.log(result);
     console.log(result.cell());

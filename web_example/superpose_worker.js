@@ -13,23 +13,23 @@ createCCP4Module({print(t){postMessage(["output",t])},printErr(t){postMessage(["
 
 onmessage = function(e) {
     var contents = e.data[0];
-    var selectedFile = e.data[1];
+    var selectedFileName = e.data[1];
     var contents2 = e.data[2];
-    var selectedFile2 = e.data[3];
+    var selectedFile2Name = e.data[3];
 
     try {
-        CCP4Module.FS_createDataFile(".", selectedFile.name, contents, true, true);
+        CCP4Module.FS_createDataFile(".", selectedFileName, contents, true, true);
     } catch(e) {
     }
     try {
-        CCP4Module.FS_createDataFile(".", selectedFile2.name, contents2, true, true);
+        CCP4Module.FS_createDataFile(".", selectedFile2Name, contents2, true, true);
     } catch(e) {
     }
 
     var files = new CCP4Module.VectorString();
     var sels = new CCP4Module.VectorString();
-    files.push_back(selectedFile.name);
-    files.push_back(selectedFile2.name);
+    files.push_back(selectedFileName);
+    files.push_back(selectedFile2Name);
     sels.push_back("dummy");
     sels.push_back("dummy");
     var result = CCP4Module.superpose(files,sels);

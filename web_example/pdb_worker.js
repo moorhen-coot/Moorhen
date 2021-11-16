@@ -214,14 +214,14 @@ function dictToMolBlock(name,dictLines){
 
 onmessage = function(e) {
     let contents = e.data[0];
-    let selectedFile = e.data[1];
+    let selectedFileName = e.data[1];
 
     try {
-        CCP4Module.FS_createDataFile(".", selectedFile.name, contents, true, true);
+        CCP4Module.FS_createDataFile(".", selectedFileName, contents, true, true);
     } catch(e) {
     }
 
-    let result = CCP4Module.mmdb2_example(selectedFile.name);
+    let result = CCP4Module.mmdb2_example(selectedFileName);
     let resultJS = [];
     for(let ir=0;ir<result.size();ir++){
         resultJS.push(result.get(ir));
@@ -229,7 +229,8 @@ onmessage = function(e) {
 
     let unique = resultJS.filter(onlyUnique);
 
-    let ligandServer = "http://192.168.1.242:8000/";
+    //let ligandServer = "http://192.168.1.242:8000/";
+    let ligandServer = "/monomers/";
 
     let promises = [];
 
