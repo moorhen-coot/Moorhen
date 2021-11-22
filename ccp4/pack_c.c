@@ -86,7 +86,7 @@
 #if defined(_AIX) || defined (___AIX) || defined(__hpux)
 /* no underscore by default */
 #else
-#  if defined (VMS) || defined (vms) || defined (__vms) || defined (__VMS)
+#  if defined (VMS) || defined (vms) || defined (__vms) || defined (__VMS) || defined(_MSC_VER)
 #    define pack_wordimage_f PACK_WORDIMAGE_F
 #    define v2pack_wordimage_f V2PACK_WORDIMAGE_F
 #    define pack_longimage_f PACK_LONGIMAGE_F

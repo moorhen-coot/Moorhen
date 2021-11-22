@@ -167,6 +167,11 @@
 #if  defined(CALL_LIKE_SUN)
 
   typedef pstr fpstr;
+#if __GNUC__ > 7 || __clang_major__ > 10
+  typedef size_t fpstr_size_t;
+#else
+  typedef int fpstr_size_t;
+#endif
 
 #define FTN_STR(s)  s
 #define FTN_LEN(s)  s##_len
@@ -190,6 +195,7 @@
 #elif defined(CALL_LIKE_HPUX)
 
   typedef pstr fpstr;
+  typedef int fpstr_size_t;
 
 #  define FTN_STR(s)  s
 #  define FTN_LEN(s)  s##_len
@@ -213,6 +219,7 @@
 #elif defined(CALL_LIKE_STARDENT)
 
   typedef PStrPar fpstr;
+  typedef int fpstr_size_t;
 
 #  define FTN_STR(s)  s->Str_pointer
 #  define FTN_LEN(s)  s->Str_length
@@ -267,6 +274,7 @@
 #if (CALL_LIKE_MVS == 2)
 
   typedef pstr fpstr;
+  typedef int fpstr_size_t;
 
 #define FTN_STR(s)  s
 #define FTN_LEN(s)  s##_len
@@ -291,6 +299,7 @@
 #else
 
   typedef pstr fpstr;
+  typedef int fpstr_size_t;
 
 #  define FTN_STR(s)  s
 #  define FTN_LEN(s)  s##_len
@@ -319,6 +328,7 @@
 #  error  Unknown machine!!!
 
   typedef pstr fpstr;
+  typedef int fpstr_size_t;
 
 #  define FTN_STR(s)  s
 #  define FTN_LEN(s)  s##_len
@@ -377,7 +387,7 @@ typedef unsigned int ftn_logical;
 #  define FORTRAN_LOGICAL_TRUE  -1
 #endif     
 
-char *ccp4_FtoCString(fpstr str1, int str1_len);
+char *ccp4_FtoCString(fpstr str1,  int str1_len);
 void ccp4_CtoFString(fpstr str1, int str1_len, const char *cstring);
 
 #endif    /* __CCP4_FORTRAN */

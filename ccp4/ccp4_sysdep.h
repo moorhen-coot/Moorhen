@@ -54,7 +54,7 @@
 #  define CALL_LIKE_VMS 1
 #elif defined (_MSC_VER) && (_MSC_VER >= 800)
 #  define CALL_LIKE_MVS 2
-#elif defined (_MSC_VER) || (defined (WIN32) && !defined(__MINGW32__))
+#elif defined (_MSC_VER) || (defined (_WIN32) && !defined(__MINGW32__))
 #  define CALL_LIKE_MVS 1
 #else
 #  define CALL_LIKE_SUN 1
@@ -118,6 +118,23 @@
 #  endif
 #endif
 
+/* Using MSVC need __declspec */
+#if defined(__WIN32__) || defined(_WIN32)
+#  if defined(_MSC_VER) && defined(DLL_EXPORT)
+#    define CCP4_DL_IMPORT(type) __declspec(dllexport) type
+#    define CCP4_DL_EXPORT __declspec(dllexport)
+#  elif defined(_MSC_VER)
+#    define CCP4_DL_IMPORT(type) __declspec(dllimport) type
+#    define CCP4_DL_EXPORT
+#  else
+#    define CCP4_DL_IMPORT(type) type
+#    define CCP4_DL_EXPORT
+#  endif
+#else
+#  define CCP4_DL_IMPORT(type) type
+#  define CCP4_DL_EXPORT
+#endif
+
 /* defined in library_utils.c */
 #if defined (_MSC_VER) &&  _MSC_VER < 1800
   double rint(double x);
@@ -165,6 +182,7 @@
 #define CCP4_BYTE  0
 #define CCP4_INT16 1
 #define CCP4_INT32 6
+#define CCP4_INT64 5
 #define FLOAT32 2
 #define COMP32  3
 #define COMP64  4
@@ -182,7 +200,7 @@
 #  define NATIVEIT DFNTI_IBO
 #endif
 
-#if defined(MIPSEL) || defined(i386) || defined(i860) || defined(__ia64__) || defined(__amd64__) || defined(__x86_64__) || defined(WIN32) || defined(__EMSCRIPTEN__)
+#if defined(MIPSEL) || defined(i386) || defined(i860) || defined(__ia64__) || defined(__amd64__) || defined(__x86_64__) || defined(_M_AMD64) || defined(__EMSCRIPTEN__)
 #  define NATIVEIT DFNTI_IBO
 #  define NATIVEFT DFNTF_LEIEEE
 #endif
@@ -212,11 +230,11 @@
 #  define NATIVEFT DFNTF_BEIEEE
 #endif
 
-#if defined(__ARM__) || defined(__arm__)
-# if defined(__ARMEB__)
+#if defined(__ARM__) || defined(__arm__) || defined(__aarch64__)
+# if defined(__ARMEB__) || defined (__AARCH64EB__)
 #  define NATIVEIT DFNTI_MBO
 #  define NATIVEFT DFNTF_BEIEEE
-# elif defined(__ARMEL__)
+# elif defined(__ARMEL__) || defined (__AARCH64EL__)
 #  define NATIVEIT DFNTI_IBO
 #  define NATIVEFT DFNTF_LEIEEE
 # endif

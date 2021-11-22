@@ -113,6 +113,8 @@ int ccp4_file_readshortcomp ( CCP4File*, uint8 *, size_t);
 
 int ccp4_file_readfloat ( CCP4File*, uint8 *, size_t);
 
+int ccp4_file_readint64 ( CCP4File*, uint8 *, size_t);
+
 int ccp4_file_readint ( CCP4File*, uint8 *, size_t);
 
 int ccp4_file_readshort ( CCP4File*, uint8 *, size_t);
@@ -128,6 +130,8 @@ int ccp4_file_writeshortcomp ( CCP4File*, const uint8 *, size_t);
 int ccp4_file_writefloat ( CCP4File*, const uint8 *, size_t);
 
 int ccp4_file_writeint ( CCP4File*, const uint8 *, size_t);
+
+int ccp4_file_writeint64 ( CCP4File*, const uint8 *, size_t);
 
 int ccp4_file_writeshort ( CCP4File*, const uint8 *, size_t);
 

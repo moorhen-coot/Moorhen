@@ -23,6 +23,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#ifdef _MSC_VER
+#include <stdint.h>
+#endif
 #include <math.h>
 #include "cmtzlib.h"
 #include "ccp4_types.h"
@@ -82,13 +85,15 @@ MTZ *MtzGetUserCellTolerance(const char *logname, int read_refs, const double ce
   double cellin[MXTALS][6],cell[6];
   int jxtalin[MSETS];
   char mkey[4], keyarg[76], hdrrec[MTZRECORDLENGTH+1], label[31], type[3];
-  int i, j, hdrst, ntotcol, nref, ntotset=0, nbat, nhist=0, icolin;
+  int i, j, ntotcol, nref, ntotset=0, nbat, nhist=0, icolin;
   int ixtal, jxtal, iset, iiset, icset, nxtal=0, nset[MXTALS]={0}, isym=0;
   int indhigh[3],indlow[3],isort[5],ind_xtal,ind_set,ind_col[3],debug=0;
   float min,max,totcell[6],minres,maxres;
   float *refldata;
   double coefhkl[6];
   int k; long xmllen;
+  int32_t tmp_hdrst;
+  int64_t hdrst;
 
   /* For cparser */
   CCP4PARSERARRAY *parser;
@@ -185,14 +190,32 @@ MTZ *MtzGetUserCellTolerance(const char *logname, int read_refs, const double ce
 
   /* set reading integers */
   ccp4_file_setmode(filein,6);
-  istat = ccp4_file_read(filein, (uint8 *) &hdrst, 1);
-  if (debug) printf(" hdrst read as %d \n",hdrst);
+  istat = ccp4_file_read(filein, (uint8 *) &tmp_hdrst, 1);
+  if (debug) printf(" tmp_hdrst read as %d \n", tmp_hdrst);
+  if (tmp_hdrst == -1) {
+    // read the real header offset in bytes 13-20 i.e. a double-word after the third word
+    if ( ccp4_file_seek(filein, 3, SEEK_SET) ) {
+      ccp4_signal(CCP4_ERRLEVEL(3) | CMTZ_ERRNO(CMTZERR_ReadFail),"MtzGet",NULL);
+      ccp4_parse_end(parser);
+      ccp4_file_close(filein);
+      free(filename);
+      return NULL;
+    }
+    /* set reading double integers*/
+    ccp4_file_setmode(filein,5);
+    istat = ccp4_file_read(filein, (uint8 *) &hdrst, 1);
+    if (debug) printf(" hdrst read as %ld \n", hdrst);
+    /* switch back to reading integers */
+    ccp4_file_setmode(filein,6);
+  } else {
+    hdrst = (int64_t) tmp_hdrst;
+  }
 
   /* 1st Pass: Read ntotcol, nref, nbat and dataset info.  
      nxtal and nset are used to assign memory for MTZ structure.
      Position at top of header */
   /* We don't test all seeks, but this one might trap duff files */
-  if ( ccp4_file_seek(filein, hdrst-1, SEEK_SET) ) {
+  if ( ccp4_file_seek(filein, (long) (hdrst-1), SEEK_SET) ) {
     ccp4_signal(CCP4_ERRLEVEL(3) | CMTZ_ERRNO(CMTZERR_ReadFail),"MtzGet",NULL);
     ccp4_parse_end(parser);
     ccp4_file_close(filein);
@@ -412,7 +435,7 @@ MTZ *MtzGetUserCellTolerance(const char *logname, int read_refs, const double ce
   /* 2nd Pass: Copy dataset information to MTZ structure.
      Position at top of header */
   ccp4_file_setmode(filein,6);
-  ccp4_file_seek(filein, hdrst-1, SEEK_SET);
+  ccp4_file_seek(filein, (long) (hdrst-1), SEEK_SET);
 
   /* Read dataset information */
   ccp4_file_setmode(filein,0);
@@ -486,7 +509,7 @@ MTZ *MtzGetUserCellTolerance(const char *logname, int read_refs, const double ce
 
   /* 3rd Pass: Position at top of header */
   ccp4_file_setmode(filein,6);
-  ccp4_file_seek(filein, hdrst-1, SEEK_SET);
+  ccp4_file_seek(filein, (long) (hdrst-1), SEEK_SET);
 
   icolin = -1;
   ccp4_file_setmode(filein,0);
@@ -657,7 +680,7 @@ MTZ *MtzGetUserCellTolerance(const char *logname, int read_refs, const double ce
   /* 4th Pass: Column group and source extensions and unknown keywords */
   /* 4th Pass: Position at top of header */
   ccp4_file_setmode(filein,6);
-  ccp4_file_seek(filein, hdrst-1, SEEK_SET);
+  ccp4_file_seek(filein, (long) (hdrst-1), SEEK_SET);
   ccp4_file_setmode(filein,0);
   istat = ccp4_file_readchar(filein, (uint8 *) hdrrec, MTZRECORDLENGTH);
   hdrrec[MTZRECORDLENGTH] = '\0';
@@ -733,7 +756,7 @@ MTZ *MtzGetUserCellTolerance(const char *logname, int read_refs, const double ce
   /* 5th Pass: Deal with unknown headers */
   /* 5th Pass: Position at top of header */
   ccp4_file_setmode(filein,6);
-  ccp4_file_seek(filein, hdrst-1, SEEK_SET);
+  ccp4_file_seek(filein, (long) (hdrst-1), SEEK_SET);
   ccp4_file_setmode(filein,0);
   istat = ccp4_file_readchar(filein, (uint8 *) hdrrec, MTZRECORDLENGTH);
   hdrrec[MTZRECORDLENGTH] = '\0';
@@ -2579,7 +2602,7 @@ int MtzPut(MTZ *mtz, const char *logname)
 
 { char hdrrec[81],symline[81],spgname[MAXSPGNAMELENGTH+3];
  CCP4File *fileout;
- int i, j, k, l, hdrst, icol, numbat, isort[5], debug=0;
+ int i, j, k, l, icol, numbat, isort[5], debug=0;
  int ind[3],ind_xtal,ind_set,ind_col[3],length,glob_cell_written=0;
  double coefhkl[6];
  float res,refldata[MCOLUMNS];
@@ -2591,6 +2614,8 @@ int MtzPut(MTZ *mtz, const char *logname)
  MTZXTAL *xtl;
  char colsource[37], *taskenv;
  int date3[3], time3[3];
+ int32_t tmp_hdrst;
+ int64_t hdrst;
 
  if (debug) 
    printf(" MtzPut: entering \n");
@@ -2962,9 +2987,21 @@ int MtzPut(MTZ *mtz, const char *logname)
  /* go back and correct hdrst */
  ccp4_file_setmode(fileout,0);
  ccp4_file_seek(fileout, 4, SEEK_SET); 
- hdrst = mtz->nref * MtzNumActiveCol(mtz) + SIZE1 + 1;
- ccp4_file_setmode(fileout,2);
- ccp4_file_write(fileout,(uint8 *) &hdrst,1);
+ hdrst = (int64_t) mtz->nref * (int64_t) MtzNumActiveCol(mtz) + SIZE1 + 1;
+ if (hdrst > INT_MAX) {
+   tmp_hdrst = -1;
+ } else {
+   tmp_hdrst = (int32_t) hdrst;
+   hdrst = 0;
+ }
+ ccp4_file_setmode(fileout, 2);
+ ccp4_file_write(fileout,(uint8 *) &tmp_hdrst, 1);
+ if (hdrst > 0) {
+   ccp4_file_seek(fileout, 3, SEEK_SET);
+   ccp4_file_setmode(fileout, 5);
+   ccp4_file_write(fileout,(uint8 *) &hdrst, 1);
+   ccp4_file_setmode(fileout, 2);
+ }
 
  /* And close the mtz file: */
  if (!mtz->fileout) 
@@ -3089,7 +3126,7 @@ CCP4File *MtzOpenForWrite(const char *logname)
 
 { CCP4File *fileout;
  int debug=0;
- int hdrst;
+ int32_t hdrst;
  char *filename;
 
  if (debug) printf(" MtzOpenForWrite: entering \n");

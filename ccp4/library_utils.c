@@ -48,6 +48,7 @@ are just generally useful (platform independent date).
 #include "ccp4_errno.h"
 
 #if defined (_WIN32)
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #endif
 

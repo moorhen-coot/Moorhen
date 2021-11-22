@@ -25,6 +25,7 @@
 #define __CCP4_ERROR_GUARD
 
 #include <errno.h>
+#include "ccp4_sysdep.h"
 
 /* rcsidhe[] = "$Id$" */
 
@@ -91,7 +92,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-extern int ccp4_errno;
+extern CCP4_DL_IMPORT(int) ccp4_errno;
 #ifdef __cplusplus
 }
 #endif

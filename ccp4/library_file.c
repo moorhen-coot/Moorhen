@@ -43,8 +43,8 @@ static int _item_sizes[] = {
   (int) sizeof (int),           /* 3: `short complex' (pairs of half words).
                                    NB int rather than 2*short since must fit
                                    into fortran integer */
-  (int) 2*sizeof (float),        /* 4: complex (pairs of words) */
-  (int) sizeof (int),           /* 5: not used */
+  (int) 2*sizeof (float),       /* 4: complex (pairs of words) */
+  (int) 2*sizeof (int),         /* 5: double integers */
   (int) sizeof (int)            /* 6: integers */
 };
 
@@ -54,7 +54,7 @@ static int (*_read_mode[])(CCP4File *, uint8 *, size_t) = {
   ccp4_file_readfloat,
   ccp4_file_readshortcomp,
   ccp4_file_readcomp,
-  NULL,
+  ccp4_file_readint64,
   ccp4_file_readint
 };
 
@@ -64,7 +64,7 @@ static int (*_write_mode[])(CCP4File *, const uint8 *, size_t) = {
   ccp4_file_writefloat,
   ccp4_file_writeshortcomp,
   ccp4_file_writecomp,
-  NULL,
+  ccp4_file_writeint64,
   ccp4_file_writeint    
 };
 
@@ -636,6 +636,7 @@ int ccp4_file_setstamp(CCP4File *cfile, const size_t offset)
  * set the data mode of cfile to mode
  * (CCP4_BYTE (8 bit) = 0, 
  *  CCP4_INT16 (16 bit) = 1, 
+ *  CCP4_INT64 (64 bit) = 5, 
  *  CCP4_INT32 (32 bit) = 6, 
  *  FLOAT32 (32 bit) = 2, 
  *  COMP32 (2*16 bit) = 3, 
@@ -649,7 +650,7 @@ int ccp4_file_setmode (CCP4File *cfile, const int mode)
 		"ccp4_file_mode", NULL);
     return EOF; }
 
-  if (mode >= 0 && mode <= 6 && mode != 5) {
+  if (mode >= 0 && mode <= 6) {
     cfile->mode = mode;
     cfile->itemsize = _item_sizes[mode];
     cfile->_read=_read_mode[mode];
@@ -666,7 +667,7 @@ int ccp4_file_setmode (CCP4File *cfile, const int mode)
  * ccp4_file_mode:
  * @param cfile  (CCP4File *)
  *
- * get data mode of @cfile (CCP4_BYTE =0, CCP4_INT16 =1, CCP4_INT32=6,
+ * get data mode of @cfile (CCP4_BYTE =0, CCP4_INT16 =1, CCP4_INT64 =5, CCP4_INT32 =6,
  * FLOAT32 =2, COMP32 =3, COMP64 =4)
  * @return %mode
  */
@@ -1395,6 +1396,72 @@ int ccp4_file_readfloat (CCP4File *cfile, uint8 *buffer, size_t nitems)
 }
 
 /**
+ * ccp4_file_readint64:
+ * @param cfile (CCP4File *)
+ * @param buffer (uint8 *) buffer
+ * @param nitems (size_t) number of items 
+ *
+ * integer read function.  Reads @nitems int64 from stream
+ * @cfile->stream to @buffer.
+ *
+ * @return number of int64 read on success, EOF on failure
+ */
+int ccp4_file_readint64 (CCP4File *cfile, uint8 *buffer, size_t nitems)
+{
+  int n, result;
+
+  if (!cfile)  {
+      ccp4_signal(CCP4_ERRLEVEL(3) | CCP4_ERRNO(CIO_NullPtr), 
+		  "ccp4_file_readint64", NULL);
+    return EOF; }
+
+  if ( !cfile->read || cfile->iostat) {
+    ccp4_signal(CCP4_ERRLEVEL(3) | CCP4_ERRNO(CIO_BadMode), 
+		"ccp4_file_readint64", NULL);
+    return EOF; }
+
+  if (cfile->last_op == WRITE_OP)
+    if (ccp4_file_raw_seek(cfile,0L,SEEK_CUR) == -1) {
+      ccp4_signal(CCP4_ERRLEVEL(3), "ccp4_file_readint64", NULL);
+      return EOF; }   
+
+  n = _item_sizes[CCP4_INT64] * nitems;
+  if ( (result = ccp4_file_raw_read (cfile, (char *) buffer, n)) != n) {
+    ccp4_signal(CCP4_ERRLEVEL(3), "ccp4_file_readint64", NULL);
+    if (cfile->stream && !feof(cfile->stream)) 
+      return EOF; } 
+
+  result /= _item_sizes[CCP4_INT64];
+
+  n = result;
+
+  if (cfile->iconvert != nativeIT) {
+    if ((cfile->iconvert==DFNTI_MBO && nativeIT==DFNTI_IBO) ||
+	(cfile->iconvert==DFNTI_IBO && nativeIT==DFNTI_MBO)) {
+      char j;
+      int i;
+      for (i=0; i < n*8; i+=8) {
+	j = buffer[i];
+	buffer[i] = buffer[i+7];
+	buffer[i+7] = j;
+	j = buffer[i+1];
+	buffer[i+1] = buffer[i+6];
+	buffer[i+6] = j;
+	j = buffer[i+2];
+	buffer[i+2] = buffer[i+5];
+	buffer[i+5] = j;
+	j = buffer[i+3];
+	buffer[i+3] = buffer[i+4];
+	buffer[i+4] = j; }
+    } else { 
+      ccp4_signal(CCP4_ERRLEVEL(3) | CCP4_ERRNO(CIO_BadMode), 
+		"ccp4_file_readint64", NULL);
+      return EOF; }
+  }
+  return (result);
+}
+
+/**
  * ccp4_file_readint:
  * @param cfile (CCP4File *)
  * @param buffer (uint8 *) buffer
@@ -1838,6 +1905,69 @@ int ccp4_file_writefloat (CCP4File *cfile, const uint8 *buffer, size_t nitems)
   return (result / _item_sizes[FLOAT32]);
 }
   
+/**
+ * ccp4_file_writeint64:
+ * @param cfile (CCP4File *)
+ * @param buffer (uint8 *) buffer
+ * @param nitems (size_t) number of items 
+ *
+ * int64 write function.  Write @nitems items from @buffer
+ * to @cfile->stream.
+ *
+ * @return number of int64 written on success, EOF on failure
+ */
+int ccp4_file_writeint64 (CCP4File *cfile, const uint8 *buffer, size_t nitems)
+{
+  size_t result = 0, n;
+
+  if (!cfile) {
+    ccp4_signal(CCP4_ERRLEVEL(3) | CCP4_ERRNO(CIO_NullPtr), 
+		"ccp4_file_writeint64", NULL);
+    return EOF; }
+
+  if (!cfile->write ||cfile->iostat) {
+    ccp4_signal(CCP4_ERRLEVEL(3) | CCP4_ERRNO(CIO_BadMode), 
+		"ccp4_file_writeint64", NULL);
+    return EOF;}
+
+  if (cfile->last_op == READ_OP) 
+    if (ccp4_file_raw_seek(cfile,0L,SEEK_CUR) == -1) {
+      ccp4_signal(CCP4_ERRLEVEL(3), "ccp4_file_writeint64", NULL);
+      return EOF; }   
+      
+  n = nitems * _item_sizes[CCP4_INT64];
+
+  if (cfile->iconvert != nativeIT) {
+    char out_buffer[8];
+    const char *out_ptr = (char *) buffer;
+    size_t i;
+    for (i = 0; i != nitems; i++) {
+      if ((cfile->iconvert==DFNTI_MBO && nativeIT==DFNTI_IBO) ||
+	  (cfile->iconvert==DFNTI_IBO && nativeIT==DFNTI_MBO)) {
+        out_buffer[7] = *out_ptr++;
+        out_buffer[6] = *out_ptr++;
+        out_buffer[5] = *out_ptr++;
+        out_buffer[4] = *out_ptr++;
+        out_buffer[3] = *out_ptr++;
+        out_buffer[2] = *out_ptr++;
+        out_buffer[1] = *out_ptr++;
+        out_buffer[0] = *out_ptr++; 
+      } else { 
+        ccp4_signal(CCP4_ERRLEVEL(3) | CCP4_ERRNO(CIO_BadMode), 
+		"ccp4_file_writeint64", NULL);
+        return EOF; }
+    result += ccp4_file_raw_write (cfile, out_buffer, _item_sizes[CCP4_INT64]);
+    }
+   } else {
+    result = ccp4_file_raw_write (cfile, (char *) buffer, n);
+  }
+
+  if ( result != n) 
+    ccp4_signal(CCP4_ERRLEVEL(3), "ccp4_file_writeint64", NULL);
+
+  return (result / _item_sizes[CCP4_INT64]);
+}
+
 /**
  * ccp4_file_writeint:
  * @param cfile (CCP4File *)
