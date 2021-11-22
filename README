@@ -19,18 +19,21 @@
     emmake make install
     cd ..
 
-4. Build the CCP4 libraries and example:
+4. Download and untar coot
+   Get and untar https://www2.mrc-lmb.cam.ac.uk/personal/pemsley/coot/source/releases/coot-0.9.6.tar.gz
+
+5. Build the CCP4 libraries and example:
 
    emcmake cmake .
    emmake make
 
-5. To run the command line examples:
+6. To run the command line examples:
 
    cd example
    node ccp4_example.js
    node superpose.js 4dfr.pdb 8dfr.pdb
 
-6. To run the web example, put the contents of the `web_example` directory on a web server. This can be a full-scale web server, or a simple one, e.g:
+7. To run the web example, put the contents of the `web_example` directory on a web server. This can be a full-scale web server, or a simple one, e.g:
 
    cd web_example
    python3 -m http.server 7800 &

@@ -19,6 +19,9 @@ Get and untar [https://mirror.ibcp.fr/pub/gnu/gsl/gsl-latest.tar.gz](https://mir
 `emcmake cmake .`  
 `emmake make`
 
+4. Download and untar coot
+`Get and untar https://www2.mrc-lmb.cam.ac.uk/personal/pemsley/coot/source/releases/coot-0.9.6.tar.gz`
+
 5. Run the command line examples:  
 `cd example`  
 `node ccp4_example.js`  

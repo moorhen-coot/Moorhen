@@ -41,6 +41,21 @@
 
 - Incorporate into react app (with servername tweak). DONE
 
-o Make a repository (This is a git repo, but has no remote server).
+o Make a repository (This is a git repo, but has no remote server, and is mirrored in MG jsmodules branch.)
+
+- Build libpng emscripten port DONE, but probably uneccessary as emscripten ports seems ot do the trick
+  - git clone https://github.com/emscripten-ports/zlib.git
+    cd zlib
+    emcmake cmake .
+    emmake make
+  - git clone https://github.com/emscripten-ports/libpng.git
+    cd libpng
+    emcmake cmake  -DZLIB_LIBRARY=$PWD/../zlib/libz.a -DZLIB_INCLUDE_DIR=$PWD/../zlib -DM_LIBRARY="" .
+    emmake make
 
 * Wrap Coot
+  - Download coot-0.9.6
+    emcmake cmake .
+    emmake make
+
+  * ligand/res-tracer.cc depends on  scored-node.hh which seems not to exist.

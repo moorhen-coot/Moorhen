@@ -23,4 +23,4 @@ add_subdirectory(clipper/phs)
 add_subdirectory(ssm)
 add_subdirectory(example)
 add_subdirectory(web_example)
-
+add_subdirectory(coot)
