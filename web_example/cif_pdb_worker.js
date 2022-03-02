@@ -15,7 +15,7 @@ onmessage = function(e) {
     var contents = e.data[0];
     var selectedFileName = e.data[1];
     var contents2 = e.data[2];
-    var cifSelectedFilNamee = e.data[3];
+    var cifSelectedFileName = e.data[3];
 
     try {
         CCP4Module.FS_createDataFile(".", selectedFileName, contents, true, true);
