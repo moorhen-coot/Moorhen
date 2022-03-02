@@ -1,0 +1,27 @@
+BZR merge-modified list format 1
+file_id: srsgen.cpp-20120907150108-018x3i2anyg0hdjc-1
+hash: d15058c22fb1602d013ec5a680b65262d1cbf541
+
+file_id: config.h.cmakein-20211124105957-f5llx5au0f09yiql-3
+hash: b8a35918d3d9870a86120987597237d1d832bb21
+
+file_id: libtool.m4-20120907150108-018x3i2anyg0hdjc-55
+hash: 00fcb1908a1b03b03b98b4f9c0452428254200e8
+
+file_id: cmakelists.txt-20211124105957-f5llx5au0f09yiql-1
+hash: 8dc0c536f9cb660011440caeccdbb5fa3538b6fa
+
+file_id: ccp4srs.pc.cmakein-20211124105957-f5llx5au0f09yiql-2
+hash: 84fba50528abdad6c9170c52bdb5206b7da940b2
+
+file_id: dirent.h-20211124105957-f5llx5au0f09yiql-6
+hash: 25469fa72c5b99e76793fcd518c9b078850100f9
+
+file_id: ccp4srs_types.h-20120907150108-018x3i2anyg0hdjc-33
+hash: 5810439b950af743cee2474262bf82dc02587557
+
+file_id: configure-20120907150108-018x3i2anyg0hdjc-53
+hash: 8ea48b88c93ee3042f440b77a4867bf75d1fad86
+
+file_id: dirent.cpp-20211124105957-f5llx5au0f09yiql-5
+hash: a960df010013f7229563f82b2f03bcfa365b5bff
