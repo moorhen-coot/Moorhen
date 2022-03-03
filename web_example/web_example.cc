@@ -32,8 +32,21 @@
 #include "gsl/gsl_sf_bessel.h"
 #include "gsl/gsl_cdf.h"
 
+#include "privateer/privateer-lib.h"
+
 using namespace emscripten;
 int superpose_main(const std::vector<std::string> &files, const std::vector<std::string> &selections);
+
+std::string privateer::scripting::get_annotated_glycans ( std::string pdb_filename, bool original_colour_scheme, std::string expression_system );
+std::string privateer::scripting::get_annotated_glycans_hierarchical ( std::string pdb_filename, bool original_colour_scheme, std::string expression_system );
+
+std::string get_annotated_glycans ( std::string pdb_filename, bool original_colour_scheme, std::string expression_system ){
+    return privateer::scripting::get_annotated_glycans ( pdb_filename, original_colour_scheme, expression_system );
+}
+
+std::string get_annotated_glycans_hierarchical ( std::string pdb_filename, bool original_colour_scheme, std::string expression_system ){
+    return privateer::scripting::get_annotated_glycans_hierarchical ( pdb_filename, original_colour_scheme, expression_system );
+}
 
 void printMapStats(clipper::Xmap<float> &xmap){
     clipper::Map_stats stats(xmap);
@@ -308,6 +321,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     function("clipper_example",&clipper_example);
     function("printMapStats",&printMapStats);
     function("superpose",&superpose_main);
+    function("get_annotated_glycans",&get_annotated_glycans);
+    function("get_annotated_glycans_hierarchical",&get_annotated_glycans_hierarchical);
     function("gsl_sf_bessel_J0",&gsl_sf_bessel_J0);
     function("gsl_cdf_hypergeometric_P",&gsl_cdf_hypergeometric_P);
 }

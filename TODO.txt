@@ -1,3 +1,4 @@
+* Layout get_annotated_glycans better.
 - Create an MMDBManager DONE
 - Read a file DONE
 - Wrap fftw DONE

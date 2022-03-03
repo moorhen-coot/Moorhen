@@ -221,6 +221,11 @@ onmessage = function(e) {
     } catch(e) {
     }
 
+    let svgTree = CCP4Module.get_annotated_glycans(selectedFileName,false,"undefined");
+    let glycanResult = {};
+    glycanResult[selectedFileName] = svgTree;
+    postMessage(["glycan_result",glycanResult]);
+
     let result = CCP4Module.mmdb2_example(selectedFileName);
     let resultJS = [];
     for(let ir=0;ir<result.size();ir++){

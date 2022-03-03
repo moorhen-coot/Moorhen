@@ -35,6 +35,7 @@
     <div style="width:96%; left-margin:3%; top-margin:20px;">
     <pre id="output" style="border:1px solid green; height:200px;overflow-x:auto; overflow-y:scroll;"></pre>
     <div id="example-1-output"></div>
+    <div id="example-1-svgoutput"></div>
     </div>
   <script>
 
@@ -79,6 +80,34 @@
                      let result = document.getElementById("output");
                      if(e.data[0]==="output"){
                          result.innerHTML += e.data[1] + "<br />";
+                     }
+                     if(e.data[0]==="glycan_result"){
+                         // This is an example. Can do better.
+                         let destSvg = document.getElementById("example-1-svgoutput");
+                         for(let isvg=0;isvg<Object.keys(e.data[1]).length;isvg++){
+                             let svg = e.data[1][Object.keys(e.data[1])[isvg]];
+                             let parser = new DOMParser();
+                             var xmlDoc = parser.parseFromString(svg,"application/xml");
+                             var sugarNodes = xmlDoc.getElementsByTagName("sugar");
+                             var validNodes = xmlDoc.getElementsByTagName("validation");
+                             //Also need stacked against -> residue -> angle
+                             for(let isug=0;isug<sugarNodes.length;isug++){
+                                let sugarNode = sugarNodes[isug];
+                                for(ich=0;ich<sugarNode.childNodes.length;ich++){
+                                    if(sugarNode.childNodes[ich].childNodes.length>0)
+                                        sugarNode.childNodes[ich].childNodes[0].nodeValue = "";
+                                }
+                             };
+                             for(let ivalid=0;ivalid<validNodes.length;ivalid++){
+                                let validNode = validNodes[ivalid];
+                                for(ich=0;ich<validNode.childNodes.length;ich++){
+                                    if(validNode.childNodes[ich].childNodes.length>0)
+                                        validNode.childNodes[ich].childNodes[0].nodeValue = "";
+                                }
+                             };
+                             var newSvg = (new XMLSerializer()).serializeToString(xmlDoc);
+                             destSvg.innerHTML += newSvg + Object.keys(e.data[1])[isvg];
+                         }
                      }
                      if(e.data[0]==="result"){
                          result.innerHTML += "<b>Result: " + Object.keys(e.data[1]) + "</b><br />";
