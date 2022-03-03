@@ -221,7 +221,7 @@ onmessage = function(e) {
     } catch(e) {
     }
 
-    let svgTree = CCP4Module.get_annotated_glycans(selectedFileName,false,"undefined");
+    let svgTree = CCP4Module.get_annotated_glycans_hierarchical(selectedFileName,false,"undefined");
     let glycanResult = {};
     glycanResult[selectedFileName] = svgTree;
     postMessage(["glycan_result",glycanResult]);
