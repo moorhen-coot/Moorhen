@@ -92,18 +92,28 @@
                              //I'm going to try to sort them by chain
                              let svgDict = {};
                              for(let iglycan=0;iglycan<glycanNodes.length;iglycan++){
-                                 let theChain = "unk";
                                  let glycanNode = glycanNodes[iglycan];
+                                 let theChain = "unk";
                                  for(let iattr=0;iattr<glycanNode.attributes.length;iattr++){
                                      if(glycanNode.attributes[iattr].name === "chain"){
                                          theChain = glycanNode.attributes[iattr].value;
                                      }
                                  }
-                                 let graphicsNodes = glycanNode.getElementsByTagName("svg_graphics");
-                                 for(let ign=0;ign<graphicsNodes.length;ign++){
-                                     let graphicsNode = graphicsNodes[ign];
-                                     let newSvg = (new XMLSerializer()).serializeToString(graphicsNode);
-                                     destSvg.innerHTML += newSvg + Object.keys(e.data[1])[isvg] + "<br/>";
+                                 if(theChain in svgDict){
+                                     svgDict[theChain].push(glycanNode);
+                                 } else {
+                                     svgDict[theChain] = [glycanNode];
+                                 }
+                             }
+                             for(const chain in svgDict){
+                                 for(let icg=0;icg<svgDict[chain].length;icg++){
+                                     let glycanNode = svgDict[chain][icg];
+                                     let graphicsNodes = glycanNode.getElementsByTagName("svg_graphics");
+                                     for(let ign=0;ign<graphicsNodes.length;ign++){
+                                         let graphicsNode = graphicsNodes[ign];
+                                         let newSvg = (new XMLSerializer()).serializeToString(graphicsNode);
+                                         destSvg.innerHTML += newSvg + Object.keys(e.data[1])[isvg] + "<br/>";
+                                     }
                                  }
                              }
                          }
