@@ -1,4 +1,4 @@
-* Layout get_annotated_glycans better.
+* Async the glycan drawing.
 - Create an MMDBManager DONE
 - Read a file DONE
 - Wrap fftw DONE
