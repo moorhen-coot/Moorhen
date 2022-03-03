@@ -105,7 +105,10 @@
                                      svgDict[theChain] = [glycanNode];
                                  }
                              }
-                             for(const chain in svgDict){
+                             let keys = Object.keys(svgDict);
+                             keys.sort();
+                             for(let ik=0;ik<keys.length;ik++){
+                                 let chain = keys[ik];
                                  for(let icg=0;icg<svgDict[chain].length;icg++){
                                      let glycanNode = svgDict[chain][icg];
                                      let graphicsNodes = glycanNode.getElementsByTagName("svg_graphics");
