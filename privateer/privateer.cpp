@@ -49,6 +49,13 @@ using clipper::data32::Flag;
 typedef clipper::HKL_data_base::HKL_reference_index HRI;
 using namespace std;
 
+#include <emscripten.h>
+
+#ifdef NODERAWFS
+#define CWD ""
+#else
+#define CWD "/working/"
+#endif
 
 // begin helper function declarations //
 
@@ -84,6 +91,15 @@ bool write_libraries ( std::vector < clipper::String > code_list );
 int main(int argc, char** argv)
 {
     
+#ifndef NODERAWFS
+    // mount the current folder as a NODEFS instance
+    // inside of emscripten
+    EM_ASM(
+            FS.mkdir('/working');
+            FS.mount(NODEFS, { root: '.' }, '/working');
+          );
+#endif
+
     clipper::String program_version = "MKIII";
     CCP4Program prog( "Privateer", program_version.c_str(), "$Date: 2015/07/10" );
 
@@ -2253,14 +2269,14 @@ bool read_coordinate_file (clipper::MMDBfile& mfile, clipper::MiniMol& mmol, cli
 {
     if (!batch)
     {
-        std::cout << std::endl << "Reading " << ippdb.trim().c_str() << "... ";
+        std::cout << std::endl << "Reading " << clipper::String(clipper::String(CWD)+ippdb).trim().c_str() << "... ";
         fflush(0);
     }
     
     const int mmdbflags = mmdb::MMDBF_IgnoreBlankLines | mmdb::MMDBF_IgnoreDuplSeqNum | mmdb::MMDBF_IgnoreNonCoorPDBErrors | mmdb::MMDBF_IgnoreRemarks | mmdb::MMDBF_EnforceUniqueChainID;
     mfile.SetFlag( mmdbflags );
     
-    mfile.read_file( ippdb.trim() );
+    mfile.read_file( clipper::String(clipper::String(CWD)+ippdb).trim() );
     mfile.import_minimol( mmol );
     
     
