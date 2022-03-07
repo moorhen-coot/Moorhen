@@ -1,4 +1,4 @@
-* Async the glycan drawing.
+* Update all libs.
 - Create an MMDBManager DONE
 - Read a file DONE
 - Wrap fftw DONE

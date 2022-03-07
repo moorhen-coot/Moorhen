@@ -84,6 +84,7 @@
                      if(e.data[0]==="glycan_result"){
                          // This is an example. Can do better.
                          let destSvg = document.getElementById("example-1-svgoutput");
+                         destSvg.innerHTML = "";
                          for(let isvg=0;isvg<Object.keys(e.data[1]).length;isvg++){
                              let svg = e.data[1][Object.keys(e.data[1])[isvg]];
                              let parser = new DOMParser();
@@ -107,15 +108,98 @@
                              }
                              let keys = Object.keys(svgDict);
                              keys.sort();
+                             let table = document.createElement("table");
+                             destSvg.appendChild(table)
+                             let tableHead = document.createElement("thead");
+                             table.appendChild(tableHead)
+                             let tableHeadRow = document.createElement("tr");
+                             tableHead.appendChild(tableHeadRow)
+                             let tableHeadNameBlock = document.createElement("td");
+                             tableHeadRow.appendChild(tableHeadNameBlock)
+                             let tableBody = document.createElement("tbody");
+                             table.appendChild(tableBody)
+                             tableHeadNameBlock.innerHTML = Object.keys(e.data[1])[isvg];
+
+                             let typeBlock = document.createElement("td");
+                             typeBlock.innerHTML = "Type";
+                             tableHeadRow.appendChild(typeBlock)
+
+                             let QBlock = document.createElement("td");
+                             QBlock.innerHTML = "Q";
+                             tableHeadRow.appendChild(QBlock)
+
+                             let PhiBlock = document.createElement("td");
+                             PhiBlock.innerHTML = "Phi";
+                             tableHeadRow.appendChild(PhiBlock)
+
+                             let ThetaBlock = document.createElement("td");
+                             ThetaBlock.innerHTML = "Theta";
+                             tableHeadRow.appendChild(ThetaBlock)
+
+                             let BFacBlock = document.createElement("td");
+                             BFacBlock.innerHTML = "&lt;B&gt;";
+                             tableHeadRow.appendChild(BFacBlock)
+
+                             let ConfBlock = document.createElement("td");
+                             ConfBlock.innerHTML = "Conformer";
+                             tableHeadRow.appendChild(ConfBlock)
+
+                             let AnomerBlock = document.createElement("td");
+                             AnomerBlock.innerHTML = "Anomer";
+                             tableHeadRow.appendChild(AnomerBlock)
+
                              for(let ik=0;ik<keys.length;ik++){
                                  let chain = keys[ik];
                                  for(let icg=0;icg<svgDict[chain].length;icg++){
                                      let glycanNode = svgDict[chain][icg];
+                                     console.log(glycanNode);
                                      let graphicsNodes = glycanNode.getElementsByTagName("svg_graphics");
+                                     let sugarNodes = glycanNode.getElementsByTagName("sugar");
+                                     let tableRow = document.createElement("tr");
+                                     tableBody.appendChild(tableRow)
                                      for(let ign=0;ign<graphicsNodes.length;ign++){
                                          let graphicsNode = graphicsNodes[ign];
+                                         let sugarNode = sugarNodes[ign];
                                          let newSvg = (new XMLSerializer()).serializeToString(graphicsNode);
-                                         destSvg.innerHTML += newSvg + Object.keys(e.data[1])[isvg] + "<br/>";
+                                         let tableGlycanBlock = document.createElement("td");
+                                         tableGlycanBlock.innerHTML = newSvg;
+                                         tableRow.appendChild(tableGlycanBlock)
+
+                                         let typeNode = sugarNode.getElementsByTagName("detected_type")[0];
+                                         let typeBlock = document.createElement("td");
+                                         typeBlock.innerHTML = typeNode.innerHTML;
+                                         tableRow.appendChild(typeBlock)
+
+                                         let QNode = sugarNode.getElementsByTagName("cremer-pople_Q")[0];
+                                         let QBlock = document.createElement("td");
+                                         QBlock.innerHTML = QNode.innerHTML;
+                                         tableRow.appendChild(QBlock)
+
+                                         let PhiNode = sugarNode.getElementsByTagName("cremer-pople_Phi")[0];
+                                         let PhiBlock = document.createElement("td");
+                                         PhiBlock.innerHTML = PhiNode.innerHTML;
+                                         tableRow.appendChild(PhiBlock)
+
+                                         let ThetaNode = sugarNode.getElementsByTagName("cremer-pople_Theta")[0];
+                                         let ThetaBlock = document.createElement("td");
+                                         ThetaBlock.innerHTML = ThetaNode.innerHTML;
+                                         tableRow.appendChild(ThetaBlock)
+
+                                         let BFacNode = sugarNode.getElementsByTagName("mean_bfactor")[0];
+                                         let BFacBlock = document.createElement("td");
+                                         BFacBlock.innerHTML = BFacNode.innerHTML;
+                                         tableRow.appendChild(BFacBlock)
+
+                                         let ConfNode = sugarNode.getElementsByTagName("conformation")[0];
+                                         let ConfBlock = document.createElement("td");
+                                         ConfBlock.innerHTML = ConfNode.innerHTML;
+                                         tableRow.appendChild(ConfBlock)
+
+                                         let AnomerNode = sugarNode.getElementsByTagName("anomer")[0];
+                                         let AnomerBlock = document.createElement("td");
+                                         AnomerBlock.innerHTML = AnomerNode.innerHTML;
+                                         tableRow.appendChild(AnomerBlock)
+
                                      }
                                  }
                              }

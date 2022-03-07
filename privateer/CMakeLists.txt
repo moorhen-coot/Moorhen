@@ -21,14 +21,24 @@ if(OPENMP_FOUND)
 endif()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}
- .. ../mmdb2 ../ssm ../ccp4 ../clipper ../ccp4srs)
+ .. ../mmdb2 ../ssm ../ccp4 ../clipper ../ccp4srs ../clipper ../gemmi/include)
 
 add_library(privateer
+            third-party/sajson.h
+            third-party/utf.hpp
+            privateer-error.h
+            privateer-json.h
             clipper-glyco.cpp
             clipper-glyco_data.cpp
+            privateer-blobs.cpp
+            privateer-composition.cpp
+            privateer-dbquery.cpp
+            privateer-cryo_em.cpp
+            privateer-xray.cpp
+            privateer-restraints.cpp
             privateer-lib.cpp)
 
-target_link_directories(privateer PUBLIC ../mmdb2 ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4 ../fftw ../rfftw ../ccp4)
+target_link_directories(privateer PUBLIC ../mmdb2 ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4 ../fftw ../rfftw ../ccp4 ../gemmi)
 target_link_libraries(privateer mmdb2 clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 nodefs.js)
 
 add_executable(privateer-validate
@@ -36,7 +46,7 @@ add_executable(privateer-validate
 
 
 target_link_directories(privateer-validate PUBLIC ../mmdb2 ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4 ../clipper/minimol ../fftw ../rfftw ../ccp4 ../ccp4srs)
-target_link_libraries(privateer-validate privateer mmdb2 clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 clipper-minimol fftw rfftw ccp4 ccp4srs nodefs.js)
+target_link_libraries(privateer-validate privateer mmdb2 clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 clipper-minimol fftw rfftw ccp4 ccp4srs z nodefs.js)
 
 set_target_properties(privateer-validate PROPERTIES OUTPUT_NAME privateer)
 target_link_options(privateer-validate PRIVATE -s ALLOW_MEMORY_GROWTH=1)

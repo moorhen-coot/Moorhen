@@ -1,45 +1,12 @@
 /*! \file clipper-glyco_data.cpp
 Implementation file for the sugar database */
 
-//C (C) 2014 Jon Agirre & Kevin Cowtan, The University of York
-//L
-//L  This library is free software and is distributed under the terms
-//L  and conditions of version 2.1 of the GNU Lesser General Public
-//L  Licence (LGPL) with the following additional clause:
-//L
-//L     `You may also combine or link a "work that uses the Library" to
-//L     produce a work containing portions of the Library, and distribute
-//L     that work under terms of your choice, provided that you give
-//L     prominent notice with each copy of the work that the specified
-//L     version of the Library is used in it, and that you include or
-//L     provide public access to the complete corresponding
-//L     machine-readable source code for the Library including whatever
-//L     changes were used in the work. (i.e. If you make changes to the
-//L     Library you must distribute those, but you do not need to
-//L     distribute source or object code to those portions of the work
-//L     not covered by this licence.)'
-//L
-//L  Note that this clause grants an additional right and does not impose
-//L  any additional restriction, and so does not affect compatibility
-//L  with the GNU General Public Licence (GPL). If you wish to negotiate
-//L  other terms, please contact the maintainer.
-//L
-//L  You can redistribute it and/or modify the library under the terms of
-//L  the GNU Lesser General Public License as published by the Free Software
-//L  Foundation; either version 2.1 of the License, or (at your option) any
-//L  later version.
-//L
-//L  This library is distributed in the hope that it will be useful, but
-//L  WITHOUT ANY WARRANTY; without even the implied warranty of
-//L  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//L  Lesser General Public License for more details.
-//L
-//L  You should have received a copy of the CCP4 licence and/or GNU
-//L  Lesser General Public License along with this library; if not, write
-//L  to the CCP4 Secretary, Daresbury Laboratory, Warrington WA4 4AD, UK.
-//L  The GNU Lesser General Public can also be obtained by writing to the
-//L  Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-//L  MA 02111-1307 USA
+// Library for the YSBL program Privateer (PRogramatic Identification of Various Anomalies Toothsome Entities Experience in Refinement)
+// Licence: LGPL - Please check Licence.txt for details.
+//
+// 2013-
+// York Structural Biology Laboratory
+// The University of York
 
 
 #include "clipper-glyco_data.h"
@@ -64,63 +31,64 @@ const clipper::String iupac_conformational_landscape[] =
 {
     "Planar ring", "<sup>4</sup>C<sub>1</sub>", "<sup>1</sup>C<sub>4",
     "<sup>3,O</sup>B", "B<sub>2,5</sub>", "<sup>1,4</sup>B", "B<sub>3,O</sub>", "<sup>2,5</sup>B", "B<sub>1,4</sub>",
-    "<sup>O</sup>E", "E<sub>5</sub>", "<sup>4</sup>E", "E<sub>3</sub>", "<sup>2</sup>E", "E<sub>1</sub>", "<sup>3</sup>E", 
+    "<sup>O</sup>E", "E<sub>5</sub>", "<sup>4</sup>E", "E<sub>3</sub>", "<sup>2</sup>E", "E<sub>1</sub>", "<sup>3</sup>E",
     "E<sub>2</sub>", "<sup>1</sup>E", "E<sub>O</sub>", "<sup>5</sup>E", "E<sub>4</sub>",
-    "<sup>O</sup>H<sub>5</sub>", "<sup>4</sup>H<sub>5</sub>", "<sup>4</sup>H<sub>3</sub>", "<sup>2</sup>H<sub>3</sub>", 
+    "<sup>O</sup>H<sub>5</sub>", "<sup>4</sup>H<sub>5</sub>", "<sup>4</sup>H<sub>3</sub>", "<sup>2</sup>H<sub>3</sub>",
     "<sup>2</sup>H<sub>1</sub>",
-    "<sup>O</sup>H<sub>1</sub>", "<sup>3</sup>H<sub>2</sub>", "<sup>1</sup>H<sub>2</sub>", "<sup>1</sup>H<sub>O</sub>", 
-    "<sup>5</sup>H<sub>O</sub>", 
+    "<sup>O</sup>H<sub>1</sub>", "<sup>3</sup>H<sub>2</sub>", "<sup>1</sup>H<sub>2</sub>", "<sup>1</sup>H<sub>O</sub>",
+    "<sup>5</sup>H<sub>O</sub>",
     "<sup>5</sup>H<sub>4</sub>", "<sup>3</sup>H<sub>4</sub>",
-    "<sup>O</sup>S<sub>2</sub>", "<sup>1</sup>S<sub>5</sub>", "<sup>1</sup>S<sub>3</sub>", "<sup>2</sup>S<sub>O</sub>", 
+    "<sup>O</sup>S<sub>2</sub>", "<sup>1</sup>S<sub>5</sub>", "<sup>1</sup>S<sub>3</sub>", "<sup>2</sup>S<sub>O</sub>",
     "<sup>5</sup>S<sub>1</sub>", "<sup>3</sup>S<sub>1</sub>",
-    "<sup>3</sup>T<sub>2</sub>", "<sup>3</sup>E","<sup>3</sup>T<sub>4</sub>", "E<sub>4</sub>","<sup>O</sup>T<sub>4</sub>", 
+    "<sup>3</sup>T<sub>2</sub>", "<sup>3</sup>E","<sup>3</sup>T<sub>4</sub>", "E<sub>4</sub>","<sup>O</sup>T<sub>4</sub>",
     "<sup>O</sup>E","<sup>O</sup>T<sub>1</sub>", "E<sub>1</sub>","<sup>2</sup>T<sub>1</sub>", "<sup>2</sup>E",
-    "<sup>2</sup>T<sub>3</sub>", "E<sub>3</sub>","<sup>4</sup>T<sub>3</sub>", "<sup>4</sup>E","<sup>4</sup>T<sub>O</sub>", 
+    "<sup>2</sup>T<sub>3</sub>", "E<sub>3</sub>","<sup>4</sup>T<sub>3</sub>", "<sup>4</sup>E","<sup>4</sup>T<sub>O</sub>",
     "E<sub>O</sub>","<sup>1</sup>T<sub>O</sub>", "<sup>1</sup>E","<sup>1</sup>T<sub>2</sub>", "E<sub>2</sub>"
 };
 
 const disaccharide disaccharide_database[] =
 {
-    { "SUC" ,  "Sucrose",  
+    { "SUC" ,  "Sucrose",
         { "FRU" ,	 "B", 	 "D", 	 "FRUCTOSE" ,                                     "O2' C2' C3' C4' C5'", 0.377, "ev4", 0.016, 5.815 },
         { "GLC" ,	 "A", 	 "D", 	 "ALPHA-D-GLUCOSE" ,                                "O5 C1 C2 C3 C4 C5", 0.593, "4c1", 0.001, 1.358 }
     },
 
     { "LAT" ,  "Beta-lactose",
         { "GAL" ,        "B",    "D",   "Beta-D-galactopyranose" ,                    "O5' C1' C2' C3' C4' C5'", 0.621, "4c1", 0.003, 2.036 },
-        { "BGC" ,        "B",    "D",   "Beta-D-glucopyranose" ,                            "O5 C1 C2 C3 C4 C5", 0.621, "4c1", 0.003, 2.036 } 
+        { "BGC" ,        "B",    "D",   "Beta-D-glucopyranose" ,                            "O5 C1 C2 C3 C4 C5", 0.621, "4c1", 0.003, 2.036 }
     },
 
     { "LBT" ,  "Alpha-lactose",
         { "GAL" ,        "B",    "D",   "Beta-D-galactopyranose" ,                          "O5 C1 C2 C3 C4 C5", 0.621, "4c1", 0.003, 2.036 },
-        { "GLC" ,        "A",    "D",   "Alpha-D-glucopyranose" ,                     "O5' C1' C2' C3' C4' C5'", 0.621, "4c1", 0.003, 2.036 } 
+        { "GLC" ,        "A",    "D",   "Alpha-D-glucopyranose" ,                     "O5' C1' C2' C3' C4' C5'", 0.621, "4c1", 0.003, 2.036 }
     },
 
     { "CBI" ,  "Cellobiose",
         { "BGC" ,        "B",    "D",   "Beta-D-glucopyranose" ,                     "O5' C1' C2' C3' C4' C5'", 0.621, "4c1", 0.003, 2.036 },
-        { "BGC" ,        "B",    "D",   "Beta-D-glucopyranose" ,                           "O5 C1 C2 C3 C4 C5", 0.621, "4c1", 0.003, 2.036 } 
+        { "BGC" ,        "B",    "D",   "Beta-D-glucopyranose" ,                           "O5 C1 C2 C3 C4 C5", 0.621, "4c1", 0.003, 2.036 }
     },
 
     { "MAL" ,  "Maltose",
         { "GLC" ,        "A",    "D",   "Alpha-D-glucopyranose" ,                     "O5' C1' C2' C3' C4' C5'", 0.621, "4c1", 0.003, 2.036 },
-        { "GLC" ,        "A",    "D",   "Alpha-D-glucopyranose" ,                           "O5 C1 C2 C3 C4 C5", 0.621, "4c1", 0.003, 2.036 } 
+        { "GLC" ,        "A",    "D",   "Alpha-D-glucopyranose" ,                           "O5 C1 C2 C3 C4 C5", 0.621, "4c1", 0.003, 2.036 }
     },
 
     { "TRE" ,  "Trehalose",
         { "GLC" ,        "A",    "D",   "Alpha-D-glucopyranose" ,                     "O5P C1P C2P C3P C4P C5P", 0.621, "4c1", 0.003, 2.036 },
-        { "GLC" ,        "A",    "D",   "Alpha-D-glucopyranose" ,                           "O5 C1 C2 C3 C4 C5", 0.621, "4c1", 0.003, 2.036 } 
-    }, 
-    
+        { "GLC" ,        "A",    "D",   "Alpha-D-glucopyranose" ,                           "O5 C1 C2 C3 C4 C5", 0.621, "4c1", 0.003, 2.036 }
+    },
+
     { "BXP" ,  "Xylobiose",
-        { "XYP" ,        "B",    "D",   "Beta-D-xylopyranose" ,                     "O5A C1A C2A C3A C4A C5A", 0.621, "4c1", 0.003, 2.036 },
-        { "XYP" ,        "B",    "D",   "Beta-D-xylopyranose" ,                     "O5B C1B C2B C3B C4B C5B", 0.621, "4c1", 0.003, 2.036 } 
-    } 
+        { "XYP" ,        "B",    "D",   "Beta-D-xylopyranose" ,                       "O5 C1 C2 C3 C4 C5", 0.621, "4c1", 0.003, 2.036 },
+        { "XYP" ,        "B",    "D",   "Beta-D-xylopyranose" ,                       "O5 C1 C2 C3 C4 C5", 0.621, "4c1", 0.003, 2.036 }
+    }
 };
 
 const int disaccharide_database_size = sizeof( disaccharide_database ) / sizeof( disaccharide_database[0] );
 
 const sugar_database_entry sugar_database[] =
 {
+    // TO DO: ADD BM7, currently does not exist in CCP4 monomer library
     { "13A" ,    "B",    "L",    "7-(3,4-DIHYDROXY-5R-HYDROXYMETHYLTETRAHYDROFU" ,  "O1 C2 C3 C4 C5",    0.380, "4ev", 0.017, 5.882 },
     { "145" ,	 "B", 	 "D", 	 "1-O-[O-NITROPHENYL]-BETA-D-GALACTOPYRANOSE" ,     "O5 C1 C2 C3 C4 C5", 0.622, "4c1", 0.003, 2.051 },
     { "147" ,	 "B", 	 "D", 	 "1-O-[P-NITROPHENYL]-BETA-D-GALACTOSE" ,           "O5 C1 C2 C3 C4 C5", 0.622, "4c1", 0.003, 2.051 },
@@ -157,7 +125,7 @@ const sugar_database_entry sugar_database[] =
     { "7JZ" ,	 "B", 	 "D", 	 "2-DEOXY-2,2-DIFLUORO-BETA-D-LYXO-HEXOPYRANOSE" ,  "O5 C1 C2 C3 C4 C5", 0.593, "4c1", 0.002, 1.342 },
     { "8GP" ,	 "B", 	 "D", 	 "N-(BETA-D-GLUCOPYRANOSYL)-N'-CYCLOPROPYLOXAL" ,   "O5 C1 C2 C3 C4 C5", 0.621, "4c1", 0.003, 2.006 },
     { "9AM" ,	 "A", 	 "D", 	 "9-AMINO-2-DEOXY-2,3-DEHYDRO-N-ACETYL-NEURAMIN" ,  "O6 C2 C3 C4 C5 C6", 0.541, "5h4", 0.087, 9.084 },
-    { "A2G" ,    "A",    "D",    "N-ACETYL-2-DEOXY-2-AMINO-GALACTOSE",              "O C1 C2 C3 C4 C5" , 0.593, "4c1", 0.002, 1.350 },
+    { "A2G" ,    "A",    "D",    "N-ACETYL-2-DEOXY-2-AMINO-GALACTOSE",              "O5 C1 C2 C3 C4 C5" , 0.593, "4c1", 0.002, 1.350 },
     { "A6P" ,	 "A", 	 "D", 	 "6-O-PHOSPHONO-ALPHA-D-ALLOPYRANOSE" ,             "O5 C1 C2 C3 C4 C5", 0.592, "4c1", 0.002, 1.380 },
     { "AAL" ,	 "A", 	 "L", 	 "3,6-ANHYDRO-L-GALACTOSE" ,                        "O5 C1 C2 C3 C4 C5", 0.695, "4c1", 0.016, 4.879 },
     { "ABE" ,	 "A", 	 "D", 	 "ABEQUOSE" ,                                       "O5 C1 C2 C3 C4 C5", 0.621, "4c1", 0.003, 2.023 },
@@ -166,6 +134,7 @@ const sugar_database_entry sugar_database[] =
     { "AGL" ,	 "A", 	 "D", 	 "4,6-DIDEOXY-4-AMINO-ALPHA-D-GLUCOSE" ,            "O5 C1 C2 C3 C4 C5", 0.621, "4c1", 0.002, 2.027 },
     { "AH8" ,	 "A", 	 "L", 	 "(2R,3R,4R,5S)-2-AZIDO-5-(HYDROXYMETHYL)TETRAH" ,  "O4 C1 C2 C3 C4"   , 0.382, "evO", 0.014, 5.711 },
     { "AHG" ,	 "B", 	 "D", 	 "2,5-ANHYDROGLUCITOL-1,6-BIPHOSPHATE" ,            "O5 C2 C3 C4 C5"   , 0.379, "ev1", 0.013, 5.447 },
+    { "AHR" ,	 "A", 	 "L", 	 "ALPHA-L-ARABINOFURANOSE" ,                      "O4' C1' C2' C3' C4'", 0.371, "ev3", 0.013, 5.447 },
     { "AMG" ,	 "A", 	 "D", 	 "ALPHA-METHYL-D-GALACTOSIDE" ,                     "O5 C1 C2 C3 C4 C5", 0.621, "4c1", 0.002, 2.053 },
     { "AMN" ,	 "A", 	 "L", 	 "9-DEOXY-9-AMINO-2-O-METHYL-5-N-ACETYL-ALPHA-D" ,  "O6 C2 C3 C4 C5 C6", 0.620, "1c4", 0.003, 2.024 },
     { "AMP" ,    "B",    "D",    "ADENOSINE MONOPHOSPHATE",                       "O4' C1' C2' C3' C4'", 0.450, "3t2", 0.031, 4.000 },
@@ -210,6 +179,7 @@ const sugar_database_entry sugar_database[] =
     { "CR1" ,	 "B", 	 "D", 	 "1-DEOXY-1-METHOXYCARBAMIDO-BETA-D-GLUCOPYRANO" ,  "O5 C1 C2 C3 C4 C5", 0.620, "4c1", 0.003, 2.010 },
     { "CR6" ,	 "B", 	 "D", 	 "1-DEOXY-1-ACETYLAMINO-BETA-D-GLUCO-2-HEPTULOP" ,  "O5 C1 C2 C3 C4 C5", 0.621, "4c1", 0.003, 2.009 },
     { "CRA" ,	 "B", 	 "D", 	 "1-DEOXY-1-METHOXYCARBAMIDO-BETA-D-GLUCO-2-HEP" ,  "O5 C1 C2 C3 C4 C5", 0.621, "4c1", 0.003, 2.035 },
+    { "CYH" ,	 "N", 	 "N", 	 "CYCLOHEXANONE"                                 ,  "C6 C1 C2 C3 C4 C5", 0.621, "4c1", 0.003, 2.035 },
     { "D6G" ,	 "A", 	 "D", 	 "2-DEOXY-6-O-PHOSPHONO-ALPHA-D-ARABINO-HEXOPYR" ,  "O5 C1 C2 C3 C4 C5", 0.621, "4c1", 0.003, 2.061 },
     { "DAG" ,	 "B", 	 "D", 	 "4,6-DIDEOXY-4-AMINO-BETA-D-GLUCOPYRANOSIDE" ,     "O5 C1 C2 C3 C4 C5", 0.620, "4c1", 0.003, 2.043 },
     { "DAN" ,	 "N", 	 "L", 	 "2-DEOXY-2,3-DEHYDRO-N-ACETYL-NEURAMINICACID" ,    "O6 C2 C3 C4 C5 C6", 0.540, "5h4", 0.087, 9.083 },
@@ -287,7 +257,7 @@ const sugar_database_entry sugar_database[] =
     { "GMB" ,	 "B", 	 "D", 	 "1,7-DI-O-PHOSPHONO-L-GLYCERO-BETA-D-MANNO-HEP" ,  "O5 C1 C2 C3 C4 C5", 0.594, "4c1", 0.002, 1.365 },
     { "GMH" ,	 "A", 	 "D", 	 "L-GLYCERO-D-MANNO-HEPTOPYRANOSE" ,                "O5 C1 C2 C3 C4 C5", 0.621, "4c1", 0.003, 2.016 },
     { "GNA" ,	 "B", 	 "L", 	 "2,4-DEOXY-4-GUANIDINO-5-N-ACETYL-NEURAMINICA" ,   "O6 C2 C3 C4 C5 C6", 0.620, "1c4", 0.003, 2.009 },
-    { "GP4" ,	 "A", 	 "D", 	 "GLUCOSAMINE4-PHOSPHATE" ,                   "O6A C1A C2A C3A C4A C5A", 0.620, "4c1", 0.003, 2.028 },
+    { "GP4" ,	 "A", 	 "D", 	 "GLUCOSAMINE4-PHOSPHATE" ,                   "O5 C1 C2 C3 C4 C5", 0.620, "4c1", 0.003, 2.028 },
     { "GS1" ,	 "B", 	 "D", 	 "1-THIO-BETA-D-GLUCOPYRANOSE" ,                    "O5 C1 C2 C3 C4 C5", 0.620, "4c1", 0.003, 2.029 },
     { "GTM" ,	 "B", 	 "D", 	 "O1-METHYL-4-DEOXY-4-THIO-BETA-D-GLUCOSE" ,        "O5 C1 C2 C3 C4 C5", 0.619, "4c1", 0.003, 1.992 },
     { "GTR" ,	 "B", 	 "D", 	 "GALACTURONIC ACID",                               "O5 C1 C2 C3 C4 C5", 0.621, "4c1", 0.003, 2.026 },
@@ -316,6 +286,7 @@ const sugar_database_entry sugar_database[] =
     { "KDE" ,	 "B", 	 "L", 	 "PROP-2-EN-1-YL3-DEOXY-BETA-L-GULO-OCT-2-ULOP" ,   "O6 C2 C3 C4 C5 C6", 0.592, "4c1", 0.001, 1.366 },
     { "KDO" ,	 "B", 	 "D", 	 "3-DEOXY-D-MANNO-OCT-2-ULOSONICACID" ,             "O6 C2 C3 C4 C5 C6", 0.621, "4c1", 0.003, 2.048 },
     { "KDR" ,	 "B", 	 "D", 	 "PROP-2-EN-1-YL3-DEOXY-ALPHA-D-MANNO-OCTOS-2-" ,   "O6 C2 C3 C4 C5 C6", 0.592, "4c1", 0.001, 1.348 },
+    { "KHP" ,	 "A", 	 "L", 	 "2-HYDROXYMETHYL-5-(4-NITRO-PHENOXY)-TETRAH" ,   "O4' C1B C2B C3B C4B", 0.379, "ev3", 0.013, 5.447 },
     { "KME" ,	 "A", 	 "D", 	 "(1E)-PROP-1-EN-1-YL3-DEOXY-7-O-METHYL-ALPHA-" ,   "O6 C2 C3 C4 C5 C6", 0.593, "4c1", 0.001, 1.348 },
     { "KO1" ,	 "A", 	 "D", 	 "D-GLYCERO-ALPHA-D-TALO-OCT-2-ULOPYRANOSONICA" ,   "O6 C2 C3 C4 C5 C6", 0.593, "4c1", 0.001, 1.379 },
     { "KO2" ,	 "A", 	 "D", 	 "PROP-2-EN-1-YLD-GLYCERO-ALPHA-D-TALO-OCT-2-U" ,   "O6 C2 C3 C4 C5 C6", 0.593, "4c1", 0.002, 1.365 },
@@ -369,7 +340,7 @@ const sugar_database_entry sugar_database[] =
     { "NAA" ,	 "B", 	 "D", 	 "N-ACETYL-D-ALLOSAMINE" ,                          "O5 C1 C2 C3 C4 C5", 0.620, "4c1", 0.003, 2.014 },
     { "NAG" ,	 "B", 	 "D", 	 "N-ACETYL-D-GLUCOSAMINE" ,                         "O5 C1 C2 C3 C4 C5", 0.593, "4c1", 0.001, 1.391 },
     { "NBG" ,	 "B", 	 "D", 	 "1-N-ACETYL-BETA-D-GLUCOSAMINE" ,                  "O5 C1 C2 C3 C4 C5", 0.621, "4c1", 0.004, 1.995 },
-    { "NDG" ,	 "A", 	 "D", 	 "2-(ACETYLAMINO)-2-DEOXY-A-D-GLUCOPYRANOSE" ,      "O C1 C2 C3 C4 C5" , 0.593, "4c1", 0.001, 1.378 },
+    { "NDG" ,	 "A", 	 "D", 	 "2-(ACETYLAMINO)-2-DEOXY-A-D-GLUCOPYRANOSE" ,      "O5 C1 C2 C3 C4 C5" , 0.593, "4c1", 0.001, 1.378 },
     { "NG1" ,	 "A", 	 "D", 	 "N-ACETYL-ALPHA-D-GALACTOSAMINE1-PHOSPHATE" ,      "O5 C1 C2 C3 C4 C5", 0.620, "4c1", 0.002, 2.010 },
     { "NG6" ,	 "B", 	 "D", 	 "N-ACETYL-D-GALACTOSAMINE 6-SULFATE" ,             "O5 C1 C2 C3 C4 C5", 0.620, "4c1", 0.002, 2.010 },
     { "NGA" ,	 "B", 	 "D", 	 "N-ACETYL-D-GALACTOSAMINE" , 	 		    "O5 C1 C2 C3 C4 C5", 0.593, "4c1", 0.002, 1.347 },
@@ -394,7 +365,7 @@ const sugar_database_entry sugar_database[] =
     { "PNW" ,	 "B", 	 "D", 	 "4-NITROPHENYLBETA-D-GLUCOPYRANOSIDE" ,            "O5 C1 C2 C3 C4 C5", 0.593, "4c1", 0.002, 1.339 },
     { "PPC" ,	 "A", 	 "D", 	 "5-PHOSPHORIBOSYL-1-(BETA-METHYLENE)PYROPHOSP" ,   "O4 C1 C2 C3 C4"   , 0.381, "Oev", 0.015, 5.688 },
     { "PRP" ,	 "A", 	 "D", 	 "ALPHA-PHOSPHORIBOSYLPYROPHOSPHORICACID" ,         "O4 C1 C2 C3 C4"   , 0.381, "Oev", 0.015, 5.696 },
-    { "PSG" ,	 "B", 	 "D", 	 "PARA-NITROPHENYL1-THIO-BETA-D-GLUCOPYRANOSID" ,   "O5 C1 C2 C3 C4 C5", 0.558, "4c1", 0.002, 1.830 },    
+    { "PSG" ,	 "B", 	 "D", 	 "PARA-NITROPHENYL1-THIO-BETA-D-GLUCOPYRANOSID" ,   "O5 C1 C2 C3 C4 C5", 0.558, "4c1", 0.002, 1.830 },
     { "PSV" ,	 "A", 	 "D", 	 "ALPHA-D-PSICOFURANOSE" ,                          "O5 C2 C3 C4 C5"   , 0.378, "ev4", 0.017, 5.851 },
     { "RAM" ,	 "A", 	 "L", 	 "ALPHA-L-RHAMNOSE" ,                               "O5 C1 C2 C3 C4 C5", 0.620, "1c4", 0.003, 2.041 },
     { "RAO" ,	 "A", 	 "L", 	 "1-O-METHYL-ALPHA-RHAMNOSE" ,                      "O5 C1 C2 C3 C4 C5", 0.621, "1c4", 0.002, 2.046 },
@@ -439,7 +410,7 @@ const sugar_database_entry sugar_database[] =
     { "X1P" ,	 "A", 	 "D", 	 "1-O-PHOSPHONO-ALPHA-D-XYLOPYRANOSE" ,             "O5 C1 C2 C3 C4 C5", 0.620, "4c1", 0.002, 2.039 },
     { "X2F" ,	 "A", 	 "D", 	 "2-DEOXY-2-FLUOROXYLOPYRANOSE" ,                   "O5 C1 C2 C3 C4 C5", 0.620, "4c1", 0.003, 2.070 },
     { "XYF" ,	 "B", 	 "D", 	 "5(R)-5-FLUORO-BETA-D-XYLOPYRANOSYL-ENZYMEINT" ,   "O5 C1 C2 C3 C4 C5", 0.557, "4c1", 0.012, 1.634 },
-    { "XYP" ,	 "B",	 "D",	 "BETA-D-XYLOPYRANOSE" ,                      "O5B C1B C2B C3B C4B C5B", 0.619, "4c1", 0.003, 2.003 },
+    { "XYP" ,	 "B",	 "D",	 "BETA-D-XYLOPYRANOSE" ,                            "O5 C1 C2 C3 C4 C5", 0.619, "4c1", 0.003, 2.003 },
     { "XYS" ,	 "A", 	 "D", 	 "XYLOPYRANOSE" ,                                   "O5 C1 C2 C3 C4 C5", 0.621, "4c1", 0.002, 2.051 },
     { "YX0" ,	 "A", 	 "L", 	 "[(3E)-3-(1-HYDROXYETHYLIDENE)-2,3-DIHYDROISOX" ,  "O5 C1 C2 C3 C4 C5", 0.594, "1c4", 0.002, 1.379 },
     { "YX1" ,	 "B", 	 "D", 	 "2-DEOXY-2-{[(2-HYDROXY-1-METHYLHYDRAZINO)CARB" ,  "O5 C1 C2 C3 C4 C5", 0.593, "4c1", 0.001, 1.385 },
@@ -470,8 +441,338 @@ const sugar_database_entry sugar_database[] =
                 return true;
         return false;
     } //!< returns true if found
+
+    std::string carbname_of( std::string name )
+    {
+        clipper::String new_name;
+
+        // codes for hexoses
+
+        if      ( name == "GLC" ) new_name = "Glc"   ; // alpha
+        else if ( name == "BGC" ) new_name = "Glc"   ; // beta
+        else if ( name == "MAN" ) new_name = "Man"   ; // alpha
+        else if ( name == "BMA" ) new_name = "Man"   ; // beta
+        else if ( name == "GLA" ) new_name = "Gal"   ; // alpha
+        else if ( name == "GAL" ) new_name = "Gal"   ; // beta
+        else if ( name == "FUC" ) new_name = "Fuc"   ; // alpha - l - fucose
+        else if ( name == "FCB" ) new_name = "Fuc"   ; // beta - d - fucose
+        else if ( name == "FUL" ) new_name = "Fuc"   ; // beta - l - fucose
+        else if ( name == "XYS" ) new_name = "Xyl"   ; // alpha
+        else if ( name == "XYP" ) new_name = "Xyl"   ; // beta
+
+        // codes for hexosamines
+        // couldn't find codes for: ManN (either), GalN (either)
+
+        else if ( name == "GCS" ) new_name = "GlcN"  ; // beta
+        else if ( name == "PA1" ) new_name = "GlcN"  ; // alpha
+
+        // codes for N-acetyl hexosamines
+        // couldn't find codes for: ManNAc (beta)
+
+        else if ( name == "NAG" ) new_name = "GlcNAc"; // beta
+        else if ( name == "NDG" ) new_name = "GlcNAc"; // alpha
+        else if ( name == "NGA" ) new_name = "GalNAc"; // beta
+        else if ( name == "A2G" ) new_name = "GalNAc"; // alpha
+        else if ( name == "BM3" ) new_name = "ManNAc"; // alpha
+        else if ( name == "BM7" ) new_name = "ManNAc"; // beta
+
+        // codes for acidic sugars
+        // couldn't find codes for: Neu5Gc (either)
+
+        else if ( name == "SIA" ) new_name = "Neu5Ac" ; // alpha
+        else if ( name == "SLB" ) new_name = "Neu5Ac" ; // beta
+        else if ( name == "IDR" ) new_name = "IdoA"   ; // alpha
+        else if ( name == "KDM" ) new_name = "KDN"    ; // alpha
+        else if ( name == "KDN" ) new_name = "KDN"    ; // beta
+        else if ( name == "BDP" ) new_name = "GlcA"   ; // beta
+        else if ( name == "GCU" ) new_name = "GlcA"   ; // alpha
+        else if ( name == "MAV" ) new_name = "ManA"   ; // alpha
+        else if ( name == "BEM" ) new_name = "ManA"   ; // beta
+        else if ( name == "GTR" ) new_name = "GalA"   ; // beta
+        else if ( name == "ADA" ) new_name = "GalA"   ; // alpha
+
+        else if ( name == "DAN" ) new_name = "NeuAc" ; // Undetermined. 
+        else new_name = "Unknown";
+
+        return new_name;
+    }
+
+
+    bool residue_has_alternate_monomer( std::string name, bool glucose_only )
+    {
+        std::unordered_set<std::string> residues_with_alternate_monomer;
+        if (glucose_only) 
+        {
+            residues_with_alternate_monomer = 
+            {
+            "GLC", "BGC", // Glc
+            };
+        }
+        else
+        {
+            residues_with_alternate_monomer = 
+            {
+            "GLC", "BGC", // Glc
+            "MAN", "BMA", // Man
+            "GLA", "GAL", // Gal
+            "NDG", "NAG", // GlcNAc
+            "BM3", "BM7", // ManNAc
+            "A2G", "NGA", // GalNAc
+            "GCU", "BDP", // GlcA
+            "MAV", "BEM", // ManA
+            "ADA", "GTR" // GalA
+            };
+        }
+        
+        if (residues_with_alternate_monomer.find(name) != residues_with_alternate_monomer.end())
+		    return true;
+        else
+            return false; 
+    }
+
+    bool residue_has_alternate_anomer( std::string name )
+    {
+        std::unordered_set<std::string> residues_with_alternate_anomer = {
+            "GLC", "BGC",
+            "MAN", "BMA",
+            "GLA", "GAL",
+            "FUC", "FUL",
+            "FCB", "FCA",
+            "XYS", "XYP",
+            "GCS", "PA1",
+            "NDG", "NAG",
+            "A2G", "NGA",
+            "BM3", "BM7",
+            "SIA", "SLB",
+            "IDR", "NGK",
+            "KDM", "KDN",
+            "GCU", "BDP",
+            "MAV", "BEM",
+            "ADA", "GTR"
+        };
+
+        if (residues_with_alternate_anomer.find(name) != residues_with_alternate_anomer.end())
+		    return true;
+        else
+            return false; 
+    }
+
+
+    std::string alternative_anomer( std::string name )
+    {
+        clipper::String new_name;
+
+        if      ( name == "GLC" ) new_name = "BGC"   ; 
+        else if ( name == "BGC" ) new_name = "GLC"   ; 
+        else if ( name == "MAN" ) new_name = "BMA"   ; 
+        else if ( name == "BMA" ) new_name = "MAN"   ; 
+        else if ( name == "GLA" ) new_name = "GAL"   ; 
+        else if ( name == "GAL" ) new_name = "GLA"   ; 
+        else if ( name == "FUC" ) new_name = "FUL"   ;    
+        else if ( name == "FUL" ) new_name = "FUC"   ;
+        else if ( name == "FCB" ) new_name = "FCA"   ;
+        else if ( name == "FCA" ) new_name = "FCB"   ;  
+        else if ( name == "XYS" ) new_name = "XYP"   ; 
+        else if ( name == "XYP" ) new_name = "XYS"   ; 
+
+        // codes for hexosamines
+        // couldn't find codes for: ManN (either), GalN (either)
+
+        else if ( name == "GCS" ) new_name = "PA1"  ; 
+        else if ( name == "PA1" ) new_name = "GCS"  ; 
+
+        // codes for N-acetyl hexosamines
+        // couldn't find codes for: ManNAc (beta)
+
+        else if ( name == "NAG" ) new_name = "NDG"; 
+        else if ( name == "NDG" ) new_name = "NAG"; 
+        else if ( name == "NGA" ) new_name = "A2G"; 
+        else if ( name == "A2G" ) new_name = "NGA"; 
+        else if ( name == "BM3" ) new_name = "BM7";
+        else if ( name == "BM7" ) new_name = "BM3"; 
+
+        // codes for acidic sugars
+        // couldn't find codes for: Neu5Gc (either)
+
+        else if ( name == "SIA" ) new_name = "SLB" ; 
+        else if ( name == "SLB" ) new_name = "SIA" ; 
+        else if ( name == "IDR" ) new_name = "NGK" ; 
+        else if ( name == "NGK" ) new_name = "IDR" ; 
+        else if ( name == "KDM" ) new_name = "KDN"    ; 
+        else if ( name == "KDN" ) new_name = "KDM"    ; 
+        else if ( name == "BDP" ) new_name = "GCU"   ; 
+        else if ( name == "GCU" ) new_name = "BDP"   ; 
+        else if ( name == "MAV" ) new_name = "BEM"   ; 
+        else if ( name == "BEM" ) new_name = "MVA"   ; 
+        else if ( name == "GTR" ) new_name = "ADA"   ; 
+        else if ( name == "ADA" ) new_name = "GTR"   ;
+
+        else new_name = "Error";
+
+        return new_name;
+    }
+
     
-    
+    std::vector<std::string> alternative_monomer( std::string name )
+    {
+        std::set<std::string> monomer_bin;
+
+        std::vector<std::set<std::string>> bins_alternate_monomers = {
+            { std::set<std::string>( { "GLC", "MAN", "GLA" } ) }, // alpha ucoses.
+            { std::set<std::string>( { "BGC", "BMA", "GAL" } ) }, // beta ucoses. 
+            { std::set<std::string>( { "NDG", "BM3", "A2G" } ) }, // alpha NAcs
+            { std::set<std::string>( { "NAG", "BM7", "NGA" } ) }, // beta NAcs
+            { std::set<std::string>( { "GCU", "MAV", "ADA" } ) }, // alpha As
+            { std::set<std::string>( { "BDP", "BEM", "GTR" } ) }, // beta As
+        };
+
+        for(int i = 0; i < bins_alternate_monomers.size(); i++)
+        {  
+            if (bins_alternate_monomers[i].find(name) != bins_alternate_monomers[i].end())
+                monomer_bin = bins_alternate_monomers[i];
+        }
+
+        std::vector<std::string> alternative_monomers;
+        for (auto element : monomer_bin)
+        {
+            if(element != name) alternative_monomers.push_back(element);
+        }
+
+        return alternative_monomers;
+    }
+
+
+
+    // Long term task: expand this list after running on entire pdb database. 
+    std::string convert_to_wurcs_residue_code( std::string name )
+    {
+        clipper::String wurcs_residue_code;
+
+        // codes for hexoses
+
+        if      ( name == "GLC" ) wurcs_residue_code = "a2122h-1a_1-5"   ; // alpha
+        else if ( name == "BGC" ) wurcs_residue_code = "a2122h-1b_1-5"   ; // beta
+        else if ( name == "MAN" ) wurcs_residue_code = "a1122h-1a_1-5"   ; // alpha
+        else if ( name == "BMA" ) wurcs_residue_code = "a1122h-1b_1-5"   ; // beta
+        else if ( name == "GLA" ) wurcs_residue_code = "a2112h-1a_1-5"   ; // alpha
+        else if ( name == "GAL" ) wurcs_residue_code = "a2112h-1b_1-5"   ; // beta
+        else if ( name == "FCA" ) wurcs_residue_code = "a2112m-1a_1-5"   ; // alpha - d - fucose
+        else if ( name == "FCB" ) wurcs_residue_code = "a2112m-1b_1-5"   ; // beta - d - fucose
+        else if ( name == "FUC" ) wurcs_residue_code = "a1221m-1a_1-5"   ; // alpha - l - fucose
+        else if ( name == "FUL" ) wurcs_residue_code = "a1221m-1b_1-5"   ; // beta - l - fucose
+        else if ( name == "XYS" ) wurcs_residue_code = "a212h-1a_1-5"   ; // alpha
+        else if ( name == "XYP" ) wurcs_residue_code = "a212h-1b_1-5"   ; // beta
+
+        // codes for hexosamines
+        // couldn't find codes for: ManN (either), GalN (either)
+
+        else if ( name == "GCS" ) wurcs_residue_code = "a2122h-1b_1-5_2*N"  ; // beta
+        else if ( name == "PA1" ) wurcs_residue_code = "a2122h-1a_1-5_2*N"  ; // alpha
+
+        // codes for N-acetyl hexosamines
+        // couldn't find codes for: ManNAc (beta)
+
+        else if ( name == "NAG" ) wurcs_residue_code = "a2122h-1b_1-5_2*NCC/3=O"; // beta
+        else if ( name == "NDG" ) wurcs_residue_code = "a2122h-1a_1-5_2*NCC/3=O"; // alpha
+        else if ( name == "NGA" ) wurcs_residue_code = "a2112h-1b_1-5_2*NCC/3=O"; // beta
+        else if ( name == "A2G" ) wurcs_residue_code = "a2112h-1a_1-5_2*NCC/3=O"; // alpha
+        else if ( name == "BM3" ) wurcs_residue_code = "a1122h-1a_1-5_2*NCC/3=O"; // alpha
+        else if ( name == "BM7" ) wurcs_residue_code = "a1122h-1b_1-5_2*NCC/3=O"; // beta
+
+        // codes for acidic sugars
+        // couldn't find codes for: Neu5Gc (either)
+
+        else if ( name == "SIA" ) wurcs_residue_code = "Aad21122h-2a_2-6_5*NCC/3=O" ; // alpha
+        else if ( name == "SLB" ) wurcs_residue_code = "Aad21122h-2b_2-6_5*NCC/3=O" ; // beta
+        else if ( name == "IDR" ) wurcs_residue_code = "a2112h-1b_1-5_2*NCC/3=O_4*OSO/3=O/3=O"   ; // alpha
+        else if ( name == "KDM" ) wurcs_residue_code = "Aad21122h-2a_2-6"    ; // alpha
+        else if ( name == "KDN" ) wurcs_residue_code = "Aad21122h-2b_2-6"    ; // beta
+        else if ( name == "BDP" ) wurcs_residue_code = "a2122A-1b_1-5"   ; // beta
+        else if ( name == "GCU" ) wurcs_residue_code = "a2122A-1a_1-5"   ; // alpha
+        else if ( name == "MAV" ) wurcs_residue_code = "a1122A-1a_1-5"   ; // alpha
+        else if ( name == "BEM" ) wurcs_residue_code = "a1122A-1b_1-5"   ; // beta
+        else if ( name == "GTR" ) wurcs_residue_code = "a2112A-1b_1-5"   ; // beta
+        else if ( name == "ADA" ) wurcs_residue_code = "a2112A-1a_1-5"   ; // alpha
+        else if ( name == "LGU" ) wurcs_residue_code = "a1121A-1a_1-5" ; // alpha-L-Gulopyranuronic acid
+        else if ( name == "GUP" ) wurcs_residue_code = "a1121h-1a_1-5" ; // alpha-l-Gulopyranoside
+        else if ( name == "DAN" ) wurcs_residue_code = "Aad21122h-2x_2-6_5*N" ; // Undetermined. 
+
+        // More unique residues
+        else if ( name == "M6D" ) wurcs_residue_code = "a1122h-1b_1-5_6*OPO/3O/3=O" ; // beta-D-Mannose 6-phosphate 
+        else if ( name == "NAA" ) wurcs_residue_code = "a2222h-1b_1-5_2*NCC/3=O" ; // 2-acetamido-2-deoxy-beta-D-Allopyranose
+        else if ( name == "NGK" ) wurcs_residue_code = "a2112h-1a_1-5_2*NCC/3=O_4*OSO/3=O/3=O" ; // 2-acetamido-4-O-sulfono-2-deoxy-alpha-D-Galactopyranose
+        
+
+        else wurcs_residue_code = "[ERROR: UNABLE TO FIND RESIDUE CODE IN INTERNAL DATABASE]";
+
+        return wurcs_residue_code;
+    } 
+
+    std::string get_anomer( std::string name )
+    {
+        clipper::String anomer;
+
+        // codes for hexoses
+
+        if      ( name == "GLC" ) anomer = "alpha"   ; // alpha
+        else if ( name == "BGC" ) anomer = "beta"   ; // beta
+        else if ( name == "MAN" ) anomer = "alpha"   ; // alpha
+        else if ( name == "BMA" ) anomer = "beta"   ; // beta
+        else if ( name == "GLA" ) anomer = "alpha"   ; // alpha
+        else if ( name == "GAL" ) anomer = "beta"   ; // beta
+        else if ( name == "FCA" ) anomer = "alpha"   ; // alpha - d - fucose
+        else if ( name == "FCB" ) anomer = "beta"   ; // beta - d - fucose
+        else if ( name == "FUC" ) anomer = "alpha"   ; // alpha - l - fucose
+        else if ( name == "FUL" ) anomer = "beta"   ; // beta - l - fucose
+        else if ( name == "XYS" ) anomer = "alpha"   ; // alpha
+        else if ( name == "XYP" ) anomer = "beta"   ; // beta
+
+        // codes for hexosamines
+        // couldn't find codes for: ManN (either), GalN (either)
+
+        else if ( name == "GCS" ) anomer = "beta"  ; // beta
+        else if ( name == "PA1" ) anomer = "alpha"  ; // alpha
+
+        // codes for N-acetyl hexosamines
+        // couldn't find codes for: ManNAc (beta)
+
+        else if ( name == "NAG" ) anomer = "beta"; // beta
+        else if ( name == "NDG" ) anomer = "alpha"; // alpha
+        else if ( name == "NGA" ) anomer = "beta"; // beta
+        else if ( name == "A2G" ) anomer = "alpha"; // alpha
+        else if ( name == "BM3" ) anomer = "alpha"; // alpha
+        else if ( name == "BM7" ) anomer = "beta"; // beta
+
+        // codes for acidic sugars
+        // couldn't find codes for: Neu5Gc (either)
+
+        else if ( name == "SIA" ) anomer = "alpha" ; // alpha
+        else if ( name == "SLB" ) anomer = "beta" ; // beta
+        else if ( name == "IDR" ) anomer = "beta"   ; // beta
+        else if ( name == "KDM" ) anomer = "alpha"    ; // alpha
+        else if ( name == "KDN" ) anomer = "beta"    ; // beta
+        else if ( name == "BDP" ) anomer = "beta"   ; // beta
+        else if ( name == "GCU" ) anomer = "alpha"   ; // alpha
+        else if ( name == "MAV" ) anomer = "alpha"   ; // alpha
+        else if ( name == "BEM" ) anomer = "beta"   ; // beta
+        else if ( name == "GTR" ) anomer = "beta"   ; // beta
+        else if ( name == "ADA" ) anomer = "alpha"   ; // alpha
+        else if ( name == "LGU" ) anomer = "alpha" ; // alpha-L-Gulopyranuronic acid
+        else if ( name == "GUP" ) anomer = "alpha" ; // alpha-l-Gulopyranoside
+        else if ( name == "DAN" ) anomer = "undetermined" ; // Undetermined. 
+
+        // More unique residues
+        else if ( name == "M6D" ) anomer = "beta" ; // beta-D-Mannose 6-phosphate 
+        else if ( name == "NAA" ) anomer = "beta" ; // 2-acetamido-2-deoxy-beta-D-Allopyranose
+        else if ( name == "NGK" ) anomer = "alpha" ; // 2-acetamido-4-O-sulfono-2-deoxy-alpha-D-Galactopyranose
+        
+
+        else anomer = "[ERROR: UNABLE TO FIND RESIDUE CODE IN INTERNAL DATABASE]";
+
+        return anomer;
+    }
+
+
 } // namespace data
 
 } // namespace clipper
