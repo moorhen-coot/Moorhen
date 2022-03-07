@@ -1,0 +1,38 @@
+
+- update .github/workflows/wheels2.yml
+  https://cibuildwheel.readthedocs.io/en/stable/setup/
+
+- check ./tools/upstream-check.py
+
+- update version in include/gemmi/version.hpp
+- bash ./run-tests.sh a
+- VERSION=$(grep -Po '\d\.\d\.\d' include/gemmi/version.hpp)
+
+- make, test and upload source package to PyPI:
+  python3 setup.py sdist
+  twine check dist/gemmi-$VERSION.tar.gz
+  python3 -m pip uninstall gemmi
+  python3 -m pip install dist/gemmi-$VERSION.tar.gz
+
+- git commit -a -m "change version number to $VERSION"
+  git push
+
+- Run https://github.com/project-gemmi/gemmi/actions/workflows/wheels.yml
+  download wheels.zip and unpack to wheelhouse/
+- python3 setup.py sdist upload
+- twine upload wheelhouse/*.whl
+
+- tag:
+  git tag -a v$VERSION -m v$VERSION
+  git push --follow-tags
+
+
+obsolete steps that were previously used to build wheels:
+- make Linux wheels (the existing build/ directory may get in the way):
+  DOCKER_IMAGE=quay.io/pypa/manylinux2010_x86_64
+  docker pull $DOCKER_IMAGE
+  docker run --rm -e PLAT=manylinux2010_x86_64 -v `pwd`:/io $DOCKER_IMAGE /io/tools/linux-wheels.sh
+- when AppVeyor build completes download Windows wheels artifacts
+  from https://ci.appveyor.com/project/wojdyr/gemmi
+  and put them where Linux wheels are: ./wheelhouse
+

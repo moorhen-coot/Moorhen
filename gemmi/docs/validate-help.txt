@@ -1,0 +1,15 @@
+$ gemmi validate -h
+Usage: gemmi validate [options] FILE [...]
+
+Options:
+  -h, --help      Print usage and exit.
+  -V, --version   Print version and exit.
+  -v, --verbose   Verbose output.
+  -q, --quiet     Show only errors.
+  -f, --fast      Syntax-only check.
+  -s, --stat      Show token statistics
+  -d, --ddl=PATH  DDL for validation.
+  --no-regex      Skip regex checking (when using DDL2)
+  --no-mandatory  Skip checking if mandatory tags are present.
+  -p              Check if parent items (DDL2) are present.
+  -m, --monomer   Extra checks for Refmac dictionary files.
