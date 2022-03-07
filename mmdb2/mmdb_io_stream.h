@@ -67,8 +67,8 @@
 
 
 #define  DefineStreamFunctions(ClassName)                              \
-  extern void StreamWrite ( mmdb::io::RFile f, RP##ClassName Object ); \
-  extern void StreamRead  ( mmdb::io::RFile f, RP##ClassName Object );
+  extern MMDB_DL_EXPORT void StreamWrite ( mmdb::io::RFile f, RP##ClassName Object ); \
+  extern MMDB_DL_EXPORT void StreamRead  ( mmdb::io::RFile f, RP##ClassName Object );
 
 
 #define  MakeStreamFunctions(ClassName)                                \
@@ -86,12 +86,12 @@
   typedef P##ClassName      Make##ClassName();                         \
   typedef Make##ClassName * PMake##ClassName;                          \
   typedef P##ClassName  StreamMake##ClassName ( mmdb::io::RPStream Object ); \
-  P##ClassName  new##ClassName ();                                     \
-  P##ClassName  streamNew##ClassName ( mmdb::io::RPStream Object );    \
+  MMDB_DL_EXPORT P##ClassName  new##ClassName ();                                     \
+  MMDB_DL_EXPORT P##ClassName  streamNew##ClassName ( mmdb::io::RPStream Object );    \
   typedef StreamMake##ClassName * PStreamMake##ClassName;              \
-  extern void SetMakers##ClassName ( void * defMk, void * streamMk );  \
-  extern void StreamWrite ( mmdb::io::RFile f, RP##ClassName Object ); \
-  extern void StreamRead  ( mmdb::io::RFile f, RP##ClassName Object );
+  extern MMDB_DL_EXPORT void SetMakers##ClassName ( void * defMk, void * streamMk );  \
+  extern MMDB_DL_EXPORT void StreamWrite ( mmdb::io::RFile f, RP##ClassName Object ); \
+  extern MMDB_DL_EXPORT void StreamRead  ( mmdb::io::RFile f, RP##ClassName Object );
 
 
 #define  MakeFactoryFunctions(ClassName)                               \
@@ -168,7 +168,7 @@ namespace mmdb  {
     DefineClass(Stream);
     DefineStreamFunctions(Stream);
 
-    class Stream  {
+    class MMDB_DL_EXPORT Stream  {
       public :
         Stream            ()           {}
         Stream            ( RPStream ) {}
@@ -180,10 +180,10 @@ namespace mmdb  {
 
     typedef PStream InitStreamObject(RPStream Object);
 
-    extern  void StreamRead_  ( RFile f, RPStream Object,
+    extern MMDB_DL_EXPORT void StreamRead_  ( RFile f, RPStream Object,
                                          InitStreamObject Init );
 
-    extern  void StreamWrite_ ( RFile f, RPStream Object );
+    extern MMDB_DL_EXPORT void StreamWrite_ ( RFile f, RPStream Object );
 
 
   }

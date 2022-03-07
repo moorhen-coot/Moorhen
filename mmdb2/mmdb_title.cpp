@@ -4,7 +4,7 @@
 //   CCP4 Coordinate Library: support of coordinate-related
 //   functionality in protein crystallography applications.
 //
-//   Copyright (C) Eugene Krissinel 2000-2013.
+//   Copyright (C) Eugene Krissinel 2000-2022.
 //
 //    This library is free software: you can redistribute it and/or
 //    modify it under the terms of the GNU Lesser General Public
@@ -22,7 +22,7 @@
 //
 //  =================================================================
 //
-//    28.09.15   <--  Date of Last Modification.
+//    09.02.22   <--  Date of Last Modification.
 //                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //  -----------------------------------------------------------------
 //
@@ -47,7 +47,7 @@
 //                  mmdb::Biomolecule
 //                  mmdb::Title       ( MMDB title section )
 //
-//   (C) E. Krissinel 2000-2015
+//   (C) E. Krissinel 2000-2022
 //
 //  =================================================================
 //
@@ -342,7 +342,7 @@ namespace mmdb  {
   }
 
   void  Caveat::MakeCIF ( mmcif::PData CIF, int N )  {
-  char S[500];
+  char S[4096];
     CIF->PutString ( idCode,CIFCAT_DATABASE_PDB_CAVEAT,CIFTAG_ID,false );
     strcpy  ( S,"\n" );
     strncat ( S,Line,sizeof(S)-2 );
@@ -641,7 +641,7 @@ namespace mmdb  {
 
   void  KeyWords::MakeCIF ( mmcif::PData CIF )  {
   int  i,k;
-  char S[500];
+  char S[4096];
     strcpy ( S,"\n" );
     for (i=0;i<nKeyWords;i++)
       if (KeyWord[i])  {

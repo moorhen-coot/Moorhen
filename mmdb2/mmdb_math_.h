@@ -50,22 +50,22 @@ namespace mmdb  {
     const realtype NO_TORSION = -MaxReal;
 
     //  U[0,1,2] = x,y,z
-    extern realtype GetTorsion   ( rvector U, rvector W, rvector V );
-    extern realtype GetAngle     ( rvector U, rvector V );
+    extern MMDB_DL_EXPORT realtype GetTorsion   ( rvector U, rvector W, rvector V );
+    extern MMDB_DL_EXPORT realtype GetAngle     ( rvector U, rvector V );
 
     //  Calculates the binomial coefficient n choose m, 0<=n<=500, 0<=m<=n
-    extern realtype Combinations ( int n, int m );
+    extern MMDB_DL_EXPORT realtype Combinations ( int n, int m );
 
     //  Calculates precisely log(1-x) for x<1, including very small x
-    extern realtype log1mx  ( realtype x );
+    extern MMDB_DL_EXPORT realtype log1mx  ( realtype x );
 
     //  Calculates precisely 1 - exp(x) for any x including very small values
-    extern realtype expc    ( realtype x );
+    extern MMDB_DL_EXPORT realtype expc    ( realtype x );
 
     inline double exp10  ( double x ) { return exp(x*ln10);   }
 
     //  Calculates precisely 1-(1-x)**y including very small x and very large y
-    extern realtype expc1mx ( realtype x, realtype y );
+    extern MMDB_DL_EXPORT realtype expc1mx ( realtype x, realtype y );
 
   }
 

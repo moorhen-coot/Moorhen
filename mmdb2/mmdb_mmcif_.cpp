@@ -4,7 +4,7 @@
 //   CCP4 Coordinate Library: support of coordinate-related
 //   functionality in protein crystallography applications.
 //
-//   Copyright (C) Eugene Krissinel 2000-2015.
+//   Copyright (C) Eugene Krissinel 2000-2022.
 //
 //    This library is free software: you can redistribute it and/or
 //    modify it under the terms of the GNU Lesser General Public
@@ -22,7 +22,7 @@
 //
 //  =================================================================
 //
-//    28.09.15   <--  Date of Last Modification.
+//    09.02.22   <--  Date of Last Modification.
 //                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //  -----------------------------------------------------------------
 //
@@ -36,7 +36,7 @@
 //                  mmdb::mmcif::Data     ( mmCIF data block  )
 //                  mmdb::mmcif::File     ( mmCIF file        )
 //
-//  (C) E. Krissinel 2000-2015
+//  (C) E. Krissinel 2000-2022
 //
 //  =================================================================
 //
@@ -1717,7 +1717,7 @@ namespace mmdb  {
       return false;
     }
 
-    #define _max_buf_len   500
+    #define _max_buf_len   4096
 
     static char  _err_string[_max_buf_len+1];
     static int   _err_line;
@@ -3288,7 +3288,7 @@ namespace mmdb  {
     int  File::ReadMMCIFFile ( cpstr FName, io::GZ_MODE gzipMode )  {
     io::File  f;
     PData     CIF;
-    char      S[500];
+    char      S[4096];
     int       RC,lcount;
 
       FreeMemory();

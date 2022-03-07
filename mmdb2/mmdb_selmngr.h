@@ -128,7 +128,7 @@ namespace mmdb  {
   DefineClass(SelManager);
   DefineStreamFunctions(SelManager);
 
-  class  SelManager : public  CoorManager  {
+  class  MMDB_DL_EXPORT SelManager : public  CoorManager  {
 
     public :
 

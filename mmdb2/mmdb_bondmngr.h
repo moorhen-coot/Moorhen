@@ -50,7 +50,7 @@ namespace mmdb  {
   DefineClass(BondManager);
   DefineStreamFunctions(BondManager);
 
-  class BondManager : public SelManager  {
+  class MMDB_DL_EXPORT BondManager : public SelManager  {
 
     public :
 

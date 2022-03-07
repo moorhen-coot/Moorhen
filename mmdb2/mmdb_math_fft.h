@@ -48,14 +48,14 @@ namespace mmdb  {
 
   namespace math  {
 
-    extern void FFT      ( rvector data, int nn, bool Forward=true );
+    extern MMDB_DL_EXPORT void FFT      ( rvector data, int nn, bool Forward=true );
 
-    extern void RealFFT  ( rvector data, int n,  bool Forward=true );
+    extern MMDB_DL_EXPORT void RealFFT  ( rvector data, int n,  bool Forward=true );
 
-    extern void TwoFFT   ( rvector data1, rvector data2,
+    extern MMDB_DL_EXPORT void TwoFFT   ( rvector data1, rvector data2,
                            rvector fft1,  rvector fft2, int n );
 
-    extern void Convolve ( rvector data, int n, rvector respns, int m,
+    extern MMDB_DL_EXPORT void Convolve ( rvector data, int n, rvector respns, int m,
                            rvector ans,  bool Conv=true );
 
 
@@ -84,7 +84,7 @@ namespace mmdb  {
     //   The number of sampling nodes n *must* be an integer power of
     // two, i.e. 2,4,8,16 ... .
     //
-    extern void mConvolve ( rvector data, int n, int m );
+    extern MMDB_DL_EXPORT void mConvolve ( rvector data, int n, int m );
 
   }  // namespace math
 

@@ -4,7 +4,7 @@
 //   CCP4 Coordinate Library: support of coordinate-related
 //   functionality in protein crystallography applications.
 //
-//   Copyright (C) Eugene Krissinel 2000-2013.
+//   Copyright (C) Eugene Krissinel 2000-2022.
 //
 //    This library is free software: you can redistribute it and/or
 //    modify it under the terms of the GNU Lesser General Public
@@ -22,7 +22,7 @@
 //
 //  =================================================================
 //
-//    12.09.13   <--  Date of Last Modification.
+//    09.02.22   <--  Date of Last Modification.
 //                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //  -----------------------------------------------------------------
 //
@@ -36,7 +36,7 @@
 //                  mmdb::mmcif::Data     ( mmCIF data block  )
 //                  mmdb::mmcif::File     ( mmCIF file        )
 //
-//  (C) E. Krissinel 2000-2013
+//  (C) E. Krissinel 2000-2022
 //
 //  =================================================================
 //
@@ -45,7 +45,7 @@
 #ifndef __MMDB_MMCIF__
 #define __MMDB_MMCIF__
 
-
+#include "mmdb_defs.h"
 #include "mmdb_io_stream.h"
 
 namespace mmdb  {
@@ -82,7 +82,7 @@ namespace mmdb  {
     hierarchies in Section \"\ref mmcif_handler\".
     */
 
-    class Category : public io::Stream  {
+    class MMDB_DL_EXPORT Category : public io::Stream  {
 
       friend class Data;
 
@@ -245,10 +245,10 @@ namespace mmdb  {
 
     /// \brief Constants used to specify mmCIF's \"data not given\" and
     /// \"data not available\" data types.
-    extern const int CIF_NODATA_DOT;
-    extern const int CIF_NODATA_QUESTION;
-    extern cpstr     CIF_NODATA_DOT_FIELD;
-    extern cpstr     CIF_NODATA_QUESTION_FIELD;
+    extern MMDB_DL_IMPORT(const int) CIF_NODATA_DOT;
+    extern MMDB_DL_IMPORT(const int) CIF_NODATA_QUESTION;
+    extern MMDB_DL_IMPORT(cpstr)     CIF_NODATA_DOT_FIELD;
+    extern MMDB_DL_IMPORT(cpstr)     CIF_NODATA_QUESTION_FIELD;
 
     /// \brief mmcif::Struct represents mmCIF's \"structure\" category,
     ///        where data follows directly the corresponding tag.
@@ -278,7 +278,7 @@ namespace mmdb  {
     \"\ref mmcif_handler\".
     */
 
-    class Struct : public Category  {
+    class MMDB_DL_EXPORT Struct : public Category  {
 
       public :
 
@@ -637,7 +637,7 @@ namespace mmdb  {
     \"\ref mmcif_handler\".
     */
 
-    class Loop : public Category  {
+    class MMDB_DL_EXPORT Loop : public Category  {
 
       friend class Data;
 
@@ -1468,7 +1468,7 @@ namespace mmdb  {
     \"\ref mmcif_handler\".
     */
 
-    class Data : public io::Stream  {
+    class MMDB_DL_EXPORT Data : public io::Stream  {
 
       friend class File;
 
@@ -1621,7 +1621,7 @@ namespace mmdb  {
         /*!
         \code
         mmcif::Data data;
-        char       errLog[500];
+        char       errLog[4096];
         int        rc;
            rc = data.ReadMMCIFData  ( "myfile.cif" );
            if (rc<0)
@@ -1640,7 +1640,7 @@ namespace mmdb  {
         /// \brief Reads sequential mmCIF data blocks from file.
         /// \param RCFile reference to a CFile object opened on a file
         /// \param S buffer string which represent a sliding read window.
-        ///          The string should be at least 500 characters long,
+        ///          The string should be at least 4096 characters long,
         ///          initialized with empty-string value before first read,
         ///          and passed unchanged between the reads
         /// \param lcount line counter, should be set zero before first
@@ -2076,7 +2076,7 @@ namespace mmdb  {
     DefineClass(File);
     DefineStreamFunctions(File);
 
-    class File : public io::Stream  {
+    class MMDB_DL_EXPORT File : public io::Stream  {
 
       public :
         int      nData;
@@ -2124,16 +2124,16 @@ namespace mmdb  {
     };
 
 
-    extern pstr GetMMCIFInputBuffer ( int & LineNo );
+    extern MMDB_DL_EXPORT pstr GetMMCIFInputBuffer ( int & LineNo );
 
     //  isCIF will return
     //    -1   if file FName does not exist
     //     0   if file FName is likely a CIF file ( 'data_' is present )
     //     1   if file FName is not a CIF file ( 'data_' is absent )
-    extern int isCIF ( cpstr FName, io::GZ_MODE gzipMode=io::GZM_CHECK );
-    extern int isCIF ( io::RFile f );
+    extern MMDB_DL_EXPORT int isCIF ( cpstr FName, io::GZ_MODE gzipMode=io::GZM_CHECK );
+    extern MMDB_DL_EXPORT int isCIF ( io::RFile f );
 
-    pstr GetCIFMessage ( pstr M, int RC );
+    MMDB_DL_EXPORT pstr GetCIFMessage ( pstr M, int RC );
 
 
   }  // namespace mmcif
@@ -2142,5 +2142,3 @@ namespace mmdb  {
 
 
 #endif
-
-

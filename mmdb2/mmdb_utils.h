@@ -77,22 +77,22 @@ namespace mmdb  {
   // ==================  Date functions  ===================
 
   // converts  DD-MMM-YY  to DD-MMM-YYYY; appends terminating zero
-  extern void  Date9to11   ( cpstr Date9, pstr Date11 );
+  extern MMDB_DL_EXPORT void  Date9to11   ( cpstr Date9, pstr Date11 );
 
   // converts DD-MMM-YYYY to DD-MMM-YY;  does not append terminating zero
-  extern void  Date11to9   ( cpstr Date11, pstr Date9 );
+  extern MMDB_DL_EXPORT void  Date11to9   ( cpstr Date11, pstr Date9 );
 
   // converts DD-MMM-YY   to YYYY-MM-DD;  appends terminating zero
-  extern void  Date9toCIF  ( cpstr Date9, pstr DateCIF );
+  extern MMDB_DL_EXPORT void  Date9toCIF  ( cpstr Date9, pstr DateCIF );
 
   // converts DD-MMM-YYYY to YYYY-MM-DD;  appends terminating zero
-  extern void  Date11toCIF ( cpstr Date11, pstr DateCIF );
+  extern MMDB_DL_EXPORT void  Date11toCIF ( cpstr Date11, pstr DateCIF );
 
   // converts YYYY-MM-DD  to DD-MMM-YY;   appends terminating zero
-  extern void  DateCIFto9  ( cpstr DateCIF, pstr Date9 );
+  extern MMDB_DL_EXPORT void  DateCIFto9  ( cpstr DateCIF, pstr Date9 );
 
   // converts YYYY-MM-DD  to DD-MMM-YYYY; appends terminating zero
-  extern void  DateCIFto11 ( cpstr DateCIF, pstr Date11 );
+  extern MMDB_DL_EXPORT void  DateCIFto11 ( cpstr DateCIF, pstr Date11 );
 
 
   // =================  Format functions  ==================
@@ -101,13 +101,13 @@ namespace mmdb  {
   // first M characters. This number is returned in N.
   //   The return is false if no integer number may be
   // recognized. In this case, N is assigned MinInt4 value.
-  extern bool GetInteger ( int & N, cpstr S, int M );
+  extern MMDB_DL_EXPORT bool GetInteger ( int & N, cpstr S, int M );
 
   //   Returns true if S contains a real number in its
   // first M characters. This number is returned in R.
   //   The return is false if no real number may be
   // recognized. In this case, R is assigned -MaxReal value.
-  extern bool GetReal ( realtype & R, cpstr S, int M );
+  extern MMDB_DL_EXPORT bool GetReal ( realtype & R, cpstr S, int M );
 
   //   Returns true if S contains an integer number in its
   // first M characters. This number is returned in N. In addition
@@ -117,14 +117,14 @@ namespace mmdb  {
   //   The return is false if no integer number may be
   // recognized. In this case, N is assigned MinInt4 value,
   // "ins" just returns (M+1)th symbol of S (+terminating 0).
-  extern bool  GetIntIns ( int & N, pstr ins, cpstr S, int M );
+  extern MMDB_DL_EXPORT bool  GetIntIns ( int & N, pstr ins, cpstr S, int M );
 
   //  Integer N is converted into ASCII string of length M
   // and pasted onto first M characters of string S. No
   // terminating zero is added.
   //  If N is set to MinInt4, then first M characters of
   // string S are set to space.
-  extern void  PutInteger ( pstr S, int N, int M );
+  extern MMDB_DL_EXPORT void  PutInteger ( pstr S, int N, int M );
 
   //  Real R is converted into ASCII string of length M
   // and pasted onto first M characters of string S. No
@@ -132,7 +132,7 @@ namespace mmdb  {
   // according to fixed format FM.L
   //  If R is set to -MaxReal, then first M characters of
   // string S are set to the space character.
-  extern void  PutRealF ( pstr S, realtype R, int M, int L );
+  extern MMDB_DL_EXPORT void  PutRealF ( pstr S, realtype R, int M, int L );
 
   //  Integer N is converted into ASCII string of length M
   // and pasted onto first M characters of string S. No
@@ -141,80 +141,80 @@ namespace mmdb  {
   //  If N is set to MinInt4, then first M+1 characters of
   // string S are set to space, and no insert code are
   // appended.
-  extern void  PutIntIns ( pstr S, int N, int M, cpstr ins );
+  extern MMDB_DL_EXPORT void  PutIntIns ( pstr S, int N, int M, cpstr ins );
 
 
   //   CIFInteger(..), CIFReal(..) and CIFGetString(..) automate
   // extraction and analysis of data from CIF file. If the data
   // is erroneous or absent, they store an error message in
   // CIFErrorLocation string (below) and return non-zero.
-  extern ERROR_CODE CIFGetInteger  ( int & I, mmcif::PStruct Struct,
+  extern MMDB_DL_EXPORT ERROR_CODE CIFGetInteger  ( int & I, mmcif::PStruct Struct,
                                      cpstr Tag,
                                      bool Remove=true );
-  extern ERROR_CODE CIFGetReal     ( realtype & R, mmcif::PStruct Struct,
+  extern MMDB_DL_EXPORT ERROR_CODE CIFGetReal     ( realtype & R, mmcif::PStruct Struct,
                                      cpstr Tag,
                                      bool Remove=true );
-  extern ERROR_CODE CIFGetString   ( pstr S, mmcif::PStruct Struct,
+  extern MMDB_DL_EXPORT ERROR_CODE CIFGetString   ( pstr S, mmcif::PStruct Struct,
                                       cpstr Tag, int SLen,
                                       cpstr DefS,
                                       bool Remove=true );
 
-  extern ERROR_CODE CIFGetInteger  ( int & I, mmcif::PLoop Loop, cpstr Tag,
+  extern MMDB_DL_EXPORT ERROR_CODE CIFGetInteger  ( int & I, mmcif::PLoop Loop, cpstr Tag,
                                      int & Signal );
-  extern ERROR_CODE CIFGetIntegerD ( int & I, mmcif::PLoop Loop, cpstr Tag,
+  extern MMDB_DL_EXPORT ERROR_CODE CIFGetIntegerD ( int & I, mmcif::PLoop Loop, cpstr Tag,
                                      int defValue=MinInt4 );
-  extern ERROR_CODE CIFGetInteger1 ( int & I, mmcif::PLoop Loop, cpstr Tag,
+  extern MMDB_DL_EXPORT ERROR_CODE CIFGetInteger1 ( int & I, mmcif::PLoop Loop, cpstr Tag,
                                      int nrow );
 
-  extern ERROR_CODE CIFGetReal     ( realtype & R, mmcif::PLoop Loop,
+  extern MMDB_DL_EXPORT ERROR_CODE CIFGetReal     ( realtype & R, mmcif::PLoop Loop,
                                      cpstr Tag, int & Signal );
-  extern ERROR_CODE CIFGetReal1    ( realtype & R, mmcif::PLoop Loop,
+  extern MMDB_DL_EXPORT ERROR_CODE CIFGetReal1    ( realtype & R, mmcif::PLoop Loop,
                                      cpstr Tag, int nrow );
 
-  extern ERROR_CODE CIFGetString   ( pstr S, mmcif::PLoop Loop, cpstr Tag,
+  extern MMDB_DL_EXPORT ERROR_CODE CIFGetString   ( pstr S, mmcif::PLoop Loop, cpstr Tag,
                                      int row, int SLen, cpstr DefS );
 
   //  Calculates AI=A^{-1}
-  extern void  Mat4Inverse ( const mat44 & A, mat44 & AI );
+  extern MMDB_DL_EXPORT void  Mat4Inverse ( const mat44 & A, mat44 & AI );
   //  Calculates A=B*C
-  extern void  Mat4Mult    ( mat44 & A, const mat44 & B, const mat44 & C );
+  extern MMDB_DL_EXPORT void  Mat4Mult    ( mat44 & A, const mat44 & B, const mat44 & C );
   //  Calculates A=B^{-1}*C
-  extern void  Mat4Div1    ( mat44 & A, const mat44 & B, const mat44 & C );
+  extern MMDB_DL_EXPORT void  Mat4Div1    ( mat44 & A, const mat44 & B, const mat44 & C );
   //  Calculates A=B*C^{-1}
-  extern void  Mat4Div2    ( mat44 & A, const mat44 & B, const mat44 & C );
+  extern MMDB_DL_EXPORT void  Mat4Div2    ( mat44 & A, const mat44 & B, const mat44 & C );
   //  Calculates determinant of the rotation part
-  extern realtype Mat4RotDet ( mat44 & T );
+  extern MMDB_DL_EXPORT realtype Mat4RotDet ( mat44 & T );
 
   //  Sets up a unit matrix
-  extern void  Mat4Init  ( mat44 & A );
-  extern void  Mat3Init  ( mat33 & A );
+  extern MMDB_DL_EXPORT void  Mat4Init  ( mat44 & A );
+  extern MMDB_DL_EXPORT void  Mat3Init  ( mat33 & A );
 
   //  Calculates AI=A^{-1}, returns determinant
-  extern realtype Mat3Inverse ( const mat33 & A, mat33 & AI );
+  extern MMDB_DL_EXPORT realtype Mat3Inverse ( const mat33 & A, mat33 & AI );
 
-  extern bool isMat4Unit ( const mat44 & A, realtype eps, bool rotOnly );
+  extern MMDB_DL_EXPORT bool isMat4Unit ( const mat44 & A, realtype eps, bool rotOnly );
 
   //  Copies A into AC
-  extern void  Mat4Copy  ( const mat44 & A, mat44 & ACopy );
-  extern void  Mat3Copy  ( const mat33 & A, mat33 & ACopy );
-  extern bool  isMat4Eq  ( const mat44 & A, const mat44 & B, realtype eps,
+  extern MMDB_DL_EXPORT void  Mat4Copy  ( const mat44 & A, mat44 & ACopy );
+  extern MMDB_DL_EXPORT void  Mat3Copy  ( const mat33 & A, mat33 & ACopy );
+  extern MMDB_DL_EXPORT bool  isMat4Eq  ( const mat44 & A, const mat44 & B, realtype eps,
                            bool rotOnly );
 
-  extern void TransformXYZ   ( const mat44 & T,
+  extern MMDB_DL_EXPORT void TransformXYZ   ( const mat44 & T,
                                realtype & X, realtype & Y, realtype & Z );
-  extern realtype TransformX ( const mat44 & T,
+  extern MMDB_DL_EXPORT realtype TransformX ( const mat44 & T,
                                realtype X, realtype Y, realtype Z );
-  extern realtype TransformY ( const mat44 & T,
+  extern MMDB_DL_EXPORT realtype TransformY ( const mat44 & T,
                                realtype X, realtype Y, realtype Z );
-  extern realtype TransformZ ( const mat44 & T,
+  extern MMDB_DL_EXPORT realtype TransformZ ( const mat44 & T,
                                realtype X, realtype Y, realtype Z );
 
 
-  extern char CIFErrorLocation[200];
+  extern MMDB_DL_IMPORT(char) CIFErrorLocation[200];
 
   //  Returns ASCII string explaining the nature of
   // Error_xxxx error code.
-  extern cpstr  GetErrorDescription ( ERROR_CODE ErrorCode );
+  extern MMDB_DL_EXPORT cpstr  GetErrorDescription ( ERROR_CODE ErrorCode );
 
 
 
@@ -223,7 +223,7 @@ namespace mmdb  {
   DefineClass(ContainerClass);
   DefineStreamFunctions(ContainerClass);
 
-  class ContainerClass : public io::Stream  {
+  class MMDB_DL_EXPORT ContainerClass : public io::Stream  {
 
     friend class ClassContainer;
 
@@ -286,7 +286,7 @@ namespace mmdb  {
   DefineClass(ContString);
   DefineStreamFunctions(ContString);
 
-  class ContString : public ContainerClass  {
+  class MMDB_DL_EXPORT ContString : public ContainerClass  {
 
     public :
 
@@ -324,7 +324,7 @@ namespace mmdb  {
   DefineClass(ClassContainer);
   DefineStreamFunctions(ClassContainer);
 
-  class ClassContainer : public io::Stream  {
+  class MMDB_DL_EXPORT ClassContainer : public io::Stream  {
 
     public :
 
@@ -384,7 +384,7 @@ namespace mmdb  {
     APATH_WC_AltLoc   = 0x00080000
   };
 
-  class AtomPath : public io::Stream  {
+  class MMDB_DL_EXPORT AtomPath : public io::Stream  {
 
     public :
 
@@ -460,7 +460,7 @@ namespace mmdb  {
 
   DefineClass(QuickSort);
 
-  class QuickSort : public io::Stream  {
+  class MMDB_DL_EXPORT QuickSort : public io::Stream  {
 
     public :
       QuickSort ();
@@ -483,7 +483,7 @@ namespace mmdb  {
 
   //  --------------------------------------------------------------
 
-  extern void  takeWord ( pstr & p, pstr wrd, cpstr ter, int l );
+  extern MMDB_DL_EXPORT void  takeWord ( pstr & p, pstr wrd, cpstr ter, int l );
 
   //   ParseAtomID(..) reads the atom ID of the following form:
   //    {name} {[element]} {:altcode}
@@ -509,7 +509,7 @@ namespace mmdb  {
   //        *[*]:A      (same as above)
   //        *[*]:*      (any atom)
   //        *           (any atom with no alternate location indicator)
-  extern void ParseAtomID ( cpstr ID, AtomName aname,
+  extern MMDB_DL_EXPORT void ParseAtomID ( cpstr ID, AtomName aname,
                             Element elname, AltLoc   aloc );
 
   //   ParseResID(..) reads the residue ID of the following form:
@@ -541,7 +541,7 @@ namespace mmdb  {
   //        *(*).A      (same as above)
   //        *(*).*      (any residue)
   //        *           (any residue with no insertion code)
-  extern int ParseResID ( cpstr ID, int & sn,
+  extern MMDB_DL_EXPORT int ParseResID ( cpstr ID, int & sn,
                           InsCode inscode, ResName resname );
 
 
@@ -588,7 +588,7 @@ namespace mmdb  {
   //      -1                - wrong numerical format for model (fatal)
   //      -2                - wrong numerical format for seqNum (fatal)
 
-  extern int ParseAtomPath ( cpstr     ID,
+  extern MMDB_DL_EXPORT int ParseAtomPath ( cpstr     ID,
                              int &     mdl,
                              ChainID   chn,
                              int &     sn,
@@ -601,7 +601,7 @@ namespace mmdb  {
 
 
 
-  extern int ParseSelectionPath ( cpstr   CID,
+  extern MMDB_DL_EXPORT int ParseSelectionPath ( cpstr   CID,
                                   int &   iModel,
                                   pstr    Chains,
                                   int &   sNum1,
@@ -615,7 +615,7 @@ namespace mmdb  {
 
 
 
-  extern void MakeSelectionPath ( pstr       CID,
+  extern MMDB_DL_EXPORT void MakeSelectionPath ( pstr       CID,
                                   int        iModel,
                                   cpstr      Chains,
                                   int        sNum1,

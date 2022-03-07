@@ -71,7 +71,7 @@ namespace mmdb  {
 
   DefineStreamFunctions(Manager);
 
-  class Manager : public BondManager  {
+  class MMDB_DL_EXPORT Manager : public BondManager  {
 
     public :
 

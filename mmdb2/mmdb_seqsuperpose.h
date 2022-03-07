@@ -54,7 +54,7 @@ namespace mmdb  {
 
   DefineClass(SeqSuperpose);
 
-  class SeqSuperpose  {
+  class MMDB_DL_EXPORT SeqSuperpose  {
 
     public :
       mat44    TMatrix;  // superposes Ca1 over Ca2: |T*Ca1 - Ca2|->min

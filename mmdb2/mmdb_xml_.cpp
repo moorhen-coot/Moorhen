@@ -4,7 +4,7 @@
 //   CCP4 Coordinate Library: support of coordinate-related
 //   functionality in protein crystallography applications.
 //
-//   Copyright (C) Eugene Krissinel 2000-2013.
+//   Copyright (C) Eugene Krissinel 2000-2022.
 //
 //    This library is free software: you can redistribute it and/or
 //    modify it under the terms of the GNU Lesser General Public
@@ -22,7 +22,7 @@
 //
 //  =================================================================
 //
-//    06.12.13   <--  Date of Last Modification.
+//    09.02.22   <--  Date of Last Modification.
 //                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //  -----------------------------------------------------------------
 //
@@ -33,7 +33,7 @@
 //  **** Classes :  mmdb::xml::XMLObject
 //       ~~~~~~~~~
 //
-//   (C) E. Krissinel 2000-2013
+//   (C) E. Krissinel 2000-2022
 //
 //  =================================================================
 //
@@ -699,7 +699,7 @@ namespace mmdb  {
 
     XML_RC XMLObject::ReadObject ( cpstr FName )  {
     io::File f;
-    char     S[500];
+    char     S[4096];
     int      i;
     XML_RC   rc;
 

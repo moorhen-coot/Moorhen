@@ -72,28 +72,28 @@ namespace mmdb  {
       syskey_all  = 3
     };
 
-    extern const char _dir_sep_c;
-    extern cpstr      _dir_sep;
+    extern MMDB_DL_IMPORT(const char) _dir_sep_c;
+    extern MMDB_DL_IMPORT(cpstr)      _dir_sep;
 
     // ===================  Auxilary Functions  ========================
 
 
-    extern cpstr GetFPath     ( pstr  FilePath, SYSKEY syskey=syskey_all );
-    extern cpstr GetFName     ( cpstr FilePath, SYSKEY syskey=syskey_all );
-    extern cpstr GetFExt      ( cpstr FilePath );
-    extern cpstr ForceUnixSep ( pstr  FilePath );
-    extern cpstr ChangeExt    ( pstr  FilePath, cpstr newExt,
+    extern MMDB_DL_EXPORT cpstr GetFPath     ( pstr  FilePath, SYSKEY syskey=syskey_all );
+    extern MMDB_DL_EXPORT cpstr GetFName     ( cpstr FilePath, SYSKEY syskey=syskey_all );
+    extern MMDB_DL_EXPORT cpstr GetFExt      ( cpstr FilePath );
+    extern MMDB_DL_EXPORT cpstr ForceUnixSep ( pstr  FilePath );
+    extern MMDB_DL_EXPORT cpstr ChangeExt    ( pstr  FilePath, cpstr newExt,
                                                 SYSKEY syskey=syskey_all );
-    extern cpstr FileError        ( int   ErrCode     );
-    extern void  RemoveDelimiters ( pstr  S, int SLen );
-    extern void  PickOutNumber    ( cpstr S, pstr SV, int SLen, int & j );
+    extern MMDB_DL_EXPORT cpstr FileError        ( int   ErrCode     );
+    extern MMDB_DL_EXPORT void  RemoveDelimiters ( pstr  S, int SLen );
+    extern MMDB_DL_EXPORT void  PickOutNumber    ( cpstr S, pstr SV, int SLen, int & j );
 
 
     // ==========================  File  ===============================
 
     DefineClass(File);
 
-    class  File  {
+    class  MMDB_DL_EXPORT File  {
 
       public :
 
@@ -293,10 +293,10 @@ namespace mmdb  {
     };
 
 
-    extern void SetGZIPPath     ( pstr gzipPath,     pstr ungzipPath     );
-    extern void SetCompressPath ( pstr compressPath, pstr uncompressPath );
+    extern MMDB_DL_EXPORT void SetGZIPPath     ( pstr gzipPath,     pstr ungzipPath     );
+    extern MMDB_DL_EXPORT void SetCompressPath ( pstr compressPath, pstr uncompressPath );
 
-    extern bool FileExists      ( cpstr FileName, PFile f=NULL );
+    extern MMDB_DL_EXPORT bool FileExists      ( cpstr FileName, PFile f=NULL );
 
   }
 

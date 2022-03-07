@@ -42,6 +42,7 @@
 #include <string.h>
 
 #ifdef  _WIN32
+#define WIN32_LEAN_AND_MEAN
 # include <windows.h>
 #ifndef sleep
 # define sleep Sleep
@@ -320,8 +321,8 @@ namespace mmdb  {
     bool  File::reset ( bool ReadOnly, int retry )  {
     #ifndef _MSC_VER
     pstr p;
-    int  i;
     #endif
+    int  i;
 
       if (memIO)  {
 
@@ -371,8 +372,6 @@ namespace mmdb  {
     #endif
 
           } else  {
-
-    #ifndef _MSC_VER
             for (i=0;(i<=retry) && (!hFile);i++)  {
               if (i>0)  sleep ( 1 );
               if (TextMode)  {
@@ -383,8 +382,6 @@ namespace mmdb  {
                          else  hFile = fopen ( FName,"r+b" );
               }
             }
-    #endif
-
           }
 
           if (hFile)  {

@@ -132,7 +132,7 @@ namespace mmdb  {
 # define CALL_LIKE_VMS  1
 
 // MVS stands for Microsoft Visual Studio
-#elif defined(_MVS)
+#elif defined(_MVS)  || defined (_MSC_VER)
 # define CALL_LIKE_MVS  1
 
 #elif defined(F2C) || defined(G77)
@@ -146,7 +146,6 @@ namespace mmdb  {
 # define CALL_LIKE_SUN  100
 
 #endif
-
 
 
 //  =================  Machine-dependent definitions  ==================
@@ -293,6 +292,11 @@ namespace mmdb  {
 #if defined(CALL_LIKE_SUN)
 
     typedef pstr fpstr;
+#if __GNUC__ > 7 || __clang_major__ > 10
+    typedef size_t fpstr_size_t;
+#else
+    typedef int fpstr_size_t;
+#endif
 
 # define FTN_STR(s)  s
 # define FTN_LEN(s)  s##_len
@@ -321,6 +325,7 @@ namespace mmdb  {
 # elif defined(CALL_LIKE_HPUX)
 
     typedef pstr fpstr;
+    typedef int fpstr_size_t;
 
 # define FTN_STR(s)  s
 # define FTN_LEN(s)  s##_len
@@ -349,6 +354,7 @@ namespace mmdb  {
 #elif defined(CALL_LIKE_STARDENT)
 
     typedef PStrPar fpstr;
+    typedef int fpstr_size_t;
 
 # define FTN_STR(s)  s->S
 # define FTN_LEN(s)  s->len
@@ -377,6 +383,7 @@ namespace mmdb  {
 #elif defined(CALL_LIKE_VMS)
 
     typedef dsc$descriptor_s * fpstr;
+    typedef int fpstr_size_t;
 
 # define FTN_STR(s)  s->dsc$a_pointer;
 # define FTN_LEN(s)  s->dsc$w_length;
@@ -406,12 +413,13 @@ namespace mmdb  {
 #elif defined(CALL_LIKE_MVS)
 
     typedef pstr fpstr;
+    typedef int fpstr_size_t;
 
 # define FTN_STR(s)  s
 # define FTN_LEN(s)  s##_len
 
 # define char_struct(s)  \
-    pstr  s;             \
+    mmdb::pstr  s;             \
     int   s##_len;
 # define fill_char_struct(s,str)  \
     s  = str;                     \
@@ -419,23 +427,24 @@ namespace mmdb  {
 
 # ifdef __cplusplus
 #   define FORTRAN_SUBR(NAME,name,p_sun,p_stardent,p_mvs) \
-    extern "C" void __stdcall NAME p_mvs
+    extern "C" void NAME p_sun
 # else
 #   define FORTRAN_SUBR(NAME,name,p_sun,p_stardent,p_mvs) \
-    void __stdcall NAME p_mvs
+    void NAME p_sun
 # endif
 
 # define FORTRAN_EXTERN(NAME,name,p_sun,p_stardent,p_mvs) \
-    extern "C" void NAME p_mvs
+    extern "C" void NAME p_sun
 
 # define FORTRAN_CALL(NAME,name,p_sun,p_stardent,p_mvs) \
-    NAME p_mvs
+    NAME p_sun
 
 #else
 
 # error  Unknown machine!!!
 
     typedef pstr fpstr;
+    typedef int fpstr_size_t;
 
 # define FTN_STR(s)  s
 # define FTN_LEN(s)  s##_len

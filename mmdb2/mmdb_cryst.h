@@ -55,7 +55,7 @@ namespace mmdb  {
   DefineClass(CrystContainer);
   DefineStreamFunctions(CrystContainer);
 
-  class CrystContainer : public ClassContainer  {
+  class MMDB_DL_EXPORT CrystContainer : public ClassContainer  {
 
     public :
 
@@ -83,7 +83,7 @@ namespace mmdb  {
   DefineClass(NCSMatrix);
   DefineStreamFunctions(NCSMatrix);
 
-  class NCSMatrix : public ContainerClass  {
+  class MMDB_DL_EXPORT NCSMatrix : public ContainerClass  {
 
     friend class Cryst;
 
@@ -130,7 +130,7 @@ namespace mmdb  {
   DefineClass(TVect);
   DefineStreamFunctions(TVect);
 
-  class TVect : public ContainerClass  {
+  class MMDB_DL_EXPORT TVect : public ContainerClass  {
 
     public :
 
@@ -199,7 +199,7 @@ namespace mmdb  {
 
   extern cpstr OrthCode[6];
 
-  class Cryst : public io::Stream  {
+  class MMDB_DL_EXPORT Cryst : public io::Stream  {
 
     friend class Channel;
 

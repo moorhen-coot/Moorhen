@@ -50,7 +50,7 @@ namespace mmdb  {
     DefineClass(AlignParams);
     DefineStreamFunctions(AlignParams);
 
-    class AlignParams : public io::Stream  {
+    class MMDB_DL_EXPORT AlignParams : public io::Stream  {
 
       public :
 
@@ -81,7 +81,7 @@ namespace mmdb  {
       ALIGN_FREEENDS = 3
     };
 
-    class  Alignment : public io::Stream  {
+    class  MMDB_DL_EXPORT Alignment : public io::Stream  {
 
       public :
 
@@ -138,7 +138,7 @@ namespace mmdb  {
 
     DefineClass(Alignment1);
 
-    class  Alignment1 : public io::Stream  {
+    class  MMDB_DL_EXPORT Alignment1 : public io::Stream  {
 
       public :
 

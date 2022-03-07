@@ -51,7 +51,7 @@ namespace mmdb  {
 
     ///  Diagonalization of symmetric matrices A[1..N][1..N]
     /// by the method of Jacobi.
-    extern void  Jacobi ( int     N,     //!< dimension of the matrix
+    extern MMDB_DL_EXPORT void  Jacobi ( int     N,     //!< dimension of the matrix
                           rmatrix A,     //!< matrix to diagonalize; the
                                          /// lower triangle, except the
                                          /// diagonal, will remain unchanged
@@ -65,7 +65,7 @@ namespace mmdb  {
 
 
     //  A5.5.2  :  Perturbed Cholesky Decomposition
-    extern void  PbCholDecomp ( int        N,
+    extern MMDB_DL_EXPORT void  PbCholDecomp ( int        N,
                                 rvector    HDiag,
                                 realtype   MaxOff,
                                 realtype   MachEps,
@@ -74,20 +74,20 @@ namespace mmdb  {
 
     //  A3.2.3a  :  Cholesky's   L - Solution  of
     //              L*Y  =  B  ( given  B )
-    extern void  LSolve ( int N, rmatrix L, rvector B, rvector Y );
+    extern MMDB_DL_EXPORT void  LSolve ( int N, rmatrix L, rvector B, rvector Y );
 
     //  A3.2.3b  :  Cholesky's   LT - Solution  of
     //              LT*X  =  Y  ( given  Y )
-    extern void  LTSolve ( int N, rmatrix L, rvector Y, rvector X );
+    extern MMDB_DL_EXPORT void  LTSolve ( int N, rmatrix L, rvector Y, rvector X );
 
     //  A3.2.3   :  Solution of the equation    L*LT*S = G
     //              by the  Cholesky's  method
-    extern void  ChSolve ( int N, rmatrix L, rvector G, rvector S );
+    extern MMDB_DL_EXPORT void  ChSolve ( int N, rmatrix L, rvector G, rvector S );
 
 
     //  ----------------------------------------------------
 
-    extern void  FastInverse (  int N, rmatrix A, ivector J0,
+    extern MMDB_DL_EXPORT void  FastInverse (  int N, rmatrix A, ivector J0,
     //#D                          realtype &  Det,
                                 int & Signal );
     //
@@ -129,7 +129,7 @@ namespace mmdb  {
 
     //  ----------------------------------------------------
 
-    extern void  SVD ( int    NA,  int     M,    int N,
+    extern MMDB_DL_EXPORT void SVD ( int    NA,  int     M,    int N,
                        rmatrix A,  rmatrix U,    rmatrix V,
                        rvector W,  rvector RV1,
                        bool MatU,  bool   MatV,
@@ -226,7 +226,7 @@ namespace mmdb  {
     //
     //
 
-    extern void  OrderSVD ( int M, int N, rmatrix U, rmatrix V,
+    extern MMDB_DL_EXPORT void OrderSVD ( int M, int N, rmatrix U, rmatrix V,
                             rvector W, bool MatU, bool MatV );
 
 

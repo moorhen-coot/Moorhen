@@ -4,7 +4,7 @@
 //   CCP4 Coordinate Library: support of coordinate-related
 //   functionality in protein crystallography applications.
 //
-//   Copyright (C) Eugene Krissinel 2000-2013.
+//   Copyright (C) Eugene Krissinel 2000-2022.
 //
 //    This library is free software: you can redistribute it and/or
 //    modify it under the terms of the GNU Lesser General Public
@@ -22,7 +22,7 @@
 //
 //  =================================================================
 //
-//    24.07.15   <--  Date of Last Modification.
+//    09.02.22   <--  Date of Last Modification.
 //                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //  -----------------------------------------------------------------
 //
@@ -33,7 +33,7 @@
 //  **** Classes :  mmdb::Root
 //       ~~~~~~~~~
 //
-//  (C) E. Krissinel 2000-2015
+//  (C) E. Krissinel 2000-2022
 //
 //  =================================================================
 //
@@ -133,7 +133,7 @@ namespace mmdb  {
   DefineClass(Root);
   DefineStreamFunctions(Root);
 
-  class Root : public UDData  {
+  class MMDB_DL_EXPORT Root : public UDData  {
 
     friend class Model;
     friend class Chain;
@@ -332,7 +332,7 @@ namespace mmdb  {
       bool GetNewChainID ( int modelNo, ChainID chID, int length=1 );
 
       //  ---------------  Enquiring -------------------------------
-      
+
       bool isCompactBinary();
 
       int   CrystReady();
@@ -562,7 +562,7 @@ namespace mmdb  {
 
       //  input buffer
       int          lcount;  // input line counter
-      char         S[500];  // read buffer
+      char         S[4096];  // read buffer
       mmcif::PData CIF;     // CIF file manager
 
       PModel     crModel; // current model, used at reading a PDB file
@@ -626,18 +626,17 @@ namespace mmdb  {
   //     2   if file FName is likely a MMDB BIN (binary) file,
   //         but of a wrong edition (i.e. produced by a lower
   //         version of MMDB).
-  extern int isMMDBBIN ( cpstr FName, io::GZ_MODE gzipMode=io::GZM_CHECK );
-  extern int isMMDBBIN ( io::RFile f );
+  extern MMDB_DL_EXPORT int isMMDBBIN ( cpstr FName, io::GZ_MODE gzipMode=io::GZM_CHECK );
+  extern MMDB_DL_EXPORT int isMMDBBIN ( io::RFile f );
 
   //  isPDB will return
   //    -1   if file FName does not exist
   //     0   if file FName is likely a PDB file
   //     1   if file FName is not a PDB file
-  extern int isPDB ( cpstr FName, io::GZ_MODE gzipMode=io::GZM_CHECK,
+  extern MMDB_DL_EXPORT int isPDB ( cpstr FName, io::GZ_MODE gzipMode=io::GZM_CHECK,
                      bool IgnoreBlankLines=false );
-  extern int isPDB ( io::RFile f, bool IgnoreBlankLines=false );
+  extern MMDB_DL_EXPORT int isPDB ( io::RFile f, bool IgnoreBlankLines=false );
 
 }  // namespace mmdb
 
 #endif
-

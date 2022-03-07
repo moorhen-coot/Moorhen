@@ -60,29 +60,29 @@ namespace mmdb  {
   const int nElementMetals = 91;
   const int nHydAtomNames  = 14;
 
-  extern cpstr    const ElementName   [nElementNames];
-  extern cpstr    const ElementMetal  [nElementMetals];
-  extern cpstr    const HydAtomName   [nHydAtomNames];
-  extern realtype const MolecWeight   [nElementNames];
-  extern realtype const CovalentRadius[nElementNames];
-  extern realtype const VdWaalsRadius [nElementNames];
-  extern realtype const IonicRadius   [nElementNames];
+  extern MMDB_DL_IMPORT(cpstr    const) ElementName   [nElementNames];
+  extern MMDB_DL_IMPORT(cpstr    const) ElementMetal  [nElementMetals];
+  extern MMDB_DL_IMPORT(cpstr    const) HydAtomName   [nHydAtomNames];
+  extern MMDB_DL_IMPORT(realtype const) MolecWeight   [nElementNames];
+  extern MMDB_DL_IMPORT(realtype const) CovalentRadius[nElementNames];
+  extern MMDB_DL_IMPORT(realtype const) VdWaalsRadius [nElementNames];
+  extern MMDB_DL_IMPORT(realtype const) IonicRadius   [nElementNames];
 
-  extern bool isMetal ( cpstr element );
+  extern MMDB_DL_EXPORT bool isMetal ( cpstr element );
 
   const int ELEMENT_UNKNOWN = -1;
 
-  extern int      getElementNo      ( cpstr element );
-  extern realtype getMolecWeight    ( cpstr element );
-  extern realtype getCovalentRadius ( cpstr element );
-  extern realtype getVdWaalsRadius  ( cpstr element );
+  extern MMDB_DL_EXPORT int      getElementNo      ( cpstr element );
+  extern MMDB_DL_EXPORT realtype getMolecWeight    ( cpstr element );
+  extern MMDB_DL_EXPORT realtype getCovalentRadius ( cpstr element );
+  extern MMDB_DL_EXPORT realtype getVdWaalsRadius  ( cpstr element );
 
   const int nResNames = 26;
 
-  extern cpstr const ResidueName [nResNames];
-  extern char  const ResidueName1[nResNames];
+  extern MMDB_DL_IMPORT(cpstr const) ResidueName [nResNames];
+  extern MMDB_DL_IMPORT(char  const) ResidueName1[nResNames];
 
-  extern int getResidueNo ( cpstr resName );
+  extern MMDB_DL_EXPORT int getResidueNo ( cpstr resName );
 
   const realtype NAvogadro = 6.02214129e23;
 
@@ -99,28 +99,28 @@ namespace mmdb  {
     realtype relSolvEnergy;
   };
 
-  extern AAProperty const AAProperties[nAminoacidNames];
-  extern int const AASimilarity[nAminoacidNames][nAminoacidNames];
+  extern MMDB_DL_IMPORT(AAProperty const) AAProperties[nAminoacidNames];
+  extern MMDB_DL_IMPORT(int const) AASimilarity[nAminoacidNames][nAminoacidNames];
 
-  extern int      GetAAPIndex     ( cpstr resName );  // 0..nAminoacidNames-1
-  extern realtype GetAAHydropathy ( cpstr resName );  // -4.5...+4.5
-  extern realtype GetAACharge     ( cpstr resName );
-  extern realtype GetAASolvationEnergy ( cpstr resName );
-  extern int      GetAASimilarity ( cpstr resName1,
+  extern MMDB_DL_EXPORT int      GetAAPIndex     ( cpstr resName );  // 0..nAminoacidNames-1
+  extern MMDB_DL_EXPORT realtype GetAAHydropathy ( cpstr resName );  // -4.5...+4.5
+  extern MMDB_DL_EXPORT realtype GetAACharge     ( cpstr resName );
+  extern MMDB_DL_EXPORT realtype GetAASolvationEnergy ( cpstr resName );
+  extern MMDB_DL_EXPORT int      GetAASimilarity ( cpstr resName1,
                                     cpstr resName2 );  // 0..5
 
-  extern cpstr const StdSolventName[nSolventNames];
-  extern cpstr const NucleotideName[nNucleotideNames];
+  extern MMDB_DL_IMPORT(cpstr const) StdSolventName[nSolventNames];
+  extern MMDB_DL_IMPORT(cpstr const) NucleotideName[nNucleotideNames];
 
-  extern bool isSolvent    ( cpstr resName );
-  extern bool isAminoacid  ( cpstr resName );
-  extern bool isNucleotide ( cpstr resName );
-  extern int  isDNARNA     ( cpstr resName ); // 0,1(DNA),2(RNA)
-  extern bool isSugar      ( cpstr resName );
+  extern MMDB_DL_EXPORT bool isSolvent    ( cpstr resName );
+  extern MMDB_DL_EXPORT bool isAminoacid  ( cpstr resName );
+  extern MMDB_DL_EXPORT bool isNucleotide ( cpstr resName );
+  extern MMDB_DL_EXPORT int  isDNARNA     ( cpstr resName ); // 0,1(DNA),2(RNA)
+  extern MMDB_DL_EXPORT bool isSugar      ( cpstr resName );
 
-  extern void  Get1LetterCode ( cpstr res3name, pstr   res1code );
-  extern void  Get1LetterCode ( cpstr res3name, char & res1code );
-  extern void  Get3LetterCode ( cpstr res1name, pstr   res3code );
+  extern MMDB_DL_EXPORT void  Get1LetterCode ( cpstr res3name, pstr   res1code );
+  extern MMDB_DL_EXPORT void  Get1LetterCode ( cpstr res3name, char & res1code );
+  extern MMDB_DL_EXPORT void  Get3LetterCode ( cpstr res1name, pstr   res3code );
 
 }  // namespace mmdb
 

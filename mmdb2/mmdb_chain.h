@@ -66,7 +66,7 @@ namespace mmdb  {
 
   DefineClass(Manager);
 
-  class ProModel : public UDData  {
+  class MMDB_DL_EXPORT ProModel : public UDData  {
 
     friend class Chain;
 
@@ -112,7 +112,7 @@ namespace mmdb  {
   DefineClass(ChainContainer);
   DefineStreamFunctions(ChainContainer);
 
-  class ChainContainer : public ClassContainer  {
+  class MMDB_DL_EXPORT ChainContainer : public ClassContainer  {
 
     public :
 
@@ -142,7 +142,7 @@ namespace mmdb  {
   DefineClass(ContainerChain);
   DefineStreamFunctions(ContainerChain);
 
-  class ContainerChain : public ContainerClass {
+  class MMDB_DL_EXPORT ContainerChain : public ContainerClass {
 
     friend class ChainContainer;
 
@@ -166,7 +166,7 @@ namespace mmdb  {
   DefineClass(DBReference);
   DefineStreamFunctions(DBReference);
 
-  class DBReference : public ContainerChain  {
+  class MMDB_DL_EXPORT DBReference : public ContainerChain  {
 
     public :
 
@@ -211,7 +211,7 @@ namespace mmdb  {
   DefineClass(SeqAdv);
   DefineStreamFunctions(SeqAdv);
 
-  class SeqAdv : public ContainerChain  {
+  class MMDB_DL_EXPORT SeqAdv : public ContainerChain  {
 
     public :
 
@@ -253,7 +253,7 @@ namespace mmdb  {
   DefineClass(SeqRes);
   DefineStreamFunctions(SeqRes);
 
-  class SeqRes : public io::Stream  {
+  class MMDB_DL_EXPORT SeqRes : public io::Stream  {
 
     friend class Model;
     friend class Chain;
@@ -295,7 +295,7 @@ namespace mmdb  {
   DefineClass(ModRes);
   DefineStreamFunctions(ModRes);
 
-  class ModRes : public ContainerChain  {
+  class MMDB_DL_EXPORT ModRes : public ContainerChain  {
 
     public :
 
@@ -334,7 +334,7 @@ namespace mmdb  {
   DefineClass(HetRec);
   DefineStreamFunctions(HetRec);
 
-  class HetRec : public ContainerChain  {
+  class MMDB_DL_EXPORT HetRec : public ContainerChain  {
 
     public :
 
@@ -373,7 +373,7 @@ namespace mmdb  {
 
   DefineFactoryFunctions(Chain);
 
-  class Chain : public UDData  {
+  class MMDB_DL_EXPORT Chain : public UDData  {
 
     friend class DBReference;
     friend class SeqAdv;

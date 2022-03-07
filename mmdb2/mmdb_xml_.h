@@ -65,7 +65,7 @@ namespace mmdb  {
     DefineClass(XMLObject);
     DefineStreamFunctions(XMLObject);
 
-    class XMLObject : public io::Stream  {
+    class MMDB_DL_EXPORT XMLObject : public io::Stream  {
 
       public :
 
@@ -148,9 +148,9 @@ namespace mmdb  {
     };
 
 
-    extern PXMLObject mmCIF2XML ( mmcif::PData mmCIFData,
+    extern MMDB_DL_EXPORT PXMLObject mmCIF2XML ( mmcif::PData mmCIFData,
                                   int * rc=NULL );
-    extern PXMLObject mmCIF2XML ( cpstr XMLName, mmcif::PFile mmCIFFile,
+    extern MMDB_DL_EXPORT PXMLObject mmCIF2XML ( cpstr XMLName, mmcif::PFile mmCIFFile,
                                   int * rc=NULL );
 
   }  // namespace xml

@@ -57,7 +57,7 @@ namespace mmdb  {
   DefineClass(Brick);
   typedef  PPBrick * PPPBrick;
 
-  class Brick  {
+  class MMDB_DL_EXPORT Brick  {
 
     public :
       int     nAtoms;  // number of atoms hit into brick
@@ -85,7 +85,7 @@ namespace mmdb  {
   DefineClass(MBrick);
   typedef  PPMBrick * PPPMBrick;
 
-  class MBrick  {
+  class MMDB_DL_EXPORT MBrick  {
 
     public :
       ivector  nAtoms;  // number of atoms in the brick
@@ -113,7 +113,7 @@ namespace mmdb  {
   DefineClass(GenSym);
   DefineStreamFunctions(GenSym);
 
-  class GenSym : public SymOps  {
+  class MMDB_DL_EXPORT GenSym : public SymOps  {
 
     friend class CoorManager;
 
@@ -154,7 +154,7 @@ namespace mmdb  {
 
   DefineStructure(Contact);
 
-  struct Contact  {
+  struct MMDB_DL_EXPORT Contact  {
     int      id1,id2;
     long     group;
     realtype dist;
@@ -167,7 +167,7 @@ namespace mmdb  {
 
   DefineClass(MContact);
 
-  class MContact : public io::Stream  {
+  class MMDB_DL_EXPORT MContact : public io::Stream  {
 
     public :
       int       nStruct,contactID;
@@ -185,7 +185,7 @@ namespace mmdb  {
 
   };
 
-  extern void DeleteMContacts ( PPMContact & mcontact, int nContacts );
+  extern MMDB_DL_EXPORT void DeleteMContacts ( PPMContact & mcontact, int nContacts );
 
 
   // ======================  CoorManager  =========================
@@ -211,7 +211,7 @@ namespace mmdb  {
     GSM_NoCell           = 3
   };
 
-  class CoorManager : public Root  {
+  class MMDB_DL_EXPORT CoorManager : public Root  {
 
     public :
 
@@ -878,7 +878,7 @@ namespace mmdb  {
   //                   1) about z-axis by angle alpha
   //                   2) about new y-axis by angle beta
   //                   3) about new z-axis by angle gamma
-  extern void  GetEulerRotMatrix ( mat33 & erm,   realtype alpha,
+  extern MMDB_DL_EXPORT void  GetEulerRotMatrix ( mat33 & erm,   realtype alpha,
                                    realtype beta, realtype gamma );
 
   //  GetEulerTMatrix(..) calculates the Euler rotation-translation
@@ -887,7 +887,7 @@ namespace mmdb  {
   //                   2) about new y-axis by angle beta
   //                   3) about new z-axis by angle gamma
   //  Point (x0,y0,z0) is the center of rotation.
-  extern void  GetEulerTMatrix ( mat44 & erm,   realtype alpha,
+  extern MMDB_DL_EXPORT void  GetEulerTMatrix ( mat44 & erm,   realtype alpha,
                             realtype beta, realtype gamma,
                             realtype x0,   realtype y0,  realtype z0 );
 
@@ -895,14 +895,14 @@ namespace mmdb  {
   //                   2) about new y-axis by angle beta
   //                   3) about new z-axis by angle gamma
   //  Point (x0,y0,z0) is the center of rotation.
-  extern void EulerRotation ( PPAtom A, int nA,
+  extern MMDB_DL_EXPORT void EulerRotation ( PPAtom A, int nA,
                            realtype alpha, realtype beta, realtype gamma,
                            realtype x0,    realtype y0,   realtype z0 );
 
   //   GetVecRotMatrix(..) calculates the rotation matrix for
   // rotation by angle alpha about arbitrary vector directed
   // as (vx,vy,vz) = (vx2-vx1,vy2-vy1,vz2-vz1).
-  extern void GetVecRotMatrix ( mat33 & vrm,  realtype alpha,
+  extern MMDB_DL_EXPORT void GetVecRotMatrix ( mat33 & vrm,  realtype alpha,
                              realtype vx,  realtype vy, realtype vz );
 
 
@@ -915,7 +915,7 @@ namespace mmdb  {
   //  matrix).
   //    The function does not check for vrm to be a valid
   //  rotation matrix.
-  extern void GetRotParameters ( mat33 & vrm, realtype & alpha,
+  extern MMDB_DL_EXPORT void GetRotParameters ( mat33 & vrm, realtype & alpha,
                          realtype & vx, realtype & vy, realtype & vz );
 
 
@@ -924,7 +924,7 @@ namespace mmdb  {
   // (vx,vy,vz) = (vx2-vx1,vy2-vy1,vz2-vz1). Point (x0,y0,z0) is
   // the center of rotation -- actually a point belonging to the
   // rotation axis.
-  extern void GetVecTMatrix  ( mat44 & vrm, realtype alpha,
+  extern MMDB_DL_EXPORT void GetVecTMatrix  ( mat44 & vrm, realtype alpha,
                                realtype vx, realtype vy, realtype vz,
                                realtype x0, realtype y0, realtype z0 );
 
@@ -932,11 +932,11 @@ namespace mmdb  {
   // vector directed as (vx,vy,vz) = (vx2-vx1,vy2-vy1,vz2-vz1).
   // Point (x0,y0,z0) is the center of rotation -- actually
   // a point belonging to the rotation axis.
-  extern void VectorRotation ( PPAtom A, int nA,  realtype alpha,
+  extern MMDB_DL_EXPORT void VectorRotation ( PPAtom A, int nA,  realtype alpha,
                                realtype vx, realtype vy, realtype vz,
                                realtype x0, realtype y0, realtype z0 );
 
-  extern void GetMassCenter  ( PPAtom A, int nA,
+  extern MMDB_DL_EXPORT void GetMassCenter  ( PPAtom A, int nA,
                         realtype & xmc, realtype & ymc, realtype & zmc );
 
 
@@ -957,7 +957,7 @@ namespace mmdb  {
   // The default option (C==NULL) is thus identical to C[i]==i, 0<=i<nA.
   //   Upon normal completion, the procedure returns SPOSEAT_Ok.
 
-  extern int SuperposeAtoms ( mat44 & T, PPAtom A1, int nA, PPAtom A2,
+  extern MMDB_DL_EXPORT int SuperposeAtoms ( mat44 & T, PPAtom A1, int nA, PPAtom A2,
                               ivector C=NULL );
 
   enum CNSORT_DIR  {
@@ -970,14 +970,14 @@ namespace mmdb  {
     CNSORT_DDEC = 6
   };
 
-  extern void  SortContacts ( PContact contact, int ncontacts,
+  extern MMDB_DL_EXPORT void  SortContacts ( PContact contact, int ncontacts,
                               CNSORT_DIR sortmode );
 
 
-  extern const realtype NO_TORSION;
+  extern MMDB_DL_IMPORT(const realtype) NO_TORSION;
 
-  extern realtype getPhi ( PPAtom A );  // A[0] - A[3] used
-  extern realtype getPsi ( PPAtom A );  // A[0] - A[2] used
+  extern MMDB_DL_EXPORT realtype getPhi ( PPAtom A );  // A[0] - A[3] used
+  extern MMDB_DL_EXPORT realtype getPsi ( PPAtom A );  // A[0] - A[2] used
 
 }  // namespace mmdb
 

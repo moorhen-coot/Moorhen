@@ -863,12 +863,12 @@ namespace mmdb  {
     if (WhatIsSet & (CSET_CrystCard | CSET_DummyCell))  {
       strcpy    ( S,"CRYST1" );
       PadSpaces ( S,80 );
-      if (WhatIsSet & CSET_CellParams1)  {
+      if (WhatIsSet & (CSET_CellParams1 | CSET_DummyCell))  {
         PutRealF ( &(S[6 ]),a,9,3 );
         PutRealF ( &(S[15]),b,9,3 );
         PutRealF ( &(S[24]),c,9,3 );
       }
-      if (WhatIsSet & CSET_CellParams2)  {
+      if (WhatIsSet & (CSET_CellParams2 | CSET_DummyCell))  {
         PutRealF ( &(S[33]),alpha,7,2 );
         PutRealF ( &(S[40]),beta ,7,2 );
         PutRealF ( &(S[47]),gamma,7,2 );

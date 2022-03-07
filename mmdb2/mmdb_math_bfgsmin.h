@@ -73,7 +73,7 @@ namespace mmdb  {
 
     DefineClass(BFGSMin);
 
-    class BFGSMin  {
+    class MMDB_DL_EXPORT BFGSMin  {
 
       public :
 

@@ -69,16 +69,16 @@ namespace mmdb  {
 
   const int ATOM_NoSeqNum = MinInt4;
 
-  extern bool  ignoreSegID;
-  extern bool  ignoreElement;
-  extern bool  ignoreCharge;
-  extern bool  ignoreNonCoorPDBErrors;
-  extern bool  ignoreUnmatch;
+  extern MMDB_DL_IMPORT(bool)  ignoreSegID;
+  extern MMDB_DL_IMPORT(bool)  ignoreElement;
+  extern MMDB_DL_IMPORT(bool)  ignoreCharge;
+  extern MMDB_DL_IMPORT(bool)  ignoreNonCoorPDBErrors;
+  extern MMDB_DL_IMPORT(bool)  ignoreUnmatch;
 
 
   DefineStructure(AtomStat);
 
-  struct AtomStat  {
+  struct MMDB_DL_EXPORT AtomStat  {
 
     public :
       int       nAtoms;          // number of atoms in statistics
@@ -123,7 +123,7 @@ namespace mmdb  {
 
   DefineStructure(AtomBondI);
 
-  struct AtomBondI  {
+  struct MMDB_DL_EXPORT AtomBondI  {
     int  index;  //!< bonded atom index
     byte order;  //!< bond order
   };
@@ -131,7 +131,7 @@ namespace mmdb  {
 
   DefineStructure(AtomBond);
 
-  struct AtomBond  {
+  struct MMDB_DL_EXPORT AtomBond  {
     PAtom atom;  //!< bonded atom pointer
     byte  order;  //!< bond order
   };
@@ -139,7 +139,7 @@ namespace mmdb  {
 
   DefineFactoryFunctions(Atom);
 
-  class Atom : public UDData  {
+  class MMDB_DL_EXPORT Atom : public UDData  {
 
     friend class Residue;
     friend class Model;
@@ -464,7 +464,7 @@ namespace mmdb  {
 
   DefineFactoryFunctions(Residue);
 
-  class Residue : public UDData  {
+  class MMDB_DL_EXPORT Residue : public UDData  {
 
     friend class Atom;
     friend class Chain;
@@ -729,7 +729,7 @@ namespace mmdb  {
   };
 
 
-  extern realtype  BondAngle ( PAtom A, PAtom B, PAtom C );
+  extern MMDB_DL_EXPORT realtype  BondAngle ( PAtom A, PAtom B, PAtom C );
 
 }  // namespace mmdb
 

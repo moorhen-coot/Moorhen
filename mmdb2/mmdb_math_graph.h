@@ -72,7 +72,7 @@ namespace mmdb  {
       TYPE_MASK     = 0x00FFFFFF
     };
 
-    class Vertex : public io::Stream  {
+    class MMDB_DL_EXPORT Vertex : public io::Stream  {
 
       friend class Graph;
       friend class GraphMatch;
@@ -151,7 +151,7 @@ namespace mmdb  {
 
     DefineClass(Edge);
 
-    class Edge : public io::Stream  {
+    class MMDB_DL_EXPORT Edge : public io::Stream  {
 
       friend class Graph;
       friend class CGMatch;
@@ -213,7 +213,7 @@ namespace mmdb  {
 
     DefineClass(Graph);
 
-    class Graph : public io::Stream  {
+    class MMDB_DL_EXPORT Graph : public io::Stream  {
 
       friend class GraphMatch;
       friend class CSBase0;
@@ -334,7 +334,7 @@ namespace mmdb  {
     DefineClass(GMatch);
     DefineStreamFunctions(GMatch);
 
-    class GMatch : public io::Stream  {
+    class MMDB_DL_EXPORT GMatch : public io::Stream  {
 
       friend class GraphMatch;
 
@@ -395,7 +395,7 @@ namespace mmdb  {
 
     DefineClass(GraphMatch);
 
-    class GraphMatch : public io::Stream  {
+    class MMDB_DL_EXPORT GraphMatch : public io::Stream  {
 
       public :
 

@@ -54,6 +54,23 @@
 
 # define __ClassMacros
 
+/* Using MSVC need __declspec */
+#if defined(__WIN32__) || defined(_WIN32)
+#  if defined(_MSC_VER) && defined(DLL_EXPORT)
+#    define MMDB_DL_IMPORT(type) __declspec(dllexport) type
+#    define MMDB_DL_EXPORT __declspec(dllexport)
+#  elif defined(_MSC_VER)
+#    define MMDB_DL_IMPORT(type) __declspec(dllimport) type
+#    define MMDB_DL_EXPORT
+#  else
+#    define MMDB_DL_IMPORT(type) type
+#    define MMDB_DL_EXPORT
+#  endif
+#else
+#  define MMDB_DL_IMPORT(type) type
+#  define MMDB_DL_EXPORT
+#endif
+
  //  A Class definition macros
 # define DefineClass(ClassName)             \
    class ClassName;                         \
@@ -126,7 +143,7 @@ namespace mmdb  {
   typedef   byte shortrealUniBin[5];
 
 #ifdef _WIN32
-  pstr strcasestr ( pstr s1, cpstr s2 );
+  MMDB_DL_EXPORT pstr strcasestr ( pstr s1, cpstr s2 );
 #endif
 
 #ifdef _MSC_VER
@@ -187,7 +204,7 @@ namespace mmdb  {
   // advisable to call InitMatType() explicitely from the top of
   // main(). It is completely harmless and cheap (although
   // unnecessary) to call InitMatType() multiple times.
-  extern bool InitMatType();
+  extern MMDB_DL_EXPORT bool InitMatType();
 
   // ------------------------------------------------------------
 
@@ -252,28 +269,28 @@ namespace mmdb  {
   //    Get-functions return  <true>  if memory was allocated;
   //  if allocation attemt fails,  vector is assigned with  NULL
 
-  extern bool GetVectorMemory ( rvector  & V, word N, word Shift=1 );
-  extern bool GetVectorMemory ( ivector  & I, word N, word Shift=1 );
-  extern bool GetVectorMemory ( wvector  & W, word N, word Shift=1 );
-  extern bool GetVectorMemory ( bvector  & B, word N, word Shift=1 );
-  extern bool GetVectorMemory ( ovector  & O, word N, word Shift=1 );
-  extern bool GetVectorMemory ( lvector  & L, word N, word Shift=1 );
-  extern bool GetVectorMemory ( lwvector & L, word N, word Shift=1 );
-  extern bool GetVectorMemory ( psvector & P, word N, word Shift=1 );
+  extern MMDB_DL_EXPORT bool GetVectorMemory ( rvector  & V, word N, word Shift=1 );
+  extern MMDB_DL_EXPORT bool GetVectorMemory ( ivector  & I, word N, word Shift=1 );
+  extern MMDB_DL_EXPORT bool GetVectorMemory ( wvector  & W, word N, word Shift=1 );
+  extern MMDB_DL_EXPORT bool GetVectorMemory ( bvector  & B, word N, word Shift=1 );
+  extern MMDB_DL_EXPORT bool GetVectorMemory ( ovector  & O, word N, word Shift=1 );
+  extern MMDB_DL_EXPORT bool GetVectorMemory ( lvector  & L, word N, word Shift=1 );
+  extern MMDB_DL_EXPORT bool GetVectorMemory ( lwvector & L, word N, word Shift=1 );
+  extern MMDB_DL_EXPORT bool GetVectorMemory ( psvector & P, word N, word Shift=1 );
 
   //    Shift at deallocation MUST be the same as that at allocation !
   //   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   //    Free-functions do nothing if vector has value  NULL (e.g.
   //  after unsuccessful allocation).
 
-  extern void FreeVectorMemory ( rvector  & V, word Shift=1 );
-  extern void FreeVectorMemory ( ivector  & I, word Shift=1 );
-  extern void FreeVectorMemory ( wvector  & W, word Shift=1 );
-  extern void FreeVectorMemory ( bvector  & B, word Shift=1 );
-  extern void FreeVectorMemory ( ovector  & O, word Shift=1 );
-  extern void FreeVectorMemory ( lvector  & L, word Shift=1 );
-  extern void FreeVectorMemory ( lwvector & L, word Shift=1 );
-  extern void FreeVectorMemory ( psvector & P, word Shift=1 );
+  extern MMDB_DL_EXPORT void FreeVectorMemory ( rvector  & V, word Shift=1 );
+  extern MMDB_DL_EXPORT void FreeVectorMemory ( ivector  & I, word Shift=1 );
+  extern MMDB_DL_EXPORT void FreeVectorMemory ( wvector  & W, word Shift=1 );
+  extern MMDB_DL_EXPORT void FreeVectorMemory ( bvector  & B, word Shift=1 );
+  extern MMDB_DL_EXPORT void FreeVectorMemory ( ovector  & O, word Shift=1 );
+  extern MMDB_DL_EXPORT void FreeVectorMemory ( lvector  & L, word Shift=1 );
+  extern MMDB_DL_EXPORT void FreeVectorMemory ( lwvector & L, word Shift=1 );
+  extern MMDB_DL_EXPORT void FreeVectorMemory ( psvector & P, word Shift=1 );
 
   // -------------------------------------------------------------
 
@@ -285,21 +302,21 @@ namespace mmdb  {
   //    Free-functions do nothing if matrix has value  NULL (e.g.
   //  after unsuccessful allocation).
 
-  extern bool GetMatrixMemory
+  extern MMDB_DL_EXPORT bool GetMatrixMemory
        ( rmatrix  & A, word N, word M, word ShiftN=1, word ShiftM=1 );
-  extern bool GetMatrixMemory
+  extern MMDB_DL_EXPORT bool GetMatrixMemory
        ( imatrix  & A, word N, word M, word ShiftN=1, word ShiftM=1 );
-  extern bool GetMatrixMemory
+  extern MMDB_DL_EXPORT bool GetMatrixMemory
        ( wmatrix  & W, word N, word M, word ShiftN=1, word ShiftM=1 );
-  extern bool GetMatrixMemory
+  extern MMDB_DL_EXPORT bool GetMatrixMemory
        ( bmatrix  & B, word N, word M, word ShiftN=1, word ShiftM=1 );
-  extern bool GetMatrixMemory
+  extern MMDB_DL_EXPORT bool GetMatrixMemory
        ( omatrix  & O, word N, word M, word ShiftN=1, word ShiftM=1 );
-  extern bool GetMatrixMemory
+  extern MMDB_DL_EXPORT bool GetMatrixMemory
        ( lmatrix  & L, word N, word M, word ShiftN=1, word ShiftM=1 );
-  extern bool GetMatrixMemory
+  extern MMDB_DL_EXPORT bool GetMatrixMemory
        ( lwmatrix & L, word N, word M, word ShiftN=1, word ShiftM=1 );
-  extern bool GetMatrixMemory
+  extern MMDB_DL_EXPORT bool GetMatrixMemory
        ( psmatrix & P, word N, word M, word ShiftN=1, word ShiftM=1 );
 
   //    ShiftN and ShiftM at deallocation MUST be the same as those at
@@ -307,49 +324,49 @@ namespace mmdb  {
   //                          allocation !
   //                         ~~~~~~~~~~~~~
 
-  extern  void FreeMatrixMemory  ( rmatrix  & A,  word N,
+  extern MMDB_DL_EXPORT  void FreeMatrixMemory  ( rmatrix  & A,  word N,
                    word ShiftN=1, word ShiftM=1 );
-  extern  void FreeMatrixMemory  ( imatrix  & A,  word N,
+  extern MMDB_DL_EXPORT  void FreeMatrixMemory  ( imatrix  & A,  word N,
                    word ShiftN=1, word ShiftM=1 );
-  extern  void FreeMatrixMemory  ( wmatrix  & W,  word N,
+  extern MMDB_DL_EXPORT  void FreeMatrixMemory  ( wmatrix  & W,  word N,
                    word ShiftN=1, word ShiftM=1 );
-  extern  void FreeMatrixMemory  ( bmatrix  & B,  word N,
+  extern MMDB_DL_EXPORT  void FreeMatrixMemory  ( bmatrix  & B,  word N,
                    word ShiftN=1, word ShiftM=1 );
-  extern  void FreeMatrixMemory  ( omatrix  & O,  word N,
+  extern MMDB_DL_EXPORT  void FreeMatrixMemory  ( omatrix  & O,  word N,
                    word ShiftN=1, word ShiftM=1 );
-  extern  void FreeMatrixMemory  ( lmatrix  & L,  word N,
+  extern MMDB_DL_EXPORT  void FreeMatrixMemory  ( lmatrix  & L,  word N,
                    word ShiftN=1, word ShiftM=1 );
-  extern  void FreeMatrixMemory  ( lwmatrix & L,  word N,
+  extern MMDB_DL_EXPORT  void FreeMatrixMemory  ( lwmatrix & L,  word N,
                    word ShiftN=1, word ShiftM=1 );
-  extern  void FreeMatrixMemory  ( psmatrix & P,  word N,
+  extern MMDB_DL_EXPORT  void FreeMatrixMemory  ( psmatrix & P,  word N,
                    word ShiftN=1, word ShiftM=1 );
 
 
   // -------------------------------------------------------------
   //   3D matrices
 
-  extern bool GetMatrix3Memory
+  extern MMDB_DL_EXPORT bool GetMatrix3Memory
              ( rmatrix3  & A, word N, word M, word K,
                    word ShiftN=1, word ShiftM=1, word ShiftK=1 );
-  extern bool GetMatrix3Memory
+  extern MMDB_DL_EXPORT bool GetMatrix3Memory
              ( imatrix3  & A, word N, word M, word K,
                    word ShiftN=1, word ShiftM=1, word ShiftK=1 );
-  extern bool GetMatrix3Memory
+  extern MMDB_DL_EXPORT bool GetMatrix3Memory
              ( wmatrix3  & A, word N, word M, word K,
                    word ShiftN=1, word ShiftM=1, word ShiftK=1 );
-  extern bool GetMatrix3Memory
+  extern MMDB_DL_EXPORT bool GetMatrix3Memory
              ( bmatrix3  & A, word N, word M, word K,
                    word ShiftN=1, word ShiftM=1, word ShiftK=1 );
-  extern bool GetMatrix3Memory
+  extern MMDB_DL_EXPORT bool GetMatrix3Memory
              ( omatrix3  & A, word N, word M, word K,
                    word ShiftN=1, word ShiftM=1, word ShiftK=1 );
-  extern bool GetMatrix3Memory
+  extern MMDB_DL_EXPORT bool GetMatrix3Memory
              ( lmatrix3  & A, word N, word M, word K,
                    word ShiftN=1, word ShiftM=1, word ShiftK=1 );
-  extern bool GetMatrix3Memory
+  extern MMDB_DL_EXPORT bool GetMatrix3Memory
              ( lwmatrix3 & A, word N, word M, word K,
                    word ShiftN=1, word ShiftM=1, word ShiftK=1 );
-  extern bool GetMatrix3Memory
+  extern MMDB_DL_EXPORT bool GetMatrix3Memory
              ( psmatrix3 & A, word N, word M, word K,
                    word ShiftN=1, word ShiftM=1, word ShiftK=1 );
 
@@ -359,54 +376,54 @@ namespace mmdb  {
   //         the same as those at allocation !
   //        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-  extern void FreeMatrix3Memory
+  extern MMDB_DL_EXPORT void FreeMatrix3Memory
                  ( rmatrix3  & A, word N, word M,
                    word ShiftN=1, word ShiftM=1, word ShiftK=1 );
-  extern void FreeMatrix3Memory
+  extern MMDB_DL_EXPORT void FreeMatrix3Memory
                  ( imatrix3  & A, word N, word M,
                    word ShiftN=1, word ShiftM=1, word ShiftK=1 );
-  extern void FreeMatrix3Memory
+  extern MMDB_DL_EXPORT void FreeMatrix3Memory
                  ( wmatrix3  & A, word N, word M,
                    word ShiftN=1, word ShiftM=1, word ShiftK=1 );
-  extern void FreeMatrix3Memory
+  extern MMDB_DL_EXPORT void FreeMatrix3Memory
                  ( bmatrix3  & A, word N, word M,
                    word ShiftN=1, word ShiftM=1, word ShiftK=1 );
-  extern void FreeMatrix3Memory
+  extern MMDB_DL_EXPORT void FreeMatrix3Memory
                  ( omatrix3  & A, word N, word M,
                    word ShiftN=1, word ShiftM=1, word ShiftK=1 );
-  extern void FreeMatrix3Memory
+  extern MMDB_DL_EXPORT void FreeMatrix3Memory
                  ( lmatrix3  & A, word N, word M,
                    word ShiftN=1, word ShiftM=1, word ShiftK=1 );
-  extern void FreeMatrix3Memory
+  extern MMDB_DL_EXPORT void FreeMatrix3Memory
                  ( lwmatrix3 & A, word N, word M,
                    word ShiftN=1, word ShiftM=1, word ShiftK=1 );
-  extern void FreeMatrix3Memory
+  extern MMDB_DL_EXPORT void FreeMatrix3Memory
                  ( psmatrix3 & A, word N, word M,
                    word ShiftN=1, word ShiftM=1, word ShiftK=1 );
 
   // -------------------------------------------------------------
 
-  extern  realtype  MachEps;
-  extern  realtype  floatMachEps;
-  extern  realtype  LnMaxReal;
-  extern  realtype  LnMinReal;
+  extern MMDB_DL_IMPORT(realtype)  MachEps;
+  extern MMDB_DL_IMPORT(realtype)  floatMachEps;
+  extern MMDB_DL_IMPORT(realtype)  LnMaxReal;
+  extern MMDB_DL_IMPORT(realtype)  LnMinReal;
 
-  extern  realtype  MachinEps     ();
-  extern  realtype  floatMachinEps();
-  extern  realtype  frac  ( realtype R   );
-  extern  long      mod   ( long     x, long     y );
-  extern  realtype  Pow   ( realtype X, int      y );
-  extern  realtype  Pow1  ( realtype X, realtype Y );
-  extern  realtype  Exp   ( realtype X );   // use to avoid catastrophies
-  extern  bool      Odd   ( int      i );
-  extern  long    HexValL ( cpstr S );
-  extern  long    OctValL ( cpstr S );
-  extern  long    BinValL ( cpstr S );
-  extern  pstr    BinValS ( long L, pstr S  );  // S[sizeof(long)+1] at least
+  extern MMDB_DL_EXPORT  realtype  MachinEps     ();
+  extern MMDB_DL_EXPORT  realtype  floatMachinEps();
+  extern MMDB_DL_EXPORT  realtype  frac  ( realtype R   );
+  extern MMDB_DL_EXPORT  long      mod   ( long     x, long     y );
+  extern MMDB_DL_EXPORT  realtype  Pow   ( realtype X, int      y );
+  extern MMDB_DL_EXPORT  realtype  Pow1  ( realtype X, realtype Y );
+  extern MMDB_DL_EXPORT  realtype  Exp   ( realtype X );   // use to avoid catastrophies
+  extern MMDB_DL_EXPORT  bool      Odd   ( int      i );
+  extern MMDB_DL_EXPORT  long    HexValL ( cpstr S );
+  extern MMDB_DL_EXPORT  long    OctValL ( cpstr S );
+  extern MMDB_DL_EXPORT  long    BinValL ( cpstr S );
+  extern MMDB_DL_EXPORT  pstr    BinValS ( long L, pstr S  );  // S[sizeof(long)+1] at least
 
-  extern  pstr ParamStr ( pstr D, cpstr S, realtype V, int M=5,
+  extern MMDB_DL_EXPORT  pstr ParamStr ( pstr D, cpstr S, realtype V, int M=5,
                           cpstr S1=(pstr)"" );
-  extern  pstr ParamStr ( pstr D, cpstr S, realtype V, int M,
+  extern MMDB_DL_EXPORT  pstr ParamStr ( pstr D, cpstr S, realtype V, int M,
                           cpstr S1, realtype V2, int M2=5,
                           cpstr S2=(pstr)"" );
 
@@ -417,55 +434,55 @@ namespace mmdb  {
   // Source into it. If Dest is not NULL prior calling the function,
   // it is attempted to deallocate first.
 
-  extern pstr CreateCopy     ( pstr & Dest, cpstr Source );
-  extern pstr CreateCopy_n   ( pstr & Dest, cpstr Source, int n );
+  extern MMDB_DL_EXPORT pstr CreateCopy     ( pstr & Dest, cpstr Source );
+  extern MMDB_DL_EXPORT pstr CreateCopy_n   ( pstr & Dest, cpstr Source, int n );
 
-  extern pstr CreateConcat   ( pstr & Dest, cpstr Source );
-  extern pstr CreateConcat   ( pstr & Dest, cpstr Source1,
+  extern MMDB_DL_EXPORT pstr CreateConcat   ( pstr & Dest, cpstr Source );
+  extern MMDB_DL_EXPORT pstr CreateConcat   ( pstr & Dest, cpstr Source1,
                                           cpstr Source2 );
-  extern pstr CreateConcat   ( pstr & Dest, cpstr Source1,
+  extern MMDB_DL_EXPORT pstr CreateConcat   ( pstr & Dest, cpstr Source1,
                                             cpstr Source2,
                                             cpstr Source3 );
-  extern pstr CreateConcat   ( pstr & Dest, cpstr Source1,
+  extern MMDB_DL_EXPORT pstr CreateConcat   ( pstr & Dest, cpstr Source1,
                                             cpstr Source2,
                                             cpstr Source3,
                                             cpstr Source4 );
-  extern pstr CreateConcat   ( pstr & Dest, cpstr Source1,
+  extern MMDB_DL_EXPORT pstr CreateConcat   ( pstr & Dest, cpstr Source1,
                                             cpstr Source2,
                                             cpstr Source3,
                                             cpstr Source4,
                                             cpstr Source5 );
 
-  extern pstr CreateCopCat   ( pstr & Dest, cpstr Source1,
+  extern MMDB_DL_EXPORT pstr CreateCopCat   ( pstr & Dest, cpstr Source1,
                                             cpstr Source2,
                                             cpstr Source3,
                                             cpstr Source4,
                                             cpstr Source5 );
-  extern pstr CreateCopCat   ( pstr & Dest, cpstr Source1,
+  extern MMDB_DL_EXPORT pstr CreateCopCat   ( pstr & Dest, cpstr Source1,
                                             cpstr Source2,
                                             cpstr Source3,
                                             cpstr Source4 );
-  extern pstr CreateCopCat   ( pstr & Dest, cpstr Source1,
+  extern MMDB_DL_EXPORT pstr CreateCopCat   ( pstr & Dest, cpstr Source1,
                                             cpstr Source2,
                                             cpstr Source3 );
-  extern pstr CreateCopCat   ( pstr & Dest, cpstr Source1,
+  extern MMDB_DL_EXPORT pstr CreateCopCat   ( pstr & Dest, cpstr Source1,
                                             cpstr Source2 );
 
-  extern pstr LastOccurence  ( cpstr S     , char c      );
-  extern pstr FirstOccurence ( cpstr S     , char c      );
-  extern int  indexOf        ( cpstr S     , char c      );
-  extern pstr FirstOccurence ( cpstr S, int Slen,
+  extern MMDB_DL_EXPORT pstr LastOccurence  ( cpstr S     , char c      );
+  extern MMDB_DL_EXPORT pstr FirstOccurence ( cpstr S     , char c      );
+  extern MMDB_DL_EXPORT int  indexOf        ( cpstr S     , char c      );
+  extern MMDB_DL_EXPORT pstr FirstOccurence ( cpstr S, int Slen,
                                cpstr Q, int Qlen );
-  extern int  indexOf        ( cpstr S, int Slen,
+  extern MMDB_DL_EXPORT int  indexOf        ( cpstr S, int Slen,
                                cpstr Q, int Qlen );
 
-  extern pstr LowerCase ( pstr s );
-  extern pstr UpperCase ( pstr s );
+  extern MMDB_DL_EXPORT pstr LowerCase ( pstr s );
+  extern MMDB_DL_EXPORT pstr UpperCase ( pstr s );
 
   //   GetString(..) copies first M characters of string S into string
   // L, appending the terminating null. If S contains less then M
   // characters, L will be padded with spaces.
-  extern void GetString ( pstr L, cpstr S, int M );
+  extern MMDB_DL_EXPORT void GetString ( pstr L, cpstr S, int M );
 
   //   GetStrTer(..) copies at least n (or LMax if LMax<n) first symbols
   // of string S into string L, then continues copying until first space
@@ -476,7 +493,7 @@ namespace mmdb  {
   //   LMax and SMax are the buffer lengths of L and S,
   // respectively. Even if no space is found, the last character
   // in L will be the terminating null.
-  extern void GetStrTer ( pstr L, cpstr S, int n, int LMax,
+  extern MMDB_DL_EXPORT void GetStrTer ( pstr L, cpstr S, int n, int LMax,
                           int SMax );
 
 
@@ -490,7 +507,7 @@ namespace mmdb  {
   // n and LMax and then terminated with the null.
   //   SMax are buffer lengths of L and S, respectively. The last
   // character in L will be the terminating null.
-  extern void GetStrTerWin32File ( pstr L, cpstr S, int n,
+  extern MMDB_DL_EXPORT void GetStrTerWin32File ( pstr L, cpstr S, int n,
                                    int LMax, int SMax );
 
 
@@ -498,81 +515,81 @@ namespace mmdb  {
   // but no more than strlen(s) (s must contain a terminating
   // null). The terminating null IS NEITHER appended OR copied
   // to d.
-  extern void strcpy_n  ( pstr d, cpstr s, int n );
+  extern MMDB_DL_EXPORT void strcpy_n  ( pstr d, cpstr s, int n );
 
   //   strcpy_n1(..) copies at most n last symbols from string s
   // to d, but no more than strlen(s) (s must contain a terminating
   // null). The string in d is aligned to the right and added with
   // spaces at the left, if necessary. The terminating null
   // IS NEITHER appended OR copied to d.
-  extern void strcpy_n1 ( pstr d, cpstr s, int n );
+  extern MMDB_DL_EXPORT void strcpy_n1 ( pstr d, cpstr s, int n );
 
   //   Copies at most n symbols from string s to d, but no
   // more than strlen(s) (s must contain a terminating null).
   // The string in d is aligned to the right and added with
   // spaces at the left, if necessary. The terminating null
   // IS NEITHER appended NOR copied to d.
-  extern void strcpy_nr ( pstr d, cpstr s, int n );
+  extern MMDB_DL_EXPORT void strcpy_nr ( pstr d, cpstr s, int n );
 
   //   strcpy_ns(..) copies at most n symbols from string s to d,
   // but no more than strlen(s) (s must contain a terminating
   // null). The terminating null IS NEITHER appended NOR copied
   // to d; rather, d is padded with spaces up to the length of n
   // if strlen(s)<n.
-  extern void strcpy_ns ( pstr d, cpstr s, int n );
+  extern MMDB_DL_EXPORT void strcpy_ns ( pstr d, cpstr s, int n );
 
   //   strcpy_cs(..) copies string s to string d cutting all
   // spaces at the end. Thus, " abcde   " will be copied
   // like " abcde" (terminating null appended).
   //   The function returns d.
-  extern pstr strcpy_cs ( pstr d, cpstr s );
+  extern MMDB_DL_EXPORT pstr strcpy_cs ( pstr d, cpstr s );
 
   //   strcpy_ncs(..) copies at most n characters from string s
   // to string d cutting all spaces at at the end. Thus, " abcde   "
   // will be copied like " abc" at n=4 and like " abcde" at n>5
   // (terminating null appended).
   //   The function returns d.
-  extern pstr strcpy_ncs ( pstr d, cpstr s, int n );
+  extern MMDB_DL_EXPORT pstr strcpy_ncs ( pstr d, cpstr s, int n );
 
   //   strcpy_css(..) copies string s to string d cutting all
   // spaces at the begining and at the end. Thus, " ab c de  "
   // will be copied like "ab c de" (terminating null appended).
   //   The function returns d.
-  extern pstr strcpy_css ( pstr d, cpstr s );
+  extern MMDB_DL_EXPORT pstr strcpy_css ( pstr d, cpstr s );
 
   //   strcpy_ncss(..) copies at most n characters from string s
   // to string d cutting all spaces at the begining and at the end.
   // Thus, " ab c de  " will be copied like "ab" at n=3 (terminating
   // null appended).
   //   The function returns d.
-  extern pstr strcpy_ncss ( pstr d, cpstr s, int n );
+  extern MMDB_DL_EXPORT pstr strcpy_ncss ( pstr d, cpstr s, int n );
 
   //   strcpy_n0(..) copies at most n symbols from string s to d,
   // but no more than strlen(s) (s must contain a terminating
   // null). The terminating null IS appended to d.
   //   The function returns d.
-  extern pstr strcpy_n0 ( pstr d, cpstr s, int n );
+  extern MMDB_DL_EXPORT pstr strcpy_n0 ( pstr d, cpstr s, int n );
 
   //   strlen_des returns the length of a string as if all extra
   // spaces from the latter have been deleted. Extra spaces
   // include all leading and tracing spaces and any sequential
   // spaces when more than one. The string does not change.
-  extern int strlen_des ( cpstr s );
+  extern MMDB_DL_EXPORT int strlen_des ( cpstr s );
 
   //   strcpy_des copies string s into string d removing all extra
   // spaces from the latter. Extra spaces include all leading and
   // tracing spaces and any sequential spaces when more than one.
-  extern pstr strcpy_des ( pstr d, cpstr s );
+  extern MMDB_DL_EXPORT pstr strcpy_des ( pstr d, cpstr s );
 
   //   strcat_des appends string s to string d removing all extra
   // spaces from the latter. Extra spaces include all leading and
   // tracing spaces and any sequential spaces when more than one.
-  extern pstr strcat_des ( pstr d, cpstr s );
+  extern MMDB_DL_EXPORT pstr strcat_des ( pstr d, cpstr s );
 
   //  PadSpaces(..) pads string S with spaces making its length
   // equal to len. The terminating zero is added, so that S should
   // reserve space of a minimum len+1 characters.
-  extern void PadSpaces ( pstr S, int len );
+  extern MMDB_DL_EXPORT void PadSpaces ( pstr S, int len );
 
   enum SCUTKEY  {
     SCUTKEY_BEGIN  = 0x00000001,
@@ -583,17 +600,17 @@ namespace mmdb  {
   //   CutSpaces(..) cuts spaces at the begining or end of
   // string S according to the value of CutKey. The function
   // returns S.
-  extern pstr CutSpaces ( pstr S, int CutKey );
+  extern MMDB_DL_EXPORT pstr CutSpaces ( pstr S, int CutKey );
 
   //   DelSpaces(..) removes all spaces (or other symbols as
   // specified by 'c') from the string. The string is then
   // shrinked by the number of removed characters. Thus,
   // " as ttt  " becomes "asttt".
-  extern pstr DelSpaces ( pstr S, char c=' ' );
+  extern MMDB_DL_EXPORT pstr DelSpaces ( pstr S, char c=' ' );
 
   //   EnforceSpaces(..) replaces all unprintable characters,
   // except <CR>, <LF>, <TAB> and some others, for spaces
-  extern pstr EnforceSpaces ( pstr S );
+  extern MMDB_DL_EXPORT pstr EnforceSpaces ( pstr S );
 
   // -------------------------------------------------------------
 
@@ -603,48 +620,48 @@ namespace mmdb  {
   ///   UniBin read/write of other types (realtype, shortreal, int etc)
   /// is not affected by this call, and to the best of knowledge is
   /// correct (no loss of precision).
-  extern void  set_new_float_unibin();
-  extern bool  is_new_float_unibin();
-  extern void  set_old_float_unibin();
+  extern MMDB_DL_EXPORT void  set_new_float_unibin();
+  extern MMDB_DL_EXPORT bool  is_new_float_unibin();
+  extern MMDB_DL_EXPORT void  set_old_float_unibin();
 
-  extern void __modify4();
+  extern MMDB_DL_EXPORT void __modify4();
 
-  extern void int2UniBin       ( int       I,  intUniBin        iUB  );
-  extern void short2UniBin     ( short     S,  shortUniBin      sUB  );
-  extern void long2UniBin      ( long      L,  longUniBin       lUB  );
-  extern void word2UniBin      ( word      W,  wordUniBin       wUB  );
-  extern void real2UniBin      ( realtype  R,  realUniBin       rUB  );
-  extern void float2UniBin     ( realtype  R,  floatUniBin      fUB  );
-  extern void shortreal2UniBin ( shortreal R,  shortrealUniBin  srUB );
-  extern void UniBin2int       ( intUniBin        iUB, int       & I );
-  extern void UniBin2short     ( shortUniBin      sUB, short     & S );
-  extern void UniBin2long      ( longUniBin       lUB, long      & L );
-  extern void UniBin2word      ( wordUniBin       wUB, word      & W );
-  extern void UniBin2real      ( realUniBin       rUB, realtype  & R );
-  extern void UniBin2shortreal ( shortrealUniBin srUB, shortreal & R );
-  extern void UniBin2float     ( floatUniBin      fUB, realtype  & R );
+  extern MMDB_DL_EXPORT void int2UniBin       ( int       I,  intUniBin        iUB  );
+  extern MMDB_DL_EXPORT void short2UniBin     ( short     S,  shortUniBin      sUB  );
+  extern MMDB_DL_EXPORT void long2UniBin      ( long      L,  longUniBin       lUB  );
+  extern MMDB_DL_EXPORT void word2UniBin      ( word      W,  wordUniBin       wUB  );
+  extern MMDB_DL_EXPORT void real2UniBin      ( realtype  R,  realUniBin       rUB  );
+  extern MMDB_DL_EXPORT void float2UniBin     ( realtype  R,  floatUniBin      fUB  );
+  extern MMDB_DL_EXPORT void shortreal2UniBin ( shortreal R,  shortrealUniBin  srUB );
+  extern MMDB_DL_EXPORT void UniBin2int       ( intUniBin        iUB, int       & I );
+  extern MMDB_DL_EXPORT void UniBin2short     ( shortUniBin      sUB, short     & S );
+  extern MMDB_DL_EXPORT void UniBin2long      ( longUniBin       lUB, long      & L );
+  extern MMDB_DL_EXPORT void UniBin2word      ( wordUniBin       wUB, word      & W );
+  extern MMDB_DL_EXPORT void UniBin2real      ( realUniBin       rUB, realtype  & R );
+  extern MMDB_DL_EXPORT void UniBin2shortreal ( shortrealUniBin srUB, shortreal & R );
+  extern MMDB_DL_EXPORT void UniBin2float     ( floatUniBin      fUB, realtype  & R );
 
-  extern void mem_write ( int       I, pstr S, int & l );
-  extern void mem_write ( short     I, pstr S, int & l );
-  extern void mem_write ( long      I, pstr S, int & l );
-  extern void mem_write ( word      W, pstr S, int & l );
-  extern void mem_write ( realtype  R, pstr S, int & l );
-  extern void mem_write ( shortreal R, pstr S, int & l );
-  extern void mem_write ( pstr      L, int len, pstr S, int & l );
-  extern void mem_write ( pstr      L, pstr S, int & l );
-  extern void mem_write ( bool      B, pstr S, int & l );
-  extern void mem_write_byte ( byte B, pstr S, int & l );
+  extern MMDB_DL_EXPORT void mem_write ( int       I, pstr S, int & l );
+  extern MMDB_DL_EXPORT void mem_write ( short     I, pstr S, int & l );
+  extern MMDB_DL_EXPORT void mem_write ( long      I, pstr S, int & l );
+  extern MMDB_DL_EXPORT void mem_write ( word      W, pstr S, int & l );
+  extern MMDB_DL_EXPORT void mem_write ( realtype  R, pstr S, int & l );
+  extern MMDB_DL_EXPORT void mem_write ( shortreal R, pstr S, int & l );
+  extern MMDB_DL_EXPORT void mem_write ( pstr      L, int len, pstr S, int & l );
+  extern MMDB_DL_EXPORT void mem_write ( pstr      L, pstr S, int & l );
+  extern MMDB_DL_EXPORT void mem_write ( bool      B, pstr S, int & l );
+  extern MMDB_DL_EXPORT void mem_write_byte ( byte B, pstr S, int & l );
 
-  extern void mem_read  ( int       & I, cpstr S, int & l );
-  extern void mem_read  ( short     & I, cpstr S, int & l );
-  extern void mem_read  ( long      & I, cpstr S, int & l );
-  extern void mem_read  ( word      & W, cpstr S, int & l );
-  extern void mem_read  ( realtype  & R, cpstr S, int & l );
-  extern void mem_read  ( shortreal & R, cpstr S, int & l );
-  extern void mem_read  ( pstr        L, int len, cpstr S, int & l );
-  extern void mem_read  ( pstr      & L, cpstr S, int & l );
-  extern void mem_read  ( bool      & B, cpstr S, int & l );
-  extern void mem_read_byte ( byte  & B, cpstr S, int & l );
+  extern MMDB_DL_EXPORT void mem_read  ( int       & I, cpstr S, int & l );
+  extern MMDB_DL_EXPORT void mem_read  ( short     & I, cpstr S, int & l );
+  extern MMDB_DL_EXPORT void mem_read  ( long      & I, cpstr S, int & l );
+  extern MMDB_DL_EXPORT void mem_read  ( word      & W, cpstr S, int & l );
+  extern MMDB_DL_EXPORT void mem_read  ( realtype  & R, cpstr S, int & l );
+  extern MMDB_DL_EXPORT void mem_read  ( shortreal & R, cpstr S, int & l );
+  extern MMDB_DL_EXPORT void mem_read  ( pstr        L, int len, cpstr S, int & l );
+  extern MMDB_DL_EXPORT void mem_read  ( pstr      & L, cpstr S, int & l );
+  extern MMDB_DL_EXPORT void mem_read  ( bool      & B, cpstr S, int & l );
+  extern MMDB_DL_EXPORT void mem_read_byte ( byte  & B, cpstr S, int & l );
 
 }
 

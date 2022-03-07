@@ -68,7 +68,7 @@ namespace mmdb  {
   DefineClass(UDRegister);
   DefineStreamFunctions(UDRegister);
 
-  class UDRegister : public io::Stream  {
+  class MMDB_DL_EXPORT UDRegister : public io::Stream  {
 
     public :
 
@@ -111,7 +111,7 @@ namespace mmdb  {
   DefineClass(UDData);
   DefineStreamFunctions(UDData);
 
-  class UDData : public Mask  {
+  class MMDB_DL_EXPORT UDData : public Mask  {
 
     friend class SelManager;
 

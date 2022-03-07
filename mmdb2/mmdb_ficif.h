@@ -55,22 +55,22 @@ FORTRAN_SUBR ( MMDB_FCIF_QUIT, mmdb_fcif_quit,(),(),() );
 FORTRAN_SUBR ( MMDB_FCIF_CREATE, mmdb_fcif_create,
                (    // lengths-at-end list
                 fpstr DataName,     // file name
-                int   DataName_len  // fortran-hidden length of DataName
+                fpstr_size_t   DataName_len  // fortran-hidden length of DataName
                ), ( // lengths-in-structure list
                 fpstr DataName
                ), ( // lengths-follow list
-                fpstr DataName, int DataName_len
+                fpstr DataName, fpstr_size_t DataName_len
                ) );
 
 FORTRAN_SUBR ( MMDB_FCIF_WRITE, mmdb_fcif_write,
                (    // lengths-at-end list
                 fpstr FileName,     // file name
                 int * iRet,         // return code
-                int   FileName_len  // fortran-hidden length of FileName
+                fpstr_size_t   FileName_len  // fortran-hidden length of FileName
                ), ( // lengths-in-structure list
     fpstr FileName, int *iRet
                ), ( // lengths-follow list
-    fpstr FileName, int FileName_len, int * iRet
+    fpstr FileName, fpstr_size_t FileName_len, int * iRet
                ) );
 
 FORTRAN_SUBR ( MMDB_FCIF_PUTDATE, mmdb_fcif_putdate,
@@ -78,13 +78,13 @@ FORTRAN_SUBR ( MMDB_FCIF_PUTDATE, mmdb_fcif_putdate,
                 fpstr CatName,     // category name
                 fpstr Tag,         // tag
                 int * iRet,        // return code
-                int   CatName_len, // fortran-hidden length of CatName
-                int   Tag_len      // fortran-hidden length of Tag
+                fpstr_size_t   CatName_len, // fortran-hidden length of CatName
+                fpstr_size_t   Tag_len      // fortran-hidden length of Tag
                ), ( // lengths-in-structure list
                 fpstr CatName, fpstr Tag, int * iRet
                ), ( // lengths-follow list
-                fpstr CatName, int CatName_len,
-                fpstr Tag,     int Tag_len,
+                fpstr CatName, fpstr_size_t CatName_len,
+                fpstr Tag,     fpstr_size_t Tag_len,
                 int * iRet
                ) );
 
@@ -93,13 +93,13 @@ FORTRAN_SUBR ( MMDB_FCIF_PUTDOT, mmdb_fcif_putdot,
                 fpstr CatName,     // category name
                 fpstr Tag,         // tag
                 int * iRet,        // return code
-                int   CatName_len, // fortran-hidden length of CatName
-                int   Tag_len      // fortran-hidden length of Tag
+                fpstr_size_t   CatName_len, // fortran-hidden length of CatName
+                fpstr_size_t   Tag_len      // fortran-hidden length of Tag
                ), ( // lengths-in-structure list
                 fpstr CatName, fpstr Tag, int * iRet
                ), ( // lengths-follow list
-                fpstr CatName, int CatName_len,
-                fpstr Tag,     int Tag_len,
+                fpstr CatName, fpstr_size_t CatName_len,
+                fpstr Tag,     fpstr_size_t Tag_len,
                 int * iRet
                ) );
 
@@ -108,13 +108,13 @@ FORTRAN_SUBR ( MMDB_FCIF_PUTQUESTION, mmdb_fcif_putquestion,
                 fpstr CatName,     // category name
                 fpstr Tag,         // tag
                 int * iRet,        // return code
-                int   CatName_len, // fortran-hidden length of CatName
-                int   Tag_len      // fortran-hidden length of Tag
+                fpstr_size_t   CatName_len, // fortran-hidden length of CatName
+                fpstr_size_t   Tag_len      // fortran-hidden length of Tag
                ), ( // lengths-in-structure list
                 fpstr CatName, fpstr Tag, int * iRet
                ), ( // lengths-follow list
-                fpstr CatName, int CatName_len,
-                fpstr Tag,     int Tag_len,
+                fpstr CatName, fpstr_size_t CatName_len,
+                fpstr Tag,     fpstr_size_t Tag_len,
                 int * iRet
                ) );
 
@@ -124,15 +124,15 @@ FORTRAN_SUBR ( MMDB_FCIF_PUTSTRING, mmdb_fcif_putstring,
                 fpstr CatName,     // category name
                 fpstr Tag,         // tag
                 int * iRet,        // return code
-                int   Data_len,    // fortran-hidden length of Data
-                int   CatName_len, // fortran-hidden length of CatName
-                int   Tag_len      // fortran-hidden length of Tag
+                fpstr_size_t   Data_len,    // fortran-hidden length of Data
+                fpstr_size_t   CatName_len, // fortran-hidden length of CatName
+                fpstr_size_t   Tag_len      // fortran-hidden length of Tag
                ), ( // lengths-in-structure list
                 fpstr Data, fpstr CatName, fpstr Tag, int * iRet
                ), ( // lengths-follow list
-    fpstr Data,    int Data_len,
-                fpstr CatName, int CatName_len,
-                fpstr Tag,     int Tag_len,
+                fpstr Data,    fpstr_size_t Data_len,
+                fpstr CatName, fpstr_size_t CatName_len,
+                fpstr Tag,     fpstr_size_t Tag_len,
                 int * iRet
                ) );
 
@@ -142,14 +142,14 @@ FORTRAN_SUBR ( MMDB_FCIF_PUTREAL, mmdb_fcif_putreal,
                 fpstr CatName,     // category name
                 fpstr Tag,         // tag
                 int * iRet,        // return code
-                int   CatName_len, // fortran-hidden length of CatName
-                int   Tag_len      // fortran-hidden length of Tag
+                fpstr_size_t   CatName_len, // fortran-hidden length of CatName
+                fpstr_size_t   Tag_len      // fortran-hidden length of Tag
                ), ( // lengths-in-structure list
                 apireal * V, fpstr CatName, fpstr Tag, int * iRet
                ), ( // lengths-follow list
     apireal * V,
-                fpstr CatName, int CatName_len,
-                fpstr Tag,     int Tag_len,
+                fpstr CatName, fpstr_size_t CatName_len,
+                fpstr Tag,     fpstr_size_t Tag_len,
                 int * iRet
                ) );
 
@@ -159,14 +159,14 @@ FORTRAN_SUBR ( MMDB_FCIF_PUTINTEGER, mmdb_fcif_putinteger,
                 fpstr CatName,     // category name
                 fpstr Tag,         // tag
                 int * iRet,        // return code
-                int   CatName_len, // fortran-hidden length of CatName
-                int   Tag_len      // fortran-hidden length of Tag
+                fpstr_size_t   CatName_len, // fortran-hidden length of CatName
+                fpstr_size_t   Tag_len      // fortran-hidden length of Tag
                ), ( // lengths-in-structure list
                 int * I, fpstr CatName, fpstr Tag, int * iRet
                ), ( // lengths-follow list
-    int * I,
-                fpstr CatName, int CatName_len,
-                fpstr Tag,     int Tag_len,
+                int * I,
+                fpstr CatName, fpstr_size_t CatName_len,
+                fpstr Tag,     fpstr_size_t Tag_len,
                 int * iRet
                ) );
 
@@ -176,13 +176,13 @@ FORTRAN_SUBR ( MMDB_FCIF_PUTLOOPDOT, mmdb_fcif_putloopdot,
                 fpstr Tag,         // tag
                 int * nrow,        // row number
                 int * iRet,        // return code
-                int   CatName_len, // fortran-hidden length of CatName
-                int   Tag_len      // fortran-hidden length of Tag
+                fpstr_size_t   CatName_len, // fortran-hidden length of CatName
+                fpstr_size_t   Tag_len      // fortran-hidden length of Tag
                ), ( // lengths-in-structure list
                 fpstr CatName, fpstr Tag, int * nrow, int * iRet
                ), ( // lengths-follow list
-                fpstr CatName, int CatName_len,
-                fpstr Tag,     int Tag_len,
+                fpstr CatName, fpstr_size_t CatName_len,
+                fpstr Tag,     fpstr_size_t Tag_len,
                 int * nrow,    int * iRet
                ) );
 
@@ -192,13 +192,13 @@ FORTRAN_SUBR ( MMDB_FCIF_PUTLOOPQUESTION, mmdb_fcif_putloopquestion,
                 fpstr Tag,         // tag
                 int * nrow,        // row number
                 int * iRet,        // return code
-                int   CatName_len, // fortran-hidden length of CatName
-                int   Tag_len      // fortran-hidden length of Tag
+                fpstr_size_t   CatName_len, // fortran-hidden length of CatName
+                fpstr_size_t   Tag_len      // fortran-hidden length of Tag
                ), ( // lengths-in-structure list
                 fpstr CatName, fpstr Tag, int * nrow, int * iRet
                ), ( // lengths-follow list
-                fpstr CatName, int CatName_len,
-                fpstr Tag,     int Tag_len,
+                fpstr CatName, fpstr_size_t CatName_len,
+                fpstr Tag,     fpstr_size_t Tag_len,
                 int * nrow,    int * iRet
                ) );
 
@@ -209,16 +209,16 @@ FORTRAN_SUBR ( MMDB_FCIF_PUTLOOPSTRING, mmdb_fcif_putloopstring,
                 fpstr Tag,         // tag
                 int * nrow,        // row number
                 int * iRet,        // return code
-                int   Data_len,    // fortran-hidden length of Data
-                int   CatName_len, // fortran-hidden length of CatName
-                int   Tag_len      // fortran-hidden length of Tag
+                fpstr_size_t   Data_len,    // fortran-hidden length of Data
+                fpstr_size_t   CatName_len, // fortran-hidden length of CatName
+                fpstr_size_t   Tag_len      // fortran-hidden length of Tag
                ), ( // lengths-in-structure list
                 fpstr Data, fpstr CatName, fpstr Tag,
                 int * nrow, int * iRet
                ), ( // lengths-follow list
-    fpstr Data,    int Data_len,
-                fpstr CatName, int CatName_len,
-                fpstr Tag,     int Tag_len,
+                fpstr Data,    fpstr_size_t Data_len,
+                fpstr CatName, fpstr_size_t CatName_len,
+                fpstr Tag,     fpstr_size_t Tag_len,
                 int * nrow,    int * iRet
                ) );
 
@@ -229,15 +229,15 @@ FORTRAN_SUBR ( MMDB_FCIF_PUTLOOPREAL, mmdb_fcif_putloopreal,
                 fpstr Tag,         // tag
                 int * nrow,        // row number
                 int * iRet,        // return code
-                int   CatName_len, // fortran-hidden length of CatName
-                int   Tag_len      // fortran-hidden length of Tag
+                fpstr_size_t   CatName_len, // fortran-hidden length of CatName
+                fpstr_size_t   Tag_len      // fortran-hidden length of Tag
                ), ( // lengths-in-structure list
                 apireal * V, fpstr CatName, fpstr Tag,
                 int * nrow, int * iRet
                ), ( // lengths-follow list
     apireal * V,
-                fpstr CatName, int CatName_len,
-                fpstr Tag,     int Tag_len,
+                fpstr CatName, fpstr_size_t CatName_len,
+                fpstr Tag,     fpstr_size_t Tag_len,
                 int * nrow,    int * iRet
                ) );
 
@@ -248,16 +248,16 @@ FORTRAN_SUBR ( MMDB_FCIF_PUTLOOPINTEGER, mmdb_fcif_putloopinteger,
                 fpstr Tag,         // tag
                 int * nrow,        // row number
                 int * iRet,        // return code
-                int   CatName_len, // fortran-hidden length of CatName
-                int   Tag_len      // fortran-hidden length of Tag
+                fpstr_size_t   CatName_len, // fortran-hidden length of CatName
+                fpstr_size_t   Tag_len      // fortran-hidden length of Tag
                ), ( // lengths-in-structure list
                 int * I, fpstr CatName, fpstr Tag,
                 int * nrow, int * iRet
                ), ( // lengths-follow list
                 int * I,
-                fpstr CatName, int CatName_len,
-                fpstr Tag,     int Tag_len,
-                int * nrow,    int * iRet
+                fpstr CatName, fpstr_size_t CatName_len,
+                fpstr Tag,     fpstr_size_t Tag_len,
+                int * nrow,    fpstr_size_t * iRet
                ) );
 
 

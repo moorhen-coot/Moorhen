@@ -67,7 +67,7 @@ namespace mmdb  {
   DefineClass(TitleContainer);
   DefineStreamFunctions(TitleContainer);
 
-  class TitleContainer : public ClassContainer  {
+  class MMDB_DL_EXPORT TitleContainer : public ClassContainer  {
 
     public :
 
@@ -86,7 +86,7 @@ namespace mmdb  {
   DefineClass(ObsLine);
   DefineStreamFunctions(ObsLine);
 
-  class ObsLine : public ContainerClass  {
+  class MMDB_DL_EXPORT ObsLine : public ContainerClass  {
 
     public :
 
@@ -122,7 +122,7 @@ namespace mmdb  {
   DefineClass(TitleLine);
   DefineStreamFunctions(TitleLine);
 
-  class TitleLine : public ContString  {
+  class MMDB_DL_EXPORT TitleLine : public ContString  {
 
     public :
 
@@ -151,7 +151,7 @@ namespace mmdb  {
   DefineClass(Caveat);
   DefineStreamFunctions(Caveat);
 
-  class Caveat : public ContString  {
+  class MMDB_DL_EXPORT Caveat : public ContString  {
 
     public :
 
@@ -189,7 +189,7 @@ namespace mmdb  {
   DefineClass(Compound);
   DefineStreamFunctions(Compound);
 
-  class Compound : public ContString  {
+  class MMDB_DL_EXPORT Compound : public ContString  {
 
     public :
 
@@ -218,7 +218,7 @@ namespace mmdb  {
   DefineClass(Source);
   DefineStreamFunctions(Source);
 
-  class Source : public ContString  {
+  class MMDB_DL_EXPORT Source : public ContString  {
 
     public :
 
@@ -247,7 +247,7 @@ namespace mmdb  {
   DefineClass(KeyWords);
   DefineStreamFunctions(KeyWords);
 
-  class KeyWords : public io::Stream  {
+  class MMDB_DL_EXPORT KeyWords : public io::Stream  {
 
     public :
       int      nKeyWords;     // number of key words
@@ -284,7 +284,7 @@ namespace mmdb  {
   DefineClass(ExpData);
   DefineStreamFunctions(ExpData);
 
-  class ExpData : public ContString  {
+  class MMDB_DL_EXPORT ExpData : public ContString  {
 
     public :
 
@@ -313,7 +313,7 @@ namespace mmdb  {
   DefineClass(MdlType);
   DefineStreamFunctions(MdlType);
 
-  class MdlType : public ContString  {
+  class MMDB_DL_EXPORT MdlType : public ContString  {
 
     public :
 
@@ -342,7 +342,7 @@ namespace mmdb  {
   DefineClass(Author);
   DefineStreamFunctions(Author);
 
-  class Author : public ContString  {
+  class MMDB_DL_EXPORT Author : public ContString  {
 
     public :
 
@@ -376,7 +376,7 @@ namespace mmdb  {
     REVDAT_WARN_MODTYPE = 0x00000002
   };
 
-  class RevData : public ContainerClass  {
+  class MMDB_DL_EXPORT RevData : public ContainerClass  {
 
     public :
       int     modNum;
@@ -414,7 +414,7 @@ namespace mmdb  {
   DefineClass(Supersede);
   DefineStreamFunctions(Supersede);
 
-  class Supersede : public ContainerClass  {
+  class MMDB_DL_EXPORT Supersede : public ContainerClass  {
 
     public :
       Date   sprsdeDate;  //  date of supersede
@@ -449,7 +449,7 @@ namespace mmdb  {
   DefineClass(Journal);
   DefineStreamFunctions(Journal);
 
-  class Journal : public ContString  {
+  class MMDB_DL_EXPORT Journal : public ContString  {
 
     public :
 
@@ -478,7 +478,7 @@ namespace mmdb  {
   DefineClass(Remark);
   DefineStreamFunctions(Remark);
 
-  class Remark : public ContainerClass  {
+  class MMDB_DL_EXPORT Remark : public ContainerClass  {
 
     public :
 
@@ -512,7 +512,7 @@ namespace mmdb  {
   DefineClass(BMApply);
   DefineStreamFunctions(BMApply);
 
-  class BMApply : public io::Stream  {
+  class MMDB_DL_EXPORT BMApply : public io::Stream  {
 
     public :
       PChainID  chain;
@@ -576,7 +576,7 @@ namespace mmdb  {
   DefineClass(Title);
   DefineStreamFunctions(Title);
 
-  class Title : public io::Stream  {
+  class MMDB_DL_EXPORT Title : public io::Stream  {
 
     friend class Model;
     friend class Chain;

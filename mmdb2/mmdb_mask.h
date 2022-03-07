@@ -51,7 +51,7 @@ namespace mmdb  {
   DefineClass(Mask);
   DefineStreamFunctions(Mask);
 
-  class Mask : public io::Stream  {
+  class MMDB_DL_EXPORT Mask : public io::Stream  {
 
     public :
 

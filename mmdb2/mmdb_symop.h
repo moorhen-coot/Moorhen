@@ -52,7 +52,7 @@ namespace mmdb  {
   DefineClass(SymOp);
   DefineStreamFunctions(SymOp);
 
-  class SymOp : public io::Stream  {
+  class MMDB_DL_EXPORT SymOp : public io::Stream  {
 
     public :
 
@@ -103,7 +103,7 @@ namespace mmdb  {
   DefineClass(SymOps);
   DefineStreamFunctions(SymOps);
 
-  class SymOps : public io::Stream  {
+  class MMDB_DL_EXPORT SymOps : public io::Stream  {
 
     public :
 

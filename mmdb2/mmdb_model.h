@@ -66,7 +66,7 @@ namespace mmdb  {
   DefineClass(HetCompound);
   DefineStreamFunctions(HetCompound);
 
-  class HetCompound : public io::Stream  {
+  class MMDB_DL_EXPORT HetCompound : public io::Stream  {
 
     public :
 
@@ -109,7 +109,7 @@ namespace mmdb  {
   DefineClass(SSContainer);
   DefineStreamFunctions(SSContainer);
 
-  class SSContainer : public ClassContainer  {
+  class MMDB_DL_EXPORT SSContainer : public ClassContainer  {
 
     public :
 
@@ -128,7 +128,7 @@ namespace mmdb  {
   DefineClass(Helix);
   DefineStreamFunctions(Helix);
 
-  class Helix : public ContainerClass  {
+  class MMDB_DL_EXPORT Helix : public ContainerClass  {
 
     public :
       int     serNum;      // serial number
@@ -174,7 +174,7 @@ namespace mmdb  {
   DefineClass(Strand);
   DefineStreamFunctions(Strand);
 
-  class Strand : public io::Stream  {
+  class MMDB_DL_EXPORT Strand : public io::Stream  {
 
     public :
 
@@ -231,7 +231,7 @@ namespace mmdb  {
   DefineClass(Sheet);
   DefineStreamFunctions(Sheet);
 
-  class Sheet : public io::Stream  {
+  class MMDB_DL_EXPORT Sheet : public io::Stream  {
 
     public :
       SheetID  sheetID;   // sheet ID
@@ -269,7 +269,7 @@ namespace mmdb  {
   DefineClass(Sheets);
   DefineStreamFunctions(Sheets);
 
-  class Sheets : public io::Stream  {
+  class MMDB_DL_EXPORT Sheets : public io::Stream  {
 
     public :
       int     nSheets;
@@ -303,7 +303,7 @@ namespace mmdb  {
   DefineClass(Turn);
   DefineStreamFunctions(Turn);
 
-  class Turn : public ContainerClass  {
+  class MMDB_DL_EXPORT Turn : public ContainerClass  {
 
     public :
       int     serNum;      // serial number
@@ -347,7 +347,7 @@ namespace mmdb  {
   DefineClass(HetCompounds);
   DefineStreamFunctions(HetCompounds);
 
-  class HetCompounds : public io::Stream  {
+  class MMDB_DL_EXPORT HetCompounds : public io::Stream  {
 
     public :
 
@@ -387,7 +387,7 @@ namespace mmdb  {
   DefineClass(LinkContainer);
   DefineStreamFunctions(LinkContainer);
 
-  class LinkContainer : public ClassContainer  {
+  class MMDB_DL_EXPORT LinkContainer : public ClassContainer  {
 
     public :
 
@@ -406,7 +406,7 @@ namespace mmdb  {
   DefineClass(Link);
   DefineStreamFunctions(Link);
 
-  class Link : public ContainerClass  {
+  class MMDB_DL_EXPORT Link : public ContainerClass  {
 
     public :
       AtomName atName1;   // name of 1st linked atom
@@ -452,7 +452,7 @@ namespace mmdb  {
   DefineClass(LinkRContainer);
   DefineStreamFunctions(LinkRContainer);
 
-  class LinkRContainer : public ClassContainer  {
+  class MMDB_DL_EXPORT LinkRContainer : public ClassContainer  {
 
     public :
 
@@ -500,7 +500,7 @@ namespace mmdb  {
   LINK         C21 2EG A   7                 C22 2EG B  19     1555   1555  1.56
   */
 
-  class LinkR : public ContainerClass  {
+  class MMDB_DL_EXPORT LinkR : public ContainerClass  {
 
     public :
       LinkRID  linkRID;   // link name
@@ -547,7 +547,7 @@ namespace mmdb  {
   DefineClass(CisPepContainer);
   DefineStreamFunctions(CisPepContainer);
 
-  class CisPepContainer : public ClassContainer  {
+  class MMDB_DL_EXPORT CisPepContainer : public ClassContainer  {
 
     public :
 
@@ -566,7 +566,7 @@ namespace mmdb  {
   DefineClass(CisPep);
   DefineStreamFunctions(CisPep);
 
-  class CisPep : public ContainerClass  {
+  class MMDB_DL_EXPORT CisPep : public ContainerClass  {
 
     public :
       int      serNum;   //  record serial number
@@ -619,7 +619,7 @@ namespace mmdb  {
 
   DefineFactoryFunctions(Model);
 
-  class Model : public ProModel  {
+  class MMDB_DL_EXPORT Model : public ProModel  {
 
     friend class Manager;
     friend class BondManager;

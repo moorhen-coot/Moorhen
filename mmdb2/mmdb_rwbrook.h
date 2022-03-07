@@ -306,18 +306,18 @@ FORTRAN_SUBR ( MMDB_F_OPEN, mmdb_f_open,
                 mmdb::machine::fpstr FType,  // "PDB", "CIF", "BIN" or " "
                 int * iUnit,      // channel number
                 int * iRet,       // returns error code
-                int   LName_len,  // fortran-hidden length of LName
-                int   RWStat_len, // fortran-hidden length of RWStat
-                int   FType_len   // fortran-hidden length of FType
+                mmdb::machine::fpstr_size_t   LName_len,  // fortran-hidden length of LName
+                mmdb::machine::fpstr_size_t   RWStat_len, // fortran-hidden length of RWStat
+                mmdb::machine::fpstr_size_t   FType_len   // fortran-hidden length of FType
                ), ( // lengths-in-structure list
                 mmdb::machine::fpstr LName,
                 mmdb::machine::fpstr RWStat,
                 mmdb::machine::fpstr FType,
                 int * iUnit,  int * iRet
                ), ( // lengths-follow list
-                mmdb::machine::fpstr LName,   int LName_len,
-                mmdb::machine::fpstr RWStat,  int RWStat_len,
-                mmdb::machine::fpstr FType,   int FType_len,
+                mmdb::machine::fpstr LName,   mmdb::machine::fpstr_size_t LName_len,
+                mmdb::machine::fpstr RWStat,  mmdb::machine::fpstr_size_t RWStat_len,
+                mmdb::machine::fpstr FType,   mmdb::machine::fpstr_size_t FType_len,
                 int * iUnit,   int * iRet
                ) );
 
@@ -340,18 +340,18 @@ FORTRAN_SUBR ( MMDB_F_OPEN1, mmdb_f_open1,
                 mmdb::machine::fpstr FType,  // "PDB", "CIF", "BIN" or " "
                 int * iUnit,      // channel number
                 int * iRet,       // returns error code
-                int   FName_len,  // fortran-hidden length of FName
-                int   RWStat_len, // fortran-hidden length of RWStat
-                int   FType_len   // fortran-hidden length of FType
+                mmdb::machine::fpstr_size_t   FName_len,  // fortran-hidden length of FName
+                mmdb::machine::fpstr_size_t   RWStat_len, // fortran-hidden length of RWStat
+                mmdb::machine::fpstr_size_t   FType_len   // fortran-hidden length of FType
                ), ( // lengths-in-structure list
                 mmdb::machine::fpstr FName,
                 mmdb::machine::fpstr RWStat,
                 mmdb::machine::fpstr FType,
                 int * iUnit,  int * iRet
                ), ( // lengths-follow list
-                mmdb::machine::fpstr FName,   int FName_len,
-                mmdb::machine::fpstr RWStat,  int RWStat_len,
-                mmdb::machine::fpstr FType,   int FType_len,
+                mmdb::machine::fpstr FName,   mmdb::machine::fpstr_size_t FName_len,
+                mmdb::machine::fpstr RWStat,  mmdb::machine::fpstr_size_t RWStat_len,
+                mmdb::machine::fpstr FType,   mmdb::machine::fpstr_size_t FType_len,
                 int * iUnit,   int * iRet
                ) );
 
@@ -453,15 +453,15 @@ FORTRAN_SUBR ( MMDB_F_SETTYPE, mmdb_f_settype,
                 mmdb::machine::fpstr RWStat, // "INPUT" or "OUTPUT"
                 int * iRet,      // returns -1 if unit not found,
                                  // otherwise 0
-                int   FType_len, // fortran-hidden length of FType
-                int   RWStat_len // fortran-hidden length of RWStat
+                mmdb::machine::fpstr_size_t   FType_len, // fortran-hidden length of FType
+                mmdb::machine::fpstr_size_t   RWStat_len // fortran-hidden length of RWStat
                ), ( // lengths-in-structure list
                 int * iUnit,  mmdb::machine::fpstr FType,
                 mmdb::machine::fpstr RWStat, int * iRet
                ), ( // lengths-follow list
                 int * iUnit,
-                mmdb::machine::fpstr FType,   int FType_len,
-                mmdb::machine::fpstr RWStat,  int RWStat_len,
+                mmdb::machine::fpstr FType,   mmdb::machine::fpstr_size_t FType_len,
+                mmdb::machine::fpstr RWStat,  mmdb::machine::fpstr_size_t RWStat_len,
                 int * iRet
                ) );
 
@@ -488,12 +488,12 @@ FORTRAN_SUBR ( MMDB_F_SETNAME, mmdb_f_setname,
                 mmdb::machine::fpstr FName,    // file name
                 int * iRet,     // returns -1 if unit not found,
                                 // otherwise 0
-                int   FName_len // fortran-hidden length of FName
+                mmdb::machine::fpstr_size_t   FName_len // fortran-hidden length of FName
                ), ( // lengths-in-structure list
                 int * iUnit, mmdb::machine::fpstr FName, int * iRet
                ), ( // lengths-follow list
                 int * iUnit,
-                mmdb::machine::fpstr FName, int FName_len,
+                mmdb::machine::fpstr FName, mmdb::machine::fpstr_size_t FName_len,
                 int * iRet
                ) );
 
@@ -729,14 +729,14 @@ FORTRAN_SUBR ( MMDB_F_ATOM,  mmdb_f_atom,
                             //  RWBWAR_UnkFormFactor unknown formfactor
                             //  RWBWAR_AmbFormFactor ambiguous formfactor
                             //
-            int AtNam_len,  // fortran-hidden length of AtNam
-            int ResNam_len, // fortran-hidden length of ResNam
-            int ChnNam_len, // fortran-hidden length of ChnNam
-            int ResNo_len,  // fortran-hidden length of ResNo
-            int InsCod_len, // fortran-hidden length of InsCod
-            int AltCod_len, // fortran-hidden length of AltCod
-            int segID_len,  // fortran-hidden length of SegID
-            int ID_len      // fortran-hidden length of ID
+            mmdb::machine::fpstr_size_t AtNam_len,  // fortran-hidden length of AtNam
+            mmdb::machine::fpstr_size_t ResNam_len,  // fortran-hidden length of ResNam
+            mmdb::machine::fpstr_size_t ChnNam_len, // fortran-hidden length of ChnNam
+            mmdb::machine::fpstr_size_t ResNo_len,  // fortran-hidden length of ResNo
+            mmdb::machine::fpstr_size_t InsCod_len, // fortran-hidden length of InsCod
+            mmdb::machine::fpstr_size_t AltCod_len, // fortran-hidden length of AltCod
+            mmdb::machine::fpstr_size_t segID_len,  // fortran-hidden length of SegID
+            mmdb::machine::fpstr_size_t ID_len      // fortran-hidden length of ID
            ), ( // lengths-in-structure list
             int * iUnit,  int * iSer,
             mmdb::machine::fpstr AtNam,
@@ -750,16 +750,16 @@ FORTRAN_SUBR ( MMDB_F_ATOM,  mmdb_f_atom,
             int * iRet
            ), ( // lengths-follow list
             int * iUnit,  int * iSer,
-            mmdb::machine::fpstr AtNam,  int   AtNam_len,
-            mmdb::machine::fpstr ResNam, int   ResNam_len,
-            mmdb::machine::fpstr ChnNam, int   ChnNam_len,
+            mmdb::machine::fpstr AtNam,  mmdb::machine::fpstr_size_t   AtNam_len,
+            mmdb::machine::fpstr ResNam, mmdb::machine::fpstr_size_t   ResNam_len,
+            mmdb::machine::fpstr ChnNam, mmdb::machine::fpstr_size_t   ChnNam_len,
             int * iResN,
-            mmdb::machine::fpstr ResNo,  int   ResNo_len,
-            mmdb::machine::fpstr InsCod, int   InsCod_len,
-            mmdb::machine::fpstr AltCod, int   AltCod_len,
-            mmdb::machine::fpstr segID,  int   segID_len,
+            mmdb::machine::fpstr ResNo,  mmdb::machine::fpstr_size_t   ResNo_len,
+            mmdb::machine::fpstr InsCod, fpsrt_size_t   InsCod_len,
+            mmdb::machine::fpstr AltCod, mmdb::machine::fpstr_size_t   AltCod_len,
+            mmdb::machine::fpstr segID,  mmdb::machine::fpstr_size_t   segID_len,
             int * IZ,
-            mmdb::machine::fpstr ID,     int   ID_len,
+            mmdb::machine::fpstr ID,     mmdb::machine::fpstr_size_t   ID_len,
             int * iRet
            ) );
 
@@ -847,8 +847,8 @@ FORTRAN_SUBR ( MMDB_F_COORD, mmdb_f_coord,
                                 //  RWBERR_NoTempFactor  if temp. factor was
                                 //                       not set in the atom
                                 //
-                int XFlag_len,  // fortran-hidden length of XFlag
-                int BFlag_len   // fortran-hidden length of BFlag
+                mmdb::machine::fpstr_size_t XFlag_len,  // fortran-hidden length of XFlag
+                mmdb::machine::fpstr_size_t BFlag_len   // fortran-hidden length of BFlag
                ), ( // lengths-in-structure list
                 int * iUnit,
                 mmdb::machine::fpstr XFlag,
@@ -862,8 +862,8 @@ FORTRAN_SUBR ( MMDB_F_COORD, mmdb_f_coord,
                 int * iRet
                ), ( // lengths-follow list
                 int * iUnit,
-                mmdb::machine::fpstr XFlag,   int XFlag_len,
-                mmdb::machine::fpstr BFlag,   int BFlag_len,
+                mmdb::machine::fpstr XFlag,   mmdb::machine::fpstr_size_t XFlag_len,
+                mmdb::machine::fpstr BFlag,   mmdb::machine::fpstr_size_t BFlag_len,
                 mmdb::machine::apireal * x,
                 mmdb::machine::apireal * y,
                 mmdb::machine::apireal * z,
@@ -1025,11 +1025,11 @@ FORTRAN_SUBR ( MMDB_F_WBSPGRP, mmdb_f_wbspgrp,
                                 //              initialized
                                 //   RWBERR_NoFile        if unit
                                 //              has been disposed
-                int spGroup_len // fortran-hidden length of spGroup
+                mmdb::machine::fpstr_size_t spGroup_len // fortran-hidden length of spGroup
                ), ( // lengths-in-structure list
                 int * iUnit, mmdb::machine::fpstr spGroup, int * iRet
                ), ( // lengths-follow list
-                int * iUnit, mmdb::machine::fpstr spGroup, int spGroup_len,
+                int * iUnit, mmdb::machine::fpstr spGroup, mmdb::machine::fpstr_size_t spGroup_len,
                 int * iRet
                )
              );
@@ -1064,11 +1064,11 @@ FORTRAN_SUBR ( MMDB_F_RBSPGRP, mmdb_f_rbspgrp,
                                 //              initialized
                                 //   RWBERR_NoFile        if unit
                                 //              has been disposed
-                int spGroup_len // fortran-hidden length of spGroup
+                mmdb::machine::fpstr_size_t spGroup_len // fortran-hidden length of spGroup
                ), ( // lengths-in-structure list
                 int * iUnit, mmdb::machine::fpstr spGroup, int * iRet
                ), ( // lengths-follow list
-                int * iUnit, mmdb::machine::fpstr spGroup, int spGroup_len,
+                int * iUnit, mmdb::machine::fpstr spGroup, mmdb::machine::fpstr_size_t spGroup_len,
                 int * iRet
                )
              );
@@ -1477,13 +1477,13 @@ FORTRAN_SUBR ( MMDB_F_WREMARK, mmdb_f_wremark,
                                  //              has been disposed
                                  // other return codea are those
                                  // returned by mmdb_f_open1_(..)
-                int    Line_len  // fortran-hidden length of Line
+                mmdb::machine::fpstr_size_t    Line_len  // fortran-hidden length of Line
                ), ( // lengths-in-structure list
                 int * iUnit,
                 mmdb::machine::fpstr Line, int * iRet
                ), ( // lengths-follow list
                 int * iUnit,
-                mmdb::machine::fpstr Line, int Line_len, int *iRet
+                mmdb::machine::fpstr Line, mmdb::machine::fpstr_size_t Line_len, int *iRet
                )
              );
 
