@@ -1,6 +1,3 @@
-* Update all libs.
-  * clipper
-
 - Create an MMDBManager DONE
 - Read a file DONE
 - Wrap fftw DONE

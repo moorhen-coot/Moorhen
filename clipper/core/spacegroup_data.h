@@ -46,6 +46,7 @@
 #ifndef CLIPPER_SPACEGROUP_DATA
 #define CLIPPER_SPACEGROUP_DATA
 
+#include "clipper_sysdep.h"
 
 namespace clipper
 {
@@ -61,10 +62,10 @@ namespace clipper
     struct LGdata { unsigned int lghash; ASUfn asufn; const char* lgname; };
 
     // data tables
-    extern LGdata lgdata[];
-    extern int lgdata_size;
-    extern SGdata sgdata[];
-    extern int sgdata_size;
+    extern CLIPPER_DL_IMPORT(LGdata) lgdata[];
+    extern CLIPPER_DL_IMPORT(int) lgdata_size;
+    extern CLIPPER_DL_IMPORT(SGdata) sgdata[];
+    extern CLIPPER_DL_IMPORT(int) sgdata_size;
 
   }  // namespace data
 

@@ -71,7 +71,7 @@ namespace clipper
     HKL_data_cacheobj( const Key& hkl_data_cachekey );
     bool matches( const Key& hkl_data_cachekey ) const;
     String format() const;
-    static Mutex mutex;                 //!< thread safety
+    static CLIPPER_DL_IMPORT(Mutex) mutex;                 //!< thread safety
   private:
     Key key;
   };

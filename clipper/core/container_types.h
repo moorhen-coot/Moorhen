@@ -52,11 +52,10 @@
 namespace clipper
 {
 
-  extern const Resolution NullResolution;  //<! null instance
-  extern const Spacegroup NullSpacegroup;  //<! null instance
-  extern const Cell NullCell;  //<! null instance
-  extern const Grid_sampling NullGrid_sampling;  //<! null instance
-
+  extern CLIPPER_DL_IMPORT(const Resolution) NullResolution;  //<! null instance
+  extern CLIPPER_DL_IMPORT(const Spacegroup) NullSpacegroup;  //<! null instance
+  extern CLIPPER_DL_IMPORT(const Cell) NullCell;  //<! null instance
+  extern CLIPPER_DL_IMPORT(const Grid_sampling) NullGrid_sampling;  //<! null instance
 
   //! Resolution container
   /*! CResolution: This has a name and a resolution.  It overrides the

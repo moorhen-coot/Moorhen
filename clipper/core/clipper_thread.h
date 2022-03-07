@@ -123,7 +123,7 @@ public:
 
   private:
     static CLIPPER_THREAD_RETTYPE Entry( CLIPPER_THREAD_ARGTYPE thisptr );
-    static Mutex mutex_global;
+    static CLIPPER_DL_IMPORT(Mutex) mutex_global;
     static int   next_id;
     CLIPPER_THREAD_TYPE thread;
     int id_;

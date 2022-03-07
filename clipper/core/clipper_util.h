@@ -172,26 +172,26 @@ namespace clipper
     static ftype rad2d( const ftype& x );
 
   private:
-    static float  nanf_;  //!< float NaN
-    static double nand_;  //!< double NaN
-    static ftype  nan_;   //!< ftype nan
-    static ftype onepi_;  //!< one*pi
-    static ftype twopi_;  //!< two*pi
-    static ftype twopi2_; //!< two*pi*pi
-    static ftype eightpi2_; //!< eight*pi*pi
-    static ftype d2rad_;  //!< degree-radian conversion
-    static ftype sim_a;   //!< sim fn param
-    static ftype sim_b;   //!< sim fn param
-    static ftype sim_c;   //!< sim fn param
-    static ftype sim_d;   //!< sim fn param
-    static ftype sim_e;   //!< sim fn param
-    static ftype sim_A;   //!< invsim fn param
-    static ftype sim_B;   //!< invsim fn param
-    static ftype sim_C;   //!< invsim fn param
-    static ftype sim_g;   //!< invsim fn param
-    static ftype sim_p;   //!< invsim fn param
-    static ftype sim_q;   //!< invsim fn param
-    static ftype sim_r;   //!< invsim fn param
+    static CLIPPER_DL_IMPORT(float) nanf_;  //!< float NaN
+    static CLIPPER_DL_IMPORT(double) nand_;  //!< double NaN
+    static CLIPPER_DL_IMPORT(ftype)  nan_;   //!< ftype nan
+    static CLIPPER_DL_IMPORT(ftype) onepi_;  //!< one*pi
+    static CLIPPER_DL_IMPORT(ftype) twopi_;  //!< two*pi
+    static CLIPPER_DL_IMPORT(ftype) twopi2_; //!< two*pi*pi
+    static CLIPPER_DL_IMPORT(ftype) eightpi2_; //!< eight*pi*pi
+    static CLIPPER_DL_IMPORT(ftype) d2rad_;  //!< degree-radian conversion
+    static CLIPPER_DL_IMPORT(ftype) sim_a;   //!< sim fn param
+    static CLIPPER_DL_IMPORT(ftype) sim_b;   //!< sim fn param
+    static CLIPPER_DL_IMPORT(ftype) sim_c;   //!< sim fn param
+    static CLIPPER_DL_IMPORT(ftype) sim_d;   //!< sim fn param
+    static CLIPPER_DL_IMPORT(ftype) sim_e;   //!< sim fn param
+    static CLIPPER_DL_IMPORT(ftype) sim_A;   //!< invsim fn param
+    static CLIPPER_DL_IMPORT(ftype) sim_B;   //!< invsim fn param
+    static CLIPPER_DL_IMPORT(ftype) sim_C;   //!< invsim fn param
+    static CLIPPER_DL_IMPORT(ftype) sim_g;   //!< invsim fn param
+    static CLIPPER_DL_IMPORT(ftype) sim_p;   //!< invsim fn param
+    static CLIPPER_DL_IMPORT(ftype) sim_q;   //!< invsim fn param
+    static CLIPPER_DL_IMPORT(ftype) sim_r;   //!< invsim fn param
   };
 
 } // namespace clipper

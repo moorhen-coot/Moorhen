@@ -49,7 +49,7 @@
 #include <string>
 #include <iostream>
 
-
+#include "clipper_sysdep.h"
 namespace clipper
 {
 
@@ -98,9 +98,9 @@ namespace clipper
       }
     }
   private:
-    static int message_level_;
-    static int fatal_level_;
-    static std::ostream* stream_;
+    static CLIPPER_DL_IMPORT(int) message_level_;
+    static CLIPPER_DL_IMPORT(int) fatal_level_;
+    static CLIPPER_DL_IMPORT(std::ostream*) stream_;
   };
 
 

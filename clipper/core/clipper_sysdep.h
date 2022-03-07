@@ -26,7 +26,7 @@
 //L
 //L  You can redistribute it and/or modify the library under the terms of
 //L  the GNU Lesser General Public License as published by the Free Software
-//L  Foundation; either version 2.1 of the License, or (at your option) any
+//L  Foundation; either version 2.1 of the License, or (at your option) ay
 //L  later version.
 //L
 //L  This library is distributed in the hope that it will be useful, but
@@ -51,7 +51,7 @@
  - mirror into the 'std' namespace as below:
 */
 
-#if defined(sun) || defined(sgi) || defined(__osf__) || defined(_MSC_VER)
+#if defined(sun) || defined(sgi) || defined(__osf__)
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
@@ -63,6 +63,9 @@
 namespace std { using ::floor; using ::ceil; using ::fabs; using ::fmod; using ::sqrt; using ::sin; using ::cos; using ::tan; using ::asin; using ::acos; using ::atan; using ::sinh; using ::cosh; using ::tanh; using ::atan2; using ::exp; using ::log; using ::pow; }
 #else
 #include <cmath>
+#endif
+#ifndef M_PI
+#define M_PI 3.14159265358979
 #endif
 
 #if defined(__MINGW32__)
@@ -107,6 +110,18 @@ namespace clipper {
 #endif
 }
 
+/* Using MSVC need __declspec */ 
+#if defined(__WIN32__) || defined(_WIN32)
+#  if defined(_MSC_VER) && defined(CLIPPER_DLL_EXPORT)
+#    define CLIPPER_DL_IMPORT(type) __declspec(dllexport) type
+#  elif defined(_MSC_VER)
+#    define CLIPPER_DL_IMPORT(type) __declspec(dllimport) type
+#  else
+#    define CLIPPER_DL_IMPORT(type) type
+#  endif
+#else
+#  define CLIPPER_DL_IMPORT(type) type
+#endif
 
 /* threading libraries and definitions */
 
@@ -123,6 +138,16 @@ namespace clipper {
 #define WIN32_LEAN_AND_MEAN 1
 #endif
 
+#ifdef max
+#undef max
+#endif
+#ifdef min
+#undef min
+#endif
+
+#define NOMINMAX
+#include <algorithm>
+using namespace std;
 #include <windows.h>
 
 #undef small

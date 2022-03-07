@@ -83,7 +83,7 @@ namespace clipper
     std::vector<int> du, dv, dw;     //!< symmetry grid shifts to index
     Array2d<unsigned char> symperm;  //!< Perumtation matrix of symops
     Mat33<> mat_grid_orth;           //!< for backward compatibility
-    static Mutex mutex;              //!< thread safety
+    static CLIPPER_DL_IMPORT(Mutex) mutex;              //!< thread safety
   };
 
 
@@ -328,7 +328,7 @@ namespace clipper
     inline void find_sym( const Coord_grid& base, int& index, int& sym ) const;
     void asu_error( const Coord_grid& pos ) const;
 
-    static FFTtype default_type_;       //!< default backend type
+    static CLIPPER_DL_IMPORT(FFTtype) default_type_;       //!< default backend type
 
     friend class Xmap_base::Map_reference_base;
     friend class Xmap_base::Map_reference_index;

@@ -155,7 +155,7 @@ namespace clipper {
     std::vector<Symop>  symops;         //!< symmetry operators
     std::vector<Isymop> isymops;        //!< symmetry operators
     Vec3<> asu_min_, asu_max_;          //!< real space ASU
-    static Mutex mutex;                 //!< thread safety
+    static CLIPPER_DL_IMPORT(Mutex) mutex;                 //!< thread safety
   };
 
 

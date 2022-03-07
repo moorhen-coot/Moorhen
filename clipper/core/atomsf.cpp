@@ -387,7 +387,7 @@ const ScatteringFactorsData& ScatteringFactorsTraits<SF>::sf(const String& eleme
     }
   }
   
-  if (charge < 0 or charge > 9)
+  if (charge < 0 || charge > 9)
   	Message::message( Message_fatal("Invalid charge"));
   
   if (charge > 0)

@@ -573,7 +573,7 @@ namespace clipper
       { return ( h1.m00==h2.m00 && h1.m11==h2.m11 && h1.m22==h2.m22 &&
 		 h1.m01==h2.m01 && h1.m02==h2.m02 && h1.m12==h2.m12 ); }
   private:
-    static itype64 sqrt_limit_value;
+    static CLIPPER_DL_IMPORT(itype64) sqrt_limit_value;
     itype64 m00, m11, m22, m01, m02, m12;
   };
 

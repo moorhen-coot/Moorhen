@@ -49,6 +49,18 @@
 #include "../core/coords.h"
 #include "minimol_data.h"
 
+/* Using MSVC need __declspec */
+#if defined(__WIN32__) || defined(_WIN32)
+#  if defined(_MSC_VER) && defined(CLIPPER_MINIMOL_DLL_EXPORT)
+#    define CLIPPER_MINIMOL_DL_IMPORT(type) __declspec(dllexport) type
+#  elif defined(_MSC_VER)
+#    define CLIPPER_MINIMOL_DL_IMPORT(type) __declspec(dllimport) type
+#  else
+#    define CLIPPER_MINIMOL_DL_IMPORT(type) type
+#  endif
+#else
+#  define CLIPPER_MINIMOL_DL_IMPORT(type) type
+#endif
 
 namespace clipper {
 
@@ -201,7 +213,7 @@ namespace clipper {
    typedef MAtom CHILDTYPE;
    std::vector<CHILDTYPE> children;
    String id_, type_;
-   static TYPE default_type_;
+   static CLIPPER_MINIMOL_DL_IMPORT(TYPE) default_type_;
    static int rotamer_find( String res, int rota, TYPE t );
  };
 

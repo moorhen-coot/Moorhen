@@ -482,7 +482,7 @@ void Grid_sampling::init( const Spacegroup& spacegroup, const Cell& cell, const 
   // now check against restrictions, speed
   for ( i = 0; i < 3; i++ ) {
     nbest = 0;
-    tbest = 1.0e12;
+    tbest = 1.0e24;
     for ( n = nuvw[i]; n < 2*nuvw[i]+16; n++ ) {
       if ( n % (2*factors[i]) == 0 ) {
         l = 0; // sum of factors (approx. log n)

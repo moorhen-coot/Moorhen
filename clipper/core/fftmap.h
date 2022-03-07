@@ -66,7 +66,7 @@ namespace clipper
   public:
     enum FFTtype { Default, Measure, Estimate };  //!< optimisation options
   protected:
-    static Mutex mutex;                 //!< Thread safety
+    static CLIPPER_DL_IMPORT(Mutex) mutex;                 //!< Thread safety
   };
 
   //! FFTmap_p1: low level P1 map used for calculating FFTs
@@ -146,7 +146,7 @@ namespace clipper
     ffttype* data_r;                    //!< pointer to real data
     std::complex<ffttype>* data_c;      //!< pointer to complex data
 
-    static FFTtype default_type_;       //!< default optimisation options
+    static CLIPPER_DL_IMPORT(FFTtype) default_type_;       //!< default optimisation options
   };
 
 
