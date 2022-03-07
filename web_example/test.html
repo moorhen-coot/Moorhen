@@ -65,6 +65,7 @@
                          result.innerHTML += "<b>Result: " + e.data[1] + "</b><br />";
                          //This is then where we decide upon the action
                          let xmap = e.data[1];
+                         //This can *never* work. We cannot postMessage wrapped complex c++ classes.
                          console.log(xmap.cell());
                      }
                      result.scrollTop = result.scrollHeight;

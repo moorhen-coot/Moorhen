@@ -32,5 +32,6 @@ onmessage = function(e) {
     console.log(result.cell());
     console.log(result.cell().a());
     CCP4Module.printMapStats(result);
+    //This can *never* work. We cannot postMessage wrapped complex c++ classes.
     postMessage(["result",result]);
 }
