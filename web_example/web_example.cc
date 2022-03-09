@@ -22,6 +22,7 @@
 #include "clipper/clipper.h"
 #include "clipper/core/cell.h"
 #include "clipper/clipper-ccp4.h"
+#include "clipper/core/clipper_types.h"
 #include "clipper/core/clipper_precision.h"
 #include "clipper/clipper-cif.h"
 #include "clipper/contrib/sfweight.h"
@@ -46,6 +47,15 @@ std::string get_annotated_glycans ( std::string pdb_filename, bool original_colo
 
 std::string get_annotated_glycans_hierarchical ( std::string pdb_filename, bool original_colour_scheme, std::string expression_system ){
     return privateer::scripting::get_annotated_glycans_hierarchical ( pdb_filename, original_colour_scheme, expression_system );
+}
+
+std::string clipperStringToString(const clipper::String &s){
+    std::string snew = s;
+    return s;
+}
+
+void exportXMapToMapFile(clipper::CCP4MAPfile &fout, const clipper::Xmap<float> &xmap){
+    fout.export_xmap(xmap);
 }
 
 void printMapStats(clipper::Xmap<float> &xmap){
@@ -315,11 +325,24 @@ EMSCRIPTEN_BINDINGS(my_module) {
     class_<clipper::Xmap_base>("Xmap_base")
     .function("cell", &clipper::Xmap_base::cell)
     ;
+    class_<clipper::String>("Clipper_String")
+    .constructor()
+    .constructor<const std::string>()
+    ;
     class_<clipper::Xmap<float>, base<clipper::Xmap_base>>("Xmap_float")
     .constructor()
     ;
+    class_<clipper::CCP4MAPfile>("CCP4MAPfile")
+    .constructor()
+    .function("open_read",&clipper::CCP4MAPfile::open_read)
+    .function("open_write",&clipper::CCP4MAPfile::open_write)
+    .function("close_read",&clipper::CCP4MAPfile::close_read)
+    .function("close_write",&clipper::CCP4MAPfile::close_write)
+    ;
     function("clipper_example",&clipper_example);
     function("printMapStats",&printMapStats);
+    function("exportXMapToMapFile",&exportXMapToMapFile);
+    function("clipperStringToString",&clipperStringToString);
     function("superpose",&superpose_main);
     function("get_annotated_glycans",&get_annotated_glycans);
     function("get_annotated_glycans_hierarchical",&get_annotated_glycans_hierarchical);

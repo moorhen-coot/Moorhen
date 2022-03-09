@@ -26,12 +26,21 @@ onmessage = function(e) {
     } catch(e) {
     }
 
+    console.log("Send",selectedFileName,"to clipper");
     var result = CCP4Module.clipper_example(selectedFileName);
     console.log("In the worker...");
     console.log(result);
     console.log(result.cell());
     console.log(result.cell().a());
     CCP4Module.printMapStats(result);
-    //This can *never* work. We cannot postMessage wrapped complex c++ classes.
-    postMessage(["result",result]);
+    var fout = new CCP4Module.CCP4MAPfile();
+    var outpath = new CCP4Module.Clipper_String("mapout.map");
+    fout.open_write(outpath);
+    CCP4Module.exportXMapToMapFile(fout,result);
+    fout.close_write();
+    console.log("Written",CCP4Module.clipperStringToString(outpath));
+    console.log(CCP4Module);
+    var mapasstr = CCP4Module.FS.readFile(CCP4Module.clipperStringToString(outpath));
+    postMessage(["result",mapasstr]);
+
 }
