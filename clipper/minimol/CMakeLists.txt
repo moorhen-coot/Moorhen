@@ -1,12 +1,12 @@
 project(clipper-minimol)
 
 add_library(clipper-minimol STATIC 
-container_minimol.cpp
-minimol.cpp
-minimol_data.cpp
-minimol_io.cpp
-minimol_seq.cpp
-minimol_utils.cpp
+../../checkout/clipper/clipper/minimol/container_minimol.cpp
+../../checkout/clipper/clipper/minimol/minimol.cpp
+../../checkout/clipper/clipper/minimol/minimol_data.cpp
+../../checkout/clipper/clipper/minimol/minimol_io.cpp
+../../checkout/clipper/clipper/minimol/minimol_seq.cpp
+../../checkout/clipper/clipper/minimol/minimol_utils.cpp
 )
 
-target_include_directories(clipper-minimol PRIVATE ../.. .. ../../fftw ../../rfftw)
+target_include_directories(clipper-minimol PRIVATE ../.. ../../checkout/clipper ../../fftw ../../rfftw)
