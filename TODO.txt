@@ -1,3 +1,35 @@
+* Make this repo more minimal
+  * Checkout appropriate CCP4, gsl and Coot libs in a jhbuild kind of way.
+    Apply patches to make compatible with this build system
+
+  * gsl NO https://mirror.ibcp.fr/pub/gnu/gsl/gsl-latest.tar.gz
+
+  * ccp4 PATCH (ccp4_sysdep.h) bzr pull http://fg.oisin.rc-harwell.ac.uk/anonscm/bzr/libccp4/trunk/
+
+  * fftw NO http://www.fftw.org/fftw-2.1.5.tar.gz
+  * rfftw NO
+
+  * mmdb2 NO bzr pull http://fg.oisin.rc-harwell.ac.uk/anonscm/bzr/mmdb2/trunk/
+
+  * clipper/minimol NO bzr pull http://fg.oisin.rc-harwell.ac.uk/anonscm/bzr/clipper/trunk/
+  * clipper/core NO
+  * clipper/ccp4 NO
+  * clipper/contrib NO
+  * clipper/cns NO
+  * clipper/mmdb NO
+  * clipper/cif NO
+  * clipper/phs NO
+
+  * ssm NO bzr branch http://fg.oisin.rc-harwell.ac.uk/anonscm/bzr/ssm/trunk/
+
+  * ccp4srs PATCH (CMakeLists.txt)
+
+  * gemmi NO git clone https://github.com/project-gemmi/gemmi.git
+
+  * privateer PATCH (comment out pybind11 stuff) https://github.com/agirre/privateer/archive/refs/tags/MKIV.tar.gz
+
+  * Coot NO https://www2.mrc-lmb.cam.ac.uk/personal/pemsley/coot/source/releases/coot-0.9.6.tar.gz
+
 - Create an MMDBManager DONE
 - Read a file DONE
 - Wrap fftw DONE
