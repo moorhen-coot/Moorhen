@@ -7,4 +7,4 @@ add_library(clipper-ccp4 STATIC
 ../../checkout/clipper/clipper/ccp4/ccp4_utils.cpp
 )
 
-target_include_directories(clipper-ccp4 PRIVATE ../.. ../../checkout/clipper ../../fftw ../../rfftw)
+target_include_directories(clipper-ccp4 PRIVATE ../../checkout/libccp4 ../../checkout/clipper ../../fftw ../../rfftw)

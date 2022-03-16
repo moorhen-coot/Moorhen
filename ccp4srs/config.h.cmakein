@@ -1,8 +1,0 @@
-/* Name of package */
-#define PACKAGE @PACKAGE@
-
-/* Version number of package */
-#define VERSION @VERSION@
-
-/* Define to 1 if you have the <dirent.h> header file, and it defines `DIR'.  */
-#cmakedefine HAVE_DIRENT_H @HAVE_DIRENT_H@

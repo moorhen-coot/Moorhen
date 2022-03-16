@@ -23,59 +23,62 @@ check_include_file_cxx( "dirent.h" HAVE_DIRENT_H)
 
 set(PACKAGE "ccp4srs")
 set(VERSION "1.0")
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmakein
+
+set(ssm_src ${CMAKE_CURRENT_SOURCE_DIR}/../checkout/ccp4srs)
+
+configure_file(${ssm_src}/config.h.cmakein
                ${CMAKE_CURRENT_BINARY_DIR}/config.h @ONLY)
 
 set(prefix      ${CMAKE_INSTALL_PREFIX})
 set(exec_prefix ${CMAKE_INSTALL_PREFIX})
 set(libdir      ${CMAKE_INSTALL_PREFIX}/lib)
 set(includedir  ${CMAKE_INSTALL_PREFIX}/include)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ccp4srs.pc.cmakein
+configure_file(${ssm_src}/ccp4srs.pc.cmakein
    ${CMAKE_CURRENT_BINARY_DIR}/ccp4srs.pc.in @ONLY)
  file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/ccp4srs.pc
    INPUT ${CMAKE_CURRENT_BINARY_DIR}/ccp4srs.pc.in)
 
 set(ccp4srs_sources
-	${CMAKE_CURRENT_SOURCE_DIR}/ccp4srs/ccp4srs_angle.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/ccp4srs/ccp4srs_manager.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/ccp4srs/ccp4srs_atom.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/ccp4srs/ccp4srs_monomer.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/ccp4srs/ccp4srs_base.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/ccp4srs/ccp4srs_plane.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/ccp4srs/ccp4srs_bond.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/ccp4srs/ccp4srs_torsion.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/ccp4srs/ccp4srs_chem.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/ccp4srs/ccp4srs_tree.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/ccp4srs/ccp4srs_chicenter.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/ccp4srs/ccp4srs_types.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/ccp4srs/ccp4srs_container.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/ccp4srs/memio_.cpp 
-	${CMAKE_CURRENT_SOURCE_DIR}/ccp4srs/ccp4srs_entry.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/ccp4srs/mpfile_.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/ccp4srs/ccp4srs_index.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/ccp4srs/ccp4srs_smiles.cpp
+	${ssm_src}/ccp4srs/ccp4srs_angle.cpp
+        ${ssm_src}/ccp4srs/ccp4srs_manager.cpp
+	${ssm_src}/ccp4srs/ccp4srs_atom.cpp
+        ${ssm_src}/ccp4srs/ccp4srs_monomer.cpp
+	${ssm_src}/ccp4srs/ccp4srs_base.cpp
+        ${ssm_src}/ccp4srs/ccp4srs_plane.cpp
+	${ssm_src}/ccp4srs/ccp4srs_bond.cpp
+        ${ssm_src}/ccp4srs/ccp4srs_torsion.cpp
+	${ssm_src}/ccp4srs/ccp4srs_chem.cpp
+        ${ssm_src}/ccp4srs/ccp4srs_tree.cpp
+	${ssm_src}/ccp4srs/ccp4srs_chicenter.cpp
+        ${ssm_src}/ccp4srs/ccp4srs_types.cpp
+	${ssm_src}/ccp4srs/ccp4srs_container.cpp
+        ${ssm_src}/ccp4srs/memio_.cpp 
+	${ssm_src}/ccp4srs/ccp4srs_entry.cpp
+        ${ssm_src}/ccp4srs/mpfile_.cpp
+	${ssm_src}/ccp4srs/ccp4srs_index.cpp
+        ${ssm_src}/ccp4srs/ccp4srs_smiles.cpp
 )
 
 set(ccp4srs_headers
-	${CMAKE_CURRENT_SOURCE_DIR}/ccp4srs/ccp4srs_angle.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/ccp4srs/ccp4srs_index.h
-	${CMAKE_CURRENT_SOURCE_DIR}/ccp4srs/ccp4srs_atom.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/ccp4srs/ccp4srs_manager.h
-	${CMAKE_CURRENT_SOURCE_DIR}/ccp4srs/ccp4srs_base.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/ccp4srs/ccp4srs_monomer.h
-	${CMAKE_CURRENT_SOURCE_DIR}/ccp4srs/ccp4srs_bond.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/ccp4srs/ccp4srs_plane.h 
-	${CMAKE_CURRENT_SOURCE_DIR}/ccp4srs/ccp4srs_chem.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/ccp4srs/ccp4srs_torsion.h
-	${CMAKE_CURRENT_SOURCE_DIR}/ccp4srs/ccp4srs_chicenter.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/ccp4srs/ccp4srs_tree.h
-	${CMAKE_CURRENT_SOURCE_DIR}/ccp4srs/ccp4srs_container.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/ccp4srs/ccp4srs_types.h
-	${CMAKE_CURRENT_SOURCE_DIR}/ccp4srs/ccp4srs_defs.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/ccp4srs/memio_.h
-	${CMAKE_CURRENT_SOURCE_DIR}/ccp4srs/ccp4srs_entry.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/ccp4srs/mpfile_.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/ccp4srs/ccp4srs_smiles.h
+	${ssm_src}/ccp4srs/ccp4srs_angle.h
+        ${ssm_src}/ccp4srs/ccp4srs_index.h
+	${ssm_src}/ccp4srs/ccp4srs_atom.h
+        ${ssm_src}/ccp4srs/ccp4srs_manager.h
+	${ssm_src}/ccp4srs/ccp4srs_base.h
+        ${ssm_src}/ccp4srs/ccp4srs_monomer.h
+	${ssm_src}/ccp4srs/ccp4srs_bond.h
+        ${ssm_src}/ccp4srs/ccp4srs_plane.h 
+	${ssm_src}/ccp4srs/ccp4srs_chem.h
+        ${ssm_src}/ccp4srs/ccp4srs_torsion.h
+	${ssm_src}/ccp4srs/ccp4srs_chicenter.h
+        ${ssm_src}/ccp4srs/ccp4srs_tree.h
+	${ssm_src}/ccp4srs/ccp4srs_container.h
+        ${ssm_src}/ccp4srs/ccp4srs_types.h
+	${ssm_src}/ccp4srs/ccp4srs_defs.h
+        ${ssm_src}/ccp4srs/memio_.h
+	${ssm_src}/ccp4srs/ccp4srs_entry.h
+        ${ssm_src}/ccp4srs/mpfile_.h
+        ${ssm_src}/ccp4srs/ccp4srs_smiles.h
 )
 
 add_library(ccp4srs ${ccp4srs_sources} ${ccp4srs_headers})
@@ -91,7 +94,7 @@ target_link_libraries(ccp4srs PRIVATE
 target_include_directories(ccp4srs PRIVATE .
     ${CMAKE_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/ccp4srs
-    .. ../mmdb2 ../ccp4
+    .. ../checkout/mmdb2 ../checkout/libccp/ccp4
     ${CMAKE_BINARY_DIR}
 )
 
@@ -109,10 +112,10 @@ install(TARGETS ccp4srs
 )
 
 set(srsgen_sources
-    ${CMAKE_CURRENT_SOURCE_DIR}/srsgen.cpp
+    ${ssm_src}/srsgen.cpp
 )
 if(MSVC)
-    set(srsgen_sources ${srsgen_sources} ${CMAKE_CURRENT_SOURCE_DIR}/windows/dirent.cpp )
+    set(srsgen_sources ${srsgen_sources} ${ssm_src}/windows/dirent.cpp )
 endif(MSVC)
 
 add_executable(srsgen ${srsgen_sources})
@@ -125,11 +128,11 @@ target_link_libraries(srsgen PRIVATE
 target_include_directories(srsgen PRIVATE .
     ${CMAKE_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/ccp4srs
-    .. ../mmdb2 ../ccp4
+    .. ../checkout/mmdb2 ../checkout/libccp4/ccp4
     ${CMAKE_BINARY_DIR}
 )
                                  
-add_executable(srsview ${CMAKE_CURRENT_SOURCE_DIR}/srsview.cpp)
+add_executable(srsview ${ssm_src}/srsview.cpp)
 target_link_directories(srsview PUBLIC ../mmdb2 ../ccp4)
 target_link_libraries(srsview PRIVATE 
                              ccp4srs::ccp4srs
@@ -139,16 +142,16 @@ target_link_libraries(srsview PRIVATE
 target_include_directories(srsview PRIVATE .
     ${CMAKE_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/ccp4srs
-    .. ../mmdb2 ../ccp4
+    .. ../checkout/mmdb2 ../checkout/libccp4/ccp4
     ${CMAKE_BINARY_DIR}
 )
 
-add_executable(pdb2to3 ${CMAKE_CURRENT_SOURCE_DIR}/srsrem.cpp)
+add_executable(pdb2to3 ${ssm_src}/srsrem.cpp)
 
 target_include_directories(pdb2to3 PRIVATE .
     ${CMAKE_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/ccp4srs
-    .. ../mmdb2 ../ccp4
+    .. ../checkout/mmdb2 ../checkout/libccp4/ccp4
     ${CMAKE_BINARY_DIR}
 )
 
@@ -161,7 +164,7 @@ target_link_libraries(pdb2to3 PRIVATE
 target_include_directories(srsgen PRIVATE .
     ${CMAKE_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/ccp4srs
-    .. ../mmdb2 ../ccp4
+    .. ../checkout/mmdb2 ../checkout/libccp4/ccp4
     ${CMAKE_BINARY_DIR}
 )
                                  
