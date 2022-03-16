@@ -20,7 +20,7 @@
   patch -p0 < ../patches/privateer-nopybind.patch
 
   * Change includes for:
-    web_example
+    coot
 
 - Create an MMDBManager DONE
 - Read a file DONE

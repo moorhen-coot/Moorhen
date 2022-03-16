@@ -33,7 +33,7 @@
 #include "gsl/gsl_sf_bessel.h"
 #include "gsl/gsl_cdf.h"
 
-#include "privateer/privateer-lib.h"
+#include "privateer-lib.h"
 
 using namespace emscripten;
 int superpose_main(const std::vector<std::string> &files, const std::vector<std::string> &selections);
