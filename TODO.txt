@@ -1,4 +1,4 @@
-* Wrap this up into a script
+* Wrap this up into a "get sources" script
 
   mkdir -p checkout
   cd checkout
@@ -10,14 +10,19 @@
   git clone https://github.com/project-gemmi/gemmi.git gemmi
   curl -L https://github.com/agirre/privateer/archive/refs/tags/MKIV.tar.gz -o privateer-MKIV.tar.gz
   curl -L http://www.fftw.org/fftw-2.1.5.tar.gz -o fftw-2.1.5.tar.gz
-  curl -L https://mirror.ibcp.fr/pub/gnu/gsl/gsl-latest.tar.gz -o gsl-2.7.1.tar.gz
+  curl -L https://mirror.ibcp.fr/pub/gnu/gsl/gsl-2.7.1.tar.gz -o gsl-2.7.1.tar.gz
   curl -L https://www2.mrc-lmb.cam.ac.uk/personal/pemsley/coot/source/releases/coot-0.9.6.tar.gz -o coot-0.9.6.tar.gz
   tar xf privateer-MKIV.tar.gz
   tar xf fftw-2.1.5.tar.gz
-  tar xf gsl-latest.tar.gz
-  tar xf coot-0.9.6.tar.gz
   patch -p0 < ../patches/ccp4-emscripten.patch 
   patch -p0 < ../patches/privateer-nopybind.patch
+  cd ..
+  tar xf checkout/gsl-2.7.1.tar.gz
+  tar xf checkout/coot-0.9.6.tar.gz
+
+  #Create a file silly.c (can be empty).
+  echo "" > silly.c
+  emcc silly.c -s USE_ZLIB=1
 
 - Create an MMDBManager DONE
 - Read a file DONE
