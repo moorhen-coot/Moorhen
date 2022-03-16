@@ -1,4 +1,4 @@
-* Make this repo more minimal
+* Wrap this up into a script
 
   mkdir -p checkout
   cd checkout
@@ -10,7 +10,7 @@
   git clone https://github.com/project-gemmi/gemmi.git gemmi
   curl -L https://github.com/agirre/privateer/archive/refs/tags/MKIV.tar.gz -o privateer-MKIV.tar.gz
   curl -L http://www.fftw.org/fftw-2.1.5.tar.gz -o fftw-2.1.5.tar.gz
-  curl -L https://mirror.ibcp.fr/pub/gnu/gsl/gsl-latest.tar.gz -o gsl-latest.tar.gz
+  curl -L https://mirror.ibcp.fr/pub/gnu/gsl/gsl-latest.tar.gz -o gsl-2.7.1.tar.gz
   curl -L https://www2.mrc-lmb.cam.ac.uk/personal/pemsley/coot/source/releases/coot-0.9.6.tar.gz -o coot-0.9.6.tar.gz
   tar xf privateer-MKIV.tar.gz
   tar xf fftw-2.1.5.tar.gz
@@ -18,9 +18,6 @@
   tar xf coot-0.9.6.tar.gz
   patch -p0 < ../patches/ccp4-emscripten.patch 
   patch -p0 < ../patches/privateer-nopybind.patch
-
-  * Change includes for:
-    coot
 
 - Create an MMDBManager DONE
 - Read a file DONE

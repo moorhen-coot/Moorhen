@@ -321,6 +321,6 @@ ${coot_src}/cootaneer/cootaneer-demo.cpp
 ${coot_src}/cootaneer/buccaneer-prot.cpp
 )
 
-target_include_directories(coot PRIVATE ${coot_src} ${coot_src}/coords ${coot_src}/utils .. ../gsl-2.7 ../include ../example ../ssm ../mmdb2 ../clipper ../fftw ../rfftw ../ccp4)
+target_include_directories(coot PRIVATE ${coot_src} ${coot_src}/coords ${coot_src}/utils ../gsl-2.7.1 ../example ../checkout/ssm ../checkout/mmdb2 ../checkout/clipper ../checkout/fftw-2.1.5/fftw ../checkout/fftw-2.1.5/rfftw ../checkout/libccp4/ccp4)
 
-set_target_properties(coot PROPERTIES COMPILE_FLAGS "-s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_BOOST_HEADERS=1" LINK_FLAGS "-s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_BOOST_HEADERS=1")
+set_target_properties(coot PROPERTIES COMPILE_FLAGS "-DFFTW_ENABLE_FLOAT -s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_BOOST_HEADERS=1" LINK_FLAGS "-s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_BOOST_HEADERS=1")

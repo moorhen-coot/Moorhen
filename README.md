@@ -7,7 +7,7 @@ Do not forget the final step (as I did!):
 `source ./emsdk_env.sh`
 
 3. Install gsl:  
-Get and untar [https://mirror.ibcp.fr/pub/gnu/gsl/gsl-latest.tar.gz](https://mirror.ibcp.fr/pub/gnu/gsl/gsl-latest.tar.gz)  
+Get and untar [https://mirror.ibcp.fr/pub/gnu/gsl/gsl-2.7.1.tar.gz](https://mirror.ibcp.fr/pub/gnu/gsl/gsl-2.7.1.tar.gz)  
 `cd gls-2.7.1`  
 `autoreconf -i`  
 `emconfigure ./configure --prefix=$PWD/..`  
