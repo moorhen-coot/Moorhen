@@ -1,5 +1,6 @@
 * Make this repo more minimal
 
+  mkdir -p checkout
   cd checkout
   bzr branch http://fg.oisin.rc-harwell.ac.uk/anonscm/bzr/libccp4/trunk/ libccp4
   bzr branch http://fg.oisin.rc-harwell.ac.uk/anonscm/bzr/clipper/trunk/ clipper
@@ -18,17 +19,8 @@
   patch -p0 < ../patches/ccp4-emscripten.patch 
   patch -p0 < ../patches/privateer-nopybind.patch
 
-  * Eradicate source from and change CMakelists to look in checkout for:
-    ccp4
-    mmdb2
-    ssm
-    ccp4srs
-    privateer
-    fftw/rfftw
   * Change includes for:
-    example
     web_example
-  
 
 - Create an MMDBManager DONE
 - Read a file DONE

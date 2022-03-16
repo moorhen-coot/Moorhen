@@ -21,28 +21,32 @@ if(OPENMP_FOUND)
 endif()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}
- .. ../mmdb2 ../ssm ../ccp4 ../clipper ../ccp4srs ../clipper ../gemmi/include)
+ .. ../checkout/mmdb2 ../checkout/ssm/ssm ../checkout/libccp4/ccp4 ../checkout/clipper ../checkout/ccp4srs ../checkout/gemmi/include)
 
 add_library(privateer
-            third-party/sajson.h
-            third-party/utf.hpp
-            privateer-error.h
-            privateer-json.h
-            clipper-glyco.cpp
-            clipper-glyco_data.cpp
-            privateer-blobs.cpp
-            privateer-composition.cpp
-            privateer-dbquery.cpp
-            privateer-cryo_em.cpp
-            privateer-xray.cpp
-            privateer-restraints.cpp
-            privateer-lib.cpp)
+            ../checkout/privateer-MKIV/src/third-party/sajson.h
+            ../checkout/privateer-MKIV/src/third-party/utf.hpp
+            ../checkout/privateer-MKIV/src/privateer-error.h
+            ../checkout/privateer-MKIV/src/privateer-json.h
+            ../checkout/privateer-MKIV/src/clipper-glyco.cpp
+            ../checkout/privateer-MKIV/src/clipper-glyco_data.cpp
+            ../checkout/privateer-MKIV/src/privateer-blobs.cpp
+            ../checkout/privateer-MKIV/src/privateer-composition.cpp
+            ../checkout/privateer-MKIV/src/privateer-dbquery.cpp
+            ../checkout/privateer-MKIV/src/privateer-cryo_em.cpp
+            ../checkout/privateer-MKIV/src/privateer-xray.cpp
+            ../checkout/privateer-MKIV/src/privateer-restraints.cpp
+            ../checkout/privateer-MKIV/src/privateer-lib.cpp)
 
 target_link_directories(privateer PUBLIC ../mmdb2 ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4 ../fftw ../rfftw ../ccp4 ../gemmi)
 target_link_libraries(privateer mmdb2 clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 nodefs.js)
 
+target_compile_options(privateer PUBLIC "-DFFTW_ENABLE_FLOAT")
+
 add_executable(privateer-validate
-               privateer.cpp)
+               ../checkout/privateer-MKIV/src/privateer.cpp)
+
+target_compile_options(privateer-validate PUBLIC "-DFFTW_ENABLE_FLOAT")
 
 
 target_link_directories(privateer-validate PUBLIC ../mmdb2 ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4 ../clipper/minimol ../fftw ../rfftw ../ccp4 ../ccp4srs)
@@ -54,7 +58,7 @@ target_link_options(privateer-validate PRIVATE -s ALLOW_MEMORY_GROWTH=1)
 SET_SOURCE_FILES_PROPERTIES(privateer-frontend_scripting.i PROPERTIES CPLUSPLUS ON)
 
 
-install(FILES clipper-glyco.h clipper-glyco_data.h privateer-lib.h
+install(FILES ../checkout/privateer-MKIV/src/clipper-glyco.h ../checkout/privateer-MKIV/src/clipper-glyco_data.h ../checkout/privateer-MKIV/src/privateer-lib.h
         DESTINATION include/privateer)
 install(TARGETS privateer
         RUNTIME DESTINATION bin

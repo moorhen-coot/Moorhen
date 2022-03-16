@@ -42,4 +42,5 @@ add_library(clipper-core STATIC
 ../../checkout/clipper/clipper/core/xmap.cpp
 )
 
-target_include_directories(clipper-core PRIVATE ../../fftw ../../rfftw)
+target_include_directories(clipper-core PRIVATE ../../checkout/fftw-2.1.5/fftw ../../checkout/fftw-2.1.5/rfftw)
+target_compile_options(clipper-core PUBLIC "-DFFTW_ENABLE_FLOAT")

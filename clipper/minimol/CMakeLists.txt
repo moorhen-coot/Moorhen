@@ -9,4 +9,4 @@ add_library(clipper-minimol STATIC
 ../../checkout/clipper/clipper/minimol/minimol_utils.cpp
 )
 
-target_include_directories(clipper-minimol PRIVATE ../../checkout/mmdb2/ ../../checkout/clipper ../../fftw ../../rfftw)
+target_include_directories(clipper-minimol PRIVATE ../../checkout/mmdb2/ ../../checkout/clipper ../../checkout/fftw-2.1.5/fftw ../../checkout/fftw-2.1.5/rfftw)
