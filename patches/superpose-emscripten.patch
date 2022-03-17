@@ -1,0 +1,131 @@
+diff -ru ssm/superpose.cpp /Users/stuart/devtools-09032022/co/ssm/superpose.cpp
++++ ssm/superpose.cpp	2022-03-17 10:20:04.000000000 +0000
+--- /Users/stuart/devtools-09032022/co/ssm/superpose_node.cpp	2022-03-17 16:09:31.000000000 +0000
+@@ -51,6 +51,10 @@
+ // =================================================================
+ //
+ 
++#if defined(__EMSCRIPTEN__)
++#include <vector>
++#include <string>
++#endif
+ #include <string.h>
+ 
+ #include "ssm/ssm_align.h"
+@@ -68,6 +72,15 @@
+ 
+ #endif
+ 
++#if defined(__EMSCRIPTEN__)
++#include <emscripten.h>
++
++#ifdef NODERAWFS
++#define CWD ""
++#else
++#define CWD "/working/"
++#endif
++#endif
+ 
+ #ifdef _emulate_ccp4_
+ 
+@@ -255,8 +268,23 @@
+ }
+ */
+ 
++#if defined(_CCP4_WEB_EXAMPLE_)
++int superpose_main(const std::vector<std::string> &files, const std::vector<std::string> &selections)  {
++#else
+ int main ( int argc, char ** argv, char ** env )  {
++#if defined(__EMSCRIPTEN__)
++#ifndef NODERAWFS
++    // mount the current folder as a NODEFS instance
++    // inside of emscripten
++    EM_ASM(
++            FS.mkdir('/working');
++            FS.mount(NODEFS, { root: '.' }, '/working');
++          );
++#endif
++#else
+ UNUSED_ARGUMENT(env);
++#endif
++#endif
+ mmdb::PPManager M;
+ mmdb::psvector  name;
+ mmdb::psvector  selstring;
+@@ -269,11 +297,19 @@
+   ccp4_banner();
+ #endif
+ 
++#if defined(_CCP4_WEB_EXAMPLE_)
++  int argc = files.size() + 1;
++#endif
+   if (argc<=1)  {
+ #ifdef _ccp4_
+     printf ( "<!--SUMMARY_BEGIN-->\n" );
+ #endif
++#if defined(_CCP4_WEB_EXAMPLE_)
++    const char *progName =  "web_superpose";
++    printInstructions ( (char*)progName );
++#else
+     printInstructions ( argv[0] );
++#endif
+ #ifdef _ccp4_
+     printf ( "<!--SUMMARY_END-->\n" );
+     ccperror ( 1,"No input" );
+@@ -281,6 +317,7 @@
+     return 1;
+   }
+ 
++#if !defined(_CCP4_WEB_EXAMPLE_)
+ #ifdef _ccp4_
+   printf ( "<!--SUMMARY_BEGIN-->\n" );
+ #endif
+@@ -293,6 +330,7 @@
+ #endif
+     return 2;
+   }
++#endif
+ 
+   printf ( "\n"
+     " Superpose v." superpose_version " from " superpose_date " "
+@@ -323,22 +361,39 @@
+   argNo = 1;
+   rc    = 0;
+   while ((argNo<argc) && (!rc))  {
++#if !defined(_CCP4_WEB_EXAMPLE_)
+     if (!strcasecmp(argv[argNo],"-o"))  {
+       argNo++;
+       if (argNo<argc)
+         mmdb::CreateCopy ( fileout,argv[argNo++] );
+     } else  {
++#endif
++#if defined(_CCP4_WEB_EXAMPLE_)
++      char *fn = (char*)files[argNo-1].c_str();
++      mmdb::CreateCopy ( name[nStructures],fn );
++#else
+       mmdb::CreateCopy ( name[nStructures],argv[argNo] );
+-      if (readCoorFile(argv[argNo++],M[nStructures]))
++      char *fn =(char*) malloc(9+strlen(argv[argNo]));
++      fn[0] = '\0';
++      strncat(fn,CWD,9);
++      strncat(fn,argv[argNo],9);
++#endif
++      argNo++;
++
++      if (readCoorFile(fn ,M[nStructures]))
+         rc = 3;
++#if !defined(_CCP4_WEB_EXAMPLE_)
+       else if (argNo<argc)  {
+         if (selectAtoms(M[nStructures],argv,argNo,
+                 selstring[nStructures],selHnd[nStructures]))
+           rc = 4;
+       } else
+         mmdb::CreateCopy ( selstring[nStructures],"*" );
++#endif
+       nStructures++;
++#if !defined(_CCP4_WEB_EXAMPLE_)
+     }
++#endif
+   }
+ 
+   if (!rc)  {
