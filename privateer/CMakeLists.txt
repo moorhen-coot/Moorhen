@@ -23,7 +23,7 @@ endif()
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}
  .. ../checkout/mmdb2 ../checkout/ssm/ssm ../checkout/libccp4/ccp4 ../checkout/clipper ../checkout/ccp4srs ../checkout/gemmi/include)
 
-add_library(privateer
+add_library(privateer STATIC
             ../checkout/privateer-MKIV/src/third-party/sajson.h
             ../checkout/privateer-MKIV/src/third-party/utf.hpp
             ../checkout/privateer-MKIV/src/privateer-error.h

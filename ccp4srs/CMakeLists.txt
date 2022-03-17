@@ -81,7 +81,7 @@ set(ccp4srs_headers
         ${ssm_src}/ccp4srs/ccp4srs_smiles.h
 )
 
-add_library(ccp4srs ${ccp4srs_sources} ${ccp4srs_headers})
+add_library(ccp4srs STATIC ${ccp4srs_sources} ${ccp4srs_headers})
 add_library(ccp4srs::ccp4srs ALIAS ccp4srs)
 
 target_link_directories(ccp4srs PUBLIC ../mmdb2 ../ccp4)

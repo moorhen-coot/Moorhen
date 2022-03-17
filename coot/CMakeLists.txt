@@ -10,7 +10,7 @@ add_definitions(-DANALYSE_REFINEMENT_TIMING -DVERSION="0.9.6" -DPACKAGE_VERSION=
 
 #  pyrogen, compat, auxil, goograph, src ignored.
 
-add_library(coot
+add_library(coot STATIC
 ${coot_src}/analysis/coot-daca.cc
 ${coot_src}/analysis/daca.cc
 ${coot_src}/analysis/kolmogorov.cc
