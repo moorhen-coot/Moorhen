@@ -1,5 +1,6 @@
-* Consolidate example/superpose_node_main.cpp, example/superpose.cpp, web_example/superpose_web_main.cpp
-  into patch against original ssm files?
+* Remove RDKit from repo and pull in with get_sources.
+
+* Remove data from repo and pull in with get_sources.
 
 - Create an MMDBManager DONE
 - Read a file DONE
