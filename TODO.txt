@@ -23,6 +23,10 @@
   #Create a file silly.c (can be empty).
   echo "" > silly.c
   emcc silly.c -s USE_ZLIB=1
+  rm silly.c
+
+* Consolidate example/superpose_node_main.cpp, example/superpose.cpp, web_example/superpose_web_main.cpp
+  into patch against original ssm files?
 
 - Create an MMDBManager DONE
 - Read a file DONE

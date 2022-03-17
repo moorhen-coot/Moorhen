@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 11)
 
 set(CMAKE_EXECUTABLE_SUFFIX ".js")
 
-set(coot_src ${CMAKE_CURRENT_SOURCE_DIR}/../coot-0.9.6)
+set(coot_src ${CMAKE_CURRENT_SOURCE_DIR}/../checkout/coot-0.9.6)
 add_definitions(-DANALYSE_REFINEMENT_TIMING -DVERSION="0.9.6" -DPACKAGE_VERSION="0.9.6" -DHAVE_CXX_THREAD -DHAVE_BOOST -DHAVE_GSL -DPKGDATADIR="${coot_src}/pixmaps" -DDATADIR="${coot_src}/data")
 
 #  pyrogen, compat, auxil, goograph, src ignored.
