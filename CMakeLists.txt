@@ -8,6 +8,17 @@ endif()
 set(CMAKE_CXX_FLAGS_RELEASE "-O2")
 set(CMAKE_C_FLAGS_RELEASE "-O2")
 
+include(ExternalProject)
+ExternalProject_Add(gsl-src
+  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/gsl-2.7.1
+  CONFIGURE_COMMAND COMMAND autoreconf -i COMMAND emconfigure ${CMAKE_CURRENT_SOURCE_DIR}/gsl-2.7.1/configure --prefix=${CMAKE_CURRENT_SOURCE_DIR}
+  PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/gsl-2.7.1
+  BUILD_COMMAND emmake make LDFLAGS=-all-static
+  INSTALL_COMMAND emmake make install
+  BUILD_IN_SOURCE 1
+)
+
+
 add_subdirectory(ccp4)
 add_subdirectory(fftw)
 add_subdirectory(rfftw)
