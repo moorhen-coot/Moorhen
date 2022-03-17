@@ -44,15 +44,17 @@
 //       ~~~~~~~~~
 //  **** Functions:  main
 //       ~~~~~~~~~~  printInstructions
+//                   readCoorFile
 //
 //  E. Krissinel, 2003-2013
 //
 // =================================================================
 //
 
+#if defined(__EMSCRIPTEN__)
 #include <vector>
 #include <string>
-
+#endif
 #include <string.h>
 
 #include "ssm/ssm_align.h"
@@ -70,7 +72,15 @@ using namespace CCP4;
 
 #endif
 
+#if defined(__EMSCRIPTEN__)
 #include <emscripten.h>
+
+#ifdef NODERAWFS
+#define CWD ""
+#else
+#define CWD "/working/"
+#endif
+#endif
 
 #ifdef _emulate_ccp4_
 
@@ -107,9 +117,6 @@ void ccperror ( int, cpstr ) {}
 
 #endif
 
-int readCoorFile ( mmdb::pstr FName, mmdb::RPManager MMDB );
-int selectAtoms ( mmdb::PManager M, char ** argv, int & argNo,
-                  mmdb::pstr & sel, int & selHnd );
 
 void printInstructions ( char *argv0 )  {
 
@@ -153,8 +160,131 @@ void printInstructions ( char *argv0 )  {
 
 }
 
-int superpose_main(const std::vector<std::string> &files, const std::vector<std::string> &selections)  {
 
+int  readCoorFile ( mmdb::pstr FName, mmdb::RPManager MMDB )  {
+char              S[500];
+int               lcount;
+mmdb::ERROR_CODE  rc;
+
+  if (!MMDB)  MMDB = new mmdb::Manager();
+
+  MMDB->SetFlag ( mmdb::MMDBF_PrintCIFWarnings       |
+                  mmdb::MMDBF_IgnoreNonCoorPDBErrors |
+                  mmdb::MMDBF_IgnoreDuplSeqNum );
+
+  rc = MMDB->ReadCoorFile ( FName );
+  MMDB->PDBCleanup ( mmdb::PDBCLEAN_ELEMENT_STRONG );
+
+  if (rc) {
+    printf ( " ***** ERROR #%i READ:\n\n %s\n\n",
+             rc,mmdb::GetErrorDescription(rc) );
+    MMDB->GetInputBuffer ( S,lcount );
+    if (lcount>=0)
+      printf ( "       LINE #%i:\n%s\n\n",lcount,S );
+    else if (lcount==-1)
+      printf ( "       CIF ITEM: %s\n\n",S );
+    delete MMDB;
+    MMDB = NULL;
+    return 1;
+  } else  {
+    switch (MMDB->GetFileType())  {
+      case mmdb::MMDB_FILE_PDB    : printf ( " PDB"         );  break;
+      case mmdb::MMDB_FILE_CIF    : printf ( " mmCIF"       );  break;
+      case mmdb::MMDB_FILE_Binary : printf ( " MMDB binary" );  break;
+      default : printf ( " Unknown (report as a bug!)" );
+    }
+    printf ( " file %s has been read in.\n",FName );
+  }
+
+  return 0;
+
+}
+
+int selectAtoms ( mmdb::PManager M, char ** argv, int & argNo,
+                  mmdb::pstr & sel, int & selHnd )  {
+int  nSel;
+
+  selHnd = 0;
+  sel    = NULL;
+
+  if (!strcasecmp(argv[argNo],"-s"))  {
+    argNo++;
+    mmdb::CreateCopy ( sel,argv[argNo] );
+    if (!strcmp(sel,"-all"))
+      mmdb::CreateCopy ( sel,"*" );
+    selHnd = M->NewSelection();
+    M->Select ( selHnd,mmdb::STYPE_ATOM,sel,mmdb::SKEY_NEW );
+    nSel = M->GetSelLength ( selHnd );
+    if (nSel<=0)  {
+      printf ( " *** Selection string '%s' does not cover "
+               "any atoms.\n",argv[argNo] );
+      return 1;
+    }
+    printf ( " ... %i atoms selected using CID '%s'\n",
+             nSel,argv[argNo] );
+    argNo++;
+  } else
+    mmdb::CreateCopy ( sel,"*" );
+
+  return 0;
+
+}
+
+
+/*
+void CrystReadyState ( PCMMDBManager M, pstr S )  {
+int CRRDY = M->CrystReady();
+
+  S[0] = char(0);
+
+  if (CRRDY==CRRDY_Complete)
+    strcpy ( S,"Complete" );
+  if (CRRDY==CRRDY_NoTransfMatrices)
+    strcpy ( S,"No transormation matrices" );
+  if (CRRDY==CRRDY_Unchecked)
+    strcpy ( S,"Unchecked" );
+  if (CRRDY==CRRDY_Ambiguous)
+    strcpy ( S,"Ambiguous" );
+  if (CRRDY==CRRDY_NoCell)
+    strcpy ( S,"No cell" );
+  if (CRRDY==CRRDY_NoSpaceGroup)
+    strcpy ( S,"No space group" );
+
+  if (!S[0])  {
+
+    if (CRRDY<0)
+      sprintf ( S,"Unknown code %i",CRRDY );
+    else  {
+      if (CRRDY & CRRDY_NotPrecise)
+        strcat ( S,"Not precise;" );
+      if (CRRDY & CRRDY_isTranslation)
+        strcat ( S,"Has translation;" );
+      if (CRRDY & CRRDY_NoOrthCode)
+        strcat ( S,"No orthogonalisation code;" );
+    }
+
+  }
+
+}
+*/
+
+#if defined(_CCP4_WEB_EXAMPLE_)
+int superpose_main(const std::vector<std::string> &files, const std::vector<std::string> &selections)  {
+#else
+int main ( int argc, char ** argv, char ** env )  {
+#if defined(__EMSCRIPTEN__)
+#ifndef NODERAWFS
+    // mount the current folder as a NODEFS instance
+    // inside of emscripten
+    EM_ASM(
+            FS.mkdir('/working');
+            FS.mount(NODEFS, { root: '.' }, '/working');
+          );
+#endif
+#else
+UNUSED_ARGUMENT(env);
+#endif
+#endif
 mmdb::PPManager M;
 mmdb::psvector  name;
 mmdb::psvector  selstring;
@@ -167,20 +297,40 @@ int             argNo,i,nStructures,rc;
   ccp4_banner();
 #endif
 
+#if defined(_CCP4_WEB_EXAMPLE_)
   int argc = files.size() + 1;
-
+#endif
   if (argc<=1)  {
 #ifdef _ccp4_
     printf ( "<!--SUMMARY_BEGIN-->\n" );
 #endif
+#if defined(_CCP4_WEB_EXAMPLE_)
     const char *progName =  "web_superpose";
     printInstructions ( (char*)progName );
+#else
+    printInstructions ( argv[0] );
+#endif
 #ifdef _ccp4_
     printf ( "<!--SUMMARY_END-->\n" );
     ccperror ( 1,"No input" );
 #endif
     return 1;
   }
+
+#if !defined(_CCP4_WEB_EXAMPLE_)
+#ifdef _ccp4_
+  printf ( "<!--SUMMARY_BEGIN-->\n" );
+#endif
+  if ((!strcmp(argv[1],"-?")) || (!strcasecmp(argv[1],"-help")) ||
+      (!strcasecmp(argv[1],"--help")))  {
+    printInstructions ( argv[0] );
+#ifdef _ccp4_
+    printf ( "<!--SUMMARY_END-->\n" );
+    ccperror ( 2,"Wrong input" );
+#endif
+    return 2;
+  }
+#endif
 
   printf ( "\n"
     " Superpose v." superpose_version " from " superpose_date " "
@@ -208,39 +358,44 @@ int             argNo,i,nStructures,rc;
   fileout     = NULL;
   nStructures = 0;
 
-  printf("%d\n",argc);
-
   argNo = 1;
   rc    = 0;
   while ((argNo<argc) && (!rc))  {
-      /*
+#if !defined(_CCP4_WEB_EXAMPLE_)
     if (!strcasecmp(argv[argNo],"-o"))  {
       argNo++;
       if (argNo<argc)
         mmdb::CreateCopy ( fileout,argv[argNo++] );
     } else  {
-        */
+#endif
+#if defined(_CCP4_WEB_EXAMPLE_)
       char *fn = (char*)files[argNo-1].c_str();
       mmdb::CreateCopy ( name[nStructures],fn );
+#else
+      mmdb::CreateCopy ( name[nStructures],argv[argNo] );
+      char *fn =(char*) malloc(9+strlen(argv[argNo]));
+      fn[0] = '\0';
+      strncat(fn,CWD,9);
+      strncat(fn,argv[argNo],9);
+#endif
       argNo++;
 
       if (readCoorFile(fn ,M[nStructures]))
         rc = 3;
-        /*
+#if !defined(_CCP4_WEB_EXAMPLE_)
       else if (argNo<argc)  {
         if (selectAtoms(M[nStructures],argv,argNo,
                 selstring[nStructures],selHnd[nStructures]))
           rc = 4;
       } else
         mmdb::CreateCopy ( selstring[nStructures],"*" );
-        */
+#endif
       nStructures++;
-      /*
+#if !defined(_CCP4_WEB_EXAMPLE_)
     }
-    */
+#endif
   }
 
-  printf("%d\n",nStructures);
   if (!rc)  {
 
     printf (
