@@ -3,25 +3,52 @@
 mkdir -p checkout
 cd checkout
 
+echo "Checking out libccp4"
 bzr branch http://fg.oisin.rc-harwell.ac.uk/anonscm/bzr/libccp4/trunk/ libccp4
+echo
+echo "Checking out clipper"
 bzr branch http://fg.oisin.rc-harwell.ac.uk/anonscm/bzr/clipper/trunk/ clipper
+echo
+echo "Checking out ssm"
 bzr branch http://fg.oisin.rc-harwell.ac.uk/anonscm/bzr/ssm/trunk/ ssm
+echo
+echo "Checking out mmdb2"
 bzr branch http://fg.oisin.rc-harwell.ac.uk/anonscm/bzr/mmdb2/trunk/ mmdb2
+echo
+echo "Checking out ccp4srs"
 bzr branch http://fg.oisin.rc-harwell.ac.uk/anonscm/bzr/ccp4srs/trunk/ ccp4srs
+echo
+echo "Checking out gemmi"
 git clone https://github.com/project-gemmi/gemmi.git gemmi
+echo
 
+echo "Downloading privateer MKIV"
 curl -L https://github.com/agirre/privateer/archive/refs/tags/MKIV.tar.gz -o privateer-MKIV.tar.gz
+echo
+echo "Downloading out fftw-2.1.5"
 curl -L http://www.fftw.org/fftw-2.1.5.tar.gz -o fftw-2.1.5.tar.gz
+echo
+echo "Downloading gsl-2.7.1"
 curl -L https://mirror.ibcp.fr/pub/gnu/gsl/gsl-2.7.1.tar.gz -o gsl-2.7.1.tar.gz
+echo
+echo "Downloading coot-0.9.6"
 curl -L https://www2.mrc-lmb.cam.ac.uk/personal/pemsley/coot/source/releases/coot-0.9.6.tar.gz -o coot-0.9.6.tar.gz
+echo
+
+echo "Unpacking privateer MKIV"
 tar xf privateer-MKIV.tar.gz
+echo "Unpacking out fftw-2.1.5"
 tar xf fftw-2.1.5.tar.gz
-tar xf checkout/coot-0.9.6.tar.gz
+echo "Unpacking coot-0.9.6"
+tar xf coot-0.9.6.tar.gz
 
 patch -p0 < ../patches/ccp4-emscripten.patch 
 patch -p0 < ../patches/privateer-nopybind.patch
 cd ..
+echo
+echo "Unpacking gsl-2.7.1"
 tar xf checkout/gsl-2.7.1.tar.gz
+echo
 
 #Create an empty file silly.c and then compile it with USE_ZLIB to force emsdk to get zlib.
 echo "Attempting to get emsdk zlib port."
