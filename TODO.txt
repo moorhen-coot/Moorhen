@@ -1,3 +1,5 @@
+* Roll gsl compilation into CMakeLists.txt
+
 * Consolidate example/superpose_node_main.cpp, example/superpose.cpp, web_example/superpose_web_main.cpp
   into patch against original ssm files?
 
