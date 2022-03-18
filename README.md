@@ -1,3 +1,8 @@
+# CCP4 Web Assembly
+
+This is a set of CMakeLists.txt files which compile some of the CCP4 libraries, some of Coot
+and the Gnu Scientific Library to Web Assembly.
+
 1. Install emscripten following:  
 [https://emscripten.org/docs/getting_started/downloads.html](https://emscripten.org/docs/getting_started/downloads.html)  
 Do not forget the final step (as I did!):  
