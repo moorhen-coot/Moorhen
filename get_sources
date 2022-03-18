@@ -60,5 +60,18 @@ rm -f silly.c
 
 #Get RDKit
 echo "Downloading RDKit_minimal js/wasm"
+echo
 curl -L https://unpkg.com/@rdkit/rdkit/Code/MinimalLib/dist/RDKit_minimal.wasm -o web_example/RDKit_minimal.wasm
 curl -L https://unpkg.com/@rdkit/rdkit/Code/MinimalLib/dist/RDKit_minimal.js -o web_example/RDKit_minimal.js
+
+#Get example data
+echo "Downloading example data"
+echo
+curl -L https://www.ebi.ac.uk/pdbe/entry-files/download/pdb1df7.ent -o example/1df7.pdb
+curl -L https://www.ebi.ac.uk/pdbe/entry-files/download/pdb4dfr.ent -o example/4dfr.pdb
+curl -L https://www.ebi.ac.uk/pdbe/entry-files/download/pdb8dfr.ent -o example/8dfr.pdb
+curl -L https://www.ebi.ac.uk/pdbe/entry-files/download/pdb5a3h.ent -o example/5a3h.pdb
+curl -L https://www.ebi.ac.uk/pdbe/entry-files/download/pdb5fjj.ent -o privateer/5fjj.pdb
+curl -L https://www.ebi.ac.uk/pdbe/entry-files/download/r5a3hsf.ent -o example/r5a3hsf.ent
+curl -L https://www.ebi.ac.uk/pdbe/entry-files/download/5a3h_map.mtz -o example/5a3h_sigmaa.mtz
+

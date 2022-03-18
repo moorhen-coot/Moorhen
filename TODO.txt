@@ -1,4 +1,6 @@
-* Remove data from repo and pull in with get_sources.
+open -a /Applications/ccp4-8.0/ViewHKL.app/ --args ~/CCP4MG_DOWNLOAD/5a3h_map.mtz
+
+* Make a privateer command line example. This requires patching to add NodeFS support like example/example.cc.
 
 - Create an MMDBManager DONE
 - Read a file DONE
