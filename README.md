@@ -30,13 +30,13 @@ The following libraries are compiled:
 
 **Requirements:** 
 
-*A Bourne-like shell*
-*bzr* 
-*git* 
-*curl* 
-*patch* 
-*emsdk (Steps 1 and 2 below)*
-*cmake* (minimum version required 3.12)
+* A Bourne-like shell
+* bzr
+* git
+* curl
+* patch
+* emsdk (Steps 1 and 2 below)
+* cmake
 
 1. Install emscripten following:  
 [https://emscripten.org/docs/getting_started/downloads.html](https://emscripten.org/docs/getting_started/downloads.html)  
