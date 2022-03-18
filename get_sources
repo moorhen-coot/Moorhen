@@ -52,7 +52,13 @@ tar xf checkout/gsl-2.7.1.tar.gz
 echo
 
 #Create an empty file silly.c and then compile it with USE_ZLIB to force emsdk to get zlib.
-echo "Attempting to get emsdk zlib port."
+echo "Attempting to get emsdk zlib port"
+echo
 echo "" > silly.c
 emcc silly.c -s USE_ZLIB=1
 rm -f silly.c
+
+#Get RDKit
+echo "Downloading RDKit_minimal js/wasm"
+curl -L https://unpkg.com/@rdkit/rdkit/Code/MinimalLib/dist/RDKit_minimal.wasm -o web_example/RDKit_minimal.wasm
+curl -L https://unpkg.com/@rdkit/rdkit/Code/MinimalLib/dist/RDKit_minimal.js -o web_example/RDKit_minimal.js

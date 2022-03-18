@@ -1,5 +1,3 @@
-* Remove RDKit from repo and pull in with get_sources.
-
 * Remove data from repo and pull in with get_sources.
 
 - Create an MMDBManager DONE
