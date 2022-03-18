@@ -26,6 +26,18 @@ The following libraries are compiled:
 * Coot
 * fftw2
 
+## **Installation instructions:**
+
+**Requirements:** 
+
+*A Bourne-like shell*
+*bzr* 
+*git* 
+*curl* 
+*patch* 
+*emsdk (Steps 1 and 2 below)*
+*cmake* (minimum version required 3.12)
+
 1. Install emscripten following:  
 [https://emscripten.org/docs/getting_started/downloads.html](https://emscripten.org/docs/getting_started/downloads.html)  
 Do not forget the final step (as I did!):  
