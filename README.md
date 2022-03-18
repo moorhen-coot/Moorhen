@@ -1,7 +1,15 @@
 # CCP4 Web Assembly
 
-This is a set of CMakeLists.txt files which compile some of the CCP4 libraries, some of Coot
-and the Gnu Scientific Library to Web Assembly.
+This project is a set of scripts, patches and CMakeLists.txt files
+which enable the compilation of  some of the [CCP4](https://www.ccp4.ac.uk/) libraries, some of [Coot](https://www2.mrc-lmb.cam.ac.uk/personal/pemsley/coot/), and the [Gnu Scientific Library](https://www.gnu.org/software/gsl/) to Web Assembly. Also contained are some examples of using the generated JS/Web 
+Assembly. There is one command line example which offers some of the functionality of the CCP4 program `superpose`.
+
+The emscripten suite of tools is required to do the
+compilation.
+
+The sources of CCP4, Coot and GSL are not contained within this
+project. They are downloaded and patched by the `get_sources`
+script.
 
 1. Install emscripten following:  
 [https://emscripten.org/docs/getting_started/downloads.html](https://emscripten.org/docs/getting_started/downloads.html)  
@@ -30,3 +38,4 @@ This can be a full-scale web server, or a simple one, e.g:
 And then point a web browser at `http://localhost:7800/test.html` .  
 In either case you will have to set `ligandServer` in `pdb_worker.js` to point to the CCP4 monomer library. One way to do this is to leave it as `"/monomers/"` and create a symbolic link to a local CCP4 monomer library, e.g. (in `web_example`):  
 `ln -s /Applications/ccp4-8.0/lib/data/monomers`
+
