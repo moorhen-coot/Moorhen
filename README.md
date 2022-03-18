@@ -8,6 +8,7 @@ Assembly. There is a command line example which offers some of the functionality
 and a web server example which does superposition, structure
 factor calculations, map calculations, 2D ligand viewing with
 [RDKit](https://github.com/rdkit/rdkit/tree/master/Code/MinimalLib) and glycosolation tree visualisation with privateer.
+![Web example screen shot](web_example/screenshot.png)
 
 The emscripten suite of tools is required to do the
 compilation.
