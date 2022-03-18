@@ -76,9 +76,11 @@ In either case you will have to set `ligandServer` in `pdb_worker.js` to point t
 ![Web example text output](web_example/screenshot_text.png)
 *Text output trapped from printf/cout and displayed asynchronously in browser div element.*
 
-## **What else can do with the compiled linraries?:**
+## **What else can do with the compiled libraries?:**
 
-This will be fleshed out... See `example/example.cc` to see how to create a command line (node) program
+This will be fleshed out...
+
+See `example/example.cc` to see how to create a command line (node) program
 and `web_example/web_example.cc` to see use of `EMSCRIPTEN_BINDINGS` to expose a couple of Clipper classes
 and Privateer methods to the web browser.
 
