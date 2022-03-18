@@ -55,4 +55,6 @@ In either case you will have to set `ligandServer` in `pdb_worker.js` to point t
 `ln -s /Applications/ccp4-8.0/lib/data/monomers`
 
 ![Web example ligands and glycotrees](web_example/screenshot.png)
+*Ligands pictures produced by interrogating file with MMDB2 and rendering with RDKit. Glycosolation trees produced by privateer.*
 ![Web example text output](web_example/screenshot_text.png)
+*Text output trapped from printf/cout and displayed asynchronously in browser div element.*
