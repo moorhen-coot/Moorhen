@@ -8,12 +8,11 @@ Assembly. There is a command line example which offers some of the functionality
 and a web server example which does superposition, structure
 factor calculations, map calculations, 2D ligand viewing with
 [RDKit](https://github.com/rdkit/rdkit/tree/master/Code/MinimalLib) and glycosolation tree visualisation with privateer.
-![Web example screen shot](web_example/screenshot.png)
 
 The emscripten suite of tools is required to do the
 compilation.
 
-The sources of CCP4, Coot FFTw, and GSL are not contained within thisvproject. They are downloaded and patched by the `get_sources`
+The sources of CCP4, Coot FFTW, and GSL are not contained within this project. They are downloaded and patched by the `get_sources`
 
 script.
 
@@ -55,3 +54,5 @@ And then point a web browser at `http://localhost:7800/test.html` .
 In either case you will have to set `ligandServer` in `pdb_worker.js` to point to the CCP4 monomer library. One way to do this is to leave it as `"/monomers/"` and create a symbolic link to a local CCP4 monomer library, e.g. (in `web_example`):  
 `ln -s /Applications/ccp4-8.0/lib/data/monomers`
 
+![Web example ligands and glycotrees](web_example/screenshot.png)
+![Web example text output](web_example/screenshot_text.png)
