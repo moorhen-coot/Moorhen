@@ -1,4 +1,4 @@
-# CCP4 Web Assembly
+# CCP4/Coot/Privateer Web Assembly
 
 This project is a set of scripts, patches and CMakeLists.txt files
 which enable the compilation of  some of the [CCP4](https://www.ccp4.ac.uk/) libraries, some of [Coot](https://www2.mrc-lmb.cam.ac.uk/personal/pemsley/coot/), [FFTW2](https://www.fftw.org/), [Privateer](https://github.com/glycojones/privateer) and the [Gnu Scientific Library](https://www.gnu.org/software/gsl/) to Web Assembly. 
