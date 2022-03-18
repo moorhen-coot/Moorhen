@@ -46,7 +46,9 @@ Do not forget the final step (as I did!):
 2. Each time you want to use emscripten:  
 `source ./emsdk_env.sh`
 
-3. Get the required sources
+3. Get the sources:  
+`git clone https://github.com/stuartjamesmcnicholas/CCP4-Web-Assembly.git ccp4_wasm`  
+`cd ccp4_wasm`  
 `./get_sources`
 
 4. Build gsl, Coot, the CCP4 libraries and examples:  
