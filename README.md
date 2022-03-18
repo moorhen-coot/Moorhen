@@ -29,7 +29,7 @@ The following libraries are compiled to Web Assembly:
 Additionally [gemmi](https://github.com/project-gemmi/gemmi) is downloaded as it is a compile-time dependency of privateer. gemmi is
 not itself compiled by this project.
 
-## **Installation instructions**
+## **Compilation instructions**
 
 **Requirements** 
 
