@@ -12,8 +12,8 @@ factor calculations, map calculations, 2D ligand viewing with
 The emscripten suite of tools is required to do the
 compilation.
 
-The sources of CCP4, Coot FFTW, and GSL are not contained within this project. They are downloaded and (possibly) patched by the `get_sources`
-script.
+The sources of CCP4, Coot, Privateer, FFTW, and GSL are not included. They are downloaded and (possibly) patched by the running
+the `get_sources` script, which is part of the build process of this project.
 
 The following libraries are compiled to Web Assembly:
 * libccp4 (bzr)
@@ -75,3 +75,13 @@ In either case you will have to set `ligandServer` in `pdb_worker.js` to point t
 *Ligands pictures produced by interrogating file with MMDB2 and rendering with RDKit. Glycosolation trees produced by privateer.*
 ![Web example text output](web_example/screenshot_text.png)
 *Text output trapped from printf/cout and displayed asynchronously in browser div element.*
+
+## **What else can do with the compiled linraries?:**
+
+This will be fleshed out... See `example/example.cc` to see how to create a command line (node) program
+and `web_example/web_example.cc` to see use of `EMSCRIPTEN_BINDINGS` to expose a couple of Clipper classes
+and Privateer methods to the web browser.
+
+## **References:**
+
+Coming soon.
