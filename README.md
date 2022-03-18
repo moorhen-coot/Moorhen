@@ -12,19 +12,22 @@ factor calculations, map calculations, 2D ligand viewing with
 The emscripten suite of tools is required to do the
 compilation.
 
-The sources of CCP4, Coot FFTW, and GSL are not contained within this project. They are downloaded and patched by the `get_sources`
-
+The sources of CCP4, Coot FFTW, and GSL are not contained within this project. They are downloaded and (possibly) patched by the `get_sources`
 script.
 
-The following libraries are compiled:
-* libccp4
-* clipper
-* ssm
-* mmdb2
-* ccp4srs
-* privateer
-* Coot
-* fftw2
+The following libraries are compiled to Web Assembly:
+* libccp4 (bzr)
+* clipper (bzr)
+* ssm (bzr)
+* mmdb2 (bzr)
+* ccp4srs (bzr)
+* privateer MKIV
+* Coot 0.9.6
+* fftw 2.1.5
+* gsl 2.7.1
+
+Additionally [gemmi](https://github.com/project-gemmi/gemmi) is downloaded as it is a compile-time dependency of privateer. gemmi is
+not itself compiled by this project.
 
 ## **Installation instructions:**
 
