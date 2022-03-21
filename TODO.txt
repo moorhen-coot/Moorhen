@@ -1,7 +1,8 @@
 * Make patches such that code still works when compiled to native machine code.
 
-  * privateer-emscripten.patch
   * superpose-emscripten.patch
+
+* Consolidate privateer patches ?
 
 * Make a Coot library example
 

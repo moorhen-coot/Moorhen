@@ -12,7 +12,7 @@
  #include "privateer-json.h"
  #include "privateer-lib.h"
  #include "privateer-cryo_em.h"
-@@ -46,11 +51,28 @@
+@@ -46,11 +51,30 @@
  using clipper::data32::Flag;
  typedef clipper::HKL_data_base::HKL_reference_index HRI;
  
@@ -22,6 +22,8 @@
 +#else
 +#define CWD "/working/"
 +#endif
++#else
++#define CWD ""
 +#endif
  
  // Glytoucan has to be the last arguement for some reason, need to fix this bs. Otherwise new arguements will not be picked up.
@@ -41,7 +43,7 @@
      CCP4Program prog( "Privateer", program_version.c_str(), "$Date: 2021/02/06" );
  
      prog.set_termination_message( "Failed" );
-@@ -141,21 +163,21 @@
+@@ -141,21 +165,21 @@
          {
            if ( ++arg < args.size() )
            {
@@ -66,7 +68,7 @@
            }
          }
          else if ( args[arg] == "-mapin" )
-@@ -163,7 +185,7 @@
+@@ -163,7 +187,7 @@
            if ( ++arg < args.size() )
            {
              useMRC = true;
@@ -75,7 +77,7 @@
            }
          }
          else if ( args[arg] == "-resolution" )
-@@ -182,7 +204,7 @@
+@@ -182,7 +206,7 @@
          else if ( args[arg] == "-cifin" )
          {
            if ( ++arg < args.size() )
@@ -84,7 +86,7 @@
          }
          else if ( args[arg] == "-list" )
          {
-@@ -285,7 +307,7 @@
+@@ -285,7 +309,7 @@
              if(clipper::String(args[arg])[0] != '-')
              {
                ipwurcsjson = args[arg];
