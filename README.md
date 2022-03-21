@@ -82,11 +82,14 @@ In either case you will have to set `ligandServer` in `pdb_worker.js` to point t
 
 ## **What else can do with the compiled libraries?**
 
-This will be fleshed out...
-
-See `example/example.cc` to see how to create a command line (node) program
-and `web_example/web_example.cc` to see use of `EMSCRIPTEN_BINDINGS` to expose a couple of Clipper classes
-and Privateer methods to the web browser.
+See `example/example.cc` or `checkout/privateer-MKIV/src/privateer.cpp` to see how to create a command line (node) program. The
+latter is quite long and a patched version of the original privateer code. It might be more helpful to look at the patch file
+`patches/privateer-emscripten.patch`. This should show how to patch an existing command line program which reads files to one
+that will work within node.
+See `web_example/web_example.cc` to see use of `EMSCRIPTEN_BINDINGS` to expose a couple of Clipper classes
+and Privateer, GSL and custom methods to the web browser. In due course, more Clipper classes may be added to this and thus
+be made available to JavaScript in the browser. Studying the way `mmd2_example` is defined and exported in `web_example/web_example.cc` and
+then used in `web_example/pdb_worker.js` should help with understanding how to use C++ classes which read files in browser Worker Threads.
 
 ## **References**
 
