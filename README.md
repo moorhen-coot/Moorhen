@@ -41,7 +41,7 @@ not itself compiled by this project.
 * emsdk (Steps 1 and 2 below)
 * cmake
 
-1. Install emscripten (following  [https://emscripten.org/docs/getting_started/downloads.html](https://emscripten.org/docs/getting_started/downloads.html):  
+1. Install emscripten (following  [https://emscripten.org/docs/getting_started/downloads.html](https://emscripten.org/docs/getting_started/downloads.html)):  
 `git clone https://github.com/emscripten-core/emsdk.git`  
 `cd emsdk`  
 `git pull`  
