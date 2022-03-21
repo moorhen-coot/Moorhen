@@ -1,49 +1,52 @@
 diff -u privateer-MKIV/src/privateer-restraints.cpp /Users/junk/privateer/privateer-restraints.cpp
 +++ privateer-MKIV/src/privateer-restraints.cpp	2021-09-27 08:56:13.000000000 +0100
 --- /Users/junk/privateer/privateer-restraints.cpp	2022-03-09 14:27:21.000000000 +0000
-@@ -6,7 +6,7 @@
+@@ -6,7 +6,9 @@
  // The University of York
  
  #include "privateer-restraints.h"
--using namespace pybind11::literals;
-+//using namespace pybind11::literals;
++#if !defined(__EMSCRIPTEN__)
+ using namespace pybind11::literals;
++#endif
  
  std::string privateer::restraints::check_monlib_access ( ) {
  
-@@ -437,6 +437,7 @@
+@@ -437,6 +439,7 @@
  }
  
  // This function is similar to gemmi's but returns a standard python object
-+/*
++#if !defined(__EMSCRIPTEN__)
  pybind11::dict privateer::restraints::CarbohydrateDictionary::get_bond (std::string atom_1, std::string atom_2) {
  
    for ( auto bond : this->chemical_component.rt.bonds ) {
-@@ -452,6 +453,7 @@
+@@ -452,6 +455,7 @@
    auto result = pybind11::dict ("length"_a="", "esd"_a="");
    return result;
  }
-+*/
++#endif
  // End CarbohydrateDictionary class
  
  
 diff -u privateer-MKIV/src/privateer-restraints.h /Users/junk/privateer/privateer-restraints.h
 +++ privateer-MKIV/src/privateer-restraints.h	2021-09-27 08:56:13.000000000 +0100
 --- /Users/junk/privateer/privateer-restraints.h	2022-03-09 14:27:21.000000000 +0000
-@@ -10,7 +10,7 @@
+@@ -10,7 +10,9 @@
  #include <gemmi/cif.hpp>
  #include <gemmi/calculate.hpp>
  #include <gemmi/to_cif.hpp>  // for write_cif_to_stream
--#include <pybind11/pybind11.h>
-+//#include <pybind11/pybind11.h>
++#if !defined(__EMSCRIPTEN__)
+ #include <pybind11/pybind11.h>
++#endif
  #include <string>
  #include <locale>
  #include <fstream>
-@@ -80,7 +80,7 @@
+@@ -80,7 +82,9 @@
          float get_torsion_from_conformer (std::string a1, std::string a2, std::string a3, std::string a4);
          void add_inverted_torsions ();
          void print_torsion_restraints ();
--        pybind11::dict get_bond (std::string atom_1, std::string atom_2);
-+        //pybind11::dict get_bond (std::string atom_1, std::string atom_2);
++#if !defined(__EMSCRIPTEN__)
+         pybind11::dict get_bond (std::string atom_1, std::string atom_2);
++#endif
  
        private:
          gemmi::ChemComp chemical_component;

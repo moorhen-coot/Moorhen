@@ -1,7 +1,6 @@
 * Make patches such that code still works when compiled to native machine code.
 
   * privateer-emscripten.patch
-  * privateer-nopybind.patch
   * superpose-emscripten.patch
 
 * Make a Coot library example
