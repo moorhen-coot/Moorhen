@@ -61,7 +61,9 @@ Do not forget the final step (as I did!):
 5. Run the command line examples:  
 `cd example`  
 `node ccp4_example.js`  
-`node superpose.js 4dfr.pdb 8dfr.pdb`
+`node superpose.js 4dfr.pdb 8dfr.pdb`  
+`cd ../privateer`  
+`node privateer.js -pdbin 5fjj.pdb -cores 1`
 
 6. To run the web example, put the contents of the `web_example` directory on a web server.  
 This can be a full-scale web server, or a simple one, e.g:  

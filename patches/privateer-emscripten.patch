@@ -1,0 +1,95 @@
++++ privateer-MKIV/src/privateer.cpp	2022-03-21 10:47:53.000000000 +0000
+--- privateer-MKIV/src/privateer-emscripten.cpp	2022-03-21 10:47:48.000000000 +0000
+@@ -19,6 +19,11 @@
+ #include <iostream>
+ #include <iomanip>
+ #include <future>
++
++#if defined(__EMSCRIPTEN__)
++#include <emscripten.h>
++#endif
++
+ #include "privateer-json.h"
+ #include "privateer-lib.h"
+ #include "privateer-cryo_em.h"
+@@ -46,11 +51,28 @@
+ using clipper::data32::Flag;
+ typedef clipper::HKL_data_base::HKL_reference_index HRI;
+ 
++#if defined(__EMSCRIPTEN__)
++#ifdef NODERAWFS
++#define CWD ""
++#else
++#define CWD "/working/"
++#endif
++#endif
+ 
+ // Glytoucan has to be the last arguement for some reason, need to fix this bs. Otherwise new arguements will not be picked up.
+ 
+ int main(int argc, char** argv)
+ {
++#if defined(__EMSCRIPTEN__)
++#ifndef NODERAWFS
++    // mount the current folder as a NODEFS instance
++    // inside of emscripten
++    EM_ASM(
++            FS.mkdir('/working');
++            FS.mount(NODEFS, { root: '.' }, '/working');
++          );
++#endif
++#endif
+     CCP4Program prog( "Privateer", program_version.c_str(), "$Date: 2021/02/06" );
+ 
+     prog.set_termination_message( "Failed" );
+@@ -141,21 +163,21 @@
+         {
+           if ( ++arg < args.size() )
+           {
+-            output_mapcoeffs_mtz = args[arg];
++            output_mapcoeffs_mtz = std::string(CWD) + args[arg];
+             output_mtz = true;
+           }
+         }
+         else if ( args[arg] == "-pdbin" )
+         {
+           if ( ++arg < args.size() )
+-            input_model = args[arg];
++            input_model = std::string(CWD) + args[arg];
+         }
+         else if ( args[arg] == "-mtzin" )
+         {
+           if ( ++arg < args.size() )
+           {
+             useMTZ = true;
+-            input_reflections_mtz = args[arg];
++            input_reflections_mtz = std::string(CWD) + args[arg];
+           }
+         }
+         else if ( args[arg] == "-mapin" )
+@@ -163,7 +185,7 @@
+           if ( ++arg < args.size() )
+           {
+             useMRC = true;
+-            input_cryoem_map = args[arg];
++            input_cryoem_map = std::string(CWD) + args[arg];
+           }
+         }
+         else if ( args[arg] == "-resolution" )
+@@ -182,7 +204,7 @@
+         else if ( args[arg] == "-cifin" )
+         {
+           if ( ++arg < args.size() )
+-            input_reflections_cif = args[arg];
++            input_reflections_cif = std::string(CWD) + args[arg];
+         }
+         else if ( args[arg] == "-list" )
+         {
+@@ -285,7 +307,7 @@
+             if(clipper::String(args[arg])[0] != '-')
+             {
+               ipwurcsjson = args[arg];
+-              std::string fileName = ipwurcsjson.tail();
++              std::string fileName = std::string(CWD) + ipwurcsjson.tail();
+               std::string fileExtension = fileName.substr( fileName.length() - 5 );
+ 
+               if (fileExtension != ".json" || fileExtension.empty() || fileExtension.length() != 5)
