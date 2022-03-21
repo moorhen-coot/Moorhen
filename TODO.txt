@@ -1,9 +1,3 @@
-* Make patches such that code still works when compiled to native machine code.
-
-  * superpose-emscripten.patch
-
-* Consolidate privateer patches ?
-
 * Make a Coot library example
 
 * Check problem with one Coot source file ligand/res-tracer.cc depends on  scored-node.hh which seems not to exist.
