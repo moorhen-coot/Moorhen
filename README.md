@@ -94,6 +94,11 @@ be made available to JavaScript in the browser.
 Studying the way `mmd2_example` is defined and exported in `web_example/web_example.cc` and
 then used in `web_example/pdb_worker.js` should help with understanding how to use C++ classes which read files in browser Worker Threads.
 
+Any program you write, which uses the *subset* of Coot, Clipper, Privateer code which this project compiles to WASM, can
+itself be compiled to WASM and used within node or Web Browser. Studying the examples should show you to do I/O, which is
+different in the 2 cases. If you require more classes or methods from the libraries to be exposed to JavaScript, then changes need to be made to
+`web_example/web_example.cc`. This should only be necessary for browser usage - in node your whole program can be written in C++.
+
 ## **References**
 
 * Coot
