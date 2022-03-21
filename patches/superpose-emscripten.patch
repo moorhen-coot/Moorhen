@@ -1,6 +1,6 @@
 diff -ru ssm/superpose.cpp /Users/stuart/devtools-09032022/co/ssm/superpose.cpp
-+++ ssm/superpose.cpp	2022-03-17 10:20:04.000000000 +0000
 --- /Users/stuart/devtools-09032022/co/ssm/superpose_node.cpp	2022-03-17 16:09:31.000000000 +0000
++++ ssm/superpose.cpp	2022-03-17 10:20:04.000000000 +0000
 @@ -51,6 +51,10 @@
  // =================================================================
  //
@@ -12,7 +12,7 @@ diff -ru ssm/superpose.cpp /Users/stuart/devtools-09032022/co/ssm/superpose.cpp
  #include <string.h>
  
  #include "ssm/ssm_align.h"
-@@ -68,6 +72,15 @@
+@@ -68,6 +72,17 @@
  
  #endif
  
@@ -24,11 +24,13 @@ diff -ru ssm/superpose.cpp /Users/stuart/devtools-09032022/co/ssm/superpose.cpp
 +#else
 +#define CWD "/working/"
 +#endif
++#else
++#define CWD ""
 +#endif
  
  #ifdef _emulate_ccp4_
  
-@@ -255,8 +268,23 @@
+@@ -255,8 +270,23 @@
  }
  */
  
@@ -52,7 +54,7 @@ diff -ru ssm/superpose.cpp /Users/stuart/devtools-09032022/co/ssm/superpose.cpp
  mmdb::PPManager M;
  mmdb::psvector  name;
  mmdb::psvector  selstring;
-@@ -269,11 +297,19 @@
+@@ -269,11 +299,19 @@
    ccp4_banner();
  #endif
  
@@ -72,7 +74,7 @@ diff -ru ssm/superpose.cpp /Users/stuart/devtools-09032022/co/ssm/superpose.cpp
  #ifdef _ccp4_
      printf ( "<!--SUMMARY_END-->\n" );
      ccperror ( 1,"No input" );
-@@ -281,6 +317,7 @@
+@@ -281,6 +319,7 @@
      return 1;
    }
  
@@ -80,7 +82,7 @@ diff -ru ssm/superpose.cpp /Users/stuart/devtools-09032022/co/ssm/superpose.cpp
  #ifdef _ccp4_
    printf ( "<!--SUMMARY_BEGIN-->\n" );
  #endif
-@@ -293,6 +330,7 @@
+@@ -293,6 +332,7 @@
  #endif
      return 2;
    }
@@ -88,7 +90,7 @@ diff -ru ssm/superpose.cpp /Users/stuart/devtools-09032022/co/ssm/superpose.cpp
  
    printf ( "\n"
      " Superpose v." superpose_version " from " superpose_date " "
-@@ -323,22 +361,39 @@
+@@ -323,22 +363,39 @@
    argNo = 1;
    rc    = 0;
    while ((argNo<argc) && (!rc))  {
@@ -105,10 +107,10 @@ diff -ru ssm/superpose.cpp /Users/stuart/devtools-09032022/co/ssm/superpose.cpp
 +#else
        mmdb::CreateCopy ( name[nStructures],argv[argNo] );
 -      if (readCoorFile(argv[argNo++],M[nStructures]))
-+      char *fn =(char*) malloc(9+strlen(argv[argNo]));
++      char *fn =(char*) malloc(strlen(CWD)+strlen(argv[argNo]));
 +      fn[0] = '\0';
-+      strncat(fn,CWD,9);
-+      strncat(fn,argv[argNo],9);
++      strncat(fn,CWD,strlen(CWD));
++      strncat(fn,argv[argNo],strlen(CWD));
 +#endif
 +      argNo++;
 +
