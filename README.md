@@ -88,4 +88,19 @@ and Privateer methods to the web browser.
 
 ## **References**
 
-Coming soon.
+* Coot
+    * P. Emsley; B. Lohkamp; W.G. Scott; Cowtan (2010). *Features and Development of Coot*, Acta Crystallographica. **D66 (4)** p486–501.
+* Privateer
+    * Agirre, J., Iglesias-Fernández, J., Rovira, C., Davies, G.J., Wilson, K.S. and Cowtan, K.D., (2015), *Privateer: software for the conformational validation of carbohydrate structures*, Nature Structural and Molecular Biology **22(11)**, p.833.
+    * Bagdonas, H., Ungar, D. and Agirre, J., (2020), *Leveraging glycomics data in glycoprotein 3D structure validation with Privateer*, Beilstein Journal of Organic Chemistry, **16(1)**, p2523-2533.
+* Clipper
+  Cowtan K (2003), *The ClipperC++ libraries for X‐ray crystallography*, IUCr Comput Comm Newslett **2**, p4–9
+* CCP4
+  Winn MD, Ballard CC, Cowtan KD, Dodson EJ, Emsley P, Evans PR, Keegan RM, Krissinel EB, Leslie AGW, McCoy A, McNicholas SJ, Murshudov GN, Pannu NS, Potterton EA, Powell HR, Read RJ, Vagin A, Wilson KS (2011), *Overview of the CCP4 suite and current developments*, Acta Cryst **D67**, p235–242. 
+* Gemmi
+   [https://github.com/project-gemmi/gemmi](https://github.com/project-gemmi/gemmi)
+* GSL
+    M. Galassi et al, GNU Scientific Library Reference Manual (3rd Ed.), ISBN 0954612078
+  https://www.gnu.org/software/gsl/
+* FFTW
+    Frigo, Matteo and Johnson, Steven G. (2005), *The Design and Implementation of FFTW*3, Proceedings of the IEEE **93(2)**, p216-231.
