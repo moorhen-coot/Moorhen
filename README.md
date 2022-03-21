@@ -43,7 +43,10 @@ not itself compiled by this project.
 
 1. Install emscripten following:  
 [https://emscripten.org/docs/getting_started/downloads.html](https://emscripten.org/docs/getting_started/downloads.html)  
-Do not forget the final step (as I did!):  
+`git clone https://github.com/emscripten-core/emsdk.git`  
+`cd emsdk`  
+`git pull`  
+`./emsdk install latest`  
 `./emsdk activate latest`
 
 2. Each time you want to use emscripten:  
