@@ -1,4 +1,8 @@
-* Make a privateer command line example. This requires patching to add NodeFS support like example/example.cc.
+* Make patches such that code still works when compiled to native machine code.
+
+  * privateer-emscripten.patch
+  * privateer-nopybind.patch
+  * superpose-emscripten.patch
 
 * Make a Coot library example
 
