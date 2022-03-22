@@ -1,5 +1,3 @@
-* Create a TODO.md.
-
 * Update README with all changes in README.md.
 
 * Split coot into library and executables. An almost accurate list can be got from:
