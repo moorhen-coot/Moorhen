@@ -7,8 +7,12 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
 - [ ] Check that this successfully compiles on Windows (needs *get_sources.bat* or *MSYS*)
 - [ ] Split coot into library and executables. An almost accurate list can be got from    
     find checkout/coot-0.9.6/ -name \*.cpp -o -name \*.cc | xargs grep -w main | grep -w int
-- [ ] Make Coot library examples    
-  - [ ] src/fix-nomenclature.cc  
+  - [x] Identify files containing main
+  - [ ] Create rules to build executables.
+- [ ] Make Coot library examples (more than just fix-nomenclature)
+  - [x] `src/fix-nomenclature.cc`
+  - [ ] Modify `coot_env.js` so that `fix-nomenclature` can be run from anywhere.
+- [ ] Modify all `CMakeLists.txt` to use `NODERAWFS=1` so that native filesystem is available.
 - [ ] Check problem with one Coot source file ligand/res-tracer.cc depends on scored-node.hh which seems not to exist. Fixed in > 0.9.6?
 ### Done ✓
 

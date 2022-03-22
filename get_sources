@@ -46,6 +46,7 @@ patch -p0 < ../patches/ccp4-emscripten.patch
 patch -p0 < ../patches/privateer-nopybind.patch
 patch -p0 < ../patches/superpose-emscripten.patch
 patch -p0 < ../patches/privateer-emscripten.patch
+patch -p0 < ../patches/coot-fixnomenclature.patch
 cd ..
 echo
 echo "Unpacking gsl-2.7.1"
