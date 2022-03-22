@@ -12,7 +12,7 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
 - [ ] Make Coot library examples (more than just fix-nomenclature)
   - [x] `src/fix-nomenclature.cc`
   - [ ] Modify `coot_env.js` so that `fix-nomenclature` can be run from anywhere.
-- [ ] Modify all `CMakeLists.txt` to use `NODERAWFS=1` so that native filesystem is available.
+- [ ] Modify all relevant `CMakeLists.txt` to use `-sNODERAWFS=1` and `-DNODERAWFS` for executables so that native filesystem is available.
 - [ ] Check problem with one Coot source file ligand/res-tracer.cc depends on scored-node.hh which seems not to exist. Fixed in > 0.9.6?
 ### Done ✓
 

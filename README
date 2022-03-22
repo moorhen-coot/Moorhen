@@ -66,6 +66,8 @@ node ccp4_example.js
 node superpose.js 4dfr.pdb 8dfr.pdb  
 cd ../privateer  
 node privateer.js -pdbin 5fjj.pdb -cores 1
+cd ../coot  
+node fix-nomenclature.js ../example/4dfr.pdb out.pdb
 
 6. To run the web example, put the contents of the `web_example` directory on a web server.  
 This can be a full-scale web server, or a simple one, e.g:  
