@@ -26,7 +26,7 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
     - [x] `analysis/bfactan.cc`
     - [x] `analysis/test-align.cc`
     - [x] `density-contour/test-occlusion.cc`
-    - [ ] `ideal/with-geometry.cc` (BLAS link errors)
+    - [x] `ideal/with-geometry.cc` (BLAS link errors)
     - [ ] `ideal/lv.cc` (`coot_optarg` link error)
     - [x] `ideal/test-rama-plot.cc`
     - [ ] `ideal/crankshaft-test.cc` (`coot_optarg` link error, `getopt.cc` needs a patch)
@@ -53,48 +53,39 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
     - [x] `coot-utils/test-h-bonds.cc`
     - [x] `coot-utils/test-morph.cc`
     - [x] `coot-utils/mmrrcc.cc`
-    - [ ] `coot-utils/test-coot-utils.cc`
-    - [ ] `coot-utils/test-shelx-reader.cc`
-    - [ ] `coot-utils/slurp-map.cc`
-    - [ ] `coot-utils/test-chem-feat.cc`
-    - [ ] `coot-utils/test-emma.cc`
-    - [ ] `coot-utils/test-coot-probe.cc`
-    - [ ] `goograph/test-goograph.cc`
-    - [ ] `coords/test-transform.cc`
-    - [ ] `coords/test-phenix-geo.cc`
-    - [ ] `geometry/make-shelx-restraints.cc`
-    - [ ] `geometry/test-ccp4srs.cc`
-    - [ ] `geometry/compare-dictionaries.cc`
-    - [ ] `geometry/dictionary-bond-distributions.cc`
-    - [ ] `geometry/available-comp-id.cc`
-    - [ ] `geometry/test-read-components.cc`
-    - [ ] `geometry/test-geometry.cc`
-    - [ ] `mini-mol/testminimol.cc`
-    - [ ] `lbg/test_lbg_functions.cc`
-    - [ ] `lbg/test-srs-standalone.cc`
-    - [ ] `lbg/lidia-main.cc`
-    - [ ] `lbg/lidia-main.cc`
-    - [ ] `cootilus/cootilus-demo.cpp`
-    - [ ] `ligand/ligand-percentiles.cc`
-    - [ ] `ligand/make-ligands-db.cc`
-    - [ ] `ligand/test-tube-finder.cc`
-    - [ ] `ligand/test-fffear-in-coot.cc`
-    - [ ] `ligand/identify-protein.cc`
-    - [ ] `ligand/test-ligand.cc`
-    - [ ] `ligand/find-waters.cc`
-    - [ ] `ligand/find-ligand.cc`
-    - [ ] `ligand/test-trace.cc`
-    - [ ] `ligand/res-tracer.cc`
-    - [ ] `ligand/test-side-chain-densities.cc`
-    - [ ] `cootaneer/cootaneer-demo.cpp`
-    - [ ] `src/main.cc`
-    - [ ] `src/user-mods.cc`
-    - [ ] `src/dynarama-main.cc`
-    - [ ] `src/density-score-by-residue-src.cc`
-    - [ ] `src/c-interface-gui.cc`
-    - [ ] `src/c-interface-maps.cc`
-    - [ ] `src/test-chol.cc`
-    - [ ] `src/align.cc`
+    - [x] `coot-utils/test-coot-utils.cc`
+    - [x] `coot-utils/test-shelx-reader.cc`
+    - [x] `coot-utils/slurp-map.cc`
+    - [x] `coot-utils/test-chem-feat.cc`
+    - [x] `coot-utils/test-emma.cc`
+    - [x] `coot-utils/test-coot-probe.cc`
+    - [x] `coords/test-transform.cc`
+    - [x] `coords/test-phenix-geo.cc`
+    - [x] `geometry/make-shelx-restraints.cc`
+    - [ ] `geometry/test-ccp4srs.cc` (`coot_optarg` link error, `getopt.cc` needs a patch)
+    - [ ] `geometry/compare-dictionaries.cc` (`coot_optarg` link error, `getopt.cc` needs a patch)
+    - [x] `geometry/dictionary-bond-distributions.cc`
+    - [x] `geometry/available-comp-id.cc`
+    - [x] `geometry/test-read-components.cc`
+    - [x] `geometry/test-geometry.cc`
+    - [x] `lbg/test-srs-standalone.cc`
+    - [x] `lbg/lidia-main.cc`
+    - [x] `cootilus/cootilus-demo.cpp`
+    - [x] `ligand/ligand-percentiles.cc`
+    - [x] `ligand/make-ligands-db.cc`
+    - [x] `ligand/test-tube-finder.cc`
+    - [ ] `ligand/test-fffear-in-coot.cc` (`coot_optarg` link error, `getopt.cc` needs a patch)
+    - [x] `ligand/identify-protein.cc`
+    - [x] `ligand/test-ligand.cc`
+    - [ ] `ligand/find-waters.cc` (`coot_optarg` link error, `getopt.cc` needs a patch)
+    - [ ] `ligand/find-ligand.cc` (`coot_optarg` link error, `getopt.cc` needs a patch)
+    - [ ] `ligand/test-trace.cc` (`coot_optarg` link error, `getopt.cc` needs a patch)
+    - [ ] `ligand/res-tracer.cc` (Missing `scored-node.hh`?)
+    - [x] `ligand/test-side-chain-densities.cc`
+    - [x] `cootaneer/cootaneer-demo.cpp`
+    - [ ] `src/density-score-by-residue-src.cc` (`coot_optarg` link error, `getopt.cc` needs a patch)
+    - [ ] `src/test-chol.cc` (matrix link problems)
+    - [ ] `src/align.cc` (`chain_mutation_info_container_t` problems)
 - [ ] Modify all relevant `CMakeLists.txt` to use `-sNODERAWFS=1` and `-DNODERAWFS` for executables so that native filesystem is available.
 - [ ] Check problem with one Coot source file ligand/res-tracer.cc depends on scored-node.hh which seems not to exist. Fixed in > 0.9.6?
 ### Done ✓
