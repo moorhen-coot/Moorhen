@@ -11,52 +11,48 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
   - [ ] Create rules to build executables.
     - [x] `src/fix-nomenclature.cc`
     - [x] Modify `coot_env.js` so that `fix-nomenclature` can be run from anywhere. Created by cmake.
-    - [ ] `auxil/strand-analysis/strand-analysis.cc`
-    - [ ] `auxil/rama/rama-data.cc`
-    - [ ] `auxil/rama/rama-doughnut.cc`
-    - [ ] `auxil/catcheck/catcheck.cc`
-    - [ ] `auxil/vectors/diff-vec.cc`
-    - [ ] `auxil/sec-str/sec-str-dist-check.cc`
-    - [ ] `analysis/coot-daca.cc`
-    - [ ] `analysis/test-cablam.cc`
-    - [ ] `analysis/test-stats.cc`
-    - [ ] `analysis/improper-dihedrals.cc`
-    - [ ] `analysis/test-mogul.cc`
-    - [ ] `analysis/peptide-projection.cc`
-    - [ ] `analysis/bfactan.cc`
-    - [ ] `analysis/test-align.cc`
-    - [ ] `density-contour/test-occlusion.cc`
-    - [ ] `ideal/with-geometry.cc`
-    - [ ] `ideal/lv.cc`
-    - [ ] `ideal/test-rama-plot.cc`
-    - [ ] `ideal/crankshaft-test.cc`
-    - [ ] `ideal/logramatest.cpp`
-    - [ ] `ideal/test-indexing.cc`
-    - [ ] `ideal/molmantest.cc`
-    - [ ] `ideal/mini-rsr.cc`
-    - [ ] `tw/tiddly.cc`
-    - [ ] `utils/test-logging.cc`
-    - [ ] `db-main/train-pepflip.cc`
+    - [ ] `auxil/strand-analysis/strand-analysis.cc` (Missing `strand-analysis.hh`?)
+    - [x] `auxil/rama/rama-data.cc`
+    - [x] `auxil/rama/rama-doughnut.cc`
+    - [x] `auxil/catcheck/catcheck.cc`
+    - [x] `auxil/vectors/diff-vec.cc`
+    - [ ] `auxil/sec-str/sec-str-dist-check.cc` (Namespace issues)
+    - [x] `analysis/coot-daca.cc`
+    - [x] `analysis/test-cablam.cc`
+    - [x] `analysis/test-stats.cc`
+    - [x] `analysis/improper-dihedrals.cc`
+    - [x] `analysis/test-mogul.cc`
+    - [x] `analysis/peptide-projection.cc`
+    - [x] `analysis/bfactan.cc`
+    - [x] `analysis/test-align.cc`
+    - [x] `density-contour/test-occlusion.cc`
+    - [ ] `ideal/with-geometry.cc` (BLAS link errors)
+    - [ ] `ideal/lv.cc` (`coot_optarg` link error)
+    - [x] `ideal/test-rama-plot.cc`
+    - [ ] `ideal/crankshaft-test.cc` (`coot_optarg` link error, `getopt.cc` needs a patch)
+    - [x] `ideal/logramatest.cpp`
+    - [x] `ideal/test-indexing.cc`
+    - [ ] `ideal/molmantest.cc` (Namespace issues)
+    - [ ] `ideal/mini-rsr.cc` (`coot_optarg` link error, `getopt.cc` needs a patch)
+    - [x] `tw/tiddly.cc`
+    - [x] `utils/test-logging.cc`
+    - [x] `db-main/train-pepflip.cc`
     - [ ] `db-main/testdbmain.cc`
-    - [ ] `high-res/trace-high-res.cc`
-    - [ ] `high-res/test-atom-graph.cc`
-    - [ ] `coot-utils/test-spherical.cc`
-    - [ ] `coot-utils/test-cod-atom-types.cc`
-    - [ ] `coot-utils/test-cod-atom-types.cc`
-    - [ ] `coot-utils/dictionary-atom-types.cc`
-    - [ ] `coot-utils/dictionary-atom-types.cc`
-    - [ ] `coot-utils/test-elastic.cc`
-    - [ ] `coot-utils/test-convolute.cc`
-    - [ ] `coot-utils/cod-db-access.cc`
-    - [ ] `coot-utils/cod-db-access.cc`
-    - [ ] `coot-utils/cod-db-access.cc`
-    - [ ] `coot-utils/test-5-residue-fragments.cc`
-    - [ ] `coot-utils/test-hole.cc`
-    - [ ] `coot-utils/test-glyco-torsions.cc`
-    - [ ] `coot-utils/test-segmap.cc`
-    - [ ] `coot-utils/test-h-bonds.cc`
-    - [ ] `coot-utils/test-morph.cc`
-    - [ ] `coot-utils/mmrrcc.cc`
+    - [ ] `high-res/trace-high-res.cc` (`coot_optarg` link error, `getopt.cc` needs a patch)
+    - [x] `high-res/test-atom-graph.cc`
+    - [x] `coot-utils/test-spherical.cc`
+    - [x] `coot-utils/test-cod-atom-types.cc`
+    - [x] `coot-utils/dictionary-atom-types.cc`
+    - [x] `coot-utils/test-elastic.cc`
+    - [x] `coot-utils/test-convolute.cc`
+    - [x] `coot-utils/cod-db-access.cc`
+    - [x] `coot-utils/test-5-residue-fragments.cc`
+    - [x] `coot-utils/test-hole.cc`
+    - [x] `coot-utils/test-glyco-torsions.cc`
+    - [x] `coot-utils/test-segmap.cc`
+    - [x] `coot-utils/test-h-bonds.cc`
+    - [x] `coot-utils/test-morph.cc`
+    - [x] `coot-utils/mmrrcc.cc`
     - [ ] `coot-utils/test-coot-utils.cc`
     - [ ] `coot-utils/test-shelx-reader.cc`
     - [ ] `coot-utils/slurp-map.cc`
@@ -93,7 +89,6 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
     - [ ] `cootaneer/cootaneer-demo.cpp`
     - [ ] `src/main.cc`
     - [ ] `src/user-mods.cc`
-    - [ ] `src/dynarama-main.cc`
     - [ ] `src/dynarama-main.cc`
     - [ ] `src/density-score-by-residue-src.cc`
     - [ ] `src/c-interface-gui.cc`
