@@ -8,6 +8,8 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
 - [ ] Split coot into library and executables. An almost accurate list can be got from  
     `find checkout/coot-0.9.6/ -name \*.cpp -o -name \*.cc | xargs grep -w main | grep -w int`
   - [x] Identify files containing main
+  - [ ] Add other environment variables to `coot_env.js`
+    - [ ] `COOT_PREFIX`
   - [ ] Create rules to build executables.
     - [x] `src/fix-nomenclature.cc`
     - [x] Modify `coot_env.js` so that `fix-nomenclature` can be run from anywhere. Created by cmake.
@@ -16,7 +18,6 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
     - [x] `auxil/rama/rama-doughnut.cc`
     - [x] `auxil/catcheck/catcheck.cc`
     - [x] `auxil/vectors/diff-vec.cc`
-    - [ ] `auxil/sec-str/sec-str-dist-check.cc` (Namespace issues)
     - [x] `analysis/coot-daca.cc`
     - [x] `analysis/test-cablam.cc`
     - [x] `analysis/test-stats.cc`
@@ -32,7 +33,6 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
     - [x] `ideal/crankshaft-test.cc`
     - [x] `ideal/logramatest.cpp`
     - [x] `ideal/test-indexing.cc`
-    - [ ] `ideal/molmantest.cc` (Namespace issues)
     - [x] `ideal/mini-rsr.cc`
     - [x] `tw/tiddly.cc`
     - [x] `utils/test-logging.cc`
@@ -84,8 +84,8 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
     - [x] `ligand/test-side-chain-densities.cc`
     - [x] `cootaneer/cootaneer-demo.cpp`
     - [x] `src/density-score-by-residue-src.cc`
-    - [ ] `src/test-chol.cc` (matrix link problems)
-    - [ ] `src/align.cc` (`chain_mutation_info_container_t` problems)
+    - [x] `src/test-chol.cc`
+    - [x] `src/align.cc` (`chain_mutation_info_container_t` problems)
 - [ ] Modify all relevant `CMakeLists.txt` to use `-sNODERAWFS=1` and `-DNODERAWFS` for executables so that native filesystem is available.
 - [ ] Check problem with one Coot source file ligand/res-tracer.cc depends on scored-node.hh which seems not to exist. Fixed in > 0.9.6?
 ### Done ✓
