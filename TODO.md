@@ -27,18 +27,18 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
     - [x] `analysis/test-align.cc`
     - [x] `density-contour/test-occlusion.cc`
     - [x] `ideal/with-geometry.cc`
-    - [ ] `ideal/lv.cc` (`coot_optarg` link error)
+    - [x] `ideal/lv.cc`
     - [x] `ideal/test-rama-plot.cc`
-    - [ ] `ideal/crankshaft-test.cc` (`coot_optarg` link error, `getopt.cc` needs a patch)
+    - [x] `ideal/crankshaft-test.cc`
     - [x] `ideal/logramatest.cpp`
     - [x] `ideal/test-indexing.cc`
     - [ ] `ideal/molmantest.cc` (Namespace issues)
-    - [ ] `ideal/mini-rsr.cc` (`coot_optarg` link error, `getopt.cc` needs a patch)
+    - [x] `ideal/mini-rsr.cc`
     - [x] `tw/tiddly.cc`
     - [x] `utils/test-logging.cc`
     - [x] `db-main/train-pepflip.cc`
-    - [ ] `db-main/testdbmain.cc`
-    - [ ] `high-res/trace-high-res.cc` (`coot_optarg` link error, `getopt.cc` needs a patch)
+    - [x] `db-main/testdbmain.cc`
+    - [x] `high-res/trace-high-res.cc`
     - [x] `high-res/test-atom-graph.cc`
     - [x] `coot-utils/test-spherical.cc`
     - [x] `coot-utils/test-cod-atom-types.cc`
@@ -62,8 +62,8 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
     - [x] `coords/test-transform.cc`
     - [x] `coords/test-phenix-geo.cc`
     - [x] `geometry/make-shelx-restraints.cc`
-    - [ ] `geometry/test-ccp4srs.cc` (`coot_optarg` link error, `getopt.cc` needs a patch)
-    - [ ] `geometry/compare-dictionaries.cc` (`coot_optarg` link error, `getopt.cc` needs a patch)
+    - [x] `geometry/test-ccp4srs.cc`
+    - [x] `geometry/compare-dictionaries.cc`
     - [x] `geometry/dictionary-bond-distributions.cc`
     - [x] `geometry/available-comp-id.cc`
     - [x] `geometry/test-read-components.cc`
@@ -74,16 +74,16 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
     - [x] `ligand/ligand-percentiles.cc`
     - [x] `ligand/make-ligands-db.cc`
     - [x] `ligand/test-tube-finder.cc`
-    - [ ] `ligand/test-fffear-in-coot.cc` (`coot_optarg` link error, `getopt.cc` needs a patch)
+    - [x] `ligand/test-fffear-in-coot.cc`
     - [x] `ligand/identify-protein.cc`
     - [x] `ligand/test-ligand.cc`
-    - [ ] `ligand/find-waters.cc` (`coot_optarg` link error, `getopt.cc` needs a patch)
-    - [ ] `ligand/find-ligand.cc` (`coot_optarg` link error, `getopt.cc` needs a patch)
-    - [ ] `ligand/test-trace.cc` (`coot_optarg` link error, `getopt.cc` needs a patch)
+    - [x] `ligand/find-waters.cc`
+    - [x] `ligand/find-ligand.cc`
+    - [x] `ligand/test-trace.cc`
     - [ ] `ligand/res-tracer.cc` (Missing `scored-node.hh`?)
     - [x] `ligand/test-side-chain-densities.cc`
     - [x] `cootaneer/cootaneer-demo.cpp`
-    - [ ] `src/density-score-by-residue-src.cc` (`coot_optarg` link error, `getopt.cc` needs a patch)
+    - [x] `src/density-score-by-residue-src.cc`
     - [ ] `src/test-chol.cc` (matrix link problems)
     - [ ] `src/align.cc` (`chain_mutation_info_container_t` problems)
 - [ ] Modify all relevant `CMakeLists.txt` to use `-sNODERAWFS=1` and `-DNODERAWFS` for executables so that native filesystem is available.
