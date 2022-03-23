@@ -26,7 +26,7 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
     - [x] `analysis/bfactan.cc`
     - [x] `analysis/test-align.cc`
     - [x] `density-contour/test-occlusion.cc`
-    - [x] `ideal/with-geometry.cc` (BLAS link errors)
+    - [x] `ideal/with-geometry.cc`
     - [ ] `ideal/lv.cc` (`coot_optarg` link error)
     - [x] `ideal/test-rama-plot.cc`
     - [ ] `ideal/crankshaft-test.cc` (`coot_optarg` link error, `getopt.cc` needs a patch)
