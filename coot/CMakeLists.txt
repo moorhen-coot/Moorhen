@@ -334,3 +334,7 @@ target_link_directories(fix-nomenclature PUBLIC ../mmdb2 ../ssm ../ccp4 ../lib .
 target_link_libraries(fix-nomenclature mmdb2 ssm clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 coot gsl nodefs.js)
 target_include_directories(fix-nomenclature PRIVATE ${coot_src} ${coot_src}/src ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw)
 target_compile_options(fix-nomenclature PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
+
+FILE(WRITE ${CMAKE_BINARY_DIR}/coot/coot_env.js
+Module.preRun = [function() {ENV.COOT_DATA_DIR="${coot_src}"}]
+)
