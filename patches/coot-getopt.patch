@@ -1,0 +1,10 @@
+--- coot-0.9.6/compat/getopt.cc	2022-03-23 15:13:07.000000000 +0000
++++ coot-0.9.6/compat/getopt.cc-patched	2022-03-23 15:12:59.000000000 +0000
+@@ -24,6 +24,7 @@
+ 
+ #include <stdio.h>
+ #include <stdlib.h>             /* getenv() */
++#include <string.h>
+ 
+ #include "coot-getopt.h"
+ 
