@@ -5,13 +5,101 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
 
 - [ ] Check that this successfully compiles on Linux
 - [ ] Check that this successfully compiles on Windows (needs *get_sources.bat* or *MSYS*)
-- [ ] Split coot into library and executables. An almost accurate list can be got from    
-    find checkout/coot-0.9.6/ -name \*.cpp -o -name \*.cc | xargs grep -w main | grep -w int
+- [ ] Split coot into library and executables. An almost accurate list can be got from  
+    `find checkout/coot-0.9.6/ -name \*.cpp -o -name \*.cc | xargs grep -w main | grep -w int`
   - [x] Identify files containing main
   - [ ] Create rules to build executables.
-- [ ] Make Coot library examples (more than just fix-nomenclature)
-  - [x] `src/fix-nomenclature.cc`
-  - [x] Modify `coot_env.js` so that `fix-nomenclature` can be run from anywhere. Created by cmake.
+    - [x] `src/fix-nomenclature.cc`
+    - [x] Modify `coot_env.js` so that `fix-nomenclature` can be run from anywhere. Created by cmake.
+    - [ ] `auxil/strand-analysis/strand-analysis.cc`
+    - [ ] `auxil/rama/rama-data.cc`
+    - [ ] `auxil/rama/rama-doughnut.cc`
+    - [ ] `auxil/catcheck/catcheck.cc`
+    - [ ] `auxil/vectors/diff-vec.cc`
+    - [ ] `auxil/sec-str/sec-str-dist-check.cc`
+    - [ ] `analysis/coot-daca.cc`
+    - [ ] `analysis/test-cablam.cc`
+    - [ ] `analysis/test-stats.cc`
+    - [ ] `analysis/improper-dihedrals.cc`
+    - [ ] `analysis/test-mogul.cc`
+    - [ ] `analysis/peptide-projection.cc`
+    - [ ] `analysis/bfactan.cc`
+    - [ ] `analysis/test-align.cc`
+    - [ ] `density-contour/test-occlusion.cc`
+    - [ ] `ideal/with-geometry.cc`
+    - [ ] `ideal/lv.cc`
+    - [ ] `ideal/test-rama-plot.cc`
+    - [ ] `ideal/crankshaft-test.cc`
+    - [ ] `ideal/logramatest.cpp`
+    - [ ] `ideal/test-indexing.cc`
+    - [ ] `ideal/molmantest.cc`
+    - [ ] `ideal/mini-rsr.cc`
+    - [ ] `tw/tiddly.cc`
+    - [ ] `utils/test-logging.cc`
+    - [ ] `db-main/train-pepflip.cc`
+    - [ ] `db-main/testdbmain.cc`
+    - [ ] `high-res/trace-high-res.cc`
+    - [ ] `high-res/test-atom-graph.cc`
+    - [ ] `coot-utils/test-spherical.cc`
+    - [ ] `coot-utils/test-cod-atom-types.cc`
+    - [ ] `coot-utils/test-cod-atom-types.cc`
+    - [ ] `coot-utils/dictionary-atom-types.cc`
+    - [ ] `coot-utils/dictionary-atom-types.cc`
+    - [ ] `coot-utils/test-elastic.cc`
+    - [ ] `coot-utils/test-convolute.cc`
+    - [ ] `coot-utils/cod-db-access.cc`
+    - [ ] `coot-utils/cod-db-access.cc`
+    - [ ] `coot-utils/cod-db-access.cc`
+    - [ ] `coot-utils/test-5-residue-fragments.cc`
+    - [ ] `coot-utils/test-hole.cc`
+    - [ ] `coot-utils/test-glyco-torsions.cc`
+    - [ ] `coot-utils/test-segmap.cc`
+    - [ ] `coot-utils/test-h-bonds.cc`
+    - [ ] `coot-utils/test-morph.cc`
+    - [ ] `coot-utils/mmrrcc.cc`
+    - [ ] `coot-utils/test-coot-utils.cc`
+    - [ ] `coot-utils/test-shelx-reader.cc`
+    - [ ] `coot-utils/slurp-map.cc`
+    - [ ] `coot-utils/test-chem-feat.cc`
+    - [ ] `coot-utils/test-emma.cc`
+    - [ ] `coot-utils/test-coot-probe.cc`
+    - [ ] `goograph/test-goograph.cc`
+    - [ ] `coords/test-transform.cc`
+    - [ ] `coords/test-phenix-geo.cc`
+    - [ ] `geometry/make-shelx-restraints.cc`
+    - [ ] `geometry/test-ccp4srs.cc`
+    - [ ] `geometry/compare-dictionaries.cc`
+    - [ ] `geometry/dictionary-bond-distributions.cc`
+    - [ ] `geometry/available-comp-id.cc`
+    - [ ] `geometry/test-read-components.cc`
+    - [ ] `geometry/test-geometry.cc`
+    - [ ] `mini-mol/testminimol.cc`
+    - [ ] `lbg/test_lbg_functions.cc`
+    - [ ] `lbg/test-srs-standalone.cc`
+    - [ ] `lbg/lidia-main.cc`
+    - [ ] `lbg/lidia-main.cc`
+    - [ ] `cootilus/cootilus-demo.cpp`
+    - [ ] `ligand/ligand-percentiles.cc`
+    - [ ] `ligand/make-ligands-db.cc`
+    - [ ] `ligand/test-tube-finder.cc`
+    - [ ] `ligand/test-fffear-in-coot.cc`
+    - [ ] `ligand/identify-protein.cc`
+    - [ ] `ligand/test-ligand.cc`
+    - [ ] `ligand/find-waters.cc`
+    - [ ] `ligand/find-ligand.cc`
+    - [ ] `ligand/test-trace.cc`
+    - [ ] `ligand/res-tracer.cc`
+    - [ ] `ligand/test-side-chain-densities.cc`
+    - [ ] `cootaneer/cootaneer-demo.cpp`
+    - [ ] `src/main.cc`
+    - [ ] `src/user-mods.cc`
+    - [ ] `src/dynarama-main.cc`
+    - [ ] `src/dynarama-main.cc`
+    - [ ] `src/density-score-by-residue-src.cc`
+    - [ ] `src/c-interface-gui.cc`
+    - [ ] `src/c-interface-maps.cc`
+    - [ ] `src/test-chol.cc`
+    - [ ] `src/align.cc`
 - [ ] Modify all relevant `CMakeLists.txt` to use `-sNODERAWFS=1` and `-DNODERAWFS` for executables so that native filesystem is available.
 - [ ] Check problem with one Coot source file ligand/res-tracer.cc depends on scored-node.hh which seems not to exist. Fixed in > 0.9.6?
 ### Done ✓
