@@ -6,7 +6,7 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
 - [x] Build gesamt
   - [x] Build librvapi
 - [x] Test gesamt
-- [ ] gesamt in web page
+- [x] gesamt in web page
 - [ ] Make a fancier (React/Bootstrap) superpose/gesamt web page
 - [ ] Make a web page with graphics
 - [ ] Check that this successfully compiles on Linux

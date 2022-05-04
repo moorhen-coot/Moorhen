@@ -27,12 +27,15 @@ onmessage = function(e) {
     }
 
     var files = new CCP4Module.VectorString();
+    //Do not add program name for superpose, only gesamt. I probably should have had the programs behave the same.
+    files.push_back("gesamt");
     var sels = new CCP4Module.VectorString();
     files.push_back(selectedFileName);
     files.push_back(selectedFile2Name);
     sels.push_back("dummy");
     sels.push_back("dummy");
-    var result = CCP4Module.superpose(files,sels);
+    //var result = CCP4Module.superpose(files,sels);
+    var result = CCP4Module.gesamt(files);
     
     /*
     //Testing, belongs elsewhere
