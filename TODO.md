@@ -3,8 +3,9 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
 
 ### Todo
 
-- [ ] Build/test gesamt
+- [x] Build gesamt
   - [x] Build librvapi
+- [ ] Test gesamt
 - [ ] Make a fancier (React/Bootstrap) superpose web page
 - [ ] Make a web page with graphics
 - [ ] Check that this successfully compiles on Linux
