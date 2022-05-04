@@ -74,6 +74,11 @@ echo
 curl -L https://unpkg.com/@rdkit/rdkit/Code/MinimalLib/dist/RDKit_minimal.wasm -o web_example/RDKit_minimal.wasm
 curl -L https://unpkg.com/@rdkit/rdkit/Code/MinimalLib/dist/RDKit_minimal.js -o web_example/RDKit_minimal.js
 
+#Get PapaParse
+echo "Downloading papaparse.min.js"
+echo
+curl -L https://unpkg.com/papaparse@latest/papaparse.min.js -o web_example/papaparse.min.js
+
 #Get example data
 echo "Downloading example data"
 echo
