@@ -18,6 +18,9 @@ echo
 echo "Checking out ccp4srs"
 bzr branch http://fg.oisin.rc-harwell.ac.uk/anonscm/bzr/ccp4srs/trunk/ ccp4srs
 echo
+echo "Checking out rvapi"
+bzr branch http://fg.oisin.rc-harwell.ac.uk/anonscm/bzr/rvapi/trunk/ rvapi
+echo
 echo "Checking out gemmi"
 git clone https://github.com/project-gemmi/gemmi.git gemmi
 echo

@@ -18,7 +18,6 @@ ExternalProject_Add(gsl-src
   BUILD_IN_SOURCE 1
 )
 
-
 add_subdirectory(ccp4)
 add_subdirectory(fftw)
 add_subdirectory(rfftw)
@@ -38,3 +37,4 @@ add_subdirectory(privateer)
 add_subdirectory(example)
 add_subdirectory(web_example)
 add_subdirectory(coot)
+add_subdirectory(rvapi)
