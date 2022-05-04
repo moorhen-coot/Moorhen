@@ -5,8 +5,6 @@ include(GNUInstallDirs)
 
 option(BUILD_SHARED_LIBS "build shared libs (true)" TRUE)
 
-find_package(zlib REQUIRED)
-
 include(CheckLibraryExists)
 
 CHECK_LIBRARY_EXISTS(m cos "" HAVE_LIB_M)                                                                                                
@@ -86,7 +84,7 @@ add_library(ccp4srs::ccp4srs ALIAS ccp4srs)
 
 target_link_directories(ccp4srs PUBLIC ../mmdb2 ../ccp4)
 target_link_libraries(ccp4srs PRIVATE 
-                             ZLIB::ZLIB
+                             z
                              mmdb2 ccp4
                              ${EXTRA_LIBS}
 )
