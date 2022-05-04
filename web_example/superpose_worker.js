@@ -35,7 +35,12 @@ onmessage = function(e) {
     sels.push_back("dummy");
     sels.push_back("dummy");
     //var result = CCP4Module.superpose(files,sels);
+    //Do not do this with superpose!
+    files.push_back("-csv");
+    files.push_back("out.csv");
     var result = CCP4Module.gesamt(files);
+    var csv_out = CCP4Module.FS.readFile("out.csv", { encoding: 'utf8' });
+    console.log(csv_out);
     
     /*
     //Testing, belongs elsewhere
