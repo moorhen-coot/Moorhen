@@ -74,7 +74,9 @@ set(GESAMT_SRC
 
 add_executable(gesamt ${GESAMT_SRC})
 
-target_link_libraries(gesamt gesamtlib rvapi ccp4 Threads::Threads mmdb2 z)
+target_link_libraries(gesamt gesamtlib rvapi ccp4 Threads::Threads mmdb2 z nodefs.js)
 target_link_directories(gesamt PUBLIC ../mmdb2 ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4 ../fftw ../rfftw ../ccp4 ../rvapi ../mmdb2)
 target_include_directories(gesamtlib PRIVATE ../checkout/gesamt/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2  ../checkout/libccp4/ccp4 ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(gesamt PRIVATE ../checkout/gesamt/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2  ../checkout/libccp4/ccp4 ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_options(gesamt PRIVATE -s ALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1)
+target_compile_options(gesamt PUBLIC -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)

@@ -1,7 +1,7 @@
 # CCP4/Coot/Privateer Web Assembly
 
 This project is a set of scripts, patches and CMakeLists.txt files
-which enable the compilation of  some of the [CCP4](https://www.ccp4.ac.uk/) libraries, some of [Coot](https://www2.mrc-lmb.cam.ac.uk/personal/pemsley/coot/), [FFTW2](https://www.fftw.org/), [Privateer](https://github.com/glycojones/privateer) and the [Gnu Scientific Library](https://www.gnu.org/software/gsl/) to Web Assembly. 
+which enable the compilation of  some of the [CCP4](https://www.ccp4.ac.uk/) libraries and programs, some of [Coot](https://www2.mrc-lmb.cam.ac.uk/personal/pemsley/coot/), [FFTW2](https://www.fftw.org/), [Privateer](https://github.com/glycojones/privateer) and the [Gnu Scientific Library](https://www.gnu.org/software/gsl/) to Web Assembly. 
 
 Contained are some examples of using the generated JS/Web 
 Assembly. There is a command line example which offers some of the functionality of the CCP4 program `superpose`, a command line example which does a structure factor calculation with clipper
@@ -15,13 +15,14 @@ compilation.
 The sources of CCP4, Coot, Privateer, FFTW, and GSL are not included. They are downloaded and (possibly) patched by the running
 the `get_sources` script, which is part of the build process of this project.
 
-The following libraries are compiled to Web Assembly:
+The following libraries/programs are compiled to Web Assembly:
 * libccp4 (bzr)
 * clipper (bzr)
 * ssm (bzr)
 * mmdb2 (bzr)
 * ccp4srs (bzr)
 * rvapi (bzr)
+* gesamt (bzr)
 * privateer MKIV
 * Coot 0.9.6
 * fftw 2.1.5
@@ -69,6 +70,8 @@ not itself compiled by this project.
 `node privateer.js -pdbin 5fjj.pdb -cores 1`  
 `cd ../coot`  
 `node fix-nomenclature.js ../example/4dfr.pdb out.pdb`
+`cd ../gesamt`  
+`node gesamt.js ../example/4dfr.pdb ../example/8dfr.pdb`  
 
 6. To run the web example, put the contents of the `web_example` directory on a web server.  
 This can be a full-scale web server, or a simple one, e.g:  
