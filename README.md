@@ -21,6 +21,7 @@ The following libraries are compiled to Web Assembly:
 * ssm (bzr)
 * mmdb2 (bzr)
 * ccp4srs (bzr)
+* rvapi (bzr)
 * privateer MKIV
 * Coot 0.9.6
 * fftw 2.1.5
