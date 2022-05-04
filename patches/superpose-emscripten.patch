@@ -1,6 +1,6 @@
-diff -ru ssm/superpose.cpp /Users/stuart/devtools-09032022/co/ssm/superpose.cpp
---- /Users/stuart/devtools-09032022/co/ssm/superpose_node.cpp	2022-03-17 16:09:31.000000000 +0000
-+++ ssm/superpose.cpp	2022-03-17 10:20:04.000000000 +0000
+=== modified file 'superpose.cpp'
+--- old/superpose.cpp	2017-05-26 23:01:01 +0000
++++ ssm/superpose.cpp	2022-05-04 14:29:58 +0000
 @@ -51,6 +51,10 @@
  // =================================================================
  //
@@ -30,6 +30,15 @@ diff -ru ssm/superpose.cpp /Users/stuart/devtools-09032022/co/ssm/superpose.cpp
  
  #ifdef _emulate_ccp4_
  
+@@ -105,7 +120,7 @@
+ #endif
+ 
+ 
+-void printInstructions ( char *argv0 )  {
++void printInstructionsSSM ( char *argv0 )  {
+ 
+   printf (
+     "\n"
 @@ -255,8 +270,23 @@
  }
  */
@@ -65,16 +74,17 @@ diff -ru ssm/superpose.cpp /Users/stuart/devtools-09032022/co/ssm/superpose.cpp
  #ifdef _ccp4_
      printf ( "<!--SUMMARY_BEGIN-->\n" );
  #endif
+-    printInstructions ( argv[0] );
 +#if defined(_CCP4_WEB_EXAMPLE_)
 +    const char *progName =  "web_superpose";
-+    printInstructions ( (char*)progName );
++    printInstructionsSSM ( (char*)progName );
 +#else
-     printInstructions ( argv[0] );
++    printInstructionsSSM ( argv[0] );
 +#endif
  #ifdef _ccp4_
      printf ( "<!--SUMMARY_END-->\n" );
      ccperror ( 1,"No input" );
-@@ -281,6 +319,7 @@
+@@ -281,18 +319,20 @@
      return 1;
    }
  
@@ -82,7 +92,13 @@ diff -ru ssm/superpose.cpp /Users/stuart/devtools-09032022/co/ssm/superpose.cpp
  #ifdef _ccp4_
    printf ( "<!--SUMMARY_BEGIN-->\n" );
  #endif
-@@ -293,6 +332,7 @@
+   if ((!strcmp(argv[1],"-?")) || (!strcasecmp(argv[1],"-help")) ||
+       (!strcasecmp(argv[1],"--help")))  {
+-    printInstructions ( argv[0] );
++    printInstructionsSSM ( argv[0] );
+ #ifdef _ccp4_
+     printf ( "<!--SUMMARY_END-->\n" );
+     ccperror ( 2,"Wrong input" );
  #endif
      return 2;
    }
@@ -131,3 +147,4 @@ diff -ru ssm/superpose.cpp /Users/stuart/devtools-09032022/co/ssm/superpose.cpp
    }
  
    if (!rc)  {
+
