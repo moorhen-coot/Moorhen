@@ -20,11 +20,6 @@ if(MSVC)
 	find_library(PTHREADS4W pthreadVCE3)
 endif()
 
-set(ZLIB_ROOT ${CMAKE_INSTALL_PREFIX}) # it's only a hint
-find_package(ZLIB REQUIRED)
-message(STATUS "zlib header found in: ${ZLIB_INCLUDE_DIR}")
-message(STATUS "zlib library: ${ZLIB_LIBRARIES}")
-
 set(GESAMTLIB_SRC
 ../checkout/gesamt/gesamtlib/gsmt_aligner.cpp		../checkout/gesamt/gesamtlib/gsmt_seqscanthread.cpp
 ../checkout/gesamt/gesamtlib/gsmt_aligner.h		../checkout/gesamt/gesamtlib/gsmt_seqscanthread.h
