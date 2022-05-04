@@ -9,7 +9,7 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
 - [x] gesamt in web page
 - [ ] Make a fancier (React/Bootstrap) superpose/gesamt web page
 - [ ] Make a web page with graphics
-- [ ] Check that this successfully compiles on Linux
+- [x] Check that this successfully compiles on Linux
 - [ ] Check that this successfully compiles on Windows (needs *get_sources.bat* or *MSYS*)
 - [ ] Split coot into library and executables. An almost accurate list can be got from  
     `find checkout/coot-0.9.6/ -name \*.cpp -o -name \*.cc | xargs grep -w main | grep -w int`
