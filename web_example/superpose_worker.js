@@ -1,6 +1,7 @@
 var CCP4Module;
 
 importScripts('web_example.js');
+importScripts('papaparse.min.js');
 
 createCCP4Module({print(t){postMessage(["output",t])},printErr(t){postMessage(["output",t]);}})
     .then(function(CCP4Mod) {
@@ -40,7 +41,9 @@ onmessage = function(e) {
     files.push_back("out.csv");
     var result = CCP4Module.gesamt(files);
     var csv_out = CCP4Module.FS.readFile("out.csv", { encoding: 'utf8' });
+    var json_out = Papa.parse(csv_out);
     console.log(csv_out);
+    console.log(json_out);
     
     /*
     //Testing, belongs elsewhere
