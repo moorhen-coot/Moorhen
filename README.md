@@ -118,6 +118,8 @@ different in the 2 cases. If you require more classes or methods from the librar
     * Winn MD, Ballard CC, Cowtan KD, Dodson EJ, Emsley P, Evans PR, Keegan RM, Krissinel EB, Leslie AGW, McCoy A, McNicholas SJ, Murshudov GN, Pannu NS, Potterton EA, Powell HR, Read RJ, Vagin A, Wilson KS (2011), *Overview of the CCP4 suite and current developments*, Acta Cryst **D67**, p235–242. 
 * Gemmi
     *   [https://github.com/project-gemmi/gemmi](https://github.com/project-gemmi/gemmi)
+* Gesamt
+    *   Krissinel E. (2012), *Enhanced fold recognition using efficient short fragment clustering*, Journal of molecular biochemistry, **1(2)**, p76–85.
 * GSL
     * M. Galassi et al, GNU Scientific Library Reference Manual (3rd Ed.), ISBN 0954612078
     * https://www.gnu.org/software/gsl/
