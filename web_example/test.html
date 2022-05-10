@@ -35,8 +35,11 @@
     </div>
     <div style="width:96%; left-margin:3%; top-margin:20px;">
     <pre id="output" style="border:1px solid green; height:200px;overflow-x:auto; overflow-y:scroll;"></pre>
-    <div id="myChartDiv"><canvas id="myChart" width="200" height="200"></canvas></div>
+    <div style="clear:both;"></div>
+    <div id="myChartDiv" style="height:400px; width:600px;"><canvas id="myChart"></canvas></div>
+    <div style="clear:both;"></div>
     <div id="example-1-output"></div>
+    <div style="clear:both;"></div>
     <div id="example-1-svgoutput"></div>
     </div>
   <script>
@@ -277,6 +280,8 @@
                                     backgroundColor: "rgb(75, 0, 192)",
                                     borderColor: 'rgb(75, 192, 192)',
                                     data: alignData,
+                                    lineTension: 0.1,
+                                    bezierCurve: true,
                                     fill:true
                                  }]
                              };
