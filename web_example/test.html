@@ -12,7 +12,8 @@
   </head>
   <body>
     <h2>Example of wrapping CCP4 libraries (and dependencies) to Web Assembly with emscripten</h2>
-    <script async type="text/javascript" src="web_example.js"></script>
+    <script type="text/javascript" src="web_example.js"></script>
+    <script async type="text/javascript" src="chart.js"></script>
     <h2>Input</h2>
     <p>All inputs are optional.
     <ul>
@@ -34,6 +35,7 @@
     </div>
     <div style="width:96%; left-margin:3%; top-margin:20px;">
     <pre id="output" style="border:1px solid green; height:200px;overflow-x:auto; overflow-y:scroll;"></pre>
+    <div id="myChartDiv"><canvas id="myChart" width="200" height="200"></canvas></div>
     <div id="example-1-output"></div>
     <div id="example-1-svgoutput"></div>
     </div>
@@ -45,6 +47,8 @@
          let myWorkerSF = new Worker('cif_pdb_worker.js');
          let myWorkerSSM = new Worker('superpose_worker.js');
          let loadButton = document.getElementById("load");
+         const ctx = document.getElementById('myChart').getContext('2d');
+         console.log(ctx);
          loadButton.onclick = function() {
              const selectedFile = document.getElementById('pdb_input').files[0];
              const selectedFile2 = document.getElementById('pdb_input2').files[0];
@@ -245,6 +249,42 @@
                          if(e.data[0]==="result"){
                              result.innerHTML += "<b>Result: " + e.data[1] + "</b><br />";
                              //This is then where we decide upon the action
+                         }
+                         if(e.data[0]==="csvResult"){
+                             let inAlign = false;
+                             let csv_data = e.data[1];
+                             let alignData = [];
+                             for(let ij=0;ij<csv_data.length;ij++){
+                                 if(inAlign){
+                                     console.log(csv_data[ij]);
+                                     if(csv_data[ij][0].length>0){
+                                         let y = parseFloat(csv_data[ij][0]);
+                                         let x = parseFloat(csv_data[ij][4].trim().split(" ")[csv_data[ij][4].trim().split(" ").length-1]);
+                                         alignData.push({x:x,y:y});
+                                     }
+                                     if(csv_data[ij].length<5){
+                                         break;
+                                     }
+                                 }
+                                 if(csv_data[ij].length>4 && csv_data[ij][0].trim()==="Dist [A]" && csv_data[ij][3].trim()==="Query" && csv_data[ij][4].trim()==="Target"){
+                                     inAlign = true;
+                                 }
+                             }
+                             const data = {
+                                 datasets: [{
+                                    label: "Gesamt results",
+                                    showLine: true,
+                                    backgroundColor: "rgb(75, 0, 192)",
+                                    borderColor: 'rgb(75, 192, 192)',
+                                    data: alignData,
+                                    fill:true
+                                 }]
+                             };
+                             const config = {
+                                 type: 'scatter',
+                                   data: data,
+                                 };
+                             const myChart = new Chart(ctx, config);
                          }
                          result.scrollTop = result.scrollHeight;
                      }

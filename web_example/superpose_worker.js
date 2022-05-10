@@ -42,8 +42,6 @@ onmessage = function(e) {
     var result = CCP4Module.gesamt(files);
     var csv_out = CCP4Module.FS.readFile("out.csv", { encoding: 'utf8' });
     var json_out = Papa.parse(csv_out);
-    console.log(csv_out);
-    console.log(json_out);
     
     /*
     //Testing, belongs elsewhere
@@ -54,4 +52,5 @@ onmessage = function(e) {
     */
 
     postMessage(["result",result]);
+    postMessage(["csvResult",json_out["data"]]);
 }
