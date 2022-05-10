@@ -85,6 +85,8 @@ In either case you will have to set `ligandServer` in `pdb_worker.js` to point t
 *Ligands pictures produced by interrogating file with MMDB2 and rendering with RDKit. Glycosylation trees produced by privateer.*
 ![Web example text output](web_example/screenshot_text.png)
 *Text output trapped from printf/cout and displayed asynchronously in browser div element.*
+![Web example gesamt output](web_example/screenshot_graph.png)
+*Chart.js plot of gesamt alignment distances.*
 
 ## **What else can do with the compiled libraries?**
 
