@@ -95,3 +95,8 @@ curl -L https://www.ebi.ac.uk/pdbe/entry-files/download/pdb5fjj.ent -o privateer
 curl -L https://www.ebi.ac.uk/pdbe/entry-files/download/r5a3hsf.ent -o example/r5a3hsf.ent
 curl -L https://www.ebi.ac.uk/pdbe/entry-files/download/5a3h_map.mtz -o example/5a3h_sigmaa.mtz
 
+#Get example data
+echo "Getting react app dependencies"
+echo
+cd react-app
+npm install
