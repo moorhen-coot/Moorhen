@@ -178,7 +178,7 @@ function dictToMolBlock(name,dictLines){
         let xString = ("          "+x.toFixed(4)).slice(-10)
         let yString = ("          "+y.toFixed(4)).slice(-10)
         let zString = ("          "+z.toFixed(4)).slice(-10)
-        let symbolString = ("  "+symbol).slice(-2);
+        let symbolString = ("   "+symbol).slice(-3);
         molblock += xString+yString+zString+symbolString+"   0  0  0  0  0  0  0  0  0  0  0  0\n";
     }
 
