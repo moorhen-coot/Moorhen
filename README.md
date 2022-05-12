@@ -118,6 +118,9 @@ different in the 2 cases. If you require more classes or methods from the librar
 
 ## **References**
 
+* Emscripten
+    *   [https://emscripten.org/](https://emscripten.org/)
+    *   [https://github.com/emscripten-core/emscripten/blob/main/docs/paper.pdf](Emscripten: An LLVM-to-JavaScript Compiler)
 * Coot
     * P. Emsley; B. Lohkamp; W.G. Scott; Cowtan (2010). *Features and Development of Coot*, Acta Crystallographica. **D66 (4)** p486–501.
 * Privateer
