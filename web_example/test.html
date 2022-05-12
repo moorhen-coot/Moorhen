@@ -253,12 +253,10 @@
                              result.innerHTML += "<b>Result: " + e.data[1] + "</b><br />";
                              //This is then where we decide upon the action
                          }
-                         //TODO - This is possibly a bit too much computation for main thread - maybe do all this is superpose worker
                          if(e.data[0]==="csvResult"){
                              const cvsResult = e.data[1];
                              const alignData = cvsResult["alignData"];
                              const transformMatrix = cvsResult["transformMatrix"];
-                             console.log(transformMatrix);
                              const data = {
                                  datasets: [{
                                     label: "Gesamt results",
