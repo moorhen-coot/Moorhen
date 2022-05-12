@@ -86,7 +86,7 @@ In either case you will have to set `ligandServer` in `pdb_worker.js` to point t
 `cd react-app`  
 `npm start`  
 And then point a web browser at `http://localhost:3000/` .  
-Again you will need to set up `ligandServer` as in the non-react example (in `react-app/public`:  
+Again you will need to set up `ligandServer` as in the non-react example (in `react-app/public`):  
 `ln -s /Applications/ccp4-8.0/lib/data/monomers`  
 This example demonstrates CCP4 web assembly only by the use of `RDKit` to make ligand pictures; it further demonstrates React-Bootstrap and WebGL.
 
