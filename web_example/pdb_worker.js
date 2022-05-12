@@ -164,10 +164,16 @@ function dictToMolBlock(name,dictLines){
 `
 
     molblock += nAtomsString+nBondsString+"  0  0  0  0  0  0  0  0999 V2000\n"
+    let ncharged = 0;
+    let chargeStr = "";
     for(let iat=0;iat<nAtoms;iat++){
         let x = parseFloat(atoms[iat]["_chem_comp_atom.x"]);
         let y = parseFloat(atoms[iat]["_chem_comp_atom.y"]);
         let z = parseFloat(atoms[iat]["_chem_comp_atom.z"]);
+        if(atoms[iat]["_chem_comp_atom.charge"]!="."&&atoms[iat]["_chem_comp_atom.charge"]!="0"){
+            ncharged++;
+            chargeStr += ("   "+(iat+1)).slice(-4)+("   "+atoms[iat]["_chem_comp_atom.charge"]).slice(-4);
+        }
         let symbol =  atoms[iat]["_chem_comp_atom.type_symbol"];
         let xString = ("          "+x.toFixed(4)).slice(-10)
         let yString = ("          "+y.toFixed(4)).slice(-10)
@@ -206,6 +212,9 @@ function dictToMolBlock(name,dictLines){
         molblock += atom1String+atom2String+bondTypeString+" 0  0  0  0\n";
     }
 
+    if(ncharged>0){
+        molblock += "M  CHG"+(("   "+ncharged).slice(-3))+chargeStr+"\n";
+    }
     molblock += "M  END";
 
     return molblock;

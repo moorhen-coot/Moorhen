@@ -9,7 +9,7 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
 - [x] gesamt in web page
 - [ ] Make a fancier (React/Bootstrap) superpose/gesamt web page
 - [ ] Make a web page with graphics
-- [ ] DCB (in e.g. 4a3h) does not produce an SVG.
+- [x] Charged ligands produce SVG (e.g DCB 4a3h)
 - [x] Check that this successfully compiles on Linux
 - [ ] Check that this successfully compiles on Windows (needs *get_sources.bat* or *MSYS*)
 - [ ] Split coot into library and executables. An almost accurate list can be got from  
