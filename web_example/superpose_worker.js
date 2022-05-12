@@ -51,6 +51,46 @@ onmessage = function(e) {
     console.log(hg);
     */
 
+    let inTransformation = false;
+    let inAlign = false;
+    let csv_data = json_out["data"];
+    let alignData = [];
+    let transformMatrix = [];
+    for(let ij=0;ij<csv_data.length;ij++){
+        if(inTransformation&&ij<iTransform+4){
+            transformMatrix.push(parseFloat(csv_data[ij][0]));
+            transformMatrix.push(parseFloat(csv_data[ij][1]));
+            transformMatrix.push(parseFloat(csv_data[ij][2]));
+            transformMatrix.push(parseFloat(csv_data[ij][3]));
+        }
+        if(inAlign){
+            if(csv_data[ij][0].length>0){
+                let y = parseFloat(csv_data[ij][0]);
+                let x = parseFloat(csv_data[ij][4].trim().split(" ")[csv_data[ij][4].trim().split(" ").length-1]);
+                alignData.push({x:x,y:y});
+            }
+            if(csv_data[ij].length<5){
+                break;
+            }
+        }
+        if(csv_data[ij].length==4 && csv_data[ij][0].trim()==="Rx" && csv_data[ij][1].trim()==="Ry" && csv_data[ij][2].trim()==="Rz"&& csv_data[ij][3].trim()==="T"){
+            inTransformation = true;
+            iTransform = ij;
+        }
+        if(csv_data[ij].length>4 && csv_data[ij][0].trim()==="Dist [A]" && csv_data[ij][3].trim()==="Query" && csv_data[ij][4].trim()==="Target"){
+            inAlign = true;
+        }
+    }
+    if(transformMatrix.length==12){
+        transformMatrix.push(0.0);
+        transformMatrix.push(0.0);
+        transformMatrix.push(0.0);
+        transformMatrix.push(1.0);
+    }
+
+    let cvsResult = {};
+    cvsResult["alignData"] = alignData;
+    cvsResult["transformMatrix"] = transformMatrix;
     postMessage(["result",result]);
-    postMessage(["csvResult",json_out["data"]]);
+    postMessage(["csvResult",cvsResult]);
 }

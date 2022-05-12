@@ -253,26 +253,12 @@
                              result.innerHTML += "<b>Result: " + e.data[1] + "</b><br />";
                              //This is then where we decide upon the action
                          }
+                         //TODO - This is possibly a bit too much computation for main thread - maybe do all this is superpose worker
                          if(e.data[0]==="csvResult"){
-                             let inAlign = false;
-                             let csv_data = e.data[1];
-                             let alignData = [];
-                             for(let ij=0;ij<csv_data.length;ij++){
-                                 if(inAlign){
-                                     console.log(csv_data[ij]);
-                                     if(csv_data[ij][0].length>0){
-                                         let y = parseFloat(csv_data[ij][0]);
-                                         let x = parseFloat(csv_data[ij][4].trim().split(" ")[csv_data[ij][4].trim().split(" ").length-1]);
-                                         alignData.push({x:x,y:y});
-                                     }
-                                     if(csv_data[ij].length<5){
-                                         break;
-                                     }
-                                 }
-                                 if(csv_data[ij].length>4 && csv_data[ij][0].trim()==="Dist [A]" && csv_data[ij][3].trim()==="Query" && csv_data[ij][4].trim()==="Target"){
-                                     inAlign = true;
-                                 }
-                             }
+                             const cvsResult = e.data[1];
+                             const alignData = cvsResult["alignData"];
+                             const transformMatrix = cvsResult["transformMatrix"];
+                             console.log(transformMatrix);
                              const data = {
                                  datasets: [{
                                     label: "Gesamt results",
