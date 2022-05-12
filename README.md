@@ -81,7 +81,7 @@ And then point a web browser at `http://localhost:7800/test.html` .
 In either case you will have to set `ligandServer` in `pdb_worker.js` to point to the CCP4 monomer library. One way to do this is to leave it as `"/monomers/"` and create a symbolic link to a local CCP4 monomer library, e.g. (in `web_example`):  
 `ln -s /Applications/ccp4-8.0/lib/data/monomers`
 
-7. To run an example using React-Bootstrap:
+7. To run an example using React-Bootstrap:  
 `make install` (This copies some files from `web_example` to `react-app/public/wasm`  
 `cd react-app`  
 `npm start`  
