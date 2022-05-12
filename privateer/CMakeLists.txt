@@ -56,19 +56,3 @@ set_target_properties(privateer-validate PROPERTIES OUTPUT_NAME privateer)
 target_link_options(privateer-validate PRIVATE -s ALLOW_MEMORY_GROWTH=1)
 
 SET_SOURCE_FILES_PROPERTIES(privateer-frontend_scripting.i PROPERTIES CPLUSPLUS ON)
-
-
-install(FILES ../checkout/privateer-MKIV/src/clipper-glyco.h ../checkout/privateer-MKIV/src/clipper-glyco_data.h ../checkout/privateer-MKIV/src/privateer-lib.h
-        DESTINATION include/privateer)
-install(TARGETS privateer
-        RUNTIME DESTINATION bin
-        ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
-        LIBRARY DESTINATION "${LIB_INSTALL_DIR}")
-install(TARGETS privateer-validate DESTINATION bin)
-
-if (UNIX)
-  install(CODE "
-    execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink privateer
-            \"\$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/bin/privateer-validate\")
-        ")
-endif()

@@ -102,13 +102,6 @@ if(MSVC)
     set_target_properties(ccp4srs PROPERTIES DEFINE_SYMBOL "CCP4SRS_DLL_EXPORT")
 endif()
 
-install(TARGETS ccp4srs
-      ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-      LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-      RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-      PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ccp4srs/
-)
-
 set(srsgen_sources
     ${ssm_src}/srsgen.cpp
 )
@@ -165,8 +158,3 @@ target_include_directories(srsgen PRIVATE .
     .. ../checkout/mmdb2 ../checkout/libccp4/ccp4
     ${CMAKE_BINARY_DIR}
 )
-                                 
-install(TARGETS pdb2to3
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
-

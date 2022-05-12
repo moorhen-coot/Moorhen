@@ -81,6 +81,15 @@ And then point a web browser at `http://localhost:7800/test.html` .
 In either case you will have to set `ligandServer` in `pdb_worker.js` to point to the CCP4 monomer library. One way to do this is to leave it as `"/monomers/"` and create a symbolic link to a local CCP4 monomer library, e.g. (in `web_example`):  
 `ln -s /Applications/ccp4-8.0/lib/data/monomers`
 
+7. To run an example using React-Bootstrap:
+`make install` (This copies some files from `web_example` to `react-app/public/wasm`  
+`cd react-app`  
+`npm start`  
+And then point a web browser at `http://localhost:3000/` .  
+Again you will need to set up `ligandServer` as in the non-react example (in `react-app/public`:  
+`ln -s /Applications/ccp4-8.0/lib/data/monomers`  
+This example demonstrates CCP4 web assembly only by the use of `RDKit` to make ligand pictures; it further demonstrates React-Bootstrap and WebGL.
+
 ![Web example ligands and glycotrees](web_example/screenshot.png)
 *Ligands pictures produced by interrogating file with MMDB2 and rendering with RDKit. Glycosylation trees produced by privateer.*
 ![Web example text output](web_example/screenshot_text.png)
