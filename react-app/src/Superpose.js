@@ -1,4 +1,5 @@
 import React, { Component, createRef } from 'react';
+import reactCSS from 'reactcss'
 
 import Table from 'react-bootstrap/Table';
 import Col from 'react-bootstrap/Col';
@@ -12,19 +13,22 @@ import Modal from 'react-bootstrap/Modal';
 class DisplayTable extends Component {
     constructor(props) {
         super(props);
-        this.state = {selected:{ids:{}}};
+        this.state = {selected:{ids:{}},log:""};
+        this.message = "";
+        const self = this;
         this.myWorkerSSM = new window.Worker('wasm/superpose_worker.js');
 
         this.myWorkerSSM.onmessage = function(e) {
                          let result = document.getElementById("output");
                          if(e.data[0]==="output"){
-                             console.log(e.data[1]);
+                             self.message += e.data[1] + "\n";
+                             self.setState({log:self.message});
                          //result.innerHTML += e.data[1] + "<br />";
                          }
                          if(e.data[0]==="result"){
-                             console.log(e.data[1]);
-                         //result.innerHTML += "<b>Result: " + e.data[1] + "</b><br />";
                          //This is then where we decide upon the action
+                             self.message += e.data[1] + "\n";
+                             self.setState({log:self.message});
                          }
                          /*
                          if(e.data[0]==="csvResult"){
@@ -81,10 +85,9 @@ class DisplayTable extends Component {
                 }
             }
         }
-        //TODO - Get the actual file data and then superpose.
-        console.log(superposeInputFileNames);
-        console.log(superposeInputFileData);
-        self.myWorkerSSM.postMessage([superposeInputFileData, superposeInputFileNames]);
+        if(superposeInputFileData.length>1){
+            self.myWorkerSSM.postMessage([superposeInputFileData, superposeInputFileNames]);
+        }
     }
 
     handleCheckChange(data_id, evt){
@@ -105,6 +108,18 @@ class DisplayTable extends Component {
     }
 
     render () {
+        const styles = reactCSS({
+            'default': {
+                'logpre': {
+                     'margin': '10px',
+                     'border': '1px solid green',
+                     'height': '200px',
+                     'overflowX': 'auto',
+                     'overflowY': 'scroll',
+                },
+            },
+        });
+
         const self = this;
         const displayData = this.props.displayData;
         let rows = [];
@@ -126,6 +141,9 @@ class DisplayTable extends Component {
                 </tbody>
                 </Table>
                 <Button size="sm" onClick={handleSuperpose}>Superpose</Button>
+                <pre style={styles.logpre}>
+                {this.state.log}
+                </pre>
             </>
         );
     }
