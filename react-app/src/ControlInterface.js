@@ -6,6 +6,7 @@ import Tab from 'react-bootstrap/Tab';
 import LightingUI from './LightingUI';
 import MGWebWizardUI from './MGWebWizardUI';
 import DisplayTable from './DisplayTable';
+import Superpose from './Superpose';
 
 class ControlInterface extends Component {
 
@@ -42,6 +43,7 @@ class ControlInterface extends Component {
     render () {
         const enerLib = this.state.enerLib;
         const displayData = this.props.displayData;
+        const dataFiles = this.props.dataFiles;
         return (
                 <Tabs
                 defaultActiveKey="home"
@@ -57,6 +59,9 @@ class ControlInterface extends Component {
                 </Tab>
                 <Tab eventKey="displayTable" title="Display Table">
                 <DisplayTable visibilityChanged={this.visibilityChanged.bind(this)} addRequest={this.addRequested.bind(this)} deleteRequest={this.deleteRequested.bind(this)} displayData={displayData} />
+                </Tab>
+                <Tab eventKey="superpose" title="Superposition">
+                <Superpose displayData={displayData} dataFiles={dataFiles}/>
                 </Tab>
                 </Tabs>
                );

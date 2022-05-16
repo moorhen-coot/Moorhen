@@ -2182,8 +2182,15 @@ class MGWebGL extends Component {
         }
     }
 
-    loadDataWithWizard(pdbatoms,enerLib,bruteForceHB,wizard,name) {
-        let thisData = {name:name,id:guid(),buffers:[],atoms:pdbatoms};
+    loadDataWithWizard(pdbatoms,enerLib,bruteForceHB,wizard,name,id) {
+
+        let fileDataId;
+        if(typeof(id)==="undefined"){
+            fileDataId = guid();
+        } else {
+            fileDataId = id;
+        }
+        let thisData = {name:name,id:fileDataId,buffers:[],atoms:pdbatoms};
         
         var self = this;
         var ribbons = [];

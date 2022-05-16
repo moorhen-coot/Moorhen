@@ -50,9 +50,9 @@ class MGWebWizardUI extends Component {
         var pending;
         if(!this.state.pending) return;
         if(this.state.pending.big){
-            pending = {atoms:this.state.pending.atoms,wizard:"Bonds",name:this.state.pending.name};
+            pending = {fileData:this.state.pending.fileData,atoms:this.state.pending.atoms,wizard:"Bonds",name:this.state.pending.name};
         } else {
-            pending = {atoms:this.state.pending.atoms,wizard:this.state.wizard,name:this.state.pending.name};
+            pending = {fileData:this.state.pending.fileData,atoms:this.state.pending.atoms,wizard:this.state.wizard,name:this.state.pending.name};
         }
         try {
             this.props.onChange(pending);
@@ -107,8 +107,10 @@ class MGWebWizardUI extends Component {
             r.onload = function(e) { 
                 var contents = e.target.result;
                 var pdbatoms;
+                let isPDB = false;
                 if(f.name.endsWith(".pdb")||f.name.endsWith(".ent")){
                     pdbatoms = parsePDB(contents.split("\n"),f.name.replace(/\.[^/.]+$/, ""));
+                    isPDB = true;
                 } else {
                     pdbatoms = parseMMCIF(contents.split("\n"),f.name.replace(/\.[^/.]+$/, ""));
                 }
@@ -133,7 +135,7 @@ class MGWebWizardUI extends Component {
                     }
 
                 }
-                self.setState({pending:{atoms:pdbatoms,big:false,name:f.name.substring(0, f.name.lastIndexOf('.'))}},()=> {self.parametersChanged(); });
+                self.setState({pending:{fileData:{contents:contents,isPDB:isPDB},atoms:pdbatoms,big:false,name:f.name.substring(0, f.name.lastIndexOf('.'))}},()=> {self.parametersChanged(); });
                 self.setState({theAtoms: pdbatoms});
             }
             r.readAsText(f);
@@ -205,11 +207,10 @@ class MGWebWizardUI extends Component {
                     console.log("Time to parse data: "+(new Date().getTime()-start));
                     console.log(cifatoms);
                     console.log(self.enerLib);
-                    //TODO - and now we set a property to trigger loading the file elsewhere...
                     if(dataSplit.length>100000){
-                        self.setState({pending:{atoms:cifatoms,big:true,name:self.state.pdbcode}},()=> {self.parametersChanged(); });
+                        self.setState({pending:{fileData:{contents:strData,isPDB:false},atoms:cifatoms,big:true,name:self.state.pdbcode}},()=> {self.parametersChanged(); });
                     } else {
-                        self.setState({pending:{atoms:cifatoms,big:false,name:self.state.pdbcode}},()=> {self.parametersChanged(); });
+                        self.setState({pending:{fileData:{contents:strData,isPDB:false},atoms:cifatoms,big:false,name:self.state.pdbcode}},()=> {self.parametersChanged(); });
                     }
                     self.setState({theAtoms: cifatoms});
                 }
