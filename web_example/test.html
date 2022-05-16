@@ -22,11 +22,21 @@
     <li>If 2 coordinate files are provided then gesamt is run using them (and the CA count is done as well).
     <li>If an MTZ file is provided then a map is calculated.
     </ul>
+    <script>
+    updateList = function() {
+    const input = document.getElementById('pdb_input');
+    const output = document.getElementById('fileList');
+    let fileNames = "";
+    for (let i = 0; i < input.files.length; ++i) {
+        fileNames += input.files.item(i).name + ' ';
+    }
+    output.innerHTML = "("+fileNames+")";
+    }
+    </script>
     <div>
-    <span>Coordinate file</span>
-    <input type="file" id="pdb_input" class="btn"><br />
-    <span>Second coordinate file (will be superposed with first)</span>
-    <input type="file" id="pdb_input2" class="btn"><br />
+    <span>Coordinate files</span>
+    <input type="file" id="pdb_input" class="btn" multiple onchange="javascript:updateList()">
+    <span id="fileList">(No files currently selected)</span><br/>
     <span>Structure factor file</span>
     <input type="file" id="cif_input" class="btn"><br />
     <span>MTZ file</span>
@@ -50,15 +60,14 @@
          let myWorkerSF = new Worker('cif_pdb_worker.js');
          let myWorkerSSM = new Worker('superpose_worker.js');
          let loadButton = document.getElementById("load");
+         let gesamtChart = null;
          const ctx = document.getElementById('myChart').getContext('2d');
          console.log(ctx);
          loadButton.onclick = function() {
              const selectedFile = document.getElementById('pdb_input').files[0];
-             const selectedFile2 = document.getElementById('pdb_input2').files[0];
              const cifSelectedFile = document.getElementById('cif_input').files[0];
              const mtzSelectedFile = document.getElementById('mtz_input').files[0];
              var r = new FileReader();
-             var r2 = new FileReader();
              var r_cif = new FileReader();
              var r_mtz = new FileReader();
              r_mtz.onload = function(e) {
@@ -241,25 +250,42 @@
                      }
                      myWorkerSF.postMessage([contents, selectedFile.name, contents2, cifSelectedFile.name]);
                  }
-                 r2.onload = function(e3) {
-                     let contents2 = e3.target.result;
 
-                     myWorkerSSM.onmessage = function(e) {
+                 if(cifSelectedFile) r_cif.readAsText(cifSelectedFile);
+
+             }
+             if(selectedFile) r.readAsText(selectedFile);
+             console.log("There are this many file:"+document.getElementById('pdb_input').files.length);
+             function superposeMultipleFiles(file_list){
+                 let promises = [];
+                 for (let file of file_list) {
+                     let filePromise = new Promise(resolve => {
+                             let reader = new FileReader();
+                             reader.readAsText(file);
+                             reader.onload = () => resolve(reader.result);
+                             });
+                     promises.push(filePromise);
+                 }
+                 Promise.all(promises).then(fileContents => {
+                         // fileContents will be an array containing the contents of the files
+                         console.log("Here are all the files");
+                         console.log(fileContents);
+                         myWorkerSSM.onmessage = function(e) {
                          let result = document.getElementById("output");
                          if(e.data[0]==="output"){
-                             result.innerHTML += e.data[1] + "<br />";
+                         result.innerHTML += e.data[1] + "<br />";
                          }
                          if(e.data[0]==="result"){
-                             result.innerHTML += "<b>Result: " + e.data[1] + "</b><br />";
-                             //This is then where we decide upon the action
+                         result.innerHTML += "<b>Result: " + e.data[1] + "</b><br />";
+                         //This is then where we decide upon the action
                          }
                          if(e.data[0]==="csvResult"){
-                             const cvsResult = e.data[1];
-                             const alignData = cvsResult["alignData"];
-                             const transformMatrix = cvsResult["transformMatrix"];
-                             const data = {
-                                 datasets: [{
-                                    label: "Gesamt results",
+                         const cvsResult = e.data[1];
+                         const alignData = cvsResult["alignData"];
+                         const transformMatrix = cvsResult["transformMatrix"];
+                         const data = {
+                             datasets: [{
+                             label: "Gesamt results",
                                     showLine: true,
                                     backgroundColor: "rgb(75, 0, 192)",
                                     borderColor: 'rgb(75, 192, 192)',
@@ -267,24 +293,30 @@
                                     lineTension: 0.1,
                                     bezierCurve: true,
                                     fill:true
-                                 }]
-                             };
-                             const config = {
-                                 type: 'scatter',
+                                       }]
+                                                      };
+                                                      const config = {
+                             type: 'scatter',
                                    data: data,
-                                 };
-                             const myChart = new Chart(ctx, config);
+                         };
+                         if(gesamtChart!=null){
+                             gesamtChart.destroy();
+                         }
+                         gesamtChart = new Chart(ctx, config);
                          }
                          result.scrollTop = result.scrollHeight;
-                     }
-                     myWorkerSSM.postMessage([contents, selectedFile.name, contents2, selectedFile2.name]);
-                 }
-                 
-                 if(cifSelectedFile) r_cif.readAsText(cifSelectedFile);
-                 if(selectedFile2) r2.readAsText(selectedFile2);
+                         }
+                         let fileNames = [];
+                         for(let ifile=0;ifile<document.getElementById('pdb_input').files.length;ifile++){
+                             fileNames.push(document.getElementById('pdb_input').files[ifile].name);
+                         }
+                         myWorkerSSM.postMessage([fileContents, fileNames]);
 
+                 });
              }
-             if(selectedFile) r.readAsText(selectedFile);
+             if(document.getElementById('pdb_input').files.length>1){
+                 superposeMultipleFiles(document.getElementById('pdb_input').files);
+             }
          }
      }
 

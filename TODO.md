@@ -7,6 +7,7 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
   - [x] Build librvapi
 - [x] Test gesamt
 - [x] gesamt in web page
+- [ ] multiple gesamt in web page
 - [ ] Make a fancier (React/Bootstrap) superpose/gesamt web page
 - [ ] Make a web page with graphics
 - [x] Charged ligands produce SVG (e.g DCB 4a3h)

@@ -13,33 +13,27 @@ createCCP4Module({print(t){postMessage(["output",t])},printErr(t){postMessage(["
         });
 
 onmessage = function(e) {
-    var contents = e.data[0];
-    var selectedFileName = e.data[1];
-    var contents2 = e.data[2];
-    var selectedFile2Name = e.data[3];
 
-    try {
-        CCP4Module.FS_createDataFile(".", selectedFileName, contents, true, true);
-    } catch(e) {
-    }
-    try {
-        CCP4Module.FS_createDataFile(".", selectedFile2Name, contents2, true, true);
-    } catch(e) {
-    }
-
-    var files = new CCP4Module.VectorString();
+    var args = new CCP4Module.VectorString();
     //Do not add program name for superpose, only gesamt. I probably should have had the programs behave the same.
-    files.push_back("gesamt");
+    args.push_back("gesamt");
     var sels = new CCP4Module.VectorString();
-    files.push_back(selectedFileName);
-    files.push_back(selectedFile2Name);
-    sels.push_back("dummy");
-    sels.push_back("dummy");
-    //var result = CCP4Module.superpose(files,sels);
+
+    for(let ifile=0;ifile<e.data[0].length;ifile++){
+        try {
+            CCP4Module.FS_createDataFile(".", e.data[1][ifile], e.data[0][ifile], true, true);
+        } catch(e) {
+            //This happens when we supply sme file name on subsequent calls to this function?:w
+        }
+        args.push_back(e.data[1][ifile]);
+        sels.push_back("dummy"); // TODO: Selections are not dealt with yet
+    }
+
+    //var result = CCP4Module.superpose(args,sels);
     //Do not do this with superpose!
-    files.push_back("-csv");
-    files.push_back("out.csv");
-    var result = CCP4Module.gesamt(files);
+    args.push_back("-csv");
+    args.push_back("out.csv");
+    var result = CCP4Module.gesamt(args);
     var csv_out = CCP4Module.FS.readFile("out.csv", { encoding: 'utf8' });
     var json_out = Papa.parse(csv_out);
     
@@ -51,46 +45,51 @@ onmessage = function(e) {
     console.log(hg);
     */
 
-    let inTransformation = false;
-    let inAlign = false;
     let csv_data = json_out["data"];
-    let alignData = [];
-    let transformMatrix = [];
-    for(let ij=0;ij<csv_data.length;ij++){
-        if(inTransformation&&ij<iTransform+4){
-            transformMatrix.push(parseFloat(csv_data[ij][0]));
-            transformMatrix.push(parseFloat(csv_data[ij][1]));
-            transformMatrix.push(parseFloat(csv_data[ij][2]));
-            transformMatrix.push(parseFloat(csv_data[ij][3]));
-        }
-        if(inAlign){
-            if(csv_data[ij][0].length>0){
-                let y = parseFloat(csv_data[ij][0]);
-                let x = parseFloat(csv_data[ij][4].trim().split(" ")[csv_data[ij][4].trim().split(" ").length-1]);
-                alignData.push({x:x,y:y});
+    if(e.data[0].length==2){ // TODO: I haven't thought about parsing multi-align csv yet.
+        let inTransformation = false;
+        let inAlign = false;
+        let alignData = [];
+        let transformMatrix = [];
+        for(let ij=0;ij<csv_data.length;ij++){
+            if(inTransformation&&ij<iTransform+4){
+                transformMatrix.push(parseFloat(csv_data[ij][0]));
+                transformMatrix.push(parseFloat(csv_data[ij][1]));
+                transformMatrix.push(parseFloat(csv_data[ij][2]));
+                transformMatrix.push(parseFloat(csv_data[ij][3]));
             }
-            if(csv_data[ij].length<5){
-                break;
+            if(inAlign){
+                if(csv_data[ij][0].length>0){
+                    let y = parseFloat(csv_data[ij][0]);
+                    let x = parseFloat(csv_data[ij][4].trim().split(" ")[csv_data[ij][4].trim().split(" ").length-1]);
+                    alignData.push({x:x,y:y});
+                }
+                if(csv_data[ij].length<5){
+                    break;
+                }
+            }
+            if(csv_data[ij].length==4 && csv_data[ij][0].trim()==="Rx" && csv_data[ij][1].trim()==="Ry" && csv_data[ij][2].trim()==="Rz"&& csv_data[ij][3].trim()==="T"){
+                inTransformation = true;
+                iTransform = ij;
+            }
+            if(csv_data[ij].length>4 && csv_data[ij][0].trim()==="Dist [A]" && csv_data[ij][3].trim()==="Query" && csv_data[ij][4].trim()==="Target"){
+                inAlign = true;
             }
         }
-        if(csv_data[ij].length==4 && csv_data[ij][0].trim()==="Rx" && csv_data[ij][1].trim()==="Ry" && csv_data[ij][2].trim()==="Rz"&& csv_data[ij][3].trim()==="T"){
-            inTransformation = true;
-            iTransform = ij;
+        if(transformMatrix.length==12){
+            transformMatrix.push(0.0);
+            transformMatrix.push(0.0);
+            transformMatrix.push(0.0);
+            transformMatrix.push(1.0);
         }
-        if(csv_data[ij].length>4 && csv_data[ij][0].trim()==="Dist [A]" && csv_data[ij][3].trim()==="Query" && csv_data[ij][4].trim()==="Target"){
-            inAlign = true;
-        }
-    }
-    if(transformMatrix.length==12){
-        transformMatrix.push(0.0);
-        transformMatrix.push(0.0);
-        transformMatrix.push(0.0);
-        transformMatrix.push(1.0);
+        let cvsResult = {};
+        cvsResult["alignData"] = alignData;
+        cvsResult["transformMatrix"] = transformMatrix;
+        postMessage(["csvResult",cvsResult]);
+    } else {
+        console.log("Multi-align results");
+        console.log(csv_data);
     }
 
-    let cvsResult = {};
-    cvsResult["alignData"] = alignData;
-    cvsResult["transformMatrix"] = transformMatrix;
     postMessage(["result",result]);
-    postMessage(["csvResult",cvsResult]);
 }
