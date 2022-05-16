@@ -255,7 +255,7 @@
 
              }
              if(selectedFile) r.readAsText(selectedFile);
-             console.log("There are this many file:"+document.getElementById('pdb_input').files.length);
+             //console.log("There are this many file:"+document.getElementById('pdb_input').files.length);
              function superposeMultipleFiles(file_list){
                  let promises = [];
                  for (let file of file_list) {
@@ -268,8 +268,8 @@
                  }
                  Promise.all(promises).then(fileContents => {
                          // fileContents will be an array containing the contents of the files
-                         console.log("Here are all the files");
-                         console.log(fileContents);
+                         //console.log("Here are all the files");
+                         //console.log(fileContents);
                          myWorkerSSM.onmessage = function(e) {
                          let result = document.getElementById("output");
                          if(e.data[0]==="output"){
@@ -282,7 +282,7 @@
                          if(e.data[0]==="csvResult"){
                          const cvsResult = e.data[1];
                          const alignData = cvsResult["alignData"];
-                         const transformMatrix = cvsResult["transformMatrix"];
+                         const transformMatrices = cvsResult["transformMatrices"];
                          const data = {
                              datasets: [{
                              label: "Gesamt results",

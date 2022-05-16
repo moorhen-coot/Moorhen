@@ -51,6 +51,7 @@ onmessage = function(e) {
         let inAlign = false;
         let alignData = [];
         let transformMatrix = [];
+        let iTransform = -1;
         for(let ij=0;ij<csv_data.length;ij++){
             if(inTransformation&&ij<iTransform+4){
                 transformMatrix.push(parseFloat(csv_data[ij][0]));
@@ -84,11 +85,53 @@ onmessage = function(e) {
         }
         let cvsResult = {};
         cvsResult["alignData"] = alignData;
-        cvsResult["transformMatrix"] = transformMatrix;
+        cvsResult["transformMatrices"] = [transformMatrix];
         postMessage(["csvResult",cvsResult]);
     } else {
-        console.log("Multi-align results");
-        console.log(csv_data);
+        let inTransformation = false;
+        let inAlign = false;
+        let alignData = [];
+        let transformMatrix = [];
+        let transformMatrices = [];
+        let iTransform = -1;
+        for(let ij=0;ij<csv_data.length;ij++){
+            if(inTransformation&&ij<iTransform+4){
+                transformMatrix.push(parseFloat(csv_data[ij][0]));
+                transformMatrix.push(parseFloat(csv_data[ij][1]));
+                transformMatrix.push(parseFloat(csv_data[ij][2]));
+                transformMatrix.push(parseFloat(csv_data[ij][3]));
+            }
+            if(transformMatrix.length==12){
+                transformMatrix.push(0.0);
+                transformMatrix.push(0.0);
+                transformMatrix.push(0.0);
+                transformMatrix.push(1.0);
+                transformMatrices.push(transformMatrix);
+                transformMatrix = [];
+                inTransformation = false;
+            }
+            if(csv_data[ij].length==4 && csv_data[ij][0].trim()==="Rx" && csv_data[ij][1].trim()==="Ry" && csv_data[ij][2].trim()==="Rz"&& csv_data[ij][3].trim()==="T"){
+                inTransformation = true;
+                iTransform = ij;
+            }
+            if(inAlign){
+                if(csv_data[ij][0].length>0){
+                    let y = parseFloat(csv_data[ij][0]);
+                    let x = parseFloat(csv_data[ij][1].trim().split(" ")[csv_data[ij][1].trim().split(" ").length-1]);
+                    alignData.push({x:x,y:y});
+                }
+                if(csv_data[ij].length<e.data[0].length+1){
+                    break;
+                }
+            }
+            if(csv_data[ij][0].trim()==="Disp.[A]"&&ij>2&&csv_data[ij-2][0].trim()==="RESIDUE ALIGNMENT"){
+                inAlign = true;
+            }
+        }
+        let cvsResult = {};
+        cvsResult["transformMatrices"] = [transformMatrix];
+        cvsResult["alignData"] = alignData;
+        postMessage(["csvResult",cvsResult]);
     }
 
     postMessage(["result",result]);
