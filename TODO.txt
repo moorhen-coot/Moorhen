@@ -1,9 +1,0 @@
-* Split coot into library and executables. An almost accurate list can be got from:
-
-  find checkout/coot-0.9.6/ -name \*.cpp -o -name \*.cc | xargs grep -w main | grep -w int 
-
-* Make a Coot library example, e.g.:
-
-  * src/fix-nomenclature.cc
-
-* Check problem with one Coot source file ligand/res-tracer.cc depends on scored-node.hh which seems not to exist.
