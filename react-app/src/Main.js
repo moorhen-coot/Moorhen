@@ -72,8 +72,9 @@ class Main extends Component {
     }
 
     matricesChanged(data) {
-        console.log("matricesChanged");
-        console.log(data);
+        if(data.matrices.length==0){
+            this.gl.current.clearDataTransforms();
+        }
         for(let imat=0;imat<data.matrices.length;imat++){
             const data_id = data.dataIds[imat];
             const matrix = data.matrices[imat];

@@ -96,6 +96,10 @@ class DisplayTable extends Component {
         }
     }
 
+    handleUndo(){
+        this.props.matricesChanged({matrices:[],dataIds:[]});
+    }
+
     handleSuperpose(){
         const self = this;
         const dataFiles = self.props.dataFiles.ids;
@@ -162,6 +166,7 @@ class DisplayTable extends Component {
         const displayData = this.props.displayData;
         let rows = [];
         let handleSuperpose = this.handleSuperpose.bind(self);
+        let handleUndo = this.handleUndo.bind(self);
         for(let iobj=0;iobj<displayData.length;iobj++){
             let data_id = displayData[iobj].id;
             let name = displayData[iobj].name;
@@ -181,7 +186,7 @@ class DisplayTable extends Component {
                 {rows}
                 </tbody>
                 </Table>
-                <Button size="sm" onClick={handleSuperpose}>Superpose</Button>
+                <Button size="sm" onClick={handleSuperpose}>Superpose</Button>&nbsp;&nbsp;<Button size="sm" onClick={handleUndo}>Undo</Button>
                 <pre ref={this.preRef} style={styles.logpre}>
                 {this.state.log}
                 </pre>

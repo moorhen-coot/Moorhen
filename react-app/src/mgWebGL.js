@@ -1761,11 +1761,20 @@ class MGWebGL extends Component {
     }
 
 
+    clearDataTransforms() {
+        for(let idx=0;idx<this.dataInfo.length;idx++){
+            const transformBuffers = this.dataInfo[idx].buffers;
+            for(let ibuf=0;ibuf<transformBuffers.length;ibuf++){
+                transformBuffers[ibuf].transformMatrix = null;
+            }
+        }
+        this.drawScene();
+    }
+
     setDataTransform(data_id,matrix) {
         for(let idx=0;idx<this.dataInfo.length;idx++){
             if(this.dataInfo[idx].id===data_id){
                 const transformBuffers = this.dataInfo[idx].buffers;
-                console.log("Apply",matrix,"to",transformBuffers);
                 for(let ibuf=0;ibuf<transformBuffers.length;ibuf++){
                     transformBuffers[ibuf].transformMatrix = matrix;
                 }
