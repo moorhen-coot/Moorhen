@@ -74,6 +74,11 @@ class Main extends Component {
     matricesChanged(data) {
         console.log("matricesChanged");
         console.log(data);
+        for(let imat=0;imat<data.matrices.length;imat++){
+            const data_id = data.dataIds[imat];
+            const matrix = data.matrices[imat];
+            this.gl.current.setDataTransform(data_id,matrix);
+        }
 
     }
     addRequested(data) {

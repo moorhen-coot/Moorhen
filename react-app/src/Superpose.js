@@ -41,7 +41,7 @@ class DisplayTable extends Component {
         const data = {
           datasets: [
             {
-              label: 'Consensus RMSD vs. residue number of first structure',
+              label: 'RMSD vs. residue number',
               data: [],
               backgroundColor: 'rgba(255, 99, 132, 1)',
             },
@@ -73,16 +73,18 @@ class DisplayTable extends Component {
                          const alignData = csvResult["alignData"];
                          const jobid = csvResult["jobid"];
                          const transformMatrices = csvResult["transformMatrices"];
+                         let label;
                          if(transformMatrices.length==1&&self.jobData[jobid].length==2){
                              self.props.matricesChanged({matrices:transformMatrices,dataIds:[self.jobData[jobid][1]]});
+                             label = 'RMSD of second structure vs. residue number of first structure';
                          } else if(transformMatrices.length==self.jobData[jobid].length){
                              self.props.matricesChanged({matrices:transformMatrices,dataIds:self.jobData[jobid]});
+                             label = 'Consensus RMSD vs. residue number of first structure';
                          }
-                         //TODO - Label depends on whether pairwise of multi.
                          const data = {
                            datasets: [
                              {
-                               label: 'Consensus RMSD vs. residue number of first structure',
+                               label: label,
                                data: alignData,
                                backgroundColor: 'rgba(255, 99, 132, 1)',
                              },
@@ -171,6 +173,7 @@ class DisplayTable extends Component {
         }
         const data = this.state.chartData;
         const options = this.state.chartOptions;
+        //TODO - Undo button
         return (
                 <>
                 <Table responsive>
