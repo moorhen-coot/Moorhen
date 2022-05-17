@@ -1,1 +1,0 @@
-find . -name CMakeFiles -o -name Makefile -o -name CMakeCache.txt -o -name cmake_install.cmake -o -name \*.wasm -o -name \*.a | xargs rm -r
