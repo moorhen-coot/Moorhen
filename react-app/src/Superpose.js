@@ -48,6 +48,8 @@ class DisplayTable extends Component {
           ],
         };
 
+        this.preRef = React.createRef();
+
         this.state = {selected:{ids:{}},log:"",chartData:data,chartOptions:options};
         this.jobData = {};
         this.message = "";
@@ -58,13 +60,13 @@ class DisplayTable extends Component {
                          let result = document.getElementById("output");
                          if(e.data[0]==="output"){
                              self.message += e.data[1] + "\n";
-                             self.setState({log:self.message});
+                             self.setState({log:self.message}, ()=> {self.preRef.current.scrollTop = self.preRef.current.scrollHeight;});
                          //result.innerHTML += e.data[1] + "<br />";
                          }
                          if(e.data[0]==="result"){
                          //This is then where we decide upon the action
                              self.message += e.data[1] + "\n";
-                             self.setState({log:self.message});
+                             self.setState({log:self.message}, ()=> {self.preRef.current.scrollTop = self.preRef.current.scrollHeight;});
                          }
                          if(e.data[0]==="csvResult"){
                          const csvResult = e.data[1];
@@ -174,7 +176,7 @@ class DisplayTable extends Component {
                 </tbody>
                 </Table>
                 <Button size="sm" onClick={handleSuperpose}>Superpose</Button>
-                <pre style={styles.logpre}>
+                <pre ref={this.preRef} style={styles.logpre}>
                 {this.state.log}
                 </pre>
                 <Scatter data={data} options={this.state.chartOptions} />
