@@ -71,6 +71,11 @@ class Main extends Component {
         this.setState({dataFiles:newIds});
     }
 
+    matricesChanged(data) {
+        console.log("matricesChanged");
+        console.log(data);
+
+    }
     addRequested(data) {
         this.gl.current.addNewObjectToDataInfo(data);
 
@@ -161,7 +166,7 @@ class Main extends Component {
             </Col>
 
             <Col lg={6}>
-            <ControlInterface displayData={displayData} enerLib={enerLib} svgChange={this.svgChanged.bind(this)} filePendingChange={this.filePendingChanged.bind(this)} lightsChange={this.lightsChanged.bind(this)} addRequest={this.addRequested.bind(this)} deleteRequest={this.deleteRequested.bind(this)} visibilityChange={this.visibilityChanged.bind(this)} dataFiles={dataFiles}/>
+            <ControlInterface displayData={displayData} enerLib={enerLib} svgChange={this.svgChanged.bind(this)} filePendingChange={this.filePendingChanged.bind(this)} lightsChange={this.lightsChanged.bind(this)} addRequest={this.addRequested.bind(this)} deleteRequest={this.deleteRequested.bind(this)} visibilityChange={this.visibilityChanged.bind(this)} matricesChanged={this.matricesChanged.bind(this)} dataFiles={dataFiles}/>
             </Col>
 
             </Row>

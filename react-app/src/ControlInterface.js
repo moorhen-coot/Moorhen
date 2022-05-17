@@ -32,6 +32,10 @@ class ControlInterface extends Component {
 	this.props.addRequest(data);
     }
 
+    matricesChanged(data) {
+	this.props.matricesChanged(data);
+    }
+
     deleteRequested(data_id) {
 	this.props.deleteRequest(data_id);
     }
@@ -61,7 +65,7 @@ class ControlInterface extends Component {
                 <DisplayTable visibilityChanged={this.visibilityChanged.bind(this)} addRequest={this.addRequested.bind(this)} deleteRequest={this.deleteRequested.bind(this)} displayData={displayData} />
                 </Tab>
                 <Tab eventKey="superpose" title="Superposition">
-                <Superpose displayData={displayData} dataFiles={dataFiles}/>
+                <Superpose displayData={displayData} dataFiles={dataFiles} matricesChanged={this.matricesChanged.bind(this)} />
                 </Tab>
                 </Tabs>
                );

@@ -72,9 +72,12 @@ class DisplayTable extends Component {
                          const csvResult = e.data[1];
                          const alignData = csvResult["alignData"];
                          const jobid = csvResult["jobid"];
-                         console.log(self.jobData[jobid]);
                          const transformMatrices = csvResult["transformMatrices"];
-                         console.log(transformMatrices);
+                         if(transformMatrices.length==1&&self.jobData[jobid].length==2){
+                             self.props.matricesChanged({matrices:transformMatrices,dataIds:[self.jobData[jobid][1]]});
+                         } else if(transformMatrices.length==self.jobData[jobid].length){
+                             self.props.matricesChanged({matrices:transformMatrices,dataIds:self.jobData[jobid]});
+                         }
                          //TODO - Label depends on whether pairwise of multi.
                          const data = {
                            datasets: [
