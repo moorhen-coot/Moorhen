@@ -10,7 +10,7 @@ Contained are some examples of using the generated JS/Web Assembly:
 * A command line example which does a structure factor calculation with `clipper`.
 * A web server example which does superposition, structure factor calculations, map calculations, 2D ligand viewing with
 [RDKit](https://github.com/rdkit/rdkit/tree/master/Code/MinimalLib) and glycosolation tree visualisation with privateer.
-* A React-Bootstrap web server example which does superposition.
+* A React-Bootstrap web server example which does superposition and shows results in 3D.
 
 The emscripten suite of tools is required to do the
 compilation.
@@ -99,6 +99,8 @@ This example demonstrates CCP4 web assembly only by the use of `RDKit` to make l
 *Text output trapped from printf/cout and displayed asynchronously in browser div element.*
 ![Web example gesamt output](web_example/screenshot_graph.png)
 *Chart.js plot of gesamt alignment distances.*
+![React-bootstrap gesamt output and 3D display](web_example/screenshot_gesamt.png)
+*Chart.js and WebGL 3D view of gesamt superposition*
 
 ## **What else can do with the compiled libraries?**
 
