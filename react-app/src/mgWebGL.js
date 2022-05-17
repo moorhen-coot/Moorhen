@@ -1764,6 +1764,7 @@ class MGWebGL extends Component {
     clearDataTransforms() {
         for(let idx=0;idx<this.dataInfo.length;idx++){
             const transformBuffers = this.dataInfo[idx].buffers;
+            this.dataInfo[idx].transformMatrix = null;
             for(let ibuf=0;ibuf<transformBuffers.length;ibuf++){
                 transformBuffers[ibuf].transformMatrix = null;
             }
@@ -1775,6 +1776,7 @@ class MGWebGL extends Component {
         for(let idx=0;idx<this.dataInfo.length;idx++){
             if(this.dataInfo[idx].id===data_id){
                 const transformBuffers = this.dataInfo[idx].buffers;
+                this.dataInfo[idx].transformMatrix = matrix;
                 for(let ibuf=0;ibuf<transformBuffers.length;ibuf++){
                     transformBuffers[ibuf].transformMatrix = matrix;
                 }
@@ -2197,6 +2199,7 @@ class MGWebGL extends Component {
                         bufs[ibuf].display_class = "custom"+data.ncustom;
                         bufs[ibuf].name_label = thisData.name;
                         bufs[ibuf].id = guid();
+                        bufs[ibuf].transformMatrix = thisData.transformMatrix;
                         thisData.buffers.push(bufs[ibuf]);
                     }
                 }
@@ -2219,7 +2222,7 @@ class MGWebGL extends Component {
         } else {
             fileDataId = id;
         }
-        let thisData = {name:name,id:fileDataId,buffers:[],atoms:pdbatoms};
+        let thisData = {name:name,id:fileDataId,buffers:[],atoms:pdbatoms,transformMatrix:null};
         
         var self = this;
         var ribbons = [];

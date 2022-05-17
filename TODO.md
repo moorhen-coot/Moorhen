@@ -9,12 +9,13 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
 - [x] gesamt in web page
 - [x] multiple gesamt in web page
 - [x] Make a fancier (React/Bootstrap) superpose/gesamt web page
-- [ ] Apply gesamt superposition to graphics
+- [x] Apply gesamt superposition to graphics
   - [x] Apply transformations
-  - [ ] Apply to newly created objects
+  - [x] Apply to newly created objects
   - [x] Undo button
 - [x] Charged ligands produce SVG (e.g DCB 4a3h)
 - [x] Check that this successfully compiles on Linux
+- [ ] Fix custom colours not working: `mgWebGLAtomsToPrimitives.js:5815 DON'T KNOW WHAT TO DO WITH #cf5353`
 - [ ] Check that this successfully compiles on Windows (needs *get_sources.bat* or *MSYS*)
 - [ ] Split coot into library and executables. An almost accurate list can be got from  
     `find checkout/coot-0.9.6/ -name \*.cpp -o -name \*.cc | xargs grep -w main | grep -w int`
