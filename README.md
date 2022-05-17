@@ -3,11 +3,14 @@
 This project is a set of scripts, patches and CMakeLists.txt files
 which enable the compilation of  some of the [CCP4](https://www.ccp4.ac.uk/) libraries and programs, some of [Coot](https://www2.mrc-lmb.cam.ac.uk/personal/pemsley/coot/), [FFTW2](https://www.fftw.org/), [Privateer](https://github.com/glycojones/privateer) and the [Gnu Scientific Library](https://www.gnu.org/software/gsl/) to Web Assembly. 
 
-Contained are some examples of using the generated JS/Web 
-Assembly. There is a command line example which offers some of the functionality of the CCP4 program `superpose`, a command line example which does a structure factor calculation with clipper
-and a web server example which does superposition, structure
-factor calculations, map calculations, 2D ligand viewing with
+Contained are some examples of using the generated JS/Web Assembly:
+
+* A command line example which offers some of the functionality of the CCP4 program `superpose`.
+* A command line example which offers some of the functionality of the CCP4 program `gesamt`.
+* A command line example which does a structure factor calculation with `clipper`.
+* A web server example which does superposition, structure factor calculations, map calculations, 2D ligand viewing with
 [RDKit](https://github.com/rdkit/rdkit/tree/master/Code/MinimalLib) and glycosolation tree visualisation with privateer.
+* A React-Bootstrap web server example which does superposition.
 
 The emscripten suite of tools is required to do the
 compilation.
