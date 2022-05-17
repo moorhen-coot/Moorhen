@@ -10,10 +10,43 @@ import Dropdown from 'react-bootstrap/Dropdown';
 import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
 
+import {
+  Chart as ChartJS,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+import { Scatter } from 'react-chartjs-2';
+
+ChartJS.register(LinearScale, PointElement, LineElement, Tooltip, Legend);
+
+
 class DisplayTable extends Component {
     constructor(props) {
+
         super(props);
-        this.state = {selected:{ids:{}},log:""};
+
+        const options = {
+          scales: {
+            y: {
+              beginAtZero: true,
+            },
+          },
+        };
+
+        const data = {
+          datasets: [
+            {
+              label: 'Alignment results',
+              data: [],
+              backgroundColor: 'rgba(255, 99, 132, 1)',
+            },
+          ],
+        };
+
+        this.state = {selected:{ids:{}},log:"",chartData:data,chartOptions:options};
         this.message = "";
         const self = this;
         this.myWorkerSSM = new window.Worker('wasm/superpose_worker.js');
@@ -30,34 +63,22 @@ class DisplayTable extends Component {
                              self.message += e.data[1] + "\n";
                              self.setState({log:self.message});
                          }
-                         /*
                          if(e.data[0]==="csvResult"){
                          const cvsResult = e.data[1];
                          const alignData = cvsResult["alignData"];
                          const transformMatrices = cvsResult["transformMatrices"];
                          const data = {
-                             datasets: [{
-                             label: "Gesamt results",
-                                    showLine: true,
-                                    backgroundColor: "rgb(75, 0, 192)",
-                                    borderColor: 'rgb(75, 192, 192)',
-                                    data: alignData,
-                                    lineTension: 0.1,
-                                    bezierCurve: true,
-                                    fill:true
-                                       }]
-                                                      };
-                                                      const config = {
-                             type: 'scatter',
-                                   data: data,
+                           datasets: [
+                             {
+                               label: 'Alignment results',
+                               data: alignData,
+                               backgroundColor: 'rgba(255, 99, 132, 1)',
+                             },
+                           ],
                          };
-                         if(gesamtChart!=null){
-                             gesamtChart.destroy();
+
+                         self.setState({chartData:data});
                          }
-                         gesamtChart = new Chart(ctx, config);
-                         }
-                         */
-                         //result.scrollTop = result.scrollHeight;
         }
     }
 
@@ -133,6 +154,10 @@ class DisplayTable extends Component {
             </tr>
             );
         }
+        console.log(this.state.chartData);
+        console.log(this.state.chartOptions);
+        const data = this.state.chartData;
+        const options = this.state.chartOptions;
         return (
                 <>
                 <Table responsive>
@@ -144,6 +169,7 @@ class DisplayTable extends Component {
                 <pre style={styles.logpre}>
                 {this.state.log}
                 </pre>
+                <Scatter data={data} options={this.state.chartOptions} />
             </>
         );
     }

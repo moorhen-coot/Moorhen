@@ -8,8 +8,8 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
 - [x] Test gesamt
 - [x] gesamt in web page
 - [x] multiple gesamt in web page
-- [ ] Make a fancier (React/Bootstrap) superpose/gesamt web page
-- [ ] Make a web page with graphics
+- [x] Make a fancier (React/Bootstrap) superpose/gesamt web page
+- [ ] Apply gesamt superposition to graphics
 - [x] Charged ligands produce SVG (e.g DCB 4a3h)
 - [x] Check that this successfully compiles on Linux
 - [ ] Check that this successfully compiles on Windows (needs *get_sources.bat* or *MSYS*)

@@ -32,7 +32,6 @@ install(TARGETS web_example DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../react-app
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/web_example.wasm  
               ${CMAKE_CURRENT_BINARY_DIR}/RDKit_minimal.js
               ${CMAKE_CURRENT_BINARY_DIR}/RDKit_minimal.wasm
-              ${CMAKE_CURRENT_BINARY_DIR}/chart.js
               ${CMAKE_CURRENT_BINARY_DIR}/cif_pdb_worker.js
               ${CMAKE_CURRENT_BINARY_DIR}/mtz_worker.js
               ${CMAKE_CURRENT_BINARY_DIR}/papaparse.min.js
