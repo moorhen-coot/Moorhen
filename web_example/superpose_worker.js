@@ -86,6 +86,9 @@ onmessage = function(e) {
         let cvsResult = {};
         cvsResult["alignData"] = alignData;
         cvsResult["transformMatrices"] = [transformMatrix];
+        if(e.data.length>2){
+            cvsResult["jobid"] = e.data[2];
+        }
         postMessage(["csvResult",cvsResult]);
     } else {
         let inTransformation = false;
@@ -129,8 +132,11 @@ onmessage = function(e) {
             }
         }
         let cvsResult = {};
-        cvsResult["transformMatrices"] = [transformMatrix];
+        cvsResult["transformMatrices"] = transformMatrices;
         cvsResult["alignData"] = alignData;
+        if(e.data.length>2){
+            cvsResult["jobid"] = e.data[2];
+        }
         postMessage(["csvResult",cvsResult]);
     }
 

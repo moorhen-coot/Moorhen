@@ -20,6 +20,8 @@ import {
 } from 'chart.js';
 import { Scatter } from 'react-chartjs-2';
 
+import { guid } from './guid.js';
+
 ChartJS.register(LinearScale, PointElement, LineElement, Tooltip, Legend);
 
 
@@ -39,7 +41,7 @@ class DisplayTable extends Component {
         const data = {
           datasets: [
             {
-              label: 'Alignment results',
+              label: 'Consensus RMSD vs. residue number of first structure',
               data: [],
               backgroundColor: 'rgba(255, 99, 132, 1)',
             },
@@ -47,6 +49,7 @@ class DisplayTable extends Component {
         };
 
         this.state = {selected:{ids:{}},log:"",chartData:data,chartOptions:options};
+        this.jobData = {};
         this.message = "";
         const self = this;
         this.myWorkerSSM = new window.Worker('wasm/superpose_worker.js');
@@ -64,13 +67,17 @@ class DisplayTable extends Component {
                              self.setState({log:self.message});
                          }
                          if(e.data[0]==="csvResult"){
-                         const cvsResult = e.data[1];
-                         const alignData = cvsResult["alignData"];
-                         const transformMatrices = cvsResult["transformMatrices"];
+                         const csvResult = e.data[1];
+                         const alignData = csvResult["alignData"];
+                         const jobid = csvResult["jobid"];
+                         console.log(self.jobData[jobid]);
+                         const transformMatrices = csvResult["transformMatrices"];
+                         console.log(transformMatrices);
+                         //TODO - Label depends on whether pairwise of multi.
                          const data = {
                            datasets: [
                              {
-                               label: 'Alignment results',
+                               label: 'Consensus RMSD vs. residue number of first structure',
                                data: alignData,
                                backgroundColor: 'rgba(255, 99, 132, 1)',
                              },
@@ -89,12 +96,15 @@ class DisplayTable extends Component {
         let checked = self.state.selected.ids;
         let superposeInputFileData = [];
         let superposeInputFileNames = [];
+        const jobid = guid();
+        this.jobData[jobid] = [];
         for (const [key, value] of Object.entries(checked)) {
             if(value){
                 for(let iobj=0;iobj<displayData.length;iobj++){
                     let data_id = displayData[iobj].id;
                     let name = displayData[iobj].name;
                     if(data_id===key){
+                        this.jobData[jobid].push(data_id);
                         superposeInputFileData.push(dataFiles[key].contents);
                         const isPDB = dataFiles[key].isPDB;
                         if(isPDB){
@@ -107,7 +117,7 @@ class DisplayTable extends Component {
             }
         }
         if(superposeInputFileData.length>1){
-            self.myWorkerSSM.postMessage([superposeInputFileData, superposeInputFileNames]);
+            self.myWorkerSSM.postMessage([superposeInputFileData, superposeInputFileNames,jobid]);
         }
     }
 
@@ -154,8 +164,6 @@ class DisplayTable extends Component {
             </tr>
             );
         }
-        console.log(this.state.chartData);
-        console.log(this.state.chartOptions);
         const data = this.state.chartData;
         const options = this.state.chartOptions;
         return (
