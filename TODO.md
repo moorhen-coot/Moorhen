@@ -14,6 +14,26 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
   - [x] Apply to newly created objects
   - [x] Undo button
 - [x] Charged ligands produce SVG (e.g DCB 4a3h)
+- [ ] Some MG stuff in WebGL react-bootstrap
+  - [ ] SmilesToPDB
+  - [ ] Get Monomer
+  - [ ] Vibrations
+    - [ ] Experimental vs. Theoretical B-values
+    - [ ] Cross correlation plot
+    - [ ] list normal modes
+    - [ ] Animate normal modes
+  - [ ] Glycan viewer to graphics interactivity
+  - [ ] PDB search
+  - [ ] Generate Helices
+  - [ ] Prosmart (? May not be possible becsause of Fortran limitations - farm off to server as alternative)
+  - [ ] Background colour
+  - [ ] Scale bar
+  - [ ] Display maps
+  - [ ] Images/Legends
+  - [ ] Perfect spheres
+  - [ ] Lipid cartoons
+  - [ ] Generate map from MTZ
+  - [ ] PDB-REDO integration
 - [x] Check that this successfully compiles on Linux
 - [x] Fix custom colours not working: `mgWebGLAtomsToPrimitives.js:5815 DON'T KNOW WHAT TO DO WITH #cf5353`
 - [ ] Keep ligand SVGs for all loaded structures and delete when file closed.
