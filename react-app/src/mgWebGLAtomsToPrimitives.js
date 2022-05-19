@@ -2638,31 +2638,32 @@ class  ColourScheme{
 constructor(pdbatoms){
     this.pdbatoms = pdbatoms;
     this.hier = this.pdbatoms["atoms"];
-    this.ice_blue     = [0.61,0.69,1.00,1.0];
-    this.gold         = [0.70,0.69,0.24,1.0];
-    this.coral        = [1.00,0.50,0.31,1.0];
-    this.grey         = [0.50,0.50,0.50,1.0];
-    this.pink         = [1.00,0.57,1.00,1.0];
-    this.sea_green    = [0.50,0.73,0.71,1.0];
-    this.pale_brown   = [0.66,0.49,0.37,1.0];
-    this.lilac        = [0.68,0.53,0.73,1.0];
-    this.lemon        = [1.00,1.00,0.50,1.0];
-    this.lawn_green   = [0.27,0.61,0.31,1.0];
-    this.pale_crimson = [0.82,0.24,0.24,1.0];
-    this.light_blue   = [0.25,0.60,0.88,1.0];
-    this.tan          = [0.47,0.00,0.00,1.0];
-    this.light_green  = [0.60,1.00,0.60,1.0];
-    this.yellow       = [1.00,1.00,0.00,1.0];
-    this.white        = [1.00,1.00,1.00,1.0];
-    this.blue         = [0.00,0.00,1.00,1.0];
-    this.red          = [1.00,0.00,0.00,1.0];
-    this.green        = [0.00,1.00,0.00,1.0];
-    this.magenta      = [1.00,0.00,1.00,1.0];
-    this.cyan         = [0.00,1.00,0.88,1.0];
-    this.purple       = [0.58,0.00,1.00,1.0];
-    this.dark_purple  = [0.57,0.13,0.34,1.0];
-    this.dark_cyan    = [0.10,0.60,0.70,1.0];
-    this.black        = [0.00,0.00,0.00,1.0];
+    this.colours = {};
+    this.ice_blue     = [0.61,0.69,1.00,1.0]; this.colours["ice_blue"] = this.ice_blue;
+    this.gold         = [0.70,0.69,0.24,1.0]; this.colours["gold"] = this.gold;
+    this.coral        = [1.00,0.50,0.31,1.0]; this.colours["coral"] = this.coral;
+    this.grey         = [0.50,0.50,0.50,1.0]; this.colours["grey"] = this.grey;
+    this.pink         = [1.00,0.57,1.00,1.0]; this.colours["pink"] = this.pink;
+    this.sea_green    = [0.50,0.73,0.71,1.0]; this.colours["sea_green"] = this.sea_green;
+    this.pale_brown   = [0.66,0.49,0.37,1.0]; this.colours["pale_brown"] = this.pale_brown;
+    this.lilac        = [0.68,0.53,0.73,1.0]; this.colours["lilac"] = this.lilac;
+    this.lemon        = [1.00,1.00,0.50,1.0]; this.colours["lemon"] = this.lemon;
+    this.lawn_green   = [0.27,0.61,0.31,1.0]; this.colours["lawn_green"] = this.lawn_green;
+    this.pale_crimson = [0.82,0.24,0.24,1.0]; this.colours["pale_crimson"] = this.pale_crimson;
+    this.light_blue   = [0.25,0.60,0.88,1.0]; this.colours["light_blue"] = this.light_blue;
+    this.tan          = [0.47,0.00,0.00,1.0]; this.colours["tan"] = this.tan;
+    this.light_green  = [0.60,1.00,0.60,1.0]; this.colours["light_green"] = this.light_green;
+    this.yellow       = [1.00,1.00,0.00,1.0]; this.colours["yellow"] = this.yellow;
+    this.white        = [1.00,1.00,1.00,1.0]; this.colours["white"] = this.white;
+    this.blue         = [0.00,0.00,1.00,1.0]; this.colours["blue"] = this.blue;
+    this.red          = [1.00,0.00,0.00,1.0]; this.colours["red"] = this.red;
+    this.green        = [0.00,1.00,0.00,1.0]; this.colours["green"] = this.green;
+    this.magenta      = [1.00,0.00,1.00,1.0]; this.colours["magenta"] = this.magenta;
+    this.cyan         = [0.00,1.00,0.88,1.0]; this.colours["cyan"] = this.cyan;
+    this.purple       = [0.58,0.00,1.00,1.0]; this.colours["purple"] = this.purple;
+    this.dark_purple  = [0.57,0.13,0.34,1.0]; this.colours["dark_purple"] = this.dark_purple;
+    this.dark_cyan    = [0.10,0.60,0.70,1.0]; this.colours["dark_cyan"] = this.dark_cyan;
+    this.black        = [0.00,0.00,0.00,1.0]; this.colours["black"] = this.black;
     this.residueColours = {"PHE":this.magenta,"TRP":this.magenta,"TYR":this.magenta,"PRO":this.coral,"VAL":this.coral,"ALA":this.coral,"ILE":this.coral,"LEU":this.coral,"SER":this.cyan,"THR":this.cyan,"ASN":this.cyan,"GLN":this.cyan,"ARG":this.blue,"LYS":this.blue,"ASP":this.red,"GLU":this.red,"CYS":this.yellow,"MET":this.yellow,"GLY":this.white,"HIS":this.light_blue,"A":this.red,"T":this.yellow,"G":this.green,"C":this.blue,"U":this.magenta,"DA":this.red,"DT":this.yellow,"DG":this.green,"DC":this.blue,"ADE":this.red,"THY":this.yellow,"GUA":this.green,"CYT":this.blue,"URA":this.magenta,"BMA":this.green,"MAN":this.green,"NAG":this.blue,"GLC":this.blue,"BGC":this.blue,"GCS":this.blue,"GAL":this.yellow,"NGA":this.yellow,"MGC":this.yellow,"NG1":this.yellow,"NG6":this.yellow,"A2G":this.yellow,"6MN":this.blue,"GLP":this.blue,"GP4":this.blue,"BEM":this.green,"KDN":this.light_green,"XLS":this.coral,"CXY":this.coral,"RBY":this.coral,"TDX":this.coral,"XYL":this.coral,"XYS":this.coral,"XYP":this.coral,"FCA":this.red,"FCB":this.red,"FUC":this.red,"GTR":this.yellow,"ADA":this.yellow,"DGU":this.yellow,"SI3":this.purple,"NCC":this.purple,"NGF":this.light_blue,"NGE":this.light_blue,"NGC":this.light_blue,"GC4":this.blue,"GCD":this.blue,"GCU":this.blue,"GCV":this.blue,"GCW":this.blue,"IDS":this.blue,"REL":this.blue,"IDR":this.pale_brown,"SIA":this.purple};
     this.order_colours = [this.ice_blue,this.gold,this.coral,this.grey,this.pink,this.sea_green,this.pale_brown,this.lilac,this.lemon,this.lawn_green,this.pale_crimson,this.light_blue,this.tan,this.light_green,this.yellow,this.blue,this.red,this.green,this.magenta,this.cyan,this.purple,this.dark_purple,this.dark_cyan];
 }
@@ -5812,7 +5813,21 @@ function objectsFromAtomColourStyle(pdbatoms,data){
         //FIXME - Not implemented
         atomColours = colourScheme.colourByModel();
     } else {
-        console.log("DON'T KNOW WHAT TO DO WITH",data.colour);
+        if(data.colour.substr(0,1) === "#" && data.colour.length==7){
+            const r = parseInt(data.colour.substr(1,2),16) / 256.0;
+            const g = parseInt(data.colour.substr(3,2),16) / 256.0;
+            const b = parseInt(data.colour.substr(5,2),16) / 256.0;
+            atomColours = colourScheme.colourOneColour([r,g,b,1.0]);
+        } else if(data.colour.substr(0,1) === "#" && data.colour.length==4){
+            const r = parseInt(data.colour.substr(1,1)+"0",16) / 256.0;
+            const g = parseInt(data.colour.substr(2,1)+"0",16) / 256.0;
+            const b = parseInt(data.colour.substr(3,1)+"0",16) / 256.0;
+        } else if(data.colour in this.colours) {
+            atomColours = colourScheme.colourOneColour(this.colours[data.colour]);
+        } else {
+            console.log("DON'T KNOW WHAT TO DO WITH COLOUR",data.colour);
+            atomColours = colourScheme.colourOneColour([1.0,0.0,0.0,1.0]);
+        }
     }
     //console.log(selectedAtoms);
     //console.log(colourScheme);
