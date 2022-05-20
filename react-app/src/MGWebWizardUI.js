@@ -7,6 +7,10 @@ import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
 
+import {Typeahead} from 'react-bootstrap-typeahead';
+import 'react-bootstrap-typeahead/css/Typeahead.css';
+
+
 import pako from 'pako';
 import {parseMMCIF,parsePDB,isAminoAcidType,isWaterType} from './mgMiniMol.js';
 
@@ -22,6 +26,37 @@ const Spacer = props => {
   return (
     <div style={{height:props.height}}></div>
   );
+}
+
+function splitQuotedCIFString(stringToSplit){
+    if(stringToSplit.length===0) return [];
+    return stringToSplit.match(/(?:[^\s"]+|"[^"]*")+/g);
+}
+
+function getLoop(lines,loopName_in){
+    let loopName = loopName_in+".";
+    let inWantedLoop = false;
+    let loopLines = [];
+    let len = lines.length;
+    for(let il=0;il<len;il++){
+        let l = lines[il].replace(/(^\s+|\s+$)/g,'');
+        if(l === "loop_"||(l.substring(0,1)==="_"&&l.substring(0,loopName.length)!==loopName)){
+            if(inWantedLoop){
+                break;
+            }else{
+                if(il<lines.length){
+                    if(lines[il+1].substring(0,loopName.length) === loopName){
+                        inWantedLoop = true;
+                    }
+                }
+            }
+        }else{
+            if(inWantedLoop){
+                loopLines.push(l);
+            }
+        }
+    }
+    return loopLines;
 }
 
 function makeRequest (method, url) {
@@ -70,7 +105,7 @@ class MGWebWizardUI extends Component {
     }
     constructor(props){
         super(props);
-        this.state = {pdbcode:'',wizard:'Bonds', theAtoms : [], showModalGetSmiles: false, showModalGetMonomer: false, smilesname:'DRG', smiles:'', monomerid:''};
+        this.state = {pdbcode:'',wizard:'Bonds', theAtoms : [], showModalGetSmiles: false, showModalGetMonomer: false, smilesname:'DRG', smiles:'', monomerid:'', ligands:[]};
         this.enerLib = this.props.enerLib;
         this.inputRef = createRef();
         this.cifinputRef = createRef();
@@ -79,7 +114,6 @@ class MGWebWizardUI extends Component {
         this.keyGetMonomer = guid();
         this.keyAddModalGetSmiles = guid();
         this.keyAddModalGetMonomer = guid();
-        console.log(this.myWorkerPDB);
         var self = this;
         this.myWorkerPDB.onmessage = function(e) {
             if(e.data[0]==="output"){
@@ -115,9 +149,46 @@ class MGWebWizardUI extends Component {
         this.setState({ showModalGetSmiles: false });
     }
 
+    componentDidMount() {
+        var self = this;
+        const ligandServer = configData["MONOMER_LIBRARY_SERVER_URL"];
+        const theUrl = ligandServer + "/list/mon_lib_list.cif";
+        makeRequest('GET',theUrl , true).then(function (ligandListCif) {
+                const ligandListLines = ligandListCif.split("\n");
+                const ligandList = getLoop(ligandListLines,"_chem_comp");
+                let ligands = [];
+                let libLigandListTypes = [];
+                for(let il=0;il<ligandList.length;il++){
+                    if(ligandList[il].substr(0,1)==="#"||ligandList[il].trim()===""){
+                        continue;
+                    } else if(ligandList[il].substr(0,1)==="_"){
+                        libLigandListTypes.push(ligandList[il]);
+                    } else {
+                        ligands.push(ligandList[il]);
+                        /*
+                        //Not sure we need the data structured - strings will do for my purposes as long as first one is id?
+                        let split = splitQuotedCIFString(ligandList[il]);
+                        if(split[0]!=="."){
+                            let atom = {};
+                            for(let iprop=0;iprop<split.length;iprop++){
+                                atom[libLigandListTypes[iprop]] = split[iprop];
+                            }
+                            ligands.push(atom);
+                        }
+                        */
+                    }
+                }
+                self.setState({ligands:ligands});
+        })
+        .catch(function (err) {
+                console.error('Aargh, there was an error!', err.statusText);
+        });
+    }
+
     handleCloseGetMonomerApplyThis(){
         console.log(this.state.monomerid);
         this.setState({ showModalGetMonomer: false });
+        console.log(splitQuotedCIFString(this.state.monomerid)[0]);
     }
 
     handleSmilesNameChange(e){
@@ -363,6 +434,10 @@ class MGWebWizardUI extends Component {
         this.setState({pdbfile: e.target.value});
     }
 
+    setMonomerIdSingleSelections (e) {
+        this.state.monomerid = e[0];
+    }
+
     handleSelect (e) {
         var self = this;
         console.log(e.target.value);
@@ -394,6 +469,7 @@ class MGWebWizardUI extends Component {
         const handleSmilesNameChange = this.handleSmilesNameChange.bind(this);
         const handleSmilesStringChange = this.handleSmilesStringChange.bind(this);
         const handleMonomerIdChange = this.handleMonomerIdChange.bind(this);
+        const setMonomerIdSingleSelections = this.setMonomerIdSingleSelections.bind(this);
 
         let modals = [];
         modals.push(
@@ -424,7 +500,15 @@ class MGWebWizardUI extends Component {
                </Modal.Header>
                <Modal.Body>Generate structure from monomer id (this does not work yet!)
                   <h4>Monomer id</h4>
+                  {/*
                   <Form.Control type="text" value={this.state.monomerid} onChange={handleMonomerIdChange}/>
+                  */}
+                  <Typeahead
+                    id="basic-typeahead-single"
+                    onChange={setMonomerIdSingleSelections}
+                    options={this.state.ligands}
+                    placeholder="Start typing monomer name or description..."
+                  />
                </Modal.Body>
                <Modal.Footer>
                    <Button variant="primary" onClick={handleCloseGetMonomerApplyThis}>
@@ -487,4 +571,3 @@ class MGWebWizardUI extends Component {
 }
 
 export default MGWebWizardUI;
-
