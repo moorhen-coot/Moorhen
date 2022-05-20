@@ -1,6 +1,8 @@
 import React, { Component, createRef } from 'react';
 import reactCSS from 'reactcss'
 
+import Tabs from 'react-bootstrap/Tabs';
+import Tab from 'react-bootstrap/Tab';
 import Table from 'react-bootstrap/Table';
 import Col from 'react-bootstrap/Col';
 import Row from 'react-bootstrap/Row';
@@ -23,7 +25,6 @@ import { Scatter } from 'react-chartjs-2';
 import { guid } from './guid.js';
 
 ChartJS.register(LinearScale, PointElement, LineElement, Tooltip, Legend);
-
 
 class DisplayTable extends Component {
     constructor(props) {
@@ -159,6 +160,12 @@ class DisplayTable extends Component {
                      'overflowX': 'auto',
                      'overflowY': 'scroll',
                 },
+                'loggraph': {
+                     'margin': '10px',
+                     'height': '200px',
+                     'overflowX': 'auto',
+                     'overflowY': 'scroll',
+                },
             },
         });
 
@@ -187,10 +194,24 @@ class DisplayTable extends Component {
                 </tbody>
                 </Table>
                 <Button size="sm" onClick={handleSuperpose}>Superpose</Button>&nbsp;&nbsp;<Button size="sm" onClick={handleUndo}>Undo</Button>
+                <div className="vspace1em"></div>
+                <Tabs
+                defaultActiveKey="superpose-graph"
+                transition={true}
+                id="superpose-tab-example"
+                className="mb-3"
+                >
+                <Tab eventKey="superpose-graph" title="Graph">
+                <div style={styles.loggraph}>
+                <Scatter data={data} options={this.state.chartOptions} />
+                </div>
+                </Tab>
+                <Tab eventKey="superpose-textout" title="Output">
                 <pre ref={this.preRef} style={styles.logpre}>
                 {this.state.log}
                 </pre>
-                <Scatter data={data} options={this.state.chartOptions} />
+                </Tab>
+                </Tabs>
             </>
         );
     }

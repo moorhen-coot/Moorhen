@@ -518,7 +518,7 @@ class DisplayTable extends Component {
                <Modal.Header closeButton>
                    <Modal.Title>Add a new display object</Modal.Title>
                </Modal.Header>
-               <Modal.Body>Add a new display object (this does not work yet!)
+               <Modal.Body>
                   <h4>Select atoms</h4>
                   <StructureTreeView onChange={function(evt){self.treeChanged(evt,self,data_id)}} treeData={tree}/>
                   <h4>Colour</h4>
