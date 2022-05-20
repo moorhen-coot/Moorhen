@@ -133,8 +133,12 @@ class MGWebWizardUI extends Component {
         this.myWorkerGetMonomer = new window.Worker('wasm/monid_to_pdb_worker.js');
         this.myWorkerGetMonomer.onmessage = function(e) {
             if(e.data[0]==="result"){
-                console.log(e.data[1]);
                 self.props.onSVGChange({svg:e.data[1]});
+            }
+            if(e.data[0]==="pdb"){
+                let pdbatoms = parsePDB(e.data[1].split("\n"),"aname");
+                self.setState({pending:{fileData:{contents:e.data[1],isPDB:true},atoms:pdbatoms,big:false,name:"aname"}},()=> {self.parametersChanged(); });
+                self.setState({theAtoms: pdbatoms});
             }
         }
     }
