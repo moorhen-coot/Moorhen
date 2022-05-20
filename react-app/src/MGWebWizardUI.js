@@ -130,6 +130,13 @@ class MGWebWizardUI extends Component {
                 self.props.onSVGChange({svg:e.data[1]});
             }
         }
+        this.myWorkerGetMonomer = new window.Worker('wasm/monid_to_pdb_worker.js');
+        this.myWorkerGetMonomer.onmessage = function(e) {
+            if(e.data[0]==="result"){
+                console.log(e.data[1]);
+                self.props.onSVGChange({svg:e.data[1]});
+            }
+        }
     }
 
     handleShowGetSmiles(){
@@ -186,9 +193,9 @@ class MGWebWizardUI extends Component {
     }
 
     handleCloseGetMonomerApplyThis(){
-        console.log(this.state.monomerid);
         this.setState({ showModalGetMonomer: false });
-        console.log(splitQuotedCIFString(this.state.monomerid)[0]);
+        const monid = splitQuotedCIFString(this.state.monomerid)[0];
+        this.myWorkerGetMonomer.postMessage([monid]);
     }
 
     handleSmilesNameChange(e){
