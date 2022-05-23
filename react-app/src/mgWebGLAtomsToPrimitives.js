@@ -2686,6 +2686,8 @@ colourByAtomType(params){
             colarray[serNum] = [0.0,0.0,1.0,1.0];
         }else if(element==="S"){
             colarray[serNum] = [1.0,1.0,0.0,1.0];
+        }else if(element==="P"){
+            colarray[serNum] = [1.0,0.0,1.0,1.0];
         }else{
             colarray[serNum] = [0.5,0.5,0.5,1.0];
         }

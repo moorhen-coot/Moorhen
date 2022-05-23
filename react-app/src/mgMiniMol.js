@@ -3193,6 +3193,9 @@ getAtomID() {
 getResidueID() {
     let resId = "";
     let seqId = this.getSeqID();
+    if(typeof(seqId)==="undefined"){
+        seqId = this.getSeqIDLabel();
+    }
     resId += seqId;
     let insCode = this.getInsCode();
     if(insCode!=="?"&&insCode!=="."){
