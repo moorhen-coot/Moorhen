@@ -234,8 +234,9 @@ std::vector<std::string> mmdb2_example(const std::string &filename){
     return ligandTypes;
 }
 
-NormalModeAnalysis calculate_normal_modes(const std::vector<double> &carts){
+NormalModeAnalysis calculate_normal_modes(const std::string& pdb_file_name){
     NormalModeAnalysis nma;
+    printf("Normal mode analysis");
     return nma;
 }
 
@@ -358,7 +359,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     function("gesamt",&gesamt_main);
     function("get_annotated_glycans",&get_annotated_glycans);
     function("get_annotated_glycans_hierarchical",&get_annotated_glycans_hierarchical);
-    function("claculate_normal_modes",&calculate_normal_modes);
+    function("calculate_normal_modes",&calculate_normal_modes);
 
     function("gsl_sf_bessel_J0",&gsl_sf_bessel_J0);
     function("gsl_cdf_hypergeometric_P",&gsl_cdf_hypergeometric_P);
