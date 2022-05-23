@@ -1632,6 +1632,7 @@ class MGWebGL extends Component {
         self.mouseDown = false;
         self.mouseDownButton = -1;
 
+        if(this.doneEvents===undefined){
         self.canvas.addEventListener("mousedown",
                 function(evt){
                 self.doMouseDown(evt,self);
@@ -1729,6 +1730,9 @@ class MGWebGL extends Component {
                 }
                 self.doMouseUp(evt,self);
                 }, false)
+        }
+        this.doneEvents = true;
+
         self.gl.viewportWidth = self.canvas.width;
         self.gl.viewportHeight = self.canvas.height;
         console.log(self.gl.viewportWidth,self.gl.viewportHeight);
@@ -7822,7 +7826,7 @@ class MGWebGL extends Component {
             if(minidx>-1){
                 //console.log("mint: "+mint+", mindist: "+mindist+", minidx: "+minidx+", minj: "+minj);
                 var theAtom = {};
-                console.log(self.displayBuffers[minidx].atoms[minj]);
+                //console.log(self.displayBuffers[minidx].atoms[minj]);
                 theAtom.x =  self.displayBuffers[minidx].atoms[minj].x;
                 theAtom.y =  self.displayBuffers[minidx].atoms[minj].y;
                 theAtom.z =  self.displayBuffers[minidx].atoms[minj].z;
