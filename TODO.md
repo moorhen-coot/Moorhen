@@ -16,7 +16,7 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
 - [x] Charged ligands produce SVG (e.g DCB 4a3h)
 - [ ] Some MG stuff in WebGL react-bootstrap
   - [x] Get Smiles (This only does svg. Seems there are no force fields in `RDKit_minimal` at present.
-  - [ ] Get Monomer
+  - [x] Get Monomer
   - [ ] Vibrations
     - [ ] Experimental vs. Theoretical B-values
     - [ ] Cross correlation plot
