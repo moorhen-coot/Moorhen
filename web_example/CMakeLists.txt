@@ -23,9 +23,9 @@ add_executable(web_example web_example.cc ../checkout/ssm/superpose.cpp ../check
 
 target_link_options(web_example PRIVATE -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCCP4Module -sEXPORTED_RUNTIME_METHODS=['FS','readFile'])
 
-target_link_directories(web_example PUBLIC ../ssm ../mmdb2 ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4 ../fftw ../rfftw ../ccp4 ../privateer ../rvapi ../gesamt ../lib)
+target_link_directories(web_example PUBLIC ../ssm ../mmdb2 ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4 ../fftw ../rfftw ../ccp4 ../privateer ../rvapi ../gesamt ../ccp4mg ../lib)
 
-target_link_libraries(web_example ssm rvapi gesamtlib mmdb2 clipper-minimol clipper-phs clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 privateer clipper-minimol gsl m z idbfs.js)
+target_link_libraries(web_example ssm rvapi gesamtlib mmdb2 clipper-minimol clipper-phs clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 privateer clipper-minimol ccp4mg gsl m z idbfs.js)
 target_include_directories(web_example PRIVATE ../checkout/privateer-MKIV/src ../include ../example ../checkout/ssm ../checkout/mmdb2/ ../checkout/mmdb2/mmdb2 ../checkout/clipper ../checkout/fftw-2.1.5/fftw ../checkout/fftw-2.1.5/rfftw ../checkout/libccp4/ccp4 ../checkout/ccp4srs ../checkout/gemmi/include ../checkout/gesamt ../gesamt)
 target_compile_options(web_example PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_WEB_EXAMPLE_)
 install(TARGETS web_example DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../react-app/public/wasm)
