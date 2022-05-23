@@ -7637,7 +7637,8 @@ class MGWebGL extends Component {
         //TODO 
           // Use the right coords and colours and not do this for clicked atoms!
           // Big texture
-        if(this.clickedAtoms.length>0){
+          // I think this below is for debugging, but I have forgotten ...
+        if(false&&this.clickedAtoms.length>0){
 
             this.gl.enableVertexAttribArray(this.shaderProgramCircles.vertexTextureAttribute);
             this.setMatrixUniforms(this.shaderProgramCircles);

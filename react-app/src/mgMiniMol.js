@@ -8,6 +8,68 @@ import getMatrixFromSymOp from './symop';
 import getSymOpsFromSpGrpName from './symop';
 import {base64decode} from './mgBase64'; 
 
+const covalentData = {
+"N O":[1.1,1.6],
+"N H":[0.8,1.6],
+"O H":[0.8,1.6],
+"S H":[0.8,1.6],
+"C H":[0.9,1.6],
+"C C":[1.15,2.0],
+"C N":[1.1,2.0],
+"N N":[0.9,2.0],
+"C O":[1.12,1.63],
+"S S":[1.4,2.6],
+"P O":[1.35,1.7],
+"C S":[1.55,1.9],
+"P S":[1.4,2.6],
+"S O":[1.3,2.0],
+"C CL":[1.65,2.0],
+"C F":[1.25,2.0],
+"N F":[1.20,1.8],
+"N CL":[1.65,2.0],
+"P P":[1.85,2.4],
+"P F":[1.40,1.7],
+"P CL":[1.90,2.3],
+"C BR":[1.8,2.1],
+"C I":[2.0,2.3],
+"F O":[1.3,1.6],
+"S F":[1.4,1.7],
+"S CL":[1.9,2.2],
+"S N":[1.4,2.0],
+"H H":[0.6,1.0],
+}
+
+const covalentDataSq = {
+"N O":[1.21,2.56],
+"N H":[0.64,2.56],
+"O H":[0.64,2.56],
+"S H":[0.64,2.56],
+"C H":[0.81,2.56],
+"C C":[1.32,4.0],
+"C N":[1.21,4.0],
+"N N":[0.81,4.0],
+"C O":[1.25,2.66],
+"S S":[1.96,6.76],
+"P O":[1.82,2.89],
+"C S":[.24,3.6],
+"P S":[1.96,6.76],
+"S O":[1.69,4.0],
+"C CL":[2.7,4.0],
+"C F":[1.56,4.0],
+"N F":[1.44,3.24],
+"N CL":[2.72,4.0],
+"P P":[3.42,5.76],
+"P F":[1.96,2.89],
+"P CL":[3.61,5.29],
+"C BR":[3.24,4.41],
+"C I":[4.0,5.29],
+"F O":[1.69,2.56],
+"S F":[1.96,2.89],
+"S CL":[3.61,4.84],
+"S N":[1.96,4.0],
+"H H":[0.36,1.0],
+}
+
 const sequenceAminoThreeLetterMap = {
     "ALA":'A',
     "ARG":'R',
@@ -919,8 +981,18 @@ calculateBonds() {
                                         let aLoc1 = at1["_atom_site.label_alt_id"];
                                         let aLoc2 = at2["_atom_site.label_alt_id"];
                                         if((aLoc1==="*"||aLoc1==="?"||aLoc1===" "||aLoc1===".")||(aLoc2==="*"||aLoc2==="?"||aLoc2===" "||aLoc2===".")||(aLoc2===aLoc1)){
-                                            at1.bonds.push(at2);
-                                            at2.bonds.push(at1);
+                                            if(at1["_atom_site.type_symbol"]+' '+at2["_atom_site.type_symbol"] in covalentDataSq && 
+                                                ((distsq>covalentDataSq[at1["_atom_site.type_symbol"]+' '+at2["_atom_site.type_symbol"]][1])
+                                                ||(distsq<covalentDataSq[at1["_atom_site.type_symbol"]+' '+at2["_atom_site.type_symbol"]][0])
+                                                )){
+                                            } else if(at2["_atom_site.type_symbol"]+' '+at1["_atom_site.type_symbol"] in covalentDataSq && 
+                                                ((distsq>covalentDataSq[at2["_atom_site.type_symbol"]+' '+at1["_atom_site.type_symbol"]][1])
+                                                ||(distsq<covalentDataSq[at2["_atom_site.type_symbol"]+' '+at1["_atom_site.type_symbol"]][0])
+                                                )){
+                                            } else {
+                                                at1.bonds.push(at2);
+                                                at2.bonds.push(at1);
+                                            }
                                         }
                                     }
                                 }
@@ -951,8 +1023,18 @@ calculateBonds() {
                                             let aLoc1 = at1["_atom_site.label_alt_id"];
                                             let aLoc2 = at2["_atom_site.label_alt_id"];
                                             if((aLoc1==="*"||aLoc1==="?"||aLoc1===" "||aLoc1===".")||(aLoc2==="*"||aLoc2==="?"||aLoc2===" "||aLoc2===".")||(aLoc2===aLoc1)){
-                                                at1.bonds.push(at2);
-                                                at2.bonds.push(at1);
+                                                if(at1["_atom_site.type_symbol"]+' '+at2["_atom_site.type_symbol"] in covalentDataSq && 
+                                                        ((distsq>covalentDataSq[at1["_atom_site.type_symbol"]+' '+at2["_atom_site.type_symbol"]][1])
+                                                         ||(distsq<covalentDataSq[at1["_atom_site.type_symbol"]+' '+at2["_atom_site.type_symbol"]][0])
+                                                        )){
+                                                } else if(at2["_atom_site.type_symbol"]+' '+at1["_atom_site.type_symbol"] in covalentDataSq && 
+                                                        ((distsq>covalentDataSq[at2["_atom_site.type_symbol"]+' '+at1["_atom_site.type_symbol"]][1])
+                                                         ||(distsq<covalentDataSq[at2["_atom_site.type_symbol"]+' '+at1["_atom_site.type_symbol"]][0])
+                                                        )){
+                                                } else {
+                                                    at1.bonds.push(at2);
+                                                    at2.bonds.push(at1);
+                                                }
                                             }
                                         }
                                     }
@@ -1100,63 +1182,6 @@ calculateBonds() {
 
     this.hasBonds = true;
     return;
-}
-
-calculateBondsOld() {
-
-    if(this.hasBonds){
-        return;
-    }
-    let mindist = 0.6;
-    let maxdist = 1.8;
-    let minsq = mindist * mindist;
-    let maxsq = maxdist * maxdist;
-
-    let atoms = this.getAllAtoms();
-    let len = atoms.length;
-
-    let abs = Math.abs;
-    
-    //let ic = 0;
-    //let icp = 0;
-    let nbonds2 = 0;
-    for(let iat1=0;iat1<len;iat1++){
-        let at1 = atoms[iat1];
-        let at1x = at1["_atom_site.Cartn_x"];
-        let at1y = at1["_atom_site.Cartn_y"];
-        let at1z = at1["_atom_site.Cartn_z"];
-        for(let iat2=iat1+1;iat2<len;iat2++){
-            //icp += 1;
-            let at2  = atoms[iat2];
-            let at2x = at2["_atom_site.Cartn_x"];
-            let at1at2x = abs(at1x-at2x);
-            if(at1at2x<=maxdist){
-                let at2y = at2["_atom_site.Cartn_y"];
-                let at1at2y = abs(at1y-at2y);
-                if(at1at2y<=maxdist){
-                    let at2z = at2["_atom_site.Cartn_z"];
-                    let at1at2z = abs(at1z-at2z);
-                    //ic += 1;
-                    if(at1at2z<=maxdist){
-                        let distsq = (at1at2x)*(at1at2x) + (at1at2y)*(at1at2y) + (at1at2z)*(at1at2z);
-                        if (distsq >= minsq && distsq <= maxsq){
-                            //console.log(at1.getAtomID()+" "+at2.getAtomID());
-                            nbonds2++;
-                            at1.bonds.push(at2);
-                            at2.bonds.push(at1);
-                            //console.log(at1.bonds.length+" "+at2.bonds.length);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    //console.log("Tested "+ic+" bonds, of "+icp);
-
-    this.hasBonds = true;
-    console.log("Added "+nbonds2+" bonds again");
-
 }
 
 bondLength(at1,at2) {
@@ -3001,138 +3026,6 @@ CloseContacts(atoms,atoms2,mindist,maxdist,checkMetalDistance) {
     return contacts;
 }
 
-SeekContactsSimple(atoms,atoms2,mindist,maxdist) {
-    let minsq = mindist * mindist;
-    let maxsq = maxdist * maxdist;
-    let contacts = [];
-
-    console.log("SeekContactsSimple");
-    console.log(atoms === atoms2);
-
-    let same = false;
-    if(atoms === atoms2){
-        same = true;
-    }
-
-    let abs=Math.abs; 
-    let sqrt=Math.sqrt; 
-
-    let len = atoms.length;
-    for(let iat1=0;iat1<len;iat1++){
-        let at1 = atoms[iat1];
-        let at1x = at1["_atom_site.Cartn_x"];
-        let at1y = at1["_atom_site.Cartn_y"];
-        let at1z = at1["_atom_site.Cartn_z"];
-        //FIXME - I presume I want this?
-        //let altLoc = at1["_atom_site.label_alt_id"];
-        let s2 = 0;
-        let e2 = atoms2.length;
-        //if(same) s2 = iat1+1;
-        if(same) e2 = iat1;
-        for(let iat2=s2;iat2<e2;iat2++){
-            let at2  = atoms2[iat2];
-            let at2x = at2["_atom_site.Cartn_x"];
-            let at1at2x = abs(at1x-at2x);
-            if(at1at2x<=maxdist){
-                let at2y = at2["_atom_site.Cartn_y"];
-                let at1at2y = abs(at1y-at2y);
-                if(at1at2y<=maxdist){
-                    let at2z = at2["_atom_site.Cartn_z"];
-                    let at1at2z = abs(at1z-at2z);
-                    if(at1at2z<=maxdist){
-                        let distsq = (at1at2x)*(at1at2x) + (at1at2y)*(at1at2y) + (at1at2z)*(at1at2z);
-                        //console.log("("+maxdist+") "+at1at2x+" "+at1at2y+" "+at1at2z+" "+Math.sqrt(distsq));
-                        if (distsq >= minsq && distsq <= maxsq){
-                            //if(atoms.indexOf(at2)==-1||at1["_atom_site.id"]>at2["_atom_site.id"]){
-                            contacts.push([sqrt(distsq), at1, at2]);
-                            //console.log("Add simple "+at1.getAtomID()+" "+at2.getAtomID());
-                            //}
-                        }
-                    }
-                }
-            }
-        }
-    }
-    return contacts;
-}
-    
-SeekContactsOld(atoms,atoms2,mindist,maxdist) {
-    let minsq = mindist * mindist;
-    let maxsq = maxdist * maxdist;
-    let contacts = [];
-
-    console.log("SeekContacts");
-    console.log(atoms === atoms2);
-
-    let same = false;
-    if(atoms === atoms2){
-        same = true;
-    }
-
-    let abs=Math.abs; 
-    let sqrt=Math.sqrt; 
-
-    let len = atoms.length;
-    for(let iat1=0;iat1<len;iat1++){
-        let at1 = atoms[iat1];
-        let at1x = at1["_atom_site.Cartn_x"];
-        let at1y = at1["_atom_site.Cartn_y"];
-        let at1z = at1["_atom_site.Cartn_z"];
-        let altLoc = at1["_atom_site.label_alt_id"];
-        let s2 = 0;
-        let e2 = atoms2.length;
-        //if(same) s2 = iat1+1;
-        if(same) e2 = iat1;
-        if(altLoc!=="*"&&altLoc!=="?"&&altLoc!==" "&&altLoc!=="."){
-            for(let iat2=s2;iat2<e2;iat2++){
-                let at2  = atoms2[iat2];
-                let at2x = at2["_atom_site.Cartn_x"];
-                let at1at2x = abs(at1x-at2x);
-                let altLoc2 = at2["_atom_site.label_alt_id"];
-                if(at1at2x<=maxdist&&(altLoc2==="*"||altLoc2==="?"||altLoc2===" "||altLoc2==="."||altLoc2===altLoc)){
-                    let at2y = at2["_atom_site.Cartn_y"];
-                    let at1at2y = abs(at1y-at2y);
-                    if(at1at2y<=maxdist){
-                        let at2z = at2["_atom_site.Cartn_z"];
-                        let at1at2z = abs(at1z-at2z);
-                        if(at1at2z<=maxdist){
-                            let distsq = (at1at2x)*(at1at2x) + (at1at2y)*(at1at2y) + (at1at2z)*(at1at2z);
-                            if (distsq >= minsq && distsq <= maxsq){
-                                //if(atoms.indexOf(at2)==-1||at1["_atom_site.id"]>at2["_atom_site.id"]){
-                                    contacts.push([sqrt(distsq), at1, at2]);
-                                //}
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            for(let iat2=s2;iat2<e2;iat2++){
-                let at2  = atoms2[iat2];
-                let at2x = at2["_atom_site.Cartn_x"];
-                let at1at2x = abs(at1x-at2x);
-                if(at1at2x<=maxdist){
-                    let at2y = at2["_atom_site.Cartn_y"];
-                    let at1at2y = abs(at1y-at2y);
-                    if(at1at2y<=maxdist){
-                        let at2z = at2["_atom_site.Cartn_z"];
-                        let at1at2z = abs(at1z-at2z);
-                        if(at1at2z<=maxdist){
-                            let distsq = (at1at2x)*(at1at2x) + (at1at2y)*(at1at2y) + (at1at2z)*(at1at2z);
-                            //console.log("("+maxdist+") "+at1at2x+" "+at1at2y+" "+at1at2z+" "+Math.sqrt(distsq));
-                            if (distsq >= minsq && distsq <= maxsq){
-                                //if(atoms.indexOf(at2)==-1||at1["_atom_site.id"]>at2["_atom_site.id"]){
-                                    contacts.push([sqrt(distsq), at1, at2]);
-                                //}
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    return contacts
-}
 }
 
 class Chain{
