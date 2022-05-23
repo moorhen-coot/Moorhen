@@ -24,9 +24,18 @@ onmessage = function(e) {
 
     var nma = CCP4Module.calculate_normal_modes(e.data[1]);
 
-    console.log(nma);
+    const bvalc = nma.GetBValues();
+    const nbval = bvalc.size();
+
+    let bvals = [];
+
+//FIXME - x needs to be sequence number?
+    for(let i=0;i<nbval;i++){
+        bvals.push({x:i+1,y:bvalc.get(i)});
+    }
 
     let result = 0;
     
+    postMessage(["bvalues",bvals]);
     postMessage(["result",result]);
 }

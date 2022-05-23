@@ -36,6 +36,7 @@
 #include "privateer-lib.h"
 
 #include "mmut_nma.h"
+#include "cartesian.h"
 
 using namespace emscripten;
 int superpose_main(const std::vector<std::string> &files, const std::vector<std::string> &selections);
@@ -237,6 +238,29 @@ std::vector<std::string> mmdb2_example(const std::string &filename){
 NormalModeAnalysis calculate_normal_modes(const std::string& pdb_file_name){
     NormalModeAnalysis nma;
     printf("Normal mode analysis");
+
+    std::vector<Cartesian> carts;
+    mmdb::Manager *molHnd = new mmdb::Manager();
+
+    const char *filename_cp = pdb_file_name.c_str();
+
+    printf("Reading a PDB file: %s\n",filename_cp);
+    int RC = molHnd->ReadCoorFile(filename_cp);
+    printf("RC:%d\n",RC);
+    assert(RC==0);
+
+    int selHnd = molHnd->NewSelection();
+    molHnd->SelectAtoms(selHnd, 0,"*",mmdb::ANY_RES,"*",mmdb::ANY_RES,"*","*","CA","C","*",mmdb::SKEY_NEW);
+
+    mmdb::Atom** SelAtoms=0;
+    int nAtoms;
+    molHnd->GetSelIndex(selHnd,SelAtoms,nAtoms);
+    printf("nAtoms:%d\n",nAtoms);
+    for(int i=0;i<nAtoms;i++){
+        carts.push_back(Cartesian(SelAtoms[i]->x,SelAtoms[i]->y,SelAtoms[i]->z));
+    }
+    nma.Calculate(carts);
+    
     return nma;
 }
 
@@ -302,6 +326,7 @@ clipper::Xmap<float> clipper_example(const std::string& mtz_file_name){
 
 EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<std::string>("VectorString");
+    register_vector<double>("VectorDouble");
     function("initialize_cif_pdb",&initialize_cif_pdb);
     function("multiply",&multiply);
     function("mmdb2_example",&mmdb2_example);
@@ -350,6 +375,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<NormalModeAnalysis>("NormalModeAnalysis")
     .constructor()
+    .function("GetBValues",&NormalModeAnalysis::GetBValues)
+    .function("GetModeShapes",&NormalModeAnalysis::GetModeShapes)
     ;
     function("clipper_example",&clipper_example);
     function("printMapStats",&printMapStats);
