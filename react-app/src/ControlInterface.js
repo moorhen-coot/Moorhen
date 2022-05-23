@@ -7,6 +7,7 @@ import LightingUI from './LightingUI';
 import MGWebWizardUI from './MGWebWizardUI';
 import DisplayTable from './DisplayTable';
 import Superpose from './Superpose';
+import NormalModes from './NormalModes';
 
 class ControlInterface extends Component {
 
@@ -66,6 +67,9 @@ class ControlInterface extends Component {
                 </Tab>
                 <Tab eventKey="superpose" title="Superposition">
                 <Superpose displayData={displayData} dataFiles={dataFiles} matricesChanged={this.matricesChanged.bind(this)} />
+                </Tab>
+                <Tab eventKey="normalmodes" title="Normal mode analysis">
+                <NormalModes displayData={displayData} dataFiles={dataFiles} />
                 </Tab>
                 </Tabs>
                );

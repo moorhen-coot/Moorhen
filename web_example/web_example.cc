@@ -35,6 +35,8 @@
 
 #include "privateer-lib.h"
 
+#include "mmut_nma.h"
+
 using namespace emscripten;
 int superpose_main(const std::vector<std::string> &files, const std::vector<std::string> &selections);
 int gesamt_main(const std::vector<std::string> &_argv);
@@ -232,6 +234,11 @@ std::vector<std::string> mmdb2_example(const std::string &filename){
     return ligandTypes;
 }
 
+NormalModeAnalysis calculate_normal_modes(const std::vector<double> &carts){
+    NormalModeAnalysis nma;
+    return nma;
+}
+
 clipper::Xmap<float> clipper_example(const std::string& mtz_file_name){
     clipper::CCP4MTZfile mtzin;
 
@@ -340,6 +347,9 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("close_read",&clipper::CCP4MAPfile::close_read)
     .function("close_write",&clipper::CCP4MAPfile::close_write)
     ;
+    class_<NormalModeAnalysis>("NormalModeAnalysis")
+    .constructor()
+    ;
     function("clipper_example",&clipper_example);
     function("printMapStats",&printMapStats);
     function("exportXMapToMapFile",&exportXMapToMapFile);
@@ -348,6 +358,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     function("gesamt",&gesamt_main);
     function("get_annotated_glycans",&get_annotated_glycans);
     function("get_annotated_glycans_hierarchical",&get_annotated_glycans_hierarchical);
+    function("claculate_normal_modes",&calculate_normal_modes);
+
     function("gsl_sf_bessel_J0",&gsl_sf_bessel_J0);
     function("gsl_cdf_hypergeometric_P",&gsl_cdf_hypergeometric_P);
 }
