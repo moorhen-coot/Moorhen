@@ -70,6 +70,9 @@ class DisplayTable extends Component {
                              self.setState({log:self.message}, ()=> {self.preRef.current.scrollTop = self.preRef.current.scrollHeight;});
                          }
                          if(e.data[0]==="bvalues"){
+                             console.log(e.data[1]);
+                         }
+                         if(e.data[0]==="bvalues"){
                              const bvals = e.data[1];
                              const label = 'Theoretical B-Values (unscaled)';
                              const data = {

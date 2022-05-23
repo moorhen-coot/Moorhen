@@ -37,8 +37,20 @@
 
 #include "mmut_nma.h"
 #include "cartesian.h"
+#include "matrix.h"
 
 using namespace emscripten;
+
+class MGmatrix : public matrix {
+    public:
+       MGmatrix() : matrix() {};
+       unsigned get_rows() { return matrix::get_rows();};
+       unsigned get_columns() { return matrix::get_columns();};
+       MGmatrix(unsigned int x,unsigned int y) : matrix(x,y) {};
+
+       double get(unsigned i, unsigned j) { return (*this)(i,j); }
+};
+
 int superpose_main(const std::vector<std::string> &files, const std::vector<std::string> &selections);
 int gesamt_main(const std::vector<std::string> &_argv);
 
@@ -235,6 +247,17 @@ std::vector<std::string> mmdb2_example(const std::string &filename){
     return ligandTypes;
 }
 
+MGmatrix GetCorrelations(const NormalModeAnalysis& nma, double norm){
+    matrix mat = nma.GetCorrelations(norm);
+    MGmatrix mgmat(mat.get_rows(),mat.get_columns());
+    for(unsigned i=0;i<mat.get_rows();i++){
+        for(unsigned j=0;j<mat.get_rows();j++){
+            mgmat(i,j) = mat(i,j);
+        }
+    }
+    return mgmat;
+}
+
 NormalModeAnalysis calculate_normal_modes(const std::string& pdb_file_name){
     NormalModeAnalysis nma;
     printf("Normal mode analysis");
@@ -373,6 +396,12 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("close_read",&clipper::CCP4MAPfile::close_read)
     .function("close_write",&clipper::CCP4MAPfile::close_write)
     ;
+    class_<MGmatrix>("MGmatrix")
+    .constructor()
+    .function("get_rows",&MGmatrix::get_rows)
+    .function("get_columns",&MGmatrix::get_columns)
+    .function("get",&MGmatrix::get)
+    ;
     class_<NormalModeAnalysis>("NormalModeAnalysis")
     .constructor()
     .function("GetBValues",&NormalModeAnalysis::GetBValues)
@@ -387,6 +416,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     function("get_annotated_glycans",&get_annotated_glycans);
     function("get_annotated_glycans_hierarchical",&get_annotated_glycans_hierarchical);
     function("calculate_normal_modes",&calculate_normal_modes);
+    function("GetCorrelations",&GetCorrelations);
 
     function("gsl_sf_bessel_J0",&gsl_sf_bessel_J0);
     function("gsl_cdf_hypergeometric_P",&gsl_cdf_hypergeometric_P);

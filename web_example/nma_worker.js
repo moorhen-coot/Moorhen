@@ -26,6 +26,10 @@ onmessage = function(e) {
 
     const bvalc = nma.GetBValues();
     const nbval = bvalc.size();
+    //FIXME - Need to calculate real norm from exptl. BVals for this. See MG ElasticNetworkModel code.
+    const norm = 1;
+    const norm_matrix = CCP4Module.GetCorrelations(nma,norm);
+    console.log(norm_matrix.get_rows(),norm_matrix.get_columns());
 
     let bvals = [];
 
@@ -34,8 +38,18 @@ onmessage = function(e) {
         bvals.push({x:i+1,y:bvalc.get(i)});
     }
 
+    const nrows = norm_matrix.get_rows();
+    const ncols = norm_matrix.get_columns();
+    let corrMat = [];
+    for(let i=0;i<nrows;i++){
+        for(let j=0;j<ncols;j++){
+            corrMat.push(norm_matrix.get(i,j));
+        }
+    }
+
     let result = 0;
     
+    postMessage(["corrMat",corrMat]);
     postMessage(["bvalues",bvals]);
     postMessage(["result",result]);
 }
