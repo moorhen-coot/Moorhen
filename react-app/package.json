@@ -12,6 +12,7 @@
     "html-react-parser": "^1.4.12",
     "pako": "^2.0.4",
     "pca-js": "^1.0.2",
+    "plotly.js": "^2.12.1",
     "prop-types": "^15.8.1",
     "rc-tree": "^5.6.1",
     "react": "^18.1.0",
@@ -20,6 +21,7 @@
     "react-chartjs-2": "^4.1.0",
     "react-color": "^2.19.3",
     "react-dom": "^18.1.0",
+    "react-plotly.js": "^2.5.1",
     "react-scripts": "5.0.1",
     "reactcss": "^1.2.3",
     "web-vitals": "^2.1.4"

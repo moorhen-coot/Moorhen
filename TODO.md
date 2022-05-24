@@ -21,7 +21,7 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
     - [x] Scale caclulated B-Factors as is done in MG.
     - [x] Make the structure selection a combo or radio buttons instead of check boxes.
     - [x] Experimental vs. Theoretical B-values
-    - [ ] Cross correlation plot
+    - [x] Cross correlation plot
     - [ ] list normal modes
     - [ ] Animate normal modes
   - [ ] Glycan viewer to graphics interactivity

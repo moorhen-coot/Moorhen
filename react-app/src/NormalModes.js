@@ -11,6 +11,8 @@ import InputGroup from 'react-bootstrap/InputGroup';
 import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
 
+import Plot from 'react-plotly.js';
+
 import {
   Chart as ChartJS,
   LinearScale,
@@ -50,7 +52,7 @@ class DisplayTable extends Component {
 
         this.preRef = React.createRef();
 
-        this.state = {log:"",chartData:data,chartOptions:options, selected:"unk"};
+        this.state = {log:"",chartData:data,chartOptions:options, selected:"unk",contourData:{x:[],y:[],z:[],type:'contour'}};
         this.jobData = {};
         this.message = "";
         const self = this;
@@ -67,6 +69,10 @@ class DisplayTable extends Component {
                          //This is then where we decide upon the action
                              self.message += e.data[1] + "\n";
                              self.setState({log:self.message}, ()=> {self.preRef.current.scrollTop = self.preRef.current.scrollHeight;});
+                         }
+                         if(e.data[0]==="corrMat"){
+                             console.log(e.data[1]);
+                             self.setState({contourData:e.data[1]});
                          }
                          if(e.data[0]==="bvalues"){
                              const bvals = e.data[1][0];
@@ -186,7 +192,13 @@ class DisplayTable extends Component {
             selected = displayData[0].id;
         }
         const data = this.state.chartData;
+        const contourData = this.state.contourData;
         const options = this.state.chartOptions;
+
+        const x = this.state.contourData.x;
+        const y = this.state.contourData.y;
+        const z = this.state.contourData.z;
+
         return (
                 <>
                 <Form.Select value={selected} onChange={handleChange} >
@@ -209,6 +221,21 @@ class DisplayTable extends Component {
                 <pre ref={this.preRef} style={styles.logpre}>
                 {this.state.log}
                 </pre>
+                </Tab>
+                <Tab eventKey="nma-plotly" title="Correlation Graph">
+                <Plot
+        data={[
+          {
+            x: x,
+            y: y,
+            z: z,
+            type: 'contour',
+          },
+        ]}
+        layout={ {width: 420, height: 340, title: 'Cross-correlation Plot'} }
+
+                  />
+                
                 </Tab>
                 </Tabs>
             </>

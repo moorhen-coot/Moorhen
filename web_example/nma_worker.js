@@ -55,10 +55,12 @@ onmessage = function(e) {
 
     const nrows = norm_matrix.get_rows();
     const ncols = norm_matrix.get_columns();
-    let corrMat = [];
+    let corrMat = {x:[],y:[],z:[]};
     for(let i=0;i<nrows;i++){
         for(let j=0;j<ncols;j++){
-            corrMat.push(norm_matrix.get(i,j));
+            corrMat.x.push(i);
+            corrMat.y.push(j);
+            corrMat.z.push(norm_matrix.get(i,j));
         }
     }
 
