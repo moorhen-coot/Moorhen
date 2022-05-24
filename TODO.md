@@ -19,7 +19,7 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
   - [x] Get Monomer
   - [ ] Vibrations
     - [x] Scale caclulated B-Factors as is done in MG.
-    - [ ] Make the structure selection a combo or radio buttons instead of check boxes.
+    - [x] Make the structure selection a combo or radio buttons instead of check boxes.
     - [x] Experimental vs. Theoretical B-values
     - [ ] Cross correlation plot
     - [ ] list normal modes

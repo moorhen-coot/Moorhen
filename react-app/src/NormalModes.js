@@ -8,7 +8,6 @@ import Col from 'react-bootstrap/Col';
 import Row from 'react-bootstrap/Row';
 import Form from 'react-bootstrap/Form';
 import InputGroup from 'react-bootstrap/InputGroup';
-import Dropdown from 'react-bootstrap/Dropdown';
 import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
 
@@ -51,7 +50,7 @@ class DisplayTable extends Component {
 
         this.preRef = React.createRef();
 
-        this.state = {selected:{ids:{}},log:"",chartData:data,chartOptions:options};
+        this.state = {log:"",chartData:data,chartOptions:options, selected:"unk"};
         this.jobData = {};
         this.message = "";
         const self = this;
@@ -101,29 +100,27 @@ class DisplayTable extends Component {
         const self = this;
         const dataFiles = self.props.dataFiles.ids;
         const displayData = this.props.displayData;
-        let checked = self.state.selected.ids;
+        let key = self.state.selected;
+        if(key==="unk"&&displayData.length>0){
+            key = displayData[0].id;
+        }
         let nmaInputFileData = null;
         let nmaInputFileNames = null;
         const jobid = guid();
         this.jobData[jobid] = [];
-        for (const [key, value] of Object.entries(checked)) {
-            if(value){
-                for(let iobj=0;iobj<displayData.length;iobj++){
-                    let data_id = displayData[iobj].id;
-                    let name = displayData[iobj].name;
-                    if(data_id===key){
-                        this.jobData[jobid].push(data_id);
-                        nmaInputFileData = dataFiles[key].contents;
-                        const isPDB = dataFiles[key].isPDB;
-                        if(isPDB){
-                            nmaInputFileNames = name+".pdb";
-                        } else {
-                            nmaInputFileNames = name+".cif";
-                        }
-                        //FIXME - This loop is pointless - we want exactly one input.
-                        break;
-                    }
+        for(let iobj=0;iobj<displayData.length;iobj++){
+            let data_id = displayData[iobj].id;
+            let name = displayData[iobj].name;
+            if(data_id===key){
+                this.jobData[jobid].push(data_id);
+                nmaInputFileData = dataFiles[key].contents;
+                const isPDB = dataFiles[key].isPDB;
+                if(isPDB){
+                    nmaInputFileNames = name+".pdb";
+                } else {
+                    nmaInputFileNames = name+".cif";
                 }
+                break;
             }
         }
         if(nmaInputFileData){
@@ -131,11 +128,17 @@ class DisplayTable extends Component {
         }
     }
 
+    /*
     handleCheckChange(data_id, evt){
         const self = this;
         const changedIds = { ...this.state.selected.ids, [data_id] : evt.target.checked };
         const newIds = { ...this.state.selected, ids : changedIds };
         this.setState({selected:newIds});
+    }
+    */
+
+    handleChange(evt){
+        this.setState({selected:evt.target.value});
     }
 
     render () {
@@ -171,24 +174,24 @@ class DisplayTable extends Component {
         const displayData = this.props.displayData;
         let rows = [];
         let handleNMA = this.handleNMA.bind(self);
+        let handleChange = this.handleChange.bind(self);
+        let selected = this.state.selected;
         for(let iobj=0;iobj<displayData.length;iobj++){
             let data_id = displayData[iobj].id;
             let name = displayData[iobj].name;
-            let keySup = "sup_"+data_id;
-            rows.push(<tr key={iobj}><td>{name}</td>
-            <td key={keySup}><input type="checkbox" onChange={(evt) => this.handleCheckChange(data_id, evt)}/></td>
-            </tr>
-            );
+            let keySup = data_id;
+            rows.push(<option value={keySup}>{name}</option>);
+        }
+        if(selected==="unk"&&displayData.length>0){
+            selected = displayData[0].id;
         }
         const data = this.state.chartData;
         const options = this.state.chartOptions;
         return (
                 <>
-                <Table responsive>
-                <tbody>
+                <Form.Select value={selected} onChange={handleChange} >
                 {rows}
-                </tbody>
-                </Table>
+                </Form.Select>
                 <Button size="sm" onClick={handleNMA}>Calculate normal modes</Button>
                 <div className="vspace1em"></div>
                 <Tabs
