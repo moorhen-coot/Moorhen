@@ -18,7 +18,7 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
   - [x] Get Smiles (This only does svg. Seems there are no force fields in `RDKit_minimal` at present.
   - [x] Get Monomer
   - [ ] Vibrations
-    - [ ] Scale caclulated B-Factors as is done in MG.
+    - [x] Scale caclulated B-Factors as is done in MG.
     - [ ] Make the structure selection a combo or radio buttons instead of check boxes.
     - [ ] Experimental vs. Theoretical B-values
     - [ ] Cross correlation plot

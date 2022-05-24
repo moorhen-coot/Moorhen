@@ -258,6 +258,33 @@ MGmatrix GetCorrelations(const NormalModeAnalysis& nma, double norm){
     return mgmat;
 }
 
+std::vector<double> get_CA_bvalues_from_file(const std::string& pdb_file_name){
+
+    std::vector<double> bvals;
+
+    mmdb::Manager *molHnd = new mmdb::Manager();
+
+    const char *filename_cp = pdb_file_name.c_str();
+
+    printf("Reading a PDB file: %s\n",filename_cp);
+    int RC = molHnd->ReadCoorFile(filename_cp);
+    printf("RC:%d\n",RC);
+    assert(RC==0);
+
+    int selHnd = molHnd->NewSelection();
+    molHnd->SelectAtoms(selHnd, 0,"*",mmdb::ANY_RES,"*",mmdb::ANY_RES,"*","*","CA","C","*",mmdb::SKEY_NEW);
+
+    mmdb::Atom** SelAtoms=0;
+    int nAtoms;
+    molHnd->GetSelIndex(selHnd,SelAtoms,nAtoms);
+    printf("nAtoms:%d\n",nAtoms);
+    for(int i=0;i<nAtoms;i++){
+        bvals.push_back(SelAtoms[i]->tempFactor);
+    }
+
+    return bvals;
+}
+
 NormalModeAnalysis calculate_normal_modes(const std::string& pdb_file_name){
     NormalModeAnalysis nma;
     printf("Normal mode analysis");
@@ -415,6 +442,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     function("gesamt",&gesamt_main);
     function("get_annotated_glycans",&get_annotated_glycans);
     function("get_annotated_glycans_hierarchical",&get_annotated_glycans_hierarchical);
+    function("get_CA_bvalues_from_file",&get_CA_bvalues_from_file);
     function("calculate_normal_modes",&calculate_normal_modes);
     function("GetCorrelations",&GetCorrelations);
 

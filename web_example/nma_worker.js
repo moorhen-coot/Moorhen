@@ -26,16 +26,31 @@ onmessage = function(e) {
 
     const bvalc = nma.GetBValues();
     const nbval = bvalc.size();
-    //FIXME - Need to calculate real norm from exptl. BVals for this. See MG ElasticNetworkModel code.
-    const norm = 1;
-    const norm_matrix = CCP4Module.GetCorrelations(nma,norm);
-    console.log(norm_matrix.get_rows(),norm_matrix.get_columns());
 
     let bvals = [];
+    let bvals_exptl = [];
 
-//FIXME - x needs to be sequence number?
+    const bval_exptl =  CCP4Module.get_CA_bvalues_from_file(e.data[1]);
+    let norm;
+    if(nbval>0){
+        norm = 0.0;
+        for(let i=0;i<nbval;i++){
+            const theo_bval = bvalc.get(i);
+            const expr_bval = bval_exptl.get(i);
+            norm += theo_bval/expr_bval;
+        }
+        norm /= nbval;
+        norm = 1/norm;
+    }else{
+        norm = 1.0;
+    }
+
+    const norm_matrix = CCP4Module.GetCorrelations(nma,norm);
+
+//FIXME - (possible) x should be sequence number?
     for(let i=0;i<nbval;i++){
-        bvals.push({x:i+1,y:bvalc.get(i)});
+        bvals.push({x:i+1,y:bvalc.get(i)*norm});
+        bvals_exptl.push({x:i+1,y:bval_exptl.get(i)});
     }
 
     const nrows = norm_matrix.get_rows();
@@ -51,5 +66,6 @@ onmessage = function(e) {
     
     postMessage(["corrMat",corrMat]);
     postMessage(["bvalues",bvals]);
+    postMessage(["bvalues_exptl",bvals_exptl]);
     postMessage(["result",result]);
 }
