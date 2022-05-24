@@ -65,7 +65,6 @@ onmessage = function(e) {
     let result = 0;
     
     postMessage(["corrMat",corrMat]);
-    postMessage(["bvalues",bvals]);
-    postMessage(["bvalues_exptl",bvals_exptl]);
+    postMessage(["bvalues",[bvals,bvals_exptl]]);
     postMessage(["result",result]);
 }

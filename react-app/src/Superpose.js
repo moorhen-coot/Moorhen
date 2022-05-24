@@ -88,6 +88,8 @@ class DisplayTable extends Component {
                                label: label,
                                data: alignData,
                                backgroundColor: 'rgba(255, 99, 132, 1)',
+                               borderColor: 'rgba(255, 99, 132, 1)',
+                               showLine:true,
                              },
                            ],
                          };

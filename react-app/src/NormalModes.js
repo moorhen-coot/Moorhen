@@ -70,22 +70,29 @@ class DisplayTable extends Component {
                              self.setState({log:self.message}, ()=> {self.preRef.current.scrollTop = self.preRef.current.scrollHeight;});
                          }
                          if(e.data[0]==="bvalues"){
-                             console.log(e.data[1]);
-                         }
-                         if(e.data[0]==="bvalues"){
-                             const bvals = e.data[1];
-                             const label = 'Theoretical B-Values (unscaled)';
+                             const bvals = e.data[1][0];
+                             const exptl_bvals = e.data[1][1];
+                             const theo_label = 'Theoretical B-Values';
+                             const exptl_label = 'Experimental B-Values';
                              const data = {
                                datasets: [
                                  {
-                                   label: label,
+                                   label: theo_label,
                                    data: bvals,
-                                   backgroundColor: 'rgba(255, 99, 132, 1)',
+                                   backgroundColor: 'rgba(88, 88, 255, 1)',
+                                   borderColor: 'rgba(88, 88, 255, 1)',
+                                   showLine:true,
+                                 },
+                                 {
+                                   label: exptl_label,
+                                   data: exptl_bvals,
+                                   backgroundColor: 'rgba(88, 255, 88, 1)',
+                                   borderColor: 'rgba(88, 255, 88, 1)',
+                                   showLine:true,
                                  },
                                ],
                              };
-
-                             self.setState({chartData:data});
+                             self.setState({chartData:data})
                          }
         }
     }
