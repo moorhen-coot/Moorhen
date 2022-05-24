@@ -22,7 +22,7 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
     - [x] Make the structure selection a combo or radio buttons instead of check boxes.
     - [x] Experimental vs. Theoretical B-values
     - [x] Cross correlation plot
-    - [ ] list normal modes
+    - [x] List normal modes
     - [ ] Animate normal modes
   - [ ] Glycan viewer to graphics interactivity
   - [ ] PDB search

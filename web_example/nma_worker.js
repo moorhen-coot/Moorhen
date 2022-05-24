@@ -22,7 +22,7 @@ onmessage = function(e) {
         //This happens when we supply sme file name on subsequent calls to this function?:w
     }
 
-    var nma = CCP4Module.calculate_normal_modes(e.data[1]);
+    var nma = CCP4Module.calculate_normal_modes(e.data[1],1);
 
     const bvalc = nma.GetBValues();
     const nbval = bvalc.size();
@@ -69,4 +69,14 @@ onmessage = function(e) {
     postMessage(["corrMat",corrMat]);
     postMessage(["bvalues",[bvals,bvals_exptl]]);
     postMessage(["result",result]);
+
+    var nma_anm = CCP4Module.calculate_normal_modes(e.data[1],0);
+    const eigens = CCP4Module.GetEigen(nma_anm);
+    const evalMat = eigens.get(1);
+    const nrows_e = evalMat.get_rows();
+    const ncols_e = evalMat.get_columns();
+    postMessage(["output","Normal modes"]);
+    for(let i=6;i<nrows_e;i++){
+        postMessage(["output",String(evalMat.get(i,0))]);
+    }
 }

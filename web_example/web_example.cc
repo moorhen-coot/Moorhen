@@ -247,11 +247,29 @@ std::vector<std::string> mmdb2_example(const std::string &filename){
     return ligandTypes;
 }
 
+std::vector<MGmatrix> GetEigen(const NormalModeAnalysis& nma){
+    std::vector<MGmatrix> mgmats;
+    std::vector<matrix> mats = nma.GetEigen();
+
+    for(unsigned k=0;k<mats.size();k++){
+        //std::cout << k << " " << mats[k].get_rows() << " " << mats[k].get_columns() << std::endl;
+        MGmatrix mgmat(mats[k].get_rows(),mats[k].get_columns());
+        for(unsigned i=0;i<mats[k].get_rows();i++){
+            for(unsigned j=0;j<mats[k].get_columns();j++){
+                mgmat(i,j) = mats[k](i,j);
+                //std::cout << k << " " << i << " " << j << " " <<  mats[k](i,j) << std::endl;
+            }
+        }
+        mgmats.push_back(mgmat);
+    }
+    return mgmats;
+}
+
 MGmatrix GetCorrelations(const NormalModeAnalysis& nma, double norm){
     matrix mat = nma.GetCorrelations(norm);
     MGmatrix mgmat(mat.get_rows(),mat.get_columns());
     for(unsigned i=0;i<mat.get_rows();i++){
-        for(unsigned j=0;j<mat.get_rows();j++){
+        for(unsigned j=0;j<mat.get_columns();j++){
             mgmat(i,j) = mat(i,j);
         }
     }
@@ -285,7 +303,7 @@ std::vector<double> get_CA_bvalues_from_file(const std::string& pdb_file_name){
     return bvals;
 }
 
-NormalModeAnalysis calculate_normal_modes(const std::string& pdb_file_name){
+NormalModeAnalysis calculate_normal_modes(const std::string& pdb_file_name, int mode=MMUT_GNM){
     NormalModeAnalysis nma;
     printf("Normal mode analysis");
 
@@ -309,7 +327,7 @@ NormalModeAnalysis calculate_normal_modes(const std::string& pdb_file_name){
     for(int i=0;i<nAtoms;i++){
         carts.push_back(Cartesian(SelAtoms[i]->x,SelAtoms[i]->y,SelAtoms[i]->z));
     }
-    nma.Calculate(carts);
+    nma.Calculate(carts,mode);
     
     return nma;
 }
@@ -377,6 +395,7 @@ clipper::Xmap<float> clipper_example(const std::string& mtz_file_name){
 EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<std::string>("VectorString");
     register_vector<double>("VectorDouble");
+    register_vector<MGmatrix>("MatrixDouble");
     function("initialize_cif_pdb",&initialize_cif_pdb);
     function("multiply",&multiply);
     function("mmdb2_example",&mmdb2_example);
@@ -445,6 +464,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     function("get_CA_bvalues_from_file",&get_CA_bvalues_from_file);
     function("calculate_normal_modes",&calculate_normal_modes);
     function("GetCorrelations",&GetCorrelations);
+    function("GetEigen",&GetEigen);
 
     function("gsl_sf_bessel_J0",&gsl_sf_bessel_J0);
     function("gsl_cdf_hypergeometric_P",&gsl_cdf_hypergeometric_P);

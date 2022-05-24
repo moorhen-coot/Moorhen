@@ -201,10 +201,18 @@ class DisplayTable extends Component {
 
         return (
                 <>
+        <Form>
+        <Form.Group as={Row} controlId="getnormalmodes">
+        <Col>
                 <Form.Select value={selected} onChange={handleChange} >
                 {rows}
                 </Form.Select>
+        </Col>
+        <Col>
                 <Button size="sm" onClick={handleNMA}>Calculate normal modes</Button>
+        </Col>
+        </Form.Group>
+        </Form>
                 <div className="vspace1em"></div>
                 <Tabs
                 defaultActiveKey="nma-graph"
