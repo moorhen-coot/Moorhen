@@ -92,6 +92,23 @@ class Main extends Component {
                 console.log(traceAtoms);
                 //FIXME - and from now on we can tweak ... in this case I am tinkering with colours...
                 //If I'm tweaking geometry, I have to make copies (deep) of the atoms, or else I'll scupper the original data model.
+                //
+                // contactsToCylindersLinesInfo atoms requires:
+                //  residue
+                //  x()
+                //  y()
+                //  z()
+                //  "_atom_site.B_iso_or_equiv"
+                //  "_atom_site.pdbx_formal_charge"
+                //  "_atom_site.type_symbol"
+                //  "_atom_site.id"
+                //  getAtomID()
+                //
+                // SeekContacts atoms requires:
+                //  "_atom_site.Cartn_x"
+                //  "_atom_site.Cartn_y"
+                //  "_atom_site.Cartn_z"
+                //
                 let atomColoursRed = colourScheme.colourOneColour(colourScheme.colours["red"]);
                 let atomColoursOrange = colourScheme.colourOneColour(colourScheme.colours["orange"]);
                 let atomColoursYellow = colourScheme.colourOneColour(colourScheme.colours["yellow"]);
