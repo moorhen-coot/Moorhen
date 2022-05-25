@@ -47,12 +47,8 @@ function wizardCATrace(pdbatoms,enerLib,bruteForceHB){
     const model = hier[0];
     const traceAtoms = model.getAtoms("catrace");
     let colourScheme = new ColourScheme(pdbatoms);
-    console.log("##################################################");
-    console.log("traceAtoms");
-    console.log(traceAtoms);
-    console.log("##################################################");
     let objects = [];
-    let contacts = model.SeekContacts(traceAtoms,traceAtoms,3.4,4.0);
+    let contacts = model.SeekContacts(traceAtoms,traceAtoms,3.4,4.1);
     let atomColours = colourScheme.colourByAtomType();
     let linePrimitiveInfo = contactsToLinesInfo(contacts,2,atomColours);
     linePrimitiveInfo["display_class"] = "bonds";
