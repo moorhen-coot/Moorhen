@@ -28,6 +28,7 @@ class DisplayTable extends Component {
     }
 
     visibilityChanged(evt,idsRibbons,self) {
+        console.log("Vis changed",idsRibbons);
         this.props.visibilityChanged({visible:evt.target.checked,bufferIds:idsRibbons});
     }
 
@@ -453,7 +454,6 @@ class DisplayTable extends Component {
             //console.log(Object.keys(customBuffers).length,maxCustom);
             if(Object.keys(customBuffers).length<maxCustom){
                 let cdiff = maxCustom - Object.keys(customBuffers).length;
-                console.log("cdiff",cdiff);
                 let disabled = true;
                 let checked = false;
                 for(let icdum=0;icdum<cdiff;icdum++){

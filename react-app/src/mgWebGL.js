@@ -1306,6 +1306,7 @@ class MGWebGL extends Component {
         console.log("MGWebGL.constructor");
         super(props);
         this.dataInfo = [];
+        this.animations = [];
         this.canvasRef = createRef();
     }
 
@@ -2172,6 +2173,69 @@ class MGWebGL extends Component {
         self.buildBuffers();
         self.drawScene();
         return theseBuffers;
+    }
+
+    setAnimationState(doStart) {
+        const self = this;
+        const start = Date.now();
+        clearInterval(this.timer);
+        if(doStart){
+            clearInterval(this.timer);
+            console.log("Try to start");
+            this.timer = setInterval(function() {
+                let delta = Date.now() - start; // milliseconds elapsed since start
+                let frac = (delta/1000.) % 1;
+                let minFrac = 2.0;
+                let minIdx = 0;
+                for(let ianim=0;ianim<self.animations.length;ianim++){
+                    let thisFrac =  self.animations[ianim].frameFrac;
+                    if(Math.abs(thisFrac-frac)<minFrac){
+                        minFrac = Math.abs(thisFrac-frac);
+                        minIdx = ianim;
+                    }
+                }
+                for(let ianim=0;ianim<self.animations.length;ianim++){
+                    if(minIdx===ianim){
+                        self.animations[ianim].visible = true;
+                    } else {
+                        self.animations[ianim].visible = false;
+                    }
+                }
+                self.drawScene();
+                }, 100); 
+        } else {
+            for(let ianim=0;ianim<self.animations.length;ianim++){
+                self.animations[ianim].visible = false;
+            }
+            self.drawScene();
+        }
+    }
+
+    clearAnimation() {
+        this.setAnimationState(false);
+        this.animations = [];
+        this.drawScene();
+    }
+
+    setupAnimation(dataInfo,animation) {
+        this.setAnimationState(false);
+        this.animations = [];
+        let animations = [];
+        for(let i=0;i<animation.length;i++){
+            let bufs = this.appendOtherData(animation[i],true);
+            for(let ibuf=0;ibuf<bufs.length;ibuf++){
+                bufs[ibuf].display_class = "normal mode animation";
+                bufs[ibuf].id = guid();
+                bufs[ibuf].frameFrac = 1.0*i/animation.length;
+                bufs[ibuf].visible = false;
+                dataInfo.buffers.push(bufs[ibuf]);
+                animations.push(bufs[ibuf]);
+            }
+        }
+        this.animations = animations;
+        this.buildBuffers();
+        this.setAnimationState(true);
+        this.drawScene();
     }
 
     setObjectsVisibility(ids,visible) {

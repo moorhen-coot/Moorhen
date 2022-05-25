@@ -33,6 +33,10 @@ class ControlInterface extends Component {
 	this.props.addRequest(data);
     }
 
+    animateStateChanged(data) {
+	this.props.animateStateChanged(data);
+    }
+
     matricesChanged(data) {
 	this.props.matricesChanged(data);
     }
@@ -69,7 +73,7 @@ class ControlInterface extends Component {
                 <Superpose displayData={displayData} dataFiles={dataFiles} matricesChanged={this.matricesChanged.bind(this)} />
                 </Tab>
                 <Tab eventKey="normalmodes" title="Normal mode analysis">
-                <NormalModes displayData={displayData} dataFiles={dataFiles} />
+                <NormalModes displayData={displayData} dataFiles={dataFiles} animateStateChanged={this.animateStateChanged.bind(this)}/>
                 </Tab>
                 </Tabs>
                );

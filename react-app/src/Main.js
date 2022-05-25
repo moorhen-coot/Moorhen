@@ -20,6 +20,8 @@ import {wizards} from './mgWizard.js';
 
 import {SequenceViewer} from './SequenceViewer.js';
 
+import {ColourScheme, contactsToLinesInfo} from './mgWebGLAtomsToPrimitives.js';
+
 class Main extends Component {
 
     constructor(props){
@@ -69,6 +71,47 @@ class Main extends Component {
         const changedIds = { ...this.state.dataFiles.ids, [fileDataId] :  params.pending.fileData};
         const newIds = { ...this.state.dataFiles, ids : changedIds };
         this.setState({dataFiles:newIds});
+    }
+
+    animateStateChanged(data) {
+        console.log("Request animate state change");
+
+        if(data.animate===false){
+            this.gl.current.clearAnimation();
+            return;
+        }
+
+        for(let idat=0;idat<this.gl.current.dataInfo.length;idat++){
+            if(data.dataId===this.gl.current.dataInfo[idat].id){
+                const theData = this.gl.current.dataInfo[idat];
+                const pdbatoms = theData["atoms"];
+                const colourScheme = new ColourScheme(pdbatoms);
+                const hier = pdbatoms["atoms"];
+                const model = hier[0];
+                const traceAtoms = model.getAtoms("catrace");
+                console.log(traceAtoms);
+                //FIXME - and from now on we can tweak ... in this case I am tinkering with colours...
+                //If I'm tweaking geometry, I have to make copies (deep) of the atoms, or else I'll scupper the original data model.
+                let atomColoursRed = colourScheme.colourOneColour(colourScheme.colours["red"]);
+                let atomColoursOrange = colourScheme.colourOneColour(colourScheme.colours["orange"]);
+                let atomColoursYellow = colourScheme.colourOneColour(colourScheme.colours["yellow"]);
+                let atomColoursGreen = colourScheme.colourOneColour(colourScheme.colours["green"]);
+                let atomColoursBlue = colourScheme.colourOneColour(colourScheme.colours["blue"]);
+                let atomColoursIndigo = colourScheme.colourOneColour(colourScheme.colours["indigo"]);
+                let atomColoursViolet = colourScheme.colourOneColour(colourScheme.colours["violet"]);
+                let contacts = model.SeekContacts(traceAtoms,traceAtoms,3.1,4.1);
+                let animation = [];
+                animation.push(contactsToLinesInfo(contacts,2,atomColoursRed));
+                animation.push(contactsToLinesInfo(contacts,2,atomColoursOrange));
+                animation.push(contactsToLinesInfo(contacts,2,atomColoursYellow));
+                animation.push(contactsToLinesInfo(contacts,2,atomColoursGreen));
+                animation.push(contactsToLinesInfo(contacts,2,atomColoursBlue));
+                animation.push(contactsToLinesInfo(contacts,2,atomColoursIndigo));
+                animation.push(contactsToLinesInfo(contacts,2,atomColoursViolet));
+                this.gl.current.setupAnimation(theData,animation);
+                break;
+            }
+        }
     }
 
     matricesChanged(data) {
@@ -172,7 +215,7 @@ class Main extends Component {
             </Col>
 
             <Col lg={6}>
-            <ControlInterface displayData={displayData} enerLib={enerLib} svgChange={this.svgChanged.bind(this)} filePendingChange={this.filePendingChanged.bind(this)} lightsChange={this.lightsChanged.bind(this)} addRequest={this.addRequested.bind(this)} deleteRequest={this.deleteRequested.bind(this)} visibilityChange={this.visibilityChanged.bind(this)} matricesChanged={this.matricesChanged.bind(this)} dataFiles={dataFiles}/>
+            <ControlInterface displayData={displayData} enerLib={enerLib} svgChange={this.svgChanged.bind(this)} filePendingChange={this.filePendingChanged.bind(this)} lightsChange={this.lightsChanged.bind(this)} addRequest={this.addRequested.bind(this)} deleteRequest={this.deleteRequested.bind(this)} visibilityChange={this.visibilityChanged.bind(this)} matricesChanged={this.matricesChanged.bind(this)} animateStateChanged={this.animateStateChanged.bind(this)} dataFiles={dataFiles}/>
             </Col>
 
             </Row>

@@ -32,6 +32,8 @@ class DisplayTable extends Component {
 
         super(props);
 
+        this.timerRunning = false;
+
         const options = {
           scales: {
             y: {
@@ -52,7 +54,8 @@ class DisplayTable extends Component {
 
         this.preRef = React.createRef();
 
-        this.state = {log:"",chartData:data,chartOptions:options, selected:"unk",contourData:{x:[],y:[],z:[],type:'contour'}};
+//FIXME - isAnimating probably out to be a property of MGWebGL instance state? Or maybe Main?
+        this.state = {log:"",chartData:data,chartOptions:options, selected:"unk",contourData:{x:[],y:[],z:[],type:'contour',isAnimating:false}};
         this.jobData = {};
         this.message = "";
         const self = this;
@@ -99,6 +102,22 @@ class DisplayTable extends Component {
                              };
                              self.setState({chartData:data})
                          }
+        }
+    }
+
+    handleAnimate(){
+        const self = this;
+        const dataFiles = this.props.dataFiles.ids;
+        const displayData = this.props.displayData;
+        let key = this.state.selected;
+        if(key==="unk"&&displayData.length>0){
+            key = displayData[0].id;
+        }
+        console.log("Animate this",key);
+        if(this.state.isAnimating){
+            this.setState({isAnimating:false}, ()=> {this.props.animateStateChanged({animate:false});});
+        } else {
+            this.setState({isAnimating:true}, ()=> {this.props.animateStateChanged({dataId:key,animate:true});});
         }
     }
 
@@ -180,6 +199,7 @@ class DisplayTable extends Component {
         const displayData = this.props.displayData;
         let rows = [];
         let handleNMA = this.handleNMA.bind(self);
+        let handleAnimate = this.handleAnimate.bind(self);
         let handleChange = this.handleChange.bind(self);
         let selected = this.state.selected;
         for(let iobj=0;iobj<displayData.length;iobj++){
@@ -199,6 +219,11 @@ class DisplayTable extends Component {
         const y = this.state.contourData.y;
         const z = this.state.contourData.z;
 
+        let animate = "Animate";
+        if(this.state.isAnimating){
+            animate = "Stop animating";
+        }
+
         return (
                 <>
         <Form>
@@ -210,6 +235,9 @@ class DisplayTable extends Component {
         </Col>
         <Col>
                 <Button size="sm" onClick={handleNMA}>Calculate normal modes</Button>
+        </Col>
+        <Col>
+                <Button size="sm" onClick={handleAnimate}>{animate}</Button>
         </Col>
         </Form.Group>
         </Form>
