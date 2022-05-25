@@ -42,6 +42,24 @@ function wizardBonds(pdbatoms,enerLib,bruteForceHB){
     return objects;
 }
 
+function wizardCATrace(pdbatoms,enerLib,bruteForceHB){
+    const hier = pdbatoms["atoms"];
+    const model = hier[0];
+    const traceAtoms = model.getAtoms("catrace");
+    let colourScheme = new ColourScheme(pdbatoms);
+    console.log("##################################################");
+    console.log("traceAtoms");
+    console.log(traceAtoms);
+    console.log("##################################################");
+    let objects = [];
+    let contacts = model.SeekContacts(traceAtoms,traceAtoms,3.4,4.0);
+    let atomColours = colourScheme.colourByAtomType();
+    let linePrimitiveInfo = contactsToLinesInfo(contacts,2,atomColours);
+    linePrimitiveInfo["display_class"] = "bonds";
+    objects.push(linePrimitiveInfo);
+    return objects;
+}
+
 function wizardRibbons(pdbatoms,enerLib,bruteForceHB){
 
     let start = new Date().getTime();
@@ -371,6 +389,6 @@ function wizardSiteAndRibbonsByChain(pdbatoms,enerLib,bruteForceHB){
  
 }
 
-const wizards = {"Bonds":wizardBonds,"Ribbons by chain":wizardRibbonsByChain,"Ribbons by secondary structure":wizardRibbons,"Worms":wizardWorms,"Site and ribbons by chain":wizardSiteAndRibbonsByChain};
+const wizards = {"Bonds":wizardBonds,"Ribbons by chain":wizardRibbonsByChain,"Ribbons by secondary structure":wizardRibbons,"Worms":wizardWorms,"Site and ribbons by chain":wizardSiteAndRibbonsByChain,"CA trace":wizardCATrace};
 
 export {wizards};
