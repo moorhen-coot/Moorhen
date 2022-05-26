@@ -22,9 +22,9 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
     - [x] Make the structure selection a combo or radio buttons instead of check boxes.
     - [x] Experimental vs. Theoretical B-values
     - [x] Cross correlation plot
-    - [ ] List normal modes
+    - [x] List normal modes
       - [x] List in log
-      - [ ] List widget (scrollable)
+      - [x] List widget (scrollable)
     - [ ] Animate normal modes
       - [x] Animate 'something' (random noise is current example).
       - [ ] Calculate real displacements associated with normal modes and animate them

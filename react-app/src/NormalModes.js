@@ -55,7 +55,7 @@ class DisplayTable extends Component {
         this.preRef = React.createRef();
 
 //FIXME - isAnimating probably out to be a property of MGWebGL instance state? Or maybe Main?
-        this.state = {log:"",chartData:data,chartOptions:options, selected:"unk",contourData:{x:[],y:[],z:[],type:'contour',isAnimating:false}};
+        this.state = {selectedEnergy:-1, energies:[], log:"",chartData:data,chartOptions:options, selected:"unk",contourData:{x:[],y:[],z:[],type:'contour',isAnimating:false}};
         this.jobData = {};
         this.message = "";
         const self = this;
@@ -70,7 +70,7 @@ class DisplayTable extends Component {
                          }
                          if(e.data[0]==="energies"){
                              const energies = e.data[1];
-                             console.log(energies);
+                             self.setState({energies:energies});
                          }
                          if(e.data[0]==="result"){
                          //This is then where we decide upon the action
@@ -78,7 +78,6 @@ class DisplayTable extends Component {
                              self.setState({log:self.message}, ()=> {self.preRef.current.scrollTop = self.preRef.current.scrollHeight;});
                          }
                          if(e.data[0]==="corrMat"){
-                             console.log(e.data[1]);
                              self.setState({contourData:e.data[1]});
                          }
                          if(e.data[0]==="bvalues"){
@@ -113,11 +112,12 @@ class DisplayTable extends Component {
         const self = this;
         const dataFiles = this.props.dataFiles.ids;
         const displayData = this.props.displayData;
+        const energy = this.state.selectedEnergy;
         let key = this.state.selected;
         if(key==="unk"&&displayData.length>0){
             key = displayData[0].id;
         }
-        console.log("Animate this",key);
+        console.log("Animate this",key,energy);
         if(this.state.isAnimating){
             this.setState({isAnimating:false}, ()=> {this.props.animateStateChanged({animate:false});});
         } else {
@@ -165,6 +165,10 @@ class DisplayTable extends Component {
         this.setState({selected:newIds});
     }
     */
+
+    handleRadioFrequencyChange(k,evt){
+        this.setState({selectedEnergy:k});
+    }
 
     handleChange(evt){
         this.setState({selected:evt.target.value});
@@ -228,6 +232,24 @@ class DisplayTable extends Component {
             animate = "Stop animating";
         }
 
+        let energyList = []; 
+        const buttonType = "radio";
+        const groupName = "energy_group";
+        for(var i=0;i<this.state.energies.length;i++){
+            const buttonId = "energy-"+i;
+            const buttonLabel = this.state.energies[i].toFixed(4);
+            energyList.push(
+              <Form.Check 
+                type={buttonType}
+                key={buttonId}
+                id={buttonId}
+                name={groupName}
+                label={buttonLabel}
+                onChange={self.handleRadioFrequencyChange.bind(self, i)}
+              />
+            );
+        }
+
         return (
                 <>
         <Form>
@@ -275,7 +297,13 @@ class DisplayTable extends Component {
         layout={ {width: 420, height: 340, title: 'Cross-correlation Plot'} }
 
                   />
-                
+                </Tab>
+                <Tab eventKey="nma-freqs" title="Normal modes">
+                <div style={styles.logpre}>
+                <Form>
+                {energyList}
+                </Form>
+                </div>
                 </Tab>
                 </Tabs>
             </>
