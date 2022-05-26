@@ -26,6 +26,7 @@ The following libraries/programs are compiled to Web Assembly:
 * ccp4srs (bzr)
 * rvapi (bzr)
 * gesamt (bzr)
+* ccp4mg (partial - normal modes and dependencies) (bzr)
 * privateer MKIV
 * Coot 0.9.6
 * fftw 2.1.5

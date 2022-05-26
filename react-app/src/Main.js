@@ -89,42 +89,73 @@ class Main extends Component {
                 const hier = pdbatoms["atoms"];
                 const model = hier[0];
                 const traceAtoms = model.getAtoms("catrace");
-                console.log(traceAtoms);
-                //FIXME - and from now on we can tweak ... in this case I am tinkering with colours...
-                //If I'm tweaking geometry, I have to make copies (deep) of the atoms, or else I'll scupper the original data model.
-                //
-                // contactsToCylindersLinesInfo atoms requires:
-                //  residue
-                //  x()
-                //  y()
-                //  z()
-                //  "_atom_site.B_iso_or_equiv"
-                //  "_atom_site.pdbx_formal_charge"
-                //  "_atom_site.type_symbol"
-                //  "_atom_site.id"
-                //  getAtomID()
-                //
-                // SeekContacts atoms requires:
-                //  "_atom_site.Cartn_x"
-                //  "_atom_site.Cartn_y"
-                //  "_atom_site.Cartn_z"
-                //
-                let atomColoursRed = colourScheme.colourOneColour(colourScheme.colours["red"]);
-                let atomColoursOrange = colourScheme.colourOneColour(colourScheme.colours["orange"]);
-                let atomColoursYellow = colourScheme.colourOneColour(colourScheme.colours["yellow"]);
-                let atomColoursGreen = colourScheme.colourOneColour(colourScheme.colours["green"]);
-                let atomColoursBlue = colourScheme.colourOneColour(colourScheme.colours["blue"]);
-                let atomColoursIndigo = colourScheme.colourOneColour(colourScheme.colours["indigo"]);
-                let atomColoursViolet = colourScheme.colourOneColour(colourScheme.colours["violet"]);
-                let contacts = model.SeekContacts(traceAtoms,traceAtoms,3.1,4.1);
+                //FIXME - and from now on we can tweak ... in this case I am tweaking by random noise. This should be meaningful coords.
+                // I'm going to store the original coords and then tweak before each call to SeekContacts.
+                // This way I do not have to worry about the horribleness of deep-copying complex data structures (with functions).
+                let atomColours = colourScheme.colourByAtomType();
+                let originalCoordsX = [];
+                let originalCoordsY = [];
+                let originalCoordsZ = [];
+                for(let iat=0;iat<traceAtoms.length;iat++){
+                    originalCoordsX.push(traceAtoms[iat]["_atom_site.Cartn_x"]);
+                    originalCoordsY.push(traceAtoms[iat]["_atom_site.Cartn_y"]);
+                    originalCoordsZ.push(traceAtoms[iat]["_atom_site.Cartn_z"]);
+                }
                 let animation = [];
-                animation.push(contactsToLinesInfo(contacts,2,atomColoursRed));
-                animation.push(contactsToLinesInfo(contacts,2,atomColoursOrange));
-                animation.push(contactsToLinesInfo(contacts,2,atomColoursYellow));
-                animation.push(contactsToLinesInfo(contacts,2,atomColoursGreen));
-                animation.push(contactsToLinesInfo(contacts,2,atomColoursBlue));
-                animation.push(contactsToLinesInfo(contacts,2,atomColoursIndigo));
-                animation.push(contactsToLinesInfo(contacts,2,atomColoursViolet));
+                for(let iat=0;iat<traceAtoms.length;iat++){
+                    traceAtoms[iat]["_atom_site.Cartn_x"] = originalCoordsX[iat] + Math.random()*.3;
+                    traceAtoms[iat]["_atom_site.Cartn_y"] = originalCoordsY[iat] + Math.random()*.3;
+                    traceAtoms[iat]["_atom_site.Cartn_z"] = originalCoordsZ[iat] + Math.random()*.3;
+                }
+                let contacts = model.SeekContacts(traceAtoms,traceAtoms,3.1,4.1);
+                animation.push(contactsToLinesInfo(contacts,2,atomColours));
+                for(let iat=0;iat<traceAtoms.length;iat++){
+                    traceAtoms[iat]["_atom_site.Cartn_x"] = originalCoordsX[iat] + Math.random()*.3;
+                    traceAtoms[iat]["_atom_site.Cartn_y"] = originalCoordsY[iat] + Math.random()*.3;
+                    traceAtoms[iat]["_atom_site.Cartn_z"] = originalCoordsZ[iat] + Math.random()*.3;
+                }
+                contacts = model.SeekContacts(traceAtoms,traceAtoms,3.1,4.1);
+                animation.push(contactsToLinesInfo(contacts,2,atomColours));
+                for(let iat=0;iat<traceAtoms.length;iat++){
+                    traceAtoms[iat]["_atom_site.Cartn_x"] = originalCoordsX[iat] + Math.random()*.3;
+                    traceAtoms[iat]["_atom_site.Cartn_y"] = originalCoordsY[iat] + Math.random()*.3;
+                    traceAtoms[iat]["_atom_site.Cartn_z"] = originalCoordsZ[iat] + Math.random()*.3;
+                }
+                contacts = model.SeekContacts(traceAtoms,traceAtoms,3.1,4.1);
+                animation.push(contactsToLinesInfo(contacts,2,atomColours));
+                for(let iat=0;iat<traceAtoms.length;iat++){
+                    traceAtoms[iat]["_atom_site.Cartn_x"] = originalCoordsX[iat] + Math.random()*.3;
+                    traceAtoms[iat]["_atom_site.Cartn_y"] = originalCoordsY[iat] + Math.random()*.3;
+                    traceAtoms[iat]["_atom_site.Cartn_z"] = originalCoordsZ[iat] + Math.random()*.3;
+                }
+                contacts = model.SeekContacts(traceAtoms,traceAtoms,3.1,4.1);
+                animation.push(contactsToLinesInfo(contacts,2,atomColours));
+                for(let iat=0;iat<traceAtoms.length;iat++){
+                    traceAtoms[iat]["_atom_site.Cartn_x"] = originalCoordsX[iat] + Math.random()*.3;
+                    traceAtoms[iat]["_atom_site.Cartn_y"] = originalCoordsY[iat] + Math.random()*.3;
+                    traceAtoms[iat]["_atom_site.Cartn_z"] = originalCoordsZ[iat] + Math.random()*.3;
+                }
+                contacts = model.SeekContacts(traceAtoms,traceAtoms,3.1,4.1);
+                animation.push(contactsToLinesInfo(contacts,2,atomColours));
+                for(let iat=0;iat<traceAtoms.length;iat++){
+                    traceAtoms[iat]["_atom_site.Cartn_x"] = originalCoordsX[iat] + Math.random()*.3;
+                    traceAtoms[iat]["_atom_site.Cartn_y"] = originalCoordsY[iat] + Math.random()*.3;
+                    traceAtoms[iat]["_atom_site.Cartn_z"] = originalCoordsZ[iat] + Math.random()*.3;
+                }
+                contacts = model.SeekContacts(traceAtoms,traceAtoms,3.1,4.1);
+                animation.push(contactsToLinesInfo(contacts,2,atomColours));
+                for(let iat=0;iat<traceAtoms.length;iat++){
+                    traceAtoms[iat]["_atom_site.Cartn_x"] = originalCoordsX[iat] + Math.random()*.3;
+                    traceAtoms[iat]["_atom_site.Cartn_y"] = originalCoordsY[iat] + Math.random()*.3;
+                    traceAtoms[iat]["_atom_site.Cartn_z"] = originalCoordsZ[iat] + Math.random()*.3;
+                }
+                contacts = model.SeekContacts(traceAtoms,traceAtoms,3.1,4.1);
+                animation.push(contactsToLinesInfo(contacts,2,atomColours));
+                for(let iat=0;iat<traceAtoms.length;iat++){
+                    traceAtoms[iat]["_atom_site.Cartn_x"] = originalCoordsX[iat];
+                    traceAtoms[iat]["_atom_site.Cartn_y"] = originalCoordsY[iat];
+                    traceAtoms[iat]["_atom_site.Cartn_z"] = originalCoordsZ[iat];
+                }
                 this.gl.current.setupAnimation(theData,animation);
                 break;
             }
