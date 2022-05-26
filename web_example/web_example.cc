@@ -41,6 +41,30 @@
 
 using namespace emscripten;
 
+class MGNormalModeDisplacements {
+        std::vector<std::vector<std::vector<double> > > displacements;
+    public:
+        MGNormalModeDisplacements(const NormalModeAnalysis &nma, int nsteps){
+            NormalModeDisplacements displacements_mg = nma.GetDisplacements(nsteps);
+            int nmodes = displacements_mg.getNumberOfModes();
+            for(int imode=0;imode<nmodes;imode++){
+                displacements.push_back(std::vector<std::vector<double> >());
+                for(int istep=0;istep<nsteps;istep++){
+                    displacements.back().push_back(std::vector<double>());
+                    const std::vector<Cartesian> carts = displacements_mg.getDisplacements(imode,istep);
+                    for(unsigned icart=0;icart<carts.size();icart++){
+                        displacements.back().back().push_back(carts[icart].get_x());
+                        displacements.back().back().push_back(carts[icart].get_y());
+                        displacements.back().back().push_back(carts[icart].get_z());
+                    }
+                }
+            }
+        }
+        const int nModes() const { return displacements.size(); }
+        const int nSteps() const { if(displacements.size()>0) return displacements[0].size(); else return 0; }
+        const std::vector<double> getDisplacements(int mode, int step) const { return  displacements[mode][step]; }
+};
+
 class MGmatrix : public matrix {
     public:
        MGmatrix() : matrix() {};
@@ -247,6 +271,11 @@ std::vector<std::string> mmdb2_example(const std::string &filename){
     return ligandTypes;
 }
 
+MGNormalModeDisplacements GetDisplacements(const NormalModeAnalysis& nma){
+    MGNormalModeDisplacements displacements(nma,10);
+    return displacements;
+}
+
 std::vector<MGmatrix> GetEigen(const NormalModeAnalysis& nma){
     std::vector<MGmatrix> mgmats;
     std::vector<matrix> mats = nma.GetEigen();
@@ -448,6 +477,11 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("get_columns",&MGmatrix::get_columns)
     .function("get",&MGmatrix::get)
     ;
+    class_<MGNormalModeDisplacements>("MGNormalModeDisplacements")
+    .function("nModes",&MGNormalModeDisplacements::nModes)
+    .function("nSteps",&MGNormalModeDisplacements::nSteps)
+    .function("getDisplacements",&MGNormalModeDisplacements::getDisplacements)
+    ;
     class_<NormalModeAnalysis>("NormalModeAnalysis")
     .constructor()
     .function("GetBValues",&NormalModeAnalysis::GetBValues)
@@ -465,6 +499,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     function("calculate_normal_modes",&calculate_normal_modes);
     function("GetCorrelations",&GetCorrelations);
     function("GetEigen",&GetEigen);
+    function("GetDisplacements",&GetDisplacements);
 
     function("gsl_sf_bessel_J0",&gsl_sf_bessel_J0);
     function("gsl_cdf_hypergeometric_P",&gsl_cdf_hypergeometric_P);

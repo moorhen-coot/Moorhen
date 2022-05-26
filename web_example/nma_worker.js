@@ -83,4 +83,8 @@ onmessage = function(e) {
         energies.push(evalMat.get(i,0));
     }
     postMessage(["energies",energies]);
+    const displacements = CCP4Module.GetDisplacements(nma_anm);
+    console.log(displacements.nModes());
+    console.log(displacements.nSteps());
+    console.log(displacements.getDisplacements(0,0));
 }
