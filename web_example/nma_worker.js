@@ -70,13 +70,17 @@ onmessage = function(e) {
     postMessage(["bvalues",[bvals,bvals_exptl]]);
     postMessage(["result",result]);
 
-    var nma_anm = CCP4Module.calculate_normal_modes(e.data[1],0);
+    let nma_anm = CCP4Module.calculate_normal_modes(e.data[1],0);
     const eigens = CCP4Module.GetEigen(nma_anm);
     const evalMat = eigens.get(1);
     const nrows_e = evalMat.get_rows();
     const ncols_e = evalMat.get_columns();
     postMessage(["output","Normal modes"]);
+    let energies = [];
+ 
     for(let i=6;i<nrows_e;i++){
         postMessage(["output",String(evalMat.get(i,0))]);
+        energies.push(evalMat.get(i,0));
     }
+    postMessage(["energies",energies]);
 }

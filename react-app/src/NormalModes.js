@@ -68,6 +68,10 @@ class DisplayTable extends Component {
                              self.setState({log:self.message}, ()=> {self.preRef.current.scrollTop = self.preRef.current.scrollHeight;});
                          //result.innerHTML += e.data[1] + "<br />";
                          }
+                         if(e.data[0]==="energies"){
+                             const energies = e.data[1];
+                             console.log(energies);
+                         }
                          if(e.data[0]==="result"){
                          //This is then where we decide upon the action
                              self.message += e.data[1] + "\n";
