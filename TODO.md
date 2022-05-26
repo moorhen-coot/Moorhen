@@ -28,6 +28,7 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
     - [ ] Animate normal modes
       - [x] Animate 'something' (random noise is current example).
       - [ ] Calculate real displacements associated with normal modes and animate them
+  - [ ] Selections for ribbons/worms (currently does all atoms whatever the selection)
   - [ ] Glycan viewer to graphics interactivity
   - [ ] PDB search
   - [ ] Generate Helices
