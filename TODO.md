@@ -17,7 +17,7 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
 - [ ] Some MG stuff in WebGL react-bootstrap
   - [x] Get Smiles (This only does svg. Seems there are no force fields in `RDKit_minimal` at present.
   - [x] Get Monomer
-  - [ ] Vibrations
+  - [x] Vibrations
     - [x] Scale caclulated B-Factors as is done in MG.
     - [x] Make the structure selection a combo or radio buttons instead of check boxes.
     - [x] Experimental vs. Theoretical B-values
