@@ -23,12 +23,7 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
     - [x] Experimental vs. Theoretical B-values
     - [x] Cross correlation plot
     - [x] List normal modes
-      - [x] List in log
-      - [x] List widget (scrollable)
-    - [ ] Animate normal modes
-      - [x] Animate 'something' (random noise is current example).
-      - [x] Calculate real displacements associated with normal modes and return to JS
-      - [ ] Animate the displacements
+    - [x] Animate normal modes
   - [ ] Selections for ribbons/worms (currently does all atoms whatever the selection)
   - [ ] Glycan viewer to graphics interactivity
   - [ ] PDB search
