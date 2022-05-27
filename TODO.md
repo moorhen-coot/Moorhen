@@ -28,7 +28,7 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
   - [ ] Glycan viewer to graphics interactivity
   - [ ] PDB search
   - [ ] Generate Helices
-  - [ ] Prosmart (? May not be possible becsause of Fortran limitations - farm off to server as alternative)
+  - [ ] Prosmart
   - [ ] Background colour
   - [ ] Scale bar
   - [ ] Display maps
