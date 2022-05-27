@@ -101,6 +101,8 @@ class Main extends Component {
                     originalCoordsY.push(traceAtoms[iat]["_atom_site.Cartn_y"]);
                     originalCoordsZ.push(traceAtoms[iat]["_atom_site.Cartn_z"]);
                 }
+                console.log("The real deltas:");
+                console.log(data.displacements);
                 let animation = [];
                 for(let iat=0;iat<traceAtoms.length;iat++){
                     traceAtoms[iat]["_atom_site.Cartn_x"] = originalCoordsX[iat] + Math.random()*.3;

@@ -84,7 +84,20 @@ onmessage = function(e) {
     }
     postMessage(["energies",energies]);
     const displacements = CCP4Module.GetDisplacements(nma_anm);
-    console.log(displacements.nModes());
-    console.log(displacements.nSteps());
-    console.log(displacements.getDisplacements(0,0));
+    const nModes = displacements.nModes();
+    const nSteps = displacements.nSteps();
+
+    let dispMessage = {modes:[]};
+    for(let imode=0;imode<nModes;imode++){
+        dispMessage.modes.push({steps:[]});
+        for(let istep=0;istep<nSteps;istep++){
+            dispMessage.modes[imode].steps.push({xyz:[]});
+            const disp = displacements.getDisplacements(imode,istep);
+            const dispSize = disp.size();
+            for(let idisp=0;idisp<dispSize;idisp++){
+                dispMessage.modes[imode].steps[istep].xyz.push(disp.get(idisp));
+            }
+        }
+    }
+    postMessage(["displacements",dispMessage]);
 }

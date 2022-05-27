@@ -55,7 +55,7 @@ class DisplayTable extends Component {
         this.preRef = React.createRef();
 
 //FIXME - isAnimating probably out to be a property of MGWebGL instance state? Or maybe Main?
-        this.state = {selectedEnergy:-1, energies:[], log:"",chartData:data,chartOptions:options, selected:"unk",contourData:{x:[],y:[],z:[],type:'contour',isAnimating:false}};
+        this.state = {selectedEnergy:-1, displacements:{}, energies:[], log:"",chartData:data,chartOptions:options, selected:"unk",contourData:{x:[],y:[],z:[],type:'contour',isAnimating:false}};
         this.jobData = {};
         this.message = "";
         const self = this;
@@ -67,6 +67,10 @@ class DisplayTable extends Component {
                              self.message += e.data[1] + "\n";
                              self.setState({log:self.message}, ()=> {self.preRef.current.scrollTop = self.preRef.current.scrollHeight;});
                          //result.innerHTML += e.data[1] + "<br />";
+                         }
+                         if(e.data[0]==="displacements"){
+                             const displacements = e.data[1];
+                             self.setState({displacements:displacements});
                          }
                          if(e.data[0]==="energies"){
                              const energies = e.data[1];
@@ -117,11 +121,15 @@ class DisplayTable extends Component {
         if(key==="unk"&&displayData.length>0){
             key = displayData[0].id;
         }
-        console.log("Animate this",key,energy);
-        if(this.state.isAnimating){
-            this.setState({isAnimating:false}, ()=> {this.props.animateStateChanged({animate:false});});
-        } else {
-            this.setState({isAnimating:true}, ()=> {this.props.animateStateChanged({dataId:key,animate:true});});
+        if(energy>-1){
+            console.log("Animate this",key,energy);
+            //This is the thing we should tell MGWebGL to animate with via Main animateStateChanged
+            console.log(this.state.displacements.modes[energy]);
+            if(this.state.isAnimating){
+                this.setState({isAnimating:false}, ()=> {this.props.animateStateChanged({animate:false});});
+            } else {
+                this.setState({isAnimating:true}, ()=> {this.props.animateStateChanged({dataId:key,animate:true,displacements:this.state.displacements.modes[energy]});});
+            }
         }
     }
 
@@ -237,7 +245,7 @@ class DisplayTable extends Component {
         const groupName = "energy_group";
         for(var i=0;i<this.state.energies.length;i++){
             const buttonId = "energy-"+i;
-            const buttonLabel = this.state.energies[i].toFixed(4);
+            const buttonLabel = "(" + i.toString() + ") " + this.state.energies[i].toFixed(4);
             energyList.push(
               <Form.Check 
                 type={buttonType}
