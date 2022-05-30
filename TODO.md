@@ -14,17 +14,19 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
   - [x] Apply to newly created objects
   - [x] Undo button
 - [x] Charged ligands produce SVG (e.g DCB 4a3h)
+- [ ] Selections for ribbons/worms (currently does all atoms whatever the selection)
 - [ ] Some MG stuff in WebGL react-bootstrap
   - [x] Get Smiles (This only does svg. Seems there are no force fields in `RDKit_minimal` at present.
   - [x] Get Monomer
-  - [x] Vibrations
+  - [ ] Vibrations
     - [x] Scale caclulated B-Factors as is done in MG.
     - [x] Make the structure selection a combo or radio buttons instead of check boxes.
     - [x] Experimental vs. Theoretical B-values
     - [x] Cross correlation plot
     - [x] List normal modes
-    - [x] Animate normal modes
-  - [ ] Selections for ribbons/worms (currently does all atoms whatever the selection)
+    - [ ] Animate normal modes
+      - [ ] Animate button should only available when ANM calculation is done.
+      - [ ] Switching between modes in list should change mode in graphics automatically.
   - [ ] Glycan viewer to graphics interactivity
   - [ ] PDB search
   - [ ] Generate Helices
