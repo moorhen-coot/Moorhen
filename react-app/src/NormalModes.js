@@ -54,8 +54,8 @@ class DisplayTable extends Component {
 
         this.preRef = React.createRef();
 
-//FIXME - isAnimating probably out to be a property of MGWebGL instance state? Or maybe Main?
-        this.state = {selectedEnergy:-1, displacements:{}, energies:[], log:"",chartData:data,chartOptions:options, selected:"unk",contourData:{x:[],y:[],z:[],type:'contour',isAnimating:false}};
+//FIXME - isAnimating probably ought to be a property of MGWebGL instance state? Or maybe Main?
+        this.state = {selectedEnergy:-1, displacements:{ids:{}}, energies:{ids:{}}, log:"",chartData:data,chartOptions:options, selected:"unk",contourData:{x:[],y:[],z:[],type:'contour',isAnimating:false}};
         this.jobData = {};
         this.message = "";
         const self = this;
@@ -69,12 +69,30 @@ class DisplayTable extends Component {
                          //result.innerHTML += e.data[1] + "<br />";
                          }
                          if(e.data[0]==="displacements"){
+                             const displayData = self.props.displayData;
+                             let key = self.state.selected;
+                             if(key==="unk"&&displayData.length>0){
+                                 key = displayData[0].id;
+                             }
                              const displacements = e.data[1];
-                             self.setState({displacements:displacements});
+
+                             const changedIds = { ...self.state.displacements.ids, [key] :  displacements};
+                             const newIds = { ...self.state.displacements, ids : changedIds };
+
+                             self.setState({displacements:newIds});
                          }
                          if(e.data[0]==="energies"){
+                             const displayData = self.props.displayData;
+                             let key = self.state.selected;
+                             if(key==="unk"&&displayData.length>0){
+                                 key = displayData[0].id;
+                             }
                              const energies = e.data[1];
-                             self.setState({energies:energies});
+
+                             const changedIds = { ...self.state.energies.ids, [key] :  energies};
+                             const newIds = { ...self.state.energies, ids : changedIds };
+
+                             self.setState({energies:newIds});
                          }
                          if(e.data[0]==="result"){
                          //This is then where we decide upon the action
@@ -122,13 +140,11 @@ class DisplayTable extends Component {
             key = displayData[0].id;
         }
         if(energy>-1){
-            console.log("Animate this",key,energy);
             //This is the thing we should tell MGWebGL to animate with via Main animateStateChanged
-            console.log(this.state.displacements.modes[energy]);
             if(this.state.isAnimating){
                 this.setState({isAnimating:false}, ()=> {this.props.animateStateChanged({animate:false});});
             } else {
-                this.setState({isAnimating:true}, ()=> {this.props.animateStateChanged({dataId:key,animate:true,displacements:this.state.displacements.modes[energy]});});
+                this.setState({isAnimating:true}, ()=> {this.props.animateStateChanged({dataId:key,animate:true,displacements:this.state.displacements.ids[key].modes[energy]});});
             }
         }
     }
@@ -175,7 +191,18 @@ class DisplayTable extends Component {
     */
 
     handleRadioFrequencyChange(k,evt){
+        const self = this;
+        const dataFiles = this.props.dataFiles.ids;
+        const displayData = this.props.displayData;
+        let key = this.state.selected;
+        if(key==="unk"&&displayData.length>0){
+            key = displayData[0].id;
+        }
         this.setState({selectedEnergy:k});
+        this.props.animateStateChanged({animate:false});
+        if(this.state.isAnimating&&k>-1){
+            this.props.animateStateChanged({dataId:key,animate:true,displacements:this.state.displacements.ids[key].modes[k]});
+        }
     }
 
     handleChange(evt){
@@ -243,19 +270,23 @@ class DisplayTable extends Component {
         let energyList = []; 
         const buttonType = "radio";
         const groupName = "energy_group";
-        for(var i=0;i<this.state.energies.length;i++){
-            const buttonId = "energy-"+i;
-            const buttonLabel = "(" + i.toString() + ") " + this.state.energies[i].toFixed(4);
-            energyList.push(
-              <Form.Check 
-                type={buttonType}
-                key={buttonId}
-                id={buttonId}
-                name={groupName}
-                label={buttonLabel}
-                onChange={self.handleRadioFrequencyChange.bind(self, i)}
-              />
-            );
+        let enableAnimateButton = false;
+        if(selected in this.state.energies.ids){
+            if(this.state.selectedEnergy>-1) enableAnimateButton = true;
+            for(var i=0;i<this.state.energies.ids[selected].length;i++){
+                const buttonId = "energy-"+i;
+                const buttonLabel = "(" + i.toString() + ") " + this.state.energies.ids[selected][i].toFixed(4);
+                energyList.push(
+                  <Form.Check
+                    type={buttonType}
+                    key={buttonId}
+                    id={buttonId}
+                    name={groupName}
+                    label={buttonLabel}
+                    onChange={self.handleRadioFrequencyChange.bind(self, i)}
+                  />
+                );
+            }
         }
 
         return (
@@ -268,10 +299,10 @@ class DisplayTable extends Component {
                 </Form.Select>
         </Col>
         <Col>
-                <Button size="sm" onClick={handleNMA}>Calculate normal modes</Button>
+                <Button size="sm" onClick={handleNMA}>Calculate</Button>
         </Col>
         <Col>
-                <Button size="sm" onClick={handleAnimate}>{animate}</Button>
+                <Button size="sm" onClick={handleAnimate} disabled={!enableAnimateButton}>{animate}</Button>
         </Col>
         </Form.Group>
         </Form>

@@ -79,9 +79,9 @@ onmessage = function(e) {
     let energies = [];
  
     for(let i=6;i<nrows_e;i++){
-        postMessage(["output",String(evalMat.get(i,0))]);
         energies.push(evalMat.get(i,0));
     }
+
     postMessage(["energies",energies]);
     const displacements = CCP4Module.GetDisplacements(nma_anm);
     const nModes = displacements.nModes();
