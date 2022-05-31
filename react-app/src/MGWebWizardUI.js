@@ -117,10 +117,13 @@ class MGWebWizardUI extends Component {
         var self = this;
         this.myWorkerPDB.onmessage = function(e) {
             if(e.data[0]==="output"){
-                console.log(e.data[1]);
+                //console.log(e.data[1]);
             }
             if(e.data[0]==="result"){
                 self.props.onSVGChange({svg:e.data[1]});
+            }
+            if(e.data[0]==="glycan_result"){
+                self.props.onGlycanChange({glycans:e.data[1]});
             }
         }
         this.myWorkerSMILES = new window.Worker('wasm/smiles_to_pdb_worker.js');

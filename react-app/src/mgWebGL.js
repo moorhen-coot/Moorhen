@@ -1305,13 +1305,14 @@ class MGWebGL extends Component {
 
         console.log("MGWebGL.constructor");
         super(props);
+        this.state = {width:400,height:400};
         this.dataInfo = [];
         this.animations = [];
         this.canvasRef = createRef();
     }
 
     render() {
-        this.canvasReact = <canvas ref={this.canvasRef} height={400} width={400} />;  
+        this.canvasReact = <canvas ref={this.canvasRef} height={this.state.width} width={this.state.height} />;
         return this.canvasReact;
     }
 
@@ -1332,8 +1333,13 @@ class MGWebGL extends Component {
         console.log("MGWebGL.componentDidMount");
         this.canvas = this.canvasRef.current;
         console.log(this.canvasReact);
-        //this.draw();
-        //return;
+        var self = this;
+
+        window.addEventListener('resize',
+                function(evt){
+            self.setState({width:window.innerWidth/3, height:window.innerHeight/3}, ()=> self.resize(window.innerWidth/3, window.innerHeight/3));
+                },
+                false);
 
         var ice_blue     = [0.0039*156,0.0039*176,0.0039*254,1.0];
         var gold         = [0.0039*179,0.0039*177,0.0039*61,1.0];
@@ -1419,10 +1425,6 @@ class MGWebGL extends Component {
 
         var self = this;
 
-        //TODO We need to be cleverer than this.
-        var theWidth = 400;
-        var theHeight = 400;
-
         this.textCtx = document.createElement("canvas").getContext("2d");
         this.circleCtx = document.createElement("canvas").getContext("2d");
 
@@ -1464,7 +1466,7 @@ class MGWebGL extends Component {
         this.gl_cursorPos[1] = this.canvas.height/2.;
 
         this.gl = initGL(this.canvas);
-        this.resize(400,400);
+        self.setState({width:window.innerWidth/3, height:window.innerHeight/3}, ()=> self.resize(window.innerWidth/3, window.innerHeight/3));
         var extensionArray = this.gl.getSupportedExtensions();
         console.log(extensionArray);
 

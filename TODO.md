@@ -25,6 +25,7 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
     - [x] Cross correlation plot
     - [x] List normal modes
     - [x] Animate normal modes
+  - [x] Put ligand picture somewhere better (in another Main tab).
   - [ ] Glycan viewer to graphics interactivity
   - [ ] PDB search
   - [ ] Generate Helices

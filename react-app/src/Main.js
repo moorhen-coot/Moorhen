@@ -47,9 +47,12 @@ class Main extends Component {
         this.setState({displayData:data.data});
     }
 
-    svgChanged(params) {
-        //FIXME - Do something
+    glycanChanged(params) {
+        console.log("Some glycans...");
         console.log(params);
+    }
+
+    svgChanged(params) {
         let message = "";
         let data = params.svg;
         for(let ilig=0;ilig<Object.keys(data).length;ilig++){
@@ -224,7 +227,7 @@ class Main extends Component {
             </Col>
 
             <Col lg={6}>
-            <ControlInterface displayData={displayData} enerLib={enerLib} svgChange={this.svgChanged.bind(this)} filePendingChange={this.filePendingChanged.bind(this)} lightsChange={this.lightsChanged.bind(this)} addRequest={this.addRequested.bind(this)} deleteRequest={this.deleteRequested.bind(this)} visibilityChange={this.visibilityChanged.bind(this)} matricesChanged={this.matricesChanged.bind(this)} animateStateChanged={this.animateStateChanged.bind(this)} dataFiles={dataFiles}/>
+            <ControlInterface displayData={displayData} enerLib={enerLib} glycanChange={this.glycanChanged.bind(this)} svgChange={this.svgChanged.bind(this)} filePendingChange={this.filePendingChanged.bind(this)} lightsChange={this.lightsChanged.bind(this)} addRequest={this.addRequested.bind(this)} deleteRequest={this.deleteRequested.bind(this)} visibilityChange={this.visibilityChanged.bind(this)} matricesChanged={this.matricesChanged.bind(this)} animateStateChanged={this.animateStateChanged.bind(this)} dataFiles={dataFiles}/>
             </Col>
 
             </Row>
