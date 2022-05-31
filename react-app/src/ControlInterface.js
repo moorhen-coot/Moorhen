@@ -15,6 +15,10 @@ import DisplayTable from './DisplayTable';
 import Superpose from './Superpose';
 import NormalModes from './NormalModes';
 
+function rowStyleFormat(row, rowIdx) {
+  return { backgroundColor: rowIdx % 2 === 0 ? 'red' : 'blue' };
+}
+
 class ControlInterface extends Component {
 
     constructor(props) {
@@ -111,6 +115,7 @@ class ControlInterface extends Component {
             });
 
         let rows = [];
+        let irow = 0;
         for(let isvg=0;isvg<Object.keys(this.state.svgInfo.ids).length;isvg++){
             let theKey = Object.keys(this.state.svgInfo.ids)[isvg];
             let svgDict = this.state.svgInfo.ids[theKey];
@@ -144,10 +149,16 @@ class ControlInterface extends Component {
                         let ConfKey = "key_"+theKey+"_"+chain+"_"+icg+"_"+ign+"_Conf";
                         let AnomerKey = "key_"+theKey+"_"+chain+"_"+icg+"_"+ign+"_Anomer";
                         let PicKey = "key_"+theKey+"_"+chain+"_"+icg+"_"+ign+"_Pic";
-                        rows.push(<tr key={picRowKey}>
+                        let rowStyle;
+                        if(irow%2) {
+                            rowStyle = {backgroundColor:'#ccccff'};
+                        } else {
+                            rowStyle = {backgroundColor:'#eeeeff'};
+                        }
+                        rows.push(<tr style={rowStyle} key={picRowKey}>
                         <td key={PicKey} colSpan="7">{newSvg}</td>
                         </tr>);
-                        rows.push(<tr key={rowKey}>
+                        rows.push(<tr style={rowStyle} key={rowKey}>
                         <td key={TypeKey}>{typeText}</td>
                         <td key={QKey}>{QText}</td>
                         <td key={PhiKey}>{PhiText}</td>
@@ -156,6 +167,7 @@ class ControlInterface extends Component {
                         <td key={ConfKey}>{ConfText}</td>
                         <td key={AnomerKey}>{AnomerText}</td>
                         </tr>);
+                        irow++;
                     }
                 }
             }
