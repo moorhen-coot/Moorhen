@@ -123,8 +123,9 @@ class ControlInterface extends Component {
                     let graphicsNodes = glycanNode.getElementsByTagName("svg_graphics");
                     let sugarNodes = glycanNode.getElementsByTagName("sugar");
                     for(let ign=0;ign<graphicsNodes.length;ign++){
-                        let graphicsNode = graphicsNodes[ign];
+                        let graphicsNode = graphicsNodes[ign].getElementsByTagName("svg")[0];
                         let sugarNode = sugarNodes[ign];
+                        let newSvg = parse((new XMLSerializer()).serializeToString(graphicsNode));
 
                         let typeText = sugarNode.getElementsByTagName("detected_type")[0].innerHTML;
                         let QText = sugarNode.getElementsByTagName("cremer-pople_Q")[0].innerHTML;
@@ -143,6 +144,9 @@ class ControlInterface extends Component {
                         let ConfKey = "key_"+theKey+"_"+chain+"_"+icg+"_"+ign+"_Conf";
                         let AnomerKey = "key_"+theKey+"_"+chain+"_"+icg+"_"+ign+"_Anomer";
                         let PicKey = "key_"+theKey+"_"+chain+"_"+icg+"_"+ign+"_Pic";
+                        rows.push(<tr key={picRowKey}>
+                        <td key={PicKey} colSpan="7">{newSvg}</td>
+                        </tr>);
                         rows.push(<tr key={rowKey}>
                         <td key={TypeKey}>{typeText}</td>
                         <td key={QKey}>{QText}</td>
@@ -151,9 +155,6 @@ class ControlInterface extends Component {
                         <td key={BFacKey}>{BFacText}</td>
                         <td key={ConfKey}>{ConfText}</td>
                         <td key={AnomerKey}>{AnomerText}</td>
-                        </tr>);
-                        rows.push(<tr key={picRowKey}>
-                        <td key={PicKey} colSpan="7">(Piccy goes here)</td>
                         </tr>);
                     }
                 }
