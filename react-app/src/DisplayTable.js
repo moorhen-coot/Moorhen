@@ -498,7 +498,8 @@ class DisplayTable extends Component {
             if(idsBonds.length>0){
                 noBonds = false;
             }
-            rows.push(<tr key={iobj}><td>{name}</td>
+            const dtRowKey = "displayTableRow_"+iobj;
+            rows.push(<tr key={dtRowKey}><td>{name}</td>
             <td key={keyRibbons}><input type="checkbox" disabled={noRibbons} defaultChecked={visRibbons} onChange={function(evt){self.visibilityChanged(evt,idsRibbons,self)}} /></td>
             <td key={keyLigands}><input type="checkbox" disabled={noLigands} defaultChecked={visLigands} onChange={function(evt){self.visibilityChanged(evt,idsLigands,self)}}/></td>
             <td key={keyNeighbourhood}><input type="checkbox" disabled={noNeighbourhood} defaultChecked={visNeighbourhood} onChange={function(evt){self.visibilityChanged(evt,idsNeighbourhood,self)}}/></td>

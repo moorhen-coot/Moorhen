@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import reactCSS from 'reactcss'
 
-import parse from 'html-react-parser';
+import parse, {domToReact, } from 'html-react-parser';
 
 import Tabs from 'react-bootstrap/Tabs';
 import Tab from 'react-bootstrap/Tab';
@@ -98,6 +98,10 @@ class ControlInterface extends Component {
 	this.props.visibilityChange(visStateInfo);
     }
 
+    onAClick(t) {
+	console.log(t["hrefText"]);
+    }
+
     render () {
 
         const enerLib = this.state.enerLib;
@@ -129,8 +133,28 @@ class ControlInterface extends Component {
                     let sugarNodes = glycanNode.getElementsByTagName("sugar");
                     for(let ign=0;ign<graphicsNodes.length;ign++){
                         let graphicsNode = graphicsNodes[ign].getElementsByTagName("svg")[0];
+                        let anchorNodes = graphicsNode.getElementsByTagName("a");
                         let sugarNode = sugarNodes[ign];
-                        let newSvg = parse((new XMLSerializer()).serializeToString(graphicsNode));
+
+                        const onAClick  = this.onAClick.bind(this);
+                        let newSvg = parse((new XMLSerializer()).serializeToString(graphicsNode),{
+                            replace: domNode => {
+                                if (domNode.name === 'a') {
+                                    delete domNode.attribs.onclick;
+                                    const hrefText = domNode.attribs["xlink:href"];
+                                    return (
+                                            <a
+                                            {...domNode.attribs}
+                                            onClick={() => onAClick({hrefText})}
+                                            >
+                                            {domToReact(domNode.children)}
+                                            </a>
+                                           );
+                                } else {
+                                    return domNode;
+                                }
+                            }
+                        });
 
                         let typeText = sugarNode.getElementsByTagName("detected_type")[0].innerHTML;
                         let QText = sugarNode.getElementsByTagName("cremer-pople_Q")[0].innerHTML;
