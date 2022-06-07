@@ -26,7 +26,7 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
     - [x] List normal modes
     - [x] Animate normal modes
   - [x] Put ligand picture somewhere better (in another Main tab).
-  - [ ] Glycan viewer to graphics interactivity
+  - [x] Glycan viewer to graphics interactivity
   - [ ] PDB search
   - [ ] Generate Helices
   - [ ] Prosmart

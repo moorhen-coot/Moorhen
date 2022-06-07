@@ -217,7 +217,32 @@ class Main extends Component {
             const t = m.clickMessage["hrefText"];
             const k = m.clickMessage["key"];
             if(t.startsWith("mmdb://")){
-                console.log(t.substring("mmdb://".length),k);
+                const kBaseName = k.replace(/\.[^/.]+$/, "");
+                for(let idat=0;idat<this.state.displayData.length;idat++){
+                    if(kBaseName===this.state.displayData[idat].name){
+                        try {
+                            const theAtoms = this.state.displayData[idat].atoms.atoms[0].getAtoms(t.substring("mmdb://".length));
+                            if(theAtoms.length>0){
+                                let cox = 0.0;
+                                let coz = 0.0;
+                                let coy = 0.0;
+                                for(let iat=0;iat<theAtoms.length;iat++){
+                                    cox += theAtoms[iat].x();
+                                    coy += theAtoms[iat].y();
+                                    coz += theAtoms[iat].z();
+                                }
+                                cox /= theAtoms.length;
+                                coy /= theAtoms.length;
+                                coz /= theAtoms.length;
+//Not sure why I need to negate. Hmm.
+                                this.gl.current.setOrigin([-cox,-coy,-coz]);
+                            }
+                        } catch(e) {
+                            console.log("Failed to get selection in SVG click");
+                            console.log(e);
+                        }
+                    }
+                }
             }
         }
     }
