@@ -212,6 +212,17 @@ class Main extends Component {
 
     }
 
+    onSVGClick(m) {
+        if("hrefText" in m.clickMessage && "key" in m.clickMessage){
+            const t = m.clickMessage["hrefText"];
+            const k = m.clickMessage["key"];
+            if(t.startsWith("mmdb://")){
+                console.log(t.substring("mmdb://".length),k);
+            }
+        }
+    }
+    
+
     render(){
 
         //const score = this.state.score;
@@ -227,7 +238,7 @@ class Main extends Component {
             </Col>
 
             <Col lg={6}>
-            <ControlInterface displayData={displayData} enerLib={enerLib} glycanChange={this.glycanChanged.bind(this)} svgChange={this.svgChanged.bind(this)} filePendingChange={this.filePendingChanged.bind(this)} lightsChange={this.lightsChanged.bind(this)} addRequest={this.addRequested.bind(this)} deleteRequest={this.deleteRequested.bind(this)} visibilityChange={this.visibilityChanged.bind(this)} matricesChanged={this.matricesChanged.bind(this)} animateStateChanged={this.animateStateChanged.bind(this)} dataFiles={dataFiles}/>
+            <ControlInterface displayData={displayData} enerLib={enerLib} glycanChange={this.glycanChanged.bind(this)} svgChange={this.svgChanged.bind(this)} filePendingChange={this.filePendingChanged.bind(this)} lightsChange={this.lightsChanged.bind(this)} addRequest={this.addRequested.bind(this)} deleteRequest={this.deleteRequested.bind(this)} visibilityChange={this.visibilityChanged.bind(this)} matricesChanged={this.matricesChanged.bind(this)} animateStateChanged={this.animateStateChanged.bind(this)} dataFiles={dataFiles} svgClicked={this.onSVGClick.bind(this)} />
             </Col>
 
             </Row>

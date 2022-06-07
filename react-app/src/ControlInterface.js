@@ -99,12 +99,7 @@ class ControlInterface extends Component {
     }
 
     onSVGClick(m) {
-        if("hrefText" in m){
-            const t = m["hrefText"];
-            if(t.startsWith("mmdb://")){
-                console.log(t.substring("mmdb://".length));
-            }
-        }
+        this.props.svgClicked(m);
     }
 
     render () {
@@ -125,6 +120,8 @@ class ControlInterface extends Component {
 
         let rows = [];
         let irow = 0;
+        const className = 'clickableSvg';
+        const onSVGClick  = this.onSVGClick.bind(this);
         for(let isvg=0;isvg<Object.keys(this.state.svgInfo.ids).length;isvg++){
             let theKey = Object.keys(this.state.svgInfo.ids)[isvg];
             let svgDict = this.state.svgInfo.ids[theKey];
@@ -141,17 +138,16 @@ class ControlInterface extends Component {
                         let anchorNodes = graphicsNode.getElementsByTagName("a");
                         let sugarNode = sugarNodes[ign];
 
-                        const onSVGClick  = this.onSVGClick.bind(this);
-                        const className = 'clickableSvg';
                         let newSvg = parse((new XMLSerializer()).serializeToString(graphicsNode),{
                             replace: domNode => {
                                 if (domNode.name === 'a') {
                                     delete domNode.attribs.onclick;
                                     const hrefText = domNode.attribs["xlink:href"];
+                                    const clickMessage = {hrefText:hrefText,key:theKey};
                                     return (
                                             <a
                                             {...domNode.attribs}
-                                            onClick={() => onSVGClick({hrefText})}
+                                            onClick={() => onSVGClick({clickMessage})}
                                             className={className}
                                             >
                                             {domToReact(domNode.children)}

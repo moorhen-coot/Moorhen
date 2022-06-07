@@ -3500,6 +3500,7 @@ _atom_site.label_entity_id : "1"
     res["modamino"] = modamino;
     res["cryst"] = cryst;
     res["sequences"] = sequences;
+    res["structureName"] = structureName;
 
     console.log(res["sequences"]);
 
@@ -3982,6 +3983,7 @@ function parseMMCIF(lines,structureName) {
     res["altlocs"] = altlocs;
     res["modamino"] = modamino;
     res["sequences"] = sequences;
+    res["structureName"] = structureName;
 
     console.log(res["sequences"]);
 
