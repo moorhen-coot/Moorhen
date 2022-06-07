@@ -98,8 +98,13 @@ class ControlInterface extends Component {
 	this.props.visibilityChange(visStateInfo);
     }
 
-    onAClick(t) {
-	console.log(t["hrefText"]);
+    onSVGClick(m) {
+        if("hrefText" in m){
+            const t = m["hrefText"];
+            if(t.startsWith("mmdb://")){
+                console.log(t.substring("mmdb://".length));
+            }
+        }
     }
 
     render () {
@@ -136,7 +141,8 @@ class ControlInterface extends Component {
                         let anchorNodes = graphicsNode.getElementsByTagName("a");
                         let sugarNode = sugarNodes[ign];
 
-                        const onAClick  = this.onAClick.bind(this);
+                        const onSVGClick  = this.onSVGClick.bind(this);
+                        const className = 'clickableSvg';
                         let newSvg = parse((new XMLSerializer()).serializeToString(graphicsNode),{
                             replace: domNode => {
                                 if (domNode.name === 'a') {
@@ -145,7 +151,8 @@ class ControlInterface extends Component {
                                     return (
                                             <a
                                             {...domNode.attribs}
-                                            onClick={() => onAClick({hrefText})}
+                                            onClick={() => onSVGClick({hrefText})}
+                                            className={className}
                                             >
                                             {domToReact(domNode.children)}
                                             </a>
