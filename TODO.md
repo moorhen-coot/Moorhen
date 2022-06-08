@@ -27,12 +27,12 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
     - [x] Animate normal modes
   - [x] Put ligand picture somewhere better (in another Main tab).
   - [x] Glycan viewer to graphics interactivity
-  - [ ] PDB search
+  - [x] Background colour
   - [ ] Generate Helices
   - [ ] Prosmart
-  - [ ] Background colour
-  - [ ] Scale bar
   - [ ] Display maps
+  - [ ] PDB search
+  - [ ] Scale bar
   - [ ] Images/Legends
   - [ ] Perfect spheres
   - [ ] Lipid cartoons

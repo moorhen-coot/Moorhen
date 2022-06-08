@@ -207,6 +207,9 @@ class Main extends Component {
             if("fog" in params.lights){
                 this.gl.current.setFog([parseInt(params.lights.fog.near),parseInt(params.lights.fog.far)]);
             }
+            if("bgcolor" in params.lights){
+                this.gl.current.setBackground([parseFloat(params.lights.bgcolor.r)/255.,parseFloat(params.lights.bgcolor.g)/255.,parseFloat(params.lights.bgcolor.b)/255.,1.0]);
+            }
         }
         this.gl.current.drawScene();
 

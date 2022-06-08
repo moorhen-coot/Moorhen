@@ -8,8 +8,6 @@ import FormRange from 'react-bootstrap/FormRange';
 import {LightSphere} from './LightSphere';
 import SketchExample from './SketchExample';
 
-//import MultiRangeSlider from './MultiRangeSlider';
-
 class LightingUI extends Component {
 
     parametersChanged() {
@@ -40,12 +38,6 @@ class LightingUI extends Component {
         this.setState({fog : {near:vals.min, far:vals.max}},()=> {this.parametersChanged(); });
     }
 
-    /*
-    slabChanged(vals) {
-        this.setState({slab : {near:vals.min, far:vals.max}},()=> {this.parametersChanged(); });
-    }
-    */
-
     fogNearChanged(evt,stuff) {
         this.setState({fog : {near:evt.target.value, far:this.state.fog.far}},()=> {this.parametersChanged(); });
     }
@@ -74,16 +66,19 @@ class LightingUI extends Component {
         this.setState({position :  position},()=> {this.parametersChanged()});
     }
 
+    backgroundColorChanged(evt,stuff) {
+        this.setState({bgcolor:evt},()=> {this.parametersChanged()});
+    }
+
     constructor(props) {
         super(props);
         var ambRGB = {r:255, g:255, b:255, a:1};
         var diffRGB = {r:255, g:255, b:255, a:1};
         var specRGB = {r:255, g:255, b:255, a:1};
-        this.state = {ambient:0, specular:100, diffuse: 100, position : {x:0,y:0,z:0.5}, specularColor:specRGB, ambientColor:ambRGB, diffuseColor:diffRGB, fog:{near:0,far:1000}, slab:{width:500,position:0}};
+        var bgcolor = {r:255, g:255, b:255, a:1};
+        this.state = {bgcolor:bgcolor, ambient:0, specular:100, diffuse: 100, position : {x:0,y:0,z:0.5}, specularColor:specRGB, ambientColor:ambRGB, diffuseColor:diffRGB, fog:{near:0,far:1000}, slab:{width:500,position:0}};
 
         this.fogChanged = this.fogChanged.bind(this);
-        //this.slabChanged = this.slabChanged.bind(this);
-        
     }
 
     render() {
@@ -149,6 +144,14 @@ class LightingUI extends Component {
 	  <Col>Fog end</Col>
 	  <Col>
 	    <FormRange min={-500} max={500} value={fog.far} onChange={function(evt){self.fogFarChanged(evt,self)}} />
+	  </Col>
+	</Row>
+	<Row>
+	  <Col>
+          Background colour
+	  </Col>
+	  <Col>
+	    <SketchExample onChange={function(evt){self.backgroundColorChanged(evt,self)}} />
 	  </Col>
 	</Row>
         </Container>);
