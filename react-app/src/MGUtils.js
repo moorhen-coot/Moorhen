@@ -4,89 +4,12 @@ import Tabs from 'react-bootstrap/Tabs';
 import Tab from 'react-bootstrap/Tab';
 import Form from 'react-bootstrap/Form';
 
-class Helices extends React.Component {
-    constructor(props){
-        super(props);
-        this.state = { };
-    }
-    render() {
-        return (
-        <div id="generate_helices">
-        Generate Helices
-        </div>
-        )
-    }
-}
-
-class ProSMART extends React.Component {
-    constructor(props){
-        super(props);
-        this.state = { };
-    }
-    render() {
-        return (
-        <div id="prosmart">
-        Prosmart Analysis
-        </div>
-        )
-    }
-}
-
-class PDBSearch extends React.Component {
-    constructor(props){
-        super(props);
-        this.state = { };
-    }
-    render() {
-        return (
-        <div id="pdb_search">
-        Search PDB
-        </div>
-        )
-    }
-}
-
-class PDB_REDO extends React.Component {
-    constructor(props){
-        super(props);
-        this.state = { };
-    }
-    render() {
-        return (
-        <div id="pdb_redo">
-        PDB_REDO
-        </div>
-        )
-    }
-}
-
-class MiscObjects extends React.Component {
-    constructor(props){
-        super(props);
-        this.state = { };
-    }
-    render() {
-        return (
-        <div id="geometric">
-        Misc. Graphical Objects
-        </div>
-        )
-    }
-}
-
-class DownloadSF extends React.Component {
-    constructor(props){
-        super(props);
-        this.state = { };
-    }
-    render() {
-        return (
-        <div id="download_sf">
-        Download Structure Factors
-        </div>
-        )
-    }
-}
+import Helices from './Helices';
+import ProSMART from './ProSMART';
+import PDBSearch from './PDBSearch';
+import PDB_REDO from './PDB_REDO';
+import MiscObjects from './MiscObjects';
+import DownloadSF from './DownloadSF';
 
 class Utilities extends React.Component {
     constructor(props){
