@@ -7,7 +7,6 @@ import Main from './Main';
 
 const App = () => (
   <Container className="p-3">
-  <h1 className="header">React-Bootstrap WebMG</h1>
   <Main />
 
   </Container>

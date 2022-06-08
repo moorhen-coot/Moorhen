@@ -14,6 +14,7 @@ import MGWebWizardUI from './MGWebWizardUI';
 import DisplayTable from './DisplayTable';
 import Superpose from './Superpose';
 import NormalModes from './NormalModes';
+import Utilities from './MGUtils';
 
 function rowStyleFormat(row, rowIdx) {
   return { backgroundColor: rowIdx % 2 === 0 ? 'red' : 'blue' };
@@ -234,6 +235,9 @@ class ControlInterface extends Component {
                 </tbody>
                 </Table>
                 </div>
+                </Tab>
+                <Tab eventKey="utilities" title="Utilities">
+                <Utilities displayData={displayData} dataFiles={dataFiles} />
                 </Tab>
                 </Tabs>
                );
