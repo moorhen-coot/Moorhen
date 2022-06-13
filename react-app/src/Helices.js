@@ -408,6 +408,7 @@ class Helices extends React.Component {
         }
 
         let s = CreateHelixPDB(ztrans,turnAngle,psi,parseInt(nresidues),sideChainH,scaleMult,isBeta,phipsi,psinew,phi);
+//TODO - Do something with this
         console.log(s);
 
     }
