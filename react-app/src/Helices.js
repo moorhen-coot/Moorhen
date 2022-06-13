@@ -5,21 +5,26 @@ import Row from 'react-bootstrap/Row';
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
 
-import {vec3} from 'gl-matrix/esm';
+import {vec3,vec4,mat4} from 'gl-matrix/esm';
 import {quat as quat4} from 'gl-matrix/esm';
 import {DihedralAngle} from './mgMaths.js';
 import {quatToMat4} from './quatToMat4.js';
 
-function quat4Create(v1,v2,v3,v4){
-    let theQuat = quat4.create();
-    quat4.set(theQuat,v1,v2,v3,v4);
-    return theQuat;
+function vec3Create(v){
+    let theVec = vec4.create();
+    vec3.set(theVec,v[0],v[1],v[2]);
+    return theVec;
 }
 
-function vec3Create(v){
-    let theVec = vec3.create();
-    vec3.set(theVec,v[0],v[1],v[2],v[3]);
-    return theVec;
+function quat4Create(v1,v2,v3,v4,v5){
+    let theQuat = quat4.create();
+
+    let vnorm = vec3.create();
+    let vin = vec3Create([v1,v2,v3]);
+    vec3.normalize(vnorm,vin);
+
+    quat4.setAxisAngle(theQuat,vnorm,v5*Math.PI/180.);
+    return theQuat;
 }
 
 function vec3CrossR(v1,v2){
@@ -55,14 +60,16 @@ function vec3ScaleR(v1,s){
 
 function mat3MultVec3R(m,v){
     let out = vec3.create();
-    vec3.transformMat4(out,v,m);
+    let t = mat4.create();
+    mat4.transpose(t,m);
+    vec3.transformMat4(out,v,t);
     return out;
 }
 
 /*
 A small utility to generate amino-acid helices.*/
 
-function CreateHelixPDB(ztrans = null, turnAngle = null, psi = null, nresidues = 3, sideChainH = false, scaleMult = 2.1, isBeta = false, phipsi = false, psinew = 0.0, phi = 0.0) {
+function CreateHelixPDB(ztrans = null, turnAngle = null, psi = null, nresidues = 3, sideChainH = false, scaleMult = 2.1, isBeta = false, phipsi = true, psinew = 0.0, phi = 0.0) {
     /*
 CreateHelixPDB: returns a PDB format string containing atoms in
 helix as defined by following parameters.
@@ -114,19 +121,12 @@ fudged at the moment until I sort out my geometry.
         ncart = vec3Create([n[0] + h[0] * hn, n[1] + h[1] * hn, n[2] + h[2] * hn]);
         carts.push(ncart);
     }
-    console.log(carts);
 
     angle = DihedralAngle(carts[0], carts[1], carts[2], carts[3]);
     psidiff = angle * 180 / Math.PI - psi;
 
-    console.log(angle);
-    console.log(psidiff);
-
     s = "";
 
-    console.log("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-    console.log(nresidues);
-    console.log("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
     if (phipsi) {
         s = s + "SHEET    1  AA 1 ALA A   1  ALA A " +nresidues.toString().padStart(3) + "  0\n";
         nca = 1.47;
@@ -150,76 +150,72 @@ fudged at the moment until I sort out my geometry.
         q = quat4Create(1, 0, 0, 1, 180 - ncac);
         caccart = vec3Create([0, 0, cac]);
         ccart = vec3AddR(mat3MultVec3R(quatToMat4(q) , caccart) , cacart);
-        console.log(caccart);
         nhcart = vec3Create([0, 0, nh]);
-        q = quat4Create(1, 0, 0, 1, 120);
+        console.log(nhcart)
+        q = quat4Create(1.0, 0.0, 0.0, 1, 120.0);
+        let qmat = quatToMat4(q);
+        console.log(q);
+        console.log(qmat);
         nhcart = mat3MultVec3R(quatToMat4(q) , nhcart);
+        console.log(nhcart)
         cancart = vec3SubtractR(cacart , ncart);
+        console.log(cancart);
         qh2 = quat4Create(cancart[0], cancart[1], cancart[2], 1, 110);
         qh1 = quat4Create(cancart[0], cancart[1], cancart[2], 1, -110);
+        let qh1mat = quatToMat4(qh2);
+        let qh2mat = quatToMat4(qh1);
+        console.log(qh1);
+        console.log(qh2);
+        console.log(qh1mat);
+        console.log(qh2mat);
         nh2 = mat3MultVec3R(quatToMat4(qh2) , nhcart);
         nh1 = mat3MultVec3R(quatToMat4(qh1) , nhcart);
+        console.log(nh1);
+        console.log(nh2);
         hcart = vec3AddR(ncart , nh1);
         h2cart = vec3AddR(ncart , nh2);
-        console.log(nhcart);
-        console.log(cancart);
-        console.log(hcart);
-        console.log(h2cart);
+        console.log(hcart)
+        console.log(h2cart)
 
         for (let i = 0, _pj_a = nresidues; i < _pj_a; i += 1) {
             if (i > 0) {
                 if (i > 1) {
                     cancartnew = vec3SubtractR(cacart , ncart);
                     NormalizeVec3(cancartnew);
-                    console.log(cancartnew);
                     nccartnew = vec3SubtractR(ncart , prevCcart);
                     NormalizeVec3(nccartnew);
-                    console.log(nccartnew);
                     ax = vec3SubtractR(nccartnew , cancartnew);
                     NormalizeVec3(ax);
                     ax[0] *= nh; ax[1] *= nh; ax[2] *= nh; 
                     hcart = vec3AddR(ncart , ax);
-                    console.log(hcart);
                 }
 
-                console.log(hcart);
-                console.log(h2cart);
-//FIXME
-                s = s + "%6s%5d %4s%s%3s %s%4d%s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n" % ["ATOM  ", 11 * (i - 1) + 2, " H  ", " ", "ALA", "A", i, " ", hcart[0], hcart[1], hcart[2], 1, 99, " H"];
-
-                if (i === 1) {
-                    s = s + "%6s%5d %4s%s%3s %s%4d%s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n" % ["ATOM  ", 11 * (i - 1) + 3, " H2 ", " ", "ALA", "A", i, " ", h2cart[0], h2cart[1], h2cart[2], 1, 99, " H"];
+                s += "ATOM".padEnd(6," ") + (11 * (i - 1) + 2).toString().padStart(5," ") + "  H   ALA A" + i.toString().padStart(4," ") + "    " + hcart[0].toFixed(3).padStart(8," ") + hcart[1].toFixed(3).padStart(8," ")  + hcart[2].toFixed(3).padStart(8," ") + (1.0).toFixed(2).padStart(6," ") + (99.0).toFixed(2).padStart(6," ") + "H".padStart(12," ") + "\n";
+                if(i===1){
+                    s += "ATOM".padEnd(6," ") + (11 * (i - 1) + 3).toString().padStart(5," ") + "  H2  ALA A" + i.toString().padStart(4," ") + "    " + h2cart[0].toFixed(3).padStart(8," ") + h2cart[1].toFixed(3).padStart(8," ")  + h2cart[2].toFixed(3).padStart(8," ") + (1.0).toFixed(2).padStart(6," ") + (99.0).toFixed(2).padStart(6," ") + "H".padStart(12," ") + "\n";
                 }
+                s += "ATOM".padEnd(6," ") + (11 * (i - 1) + 4).toString().padStart(5," ") + "  CA  ALA A" + i.toString().padStart(4," ") + "    " + cacart[0].toFixed(3).padStart(8," ") + cacart[1].toFixed(3).padStart(8," ")  + cacart[2].toFixed(3).padStart(8," ") + (1.0).toFixed(2).padStart(6," ") + (99.0).toFixed(2).padStart(6," ") + "C".padStart(12," ") + "\n";
+                s += "ATOM".padEnd(6," ") + (11 * (i - 1) + 5).toString().padStart(5," ") + "  C   ALA A" + i.toString().padStart(4," ") + "    " + ccart[0].toFixed(3).padStart(8," ") + ccart[1].toFixed(3).padStart(8," ")  + ccart[2].toFixed(3).padStart(8," ") + (1.0).toFixed(2).padStart(6," ") + (99.0).toFixed(2).padStart(6," ") + "C".padStart(12," ") + "\n";
 
-                s = s + "%6s%5d %4s%s%3s %s%4d%s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n" % ["ATOM  ", 11 * (i - 1) + 4, " CA ", " ", "ALA", "A", i, " ", cacart[0], cacart[1], cacart[2], 1, 99, " C"];
-                s = s + "%6s%5d %4s%s%3s %s%4d%s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n" % ["ATOM  ", 11 * (i - 1) + 5, " C  ", " ", "ALA", "A", i, " ", ccart[0], ccart[1], ccart[2], 1, 99, " C"];
                 ncacartnew = vec3SubtractR(prevNcart , cacart);
                 NormalizeVec3(ncacartnew);
-                console.log(ncacartnew);
                 caccartnew = vec3SubtractR(ccart , cacart);
                 NormalizeVec3(caccartnew);
                 ax = vec3AddR(ncacartnew , caccartnew);
-                console.log(ax);
                 NormalizeVec3(ax);
                 ax2 = vec3CrossR(ncacartnew, caccartnew);
                 NormalizeVec3(ax2);
-                console.log(ax2);
                 rotax = vec3CrossR(ax, ax2);
-                console.log(rotax);
                 qOther = quat4Create(rotax[0], rotax[1], rotax[2], 1, 35);
                 qOtherH = quat4Create(rotax[0], rotax[1], rotax[2], 1, 145);
                 cbcartnew = mat3MultVec3R(quatToMat4(qOther) , ax2);
                 hacartnew = mat3MultVec3R(quatToMat4(qOtherH) , ax2);
                 NormalizeVec3(hacartnew);
                 NormalizeVec3(cbcartnew);
-                console.log(hacartnew);
-                console.log(cbcartnew);
                 hacartnew[0] *= caha; hacartnew[1] *= caha; hacartnew[2] *= caha; 
                 cbcartnew[0] *= cacb; cbcartnew[1] *= cacb; cbcartnew[2] *= cacb; 
                 cbcart = vec3AddR(cacart , cbcartnew);
                 hacart = vec3AddR(cacart , hacartnew);
-                console.log(cbcart);
-                console.log(hacart);
                 pcn = vec3SubtractR(cacart , prevNcart);
                 NormalizeVec3(pcn);
                 crosscart = vec3CrossR(caccartnew, pcn);
@@ -239,11 +235,6 @@ fudged at the moment until I sort out my geometry.
                 hb2cart = vec3AddR(cbcart , vec3ScaleR(ch2 , 0.98));
                 ch3 = mat3MultVec3R(quatToMat4(qOther2) , chb);
                 hb3cart = vec3AddR(cbcart , vec3ScaleR(ch3 , 0.98));
-                console.log(pcacb);
-                console.log(chb);
-                console.log(hb1cart);
-                console.log(hb2cart);
-                console.log(hb3cart);
             }
 
             if (i > 0) {
@@ -258,16 +249,13 @@ fudged at the moment until I sort out my geometry.
                 coxtcartnew = vec3SubtractR(ccart , cacart);
                 NormalizeVec3(cncartnew);
                 NormalizeVec3(coxtcartnew);
-                cncartnew[0] *= coxt; cncartnew[1] *= coxt; cncartnew[2] *= coxt; 
-                coxtcartnew[0] *= cn; coxtcartnew[1] *= cn; coxtcartnew[2] *= cn; 
+                cncartnew[0] *= cn; cncartnew[1] *= cn; cncartnew[2] *= cn; 
+                coxtcartnew[0] *= coxt; coxtcartnew[1] *= coxt; coxtcartnew[2] *= coxt; 
                 cannorm = vec3SubtractR(ncart , cacart);
                 cacnorm = vec3SubtractR(ccart , cacart);
-                console.log(cannorm);
-                console.log(cacnorm);
                 NormalizeVec3(cannorm);
                 NormalizeVec3(cacnorm);
                 rotax = vec3CrossR(cannorm, cacnorm);
-                console.log(rotax);
                 qn1 = quat4Create(rotax[0], rotax[1], rotax[2], 1, 180 - cacn);
                 qoxt1 = quat4Create(rotax[0], rotax[1], rotax[2], 1, 180 - caco);
                 cncartnew = mat3MultVec3R(quatToMat4(qn1) , cncartnew);
@@ -306,28 +294,20 @@ fudged at the moment until I sort out my geometry.
                 caccartnew = mat3MultVec3R(quatToMat4(qpsi) , caccartnew);
                 prevCcart = vec3Create([ccart[0], ccart[1], ccart[2]]);
                 ccart = vec3AddR(cacart , caccartnew);
-                console.log(ocart);
-                console.log(cbcart);
-                console.log(hacart);
-                console.log(hb1cart);
-                console.log(hb2cart);
-                console.log(hb3cart);
-                console.log(ncart);
-                console.log(oxtcart);
-//FIXME
-                s = s + "%6s%5d %4s%s%3s %s%4d%s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n" % ["ATOM  ", 11 * (i - 1) + 6, " O  ", " ", "ALA", "A", i, " ", ocart[0], ocart[1], ocart[2], 1, 99, " O"];
-                s = s + "%6s%5d %4s%s%3s %s%4d%s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n" % ["ATOM  ", 11 * (i - 1) + 7, " CB ", " ", "ALA", "A", i, " ", cbcart[0], cbcart[1], cbcart[2], 1, 99, " C"];
-                s = s + "%6s%5d %4s%s%3s %s%4d%s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n" % ["ATOM  ", 11 * (i - 1) + 8, " HA ", " ", "ALA", "A", i, " ", hacart[0], hacart[1], hacart[2], 1, 99, " H"];
+                s += "ATOM".padEnd(6," ") + (11 * (i - 1) + 6).toString().padStart(5," ") + "  O   ALA A" + i.toString().padStart(4," ") + "    " + ocart[0].toFixed(3).padStart(8," ") + ocart[1].toFixed(3).padStart(8," ")  + ocart[2].toFixed(3).padStart(8," ") + (1.0).toFixed(2).padStart(6," ") + (99.0).toFixed(2).padStart(6," ") + "O".padStart(12," ") + "\n";
+                s += "ATOM".padEnd(6," ") + (11 * (i - 1) + 7).toString().padStart(5," ") + "  CB  ALA A" + i.toString().padStart(4," ") + "    " + cbcart[0].toFixed(3).padStart(8," ") + cbcart[1].toFixed(3).padStart(8," ")  + cbcart[2].toFixed(3).padStart(8," ") + (1.0).toFixed(2).padStart(6," ") + (99.0).toFixed(2).padStart(6," ") + "C".padStart(12," ") + "\n";
+                s += "ATOM".padEnd(6," ") + (11 * (i - 1) + 8).toString().padStart(5," ") + "  HA  ALA A" + i.toString().padStart(4," ") + "    " + hacart[0].toFixed(3).padStart(8," ") + hacart[1].toFixed(3).padStart(8," ")  + hacart[2].toFixed(3).padStart(8," ") + (1.0).toFixed(2).padStart(6," ") + (99.0).toFixed(2).padStart(6," ") + "H".padStart(12," ") + "\n";
 
                 if (sideChainH) {
-                    s = s + "%6s%5d %4s%s%3s %s%4d%s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n" % ["ATOM  ", 11 * (i - 1) + 9, " HB1", " ", "ALA", "A", i, " ", hb1cart[0], hb1cart[1], hb1cart[2], 1, 99, " H"];
-                    s = s + "%6s%5d %4s%s%3s %s%4d%s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n" % ["ATOM  ", 11 * (i - 1) + 10, " HB2", " ", "ALA", "A", i, " ", hb2cart[0], hb2cart[1], hb2cart[2], 1, 99, " H"];
-                    s = s + "%6s%5d %4s%s%3s %s%4d%s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n" % ["ATOM  ", 11 * (i - 1) + 11, " HB3", " ", "ALA", "A", i, " ", hb3cart[0], hb3cart[1], hb3cart[2], 1, 99, " H"];
+                    s += "ATOM".padEnd(6," ") + (11 * (i - 1) + 9).toString().padStart(5," ") + "  HB1 ALA A" + i.toString().padStart(4," ") + "    " + hb1cart[0].toFixed(3).padStart(8," ") + hb1cart[1].toFixed(3).padStart(8," ")  + hb1cart[2].toFixed(3).padStart(8," ") + (1.0).toFixed(2).padStart(6," ") + (99.0).toFixed(2).padStart(6," ") + "H".padStart(12," ") + "\n";
+                        s += "ATOM".padEnd(6," ") + (11 * (i - 1) + 10).toString().padStart(5," ") + "  HB2 ALA A" + i.toString().padStart(4," ") + "    " + hb2cart[0].toFixed(3).padStart(8," ") + hb2cart[1].toFixed(3).padStart(8," ")  + hb2cart[2].toFixed(3).padStart(8," ") + (1.0).toFixed(2).padStart(6," ") + (99.0).toFixed(2).padStart(6," ") + "H".padStart(12," ") + "\n";
+                        s += "ATOM".padEnd(6," ") + (11 * (i - 1) + 11).toString().padStart(5," ") + "  HB3 ALA A" + i.toString().padStart(4," ") + "    " + hb3cart[0].toFixed(3).padStart(8," ") + hb3cart[1].toFixed(3).padStart(8," ")  + hb3cart[2].toFixed(3).padStart(8," ") + (1.0).toFixed(2).padStart(6," ") + (99.0).toFixed(2).padStart(6," ") + "H".padStart(12," ") + "\n";
+
                 }
             }
 
             if (i < nresidues - 1) {
-                s = s + "%6s%5d %4s%s%3s %s%4d%s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n" % ["ATOM  ", 11 * i + 1, " N  ", " ", "ALA", "A", i + 1, " ", ncart[0], ncart[1], ncart[2], 1, 99, " N"];
+                s += "ATOM".padEnd(6," ") + (11 * (i) + 1).toString().padStart(5," ") + "  N   ALA A" + (i+1).toString().padStart(4," ") + "    " + ncart[0].toFixed(3).padStart(8," ") + ncart[1].toFixed(3).padStart(8," ")  + ncart[2].toFixed(3).padStart(8," ") + (1.0).toFixed(2).padStart(6," ") + (99.0).toFixed(2).padStart(6," ") + "N".padStart(12," ") + "\n";
             }
 
             prevNcart = vec3Create([ncart[0], ncart[1], ncart[2]]);
@@ -337,144 +317,14 @@ fudged at the moment until I sort out my geometry.
                 NormalizeVec3(ohcart);
                 ohcart[0] *= oh; ohcart[1] *= oh; ohcart[2] *= oh; 
                 ohcart = vec3AddR(ocart , ohcart);
-                s = s + "%6s%5d %4s%s%3s %s%4d%s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n" % ["ATOM  ", 11 * (i - 1) + 12, " OXT", " ", "ALA", "A", i, " ", oxtcart[0], oxtcart[1], oxtcart[2], 1, 99, " O"];
-                s = s + "%6s%5d %4s%s%3s %s%4d%s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n" % ["ATOM  ", 11 * (i - 1) + 13, " HO ", " ", "ALA", "A", i, " ", ohcart[0], ohcart[1], ohcart[2], 1, 99, " H"];
-                console.log(ohcart);
+                s += "ATOM".padEnd(6," ") + (11 * (i-1) + 12).toString().padStart(5," ") + "  OXT ALA A" + i.toString().padStart(4," ") + "    " + oxtcart[0].toFixed(3).padStart(8," ") + oxtcart[1].toFixed(3).padStart(8," ")  + oxtcart[2].toFixed(3).padStart(8," ") + (1.0).toFixed(2).padStart(6," ") + (99.0).toFixed(2).padStart(6," ") + "O".padStart(12," ") + "\n";
+                s += "ATOM".padEnd(6," ") + (11 * (i-1) + 13).toString().padStart(5," ") + "  HO  ALA A" + i.toString().padStart(4," ") + "    " + ohcart[0].toFixed(3).padStart(8," ") + ohcart[1].toFixed(3).padStart(8," ")  + ohcart[2].toFixed(3).padStart(8," ") + (1.0).toFixed(2).padStart(6," ") + (99.0).toFixed(2).padStart(6," ") + "H".padStart(12," ") + "\n";
             }
         }
 
-        console.log("returning 1");
         return s;
     }
 
-    for (let i = 0, _pj_a = nresidues; i < _pj_a; i += 1) {
-        console.log("hello");
-        theta = i * turnAngle;
-        x = scaleMult * Math.sin(theta);
-        y = scaleMult * Math.cos(theta);
-        z = -i * ztrans;
-        ca = vec3Create([x, y, z]);
-        theta2 = (i + 1) * turnAngle;
-        x2 = scaleMult * Math.sin(theta2);
-        y2 = scaleMult * Math.cos(theta2);
-        z2 = -(i + 1) * ztrans;
-        ca2 = vec3Create([x2, y2, z2]);
-        c = vec3AddR(ca ,  vec3ScaleR(vec3SubtractR(ca2 , ca) , cfrac));
-        n = vec3AddR(ca ,  vec3ScaleR(vec3SubtractR(ca2 , ca) , nfrac));
-        ca2ca = vec3SubtractR(ca2 , ca);
-        NormalizeVec3(ca2ca);
-        out = vec3CrossR(ca2ca, zaxis);
-        NormalizeVec3(out);
-        h = vec3CrossR(ca2ca, out);
-        ccart = vec3Create([c[0] + h[0] * hc, c[1] + h[1] * hc, c[2] + h[2] * hc]);
-        ncart = vec3Create([n[0] + h[0] * hn, n[1] + h[1] * hn, n[2] + h[2] * hn]);
-        q = quat4Create(ca2ca[0], ca2ca[1], ca2ca[2], 1, psidiff);
-        ccart = vec3AddR(c , mat3MultVec3R(quatToMat4(q) , vec3SubtractR(ccart , c)));
-        ncart = vec3AddR(n , mat3MultVec3R(quatToMat4(q) , vec3SubtractR(ncart , n)));
-        cacart = vec3Create([x, y, z]);
-        cac =  vec3SubtractR(ccart , cacart);
-        cn =  vec3SubtractR(ncart , ccart);
-        NormalizeVec3(cac);
-        NormalizeVec3(cn);
-        crosscart = vec3CrossR(cac, cn);
-        console.log(crosscart);
-        qo = quat4Create(crosscart[0], crosscart[1], crosscart[2], 1, -120);
-        co = mat3MultVec3R(quatToMat4(qo) , cn);
-        ocart = vec3AddR(ccart , vec3ScaleR(co , 1.2));
-
-        if (i === nresidues - 1) {
-            qoxt = quat4Create(cac[0], cac[1], cac[2], 1, 180);
-            oxt = mat3MultVec3R(quatToMat4(qoxt) , co);
-            oxtcart = vec3AddR(ccart , vec3ScaleR(oxt , 1.2));
-            oh = vec3Create([cac[0], cac[1], cac[2]]);
-            ohcart = vec3AddR(ocart , vec3ScaleR(oh , 0.9));
-        }
-
-        if (i > 0) {
-            cn = vec3SubtractR(cacart , prevNcart);
-            console.log(cn);
-            NormalizeVec3(cn);
-            crosscart = vec3CrossR(cac, cn);
-            NormalizeVec3(crosscart);
-            qcb = quat4Create(crosscart[0], crosscart[1], crosscart[2], 1, 60);
-            ccbt = mat3MultVec3R(quatToMat4(qcb) , cn);
-            theOther = vec3CrossR(ccbt, crosscart);
-            qOther = quat4Create(theOther[0], theOther[1], theOther[2], 1, 55);
-            qOtherH = quat4Create(theOther[0], theOther[1], theOther[2], 1, -55);
-            cha = mat3MultVec3R(quatToMat4(qOtherH) , ccbt);
-            hacart = vec3AddR(cacart , vec3ScaleR(cha , 0.98));
-            ccb = mat3MultVec3R(quatToMat4(qOther) , ccbt);
-            cbcart = vec3AddR(cacart , vec3ScaleR(ccb , 1.5));
-            cacb = vec3SubtractR(cacart , cbcart);
-            qOtherHB = quat4Create(theOther[0], theOther[1], theOther[2], 1, -15);
-            qOther1 = quat4Create(cacb[0], cacb[1], cacb[2], 1, 60);
-            quat4.multiply(qOtherHB,qOtherHB,qOther1);
-            chb = mat3MultVec3R(quatToMat4(qOtherHB) , ccbt);
-            hb1cart =  vec3AddR(cbcart , vec3ScaleR(chb , 0.98));
-            qOther = quat4Create(cacb[0], cacb[1], cacb[2], 1, 120);
-            qOther2 = quat4Create(cacb[0], cacb[1], cacb[2], 1, 240);
-            ch2 = mat3MultVec3R(quatToMat4(qOther) , chb);
-            hb2cart =  vec3AddR(cbcart , vec3ScaleR(ch2 , 0.98));
-            ch3 = mat3MultVec3R(quatToMat4(qOther2) , chb);
-            hb3cart =  vec3AddR(cbcart , vec3ScaleR(ch3 , 0.98));
-            cn = vec3SubtractR(prevNcart , prevCcart);
-            NormalizeVec3(cn);
-            can = vec3SubtractR(cacart , prevNcart);
-            NormalizeVec3(can);
-            crosscart = vec3CrossR(cn, can);
-            qh = quat4Create(crosscart[0], crosscart[1], crosscart[2], 1, -120);
-            nh = mat3MultVec3R(quatToMat4(qh) , can);
-            hcart = vec3AddR(prevNcart , vec3ScaleR(nh , 0.86));
-
-            if (i === 1) {
-                qh2 = quat4Create(can[0], can[1], can[2], 1, 110);
-                qh1 = quat4Create(can[0], can[1], can[2], 1, -110);
-                nh2 = mat3MultVec3R(quatToMat4(qh2) , nh);
-                nh1 = mat3MultVec3R(quatToMat4(qh1) , nh);
-                hcart = vec3AddR(prevNcart , vec3ScaleR(nh1 , 0.86));
-                h2cart = vec3AddR(prevNcart , vec3ScaleR(nh2 , 0.86));
-                console.log(hcart);
-                console.log(h2cart);
-            }
-        }
-
-//FIXME
-        if (i >= 1) {
-            s = s + "%6s%5d %4s%s%3s %s%4d%s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n" % ["ATOM  ", 11 * (i - 1) + 2, " H  ", " ", "ALA", "A", i, " ", hcart[0], hcart[1], hcart[2], 1, 99, " H"];
-        }
-
-        if (i === 1) {
-            s = s + "%6s%5d %4s%s%3s %s%4d%s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n" % ["ATOM  ", 11 * (i - 1) + 3, " H2 ", " ", "ALA", "A", i, " ", h2cart[0], h2cart[1], h2cart[2], 1, 99, " H"];
-        }
-
-        if (i > 0) {
-            s = s + "%6s%5d %4s%s%3s %s%4d%s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n" % ["ATOM  ", 11 * (i - 1) + 4, " CA ", " ", "ALA", "A", i, " ", x, y, z, 1, 99, " C"];
-            s = s + "%6s%5d %4s%s%3s %s%4d%s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n" % ["ATOM  ", 11 * (i - 1) + 5, " C  ", " ", "ALA", "A", i, " ", ccart[0], ccart[1], ccart[2], 1, 99, " C"];
-            s = s + "%6s%5d %4s%s%3s %s%4d%s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n" % ["ATOM  ", 11 * (i - 1) + 6, " O  ", " ", "ALA", "A", i, " ", ocart[0], ocart[1], ocart[2], 1, 99, " O"];
-            s = s + "%6s%5d %4s%s%3s %s%4d%s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n" % ["ATOM  ", 11 * (i - 1) + 7, " CB ", " ", "ALA", "A", i, " ", cbcart[0], cbcart[1], cbcart[2], 1, 99, " C"];
-            s = s + "%6s%5d %4s%s%3s %s%4d%s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n" % ["ATOM  ", 11 * (i - 1) + 8, " HA ", " ", "ALA", "A", i, " ", hacart[0], hacart[1], hacart[2], 1, 99, " H"];
-
-            if (sideChainH) {
-                s = s + "%6s%5d %4s%s%3s %s%4d%s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n" % ["ATOM  ", 11 * (i - 1) + 9, " HB1", " ", "ALA", "A", i, " ", hb1cart[0], hb1cart[1], hb1cart[2], 1, 99, " H"];
-                s = s + "%6s%5d %4s%s%3s %s%4d%s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n" % ["ATOM  ", 11 * (i - 1) + 10, " HB2", " ", "ALA", "A", i, " ", hb2cart[0], hb2cart[1], hb2cart[2], 1, 99, " H"];
-                s = s + "%6s%5d %4s%s%3s %s%4d%s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n" % ["ATOM  ", 11 * (i - 1) + 11, " HB3", " ", "ALA", "A", i, " ", hb3cart[0], hb3cart[1], hb3cart[2], 1, 99, " H"];
-            }
-        }
-
-        if (i < nresidues - 1) {
-            s = s + "%6s%5d %4s%s%3s %s%4d%s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n" % ["ATOM  ", 11 * i + 1, " N  ", " ", "ALA", "A", i + 1, " ", ncart[0], ncart[1], ncart[2], 1, 99, " N"];
-        }
-
-        if (i === nresidues - 1) {
-            s = s + "%6s%5d %4s%s%3s %s%4d%s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n" % ["ATOM  ", 11 * (i - 1) + 12, " OXT", " ", "ALA", "A", i, " ", oxtcart[0], oxtcart[1], oxtcart[2], 1, 99, " O"];
-            s = s + "%6s%5d %4s%s%3s %s%4d%s   %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n" % ["ATOM  ", 11 * (i - 1) + 13, " HO ", " ", "ALA", "A", i, " ", ohcart[0], ohcart[1], ohcart[2], 1, 99, " H"];
-        }
-
-        prevNcart = vec3Create([ncart[0], ncart[1], ncart[2]]);
-        prevCcart = vec3Create([ccart[0], ccart[1], ccart[2]]);
-    }
-
-    return s;
 }
 
 const Spacer = props => {
@@ -503,7 +353,6 @@ class Helices extends React.Component {
     }
 
     handleSubmit(){
-        console.log(this.state.helixType,this.state.nResidues,this.state.doCB);
 
         const t = this.state.helixType;
         const nresidues = this.state.nResidues;
