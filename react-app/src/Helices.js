@@ -151,31 +151,17 @@ fudged at the moment until I sort out my geometry.
         caccart = vec3Create([0, 0, cac]);
         ccart = vec3AddR(mat3MultVec3R(quatToMat4(q) , caccart) , cacart);
         nhcart = vec3Create([0, 0, nh]);
-        console.log(nhcart)
         q = quat4Create(1.0, 0.0, 0.0, 1, 120.0);
-        let qmat = quatToMat4(q);
-        console.log(q);
-        console.log(qmat);
         nhcart = mat3MultVec3R(quatToMat4(q) , nhcart);
-        console.log(nhcart)
         cancart = vec3SubtractR(cacart , ncart);
-        console.log(cancart);
         qh2 = quat4Create(cancart[0], cancart[1], cancart[2], 1, 110);
         qh1 = quat4Create(cancart[0], cancart[1], cancart[2], 1, -110);
         let qh1mat = quatToMat4(qh2);
         let qh2mat = quatToMat4(qh1);
-        console.log(qh1);
-        console.log(qh2);
-        console.log(qh1mat);
-        console.log(qh2mat);
         nh2 = mat3MultVec3R(quatToMat4(qh2) , nhcart);
         nh1 = mat3MultVec3R(quatToMat4(qh1) , nhcart);
-        console.log(nh1);
-        console.log(nh2);
         hcart = vec3AddR(ncart , nh1);
         h2cart = vec3AddR(ncart , nh2);
-        console.log(hcart)
-        console.log(h2cart)
 
         for (let i = 0, _pj_a = nresidues; i < _pj_a; i += 1) {
             if (i > 0) {
@@ -226,7 +212,7 @@ fudged at the moment until I sort out my geometry.
                 theOther = vec3CrossR(ccbt, crosscart);
                 qOtherHB = quat4Create(theOther[0], theOther[1], theOther[2], 1, -15);
                 qOther1 = quat4Create(pcacb[0], pcacb[1], pcacb[2], 1, 60);
-                quat4.multiply(qOtherHB,qOtherHB,qOther1);
+                quat4.multiply(qOtherHB,qOther1,qOtherHB);
                 chb = mat3MultVec3R(quatToMat4(qOtherHB) , ccbt);
                 hb1cart = vec3AddR(cbcart , vec3ScaleR(chb , 0.98));
                 qOther = quat4Create(pcacb[0], pcacb[1], pcacb[2], 1, 120);
