@@ -5846,13 +5846,17 @@ function objectsFromAtomColourStyle(pdbatoms,data){
         objects.push(linePrimitiveInfo);
         objects.push(singletonPrimitiveInfo);
     } else if(data.style==="Cylinders") {
-        let contacts = model.SeekContacts(selectedAtoms,selectedAtoms,0.6,1.6);
+        let contactsAndSingletons = model.getBondsContactsAndSingletons();
+        let contacts = contactsAndSingletons["contacts"];
+        //let contacts = model.SeekContacts(selectedAtoms,selectedAtoms,0.6,1.6);
         let spheres = atomsToSpheresInfo(selectedAtoms,0.2,atomColours);
         let cylinderPrimitiveInfo = contactsToCylindersInfo(contacts,0.2,atomColours);
         objects.push(spheres);
         objects.push(cylinderPrimitiveInfo);
     } else if(data.style==="Ball and stick") {
-        let contacts = model.SeekContacts(selectedAtoms,selectedAtoms,0.6,1.6);
+        let contactsAndSingletons = model.getBondsContactsAndSingletons();
+        let contacts = contactsAndSingletons["contacts"];
+        //let contacts = model.SeekContacts(selectedAtoms,selectedAtoms,0.6,1.6);
         let spheres = atomsToSpheresInfo(selectedAtoms,0.4,atomColours);
         let cylinderPrimitiveInfo = contactsToCylindersInfo(contacts,0.2,atomColours);
         objects.push(spheres);
