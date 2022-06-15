@@ -22,7 +22,6 @@ class PDBSearch extends React.Component {
     }
 
     handleSubmit(){
-        console.log(this.state.searchString);
 
         const url = "https://search.rcsb.org/rcsbsearch/v1/query";
 
@@ -36,7 +35,6 @@ class PDBSearch extends React.Component {
             },
             "return_type": "entry"
         };
-        console.log(JSON.stringify(theSearchString));
         const requestOptions = {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -47,6 +45,7 @@ class PDBSearch extends React.Component {
                 if(response.ok){
                     return response.json();
                 }
+                throw response;
             })
             .then(data => {
                 console.log(data)
