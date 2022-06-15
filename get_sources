@@ -30,6 +30,9 @@ echo
 echo "Checking out ccp4mg"
 bzr branch http://fg.oisin.rc-harwell.ac.uk/anonscm/bzr/ccp4mg/ccp4-pyside2-opengl33/ ccp4mg
 echo
+echo "Checking out prosmart"
+bzr branch http://fg.oisin.rc-harwell.ac.uk/anonscm/bzr/prosmart/trunk prosmart
+echo
 
 echo "Downloading privateer MKIV"
 curl -L https://github.com/agirre/privateer/archive/refs/tags/MKIV.tar.gz -o privateer-MKIV.tar.gz
