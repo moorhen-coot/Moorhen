@@ -28,10 +28,7 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
   - [x] Put ligand picture somewhere better (in another Main tab).
   - [x] Glycan viewer to graphics interactivity
   - [x] Background colour
-  - [ ] Generate Helices
-    - [x] Generate
-    - [x] Display them
-    - [ ] Fix the ones that do nothing
+  - [x] Generate Helices
   - [ ] Prosmart
   - [ ] Display maps
   - [ ] PDB search

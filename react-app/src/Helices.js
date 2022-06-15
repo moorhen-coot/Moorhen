@@ -361,7 +361,7 @@ class Helices extends React.Component {
             scaleMult = 1.865476;
             phi = 74;
             psinew = 4;
-        } else if(t === "Twisted-Beta-parallel"){
+        } else if(t === "Twisted beta parallel"){
             ztrans = 3.4;
             turnAngle = 195 * Math.PI / 180.;
             psi = -105;
@@ -369,7 +369,7 @@ class Helices extends React.Component {
             isBeta = true;
             phi = -119;
             psinew = 113;
-        } else if(t === "Twisted-Beta-anti-parallel"){
+        } else if(t === "Twisted beta antiparallel"){
             ztrans = 3.4;
             turnAngle = 195 * Math.PI / 180.;
             psi = -105;
@@ -377,7 +377,7 @@ class Helices extends React.Component {
             isBeta = true;
             phi = -139;
             psinew = 135;
-        } else if(t === "Untwisted-Beta"){
+        } else if(t === "Untwisted beta"){
             ztrans = 3.4;
             turnAngle = 180 * Math.PI / 180.;
             psi = -105;
@@ -385,7 +385,7 @@ class Helices extends React.Component {
             isBeta = true;
             phi = -131;
             psinew = 135;
-        } else if(t === "Left-handed-alpha"){
+        } else if(t === "Left-handed alpha"){
             ztrans = 1.5;
             turnAngle = -100 * Math.PI / 180.;
             psi = 60;
