@@ -33,6 +33,10 @@ class Utilities extends React.Component {
         }
     }
 
+    helicesChanged(data) {
+	this.props.helicesChanged({pending:data});
+    }
+
     render() {
 
         const selectionChanged = this.selectionChanged.bind(this);
@@ -46,7 +50,7 @@ class Utilities extends React.Component {
             <option value="geometric">Misc. Graphical Objects</option>
             <option value="download_sf">Download Structure Factors</option>
         </Form.Select>
-        { this.state.showHelices ? <Helices /> : null }
+        { this.state.showHelices ? <Helices onChange={this.helicesChanged.bind(this)} /> : null }
         { this.state.showProSMART ? <ProSMART /> : null }
         { this.state.showPDBSearch ? <PDBSearch /> : null }
         { this.state.showPDB_REDO ? <PDB_REDO /> : null }

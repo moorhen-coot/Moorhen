@@ -30,7 +30,8 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
   - [x] Background colour
   - [ ] Generate Helices
     - [x] Generate
-    - [ ] Display them
+    - [x] Display them
+    - [ ] Fix the ones that do nothing
   - [ ] Prosmart
   - [ ] Display maps
   - [ ] PDB search

@@ -103,6 +103,10 @@ class ControlInterface extends Component {
         this.props.svgClicked(m);
     }
 
+    helicesChanged(params) {
+	this.props.filePendingChange({pending:params.pending});
+    }
+
     render () {
 
         const enerLib = this.state.enerLib;
@@ -237,7 +241,7 @@ class ControlInterface extends Component {
                 </div>
                 </Tab>
                 <Tab eventKey="utilities" title="Utilities">
-                <Utilities displayData={displayData} dataFiles={dataFiles} />
+                <Utilities displayData={displayData} dataFiles={dataFiles} helicesChanged={this.helicesChanged.bind(this)}/>
                 </Tab>
                 </Tabs>
                );

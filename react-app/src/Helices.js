@@ -10,6 +10,8 @@ import {quat as quat4} from 'gl-matrix/esm';
 import {DihedralAngle} from './mgMaths.js';
 import {quatToMat4} from './quatToMat4.js';
 
+import {parsePDB} from './mgMiniMol.js';
+
 function vec3Create(v){
     let theVec = vec4.create();
     vec3.set(theVec,v[0],v[1],v[2]);
@@ -322,7 +324,7 @@ const Spacer = props => {
 class Helices extends React.Component {
     constructor(props){
         super(props);
-        this.state = { helixType : "Alpha", nResidues : 10, doCB : true };
+        this.state = { theAtoms : [], pending:{}, helixType : "Alpha", nResidues : 10, doCB : true };
         this.helixTypes = ["Alpha","3-10","Pi","Left-handed alpha","Untwisted beta","Twisted beta parallel","Twisted beta antiparallel"];
     }
 
@@ -340,6 +342,7 @@ class Helices extends React.Component {
 
     handleSubmit(){
 
+        const self = this;
         const t = this.state.helixType;
         const nresidues = this.state.nResidues;
         const sideChainH = this.state.doCB;
@@ -408,8 +411,22 @@ class Helices extends React.Component {
         }
 
         let s = CreateHelixPDB(ztrans,turnAngle,psi,parseInt(nresidues),sideChainH,scaleMult,isBeta,phipsi,psinew,phi);
-//TODO - Do something with this
-        console.log(s);
+        const name = t+"_"+parseInt(nresidues);
+        const pdbatoms = parsePDB(s.split("\n"),name+".pdb");
+        self.setState({pending:{fileData:{contents:s,isPDB:true},atoms:pdbatoms,big:false,name:name}},()=> {self.parametersChanged(); });
+        self.setState({theAtoms: pdbatoms});
+    }
+
+    parametersChanged() {
+        if(!this.state.pending) return;
+        const pending = {fileData:this.state.pending.fileData,atoms:this.state.pending.atoms,wizard:"Bonds",name:this.state.pending.name};
+        try {
+            this.props.onChange(pending);
+        } catch(e) {
+            console.log("Fail");
+            console.log(e);
+            //Ignore
+        }
 
     }
 
