@@ -32,7 +32,7 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
   - [x] Generate Helices
   - [ ] Prosmart
   - [ ] Display maps
-  - [ ] PDB search
+  - [x] PDB search
   - [ ] Scale bar
   - [ ] Images/Legends
   - [ ] Perfect spheres
