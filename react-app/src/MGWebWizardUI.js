@@ -386,8 +386,9 @@ class MGWebWizardUI extends Component {
                                 if (urlsrequest.readyState===4){
                                     if (urlsrequest.status===200 || window.location.href.indexOf("http")===-1){
                                         var resp = JSON.parse(urlsrequest.responseText);
-                                        if(typeof(resp[self.state.pdbcode])!=="undefined" && typeof(resp[self.state.pdbcode]["PDB"])!=="undefined" && typeof(resp[self.state.pdbcode]["PDB"]["downloads"])!=="undefined"){
-                                            var dl = resp[self.state.pdbcode]["PDB"]["downloads"];
+                                        const lowerCode = self.state.pdbcode.toLowerCase();
+                                        if(typeof(resp[lowerCode])!=="undefined" && typeof(resp[lowerCode]["PDB"])!=="undefined" && typeof(resp[lowerCode]["PDB"]["downloads"])!=="undefined"){
+                                            var dl = resp[lowerCode]["PDB"]["downloads"];
                                             var theUrl = null;
                                             // FIXME use updated  mmcif it has chem comp.
                                             for(var idl=0;idl<dl.length;idl++){
@@ -397,7 +398,6 @@ class MGWebWizardUI extends Component {
                                                 }
                                             }
                                             if(useGzip) theUrl = "https://files.rcsb.org/download/"+self.state.pdbcode.toUpperCase()+".cif.gz";
-                                            console.log(theUrl);
                                             if(theUrl){
                                                 mygetrequest.open("GET", theUrl, true);
                                                 if(useGzip) mygetrequest.responseType = "arraybuffer";

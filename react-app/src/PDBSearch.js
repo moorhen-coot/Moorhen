@@ -23,7 +23,7 @@ class PDBSearch extends React.Component {
     }
 
     handeleSearchChange(e){
-        this.setState({searchString: e.target.value});
+        this.setState({searchString: e.target.value, selected:{ids:{}}});
     }
 
     handleSelectedIDChange(pdb_id,evt){
@@ -140,7 +140,7 @@ class PDBSearch extends React.Component {
         const self = this;
         if("result_set" in this.state.results){
             for(let i=0;i<this.state.results.result_set.length;i++){
-                const buttonId = "pdbsearch-"+i;
+                const buttonId = "pdbsearch-"+this.state.searchString.replace(" ","_")+"-"+i;
                 const buttonLabel = this.state.results.result_set[i].identifier + " (" + parseFloat(this.state.results.result_set[i].score).toFixed(3) + ")";
                 resultsList.push(
                   <Form.Check
