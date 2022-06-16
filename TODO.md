@@ -15,6 +15,7 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
   - [x] Undo button
 - [x] Charged ligands produce SVG (e.g DCB 4a3h)
 - [ ] Selections for ribbons/worms (currently does all atoms whatever the selection)
+- [ ] Change use of XMLHttpRequest in various places to fetch API (as in PDBSearch.js).
 - [ ] Some MG stuff in WebGL react-bootstrap
   - [x] Get Smiles (This only does svg. Seems there are no force fields in `RDKit_minimal` at present.
   - [x] Get Monomer
