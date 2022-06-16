@@ -8,6 +8,8 @@ import Button from 'react-bootstrap/Button';
 
 import pako from 'pako';
 
+import {parseMMCIF} from './mgMiniMol.js';
+
 const Spacer = props => {
   return (
     <div style={{height:props.height}}></div>
@@ -35,26 +37,44 @@ class PDBSearch extends React.Component {
         //TODO - Need a way to load multiple files at once. I am not convinced by the "pending" stuff in MGWebWizardUI.
         const self = this;
         let checked = self.state.selected.ids;
+        //let promises = [];
         for (const [key, value] of Object.entries(checked)) {
             if(value){
                 console.log("Download",key);
                 let theUrl = "https://files.rcsb.org/download/"+key.toUpperCase()+".cif.gz";
+                //promises.push(fetch(theUrl));
                 fetch(theUrl).then(response => {
                     return response.blob();
                  }).then(data => {
-                    console.log(data);
                     new Response(data).arrayBuffer()
                     .then(arrayBuffer => {
+                        console.log(key);
                         const codeddata  = pako.inflate(arrayBuffer);
                         let decoder = new TextDecoder('utf-8');
                         let strData = decoder.decode(codeddata);
-                        console.log(strData);
+                        const dataSplit = strData.split("\n");
+                        const cifatoms = parseMMCIF(dataSplit,key);
+                        const pending = {fileData:strData,atoms:cifatoms,wizard:"Bonds",name:key};
+                        this.props.onChange(pending);
                     });
                 }).catch(error => {
                     console.error(error);
                 });
             }
         }
+        /*
+        // This would wait for them all; we would then loop over "result". Interesting, but probably not what I want?
+        if(promises.length>0){
+            Promise.all(promises).then(responses => {
+                Promise.all(responses.map(res => res.blob()))
+                .then(result => {
+                    console.log(result);
+                })
+            }).catch((error) => {
+                console.error(error);
+            });
+        }
+        */
     }
 
     handleSubmit(){

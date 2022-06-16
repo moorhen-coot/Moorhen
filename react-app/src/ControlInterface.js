@@ -241,7 +241,7 @@ class ControlInterface extends Component {
                 </div>
                 </Tab>
                 <Tab eventKey="utilities" title="Utilities">
-                <Utilities displayData={displayData} dataFiles={dataFiles} helicesChanged={this.helicesChanged.bind(this)}/>
+                <Utilities displayData={displayData} dataFiles={dataFiles} filePendingChanged={this.filePendingChanged.bind(this)} helicesChanged={this.helicesChanged.bind(this)}/>
                 </Tab>
                 </Tabs>
                );

@@ -33,6 +33,10 @@ class Utilities extends React.Component {
         }
     }
 
+    filePendingChanged(data) {
+	this.props.filePendingChanged(data);
+    }
+
     helicesChanged(data) {
 	this.props.helicesChanged({pending:data});
     }
@@ -52,7 +56,7 @@ class Utilities extends React.Component {
         </Form.Select>
         { this.state.showHelices ? <Helices onChange={this.helicesChanged.bind(this)} /> : null }
         { this.state.showProSMART ? <ProSMART /> : null }
-        { this.state.showPDBSearch ? <PDBSearch /> : null }
+        { this.state.showPDBSearch ? <PDBSearch onChange={this.filePendingChanged.bind(this)}/> : null }
         { this.state.showPDB_REDO ? <PDB_REDO /> : null }
         { this.state.showMiscObjects ? <MiscObjects /> : null }
         { this.state.showDownloadSF ? <DownloadSF /> : null }
