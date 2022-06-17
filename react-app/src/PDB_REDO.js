@@ -17,6 +17,17 @@ class PDB_REDO extends React.Component {
     constructor(props){
         super(props);
         this.state = { searchString: "", searchType:"full_coords"};
+        this.myWorkerMTZ = new window.Worker('wasm/mtz_arraybuffer_worker.js');
+        this.myWorkerMTZ.onmessage = function(e) {
+            let result = document.getElementById("output");
+            if(e.data[0]==="result"){
+                result.innerHTML += "<b>Result: " + e.data[1] + "</b><br />";
+                //This is then where we decide upon the action
+                let ccp4map = e.data[1];
+                console.log(ccp4map);
+            }
+        }
+
     }
 
     submitHandler (e) {
@@ -26,6 +37,7 @@ class PDB_REDO extends React.Component {
 
     getPDBREDO(){
 
+        const self = this;
         const pdbCode = this.state.searchString.toLowerCase();
         let theUrl = "";
         let name = "";
@@ -36,12 +48,14 @@ class PDB_REDO extends React.Component {
         } else if(this.state.searchType==="full_mtz") {
             theUrl = "https://pdb-redo.eu/db/"+pdbCode+"/"+pdbCode+"_final.mtz";
             blob = true;
+            name = pdbCode+"_final.mtz";
         } else if(this.state.searchType==="partial_coords") {
             theUrl = "https://pdb-redo.eu/db/"+pdbCode+"/"+pdbCode+"_besttls.pdb";
             name = pdbCode+"_besttls.pdb";
         } else if(this.state.searchType==="partial_mtz") {
             theUrl = "https://pdb-redo.eu/db/"+pdbCode+"/"+pdbCode+"_besttls.mtz";
             blob = true;
+            name = pdbCode+"_besttls.mtz";
         }
 
         fetch(theUrl).then(response => {
@@ -54,9 +68,8 @@ class PDB_REDO extends React.Component {
             if(blob){
             new Response(data).arrayBuffer()
             .then(arrayBuffer => {
-                var byteArray = new Uint8Array(arrayBuffer);
-                console.log(byteArray);
                 // TODO - now load it...
+                self.myWorkerMTZ.postMessage([arrayBuffer, name]);
             });
             } else {
                 const dataSplit = data.split("\n");

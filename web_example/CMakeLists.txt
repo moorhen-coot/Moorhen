@@ -34,6 +34,7 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/web_example.wasm
               ${CMAKE_CURRENT_BINARY_DIR}/RDKit_minimal.wasm
               ${CMAKE_CURRENT_BINARY_DIR}/cif_pdb_worker.js
               ${CMAKE_CURRENT_BINARY_DIR}/mtz_worker.js
+              ${CMAKE_CURRENT_BINARY_DIR}/mtz_arraybuffer_worker.js
               ${CMAKE_CURRENT_BINARY_DIR}/papaparse.min.js
               ${CMAKE_CURRENT_BINARY_DIR}/pdb_worker.js
               ${CMAKE_CURRENT_BINARY_DIR}/superpose_worker.js
