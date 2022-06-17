@@ -458,6 +458,11 @@ class MGWebWizardUI extends Component {
         this.setState({wizard: e.target.value},()=> {self.parametersChanged(); });
     }
 
+    submitHandler (e) {
+        e.preventDefault();
+        this.getPdb();
+    }
+
     render () {
         const options = Object.keys(wizards).map((item) => {
                 return (
@@ -535,7 +540,7 @@ class MGWebWizardUI extends Component {
             </Modal>
                );
         return (<>
-        <Form>
+        <Form onSubmit={this.submitHandler.bind(this)} >
         <Form.Group as={Row} controlId="getpdb">
         <Col>
         <Form.Control type="text" onChange={this.handlePdbCodeChange.bind(this)} placeholder="PDB code" value={this.state.pdbcode} />

@@ -77,6 +77,11 @@ class PDBSearch extends React.Component {
         */
     }
 
+    submitHandler (e) {
+        e.preventDefault();
+        this.handleSubmit();
+    }
+
     handleSubmit(){
 
         const url = "https://search.rcsb.org/rcsbsearch/v1/query";
@@ -168,7 +173,7 @@ class PDBSearch extends React.Component {
 
         return (
         <>
-        <Form>
+        <Form onSubmit={this.submitHandler.bind(this)} >
         <Spacer height="1rem" />
         <Form.Group as={Row} controlId="searchpdb">
         <Col>

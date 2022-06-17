@@ -16,6 +16,8 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
 - [x] Charged ligands produce SVG (e.g DCB 4a3h)
 - [ ] Selections for ribbons/worms (currently does all atoms whatever the selection)
 - [ ] Change use of XMLHttpRequest in various places to fetch API (as in PDBSearch.js).
+- [ ] Display maps
+  - [ ] Generate map from MTZ
 - [ ] Some MG stuff in WebGL react-bootstrap
   - [x] Get Smiles (This only does svg. Seems there are no force fields in `RDKit_minimal` at present.
   - [x] Get Monomer
@@ -30,15 +32,14 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
   - [x] Glycan viewer to graphics interactivity
   - [x] Background colour
   - [x] Generate Helices
-  - [ ] Prosmart
-  - [ ] Display maps
   - [x] PDB search
-  - [ ] Scale bar
+  - [ ] PDB-REDO integration
+  - [ ] Screenshots
+  - [ ] Lipid cartoons
   - [ ] Images/Legends
   - [ ] Perfect spheres
-  - [ ] Lipid cartoons
-  - [ ] Generate map from MTZ
-  - [ ] PDB-REDO integration
+  - [ ] Scale bar
+  - [ ] Prosmart (this is slightly complicated because of the subprocess model).
 - [x] Check that this successfully compiles on Linux
 - [x] Fix custom colours not working: `mgWebGLAtomsToPrimitives.js:5815 DON'T KNOW WHAT TO DO WITH #cf5353`
 - [ ] Keep ligand SVGs for all loaded structures and delete when file closed.
