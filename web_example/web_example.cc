@@ -361,7 +361,7 @@ NormalModeAnalysis calculate_normal_modes(const std::string& pdb_file_name, int 
     return nma;
 }
 
-clipper::Xmap<float> clipper_example(const std::string& mtz_file_name){
+clipper::Xmap<float> clipper_example_with_cols(const std::string& mtz_file_name, const std::string &f_col, const std::string &phi_col){
     clipper::CCP4MTZfile mtzin;
 
     printf("Reading an MTZ file\n");
@@ -369,9 +369,6 @@ clipper::Xmap<float> clipper_example(const std::string& mtz_file_name){
     std::cerr << "This is testing that std::cerr << ... works " << std::endl;
 
     float rate = 0.75;
-
-    std::string f_col = std::string("FC");
-    std::string phi_col = std::string("PHIC");
 
     clipper::HKL_info myhkl; 
     clipper::MTZdataset myset; 
@@ -419,6 +416,12 @@ clipper::Xmap<float> clipper_example(const std::string& mtz_file_name){
     std::cout << "done fft..." << std::endl;
 
     return xmap;
+}
+
+clipper::Xmap<float> clipper_example(const std::string& mtz_file_name){
+    std::string f_col = std::string("FC");
+    std::string phi_col = std::string("PHIC");
+    return clipper_example_with_cols(mtz_file_name,f_col,phi_col);
 }
 
 EMSCRIPTEN_BINDINGS(my_module) {
@@ -488,6 +491,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("GetModeShapes",&NormalModeAnalysis::GetModeShapes)
     ;
     function("clipper_example",&clipper_example);
+    function("clipper_example_with_cols",&clipper_example_with_cols);
     function("printMapStats",&printMapStats);
     function("exportXMapToMapFile",&exportXMapToMapFile);
     function("clipperStringToString",&clipperStringToString);

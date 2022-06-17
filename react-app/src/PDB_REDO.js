@@ -21,9 +21,8 @@ class PDB_REDO extends React.Component {
         this.myWorkerMTZ.onmessage = function(e) {
             let result = document.getElementById("output");
             if(e.data[0]==="result"){
-                result.innerHTML += "<b>Result: " + e.data[1] + "</b><br />";
-                //This is then where we decide upon the action
                 let ccp4map = e.data[1];
+                // TODO - Do something useful ...
                 console.log(ccp4map);
             }
         }
@@ -68,8 +67,7 @@ class PDB_REDO extends React.Component {
             if(blob){
             new Response(data).arrayBuffer()
             .then(arrayBuffer => {
-                // TODO - now load it...
-                self.myWorkerMTZ.postMessage([arrayBuffer, name]);
+                self.myWorkerMTZ.postMessage([arrayBuffer, name, "FC_ALL", "PHIC_ALL"]);
             });
             } else {
                 const dataSplit = data.split("\n");

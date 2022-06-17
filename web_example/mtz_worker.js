@@ -39,7 +39,6 @@ onmessage = function(e) {
     CCP4Module.exportXMapToMapFile(fout,result);
     fout.close_write();
     console.log("Written",CCP4Module.clipperStringToString(outpath));
-    console.log(CCP4Module);
     var mapasstr = CCP4Module.FS.readFile(CCP4Module.clipperStringToString(outpath));
     postMessage(["result",mapasstr]);
 

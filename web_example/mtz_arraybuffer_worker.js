@@ -16,13 +16,20 @@ onmessage = function(e) {
     const byteArray = new Uint8Array(arrayBuffer);
     var selectedFileName = e.data[1];
 
+    let f_col = "FC";
+    let phi_col = "PHIC";
+    if(e.data[2]!==undefined && e.data[3]!==undefined){
+        f_col = e.data[2];
+        phi_col = e.data[3];
+    }
+
     try {
         CCP4Module.FS_createDataFile(".", selectedFileName, byteArray, true, true);
     } catch(e) {
     }
 
     console.log("Send",selectedFileName,"to clipper");
-    var result = CCP4Module.clipper_example(selectedFileName);
+    var result = CCP4Module.clipper_example_with_cols(selectedFileName,f_col,phi_col);
     console.log("In the worker...");
     console.log(result);
     console.log(result.cell());
@@ -34,7 +41,6 @@ onmessage = function(e) {
     CCP4Module.exportXMapToMapFile(fout,result);
     fout.close_write();
     console.log("Written",CCP4Module.clipperStringToString(outpath));
-    console.log(CCP4Module);
     var mapasstr = CCP4Module.FS.readFile(CCP4Module.clipperStringToString(outpath));
     postMessage(["result",mapasstr]);
 
