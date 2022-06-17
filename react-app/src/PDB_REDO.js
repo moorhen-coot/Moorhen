@@ -7,6 +7,8 @@ import Button from 'react-bootstrap/Button';
 
 import {parsePDB} from './mgMiniMol.js';
 
+import {readMapFromArrayBuffer,mapToMapGrid} from './mgWebGLReadMap.js';
+
 const Spacer = props => {
   return (
     <div style={{height:props.height}}></div>
@@ -24,6 +26,8 @@ class PDB_REDO extends React.Component {
                 let ccp4map = e.data[1];
                 // TODO - Do something useful ...
                 console.log(ccp4map);
+                const map = readMapFromArrayBuffer(ccp4map.buffer);
+                console.log(map);
             }
         }
 

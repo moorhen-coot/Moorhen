@@ -5052,4 +5052,4 @@ function getSymOpsFromSpGrpNo(ispgrp){
     return symops;
 }
 
-export default {getSymOpsFromSpGrpName,getMatrixFromSymOp,getSymOpsFromSpGrpNo};
+export {getSymOpsFromSpGrpName,getMatrixFromSymOp,getSymOpsFromSpGrpNo};

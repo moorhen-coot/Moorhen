@@ -34,6 +34,11 @@ onmessage = function(e) {
     console.log(result);
     console.log(result.cell());
     console.log(result.cell().a());
+    console.log(result.cell().b());
+    console.log(result.cell().c());
+    console.log(result.cell().alpha());
+    console.log(result.cell().beta());
+    console.log(result.cell().gamma());
     CCP4Module.printMapStats(result);
     var fout = new CCP4Module.CCP4MAPfile();
     var outpath = new CCP4Module.Clipper_String("mapout.map");

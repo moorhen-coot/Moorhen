@@ -4,8 +4,7 @@ import pako from 'pako';
 import {ener_lib_cif,monomers} from './ener_lib';
 import {Cell} from './mgWebGLReadMap';
 import {peptideMonomers} from './peptideMonLib';
-import getMatrixFromSymOp from './symop';
-import getSymOpsFromSpGrpName from './symop';
+import {getSymOpsFromSpGrpName,getMatrixFromSymOp} from './symop';
 import {base64decode} from './mgBase64'; 
 
 const covalentData = {

@@ -4,9 +4,7 @@ mat4 everything .....
 */
 
 import {vec3,mat4,mat3} from 'gl-matrix/esm';
-import getMatrixFromSymOp from './symop';
-import getSymOpsFromSpGrpName from './symop';
-import getSymOpsFromSpGrpNo from './symop';
+import {getSymOpsFromSpGrpNo,getSymOpsFromSpGrpName,getMatrixFromSymOp} from './symop';
 //import {CIsoSurface} from './CIsoSurface';
 
 /*
