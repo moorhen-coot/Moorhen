@@ -59,12 +59,10 @@ class PDB_REDO extends React.Component {
                 // TODO - now load it...
             });
             } else {
-                console.log(data);
                 const dataSplit = data.split("\n");
                 const pdbatoms = parsePDB(dataSplit,name);
                 const pending = {fileData:data,atoms:pdbatoms,wizard:"Bonds",name:name};
-                console.log(pending);
-                // TODO - now load it...
+                this.props.onPDBChange(pending);
             }
         }).catch(error => {
             console.error(error);
