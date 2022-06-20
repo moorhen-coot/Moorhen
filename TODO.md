@@ -18,11 +18,13 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
 - [ ] Change use of XMLHttpRequest in various places to fetch API (as in PDBSearch.js).
 - [ ] Display maps
   - [x] Generate map from `PDB_REDO` MTZ.
+  - [ ] Generate map from local MTZ.
+    - [x] Load with `FC_ALL`, `PHIC_ALL`
+    - [ ] Determine correct F/PHI columns for auto loading.
+  - [ ] Delete/close a map!!
   - [ ] Improve quality (grid size, smoothing??)
   - [ ] Fix grid position issues - jerkiness, not quite right place?, etc.
   - [ ] Generate map from `PDB/EBI` MTZ.
-  - [ ] Generate map from local MTZ.
-    - [ ] Rethink "front/file/main" input to cope with more than just PDB data.
   - [ ] Generate map from `PDB/EBI` structure factors.
 - [ ] Some MG stuff in WebGL react-bootstrap
   - [x] Get Smiles (This only does svg. Seems there are no force fields in `RDKit_minimal` at present.

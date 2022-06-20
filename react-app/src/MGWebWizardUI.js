@@ -22,6 +22,8 @@ import ColoredLine from './ColoredLine.js';
 
 import { guid } from './guid.js';
 
+import {readMapFromArrayBuffer,mapToMapGrid} from './mgWebGLReadMap.js';
+
 const Spacer = props => {
   return (
     <div style={{height:props.height}}></div>
@@ -122,6 +124,21 @@ class MGWebWizardUI extends Component {
                 self.props.onGlycanChange({glycans:e.data[1]});
             }
         }
+        this.myWorkerMTZ = new window.Worker('wasm/mtz_arraybuffer_worker.js');
+        this.myWorkerMTZ.onmessage = function(e) {
+            let result = document.getElementById("output");
+            if(e.data[0]==="result"){
+                let ccp4map = e.data[1];
+
+                const map = readMapFromArrayBuffer(ccp4map.buffer);
+                const mapGrid = mapToMapGrid(map);
+                const mapTriangleData = {"mapGrids":[mapGrid],"col_tri":[[]], "norm_tri":[[]], "vert_tri":[[]], "idx_tri":[[]] , "prim_types":[[]] };
+                console.log(mapTriangleData);
+
+                self.props.mapChanged(mapTriangleData);
+
+            }
+        }
     }
 
     componentDidMount() {
@@ -181,8 +198,19 @@ class MGWebWizardUI extends Component {
         }
         function upload(file) {
             var r = new FileReader();
+            var rmtz = new FileReader();
             if(file.files.length===0) return;
             var f = file.files[0];
+            rmtz.onload = function(e) { 
+                const contents = e.target.result;
+                console.log(contents);
+                self.myWorkerMTZ.postMessage([contents, f.name, "FC_ALL", "PHIC_ALL"]);
+            }
+            if(f.name.endsWith(".mtz")){
+                console.log("Cannot deal with MTZ yet.");
+                rmtz.readAsArrayBuffer(f);
+                return;
+            }
             r.onload = function(e) { 
                 var contents = e.target.result;
                 var pdbatoms;
@@ -220,7 +248,6 @@ class MGWebWizardUI extends Component {
             r.readAsText(f);
         }
         uploadCIF(this.cifinputRef.current);
-        console.log(this.inputRef.current);
         upload(this.inputRef.current);
     }
 
@@ -419,7 +446,7 @@ class MGWebWizardUI extends Component {
         </Form.Group>
         <Spacer height="1rem" />
         <Form.Group controlId="loadpdb">
-        <Form.Label>Browse for coordinate file</Form.Label>
+        <Form.Label>Browse for data file(s) (PDB,mmCIF, MTZ)</Form.Label>
         <Form.Control ref={this.inputRef} type="file" />
         </Form.Group>
         <Spacer height="1rem" />
@@ -429,7 +456,7 @@ class MGWebWizardUI extends Component {
         </Form.Group>
         <Spacer height="1rem" />
         <Form.Group controlId="loadpdbanddictionaries">
-        <Button onClick={this.loadPdb.bind(this)}>Load PDB (and dictionaries)</Button>
+        <Button onClick={this.loadPdb.bind(this)}>Load all files</Button>
         </Form.Group>
         <Spacer height="1rem" />
         <Form.Select aria-label="Default select example" onChange={this.handleSelect.bind(this)}>
