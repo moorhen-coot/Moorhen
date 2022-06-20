@@ -105,15 +105,11 @@ class MGWebWizardUI extends Component {
     }
     constructor(props){
         super(props);
-        this.state = {pdbcode:'',wizard:'Bonds', theAtoms : [], showModalGetSmiles: false, showModalGetMonomer: false, smilesname:'DRG', smiles:'', monomerid:'', ligands:[]};
+        this.state = {pdbcode:'',wizard:'Bonds', theAtoms : [], ligands:[]};
         this.enerLib = this.props.enerLib;
         this.inputRef = createRef();
         this.cifinputRef = createRef();
         this.myWorkerPDB = new window.Worker('wasm/pdb_worker.js');
-        this.keyGetSmiles = guid();
-        this.keyGetMonomer = guid();
-        this.keyAddModalGetSmiles = guid();
-        this.keyAddModalGetMonomer = guid();
         var self = this;
         this.myWorkerPDB.onmessage = function(e) {
             if(e.data[0]==="output"){
@@ -126,41 +122,6 @@ class MGWebWizardUI extends Component {
                 self.props.onGlycanChange({glycans:e.data[1]});
             }
         }
-        this.myWorkerSMILES = new window.Worker('wasm/smiles_to_pdb_worker.js');
-        this.myWorkerSMILES.onmessage = function(e) {
-            if(e.data[0]==="result"){
-                console.log(e.data[1]);
-                self.props.onSVGChange({svg:e.data[1]});
-            }
-        }
-        this.myWorkerGetMonomer = new window.Worker('wasm/monid_to_pdb_worker.js');
-        this.myWorkerGetMonomer.onmessage = function(e) {
-            if(e.data[0]==="result"){
-                self.props.onSVGChange({svg:e.data[1]});
-            }
-            if(e.data[0]==="pdb"){
-                let pdbatoms = parsePDB(e.data[1].split("\n"),"aname");
-                self.setState({pending:{fileData:{contents:e.data[1],isPDB:true},atoms:pdbatoms,big:false,name:"aname"}},()=> {self.parametersChanged(); });
-                self.setState({theAtoms: pdbatoms});
-            }
-        }
-    }
-
-    handleShowGetSmiles(){
-        console.log("handleShowGetSmiles");
-        this.setState({ showModalGetSmiles: true });
-    }
-
-    handleCloseGetSmilesApplyThis(){
-        console.log(this.state.smilesname);
-        console.log(this.state.smiles);
-        this.myWorkerSMILES.postMessage([this.state.smiles,this.state.smilesname]);
-        //const mol = RDKit.get_mol(this.state.smiles);
-        this.setState({ showModalGetSmiles: false });
-    }
-
-    handleCloseGetSmilesCancelThis(){
-        this.setState({ showModalGetSmiles: false });
     }
 
     componentDidMount() {
@@ -197,32 +158,6 @@ class MGWebWizardUI extends Component {
         .catch(function (err) {
                 console.error('Aargh, there was an error!', err.statusText);
         });
-    }
-
-    handleCloseGetMonomerApplyThis(){
-        this.setState({ showModalGetMonomer: false });
-        const monid = splitQuotedCIFString(this.state.monomerid)[0];
-        this.myWorkerGetMonomer.postMessage([monid]);
-    }
-
-    handleSmilesNameChange(e){
-        this.setState({smilesname: e.target.value});
-    }
-
-    handleSmilesStringChange(e){
-        this.setState({smiles: e.target.value});
-    }
-
-    handleMonomerIdChange(e){
-        this.setState({monomerid: e.target.value});
-    }
-
-    handleCloseGetMonomerCancelThis(){
-        this.setState({ showModalGetMonomer: false });
-    }
-
-    handleShowGetMonomer(){
-        this.setState({ showModalGetMonomer: true });
     }
 
     loadPdb(){
@@ -471,74 +406,7 @@ class MGWebWizardUI extends Component {
                         </option>
                        )
                 });
-        const keyGetSmiles = this.keyGetSmiles;
-        const keyAddModalGetSmiles = this.keyAddModalGetSmiles;
-        const handleShowGetSmiles = this.handleShowGetSmiles.bind(this);
-        const handleCloseGetSmilesCancelThis = this.handleCloseGetSmilesCancelThis.bind(this);
-        const handleCloseGetSmilesApplyThis = this.handleCloseGetSmilesApplyThis.bind(this);
-        const showModalGetSmiles = this.state.showModalGetSmiles;
 
-        const keyGetMonomer = this.keyGetMonomer;
-        const keyAddModalGetMonomer = this.keyAddModalGetMonomer;
-        const handleShowGetMonomer = this.handleShowGetMonomer.bind(this);
-        const handleCloseGetMonomerCancelThis = this.handleCloseGetMonomerCancelThis.bind(this);
-        const handleCloseGetMonomerApplyThis = this.handleCloseGetMonomerApplyThis.bind(this);
-        const showModalGetMonomer = this.state.showModalGetMonomer;
-
-        const handleSmilesNameChange = this.handleSmilesNameChange.bind(this);
-        const handleSmilesStringChange = this.handleSmilesStringChange.bind(this);
-        const handleMonomerIdChange = this.handleMonomerIdChange.bind(this);
-        const setMonomerIdSingleSelections = this.setMonomerIdSingleSelections.bind(this);
-
-        let modals = [];
-        modals.push(
-            <Modal key={keyAddModalGetSmiles} show={showModalGetSmiles} onHide={handleCloseGetSmilesCancelThis}>
-               <Modal.Header closeButton>
-                   <Modal.Title>Generate structure from SMILES string</Modal.Title>
-               </Modal.Header>
-               <Modal.Body>Generate structure from SMILES string (this does not work yet!)
-                  <h4>Molecule name</h4>
-                  <Form.Control type="text" value={this.state.smilesname} placeholder="DRG" onChange={handleSmilesNameChange}/>
-                  <h4>SMILES string</h4>
-                  <Form.Control as="textarea" rows={6} value={this.state.smiles} onChange={handleSmilesStringChange}/>
-               </Modal.Body>
-               <Modal.Footer>
-                   <Button variant="primary" onClick={handleCloseGetSmilesApplyThis}>
-                      Generate molecule 
-                   </Button>
-                   <Button variant="secondary" onClick={handleCloseGetSmilesCancelThis}>
-                      Cancel 
-                   </Button>
-               </Modal.Footer>
-            </Modal>
-               );
-        modals.push(
-            <Modal key={keyAddModalGetMonomer} show={showModalGetMonomer} onHide={handleCloseGetMonomerCancelThis}>
-               <Modal.Header closeButton>
-                   <Modal.Title>Generate structure from monomer id</Modal.Title>
-               </Modal.Header>
-               <Modal.Body>Generate structure from monomer id (this does not work yet!)
-                  <h4>Monomer id</h4>
-                  {/*
-                  <Form.Control type="text" value={this.state.monomerid} onChange={handleMonomerIdChange}/>
-                  */}
-                  <Typeahead
-                    id="basic-typeahead-single"
-                    onChange={setMonomerIdSingleSelections}
-                    options={this.state.ligands}
-                    placeholder="Start typing monomer name or description..."
-                  />
-               </Modal.Body>
-               <Modal.Footer>
-                   <Button variant="primary" onClick={handleCloseGetMonomerApplyThis}>
-                      Get monomer 
-                   </Button>
-                   <Button variant="secondary" onClick={handleCloseGetMonomerCancelThis}>
-                      Cancel 
-                   </Button>
-               </Modal.Footer>
-            </Modal>
-               );
         return (<>
         <Form onSubmit={this.submitHandler.bind(this)} >
         <Form.Group as={Row} controlId="getpdb">
@@ -568,16 +436,6 @@ class MGWebWizardUI extends Component {
         {options}
         </Form.Select>
         </Form>
-        <ColoredLine color="blue" />
-        <Table>
-        <tbody>
-        <tr>
-            <td key={keyGetSmiles}><Button variant="primary" size="sm" onClick={handleShowGetSmiles}>Generate Structure from SMILES</Button></td>
-            <td key={keyGetMonomer}><Button variant="primary" size="sm" onClick={handleShowGetMonomer}>Get Monomer</Button></td>
-        </tr>
-        </tbody>
-        </Table>
-        {modals}
         </>
         );
 

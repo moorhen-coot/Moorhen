@@ -245,7 +245,7 @@ class ControlInterface extends Component {
                 </div>
                 </Tab>
                 <Tab eventKey="utilities" title="Utilities">
-                <Utilities displayData={displayData} dataFiles={dataFiles} mapChanged={this.mapChanged.bind(this)} filePendingChanged={this.filePendingChanged.bind(this)} helicesChanged={this.helicesChanged.bind(this)}/>
+                <Utilities displayData={displayData} dataFiles={dataFiles} onSVGChange={this.svgChanged.bind(this)} mapChanged={this.mapChanged.bind(this)} filePendingChanged={this.filePendingChanged.bind(this)} helicesChanged={this.helicesChanged.bind(this)}/>
                 </Tab>
                 </Tabs>
                );

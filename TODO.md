@@ -16,7 +16,6 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
 - [x] Charged ligands produce SVG (e.g DCB 4a3h)
 - [ ] Selections for ribbons/worms (currently does all atoms whatever the selection)
 - [ ] Change use of XMLHttpRequest in various places to fetch API (as in PDBSearch.js).
-- [ ] Move SMILES/Get monomer off "front/file/main" page.
 - [ ] Display maps
   - [x] Generate map from `PDB_REDO` MTZ.
   - [ ] Improve quality (grid size, smoothing??)
