@@ -39,6 +39,8 @@
 #include "cartesian.h"
 #include "matrix.h"
 
+#include "headers.h"
+
 using namespace emscripten;
 
 class MGNormalModeDisplacements {
@@ -361,6 +363,19 @@ NormalModeAnalysis calculate_normal_modes(const std::string& pdb_file_name, int 
     return nma;
 }
 
+std::vector<std::string>  get_mtz_columns(const std::string& mtz_file_name){
+    const char *filename_c = mtz_file_name.c_str();
+    header_info hinfo((char*)filename_c);
+    std::vector<std::vector<std::string> > theTypes = hinfo.GetUnsortedHeadersAndTypes();
+    std::vector<std::string> shortTypes;
+    for(unsigned ityp=0;ityp<theTypes.size();ityp++){
+        shortTypes.push_back(theTypes[ityp][0]);
+        shortTypes.push_back(theTypes[ityp][1]);
+    }
+    return shortTypes;
+
+}
+
 clipper::Xmap<float> clipper_example_with_cols(const std::string& mtz_file_name, const std::string &f_col, const std::string &phi_col, const float rate_in){
     clipper::CCP4MTZfile mtzin;
 
@@ -491,6 +506,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("GetModeShapes",&NormalModeAnalysis::GetModeShapes)
     ;
     function("clipper_example",&clipper_example);
+    function("get_mtz_columns",&get_mtz_columns);
     function("clipper_example_with_cols",&clipper_example_with_cols);
     function("printMapStats",&printMapStats);
     function("exportXMapToMapFile",&exportXMapToMapFile);

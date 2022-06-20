@@ -28,6 +28,13 @@ onmessage = function(e) {
     } catch(e) {
     }
 
+    //FIXME - This is not used. It is intended to allow auto-open mtz
+    const header_info = CCP4Module.get_mtz_columns(selectedFileName);
+    console.log(header_info);
+    for(let ih=0;ih<header_info.size();ih+=2){
+        console.log(header_info.get(ih),header_info.get(ih+1));
+    }
+
     console.log("Send",selectedFileName,"to clipper");
     var result = CCP4Module.clipper_example_with_cols(selectedFileName,f_col,phi_col,2.0);
     console.log("In the worker...");
