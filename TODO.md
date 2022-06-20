@@ -16,8 +16,15 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
 - [x] Charged ligands produce SVG (e.g DCB 4a3h)
 - [ ] Selections for ribbons/worms (currently does all atoms whatever the selection)
 - [ ] Change use of XMLHttpRequest in various places to fetch API (as in PDBSearch.js).
+- [ ] Move SMILES/Get monomer off "front/file/main" page.
 - [ ] Display maps
-  - [ ] Generate map from MTZ
+  - [x] Generate map from `PDB_REDO` MTZ.
+  - [ ] Improve quality (grid size, smoothing??)
+  - [ ] Fix grid position issues - jerkiness, not quite right place?, etc.
+  - [ ] Generate map from `PDB/EBI` MTZ.
+  - [ ] Generate map from local MTZ.
+    - [ ] Rethink "front/file/main" input to cope with more than just PDB data.
+  - [ ] Generate map from `PDB/EBI` structure factors.
 - [ ] Some MG stuff in WebGL react-bootstrap
   - [x] Get Smiles (This only does svg. Seems there are no force fields in `RDKit_minimal` at present.
   - [x] Get Monomer
@@ -33,7 +40,7 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
   - [x] Background colour
   - [x] Generate Helices
   - [x] PDB search
-  - [ ] PDB-REDO integration
+  - [x] PDB-REDO integration
   - [ ] Screenshots
   - [ ] Lipid cartoons
   - [ ] Images/Legends
