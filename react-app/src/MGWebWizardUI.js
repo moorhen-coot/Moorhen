@@ -126,7 +126,10 @@ class MGWebWizardUI extends Component {
         }
         this.myWorkerMTZ = new window.Worker('wasm/mtz_arraybuffer_worker.js');
         this.myWorkerMTZ.onmessage = function(e) {
-            let result = document.getElementById("output");
+            const result = document.getElementById("output");
+            if(e.data[0]==="output"){
+                console.log(e.data[1]);
+            }
             if(e.data[0]==="result"){
                 let ccp4map = e.data[1];
 

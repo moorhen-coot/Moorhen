@@ -22,8 +22,7 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
     - [x] Load with `FC_ALL`, `PHIC_ALL`
     - [ ] Determine correct F/PHI columns for auto loading.
   - [ ] Delete/close a map!!
-  - [ ] Improve quality (grid size, smoothing??)
-  - [ ] Fix grid position issues - jerkiness, not quite right place?, etc.
+  - [ ] Fix grid position issues - not quite right place?, etc.
   - [ ] Generate map from `PDB/EBI` MTZ.
   - [ ] Generate map from `PDB/EBI` structure factors.
 - [ ] Some MG stuff in WebGL react-bootstrap

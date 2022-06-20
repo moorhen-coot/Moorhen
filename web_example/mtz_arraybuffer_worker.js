@@ -29,7 +29,7 @@ onmessage = function(e) {
     }
 
     console.log("Send",selectedFileName,"to clipper");
-    var result = CCP4Module.clipper_example_with_cols(selectedFileName,f_col,phi_col);
+    var result = CCP4Module.clipper_example_with_cols(selectedFileName,f_col,phi_col,2.0);
     console.log("In the worker...");
     console.log(result);
     console.log(result.cell());
