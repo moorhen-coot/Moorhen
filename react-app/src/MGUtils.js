@@ -33,6 +33,10 @@ class Utilities extends React.Component {
         }
     }
 
+    mapChanged(data) {
+	this.props.mapChanged(data);
+    }
+
     filePendingChanged(data) {
 	this.props.filePendingChanged(data);
     }
@@ -57,7 +61,7 @@ class Utilities extends React.Component {
         { this.state.showHelices ? <Helices onChange={this.helicesChanged.bind(this)} /> : null }
         { this.state.showProSMART ? <ProSMART /> : null }
         { this.state.showPDBSearch ? <PDBSearch onChange={this.filePendingChanged.bind(this)} /> : null }
-        { this.state.showPDB_REDO ? <PDB_REDO  onPDBChange={this.filePendingChanged.bind(this)} /> : null }
+        { this.state.showPDB_REDO ? <PDB_REDO  mapChange={this.mapChanged.bind(this)} onPDBChange={this.filePendingChanged.bind(this)} /> : null }
         { this.state.showMiscObjects ? <MiscObjects /> : null }
         { this.state.showDownloadSF ? <DownloadSF /> : null }
         </>

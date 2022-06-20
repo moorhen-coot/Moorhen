@@ -71,6 +71,10 @@ class ControlInterface extends Component {
         }
     }
 
+    mapChanged(params) {
+	this.props.mapChanged(params);
+    }
+
     filePendingChanged(params) {
 	this.props.filePendingChange({pending:params});
     }
@@ -241,7 +245,7 @@ class ControlInterface extends Component {
                 </div>
                 </Tab>
                 <Tab eventKey="utilities" title="Utilities">
-                <Utilities displayData={displayData} dataFiles={dataFiles} filePendingChanged={this.filePendingChanged.bind(this)} helicesChanged={this.helicesChanged.bind(this)}/>
+                <Utilities displayData={displayData} dataFiles={dataFiles} mapChanged={this.mapChanged.bind(this)} filePendingChanged={this.filePendingChanged.bind(this)} helicesChanged={this.helicesChanged.bind(this)}/>
                 </Tab>
                 </Tabs>
                );

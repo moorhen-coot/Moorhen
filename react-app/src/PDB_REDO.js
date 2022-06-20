@@ -18,16 +18,20 @@ const Spacer = props => {
 class PDB_REDO extends React.Component {
     constructor(props){
         super(props);
+        const self = this;
         this.state = { searchString: "", searchType:"full_coords"};
         this.myWorkerMTZ = new window.Worker('wasm/mtz_arraybuffer_worker.js');
         this.myWorkerMTZ.onmessage = function(e) {
             let result = document.getElementById("output");
             if(e.data[0]==="result"){
                 let ccp4map = e.data[1];
-                // TODO - Do something useful ...
-                console.log(ccp4map);
+
                 const map = readMapFromArrayBuffer(ccp4map.buffer);
-                console.log(map);
+                const mapGrid = mapToMapGrid(map);
+                const mapTriangleData = {"mapGrids":[mapGrid],"col_tri":[[]], "norm_tri":[[]], "vert_tri":[[]], "idx_tri":[[]] , "prim_types":[[]] };
+
+                self.props.mapChange(mapTriangleData);
+
             }
         }
 

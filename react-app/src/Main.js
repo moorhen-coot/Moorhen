@@ -62,6 +62,10 @@ class Main extends Component {
         this.setState({svg:parse(message)});
     }
 
+    mapChanged(mapTriangleData){
+        this.gl.current.appendOtherDataIfReady(mapTriangleData);
+    }
+
     filePendingChanged(params){
         //FIXME - load new file should not delete existing files; change of wizard should delete buffers associated with that file.
         //this.gl.current.clearData();
@@ -266,7 +270,7 @@ class Main extends Component {
             </Col>
 
             <Col lg={6}>
-            <ControlInterface displayData={displayData} enerLib={enerLib} glycanChange={this.glycanChanged.bind(this)} svgChange={this.svgChanged.bind(this)} filePendingChange={this.filePendingChanged.bind(this)} lightsChange={this.lightsChanged.bind(this)} addRequest={this.addRequested.bind(this)} deleteRequest={this.deleteRequested.bind(this)} visibilityChange={this.visibilityChanged.bind(this)} matricesChanged={this.matricesChanged.bind(this)} animateStateChanged={this.animateStateChanged.bind(this)} dataFiles={dataFiles} svgClicked={this.onSVGClick.bind(this)} />
+            <ControlInterface displayData={displayData} enerLib={enerLib} glycanChange={this.glycanChanged.bind(this)} svgChange={this.svgChanged.bind(this)} mapChanged={this.mapChanged.bind(this)} filePendingChange={this.filePendingChanged.bind(this)} lightsChange={this.lightsChanged.bind(this)} addRequest={this.addRequested.bind(this)} deleteRequest={this.deleteRequested.bind(this)} visibilityChange={this.visibilityChanged.bind(this)} matricesChanged={this.matricesChanged.bind(this)} animateStateChanged={this.animateStateChanged.bind(this)} dataFiles={dataFiles} svgClicked={this.onSVGClick.bind(this)} />
             </Col>
 
             </Row>
