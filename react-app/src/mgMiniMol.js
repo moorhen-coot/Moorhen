@@ -2196,7 +2196,6 @@ getAtoms(selin) {
                     let indexOfSecondLessThan          = selin.indexOf("<",indexOfFirstLessThan+1);
                     let indexOfSecondLessThanOrEqualTo = selin.indexOf("<=",indexOfFirstLessThan+1);
                     //console.log(indexOfFirstLessThan+" "+indexOfFirstLessThanOrEqualTo+" "+indexOfSecondLessThan+" "+indexOfSecondLessThanOrEqualTo);
-                    //console.log("foo");
                     if(indexOfSecondLessThan===indexOfSecondLessThanOrEqualTo){
                         op2 = "<=";
                         propVal2 = parseFloat(selin.substr(indexOfFirstLessThan+2).split("<=")[1]);

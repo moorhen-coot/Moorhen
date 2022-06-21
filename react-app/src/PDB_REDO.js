@@ -29,8 +29,11 @@ class PDB_REDO extends React.Component {
                 const map = readMapFromArrayBuffer(ccp4map.buffer);
                 const mapGrid = mapToMapGrid(map);
                 const mapTriangleData = {"mapGrids":[mapGrid],"col_tri":[[]], "norm_tri":[[]], "vert_tri":[[]], "idx_tri":[[]] , "prim_types":[[]] };
-
-                self.props.mapChange(mapTriangleData);
+                if(e.data[2]){
+                    self.props.mapChange({mapTriangleData:mapTriangleData,name:e.data[2]});
+                } else {
+                    self.props.mapChange({mapTriangleData:mapTriangleData,name:"unknown"});
+                }
 
             }
         }

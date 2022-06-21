@@ -28,7 +28,6 @@ class DisplayTable extends Component {
     }
 
     visibilityChanged(evt,idsRibbons,self) {
-        console.log("Vis changed",idsRibbons);
         this.props.visibilityChanged({visible:evt.target.checked,bufferIds:idsRibbons});
     }
 
@@ -275,12 +274,29 @@ class DisplayTable extends Component {
     render () {
         var self = this;
         const displayData = this.props.displayData;
+        const mapDataFiles = this.props.mapDataFiles;
+        console.log(mapDataFiles);
+        console.log(displayData);
         let rows = [];
+        let maprows = [];
         let modals = [];
         var showModal = this.state.showModal;
         var showAddModal = this.state.showAddModal;
 
+        const mtzRegex = /.mtz$/;
         let maxCustom = 0;
+        for (const [key, value] of Object.entries(mapDataFiles.ids)) {
+            if(value.buffers && value.buffers.length>0){
+                let idsMaps = [];
+                const dtRowKey = "displayTableMapRow_"+key;
+                const keyMap = "displayTableMapRow_"+key+"_1";
+                const shortName = value.name.replace(mtzRegex,"");
+                for(let ibuf=0;ibuf<value.buffers.length;ibuf++){
+                    idsMaps.push(value.buffers[ibuf].id);
+                }
+                maprows.push(<tr key={dtRowKey}><td>{shortName}</td><td key={keyMap}><input type="checkbox" defaultChecked={value.buffers[0].visible} onChange={function(evt){self.visibilityChanged(evt,idsMaps,self)}} /></td></tr>);
+            }
+        }
         for(let iobj=0;iobj<displayData.length;iobj++){
             let data_id = displayData[iobj].id;
             let customBuffers = {};
@@ -564,10 +580,18 @@ class DisplayTable extends Component {
         }
         return (
                 <>
+                <h4 className='mb-3'>Models</h4>
                 <Table responsive>
-                <thead key="foo"><tr><th key="structName"></th><th key="R">R</th><th key="L">L</th><th key="N">N</th><th key="S">S</th><th key="W">W</th><th key="Nu">Nu</th><th key="M">M</th><th key="G">G</th><th key="B">B</th>{customHeaders}<th key="add"></th><th key="delete"></th></tr></thead>
+                <thead key="displayTableKey"><tr><th key="structName"></th><th key="R">R</th><th key="L">L</th><th key="N">N</th><th key="S">S</th><th key="W">W</th><th key="Nu">Nu</th><th key="M">M</th><th key="G">G</th><th key="B">B</th>{customHeaders}<th key="add"></th><th key="delete"></th></tr></thead>
                 <tbody>
                 {rows}
+                </tbody>
+                </Table>
+                <hr/>
+                <h4 className='mb-3'>Maps</h4>
+                <Table>
+                <tbody>
+                {maprows}
                 </tbody>
                 </Table>
                 {modals}

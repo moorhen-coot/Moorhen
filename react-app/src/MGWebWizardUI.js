@@ -138,8 +138,11 @@ class MGWebWizardUI extends Component {
                 const mapTriangleData = {"mapGrids":[mapGrid],"col_tri":[[]], "norm_tri":[[]], "vert_tri":[[]], "idx_tri":[[]] , "prim_types":[[]] };
                 console.log(mapTriangleData);
 
-                self.props.mapChanged(mapTriangleData);
-
+                if(e.data[2]){
+                    self.props.mapChanged({mapTriangleData:mapTriangleData,name:e.data[2]});
+                } else {
+                    self.props.mapChanged({mapTriangleData:mapTriangleData,name:"unknown"});
+                }
             }
         }
     }

@@ -18,7 +18,7 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
 - [ ] Change use of XMLHttpRequest in various places to fetch API (as in PDBSearch.js).
 - [ ] Display maps
   - [x] Generate map from `PDB_REDO` MTZ.
-  - [ ] Generate map from local MTZ.
+  - [x] Generate map from local MTZ.
     - [x] Load with `FC_ALL`, `PHIC_ALL`
     - [ ] Determine correct F/PHI columns for auto loading.
   - [ ] Delete/close a map!!

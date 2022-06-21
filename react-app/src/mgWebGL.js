@@ -1912,7 +1912,9 @@ class MGWebGL extends Component {
         //console.log("appendOtherData");
         //console.log(jsondata);
 
+        let thisData = {name:name,id:guid(),buffers:[],atoms:[],transformMatrix:null};
         var theseBuffers = [];
+
         for(var idat=0;idat<jsondata.norm_tri.length;idat++){
             //self.currentBufferIdx = idat;
             self.currentBufferIdx = self.displayBuffers.length;
@@ -2158,6 +2160,7 @@ class MGWebGL extends Component {
 
             //var thisName = jsondata.names[idat];
             self.displayBuffers[self.currentBufferIdx].name_label = "foo";
+            self.displayBuffers[self.currentBufferIdx].id = guid();
 
             //var atoms = jsondata.atoms[idat];
             if(typeof(jsondata.atoms)!=="undefined"){
@@ -2171,6 +2174,9 @@ class MGWebGL extends Component {
         if(typeof(skipRebuild)!=="undefined"&&skipRebuild){
             return theseBuffers;
         }
+
+        this.dataInfo.push(thisData);
+        thisData.buffers = theseBuffers;
 
         self.buildBuffers();
         self.drawScene();

@@ -115,6 +115,7 @@ class ControlInterface extends Component {
 
         const enerLib = this.state.enerLib;
         const displayData = this.props.displayData;
+        const mapDataFiles = this.props.mapDataFiles;
         const dataFiles = this.props.dataFiles;
         const styles = reactCSS({
             'default': {
@@ -223,7 +224,7 @@ class ControlInterface extends Component {
                 <LightingUI onChange={this.lightsChanged.bind(this)}/>
                 </Tab>
                 <Tab eventKey="displayTable" title="Display Table">
-                <DisplayTable visibilityChanged={this.visibilityChanged.bind(this)} addRequest={this.addRequested.bind(this)} deleteRequest={this.deleteRequested.bind(this)} displayData={displayData} />
+                <DisplayTable visibilityChanged={this.visibilityChanged.bind(this)} addRequest={this.addRequested.bind(this)} deleteRequest={this.deleteRequested.bind(this)} displayData={displayData}  mapDataFiles={mapDataFiles} />
                 </Tab>
                 <Tab eventKey="superpose" title="Superposition">
                 <Superpose displayData={displayData} dataFiles={dataFiles} matricesChanged={this.matricesChanged.bind(this)} />
