@@ -1802,6 +1802,12 @@ class MGWebGL extends Component {
                 break;
             }
         }
+        for(let idx=0;idx<this.liveUpdatingMaps.length;idx++){
+            if(this.liveUpdatingMaps[idx].id===data_id){
+                console.log("delete",this.liveUpdatingMaps[idx]);
+                deleteBuffers = this.liveUpdatingMaps[idx].theseBuffers;
+            }
+        }
         let displayBuffersNew = [];
         for(let ibuf=0;ibuf<this.displayBuffers.length;ibuf++){
             if(deleteBuffers.indexOf(this.displayBuffers[ibuf])<0){
@@ -1812,9 +1818,11 @@ class MGWebGL extends Component {
         this.displayBuffers = displayBuffersNew;
         console.log("New buffers",this.displayBuffers);
         console.log("Old infos:",this.dataInfo);
+
         this.dataInfo = this.dataInfo.filter(info => info.id !== data_id);
+        this.liveUpdatingMaps = this.liveUpdatingMaps.filter(info => info.id !== data_id);
         console.log("New infos:",this.dataInfo);
-	this.props.dataChanged({data:this.dataInfo});
+	this.props.dataChanged({data:this.dataInfo,liveUpdatingMaps:this.liveUpdatingMaps});
         this.drawScene();
     }
 
@@ -1902,6 +1910,9 @@ class MGWebGL extends Component {
     }
 
     appendOtherData(jsondata,skipRebuild,name) {
+        console.log("**************************************************");
+        console.log("appendOtherData");
+        console.log("**************************************************");
         //This can be used to *add* arbitrary triangles to a scene. Not much luck with replacing scene by this, yet.
         //This currently deals with actual numbers rather than the uuencoded stuff we get from server, but it will
         //be changed to handle both.
@@ -1912,7 +1923,6 @@ class MGWebGL extends Component {
         //console.log("appendOtherData");
         //console.log(jsondata);
 
-        let thisData = {name:name,id:guid(),buffers:[],atoms:[],transformMatrix:null};
         var theseBuffers = [];
 
         for(var idat=0;idat<jsondata.norm_tri.length;idat++){
@@ -2111,6 +2121,7 @@ class MGWebGL extends Component {
                 //console.log(colours);
                 var mapTriangleData = {"col_tri":[[colours],[],[],[],[],[],[],[]], "norm_tri":[[normals],[],[],[],[],[],[],[]], "vert_tri":[[vertices],[],[],[],[],[],[],[]], "idx_tri":[[indices],[],[],[],[],[],[],[]] , "prim_types":[["TRIANGLES"],["TRIANGLES"],["TRIANGLES"],["TRIANGLES"],["TRIANGLES"],["TRIANGLES"],["TRIANGLES"],["TRIANGLES"]] };
                 var theseBuffers = self.appendOtherData(mapTriangleData);
+
                 var liveUpdatingMap = {};
                 var gridData = rssentries.grid;
                 liveUpdatingMap["gridData"] = gridData;
@@ -2126,6 +2137,10 @@ class MGWebGL extends Component {
                 liveUpdatingMap["theseBuffers"] = theseBuffers;
                 liveUpdatingMap["contourLevel"] = contourLevel;
                 liveUpdatingMap["mapColour"] = mapColour;
+                liveUpdatingMap["id"] = guid();
+                for(let ibuf=0;ibuf<theseBuffers.length;ibuf++){
+                    theseBuffers[ibuf].parentId = liveUpdatingMap.id;
+                }
                 self.liveUpdatingMaps.push(liveUpdatingMap);
 
             }
@@ -2174,9 +2189,6 @@ class MGWebGL extends Component {
         if(typeof(skipRebuild)!=="undefined"&&skipRebuild){
             return theseBuffers;
         }
-
-        this.dataInfo.push(thisData);
-        thisData.buffers = theseBuffers;
 
         self.buildBuffers();
         self.drawScene();
@@ -2251,6 +2263,13 @@ class MGWebGL extends Component {
             for(let ibuf=0;ibuf<this.dataInfo[idat].buffers.length;ibuf++){
                 if(ids.includes(this.dataInfo[idat].buffers[ibuf].id)){
                     this.dataInfo[idat].buffers[ibuf].visible = visible;
+                }
+            }
+        }
+        for(let idat=0;idat<this.liveUpdatingMaps.length;idat++){
+            for(let ibuf=0;ibuf<this.liveUpdatingMaps[idat].theseBuffers.length;ibuf++){
+                if(ids.includes(this.liveUpdatingMaps[idat].theseBuffers[ibuf].id)){
+                    this.liveUpdatingMaps[idat].theseBuffers[ibuf].visible = visible;
                 }
             }
         }
@@ -2570,6 +2589,10 @@ class MGWebGL extends Component {
                 liveUpdatingMap["theseBuffers"] = theseBuffers;
                 liveUpdatingMap["contourLevel"] = contourLevel;
                 liveUpdatingMap["mapColour"] = mapColour;
+                liveUpdatingMap["id"] = guid();
+                for(let ibuf=0;ibuf<theseBuffers.length;ibuf++){
+                    theseBuffers[ibuf].parentId = liveUpdatingMap.id;
+                }
                 self.liveUpdatingMaps.push(liveUpdatingMap);
             }
         }

@@ -9,6 +9,7 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
 - [x] gesamt in web page
 - [x] multiple gesamt in web page
 - [x] Make a fancier (React/Bootstrap) superpose/gesamt web page
+- [ ] Fix 5oah Ribbons showing nothing
 - [x] Apply gesamt superposition to graphics
   - [x] Apply transformations
   - [x] Apply to newly created objects

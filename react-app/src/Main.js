@@ -44,7 +44,9 @@ class Main extends Component {
     }
 
     displayDataChanged(data){
+        console.log(data);
         this.setState({displayData:data.data});
+        //FIXME - Act on "liveUpdatingMaps" changing.
     }
 
     glycanChanged(params) {
@@ -66,8 +68,9 @@ class Main extends Component {
         const theBuffers = this.gl.current.appendOtherData(data.mapTriangleData);
         this.gl.current.reContourMaps();
         console.log(theBuffers);
-        let fileDataId = guid();
-        const changedIds = { ...this.state.mapDataFiles.ids, [fileDataId] :  {buffers:theBuffers, data: data.mapTriangleData, name:data.name }};
+        console.log(this.gl.current.liveUpdatingMaps);
+        let fileDataId = theBuffers[0].parentId;
+        const changedIds = { ...this.state.mapDataFiles.ids, [fileDataId] :  { buffers:theBuffers, data: data.mapTriangleData, name:data.name }};
         const newIds = { ...this.state.mapDataFiles, ids : changedIds };
         this.setState({mapDataFiles:newIds});
     }
@@ -157,6 +160,7 @@ class Main extends Component {
     }
 
     visibilityChanged(params){
+        console.log(params);
         this.gl.current.setObjectsVisibility(params.bufferIds,params.visible);
     }
 
