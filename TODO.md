@@ -3,18 +3,7 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
 
 ### Todo
 
-- [x] Build gesamt
-  - [x] Build librvapi
-- [x] Test gesamt
-- [x] gesamt in web page
-- [x] multiple gesamt in web page
-- [x] Make a fancier (React/Bootstrap) superpose/gesamt web page
 - [ ] Fix 5oah Ribbons showing nothing
-- [x] Apply gesamt superposition to graphics
-  - [x] Apply transformations
-  - [x] Apply to newly created objects
-  - [x] Undo button
-- [x] Charged ligands produce SVG (e.g DCB 4a3h)
 - [ ] Selections for ribbons/worms (currently does all atoms whatever the selection)
 - [ ] Change use of XMLHttpRequest/FileReader in various places to fetch API (as in PDBSearch.js).
 - [ ] Display maps
@@ -26,6 +15,8 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
   - [ ] Fix grid position issues - not quite right place?, etc.
   - [ ] Generate map from `PDB/EBI` MTZ.
   - [ ] Generate map from `PDB/EBI` structure factors.
+- [ ] Some Coot stuff in WebGL react-bootstrap
+  - [ ] mini-rsr
 - [ ] Some MG stuff in WebGL react-bootstrap
   - [x] Get Smiles (This only does svg. Seems there are no force fields in `RDKit_minimal` at present.
   - [x] Get Monomer
@@ -48,8 +39,6 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
   - [ ] Perfect spheres
   - [ ] Scale bar
   - [ ] Prosmart (this is slightly complicated because of the subprocess model).
-- [x] Check that this successfully compiles on Linux
-- [x] Fix custom colours not working: `mgWebGLAtomsToPrimitives.js:5815 DON'T KNOW WHAT TO DO WITH #cf5353`
 - [ ] Keep ligand SVGs for all loaded structures and delete when file closed.
 - [ ] Check that this successfully compiles on Windows (needs *get_sources.bat* or *MSYS*)
 - [ ] Split coot into library and executables. An almost accurate list can be got from  
@@ -139,3 +128,16 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
 
 - [x] Create my first TODO.md  
 - [x] Update README with all changes in README.md.
+- [x] Build gesamt
+  - [x] Build librvapi
+- [x] Test gesamt
+- [x] gesamt in web page
+- [x] multiple gesamt in web page
+- [x] Make a fancier (React/Bootstrap) superpose/gesamt web page
+- [x] Apply gesamt superposition to graphics
+  - [x] Apply transformations
+  - [x] Apply to newly created objects
+  - [x] Undo button
+- [x] Charged ligands produce SVG (e.g DCB 4a3h)
+- [x] Check that this successfully compiles on Linux
+- [x] Fix custom colours not working: `mgWebGLAtomsToPrimitives.js:5815 DON'T KNOW WHAT TO DO WITH #cf5353`
