@@ -452,7 +452,7 @@ class MGWebWizardUI extends Component {
         </Form.Group>
         <Spacer height="1rem" />
         <Form.Group controlId="loadpdb">
-        <Form.Label>Browse for data file(s) (PDB,mmCIF, MTZ)</Form.Label>
+        <Form.Label>Browse for data file (PDB,mmCIF, MTZ)</Form.Label>
         <Form.Control ref={this.inputRef} type="file" />
         </Form.Group>
         <Spacer height="1rem" />

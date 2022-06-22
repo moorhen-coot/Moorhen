@@ -22,7 +22,7 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
   - [x] Generate map from local MTZ.
     - [x] Load with `FC_ALL`, `PHIC_ALL`
     - [ ] Determine correct F/PHI columns for auto loading.
-  - [ ] Delete/close a map!!
+  - [x] Delete/close a map!!
   - [ ] Fix grid position issues - not quite right place?, etc.
   - [ ] Generate map from `PDB/EBI` MTZ.
   - [ ] Generate map from `PDB/EBI` structure factors.
