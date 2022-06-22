@@ -16,7 +16,7 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
   - [x] Undo button
 - [x] Charged ligands produce SVG (e.g DCB 4a3h)
 - [ ] Selections for ribbons/worms (currently does all atoms whatever the selection)
-- [ ] Change use of XMLHttpRequest in various places to fetch API (as in PDBSearch.js).
+- [ ] Change use of XMLHttpRequest/FileReader in various places to fetch API (as in PDBSearch.js).
 - [ ] Display maps
   - [x] Generate map from `PDB_REDO` MTZ.
   - [x] Generate map from local MTZ.
