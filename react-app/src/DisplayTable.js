@@ -274,9 +274,8 @@ class DisplayTable extends Component {
     render () {
         var self = this;
         const displayData = this.props.displayData;
+        const liveUpdatingMaps = this.props.liveUpdatingMaps;
         const mapDataFiles = this.props.mapDataFiles;
-        console.log(mapDataFiles);
-        console.log(displayData);
         let rows = [];
         let maprows = [];
         let modals = [];
@@ -285,12 +284,13 @@ class DisplayTable extends Component {
 
         const mtzRegex = /.mtz$/;
         let maxCustom = 0;
-        for (const [key, value] of Object.entries(mapDataFiles.ids)) {
-            if(value.buffers && value.buffers.length>0){
-                let idsMaps = [];
 
+        for(let imap=0;imap<liveUpdatingMaps.length;imap++){
+            const value = liveUpdatingMaps[imap];
+            if(value.theseBuffers && value.theseBuffers.length>0){
+                let idsMaps = [];
+                const key = value.id;
                 let showModalThis;
-                console.log(key,value);
                 const handleCloseThis = this.handleClose.bind(self,key);
                 try{
                     showModalThis = self.state.showModal.ids[key];
@@ -299,7 +299,7 @@ class DisplayTable extends Component {
                 }
                 const keyModal = "modal"+key;
 
-                const shortName = value.name.replace(mtzRegex,"");
+                const shortName = mapDataFiles.ids[key].name.replace(mtzRegex,"");
                 modals.push(
                         <Modal key={keyModal} show={showModalThis} onHide={handleCloseThis}>
                         <Modal.Header closeButton>
@@ -317,17 +317,18 @@ class DisplayTable extends Component {
                         </Modal>
                 );
 
-
                 const dtRowKey = "displayTableMapRow_"+key;
                 const keyMap = "displayTableMapRow_"+key+"_1";
                 const keyDelete = "deleteMap"+key;
                 let handleShowMap = this.handleShow.bind(self,key);
-                for(let ibuf=0;ibuf<value.buffers.length;ibuf++){
-                    idsMaps.push(value.buffers[ibuf].id);
+                for(let ibuf=0;ibuf<value.theseBuffers.length;ibuf++){
+                    idsMaps.push(value.theseBuffers[ibuf].id);
                 }
-                maprows.push(<tr key={dtRowKey}><td>{shortName}</td><td key={keyMap}><input type="checkbox" defaultChecked={value.buffers[0].visible} onChange={function(evt){self.visibilityChanged(evt,idsMaps,self)}} /></td><td key={keyDelete}><Button size="sm" onClick={handleShowMap}>Close</Button></td></tr>);
+                maprows.push(<tr key={dtRowKey}><td>{shortName}</td><td key={keyMap}><input type="checkbox" defaultChecked={value.theseBuffers[0].visible} onChange={function(evt){self.visibilityChanged(evt,idsMaps,self)}} /></td><td key={keyDelete}><Button size="sm" onClick={handleShowMap}>Close</Button></td></tr>);
             }
         }
+
+
         for(let iobj=0;iobj<displayData.length;iobj++){
             let data_id = displayData[iobj].id;
             let customBuffers = {};
@@ -421,7 +422,6 @@ class DisplayTable extends Component {
                 }
             } catch(e){
             }
-            console.log("What am I doing here???",iobj,displayData[iobj])
             if(this.treeCache[data_id]){
                 tree = this.treeCache[data_id];
             } else {

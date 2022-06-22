@@ -2142,6 +2142,7 @@ class MGWebGL extends Component {
                     theseBuffers[ibuf].parentId = liveUpdatingMap.id;
                 }
                 self.liveUpdatingMaps.push(liveUpdatingMap);
+                this.props.dataChanged({data:this.dataInfo,liveUpdatingMaps:this.liveUpdatingMaps});
 
             }
 
@@ -2303,7 +2304,7 @@ class MGWebGL extends Component {
                 self.buildBuffers();
                 console.log("Time to done buildBuffers after append : "+(new Date().getTime()-appendStart));
                 self.drawScene();
-                this.props.dataChanged({data:this.dataInfo});
+                this.props.dataChanged({data:this.dataInfo,liveUpdatingMaps:this.liveUpdatingMaps});
                 break;
             }
         }
@@ -2351,7 +2352,7 @@ class MGWebGL extends Component {
 
         console.log(thisData);
         this.dataInfo.push(thisData);
-	this.props.dataChanged({data:this.dataInfo});
+        this.props.dataChanged({data:this.dataInfo,liveUpdatingMaps:this.liveUpdatingMaps});
 
     }
 
@@ -2594,6 +2595,7 @@ class MGWebGL extends Component {
                     theseBuffers[ibuf].parentId = liveUpdatingMap.id;
                 }
                 self.liveUpdatingMaps.push(liveUpdatingMap);
+                this.props.dataChanged({data:this.dataInfo,liveUpdatingMaps:this.liveUpdatingMaps});
             }
         }
 
