@@ -3,9 +3,10 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
 
 ### Todo
 
+- [ ] Some Coot stuff in WebGL react-bootstrap
+  - [ ] mini-rsr
 - [ ] Fix 5oah Ribbons showing nothing
 - [ ] Selections for ribbons/worms (currently does all atoms whatever the selection)
-- [ ] Change use of XMLHttpRequest/FileReader in various places to fetch API (as in PDBSearch.js).
 - [ ] Display maps
   - [x] Generate map from `PDB_REDO` MTZ.
   - [x] Generate map from local MTZ.
@@ -15,8 +16,6 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
   - [ ] Fix grid position issues - not quite right place?, etc.
   - [ ] Generate map from `PDB/EBI` MTZ.
   - [ ] Generate map from `PDB/EBI` structure factors.
-- [ ] Some Coot stuff in WebGL react-bootstrap
-  - [ ] mini-rsr
 - [ ] Some MG stuff in WebGL react-bootstrap
   - [x] Get Smiles (This only does svg. Seems there are no force fields in `RDKit_minimal` at present.
   - [x] Get Monomer
@@ -39,6 +38,7 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
   - [ ] Perfect spheres
   - [ ] Scale bar
   - [ ] Prosmart (this is slightly complicated because of the subprocess model).
+- [ ] Change use of XMLHttpRequest/FileReader in various places to fetch API (as in PDBSearch.js).
 - [ ] Keep ligand SVGs for all loaded structures and delete when file closed.
 - [ ] Check that this successfully compiles on Windows (needs *get_sources.bat* or *MSYS*)
 - [ ] Split coot into library and executables. An almost accurate list can be got from  
