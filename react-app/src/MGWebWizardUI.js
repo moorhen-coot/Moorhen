@@ -139,9 +139,9 @@ class MGWebWizardUI extends Component {
                 console.log(mapTriangleData);
 
                 if(e.data[2]){
-                    self.props.mapChanged({mapTriangleData:mapTriangleData,name:e.data[2]});
+                    self.props.mapChanged({mapTriangleData:mapTriangleData,name:e.data[2],contents:e.data[3]});
                 } else {
-                    self.props.mapChanged({mapTriangleData:mapTriangleData,name:"unknown"});
+                    self.props.mapChanged({mapTriangleData:mapTriangleData,name:"unknown",contents:e.data[3]});
                 }
             }
         }

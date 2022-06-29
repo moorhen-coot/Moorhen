@@ -13,6 +13,7 @@ import LightingUI from './LightingUI';
 import MGWebWizardUI from './MGWebWizardUI';
 import DisplayTable from './DisplayTable';
 import Superpose from './Superpose';
+import MiniRSR from './MiniRSR';
 import NormalModes from './NormalModes';
 import Utilities from './MGUtils';
 
@@ -245,6 +246,9 @@ class ControlInterface extends Component {
                 </tbody>
                 </Table>
                 </div>
+                </Tab>
+                <Tab eventKey="miniRSRTab" title="Mini RSR">
+                <MiniRSR addRequest={this.addRequested.bind(this)} liveUpdatingMaps={liveUpdatingMaps}  dataFiles={dataFiles} displayData={displayData} mapDataFiles={mapDataFiles} />
                 </Tab>
                 <Tab eventKey="utilities" title="Utilities">
                 <Utilities displayData={displayData} dataFiles={dataFiles} onSVGChange={this.svgChanged.bind(this)} mapChanged={this.mapChanged.bind(this)} filePendingChanged={this.filePendingChanged.bind(this)} helicesChanged={this.helicesChanged.bind(this)}/>

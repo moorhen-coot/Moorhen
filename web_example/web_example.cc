@@ -45,7 +45,7 @@ int mini_rsr_main(int argc, char **argv);
 
 using namespace emscripten;
 
-int mini_rsr(std::vector<std::string> args){
+int mini_rsr(const std::vector<std::string> &args){
 
     int argc = args.size();
     char **argv = new char*[argc];

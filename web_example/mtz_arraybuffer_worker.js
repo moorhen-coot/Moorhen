@@ -54,6 +54,6 @@ onmessage = function(e) {
     fout.close_write();
     console.log("Written",CCP4Module.clipperStringToString(outpath));
     var mapasstr = CCP4Module.FS.readFile(CCP4Module.clipperStringToString(outpath));
-    postMessage(["result",mapasstr,selectedFileName]);
+    postMessage(["result",mapasstr,selectedFileName,byteArray]);
 
 }

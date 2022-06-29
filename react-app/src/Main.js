@@ -70,7 +70,7 @@ class Main extends Component {
         console.log(theBuffers);
         console.log(this.gl.current.liveUpdatingMaps);
         let fileDataId = theBuffers[0].parentId;
-        const changedIds = { ...this.state.mapDataFiles.ids, [fileDataId] :  { buffers:theBuffers, data: data.mapTriangleData, name:data.name }};
+        const changedIds = { ...this.state.mapDataFiles.ids, [fileDataId] :  { buffers:theBuffers, data: data.mapTriangleData, name:data.name, contents:data.contents }};
         const newIds = { ...this.state.mapDataFiles, ids : changedIds };
         this.setState({mapDataFiles:newIds});
     }
