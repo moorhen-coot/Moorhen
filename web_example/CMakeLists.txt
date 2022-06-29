@@ -41,4 +41,5 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/web_example.wasm
               ${CMAKE_CURRENT_BINARY_DIR}/smiles_to_pdb_worker.js
               ${CMAKE_CURRENT_BINARY_DIR}/monid_to_pdb_worker.js
               ${CMAKE_CURRENT_BINARY_DIR}/nma_worker.js
+              ${CMAKE_CURRENT_BINARY_DIR}/mini_rsr_worker.js
 DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../react-app/public/wasm)
