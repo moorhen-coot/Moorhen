@@ -26,7 +26,7 @@ import { guid } from './guid.js';
 
 ChartJS.register(LinearScale, PointElement, LineElement, Tooltip, Legend);
 
-class DisplayTable extends Component {
+class Superpose extends Component {
     constructor(props) {
 
         super(props);
@@ -218,4 +218,4 @@ class DisplayTable extends Component {
         );
     }
 }
-export default DisplayTable;
+export default Superpose;

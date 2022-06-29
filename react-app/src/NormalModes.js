@@ -27,7 +27,7 @@ import { guid } from './guid.js';
 
 ChartJS.register(LinearScale, PointElement, LineElement, Tooltip, Legend);
 
-class DisplayTable extends Component {
+class NormalModes extends Component {
     constructor(props) {
 
         super(props);
@@ -349,4 +349,4 @@ class DisplayTable extends Component {
         );
     }
 }
-export default DisplayTable;
+export default NormalModes;
