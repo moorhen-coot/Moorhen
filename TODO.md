@@ -3,8 +3,13 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
 
 ### Todo
 
-- [ ] Some Coot stuff in WebGL react-bootstrap
-  - [ ] mini-rsr
+- [ ] mini-rsr example
+  - [x] Compile
+  - [x] Run in node (sort of ... does not exit at end).
+  - [ ] Run in browser
+    - [x] Runs (if not successfully).
+    - [ ] Access to metal distances tables
+    - [ ] Access to monomer library
 - [ ] Fix 5oah Ribbons showing nothing
 - [ ] Selections for ribbons/worms (currently does all atoms whatever the selection)
 - [ ] Display maps
