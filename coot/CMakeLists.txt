@@ -266,10 +266,10 @@ ${coot_src}/src/gl-matrix.cc
 
 target_include_directories(coot PRIVATE ${coot_src} ${coot_src}/coords ${coot_src}/utils ../include ../example ../checkout/ssm ../checkout/mmdb2 ../checkout/clipper ../checkout/fftw-2.1.5/fftw ../checkout/fftw-2.1.5/rfftw ../checkout/libccp4/ccp4)
 
-set_target_properties(coot PROPERTIES COMPILE_FLAGS "-DFFTW_ENABLE_FLOAT -s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_BOOST_HEADERS=1" LINK_FLAGS "-s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_BOOST_HEADERS=1")
+set_target_properties(coot PROPERTIES COMPILE_FLAGS "-DFFTW_ENABLE_FLOAT -s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_BOOST_HEADERS=1 -s USE_PTHREADS=1" LINK_FLAGS "-s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_BOOST_HEADERS=1 -s USE_PTHREADS=1")
 
 FILE(WRITE ${CMAKE_BINARY_DIR}/coot/coot_env.js
-Module.preRun = [function() {ENV.COOT_DATA_DIR="${coot_src}"}]
+Module.preRun = [function() {ENV.COOT_DATA_DIR="${coot_src}"}, function() {ENV.CCP4_LIB="${CMAKE_BINARY_DIR}/ccp4_lib"}]
 )
 
 add_executable(fix-nomenclature ${coot_src}/src/fix-nomenclature.cc)
@@ -413,11 +413,11 @@ target_include_directories(test-indexing PRIVATE ${coot_src} ${coot_src}/src ../
 target_compile_options(test-indexing PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
 
 add_executable(mini-rsr ${coot_src}/ideal/mini-rsr.cc)
-target_link_options(mini-rsr PRIVATE -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 --pre-js coot_env.js)
+target_link_options(mini-rsr PRIVATE -sPTHREAD_POOL_SIZE=4 -sPTHREAD_POOL_SIZE_STRICT=4 -sUSE_PTHREADS=1 -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 -sASSERTIONS=1 --pre-js coot_env.js)
 target_link_directories(mini-rsr PUBLIC ../mmdb2 ../ssm ../ccp4 ../lib ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4)
 target_link_libraries(mini-rsr mmdb2 ssm clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 coot gsl gslcblas nodefs.js)
 target_include_directories(mini-rsr PRIVATE ${coot_src} ${coot_src}/src ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw ../include)
-target_compile_options(mini-rsr PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
+target_compile_options(mini-rsr PUBLIC -D_MINI_RSR_MAIN_ -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -s USE_PTHREADS=1 -DNODERAWFS)
 
 add_executable(tiddly ${coot_src}/tw/tiddly.cc)
 target_link_options(tiddly PRIVATE -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 --pre-js coot_env.js)
