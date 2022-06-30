@@ -266,11 +266,75 @@ ${coot_src}/src/gl-matrix.cc
 
 target_include_directories(coot PRIVATE ${coot_src} ${coot_src}/coords ${coot_src}/utils ../include ../example ../checkout/ssm ../checkout/mmdb2 ../checkout/clipper ../checkout/fftw-2.1.5/fftw ../checkout/fftw-2.1.5/rfftw ../checkout/libccp4/ccp4)
 
-set_target_properties(coot PROPERTIES COMPILE_FLAGS "-DFFTW_ENABLE_FLOAT -s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_BOOST_HEADERS=1 -s USE_PTHREADS=1" LINK_FLAGS "-s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_BOOST_HEADERS=1 -s USE_PTHREADS=1")
+set_target_properties(coot PROPERTIES COMPILE_FLAGS "-DNODERAWFS -DFFTW_ENABLE_FLOAT -s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_BOOST_HEADERS=1 -s USE_PTHREADS=1" LINK_FLAGS "-s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_BOOST_HEADERS=1 -s USE_PTHREADS=1")
 
 FILE(WRITE ${CMAKE_BINARY_DIR}/coot/coot_env.js
 Module.preRun = [function() {ENV.COOT_DATA_DIR="${coot_src}"}, function() {ENV.CCP4_LIB="${CMAKE_BINARY_DIR}/ccp4_lib"}]
 )
+
+FILE(WRITE ${CMAKE_BINARY_DIR}/coot/coot_env_web.js
+Module.preRun = [function() {ENV.COOT_DATA_DIR="/data/coot"}, function() {ENV.CCP4_LIB="/data/ccp4_lib"}]
+)
+
+FILE(MAKE_DIRECTORY "data/coot/metal/")
+FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/a")
+FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/c")
+FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/g")
+FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/p")
+FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/h")
+FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/i")
+FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/l")
+FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/m")
+FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/s")
+FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/t")
+FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/v")
+FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/e")
+FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/u")
+FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/d")
+FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/h")
+FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/n")
+FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/list")
+FILE(COPY ../checkout/monomers/a/ALA.cif DESTINATION data/ccp4_lib/data/monomers/a )
+FILE(COPY ../checkout/monomers/a/ASP.cif DESTINATION data/ccp4_lib/data/monomers/a )
+FILE(COPY ../checkout/monomers/a/ASN.cif DESTINATION data/ccp4_lib/data/monomers/c )
+FILE(COPY ../checkout/monomers/c/CYS.cif DESTINATION data/ccp4_lib/data/monomers/g )
+FILE(COPY ../checkout/monomers/g/GLN.cif DESTINATION data/ccp4_lib/data/monomers/g )
+FILE(COPY ../checkout/monomers/g/GLY.cif DESTINATION data/ccp4_lib/data/monomers/g )
+FILE(COPY ../checkout/monomers/g/GLU.cif DESTINATION data/ccp4_lib/data/monomers/g )
+FILE(COPY ../checkout/monomers/p/PHE.cif DESTINATION data/ccp4_lib/data/monomers/p )
+FILE(COPY ../checkout/monomers/h/HIS.cif DESTINATION data/ccp4_lib/data/monomers/h )
+FILE(COPY ../checkout/monomers/i/ILE.cif DESTINATION data/ccp4_lib/data/monomers/i )
+FILE(COPY ../checkout/monomers/l/LYS.cif DESTINATION data/ccp4_lib/data/monomers/l )
+FILE(COPY ../checkout/monomers/l/LEU.cif DESTINATION data/ccp4_lib/data/monomers/l )
+FILE(COPY ../checkout/monomers/m/MET.cif DESTINATION data/ccp4_lib/data/monomers/m )
+FILE(COPY ../checkout/monomers/m/MSE.cif DESTINATION data/ccp4_lib/data/monomers/m )
+FILE(COPY ../checkout/monomers/p/PRO.cif DESTINATION data/ccp4_lib/data/monomers/p )
+FILE(COPY ../checkout/monomers/a/ARG.cif DESTINATION data/ccp4_lib/data/monomers/a )
+FILE(COPY ../checkout/monomers/s/SER.cif DESTINATION data/ccp4_lib/data/monomers/s )
+FILE(COPY ../checkout/monomers/t/THR.cif DESTINATION data/ccp4_lib/data/monomers/t )
+FILE(COPY ../checkout/monomers/v/VAL.cif DESTINATION data/ccp4_lib/data/monomers/v )
+FILE(COPY ../checkout/monomers/t/TRP.cif DESTINATION data/ccp4_lib/data/monomers/t )
+FILE(COPY ../checkout/monomers/t/TYR.cif DESTINATION data/ccp4_lib/data/monomers/t )
+FILE(COPY ../checkout/monomers/p/PO4.cif DESTINATION data/ccp4_lib/data/monomers/p )
+FILE(COPY ../checkout/monomers/s/SO4.cif DESTINATION data/ccp4_lib/data/monomers/s )
+FILE(COPY ../checkout/monomers/g/GOL.cif DESTINATION data/ccp4_lib/data/monomers/g )
+FILE(COPY ../checkout/monomers/c/CIT.cif DESTINATION data/ccp4_lib/data/monomers/c )
+FILE(COPY ../checkout/monomers/e/EDO.cif DESTINATION data/ccp4_lib/data/monomers/e )
+FILE(COPY ../checkout/monomers/a/A.cif DESTINATION data/ccp4_lib/data/monomers/a )
+FILE(COPY ../checkout/monomers/c/C.cif DESTINATION data/ccp4_lib/data/monomers/c )
+FILE(COPY ../checkout/monomers/g/G.cif DESTINATION data/ccp4_lib/data/monomers/g )
+FILE(COPY ../checkout/monomers/u/U.cif DESTINATION data/ccp4_lib/data/monomers/u )
+FILE(COPY ../checkout/monomers/d/DA.cif DESTINATION data/ccp4_lib/data/monomers/d )
+FILE(COPY ../checkout/monomers/d/DC.cif DESTINATION data/ccp4_lib/data/monomers/d )
+FILE(COPY ../checkout/monomers/d/DG.cif DESTINATION data/ccp4_lib/data/monomers/d )
+FILE(COPY ../checkout/monomers/d/DT.cif DESTINATION data/ccp4_lib/data/monomers/d )
+FILE(COPY ../checkout/monomers/h/HOH.cif DESTINATION data/ccp4_lib/data/monomers/h )
+FILE(COPY ../checkout/monomers/n/NA.cif DESTINATION data/ccp4_lib/data/monomers/n )
+FILE(COPY ../checkout/monomers/ener_lib.cif DESTINATION data/ccp4_lib/data/monomers )
+FILE(COPY ../checkout/monomers/list/mon_lib_list.cif DESTINATION data/ccp4_lib/data/monomers/list )
+FILE(COPY ${coot_src}/data/metal/metal-N-distance.table DESTINATION data/coot/metal )
+FILE(COPY ${coot_src}/data/metal/metal-O-distance.table DESTINATION data/coot/metal )
+FILE(COPY ${coot_src}/data/metal/metal-S-distance.table DESTINATION data/coot/metal )
 
 add_executable(fix-nomenclature ${coot_src}/src/fix-nomenclature.cc)
 target_link_options(fix-nomenclature PRIVATE -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 --pre-js coot_env.js)
@@ -421,7 +485,7 @@ target_compile_options(mini-rsr PUBLIC -D_MINI_RSR_MAIN_ -DFFTW_ENABLE_FLOAT -D_
 
 add_executable(mini-rsr-web ../web_example/coot_example.cc)
 #target_link_options(mini-rsr-web PRIVATE -sPTHREAD_POOL_SIZE=4 -sPTHREAD_POOL_SIZE_STRICT=4 -sUSE_PTHREADS=1 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sENVIRONMENT=web,worker -sMODULARIZE=1 -sEXPORT_NAME=createRSRModule -sEXPORTED_RUNTIME_METHODS=['FS','readFile'])
-target_link_options(mini-rsr-web PRIVATE  -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createRSRModule -sEXPORTED_RUNTIME_METHODS=['FS','readFile'])
+target_link_options(mini-rsr-web PRIVATE -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createRSRModule -sEXPORTED_RUNTIME_METHODS=['FS','readFile'] --preload-file data  --pre-js coot_env_web.js)
 target_link_directories(mini-rsr-web PUBLIC ../ssm ../mmdb2 ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4 ../fftw ../rfftw ../ccp4 ../privateer ../rvapi ../gesamt ../ccp4mg ../lib)
 target_link_libraries(mini-rsr-web ssm rvapi gesamtlib mmdb2 clipper-minimol clipper-phs clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 privateer clipper-minimol ccp4mg coot gsl gslcblas m z idbfs.js)
 target_include_directories(mini-rsr-web PRIVATE ${coot_src} ${coot_src}/src ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw ../include)
@@ -794,7 +858,9 @@ target_compile_options(align PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -D
 
 install(TARGETS mini-rsr-web DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../react-app/public/wasm)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/mini-rsr-web.wasm
-${CMAKE_CURRENT_BINARY_DIR}/mini-rsr-web.worker.js
+#${CMAKE_CURRENT_BINARY_DIR}/mini-rsr-web.worker.js
 ${CMAKE_CURRENT_BINARY_DIR}/mini-rsr-web.js
+${CMAKE_CURRENT_BINARY_DIR}/mini-rsr-web.data
+${CMAKE_CURRENT_BINARY_DIR}/coot_env_web.js
 DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../react-app/public/wasm)
 

@@ -249,7 +249,8 @@ class NormalModes extends Component {
             let data_id = displayData[iobj].id;
             let name = displayData[iobj].name;
             let keySup = data_id;
-            rows.push(<option value={keySup}>{name}</option>);
+            const keyOption = "nma_"+keySup;
+            rows.push(<option key={keyOption} value={keySup}>{name}</option>);
         }
         if(selected==="unk"&&displayData.length>0){
             selected = displayData[0].id;

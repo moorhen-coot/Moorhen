@@ -33,6 +33,9 @@ echo
 echo "Checking out prosmart"
 bzr branch http://fg.oisin.rc-harwell.ac.uk/anonscm/bzr/prosmart/trunk prosmart
 echo
+echo "Checking out monomers"
+bzr branch http://fg.oisin.rc-harwell.ac.uk/anonscm/bzr/monomers/trunk/ monomers
+echo
 
 echo "Downloading privateer MKIV"
 curl -L https://github.com/agirre/privateer/archive/refs/tags/MKIV.tar.gz -o privateer-MKIV.tar.gz
