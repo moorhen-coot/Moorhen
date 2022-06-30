@@ -1,8 +1,8 @@
 var CCP4Module;
 
-importScripts('web_example.js');
+importScripts('./mini-rsr-web.js');
 
-createCCP4Module({print(t){postMessage(["output",t])},printErr(t){postMessage(["output",t]);}})
+createRSRModule({print(t){postMessage(["output",t])},printErr(t){postMessage(["output",t]);}})
     .then(function(CCP4Mod) {
              CCP4Module = CCP4Mod;
             })

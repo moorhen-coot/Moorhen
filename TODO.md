@@ -8,8 +8,10 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
   - [x] Run in node (sort of ... does not exit at end).
   - [ ] Run in browser
     - [x] Runs (if not successfully).
-    - [ ] Access to metal distances tables
+    - [ ] Access to metal distances tables. (Pre-load?)
     - [ ] Access to monomer library
+      - [ ] Load common dictionaries - amino acids, nucleic acids, water, Na, etc. (Pre-load?)
+      - [ ] Analyse structure and load other monomers. (From server?)
 - [ ] Fix 5oah Ribbons showing nothing
 - [ ] Selections for ribbons/worms (currently does all atoms whatever the selection)
 - [ ] Display maps

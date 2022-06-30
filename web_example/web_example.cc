@@ -41,22 +41,7 @@
 
 #include "headers.h"
 
-int mini_rsr_main(int argc, char **argv);
-
 using namespace emscripten;
-
-int mini_rsr(const std::vector<std::string> &args){
-
-    int argc = args.size();
-    char **argv = new char*[argc];
-
-    for(int i=0;i<argc;i++){
-        argv[i] = new char[args[i].size()+1];
-        strcpy(argv[i], args[i].c_str());
-    }
-
-    return mini_rsr_main(argc,argv);
-}
 
 class MGNormalModeDisplacements {
         std::vector<std::vector<std::vector<double> > > displacements;
@@ -526,7 +511,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
     function("printMapStats",&printMapStats);
     function("exportXMapToMapFile",&exportXMapToMapFile);
     function("clipperStringToString",&clipperStringToString);
-    function("mini_rsr",&mini_rsr);
     function("superpose",&superpose_main);
     function("gesamt",&gesamt_main);
     function("get_annotated_glycans",&get_annotated_glycans);

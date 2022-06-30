@@ -21,7 +21,6 @@ class MiniRSR extends Component {
         this.message = "";
         const self = this;
         this.myWorkerRSR = new window.Worker('wasm/mini_rsr_worker.js');
-        /*
 
         this.myWorkerRSR.onmessage = function(e) {
             let result = document.getElementById("output");
@@ -35,7 +34,6 @@ class MiniRSR extends Component {
                 self.setState({log:self.message}, ()=> {self.preRef.current.scrollTop = self.preRef.current.scrollHeight;});
             }
         }
-        */
     }
 
     handleRSR(){
@@ -77,11 +75,9 @@ class MiniRSR extends Component {
         const inputData = {jobId:jobid,pdbinName:rsrInputFileName,pdbinData:rsrInputFileData,hklinName:rsrInputMapFileName,hklinData:rsrInputMapFileData,chainId:"A",resnoStart:27,resnoEnd:37};
 
         console.log(inputData);
-        /*
         if(rsrInputFileData){
             self.myWorkerRSR.postMessage(inputData);
         }
-        */
     }
 
     handleChange(evt){
