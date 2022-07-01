@@ -272,11 +272,7 @@ FILE(WRITE ${CMAKE_BINARY_DIR}/coot/coot_env.js
 Module.preRun = [function() {ENV.COOT_DATA_DIR="${coot_src}"}, function() {ENV.CCP4_LIB="${CMAKE_BINARY_DIR}/ccp4_lib"}]
 )
 
-FILE(WRITE ${CMAKE_BINARY_DIR}/coot/coot_env_web.js
-Module.preRun = [function() {ENV.COOT_DATA_DIR="/data/coot"}, function() {ENV.CCP4_LIB="/data/ccp4_lib"}]
-)
-
-FILE(MAKE_DIRECTORY "data/coot/metal/")
+FILE(MAKE_DIRECTORY "data/coot/data/metal/")
 FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/a")
 FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/c")
 FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/g")
@@ -296,8 +292,8 @@ FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/n")
 FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/list")
 FILE(COPY ../checkout/monomers/a/ALA.cif DESTINATION data/ccp4_lib/data/monomers/a )
 FILE(COPY ../checkout/monomers/a/ASP.cif DESTINATION data/ccp4_lib/data/monomers/a )
-FILE(COPY ../checkout/monomers/a/ASN.cif DESTINATION data/ccp4_lib/data/monomers/c )
-FILE(COPY ../checkout/monomers/c/CYS.cif DESTINATION data/ccp4_lib/data/monomers/g )
+FILE(COPY ../checkout/monomers/a/ASN.cif DESTINATION data/ccp4_lib/data/monomers/a )
+FILE(COPY ../checkout/monomers/c/CYS.cif DESTINATION data/ccp4_lib/data/monomers/c )
 FILE(COPY ../checkout/monomers/g/GLN.cif DESTINATION data/ccp4_lib/data/monomers/g )
 FILE(COPY ../checkout/monomers/g/GLY.cif DESTINATION data/ccp4_lib/data/monomers/g )
 FILE(COPY ../checkout/monomers/g/GLU.cif DESTINATION data/ccp4_lib/data/monomers/g )
@@ -332,9 +328,9 @@ FILE(COPY ../checkout/monomers/h/HOH.cif DESTINATION data/ccp4_lib/data/monomers
 FILE(COPY ../checkout/monomers/n/NA.cif DESTINATION data/ccp4_lib/data/monomers/n )
 FILE(COPY ../checkout/monomers/ener_lib.cif DESTINATION data/ccp4_lib/data/monomers )
 FILE(COPY ../checkout/monomers/list/mon_lib_list.cif DESTINATION data/ccp4_lib/data/monomers/list )
-FILE(COPY ${coot_src}/data/metal/metal-N-distance.table DESTINATION data/coot/metal )
-FILE(COPY ${coot_src}/data/metal/metal-O-distance.table DESTINATION data/coot/metal )
-FILE(COPY ${coot_src}/data/metal/metal-S-distance.table DESTINATION data/coot/metal )
+FILE(COPY ${coot_src}/data/metal/metal-N-distance.table DESTINATION data/coot/data/metal )
+FILE(COPY ${coot_src}/data/metal/metal-O-distance.table DESTINATION data/coot/data/metal )
+FILE(COPY ${coot_src}/data/metal/metal-S-distance.table DESTINATION data/coot/data/metal )
 
 add_executable(fix-nomenclature ${coot_src}/src/fix-nomenclature.cc)
 target_link_options(fix-nomenclature PRIVATE -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 --pre-js coot_env.js)
