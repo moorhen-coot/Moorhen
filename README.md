@@ -146,7 +146,7 @@ different in the 2 cases. If you require more classes or methods from the librar
     * M. Galassi et al, GNU Scientific Library Reference Manual (3rd Ed.), ISBN 0954612078
     * https://www.gnu.org/software/gsl/
 * FFTW
-    *   Frigo, Matteo and Johnson, Steven G. (2005), *The Design and Implementation of FFTW*3, Proceedings of the IEEE **93(2)**, p216-231.
+    *   Frigo, Matteo and Johnson, Steven G. (2005), *The Design and Implementation of FFTW3*, Proceedings of the IEEE **93(2)**, p216-231.
 * RDKit
     *  RDKit for JavaScript (Official) [https://github.com/rdkit/rdkit/tree/master/Code/MinimalLib](https://github.com/rdkit/rdkit/tree/master/Code/MinimalLib)
     *  RDKit: Open-source cheminformatics [https://www.rdkit.org](https://www.rdkit.org)
