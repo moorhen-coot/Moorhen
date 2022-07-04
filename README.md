@@ -140,6 +140,8 @@ different in the 2 cases. If you require more classes or methods from the librar
     *   [https://github.com/project-gemmi/gemmi](https://github.com/project-gemmi/gemmi)
 * Gesamt
     *   Krissinel E. (2012), *Enhanced fold recognition using efficient short fragment clustering*, Journal of molecular biochemistry, **1(2)**, p76–85.
+* ProSMART
+    * R.A. Nicholls, M. Fischer, S. McNicholas and G.N. Murshudov (2014) *Conformation-Independent Structural Comparison of Macromolecules with ProSMART.* Acta Cryst. **D70**, p2487-2499.
 * GSL
     * M. Galassi et al, GNU Scientific Library Reference Manual (3rd Ed.), ISBN 0954612078
     * https://www.gnu.org/software/gsl/
