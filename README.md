@@ -73,7 +73,7 @@ not itself compiled by this project.
 `cd ../privateer`  
 `node privateer.js -pdbin 5fjj.pdb -cores 1`  
 `cd ../coot`  
-`node fix-nomenclature.js ../example/4dfr.pdb out.pdb`
+`node fix-nomenclature.js ../example/4dfr.pdb out.pdb`  
 `cd ../gesamt`  
 `node gesamt.js ../example/4dfr.pdb ../example/8dfr.pdb`  
 
