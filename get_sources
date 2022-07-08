@@ -71,11 +71,11 @@ echo "Unpacking gsl-2.7.1"
 tar xf checkout/gsl-2.7.1.tar.gz
 echo
 
-#Create an empty file silly.c and then compile it with USE_ZLIB to force emsdk to get zlib.
-echo "Attempting to get emsdk zlib port"
+#Create an empty file silly.c and then compile it with USE_ZLIB and USE_LIBPNG to force emsdk to get zlib/png.
+echo "Attempting to get emsdk zlib/png ports"
 echo
 echo "" > silly.c
-emcc silly.c -s USE_ZLIB=1
+emcc silly.c -s USE_ZLIB=1 -s USE_LIBPNG=1
 rm -f silly.c
 
 #Get RDKit
