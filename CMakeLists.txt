@@ -18,6 +18,14 @@ ExternalProject_Add(gsl-src
   BUILD_IN_SOURCE 1
 )
 
+ExternalProject_Add(boost-src
+  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/boost
+  CONFIGURE_COMMAND COMMAND ./bootstrap.sh --with-libraries=serialization,regex,chrono,date_time,filesystem,iostreams,program_options,thread,math,random,system
+  BUILD_COMMAND ./b2 toolset=emscripten
+  BUILD_IN_SOURCE 1
+)
+
+
 add_subdirectory(ccp4)
 add_subdirectory(fftw)
 add_subdirectory(rfftw)
