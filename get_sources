@@ -110,3 +110,9 @@ echo "Getting react app dependencies"
 echo
 cd react-app
 npm install
+
+cd ..
+echo "Checking out boost"
+git clone --recursive https://github.com/boostorg/boost.git boost
+echo
+patch -p0 < patches/boost-emscripten.patch
