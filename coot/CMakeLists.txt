@@ -16,7 +16,7 @@ ${coot_src}/analysis/kolmogorov.cc
 ${coot_src}/analysis/stats.cc
 ${coot_src}/analysis/bfkurt.cc
 ${coot_src}/analysis/mogul.cc
-${coot_src}/analysis/test-mogul.cc
+#${coot_src}/analysis/test-mogul.cc
 ${coot_src}/analysis/b-factor-histogram.cc
 ${coot_src}/analysis/typed-distances.cc
 ${coot_src}/analysis/cablam.cc
@@ -78,7 +78,7 @@ ${coot_src}/utils/dodec.cc
 ${coot_src}/utils/logging.cc
 ${coot_src}/utils/pir-alignment.cc
 ${coot_src}/db-main/db-strands.cc
-${coot_src}/db-main/testdbmain.cc
+#${coot_src}/db-main/testdbmain.cc
 ${coot_src}/high-res/residue-distortions.cc
 ${coot_src}/high-res/coot-atom-graph.cc
 ${coot_src}/high-res/sequence-assignment.cc
