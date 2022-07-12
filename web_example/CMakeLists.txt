@@ -30,6 +30,7 @@ target_include_directories(web_example PRIVATE ../checkout/privateer-MKIV/src ..
 target_compile_options(web_example PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_WEB_EXAMPLE_)
 install(TARGETS web_example DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../react-app/public/wasm)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/web_example.wasm  
+              ${CMAKE_CURRENT_BINARY_DIR}/web_example.js
               ${CMAKE_CURRENT_BINARY_DIR}/RDKit_minimal.js
               ${CMAKE_CURRENT_BINARY_DIR}/RDKit_minimal.wasm
               ${CMAKE_CURRENT_BINARY_DIR}/cif_pdb_worker.js

@@ -2,7 +2,17 @@ var CCP4Module;
 
 importScripts('./mini-rsr-web.js');
 
-createRSRModule({print(t){postMessage(["output",t])},printErr(t){postMessage(["output",t]);}})
+const Lib = {
+    locateFile: (file) => file,
+    onRuntimeInitialized: () => {
+        console.log('onRuntimeInitialized');
+    },
+    mainScriptUrlOrBlob: "./mini-rsr-web.js",
+    print(t){postMessage(["output",t])},
+    printErr(t){postMessage(["output",t])},
+};
+
+createRSRModule(Lib)
     .then(function(CCP4Mod) {
              CCP4Module = CCP4Mod;
             })
