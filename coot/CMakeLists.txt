@@ -182,7 +182,7 @@ ${coot_src}/geometry/glyco-tools.cc
 ${coot_src}/geometry/mol-utils-2.cc
 ${coot_src}/geometry/protein-donor-acceptors.cc
 ${coot_src}/build/CalphaBuild.cc
-${coot_src}/build/testcabuild.cc
+#${coot_src}/build/testcabuild.cc
 ${coot_src}/mini-mol/mini-mol-utils.cc
 ${coot_src}/mini-mol/mini-mol.cc
 ${coot_src}/mini-mol/atom-quads.cc
