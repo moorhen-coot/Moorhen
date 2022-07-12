@@ -58,7 +58,7 @@ echo "Unpacking coot-0.9.6"
 tar xf coot-0.9.6.tar.gz
 
 patch -p0 < ../patches/ccp4-emscripten.patch 
-patch -p0 < ../patches/privateer-nopybind.patch
+#patch -p0 < ../patches/privateer-nopybind.patch
 patch -p0 < ../patches/superpose-emscripten.patch
 patch -p0 < ../patches/gesamt-emscripten.patch
 patch -p0 < ../patches/privateer-emscripten.patch
