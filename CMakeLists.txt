@@ -21,7 +21,8 @@ ExternalProject_Add(gsl-src
 ExternalProject_Add(boost-src
   SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/boost
   CONFIGURE_COMMAND COMMAND ./bootstrap.sh --with-libraries=serialization,regex,chrono,date_time,filesystem,iostreams,program_options,thread,math,random,system
-  BUILD_COMMAND ./b2 toolset=emscripten
+  BUILD_COMMAND ./b2 toolset=emscripten link=static threading=multi cflags="-s USE_PTHREADS=1" cxxflags="-s USE_PTHREADS=1"
+  INSTALL_COMMAND true
   BUILD_IN_SOURCE 1
 )
 
