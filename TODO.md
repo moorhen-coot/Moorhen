@@ -7,11 +7,13 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
   - [x] Compile
   - [x] Run in node (sort of ... does not exit at end).
   - [ ] Run in browser
-    - [x] Runs (if not successfully).
-    - [ ] Access to metal distances tables. (Pre-load?)
-    - [ ] Access to monomer library
-      - [ ] Load common dictionaries - amino acids, nucleic acids, water, Na, etc. (Pre-load?)
-      - [ ] Analyse structure and load other monomers. (From server?)
+    - [x] Runs (mostly successfully).
+    - [x] Access to metal distances tables. (Pre-load?)
+    - [x] Access to partial monomer library in FS.
+    - [x] Access to FS when compiled with `USE_PTHREADS`
+    - [ ] UI for residue selecttion
+    - [ ] select by clicking in WebGL
+    - [ ] Fix running second time bug: `error in input pdb file name`
 - [ ] Fix 5oah Ribbons showing nothing
 - [ ] Selections for ribbons/worms (currently does all atoms whatever the selection)
 - [ ] Display maps
