@@ -26,6 +26,10 @@ ExternalProject_Add(boost-src
   BUILD_IN_SOURCE 1
 )
 
+add_custom_target(boost_thread_dep ALL
+  COMMAND emar q ${CMAKE_CURRENT_SOURCE_DIR}/boost/stage/lib/libboost_thread.a ${CMAKE_CURRENT_SOURCE_DIR}/boost/stage/lib/libboost_thread.bc
+  DEPENDS boost-src
+)
 
 add_subdirectory(ccp4)
 add_subdirectory(fftw)

@@ -482,7 +482,7 @@ target_compile_options(mini-rsr PUBLIC -D_MINI_RSR_MAIN_ -DFFTW_ENABLE_FLOAT -D_
 add_executable(mini-rsr-web ../web_example/coot_example.cc)
 target_link_options(mini-rsr-web PRIVATE -sPTHREAD_POOL_SIZE=4 -sPTHREAD_POOL_SIZE_STRICT=4 -sUSE_PTHREADS=1 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createRSRModule -sEXPORTED_RUNTIME_METHODS=['FS','readFile'] --preload-file data  --pre-js coot_env_web.js)
 target_link_directories(mini-rsr-web PUBLIC ../ssm ../mmdb2 ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4 ../fftw ../rfftw ../ccp4 ../privateer ../rvapi ../gesamt ../ccp4mg ../lib ../boost/stage/lib)
-target_link_libraries(mini-rsr-web ssm rvapi gesamtlib mmdb2 clipper-minimol clipper-phs clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 privateer clipper-minimol ccp4mg coot gsl gslcblas  m z idbfs.js)
+target_link_libraries(mini-rsr-web ssm rvapi gesamtlib mmdb2 clipper-minimol clipper-phs clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 privateer clipper-minimol ccp4mg coot gsl gslcblas boost_thread m z idbfs.js)
 target_include_directories(mini-rsr-web PRIVATE ${coot_src} ${coot_src}/src ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw ../include)
 target_compile_options(mini-rsr-web PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_WEB_EXAMPLE_)
 
