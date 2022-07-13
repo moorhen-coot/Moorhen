@@ -63,6 +63,7 @@ onmessage = function(e) {
     var pdb_out = CCP4Module.FS.readFile("out.pdb", { encoding: 'utf8' });
     CCP4Module.FS_unlink(e.data["pdbinName"])
     CCP4Module.FS_unlink(e.data["hklinName"])
+    CCP4Module.FS_unlink("out.pdb")
 
     const jobId = e.data["jobId"];
 

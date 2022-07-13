@@ -18,7 +18,7 @@ class MiniRSR extends Component {
 
         this.preRef = React.createRef();
 
-        this.state = {selected:"unk",mapSelected:"unk",log:""};
+        this.state = {selected:"unk",mapSelected:"unk",log:"", chainId:"", startRes:null, endRes:null };
         this.jobData = {};
         this.message = "";
         const self = this;
@@ -84,7 +84,7 @@ class MiniRSR extends Component {
         }
         const rsrInputMapFileData = mapDataFiles[keyMap].contents;
         const rsrInputMapFileName = mapDataFiles[keyMap].name;
-        const inputData = {jobId:jobid,pdbinName:rsrInputFileName,pdbinData:rsrInputFileData,hklinName:rsrInputMapFileName,hklinData:rsrInputMapFileData,chainId:"A",resnoStart:27,resnoEnd:37};
+        const inputData = {jobId:jobid,pdbinName:rsrInputFileName,pdbinData:rsrInputFileData,hklinName:rsrInputMapFileName,hklinData:rsrInputMapFileData,chainId:this.state.chainId,resnoStart:parseInt(this.state.startRes),resnoEnd:parseInt(this.state.endRes)};
 
         console.log(inputData);
         if(rsrInputFileData){
@@ -98,6 +98,18 @@ class MiniRSR extends Component {
 
     handleMapChange(evt){
         this.setState({mapSelected:evt.target.value});
+    }
+
+    handleChainChange(evt){
+        this.setState({chainId:evt.target.value});
+    }
+
+    handeleStartNoChange(evt){
+        this.setState({startRes:evt.target.value});
+    }
+
+    handeleEndNoChange(evt){
+        this.setState({endRes:evt.target.value});
     }
 
     render () {
@@ -156,7 +168,7 @@ class MiniRSR extends Component {
         return (
                 <>
         <Form>
-        <Form.Group as={Row} controlId="getnormalmodes">
+        <Form.Group as={Row} controlId="minirsr1">
         <Col>
                 <Form.Select value={selected} onChange={handleChange} >
                 {rows}
@@ -169,6 +181,17 @@ class MiniRSR extends Component {
         </Col>
         <Col>
                 <Button size="sm" onClick={handleRSR}>Calculate</Button>
+        </Col>
+        </Form.Group>
+        <Form.Group as={Row} controlId="minirsr2">
+        <Col>
+        <Form.Control required type="text" onChange={this.handleChainChange.bind(this)} placeholder="Chain id" value={this.state.chainId} />
+        </Col>
+        <Col>
+        <Form.Control required type="number" onChange={this.handeleStartNoChange.bind(this)} placeholder="Start residue" value={this.state.startRes} />
+        </Col>
+        <Col>
+        <Form.Control required type="number" onChange={this.handeleEndNoChange.bind(this)} placeholder="End residue" value={this.state.endRes} />
         </Col>
         </Form.Group>
         </Form>

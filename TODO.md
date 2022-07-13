@@ -11,7 +11,7 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
     - [x] Access to metal distances tables. (Pre-load?)
     - [x] Access to partial monomer library in FS.
     - [x] Access to FS when compiled with `USE_PTHREADS`
-    - [ ] UI for residue selecttion
+    - [x] UI for residue selection
     - [ ] select by clicking in WebGL
     - [ ] Fix running second time bug: `error in input pdb file name`
 - [ ] Fix 5oah Ribbons showing nothing
