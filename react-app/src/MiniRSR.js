@@ -6,6 +6,8 @@ import Row from 'react-bootstrap/Row';
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
 
+import {parsePDB} from './mgMiniMol.js';
+
 import { guid } from './guid.js';
 
 class MiniRSR extends Component {
@@ -27,6 +29,16 @@ class MiniRSR extends Component {
             if(e.data[0]==="output"){
                 self.message += e.data[1] + "\n";
                 self.setState({log:self.message}, ()=> {self.preRef.current.scrollTop = self.preRef.current.scrollHeight;});
+            }
+            if(e.data[0]==="pdb_out"){
+                console.log("A result");
+                console.log(e.data[1]);
+                const data = e.data[1];
+                const dataSplit = data.split("\n");
+                const name = "rsr_out";
+                const pdbatoms = parsePDB(dataSplit,name);
+                const pending = {fileData:data,atoms:pdbatoms,wizard:"Bonds",name:name};
+                self.props.onPDBChange(pending);
             }
             if(e.data[0]==="result"){
                 //This is then where we decide upon the action
