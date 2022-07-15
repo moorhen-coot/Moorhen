@@ -18,7 +18,7 @@ class MiniRSR extends Component {
 
         this.preRef = React.createRef();
 
-        this.state = {selected:"unk",mapSelected:"unk",log:"", chainId:"", startRes:null, endRes:null };
+        this.state = {selected:"unk",mapSelected:"unk",log:"", chainId:"", startRes:0, endRes:0 };
         this.jobData = {};
         this.message = "";
         const self = this;

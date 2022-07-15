@@ -21,17 +21,29 @@ int mini_rsr_main(int argc, char **argv);
 
 using namespace emscripten;
 
+extern void clear_getopt_initialized();
+
 int mini_rsr(const std::vector<std::string> &args){
 
     int argc = args.size();
     char **argv = new char*[argc];
 
+    clear_getopt_initialized();
+
     for(int i=0;i<argc;i++){
         argv[i] = new char[args[i].size()+1];
-        strcpy(argv[i], args[i].c_str());
+        const char* arg_c = args[i].c_str();
+        strcpy(argv[i], (char*)arg_c);
     }
 
-    return mini_rsr_main(argc,argv);
+    int retval = mini_rsr_main(argc,argv);
+
+    for(int i=0;i<argc;i++){
+        delete [] argv[i];
+    }
+    delete [] argv;
+
+    return retval;
 }
 
 
