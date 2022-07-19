@@ -112,32 +112,8 @@ class MGWebWizardUI extends Component {
         this.inputRef = createRef();
         this.cifinputRef = createRef();
         this.myWorkerPDB = new window.Worker('wasm/pdb_worker.js');
-        this.crystWorker = new window.Worker('wasm/crystallography_worker.js');
-        if (window.crossOriginIsolated) {
-            this.sharedArrayBuffer = new window.SharedArrayBuffer(16384);
-            this.crystWorker.postMessage({method:"setSharedArray",buffer:this.sharedArrayBuffer});
-        }
-
         var self = this;
-        this.crystWorker.onmessage = function(e) {
-            if(e.data[0]==="updateSharedBuffer"){
-                //This message passing probably isn't necessary for real work. I am just triggering comsole debugging.
-                console.log("response from general worker");
-                const view = new Uint8Array(self.sharedArrayBuffer);
-                let buflen = 0;
-                for(let i=0;i<self.sharedArrayBuffer.byteLength;i++){
-                    if(view[i] === 0){
-                        buflen = i;
-                        break;
-                    }
-                }
-                const dec = new TextDecoder();
-                const stringified = dec.decode(view.slice(0,buflen));
-                const dataObjectNames = JSON.parse(stringified);
-                console.log(dataObjectNames);
-            }
 
-        }
         this.myWorkerPDB.onmessage = function(e) {
             if(e.data[0]==="output"){
                 //console.log(e.data[1]);
@@ -211,7 +187,7 @@ class MGWebWizardUI extends Component {
     loadPdb(){
         console.log("Load PDB (and dicts)");
         var self = this;
-        self.crystWorker.postMessage({method:"loadFile",files:this.inputRef.current.files});
+        self.props.crystWorker.postMessage({method:"loadFile",files:this.inputRef.current.files});
         function uploadCIF(file) {
             if(file.files.length===0) return;
             for(let fno=0;fno<file.files.length;fno++){

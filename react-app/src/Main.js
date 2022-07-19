@@ -33,6 +33,32 @@ class Main extends Component {
         this.enerLib = new EnerLib();
         this.gl = React.createRef();
         this.seqRef = React.createRef();
+
+        this.crystWorker = new window.Worker('wasm/crystallography_worker.js');
+        if (window.crossOriginIsolated) {
+            this.sharedArrayBuffer = new window.SharedArrayBuffer(16384);
+            this.crystWorker.postMessage({method:"setSharedArray",buffer:this.sharedArrayBuffer});
+        }
+        var self = this;
+        this.crystWorker.onmessage = function(e) {
+            if(e.data[0]==="updateSharedBuffer"){
+                //This message passing probably isn't necessary for real work. I am just triggering console debugging.
+                console.log("response from general worker");
+                const view = new Uint8Array(self.sharedArrayBuffer);
+                let buflen = 0;
+                for(let i=0;i<self.sharedArrayBuffer.byteLength;i++){
+                    if(view[i] === 0){
+                        buflen = i;
+                        break;
+                    }
+                }
+                const dec = new TextDecoder();
+                const stringified = dec.decode(view.slice(0,buflen));
+                const dataObjectNames = JSON.parse(stringified);
+                console.log(dataObjectNames);
+            }
+        }
+
     }
 
     sequenceSelectionChanged(data){
@@ -280,7 +306,7 @@ class Main extends Component {
             </Col>
 
             <Col lg={6}>
-            <ControlInterface liveUpdatingMaps={liveUpdatingMaps} displayData={displayData} enerLib={enerLib} glycanChange={this.glycanChanged.bind(this)} svgChange={this.svgChanged.bind(this)} mapChanged={this.mapChanged.bind(this)} filePendingChange={this.filePendingChanged.bind(this)} lightsChange={this.lightsChanged.bind(this)} addRequest={this.addRequested.bind(this)} deleteRequest={this.deleteRequested.bind(this)} visibilityChange={this.visibilityChanged.bind(this)} matricesChanged={this.matricesChanged.bind(this)} animateStateChanged={this.animateStateChanged.bind(this)} mapDataFiles={mapDataFiles} dataFiles={dataFiles} svgClicked={this.onSVGClick.bind(this)} />
+            <ControlInterface crystWorker={this.crystWorker} liveUpdatingMaps={liveUpdatingMaps} displayData={displayData} enerLib={enerLib} glycanChange={this.glycanChanged.bind(this)} svgChange={this.svgChanged.bind(this)} mapChanged={this.mapChanged.bind(this)} filePendingChange={this.filePendingChanged.bind(this)} lightsChange={this.lightsChanged.bind(this)} addRequest={this.addRequested.bind(this)} deleteRequest={this.deleteRequested.bind(this)} visibilityChange={this.visibilityChanged.bind(this)} matricesChanged={this.matricesChanged.bind(this)} animateStateChanged={this.animateStateChanged.bind(this)} mapDataFiles={mapDataFiles} dataFiles={dataFiles} svgClicked={this.onSVGClick.bind(this)} />
             </Col>
 
             </Row>

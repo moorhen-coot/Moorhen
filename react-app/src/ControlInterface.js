@@ -220,7 +220,7 @@ class ControlInterface extends Component {
                 className="mb-3"
                 >
                 <Tab eventKey="home" title="Files/style">
-                <MGWebWizardUI  enerLib={enerLib} onGlycanChange={this.glycanChanged.bind(this)} onSVGChange={this.svgChanged.bind(this)} onChange={this.filePendingChanged.bind(this)}  mapChanged={this.mapChanged.bind(this)} />
+                <MGWebWizardUI crystWorker={this.props.crystWorker} enerLib={enerLib} onGlycanChange={this.glycanChanged.bind(this)} onSVGChange={this.svgChanged.bind(this)} onChange={this.filePendingChanged.bind(this)}  mapChanged={this.mapChanged.bind(this)} />
                 </Tab>
                 <Tab eventKey="lighting" title="Lighting">
                 <LightingUI onChange={this.lightsChanged.bind(this)}/>
