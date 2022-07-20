@@ -220,7 +220,7 @@ class ControlInterface extends Component {
                 className="mb-3"
                 >
                 <Tab eventKey="home" title="Files/style">
-                <MGWebWizardUI crystWorker={this.props.crystWorker} enerLib={enerLib} onGlycanChange={this.glycanChanged.bind(this)} onSVGChange={this.svgChanged.bind(this)} onChange={this.filePendingChanged.bind(this)}  mapChanged={this.mapChanged.bind(this)} />
+                <MGWebWizardUI sharedArrayBuffer={this.props.sharedArrayBuffer} crystWorker={this.props.crystWorker} enerLib={enerLib} onGlycanChange={this.glycanChanged.bind(this)} onSVGChange={this.svgChanged.bind(this)} onChange={this.filePendingChanged.bind(this)}  mapChanged={this.mapChanged.bind(this)} />
                 </Tab>
                 <Tab eventKey="lighting" title="Lighting">
                 <LightingUI onChange={this.lightsChanged.bind(this)}/>
@@ -248,7 +248,7 @@ class ControlInterface extends Component {
                 </div>
                 </Tab>
                 <Tab eventKey="miniRSRTab" title="Mini RSR">
-                <MiniRSR addRequest={this.addRequested.bind(this)} liveUpdatingMaps={liveUpdatingMaps}  dataFiles={dataFiles} displayData={displayData} mapDataFiles={mapDataFiles} onPDBChange={this.filePendingChanged.bind(this)} />
+                <MiniRSR ref={this.props.rsrRef} sharedArrayBuffer={this.props.sharedArrayBuffer} crystWorker={this.props.crystWorker} addRequest={this.addRequested.bind(this)} liveUpdatingMaps={liveUpdatingMaps}  dataFiles={dataFiles} displayData={displayData} mapDataFiles={mapDataFiles} onPDBChange={this.filePendingChanged.bind(this)} />
                 </Tab>
                 <Tab eventKey="utilities" title="Utilities">
                 <Utilities displayData={displayData} dataFiles={dataFiles} onSVGChange={this.svgChanged.bind(this)} mapChanged={this.mapChanged.bind(this)} filePendingChanged={this.filePendingChanged.bind(this)} helicesChanged={this.helicesChanged.bind(this)}/>

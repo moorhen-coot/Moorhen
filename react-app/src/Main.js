@@ -22,6 +22,8 @@ import {SequenceViewer} from './SequenceViewer.js';
 
 import {ColourScheme, contactsToLinesInfo} from './mgWebGLAtomsToPrimitives.js';
 
+import {parsePDB} from './mgMiniMol.js';
+
 class Main extends Component {
 
     constructor(props){
@@ -34,28 +36,35 @@ class Main extends Component {
         this.gl = React.createRef();
         this.seqRef = React.createRef();
 
-        this.crystWorker = new window.Worker('wasm/crystallography_worker.js');
-        if (window.crossOriginIsolated) {
+        this.crystWorker = new Worker('wasm/crystallography_worker.js');
+        this.rsrRef = React.createRef();
+        if (true||window.crossOriginIsolated) {
             this.sharedArrayBuffer = new window.SharedArrayBuffer(16384);
+            //Initialize
+            const view = new Uint8Array(this.sharedArrayBuffer);
+            const dataObjectsNames = {pdbFiles:{}, mtzFiles:{}};
+            const stringified = JSON.stringify(dataObjectsNames);
+            const encoder = new TextEncoder();
+            const enc_s = encoder.encode(stringified);
+            for(let i=0;i<enc_s.length;i++){
+                view[i] = enc_s[i];
+            }
             this.crystWorker.postMessage({method:"setSharedArray",buffer:this.sharedArrayBuffer});
         }
         var self = this;
         this.crystWorker.onmessage = function(e) {
-            if(e.data[0]==="updateSharedBuffer"){
-                //This message passing probably isn't necessary for real work. I am just triggering console debugging.
-                console.log("response from general worker");
-                const view = new Uint8Array(self.sharedArrayBuffer);
-                let buflen = 0;
-                for(let i=0;i<self.sharedArrayBuffer.byteLength;i++){
-                    if(view[i] === 0){
-                        buflen = i;
-                        break;
-                    }
+            if(e.data[0]==="output"){
+                if(e.data[2]==="mini_rsr"){
+                    self.rsrRef.current.updateLog(e.data[1] + "\n");
                 }
-                const dec = new TextDecoder();
-                const stringified = dec.decode(view.slice(0,buflen));
-                const dataObjectNames = JSON.parse(stringified);
-                console.log(dataObjectNames);
+            }
+            if(e.data[0]==="pdb_out"){
+                const data = e.data[1];
+                const dataSplit = data.split("\n");
+                const name = "rsr_out";
+                const pdbatoms = parsePDB(dataSplit,name);
+                const pending = {fileData:data,atoms:pdbatoms,wizard:"Bonds",name:name};
+                self.filePendingChanged({pending:pending});
             }
         }
 
@@ -306,7 +315,7 @@ class Main extends Component {
             </Col>
 
             <Col lg={6}>
-            <ControlInterface crystWorker={this.crystWorker} liveUpdatingMaps={liveUpdatingMaps} displayData={displayData} enerLib={enerLib} glycanChange={this.glycanChanged.bind(this)} svgChange={this.svgChanged.bind(this)} mapChanged={this.mapChanged.bind(this)} filePendingChange={this.filePendingChanged.bind(this)} lightsChange={this.lightsChanged.bind(this)} addRequest={this.addRequested.bind(this)} deleteRequest={this.deleteRequested.bind(this)} visibilityChange={this.visibilityChanged.bind(this)} matricesChanged={this.matricesChanged.bind(this)} animateStateChanged={this.animateStateChanged.bind(this)} mapDataFiles={mapDataFiles} dataFiles={dataFiles} svgClicked={this.onSVGClick.bind(this)} />
+            <ControlInterface rsrRef={this.rsrRef} sharedArrayBuffer={this.sharedArrayBuffer} crystWorker={this.crystWorker} liveUpdatingMaps={liveUpdatingMaps} displayData={displayData} enerLib={enerLib} glycanChange={this.glycanChanged.bind(this)} svgChange={this.svgChanged.bind(this)} mapChanged={this.mapChanged.bind(this)} filePendingChange={this.filePendingChanged.bind(this)} lightsChange={this.lightsChanged.bind(this)} addRequest={this.addRequested.bind(this)} deleteRequest={this.deleteRequested.bind(this)} visibilityChange={this.visibilityChanged.bind(this)} matricesChanged={this.matricesChanged.bind(this)} animateStateChanged={this.animateStateChanged.bind(this)} mapDataFiles={mapDataFiles} dataFiles={dataFiles} svgClicked={this.onSVGClick.bind(this)} />
             </Col>
 
             </Row>

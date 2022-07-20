@@ -3,6 +3,11 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
 
 ### Todo
 
+- [ ] Centre-on in Display Table
+- [ ] Separare react compomnents from library JS.
+- [ ] Better clip/fog defaults
+- [ ] Move all computation into `crystallography_worker.js`.
+  - [x] Mini-rsr
 - [ ] mini-rsr example
   - [x] Compile
   - [x] Run in node (sort of ... does not exit at end).
