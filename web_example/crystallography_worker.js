@@ -10,7 +10,7 @@ function rsrPrint(t){
 let CCP4Module;
 let RSRModule;
 
-importScripts('wasm/web_example.js');
+importScripts('./web_example.js');
 
 createCCP4Module({print(t){postMessage(["output",t])},printErr(t){postMessage(["output",t]);}})
     .then(function(CCP4Mod) {
