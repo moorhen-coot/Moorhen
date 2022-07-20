@@ -1,3 +1,4 @@
+// FIXME - Handle mmCIF, data cif, monomers(?)
 // FIXME - We may not want multiple modules (CCP4Module,RSRModule) since files have to be loaded into FS of each one.
 // FIXME - Does not seem to work in Safari. Importing mini-rsr-web.js is *not possible* in a thread on Safari, because it uses
 //         Workers internally to do the threading. And Safari does not support nested Workers, not even in technology preview.
@@ -43,8 +44,8 @@ createRSRModule(Lib)
         });
 
 
-let dataObjects = {pdbFiles:{}, mtzFiles:{}};
-let dataObjectsNames = {pdbFiles:{}, mtzFiles:{}};
+let dataObjects = {pdbFiles:{}, mtzFiles:{}, cifFiles:{}};
+let dataObjectsNames = {pdbFiles:{}, mtzFiles:{}, cifFiles:{}};
 let sharedArrayBuffer = null;
 
 function guid(){
@@ -70,7 +71,70 @@ function updateShareArrayBuffer(){
     }
 }
 
-function loadFile(files){
+function downLoadFiles(files){
+    let CIFfiles = [];
+    let gzCIFfiles = [];
+    let PDBfiles = [];
+    let gzPDBfiles = [];
+    let MTZfiles = [];
+
+    for(let x=0;x<files.length;x++){
+        if(files[x].endsWith(".mtz")){
+            MTZfiles.push(files[x]);
+        } else if(files[x].endsWith(".pdb")||files[x].endsWith(".ent")){
+            PDBfiles.push(files[x]);
+        } else if(files[x].endsWith(".cif")){
+            CIFfiles.push(files[x]);
+        } else if(files[x].endsWith(".pdb.gz")||files[x].endsWith(".ent.gz")){
+            gzPDBfiles.push(files[x]);
+        } else if(files[x].endsWith(".cif.gz")){
+            gzCIFfiles.push(files[x]);
+        } else {
+            console.log("Unknown file suffix");
+        }
+    }
+
+    console.log(gzCIFfiles);
+
+    Promise.all(gzCIFfiles.map(function(url) {
+        return fetch(url).then(resp => resp.blob()).then(data => [url, data]);
+    })).then(results => {
+        for(ires=0;ires<results.length;ires++){
+            const thisResult = results[ires];
+            console.log(thisResult);
+            const key = guid();
+            //Now gunzip, etc...
+        }
+    })
+
+    /*
+    Promise.all(gzPDBfiles.map(function(file) {
+      return fetch(file).then(resp => resp.blob())
+        .then(data => [file, data]);
+    })).then(function(results){
+        for(ires=0;ires<results.length;ires++){
+            const thisResult = results[ires];
+            console.log(thisResult);
+            const key = guid();
+            CCP4Module.FS_createDataFile(".", key + ".pdb", thisResult[1], true, true);
+            RSRModule.FS_createDataFile(".", key + ".pdb", thisResult[1], true, true);
+            //TODO - parsePDB is now in a react-app/src. How do I get at it from here?
+            //const dataSplit = thisResult[1].split("\n");
+            //const hierarchy = parsePDB(dataSplit,name);
+            //dataObjects.pdbFiles[key] = {hierarchy:hierarchy, fileName:key + ".pdb", originalFileName:thisResult[0], contents:thisResult[1]};
+            dataObjects.pdbFiles[key] = {fileName:key + ".pdb", originalFileName:thisResult[0], contents:thisResult[1]};
+            dataObjectsNames.pdbFiles[key] = {fileName:key + ".pdb", originalFileName:thisResult[0]};
+        }
+        updateShareArrayBuffer();
+    }) .catch(function(err) {
+        console.log(err);
+    });
+    */
+
+
+}
+
+function loadFiles(files){
 
     let PDBfiles = [];
     let MTZfiles = [];
@@ -78,7 +142,7 @@ function loadFile(files){
     for(let x=0;x<files.length;x++){
         if(files[x].name.endsWith(".mtz")){
             MTZfiles.push(files[x]);
-        } else if(files[x].name.endsWith(".pdb")){
+        } else if(files[x].name.endsWith(".pdb")||files[x].name.endsWith(".ent")){
             PDBfiles.push(files[x]);
         }
     }
@@ -173,8 +237,12 @@ onmessage = function(e) {
             updateShareArrayBuffer();
             break;
         case "loadFile":
-            console.log("Load a file",e.data.files);
-            loadFile(e.data.files);
+            console.log("Load file(s)",e.data.files);
+            loadFiles(e.data.files);
+            break;
+        case "loadUrl":
+            console.log("Download file(s)",e.data.urls);
+            downLoadFiles(e.data.urls);
             break;
         case "mini_rsr":
             console.log("Do mini-rsr in cryst worker ...");
