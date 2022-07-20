@@ -21,7 +21,7 @@ createCCP4Module({print(t){postMessage(["output",t])},printErr(t){postMessage(["
         console.log(e);
         });
 
-importScripts('wasm/mini-rsr-web.js');
+importScripts('./mini-rsr-web.js');
 
 const Lib = {
     locateFile: (file) => file,
