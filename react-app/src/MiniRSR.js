@@ -81,7 +81,7 @@ class MiniRSR extends Component {
                 break;
             }
         }
-        console.log(buflen);
+        //console.log(buflen);
         const dec = new TextDecoder();
         const stringified = dec.decode(view.slice(0,buflen));
         const dataObjectNames = JSON.parse(stringified);
@@ -126,7 +126,7 @@ class MiniRSR extends Component {
         const entRegex = /.ent$/;
 
         const dataObjectNames = this.getDataObjectNamesFromSharedArrayBuffer(this.props.sharedArrayBuffer);
-        console.log(dataObjectNames);
+        //console.log(dataObjectNames);
 
         const pdbKeys = Object.keys(dataObjectNames.pdbFiles);
         for(let iobj=0;iobj<pdbKeys.length;iobj++){

@@ -175,7 +175,7 @@ class Main extends Component {
     }
 
     matricesChanged(data) {
-        if(data.matrices.length==0){
+        if(data.matrices.length===0){
             this.gl.current.clearDataTransforms();
         }
         for(let imat=0;imat<data.matrices.length;imat++){
