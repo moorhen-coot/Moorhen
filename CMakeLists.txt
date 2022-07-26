@@ -54,3 +54,6 @@ add_subdirectory(rvapi)
 add_subdirectory(gesamt)
 add_subdirectory(ccp4mg)
 add_subdirectory(prosmart)
+install(FILES
+${CMAKE_CURRENT_BINARY_DIR}/react-app/node_modules/pako/dist/pako.js
+DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/react-app/public/wasm/)
