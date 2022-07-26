@@ -12,6 +12,7 @@ let CCP4Module;
 let RSRModule;
 
 importScripts('./web_example.js');
+importScripts('./pako.js');
 
 createCCP4Module({print(t){postMessage(["output",t])},printErr(t){postMessage(["output",t]);}})
     .then(function(CCP4Mod) {

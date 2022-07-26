@@ -264,8 +264,8 @@ class MGWebWizardUI extends Component {
         if(!(ligand in self.enerLib.monLibBonds)){
             console.log("Getting",ligand);
             makeRequest('GET', "https://files.rcsb.org/ligands/download/"+ligand+".cif", true).then(function (ligandlines) {
-                    console.log("Adding",ligand);
-                    console.log(ligandlines);
+                    //console.log("Adding",ligand);
+                    //console.log(ligandlines);
                     self.enerLib.addCIFAtomTypes(ligand,ligandlines);
                     self.enerLib.addCIFBondTypes(ligand,ligandlines);
                     })
@@ -368,6 +368,7 @@ class MGWebWizardUI extends Component {
                                                 }
                                             }
                                             if(useGzip) theUrl = "https://files.rcsb.org/download/"+self.state.pdbcode.toUpperCase()+".cif.gz";
+                                            self.props.crystWorker.postMessage({method:"loadUrl",urls:[theUrl]});
                                             if(theUrl){
                                                 mygetrequest.open("GET", theUrl, true);
                                                 if(useGzip) mygetrequest.responseType = "arraybuffer";
