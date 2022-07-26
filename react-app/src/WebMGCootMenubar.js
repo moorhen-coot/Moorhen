@@ -9,11 +9,13 @@ export const WebMGCootMenubar = (props) => {
     const [modalVisible, setModalVisible] = useState(false)
     const [contentType, setContentType] = useState("")
 
+    const helicesChanged = (params) => { props.filePendingChange({ pending: params.pending }); }
+
     return <Navbar>
         <Navbar.Brand href="#home">WebMGCoot</Navbar.Brand>
         <NavDropdown title="Actions" id="basic-nav-dropdown">
-            <NavDropdown.Item onClick={() => { setModalVisible(true); setContentType("Superpose") }}>Normal mode analysis</NavDropdown.Item>
-            <NavDropdown.Item onClick={() => { setModalVisible(true); setContentType("NormalModes") }}>Superpose</NavDropdown.Item>
+            <NavDropdown.Item onClick={() => { setModalVisible(true); setContentType("Superpose") }}>Superpose</NavDropdown.Item>
+            <NavDropdown.Item onClick={() => { setModalVisible(true); setContentType("NormalModes") }}>Normal mode analysis</NavDropdown.Item>
             <NavDropdown.Item onClick={() => { setModalVisible(true); setContentType("MiniRSR") }}>Mini RSR</NavDropdown.Item>
             <NavDropdown.Item onClick={() => { setModalVisible(true); setContentType("Utilities") }}>Utilities</NavDropdown.Item>
         </NavDropdown>
@@ -30,7 +32,7 @@ export const WebMGCootMenubar = (props) => {
                             case "MiniRSR":
                                 return <MiniRSR {...props} />
                             case "Utilities":
-                                return <Utilities {...props} />
+                                return <Utilities {...props} helicesChanged={helicesChanged} />
                             default:
                                 return null
                         }

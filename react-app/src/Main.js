@@ -330,7 +330,23 @@ class Main extends Component {
 
         return (
             <Container fluid={true}>
-                <WebMGCootMenubar displayData={displayData} dataFiles={dataFiles} matricesChanged={this.matricesChanged.bind(this)} />
+                <WebMGCootMenubar rsrRef={this.rsrRef}
+                    sharedArrayBuffer={this.sharedArrayBuffer}
+                    crystWorker={this.crystWorker}
+                    liveUpdatingMaps={liveUpdatingMaps}
+                    displayData={displayData}
+                    enerLib={enerLib}
+                    glycanChange={this.glycanChanged.bind(this)}
+                    svgChange={this.svgChanged.bind(this)}
+                    mapChanged={this.mapChanged.bind(this)}
+                    filePendingChange={this.filePendingChanged.bind(this)}
+                    lightsChange={this.lightsChanged.bind(this)} addRequest={this.addRequested.bind(this)}
+                    deleteRequest={this.deleteRequested.bind(this)}
+                    visibilityChange={this.visibilityChanged.bind(this)}
+                    matricesChanged={this.matricesChanged.bind(this)}
+                    animateStateChanged={this.animateStateChanged.bind(this)}
+                    mapDataFiles={mapDataFiles} dataFiles={dataFiles}
+                    svgClicked={this.onSVGClick.bind(this)} />
                 <Row>
                     <Col lg={8}>
                         {/*<ScoreWidget score={score} />*/}
@@ -344,7 +360,7 @@ class Main extends Component {
                             sharedArrayBuffer={this.sharedArrayBuffer}
                             crystWorker={this.crystWorker}
                             liveUpdatingMaps={liveUpdatingMaps}
-                            displayData={displayData} 
+                            displayData={displayData}
                             enerLib={enerLib}
                             glycanChange={this.glycanChanged.bind(this)}
                             svgChange={this.svgChanged.bind(this)}
