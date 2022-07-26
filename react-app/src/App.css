@@ -40,3 +40,7 @@
 .clickableSvg {
   cursor: pointer;
 }
+
+.modal-dialog.modal-50w {
+  min-width:50%;
+}

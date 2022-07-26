@@ -6,7 +6,7 @@ import './App.css';
 import Main from './Main';
 
 const App = () => (
-  <Container className="p-3">
+  <Container fluid={true}>
   <Main />
 
   </Container>

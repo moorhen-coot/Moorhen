@@ -1289,7 +1289,7 @@ class MGWebGL extends Component {
     resize(width,height) {
         //TODO We need to be cleverer than this.
         var theWidth = width;
-        var theHeight = width; //Keep it square for now
+        var theHeight = height; //Keep it square for now
 
         this.canvas.style.width = parseInt(theWidth)+"px";
         this.canvas.style.height = parseInt(theHeight)+"px";
@@ -1305,10 +1305,11 @@ class MGWebGL extends Component {
 
         console.log("MGWebGL.constructor");
         super(props);
-        this.state = {width:400,height:400};
+        this.state = {width:this.props.width,height:this.props.height};
         this.dataInfo = [];
         this.animations = [];
         this.canvasRef = createRef();
+
     }
 
     render() {
@@ -1329,18 +1330,23 @@ class MGWebGL extends Component {
         //this.drawGradient(c.width/2, c.height/2);
     }
 
+    componentDidUpdate(oldProps){
+        if (oldProps.width !== this.props.width || oldProps.height !== this.props.height){
+            this.resize(this.props.width, this.props.height)
+        }
+    }
     componentDidMount() {
         console.log("MGWebGL.componentDidMount");
         this.canvas = this.canvasRef.current;
         console.log(this.canvasReact);
         var self = this;
-
+        /*
         window.addEventListener('resize',
                 function(evt){
             self.setState({width:window.innerWidth/3, height:window.innerHeight/3}, ()=> self.resize(window.innerWidth/3, window.innerHeight/3));
                 },
                 false);
-
+                */
         var ice_blue     = [0.0039*156,0.0039*176,0.0039*254,1.0];
         var gold         = [0.0039*179,0.0039*177,0.0039*61,1.0];
         var coral        = [0.0039*255,0.0039*127,0.0039*80,1.0];
@@ -1466,7 +1472,7 @@ class MGWebGL extends Component {
         this.gl_cursorPos[1] = this.canvas.height/2.;
 
         this.gl = initGL(this.canvas);
-        self.setState({width:window.innerWidth/3, height:window.innerHeight/3}, ()=> self.resize(window.innerWidth/3, window.innerHeight/3));
+        //self.setState({width:window.innerWidth/3, height:window.innerHeight/3}, ()=> self.resize(window.innerWidth/3, window.innerHeight/3));
         var extensionArray = this.gl.getSupportedExtensions();
         console.log(extensionArray);
 
