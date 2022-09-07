@@ -69,7 +69,7 @@ class Main extends Component {
             if (e.data[0] === "pdb_out") {
                 const data = e.data[1];
                 const dataSplit = data.split("\n");
-                const name = "rsr_out";
+                const name = e.data[3]+"out";
                 const pdbatoms = parsePDB(dataSplit, name);
                 const pending = { fileData: data, atoms: pdbatoms, wizard: "Bonds", name: name };
                 self.filePendingChanged({ pending: pending });

@@ -195,6 +195,13 @@ function flipPeptide(e) {
     console.log(e.data);
     const jobId = e.data.jobId;
 
+    const pdbin = dataObjects.pdbFiles[e.data.pdbinKey].fileName;
+    const hklin = dataObjects.mtzFiles[e.data.hklinKey].fileName;
+    const resno = e.data["resnoFlip"];
+    const pdbout = "out.pdb";
+
+    var result = RSRModule.flipPeptide(pdbin,hklin,resno,pdbout);
+
     postMessage(["output","This task currently does nothing","flip_peptide"]);
 }
 
