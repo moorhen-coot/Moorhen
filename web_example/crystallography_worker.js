@@ -190,6 +190,14 @@ function loadFiles(files){
 
 }
 
+function flipPeptide(e) {
+
+    console.log(e.data);
+    const jobId = e.data.jobId;
+
+    postMessage(["output","This task currently does nothing","flip_peptide"]);
+}
+
 function miniRSR(e) {
 
     console.log(e.data);
@@ -244,6 +252,12 @@ onmessage = function(e) {
         case "loadUrl":
             console.log("Download file(s)",e.data.urls);
             downLoadFiles(e.data.urls);
+            break;
+        case "flip_peptide":
+            console.log("Do peptide-flip in cryst worker ...");
+            currentTaskName = "flip_peptide";
+            flipPeptide(e);
+            currentTaskName = "";
             break;
         case "mini_rsr":
             console.log("Do mini-rsr in cryst worker ...");

@@ -42,6 +42,7 @@ class Main extends Component {
 
         this.crystWorker = new Worker('wasm/crystallography_worker.js');
         this.rsrRef = React.createRef();
+        this.flipRef = React.createRef();
         if (true || window.crossOriginIsolated) {
             this.sharedArrayBuffer = new window.SharedArrayBuffer(16384);
             //Initialize
@@ -60,6 +61,9 @@ class Main extends Component {
             if (e.data[0] === "output") {
                 if (e.data[2] === "mini_rsr") {
                     self.rsrRef.current.updateLog(e.data[1] + "\n");
+                }
+                if (e.data[2] === "flip_peptide") {
+                    self.flipRef.current.updateLog(e.data[1] + "\n");
                 }
             }
             if (e.data[0] === "pdb_out") {
@@ -330,7 +334,7 @@ class Main extends Component {
 
         return (
             <Container fluid={true}>
-                <WebMGCootMenubar rsrRef={this.rsrRef}
+                <WebMGCootMenubar rsrRef={this.rsrRef} flipRef={this.flip}
                     sharedArrayBuffer={this.sharedArrayBuffer}
                     crystWorker={this.crystWorker}
                     liveUpdatingMaps={liveUpdatingMaps}
@@ -356,7 +360,7 @@ class Main extends Component {
                     </Col>
 
                     <Col lg={4}>
-                        <ControlInterface rsrRef={this.rsrRef}
+                        <ControlInterface rsrRef={this.rsrRef} flipRef={this.flipRef}
                             sharedArrayBuffer={this.sharedArrayBuffer}
                             crystWorker={this.crystWorker}
                             liveUpdatingMaps={liveUpdatingMaps}
