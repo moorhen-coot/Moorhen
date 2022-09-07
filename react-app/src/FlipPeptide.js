@@ -31,32 +31,28 @@ class FlipPeptide extends Component {
     }
 
     handleFlip(){
+        console.log("Flip 1!");
         const self = this;
         let key = self.state.selected;
-        let keyMap = self.state.mapSelected;
         const dataObjectNames = this.getDataObjectNamesFromSharedArrayBuffer(this.props.sharedArrayBuffer);
         const pdbKeys = Object.keys(dataObjectNames.pdbFiles);
-        const mtzKeys = Object.keys(dataObjectNames.mtzFiles);
-        if(pdbKeys.length<1||mtzKeys.length<1){
+        console.log("Flip 2!");
+        if(pdbKeys.length<1){
             return;
         }
+        console.log("Flip 3!");
         if(key==="unk"){
             key = pdbKeys[0];
         }
-        if(keyMap==="unk"){
-            keyMap = mtzKeys[0];
-        }
+        console.log("Flip 4!");
         const jobid = guid();
-        const inputData = {method:"flip_peptide",jobId:jobid,pdbinKey:key,hklinKey:keyMap,chainId:this.state.chainId,resnoFlip:parseInt(this.state.flipRes)};
+        console.log("Flip 5!");
+        const inputData = {method:"flip_peptide",jobId:jobid,pdbinKey:key,chainId:this.state.chainId,resnoFlip:parseInt(this.state.flipRes)};
         self.props.crystWorker.postMessage(inputData);
     }
 
     handleChange(evt){
         this.setState({selected:evt.target.value});
-    }
-
-    handleMapChange(evt){
-        this.setState({mapSelected:evt.target.value});
     }
 
     handleChainChange(evt){
@@ -110,14 +106,10 @@ class FlipPeptide extends Component {
         const mapDataFiles = this.props.mapDataFiles;
 
         let rows = [];
-        let mapRows = [];
         let handleFlip = this.handleFlip.bind(self);
         let handleChange = this.handleChange.bind(self);
-        let handleMapChange = this.handleMapChange.bind(self);
         let selected = this.state.selected;
-        let mapSelected = this.state.mapSelected;
 
-        const mtzRegex = /.mtz$/;
         const pdbRegex = /.pdb$/;
         const entRegex = /.ent$/;
 
@@ -134,16 +126,6 @@ class FlipPeptide extends Component {
             rows.push(<option key={keyOption} value={keySup}>{shortName}</option>);
         }
 
-        const mtzKeys = Object.keys(dataObjectNames.mtzFiles);
-        for(let iobj=0;iobj<mtzKeys.length;iobj++){
-            const data_id = mtzKeys[iobj];
-            const name = dataObjectNames.mtzFiles[data_id].originalFileName;
-            const keySup = data_id;
-            const keyOption = "rsr_"+keySup;
-            const shortName = name.replace(mtzRegex,"");
-            mapRows.push(<option key={keyOption} value={keySup}>{shortName}</option>);
-        }
-
         return (
                 <>
         <Form>
@@ -151,11 +133,6 @@ class FlipPeptide extends Component {
         <Col>
                 <Form.Select value={selected} onChange={handleChange} >
                 {rows}
-                </Form.Select>
-        </Col>
-        <Col>
-                <Form.Select value={mapSelected} onChange={handleMapChange} >
-                {mapRows}
                 </Form.Select>
         </Col>
         <Col>

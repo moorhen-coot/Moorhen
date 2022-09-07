@@ -25,11 +25,11 @@ using namespace emscripten;
 
 extern void clear_getopt_initialized();
 
-int flipPeptide(const std::string &pdbin, const std::string &hklin, const int resno, const std::string &pdbout){
+int flipPeptide(const std::string &pdbin, const std::string &chainId, const int resno, const std::string &pdbout){
     int retval = 0;
     std::cout << "In flipPeptide in C++. This does nothing useful." << std::endl;
     std::cout << "PDBIN: " << pdbin << std::endl;
-    std::cout << "HKLIN: " << hklin << std::endl;
+    std::cout << "CHAIN: " << chainId << std::endl;
     std::cout << "RESNO: " << resno << std::endl;
     std::cout << "PDBOUT: " << pdbout << std::endl;
 

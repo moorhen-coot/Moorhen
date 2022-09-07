@@ -203,11 +203,11 @@ function flipPeptide(e) {
     const jobId = e.data.jobId;
 
     const pdbin = dataObjects.pdbFiles[e.data.pdbinKey].fileName;
-    const hklin = dataObjects.mtzFiles[e.data.hklinKey].fileName;
+    const chainId = e.data["chainId"];
     const resno = e.data["resnoFlip"];
     const pdbout = jobId+"out.pdb";
 
-    var result = RSRModule.flipPeptide(pdbin,hklin,resno,pdbout);
+    var result = RSRModule.flipPeptide(pdbin,chainId,resno,pdbout);
     var pdb_out = RSRModule.FS.readFile(pdbout, { encoding: 'utf8' });
 
     postMessage(["result",result,currentTaskName]);
