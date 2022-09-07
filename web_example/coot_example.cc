@@ -17,6 +17,8 @@
 #include <emscripten.h>
 #include <emscripten/bind.h>
 
+#include "mmdb_manager.h"
+
 int mini_rsr_main(int argc, char **argv);
 
 using namespace emscripten;
@@ -30,6 +32,22 @@ int flipPeptide(const std::string &pdbin, const std::string &hklin, const int re
     std::cout << "HKLIN: " << hklin << std::endl;
     std::cout << "RESNO: " << resno << std::endl;
     std::cout << "PDBOUT: " << pdbout << std::endl;
+
+    const char *filename_cp = pdbin.c_str();
+    const char *filename_out_cp = pdbout.c_str();
+
+    //TODO - So this is where we should implement/call a proper function.
+    //BEGIN STUB
+    mmdb::InitMatType();
+    mmdb::Manager *molHnd = new mmdb::Manager();
+
+    int RC = molHnd->ReadCoorFile(filename_cp);
+    assert(RC==0);
+
+    RC = molHnd->WritePDBASCII(filename_out_cp);
+    assert(RC==0);
+    //END STUB
+
     return retval;
 }
 

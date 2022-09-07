@@ -192,17 +192,20 @@ function loadFiles(files){
 
 function flipPeptide(e) {
 
+    postMessage(["output","This task currently does nothing useful","flip_peptide"]);
     console.log(e.data);
     const jobId = e.data.jobId;
 
     const pdbin = dataObjects.pdbFiles[e.data.pdbinKey].fileName;
     const hklin = dataObjects.mtzFiles[e.data.hklinKey].fileName;
     const resno = e.data["resnoFlip"];
-    const pdbout = "out.pdb";
+    const pdbout = jobId+"out.pdb";
 
     var result = RSRModule.flipPeptide(pdbin,hklin,resno,pdbout);
+    var pdb_out = RSRModule.FS.readFile(pdbout, { encoding: 'utf8' });
 
-    postMessage(["output","This task currently does nothing","flip_peptide"]);
+    postMessage(["result",result,currentTaskName]);
+    postMessage(["pdb_out",pdb_out,jobId,currentTaskName]);
 }
 
 function miniRSR(e) {
