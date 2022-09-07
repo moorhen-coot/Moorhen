@@ -59,6 +59,12 @@ function guid(){
     return uuid;
 }
 
+//TODO 
+// * Make files loaded from PDB available to MiniRSR/Flip and Ramachandran plot. Do not know why they are not ...
+// * Create method to get Rama data from a PDB file, 
+// * Change dataObjectsNames to globalCache or something
+// * Add Rama data to the globalCache
+
 function updateShareArrayBuffer(){
     if(sharedArrayBuffer){
         const view = new Uint8Array(sharedArrayBuffer);
@@ -241,7 +247,7 @@ function miniRSR(e) {
 
     var result = RSRModule.mini_rsr(args);
     var pdb_out = RSRModule.FS.readFile(jobId+"out.pdb", { encoding: 'utf8' });
-    //TODO We need to store pdb_out!
+    //TODO We need to store pdb_out! (and cache with updateShareArrayBuffer)
 
     postMessage(["result",result,currentTaskName]);
     postMessage(["pdb_out",pdb_out,jobId,currentTaskName]);

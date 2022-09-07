@@ -15,6 +15,7 @@ import DisplayTable from './DisplayTable';
 import Superpose from './Superpose';
 import MiniRSR from './MiniRSR';
 import FlipPeptide from './FlipPeptide';
+import Ramachandran from './Ramachandran';
 import NormalModes from './NormalModes';
 import Utilities from './MGUtils';
 
@@ -253,6 +254,9 @@ class ControlInterface extends Component {
                 </Tab>
                 <Tab eventKey="flipPeptideTab" title="Flip Peptide">
                     <FlipPeptide ref={this.props.flipRef} sharedArrayBuffer={this.props.sharedArrayBuffer} crystWorker={this.props.crystWorker} addRequest={this.addRequested.bind(this)} liveUpdatingMaps={liveUpdatingMaps} dataFiles={dataFiles} displayData={displayData} mapDataFiles={mapDataFiles} onPDBChange={this.filePendingChanged.bind(this)} />
+                </Tab>
+                <Tab eventKey="ramaTab" title="Ramachandran plot">
+                    <Ramachandran sharedArrayBuffer={this.props.sharedArrayBuffer} crystWorker={this.props.crystWorker} addRequest={this.addRequested.bind(this)} liveUpdatingMaps={liveUpdatingMaps} dataFiles={dataFiles} displayData={displayData} mapDataFiles={mapDataFiles} onPDBChange={this.filePendingChanged.bind(this)} />
                 </Tab>
                 <Tab eventKey="utilities" title="Utilities">
                     <Utilities displayData={displayData} dataFiles={dataFiles} onSVGChange={this.svgChanged.bind(this)} mapChanged={this.mapChanged.bind(this)} filePendingChanged={this.filePendingChanged.bind(this)} helicesChanged={this.helicesChanged.bind(this)} />
