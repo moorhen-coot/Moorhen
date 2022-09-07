@@ -859,3 +859,5 @@ ${CMAKE_CURRENT_BINARY_DIR}/mini-rsr-web.data
 ${CMAKE_CURRENT_BINARY_DIR}/coot_env_web.js
 DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../react-app/public/wasm)
 
+install(FILES ${coot_src}/pixmaps/rama2_all.png
+DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../react-app/public)
