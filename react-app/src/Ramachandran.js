@@ -124,7 +124,8 @@ class Ramachandran extends Component {
     }
 
     handleChange(evt){
-        this.setState({selected:evt.target.value});
+        const self = this;
+        this.setState({selected:evt.target.value}, ()=> self.getRama());
     }
 
 
