@@ -28,9 +28,7 @@ class RamaPlot extends Component {
         ctx.strokeStyle = 'black';
 
         if(this.state.plotInfo){
-            console.log("Draw points ...",c.width,c.height);
             for(let ip=0;ip<this.state.plotInfo.length;ip++){
-                console.log(this.state.plotInfo[ip].phi,this.state.plotInfo[ip].psi);
                 let phitest = this.state.plotInfo[ip].phi;
                 let psitest = this.state.plotInfo[ip].psi;
                 let x = ((phitest /180.) * 0.5 + 0.5) * c.width;

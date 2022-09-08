@@ -74,6 +74,7 @@ function updateShareArrayBuffer(){
         for(let i=0;i<enc_s.length;i++){
             Atomics.store(view,i,enc_s[i]);
         }
+        Atomics.store(view,enc_s.length,0);
     }
 }
 
