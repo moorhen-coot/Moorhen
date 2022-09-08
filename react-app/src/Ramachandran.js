@@ -10,6 +10,20 @@ import {parsePDB} from './mgMiniMol.js';
 
 import { guid } from './guid.js';
 
+function getOffsetRect(elem) {
+    var box = elem.getBoundingClientRect();
+    var body = document.body;
+    var docElem = document.documentElement;
+
+    var scrollTop = window.pageYOffset || docElem.scrollTop || body.scrollTop;
+    var scrollLeft = window.pageXOffset || docElem.scrollLeft || body.scrollLeft;
+    var clientTop = docElem.clientTop || body.clientTop || 0;
+    var clientLeft = docElem.clientLeft || body.clientLeft || 0;
+    var top  = box.top +  scrollTop - clientTop;
+    var left = box.left + scrollLeft - clientLeft;
+    return { top: Math.round(top), left: Math.round(left) };
+}
+
 class RamaPlot extends Component {
 
     draw() {
@@ -26,6 +40,7 @@ class RamaPlot extends Component {
         }
 
         ctx.strokeStyle = 'black';
+        ctx.lineWidth = 1;
 
         if(this.state.plotInfo){
             for(let ip=0;ip<this.state.plotInfo.length;ip++){
@@ -40,6 +55,22 @@ class RamaPlot extends Component {
                 ctx.moveTo(x, y-3);
                 ctx.lineTo(x, y+3);
                 ctx.stroke();
+            }
+            if(this.hit>-1){
+                ctx.strokeStyle = 'red';
+                ctx.lineWidth = 3;
+                let phitest = this.state.plotInfo[this.hit].phi;
+                let psitest = this.state.plotInfo[this.hit].psi;
+                let x = ((phitest /180.) * 0.5 + 0.5) * c.width;
+                let y = ((-psitest /180.) * 0.5 + 0.5) * c.height;
+
+                ctx.beginPath();
+                ctx.moveTo(x-5, y);
+                ctx.lineTo(x+5, y);
+                ctx.moveTo(x, y-5);
+                ctx.lineTo(x, y+5);
+                ctx.stroke();
+                
             }
         }
         
@@ -56,6 +87,49 @@ class RamaPlot extends Component {
         this.draw();
     }
 
+    doMouseMove(event,self) {
+        var x;
+        var y;
+        var e = event;
+        if (e.pageX || e.pageY) {
+            x = e.pageX;
+            y = e.pageY;
+        }
+        else {
+            x = e.clientX ;
+            y = e.clientY ;
+        }
+
+        var c = this.canvasRef.current;
+        var offset = getOffsetRect(c);
+
+        x -= offset.left;
+        y -= offset.top;
+        
+        if(this.state.plotInfo){
+            let ihit = -1;
+            let mindist = 100000;
+            for(let ip=0;ip<this.state.plotInfo.length;ip++){
+                let phitest = this.state.plotInfo[ip].phi;
+                let psitest = this.state.plotInfo[ip].psi;
+                let xp = ((phitest /180.) * 0.5 + 0.5) * c.width;
+                let yp = ((-psitest /180.) * 0.5 + 0.5) * c.height;
+                if((Math.abs(xp-x)<3)&&(Math.abs(yp-y)<3)){
+                    let dist = (xp-x)*(xp-x) + (yp-y)*(yp-y);
+                    if(dist<mindist){
+                        mindist = dist;
+                        ihit = ip;
+                    }
+                }
+            }
+            if(ihit>-1){
+                this.hit = ihit;
+                this.draw();
+            }
+        }
+
+    }
+
     componentDidMount() {
         const self = this;
         this.context = this.canvasRef.current.getContext('2d');
@@ -69,6 +143,7 @@ class RamaPlot extends Component {
         console.log("componentDidMount");
         console.log(this.imageRef);
         self.mouseDown = false;
+        this.canvasRef.current.addEventListener("mousemove", function(evt){ self.doMouseMove(evt,self); }, false);
     }
 
     render() {
@@ -84,6 +159,7 @@ class RamaPlot extends Component {
         this.canvasRef = createRef();
         this.imageRef = createRef();
         this.image = null;
+        this.hit = -1;
     }
 
     updatePlotData(plotInfo){
