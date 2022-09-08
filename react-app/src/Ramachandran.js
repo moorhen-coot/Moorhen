@@ -24,6 +24,27 @@ class RamaPlot extends Component {
         if(this.image) {
             ctx.drawImage(this.image, 0, 0, c.width, c.height);
         }
+
+        ctx.strokeStyle = 'black';
+
+        if(this.state.plotInfo){
+            console.log("Draw points ...",c.width,c.height);
+            for(let ip=0;ip<this.state.plotInfo.length;ip++){
+                console.log(this.state.plotInfo[ip].phi,this.state.plotInfo[ip].psi);
+                let phitest = this.state.plotInfo[ip].phi;
+                let psitest = this.state.plotInfo[ip].psi;
+                let x = ((phitest /180.) * 0.5 + 0.5) * c.width;
+                let y = ((-psitest /180.) * 0.5 + 0.5) * c.height;
+
+                ctx.beginPath();
+                ctx.moveTo(x-3, y);
+                ctx.lineTo(x+3, y);
+                ctx.moveTo(x, y-3);
+                ctx.lineTo(x, y+3);
+                ctx.stroke();
+            }
+        }
+        
     }
 
     fixContext() {
@@ -53,17 +74,23 @@ class RamaPlot extends Component {
     }
 
     render() {
-        const height = 250;
-        const width = 250;
+        const height = 230;
+        const width = 230;
         this.canvas = <canvas height={height} height={height} ref={this.canvasRef} />;  
         return this.canvas;
     }
 
     constructor(props) {
         super(props);
+        this.state = {plotInfo: null};
         this.canvasRef = createRef();
         this.imageRef = createRef();
         this.image = null;
+    }
+
+    updatePlotData(plotInfo){
+        const self = this;
+        this.setState({plotInfo:plotInfo},()=>self.draw());
     }
     
 }
@@ -75,7 +102,7 @@ class Ramachandran extends Component {
 
         this.ramaRef = createRef();
 
-        this.state = {selected:"unk",log:"", chainId:""};
+        this.state = {selected:"unk",log:"", chainId:"", plotInfo: null};
         this.message = "";
         const self = this;
     }
@@ -103,9 +130,48 @@ class Ramachandran extends Component {
     }
 
 
+    handleSubmit(evt){
+        evt.preventDefault();
+    }
+
+    getRama(){
+        const self = this;
+        let key = self.state.selected;
+        const dataObjectNames = this.getDataObjectNamesFromSharedArrayBuffer(this.props.sharedArrayBuffer);
+        const pdbKeys = Object.keys(dataObjectNames.pdbFiles);
+        if(pdbKeys.length<1){
+            return;
+        }
+        if(key==="unk"){
+            key = pdbKeys[0];
+        }
+        const jobid = guid();
+        const inputData = {method:"get_rama",jobId:jobid,pdbinKey:key,chainId:this.state.chainId};
+        self.props.crystWorker.postMessage(inputData);
+        console.log(inputData);
+        
+    }
+
+    updatePlotData(){
+        const self = this;
+        let key = self.state.selected;
+        const dataObjectNames = this.getDataObjectNamesFromSharedArrayBuffer(this.props.sharedArrayBuffer);
+        const pdbKeys = Object.keys(dataObjectNames.pdbFiles);
+        if(pdbKeys.length<1){
+            return;
+        }
+        if(key==="unk"){
+            key = pdbKeys[0];
+        }
+        self.ramaRef.current.updatePlotData(dataObjectNames.ramaInfo[key]);
+        this.setState({plotInfo:dataObjectNames.ramaInfo[key]});
+        
+    }
+
     handleChainChange(evt){
-        this.setState({chainId:evt.target.value});
-        console.log(this.props.sharedArrayBuffer);
+        const self = this;
+        //TODO - calling getRama should be more sane ?
+        this.setState({chainId:evt.target.value}, ()=> self.getRama());
     }
 
     render () {
@@ -139,7 +205,6 @@ class Ramachandran extends Component {
         const entRegex = /.ent$/;
 
         const dataObjectNames = this.getDataObjectNamesFromSharedArrayBuffer(this.props.sharedArrayBuffer);
-        //console.log(dataObjectNames);
 
         const pdbKeys = Object.keys(dataObjectNames.pdbFiles);
         for(let iobj=0;iobj<pdbKeys.length;iobj++){
@@ -156,11 +221,10 @@ class Ramachandran extends Component {
         }
 
         //TODO - Need to introspect the pdb file to see what chains exist and pick the first one ...
-        console.log(selected);
 
         return (
                 <>
-        <Form>
+        <Form onSubmit={this.handleSubmit.bind(this)}>
         <Form.Group as={Row} controlId="rama">
         <Col>
                 <Form.Select value={selected} onChange={handleChange} >
@@ -173,7 +237,7 @@ class Ramachandran extends Component {
         </Form.Group>
         </Form>
         <div className="vspace1em"></div>
-        <RamaPlot ramaRef={this.ramaRef} />
+        <RamaPlot ref={this.ramaRef} />
         </>
         );
     }

@@ -43,11 +43,12 @@ class Main extends Component {
         this.crystWorker = new Worker('wasm/crystallography_worker.js');
         this.rsrRef = React.createRef();
         this.flipRef = React.createRef();
+        this.ramaRef = React.createRef();
         if (true || window.crossOriginIsolated) {
-            this.sharedArrayBuffer = new window.SharedArrayBuffer(16384);
+            this.sharedArrayBuffer = new window.SharedArrayBuffer(2097152);
             //Initialize
             const view = new Uint8Array(this.sharedArrayBuffer);
-            const dataObjectsNames = { pdbFiles: {}, mtzFiles: {} };
+            const dataObjectsNames = { pdbFiles: {}, mtzFiles: {}, cifFiles:{}, ramaInfo:{} };
             const stringified = JSON.stringify(dataObjectsNames);
             const encoder = new TextEncoder();
             const enc_s = encoder.encode(stringified);
@@ -65,6 +66,12 @@ class Main extends Component {
                 if (e.data[2] === "flip_peptide") {
                     self.flipRef.current.updateLog(e.data[1] + "\n");
                 }
+                if (e.data[2] === "get_rama") {
+                    console.log(e.data[1]);
+                }
+            }
+            if (e.data[0] === "result" && e.data[2] === "get_rama") {
+                self.ramaRef.current.updatePlotData();
             }
             if (e.data[0] === "pdb_out") {
                 const data = e.data[1];
@@ -360,7 +367,7 @@ class Main extends Component {
                     </Col>
 
                     <Col lg={4}>
-                        <ControlInterface rsrRef={this.rsrRef} flipRef={this.flipRef}
+                        <ControlInterface rsrRef={this.rsrRef} flipRef={this.flipRef} ramaRef={this.ramaRef}
                             sharedArrayBuffer={this.sharedArrayBuffer}
                             crystWorker={this.crystWorker}
                             liveUpdatingMaps={liveUpdatingMaps}

@@ -60,6 +60,7 @@ class MiniRSR extends Component {
     }
 
     handleChainChange(evt){
+        console.log("hello");
         this.setState({chainId:evt.target.value});
     }
 

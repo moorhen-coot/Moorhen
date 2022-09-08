@@ -31,22 +31,17 @@ class FlipPeptide extends Component {
     }
 
     handleFlip(){
-        console.log("Flip 1!");
         const self = this;
         let key = self.state.selected;
         const dataObjectNames = this.getDataObjectNamesFromSharedArrayBuffer(this.props.sharedArrayBuffer);
         const pdbKeys = Object.keys(dataObjectNames.pdbFiles);
-        console.log("Flip 2!");
         if(pdbKeys.length<1){
             return;
         }
-        console.log("Flip 3!");
         if(key==="unk"){
             key = pdbKeys[0];
         }
-        console.log("Flip 4!");
         const jobid = guid();
-        console.log("Flip 5!");
         const inputData = {method:"flip_peptide",jobId:jobid,pdbinKey:key,chainId:this.state.chainId,resnoFlip:parseInt(this.state.flipRes)};
         self.props.crystWorker.postMessage(inputData);
     }
@@ -73,7 +68,6 @@ class FlipPeptide extends Component {
                 break;
             }
         }
-        //console.log(buflen);
         const dec = new TextDecoder();
         const stringified = dec.decode(view.slice(0,buflen));
         const dataObjectNames = JSON.parse(stringified);
@@ -114,7 +108,6 @@ class FlipPeptide extends Component {
         const entRegex = /.ent$/;
 
         const dataObjectNames = this.getDataObjectNamesFromSharedArrayBuffer(this.props.sharedArrayBuffer);
-        //console.log(dataObjectNames);
 
         const pdbKeys = Object.keys(dataObjectNames.pdbFiles);
         for(let iobj=0;iobj<pdbKeys.length;iobj++){

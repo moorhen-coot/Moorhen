@@ -46,7 +46,7 @@ createRSRModule(Lib)
 
 
 let dataObjects = {pdbFiles:{}, mtzFiles:{}, cifFiles:{}};
-let dataObjectsNames = {pdbFiles:{}, mtzFiles:{}, cifFiles:{}};
+let dataObjectsNames = {pdbFiles:{}, mtzFiles:{}, cifFiles:{}, ramaInfo:{}};
 let sharedArrayBuffer = null;
 
 function guid(){
@@ -74,7 +74,6 @@ function updateShareArrayBuffer(){
         for(let i=0;i<enc_s.length;i++){
             Atomics.store(view,i,enc_s[i]);
         }
-        console.log(view,enc_s.length);
     }
 }
 
@@ -196,6 +195,25 @@ function loadFiles(files){
 
 }
 
+function getRama(e) {
+    console.log(e.data);
+    const jobId = e.data.jobId;
+    const pdbin = dataObjects.pdbFiles[e.data.pdbinKey].fileName;
+    const chainId = e.data["chainId"];
+    const result = RSRModule.getRamachandranData(pdbin,chainId);
+    console.log(result);
+    let resInfo = [];
+    for(let ir=0;ir<result.size();ir++){
+        const cppres = result.get(ir);
+        //TODO - Is there a nicer way to do this?
+        const jsres = {chainId:cppres.chainId,insCode:cppres.insCode,seqNum:cppres.seqNum,phi:cppres.phi,psi:cppres.psi};
+        resInfo.push(jsres);
+    }
+    dataObjectsNames.ramaInfo[e.data.pdbinKey] = resInfo;
+    updateShareArrayBuffer();
+    postMessage(["result",result,currentTaskName]);
+}
+
 function flipPeptide(e) {
 
     postMessage(["output","This task currently does nothing useful","flip_peptide"]);
@@ -268,6 +286,11 @@ onmessage = function(e) {
         case "loadUrl":
             console.log("Download file(s)",e.data.urls);
             downLoadFiles(e.data.urls);
+            break;
+        case "get_rama":
+            currentTaskName = "get_rama";
+            getRama(e);
+            currentTaskName = "";
             break;
         case "flip_peptide":
             console.log("Do peptide-flip in cryst worker ...");

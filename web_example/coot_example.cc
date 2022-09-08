@@ -14,10 +14,17 @@
 #include <string>
 #include <vector>
 
+#include <math.h>
+#ifndef M_PI
+#define M_PI           3.14159265358979323846
+#endif
+
 #include <emscripten.h>
 #include <emscripten/bind.h>
 
 #include "mmdb_manager.h"
+#include "cartesian.h"
+#include "geomutil.h"
 
 int mini_rsr_main(int argc, char **argv);
 
@@ -25,25 +32,56 @@ using namespace emscripten;
 
 extern void clear_getopt_initialized();
 
-struct ResidueIdentifier {
+struct RamachandranInfo {
     std::string chainId;
-    int resNo;
+    int seqNum;
     std::string insCode;
+    double phi;
+    double psi;
 };
 
-std::vector<ResidueIdentifier> getRamachandranData(const std::string &pdbin, const std::string &chainId){
-    std::vector<ResidueIdentifier> info;
+std::vector<RamachandranInfo> getRamachandranData(const std::string &pdbin, const std::string &chainId){
+    std::vector<RamachandranInfo> info;
     const char *filename_cp = pdbin.c_str();
     mmdb::InitMatType();
     mmdb::Manager *molHnd = new mmdb::Manager();
 
     int RC = molHnd->ReadCoorFile(filename_cp);
     int selHnd = molHnd->NewSelection();
-    molHnd->Select(selHnd,mmdb::STYPE_RESIDUE,"/*/*/(GLY,ALA,VAL,PRO,SER,THR,LEU,ILE,CYS,ASP,GLU,ASN,GLN,ARG,LYS,MET,MSE,HIS,PHE,TYR,TRP,HCS,ALO,PDD,UNK)",mmdb::SKEY_NEW);
+    std::string selStr = std::string("/*/")+chainId+std::string("/(GLY,ALA,VAL,PRO,SER,THR,LEU,ILE,CYS,ASP,GLU,ASN,GLN,ARG,LYS,MET,MSE,HIS,PHE,TYR,TRP,HCS,ALO,PDD,UNK)");
+    const char *sel_cp = selStr.c_str();
+    molHnd->Select(selHnd,mmdb::STYPE_RESIDUE,sel_cp,mmdb::SKEY_NEW);
     mmdb::Residue** SelRes=0;
     int nRes;
     molHnd->GetSelIndex(selHnd,SelRes,nRes);
-    // TODO - get the actual data ...
+    //std::cout << nRes << " residues" << std::endl;
+    // TODO - Terminal residues?
+    for(int ires=1;ires<nRes-1;ires++){
+        mmdb::Atom *N = SelRes[ires]->GetAtom(" N");
+        mmdb::Atom *CA = SelRes[ires]->GetAtom("CA");
+        mmdb::Atom *C = SelRes[ires]->GetAtom(" C");
+        mmdb::Atom *Cm = SelRes[ires-1]->GetAtom(" C");
+        mmdb::Atom *Np = SelRes[ires+1]->GetAtom(" N");
+        if(N&&CA&&C&&Cm&&Np){
+            RamachandranInfo resInfo;
+            resInfo.chainId = chainId;
+            resInfo.seqNum = N->GetSeqNum();
+            resInfo.insCode = std::string(N->GetInsCode());
+            //Phi: C-N-CA-C
+            //Psi: N-CA-C-N
+            Cartesian Ncart(N->x,N->y,N->z);
+            Cartesian CAcart(CA->x,CA->y,CA->z);
+            Cartesian Ccart(C->x,C->y,C->z);
+            Cartesian CMcart(Cm->x,Cm->y,Cm->z);
+            Cartesian NPcart(Np->x,Np->y,Np->z);
+            double phi = DihedralAngle(CMcart,Ncart,CAcart,Ccart);
+            double psi = DihedralAngle(Ncart,CAcart,Ccart,NPcart);
+            //std::cout << N->GetSeqNum() << " " << N->name << " " << CA->name << " " << C->name << " " << Cm->name << " " << Np->name << " " << phi*180.0/M_PI << " " << psi*180.0/M_PI << std::endl;
+            resInfo.phi = phi*180.0/M_PI;
+            resInfo.psi = psi*180.0/M_PI;
+            info.push_back(resInfo);
+        }
+    }
 
     return info;
 }
@@ -99,14 +137,17 @@ int mini_rsr(const std::vector<std::string> &args){
 
 
 EMSCRIPTEN_BINDINGS(my_module) {
-    class_<ResidueIdentifier>("ResidueIdentifier")
+    class_<RamachandranInfo>("RamachandranInfo")
     .constructor<>()
-    .property("chainId", &ResidueIdentifier::chainId)
-    .property("resNo", &ResidueIdentifier::resNo)
-    .property("insCode", &ResidueIdentifier::insCode)
+    .property("chainId", &RamachandranInfo::chainId)
+    .property("seqNum", &RamachandranInfo::seqNum)
+    .property("insCode", &RamachandranInfo::insCode)
+    .property("phi", &RamachandranInfo::phi)
+    .property("psi", &RamachandranInfo::psi)
     ;
     register_vector<std::string>("VectorString");
-    register_vector<ResidueIdentifier>("VectorResidueIdentifier");
+    register_vector<RamachandranInfo>("VectorResidueIdentifier");
     function("mini_rsr",&mini_rsr);
     function("flipPeptide",&flipPeptide);
+    function("getRamachandranData",&getRamachandranData);
 }
