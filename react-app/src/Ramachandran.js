@@ -45,7 +45,7 @@ class RamaPlot extends Component {
         ctx.strokeStyle = 'black';
         ctx.lineWidth = 1;
 
-        if(this.state.plotInfo){
+        if(this.state.plotInfo&&this.imgOtherOutlier&&this.imgOtherNormal&&this.imgGlyOutlier&&this.imgProOutlier){
             for(let ip=0;ip<this.state.plotInfo.length;ip++){
                 let phitest = this.state.plotInfo[ip].phi;
                 let psitest = this.state.plotInfo[ip].psi;
@@ -57,18 +57,27 @@ class RamaPlot extends Component {
                 const g = imageData3.data[4*y*imageData3.width+4*x+1];
                 const b = imageData3.data[4*y*imageData3.width+4*x+2];
                 if(r>250&&g>250&&b>250){
-                    if(this.imgOtherOutlier){
-                        ctx.drawImage(this.imgOtherOutlier, x-5, y-5, 10, 10);
+                    if(this.state.plotInfo[ip].restype==="PRO"){
+                        ctx.drawImage(this.imgProOutlier, x-4, y-4, 8, 8);
+                    } else if(this.state.plotInfo[ip].restype==="GLY"){
+                        ctx.drawImage(this.imgGlyOutlier, x-4, y-4, 8, 8);
+                    } else {
+                        ctx.drawImage(this.imgOtherOutlier, x-4, y-4, 8, 8);
                     }
                 } else {
-                    if(this.imgOtherNormal){
-                        ctx.drawImage(this.imgOtherNormal, x-5, y-5, 10, 10);
+                    if(this.state.plotInfo[ip].restype==="PRO"){
+                        ctx.drawImage(this.imgProNormal, x-4, y-4, 8, 8);
+                    } else if(this.state.plotInfo[ip].restype==="GLY"){
+                        ctx.drawImage(this.imgGlyNormal, x-4, y-4, 8, 8);
+                    } else {
+                        ctx.drawImage(this.imgOtherNormal, x-4, y-4, 8, 8);
                     }
                 }
             }
             if(this.hit>-1){
                 let phitest = this.state.plotInfo[this.hit].phi;
                 let psitest = this.state.plotInfo[this.hit].psi;
+                console.log(this.state.plotInfo[this.hit].restype);
                 let x = parseInt(((phitest /180.) * 0.5 + 0.5) * c.width);
                 let y = parseInt(((-psitest /180.) * 0.5 + 0.5) * c.height);
 
@@ -76,15 +85,22 @@ class RamaPlot extends Component {
                 const g = imageData3.data[4*y*imageData3.width+4*x+1];
                 const b = imageData3.data[4*y*imageData3.width+4*x+2];
                 if(r>250&&g>250&&b>250){
-                    if(this.imgOtherOutlier){
-                        ctx.drawImage(this.imgOtherOutlier, x-8, y-8, 16, 16);
+                    if(this.state.plotInfo[this.hit].restype==="PRO"){
+                        ctx.drawImage(this.imgProOutlier, x-6, y-6, 12, 12);
+                    } else if(this.state.plotInfo[this.hit].restype==="GLY"){
+                        ctx.drawImage(this.imgGlyOutlier, x-6, y-6, 12, 12);
+                    } else {
+                        ctx.drawImage(this.imgOtherOutlier, x-6, y-6, 12, 12);
                     }
                 } else {
-                    if(this.imgOtherNormal){
-                        ctx.drawImage(this.imgOtherNormal, x-8, y-8, 16, 16);
+                    if(this.state.plotInfo[this.hit].restype==="PRO"){
+                        ctx.drawImage(this.imgProNormal, x-6, y-6, 12, 12);
+                    } else if(this.state.plotInfo[this.hit].restype==="GLY"){
+                        ctx.drawImage(this.imgGlyNormal, x-6, y-6, 12, 12);
+                    } else {
+                        ctx.drawImage(this.imgOtherNormal, x-6, y-6, 12, 12);
                     }
                 }
-
             }
         }
         

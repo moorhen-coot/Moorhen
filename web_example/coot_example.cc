@@ -36,6 +36,7 @@ struct RamachandranInfo {
     std::string chainId;
     int seqNum;
     std::string insCode;
+    std::string restype;
     double phi;
     double psi;
 };
@@ -67,6 +68,7 @@ std::vector<RamachandranInfo> getRamachandranData(const std::string &pdbin, cons
             resInfo.chainId = chainId;
             resInfo.seqNum = N->GetSeqNum();
             resInfo.insCode = std::string(N->GetInsCode());
+            resInfo.restype = std::string(N->GetResidue()->GetResName());
             //Phi: C-N-CA-C
             //Psi: N-CA-C-N
             Cartesian Ncart(N->x,N->y,N->z);
@@ -142,6 +144,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("chainId", &RamachandranInfo::chainId)
     .property("seqNum", &RamachandranInfo::seqNum)
     .property("insCode", &RamachandranInfo::insCode)
+    .property("restype", &RamachandranInfo::restype)
     .property("phi", &RamachandranInfo::phi)
     .property("psi", &RamachandranInfo::psi)
     ;

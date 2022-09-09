@@ -207,7 +207,7 @@ function getRama(e) {
     for(let ir=0;ir<result.size();ir++){
         const cppres = result.get(ir);
         //TODO - Is there a nicer way to do this?
-        const jsres = {chainId:cppres.chainId,insCode:cppres.insCode,seqNum:cppres.seqNum,phi:cppres.phi,psi:cppres.psi};
+        const jsres = {chainId:cppres.chainId,insCode:cppres.insCode,seqNum:cppres.seqNum,restype:cppres.restype,phi:cppres.phi,psi:cppres.psi};
         resInfo.push(jsres);
     }
     dataObjectsNames.ramaInfo[e.data.pdbinKey] = resInfo;
