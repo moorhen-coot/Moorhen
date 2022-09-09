@@ -860,4 +860,10 @@ ${CMAKE_CURRENT_BINARY_DIR}/coot_env_web.js
 DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../react-app/public/wasm)
 
 install(FILES ${coot_src}/pixmaps/rama2_all.png
+${CMAKE_CURRENT_BINARY_DIR}/rama-plot-gly-normal.png
+${CMAKE_CURRENT_BINARY_DIR}/rama-plot-gly-outlier.png
+${CMAKE_CURRENT_BINARY_DIR}/rama-plot-other-normal.png
+${CMAKE_CURRENT_BINARY_DIR}/rama-plot-other-outlier.png
+${CMAKE_CURRENT_BINARY_DIR}/rama-plot-pro-normal.png
+${CMAKE_CURRENT_BINARY_DIR}/rama-plot-pro-outlier.png
 DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../react-app/public)

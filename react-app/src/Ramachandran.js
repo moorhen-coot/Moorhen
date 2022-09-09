@@ -57,21 +57,16 @@ class RamaPlot extends Component {
                 const g = imageData3.data[4*y*imageData3.width+4*x+1];
                 const b = imageData3.data[4*y*imageData3.width+4*x+2];
                 if(r>250&&g>250&&b>250){
-                    ctx.strokeStyle = 'red';
-                }
-
-                ctx.beginPath();
-                ctx.moveTo(x-3, y);
-                ctx.lineTo(x+3, y);
-                ctx.moveTo(x, y-3);
-                ctx.lineTo(x, y+3);
-                ctx.stroke();
-                if(r>250&&g>250&&b>250){
-                    ctx.strokeStyle = 'black';
+                    if(this.imgOtherOutlier){
+                        ctx.drawImage(this.imgOtherOutlier, x-5, y-5, 10, 10);
+                    }
+                } else {
+                    if(this.imgOtherNormal){
+                        ctx.drawImage(this.imgOtherNormal, x-5, y-5, 10, 10);
+                    }
                 }
             }
             if(this.hit>-1){
-                ctx.lineWidth = 3;
                 let phitest = this.state.plotInfo[this.hit].phi;
                 let psitest = this.state.plotInfo[this.hit].psi;
                 let x = parseInt(((phitest /180.) * 0.5 + 0.5) * c.width);
@@ -81,17 +76,15 @@ class RamaPlot extends Component {
                 const g = imageData3.data[4*y*imageData3.width+4*x+1];
                 const b = imageData3.data[4*y*imageData3.width+4*x+2];
                 if(r>250&&g>250&&b>250){
-                    ctx.strokeStyle = 'red';
+                    if(this.imgOtherOutlier){
+                        ctx.drawImage(this.imgOtherOutlier, x-8, y-8, 16, 16);
+                    }
+                } else {
+                    if(this.imgOtherNormal){
+                        ctx.drawImage(this.imgOtherNormal, x-8, y-8, 16, 16);
+                    }
                 }
-                ctx.beginPath();
-                ctx.moveTo(x-5, y);
-                ctx.lineTo(x+5, y);
-                ctx.moveTo(x, y-5);
-                ctx.lineTo(x, y+5);
-                ctx.stroke();
-                if(r>250&&g>250&&b>250){
-                    ctx.strokeStyle = 'black';
-                }
+
             }
         }
         
@@ -105,6 +98,12 @@ class RamaPlot extends Component {
 
     handleLoad() {
         this.image = this.imageRef.current;
+        this.imgOtherOutlier = this.ramaPlotOtherOutlierImageRef.current;
+        this.imgOtherNormal = this.ramaPlotOtherNormalImageRef.current;
+        this.imgProOutlier = this.ramaPlotProOutlierImageRef.current;
+        this.imgProNormal = this.ramaPlotProNormalImageRef.current;
+        this.imgGlyOutlier = this.ramaPlotGlyOutlierImageRef.current;
+        this.imgGlyNormal = this.ramaPlotGlyNormalImageRef.current;
         this.draw();
     }
 
@@ -156,13 +155,49 @@ class RamaPlot extends Component {
         this.context = this.canvasRef.current.getContext('2d');
         var ctx = this.context;
         this.imageData = ctx.getImageData(0,0,this.canvasRef.current.width, this.canvasRef.current.height);
+
         const img = new window.Image();
         img.src = "/rama2_all.png";
         img.crossOrigin="Anonymous";
         this.imageRef.current = img;
         this.imageRef.current.addEventListener('load', this.handleLoad.bind(self));
-        console.log("componentDidMount");
-        console.log(this.imageRef);
+
+        const imgGlyNormal = new window.Image();
+        imgGlyNormal.src = "/rama-plot-gly-normal.png";
+        imgGlyNormal.crossOrigin="Anonymous";
+        this.ramaPlotGlyNormalImageRef.current = imgGlyNormal;
+        this.ramaPlotGlyNormalImageRef.current.addEventListener('load', this.handleLoad.bind(self));
+
+        const imgGlyOutlier = new window.Image();
+        imgGlyOutlier.src = "/rama-plot-gly-outlier.png";
+        imgGlyOutlier.crossOrigin="Anonymous";
+        this.ramaPlotGlyOutlierImageRef.current = imgGlyOutlier;
+        this.ramaPlotGlyOutlierImageRef.current.addEventListener('load', this.handleLoad.bind(self));
+
+        const imgProNormal = new window.Image();
+        imgProNormal.src = "/rama-plot-pro-normal.png";
+        imgProNormal.crossOrigin="Anonymous";
+        this.ramaPlotProNormalImageRef.current = imgProNormal;
+        this.ramaPlotProNormalImageRef.current.addEventListener('load', this.handleLoad.bind(self));
+
+        const imgProOutlier = new window.Image();
+        imgProOutlier.src = "/rama-plot-pro-outlier.png";
+        imgProOutlier.crossOrigin="Anonymous";
+        this.ramaPlotProOutlierImageRef.current = imgProOutlier;
+        this.ramaPlotProOutlierImageRef.current.addEventListener('load', this.handleLoad.bind(self));
+
+        const imgOtherNormal = new window.Image();
+        imgOtherNormal.src = "/rama-plot-other-normal.png";
+        imgOtherNormal.crossOrigin="Anonymous";
+        this.ramaPlotOtherNormalImageRef.current = imgOtherNormal;
+        this.ramaPlotOtherNormalImageRef.current.addEventListener('load', this.handleLoad.bind(self));
+
+        const imgOtherOutlier = new window.Image();
+        imgOtherOutlier.src = "/rama-plot-other-outlier.png";
+        imgOtherOutlier.crossOrigin="Anonymous";
+        this.ramaPlotOtherOutlierImageRef.current = imgOtherOutlier;
+        this.ramaPlotOtherOutlierImageRef.current.addEventListener('load', this.handleLoad.bind(self));
+
         self.mouseDown = false;
         this.canvasRef.current.addEventListener("mousemove", function(evt){ self.doMouseMove(evt,self); }, false);
     }
@@ -179,7 +214,19 @@ class RamaPlot extends Component {
         this.state = {plotInfo: null};
         this.canvasRef = createRef();
         this.imageRef = createRef();
+        this.ramaPlotGlyNormalImageRef = createRef();
+        this.ramaPlotGlyOutlierImageRef = createRef();
+        this.ramaPlotProNormalImageRef = createRef();
+        this.ramaPlotProOutlierImageRef = createRef();
+        this.ramaPlotOtherNormalImageRef = createRef();
+        this.ramaPlotOtherOutlierImageRef = createRef();
         this.image = null;
+        this.ramaPlotGlyNormalImage = null;
+        this.ramaPlotGlyOutlierImage = null;
+        this.ramaPlotProNormalImage = null;
+        this.ramaPlotProOutlierImage = null;
+        this.ramaPlotOtherNormalImage = null;
+        this.ramaPlotOtherOutlierImage = null;
         this.hit = -1;
     }
 
