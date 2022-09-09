@@ -33,11 +33,14 @@ class RamaPlot extends Component {
 
         ctx.clearRect(0, 0, c.width, c.height);
 
-        ctx.fillStyle = 'green';
+        ctx.fillStyle = 'red';
         ctx.fillRect(0, 0, c.width, c.height);
+
         if(this.image) {
             ctx.drawImage(this.image, 0, 0, c.width, c.height);
         }
+
+        const imageData3 = ctx.getImageData(0, 0, c.width, c.height);
 
         ctx.strokeStyle = 'black';
         ctx.lineWidth = 1;
@@ -46,8 +49,16 @@ class RamaPlot extends Component {
             for(let ip=0;ip<this.state.plotInfo.length;ip++){
                 let phitest = this.state.plotInfo[ip].phi;
                 let psitest = this.state.plotInfo[ip].psi;
-                let x = ((phitest /180.) * 0.5 + 0.5) * c.width;
-                let y = ((-psitest /180.) * 0.5 + 0.5) * c.height;
+                let x = parseInt(((phitest /180.) * 0.5 + 0.5) * c.width);
+                let y = parseInt(((-psitest /180.) * 0.5 + 0.5) * c.height);
+
+                //FIXME - Do we *know* this is RGBA?
+                const r = imageData3.data[4*y*imageData3.width+4*x];
+                const g = imageData3.data[4*y*imageData3.width+4*x+1];
+                const b = imageData3.data[4*y*imageData3.width+4*x+2];
+                if(r>250&&g>250&&b>250){
+                    ctx.strokeStyle = 'red';
+                }
 
                 ctx.beginPath();
                 ctx.moveTo(x-3, y);
@@ -55,22 +66,32 @@ class RamaPlot extends Component {
                 ctx.moveTo(x, y-3);
                 ctx.lineTo(x, y+3);
                 ctx.stroke();
+                if(r>250&&g>250&&b>250){
+                    ctx.strokeStyle = 'black';
+                }
             }
             if(this.hit>-1){
-                ctx.strokeStyle = 'red';
                 ctx.lineWidth = 3;
                 let phitest = this.state.plotInfo[this.hit].phi;
                 let psitest = this.state.plotInfo[this.hit].psi;
-                let x = ((phitest /180.) * 0.5 + 0.5) * c.width;
-                let y = ((-psitest /180.) * 0.5 + 0.5) * c.height;
+                let x = parseInt(((phitest /180.) * 0.5 + 0.5) * c.width);
+                let y = parseInt(((-psitest /180.) * 0.5 + 0.5) * c.height);
 
+                const r = imageData3.data[4*y*imageData3.width+4*x];
+                const g = imageData3.data[4*y*imageData3.width+4*x+1];
+                const b = imageData3.data[4*y*imageData3.width+4*x+2];
+                if(r>250&&g>250&&b>250){
+                    ctx.strokeStyle = 'red';
+                }
                 ctx.beginPath();
                 ctx.moveTo(x-5, y);
                 ctx.lineTo(x+5, y);
                 ctx.moveTo(x, y-5);
                 ctx.lineTo(x, y+5);
                 ctx.stroke();
-                
+                if(r>250&&g>250&&b>250){
+                    ctx.strokeStyle = 'black';
+                }
             }
         }
         
