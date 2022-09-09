@@ -41,6 +41,46 @@ struct RamachandranInfo {
     double psi;
 };
 
+struct ResiduePropertyInfo {
+    std::string chainId;
+    int seqNum;
+    std::string insCode;
+    std::string restype;
+    double property;
+};
+
+std::vector<ResiduePropertyInfo> getBVals(const std::string &pdbin, const std::string &chainId){
+    std::vector<ResiduePropertyInfo> info;
+    const char *filename_cp = pdbin.c_str();
+    mmdb::InitMatType();
+    mmdb::Manager *molHnd = new mmdb::Manager();
+
+    int RC = molHnd->ReadCoorFile(filename_cp);
+    int selHnd = molHnd->NewSelection();
+    std::string selStr = std::string("/*/")+chainId+std::string("/(GLY,ALA,VAL,PRO,SER,THR,LEU,ILE,CYS,ASP,GLU,ASN,GLN,ARG,LYS,MET,MSE,HIS,PHE,TYR,TRP,HCS,ALO,PDD,UNK)");
+    const char *sel_cp = selStr.c_str();
+    molHnd->Select(selHnd,mmdb::STYPE_RESIDUE,sel_cp,mmdb::SKEY_NEW);
+    mmdb::Residue** SelRes=0;
+    int nRes;
+    molHnd->GetSelIndex(selHnd,SelRes,nRes);
+    for(int ires=0;ires<nRes;ires++){
+        mmdb::Atom *N = SelRes[ires]->GetAtom(" N");
+        mmdb::Atom *CA = SelRes[ires]->GetAtom("CA");
+        mmdb::Atom *C = SelRes[ires]->GetAtom(" C");
+        if(N&&CA&&C){
+            ResiduePropertyInfo resInfo;
+            resInfo.chainId = chainId;
+            resInfo.seqNum = N->GetSeqNum();
+            resInfo.insCode = std::string(N->GetInsCode());
+            resInfo.restype = std::string(N->GetResidue()->GetResName());
+            resInfo.property = CA->tempFactor;
+            info.push_back(resInfo);
+        }
+    }
+
+    return info;
+}
+
 std::vector<RamachandranInfo> getRamachandranData(const std::string &pdbin, const std::string &chainId){
     std::vector<RamachandranInfo> info;
     const char *filename_cp = pdbin.c_str();
@@ -148,9 +188,19 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("phi", &RamachandranInfo::phi)
     .property("psi", &RamachandranInfo::psi)
     ;
+    class_<ResiduePropertyInfo>("ResiduePropertyInfo")
+    .constructor<>()
+    .property("chainId", &ResiduePropertyInfo::chainId)
+    .property("seqNum", &ResiduePropertyInfo::seqNum)
+    .property("insCode", &ResiduePropertyInfo::insCode)
+    .property("restype", &ResiduePropertyInfo::restype)
+    .property("property", &ResiduePropertyInfo::property)
+    ;
     register_vector<std::string>("VectorString");
     register_vector<RamachandranInfo>("VectorResidueIdentifier");
+    register_vector<ResiduePropertyInfo>("VectorResiduePropertyInfo");
     function("mini_rsr",&mini_rsr);
     function("flipPeptide",&flipPeptide);
     function("getRamachandranData",&getRamachandranData);
+    function("getBVals",&getBVals);
 }

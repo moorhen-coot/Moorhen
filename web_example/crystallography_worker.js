@@ -46,7 +46,7 @@ createRSRModule(Lib)
 
 
 let dataObjects = {pdbFiles:{}, mtzFiles:{}, cifFiles:{}};
-let dataObjectsNames = {pdbFiles:{}, mtzFiles:{}, cifFiles:{}, ramaInfo:{}};
+let dataObjectsNames = {pdbFiles:{}, mtzFiles:{}, cifFiles:{}, ramaInfo:{}, bvalInfo:{}};
 let sharedArrayBuffer = null;
 
 function guid(){
@@ -196,6 +196,24 @@ function loadFiles(files){
 
 }
 
+function getBVals(e) {
+    console.log(e.data);
+    const jobId = e.data.jobId;
+    const pdbin = dataObjects.pdbFiles[e.data.pdbinKey].fileName;
+    const chainId = e.data["chainId"];
+    const result = RSRModule.getBVals(pdbin,chainId);
+    let resInfo = [];
+    for(let ir=0;ir<result.size();ir++){
+        const cppres = result.get(ir);
+        //TODO - Is there a nicer way to do this?
+        const jsres = {chainId:cppres.chainId,insCode:cppres.insCode,seqNum:cppres.seqNum,restype:cppres.restype,bval:cppres.property};
+        resInfo.push(jsres);
+    }
+    dataObjectsNames.bvalInfo[e.data.pdbinKey] = resInfo;
+    updateShareArrayBuffer();
+    postMessage(["result",result,currentTaskName]);
+}
+
 function getRama(e) {
     console.log(e.data);
     const jobId = e.data.jobId;
@@ -303,6 +321,11 @@ onmessage = function(e) {
             console.log("Do mini-rsr in cryst worker ...");
             currentTaskName = "mini_rsr";
             miniRSR(e);
+            currentTaskName = "";
+            break;
+        case "get_bvals":
+            currentTaskName = "get_bvals";
+            getBVals(e);
             currentTaskName = "";
             break;
         default:
