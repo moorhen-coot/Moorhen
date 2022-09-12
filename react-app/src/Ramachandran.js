@@ -52,11 +52,7 @@ class RamaPlot extends Component {
                 let x = parseInt(((phitest /180.) * 0.5 + 0.5) * c.width);
                 let y = parseInt(((-psitest /180.) * 0.5 + 0.5) * c.height);
 
-                //FIXME - Do we *know* this is RGBA?
-                const r = imageData3.data[4*y*imageData3.width+4*x];
-                const g = imageData3.data[4*y*imageData3.width+4*x+1];
-                const b = imageData3.data[4*y*imageData3.width+4*x+2];
-                if(r>250&&g>250&&b>250){
+                if(this.state.plotInfo[ip].isOutlier){
                     if(this.state.plotInfo[ip].restype==="PRO"){
                         ctx.drawImage(this.imgProOutlier, x-4, y-4, 8, 8);
                     } else if(this.state.plotInfo[ip].restype==="GLY"){
@@ -81,10 +77,7 @@ class RamaPlot extends Component {
                 let x = parseInt(((phitest /180.) * 0.5 + 0.5) * c.width);
                 let y = parseInt(((-psitest /180.) * 0.5 + 0.5) * c.height);
 
-                const r = imageData3.data[4*y*imageData3.width+4*x];
-                const g = imageData3.data[4*y*imageData3.width+4*x+1];
-                const b = imageData3.data[4*y*imageData3.width+4*x+2];
-                if(r>250&&g>250&&b>250){
+                if(this.state.plotInfo[this.hit].isOutlier){
                     if(this.state.plotInfo[this.hit].restype==="PRO"){
                         ctx.drawImage(this.imgProOutlier, x-6, y-6, 12, 12);
                     } else if(this.state.plotInfo[this.hit].restype==="GLY"){

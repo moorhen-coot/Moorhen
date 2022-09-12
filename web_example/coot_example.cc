@@ -23,6 +23,8 @@
 #include <emscripten/bind.h>
 
 #include "mmdb_manager.h"
+#include "clipper/core/ramachandran.h"
+
 #include "cartesian.h"
 #include "geomutil.h"
 
@@ -39,6 +41,8 @@ struct RamachandranInfo {
     std::string restype;
     double phi;
     double psi;
+    bool isOutlier;
+    bool is_pre_pro;
 };
 
 struct ResiduePropertyInfo {
@@ -95,8 +99,44 @@ std::vector<RamachandranInfo> getRamachandranData(const std::string &pdbin, cons
     mmdb::Residue** SelRes=0;
     int nRes;
     molHnd->GetSelIndex(selHnd,SelRes,nRes);
+
+
+    clipper::Ramachandran rama;
+    clipper::Ramachandran r_gly, r_pro, r_non_gly_pro;
+    clipper::Ramachandran r_ileval, r_pre_pro, r_non_gly_pro_pre_pro_ileval;
+    rama.init(clipper::Ramachandran::All2);
+
+    // Lovell et al. 2003, 50, 437 Protein Structure, Function and Genetics values:
+    double rama_threshold_preferred = 0.02; 
+    double rama_threshold_allowed = 0.002;
+    float level_prefered = 0.02;
+    float level_allowed = 0.002;
+
+    //clipper defaults: 0.01 0.0005
+
+    rama.set_thresholds(level_prefered, level_allowed);
+    //
+    r_gly.init(clipper::Ramachandran::Gly2);
+    r_gly.set_thresholds(level_prefered, level_allowed);
+    //
+    r_pro.init(clipper::Ramachandran::Pro2);
+    r_pro.set_thresholds(level_prefered, level_allowed);
+    // first approximation; shouldnt be used if top8000 is available anyway
+    r_non_gly_pro.init(clipper::Ramachandran::NoGPIVpreP2);
+    r_non_gly_pro.set_thresholds(level_prefered, level_allowed);
+    // new
+    r_ileval.init(clipper::Ramachandran::IleVal2);
+    r_ileval.set_thresholds(level_prefered, level_allowed);
+    //
+    r_pre_pro.init(clipper::Ramachandran::PrePro2);
+    r_pre_pro.set_thresholds(level_prefered, level_allowed);
+    //
+    r_non_gly_pro_pre_pro_ileval.init(clipper::Ramachandran::NoGPIVpreP2);
+    r_non_gly_pro_pre_pro_ileval.set_thresholds(level_prefered, level_allowed);
+
+
     //std::cout << nRes << " residues" << std::endl;
-    // TODO - Terminal residues?
+
     for(int ires=1;ires<nRes-1;ires++){
         mmdb::Atom *N = SelRes[ires]->GetAtom(" N");
         mmdb::Atom *CA = SelRes[ires]->GetAtom("CA");
@@ -109,6 +149,9 @@ std::vector<RamachandranInfo> getRamachandranData(const std::string &pdbin, cons
             resInfo.seqNum = N->GetSeqNum();
             resInfo.insCode = std::string(N->GetInsCode());
             resInfo.restype = std::string(N->GetResidue()->GetResName());
+            std::string restypeP = std::string(Np->GetResidue()->GetResName());
+            resInfo.is_pre_pro = false;
+            if(restypeP=="PRO") resInfo.is_pre_pro = true;
             //Phi: C-N-CA-C
             //Psi: N-CA-C-N
             Cartesian Ncart(N->x,N->y,N->z);
@@ -121,6 +164,38 @@ std::vector<RamachandranInfo> getRamachandranData(const std::string &pdbin, cons
             //std::cout << N->GetSeqNum() << " " << N->name << " " << CA->name << " " << C->name << " " << Cm->name << " " << Np->name << " " << phi*180.0/M_PI << " " << psi*180.0/M_PI << std::endl;
             resInfo.phi = phi*180.0/M_PI;
             resInfo.psi = psi*180.0/M_PI;
+            bool r = false; //isOutlier
+            if (resInfo.restype == "GLY") {
+                if (! r_gly.allowed(phi, psi))
+                    if (! r_gly.favored(phi, psi))
+                        r = true;
+            } else {
+                if (resInfo.restype == "PRO") {
+                    if (! r_pro.allowed(phi, psi))
+                        if (! r_pro.favored(phi, psi))
+                            r = true;
+                } else {
+                    if (resInfo.is_pre_pro) {
+                        if (! r_pre_pro.allowed(phi, psi))
+                            if (! r_pre_pro.favored(phi, psi))
+                                r = true;
+                    } else {
+                        if ((resInfo.restype == "ILE") ||
+                                (resInfo.restype == "VAL")) {
+                            if (! r_ileval.allowed(phi, psi))
+                                if (! r_ileval.favored(phi, psi))
+                                    r = true;
+                        } else {
+                            if (! rama.allowed(phi, psi))
+                                if (! rama.favored(phi, psi))
+                                    r = true;
+                        }
+                    }
+                }
+            }
+            resInfo.isOutlier = r;
+            if(resInfo.isOutlier) std::cout << "An outlier!" << std::endl;
+
             info.push_back(resInfo);
         }
     }
@@ -187,6 +262,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("restype", &RamachandranInfo::restype)
     .property("phi", &RamachandranInfo::phi)
     .property("psi", &RamachandranInfo::psi)
+    .property("isOutlier", &RamachandranInfo::isOutlier)
+    .property("is_pre_pro", &RamachandranInfo::is_pre_pro)
     ;
     class_<ResiduePropertyInfo>("ResiduePropertyInfo")
     .constructor<>()
