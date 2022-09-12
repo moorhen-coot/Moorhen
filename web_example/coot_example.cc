@@ -194,7 +194,6 @@ std::vector<RamachandranInfo> getRamachandranData(const std::string &pdbin, cons
                 }
             }
             resInfo.isOutlier = r;
-            if(resInfo.isOutlier) std::cout << "An outlier!" << std::endl;
 
             info.push_back(resInfo);
         }

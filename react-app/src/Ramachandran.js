@@ -36,8 +36,40 @@ class RamaPlot extends Component {
         ctx.fillStyle = 'red';
         ctx.fillRect(0, 0, c.width, c.height);
 
-        if(this.image) {
-            ctx.drawImage(this.image, 0, 0, c.width, c.height);
+        if(this.hit>-1){
+            // And we can determine background image with this.
+            if (this.state.plotInfo[this.hit].restype=== "GLY") {
+                if(this.imageGly) {
+                    ctx.drawImage(this.imageGly, 0, 0, c.width, c.height);
+                }
+            } else {
+                if (this.state.plotInfo[this.hit].restype=== "PRO") {
+                    if(this.imagePro) {
+                        ctx.drawImage(this.imagePro, 0, 0, c.width, c.height);
+                    }
+                }  else {
+                    if (this.state.plotInfo[this.hit].is_pre_pro) {
+                        if(this.imagePrePro) {
+                            ctx.drawImage(this.imagePrePro, 0, 0, c.width, c.height);
+                        }
+                    } else {
+                        if (this.state.plotInfo[this.hit].restype=== "ILE" || this.state.plotInfo[this.hit].restype=== "VAL") {
+                            if(this.imageIleVal) {
+                                ctx.drawImage(this.imageIleVal, 0, 0, c.width, c.height);
+                            }
+                        } else {
+                            if(this.imageNonGlyProIleVal) {
+                                ctx.drawImage(this.imageNonGlyProIleVal, 0, 0, c.width, c.height);
+                            }
+                        }
+                    }
+                }
+            }
+
+        } else {
+            if(this.imageAll) {
+                ctx.drawImage(this.imageAll, 0, 0, c.width, c.height);
+            }
         }
 
         const imageData3 = ctx.getImageData(0, 0, c.width, c.height);
@@ -73,7 +105,6 @@ class RamaPlot extends Component {
             if(this.hit>-1){
                 let phitest = this.state.plotInfo[this.hit].phi;
                 let psitest = this.state.plotInfo[this.hit].psi;
-                console.log(this.state.plotInfo[this.hit].restype);
                 let x = parseInt(((phitest /180.) * 0.5 + 0.5) * c.width);
                 let y = parseInt(((-psitest /180.) * 0.5 + 0.5) * c.height);
 
@@ -106,7 +137,13 @@ class RamaPlot extends Component {
     }
 
     handleLoad() {
-        this.image = this.imageRef.current;
+        this.imageAll = this.imageRefAll.current;
+        this.imageGly = this.imageRefGly.current;
+        this.imagePro = this.imageRefPro.current;
+        this.imagePrePro = this.imageRefPrePro.current;
+        this.imageIleVal = this.imageRefIleVal.current;
+        this.imageNonGlyPro = this.imageRefNonGlyPro.current;
+        this.imageNonGlyProIleVal = this.imageRefNonGlyProIleVal.current;
         this.imgOtherOutlier = this.ramaPlotOtherOutlierImageRef.current;
         this.imgOtherNormal = this.ramaPlotOtherNormalImageRef.current;
         this.imgProOutlier = this.ramaPlotProOutlierImageRef.current;
@@ -135,6 +172,7 @@ class RamaPlot extends Component {
         x -= offset.left;
         y -= offset.top;
         
+        this.hit = -1;
         if(this.state.plotInfo){
             let ihit = -1;
             let mindist = 100000;
@@ -153,9 +191,9 @@ class RamaPlot extends Component {
             }
             if(ihit>-1){
                 this.hit = ihit;
-                this.draw();
             }
         }
+        this.draw();
 
     }
 
@@ -165,11 +203,47 @@ class RamaPlot extends Component {
         var ctx = this.context;
         this.imageData = ctx.getImageData(0,0,this.canvasRef.current.width, this.canvasRef.current.height);
 
-        const img = new window.Image();
-        img.src = "/rama2_all.png";
-        img.crossOrigin="Anonymous";
-        this.imageRef.current = img;
-        this.imageRef.current.addEventListener('load', this.handleLoad.bind(self));
+        const imgAll = new window.Image();
+        imgAll.src = "/rama2_all.png";
+        imgAll.crossOrigin="Anonymous";
+        this.imageRefAll.current = imgAll;
+        this.imageRefAll.current.addEventListener('load', this.handleLoad.bind(self));
+
+        const imgGly = new window.Image();
+        imgGly.src = "/rama2_gly.png";
+        imgGly.crossOrigin="Anonymous";
+        this.imageRefGly.current = imgGly;
+        this.imageRefGly.current.addEventListener('load', this.handleLoad.bind(self));
+
+        const imgPrePro = new window.Image();
+        imgPrePro.src = "/rama2_pre_pro.png";
+        imgPrePro.crossOrigin="Anonymous";
+        this.imageRefPrePro.current = imgPrePro;
+        this.imageRefPrePro.current.addEventListener('load', this.handleLoad.bind(self));
+
+        const imgPro = new window.Image();
+        imgPro.src = "/rama2_pro.png";
+        imgPro.crossOrigin="Anonymous";
+        this.imageRefPro.current = imgPro;
+        this.imageRefPro.current.addEventListener('load', this.handleLoad.bind(self));
+
+        const imgIleVal = new window.Image();
+        imgIleVal.src = "/rama2_ileval.png";
+        imgIleVal.crossOrigin="Anonymous";
+        this.imageRefIleVal.current = imgIleVal;
+        this.imageRefIleVal.current.addEventListener('load', this.handleLoad.bind(self));
+
+        const imgNonGlyPro = new window.Image();
+        imgNonGlyPro.src = "/rama2_non_gly_pro.png";
+        imgNonGlyPro.crossOrigin="Anonymous";
+        this.imageRefNonGlyPro.current = imgNonGlyPro;
+        this.imageRefNonGlyPro.current.addEventListener('load', this.handleLoad.bind(self));
+
+        const imgNonGlyProIleVal = new window.Image();
+        imgNonGlyProIleVal.src = "/rama2_non_gly_pro_pre_pro_ileval.png";
+        imgNonGlyProIleVal.crossOrigin="Anonymous";
+        this.imageRefNonGlyProIleVal.current = imgNonGlyProIleVal;
+        this.imageRefNonGlyProIleVal.current.addEventListener('load', this.handleLoad.bind(self));
 
         const imgGlyNormal = new window.Image();
         imgGlyNormal.src = "/rama-plot-gly-normal.png";
@@ -222,14 +296,20 @@ class RamaPlot extends Component {
         super(props);
         this.state = {plotInfo: null};
         this.canvasRef = createRef();
-        this.imageRef = createRef();
+        this.imageRefAll = createRef();
+        this.imageRefGly = createRef();
+        this.imageRefPro = createRef();
+        this.imageRefPrePro = createRef();
+        this.imageRefIleVal = createRef();
+        this.imageRefNonGlyPro = createRef();
+        this.imageRefNonGlyProIleVal = createRef();
         this.ramaPlotGlyNormalImageRef = createRef();
         this.ramaPlotGlyOutlierImageRef = createRef();
         this.ramaPlotProNormalImageRef = createRef();
         this.ramaPlotProOutlierImageRef = createRef();
         this.ramaPlotOtherNormalImageRef = createRef();
         this.ramaPlotOtherOutlierImageRef = createRef();
-        this.image = null;
+        this.imageAll = null;
         this.ramaPlotGlyNormalImage = null;
         this.ramaPlotGlyOutlierImage = null;
         this.ramaPlotProNormalImage = null;
