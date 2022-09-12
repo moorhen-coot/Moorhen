@@ -7,8 +7,12 @@ import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
 
 import {parsePDB} from './mgMiniMol.js';
+import {ScrollableCanvas} from './ScrollableCanvas';
 
 import { guid } from './guid.js';
+
+//TODO - Work with real data rather than random numbers
+//TODO - Split over multiple lines for large data sets
 
 function getOffsetRect(elem) {
     var box = elem.getBoundingClientRect();
@@ -27,28 +31,67 @@ function getOffsetRect(elem) {
 class ResidueDataPlot extends Component {
 
     draw() {
-        this.fixContext();
-        var ctx = this.context;
-        var c = this.canvasRef.current;
+        let scrollX = this.state.scrollX;
+        let scrollY = this.state.scrollY;
+        const ctx = this.context;
+        const c = this.canvasRef.current;
+        this.canvasRef.current.style.position = "relative";
+        this.canvasRef.current.style.left = scrollX+"px";
+        this.canvasRef.current.style.top = scrollY+"px";
 
         ctx.clearRect(0, 0, c.width, c.height);
 
-        ctx.fillStyle = 'yellow';
+        ctx.fillStyle = '#aaa';
         ctx.fillRect(0, 0, c.width, c.height);
         ctx.fillStyle = 'black';
-        ctx.font = "24px serif";
-        ctx.fillText('This widget currently', 10, 50);
-        ctx.fillText('does very little...', 10, 80);
-        if(this.state.plotInfo&&this.state.plotInfo.length>0){
-            //FIXME Now do something useful!!
-            ctx.fillText(this.state.plotInfo[0].chainId+"/"+this.state.plotInfo[0].seqNum+this.state.plotInfo[0].insCode+": "+this.state.plotInfo[0].bval, 10, 110);
-        }
-    }
 
-    fixContext() {
-        this.context = this.canvasRef.current.getContext('2d');
-        var ctx = this.context;
-        this.imageData = ctx.getImageData(0,0,this.canvasRef.current.width, this.canvasRef.current.height);
+        ctx.font = "18px serif";
+
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = "#000";
+        if(this.state.plotInfo){
+            ctx.beginPath();
+            ctx.moveTo(0-scrollX, 150-scrollY);
+            ctx.lineTo(this.state.plotInfo.length*20-scrollX, 150-scrollY);
+            ctx.stroke();
+            let height = 40;
+            for(let i=0;i<this.state.plotInfo.length;i++){
+                const gfrac = 1.0-this.state.plotInfo[i][1];
+                ctx.fillStyle = 'rgb(255, '+parseInt(256*gfrac)+', 0)';
+                ctx.fillRect(i*20+4-scrollX, 150-scrollY, 12,-parseInt(height * this.state.plotInfo[i][1]));
+            }
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            for(let i=0;i<this.state.plotInfo.length;i++){
+                ctx.moveTo(i*20+4-scrollX, 150-scrollY);
+                ctx.lineTo(i*20+4-scrollX, parseInt(150-scrollY-height * this.state.plotInfo[i][1]));
+                ctx.lineTo(i*20+16-scrollX, parseInt(150-scrollY-height * this.state.plotInfo[i][1]));
+                ctx.lineTo(i*20+16-scrollX, 150-scrollY);
+                if(i%10==0){
+                    ctx.moveTo(i*20+10-scrollX, 150-scrollY);
+                    ctx.lineTo(i*20+10-scrollX, 150-scrollY+6);
+                }
+            }
+            ctx.stroke();
+            if(this.hit>-1){
+                const i = this.hit;
+                ctx.strokeStyle = "#fff";
+                ctx.beginPath();
+                ctx.moveTo(i*20+4-scrollX, 150-scrollY);
+                ctx.lineTo(i*20+4-scrollX, parseInt(150-scrollY-height * this.state.plotInfo[i][1]));
+                ctx.lineTo(i*20+16-scrollX, parseInt(150-scrollY-height * this.state.plotInfo[i][1]));
+                ctx.lineTo(i*20+16-scrollX, 150-scrollY);
+                ctx.stroke();
+                ctx.strokeStyle = "#000";
+            }
+            ctx.fillStyle = 'black';
+            for(let i=0;i<this.state.plotInfo.length;i++){
+                if(i%10==0){
+                    ctx.fillText(""+i,i*20+4-scrollX, 150-scrollY+24);
+                }
+            }
+        }
+
     }
 
     doMouseMove(event,self) {
@@ -69,14 +112,16 @@ class ResidueDataPlot extends Component {
 
         x -= offset.left;
         y -= offset.top;
-        
+
+        this.hit = -1;
         if(this.state.plotInfo){
-            let ihit = -1;
-            let mindist = 100000;
-            for(let ip=0;ip<this.state.plotInfo.length;ip++){
-            }
-            if(ihit>-1){
-                this.hit = ihit;
+            const diff = (x+this.state.scrollX)/20. - Math.floor((x+this.state.scrollX)/20.);
+            if(diff>.2&&diff<.8){
+                const theHit =  Math.floor((x+this.state.scrollX)/20.);
+                const v = this.state.plotInfo[theHit][1];
+                if(y+this.state.scrollY>(150-v*40)&&y+this.state.scrollY<152){
+                    this.hit = theHit;
+                }
                 this.draw();
             }
         }
@@ -87,32 +132,70 @@ class ResidueDataPlot extends Component {
         const self = this;
         this.context = this.canvasRef.current.getContext('2d');
         var ctx = this.context;
-        this.imageData = ctx.getImageData(0,0,this.canvasRef.current.width, this.canvasRef.current.height);
+        this.context = this.canvasRef.current.getContext('2d', {alpha: false});
+        this.draw();
+        var rect = this.scrollDivRef.current.getBoundingClientRect();
+        this.scrollRef.current.setSize(rect.width,150);
 
+        //?
         self.mouseDown = false;
         this.canvasRef.current.addEventListener("mousemove", function(evt){ self.doMouseMove(evt,self); }, false);
         self.draw();
+
+        // Some testing junk
+        ctx.font = "24px serif";
+        const charWidth = Math.ceil(ctx.measureText("does very little.............................................................").width);
+        this.largeRef.current.style.width = (charWidth)+"px";
+        this.largeRef.current.style.height = ""+(24*8)+"px";
+
+    }
+
+    setScroll(scrollX,scrollY){
+        this.setState({scrollX:scrollX,scrollY:scrollY});
     }
 
     render() {
-        const height = 230;
-        const width = 230;
-        this.canvas = <canvas height={height} height={height} ref={this.canvasRef} />;  
-        return this.canvas;
+        if(this.canvasRef.current){
+            this.context = this.canvasRef.current.getContext('2d', {alpha: false});
+            this.draw();
+        }
+        this.canvas = <ScrollableCanvas largeRef={this.largeRef} ref={this.scrollRef} onScroll={this.setScroll.bind(this)} canvasRef={this.canvasRef} />;
+        return (<div ref={this.scrollDivRef}>{this.canvas}</div>);
+
     }
 
+    handleResize() {
+        if(this.scrollDivRef.current){
+            var rect = this.scrollDivRef.current.getBoundingClientRect();
+            this.scrollRef.current.setSize(rect.width,150);
+            this.draw();
+        }
+    }
     constructor(props) {
         super(props);
-        this.state = {plotInfo: null};
+        this.xoff = 15;
+        this.downX = -1;
+        this.downY = -1;
+        this.eX = -1;
+        this.eY = -1;
+        this.state = {scrollX:0,scrollyY:0,plotInfo: null};
         this.canvasRef = createRef();
+        this.scrollRef = createRef();
+        this.scrollDivRef = createRef();
+        this.largeRef = createRef();
+        window.addEventListener('resize', this.handleResize.bind(this));
         this.hit = -1;
+
     }
 
     updatePlotData(plotInfo){
         const self = this;
         this.setState({plotInfo:plotInfo},()=>self.draw());
+
+        this.largeRef.current.style.width = (1+plotInfo.length)*(20)+"px";
+        this.largeRef.current.style.height = ""+(24*8)+"px";
     }
-    
+
 }
 
 class ResidueData extends Component {
@@ -122,9 +205,16 @@ class ResidueData extends Component {
 
         this.plotRef = createRef();
 
-        this.state = {selected:"unk",log:"", chainId:"", plotInfo: null};
+        //FIXME - hack
+        let dummyData = [];
+        for(let i=0;i<1000;i++){
+            const v = Math.random();
+            dummyData.push([i,v]);
+        }
+        this.state = {selected:"unk",log:"", chainId:"", plotInfo: dummyData};
         this.message = "";
         const self = this;
+
     }
 
     getDataObjectNamesFromSharedArrayBuffer(buffer){
@@ -170,7 +260,7 @@ class ResidueData extends Component {
         const inputData = {method:"get_bvals",jobId:jobid,pdbinKey:key,chainId:this.state.chainId};
         self.props.crystWorker.postMessage(inputData);
         console.log(inputData);
-        
+
     }
 
     updatePlotData(){
@@ -188,12 +278,14 @@ class ResidueData extends Component {
             self.plotRef.current.updatePlotData(dataObjectNames.bvalInfo[key]);
             this.setState({plotInfo:dataObjectNames.bvalInfo[key]});
         }
-        
+
     }
 
     handleChainChange(evt){
         const self = this;
-        this.setState({chainId:evt.target.value}, ()=> self.getData());
+        //FIXME - Hack
+        self.plotRef.current.updatePlotData(self.state.plotInfo);
+        //this.setState({chainId:evt.target.value}, ()=> self.getData());
     }
 
     render () {
