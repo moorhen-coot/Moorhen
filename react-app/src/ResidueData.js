@@ -11,8 +11,6 @@ import {ScrollableCanvas} from './ScrollableCanvas';
 
 import { guid } from './guid.js';
 
-//TODO - Work with real data rather than random numbers
-
 function getOffsetRect(elem) {
     var box = elem.getBoundingClientRect();
     var body = document.body;
@@ -57,11 +55,11 @@ class ResidueDataPlot extends Component {
                 ctx.stroke();
             }
             for(let i=0;i<this.state.plotInfo.length;i++){
-                const gfrac = 1.0-this.state.plotInfo[i][1];
+                const gfrac = 1.0-this.state.plotInfo[i][this.dataKey]/ this.dataInfoScaling;
                 ctx.fillStyle = 'rgb(255, '+parseInt(256*gfrac)+', 0)';
                 const xpos = i % this.maxPerRow;
                 const ypos = (parseInt(i / this.maxPerRow) + 1) * this.baseLine;
-                ctx.fillRect(xpos*this.dataPointWidth+this.dataPointSpacing/2-scrollX, ypos-scrollY, this.dataPointWidth-this.dataPointSpacing,-parseInt(this.barHeight * this.state.plotInfo[i][1]));
+                ctx.fillRect(xpos*this.dataPointWidth+this.dataPointSpacing/2-scrollX, ypos-scrollY, this.dataPointWidth-this.dataPointSpacing,-parseInt(this.barHeight * this.state.plotInfo[i][this.dataKey] / this.dataInfoScaling));
             }
             ctx.lineWidth = 2;
             ctx.beginPath();
@@ -69,8 +67,8 @@ class ResidueDataPlot extends Component {
                 const xpos = i % this.maxPerRow;
                 const ypos = (parseInt(i / this.maxPerRow) + 1) * this.baseLine;
                 ctx.moveTo(xpos*this.dataPointWidth+this.dataPointSpacing/2-scrollX, ypos-scrollY);
-                ctx.lineTo(xpos*this.dataPointWidth+this.dataPointSpacing/2-scrollX, parseInt(ypos-scrollY-this.barHeight * this.state.plotInfo[i][1]));
-                ctx.lineTo(xpos*this.dataPointWidth+(this.dataPointWidth-this.dataPointSpacing/2)-scrollX, parseInt(ypos-scrollY-this.barHeight * this.state.plotInfo[i][1]));
+                ctx.lineTo(xpos*this.dataPointWidth+this.dataPointSpacing/2-scrollX, parseInt(ypos-scrollY-this.barHeight * this.state.plotInfo[i][this.dataKey] / this.dataInfoScaling));
+                ctx.lineTo(xpos*this.dataPointWidth+(this.dataPointWidth-this.dataPointSpacing/2)-scrollX, parseInt(ypos-scrollY-this.barHeight * this.state.plotInfo[i][this.dataKey] / this.dataInfoScaling));
                 ctx.lineTo(xpos*this.dataPointWidth+(this.dataPointWidth-this.dataPointSpacing/2)-scrollX, ypos-scrollY);
                 if(xpos%10==0){
                     ctx.moveTo(xpos*this.dataPointWidth+this.dataPointWidth/2-scrollX, ypos-scrollY);
@@ -85,8 +83,8 @@ class ResidueDataPlot extends Component {
                 const xpos = i % this.maxPerRow;
                 const ypos = (parseInt(i / this.maxPerRow) + 1) * this.baseLine;
                 ctx.moveTo(xpos*this.dataPointWidth+this.dataPointSpacing/2-scrollX, ypos-scrollY);
-                ctx.lineTo(xpos*this.dataPointWidth+this.dataPointSpacing/2-scrollX, parseInt(ypos-scrollY-this.barHeight * this.state.plotInfo[i][1]));
-                ctx.lineTo(xpos*this.dataPointWidth+(this.dataPointWidth-this.dataPointSpacing/2)-scrollX, parseInt(ypos-scrollY-this.barHeight * this.state.plotInfo[i][1]));
+                ctx.lineTo(xpos*this.dataPointWidth+this.dataPointSpacing/2-scrollX, parseInt(ypos-scrollY-this.barHeight * this.state.plotInfo[i][this.dataKey] / this.dataInfoScaling));
+                ctx.lineTo(xpos*this.dataPointWidth+(this.dataPointWidth-this.dataPointSpacing/2)-scrollX, parseInt(ypos-scrollY-this.barHeight * this.state.plotInfo[i][this.dataKey] / this.dataInfoScaling));
                 ctx.lineTo(xpos*this.dataPointWidth+(this.dataPointWidth-this.dataPointSpacing/2)-scrollX, ypos-scrollY);
                 ctx.stroke();
                 ctx.strokeStyle = "#000";
@@ -130,7 +128,7 @@ class ResidueDataPlot extends Component {
                 const ypos = (iRow + 1) * this.baseLine;
                 const theHit =  (iRow * this.maxPerRow) + Math.floor((x+this.state.scrollX)/this.dataPointWidth);
                 if(theHit<this.state.plotInfo.length){
-                    const v = this.state.plotInfo[theHit][1];
+                    const v = this.state.plotInfo[theHit][this.dataKey] / this.dataInfoScaling;
                     if(y+this.state.scrollY>(ypos-v*this.barHeight)&&y+this.state.scrollY<ypos+2){
                         this.hit = theHit;
                     }
@@ -211,7 +209,6 @@ class ResidueDataPlot extends Component {
         const self = this;
         this.setState({plotInfo:plotInfo},()=>self.draw());
 
-        //TODO change if we are splitting across rows ...
         this.nRows = parseInt((plotInfo.length + this.maxPerRow - 1) / this.maxPerRow);
 
         this.largeRef.current.style.width = (1+this.maxPerRow)*(this.dataPointWidth)+"px";
@@ -224,21 +221,62 @@ class ResidueDataPlot extends Component {
 }
 
 class ResidueData extends Component {
+
+    //TODO this should be overridden.
     constructor(props) {
 
         super(props);
 
         this.plotRef = createRef();
 
-        //FIXME - hack
         let dummyData = [];
-        for(let i=0;i<1050;i++){
-            const v = Math.random();
-            dummyData.push([i,v]);
-        }
         this.state = {selected:"unk",log:"", chainId:"", plotInfo: dummyData};
         this.message = "";
         const self = this;
+
+        this.dataKey = 'bval';
+        this.dataInfoScaling = 100.;
+
+    }
+
+    //TODO this should be overridden.
+    getData(){
+        const self = this;
+        let key = self.state.selected;
+        const dataObjectNames = this.getDataObjectNamesFromSharedArrayBuffer(this.props.sharedArrayBuffer);
+        const pdbKeys = Object.keys(dataObjectNames.pdbFiles);
+        if(pdbKeys.length<1){
+            return;
+        }
+        if(key==="unk"){
+            key = pdbKeys[0];
+        }
+        const jobid = guid();
+        const inputData = {method:"get_bvals",jobId:jobid,pdbinKey:key,chainId:this.state.chainId};
+        self.props.crystWorker.postMessage(inputData);
+
+    }
+
+    //TODO this should be overridden.
+    updatePlotData(){
+        const self = this;
+        let key = self.state.selected;
+        const dataObjectNames = this.getDataObjectNamesFromSharedArrayBuffer(this.props.sharedArrayBuffer);
+        const pdbKeys = Object.keys(dataObjectNames.pdbFiles);
+        if(pdbKeys.length<1){
+            return;
+        }
+        if(key==="unk"){
+            key = pdbKeys[0];
+        }
+
+        self.plotRef.current.dataKey = this.dataKey;
+        self.plotRef.current.dataInfoScaling = this.dataInfoScaling;
+
+        if(dataObjectNames.bvalInfo && dataObjectNames.bvalInfo[key]){
+            self.plotRef.current.updatePlotData(dataObjectNames.bvalInfo[key]);
+            this.setState({plotInfo:dataObjectNames.bvalInfo[key]});
+        }
 
     }
 
@@ -265,52 +303,14 @@ class ResidueData extends Component {
         this.setState({selected:evt.target.value}, ()=> self.getData());
     }
 
-
     handleSubmit(evt){
         evt.preventDefault();
     }
 
-    getData(){
-        const self = this;
-        let key = self.state.selected;
-        const dataObjectNames = this.getDataObjectNamesFromSharedArrayBuffer(this.props.sharedArrayBuffer);
-        const pdbKeys = Object.keys(dataObjectNames.pdbFiles);
-        if(pdbKeys.length<1){
-            return;
-        }
-        if(key==="unk"){
-            key = pdbKeys[0];
-        }
-        const jobid = guid();
-        const inputData = {method:"get_bvals",jobId:jobid,pdbinKey:key,chainId:this.state.chainId};
-        self.props.crystWorker.postMessage(inputData);
-        console.log(inputData);
-
-    }
-
-    updatePlotData(){
-        const self = this;
-        let key = self.state.selected;
-        const dataObjectNames = this.getDataObjectNamesFromSharedArrayBuffer(this.props.sharedArrayBuffer);
-        const pdbKeys = Object.keys(dataObjectNames.pdbFiles);
-        if(pdbKeys.length<1){
-            return;
-        }
-        if(key==="unk"){
-            key = pdbKeys[0];
-        }
-        if(dataObjectNames.bvalInfo && dataObjectNames.bvalInfo[key]){
-            self.plotRef.current.updatePlotData(dataObjectNames.bvalInfo[key]);
-            this.setState({plotInfo:dataObjectNames.bvalInfo[key]});
-        }
-
-    }
-
     handleChainChange(evt){
         const self = this;
-        //FIXME - Hack
         self.plotRef.current.updatePlotData(self.state.plotInfo);
-        //this.setState({chainId:evt.target.value}, ()=> self.getData());
+        this.setState({chainId:evt.target.value}, ()=> self.getData());
     }
 
     render () {
