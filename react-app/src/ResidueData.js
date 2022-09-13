@@ -97,11 +97,47 @@ class ResidueDataPlot extends Component {
                     ctx.fillText(""+i,xpos*this.dataPointWidth+4-scrollX, ypos-scrollY+24);
                 }
             }
+            /*
+            if(this.clickHit){
+                console.log(this.clickHit);
+                ctx.fillStyle = '#aaa';
+                ctx.fillRect(this.clickHit.x-scrollX, this.clickHit.y-scrollY, 80, -40);
+                ctx.beginPath();
+                ctx.moveTo(this.clickHit.x-scrollX, this.clickHit.y-scrollY);
+                ctx.lineTo(this.clickHit.x+80-scrollX, this.clickHit.y-scrollY);
+                ctx.lineTo(this.clickHit.x+80-scrollX, this.clickHit.y-scrollY-40);
+                ctx.lineTo(this.clickHit.x-scrollX, this.clickHit.y-scrollY-40);
+                ctx.lineTo(this.clickHit.x-scrollX, this.clickHit.y-scrollY);
+                ctx.stroke();
+            }
+            */
         }
 
     }
 
+    doMouseClick(event,self) {
+        this.clickHit = null;
+        if(this.state.plotInfo){
+            const theHit =  this.getHit(event,self);
+            if(theHit&&theHit.hit>-1){
+                this.clickHit = theHit;
+            }
+        }
+        this.draw();
+    }
+
     doMouseMove(event,self) {
+        this.hit = -1;
+        if(this.state.plotInfo){
+            const hit = this.getHit(event,self);
+            if(hit){
+                this.hit = hit.hit;
+            }
+            this.draw();
+        }
+    }
+
+    getHit(event,self) {
         var x;
         var y;
         var e = event;
@@ -120,7 +156,6 @@ class ResidueDataPlot extends Component {
         x -= offset.left;
         y -= offset.top;
 
-        this.hit = -1;
         if(this.state.plotInfo){
             const diff = (x+this.state.scrollX)/this.dataPointWidth - Math.floor((x+this.state.scrollX)/this.dataPointWidth);
             if(diff>.2&&diff<.8){
@@ -130,12 +165,12 @@ class ResidueDataPlot extends Component {
                 if(theHit<this.state.plotInfo.length){
                     const v = this.state.plotInfo[theHit][this.dataKey] / this.dataInfoScaling;
                     if(y+this.state.scrollY>(ypos-v*this.barHeight)&&y+this.state.scrollY<ypos+2){
-                        this.hit = theHit;
+                        return {hit:theHit,x:x,y:y};
                     }
                 }
-                this.draw();
             }
         }
+        return null;
 
     }
 
@@ -150,7 +185,8 @@ class ResidueDataPlot extends Component {
 
         //?
         self.mouseDown = false;
-        this.canvasRef.current.addEventListener("mousemove", function(evt){ self.doMouseMove(evt,self); }, false);
+        this.canvasRef.current.addEventListener("mousemove", this.moveHandler , false);
+        this.canvasRef.current.addEventListener("click", this.clickHandler, false);
         self.draw();
 
         // Some testing junk
@@ -193,7 +229,13 @@ class ResidueDataPlot extends Component {
         this.scrollDivRef = createRef();
         this.largeRef = createRef();
         window.addEventListener('resize', this.handleResize.bind(this));
+
+        const self = this;
+        this.clickHandler = function(evt){ self.doMouseClick(evt,self); }
+        this.moveHandler = function(evt){ self.doMouseMove(evt,self); }
+
         this.hit = -1;
+        this.clickHit = null;
 
         this.nRows = 1;
 
