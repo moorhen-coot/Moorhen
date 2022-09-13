@@ -97,20 +97,29 @@ class ResidueDataPlot extends Component {
                     ctx.fillText(""+i,xpos*this.dataPointWidth+4-scrollX, ypos-scrollY+24);
                 }
             }
-            /*
             if(this.clickHit){
-                console.log(this.clickHit);
-                ctx.fillStyle = '#aaa';
-                ctx.fillRect(this.clickHit.x-scrollX, this.clickHit.y-scrollY, 80, -40);
+                ctx.fillStyle = '#ddd';
+                //FIXME - determine width
+                let label;
+                if(this.state.plotInfo[this.clickHit.hit].insCode){
+                    label = this.state.plotInfo[this.clickHit.hit].chainId + "/" + this.state.plotInfo[this.clickHit.hit].seqNum + ":" + this.state.plotInfo[this.clickHit.hit].insCode + "/(" + this.state.plotInfo[this.clickHit.hit].restype + ")";
+                } else {
+                    label = this.state.plotInfo[this.clickHit.hit].chainId + "/" + this.state.plotInfo[this.clickHit.hit].seqNum + "/(" + this.state.plotInfo[this.clickHit.hit].restype + ")";
+                }
+                label += " : " + this.state.plotInfo[this.clickHit.hit][this.dataKey];
+                const boxWidth = Math.ceil(ctx.measureText(label).width) + 6;
+                ctx.fillRect(this.clickHit.x-scrollX, this.clickHit.y-scrollY, boxWidth, -21);
                 ctx.beginPath();
                 ctx.moveTo(this.clickHit.x-scrollX, this.clickHit.y-scrollY);
-                ctx.lineTo(this.clickHit.x+80-scrollX, this.clickHit.y-scrollY);
-                ctx.lineTo(this.clickHit.x+80-scrollX, this.clickHit.y-scrollY-40);
-                ctx.lineTo(this.clickHit.x-scrollX, this.clickHit.y-scrollY-40);
+                ctx.lineTo(this.clickHit.x+boxWidth-scrollX, this.clickHit.y-scrollY);
+                ctx.lineTo(this.clickHit.x+boxWidth-scrollX, this.clickHit.y-scrollY-21);
+                ctx.lineTo(this.clickHit.x-scrollX, this.clickHit.y-scrollY-21);
                 ctx.lineTo(this.clickHit.x-scrollX, this.clickHit.y-scrollY);
                 ctx.stroke();
+                ctx.fillStyle = 'black';
+                console.log(this.state.plotInfo[this.clickHit.hit]);
+                ctx.fillText(label,this.clickHit.x-scrollX+3, this.clickHit.y-scrollY-3);
             }
-            */
         }
 
     }
@@ -121,6 +130,7 @@ class ResidueDataPlot extends Component {
             const theHit =  this.getHit(event,self);
             if(theHit&&theHit.hit>-1){
                 this.clickHit = theHit;
+                //TODO - And call handler?
             }
         }
         this.draw();
@@ -165,7 +175,7 @@ class ResidueDataPlot extends Component {
                 if(theHit<this.state.plotInfo.length){
                     const v = this.state.plotInfo[theHit][this.dataKey] / this.dataInfoScaling;
                     if(y+this.state.scrollY>(ypos-v*this.barHeight)&&y+this.state.scrollY<ypos+2){
-                        return {hit:theHit,x:x,y:y};
+                        return {hit:theHit,x:x+this.state.scrollX,y:y+this.state.scrollY};
                     }
                 }
             }
