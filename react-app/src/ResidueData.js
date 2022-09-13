@@ -222,7 +222,6 @@ class ResidueDataPlot extends Component {
 
 class ResidueData extends Component {
 
-    //TODO this should be overridden.
     constructor(props) {
 
         super(props);
@@ -234,30 +233,13 @@ class ResidueData extends Component {
         this.message = "";
         const self = this;
 
-        this.dataKey = 'bval';
-        this.dataInfoScaling = 100.;
+        this.dataKey = this.props.dataKey;
+        this.crystMethod = this.props.crystMethod;
+        this.infoName = this.props.infoName;
+        this.dataInfoScaling = this.props.dataInfoScaling;
 
     }
 
-    //TODO this should be overridden.
-    getData(){
-        const self = this;
-        let key = self.state.selected;
-        const dataObjectNames = this.getDataObjectNamesFromSharedArrayBuffer(this.props.sharedArrayBuffer);
-        const pdbKeys = Object.keys(dataObjectNames.pdbFiles);
-        if(pdbKeys.length<1){
-            return;
-        }
-        if(key==="unk"){
-            key = pdbKeys[0];
-        }
-        const jobid = guid();
-        const inputData = {method:"get_bvals",jobId:jobid,pdbinKey:key,chainId:this.state.chainId};
-        self.props.crystWorker.postMessage(inputData);
-
-    }
-
-    //TODO this should be overridden.
     updatePlotData(){
         const self = this;
         let key = self.state.selected;
@@ -273,10 +255,27 @@ class ResidueData extends Component {
         self.plotRef.current.dataKey = this.dataKey;
         self.plotRef.current.dataInfoScaling = this.dataInfoScaling;
 
-        if(dataObjectNames.bvalInfo && dataObjectNames.bvalInfo[key]){
-            self.plotRef.current.updatePlotData(dataObjectNames.bvalInfo[key]);
-            this.setState({plotInfo:dataObjectNames.bvalInfo[key]});
+        if(dataObjectNames[self.infoName] && dataObjectNames[self.infoName][key]){
+            self.plotRef.current.updatePlotData(dataObjectNames[self.infoName][key]);
+            this.setState({plotInfo:dataObjectNames[self.infoName][key]});
         }
+
+    }
+
+    getData(){
+        const self = this;
+        let key = self.state.selected;
+        const dataObjectNames = this.getDataObjectNamesFromSharedArrayBuffer(this.props.sharedArrayBuffer);
+        const pdbKeys = Object.keys(dataObjectNames.pdbFiles);
+        if(pdbKeys.length<1){
+            return;
+        }
+        if(key==="unk"){
+            key = pdbKeys[0];
+        }
+        const jobid = guid();
+        const inputData = {method:self.crystMethod,jobId:jobid,pdbinKey:key,chainId:this.state.chainId};
+        self.props.crystWorker.postMessage(inputData);
 
     }
 
@@ -309,7 +308,6 @@ class ResidueData extends Component {
 
     handleChainChange(evt){
         const self = this;
-        self.plotRef.current.updatePlotData(self.state.plotInfo);
         this.setState({chainId:evt.target.value}, ()=> self.getData());
     }
 

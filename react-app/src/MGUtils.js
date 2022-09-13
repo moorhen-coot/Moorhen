@@ -58,6 +58,10 @@ class Utilities extends React.Component {
     render() {
 
         const selectionChanged = this.selectionChanged.bind(this);
+        const bValDataKey = 'bval';
+        const bValCrystMethod = "get_bvals";
+        const bValInfoName = "bvalInfo";
+        const bValDataInfoScaling = 100.;
         return (
         <>
         <Form.Select aria-label="Utilities select example" onChange={selectionChanged}>
@@ -77,7 +81,7 @@ class Utilities extends React.Component {
         { this.state.showOtherDataSources ? <OtherDataSources  onSVGChange={this.onSVGChange.bind(this)} /> : null }
         { this.state.showMiscObjects ? <MiscObjects /> : null }
         { this.state.showDownloadSF ? <DownloadSF /> : null }
-        { this.state.showBVals ? <ResidueData ref={this.props.bvalRef} sharedArrayBuffer={this.props.sharedArrayBuffer} crystWorker={this.props.crystWorker} /> : null }
+        { this.state.showBVals ? <ResidueData dataInfoScaling={bValDataInfoScaling} infoName={bValInfoName} crystMethod={bValCrystMethod} dataKey={bValDataKey} ref={this.props.bvalRef} sharedArrayBuffer={this.props.sharedArrayBuffer} crystWorker={this.props.crystWorker} /> : null }
         </>
         
     )
