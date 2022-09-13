@@ -12,7 +12,6 @@ import {ScrollableCanvas} from './ScrollableCanvas';
 import { guid } from './guid.js';
 
 //TODO - Work with real data rather than random numbers
-//TODO - Split over multiple lines for large data sets
 
 function getOffsetRect(elem) {
     var box = elem.getBoundingClientRect();
@@ -50,26 +49,32 @@ class ResidueDataPlot extends Component {
         ctx.lineWidth = 1;
         ctx.strokeStyle = "#000";
         if(this.state.plotInfo){
-            ctx.beginPath();
-            ctx.moveTo(0-scrollX, 150-scrollY);
-            ctx.lineTo(this.state.plotInfo.length*20-scrollX, 150-scrollY);
-            ctx.stroke();
-            let height = 40;
+            for(let i=0;i<this.nRows;i++){
+                const ypos = (i + 1) * this.baseLine;
+                ctx.beginPath();
+                ctx.moveTo(0-scrollX, ypos-scrollY);
+                ctx.lineTo(this.maxPerRow*this.dataPointWidth-scrollX, ypos-scrollY);
+                ctx.stroke();
+            }
             for(let i=0;i<this.state.plotInfo.length;i++){
                 const gfrac = 1.0-this.state.plotInfo[i][1];
                 ctx.fillStyle = 'rgb(255, '+parseInt(256*gfrac)+', 0)';
-                ctx.fillRect(i*20+4-scrollX, 150-scrollY, 12,-parseInt(height * this.state.plotInfo[i][1]));
+                const xpos = i % this.maxPerRow;
+                const ypos = (parseInt(i / this.maxPerRow) + 1) * this.baseLine;
+                ctx.fillRect(xpos*this.dataPointWidth+this.dataPointSpacing/2-scrollX, ypos-scrollY, this.dataPointWidth-this.dataPointSpacing,-parseInt(this.barHeight * this.state.plotInfo[i][1]));
             }
             ctx.lineWidth = 2;
             ctx.beginPath();
             for(let i=0;i<this.state.plotInfo.length;i++){
-                ctx.moveTo(i*20+4-scrollX, 150-scrollY);
-                ctx.lineTo(i*20+4-scrollX, parseInt(150-scrollY-height * this.state.plotInfo[i][1]));
-                ctx.lineTo(i*20+16-scrollX, parseInt(150-scrollY-height * this.state.plotInfo[i][1]));
-                ctx.lineTo(i*20+16-scrollX, 150-scrollY);
-                if(i%10==0){
-                    ctx.moveTo(i*20+10-scrollX, 150-scrollY);
-                    ctx.lineTo(i*20+10-scrollX, 150-scrollY+6);
+                const xpos = i % this.maxPerRow;
+                const ypos = (parseInt(i / this.maxPerRow) + 1) * this.baseLine;
+                ctx.moveTo(xpos*this.dataPointWidth+this.dataPointSpacing/2-scrollX, ypos-scrollY);
+                ctx.lineTo(xpos*this.dataPointWidth+this.dataPointSpacing/2-scrollX, parseInt(ypos-scrollY-this.barHeight * this.state.plotInfo[i][1]));
+                ctx.lineTo(xpos*this.dataPointWidth+(this.dataPointWidth-this.dataPointSpacing/2)-scrollX, parseInt(ypos-scrollY-this.barHeight * this.state.plotInfo[i][1]));
+                ctx.lineTo(xpos*this.dataPointWidth+(this.dataPointWidth-this.dataPointSpacing/2)-scrollX, ypos-scrollY);
+                if(xpos%10==0){
+                    ctx.moveTo(xpos*this.dataPointWidth+this.dataPointWidth/2-scrollX, ypos-scrollY);
+                    ctx.lineTo(xpos*this.dataPointWidth+this.dataPointWidth/2-scrollX, ypos-scrollY+6);
                 }
             }
             ctx.stroke();
@@ -77,17 +82,21 @@ class ResidueDataPlot extends Component {
                 const i = this.hit;
                 ctx.strokeStyle = "#fff";
                 ctx.beginPath();
-                ctx.moveTo(i*20+4-scrollX, 150-scrollY);
-                ctx.lineTo(i*20+4-scrollX, parseInt(150-scrollY-height * this.state.plotInfo[i][1]));
-                ctx.lineTo(i*20+16-scrollX, parseInt(150-scrollY-height * this.state.plotInfo[i][1]));
-                ctx.lineTo(i*20+16-scrollX, 150-scrollY);
+                const xpos = i % this.maxPerRow;
+                const ypos = (parseInt(i / this.maxPerRow) + 1) * this.baseLine;
+                ctx.moveTo(xpos*this.dataPointWidth+this.dataPointSpacing/2-scrollX, ypos-scrollY);
+                ctx.lineTo(xpos*this.dataPointWidth+this.dataPointSpacing/2-scrollX, parseInt(ypos-scrollY-this.barHeight * this.state.plotInfo[i][1]));
+                ctx.lineTo(xpos*this.dataPointWidth+(this.dataPointWidth-this.dataPointSpacing/2)-scrollX, parseInt(ypos-scrollY-this.barHeight * this.state.plotInfo[i][1]));
+                ctx.lineTo(xpos*this.dataPointWidth+(this.dataPointWidth-this.dataPointSpacing/2)-scrollX, ypos-scrollY);
                 ctx.stroke();
                 ctx.strokeStyle = "#000";
             }
             ctx.fillStyle = 'black';
             for(let i=0;i<this.state.plotInfo.length;i++){
-                if(i%10==0){
-                    ctx.fillText(""+i,i*20+4-scrollX, 150-scrollY+24);
+                const xpos = i % this.maxPerRow;
+                const ypos = (parseInt(i / this.maxPerRow) + 1) * this.baseLine;
+                if(xpos%10==0){
+                    ctx.fillText(""+i,xpos*this.dataPointWidth+4-scrollX, ypos-scrollY+24);
                 }
             }
         }
@@ -115,12 +124,16 @@ class ResidueDataPlot extends Component {
 
         this.hit = -1;
         if(this.state.plotInfo){
-            const diff = (x+this.state.scrollX)/20. - Math.floor((x+this.state.scrollX)/20.);
+            const diff = (x+this.state.scrollX)/this.dataPointWidth - Math.floor((x+this.state.scrollX)/this.dataPointWidth);
             if(diff>.2&&diff<.8){
-                const theHit =  Math.floor((x+this.state.scrollX)/20.);
-                const v = this.state.plotInfo[theHit][1];
-                if(y+this.state.scrollY>(150-v*40)&&y+this.state.scrollY<152){
-                    this.hit = theHit;
+                const iRow = parseInt((y+this.state.scrollY-2)/ this.baseLine);
+                const ypos = (iRow + 1) * this.baseLine;
+                const theHit =  (iRow * this.maxPerRow) + Math.floor((x+this.state.scrollX)/this.dataPointWidth);
+                if(theHit<this.state.plotInfo.length){
+                    const v = this.state.plotInfo[theHit][1];
+                    if(y+this.state.scrollY>(ypos-v*this.barHeight)&&y+this.state.scrollY<ypos+2){
+                        this.hit = theHit;
+                    }
                 }
                 this.draw();
             }
@@ -135,7 +148,7 @@ class ResidueDataPlot extends Component {
         this.context = this.canvasRef.current.getContext('2d', {alpha: false});
         this.draw();
         var rect = this.scrollDivRef.current.getBoundingClientRect();
-        this.scrollRef.current.setSize(rect.width,150);
+        this.scrollRef.current.setSize(rect.width,this.baseLine);
 
         //?
         self.mouseDown = false;
@@ -143,10 +156,8 @@ class ResidueDataPlot extends Component {
         self.draw();
 
         // Some testing junk
-        ctx.font = "24px serif";
-        const charWidth = Math.ceil(ctx.measureText("does very little.............................................................").width);
-        this.largeRef.current.style.width = (charWidth)+"px";
-        this.largeRef.current.style.height = ""+(24*8)+"px";
+        this.largeRef.current.style.width = "400px";
+        this.largeRef.current.style.height = "200px";
 
     }
 
@@ -167,7 +178,7 @@ class ResidueDataPlot extends Component {
     handleResize() {
         if(this.scrollDivRef.current){
             var rect = this.scrollDivRef.current.getBoundingClientRect();
-            this.scrollRef.current.setSize(rect.width,150);
+            this.scrollRef.current.setSize(rect.width,this.baseLine);
             this.draw();
         }
     }
@@ -186,14 +197,28 @@ class ResidueDataPlot extends Component {
         window.addEventListener('resize', this.handleResize.bind(this));
         this.hit = -1;
 
+        this.nRows = 1;
+
+        this.baseLine = 75;
+        this.barHeight = 40;
+        this.maxPerRow = 200;
+        this.dataPointWidth = 20;
+        this.dataPointSpacing = 8;
+
     }
 
     updatePlotData(plotInfo){
         const self = this;
         this.setState({plotInfo:plotInfo},()=>self.draw());
 
-        this.largeRef.current.style.width = (1+plotInfo.length)*(20)+"px";
-        this.largeRef.current.style.height = ""+(24*8)+"px";
+        //TODO change if we are splitting across rows ...
+        this.nRows = parseInt((plotInfo.length + this.maxPerRow - 1) / this.maxPerRow);
+
+        this.largeRef.current.style.width = (1+this.maxPerRow)*(this.dataPointWidth)+"px";
+        let bigHeight = (this.nRows+1)*75;
+        if(bigHeight<200)
+            bigHeight = 200;
+        this.largeRef.current.style.height = bigHeight+"px";
     }
 
 }
@@ -207,7 +232,7 @@ class ResidueData extends Component {
 
         //FIXME - hack
         let dummyData = [];
-        for(let i=0;i<1000;i++){
+        for(let i=0;i<1050;i++){
             const v = Math.random();
             dummyData.push([i,v]);
         }
