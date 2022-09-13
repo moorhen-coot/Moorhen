@@ -3,13 +3,13 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
 
 ### Todo
 
-- [ ] Flip peptide
+- [x] Flip peptide (*not in this branch!* Done in coot-1 branch.
 - [ ] Use map and model find peptides that need to be flipped
 - [ ] Density fit validation tool (clickable)
-  - [ ] Create generic res vs. data widget
+  - [x] Create generic res vs. data widget
   - [ ] Clickable
-  - [ ] Create simpler e.g. Bval vs residue widget
-  - [ ] Get density fir per res data
+  - [x] Create simpler e.g. Bval vs residue widget
+  - [ ] Get density for per residue data
 - [ ] Get a list of Rotamer Chi Angles for a given residue (type)
 - [ ] Ramachandran Plot
   - [x] Basic plot
