@@ -3,7 +3,7 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
 
 ### Todo
 
-- [x] Flip peptide (*not in this branch!* Done in coot-1 branch.
+- [x] Flip peptide (**not in this branch!** Done in coot-1 branch).
 - [ ] Use map and model find peptides that need to be flipped
 - [ ] Density fit validation tool (clickable)
   - [x] Create generic res vs. data widget
