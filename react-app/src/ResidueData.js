@@ -117,7 +117,6 @@ class ResidueDataPlot extends Component {
                 ctx.lineTo(this.clickHit.x-scrollX, this.clickHit.y-scrollY);
                 ctx.stroke();
                 ctx.fillStyle = 'black';
-                console.log(this.state.plotInfo[this.clickHit.hit]);
                 ctx.fillText(label,this.clickHit.x-scrollX+3, this.clickHit.y-scrollY-3);
             }
         }
@@ -130,7 +129,9 @@ class ResidueDataPlot extends Component {
             const theHit =  this.getHit(event,self);
             if(theHit&&theHit.hit>-1){
                 this.clickHit = theHit;
-                //TODO - And call handler?
+                if(this.customClickHandler) {
+                    this.customClickHandler(theHit);
+                }
             }
         }
         this.draw();
@@ -289,6 +290,7 @@ class ResidueData extends Component {
         this.crystMethod = this.props.crystMethod;
         this.infoName = this.props.infoName;
         this.dataInfoScaling = this.props.dataInfoScaling;
+        this.clickHandler = this.props.clickHandler;
 
     }
 
@@ -306,6 +308,7 @@ class ResidueData extends Component {
 
         self.plotRef.current.dataKey = this.dataKey;
         self.plotRef.current.dataInfoScaling = this.dataInfoScaling;
+        self.plotRef.current.customClickHandler = this.clickHandler;
 
         if(dataObjectNames[self.infoName] && dataObjectNames[self.infoName][key]){
             self.plotRef.current.updatePlotData(dataObjectNames[self.infoName][key]);
