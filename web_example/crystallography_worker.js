@@ -14,7 +14,7 @@ let RSRModule;
 importScripts('./web_example.js');
 importScripts('./pako.js');
 
-createCCP4Module({print(t){postMessage(["output",t])},printErr(t){postMessage(["output",t]);}})
+createCCP4Module({print: rsrPrint,printErr: rsrPrint})
     .then(function(CCP4Mod) {
              CCP4Module = CCP4Mod;
             })
@@ -326,6 +326,27 @@ onmessage = function(e) {
         case "get_bvals":
             currentTaskName = "get_bvals";
             getBVals(e);
+            currentTaskName = "";
+            break;
+        case "get_xyz":
+            currentTaskName = "get_xyz";
+            const pdbRegex = /.pdb$/;
+            const pdbKeys = Object.keys(dataObjectsNames.pdbFiles);
+            for(let iobj=0;iobj<pdbKeys.length;iobj++){
+                const data_id = pdbKeys[iobj];
+                const name = dataObjectsNames.pdbFiles[data_id].originalFileName;
+                const shortName = name.replace(pdbRegex,"");
+                console.log(shortName);
+                if(shortName===e.data.resInfo.molName){
+                    console.log("Use",data_id,dataObjects.pdbFiles[data_id]);
+                    const result = CCP4Module.getXYZ(dataObjects.pdbFiles[data_id].fileName,e.data.resInfo.chain,e.data.resInfo.resNum);
+                    console.log(result.size());
+                    if(result.size()===3){
+                        postMessage(["result",[-result.get(0),-result.get(1),-result.get(2)],currentTaskName]);
+                    }
+                    break;
+                }
+            }
             currentTaskName = "";
             break;
         default:

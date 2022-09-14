@@ -299,6 +299,33 @@ class SequenceViewer extends Component {
         }
     }
 
+    doMouseDoubleClick(event,self) {
+        const ctx = this.context;
+        ctx.font = "bold " + this.charHeight+'px Courier';
+        const charWidth = Math.ceil(ctx.measureText("M").width);
+        var xy = this.getEventXY(event);
+        if(xy[0]<10*charWidth) return;
+        const sequences = this.state.sequences;
+        var eX = xy[0] + this.state.scrollX;
+        var eY = xy[1] + this.state.scrollY;
+        var iseq = Math.floor(eY/this.charHeight-1);
+        var ic = Math.floor(eX/charWidth-1);
+        if(iseq>-1&&iseq<sequences.length&&(ic-this.xoff+1)<sequences[iseq].sequence.length){
+            var t = sequences[iseq].sequence[ic-this.xoff+1];
+            if(sequences[iseq].type==="peptide"||sequences[iseq].type==="polypeptide(L)"){ 
+                t = sequenceAminoOneLetterMap[t];
+            }
+            const name = sequences[iseq].name;
+            const chain = sequences[iseq].chain;
+            const re = new RegExp("_"+chain);
+            const resNum = ic-this.xoff+2;
+            const molName = name.replace(re,"");
+            if(this.props.onDoubleClick){
+                this.props.onDoubleClick({molName:molName,chain:chain,resNum:resNum-1});
+            }
+        }
+    }
+
     componentDidMount() {
         console.log("SequenceViewer componentDidMount");
         this.context = this.canvasRef.current.getContext('2d', {alpha: false});
@@ -310,6 +337,7 @@ class SequenceViewer extends Component {
         this.canvasRef.current.addEventListener("mousedown", function(evt){ self.doMouseDown(evt,self); }, false);
         this.canvasRef.current.addEventListener("mousemove", function(evt){ self.doMouseMove(evt,self); }, false);
         this.canvasRef.current.addEventListener("mouseup", function(evt){ self.doMouseUp(evt,self); }, false);
+        this.canvasRef.current.addEventListener("dblclick", this.doubleClickHandler, false);
     }
 
     doMouseMove(event,self) {
@@ -458,6 +486,8 @@ class SequenceViewer extends Component {
         }
         this.setSelections();
         window.addEventListener('resize', this.handleResize.bind(this));
+        const self = this;
+        this.doubleClickHandler = function(evt){ self.doMouseDoubleClick(evt,self); }
     }
 
     setSelections(){

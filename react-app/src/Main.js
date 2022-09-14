@@ -67,7 +67,7 @@ class Main extends Component {
                 if (e.data[2] === "flip_peptide") {
                     self.flipRef.current.updateLog(e.data[1] + "\n");
                 }
-                if (e.data[2] === "get_rama") {
+                if (e.data[2] === "get_rama"||e.data[2] === "get_xyz") {
                     console.log(e.data[1]);
                 }
             }
@@ -76,6 +76,9 @@ class Main extends Component {
             }
             if (e.data[0] === "result" && e.data[2] === "get_bvals") {
                 self.bvalRef.current.updatePlotData();
+            }
+            if (e.data[0] === "result" && e.data[2] === "get_xyz") {
+                    self.gl.current.setOrigin(e.data[1]);
             }
             if (e.data[0] === "pdb_out") {
                 const data = e.data[1];
@@ -104,6 +107,10 @@ class Main extends Component {
         this.setState({ viewportWidth: this.containerRef.current.clientWidth, viewportHeight: this.containerRef.current.clientHeight })
         this.gl.current.resize(this.containerRef.current.clientWidth, this.containerRef.current.clientHeight)
         this.gl.current.drawScene()
+    }
+
+    sequenceDoubleClick(data) {
+        this.crystWorker.postMessage({ method: "get_xyz", resInfo:data});
     }
 
     sequenceSelectionChanged(data) {
@@ -153,6 +160,7 @@ class Main extends Component {
         this.gl.current.loadDataWithWizard(params.pending.atoms, this.enerLib, true, wizards[params.pending.wizard], params.pending.name, fileDataId);
         if (params.pending && params.pending.atoms && params.pending.atoms.sequences) {
             let theSequences = params.pending.atoms.sequences;
+            console.log(theSequences);
             this.seqRef.current.addSequences(theSequences);
         }
         const changedIds = { ...this.state.dataFiles.ids, [fileDataId]: params.pending.fileData };
@@ -392,7 +400,7 @@ class Main extends Component {
                 </Row>
                 <Row>
                     <Col>
-                        <SequenceViewer sequences={this.state.sequences} ref={this.seqRef} selectionChanged={this.sequenceSelectionChanged.bind(this)} messageChanged={this.statusMessageChanged.bind(this)} />
+                        <SequenceViewer onDoubleClick={this.sequenceDoubleClick.bind(this)} sequences={this.state.sequences} ref={this.seqRef} selectionChanged={this.sequenceSelectionChanged.bind(this)} messageChanged={this.statusMessageChanged.bind(this)} />
                     </Col>
                 </Row>
                 <Row>
