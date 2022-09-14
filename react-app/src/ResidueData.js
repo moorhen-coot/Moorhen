@@ -97,7 +97,7 @@ class ResidueDataPlot extends Component {
                     ctx.fillText(""+i,xpos*this.dataPointWidth+4-scrollX, ypos-scrollY+24);
                 }
             }
-            if(this.clickHit){
+            if(this.clickHit&&this.state.plotInfo[this.clickHit.hit]){
                 ctx.fillStyle = '#ddd';
                 //FIXME - determine width
                 let label;
@@ -130,7 +130,8 @@ class ResidueDataPlot extends Component {
             if(theHit&&theHit.hit>-1){
                 this.clickHit = theHit;
                 if(this.customClickHandler) {
-                    this.customClickHandler(theHit);
+                    const molName = "UNK";
+                    this.customClickHandler({hit:theHit,molKey:this.state.key,molName:molName,chain:this.state.plotInfo[this.clickHit.hit].chainId,seqNum:this.state.plotInfo[this.clickHit.hit].seqNum,insCode:this.state.plotInfo[this.clickHit.hit].insCode});
                 }
             }
         }
@@ -234,7 +235,7 @@ class ResidueDataPlot extends Component {
         this.downY = -1;
         this.eX = -1;
         this.eY = -1;
-        this.state = {scrollX:0,scrollyY:0,plotInfo: null};
+        this.state = {scrollX:0,scrollyY:0,plotInfo: null, key:null};
         this.canvasRef = createRef();
         this.scrollRef = createRef();
         this.scrollDivRef = createRef();
@@ -260,7 +261,7 @@ class ResidueDataPlot extends Component {
 
     updatePlotData(plotInfo){
         const self = this;
-        this.setState({plotInfo:plotInfo},()=>self.draw());
+        this.setState({plotInfo:plotInfo.info,key:plotInfo.key},()=>self.draw());
 
         this.nRows = parseInt((plotInfo.length + this.maxPerRow - 1) / this.maxPerRow);
 
@@ -311,7 +312,7 @@ class ResidueData extends Component {
         self.plotRef.current.customClickHandler = this.clickHandler;
 
         if(dataObjectNames[self.infoName] && dataObjectNames[self.infoName][key]){
-            self.plotRef.current.updatePlotData(dataObjectNames[self.infoName][key]);
+            self.plotRef.current.updatePlotData({info:dataObjectNames[self.infoName][key],key:key});
             this.setState({plotInfo:dataObjectNames[self.infoName][key]});
         }
 
@@ -417,7 +418,7 @@ class ResidueData extends Component {
         return (
                 <>
         <Form onSubmit={this.handleSubmit.bind(this)}>
-        <Form.Group as={Row} controlId="rama">
+        <Form.Group as={Row} controlId="resData">
         <Col>
                 <Form.Select value={selected} onChange={handleChange} >
                 {rows}

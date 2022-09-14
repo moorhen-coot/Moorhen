@@ -55,10 +55,6 @@ class Utilities extends React.Component {
 	this.props.helicesChanged({pending:data});
     }
 
-    bvalClickHandler(hit) {
-        console.log("handler",hit);
-    }
-
     render() {
 
         const selectionChanged = this.selectionChanged.bind(this);
@@ -85,7 +81,7 @@ class Utilities extends React.Component {
         { this.state.showOtherDataSources ? <OtherDataSources  onSVGChange={this.onSVGChange.bind(this)} /> : null }
         { this.state.showMiscObjects ? <MiscObjects /> : null }
         { this.state.showDownloadSF ? <DownloadSF /> : null }
-        { this.state.showBVals ? <ResidueData clickHandler={this.bvalClickHandler.bind(this)} dataInfoScaling={bValDataInfoScaling} infoName={bValInfoName} crystMethod={bValCrystMethod} dataKey={bValDataKey} ref={this.props.bvalRef} sharedArrayBuffer={this.props.sharedArrayBuffer} crystWorker={this.props.crystWorker} /> : null }
+        { this.state.showBVals ? <ResidueData clickHandler={this.props.onResidueDataClick} dataInfoScaling={bValDataInfoScaling} infoName={bValInfoName} crystMethod={bValCrystMethod} dataKey={bValDataKey} ref={this.props.bvalRef} sharedArrayBuffer={this.props.sharedArrayBuffer} crystWorker={this.props.crystWorker} /> : null }
         </>
         
     )

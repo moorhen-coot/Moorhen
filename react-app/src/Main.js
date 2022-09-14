@@ -113,6 +113,10 @@ class Main extends Component {
         this.crystWorker.postMessage({ method: "get_xyz", resInfo:data});
     }
 
+    residueDataClick(data) {
+        this.crystWorker.postMessage({ method: "get_xyz", resInfo:data});
+    }
+
     sequenceSelectionChanged(data) {
         console.log(data);
     }
@@ -379,7 +383,7 @@ class Main extends Component {
                     </Col>
 
                     <Col lg={4}>
-                        <ControlInterface rsrRef={this.rsrRef} flipRef={this.flipRef} ramaRef={this.ramaRef} bvalRef={this.bvalRef}
+                        <ControlInterface onResidueDataClick={this.residueDataClick.bind(this)} rsrRef={this.rsrRef} flipRef={this.flipRef} ramaRef={this.ramaRef} bvalRef={this.bvalRef}
                             sharedArrayBuffer={this.sharedArrayBuffer}
                             crystWorker={this.crystWorker}
                             liveUpdatingMaps={liveUpdatingMaps}

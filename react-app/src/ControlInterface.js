@@ -259,7 +259,7 @@ class ControlInterface extends Component {
                     <Ramachandran ref={this.props.ramaRef} sharedArrayBuffer={this.props.sharedArrayBuffer} crystWorker={this.props.crystWorker} addRequest={this.addRequested.bind(this)} liveUpdatingMaps={liveUpdatingMaps} dataFiles={dataFiles} displayData={displayData} mapDataFiles={mapDataFiles} onPDBChange={this.filePendingChanged.bind(this)} />
                 </Tab>
                 <Tab eventKey="utilities" title="Utilities">
-                    <Utilities bvalRef={this.props.bvalRef} displayData={displayData} sharedArrayBuffer={this.props.sharedArrayBuffer} crystWorker={this.props.crystWorker} dataFiles={dataFiles} onSVGChange={this.svgChanged.bind(this)} mapChanged={this.mapChanged.bind(this)} filePendingChanged={this.filePendingChanged.bind(this)} helicesChanged={this.helicesChanged.bind(this)} />
+                    <Utilities onResidueDataClick={this.props.onResidueDataClick} bvalRef={this.props.bvalRef} displayData={displayData} sharedArrayBuffer={this.props.sharedArrayBuffer} crystWorker={this.props.crystWorker} dataFiles={dataFiles} onSVGChange={this.svgChanged.bind(this)} mapChanged={this.mapChanged.bind(this)} filePendingChanged={this.filePendingChanged.bind(this)} helicesChanged={this.helicesChanged.bind(this)} />
                 </Tab>
             </Tabs>
         );
