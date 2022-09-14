@@ -7,7 +7,7 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
 - [ ] Use map and model find peptides that need to be flipped
 - [ ] Density fit validation tool (clickable)
   - [x] Create generic res vs. data widget
-  - [ ] Clickable
+  - [x] Clickable
   - [x] Create simpler e.g. Bval vs residue widget
   - [ ] Get density for per residue data
 - [ ] Get a list of Rotamer Chi Angles for a given residue (type)
