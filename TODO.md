@@ -11,9 +11,9 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
   - [x] Create simpler e.g. Bval vs residue widget
   - [ ] Get density for per residue data
 - [ ] Get a list of Rotamer Chi Angles for a given residue (type)
-- [ ] Ramachandran Plot
+- [x] Ramachandran Plot
   - [x] Basic plot
-  - [ ] Feedback from hover/click
+  - [x] Feedback from hover/click
 - [ ] Centre-on in Display Table
 - [ ] Separare react compomnents from library JS.
 - [ ] Better clip/fog defaults

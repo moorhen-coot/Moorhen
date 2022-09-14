@@ -153,7 +153,28 @@ class RamaPlot extends Component {
         this.draw();
     }
 
+    doMouseClick(event,self) {
+        if(this.state.plotInfo){
+            const hit = this.getHit(event,self);
+            if(this.props.onClick){
+                const molName = "UNK";
+                this.props.onClick({molKey:this.state.key,molName:molName,chain:this.state.plotInfo[hit].chainId,seqNum:this.state.plotInfo[hit].seqNum,insCode:this.state.plotInfo[hit].insCode});
+            }
+        }
+    }
+
     doMouseMove(event,self) {
+        this.hit = -1;
+        if(this.state.plotInfo){
+            const hit = this.getHit(event,self);
+            if(hit){
+                this.hit = hit;
+            }
+            this.draw();
+        }
+    }
+
+    getHit(event,self) {
         var x;
         var y;
         var e = event;
@@ -172,7 +193,6 @@ class RamaPlot extends Component {
         x -= offset.left;
         y -= offset.top;
         
-        this.hit = -1;
         if(this.state.plotInfo){
             let ihit = -1;
             let mindist = 100000;
@@ -189,11 +209,9 @@ class RamaPlot extends Component {
                     }
                 }
             }
-            if(ihit>-1){
-                this.hit = ihit;
-            }
+            return ihit;
         }
-        this.draw();
+        return -1;
 
     }
 
@@ -282,7 +300,8 @@ class RamaPlot extends Component {
         this.ramaPlotOtherOutlierImageRef.current.addEventListener('load', this.handleLoad.bind(self));
 
         self.mouseDown = false;
-        this.canvasRef.current.addEventListener("mousemove", function(evt){ self.doMouseMove(evt,self); }, false);
+        this.canvasRef.current.addEventListener("mousemove", this.moveHandler , false);
+        this.canvasRef.current.addEventListener("click", this.clickHandler, false);
     }
 
     render() {
@@ -294,7 +313,7 @@ class RamaPlot extends Component {
 
     constructor(props) {
         super(props);
-        this.state = {plotInfo: null};
+        this.state = {plotInfo: null, key:null};
         this.canvasRef = createRef();
         this.imageRefAll = createRef();
         this.imageRefGly = createRef();
@@ -317,11 +336,14 @@ class RamaPlot extends Component {
         this.ramaPlotOtherNormalImage = null;
         this.ramaPlotOtherOutlierImage = null;
         this.hit = -1;
+        const self = this;
+        this.clickHandler = function(evt){ self.doMouseClick(evt,self); }
+        this.moveHandler = function(evt){ self.doMouseMove(evt,self); }
     }
 
     updatePlotData(plotInfo){
         const self = this;
-        this.setState({plotInfo:plotInfo},()=>self.draw());
+        this.setState({plotInfo:plotInfo.info,key:plotInfo.key},()=>self.draw());
     }
     
 }
@@ -395,7 +417,7 @@ class Ramachandran extends Component {
         if(key==="unk"){
             key = pdbKeys[0];
         }
-        self.ramaRef.current.updatePlotData(dataObjectNames.ramaInfo[key]);
+        self.ramaRef.current.updatePlotData({info:dataObjectNames.ramaInfo[key],key:key});
         this.setState({plotInfo:dataObjectNames.ramaInfo[key]});
         
     }
@@ -469,7 +491,7 @@ class Ramachandran extends Component {
         </Form.Group>
         </Form>
         <div className="vspace1em"></div>
-        <RamaPlot ref={this.ramaRef} />
+        <RamaPlot onClick={this.props.onClick} ref={this.ramaRef} />
         </>
         );
     }
