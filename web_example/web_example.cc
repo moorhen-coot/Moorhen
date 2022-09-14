@@ -236,10 +236,7 @@ int multiply(int i1, int i2){
     return a[0]*a[1];
 }
 
-std::vector<double> getXYZ(const std::string &pdb_file_name, const std::string &chainID, int resNum){
-
-    std::cout << "getXYZ" << std::endl;
-
+std::vector<double> getXYZResNo(const std::string &pdb_file_name, const std::string &chainID, int resNo){
     std::vector<double> xyz;
 
     mmdb::InitMatType();
@@ -257,9 +254,8 @@ std::vector<double> getXYZ(const std::string &pdb_file_name, const std::string &
     mmdb::Chain *chain = molHnd->GetChain (1, chainID_cp );
 
     if(chain){
-        if(resNum>=0&&resNum<chain->GetNumberOfResidues()){
-            //FIXME - this is almost certainly dodgy. Ignoring insCode is probably a bad idea.
-            mmdb::Residue *res = chain->GetResidue(resNum,"");
+        if(resNo>=0&&resNo<chain->GetNumberOfResidues()){
+            mmdb::Residue *res = chain->GetResidue(resNo);
             if(res){
                 mmdb::Atom *ca = res->GetAtom("CA");
                 if(ca){
@@ -268,6 +264,41 @@ std::vector<double> getXYZ(const std::string &pdb_file_name, const std::string &
                     xyz.push_back(ca->z);
                     return xyz;
                 }
+            }
+        }
+    }
+
+    return xyz;
+}
+
+std::vector<double> getXYZSeqNumInsCode(const std::string &pdb_file_name, const std::string &chainID, int seqNum, const std::string insCode){
+
+    std::vector<double> xyz;
+
+    mmdb::InitMatType();
+    mmdb::Manager *molHnd = new mmdb::Manager();
+
+    const char *filename_cp = pdb_file_name.c_str();
+    const char *chainID_cp = chainID.c_str();
+    const char *insCode_cp = insCode.c_str();
+
+    printf("Reading a PDB file: %s\n",filename_cp);
+    int RC = molHnd->ReadCoorFile(filename_cp);
+    assert(RC==0);
+
+    int selHnd = molHnd->NewSelection();
+
+    mmdb::Chain *chain = molHnd->GetChain (1, chainID_cp );
+
+    if(chain){
+        mmdb::Residue *res = chain->GetResidue(seqNum,insCode_cp);
+        if(res){
+            mmdb::Atom *ca = res->GetAtom("CA");
+            if(ca){
+                xyz.push_back(ca->x);
+                xyz.push_back(ca->y);
+                xyz.push_back(ca->z);
+                return xyz;
             }
         }
     }
@@ -559,7 +590,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     function("GetCorrelations",&GetCorrelations);
     function("GetEigen",&GetEigen);
     function("GetDisplacements",&GetDisplacements);
-    function("getXYZ",&getXYZ);
+    function("getXYZResNo",&getXYZResNo);
+    function("getXYZSeqNumInsCode",&getXYZSeqNumInsCode);
 
     function("gsl_sf_bessel_J0",&gsl_sf_bessel_J0);
     function("gsl_cdf_hypergeometric_P",&gsl_cdf_hypergeometric_P);

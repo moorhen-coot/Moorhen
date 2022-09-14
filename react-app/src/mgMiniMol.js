@@ -246,7 +246,7 @@ function atomsToHierarchy(atoms){
                 residue = new Residue();
                 residue.addAtom(atoms[i]);
                 chain.addResidue(residue);
-            } else if(atoms[i].getSeqID()!==residue.getSeqID()||atoms[i].getSeqIDAuth()!==residue.getSeqIDAuth()){
+            } else if(atoms[i].getSeqIDLabel()!==residue.getSeqIDLabel()||atoms[i].getSeqIDAuth()!==residue.getSeqIDAuth()){
                 residue = new Residue();
                 residue.addAtom(atoms[i]);
                 chain.addResidue(residue);
@@ -3139,6 +3139,10 @@ addAtom(atom) {
 
 getSeqID() {
     return this.atoms[0].getSeqID();
+}
+
+getSeqIDLabel() {
+    return this.atoms[0].getSeqIDLabel();
 }
 
 getSeqIDAuth() {

@@ -339,7 +339,13 @@ onmessage = function(e) {
                 console.log(shortName);
                 if(shortName===e.data.resInfo.molName){
                     console.log("Use",data_id,dataObjects.pdbFiles[data_id]);
-                    const result = CCP4Module.getXYZ(dataObjects.pdbFiles[data_id].fileName,e.data.resInfo.chain,e.data.resInfo.resNum);
+                    let result;
+                    if(e.data.resInfo.seqNum){
+                        //FIXME - this is almost certainly dodgy. Ignoring insCode is probably a bad idea.
+                        result = CCP4Module.getXYZSeqNumInsCode(dataObjects.pdbFiles[data_id].fileName,e.data.resInfo.chain,e.data.resInfo.seqNum,"");
+                    } else {
+                        result = CCP4Module.getXYZResNo(dataObjects.pdbFiles[data_id].fileName,e.data.resInfo.chain,e.data.resInfo.resNo);
+                    }
                     console.log(result.size());
                     if(result.size()===3){
                         postMessage(["result",[-result.get(0),-result.get(1),-result.get(2)],currentTaskName]);
