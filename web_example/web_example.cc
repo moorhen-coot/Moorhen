@@ -258,7 +258,8 @@ std::vector<double> getXYZ(const std::string &pdb_file_name, const std::string &
 
     if(chain){
         if(resNum>=0&&resNum<chain->GetNumberOfResidues()){
-            mmdb::Residue *res = chain->GetResidue(resNum);
+            //FIXME - this is almost certainly dodgy. Ignoring insCode is probably a bad idea.
+            mmdb::Residue *res = chain->GetResidue(resNum,"");
             if(res){
                 mmdb::Atom *ca = res->GetAtom("CA");
                 if(ca){
