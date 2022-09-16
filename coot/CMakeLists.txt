@@ -269,7 +269,7 @@ target_include_directories(coot PRIVATE ${coot_src} ${coot_src}/coords ${coot_sr
 set_target_properties(coot PROPERTIES COMPILE_FLAGS "-DHAVE_BOOST -DNODERAWFS -DFFTW_ENABLE_FLOAT -s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_PTHREADS=1" LINK_FLAGS "-s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_PTHREADS=1")
 
 FILE(WRITE ${CMAKE_BINARY_DIR}/coot/coot_env.js
-Module.preRun = [function() {ENV.COOT_DATA_DIR="${coot_src}"}, function() {ENV.CCP4_LIB="${CMAKE_BINARY_DIR}/ccp4_lib"}]
+Module.preRun = [function() {ENV.COOT_DATA_DIR="${coot_src}"}, function() {ENV.COOT_REFMAC_LIB_DIR="${CMAKE_BINARY_DIR}/ccp4_lib"}, function() {ENV.CCP4_LIB="${CMAKE_BINARY_DIR}/ccp4_lib"}]
 )
 
 FILE(MAKE_DIRECTORY "data/coot/data/metal/")
@@ -331,6 +331,15 @@ FILE(COPY ../checkout/monomers/list/mon_lib_list.cif DESTINATION data/ccp4_lib/d
 FILE(COPY ${coot_src}/data/metal/metal-N-distance.table DESTINATION data/coot/data/metal )
 FILE(COPY ${coot_src}/data/metal/metal-O-distance.table DESTINATION data/coot/data/metal )
 FILE(COPY ${coot_src}/data/metal/metal-S-distance.table DESTINATION data/coot/data/metal )
+
+#[[
+add_executable(dynamic_read_lib ../example/dynamic_read_lib.cc)
+target_link_options(dynamic_read_lib PRIVATE  -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 --pre-js coot_env.js)
+target_link_directories(dynamic_read_lib PUBLIC ../mmdb2 ../ssm ../ccp4 ../lib ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4)
+target_link_libraries(dynamic_read_lib mmdb2 ssm clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 coot gsl nodefs.js)
+target_include_directories(dynamic_read_lib PRIVATE ${coot_src} ${coot_src}/src ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw)
+target_compile_options(dynamic_read_lib PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
+]]
 
 add_executable(fix-nomenclature ${coot_src}/src/fix-nomenclature.cc)
 target_link_options(fix-nomenclature PRIVATE -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 --pre-js coot_env.js)
