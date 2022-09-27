@@ -472,6 +472,7 @@ target_link_libraries(find-waters mmdb2 ssm clipper-mmdb clipper-cif clipper-cor
 target_include_directories(find-waters PRIVATE ${coot_src} ${coot_src}/src ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw)
 target_compile_options(find-waters PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
 
+#[[
 add_executable(find-ligand ${coot_src}/ligand/find-ligand.cc)
 target_link_options(find-ligand PRIVATE -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 --pre-js coot_env.js)
 target_link_directories(find-ligand PUBLIC ../mmdb2 ../ssm ../ccp4 ../lib ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4)
@@ -506,6 +507,7 @@ target_link_directories(density-score-by-residue-src PUBLIC ../mmdb2 ../ssm ../c
 target_link_libraries(density-score-by-residue-src mmdb2 ssm clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 coot gsl gslcblas nodefs.js)
 target_include_directories(density-score-by-residue-src PRIVATE ${coot_src} ${coot_src}/src ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw)
 target_compile_options(density-score-by-residue-src PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
+]]
 
 install(TARGETS mini-rsr-web DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../react-app/public/wasm)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/mini-rsr-web.wasm
