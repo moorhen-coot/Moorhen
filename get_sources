@@ -124,6 +124,7 @@ cd ..
 ln -s checkout/boost_1_80_0 boost
 echo
 patch -p0 < patches/boost-emscripten.patch
+patch -p0 < patches/boost-clang.patch
 
 echo "Linking glm headers"
 mkdir -p include
