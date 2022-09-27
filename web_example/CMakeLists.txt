@@ -26,7 +26,7 @@ target_link_options(web_example PRIVATE -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_F
 target_link_directories(web_example PUBLIC ../ssm ../mmdb2 ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4 ../fftw ../rfftw ../ccp4 ../privateer ../rvapi ../gesamt ../ccp4mg ../lib)
 
 target_link_libraries(web_example ssm rvapi gesamtlib mmdb2 clipper-minimol clipper-phs clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 privateer clipper-minimol ccp4mg coot gsl gslcblas m z idbfs.js)
-target_include_directories(web_example PRIVATE ../checkout/privateer-MKIV/src ../include ../example ../checkout/ssm ../checkout/mmdb2/ ../checkout/mmdb2/mmdb2 ../checkout/clipper ../checkout/fftw-2.1.5/fftw ../checkout/fftw-2.1.5/rfftw ../checkout/libccp4/ccp4 ../checkout/ccp4srs ../checkout/gemmi/include ../checkout/gesamt ../gesamt ../ccp4mg  ../checkout/ccp4mg/mmut  ../checkout/ccp4mg/util ../checkout/ccp4mg/pygl/mapview )
+target_include_directories(web_example PRIVATE ../checkout/privateer-MKIV/src ../include ../example ../checkout/ssm ../checkout/mmdb2/ ../checkout/mmdb2/mmdb2 ../checkout/clipper ../checkout/fftw-2.1.5/fftw ../checkout/fftw-2.1.5/rfftw ../checkout/libccp4/ccp4 ../checkout/ccp4srs ../checkout/gemmi/include ../checkout/gesamt ../gesamt ../ccp4mg  ../checkout/ccp4mg/mmut  ../checkout/ccp4mg/util ../checkout/ccp4mg/pygl/mapview ../checkout/coot-1.0 )
 target_compile_options(web_example PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_WEB_EXAMPLE_)
 install(TARGETS web_example DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../react-app/public/wasm)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/web_example.wasm  

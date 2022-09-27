@@ -22,6 +22,10 @@
 #include <emscripten.h>
 #include <emscripten/bind.h>
 
+#include "geometry/residue-and-atom-specs.hh"
+#include "api/interfaces.hh"
+#include "api/molecules_container.hh"
+
 #include "mmdb_manager.h"
 #include "clipper/core/ramachandran.h"
 
@@ -202,6 +206,7 @@ std::vector<RamachandranInfo> getRamachandranData(const std::string &pdbin, cons
     return info;
 }
 
+/*
 int flipPeptide(const std::string &pdbin, const std::string &chainId, const int resno, const std::string &pdbout){
     int retval = 0;
     std::cout << "In flipPeptide in C++. This does nothing useful." << std::endl;
@@ -227,6 +232,7 @@ int flipPeptide(const std::string &pdbin, const std::string &chainId, const int 
 
     return retval;
 }
+*/
 
 int mini_rsr(const std::vector<std::string> &args){
 
@@ -251,8 +257,29 @@ int mini_rsr(const std::vector<std::string> &args){
     return retval;
 }
 
+class molecules_container_js : public molecules_container_t{
+    public:
+        int writePDBASCII(int imol, const std::string &file_name) { 
+            const char *fname_cp = file_name.c_str();
+            return mol(imol)->WritePDBASCII(fname_cp);
+        }
+        int flipPeptide(int imol, const coot::residue_spec_t &rs, const std::string &alt_conf) { return  molecules_container_t::flipPeptide(imol,rs,alt_conf); }
+        int flipPeptide(int imol, const std::string &cid, const std::string &alt_conf) { return molecules_container_t::flipPeptide(imol,cid,alt_conf); }
+        int read_pdb(const std::string &file_name) { return molecules_container_t::read_pdb(file_name); }
+        int read_mtz(const std::string &file_name, const std::string &f, const std::string &phi, const std::string &weight, bool use_weight, bool is_a_difference_map) {return molecules_container_t::read_mtz(file_name,f,phi,weight,use_weight,is_a_difference_map); } 
+};
 
 EMSCRIPTEN_BINDINGS(my_module) {
+    class_<molecules_container_js>("molecules_container_js")
+    .constructor<>()
+    .function("is_valid_model_molecule",&molecules_container_js::is_valid_model_molecule)
+    .function("is_valid_map_molecule",&molecules_container_js::is_valid_map_molecule)
+    .function("writePDBASCII",&molecules_container_js::writePDBASCII)
+    .function("read_pdb",&molecules_container_js::read_pdb)
+    .function("read_mtz",&molecules_container_js::read_mtz)
+    .function("flipPeptide_cid", select_overload<int(int, const std::string&,const std::string&)>(&molecules_container_js::flipPeptide))
+    .function("flipPeptide_rs", select_overload<int(int, const coot::residue_spec_t&,const std::string&)>(&molecules_container_js::flipPeptide))
+    ;
     class_<RamachandranInfo>("RamachandranInfo")
     .constructor<>()
     .property("chainId", &RamachandranInfo::chainId)
@@ -271,6 +298,9 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("insCode", &ResiduePropertyInfo::insCode)
     .property("restype", &ResiduePropertyInfo::restype)
     .property("property", &ResiduePropertyInfo::property)
+    ;
+    class_<coot::residue_spec_t>("residue_spec_t")
+    .constructor<const std::string &, int, const std::string &>()
     ;
     register_vector<std::string>("VectorString");
     register_vector<RamachandranInfo>("VectorResidueIdentifier");
