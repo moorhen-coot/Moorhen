@@ -3,22 +3,11 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
 
 ### Todo
 
-- [x] Flip peptide
-- [ ] Use map and model find peptides that need to be flipped
-- [ ] Density fit validation tool (clickable)
-  - [x] Create generic res vs. data widget
-  - [x] Clickable
-  - [x] Create simpler e.g. Bval vs residue widget
-  - [ ] Get density for per residue data
 - [ ] Get a list of Rotamer Chi Angles for a given residue (type)
-- [x] Ramachandran Plot
-  - [x] Basic plot
-  - [x] Feedback from hover/click
+- [ ] Use map and model find peptides that need to be flipped
 - [ ] Centre-on in Display Table
-- [ ] Separare react compomnents from library JS.
+- [ ] Separate react components from library JS.
 - [ ] Better clip/fog defaults
-- [ ] Move all computation into `crystallography_worker.js`.
-  - [x] Mini-rsr
 - [ ] mini-rsr example
   - [x] Compile
   - [x] Run in node (sort of ... does not exit at end).
@@ -66,89 +55,7 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
 - [ ] Change use of XMLHttpRequest/FileReader in various places to fetch API (as in PDBSearch.js).
 - [ ] Keep ligand SVGs for all loaded structures and delete when file closed.
 - [ ] Check that this successfully compiles on Windows (needs *get_sources.bat* or *MSYS*)
-- [ ] Split coot into library and executables. An almost accurate list can be got from  
-    `find checkout/coot-0.9.6/ -name \*.cpp -o -name \*.cc | xargs grep -w main | grep -w int`
-  - [x] Identify files containing main
-  - [ ] Add other environment variables to `coot_env.js`
-    - [ ] `COOT_PREFIX`
-  - [ ] Create rules to build executables.
-    - [x] `src/fix-nomenclature.cc`
-    - [x] Modify `coot_env.js` so that `fix-nomenclature` can be run from anywhere. Created by cmake.
-    - [ ] `auxil/strand-analysis/strand-analysis.cc` (Missing `strand-analysis.hh`?)
-    - [x] `auxil/rama/rama-data.cc`
-    - [x] `auxil/rama/rama-doughnut.cc`
-    - [x] `auxil/catcheck/catcheck.cc`
-    - [x] `auxil/vectors/diff-vec.cc`
-    - [x] `analysis/coot-daca.cc`
-    - [x] `analysis/test-cablam.cc`
-    - [x] `analysis/test-stats.cc`
-    - [x] `analysis/improper-dihedrals.cc`
-    - [x] `analysis/test-mogul.cc`
-    - [x] `analysis/peptide-projection.cc`
-    - [x] `analysis/bfactan.cc`
-    - [x] `analysis/test-align.cc`
-    - [x] `density-contour/test-occlusion.cc`
-    - [x] `ideal/with-geometry.cc`
-    - [x] `ideal/lv.cc`
-    - [x] `ideal/test-rama-plot.cc`
-    - [x] `ideal/crankshaft-test.cc`
-    - [x] `ideal/logramatest.cpp`
-    - [x] `ideal/test-indexing.cc`
-    - [x] `ideal/mini-rsr.cc`
-    - [x] `tw/tiddly.cc`
-    - [x] `utils/test-logging.cc`
-    - [x] `db-main/train-pepflip.cc`
-    - [x] `db-main/testdbmain.cc`
-    - [x] `high-res/trace-high-res.cc`
-    - [x] `high-res/test-atom-graph.cc`
-    - [x] `coot-utils/test-spherical.cc`
-    - [x] `coot-utils/test-cod-atom-types.cc`
-    - [x] `coot-utils/dictionary-atom-types.cc`
-    - [x] `coot-utils/test-elastic.cc`
-    - [x] `coot-utils/test-convolute.cc`
-    - [x] `coot-utils/cod-db-access.cc`
-    - [x] `coot-utils/test-5-residue-fragments.cc`
-    - [x] `coot-utils/test-hole.cc`
-    - [x] `coot-utils/test-glyco-torsions.cc`
-    - [x] `coot-utils/test-segmap.cc`
-    - [x] `coot-utils/test-h-bonds.cc`
-    - [x] `coot-utils/test-morph.cc`
-    - [x] `coot-utils/mmrrcc.cc`
-    - [x] `coot-utils/test-coot-utils.cc`
-    - [x] `coot-utils/test-shelx-reader.cc`
-    - [x] `coot-utils/slurp-map.cc`
-    - [x] `coot-utils/test-chem-feat.cc`
-    - [x] `coot-utils/test-emma.cc`
-    - [x] `coot-utils/test-coot-probe.cc`
-    - [x] `coords/test-transform.cc`
-    - [x] `coords/test-phenix-geo.cc`
-    - [x] `geometry/make-shelx-restraints.cc`
-    - [x] `geometry/test-ccp4srs.cc`
-    - [x] `geometry/compare-dictionaries.cc`
-    - [x] `geometry/dictionary-bond-distributions.cc`
-    - [x] `geometry/available-comp-id.cc`
-    - [x] `geometry/test-read-components.cc`
-    - [x] `geometry/test-geometry.cc`
-    - [x] `lbg/test-srs-standalone.cc`
-    - [x] `lbg/lidia-main.cc`
-    - [x] `cootilus/cootilus-demo.cpp`
-    - [x] `ligand/ligand-percentiles.cc`
-    - [x] `ligand/make-ligands-db.cc`
-    - [x] `ligand/test-tube-finder.cc`
-    - [x] `ligand/test-fffear-in-coot.cc`
-    - [x] `ligand/identify-protein.cc`
-    - [x] `ligand/test-ligand.cc`
-    - [x] `ligand/find-waters.cc`
-    - [x] `ligand/find-ligand.cc`
-    - [x] `ligand/test-trace.cc`
-    - [ ] `ligand/res-tracer.cc` (Missing `scored-node.hh`?)
-    - [x] `ligand/test-side-chain-densities.cc`
-    - [x] `cootaneer/cootaneer-demo.cpp`
-    - [x] `src/density-score-by-residue-src.cc`
-    - [x] `src/test-chol.cc`
-    - [x] `src/align.cc` (`chain_mutation_info_container_t` problems)
 - [ ] Modify all relevant `CMakeLists.txt` to use `-sNODERAWFS=1` and `-DNODERAWFS` for executables so that native filesystem is available.
-- [ ] Check problem with one Coot source file ligand/res-tracer.cc depends on scored-node.hh which seems not to exist. Fixed in > 0.9.6?
 ### Done ✓
 
 - [x] Create my first TODO.md  
@@ -166,3 +73,14 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
 - [x] Charged ligands produce SVG (e.g DCB 4a3h)
 - [x] Check that this successfully compiles on Linux
 - [x] Fix custom colours not working: `mgWebGLAtomsToPrimitives.js:5815 DON'T KNOW WHAT TO DO WITH #cf5353`
+- [x] Move all computation into `crystallography_worker.js`.
+  - [x] Mini-rsr
+- [x] Flip peptide
+- [x] Density fit validation tool (clickable)
+  - [x] Create generic res vs. data widget
+  - [x] Clickable
+  - [x] Create simpler e.g. Bval vs residue widget
+  - [x] Get density for per residue data
+- [x] Ramachandran Plot
+  - [x] Basic plot
+  - [x] Feedback from hover/click
