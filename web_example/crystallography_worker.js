@@ -51,7 +51,7 @@ createRSRModule(Lib)
 
 
 let dataObjects = {pdbFiles:{}, mtzFiles:{}, cifFiles:{}};
-let dataObjectsNames = {pdbFiles:{}, mtzFiles:{}, cifFiles:{}, ramaInfo:{}, bvalInfo:{}, mol_cont_idx:{}};
+let dataObjectsNames = {pdbFiles:{}, mtzFiles:{}, cifFiles:{}, ramaInfo:{}, bvalInfo:{}, mol_cont_idx:{}, densityFitInfo:{}};
 let sharedArrayBuffer = null;
 
 function guid(){
@@ -203,6 +203,17 @@ function loadFiles(files){
 
 }
 
+function getDensityFit(e) {
+    console.log(e.data);
+    const jobId = e.data.jobId;
+    const pdbin = dataObjects.pdbFiles[e.data.pdbinKey].fileName;
+    const chainId = e.data["chainId"];
+    const hklin = dataObjects.pdbFiles[e.data.hklinKey].fileName;
+    const imol_model = dataObjectsNames.mol_cont_idx[e.data.pdbinKey];
+    const imol_map = 0; // FIXME - I am not sure we have the data structure yet ...
+    //const result = RSRModule.DFA(imol_model, imol_map);
+}
+
 function getBVals(e) {
     console.log(e.data);
     const jobId = e.data.jobId;
@@ -257,7 +268,7 @@ function flipPeptide(e) {
     */
 
     console.log("Should in fact call molecules_container.flipPeptide_rs with", dataObjectsNames.mol_cont_idx[e.data.pdbinKey]);
-    const resultMolCont = molecules_container.flipPeptide_rs(pdbin,resSpec,"");
+    const resultMolCont = molecules_container.flipPeptide_rs(dataObjectsNames.mol_cont_idx[e.data.pdbinKey],resSpec,"");
     const write_result = molecules_container.writePDBASCII(dataObjectsNames.mol_cont_idx[e.data.pdbinKey],pdbout);
     console.log("result of which is",resultMolCont,write_result);
     var pdb_out = RSRModule.FS.readFile(pdbout, { encoding: 'utf8' });
@@ -342,6 +353,11 @@ onmessage = function(e) {
         case "get_bvals":
             currentTaskName = "get_bvals";
             getBVals(e);
+            currentTaskName = "";
+            break;
+        case "density_fit":
+            currentTaskName = "density_fit";
+            getDensityFit(e);
             currentTaskName = "";
             break;
         case "get_xyz":
