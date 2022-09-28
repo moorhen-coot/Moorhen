@@ -51,7 +51,7 @@ createRSRModule(Lib)
 
 
 let dataObjects = {pdbFiles:{}, mtzFiles:{}, cifFiles:{}};
-let dataObjectsNames = {pdbFiles:{}, mtzFiles:{}, cifFiles:{}, ramaInfo:{}, bvalInfo:{}, mol_cont_idx:{}, densityFitInfo:{}};
+let dataObjectsNames = {pdbFiles:{}, mtzFiles:{}, cifFiles:{}, ramaInfo:{}, bvalInfo:{}, mol_cont_idx:{}, map_cont_idx:{}, densityFitInfo:{}};
 let sharedArrayBuffer = null;
 
 function guid(){
@@ -195,6 +195,14 @@ function loadFiles(files){
             RSRModule.FS_createDataFile(".", key + ".mtz", byteArray, true, true);
             dataObjects.mtzFiles[key] = {fileName:key + ".mtz", originalFileName:thisResult[0], contents:byteArray};
             dataObjectsNames.mtzFiles[key] = {fileName:key + ".mtz", originalFileName:thisResult[0]};
+            //TODO - work out what columns to use ...
+            const f = "FC";
+            const phi = "PHIC";
+            const wt = "";
+            const use_wt = false;
+            const is_diff = false;
+            const result = molecules_container.read_mtz(key + ".mtz",f,phi,wt,use_wt,is_diff);
+            dataObjectsNames.map_cont_idx[key] = result;
         }
         updateShareArrayBuffer();
     }).catch(function(err) {
@@ -208,10 +216,22 @@ function getDensityFit(e) {
     const jobId = e.data.jobId;
     const pdbin = dataObjects.pdbFiles[e.data.pdbinKey].fileName;
     const chainId = e.data["chainId"];
-    const hklin = dataObjects.pdbFiles[e.data.hklinKey].fileName;
+    const hklin = dataObjects.mtzFiles[e.data.hklinKey].fileName;
     const imol_model = dataObjectsNames.mol_cont_idx[e.data.pdbinKey];
-    const imol_map = 0; // FIXME - I am not sure we have the data structure yet ...
-    //const result = RSRModule.DFA(imol_model, imol_map);
+    const imol_map = dataObjectsNames.map_cont_idx[e.data.hklinKey];
+    console.log(imol_model,imol_map);
+    const result = molecules_container.density_fit_analysis(imol_model, imol_map);
+    console.log(result);
+    const index_for_chain = result.get_index_for_chain(chainId);
+    console.log(index_for_chain);
+    console.log(result.cviv.get(index_for_chain));
+    const resInfo = result.cviv.get(index_for_chain).rviv;
+    console.log(resInfo);
+    console.log(resInfo.size());
+    //Hmm - this is size 0.
+    for(let ir=0;ir<resInfo.size();ir++){
+        console.log(resInfo.get(ir));
+    }
 }
 
 function getBVals(e) {
