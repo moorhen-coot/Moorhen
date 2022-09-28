@@ -5,7 +5,7 @@
  /* ideal/with-map.cc
   * 
   * Copyright 2002, 2003 The University of York
-@@ -258,7 +259,7 @@
+@@ -258,7 +259,7 @@ execute_crankshaft(const coot::residue_spec_t &rs, int n_peptides, const clipper
  }
  
  int
@@ -14,7 +14,15 @@
  
  #ifndef HAVE_GSL
     std::cout << "We don't have GSL, this program does nothing" << std::endl;
-@@ -652,6 +653,7 @@
+@@ -486,6 +487,7 @@ main(int argc, char **argv) {
+ 		  make_trans_peptide_restraints = true;
+ 
+ 	       int n_threads = coot::get_max_number_of_threads();
++               n_threads = std::min(n_threads,4); // 4 is the PTHREAD_POOL_SIZE set in CMakeLists.txt for emscripten.
+ 	       ctpl::thread_pool thread_pool(n_threads);
+ 	       restraints.thread_pool(&thread_pool, n_threads);
+ 
+@@ -652,6 +654,7 @@ map_from_mtz(std::string mtz_file_name,
        std::cout << "Failed to read mtz file " << mtz_file_name << std::endl;
     }
  
@@ -22,7 +30,7 @@
     return std::pair<bool, clipper::Xmap<float> > (status, xmap);
  }
  
-@@ -925,3 +927,13 @@
+@@ -925,3 +928,13 @@ get_input_details(int argc, char **argv) {
  	    
     return d;
  }
