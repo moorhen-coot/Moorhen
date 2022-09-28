@@ -263,7 +263,7 @@ class ResidueDataPlot extends Component {
         const self = this;
         this.setState({plotInfo:plotInfo.info,key:plotInfo.key},()=>self.draw());
 
-        this.nRows = parseInt((plotInfo.length + this.maxPerRow - 1) / this.maxPerRow);
+        this.nRows = parseInt((plotInfo.info.length + this.maxPerRow - 1) / this.maxPerRow);
 
         this.largeRef.current.style.width = (1+this.maxPerRow)*(this.dataPointWidth)+"px";
         let bigHeight = (this.nRows+1)*75;

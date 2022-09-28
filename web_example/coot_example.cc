@@ -275,6 +275,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     class_<coot::residue_validation_information_t>("residue_validation_information_t")
     .property("distortion", &coot::residue_validation_information_t::distortion)
     .property("label", &coot::residue_validation_information_t::label)
+    .property("residue_spec", &coot::residue_validation_information_t::residue_spec)
+    .property("atom_spec", &coot::residue_validation_information_t::atom_spec)
     ;
     class_<coot::chain_validation_information_t>("chain_validation_information_t")
     .property("name", &coot::chain_validation_information_t::name)
@@ -318,8 +320,25 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("restype", &ResiduePropertyInfo::restype)
     .property("property", &ResiduePropertyInfo::property)
     ;
+    class_<coot::atom_spec_t>("atom_spec_t")
+    .constructor<const std::string &, int, const std::string &, const std::string &, const std::string &>()
+    .property("chain_id",&coot::atom_spec_t::chain_id)
+    .property("res_no",&coot::atom_spec_t::res_no)
+    .property("ins_code",&coot::atom_spec_t::ins_code)
+    .property("atom_name",&coot::atom_spec_t::atom_name)
+    .property("alt_conf",&coot::atom_spec_t::alt_conf)
+    .property("int_user_data",&coot::atom_spec_t::int_user_data)
+    .property("float_user_data",&coot::atom_spec_t::float_user_data)
+    .property("string_user_data",&coot::atom_spec_t::string_user_data)
+    .property("model_number",&coot::atom_spec_t::model_number)
+    ;
     class_<coot::residue_spec_t>("residue_spec_t")
     .constructor<const std::string &, int, const std::string &>()
+    .property("model_number",&coot::residue_spec_t::model_number)
+    .property("chain_id",&coot::residue_spec_t::chain_id)
+    .property("res_no",&coot::residue_spec_t::res_no)
+    .property("ins_code",&coot::residue_spec_t::ins_code)
+    .property("int_user_data",&coot::residue_spec_t::int_user_data)
     ;
     register_vector<std::string>("VectorString");
     register_vector<RamachandranInfo>("VectorResidueIdentifier");

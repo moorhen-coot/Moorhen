@@ -45,6 +45,7 @@ class Main extends Component {
         this.flipRef = React.createRef();
         this.ramaRef = React.createRef();
         this.bvalRef = React.createRef();
+        this.densityFitRef = React.createRef();
         if (true || window.crossOriginIsolated) {
             this.sharedArrayBuffer = new window.SharedArrayBuffer(2097152);
             //Initialize
@@ -76,6 +77,9 @@ class Main extends Component {
             }
             if (e.data[0] === "result" && e.data[2] === "get_bvals") {
                 self.bvalRef.current.updatePlotData();
+            }
+            if (e.data[0] === "result" && e.data[2] === "density_fit") {
+                self.densityFitRef.current.updatePlotData();
             }
             if (e.data[0] === "result" && e.data[2] === "get_xyz") {
                     self.gl.current.setOrigin(e.data[1]);
@@ -383,7 +387,7 @@ class Main extends Component {
                     </Col>
 
                     <Col lg={4}>
-                        <ControlInterface onResidueDataClick={this.residueDataClick.bind(this)} rsrRef={this.rsrRef} flipRef={this.flipRef} ramaRef={this.ramaRef} bvalRef={this.bvalRef}
+                        <ControlInterface onResidueDataClick={this.residueDataClick.bind(this)} rsrRef={this.rsrRef} flipRef={this.flipRef} ramaRef={this.ramaRef} bvalRef={this.bvalRef} densityFitRef={this.densityFitRef}
                             sharedArrayBuffer={this.sharedArrayBuffer}
                             crystWorker={this.crystWorker}
                             liveUpdatingMaps={liveUpdatingMaps}

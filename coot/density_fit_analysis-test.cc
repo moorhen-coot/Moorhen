@@ -29,6 +29,11 @@ int main(int argc, char *argv[]){
 
     for(unsigned ir=0;ir<result.cviv[index_for_chain].rviv.size();ir++){
         std::cout << result.cviv[index_for_chain].rviv[ir].label << " " << result.cviv[index_for_chain].rviv[ir].distortion << std::endl;
+        std::cout << result.cviv[index_for_chain].rviv[ir].residue_spec.model_number << " ";
+        std::cout << result.cviv[index_for_chain].rviv[ir].residue_spec.chain_id << " ";
+        std::cout << result.cviv[index_for_chain].rviv[ir].residue_spec.res_no << " ";
+        std::cout << result.cviv[index_for_chain].rviv[ir].residue_spec.ins_code << " ";
+        std::cout << result.cviv[index_for_chain].rviv[ir].residue_spec.int_user_data << std::endl;
     }
 
     return 0;

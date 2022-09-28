@@ -228,10 +228,20 @@ function getDensityFit(e) {
     const resInfo = result.cviv.get(index_for_chain).rviv;
     console.log(resInfo);
     console.log(resInfo.size());
-    //Hmm - this is size 0.
+    let resInfoJS = [];
     for(let ir=0;ir<resInfo.size();ir++){
-        console.log(resInfo.get(ir).label,resInfo.get(ir).distortion);
+        const CPPchainId = resInfo.get(ir).residue_spec.chain_id;
+        const seqNum = resInfo.get(ir).residue_spec.res_no;
+        const value = resInfo.get(ir).distortion;
+        const insCode = resInfo.get(ir).residue_spec.ins_code;
+        //FIXME - It would be nice to know.
+        const restype = "UNK";
+        const jsres = {chainId:CPPchainId,insCode:insCode,seqNum:seqNum,restype:restype,density_fit:value};
+        resInfoJS.push(jsres);
     }
+    dataObjectsNames.densityFitInfo[e.data.pdbinKey] = resInfoJS;
+    updateShareArrayBuffer();
+    postMessage(["result",result,currentTaskName]);
 }
 
 function getBVals(e) {
