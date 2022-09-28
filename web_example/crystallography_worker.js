@@ -230,7 +230,7 @@ function getDensityFit(e) {
     console.log(resInfo.size());
     //Hmm - this is size 0.
     for(let ir=0;ir<resInfo.size();ir++){
-        console.log(resInfo.get(ir));
+        console.log(resInfo.get(ir).label,resInfo.get(ir).distortion);
     }
 }
 
