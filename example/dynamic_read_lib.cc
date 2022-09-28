@@ -67,9 +67,13 @@ int main(int argc, char **argv) {
 
                 std::cout << resno << " " << res_name << std::endl;
                 std::vector<coot::simple_rotamer> rots =  rot.get_rotamers(res_name, 0.001);
-                std::cout << rots.size() << std::endl;
-                std::cout << rots[0].get_chi(1) << std::endl;
-                
+                for(int irot=0;irot<rots.size();irot++){
+                    for(int n_chi=0;n_chi<4;n_chi++){
+                        std::cout << " " << rots[irot].get_chi(n_chi+1);
+                    }
+                    std::cout << " " << rots[irot].P_r1234();
+                    std::cout << std::endl;
+                }
             }
         }
     }
