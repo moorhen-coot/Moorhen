@@ -236,7 +236,7 @@ function getDensityFit(e) {
         const insCode = resInfo.get(ir).residue_spec.ins_code;
         //FIXME - It would be nice to know.
         const restype = "UNK";
-        const jsres = {chainId:CPPchainId,insCode:insCode,seqNum:seqNum,restype:restype,density_fit:value};
+        const jsres = {chainId:CPPchainId,insCode:insCode,seqNum:seqNum,restype:restype,density_fit:1./value};
         resInfoJS.push(jsres);
     }
     dataObjectsNames.densityFitInfo[e.data.pdbinKey] = resInfoJS;

@@ -68,7 +68,7 @@ class Utilities extends React.Component {
         const densityFitDataKey = 'density_fit';
         const densityFitCrystMethod = "density_fit";
         const densityFitInfoName = "densityFitInfo";
-        const densityFitDataInfoScaling = 100.;
+        const densityFitDataInfoScaling = 1.;
         return (
         <>
         <Form.Select aria-label="Utilities select example" onChange={selectionChanged}>
