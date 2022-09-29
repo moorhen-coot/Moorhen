@@ -281,6 +281,28 @@ function getRama(e) {
     postMessage(["result",result,currentTaskName]);
 }
 
+function getRotamers(e) {
+    const jobId = e.data.jobId;
+    const pdbin = dataObjects.pdbFiles[e.data.pdbinKey].fileName;
+    const chainId = e.data["chainId"];
+    const result = RSRModule.getRotamersForChain(pdbin,chainId);
+    console.log(result.size());
+    let ir=0;
+    for(ir=0;ir<result.size();ir++){
+        const resRot = result.get(ir);
+        console.log(resRot.size());
+        let irot = 0;
+        for(irot=0;irot<resRot.size();irot++){
+            const rotamer = resRot.get(irot);
+            const chi1 = rotamer.get_chi(1);
+            const chi2 = rotamer.get_chi(2);
+            const chi3 = rotamer.get_chi(3);
+            const chi4 = rotamer.get_chi(4);
+            console.log(chi1,chi2,chi3,chi4);
+        }
+    }
+}
+
 function flipPeptide(e) {
 
     const jobId = e.data.jobId;
@@ -423,8 +445,14 @@ onmessage = function(e) {
             }
             currentTaskName = "";
             break;
+        case "get_rotamers":
+            console.log("Do get rotamers in cryst worker ...");
+            currentTaskName = "rotamers";
+            getRotamers(e);
+            currentTaskName = "";
+            break;
         default:
-            console.log("default, do nothing");
+            console.log("default, do nothing",e.data.method);
     }
 
 }

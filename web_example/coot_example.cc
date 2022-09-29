@@ -23,6 +23,9 @@
 #include <emscripten/bind.h>
 
 #include "geometry/residue-and-atom-specs.hh"
+#include "ligand/chi-angles.hh"
+#include "ligand/primitive-chi-angles.hh"
+#include "ligand/rotamer.hh"
 #include "api/interfaces.hh"
 #include "api/molecules_container.hh"
 #include "api/validation-information.hh"
@@ -90,7 +93,61 @@ std::vector<ResiduePropertyInfo> getBVals(const std::string &pdbin, const std::s
     return info;
 }
 
+int getRotamersForChain2(const std::string &pdbin, const std::string &chainId_in){
+    std::cout << "Hello!!!!!!!" << std::endl;
+    return 1;
+}
+
+std::vector<std::vector<coot::simple_rotamer> > getRotamersForChain(const std::string &pdbin, const std::string &chainId_in){
+
+    //std::cout << "std::vector<coot::simple_rotamer> getRotamersForChain(const std::string &pdbin, const std::string &chainId_in)" << std::endl;
+    std::vector<std::vector<coot::simple_rotamer> > all_rots;
+
+    const char *filename_cp = pdbin.c_str();
+    mmdb::InitMatType();
+    mmdb::Manager *molHnd = new mmdb::Manager();
+    int RC = molHnd->ReadCoorFile(filename_cp);
+    //std::cout << RC << std::endl;
+
+    //std::cout << "getRotamers (2)" << std::endl;
+
+    coot::rotamer rot(0);
+
+    //std::cout << "getRotamers (3)" << std::endl;
+
+    mmdb::Model *model_p = molHnd->GetModel(1);
+    int nchains = model_p->GetNumberOfChains();
+    for (int ichain=0; ichain<nchains; ichain++) {
+        //std::cout << "chain " << ichain << std::endl;
+        mmdb::Chain *chain_p = model_p->GetChain(ichain);
+        std::string chain_id = chain_p->GetChainID();
+        //std::cout << "chain_id " << chain_id << std::endl;
+        //std::cout << "chainId_in " << chainId_in << std::endl;
+        if (chain_id == chainId_in) {
+            //std::cout << "match" << std::endl;
+            int nres = chain_p->GetNumberOfResidues();
+            mmdb::Residue *residue_p;
+            for (int ires=0; ires<nres; ires++) { 
+                residue_p = chain_p->GetResidue(ires);
+                int resno = residue_p->GetSeqNum();
+                std::string res_name(residue_p->GetResName());
+                if (res_name == "GLY" || res_name == "ALA" || res_name == "HOH") {
+                    continue;
+                }
+
+                //std::cout << resno << " " << res_name << std::endl;
+                std::vector<coot::simple_rotamer> rots =  rot.get_rotamers(res_name, 0.001);
+                all_rots.push_back(rots);
+            }
+            break;
+        }
+    }
+    
+    return all_rots;
+}
+
 std::vector<RamachandranInfo> getRamachandranData(const std::string &pdbin, const std::string &chainId){
+    std::cout << "std::vector<RamachandranInfo> getRamachandranData" << std::endl;
     std::vector<RamachandranInfo> info;
     const char *filename_cp = pdbin.c_str();
     mmdb::InitMatType();
@@ -272,6 +329,11 @@ class molecules_container_js : public molecules_container_t {
 };
 
 EMSCRIPTEN_BINDINGS(my_module) {
+    class_<coot::simple_rotamer>("simple_rotamer")
+    .function("P_r1234",&coot::simple_rotamer::P_r1234)
+    .function("Probability_rich",&coot::simple_rotamer::Probability_rich)
+    .function("get_chi",&coot::simple_rotamer::get_chi)
+    ;
     class_<coot::residue_validation_information_t>("residue_validation_information_t")
     .property("distortion", &coot::residue_validation_information_t::distortion)
     .property("label", &coot::residue_validation_information_t::label)
@@ -345,8 +407,12 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<ResiduePropertyInfo>("VectorResiduePropertyInfo");
     register_vector<coot::chain_validation_information_t>("Vectorchain_validation_information_t");
     register_vector<coot::residue_validation_information_t>("Vectorresidue_validation_information_t");
+    register_vector<coot::simple_rotamer>("Vectorsimple_rotamer");
+    register_vector<std::vector<coot::simple_rotamer> >("VectorVectorsimple_rotamer");
     function("mini_rsr",&mini_rsr);
     function("flipPeptide",&flipPeptide);
     function("getRamachandranData",&getRamachandranData);
+    function("getRotamersForChain",&getRotamersForChain);
+    function("getRotamersForChain2",&getRotamersForChain2);
     function("getBVals",&getBVals);
 }

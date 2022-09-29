@@ -12,6 +12,8 @@
 #include "mmdb_manager.h"
 
 int main(int argc, char **argv) {
+
+    /*
     coot::protein_geometry geom;
     geom.init_standard();
 
@@ -39,6 +41,7 @@ int main(int argc, char **argv) {
          std::cout << "test: " << res_type << " -- no dictionary " << std::endl;
       }
    }
+   */
 
 
     mmdb::InitMatType();

@@ -64,11 +64,9 @@ class Main extends Component {
             if (e.data[0] === "output") {
                 if (e.data[2] === "mini_rsr") {
                     self.rsrRef.current.updateLog(e.data[1] + "\n");
-                }
-                if (e.data[2] === "flip_peptide") {
+                } else if (e.data[2] === "flip_peptide") {
                     self.flipRef.current.updateLog(e.data[1] + "\n");
-                }
-                if (e.data[2] === "get_rama"||e.data[2] === "get_xyz") {
+                } else {
                     console.log(e.data[1]);
                 }
             }
