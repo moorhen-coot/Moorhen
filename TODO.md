@@ -18,7 +18,7 @@ This project is a set of scripts, patches and CMakeLists.txt files which enable 
     - [x] Access to FS when compiled with `USE_PTHREADS`
     - [x] UI for residue selection
     - [ ] select by clicking in WebGL
-- [ ] Fix strange `This build does not incorporate the necessary CCP4 SRS library` error message.
+- [x] Fix strange `This build does not incorporate the necessary CCP4 SRS library` error message.
 - [ ] Fix 5oah Ribbons showing nothing
 - [ ] Selections for ribbons/worms (currently does all atoms whatever the selection)
 - [ ] Display maps

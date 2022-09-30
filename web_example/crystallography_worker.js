@@ -285,12 +285,13 @@ function getRotamers(e) {
     const jobId = e.data.jobId;
     const pdbin = dataObjects.pdbFiles[e.data.pdbinKey].fileName;
     const chainId = e.data["chainId"];
-    const result = RSRModule.getRotamersForChain(pdbin,chainId);
-    console.log(result.size());
-    let ir=0;
-    for(ir=0;ir<result.size();ir++){
-        const resRot = result.get(ir);
-        console.log(resRot.size());
+
+    const result = RSRModule.getRotamersMap();
+    const mapKeys = result.keys();
+    for (let i = 0; i < mapKeys.size(); i++) {
+        const key = mapKeys.get(i);
+        console.log(key,":");
+        const resRot = result.get(key);
         let irot = 0;
         for(irot=0;irot<resRot.size();irot++){
             const rotamer = resRot.get(irot);

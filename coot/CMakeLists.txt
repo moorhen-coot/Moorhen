@@ -175,7 +175,6 @@ ${coot_src}/geometry/read-sbase.cc
 ${coot_src}/geometry/hydrophobic.cc
 ${coot_src}/geometry/energy-lib.cc
 ${coot_src}/geometry/srs-interface.cc
-${coot_src}/geometry/available-comp-id.cc
 ${coot_src}/geometry/residue-and-atom-specs.cc
 ${coot_src}/geometry/protein-geometry-mmdb.cc
 ${coot_src}/geometry/mol-utils.cc
