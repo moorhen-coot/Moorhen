@@ -58,18 +58,10 @@ class ResidueList extends Component {
             key = pdbKeys[0];
         }
 
-        console.log(dataObjectNames[self.infoName][key]);
-
-        /*
-        self.plotRef.current.dataKey = this.dataKey;
-        self.plotRef.current.dataInfoScaling = this.dataInfoScaling;
-        self.plotRef.current.customClickHandler = this.clickHandler;
 
         if(dataObjectNames[self.infoName] && dataObjectNames[self.infoName][key]){
-            self.plotRef.current.updatePlotData({info:dataObjectNames[self.infoName][key],key:key});
             this.setState({plotInfo:dataObjectNames[self.infoName][key]});
         }
-        */
 
     }
 
@@ -126,6 +118,11 @@ class ResidueList extends Component {
     render () {
         const styles = reactCSS({
             'default': {
+                'scrolllist': {
+                     'height': '200px',
+                     'overflowX': 'auto',
+                     'overflowY': 'scroll',
+                },
                 'logpre': {
                      'margin': '10px',
                      'border': '1px solid green',
@@ -169,6 +166,22 @@ class ResidueList extends Component {
             selected = pdbKeys[0];
         }
 
+        let buttons = [];
+        if(dataObjectNames[self.infoName][selected]){
+            for(let i=0;i<dataObjectNames[self.infoName][selected].length;i++){
+                const resRot = dataObjectNames[self.infoName][selected][i];
+                if(resRot.rotamers.length>0){
+                    const buttonId = "rotamer-"+i;
+                    const buttonLabel = resRot.chainId + "/" + resRot.seqNum + "(" + resRot.restype + ")";
+                    buttons.push(
+                            <Button key={buttonId} variant="primary" size="lg">
+                            {buttonLabel}
+                            </Button>
+                            )
+                }
+            }
+        }
+
         //TODO - Need to introspect the pdb file to see what chains exist and pick the first one ...
 
         return (
@@ -186,6 +199,11 @@ class ResidueList extends Component {
         </Form.Group>
         </Form>
         <div className="vspace1em"></div>
+        <div style={styles.scrolllist}>
+        <div className="d-grid gap-2">
+        {buttons}
+        </div>
+        </div>
         </>
         );
     }

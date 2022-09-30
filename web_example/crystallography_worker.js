@@ -458,7 +458,6 @@ onmessage = function(e) {
             currentTaskName = "";
             break;
         case "get_rotamers":
-            console.log("Do get rotamers in cryst worker ...");
             currentTaskName = "rotamers";
             getRotamers(e);
             currentTaskName = "";
