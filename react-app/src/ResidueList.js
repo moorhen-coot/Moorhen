@@ -172,7 +172,12 @@ class ResidueList extends Component {
                 const resRot = dataObjectNames[self.infoName][selected][i];
                 if(resRot.rotamers.length>0){
                     const buttonId = "rotamer-"+i;
-                    const buttonLabel = resRot.chainId + "/" + resRot.seqNum + "(" + resRot.restype + ")";
+                    let buttonLabel;
+                    if(resRot.insCode){
+                        buttonLabel = resRot.chainId + "/" + resRot.seqNum + "[" + resRot.insCode +  "](" + resRot.restype + ")";
+                    } else {
+                        buttonLabel = resRot.chainId + "/" + resRot.seqNum + "(" + resRot.restype + ")";
+                    }
                     buttons.push(
                             <Button key={buttonId} variant="primary" size="lg">
                             {buttonLabel}
