@@ -93,6 +93,41 @@ std::vector<ResiduePropertyInfo> getBVals(const std::string &pdbin, const std::s
     return info;
 }
 
+std::vector<coot::residue_spec_t> getResidueSpecListForChain(const std::string &pdbin, const std::string &chainId_in){
+
+    std::vector<coot::residue_spec_t> resSpecList;
+
+    const char *filename_cp = pdbin.c_str();
+    mmdb::InitMatType();
+    mmdb::Manager *molHnd = new mmdb::Manager();
+    int RC = molHnd->ReadCoorFile(filename_cp);
+
+    mmdb::Model *model_p = molHnd->GetModel(1);
+    int nchains = model_p->GetNumberOfChains();
+    for (int ichain=0; ichain<nchains; ichain++) {
+        mmdb::Chain *chain_p = model_p->GetChain(ichain);
+        std::string chain_id = chain_p->GetChainID();
+        if (chain_id == chainId_in) {
+            int nres = chain_p->GetNumberOfResidues();
+            mmdb::Residue *residue_p;
+            for (int ires=0; ires<nres; ires++) { 
+                residue_p = chain_p->GetResidue(ires);
+                int resno = residue_p->GetSeqNum();
+                std::string res_name(residue_p->GetResName());
+                coot::residue_spec_t res_spec;
+                res_spec.model_number = 1;
+                res_spec.chain_id = chain_id;
+                res_spec.res_no = residue_p->GetSeqNum();
+                res_spec.ins_code = residue_p->GetInsCode();
+                resSpecList.push_back(res_spec);
+            }
+        }
+    }
+
+    return resSpecList;
+
+}
+
 std::vector<std::string> getResidueListForChain(const std::string &pdbin, const std::string &chainId_in){
 
     std::vector<std::string> resList;
@@ -401,11 +436,13 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<coot::chain_validation_information_t>("Vectorchain_validation_information_t");
     register_vector<coot::residue_validation_information_t>("Vectorresidue_validation_information_t");
     register_vector<coot::simple_rotamer>("Vectorsimple_rotamer");
+    register_vector<coot::residue_spec_t>("Vectorresidue_spec_t");
     register_map<std::string,std::vector<coot::simple_rotamer> >("MapStringVectorsimple_rotamer");
     function("mini_rsr",&mini_rsr);
     function("flipPeptide",&flipPeptide);
     function("getRamachandranData",&getRamachandranData);
     function("getRotamersMap",&getRotamersMap);
     function("getResidueListForChain",&getResidueListForChain);
+    function("getResidueSpecListForChain",&getResidueSpecListForChain);
     function("getBVals",&getBVals);
 }

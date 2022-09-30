@@ -287,25 +287,10 @@ function getRotamers(e) {
     const chainId = e.data["chainId"];
 
     const rotamersMap = RSRModule.getRotamersMap();
-    const mapKeys = rotamersMap.keys();
-    for (let i = 0; i < mapKeys.size(); i++) {
-        const key = mapKeys.get(i);
-        console.log(key,":");
-        const resRot = rotamersMap.get(key);
-        let irot = 0;
-        for(irot=0;irot<resRot.size();irot++){
-            const rotamer = resRot.get(irot);
-            const chi1 = rotamer.get_chi(1);
-            const chi2 = rotamer.get_chi(2);
-            const chi3 = rotamer.get_chi(3);
-            const chi4 = rotamer.get_chi(4);
-            console.log(chi1,chi2,chi3,chi4);
-        }
-    }
 
     let rotamersInfo = [];
     const residueList = RSRModule.getResidueListForChain(pdbin,chainId);
-    console.log(residueList);
+    const residueSpecList = RSRModule.getResidueSpecListForChain(pdbin,chainId);
     for(let i=0;i<residueList.size();i++){
         const resRot = rotamersMap.get(residueList.get(i));
         if(resRot){
@@ -319,13 +304,12 @@ function getRotamers(e) {
                 const chi4 = rotamer.get_chi(4);
                 resRots.push([chi1,chi2,chi3,chi4]);
             }
-            //FIXME - Need insCode and seqNum
-            rotamersInfo.push({chainId:chainId,restype:residueList.get(i),rotamers:resRots});
+            rotamersInfo.push({chainId:chainId,seqNum:residueSpecList.get(i).res_no,insCode:residueSpecList.get(i).ins_code,restype:residueList.get(i),rotamers:resRots});
         } else {
-            rotamersInfo.push({chainId:chainId,restype:residueList.get(i),rotamers:[]});
+            rotamersInfo.push({chainId:chainId,seqNum:residueSpecList.get(i).res_no,insCode:residueSpecList.get(i).ins_code,restype:residueList.get(i),rotamers:[]});
         }
     }
-    console.log(rotamersInfo);
+
     dataObjectsNames.rotamersInfo[e.data.pdbinKey] = rotamersInfo;
     updateShareArrayBuffer();
     postMessage(["result",0,currentTaskName]);
