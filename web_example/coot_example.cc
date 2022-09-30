@@ -93,11 +93,6 @@ std::vector<ResiduePropertyInfo> getBVals(const std::string &pdbin, const std::s
     return info;
 }
 
-int getRotamersForChain2(const std::string &pdbin, const std::string &chainId_in){
-    std::cout << "Hello!!!!!!!" << std::endl;
-    return 1;
-}
-
 std::map<std::string,std::vector<coot::simple_rotamer> > getRotamersMap(){
 
     std::map<std::string,std::vector<coot::simple_rotamer> > all_rots;
@@ -381,6 +376,5 @@ EMSCRIPTEN_BINDINGS(my_module) {
     function("flipPeptide",&flipPeptide);
     function("getRamachandranData",&getRamachandranData);
     function("getRotamersMap",&getRotamersMap);
-    function("getRotamersForChain2",&getRotamersForChain2);
     function("getBVals",&getBVals);
 }
