@@ -57,6 +57,10 @@ class Utilities extends React.Component {
 	this.props.onSVGChange(data);
     }
 
+    rotamerClick(data) {
+        console.log(data);
+    }
+
     helicesChanged(data) {
 	this.props.helicesChanged({pending:data});
     }
@@ -98,7 +102,7 @@ class Utilities extends React.Component {
         { this.state.showDownloadSF ? <DownloadSF /> : null }
         { this.state.showBVals ? <ResidueData clickHandler={this.props.onResidueDataClick} dataInfoScaling={bValDataInfoScaling} infoName={bValInfoName} crystMethod={bValCrystMethod} dataKey={bValDataKey} ref={this.props.bvalRef} sharedArrayBuffer={this.props.sharedArrayBuffer} crystWorker={this.props.crystWorker} /> : null }
         { this.state.showDensityFit ? <ResidueMapData clickHandler={this.props.onResidueDataClick} dataInfoScaling={densityFitDataInfoScaling} infoName={densityFitInfoName} crystMethod={densityFitCrystMethod} dataKey={densityFitDataKey} ref={this.props.densityFitRef} sharedArrayBuffer={this.props.sharedArrayBuffer} crystWorker={this.props.crystWorker} /> : null }
-        { this.state.showRotamers ? <ResidueList ref={this.props.rotamersRef} infoName={rotamerInfoName} crystMethod={rotamerCrystMethod} dataKey={rotamerDataKey} sharedArrayBuffer={this.props.sharedArrayBuffer} crystWorker={this.props.crystWorker} /> : null }
+        { this.state.showRotamers ? <ResidueList ref={this.props.rotamersRef} infoName={rotamerInfoName} crystMethod={rotamerCrystMethod} dataKey={rotamerDataKey} sharedArrayBuffer={this.props.sharedArrayBuffer} crystWorker={this.props.crystWorker} clickHandler={this.rotamerClick} /> : null }
         </>
         
     )

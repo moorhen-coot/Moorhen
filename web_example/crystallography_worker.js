@@ -304,9 +304,9 @@ function getRotamers(e) {
                 const chi4 = rotamer.get_chi(4);
                 resRots.push([chi1,chi2,chi3,chi4]);
             }
-            rotamersInfo.push({chainId:chainId,seqNum:residueSpecList.get(i).res_no,insCode:residueSpecList.get(i).ins_code,restype:residueList.get(i),rotamers:resRots});
+            rotamersInfo.push({chainId:chainId,seqNum:residueSpecList.get(i).res_no,insCode:residueSpecList.get(i).ins_code,restype:residueList.get(i),data:resRots});
         } else {
-            rotamersInfo.push({chainId:chainId,seqNum:residueSpecList.get(i).res_no,insCode:residueSpecList.get(i).ins_code,restype:residueList.get(i),rotamers:[]});
+            rotamersInfo.push({chainId:chainId,seqNum:residueSpecList.get(i).res_no,insCode:residueSpecList.get(i).ins_code,restype:residueList.get(i),data:[]});
         }
     }
 

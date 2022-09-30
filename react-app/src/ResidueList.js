@@ -169,17 +169,17 @@ class ResidueList extends Component {
         let buttons = [];
         if(dataObjectNames[self.infoName][selected]){
             for(let i=0;i<dataObjectNames[self.infoName][selected].length;i++){
-                const resRot = dataObjectNames[self.infoName][selected][i];
-                if(resRot.rotamers.length>0){
-                    const buttonId = "rotamer-"+i;
+                const resData = dataObjectNames[self.infoName][selected][i];
+                if(resData.data&&resData.data.length>0){
+                    const buttonId = "reslistbutton-"+i;
                     let buttonLabel;
-                    if(resRot.insCode){
-                        buttonLabel = resRot.chainId + "/" + resRot.seqNum + "[" + resRot.insCode +  "](" + resRot.restype + ")";
+                    if(resData.insCode){
+                        buttonLabel = resData.chainId + "/" + resData.seqNum + "[" + resData.insCode +  "](" + resData.restype + ")";
                     } else {
-                        buttonLabel = resRot.chainId + "/" + resRot.seqNum + "(" + resRot.restype + ")";
+                        buttonLabel = resData.chainId + "/" + resData.seqNum + "(" + resData.restype + ")";
                     }
                     buttons.push(
-                            <Button key={buttonId} variant="primary" size="lg">
+                            <Button key={buttonId} variant="primary" size="lg" onClick={self.clickHandler.bind(self,resData)}>
                             {buttonLabel}
                             </Button>
                             )
@@ -192,7 +192,7 @@ class ResidueList extends Component {
         return (
                 <>
         <Form onSubmit={this.handleSubmit.bind(this)}>
-        <Form.Group as={Row} controlId="resData">
+        <Form.Group as={Row} controlId="resListData">
         <Col>
                 <Form.Select value={selected} onChange={handleChange} >
                 {rows}
