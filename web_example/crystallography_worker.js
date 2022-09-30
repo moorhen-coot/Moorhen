@@ -51,7 +51,7 @@ createRSRModule(Lib)
 
 
 let dataObjects = {pdbFiles:{}, mtzFiles:{}, cifFiles:{}};
-let dataObjectsNames = {pdbFiles:{}, mtzFiles:{}, cifFiles:{}, ramaInfo:{}, bvalInfo:{}, mol_cont_idx:{}, map_cont_idx:{}, densityFitInfo:{}};
+let dataObjectsNames = {pdbFiles:{}, mtzFiles:{}, cifFiles:{}, ramaInfo:{}, bvalInfo:{}, mol_cont_idx:{}, map_cont_idx:{}, densityFitInfo:{}, rotamersInfo:{}};
 let sharedArrayBuffer = null;
 
 function guid(){
@@ -286,12 +286,12 @@ function getRotamers(e) {
     const pdbin = dataObjects.pdbFiles[e.data.pdbinKey].fileName;
     const chainId = e.data["chainId"];
 
-    const result = RSRModule.getRotamersMap();
-    const mapKeys = result.keys();
+    const rotamersMap = RSRModule.getRotamersMap();
+    const mapKeys = rotamersMap.keys();
     for (let i = 0; i < mapKeys.size(); i++) {
         const key = mapKeys.get(i);
         console.log(key,":");
-        const resRot = result.get(key);
+        const resRot = rotamersMap.get(key);
         let irot = 0;
         for(irot=0;irot<resRot.size();irot++){
             const rotamer = resRot.get(irot);
@@ -302,6 +302,33 @@ function getRotamers(e) {
             console.log(chi1,chi2,chi3,chi4);
         }
     }
+
+    let rotamersInfo = [];
+    const residueList = RSRModule.getResidueListForChain(pdbin,chainId);
+    console.log(residueList);
+    for(let i=0;i<residueList.size();i++){
+        const resRot = rotamersMap.get(residueList.get(i));
+        if(resRot){
+            let irot = 0;
+            let resRots = [];
+            for(irot=0;irot<resRot.size();irot++){
+                const rotamer = resRot.get(irot);
+                const chi1 = rotamer.get_chi(1);
+                const chi2 = rotamer.get_chi(2);
+                const chi3 = rotamer.get_chi(3);
+                const chi4 = rotamer.get_chi(4);
+                resRots.push([chi1,chi2,chi3,chi4]);
+            }
+            //FIXME - Need insCode and seqNum
+            rotamersInfo.push({chainId:chainId,restype:residueList.get(i),rotamers:resRots});
+        } else {
+            rotamersInfo.push({chainId:chainId,restype:residueList.get(i),rotamers:[]});
+        }
+    }
+    console.log(rotamersInfo);
+    dataObjectsNames.rotamersInfo[e.data.pdbinKey] = rotamersInfo;
+    updateShareArrayBuffer();
+    postMessage(["result",0,currentTaskName]);
 }
 
 function flipPeptide(e) {

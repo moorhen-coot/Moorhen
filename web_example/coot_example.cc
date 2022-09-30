@@ -93,6 +93,36 @@ std::vector<ResiduePropertyInfo> getBVals(const std::string &pdbin, const std::s
     return info;
 }
 
+std::vector<std::string> getResidueListForChain(const std::string &pdbin, const std::string &chainId_in){
+
+    std::vector<std::string> resList;
+
+    const char *filename_cp = pdbin.c_str();
+    mmdb::InitMatType();
+    mmdb::Manager *molHnd = new mmdb::Manager();
+    int RC = molHnd->ReadCoorFile(filename_cp);
+
+    mmdb::Model *model_p = molHnd->GetModel(1);
+    int nchains = model_p->GetNumberOfChains();
+    for (int ichain=0; ichain<nchains; ichain++) {
+        mmdb::Chain *chain_p = model_p->GetChain(ichain);
+        std::string chain_id = chain_p->GetChainID();
+        if (chain_id == chainId_in) {
+            int nres = chain_p->GetNumberOfResidues();
+            mmdb::Residue *residue_p;
+            for (int ires=0; ires<nres; ires++) { 
+                residue_p = chain_p->GetResidue(ires);
+                int resno = residue_p->GetSeqNum();
+                std::string res_name(residue_p->GetResName());
+                resList.push_back(res_name);
+            }
+        }
+    }
+
+    return resList;
+
+}
+
 std::map<std::string,std::vector<coot::simple_rotamer> > getRotamersMap(){
 
     std::map<std::string,std::vector<coot::simple_rotamer> > all_rots;
@@ -376,5 +406,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
     function("flipPeptide",&flipPeptide);
     function("getRamachandranData",&getRamachandranData);
     function("getRotamersMap",&getRotamersMap);
+    function("getResidueListForChain",&getResidueListForChain);
     function("getBVals",&getBVals);
 }

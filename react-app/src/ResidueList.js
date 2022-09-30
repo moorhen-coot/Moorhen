@@ -58,6 +58,8 @@ class ResidueList extends Component {
             key = pdbKeys[0];
         }
 
+        console.log(dataObjectNames[self.infoName][key]);
+
         /*
         self.plotRef.current.dataKey = this.dataKey;
         self.plotRef.current.dataInfoScaling = this.dataInfoScaling;
