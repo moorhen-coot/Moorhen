@@ -179,7 +179,7 @@ class ResidueList extends Component {
                         buttonLabel = resData.chainId + "/" + resData.seqNum + "(" + resData.restype + ")";
                     }
                     buttons.push(
-                            <Button key={buttonId} variant="primary" size="lg" onClick={self.clickHandler.bind(self,resData)}>
+                            <Button key={buttonId} variant="primary" size="lg" onClick={self.clickHandler.bind(this,resData)}>
                             {buttonLabel}
                             </Button>
                             )

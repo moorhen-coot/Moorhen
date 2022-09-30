@@ -3,6 +3,8 @@ import React from 'react'
 import Tabs from 'react-bootstrap/Tabs';
 import Tab from 'react-bootstrap/Tab';
 import Form from 'react-bootstrap/Form';
+import Button from 'react-bootstrap/Button';
+import Modal from 'react-bootstrap/Modal';
 
 import Helices from './Helices';
 import ProSMART from './ProSMART';
@@ -18,7 +20,7 @@ import ResidueList from './ResidueList.js';
 class Utilities extends React.Component {
     constructor(props){
         super(props);
-        this.state = { showHelices:true, showProSMART:false, showPDBSearch:false, showPDB_REDO:false, showMiscObjects:false, showDownloadSF:false, showBVals: false, showDensityFit: false, showRotamers: false};
+        this.state = { showHelices:true, showProSMART:false, showPDBSearch:false, showPDB_REDO:false, showMiscObjects:false, showDownloadSF:false, showBVals: false, showDensityFit: false, showRotamers: false, showRotamerModal:false, rotamerText:""};
     }
 
     selectionChanged(evt) {
@@ -57,15 +59,26 @@ class Utilities extends React.Component {
 	this.props.onSVGChange(data);
     }
 
-    rotamerClick(data) {
-        console.log(data);
+    rotamerClick(rotamerData) {
+        this.setState({rotamerText:rotamerData.restype,showRotamerModal:true});
     }
 
     helicesChanged(data) {
 	this.props.helicesChanged({pending:data});
     }
 
+    handleClose(data_id){
+        console.log("Close");
+        this.setState({showRotamerModal:false});
+    }
+
     render() {
+
+        console.log("render!");
+
+        const handleCloseThis = this.handleClose.bind(this);
+        const showModalThis = this.state.showRotamerModal;
+        console.log("Show modal",showModalThis);
 
         const selectionChanged = this.selectionChanged.bind(this);
         const rotamerDataKey = 'rotamers';
@@ -79,6 +92,9 @@ class Utilities extends React.Component {
         const densityFitCrystMethod = "density_fit";
         const densityFitInfoName = "densityFitInfo";
         const densityFitDataInfoScaling = 1.;
+
+        const keyModal = "modalRotamer";
+
         return (
         <>
         <Form.Select aria-label="Utilities select example" onChange={selectionChanged}>
@@ -102,9 +118,21 @@ class Utilities extends React.Component {
         { this.state.showDownloadSF ? <DownloadSF /> : null }
         { this.state.showBVals ? <ResidueData clickHandler={this.props.onResidueDataClick} dataInfoScaling={bValDataInfoScaling} infoName={bValInfoName} crystMethod={bValCrystMethod} dataKey={bValDataKey} ref={this.props.bvalRef} sharedArrayBuffer={this.props.sharedArrayBuffer} crystWorker={this.props.crystWorker} /> : null }
         { this.state.showDensityFit ? <ResidueMapData clickHandler={this.props.onResidueDataClick} dataInfoScaling={densityFitDataInfoScaling} infoName={densityFitInfoName} crystMethod={densityFitCrystMethod} dataKey={densityFitDataKey} ref={this.props.densityFitRef} sharedArrayBuffer={this.props.sharedArrayBuffer} crystWorker={this.props.crystWorker} /> : null }
-        { this.state.showRotamers ? <ResidueList ref={this.props.rotamersRef} infoName={rotamerInfoName} crystMethod={rotamerCrystMethod} dataKey={rotamerDataKey} sharedArrayBuffer={this.props.sharedArrayBuffer} crystWorker={this.props.crystWorker} clickHandler={this.rotamerClick} /> : null }
-        </>
+        { this.state.showRotamers ? <ResidueList ref={this.props.rotamersRef} infoName={rotamerInfoName} crystMethod={rotamerCrystMethod} dataKey={rotamerDataKey} sharedArrayBuffer={this.props.sharedArrayBuffer} crystWorker={this.props.crystWorker} clickHandler={this.rotamerClick.bind(this)} /> : null }
+            <Modal key={keyModal} show={showModalThis} onHide={handleCloseThis}>
+               <Modal.Header closeButton>
+                   <Modal.Title>Rotamers</Modal.Title>
+               </Modal.Header>
+               <Modal.Body>Rotamer:{this.state.rotamerText}</Modal.Body>
+               <Modal.Footer>
+                   <Button variant="primary" onClick={handleCloseThis}>
+                      Cancel 
+                   </Button>
+               </Modal.Footer>
+            </Modal>
         
+        </>
+
     )
   }
 }
