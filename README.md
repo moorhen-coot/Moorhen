@@ -94,12 +94,13 @@ Again you will need to set up `ligandServer` as in the non-react example (in `re
 `ln -s /Applications/ccp4-8.0/lib/data/monomers`  
 This example demonstrates CCP4 web assembly only by the use of `RDKit` to make ligand pictures; it further demonstrates React-Bootstrap and WebGL.
 
-8. To run a suite of javascript tests 
-For reason of file searching, you will have to make a symbolic link to allow jest to find the data associated with the mini-rsr-web javascript file which defines the coot interface.  You will then need to install jest, but subsequently testing should be straightforward.
-`cd tests`
-`ln -s ../coot/mini-rsr-web.data`
-`npm install`
-`npm test` 
+8. To run a suite of javascript tests:  
+For reason of file searching, you will have to make a symbolic link to allow jest to find the data associated with the mini-rsr-web javascript file which defines the coot interface.  You will then need to install jest, but subsequently testing should be straightforward.  
+`cd tests`  
+`ln -s ../coot/mini-rsr-web.data`  
+`npm install`  
+`npm test`  
+When testing is completed, you will have to issue a `<ctrl-C>`.  
 
 ![Web example ligands and glycotrees](web_example/screenshot.png)
 *Ligands pictures produced by interrogating file with MMDB2 and rendering with RDKit. Glycosylation trees produced by privateer.*
