@@ -46,7 +46,7 @@ describe('Testing molecules_container_js', () => {
             'FWT', 'PHWT', "", false, false)
         expect(mapMolNo).toBe(1)
         const resSpec = new cootModule.residue_spec_t("A", 217, "");
-        molecules_container.flipPeptide_rs(mapMolNo, resSpec, "")
+        molecules_container.flipPeptide_rs(coordMolNo, resSpec, "")
     })
 
 })
