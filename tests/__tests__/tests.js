@@ -100,7 +100,6 @@ describe('Testing molecules_container_js', () => {
         expect(c_g).toBeCloseTo(0.2,5)
         expect(c_b).toBeCloseTo(0.5,5)
         expect(c_a).toBeCloseTo(1.0,5)
-        console.log(vertices.get(secondTri_idxs[2]).color)
     })
 
 })
