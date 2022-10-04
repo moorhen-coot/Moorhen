@@ -351,10 +351,13 @@ class molecules_container_js : public molecules_container_t {
         }
         int flipPeptide(int imol, const coot::residue_spec_t &rs, const std::string &alt_conf) { return  molecules_container_t::flipPeptide(imol,rs,alt_conf); }
         int flipPeptide(int imol, const std::string &cid, const std::string &alt_conf) { return molecules_container_t::flipPeptide(imol,cid,alt_conf); }
+        coot::simple_mesh_t test_origin_cube() { return molecules_container_t::test_origin_cube(); }
+        int count_simple_mesh_vertices(const coot::simple_mesh_t &m) { return m.vertices.size(); }
         int read_pdb(const std::string &file_name) { return molecules_container_t::read_pdb(file_name); }
         int read_mtz(const std::string &file_name, const std::string &f, const std::string &phi, const std::string &weight, bool use_weight, bool is_a_difference_map) {return molecules_container_t::read_mtz(file_name,f,phi,weight,use_weight,is_a_difference_map); } 
         coot::validation_information_t density_fit_analysis(int imol_model, int imol_map) { return molecules_container_t::density_fit_analysis(imol_model,imol_map); }
 };
+
 
 EMSCRIPTEN_BINDINGS(my_module) {
     class_<coot::simple_rotamer>("simple_rotamer")
@@ -390,6 +393,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("density_fit_analysis",&molecules_container_js::density_fit_analysis)
     .function("flipPeptide_cid", select_overload<int(int, const std::string&,const std::string&)>(&molecules_container_js::flipPeptide))
     .function("flipPeptide_rs", select_overload<int(int, const coot::residue_spec_t&,const std::string&)>(&molecules_container_js::flipPeptide))
+    .function("test_origin_cube",&molecules_container_js::test_origin_cube)
+    .function("count_simple_mesh_vertices",&molecules_container_js::count_simple_mesh_vertices)
     ;
     class_<RamachandranInfo>("RamachandranInfo")
     .constructor<>()
@@ -429,6 +434,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("res_no",&coot::residue_spec_t::res_no)
     .property("ins_code",&coot::residue_spec_t::ins_code)
     .property("int_user_data",&coot::residue_spec_t::int_user_data)
+    ;
+    class_<coot::simple_mesh_t>("simple_mesh_t")
     ;
     register_vector<std::string>("VectorString");
     register_vector<RamachandranInfo>("VectorResidueIdentifier");

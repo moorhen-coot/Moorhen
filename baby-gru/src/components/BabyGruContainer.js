@@ -3,6 +3,8 @@ import { Navbar, Container, NavDropdown, Nav, Row, Col } from 'react-bootstrap';
 import Form from 'react-bootstrap/Form';
 import { BabyGruMolecules } from './BabyGruMolecules';
 import { BabyGruMaps } from './BabyGruMaps';
+import { BabyGruWebMG } from './BabyGruWebMG';
+import {v4 as uuidv4} from 'uuid';
 
 export const BabyGruContainer = (props) => {
     const cootWorker = useRef(null)
@@ -15,7 +17,7 @@ export const BabyGruContainer = (props) => {
         cootWorker.current.onmessage = (e) => {
             handleResponse(e)
         }
-        cootWorker.current.postMessage({ message: 'CootInitialize', data: {} })
+        cootWorker.current.postMessage({ messageId:uuidv4(), message: 'CootInitialize', data: {} })
         return () => {
             cootWorker.current.terminate()
         }
@@ -37,6 +39,7 @@ export const BabyGruContainer = (props) => {
     }
 
     const readPdbFile = (file) => {
+        
         const reader = new FileReader();
         reader.addEventListener("load", () => {
             cootWorker.current.postMessage({ message: 'read_pdb', name: file.name, text: reader.result })
@@ -48,7 +51,7 @@ export const BabyGruContainer = (props) => {
         const reader = new FileReader();
         reader.addEventListener("load", () => {
             const mtzData = new Uint8Array(reader.result)
-            cootWorker.current.postMessage({ message: 'read_mtz', name: file.name, data:mtzData  })
+            cootWorker.current.postMessage({ message: 'read_mtz', name: file.name, data: mtzData })
         }, false);
         reader.readAsArrayBuffer(file);
     }
@@ -89,7 +92,14 @@ export const BabyGruContainer = (props) => {
                     float: "left",
                     width: "calc(100vw - 35rem)",
                     height: "calc(100vh - 15rem)"
-                }}>Hello</div>
+                }}>
+                    <BabyGruWebMG 
+                        molecules={molecules}
+                        maps={maps}
+                        width={() => { return window.innerWidth - 580 }}
+                        height={() => { return window.innerHeight - 250 }}
+                    />
+                </div>
                 <div style={{
                     overflow: "auto",
                     float: "left",

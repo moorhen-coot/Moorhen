@@ -28,6 +28,7 @@ const Lib = {
 };
 
 onmessage = function (e) {
+
     if (e.data.message === 'CootInitialize') {
         postMessage({ message: 'Initializing molecules_container' })
 
@@ -50,6 +51,7 @@ onmessage = function (e) {
         const coordMolNo = molecules_container.read_pdb(tempFilename)
         cootModule.FS_unlink(tempFilename)
         this.postMessage({
+            messageId: e.data.messageId,
             response: `Read coordinates as molecule ${coordMolNo}`,
             message: e.data.message,
             result: { coordMolNo: coordMolNo, name: e.data.name }
@@ -65,6 +67,7 @@ onmessage = function (e) {
             const mapMolNo = molecules_container.read_mtz(tempFilename, 'FWT', 'PHWT', "", false, false)
             cootModule.FS_unlink(tempFilename)
             this.postMessage({
+                messageId: e.data.messageId,
                 response: `Read map MTZ as molecule ${mapMolNo}`,
                 message: e.data.message,
                 result: { mapMolNo: mapMolNo, name: e.data.name }
