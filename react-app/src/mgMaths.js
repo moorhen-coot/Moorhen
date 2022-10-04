@@ -1,4 +1,8 @@
-import {vec3} from 'gl-matrix/esm';
+import * as vec3 from 'gl-matrix/vec3';
+import * as vec4 from 'gl-matrix/vec4';
+import * as quat4 from 'gl-matrix/quat';
+import * as mat4 from 'gl-matrix/mat4';
+//import {vec3} from 'gl-matrix/esm';
 
 function NormalizeVec3(v){
     let vin = vec3Create(v);

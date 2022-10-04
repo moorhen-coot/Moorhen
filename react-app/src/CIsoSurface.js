@@ -3,8 +3,12 @@ TODO
 quat4 everything ...
 */
 
-import {vec3} from 'gl-matrix/esm';
-import {quat as quat4} from 'gl-matrix/esm';
+import * as vec3 from 'gl-matrix/vec3';
+import * as vec4 from 'gl-matrix/vec4';
+import * as quat4 from 'gl-matrix/quat';
+import * as mat4 from 'gl-matrix/mat4';
+//import {vec3} from 'gl-matrix/esm';
+//import {quat as quat4} from 'gl-matrix/esm';
 
 import { quatToMat4 } from './quatToMat4.js';
 

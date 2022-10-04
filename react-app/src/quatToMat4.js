@@ -10,7 +10,11 @@
  * dest if specified, a new mat4 otherwise
  */
 
-import {mat4} from 'gl-matrix/esm';
+import * as vec3 from 'gl-matrix/vec3';
+import * as vec4 from 'gl-matrix/vec4';
+import * as quat4 from 'gl-matrix/quat';
+import * as mat4 from 'gl-matrix/mat4';
+//import {mat4} from 'gl-matrix/esm';
 
 function quatToMat4(quat, dest) {
 	if(!dest) { dest = mat4.create(); }

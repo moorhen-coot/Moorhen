@@ -5,8 +5,13 @@ TODO ?
 import React, { createRef, Component } from 'react';
 
 import pako from 'pako';
-import {vec3,mat4,mat3} from 'gl-matrix/esm';
-import {quat as quat4} from 'gl-matrix/esm';
+import * as vec3 from 'gl-matrix/vec3';
+import * as vec4 from 'gl-matrix/vec4';
+import * as quat4 from 'gl-matrix/quat';
+import * as mat4 from 'gl-matrix/mat4';
+import * as mat3 from 'gl-matrix/mat3';
+//import {vec3,mat4,mat3} from 'gl-matrix/esm';
+//import {quat as quat4} from 'gl-matrix/esm';
 import {base64encode,base64decode} from './mgBase64.js';
 
 import {lines_fragment_shader_source} from './lines-fragment-shader.js';
