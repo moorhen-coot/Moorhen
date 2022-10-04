@@ -83,9 +83,24 @@ describe('Testing molecules_container_js', () => {
         const t_x = vertices.get(secondTri_idxs[2]).pos[0]
         const t_y = vertices.get(secondTri_idxs[2]).pos[1]
         const t_z = vertices.get(secondTri_idxs[2]).pos[2]
-        expect(t_x).toBe(0.5)
-        expect(t_y).toBe(0.5)
-        expect(t_z).toBe(-0.5)
+        const n_x = vertices.get(secondTri_idxs[2]).normal[0]
+        const n_y = vertices.get(secondTri_idxs[2]).normal[1]
+        const n_z = vertices.get(secondTri_idxs[2]).normal[2]
+        const c_r = vertices.get(secondTri_idxs[2]).color[0]
+        const c_g = vertices.get(secondTri_idxs[2]).color[1]
+        const c_b = vertices.get(secondTri_idxs[2]).color[2]
+        const c_a = vertices.get(secondTri_idxs[2]).color[3]
+        expect(t_x).toBeCloseTo(0.5,5)
+        expect(t_y).toBeCloseTo(0.5,5)
+        expect(t_z).toBeCloseTo(-0.5,5)
+        expect(n_x).toBeCloseTo(0,5)
+        expect(n_y).toBeCloseTo(0,5)
+        expect(n_z).toBeCloseTo(-1,5)
+        expect(c_r).toBeCloseTo(0.5,5)
+        expect(c_g).toBeCloseTo(0.2,5)
+        expect(c_b).toBeCloseTo(0.5,5)
+        expect(c_a).toBeCloseTo(1.0,5)
+        console.log(vertices.get(secondTri_idxs[2]).color)
     })
 
 })
