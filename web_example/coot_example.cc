@@ -465,6 +465,12 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .element(emscripten::index<1>())
         .element(emscripten::index<2>())
     ;
+    value_array<glm::vec4>("array_float_4")
+        .element(emscripten::index<0>())
+        .element(emscripten::index<1>())
+        .element(emscripten::index<2>())
+        .element(emscripten::index<3>())
+    ;
     value_array<std::array<unsigned int, 3>>("array_unsigned_int_3")
         .element(emscripten::index<0>())
         .element(emscripten::index<1>())
