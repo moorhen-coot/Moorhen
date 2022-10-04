@@ -1,6 +1,10 @@
 import React, { createRef, Component } from 'react';
 
-import {vec3,mat4} from 'gl-matrix/esm';
+import * as vec3 from 'gl-matrix/vec3';
+import * as vec4 from 'gl-matrix/vec4';
+import * as quat4 from 'gl-matrix/quat';
+import * as mat4 from 'gl-matrix/mat4';
+//import {vec3,mat4} from 'gl-matrix/esm';
 import pako from 'pako';
 import {EnerLib, Model, Chain, Residue, Atom, parseMMCIF} from './mgMiniMol';
 import {CIsoSurface} from './CIsoSurface.js';

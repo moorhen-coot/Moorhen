@@ -1,4 +1,5 @@
 importScripts('./mini-rsr-web.js')
+importScripts('uuid')
 
 let cootModule;
 let molecules_container;

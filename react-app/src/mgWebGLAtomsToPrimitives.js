@@ -3,7 +3,11 @@ TODO
 vec3.subtract, vec3.add, create, normalize, cross
 */
 
-import {vec3,mat4} from 'gl-matrix/esm';
+import * as vec3 from 'gl-matrix/vec3';
+import * as vec4 from 'gl-matrix/vec4';
+import * as quat4 from 'gl-matrix/quat';
+import * as mat4 from 'gl-matrix/mat4';
+//import {vec3,mat4} from 'gl-matrix/esm';
 import PCA from 'pca-js';
 import {Model, Atom} from './mgMiniMol.js';
 import {DistanceBetweenPointAndLine, DistanceBetweenTwoLines, DihedralAngle} from './mgMaths.js';

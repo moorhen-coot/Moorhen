@@ -3,7 +3,12 @@ TODO
 mat4 everything .....
 */
 
-import {vec3,mat4,mat3} from 'gl-matrix/esm';
+import * as vec3 from 'gl-matrix/vec3';
+import * as vec4 from 'gl-matrix/vec4';
+import * as quat4 from 'gl-matrix/quat';
+import * as mat4 from 'gl-matrix/mat4';
+import * as mat3 from 'gl-matrix/mat3';
+//import {vec3,mat4,mat3} from 'gl-matrix/esm';
 import {getSymOpsFromSpGrpNo,getSymOpsFromSpGrpName,getMatrixFromSymOp} from './symop';
 //import {CIsoSurface} from './CIsoSurface';
 
