@@ -29,6 +29,8 @@
 #include "api/interfaces.hh"
 #include "api/molecules_container.hh"
 #include "api/validation-information.hh"
+#include "api/g_triangle.hh"
+#include "api/vertex.hh"
 
 #include "mmdb_manager.h"
 #include "clipper/core/ramachandran.h"
@@ -435,7 +437,17 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("ins_code",&coot::residue_spec_t::ins_code)
     .property("int_user_data",&coot::residue_spec_t::int_user_data)
     ;
+    class_<coot::api::vnc_vertex>("vnc_vertex")
+    .constructor<const glm::vec3 &, const glm::vec3 &, const glm::vec4 &>()
+    .property("pos",&coot::api::vnc_vertex::pos)
+    .property("normal",&coot::api::vnc_vertex::normal)
+    .property("color",&coot::api::vnc_vertex::color)
+    ;
+    class_<g_triangle>("g_triangle")
+    ;
     class_<coot::simple_mesh_t>("simple_mesh_t")
+    .property("vertices",&coot::simple_mesh_t::vertices)
+    .property("triangles",&coot::simple_mesh_t::triangles)
     ;
     register_vector<std::string>("VectorString");
     register_vector<RamachandranInfo>("VectorResidueIdentifier");
@@ -444,6 +456,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<coot::residue_validation_information_t>("Vectorresidue_validation_information_t");
     register_vector<coot::simple_rotamer>("Vectorsimple_rotamer");
     register_vector<coot::residue_spec_t>("Vectorresidue_spec_t");
+    register_vector<coot::api::vnc_vertex>("Vectorvnc_veertex");
     register_map<std::string,std::vector<coot::simple_rotamer> >("MapStringVectorsimple_rotamer");
     function("mini_rsr",&mini_rsr);
     function("flipPeptide",&flipPeptide);
