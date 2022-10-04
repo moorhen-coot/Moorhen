@@ -80,6 +80,12 @@ describe('Testing molecules_container_js', () => {
         expect(secondTri_idxs[0]).toBe(1)
         expect(secondTri_idxs[1]).toBe(2)
         expect(secondTri_idxs[2]).toBe(3)
+        const t_x = vertices.get(secondTri_idxs[2]).pos[0]
+        const t_y = vertices.get(secondTri_idxs[2]).pos[1]
+        const t_z = vertices.get(secondTri_idxs[2]).pos[2]
+        expect(t_x).toBe(0.5)
+        expect(t_y).toBe(0.5)
+        expect(t_z).toBe(-0.5)
     })
 
 })

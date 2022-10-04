@@ -460,7 +460,12 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<coot::api::vnc_vertex>("Vectorvnc_veertex");
     register_vector<g_triangle>("Vectorg_triangle");
     register_map<std::string,std::vector<coot::simple_rotamer> >("MapStringVectorsimple_rotamer");
-    value_array<std::array<unsigned int, 3>>("unsigned_array_int_3")
+    value_array<glm::vec3>("array_float_3")
+        .element(emscripten::index<0>())
+        .element(emscripten::index<1>())
+        .element(emscripten::index<2>())
+    ;
+    value_array<std::array<unsigned int, 3>>("array_unsigned_int_3")
         .element(emscripten::index<0>())
         .element(emscripten::index<1>())
         .element(emscripten::index<2>())
