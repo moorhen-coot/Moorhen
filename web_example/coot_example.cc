@@ -443,7 +443,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("normal",&coot::api::vnc_vertex::normal)
     .property("color",&coot::api::vnc_vertex::color)
     ;
-    class_<g_triangle>("g_triangle")
+    value_object<g_triangle>("g_triangle")
+    .field("point_id", &g_triangle::point_id)
     ;
     class_<coot::simple_mesh_t>("simple_mesh_t")
     .property("vertices",&coot::simple_mesh_t::vertices)
@@ -457,7 +458,13 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<coot::simple_rotamer>("Vectorsimple_rotamer");
     register_vector<coot::residue_spec_t>("Vectorresidue_spec_t");
     register_vector<coot::api::vnc_vertex>("Vectorvnc_veertex");
+    register_vector<g_triangle>("Vectorg_triangle");
     register_map<std::string,std::vector<coot::simple_rotamer> >("MapStringVectorsimple_rotamer");
+    value_array<std::array<unsigned int, 3>>("unsigned_array_int_3")
+        .element(emscripten::index<0>())
+        .element(emscripten::index<1>())
+        .element(emscripten::index<2>())
+    ;
     function("mini_rsr",&mini_rsr);
     function("flipPeptide",&flipPeptide);
     function("getRamachandranData",&getRamachandranData);

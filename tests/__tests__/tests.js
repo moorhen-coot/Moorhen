@@ -69,6 +69,17 @@ describe('Testing molecules_container_js', () => {
         const vertices = simpleMesh.vertices
         const nVerticesDirect = vertices.size()
         expect(nVerticesDirect).toBe(24)
+        const triangles = simpleMesh.triangles
+        const nTriangles = triangles.size()
+        expect(nTriangles).toBe(12)
+        const firstTri_idxs = triangles.get(0).point_id
+        const secondTri_idxs = triangles.get(1).point_id
+        expect(firstTri_idxs[0]).toBe(0)
+        expect(firstTri_idxs[1]).toBe(1)
+        expect(firstTri_idxs[2]).toBe(2)
+        expect(secondTri_idxs[0]).toBe(1)
+        expect(secondTri_idxs[1]).toBe(2)
+        expect(secondTri_idxs[2]).toBe(3)
     })
 
 })
