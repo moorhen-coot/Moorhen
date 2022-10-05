@@ -4,7 +4,9 @@ import Form from 'react-bootstrap/Form';
 import { BabyGruMolecules } from './BabyGruMolecules';
 import { BabyGruMaps } from './BabyGruMaps';
 import { BabyGruWebMG } from './BabyGruWebMG';
-import {v4 as uuidv4} from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
+import { BabyGruMolecule } from './BabyGruMolecule';
+import { postCootMessage } from '../BabyGruUtils';
 
 export const BabyGruContainer = (props) => {
     const cootWorker = useRef(null)
@@ -14,23 +16,16 @@ export const BabyGruContainer = (props) => {
 
     useEffect(() => {
         cootWorker.current = new Worker('CootWorker.js')
-        cootWorker.current.onmessage = (e) => {
-            handleResponse(e)
-        }
-        cootWorker.current.postMessage({ messageId:uuidv4(), message: 'CootInitialize', data: {} })
+        postCootMessage(cootWorker, { messageId: uuidv4(), message: 'CootInitialize', data: {} })
+        cootWorker.current.addEventListener("message", (e) => { handleResponse(e) })
         return () => {
             cootWorker.current.terminate()
         }
     }, [])
 
     const handleResponse = (e) => {
-        let newOutput = 'Response>'.concat(e.data.response).concat('\n')
+        let newOutput = 'Response > '.concat(e.data.response).concat('\n')
         setConsoleOutput(newOutput)
-        if (e.data.message === 'read_pdb') {
-            const newMolecules = molecules
-            newMolecules.push(e.data.result)
-            setMolecules(newMolecules)
-        }
         if (e.data.message === 'read_mtz') {
             const newMaps = maps
             newMaps.push(e.data.result)
@@ -39,12 +34,26 @@ export const BabyGruContainer = (props) => {
     }
 
     const readPdbFile = (file) => {
-        
-        const reader = new FileReader();
-        reader.addEventListener("load", () => {
-            cootWorker.current.postMessage({ message: 'read_pdb', name: file.name, text: reader.result })
-        }, false);
-        reader.readAsText(file);
+        const newMolecule = new BabyGruMolecule(cootWorker)
+        newMolecule.loadToCootFromFile(file)
+            .then(result => {
+                const newMolecules = molecules
+                newMolecules.push(newMolecule)
+                setMolecules(newMolecules)
+                Promise.resolve(newMolecule)
+            })
+    }
+
+    const fetchFileFromEBI = (pdbCode) => {
+        console.log(pdbCode)
+        const newMolecule = new BabyGruMolecule(cootWorker)
+        newMolecule.loadToCootFromEBI(pdbCode)
+            .then(result => {
+                const newMolecules = molecules
+                newMolecules.push(newMolecule)
+                setMolecules(newMolecules)
+                Promise.resolve(newMolecule)
+            })
     }
 
     const readMtzFile = (file) => {
@@ -72,6 +81,14 @@ export const BabyGruContainer = (props) => {
                                     }
                                 }} />
                             </Form.Group>
+                            <Form.Group style={{ width: '20rem' }} controlId="downloadCoords" className="mb-3">
+                                <Form.Label>From PDBe</Form.Label>
+                                <Form.Control type="text" onKeyDown={(e)=>{
+                                    if (e.code === 'Enter'){
+                                        fetchFileFromEBI(e.target.value.toUpperCase())
+                                    }
+                                }} />
+                            </Form.Group>
                             <Form.Group style={{ width: '20rem' }} controlId="uploadMTZs" className="mb-3">
                                 <Form.Label>Map coefficients</Form.Label>
                                 <Form.Control type="file" accept=".mtz" onChange={(e) => {
@@ -93,7 +110,7 @@ export const BabyGruContainer = (props) => {
                     width: "calc(100vw - 35rem)",
                     height: "calc(100vh - 15rem)"
                 }}>
-                    <BabyGruWebMG 
+                    <BabyGruWebMG
                         molecules={molecules}
                         maps={maps}
                         width={() => { return window.innerWidth - 580 }}

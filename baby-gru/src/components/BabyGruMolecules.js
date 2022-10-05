@@ -13,6 +13,6 @@ export const BabyGruMolecules = (props) => {
                     <th>{molecule.coordMolNo}</th><th>{molecule.name}</th>
                 </tr>)
             }
-        </tbody>
+        </tbody> 
     </Table>
 }

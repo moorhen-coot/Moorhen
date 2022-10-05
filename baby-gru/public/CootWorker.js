@@ -1,5 +1,4 @@
 importScripts('./mini-rsr-web.js')
-importScripts('uuid')
 
 let cootModule;
 let molecules_container;
@@ -47,7 +46,7 @@ onmessage = function (e) {
 
     else if (e.data.message === 'read_pdb') {
         const theGuid = guid()
-        cootModule.FS_createDataFile(".", `${theGuid}.pdb`, e.data.text, true, true);
+        cootModule.FS_createDataFile(".", `${theGuid}.pdb`, e.data.data, true, true);
         const tempFilename = `./${theGuid}.pdb`
         const coordMolNo = molecules_container.read_pdb(tempFilename)
         cootModule.FS_unlink(tempFilename)
@@ -56,6 +55,20 @@ onmessage = function (e) {
             response: `Read coordinates as molecule ${coordMolNo}`,
             message: e.data.message,
             result: { coordMolNo: coordMolNo, name: e.data.name }
+        })
+    }
+
+    else if (e.data.message === 'get_atoms') {
+        const theGuid = guid()
+        const tempFilename = `./${theGuid}.pdb`
+        molecules_container.writePDBASCII(e.data.coordMolNo, tempFilename)
+        const pdbData = cootModule.FS.readFile(tempFilename, { encoding: 'utf8' });
+        cootModule.FS_unlink(tempFilename)
+        postMessage({
+            messageId: e.data.messageId,
+            response: `Fetched coordinates of molecule ${e.data.coordMolNo}`,
+            message: e.data.message,
+            result: { coordMolNo: e.data.coordMolNo, pdbData: pdbData }
         })
     }
 
