@@ -204,11 +204,21 @@ class MGWebWizardUI extends Component {
                 r.readAsText(f);
             }
         }
-        function upload(file) {
+
+        function upload(fileList) {
             var r = new FileReader();
             var rmtz = new FileReader();
-            if(file.files.length===0) return;
-            var f = file.files[0];
+
+            for(let i=0; i<fileList.files.length; i++){
+                let f = fileList.files[i];
+                console.log(`Reading file no. ${i+1} out of ${fileList.files.length}`);
+                readFile(f);
+            }
+        }
+
+        function readFile(f) {
+            var r = new FileReader();
+            var rmtz = new FileReader();
             rmtz.onload = function(e) { 
                 const contents = e.target.result;
                 console.log(contents);
@@ -456,7 +466,7 @@ class MGWebWizardUI extends Component {
         <Spacer height="1rem" />
         <Form.Group controlId="loadpdb">
         <Form.Label>Browse for data file (PDB,mmCIF, MTZ)</Form.Label>
-        <Form.Control ref={this.inputRef} type="file" />
+        <Form.Control ref={this.inputRef} type="file" multiple />
         </Form.Group>
         <Spacer height="1rem" />
         <Form.Group controlId="loaddictionary">
