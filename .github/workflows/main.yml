@@ -1,7 +1,12 @@
 name: My Workflow
 
-on: [push]
-
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
 jobs:
   runMultipleCommands:
     runs-on: ubuntu-latest
