@@ -1,0 +1,17 @@
+name: My Workflow
+
+on: [push]
+
+jobs:
+  runMultipleCommands:
+    runs-on: ubuntu-latest
+    steps:
+     - uses: actions/checkout@v3
+     - uses: actions/setup-node@v3
+     - uses: mymindstorm/setup-emsdk@v11
+     - run: |
+        ./get_sources
+        emcmake cmake .
+        emmake make
+        cd react-app
+     - run: npm test
