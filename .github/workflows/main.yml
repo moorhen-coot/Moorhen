@@ -7,16 +7,23 @@ on:
   pull_request:
     branches:
       - master
+
 jobs:
-  runMultipleCommands:
+  runTests:
     runs-on: ubuntu-latest
     steps:
      - uses: actions/checkout@v3
      - uses: actions/setup-node@v3
      - uses: mymindstorm/setup-emsdk@v11
+     - name: Get sources
+       run: |
+         ./get_sources
+     - name: emscriptem bndings
      - run: |
-        ./get_sources
-        emcmake cmake .
-        emmake make
-        cd react-app
-     - run: npm test
+         emcmake cmake .
+         emmake make
+     - name: Run tests
+     - run: |
+         cd reac_app
+         npm test
+         
