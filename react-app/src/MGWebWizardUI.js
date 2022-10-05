@@ -206,9 +206,6 @@ class MGWebWizardUI extends Component {
         }
 
         function upload(fileList) {
-            var r = new FileReader();
-            var rmtz = new FileReader();
-
             for(let i=0; i<fileList.files.length; i++){
                 let f = fileList.files[i];
                 console.log(`Reading file no. ${i+1} out of ${fileList.files.length}`);
@@ -225,7 +222,6 @@ class MGWebWizardUI extends Component {
                 self.myWorkerMTZ.postMessage([contents, f.name, "FC_ALL", "PHIC_ALL"]);
             }
             if(f.name.endsWith(".mtz")){
-                console.log("Cannot deal with MTZ yet.");
                 rmtz.readAsArrayBuffer(f);
                 return;
             }
