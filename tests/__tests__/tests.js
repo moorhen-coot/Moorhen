@@ -38,6 +38,14 @@ describe('Testing molecules_container_js', () => {
         const resSpec = new cootModule.residue_spec_t("A", 217, "");
     })
 
+    test('Test Rama mesh', () => {
+        const molecules_container = new cootModule.molecules_container_js()
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        console.log(coordMolNo);
+        const simpleMesh = molecules_container.ramachandran_validation_markup_mesh(coordMolNo);
+        //And then we need to expect "something"
+    })
+
     test('Test flip_peptide by residue spec', () => {
         const molecules_container = new cootModule.molecules_container_js()
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
