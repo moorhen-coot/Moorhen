@@ -60,7 +60,15 @@ class Utilities extends React.Component {
     }
 
     rotamerClick(rotamerData) {
-        this.setState({rotamerText:rotamerData.restype,showRotamerModal:true});
+        let t = rotamerData.restype + " : ";
+        for(let irot=0;irot<rotamerData.data.length;irot++){
+            t += "(";
+            for(let ichi=0;ichi<4;ichi++){
+                t += rotamerData.data[irot][ichi] + ", ";
+            }
+            t += "); ";
+        }
+        this.setState({rotamerText:t,showRotamerModal:true});
     }
 
     helicesChanged(data) {

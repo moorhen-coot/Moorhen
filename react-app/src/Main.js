@@ -71,6 +71,9 @@ class Main extends Component {
                     console.log(e.data[1]);
                 }
             }
+            if (e.data[0] === "result" && e.data[2] === "draw_cube") {
+                const theBuffers = self.gl.current.appendOtherData(e.data[1],false,"cube");
+            }
             if (e.data[0] === "result" && e.data[2] === "get_rama") {
                 self.ramaRef.current.updatePlotData();
             }

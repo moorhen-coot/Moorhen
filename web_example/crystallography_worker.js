@@ -281,6 +281,32 @@ function getRama(e) {
     postMessage(["result",result,currentTaskName]);
 }
 
+function drawCube(e) {
+    const simpleMesh = molecules_container.test_origin_cube();
+    const nVertices = molecules_container.count_simple_mesh_vertices(simpleMesh);
+    const vertices = simpleMesh.vertices;
+    const nVerticesDirect = vertices.size();
+    const triangles = simpleMesh.triangles;
+    const nTriangles = triangles.size();
+    let totIdxs = [];
+    let totPos = [];
+    let totNorm = [];
+    let totCol = [];
+    for(let i=0;i<triangles.size();i++){
+        const idxs = triangles.get(i).point_id;
+        totIdxs.push(...idxs);
+    }
+    for(let i=0;i<vertices.size();i++){
+        const vert = vertices.get(i);
+        totPos.push(...vert.pos);
+        totNorm.push(...vert.normal);
+        totCol.push(...vert.color);
+    }
+    const cubeInfo = {prim_types:[["TRIANGLES"]],idx_tri:[[totIdxs]],vert_tri:[[totPos]],norm_tri:[[totNorm]],col_tri:[[totCol]]};
+    postMessage(["result",cubeInfo,currentTaskName]);
+
+}
+
 function getRotamers(e) {
     const jobId = e.data.jobId;
     const pdbin = dataObjects.pdbFiles[e.data.pdbinKey].fileName;
@@ -460,6 +486,11 @@ onmessage = function(e) {
         case "get_rotamers":
             currentTaskName = "rotamers";
             getRotamers(e);
+            currentTaskName = "";
+            break;
+        case "draw_cube":
+            currentTaskName = "draw_cube";
+            drawCube(e);
             currentTaskName = "";
             break;
         default:
