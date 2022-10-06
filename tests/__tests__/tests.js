@@ -58,6 +58,11 @@ describe('Testing molecules_container_js', () => {
         expect(res.isSolvent()).toBe(false)
         expect(res.isModRes()).toBe(false)
         expect(res.GetModelNum()).toBe(1)
+        expect(res.GetInsCode()).toBe("")
+        expect(res.GetLabelAsymID()).toBe("A")
+        expect(res.GetLabelCompID()).toBe("ALA")
+        expect(res.GetLabelSeqID()).toBe(217)
+        expect(res.GetLabelEntityID()).toBe(1)
         const atom = res.GetAtom(0);
         expect(atom.x).toBeCloseTo(70.783,3)
         expect(atom.y).toBeCloseTo(22.745,3)
@@ -76,6 +81,11 @@ describe('Testing molecules_container_js', () => {
         expect(atom.isTer()).toBe(false)
         expect(atom.isMetal()).toBe(false)
         expect(atom.GetModelNum()).toBe(1)
+        expect(atom.GetLabelAsymID()).toBe("A")
+        expect(atom.GetLabelCompID()).toBe("ALA")
+        expect(atom.GetLabelSeqID()).toBe(217)
+        expect(atom.GetLabelEntityID()).toBe(1)
+        expect(atom.GetNBonds()).toBe(0)
     })
 
     test('Test Rama mesh', () => {
