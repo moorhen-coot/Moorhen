@@ -1,7 +1,7 @@
-import { useRef, useState, useEffect } from 'react';
-import { Navbar, Container, NavDropdown, Nav, Row, Col } from 'react-bootstrap';
+import { useRef, useState, useEffect, createRef } from 'react';
+import { Navbar, Container, NavDropdown, Nav, Tabs, Tab } from 'react-bootstrap';
 import Form from 'react-bootstrap/Form';
-import { BabyGruMolecules } from './BabyGruMolecules';
+import { BabyGruMolecules } from './BabyGruMoleculeUI';
 import { BabyGruMaps } from './BabyGruMaps';
 import { BabyGruWebMG } from './BabyGruWebMG';
 import { v4 as uuidv4 } from 'uuid';
@@ -9,6 +9,7 @@ import { BabyGruMolecule } from './BabyGruMolecule';
 import { postCootMessage } from '../BabyGruUtils';
 
 export const BabyGruContainer = (props) => {
+    const glRef = useRef(null)
     const cootWorker = useRef(null)
     const [consoleOutput, setConsoleOutput] = useState("")
     const [molecules, setMolecules] = useState([])
@@ -37,6 +38,8 @@ export const BabyGruContainer = (props) => {
         const newMolecule = new BabyGruMolecule(cootWorker)
         newMolecule.loadToCootFromFile(file)
             .then(result => {
+                newMolecule.fetchCoordsAndDraw('ribbons', glRef)
+            }).then(result=>{
                 const newMolecules = molecules
                 newMolecules.push(newMolecule)
                 setMolecules(newMolecules)
@@ -49,6 +52,8 @@ export const BabyGruContainer = (props) => {
         const newMolecule = new BabyGruMolecule(cootWorker)
         newMolecule.loadToCootFromEBI(pdbCode)
             .then(result => {
+                newMolecule.fetchCoordsAndDraw('ribbons', glRef)
+            }).then(result=>{
                 const newMolecules = molecules
                 newMolecules.push(newMolecule)
                 setMolecules(newMolecules)
@@ -83,8 +88,8 @@ export const BabyGruContainer = (props) => {
                             </Form.Group>
                             <Form.Group style={{ width: '20rem' }} controlId="downloadCoords" className="mb-3">
                                 <Form.Label>From PDBe</Form.Label>
-                                <Form.Control type="text" onKeyDown={(e)=>{
-                                    if (e.code === 'Enter'){
+                                <Form.Control type="text" onKeyDown={(e) => {
+                                    if (e.code === 'Enter') {
                                         fetchFileFromEBI(e.target.value.toUpperCase())
                                     }
                                 }} />
@@ -112,6 +117,7 @@ export const BabyGruContainer = (props) => {
                 }}>
                     <BabyGruWebMG
                         molecules={molecules}
+                        ref={glRef}
                         maps={maps}
                         width={() => { return window.innerWidth - 580 }}
                         height={() => { return window.innerHeight - 250 }}
@@ -124,8 +130,18 @@ export const BabyGruContainer = (props) => {
                     width: "33rem",
                     height: "calc(100vh - 15rem)"
                 }}>
-                    <BabyGruMolecules molecules={molecules} />
-                    <BabyGruMaps maps={maps} />
+                    <Tabs defaultActiveKey="models">
+                        <Tab title="Models" eventKey="models">
+                            <div style={{ width: "33rem" }}>
+                                <BabyGruMolecules molecules={molecules} glRef={glRef} />
+                            </div>
+                        </Tab>
+                        <Tab title="Maps" eventKey="maps" >
+                            <div style={{ width: "33rem" }}>
+                                <BabyGruMaps maps={maps} />
+                            </div>
+                        </Tab>
+                    </Tabs>
                 </div>
             </div>
             <textarea readOnly={true} rows={7} value={consoleOutput} style={{ width: "100vw" }} />

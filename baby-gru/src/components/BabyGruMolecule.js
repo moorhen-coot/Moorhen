@@ -6,7 +6,7 @@ import { ColourScheme } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { GetSplinesColoured } from '../WebGL/mgSecStr';
 import { getMultipleBonds } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { atomsToSpheresInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
-import { contactsToCylindersInfo, contactsToCappedCylindersInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
+import { contactsToCylindersInfo, contactsToLinesInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { readMapFromArrayBuffer, mapToMapGrid } from '../WebGL/mgWebGLReadMap';
 import { singletonsToLinesInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { DisplayBuffer, getEncodedData } from '../WebGL/mgWebGL';
@@ -15,10 +15,12 @@ import { postCootMessage, readTextFile, readDataFile } from '../BabyGruUtils'
 
 export function BabyGruMolecule(cootWorker) {
     this.cootWorker = cootWorker
+    this.enerLib = new EnerLib()
     this.HBondsAssigned = false
     this.displayObjects = {
         ribbons: [],
-        bonds: []
+        bonds: [],
+        sticks: []
     }
 };
 
@@ -67,14 +69,48 @@ BabyGruMolecule.prototype.getAtoms = function () {
     return postCootMessage($this.cootWorker, { message: "get_atoms", coordMolNo: $this.coordMolNo })
 }
 
-BabyGruMolecule.prototype.fetchCoordsAndDrawBonds = function (gl, enerLib) {
-    const $this = this;
-    this.getAtoms()
+BabyGruMolecule.prototype.fetchCoordsAndDraw = function (style, gl) {
+    return this.getAtoms()
         .then(result => {
-            const webMGAtoms = $this.webMGAtomsFromFileString(result.data.result.pdbData)
-            gl.current.setOrigin(webMGAtoms.atoms[0].centre())
-            $this.drawBonds(webMGAtoms, gl.current, 0)
+            return new Promise((resolve, reject) => {
+                const webMGAtoms = this.webMGAtomsFromFileString(result.data.result.pdbData)
+                console.log(gl, gl.current)
+                gl.current.setOrigin(webMGAtoms.atoms[0].centre())
+                switch (style) {
+                    case 'ribbons':
+                        this.drawRibbons(webMGAtoms, gl.current)
+                        break;
+                    case 'bonds':
+                        this.drawBonds(webMGAtoms, gl.current, 0)
+                        break;
+                    case 'sticks':
+                        this.drawSticks(webMGAtoms, gl.current, 0)
+                        break;
+                    default:
+                        break;
+                }
+                resolve(true)
+            })
         })
+}
+
+BabyGruMolecule.prototype.show = function (style, gl) {
+    if (this.displayObjects[style].length == 0) {
+        this.fetchCoordsAndDraw(style, gl)
+    }
+    else {
+        this.displayObjects[style].forEach(displayBuffer => {
+            displayBuffer.visible = true
+        })
+    }
+    gl.current.drawScene()
+}
+
+BabyGruMolecule.prototype.hide = function (style, gl) {
+    this.displayObjects[style].forEach(displayBuffer => {
+        displayBuffer.visible = false
+    })
+    gl.current.drawScene()
 }
 
 BabyGruMolecule.prototype.webMGAtomsFromFileString = function (fileString) {
@@ -111,9 +147,18 @@ BabyGruMolecule.prototype.drawBonds = function (webMGAtoms, gl, colourSchemeInde
     var singletons = contactsAndSingletons["singletons"];
     var linePrimitiveInfo = contactsToCylindersInfo(contacts, 0.1, atomColours);
     var singletonPrimitiveInfo = singletonsToLinesInfo(singletons, 4, atomColours);
-    var objects = []
-    objects.push(linePrimitiveInfo);
-    objects.push(singletonPrimitiveInfo);
+
+    var linesAndSpheres = []
+    linesAndSpheres.push(linePrimitiveInfo);
+    linesAndSpheres.push(singletonPrimitiveInfo);
+
+    const objects = linesAndSpheres.filter(item => {
+        return typeof item.sizes !== "undefined" &&
+            item.sizes.length > 0 &&
+            item.sizes[0].length > 0 &&
+            item.sizes[0][0].length > 0
+    })
+
     objects.forEach(object => {
         var a = gl.appendOtherData(object, true);
         $this.displayObjects.bonds = $this.displayObjects.bonds.concat(a)
@@ -122,7 +167,7 @@ BabyGruMolecule.prototype.drawBonds = function (webMGAtoms, gl, colourSchemeInde
     gl.drawScene();
 }
 
-BabyGruMolecule.prototype.drawRibbons = function (webMGAtoms, gl, enerLib) {
+BabyGruMolecule.prototype.drawRibbons = function (webMGAtoms, gl) {
 
     const selectionString = '/*/*'
 
@@ -150,12 +195,12 @@ BabyGruMolecule.prototype.drawRibbons = function (webMGAtoms, gl, enerLib) {
 
     if (typeof (webMGAtoms["modamino"]) !== "undefined") {
         webMGAtoms["modamino"].forEach(modifiedResidue => {
-            Model.prototype.getPeptideLibraryEntry(modifiedResidue, enerLib);
+            Model.prototype.getPeptideLibraryEntry(modifiedResidue, this.enerLib);
         })
     }
 
     //Sort out H-bonding
-    enerLib.AssignHBTypes(webMGAtoms, true);
+    this.enerLib.AssignHBTypes(webMGAtoms, true);
     var model = webMGAtoms.atoms[0];
     model.calculateHBonds();
 
@@ -185,3 +230,36 @@ BabyGruMolecule.prototype.drawRibbons = function (webMGAtoms, gl, enerLib) {
     webMGAtoms.atoms = oldHierarchy
     return
 }
+
+BabyGruMolecule.prototype.drawSticks = function (webMGAtoms, gl) {
+    let hier = webMGAtoms["atoms"];
+
+    let colourScheme = new ColourScheme(webMGAtoms);
+    let atomColours = colourScheme.colourByAtomType();
+
+
+    let model = hier[0];
+    /*
+    let atoms = model.getAllAtoms();
+    contacts = model.SeekContacts(atoms,atoms,0.6,1.6);
+    */
+    let contactsAndSingletons = model.getBondsContactsAndSingletons();
+    let contacts = contactsAndSingletons["contacts"];
+    let singletons = contactsAndSingletons["singletons"];
+    let linePrimitiveInfo = contactsToLinesInfo(contacts, 2, atomColours);
+    let singletonPrimitiveInfo = singletonsToLinesInfo(singletons, 2, atomColours);
+    linePrimitiveInfo["display_class"] = "bonds";
+    singletonPrimitiveInfo["display_class"] = "bonds";
+
+    let objects = [linePrimitiveInfo, singletonPrimitiveInfo];
+
+    objects.forEach(object => {
+        const a = gl.appendOtherData(object, true);
+        this.displayObjects.sticks = this.displayObjects.sticks.concat(a)
+    })
+
+    gl.buildBuffers();
+    gl.drawScene();
+
+}
+
