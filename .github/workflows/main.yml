@@ -10,31 +10,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
        - uses: actions/checkout@v1
-       - name: Install dependencies
+       - name: Rename folder
          run: |
-           sudo apt-get install -y bzr cmake libz-dev nodejs npm git
-           cd /home/runner/work/CCP4-Web-Assembly/
-           git clone https://github.com/emscripten-core/emsdk.git
-           cd /home/runner/work/CCP4-Web-Assembly/emsdk
-           ./emsdk install latest
-           ./emsdk activate latest
-           source ./emsdk_env.sh  
            cd /home/runner/work/CCP4-Web-Assembly/
            mv CCP4-Web-Assembly ccp4_wasm
        - name: Download sources
          working-directory: /home/runner/work/CCP4-Web-Assembly/ccp4_wasm
-         run: |         
+         run: |
+           sudo apt-get install -y bzr
            cd /home/runner/work/CCP4-Web-Assembly/ccp4_wasm
            ./get_sources
        - name: emscripten bindings
-         working-directory: /home/runner/work/CCP4-Web-Assembly/ccp4_wasm       
-         run: |       
+         working-directory: /home/runner/work/CCP4-Web-Assembly/       
+         run: |    
+           cd /home/runner/work/CCP4-Web-Assembly/
+           git clone https://github.com/emscripten-core/emsdk.git
+           cd /home/runner/work/CCP4-Web-Assembly/emsdk/
+           ./emsdk install latest
+           ./emsdk activate latest
+           source ./emsdk_env.sh  
            cd /home/runner/work/CCP4-Web-Assembly/ccp4_wasm         
            emcmake cmake .
            emmake make
        - name: Run tests
          working-directory: /home/runner/work/CCP4-Web-Assembly/ccp4_wasm       
-         run: |                               
+         run: |             
+           sudo apt-get install nodejs npm
            cd /home/runner/work/CCP4-Web-Assembly/ccp4_wasm/tests
            npm install
            npm test       
