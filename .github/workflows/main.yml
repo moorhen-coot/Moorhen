@@ -1,5 +1,3 @@
-name: Build and Test
-
 on:
   push:
     branches:
@@ -7,28 +5,28 @@ on:
   pull_request:
     branches:
       - master
-
 jobs:
   runTests:
     runs-on: ubuntu-latest
     steps:
      - uses: actions/checkout@v3  
-     - uses: mymindstorm/setup-emsdk@v11
-     - uses: actions/setup-node@v3
-     - name: Run tests
+     - name: Install dependencies
        run: |
-         sudo apt-get install -y bzr cmake libz-dev nodejs npm git
-         git clone https://github.com/emscripten-core/emsdk.git
-         cd emsdk
-         ./emsdk install latest
-         ./emsdk activate latest
-         source ./emsdk_env.sh  
-         cd ../..
+         sudo apt-get install -y bzr cmake libz-dev
+         cd ..
          mv CCP4-Web-Assembly ccp4_wasm
          cd ccp4_wasm
          ./get_sources
+     - uses: mymindstorm/setup-emsdk@v11     
+     - name: Create emscripten bindings
+       working-directory: /home/runner/work/CCP4-Web-Assembly/ccp4_wasm
+       run: |
          emcmake cmake .
          emmake make
+     - uses: actions/setup-node@v3
+     - name: Run tests
+       working-directory: /home/runner/work/CCP4-Web-Assembly/ccp4_wasm
+       run: |
          cd tests
          npm install
          npm test
