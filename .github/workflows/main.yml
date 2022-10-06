@@ -15,7 +15,8 @@ jobs:
                mv CCP4-Web-Assembly ccp4_wasm
        - name: Three     
          working-directory: /home/runner/work/CCP4-Web-Assembly/
-         run:  echo $(ls ccp4_wasm)
+         run:  echo "::set-output name=mix-test::$(ls ccp4_wasm)" 
        - name: Four    
          working-directory: /home/runner/work/CCP4-Web-Assembly/ccp4_wasm    
-         run:  echo $(ls  $pwd)
+         run:  echo "::set-output name=mix-test::$(ls  $pwd)
+"
