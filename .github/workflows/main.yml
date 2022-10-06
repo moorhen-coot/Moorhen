@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
      - uses: actions/checkout@v3  
-     - name: Install dependencies
+     - name: Run tests
        run: |
          sudo apt-get install -y bzr cmake libz-dev nodejs npm git
          git clone https://github.com/emscripten-core/emsdk.git
@@ -25,13 +25,8 @@ jobs:
          mv CCP4-Web-Assembly ccp4_wasm
          cd ccp4_wasm
          ./get_sources
-     - name: Create emscripten bindings
-       run: |
          emcmake cmake .
          emmake make
-     - name: Run tests
-       run: |
          cd tests
          npm install
          npm test
-         
