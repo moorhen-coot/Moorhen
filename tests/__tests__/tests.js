@@ -92,7 +92,8 @@ describe('Testing molecules_container_js', () => {
         const molecules_container = new cootModule.molecules_container_js()
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const simpleMesh = molecules_container.ramachandran_validation_markup_mesh(coordMolNo);
-        //And then we need to expect "something"
+        expect(simpleMesh.vertices.size()).toBe(35880)
+        expect(simpleMesh.triangles.size()).toBe(38272)
     })
 
     test('Test flip_peptide by residue spec', () => {
