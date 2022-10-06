@@ -443,7 +443,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("GetNBonds",&mmdb::Atom::GetNBonds)
     .function("GetModelNum",&mmdb::Atom::GetModelNum)
     .function("GetSeqNum",&mmdb::Atom::GetSeqNum)
-    .function("GetSeqNum",&mmdb::Atom::GetSeqNum)
     .function("GetLabelSeqID",&mmdb::Atom::GetLabelSeqID)
     .function("GetLabelEntityID",&mmdb::Atom::GetLabelEntityID)
     .function("GetSSEType",&mmdb::Atom::GetSSEType)

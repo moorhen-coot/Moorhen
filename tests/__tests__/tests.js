@@ -57,6 +57,7 @@ describe('Testing molecules_container_js', () => {
         expect(res.isSugar()).toBe(false)
         expect(res.isSolvent()).toBe(false)
         expect(res.isModRes()).toBe(false)
+        expect(res.GetModelNum()).toBe(1)
         const atom = res.GetAtom(0);
         expect(atom.x).toBeCloseTo(70.783,3)
         expect(atom.y).toBeCloseTo(22.745,3)
@@ -74,6 +75,7 @@ describe('Testing molecules_container_js', () => {
         expect(atom.isCTerminus()).toBe(false)
         expect(atom.isTer()).toBe(false)
         expect(atom.isMetal()).toBe(false)
+        expect(atom.GetModelNum()).toBe(1)
     })
 
     test('Test Rama mesh', () => {
