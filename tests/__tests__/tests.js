@@ -49,16 +49,36 @@ describe('Testing molecules_container_js', () => {
         expect(res.GetSeqNum()).toBe(217)
         expect(res.GetResidueNo()).toBe(213)
         expect(res.GetNumberOfAtoms()).toBe(5)
+        expect(res.isNTerminus()).toBe(false)
+        expect(res.isCTerminus()).toBe(false)
+        expect(res.isAminoacid()).toBe(true)
+        expect(res.isNucleotide()).toBe(false)
+        expect(res.isDNARNA()).toBe(0)
+        expect(res.isSugar()).toBe(false)
+        expect(res.isSolvent()).toBe(false)
+        expect(res.isModRes()).toBe(false)
         const atom = res.GetAtom_idx(0);
         expect(atom.x).toBeCloseTo(70.783,3)
         expect(atom.y).toBeCloseTo(22.745,3)
         expect(atom.z).toBeCloseTo(32.692,3)
+        expect(atom.GetSeqNum()).toBe(217)
+        expect(atom.GetResidueNo()).toBe(213)
+        expect(atom.tempFactor).toBeCloseTo(10.25,2)
+        expect(atom.occupancy).toBeCloseTo(1.00,2)
+        expect(atom.charge).toBeCloseTo(0.00,2)
+        expect(atom.GetAtomName()).toBe(" N  ")
+        expect(atom.GetInsCode()).toBe("")
+        expect(atom.GetChainID()).toBe("A")
+        expect(atom.GetIndex()).toBe(1733)
+        expect(atom.isNTerminus()).toBe(false)
+        expect(atom.isCTerminus()).toBe(false)
+        expect(atom.isTer()).toBe(false)
+        expect(atom.isMetal()).toBe(false)
     })
 
     test('Test Rama mesh', () => {
         const molecules_container = new cootModule.molecules_container_js()
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
-        console.log(coordMolNo);
         const simpleMesh = molecules_container.ramachandran_validation_markup_mesh(coordMolNo);
         //And then we need to expect "something"
     })
@@ -77,7 +97,7 @@ describe('Testing molecules_container_js', () => {
         expect(status).toBe(1)
         const flippedFileName = "flip_out.pdb"
         const writeStatus = molecules_container.writePDBASCII(coordMolNo,flippedFileName)
-        console.log(writeStatus)
+        expect(writeStatus).toBe(0)
         const flippedFile = cootModule.FS.readFile(flippedFileName, { encoding: 'utf8' });
         //console.log(flippedFile)
 

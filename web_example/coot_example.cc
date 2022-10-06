@@ -354,6 +354,26 @@ class molecules_container_js : public molecules_container_t {
         int count_simple_mesh_vertices(const coot::simple_mesh_t &m) { return m.vertices.size(); }
 };
 
+std::string GetAtomNameFromAtom(mmdb::Atom *atom){
+    return std::string(atom->GetAtomName());
+}
+
+std::string GetChainIDFromAtom(mmdb::Atom *atom){
+    return std::string(atom->GetChainID());
+}
+
+std::string GetLabelAsymIDFromAtom(mmdb::Atom *atom){
+    return std::string(atom->GetLabelAsymID());
+}
+
+std::string GetLabelCompIDFromAtom(mmdb::Atom *atom){
+    return std::string(atom->GetLabelCompID());
+}
+
+std::string GetInsCodeFromAtom(mmdb::Atom *atom){
+    return std::string(atom->GetInsCode());
+}
+
 std::string GetResNameFromResidue(mmdb::Residue *res){
     return std::string(res->GetResName());
 }
@@ -403,6 +423,44 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("x",&mmdb::Atom::x)
     .property("y",&mmdb::Atom::y)
     .property("z",&mmdb::Atom::z)
+    .property("serNum",&mmdb::Atom::serNum)
+    .property("occupancy",&mmdb::Atom::occupancy)
+    .property("tempFactor",&mmdb::Atom::tempFactor)
+    .property("charge",&mmdb::Atom::charge)
+    .property("sigX",&mmdb::Atom::sigX)
+    .property("sigY",&mmdb::Atom::sigY)
+    .property("sigZ",&mmdb::Atom::sigZ)
+    .property("sigOcc",&mmdb::Atom::sigOcc)
+    .property("sigTemp",&mmdb::Atom::sigTemp)
+    .property("u11",&mmdb::Atom::u11)
+    .property("u22",&mmdb::Atom::u22)
+    .property("u33",&mmdb::Atom::u33)
+    .property("u12",&mmdb::Atom::u12)
+    .property("u13",&mmdb::Atom::u13)
+    .property("u23",&mmdb::Atom::u23)
+    .property("Het",&mmdb::Atom::Het)
+    .property("Ter",&mmdb::Atom::Ter)
+    .function("GetNBonds",&mmdb::Atom::GetNBonds)
+    .function("GetModelNum",&mmdb::Atom::GetModelNum)
+    .function("GetSeqNum",&mmdb::Atom::GetSeqNum)
+    .function("GetSeqNum",&mmdb::Atom::GetSeqNum)
+    .function("GetLabelSeqID",&mmdb::Atom::GetLabelSeqID)
+    .function("GetLabelEntityID",&mmdb::Atom::GetLabelEntityID)
+    .function("GetSSEType",&mmdb::Atom::GetSSEType)
+    .function("isTer",&mmdb::Atom::isTer)
+    .function("isTer",&mmdb::Atom::isTer)
+    .function("isMetal",&mmdb::Atom::isMetal)
+    .function("isSolvent",&mmdb::Atom::isSolvent)
+    .function("isInSelection",&mmdb::Atom::isInSelection)
+    .function("isNTerminus",&mmdb::Atom::isNTerminus)
+    .function("isCTerminus",&mmdb::Atom::isCTerminus)
+    .function("GetResidueNo",&mmdb::Atom::GetResidueNo)
+    .function("GetIndex",&mmdb::Atom::GetIndex)
+    .function("GetAtomName",&GetAtomNameFromAtom, allow_raw_pointers())
+    .function("GetChainID",&GetChainIDFromAtom, allow_raw_pointers())
+    .function("GetLabelAsymID",&GetLabelAsymIDFromAtom, allow_raw_pointers())
+    .function("GetLabelCompID",&GetLabelCompIDFromAtom, allow_raw_pointers())
+    .function("GetInsCode",&GetInsCodeFromAtom, allow_raw_pointers())
     ;
     class_<mmdb::Residue>("Residue")
     .constructor<>()
@@ -423,6 +481,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("isSugar",&mmdb::Residue::isSugar)
     .function("isSolvent",&mmdb::Residue::isSolvent)
     .function("isModRes",&mmdb::Residue::isModRes)
+    .function("isInSelection",&mmdb::Residue::isInSelection)
     .function("isNTerminus",&mmdb::Residue::isNTerminus)
     .function("isCTerminus",&mmdb::Residue::isCTerminus)
     .function("GetResName",&GetResNameFromResidue, allow_raw_pointers())
