@@ -2,11 +2,12 @@ import { useRef, useState, useEffect, createRef } from 'react';
 import { Navbar, Container, NavDropdown, Nav, Tabs, Tab } from 'react-bootstrap';
 import Form from 'react-bootstrap/Form';
 import { BabyGruMolecules } from './BabyGruMoleculeUI';
-import { BabyGruMaps } from './BabyGruMaps';
+import { BabyGruMaps } from './BabyGruMapUI';
 import { BabyGruWebMG } from './BabyGruWebMG';
 import { v4 as uuidv4 } from 'uuid';
 import { BabyGruMolecule } from './BabyGruMolecule';
 import { postCootMessage } from '../BabyGruUtils';
+import { BabyGruMap } from './BabyGruMap';
 
 export const BabyGruContainer = (props) => {
     const glRef = useRef(null)
@@ -27,11 +28,6 @@ export const BabyGruContainer = (props) => {
     const handleResponse = (e) => {
         let newOutput = 'Response > '.concat(e.data.response).concat('\n')
         setConsoleOutput(newOutput)
-        if (e.data.message === 'read_mtz') {
-            const newMaps = maps
-            newMaps.push(e.data.result)
-            setMaps(newMaps)
-        }
     }
 
     const readPdbFile = (file) => {
@@ -39,11 +35,24 @@ export const BabyGruContainer = (props) => {
         newMolecule.loadToCootFromFile(file)
             .then(result => {
                 newMolecule.fetchCoordsAndDraw('ribbons', glRef)
-            }).then(result=>{
+            }).then(result => {
                 const newMolecules = molecules
                 newMolecules.push(newMolecule)
                 setMolecules(newMolecules)
                 Promise.resolve(newMolecule)
+            })
+    }
+
+    const readMtzFile = (file) => {
+        const newMap = new BabyGruMap(cootWorker)
+        newMap.loadToCootFromFile(file)
+            .then(result => {
+                Promise.resolve(true)
+            }).then(result => {
+                const newMaps = maps
+                newMaps.push(newMap)
+                setMaps(newMaps)
+                Promise.resolve(newMap)
             })
     }
 
@@ -53,21 +62,12 @@ export const BabyGruContainer = (props) => {
         newMolecule.loadToCootFromEBI(pdbCode)
             .then(result => {
                 newMolecule.fetchCoordsAndDraw('ribbons', glRef)
-            }).then(result=>{
+            }).then(result => {
                 const newMolecules = molecules
                 newMolecules.push(newMolecule)
                 setMolecules(newMolecules)
                 Promise.resolve(newMolecule)
             })
-    }
-
-    const readMtzFile = (file) => {
-        const reader = new FileReader();
-        reader.addEventListener("load", () => {
-            const mtzData = new Uint8Array(reader.result)
-            cootWorker.current.postMessage({ message: 'read_mtz', name: file.name, data: mtzData })
-        }, false);
-        reader.readAsArrayBuffer(file);
     }
 
     return <div>
@@ -126,8 +126,8 @@ export const BabyGruContainer = (props) => {
                 <div style={{
                     overflow: "auto",
                     float: "left",
-                    backgroundColor: "pink",
                     width: "33rem",
+                    backgroundColor: "white",
                     height: "calc(100vh - 15rem)"
                 }}>
                     <Tabs defaultActiveKey="models">

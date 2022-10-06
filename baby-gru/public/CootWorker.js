@@ -1,7 +1,9 @@
 importScripts('./mini-rsr-web.js')
+importScripts('./web_example.js')
 
 let cootModule;
 let molecules_container;
+let ccp4Module;
 
 const guid = () => {
     var d = Date.now();
@@ -17,31 +19,46 @@ let print = (stuff) => {
     postMessage({ response: JSON.stringify(stuff) })
 }
 
-const Lib = {
-    locateFile: (file) => file,
-    onRuntimeInitialized: () => {
-        postMessage({ message: 'onRuntimeInitialized' });
-    },
-    mainScriptUrlOrBlob: "./mini-rsr-web.js",
-    print: print,
-    printErr: print,
-};
-
 onmessage = function (e) {
 
     if (e.data.message === 'CootInitialize') {
         postMessage({ message: 'Initializing molecules_container' })
 
-        createRSRModule(Lib)
-            .then((returnedModule) => {
-                cootModule = returnedModule;
-                molecules_container = new cootModule.molecules_container_js()
-                postMessage({ response: 'Initialized molecules_container', message: e.data.message })
-            })
+        createRSRModule({
+            locateFile: (file) => file,
+            onRuntimeInitialized: () => {
+                postMessage({ message: 'onRuntimeInitialized' });
+            },
+            mainScriptUrlOrBlob: "./mini-rsr-web.js",
+            print: print,
+            printErr: print,
+        }).then((returnedModule) => {
+            cootModule = returnedModule;
+            molecules_container = new cootModule.molecules_container_js()
+            postMessage({ response: 'Initialized molecules_container', message: e.data.message })
+        })
             .catch((e) => {
                 console.log(e)
                 print(e);
             });
+
+        createCCP4Module({
+            locateFile: (file) => file,
+            onRuntimeInitialized: () => {
+                postMessage({ message: 'onRuntimeInitialized' });
+            },
+            mainScriptUrlOrBlob: "./web_example.js",
+            print: print,
+            printErr: print,
+        }).then((returnedModule) => {
+            ccp4Module = returnedModule;
+            postMessage({ response: 'Initialized ccp4Module', message: e.data.message })
+        })
+            .catch((e) => {
+                console.log(e)
+                print(e);
+            });
+
     }
 
     else if (e.data.message === 'read_pdb') {
@@ -69,6 +86,27 @@ onmessage = function (e) {
             response: `Fetched coordinates of molecule ${e.data.coordMolNo}`,
             message: e.data.message,
             result: { coordMolNo: e.data.coordMolNo, pdbData: pdbData }
+        })
+    }
+
+    else if (e.data.message === 'get_map') {
+        const theGuid = guid()
+        const tempFilename = `./${theGuid}.map`
+        /*
+                var fout = new CCP4Module.CCP4MAPfile();
+                var outpath = new CCP4Module.Clipper_String("mapout.map");
+                fout.open_write(outpath);
+                CCP4Module.exportXMapToMapFile(fout,result);
+        
+                const ccp4Map = molecules_container.a
+        */
+        const mapData = cootModule.FS.readFile(tempFilename, {});
+        cootModule.FS_unlink(tempFilename)
+        postMessage({
+            messageId: e.data.messageId,
+            response: `Fetched map of map ${e.data.mapMolNo}`,
+            message: e.data.message,
+            result: { mapMolNo: e.data.mapMolNo, mapData: mapData }
         })
     }
 

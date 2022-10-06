@@ -15,7 +15,7 @@ export const BabyGruMoleculeUI = (props) => {
         props.molecule.displayObjects.sticks.length,
         props.molecule.displayObjects.ribbons.length])
 
-    return <Card key={props.molecule.coordMolNo}>
+    return <Card className="px-2" key={props.molecule.coordMolNo}>
         <Card.Title>{`Mol ${props.molecule.coordMolNo}:${props.molecule.name}`}</Card.Title>
         <Card.Body>
             {
@@ -51,7 +51,7 @@ export const BabyGruMolecules = (props) => {
     useEffect(() => {
     }, [])
 
-    return <Fragment>
+    return <Fragment style={{paddingTop:"0.5rem"}}>
         {
             props.molecules.map(molecule => <BabyGruMoleculeUI key={molecule.coordMolNo}
                 molecule={molecule}

@@ -28,3 +28,14 @@ export const readTextFile = (source) => {
     })
 }
 
+export const readDataFile = (source) => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        const loadListener = reader.addEventListener("load", () => {
+            reader.removeEventListener("load", loadListener)
+            resolve(reader.result)
+        })
+        reader.readAsArrayBuffer(source)
+    })
+}
+
