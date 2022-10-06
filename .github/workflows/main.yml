@@ -9,21 +9,27 @@ jobs:
   runTests:
     runs-on: ubuntu-latest
     steps:
-       name: Run tests
-       run: |
-         sudo apt-get install -y bzr cmake libz-dev nodejs npm git
-         cd /home/runner/work/CCP4-Web-Assembly/
-         git clone https://github.com/emscripten-core/emsdk.git
-         cd /home/runner/work/CCP4-Web-Assembly/emsdk
-         ./emsdk install latest
-         ./emsdk activate latest
-         source ./emsdk_env.sh  
-         cd /home/runner/work/CCP4-Web-Assembly/
-         mv CCP4-Web-Assembly ccp4_wasm
-         cd /home/runner/work/CCP4-Web-Assembly/ccp4_wasm
-         ./get_sources
-         emcmake cmake .
-         emmake make
-         cd /home/runner/work/CCP4-Web-Assembly/ccp4_wasm/tests
-         npm install
-         npm test
+       - name: Install dependencies
+         run: |
+           sudo apt-get install -y bzr cmake libz-dev nodejs npm git
+           cd /home/runner/work/CCP4-Web-Assembly/
+           git clone https://github.com/emscripten-core/emsdk.git
+           cd /home/runner/work/CCP4-Web-Assembly/emsdk
+           ./emsdk install latest
+           ./emsdk activate latest
+           source ./emsdk_env.sh  
+           cd /home/runner/work/CCP4-Web-Assembly/
+           mv CCP4-Web-Assembly ccp4_wasm
+       - name: Download sources
+         run: |         
+           cd /home/runner/work/CCP4-Web-Assembly/ccp4_wasm
+           ./get_sources
+       - name: emscripten bindings
+         run: |                    
+           emcmake cmake .
+           emmake make
+       - name: Run tests
+         run: |                               
+           cd /home/runner/work/CCP4-Web-Assembly/ccp4_wasm/tests
+           npm install
+           npm test
