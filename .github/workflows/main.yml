@@ -16,6 +16,9 @@ jobs:
      - name: Install dependencies
        run: |
          sudo apt-get install -y bzr cmake libz-dev
+         cd ..
+         mv CCP4-Web-Assembly ccp4_wasm
+         cd ccp4_wasm
          ./get_sources
      - uses: mymindstorm/setup-emsdk@v11     
      - name: Create emscripten bindings
