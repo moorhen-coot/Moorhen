@@ -19,13 +19,13 @@ jobs:
          ./get_sources
      - uses: mymindstorm/setup-emsdk@v11     
      - name: Create emscripten bindings
-       working-directory: /home/runner/work/CCP4-Web-Assembly/ccp4_wasm
+     - working-directory: /home/runner/work/CCP4-Web-Assembly/ccp4_wasm
        run: |
          emcmake cmake .
          emmake make
      - uses: actions/setup-node@v3
      - name: Run tests
-       working-directory: /home/runner/work/CCP4-Web-Assembly/ccp4_wasm
+     - working-directory: /home/runner/work/CCP4-Web-Assembly/ccp4_wasm
        run: |
          cd tests
          npm install
