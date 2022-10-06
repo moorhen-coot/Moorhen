@@ -38,4 +38,4 @@ jobs:
            sudo apt-get install nodejs npm
            cd /home/runner/work/CCP4-Web-Assembly/ccp4_wasm/tests
            npm install
-           npm test       
+           npm test -sEXIT_RUNTIME=1       
