@@ -16,6 +16,9 @@ ${coot_src}/api/interfaces.cc
 ${coot_src}/api/coot_molecule.cc
 ${coot_src}/api/molecule_container.cc
 ${coot_src}/api/molecules_container.cc
+${coot_src}/api/oct.cc
+${coot_src}/api/prideout-octasphere.cc
+${coot_src}/api/rama-plot-phi-psi.cc
 ${coot_src}/analysis/daca.cc
 ${coot_src}/analysis/kolmogorov.cc
 ${coot_src}/analysis/stats.cc
@@ -373,7 +376,7 @@ target_include_directories(bfactan PRIVATE ${coot_src} ${coot_src}/src ../checko
 target_compile_options(bfactan PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
 
 add_executable(mini-rsr ${coot_src}/ideal/mini-rsr.cc)
-target_link_options(mini-rsr PRIVATE -sPTHREAD_POOL_SIZE=4 -sPTHREAD_POOL_SIZE_STRICT=4 -sUSE_PTHREADS=1 -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 -sASSERTIONS=1 --pre-js coot_env.js)
+target_link_options(mini-rsr PRIVATE -sPTHREAD_POOL_SIZE=4 -sPTHREAD_POOL_SIZE_STRICT=4 -sUSE_PTHREADS=1 -sEXIT_RUNTIME=1 -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 -sASSERTIONS=1 --pre-js coot_env.js)
 target_link_directories(mini-rsr PUBLIC ../mmdb2 ../ssm ../ccp4 ../lib ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4)
 target_link_libraries(mini-rsr mmdb2 ssm clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 coot gsl gslcblas nodefs.js)
 target_include_directories(mini-rsr PRIVATE ${coot_src} ${coot_src}/src ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw ../include)
@@ -386,6 +389,7 @@ target_link_libraries(mini-rsr-web ssm rvapi gesamtlib mmdb2 clipper-minimol cli
 target_include_directories(mini-rsr-web PRIVATE ${coot_src} ${coot_src}/src ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw ../include)
 target_compile_options(mini-rsr-web PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_WEB_EXAMPLE_)
 
+#[[
 add_executable(mmrrcc ${coot_src}/coot-utils/mmrrcc.cc)
 target_link_options(mmrrcc PRIVATE -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 --pre-js coot_env.js)
 target_link_directories(mmrrcc PUBLIC ../mmdb2 ../ssm ../ccp4 ../lib ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4)
@@ -442,7 +446,7 @@ target_link_libraries(test-srs-standalone mmdb2 ssm clipper-mmdb clipper-cif cli
 target_include_directories(test-srs-standalone PRIVATE ${coot_src} ${coot_src}/src ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw)
 target_compile_options(test-srs-standalone PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
 
-add_executable(cootilus-demo.cpp ${coot_src}/cootilus/cootilus-demo.cpp)
+add_executable(cootilus-demo ${coot_src}/cootilus/cootilus-demo.cpp)
 target_link_options(cootilus-demo.cpp PRIVATE -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 --pre-js coot_env.js)
 target_link_directories(cootilus-demo.cpp PUBLIC ../mmdb2 ../ssm ../ccp4 ../lib ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4)
 target_link_libraries(cootilus-demo.cpp mmdb2 ssm clipper-minimol clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 coot gsl nodefs.js)
@@ -469,6 +473,7 @@ target_link_directories(find-waters PUBLIC ../mmdb2 ../ssm ../ccp4 ../lib ../cli
 target_link_libraries(find-waters mmdb2 ssm clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 coot gsl gslcblas nodefs.js)
 target_include_directories(find-waters PRIVATE ${coot_src} ${coot_src}/src ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw)
 target_compile_options(find-waters PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
+]]
 
 add_executable(density_fit_analysis-test density_fit_analysis-test.cc)
 target_link_options(density_fit_analysis-test PRIVATE -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1)

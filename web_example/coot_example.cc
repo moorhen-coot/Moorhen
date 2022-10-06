@@ -29,6 +29,8 @@
 #include "api/interfaces.hh"
 #include "api/molecules_container.hh"
 #include "api/validation-information.hh"
+#include "api/g_triangle.hh"
+#include "api/vertex.hh"
 
 #include "mmdb_manager.h"
 #include "clipper/core/ramachandran.h"
@@ -349,13 +351,7 @@ class molecules_container_js : public molecules_container_t {
             const char *fname_cp = file_name.c_str();
             return mol(imol)->WritePDBASCII(fname_cp);
         }
-        int flipPeptide(int imol, const coot::residue_spec_t &rs, const std::string &alt_conf) { return  molecules_container_t::flipPeptide(imol,rs,alt_conf); }
-        int flipPeptide(int imol, const std::string &cid, const std::string &alt_conf) { return molecules_container_t::flipPeptide(imol,cid,alt_conf); }
-        coot::simple_mesh_t test_origin_cube() { return molecules_container_t::test_origin_cube(); }
         int count_simple_mesh_vertices(const coot::simple_mesh_t &m) { return m.vertices.size(); }
-        int read_pdb(const std::string &file_name) { return molecules_container_t::read_pdb(file_name); }
-        int read_mtz(const std::string &file_name, const std::string &f, const std::string &phi, const std::string &weight, bool use_weight, bool is_a_difference_map) {return molecules_container_t::read_mtz(file_name,f,phi,weight,use_weight,is_a_difference_map); } 
-        coot::validation_information_t density_fit_analysis(int imol_model, int imol_map) { return molecules_container_t::density_fit_analysis(imol_model,imol_map); }
 };
 
 
@@ -383,17 +379,21 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("cviv", &coot::validation_information_t::cviv)
     .function("get_index_for_chain",&coot::validation_information_t::get_index_for_chain)
     ;
-    class_<molecules_container_js>("molecules_container_js")
+    class_<molecules_container_t>("molecules_container_t")
     .constructor<>()
-    .function("is_valid_model_molecule",&molecules_container_js::is_valid_model_molecule)
-    .function("is_valid_map_molecule",&molecules_container_js::is_valid_map_molecule)
+    .function("is_valid_model_molecule",&molecules_container_t::is_valid_model_molecule)
+    .function("is_valid_map_molecule",&molecules_container_t::is_valid_map_molecule)
+    .function("read_pdb",&molecules_container_t::read_pdb)
+    .function("read_mtz",&molecules_container_t::read_mtz)
+    .function("density_fit_analysis",&molecules_container_t::density_fit_analysis)
+    .function("flipPeptide_cid", select_overload<int(int, const std::string&,const std::string&)>(&molecules_container_t::flipPeptide))
+    .function("flipPeptide_rs", select_overload<int(int, const coot::residue_spec_t&,const std::string&)>(&molecules_container_t::flipPeptide))
+    .function("test_origin_cube",&molecules_container_t::test_origin_cube)
+    .function("ramachandran_validation_markup_mesh",&molecules_container_t::ramachandran_validation_markup_mesh)
+    ;
+    class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
+    .constructor<>()
     .function("writePDBASCII",&molecules_container_js::writePDBASCII)
-    .function("read_pdb",&molecules_container_js::read_pdb)
-    .function("read_mtz",&molecules_container_js::read_mtz)
-    .function("density_fit_analysis",&molecules_container_js::density_fit_analysis)
-    .function("flipPeptide_cid", select_overload<int(int, const std::string&,const std::string&)>(&molecules_container_js::flipPeptide))
-    .function("flipPeptide_rs", select_overload<int(int, const coot::residue_spec_t&,const std::string&)>(&molecules_container_js::flipPeptide))
-    .function("test_origin_cube",&molecules_container_js::test_origin_cube)
     .function("count_simple_mesh_vertices",&molecules_container_js::count_simple_mesh_vertices)
     ;
     class_<RamachandranInfo>("RamachandranInfo")
@@ -435,7 +435,18 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("ins_code",&coot::residue_spec_t::ins_code)
     .property("int_user_data",&coot::residue_spec_t::int_user_data)
     ;
+    class_<coot::api::vnc_vertex>("vnc_vertex")
+    .constructor<const glm::vec3 &, const glm::vec3 &, const glm::vec4 &>()
+    .property("pos",&coot::api::vnc_vertex::pos)
+    .property("normal",&coot::api::vnc_vertex::normal)
+    .property("color",&coot::api::vnc_vertex::color)
+    ;
+    value_object<g_triangle>("g_triangle")
+    .field("point_id", &g_triangle::point_id)
+    ;
     class_<coot::simple_mesh_t>("simple_mesh_t")
+    .property("vertices",&coot::simple_mesh_t::vertices)
+    .property("triangles",&coot::simple_mesh_t::triangles)
     ;
     register_vector<std::string>("VectorString");
     register_vector<RamachandranInfo>("VectorResidueIdentifier");
@@ -444,7 +455,25 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<coot::residue_validation_information_t>("Vectorresidue_validation_information_t");
     register_vector<coot::simple_rotamer>("Vectorsimple_rotamer");
     register_vector<coot::residue_spec_t>("Vectorresidue_spec_t");
+    register_vector<coot::api::vnc_vertex>("Vectorvnc_veertex");
+    register_vector<g_triangle>("Vectorg_triangle");
     register_map<std::string,std::vector<coot::simple_rotamer> >("MapStringVectorsimple_rotamer");
+    value_array<glm::vec3>("array_float_3")
+        .element(emscripten::index<0>())
+        .element(emscripten::index<1>())
+        .element(emscripten::index<2>())
+    ;
+    value_array<glm::vec4>("array_float_4")
+        .element(emscripten::index<0>())
+        .element(emscripten::index<1>())
+        .element(emscripten::index<2>())
+        .element(emscripten::index<3>())
+    ;
+    value_array<std::array<unsigned int, 3>>("array_unsigned_int_3")
+        .element(emscripten::index<0>())
+        .element(emscripten::index<1>())
+        .element(emscripten::index<2>())
+    ;
     function("mini_rsr",&mini_rsr);
     function("flipPeptide",&flipPeptide);
     function("getRamachandranData",&getRamachandranData);

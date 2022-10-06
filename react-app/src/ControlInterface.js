@@ -8,6 +8,7 @@ import Tab from 'react-bootstrap/Tab';
 import Table from 'react-bootstrap/Table';
 import Col from 'react-bootstrap/Col';
 import Row from 'react-bootstrap/Row';
+import Button from 'react-bootstrap/Button';
 
 import LightingUI from './LightingUI';
 import MGWebWizardUI from './MGWebWizardUI';
@@ -18,6 +19,8 @@ import FlipPeptide from './FlipPeptide';
 import Ramachandran from './Ramachandran';
 import NormalModes from './NormalModes';
 import Utilities from './MGUtils';
+
+import { guid } from './guid.js';
 
 function rowStyleFormat(row, rowIdx) {
     return { backgroundColor: rowIdx % 2 === 0 ? 'red' : 'blue' };
@@ -72,6 +75,13 @@ class ControlInterface extends Component {
             this.setState({ svgInfo: newIds });
 
         }
+    }
+
+    cubeButtonHandler(e){
+        console.log("Draw a cube");
+        const jobid = guid();
+        const inputData = {method:"draw_cube",jobId:jobid};
+        this.props.crystWorker.postMessage(inputData);
     }
 
     mapChanged(params) {
@@ -214,6 +224,8 @@ class ControlInterface extends Component {
             }
         }
 
+        const buttonId = "cube_button";
+
         return (
             <Tabs
                 defaultActiveKey="home"
@@ -260,6 +272,11 @@ class ControlInterface extends Component {
                 </Tab>
                 <Tab eventKey="utilities" title="Utilities">
                     <Utilities onResidueDataClick={this.props.onResidueDataClick} bvalRef={this.props.bvalRef} rotamersRef={this.props.rotamersRef} densityFitRef={this.props.densityFitRef} displayData={displayData} sharedArrayBuffer={this.props.sharedArrayBuffer} crystWorker={this.props.crystWorker} dataFiles={dataFiles} onSVGChange={this.svgChanged.bind(this)} mapChanged={this.mapChanged.bind(this)} filePendingChanged={this.filePendingChanged.bind(this)} helicesChanged={this.helicesChanged.bind(this)} />
+                </Tab>
+                <Tab eventKey="cube" title="Cube">
+                <Button key={buttonId} variant="primary" size="lg" onClick={this.cubeButtonHandler.bind(this)}>
+                Draw a cube
+                </Button>
                 </Tab>
             </Tabs>
         );
