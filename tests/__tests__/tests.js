@@ -57,7 +57,7 @@ describe('Testing molecules_container_js', () => {
         expect(res.isSugar()).toBe(false)
         expect(res.isSolvent()).toBe(false)
         expect(res.isModRes()).toBe(false)
-        const atom = res.GetAtom_idx(0);
+        const atom = res.GetAtom(0);
         expect(atom.x).toBeCloseTo(70.783,3)
         expect(atom.y).toBeCloseTo(22.745,3)
         expect(atom.z).toBeCloseTo(32.692,3)

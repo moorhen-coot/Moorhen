@@ -489,7 +489,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("GetLabelAsymID",&GetLabelAsymIDFromResidue, allow_raw_pointers())
     .function("GetLabelCompID",&GetLabelCompIDFromResidue, allow_raw_pointers())
     .function("GetInsCode",&GetInsCodeFromResidue, allow_raw_pointers())
-    .function("GetAtom_idx", select_overload<mmdb::Atom*(int)>(&mmdb::Residue::GetAtom), allow_raw_pointers())
+    .function("GetAtom", select_overload<mmdb::Atom*(int)>(&mmdb::Residue::GetAtom), allow_raw_pointers())
     .function("GetNumberOfAtoms", select_overload<int(void)>(&mmdb::Residue::GetNumberOfAtoms))
     .function("GetNumberOfAtoms_countTers", select_overload<int(bool)>(&mmdb::Residue::GetNumberOfAtoms))
     ;
