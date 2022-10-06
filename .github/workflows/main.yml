@@ -20,12 +20,12 @@ jobs:
            #source ./emsdk_env.sh  
            #cd /home/runner/work/CCP4-Web-Assembly/
            mv CCP4-Web-Assembly ccp4_wasm
-           ls ccp4_wasm
+           echo $(ls ccp4_wasm)
        - name: Download sources
          working-directory: /home/runner/work/CCP4-Web-Assembly/ccp4_wasm
          run: |         
            cd /home/runner/work/CCP4-Web-Assembly/ccp4_wasm
-           ls 
+           echo $(ls  $pwd)
            #./get_sources
        - name: emscripten bindings
          working-directory: /home/runner/work/CCP4-Web-Assembly/ccp4_wasm       
