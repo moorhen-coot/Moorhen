@@ -447,7 +447,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("GetLabelEntityID",&mmdb::Atom::GetLabelEntityID)
     .function("GetSSEType",&mmdb::Atom::GetSSEType)
     .function("isTer",&mmdb::Atom::isTer)
-    .function("isTer",&mmdb::Atom::isTer)
     .function("isMetal",&mmdb::Atom::isMetal)
     .function("isSolvent",&mmdb::Atom::isSolvent)
     .function("isInSelection",&mmdb::Atom::isInSelection)
