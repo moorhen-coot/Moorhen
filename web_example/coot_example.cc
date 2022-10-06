@@ -354,6 +354,25 @@ class molecules_container_js : public molecules_container_t {
         int count_simple_mesh_vertices(const coot::simple_mesh_t &m) { return m.vertices.size(); }
 };
 
+std::string GetResNameFromResidue(mmdb::Residue *res){
+    return std::string(res->GetResName());
+}
+
+std::string GetChainIDFromResidue(mmdb::Residue *res){
+    return std::string(res->GetChainID());
+}
+
+std::string GetLabelAsymIDFromResidue(mmdb::Residue *res){
+    return std::string(res->GetLabelAsymID());
+}
+
+std::string GetLabelCompIDFromResidue(mmdb::Residue *res){
+    return std::string(res->GetLabelCompID());
+}
+
+std::string GetInsCodeFromResidue(mmdb::Residue *res){
+    return std::string(res->GetInsCode());
+}
 
 EMSCRIPTEN_BINDINGS(my_module) {
     class_<coot::simple_rotamer>("simple_rotamer")
@@ -379,6 +398,42 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("cviv", &coot::validation_information_t::cviv)
     .function("get_index_for_chain",&coot::validation_information_t::get_index_for_chain)
     ;
+    class_<mmdb::Atom>("Atom")
+    .constructor<>()
+    .property("x",&mmdb::Atom::x)
+    .property("y",&mmdb::Atom::y)
+    .property("z",&mmdb::Atom::z)
+    ;
+    class_<mmdb::Residue>("Residue")
+    .constructor<>()
+    .property("seqNum",&mmdb::Residue::seqNum)
+    .property("label_seq_id",&mmdb::Residue::label_seq_id)
+    .property("label_entity_id",&mmdb::Residue::label_entity_id)
+    .property("index",&mmdb::Residue::index)
+    .property("nAtoms",&mmdb::Residue::nAtoms)
+    .function("GetModelNum",&mmdb::Residue::GetModelNum)
+    .function("GetSeqNum",&mmdb::Residue::GetSeqNum)
+    .function("GetLabelSeqID",&mmdb::Residue::GetLabelSeqID)
+    .function("GetLabelEntityID",&mmdb::Residue::GetLabelEntityID)
+    .function("GetResidueNo",&mmdb::Residue::GetResidueNo)
+    .function("GetNofAltLocations",&mmdb::Residue::GetNofAltLocations)
+    .function("isAminoacid",&mmdb::Residue::isAminoacid)
+    .function("isNucleotide",&mmdb::Residue::isNucleotide)
+    .function("isDNARNA",&mmdb::Residue::isDNARNA)
+    .function("isSugar",&mmdb::Residue::isSugar)
+    .function("isSolvent",&mmdb::Residue::isSolvent)
+    .function("isModRes",&mmdb::Residue::isModRes)
+    .function("isNTerminus",&mmdb::Residue::isNTerminus)
+    .function("isCTerminus",&mmdb::Residue::isCTerminus)
+    .function("GetResName",&GetResNameFromResidue, allow_raw_pointers())
+    .function("GetChainID",&GetChainIDFromResidue, allow_raw_pointers())
+    .function("GetLabelAsymID",&GetLabelAsymIDFromResidue, allow_raw_pointers())
+    .function("GetLabelCompID",&GetLabelCompIDFromResidue, allow_raw_pointers())
+    .function("GetInsCode",&GetInsCodeFromResidue, allow_raw_pointers())
+    .function("GetAtom_idx", select_overload<mmdb::Atom*(int)>(&mmdb::Residue::GetAtom), allow_raw_pointers())
+    .function("GetNumberOfAtoms", select_overload<int(void)>(&mmdb::Residue::GetNumberOfAtoms))
+    .function("GetNumberOfAtoms_countTers", select_overload<int(bool)>(&mmdb::Residue::GetNumberOfAtoms))
+    ;
     class_<molecules_container_t>("molecules_container_t")
     .constructor<>()
     .function("is_valid_model_molecule",&molecules_container_t::is_valid_model_molecule)
@@ -386,6 +441,9 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("read_pdb",&molecules_container_t::read_pdb)
     .function("read_mtz",&molecules_container_t::read_mtz)
     .function("density_fit_analysis",&molecules_container_t::density_fit_analysis)
+    //Using allow_raw_pointers(). Perhaps suggests we need to do something different from exposing mmdb pointers to JS.
+    .function("get_residue",&molecules_container_t::get_residue, allow_raw_pointers())
+    .function("get_atom",&molecules_container_t::get_atom, allow_raw_pointers())
     .function("flipPeptide_cid", select_overload<int(int, const std::string&,const std::string&)>(&molecules_container_t::flipPeptide))
     .function("flipPeptide_rs", select_overload<int(int, const coot::residue_spec_t&,const std::string&)>(&molecules_container_t::flipPeptide))
     .function("test_origin_cube",&molecules_container_t::test_origin_cube)

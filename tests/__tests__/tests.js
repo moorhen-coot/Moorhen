@@ -38,6 +38,23 @@ describe('Testing molecules_container_js', () => {
         const resSpec = new cootModule.residue_spec_t("A", 217, "");
     })
 
+    test('Test get_residue', () => {
+        const resSpec = new cootModule.residue_spec_t("A", 217, "");
+        const molecules_container = new cootModule.molecules_container_js()
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        const res = molecules_container.get_residue(coordMolNo,resSpec)
+        expect(res.nAtoms).toBe(5)
+        expect(res.GetResName()).toBe("ALA")
+        expect(res.GetChainID()).toBe("A")
+        expect(res.GetSeqNum()).toBe(217)
+        expect(res.GetResidueNo()).toBe(213)
+        expect(res.GetNumberOfAtoms()).toBe(5)
+        const atom = res.GetAtom_idx(0);
+        expect(atom.x).toBeCloseTo(70.783,3)
+        expect(atom.y).toBeCloseTo(22.745,3)
+        expect(atom.z).toBeCloseTo(32.692,3)
+    })
+
     test('Test Rama mesh', () => {
         const molecules_container = new cootModule.molecules_container_js()
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
