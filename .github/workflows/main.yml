@@ -10,12 +10,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
        - name: One
-         run: cd /home/runner/work/CCP4-Web-Assembly/
-       - name: Two
-         run:  mv CCP4-Web-Assembly ccp4_wasm
+         run: | 
+               cd /home/runner/work/CCP4-Web-Assembly/
+               mv CCP4-Web-Assembly ccp4_wasm
        - name: Three     
+         working-directory: /home/runner/work/CCP4-Web-Assembly/
          run:  echo $(ls ccp4_wasm)
-       - name: Four       
-         run:  cd /home/runner/work/CCP4-Web-Assembly/ccp4_wasm
-       - name: Five       
+       - name: Four    
+         working-directory: /home/runner/work/CCP4-Web-Assembly/ccp4_wasm    
          run:  echo $(ls  $pwd)
