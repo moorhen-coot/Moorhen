@@ -25,6 +25,7 @@ jobs:
      - uses: actions/setup-node@v3
      - name: Run tests
        run: |
-         cd reac_app
+         cd tests
+         npm install
          npm test
          
