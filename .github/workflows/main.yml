@@ -14,6 +14,6 @@ jobs:
                cd /home/runner/work/CCP4-Web-Assembly/
                mv CCP4-Web-Assembly ccp4_wasm
        - name: Three     
-         working-directory: /home/runner/work/CCP4-Web-Assembly/
+         working-directory: /home/runner/work/CCP4-Web-Assembly/ccp4_wasm
          run:  ls
 
