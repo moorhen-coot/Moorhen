@@ -11,6 +11,9 @@ on:
 jobs:
   runTests:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./ccp4_wasm    
     steps:
      - uses: actions/checkout@v3  
      - name: Install dependencies
@@ -22,13 +25,11 @@ jobs:
          ./get_sources
      - uses: mymindstorm/setup-emsdk@v11     
      - name: Create emscripten bindings
-       working-directory: ./ccp4_wasm
        run: |
          emcmake cmake .
          emmake make
      - uses: actions/setup-node@v3
      - name: Run tests
-       working-directory: ./ccp4_wasm     
        run: |
          cd tests
          npm install
