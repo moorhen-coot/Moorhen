@@ -11,24 +11,24 @@ on:
 jobs:
   runTests:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./ccp4_wasm    
     steps:
      - uses: actions/checkout@v3  
      - name: Install dependencies
        run: |
-         sudo apt-get install -y bzr cmake libz-dev
-         cd ..
+         sudo apt-get install -y bzr cmake libz-dev nodejs npm git
+         git clone https://github.com/emscripten-core/emsdk.git
+         cd emsdk
+         ./emsdk install latest
+         ./emsdk activate latest
+         source ./emsdk_env.sh  
+         cd ../..
          mv CCP4-Web-Assembly ccp4_wasm
          cd ccp4_wasm
          ./get_sources
-     - uses: mymindstorm/setup-emsdk@v11     
      - name: Create emscripten bindings
        run: |
          emcmake cmake .
          emmake make
-     - uses: actions/setup-node@v3
      - name: Run tests
        run: |
          cd tests
