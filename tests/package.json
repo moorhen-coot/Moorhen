@@ -4,7 +4,7 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-        "test": "node --experimental-wasm-git commit -amthreads --experimental-wasm-bulk-memory node_modules/jest/bin/jest.js"
+        "test": "node --experimental-wasm-threads --experimental-wasm-bulk-memory node_modules/jest/bin/jest.js"
     },
     "keywords": [],
     "author": "Martin Noble",
