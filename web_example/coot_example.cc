@@ -34,6 +34,7 @@
 
 #include "mmdb_manager.h"
 #include "clipper/core/ramachandran.h"
+#include "clipper/clipper-ccp4.h"
 
 #include "cartesian.h"
 #include "geomutil.h"
@@ -351,6 +352,13 @@ class molecules_container_js : public molecules_container_t {
             const char *fname_cp = file_name.c_str();
             return mol(imol)->WritePDBASCII(fname_cp);
         }
+        int writeCCP4Map(int imol, const std::string &file_name) {
+            auto xMap = (*this)[imol].xmap;
+            auto clipperMap = clipper::CCP4MAPfile();
+            clipperMap.open_write(file_name);
+            clipperMap.export_xmap(xMap);
+            return 0;
+        }        
         int count_simple_mesh_vertices(const coot::simple_mesh_t &m) { return m.vertices.size(); }
 };
 
@@ -509,6 +517,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<>()
     .function("writePDBASCII",&molecules_container_js::writePDBASCII)
+    .function("writeCCP4Map",&molecules_container_js::writeCCP4Map)
     .function("count_simple_mesh_vertices",&molecules_container_js::count_simple_mesh_vertices)
     ;
     class_<RamachandranInfo>("RamachandranInfo")
