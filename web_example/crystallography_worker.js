@@ -52,7 +52,6 @@ createRSRModule(Lib)
 
 let dataObjects = {pdbFiles:{}, mtzFiles:{}, cifFiles:{}};
 let dataObjectsNames = {pdbFiles:{}, mtzFiles:{}, cifFiles:{}, ramaInfo:{}, bvalInfo:{}, mol_cont_idx:{}, map_cont_idx:{}, densityFitInfo:{}, rotamersInfo:{}};
-let sharedArrayBuffer = null;
 
 function guid(){
     var d = Date.now();
@@ -71,16 +70,7 @@ function guid(){
 // * Add Rama data to the globalCache
 
 function updateShareArrayBuffer(){
-    if(sharedArrayBuffer){
-        const view = new Uint8Array(sharedArrayBuffer);
-        const stringified = JSON.stringify(dataObjectsNames);
-        const encoder = new TextEncoder();
-        const enc_s = encoder.encode(stringified);
-        for(let i=0;i<enc_s.length;i++){
-            Atomics.store(view,i,enc_s[i]);
-        }
-        Atomics.store(view,enc_s.length,0);
-    }
+    postMessage(["dataObjectsNames",dataObjectsNames]);
 }
 
 function downLoadFiles(files){
@@ -282,12 +272,18 @@ function getRama(e) {
 }
 
 function drawCube(e) {
+    console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+    console.log(dataObjectsNames.mol_cont_idx);
+    console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+    //const simpleMesh = molecules_container.ramachandran_validation_markup_mesh(0);
     const simpleMesh = molecules_container.test_origin_cube();
     const nVertices = molecules_container.count_simple_mesh_vertices(simpleMesh);
     const vertices = simpleMesh.vertices;
     const nVerticesDirect = vertices.size();
     const triangles = simpleMesh.triangles;
     const nTriangles = triangles.size();
+    console.log(triangles.size());
+    console.log(vertices.size());
     let totIdxs = [];
     let totPos = [];
     let totNorm = [];
@@ -303,6 +299,7 @@ function drawCube(e) {
         totCol.push(...vert.color);
     }
     const cubeInfo = {prim_types:[["TRIANGLES"]],idx_tri:[[totIdxs]],vert_tri:[[totPos]],norm_tri:[[totNorm]],col_tri:[[totCol]]};
+    console.log(cubeInfo);
     postMessage(["result",cubeInfo,currentTaskName]);
 
 }
@@ -411,10 +408,6 @@ function miniRSR(e) {
 onmessage = function(e) {
 
     switch(e.data.method){
-        case "setSharedArray":
-            sharedArrayBuffer = e.data.buffer;
-            updateShareArrayBuffer();
-            break;
         case "loadFile":
             console.log("Load file(s)",e.data.files);
             loadFiles(e.data.files);

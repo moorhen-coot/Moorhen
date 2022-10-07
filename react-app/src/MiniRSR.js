@@ -34,7 +34,7 @@ class MiniRSR extends Component {
         const self = this;
         let key = self.state.selected;
         let keyMap = self.state.mapSelected;
-        const dataObjectNames = this.getDataObjectNamesFromSharedArrayBuffer(this.props.sharedArrayBuffer);
+        const dataObjectNames = this.props.dataObjectsNames;
         const pdbKeys = Object.keys(dataObjectNames.pdbFiles);
         const mtzKeys = Object.keys(dataObjectNames.mtzFiles);
         if(pdbKeys.length<1||mtzKeys.length<1){
@@ -126,7 +126,7 @@ class MiniRSR extends Component {
         const pdbRegex = /.pdb$/;
         const entRegex = /.ent$/;
 
-        const dataObjectNames = this.getDataObjectNamesFromSharedArrayBuffer(this.props.sharedArrayBuffer);
+        const dataObjectNames = this.props.dataObjectsNames;
         //console.log(dataObjectNames);
 
         const pdbKeys = Object.keys(dataObjectNames.pdbFiles);

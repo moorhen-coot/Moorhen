@@ -234,7 +234,7 @@ class ControlInterface extends Component {
                 className="mb-3"
             >
                 <Tab eventKey="home" title="Files/style">
-                    <MGWebWizardUI sharedArrayBuffer={this.props.sharedArrayBuffer} crystWorker={this.props.crystWorker} enerLib={enerLib} onGlycanChange={this.glycanChanged.bind(this)} onSVGChange={this.svgChanged.bind(this)} onChange={this.filePendingChanged.bind(this)} mapChanged={this.mapChanged.bind(this)} />
+                    <MGWebWizardUI dataObjectsNames={this.props.dataObjectsNames} crystWorker={this.props.crystWorker} enerLib={enerLib} onGlycanChange={this.glycanChanged.bind(this)} onSVGChange={this.svgChanged.bind(this)} onChange={this.filePendingChanged.bind(this)} mapChanged={this.mapChanged.bind(this)} />
                 </Tab>
                 <Tab eventKey="lighting" title="Lighting">
                     <LightingUI onChange={this.lightsChanged.bind(this)} />
@@ -262,16 +262,16 @@ class ControlInterface extends Component {
                     </div>
                 </Tab>
                 <Tab eventKey="miniRSRTab" title="Mini RSR">
-                    <MiniRSR ref={this.props.rsrRef} sharedArrayBuffer={this.props.sharedArrayBuffer} crystWorker={this.props.crystWorker} addRequest={this.addRequested.bind(this)} liveUpdatingMaps={liveUpdatingMaps} dataFiles={dataFiles} displayData={displayData} mapDataFiles={mapDataFiles} onPDBChange={this.filePendingChanged.bind(this)} />
+                    <MiniRSR ref={this.props.rsrRef} dataObjectsNames={this.props.dataObjectsNames}  crystWorker={this.props.crystWorker} addRequest={this.addRequested.bind(this)} liveUpdatingMaps={liveUpdatingMaps} dataFiles={dataFiles} displayData={displayData} mapDataFiles={mapDataFiles} onPDBChange={this.filePendingChanged.bind(this)} />
                 </Tab>
                 <Tab eventKey="flipPeptideTab" title="Flip Peptide">
-                    <FlipPeptide ref={this.props.flipRef} sharedArrayBuffer={this.props.sharedArrayBuffer} crystWorker={this.props.crystWorker} addRequest={this.addRequested.bind(this)} liveUpdatingMaps={liveUpdatingMaps} dataFiles={dataFiles} displayData={displayData} mapDataFiles={mapDataFiles} onPDBChange={this.filePendingChanged.bind(this)} />
+                    <FlipPeptide ref={this.props.flipRef} dataObjectsNames={this.props.dataObjectsNames}  crystWorker={this.props.crystWorker} addRequest={this.addRequested.bind(this)} liveUpdatingMaps={liveUpdatingMaps} dataFiles={dataFiles} displayData={displayData} mapDataFiles={mapDataFiles} onPDBChange={this.filePendingChanged.bind(this)} />
                 </Tab>
                 <Tab eventKey="ramaTab" title="Ramachandran plot">
-                    <Ramachandran onClick={this.props.onResidueDataClick} ref={this.props.ramaRef} sharedArrayBuffer={this.props.sharedArrayBuffer} crystWorker={this.props.crystWorker} addRequest={this.addRequested.bind(this)} liveUpdatingMaps={liveUpdatingMaps} dataFiles={dataFiles} displayData={displayData} mapDataFiles={mapDataFiles} onPDBChange={this.filePendingChanged.bind(this)} />
+                    <Ramachandran onClick={this.props.onResidueDataClick} ref={this.props.ramaRef} dataObjectsNames={this.props.dataObjectsNames}  crystWorker={this.props.crystWorker} addRequest={this.addRequested.bind(this)} liveUpdatingMaps={liveUpdatingMaps} dataFiles={dataFiles} displayData={displayData} mapDataFiles={mapDataFiles} onPDBChange={this.filePendingChanged.bind(this)} />
                 </Tab>
                 <Tab eventKey="utilities" title="Utilities">
-                    <Utilities onResidueDataClick={this.props.onResidueDataClick} bvalRef={this.props.bvalRef} rotamersRef={this.props.rotamersRef} densityFitRef={this.props.densityFitRef} displayData={displayData} sharedArrayBuffer={this.props.sharedArrayBuffer} crystWorker={this.props.crystWorker} dataFiles={dataFiles} onSVGChange={this.svgChanged.bind(this)} mapChanged={this.mapChanged.bind(this)} filePendingChanged={this.filePendingChanged.bind(this)} helicesChanged={this.helicesChanged.bind(this)} />
+                    <Utilities onResidueDataClick={this.props.onResidueDataClick} bvalRef={this.props.bvalRef} rotamersRef={this.props.rotamersRef} densityFitRef={this.props.densityFitRef} displayData={displayData} dataObjectsNames={this.props.dataObjectsNames} crystWorker={this.props.crystWorker} dataFiles={dataFiles} onSVGChange={this.svgChanged.bind(this)} mapChanged={this.mapChanged.bind(this)} filePendingChanged={this.filePendingChanged.bind(this)} helicesChanged={this.helicesChanged.bind(this)} />
                 </Tab>
                 <Tab eventKey="cube" title="Cube">
                 <Button key={buttonId} variant="primary" size="lg" onClick={this.cubeButtonHandler.bind(this)}>

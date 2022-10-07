@@ -391,7 +391,7 @@ class Ramachandran extends Component {
     getRama(){
         const self = this;
         let key = self.state.selected;
-        const dataObjectNames = this.getDataObjectNamesFromSharedArrayBuffer(this.props.sharedArrayBuffer);
+        const dataObjectNames = this.props.dataObjectsNames;
         const pdbKeys = Object.keys(dataObjectNames.pdbFiles);
         if(pdbKeys.length<1){
             return;
@@ -409,7 +409,7 @@ class Ramachandran extends Component {
     updatePlotData(){
         const self = this;
         let key = self.state.selected;
-        const dataObjectNames = this.getDataObjectNamesFromSharedArrayBuffer(this.props.sharedArrayBuffer);
+        const dataObjectNames = this.props.dataObjectsNames;
         const pdbKeys = Object.keys(dataObjectNames.pdbFiles);
         if(pdbKeys.length<1){
             return;
@@ -458,7 +458,7 @@ class Ramachandran extends Component {
         const pdbRegex = /.pdb$/;
         const entRegex = /.ent$/;
 
-        const dataObjectNames = this.getDataObjectNamesFromSharedArrayBuffer(this.props.sharedArrayBuffer);
+        const dataObjectNames = this.props.dataObjectsNames;
 
         const pdbKeys = Object.keys(dataObjectNames.pdbFiles);
         for(let iobj=0;iobj<pdbKeys.length;iobj++){
