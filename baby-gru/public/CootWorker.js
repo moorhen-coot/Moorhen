@@ -148,5 +148,52 @@ onmessage = function (e) {
         }
     }
 
+    else if (e.data.message === 'ramachandran_validation_markup_mesh') {
+        try {
+            const {coordMolNo} = e.data
+            console.log(`Asked for rama validation spheres for mol ${coordMolNo}`)
+
+            //Issue here while ramachandran_validation_markup_mesh not working
+            const simpleMesh = molecules_container.test_origin_cube();
+            //const simpleMesh = molecules_container.ramachandran_validation_markup_mesh(coordMolNo)         
+
+            const nVertices = molecules_container.count_simple_mesh_vertices(simpleMesh);
+            const vertices = simpleMesh.vertices;
+            const nVerticesDirect = vertices.size();
+            const triangles = simpleMesh.triangles;
+            const nTriangles = triangles.size();
+            let totIdxs = [];
+            let totPos = [];
+            let totNorm = [];
+            let totCol = [];
+            for(let i=0;i<triangles.size();i++){
+                const idxs = triangles.get(i).point_id;
+                totIdxs.push(...idxs);
+            }
+            for(let i=0;i<vertices.size();i++){
+                const vert = vertices.get(i);
+                totPos.push(...vert.pos);
+                totNorm.push(...vert.normal);
+                totCol.push(...vert.color);
+            }
+            const cubeInfo = {prim_types:[["TRIANGLES"]],idx_tri:[[totIdxs]],vert_tri:[[totPos]],norm_tri:[[totNorm]],col_tri:[[totCol]]};
+            console.log('result is ', cubeInfo)
+            this.postMessage({
+                messageId: e.data.messageId,
+                response: `Evaluated ramachandran validation mesh nVerices ${nVertices} nVerticesDirect ${nVerticesDirect} nTriangles ${nTriangles}`,
+                message: e.data.message,
+                result: {cubeInfo, status:"Success"}
+            })
+
+        }
+        catch (err) {
+            this.postMessage({
+                messageId: e.data.messageId,
+                response: `Failed with status ${err}`,
+                message: e.data.message,
+                result: {status:"Failed"}
+            })
+        }
+    }
 
 }

@@ -11,7 +11,7 @@ export const BabyGruWebMG = forwardRef((props, ref) => {
         ref.current.setLightPositionNoUpdate(1., 1., 1.);
         ref.current.set_fog_range(490, 510)
         ref.current.set_clip_range(-10,20)
-        ref.current.background_colour = [.2, 0., 0., 1.];
+        ref.current.background_colour = [0., 0., 0., 1.];
         windowResizedBinding.current = window.addEventListener('resize', windowResized)
         windowResized()
         ref.current.drawScene()

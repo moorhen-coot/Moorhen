@@ -73,7 +73,7 @@ export const BabyGruContainer = (props) => {
                 setMolecules(newMolecules)
                 Promise.resolve(newMolecule)
             }).then(_ => {
-                newMolecule.centreOn(glRef)
+                //newMolecule.centreOn(glRef)
             })
     }
 
@@ -121,7 +121,7 @@ export const BabyGruContainer = (props) => {
                     style={{
                         backgroundColor: "black",
                         float: "left",
-                        width: "calc(100vw - 27rem)",
+                        width: "calc(100vw - 32rem)",
                         height: "calc(100vh - 7rem)",
                         cursor: cursorStyle
                     }}>
@@ -166,18 +166,18 @@ export const BabyGruContainer = (props) => {
                 <div style={{
                     overflow: "auto",
                     float: "left",
-                    width: "20rem",
+                    width: "25rem",
                     backgroundColor: "white",
                     height: "calc(100vh - 7rem)"
                 }}>
                     <Tabs defaultActiveKey="models">
                         <Tab title="Models" eventKey="models">
-                            <div style={{ width: "20rem" }}>
+                            <div style={{ width: "25rem" }}>
                                 <BabyGruMolecules molecules={molecules} glRef={glRef} />
                             </div>
                         </Tab>
                         <Tab title="Maps" eventKey="maps" >
-                            <div style={{ width: "20rem" }}>
+                            <div style={{ width: "25rem" }}>
                                 <BabyGruMaps maps={maps} />
                             </div>
                         </Tab>

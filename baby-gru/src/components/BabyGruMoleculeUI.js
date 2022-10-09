@@ -24,13 +24,14 @@ export const BabyGruMoleculeUI = (props) => {
                     {`Mol ${props.molecule.coordMolNo}:${props.molecule.name}`}
                 </div>
                 <div class="col-2">
-                    <Button onClick={() => {
+                    <Button size="sm" 
+                    onClick={() => {
                         props.molecule.getAtoms()
                             .then(reply => {
                                 doDownload([reply.data.result.pdbData], `${props.molecule.name}`)
                             })
                     }}>
-                        <Download />
+                        <Download size={12}/>
                     </Button>
                 </div>
             </div>

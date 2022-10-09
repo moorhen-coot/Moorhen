@@ -20,7 +20,8 @@ export function BabyGruMolecule(cootWorker) {
     this.displayObjects = {
         ribbons: [],
         bonds: [],
-        sticks: []
+        sticks: [],
+        rama: [],
     }
 };
 
@@ -131,12 +132,29 @@ BabyGruMolecule.prototype.drawWithStyleFromAtoms = function (style, gl, webMGAto
         case 'sticks':
             this.drawSticks(webMGAtoms, gl.current, 0)
             break;
+        case 'rama':
+            this.drawRamachandranBalls(gl.current)
+            break;
         default:
             break;
     }
-
 }
 
+BabyGruMolecule.prototype.drawRamachandranBalls = function (gl) {
+    const $this = this
+    postCootMessage($this.cootWorker, {
+        message: 'ramachandran_validation_markup_mesh',
+        coordMolNo: this.coordMolNo
+    }).then(response => {
+        const objects = [response.data.result.cubeInfo]
+        objects.forEach(object => {
+            var a = gl.appendOtherData(object, true);
+            $this.displayObjects.rama = $this.displayObjects.rama.concat(a)
+        })
+        gl.buildBuffers();
+        gl.drawScene();
+    })
+}
 
 BabyGruMolecule.prototype.show = function (style, gl) {
     if (this.displayObjects[style].length == 0) {
@@ -326,7 +344,6 @@ BabyGruMolecule.prototype.redraw = function (gl) {
         (p, style) => {
             console.log(`Redrawing ${style}`, $this.atomsDirty)
             return p.then(() => $this.fetchCoordsAndDraw(style, gl)
-
             )
         },
         Promise.resolve()
