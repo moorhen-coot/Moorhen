@@ -22,7 +22,7 @@ export const BabyGruWebMG = forwardRef((props, ref) => {
 
     useEffect(() => {
         props.molecules.forEach(molecule => {
-            //molecule.fetchCoordsAndDraw('bonds', glRef)
+            //molecule.fetchIfDirtyAndDraw('bonds', glRef)
         })
     }, [props.molecules, props.molecules.length])
 

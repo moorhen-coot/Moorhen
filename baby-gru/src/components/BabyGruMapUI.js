@@ -15,15 +15,17 @@ export const BabyGruMaps = (props) => {
                 {
                     props.maps.map(map => <tr key={map.mapMolNo} >
                         <th>{map.mapMolNo}</th><th>{map.name}</th>
-                        <th>            <Button onClick={() => {
-                            map.getMap()
-                                .then(reply => {
-                                    doDownload([reply.data.result.mapData],
-                                        `${map.name.replace('.mtz', '.map')}`
-                                    )
-                                })
-                        }}><Download />
-                        </Button>
+                        <th>
+                            <Button size="sm" onClick={() => {
+                                map.getMap()
+                                    .then(reply => {
+                                        doDownload([reply.data.result.mapData],
+                                            `${map.name.replace('.mtz', '.map')}`
+                                        )
+                                    })
+                            }}>
+                                <Download size={12} />
+                            </Button>
                         </th>
                     </tr>)
                 }

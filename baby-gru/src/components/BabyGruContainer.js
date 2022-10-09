@@ -37,11 +37,9 @@ export const BabyGruContainer = (props) => {
         const newMolecule = new BabyGruMolecule(cootWorker)
         newMolecule.loadToCootFromFile(file)
             .then(result => {
-                newMolecule.fetchCoordsAndDraw('bonds', glRef, true)
+                newMolecule.fetchIfDirtyAndDraw('bonds', glRef, true)
             }).then(result => {
-                const newMolecules = molecules
-                newMolecules.push(newMolecule)
-                setMolecules(newMolecules)
+                setMolecules([...molecules, newMolecule])
                 Promise.resolve(newMolecule)
             }).then(_ => {
                 newMolecule.centreOn(glRef)
@@ -54,9 +52,7 @@ export const BabyGruContainer = (props) => {
             .then(result => {
                 Promise.resolve(true)
             }).then(result => {
-                const newMaps = maps
-                newMaps.push(newMap)
-                setMaps(newMaps)
+                setMaps([...maps, newMap])
                 Promise.resolve(newMap)
             })
     }
@@ -66,11 +62,9 @@ export const BabyGruContainer = (props) => {
         const newMolecule = new BabyGruMolecule(cootWorker)
         newMolecule.loadToCootFromEBI(pdbCode)
             .then(result => {
-                newMolecule.fetchCoordsAndDraw('bonds', glRef, true)
+                newMolecule.fetchIfDirtyAndDraw('bonds', glRef, true)
             }).then(result => {
-                const newMolecules = molecules
-                newMolecules.push(newMolecule)
-                setMolecules(newMolecules)
+                setMolecules([...molecules, newMolecule])
                 Promise.resolve(newMolecule)
             }).then(_ => {
                 //newMolecule.centreOn(glRef)
@@ -184,7 +178,7 @@ export const BabyGruContainer = (props) => {
                     </Tabs>
                 </div>
             </div>
-            <textarea readOnly={true} rows={2} value={consoleOutput} style={{ width: "100vw" }} />
+            <textarea readOnly={true} rows={2} value={consoleOutput} style={{ width: "calc(100vw - 20rem)" }} />
         </Container>
     </div>
 }

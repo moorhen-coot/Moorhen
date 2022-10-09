@@ -86,7 +86,7 @@ BabyGruMolecule.prototype.updateAtoms = function () {
     })
 }
 
-BabyGruMolecule.prototype.fetchCoordsAndDraw = function (style, gl) {
+BabyGruMolecule.prototype.fetchIfDirtyAndDraw = function (style, gl) {
     const $this = this
     let promise
     if ($this.atomsDirty) {
@@ -158,7 +158,7 @@ BabyGruMolecule.prototype.drawRamachandranBalls = function (gl) {
 
 BabyGruMolecule.prototype.show = function (style, gl) {
     if (this.displayObjects[style].length == 0) {
-        this.fetchCoordsAndDraw(style, gl)
+        this.fetchIfDirtyAndDraw(style, gl)
     }
     else {
         this.displayObjects[style].forEach(displayBuffer => {
@@ -343,7 +343,7 @@ BabyGruMolecule.prototype.redraw = function (gl) {
     itemsToRedraw.reduce(
         (p, style) => {
             console.log(`Redrawing ${style}`, $this.atomsDirty)
-            return p.then(() => $this.fetchCoordsAndDraw(style, gl)
+            return p.then(() => $this.fetchIfDirtyAndDraw(style, gl)
             )
         },
         Promise.resolve()
