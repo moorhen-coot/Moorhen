@@ -1,5 +1,7 @@
 import { useEffect, Fragment, useState } from "react";
-import { Table, Card, Form } from "react-bootstrap";
+import { Table, Card, Form, Button, Row, Col } from "react-bootstrap";
+import { doDownload } from '../BabyGruUtils';
+import { Download } from 'react-bootstrap-icons';
 
 export const BabyGruMoleculeUI = (props) => {
     const [showState, setShowState] = useState({})
@@ -7,16 +9,32 @@ export const BabyGruMoleculeUI = (props) => {
     useEffect(() => {
         const initialState = {}
         Object.keys(props.molecule.displayObjects).forEach(key => {
-            initialState[key] = props.molecule.displayObjects[key].length > 0 
-            //&& props.molecule.displayObjects[key][0].visible
+            initialState[key] = props.molecule.displayObjects[key].length > 0
+                && props.molecule.displayObjects[key][0].visible
         })
         setShowState(initialState)
     }, [props.molecule.displayObjects.bonds.length,
-        props.molecule.displayObjects.sticks.length,
-        props.molecule.displayObjects.ribbons.length])
+    props.molecule.displayObjects.sticks.length,
+    props.molecule.displayObjects.ribbons.length])
 
     return <Card className="px-2" key={props.molecule.coordMolNo}>
-        <Card.Title>{`Mol ${props.molecule.coordMolNo}:${props.molecule.name}`}</Card.Title>
+        <Card.Header>
+            <div class="row justify-content-between">
+                <div class="col-6">
+                    {`Mol ${props.molecule.coordMolNo}:${props.molecule.name}`}
+                </div>
+                <div class="col-2">
+                    <Button onClick={() => {
+                        props.molecule.getAtoms()
+                            .then(reply => {
+                                doDownload([reply.data.result.pdbData], `${props.molecule.name}`)
+                            })
+                    }}>
+                        <Download />
+                    </Button>
+                </div>
+            </div>
+        </Card.Header>
         <Card.Body>
             {
                 Object.keys(props.molecule.displayObjects).map(key => {
@@ -44,14 +62,15 @@ export const BabyGruMoleculeUI = (props) => {
                 })
             }
         </Card.Body>
-    </Card>
+    </Card >
 }
 
 export const BabyGruMolecules = (props) => {
     useEffect(() => {
     }, [])
 
-    return <Fragment style={{paddingTop:"0.5rem"}}>
+    return <Fragment>
+        <Row><Col><div style={{ height: "1rem" }} /></Col></Row>
         {
             props.molecules.map(molecule => <BabyGruMoleculeUI key={molecule.coordMolNo}
                 molecule={molecule}

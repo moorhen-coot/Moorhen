@@ -4,13 +4,13 @@ import { MGWebGL } from '../WebGL/mgWebGL.js';
 
 export const BabyGruWebMG = forwardRef((props, ref) => {
     const windowResizedBinding = createRef(null)
-    const [width, setWidth] = useState(200)
-    const [height, setHeight] = useState(200)
 
     useEffect(() => {
         ref.current.setAmbientLightNoUpdate(0.2, 0.2, 0.2);
         ref.current.setSpecularLightNoUpdate(0.6, 0.6, 0.6);
         ref.current.setLightPositionNoUpdate(1., 1., 1.);
+        ref.current.set_fog_range(490, 510)
+        ref.current.set_clip_range(-10,20)
         ref.current.background_colour = [.2, 0., 0., 1.];
         windowResizedBinding.current = window.addEventListener('resize', windowResized)
         windowResized()
@@ -25,6 +25,13 @@ export const BabyGruWebMG = forwardRef((props, ref) => {
             //molecule.fetchCoordsAndDraw('bonds', glRef)
         })
     }, [props.molecules, props.molecules.length])
+
+    useEffect(() => {
+        props.maps.forEach(map => {
+            console.log('in map changed useEffect')
+            map.contour(ref.current)
+        })
+    }, [props.maps, props.maps.length])
 
     const windowResized = (e) => {
         ref.current.resize(props.width(), props.height())
@@ -64,7 +71,7 @@ export const BabyGruWebMG = forwardRef((props, ref) => {
     }
 
     return <div >
-        <MGWebGL 
+        <MGWebGL
             ref={ref}
             dataChanged={() => { }}
             messageChanged={() => { }} />

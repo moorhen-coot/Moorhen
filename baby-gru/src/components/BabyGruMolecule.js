@@ -1,5 +1,4 @@
 import 'pako';
-import $ from 'jquery';
 import { EnerLib, Model, parseMMCIF, parsePDB, atomsToHierarchy } from '../WebGL/mgMiniMol';
 import { CalcSecStructure } from '../WebGL/mgSecStr';
 import { ColourScheme } from '../WebGL/mgWebGLAtomsToPrimitives';
@@ -7,7 +6,6 @@ import { GetSplinesColoured } from '../WebGL/mgSecStr';
 import { getMultipleBonds } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { atomsToSpheresInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { contactsToCylindersInfo, contactsToLinesInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
-import { readMapFromArrayBuffer, mapToMapGrid } from '../WebGL/mgWebGLReadMap';
 import { singletonsToLinesInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { DisplayBuffer, getEncodedData } from '../WebGL/mgWebGL';
 import { v4 as uuidv4 } from 'uuid';
@@ -17,6 +15,8 @@ export function BabyGruMolecule(cootWorker) {
     this.cootWorker = cootWorker
     this.enerLib = new EnerLib()
     this.HBondsAssigned = false
+    this.cachedAtoms = null
+    this.atomsDirty = true
     this.displayObjects = {
         ribbons: [],
         bonds: [],
@@ -29,6 +29,8 @@ BabyGruMolecule.prototype.loadToCootFromFile = function (source) {
     return new Promise((resolve, reject) => {
         return readTextFile(source)
             .then(coordData => {
+                $this.cachedAtoms = $this.webMGAtomsFromFileString(coordData)
+                $this.atomsDirty = false
                 return postCootMessage($this.cootWorker, {
                     message: 'read_pdb',
                     name: source.name,
@@ -41,6 +43,9 @@ BabyGruMolecule.prototype.loadToCootFromFile = function (source) {
             })
     })
 }
+BabyGruMolecule.prototype.setAtomsDirty = function (state) {
+    this.atomsDirty = state
+}
 
 BabyGruMolecule.prototype.loadToCootFromEBI = function (pdbCode) {
     const $this = this
@@ -50,13 +55,15 @@ BabyGruMolecule.prototype.loadToCootFromEBI = function (pdbCode) {
             .then(response => {
                 return response.text()
             }).then((coordData) => {
+                $this.cachedAtoms = $this.webMGAtomsFromFileString(coordData)
+                $this.atomsDirty = false
                 return postCootMessage($this.cootWorker, {
                     message: 'read_pdb',
                     name: pdbCode,
                     data: coordData
-                }).then(e => {
-                    $this.name = e.data.result.name
-                    $this.coordMolNo = e.data.result.coordMolNo
+                }).then(reply => {
+                    $this.name = reply.data.result.name
+                    $this.coordMolNo = reply.data.result.coordMolNo
                     resolve($this)
                 })
             })
@@ -64,35 +71,72 @@ BabyGruMolecule.prototype.loadToCootFromEBI = function (pdbCode) {
     })
 }
 
-BabyGruMolecule.prototype.getAtoms = function () {
+BabyGruMolecule.prototype.updateAtoms = function () {
     const $this = this;
-    return postCootMessage($this.cootWorker, { message: "get_atoms", coordMolNo: $this.coordMolNo })
+    return postCootMessage($this.cootWorker, {
+        message: "get_atoms",
+        coordMolNo: $this.coordMolNo
+    }).then((result) => {
+        return new Promise((resolve, reject) => {
+            $this.cachedAtoms = $this.webMGAtomsFromFileString(result.data.result.pdbData)
+            $this.atomsDirty = false
+            resolve($this.cachedAtoms)
+        })
+    })
 }
 
 BabyGruMolecule.prototype.fetchCoordsAndDraw = function (style, gl) {
-    return this.getAtoms()
-        .then(result => {
-            return new Promise((resolve, reject) => {
-                const webMGAtoms = this.webMGAtomsFromFileString(result.data.result.pdbData)
-                console.log(gl, gl.current)
-                gl.current.setOrigin(webMGAtoms.atoms[0].centre())
-                switch (style) {
-                    case 'ribbons':
-                        this.drawRibbons(webMGAtoms, gl.current)
-                        break;
-                    case 'bonds':
-                        this.drawBonds(webMGAtoms, gl.current, 0)
-                        break;
-                    case 'sticks':
-                        this.drawSticks(webMGAtoms, gl.current, 0)
-                        break;
-                    default:
-                        break;
-                }
-                resolve(true)
-            })
+    const $this = this
+    let promise
+    if ($this.atomsDirty) {
+        promise = this.updateAtoms()
+    }
+    else {
+        promise = new Promise((resolve, reject) => { resolve($this.cachedAtoms) })
+    }
+    return promise.then(webMGAtoms => {
+        return new Promise((resolve, reject) => {
+            $this.drawWithStyleFromAtoms(style, gl, webMGAtoms)
+            resolve(true)
         })
+    })
 }
+
+BabyGruMolecule.prototype.centreOn = function (gl, selection) {
+    //Note add selection to permit centringh on subset
+    const $this = this
+    let promise
+    if (this.atomsDirty) {
+        promise = this.updateAtoms()
+    }
+    else {
+        promise = Promise.resolve()
+    }
+    return promise.then(() => {
+        return new Promise((resolve, reject) => {
+            gl.current.setOrigin($this.cachedAtoms.atoms[0].centre())
+            resolve(true)
+        })
+    })
+}
+
+BabyGruMolecule.prototype.drawWithStyleFromAtoms = function (style, gl, webMGAtoms) {
+    switch (style) {
+        case 'ribbons':
+            this.drawRibbons(webMGAtoms, gl.current)
+            break;
+        case 'bonds':
+            this.drawBonds(webMGAtoms, gl.current, 0)
+            break;
+        case 'sticks':
+            this.drawSticks(webMGAtoms, gl.current, 0)
+            break;
+        default:
+            break;
+    }
+
+}
+
 
 BabyGruMolecule.prototype.show = function (style, gl) {
     if (this.displayObjects[style].length == 0) {
@@ -263,3 +307,28 @@ BabyGruMolecule.prototype.drawSticks = function (webMGAtoms, gl) {
 
 }
 
+BabyGruMolecule.prototype.redraw = function (gl) {
+    const $this = this
+    const itemsToRedraw = []
+    Object.keys($this.displayObjects).forEach(style => {
+        const objectCategoryBuffers = $this.displayObjects[style]
+        if (objectCategoryBuffers.length > 0) {
+            if (objectCategoryBuffers[0].visible) {
+                itemsToRedraw.push(style)
+            }
+            objectCategoryBuffers.forEach((buffer) => {
+                buffer.clearBuffers()
+            })
+            $this.displayObjects[style] = []
+        }
+    })
+    itemsToRedraw.reduce(
+        (p, style) => {
+            console.log(`Redrawing ${style}`, $this.atomsDirty)
+            return p.then(() => $this.fetchCoordsAndDraw(style, gl)
+
+            )
+        },
+        Promise.resolve()
+    )
+}

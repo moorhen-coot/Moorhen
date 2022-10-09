@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, createRef } from 'react';
-import { Navbar, Container, NavDropdown, Nav, Tabs, Tab } from 'react-bootstrap';
+import { Navbar, Container, NavDropdown, Nav, Tabs, Tab, ButtonGroup, Button } from 'react-bootstrap';
 import Form from 'react-bootstrap/Form';
 import { BabyGruMolecules } from './BabyGruMoleculeUI';
 import { BabyGruMaps } from './BabyGruMapUI';
@@ -12,9 +12,12 @@ import { BabyGruMap } from './BabyGruMap';
 export const BabyGruContainer = (props) => {
     const glRef = useRef(null)
     const cootWorker = useRef(null)
+    const graphicsDiv = createRef()
+    const flipClickedBinding = useRef(null)
     const [consoleOutput, setConsoleOutput] = useState("")
     const [molecules, setMolecules] = useState([])
     const [maps, setMaps] = useState([])
+    const [cursorStyle, setCursorStyle] = useState("default")
 
     useEffect(() => {
         cootWorker.current = new Worker('CootWorker.js')
@@ -34,12 +37,14 @@ export const BabyGruContainer = (props) => {
         const newMolecule = new BabyGruMolecule(cootWorker)
         newMolecule.loadToCootFromFile(file)
             .then(result => {
-                newMolecule.fetchCoordsAndDraw('ribbons', glRef)
+                newMolecule.fetchCoordsAndDraw('bonds', glRef, true)
             }).then(result => {
                 const newMolecules = molecules
                 newMolecules.push(newMolecule)
                 setMolecules(newMolecules)
                 Promise.resolve(newMolecule)
+            }).then(_ => {
+                newMolecule.centreOn(glRef)
             })
     }
 
@@ -61,12 +66,14 @@ export const BabyGruContainer = (props) => {
         const newMolecule = new BabyGruMolecule(cootWorker)
         newMolecule.loadToCootFromEBI(pdbCode)
             .then(result => {
-                newMolecule.fetchCoordsAndDraw('ribbons', glRef)
+                newMolecule.fetchCoordsAndDraw('bonds', glRef, true)
             }).then(result => {
                 const newMolecules = molecules
                 newMolecules.push(newMolecule)
                 setMolecules(newMolecules)
                 Promise.resolve(newMolecule)
+            }).then(_ => {
+                newMolecule.centreOn(glRef)
             })
     }
 
@@ -109,42 +116,75 @@ export const BabyGruContainer = (props) => {
         </Navbar>
         <Container fluid>
             <div style={{ backgroundColor: "#eee", height: "calc(100vh - 15rem)" }}>
-                <div style={{
-                    backgroundColor: "black",
-                    float: "left",
-                    width: "calc(100vw - 35rem)",
-                    height: "calc(100vh - 15rem)"
-                }}>
+                <div
+                    ref={graphicsDiv}
+                    style={{
+                        backgroundColor: "black",
+                        float: "left",
+                        width: "calc(100vw - 27rem)",
+                        height: "calc(100vh - 7rem)",
+                        cursor: cursorStyle
+                    }}>
                     <BabyGruWebMG
                         molecules={molecules}
                         ref={glRef}
                         maps={maps}
-                        width={() => { return window.innerWidth - 580 }}
-                        height={() => { return window.innerHeight - 250 }}
+                        width={() => { return window.innerWidth - 440 }}
+                        height={() => { return window.innerHeight - 115 }}
                     />
+                </div>
+
+                <div class="border" style={{
+                    overflow: "auto",
+                    float: "left",
+                    width: "5rem",
+                    backgroundColor: "white",
+                    height: "calc(100vh - 7rem)"
+                }}>
+                    <ButtonGroup size="sm" vertical>
+                        <Button onClick={() => {
+                            setConsoleOutput('Select atom in residue for which to flip peptide')
+                            setCursorStyle("crosshair")
+                            flipClickedBinding.current = document.addEventListener('atomClicked', (event) => {
+                                setConsoleOutput(`Selected atom ${event.detail}`)
+                                //Currrently don't know which molecule has been edited...appply flip to all
+                                molecules.forEach(molecule => {
+                                    molecule.setAtomsDirty(true)
+                                    setCursorStyle("default")
+                                    postCootMessage(cootWorker, {
+                                        message: 'flipPeptide',
+                                        coordMolNo: molecule.coordMolNo,
+                                        cid: event.detail
+                                    }).then(_ => {
+                                        molecule.redraw(glRef)
+                                    })
+                                })
+                            }, {once:true})
+                        }}>Flip</Button>
+                    </ButtonGroup>
                 </div>
                 <div style={{
                     overflow: "auto",
                     float: "left",
-                    width: "33rem",
+                    width: "20rem",
                     backgroundColor: "white",
-                    height: "calc(100vh - 15rem)"
+                    height: "calc(100vh - 7rem)"
                 }}>
                     <Tabs defaultActiveKey="models">
                         <Tab title="Models" eventKey="models">
-                            <div style={{ width: "33rem" }}>
+                            <div style={{ width: "20rem" }}>
                                 <BabyGruMolecules molecules={molecules} glRef={glRef} />
                             </div>
                         </Tab>
                         <Tab title="Maps" eventKey="maps" >
-                            <div style={{ width: "33rem" }}>
+                            <div style={{ width: "20rem" }}>
                                 <BabyGruMaps maps={maps} />
                             </div>
                         </Tab>
                     </Tabs>
                 </div>
             </div>
-            <textarea readOnly={true} rows={7} value={consoleOutput} style={{ width: "100vw" }} />
+            <textarea readOnly={true} rows={2} value={consoleOutput} style={{ width: "100vw" }} />
         </Container>
     </div>
 }

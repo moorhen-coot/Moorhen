@@ -93,20 +93,20 @@ onmessage = function (e) {
         const theGuid = guid()
         const tempFilename = `./${theGuid}.map`
         /*
-                var fout = new CCP4Module.CCP4MAPfile();
-                var outpath = new CCP4Module.Clipper_String("mapout.map");
-                fout.open_write(outpath);
-                CCP4Module.exportXMapToMapFile(fout,result);
-        
-                const ccp4Map = molecules_container.a
+        var fout = new ccp4Module.CCP4MAPfile();
+        var outpath = new ccp4Module.Clipper_String(tempFilename);
+        fout.open_write(outpath);
+        ccp4Module.exportXMapToMapFile(fout, molecules_container[e.data.mapMolNo].xmap);
         */
-        const mapData = cootModule.FS.readFile(tempFilename, {});
+        molecules_container.writeCCP4Map(e.data.mapMolNo, tempFilename)
+
+        const mapData = cootModule.FS.readFile(tempFilename, { encoding: 'binary' });
         cootModule.FS_unlink(tempFilename)
         postMessage({
             messageId: e.data.messageId,
             response: `Fetched map of map ${e.data.mapMolNo}`,
             message: e.data.message,
-            result: { mapMolNo: e.data.mapMolNo, mapData: mapData }
+            result: { mapMolNo: e.data.mapMolNo, mapData: mapData.buffer }
         })
     }
 
@@ -129,5 +129,24 @@ onmessage = function (e) {
             print(err)
         }
     }
+
+    else if (e.data.message === 'flipPeptide') {
+        try {
+            const {coordMolNo, cid} = e.data
+            const [molNo, modelId, chainId, resNo] = cid.split('/')
+            const resSpec = new cootModule.residue_spec_t(chainId, parseInt(resNo), "");
+            const status = molecules_container.flipPeptide_rs(coordMolNo, resSpec, "")         
+            this.postMessage({
+                messageId: e.data.messageId,
+                response: `Flipped Peptide command ${chainId} ${parseInt(resNo)} return ${status}`,
+                message: e.data.message,
+                result: {}
+            })
+        }
+        catch (err) {
+            print(err)
+        }
+    }
+
 
 }

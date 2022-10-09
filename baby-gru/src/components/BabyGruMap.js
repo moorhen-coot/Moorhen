@@ -1,7 +1,9 @@
 import { postCootMessage, readDataFile } from "../BabyGruUtils"
+import { readMapFromArrayBuffer, mapToMapGrid } from '../WebGL/mgWebGLReadMap';
 
 export function BabyGruMap(cootWorker) {
     this.cootWorker = cootWorker
+    this.liveUpdatingMaps = {}
     this.displayBuffers = []
 }
 
@@ -15,36 +17,42 @@ BabyGruMap.prototype.loadToCootFromFile = function (source) {
                     message: 'read_mtz',
                     name: source.name,
                     data: asUIntArray
-                }).then(e => {
-                    $this.name = e.data.result.name
-                    $this.mapMolNo = e.data.result.mapMolNo
+                }).then(reply => {
+                    $this.name = reply.data.result.name
+                    $this.mapMolNo = reply.data.result.mapMolNo
                     resolve($this)
                 })
             })
     })
 }
 
+BabyGruMap.prototype.getMap = function () {
+    const $this = this
+    return postCootMessage($this.cootWorker, {
+        message: 'get_map',
+        mapMolNo: $this.mapMolNo
+    })
+}
+
 BabyGruMap.prototype.contour = function (gl) {
     const $this = this
-/*
-    var map = readMapFromArrayBuffer($this._base64ToArrayBuffer(result.text));
-    result.text = null
-    var mapGrid = mapToMapGrid(map);
-    var mapTriangleData = { "mapGrids": [mapGrid], "col_tri": [[]], "norm_tri": [[]], "vert_tri": [[]], "idx_tri": [[]], "prim_types": [[]] };
-    $this.gl.setShowAxes(true);
-    var newBuffers = $this.gl.appendOtherData(mapTriangleData);
+    $this.getMap()
+        .then(reply => {
+            let map = readMapFromArrayBuffer(reply.data.result.mapData);
+            var mapGrid = mapToMapGrid(map);
+            var mapTriangleData = { "mapGrids": [mapGrid], "col_tri": [[]], "norm_tri": [[]], "vert_tri": [[]], "idx_tri": [[]], "prim_types": [[]] };
+            var newBuffers = gl.appendOtherData(mapTriangleData);
 
-    var newMap = $this.gl.liveUpdatingMaps[$this.gl.liveUpdatingMaps.length - 1]
-    newMap.contourLevel = 0.5
-    newMap.mapColour = [0.2, 0.7, 0.2, 0.5]
-    $this.liveUpdatingMaps[objectType] = newMap
-    $this.gl.reContourMaps()
-    for (var buffer of newBuffers) {
-        buffer.visible = true
-    }
-    $this.displayObjects[objectType] = $this.displayObjects[objectType].concat(newBuffers)
-    $this.gl.drawScene()
+            var newMap = gl.liveUpdatingMaps[gl.liveUpdatingMaps.length - 1]
 
-
-*/
+            newMap.contourLevel = 0.5
+            newMap.mapColour = [0.2, 0.7, 0.2, 0.5]
+            $this.liveUpdatingMaps['2FoFc'] = newMap
+            gl.reContourMaps()
+            for (var buffer of newBuffers) {
+                buffer.visible = true
+            }
+            $this.displayBuffers['2FoFc'] = $this.displayBuffers['2FoFc'].concat(newBuffers)
+            gl.drawScene()
+        })
 }
