@@ -7973,6 +7973,11 @@ class MGWebGL extends Component {
                 }
                 this.props.messageChanged({message:label + ", xyz:("+ atx+" "+aty+" "+atz+")"+tempFactorLabel});
 
+                var atomClicked = new CustomEvent("atomClicked", {
+                    "detail": theAtom.label
+                });
+                document.dispatchEvent(atomClicked);
+
                 if(event.altKey){
                     self.origin = [-atx,-aty,-atz];
                     self.reContourMaps();
@@ -8079,6 +8084,12 @@ class MGWebGL extends Component {
                     tempFactorLabel = ", B: "+self.displayBuffers[minidx].atoms[minj].tempFactor;
                 }
                 this.props.messageChanged({message:label + ", xyz:("+ atx+" "+aty+" "+atz+")"+tempFactorLabel});
+
+                var atomClicked = new CustomEvent("atomClicked", {
+                    "detail": theAtom.label
+                });
+                document.dispatchEvent(atomClicked);
+
             }
 
         }
