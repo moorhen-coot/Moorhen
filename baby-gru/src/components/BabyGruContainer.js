@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, createRef } from 'react';
-import { Navbar, Container, NavDropdown, Nav, Tabs, Tab, ButtonGroup, Button } from 'react-bootstrap';
+import { Navbar, Container, NavDropdown, Nav, Tabs, Tab, ButtonGroup, Button, Image } from 'react-bootstrap';
 import Form from 'react-bootstrap/Form';
 import { BabyGruMolecules } from './BabyGruMoleculeUI';
 import { BabyGruMaps } from './BabyGruMapUI';
@@ -154,7 +154,9 @@ export const BabyGruContainer = (props) => {
                                     })
                                 })
                             }, {once:true})
-                        }}>Flip</Button>
+                        }}>
+                            <img src="pixmaps/flip-peptide.svg"/>
+                        </Button>
                     </ButtonGroup>
                 </div>
                 <div style={{
