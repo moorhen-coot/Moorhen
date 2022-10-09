@@ -8,12 +8,13 @@ import { v4 as uuidv4 } from 'uuid';
 import { BabyGruMolecule } from './BabyGruMolecule';
 import { postCootMessage } from '../BabyGruUtils';
 import { BabyGruMap } from './BabyGruMap';
+import { BabyGruButtonBar } from './BabyGruButtonBar';
 
 export const BabyGruContainer = (props) => {
+
     const glRef = useRef(null)
     const cootWorker = useRef(null)
     const graphicsDiv = createRef()
-    const flipClickedBinding = useRef(null)
     const [consoleOutput, setConsoleOutput] = useState("")
     const [molecules, setMolecules] = useState([])
     const [maps, setMaps] = useState([])
@@ -127,38 +128,11 @@ export const BabyGruContainer = (props) => {
                         height={() => { return window.innerHeight - 115 }}
                     />
                 </div>
-
-                <div class="border" style={{
-                    overflow: "auto",
-                    float: "left",
-                    width: "5rem",
-                    backgroundColor: "white",
-                    height: "calc(100vh - 7rem)"
-                }}>
-                    <ButtonGroup size="sm" vertical>
-                        <Button onClick={() => {
-                            setConsoleOutput('Select atom in residue for which to flip peptide')
-                            setCursorStyle("crosshair")
-                            flipClickedBinding.current = document.addEventListener('atomClicked', (event) => {
-                                setConsoleOutput(`Selected atom ${event.detail}`)
-                                //Currrently don't know which molecule has been edited...appply flip to all
-                                molecules.forEach(molecule => {
-                                    setCursorStyle("default")
-                                    postCootMessage(cootWorker, {
-                                        message: 'flipPeptide',
-                                        coordMolNo: molecule.coordMolNo,
-                                        cid: event.detail
-                                    }).then(_ => {
-                                        molecule.setAtomsDirty(true)
-                                        molecule.redraw(glRef)
-                                    })
-                                })
-                            }, {once:true})
-                        }}>
-                            <img src="pixmaps/flip-peptide.svg"/>
-                        </Button>
-                    </ButtonGroup>
-                </div>
+                <BabyGruButtonBar setCursorStyle={setCursorStyle}
+                    molecules={molecules}
+                    setConsoleOutput={setConsoleOutput} 
+                    cootWorker={cootWorker}
+                    glRef={glRef}/>
                 <div style={{
                     overflow: "auto",
                     float: "left",
