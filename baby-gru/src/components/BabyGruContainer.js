@@ -1,14 +1,12 @@
 import { useRef, useState, useEffect, createRef } from 'react';
-import { Navbar, Container, NavDropdown, Nav, Tabs, Tab, ButtonGroup, Button, Image } from 'react-bootstrap';
-import Form from 'react-bootstrap/Form';
+import { Navbar, Container, Nav, Tabs, Tab } from 'react-bootstrap';
 import { BabyGruMolecules } from './BabyGruMoleculeUI';
 import { BabyGruMaps } from './BabyGruMapUI';
 import { BabyGruWebMG } from './BabyGruWebMG';
 import { v4 as uuidv4 } from 'uuid';
-import { BabyGruMolecule } from './BabyGruMolecule';
 import { postCootMessage } from '../BabyGruUtils';
-import { BabyGruMap } from './BabyGruMap';
 import { BabyGruButtonBar } from './BabyGruButtonBar';
+import { BabyGruFileMenu } from './BabyGruFileMenu';
 
 export const BabyGruContainer = (props) => {
 
@@ -34,44 +32,6 @@ export const BabyGruContainer = (props) => {
         setConsoleOutput(newOutput)
     }
 
-    const readPdbFile = (file) => {
-        const newMolecule = new BabyGruMolecule(cootWorker)
-        newMolecule.loadToCootFromFile(file)
-            .then(result => {
-                newMolecule.fetchIfDirtyAndDraw('bonds', glRef, true)
-            }).then(result => {
-                setMolecules([...molecules, newMolecule])
-                Promise.resolve(newMolecule)
-            }).then(_ => {
-                newMolecule.centreOn(glRef)
-            })
-    }
-
-    const readMtzFile = (file) => {
-        const newMap = new BabyGruMap(cootWorker)
-        newMap.loadToCootFromFile(file)
-            .then(result => {
-                Promise.resolve(true)
-            }).then(result => {
-                setMaps([...maps, newMap])
-                Promise.resolve(newMap)
-            })
-    }
-
-    const fetchFileFromEBI = (pdbCode) => {
-        console.log(pdbCode)
-        const newMolecule = new BabyGruMolecule(cootWorker)
-        newMolecule.loadToCootFromEBI(pdbCode)
-            .then(result => {
-                newMolecule.fetchIfDirtyAndDraw('bonds', glRef, true)
-            }).then(result => {
-                setMolecules([...molecules, newMolecule])
-                Promise.resolve(newMolecule)
-            }).then(_ => {
-                newMolecule.centreOn(glRef)
-            })
-    }
-
     return <div>
         <Navbar>
             <Container >
@@ -79,32 +39,14 @@ export const BabyGruContainer = (props) => {
                 <Navbar.Toggle aria-controls="basic-navbar-nav" />
                 <Navbar.Collapse id="basic-navbar-nav">
                     <Nav className="me-auto">
-                        <NavDropdown title="File" id="basic-nav-dropdown">
-                            <Form.Group style={{ width: '20rem' }} controlId="uploadCoords" className="mb-3">
-                                <Form.Label>Coordinates</Form.Label>
-                                <Form.Control type="file" accept=".pdb, .mmcif, .ent" onChange={(e) => {
-                                    for (const file of e.target.files) {
-                                        readPdbFile(file)
-                                    }
-                                }} />
-                            </Form.Group>
-                            <Form.Group style={{ width: '20rem' }} controlId="downloadCoords" className="mb-3">
-                                <Form.Label>From PDBe</Form.Label>
-                                <Form.Control type="text" onKeyDown={(e) => {
-                                    if (e.code === 'Enter') {
-                                        fetchFileFromEBI(e.target.value.toUpperCase())
-                                    }
-                                }} />
-                            </Form.Group>
-                            <Form.Group style={{ width: '20rem' }} controlId="uploadMTZs" className="mb-3">
-                                <Form.Label>Map coefficients</Form.Label>
-                                <Form.Control type="file" accept=".mtz" onChange={(e) => {
-                                    for (const file of e.target.files) {
-                                        readMtzFile(file)
-                                    }
-                                }} />
-                            </Form.Group>
-                        </NavDropdown>
+                        <BabyGruFileMenu
+                            molecules={molecules}
+                            setMolecules={setMolecules}
+                            maps={maps}
+                            setMaps={setMaps}
+                            cootWorker={cootWorker}
+                            glRef={glRef}
+                        />
                     </Nav>
                 </Navbar.Collapse>
             </Container>
@@ -130,9 +72,9 @@ export const BabyGruContainer = (props) => {
                 </div>
                 <BabyGruButtonBar setCursorStyle={setCursorStyle}
                     molecules={molecules}
-                    setConsoleOutput={setConsoleOutput} 
+                    setConsoleOutput={setConsoleOutput}
                     cootWorker={cootWorker}
-                    glRef={glRef}/>
+                    glRef={glRef} />
                 <div style={{
                     overflow: "auto",
                     float: "left",

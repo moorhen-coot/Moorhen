@@ -7,8 +7,6 @@ import { getMultipleBonds } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { atomsToSpheresInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { contactsToCylindersInfo, contactsToLinesInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { singletonsToLinesInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
-import { DisplayBuffer, getEncodedData } from '../WebGL/mgWebGL';
-import { v4 as uuidv4 } from 'uuid';
 import { postCootMessage, readTextFile, readDataFile } from '../BabyGruUtils'
 
 export function BabyGruMolecule(cootWorker) {

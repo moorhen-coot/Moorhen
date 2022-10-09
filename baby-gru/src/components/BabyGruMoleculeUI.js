@@ -1,5 +1,5 @@
 import { useEffect, Fragment, useState } from "react";
-import { Table, Card, Form, Button, Row, Col } from "react-bootstrap";
+import { Card, Form, Button, Row, Col } from "react-bootstrap";
 import { doDownload } from '../BabyGruUtils';
 import { Download } from 'react-bootstrap-icons';
 

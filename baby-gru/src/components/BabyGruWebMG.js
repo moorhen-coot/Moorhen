@@ -38,38 +38,6 @@ export const BabyGruWebMG = forwardRef((props, ref) => {
         ref.current.drawScene()
     }
 
-    const setOrigin = (o) => {
-        ref.current.setOrigin(o)
-        ref.current.drawScene()
-    }
-
-    const setQuat = (q) => {
-        ref.current.setQuat(q)
-        ref.current.drawScene()
-    }
-
-    const setZoom = (z) => {
-        ref.current.setZoom(z)
-        ref.current.drawScene()
-    }
-
-    const set_fog_range = (start, end) => {
-        ref.current.set_fog_range(start, end, true)
-        ref.current.drawScene()
-    }
-
-    const set_clip_range = (start, end) => {
-        ref.current.set_clip_range(start, end, true)
-        ref.current.drawScene()
-    }
-
-    const setBackground = (bgColor) => {
-        var rgbaFloat = [...bgColor];
-        if (rgbaFloat.length == 3) { rgbaFloat.push(1.) }
-        ref.current.background_colour = rgbaFloat;
-        ref.current.drawScene()
-    }
-
     return <div >
         <MGWebGL
             ref={ref}
