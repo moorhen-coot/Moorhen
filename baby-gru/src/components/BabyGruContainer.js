@@ -67,7 +67,7 @@ export const BabyGruContainer = (props) => {
                 setMolecules([...molecules, newMolecule])
                 Promise.resolve(newMolecule)
             }).then(_ => {
-                //newMolecule.centreOn(glRef)
+                newMolecule.centreOn(glRef)
             })
     }
 
@@ -143,13 +143,13 @@ export const BabyGruContainer = (props) => {
                                 setConsoleOutput(`Selected atom ${event.detail}`)
                                 //Currrently don't know which molecule has been edited...appply flip to all
                                 molecules.forEach(molecule => {
-                                    molecule.setAtomsDirty(true)
                                     setCursorStyle("default")
                                     postCootMessage(cootWorker, {
                                         message: 'flipPeptide',
                                         coordMolNo: molecule.coordMolNo,
                                         cid: event.detail
                                     }).then(_ => {
+                                        molecule.setAtomsDirty(true)
                                         molecule.redraw(glRef)
                                     })
                                 })

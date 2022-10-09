@@ -22,7 +22,6 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-public/mini-rsr-web.data
-public/mini-rsr-web.js
-public/mini-rsr-web.wasm
-public/mini-rsr-web.worker.js
+/public/wasm
+/public/pixmaps
+/src/WebGL
