@@ -1,5 +1,5 @@
-importScripts('./mini-rsr-web.js')
-importScripts('./web_example.js')
+importScripts('./wasm/mini-rsr-web.js')
+importScripts('./wasm/web_example.js')
 
 let cootModule;
 let molecules_container;
@@ -25,11 +25,11 @@ onmessage = function (e) {
         postMessage({ message: 'Initializing molecules_container' })
 
         createRSRModule({
-            locateFile: (file) => file,
+            locateFile: (file) => `./wasm/${file}`,
             onRuntimeInitialized: () => {
                 postMessage({ message: 'onRuntimeInitialized' });
             },
-            mainScriptUrlOrBlob: "./mini-rsr-web.js",
+            mainScriptUrlOrBlob: "mini-rsr-web.js",
             print: print,
             printErr: print,
         }).then((returnedModule) => {
@@ -43,11 +43,11 @@ onmessage = function (e) {
             });
 
         createCCP4Module({
-            locateFile: (file) => file,
+            locateFile: (file) => `./wasm/${file}`,
             onRuntimeInitialized: () => {
                 postMessage({ message: 'onRuntimeInitialized' });
             },
-            mainScriptUrlOrBlob: "./web_example.js",
+            mainScriptUrlOrBlob: "web_example.js",
             print: print,
             printErr: print,
         }).then((returnedModule) => {
