@@ -214,7 +214,7 @@ function insertAnisou(atoms,anisou){
     }
 }
 
-function atomsToHierarchy(atoms){
+export function atomsToHierarchy(atoms){
     let models = [];
     let chains = {}
     if(atoms.length>0){
