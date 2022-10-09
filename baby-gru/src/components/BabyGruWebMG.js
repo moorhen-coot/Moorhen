@@ -1,24 +1,24 @@
-import React, { createRef, useEffect, useState, useRef, forwardRef } from 'react';
+import React, { createRef, useEffect, forwardRef } from 'react';
 
 import { MGWebGL } from '../WebGL/mgWebGL.js';
 
-export const BabyGruWebMG = forwardRef((props, ref) => {
+export const BabyGruWebMG = forwardRef((props, glRef) => {
     const windowResizedBinding = createRef(null)
 
     useEffect(() => {
-        ref.current.setAmbientLightNoUpdate(0.2, 0.2, 0.2);
-        ref.current.setSpecularLightNoUpdate(0.6, 0.6, 0.6);
-        ref.current.setLightPositionNoUpdate(1., 1., 1.);
-        ref.current.set_fog_range(490, 510)
-        ref.current.set_clip_range(-10,20)
-        ref.current.background_colour = [0., 0., 0., 1.];
+        glRef.current.setAmbientLightNoUpdate(0.2, 0.2, 0.2);
+        glRef.current.setSpecularLightNoUpdate(0.6, 0.6, 0.6);
+        glRef.current.setLightPositionNoUpdate(1., 1., 1.);
+        glRef.current.set_fog_range(490, 510)
+        glRef.current.set_clip_range(-10, 20)
+        glRef.current.background_colour = [0., 0., 0., 1.];
         windowResizedBinding.current = window.addEventListener('resize', windowResized)
         windowResized()
-        ref.current.drawScene()
+        glRef.current.drawScene()
         return () => {
             window.removeEventListener('resize', windowResizedBinding.current)
         }
-    }, [])
+    }, [glRef])
 
     useEffect(() => {
         props.molecules.forEach(molecule => {
@@ -29,22 +29,19 @@ export const BabyGruWebMG = forwardRef((props, ref) => {
     useEffect(() => {
         props.maps.forEach(map => {
             console.log('in map changed useEffect')
-            map.contour(ref.current)
+            map.contour(glRef.current)
         })
     }, [props.maps, props.maps.length])
 
     const windowResized = (e) => {
-        ref.current.resize(props.width(), props.height())
-        ref.current.drawScene()
+        glRef.current.resize(props.width(), props.height())
+        glRef.current.drawScene()
     }
 
-    return <div >
-        <MGWebGL
-            ref={ref}
-            dataChanged={() => { }}
-            messageChanged={() => { }} />
-    </div>
-
+    return <MGWebGL
+        ref={glRef}
+        dataChanged={() => { }}
+        messageChanged={() => { }} />
 });
 
 

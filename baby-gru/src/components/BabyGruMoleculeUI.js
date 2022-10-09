@@ -13,9 +13,11 @@ export const BabyGruMoleculeUI = (props) => {
                 && props.molecule.displayObjects[key][0].visible
         })
         setShowState(initialState)
-    }, [props.molecule.displayObjects.bonds.length,
-    props.molecule.displayObjects.sticks.length,
-    props.molecule.displayObjects.ribbons.length])
+    }, [
+        props.molecule.displayObjects.bonds.length,
+        props.molecule.displayObjects.sticks.length,
+        props.molecule.displayObjects.ribbons.length
+    ])
 
     return <Card className="px-2" key={props.molecule.coordMolNo}>
         <Card.Header>
@@ -24,14 +26,14 @@ export const BabyGruMoleculeUI = (props) => {
                     {`Mol ${props.molecule.coordMolNo}:${props.molecule.name}`}
                 </div>
                 <div class="col-2">
-                    <Button size="sm" 
-                    onClick={() => {
-                        props.molecule.getAtoms()
-                            .then(reply => {
-                                doDownload([reply.data.result.pdbData], `${props.molecule.name}`)
-                            })
-                    }}>
-                        <Download size={12}/>
+                    <Button size="sm"
+                        onClick={() => {
+                            props.molecule.getAtoms()
+                                .then(reply => {
+                                    doDownload([reply.data.result.pdbData], `${props.molecule.name}`)
+                                })
+                        }}>
+                        <Download size={12} />
                     </Button>
                 </div>
             </div>
