@@ -29,6 +29,7 @@ target_link_libraries(web_example ssm rvapi gesamtlib mmdb2 clipper-minimol clip
 target_include_directories(web_example PRIVATE ../checkout/privateer-MKIV/src ../include ../example ../checkout/ssm ../checkout/mmdb2/ ../checkout/mmdb2/mmdb2 ../checkout/clipper ../checkout/fftw-2.1.5/fftw ../checkout/fftw-2.1.5/rfftw ../checkout/libccp4/ccp4 ../checkout/ccp4srs ../checkout/gemmi/include ../checkout/gesamt ../gesamt ../ccp4mg  ../checkout/ccp4mg/mmut  ../checkout/ccp4mg/util ../checkout/ccp4mg/pygl/mapview ../checkout/coot-1.0 )
 target_compile_options(web_example PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_WEB_EXAMPLE_)
 install(TARGETS web_example DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../react-app/public/wasm)
+install(TARGETS web_example DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../baby-gru/public/wasm)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/web_example.wasm  
               ${CMAKE_CURRENT_BINARY_DIR}/web_example.js
               ${CMAKE_CURRENT_BINARY_DIR}/RDKit_minimal.js
@@ -48,6 +49,28 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/web_example.wasm
               #${CMAKE_CURRENT_BINARY_DIR}/pthread_test.js
               #${CMAKE_CURRENT_BINARY_DIR}/pthread_test.worker.js
 DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../react-app/public/wasm)
+#MN added install for baby-gru
+install(TARGETS web_example DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../baby-gru/public/wasm)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/web_example.wasm  
+              ${CMAKE_CURRENT_BINARY_DIR}/web_example.js
+              ${CMAKE_CURRENT_BINARY_DIR}/RDKit_minimal.js
+              ${CMAKE_CURRENT_BINARY_DIR}/RDKit_minimal.wasm
+              ${CMAKE_CURRENT_BINARY_DIR}/crystallography_worker.js
+              ${CMAKE_CURRENT_BINARY_DIR}/cif_pdb_worker.js
+              ${CMAKE_CURRENT_BINARY_DIR}/mtz_worker.js
+              ${CMAKE_CURRENT_BINARY_DIR}/mtz_arraybuffer_worker.js
+              ${CMAKE_CURRENT_BINARY_DIR}/papaparse.min.js
+              ${CMAKE_CURRENT_BINARY_DIR}/pdb_worker.js
+              ${CMAKE_CURRENT_BINARY_DIR}/superpose_worker.js
+              ${CMAKE_CURRENT_BINARY_DIR}/smiles_to_pdb_worker.js
+              ${CMAKE_CURRENT_BINARY_DIR}/monid_to_pdb_worker.js
+              ${CMAKE_CURRENT_BINARY_DIR}/nma_worker.js
+              ${CMAKE_CURRENT_BINARY_DIR}/mini_rsr_worker.js
+              #${CMAKE_CURRENT_BINARY_DIR}/pthread_test.wasm
+              #${CMAKE_CURRENT_BINARY_DIR}/pthread_test.js
+              #${CMAKE_CURRENT_BINARY_DIR}/pthread_test.worker.js
+DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../baby-gru/public/wasm)
+
 
 #add_executable(pthread_test pthread_test.cc)
 #target_compile_options(pthread_test PUBLIC -sUSE_PTHREADS=1 )
