@@ -403,6 +403,55 @@ std::string GetInsCodeFromResidue(mmdb::Residue *res){
 }
 
 EMSCRIPTEN_BINDINGS(my_module) {
+    class_<clipper::Coord_orth>("Coord_orth")
+    .constructor<const clipper::ftype&, const clipper::ftype&, const clipper::ftype&>()
+    .function("x", &clipper::Coord_orth::x)
+    .function("y", &clipper::Coord_orth::y)
+    .function("z", &clipper::Coord_orth::z)
+    ;
+    class_<clipper::Cell_descr>("Cell_descr")
+    .constructor<const clipper::ftype&, const clipper::ftype&, const clipper::ftype&, const clipper::ftype&, const clipper::ftype&, const clipper::ftype&>()
+    .function("a", &clipper::Cell_descr::a)
+    .function("b", &clipper::Cell_descr::b)
+    .function("c", &clipper::Cell_descr::c)
+    .function("alpha", &clipper::Cell_descr::alpha)
+    .function("beta", &clipper::Cell_descr::beta)
+    .function("gamma", &clipper::Cell_descr::gamma)
+    .function("alpha_deg", &clipper::Cell_descr::alpha_deg)
+    .function("beta_deg", &clipper::Cell_descr::beta_deg)
+    .function("gamma_deg", &clipper::Cell_descr::gamma_deg)
+    .function("format", &clipper::Cell_descr::format)
+    ;
+    class_<clipper::Cell, base<clipper::Cell_descr>>("Cell")
+    .constructor()
+    .constructor<const clipper::Cell_descr &>()
+    .function("a_star", &clipper::Cell::a_star)
+    .function("b_star", &clipper::Cell::b_star)
+    .function("c_star", &clipper::Cell::c_star)
+    .function("alpha_star", &clipper::Cell::alpha_star)
+    .function("beta_star", &clipper::Cell::beta_star)
+    .function("gamma_star", &clipper::Cell::gamma_star)
+    .function("descr", &clipper::Cell::descr)
+    .function("is_null", &clipper::Cell::is_null)
+    .function("init", &clipper::Cell::init)
+    ;
+    class_<clipper::Xmap_base>("Xmap_base")
+    .function("cell", &clipper::Xmap_base::cell)
+    ;
+    class_<clipper::String>("Clipper_String")
+    .constructor()
+    .constructor<const std::string>()
+    ;
+    class_<clipper::Xmap<float>, base<clipper::Xmap_base>>("Xmap_float")
+    .constructor()
+    ;
+    class_<clipper::CCP4MAPfile>("CCP4MAPfile")
+    .constructor()
+    .function("open_read",&clipper::CCP4MAPfile::open_read)
+    .function("open_write",&clipper::CCP4MAPfile::open_write)
+    .function("close_read",&clipper::CCP4MAPfile::close_read)
+    .function("close_write",&clipper::CCP4MAPfile::close_write)
+    ;
     class_<coot::simple_rotamer>("simple_rotamer")
     .function("P_r1234",&coot::simple_rotamer::P_r1234)
     .function("Probability_rich",&coot::simple_rotamer::Probability_rich)
@@ -513,6 +562,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("flipPeptide_rs", select_overload<int(int, const coot::residue_spec_t&,const std::string&)>(&molecules_container_t::flipPeptide))
     .function("test_origin_cube",&molecules_container_t::test_origin_cube)
     .function("ramachandran_validation_markup_mesh",&molecules_container_t::ramachandran_validation_markup_mesh)
+    .function("get_map_contours_mesh",&molecules_container_t::get_map_contours_mesh)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<>()
