@@ -10,6 +10,9 @@ import {parsePDB} from './mgMiniMol.js';
 
 import { guid } from './guid.js';
 
+/**
+ * React component to handle flip peptides task
+ */
 class FlipPeptide extends Component {
     constructor(props) {
 
@@ -18,19 +21,47 @@ class FlipPeptide extends Component {
 
         this.preRef = React.createRef();
 
-        this.state = {selected:"unk",mapSelected:"unk",log:"", chainId:"", flipRes:0 };
+        this.state = {selected:"unk", mapSelected:"unk", log:"", chainId:"", flipRes:0 };
         this.jobData = {};
         this.message = "";
         const self = this;
     }
 
+    /**
+     * Sends a message to crystallography worker as a promise
+     * @param {Worker} crystWorker 
+     * @param {Object} kwargs 
+     */
+    postCrystWorkerMessage(crystWorker, kwargs) {
+        const messageId = guid();
+        return new Promise((resolve, reject) => {
+            const messageListener = crystWorker.addEventListener('message', (e) => {
+                if (e.data.messageId === messageId) {
+                    crystWorker.removeEventListener('message', messageListener);
+                    resolve(e);
+                }
+            })
+            crystWorker.postMessage({
+                messageId, ...kwargs
+            });
+        });
+    }    
+    
+    /**
+     * Appends string to message displayed in log box
+     * @param {string} s - string with the message that will get logged
+     */
     updateLog(s){
         const self = this;
         self.message += s;
         self.setState({log:self.message}, ()=> {self.preRef.current.scrollTop = self.preRef.current.scrollHeight;});
     }
 
-    handleFlip(){
+    
+    /**
+     * Handle the peptide flip and send message with result to crystallography worker
+     */
+     async handleFlip(){
         const self = this;
         let key = self.state.selected;
         const dataObjectNames = this.props.dataObjectsNames;
@@ -42,39 +73,39 @@ class FlipPeptide extends Component {
             key = pdbKeys[0];
         }
         const jobid = guid();
-        const inputData = {method:"flip_peptide",jobId:jobid,pdbinKey:key,chainId:this.state.chainId,resnoFlip:parseInt(this.state.flipRes)};
-        self.props.crystWorker.postMessage(inputData);
+        const inputData = {method:"flip_peptide", jobId:jobid,pdbinKey:key, chainId:this.state.chainId, resnoFlip:parseInt(this.state.flipRes)};
+        let response = await this.postCrystWorkerMessage(self.props.crystWorker, inputData);
     }
 
+    /**
+     * Handle model name change by updating widget state
+     * @param {Event} evt 
+     */
     handleChange(evt){
         this.setState({selected:evt.target.value});
     }
 
+    /**
+     * Handle chain name change by updating widget state
+     * @param {Event} evt 
+     */
     handleChainChange(evt){
         this.setState({chainId:evt.target.value});
     }
 
-    handeleFlipNoChange(evt){
+    /**
+     * Handle residue number change by updating widget state
+     * @param {Event} evt 
+     */
+    handleFlipNoChange(evt){
         this.setState({flipRes:evt.target.value});
     }
 
-    getDataObjectNamesFromSharedArrayBuffer(buffer){
 
-        const view = new Uint8Array(buffer);
-        let buflen = 0;
-        for(let i=0;i<buffer.byteLength;i++){
-            if(view[i] === 0){
-                buflen = i;
-                break;
-            }
-        }
-        const dec = new TextDecoder();
-        const stringified = dec.decode(view.slice(0,buflen));
-        const dataObjectNames = JSON.parse(stringified);
-        return dataObjectNames;
-
-    }
-
+    /**
+     * Renders widget in html format
+     * @returns {string} - html contents with the rendered widget
+     */
     render () {
         const styles = reactCSS({
             'default': {
@@ -137,7 +168,7 @@ class FlipPeptide extends Component {
         <Form.Control required type="text" onChange={this.handleChainChange.bind(this)} placeholder="Chain id" value={this.state.chainId} />
         </Col>
         <Col>
-        <Form.Control required type="number" onChange={this.handeleFlipNoChange.bind(this)} placeholder="Residue" value={this.state.flipRes} />
+        <Form.Control required type="number" onChange={this.handleFlipNoChange.bind(this)} placeholder="Residue" value={this.state.flipRes} />
         </Col>
         </Form.Group>
         </Form>

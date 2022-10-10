@@ -295,7 +295,30 @@ class ResidueMapData extends Component {
         this.clickHandler = this.props.clickHandler;
 
     }
+    
+    /**
+     * Sends a message to crystallography worker as a promise
+     * @param {Worker} crystWorker 
+     * @param {Object} kwargs 
+     */
+     postCrystWorkerMessage(crystWorker, kwargs) {
+        const messageId = guid();
+        return new Promise((resolve, reject) => {
+            const messageListener = crystWorker.addEventListener('message', (e) => {
+                if (e.data.messageId === messageId) {
+                    crystWorker.removeEventListener('message', messageListener);
+                    resolve(e);
+                }
+            })
+            crystWorker.postMessage({
+                messageId, ...kwargs
+            });
+        });
+    }    
 
+    /**
+     * Update density fit plot data
+     */
     updatePlotData(){
         const self = this;
         let key = self.state.selected;
@@ -318,8 +341,11 @@ class ResidueMapData extends Component {
         }
 
     }
-
-    getData(){
+    
+    /**
+     * Get density fit data and send message with result to crystallography worker
+     */
+    async getData(){
         const self = this;
         let key = self.state.selected;
         let keyMap = self.state.mapSelected;
@@ -337,33 +363,23 @@ class ResidueMapData extends Component {
         }
         const jobid = guid();
         const inputData = {method:self.crystMethod,jobId:jobid,pdbinKey:key,hklinKey:keyMap,chainId:this.state.chainId};
-        self.props.crystWorker.postMessage(inputData);
+        let response = await this.postCrystWorkerMessage(self.props.crystWorker, inputData);
 
     }
 
-    getDataObjectNamesFromSharedArrayBuffer(buffer){
-
-        const view = new Uint8Array(buffer);
-        let buflen = 0;
-        for(let i=0;i<buffer.byteLength;i++){
-            if(view[i] === 0){
-                buflen = i;
-                break;
-            }
-        }
-        //console.log(buflen);
-        const dec = new TextDecoder();
-        const stringified = dec.decode(view.slice(0,buflen));
-        const dataObjectNames = JSON.parse(stringified);
-        return dataObjectNames;
-
-    }
-
+    /**
+     * Handle model name change by updating widget state
+     * @param {Event} evt 
+     */
     handleChange(evt){
         const self = this;
         this.setState({selected:evt.target.value}, ()=> self.getData());
     }
 
+    /**
+     * Handle map name change by updating widget state
+     * @param {Event} evt 
+     */
     handleMapChange(evt){
         const self = this;
         this.setState({mapSelected:evt.target.value}, ()=> self.getData());
@@ -373,11 +389,19 @@ class ResidueMapData extends Component {
         evt.preventDefault();
     }
 
+    /**
+     * Handle chain name change by updating widget state
+     * @param {Event} evt 
+     */
     handleChainChange(evt){
         const self = this;
         this.setState({chainId:evt.target.value}, ()=> self.getData());
     }
 
+    /**
+     * Renders widget in html format
+     * @returns {string} - html contents with the rendered widget
+     */
     render () {
         const styles = reactCSS({
             'default': {
