@@ -550,6 +550,13 @@ ${coot_src}/textures/rama-plot-pro-normal.png
 ${coot_src}/textures/rama-plot-pro-outlier.png
 DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../react-app/public)
 
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/mini-rsr-web.wasm
+${CMAKE_CURRENT_BINARY_DIR}/mini-rsr-web.worker.js
+${CMAKE_CURRENT_BINARY_DIR}/mini-rsr-web.js
+${CMAKE_CURRENT_BINARY_DIR}/mini-rsr-web.data
+${CMAKE_CURRENT_BINARY_DIR}/coot_env_web.js
+DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../baby-gru/public/wasm)
+
 install(DIRECTORY 
 ${coot_src}/pixmaps
 DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../baby-gru/public)
