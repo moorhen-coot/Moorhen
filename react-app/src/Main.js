@@ -48,47 +48,47 @@ class Main extends Component {
         this.densityFitRef = React.createRef();
         this.rotamersRef = React.createRef();
         var self = this;
+        
         this.crystWorker.onmessage = function (e) {
-            if (e.data[0] === "dataObjectsNames") {
-                self.setState({dataObjectsNames:e.data[1]});
+            if (e.data.messageTag === "dataObjectsNames") {
+                self.setState({dataObjectsNames:e.data.result});
             }
-            if (e.data[0] === "output") {
-                if (e.data[2] === "mini_rsr") {
-                    self.rsrRef.current.updateLog(e.data[1] + "\n");
-                } else if (e.data[2] === "flip_peptide") {
-                    self.flipRef.current.updateLog(e.data[1] + "\n");
+            if (e.data.messageTag === "output") {
+                if (e.data.taskName === "mini_rsr") {
+                    self.rsrRef.current.updateLog(e.data.result + "\n");
+                } else if (e.data.taskName === "flip_peptide") {
+                    self.flipRef.current.updateLog(e.data.result + "\n");
                 } else {
-                    console.log(e.data[1]);
+                    console.log(e.data.result);
                 }
             }
-            if (e.data[0] === "result" && e.data[2] === "draw_cube") {
-                const theBuffers = self.gl.current.appendOtherData(e.data[1],false,"cube");
+            if (e.data.messageTag === "result" && e.data.taskName === "draw_cube") {
+                const theBuffers = self.gl.current.appendOtherData(e.data.result,false,"cube");
             }
-            if (e.data[0] === "result" && e.data[2] === "get_rama") {
+            if (e.data.messageTag === "result" && e.data.taskName === "get_rama") {
                 self.ramaRef.current.updatePlotData();
             }
-            if (e.data[0] === "result" && e.data[2] === "get_bvals") {
+            if (e.data.messageTag === "result" && e.data.taskName === "get_bvals") {
                 self.bvalRef.current.updatePlotData();
             }
-            if (e.data[0] === "result" && e.data[2] === "density_fit") {
+            if (e.data.messageTag === "result" && e.data.taskName === "density_fit") {
                 self.densityFitRef.current.updatePlotData();
             }
-            if (e.data[0] === "result" && e.data[2] === "rotamers") {
+            if (e.data.messageTag === "result" && e.data.taskName === "rotamers") {
                 self.rotamersRef.current.updatePlotData();
             }
-            if (e.data[0] === "result" && e.data[2] === "get_xyz") {
-                    self.gl.current.setOrigin(e.data[1]);
+            if (e.data.messageTag === "result" && e.data.taskName === "get_xyz") {
+                    self.gl.current.setOrigin(e.data.result);
             }
-            if (e.data[0] === "pdb_out") {
-                const data = e.data[1];
+            if (e.data.messageTag === "pdb_out") {
+                const data = e.data.result;
                 const dataSplit = data.split("\n");
-                const name = e.data[3]+"out";
+                const name = e.data.taskName+"out";
                 const pdbatoms = parsePDB(dataSplit, name);
                 const pending = { fileData: data, atoms: pdbatoms, wizard: "Bonds", name: name };
                 self.filePendingChanged({ pending: pending });
             }
         }
-
     }
 
     componentDidMount() {
