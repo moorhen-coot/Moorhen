@@ -92,8 +92,8 @@ describe('Testing molecules_container_js', () => {
         const molecules_container = new cootModule.molecules_container_js()
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const simpleMesh = molecules_container.ramachandran_validation_markup_mesh(coordMolNo);
-        expect(simpleMesh.vertices.size()).toBe(35880)
-        expect(simpleMesh.triangles.size()).toBe(38272)
+        expect(simpleMesh.vertices.size()).toBe(35760)
+        expect(simpleMesh.triangles.size()).toBe(38144)
     })
 
     test('Test flip_peptide by residue spec', () => {
@@ -136,8 +136,8 @@ describe('Testing molecules_container_js', () => {
         expect(firstTri_idxs[1]).toBe(1)
         expect(firstTri_idxs[2]).toBe(2)
         expect(secondTri_idxs[0]).toBe(1)
-        expect(secondTri_idxs[1]).toBe(2)
-        expect(secondTri_idxs[2]).toBe(3)
+        expect(secondTri_idxs[1]).toBe(3)
+        expect(secondTri_idxs[2]).toBe(2)
         const t_x = vertices.get(secondTri_idxs[2]).pos[0]
         const t_y = vertices.get(secondTri_idxs[2]).pos[1]
         const t_z = vertices.get(secondTri_idxs[2]).pos[2]
@@ -148,9 +148,9 @@ describe('Testing molecules_container_js', () => {
         const c_g = vertices.get(secondTri_idxs[2]).color[1]
         const c_b = vertices.get(secondTri_idxs[2]).color[2]
         const c_a = vertices.get(secondTri_idxs[2]).color[3]
-        expect(t_x).toBeCloseTo(0.5,5)
-        expect(t_y).toBeCloseTo(0.5,5)
-        expect(t_z).toBeCloseTo(-0.5,5)
+        expect(t_x).toBeCloseTo(-5,5)
+        expect(t_y).toBeCloseTo(5,5)
+        expect(t_z).toBeCloseTo(-5,5)
         expect(n_x).toBeCloseTo(0,5)
         expect(n_y).toBeCloseTo(0,5)
         expect(n_z).toBeCloseTo(-1,5)
