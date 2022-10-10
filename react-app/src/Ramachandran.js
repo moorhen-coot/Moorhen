@@ -343,7 +343,7 @@ class RamaPlot extends Component {
 
     updatePlotData(plotInfo){
         const self = this;
-        this.setState({plotInfo:plotInfo.info,key:plotInfo.key},()=>self.draw());
+        this.setState({plotInfo:plotInfo.info, key:plotInfo.key},()=>self.draw());
     }
     
 }
@@ -381,6 +381,7 @@ class Ramachandran extends Component {
      * @param {Object} kwargs 
      */
      postCrystWorkerMessage(crystWorker, kwargs) {
+        console.log(crystWorker);
         const messageId = guid();
         return new Promise((resolve, reject) => {
             const messageListener = crystWorker.addEventListener('message', (e) => {
@@ -412,14 +413,13 @@ class Ramachandran extends Component {
         const jobid = guid();
         const inputData = {method:"get_rama",jobId:jobid,pdbinKey:key,chainId:this.state.chainId};
         let response = await this.postCrystWorkerMessage(self.props.crystWorker, inputData);
-        console.log(inputData);
-        
-    }
+        this.updatePlotData(response.data.result);
+   }
 
     /**
      * Update contents of ramachandran plot
      */
-    updatePlotData(){
+    updatePlotData(plotData){
         const self = this;
         let key = self.state.selected;
         const dataObjectNames = this.props.dataObjectsNames;
@@ -430,8 +430,8 @@ class Ramachandran extends Component {
         if(key==="unk"){
             key = pdbKeys[0];
         }
-        self.ramaRef.current.updatePlotData({info:dataObjectNames.ramaInfo[key],key:key});
-        this.setState({plotInfo:dataObjectNames.ramaInfo[key]});
+        self.ramaRef.current.updatePlotData({info:plotData, key:key});
+        this.setState({plotInfo:plotData});
         
     }
 
