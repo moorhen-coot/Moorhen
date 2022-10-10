@@ -381,7 +381,6 @@ class Ramachandran extends Component {
      * @param {Object} kwargs 
      */
      postCrystWorkerMessage(crystWorker, kwargs) {
-        console.log(crystWorker);
         const messageId = guid();
         return new Promise((resolve, reject) => {
             const messageListener = crystWorker.addEventListener('message', (e) => {
