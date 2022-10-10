@@ -56,7 +56,7 @@ class RamaBalls extends Component {
     }    
 
     /**
-     * Get ramachandran plot and send message with result to crystallography worker
+     * Get ramachandran balls and send message with result to crystallography worker
      */
     async getRama(){
         const self = this;
