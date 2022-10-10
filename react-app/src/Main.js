@@ -62,7 +62,7 @@ class Main extends Component {
                     console.log(e.data.result);
                 }
             }
-            if (e.data.messageTag === "result" && e.data.taskName === "draw_cube") {
+            if (e.data.messageTag === "result" && (e.data.taskName === "draw_cube" || e.data.taskName === "rama_balls")) {
                 const theBuffers = self.gl.current.appendOtherData(e.data.result,false,"cube");
             }
             if (e.data.messageTag === "result" && e.data.taskName === "get_rama") {

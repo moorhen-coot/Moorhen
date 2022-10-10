@@ -16,34 +16,37 @@ import OtherDataSources from './OtherDataSources.js';
 import ResidueData from './ResidueData.js';
 import ResidueMapData from './ResidueMapData.js';
 import ResidueList from './ResidueList.js';
+import RamaBalls from './RamaBalls.js';
 
 class Utilities extends React.Component {
     constructor(props){
         super(props);
-        this.state = { showHelices:true, showProSMART:false, showPDBSearch:false, showPDB_REDO:false, showMiscObjects:false, showDownloadSF:false, showBVals: false, showDensityFit: false, showRotamers: false, showRotamerModal:false, rotamerText:""};
+        this.state = { showHelices:true, showProSMART:false, showPDBSearch:false, showPDB_REDO:false, showMiscObjects:false, showDownloadSF:false, showBVals: false, showDensityFit: false, showRotamers: false, showRotamerModal:false, showRamaBalls: false, rotamerText:""};
     }
 
     selectionChanged(evt) {
         if(evt.target.value==="generate_helices") {
-            this.setState({ showHelices:true, showProSMART:false, showPDBSearch:false, showPDB_REDO:false, showMiscObjects:false, showDownloadSF:false, showOtherDataSources: false, showBVals: false, showDensityFit: false, showRotamers: false});
+            this.setState({ showHelices:true, showProSMART:false, showPDBSearch:false, showPDB_REDO:false, showMiscObjects:false, showDownloadSF:false, showOtherDataSources: false, showBVals: false, showDensityFit: false, showRotamers: false, showRamaBalls: false});
         } else if(evt.target.value==="prosmart") {
-            this.setState({ showHelices:false, showProSMART:true, showPDBSearch:false, showPDB_REDO:false, showMiscObjects:false, showDownloadSF:false, showOtherDataSources: false, showBVals: false, showDensityFit: false, showRotamers: false});
+            this.setState({ showHelices:false, showProSMART:true, showPDBSearch:false, showPDB_REDO:false, showMiscObjects:false, showDownloadSF:false, showOtherDataSources: false, showBVals: false, showDensityFit: false, showRotamers: false, showRamaBalls: false});
         } else if(evt.target.value==="pdb_search") {
-            this.setState({ showHelices:false, showProSMART:false, showPDBSearch:true, showPDB_REDO:false, showMiscObjects:false, showDownloadSF:false, showOtherDataSources: false, showBVals: false, showDensityFit: false, showRotamers: false});
+            this.setState({ showHelices:false, showProSMART:false, showPDBSearch:true, showPDB_REDO:false, showMiscObjects:false, showDownloadSF:false, showOtherDataSources: false, showBVals: false, showDensityFit: false, showRotamers: false, showRamaBalls: false});
         } else if(evt.target.value==="pdb_redo") {
-            this.setState({ showHelices:false, showProSMART:false, showPDBSearch:false, showPDB_REDO:true, showMiscObjects:false, showDownloadSF:false, showOtherDataSources: false, showBVals: false, showDensityFit: false, showRotamers: false});
+            this.setState({ showHelices:false, showProSMART:false, showPDBSearch:false, showPDB_REDO:true, showMiscObjects:false, showDownloadSF:false, showOtherDataSources: false, showBVals: false, showDensityFit: false, showRotamers: false, showRamaBalls: false});
         } else if(evt.target.value==="geometric") {
-            this.setState({ showHelices:false, showProSMART:false, showPDBSearch:false, showPDB_REDO:false, showMiscObjects:true, showDownloadSF:false, showOtherDataSources: false, showBVals: false, showDensityFit: false, showRotamers: false});
+            this.setState({ showHelices:false, showProSMART:false, showPDBSearch:false, showPDB_REDO:false, showMiscObjects:true, showDownloadSF:false, showOtherDataSources: false, showBVals: false, showDensityFit: false, showRotamers: false, showRamaBalls: false});
         } else if(evt.target.value==="download_sf") {
-            this.setState({ showHelices:false, showProSMART:false, showPDBSearch:false, showPDB_REDO:false, showMiscObjects:false, showDownloadSF:true, showOtherDataSources: false, showBVals: false, showDensityFit: false, showRotamers: false});
+            this.setState({ showHelices:false, showProSMART:false, showPDBSearch:false, showPDB_REDO:false, showMiscObjects:false, showDownloadSF:true, showOtherDataSources: false, showBVals: false, showDensityFit: false, showRotamers: false, showRamaBalls: false});
         } else if(evt.target.value==="otherdata") {
-            this.setState({ showHelices:false, showProSMART:false, showPDBSearch:false, showPDB_REDO:false, showMiscObjects:false, showDownloadSF:false, showOtherDataSources: true, showBVals: false, showDensityFit: false, showRotamers: false});
+            this.setState({ showHelices:false, showProSMART:false, showPDBSearch:false, showPDB_REDO:false, showMiscObjects:false, showDownloadSF:false, showOtherDataSources: true, showBVals: false, showDensityFit: false, showRotamers: false, showRamaBalls: false});
         } else if(evt.target.value==="res_bval") {
-            this.setState({ showHelices:false, showProSMART:false, showPDBSearch:false, showPDB_REDO:false, showMiscObjects:false, showDownloadSF:false, showOtherDataSources: false, showBVals: true, showDensityFit: false, showRotamers: false});
+            this.setState({ showHelices:false, showProSMART:false, showPDBSearch:false, showPDB_REDO:false, showMiscObjects:false, showDownloadSF:false, showOtherDataSources: false, showBVals: true, showDensityFit: false, showRotamers: false, showRamaBalls: false});
         } else if(evt.target.value==="density_fit") {
-            this.setState({ showHelices:false, showProSMART:false, showPDBSearch:false, showPDB_REDO:false, showMiscObjects:false, showDownloadSF:false, showOtherDataSources: false, showBVals: false, showDensityFit: true, showRotamers: false});
+            this.setState({ showHelices:false, showProSMART:false, showPDBSearch:false, showPDB_REDO:false, showMiscObjects:false, showDownloadSF:false, showOtherDataSources: false, showBVals: false, showDensityFit: true, showRotamers: false, showRamaBalls: false});
         } else if(evt.target.value==="rotamers") {
-            this.setState({ showHelices:false, showProSMART:false, showPDBSearch:false, showPDB_REDO:false, showMiscObjects:false, showDownloadSF:false, showOtherDataSources: false, showBVals: false, showDensityFit: false, showRotamers: true});
+            this.setState({ showHelices:false, showProSMART:false, showPDBSearch:false, showPDB_REDO:false, showMiscObjects:false, showDownloadSF:false, showOtherDataSources: false, showBVals: false, showDensityFit: false, showRotamers: true, showRamaBalls: false});
+        } else if(evt.target.value==="rama_balls") {
+            this.setState({ showHelices:false, showProSMART:false, showPDBSearch:false, showPDB_REDO:false, showMiscObjects:false, showDownloadSF:false, showOtherDataSources: false, showBVals: false, showDensityFit: false, showRotamers: false, showRamaBalls: true});
         }
     }
 
@@ -116,6 +119,7 @@ class Utilities extends React.Component {
             <option value="res_bval">B-values vs. Residue</option>
             <option value="density_fit">Density Fit Analysis</option>
             <option value="rotamers">Rotamers</option>
+            <option value="rama_balls">Ramachandran balls</option>
         </Form.Select>
         { this.state.showHelices ? <Helices onChange={this.helicesChanged.bind(this)} /> : null }
         { this.state.showProSMART ? <ProSMART /> : null }
@@ -127,6 +131,8 @@ class Utilities extends React.Component {
         { this.state.showBVals ? <ResidueData clickHandler={this.props.onResidueDataClick} dataInfoScaling={bValDataInfoScaling} infoName={bValInfoName} crystMethod={bValCrystMethod} dataKey={bValDataKey} ref={this.props.bvalRef} dataObjectsNames={this.props.dataObjectsNames} crystWorker={this.props.crystWorker} /> : null }
         { this.state.showDensityFit ? <ResidueMapData clickHandler={this.props.onResidueDataClick} dataInfoScaling={densityFitDataInfoScaling} infoName={densityFitInfoName} crystMethod={densityFitCrystMethod} dataKey={densityFitDataKey} ref={this.props.densityFitRef} dataObjectsNames={this.props.dataObjectsNames} crystWorker={this.props.crystWorker} /> : null }
         { this.state.showRotamers ? <ResidueList ref={this.props.rotamersRef} infoName={rotamerInfoName} crystMethod={rotamerCrystMethod} dataKey={rotamerDataKey} dataObjectsNames={this.props.dataObjectsNames} crystWorker={this.props.crystWorker} clickHandler={this.rotamerClick.bind(this)} /> : null }
+        { this.state.showRamaBalls ? <RamaBalls dataObjectsNames={this.props.dataObjectsNames} crystWorker={this.props.crystWorker} /> : null }
+
             <Modal key={keyModal} show={showModalThis} onHide={handleCloseThis}>
                <Modal.Header closeButton>
                    <Modal.Title>Rotamers</Modal.Title>

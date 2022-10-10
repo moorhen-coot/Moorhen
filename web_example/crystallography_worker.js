@@ -293,19 +293,12 @@ function getRama(e) {
     })
 }
 
-function drawCube(e) {
-    console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
-    console.log(dataObjectsNames.mol_cont_idx);
-    console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
-    //const simpleMesh = molecules_container.ramachandran_validation_markup_mesh(0);
-    const simpleMesh = molecules_container.test_origin_cube();
+function drawMesh(simpleMesh,e) {
     const nVertices = molecules_container.count_simple_mesh_vertices(simpleMesh);
     const vertices = simpleMesh.vertices;
     const nVerticesDirect = vertices.size();
     const triangles = simpleMesh.triangles;
     const nTriangles = triangles.size();
-    console.log(triangles.size());
-    console.log(vertices.size());
     let totIdxs = [];
     let totPos = [];
     let totNorm = [];
@@ -321,7 +314,6 @@ function drawCube(e) {
         totCol.push(...vert.color);
     }
     const cubeInfo = {prim_types:[["TRIANGLES"]],idx_tri:[[totIdxs]],vert_tri:[[totPos]],norm_tri:[[totNorm]],col_tri:[[totCol]]};
-    console.log(cubeInfo);
     postMessage({
         messageId: e.data.messageId,
         messageTag: "result",
@@ -329,6 +321,22 @@ function drawCube(e) {
         taskName: currentTaskName
     })
 }
+
+function drawRamaBalls(e) {
+
+    //This is not yet used
+    //const chainId = e.data["chainId"];
+
+    const idx = dataObjectsNames.mol_cont_idx[e.data.pdbinKey];
+    const simpleMesh = molecules_container.ramachandran_validation_markup_mesh(idx);
+    drawMesh(simpleMesh,e);
+}
+
+function drawCube(e) {
+    const simpleMesh = molecules_container.test_origin_cube();
+    drawMesh(simpleMesh,e);
+}
+
 
 function getRotamers(e) {
     const jobId = e.data.jobId;
@@ -540,6 +548,11 @@ onmessage = function(e) {
         case "draw_cube":
             currentTaskName = "draw_cube";
             drawCube(e);
+            currentTaskName = "";
+            break;
+        case "rama_balls":
+            currentTaskName = "rama_balls";
+            drawRamaBalls(e);
             currentTaskName = "";
             break;
         default:
