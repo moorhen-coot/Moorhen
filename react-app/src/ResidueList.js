@@ -69,7 +69,7 @@ class ResidueList extends Component {
     /**
      * Update rotamer plot data
      */
-    updatePlotData(){
+    updatePlotData(plotData){
         const self = this;
         let key = self.state.selected;
         const dataObjectNames = this.props.dataObjectsNames;
@@ -83,7 +83,7 @@ class ResidueList extends Component {
 
 
         if(dataObjectNames[self.infoName] && dataObjectNames[self.infoName][key]){
-            this.setState({plotInfo:dataObjectNames[self.infoName][key]});
+            this.setState({plotInfo:plotData});
         }
 
     }
@@ -106,6 +106,7 @@ class ResidueList extends Component {
 
         const inputData = {method:self.crystMethod,jobId:jobid,pdbinKey:key,chainId:this.state.chainId};
         let response = await this.postCrystWorkerMessage(self.props.crystWorker, inputData);
+        this.updatePlotData(response.data.result);
     }
 
     /**
