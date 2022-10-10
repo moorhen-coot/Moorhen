@@ -5,7 +5,11 @@
 
 let currentTaskName = "";
 function rsrPrint(t){
-    postMessage(["output",t,currentTaskName]);
+    postMessage({
+        messageTag: "output",
+        result: t,
+        taskName: currentTaskName
+    })
 }
 
 let CCP4Module;
@@ -69,8 +73,11 @@ function guid(){
 // * Change dataObjectsNames to globalCache or something
 // * Add Rama data to the globalCache
 
-function updateShareArrayBuffer(){
-    postMessage(["dataObjectsNames",dataObjectsNames]);
+function updateDataObjectsNames(){
+    postMessage({
+        messageTag: "dataObjectsNames",
+        result: dataObjectsNames,
+    })
 }
 
 function downLoadFiles(files){
@@ -167,7 +174,7 @@ function loadFiles(files){
             const result = molecules_container.read_pdb(key + ".pdb");
             dataObjectsNames.mol_cont_idx[key] = result;
         }
-        updateShareArrayBuffer();
+        updateDataObjectsNames();
     }) .catch(function(err) {
         console.log(err);
     });
@@ -194,7 +201,7 @@ function loadFiles(files){
             const result = molecules_container.read_mtz(key + ".mtz",f,phi,wt,use_wt,is_diff);
             dataObjectsNames.map_cont_idx[key] = result;
         }
-        updateShareArrayBuffer();
+        updateDataObjectsNames();
     }).catch(function(err) {
         console.log(err);
     });
@@ -230,8 +237,13 @@ function getDensityFit(e) {
         resInfoJS.push(jsres);
     }
     dataObjectsNames.densityFitInfo[e.data.pdbinKey] = resInfoJS;
-    updateShareArrayBuffer();
-    postMessage(["result",result,currentTaskName]);
+    updateDataObjectsNames();
+        postMessage({
+        messageId: e.data.messageId,
+        messageTag: "result",
+        result: result,
+        taskName: currentTaskName
+    })
 }
 
 function getBVals(e) {
@@ -248,8 +260,13 @@ function getBVals(e) {
         resInfo.push(jsres);
     }
     dataObjectsNames.bvalInfo[e.data.pdbinKey] = resInfo;
-    updateShareArrayBuffer();
-    postMessage(["result",result,currentTaskName]);
+    updateDataObjectsNames();
+    postMessage({
+        messageId: e.data.messageId,
+        messageTag: "result",
+        result: result,
+        taskName: currentTaskName
+    })
 }
 
 function getRama(e) {
@@ -267,8 +284,13 @@ function getRama(e) {
         resInfo.push(jsres);
     }
     dataObjectsNames.ramaInfo[e.data.pdbinKey] = resInfo;
-    updateShareArrayBuffer();
-    postMessage(["result",result,currentTaskName]);
+    updateDataObjectsNames();
+    postMessage({
+        messageId: e.data.messageId,
+        messageTag: "result",
+        result: result,
+        taskName: currentTaskName
+    })
 }
 
 function drawCube(e) {
@@ -300,8 +322,12 @@ function drawCube(e) {
     }
     const cubeInfo = {prim_types:[["TRIANGLES"]],idx_tri:[[totIdxs]],vert_tri:[[totPos]],norm_tri:[[totNorm]],col_tri:[[totCol]]};
     console.log(cubeInfo);
-    postMessage(["result",cubeInfo,currentTaskName]);
-
+    postMessage({
+        messageId: e.data.messageId,
+        messageTag: "result",
+        result: cubeInfo,
+        taskName: currentTaskName
+    })
 }
 
 function getRotamers(e) {
@@ -334,8 +360,13 @@ function getRotamers(e) {
     }
 
     dataObjectsNames.rotamersInfo[e.data.pdbinKey] = rotamersInfo;
-    updateShareArrayBuffer();
-    postMessage(["result",0,currentTaskName]);
+    updateDataObjectsNames();
+    postMessage({
+        messageId: e.data.messageId,
+        messageTag: "result",
+        result: 0,
+        taskName: currentTaskName
+    })
 }
 
 function flipPeptide(e) {
@@ -361,8 +392,19 @@ function flipPeptide(e) {
     var pdb_out = RSRModule.FS.readFile(pdbout, { encoding: 'utf8' });
 
     //postMessage(["result",result,currentTaskName]);
-    postMessage(["result",resultMolCont,currentTaskName]);
-    postMessage(["pdb_out",pdb_out,jobId,currentTaskName]);
+    postMessage({
+        messageId: e.data.messageId,
+        messageTag: "result",
+        result: resultMolCont,
+        taskName: currentTaskName
+    })
+    postMessage({
+        messageId: e.data.messageId,
+        messageTag: "pdb_out",
+        jobId: jobId,
+        result: pdb_out,
+        taskName: currentTaskName
+    })
 }
 
 function miniRSR(e) {
@@ -399,10 +441,19 @@ function miniRSR(e) {
     var result = RSRModule.mini_rsr(args);
     var pdb_out = RSRModule.FS.readFile(jobId+"out.pdb", { encoding: 'utf8' });
     //TODO We need to store pdb_out! (and cache with updateShareArrayBuffer)
-
-    postMessage(["result",result,currentTaskName]);
-    postMessage(["pdb_out",pdb_out,jobId,currentTaskName]);
-}
+    postMessage({
+        messageId: e.data.messageId,
+        messageTag: "result",
+        result: result,
+        taskName: currentTaskName
+    })
+    postMessage({
+        messageId: e.data.messageId,
+        messageTag: "pdb_out",
+        jobId: jobId,
+        result: pdb_out,
+        taskName: currentTaskName
+    })}
 
 
 onmessage = function(e) {
@@ -471,7 +522,12 @@ onmessage = function(e) {
                     result = CCP4Module.getXYZResNo(dataObjects.pdbFiles[theData_id].fileName,e.data.resInfo.chain,e.data.resInfo.resNo);
                 }
                 if(result.size()===3){
-                    postMessage(["result",[-result.get(0),-result.get(1),-result.get(2)],currentTaskName]);
+                    postMessage({
+                        messageId: e.data.messageId,
+                        messageTag: "result",
+                        result: [-result.get(0),-result.get(1),-result.get(2)],
+                        taskName: currentTaskName
+                    })
                 }
             }
             currentTaskName = "";
