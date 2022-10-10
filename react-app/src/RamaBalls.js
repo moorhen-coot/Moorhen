@@ -71,9 +71,8 @@ class RamaBalls extends Component {
         }
         const jobid = guid();
         const inputData = {method:"rama_balls",jobId:jobid,pdbinKey:key,chainId:this.state.chainId};
-        this.postCrystWorkerMessage(self.props.crystWorker, inputData).then(response => {
-                this.props.glRef.current.appendOtherData(response.data.result,false,"RamaBalls")
-        })
+        let response = await this.postCrystWorkerMessage(self.props.crystWorker, inputData);
+        this.props.glRef.current.appendOtherData(response.data.result,false,"RamaBalls")
         
     }
 
