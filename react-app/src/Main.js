@@ -62,7 +62,7 @@ class Main extends Component {
                     console.log(e.data.result);
                 }
             }
-            if (e.data.messageTag === "result" && (e.data.taskName === "draw_cube" || e.data.taskName === "rama_balls")) {
+            if (e.data.messageTag === "result" && e.data.taskName === "draw_cube") {
                 const theBuffers = self.gl.current.appendOtherData(e.data.result,false,"cube");
             }
             if (e.data.messageTag === "result" && e.data.taskName === "get_rama") {
@@ -383,7 +383,7 @@ class Main extends Component {
                     </Col>
 
                     <Col lg={4}>
-                        <ControlInterface onResidueDataClick={this.residueDataClick.bind(this)} rsrRef={this.rsrRef} flipRef={this.flipRef} ramaRef={this.ramaRef} bvalRef={this.bvalRef} densityFitRef={this.densityFitRef} rotamersRef={this.rotamersRef}
+                        <ControlInterface glRef={this.gl} onResidueDataClick={this.residueDataClick.bind(this)} rsrRef={this.rsrRef} flipRef={this.flipRef} ramaRef={this.ramaRef} bvalRef={this.bvalRef} densityFitRef={this.densityFitRef} rotamersRef={this.rotamersRef}
                             dataObjectsNames={dataObjectsNames}
                             crystWorker={this.crystWorker}
                             liveUpdatingMaps={liveUpdatingMaps}

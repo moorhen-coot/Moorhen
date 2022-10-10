@@ -131,7 +131,7 @@ class Utilities extends React.Component {
         { this.state.showBVals ? <ResidueData clickHandler={this.props.onResidueDataClick} dataInfoScaling={bValDataInfoScaling} infoName={bValInfoName} crystMethod={bValCrystMethod} dataKey={bValDataKey} ref={this.props.bvalRef} dataObjectsNames={this.props.dataObjectsNames} crystWorker={this.props.crystWorker} /> : null }
         { this.state.showDensityFit ? <ResidueMapData clickHandler={this.props.onResidueDataClick} dataInfoScaling={densityFitDataInfoScaling} infoName={densityFitInfoName} crystMethod={densityFitCrystMethod} dataKey={densityFitDataKey} ref={this.props.densityFitRef} dataObjectsNames={this.props.dataObjectsNames} crystWorker={this.props.crystWorker} /> : null }
         { this.state.showRotamers ? <ResidueList ref={this.props.rotamersRef} infoName={rotamerInfoName} crystMethod={rotamerCrystMethod} dataKey={rotamerDataKey} dataObjectsNames={this.props.dataObjectsNames} crystWorker={this.props.crystWorker} clickHandler={this.rotamerClick.bind(this)} /> : null }
-        { this.state.showRamaBalls ? <RamaBalls dataObjectsNames={this.props.dataObjectsNames} crystWorker={this.props.crystWorker} /> : null }
+        { this.state.showRamaBalls ? <RamaBalls glRef={this.props.glRef} dataObjectsNames={this.props.dataObjectsNames} crystWorker={this.props.crystWorker} /> : null }
 
             <Modal key={keyModal} show={showModalThis} onHide={handleCloseThis}>
                <Modal.Header closeButton>

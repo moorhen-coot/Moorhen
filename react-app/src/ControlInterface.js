@@ -271,7 +271,7 @@ class ControlInterface extends Component {
                     <Ramachandran onClick={this.props.onResidueDataClick} ref={this.props.ramaRef} dataObjectsNames={this.props.dataObjectsNames}  crystWorker={this.props.crystWorker} addRequest={this.addRequested.bind(this)} liveUpdatingMaps={liveUpdatingMaps} dataFiles={dataFiles} displayData={displayData} mapDataFiles={mapDataFiles} onPDBChange={this.filePendingChanged.bind(this)} />
                 </Tab>
                 <Tab eventKey="utilities" title="Utilities">
-                    <Utilities onResidueDataClick={this.props.onResidueDataClick} bvalRef={this.props.bvalRef} rotamersRef={this.props.rotamersRef} densityFitRef={this.props.densityFitRef} displayData={displayData} dataObjectsNames={this.props.dataObjectsNames} crystWorker={this.props.crystWorker} dataFiles={dataFiles} onSVGChange={this.svgChanged.bind(this)} mapChanged={this.mapChanged.bind(this)} filePendingChanged={this.filePendingChanged.bind(this)} helicesChanged={this.helicesChanged.bind(this)} />
+                    <Utilities glRef={this.props.glRef} onResidueDataClick={this.props.onResidueDataClick} bvalRef={this.props.bvalRef} rotamersRef={this.props.rotamersRef} densityFitRef={this.props.densityFitRef} displayData={displayData} dataObjectsNames={this.props.dataObjectsNames} crystWorker={this.props.crystWorker} dataFiles={dataFiles} onSVGChange={this.svgChanged.bind(this)} mapChanged={this.mapChanged.bind(this)} filePendingChanged={this.filePendingChanged.bind(this)} helicesChanged={this.helicesChanged.bind(this)} />
                 </Tab>
                 <Tab eventKey="cube" title="Cube">
                 <Button key={buttonId} variant="primary" size="lg" onClick={this.cubeButtonHandler.bind(this)}>
