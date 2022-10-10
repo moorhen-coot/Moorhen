@@ -119,6 +119,25 @@ describe('Testing molecules_container_js', () => {
         expect(failedStatus).toBe(0)
     })
 
+    test('Create Coord_orth', () => {
+        const molecules_container = new cootModule.molecules_container_js()
+        const imol_map = molecules_container.read_mtz("rnasa-1.8-all_refmac1.mtz", "FWT", "PHWT", "W", false, false);
+        const p = new cootModule.Coord_orth(55, 10, 10);
+        expect(p.x()).toBe(55)
+        expect(p.y()).toBe(10)
+        expect(p.z()).toBe(10)
+        const radius = 12;
+        const contour_level = 0.13;
+        const map_mesh = molecules_container.get_map_contours_mesh(imol_map, p.x(), p.y(), p.z(), radius, contour_level)
+        const vertices = map_mesh.vertices
+        const triangles = map_mesh.triangles
+        const nVerticesDirect = vertices.size()
+        const nTriangles = triangles.size()
+        expect(nVerticesDirect).toBe(33531)
+        expect(nTriangles).toBe(30896)
+        
+    })
+
     test('Create test origin', () => {
         const molecules_container = new cootModule.molecules_container_js()
         const simpleMesh = molecules_container.test_origin_cube();
@@ -170,5 +189,8 @@ const setupFunctions = {
         const sigmaaData = fs.readFileSync(path.join(__dirname, '..', '..', 'example', '5a3h_sigmaa.mtz'),
             { encoding: null, flag: 'r' })
             cootModule.FS_createDataFile(".", '5a3h_sigmaa.mtz', sigmaaData, true, true);
+        const rnaseSigmaaData = fs.readFileSync(path.join(__dirname, '..', '..', 'checkout', 'coot-1.0', 'data', 'rnasa-1.8-all_refmac1.mtz'),
+            { encoding: null, flag: 'r' })
+            cootModule.FS_createDataFile(".", 'rnasa-1.8-all_refmac1.mtz', rnaseSigmaaData, true, true);
     }
 }
