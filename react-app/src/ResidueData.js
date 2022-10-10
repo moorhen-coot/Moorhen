@@ -318,7 +318,7 @@ class ResidueData extends Component {
     /**
      * Update bfactor plot data
      */
-    updatePlotData(){
+    updatePlotData(plotData){
         const self = this;
         let key = self.state.selected;
         const dataObjectNames = this.props.dataObjectsNames;
@@ -335,10 +335,9 @@ class ResidueData extends Component {
         self.plotRef.current.customClickHandler = this.clickHandler;
 
         if(dataObjectNames[self.infoName] && dataObjectNames[self.infoName][key]){
-            self.plotRef.current.updatePlotData({info:dataObjectNames[self.infoName][key],key:key});
-            this.setState({plotInfo:dataObjectNames[self.infoName][key]});
+            self.plotRef.current.updatePlotData({info:plotData, key:key});
+            this.setState({plotInfo:plotData});
         }
-
     }
 
     /**
@@ -358,6 +357,7 @@ class ResidueData extends Component {
         const jobid = guid();
         const inputData = {method:self.crystMethod,jobId:jobid,pdbinKey:key,chainId:this.state.chainId};
         let response = await this.postCrystWorkerMessage(self.props.crystWorker, inputData);
+        this.updatePlotData(response.data.result);
     }
 
     /**
