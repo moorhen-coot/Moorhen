@@ -238,10 +238,10 @@ function getDensityFit(e) {
     }
     dataObjectsNames.densityFitInfo[e.data.pdbinKey] = resInfoJS;
     updateDataObjectsNames();
-        postMessage({
+    postMessage({
         messageId: e.data.messageId,
         messageTag: "result",
-        result: result,
+        result: resInfoJS,
         taskName: currentTaskName
     })
 }
@@ -264,7 +264,7 @@ function getBVals(e) {
     postMessage({
         messageId: e.data.messageId,
         messageTag: "result",
-        result: result,
+        result: resInfo,
         taskName: currentTaskName
     })
 }
@@ -288,7 +288,7 @@ function getRama(e) {
     postMessage({
         messageId: e.data.messageId,
         messageTag: "result",
-        result: result,
+        result: resInfo,
         taskName: currentTaskName
     })
 }
