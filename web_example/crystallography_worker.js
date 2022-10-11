@@ -236,8 +236,6 @@ function getDensityFit(e) {
         const jsres = {chainId:CPPchainId,insCode:insCode,seqNum:seqNum,restype:restype,density_fit:1./value};
         resInfoJS.push(jsres);
     }
-    dataObjectsNames.densityFitInfo[e.data.pdbinKey] = resInfoJS;
-    updateDataObjectsNames();
     postMessage({
         messageId: e.data.messageId,
         messageTag: "result",
@@ -259,8 +257,6 @@ function getBVals(e) {
         const jsres = {chainId:cppres.chainId,insCode:cppres.insCode,seqNum:cppres.seqNum,restype:cppres.restype,bval:cppres.property};
         resInfo.push(jsres);
     }
-    dataObjectsNames.bvalInfo[e.data.pdbinKey] = resInfo;
-    updateDataObjectsNames();
     postMessage({
         messageId: e.data.messageId,
         messageTag: "result",
@@ -283,8 +279,6 @@ function getRama(e) {
         const jsres = {chainId:cppres.chainId,insCode:cppres.insCode,seqNum:cppres.seqNum,restype:cppres.restype,phi:cppres.phi,psi:cppres.psi,isOutlier:cppres.isOutlier,is_pre_pro:cppres.is_pre_pro};
         resInfo.push(jsres);
     }
-    dataObjectsNames.ramaInfo[e.data.pdbinKey] = resInfo;
-    updateDataObjectsNames();
     postMessage({
         messageId: e.data.messageId,
         messageTag: "result",
@@ -366,13 +360,10 @@ function getRotamers(e) {
             rotamersInfo.push({chainId:chainId,seqNum:residueSpecList.get(i).res_no,insCode:residueSpecList.get(i).ins_code,restype:residueList.get(i),data:[]});
         }
     }
-
-    dataObjectsNames.rotamersInfo[e.data.pdbinKey] = rotamersInfo;
-    updateDataObjectsNames();
     postMessage({
         messageId: e.data.messageId,
         messageTag: "result",
-        result: 0,
+        result: rotamersInfo,
         taskName: currentTaskName
     })
 }
