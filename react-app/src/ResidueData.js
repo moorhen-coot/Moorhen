@@ -316,29 +316,21 @@ class ResidueData extends Component {
     }    
 
     /**
-     * Update bfactor plot data
+     * Update contents of plot
+     * @param {array} plotData - array with residue information
+     * @param {string} key - key for the selected pdb model
      */
-    updatePlotData(){
+     updatePlotData(plotData, key){
         const self = this;
-        let key = self.state.selected;
-        const dataObjectNames = this.props.dataObjectsNames;
-        const pdbKeys = Object.keys(dataObjectNames.pdbFiles);
-        if(pdbKeys.length<1){
-            return;
-        }
-        if(key==="unk"){
-            key = pdbKeys[0];
-        }
-
+ 
         self.plotRef.current.dataKey = this.dataKey;
         self.plotRef.current.dataInfoScaling = this.dataInfoScaling;
         self.plotRef.current.customClickHandler = this.clickHandler;
 
-        if(dataObjectNames[self.infoName] && dataObjectNames[self.infoName][key]){
-            self.plotRef.current.updatePlotData({info:dataObjectNames[self.infoName][key],key:key});
-            this.setState({plotInfo:dataObjectNames[self.infoName][key]});
+        if(plotData){
+            self.plotRef.current.updatePlotData({info:plotData, key:key});
+            this.setState({plotInfo:plotData});
         }
-
     }
 
     /**
@@ -358,6 +350,7 @@ class ResidueData extends Component {
         const jobid = guid();
         const inputData = {method:self.crystMethod,jobId:jobid,pdbinKey:key,chainId:this.state.chainId};
         let response = await this.postCrystWorkerMessage(self.props.crystWorker, inputData);
+        this.updatePlotData(response.data.result, key);
     }
 
     /**

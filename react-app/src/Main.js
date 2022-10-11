@@ -65,18 +65,6 @@ class Main extends Component {
             if (e.data.messageTag === "result" && e.data.taskName === "draw_cube") {
                 const theBuffers = self.gl.current.appendOtherData(e.data.result,false,"cube");
             }
-            if (e.data.messageTag === "result" && e.data.taskName === "get_rama") {
-                self.ramaRef.current.updatePlotData();
-            }
-            if (e.data.messageTag === "result" && e.data.taskName === "get_bvals") {
-                self.bvalRef.current.updatePlotData();
-            }
-            if (e.data.messageTag === "result" && e.data.taskName === "density_fit") {
-                self.densityFitRef.current.updatePlotData();
-            }
-            if (e.data.messageTag === "result" && e.data.taskName === "rotamers") {
-                self.rotamersRef.current.updatePlotData();
-            }
             if (e.data.messageTag === "result" && e.data.taskName === "get_xyz") {
                     self.gl.current.setOrigin(e.data.result);
             }

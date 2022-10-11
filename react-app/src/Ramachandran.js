@@ -343,7 +343,7 @@ class RamaPlot extends Component {
 
     updatePlotData(plotInfo){
         const self = this;
-        this.setState({plotInfo:plotInfo.info,key:plotInfo.key},()=>self.draw());
+        this.setState({plotInfo:plotInfo.info, key:plotInfo.key},()=>self.draw());
     }
     
 }
@@ -412,27 +412,18 @@ class Ramachandran extends Component {
         const jobid = guid();
         const inputData = {method:"get_rama",jobId:jobid,pdbinKey:key,chainId:this.state.chainId};
         let response = await this.postCrystWorkerMessage(self.props.crystWorker, inputData);
-        console.log(inputData);
-        
-    }
+        this.updatePlotData(response.data.result, key);
+   }
 
     /**
      * Update contents of ramachandran plot
+     * @param {array} plotData - array with residue information
+     * @param {string} key - key for the selected pdb model
      */
-    updatePlotData(){
+    updatePlotData(plotData, key){
         const self = this;
-        let key = self.state.selected;
-        const dataObjectNames = this.props.dataObjectsNames;
-        const pdbKeys = Object.keys(dataObjectNames.pdbFiles);
-        if(pdbKeys.length<1){
-            return;
-        }
-        if(key==="unk"){
-            key = pdbKeys[0];
-        }
-        self.ramaRef.current.updatePlotData({info:dataObjectNames.ramaInfo[key],key:key});
-        this.setState({plotInfo:dataObjectNames.ramaInfo[key]});
-        
+        self.ramaRef.current.updatePlotData({info:plotData, key:key});
+        this.setState({plotInfo:plotData});
     }
 
     /**
