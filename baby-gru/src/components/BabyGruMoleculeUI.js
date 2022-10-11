@@ -1,7 +1,7 @@
 import { useEffect, Fragment, useState } from "react";
 import { Card, Form, Button, Row, Col } from "react-bootstrap";
 import { doDownload } from '../BabyGruUtils';
-import { Download } from 'react-bootstrap-icons';
+//import { Download } from 'react-bootstrap-icons';
 
 export const BabyGruMoleculeUI = (props) => {
     const [showState, setShowState] = useState({})
@@ -16,7 +16,8 @@ export const BabyGruMoleculeUI = (props) => {
     }, [
         props.molecule.displayObjects.bonds.length,
         props.molecule.displayObjects.sticks.length,
-        props.molecule.displayObjects.ribbons.length
+        props.molecule.displayObjects.ribbons.length,
+        props.molecule.displayObjects.rama.length
     ])
 
     return <Card className="px-2" key={props.molecule.coordMolNo}>
@@ -33,7 +34,7 @@ export const BabyGruMoleculeUI = (props) => {
                                     doDownload([reply.data.result.pdbData], `${props.molecule.name}`)
                                 })
                         }}>
-                        <Download size={12} />
+                        Down
                     </Button>
                 </div>
             </div>

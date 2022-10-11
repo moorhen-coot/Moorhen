@@ -70,12 +70,17 @@ BabyGruMolecule.prototype.loadToCootFromEBI = function (pdbCode) {
     })
 }
 
-BabyGruMolecule.prototype.updateAtoms = function () {
+BabyGruMolecule.prototype.getAtoms = function () {
     const $this = this;
     return postCootMessage($this.cootWorker, {
         message: "get_atoms",
         coordMolNo: $this.coordMolNo
-    }).then((result) => {
+    })
+}
+
+BabyGruMolecule.prototype.updateAtoms = function () {
+    const $this = this;
+    return $this.getAtoms().then((result) => {
         return new Promise((resolve, reject) => {
             $this.cachedAtoms = $this.webMGAtomsFromFileString(result.data.result.pdbData)
             $this.atomsDirty = false
@@ -335,8 +340,8 @@ BabyGruMolecule.prototype.redraw = function (gl) {
             objectCategoryBuffers.forEach((buffer) => {
                 buffer.clearBuffers()
             })
-            $this.displayObjects[style] = []
         }
+        $this.displayObjects[style] = []
     })
     itemsToRedraw.reduce(
         (p, style) => {
