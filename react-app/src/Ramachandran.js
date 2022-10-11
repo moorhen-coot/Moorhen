@@ -422,7 +422,7 @@ class Ramachandran extends Component {
      */
     updatePlotData(plotData, key){
         const self = this;
-        self.ramaRef.current.updatePlotData({info:plotData, key:plotData.key});
+        self.ramaRef.current.updatePlotData({info:plotData, key:key});
         this.setState({plotInfo:plotData});
     }
 
