@@ -355,7 +355,7 @@ class Ramachandran extends Component {
 
         this.ramaRef = createRef();
 
-        this.state = {selected:"unk", log:"", chainId:"", plotInfo: null, key:null};
+        this.state = {selected:"unk",log:"", chainId:"", plotInfo: null};
         this.message = "";
         const self = this;
     }
@@ -423,7 +423,7 @@ class Ramachandran extends Component {
     updatePlotData(plotData, key){
         const self = this;
         self.ramaRef.current.updatePlotData({info:plotData, key:plotData.key});
-        this.setState({plotInfo:plotData, key:plotData.key});
+        this.setState({plotInfo:plotData});
     }
 
     /**
