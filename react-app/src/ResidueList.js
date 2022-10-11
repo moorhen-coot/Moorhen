@@ -67,28 +67,6 @@ class ResidueList extends Component {
     }
 
     /**
-     * Update rotamer plot data
-     */
-    updatePlotData(plotData){
-        const self = this;
-        let key = self.state.selected;
-        const dataObjectNames = this.props.dataObjectsNames;
-        const pdbKeys = Object.keys(dataObjectNames.pdbFiles);
-        if(pdbKeys.length<1){
-            return;
-        }
-        if(key==="unk"){
-            key = pdbKeys[0];
-        }
-
-
-        if(dataObjectNames[self.infoName] && dataObjectNames[self.infoName][key]){
-            this.setState({plotInfo:plotData});
-        }
-
-    }
-
-    /**
      * Get rotamers data and send message with result to crystallography worker
      */
     async getData(){
@@ -106,7 +84,12 @@ class ResidueList extends Component {
 
         const inputData = {method:self.crystMethod,jobId:jobid,pdbinKey:key,chainId:this.state.chainId};
         let response = await this.postCrystWorkerMessage(self.props.crystWorker, inputData);
-        this.updatePlotData(response.data.result);
+        console.log(response.data.result);
+        if(response.data.result){
+            console.log('UPDATE');
+            this.setState({plotInfo:response.data.result});
+        }
+        
     }
 
     /**
@@ -187,9 +170,9 @@ class ResidueList extends Component {
         }
 
         let buttons = [];
-        if(dataObjectNames[self.infoName][selected]){
-            for(let i=0;i<dataObjectNames[self.infoName][selected].length;i++){
-                const resData = dataObjectNames[self.infoName][selected][i];
+        if(this.state.plotInfo){
+            for(let i=0;i<this.state.plotInfo.length;i++){
+                const resData = this.state.plotInfo[i];
                 if(resData.data&&resData.data.length>0){
                     const buttonId = "reslistbutton-"+i;
                     let buttonLabel;
@@ -206,6 +189,9 @@ class ResidueList extends Component {
                 }
             }
         }
+        console.log('RENDER');
+        console.log(buttons);
+        console.log(this.state.plotInfo);
 
         //TODO - Need to introspect the pdb file to see what chains exist and pick the first one ...
 
