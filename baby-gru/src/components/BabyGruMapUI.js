@@ -1,7 +1,7 @@
 import { Fragment, useEffect } from "react";
 import { Table, Button, Row, Col } from "react-bootstrap";
 import { doDownload } from "../BabyGruUtils";
-import { Download } from 'react-bootstrap-icons';
+//import { Download } from 'react-bootstrap-icons';
 
 export const BabyGruMaps = (props) => {
     useEffect(() => {
@@ -24,7 +24,7 @@ export const BabyGruMaps = (props) => {
                                         )
                                     })
                             }}>
-                                <Download size={12} />
+                                Down
                             </Button>
                         </th>
                     </tr>)

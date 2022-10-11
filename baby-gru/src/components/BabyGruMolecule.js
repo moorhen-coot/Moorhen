@@ -335,8 +335,8 @@ BabyGruMolecule.prototype.redraw = function (gl) {
             objectCategoryBuffers.forEach((buffer) => {
                 buffer.clearBuffers()
             })
-            $this.displayObjects[style] = []
         }
+        $this.displayObjects[style] = []
     })
     itemsToRedraw.reduce(
         (p, style) => {

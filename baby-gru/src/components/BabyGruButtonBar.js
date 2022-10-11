@@ -1,7 +1,9 @@
+import { createRef } from "react";
 import { ButtonGroup, Button } from "react-bootstrap"
 import { postCootMessage } from "../BabyGruUtils"
 
 export const BabyGruButtonBar = (props) => {
+    const atomClickedBinding = createRef(null);
     return <div class="border" style={{
         overflow: "auto",
         float: "left",
@@ -13,8 +15,9 @@ export const BabyGruButtonBar = (props) => {
             <Button variant='light' onClick={() => {
                 props.setConsoleOutput('Select atom in residue for which to flip peptide')
                 props.setCursorStyle("crosshair")
-                document.addEventListener('atomClicked', (event) => {
+                atomClickedBinding.current = document.addEventListener('atomClicked', (event) => {
                     props.setConsoleOutput(`Selected atom ${event.detail}`)
+                    document.removeEventListener('atomClicked', atomClickedBinding.current)
                     //Currrently don't know which molecule has been edited...appply flip to all
                     props.molecules.forEach(molecule => {
                         props.setCursorStyle("default")

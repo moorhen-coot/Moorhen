@@ -154,8 +154,8 @@ onmessage = function (e) {
             console.log(`Asked for rama validation spheres for mol ${coordMolNo}`)
 
             //Issue here while ramachandran_validation_markup_mesh not working
-            const simpleMesh = molecules_container.test_origin_cube();
-            //const simpleMesh = molecules_container.ramachandran_validation_markup_mesh(coordMolNo)         
+            //const simpleMesh = molecules_container.test_origin_cube();
+            const simpleMesh = molecules_container.ramachandran_validation_markup_mesh(coordMolNo)         
 
             const nVertices = molecules_container.count_simple_mesh_vertices(simpleMesh);
             const vertices = simpleMesh.vertices;
