@@ -355,7 +355,7 @@ class Ramachandran extends Component {
 
         this.ramaRef = createRef();
 
-        this.state = {selected:"unk",log:"", chainId:"", plotInfo: null};
+        this.state = {selected:"unk", log:"", chainId:"", plotInfo: null, key:null};
         this.message = "";
         const self = this;
     }
@@ -381,6 +381,7 @@ class Ramachandran extends Component {
      * @param {Object} kwargs 
      */
      postCrystWorkerMessage(crystWorker, kwargs) {
+        console.log(crystWorker);
         const messageId = guid();
         return new Promise((resolve, reject) => {
             const messageListener = crystWorker.addEventListener('message', (e) => {
@@ -412,26 +413,18 @@ class Ramachandran extends Component {
         const jobid = guid();
         const inputData = {method:"get_rama",jobId:jobid,pdbinKey:key,chainId:this.state.chainId};
         let response = await this.postCrystWorkerMessage(self.props.crystWorker, inputData);
-        this.updatePlotData(response.data.result);
+        this.updatePlotData(response.data.result, key);
    }
 
     /**
      * Update contents of ramachandran plot
+     * @param {array} plotData - array with residue information
+     * @param {string} key - key for the selected pdb model
      */
-    updatePlotData(plotData){
+    updatePlotData(plotData, key){
         const self = this;
-        let key = self.state.selected;
-        const dataObjectNames = this.props.dataObjectsNames;
-        const pdbKeys = Object.keys(dataObjectNames.pdbFiles);
-        if(pdbKeys.length<1){
-            return;
-        }
-        if(key==="unk"){
-            key = pdbKeys[0];
-        }
-        self.ramaRef.current.updatePlotData({info:plotData, key:key});
-        this.setState({plotInfo:plotData});
-        
+        self.ramaRef.current.updatePlotData({info:plotData, key:plotData.key});
+        this.setState({plotInfo:plotData, key:plotData.key});
     }
 
     /**
