@@ -84,9 +84,7 @@ class ResidueList extends Component {
 
         const inputData = {method:self.crystMethod,jobId:jobid,pdbinKey:key,chainId:this.state.chainId};
         let response = await this.postCrystWorkerMessage(self.props.crystWorker, inputData);
-        console.log(response.data.result);
         if(response.data.result){
-            console.log('UPDATE');
             this.setState({plotInfo:response.data.result});
         }
         
@@ -189,9 +187,6 @@ class ResidueList extends Component {
                 }
             }
         }
-        console.log('RENDER');
-        console.log(buttons);
-        console.log(this.state.plotInfo);
 
         //TODO - Need to introspect the pdb file to see what chains exist and pick the first one ...
 
