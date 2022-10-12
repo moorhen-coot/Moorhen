@@ -562,6 +562,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("flipPeptide_rs", select_overload<int(int, const coot::residue_spec_t&,const std::string&)>(&molecules_container_t::flipPeptide))
     .function("test_origin_cube",&molecules_container_t::test_origin_cube)
     .function("ramachandran_validation_markup_mesh",&molecules_container_t::ramachandran_validation_markup_mesh)
+    .function("get_rotamer_dodecs",&molecules_container_t::get_rotamer_dodecs)
     .function("get_map_contours_mesh",&molecules_container_t::get_map_contours_mesh)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
