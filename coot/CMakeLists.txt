@@ -10,7 +10,7 @@ add_definitions(-DANALYSE_REFINEMENT_TIMING -DVERSION="1.0" -DPACKAGE_VERSION="1
 
 #  pyrogen, compat, auxil, goograph, src ignored.
 
-add_library(coot STATIC
+file(GLOB coot_exception_srcs
 ${coot_src}/api/simple-mesh.cc
 ${coot_src}/api/interfaces.cc
 ${coot_src}/api/coot_molecule.cc
@@ -25,7 +25,6 @@ ${coot_src}/analysis/kolmogorov.cc
 ${coot_src}/analysis/stats.cc
 ${coot_src}/analysis/bfkurt.cc
 ${coot_src}/analysis/mogul.cc
-#${coot_src}/analysis/test-mogul.cc
 ${coot_src}/analysis/b-factor-histogram.cc
 ${coot_src}/analysis/typed-distances.cc
 ${coot_src}/analysis/cablam.cc
@@ -69,7 +68,6 @@ ${coot_src}/ideal/crankshaft.cc
 ${coot_src}/ideal/phi-psi.cc
 ${coot_src}/ideal/lograma.cpp
 ${coot_src}/ideal/process-dfs-in-range.cc
-${coot_src}/ideal/write-png.cc
 ${coot_src}/ideal/zo-rama.cc
 ${coot_src}/tw/tw.cc
 ${coot_src}/utils/radix.cc
@@ -259,8 +257,6 @@ ${coot_src}/ligand/trace.cc
 ${coot_src}/ligand/smith-waterman.cc
 ${coot_src}/ligand/tube-finder.cc
 ${coot_src}/ligand/fast-ss-search.cc
-#Missing scored-node.hh
-#./ligand/res-tracer.cc
 ${coot_src}/ligand/rotamer.cc
 ${coot_src}/cootaneer/buccaneer-sequence.cpp
 ${coot_src}/cootaneer/cootaneer-sequence.cpp
@@ -273,9 +269,16 @@ ${coot_src}/compat/getopt1.cc
 ${coot_src}/src/gl-matrix.cc
 )
 
+add_library(coot STATIC
+${coot_exception_srcs}
+${coot_src}/ideal/write-png.cc
+)
+
 target_include_directories(coot PRIVATE ${coot_src} ${coot_src}/coords ${coot_src}/utils ../include ../example ../checkout/ssm ../checkout/mmdb2 ../checkout/clipper ../checkout/fftw-2.1.5/fftw ../checkout/fftw-2.1.5/rfftw ../checkout/libccp4/ccp4 ../boost)
 
-set_target_properties(coot PROPERTIES COMPILE_FLAGS "-DHAVE_BOOST -DNODERAWFS -DFFTW_ENABLE_FLOAT -s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_PTHREADS=1" LINK_FLAGS "-s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_PTHREADS=1")
+set_target_properties(coot PROPERTIES COMPILE_FLAGS "-pthread -DHAVE_BOOST -DNODERAWFS -DFFTW_ENABLE_FLOAT -s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_PTHREADS=1" LINK_FLAGS "-fexceptions -pthread -s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_PTHREADS=1")
+
+set_source_files_properties(${coot_exception_srcs} PROPERTIES COMPILE_FLAGS "-fexceptions -pthread -DHAVE_BOOST -DNODERAWFS -DFFTW_ENABLE_FLOAT -s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_PTHREADS=1" )
 
 FILE(WRITE ${CMAKE_BINARY_DIR}/coot/coot_env.js
 Module.preRun = [function() {ENV.COOT_DATA_DIR="${coot_src}"}, function() {ENV.COOT_REFMAC_LIB_DIR="${CMAKE_BINARY_DIR}/ccp4_lib"}, function() {ENV.CCP4_LIB="${CMAKE_BINARY_DIR}/ccp4_lib"}]
@@ -377,18 +380,18 @@ target_include_directories(bfactan PRIVATE ${coot_src} ${coot_src}/src ../checko
 target_compile_options(bfactan PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
 
 add_executable(mini-rsr ${coot_src}/ideal/mini-rsr.cc)
-target_link_options(mini-rsr PRIVATE -sPTHREAD_POOL_SIZE=4 -sPTHREAD_POOL_SIZE_STRICT=4 -sUSE_PTHREADS=1 -sEXIT_RUNTIME=1 -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 -sASSERTIONS=1 --pre-js coot_env.js)
+target_link_options(mini-rsr PRIVATE -fexceptions -pthread -sPTHREAD_POOL_SIZE=4 -sPTHREAD_POOL_SIZE_STRICT=4 -sUSE_PTHREADS=1 -sEXIT_RUNTIME=1 -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 -sASSERTIONS=1 --pre-js coot_env.js)
 target_link_directories(mini-rsr PUBLIC ../mmdb2 ../ssm ../ccp4 ../lib ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4)
 target_link_libraries(mini-rsr mmdb2 ssm clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 coot gsl gslcblas nodefs.js)
 target_include_directories(mini-rsr PRIVATE ${coot_src} ${coot_src}/src ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw ../include)
-target_compile_options(mini-rsr PUBLIC -D_MINI_RSR_MAIN_ -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -s USE_PTHREADS=1 -DNODERAWFS)
+target_compile_options(mini-rsr PUBLIC -fexceptions -pthread -D_MINI_RSR_MAIN_ -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -s USE_PTHREADS=1 -DNODERAWFS)
 
 add_executable(mini-rsr-web ../web_example/coot_example.cc)
-target_link_options(mini-rsr-web PRIVATE -sERROR_ON_UNDEFINED_SYMBOLS=0 -sPTHREAD_POOL_SIZE=4 -sPTHREAD_POOL_SIZE_STRICT=4 -sUSE_PTHREADS=1 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createRSRModule -sEXPORTED_RUNTIME_METHODS=['FS','readFile'] --preload-file data  --pre-js coot_env_web.js)
+target_link_options(mini-rsr-web PRIVATE -fexceptions -pthread -sPTHREAD_POOL_SIZE=4 -sPTHREAD_POOL_SIZE_STRICT=4 -sUSE_PTHREADS=1 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createRSRModule -sEXPORTED_RUNTIME_METHODS=['FS','readFile'] --preload-file data  --pre-js coot_env_web.js)
 target_link_directories(mini-rsr-web PUBLIC ../ssm ../mmdb2 ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4 ../fftw ../rfftw ../ccp4 ../privateer ../rvapi ../gesamt ../ccp4mg ../lib ../boost/stage/lib)
 target_link_libraries(mini-rsr-web ssm rvapi gesamtlib mmdb2 clipper-minimol clipper-phs clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 privateer clipper-minimol ccp4mg coot gsl gslcblas boost_thread m z idbfs.js)
 target_include_directories(mini-rsr-web PRIVATE ${coot_src} ${coot_src}/src ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw ../include)
-target_compile_options(mini-rsr-web PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_WEB_EXAMPLE_)
+target_compile_options(mini-rsr-web PUBLIC -fexceptions -sUSE_PTHREADS=1 -pthread -DFFTW_ENABLE_FLOAT -D_CCP4_WEB_EXAMPLE_)
 
 #[[
 add_executable(mmrrcc ${coot_src}/coot-utils/mmrrcc.cc)
