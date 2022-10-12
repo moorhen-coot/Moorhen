@@ -24,13 +24,15 @@ jobs:
          working-directory: /home/runner/work/CCP4-Web-Assembly/ccp4_wasm
          run: |
            cd /home/runner/work/CCP4-Web-Assembly/ccp4_wasm         
-           source /home/runner/work/CCP4-Web-Assembly/emsdk/emsdk_env.sh  
+           source /home/runner/work/CCP4-Web-Assembly/emsdk/emsdk_env.sh
            ./get_sources
            emcmake cmake .
            emmake make
+           emmake make install
        - name: Run tests
          working-directory: /home/runner/work/CCP4-Web-Assembly/ccp4_wasm       
          run: |             
            cd /home/runner/work/CCP4-Web-Assembly/ccp4_wasm/tests
+           source /home/runner/work/CCP4-Web-Assembly/emsdk/emsdk_env.sh
            npm install
            npm test
