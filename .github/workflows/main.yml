@@ -33,6 +33,7 @@ jobs:
          working-directory: /home/runner/work/CCP4-Web-Assembly/ccp4_wasm       
          run: |             
            cd /home/runner/work/CCP4-Web-Assembly/ccp4_wasm/tests
+           ln -s ../coot/mini-rsr-web.data .
            source /home/runner/work/CCP4-Web-Assembly/emsdk/emsdk_env.sh
            npm install
-           npm test
+           ./run_tests.sh
