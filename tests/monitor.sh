@@ -16,6 +16,12 @@ do
                 kill -9 $nodePid
             fi
             cat test.log
+            rc=`grep -c failed test.log`
+            if [ $rc -eq 0 ];then
+                exit 0
+            else
+                exit 1
+            fi
     fi
     counter=$((counter-1))
     sleep 1
