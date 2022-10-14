@@ -30,7 +30,7 @@ export const BabyGruMaps = (props) => {
                         </td>
                         <td>
                             <Button size="sm" onClick={() => {
-                                map.cootContour(0., 0., 0., 15., 0.3)
+                                map.cootContour(props.glRef.current, 0., 0., 0., 15., 0.3)
                             }}>
                                 Down
                             </Button>

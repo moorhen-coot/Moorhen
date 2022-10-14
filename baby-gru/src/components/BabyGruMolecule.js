@@ -7,7 +7,7 @@ import { getMultipleBonds } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { atomsToSpheresInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { contactsToCylindersInfo, contactsToLinesInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { singletonsToLinesInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
-import { postCootMessage, readTextFile, readDataFile } from '../BabyGruUtils'
+import { postCootMessage, readTextFile, readDataFile, cootCommand } from '../BabyGruUtils'
 
 export function BabyGruMolecule(cootWorker) {
     this.cootWorker = cootWorker
@@ -150,11 +150,13 @@ BabyGruMolecule.prototype.drawWithStyleFromAtoms = function (style, gl, webMGAto
 
 BabyGruMolecule.prototype.drawRamachandranBalls = function (gl) {
     const $this = this
-    postCootMessage($this.cootWorker, {
-        message: 'ramachandran_validation_markup_mesh',
-        coordMolNo: this.coordMolNo
+    cootCommand($this.cootWorker, {
+        returnType: "mesh",
+        command: "ramachandran_validation_markup_mesh",
+        commandArgs: [$this.coordMolNo]
     }).then(response => {
-        const objects = [response.data.result.meshData]
+        console.log('result', response)
+        const objects = [response.data.result.result]
         objects.forEach(object => {
             var a = gl.appendOtherData(object, true);
             $this.displayObjects.rama = $this.displayObjects.rama.concat(a)
@@ -166,12 +168,13 @@ BabyGruMolecule.prototype.drawRamachandranBalls = function (gl) {
 
 BabyGruMolecule.prototype.drawRotamerDodecahedra = function (gl) {
     const $this = this
-    console.log('in drawRot')
-    postCootMessage($this.cootWorker, {
-        message: 'get_rotamer_dodecs',
-        coordMolNo: this.coordMolNo
+    cootCommand($this.cootWorker, {
+        returnType: "mesh",
+        command: "get_rotamer_dodecs",
+        commandArgs: [$this.coordMolNo]
     }).then(response => {
-        const objects = [response.data.result.meshData]
+        console.log('result', response)
+        const objects = [response.data.result.result]
         objects.forEach(object => {
             var a = gl.appendOtherData(object, true);
             $this.displayObjects.rotamer = $this.displayObjects.rotamer.concat(a)
@@ -212,8 +215,8 @@ BabyGruMolecule.prototype.webMGAtomsFromFileString = function (fileString) {
         }
     }
     catch (err) {
-            result = parsePDB(unindentedLines)
-            console.log('Parsed file as PDB')
+        result = parsePDB(unindentedLines)
+        console.log('Parsed file as PDB')
     }
     return result
 }
