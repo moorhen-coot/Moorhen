@@ -5,7 +5,7 @@ pid=$1
 counter=10
 while ps -p $pid > /dev/null
 do
-    if [[ $counter -eq 0 ]] ; then
+    if [ $counter -eq 0 ] ; then
             nodePid=`ps -ef | grep experimental-wasm-threads | grep $pid | grep -v grep | awk '{print $2}'`
             echo "Killing PID: $pid"
             kill -9 $pid
