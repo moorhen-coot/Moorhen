@@ -565,6 +565,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("get_rotamer_dodecs",&molecules_container_t::get_rotamer_dodecs)
     .function("auto_fit_rotamer",&molecules_container_t::auto_fit_rotamer)
     .function("get_map_contours_mesh",&molecules_container_t::get_map_contours_mesh)
+    .function("geometry_init_standard",&molecules_container_t::geometry_init_standard)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<>()
