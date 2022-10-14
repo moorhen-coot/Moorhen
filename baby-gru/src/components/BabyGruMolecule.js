@@ -20,6 +20,7 @@ export function BabyGruMolecule(cootWorker) {
         bonds: [],
         sticks: [],
         rama: [],
+        rotamer: []
     }
 };
 
@@ -37,6 +38,7 @@ BabyGruMolecule.prototype.loadToCootFromFile = function (source) {
                 }).then(e => {
                     $this.name = e.data.result.name
                     $this.coordMolNo = e.data.result.coordMolNo
+                    console.log('e is', e)
                     resolve($this)
                 })
             })
@@ -138,6 +140,9 @@ BabyGruMolecule.prototype.drawWithStyleFromAtoms = function (style, gl, webMGAto
         case 'rama':
             this.drawRamachandranBalls(gl.current)
             break;
+        case 'rotamer':
+            this.drawRotamerDodecahedra(gl.current)
+            break;
         default:
             break;
     }
@@ -149,10 +154,27 @@ BabyGruMolecule.prototype.drawRamachandranBalls = function (gl) {
         message: 'ramachandran_validation_markup_mesh',
         coordMolNo: this.coordMolNo
     }).then(response => {
-        const objects = [response.data.result.cubeInfo]
+        const objects = [response.data.result.meshData]
         objects.forEach(object => {
             var a = gl.appendOtherData(object, true);
             $this.displayObjects.rama = $this.displayObjects.rama.concat(a)
+        })
+        gl.buildBuffers();
+        gl.drawScene();
+    })
+}
+
+BabyGruMolecule.prototype.drawRotamerDodecahedra = function (gl) {
+    const $this = this
+    console.log('in drawRot')
+    postCootMessage($this.cootWorker, {
+        message: 'get_rotamer_dodecs',
+        coordMolNo: this.coordMolNo
+    }).then(response => {
+        const objects = [response.data.result.meshData]
+        objects.forEach(object => {
+            var a = gl.appendOtherData(object, true);
+            $this.displayObjects.rotamer = $this.displayObjects.rotamer.concat(a)
         })
         gl.buildBuffers();
         gl.drawScene();
@@ -186,11 +208,12 @@ BabyGruMolecule.prototype.webMGAtomsFromFileString = function (fileString) {
         result = parseMMCIF(unindentedLines);
         if (typeof result.atoms === 'undefined') {
             result = parsePDB(unindentedLines)
+            console.log('Parsed file as PDB')
         }
     }
     catch (err) {
-        console.log('Err', err)
-        result = parsePDB(unindentedLines)
+            result = parsePDB(unindentedLines)
+            console.log('Parsed file as PDB')
     }
     return result
 }

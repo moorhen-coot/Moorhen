@@ -4,7 +4,7 @@ import { readMapFromArrayBuffer, mapToMapGrid } from '../WebGL/mgWebGLReadMap';
 export function BabyGruMap(cootWorker) {
     this.cootWorker = cootWorker
     this.liveUpdatingMaps = {}
-    this.displayBuffers = []
+    this.displayObjects = {}
 }
 
 BabyGruMap.prototype.loadToCootFromFile = function (source) {
@@ -52,7 +52,31 @@ BabyGruMap.prototype.contour = function (gl) {
             for (var buffer of newBuffers) {
                 buffer.visible = true
             }
-            $this.displayBuffers['2FoFc'] = $this.displayBuffers['2FoFc'].concat(newBuffers)
+            $this.displayObjects['2FoFc'] = $this.displayObjects['2FoFc'].concat(newBuffers)
             gl.drawScene()
         })
+}
+
+BabyGruMap.prototype.cootContour = function (x, y, z, radius, contourLevel) {
+    const $this = this
+    const itemsToRedraw = []
+    Object.keys($this.displayObjects).forEach(style => {
+        const objectCategoryBuffers = $this.displayObjects[style]
+        if (objectCategoryBuffers.length > 0) {
+            if (objectCategoryBuffers[0].visible) {
+                itemsToRedraw.push(style)
+            }
+            objectCategoryBuffers.forEach((buffer) => {
+                buffer.clearBuffers()
+            })
+        }
+        $this.displayObjects[style] = []
+    })
+    return postCootMessage($this.cootWorker, {
+        message: 'get_map_contours_mesh',
+        data: { mapMolNo: $this.mapMolNo, x, y, z, radius, contourLevel }
+    }).then(reply => {
+        this.console.log(reply)
+    })
+
 }
