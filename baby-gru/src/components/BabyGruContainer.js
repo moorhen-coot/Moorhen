@@ -28,8 +28,7 @@ export const BabyGruContainer = (props) => {
     }, [])
 
     const handleResponse = (e) => {
-        let newOutput = 'Response > '.concat(e.data.response).concat('\n')
-        setConsoleOutput(newOutput)
+        setConsoleOutput(`${consoleOutput}${e.data.response}\n`)
     }
 
     return <div>
@@ -52,22 +51,24 @@ export const BabyGruContainer = (props) => {
             </Container>
         </Navbar>
         <Container fluid>
-            <div style={{ backgroundColor: "#eee", height: "calc(100vh - 15rem)" }}>
+            <div
+                className='baby-gru-panel'
+                style={{ backgroundColor: "#eee" }}>
                 <div
                     ref={graphicsDiv}
+                    className='baby-gru-panel'
                     style={{
-                        backgroundColor: "black",
+                        backgroundColor: "red",
                         float: "left",
                         width: "calc(100vw - 32rem)",
-                        height: "calc(100vh - 7rem)",
                         cursor: cursorStyle
                     }}>
                     <BabyGruWebMG
                         molecules={molecules}
                         ref={glRef}
                         maps={maps}
-                        width={() => { return window.innerWidth - 440 }}
-                        height={() => { return window.innerHeight - 115 }}
+                        width={() => { return window.innerWidth - 515 }}
+                        height={() => { return window.innerHeight - 240 }}
                     />
                 </div>
                 <BabyGruButtonBar setCursorStyle={setCursorStyle}
@@ -75,13 +76,15 @@ export const BabyGruContainer = (props) => {
                     setConsoleOutput={setConsoleOutput}
                     cootWorker={cootWorker}
                     glRef={glRef} />
-                <div style={{
-                    overflow: "auto",
-                    float: "left",
-                    width: "25rem",
-                    backgroundColor: "white",
-                    height: "calc(100vh - 7rem)"
-                }}>
+                <div
+                    className='baby-gru-panel'
+                    style={{
+                        overflow: "auto",
+                        float: "left",
+                        width: "25rem",
+                        backgroundColor: "white",
+
+                    }}>
                     <Tabs defaultActiveKey="models">
                         <Tab title="Models" eventKey="models">
                             <div style={{ width: "25rem" }}>
@@ -96,7 +99,7 @@ export const BabyGruContainer = (props) => {
                     </Tabs>
                 </div>
             </div>
-            <textarea readOnly={true} rows={2} value={consoleOutput} style={{ width: "calc(100vw - 20rem)" }} />
+            <textarea readOnly={true} value={consoleOutput} style={{ overflowY: "scroll", height: "15rem", width: "100vw" }} />
         </Container>
     </div>
 }

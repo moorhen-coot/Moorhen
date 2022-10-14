@@ -17,7 +17,8 @@ export const BabyGruMoleculeUI = (props) => {
         props.molecule.displayObjects.bonds.length,
         props.molecule.displayObjects.sticks.length,
         props.molecule.displayObjects.ribbons.length,
-        props.molecule.displayObjects.rama.length
+        props.molecule.displayObjects.rama.length,
+        props.molecule.displayObjects.rotamer.length,
     ])
 
     return <Card className="px-2" key={props.molecule.coordMolNo}>

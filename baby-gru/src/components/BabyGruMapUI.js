@@ -10,12 +10,13 @@ export const BabyGruMaps = (props) => {
     return <Fragment>
         <Row><Col><div style={{ height: "1rem" }} /></Col></Row>
         <Table key="BabyGruMaps">
-            <thead><tr><th>Number</th><th>Name</th><th>Download</th></tr></thead>
+            <thead><tr><th>Number</th><th>Name</th><th>Download</th><th>Contour</th></tr></thead>
             <tbody>
                 {
                     props.maps.map(map => <tr key={map.mapMolNo} >
-                        <th>{map.mapMolNo}</th><th>{map.name}</th>
-                        <th>
+                        <td>{map.mapMolNo}</td>
+                        <td>{map.name}</td>
+                        <td>
                             <Button size="sm" onClick={() => {
                                 map.getMap()
                                     .then(reply => {
@@ -26,7 +27,14 @@ export const BabyGruMaps = (props) => {
                             }}>
                                 Down
                             </Button>
-                        </th>
+                        </td>
+                        <td>
+                            <Button size="sm" onClick={() => {
+                                map.cootContour(0., 0., 0., 15., 0.3)
+                            }}>
+                                Down
+                            </Button>
+                        </td>
                     </tr>)
                 }
             </tbody>
