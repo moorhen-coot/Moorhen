@@ -44,6 +44,7 @@ createRSRModule(Lib)
     .then(function(CCP4Mod) {
              RSRModule = CCP4Mod;
              molecules_container = new RSRModule.molecules_container_js();
+             molecules_container.geometry_init_standard();
              console.log("##################################################");
              console.log(molecules_container);
              console.log("##################################################");
@@ -368,6 +369,39 @@ function getRotamers(e) {
     })
 }
 
+function autoFitRotamer(e) {
+
+    const jobId = e.data.jobId;
+
+    const pdbin = dataObjects.pdbFiles[e.data.pdbinKey].fileName;
+    const chainId = e.data["chainId"];
+    const resno = e.data["resno"];
+    const pdbout = jobId+"out.pdb";
+    const imol_model = dataObjectsNames.mol_cont_idx[e.data.pdbinKey];
+    const imol_map = dataObjectsNames.map_cont_idx[e.data.hklinKey];
+
+    const resultMolCont = molecules_container.auto_fit_rotamer(imol_model,chainId,resno,"","",imol_map)
+
+    const write_result = molecules_container.writePDBASCII(dataObjectsNames.mol_cont_idx[e.data.pdbinKey],pdbout);
+    console.log("result of which is",resultMolCont,write_result);
+    var pdb_out = RSRModule.FS.readFile(pdbout, { encoding: 'utf8' });
+
+    //postMessage(["result",result,currentTaskName]);
+    postMessage({
+        messageId: e.data.messageId,
+        messageTag: "result",
+        result: resultMolCont,
+        taskName: currentTaskName
+    })
+    postMessage({
+        messageId: e.data.messageId,
+        messageTag: "pdb_out",
+        jobId: jobId,
+        result: pdb_out,
+        taskName: currentTaskName
+    })
+}
+
 function flipPeptide(e) {
 
     const jobId = e.data.jobId;
@@ -481,6 +515,12 @@ onmessage = function(e) {
             console.log("Do mini-rsr in cryst worker ...");
             currentTaskName = "mini_rsr";
             miniRSR(e);
+            currentTaskName = "";
+            break;
+        case "auto_fit_rotamer":
+            console.log("Do auto-fit rotamer in cryst worker ...");
+            currentTaskName = "mini_rsr";
+            autoFitRotamer(e);
             currentTaskName = "";
             break;
         case "get_bvals":

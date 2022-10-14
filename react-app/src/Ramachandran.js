@@ -26,51 +26,78 @@ function getOffsetRect(elem) {
 
 class RamaPlot extends Component {
 
-    draw() {
+    draw(iframe,oldHit,newHit) {
         this.fixContext();
         var ctx = this.context;
         var c = this.canvasRef.current;
 
         ctx.clearRect(0, 0, c.width, c.height);
 
-        ctx.fillStyle = 'red';
+        ctx.fillStyle = 'white';
         ctx.fillRect(0, 0, c.width, c.height);
 
+        this.hit = newHit;
         if(this.hit>-1){
+
+            ctx.globalAlpha = iframe/this.nAnimationFrames;
             // And we can determine background image with this.
             if (this.state.plotInfo[this.hit].restype=== "GLY") {
                 if(this.imageGly) {
+                    if(this.imageGly===this.oldImage) ctx.globalAlpha = 1;
                     ctx.drawImage(this.imageGly, 0, 0, c.width, c.height);
+                    if(iframe===this.nAnimationFrames-1) this.oldImage = this.imageGly;
                 }
             } else {
                 if (this.state.plotInfo[this.hit].restype=== "PRO") {
                     if(this.imagePro) {
+                        if(this.imagePro===this.oldImage) ctx.globalAlpha = 1;
                         ctx.drawImage(this.imagePro, 0, 0, c.width, c.height);
+                        if(iframe===this.nAnimationFrames-1) this.oldImage = this.imagePro;
                     }
                 }  else {
                     if (this.state.plotInfo[this.hit].is_pre_pro) {
                         if(this.imagePrePro) {
+                            if(this.imagePrePro===this.oldImage) ctx.globalAlpha = 1;
                             ctx.drawImage(this.imagePrePro, 0, 0, c.width, c.height);
+                            if(iframe===this.nAnimationFrames-1) this.oldImage = this.imagePrePro;
                         }
                     } else {
                         if (this.state.plotInfo[this.hit].restype=== "ILE" || this.state.plotInfo[this.hit].restype=== "VAL") {
                             if(this.imageIleVal) {
+                                if(this.imageIleVal===this.oldImage) ctx.globalAlpha = 1;
                                 ctx.drawImage(this.imageIleVal, 0, 0, c.width, c.height);
+                                if(iframe===this.nAnimationFrames-1) this.oldImage = this.imageIleVal;
                             }
                         } else {
                             if(this.imageNonGlyProIleVal) {
+                                if(this.imageNonGlyProIleVal===this.oldImage) ctx.globalAlpha = 1;
                                 ctx.drawImage(this.imageNonGlyProIleVal, 0, 0, c.width, c.height);
+                                if(iframe===this.nAnimationFrames-1) this.oldImage = this.imageNonGlyProIleVal;
                             }
                         }
                     }
                 }
             }
 
+            if(Math.abs(ctx.globalAlpha-1.0)>1e-2){
+                if(this.oldImage) {
+                    ctx.globalAlpha = 1.0-iframe/this.nAnimationFrames;
+                    ctx.drawImage(this.oldImage, 0, 0, c.width, c.height);
+                } else if(this.imageAll) {
+                    ctx.globalAlpha = 1.0-iframe/this.nAnimationFrames;
+                    ctx.drawImage(this.imageAll, 0, 0, c.width, c.height);
+                }
+            }
+
         } else {
-            if(this.imageAll) {
+            ctx.globalAlpha = 1.0;
+            if(this.oldImage) {
+                ctx.drawImage(this.oldImage, 0, 0, c.width, c.height);
+            } else if(this.imageAll) {
                 ctx.drawImage(this.imageAll, 0, 0, c.width, c.height);
             }
         }
+        ctx.globalAlpha = 1.0;
 
         const imageData3 = ctx.getImageData(0, 0, c.width, c.height);
 
@@ -110,24 +137,27 @@ class RamaPlot extends Component {
 
                 if(this.state.plotInfo[this.hit].isOutlier){
                     if(this.state.plotInfo[this.hit].restype==="PRO"){
-                        ctx.drawImage(this.imgProOutlier, x-6, y-6, 12, 12);
+                        ctx.drawImage(this.imgProOutlier, x-4-iframe/this.nAnimationFrames*2, y-4-iframe/this.nAnimationFrames*2, 8+iframe/this.nAnimationFrames*4, 8+iframe/this.nAnimationFrames*4);
                     } else if(this.state.plotInfo[this.hit].restype==="GLY"){
-                        ctx.drawImage(this.imgGlyOutlier, x-6, y-6, 12, 12);
+                        ctx.drawImage(this.imgGlyOutlier, x-4-iframe/this.nAnimationFrames*2, y-4-iframe/this.nAnimationFrames*2, 8+iframe/this.nAnimationFrames*4, 8+iframe/this.nAnimationFrames*4);
                     } else {
-                        ctx.drawImage(this.imgOtherOutlier, x-6, y-6, 12, 12);
+                        ctx.drawImage(this.imgOtherOutlier, x-4-iframe/this.nAnimationFrames*2, y-4-iframe/this.nAnimationFrames*2, 8+iframe/this.nAnimationFrames*4, 8+iframe/this.nAnimationFrames*4);
                     }
                 } else {
                     if(this.state.plotInfo[this.hit].restype==="PRO"){
-                        ctx.drawImage(this.imgProNormal, x-6, y-6, 12, 12);
+                        ctx.drawImage(this.imgProNormal, x-4-iframe/this.nAnimationFrames*2, y-4-iframe/this.nAnimationFrames*2, 8+iframe/this.nAnimationFrames*4, 8+iframe/this.nAnimationFrames*4);
                     } else if(this.state.plotInfo[this.hit].restype==="GLY"){
-                        ctx.drawImage(this.imgGlyNormal, x-6, y-6, 12, 12);
+                        ctx.drawImage(this.imgGlyNormal, x-4-iframe/this.nAnimationFrames*2, y-4-iframe/this.nAnimationFrames*2, 8+iframe/this.nAnimationFrames*4, 8+iframe/this.nAnimationFrames*4);
                     } else {
-                        ctx.drawImage(this.imgOtherNormal, x-6, y-6, 12, 12);
+                        ctx.drawImage(this.imgOtherNormal, x-4-iframe/this.nAnimationFrames*2, y-4-iframe/this.nAnimationFrames*2, 8+iframe/this.nAnimationFrames*4, 8+iframe/this.nAnimationFrames*4);
                     }
                 }
             }
         }
-        
+        if(iframe<this.nAnimationFrames)
+            this.reqRef = requestAnimationFrame(this.draw.bind(this,iframe+1,oldHit,newHit));
+        else
+            this.reqRef = null;
     }
 
     fixContext() {
@@ -150,13 +180,13 @@ class RamaPlot extends Component {
         this.imgProNormal = this.ramaPlotProNormalImageRef.current;
         this.imgGlyOutlier = this.ramaPlotGlyOutlierImageRef.current;
         this.imgGlyNormal = this.ramaPlotGlyNormalImageRef.current;
-        this.draw();
+        this.draw(-1);
     }
 
     doMouseClick(event,self) {
         if(this.state.plotInfo){
             const hit = this.getHit(event,self);
-            if(this.props.onClick){
+            if(this.props.onClick&&hit>-1){
                 const molName = "UNK";
                 this.props.onClick({molKey:this.state.key,molName:molName,chain:this.state.plotInfo[hit].chainId,seqNum:this.state.plotInfo[hit].seqNum,insCode:this.state.plotInfo[hit].insCode});
             }
@@ -164,13 +194,16 @@ class RamaPlot extends Component {
     }
 
     doMouseMove(event,self) {
-        this.hit = -1;
+        let oldHit = this.hit;
+        function animate() {
+            if(oldHit===self.hit) return;
+            if(self.reqRef) cancelAnimationFrame(self.reqRef);
+            self.reqRef = requestAnimationFrame(self.draw.bind(self,0,oldHit,self.hit));
+        }
         if(this.state.plotInfo){
             const hit = this.getHit(event,self);
-            if(hit){
-                this.hit = hit;
-            }
-            this.draw();
+            this.hit = hit;
+            if(hit>-1) animate();
         }
     }
 
@@ -302,6 +335,7 @@ class RamaPlot extends Component {
         self.mouseDown = false;
         this.canvasRef.current.addEventListener("mousemove", this.moveHandler , false);
         this.canvasRef.current.addEventListener("click", this.clickHandler, false);
+
     }
 
     render() {
@@ -313,6 +347,9 @@ class RamaPlot extends Component {
 
     constructor(props) {
         super(props);
+        this.reqRef = null;
+        this.oldImage = null;
+        this.nAnimationFrames = 15;
         this.state = {plotInfo: null, key:null};
         this.canvasRef = createRef();
         this.imageRefAll = createRef();
@@ -343,9 +380,10 @@ class RamaPlot extends Component {
 
     updatePlotData(plotInfo){
         const self = this;
-        this.setState({plotInfo:plotInfo.info, key:plotInfo.key},()=>self.draw());
+        this.setState({plotInfo:plotInfo.info, key:plotInfo.key},()=>self.draw(-1));
+        //this.setState({plotInfo:plotInfo.info, key:plotInfo.key});
     }
-    
+
 }
 
 class Ramachandran extends Component {

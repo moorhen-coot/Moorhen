@@ -96,6 +96,14 @@ describe('Testing molecules_container_js', () => {
         expect(simpleMesh.triangles.size()).toBe(38144)
     })
 
+    test('Test Dodo mesh', () => {
+        const molecules_container = new cootModule.molecules_container_js()
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        const simpleMesh = molecules_container.get_rotamer_dodecs(coordMolNo);
+        expect(simpleMesh.vertices.size()).toBe(39000)
+        expect(simpleMesh.triangles.size()).toBe(23400)
+    })
+
     test('Test flip_peptide by residue spec', () => {
         const molecules_container = new cootModule.molecules_container_js()
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
