@@ -25,32 +25,32 @@ export const BabyGruButtonBar = (props) => {
                     props.molecules.forEach(molecule => {
                         props.setCursorStyle("default")
                         const chosenAtom = cidToSpec(event.detail)
+                        /*
+                                                cootCommand(props.cootWorker, {
+                                                    returnType: "status",
+                                                    command: "flipPeptide_cid",
+                                                    commandArgs: [
+                                                        molecule.coordMolNo,
+                                                        `/${chosenAtom.chain_id}/${chosenAtom.res_no}`,
+                                                        ''
+                                                    ]
+                                                }).then(response => {
+                                                    molecule.setAtomsDirty(true)
+                                                    molecule.redraw(props.glRef)
+                                                })
+                        */
 
-                        cootCommand(props.cootWorker, {
-                            returnType: "status",
-                            command: "flipPeptide_cid",
-                            commandArgs: [
-                                molecule.coordMolNo,
-                                `/${chosenAtom.chain_id}/${chosenAtom.res_no}`,
-                                ''
-                            ]
-                        }).then(response => {
+
+
+                        postCootMessage(props.cootWorker, {
+                            message: 'flipPeptide',
+                            coordMolNo: molecule.coordMolNo,
+                            cid: event.detail
+                        }).then(_ => {
                             molecule.setAtomsDirty(true)
                             molecule.redraw(props.glRef)
                         })
 
-
-
-                        /*
-                                                postCootMessage(props.cootWorker, {
-                                                    message: 'flipPeptide',
-                                                    coordMolNo: molecule.coordMolNo,
-                                                    cid: event.detail
-                                                }).then(_ => {
-                                                    molecule.setAtomsDirty(true)
-                                                    molecule.redraw(props.glRef)
-                                                })
-                                                */
 
                     })
                 }, { once: true })
