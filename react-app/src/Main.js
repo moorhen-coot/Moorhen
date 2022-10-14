@@ -47,6 +47,7 @@ class Main extends Component {
         this.bvalRef = React.createRef();
         this.densityFitRef = React.createRef();
         this.rotamersRef = React.createRef();
+        this.validationRef = React.createRef();
         var self = this;
         
         this.crystWorker.onmessage = function (e) {
@@ -371,7 +372,7 @@ class Main extends Component {
                     </Col>
 
                     <Col lg={4}>
-                        <ControlInterface glRef={this.gl} onResidueDataClick={this.residueDataClick.bind(this)} rsrRef={this.rsrRef} flipRef={this.flipRef} ramaRef={this.ramaRef} bvalRef={this.bvalRef} densityFitRef={this.densityFitRef} rotamersRef={this.rotamersRef}
+                        <ControlInterface glRef={this.gl} onResidueDataClick={this.residueDataClick.bind(this)} validationRef={this.validationRef} rsrRef={this.rsrRef} flipRef={this.flipRef} ramaRef={this.ramaRef} bvalRef={this.bvalRef} densityFitRef={this.densityFitRef} rotamersRef={this.rotamersRef}
                             dataObjectsNames={dataObjectsNames}
                             crystWorker={this.crystWorker}
                             liveUpdatingMaps={liveUpdatingMaps}

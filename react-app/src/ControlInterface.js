@@ -20,6 +20,7 @@ import FlipPeptide from './FlipPeptide';
 import Ramachandran from './Ramachandran';
 import NormalModes from './NormalModes';
 import Utilities from './MGUtils';
+import Validation from './Validation';
 
 import { guid } from './guid.js';
 
@@ -276,6 +277,9 @@ class ControlInterface extends Component {
                 </Tab>
                 <Tab eventKey="utilities" title="Utilities">
                     <Utilities glRef={this.props.glRef} onResidueDataClick={this.props.onResidueDataClick} bvalRef={this.props.bvalRef} rotamersRef={this.props.rotamersRef} densityFitRef={this.props.densityFitRef} displayData={displayData} dataObjectsNames={this.props.dataObjectsNames} crystWorker={this.props.crystWorker} dataFiles={dataFiles} onSVGChange={this.svgChanged.bind(this)} mapChanged={this.mapChanged.bind(this)} filePendingChanged={this.filePendingChanged.bind(this)} helicesChanged={this.helicesChanged.bind(this)} />
+                </Tab>
+                <Tab eventKey="validationTab" title="Validation">
+                    <Validation  ref={this.props.validationRef} clickHandler={this.props.onResidueDataClick} displayData={displayData} dataObjectsNames={this.props.dataObjectsNames} crystWorker={this.props.crystWorker} dataFiles={dataFiles} onSVGChange={this.svgChanged.bind(this)} mapChanged={this.mapChanged.bind(this)} filePendingChanged={this.filePendingChanged.bind(this)} />
                 </Tab>
                 <Tab eventKey="cube" title="Cube">
                 <Button key={buttonId} variant="primary" size="lg" onClick={this.cubeButtonHandler.bind(this)}>
