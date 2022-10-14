@@ -44,6 +44,7 @@ createRSRModule(Lib)
     .then(function(CCP4Mod) {
              RSRModule = CCP4Mod;
              molecules_container = new RSRModule.molecules_container_js();
+             molecules_container.geometry_init_standard();
              console.log("##################################################");
              console.log(molecules_container);
              console.log("##################################################");
