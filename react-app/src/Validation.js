@@ -195,7 +195,6 @@ class ValidationBarPlot extends Component {
         if(this.state.plotInfo){
             const resIndex = points[0].index
             const resNum = this.state.plotInfo[0][resIndex].seqNum;
-            console.log(resNum)
             if(resNum&&resNum>-1){
                 if(this.customClickHandler) {
                     const molName = "UNK";
