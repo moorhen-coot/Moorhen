@@ -88,6 +88,15 @@ describe('Testing molecules_container_js', () => {
         expect(atom.GetNBonds()).toBe(0)
     })
 
+    test('Test Auto-fit rotamer', () => {
+        const molecules_container = new cootModule.molecules_container_js()
+        molecules_container.geometry_init_standard()
+        const imol = molecules_container.read_pdb('./tm-A.pdb')
+        const imol_map = molecules_container.read_mtz("./rnasa-1.8-all_refmac1.mtz", "FWT", "PHWT", "W", false, false)
+        const result = molecules_container.auto_fit_rotamer(imol, "A", 89, "", "", imol_map)
+        expect(result).toBe(1)
+    })
+
     test('Test Rama mesh', () => {
         const molecules_container = new cootModule.molecules_container_js()
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
@@ -200,5 +209,8 @@ const setupFunctions = {
         const rnaseSigmaaData = fs.readFileSync(path.join(__dirname, '..', '..', 'checkout', 'coot-1.0', 'data', 'rnasa-1.8-all_refmac1.mtz'),
             { encoding: null, flag: 'r' })
             cootModule.FS_createDataFile(".", 'rnasa-1.8-all_refmac1.mtz', rnaseSigmaaData, true, true);
+        const tmCoordData = fs.readFileSync(path.join(__dirname, '..', '..', 'checkout', 'coot-1.0', 'api', 'tm-A.pdb'),
+            { encoding: 'utf8', flag: 'r' })
+            cootModule.FS_createDataFile(".", 'tm-A.pdb', tmCoordData, true, true);
     }
 }
