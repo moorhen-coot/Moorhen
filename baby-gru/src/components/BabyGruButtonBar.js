@@ -1,6 +1,6 @@
 import { createRef } from "react";
 import { ButtonGroup, Button } from "react-bootstrap"
-import { postCootMessage } from "../BabyGruUtils"
+import { cootCommand, postCootMessage } from "../BabyGruUtils"
 import { circles_fragment_shader_source } from "../WebGL/circle-fragment-shader";
 
 export const BabyGruButtonBar = (props) => {
@@ -24,14 +24,34 @@ export const BabyGruButtonBar = (props) => {
                     //Currrently don't know which molecule has been edited...appply flip to all
                     props.molecules.forEach(molecule => {
                         props.setCursorStyle("default")
-                        postCootMessage(props.cootWorker, {
-                            message: 'flipPeptide',
-                            coordMolNo: molecule.coordMolNo,
-                            cid: event.detail
-                        }).then(_ => {
+                        const chosenAtom = cidToSpec(event.detail)
+
+                        cootCommand(props.cootWorker, {
+                            returnType: "status",
+                            command: "flipPeptide_cid",
+                            commandArgs: [
+                                molecule.coordMolNo,
+                                `/${chosenAtom.chain_id}/${chosenAtom.res_no}`,
+                                ''
+                            ]
+                        }).then(response => {
                             molecule.setAtomsDirty(true)
                             molecule.redraw(props.glRef)
                         })
+
+
+
+                        /*
+                                                postCootMessage(props.cootWorker, {
+                                                    message: 'flipPeptide',
+                                                    coordMolNo: molecule.coordMolNo,
+                                                    cid: event.detail
+                                                }).then(_ => {
+                                                    molecule.setAtomsDirty(true)
+                                                    molecule.redraw(props.glRef)
+                                                })
+                                                */
+
                     })
                 }, { once: true })
             }}>
@@ -48,17 +68,23 @@ export const BabyGruButtonBar = (props) => {
                     props.molecules.forEach(molecule => {
                         props.setCursorStyle("default")
                         const chosenAtom = cidToSpec(event.detail)
-                        postCootMessage(props.cootWorker, {
-                            message: 'auto_fit_rotamer',
-                            coordMolNo: molecule.coordMolNo,
-                            //FIXME should check what is "active" map
-                            mapMolNo: 1,
-                            ...chosenAtom
+
+                        cootCommand(props.cootWorker, {
+                            returnType: "status",
+                            command: "auto_fit_rotamer",
+                            commandArgs: [
+                                molecule.coordMolNo,
+                                chosenAtom.chain_id,
+                                chosenAtom.res_no,
+                                chosenAtom.ins_code,
+                                chosenAtom.alt_conf,
+                                1 //Hardwired Map number !!!
+                            ]
                         }).then(_ => {
                             molecule.setAtomsDirty(true)
                             molecule.redraw(props.glRef)
                         })
-                            
+
                     })
                 }, { once: true })
             }}>

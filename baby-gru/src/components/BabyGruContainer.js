@@ -93,7 +93,7 @@ export const BabyGruContainer = (props) => {
                         </Tab>
                         <Tab title="Maps" eventKey="maps" >
                             <div style={{ width: "25rem" }}>
-                                <BabyGruMaps maps={maps} />
+                                <BabyGruMaps maps={maps} glRef={glRef}/>
                             </div>
                         </Tab>
                     </Tabs>

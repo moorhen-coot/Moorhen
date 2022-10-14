@@ -17,7 +17,7 @@ const guid = () => {
 
 let print = (stuff) => {
     console.log(stuff)
-//    postMessage({ response: JSON.stringify(stuff) })
+    //    postMessage({ response: JSON.stringify(stuff) })
 }
 
 const simpleMeshToMeshData = (simpleMesh) => {
@@ -56,6 +56,7 @@ onmessage = function (e) {
         }).then((returnedModule) => {
             cootModule = returnedModule;
             molecules_container = new cootModule.molecules_container_js()
+            molecules_container.geometry_init_standard()
             postMessage({ response: 'Initialized molecules_container', message: e.data.message })
         })
             .catch((e) => {
@@ -115,12 +116,6 @@ onmessage = function (e) {
     else if (e.data.message === 'get_map') {
         const theGuid = guid()
         const tempFilename = `./${theGuid}.map`
-        /*
-        var fout = new ccp4Module.CCP4MAPfile();
-        var outpath = new ccp4Module.Clipper_String(tempFilename);
-        fout.open_write(outpath);
-        ccp4Module.exportXMapToMapFile(fout, molecules_container[e.data.mapMolNo].xmap);
-        */
         molecules_container.writeCCP4Map(e.data.mapMolNo, tempFilename)
 
         const mapData = cootModule.FS.readFile(tempFilename, { encoding: 'binary' });
@@ -153,6 +148,57 @@ onmessage = function (e) {
         }
     }
 
+    if (e.data.message === 'return_status_command') {
+        const { command, commandArgs, messageId, message } = e.data
+        try {
+            console.log(command, commandArgs)
+            commandArgs.forEach(arg=>{
+                console.log(typeof arg, arg)
+            })
+            const status = molecules_container[command](...commandArgs)
+            console.log('Completed with status', status)
+            postMessage({
+                messageId: messageId,
+                response: `Completed ${command} with args ${commandArgs}`,
+                message: message,
+                result: { status: 'Completed', result: status }
+            })
+        }
+        catch (err) {
+            console.log('Encountered err', err)
+            postMessage({
+                messageId: messageId,
+                response: `EXCEPTION RAISED IN ${command} with args ${commandArgs}`,
+                message: message,
+                result: { status: 'Exception' }
+            })
+        }
+    }
+
+    if (e.data.message === 'return_mesh_command') {
+        try {
+            const { command, commandArgs, message, messageId } = e.data
+            console.log(command, commandArgs)
+            const simpleMesh = molecules_container[command](...commandArgs)
+            const meshData = simpleMeshToMeshData(simpleMesh)
+            postMessage({
+                messageId: messageId,
+                response: `Completed ${command} with args ${commandArgs}`,
+                message: message,
+                result: { status: 'Completed', result: meshData }
+            })
+        }
+        catch (err) {
+            postMessage({
+                messageId: messageId,
+                response: `EXCEPTION RAISED IN ${command} with args ${commandArgs}`,
+                message: message,
+                result: { status: 'Exception' }
+            })
+        }
+    }
+
+
     else if (e.data.message === 'flipPeptide') {
         try {
             console.log('Received flipPeptide', e.data)
@@ -171,120 +217,5 @@ onmessage = function (e) {
             print(err)
         }
     }
-
-    else if (e.data.message === 'auto_fit_rotamer') {
-        /*molecules_container_t::auto_fit_rotamer(int imol,
-                                        const std::string &chain_id, int res_no, const std::string &ins_code,
-                                        const std::string &alt_conf,
-                                        int imol_map) {
-        */
-        try {
-            console.log('Received auto_fit_rotamer', e.data)
-            const { coordMolNo, chain_id, res_no, ins_code, alt_conf, mapMolNo } = e.data
-            const args = [coordMolNo, chain_id, res_no, ins_code, alt_conf, mapMolNo]
-            console.log('args are', ...args)
-            const status = molecules_container.auto_fit_rotamer(...args)
-            console.log('Status is ', status)
-            postMessage({
-                messageId: e.data.messageId,
-                response: `Autofitted rotamer ${chain_id} ${res_no} return ${status}`,
-                message: e.data.message,
-                result: {}
-            })
-        }
-        catch (err) {
-            print(err)
-        }
-    }
-
-    else if (e.data.message === 'ramachandran_validation_markup_mesh') {
-        try {
-            const { coordMolNo } = e.data
-            console.log(`Asked for rama validation spheres for mol ${coordMolNo}`)
-
-            //Issue here while ramachandran_validation_markup_mesh not working
-            //const simpleMesh = molecules_container.test_origin_cube();
-            const simpleMesh = molecules_container.ramachandran_validation_markup_mesh(coordMolNo)
-
-            const meshData = simpleMeshToMeshData(simpleMesh)
-            postMessage({
-                messageId: e.data.messageId,
-                response: `Evaluated ramachandran validation mesh nVertices ${meshData.vert_tri.length / 3
-                    }`,
-                message: e.data.message,
-                result: { meshData, status: "Success" }
-            })
-
-        }
-        catch (err) {
-            postMessage({
-                messageId: e.data.messageId,
-                response: `Failed with status ${err}`,
-                message: e.data.message,
-                result: { status: "Failed" }
-            })
-        }
-    }
-
-
-    else if (e.data.message === 'get_rotamer_dodecs') {
-        try {
-            const { coordMolNo } = e.data
-            console.log(`Asked for rotamer dodecs  for mol ${coordMolNo}`)
-
-            //Issue here while ramachandran_validation_markup_mesh not working
-            //const simpleMesh = molecules_container.test_origin_cube();
-            const simpleMesh = molecules_container.get_rotamer_dodecs(coordMolNo)
-            console.log(simpleMesh)
-            const meshData = simpleMeshToMeshData(simpleMesh)
-            console.log(meshData)
-            postMessage({
-                messageId: e.data.messageId,
-                response: `Evaluated rotamer validation mesh `,
-                message: e.data.message,
-                result: { meshData, status: "Success" }
-            })
-
-        }
-        catch (err) {
-            postMessage({
-                messageId: e.data.messageId,
-                response: `Failed with status ${err}`,
-                message: e.data.message,
-                result: { status: "Failed" }
-            })
-        }
-    }
-
-    else if (e.data.message === 'get_map_contours_mesh') {
-        try {
-            const { mapMolNo, x, y, z, radius, contourLevel } = e.data.data
-            console.log(mapMolNo, x, y, z, radius, contourLevel, e.data.data)
-            console.log(`Asked for coot contour for mol ${mapMolNo}`)
-
-            //Issue here while ramachandran_validation_markup_mesh not working
-            //const simpleMesh = molecules_container.test_origin_cube();
-            const simpleMesh = molecules_container.get_map_contours_mesh(mapMolNo, x, y, z, radius, contourLevel)
-            console.log(simpleMesh)
-            const meshData = simpleMeshToMeshData(simpleMesh)
-            postMessage({
-                messageId: e.data.messageId,
-                response: `Evaluated coot cotour mesh nVertices ${meshData.vert_tri.length / 3
-                    }`,
-                message: e.data.message,
-                result: { meshData, status: "Success" }
-            })
-
-        }
-        catch (err) {
-            postMessage({
-                messageId: e.data.messageId,
-                response: `Failed with status ${err}`,
-                message: e.data.message,
-                result: { status: "Failed" }
-            })
-        }
-    }
-
 
 }
