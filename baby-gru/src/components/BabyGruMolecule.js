@@ -127,6 +127,7 @@ BabyGruMolecule.prototype.centreOn = function (gl, selection) {
 }
 
 BabyGruMolecule.prototype.drawWithStyleFromAtoms = function (style, gl, webMGAtoms) {
+
     switch (style) {
         case 'ribbons':
             this.drawRibbons(webMGAtoms, gl.current)
@@ -157,6 +158,13 @@ BabyGruMolecule.prototype.drawRamachandranBalls = function (gl) {
     }).then(response => {
         console.log('result', response)
         const objects = [response.data.result.result]
+
+        //Empty existing buffers of this type
+        this.displayObjects.rama.forEach((buffer) => {
+            buffer.clearBuffers()
+        })
+        this.displayObjects.rama = []
+
         objects.forEach(object => {
             var a = gl.appendOtherData(object, true);
             $this.displayObjects.rama = $this.displayObjects.rama.concat(a)
@@ -175,10 +183,17 @@ BabyGruMolecule.prototype.drawRotamerDodecahedra = function (gl) {
     }).then(response => {
         console.log('result', response)
         const objects = [response.data.result.result]
+
+        //Empty existing buffers of this type
+        this.displayObjects.rotamer.forEach((buffer) => {
+            buffer.clearBuffers()
+        })
+
         objects.forEach(object => {
             var a = gl.appendOtherData(object, true);
             $this.displayObjects.rotamer = $this.displayObjects.rotamer.concat(a)
         })
+
         gl.buildBuffers();
         gl.drawScene();
     })
@@ -250,6 +265,12 @@ BabyGruMolecule.prototype.drawBonds = function (webMGAtoms, gl, colourSchemeInde
             item.sizes[0][0].length > 0
     })
 
+    //Empty existing buffers of this type
+    $this.displayObjects.bonds.forEach((buffer) => {
+        buffer.clearBuffers()
+    })
+    $this.displayObjects.bonds = []
+
     objects.forEach(object => {
         var a = gl.appendOtherData(object, true);
         $this.displayObjects.bonds = $this.displayObjects.bonds.concat(a)
@@ -309,6 +330,12 @@ BabyGruMolecule.prototype.drawRibbons = function (webMGAtoms, gl) {
             item.sizes[0][0].length > 0
     })
 
+    //Empty existing buffers of this type
+    this.displayObjects.ribbons.forEach((buffer) => {
+        buffer.clearBuffers()
+    })
+    this.displayObjects.ribbons = []
+
     objects.forEach(object => {
         const a = gl.appendOtherData(object, true);
         this.displayObjects.ribbons = this.displayObjects.ribbons.concat(a)
@@ -361,13 +388,10 @@ BabyGruMolecule.prototype.redraw = function (gl) {
         const objectCategoryBuffers = $this.displayObjects[style]
         if (objectCategoryBuffers.length > 0) {
             if (objectCategoryBuffers[0].visible) {
+                //FOr currently visible display types, put them on a list for redraw
                 itemsToRedraw.push(style)
             }
-            objectCategoryBuffers.forEach((buffer) => {
-                buffer.clearBuffers()
-            })
         }
-        $this.displayObjects[style] = []
     })
     itemsToRedraw.reduce(
         (p, style) => {

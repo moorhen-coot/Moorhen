@@ -13,6 +13,7 @@ export const BabyGruContainer = (props) => {
     const glRef = useRef(null)
     const cootWorker = useRef(null)
     const graphicsDiv = createRef()
+    const [activeMap, setActiveMap] = useState(null)
     const [consoleOutput, setConsoleOutput] = useState("")
     const [molecules, setMolecules] = useState([])
     const [maps, setMaps] = useState([])
@@ -44,6 +45,7 @@ export const BabyGruContainer = (props) => {
                             maps={maps}
                             setMaps={setMaps}
                             cootWorker={cootWorker}
+                            setActiveMap={setActiveMap}
                             glRef={glRef}
                         />
                     </Nav>
@@ -75,6 +77,7 @@ export const BabyGruContainer = (props) => {
                     molecules={molecules}
                     setConsoleOutput={setConsoleOutput}
                     cootWorker={cootWorker}
+                    activeMap={activeMap}
                     glRef={glRef} />
                 <div
                     className='baby-gru-panel'
@@ -93,7 +96,11 @@ export const BabyGruContainer = (props) => {
                         </Tab>
                         <Tab title="Maps" eventKey="maps" >
                             <div style={{ width: "25rem" }}>
-                                <BabyGruMaps maps={maps} glRef={glRef}/>
+                                <BabyGruMaps maps={maps}
+                                    glRef={glRef}
+                                    activeMap={activeMap}
+                                    setActiveMap={setActiveMap}
+                                />
                             </div>
                         </Tab>
                     </Tabs>

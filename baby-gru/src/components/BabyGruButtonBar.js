@@ -78,7 +78,7 @@ export const BabyGruButtonBar = (props) => {
                                 chosenAtom.res_no,
                                 chosenAtom.ins_code,
                                 chosenAtom.alt_conf,
-                                1 //Hardwired Map number !!!
+                                props.activeMap.mapMolNo
                             ]
                         }).then(_ => {
                             molecule.setAtomsDirty(true)
