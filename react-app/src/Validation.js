@@ -46,11 +46,6 @@ class ValidationBarPlot extends Component {
 
     constructor(props) {
         super(props);
-        this.xoff = 15;
-        this.downX = -1;
-        this.downY = -1;
-        this.eX = -1;
-        this.eY = -1;
         this.state = {scrollX:0, scrollY:0, plotInfo: null, key:null, selectedMethods:[]};
         this.canvasRef = createRef();
         this.scrollRef = createRef();
@@ -58,14 +53,9 @@ class ValidationBarPlot extends Component {
         this.largeRef = createRef();
         window.addEventListener('resize', this.handleResize.bind(this));
 
-        this.nRows = 1;
         this.chart = null;
-
+        this.barWidth = 24;
         this.baseLine = 75;
-        this.barHeight = 40;
-        this.maxPerRow = 200;
-        this.dataPointWidth = 20;
-        this.dataPointSpacing = 8;
 
     }
 
@@ -252,20 +242,6 @@ class ValidationBarPlot extends Component {
         return title;
     }
 
-    componentDidMount() {
-        const self = this;
-        this.context = this.canvasRef.current.getContext('2d');
-        var ctx = this.context;
-        this.context = this.canvasRef.current.getContext('2d', {alpha: false});
-        var rect = this.scrollDivRef.current.getBoundingClientRect();
-        this.scrollRef.current.setSize(rect.width,this.baseLine);
-
-        // Some testing junk
-        this.largeRef.current.style.width = "400px";
-        this.largeRef.current.style.height = "200px";
-
-    }
-
     setScroll(scrollX,scrollY){
         this.setState({scrollX:scrollX,scrollY:scrollY});
     }
@@ -297,19 +273,14 @@ class ValidationBarPlot extends Component {
      * @param {Array} plotInfo 
      * @param {string} key 
      */
-    updatePlotData(selectedMethods, plotInfo, key){
+     updatePlotData(selectedMethods, plotInfo, key){
         const self = this;
+        let nRes = Math.max(...plotInfo.map(item => item.length));
+        this.largeRef.current.style.width = nRes*this.barWidth+"px";
+        this.largeRef.current.style.height = "200px";
+
         this.setState({plotInfo:plotInfo, key:key, selectedMethods:selectedMethods}, ()=>self.draw());
-
-        this.nRows = parseInt((plotInfo.length + this.maxPerRow - 1) / this.maxPerRow);
-
-        this.largeRef.current.style.width = (1+this.maxPerRow)*(this.dataPointWidth+100)+"px";
-        let bigHeight = (this.nRows+1)*75;
-        if(bigHeight<200)
-            bigHeight = 200;
-        this.largeRef.current.style.height = bigHeight+"px";
     }
-
 }
 
 class ValidationData extends Component {
