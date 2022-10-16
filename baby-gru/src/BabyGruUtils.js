@@ -1,6 +1,6 @@
 
 
-import {v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 
 export const postCootMessage = (cootWorker, kwargs) => {
     const messageId = uuidv4()
@@ -15,6 +15,22 @@ export const postCootMessage = (cootWorker, kwargs) => {
             messageId, ...kwargs
         })
     })
+}
+
+export const cootCommand = (cootWorker, commandSpec) => {
+    let message;
+    switch (commandSpec.returnType) {
+        case "status":
+            message = "return_status_command"
+            break;
+        case "mesh":
+            message = "return_mesh_command"
+            break;
+        default:
+            message = "return_status_command"
+            break;
+    }
+    return postCootMessage(cootWorker, { message, ...commandSpec })
 }
 
 export const readTextFile = (source) => {
@@ -39,7 +55,7 @@ export const readDataFile = (source) => {
     })
 }
 
-export const doDownload = (data, targetName) =>{
+export const doDownload = (data, targetName) => {
     const url = window.URL.createObjectURL(
         new Blob(data),
     );
