@@ -8,7 +8,9 @@ export const BabyGruMaps = (props) => {
     }, [])
 
     return <Fragment>
-        <Row><Col><div style={{ height: "1rem" }} /></Col></Row>
+        <Row>
+            <Col><div style={{ height: "1rem" }} /></Col>
+        </Row>
         <Table key="BabyGruMaps">
             <thead><tr><th>Active</th><th>Number</th><th>Name</th><th>Download</th></tr></thead>
             <tbody>

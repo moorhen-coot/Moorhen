@@ -6,15 +6,11 @@ import { circles_fragment_shader_source } from "../WebGL/circle-fragment-shader"
 export const BabyGruButtonBar = (props) => {
     const atomClickedBinding = createRef(null);
     return <div
-        className="baby-gru-panel"
         style={{
             overflow: "auto",
-            float: "left",
-            width: "5rem",
             backgroundColor: "white",
         }}>
-        <ButtonGroup size="sm" vertical>
-
+        <ButtonGroup vertical>
             <Button variant='light' onClick={() => {
                 //props.setConsoleOutput('Select atom in residue for which to flip peptide')
                 props.setCursorStyle("crosshair")
