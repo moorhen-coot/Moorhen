@@ -22,6 +22,26 @@ const desiredMethodOrder = [
     'bVals'
 ]
 
+/**
+ * Custom pluign to draw bar borders. Only necessary in Firefox.
+ */
+ const barBorderPlugin = {
+    id: 'custom_bar_borders',
+    afterDatasetsDraw: (chart, args, options) => {
+        const {ctx} = chart;
+        ctx.save();
+        ctx.lineWidth = 1;
+        for(let datasetIndex=0; datasetIndex<chart._metasets.length; datasetIndex++){
+          for(let dataPoint=0; dataPoint<chart._metasets[datasetIndex].data.length; dataPoint++){
+            ctx.beginPath();
+            ctx.rect(chart._metasets[datasetIndex].data[dataPoint].x-chart._metasets[datasetIndex].data[dataPoint].width/2, chart._metasets[datasetIndex].data[dataPoint].y, chart._metasets[datasetIndex].data[dataPoint].width, chart._metasets[datasetIndex].data[dataPoint].height);
+            ctx.stroke();
+          }
+        }
+      ctx.restore();
+    }
+}
+
 class ValidationBarPlot extends Component {
 
     constructor(props) {
@@ -107,13 +127,14 @@ class ValidationBarPlot extends Component {
                 label: this.state.selectedMethods[methodIndex],
                 data: labels.map(seqNum => chartData[seqNum].data[methodIndex]),
                 backgroundColor: labels.map(seqNum => chartData[seqNum].backgroundColor[methodIndex]),
-                borderColor: labels.map(seqNum => chartData[seqNum].borderColor[methodIndex]),
-                borderWidth: 1
+                borderWidth: 0,
+                clip: false
             })
         }
         
         this.chart = new Chart(ctx, {
                 type: 'bar',
+                plugins: [barBorderPlugin],
                 data: {
                     labels: labels,
                     datasets: datasets
