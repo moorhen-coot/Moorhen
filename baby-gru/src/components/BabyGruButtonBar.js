@@ -16,10 +16,10 @@ export const BabyGruButtonBar = (props) => {
         <ButtonGroup size="sm" vertical>
 
             <Button variant='light' onClick={() => {
-                props.setConsoleOutput('Select atom in residue for which to flip peptide')
+                //props.setConsoleOutput('Select atom in residue for which to flip peptide')
                 props.setCursorStyle("crosshair")
                 atomClickedBinding.current = document.addEventListener('atomClicked', (event) => {
-                    props.setConsoleOutput(`Selected atom ${event.detail}`)
+                    //props.setConsoleOutput(`Selected atom ${event.detail}`)
                     document.removeEventListener('atomClicked', atomClickedBinding.current)
                     //Currrently don't know which molecule has been edited...appply flip to all
                     props.molecules.forEach(molecule => {
@@ -59,10 +59,10 @@ export const BabyGruButtonBar = (props) => {
             </Button>
 
             <Button variant='light' onClick={() => {
-                props.setConsoleOutput('Select atom in residue for which to autofit rotamer')
+                //props.setConsoleOutput('Select atom in residue for which to autofit rotamer')
                 props.setCursorStyle("crosshair")
                 atomClickedBinding.current = document.addEventListener('atomClicked', (event) => {
-                    props.setConsoleOutput(`Selected atom ${event.detail}`)
+                    //props.setConsoleOutput(`Selected atom ${event.detail}`)
                     document.removeEventListener('atomClicked', atomClickedBinding.current)
                     //Currrently don't know which molecule has been edited...appply flip to all
                     props.molecules.forEach(molecule => {

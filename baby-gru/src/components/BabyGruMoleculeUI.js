@@ -45,7 +45,8 @@ export const BabyGruMoleculeUI = (props) => {
                 Object.keys(props.molecule.displayObjects).map(key => {
                     return <Form.Check
                         inline
-                        label={`${key}`}
+                        label={`${key.substring(0,3)}.`}
+                        feedbackTooltip={"Toggle on"}
                         name={key}
                         type="checkbox"
                         checked={showState[key]}

@@ -17,7 +17,7 @@ const guid = () => {
 
 let print = (stuff) => {
     console.log(stuff)
-    //    postMessage({ response: JSON.stringify(stuff) })
+    postMessage({ consoleMessage: JSON.stringify(stuff) })
 }
 
 const simpleMeshToMeshData = (simpleMesh) => {
@@ -57,7 +57,7 @@ onmessage = function (e) {
             cootModule = returnedModule;
             molecules_container = new cootModule.molecules_container_js()
             molecules_container.geometry_init_standard()
-            postMessage({ response: 'Initialized molecules_container', message: e.data.message })
+            postMessage({ consoleMessage: 'Initialized molecules_container', message: e.data.message })
         })
             .catch((e) => {
                 console.log(e)
@@ -74,7 +74,7 @@ onmessage = function (e) {
             printErr: print,
         }).then((returnedModule) => {
             ccp4Module = returnedModule;
-            postMessage({ response: 'Initialized ccp4Module', message: e.data.message })
+            postMessage({ consoleMessage: 'Initialized ccp4Module', message: e.data.message })
         })
             .catch((e) => {
                 console.log(e)
@@ -93,7 +93,7 @@ onmessage = function (e) {
         cootModule.FS_unlink(tempFilename)
         postMessage({
             messageId: e.data.messageId,
-            response: `Read coordinates as molecule ${coordMolNo}`,
+            consoleMessage: `Read coordinates as molecule ${coordMolNo}`,
             message: e.data.message,
             result: { coordMolNo: coordMolNo, name: e.data.name }
         })
@@ -107,7 +107,7 @@ onmessage = function (e) {
         cootModule.FS_unlink(tempFilename)
         postMessage({
             messageId: e.data.messageId,
-            response: `Fetched coordinates of molecule ${e.data.coordMolNo}`,
+            consoleMessage: `Fetched coordinates of molecule ${e.data.coordMolNo}`,
             message: e.data.message,
             result: { coordMolNo: e.data.coordMolNo, pdbData: pdbData }
         })
@@ -122,7 +122,7 @@ onmessage = function (e) {
         cootModule.FS_unlink(tempFilename)
         postMessage({
             messageId: e.data.messageId,
-            response: `Fetched map of map ${e.data.mapMolNo}`,
+            consoleMessage: `Fetched map of map ${e.data.mapMolNo}`,
             message: e.data.message,
             result: { mapMolNo: e.data.mapMolNo, mapData: mapData.buffer }
         })
@@ -138,7 +138,7 @@ onmessage = function (e) {
             cootModule.FS_unlink(tempFilename)
             postMessage({
                 messageId: e.data.messageId,
-                response: `Read map MTZ as molecule ${mapMolNo}`,
+                consoleMessage: `Read map MTZ as molecule ${mapMolNo}`,
                 message: e.data.message,
                 result: { mapMolNo: mapMolNo, name: e.data.name }
             })
@@ -159,7 +159,7 @@ onmessage = function (e) {
             console.log('Completed with status', status)
             postMessage({
                 messageId: messageId,
-                response: `Completed ${command} with args ${commandArgs}`,
+                consoleMessage: `Completed ${command} with args ${commandArgs}`,
                 message: message,
                 result: { status: 'Completed', result: status }
             })
@@ -168,7 +168,7 @@ onmessage = function (e) {
             console.log('Encountered err', err)
             postMessage({
                 messageId: messageId,
-                response: `EXCEPTION RAISED IN ${command} with args ${commandArgs}`,
+                consoleMessage: `EXCEPTION RAISED IN ${command} with args ${commandArgs}`,
                 message: message,
                 result: { status: 'Exception' }
             })
@@ -183,7 +183,7 @@ onmessage = function (e) {
             const meshData = simpleMeshToMeshData(simpleMesh)
             postMessage({
                 messageId: messageId,
-                response: `Completed ${command} with args ${commandArgs}`,
+                consoleMessage: `Completed ${command} with args ${commandArgs}`,
                 message: message,
                 result: { status: 'Completed', result: meshData }
             })
@@ -191,7 +191,7 @@ onmessage = function (e) {
         catch (err) {
             postMessage({
                 messageId: messageId,
-                response: `EXCEPTION RAISED IN ${command} with args ${commandArgs}`,
+                consoleMessage: `EXCEPTION RAISED IN ${command} with args ${commandArgs}`,
                 message: message,
                 result: { status: 'Exception' }
             })
@@ -208,7 +208,7 @@ onmessage = function (e) {
             const status = molecules_container.flipPeptide_rs(coordMolNo, resSpec, "")
             postMessage({
                 messageId: e.data.messageId,
-                response: `Flipped Peptide command ${chainId} ${parseInt(resNo)} return ${status}`,
+                consoleMessage: `Flipped Peptide command ${chainId} ${parseInt(resNo)} return ${status}`,
                 message: e.data.message,
                 result: {}
             })

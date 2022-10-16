@@ -156,7 +156,6 @@ BabyGruMolecule.prototype.drawRamachandranBalls = function (gl) {
         command: "ramachandran_validation_markup_mesh",
         commandArgs: [$this.coordMolNo]
     }).then(response => {
-        console.log('result', response)
         const objects = [response.data.result.result]
 
         //Empty existing buffers of this type
@@ -181,13 +180,13 @@ BabyGruMolecule.prototype.drawRotamerDodecahedra = function (gl) {
         command: "get_rotamer_dodecs",
         commandArgs: [$this.coordMolNo]
     }).then(response => {
-        console.log('result', response)
         const objects = [response.data.result.result]
 
         //Empty existing buffers of this type
         this.displayObjects.rotamer.forEach((buffer) => {
             buffer.clearBuffers()
         })
+        this.displayObjects.rotamer = []
 
         objects.forEach(object => {
             var a = gl.appendOtherData(object, true);
