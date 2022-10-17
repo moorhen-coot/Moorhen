@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { postCootMessage } from '../BabyGruUtils';
 import { BabyGruButtonBar } from './BabyGruButtonBar';
 import { BabyGruFileMenu } from './BabyGruFileMenu';
+import { BabyGruSequenceViewer } from './BabyGruSequenceViewer';
 
 const initialState = { count: 0, consoleMessage: "" };
 
@@ -28,11 +29,14 @@ export const BabyGruContainer = (props) => {
     const [maps, setMaps] = useState([])
     const [cursorStyle, setCursorStyle] = useState("default")
     const headerRef = useRef()
-    const footerRef = useRef()
     const consoleDivRef = useRef()
-    const heightOfConsole = 190;
-    const [accordionHeight, setAccordionHeight] = useState(heightOfConsole)
+    const headerHeight = 60
+    const accordionHeaderHeight = 52
+    const consoleHeight = 192;
+    const [accordionHeight, setAccordionHeight] = useState(headerHeight+2*accordionHeaderHeight+consoleHeight)
     const [showSideBar, setShowSideBar] = useState(true)
+    const sequenceViewerRef = useRef()
+    const sequenceViewerHeight = 150
 
     useEffect(() => {
         cootWorker.current = new Worker('CootWorker.js')
@@ -61,12 +65,12 @@ export const BabyGruContainer = (props) => {
     }
 
     const webGLWidth = () => {
-        const result = window.innerWidth - (150 + (showSideBar ? 500 : 0))
+        const result = window.innerWidth - (190 + (showSideBar ? 500 : 0))
         return result
     }
 
     const webGLHeight = () => {
-        return window.innerHeight - (115 + accordionHeight)
+        return window.innerHeight - (headerHeight + accordionHeight)
     }
 
     return <>
@@ -148,16 +152,35 @@ export const BabyGruContainer = (props) => {
             <Row style={{ backgroundColor: "white" }}>
                 <Col>
                     <div >
-                        <Accordion ref={footerRef}
-                            defaultActiveKey="console" onSelect={
-                                (openPanels) => {
-                                    let newAccordionHeight = 0;
-                                    if (openPanels && openPanels.includes("console")) {
-                                        newAccordionHeight += heightOfConsole
-                                    }
-                                    setAccordionHeight(newAccordionHeight)
+                        <Accordion
+                            alwaysOpen={true}
+                            defaultActiveKey="console"
+                            onSelect={(openPanels) => {
+                                let newAccordionHeight = 0;
+                                newAccordionHeight += 52;
+                                if (openPanels && openPanels.includes("console")) {
+                                    newAccordionHeight += consoleHeight
                                 }
-                            }>
+                                newAccordionHeight += 52;//sequences header line
+                                if (openPanels && openPanels.includes("sequences")) {
+                                    newAccordionHeight += sequenceViewerHeight
+                                }
+                                setAccordionHeight(newAccordionHeight)
+                            }}>
+                            <Accordion.Item eventKey="sequences">
+                                <Accordion.Header>Sequences</Accordion.Header>
+                                <Accordion.Body>
+                                    <div ref={sequenceViewerRef} style={{
+                                        overflowY: "scroll",
+                                        height: "15rem",
+                                        width: "100vw",
+                                        lineHeight: "1.0rem",
+                                        textAlign: "left"
+                                    }}>
+                                        <BabyGruSequenceViewer molecules={molecules} glRef={glRef} />
+                                    </div>
+                                </Accordion.Body>
+                            </Accordion.Item>
                             <Accordion.Item eventKey="console">
                                 <Accordion.Header>Console</Accordion.Header>
                                 <Accordion.Body>
