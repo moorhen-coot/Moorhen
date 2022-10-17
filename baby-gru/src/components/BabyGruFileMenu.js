@@ -26,6 +26,7 @@ export const BabyGruFileMenu = (props) => {
                 Promise.resolve(true)
             }).then(result => {
                 setMaps([...maps, newMap])
+                props.setActiveMap(newMap)
                 Promise.resolve(newMap)
             })
     }

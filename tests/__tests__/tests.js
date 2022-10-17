@@ -88,6 +88,24 @@ describe('Testing molecules_container_js', () => {
         expect(atom.GetNBonds()).toBe(0)
     })
 
+    test('Test Auto-fit rotamer', () => {
+        const molecules_container = new cootModule.molecules_container_js()
+        molecules_container.geometry_init_standard()
+        const imol = molecules_container.read_pdb('./tm-A.pdb')
+        const imol_map = molecules_container.read_mtz("./rnasa-1.8-all_refmac1.mtz", "FWT", "PHWT", "W", false, false)
+        const resSpec = new cootModule.residue_spec_t("A", 89, "");
+        const res = molecules_container.get_residue(imol,resSpec)
+        const CZatom = res.GetAtom(6);
+        const CZatom_x = CZatom.x;
+        const CZatom_y = CZatom.y;
+        const CZatom_z = CZatom.z;
+        const result = molecules_container.auto_fit_rotamer(imol, "A", 89, "", "", imol_map)
+        const dd = (CZatom.x-CZatom_x) * (CZatom.x-CZatom_x) + (CZatom.y-CZatom_y) * (CZatom.y-CZatom_y) + (CZatom.z-CZatom_z) * (CZatom.z-CZatom_z)
+        const d = Math.sqrt(dd)
+        expect(d).toBeCloseTo(7.28975,5)
+
+    })
+
     test('Test Rama mesh', () => {
         const molecules_container = new cootModule.molecules_container_js()
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
@@ -200,5 +218,8 @@ const setupFunctions = {
         const rnaseSigmaaData = fs.readFileSync(path.join(__dirname, '..', '..', 'checkout', 'coot-1.0', 'data', 'rnasa-1.8-all_refmac1.mtz'),
             { encoding: null, flag: 'r' })
             cootModule.FS_createDataFile(".", 'rnasa-1.8-all_refmac1.mtz', rnaseSigmaaData, true, true);
+        const tmCoordData = fs.readFileSync(path.join(__dirname, '..', '..', 'checkout', 'coot-1.0', 'api', 'tm-A.pdb'),
+            { encoding: 'utf8', flag: 'r' })
+            cootModule.FS_createDataFile(".", 'tm-A.pdb', tmCoordData, true, true);
     }
 }

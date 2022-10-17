@@ -1,5 +1,5 @@
 import { Fragment, useEffect } from "react";
-import { Table, Button, Row, Col } from "react-bootstrap";
+import { Table, Button, Row, Col, Form } from "react-bootstrap";
 import { doDownload } from "../BabyGruUtils";
 //import { Download } from 'react-bootstrap-icons';
 
@@ -8,12 +8,23 @@ export const BabyGruMaps = (props) => {
     }, [])
 
     return <Fragment>
-        <Row><Col><div style={{ height: "1rem" }} /></Col></Row>
+        <Row>
+            <Col><div style={{ height: "1rem" }} /></Col>
+        </Row>
         <Table key="BabyGruMaps">
-            <thead><tr><th>Number</th><th>Name</th><th>Download</th><th>Contour</th></tr></thead>
+            <thead><tr><th>Active</th><th>Number</th><th>Name</th><th>Download</th></tr></thead>
             <tbody>
                 {
                     props.maps.map(map => <tr key={map.mapMolNo} >
+                        <td>
+                            <Form.Check checked={map === props.activeMap}
+                                onChange={(e) => {
+                                    if (e.target.checked) {
+                                        props.setActiveMap(map)
+                                    }
+                                }}
+                            />
+                        </td>
                         <td>{map.mapMolNo}</td>
                         <td>{map.name}</td>
                         <td>
@@ -24,13 +35,6 @@ export const BabyGruMaps = (props) => {
                                             `${map.name.replace('.mtz', '.map')}`
                                         )
                                     })
-                            }}>
-                                Down
-                            </Button>
-                        </td>
-                        <td>
-                            <Button size="sm" onClick={() => {
-                                map.cootContour(0., 0., 0., 15., 0.3)
                             }}>
                                 Down
                             </Button>

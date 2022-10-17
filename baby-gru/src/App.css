@@ -38,10 +38,6 @@
   }
 }
 
-div.baby-gru-panel {
-  height: calc(100vh - 15rem);
-}
-
 img.baby-gru-button-icon {
   height: 3rem;
   width: 3rem;

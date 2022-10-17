@@ -7,7 +7,7 @@ import { getMultipleBonds } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { atomsToSpheresInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { contactsToCylindersInfo, contactsToLinesInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { singletonsToLinesInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
-import { postCootMessage, readTextFile, readDataFile } from '../BabyGruUtils'
+import { postCootMessage, readTextFile, readDataFile, cootCommand } from '../BabyGruUtils'
 
 export function BabyGruMolecule(cootWorker) {
     this.cootWorker = cootWorker
@@ -127,6 +127,7 @@ BabyGruMolecule.prototype.centreOn = function (gl, selection) {
 }
 
 BabyGruMolecule.prototype.drawWithStyleFromAtoms = function (style, gl, webMGAtoms) {
+
     switch (style) {
         case 'ribbons':
             this.drawRibbons(webMGAtoms, gl.current)
@@ -150,11 +151,19 @@ BabyGruMolecule.prototype.drawWithStyleFromAtoms = function (style, gl, webMGAto
 
 BabyGruMolecule.prototype.drawRamachandranBalls = function (gl) {
     const $this = this
-    postCootMessage($this.cootWorker, {
-        message: 'ramachandran_validation_markup_mesh',
-        coordMolNo: this.coordMolNo
+    cootCommand($this.cootWorker, {
+        returnType: "mesh",
+        command: "ramachandran_validation_markup_mesh",
+        commandArgs: [$this.coordMolNo]
     }).then(response => {
-        const objects = [response.data.result.meshData]
+        const objects = [response.data.result.result]
+
+        //Empty existing buffers of this type
+        this.displayObjects.rama.forEach((buffer) => {
+            buffer.clearBuffers()
+        })
+        this.displayObjects.rama = []
+
         objects.forEach(object => {
             var a = gl.appendOtherData(object, true);
             $this.displayObjects.rama = $this.displayObjects.rama.concat(a)
@@ -166,16 +175,24 @@ BabyGruMolecule.prototype.drawRamachandranBalls = function (gl) {
 
 BabyGruMolecule.prototype.drawRotamerDodecahedra = function (gl) {
     const $this = this
-    console.log('in drawRot')
-    postCootMessage($this.cootWorker, {
-        message: 'get_rotamer_dodecs',
-        coordMolNo: this.coordMolNo
+    cootCommand($this.cootWorker, {
+        returnType: "mesh",
+        command: "get_rotamer_dodecs",
+        commandArgs: [$this.coordMolNo]
     }).then(response => {
-        const objects = [response.data.result.meshData]
+        const objects = [response.data.result.result]
+
+        //Empty existing buffers of this type
+        this.displayObjects.rotamer.forEach((buffer) => {
+            buffer.clearBuffers()
+        })
+        this.displayObjects.rotamer = []
+
         objects.forEach(object => {
             var a = gl.appendOtherData(object, true);
             $this.displayObjects.rotamer = $this.displayObjects.rotamer.concat(a)
         })
+
         gl.buildBuffers();
         gl.drawScene();
     })
@@ -212,8 +229,8 @@ BabyGruMolecule.prototype.webMGAtomsFromFileString = function (fileString) {
         }
     }
     catch (err) {
-            result = parsePDB(unindentedLines)
-            console.log('Parsed file as PDB')
+        result = parsePDB(unindentedLines)
+        console.log('Parsed file as PDB')
     }
     return result
 }
@@ -246,6 +263,12 @@ BabyGruMolecule.prototype.drawBonds = function (webMGAtoms, gl, colourSchemeInde
             item.sizes[0].length > 0 &&
             item.sizes[0][0].length > 0
     })
+
+    //Empty existing buffers of this type
+    $this.displayObjects.bonds.forEach((buffer) => {
+        buffer.clearBuffers()
+    })
+    $this.displayObjects.bonds = []
 
     objects.forEach(object => {
         var a = gl.appendOtherData(object, true);
@@ -306,6 +329,12 @@ BabyGruMolecule.prototype.drawRibbons = function (webMGAtoms, gl) {
             item.sizes[0][0].length > 0
     })
 
+    //Empty existing buffers of this type
+    this.displayObjects.ribbons.forEach((buffer) => {
+        buffer.clearBuffers()
+    })
+    this.displayObjects.ribbons = []
+
     objects.forEach(object => {
         const a = gl.appendOtherData(object, true);
         this.displayObjects.ribbons = this.displayObjects.ribbons.concat(a)
@@ -358,13 +387,10 @@ BabyGruMolecule.prototype.redraw = function (gl) {
         const objectCategoryBuffers = $this.displayObjects[style]
         if (objectCategoryBuffers.length > 0) {
             if (objectCategoryBuffers[0].visible) {
+                //FOr currently visible display types, put them on a list for redraw
                 itemsToRedraw.push(style)
             }
-            objectCategoryBuffers.forEach((buffer) => {
-                buffer.clearBuffers()
-            })
         }
-        $this.displayObjects[style] = []
     })
     itemsToRedraw.reduce(
         (p, style) => {

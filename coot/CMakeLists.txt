@@ -14,7 +14,6 @@ file(GLOB coot_exception_srcs
 ${coot_src}/api/simple-mesh.cc
 ${coot_src}/api/interfaces.cc
 ${coot_src}/api/coot_molecule.cc
-${coot_src}/api/molecule_container.cc
 ${coot_src}/api/molecules_container.cc
 ${coot_src}/api/oct.cc
 ${coot_src}/api/prideout-octasphere.cc
