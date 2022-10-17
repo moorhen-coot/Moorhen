@@ -10,6 +10,10 @@ add_definitions(-DANALYSE_REFINEMENT_TIMING -DVERSION="1.0" -DPACKAGE_VERSION="1
 
 #  pyrogen, compat, auxil, goograph, src ignored.
 
+file(GLOB coot_rotamer_data
+${coot_src}/rama-data/*.data
+)
+
 file(GLOB coot_exception_srcs
 ${coot_src}/api/simple-mesh.cc
 ${coot_src}/api/interfaces.cc
@@ -339,6 +343,8 @@ FILE(COPY ../checkout/monomers/h/HOH.cif DESTINATION data/ccp4_lib/data/monomers
 FILE(COPY ../checkout/monomers/n/NA.cif DESTINATION data/ccp4_lib/data/monomers/n )
 FILE(COPY ../checkout/monomers/ener_lib.cif DESTINATION data/ccp4_lib/data/monomers )
 FILE(COPY ../checkout/monomers/list/mon_lib_list.cif DESTINATION data/ccp4_lib/data/monomers/list )
+FILE(COPY ${coot_src}/standard-residues.pdb DESTINATION data/coot )
+FILE(COPY ${coot_rotamer_data} DESTINATION data/coot/rama-data )
 FILE(COPY ${coot_src}/data/metal/metal-N-distance.table DESTINATION data/coot/data/metal )
 FILE(COPY ${coot_src}/data/metal/metal-O-distance.table DESTINATION data/coot/data/metal )
 FILE(COPY ${coot_src}/data/metal/metal-S-distance.table DESTINATION data/coot/data/metal )
