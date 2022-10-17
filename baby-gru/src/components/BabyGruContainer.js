@@ -33,10 +33,10 @@ export const BabyGruContainer = (props) => {
     const headerHeight = 60
     const accordionHeaderHeight = 52
     const consoleHeight = 192;
-    const [accordionHeight, setAccordionHeight] = useState(headerHeight+2*accordionHeaderHeight+consoleHeight)
+    const [accordionHeight, setAccordionHeight] = useState(headerHeight+104)
     const [showSideBar, setShowSideBar] = useState(true)
     const sequenceViewerRef = useRef()
-    const sequenceViewerHeight = 150
+    const sequenceViewerHeight = 272
 
     useEffect(() => {
         cootWorker.current = new Worker('CootWorker.js')
@@ -154,7 +154,7 @@ export const BabyGruContainer = (props) => {
                     <div >
                         <Accordion
                             alwaysOpen={true}
-                            defaultActiveKey="console"
+                            defaultActiveKey=""
                             onSelect={(openPanels) => {
                                 let newAccordionHeight = 0;
                                 newAccordionHeight += 52;
