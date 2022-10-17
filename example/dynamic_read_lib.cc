@@ -4,7 +4,7 @@
 
 #include "geometry/protein-geometry.hh"
 #include "coords/mmdb-extras.h"
-#include "coords/mmdb.h"
+#include "coords/mmdb.hh"
 #include "ligand/chi-angles.hh"
 #include "ligand/primitive-chi-angles.hh"
 #include "ligand/rotamer.hh"
