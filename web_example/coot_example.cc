@@ -558,8 +558,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     //Using allow_raw_pointers(). Perhaps suggests we need to do something different from exposing mmdb pointers to JS.
     .function("get_residue",&molecules_container_t::get_residue, allow_raw_pointers())
     .function("get_atom",&molecules_container_t::get_atom, allow_raw_pointers())
-    .function("flipPeptide_cid", select_overload<int(int, const std::string&,const std::string&)>(&molecules_container_t::flipPeptide))
-    .function("flipPeptide_rs", select_overload<int(int, const coot::residue_spec_t&,const std::string&)>(&molecules_container_t::flipPeptide))
+    .function("flipPeptide_cid", select_overload<int(int, const std::string&,const std::string&)>(&molecules_container_t::flip_peptide_using_cid))
+    .function("flipPeptide_rs", select_overload<int(int, const coot::residue_spec_t&,const std::string&)>(&molecules_container_t::flip_peptide))
     .function("test_origin_cube",&molecules_container_t::test_origin_cube)
     .function("ramachandran_validation_markup_mesh",&molecules_container_t::ramachandran_validation_markup_mesh)
     .function("get_rotamer_dodecs",&molecules_container_t::get_rotamer_dodecs)
