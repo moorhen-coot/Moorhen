@@ -15,6 +15,7 @@ export function BabyGruMolecule(cootWorker) {
     this.HBondsAssigned = false
     this.cachedAtoms = null
     this.atomsDirty = true
+    this.name = "unnamed"
     this.displayObjects = {
         ribbons: [],
         bonds: [],
@@ -29,6 +30,7 @@ BabyGruMolecule.prototype.loadToCootFromFile = function (source) {
     return new Promise((resolve, reject) => {
         return readTextFile(source)
             .then(coordData => {
+                $this.name = source.name
                 $this.cachedAtoms = $this.webMGAtomsFromFileString(coordData)
                 $this.atomsDirty = false
                 return postCootMessage($this.cootWorker, {
@@ -56,6 +58,7 @@ BabyGruMolecule.prototype.loadToCootFromEBI = function (pdbCode) {
             .then(response => {
                 return response.text()
             }).then((coordData) => {
+                $this.name = pdbCode
                 $this.cachedAtoms = $this.webMGAtomsFromFileString(coordData)
                 $this.atomsDirty = false
                 return postCootMessage($this.cootWorker, {
@@ -218,18 +221,19 @@ BabyGruMolecule.prototype.hide = function (style, gl) {
 }
 
 BabyGruMolecule.prototype.webMGAtomsFromFileString = function (fileString) {
+    const $this = this
     let result = { atoms: [] }
     var possibleIndentedLines = fileString.split("\n");
     var unindentedLines = possibleIndentedLines.map(line => line.trim())
     try {
-        result = parseMMCIF(unindentedLines);
+        result = parseMMCIF(unindentedLines, $this.name);
         if (typeof result.atoms === 'undefined') {
-            result = parsePDB(unindentedLines)
+            result = parsePDB(unindentedLines, $this.name)
             console.log('Parsed file as PDB')
         }
     }
     catch (err) {
-        result = parsePDB(unindentedLines)
+        result = parsePDB(unindentedLines, $this.name)
         console.log('Parsed file as PDB')
     }
     return result
