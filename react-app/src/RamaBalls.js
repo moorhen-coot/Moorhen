@@ -73,6 +73,9 @@ class RamaBalls extends Component {
         const inputData = {method:"rama_balls",jobId:jobid,pdbinKey:key,chainId:this.state.chainId};
         let response = await this.postCrystWorkerMessage(self.props.crystWorker, inputData);
         this.props.glRef.current.appendOtherData(response.data.result,false,"RamaBalls")
+        const inputData2 = {method:"rotamer_dodecs",jobId:jobid,pdbinKey:key,chainId:this.state.chainId};
+        let response2 = await this.postCrystWorkerMessage(self.props.crystWorker, inputData2);
+        this.props.glRef.current.appendOtherData(response2.data.result,false,"RamaBalls")
         
     }
 
