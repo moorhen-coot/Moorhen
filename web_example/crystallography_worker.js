@@ -290,7 +290,7 @@ function getRama(e) {
     })
 }
 
-function drawMesh(simpleMesh,e,perm) {
+function drawMesh(simpleMesh,e) {
     const nVertices = molecules_container.count_simple_mesh_vertices(simpleMesh);
     const vertices = simpleMesh.vertices;
     const nVerticesDirect = vertices.size();
@@ -302,10 +302,7 @@ function drawMesh(simpleMesh,e,perm) {
     let totCol = [];
     for(let i=0;i<triangles.size();i++){
         const idxs = triangles.get(i).point_id;
-        if(perm)
-            totIdxs.push(...[idxs[0],idxs[2],idxs[1]]);
-        else
-            totIdxs.push(...idxs);
+        totIdxs.push(...idxs);
     }
     for(let i=0;i<vertices.size();i++){
         const vert = vertices.get(i);
@@ -329,7 +326,7 @@ function drawDodos(e) {
 
     const idx = dataObjectsNames.mol_cont_idx[e.data.pdbinKey];
     const simpleMesh = molecules_container.get_rotamer_dodecs(idx);
-    drawMesh(simpleMesh,e,true);
+    drawMesh(simpleMesh,e);
 }
 
 function drawRamaBalls(e) {
