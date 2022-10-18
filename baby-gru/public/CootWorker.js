@@ -149,44 +149,29 @@ onmessage = function (e) {
         }
     }
 
-    if (e.data.message === 'return_status_command') {
-        const { command, commandArgs, messageId, message } = e.data
-        try {
-            console.log(command, commandArgs)
-            commandArgs.forEach(arg=>{
-                console.log(typeof arg, arg)
-            })
-            const status = molecules_container[command](...commandArgs)
-            console.log('Completed with status', status)
-            postMessage({
-                messageId: messageId,
-                consoleMessage: `Completed ${command} with args ${commandArgs}`,
-                message: message,
-                result: { status: 'Completed', result: status }
-            })
-        }
-        catch (err) {
-            console.log('Encountered err', err)
-            postMessage({
-                messageId: messageId,
-                consoleMessage: `EXCEPTION RAISED IN ${command} with args ${commandArgs}`,
-                message: message,
-                result: { status: 'Exception' }
-            })
-        }
-    }
 
-    if (e.data.message === 'return_mesh_command') {
+    if (e.data.message === 'coot_command') {
+        const { returnType, command, commandArgs, message, messageId } = e.data
         try {
-            const { command, commandArgs, message, messageId } = e.data
             console.log(command, commandArgs)
-            const simpleMesh = molecules_container[command](...commandArgs)
-            const meshData = simpleMeshToMeshData(simpleMesh)
+            const cootResult = molecules_container[command](...commandArgs)
+            console.log('Completed', cootResult)
+
+            let returnResult;
+            switch (returnType) {
+                case 'mesh':
+                    returnResult = simpleMeshToMeshData(cootResult)
+                    break;
+                case 'status':
+                default:
+                    returnResult = cootResult
+                    break;
+            }
             postMessage({
                 messageId: messageId,
                 consoleMessage: `Completed ${command} with args ${commandArgs}`,
                 message: message,
-                result: { status: 'Completed', result: meshData }
+                result: { status: 'Completed', result: returnResult }
             })
         }
         catch (err) {
