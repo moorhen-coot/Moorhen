@@ -186,10 +186,7 @@ BabyGruMolecule.prototype.drawRotamerDodecahedra = function (gl) {
         const objects = [response.data.result.result]
 
         //Empty existing buffers of this type
-        this.displayObjects.rotamer.forEach((buffer) => {
-            buffer.clearBuffers()
-        })
-        this.displayObjects.rotamer = []
+        this.clearBuffersOfStyle('rotamer')
 
         objects.forEach(object => {
             var a = gl.appendOtherData(object, true);

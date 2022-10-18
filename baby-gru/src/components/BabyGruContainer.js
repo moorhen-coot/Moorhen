@@ -30,10 +30,12 @@ export const BabyGruContainer = (props) => {
     const [cursorStyle, setCursorStyle] = useState("default")
     const headerRef = useRef()
     const consoleDivRef = useRef()
-    const headerHeight = 60
-    const accordionHeaderHeight = 52
+
     const consoleHeight = 192;
-    const [accordionHeight, setAccordionHeight] = useState(headerHeight+104)
+    const accordionHeaderHeight = 52;
+    const navHeight = 58;
+
+    const [accordionHeight, setAccordionHeight] = useState(2*accordionHeaderHeight)
     const [showSideBar, setShowSideBar] = useState(true)
     const sequenceViewerRef = useRef()
     const sequenceViewerHeight = 272
@@ -70,7 +72,7 @@ export const BabyGruContainer = (props) => {
     }
 
     const webGLHeight = () => {
-        return window.innerHeight - (headerHeight + accordionHeight)
+        return window.innerHeight - (navHeight + accordionHeight)
     }
 
     return <>
@@ -157,11 +159,11 @@ export const BabyGruContainer = (props) => {
                             defaultActiveKey=""
                             onSelect={(openPanels) => {
                                 let newAccordionHeight = 0;
-                                newAccordionHeight += 52;
+                                newAccordionHeight += accordionHeaderHeight;
                                 if (openPanels && openPanels.includes("console")) {
                                     newAccordionHeight += consoleHeight
                                 }
-                                newAccordionHeight += 52;//sequences header line
+                                newAccordionHeight += accordionHeaderHeight;//sequences header line
                                 if (openPanels && openPanels.includes("sequences")) {
                                     newAccordionHeight += sequenceViewerHeight
                                 }
