@@ -3,7 +3,6 @@ import { SequenceViewer } from "../WebGL/SequenceViewer"
 
 export const BabyGruSequenceViewer = (props) => {
     const sequenceViewer = useRef()
-    const [viewerTitle, setViewerTitle] = useState("")
     const [message, setMessage] = useState("")
     const [clickedResidue, setClickedResidue] = useState(null)
 
@@ -16,7 +15,6 @@ export const BabyGruSequenceViewer = (props) => {
     }, [])
 
     useEffect(() => {
-        setViewerTitle(`${props.molecules.length} sequences`)
         props.molecules.forEach((molecule) => {
             console.log(molecule.cachedAtoms)
             sequenceViewer.current.addSequences(molecule.cachedAtoms.sequences)
@@ -30,9 +28,6 @@ export const BabyGruSequenceViewer = (props) => {
         if (!clickedResidue) {
             return
         }
-
-        console.log(clickedResidue)
-        console.log(props.molecules)
 
         let selectedMoleculeIndex = props.molecules.findIndex(molecule => molecule.name === clickedResidue.molName);
         if (selectedMoleculeIndex === -1) {
@@ -60,7 +55,7 @@ export const BabyGruSequenceViewer = (props) => {
 
 
     return <Fragment>
-        <span>{viewerTitle}: {message}</span>
+        <span>{message}</span>
         <SequenceViewer
             ref={sequenceViewer}
             selectionChanged={(result) => { }}
