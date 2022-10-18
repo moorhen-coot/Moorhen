@@ -16,6 +16,7 @@ export function BabyGruMolecule(cootWorker) {
     this.cachedAtoms = null
     this.atomsDirty = true
     this.name = "unnamed"
+    this.fileName = null
     this.displayObjects = {
         ribbons: [],
         bonds: [],
@@ -27,19 +28,21 @@ export function BabyGruMolecule(cootWorker) {
 
 BabyGruMolecule.prototype.loadToCootFromFile = function (source) {
     const $this = this
+    const pdbRegex = /.pdb$/;
     return new Promise((resolve, reject) => {
         return readTextFile(source)
             .then(coordData => {
-                $this.name = source.name
+                $this.name = source.name.replace(pdbRegex,"");
                 $this.cachedAtoms = $this.webMGAtomsFromFileString(coordData)
                 $this.atomsDirty = false
                 return postCootMessage($this.cootWorker, {
                     message: 'read_pdb',
-                    name: source.name,
+                    name: $this.name,
                     data: coordData
                 }).then(e => {
                     $this.name = e.data.result.name
                     $this.coordMolNo = e.data.result.coordMolNo
+                    $this.fileName = e.data.result.fileName
                     console.log('e is', e)
                     resolve($this)
                 })
