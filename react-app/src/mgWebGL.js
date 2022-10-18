@@ -8036,6 +8036,7 @@ class MGWebGL extends Component {
             var theY = maxY - fracY*(maxY - minY);
             var frontPos = vec3Create([theX,theY,0.000001]);
             var backPos  = vec3Create([theX,theY,1000.0]);
+            //console.log(this.gl_clipPlane0[3],this.gl_clipPlane1[3]);
             vec3.transformMat4(frontPos,frontPos,theMatrix);
             vec3.transformMat4(backPos,backPos,theMatrix);
             vec3.subtract(frontPos,frontPos,self.origin);
@@ -9552,6 +9553,8 @@ class MGWebGL extends Component {
             self.drawSceneDirty();
             //console.log(self.origin);
             self.reContourMaps();
+            const originChangeEvent = new CustomEvent("originChange", { "detail": self.origin });
+            document.dispatchEvent(originChangeEvent);
             return;
         }
 
@@ -9728,6 +9731,8 @@ class MGWebGL extends Component {
             self.origin[0] += xshift[0]/8.*self.zoom;
             self.origin[1] += xshift[1]/8.*self.zoom;
             self.origin[2] += xshift[2]/8.*self.zoom;
+            const originChangeEvent = new CustomEvent("originChange", { "detail": self.origin });
+            document.dispatchEvent(originChangeEvent);
             self.drawSceneDirty();
             //console.log(self.origin);
             self.reContourMaps();
@@ -9741,6 +9746,8 @@ class MGWebGL extends Component {
             self.origin[0] += xshift[0]/8.*self.zoom;
             self.origin[1] += xshift[1]/8.*self.zoom;
             self.origin[2] += xshift[2]/8.*self.zoom;
+            const originChangeEvent = new CustomEvent("originChange", { "detail": self.origin });
+            document.dispatchEvent(originChangeEvent);
             self.drawSceneDirty();
             //console.log(self.origin);
             self.reContourMaps();
@@ -9754,6 +9761,8 @@ class MGWebGL extends Component {
             self.origin[0] += yshift[0]/8.*self.zoom;
             self.origin[1] += yshift[1]/8.*self.zoom;
             self.origin[2] += yshift[2]/8.*self.zoom;
+            const originChangeEvent = new CustomEvent("originChange", { "detail": self.origin });
+            document.dispatchEvent(originChangeEvent);
             self.drawSceneDirty();
             //console.log(self.origin);
             self.reContourMaps();
@@ -9767,6 +9776,8 @@ class MGWebGL extends Component {
             self.origin[0] += yshift[0]/8.*self.zoom;
             self.origin[1] += yshift[1]/8.*self.zoom;
             self.origin[2] += yshift[2]/8.*self.zoom;
+            const originChangeEvent = new CustomEvent("originChange", { "detail": self.origin });
+            document.dispatchEvent(originChangeEvent);
             self.drawSceneDirty();
             //console.log(self.origin);
             self.reContourMaps();
