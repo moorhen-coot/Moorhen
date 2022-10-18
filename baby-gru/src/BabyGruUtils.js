@@ -11,6 +11,8 @@ export const postCootMessage = (cootWorker, kwargs) => {
                 resolve(reply)
             }
         })
+        const messageEvent = new CustomEvent('coot_message_dispatch', { detail: { messageId: messageId } })
+        document.dispatchEvent(messageEvent)
         cootWorker.current.postMessage({
             messageId, ...kwargs
         })
@@ -18,19 +20,9 @@ export const postCootMessage = (cootWorker, kwargs) => {
 }
 
 export const cootCommand = (cootWorker, commandSpec) => {
-    let message;
-    switch (commandSpec.returnType) {
-        case "status":
-            message = "return_status_command"
-            break;
-        case "mesh":
-            message = "return_mesh_command"
-            break;
-        default:
-            message = "return_status_command"
-            break;
-    }
-    return postCootMessage(cootWorker, { message, ...commandSpec })
+    const message = "coot_command"
+    const returnType = commandSpec.returnType
+    return postCootMessage(cootWorker, { message, returnType, ...commandSpec })
 }
 
 export const readTextFile = (source) => {

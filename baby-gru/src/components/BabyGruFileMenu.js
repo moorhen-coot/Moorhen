@@ -32,9 +32,12 @@ export const BabyGruFileMenu = (props) => {
     }
 
     const fetchFileFromEBI = (pdbCode) => {
-        console.log(pdbCode)
+        return fetchFileFromURL (`/download/${pdbCode}.cif`, pdbCode)
+    }
+
+    const fetchFileFromURL = (url, molName) => {
         const newMolecule = new BabyGruMolecule(cootWorker)
-        newMolecule.loadToCootFromEBI(pdbCode)
+        return newMolecule.loadToCootFromURL(url, molName)
             .then(result => {
                 newMolecule.fetchIfDirtyAndDraw('bonds', glRef, true)
             }).then(result => {
@@ -43,7 +46,7 @@ export const BabyGruFileMenu = (props) => {
             }).then(_ => {
                 newMolecule.centreOn(glRef)
             })
-    }
+    }    
 
     return <NavDropdown title="File" id="basic-nav-dropdown">
         <Form.Group style={{ width: '20rem' }} controlId="uploadCoords" className="mb-3">

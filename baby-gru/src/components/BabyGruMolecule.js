@@ -16,6 +16,7 @@ export function BabyGruMolecule(cootWorker) {
     this.cachedAtoms = null
     this.atomsDirty = true
     this.name = "unnamed"
+    this.fileName = null
     this.displayObjects = {
         ribbons: [],
         bonds: [],
@@ -27,19 +28,22 @@ export function BabyGruMolecule(cootWorker) {
 
 BabyGruMolecule.prototype.loadToCootFromFile = function (source) {
     const $this = this
+    const pdbRegex = /.pdb$/;
+    const entRegex = /.ent$/;
     return new Promise((resolve, reject) => {
         return readTextFile(source)
             .then(coordData => {
-                $this.name = source.name
+                $this.name = source.name.replace(pdbRegex,"").replace(entRegex, "");
                 $this.cachedAtoms = $this.webMGAtomsFromFileString(coordData)
                 $this.atomsDirty = false
                 return postCootMessage($this.cootWorker, {
                     message: 'read_pdb',
-                    name: source.name,
+                    name: $this.name,
                     data: coordData
                 }).then(e => {
                     $this.name = e.data.result.name
                     $this.coordMolNo = e.data.result.coordMolNo
+                    $this.fileName = e.data.result.fileName
                     console.log('e is', e)
                     resolve($this)
                 })
@@ -50,20 +54,21 @@ BabyGruMolecule.prototype.setAtomsDirty = function (state) {
     this.atomsDirty = state
 }
 
-BabyGruMolecule.prototype.loadToCootFromEBI = function (pdbCode) {
+BabyGruMolecule.prototype.loadToCootFromURL = function (url, molName) {
     const $this = this
     return new Promise((resolve, reject) => {
+        console.log('Off to fetch url', url)
         //Remember to change this to an appropriate URL for downloads in produciton, and to deal with the consequent CORS headache
-        return fetch(`/download/${pdbCode}.cif`, { mode: "no-cors" })
+        return fetch(url, { mode: "no-cors" })
             .then(response => {
                 return response.text()
             }).then((coordData) => {
-                $this.name = pdbCode
+                $this.name = molName
                 $this.cachedAtoms = $this.webMGAtomsFromFileString(coordData)
                 $this.atomsDirty = false
                 return postCootMessage($this.cootWorker, {
                     message: 'read_pdb',
-                    name: pdbCode,
+                    name: molName,
                     data: coordData
                 }).then(reply => {
                     $this.name = reply.data.result.name
