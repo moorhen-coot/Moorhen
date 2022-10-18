@@ -2,7 +2,7 @@
 
 pid=$1
 
-counter=10
+counter=120
 while ps -p $pid > /dev/null
 do
     if [ $counter -eq 0 ] ; then
