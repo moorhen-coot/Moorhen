@@ -88,6 +88,11 @@ describe('Testing molecules_container_js', () => {
         expect(atom.GetNBonds()).toBe(0)
     })
 
+    test('Test Fill Rotamer tables', () => {
+        const molecules_container = new cootModule.molecules_container_js()
+        molecules_container.fill_rotamer_probability_tables()
+    })
+
     test('Test Auto-fit rotamer', () => {
         const molecules_container = new cootModule.molecules_container_js()
         molecules_container.geometry_init_standard()
@@ -103,7 +108,6 @@ describe('Testing molecules_container_js', () => {
         const dd = (CZatom.x-CZatom_x) * (CZatom.x-CZatom_x) + (CZatom.y-CZatom_y) * (CZatom.y-CZatom_y) + (CZatom.z-CZatom_z) * (CZatom.z-CZatom_z)
         const d = Math.sqrt(dd)
         expect(d).toBeCloseTo(7.28975,5)
-
     })
 
     test('Test Rama mesh', () => {
@@ -161,7 +165,6 @@ describe('Testing molecules_container_js', () => {
         const nTriangles = triangles.size()
         expect(nVerticesDirect).toBe(33531)
         expect(nTriangles).toBe(30896)
-        
     })
 
     test('Create test origin', () => {

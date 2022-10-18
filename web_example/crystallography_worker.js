@@ -45,6 +45,7 @@ createRSRModule(Lib)
              RSRModule = CCP4Mod;
              molecules_container = new RSRModule.molecules_container_js();
              molecules_container.geometry_init_standard();
+             molecules_container.fill_rotamer_probability_tables();
              console.log("##################################################");
              console.log(molecules_container);
              console.log("##################################################");
@@ -364,7 +365,7 @@ function getRama(e) {
     })
 }
 
-function drawMesh(simpleMesh,e) {
+function drawMesh(simpleMesh,e,perm) {
     const nVertices = molecules_container.count_simple_mesh_vertices(simpleMesh);
     const vertices = simpleMesh.vertices;
     const nVerticesDirect = vertices.size();
@@ -376,7 +377,10 @@ function drawMesh(simpleMesh,e) {
     let totCol = [];
     for(let i=0;i<triangles.size();i++){
         const idxs = triangles.get(i).point_id;
-        totIdxs.push(...idxs);
+        if(perm)
+            totIdxs.push(...[idxs[0],idxs[2],idxs[1]]);
+        else
+            totIdxs.push(...idxs);
     }
     for(let i=0;i<vertices.size();i++){
         const vert = vertices.get(i);
@@ -391,6 +395,16 @@ function drawMesh(simpleMesh,e) {
         result: cubeInfo,
         taskName: currentTaskName
     })
+}
+
+function drawDodos(e) {
+
+    //This is not yet used
+    //const chainId = e.data["chainId"];
+
+    const idx = dataObjectsNames.mol_cont_idx[e.data.pdbinKey];
+    const simpleMesh = molecules_container.get_rotamer_dodecs(idx);
+    drawMesh(simpleMesh,e,true);
 }
 
 function drawRamaBalls(e) {
@@ -660,6 +674,11 @@ onmessage = function(e) {
         case "draw_cube":
             currentTaskName = "draw_cube";
             drawCube(e);
+            currentTaskName = "";
+            break;
+        case "rotamer_dodecs":
+            currentTaskName = "rotamer_dodecs";
+            drawDodos(e);
             currentTaskName = "";
             break;
         case "rama_balls":

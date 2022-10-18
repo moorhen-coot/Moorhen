@@ -15,6 +15,7 @@ export function BabyGruMolecule(cootWorker) {
     this.HBondsAssigned = false
     this.cachedAtoms = null
     this.atomsDirty = true
+    this.name = "unnamed"
     this.displayObjects = {
         ribbons: [],
         bonds: [],
@@ -29,6 +30,7 @@ BabyGruMolecule.prototype.loadToCootFromFile = function (source) {
     return new Promise((resolve, reject) => {
         return readTextFile(source)
             .then(coordData => {
+                $this.name = source.name
                 $this.cachedAtoms = $this.webMGAtomsFromFileString(coordData)
                 $this.atomsDirty = false
                 return postCootMessage($this.cootWorker, {
@@ -56,6 +58,7 @@ BabyGruMolecule.prototype.loadToCootFromEBI = function (pdbCode) {
             .then(response => {
                 return response.text()
             }).then((coordData) => {
+                $this.name = pdbCode
                 $this.cachedAtoms = $this.webMGAtomsFromFileString(coordData)
                 $this.atomsDirty = false
                 return postCootMessage($this.cootWorker, {
@@ -183,10 +186,7 @@ BabyGruMolecule.prototype.drawRotamerDodecahedra = function (gl) {
         const objects = [response.data.result.result]
 
         //Empty existing buffers of this type
-        this.displayObjects.rotamer.forEach((buffer) => {
-            buffer.clearBuffers()
-        })
-        this.displayObjects.rotamer = []
+        this.clearBuffersOfStyle('rotamer')
 
         objects.forEach(object => {
             var a = gl.appendOtherData(object, true);
@@ -218,26 +218,36 @@ BabyGruMolecule.prototype.hide = function (style, gl) {
 }
 
 BabyGruMolecule.prototype.webMGAtomsFromFileString = function (fileString) {
+    const $this = this
     let result = { atoms: [] }
     var possibleIndentedLines = fileString.split("\n");
     var unindentedLines = possibleIndentedLines.map(line => line.trim())
     try {
-        result = parseMMCIF(unindentedLines);
+        result = parseMMCIF(unindentedLines, $this.name);
         if (typeof result.atoms === 'undefined') {
-            result = parsePDB(unindentedLines)
+            result = parsePDB(unindentedLines, $this.name)
             console.log('Parsed file as PDB')
         }
     }
     catch (err) {
-        result = parsePDB(unindentedLines)
+        result = parsePDB(unindentedLines, $this.name)
         console.log('Parsed file as PDB')
     }
     return result
 }
 
-BabyGruMolecule.prototype.drawBonds = function (webMGAtoms, gl, colourSchemeIndex) {
+BabyGruMolecule.prototype.clearBuffersOfStyle = function (style) {
+    const $this = this
+    //Empty existing buffers of this type
+    $this.displayObjects[style].forEach((buffer) => {
+        buffer.clearBuffers()
+    })
+    $this.displayObjects[style] = []
+}
 
-    var $this = this
+BabyGruMolecule.prototype.drawBonds = function (webMGAtoms, gl, colourSchemeIndex) {
+    const $this = this
+
     if (typeof webMGAtoms["atoms"] === 'undefined') return;
     var model = webMGAtoms["atoms"][0];
 
@@ -264,11 +274,7 @@ BabyGruMolecule.prototype.drawBonds = function (webMGAtoms, gl, colourSchemeInde
             item.sizes[0][0].length > 0
     })
 
-    //Empty existing buffers of this type
-    $this.displayObjects.bonds.forEach((buffer) => {
-        buffer.clearBuffers()
-    })
-    $this.displayObjects.bonds = []
+    $this.clearBuffersOfStyle('bonds')
 
     objects.forEach(object => {
         var a = gl.appendOtherData(object, true);
@@ -279,7 +285,7 @@ BabyGruMolecule.prototype.drawBonds = function (webMGAtoms, gl, colourSchemeInde
 }
 
 BabyGruMolecule.prototype.drawRibbons = function (webMGAtoms, gl) {
-
+    const $this = this
     const selectionString = '/*/*'
 
     //Attempt to apply selection, storing old hierarchy
@@ -329,11 +335,7 @@ BabyGruMolecule.prototype.drawRibbons = function (webMGAtoms, gl) {
             item.sizes[0][0].length > 0
     })
 
-    //Empty existing buffers of this type
-    this.displayObjects.ribbons.forEach((buffer) => {
-        buffer.clearBuffers()
-    })
-    this.displayObjects.ribbons = []
+    $this.clearBuffersOfStyle('ribbons')
 
     objects.forEach(object => {
         const a = gl.appendOtherData(object, true);
@@ -349,11 +351,11 @@ BabyGruMolecule.prototype.drawRibbons = function (webMGAtoms, gl) {
 }
 
 BabyGruMolecule.prototype.drawSticks = function (webMGAtoms, gl) {
+    const $this = this
     let hier = webMGAtoms["atoms"];
 
     let colourScheme = new ColourScheme(webMGAtoms);
     let atomColours = colourScheme.colourByAtomType();
-
 
     let model = hier[0];
     /*
@@ -369,6 +371,8 @@ BabyGruMolecule.prototype.drawSticks = function (webMGAtoms, gl) {
     singletonPrimitiveInfo["display_class"] = "bonds";
 
     let objects = [linePrimitiveInfo, singletonPrimitiveInfo];
+
+    $this.clearBuffersOfStyle('sticks')
 
     objects.forEach(object => {
         const a = gl.appendOtherData(object, true);
@@ -389,6 +393,9 @@ BabyGruMolecule.prototype.redraw = function (gl) {
             if (objectCategoryBuffers[0].visible) {
                 //FOr currently visible display types, put them on a list for redraw
                 itemsToRedraw.push(style)
+            }
+            else {
+                $this.clearBuffersOfStyle(style)
             }
         }
     })

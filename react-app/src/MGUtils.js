@@ -119,7 +119,7 @@ class Utilities extends React.Component {
             <option value="res_bval">B-values vs. Residue</option>
             <option value="density_fit">Density Fit Analysis</option>
             <option value="rotamers">Rotamers</option>
-            <option value="rama_balls">Ramachandran balls</option>
+            <option value="rama_balls">Rama balls/Rotamer Dodecs</option>
         </Form.Select>
         { this.state.showHelices ? <Helices onChange={this.helicesChanged.bind(this)} /> : null }
         { this.state.showProSMART ? <ProSMART /> : null }
