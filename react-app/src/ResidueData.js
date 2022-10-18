@@ -320,7 +320,7 @@ class ResidueData extends Component {
      * @param {array} plotData - array with residue information
      * @param {string} key - key for the selected pdb model
      */
-    updatePlotData(plotData, key){
+     updatePlotData(plotData, key){
         const self = this;
  
         self.plotRef.current.dataKey = this.dataKey;

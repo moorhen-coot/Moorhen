@@ -210,81 +210,6 @@ function loadFiles(files){
 
 }
 
-async function getCombinedScores(e){
-    let promises = [];
-
-    for(let i=0; i<e.data.selectedMethods.length; i++){
-        switch(e.data.selectedMethods[i]) {
-            case "bVals":
-                promises.push(promiseBVals(e));
-                break;
-            case "densityFit":
-                promises.push(promiseDensityFit(e));
-                break;
-            default:
-                break;
-            }
-    }
-
-    let combinedScores = await Promise.all(promises);
-    postMessage({
-        messageId: e.data.messageId,
-        messageTag: "result",
-        result: combinedScores,
-        taskName: currentTaskName
-    });
-}
-
-function promiseDensityFit(e) {
-    return new Promise((resolve, reject) => {
-        console.log(e.data);
-        const jobId = e.data.jobId;
-        const pdbin = dataObjects.pdbFiles[e.data.pdbinKey].fileName;
-        const chainId = e.data["chainId"];
-        const hklin = dataObjects.mtzFiles[e.data.hklinKey].fileName;
-        const imol_model = dataObjectsNames.mol_cont_idx[e.data.pdbinKey];
-        const imol_map = dataObjectsNames.map_cont_idx[e.data.hklinKey];
-        console.log(imol_model,imol_map);
-        const result = molecules_container.density_fit_analysis(imol_model, imol_map);
-        console.log(result);
-        const index_for_chain = result.get_index_for_chain(chainId);
-        console.log(index_for_chain);
-        console.log(result.cviv.get(index_for_chain));
-        const resInfo = result.cviv.get(index_for_chain).rviv;
-        console.log(resInfo);
-        console.log(resInfo.size());
-        let resInfoJS = [];
-        for(let ir=0;ir<resInfo.size();ir++){
-            const CPPchainId = resInfo.get(ir).residue_spec.chain_id;
-            const seqNum = resInfo.get(ir).residue_spec.res_no;
-            const value = resInfo.get(ir).distortion;
-            const insCode = resInfo.get(ir).residue_spec.ins_code;
-            const restype = "UNK";
-            const jsres = {chainId:CPPchainId,insCode:insCode,seqNum:seqNum,restype:restype,value:1./value};
-            resInfoJS.push(jsres);
-        }
-        resolve(resInfoJS);
-    })
-}
-
-function promiseBVals(e) {
-    return new Promise((resolve, reject) => {
-        console.log(e.data);
-        const jobId = e.data.jobId;
-        const pdbin = dataObjects.pdbFiles[e.data.pdbinKey].fileName;
-        const chainId = e.data["chainId"];
-        const result = RSRModule.getBVals(pdbin,chainId);
-        let resInfo = [];
-        for(let ir=0;ir<result.size();ir++){
-            const cppres = result.get(ir);
-            const jsres = {chainId:cppres.chainId,insCode:cppres.insCode,seqNum:cppres.seqNum,restype:cppres.restype,value:cppres.property};
-            resInfo.push(jsres);
-        }
-        resolve(resInfo);
-    
-    })
-}
-
 
 function getDensityFit(e) {
     console.log(e.data);
@@ -621,11 +546,6 @@ onmessage = function(e) {
         case "density_fit":
             currentTaskName = "density_fit";
             getDensityFit(e);
-            currentTaskName = "";
-            break;
-        case "validation":
-            currentTaskName = "density_fit";
-            getCombinedScores(e);
             currentTaskName = "";
             break;
         case "get_xyz":
