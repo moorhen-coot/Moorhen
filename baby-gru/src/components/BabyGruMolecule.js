@@ -29,10 +29,11 @@ export function BabyGruMolecule(cootWorker) {
 BabyGruMolecule.prototype.loadToCootFromFile = function (source) {
     const $this = this
     const pdbRegex = /.pdb$/;
+    const entRegex = /.ent$/;
     return new Promise((resolve, reject) => {
         return readTextFile(source)
             .then(coordData => {
-                $this.name = source.name.replace(pdbRegex,"");
+                $this.name = source.name.replace(pdbRegex,"").replace(entRegex, "");
                 $this.cachedAtoms = $this.webMGAtomsFromFileString(coordData)
                 $this.atomsDirty = false
                 return postCootMessage($this.cootWorker, {
