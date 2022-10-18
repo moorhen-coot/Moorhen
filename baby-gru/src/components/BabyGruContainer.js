@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, createRef, useReducer } from 'react';
-import { Navbar, Container, Nav, Tabs, Tab, Accordion, Button, Offcanvas, Col, Row, Card, Collapse, Fade } from 'react-bootstrap';
+import { Navbar, Container, Nav, Tabs, Tab, Accordion, Button, Offcanvas, Col, Row, Card, Collapse, Fade, Spinner } from 'react-bootstrap';
 import { BabyGruMolecules } from './BabyGruMoleculeUI';
 import { BabyGruMaps } from './BabyGruMapUI';
 import { BabyGruWebMG } from './BabyGruWebMG';
@@ -30,12 +30,16 @@ export const BabyGruContainer = (props) => {
     const [cursorStyle, setCursorStyle] = useState("default")
     const headerRef = useRef()
     const consoleDivRef = useRef()
+    const cootWorkerListenerBinding = createRef()
+    const cootEventDispatchBinding = createRef()
+    const [dispatchedMessages, setDispatchedMessages] = useState([])
+    const [busy, setBusy] = useState(false)
 
     const consoleHeight = 192;
     const accordionHeaderHeight = 52;
     const navHeight = 58;
 
-    const [accordionHeight, setAccordionHeight] = useState(2*accordionHeaderHeight)
+    const [accordionHeight, setAccordionHeight] = useState(2 * accordionHeaderHeight)
     const [showSideBar, setShowSideBar] = useState(true)
     const sequenceViewerRef = useRef()
     const sequenceViewerHeight = 272
@@ -44,14 +48,30 @@ export const BabyGruContainer = (props) => {
         cootWorker.current = new Worker('CootWorker.js')
         postCootMessage(cootWorker, { messageId: uuidv4(), message: 'CootInitialize', data: {} })
         //Register an event listener to update console
-        cootWorker.current.addEventListener("message", (e) => {
+        cootWorkerListenerBinding.current = cootWorker.current.addEventListener("message", (e) => {
+            //Append the response consoleMessage to the console text
             dispatch({ newText: e.data.consoleMessage })
+            //remove this messageId from the dispatchedMessagesList
+            let newDispatchedMessages = dispatchedMessages.filter(messageId => messageId !== e.data.messageId)
+            setDispatchedMessages(newDispatchedMessages)
+        })
+        cootEventDispatchBinding.current = document.addEventListener("coot_message_dispatch", (e) => {
+            let newDispatchedMessages = [...dispatchedMessages]
+            console.log(e)
+            newDispatchedMessages.push(e.detail.messageId)
+            setDispatchedMessages(newDispatchedMessages)
         })
         return () => {
+            cootWorker.current.removeEventListener('message', cootWorkerListenerBinding.current)
+            document.removeEventListener('coot_message_dispatch', cootEventDispatchBinding.current)
             cootWorker.current.terminate()
         }
         glResize()
     }, [])
+
+    useEffect(() => {
+        setBusy(dispatchedMessages.length > 0)
+    }, [dispatchedMessages.length])
 
     useEffect(() => {
         consoleDivRef.current.scrollTop = consoleDivRef.current.scrollHeight;
@@ -96,9 +116,9 @@ export const BabyGruContainer = (props) => {
                         </Nav>
                     </Navbar.Collapse>
                     <Nav className="justify-content-right">
-                        <Button onClick={() => {
+                        {busy && <Spinner animation="border" />}
+                        <Button className="ml-2" onClick={() => {
                             //setShowDisplayTable(true) 
-                            console.log(showSideBar)
                             setShowSideBar(!showSideBar)
                         }}>Sidebar</Button>
                     </Nav>

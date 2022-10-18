@@ -11,6 +11,8 @@ export const postCootMessage = (cootWorker, kwargs) => {
                 resolve(reply)
             }
         })
+        const messageEvent = new CustomEvent('coot_message_dispatch', { detail: { messageId: messageId } })
+        document.dispatchEvent(messageEvent)
         cootWorker.current.postMessage({
             messageId, ...kwargs
         })
