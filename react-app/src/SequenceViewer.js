@@ -177,8 +177,6 @@ class SequenceViewer extends Component {
                 }
             }
         }
-
-
     }
 
     draw() {
@@ -294,7 +292,9 @@ class SequenceViewer extends Component {
     handleResize() {
         if(this.scrollDivRef.current){
             var rect = this.scrollDivRef.current.getBoundingClientRect();
-            this.scrollRef.current.setSize(rect.width,150);
+            if(rect.width !== 0) {
+                this.scrollRef.current.setSize(rect.width, 150);    
+            }
             this.draw();
         }
     }
@@ -325,13 +325,15 @@ class SequenceViewer extends Component {
             }
         }
     }
-
+    
     componentDidMount() {
         console.log("SequenceViewer componentDidMount");
         this.context = this.canvasRef.current.getContext('2d', {alpha: false});
         this.draw();
         var rect = this.scrollDivRef.current.getBoundingClientRect();
-        this.scrollRef.current.setSize(rect.width,150);
+        if(rect.width !== 0) {
+            this.scrollRef.current.setSize(rect.width, 150);    
+        }
         const self = this;
         self.mouseDown = false;
         this.canvasRef.current.addEventListener("mousedown", function(evt){ self.doMouseDown(evt,self); }, false);
@@ -537,7 +539,7 @@ class SequenceViewer extends Component {
             this.draw();
         }
         this.canvas = <ScrollableCanvas largeRef={this.largeRef} ref={this.scrollRef} onScroll={this.setScroll.bind(this)} canvasRef={this.canvasRef} />;  
-        return (<div ref={this.scrollDivRef}>{this.canvas}</div>);
+        return (<div ref={this.scrollDivRef} id="helo">{this.canvas}</div>);
     }
 }
 

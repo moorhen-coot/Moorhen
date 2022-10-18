@@ -175,7 +175,7 @@ export const BabyGruContainer = (props) => {
                                     <div ref={sequenceViewerRef} style={{
                                         overflowY: "scroll",
                                         height: "15rem",
-                                        width: "100vw",
+                                        width: "90vw",
                                         lineHeight: "1.0rem",
                                         textAlign: "left"
                                     }}>
