@@ -155,7 +155,6 @@ onmessage = function (e) {
         try {
             console.log(command, commandArgs)
             const cootResult = molecules_container[command](...commandArgs)
-            console.log('Completed', cootResult)
 
             let returnResult;
             switch (returnType) {
