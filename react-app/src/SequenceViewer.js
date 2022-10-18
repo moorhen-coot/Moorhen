@@ -325,7 +325,7 @@ class SequenceViewer extends Component {
             }
         }
     }
-    
+
     componentDidMount() {
         console.log("SequenceViewer componentDidMount");
         this.context = this.canvasRef.current.getContext('2d', {alpha: false});
@@ -539,7 +539,7 @@ class SequenceViewer extends Component {
             this.draw();
         }
         this.canvas = <ScrollableCanvas largeRef={this.largeRef} ref={this.scrollRef} onScroll={this.setScroll.bind(this)} canvasRef={this.canvasRef} />;  
-        return (<div ref={this.scrollDivRef} id="helo">{this.canvas}</div>);
+        return (<div ref={this.scrollDivRef}>{this.canvas}</div>);
     }
 }
 
