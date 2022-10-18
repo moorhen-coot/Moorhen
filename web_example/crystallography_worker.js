@@ -210,6 +210,7 @@ function loadFiles(files){
 
 }
 
+
 function getDensityFit(e) {
     console.log(e.data);
     const jobId = e.data.jobId;
