@@ -174,7 +174,7 @@ export const BabyGruContainer = (props) => {
                                 <Accordion.Body>
                                     <div ref={sequenceViewerRef} style={{
                                         height: "15rem",
-                                        width: "90vw",
+                                        width: "95vw",
                                         lineHeight: "1.0rem",
                                         textAlign: "left"
                                     }}>
