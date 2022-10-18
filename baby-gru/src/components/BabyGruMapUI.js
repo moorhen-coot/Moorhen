@@ -12,7 +12,7 @@ export const BabyGruMaps = (props) => {
             <Col><div style={{ height: "1rem" }} /></Col>
         </Row>
         <Table key="BabyGruMaps">
-            <thead><tr><th>Active</th><th>Number</th><th>Name</th><th>Download</th></tr></thead>
+            <thead><tr><th>Active</th><th>Number</th><th>Name</th><th>Download</th><th>Coot</th></tr></thead>
             <tbody>
                 {
                     props.maps.map(map => <tr key={map.mapMolNo} >
@@ -35,6 +35,14 @@ export const BabyGruMaps = (props) => {
                                             `${map.name.replace('.mtz', '.map')}`
                                         )
                                     })
+                            }}>
+                                Down
+                            </Button>
+                        </td>
+                        <td>
+                            <Button size="sm" onClick={() => {
+                                map.cootContour(props.glRef.current, 
+                                    0.,0.,0.,15.,0.5)
                             }}>
                                 Down
                             </Button>
