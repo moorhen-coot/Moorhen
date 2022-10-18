@@ -1,15 +1,24 @@
-import { Fragment, useEffect } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { Table, Button, Row, Col, Form } from "react-bootstrap";
 import { doDownload } from "../BabyGruUtils";
 //import { Download } from 'react-bootstrap-icons';
 
 export const BabyGruMaps = (props) => {
+    const [mapRadius, setMapRadius] = useState(50.)
+
     useEffect(() => {
     }, [])
 
     return <Fragment>
         <Row>
-            <Col><div style={{ height: "1rem" }} /></Col>
+            <Form.Group style={{ width: '20rem' }} controlId="downloadCoords" className="mb-3">
+                <Form.Label>Coot contouring radius</Form.Label>
+                <Form.Control type="number" value={mapRadius} onChange={(e) => {
+                    console.log(e.target.value)
+                    setMapRadius(e.target.value)
+                }} />
+            </Form.Group>
+
         </Row>
         <Table key="BabyGruMaps">
             <thead><tr><th>Active</th><th>Number</th><th>Name</th><th>Download</th><th>Coot</th></tr></thead>
@@ -45,9 +54,9 @@ export const BabyGruMaps = (props) => {
                                     -props.glRef.current.origin[0],
                                     -props.glRef.current.origin[1],
                                     -props.glRef.current.origin[2],
-                                    50., 0.5)
+                                    mapRadius, 0.5)
                             }}>
-                                Down
+                                Contour
                             </Button>
                         </td>
                     </tr>)
