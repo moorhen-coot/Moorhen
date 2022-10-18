@@ -568,3 +568,11 @@ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../baby-gru/public/wasm)
 install(DIRECTORY 
 ${coot_src}/pixmaps
 DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../baby-gru/public)
+
+install(FILES 
+${coot_src}/api/gideondoesntapprove.mtz
+DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../baby-gru/public/tutorials RENAME moorhen-tutorial-map-number-1.mtz)
+
+install(FILES 
+${coot_src}/api/gideondoesntapprove.pdb
+DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../baby-gru/public/tutorials RENAME moorhen-tutorial-structure-number-1.pdb)
