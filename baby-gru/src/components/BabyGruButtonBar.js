@@ -73,6 +73,7 @@ const BabyGruSimpleEditButton = (props) => {
             ref={target}
             active={props.buttonIndex === props.selectedbuttonIndex}
             variant='light'
+            disabled={props.buttonIndex==0&&!props.activeMap || props.buttonIndex==1&&props.molecules.length===0}
             onClick={(e) => {
                 if (props.selectedbuttonIndex === e.currentTarget.value) {
                     props.setSelectedbuttonIndex(null)
