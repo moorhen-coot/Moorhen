@@ -350,7 +350,7 @@ class molecules_container_js : public molecules_container_t {
     public:
         int writePDBASCII(int imol, const std::string &file_name) { 
             const char *fname_cp = file_name.c_str();
-            return mol(imol)->WritePDBASCII(fname_cp);
+            return get_mol(imol)->WritePDBASCII(fname_cp);
         }
         int writeCCP4Map(int imol, const std::string &file_name) {
             auto xMap = (*this)[imol].xmap;
