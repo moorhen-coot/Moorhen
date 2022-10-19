@@ -40,6 +40,47 @@ const simpleMeshToMeshData = (simpleMesh) => {
     return { prim_types: [["TRIANGLES"]], idx_tri: [[totIdxs]], vert_tri: [[totPos]], norm_tri: [[totNorm]], col_tri: [[totCol]] };
 }
 
+const simpleMeshToLineMeshData = (simpleMesh) => {
+    const vertices = simpleMesh.vertices;
+    const triangles = simpleMesh.triangles;
+    let totIdxs = [];
+    let totPos = [];
+    let totNorm = [];
+    let totCol = [];
+    for (let i = 0; i < triangles.size(); i++) {
+        const idxs = triangles.get(i).point_id;
+        //totIdxs.push(...[0,1,2,3,4,5]);
+        const vert0 = vertices.get(idxs[0]);
+        const vert1 = vertices.get(idxs[1]);
+        const vert2 = vertices.get(idxs[2]);
+
+        totPos.push(...vert0.pos);
+        totNorm.push(...vert0.normal);
+        totCol.push(...vert0.color);
+
+        totPos.push(...vert1.pos);
+        totNorm.push(...vert1.normal);
+        totCol.push(...vert1.color);
+
+        totPos.push(...vert0.pos);
+        totNorm.push(...vert0.normal);
+        totCol.push(...vert0.color);
+
+        totPos.push(...vert2.pos);
+        totNorm.push(...vert2.normal);
+        totCol.push(...vert2.color);
+
+        totPos.push(...vert1.pos);
+        totNorm.push(...vert1.normal);
+        totCol.push(...vert1.color);
+
+        totPos.push(...vert2.pos);
+        totNorm.push(...vert2.normal);
+        totCol.push(...vert2.color);
+    }
+    return { prim_types: [["LINES"]], idx_tri: [[totIdxs]], vert_tri: [[totPos]], norm_tri: [[totNorm]], col_tri: [[totCol]] };
+}
+
 onmessage = function (e) {
     console.log(e.data.message)
     if (e.data.message === 'CootInitialize') {
@@ -160,6 +201,7 @@ onmessage = function (e) {
             switch (returnType) {
                 case 'mesh':
                     returnResult = simpleMeshToMeshData(cootResult)
+                    //returnResult = simpleMeshToLineMeshData(cootResult)
                     break;
                 case 'status':
                 default:
