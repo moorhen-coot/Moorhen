@@ -403,6 +403,11 @@ std::string GetInsCodeFromResidue(mmdb::Residue *res){
 }
 
 EMSCRIPTEN_BINDINGS(my_module) {
+    enum_<coot::molecule_t::refine_residues_mode>("refine_residues_mode")
+        .value("SINGLE", coot::molecule_t::SINGLE)
+        .value("TRIPLE", coot::molecule_t::TRIPLE)
+        .value("QUINTUPLE", coot::molecule_t::QUINTUPLE)
+        ;
     class_<clipper::Coord_orth>("Coord_orth")
     .constructor<const clipper::ftype&, const clipper::ftype&, const clipper::ftype&>()
     .function("x", &clipper::Coord_orth::x)
@@ -569,6 +574,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("fill_rotamer_probability_tables",&molecules_container_t::fill_rotamer_probability_tables)
     .function("undo",&molecules_container_t::undo)
     .function("redo",&molecules_container_t::redo)
+    .function("refine_residues_using_atom_cid",&molecules_container_t::refine_residues_using_atom_cid)
+    .function("set_imol_refinement_map",&molecules_container_t::set_imol_refinement_map)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<>()

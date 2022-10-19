@@ -33,7 +33,7 @@ BabyGruMolecule.prototype.loadToCootFromFile = function (source) {
     return new Promise((resolve, reject) => {
         return readTextFile(source)
             .then(coordData => {
-                $this.name = source.name.replace(pdbRegex,"").replace(entRegex, "");
+                $this.name = source.name.replace(pdbRegex, "").replace(entRegex, "");
                 $this.cachedAtoms = $this.webMGAtomsFromFileString(coordData)
                 $this.atomsDirty = false
                 return postCootMessage($this.cootWorker, {
@@ -191,7 +191,7 @@ BabyGruMolecule.prototype.drawRotamerDodecahedra = function (gl) {
         const objects = [response.data.result.result]
 
         //Empty existing buffers of this type
-        this.clearBuffersOfStyle('rotamer')
+        this.clearBuffersOfStyle('rotamer', gl)
 
         objects.forEach(object => {
             var a = gl.appendOtherData(object, true);
@@ -241,13 +241,36 @@ BabyGruMolecule.prototype.webMGAtomsFromFileString = function (fileString) {
     return result
 }
 
-BabyGruMolecule.prototype.clearBuffersOfStyle = function (style) {
+BabyGruMolecule.prototype.clearBuffersOfStyle = function (style, gl) {
     const $this = this
     //Empty existing buffers of this type
     $this.displayObjects[style].forEach((buffer) => {
         buffer.clearBuffers()
+        gl.displayBuffers = gl.displayBuffers.filter(glBuffer=>glBuffer.id !== buffer.id)
     })
     $this.displayObjects[style] = []
+}
+
+BabyGruMolecule.prototype.buffersInclude = function (bufferIn) {
+    const $this = this
+    console.log(bufferIn)
+    console.log($this.displayObjects)
+    var BreakException = {};
+    try {
+        Object.keys($this.displayObjects).forEach(style => {
+            const objectBuffers = $this.displayObjects[style].filter(buffer => bufferIn.id === buffer.id)
+            console.log('Object buffer length', objectBuffers.length, objectBuffers.length > 0)
+            if (objectBuffers.length > 0) {
+                throw BreakException;
+            }
+        })
+    }
+    catch (e) {
+        if (e !== BreakException) throw e;
+        console.log('Catching Break Exception')
+        return true
+    }
+    return false
 }
 
 BabyGruMolecule.prototype.drawBonds = function (webMGAtoms, gl, colourSchemeIndex) {
@@ -285,7 +308,7 @@ BabyGruMolecule.prototype.drawBonds = function (webMGAtoms, gl, colourSchemeInde
             item.sizes[0][0].length > 0
     })
 
-    $this.clearBuffersOfStyle('bonds')
+    $this.clearBuffersOfStyle('bonds', gl)
 
     objects.forEach(object => {
         var a = gl.appendOtherData(object, true);
@@ -346,7 +369,7 @@ BabyGruMolecule.prototype.drawRibbons = function (webMGAtoms, gl) {
             item.sizes[0][0].length > 0
     })
 
-    $this.clearBuffersOfStyle('ribbons')
+    $this.clearBuffersOfStyle('ribbons', gl)
 
     objects.forEach(object => {
         const a = gl.appendOtherData(object, true);
@@ -383,7 +406,7 @@ BabyGruMolecule.prototype.drawSticks = function (webMGAtoms, gl) {
 
     let objects = [linePrimitiveInfo, singletonPrimitiveInfo];
 
-    $this.clearBuffersOfStyle('sticks')
+    $this.clearBuffersOfStyle('sticks', gl)
 
     objects.forEach(object => {
         const a = gl.appendOtherData(object, true);
@@ -406,7 +429,7 @@ BabyGruMolecule.prototype.redraw = function (gl) {
                 itemsToRedraw.push(style)
             }
             else {
-                $this.clearBuffersOfStyle(style)
+                $this.clearBuffersOfStyle(style, gl)
             }
         }
     })

@@ -24,7 +24,13 @@ BabyGruMap.prototype.loadToCootFromFile = function (source) {
                 }).then(reply => {
                     $this.name = reply.data.result.name
                     $this.mapMolNo = reply.data.result.mapMolNo
-                    resolve($this)
+                    return cootCommand($this.cootWorker, {
+                        returnType: "status",
+                        command: "set_imol_refinement_map",
+                        commandArgs: [reply.data.result.mapMolNo]
+                    }).then(reply=>{
+                        resolve($this)
+                    })
                 })
             })
     })
@@ -123,7 +129,7 @@ BabyGruMap.prototype.doCootContour = function (gl, x, y, z, radius, contourLevel
 
     const $this = this
 
-    return new Promise((resolve, reject)=>{
+    return new Promise((resolve, reject) => {
         cootCommand($this.cootWorker, {
             returnType: "lines_mesh",
             command: "get_map_contours_mesh",
