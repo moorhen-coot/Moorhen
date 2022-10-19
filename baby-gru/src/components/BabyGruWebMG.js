@@ -38,9 +38,10 @@ export const BabyGruWebMG = forwardRef((props, glRef) => {
         glRef.current.drawScene()
     }
 
+
     return <MGWebGL
         ref={glRef}
-        dataChanged={() => { }}
+        dataChanged={(d)=>{console.log(d)}}
         messageChanged={() => { }} />
 });
 

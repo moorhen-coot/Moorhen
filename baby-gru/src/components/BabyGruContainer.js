@@ -57,7 +57,6 @@ export const BabyGruContainer = (props) => {
         })
         cootEventDispatchBinding.current = document.addEventListener("coot_message_dispatch", (e) => {
             let newDispatchedMessages = [...dispatchedMessages]
-            console.log(e)
             newDispatchedMessages.push(e.detail.messageId)
             setDispatchedMessages(newDispatchedMessages)
         })

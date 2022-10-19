@@ -3,11 +3,11 @@ import { readMapFromArrayBuffer, mapToMapGrid } from '../WebGL/mgWebGLReadMap';
 
 export function BabyGruMap(cootWorker) {
     this.cootWorker = cootWorker
-    this.contourLevel = 0.15
+    this.contourLevel = 0.5
     this.mapColour = [0.3, 0.3, 1.0, 1.0]
     this.liveUpdatingMaps = {}
     this.webMGContour = true
-    this.cootContour = true
+    this.cootContour = false
     this.displayObjects = { 'Coot': [] }
 }
 
@@ -59,14 +59,14 @@ BabyGruMap.prototype.makeWebMGUnlive = function (gl) {
     gl.drawScene()
 }
 
-BabyGruMap.prototype.makeCootLive = function (gl) {
+BabyGruMap.prototype.makeCootLive = function (gl, mapRadius) {
     const $this = this
     $this.cootContour = false
     $this.doCootContour(gl,
         -gl.origin[0],
         -gl.origin[1],
         -gl.origin[2],
-        15, $this.contourLevel)
+        mapRadius, $this.contourLevel)
     gl.drawScene()
 }
 
@@ -121,17 +121,15 @@ BabyGruMap.prototype.clearBuffersOfStyle = function (style) {
 BabyGruMap.prototype.doCootContour = function (gl, x, y, z, radius, contourLevel) {
 
     const $this = this
-    Object.keys($this.displayObjects).forEach(style => {
-        this.clearBuffersOfStyle(style)
-    })
 
     return cootCommand($this.cootWorker, {
         returnType: "mesh",
         command: "get_map_contours_mesh",
         commandArgs: [$this.mapMolNo, x, y, z, radius, contourLevel]
     }).then(response => {
-        $this.clearBuffersOfStyle('Coot')
         const objects = [response.data.result.result]
+        $this.clearBuffersOfStyle('Coot')
+        //$this.displayObjects['Coot'] = [...$this.displayObjects['Coot'], ...objects.map(object=>gl.appendOtherData(object, true))]
         objects.forEach(object => {
             var a = gl.appendOtherData(object, true);
             $this.displayObjects['Coot'] = $this.displayObjects['Coot'].concat(a)
