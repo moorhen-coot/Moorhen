@@ -1969,6 +1969,15 @@ class MGWebGL extends Component {
                 self.createIndexBuffer(idxs[i]);
             }
 
+            if(typeof(jsondata.useIndices)!=="undefined"){
+                if(typeof(jsondata.useIndices[idat])!=="undefined"){
+                    rssentries=getEncodedData(jsondata.useIndices[idat]);
+                    for (let i=0; i<rssentries.length; i++){
+                        self.addSupplementaryInfo(rssentries[i],"useIndices");
+                    }
+                }
+            }
+
             if(typeof(jsondata.radii)!=="undefined"){
                 if(typeof(jsondata.radii[idat])!=="undefined"){
                     rssentries=jsondata.radii[idat];
@@ -5955,7 +5964,13 @@ class MGWebGL extends Component {
                 } else if(this.displayBuffers[idx].bufferTypes[j]==="LINES"){
                     console.log("Treating lines specially");
                     var size = 1.0;
-                    var thickLines = this.linesToThickLines(this.displayBuffers[idx].triangleVertices[j],this.displayBuffers[idx].triangleColours[j],size);
+                    const useIndices = this.displayBuffers[idx].supplementary["useIndices"];
+                    var thickLines;
+                    if(useIndices){
+                        thickLines = this.linesToThickLinesWithIndices(this.displayBuffers[idx].triangleVertices[j],this.displayBuffers[idx].triangleColours[j],this.displayBuffers[idx].triangleIndexs[j],size);
+                    } else {
+                        thickLines = this.linesToThickLines(this.displayBuffers[idx].triangleVertices[j],this.displayBuffers[idx].triangleColours[j],size);
+                    }
                     var Normals_new = thickLines["normals"];
                     var Vertices_new = thickLines["vertices"];
                     var Colours_new = thickLines["colours"];
@@ -8105,6 +8120,148 @@ class MGWebGL extends Component {
         }
         this.drawScene();
         return;
+    }
+
+    linesToThickLinesWithIndices(axesVertices,axesColours,axesIndices,size) {
+        let axesNormals = [];
+        let axesVertices_new = [];
+        let axesColours_new = [];
+        let axesIndexs_new = [];
+        let axesIdx_new = 0;
+
+        for(let idx=0;idx<axesIndices.length;idx+=2){
+
+            const il = 3*axesIndices[idx];
+            const il2 = 3*axesIndices[idx+1];
+
+            axesColours_new.push(axesColours[4*il/3]);
+            axesColours_new.push(axesColours[4*il/3+1]);
+            axesColours_new.push(axesColours[4*il/3+2]);
+            axesColours_new.push(axesColours[4*il/3+3]);
+
+            axesColours_new.push(axesColours[4*il/3]);
+            axesColours_new.push(axesColours[4*il/3+1]);
+            axesColours_new.push(axesColours[4*il/3+2]);
+            axesColours_new.push(axesColours[4*il/3+3]);
+
+            axesColours_new.push(axesColours[4*il2/3]);
+            axesColours_new.push(axesColours[4*il2/3+1]);
+            axesColours_new.push(axesColours[4*il2/3+2]);
+            axesColours_new.push(axesColours[4*il2/3+3]);
+
+            axesColours_new.push(axesColours[4*il/3]);
+            axesColours_new.push(axesColours[4*il/3+1]);
+            axesColours_new.push(axesColours[4*il/3+2]);
+            axesColours_new.push(axesColours[4*il/3+3]);
+
+            axesColours_new.push(axesColours[4*il2/3]);
+            axesColours_new.push(axesColours[4*il2/3+1]);
+            axesColours_new.push(axesColours[4*il2/3+2]);
+            axesColours_new.push(axesColours[4*il2/3+3]);
+
+            axesColours_new.push(axesColours[4*il2/3]);
+            axesColours_new.push(axesColours[4*il2/3+1]);
+            axesColours_new.push(axesColours[4*il2/3+2]);
+            axesColours_new.push(axesColours[4*il2/3+3]);
+
+            axesVertices_new.push(axesVertices[il]);
+            axesVertices_new.push(axesVertices[il+1]);
+            axesVertices_new.push(axesVertices[il+2]);
+
+            axesVertices_new.push(axesVertices[il]);
+            axesVertices_new.push(axesVertices[il+1]);
+            axesVertices_new.push(axesVertices[il+2]);
+
+            axesVertices_new.push(axesVertices[il2]);
+            axesVertices_new.push(axesVertices[il2+1]);
+            axesVertices_new.push(axesVertices[il2+2]);
+
+            axesNormals.push(axesVertices[il2]-axesVertices[il]);
+            axesNormals.push(axesVertices[il2+1]-axesVertices[il+1]);
+            axesNormals.push(axesVertices[il2+2]-axesVertices[il+2]);
+
+            var d = Math.sqrt(axesNormals[axesNormals.length-1-2]*axesNormals[axesNormals.length-1-2]+axesNormals[axesNormals.length-1-1]*axesNormals[axesNormals.length-1-1]+axesNormals[axesNormals.length-1-0]*axesNormals[axesNormals.length-1-0]);
+            if(d>1e-8){
+                axesNormals[axesNormals.length-1-2]   *= size/d;
+                axesNormals[axesNormals.length-1-1] *= size/d;
+                axesNormals[axesNormals.length-1] *= size/d;
+            }
+
+            axesNormals.push(-(axesVertices[il2]-axesVertices[il]));
+            axesNormals.push(-(axesVertices[il2+1]-axesVertices[il+1]));
+            axesNormals.push(-(axesVertices[il2+2]-axesVertices[il+2]));
+
+            if(d>1e-8){
+                axesNormals[axesNormals.length-1-2]   *= size/d;
+                axesNormals[axesNormals.length-1-1] *= size/d;
+                axesNormals[axesNormals.length-1] *= size/d;
+            }
+
+            axesNormals.push(-(axesVertices[il2]-axesVertices[il]));
+            axesNormals.push(-(axesVertices[il2+1]-axesVertices[il+1]));
+            axesNormals.push(-(axesVertices[il2+2]-axesVertices[il+2]));
+
+            if(d>1e-8){
+                axesNormals[axesNormals.length-1-2]   *= size/d;
+                axesNormals[axesNormals.length-1-1] *= size/d;
+                axesNormals[axesNormals.length-1] *= size/d;
+            }
+            axesVertices_new.push(axesVertices[il]);
+            axesVertices_new.push(axesVertices[il+1]);
+            axesVertices_new.push(axesVertices[il+2]);
+
+            axesVertices_new.push(axesVertices[il2]);
+            axesVertices_new.push(axesVertices[il2+1]);
+            axesVertices_new.push(axesVertices[il2+2]);
+
+            axesVertices_new.push(axesVertices[il2]);
+            axesVertices_new.push(axesVertices[il2+1]);
+            axesVertices_new.push(axesVertices[il2+2]);
+
+            axesNormals.push(axesVertices[il2]-axesVertices[il]);
+            axesNormals.push(axesVertices[il2+1]-axesVertices[il+1]);
+            axesNormals.push(axesVertices[il2+2]-axesVertices[il+2]);
+
+            if(d>1e-8){
+                axesNormals[axesNormals.length-1-2]   *= size/d;
+                axesNormals[axesNormals.length-1-1] *= size/d;
+                axesNormals[axesNormals.length-1] *= size/d;
+            }
+
+            axesNormals.push(axesVertices[il2]-axesVertices[il]);
+            axesNormals.push(axesVertices[il2+1]-axesVertices[il+1]);
+            axesNormals.push(axesVertices[il2+2]-axesVertices[il+2]);
+
+            if(d>1e-8){
+                axesNormals[axesNormals.length-1-2]   *= size/d;
+                axesNormals[axesNormals.length-1-1] *= size/d;
+                axesNormals[axesNormals.length-1] *= size/d;
+            }
+
+            axesNormals.push(-(axesVertices[il2]-axesVertices[il]));
+            axesNormals.push(-(axesVertices[il2+1]-axesVertices[il+1]));
+            axesNormals.push(-(axesVertices[il2+2]-axesVertices[il+2]));
+
+            if(d>1e-8){
+                axesNormals[axesNormals.length-1-2]   *= size/d;
+                axesNormals[axesNormals.length-1-1] *= size/d;
+                axesNormals[axesNormals.length-1] *= size/d;
+            }
+            axesIndexs_new.push(axesIdx_new++);
+            axesIndexs_new.push(axesIdx_new++);
+            axesIndexs_new.push(axesIdx_new++);
+            axesIndexs_new.push(axesIdx_new++);
+            axesIndexs_new.push(axesIdx_new++);
+            axesIndexs_new.push(axesIdx_new++);
+        }
+
+        var ret = {};
+        ret["vertices"] = axesVertices_new;
+        ret["indices"] = axesIndexs_new;
+        ret["normals"] = axesNormals;
+        ret["colours"] = axesColours_new;
+        return ret;
+
     }
 
     linesToThickLines(axesVertices,axesColours,size) {
