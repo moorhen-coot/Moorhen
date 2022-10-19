@@ -132,12 +132,11 @@ onmessage = function (e) {
         console.log(`Off to read coords into coot ${tempFilename} ${e.data.name}`)
         const coordMolNo = molecules_container.read_pdb(tempFilename)
         console.log(`Read coordinates as molecule ${coordMolNo}`)
-        cootModule.FS_unlink(tempFilename)
         postMessage({
             messageId: e.data.messageId,
             consoleMessage: `Read coordinates as molecule ${coordMolNo}`,
             message: e.data.message,
-            result: { coordMolNo: coordMolNo, name: e.data.name }
+            result: { coordMolNo: coordMolNo, name: e.data.name, fileName: tempFilename }
         })
     }
 
@@ -146,7 +145,6 @@ onmessage = function (e) {
         const tempFilename = `./${theGuid}.pdb`
         molecules_container.writePDBASCII(e.data.coordMolNo, tempFilename)
         const pdbData = cootModule.FS.readFile(tempFilename, { encoding: 'utf8' });
-        cootModule.FS_unlink(tempFilename)
         postMessage({
             messageId: e.data.messageId,
             consoleMessage: `Fetched coordinates of molecule ${e.data.coordMolNo}`,
@@ -161,7 +159,6 @@ onmessage = function (e) {
         molecules_container.writeCCP4Map(e.data.mapMolNo, tempFilename)
 
         const mapData = cootModule.FS.readFile(tempFilename, { encoding: 'binary' });
-        cootModule.FS_unlink(tempFilename)
         postMessage({
             messageId: e.data.messageId,
             consoleMessage: `Fetched map of map ${e.data.mapMolNo}`,
@@ -177,7 +174,6 @@ onmessage = function (e) {
             cootModule.FS_createDataFile(".", `${theGuid}.mtz`, e.data.data, true, true, true);
             const tempFilename = `./${theGuid}.mtz`
             const mapMolNo = molecules_container.read_mtz(tempFilename, 'FWT', 'PHWT', "", false, false)
-            cootModule.FS_unlink(tempFilename)
             postMessage({
                 messageId: e.data.messageId,
                 consoleMessage: `Read map MTZ as molecule ${mapMolNo}`,
@@ -190,7 +186,7 @@ onmessage = function (e) {
         }
     }
 
-
+    
     if (e.data.message === 'coot_command') {
         const { returnType, command, commandArgs, message, messageId } = e.data
         try {
