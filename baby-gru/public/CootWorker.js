@@ -186,7 +186,27 @@ onmessage = function (e) {
         }
     }
 
-    
+    else if (e.data.message === 'get_rama') {
+        const jobId = e.data.jobId;
+        const pdbin = e.data.pdbinKey;
+        const chainId = e.data.chainId
+
+        const result = cootModule.getRamachandranData(pdbin, chainId);
+        let resInfo = [];
+        for(let ir=0;ir<result.size();ir++){
+            const cppres = result.get(ir);
+            //TODO - Is there a nicer way to do this?
+            const jsres = {chainId:cppres.chainId,insCode:cppres.insCode,seqNum:cppres.seqNum,restype:cppres.restype,phi:cppres.phi,psi:cppres.psi,isOutlier:cppres.isOutlier,is_pre_pro:cppres.is_pre_pro};
+            resInfo.push(jsres);
+        }
+
+        postMessage({
+            messageId: e.data.messageId,
+            messageTag: "result",
+            result: resInfo,
+        })
+    }
+
     if (e.data.message === 'coot_command') {
         const { returnType, command, commandArgs, message, messageId } = e.data
         try {
