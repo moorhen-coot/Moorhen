@@ -6,8 +6,8 @@ export function BabyGruMap(cootWorker) {
     this.contourLevel = 0.5
     this.mapColour = [0.3, 0.3, 1.0, 1.0]
     this.liveUpdatingMaps = {}
-    this.webMGContour = true
-    this.cootContour = false
+    this.webMGContour = false
+    this.cootContour = true
     this.displayObjects = { 'Coot': [] }
 }
 

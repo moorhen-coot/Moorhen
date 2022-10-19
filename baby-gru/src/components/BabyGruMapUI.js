@@ -36,8 +36,8 @@ export const BabyGruMaps = (props) => {
 }
 
 const BabyGruMapRow = (props) => {
-    const [webMGContour, setWebMGContour] = useState(true)
-    const [cootContour, setCootContour] = useState(false)
+    const [webMGContour, setWebMGContour] = useState(false)
+    const [cootContour, setCootContour] = useState(true)
     const nextOrigin = createRef([])
     const busyContouring = createRef(false)
 
