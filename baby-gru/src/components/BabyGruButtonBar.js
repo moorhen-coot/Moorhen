@@ -1,4 +1,4 @@
-import { createRef, useCallback, useRef, useState } from "react";
+import { createRef, useCallback, useEffect, useRef, useState } from "react";
 import { ButtonGroup, Button, Popover, Overlay } from "react-bootstrap"
 import { cootCommand, postCootMessage } from "../BabyGruUtils"
 import { circles_fragment_shader_source } from "../WebGL/circle-fragment-shader";
@@ -19,6 +19,7 @@ export const BabyGruButtonBar = (props) => {
                 selectedbuttonIndex={selectedbuttonIndex}
                 setSelectedbuttonIndex={setSelectedbuttonIndex}
                 cootCommand="auto_fit_rotamer"
+                prompt="Click atom in residue to fit rotamer"
                 icon={<img className="baby-gru-button-icon" src="pixmaps/auto-fit-rotamer.svg" />}
                 formatArgs={(molecule, chosenAtom) => {
                     return [
@@ -35,6 +36,7 @@ export const BabyGruButtonBar = (props) => {
                 selectedbuttonIndex={selectedbuttonIndex}
                 setSelectedbuttonIndex={setSelectedbuttonIndex}
                 cootCommand="flipPeptide_cid"
+                prompt="Click atom in residue to flip"
                 icon={<img className="baby-gru-button-icon" src="pixmaps/flip-peptide.svg" />}
                 formatArgs={(molecule, chosenAtom) => {
                     return [
@@ -47,9 +49,14 @@ export const BabyGruButtonBar = (props) => {
     </div>
 }
 
-const BabyGruSimpleEditButton = (props) => {
+export const BabyGruSimpleEditButton = (props) => {
     const [showPrompt, setShowPrompt] = useState(false)
     const target = useRef(null);
+    const [prompt, setPrompt] = useState(null)
+
+    useEffect(() => {
+        setPrompt(props.prompt)
+    }, [])
 
     const atomClickedCallback = useCallback(event => {
         props.molecules.forEach(molecule => {
@@ -70,6 +77,7 @@ const BabyGruSimpleEditButton = (props) => {
 
     return <>
         <Button value={props.buttonIndex}
+            size="sm"
             ref={target}
             active={props.buttonIndex === props.selectedbuttonIndex}
             variant='light'
@@ -84,29 +92,34 @@ const BabyGruSimpleEditButton = (props) => {
                 props.setSelectedbuttonIndex(props.buttonIndex)
                 props.setCursorStyle("crosshair")
                 document.addEventListener('atomClicked', atomClickedCallback, { once: true })
-                setShowPrompt(true)
+                if (props.prompt) {
+                    setShowPrompt(true)
+                }
             }}>
             {props.icon}
         </Button>
 
-        <Overlay target={target.current} show={showPrompt} placement="left">
-            {({ placement, arrowProps, show: _show, popper, ...props }) => (
-                <div
-                    {...props}
-                    style={{
-                        position: 'absolute',
-                        backgroundColor: 'rgba(255, 100, 100, 0.85)',
-                        padding: '2px 10px',
-                        color: 'white',
-                        borderRadius: 3,
-                        ...props.style,
-                    }}
-                >Click an atom
-                </div>
-            )}
-        </Overlay>
+        {
+            prompt && <Overlay target={target.current} show={showPrompt} placement="left">
+                {({ placement, arrowProps, show: _show, popper, ...props }) => (
+                    <div
+                        {...props}
+                        style={{
+                            position: 'absolute',
+                            backgroundColor: 'rgba(255, 100, 100, 0.85)',
+                            padding: '2px 10px',
+                            color: 'white',
+                            borderRadius: 3,
+                            ...props.style,
+                        }}
+                    >{prompt}
+                    </div>
+                )}
+            </Overlay>
+        }
     </>
 }
+BabyGruSimpleEditButton.defaultProps = { setCursorStyle: () => { }, setselectedButtonIndex: () => { }, selectedButtonIndex: 0, prompt: null }
 
 const cidToSpec = (cid) => {
     //coordMolNo, chain_id, res_no, ins_code, alt_conf

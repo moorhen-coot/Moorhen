@@ -125,7 +125,7 @@ BabyGruMap.prototype.doCootContour = function (gl, x, y, z, radius, contourLevel
 
     return new Promise((resolve, reject)=>{
         cootCommand($this.cootWorker, {
-            returnType: "mesh",
+            returnType: "lines_mesh",
             command: "get_map_contours_mesh",
             commandArgs: [$this.mapMolNo, x, y, z, radius, contourLevel]
         }).then(response => {

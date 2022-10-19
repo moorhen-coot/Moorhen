@@ -203,6 +203,10 @@ onmessage = function (e) {
                     returnResult = simpleMeshToMeshData(cootResult)
                     //returnResult = simpleMeshToLineMeshData(cootResult)
                     break;
+                case 'lines_mesh':
+                    returnResult = simpleMeshToLineMeshData(cootResult)
+                    //returnResult = simpleMeshToLineMeshData(cootResult)
+                    break;
                 case 'status':
                 default:
                     returnResult = cootResult
