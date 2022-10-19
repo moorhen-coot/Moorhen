@@ -5,6 +5,7 @@ import { cootCommand, postCootMessage } from "../BabyGruUtils"
 export const BabyGruRamachandran = (props) => {
     const ramachandranRef = useRef();
     const [clickedResidue, setClickedResidue] = useState(null)
+    const [message, setMessage] = useState("")
 
     // TODO: REFACTOR THIS CODE, IT IS THE SAME AS IN THE SEQUENCE VIEWER...
     useEffect(() => {
@@ -43,7 +44,12 @@ export const BabyGruRamachandran = (props) => {
                     molecules={props.molecules}
                     cootWorker={props.cootWorker} 
                     postCootMessage={postCootMessage}
+                    setMessage={setMessage}
                 />
+                <div>
+                    <span>{message}</span>
+                </div>
+                
             </Fragment>
 
 }

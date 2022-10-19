@@ -202,7 +202,10 @@ class RamaPlot extends Component {
         if(this.state.plotInfo){
             const hit = this.getHit(event,self);
             this.hit = hit;
-            if(hit>-1) animate();
+            if(hit>-1){
+                animate()
+                this.props.setMessage(`${this.state.molName} / ${this.state.chainId} / ${this.state.plotInfo[hit].seqNum} (${this.state.plotInfo[hit].restype})`)
+            };
         }
     }
 
@@ -497,7 +500,7 @@ class Ramachandran extends Component {
         </Col>
         </Form.Group>
         </Form>
-        <RamaPlot onClick={this.props.onClick} ref={this.ramaRef} />
+        <RamaPlot onClick={this.props.onClick} setMessage={this.props.setMessage} ref={this.ramaRef} />
         </>
         );
     }
