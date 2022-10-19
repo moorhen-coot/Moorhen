@@ -101,8 +101,7 @@ export const BabyGruContainer = (props) => {
     return <>
         <div className="border" ref={headerRef}>
 
-            <Navbar>
-                <Container >
+        <Navbar style={{justifyContent:'between', marginLeft:'1rem', marginRight:'1rem'}}>
                     <Navbar.Brand href="#home">Baby Gru</Navbar.Brand>
                     <Navbar.Toggle aria-controls="basic-navbar-nav" />
                     <Navbar.Collapse id="basic-navbar-nav">
@@ -119,13 +118,12 @@ export const BabyGruContainer = (props) => {
                         </Nav>
                     </Navbar.Collapse>
                     <Nav className="justify-content-right">
-                        {busy && <Spinner animation="border" />}
+                        {busy && <Spinner animation="border" style={{marginRight:'0.5rem'}} />}
                         <Button className="ml-2" onClick={() => {
                             //setShowDisplayTable(true) 
                             setShowSideBar(!showSideBar)
                         }}>Sidebar</Button>
                     </Nav>
-                </Container>
             </Navbar>
         </div>
         <Container fluid>

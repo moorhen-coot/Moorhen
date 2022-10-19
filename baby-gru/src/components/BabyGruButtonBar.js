@@ -1,10 +1,12 @@
-import { createRef, useCallback } from "react";
+import { createRef, useState} from "react";
 import { ButtonGroup, Button } from "react-bootstrap"
 import { cootCommand, postCootMessage } from "../BabyGruUtils"
 import { circles_fragment_shader_source } from "../WebGL/circle-fragment-shader";
 
 export const BabyGruButtonBar = (props) => {
     const atomClickedBinding = createRef(null);
+    const [selectedbuttonIndex, setSelectedbuttonIndex] = useState(null)
+
     return <div
         style={{
             overflow: "auto",
@@ -13,6 +15,9 @@ export const BabyGruButtonBar = (props) => {
         <ButtonGroup vertical>
 
             <BabyGruSimpleEditButton {...props}
+                buttonIndex={"0"}
+                selectedbuttonIndex = {selectedbuttonIndex}
+                setSelectedbuttonIndex={setSelectedbuttonIndex}
                 cootCommand="auto_fit_rotamer"
                 icon={<img className="baby-gru-button-icon" src="pixmaps/auto-fit-rotamer.svg" />}
                 formatArgs={(molecule, chosenAtom) => {
@@ -26,6 +31,9 @@ export const BabyGruButtonBar = (props) => {
                 }} />
 
             <BabyGruSimpleEditButton {...props}
+                buttonIndex={"1"}
+                selectedbuttonIndex = {selectedbuttonIndex}
+                setSelectedbuttonIndex={setSelectedbuttonIndex}
                 cootCommand="flipPeptide_cid"
                 icon={<img className="baby-gru-button-icon" src="pixmaps/flip-peptide.svg" />}
                 formatArgs={(molecule, chosenAtom) => {
@@ -42,7 +50,14 @@ export const BabyGruButtonBar = (props) => {
 const BabyGruSimpleEditButton = (props) => {
     const atomClickedBinding = createRef(null);
 
-    return <Button variant='light' onClick={() => {
+    return <Button value={props.buttonIndex} active={props.buttonIndex===props.selectedbuttonIndex} variant='light' onClick={(e) => {
+        if (props.selectedbuttonIndex === e.currentTarget.value) {
+            props.setSelectedbuttonIndex(null)
+            props.setCursorStyle("default")
+            document.removeEventListener('atomClicked', atomClickedBinding.current)
+            return
+        }
+        props.setSelectedbuttonIndex(props.buttonIndex)
         props.setCursorStyle("crosshair")
         atomClickedBinding.current = document.addEventListener('atomClicked', (event) => {
             props.molecules.forEach(molecule => {
@@ -55,6 +70,7 @@ const BabyGruSimpleEditButton = (props) => {
                 }).then(_ => {
                     molecule.setAtomsDirty(true)
                     molecule.redraw(props.glRef)
+                    props.setSelectedbuttonIndex(null)
                 })
 
             })
