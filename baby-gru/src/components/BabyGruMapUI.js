@@ -4,7 +4,7 @@ import { doDownload } from "../BabyGruUtils";
 //import { Download } from 'react-bootstrap-icons';
 
 export const BabyGruMaps = (props) => {
-    const [mapRadius, setMapRadius] = useState(50.)
+    const [mapRadius, setMapRadius] = useState(15.)
 
     useEffect(() => {
     }, [])
@@ -39,14 +39,28 @@ const BabyGruMapRow = (props) => {
     const [webMGContour, setWebMGContour] = useState(true)
     const [cootContour, setCootContour] = useState(false)
     const originChangeBinding = createRef()
+    const nextOrigin = createRef([])
+    const busyContouring = createRef(false)
+
 
     useEffect(() => {
         setWebMGContour(props.map.webMGContour)
         setCootContour(props.map.cootContour)
         originChangeBinding.current = document.addEventListener('originChange', (e) => {
-            if (cootContour) {
-                props.map.makeCootLive(props.glRef.current, 15)
+            nextOrigin.current = [...e.detail.map(coord => -coord)]
+            if (props.map.cootContour) {
+                if (busyContouring.current) {
+                    console.log('Skipping originChange ')
+                }
+                else {
+                    busyContouring.current = true
+                    props.map.doCootContour(props.glRef.current, ...nextOrigin.current, 15, props.map.contourLevel)
+                        .then(result => {
+                            busyContouring.current = false
+                        })
+                }
             }
+
         })
         return () => {
             document.removeEventListener('originChange', originChangeBinding.current)

@@ -61,7 +61,7 @@ BabyGruMap.prototype.makeWebMGUnlive = function (gl) {
 
 BabyGruMap.prototype.makeCootLive = function (gl, mapRadius) {
     const $this = this
-    $this.cootContour = false
+    $this.cootContour = true
     $this.doCootContour(gl,
         -gl.origin[0],
         -gl.origin[1],
@@ -72,6 +72,7 @@ BabyGruMap.prototype.makeCootLive = function (gl, mapRadius) {
 
 BabyGruMap.prototype.makeCootUnlive = function (gl) {
     const $this = this
+    $this.cootContour = false
     $this.clearBuffersOfStyle('Coot')
     gl.drawScene()
 }
@@ -122,19 +123,23 @@ BabyGruMap.prototype.doCootContour = function (gl, x, y, z, radius, contourLevel
 
     const $this = this
 
-    return cootCommand($this.cootWorker, {
-        returnType: "mesh",
-        command: "get_map_contours_mesh",
-        commandArgs: [$this.mapMolNo, x, y, z, radius, contourLevel]
-    }).then(response => {
-        const objects = [response.data.result.result]
-        $this.clearBuffersOfStyle('Coot')
-        //$this.displayObjects['Coot'] = [...$this.displayObjects['Coot'], ...objects.map(object=>gl.appendOtherData(object, true))]
-        objects.forEach(object => {
-            var a = gl.appendOtherData(object, true);
-            $this.displayObjects['Coot'] = $this.displayObjects['Coot'].concat(a)
+    return new Promise((resolve, reject)=>{
+        cootCommand($this.cootWorker, {
+            returnType: "mesh",
+            command: "get_map_contours_mesh",
+            commandArgs: [$this.mapMolNo, x, y, z, radius, contourLevel]
+        }).then(response => {
+            const objects = [response.data.result.result]
+            $this.clearBuffersOfStyle('Coot')
+            //$this.displayObjects['Coot'] = [...$this.displayObjects['Coot'], ...objects.map(object=>gl.appendOtherData(object, true))]
+            objects.forEach(object => {
+                var a = gl.appendOtherData(object, true);
+                $this.displayObjects['Coot'] = $this.displayObjects['Coot'].concat(a)
+            })
+            gl.buildBuffers();
+            gl.drawScene();
+            resolve(true)
         })
-        gl.buildBuffers();
-        gl.drawScene();
     })
+
 }
