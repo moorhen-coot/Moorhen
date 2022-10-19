@@ -263,14 +263,20 @@ BabyGruMolecule.prototype.drawBonds = function (webMGAtoms, gl, colourSchemeInde
     });
 
     var contactsAndSingletons = model.getBondsContactsAndSingletons();
+
     var contacts = contactsAndSingletons["contacts"];
     var singletons = contactsAndSingletons["singletons"];
     var linePrimitiveInfo = contactsToCylindersInfo(contacts, 0.1, atomColours);
     var singletonPrimitiveInfo = singletonsToLinesInfo(singletons, 4, atomColours);
-
     var linesAndSpheres = []
+
     linesAndSpheres.push(linePrimitiveInfo);
     linesAndSpheres.push(singletonPrimitiveInfo);
+
+    var nonHydrogenAtoms = model.getAtoms("not [H]");
+    var nonHydrogenPrimitiveInfo = atomsToSpheresInfo(nonHydrogenAtoms, 0.13, atomColours);
+    linesAndSpheres.push(nonHydrogenPrimitiveInfo);
+
 
     const objects = linesAndSpheres.filter(item => {
         return typeof item.sizes !== "undefined" &&
