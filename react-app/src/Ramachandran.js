@@ -341,7 +341,7 @@ class RamaPlot extends Component {
     render() {
         const height = 230;
         const width = 230;
-        this.canvas = <canvas height={height} width={width} ref={this.canvasRef} />;  
+        this.canvas = <canvas style={{marginTop:'1rem'}} height={height} width={width} ref={this.canvasRef} />;  
         return this.canvas;
     }
 
@@ -492,7 +492,7 @@ class Ramachandran extends Component {
 
         return (
                 <>
-        <Form onSubmit={this.handleSubmit.bind(this)}>
+        <Form style={{marginTop:'1rem'}} onSubmit={this.handleSubmit.bind(this)}>
         <Form.Group as={Row} controlId="rama">
         <Col>
                 <Form.Select value={selected} onChange={handleChange} >
