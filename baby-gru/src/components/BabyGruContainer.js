@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, createRef, useReducer } from 'react';
+import { useRef, useState, useEffect, createRef, useReducer, useCallback } from 'react';
 import { Navbar, Container, Nav, Tabs, Tab, Accordion, Button, Offcanvas, Col, Row, Card, Collapse, Fade, Spinner } from 'react-bootstrap';
 import { BabyGruMolecules } from './BabyGruMoleculeUI';
 import { BabyGruMaps } from './BabyGruMapUI';
@@ -44,25 +44,29 @@ export const BabyGruContainer = (props) => {
     const sequenceViewerRef = useRef()
     const sequenceViewerHeight = 272
 
+    const handleMessage = useCallback(e => {
+        //Append the response consoleMessage to the console text
+        dispatch({ newText: e.data.consoleMessage })
+        //remove this messageId from the dispatchedMessagesList
+        let newDispatchedMessages = dispatchedMessages.filter(messageId => messageId !== e.data.messageId)
+        setDispatchedMessages(newDispatchedMessages)
+    })
+
+    const handleCootMessageDispatch = useCallback(e => {
+        let newDispatchedMessages = [...dispatchedMessages]
+        newDispatchedMessages.push(e.detail.messageId)
+        setDispatchedMessages(newDispatchedMessages)
+    })
+
     useEffect(() => {
         cootWorker.current = new Worker('CootWorker.js')
         postCootMessage(cootWorker, { messageId: uuidv4(), message: 'CootInitialize', data: {} })
         //Register an event listener to update console
-        cootWorkerListenerBinding.current = cootWorker.current.addEventListener("message", (e) => {
-            //Append the response consoleMessage to the console text
-            dispatch({ newText: e.data.consoleMessage })
-            //remove this messageId from the dispatchedMessagesList
-            let newDispatchedMessages = dispatchedMessages.filter(messageId => messageId !== e.data.messageId)
-            setDispatchedMessages(newDispatchedMessages)
-        })
-        cootEventDispatchBinding.current = document.addEventListener("coot_message_dispatch", (e) => {
-            let newDispatchedMessages = [...dispatchedMessages]
-            newDispatchedMessages.push(e.detail.messageId)
-            setDispatchedMessages(newDispatchedMessages)
-        })
+        cootWorkerListenerBinding.current = cootWorker.current.addEventListener("message", handleMessage)
+        cootEventDispatchBinding.current = document.addEventListener("coot_message_dispatch", handleCootMessageDispatch)
         return () => {
-            cootWorker.current.removeEventListener('message', cootWorkerListenerBinding.current)
-            document.removeEventListener('coot_message_dispatch', cootEventDispatchBinding.current)
+            cootWorker.current.removeEventListener('message', handleMessage)
+            document.removeEventListener('coot_message_dispatch', handleCootMessageDispatch)
             cootWorker.current.terminate()
         }
         glResize()

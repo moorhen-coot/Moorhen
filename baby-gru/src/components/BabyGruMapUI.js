@@ -1,4 +1,4 @@
-import { createRef, Fragment, useEffect, useState } from "react";
+import { createRef, Fragment, useCallback, useEffect, useState } from "react";
 import { Table, Button, Row, Col, Form, FormCheck } from "react-bootstrap";
 import { doDownload } from "../BabyGruUtils";
 //import { Download } from 'react-bootstrap-icons';
@@ -38,39 +38,54 @@ export const BabyGruMaps = (props) => {
 const BabyGruMapRow = (props) => {
     const [webMGContour, setWebMGContour] = useState(true)
     const [cootContour, setCootContour] = useState(false)
-    const originChangeBinding = createRef()
     const nextOrigin = createRef([])
     const busyContouring = createRef(false)
 
+    const handleOriginCallback = useCallback(e => {
+        nextOrigin.current = [...e.detail.map(coord => -coord)]
+        if (props.map.cootContour) {
+            if (busyContouring.current) {
+                console.log('Skipping originChange ', nextOrigin.current)
+            }
+            else {
+                busyContouring.current = true
+                props.map.doCootContour(props.glRef.current,
+                    ...nextOrigin.current,
+                    props.mapRadius,
+                    props.map.contourLevel)
+                    .then(result => {
+                        busyContouring.current = false
+                    })
+            }
+        }
+    }, [props.map.contourLevel, props.mapRadius])
+
+    useEffect(() => {
+        document.addEventListener("originChange", handleOriginCallback);
+        return () => {
+            document.removeEventListener("originChange", handleOriginCallback);
+        };
+    }, [handleOriginCallback]);
 
     useEffect(() => {
         setWebMGContour(props.map.webMGContour)
         setCootContour(props.map.cootContour)
-        originChangeBinding.current = document.addEventListener('originChange', (e) => {
-            nextOrigin.current = [...e.detail.map(coord => -coord)]
-            if (props.map.cootContour) {
-                if (busyContouring.current) {
-                    console.log('Skipping originChange ')
-                }
-                else {
-                    busyContouring.current = true
-                    props.map.doCootContour(props.glRef.current, ...nextOrigin.current, 15, props.map.contourLevel)
-                        .then(result => {
-                            busyContouring.current = false
-                        })
-                }
-            }
-
-        })
-        return () => {
-            document.removeEventListener('originChange', originChangeBinding.current)
-        }
     }, [])
 
     useEffect(() => {
         setWebMGContour(props.map.webMGContour)
         setCootContour(props.map.cootContour)
-    }, [props.map.webMGContour, props.map.cootContour])
+        if (props.map.cootContour) {
+            busyContouring.current = true
+            props.map.doCootContour(props.glRef.current,
+                ...props.glRef.current.origin.map(coord => -coord),
+                props.mapRadius,
+                props.map.contourLevel)
+                .then(result => {
+                    busyContouring.current = false
+                })
+        }
+    }, [props.mapRadius, props.map.contourLevel])
 
     return <tr key={props.map.mapMolNo} >
         <td>

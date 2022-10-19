@@ -1,4 +1,4 @@
-import { createRef } from "react";
+import { createRef, useCallback } from "react";
 import { ButtonGroup, Button } from "react-bootstrap"
 import { cootCommand, postCootMessage } from "../BabyGruUtils"
 import { circles_fragment_shader_source } from "../WebGL/circle-fragment-shader";
@@ -45,7 +45,6 @@ const BabyGruSimpleEditButton = (props) => {
     return <Button variant='light' onClick={() => {
         props.setCursorStyle("crosshair")
         atomClickedBinding.current = document.addEventListener('atomClicked', (event) => {
-            document.removeEventListener('atomClicked', atomClickedBinding.current)
             props.molecules.forEach(molecule => {
                 props.setCursorStyle("default")
                 const chosenAtom = cidToSpec(event.detail)

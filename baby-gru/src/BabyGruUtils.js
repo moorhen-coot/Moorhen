@@ -2,11 +2,13 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
+
 export const postCootMessage = (cootWorker, kwargs) => {
     const messageId = uuidv4()
     return new Promise((resolve, reject) => {
         const messageListener = cootWorker.current.addEventListener('message', (reply) => {
             if (reply.data.messageId === messageId) {
+                //I'm now 90% certain that this does not in fact remove the eventListener...
                 cootWorker.current.removeEventListener('message', messageListener)
                 resolve(reply)
             }
