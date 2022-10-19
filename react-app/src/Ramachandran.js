@@ -255,79 +255,79 @@ class RamaPlot extends Component {
         this.imageData = ctx.getImageData(0,0,this.canvasRef.current.width, this.canvasRef.current.height);
 
         const imgAll = new window.Image();
-        imgAll.src = "/rama2_all.png";
+        imgAll.src = "pixmaps/rama2_all.png";
         imgAll.crossOrigin="Anonymous";
         this.imageRefAll.current = imgAll;
         this.imageRefAll.current.addEventListener('load', this.handleLoad.bind(self));
 
         const imgGly = new window.Image();
-        imgGly.src = "/rama2_gly.png";
+        imgGly.src = "pixmaps/rama2_gly.png";
         imgGly.crossOrigin="Anonymous";
         this.imageRefGly.current = imgGly;
         this.imageRefGly.current.addEventListener('load', this.handleLoad.bind(self));
 
         const imgPrePro = new window.Image();
-        imgPrePro.src = "/rama2_pre_pro.png";
+        imgPrePro.src = "pixmaps/rama2_pre_pro.png";
         imgPrePro.crossOrigin="Anonymous";
         this.imageRefPrePro.current = imgPrePro;
         this.imageRefPrePro.current.addEventListener('load', this.handleLoad.bind(self));
 
         const imgPro = new window.Image();
-        imgPro.src = "/rama2_pro.png";
+        imgPro.src = "pixmaps/rama2_pro.png";
         imgPro.crossOrigin="Anonymous";
         this.imageRefPro.current = imgPro;
         this.imageRefPro.current.addEventListener('load', this.handleLoad.bind(self));
 
         const imgIleVal = new window.Image();
-        imgIleVal.src = "/rama2_ileval.png";
+        imgIleVal.src = "pixmaps/rama2_ileval.png";
         imgIleVal.crossOrigin="Anonymous";
         this.imageRefIleVal.current = imgIleVal;
         this.imageRefIleVal.current.addEventListener('load', this.handleLoad.bind(self));
 
         const imgNonGlyPro = new window.Image();
-        imgNonGlyPro.src = "/rama2_non_gly_pro.png";
+        imgNonGlyPro.src = "pixmaps/rama2_non_gly_pro.png";
         imgNonGlyPro.crossOrigin="Anonymous";
         this.imageRefNonGlyPro.current = imgNonGlyPro;
         this.imageRefNonGlyPro.current.addEventListener('load', this.handleLoad.bind(self));
 
         const imgNonGlyProIleVal = new window.Image();
-        imgNonGlyProIleVal.src = "/rama2_non_gly_pro_pre_pro_ileval.png";
+        imgNonGlyProIleVal.src = "pixmaps/rama2_non_gly_pro_pre_pro_ileval.png";
         imgNonGlyProIleVal.crossOrigin="Anonymous";
         this.imageRefNonGlyProIleVal.current = imgNonGlyProIleVal;
         this.imageRefNonGlyProIleVal.current.addEventListener('load', this.handleLoad.bind(self));
 
         const imgGlyNormal = new window.Image();
-        imgGlyNormal.src = "/rama-plot-gly-normal.png";
+        imgGlyNormal.src = "pixmaps/rama-plot-gly-normal.png";
         imgGlyNormal.crossOrigin="Anonymous";
         this.ramaPlotGlyNormalImageRef.current = imgGlyNormal;
         this.ramaPlotGlyNormalImageRef.current.addEventListener('load', this.handleLoad.bind(self));
 
         const imgGlyOutlier = new window.Image();
-        imgGlyOutlier.src = "/rama-plot-gly-outlier.png";
+        imgGlyOutlier.src = "pixmaps/rama-plot-gly-outlier.png";
         imgGlyOutlier.crossOrigin="Anonymous";
         this.ramaPlotGlyOutlierImageRef.current = imgGlyOutlier;
         this.ramaPlotGlyOutlierImageRef.current.addEventListener('load', this.handleLoad.bind(self));
 
         const imgProNormal = new window.Image();
-        imgProNormal.src = "/rama-plot-pro-normal.png";
+        imgProNormal.src = "pixmaps/rama-plot-pro-normal.png";
         imgProNormal.crossOrigin="Anonymous";
         this.ramaPlotProNormalImageRef.current = imgProNormal;
         this.ramaPlotProNormalImageRef.current.addEventListener('load', this.handleLoad.bind(self));
 
         const imgProOutlier = new window.Image();
-        imgProOutlier.src = "/rama-plot-pro-outlier.png";
+        imgProOutlier.src = "pixmaps/rama-plot-pro-outlier.png";
         imgProOutlier.crossOrigin="Anonymous";
         this.ramaPlotProOutlierImageRef.current = imgProOutlier;
         this.ramaPlotProOutlierImageRef.current.addEventListener('load', this.handleLoad.bind(self));
 
         const imgOtherNormal = new window.Image();
-        imgOtherNormal.src = "/rama-plot-other-normal.png";
+        imgOtherNormal.src = "pixmaps/rama-plot-other-normal.png";
         imgOtherNormal.crossOrigin="Anonymous";
         this.ramaPlotOtherNormalImageRef.current = imgOtherNormal;
         this.ramaPlotOtherNormalImageRef.current.addEventListener('load', this.handleLoad.bind(self));
 
         const imgOtherOutlier = new window.Image();
-        imgOtherOutlier.src = "/rama-plot-other-outlier.png";
+        imgOtherOutlier.src = "pixmaps/rama-plot-other-outlier.png";
         imgOtherOutlier.crossOrigin="Anonymous";
         this.ramaPlotOtherOutlierImageRef.current = imgOtherOutlier;
         this.ramaPlotOtherOutlierImageRef.current.addEventListener('load', this.handleLoad.bind(self));
@@ -341,7 +341,7 @@ class RamaPlot extends Component {
     render() {
         const height = 230;
         const width = 230;
-        this.canvas = <canvas height={height} height={height} ref={this.canvasRef} />;  
+        this.canvas = <canvas height={height} width={width} ref={this.canvasRef} />;  
         return this.canvas;
     }
 
@@ -388,14 +388,10 @@ class RamaPlot extends Component {
 
 class Ramachandran extends Component {
     constructor(props) {
-
         super(props);
-
         this.ramaRef = createRef();
-
         this.state = {selected:"unk",log:"", chainId:"", plotInfo: null};
         this.message = "";
-        const self = this;
     }
 
 
@@ -414,42 +410,23 @@ class Ramachandran extends Component {
     }
 
     /**
-     * Sends a message to crystallography worker as a promise
-     * @param {Worker} crystWorker 
-     * @param {Object} kwargs 
-     */
-     postCrystWorkerMessage(crystWorker, kwargs) {
-        const messageId = guid();
-        return new Promise((resolve, reject) => {
-            const messageListener = crystWorker.addEventListener('message', (e) => {
-                if (e.data.messageId === messageId) {
-                    crystWorker.removeEventListener('message', messageListener);
-                    resolve(e);
-                }
-            })
-            crystWorker.postMessage({
-                messageId, ...kwargs
-            });
-        });
-    }    
-
-    /**
      * Get ramachandran plot and send message with result to crystallography worker
      */
     async getRama(){
-        const self = this;
-        let key = self.state.selected;
-        const dataObjectNames = this.props.dataObjectsNames;
-        const pdbKeys = Object.keys(dataObjectNames.pdbFiles);
-        if(pdbKeys.length<1){
+        if(this.props.molecules<1){
             return;
         }
+
+        let key = this.state.selected;
+        const fileNames = this.props.molecules.map(molecule => molecule.fileName);
+        
         if(key==="unk"){
-            key = pdbKeys[0];
+            key = fileNames[0];
         }
+
         const jobid = guid();
-        const inputData = {method:"get_rama",jobId:jobid,pdbinKey:key,chainId:this.state.chainId};
-        let response = await this.postCrystWorkerMessage(self.props.crystWorker, inputData);
+        const inputData = {message:"get_rama", jobId:jobid, pdbinKey:key, chainId:this.state.chainId};
+        let response = await this.props.postCootMessage(this.props.cootWorker, inputData);
         this.updatePlotData(response.data.result, key);
    }
 
@@ -498,32 +475,19 @@ class Ramachandran extends Component {
         });
 
         const self = this;
-        const displayData = this.props.displayData;
-        const liveUpdatingMaps = this.props.liveUpdatingMaps;
 
         let rows = [];
         let selected = this.state.selected;
         let handleChange = this.handleChange.bind(self);
 
-        const pdbRegex = /.pdb$/;
-        const entRegex = /.ent$/;
+        this.props.molecules.forEach(molecule => {
+            rows.push(<option key={"rsr_"+molecule.fileName} value={molecule.fileName}>{molecule.name}</option>);
+        });        
 
-        const dataObjectNames = this.props.dataObjectsNames;
-
-        const pdbKeys = Object.keys(dataObjectNames.pdbFiles);
-        for(let iobj=0;iobj<pdbKeys.length;iobj++){
-            const data_id = pdbKeys[iobj];
-            const name = dataObjectNames.pdbFiles[data_id].originalFileName;
-            const keySup = data_id;
-            const keyOption = "rsr_"+keySup;
-            const shortName = name.replace(pdbRegex,"");
-            rows.push(<option key={keyOption} value={keySup}>{shortName}</option>);
+        if(selected==="unk" && this.props.molecules.length>0){
+            selected = this.props.molecules[0].fileName;
         }
-
-        if(selected==="unk"&&pdbKeys.length>0){
-            selected = pdbKeys[0];
-        }
-
+        
         //TODO - Need to introspect the pdb file to see what chains exist and pick the first one ...
 
         return (
@@ -546,4 +510,4 @@ class Ramachandran extends Component {
         );
     }
 }
-export default Ramachandran;
+export { Ramachandran };
