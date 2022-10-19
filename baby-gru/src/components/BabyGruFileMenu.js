@@ -49,7 +49,7 @@ export const BabyGruFileMenu = (props) => {
     }    
 
     return <NavDropdown title="File" id="basic-nav-dropdown">
-        <Form.Group style={{ width: '20rem' }} controlId="uploadCoords" className="mb-3">
+        <Form.Group style={{ width: '20rem', margin: '0.5rem'}} controlId="uploadCoords" className="mb-3">
             <Form.Label>Coordinates</Form.Label>
             <Form.Control type="file" accept=".pdb, .mmcif, .ent" onChange={(e) => {
                 for (const file of e.target.files) {
@@ -57,7 +57,7 @@ export const BabyGruFileMenu = (props) => {
                 }
             }} />
         </Form.Group>
-        <Form.Group style={{ width: '20rem' }} controlId="downloadCoords" className="mb-3">
+        <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="downloadCoords" className="mb-3">
             <Form.Label>From PDBe</Form.Label>
             <Form.Control type="text" onKeyDown={(e) => {
                 if (e.code === 'Enter') {
@@ -65,7 +65,7 @@ export const BabyGruFileMenu = (props) => {
                 }
             }} />
         </Form.Group>
-        <Form.Group style={{ width: '20rem' }} controlId="uploadMTZs" className="mb-3">
+        <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="uploadMTZs" className="mb-3">
             <Form.Label>Map coefficients</Form.Label>
             <Form.Control type="file" accept=".mtz" onChange={(e) => {
                 for (const file of e.target.files) {

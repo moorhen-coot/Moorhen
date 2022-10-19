@@ -23,11 +23,11 @@ export const BabyGruMoleculeUI = (props) => {
 
     return <Card className="px-2" key={props.molecule.coordMolNo}>
         <Card.Header>
-            <div class="row justify-content-between">
-                <div class="col-6">
+            <div className="row justify-content-between">
+                <div className="col-6">
                     {`Mol ${props.molecule.coordMolNo}:${props.molecule.name}`}
                 </div>
-                <div class="col-2">
+                <div className="col-2">
                     <Button size="sm"
                         onClick={() => {
                             props.molecule.getAtoms()
