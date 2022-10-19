@@ -187,8 +187,7 @@ class RamaPlot extends Component {
         if(this.state.plotInfo){
             const hit = this.getHit(event,self);
             if(this.props.onClick&&hit>-1){
-                const molName = "UNK";
-                this.props.onClick({molKey:this.state.key,molName:molName,chain:this.state.plotInfo[hit].chainId,seqNum:this.state.plotInfo[hit].seqNum,insCode:this.state.plotInfo[hit].insCode});
+                this.props.onClick({pdbinKey:this.state.pdbinKey, molName:this.state.molName, chain:this.state.chainId, seqNum:this.state.plotInfo[hit].seqNum, insCode:this.state.plotInfo[hit].insCode});
             }
         }
     }
@@ -350,7 +349,7 @@ class RamaPlot extends Component {
         this.reqRef = null;
         this.oldImage = null;
         this.nAnimationFrames = 15;
-        this.state = {plotInfo: null, key:null};
+        this.state = {plotInfo: null, molName:null, chainId:null, pdbinKey:null};
         this.canvasRef = createRef();
         this.imageRefAll = createRef();
         this.imageRefGly = createRef();
@@ -380,8 +379,7 @@ class RamaPlot extends Component {
 
     updatePlotData(plotInfo){
         const self = this;
-        this.setState({plotInfo:plotInfo.info, key:plotInfo.key},()=>self.draw(-1));
-        //this.setState({plotInfo:plotInfo.info, key:plotInfo.key});
+        this.setState({plotInfo:plotInfo.info, molName:plotInfo.molName, chainId:plotInfo.chainId, pdbinKey:plotInfo.pdbinKey},()=>self.draw(-1));
     }
 
 }
@@ -417,29 +415,24 @@ class Ramachandran extends Component {
             return;
         }
 
-        let key = this.state.selected;
+        let pdbinKey = this.state.selected;        
         const fileNames = this.props.molecules.map(molecule => molecule.fileName);
+        const molNames = this.props.molecules.map(molecule => molecule.name);
+        let molName = null;
         
-        if(key==="unk"){
-            key = fileNames[0];
+        if(pdbinKey==="unk"){
+            pdbinKey = fileNames[0];
+            molName = molNames[0];
+        } else {
+            molName = molNames[fileNames.findIndex(pdbinKey)];
         }
 
         const jobid = guid();
-        const inputData = {message:"get_rama", jobId:jobid, pdbinKey:key, chainId:this.state.chainId};
+        const inputData = {message:"get_rama", jobId:jobid, pdbinKey:pdbinKey, chainId:this.state.chainId};
         let response = await this.props.postCootMessage(this.props.cootWorker, inputData);
-        this.updatePlotData(response.data.result, key);
+        this.ramaRef.current.updatePlotData({info:response.data.result, molName:molName, chainId:this.state.chainId, pdbinKey:pdbinKey});
+        this.setState({plotInfo:response.data.result});
    }
-
-    /**
-     * Update contents of ramachandran plot
-     * @param {array} plotData - array with residue information
-     * @param {string} key - key for the selected pdb model
-     */
-    updatePlotData(plotData, key){
-        const self = this;
-        self.ramaRef.current.updatePlotData({info:plotData, key:key});
-        this.setState({plotInfo:plotData});
-    }
 
     /**
      * Handle chain name change by updating widget state
@@ -504,7 +497,6 @@ class Ramachandran extends Component {
         </Col>
         </Form.Group>
         </Form>
-        <div className="vspace1em"></div>
         <RamaPlot onClick={this.props.onClick} ref={this.ramaRef} />
         </>
         );
