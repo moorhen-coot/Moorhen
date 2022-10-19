@@ -6,8 +6,8 @@ export function BabyGruMap(cootWorker) {
     this.contourLevel = 0.5
     this.mapColour = [0.3, 0.3, 1.0, 1.0]
     this.liveUpdatingMaps = {}
-    this.webMGContour = true
-    this.cootContour = false
+    this.webMGContour = false
+    this.cootContour = true
     this.displayObjects = { 'Coot': [] }
 }
 
@@ -125,7 +125,7 @@ BabyGruMap.prototype.doCootContour = function (gl, x, y, z, radius, contourLevel
 
     return new Promise((resolve, reject)=>{
         cootCommand($this.cootWorker, {
-            returnType: "mesh",
+            returnType: "lines_mesh",
             command: "get_map_contours_mesh",
             commandArgs: [$this.mapMolNo, x, y, z, radius, contourLevel]
         }).then(response => {

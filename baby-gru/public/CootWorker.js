@@ -49,36 +49,15 @@ const simpleMeshToLineMeshData = (simpleMesh) => {
     let totCol = [];
     for (let i = 0; i < triangles.size(); i++) {
         const idxs = triangles.get(i).point_id;
-        //totIdxs.push(...[0,1,2,3,4,5]);
-        const vert0 = vertices.get(idxs[0]);
-        const vert1 = vertices.get(idxs[1]);
-        const vert2 = vertices.get(idxs[2]);
-
-        totPos.push(...vert0.pos);
-        totNorm.push(...vert0.normal);
-        totCol.push(...vert0.color);
-
-        totPos.push(...vert1.pos);
-        totNorm.push(...vert1.normal);
-        totCol.push(...vert1.color);
-
-        totPos.push(...vert0.pos);
-        totNorm.push(...vert0.normal);
-        totCol.push(...vert0.color);
-
-        totPos.push(...vert2.pos);
-        totNorm.push(...vert2.normal);
-        totCol.push(...vert2.color);
-
-        totPos.push(...vert1.pos);
-        totNorm.push(...vert1.normal);
-        totCol.push(...vert1.color);
-
-        totPos.push(...vert2.pos);
-        totNorm.push(...vert2.normal);
-        totCol.push(...vert2.color);
+        totIdxs.push(...[idxs[0],idxs[1],idxs[0],idxs[2],idxs[1],idxs[2]]);
     }
-    return { prim_types: [["LINES"]], idx_tri: [[totIdxs]], vert_tri: [[totPos]], norm_tri: [[totNorm]], col_tri: [[totCol]] };
+    for (let i = 0; i < vertices.size(); i++) {
+        const vert = vertices.get(i);
+        totPos.push(...vert.pos);
+        totNorm.push(...vert.normal);
+        totCol.push(...vert.color);
+    }
+    return { prim_types: [["LINES"]], useIndices: [[true]], idx_tri: [[totIdxs]], vert_tri: [[totPos]], norm_tri: [[totNorm]], col_tri: [[totCol]] };
 }
 
 onmessage = function (e) {
@@ -217,6 +196,10 @@ onmessage = function (e) {
             switch (returnType) {
                 case 'mesh':
                     returnResult = simpleMeshToMeshData(cootResult)
+                    //returnResult = simpleMeshToLineMeshData(cootResult)
+                    break;
+                case 'lines_mesh':
+                    returnResult = simpleMeshToLineMeshData(cootResult)
                     //returnResult = simpleMeshToLineMeshData(cootResult)
                     break;
                 case 'status':

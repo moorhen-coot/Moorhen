@@ -157,7 +157,7 @@ export const BabyGruContainer = (props) => {
                         <Tabs defaultActiveKey="models">
                             <Tab title="Models" eventKey="models">
                                 <div>
-                                    <BabyGruMolecules molecules={molecules} glRef={glRef} />
+                                    <BabyGruMolecules molecules={molecules} glRef={glRef} cootWorker={cootWorker}/>
                                 </div>
                             </Tab>
                             <Tab title="Maps" eventKey="maps" >

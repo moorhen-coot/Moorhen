@@ -1,7 +1,6 @@
 import { useEffect, Fragment, useState } from "react";
 import { Card, Form, Button, Row, Col } from "react-bootstrap";
-import { doDownload } from '../BabyGruUtils';
-//import { Download } from 'react-bootstrap-icons';
+import { cootCommand, doDownload } from '../BabyGruUtils';
 
 export const BabyGruMoleculeUI = (props) => {
     const [showState, setShowState] = useState({})
@@ -24,10 +23,32 @@ export const BabyGruMoleculeUI = (props) => {
     return <Card className="px-2" key={props.molecule.coordMolNo}>
         <Card.Header>
             <div className="row justify-content-between">
-                <div className="col-6">
+                <div className="col-3">
                     {`Mol ${props.molecule.coordMolNo}:${props.molecule.name}`}
                 </div>
-                <div className="col-2">
+                <div className="col-5">
+                    <Button size="sm"
+                        onClick={() => {
+                            cootCommand(props.cootWorker, {
+                                returnType: "status",
+                                command: "undo",
+                                commandArgs: [props.molecule.coordMolNo]
+                            }).then(_ => {
+                                props.molecule.setAtomsDirty(true)
+                                props.molecule.redraw(props.glRef)
+                            })
+                        }}>Undo</Button>
+                    <Button size="sm"
+                        onClick={() => {
+                            cootCommand(props.cootWorker, {
+                                returnType: "status",
+                                command: "redo",
+                                commandArgs: [props.molecule.coordMolNo]
+                            }).then(_ => {
+                                props.molecule.setAtomsDirty(true)
+                                props.molecule.redraw(props.glRef)
+                            })
+                        }}>Redo</Button>
                     <Button size="sm"
                         onClick={() => {
                             props.molecule.getAtoms()
@@ -45,7 +66,7 @@ export const BabyGruMoleculeUI = (props) => {
                 Object.keys(props.molecule.displayObjects).map(key => {
                     return <Form.Check
                         inline
-                        label={`${key.substring(0,3)}.`}
+                        label={`${key.substring(0, 3)}.`}
                         feedbackTooltip={"Toggle on"}
                         name={key}
                         type="checkbox"
@@ -80,7 +101,8 @@ export const BabyGruMolecules = (props) => {
         {
             props.molecules.map(molecule => <BabyGruMoleculeUI key={molecule.coordMolNo}
                 molecule={molecule}
-                glRef={props.glRef}>
+                glRef={props.glRef}
+                cootWorker={props.cootWorker}>
             </BabyGruMoleculeUI>
             )
         }
