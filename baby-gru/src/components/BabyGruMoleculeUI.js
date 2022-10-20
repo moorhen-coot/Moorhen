@@ -1,7 +1,7 @@
 import { useEffect, Fragment, useState } from "react";
 import { Card, Form, Button, Row, Col } from "react-bootstrap";
 import { cootCommand, doDownload } from '../BabyGruUtils';
-import { DownloadOutlined, UndoOutlined, RedoOutlined } from '@mui/icons-material';
+import { DownloadOutlined, UndoOutlined, RedoOutlined, DeleteOutlined, FitScreenOutlined } from '@mui/icons-material';
 
 export const BabyGruMoleculeUI = (props) => {
     const [showState, setShowState] = useState({})
@@ -51,6 +51,10 @@ export const BabyGruMoleculeUI = (props) => {
                             })
                         }}><RedoOutlined /></Button>
                     <Button size="sm" variant="outlined"
+                        onClick={() => {props.molecule.centreOn(props.glRef)}}>
+                        <FitScreenOutlined />
+                    </Button>
+                    <Button size="sm" variant="outlined"
                         onClick={() => {
                             props.molecule.getAtoms()
                                 .then(reply => {
@@ -58,6 +62,10 @@ export const BabyGruMoleculeUI = (props) => {
                                 })
                         }}>
                         <DownloadOutlined />
+                    </Button>
+                    <Button size="sm" variant="outlined"
+                        onClick={() => {console.log('Molecule deletion not implemented yet')}}>
+                        <DeleteOutlined />
                     </Button>
                 </Col>
             </Row>
