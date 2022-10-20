@@ -11,9 +11,29 @@ export const BabyGruMaps = (props) => {
     useEffect(() => {
     }, [])
 
+    let placeHolder = "No map data loaded"
+    let mapTableUI = ""
+    if (props.maps.length !== 0) {
+        placeHolder = ""
+        mapTableUI = props.maps.map(map =>
+            <BabyGruMapRow {...props}
+                mapRadius={mapRadius}
+                map={map}
+            />)
+    }
+
 
     return <Fragment>
-        <Row>
+        <Table key="BabyGruMaps" style={{marginTop:'0.5rem'}}>
+            <thead><tr><th>Active</th><th>No.</th><th>Name</th><th>Download</th><th>WC</th><th>CC</th></tr></thead>
+            <tbody>
+                {
+                    mapTableUI
+                }
+            </tbody>
+        </Table>
+        <div>{placeHolder}</div>
+        <Row className="mx-auto" style={{ marginTop:'5rem', width: '20rem' }}>
             <Form.Group style={{ width: '20rem' }} controlId="downloadCoords" className="mb-3">
                 <Form.Label>Coot contouring radius</Form.Label>
                 <Form.Control type="number" value={mapRadius} onChange={(e) => {
@@ -22,18 +42,6 @@ export const BabyGruMaps = (props) => {
             </Form.Group>
 
         </Row>
-        <Table key="BabyGruMaps">
-            <thead><tr><th>Active</th><th>No.</th><th>Name</th><th>Download</th><th>WC</th><th>CC</th></tr></thead>
-            <tbody>
-                {
-                    props.maps.map(map =>
-                        <BabyGruMapRow {...props}
-                            mapRadius={mapRadius}
-                            map={map}
-                        />)
-                }
-            </tbody>
-        </Table>
     </Fragment>
 }
 
