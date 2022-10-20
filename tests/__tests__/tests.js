@@ -1,7 +1,7 @@
 
 const fs = require('fs')
 const path = require('path')
-const createCootModule = require('../../coot/mini-rsr-web.js')
+const createCootModule = require('../../coot/moorhen.js')
 
 let cootModule;
 

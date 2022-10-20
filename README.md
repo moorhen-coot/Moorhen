@@ -98,9 +98,9 @@ Again you will need to set up `ligandServer` as in the non-react example (in `re
 This example demonstrates CCP4 web assembly only by the use of `RDKit` to make ligand pictures; it further demonstrates React-Bootstrap and WebGL.
 
 8. To run a suite of javascript tests:  
-For reason of file searching, you will have to make a symbolic link to allow jest (the javascript testing framework) to find the data associated with the mini-rsr-web javascript file which defines the coot interface.  You will then need to install jest, but subsequently testing should be straightforward.  
+For reason of file searching, you will have to make a symbolic link to allow jest (the javascript testing framework) to find the data associated with the moorhen javascript file which defines the coot interface.  You will then need to install jest, but subsequently testing should be straightforward.  
 `cd tests`  
-`ln -s ../coot/mini-rsr-web.data`  
+`ln -s ../coot/moorhen.data`  
 `npm install`  
 `npm test`  
 When testing is completed, you will have to issue a `<ctrl-C>`.  
