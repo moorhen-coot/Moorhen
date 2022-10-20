@@ -88,7 +88,6 @@ export const BabyGruButtonBar = (props) => {
 }
 
 export const BabyGruSimpleEditButton = (props) => {
-    const [showPrompt, setShowPrompt] = useState(false)
     const target = useRef(null);
     const [prompt, setPrompt] = useState(null)
 
@@ -103,7 +102,6 @@ export const BabyGruSimpleEditButton = (props) => {
     const atomClickedCallback = useCallback(event => {
         props.molecules.forEach(molecule => {
             if (molecule.buffersInclude(event.detail.buffer)) {
-                setShowPrompt(false)
                 props.setCursorStyle("default")
                 const chosenAtom = cidToSpec(event.detail.atom.label)
                 let formattedArgs = props.formatArgs(molecule, chosenAtom)
@@ -132,21 +130,19 @@ export const BabyGruSimpleEditButton = (props) => {
                     props.setSelectedbuttonIndex(null)
                     props.setCursorStyle("default")
                     document.removeEventListener('atomClicked', atomClickedCallback, { once: true })
-                    setShowPrompt(false)
                     return
                 }
                 props.setSelectedbuttonIndex(props.buttonIndex)
                 props.setCursorStyle("crosshair")
                 document.addEventListener('atomClicked', atomClickedCallback, { once: true })
                 if (props.prompt) {
-                    setShowPrompt(true)
                 }
             }}>
             {props.icon}
         </Button>
 
         {
-            prompt && <Overlay target={target.current} show={showPrompt} placement="left">
+            prompt && <Overlay target={target.current} show={props.buttonIndex === props.selectedbuttonIndex} placement="left">
                 {({ placement, arrowProps, show: _show, popper, ...props }) => (
                     <div
                         {...props}
