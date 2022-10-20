@@ -187,7 +187,7 @@ class RamaPlot extends Component {
         if(this.state.plotInfo){
             const hit = this.getHit(event,self);
             if(this.props.onClick&&hit>-1){
-                this.props.onClick({pdbinKey:this.state.pdbinKey, molName:this.state.molName, chain:this.state.chainId, seqNum:this.state.plotInfo[hit].seqNum, insCode:this.state.plotInfo[hit].insCode});
+                this.props.onClick({coordMolNo:this.state.coordMolNo, molName:this.state.molName, chain:this.state.chainId, seqNum:this.state.plotInfo[hit].seqNum, insCode:this.state.plotInfo[hit].insCode});
             }
         }
     }
@@ -352,7 +352,7 @@ class RamaPlot extends Component {
         this.reqRef = null;
         this.oldImage = null;
         this.nAnimationFrames = 15;
-        this.state = {plotInfo: null, molName:null, chainId:null, pdbinKey:null};
+        this.state = {plotInfo: null, molName:null, chainId:null, coordMolNo:null};
         this.canvasRef = createRef();
         this.imageRefAll = createRef();
         this.imageRefGly = createRef();
@@ -382,7 +382,7 @@ class RamaPlot extends Component {
 
     updatePlotData(plotInfo){
         const self = this;
-        this.setState({plotInfo:plotInfo.info, molName:plotInfo.molName, chainId:plotInfo.chainId, pdbinKey:plotInfo.pdbinKey},()=>self.draw(-1));
+        this.setState({plotInfo:plotInfo.info, molName:plotInfo.molName, chainId:plotInfo.chainId, coordMolNo:plotInfo.coordMolNo},()=>self.draw(-1));
     }
 
 }
@@ -418,22 +418,21 @@ class Ramachandran extends Component {
             return;
         }
 
-        let pdbinKey = this.state.selected;        
-        const fileNames = this.props.molecules.map(molecule => molecule.fileName);
+        let coordMolNo = this.state.selected;        
+        const coordMolNums = this.props.molecules.map(molecule => molecule.coordMolNo);
         const molNames = this.props.molecules.map(molecule => molecule.name);
         let molName = null;
         
-        if(pdbinKey==="unk"){
-            pdbinKey = fileNames[0];
+        if(coordMolNo==="unk"){
+            coordMolNo = coordMolNums[0];
             molName = molNames[0];
         } else {
-            molName = molNames[fileNames.findIndex(pdbinKey)];
+            molName = molNames[coordMolNums.findIndex(coordMolNo)];
         }
 
-        const jobid = guid();
-        const inputData = {message:"get_rama", jobId:jobid, pdbinKey:pdbinKey, chainId:this.state.chainId};
+        const inputData = {message:"get_rama", coordMolNo:coordMolNo, chainId:this.state.chainId};
         let response = await this.props.postCootMessage(this.props.cootWorker, inputData);
-        this.ramaRef.current.updatePlotData({info:response.data.result, molName:molName, chainId:this.state.chainId, pdbinKey:pdbinKey});
+        this.ramaRef.current.updatePlotData({info:response.data.result, molName:molName, chainId:this.state.chainId, coordMolNo:coordMolNo});
         this.setState({plotInfo:response.data.result});
    }
 
@@ -477,11 +476,11 @@ class Ramachandran extends Component {
         let handleChange = this.handleChange.bind(self);
 
         this.props.molecules.forEach(molecule => {
-            rows.push(<option key={"rsr_"+molecule.fileName} value={molecule.fileName}>{molecule.name}</option>);
+            rows.push(<option key={molecule.coordMolNo} value={molecule.coordMolNo}>{molecule.name}</option>);
         });        
 
         if(selected==="unk" && this.props.molecules.length>0){
-            selected = this.props.molecules[0].fileName;
+            selected = this.props.molecules[0].coordMolNo;
         }
         
         //TODO - Need to introspect the pdb file to see what chains exist and pick the first one ...
