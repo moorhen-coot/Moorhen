@@ -4,7 +4,7 @@ import { BabyGruMolecules } from './BabyGruMoleculeUI';
 import { BabyGruMaps } from './BabyGruMapUI';
 import { BabyGruWebMG } from './BabyGruWebMG';
 import { v4 as uuidv4 } from 'uuid';
-import { postCootMessage } from '../BabyGruUtils';
+import { cootCommand, postCootMessage } from '../BabyGruUtils';
 import { BabyGruButtonBar } from './BabyGruButtonBar';
 import { BabyGruFileMenu } from './BabyGruFileMenu';
 import { BabyGruSequenceViewer } from './BabyGruSequenceViewer';
@@ -84,6 +84,17 @@ export const BabyGruContainer = (props) => {
         glResize()
     }, [accordionHeight, showSideBar])
 
+    useEffect(() => {
+        if (activeMap) {
+            alert(`In changes active map changed ${activeMap.mapMolNo}`)
+            cootCommand(cootWorker, {
+                returnType: "status",
+                command: "set_imol_refinement_map",
+                commandArgs: [activeMap.mapMolNo]
+            })
+        }
+    }, [activeMap])
+
     const glResize = () => {
         glRef.current.resize(webGLWidth(), webGLHeight())
         glRef.current.drawScene()
@@ -101,29 +112,29 @@ export const BabyGruContainer = (props) => {
     return <>
         <div className="border" ref={headerRef}>
 
-        <Navbar style={{justifyContent:'between', marginLeft:'1rem', marginRight:'1rem'}}>
-                    <Navbar.Brand href="#home">Baby Gru</Navbar.Brand>
-                    <Navbar.Toggle aria-controls="basic-navbar-nav" />
-                    <Navbar.Collapse id="basic-navbar-nav">
-                        <Nav className="justify-content-left">
-                            <BabyGruFileMenu
-                                molecules={molecules}
-                                setMolecules={setMolecules}
-                                maps={maps}
-                                setMaps={setMaps}
-                                cootWorker={cootWorker}
-                                setActiveMap={setActiveMap}
-                                glRef={glRef}
-                            />
-                        </Nav>
-                    </Navbar.Collapse>
-                    <Nav className="justify-content-right">
-                        {busy && <Spinner animation="border" style={{marginRight:'0.5rem'}} />}
-                        <Button className="ml-2" onClick={() => {
-                            //setShowDisplayTable(true) 
-                            setShowSideBar(!showSideBar)
-                        }}>Sidebar</Button>
+            <Navbar style={{ justifyContent: 'between', marginLeft: '1rem', marginRight: '1rem' }}>
+                <Navbar.Brand href="#home">Baby Gru</Navbar.Brand>
+                <Navbar.Toggle aria-controls="basic-navbar-nav" />
+                <Navbar.Collapse id="basic-navbar-nav">
+                    <Nav className="justify-content-left">
+                        <BabyGruFileMenu
+                            molecules={molecules}
+                            setMolecules={setMolecules}
+                            maps={maps}
+                            setMaps={setMaps}
+                            cootWorker={cootWorker}
+                            setActiveMap={setActiveMap}
+                            glRef={glRef}
+                        />
                     </Nav>
+                </Navbar.Collapse>
+                <Nav className="justify-content-right">
+                    {busy && <Spinner animation="border" style={{ marginRight: '0.5rem' }} />}
+                    <Button className="ml-2" onClick={() => {
+                        //setShowDisplayTable(true) 
+                        setShowSideBar(!showSideBar)
+                    }}>Sidebar</Button>
+                </Nav>
             </Navbar>
         </div>
         <Container fluid>
@@ -156,7 +167,7 @@ export const BabyGruContainer = (props) => {
                         <Tabs defaultActiveKey="models">
                             <Tab title="Models" eventKey="models">
                                 <div>
-                                    <BabyGruMolecules molecules={molecules} glRef={glRef} cootWorker={cootWorker}/>
+                                    <BabyGruMolecules molecules={molecules} glRef={glRef} cootWorker={cootWorker} />
                                 </div>
                             </Tab>
                             <Tab title="Maps" eventKey="maps" >
