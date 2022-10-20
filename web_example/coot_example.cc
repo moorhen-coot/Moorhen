@@ -399,7 +399,7 @@ std::string GetLabelAsymIDFromResidue(mmdb::Residue *res){
 std::string GetLabelCompIDFromResidue(mmdb::Residue *res){
     return std::string(res->GetLabelCompID());
 }
-
+ 
 std::string GetInsCodeFromResidue(mmdb::Residue *res){
     return std::string(res->GetInsCode());
 }
@@ -409,6 +409,11 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .value("SINGLE", coot::molecule_t::SINGLE)
         .value("TRIPLE", coot::molecule_t::TRIPLE)
         .value("QUINTUPLE", coot::molecule_t::QUINTUPLE)
+        .value("HEPTUPLE", coot::molecule_t::HEPTUPLE)
+        .value("SPHERE", coot::molecule_t::SPHERE)
+        .value("BIG_SPHERE", coot::molecule_t::BIG_SPHERE)
+        .value("CHAIN", coot::molecule_t::CHAIN)
+        .value("ALL", coot::molecule_t::ALL)
         ;
     class_<clipper::Coord_orth>("Coord_orth")
     .constructor<const clipper::ftype&, const clipper::ftype&, const clipper::ftype&>()
