@@ -2918,9 +2918,14 @@ class MGWebGL extends Component {
         this.drawScene();
     }
 
-    setOrigin(o) {
+    setOrigin(o, doDrawScene) {
         this.origin = o;
-        this.drawScene();
+        const originChangedEvent = new CustomEvent("originChanged", { "detail": this.origin });
+        document.dispatchEvent(originChangedEvent);
+        //default is to drawScene, unless doDrawScene provided and value is false
+        if (typeof doDrawScene === 'undefined' || doDrawScene === true) {
+            this.drawScene();
+        }
     }
 
     setAmbientLightNoUpdate(r,g,b) {
@@ -9713,17 +9718,22 @@ class MGWebGL extends Component {
             vec3.set(yshift,0,self.dy/getDeviceScale(),0);
             vec3.transformMat4(xshift,xshift,theMatrix);
             vec3.transformMat4(yshift,yshift,theMatrix);
+
+            const newOrigin = self.origin.map((coord, coordIndex)=>{
+                return coord + (self.zoom * xshift[coordIndex]/8.) - (self.zoom * yshift[coordIndex]/8.)
+            })
+            self.setOrigin(newOrigin, false)
+            /*
             self.origin[0] += xshift[0]/8.*self.zoom;
             self.origin[1] += xshift[1]/8.*self.zoom;
             self.origin[2] += xshift[2]/8.*self.zoom;
             self.origin[0] -= yshift[0]/8.*self.zoom;
             self.origin[1] -= yshift[1]/8.*self.zoom;
             self.origin[2] -= yshift[2]/8.*self.zoom;
+            */
             self.drawSceneDirty();
             //console.log(self.origin);
             self.reContourMaps();
-            const originChangeEvent = new CustomEvent("originChange", { "detail": self.origin });
-            document.dispatchEvent(originChangeEvent);
             return;
         }
 

@@ -47,7 +47,7 @@ const BabyGruMapRow = (props) => {
         nextOrigin.current = [...e.detail.map(coord => -coord)]
         if (props.map.cootContour) {
             if (busyContouring.current) {
-                console.log('Skipping originChange ', nextOrigin.current)
+                console.log('Skipping originChanged ', nextOrigin.current)
             }
             else {
                 busyContouring.current = true
@@ -63,9 +63,9 @@ const BabyGruMapRow = (props) => {
     }, [props.map.contourLevel, props.mapRadius])
 
     useEffect(() => {
-        document.addEventListener("originChange", handleOriginCallback);
+        document.addEventListener("originChanged", handleOriginCallback);
         return () => {
-            document.removeEventListener("originChange", handleOriginCallback);
+            document.removeEventListener("originChanged", handleOriginCallback);
         };
     }, [handleOriginCallback]);
 
