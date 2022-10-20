@@ -1,4 +1,4 @@
-importScripts('./wasm/mini-rsr-web.js')
+importScripts('./wasm/moorhen.js')
 importScripts('./wasm/web_example.js')
 
 let cootModule;
@@ -70,7 +70,7 @@ onmessage = function (e) {
             onRuntimeInitialized: () => {
                 postMessage({ message: 'onRuntimeInitialized' });
             },
-            mainScriptUrlOrBlob: "mini-rsr-web.js",
+            mainScriptUrlOrBlob: "moorhen.js",
             print: print,
             printErr: print,
         }).then((returnedModule) => {
