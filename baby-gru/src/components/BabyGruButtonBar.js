@@ -45,7 +45,7 @@ export const BabyGruButtonBar = (props) => {
                 }} />
 
             <BabyGruSimpleEditButton {...props}
-                buttonIndex={"1"}
+                buttonIndex={"2"}
                 selectedbuttonIndex={selectedbuttonIndex}
                 setSelectedbuttonIndex={setSelectedbuttonIndex}
                 cootCommand="refine_residues_using_atom_cid"
@@ -97,7 +97,7 @@ export const BabyGruSimpleEditButton = (props) => {
             ref={target}
             active={props.buttonIndex === props.selectedbuttonIndex}
             variant='light'
-            disabled={props.buttonIndex==0&&!props.activeMap || props.buttonIndex==1&&props.molecules.length===0}
+            disabled={props.buttonIndex!=1&&!props.activeMap || props.molecules.length===0}
             onClick={(e) => {
                 if (props.selectedbuttonIndex === e.currentTarget.value) {
                     props.setSelectedbuttonIndex(null)
