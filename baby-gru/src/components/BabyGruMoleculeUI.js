@@ -71,6 +71,7 @@ export const BabyGruMoleculeUI = (props) => {
                         feedbackTooltip={"Toggle on"}
                         name={key}
                         type="checkbox"
+                        variant="outline"
                         checked={showState[key]}
                         onChange={(e) => {
                             if (e.target.checked) {
