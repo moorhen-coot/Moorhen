@@ -55,7 +55,7 @@ export const BabyGruButtonBar = (props) => {
                     return [
                         molecule.coordMolNo,
                         `//${chosenAtom.chain_id}/${chosenAtom.res_no}`,
-                        'TRIPLE']
+                        'BIG_SPHERE']
                 }} />
 
         </ButtonGroup>

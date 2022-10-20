@@ -39,7 +39,7 @@ export const BabyGruFileMenu = (props) => {
                 newMolecule.fetchIfDirtyAndDraw('bonds', glRef, true)
             }).then(result => {
                 setMolecules([...molecules, newMolecule])
-                Promise.resolve(newMolecule)
+                return Promise.resolve(newMolecule)
             }).then(_ => {
                 newMolecule.centreOn(glRef)
             })
