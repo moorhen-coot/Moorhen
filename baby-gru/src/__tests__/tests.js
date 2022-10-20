@@ -1,7 +1,7 @@
 
 const fs = require('fs')
 const path = require('path')
-const createCootModule = require('../../public/mini-rsr-web.js')
+const createCootModule = require('../../public/moorhen.js')
 const cootWorker = new Worker('../../public/CootWorker.js')
 
 
