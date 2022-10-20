@@ -1,6 +1,7 @@
 import { useEffect, Fragment, useState } from "react";
 import { Card, Form, Button, Row, Col } from "react-bootstrap";
 import { cootCommand, doDownload } from '../BabyGruUtils';
+import { DownloadOutlined, UndoOutlined, RedoOutlined } from '@mui/icons-material';
 
 export const BabyGruMoleculeUI = (props) => {
     const [showState, setShowState] = useState({})
@@ -22,12 +23,12 @@ export const BabyGruMoleculeUI = (props) => {
 
     return <Card className="px-2" key={props.molecule.coordMolNo}>
         <Card.Header>
-            <div className="row justify-content-between">
-                <div className="col-3">
-                    {`Mol ${props.molecule.coordMolNo}:${props.molecule.name}`}
-                </div>
-                <div className="col-5">
-                    <Button size="sm"
+            <Row>
+                <Col>
+                {`Mol ${props.molecule.coordMolNo}:${props.molecule.name}`}
+                </Col>
+                <Col>
+                    <Button size="sm" variant="outlined"
                         onClick={() => {
                             cootCommand(props.cootWorker, {
                                 returnType: "status",
@@ -37,8 +38,8 @@ export const BabyGruMoleculeUI = (props) => {
                                 props.molecule.setAtomsDirty(true)
                                 props.molecule.redraw(props.glRef)
                             })
-                        }}>Undo</Button>
-                    <Button size="sm"
+                        }}><UndoOutlined /></Button>
+                    <Button size="sm" variant="outlined"
                         onClick={() => {
                             cootCommand(props.cootWorker, {
                                 returnType: "status",
@@ -48,18 +49,18 @@ export const BabyGruMoleculeUI = (props) => {
                                 props.molecule.setAtomsDirty(true)
                                 props.molecule.redraw(props.glRef)
                             })
-                        }}>Redo</Button>
-                    <Button size="sm"
+                        }}><RedoOutlined /></Button>
+                    <Button size="sm" variant="outlined"
                         onClick={() => {
                             props.molecule.getAtoms()
                                 .then(reply => {
                                     doDownload([reply.data.result.pdbData], `${props.molecule.name}`)
                                 })
                         }}>
-                        Down
+                        <DownloadOutlined />
                     </Button>
-                </div>
-            </div>
+                </Col>
+            </Row>
         </Card.Header>
         <Card.Body>
             {

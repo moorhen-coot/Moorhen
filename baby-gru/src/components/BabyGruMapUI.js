@@ -1,6 +1,8 @@
 import { createRef, Fragment, useCallback, useEffect, useState } from "react";
 import { Table, Button, Row, Col, Form, FormCheck } from "react-bootstrap";
 import { doDownload } from "../BabyGruUtils";
+import { DownloadOutlined } from '@mui/icons-material';
+
 //import { Download } from 'react-bootstrap-icons';
 
 export const BabyGruMaps = (props) => {
@@ -100,15 +102,16 @@ const BabyGruMapRow = (props) => {
         <td>{props.map.mapMolNo}</td>
         <td>{props.map.name}</td>
         <td>
-            <Button size="sm" onClick={() => {
-                props.map.getMap()
-                    .then(reply => {
-                        doDownload([reply.data.result.mapData],
-                            `${props.map.name.replace('.mtz', '.map')}`
-                        )
-                    })
-            }}>
-                Down
+            <Button size="sm" variant="outlined"
+                onClick={() => {
+                    props.map.getMap()
+                        .then(reply => {
+                            doDownload([reply.data.result.mapData],
+                                `${props.map.name.replace('.mtz', '.map')}`
+                            )
+                        })
+                }}>
+                <DownloadOutlined />
             </Button>
         </td>
         <td>
