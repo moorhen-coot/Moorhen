@@ -82,7 +82,7 @@ export const BabyGruButtonBar = (props) => {
                 cootCommand="refine_residues_using_atom_cid"
                 prompt={<BabyGruRefinementPanel />}
                 icon={<img className="baby-gru-button-icon" src="pixmaps/refine-1.svg" />}
-                formatArgs={refinementFormatArgs} />
+                formatArgs={(molecule, chosenAtom) => refinementFormatArgs(molecule, chosenAtom)} />
         </ButtonGroup>
     </div>
 }
@@ -97,7 +97,7 @@ export const BabyGruSimpleEditButton = (props) => {
     }, [props.prompt])
 
     useEffect(() => {
-        console.log('argFormatter changed')
+        console.log('argFormatter changed', props.formatArgs)
     }, [props.formatArgs])
 
     const atomClickedCallback = useCallback(event => {
@@ -126,7 +126,7 @@ export const BabyGruSimpleEditButton = (props) => {
             ref={target}
             active={props.buttonIndex === props.selectedbuttonIndex}
             variant='light'
-            disabled={props.needsMapData&&!props.activeMap || props.molecules.length===0}
+            disabled={props.needsMapData && !props.activeMap || props.molecules.length === 0}
             onClick={(e) => {
                 if (props.selectedbuttonIndex === e.currentTarget.value) {
                     props.setSelectedbuttonIndex(null)
