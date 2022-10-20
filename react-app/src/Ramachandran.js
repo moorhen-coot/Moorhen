@@ -422,17 +422,23 @@ class Ramachandran extends Component {
         const coordMolNums = this.props.molecules.map(molecule => molecule.coordMolNo);
         const molNames = this.props.molecules.map(molecule => molecule.name);
         let molName = null;
+        let moleculeIndex = 0;
         
         if(coordMolNo==="unk"){
-            coordMolNo = coordMolNums[0];
-            molName = molNames[0];
+            coordMolNo = coordMolNums[moleculeIndex];
+            molName = molNames[moleculeIndex];
         } else {
-            molName = molNames[coordMolNums.findIndex(coordMolNo)];
-        }
+            moleculeIndex = coordMolNums.findIndex(num => num == coordMolNo)
+            molName = molNames[moleculeIndex];
+        }        
 
         const inputData = {message:"get_rama", coordMolNo:coordMolNo, chainId:this.state.chainId};
         let response = await this.props.postCootMessage(this.props.cootWorker, inputData);
         this.ramaRef.current.updatePlotData({info:response.data.result, molName:molName, chainId:this.state.chainId, coordMolNo:coordMolNo});
+        
+        this.props.setActiveCoordMolNo(coordMolNo);
+        this.props.setactiveChainId(this.state.chainId);
+        this.props.setMoleculeIndex(moleculeIndex)
         this.setState({plotInfo:response.data.result});
    }
 

@@ -1,11 +1,29 @@
 import { Fragment, useEffect, useRef, useState } from "react"
 import { Ramachandran } from "../WebGL/Ramachandran"
 import { cootCommand, postCootMessage } from "../BabyGruUtils"
+import { inspect } from 'util'
+
 
 export const BabyGruRamachandran = (props) => {
     const ramachandranRef = useRef();
     const [clickedResidue, setClickedResidue] = useState(null)
     const [message, setMessage] = useState("")
+    const [activeCoordMolNo, setActiveCoordMolNo] = useState(null)
+    const [activeChainId, setactiveChainId] = useState(null)
+    const [moleculeIndex, setMoleculeIndex] = useState(null)
+
+    
+    // IF CACHED ATOMS OF SELECTEDMOLECULE CHANGES AND ONLY IF THIS IS AN ACTIVE WIDGET
+    useEffect(() => {
+
+        if(activeCoordMolNo === null || activeChainId === null || props.molecules.length === 0) {
+            return;
+        }
+
+        ramachandranRef.current.getRama();
+
+    }, [inspect(props.molecules[moleculeIndex])])
+
 
     // TODO: REFACTOR THIS CODE, IT IS THE SAME AS IN THE SEQUENCE VIEWER...
     useEffect(() => {
@@ -45,6 +63,9 @@ export const BabyGruRamachandran = (props) => {
                     cootWorker={props.cootWorker} 
                     postCootMessage={postCootMessage}
                     setMessage={setMessage}
+                    setactiveChainId={setactiveChainId}
+                    setActiveCoordMolNo={setActiveCoordMolNo}
+                    setMoleculeIndex={setMoleculeIndex}
                 />
                 <div>
                     <span>{message}</span>
