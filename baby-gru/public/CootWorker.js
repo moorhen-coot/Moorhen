@@ -224,24 +224,4 @@ onmessage = function (e) {
         }
     }
 
-
-    else if (e.data.message === 'flipPeptide') {
-        try {
-            console.log('Received flipPeptide', e.data)
-            const { coordMolNo, cid } = e.data
-            const [molNo, modelId, chainId, resNo] = cid.split('/')
-            const resSpec = new cootModule.residue_spec_t(chainId, parseInt(resNo), "");
-            const status = molecules_container.flipPeptide_rs(coordMolNo, resSpec, "")
-            postMessage({
-                messageId: e.data.messageId,
-                consoleMessage: `Flipped Peptide command ${chainId} ${parseInt(resNo)} return ${status}`,
-                message: e.data.message,
-                result: {}
-            })
-        }
-        catch (err) {
-            print(err)
-        }
-    }
-
 }

@@ -4,7 +4,6 @@ import { cootCommand, postCootMessage } from "../BabyGruUtils"
 import { circles_fragment_shader_source } from "../WebGL/circle-fragment-shader";
 
 export const BabyGruButtonBar = (props) => {
-    const atomClickedBinding = createRef(null);
     const [selectedbuttonIndex, setSelectedbuttonIndex] = useState(null)
 
     return <div
@@ -45,6 +44,20 @@ export const BabyGruButtonBar = (props) => {
                         '']
                 }} />
 
+            <BabyGruSimpleEditButton {...props}
+                buttonIndex={"1"}
+                selectedbuttonIndex={selectedbuttonIndex}
+                setSelectedbuttonIndex={setSelectedbuttonIndex}
+                cootCommand="refine_residues_using_atom_cid"
+                prompt="Click atom for centre of refinement"
+                icon={<img className="baby-gru-button-icon" src="pixmaps/refine-1.svg" />}
+                formatArgs={(molecule, chosenAtom) => {
+                    return [
+                        molecule.coordMolNo,
+                        `//${chosenAtom.chain_id}/${chosenAtom.res_no}`,
+                        'BIG_SPHERE']
+                }} />
+
         </ButtonGroup>
     </div>
 }
@@ -60,18 +73,21 @@ export const BabyGruSimpleEditButton = (props) => {
 
     const atomClickedCallback = useCallback(event => {
         props.molecules.forEach(molecule => {
-            setShowPrompt(false)
-            props.setCursorStyle("default")
-            const chosenAtom = cidToSpec(event.detail)
-            cootCommand(props.cootWorker, {
-                returnType: "status",
-                command: props.cootCommand,
-                commandArgs: props.formatArgs(molecule, chosenAtom)
-            }).then(_ => {
-                molecule.setAtomsDirty(true)
-                molecule.redraw(props.glRef)
-                props.setSelectedbuttonIndex(null)
-            })
+            if (molecule.buffersInclude(event.detail.buffer)) {
+                console.log('Passed buffersInclude')
+                setShowPrompt(false)
+                props.setCursorStyle("default")
+                const chosenAtom = cidToSpec(event.detail.atom.label)
+                cootCommand(props.cootWorker, {
+                    returnType: "status",
+                    command: props.cootCommand,
+                    commandArgs: props.formatArgs(molecule, chosenAtom)
+                }).then(_ => {
+                    molecule.setAtomsDirty(true)
+                    molecule.redraw(props.glRef)
+                    props.setSelectedbuttonIndex(null)
+                })
+            }
         })
     })
 

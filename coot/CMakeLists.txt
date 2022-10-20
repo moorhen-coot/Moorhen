@@ -287,6 +287,7 @@ FILE(WRITE ${CMAKE_BINARY_DIR}/coot/coot_env.js
 Module.preRun = [function() {ENV.COOT_DATA_DIR="${coot_src}"}, function() {ENV.COOT_REFMAC_LIB_DIR="${CMAKE_BINARY_DIR}/ccp4_lib"}, function() {ENV.CCP4_LIB="${CMAKE_BINARY_DIR}/ccp4_lib"}]
 )
 
+FILE(MAKE_DIRECTORY "data/COOT_BACKUP/")
 FILE(MAKE_DIRECTORY "data/coot/data/metal/")
 FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/a")
 FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/c")
@@ -395,7 +396,7 @@ add_executable(mini-rsr-web ../web_example/coot_example.cc)
 target_link_options(mini-rsr-web PRIVATE -fexceptions -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sUSE_PTHREADS=1 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createRSRModule -sEXPORTED_RUNTIME_METHODS=['FS','readFile'] --preload-file data  --pre-js coot_env_web.js)
 target_link_directories(mini-rsr-web PUBLIC ../ssm ../mmdb2 ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4 ../fftw ../rfftw ../ccp4 ../privateer ../rvapi ../gesamt ../ccp4mg ../lib ../boost/stage/lib)
 target_link_libraries(mini-rsr-web ssm rvapi gesamtlib mmdb2 clipper-minimol clipper-phs clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 privateer clipper-minimol ccp4mg coot gsl gslcblas boost_thread m z idbfs.js)
-target_include_directories(mini-rsr-web PRIVATE ${coot_src} ${coot_src}/src ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw ../include)
+target_include_directories(mini-rsr-web PRIVATE ${coot_src} ${coot_src}/src ../checkout/boost_1_80_0 ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw ../include)
 target_compile_options(mini-rsr-web PUBLIC -fexceptions -sUSE_PTHREADS=1 -pthread -DFFTW_ENABLE_FLOAT -D_CCP4_WEB_EXAMPLE_)
 
 #[[
@@ -483,14 +484,14 @@ target_link_libraries(find-waters mmdb2 ssm clipper-mmdb clipper-cif clipper-cor
 target_include_directories(find-waters PRIVATE ${coot_src} ${coot_src}/src ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw)
 target_compile_options(find-waters PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
 ]]
-
+#[[
 add_executable(density_fit_analysis-test density_fit_analysis-test.cc)
 target_link_options(density_fit_analysis-test PRIVATE -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1)
 target_link_directories(density_fit_analysis-test PUBLIC ../mmdb2 ../ssm ../ccp4 ../lib ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4)
 target_link_libraries(density_fit_analysis-test mmdb2 ssm clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 coot gsl gslcblas nodefs.js)
-target_include_directories(density_fit_analysis-test PRIVATE ${coot_src} ${coot_src}/src ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw ../checkout/glm-0.9.9.8)
+target_include_directories(density_fit_analysis-test PRIVATE ${coot_src} ${coot_src}/src ../checkout/boost_1_80_0 ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw ../checkout/glm-0.9.9.8)
 target_compile_options(density_fit_analysis-test PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
-
+]]
 #[[
 add_executable(find-ligand ${coot_src}/ligand/find-ligand.cc)
 target_link_options(find-ligand PRIVATE -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 --pre-js coot_env.js)
@@ -532,7 +533,7 @@ add_executable(test-molecules-container ${coot_src}/api/test_molecules_container
 target_link_options(test-molecules-container PRIVATE -sEXIT_RUNTIME=1 -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sUSE_PTHREADS=1 -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 --pre-js coot_env.js)
 target_link_directories(test-molecules-container PUBLIC ../mmdb2 ../ssm ../ccp4 ../lib ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4)
 target_link_libraries(test-molecules-container mmdb2 ssm clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 coot gsl gslcblas nodefs.js)
-target_include_directories(test-molecules-container PRIVATE ${coot_src} ${coot_src}/src ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw ${dependency_install_dir}/include ../checkout/glm-0.9.9.8)
+target_include_directories(test-molecules-container PRIVATE ${coot_src} ${coot_src}/src ../include ../checkout/boost_1_80_0 ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw ${dependency_install_dir}/include ../checkout/glm-0.9.9.8)
 target_compile_options(test-molecules-container PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
 
 install(TARGETS mini-rsr-web DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../react-app/public/wasm)

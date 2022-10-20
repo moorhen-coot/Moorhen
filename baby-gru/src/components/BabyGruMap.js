@@ -11,6 +11,32 @@ export function BabyGruMap(cootWorker) {
     this.displayObjects = { 'Coot': [] }
 }
 
+BabyGruMap.prototype.loadToCootFromURL = function (url, mapName) {
+    const $this = this
+    return new Promise((resolve, reject) => {
+        console.log('Off to fetch url', url)
+        //Remember to change this to an appropriate URL for downloads in produciton, and to deal with the consequent CORS headache
+        return fetch(url, { mode: "no-cors" })
+            .then(response => {
+                return response.blob()
+            }).then(reflectionData => reflectionData.arrayBuffer())
+            .then(arrayBuffer => {
+                return postCootMessage($this.cootWorker, {
+                    message: 'read_mtz',
+                    name: mapName,
+                    data: new Uint8Array(arrayBuffer)
+                }).then(reply => {
+                    $this.name = reply.data.result.name
+                    $this.mapMolNo = reply.data.result.mapMolNo
+                    resolve($this)
+                })
+            })
+            .catch((err) => { console.log(err) })
+    })
+}
+
+
+
 BabyGruMap.prototype.loadToCootFromFile = function (source) {
     const $this = this
     return new Promise((resolve, reject) => {
@@ -123,7 +149,7 @@ BabyGruMap.prototype.doCootContour = function (gl, x, y, z, radius, contourLevel
 
     const $this = this
 
-    return new Promise((resolve, reject)=>{
+    return new Promise((resolve, reject) => {
         cootCommand($this.cootWorker, {
             returnType: "lines_mesh",
             command: "get_map_contours_mesh",
@@ -142,4 +168,11 @@ BabyGruMap.prototype.doCootContour = function (gl, x, y, z, radius, contourLevel
         })
     })
 
+}
+
+BabyGruMap.prototype.cootContourInPlace = function (gl, radius) {
+    const $this = this
+    const commandArgs = [gl, ...gl.origin.map(coord => -coord), radius, $this.contourLevel]
+    console.log('cootContourInPlace in place with ', commandArgs)
+    return $this.doCootContour(...commandArgs)
 }
