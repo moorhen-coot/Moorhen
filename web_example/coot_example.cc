@@ -404,6 +404,10 @@ std::string GetInsCodeFromResidue(mmdb::Residue *res){
     return std::string(res->GetInsCode());
 }
 
+int refine_residues_modeToInt(coot::molecule_t::refine_residues_mode val){
+    return val;
+}
+
 EMSCRIPTEN_BINDINGS(my_module) {
     enum_<coot::molecule_t::refine_residues_mode>("refine_residues_mode")
         .value("SINGLE", coot::molecule_t::SINGLE)
@@ -669,6 +673,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .element(emscripten::index<2>())
     ;
     //function("mini_rsr",&mini_rsr);
+    function("refine_residues_modeToInt",&refine_residues_modeToInt);
     function("flipPeptide",&flipPeptide);
     function("getRamachandranData",&getRamachandranData);
     function("getRotamersMap",&getRotamersMap);
