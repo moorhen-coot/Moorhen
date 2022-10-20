@@ -21,11 +21,11 @@ export const BabyGruMoleculeUI = (props) => {
         props.molecule.displayObjects.rotamer.length,
     ])
 
-    return <Card className="px-2" key={props.molecule.coordMolNo}>
+    return <Card className="px-0"  style={{marginTop:'0.5rem', padding:'0'}} key={props.molecule.coordMolNo}>
         <Card.Header>
-            <Row>
+            <Row className='align-items-center'>
                 <Col>
-                {`Mol ${props.molecule.coordMolNo}:${props.molecule.name}`}
+                    {`#${props.molecule.coordMolNo+1} Mol. ${props.molecule.name}`}
                 </Col>
                 <Col>
                     <Button size="sm" variant="outlined"
