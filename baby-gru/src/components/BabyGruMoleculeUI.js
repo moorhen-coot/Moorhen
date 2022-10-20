@@ -25,7 +25,7 @@ export const BabyGruMoleculeUI = (props) => {
         <Card.Header>
             <Row className='align-items-center'>
                 <Col>
-                    {`#${props.molecule.coordMolNo+1} Mol. ${props.molecule.name}`}
+                    {`#${props.molecule.coordMolNo} Mol. ${props.molecule.name}`}
                 </Col>
                 <Col>
                     <Button size="sm" variant="outlined"
