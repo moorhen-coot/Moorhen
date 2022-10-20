@@ -15,7 +15,6 @@ export const BabyGruRamachandran = (props) => {
     
     // IF CACHED ATOMS OF SELECTEDMOLECULE CHANGES AND ONLY IF THIS IS AN ACTIVE WIDGET
     useEffect(() => {
-
         if(activeCoordMolNo === null || activeChainId === null || props.molecules.length === 0) {
             return;
         }
