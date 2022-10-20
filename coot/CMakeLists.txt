@@ -287,6 +287,7 @@ FILE(WRITE ${CMAKE_BINARY_DIR}/coot/coot_env.js
 Module.preRun = [function() {ENV.COOT_DATA_DIR="${coot_src}"}, function() {ENV.COOT_REFMAC_LIB_DIR="${CMAKE_BINARY_DIR}/ccp4_lib"}, function() {ENV.CCP4_LIB="${CMAKE_BINARY_DIR}/ccp4_lib"}]
 )
 
+FILE(MAKE_DIRECTORY "data/COOT_BACKUP/")
 FILE(MAKE_DIRECTORY "data/coot/data/metal/")
 FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/a")
 FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/c")
