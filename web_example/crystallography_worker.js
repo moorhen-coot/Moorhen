@@ -1,6 +1,6 @@
 // FIXME - Handle mmCIF, data cif, monomers(?)
 // FIXME - We may not want multiple modules (CCP4Module,RSRModule) since files have to be loaded into FS of each one.
-// FIXME - Does not seem to work in Safari. Importing mini-rsr-web.js is *not possible* in a thread on Safari, because it uses
+// FIXME - Does not seem to work in Safari. Importing moorhen.js is *not possible* in a thread on Safari, because it uses
 //         Workers internally to do the threading. And Safari does not support nested Workers, not even in technology preview.
 
 let currentTaskName = "";
@@ -28,14 +28,14 @@ createCCP4Module({print: rsrPrint,printErr: rsrPrint})
         console.log(e);
         });
 
-importScripts('./mini-rsr-web.js');
+importScripts('./moorhen.js');
 
 const Lib = {
     locateFile: (file) => file,
     onRuntimeInitialized: () => {
         console.log('onRuntimeInitialized');
     },
-    mainScriptUrlOrBlob: "./mini-rsr-web.js",
+    mainScriptUrlOrBlob: "./moorhen.js",
     print: rsrPrint,
     printErr: rsrPrint,
 };

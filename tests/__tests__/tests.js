@@ -1,7 +1,7 @@
 
 const fs = require('fs')
 const path = require('path')
-const createCootModule = require('../../coot/mini-rsr-web.js')
+const createCootModule = require('../../coot/moorhen.js')
 
 let cootModule;
 
@@ -19,6 +19,17 @@ describe('Testing molecules_container_js', () => {
 
     beforeAll(() => {
         setupFunctions.copyExampleDataToFauxFS()
+    })
+
+    test('Test enums', () => {
+        expect(cootModule.refine_residues_modeToInt(cootModule.refine_residues_mode.SINGLE)).toBe(0)
+        expect(cootModule.refine_residues_modeToInt(cootModule.refine_residues_mode.TRIPLE)).toBe(1)
+        expect(cootModule.refine_residues_modeToInt(cootModule.refine_residues_mode.QUINTUPLE)).toBe(2)
+        expect(cootModule.refine_residues_modeToInt(cootModule.refine_residues_mode.HEPTUPLE)).toBe(3)
+        expect(cootModule.refine_residues_modeToInt(cootModule.refine_residues_mode.SPHERE)).toBe(4)
+        expect(cootModule.refine_residues_modeToInt(cootModule.refine_residues_mode.BIG_SPHERE)).toBe(5)
+        expect(cootModule.refine_residues_modeToInt(cootModule.refine_residues_mode.CHAIN)).toBe(6)
+        expect(cootModule.refine_residues_modeToInt(cootModule.refine_residues_mode.ALL)).toBe(7)
     })
 
     test('Test read_pdb from faux file system', () => {

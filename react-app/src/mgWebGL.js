@@ -1443,7 +1443,7 @@ class MGWebGL extends Component {
         quat4.set(this.myQuat,0,0,0,-1);
         //var testmat = quatToMat4(this.myQuat)
         //alert(mat4.str(testmat))
-        this.zoom = 1.0;
+        this.setZoom(1.0)
 
         this.gl_clipPlane0 = new Float32Array(4);
         this.gl_clipPlane1 = new Float32Array(4);
@@ -2918,9 +2918,14 @@ class MGWebGL extends Component {
         this.drawScene();
     }
 
-    setOrigin(o) {
+    setOrigin(o, doDrawScene) {
         this.origin = o;
-        this.drawScene();
+        const originChangedEvent = new CustomEvent("originChanged", { "detail": this.origin });
+        document.dispatchEvent(originChangedEvent);
+        //default is to drawScene, unless doDrawScene provided and value is false
+        if (typeof doDrawScene === 'undefined' || doDrawScene === true) {
+            this.drawScene();
+        }
     }
 
     setAmbientLightNoUpdate(r,g,b) {
@@ -2959,9 +2964,18 @@ class MGWebGL extends Component {
         this.drawScene();
     }
 
-    setZoom(z) {
+    setZoom(z, drawScene) {
+        const oldZoom = this.zoom
         this.zoom = z;
-        this.drawScene();
+        var zoomChanged = new CustomEvent("zoomChanged", {
+            "detail": {
+                oldZoom,
+                newZoom: z
+            }
+        });
+        document.dispatchEvent(zoomChanged);
+
+        if (drawScene) this.drawScene();
     }
 
     setShowAxes(a) {
@@ -8117,11 +8131,11 @@ class MGWebGL extends Component {
         } else {
             factor = 1. - 5/50.;
         }
-        this.zoom = this.zoom * factor;
-        if(this.zoom < .01){
-            this.zoom = 0.01;
+        let newZoom = this.zoom * factor;
+        if(newZoom < .01){
+            newZoom = 0.01;
         }
-        this.drawScene();
+        this.setZoom(newZoom, true)
         return;
     }
 
@@ -9704,26 +9718,32 @@ class MGWebGL extends Component {
             vec3.set(yshift,0,self.dy/getDeviceScale(),0);
             vec3.transformMat4(xshift,xshift,theMatrix);
             vec3.transformMat4(yshift,yshift,theMatrix);
+
+            const newOrigin = self.origin.map((coord, coordIndex)=>{
+                return coord + (self.zoom * xshift[coordIndex]/8.) - (self.zoom * yshift[coordIndex]/8.)
+            })
+            self.setOrigin(newOrigin, false)
+            /*
             self.origin[0] += xshift[0]/8.*self.zoom;
             self.origin[1] += xshift[1]/8.*self.zoom;
             self.origin[2] += xshift[2]/8.*self.zoom;
             self.origin[0] -= yshift[0]/8.*self.zoom;
             self.origin[1] -= yshift[1]/8.*self.zoom;
             self.origin[2] -= yshift[2]/8.*self.zoom;
+            */
             self.drawSceneDirty();
             //console.log(self.origin);
             self.reContourMaps();
-            const originChangeEvent = new CustomEvent("originChange", { "detail": self.origin });
-            document.dispatchEvent(originChangeEvent);
             return;
         }
 
         if(event.altKey){
             var factor = 1. - self.dy/50.;
-            self.zoom = self.zoom * factor;
-            if(self.zoom < .01){
-                self.zoom = 0.01;
+            let newZoom = self.zoom * factor;
+            if(newZoom < .01){
+                newZoom = 0.01;
             }
+            self.setZoom(newZoom)
             self.drawSceneDirty();
             return;
         }
@@ -9800,7 +9820,8 @@ class MGWebGL extends Component {
             saveCanvas.height = this.canvas.height*ncells_y;
             var ctx = saveCanvas.getContext("2d");
 
-            this.zoom /= ncells_x;
+            let newZoom = this.zoom / ncells_x
+            this.setZoom(newZoom)
 
             var jj = 0;
             for(var j=Math.floor(-ncells_y/2);j<Math.floor(ncells_y/2);j++){
@@ -9833,8 +9854,9 @@ class MGWebGL extends Component {
                 jj++;
             }
 
+            newZoom = this.zoom * ncells_x
+            this.setZoom(newZoom)
 
-            this.zoom *= ncells_x;
             this.origin = [oldOrigin[0], oldOrigin[1], oldOrigin[2]];
             self.save_pixel_data = false;
             this.drawScene();
@@ -9874,7 +9896,7 @@ class MGWebGL extends Component {
         if(event.keyCode===114||event.keyCode===82){
             self.myQuat = quat4.create();
             quat4.set(self.myQuat,0,0,0,-1);
-            self.zoom = 1.0;
+            self.setZoom(1.0)
             self.clickedAtoms = [];
             self.drawScene();
         }

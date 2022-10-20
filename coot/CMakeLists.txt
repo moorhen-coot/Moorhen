@@ -47,7 +47,7 @@ ${coot_src}/skeleton/graphical_skel.cc
 ${coot_src}/ideal/pepflip.cc
 ${coot_src}/ideal/parallel-planes.cc
 ${coot_src}/ideal/simple-restraint.cc
-${coot_src}/ideal/mini-rsr.cc
+#${coot_src}/ideal/mini-rsr.cc
 ${coot_src}/ideal/ng.cc
 ${coot_src}/ideal/torsion-bonds.cc
 ${coot_src}/ideal/chi-squareds.cc
@@ -357,12 +357,14 @@ target_link_libraries(dynamic_read_lib mmdb2 ssm clipper-mmdb clipper-cif clippe
 target_include_directories(dynamic_read_lib PRIVATE ${coot_src} ${coot_src}/src ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw)
 target_compile_options(dynamic_read_lib PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
 
+#[[
 add_executable(fix-nomenclature ${coot_src}/src/fix-nomenclature.cc)
 target_link_options(fix-nomenclature PRIVATE -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 --pre-js coot_env.js)
 target_link_directories(fix-nomenclature PUBLIC ../mmdb2 ../ssm ../ccp4 ../lib ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4)
 target_link_libraries(fix-nomenclature mmdb2 ssm clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 coot gsl nodefs.js)
 target_include_directories(fix-nomenclature PRIVATE ${coot_src} ${coot_src}/src ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw)
 target_compile_options(fix-nomenclature PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
+]]
 
 add_executable(rama-data ${coot_src}/auxil/rama/rama-data.cc)
 target_link_options(rama-data PRIVATE -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 --pre-js coot_env.js)
@@ -385,19 +387,21 @@ target_link_libraries(bfactan mmdb2 ssm clipper-mmdb clipper-cif clipper-core cl
 target_include_directories(bfactan PRIVATE ${coot_src} ${coot_src}/src ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw)
 target_compile_options(bfactan PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
 
+#[[
 add_executable(mini-rsr ${coot_src}/ideal/mini-rsr.cc)
 target_link_options(mini-rsr PRIVATE -fexceptions -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sUSE_PTHREADS=1 -sEXIT_RUNTIME=1 -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 -sASSERTIONS=1 --pre-js coot_env.js)
 target_link_directories(mini-rsr PUBLIC ../mmdb2 ../ssm ../ccp4 ../lib ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4)
 target_link_libraries(mini-rsr mmdb2 ssm clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 coot gsl gslcblas nodefs.js)
 target_include_directories(mini-rsr PRIVATE ${coot_src} ${coot_src}/src ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw ../include)
 target_compile_options(mini-rsr PUBLIC -fexceptions -pthread -D_MINI_RSR_MAIN_ -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -s USE_PTHREADS=1 -DNODERAWFS)
+]]
 
-add_executable(mini-rsr-web ../web_example/coot_example.cc)
-target_link_options(mini-rsr-web PRIVATE -fexceptions -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sUSE_PTHREADS=1 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createRSRModule -sEXPORTED_RUNTIME_METHODS=['FS','readFile'] --preload-file data  --pre-js coot_env_web.js)
-target_link_directories(mini-rsr-web PUBLIC ../ssm ../mmdb2 ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4 ../fftw ../rfftw ../ccp4 ../privateer ../rvapi ../gesamt ../ccp4mg ../lib ../boost/stage/lib)
-target_link_libraries(mini-rsr-web ssm rvapi gesamtlib mmdb2 clipper-minimol clipper-phs clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 privateer clipper-minimol ccp4mg coot gsl gslcblas boost_thread m z idbfs.js)
-target_include_directories(mini-rsr-web PRIVATE ${coot_src} ${coot_src}/src ../checkout/boost_1_80_0 ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw ../include)
-target_compile_options(mini-rsr-web PUBLIC -fexceptions -sUSE_PTHREADS=1 -pthread -DFFTW_ENABLE_FLOAT -D_CCP4_WEB_EXAMPLE_)
+add_executable(moorhen ../web_example/coot_example.cc)
+target_link_options(moorhen PRIVATE -fexceptions -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sUSE_PTHREADS=1 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createRSRModule -sEXPORTED_RUNTIME_METHODS=['FS','readFile'] --preload-file data  --pre-js coot_env_web.js)
+target_link_directories(moorhen PUBLIC ../ssm ../mmdb2 ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4 ../fftw ../rfftw ../ccp4 ../privateer ../rvapi ../gesamt ../ccp4mg ../lib ../boost/stage/lib)
+target_link_libraries(moorhen ssm rvapi gesamtlib mmdb2 clipper-minimol clipper-phs clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 privateer clipper-minimol ccp4mg coot gsl gslcblas boost_thread m z idbfs.js)
+target_include_directories(moorhen PRIVATE ${coot_src} ${coot_src}/src ../checkout/boost_1_80_0 ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw ../include)
+target_compile_options(moorhen PUBLIC -fexceptions -sUSE_PTHREADS=1 -pthread -DFFTW_ENABLE_FLOAT -D_CCP4_WEB_EXAMPLE_)
 
 #[[
 add_executable(mmrrcc ${coot_src}/coot-utils/mmrrcc.cc)
@@ -536,11 +540,11 @@ target_link_libraries(test-molecules-container mmdb2 ssm clipper-mmdb clipper-ci
 target_include_directories(test-molecules-container PRIVATE ${coot_src} ${coot_src}/src ../include ../checkout/boost_1_80_0 ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw ${dependency_install_dir}/include ../checkout/glm-0.9.9.8)
 target_compile_options(test-molecules-container PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
 
-install(TARGETS mini-rsr-web DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../react-app/public/wasm)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/mini-rsr-web.wasm
-${CMAKE_CURRENT_BINARY_DIR}/mini-rsr-web.worker.js
-${CMAKE_CURRENT_BINARY_DIR}/mini-rsr-web.js
-${CMAKE_CURRENT_BINARY_DIR}/mini-rsr-web.data
+install(TARGETS moorhen DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../react-app/public/wasm)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/moorhen.wasm
+${CMAKE_CURRENT_BINARY_DIR}/moorhen.worker.js
+${CMAKE_CURRENT_BINARY_DIR}/moorhen.js
+${CMAKE_CURRENT_BINARY_DIR}/moorhen.data
 ${CMAKE_CURRENT_BINARY_DIR}/coot_env_web.js
 DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../react-app/public/wasm)
 
@@ -559,10 +563,10 @@ ${coot_src}/textures/rama-plot-pro-normal.png
 ${coot_src}/textures/rama-plot-pro-outlier.png
 DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../react-app/public)
 
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/mini-rsr-web.wasm
-${CMAKE_CURRENT_BINARY_DIR}/mini-rsr-web.worker.js
-${CMAKE_CURRENT_BINARY_DIR}/mini-rsr-web.js
-${CMAKE_CURRENT_BINARY_DIR}/mini-rsr-web.data
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/moorhen.wasm
+${CMAKE_CURRENT_BINARY_DIR}/moorhen.worker.js
+${CMAKE_CURRENT_BINARY_DIR}/moorhen.js
+${CMAKE_CURRENT_BINARY_DIR}/moorhen.data
 ${CMAKE_CURRENT_BINARY_DIR}/coot_env_web.js
 DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../baby-gru/public/wasm)
 

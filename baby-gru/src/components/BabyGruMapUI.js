@@ -1,6 +1,8 @@
 import { createRef, Fragment, useCallback, useEffect, useState } from "react";
 import { Table, Button, Row, Col, Form, FormCheck } from "react-bootstrap";
 import { doDownload } from "../BabyGruUtils";
+import { DownloadOutlined } from '@mui/icons-material';
+
 //import { Download } from 'react-bootstrap-icons';
 
 export const BabyGruMaps = (props) => {
@@ -45,7 +47,7 @@ const BabyGruMapRow = (props) => {
         nextOrigin.current = [...e.detail.map(coord => -coord)]
         if (props.map.cootContour) {
             if (busyContouring.current) {
-                console.log('Skipping originChange ', nextOrigin.current)
+                console.log('Skipping originChanged ', nextOrigin.current)
             }
             else {
                 busyContouring.current = true
@@ -61,9 +63,9 @@ const BabyGruMapRow = (props) => {
     }, [props.map.contourLevel, props.mapRadius])
 
     useEffect(() => {
-        document.addEventListener("originChange", handleOriginCallback);
+        document.addEventListener("originChanged", handleOriginCallback);
         return () => {
-            document.removeEventListener("originChange", handleOriginCallback);
+            document.removeEventListener("originChanged", handleOriginCallback);
         };
     }, [handleOriginCallback]);
 
@@ -100,15 +102,16 @@ const BabyGruMapRow = (props) => {
         <td>{props.map.mapMolNo}</td>
         <td>{props.map.name}</td>
         <td>
-            <Button size="sm" onClick={() => {
-                props.map.getMap()
-                    .then(reply => {
-                        doDownload([reply.data.result.mapData],
-                            `${props.map.name.replace('.mtz', '.map')}`
-                        )
-                    })
-            }}>
-                Down
+            <Button size="sm" variant="outlined"
+                onClick={() => {
+                    props.map.getMap()
+                        .then(reply => {
+                            doDownload([reply.data.result.mapData],
+                                `${props.map.name.replace('.mtz', '.map')}`
+                            )
+                        })
+                }}>
+                <DownloadOutlined />
             </Button>
         </td>
         <td>

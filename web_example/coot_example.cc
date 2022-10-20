@@ -39,11 +39,11 @@
 #include "cartesian.h"
 #include "geomutil.h"
 
-int mini_rsr_main(int argc, char **argv);
+//int mini_rsr_main(int argc, char **argv);
 
 using namespace emscripten;
 
-extern void clear_getopt_initialized();
+//extern void clear_getopt_initialized();
 
 struct RamachandranInfo {
     std::string chainId;
@@ -323,6 +323,7 @@ int flipPeptide(const std::string &pdbin, const std::string &chainId, const int 
 }
 */
 
+/*
 int mini_rsr(const std::vector<std::string> &args){
 
     int argc = args.size();
@@ -345,6 +346,7 @@ int mini_rsr(const std::vector<std::string> &args){
 
     return retval;
 }
+*/
 
 class molecules_container_js : public molecules_container_t {
     public:
@@ -400,6 +402,10 @@ std::string GetLabelCompIDFromResidue(mmdb::Residue *res){
  
 std::string GetInsCodeFromResidue(mmdb::Residue *res){
     return std::string(res->GetInsCode());
+}
+
+int refine_residues_modeToInt(coot::molecule_t::refine_residues_mode val){
+    return val;
 }
 
 EMSCRIPTEN_BINDINGS(my_module) {
@@ -666,7 +672,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .element(emscripten::index<1>())
         .element(emscripten::index<2>())
     ;
-    function("mini_rsr",&mini_rsr);
+    //function("mini_rsr",&mini_rsr);
+    function("refine_residues_modeToInt",&refine_residues_modeToInt);
     function("flipPeptide",&flipPeptide);
     function("getRamachandranData",&getRamachandranData);
     function("getRotamersMap",&getRotamersMap);
