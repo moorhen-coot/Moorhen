@@ -187,8 +187,7 @@ class RamaPlot extends Component {
         if(this.state.plotInfo){
             const hit = this.getHit(event,self);
             if(this.props.onClick&&hit>-1){
-                const molName = "UNK";
-                this.props.onClick({molKey:this.state.key,molName:molName,chain:this.state.plotInfo[hit].chainId,seqNum:this.state.plotInfo[hit].seqNum,insCode:this.state.plotInfo[hit].insCode});
+                this.props.onClick({coordMolNo:this.state.coordMolNo, molName:this.state.molName, chain:this.state.chainId, seqNum:this.state.plotInfo[hit].seqNum, insCode:this.state.plotInfo[hit].insCode});
             }
         }
     }
@@ -203,7 +202,10 @@ class RamaPlot extends Component {
         if(this.state.plotInfo){
             const hit = this.getHit(event,self);
             this.hit = hit;
-            if(hit>-1) animate();
+            if(hit>-1){
+                animate()
+                this.props.setMessage(`${this.state.molName} / ${this.state.chainId} / ${this.state.plotInfo[hit].seqNum} (${this.state.plotInfo[hit].restype})`)
+            };
         }
     }
 
@@ -255,79 +257,79 @@ class RamaPlot extends Component {
         this.imageData = ctx.getImageData(0,0,this.canvasRef.current.width, this.canvasRef.current.height);
 
         const imgAll = new window.Image();
-        imgAll.src = "/rama2_all.png";
+        imgAll.src = "pixmaps/rama2_all.png";
         imgAll.crossOrigin="Anonymous";
         this.imageRefAll.current = imgAll;
         this.imageRefAll.current.addEventListener('load', this.handleLoad.bind(self));
 
         const imgGly = new window.Image();
-        imgGly.src = "/rama2_gly.png";
+        imgGly.src = "pixmaps/rama2_gly.png";
         imgGly.crossOrigin="Anonymous";
         this.imageRefGly.current = imgGly;
         this.imageRefGly.current.addEventListener('load', this.handleLoad.bind(self));
 
         const imgPrePro = new window.Image();
-        imgPrePro.src = "/rama2_pre_pro.png";
+        imgPrePro.src = "pixmaps/rama2_pre_pro.png";
         imgPrePro.crossOrigin="Anonymous";
         this.imageRefPrePro.current = imgPrePro;
         this.imageRefPrePro.current.addEventListener('load', this.handleLoad.bind(self));
 
         const imgPro = new window.Image();
-        imgPro.src = "/rama2_pro.png";
+        imgPro.src = "pixmaps/rama2_pro.png";
         imgPro.crossOrigin="Anonymous";
         this.imageRefPro.current = imgPro;
         this.imageRefPro.current.addEventListener('load', this.handleLoad.bind(self));
 
         const imgIleVal = new window.Image();
-        imgIleVal.src = "/rama2_ileval.png";
+        imgIleVal.src = "pixmaps/rama2_ileval.png";
         imgIleVal.crossOrigin="Anonymous";
         this.imageRefIleVal.current = imgIleVal;
         this.imageRefIleVal.current.addEventListener('load', this.handleLoad.bind(self));
 
         const imgNonGlyPro = new window.Image();
-        imgNonGlyPro.src = "/rama2_non_gly_pro.png";
+        imgNonGlyPro.src = "pixmaps/rama2_non_gly_pro.png";
         imgNonGlyPro.crossOrigin="Anonymous";
         this.imageRefNonGlyPro.current = imgNonGlyPro;
         this.imageRefNonGlyPro.current.addEventListener('load', this.handleLoad.bind(self));
 
         const imgNonGlyProIleVal = new window.Image();
-        imgNonGlyProIleVal.src = "/rama2_non_gly_pro_pre_pro_ileval.png";
+        imgNonGlyProIleVal.src = "pixmaps/rama2_non_gly_pro_pre_pro_ileval.png";
         imgNonGlyProIleVal.crossOrigin="Anonymous";
         this.imageRefNonGlyProIleVal.current = imgNonGlyProIleVal;
         this.imageRefNonGlyProIleVal.current.addEventListener('load', this.handleLoad.bind(self));
 
         const imgGlyNormal = new window.Image();
-        imgGlyNormal.src = "/rama-plot-gly-normal.png";
+        imgGlyNormal.src = "pixmaps/rama-plot-gly-normal.png";
         imgGlyNormal.crossOrigin="Anonymous";
         this.ramaPlotGlyNormalImageRef.current = imgGlyNormal;
         this.ramaPlotGlyNormalImageRef.current.addEventListener('load', this.handleLoad.bind(self));
 
         const imgGlyOutlier = new window.Image();
-        imgGlyOutlier.src = "/rama-plot-gly-outlier.png";
+        imgGlyOutlier.src = "pixmaps/rama-plot-gly-outlier.png";
         imgGlyOutlier.crossOrigin="Anonymous";
         this.ramaPlotGlyOutlierImageRef.current = imgGlyOutlier;
         this.ramaPlotGlyOutlierImageRef.current.addEventListener('load', this.handleLoad.bind(self));
 
         const imgProNormal = new window.Image();
-        imgProNormal.src = "/rama-plot-pro-normal.png";
+        imgProNormal.src = "pixmaps/rama-plot-pro-normal.png";
         imgProNormal.crossOrigin="Anonymous";
         this.ramaPlotProNormalImageRef.current = imgProNormal;
         this.ramaPlotProNormalImageRef.current.addEventListener('load', this.handleLoad.bind(self));
 
         const imgProOutlier = new window.Image();
-        imgProOutlier.src = "/rama-plot-pro-outlier.png";
+        imgProOutlier.src = "pixmaps/rama-plot-pro-outlier.png";
         imgProOutlier.crossOrigin="Anonymous";
         this.ramaPlotProOutlierImageRef.current = imgProOutlier;
         this.ramaPlotProOutlierImageRef.current.addEventListener('load', this.handleLoad.bind(self));
 
         const imgOtherNormal = new window.Image();
-        imgOtherNormal.src = "/rama-plot-other-normal.png";
+        imgOtherNormal.src = "pixmaps/rama-plot-other-normal.png";
         imgOtherNormal.crossOrigin="Anonymous";
         this.ramaPlotOtherNormalImageRef.current = imgOtherNormal;
         this.ramaPlotOtherNormalImageRef.current.addEventListener('load', this.handleLoad.bind(self));
 
         const imgOtherOutlier = new window.Image();
-        imgOtherOutlier.src = "/rama-plot-other-outlier.png";
+        imgOtherOutlier.src = "pixmaps/rama-plot-other-outlier.png";
         imgOtherOutlier.crossOrigin="Anonymous";
         this.ramaPlotOtherOutlierImageRef.current = imgOtherOutlier;
         this.ramaPlotOtherOutlierImageRef.current.addEventListener('load', this.handleLoad.bind(self));
@@ -341,7 +343,7 @@ class RamaPlot extends Component {
     render() {
         const height = 230;
         const width = 230;
-        this.canvas = <canvas height={height} height={height} ref={this.canvasRef} />;  
+        this.canvas = <canvas style={{marginTop:'1rem'}} height={height} width={width} ref={this.canvasRef} />;  
         return this.canvas;
     }
 
@@ -350,7 +352,7 @@ class RamaPlot extends Component {
         this.reqRef = null;
         this.oldImage = null;
         this.nAnimationFrames = 15;
-        this.state = {plotInfo: null, key:null};
+        this.state = {plotInfo: null, molName:null, chainId:null, coordMolNo:null};
         this.canvasRef = createRef();
         this.imageRefAll = createRef();
         this.imageRefGly = createRef();
@@ -380,22 +382,17 @@ class RamaPlot extends Component {
 
     updatePlotData(plotInfo){
         const self = this;
-        this.setState({plotInfo:plotInfo.info, key:plotInfo.key},()=>self.draw(-1));
-        //this.setState({plotInfo:plotInfo.info, key:plotInfo.key});
+        this.setState({plotInfo:plotInfo.info, molName:plotInfo.molName, chainId:plotInfo.chainId, coordMolNo:plotInfo.coordMolNo},()=>self.draw(-1));
     }
 
 }
 
 class Ramachandran extends Component {
     constructor(props) {
-
         super(props);
-
         this.ramaRef = createRef();
-
         this.state = {selected:"unk",log:"", chainId:"", plotInfo: null};
         this.message = "";
-        const self = this;
     }
 
 
@@ -414,55 +411,36 @@ class Ramachandran extends Component {
     }
 
     /**
-     * Sends a message to crystallography worker as a promise
-     * @param {Worker} crystWorker 
-     * @param {Object} kwargs 
-     */
-     postCrystWorkerMessage(crystWorker, kwargs) {
-        const messageId = guid();
-        return new Promise((resolve, reject) => {
-            const messageListener = crystWorker.addEventListener('message', (e) => {
-                if (e.data.messageId === messageId) {
-                    crystWorker.removeEventListener('message', messageListener);
-                    resolve(e);
-                }
-            })
-            crystWorker.postMessage({
-                messageId, ...kwargs
-            });
-        });
-    }    
-
-    /**
      * Get ramachandran plot and send message with result to crystallography worker
      */
     async getRama(){
-        const self = this;
-        let key = self.state.selected;
-        const dataObjectNames = this.props.dataObjectsNames;
-        const pdbKeys = Object.keys(dataObjectNames.pdbFiles);
-        if(pdbKeys.length<1){
+        if(this.props.molecules<1){
             return;
         }
-        if(key==="unk"){
-            key = pdbKeys[0];
-        }
-        const jobid = guid();
-        const inputData = {method:"get_rama",jobId:jobid,pdbinKey:key,chainId:this.state.chainId};
-        let response = await this.postCrystWorkerMessage(self.props.crystWorker, inputData);
-        this.updatePlotData(response.data.result, key);
-   }
 
-    /**
-     * Update contents of ramachandran plot
-     * @param {array} plotData - array with residue information
-     * @param {string} key - key for the selected pdb model
-     */
-    updatePlotData(plotData, key){
-        const self = this;
-        self.ramaRef.current.updatePlotData({info:plotData, key:key});
-        this.setState({plotInfo:plotData});
-    }
+        let coordMolNo = this.state.selected;        
+        const coordMolNums = this.props.molecules.map(molecule => molecule.coordMolNo);
+        const molNames = this.props.molecules.map(molecule => molecule.name);
+        let molName = null;
+        let moleculeIndex = 0;
+        
+        if(coordMolNo==="unk"){
+            coordMolNo = coordMolNums[moleculeIndex];
+            molName = molNames[moleculeIndex];
+        } else {
+            moleculeIndex = coordMolNums.findIndex(num => num == coordMolNo)
+            molName = molNames[moleculeIndex];
+        }        
+
+        const inputData = {message:"get_rama", coordMolNo:coordMolNo, chainId:this.state.chainId};
+        let response = await this.props.postCootMessage(this.props.cootWorker, inputData);
+        this.ramaRef.current.updatePlotData({info:response.data.result, molName:molName, chainId:this.state.chainId, coordMolNo:coordMolNo});
+        
+        this.props.setActiveCoordMolNo(coordMolNo);
+        this.props.setactiveChainId(this.state.chainId);
+        this.props.setMoleculeIndex(moleculeIndex)
+        this.setState({plotInfo:response.data.result});
+   }
 
     /**
      * Handle chain name change by updating widget state
@@ -498,37 +476,24 @@ class Ramachandran extends Component {
         });
 
         const self = this;
-        const displayData = this.props.displayData;
-        const liveUpdatingMaps = this.props.liveUpdatingMaps;
 
         let rows = [];
         let selected = this.state.selected;
         let handleChange = this.handleChange.bind(self);
 
-        const pdbRegex = /.pdb$/;
-        const entRegex = /.ent$/;
+        this.props.molecules.forEach(molecule => {
+            rows.push(<option key={molecule.coordMolNo} value={molecule.coordMolNo}>{molecule.name}</option>);
+        });        
 
-        const dataObjectNames = this.props.dataObjectsNames;
-
-        const pdbKeys = Object.keys(dataObjectNames.pdbFiles);
-        for(let iobj=0;iobj<pdbKeys.length;iobj++){
-            const data_id = pdbKeys[iobj];
-            const name = dataObjectNames.pdbFiles[data_id].originalFileName;
-            const keySup = data_id;
-            const keyOption = "rsr_"+keySup;
-            const shortName = name.replace(pdbRegex,"");
-            rows.push(<option key={keyOption} value={keySup}>{shortName}</option>);
+        if(selected==="unk" && this.props.molecules.length>0){
+            selected = this.props.molecules[0].coordMolNo;
         }
-
-        if(selected==="unk"&&pdbKeys.length>0){
-            selected = pdbKeys[0];
-        }
-
+        
         //TODO - Need to introspect the pdb file to see what chains exist and pick the first one ...
 
         return (
                 <>
-        <Form onSubmit={this.handleSubmit.bind(this)}>
+        <Form style={{marginTop:'1rem'}} onSubmit={this.handleSubmit.bind(this)}>
         <Form.Group as={Row} controlId="rama">
         <Col>
                 <Form.Select value={selected} onChange={handleChange} >
@@ -540,10 +505,9 @@ class Ramachandran extends Component {
         </Col>
         </Form.Group>
         </Form>
-        <div className="vspace1em"></div>
-        <RamaPlot onClick={this.props.onClick} ref={this.ramaRef} />
+        <RamaPlot onClick={this.props.onClick} setMessage={this.props.setMessage} ref={this.ramaRef} />
         </>
         );
     }
 }
-export default Ramachandran;
+export { Ramachandran };

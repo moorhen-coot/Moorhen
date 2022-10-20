@@ -8,6 +8,7 @@ import { cootCommand, postCootMessage } from '../BabyGruUtils';
 import { BabyGruButtonBar } from './BabyGruButtonBar';
 import { BabyGruFileMenu } from './BabyGruFileMenu';
 import { BabyGruSequenceViewer } from './BabyGruSequenceViewer';
+import { BabyGruRamachandran } from './BabyGruRamachandran';
 
 const initialState = { count: 0, consoleMessage: "" };
 
@@ -176,6 +177,11 @@ export const BabyGruContainer = (props) => {
                                         activeMap={activeMap}
                                         setActiveMap={setActiveMap}
                                     />
+                                </div>
+                            </Tab>
+                            <Tab title="Ramachandran" eventKey="ramachandran">
+                                <div>
+                                    <BabyGruRamachandran molecules={molecules} cootWorker={cootWorker} glRef={glRef} />
                                 </div>
                             </Tab>
                         </Tabs>
