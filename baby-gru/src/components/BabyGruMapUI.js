@@ -11,7 +11,7 @@ export const BabyGruMaps = (props) => {
     useEffect(() => {
     }, [])
 
-    let placeHolder = "No map data loaded"
+    let placeHolder = <div>No map data loaded<hr style={{}}></hr></div>
     let mapTableUI = ""
     if (props.maps.length !== 0) {
         placeHolder = ""
@@ -32,8 +32,8 @@ export const BabyGruMaps = (props) => {
                 }
             </tbody>
         </Table>
-        <div>{placeHolder}</div>
-        <Row className="mx-auto" style={{ marginTop:'5rem', width: '20rem' }}>
+        {placeHolder}
+        <Row className="mx-auto" style={{ marginTop:'2rem', width: '20rem' }}>
             <Form.Group style={{ width: '20rem' }} controlId="downloadCoords" className="mb-3">
                 <Form.Label>Coot contouring radius</Form.Label>
                 <Form.Control type="number" value={mapRadius} onChange={(e) => {
