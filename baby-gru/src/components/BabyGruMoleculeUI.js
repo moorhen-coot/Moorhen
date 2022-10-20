@@ -98,16 +98,27 @@ export const BabyGruMolecules = (props) => {
     useEffect(() => {
     }, [])
 
-    return <Fragment>
-        <Row><Col><div style={{ height: "1rem" }} /></Col></Row>
-        {
-            props.molecules.map(molecule => <BabyGruMoleculeUI key={molecule.coordMolNo}
+    let placeHolder = <Card className="px-0"  style={{marginTop:'0.5rem', padding:'0'}} >
+                        <Card.Body>
+                                No models loaded
+                        </Card.Body>
+                     </Card>
+
+    let moleculesTableUI = placeHolder
+
+    if (props.molecules.length!=0) {
+        moleculesTableUI = props.molecules.map(molecule => 
+            <BabyGruMoleculeUI key={molecule.coordMolNo}
                 molecule={molecule}
                 glRef={props.glRef}
                 cootWorker={props.cootWorker}>
             </BabyGruMoleculeUI>
-            )
-        }
-    </Fragment>
+        )
+    }
+
+    return <Fragment>
+                <Row><Col><div style={{ height: "1rem" }} /></Col></Row>
+                {moleculesTableUI}
+            </Fragment>
 }
 
