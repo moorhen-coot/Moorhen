@@ -86,7 +86,6 @@ export const BabyGruContainer = (props) => {
 
     useEffect(() => {
         if (activeMap) {
-            alert(`In changes active map changed ${activeMap.mapMolNo}`)
             cootCommand(cootWorker, {
                 returnType: "status",
                 command: "set_imol_refinement_map",
