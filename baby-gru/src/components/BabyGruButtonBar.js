@@ -2,40 +2,41 @@ import { createRef, useCallback, useEffect, useRef, useState } from "react";
 import { ButtonGroup, Button, Popover, Overlay, Container, Row, FormSelect, FormGroup, FormLabel } from "react-bootstrap"
 import { cootCommand, postCootMessage } from "../BabyGruUtils"
 import { circles_fragment_shader_source } from "../WebGL/circle-fragment-shader";
+import { inspect } from 'util';
 
+const BabyGruRefinementPanel = (props) => {
+    const refinementModes = ['SINGLE', 'TRIPLE', 'QUINTUPLE', 'HEPTUPLE', 'SPHERE', 'BIG_SPHERE', 'CHAIN', 'ALL']
+    return <Container>
+        <Row>Please click an atom for centre of refinement</Row>
+        <Row>
+            <FormGroup>
+                <FormLabel>Refinement mode</FormLabel>
+                <FormSelect defaultValue={props.panelParameters.mode}
+                    onChange={(e) => {
+                        props.setPanelParameters({ ...props.panelParameters, mode: e.target.value })
+                    }}>
+                    {refinementModes.map(optionName => {
+                        return <option value={optionName}>{optionName}</option>
+                    })}
+                </FormSelect></FormGroup>
+        </Row>
+    </Container>
+}
+const refinementFormatArgs = (molecule, chosenAtom, pp) => {
+    //console.log({ molecule, chosenAtom, pp })
+    return [
+        molecule.coordMolNo,
+        `//${chosenAtom.chain_id}/${chosenAtom.res_no}`,
+        pp.mode]
+}
 
 export const BabyGruButtonBar = (props) => {
     const [selectedbuttonIndex, setSelectedbuttonIndex] = useState(null);
-    const [refinementMode, setRefinementMode] = useState("TRIPLE");
+    const [panelParameters, setPanelParameters] = useState({ mode: 'TRIPLE' })
 
     useEffect(() => {
-        console.log('refinement mode now', refinementMode)
-    }, [refinementMode])
-
-    let refinementFormatArgs = useCallback((molecule, chosenAtom) => {
-        return [
-            molecule.coordMolNo,
-            `//${chosenAtom.chain_id}/${chosenAtom.res_no}`,
-            refinementMode]
-    }, [refinementMode])
-
-    const BabyGruRefinementPanel = (props) => {
-        const refinementModes = ['SINGLE', 'TRIPLE', 'QUINTUPLE', 'HEPTUPLE', 'SPHERE', 'BIG_SPHERE', 'CHAIN', 'ALL']
-        return <Container>
-            <Row>Please click an atom for centre of refinement</Row>
-            <Row>
-                <FormGroup>
-                    <FormLabel>Refinement mode</FormLabel>
-                    <FormSelect defaultValue={refinementMode}
-                        onChange={(e) => { setRefinementMode(e.target.value) }}>
-                        {refinementModes.map(optionName => {
-                            return <option value={optionName}>{optionName}</option>
-                        })}
-                    </FormSelect></FormGroup>
-            </Row>
-        </Container>
-    }
-
+        console.log('refinement mode now', panelParameters)
+    }, [panelParameters])
 
     return <div
         style={{
@@ -80,9 +81,12 @@ export const BabyGruButtonBar = (props) => {
                 setSelectedbuttonIndex={setSelectedbuttonIndex}
                 needsMapData={true}
                 cootCommand="refine_residues_using_atom_cid"
-                prompt={<BabyGruRefinementPanel />}
+                panelParameters={panelParameters}
+                prompt={<BabyGruRefinementPanel
+                    setPanelParameters={setPanelParameters}
+                    panelParameters={panelParameters} />}
                 icon={<img className="baby-gru-button-icon" src="pixmaps/refine-1.svg" />}
-                formatArgs={(molecule, chosenAtom) => refinementFormatArgs(molecule, chosenAtom)} />
+                formatArgs={(m, c, p) => refinementFormatArgs(m, c, p)} />
         </ButtonGroup>
     </div>
 }
@@ -91,22 +95,36 @@ export const BabyGruSimpleEditButton = (props) => {
     const [showPrompt, setShowPrompt] = useState(false)
     const target = useRef(null);
     const [prompt, setPrompt] = useState(null)
+    const [localParameters, setLocalParameters] = useState({})
 
     useEffect(() => {
         setPrompt(props.prompt)
     }, [props.prompt])
 
     useEffect(() => {
-        console.log('argFormatter changed', props.formatArgs)
-    }, [props.formatArgs])
+        setLocalParameters(props.panelParameters)
+    }, [])
+
+    useEffect(() => {
+        console.log('changing panelParameters', props.panelParameters)
+        setLocalParameters(props.panelParameters)
+    }, [props.panelParameters])
+
+    useEffect(() => {
+        console.log('changed localParameters', localParameters)
+        document.removeEventListener('atomClicked', atomClickedCallback, { once: true })
+        document.addEventListener('atomClicked', atomClickedCallback, { once: true })
+    }, [localParameters])
 
     const atomClickedCallback = useCallback(event => {
+        console.log('in atomClickedcallback', event)
         props.molecules.forEach(molecule => {
+            console.log('Testing molecule ', molecule.coordMolNo)
             if (molecule.buffersInclude(event.detail.buffer)) {
                 setShowPrompt(false)
                 props.setCursorStyle("default")
                 const chosenAtom = cidToSpec(event.detail.atom.label)
-                let formattedArgs = props.formatArgs(molecule, chosenAtom)
+                let formattedArgs = props.formatArgs(molecule, chosenAtom, localParameters)
                 cootCommand(props.cootWorker, {
                     returnType: "status",
                     command: props.cootCommand,
@@ -117,8 +135,11 @@ export const BabyGruSimpleEditButton = (props) => {
                     props.setSelectedbuttonIndex(null)
                 })
             }
+            else {
+                console.log('molecule for buffer not found')
+            }
         })
-    }, [props.formatArgs])
+    }, [localParameters, props.molecules])
 
     return <>
         <Button value={props.buttonIndex}

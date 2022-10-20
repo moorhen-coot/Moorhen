@@ -404,21 +404,8 @@ std::string GetInsCodeFromResidue(mmdb::Residue *res){
     return std::string(res->GetInsCode());
 }
 
-int refine_residues_modeToInt(coot::molecule_t::refine_residues_mode val){
-    return val;
-}
 
 EMSCRIPTEN_BINDINGS(my_module) {
-    enum_<coot::molecule_t::refine_residues_mode>("refine_residues_mode")
-        .value("SINGLE", coot::molecule_t::SINGLE)
-        .value("TRIPLE", coot::molecule_t::TRIPLE)
-        .value("QUINTUPLE", coot::molecule_t::QUINTUPLE)
-        .value("HEPTUPLE", coot::molecule_t::HEPTUPLE)
-        .value("SPHERE", coot::molecule_t::SPHERE)
-        .value("BIG_SPHERE", coot::molecule_t::BIG_SPHERE)
-        .value("CHAIN", coot::molecule_t::CHAIN)
-        .value("ALL", coot::molecule_t::ALL)
-        ;
     class_<clipper::Coord_orth>("Coord_orth")
     .constructor<const clipper::ftype&, const clipper::ftype&, const clipper::ftype&>()
     .function("x", &clipper::Coord_orth::x)
@@ -673,7 +660,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .element(emscripten::index<2>())
     ;
     //function("mini_rsr",&mini_rsr);
-    function("refine_residues_modeToInt",&refine_residues_modeToInt);
     function("flipPeptide",&flipPeptide);
     function("getRamachandranData",&getRamachandranData);
     function("getRotamersMap",&getRotamersMap);
