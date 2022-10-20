@@ -17,6 +17,7 @@ export const BabyGruButtonBar = (props) => {
                 buttonIndex={"0"}
                 selectedbuttonIndex={selectedbuttonIndex}
                 setSelectedbuttonIndex={setSelectedbuttonIndex}
+                needsMapData={true}
                 cootCommand="auto_fit_rotamer"
                 prompt="Click atom in residue to fit rotamer"
                 icon={<img className="baby-gru-button-icon" src="pixmaps/auto-fit-rotamer.svg" />}
@@ -34,6 +35,7 @@ export const BabyGruButtonBar = (props) => {
                 buttonIndex={"1"}
                 selectedbuttonIndex={selectedbuttonIndex}
                 setSelectedbuttonIndex={setSelectedbuttonIndex}
+                needsMapData={false}
                 cootCommand="flipPeptide_cid"
                 prompt="Click atom in residue to flip"
                 icon={<img className="baby-gru-button-icon" src="pixmaps/flip-peptide.svg" />}
@@ -48,6 +50,7 @@ export const BabyGruButtonBar = (props) => {
                 buttonIndex={"2"}
                 selectedbuttonIndex={selectedbuttonIndex}
                 setSelectedbuttonIndex={setSelectedbuttonIndex}
+                needsMapData={true}
                 cootCommand="refine_residues_using_atom_cid"
                 prompt="Click atom for centre of refinement"
                 icon={<img className="baby-gru-button-icon" src="pixmaps/refine-1.svg" />}
@@ -97,7 +100,7 @@ export const BabyGruSimpleEditButton = (props) => {
             ref={target}
             active={props.buttonIndex === props.selectedbuttonIndex}
             variant='light'
-            disabled={props.buttonIndex!=1&&!props.activeMap || props.molecules.length===0}
+            disabled={props.needsMapData&&!props.activeMap || props.molecules.length===0}
             onClick={(e) => {
                 if (props.selectedbuttonIndex === e.currentTarget.value) {
                     props.setSelectedbuttonIndex(null)
