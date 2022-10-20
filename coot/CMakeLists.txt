@@ -574,6 +574,15 @@ install(DIRECTORY
 ${coot_src}/pixmaps
 DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../baby-gru/public)
 
+install(FILES ${coot_src}/pixmaps/rama2_all.png
+${coot_src}/textures/rama-plot-gly-normal.png
+${coot_src}/textures/rama-plot-gly-outlier.png
+${coot_src}/textures/rama-plot-other-normal.png
+${coot_src}/textures/rama-plot-other-outlier.png
+${coot_src}/textures/rama-plot-pro-normal.png
+${coot_src}/textures/rama-plot-pro-outlier.png
+DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../baby-gru/public/pixmaps/)
+
 install(FILES 
 ${coot_src}/api/gideondoesntapprove.mtz
 DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../baby-gru/public/tutorials RENAME moorhen-tutorial-map-number-1.mtz)
