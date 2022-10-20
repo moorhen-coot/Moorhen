@@ -126,13 +126,34 @@ BabyGruMolecule.prototype.centreOn = function (gl, selection) {
     else {
         promise = Promise.resolve()
     }
+
+    let selectionCentre = null;
+    if (selection) {
+        let selectedChainIndex = $this.cachedAtoms.atoms[selection.modelIndex].chains.findIndex(chain => chain.residues[0].atoms[0]["_atom_site.auth_asym_id"] === selection.chain);
+        if (selectedChainIndex === -1) {
+            console.log(`Cannot find chain ${selection.molName}/${selection.chain}`);
+            return;
+        }
+        let selectedResidueIndex = $this.cachedAtoms.atoms[selection.modelIndex].chains[selectedChainIndex].residues.findIndex(residue => residue.atoms[0]["_atom_site.label_seq_id"] == selection.seqNum);
+        if (selectedResidueIndex === -1) {
+            console.log(`Cannot find residue ${selection.molName}/${selection.chain}/${selection.seqNum}`);
+            return;
+        } else {
+            let selectedAtoms = $this.cachedAtoms.atoms[selection.modelIndex].chains[selectedChainIndex].residues[selectedResidueIndex].atoms;
+            selectionCentre = $this.cachedAtoms.atoms[selection.modelIndex].centreOnAtoms(selectedAtoms);
+        }
+    } else {
+        selectionCentre = $this.cachedAtoms.atoms[0].centre();
+    }
+
     return promise.then(() => {
         return new Promise((resolve, reject) => {
-            gl.current.setOrigin($this.cachedAtoms.atoms[0].centre())
-            resolve(true)
+            gl.current.setOrigin(selectionCentre);
+            resolve(true);
         })
     })
 }
+
 
 BabyGruMolecule.prototype.drawWithStyleFromAtoms = function (style, gl, webMGAtoms) {
 

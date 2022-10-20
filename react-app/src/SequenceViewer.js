@@ -321,7 +321,8 @@ class SequenceViewer extends Component {
             const resNum = ic-this.xoff+2;
             const molName = name.replace(re,"");
             if(this.props.onDoubleClick){
-                this.props.onDoubleClick({molName:molName,chain:chain,seqNum:resNum});
+                // WARNING: ALWAYS ASSUMING FIRST MODEL IN MOLECULE
+                this.props.onDoubleClick({modelIndex:0, molName:molName, chain:chain, seqNum:resNum});
             }
         }
     }

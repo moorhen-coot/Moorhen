@@ -187,7 +187,8 @@ class RamaPlot extends Component {
         if(this.state.plotInfo){
             const hit = this.getHit(event,self);
             if(this.props.onClick&&hit>-1){
-                this.props.onClick({coordMolNo:this.state.coordMolNo, molName:this.state.molName, chain:this.state.chainId, seqNum:this.state.plotInfo[hit].seqNum, insCode:this.state.plotInfo[hit].insCode});
+                // WARNING: ALWAYS ASSUMING FIRST MODEL IN MOLECULE
+                this.props.onClick({modelIndex:0, coordMolNo:this.state.coordMolNo, molName:this.state.molName, chain:this.state.chainId, seqNum:this.state.plotInfo[hit].seqNum, insCode:this.state.plotInfo[hit].insCode});
             }
         }
     }
