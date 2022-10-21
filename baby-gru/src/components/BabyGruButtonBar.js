@@ -24,6 +24,15 @@ const BabyGruRefinementPanel = (props) => {
         </Row>
     </Container>
 }
+const refinementFormatArgs = (molecule, chosenAtom, pp) => {
+    //console.log({ molecule, chosenAtom, pp })
+    return [
+        molecule.coordMolNo,
+        `//${chosenAtom.chain_id}/${chosenAtom.res_no}`,
+        pp.refine.mode]
+}
+
+
 
 const BabyGruDeletePanel = (props) => {
     const deleteModes = ['ATOM', 'RESIDUE', 'CHAIN']
@@ -45,15 +54,6 @@ const BabyGruDeletePanel = (props) => {
         </Row>
     </Container>
 }
-
-const refinementFormatArgs = (molecule, chosenAtom, pp) => {
-    //console.log({ molecule, chosenAtom, pp })
-    return [
-        molecule.coordMolNo,
-        `//${chosenAtom.chain_id}/${chosenAtom.res_no}`,
-        pp.refine.mode]
-}
-
 const deleteFormatArgs = (molecule, chosenAtom, pp) => {
     //console.log({ molecule, chosenAtom, pp })
     return [
