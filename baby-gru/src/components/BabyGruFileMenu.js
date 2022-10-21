@@ -6,17 +6,26 @@ export const BabyGruFileMenu = (props) => {
 
     const { molecules, setMolecules, maps, setMaps, cootWorker, glRef } = props;
 
+    const loadPdbFiles = async (files) => {
+        let loadPromises = []
+        for (const file of files) {
+            loadPromises.push(readPdbFile(file))
+        }
+        let newMolecules = await Promise.all(loadPromises)
+        
+        let drawPromises = []
+        for (const newMolecule of newMolecules){
+            drawPromises.push(newMolecule.fetchIfDirtyAndDraw('bonds', glRef, true))
+        }
+        await Promise.all(drawPromises)
+        
+        setMolecules(molecules.concat(newMolecules))
+        newMolecules.at(-1).centreOn(glRef)
+    }
+
     const readPdbFile = (file) => {
         const newMolecule = new BabyGruMolecule(cootWorker)
-        newMolecule.loadToCootFromFile(file)
-            .then(result => {
-                newMolecule.fetchIfDirtyAndDraw('bonds', glRef, true)
-            }).then(result => {
-                setMolecules([...molecules, newMolecule])
-                Promise.resolve(newMolecule)
-            }).then(_ => {
-                newMolecule.centreOn(glRef)
-            })
+        return newMolecule.loadToCootFromFile(file)
     }
 
     const readMtzFile = (file) => {
@@ -69,11 +78,7 @@ export const BabyGruFileMenu = (props) => {
     return <NavDropdown title="File" id="basic-nav-dropdown">
         <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="uploadCoords" className="mb-3">
             <Form.Label>Coordinates</Form.Label>
-            <Form.Control type="file" accept=".pdb, .mmcif, .ent" onChange={(e) => {
-                for (const file of e.target.files) {
-                    readPdbFile(file)
-                }
-            }} />
+            <Form.Control type="file" accept=".pdb, .mmcif, .ent" multiple={true} onChange={(e) => {loadPdbFiles(e.target.files)}} />
         </Form.Group>
         <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="downloadCoords" className="mb-3">
             <Form.Label>From PDBe</Form.Label>
