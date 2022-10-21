@@ -6,26 +6,41 @@ export const BabyGruFileMenu = (props) => {
 
     const { molecules, setMolecules, maps, setMaps, cootWorker, glRef } = props;
 
+    const loadPdbFiles = async (files) => {
+        let readPromises = []
+        for (const file of files) {
+            readPromises.push(readPdbFile(file))
+        }
+        let newMolecules = await Promise.all(readPromises)
+        
+        let drawPromises = []
+        for (const newMolecule of newMolecules){
+            drawPromises.push(newMolecule.fetchIfDirtyAndDraw('bonds', glRef, true))
+        }
+        await Promise.all(drawPromises)
+        
+        setMolecules(molecules.concat(newMolecules))
+        newMolecules.at(-1).centreOn(glRef)
+    }
+
     const readPdbFile = (file) => {
         const newMolecule = new BabyGruMolecule(cootWorker)
-        newMolecule.loadToCootFromFile(file)
-            .then(result => {
-                newMolecule.fetchIfDirtyAndDraw('bonds', glRef, true)
-            }).then(result => {
-                setMolecules([...molecules, newMolecule])
-                Promise.resolve(newMolecule)
-            }).then(_ => {
-                newMolecule.centreOn(glRef)
-            })
+        return newMolecule.loadToCootFromFile(file)
+    }
+
+    const loadMtzFiles = async (files) => {
+        let readPromises = []
+        for (const file of files) {
+            readPromises.push(readMtzFile(file))
+        }
+        let newMaps = await Promise.all(readPromises)
+        setMaps(maps.concat(newMaps))
+        props.setActiveMap(newMaps.at(-1))
     }
 
     const readMtzFile = (file) => {
         const newMap = new BabyGruMap(cootWorker)
-        newMap.loadToCootFromFile(file)
-            .then(result => {
-                setMaps([...maps, newMap])
-                props.setActiveMap(newMap)
-            })
+        return newMap.loadToCootFromFile(file)
     }
 
     const fetchFileFromEBI = (pdbCode) => {
@@ -69,11 +84,7 @@ export const BabyGruFileMenu = (props) => {
     return <NavDropdown title="File" id="basic-nav-dropdown">
         <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="uploadCoords" className="mb-3">
             <Form.Label>Coordinates</Form.Label>
-            <Form.Control type="file" accept=".pdb, .mmcif, .ent" onChange={(e) => {
-                for (const file of e.target.files) {
-                    readPdbFile(file)
-                }
-            }} />
+            <Form.Control type="file" accept=".pdb, .mmcif, .ent" multiple={true} onChange={(e) => {loadPdbFiles(e.target.files)}} />
         </Form.Group>
         <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="downloadCoords" className="mb-3">
             <Form.Label>From PDBe</Form.Label>
@@ -85,11 +96,7 @@ export const BabyGruFileMenu = (props) => {
         </Form.Group>
         <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="uploadMTZs" className="mb-3">
             <Form.Label>Map coefficients</Form.Label>
-            <Form.Control type="file" accept=".mtz" onChange={(e) => {
-                for (const file of e.target.files) {
-                    readMtzFile(file)
-                }
-            }} />
+            <Form.Control type="file" accept=".mtz" multiple={true} onChange={(e) => {loadMtzFiles(e.target.files)}} />
         </Form.Group>
 
         <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="uploadMTZs" className="mb-3">

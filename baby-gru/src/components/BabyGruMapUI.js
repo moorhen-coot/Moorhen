@@ -34,8 +34,8 @@ export const BabyGruMaps = (props) => {
     }
 
     return <Fragment>
-        <Row>
-            <Form.Group style={{ width: '20rem' }} controlId="Contouring radius" className="mb-3">
+        <Row className="mx-auto" style={{ marginTop: '2rem', width: '20rem' }}>
+            <Form.Group style={{ width: '20rem' }} controlId="downloadCoords" className="mb-3">
                 <Form.Label>Coot contouring radius</Form.Label>
                 <Form.Control type="number" value={mapRadius} onChange={(e) => {
                     setMapRadius(parseFloat(e.target.value))
@@ -48,15 +48,15 @@ export const BabyGruMaps = (props) => {
                 <BabyGruSlider minVal={0.01} maxVal={50} logScale={true} setExternalValue={recontourActiveMap} />
             </Form.Group>
         </Row>
-        <Table key="BabyGruMaps">
+        <Table key="BabyGruMaps" style={{ marginTop: '0.5rem' }}>
             <thead><tr><th>Active</th><th>No.</th><th>Name</th><th>Download</th><th>WC</th><th>CC</th></tr></thead>
             <tbody>
-                {
-                    props.maps.map(map =>
-                        <BabyGruMapRow {...props}
-                            mapRadius={mapRadius}
-                            map={map}
-                        />)
+                {props.maps.length == 0 ?
+                    <div>No map data loaded<hr style={{}}></hr></div> :
+                    props.maps.map(map => <BabyGruMapRow {...props}
+                        mapRadius={mapRadius}
+                        map={map}
+                    />)
                 }
             </tbody>
         </Table>
@@ -190,3 +190,5 @@ const BabyGruMapRow = (props) => {
         </td>
     </tr>
 }
+
+

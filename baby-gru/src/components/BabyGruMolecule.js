@@ -16,7 +16,7 @@ export function BabyGruMolecule(cootWorker) {
     this.cachedAtoms = null
     this.atomsDirty = true
     this.name = "unnamed"
-    this.fileName = null
+    this.coordMolNo = null
     this.displayObjects = {
         ribbons: [],
         bonds: [],
@@ -43,7 +43,6 @@ BabyGruMolecule.prototype.loadToCootFromFile = function (source) {
                 }).then(e => {
                     $this.name = e.data.result.name
                     $this.coordMolNo = e.data.result.coordMolNo
-                    $this.fileName = e.data.result.fileName
                     console.log('e is', e)
                     resolve($this)
                 })

@@ -1,7 +1,7 @@
 import { useEffect, Fragment, useState } from "react";
 import { Card, Form, Button, Row, Col } from "react-bootstrap";
 import { cootCommand, doDownload } from '../BabyGruUtils';
-import { DownloadOutlined, UndoOutlined, RedoOutlined } from '@mui/icons-material';
+import { DownloadOutlined, UndoOutlined, RedoOutlined, DeleteOutlined, FitScreenOutlined } from '@mui/icons-material';
 
 export const BabyGruMoleculeUI = (props) => {
     const [showState, setShowState] = useState({})
@@ -21,11 +21,11 @@ export const BabyGruMoleculeUI = (props) => {
         props.molecule.displayObjects.rotamer.length,
     ])
 
-    return <Card className="px-2" key={props.molecule.coordMolNo}>
+    return <Card className="px-0"  style={{marginTop:'0.5rem', padding:'0'}} key={props.molecule.coordMolNo}>
         <Card.Header>
-            <Row>
+            <Row className='align-items-center'>
                 <Col>
-                {`Mol ${props.molecule.coordMolNo}:${props.molecule.name}`}
+                    {`#${props.molecule.coordMolNo} Mol. ${props.molecule.name}`}
                 </Col>
                 <Col>
                     <Button size="sm" variant="outlined"
@@ -51,6 +51,10 @@ export const BabyGruMoleculeUI = (props) => {
                             })
                         }}><RedoOutlined /></Button>
                     <Button size="sm" variant="outlined"
+                        onClick={() => {props.molecule.centreOn(props.glRef)}}>
+                        <FitScreenOutlined />
+                    </Button>
+                    <Button size="sm" variant="outlined"
                         onClick={() => {
                             props.molecule.getAtoms()
                                 .then(reply => {
@@ -58,6 +62,10 @@ export const BabyGruMoleculeUI = (props) => {
                                 })
                         }}>
                         <DownloadOutlined />
+                    </Button>
+                    <Button size="sm" variant="outlined"
+                        onClick={() => {console.log('Molecule deletion not implemented yet')}}>
+                        <DeleteOutlined />
                     </Button>
                 </Col>
             </Row>
@@ -98,16 +106,27 @@ export const BabyGruMolecules = (props) => {
     useEffect(() => {
     }, [])
 
-    return <Fragment>
-        <Row><Col><div style={{ height: "1rem" }} /></Col></Row>
-        {
-            props.molecules.map(molecule => <BabyGruMoleculeUI key={molecule.coordMolNo}
+    let placeHolder = <Card className="px-0"  style={{marginTop:'0.5rem', padding:'0'}} >
+                        <Card.Body>
+                                No models loaded
+                        </Card.Body>
+                     </Card>
+
+    let moleculesTableUI = placeHolder
+
+    if (props.molecules.length!=0) {
+        moleculesTableUI = props.molecules.map(molecule => 
+            <BabyGruMoleculeUI key={molecule.coordMolNo}
                 molecule={molecule}
                 glRef={props.glRef}
                 cootWorker={props.cootWorker}>
             </BabyGruMoleculeUI>
-            )
-        }
-    </Fragment>
+        )
+    }
+
+    return <Fragment>
+                <Row><Col><div style={{ height: "1rem" }} /></Col></Row>
+                {moleculesTableUI}
+            </Fragment>
 }
 
