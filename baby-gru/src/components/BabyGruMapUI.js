@@ -2,25 +2,51 @@ import { createRef, Fragment, useCallback, useEffect, useState } from "react";
 import { Table, Button, Row, Col, Form, FormCheck } from "react-bootstrap";
 import { doDownload } from "../BabyGruUtils";
 import { DownloadOutlined } from '@mui/icons-material';
+import BabyGruSlider from "./BabyGruSlider";
 
 //import { Download } from 'react-bootstrap-icons';
 
 export const BabyGruMaps = (props) => {
     const [mapRadius, setMapRadius] = useState(15.)
+    const busyContouring = createRef(false)
 
     useEffect(() => {
     }, [])
 
+    const recontourActiveMap = (newLevel) => {
+        if (props.activeMap) {
+            props.activeMap.contourLevel = newLevel
+            if (props.activeMap.cootContour) {
+                if (busyContouring.current) {
+                }
+                else {
+                    busyContouring.current = true
+                    props.activeMap.doCootContour(props.glRef.current,
+                        ...props.glRef.current.origin,
+                        mapRadius,
+                        props.activeMap.contourLevel)
+                        .then(result => {
+                            busyContouring.current = false
+                        })
+                }
+            }
+        }
+    }
 
     return <Fragment>
         <Row>
-            <Form.Group style={{ width: '20rem' }} controlId="downloadCoords" className="mb-3">
+            <Form.Group style={{ width: '20rem' }} controlId="Contouring radius" className="mb-3">
                 <Form.Label>Coot contouring radius</Form.Label>
                 <Form.Control type="number" value={mapRadius} onChange={(e) => {
                     setMapRadius(parseFloat(e.target.value))
                 }} />
             </Form.Group>
-
+        </Row>
+        <Row>
+            <Form.Group style={{ width: '20rem' }} controlId="Contouring level" className="mb-3">
+                <Form.Label>Contour level</Form.Label>
+                <BabyGruSlider minVal={0.01} maxVal={50} logScale={true} setExternalValue={recontourActiveMap} />
+            </Form.Group>
         </Row>
         <Table key="BabyGruMaps">
             <thead><tr><th>Active</th><th>No.</th><th>Name</th><th>Download</th><th>WC</th><th>CC</th></tr></thead>
@@ -62,10 +88,32 @@ const BabyGruMapRow = (props) => {
         }
     }, [props.map.contourLevel, props.mapRadius])
 
+    const handleContourLevelCallback = useCallback(e => {
+        nextOrigin.current = [...e.detail.map(coord => -coord)]
+        if (props.map.cootContour) {
+            if (busyContouring.current) {
+                console.log('Skipping originChanged ', nextOrigin.current)
+            }
+            else {
+                busyContouring.current = true
+                props.map.doCootContour(props.glRef.current,
+                    ...nextOrigin.current,
+                    props.mapRadius,
+                    props.map.contourLevel)
+                    .then(result => {
+                        busyContouring.current = false
+                    })
+            }
+        }
+    }, [props.map.contourLevel, props.mapRadius])
+
+
     useEffect(() => {
         document.addEventListener("originChanged", handleOriginCallback);
+        document.addEventListener("contourLevelChanged", handleContourLevelCallback);
         return () => {
             document.removeEventListener("originChanged", handleOriginCallback);
+            document.removeEventListener("contourLevelChanged", handleContourLevelCallback);
         };
     }, [handleOriginCallback]);
 
