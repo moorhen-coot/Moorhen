@@ -13,7 +13,7 @@ const BabyGruRefinementPanel = (props) => {
                 <FormLabel>Refinement mode</FormLabel>
                 <FormSelect defaultValue={props.panelParameters.refine.mode}
                     onChange={(e) => {
-                        const newParameters = {...props.panelParameters}
+                        const newParameters = { ...props.panelParameters }
                         newParameters.refine.mode = e.target.value
                         props.setPanelParameters(newParameters)
                     }}>
@@ -43,7 +43,7 @@ const BabyGruDeletePanel = (props) => {
                 <FormLabel>Delete mode</FormLabel>
                 <FormSelect defaultValue={props.panelParameters.delete.mode}
                     onChange={(e) => {
-                        const newParameters = {...props.panelParameters}
+                        const newParameters = { ...props.panelParameters }
                         newParameters.delete.mode = e.target.value
                         props.setPanelParameters(newParameters)
                     }}>
@@ -62,11 +62,43 @@ const deleteFormatArgs = (molecule, chosenAtom, pp) => {
         pp.delete.mode]
 }
 
+
+const BabyGruMutatePanel = (props) => {
+    const toTypes = ['ALA', 'CYS', 'ASP', 'GLU', 'ARG']
+    return <Container>
+        <Row>Please identify residue to mutate</Row>
+        <Row>
+            <FormGroup>
+                <FormLabel>To residue of type</FormLabel>
+                <FormSelect defaultValue={props.panelParameters.mutate.toType}
+                    onChange={(e) => {
+                        const newParameters = { ...props.panelParameters }
+                        newParameters.mutate.toType = e.target.value
+                        props.setPanelParameters(newParameters)
+                    }}>
+                    {toTypes.map(optionName => {
+                        return <option value={optionName}>{optionName}</option>
+                    })}
+                </FormSelect></FormGroup>
+        </Row>
+    </Container>
+}
+const mutateFormatArgs = (molecule, chosenAtom, pp) => {
+    return [
+        molecule.coordMolNo,
+        `//${chosenAtom.chain_id}/${chosenAtom.res_no}`,
+        pp.mutate.toType]
+}
+
+
+
+
 export const BabyGruButtonBar = (props) => {
     const [selectedbuttonIndex, setSelectedbuttonIndex] = useState(null);
-    const [panelParameters, setPanelParameters] = useState({ 
-        refine:{mode: 'TRIPLE' },
-        delete:{mode: 'ATOM' }
+    const [panelParameters, setPanelParameters] = useState({
+        refine: { mode: 'TRIPLE' },
+        delete: { mode: 'ATOM' },
+        mutate: { toType: "ALA" }
     })
 
     useEffect(() => {
@@ -135,6 +167,20 @@ export const BabyGruButtonBar = (props) => {
                     panelParameters={panelParameters} />}
                 icon={<img className="baby-gru-button-icon" src="pixmaps/delete.svg" />}
                 formatArgs={(m, c, p) => deleteFormatArgs(m, c, p)} />
+
+            <BabyGruSimpleEditButton {...props}
+                buttonIndex={"4"}
+                selectedbuttonIndex={selectedbuttonIndex}
+                setSelectedbuttonIndex={setSelectedbuttonIndex}
+                needsMapData={false}
+                cootCommand="mutate"
+                panelParameters={panelParameters}
+                prompt={<BabyGruMutatePanel
+                    setPanelParameters={setPanelParameters}
+                    panelParameters={panelParameters} />}
+                icon={<img className="baby-gru-button-icon" src="pixmaps/mutate.svg" />}
+                formatArgs={(m, c, p) => mutateFormatArgs(m, c, p)} />
+
         </ButtonGroup>
     </div>
 }

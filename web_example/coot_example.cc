@@ -574,6 +574,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("redo",&molecules_container_t::redo)
     .function("refine_residues_using_atom_cid",&molecules_container_t::refine_residues_using_atom_cid)
     .function("set_imol_refinement_map",&molecules_container_t::set_imol_refinement_map)
+    .function("mutate",&molecules_container_t::mutate)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<>()

@@ -136,11 +136,12 @@ BabyGruMap.prototype.contour = function (gl) {
         })
 }
 
-BabyGruMap.prototype.clearBuffersOfStyle = function (style) {
+BabyGruMap.prototype.clearBuffersOfStyle = function (gl, style) {
     const $this = this
     //Empty existing buffers of this type
     $this.displayObjects[style].forEach((buffer) => {
         buffer.clearBuffers()
+        gl.displayBuffers = gl.displayBuffers.filter(glBuffer=>glBuffer.id !== buffer.id)
     })
     $this.displayObjects[style] = []
 }
@@ -156,7 +157,7 @@ BabyGruMap.prototype.doCootContour = function (gl, x, y, z, radius, contourLevel
             commandArgs: [$this.mapMolNo, x, y, z, radius, contourLevel]
         }).then(response => {
             const objects = [response.data.result.result]
-            $this.clearBuffersOfStyle('Coot')
+            $this.clearBuffersOfStyle(gl, 'Coot')
             //$this.displayObjects['Coot'] = [...$this.displayObjects['Coot'], ...objects.map(object=>gl.appendOtherData(object, true))]
             objects.forEach(object => {
                 var a = gl.appendOtherData(object, true);
