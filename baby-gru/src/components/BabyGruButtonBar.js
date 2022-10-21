@@ -11,9 +11,11 @@ const BabyGruRefinementPanel = (props) => {
         <Row>
             <FormGroup>
                 <FormLabel>Refinement mode</FormLabel>
-                <FormSelect defaultValue={props.panelParameters.mode}
+                <FormSelect defaultValue={props.panelParameters.refine.mode}
                     onChange={(e) => {
-                        props.setPanelParameters({ ...props.panelParameters, mode: e.target.value })
+                        const newParameters = {...props.panelParameters}
+                        newParameters.refine.mode = e.target.value
+                        props.setPanelParameters(newParameters)
                     }}>
                     {refinementModes.map(optionName => {
                         return <option value={optionName}>{optionName}</option>
@@ -22,20 +24,53 @@ const BabyGruRefinementPanel = (props) => {
         </Row>
     </Container>
 }
+
+const BabyGruDeletePanel = (props) => {
+    const deleteModes = ['ATOM', 'RESIDUE', 'CHAIN']
+    return <Container>
+        <Row>Please click an atom for core of deletion</Row>
+        <Row>
+            <FormGroup>
+                <FormLabel>Delete mode</FormLabel>
+                <FormSelect defaultValue={props.panelParameters.delete.mode}
+                    onChange={(e) => {
+                        const newParameters = {...props.panelParameters}
+                        newParameters.delete.mode = e.target.value
+                        props.setPanelParameters(newParameters)
+                    }}>
+                    {deleteModes.map(optionName => {
+                        return <option value={optionName}>{optionName}</option>
+                    })}
+                </FormSelect></FormGroup>
+        </Row>
+    </Container>
+}
+
 const refinementFormatArgs = (molecule, chosenAtom, pp) => {
     //console.log({ molecule, chosenAtom, pp })
     return [
         molecule.coordMolNo,
         `//${chosenAtom.chain_id}/${chosenAtom.res_no}`,
-        pp.mode]
+        pp.refine.mode]
+}
+
+const deleteFormatArgs = (molecule, chosenAtom, pp) => {
+    //console.log({ molecule, chosenAtom, pp })
+    return [
+        molecule.coordMolNo,
+        `//${chosenAtom.chain_id}/${chosenAtom.res_no}`,
+        pp.delete.mode]
 }
 
 export const BabyGruButtonBar = (props) => {
     const [selectedbuttonIndex, setSelectedbuttonIndex] = useState(null);
-    const [panelParameters, setPanelParameters] = useState({ mode: 'TRIPLE' })
+    const [panelParameters, setPanelParameters] = useState({ 
+        refine:{mode: 'TRIPLE' },
+        delete:{mode: 'ATOM' }
+    })
 
     useEffect(() => {
-        console.log('refinement mode now', panelParameters)
+        console.log('panelPaarameters', panelParameters)
     }, [panelParameters])
 
     return <div
@@ -87,6 +122,19 @@ export const BabyGruButtonBar = (props) => {
                     panelParameters={panelParameters} />}
                 icon={<img className="baby-gru-button-icon" src="pixmaps/refine-1.svg" />}
                 formatArgs={(m, c, p) => refinementFormatArgs(m, c, p)} />
+
+            <BabyGruSimpleEditButton {...props}
+                buttonIndex={"3"}
+                selectedbuttonIndex={selectedbuttonIndex}
+                setSelectedbuttonIndex={setSelectedbuttonIndex}
+                needsMapData={true}
+                cootCommand="delete_using_cid"
+                panelParameters={panelParameters}
+                prompt={<BabyGruDeletePanel
+                    setPanelParameters={setPanelParameters}
+                    panelParameters={panelParameters} />}
+                icon={<img className="baby-gru-button-icon" src="pixmaps/delete.svg" />}
+                formatArgs={(m, c, p) => deleteFormatArgs(m, c, p)} />
         </ButtonGroup>
     </div>
 }

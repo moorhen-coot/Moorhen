@@ -10,13 +10,14 @@ export const postCootMessage = (cootWorker, kwargs) => {
             if (reply.data.messageId === messageId) {
                 //I'm now 90% certain that this does not in fact remove the eventListener...
                 cootWorker.current.removeEventListener('message', messageListener)
+                console.log(`Completed in `, Date.now() - reply.data.myTimeStamp)
                 resolve(reply)
             }
         })
         const messageEvent = new CustomEvent('coot_message_dispatch', { detail: { messageId: messageId } })
         document.dispatchEvent(messageEvent)
         cootWorker.current.postMessage({
-            messageId, ...kwargs
+            messageId, myTimeStamp: Date.now(), ...kwargs
         })
     })
 }

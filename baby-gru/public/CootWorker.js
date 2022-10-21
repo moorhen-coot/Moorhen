@@ -49,7 +49,7 @@ const simpleMeshToLineMeshData = (simpleMesh) => {
     let totCol = [];
     for (let i = 0; i < triangles.size(); i++) {
         const idxs = triangles.get(i).point_id;
-        totIdxs.push(...[idxs[0],idxs[1],idxs[0],idxs[2],idxs[1],idxs[2]]);
+        totIdxs.push(...[idxs[0], idxs[1], idxs[0], idxs[2], idxs[1], idxs[2]]);
     }
     for (let i = 0; i < vertices.size(); i++) {
         const vert = vertices.get(i);
@@ -114,6 +114,7 @@ onmessage = function (e) {
         cootModule.FS_unlink(tempFilename)
         postMessage({
             messageId: e.data.messageId,
+            myTimeStamp:e.data.myTimeStamp,
             consoleMessage: `Read coordinates as molecule ${coordMolNo}`,
             message: e.data.message,
             result: { coordMolNo: coordMolNo, name: e.data.name }
@@ -128,6 +129,7 @@ onmessage = function (e) {
         cootModule.FS_unlink(tempFilename)
         postMessage({
             messageId: e.data.messageId,
+            myTimeStamp:e.data.myTimeStamp,
             consoleMessage: `Fetched coordinates of molecule ${e.data.coordMolNo}`,
             message: e.data.message,
             result: { coordMolNo: e.data.coordMolNo, pdbData: pdbData }
@@ -143,6 +145,7 @@ onmessage = function (e) {
         cootModule.FS_unlink(tempFilename)
         postMessage({
             messageId: e.data.messageId,
+            myTimeStamp:e.data.myTimeStamp,
             consoleMessage: `Fetched map of map ${e.data.mapMolNo}`,
             message: e.data.message,
             result: { mapMolNo: e.data.mapMolNo, mapData: mapData.buffer }
@@ -159,6 +162,7 @@ onmessage = function (e) {
             cootModule.FS_unlink(tempFilename)
             postMessage({
                 messageId: e.data.messageId,
+                myTimeStamp:e.data.myTimeStamp,
                 consoleMessage: `Read map MTZ as molecule ${mapMolNo}`,
                 message: e.data.message,
                 result: { mapMolNo: mapMolNo, name: e.data.name }
@@ -176,24 +180,25 @@ onmessage = function (e) {
         const result = cootModule.getRamachandranData(tempFilename, e.data.chainId);
         cootModule.FS_unlink(tempFilename)
         let resInfo = [];
-        for(let ir=0;ir<result.size();ir++){
+        for (let ir = 0; ir < result.size(); ir++) {
             const cppres = result.get(ir);
             //TODO - Is there a nicer way to do this?
-            const jsres = {chainId:cppres.chainId,insCode:cppres.insCode,seqNum:cppres.seqNum,restype:cppres.restype,phi:cppres.phi,psi:cppres.psi,isOutlier:cppres.isOutlier,is_pre_pro:cppres.is_pre_pro};
+            const jsres = { chainId: cppres.chainId, insCode: cppres.insCode, seqNum: cppres.seqNum, restype: cppres.restype, phi: cppres.phi, psi: cppres.psi, isOutlier: cppres.isOutlier, is_pre_pro: cppres.is_pre_pro };
             resInfo.push(jsres);
         }
 
         postMessage({
             messageId: e.data.messageId,
+            myTimeStamp:e.data.myTimeStamp,
             messageTag: "result",
             result: resInfo,
         })
     }
 
     if (e.data.message === 'coot_command') {
-        const { returnType, command, commandArgs, message, messageId } = e.data
+        const { returnType, command, commandArgs, message, messageId, myTimeStamp } = e.data
         try {
-            console.log(command, commandArgs)
+            console.log(command, commandArgs, e.data)
             const cootResult = molecules_container[command](...commandArgs)
 
             let returnResult;
@@ -211,18 +216,21 @@ onmessage = function (e) {
                     returnResult = cootResult
                     break;
             }
+            
             postMessage({
-                messageId: messageId,
-                consoleMessage: `Completed ${command} with args ${commandArgs}`,
-                message: message,
+                messageId:e.data.messageId,
+                myTimeStamp:e.data.myTimeStamp,
+                message:e.data.message,
+                consoleMessage: `Completed ${command} with args ${commandArgs} in ${Date.now() - e.data.myTimeStamp} ms`,
                 result: { status: 'Completed', result: returnResult }
             })
         }
         catch (err) {
             postMessage({
-                messageId: messageId,
+                messageId:e.data.messageId,
+                myTimeStamp:e.data.myTimeStamp,
+                message:e.data.message,
                 consoleMessage: `EXCEPTION RAISED IN ${command} with args ${commandArgs}`,
-                message: message,
                 result: { status: 'Exception' }
             })
         }
