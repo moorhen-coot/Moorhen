@@ -7,11 +7,11 @@ export const BabyGruFileMenu = (props) => {
     const { molecules, setMolecules, maps, setMaps, cootWorker, glRef } = props;
 
     const loadPdbFiles = async (files) => {
-        let loadPromises = []
+        let readPromises = []
         for (const file of files) {
-            loadPromises.push(readPdbFile(file))
+            readPromises.push(readPdbFile(file))
         }
-        let newMolecules = await Promise.all(loadPromises)
+        let newMolecules = await Promise.all(readPromises)
         
         let drawPromises = []
         for (const newMolecule of newMolecules){
@@ -28,13 +28,19 @@ export const BabyGruFileMenu = (props) => {
         return newMolecule.loadToCootFromFile(file)
     }
 
+    const loadMtzFiles = async (files) => {
+        let readPromises = []
+        for (const file of files) {
+            readPromises.push(readMtzFile(file))
+        }
+        let newMaps = await Promise.all(readPromises)
+        setMaps(maps.concat(newMaps))
+        props.setActiveMap(newMaps.at(-1))
+    }
+
     const readMtzFile = (file) => {
         const newMap = new BabyGruMap(cootWorker)
-        newMap.loadToCootFromFile(file)
-            .then(result => {
-                setMaps([...maps, newMap])
-                props.setActiveMap(newMap)
-            })
+        return newMap.loadToCootFromFile(file)
     }
 
     const fetchFileFromEBI = (pdbCode) => {
@@ -90,11 +96,7 @@ export const BabyGruFileMenu = (props) => {
         </Form.Group>
         <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="uploadMTZs" className="mb-3">
             <Form.Label>Map coefficients</Form.Label>
-            <Form.Control type="file" accept=".mtz" onChange={(e) => {
-                for (const file of e.target.files) {
-                    readMtzFile(file)
-                }
-            }} />
+            <Form.Control type="file" accept=".mtz" multiple={true} onChange={(e) => {loadMtzFiles(e.target.files)}} />
         </Form.Group>
 
         <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="uploadMTZs" className="mb-3">
