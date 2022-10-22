@@ -18,6 +18,7 @@ file(GLOB coot_exception_srcs
 ${coot_src}/api/simple-mesh.cc
 ${coot_src}/api/interfaces.cc
 ${coot_src}/api/coot_molecule.cc
+${coot_src}/api/add-terminal-residue.cc
 ${coot_src}/api/molecules_container.cc
 ${coot_src}/api/oct.cc
 ${coot_src}/api/prideout-octasphere.cc
@@ -112,6 +113,7 @@ ${coot_src}/coot-utils/lidia-core-functions.cc
 ${coot_src}/coot-utils/cablam-markup.cc
 ${coot_src}/coot-utils/fib-sphere.cc
 ${coot_src}/coot-utils/atom-selection-container.cc
+${coot_src}/coot-utils/blob-line.cc
 ${coot_src}/coot-utils/coot-coord-utils-glyco.cc
 ${coot_src}/coot-utils/coot-coord-utils.cc
 ${coot_src}/coot-utils/merge-molecules.cc
