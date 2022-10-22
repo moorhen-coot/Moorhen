@@ -20,7 +20,8 @@ const BabyGruRefinementPanel = (props) => {
                     {refinementModes.map(optionName => {
                         return <option value={optionName}>{optionName}</option>
                     })}
-                </FormSelect></FormGroup>
+                </FormSelect>
+            </FormGroup>
         </Row>
     </Container>
 }
@@ -50,7 +51,8 @@ const BabyGruDeletePanel = (props) => {
                     {deleteModes.map(optionName => {
                         return <option value={optionName}>{optionName}</option>
                     })}
-                </FormSelect></FormGroup>
+                </FormSelect>
+            </FormGroup>
         </Row>
     </Container>
 }
@@ -64,7 +66,8 @@ const deleteFormatArgs = (molecule, chosenAtom, pp) => {
 
 
 const BabyGruMutatePanel = (props) => {
-    const toTypes = ['ALA', 'CYS', 'ASP', 'GLU', 'ARG']
+    const toTypes = ['ALA', 'CYS', 'ASP', 'GLU', 'PHE', 'GLY', 'HIS', 'ILE',
+        'LYS', 'LEU', 'MET', 'ASN', 'PRO', 'GLN', 'ARG', 'SER', 'THR', 'VAL', 'TRP', 'TYR']
     return <Container>
         <Row>Please identify residue to mutate</Row>
         <Row>
@@ -79,7 +82,8 @@ const BabyGruMutatePanel = (props) => {
                     {toTypes.map(optionName => {
                         return <option value={optionName}>{optionName}</option>
                     })}
-                </FormSelect></FormGroup>
+                </FormSelect>
+            </FormGroup>
         </Row>
     </Container>
 }
@@ -205,12 +209,11 @@ export const BabyGruSimpleEditButton = (props) => {
 
     useEffect(() => {
         console.log('changed localParameters', localParameters)
-        document.removeEventListener('atomClicked', atomClickedCallback, { once: true })
-        document.addEventListener('atomClicked', atomClickedCallback, { once: true })
     }, [localParameters])
 
-    const atomClickedCallback = useCallback(event => {
+    const atomClickedCallback = event => {
         console.log('in atomClickedcallback', event)
+        document.removeEventListener('atomClicked', atomClickedCallback, { once: true })
         props.molecules.forEach(molecule => {
             console.log('Testing molecule ', molecule.coordMolNo)
             if (molecule.buffersInclude(event.detail.buffer)) {
@@ -231,7 +234,7 @@ export const BabyGruSimpleEditButton = (props) => {
                 console.log('molecule for buffer not found')
             }
         })
-    }, [localParameters, props.molecules])
+    }
 
     return <>
         <Button value={props.buttonIndex}

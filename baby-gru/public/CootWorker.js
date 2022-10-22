@@ -114,7 +114,7 @@ onmessage = function (e) {
         cootModule.FS_unlink(tempFilename)
         postMessage({
             messageId: e.data.messageId,
-            myTimeStamp:e.data.myTimeStamp,
+            myTimeStamp: e.data.myTimeStamp,
             consoleMessage: `Read coordinates as molecule ${coordMolNo}`,
             message: e.data.message,
             result: { coordMolNo: coordMolNo, name: e.data.name }
@@ -129,7 +129,7 @@ onmessage = function (e) {
         cootModule.FS_unlink(tempFilename)
         postMessage({
             messageId: e.data.messageId,
-            myTimeStamp:e.data.myTimeStamp,
+            myTimeStamp: e.data.myTimeStamp,
             consoleMessage: `Fetched coordinates of molecule ${e.data.coordMolNo}`,
             message: e.data.message,
             result: { coordMolNo: e.data.coordMolNo, pdbData: pdbData }
@@ -145,7 +145,7 @@ onmessage = function (e) {
         cootModule.FS_unlink(tempFilename)
         postMessage({
             messageId: e.data.messageId,
-            myTimeStamp:e.data.myTimeStamp,
+            myTimeStamp: e.data.myTimeStamp,
             consoleMessage: `Fetched map of map ${e.data.mapMolNo}`,
             message: e.data.message,
             result: { mapMolNo: e.data.mapMolNo, mapData: mapData.buffer }
@@ -162,7 +162,7 @@ onmessage = function (e) {
             cootModule.FS_unlink(tempFilename)
             postMessage({
                 messageId: e.data.messageId,
-                myTimeStamp:e.data.myTimeStamp,
+                myTimeStamp: e.data.myTimeStamp,
                 consoleMessage: `Read map MTZ as molecule ${mapMolNo}`,
                 message: e.data.message,
                 result: { mapMolNo: mapMolNo, name: e.data.name }
@@ -189,7 +189,7 @@ onmessage = function (e) {
 
         postMessage({
             messageId: e.data.messageId,
-            myTimeStamp:e.data.myTimeStamp,
+            myTimeStamp: e.data.myTimeStamp,
             messageTag: "result",
             result: resInfo,
         })
@@ -198,7 +198,8 @@ onmessage = function (e) {
     if (e.data.message === 'coot_command') {
         const { returnType, command, commandArgs, message, messageId, myTimeStamp } = e.data
         try {
-            console.log(command, commandArgs, e.data)
+            postMessage({ consoleMessage: `Received ${command} with args ${commandArgs}` })
+
             const cootResult = molecules_container[command](...commandArgs)
 
             let returnResult;
@@ -216,20 +217,20 @@ onmessage = function (e) {
                     returnResult = cootResult
                     break;
             }
-            
+
             postMessage({
-                messageId:e.data.messageId,
-                myTimeStamp:e.data.myTimeStamp,
-                message:e.data.message,
+                messageId: e.data.messageId,
+                myTimeStamp: e.data.myTimeStamp,
+                message: e.data.message,
                 consoleMessage: `Completed ${command} with args ${commandArgs} in ${Date.now() - e.data.myTimeStamp} ms`,
                 result: { status: 'Completed', result: returnResult }
             })
         }
         catch (err) {
             postMessage({
-                messageId:e.data.messageId,
-                myTimeStamp:e.data.myTimeStamp,
-                message:e.data.message,
+                messageId: e.data.messageId,
+                myTimeStamp: e.data.myTimeStamp,
+                message: e.data.message,
                 consoleMessage: `EXCEPTION RAISED IN ${command} with args ${commandArgs}`,
                 result: { status: 'Exception' }
             })
