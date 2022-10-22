@@ -58,9 +58,12 @@ const BabyGruDeletePanel = (props) => {
 }
 const deleteFormatArgs = (molecule, chosenAtom, pp) => {
     //console.log({ molecule, chosenAtom, pp })
-    return [
-        molecule.coordMolNo,
-        `//${chosenAtom.chain_id}/${chosenAtom.res_no}`,
+    return pp.delete.mode === 'RESIDUE' ?
+        [molecule.coordMolNo,
+        `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}`,
+        pp.delete.mode] :
+        [molecule.coordMolNo,
+        `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`,
         pp.delete.mode]
 }
 
@@ -163,7 +166,7 @@ export const BabyGruButtonBar = (props) => {
                 buttonIndex={"3"}
                 selectedbuttonIndex={selectedbuttonIndex}
                 setSelectedbuttonIndex={setSelectedbuttonIndex}
-                needsMapData={true}
+                needsMapData={false}
                 cootCommand="delete_using_cid"
                 panelParameters={panelParameters}
                 prompt={<BabyGruDeletePanel
