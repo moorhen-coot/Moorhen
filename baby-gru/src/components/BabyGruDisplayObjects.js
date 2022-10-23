@@ -263,7 +263,8 @@ export const BabyGruDisplayObjects = (props) => {
     // TODO: Concatenate molecules and maps, sort them by coordMolNo and then push them in that order...
     if (props.molecules.length!=0) {
         props.molecules.forEach(molecule => displayData.push(
-            <BabyGruMoleculeCard key={molecule.coordMolNo}
+            <BabyGruMoleculeCard 
+                index={molecule.coordMolNo}
                 molecule={molecule}
                 glRef={props.glRef}
                 cootWorker={props.cootWorker}>
@@ -274,9 +275,11 @@ export const BabyGruDisplayObjects = (props) => {
     
     if (props.maps.length!=0) {
         props.maps.forEach(map => displayData.push(
-            <BabyGruMapCard {...props} mapRadius={props.mapRadius} map={map}/>
+            <BabyGruMapCard {...props} index={map.mapMolNo} mapRadius={props.mapRadius} map={map}/>
         ))
     }   
+
+    displayData.sort((a,b) => (a.props.index > b.props.index) ? 1 : ((b.props.index > a.props.index) ? -1 : 0))
 
     return <Fragment>
                 {displayData}
