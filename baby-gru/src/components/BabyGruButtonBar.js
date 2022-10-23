@@ -146,7 +146,7 @@ export const BabyGruButtonBar = (props) => {
                 prompt="Click atom in residue to flip"
                 icon={<img className="baby-gru-button-icon" src="pixmaps/flip-peptide.svg" />}
                 formatArgs={(molecule, chosenAtom) => {
-                    return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`, '']
+                    return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, '']
                 }} />
 
             <BabyGruSimpleEditButton {...props}
