@@ -116,7 +116,6 @@ export const BabyGruContainer = (props) => {
     }
 
     const webGLHeight = () => {
-        console.log(window.innerHeight)
         return window.innerHeight - (navHeight + accordionHeight + accordionMargin)
     }
 
