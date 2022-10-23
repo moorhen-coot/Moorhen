@@ -8,6 +8,7 @@ import { BabyGruButtonBar } from './BabyGruButtonBar';
 import { BabyGruFileMenu } from './BabyGruFileMenu';
 import { BabyGruSequenceViewer } from './BabyGruSequenceViewer';
 import { BabyGruRamachandran } from './BabyGruRamachandran';
+import { BabyGruMapSettings } from './BabyGruMapSettings';
 import { DensitySmallOutlined } from '@mui/icons-material';
 
 const initialState = { count: 0, consoleMessage: "" };
@@ -44,6 +45,7 @@ export const BabyGruContainer = (props) => {
     const cootEventDispatchBinding = createRef()
     const [dispatchedMessages, setDispatchedMessages] = useState([])
     const [busy, setBusy] = useState(false)
+    const [mapRadius, setMapRadius] = useState(15.)
 
     const consoleHeight = convertVhtoPx(15);
     const accordionHeaderHeight = convertVhtoPx(5);
@@ -224,7 +226,7 @@ export const BabyGruContainer = (props) => {
                                         Display Objects
                                     </Card.Header>
                                     <Card.Body style={{ overflowY:'auto' }}>
-                                        { molecules.length===0 && maps.length===0 ? "No data files loaded" : <BabyGruDisplayObjects molecules={molecules} glRef={glRef} cootWorker={cootWorker} maps={maps} activeMap={activeMap} setActiveMap={setActiveMap} /> }
+                                        { molecules.length===0 && maps.length===0 ? "No data files loaded" : <BabyGruDisplayObjects molecules={molecules} glRef={glRef} cootWorker={cootWorker} maps={maps} activeMap={activeMap} setActiveMap={setActiveMap} mapRadius={mapRadius} setMapRadius={setMapRadius}/> }
                                     </Card.Body>
                                 </Card>   
                             </div>
@@ -238,13 +240,13 @@ export const BabyGruContainer = (props) => {
                                                 <BabyGruRamachandran molecules={molecules} cootWorker={cootWorker} glRef={glRef} />
                                             </Tab>
                                             <Tab eventKey='mapCountour' title='Map Settings'>
-                                                <BabyGruRamachandran molecules={molecules} cootWorker={cootWorker} glRef={glRef} />
+                                                <BabyGruMapSettings glRef={glRef} cootWorker={cootWorker} maps={maps} activeMap={activeMap} mapRadius={mapRadius} setMapRadius={setMapRadius} setActiveMap={setActiveMap} />
                                             </Tab>
                                             <Tab eventKey='densityFit' title='Density Fit'>
-                                                <BabyGruRamachandran molecules={molecules} cootWorker={cootWorker} glRef={glRef} />
+                                                Not ready yet...
                                             </Tab>
                                             <Tab eventKey='more' title='More...'>
-                                                <BabyGruRamachandran molecules={molecules} cootWorker={cootWorker} glRef={glRef} />
+                                                Not ready yet...
                                             </Tab>
                                         </Tabs>
                                     </Card.Body>

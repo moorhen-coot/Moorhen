@@ -255,28 +255,6 @@ const BabyGruMapCard = (props) => {
 
 
 export const BabyGruDisplayObjects = (props) => {
-    const [mapRadius, setMapRadius] = useState(15.)
-    const busyContouring = createRef(false)
-
-    const recontourActiveMap = (newLevel) => {
-        if (props.activeMap) {
-            props.activeMap.contourLevel = newLevel
-            if (props.activeMap.cootContour) {
-                if (busyContouring.current) {
-                }
-                else {
-                    busyContouring.current = true
-                    props.activeMap.doCootContour(props.glRef.current,
-                        ...props.glRef.current.origin,
-                        mapRadius,
-                        props.activeMap.contourLevel)
-                        .then(result => {
-                            busyContouring.current = false
-                        })
-                }
-            }
-        }
-    }
 
     useEffect(() => {
     }, [])
@@ -296,7 +274,7 @@ export const BabyGruDisplayObjects = (props) => {
     
     if (props.maps.length!=0) {
         props.maps.forEach(map => displayData.push(
-            <BabyGruMapCard {...props} mapRadius={mapRadius} map={map}/>
+            <BabyGruMapCard {...props} mapRadius={props.mapRadius} map={map}/>
         ))
     }   
 
