@@ -25,7 +25,7 @@ export const BabyGruMoleculeCard = (props) => {
     return <Card className="px-0"  style={{marginBottom:'0.5rem', padding:'0'}} key={props.molecule.coordMolNo}>
         <Card.Header>
             <Row className='align-items-center'>
-                <Col>
+                <Col style={{display:'flex', justifyContent:'left'}}>
                     {`#${props.molecule.coordMolNo} Mol. ${props.molecule.name}`}
                 </Col>
                 <Col style={{display:'flex', justifyContent:'right'}}>
@@ -180,7 +180,7 @@ const BabyGruMapCard = (props) => {
     return <Card className="px-0"  style={{marginBottom:'0.5rem', padding:'0'}} key={props.map.mapMolNo}>
         <Card.Header>
             <Row className='align-items-center'>
-                <Col>
+            <Col style={{display:'flex', justifyContent:'left'}}>
                     {`#${props.map.mapMolNo} Map ${props.map.name}`}
                 </Col>
                 <Col style={{display:'flex', justifyContent:'right'}}>
