@@ -1,5 +1,5 @@
-import { useRef, useState, useEffect, createRef, useReducer, useCallback } from 'react';
-import { Navbar, Container, Nav, Tabs, Tab, Accordion, Button, Offcanvas, Col, Row, Card, Collapse, Fade, Spinner } from 'react-bootstrap';
+import { useRef, useLayoutEffect, useState, useEffect, createRef, useReducer, useCallback } from 'react';
+import { Navbar, Container, Nav, Tabs, Tab, Accordion, Button, Col, Row, Card, Spinner } from 'react-bootstrap';
 import { BabyGruDisplayObjects } from './BabyGruDisplayObjects';
 import { BabyGruWebMG } from './BabyGruWebMG';
 import { v4 as uuidv4 } from 'uuid';
@@ -11,6 +11,7 @@ import { BabyGruRamachandran } from './BabyGruRamachandran';
 import { BabyGruMapSettings } from './BabyGruMapSettings';
 import { DensitySmallOutlined } from '@mui/icons-material';
 
+
 const initialState = { count: 0, consoleMessage: "" };
 
 function reducer(consoleState, action) {
@@ -20,20 +21,25 @@ function reducer(consoleState, action) {
     };
 }
 
-function convertPxtoVh(input) {
-    return 100 * input / window.innerHeight 
+function convertPxtoVh(input, height) {
+    return 100 * input / height 
 }
 
-function convertVhtoPx(input) {
-    return window.innerHeight * (input / 100)
+function convertVhtoPx(input, height) {
+    return height * (input / 100)
 }
 
 
 export const BabyGruContainer = (props) => {
 
     const glRef = useRef(null)
+    const sideBarRef = useRef(null)
+    const buttonBarRef = useRef(null)
+    const accordionRef = useRef(null)
     const cootWorker = useRef(null)
     const graphicsDiv = createRef()
+    const sequenceViewerRef = useRef()
+    const [showSideBar, setShowSideBar] = useState(true)
     const [activeMap, setActiveMap] = useState(null)
     const [consoleState, dispatch] = useReducer(reducer, initialState);
     const [molecules, setMolecules] = useState([])
@@ -46,17 +52,17 @@ export const BabyGruContainer = (props) => {
     const [dispatchedMessages, setDispatchedMessages] = useState([])
     const [busy, setBusy] = useState(false)
     const [mapRadius, setMapRadius] = useState(15.)
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth)
+    const [windowHeight, setWindowHeight] = useState(window.innerHeight)
 
-    const consoleHeight = convertVhtoPx(15);
-    const accordionHeaderHeight = convertVhtoPx(5);
-    const navHeight = convertVhtoPx(4);
-    const sequenceViewerHeight = convertVhtoPx(15)
-    const accordionMargin = convertVhtoPx(3)
+    const consoleHeight = convertVhtoPx(15, windowHeight);
+    const accordionHeaderHeight = convertVhtoPx(4, windowHeight);
+    const navHeight = convertVhtoPx(4, windowHeight);
+    const sequenceViewerHeight = convertVhtoPx(15, windowHeight)
+    const innerWindowMarginHeight = windowHeight*0.05
 
     const [accordionHeight, setAccordionHeight] = useState(2 * accordionHeaderHeight)
-    const [showSideBar, setShowSideBar] = useState(true)
-    const sequenceViewerRef = useRef()
-
+    
     const handleMessage = useCallback(e => {
         //Append the response consoleMessage to the console text
         dispatch({ newText: e.data.consoleMessage })
@@ -70,6 +76,11 @@ export const BabyGruContainer = (props) => {
         newDispatchedMessages.push(e.detail.messageId)
         setDispatchedMessages(newDispatchedMessages)
     })
+    
+    const setWindowDimensions = () => {
+        setWindowWidth(window.innerWidth)
+        setWindowHeight(window.innerHeight)
+      }
 
     useEffect(() => {
         cootWorker.current = new Worker('CootWorker.js')
@@ -77,12 +88,13 @@ export const BabyGruContainer = (props) => {
         //Register an event listener to update console
         cootWorkerListenerBinding.current = cootWorker.current.addEventListener("message", handleMessage)
         cootEventDispatchBinding.current = document.addEventListener("coot_message_dispatch", handleCootMessageDispatch)
+        window.addEventListener('resize', setWindowDimensions)
         return () => {
+            window.removeEventListener('resize', setWindowDimensions)
             cootWorker.current.removeEventListener('message', handleMessage)
             document.removeEventListener('coot_message_dispatch', handleCootMessageDispatch)
             cootWorker.current.terminate()
         }
-        glResize()
     }, [])
 
     useEffect(() => {
@@ -95,7 +107,9 @@ export const BabyGruContainer = (props) => {
 
     useEffect(() => {
         glResize()
-    }, [accordionHeight, showSideBar])
+        sideBarResize()
+    }, [accordionHeight, showSideBar, windowHeight, windowWidth])
+
 
     useEffect(() => {
         if (activeMap) {
@@ -113,12 +127,22 @@ export const BabyGruContainer = (props) => {
     }
 
     const webGLWidth = () => {
-        const result = window.innerWidth - (190 + (showSideBar ? 500 : 0))
+        const result = windowWidth - (190 + (showSideBar ? 500 : 0))
         return result
     }
 
     const webGLHeight = () => {
-        return window.innerHeight - (navHeight + accordionHeight + accordionMargin)
+        return windowHeight - (navHeight + accordionHeight + innerWindowMarginHeight)
+    }
+
+    const sideBarHeight = () => {
+        return windowHeight - (navHeight + innerWindowMarginHeight)
+    }
+
+    const sideBarResize = () => {
+        let newHeight = sideBarHeight()
+        sideBarRef.current.style.height = newHeight
+        buttonBarRef.current.style.height = newHeight
     }
 
     return <>
@@ -170,23 +194,19 @@ export const BabyGruContainer = (props) => {
                             alwaysOpen={true}
                             defaultActiveKey=""
                             onSelect={(openPanels) => {
-                                let newAccordionHeight = 0;
-                                newAccordionHeight += accordionHeaderHeight;
+                                let newAccordionHeight = accordionHeaderHeight*2;
                                 if (openPanels && openPanels.includes("console")) {
-                                    newAccordionHeight += consoleHeight+accordionMargin
+                                    newAccordionHeight += consoleHeight
                                 }
-                                newAccordionHeight += accordionHeaderHeight;//sequences header line
                                 if (openPanels && openPanels.includes("sequences")) {
-                                    newAccordionHeight += sequenceViewerHeight+accordionMargin
-                                }
+                                    newAccordionHeight += sequenceViewerHeight
+                                };
                                 setAccordionHeight(newAccordionHeight)
                             }}>
                             <Accordion.Item eventKey="sequences">
-                                <Accordion.Header>Sequences</Accordion.Header>
-                                <Accordion.Body>
+                                <Accordion.Header style={{height:accordionHeaderHeight}}>Sequences</Accordion.Header>
+                                <Accordion.Body style={{height: sequenceViewerHeight}}>
                                     <div ref={sequenceViewerRef} style={{
-                                        height: sequenceViewerHeight,
-                                        lineHeight: "1.0rem",
                                         textAlign: "left"
                                     }}>
                                         <BabyGruSequenceViewer molecules={molecules} glRef={glRef} />
@@ -194,12 +214,11 @@ export const BabyGruContainer = (props) => {
                                 </Accordion.Body>
                             </Accordion.Item>
                             <Accordion.Item eventKey="console">
-                                <Accordion.Header>Console</Accordion.Header>
-                                <Accordion.Body>
+                                <Accordion.Header style={{height:accordionHeaderHeight}}>Console</Accordion.Header>
+                                <Accordion.Body style={{height: consoleHeight}}>
                                     <div ref={consoleDivRef} style={{
                                         overflowY: "scroll",
-                                        height: consoleHeight,
-                                        lineHeight: "1.0rem",
+                                        height: '100%',
                                         textAlign: "left"
                                     }}>
                                         <pre>{consoleState.consoleMessage}
@@ -210,18 +229,18 @@ export const BabyGruContainer = (props) => {
                         </Accordion>
                     </div>
                 </Col>
-                <Col style={{ height: '95vh', paddingLeft: '0.5rem', paddingRight:'0.5rem'}}  md="auto">
+                <Col ref={sideBarRef} style={{ height: sideBarHeight(), paddingLeft: '0.5rem', paddingRight:'0.5rem'}}  md="auto">
                     <BabyGruButtonBar setCursorStyle={setCursorStyle}
                         molecules={molecules}
                         cootWorker={cootWorker}
                         activeMap={activeMap}
                         glRef={glRef} />
                 </Col>
-                <Col style={{ height: '95vh', paddingLeft: '0.5rem', paddingRight:'0.5rem', display: showSideBar ? "Block" : "None" }}  md="auto">
+                <Col ref={buttonBarRef} style={{ height: sideBarHeight(), paddingLeft: '0.5rem', paddingRight:'0.5rem', display: showSideBar ? "Block" : "None" }}  md="auto">
                     <div style={{ width: "35rem", height:'100%' }}>
-                    <Row style={{marginTop:'1%', marginBottom:'1%', padding:'0', height:'48%'}} >
+                    <Row style={{ paddingTop:'2%', height:'48%'}} >
                             <div style={{height:'100%'}}>
-                            <Card className="px-0"  style={{marginTop:'1%', marginBottom:'1%', padding:'0', height:'100%'}} >
+                            <Card className="px-0"  style={{marginTop:'0', marginBottom:'0', padding:'0', height:'100%'}} >
                                     <Card.Header>
                                         Display Objects
                                     </Card.Header>
@@ -231,9 +250,9 @@ export const BabyGruContainer = (props) => {
                                 </Card>   
                             </div>
                         </Row>
-                        <Row style={{ height:'48%'}} >
+                        <Row style={{ paddingTop:'2%', height:'48%'}} >
                             <div style={{height:'100%'}}>
-                            <Card className="px-0"  style={{marginTop:'1%', marginBottom:'1%', padding:'0', height:'100%'}} >
+                            <Card className="px-0"  style={{marginTop:'0', marginBottom:'0', padding:'0', height:'100%'}} >
                                     <Card.Body>      
                                         <Tabs defaultActiveKey='ramachandran'>
                                         <Tab eventKey='ramachandran' title='Ramachandran'>
