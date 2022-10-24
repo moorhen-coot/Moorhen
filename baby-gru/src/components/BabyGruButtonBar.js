@@ -146,11 +146,23 @@ export const BabyGruButtonBar = (props) => {
                 prompt="Click atom in residue to flip"
                 icon={<img className="baby-gru-button-icon" src="pixmaps/flip-peptide.svg" />}
                 formatArgs={(molecule, chosenAtom) => {
-                    return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`, '']
+                    return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, '']
                 }} />
 
             <BabyGruSimpleEditButton {...props}
                 buttonIndex={"2"}
+                selectedbuttonIndex={selectedbuttonIndex}
+                setSelectedbuttonIndex={setSelectedbuttonIndex}
+                needsMapData={false}
+                cootCommand="side_chain_180"
+                prompt="Click atom in residue to flip sidechain"
+                icon={<img className="baby-gru-button-icon" src="pixmaps/side-chain-180.svg" />}
+                formatArgs={(molecule, chosenAtom) => {
+                    return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
+                }} />
+
+        <BabyGruSimpleEditButton {...props}
+                buttonIndex={"3"}
                 selectedbuttonIndex={selectedbuttonIndex}
                 setSelectedbuttonIndex={setSelectedbuttonIndex}
                 needsMapData={true}
@@ -163,7 +175,7 @@ export const BabyGruButtonBar = (props) => {
                 formatArgs={(m, c, p) => refinementFormatArgs(m, c, p)} />
 
             <BabyGruSimpleEditButton {...props}
-                buttonIndex={"3"}
+                buttonIndex={"4"}
                 selectedbuttonIndex={selectedbuttonIndex}
                 setSelectedbuttonIndex={setSelectedbuttonIndex}
                 needsMapData={false}
@@ -176,7 +188,7 @@ export const BabyGruButtonBar = (props) => {
                 formatArgs={(m, c, p) => deleteFormatArgs(m, c, p)} />
 
             <BabyGruSimpleEditButton {...props}
-                buttonIndex={"4"}
+                buttonIndex={"5"}
                 selectedbuttonIndex={selectedbuttonIndex}
                 setSelectedbuttonIndex={setSelectedbuttonIndex}
                 needsMapData={false}
@@ -187,6 +199,18 @@ export const BabyGruButtonBar = (props) => {
                     panelParameters={panelParameters} />}
                 icon={<img className="baby-gru-button-icon" src="pixmaps/mutate.svg" />}
                 formatArgs={(m, c, p) => mutateFormatArgs(m, c, p)} />
+
+            <BabyGruSimpleEditButton {...props}
+                buttonIndex={"6"}
+                selectedbuttonIndex={selectedbuttonIndex}
+                setSelectedbuttonIndex={setSelectedbuttonIndex}
+                needsMapData={false}
+                cootCommand="add_terminal_residue_directly_using_cid"
+                prompt="Click atom in residue to add a residue to that residue"
+                icon={<img className="baby-gru-button-icon" src="pixmaps/add-peptide-1.svg" />}
+                formatArgs={(molecule, chosenAtom) => {
+                    return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
+                }} />
 
         </ButtonGroup>
     </div>
