@@ -78,6 +78,7 @@ onmessage = function (e) {
             molecules_container = new cootModule.molecules_container_js()
             molecules_container.geometry_init_standard()
             molecules_container.fill_rotamer_probability_tables()
+            cootModule.FS.mkdir("COOT_BACKUP");
             postMessage({ consoleMessage: 'Initialized molecules_container', message: e.data.message })
         })
             .catch((e) => {
