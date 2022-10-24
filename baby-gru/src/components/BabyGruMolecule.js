@@ -126,26 +126,27 @@ BabyGruMolecule.prototype.centreOn = function (gl, selection) {
         promise = Promise.resolve()
     }
 
-    let selectionCentre = null;
-    if (selection) {
-        let selectedChainIndex = $this.cachedAtoms.atoms[selection.modelIndex].chains.findIndex(chain => chain.residues[0].atoms[0]["_atom_site.auth_asym_id"] === selection.chain);
-        if (selectedChainIndex === -1) {
-            console.log(`Cannot find chain ${selection.molName}/${selection.chain}`);
-            return;
-        }
-        let selectedResidueIndex = $this.cachedAtoms.atoms[selection.modelIndex].chains[selectedChainIndex].residues.findIndex(residue => residue.atoms[0]["_atom_site.label_seq_id"] == selection.seqNum);
-        if (selectedResidueIndex === -1) {
-            console.log(`Cannot find residue ${selection.molName}/${selection.chain}/${selection.seqNum}`);
-            return;
-        } else {
-            let selectedAtoms = $this.cachedAtoms.atoms[selection.modelIndex].chains[selectedChainIndex].residues[selectedResidueIndex].atoms;
-            selectionCentre = $this.cachedAtoms.atoms[selection.modelIndex].centreOnAtoms(selectedAtoms);
-        }
-    } else {
-        selectionCentre = $this.cachedAtoms.atoms[0].centre();
-    }
-
     return promise.then(() => {
+
+        let selectionCentre = null;
+        if (selection) {
+            let selectedChainIndex = $this.cachedAtoms.atoms[selection.modelIndex].chains.findIndex(chain => chain.residues[0].atoms[0]["_atom_site.auth_asym_id"] === selection.chain);
+            if (selectedChainIndex === -1) {
+                console.log(`Cannot find chain ${selection.molName}/${selection.chain}`);
+                return;
+            }
+            let selectedResidueIndex = $this.cachedAtoms.atoms[selection.modelIndex].chains[selectedChainIndex].residues.findIndex(residue => residue.atoms[0]["_atom_site.label_seq_id"] == selection.seqNum);
+            if (selectedResidueIndex === -1) {
+                console.log(`Cannot find residue ${selection.molName}/${selection.chain}/${selection.seqNum}`);
+                return;
+            } else {
+                let selectedAtoms = $this.cachedAtoms.atoms[selection.modelIndex].chains[selectedChainIndex].residues[selectedResidueIndex].atoms;
+                selectionCentre = $this.cachedAtoms.atoms[selection.modelIndex].centreOnAtoms(selectedAtoms);
+            }
+        } else {
+            selectionCentre = $this.cachedAtoms.atoms[0].centre();
+        }
+
         return new Promise((resolve, reject) => {
             gl.current.setOrigin(selectionCentre);
             resolve(true);
@@ -308,6 +309,7 @@ BabyGruMolecule.prototype.drawBonds = function (webMGAtoms, gl, colourSchemeInde
     var contactsAndSingletons = model.getBondsContactsAndSingletons();
 
     var contacts = contactsAndSingletons["contacts"];
+    console.log('contacts are', contacts)
     var singletons = contactsAndSingletons["singletons"];
     var linePrimitiveInfo = contactsToCylindersInfo(contacts, 0.1, atomColours);
     var singletonPrimitiveInfo = singletonsToLinesInfo(singletons, 4, atomColours);
@@ -453,12 +455,23 @@ BabyGruMolecule.prototype.redraw = function (gl) {
             }
         }
     })
-    itemsToRedraw.reduce(
-        (p, style) => {
-            console.log(`Redrawing ${style}`, $this.atomsDirty)
-            return p.then(() => $this.fetchIfDirtyAndDraw(style, gl)
-            )
-        },
-        Promise.resolve()
+    let promise
+    if ($this.atomsDirty) {
+        promise = $this.updateAtoms()
+    }
+    else {
+        promise = Promise.resolve()
+    }
+    promise.then(
+        _=>{
+            itemsToRedraw.reduce(
+                (p, style) => {
+                    console.log(`Redrawing ${style}`, $this.atomsDirty)
+                    return p.then(() => $this.fetchIfDirtyAndDraw(style, gl)
+                    )
+                },
+                Promise.resolve()
+            )        
+        }
     )
 }
