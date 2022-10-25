@@ -238,11 +238,11 @@ BabyGruMolecule.prototype.drawCootBonds = function (gl) {
         const objects = [response.data.result.result]
 
         //Empty existing buffers of this type
-        this.clearBuffersOfStyle('rotamer', gl)
+        this.clearBuffersOfStyle('CBs', gl)
 
         objects.forEach(object => {
             var a = gl.appendOtherData(object, true);
-            $this.displayObjects.rotamer = $this.displayObjects.rotamer.concat(a)
+            $this.displayObjects.CBs = $this.displayObjects.CBs.concat(a)
         })
 
         gl.buildBuffers();
