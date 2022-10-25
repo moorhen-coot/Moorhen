@@ -8,7 +8,7 @@ export function BabyGruMap(cootWorker) {
     this.liveUpdatingMaps = {}
     this.webMGContour = false
     this.cootContour = true
-    this.displayObjects = { 'Coot': [] }
+    this.displayObjects = { Coot: [] }
 }
 
 BabyGruMap.prototype.loadToCootFromURL = function (url, mapName) {
@@ -99,8 +99,9 @@ BabyGruMap.prototype.makeCootLive = function (gl, mapRadius) {
 BabyGruMap.prototype.makeCootUnlive = function (gl) {
     const $this = this
     $this.cootContour = false
-    $this.clearBuffersOfStyle('Coot')
-    gl.drawScene()
+    $this.clearBuffersOfStyle(gl, 'Coot')
+    gl.buildBuffers();
+    gl.drawScene();
 }
 
 
@@ -138,10 +139,11 @@ BabyGruMap.prototype.contour = function (gl) {
 
 BabyGruMap.prototype.clearBuffersOfStyle = function (gl, style) {
     const $this = this
+    //console.log('In clear buffers', style, $this.displayObjects)
     //Empty existing buffers of this type
     $this.displayObjects[style].forEach((buffer) => {
         buffer.clearBuffers()
-        gl.displayBuffers = gl.displayBuffers.filter(glBuffer=>glBuffer.id !== buffer.id)
+        gl.displayBuffers = gl.displayBuffers.filter(glBuffer => glBuffer.id !== buffer.id)
     })
     $this.displayObjects[style] = []
 }
@@ -157,7 +159,7 @@ BabyGruMap.prototype.doCootContour = function (gl, x, y, z, radius, contourLevel
             commandArgs: [$this.mapMolNo, x, y, z, radius, contourLevel]
         }).then(response => {
             const objects = [response.data.result.result]
-            $this.clearBuffersOfStyle(gl, 'Coot')
+            $this.clearBuffersOfStyle(gl, "Coot")
             //$this.displayObjects['Coot'] = [...$this.displayObjects['Coot'], ...objects.map(object=>gl.appendOtherData(object, true))]
             objects.forEach(object => {
                 var a = gl.appendOtherData(object, true);

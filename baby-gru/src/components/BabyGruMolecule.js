@@ -23,7 +23,7 @@ export function BabyGruMolecule(cootWorker) {
         sticks: [],
         rama: [],
         rotamer: [],
-        CBs:[]
+        CBs: []
     }
 };
 
@@ -182,32 +182,34 @@ BabyGruMolecule.prototype.drawWithStyleFromAtoms = function (style, gl, webMGAto
     }
 }
 
+BabyGruMolecule.prototype.addBuffersOfStyle = function (gl, objects, style) {
+    const $this = this
+    objects.forEach(object => {
+        var a = gl.appendOtherData(object, true);
+        $this.displayObjects[style] = $this.displayObjects[style].concat(a)
+    })
+    gl.buildBuffers();
+    gl.drawScene();
+}
+
 BabyGruMolecule.prototype.drawRamachandranBalls = function (gl) {
     const $this = this
+    const style = "rama"
     cootCommand($this.cootWorker, {
         returnType: "mesh",
         command: "ramachandran_validation_markup_mesh",
         commandArgs: [$this.coordMolNo]
     }).then(response => {
         const objects = [response.data.result.result]
-
         //Empty existing buffers of this type
-        this.displayObjects.rama.forEach((buffer) => {
-            buffer.clearBuffers()
-        })
-        this.displayObjects.rama = []
-
-        objects.forEach(object => {
-            var a = gl.appendOtherData(object, true);
-            $this.displayObjects.rama = $this.displayObjects.rama.concat(a)
-        })
-        gl.buildBuffers();
-        gl.drawScene();
+        this.clearBuffersOfStyle(style, gl)
+        this.addBuffersOfStyle(gl, objects, style)
     })
 }
 
 BabyGruMolecule.prototype.drawRotamerDodecahedra = function (gl) {
     const $this = this
+    const style = "rotamer"
     cootCommand($this.cootWorker, {
         returnType: "mesh",
         command: "get_rotamer_dodecs",
@@ -216,20 +218,14 @@ BabyGruMolecule.prototype.drawRotamerDodecahedra = function (gl) {
         const objects = [response.data.result.result]
 
         //Empty existing buffers of this type
-        this.clearBuffersOfStyle('rotamer', gl)
-
-        objects.forEach(object => {
-            var a = gl.appendOtherData(object, true);
-            $this.displayObjects.rotamer = $this.displayObjects.rotamer.concat(a)
-        })
-
-        gl.buildBuffers();
-        gl.drawScene();
+        this.clearBuffersOfStyle(style, gl)
+        this.addBuffersOfStyle(gl, objects, style)
     })
 }
 
 BabyGruMolecule.prototype.drawCootBonds = function (gl) {
     const $this = this
+    const style = "CBs"
     cootCommand($this.cootWorker, {
         returnType: "mesh",
         command: "get_bonds_mesh",
@@ -238,15 +234,8 @@ BabyGruMolecule.prototype.drawCootBonds = function (gl) {
         const objects = [response.data.result.result]
 
         //Empty existing buffers of this type
-        this.clearBuffersOfStyle('CBs', gl)
-
-        objects.forEach(object => {
-            var a = gl.appendOtherData(object, true);
-            $this.displayObjects.CBs = $this.displayObjects.CBs.concat(a)
-        })
-
-        gl.buildBuffers();
-        gl.drawScene();
+        this.clearBuffersOfStyle(style, gl)
+        this.addBuffersOfStyle(gl, objects, style)
     })
 }
 
@@ -323,6 +312,7 @@ BabyGruMolecule.prototype.buffersInclude = function (bufferIn) {
 
 BabyGruMolecule.prototype.drawBonds = function (webMGAtoms, gl, colourSchemeIndex) {
     const $this = this
+    const style = "bonds"
 
     if (typeof webMGAtoms["atoms"] === 'undefined') return;
     var model = webMGAtoms["atoms"][0];
@@ -357,18 +347,13 @@ BabyGruMolecule.prototype.drawBonds = function (webMGAtoms, gl, colourSchemeInde
             item.sizes[0][0].length > 0
     })
 
-    $this.clearBuffersOfStyle('bonds', gl)
-
-    objects.forEach(object => {
-        var a = gl.appendOtherData(object, true);
-        $this.displayObjects.bonds = $this.displayObjects.bonds.concat(a)
-    })
-    gl.buildBuffers();
-    gl.drawScene();
+    $this.clearBuffersOfStyle(style, gl)
+    this.addBuffersOfStyle(gl, objects, style)
 }
 
 BabyGruMolecule.prototype.drawRibbons = function (webMGAtoms, gl) {
     const $this = this
+    const style = "ribbons"
     const selectionString = '/*/*'
 
     //Attempt to apply selection, storing old hierarchy
@@ -418,15 +403,8 @@ BabyGruMolecule.prototype.drawRibbons = function (webMGAtoms, gl) {
             item.sizes[0][0].length > 0
     })
 
-    $this.clearBuffersOfStyle('ribbons', gl)
-
-    objects.forEach(object => {
-        const a = gl.appendOtherData(object, true);
-        this.displayObjects.ribbons = this.displayObjects.ribbons.concat(a)
-    })
-
-    gl.buildBuffers();
-    gl.drawScene();
+    $this.clearBuffersOfStyle(style, gl)
+    this.addBuffersOfStyle(gl, objects, style)
 
     //Restore odlHierarchy
     webMGAtoms.atoms = oldHierarchy
@@ -435,6 +413,7 @@ BabyGruMolecule.prototype.drawRibbons = function (webMGAtoms, gl) {
 
 BabyGruMolecule.prototype.drawSticks = function (webMGAtoms, gl) {
     const $this = this
+    const style = "sticks"
     let hier = webMGAtoms["atoms"];
 
     let colourScheme = new ColourScheme(webMGAtoms);
@@ -455,15 +434,8 @@ BabyGruMolecule.prototype.drawSticks = function (webMGAtoms, gl) {
 
     let objects = [linePrimitiveInfo, singletonPrimitiveInfo];
 
-    $this.clearBuffersOfStyle('sticks', gl)
-
-    objects.forEach(object => {
-        const a = gl.appendOtherData(object, true);
-        this.displayObjects.sticks = this.displayObjects.sticks.concat(a)
-    })
-
-    gl.buildBuffers();
-    gl.drawScene();
+    $this.clearBuffersOfStyle(style, gl)
+    this.addBuffersOfStyle(gl, objects, style)
 
 }
 
