@@ -8034,9 +8034,8 @@ class MGWebGL extends Component {
                 document.dispatchEvent(atomClicked);
 
                 if(event.altKey){
-                    self.origin = [-atx,-aty,-atz];
+                    self.setOrigin([-atx,-aty,-atz], true);
                     self.reContourMaps();
-                    self.drawScene();
                     return;
                 }
 
