@@ -22,7 +22,8 @@ export function BabyGruMolecule(cootWorker) {
         bonds: [],
         sticks: [],
         rama: [],
-        rotamer: []
+        rotamer: [],
+        CBs:[]
     }
 };
 
@@ -173,6 +174,9 @@ BabyGruMolecule.prototype.drawWithStyleFromAtoms = function (style, gl, webMGAto
         case 'rotamer':
             this.drawRotamerDodecahedra(gl.current)
             break;
+        case 'CBs':
+            this.drawCootBonds(gl.current)
+            break;
         default:
             break;
     }
@@ -224,6 +228,29 @@ BabyGruMolecule.prototype.drawRotamerDodecahedra = function (gl) {
     })
 }
 
+BabyGruMolecule.prototype.drawCootBonds = function (gl) {
+    const $this = this
+    cootCommand($this.cootWorker, {
+        returnType: "mesh",
+        command: "get_bonds_mesh",
+        commandArgs: [$this.coordMolNo, "COLOUR-BY-CHAIN-AND-DICTIONARY"]
+    }).then(response => {
+        const objects = [response.data.result.result]
+
+        //Empty existing buffers of this type
+        this.clearBuffersOfStyle('rotamer', gl)
+
+        objects.forEach(object => {
+            var a = gl.appendOtherData(object, true);
+            $this.displayObjects.rotamer = $this.displayObjects.rotamer.concat(a)
+        })
+
+        gl.buildBuffers();
+        gl.drawScene();
+    })
+}
+
+
 BabyGruMolecule.prototype.show = function (style, gl) {
     if (this.displayObjects[style].length == 0) {
         this.fetchIfDirtyAndDraw(style, gl)
@@ -267,7 +294,7 @@ BabyGruMolecule.prototype.clearBuffersOfStyle = function (style, gl) {
     //Empty existing buffers of this type
     $this.displayObjects[style].forEach((buffer) => {
         buffer.clearBuffers()
-        gl.displayBuffers = gl.displayBuffers.filter(glBuffer=>glBuffer.id !== buffer.id)
+        gl.displayBuffers = gl.displayBuffers.filter(glBuffer => glBuffer.id !== buffer.id)
     })
     $this.displayObjects[style] = []
 }
@@ -463,7 +490,7 @@ BabyGruMolecule.prototype.redraw = function (gl) {
         promise = Promise.resolve()
     }
     promise.then(
-        _=>{
+        _ => {
             itemsToRedraw.reduce(
                 (p, style) => {
                     console.log(`Redrawing ${style}`, $this.atomsDirty)
@@ -471,7 +498,7 @@ BabyGruMolecule.prototype.redraw = function (gl) {
                     )
                 },
                 Promise.resolve()
-            )        
+            )
         }
     )
 }
