@@ -7945,8 +7945,11 @@ class MGWebGL extends Component {
             var fracY = 1.0*(y)/self.gl.viewportHeight;
             var theX = minX + fracX*(maxX - minX);
             var theY = maxY - fracY*(maxY - minY);
-            var frontPos = vec3Create([theX,theY,0.000001]);
-            var backPos  = vec3Create([theX,theY,1000.0]);
+            //var frontPos = vec3Create([theX,theY,0.000001]);
+            //var backPos  = vec3Create([theX,theY,1000.0]);
+            //MN Changed to improve picking
+            var frontPos = vec3Create([theX,theY,this.gl_clipPlane0[3]]);
+            var backPos  = vec3Create([theX,theY,this.gl_clipPlane1[3]]);
             vec3.transformMat4(frontPos,frontPos,theMatrix);
             vec3.transformMat4(backPos,backPos,theMatrix);
             vec3.subtract(frontPos,frontPos,self.origin);
@@ -7973,7 +7976,27 @@ class MGWebGL extends Component {
                     var p = vec3Create([atx,aty,atz]);
 
                     var dpl = DistanceBetweenPointAndLine(frontPos,backPos,p);
-                    if(dpl[0]<clickTol&&dpl[1]>mint){
+
+                    //MN Changed logic here
+                    let atPos = vec3Create([atx, aty, atz])
+                    let displacement = vec3Create([0, 0, 0]);
+                    vec3.subtract(displacement, atPos, frontPos)
+                    //fB_plus_fZ is the displacement from the front clipping plane to the back clipping plane
+                    const fB_plus_fZ = (this.gl_clipPlane0[3] + this.gl_clipPlane1[3]) / this.zoom
+                    //fZ is the displacement from teh front clipping plane to the origin of rotation
+                    const fZ = (this.gl_clipPlane0[3] + 500) / this.zoom
+                    //aZ is the displacement from the frontClipping plane to the atom
+                    const aZ = (500 - vec3.length(displacement)) / this.zoom
+
+                    const targetFactor = 1. / (1 + (Math.abs(fZ - aZ)/fB_plus_fZ))
+                    if (
+                        dpl[0] < clickTol * targetFactor //clickTol modified to reflect proximity to rptation origin
+                        && dpl[0] < mindist //closest click seen
+                        && aZ > 0 //Beyond near clipping plane
+                        && aZ < fB_plus_fZ //In front of far clipping plane
+                        ){
+
+                    //if(dpl[0]<clickTol&&dpl[1]>mint){
                         minidx = idx;
                         minj = j;
                         mindist = dpl[0];
