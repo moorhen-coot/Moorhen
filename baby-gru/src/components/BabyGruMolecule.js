@@ -249,9 +249,7 @@ BabyGruMolecule.prototype.drawCootBonds = function (webMGAtoms, gl) {
             //Empty existing buffers of this type
             this.clearBuffersOfStyle(style, gl)
             this.addBuffersOfStyle(gl, objects, style)
-            this.displayObjects[style].forEach(buffer => {
-                buffer.atoms = bufferAtoms
-            })
+            this.displayObjects[style][0].atoms = bufferAtoms
         }
     })
 }
