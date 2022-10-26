@@ -175,7 +175,7 @@ BabyGruMolecule.prototype.drawWithStyleFromAtoms = function (style, gl, webMGAto
             this.drawRotamerDodecahedra(gl.current)
             break;
         case 'CBs':
-            this.drawCootBonds(gl.current)
+            this.drawCootBonds(webMGAtoms, gl.current)
             break;
         default:
             break;
@@ -223,7 +223,7 @@ BabyGruMolecule.prototype.drawRotamerDodecahedra = function (gl) {
     })
 }
 
-BabyGruMolecule.prototype.drawCootBonds = function (gl) {
+BabyGruMolecule.prototype.drawCootBonds = function (webMGAtoms, gl) {
     const $this = this
     const style = "CBs"
     cootCommand($this.cootWorker, {
@@ -232,10 +232,27 @@ BabyGruMolecule.prototype.drawCootBonds = function (gl) {
         commandArgs: [$this.coordMolNo, "COLOUR-BY-CHAIN-AND-DICTIONARY"]
     }).then(response => {
         const objects = [response.data.result.result]
-
-        //Empty existing buffers of this type
-        this.clearBuffersOfStyle(style, gl)
-        this.addBuffersOfStyle(gl, objects, style)
+        if (objects.length > 0) {
+            //console.log('atoms are ', webMGAtoms)
+            let bufferAtoms = []
+            webMGAtoms.atoms[0].getAllAtoms().forEach(at1 => {
+                let atom = {};
+                atom["x"] = at1.x();
+                atom["y"] = at1.y();
+                atom["z"] = at1.z();
+                atom["tempFactor"] = at1["_atom_site.B_iso_or_equiv"];
+                atom["charge"] = at1["_atom_site.pdbx_formal_charge"];
+                atom["symbol"] = at1["_atom_site.type_symbol"];
+                atom["label"] = at1.getAtomID();
+                bufferAtoms.push(atom);
+            })
+            //Empty existing buffers of this type
+            this.clearBuffersOfStyle(style, gl)
+            this.addBuffersOfStyle(gl, objects, style)
+            this.displayObjects[style].forEach(buffer => {
+                buffer.atoms = bufferAtoms
+            })
+        }
     })
 }
 
@@ -283,7 +300,9 @@ BabyGruMolecule.prototype.clearBuffersOfStyle = function (style, gl) {
     //Empty existing buffers of this type
     $this.displayObjects[style].forEach((buffer) => {
         buffer.clearBuffers()
-        gl.displayBuffers = gl.displayBuffers.filter(glBuffer => glBuffer.id !== buffer.id)
+        if (gl.displayBuffers) {
+            gl.displayBuffers = gl.displayBuffers.filter(glBuffer => glBuffer !== buffer)
+        }
     })
     $this.displayObjects[style] = []
 }
