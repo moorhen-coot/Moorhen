@@ -44,7 +44,7 @@ BabyGruMolecule.prototype.loadToCootFromFile = function (source) {
                 }).then(e => {
                     $this.name = e.data.result.name
                     $this.coordMolNo = e.data.result.coordMolNo
-                    console.log('e is', e)
+                    //console.log('e is', e)
                     resolve($this)
                 })
             })
@@ -57,7 +57,7 @@ BabyGruMolecule.prototype.setAtomsDirty = function (state) {
 BabyGruMolecule.prototype.loadToCootFromURL = function (url, molName) {
     const $this = this
     return new Promise((resolve, reject) => {
-        console.log('Off to fetch url', url)
+        //console.log('Off to fetch url', url)
         //Remember to change this to an appropriate URL for downloads in produciton, and to deal with the consequent CORS headache
         return fetch(url, { mode: "no-cors" })
             .then(response => {
@@ -290,13 +290,13 @@ BabyGruMolecule.prototype.clearBuffersOfStyle = function (style, gl) {
 
 BabyGruMolecule.prototype.buffersInclude = function (bufferIn) {
     const $this = this
-    console.log(bufferIn)
-    console.log($this.displayObjects)
+    //console.log(bufferIn)
+    //console.log($this.displayObjects)
     var BreakException = {};
     try {
         Object.keys($this.displayObjects).forEach(style => {
             const objectBuffers = $this.displayObjects[style].filter(buffer => bufferIn.id === buffer.id)
-            console.log('Object buffer length', objectBuffers.length, objectBuffers.length > 0)
+            //console.log('Object buffer length', objectBuffers.length, objectBuffers.length > 0)
             if (objectBuffers.length > 0) {
                 throw BreakException;
             }
@@ -326,7 +326,7 @@ BabyGruMolecule.prototype.drawBonds = function (webMGAtoms, gl, colourSchemeInde
     var contactsAndSingletons = model.getBondsContactsAndSingletons();
 
     var contacts = contactsAndSingletons["contacts"];
-    console.log('contacts are', contacts)
+    //console.log('contacts are', contacts)
     var singletons = contactsAndSingletons["singletons"];
     var linePrimitiveInfo = contactsToCylindersInfo(contacts, 0.1, atomColours);
     var singletonPrimitiveInfo = singletonsToLinesInfo(singletons, 4, atomColours);
@@ -465,7 +465,7 @@ BabyGruMolecule.prototype.redraw = function (gl) {
         _ => {
             itemsToRedraw.reduce(
                 (p, style) => {
-                    console.log(`Redrawing ${style}`, $this.atomsDirty)
+                    //console.log(`Redrawing ${style}`, $this.atomsDirty)
                     return p.then(() => $this.fetchIfDirtyAndDraw(style, gl)
                     )
                 },
