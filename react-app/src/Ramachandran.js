@@ -251,7 +251,7 @@ class RamaPlot extends Component {
 
     }
 
-    componentDidMount() {
+    setBackgroundImages() {
         const self = this;
         this.context = this.canvasRef.current.getContext('2d');
         var ctx = this.context;
@@ -338,13 +338,23 @@ class RamaPlot extends Component {
         self.mouseDown = false;
         this.canvasRef.current.addEventListener("mousemove", this.moveHandler , false);
         this.canvasRef.current.addEventListener("click", this.clickHandler, false);
-
     }
 
+    componentDidMount() {
+        this.setBackgroundImages();
+    }
+
+    componentDidUpdate(prevProps, prevState) {       
+        if (this.canvasRef.current === null || this.state.ramaPlotDimensions === prevState.ramaPlotDimensions) {
+            return;
+        }
+
+        this.setBackgroundImages();
+    }
+
+
     render() {
-        const height = 230;
-        const width = 230;
-        this.canvas = <canvas style={{marginTop:'1rem'}} height={height} width={width} ref={this.canvasRef} />;  
+        this.canvas = <canvas style={{marginTop:'1rem'}} height={this.state.ramaPlotDimensions} width={this.state.ramaPlotDimensions} ref={this.canvasRef} />;  
         return this.canvas;
     }
 
@@ -353,7 +363,7 @@ class RamaPlot extends Component {
         this.reqRef = null;
         this.oldImage = null;
         this.nAnimationFrames = 15;
-        this.state = {plotInfo: null, molName:null, chainId:null, coordMolNo:null};
+        this.state = {plotInfo: null, molName:null, chainId:null, coordMolNo:null, ramaPlotDimensions:230};
         this.canvasRef = createRef();
         this.imageRefAll = createRef();
         this.imageRefGly = createRef();
@@ -392,7 +402,7 @@ class Ramachandran extends Component {
     constructor(props) {
         super(props);
         this.ramaRef = createRef();
-        this.state = {selected:"unk",log:"", chainId:"", plotInfo: null};
+        this.state = {selected:"unk",log:"", chainId:"", plotInfo: null, sideBarWidth:props.sideBarWidth, toolAccordionBodyHeight:props.toolAccordionBodyHeight};
         this.message = "";
     }
 
@@ -494,21 +504,21 @@ class Ramachandran extends Component {
 
         return (
                 <>
-        <Form style={{marginTop:'1rem'}} onSubmit={this.handleSubmit.bind(this)}>
-        <Form.Group as={Row} controlId="rama">
-        <Col>
-                <Form.Select value={selected} onChange={handleChange} >
-                {rows}
-                </Form.Select>
-        </Col>
-        <Col>
-        <Form.Control required type="text" onChange={this.handleChainChange.bind(this)} placeholder="Chain id" value={this.state.chainId} />
-        </Col>
-        </Form.Group>
+        <Form style={{margin:'0', padding:'0'}} onSubmit={this.handleSubmit.bind(this)}>
+            <Form.Group controlId="rama">
+                <Col>
+                    <Form.Select value={selected} onChange={handleChange} >
+                        {rows}
+                    </Form.Select>
+                </Col>
+                <Col>
+                    <Form.Control required type="text" onChange={this.handleChainChange.bind(this)} placeholder="Chain id" value={this.state.chainId} />
+                </Col>
+            </Form.Group>
         </Form>
-        <RamaPlot onClick={this.props.onClick} setMessage={this.props.setMessage} ref={this.ramaRef} />
+        <RamaPlot onClick={this.props.onClick} setMessage={this.props.setMessage} ref={this.ramaRef} toolAccordionBodyHeight={this.state.toolAccordionBodyHeight} sideBarWidth={this.state.sideBarWidth}/>
         </>
         );
     }
 }
-export { Ramachandran };
+export { Ramachandran, RamaPlot};
