@@ -231,7 +231,7 @@ function readMapFromArrayBuffer(contents) {
         //index += secSkip;
     }
 
-    console.log(xmap);
+    //console.log(xmap);
 
     var symops = getSymOpsFromSpGrpNo(header["ispg"]);
     console.log(symops);
