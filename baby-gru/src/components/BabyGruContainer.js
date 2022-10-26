@@ -11,6 +11,7 @@ import { BabyGruRamachandran } from './BabyGruRamachandran';
 import { BabyGruMapSettings } from './BabyGruMapSettings';
 import { ArrowBackIosOutlined, ArrowForwardIosOutlined } from '@mui/icons-material';
 import './BabyGruContainer.css'
+import { BabyGruHistoryMenu } from './BabyGruHistoryMenu';
 
 
 function consoleReducer(consoleState, action) {
