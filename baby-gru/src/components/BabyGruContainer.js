@@ -279,7 +279,7 @@ export const BabyGruContainer = (props) => {
                             <Accordion.Header style={{ padding: '0', margin: '0', height: '4rem' }}>Sequences</Accordion.Header>
                             <Accordion.Body style={{ overflowY: 'auto', height: sequenceViewerBodyHeight }}>
                                 <div ref={sequenceViewerRef} style={{ textAlign: "left" }}>
-                                    <BabyGruSequenceViewer molecules={molecules} cootWorker={cootWorker} postCootMessage={postCootMessage} glRef={glRef} />
+                                    <BabyGruSequenceViewer molecules={molecules} glRef={glRef} />
                                 </div>
                             </Accordion.Body>
                         </Accordion.Item>
