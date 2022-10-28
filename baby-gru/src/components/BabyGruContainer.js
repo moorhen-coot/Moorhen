@@ -125,7 +125,7 @@ export const BabyGruContainer = (props) => {
         setAccordionHeight(getAccordionHeight())
         displayObjectsAccordionBodyHeight !== 0 ? setDisplayObjectsAccordionBodyHeight(convertViewtoPx(20, windowHeight)) : setDisplayObjectsAccordionBodyHeight(convertViewtoPx(0, windowHeight))
         toolAccordionBodyHeight !== 0 ? setToolAccordionBodyHeight(convertViewtoPx(70, windowHeight)) : setToolAccordionBodyHeight(convertViewtoPx(0, windowHeight))
-        sequenceViewerBodyHeight !== 0 ? setSequenceViewerBodyHeight(convertViewtoPx(30, windowHeight)) : setSequenceViewerBodyHeight(convertViewtoPx(0, windowHeight))
+        sequenceViewerBodyHeight !== 0 ? setSequenceViewerBodyHeight(convertViewtoPx(15, windowHeight)) : setSequenceViewerBodyHeight(convertViewtoPx(0, windowHeight))
         consoleBodyHeight !== 0 ? setConsoleBodyHeight(convertViewtoPx(15, windowHeight)) : setConsoleBodyHeight(convertViewtoPx(0, windowHeight))
     }, [showSideBar, windowHeight, windowWidth])
 
@@ -244,7 +244,7 @@ export const BabyGruContainer = (props) => {
                                 setToolAccordionBodyHeight(convertViewtoPx(70, windowHeight))
                             }
                             if (openPanels.includes('showSequenceViewer')) {
-                                setSequenceViewerBodyHeight(convertViewtoPx(30, windowHeight))
+                                setSequenceViewerBodyHeight(convertViewtoPx(15, windowHeight))
                             }
                             if (openPanels.includes('showConsole')) {
                                 setConsoleBodyHeight(convertViewtoPx(15, windowHeight))
@@ -276,10 +276,12 @@ export const BabyGruContainer = (props) => {
                             </Accordion.Body>
                         </Accordion.Item>
                         <Accordion.Item eventKey="showSequenceViewer" style={{ width: sideBarWidth, padding: '0', margin: '0' }} >
-                            <Accordion.Header style={{ padding: '0', margin: '0', height: '4rem' }}>Sequences</Accordion.Header>
-                            <Accordion.Body style={{ overflowY: 'auto', height: sequenceViewerBodyHeight }}>
-                                <div ref={sequenceViewerRef} style={{ textAlign: "center" }}>
-                                {molecules.length === 0 && maps.length === 0 ? "No data files loaded" : <BabyGruSequenceViewer molecules={molecules} glRef={glRef} />}
+                            <Accordion.Header style={{ height: '4rem' }}>Sequences</Accordion.Header>
+                            <Accordion.Body style={{ height: sequenceViewerBodyHeight }}>
+                                <div ref={sequenceViewerRef} style={{
+                                    textAlign: "left"
+                                }}>
+                                    <BabyGruSequenceViewer molecules={molecules} glRef={glRef} />
                                 </div>
                             </Accordion.Body>
                         </Accordion.Item>

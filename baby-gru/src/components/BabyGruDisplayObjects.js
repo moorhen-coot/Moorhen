@@ -256,8 +256,11 @@ const BabyGruMapCard = (props) => {
 
 export const BabyGruDisplayObjects = (props) => {
 
-    let displayData = [];
+    useEffect(() => {
+    }, [])
 
+    let displayData = [];
+    // TODO: Concatenate molecules and maps, sort them by coordMolNo and then push them in that order...
     if (props.molecules.length!=0) {
         props.molecules.forEach(molecule => displayData.push(
             <BabyGruMoleculeCard 
