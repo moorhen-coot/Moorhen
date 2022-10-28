@@ -278,8 +278,8 @@ export const BabyGruContainer = (props) => {
                         <Accordion.Item eventKey="showSequenceViewer" style={{ width: sideBarWidth, padding: '0', margin: '0' }} >
                             <Accordion.Header style={{ padding: '0', margin: '0', height: '4rem' }}>Sequences</Accordion.Header>
                             <Accordion.Body style={{ overflowY: 'auto', height: sequenceViewerBodyHeight }}>
-                                <div ref={sequenceViewerRef} style={{ textAlign: "left" }}>
-                                    <BabyGruSequenceViewer molecules={molecules} glRef={glRef} />
+                                <div ref={sequenceViewerRef} style={{ textAlign: "center" }}>
+                                {molecules.length === 0 && maps.length === 0 ? "No data files loaded" : <BabyGruSequenceViewer molecules={molecules} glRef={glRef} />}
                                 </div>
                             </Accordion.Body>
                         </Accordion.Item>
