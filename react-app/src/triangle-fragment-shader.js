@@ -1,10 +1,10 @@
-var triangle_fragment_shader_source = `
+var triangle_fragment_shader_source = `#version 300 es\n
     precision mediump float;
-    varying lowp vec4 vColor;
-    varying lowp vec3 vNormal;
-    varying lowp vec4 eyePos;
-    varying lowp vec3 v;
-    varying mediump mat4 mvInvMatrix;
+    in lowp vec4 vColor;
+    in lowp vec3 vNormal;
+    in lowp vec4 eyePos;
+    in lowp vec3 v;
+    in mediump mat4 mvInvMatrix;
 
     uniform vec4 fogColour;
 
@@ -32,6 +32,8 @@ var triangle_fragment_shader_source = `
     uniform vec4 light_colours_specular;
     uniform vec4 light_colours_diffuse;
 
+    out vec4 fragColor;
+
     void main(void) {
       if(dot(eyePos, clipPlane0)<0.0){
        discard;
@@ -48,12 +50,11 @@ var triangle_fragment_shader_source = `
       vec3 norm = normalize(vNormal);
 
       if(gl_FrontFacing!=true){
-        //gl_FragColor = vec4(1.0,0.0,0.0,1.0);
-        //gl_FragColor = gl_FragColor;
         norm = -norm;
       }
 
       if(gl_FrontFacing!=true){
+          discard;
       E = (mvInvMatrix * vec4(normalize(-v),1.0)).xyz;
       //for (i = 0; i<nLights&&i<8; i++) {
        L = normalize((mvInvMatrix *light_positions).xyz);
@@ -97,12 +98,12 @@ var triangle_fragment_shader_source = `
       vec4 color = (1.5*theColor*Iamb + 1.2*theColor* Idiff);
       color.a = vColor.a;
       color += Ispec;
-      //gl_FragColor = color;
-      gl_FragColor = mix(color, fogColour, fogFactor );
+      fragColor = mix(color, fogColour, fogFactor );
 
-      //if((gl_FragCoord.x-cursorPos[0])*(gl_FragCoord.x-cursorPos[0])+(gl_FragCoord.y-cursorPos[1])*(gl_FragCoord.y-cursorPos[1])<500.){
-       // gl_FragColor = mix(gl_FragColor, vec4(1.0,1.0,1.0,1.0), 0.4 );
-      //}
+      //fragColor = vec4(vNormal,1.0);
+      //fragColor = light_colours_specular;
+      //fragColor = light_colours_diffuse*vec4(vNormal,1.0);
+      //fragColor = Idiff;
  
     }
 `;

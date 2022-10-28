@@ -220,9 +220,7 @@ onmessage = function (e) {
             }
 
             postMessage({
-                messageId: e.data.messageId,
-                myTimeStamp: e.data.myTimeStamp,
-                message: e.data.message,
+                returnType, command, commandArgs, message, messageId, myTimeStamp,
                 consoleMessage: `Completed ${command} with args ${commandArgs} in ${Date.now() - e.data.myTimeStamp} ms`,
                 result: { status: 'Completed', result: returnResult }
             })

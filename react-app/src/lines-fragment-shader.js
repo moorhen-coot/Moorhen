@@ -1,8 +1,7 @@
-var lines_fragment_shader_source = `
-#extension GL_OES_element_index : enable
+var lines_fragment_shader_source = `#version 300 es\n
     precision mediump float;
-    varying lowp vec4 vColor;
-    varying lowp vec4 eyePos;
+    in lowp vec4 vColor;
+    in lowp vec4 eyePos;
 
     uniform float fog_end;
     uniform float fog_start;
@@ -19,6 +18,8 @@ var lines_fragment_shader_source = `
     uniform vec4 clipPlane7;
     uniform int nClipPlanes;
 
+    out vec4 fragColor;
+
     void main(void) {
       if(dot(eyePos, clipPlane0)<0.0){
        discard;
@@ -29,7 +30,7 @@ var lines_fragment_shader_source = `
       float FogFragCoord = abs(eyePos.z/eyePos.w);
       float fogFactor = (fog_end - FogFragCoord)/(fog_end - fog_start);
       fogFactor = 1.0 - clamp(fogFactor,0.0,1.0);
-      gl_FragColor = mix(vColor, fogColour, fogFactor );
+      fragColor = mix(vColor, fogColour, fogFactor );
     }
 `;
 

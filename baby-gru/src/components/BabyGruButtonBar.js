@@ -117,7 +117,7 @@ export const BabyGruButtonBar = (props) => {
             overflow: "auto",
             backgroundColor: "white",
         }}>
-        <ButtonGroup vertical>
+        <ButtonGroup horizontal>
 
             <BabyGruSimpleEditButton {...props}
                 buttonIndex={"0"}
@@ -287,12 +287,13 @@ export const BabyGruSimpleEditButton = (props) => {
         </Button>
 
         {
-            prompt && <Overlay target={target.current} show={props.buttonIndex === props.selectedbuttonIndex} placement="left">
+            prompt && <Overlay target={target.current} show={props.buttonIndex === props.selectedbuttonIndex} placement="top">
                 {({ placement, arrowProps, show: _show, popper, ...props }) => (
                     <div
                         {...props}
                         style={{
                             position: 'absolute',
+                            marginBottom:'0.5rem',
                             backgroundColor: 'rgba(100, 255, 100, 0.85)',
                             padding: '2px 10px',
                             color: 'black',

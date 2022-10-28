@@ -1,10 +1,10 @@
-var pointspheres_shadow_fragment_shader_source = `
+var pointspheres_shadow_fragment_shader_source = `#version 300 es\n
     precision mediump float;
-    varying lowp vec4 vColor;
-    varying lowp vec3 vNormal;
-    varying lowp vec3 vPosition;
-    varying lowp vec4 eyePos;
-    varying mediump mat4 mvInvMatrix;
+    in lowp vec4 vColor;
+    in lowp vec3 vNormal;
+    in lowp vec3 vPosition;
+    in lowp vec4 eyePos;
+    in mediump mat4 mvInvMatrix;
 
     uniform vec4 fogColour;
 
@@ -26,8 +26,10 @@ var pointspheres_shadow_fragment_shader_source = `
     uniform vec4 light_colours_specular;
     uniform vec4 light_colours_diffuse;
 
-    varying lowp vec4 ShadowCoord;
+    in lowp vec4 ShadowCoord;
     uniform sampler2D ShadowMap;
+
+    out vec4 fragColor;
 
     float lookup(vec2 offSet){
       float xPixelOffset = 1.0/1024.0;
@@ -35,8 +37,8 @@ var pointspheres_shadow_fragment_shader_source = `
       vec4 coord = ShadowCoord + vec4(offSet.x * xPixelOffset * ShadowCoord.w, offSet.y * yPixelOffset * ShadowCoord.w, 0.07, 0.0);
       if(coord.s>1.0||coord.s<0.0||coord.t>1.0||coord.t<0.0)
           return 1.0;
-      //gl_FragColor = texture2D(ShadowMap, coord.xy );
-      float shad2 = texture2D(ShadowMap, coord.xy ).x;
+      //fragColor = texture(ShadowMap, coord.xy );
+      float shad2 = texture(ShadowMap, coord.xy ).x;
       shad2 = shad2/(coord.p/coord.q);
       shad2 = clamp(shad2,0.0,1.0);
       if(shad2<0.9){
@@ -87,7 +89,7 @@ var pointspheres_shadow_fragment_shader_source = `
       vec4 color = (1.5*theColor*Iamb + 1.2*theColor* Idiff);
       color.a = vColor.a;
       color += Ispec;
-      gl_FragColor = mix(color, fogColour, fogFactor );
+      fragColor = mix(color, fogColour, fogFactor );
 
       // FIXME - this should be done before fogging.
 
@@ -116,7 +118,7 @@ var pointspheres_shadow_fragment_shader_source = `
       shad2 = clamp(shad2,0.0,1.0);
       
 
-      gl_FragColor = vec4(color.r*shad2, color.g*shad2,color.b*shad2, 1.0);
+      fragColor = vec4(color.r*shad2, color.g*shad2,color.b*shad2, 1.0);
  
     }
 `;

@@ -1,7 +1,7 @@
-var circles_fragment_shader_source = `
+var circles_fragment_shader_source = `#version 300 es\n
     precision mediump float;
-    varying lowp vec4 eyePos;
-    varying lowp vec2 vTexture;
+    in lowp vec4 eyePos;
+    in lowp vec2 vTexture;
 
     uniform float fog_end;
     uniform float fog_start;
@@ -17,6 +17,8 @@ var circles_fragment_shader_source = `
     uniform vec4 clipPlane6;
     uniform vec4 clipPlane7;
     uniform int nClipPlanes;
+    
+    out vec4 fragColor;
 
     void main(void) {
       if(dot(eyePos, clipPlane0)<0.0){
@@ -37,9 +39,9 @@ var circles_fragment_shader_source = `
       float FogFragCoord = abs(eyePos.z/eyePos.w);
       float fogFactor = (fog_end - FogFragCoord)/(fog_end - fog_start);
       fogFactor = 1.0 - clamp(fogFactor,0.0,1.0);
-      gl_FragColor = texture2D(uSampler, vec2(vTexture.s, vTexture.t));
-      //gl_FragColor = vec4(vTexture.s,vTexture.t,0.0,1.0);
-      //gl_FragColor = vec4(1.0,0.0,0.0,1.0);
+      fragColor = texture(uSampler, vec2(vTexture.s, vTexture.t));
+      //fragColor = vec4(vTexture.s,vTexture.t,0.0,1.0);
+      //fragColor = vec4(1.0,0.0,0.0,1.0);
     }
 `;
 

@@ -1,9 +1,9 @@
-var circles_vertex_shader_source = `
+var circles_vertex_shader_source = `#version 300 es\n
     // This shader is basic
-    attribute vec3 aVertexPosition;
-    attribute vec3 aVertexColour;
-    attribute vec3 aVertexNormal;
-    attribute vec2 aVertexTexture;
+    in vec3 aVertexPosition;
+    in vec3 aVertexColour;
+    in vec3 aVertexNormal;
+    in vec2 aVertexTexture;
 
     uniform mat4 uMVMatrix;
     uniform mat4 uMVINVMatrix;
@@ -12,8 +12,8 @@ var circles_vertex_shader_source = `
     uniform vec3 up;
     uniform vec3 right;
 
-    varying lowp vec2 vTexture;
-    varying lowp vec4 eyePos;
+    out lowp vec2 vTexture;
+    out lowp vec4 eyePos;
 
     void main(void) {
 

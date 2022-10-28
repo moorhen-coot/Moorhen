@@ -21,17 +21,6 @@ describe('Testing molecules_container_js', () => {
         setupFunctions.copyExampleDataToFauxFS()
     })
 
-    test('Test enums', () => {
-        expect(cootModule.refine_residues_modeToInt(cootModule.refine_residues_mode.SINGLE)).toBe(0)
-        expect(cootModule.refine_residues_modeToInt(cootModule.refine_residues_mode.TRIPLE)).toBe(1)
-        expect(cootModule.refine_residues_modeToInt(cootModule.refine_residues_mode.QUINTUPLE)).toBe(2)
-        expect(cootModule.refine_residues_modeToInt(cootModule.refine_residues_mode.HEPTUPLE)).toBe(3)
-        expect(cootModule.refine_residues_modeToInt(cootModule.refine_residues_mode.SPHERE)).toBe(4)
-        expect(cootModule.refine_residues_modeToInt(cootModule.refine_residues_mode.BIG_SPHERE)).toBe(5)
-        expect(cootModule.refine_residues_modeToInt(cootModule.refine_residues_mode.CHAIN)).toBe(6)
-        expect(cootModule.refine_residues_modeToInt(cootModule.refine_residues_mode.ALL)).toBe(7)
-    })
-
     test('Test read_pdb from faux file system', () => {
         const molecules_container = new cootModule.molecules_container_js()
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
@@ -118,7 +107,7 @@ describe('Testing molecules_container_js', () => {
         const result = molecules_container.auto_fit_rotamer(imol, "A", 89, "", "", imol_map)
         const dd = (CZatom.x-CZatom_x) * (CZatom.x-CZatom_x) + (CZatom.y-CZatom_y) * (CZatom.y-CZatom_y) + (CZatom.z-CZatom_z) * (CZatom.z-CZatom_z)
         const d = Math.sqrt(dd)
-        expect(d).toBeCloseTo(7.28975,5)
+        expect(d).toBeCloseTo(7.34355,5)
     })
 
     test('Test Rama mesh', () => {
@@ -137,6 +126,30 @@ describe('Testing molecules_container_js', () => {
         expect(simpleMesh.triangles.size()).toBe(23400)
     })
 
+    test('Test backups', () => {
+        const molecules_container = new cootModule.molecules_container_js()
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', "", false, false)
+        const resSpec = new cootModule.residue_spec_t("A", 32, "");
+        const res = molecules_container.get_residue(coordMolNo,resSpec)
+        const atom = res.GetAtom(2);
+        expect(atom.x).toBeCloseTo(67.271,3)
+        expect(atom.y).toBeCloseTo(45.492,3)
+        expect(atom.z).toBeCloseTo(24.559,3)
+        molecules_container.flipPeptide_cid(coordMolNo,"A/33","")
+        expect(atom.x).toBeCloseTo(67.623,3)
+        expect(atom.y).toBeCloseTo(45.837,3)
+        expect(atom.z).toBeCloseTo(25.588,3)
+        molecules_container.undo(coordMolNo)
+        // We seemingly need to re-get the residue after restore.
+        const res2 = molecules_container.get_residue(coordMolNo,resSpec)
+        const atom2 = res2.GetAtom(2);
+        expect(atom2.x).toBeCloseTo(67.271,3)
+        expect(atom2.y).toBeCloseTo(45.492,3)
+        expect(atom2.z).toBeCloseTo(24.559,3)
+        const auto_res = molecules_container.auto_fit_rotamer(coordMolNo, "A", 89, "", "", mapMolNo)
+    })
+
     test('Test flip_peptide by residue spec', () => {
         const molecules_container = new cootModule.molecules_container_js()
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
@@ -146,8 +159,8 @@ describe('Testing molecules_container_js', () => {
             'FWT', 'PHWT', "", false, false)
         expect(mapMolNo).toBe(1)
 
-        const resSpec = new cootModule.residue_spec_t("A", 217, "");
-        const status = molecules_container.flipPeptide_rs(coordMolNo, resSpec, "")
+        const atomSpec = new cootModule.atom_spec_t("A", 217, "", " N  ","");
+        const status = molecules_container.flipPeptide(coordMolNo, atomSpec, "")
         expect(status).toBe(1)
         const flippedFileName = "flip_out.pdb"
         const writeStatus = molecules_container.writePDBASCII(coordMolNo,flippedFileName)
@@ -155,8 +168,8 @@ describe('Testing molecules_container_js', () => {
         const flippedFile = cootModule.FS.readFile(flippedFileName, { encoding: 'utf8' });
         //console.log(flippedFile)
 
-        const resSpecFalse = new cootModule.residue_spec_t("A", 999, "");
-        const failedStatus = molecules_container.flipPeptide_rs(coordMolNo, resSpecFalse, "")
+        const atomSpecFalse = new cootModule.atom_spec_t("A", 999, "", " N  ","");
+        const failedStatus = molecules_container.flipPeptide(coordMolNo, atomSpecFalse, "")
         expect(failedStatus).toBe(0)
     })
 
@@ -174,8 +187,8 @@ describe('Testing molecules_container_js', () => {
         const triangles = map_mesh.triangles
         const nVerticesDirect = vertices.size()
         const nTriangles = triangles.size()
-        expect(nVerticesDirect).toBe(33531)
-        expect(nTriangles).toBe(30896)
+        expect(Math.abs(nVerticesDirect-70000)).toBeLessThanOrEqual(4000)
+        expect(Math.abs(nTriangles-70000)).toBeLessThanOrEqual(2000)
     })
 
     test('Create test origin', () => {
@@ -223,17 +236,14 @@ describe('Testing molecules_container_js', () => {
 
 const setupFunctions = {
     copyExampleDataToFauxFS: () => {
-        const coordData = fs.readFileSync(path.join(__dirname, '..', '..', 'example', '5a3h.pdb'),
-            { encoding: 'utf8', flag: 'r' })
-            cootModule.FS_createDataFile(".", '5a3h.pdb', coordData, true, true);
-        const sigmaaData = fs.readFileSync(path.join(__dirname, '..', '..', 'example', '5a3h_sigmaa.mtz'),
-            { encoding: null, flag: 'r' })
-            cootModule.FS_createDataFile(".", '5a3h_sigmaa.mtz', sigmaaData, true, true);
-        const rnaseSigmaaData = fs.readFileSync(path.join(__dirname, '..', '..', 'checkout', 'coot-1.0', 'data', 'rnasa-1.8-all_refmac1.mtz'),
-            { encoding: null, flag: 'r' })
-            cootModule.FS_createDataFile(".", 'rnasa-1.8-all_refmac1.mtz', rnaseSigmaaData, true, true);
-        const tmCoordData = fs.readFileSync(path.join(__dirname, '..', '..', 'checkout', 'coot-1.0', 'api', 'tm-A.pdb'),
-            { encoding: 'utf8', flag: 'r' })
-            cootModule.FS_createDataFile(".", 'tm-A.pdb', tmCoordData, true, true);
+        const coordData = fs.readFileSync(path.join(__dirname, '..', '..', 'example', '5a3h.pdb'), { encoding: 'utf8', flag: 'r' })
+        cootModule.FS_createDataFile(".", '5a3h.pdb', coordData, true, true);
+        const sigmaaData = fs.readFileSync(path.join(__dirname, '..', '..', 'example', '5a3h_sigmaa.mtz'), { encoding: null, flag: 'r' })
+        cootModule.FS_createDataFile(".", '5a3h_sigmaa.mtz', sigmaaData, true, true);
+        const rnaseSigmaaData = fs.readFileSync(path.join(__dirname, '..', '..', 'checkout', 'coot-1.0', 'data', 'rnasa-1.8-all_refmac1.mtz'), { encoding: null, flag: 'r' })
+        cootModule.FS_createDataFile(".", 'rnasa-1.8-all_refmac1.mtz', rnaseSigmaaData, true, true);
+        const tmCoordData = fs.readFileSync(path.join(__dirname, '..', '..', 'checkout', 'coot-1.0', 'api', 'tm-A.pdb'), { encoding: 'utf8', flag: 'r' })
+        cootModule.FS_createDataFile(".", 'tm-A.pdb', tmCoordData, true, true);
+        cootModule.FS.mkdir("COOT_BACKUP");
     }
 }

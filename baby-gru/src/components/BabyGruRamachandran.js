@@ -1,27 +1,100 @@
-import { Fragment, useEffect, useRef, useState } from "react"
-import { Ramachandran } from "../WebGL/Ramachandran"
+import { Fragment, useEffect, useRef, useState, useLayoutEffect } from "react"
+import { Col, Row, Form } from 'react-bootstrap';
+import { RamaPlot } from "../WebGL/Ramachandran"
 import { cootCommand, postCootMessage } from "../BabyGruUtils"
 import { inspect } from 'util'
+import { height } from "@mui/system";
 
+function convertRemToPixels(rem) {    
+    return rem * parseFloat(getComputedStyle(document.documentElement).fontSize);
+}
 
 export const BabyGruRamachandran = (props) => {
     const ramachandranRef = useRef();
+    const ramaPlotDivRef = useRef();
     const [clickedResidue, setClickedResidue] = useState(null)
     const [message, setMessage] = useState("")
-    const [activeCoordMolNo, setActiveCoordMolNo] = useState(null)
-    const [activeChainId, setactiveChainId] = useState(null)
-    const [moleculeIndex, setMoleculeIndex] = useState(null)
+    const [ramaPlotDimensions, setRamaPlotDimensions] = useState(230)
+    const [ramaPlotData, setRamaPlotData] = useState(null)
+    const [selectedModel, setSelectedModel] = useState(null)
+    const [selectedChain, setSelectedChain] = useState(null)
 
+    const getMolName = () => {
+        if(selectedModel===null || props.molecules.length === 0){
+            return;
+        }
+        const coordMolNums = props.molecules.map(molecule => molecule.coordMolNo);
+        const molNames = props.molecules.map(molecule => molecule.name);
+        let moleculeIndex = coordMolNums.findIndex(num => num == selectedModel)
+        return molNames[moleculeIndex];
+    }
+
+    useEffect(() => {
+        setTimeout(() => {
+            let plotHeigth = (ramaPlotDivRef.current.clientHeight)
+            let plotWidth = (ramaPlotDivRef.current.clientWidth)
+            if (plotHeigth > 0 && plotWidth > 0) {
+                plotHeigth > plotWidth ? setRamaPlotDimensions(plotWidth - convertRemToPixels(3)) : setRamaPlotDimensions(plotHeigth - convertRemToPixels(3))
+            } 
+        }, 50);
+        
+    }, [props.toolAccordionBodyHeight, props.windowHeight, props.windowWidth])
+
+    useEffect(() => {
+        ramachandranRef.current?.setState({ramaPlotDimensions:ramaPlotDimensions})
+    }, [ramaPlotDimensions])
     
     useEffect(() => {
-        if(activeCoordMolNo === null || activeChainId === null || props.molecules.length === 0) {
+        async function fetchRamaData() {
+            if(selectedModel === null || selectedChain === null){
+                setRamaPlotData(null)
+                return
+            }    
+            const inputData = {message:"get_rama", coordMolNo:selectedModel, chainId:selectedChain}
+            let response = await props.postCootMessage(props.cootWorker, inputData)
+            setRamaPlotData(response.data.result)
+          }
+        fetchRamaData()
+
+    }, [selectedModel, selectedChain])
+    
+    useEffect(() => {
+
+        ramachandranRef.current?.updatePlotData({info:ramaPlotData, molName:getMolName(selectedModel), chainId:selectedChain, coordMolNo:selectedModel});
+        
+    }, [ramaPlotData])
+
+
+
+    useEffect(() => {
+        if (props.molecules.length === 0) {
+            setSelectedModel(null)
+        } else if (selectedModel === null) {
+            setSelectedModel(props.molecules[0].coordMolNo)
+        } else if (!props.molecules.map(molecule => molecule.coordMolNo).includes(selectedModel)) {
+            setSelectedModel(props.molecules[0].coordMolNo)
+        }
+
+    }, [props.molecules.length])
+
+
+    useEffect(() => {
+        if(ramaPlotData === null || selectedModel === null || selectedChain === null || props.molecules.length === 0) {
             return;
         }
 
-        ramachandranRef.current.getRama();
+        async function fetchRamaData() {
+            if(selectedModel === null || selectedChain === null){
+                setRamaPlotData(null)
+                return
+            }    
+            const inputData = {message:"get_rama", coordMolNo:selectedModel, chainId:selectedChain}
+            let response = await props.postCootMessage(props.cootWorker, inputData)
+            setRamaPlotData(response.data.result)
+          }
+        fetchRamaData()
 
-    }, [inspect(props.molecules[moleculeIndex])])
-
+    }, [inspect(props.molecules[selectedModel])])
 
     useEffect(() => {
         if (!clickedResidue) {
@@ -38,23 +111,41 @@ export const BabyGruRamachandran = (props) => {
 
     }, [clickedResidue])
 
+    const handleModelChange = (evt) => {
+        console.log(`Ramachandran selected model ${evt.target.value}`)
+        setSelectedModel(evt.target.value)
+    }
+
+    const handleChainChange = (evt) => {
+        console.log(`Ramachandran selected chain ${evt.target.value}`)
+        setSelectedChain(evt.target.value)
+    }
+
 
     return <Fragment>
-                <Ramachandran
-                    ref={ramachandranRef}
-                    onClick={(result) => setClickedResidue(result)} 
-                    molecules={props.molecules}
-                    cootWorker={props.cootWorker} 
-                    postCootMessage={postCootMessage}
-                    setMessage={setMessage}
-                    setactiveChainId={setactiveChainId}
-                    setActiveCoordMolNo={setActiveCoordMolNo}
-                    setMoleculeIndex={setMoleculeIndex}
-                />
-                <div>
-                    <span>{message}</span>
+                <Form style={{paddingTop:'0.5rem', margin:'0'}}>
+                    <Form.Group>
+                        <Row style={{padding:'0', margin:'0'}}>
+                        <Col>
+                            <Form.Select value={selectedModel} onChange={handleModelChange} >
+                            {props.molecules.map(molecule => {
+                                return <option key={molecule.coordMolNo} value={molecule.coordMolNo}>{molecule.name}</option>
+                            })}
+                            </Form.Select>
+                        </Col>
+                        <Col>
+                            <Form.Control required type="text" onChange={handleChainChange} placeholder="Chain id" value={selectedChain} />
+                        </Col>
+                        </Row>
+                    </Form.Group>
+                </Form>
+                <div ref={ramaPlotDivRef} id="ramaPlotDiv" className="rama-plot-div">
+                <RamaPlot ref={ramachandranRef} 
+                          onClick={(result) => setClickedResidue(result)}
+                          setMessage={setMessage}/>
+                <br></br>
+                <span>{message}</span>       
                 </div>
-                
             </Fragment>
 
 }

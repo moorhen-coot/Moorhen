@@ -162,6 +162,7 @@ ${coot_src}/coot-utils/sfcalc-genmap.cc
 ${coot_src}/coot-utils/reduce.cc
 ${coot_src}/coot-utils/contact-info.cc
 ${coot_src}/coot-utils/hole.cc
+${coot_src}/coot-utils/slurp-map.cc
 ${coot_src}/coot-utils/read-sm-cif.cc
 ${coot_src}/coot-utils/exp-fit.cc
 ${coot_src}/coords/phenix-geo-bonds.cc
@@ -271,7 +272,7 @@ ${coot_exception_srcs}
 ${coot_src}/ideal/write-png.cc
 )
 
-target_include_directories(coot PRIVATE ${coot_src} ${coot_src}/coords ${coot_src}/utils ../include ../example ../checkout/ssm ../checkout/mmdb2 ../checkout/clipper ../checkout/fftw-2.1.5/fftw ../checkout/fftw-2.1.5/rfftw ../checkout/libccp4/ccp4 ../boost)
+target_include_directories(coot PRIVATE ${coot_src} ${coot_src}/coords ${coot_src}/utils ${coot_src}/src ../include ../example ../checkout/ssm ../checkout/mmdb2 ../checkout/clipper ../checkout/fftw-2.1.5/fftw ../checkout/fftw-2.1.5/rfftw ../checkout/libccp4/ccp4 ../boost)
 
 set_target_properties(coot PROPERTIES COMPILE_FLAGS "-pthread -DHAVE_BOOST -DNODERAWFS -DFFTW_ENABLE_FLOAT -s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_PTHREADS=1" LINK_FLAGS "-fexceptions -pthread -s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_PTHREADS=1")
 

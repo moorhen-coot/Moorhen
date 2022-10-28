@@ -578,6 +578,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("set_imol_refinement_map",&molecules_container_t::set_imol_refinement_map)
     .function("mutate",&molecules_container_t::mutate)
     .function("delete_using_cid",&molecules_container_t::delete_using_cid)
+    .function("get_bonds_mesh",&molecules_container_t::get_bonds_mesh)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<>()

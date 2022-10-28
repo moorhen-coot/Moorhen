@@ -1,13 +1,12 @@
-var twod_fragment_shader_source = `
-#extension GL_OES_element_index : enable
+var twod_fragment_shader_source = `#version 300 es\n
     precision mediump float;
-    varying lowp vec4 vColor;
-    varying lowp vec3 vNormal;
-    varying lowp vec4 eyePos;
-    varying lowp vec3 v;
-    varying mediump mat4 mvMatrix;
+    in lowp vec4 vColor;
+    in lowp vec3 vNormal;
+    in lowp vec4 eyePos;
+    in lowp vec3 v;
+    in mediump mat4 mvMatrix;
 
-    varying float FogFragCoord;
+    in float FogFragCoord;
     uniform vec4 fogColour;
 
     uniform float fog_end;
@@ -25,6 +24,8 @@ var twod_fragment_shader_source = `
 
     uniform vec2 cursorPos;
 
+    out vec4 fragColor;
+
     void main(void) {
       if(dot(eyePos, clipPlane0)<0.0){
        discard;
@@ -39,7 +40,7 @@ var twod_fragment_shader_source = `
 
       vec4 theColor = vec4(vColor);
       vec4 color = vColor;
-      gl_FragColor = mix(color, fogColour, fogFactor );
+      fragColor = mix(color, fogColour, fogFactor );
 
     }
 `;

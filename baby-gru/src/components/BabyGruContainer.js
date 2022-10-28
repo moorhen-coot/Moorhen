@@ -9,23 +9,30 @@ import { BabyGruFileMenu } from './BabyGruFileMenu';
 import { BabyGruSequenceViewer } from './BabyGruSequenceViewer';
 import { BabyGruRamachandran } from './BabyGruRamachandran';
 import { BabyGruMapSettings } from './BabyGruMapSettings';
-import { DensitySmallOutlined } from '@mui/icons-material';
+import { ArrowBackIosOutlined, ArrowForwardIosOutlined } from '@mui/icons-material';
+import './BabyGruContainer.css'
+import { BabyGruHistoryMenu } from './BabyGruHistoryMenu';
 
 
-const initialState = { count: 0, consoleMessage: "" };
-
-function reducer(consoleState, action) {
+function consoleReducer(consoleState, action) {
     return {
         count: consoleState.count + 1,
         consoleMessage: `${consoleState.consoleMessage}${consoleState.count} > ${action.newText}\n`
     };
 }
 
-function convertPxtoVh(input, height) {
-    return 100 * input / height 
+function journalReducer(journalState, action) {
+    return {
+        count: journalState.count + 1,
+        commands: [...journalState.commands, action.commandAndArgs]
+    };
 }
 
-function convertVhtoPx(input, height) {
+function convertPxtoVh(input, height) {
+    return 100 * input / height
+}
+
+function convertViewtoPx(input, height) {
     return height * (input / 100)
 }
 
@@ -33,15 +40,13 @@ function convertVhtoPx(input, height) {
 export const BabyGruContainer = (props) => {
 
     const glRef = useRef(null)
-    const sideBarRef = useRef(null)
-    const buttonBarRef = useRef(null)
-    const accordionRef = useRef(null)
     const cootWorker = useRef(null)
     const graphicsDiv = createRef()
     const sequenceViewerRef = useRef()
-    const [showSideBar, setShowSideBar] = useState(true)
+    const [showSideBar, setShowSideBar] = useState(false)
     const [activeMap, setActiveMap] = useState(null)
-    const [consoleState, dispatch] = useReducer(reducer, initialState);
+    const [consoleState, updateConsoleState] = useReducer(consoleReducer, { count: 0, consoleMessage: "" });
+    const [journalState, updateJournalState] = useReducer(journalReducer, { count: 0, commands: [] });
     const [molecules, setMolecules] = useState([])
     const [maps, setMaps] = useState([])
     const [cursorStyle, setCursorStyle] = useState("default")
@@ -54,33 +59,43 @@ export const BabyGruContainer = (props) => {
     const [mapRadius, setMapRadius] = useState(15.)
     const [windowWidth, setWindowWidth] = useState(window.innerWidth)
     const [windowHeight, setWindowHeight] = useState(window.innerHeight)
+    const [displayObjectsAccordionBodyHeight, setDisplayObjectsAccordionBodyHeight] = useState(convertViewtoPx(0, windowHeight))
+    const [toolAccordionBodyHeight, setToolAccordionBodyHeight] = useState(convertViewtoPx(0, windowHeight))
+    const [sequenceViewerBodyHeight, setSequenceViewerBodyHeight] = useState(convertViewtoPx(0, windowHeight))
+    const [consoleBodyHeight, setConsoleBodyHeight] = useState(convertViewtoPx(0, windowHeight))
+    const [accordionHeight, setAccordionHeight] = useState(convertViewtoPx(90, windowHeight))
 
-    const consoleHeight = convertVhtoPx(15, windowHeight);
-    const accordionHeaderHeight = convertVhtoPx(4, windowHeight);
-    const navHeight = convertVhtoPx(4, windowHeight);
-    const sequenceViewerHeight = convertVhtoPx(15, windowHeight)
-    const innerWindowMarginHeight = windowHeight*0.05
+    const sideBarWidth = convertViewtoPx(50, windowWidth)
+    const innerWindowMarginHeight = windowHeight * 0.04
+    const innerWindowMarginWidth = windowWidth * 0.04
 
-    const [accordionHeight, setAccordionHeight] = useState(2 * accordionHeaderHeight)
-    
-    const handleMessage = useCallback(e => {
+    const handleMessage = e => {
         //Append the response consoleMessage to the console text
-        dispatch({ newText: e.data.consoleMessage })
+        updateConsoleState({ newText: e.data.consoleMessage })
+        //console.log('Received from coot', e.data)
+        const dataKeys = Object.keys(e.data)
+        if (dataKeys.includes("command") && dataKeys.includes("commandArgs")) {
+            const storedResult = {}
+            Object.keys(e.data).filter(key => key !== "result").forEach(key => {
+                storedResult[key] = e.data[key]
+            })
+            updateJournalState({ commandAndArgs: storedResult })
+        }
         //remove this messageId from the dispatchedMessagesList
         let newDispatchedMessages = dispatchedMessages.filter(messageId => messageId !== e.data.messageId)
         setDispatchedMessages(newDispatchedMessages)
-    })
+    }
 
-    const handleCootMessageDispatch = useCallback(e => {
+    const handleCootMessageDispatch = e => {
         let newDispatchedMessages = [...dispatchedMessages]
         newDispatchedMessages.push(e.detail.messageId)
         setDispatchedMessages(newDispatchedMessages)
-    })
-    
+    }
+
     const setWindowDimensions = () => {
         setWindowWidth(window.innerWidth)
         setWindowHeight(window.innerHeight)
-      }
+    }
 
     useEffect(() => {
         cootWorker.current = new Worker('CootWorker.js')
@@ -107,8 +122,12 @@ export const BabyGruContainer = (props) => {
 
     useEffect(() => {
         glResize()
-        sideBarResize()
-    }, [accordionHeight, showSideBar, windowHeight, windowWidth])
+        setAccordionHeight(getAccordionHeight())
+        displayObjectsAccordionBodyHeight !== 0 ? setDisplayObjectsAccordionBodyHeight(convertViewtoPx(20, windowHeight)) : setDisplayObjectsAccordionBodyHeight(convertViewtoPx(0, windowHeight))
+        toolAccordionBodyHeight !== 0 ? setToolAccordionBodyHeight(convertViewtoPx(70, windowHeight)) : setToolAccordionBodyHeight(convertViewtoPx(0, windowHeight))
+        sequenceViewerBodyHeight !== 0 ? setSequenceViewerBodyHeight(convertViewtoPx(15, windowHeight)) : setSequenceViewerBodyHeight(convertViewtoPx(0, windowHeight))
+        consoleBodyHeight !== 0 ? setConsoleBodyHeight(convertViewtoPx(15, windowHeight)) : setConsoleBodyHeight(convertViewtoPx(0, windowHeight))
+    }, [showSideBar, windowHeight, windowWidth])
 
 
     useEffect(() => {
@@ -127,28 +146,26 @@ export const BabyGruContainer = (props) => {
     }
 
     const webGLWidth = () => {
-        const result = windowWidth - (190 + (showSideBar ? 500 : 0))
+        const result = windowWidth - (innerWindowMarginWidth + (showSideBar ? sideBarWidth : 0))
         return result
     }
 
     const webGLHeight = () => {
-        return windowHeight - (navHeight + accordionHeight + innerWindowMarginHeight)
+        let navBarHeight = parseFloat(window.getComputedStyle(document.getElementById('navbar-baby-gru')).height);
+        let buttonBarHeight = parseFloat(window.getComputedStyle(document.getElementById('button-bar-baby-gru')).height);
+        return windowHeight - (navBarHeight + buttonBarHeight + innerWindowMarginHeight)
     }
 
-    const sideBarHeight = () => {
-        return windowHeight - (navHeight + innerWindowMarginHeight)
-    }
-
-    const sideBarResize = () => {
-        let newHeight = sideBarHeight()
-        sideBarRef.current.style.height = newHeight
-        buttonBarRef.current.style.height = newHeight
+    const getAccordionHeight = () => {
+        let navBarHeight = parseFloat(window.getComputedStyle(document.getElementById('navbar-baby-gru')).height);
+        let buttonBarHeight = parseFloat(window.getComputedStyle(document.getElementById('button-bar-baby-gru')).height);
+        return windowHeight - (navBarHeight + innerWindowMarginHeight)
     }
 
     return <>
         <div className="border" ref={headerRef}>
 
-            <Navbar style={{ height: navHeight, justifyContent: 'between', marginLeft: '1rem', marginRight: '1rem' }}>
+            <Navbar id='navbar-baby-gru' style={{ height: '3rem', justifyContent: 'between', margin: '0.5rem', padding: '0.5rem' }}>
                 <Navbar.Brand href="#home">Baby Gru</Navbar.Brand>
                 <Navbar.Toggle aria-controls="basic-navbar-nav" />
                 <Navbar.Collapse id="basic-navbar-nav">
@@ -162,19 +179,29 @@ export const BabyGruContainer = (props) => {
                             setActiveMap={setActiveMap}
                             glRef={glRef}
                         />
+                        <BabyGruHistoryMenu
+                            molecules={molecules}
+                            setMolecules={setMolecules}
+                            maps={maps}
+                            setMaps={setMaps}
+                            cootWorker={cootWorker}
+                            setActiveMap={setActiveMap}
+                            glRef={glRef}
+                            journalState={journalState}
+                        />
                     </Nav>
                 </Navbar.Collapse>
                 <Nav className="justify-content-right">
                     {busy && <Spinner animation="border" style={{ marginRight: '0.5rem' }} />}
-                    <Button style={{height: '100%', backgroundColor: 'white', border: 0}} onClick={() => {
-                        setShowSideBar(!showSideBar)
-                    }}><DensitySmallOutlined style={{color:'black'}}/></Button>
+                    <Button style={{ height: '100%', backgroundColor: 'white', border: 0 }} onClick={() => { setShowSideBar(!showSideBar) }}>
+                        {showSideBar ? <ArrowForwardIosOutlined style={{ color: 'black' }} /> : <ArrowBackIosOutlined style={{ color: 'black' }} />}
+                    </Button>
                 </Nav>
             </Navbar>
         </div>
         <Container fluid>
             <Row>
-                <Col style={{ paddingLeft: '0.5rem', paddingRight:'0.5rem'}}>
+                <Col style={{ paddingLeft: '0', paddingRight: '0' }}>
                     <div
                         ref={graphicsDiv}
                         style={{
@@ -188,91 +215,91 @@ export const BabyGruContainer = (props) => {
                             width={webGLWidth}
                             height={webGLHeight}
                         />
-                    </div>                    
-                    <div >
-                        <Accordion
-                            alwaysOpen={true}
-                            defaultActiveKey=""
-                            onSelect={(openPanels) => {
-                                let newAccordionHeight = accordionHeaderHeight*2;
-                                if (openPanels && openPanels.includes("console")) {
-                                    newAccordionHeight += consoleHeight
-                                }
-                                if (openPanels && openPanels.includes("sequences")) {
-                                    newAccordionHeight += sequenceViewerHeight
-                                };
-                                setAccordionHeight(newAccordionHeight)
-                            }}>
-                            <Accordion.Item eventKey="sequences">
-                                <Accordion.Header style={{height:accordionHeaderHeight}}>Sequences</Accordion.Header>
-                                <Accordion.Body style={{height: sequenceViewerHeight}}>
-                                    <div ref={sequenceViewerRef} style={{
-                                        textAlign: "left"
-                                    }}>
-                                        <BabyGruSequenceViewer molecules={molecules} glRef={glRef} />
-                                    </div>
-                                </Accordion.Body>
-                            </Accordion.Item>
-                            <Accordion.Item eventKey="console">
-                                <Accordion.Header style={{height:accordionHeaderHeight}}>Console</Accordion.Header>
-                                <Accordion.Body style={{height: consoleHeight}}>
-                                    <div ref={consoleDivRef} style={{
-                                        overflowY: "scroll",
-                                        height: '100%',
-                                        textAlign: "left"
-                                    }}>
-                                        <pre>{consoleState.consoleMessage}
-                                        </pre>
-                                    </div>
-                                </Accordion.Body>
-                            </Accordion.Item>
-                        </Accordion>
+                    </div>
+                    <div style={{ height: '4rem' }} id='button-bar-baby-gru'>
+                        <BabyGruButtonBar setCursorStyle={setCursorStyle}
+                            molecules={molecules}
+                            cootWorker={cootWorker}
+                            activeMap={activeMap}
+                            glRef={glRef} />
+
                     </div>
                 </Col>
-                <Col ref={sideBarRef} style={{ height: sideBarHeight(), paddingLeft: '0.5rem', paddingRight:'0.5rem'}}  md="auto">
-                    <BabyGruButtonBar setCursorStyle={setCursorStyle}
-                        molecules={molecules}
-                        cootWorker={cootWorker}
-                        activeMap={activeMap}
-                        glRef={glRef} />
-                </Col>
-                <Col ref={buttonBarRef} style={{ height: sideBarHeight(), paddingLeft: '0.5rem', paddingRight:'0.5rem', display: showSideBar ? "Block" : "None" }}  md="auto">
-                    <div style={{ width: "35rem", height:'100%' }}>
-                    <Row style={{ paddingTop:'2%', height:'48%'}} >
-                            <div style={{height:'100%'}}>
-                            <Card className="px-0"  style={{marginTop:'0', marginBottom:'0', padding:'0', height:'100%'}} >
-                                    <Card.Header>
-                                        Display Objects
-                                    </Card.Header>
-                                    <Card.Body style={{ overflowY:'auto' }}>
-                                        { molecules.length===0 && maps.length===0 ? "No data files loaded" : <BabyGruDisplayObjects molecules={molecules} glRef={glRef} cootWorker={cootWorker} maps={maps} activeMap={activeMap} setActiveMap={setActiveMap} mapRadius={mapRadius} setMapRadius={setMapRadius}/> }
-                                    </Card.Body>
-                                </Card>   
-                            </div>
-                        </Row>
-                        <Row style={{ paddingTop:'2%', height:'48%'}} >
-                            <div style={{height:'100%'}}>
-                            <Card className="px-0"  style={{marginTop:'0', marginBottom:'0', padding:'0', height:'100%'}} >
-                                    <Card.Body>      
-                                        <Tabs defaultActiveKey='ramachandran'>
-                                        <Tab eventKey='ramachandran' title='Ramachandran'>
-                                                <BabyGruRamachandran molecules={molecules} cootWorker={cootWorker} glRef={glRef} />
-                                            </Tab>
-                                            <Tab eventKey='mapCountour' title='Map Settings'>
-                                                <BabyGruMapSettings glRef={glRef} cootWorker={cootWorker} maps={maps} activeMap={activeMap} mapRadius={mapRadius} setMapRadius={setMapRadius} setActiveMap={setActiveMap} />
-                                            </Tab>
-                                            <Tab eventKey='densityFit' title='Density Fit'>
-                                                Not ready yet...
-                                            </Tab>
-                                            <Tab eventKey='more' title='More...'>
-                                                Not ready yet...
-                                            </Tab>
-                                        </Tabs>
-                                    </Card.Body>
-                                </Card>   
-                            </div>
-                        </Row>
-                    </div>
+                <Col style={{ padding: '0.5rem', margin: '0', display: showSideBar ? "Block" : "None" }} >
+                    <Accordion style={{ height: accordionHeight, overflowY: 'scroll' }}
+                        alwaysOpen={true}
+                        defaultActiveKey={''}
+                        onSelect={(openPanels) => {
+                            setDisplayObjectsAccordionBodyHeight(convertViewtoPx(0, windowHeight))
+                            setToolAccordionBodyHeight(convertViewtoPx(0, windowHeight))
+                            setSequenceViewerBodyHeight(convertViewtoPx(0, windowHeight))
+                            setConsoleBodyHeight(convertViewtoPx(0, windowHeight))
+                            if (!openPanels) {
+                                return
+                            }
+                            if (openPanels.includes('showDisplayObjects')) {
+                                setDisplayObjectsAccordionBodyHeight(convertViewtoPx(20, windowHeight))
+                            }
+                            if (openPanels.includes('showTools')) {
+                                setToolAccordionBodyHeight(convertViewtoPx(70, windowHeight))
+                            }
+                            if (openPanels.includes('showSequenceViewer')) {
+                                setSequenceViewerBodyHeight(convertViewtoPx(15, windowHeight))
+                            }
+                            if (openPanels.includes('showConsole')) {
+                                setConsoleBodyHeight(convertViewtoPx(15, windowHeight))
+                            }
+                        }}>
+                        <Accordion.Item eventKey="showDisplayObjects" style={{ width: sideBarWidth, padding: '0', margin: '0' }} >
+                            <Accordion.Header style={{ padding: '0', margin: '0', height: '4rem' }}>Display Objects</Accordion.Header>
+                            <Accordion.Body style={{ overflowY: 'auto', height: displayObjectsAccordionBodyHeight }}>
+                                {molecules.length === 0 && maps.length === 0 ? "No data files loaded" : <BabyGruDisplayObjects molecules={molecules} glRef={glRef} cootWorker={cootWorker} maps={maps} activeMap={activeMap} setActiveMap={setActiveMap} mapRadius={mapRadius} setMapRadius={setMapRadius} />}
+                            </Accordion.Body>
+                        </Accordion.Item>
+                        <Accordion.Item eventKey="showTools" style={{ width: sideBarWidth, padding: '0', margin: '0' }} >
+                            <Accordion.Header style={{ height: '4rem' }}>Tools</Accordion.Header>
+                            <Accordion.Body style={{ height: toolAccordionBodyHeight, padding: '0', margin: '0', }}>
+                                <Tabs defaultActiveKey='ramachandran'>
+                                    <Tab eventKey='ramachandran' title='Ramachandran' style={{ height: '100%' }}>
+                                        <BabyGruRamachandran molecules={molecules} cootWorker={cootWorker} postCootMessage={postCootMessage} glRef={glRef} toolAccordionBodyHeight={toolAccordionBodyHeight} sideBarWidth={sideBarWidth} windowHeight={windowHeight} windowWidth={windowWidth} />
+                                    </Tab>
+                                    <Tab eventKey='mapCountour' title='Map Settings'>
+                                        <BabyGruMapSettings glRef={glRef} cootWorker={cootWorker} maps={maps} activeMap={activeMap} mapRadius={mapRadius} setMapRadius={setMapRadius} setActiveMap={setActiveMap} />
+                                    </Tab>
+                                    <Tab eventKey='densityFit' title='Density Fit'>
+                                        Not ready yet...
+                                    </Tab>
+                                    <Tab eventKey='more' title='More...'>
+                                        Not ready yet...
+                                    </Tab>
+                                </Tabs>
+                            </Accordion.Body>
+                        </Accordion.Item>
+                        <Accordion.Item eventKey="showSequenceViewer" style={{ width: sideBarWidth, padding: '0', margin: '0' }} >
+                            <Accordion.Header style={{ height: '4rem' }}>Sequences</Accordion.Header>
+                            <Accordion.Body style={{ height: sequenceViewerBodyHeight }}>
+                                <div ref={sequenceViewerRef} style={{
+                                    textAlign: "left"
+                                }}>
+                                    <BabyGruSequenceViewer molecules={molecules} glRef={glRef} />
+                                </div>
+                            </Accordion.Body>
+                        </Accordion.Item>
+                        <Accordion.Item eventKey="showConsole" style={{ width: sideBarWidth, padding: '0', margin: '0' }} >
+                            <Accordion.Header style={{ height: '4rem' }}>Console</Accordion.Header>
+                            <Accordion.Body style={{ height: consoleBodyHeight }}>
+                                <div ref={consoleDivRef} style={{
+                                    overflowY: "scroll",
+                                    height: '100%',
+                                    textAlign: "left"
+                                }}>
+                                    <pre>{consoleState.consoleMessage}
+                                    </pre>
+                                </div>
+                            </Accordion.Body>
+                        </Accordion.Item>
+
+                    </Accordion>
                 </Col>
             </Row>
         </Container>
