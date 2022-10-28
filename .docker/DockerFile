@@ -4,7 +4,7 @@ ENV TZ=Europe/London
 ARG DEBIAN_FRONTEND=noninteractive
 SHELL ["/bin/bash", "-c"]
 RUN apt-get update
-RUN apt-get -y install autoconf autotools-dev libtool bzr git curl cmake gcc clang python3-dev libz-dev
+RUN apt-get -y install autoconf autotools-dev libtool bzr git curl cmake gcc clang python3-dev libz-dev zlib1g-dev
 
 # INSTALL EMSCRIPTEN
 RUN mkdir -p /opt/
