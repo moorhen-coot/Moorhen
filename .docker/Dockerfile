@@ -14,10 +14,18 @@ RUN /opt/emsdk/emsdk install latest
 RUN /opt/emsdk/emsdk activate latest
 RUN source /opt/emsdk/emsdk_env.sh
 
-# CLONE CCP4 Web-Assembly REPO
+# CLONE CCP4 WEB-ASSEMBLY AND DOWNLOAD SOURCES
 RUN  git clone https://github.com/stuartjamesmcnicholas/CCP4-Web-Assembly.git ccp4_wasm
 WORKDIR /opt/ccp4_wasm/
 RUN /opt/ccp4_wasm/get_sources
+
+# INSTALL
 RUN emcmake cmake .
 RUN emmake make
 RUN make install
+
+# START BABY-GRU
+COPY /opt/ccp4_wasm/react-app/src /opt/ccp4_wasm/baby-gru/src/WebGL 
+WORKDIR /opt/ccp4_wasm/baby-gru/
+RUN npm install
+RUN npm start
