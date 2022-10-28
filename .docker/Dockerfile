@@ -24,8 +24,7 @@ RUN emcmake cmake .
 RUN emmake make
 RUN make install
 
-# START BABY-GRU
+# INSTALL WEBPACK
 COPY /opt/ccp4_wasm/react-app/src /opt/ccp4_wasm/baby-gru/src/WebGL 
 WORKDIR /opt/ccp4_wasm/baby-gru/
 RUN npm install
-RUN npm start
