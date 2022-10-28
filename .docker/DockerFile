@@ -12,7 +12,6 @@ WORKDIR /opt/
 RUN  git clone https://github.com/emscripten-core/emsdk.git
 RUN /opt/emsdk/emsdk install latest
 RUN /opt/emsdk/emsdk activate latest
-RUN source /opt/emsdk/emsdk_env.sh
 
 # CLONE CCP4 WEB-ASSEMBLY AND DOWNLOAD SOURCES
 RUN  git clone https://github.com/stuartjamesmcnicholas/CCP4-Web-Assembly.git ccp4_wasm
@@ -20,9 +19,9 @@ WORKDIR /opt/ccp4_wasm/
 RUN /opt/ccp4_wasm/get_sources
 
 # INSTALL
-RUN emcmake cmake .
-RUN emmake make
-RUN make install
+RUN source /opt/emsdk/emsdk_env.sh && emcmake cmake .
+RUN source /opt/emsdk/emsdk_env.sh && emmake make
+RUN source /opt/emsdk/emsdk_env.sh && make install
 
 # INSTALL WEBPACK
 COPY /opt/ccp4_wasm/react-app/src /opt/ccp4_wasm/baby-gru/src/WebGL 
