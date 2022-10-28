@@ -27,7 +27,8 @@ export const BabyGruWebMG = forwardRef((props, glRef) => {
     useEffect(() => {
         glRef.current.setAmbientLightNoUpdate(0.2, 0.2, 0.2);
         glRef.current.setSpecularLightNoUpdate(0.6, 0.6, 0.6);
-        glRef.current.setLightPositionNoUpdate(1., 1., 1.);
+        glRef.current.setDiffuseLight(1., 1., 1.);
+        glRef.current.setLightPositionNoUpdate(10., 10., 60.);
         setClipFogByZoom()
         glRef.current.background_colour = [0., 0., 0., 1.];
         windowResizedBinding.current = window.addEventListener('resize', windowResized)

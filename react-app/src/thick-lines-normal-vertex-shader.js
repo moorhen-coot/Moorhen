@@ -24,7 +24,7 @@ var thick_lines_normal_vertex_shader_source = `#version 300 es\n
 
         gl_Position =  uPMatrix * vec4(lineY+aVertexPosition.xyz,1.0);
         vColor = aVertexColour;
-        vNormal = aVertexRealNormal;
+        vNormal = -aVertexRealNormal;
         eyePos = uMVMatrix * aVertexPosition;
         mvInvMatrix = uMVINVMatrix;
         v = vec3(uMVMatrix * theVert);

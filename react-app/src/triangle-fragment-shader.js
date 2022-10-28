@@ -54,6 +54,7 @@ var triangle_fragment_shader_source = `#version 300 es\n
       }
 
       if(gl_FrontFacing!=true){
+          discard;
       E = (mvInvMatrix * vec4(normalize(-v),1.0)).xyz;
       //for (i = 0; i<nLights&&i<8; i++) {
        L = normalize((mvInvMatrix *light_positions).xyz);
