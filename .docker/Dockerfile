@@ -28,3 +28,7 @@ RUN make install
 COPY /opt/ccp4_wasm/react-app/src /opt/ccp4_wasm/baby-gru/src/WebGL 
 WORKDIR /opt/ccp4_wasm/baby-gru/
 RUN npm install
+
+# EXPOSE PORT AND START BABY-GRU
+CMD ["npm", "start"]
+EXPOSE 3000
