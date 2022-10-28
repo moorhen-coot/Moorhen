@@ -1,31 +1,30 @@
-var twod_vertex_shadow_shader_source = `
-#extension GL_OES_element_index : enable
+var twod_vertex_shadow_shader_source = `#version 300 es\n
     // This shader is basic
-    attribute vec3 aVertexOrigin;
-    attribute vec3 aVertexPosition;
-    attribute vec4 aVertexColour;
-    attribute vec3 aVertexNormal;
-    attribute vec2 aVertexTexture;
+    in vec3 aVertexOrigin;
+    in vec3 aVertexPosition;
+    in vec4 aVertexColour;
+    in vec3 aVertexNormal;
+    in vec2 aVertexTexture;
 
     uniform mat4 uMVMatrix;
     uniform mat4 uMVINVMatrix;
     uniform mat4 uPMatrix;
 
-    varying lowp vec4 vColor;
-    varying lowp vec3 vNormal;
-    varying lowp vec2 vTexture;
-    varying mediump mat4 mvMatrix;
-    varying mediump mat4 projMatrix;
-    varying lowp vec3 v;
-    varying float size_v;
+    out lowp vec4 vColor;
+    out lowp vec3 vNormal;
+    out lowp vec2 vTexture;
+    out mediump mat4 mvMatrix;
+    out mediump mat4 projMatrix;
+    out lowp vec3 v;
+    out float size_v;
 
-    varying lowp vec4 eyePos;
+    out lowp vec4 eyePos;
 
     uniform float size;
     uniform vec3 offset;
 
     uniform mat4 TextureMatrix;
-    varying lowp vec4 ShadowCoord;
+    out lowp vec4 ShadowCoord;
 
     void main(void) {
 

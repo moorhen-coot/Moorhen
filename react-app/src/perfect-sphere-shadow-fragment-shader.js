@@ -1,14 +1,12 @@
-var perfect_sphere_shadow_fragment_shader_source = `
-#extension GL_OES_element_index : enable
-#extension GL_EXT_frag_depth : enable
+var perfect_sphere_shadow_fragment_shader_source = `#version 300 es\n
     precision mediump float;
-    varying lowp vec4 vColor;
-    varying lowp vec3 vNormal;
-    varying lowp vec4 eyePos;
-    varying lowp vec2 vTexture;
-    varying mediump mat4 mvMatrix;
+    in lowp vec4 vColor;
+    in lowp vec3 vNormal;
+    in lowp vec4 eyePos;
+    in lowp vec2 vTexture;
+    in mediump mat4 mvMatrix;
 
-    varying lowp vec4 ShadowCoord;
+    in lowp vec4 ShadowCoord;
 
     uniform float fog_end;
     uniform float fog_start;
@@ -31,8 +29,10 @@ var perfect_sphere_shadow_fragment_shader_source = `
     uniform vec4 light_colours_specular;
     uniform vec4 light_colours_diffuse;
 
-    varying mediump mat4 projMatrix;
-    varying float size_v;
+    in mediump mat4 projMatrix;
+    in float size_v;
+
+    out vec4 fragColor;
 
     uniform sampler2D ShadowMap;
     //FIXME  - my buffer is currently always 1024 x 1024. This may change.
@@ -45,8 +45,8 @@ var perfect_sphere_shadow_fragment_shader_source = `
       vec4 coord = ShadowCoord + vec4(offSet.x * xPixelOffset * ShadowCoord.w, offSet.y * yPixelOffset * ShadowCoord.w, 0.07, 0.0);
       if(coord.s>1.0||coord.s<0.0||coord.t>1.0||coord.t<0.0)
           return 1.0;
-      //gl_FragColor = texture2D(ShadowMap, coord.xy );
-      float shad2 = texture2D(ShadowMap, coord.xy ).x;
+      //fragColor = texture(ShadowMap, coord.xy );
+      float shad2 = texture(ShadowMap, coord.xy ).x;
       shad2 = shad2/(coord.p/coord.q);
       shad2 = clamp(shad2,0.0,1.0);
       if(shad2<0.9){
@@ -70,14 +70,14 @@ var perfect_sphere_shadow_fragment_shader_source = `
       if(dot(eyePos, clipPlane1)<0.0){
        discard;
       }
-      gl_FragColor = vec4(zz*vColor.r, zz*vColor.g, zz*vColor.b, 1.0);
+      fragColor = vec4(zz*vColor.r, zz*vColor.g, zz*vColor.b, 1.0);
 
 
       vec4 pos = eyePos;
       pos.z += 0.7071*z*size_v;
       pos = projMatrix * pos;
 
-      gl_FragDepthEXT = (pos.z / pos.w + 1.0) / 2.0;
+      gl_FragDepth = (pos.z / pos.w + 1.0) / 2.0;
 
       vec3 L;
       vec3 E;
@@ -112,8 +112,8 @@ var perfect_sphere_shadow_fragment_shader_source = `
       vec4 color = (1.5*theColor*Iamb + 1.2*theColor* Idiff);
       color.a = vColor.a;
       color += Ispec;
-      gl_FragColor = mix(color, fogColour, fogFactor );
-      //gl_FragColor = color;
+      fragColor = mix(color, fogColour, fogFactor );
+      //fragColor = color;
       
       // FIXME - this should be done before fogging.
 
@@ -142,7 +142,7 @@ var perfect_sphere_shadow_fragment_shader_source = `
       shad2 = clamp(shad2,0.0,1.0);
       
 
-      gl_FragColor = vec4(color.r*shad2, color.g*shad2,color.b*shad2, 1.0);
+      fragColor = vec4(color.r*shad2, color.g*shad2,color.b*shad2, 1.0);
     }
 `;
 

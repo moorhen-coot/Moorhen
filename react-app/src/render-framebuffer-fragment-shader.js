@@ -1,7 +1,7 @@
-var render_framebuffer_fragment_shader_source = `
+var render_framebuffer_fragment_shader_source = `#version 300 es\n
     precision mediump float;
-    varying lowp vec4 vColor;
-    varying lowp vec2 vTexture;
+    in lowp vec4 vColor;
+    in lowp vec2 vTexture;
 
     uniform float fog_end;
     uniform float fog_start;
@@ -18,20 +18,22 @@ var render_framebuffer_fragment_shader_source = `
     uniform vec4 clipPlane7;
     uniform int nClipPlanes;
 
+    out vec4 fragColor;
+
     void main(void) {
-      gl_FragColor = texture2D(uSampler, vec2(vTexture.s, vTexture.t));
+      fragColor = texture(uSampler, vec2(vTexture.s, vTexture.t));
 
       //e.g. a 1D gaussian blur.
       //float blurSize = 1.0/1024.0;
       //vec4 color = vec4(0.0);
-      //color += texture2D( uSampler, vec2(vTexture.s -3.0*blurSize,vTexture.t)) * 0.015625;
-      //color += texture2D( uSampler, vec2(vTexture.s -2.0*blurSize,vTexture.t)) * 0.09375;
-      //color += texture2D( uSampler, vec2(vTexture.s -1.0*blurSize,vTexture.t)) * 0.234375;
-      //color += texture2D( uSampler, vec2(vTexture.s,vTexture.t) )*0.3125;
-      //color += texture2D( uSampler, vec2(vTexture.s +1.0*blurSize,vTexture.t)) * 0.234375;
-      //color += texture2D( uSampler, vec2(vTexture.s +2.0*blurSize,vTexture.t)) * 0.09375;
-      //color += texture2D( uSampler, vec2(vTexture.s +3.0*blurSize,vTexture.t)) * 0.015625;
-      //gl_FragColor = color;
+      //color += texture( uSampler, vec2(vTexture.s -3.0*blurSize,vTexture.t)) * 0.015625;
+      //color += texture( uSampler, vec2(vTexture.s -2.0*blurSize,vTexture.t)) * 0.09375;
+      //color += texture( uSampler, vec2(vTexture.s -1.0*blurSize,vTexture.t)) * 0.234375;
+      //color += texture( uSampler, vec2(vTexture.s,vTexture.t) )*0.3125;
+      //color += texture( uSampler, vec2(vTexture.s +1.0*blurSize,vTexture.t)) * 0.234375;
+      //color += texture( uSampler, vec2(vTexture.s +2.0*blurSize,vTexture.t)) * 0.09375;
+      //color += texture( uSampler, vec2(vTexture.s +3.0*blurSize,vTexture.t)) * 0.015625;
+      //fragColor = color;
       
     }
 `;

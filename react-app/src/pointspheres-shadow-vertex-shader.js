@@ -1,8 +1,8 @@
-var pointspheres_shadow_vertex_shader_source = `
+var pointspheres_shadow_vertex_shader_source = `#version 300 es\n
     // This shader is basic
-    attribute vec3 aVertexPosition;
-    attribute vec4 aVertexColour;
-    attribute vec3 aVertexNormal;
+    in vec3 aVertexPosition;
+    in vec4 aVertexColour;
+    in vec3 aVertexNormal;
 
     uniform vec3 offset;
     uniform float size;
@@ -12,15 +12,15 @@ var pointspheres_shadow_vertex_shader_source = `
     uniform mat4 uMVINVMatrix;
     uniform mat4 uPMatrix;
 
-    varying lowp vec4 vColor;
-    varying lowp vec3 vNormal;
-    varying lowp vec3 vPosition;
-    varying mediump mat4 mvInvMatrix;
+    out lowp vec4 vColor;
+    out lowp vec3 vNormal;
+    out lowp vec3 vPosition;
+    out mediump mat4 mvInvMatrix;
 
-    varying lowp vec4 eyePos;
+    out lowp vec4 eyePos;
 
     uniform mat4 TextureMatrix;
-    varying lowp vec4 ShadowCoord;
+    out lowp vec4 ShadowCoord;
 
     void main(void) {
 

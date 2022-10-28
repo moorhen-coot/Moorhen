@@ -1,16 +1,15 @@
-var shadow_vertex_shader_source = `
-#extension GL_OES_element_index : enable
+var shadow_vertex_shader_source = `#version 300 es\n
     // This shader is basic
-    attribute vec3 aVertexPosition;
-    attribute vec4 aVertexColour;
+    in vec3 aVertexPosition;
+    in vec4 aVertexColour;
 
     uniform mat4 uMVMatrix;
     uniform mat4 uMVINVMatrix;
     uniform mat4 uPMatrix;
 
-    varying lowp vec4 vColor;
+    out lowp vec4 vColor;
 
-    varying lowp vec4 eyePos;
+    out lowp vec4 eyePos;
 
     void main(void) {
 

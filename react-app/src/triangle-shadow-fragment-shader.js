@@ -1,16 +1,15 @@
-var triangle_shadow_fragment_shader_source = `
-#extension GL_OES_element_index : enable
+var triangle_shadow_fragment_shader_source = `#version 300 es\n
     precision mediump float;
-    varying lowp vec4 vColor;
-    varying lowp vec3 vNormal;
-    varying lowp vec4 eyePos;
-    varying lowp vec3 v;
-    varying mediump mat4 mvInvMatrix;
-    varying mediump mat4 mvMatrix;
+    in lowp vec4 vColor;
+    in lowp vec3 vNormal;
+    in lowp vec4 eyePos;
+    in lowp vec3 v;
+    in mediump mat4 mvInvMatrix;
+    in mediump mat4 mvMatrix;
 
-    varying lowp vec4 ShadowCoord;
+    in lowp vec4 ShadowCoord;
 
-    varying float FogFragCoord;
+    in float FogFragCoord;
     uniform vec4 fogColour;
 
     uniform float fog_end;
@@ -42,14 +41,16 @@ var triangle_shadow_fragment_shader_source = `
     //uniform float xPixelOffset;
     //uniform float yPixelOffset;
 
+    out vec4 fragColor;
+
     float lookup(vec2 offSet){
       float xPixelOffset = 1.0/1024.0;
       float yPixelOffset = 1.0/1024.0;
       vec4 coord = ShadowCoord + vec4(offSet.x * xPixelOffset * ShadowCoord.w, offSet.y * yPixelOffset * ShadowCoord.w, 0.07, 0.0);
       if(coord.s>1.0||coord.s<0.0||coord.t>1.0||coord.t<0.0)
           return 1.0;
-      //gl_FragColor = texture2D(ShadowMap, coord.xy );
-      float shad2 = texture2D(ShadowMap, coord.xy ).x;
+      //fragColor = texture(ShadowMap, coord.xy );
+      float shad2 = texture(ShadowMap, coord.xy ).x;
       shad2 = shad2/(coord.p/coord.q);
       shad2 = clamp(shad2,0.0,1.0);
       if(shad2<0.9){
@@ -74,8 +75,8 @@ var triangle_shadow_fragment_shader_source = `
       vec3 norm = normalize(vNormal);
 
       if(gl_FrontFacing!=true){
-        //gl_FragColor = vec4(1.0,0.0,0.0,1.0);
-        //gl_FragColor = gl_FragColor;
+        //fragColor = vec4(1.0,0.0,0.0,1.0);
+        //fragColor = gl_FragColor;
         norm = -norm;
       }
 
@@ -123,11 +124,11 @@ var triangle_shadow_fragment_shader_source = `
       vec4 color = (1.5*theColor*Iamb + 1.2*theColor* Idiff);
       color.a = vColor.a;
       color += Ispec;
-      //gl_FragColor = color;
-      gl_FragColor = mix(color, fogColour, fogFactor );
+      //fragColor = color;
+      fragColor = mix(color, fogColour, fogFactor );
 
       //if((gl_FragCoord.x-cursorPos[0])*(gl_FragCoord.x-cursorPos[0])+(gl_FragCoord.y-cursorPos[1])*(gl_FragCoord.y-cursorPos[1])<500.){
-       // gl_FragColor = mix(gl_FragColor, vec4(1.0,1.0,1.0,1.0), 0.4 );
+       // fragColor = mix(gl_FragColor, vec4(1.0,1.0,1.0,1.0), 0.4 );
       //}
 
       // FIXME - this should be done before fogging.
@@ -157,7 +158,7 @@ var triangle_shadow_fragment_shader_source = `
       shad2 = clamp(shad2,0.0,1.0);
       
 
-      gl_FragColor = vec4(color.r*shad2, color.g*shad2,color.b*shad2, 1.0);
+      fragColor = vec4(color.r*shad2, color.g*shad2,color.b*shad2, 1.0);
     }
 `;
 

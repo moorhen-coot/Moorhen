@@ -29,6 +29,7 @@ import {text_fragment_shader_source} from './text-fragment-shader.js';
 import {circles_fragment_shader_source} from './circle-fragment-shader.js';
 import {circles_vertex_shader_source} from './circle-vertex-shader.js';
 import {thick_lines_vertex_shader_source} from './thick-lines-vertex-shader.js';
+import {thick_lines_normal_vertex_shader_source} from './thick-lines-normal-vertex-shader.js';
 import {triangle_fragment_shader_source} from './triangle-fragment-shader.js';
 import {triangle_shadow_fragment_shader_source} from './triangle-shadow-fragment-shader.js';
 import {triangle_shadow_vertex_shader_source} from './triangle-shadow-vertex-shader.js';
@@ -1166,7 +1167,7 @@ function getEncodedData( rssentries, createFun ) {
 function initGL(canvas) {
     console.log("canvas in initGL",canvas);
     try {
-        var gl = canvas.getContext("webgl");
+        var gl = canvas.getContext("webgl2");
         gl.viewportWidth = canvas.width;
         gl.viewportHeight = canvas.height;
         console.log(canvas.width,canvas.height);
@@ -1196,7 +1197,7 @@ function getShader(gl, str, type) {
     gl.compileShader(shader);
 
     if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        alert(gl.getShaderInfoLog(shader));
+        console.log(gl.getShaderInfoLog(shader));
         return null;
     }
 
@@ -1230,6 +1231,7 @@ class DisplayBuffer {
     }
 
     clearBuffers() {
+        this.triangleVertexRealNormalBuffer = []; // This is going to be for lit lines.
         this.triangleVertexNormalBuffer = [];
         this.triangleVertexPositionBuffer = [];
         this.triangleVertexIndexBuffer = [];
@@ -1485,17 +1487,22 @@ class MGWebGL extends Component {
 
         //console.log("The GL context ... ");
         //console.log(this.gl);
-        this.ext = this.gl.getExtension("OES_element_index_uint");
+        this.ext = true;//this.gl.getExtension("OES_element_index_uint");
+        /*
         if(!this.ext) {
             alert("No OES_element_index_uint support");
         }
+        */
+        /*
         this.deriv_ext = this.gl.getExtension("OES_standard_derivatives");
         if(!this.deriv_ext) {
             alert("No GL_OES_standard_derivatives support");
         }
-        this.frag_depth_ext = this.gl.getExtension("EXT_frag_depth");
+        */
+        this.frag_depth_ext = true;//this.gl.getExtension("EXT_frag_depth");
 
-        this.depth_texture = this.gl.getExtension("WEBGL_depth_texture");
+        this.depth_texture = true;//this.gl.getExtension("WEBGL_depth_texture");
+        /*
         if(!this.depth_texture){
             this.depth_texture = this.gl.getExtension("MOZ_WEBGL_depth_texture");
             if(!this.depth_texture){
@@ -1505,6 +1512,7 @@ class MGWebGL extends Component {
                 }
             }
         }
+        */
 
         this.initTextureFramebuffer();
 
@@ -1545,6 +1553,7 @@ class MGWebGL extends Component {
         var fragmentShader;
         var lineVertexShader;
         var thickLineVertexShader;
+        var thickLineNormalVertexShader;
         var lineFragmentShader;
         var textVertexShader;
         var circlesVertexShader;
@@ -1588,6 +1597,7 @@ class MGWebGL extends Component {
         fragmentShader                  = getShader(self.gl,triangle_fragment_shader_source,"fragment");
         lineVertexShader                = getShader(self.gl,lines_vertex_shader_source,"vertex");
         thickLineVertexShader           = getShader(self.gl,thick_lines_vertex_shader_source,"vertex");
+        thickLineNormalVertexShader     = getShader(self.gl,thick_lines_normal_vertex_shader_source,"vertex");
         lineFragmentShader              = getShader(self.gl,lines_fragment_shader_source,"fragment");
         textVertexShader                = getShader(self.gl,triangle_vertex_shader_source,"vertex");
         circlesVertexShader             = getShader(self.gl,circles_vertex_shader_source,"vertex");
@@ -1617,6 +1627,7 @@ class MGWebGL extends Component {
         self.initRenderFrameBufferShaders(renderFrameBufferVertexShader,renderFrameBufferFragmentShader);
         self.initLineShaders(lineVertexShader,lineFragmentShader);
         self.initThickLineShaders(thickLineVertexShader,lineFragmentShader);
+        self.initThickLineNormalShaders(thickLineNormalVertexShader,fragmentShader);
         self.initPointSpheresShaders(pointSpheresVertexShader,pointSpheresFragmentShader);
         self.initTwoDShapesShaders(twoDShapesVertexShader,twoDShapesFragmentShader);
         self.initImageShaders(twoDShapesVertexShader,textFragmentShader);
@@ -1941,11 +1952,19 @@ class MGWebGL extends Component {
             self.currentBufferIdx = self.displayBuffers.length;
             self.displayBuffers.push(new DisplayBuffer());
             theseBuffers.push(self.displayBuffers[self.currentBufferIdx]);
+
             let rssentries=jsondata.norm_tri[idat];
-            //console.log(rssentries);
             var norms = rssentries;
             for (let i=0; i<norms.length; i++){
                 self.createNormalBuffer(norms[i]);
+            }
+
+            if(jsondata.additional_norm_tri){
+                rssentries=jsondata.additional_norm_tri[idat];
+                let add_norms = rssentries;
+                for (let i=0; i<add_norms.length; i++){
+                    self.createRealNormalBuffer(add_norms[i]); //This is dummy data. It will be blatted.
+                }
             }
 
             rssentries=jsondata.vert_tri[idat];
@@ -3020,7 +3039,7 @@ class MGWebGL extends Component {
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
             //this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_COMPARE_MODE, this.gl.COMPARE_R_TO_TEXTURE);
             //this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_COMPARE_FUNC, this.gl.LEQUAL);
-            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.DEPTH_COMPONENT, this.rttFramebufferDepth.width, this.rttFramebufferDepth.height, 0, this.gl.DEPTH_COMPONENT, this.gl.UNSIGNED_SHORT, null);
+            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.DEPTH_COMPONENT, this.rttFramebufferDepth.width, this.rttFramebufferDepth.height, 0, this.gl.DEPTH_COMPONENT, this.gl.UNSIGNED_INT_24_8, null);
             var renderbufferCol = this.gl.createRenderbuffer();
             this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, renderbufferCol);
             this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.RGBA4, this.rttFramebufferDepth.width, this.rttFramebufferDepth.height);
@@ -4242,6 +4261,62 @@ class MGWebGL extends Component {
         this.shaderProgram.light_colours_ambient = this.gl.getUniformLocation(this.shaderProgram, "light_colours_ambient");
         this.shaderProgram.light_colours_specular = this.gl.getUniformLocation(this.shaderProgram, "light_colours_specular");
         this.shaderProgram.light_colours_diffuse = this.gl.getUniformLocation(this.shaderProgram, "light_colours_diffuse");
+    }
+
+    initThickLineNormalShaders(vertexShader,fragmentShader) {
+
+        this.shaderProgramThickLinesNormal = this.gl.createProgram();
+        this.gl.attachShader(this.shaderProgramThickLinesNormal, vertexShader);
+        this.gl.attachShader(this.shaderProgramThickLinesNormal, fragmentShader);
+        this.gl.bindAttribLocation(this.shaderProgramThickLinesNormal, 0, "aVertexPosition");
+        this.gl.bindAttribLocation(this.shaderProgramThickLinesNormal, 1, "aVertexColour");
+        this.gl.bindAttribLocation(this.shaderProgramThickLinesNormal, 2, "aVertexNormal");
+        this.gl.bindAttribLocation(this.shaderProgramThickLinesNormal, 3, "aVertexRealNormal");
+        this.gl.linkProgram(this.shaderProgramThickLinesNormal);
+
+        if (!this.gl.getProgramParameter(this.shaderProgramThickLinesNormal, this.gl.LINK_STATUS)) {
+            alert("Could not initialise shaders (initThickLineNormalShaders)");
+        }
+
+        this.gl.useProgram(this.shaderProgramThickLinesNormal);
+
+        this.shaderProgramThickLinesNormal.vertexPositionAttribute = this.gl.getAttribLocation(this.shaderProgramThickLinesNormal, "aVertexPosition");
+        this.gl.enableVertexAttribArray(this.shaderProgramThickLinesNormal.vertexPositionAttribute);
+
+        this.shaderProgramThickLinesNormal.vertexColourAttribute = this.gl.getAttribLocation(this.shaderProgramThickLinesNormal, "aVertexColour");
+        this.gl.enableVertexAttribArray(this.shaderProgramThickLinesNormal.vertexColourAttribute);
+
+        this.shaderProgramThickLinesNormal.vertexNormalAttribute = this.gl.getAttribLocation(this.shaderProgramThickLinesNormal, "aVertexNormal");
+        this.gl.enableVertexAttribArray(this.shaderProgramThickLinesNormal.vertexNormalAttribute);
+
+        this.shaderProgramThickLinesNormal.vertexRealNormalAttribute = this.gl.getAttribLocation(this.shaderProgramThickLinesNormal, "aVertexRealNormal");
+        this.gl.enableVertexAttribArray(this.shaderProgramThickLinesNormal.vertexRealNormalAttribute);
+
+        this.shaderProgramThickLinesNormal.pMatrixUniform = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "uPMatrix");
+        this.shaderProgramThickLinesNormal.mvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "uMVMatrix");
+        this.shaderProgramThickLinesNormal.mvInvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "uMVINVMatrix");
+        this.shaderProgramThickLinesNormal.screenZ = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "screenZ");
+
+        this.shaderProgramThickLinesNormal.fog_start = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "fog_start");
+        this.shaderProgramThickLinesNormal.fog_end = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "fog_end");
+        this.shaderProgramThickLinesNormal.fogColour = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "fogColour");
+        this.shaderProgramThickLinesNormal.clipPlane0 = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "clipPlane0");
+        this.shaderProgramThickLinesNormal.clipPlane1 = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "clipPlane1");
+        this.shaderProgramThickLinesNormal.clipPlane2 = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "clipPlane2");
+        this.shaderProgramThickLinesNormal.clipPlane3 = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "clipPlane3");
+        this.shaderProgramThickLinesNormal.clipPlane4 = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "clipPlane4");
+        this.shaderProgramThickLinesNormal.clipPlane5 = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "clipPlane5");
+        this.shaderProgramThickLinesNormal.clipPlane6 = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "clipPlane6");
+        this.shaderProgramThickLinesNormal.clipPlane7 = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "clipPlane7");
+        this.shaderProgramThickLinesNormal.nClipPlanes = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "nClipPlanes");
+
+        this.shaderProgramThickLinesNormal.pixelZoom = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "pixelZoom");
+
+        this.shaderProgramThickLinesNormal.light_positions = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "light_positions");
+        this.shaderProgramThickLinesNormal.light_colours_ambient = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "light_colours_ambient");
+        this.shaderProgramThickLinesNormal.light_colours_specular = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "light_colours_specular");
+        this.shaderProgramThickLinesNormal.light_colours_diffuse = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "light_colours_diffuse");
+
     }
 
     initThickLineShaders(vertexShader,fragmentShader) {
@@ -5975,6 +6050,48 @@ class MGWebGL extends Component {
                     this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(triangleColours), this.gl.STATIC_DRAW);
                     this.displayBuffers[idx].triangleColourBuffer[j].itemSize = 4;
 
+                } else if(this.displayBuffers[idx].bufferTypes[j]==="NORMALLINES"){
+                    console.log("Treating normal lines specially");
+                    var size = 1.0;
+                    const useIndices = this.displayBuffers[idx].supplementary["useIndices"];
+                    let thickLines;
+                    if(useIndices){
+                        thickLines = this.linesToThickLinesWithIndicesAndNormals(this.displayBuffers[idx].triangleVertices[j],this.displayBuffers[idx].triangleNormals[j],this.displayBuffers[idx].triangleColours[j],this.displayBuffers[idx].triangleIndexs[j],size);
+                    } else {
+                        return;
+                    }
+                    console.log(thickLines);
+                    var Normals_new = thickLines["normals"];
+                    var RealNormals_new = thickLines["realNormals"];
+                    var Vertices_new = thickLines["vertices"];
+                    var Colours_new = thickLines["colours"];
+                    var Indexs_new = thickLines["indices"];
+                    this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexIndexBuffer[j]);
+                    if(this.ext){
+                        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(Indexs_new), this.gl.STATIC_DRAW);
+                    }else{
+                        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(Indexs_new), this.gl.STATIC_DRAW);
+                    }
+                    this.displayBuffers[idx].triangleVertexIndexBuffer[j].itemSize = 1;
+                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexRealNormalBuffer[j]);
+                    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(RealNormals_new), this.gl.STATIC_DRAW);
+                    this.displayBuffers[idx].triangleVertexRealNormalBuffer[j].itemSize = 3;
+                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexNormalBuffer[j]);
+                    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(Normals_new), this.gl.STATIC_DRAW);
+                    this.displayBuffers[idx].triangleVertexNormalBuffer[j].itemSize = 3;
+                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexPositionBuffer[j]);
+                    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(Vertices_new), this.gl.STATIC_DRAW);
+                    this.displayBuffers[idx].triangleVertexPositionBuffer[j].itemSize = 3;
+                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleColourBuffer[j]);
+                    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(Colours_new), this.gl.STATIC_DRAW);
+                    this.displayBuffers[idx].triangleColourBuffer[j].itemSize = 4;
+
+                    this.displayBuffers[idx].triangleVertexIndexBuffer[j].numItems = Indexs_new.length;
+                    this.displayBuffers[idx].triangleVertexNormalBuffer[j].numItems = RealNormals_new.length/3;
+                    this.displayBuffers[idx].triangleVertexRealNormalBuffer[j].numItems = Normals_new.length/3;
+                    this.displayBuffers[idx].triangleVertexPositionBuffer[j].numItems = Vertices_new.length/3;
+                    this.displayBuffers[idx].triangleColourBuffer[j].numItems = Colours_new.length/4;
+                    
                 } else if(this.displayBuffers[idx].bufferTypes[j]==="LINES"){
                     console.log("Treating lines specially");
                     var size = 1.0;
@@ -5989,10 +6106,6 @@ class MGWebGL extends Component {
                     var Vertices_new = thickLines["vertices"];
                     var Colours_new = thickLines["colours"];
                     var Indexs_new = thickLines["indices"];
-                    //console.log("Buffering "+Normals_new.length/3+" normals");
-                    //console.log("Buffering "+Vertices_new.length/3+" vertices");
-                    //console.log("Buffering "+Colours_new.length/4+" colours");
-                    //console.log("Buffering "+Indexs_new.length+" indices");
                     this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexIndexBuffer[j]);
                     if(this.ext){
                         this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(Indexs_new), this.gl.STATIC_DRAW);
@@ -6015,10 +6128,6 @@ class MGWebGL extends Component {
                     this.displayBuffers[idx].triangleVertexPositionBuffer[j].numItems = Vertices_new.length/3;
                     this.displayBuffers[idx].triangleColourBuffer[j].numItems = Colours_new.length/4;
 
-                    //console.log(this.displayBuffers[idx].triangleVertexIndexBuffer[j]);
-                    //console.log(this.displayBuffers[idx].triangleVertexNormalBuffer[j]);
-                    //console.log(this.displayBuffers[idx].triangleVertexPositionBuffer[j]);
-                    //console.log(this.displayBuffers[idx].triangleColourBuffer[j]);
                 } else {
                     //console.log("This buffer type is "+this.displayBuffers[idx].bufferTypes[j]);
                     this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexIndexBuffer[j]);
@@ -6028,7 +6137,7 @@ class MGWebGL extends Component {
                         this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.displayBuffers[idx].triangleIndexs[j]), this.gl.STATIC_DRAW);
                     }
                     this.displayBuffers[idx].triangleVertexIndexBuffer[j].itemSize = 1;
-                    if(this.displayBuffers[idx].bufferTypes[j]!=="LINES"&&this.displayBuffers[idx].bufferTypes[j]!=="LINE_LOOP"&&this.displayBuffers[idx].bufferTypes[j]!=="LINE_STRIP"&&this.displayBuffers[idx].bufferTypes[j]!=="POINTS"&&this.displayBuffers[idx].bufferTypes[j]!=="STARS"&&this.displayBuffers[idx].bufferTypes[j]!=="POINTS_SPHERES"&&this.displayBuffers[idx].bufferTypes[j]!=="CYLINDERS"&&this.displayBuffers[idx].bufferTypes[j]!=="CAPCYLINDERS"&&this.displayBuffers[idx].bufferTypes[j]!=="SPLINE"&&this.displayBuffers[idx].bufferTypes[j]!=="WORM"&&this.displayBuffers[idx].bufferTypes[j]!=="SPHEROIDS"&&this.displayBuffers[idx].bufferTypes[j]!=="TORUSES"&&this.displayBuffers[idx].bufferTypes[j]!=="CIRCLES"){
+                    if(this.displayBuffers[idx].bufferTypes[j]!=="NORMALLINES"&&this.displayBuffers[idx].bufferTypes[j]!=="LINES"&&this.displayBuffers[idx].bufferTypes[j]!=="LINE_LOOP"&&this.displayBuffers[idx].bufferTypes[j]!=="LINE_STRIP"&&this.displayBuffers[idx].bufferTypes[j]!=="POINTS"&&this.displayBuffers[idx].bufferTypes[j]!=="STARS"&&this.displayBuffers[idx].bufferTypes[j]!=="POINTS_SPHERES"&&this.displayBuffers[idx].bufferTypes[j]!=="CYLINDERS"&&this.displayBuffers[idx].bufferTypes[j]!=="CAPCYLINDERS"&&this.displayBuffers[idx].bufferTypes[j]!=="SPLINE"&&this.displayBuffers[idx].bufferTypes[j]!=="WORM"&&this.displayBuffers[idx].bufferTypes[j]!=="SPHEROIDS"&&this.displayBuffers[idx].bufferTypes[j]!=="TORUSES"&&this.displayBuffers[idx].bufferTypes[j]!=="CIRCLES"){
                         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexNormalBuffer[j]);
                         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[idx].triangleNormals[j]), this.gl.STATIC_DRAW);
                         this.displayBuffers[idx].triangleVertexNormalBuffer[j].itemSize = 3;
@@ -6591,6 +6700,7 @@ class MGWebGL extends Component {
             var bufferTypes = this.displayBuffers[idx].bufferTypes;
 
             var triangleVertexNormalBuffer = this.displayBuffers[idx].triangleVertexNormalBuffer;
+            var triangleVertexRealNormalBuffer = this.displayBuffers[idx].triangleVertexRealNormalBuffer;
             var triangleVertexPositionBuffer = this.displayBuffers[idx].triangleVertexPositionBuffer;
             var triangleVertexIndexBuffer = this.displayBuffers[idx].triangleVertexIndexBuffer;
             var triangleColourBuffer = this.displayBuffers[idx].triangleColourBuffer;
@@ -6614,7 +6724,7 @@ class MGWebGL extends Component {
             //console.log("Drawing object "+idx+" it has "+triangleVertexIndexBuffer.length+" parts");
 
             for (var j = 0; j < triangleVertexIndexBuffer.length; j++){
-                if(bufferTypes[j]==="LINES"||bufferTypes[j]==="LINE_LOOP"||bufferTypes[j]==="LINE_STRIP"||bufferTypes[j]==="DIAMONDS"||bufferTypes[j]==="TEXT"||bufferTypes[j]==="IMAGES"||bufferTypes[j]==="SQUARES"||bufferTypes[j]==="PENTAGONS"||bufferTypes[j]==="HEXAGONS"||bufferTypes[j]==="POINTS"||bufferTypes[j]==="SPHEROIDS"||bufferTypes[j]==="POINTS_SPHERES"||bufferTypes[j]==="STARS"||bufferTypes[j].substring(0,7)==="POLYGON"||bufferTypes[j].substring(0,8)==="POLYSTAR"||bufferTypes[j].substring(0,"CUSTOM_2D_SHAPE_".length)==="CUSTOM_2D_SHAPE_"||bufferTypes[j]==="PERFECT_SPHERES"){
+                if(bufferTypes[j]==="NORMALLINES"||bufferTypes[j]==="LINES"||bufferTypes[j]==="LINE_LOOP"||bufferTypes[j]==="LINE_STRIP"||bufferTypes[j]==="DIAMONDS"||bufferTypes[j]==="TEXT"||bufferTypes[j]==="IMAGES"||bufferTypes[j]==="SQUARES"||bufferTypes[j]==="PENTAGONS"||bufferTypes[j]==="HEXAGONS"||bufferTypes[j]==="POINTS"||bufferTypes[j]==="SPHEROIDS"||bufferTypes[j]==="POINTS_SPHERES"||bufferTypes[j]==="STARS"||bufferTypes[j].substring(0,7)==="POLYGON"||bufferTypes[j].substring(0,8)==="POLYSTAR"||bufferTypes[j].substring(0,"CUSTOM_2D_SHAPE_".length)==="CUSTOM_2D_SHAPE_"||bufferTypes[j]==="PERFECT_SPHERES"){
                     continue;
                 }
                 if(this.displayBuffers[idx].transparent) {
@@ -6998,6 +7108,52 @@ class MGWebGL extends Component {
                         this.gl.drawElements(this.gl.LINE_STRIP, triangleVertexIndexBuffer[j].numItems, this.gl.UNSIGNED_SHORT, 0);
                     }
                 }
+                nprims += triangleVertexIndexBuffer[j].numItems;
+            }
+
+            this.gl.useProgram(this.shaderProgramThickLinesNormal);
+            this.gl.uniform1i(this.shaderProgramThickLinesNormal.shinyBack, true);
+            this.setLightUniforms(this.shaderProgramThickLinesNormal);
+            this.gl.uniform3fv(this.shaderProgramThickLinesNormal.screenZ,this.screenZ);
+            this.gl.enableVertexAttribArray(this.shaderProgramThickLinesNormal.vertexNormalAttribute);
+            this.gl.enableVertexAttribArray(this.shaderProgramThickLinesNormal.vertexRealNormalAttribute);
+            this.setMatrixUniforms(this.shaderProgramThickLinesNormal);
+            this.gl.uniformMatrix4fv(this.shaderProgramThickLinesNormal.pMatrixUniform, false, this.pmvMatrix);
+
+            for (var j = 0; j < triangleVertexIndexBuffer.length; j++){
+                if(bufferTypes[j]!=="NORMALLINES"){
+                    continue;
+                }
+                // FIXME ? We assume all are the same size. Anything else is a little tricky for now.
+                if(typeof(this.displayBuffers[idx].primitiveSizes)!=="undefined" && typeof(this.displayBuffers[idx].primitiveSizes[j])!=="undefined"&&typeof(this.displayBuffers[idx].primitiveSizes[j][0])!=="undefined"){
+                    this.gl.uniform1f(this.shaderProgramThickLinesNormal.pixelZoom, this.displayBuffers[idx].primitiveSizes[j][0]*0.04*this.zoom);
+                }else{
+                    this.gl.uniform1f(this.shaderProgramThickLinesNormal.pixelZoom, 1.0*0.04*this.zoom);
+                }
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, triangleVertexNormalBuffer[j]);
+                this.gl.vertexAttribPointer(this.shaderProgramThickLinesNormal.vertexNormalAttribute, triangleVertexNormalBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
+                console.log(triangleVertexRealNormalBuffer[j]);
+                console.log(this.shaderProgramThickLinesNormal.vertexRealNormalAttribute);
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, triangleVertexRealNormalBuffer[j]);
+                this.gl.vertexAttribPointer(this.shaderProgramThickLinesNormal.vertexRealNormalAttribute, triangleVertexRealNormalBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, triangleVertexPositionBuffer[j]);
+                this.gl.vertexAttribPointer(this.shaderProgramThickLinesNormal.vertexPositionAttribute, triangleVertexPositionBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, triangleColourBuffer[j]);
+                this.gl.vertexAttribPointer(this.shaderProgramThickLinesNormal.vertexColourAttribute, triangleColourBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
+                this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, triangleVertexIndexBuffer[j]);
+
+                if(this.displayBuffers[idx].transformMatrix){
+                    this.drawTransformMatrixPMV(this.displayBuffers[idx].transformMatrix,this.displayBuffers[idx],this.shaderProgramThickLinesNormal,this.gl.TRIANGLES,j);
+                } else {
+                    if(this.ext){
+                        this.gl.drawElements(this.gl.TRIANGLES, triangleVertexIndexBuffer[j].numItems, this.gl.UNSIGNED_INT, 0);
+                    }else{
+                        this.gl.drawElements(this.gl.TRIANGLES, triangleVertexIndexBuffer[j].numItems, this.gl.UNSIGNED_SHORT, 0);
+                    }
+                }
+
+                if(symmetry) this.drawSymmetryPMV(symmetry,this.displayBuffers[idx],this.shaderProgramThickLinesNormal,this.gl.TRIANGLES,j);
+
                 nprims += triangleVertexIndexBuffer[j].numItems;
             }
 
@@ -7945,11 +8101,8 @@ class MGWebGL extends Component {
             var fracY = 1.0*(y)/self.gl.viewportHeight;
             var theX = minX + fracX*(maxX - minX);
             var theY = maxY - fracY*(maxY - minY);
-            //var frontPos = vec3Create([theX,theY,0.000001]);
-            //var backPos  = vec3Create([theX,theY,1000.0]);
-            //MN Changed to improve picking
-            var frontPos = vec3Create([theX,theY,this.gl_clipPlane0[3]]);
-            var backPos  = vec3Create([theX,theY,this.gl_clipPlane1[3]]);
+            var frontPos = vec3Create([theX,theY,0.000001]);
+            var backPos  = vec3Create([theX,theY,1000.0]);
             vec3.transformMat4(frontPos,frontPos,theMatrix);
             vec3.transformMat4(backPos,backPos,theMatrix);
             vec3.subtract(frontPos,frontPos,self.origin);
@@ -7976,27 +8129,7 @@ class MGWebGL extends Component {
                     var p = vec3Create([atx,aty,atz]);
 
                     var dpl = DistanceBetweenPointAndLine(frontPos,backPos,p);
-
-                    //MN Changed logic here
-                    let atPos = vec3Create([atx, aty, atz])
-                    let displacement = vec3Create([0, 0, 0]);
-                    vec3.subtract(displacement, atPos, frontPos)
-                    //fB_plus_fZ is the displacement from the front clipping plane to the back clipping plane
-                    const fB_plus_fZ = (this.gl_clipPlane0[3] + this.gl_clipPlane1[3]) / this.zoom
-                    //fZ is the displacement from teh front clipping plane to the origin of rotation
-                    const fZ = (this.gl_clipPlane0[3] + 500) / this.zoom
-                    //aZ is the displacement from the frontClipping plane to the atom
-                    const aZ = (500 - vec3.length(displacement)) / this.zoom
-
-                    const targetFactor = 1. / (1 + (Math.abs(fZ - aZ)/fB_plus_fZ))
-                    if (
-                        dpl[0] < clickTol * targetFactor //clickTol modified to reflect proximity to rptation origin
-                        && dpl[0] < mindist //closest click seen
-                        && aZ > 0 //Beyond near clipping plane
-                        && aZ < fB_plus_fZ //In front of far clipping plane
-                        ){
-
-                    //if(dpl[0]<clickTol&&dpl[1]>mint){
+                    if(dpl[0]<clickTol&&dpl[1]>mint){
                         minidx = idx;
                         minj = j;
                         mindist = dpl[0];
@@ -8034,8 +8167,9 @@ class MGWebGL extends Component {
                 document.dispatchEvent(atomClicked);
 
                 if(event.altKey){
-                    self.setOrigin([-atx,-aty,-atz], true);
+                    self.origin = [-atx,-aty,-atz];
                     self.reContourMaps();
+                    self.drawScene();
                     return;
                 }
 
@@ -8161,8 +8295,13 @@ class MGWebGL extends Component {
         return;
     }
 
-    linesToThickLinesWithIndices(axesVertices,axesColours,axesIndices,size) {
+    linesToThickLinesWithIndicesAndNormals(axesVertices,axesNormals,axesColours,axesIndices,size) {
+        return this.linesToThickLinesWithIndices(axesVertices,axesColours,axesIndices,size,axesNormals)
+    }
+
+    linesToThickLinesWithIndices(axesVertices,axesColours,axesIndices,size,axesNormals_old) {
         let axesNormals = [];
+        let axesNormals_new = [];
         let axesVertices_new = [];
         let axesColours_new = [];
         let axesIndexs_new = [];
@@ -8215,6 +8354,20 @@ class MGWebGL extends Component {
             axesVertices_new.push(axesVertices[il2+1]);
             axesVertices_new.push(axesVertices[il2+2]);
 
+            if(axesNormals_old){
+                axesNormals_new.push(axesNormals_old[il]);
+                axesNormals_new.push(axesNormals_old[il+1]);
+                axesNormals_new.push(axesNormals_old[il+2]);
+
+                axesNormals_new.push(axesNormals_old[il]);
+                axesNormals_new.push(axesNormals_old[il+1]);
+                axesNormals_new.push(axesNormals_old[il+2]);
+
+                axesNormals_new.push(axesNormals_old[il2]);
+                axesNormals_new.push(axesNormals_old[il2+1]);
+                axesNormals_new.push(axesNormals_old[il2+2]);
+            }
+
             axesNormals.push(axesVertices[il2]-axesVertices[il]);
             axesNormals.push(axesVertices[il2+1]-axesVertices[il+1]);
             axesNormals.push(axesVertices[il2+2]-axesVertices[il+2]);
@@ -8256,6 +8409,20 @@ class MGWebGL extends Component {
             axesVertices_new.push(axesVertices[il2]);
             axesVertices_new.push(axesVertices[il2+1]);
             axesVertices_new.push(axesVertices[il2+2]);
+
+            if(axesNormals_old){
+                axesNormals_new.push(axesNormals_old[il]);
+                axesNormals_new.push(axesNormals_old[il+1]);
+                axesNormals_new.push(axesNormals_old[il+2]);
+
+                axesNormals_new.push(axesNormals_old[il2]);
+                axesNormals_new.push(axesNormals_old[il2+1]);
+                axesNormals_new.push(axesNormals_old[il2+2]);
+
+                axesNormals_new.push(axesNormals_old[il2]);
+                axesNormals_new.push(axesNormals_old[il2+1]);
+                axesNormals_new.push(axesNormals_old[il2+2]);
+            }
 
             axesNormals.push(axesVertices[il2]-axesVertices[il]);
             axesNormals.push(axesVertices[il2+1]-axesVertices[il+1]);
@@ -8299,6 +8466,7 @@ class MGWebGL extends Component {
         ret["indices"] = axesIndexs_new;
         ret["normals"] = axesNormals;
         ret["colours"] = axesColours_new;
+        ret["realNormals"] = axesNormals_new;
         return ret;
 
     }
@@ -10037,6 +10205,11 @@ class MGWebGL extends Component {
             this.displayBuffers[this.currentBufferIdx].triangleVertexPositionBuffer[this.displayBuffers[this.currentBufferIdx].triangleVertexPositionBuffer.length-1].numItems++;
         }
         this.displayBuffers[this.currentBufferIdx].triangleVertexPositionBuffer[this.displayBuffers[this.currentBufferIdx].triangleVertexPositionBuffer.length-1].numItems /= 3;
+    }
+
+    createRealNormalBuffer(norm){ //Where "Real" is open to intepretation ...
+        this.displayBuffers[this.currentBufferIdx].triangleVertexRealNormalBuffer.push(this.gl.createBuffer());
+        this.displayBuffers[this.currentBufferIdx].triangleVertexRealNormalBuffer[this.displayBuffers[this.currentBufferIdx].triangleVertexRealNormalBuffer.length-1].numItems = 0;
     }
 
     createNormalBuffer(norm){

@@ -1,17 +1,16 @@
-var thick_lines_vertex_shader_source = `
-#extension GL_OES_element_index : enable
+var thick_lines_vertex_shader_source = `#version 300 es\n
     // This shader is basic
-    attribute vec4 aVertexPosition;
-    attribute vec4 aVertexColour;
-    attribute vec3 aVertexNormal;
+    in vec4 aVertexPosition;
+    in vec4 aVertexColour;
+    in vec3 aVertexNormal;
 
     uniform mat4 uMVMatrix;
     uniform vec3 screenZ;
     uniform mat4 uPMatrix;
     uniform float pixelZoom;
 
-    varying lowp vec4 vColor;
-    varying lowp vec4 eyePos;
+    out lowp vec4 vColor;
+    out lowp vec4 eyePos;
 
 
     void main(void) {

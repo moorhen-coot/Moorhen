@@ -1,10 +1,10 @@
-var pointspheres_fragment_shader_source = `
+var pointspheres_fragment_shader_source = `#version 300 es\n
     precision mediump float;
-    varying lowp vec4 vColor;
-    varying lowp vec3 vNormal;
-    varying lowp vec3 vPosition;
-    varying lowp vec4 eyePos;
-    varying mediump mat4 mvInvMatrix;
+    in lowp vec4 vColor;
+    in lowp vec3 vNormal;
+    in lowp vec3 vPosition;
+    in lowp vec4 eyePos;
+    in mediump mat4 mvInvMatrix;
 
     uniform vec4 fogColour;
 
@@ -25,6 +25,8 @@ var pointspheres_fragment_shader_source = `
     uniform vec4 light_colours_ambient;
     uniform vec4 light_colours_specular;
     uniform vec4 light_colours_diffuse;
+
+    out vec4 fragColor;
 
     void main(void) {
       if(dot(eyePos, clipPlane0)<0.0){
@@ -68,7 +70,7 @@ var pointspheres_fragment_shader_source = `
       vec4 color = (1.5*theColor*Iamb + 1.2*theColor* Idiff);
       color.a = vColor.a;
       color += Ispec;
-      gl_FragColor = mix(color, fogColour, fogFactor );
+      fragColor = mix(color, fogColour, fogFactor );
 
  
     }

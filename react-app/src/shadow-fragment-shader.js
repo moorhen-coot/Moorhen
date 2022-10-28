@@ -1,8 +1,7 @@
-var shadow_fragment_shader_source = `
-#extension GL_OES_element_index : enable
+var shadow_fragment_shader_source = `#version 300 es\n
     precision mediump float;
-    varying lowp vec4 vColor;
-    varying lowp vec4 eyePos;
+    in lowp vec4 vColor;
+    in lowp vec4 eyePos;
 
     uniform float fog_end;
     uniform float fog_start;
@@ -19,6 +18,8 @@ var shadow_fragment_shader_source = `
     uniform vec4 clipPlane7;
     uniform int nClipPlanes;
 
+    out vec4 fragColor;
+
     void main(void) {
       if(dot(eyePos, clipPlane0)<0.0){
        discard;
@@ -26,7 +27,7 @@ var shadow_fragment_shader_source = `
       if(dot(eyePos, clipPlane1)<0.0){
        discard;
       }
-      gl_FragColor = vColor;
+      fragColor = vColor;
     }
 `;
 

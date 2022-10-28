@@ -1,12 +1,10 @@
-var perfect_sphere_fragment_shader_source = `
-#extension GL_OES_element_index : enable
-#extension GL_EXT_frag_depth : enable
+var perfect_sphere_fragment_shader_source = `#version 300 es\n
     precision mediump float;
-    varying lowp vec4 vColor;
-    varying lowp vec3 vNormal;
-    varying lowp vec4 eyePos;
-    varying lowp vec2 vTexture;
-    varying mediump mat4 mvMatrix;
+    in lowp vec4 vColor;
+    in lowp vec3 vNormal;
+    in lowp vec4 eyePos;
+    in lowp vec2 vTexture;
+    in mediump mat4 mvMatrix;
 
     uniform float fog_end;
     uniform float fog_start;
@@ -29,8 +27,10 @@ var perfect_sphere_fragment_shader_source = `
     uniform vec4 light_colours_specular;
     uniform vec4 light_colours_diffuse;
 
-    varying mediump mat4 projMatrix;
-    varying float size_v;
+    in mediump mat4 projMatrix;
+    in float size_v;
+
+    out vec4 fragColor;
 
     void main(void) {
       float x = 2.0*(vTexture.x-.5);
@@ -47,14 +47,14 @@ var perfect_sphere_fragment_shader_source = `
       if(dot(eyePos, clipPlane1)<0.0){
        discard;
       }
-      gl_FragColor = vec4(zz*vColor.r, zz*vColor.g, zz*vColor.b, 1.0);
+      fragColor = vec4(zz*vColor.r, zz*vColor.g, zz*vColor.b, 1.0);
 
 
       vec4 pos = eyePos;
       pos.z += 0.7071*z*size_v;
       pos = projMatrix * pos;
 
-      gl_FragDepthEXT = (pos.z / pos.w + 1.0) / 2.0;
+      gl_FragDepth = (pos.z / pos.w + 1.0) / 2.0;
 
       vec3 L;
       vec3 E;
@@ -89,8 +89,8 @@ var perfect_sphere_fragment_shader_source = `
       vec4 color = (1.5*theColor*Iamb + 1.2*theColor* Idiff);
       color.a = vColor.a;
       color += Ispec;
-      gl_FragColor = mix(color, fogColour, fogFactor );
-      //gl_FragColor = color;
+      fragColor = mix(color, fogColour, fogFactor );
+      //fragColor = color;
       
       
     }
