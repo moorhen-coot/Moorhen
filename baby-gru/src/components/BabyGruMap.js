@@ -13,47 +13,42 @@ export function BabyGruMap(cootWorker) {
 
 BabyGruMap.prototype.loadToCootFromURL = function (url, mapName) {
     const $this = this
-    return new Promise((resolve, reject) => {
-        console.log('Off to fetch url', url)
-        //Remember to change this to an appropriate URL for downloads in produciton, and to deal with the consequent CORS headache
-        return fetch(url, { mode: "no-cors" })
-            .then(response => {
-                return response.blob()
-            }).then(reflectionData => reflectionData.arrayBuffer())
-            .then(arrayBuffer => {
-                return postCootMessage($this.cootWorker, {
-                    message: 'read_mtz',
-                    name: mapName,
-                    data: new Uint8Array(arrayBuffer)
-                }).then(reply => {
-                    $this.name = reply.data.result.name
-                    $this.mapMolNo = reply.data.result.mapMolNo
-                    resolve($this)
-                })
-            })
-            .catch((err) => { console.log(err) })
-    })
+    console.log('Off to fetch url', url)
+    //Remember to change this to an appropriate URL for downloads in produciton, and to deal with the consequent CORS headache
+    return fetch(url, { mode: "no-cors" })
+        .then(response => {
+            return response.blob()
+        }).then(reflectionData => reflectionData.arrayBuffer())
+        .then(arrayBuffer => {
+            return $this.loadToCootFromData(new Uint8Array(arrayBuffer), mapName)
+        })
+        .catch((err) => { console.log(err) })
 }
 
 
+BabyGruMap.prototype.loadToCootFromData = function (data, mapName) {
+    const $this = this
+    $this.mapName = mapName
+    return new Promise((resolve, reject) => {
+        return cootCommand($this.cootWorker, {
+            returnType: "status",
+            command: "shim_read_mtz",
+            commandArgs: [data, mapName]
+        })
+            .then(reply => {
+                $this.mapMolNo = reply.data.result.result
+                resolve($this)
+            })
+    })
+}
 
 BabyGruMap.prototype.loadToCootFromFile = function (source) {
     const $this = this
-    return new Promise((resolve, reject) => {
-        return readDataFile(source)
-            .then(reflectionData => {
-                const asUIntArray = new Uint8Array(reflectionData)
-                return postCootMessage($this.cootWorker, {
-                    message: 'read_mtz',
-                    name: source.name,
-                    data: asUIntArray
-                }).then(reply => {
-                    $this.name = reply.data.result.name
-                    $this.mapMolNo = reply.data.result.mapMolNo
-                    resolve($this)
-                })
-            })
-    })
+    return readDataFile(source)
+        .then(reflectionData => {
+            const asUIntArray = new Uint8Array(reflectionData)
+            return $this.loadToCootFromData(asUIntArray, source.name)
+        })
 }
 
 BabyGruMap.prototype.getMap = function () {

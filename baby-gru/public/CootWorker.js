@@ -60,6 +60,37 @@ const simpleMeshToLineMeshData = (simpleMesh) => {
     return { prim_types: [["LINES"]], useIndices: [[true]], idx_tri: [[totIdxs]], vert_tri: [[totPos]], norm_tri: [[totNorm]], col_tri: [[totCol]] };
 }
 
+const read_pdb = (coordData, name) => {
+    const theGuid = guid()
+    cootModule.FS_createDataFile(".", `${theGuid}.pdb`, coordData, true, true);
+    const tempFilename = `./${theGuid}.pdb`
+    console.log(`Off to read coords into coot ${tempFilename} ${name}`)
+    const coordMolNo = molecules_container.read_pdb(tempFilename)
+    console.log(`Read coordinates as molecule ${coordMolNo}`)
+    cootModule.FS_unlink(tempFilename)
+    return coordMolNo
+}
+
+function base64ToArrayBuffer(base64) {
+    var binary_string = window.atob(base64);
+    var len = binary_string.length;
+    var bytes = new Uint8Array(len);
+    for (var i = 0; i < len; i++) {
+        bytes[i] = binary_string.charCodeAt(i);
+    }
+    return bytes.buffer;
+}
+
+const read_mtz = (mapData, name) => {
+    const theGuid = guid()
+    const asUint8Array = new Uint8Array(mapData)
+    cootModule.FS_createDataFile(".", `${theGuid}.mtz`, asUint8Array, true, true);
+    const tempFilename = `./${theGuid}.mtz`
+    const mapMolNo = molecules_container.read_mtz(tempFilename, 'FWT', 'PHWT', "", false, false)
+    cootModule.FS_unlink(tempFilename)
+    return mapMolNo
+}
+
 onmessage = function (e) {
     console.log(e.data.message)
     if (e.data.message === 'CootInitialize') {
@@ -102,24 +133,6 @@ onmessage = function (e) {
                 console.log(e)
                 print(e);
             });
-
-    }
-
-    else if (e.data.message === 'read_pdb') {
-        const theGuid = guid()
-        cootModule.FS_createDataFile(".", `${theGuid}.pdb`, e.data.data, true, true);
-        const tempFilename = `./${theGuid}.pdb`
-        console.log(`Off to read coords into coot ${tempFilename} ${e.data.name}`)
-        const coordMolNo = molecules_container.read_pdb(tempFilename)
-        console.log(`Read coordinates as molecule ${coordMolNo}`)
-        cootModule.FS_unlink(tempFilename)
-        postMessage({
-            messageId: e.data.messageId,
-            myTimeStamp: e.data.myTimeStamp,
-            consoleMessage: `Read coordinates as molecule ${coordMolNo}`,
-            message: e.data.message,
-            result: { coordMolNo: coordMolNo, name: e.data.name }
-        })
     }
 
     else if (e.data.message === 'get_atoms') {
@@ -200,9 +213,19 @@ onmessage = function (e) {
         const { returnType, command, commandArgs, message, messageId, myTimeStamp } = e.data
         try {
             postMessage({ consoleMessage: `Received ${command} with args ${commandArgs}` })
-
-            const cootResult = molecules_container[command](...commandArgs)
-
+            /* Here a block of "shims"
+            * over time want to reduce these to none
+            */
+            let cootResult
+            if (command === 'shim_read_pdb') {
+                cootResult = read_pdb(...commandArgs)
+            }
+            else if (command === 'shim_read_mtz') {
+                cootResult = read_mtz(...commandArgs)
+            }
+            else {
+                cootResult = molecules_container[command](...commandArgs)
+            }
             let returnResult;
             switch (returnType) {
                 case 'mesh':
@@ -230,7 +253,7 @@ onmessage = function (e) {
                 messageId: e.data.messageId,
                 myTimeStamp: e.data.myTimeStamp,
                 message: e.data.message,
-                consoleMessage: `EXCEPTION RAISED IN ${command} with args ${commandArgs}`,
+                consoleMessage: `EXCEPTION RAISED IN ${command} with args ${commandArgs}, ${err}`,
                 result: { status: 'Exception' }
             })
         }
