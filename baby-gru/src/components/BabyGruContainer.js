@@ -3,7 +3,7 @@ import { Navbar, Container, Nav, Tabs, Tab, Accordion, Button, Col, Row, Card, S
 import { BabyGruDisplayObjects } from './BabyGruDisplayObjects';
 import { BabyGruWebMG } from './BabyGruWebMG';
 import { v4 as uuidv4 } from 'uuid';
-import { cootCommand, postCootMessage } from '../BabyGruUtils';
+import { BabyGruCommandCentre } from '../BabyGruUtils';
 import { BabyGruButtonBar } from './BabyGruButtonBar';
 import { BabyGruFileMenu } from './BabyGruFileMenu';
 import { BabyGruSequenceViewer } from './BabyGruSequenceViewer';
@@ -12,21 +12,6 @@ import { BabyGruMapSettings } from './BabyGruMapSettings';
 import { ArrowBackIosOutlined, ArrowForwardIosOutlined } from '@mui/icons-material';
 import './BabyGruContainer.css'
 import { BabyGruHistoryMenu } from './BabyGruHistoryMenu';
-
-
-function consoleReducer(consoleState, action) {
-    return {
-        count: consoleState.count + 1,
-        consoleMessage: `${consoleState.consoleMessage}${consoleState.count} > ${action.newText}\n`
-    };
-}
-
-function journalReducer(journalState, action) {
-    return {
-        count: journalState.count + 1,
-        commands: [...journalState.commands, action.commandAndArgs]
-    };
-}
 
 function convertPxtoVh(input, height) {
     return 100 * input / height
@@ -40,21 +25,17 @@ function convertViewtoPx(input, height) {
 export const BabyGruContainer = (props) => {
 
     const glRef = useRef(null)
-    const cootWorker = useRef(null)
+    const commandCentre = useRef(null)
     const graphicsDiv = createRef()
     const sequenceViewerRef = useRef()
     const [showSideBar, setShowSideBar] = useState(false)
     const [activeMap, setActiveMap] = useState(null)
-    const [consoleState, updateConsoleState] = useReducer(consoleReducer, { count: 0, consoleMessage: "" });
-    const [journalState, updateJournalState] = useReducer(journalReducer, { count: 0, commands: [] });
+    const [consoleMessage, setConsoleMessage] = useState("")
     const [molecules, setMolecules] = useState([])
     const [maps, setMaps] = useState([])
     const [cursorStyle, setCursorStyle] = useState("default")
     const headerRef = useRef()
     const consoleDivRef = useRef()
-    const cootWorkerListenerBinding = createRef()
-    const cootEventDispatchBinding = createRef()
-    const [dispatchedMessages, setDispatchedMessages] = useState([])
     const [busy, setBusy] = useState(false)
     const [mapRadius, setMapRadius] = useState(15.)
     const [windowWidth, setWindowWidth] = useState(window.innerWidth)
@@ -64,33 +45,11 @@ export const BabyGruContainer = (props) => {
     const [sequenceViewerBodyHeight, setSequenceViewerBodyHeight] = useState(convertViewtoPx(0, windowHeight))
     const [consoleBodyHeight, setConsoleBodyHeight] = useState(convertViewtoPx(0, windowHeight))
     const [accordionHeight, setAccordionHeight] = useState(convertViewtoPx(90, windowHeight))
+    const [commandHistory, setCommandHistory] = useState({ commands: [] })
 
     const sideBarWidth = convertViewtoPx(50, windowWidth)
     const innerWindowMarginHeight = windowHeight * 0.04
     const innerWindowMarginWidth = windowWidth * 0.04
-
-    const handleMessage = e => {
-        //Append the response consoleMessage to the console text
-        updateConsoleState({ newText: e.data.consoleMessage })
-        //console.log('Received from coot', e.data)
-        const dataKeys = Object.keys(e.data)
-        if (dataKeys.includes("command") && dataKeys.includes("commandArgs")) {
-            const storedResult = {}
-            Object.keys(e.data).filter(key => key !== "result").forEach(key => {
-                storedResult[key] = e.data[key]
-            })
-            updateJournalState({ commandAndArgs: storedResult })
-        }
-        //remove this messageId from the dispatchedMessagesList
-        let newDispatchedMessages = dispatchedMessages.filter(messageId => messageId !== e.data.messageId)
-        setDispatchedMessages(newDispatchedMessages)
-    }
-
-    const handleCootMessageDispatch = e => {
-        let newDispatchedMessages = [...dispatchedMessages]
-        newDispatchedMessages.push(e.detail.messageId)
-        setDispatchedMessages(newDispatchedMessages)
-    }
 
     const setWindowDimensions = () => {
         setWindowWidth(window.innerWidth)
@@ -98,27 +57,27 @@ export const BabyGruContainer = (props) => {
     }
 
     useEffect(() => {
-        cootWorker.current = new Worker('CootWorker.js')
-        postCootMessage(cootWorker, { messageId: uuidv4(), message: 'CootInitialize', data: {} })
-        //Register an event listener to update console
-        cootWorkerListenerBinding.current = cootWorker.current.addEventListener("message", handleMessage)
-        cootEventDispatchBinding.current = document.addEventListener("coot_message_dispatch", handleCootMessageDispatch)
+        commandCentre.current = new BabyGruCommandCentre({
+            onConsoleChanged: (newMessage) => {
+                setConsoleMessage(newMessage)
+            },
+            onActiveMessagesChanged: (newActiveMessages) => {
+                setBusy(newActiveMessages.length !== 0)
+            },
+            onCommandHistoryChanged: (newCommandHistory) => {
+                setCommandHistory({commands:newCommandHistory})
+            }
+        })
         window.addEventListener('resize', setWindowDimensions)
         return () => {
             window.removeEventListener('resize', setWindowDimensions)
-            cootWorker.current.removeEventListener('message', handleMessage)
-            document.removeEventListener('coot_message_dispatch', handleCootMessageDispatch)
-            cootWorker.current.terminate()
+            commandCentre.current.unhook()
         }
     }, [])
 
     useEffect(() => {
-        setBusy(dispatchedMessages.length > 0)
-    }, [dispatchedMessages.length])
-
-    useEffect(() => {
         consoleDivRef.current.scrollTop = consoleDivRef.current.scrollHeight;
-    }, [consoleState.consoleMessage])
+    }, [consoleMessage])
 
     useEffect(() => {
         glResize()
@@ -131,8 +90,8 @@ export const BabyGruContainer = (props) => {
 
 
     useEffect(() => {
-        if (activeMap) {
-            cootCommand(cootWorker, {
+        if (activeMap && commandCentre.current) {
+            commandCentre.current.cootCommand({
                 returnType: "status",
                 command: "set_imol_refinement_map",
                 commandArgs: [activeMap.mapMolNo]
@@ -162,43 +121,42 @@ export const BabyGruContainer = (props) => {
         return windowHeight - (navBarHeight + innerWindowMarginHeight)
     }
 
-    return <>
-        <div className="border" ref={headerRef}>
+    return <> <div className="border" ref={headerRef}>
 
-            <Navbar id='navbar-baby-gru' style={{ height: '3rem', justifyContent: 'between', margin: '0.5rem', padding: '0.5rem' }}>
-                <Navbar.Brand href="#home">Baby Gru</Navbar.Brand>
-                <Navbar.Toggle aria-controls="basic-navbar-nav" />
-                <Navbar.Collapse id="basic-navbar-nav">
-                    <Nav className="justify-content-left">
-                        <BabyGruFileMenu
-                            molecules={molecules}
-                            setMolecules={setMolecules}
-                            maps={maps}
-                            setMaps={setMaps}
-                            cootWorker={cootWorker}
-                            setActiveMap={setActiveMap}
-                            glRef={glRef}
-                        />
-                        <BabyGruHistoryMenu
-                            molecules={molecules}
-                            setMolecules={setMolecules}
-                            maps={maps}
-                            setMaps={setMaps}
-                            cootWorker={cootWorker}
-                            setActiveMap={setActiveMap}
-                            glRef={glRef}
-                            journalState={journalState}
-                        />
-                    </Nav>
-                </Navbar.Collapse>
-                <Nav className="justify-content-right">
-                    {busy && <Spinner animation="border" style={{ marginRight: '0.5rem' }} />}
-                    <Button style={{ height: '100%', backgroundColor: 'white', border: 0 }} onClick={() => { setShowSideBar(!showSideBar) }}>
-                        {showSideBar ? <ArrowForwardIosOutlined style={{ color: 'black' }} /> : <ArrowBackIosOutlined style={{ color: 'black' }} />}
-                    </Button>
+        <Navbar id='navbar-baby-gru' style={{ height: '3rem', justifyContent: 'between', margin: '0.5rem', padding: '0.5rem' }}>
+            <Navbar.Brand href="#home">Baby Gru</Navbar.Brand>
+            <Navbar.Toggle aria-controls="basic-navbar-nav" />
+            <Navbar.Collapse id="basic-navbar-nav">
+                <Nav className="justify-content-left">
+                    <BabyGruFileMenu
+                        molecules={molecules}
+                        setMolecules={setMolecules}
+                        maps={maps}
+                        setMaps={setMaps}
+                        commandCentre={commandCentre}
+                        setActiveMap={setActiveMap}
+                        glRef={glRef}
+                    />
+                    <BabyGruHistoryMenu
+                        molecules={molecules}
+                        setMolecules={setMolecules}
+                        maps={maps}
+                        setMaps={setMaps}
+                        commandCentre={commandCentre}
+                        commandHistory={commandHistory}
+                        setActiveMap={setActiveMap}
+                        glRef={glRef}
+                    />
                 </Nav>
-            </Navbar>
-        </div>
+            </Navbar.Collapse>
+            <Nav className="justify-content-right">
+                {busy && <Spinner animation="border" style={{ marginRight: '0.5rem' }} />}
+                <Button style={{ height: '100%', backgroundColor: 'white', border: 0 }} onClick={() => { setShowSideBar(!showSideBar) }}>
+                    {showSideBar ? <ArrowForwardIosOutlined style={{ color: 'black' }} /> : <ArrowBackIosOutlined style={{ color: 'black' }} />}
+                </Button>
+            </Nav>
+        </Navbar>
+    </div>
         <Container fluid>
             <Row>
                 <Col style={{ paddingLeft: '0', paddingRight: '0' }}>
@@ -219,7 +177,7 @@ export const BabyGruContainer = (props) => {
                     <div style={{ height: '4rem' }} id='button-bar-baby-gru'>
                         <BabyGruButtonBar setCursorStyle={setCursorStyle}
                             molecules={molecules}
-                            cootWorker={cootWorker}
+                            commandCentre={commandCentre}
                             activeMap={activeMap}
                             glRef={glRef} />
 
@@ -253,7 +211,7 @@ export const BabyGruContainer = (props) => {
                         <Accordion.Item eventKey="showDisplayObjects" style={{ width: sideBarWidth, padding: '0', margin: '0' }} >
                             <Accordion.Header style={{ padding: '0', margin: '0', height: '4rem' }}>Display Objects</Accordion.Header>
                             <Accordion.Body style={{ overflowY: 'auto', height: displayObjectsAccordionBodyHeight }}>
-                                {molecules.length === 0 && maps.length === 0 ? "No data files loaded" : <BabyGruDisplayObjects molecules={molecules} glRef={glRef} cootWorker={cootWorker} maps={maps} activeMap={activeMap} setActiveMap={setActiveMap} mapRadius={mapRadius} setMapRadius={setMapRadius} />}
+                                {molecules.length === 0 && maps.length === 0 ? "No data files loaded" : <BabyGruDisplayObjects molecules={molecules} glRef={glRef} commandCentre={commandCentre} maps={maps} activeMap={activeMap} setActiveMap={setActiveMap} mapRadius={mapRadius} setMapRadius={setMapRadius} />}
                             </Accordion.Body>
                         </Accordion.Item>
                         <Accordion.Item eventKey="showTools" style={{ width: sideBarWidth, padding: '0', margin: '0' }} >
@@ -261,10 +219,10 @@ export const BabyGruContainer = (props) => {
                             <Accordion.Body style={{ height: toolAccordionBodyHeight, padding: '0', margin: '0', }}>
                                 <Tabs defaultActiveKey='ramachandran'>
                                     <Tab eventKey='ramachandran' title='Ramachandran' style={{ height: '100%' }}>
-                                        <BabyGruRamachandran molecules={molecules} cootWorker={cootWorker} postCootMessage={postCootMessage} glRef={glRef} toolAccordionBodyHeight={toolAccordionBodyHeight} sideBarWidth={sideBarWidth} windowHeight={windowHeight} windowWidth={windowWidth} />
+                                        <BabyGruRamachandran molecules={molecules} commandCentre={commandCentre} glRef={glRef} toolAccordionBodyHeight={toolAccordionBodyHeight} sideBarWidth={sideBarWidth} windowHeight={windowHeight} windowWidth={windowWidth} />
                                     </Tab>
                                     <Tab eventKey='mapCountour' title='Map Settings'>
-                                        <BabyGruMapSettings glRef={glRef} cootWorker={cootWorker} maps={maps} activeMap={activeMap} mapRadius={mapRadius} setMapRadius={setMapRadius} setActiveMap={setActiveMap} />
+                                        <BabyGruMapSettings glRef={glRef} commandCentre={commandCentre} maps={maps} activeMap={activeMap} mapRadius={mapRadius} setMapRadius={setMapRadius} setActiveMap={setActiveMap} />
                                     </Tab>
                                     <Tab eventKey='densityFit' title='Density Fit'>
                                         Not ready yet...
@@ -293,7 +251,7 @@ export const BabyGruContainer = (props) => {
                                     height: '100%',
                                     textAlign: "left"
                                 }}>
-                                    <pre>{consoleState.consoleMessage}
+                                    <pre>{consoleMessage}
                                     </pre>
                                 </div>
                             </Accordion.Body>

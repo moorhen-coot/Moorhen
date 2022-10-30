@@ -1,8 +1,5 @@
-import { createRef, useCallback, useEffect, useRef, useState } from "react";
-import { ButtonGroup, Button, Popover, Overlay, Container, Row, FormSelect, FormGroup, FormLabel } from "react-bootstrap"
-import { cootCommand, postCootMessage } from "../BabyGruUtils"
-import { circles_fragment_shader_source } from "../WebGL/circle-fragment-shader";
-import { inspect } from 'util';
+import { useEffect, useRef, useState } from "react";
+import { ButtonGroup, Button, Overlay, Container, Row, FormSelect, FormGroup, FormLabel } from "react-bootstrap"
 
 const BabyGruRefinementPanel = (props) => {
     const refinementModes = ['SINGLE', 'TRIPLE', 'QUINTUPLE', 'HEPTUPLE', 'SPHERE', 'BIG_SPHERE', 'CHAIN', 'ALL']
@@ -247,7 +244,7 @@ export const BabyGruSimpleEditButton = (props) => {
                 props.setCursorStyle("default")
                 const chosenAtom = cidToSpec(event.detail.atom.label)
                 let formattedArgs = props.formatArgs(molecule, chosenAtom, localParameters)
-                cootCommand(props.cootWorker, {
+                props.commandCentre.current.cootCommand({
                     returnType: "status",
                     command: props.cootCommand,
                     commandArgs: formattedArgs

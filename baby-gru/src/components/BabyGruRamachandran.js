@@ -51,7 +51,7 @@ export const BabyGruRamachandran = (props) => {
                 return
             }    
             const inputData = {message:"get_rama", coordMolNo:selectedModel, chainId:selectedChain}
-            let response = await props.postCootMessage(props.cootWorker, inputData)
+            let response = await props.commandCentre.current.postMessage(inputData)
             setRamaPlotData(response.data.result)
           }
         fetchRamaData()
@@ -89,7 +89,7 @@ export const BabyGruRamachandran = (props) => {
                 return
             }    
             const inputData = {message:"get_rama", coordMolNo:selectedModel, chainId:selectedChain}
-            let response = await props.postCootMessage(props.cootWorker, inputData)
+            let response = await props.commandCentre.current.postMessage(inputData)
             setRamaPlotData(response.data.result)
           }
         fetchRamaData()
