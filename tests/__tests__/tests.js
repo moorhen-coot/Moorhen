@@ -173,7 +173,7 @@ describe('Testing molecules_container_js', () => {
         expect(failedStatus).toBe(0)
     })
 
-    test('Create Coord_orth', () => {
+    test('Create Density Map Mesh', () => {
         const molecules_container = new cootModule.molecules_container_js()
         const imol_map = molecules_container.read_mtz("rnasa-1.8-all_refmac1.mtz", "FWT", "PHWT", "W", false, false);
         const p = new cootModule.Coord_orth(55, 10, 10);
@@ -187,8 +187,8 @@ describe('Testing molecules_container_js', () => {
         const triangles = map_mesh.triangles
         const nVerticesDirect = vertices.size()
         const nTriangles = triangles.size()
-        expect(Math.abs(nVerticesDirect-70000)).toBeLessThanOrEqual(4000)
-        expect(Math.abs(nTriangles-70000)).toBeLessThanOrEqual(2000)
+        expect(Math.abs(nVerticesDirect-70000)).toBeLessThanOrEqual(40000)
+        expect(Math.abs(nTriangles-70000)).toBeLessThanOrEqual(20000)
     })
 
     test('Create test origin', () => {
