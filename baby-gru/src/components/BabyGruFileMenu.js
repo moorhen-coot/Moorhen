@@ -4,7 +4,7 @@ import { BabyGruMap } from "./BabyGruMap";
 
 export const BabyGruFileMenu = (props) => {
 
-    const { molecules, setMolecules, maps, setMaps, cootWorker, glRef } = props;
+    const { molecules, setMolecules, maps, setMaps, commandCentre, glRef } = props;
 
     const loadPdbFiles = async (files) => {
         let readPromises = []
@@ -24,7 +24,7 @@ export const BabyGruFileMenu = (props) => {
     }
 
     const readPdbFile = (file) => {
-        const newMolecule = new BabyGruMolecule(cootWorker)
+        const newMolecule = new BabyGruMolecule(commandCentre)
         return newMolecule.loadToCootFromFile(file)
     }
 
@@ -39,7 +39,7 @@ export const BabyGruFileMenu = (props) => {
     }
 
     const readMtzFile = (file) => {
-        const newMap = new BabyGruMap(cootWorker)
+        const newMap = new BabyGruMap(commandCentre)
         return newMap.loadToCootFromFile(file)
     }
 
@@ -48,7 +48,7 @@ export const BabyGruFileMenu = (props) => {
     }
 
     const fetchFileFromURL = (url, molName) => {
-        const newMolecule = new BabyGruMolecule(cootWorker)
+        const newMolecule = new BabyGruMolecule(commandCentre)
         return newMolecule.loadToCootFromURL(url, molName)
             .then(result => {
                 newMolecule.fetchIfDirtyAndDraw('bonds', glRef, true)
@@ -61,8 +61,8 @@ export const BabyGruFileMenu = (props) => {
     }
 
     const loadTutorialData = () => {
-        const newMolecule = new BabyGruMolecule(cootWorker)
-        const newMap = new BabyGruMap(cootWorker)
+        const newMolecule = new BabyGruMolecule(commandCentre)
+        const newMap = new BabyGruMap(commandCentre)
         newMolecule.loadToCootFromURL(`./tutorials/moorhen-tutorial-structure-number-1.pdb`, "moorhen-tutorial-1")
             .then(result => {
                 newMolecule.fetchIfDirtyAndDraw('bonds', glRef, true)

@@ -9,8 +9,8 @@ import { contactsToCylindersInfo, contactsToLinesInfo } from '../WebGL/mgWebGLAt
 import { singletonsToLinesInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { postCootMessage, readTextFile, readDataFile, cootCommand } from '../BabyGruUtils'
 
-export function BabyGruMolecule(cootWorker) {
-    this.cootWorker = cootWorker
+export function BabyGruMolecule(commandCentre) {
+    this.commandCentre = commandCentre
     this.enerLib = new EnerLib()
     this.HBondsAssigned = false
     this.cachedAtoms = null
@@ -37,7 +37,7 @@ BabyGruMolecule.prototype.loadToCootFromFile = function (source) {
                 $this.name = source.name.replace(pdbRegex, "").replace(entRegex, "");
                 $this.cachedAtoms = $this.webMGAtomsFromFileString(coordData)
                 $this.atomsDirty = false
-                return cootCommand($this.cootWorker, {
+                this.commandCentre.cootCommand({
                     returnType: "status",
                     command: 'shim_read_pdb',
                     commandArgs: [coordData, $this.name]
@@ -66,7 +66,7 @@ BabyGruMolecule.prototype.loadToCootFromURL = function (url, molName) {
                 $this.cachedAtoms = $this.webMGAtomsFromFileString(coordData)
                 $this.atomsDirty = false
 
-                return cootCommand($this.cootWorker, {
+                return this.commandCentre.current.cootCommand({
                     returnType: "status",
                     command: 'shim_read_pdb',
                     commandArgs: [coordData, $this.name]
@@ -82,7 +82,7 @@ BabyGruMolecule.prototype.loadToCootFromURL = function (url, molName) {
 
 BabyGruMolecule.prototype.getAtoms = function () {
     const $this = this;
-    return postCootMessage($this.cootWorker, {
+    return $this.commandCentre.current.postMessage( {
         message: "get_atoms",
         coordMolNo: $this.coordMolNo
     })
@@ -196,7 +196,7 @@ BabyGruMolecule.prototype.addBuffersOfStyle = function (gl, objects, style) {
 BabyGruMolecule.prototype.drawRamachandranBalls = function (gl) {
     const $this = this
     const style = "rama"
-    cootCommand($this.cootWorker, {
+    return this.commandCentre.current.cootCommand({
         returnType: "mesh",
         command: "ramachandran_validation_markup_mesh",
         commandArgs: [$this.coordMolNo]
@@ -211,13 +211,13 @@ BabyGruMolecule.prototype.drawRamachandranBalls = function (gl) {
 BabyGruMolecule.prototype.drawRotamerDodecahedra = function (gl) {
     const $this = this
     const style = "rotamer"
-    cootCommand($this.cootWorker, {
+    return this.commandCentre.current.cootCommand({
         returnType: "mesh",
         command: "get_rotamer_dodecs",
         commandArgs: [$this.coordMolNo]
     }).then(response => {
         const objects = [response.data.result.result]
-
+        
         //Empty existing buffers of this type
         this.clearBuffersOfStyle(style, gl)
         this.addBuffersOfStyle(gl, objects, style)
@@ -227,7 +227,7 @@ BabyGruMolecule.prototype.drawRotamerDodecahedra = function (gl) {
 BabyGruMolecule.prototype.drawCootBonds = function (webMGAtoms, gl) {
     const $this = this
     const style = "CBs"
-    cootCommand($this.cootWorker, {
+    return this.commandCentre.current.cootCommand({
         returnType: "mesh",
         command: "get_bonds_mesh",
         commandArgs: [$this.coordMolNo, "COLOUR-BY-CHAIN-AND-DICTIONARY"]

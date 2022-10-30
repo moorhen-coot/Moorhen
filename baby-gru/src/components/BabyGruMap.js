@@ -1,8 +1,8 @@
 import { cootCommand, postCootMessage, readDataFile } from "../BabyGruUtils"
 import { readMapFromArrayBuffer, mapToMapGrid } from '../WebGL/mgWebGLReadMap';
 
-export function BabyGruMap(cootWorker) {
-    this.cootWorker = cootWorker
+export function BabyGruMap(commandCentre) {
+    this.commandCentre = commandCentre
     this.contourLevel = 0.5
     this.mapColour = [0.3, 0.3, 1.0, 1.0]
     this.liveUpdatingMaps = {}
@@ -30,7 +30,7 @@ BabyGruMap.prototype.loadToCootFromData = function (data, mapName) {
     const $this = this
     $this.mapName = mapName
     return new Promise((resolve, reject) => {
-        return cootCommand($this.cootWorker, {
+        return this.commandCentre.current.cootCommand({
             returnType: "status",
             command: "shim_read_mtz",
             commandArgs: [data, mapName]
@@ -53,7 +53,7 @@ BabyGruMap.prototype.loadToCootFromFile = function (source) {
 
 BabyGruMap.prototype.getMap = function () {
     const $this = this
-    return postCootMessage($this.cootWorker, {
+    return this.commandCentre.current.postMessage({
         message: 'get_map',
         mapMolNo: $this.mapMolNo
     })
@@ -148,7 +148,7 @@ BabyGruMap.prototype.doCootContour = function (gl, x, y, z, radius, contourLevel
     const $this = this
 
     return new Promise((resolve, reject) => {
-        cootCommand($this.cootWorker, {
+        this.commandCentre.current.cootCommand( {
             returnType: "lines_mesh",
             command: "get_map_contours_mesh",
             commandArgs: [$this.mapMolNo, x, y, z, radius, contourLevel]
