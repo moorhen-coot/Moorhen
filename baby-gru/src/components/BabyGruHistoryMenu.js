@@ -32,13 +32,32 @@ export const BabyGruHistoryMenu = (props) => {
                     returnType: nextCommand.returnType,
                     command: nextCommand.command,
                     commandArgs: nextCommand.commandArgs
-                }))
+                })).then(reply => {
+                    // If this was a command to read a molecule, then teh corresponding
+                    //BabyGruMolecule has to be created
+                    if (nextCommand.command === 'shim_read_pdb') {
+                        const newMolecule = new BabyGruMolecule(props.cootWorker)
+                        newMolecule.coordMolNo = reply.data.result.result
+                        newMolecule.cachedAtoms = newMolecule.webMGAtomsFromFileString(
+                            nextCommand.commandArgs[0])
+                        newMolecule.name = nextCommand.commandArgs[1]
+                        newMolecule.centreOn(props.glRef)
+                        props.setMolecules([...props.molecules, newMolecule])
+                        return newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef, true)
+                    }
+                    else if (nextCommand.command === 'shim_read_mtz') {
+                        const newMap = new BabyGruMap(props.cootWorker)
+                        newMap.mapMolNo = reply.data.result.result
+                        props.setMaps([...props.maps, newMap])
+                        return newMap
+                    }
+                    return Promise.resolve()
+                })
             },
             Promise.resolve()
         ).then(_ => {
             console.log('Done editing', props.glRef.current)
             props.molecules.forEach(molecule => {
-                molecule.atomsDirty = true
                 molecule.redraw(props.glRef)
             })
             props.glRef.current.drawScene()
@@ -95,8 +114,8 @@ export const BabyGruHistoryMenu = (props) => {
                         </tr>
                     </thead>
                     <tbody>
-                        {sessionHistory.commands.map((row) => {
-                            return <tr key={row.count}>
+                        {sessionHistory.commands.map((row, iRow) => {
+                            return <tr key={iRow}>
                                 {Object.keys(row).filter(key => key !== "result").map(key =>
                                     <td align="right">{JSON.stringify(row[key], null, 2)}</td>
                                 )}

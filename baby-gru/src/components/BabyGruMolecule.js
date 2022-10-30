@@ -37,16 +37,15 @@ BabyGruMolecule.prototype.loadToCootFromFile = function (source) {
                 $this.name = source.name.replace(pdbRegex, "").replace(entRegex, "");
                 $this.cachedAtoms = $this.webMGAtomsFromFileString(coordData)
                 $this.atomsDirty = false
-                return postCootMessage($this.cootWorker, {
-                    message: 'read_pdb',
-                    name: $this.name,
-                    data: coordData
-                }).then(e => {
-                    $this.name = e.data.result.name
-                    $this.coordMolNo = e.data.result.coordMolNo
-                    //console.log('e is', e)
-                    resolve($this)
+                return cootCommand($this.cootWorker, {
+                    returnType: "status",
+                    command: 'shim_read_pdb',
+                    commandArgs: [coordData, $this.name]
                 })
+                    .then(reply => {
+                        $this.coordMolNo = reply.data.result.coordMolNo
+                        resolve($this)
+                    })
             })
     })
 }
@@ -66,15 +65,16 @@ BabyGruMolecule.prototype.loadToCootFromURL = function (url, molName) {
                 $this.name = molName
                 $this.cachedAtoms = $this.webMGAtomsFromFileString(coordData)
                 $this.atomsDirty = false
-                return postCootMessage($this.cootWorker, {
-                    message: 'read_pdb',
-                    name: molName,
-                    data: coordData
-                }).then(reply => {
-                    $this.name = reply.data.result.name
-                    $this.coordMolNo = reply.data.result.coordMolNo
-                    resolve($this)
+
+                return cootCommand($this.cootWorker, {
+                    returnType: "status",
+                    command: 'shim_read_pdb',
+                    commandArgs: [coordData, $this.name]
                 })
+                    .then(reply => {
+                        $this.coordMolNo = reply.data.result.coordMolNo
+                        resolve($this)
+                    })
             })
             .catch((err) => { console.log(err) })
     })
@@ -100,6 +100,7 @@ BabyGruMolecule.prototype.updateAtoms = function () {
 }
 
 BabyGruMolecule.prototype.fetchIfDirtyAndDraw = function (style, gl) {
+    //console.log('fetchIfDirtyAndDraw', style, gl)
     const $this = this
     let promise
     if ($this.atomsDirty) {
@@ -363,7 +364,7 @@ BabyGruMolecule.prototype.drawBonds = function (webMGAtoms, gl, colourSchemeInde
             item.sizes[0].length > 0 &&
             item.sizes[0][0].length > 0
     })
-
+    console.log('clearing', style, gl)
     $this.clearBuffersOfStyle(style, gl)
     this.addBuffersOfStyle(gl, objects, style)
 }
