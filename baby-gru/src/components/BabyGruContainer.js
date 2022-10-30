@@ -13,13 +13,6 @@ import { ArrowBackIosOutlined, ArrowForwardIosOutlined } from '@mui/icons-materi
 import './BabyGruContainer.css'
 import { BabyGruHistoryMenu } from './BabyGruHistoryMenu';
 
-function journalReducer(journalState, action) {
-    return {
-        count: journalState.count + 1,
-        commands: [...journalState.commands, action.commandAndArgs]
-    };
-}
-
 function convertPxtoVh(input, height) {
     return 100 * input / height
 }
@@ -38,7 +31,6 @@ export const BabyGruContainer = (props) => {
     const [showSideBar, setShowSideBar] = useState(false)
     const [activeMap, setActiveMap] = useState(null)
     const [consoleMessage, setConsoleMessage] = useState("")
-    const [journalState, updateJournalState] = useReducer(journalReducer, { count: 0, commands: [] });
     const [molecules, setMolecules] = useState([])
     const [maps, setMaps] = useState([])
     const [cursorStyle, setCursorStyle] = useState("default")
@@ -53,6 +45,7 @@ export const BabyGruContainer = (props) => {
     const [sequenceViewerBodyHeight, setSequenceViewerBodyHeight] = useState(convertViewtoPx(0, windowHeight))
     const [consoleBodyHeight, setConsoleBodyHeight] = useState(convertViewtoPx(0, windowHeight))
     const [accordionHeight, setAccordionHeight] = useState(convertViewtoPx(90, windowHeight))
+    const [commandHistory, setCommandHistory] = useState({ commands: [] })
 
     const sideBarWidth = convertViewtoPx(50, windowWidth)
     const innerWindowMarginHeight = windowHeight * 0.04
@@ -70,6 +63,9 @@ export const BabyGruContainer = (props) => {
             },
             onActiveMessagesChanged: (newActiveMessages) => {
                 setBusy(newActiveMessages.length !== 0)
+            },
+            onCommandHistoryChanged: (newCommandHistory) => {
+                setCommandHistory({commands:newCommandHistory})
             }
         })
         window.addEventListener('resize', setWindowDimensions)
@@ -147,9 +143,9 @@ export const BabyGruContainer = (props) => {
                         maps={maps}
                         setMaps={setMaps}
                         commandCentre={commandCentre}
+                        commandHistory={commandHistory}
                         setActiveMap={setActiveMap}
                         glRef={glRef}
-                        journalState={journalState}
                     />
                 </Nav>
             </Navbar.Collapse>

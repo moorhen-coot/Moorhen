@@ -86,7 +86,7 @@ export const doDownloadText = (text, filename) => {
 
 export const BabyGruCommandCentre = class {
     banana = 12
-    commandHistory = []
+    commands = []
     consoleMessage = ""
     activeMessages = []
 
@@ -137,6 +137,10 @@ export const BabyGruCommandCentre = class {
     cootCommand(kwargs) {
         const message = "coot_command"
         const returnType = kwargs.returnType
+        this.commands.push(kwargs)
+        if (this.onCommandHistoryChanged) {
+            this.onCommandHistoryChanged(this.commands)
+        }
         return this.postMessage({ message, returnType, ...kwargs })
     }
     postMessage(kwargs) {

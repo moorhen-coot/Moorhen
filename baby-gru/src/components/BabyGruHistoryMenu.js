@@ -10,8 +10,11 @@ export const BabyGruHistoryMenu = (props) => {
     const [sessionHistory, setSessionHistory] = useState({ commands: [] })
 
     useEffect(() => {
-        setSessionHistory(props.journalState)
-    }, [props.journalState])
+        console.log('CommandHistory', props.commandHistory)
+        if (props.commandHistory && props.commandHistory.commands) {
+            setSessionHistory(props.commandHistory)
+        }
+    }, [props.commandHistory])
 
     const executeJournalFiles = (files) => {
         console.log(files)
@@ -28,7 +31,7 @@ export const BabyGruHistoryMenu = (props) => {
         commands.filter(command => command.returnType === "status").reduce(
             (p, nextCommand) => {
                 //console.log(`Redrawing ${style}`, $this.atomsDirty)
-                return p.then(() => cootCommand(props.cootWorker, {
+                return p.then(() => props.commandCentre.current.cootCommand({
                     returnType: nextCommand.returnType,
                     command: nextCommand.command,
                     commandArgs: nextCommand.commandArgs
@@ -36,7 +39,7 @@ export const BabyGruHistoryMenu = (props) => {
                     // If this was a command to read a molecule, then teh corresponding
                     //BabyGruMolecule has to be created
                     if (nextCommand.command === 'shim_read_pdb') {
-                        const newMolecule = new BabyGruMolecule(props.cootWorker)
+                        const newMolecule = new BabyGruMolecule(props.commandCentre)
                         newMolecule.coordMolNo = reply.data.result.result
                         newMolecule.cachedAtoms = newMolecule.webMGAtomsFromFileString(
                             nextCommand.commandArgs[0])
@@ -46,7 +49,7 @@ export const BabyGruHistoryMenu = (props) => {
                         return newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef, true)
                     }
                     else if (nextCommand.command === 'shim_read_mtz') {
-                        const newMap = new BabyGruMap(props.cootWorker)
+                        const newMap = new BabyGruMap(props.commandCentre)
                         newMap.mapMolNo = reply.data.result.result
                         props.setMaps([...props.maps, newMap])
                         return newMap
@@ -116,8 +119,13 @@ export const BabyGruHistoryMenu = (props) => {
                     <tbody>
                         {sessionHistory.commands.map((row, iRow) => {
                             return <tr key={iRow}>
-                                {Object.keys(row).filter(key => key !== "result").map(key =>
-                                    <td align="right">{JSON.stringify(row[key], null, 2)}</td>
+                                {Object.keys(row).filter(key => key !== "result").map(key => {
+                                    let stringRep  = JSON.stringify(row[key], null, 2)
+                                    if (stringRep.length > 160){
+                                        stringRep = `[TRUNCATED to ${stringRep.substring(0, 160)}]`
+                                    }
+                                    return <td align="right">{stringRep}</td>
+                                }
                                 )}
                             </tr>
                         })}
