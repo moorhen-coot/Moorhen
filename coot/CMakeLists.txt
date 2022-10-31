@@ -15,6 +15,7 @@ ${coot_src}/rama-data/*.data
 )
 
 file(GLOB coot_exception_srcs
+${coot_src}/api/molecules_container_modelling.cc
 ${coot_src}/api/add-terminal-residue.cc
 ${coot_src}/api/simple-mesh.cc
 ${coot_src}/api/interfaces.cc
