@@ -204,7 +204,6 @@ ${coot_src}/build/CalphaBuild.cc
 ${coot_src}/mini-mol/mini-mol-utils.cc
 ${coot_src}/mini-mol/mini-mol.cc
 ${coot_src}/mini-mol/atom-quads.cc
-${coot_src}/lbg/lbg.cc
 ${coot_src}/lbg/residue-circles.cc
 ${coot_src}/lbg/graphics-c-interface-functions-blanks.cc
 ${coot_src}/lbg/lbg-search.cc
