@@ -104,8 +104,8 @@ export const BabyGruCommandCentre = class {
     handleMessage(reply) {
         if (this.onConsoleChanged && reply.data.consoleMessage) {
             let newMessage
-            if (reply.data.consoleMessage.length > 160){
-                newMessage = `TRUNCATED TO [${reply.data.consoleMessage.substring(0,160)}]`
+            if (reply.data.consoleMessage.length > 160) {
+                newMessage = `TRUNCATED TO [${reply.data.consoleMessage.substring(0, 160)}]`
             }
             else {
                 newMessage = reply.data.consoleMessage
@@ -156,5 +156,32 @@ export const BabyGruCommandCentre = class {
                 messageId, myTimeStamp: Date.now(), ...kwargs
             })
         })
+    }
+}
+
+export const BabyGruMtzWrapper = class {
+    constructor() {
+
+    }
+    loadHeaderFromFile(file) {
+        return new Promise((resolve, reject) => {
+            readDataFile(file)
+                .then(arrayBuffer => {
+                    const fileName = `File_${uuidv4()}`
+                    const byteArray = new Uint8Array(arrayBuffer)
+                    window.CCP4Module.FS_createDataFile(".", fileName, byteArray, true, true);
+                    const header_info = window.CCP4Module.get_mtz_columns(fileName);
+                    window.CCP4Module.FS_unlink(`./${fileName}`)
+                    let newColumns = {}
+                    for (let ih = 0; ih < header_info.size(); ih += 2) {
+                        newColumns[header_info.get(ih + 1)] = header_info.get(ih)
+                    }
+                    console.log(newColumns)
+                    resolve(newColumns)
+                })
+        })
+    }
+    loadFromData(data) {
+
     }
 }

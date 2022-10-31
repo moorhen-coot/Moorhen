@@ -187,6 +187,7 @@ BabyGruMolecule.prototype.addBuffersOfStyle = function (gl, objects, style) {
     const $this = this
     objects.forEach(object => {
         var a = gl.appendOtherData(object, true);
+        console.log('as are', a)
         $this.displayObjects[style] = $this.displayObjects[style].concat(a)
     })
     gl.buildBuffers();
