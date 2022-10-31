@@ -81,12 +81,13 @@ function base64ToArrayBuffer(base64) {
     return bytes.buffer;
 }
 
-const read_mtz = (mapData, name) => {
+const read_mtz = (mapData, name, selectedColumns) => {
     const theGuid = guid()
     const asUint8Array = new Uint8Array(mapData)
     cootModule.FS_createDataFile(".", `${theGuid}.mtz`, asUint8Array, true, true);
     const tempFilename = `./${theGuid}.mtz`
-    const mapMolNo = molecules_container.read_mtz(tempFilename, 'FWT', 'PHWT', "", false, false)
+    const mapMolNo = molecules_container.read_mtz(tempFilename, selectedColumns.F,
+        selectedColumns.PHI, "", false, false)
     cootModule.FS_unlink(tempFilename)
     return mapMolNo
 }

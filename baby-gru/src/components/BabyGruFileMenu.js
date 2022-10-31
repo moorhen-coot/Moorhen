@@ -50,7 +50,6 @@ export const BabyGruFileMenu = (props) => {
     const disambiguateColumns = async (newColumns) => {
         return new Promise((resolve, reject) => {
             awaitingPromiseRef.current = { resolve, reject };
-            console.log("ZZZ", awaitingPromiseRef.current)
             setDisambiguateColumnsVisible(true)
             setDisambiguateColumnsResolve(awaitingPromiseRef)
             const fColumns = Object.keys(newColumns)
@@ -71,9 +70,10 @@ export const BabyGruFileMenu = (props) => {
         const newMap = new BabyGruMap(commandCentre)
         const babyGruMtzWrapper = new BabyGruMtzWrapper()
         const newColumns = await babyGruMtzWrapper.loadHeaderFromFile(file)
+        setDisambiguateColumnsVisible(true)
         const selectedColumns = await disambiguateColumns(newColumns)
-        console.log('selectedColumns are ', selectedColumns)
-        return newMap.loadToCootFromFile(file)
+        setDisambiguateColumnsVisible(false)
+        return newMap.loadToCootFromFile(file, selectedColumns)
     }
 
     const fetchFileFromEBI = (pdbCode) => {
@@ -105,7 +105,8 @@ export const BabyGruFileMenu = (props) => {
             }).then(_ => {
                 newMolecule.centreOn(glRef)
             }).then(_ => {
-                return newMap.loadToCootFromURL(`./tutorials/moorhen-tutorial-map-number-1.mtz`, "moorhen-tutorial-1")
+                return newMap.loadToCootFromURL(`./tutorials/moorhen-tutorial-map-number-1.mtz`, "moorhen-tutorial-1",
+                    { F: "FWT", PHI: "PHWT" })
             })
             .then(result => {
                 setMaps([...maps, newMap])
@@ -163,12 +164,14 @@ const BabyGruDisambiguateColumns = (props) => {
         console.log('props.resolveOrReject', props.resolveOrReject)
     }, [props.resolveOrReject])
 
-    return <Modal show={props.visible}>
+    return <Modal show={props.visible} onHide={() => {
+        props.resolveOrReject.current.reject("Cancelled")
+    }}>
         <Modal.Title>Dialog to disambiguate columns</Modal.Title>
         <Modal.Body>
             <Row key="Row1">
                 <Col key="F">
-                    <FormSelect ref={fRef} onChange={(val) => { }}>
+                    <FormSelect ref={fRef} defaultValue="FWT" onChange={(val) => { }}>
                         {Object.keys(props.columns)
                             .filter(key => props.columns[key] === 'F')
                             .map(key => <option value={key} key={key}>{key}</option>
@@ -176,7 +179,7 @@ const BabyGruDisambiguateColumns = (props) => {
                     </FormSelect>
                 </Col>
                 <Col key="Phi">
-                    <FormSelect ref={pRef} onChange={(val) => { }}>
+                    <FormSelect ref={pRef} defaultValue="PHWT" onChange={(val) => { }}>
                         {Object.keys(props.columns)
                             .filter(key => props.columns[key] === 'P')
                             .map(key => <option value={key} key={key}>{key}</option>
@@ -186,8 +189,6 @@ const BabyGruDisambiguateColumns = (props) => {
             </Row>
             <Row key="Row2">
                 <Button onClick={() => {
-                    console.log(fRef.current.value, pRef.current.value)
-                    console.log(props.resolve)
                     props.resolveOrReject.current.resolve({
                         F: fRef.current.value,
                         PHI: pRef.current.value
