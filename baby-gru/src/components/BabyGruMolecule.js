@@ -37,7 +37,7 @@ BabyGruMolecule.prototype.loadToCootFromFile = function (source) {
                 $this.name = source.name.replace(pdbRegex, "").replace(entRegex, "");
                 $this.cachedAtoms = $this.webMGAtomsFromFileString(coordData)
                 $this.atomsDirty = false
-                this.commandCentre.cootCommand({
+                this.commandCentre.current.cootCommand({
                     returnType: "status",
                     command: 'shim_read_pdb',
                     commandArgs: [coordData, $this.name]
@@ -217,7 +217,7 @@ BabyGruMolecule.prototype.drawRotamerDodecahedra = function (gl) {
         commandArgs: [$this.coordMolNo]
     }).then(response => {
         const objects = [response.data.result.result]
-        
+
         //Empty existing buffers of this type
         this.clearBuffersOfStyle(style, gl)
         this.addBuffersOfStyle(gl, objects, style)

@@ -14,6 +14,8 @@ import * as mat3 from 'gl-matrix/mat3';
 //import {quat as quat4} from 'gl-matrix/esm';
 import {base64encode,base64decode} from './mgBase64.js';
 
+//WebGL2 shaders
+/*
 import {lines_fragment_shader_source} from './lines-fragment-shader.js';
 import {lines_vertex_shader_source} from './lines-vertex-shader.js';
 import {perfect_sphere_fragment_shader_source} from './perfect-sphere-fragment-shader.js';
@@ -37,6 +39,32 @@ import {triangle_vertex_shader_source} from './triangle-vertex-shader.js';
 import {twod_fragment_shader_source} from './twodshapes-fragment-shader.js';
 import {twod_vertex_shadow_shader_source} from './twodshapes-shadow-vertex-shader.js';
 import {twod_vertex_shader_source} from './twodshapes-vertex-shader.js';
+*/
+
+//WebGL1 shaders
+import {lines_fragment_shader_source} from './webgl-1/lines-fragment-shader.js';
+import {lines_vertex_shader_source} from './webgl-1/lines-vertex-shader.js';
+import {perfect_sphere_fragment_shader_source} from './webgl-1/perfect-sphere-fragment-shader.js';
+import {perfect_sphere_shadow_fragment_shader_source} from './webgl-1/perfect-sphere-shadow-fragment-shader.js';
+import {pointspheres_fragment_shader_source} from './webgl-1/pointspheres-fragment-shader.js';
+import {pointspheres_shadow_fragment_shader_source} from './webgl-1/pointspheres-shadow-fragment-shader.js';
+import {pointspheres_shadow_vertex_shader_source} from './webgl-1/pointspheres-shadow-vertex-shader.js';
+import {pointspheres_vertex_shader_source} from './webgl-1/pointspheres-vertex-shader.js';
+import {render_framebuffer_fragment_shader_source} from './webgl-1/render-framebuffer-fragment-shader.js';
+import {shadow_fragment_shader_source} from './webgl-1/shadow-fragment-shader.js';
+import {shadow_vertex_shader_source} from './webgl-1/shadow-vertex-shader.js';
+import {text_fragment_shader_source} from './webgl-1/text-fragment-shader.js';
+import {circles_fragment_shader_source} from './webgl-1/circle-fragment-shader.js';
+import {circles_vertex_shader_source} from './webgl-1/circle-vertex-shader.js';
+import {thick_lines_vertex_shader_source} from './webgl-1/thick-lines-vertex-shader.js';
+import {thick_lines_normal_vertex_shader_source} from './webgl-1/thick-lines-normal-vertex-shader.js';
+import {triangle_fragment_shader_source} from './webgl-1/triangle-fragment-shader.js';
+import {triangle_shadow_fragment_shader_source} from './webgl-1/triangle-shadow-fragment-shader.js';
+import {triangle_shadow_vertex_shader_source} from './webgl-1/triangle-shadow-vertex-shader.js';
+import {triangle_vertex_shader_source} from './webgl-1/triangle-vertex-shader.js';
+import {twod_fragment_shader_source} from './webgl-1/twodshapes-fragment-shader.js';
+import {twod_vertex_shadow_shader_source} from './webgl-1/twodshapes-shadow-vertex-shader.js';
+import {twod_vertex_shader_source} from './webgl-1/twodshapes-vertex-shader.js';
 
 import {CIsoSurface} from './CIsoSurface.js';
 import {SplineCurve,BezierCurve,DistanceBetweenPointAndLine, DistanceBetweenTwoLines, DihedralAngle} from './mgMaths.js';
@@ -1164,20 +1192,21 @@ function getEncodedData( rssentries, createFun ) {
     return allBuffers;
 }
 
-function initGL(canvas) {
-    console.log("canvas in initGL",canvas);
-    try {
-        var gl = canvas.getContext("webgl2");
-        gl.viewportWidth = canvas.width;
-        gl.viewportHeight = canvas.height;
-        console.log(canvas.width,canvas.height);
-        console.log(gl.viewportWidth,gl.viewportHeight);
-        console.log(gl.getContextAttributes());
-    } catch (e) {
+function initGL(canvas,WEBGL2) {
+    let gl;
+    if(WEBGL2){
+        gl = canvas.getContext("webgl2");
+    } else {
+        gl = canvas.getContext("webgl");
     }
     if (!gl) {
         alert("Could not initialise WebGL, sorry :-(");
     }
+    gl.viewportWidth = canvas.width;
+    gl.viewportHeight = canvas.height;
+    console.log(canvas.width,canvas.height);
+    console.log(gl.viewportWidth,gl.viewportHeight);
+    console.log(gl.getContextAttributes());
     console.log("Max varying vectors: "+gl.getParameter(gl.MAX_VARYING_VECTORS));
     return gl;
 }
@@ -1310,8 +1339,10 @@ class MGWebGL extends Component {
 
     constructor(props) {
 
+        //Set to false to use WebGL 1
         console.log("MGWebGL.constructor");
         super(props);
+        this.WEBGL2 = false;
         this.state = {width:this.props.width,height:this.props.height};
         this.dataInfo = [];
         this.animations = [];
@@ -1478,7 +1509,7 @@ class MGWebGL extends Component {
         this.gl_cursorPos[0] = this.canvas.width/2.;
         this.gl_cursorPos[1] = this.canvas.height/2.;
 
-        this.gl = initGL(this.canvas);
+        this.gl = initGL(this.canvas,this.WEBGL2);
         //self.setState({width:window.innerWidth/3, height:window.innerHeight/3}, ()=> self.resize(window.innerWidth/3, window.innerHeight/3));
         var extensionArray = this.gl.getSupportedExtensions();
         console.log(extensionArray);
@@ -1487,32 +1518,27 @@ class MGWebGL extends Component {
 
         //console.log("The GL context ... ");
         //console.log(this.gl);
-        this.ext = true;//this.gl.getExtension("OES_element_index_uint");
-        /*
-        if(!this.ext) {
-            alert("No OES_element_index_uint support");
-        }
-        */
-        /*
-        this.deriv_ext = this.gl.getExtension("OES_standard_derivatives");
-        if(!this.deriv_ext) {
-            alert("No GL_OES_standard_derivatives support");
-        }
-        */
-        this.frag_depth_ext = true;//this.gl.getExtension("EXT_frag_depth");
-
-        this.depth_texture = true;//this.gl.getExtension("WEBGL_depth_texture");
-        /*
-        if(!this.depth_texture){
-            this.depth_texture = this.gl.getExtension("MOZ_WEBGL_depth_texture");
+        if(this.WEBGL2){
+            this.ext = true;
+            this.frag_depth_ext = true;
+            this.depth_texture = true;
+        } else {
+            this.ext = this.gl.getExtension("OES_element_index_uint");
+            if(!this.ext) {
+                alert("No OES_element_index_uint support");
+            }
+            this.frag_depth_ext = this.gl.getExtension("EXT_frag_depth");
+            this.depth_texture = this.gl.getExtension("WEBGL_depth_texture");
             if(!this.depth_texture){
-                this.depth_texture = this.gl.getExtension("WEBKIT_WEBGL_depth_texture");
+                this.depth_texture = this.gl.getExtension("MOZ_WEBGL_depth_texture");
                 if(!this.depth_texture){
-                    alert("No depth texture extension");
+                    this.depth_texture = this.gl.getExtension("WEBKIT_WEBGL_depth_texture");
+                    if(!this.depth_texture){
+                        alert("No depth texture extension");
+                    }
                 }
             }
         }
-        */
 
         this.initTextureFramebuffer();
 
@@ -3039,7 +3065,11 @@ class MGWebGL extends Component {
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
             //this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_COMPARE_MODE, this.gl.COMPARE_R_TO_TEXTURE);
             //this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_COMPARE_FUNC, this.gl.LEQUAL);
-            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.DEPTH_COMPONENT, this.rttFramebufferDepth.width, this.rttFramebufferDepth.height, 0, this.gl.DEPTH_COMPONENT, this.gl.UNSIGNED_INT_24_8, null);
+            if(this.WEBGL2){
+                this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.DEPTH_COMPONENT, this.rttFramebufferDepth.width, this.rttFramebufferDepth.height, 0, this.gl.DEPTH_COMPONENT, this.gl.UNSIGNED_INT_24_8, null);
+            } else {
+                this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.DEPTH_COMPONENT, this.rttFramebufferDepth.width, this.rttFramebufferDepth.height, 0, this.gl.DEPTH_COMPONENT, this.gl.UNSIGNED_SHORT, null);
+            }
             var renderbufferCol = this.gl.createRenderbuffer();
             this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, renderbufferCol);
             this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.RGBA4, this.rttFramebufferDepth.width, this.rttFramebufferDepth.height);
@@ -6091,7 +6121,7 @@ class MGWebGL extends Component {
                     this.displayBuffers[idx].triangleVertexRealNormalBuffer[j].numItems = Normals_new.length/3;
                     this.displayBuffers[idx].triangleVertexPositionBuffer[j].numItems = Vertices_new.length/3;
                     this.displayBuffers[idx].triangleColourBuffer[j].numItems = Colours_new.length/4;
-                    
+
                 } else if(this.displayBuffers[idx].bufferTypes[j]==="LINES"){
                     console.log("Treating lines specially");
                     var size = 1.0;
@@ -7132,8 +7162,6 @@ class MGWebGL extends Component {
                 }
                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, triangleVertexNormalBuffer[j]);
                 this.gl.vertexAttribPointer(this.shaderProgramThickLinesNormal.vertexNormalAttribute, triangleVertexNormalBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
-                console.log(triangleVertexRealNormalBuffer[j]);
-                console.log(this.shaderProgramThickLinesNormal.vertexRealNormalAttribute);
                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, triangleVertexRealNormalBuffer[j]);
                 this.gl.vertexAttribPointer(this.shaderProgramThickLinesNormal.vertexRealNormalAttribute, triangleVertexRealNormalBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, triangleVertexPositionBuffer[j]);
@@ -8101,8 +8129,11 @@ class MGWebGL extends Component {
             var fracY = 1.0*(y)/self.gl.viewportHeight;
             var theX = minX + fracX*(maxX - minX);
             var theY = maxY - fracY*(maxY - minY);
-            var frontPos = vec3Create([theX,theY,0.000001]);
-            var backPos  = vec3Create([theX,theY,1000.0]);
+            //var frontPos = vec3Create([theX,theY,0.000001]);
+            //var backPos  = vec3Create([theX,theY,1000.0]);
+            //MN Changed to improve picking
+            var frontPos = vec3Create([theX,theY,this.gl_clipPlane0[3]]);
+            var backPos  = vec3Create([theX,theY,this.gl_clipPlane1[3]]);
             vec3.transformMat4(frontPos,frontPos,theMatrix);
             vec3.transformMat4(backPos,backPos,theMatrix);
             vec3.subtract(frontPos,frontPos,self.origin);
@@ -8129,7 +8160,27 @@ class MGWebGL extends Component {
                     var p = vec3Create([atx,aty,atz]);
 
                     var dpl = DistanceBetweenPointAndLine(frontPos,backPos,p);
-                    if(dpl[0]<clickTol&&dpl[1]>mint){
+
+                    //MN Changed logic here
+                    let atPos = vec3Create([atx, aty, atz])
+                    let displacement = vec3Create([0, 0, 0]);
+                    vec3.subtract(displacement, atPos, frontPos)
+                    //fB_plus_fZ is the displacement from the front clipping plane to the back clipping plane
+                    const fB_plus_fZ = (this.gl_clipPlane0[3] + this.gl_clipPlane1[3]) / this.zoom
+                    //fZ is the displacement from teh front clipping plane to the origin of rotation
+                    const fZ = (this.gl_clipPlane0[3] + 500) / this.zoom
+                    //aZ is the displacement from the frontClipping plane to the atom
+                    const aZ = (500 - vec3.length(displacement)) / this.zoom
+
+                    const targetFactor = 1. / (1 + (Math.abs(fZ - aZ)/fB_plus_fZ))
+                    if (
+                        dpl[0] < clickTol * targetFactor //clickTol modified to reflect proximity to rptation origin
+                        && dpl[0] < mindist //closest click seen
+                        && aZ > 0 //Beyond near clipping plane
+                        && aZ < fB_plus_fZ //In front of far clipping plane
+                        ){
+
+                    //if(dpl[0]<clickTol&&dpl[1]>mint){
                         minidx = idx;
                         minj = j;
                         mindist = dpl[0];
@@ -8167,9 +8218,8 @@ class MGWebGL extends Component {
                 document.dispatchEvent(atomClicked);
 
                 if(event.altKey){
-                    self.origin = [-atx,-aty,-atz];
+                    self.setOrigin([-atx,-aty,-atz], true);
                     self.reContourMaps();
-                    self.drawScene();
                     return;
                 }
 
