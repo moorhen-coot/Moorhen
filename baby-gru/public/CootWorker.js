@@ -251,7 +251,6 @@ onmessage = function (e) {
                     break;
                 case 'float_array':
                     returnResult = floatArrayToJSArray(cootResult)
-                    console.log("float_array", returnResult)
                     break;
                 case 'status':
                 default:

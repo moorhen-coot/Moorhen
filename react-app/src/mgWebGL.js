@@ -8099,7 +8099,6 @@ class MGWebGL extends Component {
         let y = this.canvas.height-this.gl_cursorPos[1];
         x *= getDeviceScale();
         y *= getDeviceScale();
-        console.log(x,y);
 
         //document.getElementById("info").innerHTML="Click: "+event.x+" "+event.y;
         let invQuat = quat4.create();
@@ -8123,7 +8122,7 @@ class MGWebGL extends Component {
         vec3.transformMat4(backPos,backPos,theMatrix);
         vec3.subtract(frontPos,frontPos,self.origin);
         vec3.subtract(backPos,backPos,self.origin);
-        return [frontPos,backPos];
+        return [frontPos,backPos,x,y];
     }
 
     doClick(event,self) {
@@ -10143,12 +10142,13 @@ class MGWebGL extends Component {
         // FIXME, we need an active map, like Coot.
         if(event.keyCode===71||event.keyCode===103){
             const frontAndBack = self.getFrontAndBackPos(event);
-            console.log("G force!");
-            console.log(frontAndBack[0],frontAndBack[1]);
-            var goToBlobEvent = new CustomEvent("goToBlob", {
+            var goToBlobEvent = new CustomEvent("keyPressWithMousePosition", {
                     "detail": {
                         front:[frontAndBack[0][0],frontAndBack[0][1],frontAndBack[0][2]],
-                        back:[frontAndBack[1][0],frontAndBack[1][1],frontAndBack[1][2]]
+                        back:[frontAndBack[1][0],frontAndBack[1][1],frontAndBack[1][2]],
+                        windowX: frontAndBack[2],
+                        windowY: frontAndBack[3],
+                        key: 'G'
                     }
                 });
             document.dispatchEvent(goToBlobEvent);
