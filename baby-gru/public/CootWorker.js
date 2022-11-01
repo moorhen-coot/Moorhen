@@ -42,7 +42,7 @@ const simpleMeshToMeshData = (simpleMesh) => {
 
 const floatArrayToJSArray = (floatArray) => {
     let returnResult = []
-    for(let i=0;i<floatArray.size();i++){
+    for (let i = 0; i < floatArray.size(); i++) {
         returnResult.push(floatArray.get(i));
     }
     return returnResult;
@@ -94,8 +94,10 @@ const read_mtz = (mapData, name, selectedColumns) => {
     const asUint8Array = new Uint8Array(mapData)
     cootModule.FS_createDataFile(".", `${theGuid}.mtz`, asUint8Array, true, true);
     const tempFilename = `./${theGuid}.mtz`
-    const mapMolNo = molecules_container.read_mtz(tempFilename, selectedColumns.F,
-        selectedColumns.PHI, "", false, false)
+    const read_mtz_args = [tempFilename, selectedColumns.F,
+        selectedColumns.PHI, "", false, selectedColumns.isDifference]
+    postMessage({ message: `read_mtz args ${read_mtz_args}` })
+    const mapMolNo = molecules_container.read_mtz(...read_mtz_args)
     cootModule.FS_unlink(tempFilename)
     return mapMolNo
 }
@@ -249,7 +251,7 @@ onmessage = function (e) {
                     break;
                 case 'float_array':
                     returnResult = floatArrayToJSArray(cootResult)
-                    console.log("float_array",returnResult)
+                    console.log("float_array", returnResult)
                     break;
                 case 'status':
                 default:

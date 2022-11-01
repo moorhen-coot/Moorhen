@@ -1,8 +1,9 @@
-import { NavDropdown, Form, Button, InputGroup, Modal, FormSelect, Col, Row, Overlay, Card } from "react-bootstrap";
+import { NavDropdown, Form, Button, InputGroup, Modal, FormSelect, Col, Row, Overlay, Card, FormCheck } from "react-bootstrap";
 import { BabyGruMolecule } from "./BabyGruMolecule";
 import { BabyGruMap } from "./BabyGruMap";
 import { useEffect, useState, useRef, createRef } from "react";
 import { BabyGruMtzWrapper } from '../BabyGruUtils';
+import { InsertDriveFile } from "@mui/icons-material";
 
 export const BabyGruFileMenu = (props) => {
 
@@ -108,7 +109,7 @@ export const BabyGruFileMenu = (props) => {
                 newMolecule.centreOn(glRef)
             }).then(_ => {
                 return newMap.loadToCootFromURL(`./tutorials/moorhen-tutorial-map-number-1.mtz`, "moorhen-tutorial-1",
-                    { F: "FWT", PHI: "PHWT" })
+                    { F: "FWT", PHI: "PHWT", isDifference: false })
             })
             .then(result => {
                 setMaps([...maps, newMap])
@@ -182,6 +183,7 @@ export const BabyGruFileMenu = (props) => {
 const BabyGruDisambiguateColumns = (props) => {
     const fRef = createRef()
     const pRef = createRef()
+    const isDif = createRef()
 
     useEffect(() => {
     }, [props.resolveOrReject])
@@ -210,12 +212,24 @@ const BabyGruDisambiguateColumns = (props) => {
                         </FormSelect>
                     </Col>
                 </Row>
-                <Row key="Row2">
+                <Row>
+                    <Form.Check
+                        inline
+                        label={'isDifference'}
+                        name={`isDifference`}
+                        type="checkbox"
+                        ref={isDif}
+                        variant="outline" />
+                </Row>
+                <Row key="Row3">
                     <Button onClick={() => {
-                        props.resolveOrReject.current.resolve({
+                        const result = {
                             F: fRef.current.value,
-                            PHI: pRef.current.value
-                        })
+                            PHI: pRef.current.value,
+                            isDifference: isDif.current.checked
+                        }
+                        console.log(result)
+                        props.resolveOrReject.current.resolve(result)
                     }}>OK</Button>
                 </Row>
             </Card.Body>
