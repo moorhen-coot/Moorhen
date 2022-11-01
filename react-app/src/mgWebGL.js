@@ -8117,7 +8117,7 @@ class MGWebGL extends Component {
         //var frontPos = vec3Create([theX,theY,-1000.0]);
         //var backPos  = vec3Create([theX,theY,1000.0]);
         //MN Changed to improve picking
-        let frontPos = vec3Create([theX,theY,this.gl_clipPlane0[3]+500.]);
+        let frontPos = vec3Create([theX,theY,-this.gl_clipPlane0[3]-500.]);
         let backPos  = vec3Create([theX,theY,this.gl_clipPlane1[3]-500.]);
         vec3.transformMat4(frontPos,frontPos,theMatrix);
         vec3.transformMat4(backPos,backPos,theMatrix);
