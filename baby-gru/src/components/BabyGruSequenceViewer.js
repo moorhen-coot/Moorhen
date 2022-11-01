@@ -120,13 +120,11 @@ export const BabyGruSequenceViewer = (props) => {
     /**
      * Hook used to set a range of highlighted residues
      */
-     useEffect(()=> {
+    useEffect(()=> {
         if (props.selectedResidues !== null  && props.clickedResidue.chain === props.sequence.chain) {
           setSelection(...props.selectedResidues)
         }
     }, [props.selectedResidues]);
-
-
 
     /**
      * Hook used on component start-up to define the protvista-navigation and protvista-sequence display start and end
@@ -143,7 +141,6 @@ export const BabyGruSequenceViewer = (props) => {
         }
         
     }, [props.sequence]);
-
 
     return (
         <div className='align-items-center' style={{marginBottom:'1rem', padding:'0'}}>

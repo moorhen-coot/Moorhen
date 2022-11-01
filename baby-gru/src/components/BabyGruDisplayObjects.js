@@ -1,14 +1,18 @@
 import { useEffect, Fragment, useState, createRef, useCallback, useRef } from "react";
-import { Card, Form, Button, Row, Col, FormCheck } from "react-bootstrap";
+import { Card, Form, Button, Row, Col, FormCheck, Dropdown, DropdownButton, Modal } from "react-bootstrap";
 import { cootCommand, doDownload } from '../BabyGruUtils';
 import { DownloadOutlined, UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, MoreVertOutlined } from '@mui/icons-material';
 import { BabyGruSequenceViewer } from "./BabyGruSequenceViewer";
 import BabyGruSlider from "./BabyGruSlider";
+import { BabyGruMolecule } from "./BabyGruMolecule";
 
 export const BabyGruMoleculeCard = (props) => {
     const [showState, setShowState] = useState({})
     const [selectedResidues, setSelectedResidues] = useState(null);
     const [clickedResidue, setClickedResidue] = useState(null);
+    const [moleculeName, setMoleculeName] = useState(props.molecule.name);
+    const [showRenameModal, setShowRenameModal] = useState(false);
+    const newNameInputRef = useRef();
 
     useEffect(() => {
         const initialState = {}
@@ -34,11 +38,63 @@ export const BabyGruMoleculeCard = (props) => {
 
     }, [clickedResidue]);
 
+    const copyFragment = () => {
+        async function createNewFragmentMolecule() {
+            const inputData = {message:"copy_fragment", coordMolNo:clickedResidue.coordMolNo, chainId:clickedResidue.chain, res_no_start:selectedResidues[0], res_no_end:selectedResidues[1]}
+            const response = await props.commandCentre.current.postMessage(inputData)
+            const newMolecule = new BabyGruMolecule(props.commandCentre)
+            newMolecule.name = `${props.molecule.name} fragment`
+            await newMolecule.loadFromCoordMolNo(response.data.result)
+            await newMolecule.fetchIfDirtyAndDraw('bonds', props.glRef)
+            await newMolecule.centreOn(props.glRef)
+            props.setMolecules([...props.molecules, newMolecule])         
+        }
+        
+        // TODO: Test that residue start and residue end are valid (i.e. not missing from the structure)
+        if(clickedResidue && selectedResidues){
+            createNewFragmentMolecule()
+        }
+    }
+
+    const handleMoleculeRename = () => {
+        let newName = newNameInputRef.current.value
+        setShowRenameModal(false)
+        if (newName=="") {
+            return
+        }
+        props.molecule.name = newName
+        setShowRenameModal(false)
+        setMoleculeName(newName)
+    }
+
     return <Card className="px-0"  style={{marginBottom:'0.5rem', padding:'0'}} key={props.molecule.coordMolNo}>
+            <Modal show={showRenameModal} onHide={handleMoleculeRename}>
+                <Modal.Body>
+                    <Form>
+                        <Form.Group className="mb-3" controlId="renameMoleculeNewNameInput">
+                            <Form.Label>Rename Molecule</Form.Label>
+                            <Form.Control 
+                                ref={newNameInputRef}
+                                name="newMoleculeName"
+                                placeholder="New name"
+                                autoFocus
+                            />
+                        </Form.Group>
+                    </Form>
+                <div>
+                    <Button variant="secondary" onClick={() => {setShowRenameModal(false)}}>
+                        Close
+                    </Button>
+                    <Button style={{marginLeft:'0.2rem'}} variant="primary" onClick={handleMoleculeRename}>
+                        Rename
+                    </Button>
+                </div>
+            </Modal.Body>
+        </Modal>
         <Card.Header>
             <Row className='align-items-center'>
                 <Col style={{display:'flex', justifyContent:'left'}}>
-                    {`#${props.molecule.coordMolNo} Mol. ${props.molecule.name}`}
+                    {`#${props.molecule.coordMolNo} Mol. ${moleculeName}`}
                 </Col>
                 <Col style={{display:'flex', justifyContent:'right'}}>
                     <Button size="sm" variant="outlined"
@@ -71,15 +127,15 @@ export const BabyGruMoleculeCard = (props) => {
                         onClick={() => {
                             props.molecule.getAtoms()
                                 .then(reply => {
-                                    doDownload([reply.data.result.pdbData], `${props.molecule.name}`)
+                                    doDownload([reply.data.result.pdbData], `${moleculeName}`)
                                 })
                         }}>
                         <DownloadOutlined />
                     </Button>
-                    <Button size="sm" variant="outlined"
-                        onClick={() => {console.log('More quick actions button not implemented yet')}}>
-                        <MoreVertOutlined />
-                    </Button>
+                    <DropdownButton size="sm" variant="outlined">
+                        <Dropdown.Item as="button" onClick={copyFragment}>Copy selected residues into fragment</Dropdown.Item>
+                        <Dropdown.Item as="button" onClick={() => {setShowRenameModal(true)}}>Rename molecule</Dropdown.Item>
+                    </DropdownButton>
                 </Col>
             </Row>
         </Card.Header>
@@ -305,6 +361,8 @@ export const BabyGruDisplayObjects = (props) => {
             <BabyGruMoleculeCard 
                 index={molecule.coordMolNo}
                 molecule={molecule}
+                molecules={props.molecules}
+                setMolecules={props.setMolecules}
                 glRef={props.glRef}
                 commandCentre={props.commandCentre}>
             </BabyGruMoleculeCard>
