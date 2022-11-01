@@ -171,9 +171,3 @@ BabyGruMap.prototype.doCootContour = function (gl, x, y, z, radius, contourLevel
 
 }
 
-BabyGruMap.prototype.cootContourInPlace = function (gl, radius) {
-    const $this = this
-    const commandArgs = [gl, ...gl.origin.map(coord => -coord), radius, $this.contourLevel]
-    console.log('cootContourInPlace in place with ', commandArgs)
-    return $this.doCootContour(...commandArgs)
-}
