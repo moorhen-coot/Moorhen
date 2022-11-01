@@ -157,7 +157,6 @@ export const BabyGruFileMenu = (props) => {
         >
             {({ placement, arrowProps, show: _show, popper, ...props }) => (
                 <div
-                    {...props}
                     style={{
                         position: 'absolute',
                         marginBottom: '0.5rem',
@@ -168,7 +167,8 @@ export const BabyGruFileMenu = (props) => {
                         ...props.style,
                     }}
                 >
-                    <BabyGruDisambiguateColumns resolveOrReject={disambiguateColumnsResolve}
+                    <BabyGruDisambiguateColumns
+                        resolveOrReject={disambiguateColumnsResolve}
                         columns={columns} />
 
                 </div>

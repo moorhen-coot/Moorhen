@@ -93,7 +93,7 @@ const read_mtz = (mapData, name, selectedColumns) => {
 }
 
 onmessage = function (e) {
-    console.log(e.data.message)
+    //console.log(e.data.message)
     if (e.data.message === 'CootInitialize') {
         postMessage({ message: 'Initializing molecules_container' })
 
@@ -170,7 +170,7 @@ onmessage = function (e) {
     else if (e.data.message === 'read_mtz') {
         try {
             const theGuid = guid()
-            console.log('e.data.data type', typeof e.data.data, e.data.data.length)
+            //console.log('e.data.data type', typeof e.data.data, e.data.data.length)
             cootModule.FS_createDataFile(".", `${theGuid}.mtz`, e.data.data, true, true, true);
             const tempFilename = `./${theGuid}.mtz`
             const mapMolNo = molecules_container.read_mtz(tempFilename, 'FWT', 'PHWT', "", false, false)
@@ -227,7 +227,9 @@ onmessage = function (e) {
             else {
                 cootResult = molecules_container[command](...commandArgs)
             }
+            //console.log('Here')
             let returnResult;
+            //console.log('And Here')
             switch (returnType) {
                 case 'mesh':
                     returnResult = simpleMeshToMeshData(cootResult)
@@ -242,6 +244,7 @@ onmessage = function (e) {
                     returnResult = cootResult
                     break;
             }
+            //console.log('And also Here')
 
             postMessage({
                 returnType, command, commandArgs, message, messageId, myTimeStamp,
