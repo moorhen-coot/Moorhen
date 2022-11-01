@@ -105,7 +105,7 @@ export const BabyGruSequenceViewer = (props) => {
         // TODO: Need to double check that this is actually removing the event listeners
         return () => {
             sequenceRef.current.removeEventListener('change', handleChange);
-            sequenceRef.current.removeEventListener('dblclick', handleChange);
+            sequenceRef.current.removeEventListener('dblclick', disableDoubleClick, true);
         };
         
       }, []);    
