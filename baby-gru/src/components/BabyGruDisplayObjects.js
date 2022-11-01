@@ -1,7 +1,8 @@
-import { useEffect, Fragment, useState, createRef, useCallback } from "react";
+import { useEffect, Fragment, useState, createRef, useCallback, useRef } from "react";
 import { Card, Form, Button, Row, Col, FormCheck } from "react-bootstrap";
 import { cootCommand, doDownload } from '../BabyGruUtils';
 import { DownloadOutlined, UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, MoreVertOutlined } from '@mui/icons-material';
+import { BabyGruSequenceViewer } from "./BabyGruSequenceViewer";
 import BabyGruSlider from "./BabyGruSlider";
 
 export const BabyGruMoleculeCard = (props) => {
@@ -72,33 +73,59 @@ export const BabyGruMoleculeCard = (props) => {
             </Row>
         </Card.Header>
         <Card.Body>
-            {
-                Object.keys(props.molecule.displayObjects).map(key => {
-                    return <Form.Check
-                        inline
-                        label={`${key.substring(0, 3)}.`}
-                        feedbackTooltip={"Toggle on"}
-                        name={key}
-                        type="checkbox"
-                        variant="outline"
-                        checked={showState[key]}
-                        onChange={(e) => {
-                            if (e.target.checked) {
-                                props.molecule.show(key, props.glRef)
-                                const changedState = { ...showState }
-                                changedState[key] = true
-                                setShowState(changedState)
+                <Row style={{ height: '100%' }}>
+                    <Col> 
+                    <div>
+                        <b>Display Options</b>
+                    </div>
+                    <div>
+                        {Object.keys(props.molecule.displayObjects).map(key => {
+                                return <Form.Check
+                                    inline
+                                    label={`${key.substring(0, 3)}.`}
+                                    feedbackTooltip={"Toggle on"}
+                                    name={key}
+                                    type="checkbox"
+                                    variant="outline"
+                                    checked={showState[key]}
+                                    onChange={(e) => {
+                                        if (e.target.checked) {
+                                            props.molecule.show(key, props.glRef)
+                                            const changedState = { ...showState }
+                                            changedState[key] = true
+                                            setShowState(changedState)
+                                        }
+                                        else {
+                                            props.molecule.hide(key, props.glRef)
+                                            const changedState = { ...showState }
+                                            changedState[key] = false
+                                            setShowState(changedState)
+                                        }
+                                    }}/>
+                                })
                             }
-                            else {
-                                props.molecule.hide(key, props.glRef)
-                                const changedState = { ...showState }
-                                changedState[key] = false
-                                setShowState(changedState)
-                            }
-                        }}
-                    />
-                })
-            }
+                    </div>
+                    </Col>
+                </Row>
+                <hr></hr>
+                <Row style={{ height: '100%' }}>
+                    <Col>
+                        <div>
+                            <b>Sequences</b>
+                        </div>
+                        {
+                            props.molecule.cachedAtoms.sequences.map(
+                                sequence => (
+                                    <BabyGruSequenceViewer 
+                                        sequence={sequence}
+                                        molecule={props.molecule}
+                                        glRef={props.glRef}
+                                    />
+                                )
+                            )
+                        }
+                    </Col>
+                </Row>
         </Card.Body>
     </Card >
 }
@@ -255,9 +282,6 @@ const BabyGruMapCard = (props) => {
 
 
 export const BabyGruDisplayObjects = (props) => {
-
-    useEffect(() => {
-    }, [])
 
     let displayData = [];
     // TODO: Concatenate molecules and maps, sort them by coordMolNo and then push them in that order...

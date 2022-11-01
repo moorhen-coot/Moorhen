@@ -82,10 +82,10 @@ export const BabyGruContainer = (props) => {
     useEffect(() => {
         glResize()
         setAccordionHeight(getAccordionHeight())
-        displayObjectsAccordionBodyHeight !== 0 ? setDisplayObjectsAccordionBodyHeight(convertViewtoPx(20, windowHeight)) : setDisplayObjectsAccordionBodyHeight(convertViewtoPx(0, windowHeight))
+        displayObjectsAccordionBodyHeight !== 0 ? setDisplayObjectsAccordionBodyHeight(convertViewtoPx(40, windowHeight)) : setDisplayObjectsAccordionBodyHeight(convertViewtoPx(0, windowHeight))
         toolAccordionBodyHeight !== 0 ? setToolAccordionBodyHeight(convertViewtoPx(70, windowHeight)) : setToolAccordionBodyHeight(convertViewtoPx(0, windowHeight))
-        sequenceViewerBodyHeight !== 0 ? setSequenceViewerBodyHeight(convertViewtoPx(15, windowHeight)) : setSequenceViewerBodyHeight(convertViewtoPx(0, windowHeight))
-        consoleBodyHeight !== 0 ? setConsoleBodyHeight(convertViewtoPx(15, windowHeight)) : setConsoleBodyHeight(convertViewtoPx(0, windowHeight))
+        sequenceViewerBodyHeight !== 0 ? setSequenceViewerBodyHeight(convertViewtoPx(30, windowHeight)) : setSequenceViewerBodyHeight(convertViewtoPx(0, windowHeight))
+        consoleBodyHeight !== 0 ? setConsoleBodyHeight(convertViewtoPx(30, windowHeight)) : setConsoleBodyHeight(convertViewtoPx(0, windowHeight))
         consoleDivRef.current.scrollTop = consoleDivRef.current.scrollHeight;
     }, [showSideBar, windowHeight, windowWidth])
 
@@ -197,16 +197,16 @@ export const BabyGruContainer = (props) => {
                                 return
                             }
                             if (openPanels.includes('showDisplayObjects')) {
-                                setDisplayObjectsAccordionBodyHeight(convertViewtoPx(20, windowHeight))
+                                setDisplayObjectsAccordionBodyHeight(convertViewtoPx(40, windowHeight))
                             }
                             if (openPanels.includes('showTools')) {
                                 setToolAccordionBodyHeight(convertViewtoPx(70, windowHeight))
                             }
                             if (openPanels.includes('showSequenceViewer')) {
-                                setSequenceViewerBodyHeight(convertViewtoPx(15, windowHeight))
+                                setSequenceViewerBodyHeight(convertViewtoPx(30, windowHeight))
                             }
                             if (openPanels.includes('showConsole')) {
-                                setConsoleBodyHeight(convertViewtoPx(15, windowHeight))
+                                setConsoleBodyHeight(convertViewtoPx(30, windowHeight))
                             }
                         }}>
                         <Accordion.Item eventKey="showDisplayObjects" style={{ width: sideBarWidth, padding: '0', margin: '0' }} >
@@ -232,16 +232,6 @@ export const BabyGruContainer = (props) => {
                                         Not ready yet...
                                     </Tab>
                                 </Tabs>
-                            </Accordion.Body>
-                        </Accordion.Item>
-                        <Accordion.Item eventKey="showSequenceViewer" style={{ width: sideBarWidth, padding: '0', margin: '0' }} >
-                            <Accordion.Header style={{ height: '4rem' }}>Sequences</Accordion.Header>
-                            <Accordion.Body style={{ height: sequenceViewerBodyHeight }}>
-                                <div ref={sequenceViewerRef} style={{
-                                    textAlign: "left"
-                                }}>
-                                    <BabyGruSequenceViewer molecules={molecules} glRef={glRef} />
-                                </div>
                             </Accordion.Body>
                         </Accordion.Item>
                         <Accordion.Item eventKey="showConsole" style={{ width: sideBarWidth, padding: '0', margin: '0' }} >
