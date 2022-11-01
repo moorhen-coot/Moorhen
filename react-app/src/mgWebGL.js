@@ -8093,6 +8093,39 @@ class MGWebGL extends Component {
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.textTex);
     }
 
+    getFrontAndBackPos(event) {
+        const self = this;
+        let x = this.gl_cursorPos[0];
+        let y = this.canvas.height-this.gl_cursorPos[1];
+        x *= getDeviceScale();
+        y *= getDeviceScale();
+        console.log(x,y);
+
+        //document.getElementById("info").innerHTML="Click: "+event.x+" "+event.y;
+        let invQuat = quat4.create();
+        quat4Inverse(self.myQuat,invQuat);
+        const theMatrix = quatToMat4(invQuat);
+        const ratio =  1.0*self.gl.viewportWidth/self.gl.viewportHeight;
+        const minX = (-24.*ratio*self.zoom);
+        const maxX =  (24.*ratio*self.zoom);
+        const minY = (-24.*self.zoom);
+        const maxY =  (24.*self.zoom);
+        const fracX = 1.0*x/self.gl.viewportWidth;
+        const fracY = 1.0*(y)/self.gl.viewportHeight;
+        const theX = minX + fracX*(maxX - minX);
+        const theY = maxY - fracY*(maxY - minY);
+        //var frontPos = vec3Create([theX,theY,-1000.0]);
+        //var backPos  = vec3Create([theX,theY,1000.0]);
+        //MN Changed to improve picking
+        let frontPos = vec3Create([theX,theY,this.gl_clipPlane0[3]+500.]);
+        let backPos  = vec3Create([theX,theY,this.gl_clipPlane1[3]-500.]);
+        vec3.transformMat4(frontPos,frontPos,theMatrix);
+        vec3.transformMat4(backPos,backPos,theMatrix);
+        vec3.subtract(frontPos,frontPos,self.origin);
+        vec3.subtract(backPos,backPos,self.origin);
+        return [frontPos,backPos];
+    }
+
     doClick(event,self) {
         if(!self.mouseMoved){
             var x;
@@ -8114,7 +8147,6 @@ class MGWebGL extends Component {
             y -= offset.top;
             x *= getDeviceScale();
             y *= getDeviceScale();
-
 
             //document.getElementById("info").innerHTML="Click: "+event.x+" "+event.y;
             var invQuat = quat4.create();
@@ -10109,6 +10141,19 @@ class MGWebGL extends Component {
             newwindow.document.close();
         }
         // FIXME, we need an active map, like Coot.
+        if(event.keyCode===71||event.keyCode===103){
+            const frontAndBack = self.getFrontAndBackPos(event);
+            console.log("G force!");
+            console.log(frontAndBack[0],frontAndBack[1]);
+            var goToBlobEvent = new CustomEvent("goToBlob", {
+                    "detail": {
+                        front:[frontAndBack[0][0],frontAndBack[0][1],frontAndBack[0][2]],
+                        back:[frontAndBack[1][0],frontAndBack[1][1],frontAndBack[1][2]]
+                    }
+                });
+            document.dispatchEvent(goToBlobEvent);
+        }
+
         if(event.keyCode===187){ //+ (actually equals, sigh)
             for(let ilm=0;ilm<self.liveUpdatingMaps.length;ilm++){
                 self.liveUpdatingMaps[ilm].contourLevel += 0.05;

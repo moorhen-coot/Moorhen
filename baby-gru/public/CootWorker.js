@@ -40,6 +40,14 @@ const simpleMeshToMeshData = (simpleMesh) => {
     return { prim_types: [["TRIANGLES"]], idx_tri: [[totIdxs]], vert_tri: [[totPos]], norm_tri: [[totNorm]], col_tri: [[totCol]] };
 }
 
+const floatArrayToJSArray = (floatArray) => {
+    let returnResult = []
+    for(let i=0;i<floatArray.size();i++){
+        returnResult.push(floatArray.get(i));
+    }
+    return returnResult;
+}
+
 const simpleMeshToLineMeshData = (simpleMesh) => {
     const vertices = simpleMesh.vertices;
     const triangles = simpleMesh.triangles;
@@ -238,6 +246,10 @@ onmessage = function (e) {
                 case 'lines_mesh':
                     returnResult = simpleMeshToLineMeshData(cootResult)
                     //returnResult = simpleMeshToLineMeshData(cootResult)
+                    break;
+                case 'float_array':
+                    returnResult = floatArrayToJSArray(cootResult)
+                    console.log("float_array",returnResult)
                     break;
                 case 'status':
                 default:

@@ -171,6 +171,7 @@ export const BabyGruContainer = (props) => {
                             molecules={molecules}
                             ref={glRef}
                             maps={maps}
+                            commandCentre={commandCentre} 
                             width={webGLWidth}
                             height={webGLHeight}
                         />
