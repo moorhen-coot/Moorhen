@@ -117,7 +117,7 @@ const BabyGruMapCard = (props) => {
             }
             else {
                 busyContouring.current = true
-                props.commandCentre.extendConsoleMessage("Because contourLevel or mapRadius changed useCallback")
+                props.commandCentre.current.extendConsoleMessage("Because contourLevel or mapRadius changed useCallback")
                 props.map.doCootContour(props.glRef.current,
                     ...nextOrigin.current,
                     props.mapRadius,
