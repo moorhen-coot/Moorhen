@@ -48,7 +48,6 @@ export const BabyGruSequenceViewer = (props) => {
     const managerRef = useRef(null);
     const sequenceRef = useRef(null);
     const navigationRef = useRef(null);
-    const [selectedResidues, setSelectedResidues] = useState(null);
     const [message, setMessage] = useState("");
     const [start, end] = calculateDisplayStartAndEnd(props.sequence.sequence.length);
 
@@ -81,7 +80,7 @@ export const BabyGruSequenceViewer = (props) => {
                     props.setClickedResidue({modelIndex:0, molName:props.molecule.name, chain:props.sequence.chain, seqNum:evt.detail.feature.start})
                 } else if (evt.detail.highlight.includes(',')) {
                     let residues = evt.detail.highlight.split(',').map(residue => parseInt(residue.split(':')[0]))
-                    setSelectedResidues([Math.min(...residues), Math.max(...residues)])
+                    props.setSelectedResidues([Math.min(...residues), Math.max(...residues)])
                 }
             } else if (evt.detail.eventtype === "mouseover") {
                 if (evt.detail.feature !== null) {
@@ -116,19 +115,17 @@ export const BabyGruSequenceViewer = (props) => {
         if (props.clickedResidue && props.clickedResidue.chain != props.sequence.chain) {
             clearSelection()
         }
-
-        
-
     }, [props.clickedResidue]);
 
     /**
      * Hook used to set a range of highlighted residues
      */
-    useEffect(()=> {
-        if (selectedResidues !== null) {
-          setSelection(...selectedResidues)
+     useEffect(()=> {
+        if (props.selectedResidues !== null  && props.clickedResidue.chain === props.sequence.chain) {
+          setSelection(...props.selectedResidues)
         }
-    }, [selectedResidues]);
+    }, [props.selectedResidues]);
+
 
 
     /**

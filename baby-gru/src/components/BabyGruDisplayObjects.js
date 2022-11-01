@@ -8,6 +8,7 @@ import BabyGruSlider from "./BabyGruSlider";
 export const BabyGruMoleculeCard = (props) => {
     const [showState, setShowState] = useState({})
     const [clickedResidue, setClickedResidue] = useState(null);
+    const [selectedResidues, setSelectedResidues] = useState(null);
 
     useEffect(() => {
         const initialState = {}
