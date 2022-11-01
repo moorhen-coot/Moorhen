@@ -102,6 +102,7 @@ export const BabyGruFileMenu = (props) => {
     const loadTutorialData = () => {
         const newMolecule = new BabyGruMolecule(commandCentre)
         const newMap = new BabyGruMap(commandCentre)
+        const newDiffMap = new BabyGruMap(commandCentre)
         newMolecule.loadToCootFromURL(`./tutorials/moorhen-tutorial-structure-number-1.pdb`, "moorhen-tutorial-1")
             .then(result => {
                 newMolecule.fetchIfDirtyAndDraw('bonds', glRef, true)
@@ -112,12 +113,15 @@ export const BabyGruFileMenu = (props) => {
                 newMolecule.centreOn(glRef)
             }).then(_ => {
                 return newMap.loadToCootFromURL(`./tutorials/moorhen-tutorial-map-number-1.mtz`, "moorhen-tutorial-1",
-                    { F: "FWT", PHI: "PHWT", isDifference: false })
-            })
-            .then(result => {
-                setMaps([...maps, newMap])
+                    { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false })
+            }).then(_ => {
+                return newDiffMap.loadToCootFromURL(`./tutorials/moorhen-tutorial-map-number-1.mtz`, "moorhen-tutorial-1",
+                    { F: "DELFWT", PHI: "PHDELWT", isDifference: true, useWeight: false })
+            }).then(_ => {
+                setMaps([...maps, newMap, newDiffMap])
                 props.setActiveMap(newMap)
             })
+            
     }
 
     return <>
