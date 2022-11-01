@@ -7,6 +7,7 @@ import BabyGruSlider from "./BabyGruSlider";
 
 export const BabyGruMoleculeCard = (props) => {
     const [showState, setShowState] = useState({})
+    const [clickedResidue, setClickedResidue] = useState(null);
 
     useEffect(() => {
         const initialState = {}
@@ -22,6 +23,15 @@ export const BabyGruMoleculeCard = (props) => {
         props.molecule.displayObjects.rama.length,
         props.molecule.displayObjects.rotamer.length,
     ])
+
+    useEffect(() => {
+        if (!clickedResidue) {
+            return
+        }
+    
+        props.molecule.centreOn(props.glRef, clickedResidue)
+   
+    }, [clickedResidue]);
 
     return <Card className="px-0"  style={{marginBottom:'0.5rem', padding:'0'}} key={props.molecule.coordMolNo}>
         <Card.Header>
@@ -120,6 +130,8 @@ export const BabyGruMoleculeCard = (props) => {
                                         sequence={sequence}
                                         molecule={props.molecule}
                                         glRef={props.glRef}
+                                        clickedResidue={clickedResidue}
+                                        setClickedResidue={setClickedResidue}
                                     />
                                 )
                             )

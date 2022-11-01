@@ -50,7 +50,6 @@ export const BabyGruSequenceViewer = (props) => {
     const navigationRef = useRef(null);
     const [selectedResidues, setSelectedResidues] = useState(null);
     const [message, setMessage] = useState("");
-    const [clickedResidue, setClickedResidue] = useState(null);
     const [start, end] = calculateDisplayStartAndEnd(props.sequence.sequence.length);
 
     /**
@@ -79,7 +78,7 @@ export const BabyGruSequenceViewer = (props) => {
         const handleChange = (evt) => {
             if (evt.detail.eventtype === "click") {
                 if (evt.detail.feature !== null && !(evt.detail.highlight.includes(','))) {
-                    setClickedResidue({modelIndex:0, molName:props.molecule.name, chain:props.sequence.chain, seqNum:evt.detail.feature.start})
+                    props.setClickedResidue({modelIndex:0, molName:props.molecule.name, chain:props.sequence.chain, seqNum:evt.detail.feature.start})
                 } else if (evt.detail.highlight.includes(',')) {
                     let residues = evt.detail.highlight.split(',').map(residue => parseInt(residue.split(':')[0]))
                     setSelectedResidues([Math.min(...residues), Math.max(...residues)])
@@ -109,6 +108,18 @@ export const BabyGruSequenceViewer = (props) => {
         };
         
       }, []);    
+    
+    /**
+     * Hook used to clear the current selection if user selects residue from different chain
+     */
+     useEffect(() => {       
+        if (props.clickedResidue && props.clickedResidue.chain != props.sequence.chain) {
+            clearSelection()
+        }
+
+        
+
+    }, [props.clickedResidue]);
 
     /**
      * Hook used to set a range of highlighted residues
@@ -119,17 +130,6 @@ export const BabyGruSequenceViewer = (props) => {
         }
     }, [selectedResidues]);
 
-    /**
-     * Hook used to center on a given clicked residue
-     */
-    useEffect(() => {
-        if (!clickedResidue) {
-            return
-        }
-
-        props.molecule.centreOn(props.glRef, clickedResidue)
-
-    }, [clickedResidue]);
 
     /**
      * Hook used on component start-up to define the protvista-navigation and protvista-sequence display start and end
