@@ -1,4 +1,4 @@
-import { NavDropdown, Form, Button, InputGroup, Modal, FormSelect, Col, Row } from "react-bootstrap";
+import { NavDropdown, Form, Button, InputGroup, Modal, FormSelect, Col, Row, Overlay, Card } from "react-bootstrap";
 import { BabyGruMolecule } from "./BabyGruMolecule";
 import { BabyGruMap } from "./BabyGruMap";
 import { useEffect, useState, useRef, createRef } from "react";
@@ -10,6 +10,8 @@ export const BabyGruFileMenu = (props) => {
     const [disambiguateColumnsVisible, setDisambiguateColumnsVisible] = useState(false)
     const [disambiguateColumnsResolve, setDisambiguateColumnsResolve] = useState(() => { })
     const [columns, setColumns] = useState({})
+    const target = useRef(null);
+
     const awaitingPromiseRef = useRef({
         resolve: () => { },
         reject: () => { }
@@ -111,7 +113,7 @@ export const BabyGruFileMenu = (props) => {
             .then(result => {
                 setMaps([...maps, newMap])
                 props.setActiveMap(newMap)
-                newMap.cootContourInPlace(glRef.current, 15)
+                //newMap.cootContourInPlace(glRef.current, 15)
             })
     }
 
@@ -131,7 +133,7 @@ export const BabyGruFileMenu = (props) => {
             </Form.Group>
             <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="uploadMTZs" className="mb-3">
                 <Form.Label>Map coefficients</Form.Label>
-                <Form.Control type="file" accept=".mtz" multiple={true} onChange={(e) => { loadMtzFiles(e.target.files) }} />
+                <Form.Control ref={target} type="file" accept=".mtz" multiple={true} onChange={(e) => { loadMtzFiles(e.target.files) }} />
             </Form.Group>
 
             <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="uploadMTZs" className="mb-3">
@@ -148,53 +150,74 @@ export const BabyGruFileMenu = (props) => {
             </Form.Group>
 
         </NavDropdown>
-        <BabyGruDisambiguateColumns
-            visible={disambiguateColumnsVisible}
-            resolveOrReject={disambiguateColumnsResolve}
-            columns={columns}
-        />
+        <Overlay
+            target={target.current}
+            show={disambiguateColumnsVisible}
+            placement={"right"}
+        >
+            {({ placement, arrowProps, show: _show, popper, ...props }) => (
+                <div
+                    {...props}
+                    style={{
+                        position: 'absolute',
+                        marginBottom: '0.5rem',
+                        marginLeft: '1rem',
+                        backgroundColor: 'rgba(200, 200, 200, 0.65)',
+                        color: 'black',
+                        borderRadius: 3,
+                        ...props.style,
+                    }}
+                >
+                    <BabyGruDisambiguateColumns resolveOrReject={disambiguateColumnsResolve}
+                        columns={columns} />
+
+                </div>
+            )}
+        </Overlay>
     </>
 }
+
 
 const BabyGruDisambiguateColumns = (props) => {
     const fRef = createRef()
     const pRef = createRef()
 
     useEffect(() => {
-        console.log('props.resolveOrReject', props.resolveOrReject)
     }, [props.resolveOrReject])
 
-    return <Modal show={props.visible} onHide={() => {
-        props.resolveOrReject.current.reject("Cancelled")
-    }}>
-        <Modal.Title>Dialog to disambiguate columns</Modal.Title>
-        <Modal.Body>
-            <Row key="Row1">
-                <Col key="F">
-                    <FormSelect ref={fRef} defaultValue="FWT" onChange={(val) => { }}>
-                        {Object.keys(props.columns)
-                            .filter(key => props.columns[key] === 'F')
-                            .map(key => <option value={key} key={key}>{key}</option>
-                            )}
-                    </FormSelect>
-                </Col>
-                <Col key="Phi">
-                    <FormSelect ref={pRef} defaultValue="PHWT" onChange={(val) => { }}>
-                        {Object.keys(props.columns)
-                            .filter(key => props.columns[key] === 'P')
-                            .map(key => <option value={key} key={key}>{key}</option>
-                            )}
-                    </FormSelect>
-                </Col>
-            </Row>
-            <Row key="Row2">
-                <Button onClick={() => {
-                    props.resolveOrReject.current.resolve({
-                        F: fRef.current.value,
-                        PHI: pRef.current.value
-                    })
-                }}>OK</Button>
-            </Row>
-        </Modal.Body>
-    </Modal>
+    return <div>
+        <Card>
+            <Card.Title>
+                Select columns
+            </Card.Title>
+            <Card.Body>
+                <Row key="Row1">
+                    <Col key="F">
+                        <FormSelect ref={fRef} defaultValue="FWT" onChange={(val) => { }}>
+                            {Object.keys(props.columns)
+                                .filter(key => props.columns[key] === 'F')
+                                .map(key => <option value={key} key={key}>{key}</option>
+                                )}
+                        </FormSelect>
+                    </Col>
+                    <Col key="Phi">
+                        <FormSelect ref={pRef} defaultValue="PHWT" onChange={(val) => { }}>
+                            {Object.keys(props.columns)
+                                .filter(key => props.columns[key] === 'P')
+                                .map(key => <option value={key} key={key}>{key}</option>
+                                )}
+                        </FormSelect>
+                    </Col>
+                </Row>
+                <Row key="Row2">
+                    <Button onClick={() => {
+                        props.resolveOrReject.current.resolve({
+                            F: fRef.current.value,
+                            PHI: pRef.current.value
+                        })
+                    }}>OK</Button>
+                </Row>
+            </Card.Body>
+        </Card>
+    </div>
 }
