@@ -1,8 +1,9 @@
-import { NavDropdown, Form, Button, InputGroup, Modal, FormSelect, Col, Row, Overlay, Card } from "react-bootstrap";
+import { NavDropdown, Form, Button, InputGroup, Modal, FormSelect, Col, Row, Overlay, Card, FormCheck } from "react-bootstrap";
 import { BabyGruMolecule } from "./BabyGruMolecule";
 import { BabyGruMap } from "./BabyGruMap";
 import { useEffect, useState, useRef, createRef } from "react";
 import { BabyGruMtzWrapper } from '../BabyGruUtils';
+import { InsertDriveFile } from "@mui/icons-material";
 
 export const BabyGruFileMenu = (props) => {
 
@@ -58,9 +59,12 @@ export const BabyGruFileMenu = (props) => {
                 .filter(key => newColumns[key] === 'F')
             const pColumns = Object.keys(newColumns)
                 .filter(key => newColumns[key] === 'P')
+            const wColumns = Object.keys(newColumns)
+                .filter(key => newColumns[key] === 'W')
             if (fColumns.length === 1 && fColumns.includes('FWT') &&
                 pColumns.length === 1 && pColumns.includes('PHWT')) {
-                resolve({ F: 'FWT', PHI: 'PHWT' })
+                let result = { F: 'FWT', PHI: 'PHWT', W: '', isDifference: false, useWeight: false }
+                resolve(result)
             }
             else {
                 setColumns(newColumns)
@@ -98,6 +102,7 @@ export const BabyGruFileMenu = (props) => {
     const loadTutorialData = () => {
         const newMolecule = new BabyGruMolecule(commandCentre)
         const newMap = new BabyGruMap(commandCentre)
+        const newDiffMap = new BabyGruMap(commandCentre)
         newMolecule.loadToCootFromURL(`./tutorials/moorhen-tutorial-structure-number-1.pdb`, "moorhen-tutorial-1")
             .then(result => {
                 newMolecule.fetchIfDirtyAndDraw('bonds', glRef, true)
@@ -108,13 +113,15 @@ export const BabyGruFileMenu = (props) => {
                 newMolecule.centreOn(glRef)
             }).then(_ => {
                 return newMap.loadToCootFromURL(`./tutorials/moorhen-tutorial-map-number-1.mtz`, "moorhen-tutorial-1",
-                    { F: "FWT", PHI: "PHWT" })
-            })
-            .then(result => {
-                setMaps([...maps, newMap])
+                    { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false })
+            }).then(_ => {
+                return newDiffMap.loadToCootFromURL(`./tutorials/moorhen-tutorial-map-number-1.mtz`, "moorhen-tutorial-1",
+                    { F: "DELFWT", PHI: "PHDELWT", isDifference: true, useWeight: false })
+            }).then(_ => {
+                setMaps([...maps, newMap, newDiffMap])
                 props.setActiveMap(newMap)
-                //newMap.cootContourInPlace(glRef.current, 15)
             })
+            
     }
 
     return <>
@@ -168,7 +175,8 @@ export const BabyGruFileMenu = (props) => {
                         ...props.style,
                     }}
                 >
-                    <BabyGruDisambiguateColumns resolveOrReject={disambiguateColumnsResolve}
+                    <BabyGruDisambiguateColumns
+                        resolveOrReject={disambiguateColumnsResolve}
                         columns={columns} />
 
                 </div>
@@ -181,6 +189,9 @@ export const BabyGruFileMenu = (props) => {
 const BabyGruDisambiguateColumns = (props) => {
     const fRef = createRef()
     const pRef = createRef()
+    const wRef = createRef()
+    const isDif = createRef()
+    const useWeight = createRef()
 
     useEffect(() => {
     }, [props.resolveOrReject])
@@ -191,9 +202,10 @@ const BabyGruDisambiguateColumns = (props) => {
                 Select columns
             </Card.Title>
             <Card.Body>
-                <Row key="Row1">
+                <Row key="Row1" style={{ marginBottom: "1rem" }}>
                     <Col key="F">
-                        <FormSelect ref={fRef} defaultValue="FWT" onChange={(val) => { }}>
+                        Amplitude
+                        <FormSelect size="sm" ref={fRef} defaultValue="FWT" onChange={(val) => { }}>
                             {Object.keys(props.columns)
                                 .filter(key => props.columns[key] === 'F')
                                 .map(key => <option value={key} key={key}>{key}</option>
@@ -201,20 +213,53 @@ const BabyGruDisambiguateColumns = (props) => {
                         </FormSelect>
                     </Col>
                     <Col key="Phi">
-                        <FormSelect ref={pRef} defaultValue="PHWT" onChange={(val) => { }}>
+                        Phase
+                        <FormSelect size="sm" ref={pRef} defaultValue="PHWT" onChange={(val) => { }}>
                             {Object.keys(props.columns)
                                 .filter(key => props.columns[key] === 'P')
                                 .map(key => <option value={key} key={key}>{key}</option>
                                 )}
                         </FormSelect>
                     </Col>
+                    <Col key="Weight">
+                        Weight
+                        <FormSelect size="sm" ref={wRef} defaultValue="FOM" onChange={(val) => { }}>
+                            {Object.keys(props.columns)
+                                .filter(key => props.columns[key] === 'W')
+                                .map(key => <option value={key} key={key}>{key}</option>
+                                )}
+                        </FormSelect>
+                    </Col>
                 </Row>
-                <Row key="Row2">
+                <Row style={{ marginBottom: "1rem" }}>
+                    <Col>
+                        <Form.Check
+                            label={'is diff map'}
+                            name={`isDifference`}
+                            type="checkbox"
+                            ref={isDif}
+                            variant="outline" />
+                    </Col>
+                    <Col>
+                        <Form.Check
+                            label={'use weight'}
+                            name={`useWeight`}
+                            type="checkbox"
+                            ref={useWeight}
+                            variant="outline" />
+                    </Col>
+                </Row>
+                <Row key="Row3" style={{ marginBottom: "1rem" }}>
                     <Button onClick={() => {
-                        props.resolveOrReject.current.resolve({
+                        const result = {
                             F: fRef.current.value,
-                            PHI: pRef.current.value
-                        })
+                            PHI: pRef.current.value,
+                            WEIGHT: wRef.current.value,
+                            isDifference: isDif.current.checked,
+                            useWeight: useWeight.current.checked
+                        }
+                        console.log(result)
+                        props.resolveOrReject.current.resolve(result)
                     }}>OK</Button>
                 </Row>
             </Card.Body>

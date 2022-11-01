@@ -111,7 +111,7 @@ export const BabyGruHistoryMenu = (props) => {
                 {sessionHistory.commands.length > 0 && <Table>
                     <thead>
                         <tr>
-                            {Object.keys(sessionHistory.commands[0]).filter(key => key !== "result").map(key =>
+                            {Object.keys(sessionHistory.commands[0]).filter(key => key !== "result" && key !== "commandArgs").map(key =>
                                 <th align="right">{key}</th>
                             )}
                         </tr>
@@ -119,9 +119,9 @@ export const BabyGruHistoryMenu = (props) => {
                     <tbody>
                         {sessionHistory.commands.map((row, iRow) => {
                             return <tr key={iRow}>
-                                {Object.keys(row).filter(key => key !== "result").map(key => {
-                                    let stringRep  = JSON.stringify(row[key], null, 2)
-                                    if (stringRep.length > 160){
+                                {Object.keys(row).filter(key => key !== "result" && key !== "commandArgs").map(key => {
+                                    let stringRep = JSON.stringify(row[key], null, 2)
+                                    if (stringRep.length > 160) {
                                         stringRep = `[TRUNCATED to ${stringRep.substring(0, 160)}]`
                                     }
                                     return <td align="right">{stringRep}</td>

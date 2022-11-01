@@ -215,6 +215,7 @@ const BabyGruMapCard = (props) => {
             }
             else {
                 busyContouring.current = true
+                props.commandCentre.extendConsoleMessage("Because contourLevel or mapRadius changed useCallback")
                 props.map.doCootContour(props.glRef.current,
                     ...nextOrigin.current,
                     props.mapRadius,
@@ -263,8 +264,10 @@ const BabyGruMapCard = (props) => {
     useEffect(() => {
         setWebMGContour(props.map.webMGContour)
         setCootContour(props.map.cootContour)
-        if (props.map.cootContour) {
+        if (props.map.cootContour && !busyContouring.current) {
             busyContouring.current = true
+            console.log(props.commandCentre.current)
+            props.commandCentre.current.extendConsoleMessage('Because I can')
             props.map.doCootContour(props.glRef.current,
                 ...props.glRef.current.origin.map(coord => -coord),
                 props.mapRadius,

@@ -362,6 +362,16 @@ class molecules_container_js : public molecules_container_t {
             return 0;
         }        
         int count_simple_mesh_vertices(const coot::simple_mesh_t &m) { return m.vertices.size(); }
+        std::vector<float> go_to_blob_array(float x1, float y1, float z1, float x2, float y2, float z2, float contour_level){
+            std::vector<float> o;
+            std::pair<bool, clipper::Coord_orth> pp = molecules_container_t::go_to_blob(x1, y1, z1, x2, y2, z2, contour_level);
+            if(pp.first){
+                o.push_back(pp.second.x());
+                o.push_back(pp.second.y());
+                o.push_back(pp.second.z());
+            }
+            return o;
+        }
 };
 
 std::string GetAtomNameFromAtom(mmdb::Atom *atom){
@@ -579,12 +589,15 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("mutate",&molecules_container_t::mutate)
     .function("delete_using_cid",&molecules_container_t::delete_using_cid)
     .function("get_bonds_mesh",&molecules_container_t::get_bonds_mesh)
+    .function("go_to_blob",&molecules_container_t::go_to_blob)
+    .function("set_map_sampling_rate",&molecules_container_t::set_map_sampling_rate)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<>()
     .function("writePDBASCII",&molecules_container_js::writePDBASCII)
     .function("writeCCP4Map",&molecules_container_js::writeCCP4Map)
     .function("count_simple_mesh_vertices",&molecules_container_js::count_simple_mesh_vertices)
+    .function("go_to_blob_array",&molecules_container_js::go_to_blob_array)
     ;
     class_<RamachandranInfo>("RamachandranInfo")
     .constructor<>()
@@ -639,6 +652,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("triangles",&coot::simple_mesh_t::triangles)
     ;
     register_vector<std::string>("VectorString");
+    register_vector<float>("VectorFloat");
     register_vector<RamachandranInfo>("VectorResidueIdentifier");
     register_vector<ResiduePropertyInfo>("VectorResiduePropertyInfo");
     register_vector<coot::chain_validation_information_t>("Vectorchain_validation_information_t");

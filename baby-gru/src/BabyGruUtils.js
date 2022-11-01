@@ -110,8 +110,7 @@ export const BabyGruCommandCentre = class {
             else {
                 newMessage = reply.data.consoleMessage
             }
-            this.consoleMessage = this.consoleMessage.concat(">" + newMessage + "\n")
-            this.onConsoleChanged(this.consoleMessage)
+            this.extendConsoleMessage(newMessage)
         }
         this.activeMessages.filter(
             message => message.messageId && (message.messageId === reply.data.messageId)
@@ -124,6 +123,10 @@ export const BabyGruCommandCentre = class {
         if (this.onActiveMessagesChanged) {
             this.onActiveMessagesChanged(this.activeMessages)
         }
+    }
+    extendConsoleMessage(newMessage) {
+        this.consoleMessage = this.consoleMessage.concat(">" + newMessage + "\n")
+        this.onConsoleChanged(this.consoleMessage)
     }
     makeHandler(resolve) {
         return (reply) => {
