@@ -590,6 +590,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("delete_using_cid",&molecules_container_t::delete_using_cid)
     .function("get_bonds_mesh",&molecules_container_t::get_bonds_mesh)
     .function("go_to_blob",&molecules_container_t::go_to_blob)
+    .function("set_map_sampling_rate",&molecules_container_t::set_map_sampling_rate)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<>()

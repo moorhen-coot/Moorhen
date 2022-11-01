@@ -37,7 +37,7 @@ export const BabyGruContainer = (props) => {
     const headerRef = useRef()
     const consoleDivRef = useRef()
     const [busy, setBusy] = useState(false)
-    const [mapRadius, setMapRadius] = useState(15.)
+    const [mapRadius, setMapRadius] = useState(10.)
     const [windowWidth, setWindowWidth] = useState(window.innerWidth)
     const [windowHeight, setWindowHeight] = useState(window.innerHeight)
     const [displayObjectsAccordionBodyHeight, setDisplayObjectsAccordionBodyHeight] = useState(convertViewtoPx(0, windowHeight))
