@@ -86,6 +86,7 @@ export const BabyGruContainer = (props) => {
         toolAccordionBodyHeight !== 0 ? setToolAccordionBodyHeight(convertViewtoPx(70, windowHeight)) : setToolAccordionBodyHeight(convertViewtoPx(0, windowHeight))
         sequenceViewerBodyHeight !== 0 ? setSequenceViewerBodyHeight(convertViewtoPx(15, windowHeight)) : setSequenceViewerBodyHeight(convertViewtoPx(0, windowHeight))
         consoleBodyHeight !== 0 ? setConsoleBodyHeight(convertViewtoPx(15, windowHeight)) : setConsoleBodyHeight(convertViewtoPx(0, windowHeight))
+        consoleDivRef.current.scrollTop = consoleDivRef.current.scrollHeight;
     }, [showSideBar, windowHeight, windowWidth])
 
 
@@ -170,6 +171,7 @@ export const BabyGruContainer = (props) => {
                             molecules={molecules}
                             ref={glRef}
                             maps={maps}
+                            commandCentre={commandCentre} 
                             width={webGLWidth}
                             height={webGLHeight}
                         />

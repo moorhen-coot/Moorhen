@@ -40,6 +40,14 @@ const simpleMeshToMeshData = (simpleMesh) => {
     return { prim_types: [["TRIANGLES"]], idx_tri: [[totIdxs]], vert_tri: [[totPos]], norm_tri: [[totNorm]], col_tri: [[totCol]] };
 }
 
+const floatArrayToJSArray = (floatArray) => {
+    let returnResult = []
+    for (let i = 0; i < floatArray.size(); i++) {
+        returnResult.push(floatArray.get(i));
+    }
+    return returnResult;
+}
+
 const simpleMeshToLineMeshData = (simpleMesh) => {
     const vertices = simpleMesh.vertices;
     const triangles = simpleMesh.triangles;
@@ -81,18 +89,21 @@ function base64ToArrayBuffer(base64) {
     return bytes.buffer;
 }
 
-const read_mtz = (mapData, name) => {
+const read_mtz = (mapData, name, selectedColumns) => {
     const theGuid = guid()
     const asUint8Array = new Uint8Array(mapData)
     cootModule.FS_createDataFile(".", `${theGuid}.mtz`, asUint8Array, true, true);
     const tempFilename = `./${theGuid}.mtz`
-    const mapMolNo = molecules_container.read_mtz(tempFilename, 'FWT', 'PHWT', "", false, false)
+    const read_mtz_args = [tempFilename, selectedColumns.F,
+        selectedColumns.PHI, "", false, selectedColumns.isDifference]
+    postMessage({ message: `read_mtz args ${read_mtz_args}` })
+    const mapMolNo = molecules_container.read_mtz(...read_mtz_args)
     cootModule.FS_unlink(tempFilename)
     return mapMolNo
 }
 
 onmessage = function (e) {
-    console.log(e.data.message)
+    //console.log(e.data.message)
     if (e.data.message === 'CootInitialize') {
         postMessage({ message: 'Initializing molecules_container' })
 
@@ -169,7 +180,7 @@ onmessage = function (e) {
     else if (e.data.message === 'read_mtz') {
         try {
             const theGuid = guid()
-            console.log('e.data.data type', typeof e.data.data, e.data.data.length)
+            //console.log('e.data.data type', typeof e.data.data, e.data.data.length)
             cootModule.FS_createDataFile(".", `${theGuid}.mtz`, e.data.data, true, true, true);
             const tempFilename = `./${theGuid}.mtz`
             const mapMolNo = molecules_container.read_mtz(tempFilename, 'FWT', 'PHWT', "", false, false)
@@ -226,7 +237,9 @@ onmessage = function (e) {
             else {
                 cootResult = molecules_container[command](...commandArgs)
             }
+            //console.log('Here')
             let returnResult;
+            //console.log('And Here')
             switch (returnType) {
                 case 'mesh':
                     returnResult = simpleMeshToMeshData(cootResult)
@@ -236,11 +249,16 @@ onmessage = function (e) {
                     returnResult = simpleMeshToLineMeshData(cootResult)
                     //returnResult = simpleMeshToLineMeshData(cootResult)
                     break;
+                case 'float_array':
+                    returnResult = floatArrayToJSArray(cootResult)
+                    console.log("float_array", returnResult)
+                    break;
                 case 'status':
                 default:
                     returnResult = cootResult
                     break;
             }
+            //console.log('And also Here')
 
             postMessage({
                 returnType, command, commandArgs, message, messageId, myTimeStamp,

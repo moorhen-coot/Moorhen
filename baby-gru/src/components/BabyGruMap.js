@@ -11,7 +11,7 @@ export function BabyGruMap(commandCentre) {
     this.displayObjects = { Coot: [] }
 }
 
-BabyGruMap.prototype.loadToCootFromURL = function (url, mapName) {
+BabyGruMap.prototype.loadToCootFromURL = function (url, mapName, selectedColumns) {
     const $this = this
     console.log('Off to fetch url', url)
     //Remember to change this to an appropriate URL for downloads in produciton, and to deal with the consequent CORS headache
@@ -20,20 +20,20 @@ BabyGruMap.prototype.loadToCootFromURL = function (url, mapName) {
             return response.blob()
         }).then(reflectionData => reflectionData.arrayBuffer())
         .then(arrayBuffer => {
-            return $this.loadToCootFromData(new Uint8Array(arrayBuffer), mapName)
+            return $this.loadToCootFromData(new Uint8Array(arrayBuffer), mapName, selectedColumns)
         })
         .catch((err) => { console.log(err) })
 }
 
 
-BabyGruMap.prototype.loadToCootFromData = function (data, mapName) {
+BabyGruMap.prototype.loadToCootFromData = function (data, mapName, selectedColumns) {
     const $this = this
     $this.mapName = mapName
     return new Promise((resolve, reject) => {
         return this.commandCentre.current.cootCommand({
             returnType: "status",
             command: "shim_read_mtz",
-            commandArgs: [data, mapName]
+            commandArgs: [data, mapName, selectedColumns]
         })
             .then(reply => {
                 $this.mapMolNo = reply.data.result.result
@@ -42,12 +42,12 @@ BabyGruMap.prototype.loadToCootFromData = function (data, mapName) {
     })
 }
 
-BabyGruMap.prototype.loadToCootFromFile = function (source) {
+BabyGruMap.prototype.loadToCootFromFile = function (source, selectedColumns) {
     const $this = this
     return readDataFile(source)
         .then(reflectionData => {
             const asUIntArray = new Uint8Array(reflectionData)
-            return $this.loadToCootFromData(asUIntArray, source.name)
+            return $this.loadToCootFromData(asUIntArray, source.name, selectedColumns)
         })
 }
 
@@ -62,11 +62,21 @@ BabyGruMap.prototype.getMap = function () {
 BabyGruMap.prototype.makeWebMGLive = function (gl) {
     const $this = this
     $this.webMGContour = true
-    if (!gl.liveUpdatingMaps.includes($this.liveUpdatingMaps['WebMG'])) {
-        gl.liveUpdatingMaps.push($this.liveUpdatingMaps['WebMG'])
+    let promise
+    if (!Object.keys($this.liveUpdatingMaps).includes("WebMG")){
+        promise = $this.contour(gl)
     }
-    gl.reContourMaps()
-    gl.drawScene()
+    else {
+        promise = Promise.resolve(true)
+    }
+    promise.then(()=>{
+        if (!gl.liveUpdatingMaps.includes($this.liveUpdatingMaps['WebMG'])) {
+            gl.liveUpdatingMaps.push($this.liveUpdatingMaps['WebMG'])
+        }
+        gl.reContourMaps()
+        gl.drawScene()
+    })
+
 }
 
 BabyGruMap.prototype.makeWebMGUnlive = function (gl) {
@@ -121,13 +131,6 @@ BabyGruMap.prototype.contour = function (gl) {
                 gl.reContourMaps()
             }
 
-            if ($this.cootContour) {
-                $this.doCootContour(gl,
-                    -gl.origin[0],
-                    -gl.origin[1],
-                    -gl.origin[2],
-                    15, $this.contourLevel)
-            }
             gl.drawScene()
         })
 }

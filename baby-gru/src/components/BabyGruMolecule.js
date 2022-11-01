@@ -43,7 +43,7 @@ BabyGruMolecule.prototype.loadToCootFromFile = function (source) {
                     commandArgs: [coordData, $this.name]
                 })
                     .then(reply => {
-                        $this.coordMolNo = reply.data.result.coordMolNo
+                        $this.coordMolNo = reply.data.result.result
                         resolve($this)
                     })
             })
@@ -72,7 +72,7 @@ BabyGruMolecule.prototype.loadToCootFromURL = function (url, molName) {
                     commandArgs: [coordData, $this.name]
                 })
                     .then(reply => {
-                        $this.coordMolNo = reply.data.result.coordMolNo
+                        $this.coordMolNo = reply.data.result.result
                         resolve($this)
                     })
             })
@@ -364,7 +364,7 @@ BabyGruMolecule.prototype.drawBonds = function (webMGAtoms, gl, colourSchemeInde
             item.sizes[0].length > 0 &&
             item.sizes[0][0].length > 0
     })
-    console.log('clearing', style, gl)
+    //console.log('clearing', style, gl)
     $this.clearBuffersOfStyle(style, gl)
     this.addBuffersOfStyle(gl, objects, style)
 }

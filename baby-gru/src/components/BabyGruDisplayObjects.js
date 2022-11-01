@@ -31,7 +31,7 @@ export const BabyGruMoleculeCard = (props) => {
                 <Col style={{display:'flex', justifyContent:'right'}}>
                     <Button size="sm" variant="outlined"
                         onClick={() => {
-                            cootCommand(props.cootWorker, {
+                            props.commandCentre.current.cootCommand( {
                                 returnType: "status",
                                 command: "undo",
                                 commandArgs: [props.molecule.coordMolNo]
@@ -42,7 +42,7 @@ export const BabyGruMoleculeCard = (props) => {
                         }}><UndoOutlined /></Button>
                     <Button size="sm" variant="outlined"
                         onClick={() => {
-                            cootCommand(props.cootWorker, {
+                            props.commandCentre.current.cootCommand({
                                 returnType: "status",
                                 command: "redo",
                                 commandArgs: [props.molecule.coordMolNo]
@@ -267,7 +267,7 @@ export const BabyGruDisplayObjects = (props) => {
                 index={molecule.coordMolNo}
                 molecule={molecule}
                 glRef={props.glRef}
-                cootWorker={props.cootWorker}>
+                commandCentre={props.commandCentre}>
             </BabyGruMoleculeCard>
             )
         )

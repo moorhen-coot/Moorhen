@@ -17,6 +17,26 @@ export const BabyGruWebMG = forwardRef((props, glRef) => {
         setClipFogByZoom()
     })
 
+    const goToBlob = useCallback(e => {
+        props.commandCentre.current.cootCommand({
+            returnType: "float_array",
+            command: "go_to_blob_array",
+            commandArgs: [e.detail.front[0],e.detail.front[1],e.detail.front[2],e.detail.back[0],e.detail.back[1],e.detail.back[2],0.5]
+        }).then(response => {
+            let newOrigin = response.data.result.result;
+            if(newOrigin.length===3){
+                glRef.current.setOrigin([-newOrigin[0],-newOrigin[1],-newOrigin[2]])
+            }
+        })
+    })
+
+    useEffect(() => {
+        document.addEventListener("goToBlob", goToBlob);
+        return () => {
+            document.removeEventListener("goToBlob", goToBlob);
+        };
+    }, [goToBlob]);
+
     useEffect(() => {
         document.addEventListener("zoomChanged", handleZoomChanged);
         return () => {
@@ -48,7 +68,9 @@ export const BabyGruWebMG = forwardRef((props, glRef) => {
     useEffect(() => {
         props.maps.forEach(map => {
             console.log('in map changed useEffect')
-            map.contour(glRef.current)
+            if (map.webMGContour){
+                map.contour(glRef.current)
+            }
         })
     }, [props.maps, props.maps.length])
 
