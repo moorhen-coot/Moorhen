@@ -68,7 +68,9 @@ export const BabyGruWebMG = forwardRef((props, glRef) => {
     useEffect(() => {
         props.maps.forEach(map => {
             console.log('in map changed useEffect')
-            map.contour(glRef.current)
+            if (map.webMGContour){
+                map.contour(glRef.current)
+            }
         })
     }, [props.maps, props.maps.length])
 

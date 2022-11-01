@@ -157,6 +157,7 @@ export const BabyGruFileMenu = (props) => {
         >
             {({ placement, arrowProps, show: _show, popper, ...props }) => (
                 <div
+                    {...props}
                     style={{
                         position: 'absolute',
                         marginBottom: '0.5rem',

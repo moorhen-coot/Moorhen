@@ -62,11 +62,21 @@ BabyGruMap.prototype.getMap = function () {
 BabyGruMap.prototype.makeWebMGLive = function (gl) {
     const $this = this
     $this.webMGContour = true
-    if (!gl.liveUpdatingMaps.includes($this.liveUpdatingMaps['WebMG'])) {
-        gl.liveUpdatingMaps.push($this.liveUpdatingMaps['WebMG'])
+    let promise
+    if (!Object.keys($this.liveUpdatingMaps).includes("WebMG")){
+        promise = $this.contour(gl)
     }
-    gl.reContourMaps()
-    gl.drawScene()
+    else {
+        promise = Promise.resolve(true)
+    }
+    promise.then(()=>{
+        if (!gl.liveUpdatingMaps.includes($this.liveUpdatingMaps['WebMG'])) {
+            gl.liveUpdatingMaps.push($this.liveUpdatingMaps['WebMG'])
+        }
+        gl.reContourMaps()
+        gl.drawScene()
+    })
+
 }
 
 BabyGruMap.prototype.makeWebMGUnlive = function (gl) {
@@ -121,13 +131,6 @@ BabyGruMap.prototype.contour = function (gl) {
                 gl.reContourMaps()
             }
 
-            if ($this.cootContour) {
-                $this.doCootContour(gl,
-                    -gl.origin[0],
-                    -gl.origin[1],
-                    -gl.origin[2],
-                    15, $this.contourLevel)
-            }
             gl.drawScene()
         })
 }
