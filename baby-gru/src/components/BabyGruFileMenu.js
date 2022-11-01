@@ -59,9 +59,12 @@ export const BabyGruFileMenu = (props) => {
                 .filter(key => newColumns[key] === 'F')
             const pColumns = Object.keys(newColumns)
                 .filter(key => newColumns[key] === 'P')
+            const wColumns = Object.keys(newColumns)
+                .filter(key => newColumns[key] === 'W')
             if (fColumns.length === 1 && fColumns.includes('FWT') &&
                 pColumns.length === 1 && pColumns.includes('PHWT')) {
-                resolve({ F: 'FWT', PHI: 'PHWT' })
+                let result = { F: 'FWT', PHI: 'PHWT', W: '', isDifference: false, useWeight: false }
+                resolve(result)
             }
             else {
                 setColumns(newColumns)
@@ -114,7 +117,6 @@ export const BabyGruFileMenu = (props) => {
             .then(result => {
                 setMaps([...maps, newMap])
                 props.setActiveMap(newMap)
-                //newMap.cootContourInPlace(glRef.current, 15)
             })
     }
 
@@ -183,7 +185,9 @@ export const BabyGruFileMenu = (props) => {
 const BabyGruDisambiguateColumns = (props) => {
     const fRef = createRef()
     const pRef = createRef()
+    const wRef = createRef()
     const isDif = createRef()
+    const useWeight = createRef()
 
     useEffect(() => {
     }, [props.resolveOrReject])
@@ -194,9 +198,10 @@ const BabyGruDisambiguateColumns = (props) => {
                 Select columns
             </Card.Title>
             <Card.Body>
-                <Row key="Row1">
+                <Row key="Row1" style={{ marginBottom: "1rem" }}>
                     <Col key="F">
-                        <FormSelect ref={fRef} defaultValue="FWT" onChange={(val) => { }}>
+                        Amplitude
+                        <FormSelect size="sm" ref={fRef} defaultValue="FWT" onChange={(val) => { }}>
                             {Object.keys(props.columns)
                                 .filter(key => props.columns[key] === 'F')
                                 .map(key => <option value={key} key={key}>{key}</option>
@@ -204,29 +209,50 @@ const BabyGruDisambiguateColumns = (props) => {
                         </FormSelect>
                     </Col>
                     <Col key="Phi">
-                        <FormSelect ref={pRef} defaultValue="PHWT" onChange={(val) => { }}>
+                        Phase
+                        <FormSelect size="sm" ref={pRef} defaultValue="PHWT" onChange={(val) => { }}>
                             {Object.keys(props.columns)
                                 .filter(key => props.columns[key] === 'P')
                                 .map(key => <option value={key} key={key}>{key}</option>
                                 )}
                         </FormSelect>
                     </Col>
+                    <Col key="Weight">
+                        Weight
+                        <FormSelect size="sm" ref={wRef} defaultValue="FOM" onChange={(val) => { }}>
+                            {Object.keys(props.columns)
+                                .filter(key => props.columns[key] === 'W')
+                                .map(key => <option value={key} key={key}>{key}</option>
+                                )}
+                        </FormSelect>
+                    </Col>
                 </Row>
-                <Row>
-                    <Form.Check
-                        inline
-                        label={'isDifference'}
-                        name={`isDifference`}
-                        type="checkbox"
-                        ref={isDif}
-                        variant="outline" />
+                <Row style={{ marginBottom: "1rem" }}>
+                    <Col>
+                        <Form.Check
+                            label={'is diff map'}
+                            name={`isDifference`}
+                            type="checkbox"
+                            ref={isDif}
+                            variant="outline" />
+                    </Col>
+                    <Col>
+                        <Form.Check
+                            label={'use weight'}
+                            name={`useWeight`}
+                            type="checkbox"
+                            ref={useWeight}
+                            variant="outline" />
+                    </Col>
                 </Row>
-                <Row key="Row3">
+                <Row key="Row3" style={{ marginBottom: "1rem" }}>
                     <Button onClick={() => {
                         const result = {
                             F: fRef.current.value,
                             PHI: pRef.current.value,
-                            isDifference: isDif.current.checked
+                            WEIGHT: wRef.current.value,
+                            isDifference: isDif.current.checked,
+                            useWeight: useWeight.current.checked
                         }
                         console.log(result)
                         props.resolveOrReject.current.resolve(result)
