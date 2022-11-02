@@ -209,6 +209,29 @@ export const BabyGruButtonBar = (props) => {
                     return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
                 }} />
 
+            <BabyGruSimpleEditButton {...props}
+                buttonIndex={"7"}
+                selectedbuttonIndex={selectedbuttonIndex}
+                setSelectedbuttonIndex={setSelectedbuttonIndex}
+                needsMapData={false}
+                cootCommand="jed_flip"
+                prompt="Click atom in residue to flip around that rotatable bond - wag the tail"
+                icon={<img className="baby-gru-button-icon" src="pixmaps/spin-view.svg" />}
+                formatArgs={(molecule, chosenAtom) => {
+                    return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, false]
+                }} />
+
+            <BabyGruSimpleEditButton {...props}
+                buttonIndex={"7"}
+                selectedbuttonIndex={selectedbuttonIndex}
+                setSelectedbuttonIndex={setSelectedbuttonIndex}
+                needsMapData={false}
+                cootCommand="jed_flip"
+                prompt="Click atom in residue to flip around that rotatable bond - wag the dog"
+                icon={<img className="baby-gru-button-icon" src="pixmaps/spin-view.svg" />}
+                formatArgs={(molecule, chosenAtom) => {
+                    return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, true]
+                }} />
         </ButtonGroup>
     </div>
 }

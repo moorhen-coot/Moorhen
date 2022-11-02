@@ -574,6 +574,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("flipPeptide_cid", select_overload<int(int, const std::string&,      const std::string&)>(&molecules_container_t::flip_peptide_using_cid))
     .function("flipPeptide",     select_overload<int(int, const coot::atom_spec_t&,const std::string&)>(&molecules_container_t::flip_peptide))
     .function("side_chain_180",  select_overload<int(int, const std::string&)>                         (&molecules_container_t::side_chain_180))
+    .function("jed_flip",        select_overload<std::string(int, const std::string&, bool)>           (&molecules_container_t::jed_flip))
     .function("add_terminal_residue_directly_using_cid", select_overload<int(int,  const std::string&)>(&molecules_container_t::add_terminal_residue_directly_using_cid))
     .function("test_origin_cube",&molecules_container_t::test_origin_cube)
     .function("ramachandran_validation_markup_mesh",&molecules_container_t::ramachandran_validation_markup_mesh)
