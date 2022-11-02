@@ -221,6 +221,17 @@ onmessage = function (e) {
         })
     }
 
+    else if (e.data.message === 'copy_fragment') {
+        const newCoordMolNo = molecules_container.copy_fragment_using_residue_range(e.data.coordMolNo, e.data.chainId, e.data.res_no_start, e.data.res_no_end)
+ 
+        postMessage({
+            messageId: e.data.messageId,
+            myTimeStamp: e.data.myTimeStamp,
+            messageTag: "result",
+            result: newCoordMolNo,
+        })
+    }
+
     if (e.data.message === 'coot_command') {
         const { returnType, command, commandArgs, message, messageId, myTimeStamp } = e.data
         try {
