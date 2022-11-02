@@ -40,13 +40,7 @@ export const BabyGruMoleculeCard = (props) => {
 
     const copyFragment = () => {
         async function createNewFragmentMolecule() {
-            const inputData = {message:"copy_fragment", coordMolNo:clickedResidue.coordMolNo, chainId:clickedResidue.chain, res_no_start:selectedResidues[0], res_no_end:selectedResidues[1]}
-            const response = await props.commandCentre.current.postMessage(inputData)
-            const newMolecule = new BabyGruMolecule(props.commandCentre)
-            newMolecule.name = `${props.molecule.name} fragment`
-            await newMolecule.loadFromCoordMolNo(response.data.result)
-            await newMolecule.fetchIfDirtyAndDraw('bonds', props.glRef)
-            await newMolecule.centreOn(props.glRef)
+            const newMolecule = await props.molecule.copyFragment(clickedResidue.chain, selectedResidues[0], selectedResidues[1], props.glRef)
             props.setMolecules([...props.molecules, newMolecule])         
         }
         
