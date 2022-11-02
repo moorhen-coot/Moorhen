@@ -214,21 +214,33 @@ export const BabyGruButtonBar = (props) => {
                 selectedbuttonIndex={selectedbuttonIndex}
                 setSelectedbuttonIndex={setSelectedbuttonIndex}
                 needsMapData={false}
+                cootCommand="eigen_flip_ligand"
+                prompt="Click atom in residue to eigen flip it"
+                icon={<img className="baby-gru-button-icon" src="pixmaps/spin-view.svg" />}
+                formatArgs={(molecule, chosenAtom) => {
+                    return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
+                }} />
+
+            <BabyGruSimpleEditButton {...props}
+                buttonIndex={"8"}
+                selectedbuttonIndex={selectedbuttonIndex}
+                setSelectedbuttonIndex={setSelectedbuttonIndex}
+                needsMapData={false}
                 cootCommand="jed_flip"
                 prompt="Click atom in residue to flip around that rotatable bond - wag the tail"
-                icon={<img className="baby-gru-button-icon" src="pixmaps/spin-view.svg" />}
+                icon={<img className="baby-gru-button-icon" src="pixmaps/edit-chi.svg" />}
                 formatArgs={(molecule, chosenAtom) => {
                     return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, false]
                 }} />
 
             <BabyGruSimpleEditButton {...props}
-                buttonIndex={"7"}
+                buttonIndex={"9"}
                 selectedbuttonIndex={selectedbuttonIndex}
                 setSelectedbuttonIndex={setSelectedbuttonIndex}
                 needsMapData={false}
                 cootCommand="jed_flip"
                 prompt="Click atom in residue to flip around that rotatable bond - wag the dog"
-                icon={<img className="baby-gru-button-icon" src="pixmaps/spin-view.svg" />}
+                icon={<img className="baby-gru-button-icon" src="pixmaps/edit-chi.svg" />}
                 formatArgs={(molecule, chosenAtom) => {
                     return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, true]
                 }} />
