@@ -93,6 +93,17 @@ describe('Testing molecules_container_js', () => {
         molecules_container.fill_rotamer_probability_tables()
     })
 
+    test('Test get_single_letter_codes_for_chain', () => {
+        const molecules_container = new cootModule.molecules_container_js()
+        molecules_container.geometry_init_standard()
+        const imol = molecules_container.read_pdb('./tm-A.pdb')
+        const codes = molecules_container.get_single_letter_codes_for_chain(imol,"A")
+        console.log(codes)
+        for(let ic=0;ic<codes.size();ic++){
+            console.log(codes.get(ic).first.chain_id,codes.get(ic).second)
+        }
+    })
+
     test('Test Auto-fit rotamer', () => {
         const molecules_container = new cootModule.molecules_container_js()
         molecules_container.geometry_init_standard()
@@ -107,7 +118,7 @@ describe('Testing molecules_container_js', () => {
         const result = molecules_container.auto_fit_rotamer(imol, "A", 89, "", "", imol_map)
         const dd = (CZatom.x-CZatom_x) * (CZatom.x-CZatom_x) + (CZatom.y-CZatom_y) * (CZatom.y-CZatom_y) + (CZatom.z-CZatom_z) * (CZatom.z-CZatom_z)
         const d = Math.sqrt(dd)
-        expect(d).toBeCloseTo(7.34355,5)
+        expect(d).toBeCloseTo(7.28975,5)
     })
 
     test('Test Rama mesh', () => {
@@ -187,8 +198,8 @@ describe('Testing molecules_container_js', () => {
         const triangles = map_mesh.triangles
         const nVerticesDirect = vertices.size()
         const nTriangles = triangles.size()
-        expect(Math.abs(nVerticesDirect-70000)).toBeLessThanOrEqual(40000)
-        expect(Math.abs(nTriangles-70000)).toBeLessThanOrEqual(20000)
+        expect(Math.abs(nVerticesDirect-50000)).toBeLessThanOrEqual(2000)
+        expect(Math.abs(nTriangles-47024)).toBeLessThanOrEqual(2000)
     })
 
     test('Create test origin', () => {
