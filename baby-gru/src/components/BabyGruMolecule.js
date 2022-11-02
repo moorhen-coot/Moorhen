@@ -27,6 +27,19 @@ export function BabyGruMolecule(commandCentre) {
     }
 };
 
+
+BabyGruMolecule.prototype.copyFragment = async function (chainId, res_no_start, res_no_end, gl) {
+    const $this = this
+    const inputData = {message:"copy_fragment", coordMolNo:$this.coordMolNo, chainId:chainId, res_no_start:res_no_start, res_no_end:res_no_end}
+    const response = await $this.commandCentre.current.postMessage(inputData)
+    const newMolecule = new BabyGruMolecule($this.commandCentre)
+    newMolecule.name = `${$this.name} fragment`
+    newMolecule.coordMolNo = response.data.result
+    await newMolecule.fetchIfDirtyAndDraw('bonds', gl)
+    await newMolecule.centreOn(gl)
+    return newMolecule
+}
+
 BabyGruMolecule.prototype.loadToCootFromFile = function (source) {
     const $this = this
     const pdbRegex = /.pdb$/;
