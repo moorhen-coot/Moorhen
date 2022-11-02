@@ -37,6 +37,13 @@ BabyGruMolecule.prototype.copyFragment = async function (chainId, res_no_start, 
     newMolecule.coordMolNo = response.data.result
     await newMolecule.fetchIfDirtyAndDraw('bonds', gl)
     await newMolecule.centreOn(gl)
+    
+    const sequenceInputData = { returnType: "residue_codes", command:"get_single_letter_codes_for_chain", commandArgs:[response.data.result, chainId]}
+    const sequenceResponse = await $this.commandCentre.current.cootCommand(sequenceInputData)
+    newMolecule.cachedAtoms.sequences = [{
+        sequence: sequenceResponse.data.result.result.map(residue => residue.resCode).join('')
+    }]
+
     return newMolecule
 }
 
