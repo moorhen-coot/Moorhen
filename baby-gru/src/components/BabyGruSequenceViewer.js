@@ -74,6 +74,11 @@ export const BabyGruSequenceViewer = (props) => {
      * and mouse over. It will also disable mouse double click.
      */
     useEffect(()=> {
+        
+        if (sequenceRef.current === null) {
+            return;
+        }
+
         const handleChange = (evt) => {
             if (evt.detail.eventtype === "click") {
                 if (evt.detail.feature !== null && !(evt.detail.highlight.includes(','))) {
@@ -100,10 +105,11 @@ export const BabyGruSequenceViewer = (props) => {
         sequenceRef.current.addEventListener("change", handleChange)
         sequenceRef.current.addEventListener('dblclick', disableDoubleClick, true)
 
-        // TODO: Need to double check that this is actually removing the event listeners
         return () => {
-            sequenceRef.current.removeEventListener('change', handleChange);
-            sequenceRef.current.removeEventListener('dblclick', disableDoubleClick, true);
+            if (sequenceRef && sequenceRef.current) {
+                sequenceRef.current.removeEventListener('change', handleChange);
+                sequenceRef.current.removeEventListener('dblclick', disableDoubleClick, true);
+            }
         };
         
       }, []);    
