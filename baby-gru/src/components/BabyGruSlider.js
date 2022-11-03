@@ -6,7 +6,7 @@ import VolumeDown from '@mui/icons-material/VolumeDown';
 import VolumeUp from '@mui/icons-material/VolumeUp';
 
 export default function BabyGruSlider(props) {
-    const [value, setValue] = React.useState(30);
+    const [value, setValue] = React.useState(props.intialValue);
     const setValueTimer = React.createRef(null)
     const [externalValue, setExternalValue] = React.useState(5)
 
@@ -29,7 +29,7 @@ export default function BabyGruSlider(props) {
     };
 
     return (
-        <Box sx={{ width: 400 }}>
+        <Box sx={{ width: '100%' }}>
             <span>{props.sliderTitle}: {props.externalValue.toFixed(3)}</span>
             <Stack spacing={2} direction="row" sx={{ mb: 1 }} alignItems="center">
                 {props.minVal}
