@@ -339,10 +339,10 @@ const BabyGruMapCard = (props) => {
                 </Col>
                 <Col>
                 <Form.Group style={{ width: '20rem' }} controlId="Contouring level" className="mb-3">
-                            <BabyGruSlider minVal={0.01} maxVal={5} logScale={true} sliderTitle="Countour Level" externalValue={mapContourLevel} setExternalValue={setMapContourLevel}/>
+                            <BabyGruSlider minVal={0.01} maxVal={5} logScale={true} sliderTitle="Countour Level" intialValue={62} externalValue={mapContourLevel} setExternalValue={setMapContourLevel}/>
                     </Form.Group>
                     <Form.Group style={{ width: '20rem' }} controlId="Contouring level" className="mb-3">
-                            <BabyGruSlider minVal={0.01} maxVal={50} logScale={false} sliderTitle="Contour Radius" externalValue={mapRadius} setExternalValue={setMapRadius}/>
+                            <BabyGruSlider minVal={0.01} maxVal={50} logScale={false} sliderTitle="Contour Radius" intialValue={24.5} externalValue={mapRadius} setExternalValue={setMapRadius}/>
                     </Form.Group>
                 </Col>
             </Row>
