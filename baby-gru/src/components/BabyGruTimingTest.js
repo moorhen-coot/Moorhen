@@ -1,17 +1,15 @@
 import React, { createRef, useEffect, useCallback, forwardRef, useState } from 'react';
-import { Button, Row } from "react-bootstrap";
+import { Button, FormCheck, Row } from "react-bootstrap";
 
 export const BabyGruTimingTest = (props) => {
+    const [doJournal, setDoJournal] = useState(false)
     const [floatTimeInMs, setFloatTimeInMs] = useState("")
 
     const startTimingTest = () => {
-
         const t0 = performance.now();
         let icount = 0
         //timingTest(icount,1000,t0)
         timingTestFloats(icount, 1000, 40000, t0)
-
-
     }
 
     const timingTestFloats = (icount, maxCount, nFloats, t0) => {
@@ -19,7 +17,7 @@ export const BabyGruTimingTest = (props) => {
             returnType: "float_array",
             command: "getFloats",
             commandArgs: [nFloats]
-        }, true).then(retval => {
+        }, doJournal).then(retval => {
             if (icount < maxCount) {
                 timingTestFloats(icount + 1, maxCount, nFloats, t0)
             } else {
@@ -34,7 +32,7 @@ export const BabyGruTimingTest = (props) => {
             returnType: "int",
             command: "add",
             commandArgs: [icount]
-        }, false).then(retval => {
+        }, doJournal).then(retval => {
             if (retval.data.result.result < maxCount) {
                 timingTest(retval.data.result.result, maxCount, t0)
             } else {
@@ -46,6 +44,16 @@ export const BabyGruTimingTest = (props) => {
     }
 
     return <div>
+            <FormCheck
+                inline
+                name={`doJournal`}
+                type="checkbox"
+                variant="outline"
+                checked={doJournal} 
+                label="Journalling"
+                onChange={(e) => {
+                    setDoJournal(e.target.checked)
+                }} />
         <Row>
             <Button onClick={startTimingTest}>
                 Run profiling</Button>
