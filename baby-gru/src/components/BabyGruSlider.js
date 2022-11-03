@@ -8,14 +8,13 @@ import VolumeUp from '@mui/icons-material/VolumeUp';
 export default function BabyGruSlider(props) {
     const [value, setValue] = React.useState(30);
     const setValueTimer = React.createRef(null)
-    const [externalValue, setExternalValue] = React.useState(10)
+    const [externalValue, setExternalValue] = React.useState(5)
 
     React.useEffect(() => {
-        props.setExternalValue(externalValue)
+        props.setExternalValue(parseFloat(externalValue))
     }, [externalValue])
 
     const handleChange = (event, newValue) => {
-        console.log(newValue)
         setValue(newValue);
         if (props.logScale) {
             const log10MaxVal = Math.log10(props.maxVal)
@@ -31,11 +30,11 @@ export default function BabyGruSlider(props) {
 
     return (
         <Box sx={{ width: 400 }}>
+            <span>{props.sliderTitle}: {props.externalValue.toFixed(3)}</span>
             <Stack spacing={2} direction="row" sx={{ mb: 1 }} alignItems="center">
                 {props.minVal}
                 <Slider value={value} onChange={handleChange} />
                 {props.maxVal}
-                <input disabled type='number' value={externalValue.toFixed(3)}/>
             </Stack>
         </Box>
     );
