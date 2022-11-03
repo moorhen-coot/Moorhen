@@ -1,11 +1,18 @@
-import { useEffect, Fragment, useState, createRef, useCallback } from "react";
-import { Card, Form, Button, Row, Col, FormCheck } from "react-bootstrap";
+import { useEffect, Fragment, useState, createRef, useCallback, useRef } from "react";
+import { Card, Form, Button, Row, Col, FormCheck, Dropdown, DropdownButton, Modal } from "react-bootstrap";
 import { cootCommand, doDownload } from '../BabyGruUtils';
 import { DownloadOutlined, UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, MoreVertOutlined } from '@mui/icons-material';
+import { BabyGruSequenceViewer } from "./BabyGruSequenceViewer";
 import BabyGruSlider from "./BabyGruSlider";
+import { BabyGruMolecule } from "./BabyGruMolecule";
 
 export const BabyGruMoleculeCard = (props) => {
     const [showState, setShowState] = useState({})
+    const [selectedResidues, setSelectedResidues] = useState(null);
+    const [clickedResidue, setClickedResidue] = useState(null);
+    const [moleculeName, setMoleculeName] = useState(props.molecule.name);
+    const [showRenameModal, setShowRenameModal] = useState(false);
+    const newNameInputRef = useRef();
 
     useEffect(() => {
         const initialState = {}
@@ -22,11 +29,66 @@ export const BabyGruMoleculeCard = (props) => {
         props.molecule.displayObjects.rotamer.length,
     ])
 
+    useEffect(() => {
+        if (!clickedResidue) {
+            return
+        }
+
+        props.molecule.centreOn(props.glRef, clickedResidue)
+
+    }, [clickedResidue]);
+
+    const copyFragment = () => {
+        async function createNewFragmentMolecule() {
+            const newMolecule = await props.molecule.copyFragment(clickedResidue.chain, selectedResidues[0], selectedResidues[1], props.glRef)
+            props.setMolecules([...props.molecules, newMolecule])         
+        }
+        
+        // TODO: Test that residue start and residue end are valid (i.e. not missing from the structure)
+        if(clickedResidue && selectedResidues){
+            createNewFragmentMolecule()
+        }
+    }
+
+    const handleMoleculeRename = () => {
+        let newName = newNameInputRef.current.value
+        setShowRenameModal(false)
+        if (newName=="") {
+            return
+        }
+        props.molecule.name = newName
+        setShowRenameModal(false)
+        setMoleculeName(newName)
+    }
+
     return <Card className="px-0"  style={{marginBottom:'0.5rem', padding:'0'}} key={props.molecule.coordMolNo}>
+            <Modal show={showRenameModal} onHide={handleMoleculeRename}>
+                <Modal.Body>
+                    <Form>
+                        <Form.Group className="mb-3" controlId="renameMoleculeNewNameInput">
+                            <Form.Label>Rename Molecule</Form.Label>
+                            <Form.Control 
+                                ref={newNameInputRef}
+                                name="newMoleculeName"
+                                placeholder="New name"
+                                autoFocus
+                            />
+                        </Form.Group>
+                    </Form>
+                <div>
+                    <Button variant="secondary" onClick={() => {setShowRenameModal(false)}}>
+                        Close
+                    </Button>
+                    <Button style={{marginLeft:'0.2rem'}} variant="primary" onClick={handleMoleculeRename}>
+                        Rename
+                    </Button>
+                </div>
+            </Modal.Body>
+        </Modal>
         <Card.Header>
             <Row className='align-items-center'>
                 <Col style={{display:'flex', justifyContent:'left'}}>
-                    {`#${props.molecule.coordMolNo} Mol. ${props.molecule.name}`}
+                    {`#${props.molecule.coordMolNo} Mol. ${moleculeName}`}
                 </Col>
                 <Col style={{display:'flex', justifyContent:'right'}}>
                     <Button size="sm" variant="outlined"
@@ -59,46 +121,76 @@ export const BabyGruMoleculeCard = (props) => {
                         onClick={() => {
                             props.molecule.getAtoms()
                                 .then(reply => {
-                                    doDownload([reply.data.result.pdbData], `${props.molecule.name}`)
+                                    doDownload([reply.data.result.pdbData], `${moleculeName}`)
                                 })
                         }}>
                         <DownloadOutlined />
                     </Button>
-                    <Button size="sm" variant="outlined"
-                        onClick={() => {console.log('More quick actions button not implemented yet')}}>
-                        <MoreVertOutlined />
-                    </Button>
+                    <DropdownButton size="sm" variant="outlined">
+                        <Dropdown.Item as="button" onClick={copyFragment}>Copy selected residues into fragment</Dropdown.Item>
+                        <Dropdown.Item as="button" onClick={() => {setShowRenameModal(true)}}>Rename molecule</Dropdown.Item>
+                    </DropdownButton>
                 </Col>
             </Row>
         </Card.Header>
         <Card.Body>
-            {
-                Object.keys(props.molecule.displayObjects).map(key => {
-                    return <Form.Check
-                        inline
-                        label={`${key.substring(0, 3)}.`}
-                        feedbackTooltip={"Toggle on"}
-                        name={key}
-                        type="checkbox"
-                        variant="outline"
-                        checked={showState[key]}
-                        onChange={(e) => {
-                            if (e.target.checked) {
-                                props.molecule.show(key, props.glRef)
-                                const changedState = { ...showState }
-                                changedState[key] = true
-                                setShowState(changedState)
+                <Row style={{ height: '100%' }}>
+                    <Col> 
+                    <div>
+                        <b>Display Options</b>
+                    </div>
+                    <div>
+                        {Object.keys(props.molecule.displayObjects).map(key => {
+                                return <Form.Check
+                                    inline
+                                    label={`${key.substring(0, 3)}.`}
+                                    feedbackTooltip={"Toggle on"}
+                                    name={key}
+                                    type="checkbox"
+                                    variant="outline"
+                                    checked={showState[key]}
+                                    onChange={(e) => {
+                                        if (e.target.checked) {
+                                            props.molecule.show(key, props.glRef)
+                                            const changedState = { ...showState }
+                                            changedState[key] = true
+                                            setShowState(changedState)
+                                        }
+                                        else {
+                                            props.molecule.hide(key, props.glRef)
+                                            const changedState = { ...showState }
+                                            changedState[key] = false
+                                            setShowState(changedState)
+                                        }
+                                    }}/>
+                                })
                             }
-                            else {
-                                props.molecule.hide(key, props.glRef)
-                                const changedState = { ...showState }
-                                changedState[key] = false
-                                setShowState(changedState)
-                            }
-                        }}
-                    />
-                })
-            }
+                    </div>
+                    </Col>
+                </Row>
+                <hr></hr>
+                <Row style={{ height: '100%' }}>
+                    <Col>
+                        <div>
+                            <b>Sequences</b>
+                        </div>
+                        {
+                            props.molecule.cachedAtoms.sequences.map(
+                                sequence => (
+                                    <BabyGruSequenceViewer 
+                                        sequence={sequence}
+                                        molecule={props.molecule}
+                                        glRef={props.glRef}
+                                        clickedResidue={clickedResidue}
+                                        setClickedResidue={setClickedResidue}
+                                        selectedResidues={selectedResidues}
+                                        setSelectedResidues={setSelectedResidues}
+                                    />
+                                )
+                            )
+                        }
+                    </Col>
+                </Row>
         </Card.Body>
     </Card >
 }
@@ -117,7 +209,7 @@ const BabyGruMapCard = (props) => {
             }
             else {
                 busyContouring.current = true
-                props.commandCentre.extendConsoleMessage("Because contourLevel or mapRadius changed useCallback")
+                props.commandCentre.current.extendConsoleMessage("Because contourLevel or mapRadius changed useCallback")
                 props.map.doCootContour(props.glRef.current,
                     ...nextOrigin.current,
                     props.mapRadius,
@@ -259,9 +351,6 @@ const BabyGruMapCard = (props) => {
 
 export const BabyGruDisplayObjects = (props) => {
 
-    useEffect(() => {
-    }, [])
-
     let displayData = [];
     // TODO: Concatenate molecules and maps, sort them by coordMolNo and then push them in that order...
     if (props.molecules.length!=0) {
@@ -269,6 +358,8 @@ export const BabyGruDisplayObjects = (props) => {
             <BabyGruMoleculeCard 
                 index={molecule.coordMolNo}
                 molecule={molecule}
+                molecules={props.molecules}
+                setMolecules={props.setMolecules}
                 glRef={props.glRef}
                 commandCentre={props.commandCentre}>
             </BabyGruMoleculeCard>

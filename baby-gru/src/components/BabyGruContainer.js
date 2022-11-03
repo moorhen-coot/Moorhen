@@ -9,6 +9,7 @@ import { BabyGruFileMenu } from './BabyGruFileMenu';
 import { BabyGruSequenceViewer } from './BabyGruSequenceViewer';
 import { BabyGruRamachandran } from './BabyGruRamachandran';
 import { BabyGruMapSettings } from './BabyGruMapSettings';
+import { BabyGruTimingTest } from './BabyGruTimingTest';
 import { ArrowBackIosOutlined, ArrowForwardIosOutlined } from '@mui/icons-material';
 import './BabyGruContainer.css'
 import { BabyGruHistoryMenu } from './BabyGruHistoryMenu';
@@ -37,7 +38,7 @@ export const BabyGruContainer = (props) => {
     const headerRef = useRef()
     const consoleDivRef = useRef()
     const [busy, setBusy] = useState(false)
-    const [mapRadius, setMapRadius] = useState(10.)
+    const [mapRadius, setMapRadius] = useState(13.)
     const [windowWidth, setWindowWidth] = useState(window.innerWidth)
     const [windowHeight, setWindowHeight] = useState(window.innerHeight)
     const [displayObjectsAccordionBodyHeight, setDisplayObjectsAccordionBodyHeight] = useState(convertViewtoPx(0, windowHeight))
@@ -82,10 +83,10 @@ export const BabyGruContainer = (props) => {
     useEffect(() => {
         glResize()
         setAccordionHeight(getAccordionHeight())
-        displayObjectsAccordionBodyHeight !== 0 ? setDisplayObjectsAccordionBodyHeight(convertViewtoPx(20, windowHeight)) : setDisplayObjectsAccordionBodyHeight(convertViewtoPx(0, windowHeight))
+        displayObjectsAccordionBodyHeight !== 0 ? setDisplayObjectsAccordionBodyHeight(convertViewtoPx(40, windowHeight)) : setDisplayObjectsAccordionBodyHeight(convertViewtoPx(0, windowHeight))
         toolAccordionBodyHeight !== 0 ? setToolAccordionBodyHeight(convertViewtoPx(70, windowHeight)) : setToolAccordionBodyHeight(convertViewtoPx(0, windowHeight))
-        sequenceViewerBodyHeight !== 0 ? setSequenceViewerBodyHeight(convertViewtoPx(15, windowHeight)) : setSequenceViewerBodyHeight(convertViewtoPx(0, windowHeight))
-        consoleBodyHeight !== 0 ? setConsoleBodyHeight(convertViewtoPx(15, windowHeight)) : setConsoleBodyHeight(convertViewtoPx(0, windowHeight))
+        sequenceViewerBodyHeight !== 0 ? setSequenceViewerBodyHeight(convertViewtoPx(30, windowHeight)) : setSequenceViewerBodyHeight(convertViewtoPx(0, windowHeight))
+        consoleBodyHeight !== 0 ? setConsoleBodyHeight(convertViewtoPx(30, windowHeight)) : setConsoleBodyHeight(convertViewtoPx(0, windowHeight))
         consoleDivRef.current.scrollTop = consoleDivRef.current.scrollHeight;
     }, [showSideBar, windowHeight, windowWidth])
 
@@ -198,22 +199,22 @@ export const BabyGruContainer = (props) => {
                                 return
                             }
                             if (openPanels.includes('showDisplayObjects')) {
-                                setDisplayObjectsAccordionBodyHeight(convertViewtoPx(20, windowHeight))
+                                setDisplayObjectsAccordionBodyHeight(convertViewtoPx(40, windowHeight))
                             }
                             if (openPanels.includes('showTools')) {
                                 setToolAccordionBodyHeight(convertViewtoPx(70, windowHeight))
                             }
                             if (openPanels.includes('showSequenceViewer')) {
-                                setSequenceViewerBodyHeight(convertViewtoPx(15, windowHeight))
+                                setSequenceViewerBodyHeight(convertViewtoPx(30, windowHeight))
                             }
                             if (openPanels.includes('showConsole')) {
-                                setConsoleBodyHeight(convertViewtoPx(15, windowHeight))
+                                setConsoleBodyHeight(convertViewtoPx(30, windowHeight))
                             }
                         }}>
                         <Accordion.Item eventKey="showDisplayObjects" style={{ width: sideBarWidth, padding: '0', margin: '0' }} >
                             <Accordion.Header style={{ padding: '0', margin: '0', height: '4rem' }}>Display Objects</Accordion.Header>
                             <Accordion.Body style={{ overflowY: 'auto', height: displayObjectsAccordionBodyHeight }}>
-                                {molecules.length === 0 && maps.length === 0 ? "No data files loaded" : <BabyGruDisplayObjects molecules={molecules} glRef={glRef} commandCentre={commandCentre} maps={maps} activeMap={activeMap} setActiveMap={setActiveMap} mapRadius={mapRadius} setMapRadius={setMapRadius} />}
+                                {molecules.length === 0 && maps.length === 0 ? "No data files loaded" : <BabyGruDisplayObjects molecules={molecules} setMolecules={setMolecules} glRef={glRef} commandCentre={commandCentre} maps={maps} activeMap={activeMap} setActiveMap={setActiveMap} mapRadius={mapRadius} setMapRadius={setMapRadius} />}
                             </Accordion.Body>
                         </Accordion.Item>
                         <Accordion.Item eventKey="showTools" style={{ width: sideBarWidth, padding: '0', margin: '0' }} >
@@ -230,19 +231,9 @@ export const BabyGruContainer = (props) => {
                                         Not ready yet...
                                     </Tab>
                                     <Tab eventKey='more' title='More...'>
-                                        Not ready yet...
+                                        <BabyGruTimingTest  commandCentre={commandCentre} />
                                     </Tab>
                                 </Tabs>
-                            </Accordion.Body>
-                        </Accordion.Item>
-                        <Accordion.Item eventKey="showSequenceViewer" style={{ width: sideBarWidth, padding: '0', margin: '0' }} >
-                            <Accordion.Header style={{ height: '4rem' }}>Sequences</Accordion.Header>
-                            <Accordion.Body style={{ height: sequenceViewerBodyHeight }}>
-                                <div ref={sequenceViewerRef} style={{
-                                    textAlign: "left"
-                                }}>
-                                    <BabyGruSequenceViewer molecules={molecules} glRef={glRef} />
-                                </div>
                             </Accordion.Body>
                         </Accordion.Item>
                         <Accordion.Item eventKey="showConsole" style={{ width: sideBarWidth, padding: '0', margin: '0' }} >

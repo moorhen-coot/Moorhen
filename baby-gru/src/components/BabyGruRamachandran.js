@@ -5,7 +5,7 @@ import { cootCommand, postCootMessage } from "../BabyGruUtils"
 import { inspect } from 'util'
 import { height } from "@mui/system";
 
-function convertRemToPixels(rem) {    
+function convertRemToPixels(rem) {
     return rem * parseFloat(getComputedStyle(document.documentElement).fontSize);
 }
 
@@ -18,9 +18,10 @@ export const BabyGruRamachandran = (props) => {
     const [ramaPlotData, setRamaPlotData] = useState(null)
     const [selectedModel, setSelectedModel] = useState(null)
     const [selectedChain, setSelectedChain] = useState(null)
+    const [cachedAtoms, setCachedAtoms] = useState(null)
 
     const getMolName = () => {
-        if(selectedModel===null || props.molecules.length === 0){
+        if (selectedModel === null || props.molecules.length === 0) {
             return;
         }
         const coordMolNums = props.molecules.map(molecule => molecule.coordMolNo);
@@ -35,33 +36,33 @@ export const BabyGruRamachandran = (props) => {
             let plotWidth = (ramaPlotDivRef.current.clientWidth)
             if (plotHeigth > 0 && plotWidth > 0) {
                 plotHeigth > plotWidth ? setRamaPlotDimensions(plotWidth - convertRemToPixels(3)) : setRamaPlotDimensions(plotHeigth - convertRemToPixels(3))
-            } 
+            }
         }, 50);
-        
+
     }, [props.toolAccordionBodyHeight, props.windowHeight, props.windowWidth])
 
     useEffect(() => {
-        ramachandranRef.current?.setState({ramaPlotDimensions:ramaPlotDimensions})
+        ramachandranRef.current?.setState({ ramaPlotDimensions: ramaPlotDimensions })
     }, [ramaPlotDimensions])
-    
+
     useEffect(() => {
         async function fetchRamaData() {
-            if(selectedModel === null || selectedChain === null){
+            if (selectedModel === null || selectedChain === null) {
                 setRamaPlotData(null)
                 return
-            }    
-            const inputData = {message:"get_rama", coordMolNo:selectedModel, chainId:selectedChain}
+            }
+            const inputData = { message: "get_rama", coordMolNo: selectedModel, chainId: selectedChain }
             let response = await props.commandCentre.current.postMessage(inputData)
             setRamaPlotData(response.data.result)
-          }
+        }
         fetchRamaData()
 
     }, [selectedModel, selectedChain])
-    
+
     useEffect(() => {
 
-        ramachandranRef.current?.updatePlotData({info:ramaPlotData, molName:getMolName(selectedModel), chainId:selectedChain, coordMolNo:selectedModel});
-        
+        ramachandranRef.current?.updatePlotData({ info: ramaPlotData, molName: getMolName(selectedModel), chainId: selectedChain, coordMolNo: selectedModel });
+
     }, [ramaPlotData])
 
 
@@ -77,24 +78,31 @@ export const BabyGruRamachandran = (props) => {
 
     }, [props.molecules.length])
 
+    useEffect(() => {
+        console.log('selectedModel changed', selectedModel)
+        if (selectedModel !== null) {
+            setCachedAtoms(props.molecules[selectedModel].cachedAtoms)
+        }
+    })
 
     useEffect(() => {
-        if(ramaPlotData === null || selectedModel === null || selectedChain === null || props.molecules.length === 0) {
+        console.log('cachedAtoms changed')
+        if (ramaPlotData === null || selectedModel === null || selectedChain === null || props.molecules.length === 0) {
             return;
         }
 
         async function fetchRamaData() {
-            if(selectedModel === null || selectedChain === null){
+            if (selectedModel === null || selectedChain === null) {
                 setRamaPlotData(null)
                 return
-            }    
-            const inputData = {message:"get_rama", coordMolNo:selectedModel, chainId:selectedChain}
+            }
+            const inputData = { message: "get_rama", coordMolNo: selectedModel, chainId: selectedChain }
             let response = await props.commandCentre.current.postMessage(inputData)
             setRamaPlotData(response.data.result)
-          }
+        }
         fetchRamaData()
 
-    }, [inspect(props.molecules[selectedModel])])
+    }, [cachedAtoms])
 
     useEffect(() => {
         if (!clickedResidue) {
@@ -123,29 +131,29 @@ export const BabyGruRamachandran = (props) => {
 
 
     return <Fragment>
-                <Form style={{paddingTop:'0.5rem', margin:'0'}}>
-                    <Form.Group>
-                        <Row style={{padding:'0', margin:'0'}}>
-                        <Col>
-                            <Form.Select value={selectedModel} onChange={handleModelChange} >
+        <Form style={{ paddingTop: '0.5rem', margin: '0' }}>
+            <Form.Group>
+                <Row style={{ padding: '0', margin: '0' }}>
+                    <Col>
+                        <Form.Select value={selectedModel} onChange={handleModelChange} >
                             {props.molecules.map(molecule => {
                                 return <option key={molecule.coordMolNo} value={molecule.coordMolNo}>{molecule.name}</option>
                             })}
-                            </Form.Select>
-                        </Col>
-                        <Col>
-                            <Form.Control required type="text" onChange={handleChainChange} placeholder="Chain id" value={selectedChain} />
-                        </Col>
-                        </Row>
-                    </Form.Group>
-                </Form>
-                <div ref={ramaPlotDivRef} id="ramaPlotDiv" className="rama-plot-div">
-                <RamaPlot ref={ramachandranRef} 
-                          onClick={(result) => setClickedResidue(result)}
-                          setMessage={setMessage}/>
-                <br></br>
-                <span>{message}</span>       
-                </div>
-            </Fragment>
+                        </Form.Select>
+                    </Col>
+                    <Col>
+                        <Form.Control required type="text" onChange={handleChainChange} placeholder="Chain id" value={selectedChain} />
+                    </Col>
+                </Row>
+            </Form.Group>
+        </Form>
+        <div ref={ramaPlotDivRef} id="ramaPlotDiv" className="rama-plot-div">
+            <RamaPlot ref={ramachandranRef}
+                onClick={(result) => setClickedResidue(result)}
+                setMessage={setMessage} />
+            <br></br>
+            <span>{message}</span>
+        </div>
+    </Fragment>
 
 }

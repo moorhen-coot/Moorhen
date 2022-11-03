@@ -48,6 +48,15 @@ const floatArrayToJSArray = (floatArray) => {
     return returnResult;
 }
 
+const residueCodesToJSArray = (residueCodes) => {
+    let returnResult = []
+    for(let ic=0; ic < residueCodes.size(); ic++){
+        returnResult.push({"resNum": residueCodes.get(ic).first.res_no, "resCode": residueCodes.get(ic).second})
+    }
+    return returnResult
+
+}
+
 const simpleMeshToLineMeshData = (simpleMesh) => {
     const vertices = simpleMesh.vertices;
     const triangles = simpleMesh.triangles;
@@ -221,6 +230,17 @@ onmessage = function (e) {
         })
     }
 
+    else if (e.data.message === 'copy_fragment') {
+        const newCoordMolNo = molecules_container.copy_fragment_using_residue_range(e.data.coordMolNo, e.data.chainId, e.data.res_no_start, e.data.res_no_end)
+ 
+        postMessage({
+            messageId: e.data.messageId,
+            myTimeStamp: e.data.myTimeStamp,
+            messageTag: "result",
+            result: newCoordMolNo,
+        })
+    }
+
     if (e.data.message === 'coot_command') {
         const { returnType, command, commandArgs, message, messageId, myTimeStamp } = e.data
         try {
@@ -238,27 +258,27 @@ onmessage = function (e) {
             else {
                 cootResult = molecules_container[command](...commandArgs)
             }
-            //console.log('Here')
+
             let returnResult;
-            //console.log('And Here')
+
             switch (returnType) {
                 case 'mesh':
                     returnResult = simpleMeshToMeshData(cootResult)
-                    //returnResult = simpleMeshToLineMeshData(cootResult)
                     break;
                 case 'lines_mesh':
                     returnResult = simpleMeshToLineMeshData(cootResult)
-                    //returnResult = simpleMeshToLineMeshData(cootResult)
                     break;
                 case 'float_array':
                     returnResult = floatArrayToJSArray(cootResult)
                     break;
+                case 'residue_codes':
+                    returnResult = residueCodesToJSArray(cootResult)
+                    break;                    
                 case 'status':
                 default:
                     returnResult = cootResult
                     break;
             }
-            //console.log('And also Here')
 
             postMessage({
                 returnType, command, commandArgs, message, messageId, myTimeStamp,

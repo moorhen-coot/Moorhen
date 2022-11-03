@@ -348,11 +348,31 @@ int mini_rsr(const std::vector<std::string> &args){
 }
 */
 
+class ResSpecStringPair {
+    public:
+        coot::residue_spec_t first;
+        std::string second;
+};
+
 class molecules_container_js : public molecules_container_t {
     public:
+        int add(int ic) { 
+            return ic + 1;
+        }
         int writePDBASCII(int imol, const std::string &file_name) { 
             const char *fname_cp = file_name.c_str();
             return get_mol(imol)->WritePDBASCII(fname_cp);
+        }
+        std::vector<ResSpecStringPair> get_single_letter_codes_for_chain(int imol, const std::string &chain_id) {
+            std::vector<ResSpecStringPair> retval;
+            std::vector<std::pair<coot::residue_spec_t, std::string> > seq = molecules_container_t::get_single_letter_codes_for_chain(imol, chain_id);
+            for(unsigned i=0;i<seq.size();i++){
+                ResSpecStringPair p;
+                p.first = seq[i].first;
+                p.second = seq[i].second;
+                retval.push_back(p);
+            }
+            return retval;
         }
         int writeCCP4Map(int imol, const std::string &file_name) {
             auto xMap = (*this)[imol].xmap;
@@ -584,6 +604,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("get_map_contours_mesh",&molecules_container_t::get_map_contours_mesh)
     .function("geometry_init_standard",&molecules_container_t::geometry_init_standard)
     .function("fill_rotamer_probability_tables",&molecules_container_t::fill_rotamer_probability_tables)
+    .function("copy_fragment_using_residue_range",&molecules_container_t::copy_fragment_using_residue_range)
+    .function("get_single_letter_codes_for_chain",&molecules_container_t::get_single_letter_codes_for_chain)
     .function("undo",&molecules_container_t::undo)
     .function("redo",&molecules_container_t::redo)
     .function("refine_residues_using_atom_cid",&molecules_container_t::refine_residues_using_atom_cid)
@@ -600,6 +622,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("writeCCP4Map",&molecules_container_js::writeCCP4Map)
     .function("count_simple_mesh_vertices",&molecules_container_js::count_simple_mesh_vertices)
     .function("go_to_blob_array",&molecules_container_js::go_to_blob_array)
+    .function("get_single_letter_codes_for_chain",&molecules_container_js::get_single_letter_codes_for_chain)
+    .function("add",&molecules_container_js::add)
     ;
     class_<RamachandranInfo>("RamachandranInfo")
     .constructor<>()
@@ -632,6 +656,10 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("string_user_data",&coot::atom_spec_t::string_user_data)
     .property("model_number",&coot::atom_spec_t::model_number)
     ;
+    class_<ResSpecStringPair>("ResSpecStringPair")
+    .property("first",&ResSpecStringPair::first)
+    .property("second",&ResSpecStringPair::second)
+    ;
     class_<coot::residue_spec_t>("residue_spec_t")
     .constructor<const std::string &, int, const std::string &>()
     .property("model_number",&coot::residue_spec_t::model_number)
@@ -663,7 +691,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<coot::residue_spec_t>("Vectorresidue_spec_t");
     register_vector<coot::api::vnc_vertex>("Vectorvnc_veertex");
     register_vector<g_triangle>("Vectorg_triangle");
-    register_map<std::string,std::vector<coot::simple_rotamer> >("MapStringVectorsimple_rotamer");
+    register_vector<ResSpecStringPair>("VectorResSpecStringPair");
     value_array<glm::vec3>("array_float_3")
         .element(emscripten::index<0>())
         .element(emscripten::index<1>())
