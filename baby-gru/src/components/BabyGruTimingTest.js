@@ -11,6 +11,21 @@ export const BabyGruTimingTest = (props) => {
 
     }
 
+    const timingTestFloats = (icount,maxCount,nFloats,t0) => {
+        props.commandCentre.current.cootCommand( {
+            returnType: "dummy_array_float",
+            command: "getFloats",
+            commandArgs: [nFloats]
+        }).then(retval => {
+            if(icount<maxCount){
+                timingTestFloats(icount+1,maxCount,nFloats,t0)
+            } else {
+                const t1 = performance.now();
+                console.log(`Call to ${maxCount} round trip calls getting ${nFloats} floats took ${t1 - t0} milliseconds.`);
+            }
+        })
+    }
+
     const timingTest = (icount,maxCount,t0) => {
         props.commandCentre.current.cootCommand( {
             returnType: "int",
@@ -22,6 +37,9 @@ export const BabyGruTimingTest = (props) => {
             else {
                 const t1 = performance.now();
                 console.log(`Call to ${maxCount} round trip calls took ${t1 - t0} milliseconds.`);
+                let icountF = 0
+                const t2 = performance.now();
+                timingTestFloats(icountF,1000,4000,t2)
             }
         })
     }
