@@ -83,7 +83,7 @@ export const BabyGruFileMenu = (props) => {
     }
 
     const fetchFileFromEBI = (pdbCode) => {
-        return fetchFileFromURL(`/download/${pdbCode}.cif`, pdbCode)
+        return fetchFileFromURL(`https://www.ebi.ac.uk/pdbe/entry-files/download/pdb${pdbCode}.ent`, pdbCode)
     }
 
     const fetchFileFromURL = (url, molName) => {
@@ -134,7 +134,7 @@ export const BabyGruFileMenu = (props) => {
                 <Form.Label>From PDBe</Form.Label>
                 <Form.Control type="text" onKeyDown={(e) => {
                     if (e.code === 'Enter') {
-                        fetchFileFromEBI(e.target.value.toUpperCase())
+                        fetchFileFromEBI(e.target.value.toLowerCase())
                     }
                 }} />
             </Form.Group>
