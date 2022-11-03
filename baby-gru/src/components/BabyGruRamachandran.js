@@ -80,7 +80,7 @@ export const BabyGruRamachandran = (props) => {
 
     useEffect(() => {
         console.log('selectedModel changed', selectedModel)
-        if (selectedModel !== null) {
+        if (selectedModel !== null && props.molecules[selectedModel]) {
             setCachedAtoms(props.molecules[selectedModel].cachedAtoms)
         }
     })

@@ -38,7 +38,7 @@ export const BabyGruMoleculeCard = (props) => {
 
     }, [clickedResidue]);
 
-    const copyFragment = () => {
+    const handleCopyFragment = () => {
         async function createNewFragmentMolecule() {
             const newMolecule = await props.molecule.copyFragment(clickedResidue.chain, selectedResidues[0], selectedResidues[1], props.glRef)
             props.setMolecules([...props.molecules, newMolecule])         
@@ -48,6 +48,12 @@ export const BabyGruMoleculeCard = (props) => {
         if(clickedResidue && selectedResidues){
             createNewFragmentMolecule()
         }
+    }
+
+    const handleDeleteMolecule = () => {
+        let newMoleculesList = props.molecules.filter(molecule => molecule.coordMolNo !== props.molecule.coordMolNo)
+        props.setMolecules(newMoleculesList)
+        props.molecule.delete(props.glRef);
     }
 
     const handleMoleculeRename = () => {
@@ -127,7 +133,8 @@ export const BabyGruMoleculeCard = (props) => {
                         <DownloadOutlined />
                     </Button>
                     <DropdownButton size="sm" variant="outlined">
-                        <Dropdown.Item as="button" onClick={copyFragment}>Copy selected residues into fragment</Dropdown.Item>
+                        <Dropdown.Item as="button" onClick={handleCopyFragment}>Copy selected residues into fragment</Dropdown.Item>
+                        <Dropdown.Item as="button" onClick={handleDeleteMolecule}>Delete molecule</Dropdown.Item>
                         <Dropdown.Item as="button" onClick={() => {setShowRenameModal(true)}}>Rename molecule</Dropdown.Item>
                     </DropdownButton>
                 </Col>

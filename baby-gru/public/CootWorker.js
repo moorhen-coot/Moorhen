@@ -241,6 +241,17 @@ onmessage = function (e) {
         })
     }
 
+    else if (e.data.message === 'delete') {
+        const result = molecules_container.close_molecule(e.data.coordMolNo)
+ 
+        postMessage({
+            messageId: e.data.messageId,
+            myTimeStamp: e.data.myTimeStamp,
+            messageTag: "result",
+            result: result,
+        })
+    }
+
     if (e.data.message === 'coot_command') {
         const { returnType, command, commandArgs, message, messageId, myTimeStamp } = e.data
         try {
