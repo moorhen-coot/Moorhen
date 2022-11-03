@@ -10,7 +10,7 @@ export const BabyGruHistoryMenu = (props) => {
     const [sessionHistory, setSessionHistory] = useState({ commands: [] })
 
     useEffect(() => {
-        console.log('CommandHistory', props.commandHistory)
+        //console.log('CommandHistory', props.commandHistory)
         if (props.commandHistory && props.commandHistory.commands) {
             setSessionHistory(props.commandHistory)
         }

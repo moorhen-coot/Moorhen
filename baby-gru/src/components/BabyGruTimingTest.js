@@ -19,7 +19,7 @@ export const BabyGruTimingTest = (props) => {
             returnType: "float_array",
             command: "getFloats",
             commandArgs: [nFloats]
-        }, false).then(retval => {
+        }, true).then(retval => {
             if (icount < maxCount) {
                 timingTestFloats(icount + 1, maxCount, nFloats, t0)
             } else {

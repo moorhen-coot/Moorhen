@@ -227,13 +227,9 @@ export const BabyGruSimpleEditButton = (props) => {
     }, [])
 
     useEffect(() => {
-        console.log('changing panelParameters', props.panelParameters)
+        //console.log('changing panelParameters', props.panelParameters)
         setLocalParameters(props.panelParameters)
     }, [props.panelParameters])
-
-    useEffect(() => {
-        console.log('changed localParameters', localParameters)
-    }, [localParameters])
 
     const atomClickedCallback = event => {
         console.log('in atomClickedcallback', event)

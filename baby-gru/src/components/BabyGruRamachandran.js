@@ -79,7 +79,6 @@ export const BabyGruRamachandran = (props) => {
     }, [props.molecules.length])
 
     useEffect(() => {
-        console.log('selectedModel changed', selectedModel)
         if (selectedModel !== null && props.molecules[selectedModel]) {
             setCachedAtoms(props.molecules[selectedModel].cachedAtoms)
         }
