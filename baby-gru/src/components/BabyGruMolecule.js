@@ -88,7 +88,7 @@ BabyGruMolecule.prototype.loadToCootFromURL = function (url, molName) {
     return new Promise((resolve, reject) => {
         //console.log('Off to fetch url', url)
         //Remember to change this to an appropriate URL for downloads in produciton, and to deal with the consequent CORS headache
-        return fetch(url, { mode: "no-cors" })
+        return fetch(url)
             .then(response => {
                 return response.text()
             }).then((coordData) => {
