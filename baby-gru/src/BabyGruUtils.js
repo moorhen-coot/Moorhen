@@ -137,11 +137,15 @@ export const BabyGruCommandCentre = class {
         this.cootWorker.removeEventListener("message", this.handleMessage)
         this.cootWorker.terminate()
     }
-    cootCommand(kwargs) {
+    cootCommand(kwargs, doJournal) {
+        //doJournal defaults to true
+        if (typeof doJournal === 'undefined'){
+            doJournal = true
+        }
         const message = "coot_command"
         const returnType = kwargs.returnType
         this.commands.push(kwargs)
-        if (this.onCommandHistoryChanged) {
+        if (this.onCommandHistoryChanged  && doJournal) {
             this.onCommandHistoryChanged(this.commands)
         }
         return this.postMessage({ message, returnType, ...kwargs })
