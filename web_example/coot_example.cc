@@ -356,6 +356,9 @@ class ResSpecStringPair {
 
 class molecules_container_js : public molecules_container_t {
     public:
+        int add(int ic) { 
+            return ic + 1;
+        }
         int writePDBASCII(int imol, const std::string &file_name) { 
             const char *fname_cp = file_name.c_str();
             return get_mol(imol)->WritePDBASCII(fname_cp);
@@ -618,6 +621,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("count_simple_mesh_vertices",&molecules_container_js::count_simple_mesh_vertices)
     .function("go_to_blob_array",&molecules_container_js::go_to_blob_array)
     .function("get_single_letter_codes_for_chain",&molecules_container_js::get_single_letter_codes_for_chain)
+    .function("add",&molecules_container_js::add)
     ;
     class_<RamachandranInfo>("RamachandranInfo")
     .constructor<>()

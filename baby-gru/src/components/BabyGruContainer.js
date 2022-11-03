@@ -9,6 +9,7 @@ import { BabyGruFileMenu } from './BabyGruFileMenu';
 import { BabyGruSequenceViewer } from './BabyGruSequenceViewer';
 import { BabyGruRamachandran } from './BabyGruRamachandran';
 import { BabyGruMapSettings } from './BabyGruMapSettings';
+import { BabyGruTimingTest } from './BabyGruTimingTest';
 import { ArrowBackIosOutlined, ArrowForwardIosOutlined } from '@mui/icons-material';
 import './BabyGruContainer.css'
 import { BabyGruHistoryMenu } from './BabyGruHistoryMenu';
@@ -230,7 +231,7 @@ export const BabyGruContainer = (props) => {
                                         Not ready yet...
                                     </Tab>
                                     <Tab eventKey='more' title='More...'>
-                                        Not ready yet...
+                                        <BabyGruTimingTest  commandCentre={commandCentre} />
                                     </Tab>
                                 </Tabs>
                             </Accordion.Body>
