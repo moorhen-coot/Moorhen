@@ -91,7 +91,7 @@ export const BabyGruCommandCentre = class {
     activeMessages = []
 
     onConsoleChanged = null
-    onCommandHistoryChanged = null
+    onNewCommand = null
     onActiveMessagesChanged = null
 
     constructor(props) {
@@ -145,8 +145,8 @@ export const BabyGruCommandCentre = class {
         const message = "coot_command"
         const returnType = kwargs.returnType
         this.commands.push(kwargs)
-        if (this.onCommandHistoryChanged  && doJournal) {
-            this.onCommandHistoryChanged(this.commands)
+        if (this.onNewCommand && doJournal) {
+            this.onNewCommand(kwargs)
         }
         return this.postMessage({ message, returnType, ...kwargs })
     }

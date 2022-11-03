@@ -22,6 +22,11 @@ function convertViewtoPx(input, height) {
     return height * (input / 100)
 }
 
+const initialHistoryState={commands:[]}
+
+const historyReducer = (oldHistory, newCommand) => {
+    return {commands:[...oldHistory.commands, newCommand]}
+}
 
 export const BabyGruContainer = (props) => {
 
@@ -46,7 +51,8 @@ export const BabyGruContainer = (props) => {
     const [sequenceViewerBodyHeight, setSequenceViewerBodyHeight] = useState(convertViewtoPx(0, windowHeight))
     const [consoleBodyHeight, setConsoleBodyHeight] = useState(convertViewtoPx(0, windowHeight))
     const [accordionHeight, setAccordionHeight] = useState(convertViewtoPx(90, windowHeight))
-    const [commandHistory, setCommandHistory] = useState({ commands: [] })
+    const [commandHistory, dispatchHistoryReducer] = useReducer(historyReducer, initialHistoryState)
+    //const [commandHistory, setCommandHistory] = useState({ commands: [] })
 
     const sideBarWidth = convertViewtoPx(50, windowWidth)
     const innerWindowMarginHeight = windowHeight * 0.04
@@ -65,8 +71,9 @@ export const BabyGruContainer = (props) => {
             onActiveMessagesChanged: (newActiveMessages) => {
                 setBusy(newActiveMessages.length !== 0)
             },
-            onCommandHistoryChanged: (newCommandHistory) => {
-                setCommandHistory({commands:newCommandHistory})
+            onNewCommand: (newCommand) => {
+                console.log('In onNewCommand')
+                dispatchHistoryReducer(newCommand)
             }
         })
         window.addEventListener('resize', setWindowDimensions)
@@ -172,7 +179,7 @@ export const BabyGruContainer = (props) => {
                             molecules={molecules}
                             ref={glRef}
                             maps={maps}
-                            commandCentre={commandCentre} 
+                            commandCentre={commandCentre}
                             width={webGLWidth}
                             height={webGLHeight}
                         />
@@ -231,7 +238,7 @@ export const BabyGruContainer = (props) => {
                                         Not ready yet...
                                     </Tab>
                                     <Tab eventKey='more' title='More...'>
-                                        <BabyGruTimingTest  commandCentre={commandCentre} />
+                                        <BabyGruTimingTest commandCentre={commandCentre} />
                                     </Tab>
                                 </Tabs>
                             </Accordion.Body>

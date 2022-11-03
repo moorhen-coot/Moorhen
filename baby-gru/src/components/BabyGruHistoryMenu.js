@@ -11,10 +11,17 @@ export const BabyGruHistoryMenu = (props) => {
 
     useEffect(() => {
         //console.log('CommandHistory', props.commandHistory)
-        if (props.commandHistory && props.commandHistory.commands) {
+        if (props.commandHistory && props.commandHistory.commands && showHistory) {
             setSessionHistory(props.commandHistory)
         }
     }, [props.commandHistory])
+
+    useEffect(() => {
+        console.log('show history changed', showHistory, props.commandHistory)
+        if (props.commandHistory && props.commandHistory.commands && showHistory) {
+            setSessionHistory(props.commandHistory)
+        }
+    }, [showHistory])
 
     const executeJournalFiles = (files) => {
         console.log(files)
