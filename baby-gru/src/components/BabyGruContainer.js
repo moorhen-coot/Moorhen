@@ -11,6 +11,7 @@ import { BabyGruTimingTest } from './BabyGruTimingTest';
 import { ArrowBackIosOutlined, ArrowForwardIosOutlined } from '@mui/icons-material';
 import './BabyGruContainer.css'
 import { BabyGruHistoryMenu } from './BabyGruHistoryMenu';
+import { BabyGruViewMenu } from './BabyGruViewMenu';
 
 function convertPxtoVh(input, height) {
     return 100 * input / height
@@ -20,10 +21,10 @@ function convertViewtoPx(input, height) {
     return height * (input / 100)
 }
 
-const initialHistoryState={commands:[]}
+const initialHistoryState = { commands: [] }
 
 const historyReducer = (oldHistory, newCommand) => {
-    return {commands:[...oldHistory.commands, newCommand]}
+    return { commands: [...oldHistory.commands, newCommand] }
 }
 
 export const BabyGruContainer = (props) => {
@@ -49,7 +50,7 @@ export const BabyGruContainer = (props) => {
     const [consoleBodyHeight, setConsoleBodyHeight] = useState(convertViewtoPx(0, windowHeight))
     const [accordionHeight, setAccordionHeight] = useState(convertViewtoPx(90, windowHeight))
     const [commandHistory, dispatchHistoryReducer] = useReducer(historyReducer, initialHistoryState)
-    //const [commandHistory, setCommandHistory] = useState({ commands: [] })
+    const [backgroundColor, setBackgroundColor] = useState([0., 0., 0., 1.])
 
     const sideBarWidth = convertViewtoPx(50, windowWidth)
     const innerWindowMarginHeight = windowHeight * 0.04
@@ -69,7 +70,6 @@ export const BabyGruContainer = (props) => {
                 setBusy(newActiveMessages.length !== 0)
             },
             onNewCommand: (newCommand) => {
-                console.log('In onNewCommand')
                 dispatchHistoryReducer(newCommand)
             }
         })
@@ -94,6 +94,9 @@ export const BabyGruContainer = (props) => {
         consoleDivRef.current.scrollTop = consoleDivRef.current.scrollHeight;
     }, [showSideBar, windowHeight, windowWidth])
 
+    useEffect(() => {
+        console.log('backgroundColor changed', backgroundColor)
+    }, [backgroundColor])
 
     useEffect(() => {
         if (activeMap && commandCentre.current) {
@@ -153,6 +156,10 @@ export const BabyGruContainer = (props) => {
                         setActiveMap={setActiveMap}
                         glRef={glRef}
                     />
+                    <BabyGruViewMenu
+                        backgroundColor={backgroundColor}
+                        setBackgroundColor={(color)=>{setBackgroundColor(color)}}
+                    />
                 </Nav>
             </Navbar.Collapse>
             <Nav className="justify-content-right">
@@ -169,7 +176,11 @@ export const BabyGruContainer = (props) => {
                     <div
                         ref={graphicsDiv}
                         style={{
-                            backgroundColor: "black",
+                            backgroundColor: `rgba(
+                                ${255 * backgroundColor[0]},
+                                ${255 * backgroundColor[1]},
+                                ${255 * backgroundColor[2]}, 
+                                ${backgroundColor[3]})`,
                             cursor: cursorStyle
                         }}>
                         <BabyGruWebMG
@@ -179,6 +190,7 @@ export const BabyGruContainer = (props) => {
                             commandCentre={commandCentre}
                             width={webGLWidth}
                             height={webGLHeight}
+                            backgroundColor={backgroundColor}
                         />
                     </div>
                     <div style={{ height: '4rem' }} id='button-bar-baby-gru'>

@@ -18,15 +18,15 @@ export const BabyGruWebMG = forwardRef((props, glRef) => {
     })
 
     const handleKeyPressWithMousePosition = useCallback(e => {
-        if(e.detail.key==="G") {
+        if (e.detail.key === "G") {
             props.commandCentre.current.cootCommand({
                 returnType: "float_array",
                 command: "go_to_blob_array",
-                commandArgs: [e.detail.front[0],e.detail.front[1],e.detail.front[2],e.detail.back[0],e.detail.back[1],e.detail.back[2],0.5]
+                commandArgs: [e.detail.front[0], e.detail.front[1], e.detail.front[2], e.detail.back[0], e.detail.back[1], e.detail.back[2], 0.5]
             }).then(response => {
                 let newOrigin = response.data.result.result;
-                if(newOrigin.length===3){
-                    glRef.current.setOrigin([-newOrigin[0],-newOrigin[1],-newOrigin[2]])
+                if (newOrigin.length === 3) {
+                    glRef.current.setOrigin([-newOrigin[0], -newOrigin[1], -newOrigin[2]])
                 }
             })
         }
@@ -52,7 +52,6 @@ export const BabyGruWebMG = forwardRef((props, glRef) => {
         glRef.current.setDiffuseLight(1., 1., 1.);
         glRef.current.setLightPositionNoUpdate(10., 10., 60.);
         setClipFogByZoom()
-        glRef.current.background_colour = [0., 0., 0., 1.];
         windowResizedBinding.current = window.addEventListener('resize', windowResized)
         windowResized()
         glRef.current.drawScene()
@@ -60,6 +59,19 @@ export const BabyGruWebMG = forwardRef((props, glRef) => {
             window.removeEventListener('resize', windowResizedBinding.current)
         }
     }, [glRef])
+
+    useEffect(() => {
+        if (glRef.current) {
+            console.log('Stuff', glRef.current.background_colour, props.backgroundColor)
+            glRef.current.background_colour = props.backgroundColor
+            glRef.current.drawScene()
+        }
+    }, [
+        props.backgroundColor,
+        glRef.current
+    ])
+
+
 
     useEffect(() => {
         props.molecules.forEach(molecule => {
@@ -70,7 +82,7 @@ export const BabyGruWebMG = forwardRef((props, glRef) => {
     useEffect(() => {
         props.maps.forEach(map => {
             console.log('in map changed useEffect')
-            if (map.webMGContour){
+            if (map.webMGContour) {
                 map.contour(glRef.current)
             }
         })
