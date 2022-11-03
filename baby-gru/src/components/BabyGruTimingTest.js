@@ -1,37 +1,56 @@
 import React, { createRef, useEffect, useCallback, forwardRef, useState } from 'react';
-import { Button } from "react-bootstrap";
+import { Button, Row } from "react-bootstrap";
 
 export const BabyGruTimingTest = (props) => {
-    const [timeInMs, setTimeInMs] = useState(0)
+    const [floatTimeInMs, setFloatTimeInMs] = useState("")
 
     const startTimingTest = () => {
 
         const t0 = performance.now();
         let icount = 0
-        timingTest(icount,1000,t0)
+        //timingTest(icount,1000,t0)
+        timingTestFloats(icount, 1000, 40000, t0)
+
 
     }
 
-    const timingTest = (icount,maxCount,t0) => {
-        props.commandCentre.current.cootCommand( {
+    const timingTestFloats = (icount, maxCount, nFloats, t0) => {
+        props.commandCentre.current.cootCommand({
+            returnType: "float_array",
+            command: "getFloats",
+            commandArgs: [nFloats]
+        }, false).then(retval => {
+            if (icount < maxCount) {
+                timingTestFloats(icount + 1, maxCount, nFloats, t0)
+            } else {
+                const t1 = performance.now();
+                setFloatTimeInMs(`${icount} round trips getting ${nFloats} took ${t1 - t0} milliseconds.`)
+            }
+        })
+    }
+
+    const timingTest = (icount, maxCount, t0) => {
+        props.commandCentre.current.cootCommand({
             returnType: "int",
             command: "add",
             commandArgs: [icount]
         }, false).then(retval => {
-            if(retval.data.result.result<maxCount)
-                timingTest(retval.data.result.result,maxCount,t0)
-            else {
-                const t1 = performance.now();
-                setTimeInMs(`${maxCount} round trips took ${t1 - t0} milliseconds.`)
+            if (retval.data.result.result < maxCount) {
+                timingTest(retval.data.result.result, maxCount, t0)
+            } else {
+                let icountF = 0
+                const t2 = performance.now();
+                timingTestFloats(icountF, 1000, 40000, t2)
             }
         })
     }
 
     return <div>
-        <Button onClick={startTimingTest}>
-            Run profiling
-            </Button>
-            <textarea disabled value={timeInMs}/>
-        </div>
+        <Row>
+            <Button onClick={startTimingTest}>
+                Run profiling</Button>
+        </Row>
+        <Row><span>[{floatTimeInMs}]</span></Row>
+    </div>
 
 };
