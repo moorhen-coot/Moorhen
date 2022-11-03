@@ -283,7 +283,7 @@ const BabyGruMapCard = (props) => {
         <Card.Header>
             <Row className='align-items-center'>
             <Col style={{display:'flex', justifyContent:'left'}}>
-                    {`#${props.map.mapMolNo} Map ${props.map.name}`}
+                    {`#${props.map.mapMolNo} Map ${props.map.mapName}`}
                 </Col>
                 <Col style={{display:'flex', justifyContent:'right'}}>
                     <Button size="sm" variant="outlined"
