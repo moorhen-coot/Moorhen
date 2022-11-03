@@ -198,8 +198,8 @@ describe('Testing molecules_container_js', () => {
         const triangles = map_mesh.triangles
         const nVerticesDirect = vertices.size()
         const nTriangles = triangles.size()
-        expect(Math.abs(nVerticesDirect-50000)).toBeLessThanOrEqual(2000)
-        expect(Math.abs(nTriangles-47024)).toBeLessThanOrEqual(2000)
+        expect(Math.abs(nVerticesDirect-50000)).toBeLessThanOrEqual(3000)
+        expect(Math.abs(nTriangles-47024)).toBeLessThanOrEqual(3000)
     })
 
     test('Create test origin', () => {
