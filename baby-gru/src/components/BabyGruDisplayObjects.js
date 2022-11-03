@@ -1,7 +1,7 @@
 import { useEffect, Fragment, useState, createRef, useCallback, useRef } from "react";
 import { Card, Form, Button, Row, Col, FormCheck, Dropdown, DropdownButton, Modal } from "react-bootstrap";
 import { cootCommand, doDownload } from '../BabyGruUtils';
-import { DownloadOutlined, UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, MoreVertOutlined } from '@mui/icons-material';
+import { DownloadOutlined, UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, MoreVertOutlined, VisibilityOffOutlined, VisibilityOutlined, SettingsAccessibilitySharp } from '@mui/icons-material';
 import { BabyGruSequenceViewer } from "./BabyGruSequenceViewer";
 import BabyGruSlider from "./BabyGruSlider";
 import { BabyGruMolecule } from "./BabyGruMolecule";
@@ -203,8 +203,9 @@ export const BabyGruMoleculeCard = (props) => {
 }
 
 const BabyGruMapCard = (props) => {
-    const [webMGContour, setWebMGContour] = useState(false)
     const [cootContour, setCootContour] = useState(true)
+    const [mapRadius, setMapRadius] = useState(13.)
+    const [mapContourLevel, setMapContourLevel] = useState(0.5)
     const nextOrigin = createRef([])
     const busyContouring = createRef(false)
 
@@ -215,38 +216,40 @@ const BabyGruMapCard = (props) => {
                 console.log('Skipping originChanged ', nextOrigin.current)
             }
             else {
+                props.map.contourLevel = mapContourLevel
                 busyContouring.current = true
                 props.commandCentre.current.extendConsoleMessage("Because contourLevel or mapRadius changed useCallback")
                 props.map.doCootContour(props.glRef.current,
                     ...nextOrigin.current,
-                    props.mapRadius,
+                    mapRadius,
                     props.map.contourLevel)
                     .then(result => {
                         busyContouring.current = false
                     })
             }
         }
-    }, [props.map.contourLevel, props.mapRadius])
+    }, [mapContourLevel, mapRadius])
 
     const handleContourLevelCallback = useCallback(e => {
+        props.map.contourLevel = mapContourLevel
         nextOrigin.current = [...e.detail.map(coord => -coord)]
         if (props.map.cootContour) {
             if (busyContouring.current) {
                 console.log('Skipping originChanged ', nextOrigin.current)
             }
             else {
+                props.map.contourLevel = mapContourLevel
                 busyContouring.current = true
                 props.map.doCootContour(props.glRef.current,
                     ...nextOrigin.current,
-                    props.mapRadius,
+                    mapRadius,
                     props.map.contourLevel)
                     .then(result => {
                         busyContouring.current = false
                     })
             }
         }
-    }, [props.map.contourLevel, props.mapRadius])
-
+    }, [mapContourLevel, mapRadius])
 
     useEffect(() => {
         document.addEventListener("originChanged", handleOriginCallback);
@@ -258,26 +261,27 @@ const BabyGruMapCard = (props) => {
     }, [handleOriginCallback]);
 
     useEffect(() => {
-        setWebMGContour(props.map.webMGContour)
         setCootContour(props.map.cootContour)
+        setMapContourLevel(0.5)
+        setMapRadius(13)
     }, [])
 
     useEffect(() => {
-        setWebMGContour(props.map.webMGContour)
         setCootContour(props.map.cootContour)
         if (props.map.cootContour && !busyContouring.current) {
             busyContouring.current = true
             console.log(props.commandCentre.current)
             props.commandCentre.current.extendConsoleMessage('Because I can')
+            props.map.contourLevel = mapContourLevel
             props.map.doCootContour(props.glRef.current,
                 ...props.glRef.current.origin.map(coord => -coord),
-                props.mapRadius,
+                mapRadius,
                 props.map.contourLevel)
                 .then(result => {
                     busyContouring.current = false
                 })
         }
-    }, [props.mapRadius, props.map.contourLevel])
+    }, [mapRadius, mapContourLevel])
 
     return <Card className="px-0"  style={{marginBottom:'0.5rem', padding:'0'}} key={props.map.mapMolNo}>
         <Card.Header>
@@ -286,6 +290,18 @@ const BabyGruMapCard = (props) => {
                     {`#${props.map.mapMolNo} Map ${props.map.mapName}`}
                 </Col>
                 <Col style={{display:'flex', justifyContent:'right'}}>
+                    <Button size="sm" variant="outlined" onClick={() => {
+                        console.log(mapRadius)
+                        if (!cootContour) {
+                            props.map.makeCootLive(props.glRef.current, mapRadius)
+                            setCootContour(true)
+                        } else {
+                            props.map.makeCootUnlive(props.glRef.current)
+                            setCootContour(false)
+                        }
+                    }}>
+                        {cootContour ? <VisibilityOutlined /> : <VisibilityOffOutlined />}
+                    </Button>
                     <Button size="sm" variant="outlined"
                         onClick={() => {
                             props.map.getMap()
@@ -305,52 +321,31 @@ const BabyGruMapCard = (props) => {
             </Row>
         </Card.Header>
         <Card.Body>
-            <Form.Check checked={props.map === props.activeMap}
-                        inline
-                        label={'Active'}
-                        name={`setActiveMap ${props.map.mapMolNo}`}
-                        type="checkbox"
-                        variant="outline"
-                        onChange={(e) => {
-                            if (e.target.checked) {
-                                props.setActiveMap(props.map)
-                            }
-                        }}
-            />
-            <FormCheck  checked={webMGContour}
-                        inline
-                        label={'WC'}
-                        name={`setWC ${props.map.mapMolNo}`}
-                        type="checkbox"
-                        variant="outline"
-                        onChange={(newState) => {
-                            if (newState.target.checked && !webMGContour) {
-                                props.map.makeWebMGLive(props.glRef.current)
-                                setWebMGContour(true)
-                            }
-                            else if (!newState.target.checked && webMGContour) {
-                                props.map.makeWebMGUnlive(props.glRef.current)
-                                setWebMGContour(false)
-                            }
-                }}
-            />
-            <FormCheck  checked={cootContour}
-                        inline
-                        label={'CC'}
-                        name={`setCC ${props.map.mapMolNo}`}
-                        type="checkbox"
-                        variant="outline"
-                        onChange={(newState) => {
-                            if (newState.target.checked && !cootContour) {
-                                props.map.makeCootLive(props.glRef.current, props.mapRadius)
-                                setCootContour(true)
-                            } 
-                            else if (!newState.target.checked && cootContour) {
-                                props.map.makeCootUnlive(props.glRef.current)
-                                setCootContour(false)
-                            }
-                }} 
-            />
+            <Row style={{ height: '100%', justifyContent:'between', display:'flex'}}>
+                <Col classNane="border-left" style={{justifyContent:'left', display:'flex'}}> 
+                        <Form.Check checked={props.map === props.activeMap}
+                                    style={{margin:'0'}}
+                                    inline
+                                    label={'Active Map'}
+                                    name={`setActiveMap ${props.map.mapMolNo}`}
+                                    type="checkbox"
+                                    variant="outline"
+                                    onChange={(e) => {
+                                        if (e.target.checked) {
+                                            props.setActiveMap(props.map)
+                                        }
+                                    }}
+                        />
+                </Col>
+                <Col>
+                <Form.Group style={{ width: '20rem' }} controlId="Contouring level" className="mb-3">
+                            <BabyGruSlider minVal={0.01} maxVal={5} logScale={true} sliderTitle="Countour Level" intialValue={62} externalValue={mapContourLevel} setExternalValue={setMapContourLevel}/>
+                    </Form.Group>
+                    <Form.Group style={{ width: '20rem' }} controlId="Contouring level" className="mb-3">
+                            <BabyGruSlider minVal={0.01} maxVal={50} logScale={false} sliderTitle="Contour Radius" intialValue={24.5} externalValue={mapRadius} setExternalValue={setMapRadius}/>
+                    </Form.Group>
+                </Col>
+            </Row>
         </Card.Body>
     </Card >
     }
@@ -376,7 +371,7 @@ export const BabyGruDisplayObjects = (props) => {
     
     if (props.maps.length!=0) {
         props.maps.forEach(map => displayData.push(
-            <BabyGruMapCard {...props} index={map.mapMolNo} mapRadius={props.mapRadius} map={map}/>
+            <BabyGruMapCard {...props} index={map.mapMolNo} map={map}/>
         ))
     }   
 

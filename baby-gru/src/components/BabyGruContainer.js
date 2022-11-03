@@ -6,9 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { BabyGruCommandCentre } from '../BabyGruUtils';
 import { BabyGruButtonBar } from './BabyGruButtonBar';
 import { BabyGruFileMenu } from './BabyGruFileMenu';
-import { BabyGruSequenceViewer } from './BabyGruSequenceViewer';
 import { BabyGruRamachandran } from './BabyGruRamachandran';
-import { BabyGruMapSettings } from './BabyGruMapSettings';
 import { BabyGruTimingTest } from './BabyGruTimingTest';
 import { ArrowBackIosOutlined, ArrowForwardIosOutlined } from '@mui/icons-material';
 import './BabyGruContainer.css'
@@ -43,7 +41,6 @@ export const BabyGruContainer = (props) => {
     const headerRef = useRef()
     const consoleDivRef = useRef()
     const [busy, setBusy] = useState(false)
-    const [mapRadius, setMapRadius] = useState(13.)
     const [windowWidth, setWindowWidth] = useState(window.innerWidth)
     const [windowHeight, setWindowHeight] = useState(window.innerHeight)
     const [displayObjectsAccordionBodyHeight, setDisplayObjectsAccordionBodyHeight] = useState(convertViewtoPx(0, windowHeight))
@@ -221,7 +218,7 @@ export const BabyGruContainer = (props) => {
                         <Accordion.Item eventKey="showDisplayObjects" style={{ width: sideBarWidth, padding: '0', margin: '0' }} >
                             <Accordion.Header style={{ padding: '0', margin: '0', height: '4rem' }}>Display Objects</Accordion.Header>
                             <Accordion.Body style={{ overflowY: 'auto', height: displayObjectsAccordionBodyHeight }}>
-                                {molecules.length === 0 && maps.length === 0 ? "No data files loaded" : <BabyGruDisplayObjects molecules={molecules} setMolecules={setMolecules} glRef={glRef} commandCentre={commandCentre} maps={maps} activeMap={activeMap} setActiveMap={setActiveMap} mapRadius={mapRadius} setMapRadius={setMapRadius} />}
+                                {molecules.length === 0 && maps.length === 0 ? "No data files loaded" : <BabyGruDisplayObjects molecules={molecules} setMolecules={setMolecules} glRef={glRef} commandCentre={commandCentre} maps={maps} activeMap={activeMap} setActiveMap={setActiveMap} />}
                             </Accordion.Body>
                         </Accordion.Item>
                         <Accordion.Item eventKey="showTools" style={{ width: sideBarWidth, padding: '0', margin: '0' }} >
@@ -230,9 +227,6 @@ export const BabyGruContainer = (props) => {
                                 <Tabs defaultActiveKey='ramachandran'>
                                     <Tab eventKey='ramachandran' title='Ramachandran' style={{ height: '100%' }}>
                                         <BabyGruRamachandran molecules={molecules} commandCentre={commandCentre} glRef={glRef} toolAccordionBodyHeight={toolAccordionBodyHeight} sideBarWidth={sideBarWidth} windowHeight={windowHeight} windowWidth={windowWidth} />
-                                    </Tab>
-                                    <Tab eventKey='mapCountour' title='Map Settings'>
-                                        <BabyGruMapSettings glRef={glRef} commandCentre={commandCentre} maps={maps} activeMap={activeMap} mapRadius={mapRadius} setMapRadius={setMapRadius} setActiveMap={setActiveMap} />
                                     </Tab>
                                     <Tab eventKey='densityFit' title='Density Fit'>
                                         Not ready yet...
