@@ -600,7 +600,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("geometry_init_standard",&molecules_container_t::geometry_init_standard)
     .function("fill_rotamer_probability_tables",&molecules_container_t::fill_rotamer_probability_tables)
     .function("copy_fragment_using_residue_range",&molecules_container_t::copy_fragment_using_residue_range)
-    .function("get_single_letter_codes_for_chain",&molecules_container_t::get_single_letter_codes_for_chain)
+    .function("close_molecule",&molecules_container_t::close_molecule)
     .function("undo",&molecules_container_t::undo)
     .function("redo",&molecules_container_t::redo)
     .function("refine_residues_using_atom_cid",&molecules_container_t::refine_residues_using_atom_cid)

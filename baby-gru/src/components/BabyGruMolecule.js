@@ -28,6 +28,16 @@ export function BabyGruMolecule(commandCentre) {
 };
 
 
+BabyGruMolecule.prototype.delete = async function (gl) {
+    const $this = this
+    Object.getOwnPropertyNames(this.displayObjects).forEach(displayObject => {
+        if(this.displayObjects[displayObject].length > 0) {this.hide(displayObject, gl)}
+    })
+    const inputData = {message:"delete", coordMolNo:$this.coordMolNo}
+    const response = await $this.commandCentre.current.postMessage(inputData)
+    return response
+}
+
 BabyGruMolecule.prototype.copyFragment = async function (chainId, res_no_start, res_no_end, gl) {
     const $this = this
     const inputData = {message:"copy_fragment", coordMolNo:$this.coordMolNo, chainId:chainId, res_no_start:res_no_start, res_no_end:res_no_end}
