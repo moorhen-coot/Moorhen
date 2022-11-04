@@ -52,12 +52,16 @@ export const BabyGruViewMenu = (props) => {
         return 1 + 99 * ((Math.log10(val) - Math.log10(minVal)) / (Math.log10(maxVal) - Math.log10(minVal)))
     }
     const clipContent = () => {
+        const initialClipFront = fractionalLog(0.1, 1000, 500+props.glRef.current.gl_clipPlane0[3])
+        const initialClipBack = fractionalLog(0.1, 1000, props.glRef.current.gl_clipPlane1[3])
+        const initialFogFront = fractionalLog(0.1, 1000, 500-props.glRef.current.gl_fog_end)
         const initialFogBack = fractionalLog(0.1, 1000, props.glRef.current.gl_fog_end-500)
         console.log('initialFogBack', initialFogBack)
         return props.glRef.current && props.glRef.current.gl_clipPlane0 &&
             <div style={{ margin: "1rem" }}>
                 <BabyGruSlider minVal={0.1} maxVal={1000} logScale={true}
-                    sliderTitle="Front clipping plane"
+                    sliderTitle="Front clip"
+                    initialValue={initialClipFront}
                     externalValue={zclipFront}
                     setExternalValue={(newValue) => {
                         props.glRef.current.gl_clipPlane0[3] = newValue - 500
@@ -65,7 +69,8 @@ export const BabyGruViewMenu = (props) => {
                         setZclipFront(newValue)
                     }} />
                 <BabyGruSlider minVal={0.1} maxVal={1000} logScale={true}
-                    sliderTitle="Back clipping plane"
+                    sliderTitle="Back clip"
+                    initialValue={initialClipBack}
                     externalValue={zclipBack}
                     setExternalValue={(newValue) => {
                         props.glRef.current.gl_clipPlane1[3] = 500 + newValue
@@ -74,6 +79,7 @@ export const BabyGruViewMenu = (props) => {
                     }} />
                 <BabyGruSlider minVal={0.1} maxVal={1000} logScale={true}
                     sliderTitle="Front zFog"
+                    initialValue={initialFogFront}
                     externalValue={zfogFront}
                     setExternalValue={(newValue) => {
                         props.glRef.current.gl_fog_start = 500 - newValue
