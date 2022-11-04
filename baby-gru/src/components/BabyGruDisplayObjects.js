@@ -321,12 +321,12 @@ const BabyGruMapCard = (props) => {
             </Row>
         </Card.Header>
         <Card.Body>
-            <Row style={{ height: '100%', justifyContent:'between', display:'flex'}}>
+            <Row className="align-items-center" style={{ height: '100%', justifyContent:'between', display:'flex'}}>
                 <Col classNane="border-left" style={{justifyContent:'left', display:'flex'}}> 
                         <Form.Check checked={props.map === props.activeMap}
                                     style={{margin:'0'}}
                                     inline
-                                    label={'Active Map'}
+                                    label={'Active'}
                                     name={`setActiveMap ${props.map.mapMolNo}`}
                                     type="checkbox"
                                     variant="outline"
@@ -338,11 +338,13 @@ const BabyGruMapCard = (props) => {
                         />
                 </Col>
                 <Col>
-                <Form.Group style={{ width: '20rem' }} controlId="Contouring level" className="mb-3">
-                            <BabyGruSlider minVal={0.01} maxVal={5} logScale={true} sliderTitle="Countour Level" intialValue={62} externalValue={mapContourLevel} setExternalValue={setMapContourLevel}/>
+                    <Form.Group controlId="contouringLevel" className="mb-3">
+                            <BabyGruSlider minVal={0.01} maxVal={5} logScale={true} sliderTitle="Level" intialValue={62} externalValue={mapContourLevel} setExternalValue={setMapContourLevel}/>
                     </Form.Group>
-                    <Form.Group style={{ width: '20rem' }} controlId="Contouring level" className="mb-3">
-                            <BabyGruSlider minVal={0.01} maxVal={50} logScale={false} sliderTitle="Contour Radius" intialValue={24.5} externalValue={mapRadius} setExternalValue={setMapRadius}/>
+                </Col>
+                <Col>
+                    <Form.Group controlId="contouringRadius" className="mb-3">
+                            <BabyGruSlider minVal={0.01} maxVal={50} logScale={false} sliderTitle="Radius" intialValue={24.5} externalValue={mapRadius} setExternalValue={setMapRadius}/>
                     </Form.Group>
                 </Col>
             </Row>
