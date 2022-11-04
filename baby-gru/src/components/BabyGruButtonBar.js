@@ -240,7 +240,7 @@ export const BabyGruButtonBar = (props) => {
                 needsMapData={false}
                 cootCommand="jed_flip"
                 prompt="Click atom in residue to flip around that rotatable bond - wag the dog"
-                icon={<img className="baby-gru-button-icon" src="pixmaps/edit-chi.svg" />}
+                icon={<img className="baby-gru-button-icon" src="pixmaps/jed-flip-reverse.svg" />}
                 formatArgs={(molecule, chosenAtom) => {
                     return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, true]
                 }} />
