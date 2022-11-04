@@ -45,7 +45,15 @@ export const BabyGruViewMenu = (props) => {
         }
     }
 
+    const fractionalLog = (minVal, maxVal, val) => {
+        if (minVal < 0.00001) minVal = 0.0001
+        if (maxVal < 0.0001) maxVal = 0.0001
+        if (val < 0.0001) val = 0.0001
+        return 1 + 99 * ((Math.log10(val) - Math.log10(minVal)) / (Math.log10(maxVal) - Math.log10(minVal)))
+    }
     const clipContent = () => {
+        const initialFogBack = fractionalLog(0.1, 1000, props.glRef.current.gl_fog_end-500)
+        console.log('initialFogBack', initialFogBack)
         return props.glRef.current && props.glRef.current.gl_clipPlane0 &&
             <div style={{ margin: "1rem" }}>
                 <BabyGruSlider minVal={0.1} maxVal={1000} logScale={true}
@@ -75,6 +83,7 @@ export const BabyGruViewMenu = (props) => {
                 <BabyGruSlider minVal={0.1} maxVal={1000} logScale={true}
                     sliderTitle="Back zFog"
                     externalValue={zfogBack}
+                    initialValue={initialFogBack}
                     setExternalValue={(newValue) => {
                         props.glRef.current.gl_fog_end = newValue + 500
                         props.glRef.current.drawScene()
