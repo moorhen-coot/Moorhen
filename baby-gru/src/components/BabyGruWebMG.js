@@ -8,7 +8,7 @@ export const BabyGruWebMG = forwardRef((props, glRef) => {
     const setClipFogByZoom = () => {
         const fieldDepthFront = 8;
         const fieldDepthBack = 21;
-        glRef.current.set_fog_range(500 - (glRef.current.zoom * fieldDepthFront), 500 + (glRef.current.zoom * fieldDepthBack))
+        glRef.current.set_fog_range(500 /*- (glRef.current.zoom * fieldDepthFront)*/, 500 + (glRef.current.zoom * fieldDepthBack))
         glRef.current.set_clip_range(0 - (glRef.current.zoom * fieldDepthFront), 0 + (glRef.current.zoom * fieldDepthBack))
         glRef.current.doDrawClickedAtomLines = false
     }

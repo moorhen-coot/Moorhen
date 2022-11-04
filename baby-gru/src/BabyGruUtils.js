@@ -140,7 +140,7 @@ export const BabyGruCommandCentre = class {
     cootCommand(kwargs, doJournal) {
         //doJournal defaults to true
         if (typeof doJournal === 'undefined'){
-            doJournal = true
+            doJournal = false
         }
         const message = "coot_command"
         const returnType = kwargs.returnType
