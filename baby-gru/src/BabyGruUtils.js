@@ -3,6 +3,14 @@
 import { v4 as uuidv4 } from 'uuid';
 
 
+export function convertRemToPx(rem) {    
+    return rem * parseFloat(getComputedStyle(document.documentElement).fontSize);
+}
+
+export function convertViewtoPx(input, height) {
+    return height * (input / 100)
+}
+
 export const postCootMessage = (cootWorker, kwargs) => {
     const messageId = uuidv4()
     return new Promise((resolve, reject) => {
