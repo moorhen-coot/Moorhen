@@ -255,7 +255,11 @@ onmessage = function (e) {
     if (e.data.message === 'coot_command') {
         const { returnType, command, commandArgs, message, messageId, myTimeStamp } = e.data
         try {
+
+            /* A debug message to show tht commands are reachng CootWorker
             postMessage({ consoleMessage: `Received ${command} with args ${commandArgs}` })
+            */
+
             /* Here a block of "shims"
             * over time want to reduce these to none
             */
