@@ -12,6 +12,7 @@ export const BabyGruFileMenu = (props) => {
     const [disambiguateColumnsResolve, setDisambiguateColumnsResolve] = useState(() => { })
     const [columns, setColumns] = useState({})
     const target = useRef(null);
+    const pdbCodeFetchInputRef = useRef(null);
 
     const awaitingPromiseRef = useRef({
         resolve: () => { },
@@ -82,8 +83,11 @@ export const BabyGruFileMenu = (props) => {
         return newMap.loadToCootFromFile(file, selectedColumns)
     }
 
-    const fetchFileFromEBI = (pdbCode) => {
-        return fetchFileFromURL(`/download/${pdbCode}.cif`, pdbCode)
+    const fetchFileFromEBI = () => {
+        let pdbCode = pdbCodeFetchInputRef.current.value.toLowerCase()
+        if (pdbCode){
+            return fetchFileFromURL(`https://www.ebi.ac.uk/pdbe/entry-files/download/pdb${pdbCode}.ent`, pdbCode)
+        }
     }
 
     const fetchFileFromURL = (url, molName) => {
@@ -131,12 +135,16 @@ export const BabyGruFileMenu = (props) => {
                 <Form.Control type="file" accept=".pdb, .mmcif, .ent" multiple={true} onChange={(e) => { loadPdbFiles(e.target.files) }} />
             </Form.Group>
             <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="downloadCoords" className="mb-3">
-                <Form.Label>From PDBe</Form.Label>
-                <Form.Control type="text" onKeyDown={(e) => {
-                    if (e.code === 'Enter') {
-                        fetchFileFromEBI(e.target.value.toUpperCase())
-                    }
-                }} />
+            <Form.Label>From PDBe</Form.Label>
+                <InputGroup>
+                    <Form.Control type="text" ref={pdbCodeFetchInputRef} onKeyDown={(e) => {
+                        if (e.code === 'Enter') {
+                            fetchFileFromEBI()
+                        }}}/>
+                    <Button variant="outline-secondary" onClick={fetchFileFromEBI}>
+                        Fetch
+                    </Button>
+                </InputGroup>
             </Form.Group>
             <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="uploadMTZs" className="mb-3">
                 <Form.Label>Map coefficients</Form.Label>

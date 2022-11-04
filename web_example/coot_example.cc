@@ -356,6 +356,13 @@ class ResSpecStringPair {
 
 class molecules_container_js : public molecules_container_t {
     public:
+        std::vector<float> getFloats(unsigned nFloats) { 
+            std::vector<float> fs;
+            for(unsigned i=0;i<nFloats;i++){
+                fs.push_back(i*1.0);
+            }
+            return fs;
+        }
         int add(int ic) { 
             return ic + 1;
         }
@@ -605,7 +612,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("geometry_init_standard",&molecules_container_t::geometry_init_standard)
     .function("fill_rotamer_probability_tables",&molecules_container_t::fill_rotamer_probability_tables)
     .function("copy_fragment_using_residue_range",&molecules_container_t::copy_fragment_using_residue_range)
-    .function("get_single_letter_codes_for_chain",&molecules_container_t::get_single_letter_codes_for_chain)
+    .function("close_molecule",&molecules_container_t::close_molecule)
     .function("undo",&molecules_container_t::undo)
     .function("redo",&molecules_container_t::redo)
     .function("refine_residues_using_atom_cid",&molecules_container_t::refine_residues_using_atom_cid)
@@ -624,6 +631,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("go_to_blob_array",&molecules_container_js::go_to_blob_array)
     .function("get_single_letter_codes_for_chain",&molecules_container_js::get_single_letter_codes_for_chain)
     .function("add",&molecules_container_js::add)
+    .function("getFloats",&molecules_container_js::getFloats)
     ;
     class_<RamachandranInfo>("RamachandranInfo")
     .constructor<>()

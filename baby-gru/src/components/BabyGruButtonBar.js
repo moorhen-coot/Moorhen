@@ -104,11 +104,13 @@ export const BabyGruButtonBar = (props) => {
         delete: { mode: 'ATOM' },
         mutate: { toType: "ALA" }
     })
+    /*
+    * debug to observe and respond to changes in panelParameters
 
-    useEffect(() => {
-        console.log('panelPaarameters', panelParameters)
-    }, [panelParameters])
-
+        useEffect(() => {
+            console.log('panelParameters', panelParameters)
+        }, [panelParameters])
+    */
     return <div
         style={{
             overflow: "auto",
@@ -158,7 +160,7 @@ export const BabyGruButtonBar = (props) => {
                     return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
                 }} />
 
-        <BabyGruSimpleEditButton {...props}
+            <BabyGruSimpleEditButton {...props}
                 buttonIndex={"3"}
                 selectedbuttonIndex={selectedbuttonIndex}
                 setSelectedbuttonIndex={setSelectedbuttonIndex}
@@ -262,13 +264,9 @@ export const BabyGruSimpleEditButton = (props) => {
     }, [])
 
     useEffect(() => {
-        console.log('changing panelParameters', props.panelParameters)
+        //console.log('changing panelParameters', props.panelParameters)
         setLocalParameters(props.panelParameters)
     }, [props.panelParameters])
-
-    useEffect(() => {
-        console.log('changed localParameters', localParameters)
-    }, [localParameters])
 
     const atomClickedCallback = event => {
         console.log('in atomClickedcallback', event)
@@ -283,7 +281,7 @@ export const BabyGruSimpleEditButton = (props) => {
                     returnType: "status",
                     command: props.cootCommand,
                     commandArgs: formattedArgs
-                }).then(_ => {
+                }, true).then(_ => {
                     molecule.setAtomsDirty(true)
                     molecule.redraw(props.glRef)
                     props.setSelectedbuttonIndex(null)
@@ -325,7 +323,7 @@ export const BabyGruSimpleEditButton = (props) => {
                         {...props}
                         style={{
                             position: 'absolute',
-                            marginBottom:'0.5rem',
+                            marginBottom: '0.5rem',
                             backgroundColor: 'rgba(100, 255, 100, 0.85)',
                             padding: '2px 10px',
                             color: 'black',

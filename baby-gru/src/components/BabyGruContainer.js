@@ -6,13 +6,12 @@ import { v4 as uuidv4 } from 'uuid';
 import { BabyGruCommandCentre } from '../BabyGruUtils';
 import { BabyGruButtonBar } from './BabyGruButtonBar';
 import { BabyGruFileMenu } from './BabyGruFileMenu';
-import { BabyGruSequenceViewer } from './BabyGruSequenceViewer';
 import { BabyGruRamachandran } from './BabyGruRamachandran';
-import { BabyGruMapSettings } from './BabyGruMapSettings';
 import { BabyGruTimingTest } from './BabyGruTimingTest';
 import { ArrowBackIosOutlined, ArrowForwardIosOutlined } from '@mui/icons-material';
 import './BabyGruContainer.css'
 import { BabyGruHistoryMenu } from './BabyGruHistoryMenu';
+import { BabyGruViewMenu } from './BabyGruViewMenu';
 
 function convertPxtoVh(input, height) {
     return 100 * input / height
@@ -22,6 +21,11 @@ function convertViewtoPx(input, height) {
     return height * (input / 100)
 }
 
+const initialHistoryState = { commands: [] }
+
+const historyReducer = (oldHistory, newCommand) => {
+    return { commands: [...oldHistory.commands, newCommand] }
+}
 
 export const BabyGruContainer = (props) => {
 
@@ -38,7 +42,6 @@ export const BabyGruContainer = (props) => {
     const headerRef = useRef()
     const consoleDivRef = useRef()
     const [busy, setBusy] = useState(false)
-    const [mapRadius, setMapRadius] = useState(13.)
     const [windowWidth, setWindowWidth] = useState(window.innerWidth)
     const [windowHeight, setWindowHeight] = useState(window.innerHeight)
     const [displayObjectsAccordionBodyHeight, setDisplayObjectsAccordionBodyHeight] = useState(convertViewtoPx(0, windowHeight))
@@ -46,7 +49,8 @@ export const BabyGruContainer = (props) => {
     const [sequenceViewerBodyHeight, setSequenceViewerBodyHeight] = useState(convertViewtoPx(0, windowHeight))
     const [consoleBodyHeight, setConsoleBodyHeight] = useState(convertViewtoPx(0, windowHeight))
     const [accordionHeight, setAccordionHeight] = useState(convertViewtoPx(90, windowHeight))
-    const [commandHistory, setCommandHistory] = useState({ commands: [] })
+    const [commandHistory, dispatchHistoryReducer] = useReducer(historyReducer, initialHistoryState)
+    const [backgroundColor, setBackgroundColor] = useState([0., 0., 0., 1.])
 
     const sideBarWidth = convertViewtoPx(50, windowWidth)
     const innerWindowMarginHeight = windowHeight * 0.04
@@ -65,8 +69,8 @@ export const BabyGruContainer = (props) => {
             onActiveMessagesChanged: (newActiveMessages) => {
                 setBusy(newActiveMessages.length !== 0)
             },
-            onCommandHistoryChanged: (newCommandHistory) => {
-                setCommandHistory({commands:newCommandHistory})
+            onNewCommand: (newCommand) => {
+                dispatchHistoryReducer(newCommand)
             }
         })
         window.addEventListener('resize', setWindowDimensions)
@@ -90,6 +94,9 @@ export const BabyGruContainer = (props) => {
         consoleDivRef.current.scrollTop = consoleDivRef.current.scrollHeight;
     }, [showSideBar, windowHeight, windowWidth])
 
+    useEffect(() => {
+        console.log('backgroundColor changed', backgroundColor)
+    }, [backgroundColor])
 
     useEffect(() => {
         if (activeMap && commandCentre.current) {
@@ -149,6 +156,10 @@ export const BabyGruContainer = (props) => {
                         setActiveMap={setActiveMap}
                         glRef={glRef}
                     />
+                    <BabyGruViewMenu
+                        backgroundColor={backgroundColor}
+                        setBackgroundColor={(color)=>{setBackgroundColor(color)}}
+                    />
                 </Nav>
             </Navbar.Collapse>
             <Nav className="justify-content-right">
@@ -165,16 +176,21 @@ export const BabyGruContainer = (props) => {
                     <div
                         ref={graphicsDiv}
                         style={{
-                            backgroundColor: "black",
+                            backgroundColor: `rgba(
+                                ${255 * backgroundColor[0]},
+                                ${255 * backgroundColor[1]},
+                                ${255 * backgroundColor[2]}, 
+                                ${backgroundColor[3]})`,
                             cursor: cursorStyle
                         }}>
                         <BabyGruWebMG
                             molecules={molecules}
                             ref={glRef}
                             maps={maps}
-                            commandCentre={commandCentre} 
+                            commandCentre={commandCentre}
                             width={webGLWidth}
                             height={webGLHeight}
+                            backgroundColor={backgroundColor}
                         />
                     </div>
                     <div style={{ height: '4rem' }} id='button-bar-baby-gru'>
@@ -214,7 +230,7 @@ export const BabyGruContainer = (props) => {
                         <Accordion.Item eventKey="showDisplayObjects" style={{ width: sideBarWidth, padding: '0', margin: '0' }} >
                             <Accordion.Header style={{ padding: '0', margin: '0', height: '4rem' }}>Display Objects</Accordion.Header>
                             <Accordion.Body style={{ overflowY: 'auto', height: displayObjectsAccordionBodyHeight }}>
-                                {molecules.length === 0 && maps.length === 0 ? "No data files loaded" : <BabyGruDisplayObjects molecules={molecules} setMolecules={setMolecules} glRef={glRef} commandCentre={commandCentre} maps={maps} activeMap={activeMap} setActiveMap={setActiveMap} mapRadius={mapRadius} setMapRadius={setMapRadius} />}
+                                {molecules.length === 0 && maps.length === 0 ? "No data files loaded" : <BabyGruDisplayObjects molecules={molecules} setMolecules={setMolecules} glRef={glRef} commandCentre={commandCentre} maps={maps} activeMap={activeMap} setActiveMap={setActiveMap} />}
                             </Accordion.Body>
                         </Accordion.Item>
                         <Accordion.Item eventKey="showTools" style={{ width: sideBarWidth, padding: '0', margin: '0' }} >
@@ -224,14 +240,11 @@ export const BabyGruContainer = (props) => {
                                     <Tab eventKey='ramachandran' title='Ramachandran' style={{ height: '100%' }}>
                                         <BabyGruRamachandran molecules={molecules} commandCentre={commandCentre} glRef={glRef} toolAccordionBodyHeight={toolAccordionBodyHeight} sideBarWidth={sideBarWidth} windowHeight={windowHeight} windowWidth={windowWidth} />
                                     </Tab>
-                                    <Tab eventKey='mapCountour' title='Map Settings'>
-                                        <BabyGruMapSettings glRef={glRef} commandCentre={commandCentre} maps={maps} activeMap={activeMap} mapRadius={mapRadius} setMapRadius={setMapRadius} setActiveMap={setActiveMap} />
-                                    </Tab>
                                     <Tab eventKey='densityFit' title='Density Fit'>
                                         Not ready yet...
                                     </Tab>
                                     <Tab eventKey='more' title='More...'>
-                                        <BabyGruTimingTest  commandCentre={commandCentre} />
+                                        <BabyGruTimingTest commandCentre={commandCentre} />
                                     </Tab>
                                 </Tabs>
                             </Accordion.Body>
