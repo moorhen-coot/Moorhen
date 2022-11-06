@@ -92,7 +92,6 @@ export const BabyGruFileMenu = (props) => {
             readPromises.push(readMmcifFile(file))
         }
         let mmcifReads = await Promise.all(readPromises)
-        console.log(mmcifReads)
     }
 
     const readMmcifFile = async (file) => {
@@ -105,6 +104,14 @@ export const BabyGruFileMenu = (props) => {
                     command: 'shim_read_dictionary',
                     commandArgs: [fileContent, selectedMolecule]
                 })
+            }).then(result => {
+                console.log('selected is', selectedMolecule)
+                props.molecules
+                    .filter(molecule => molecule.coordMolNo === parseInt(selectedMolecule.coordMolNo))
+                    .forEach(molecule => {
+                        console.log('redrawing, molecule')
+                        molecule.redraw(props.glRef)
+                    })
             })
     }
 
