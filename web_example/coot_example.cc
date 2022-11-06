@@ -594,6 +594,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("is_valid_map_molecule",&molecules_container_t::is_valid_map_molecule)
     .function("read_pdb",&molecules_container_t::read_pdb)
     .function("read_mtz",&molecules_container_t::read_mtz)
+    //   int import_cif_dictionary(const std::string &cif_file_name, int imol_enc);
+    .function("import_cif_dictionary",&molecules_container_t::import_cif_dictionary)
     .function("density_fit_analysis",&molecules_container_t::density_fit_analysis)
     //Using allow_raw_pointers(). Perhaps suggests we need to do something different from exposing mmdb pointers to JS.
     .function("get_residue",&molecules_container_t::get_residue, allow_raw_pointers())

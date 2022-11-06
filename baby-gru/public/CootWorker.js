@@ -88,6 +88,17 @@ const read_pdb = (coordData, name) => {
     return coordMolNo
 }
 
+const read_dictionary = (coordData, associatedMolNo) => {
+    const theGuid = guid()
+    cootModule.FS_createDataFile(".", `${theGuid}.cif`, coordData, true, true);
+    const tempFilename = `./${theGuid}.cif`
+    console.log(`Off to read dictionary into coot ${tempFilename} ${associatedMolNo}`)
+    const returnVal = molecules_container.import_cif_dictionary(tempFilename, associatedMolNo)
+    console.log(`Read Dictionary with status ${returnVal}`)
+    cootModule.FS_unlink(tempFilename)
+    return returnVal
+}
+
 function base64ToArrayBuffer(base64) {
     var binary_string = window.atob(base64);
     var len = binary_string.length;
@@ -269,6 +280,9 @@ onmessage = function (e) {
             }
             else if (command === 'shim_read_mtz') {
                 cootResult = read_mtz(...commandArgs)
+            }
+            else if (command === 'shim_read_dictionary') {
+                cootResult = read_dictionary(...commandArgs)
             }
             else {
                 cootResult = molecules_container[command](...commandArgs)
