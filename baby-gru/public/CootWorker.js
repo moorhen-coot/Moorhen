@@ -57,7 +57,7 @@ const residueCodesToJSArray = (residueCodes) => {
 
 }
 
-const simpleMeshToLineMeshData = (simpleMesh) => {
+const simpleMeshToLineMeshData = (simpleMesh,normalLighting) => {
     const vertices = simpleMesh.vertices;
     const triangles = simpleMesh.triangles;
     let totIdxs = [];
@@ -74,7 +74,12 @@ const simpleMeshToLineMeshData = (simpleMesh) => {
         totNorm.push(...vert.normal);
         totCol.push(...vert.color);
     }
-    return { prim_types: [["LINES"]], useIndices: [[true]], idx_tri: [[totIdxs]], vert_tri: [[totPos]], norm_tri: [[totNorm]], col_tri: [[totCol]] };
+
+    if(normalLighting)
+        return { prim_types: [["NORMALLINES"]], useIndices: [[true]], idx_tri: [[totIdxs]], vert_tri: [[totPos]], additional_norm_tri:[[totNorm]], norm_tri: [[totNorm]], col_tri: [[totCol]] };
+    else
+        return { prim_types: [["LINES"]], useIndices: [[true]], idx_tri: [[totIdxs]], vert_tri: [[totPos]], norm_tri: [[totNorm]], col_tri: [[totCol]] };
+    
 }
 
 const read_pdb = (coordData, name) => {
@@ -294,8 +299,11 @@ onmessage = function (e) {
                 case 'mesh':
                     returnResult = simpleMeshToMeshData(cootResult)
                     break;
+                case 'lit_lines_mesh':
+                    returnResult = simpleMeshToLineMeshData(cootResult,true)
+                    break;
                 case 'lines_mesh':
-                    returnResult = simpleMeshToLineMeshData(cootResult)
+                    returnResult = simpleMeshToLineMeshData(cootResult,false)
                     break;
                 case 'float_array':
                     returnResult = floatArrayToJSArray(cootResult)
