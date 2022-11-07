@@ -31,7 +31,7 @@ export function BabyGruMolecule(commandCentre) {
 BabyGruMolecule.prototype.delete = async function (gl) {
     const $this = this
     Object.getOwnPropertyNames(this.displayObjects).forEach(displayObject => {
-        if(this.displayObjects[displayObject].length > 0) {this.hide(displayObject, gl)}
+        if(this.displayObjects[displayObject].length > 0) {this.clearBuffersOfStyle(displayObject, gl)}
     })
     const inputData = {message:"delete", coordMolNo:$this.coordMolNo}
     const response = await $this.commandCentre.current.postMessage(inputData)
