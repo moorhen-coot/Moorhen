@@ -61,7 +61,7 @@ const calculateDisplayStartAndEnd = (sequenceLength) => {
 const parseSequenceData = (sequence) => {
     let rulerStart = sequence[0].resNum
     let finalSequence = Array(sequence[sequence.length-1].resNum).fill('-')
-    let seqLenght = sequence[sequence.length-1].resNum - rulerStart
+    let seqLenght = sequence[sequence.length-1].resNum - rulerStart + 1
     
     sequence.forEach(residue => {
         finalSequence[residue.resNum - 1] = residue.resCode
