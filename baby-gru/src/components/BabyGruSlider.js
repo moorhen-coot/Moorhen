@@ -6,7 +6,16 @@ import VolumeDown from '@mui/icons-material/VolumeDown';
 import VolumeUp from '@mui/icons-material/VolumeUp';
 
 export default function BabyGruSlider(props) {
-    const [value, setValue] = React.useState(props.intialValue);
+    
+    const convertInitValueToScale = (value) => {
+        if (props.logScale) {
+            return 100 * ((Math.log10(value) - Math.log10(props.minVal)) / ((Math.log10(props.maxVal) - Math.log10(props.minVal))));
+        } else {
+            return (100 * value) / props.maxVal;
+        }
+    }
+
+    const [value, setValue] = React.useState(convertInitValueToScale(props.intialValue));
     const setValueTimer = React.createRef(null)
     const [externalValue, setExternalValue] = React.useState(5)
 
@@ -39,6 +48,7 @@ export default function BabyGruSlider(props) {
         </Box>
     );
 }
+
 BabyGruSlider.defaultProps={
     minVal:0, maxVal:100, setExternalValue:()=>{}, logScale:false
 }

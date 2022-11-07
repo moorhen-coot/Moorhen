@@ -204,8 +204,8 @@ export const BabyGruMoleculeCard = (props) => {
 
 const BabyGruMapCard = (props) => {
     const [cootContour, setCootContour] = useState(true)
-    const [mapRadius, setMapRadius] = useState(13.)
-    const [mapContourLevel, setMapContourLevel] = useState(0.5)
+    const [mapRadius, setMapRadius] = useState(props.initialRadius)
+    const [mapContourLevel, setMapContourLevel] = useState(props.initialContour)
     const nextOrigin = createRef([])
     const busyContouring = createRef(false)
 
@@ -262,8 +262,8 @@ const BabyGruMapCard = (props) => {
 
     useEffect(() => {
         setCootContour(props.map.cootContour)
-        setMapContourLevel(0.5)
-        setMapRadius(13)
+        setMapContourLevel(props.initialContour)
+        setMapRadius(props.initialRadius)
     }, [])
 
     useEffect(() => {
@@ -339,12 +339,12 @@ const BabyGruMapCard = (props) => {
                 </Col>
                 <Col>
                     <Form.Group controlId="contouringLevel" className="mb-3">
-                            <BabyGruSlider minVal={0.01} maxVal={5} logScale={true} sliderTitle="Level" intialValue={62} externalValue={mapContourLevel} setExternalValue={setMapContourLevel}/>
+                            <BabyGruSlider minVal={0.01} maxVal={5} logScale={true} sliderTitle="Level" intialValue={props.initialContour} externalValue={mapContourLevel} setExternalValue={setMapContourLevel}/>
                     </Form.Group>
                 </Col>
                 <Col>
                     <Form.Group controlId="contouringRadius" className="mb-3">
-                            <BabyGruSlider minVal={0.01} maxVal={50} logScale={false} sliderTitle="Radius" intialValue={24.5} externalValue={mapRadius} setExternalValue={setMapRadius}/>
+                            <BabyGruSlider minVal={0.01} maxVal={50} logScale={false} sliderTitle="Radius" intialValue={props.initialRadius} externalValue={mapRadius} setExternalValue={setMapRadius}/>
                     </Form.Group>
                 </Col>
             </Row>
@@ -356,7 +356,6 @@ const BabyGruMapCard = (props) => {
 export const BabyGruDisplayObjects = (props) => {
 
     let displayData = [];
-    // TODO: Concatenate molecules and maps, sort them by coordMolNo and then push them in that order...
     if (props.molecules.length!=0) {
         props.molecules.forEach(molecule => displayData.push(
             <BabyGruMoleculeCard 
@@ -373,7 +372,7 @@ export const BabyGruDisplayObjects = (props) => {
     
     if (props.maps.length!=0) {
         props.maps.forEach(map => displayData.push(
-            <BabyGruMapCard {...props} index={map.mapMolNo} map={map}/>
+            <BabyGruMapCard {...props} index={map.mapMolNo} map={map} initialContour={0.5} initialRadius={13} />
         ))
     }   
 
