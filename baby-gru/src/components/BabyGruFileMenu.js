@@ -215,6 +215,9 @@ export const BabyGruFileMenu = (props) => {
             </Form.Group>
 
         </NavDropdown>
+
+
+        
         <Overlay
             target={overlayTarget}
             show={overlayVisible}
@@ -334,7 +337,8 @@ const BabyGruSelectMolecule = (props) => {
                 <Row key="Row1" style={{ marginBottom: "1rem" }}>
                     <Col key="F">
                         Molecule
-                        <FormSelect size="sm" ref={moleculeSelectRef} defaultValue="" onChange={(val) => { }}>
+                        <FormSelect size="sm" ref={moleculeSelectRef} defaultValue={-999999} onChange={(val) => { }}>
+                            <option value={-999999} key={-999999}>Any molecule</option>
                             {props.molecules
                                 .map(molecule => <option value={molecule.coordMolNo} key={molecule.coordMolNo}>{molecule.name}</option>
                                 )}
