@@ -49,12 +49,12 @@ const nucleotideCodesOneToThree = {"A": "A",
  * @param {Number} sequenceLength sequence lenght
  * @returns {Array} An array containing the display start and display end consisting of a range of 40 residues
  */
-const calculateDisplayStartAndEnd = (sequenceLength) => {
+const calculateDisplayStartAndEnd = (rulerStart, sequenceLength) => {
     if (sequenceLength <= 40) {
-        return [parseFloat("1"), parseFloat(sequenceLength)]
+        return [parseFloat(rulerStart), parseFloat(sequenceLength + rulerStart)]
     }
     let middleIndex = Math.round((sequenceLength) / 2)
-    return [parseFloat(middleIndex-20), parseFloat( middleIndex+20)]        
+    return [parseFloat(middleIndex - 20 + rulerStart), parseFloat(middleIndex + 20 + rulerStart)]        
 }
 
 
@@ -76,7 +76,7 @@ export const BabyGruSequenceViewer = (props) => {
     const navigationRef = useRef(null);
     const [message, setMessage] = useState("");
     const [rulerStart, seqLenght, displaySequence] = parseSequenceData(props.sequence.sequence)
-    const [start, end] = calculateDisplayStartAndEnd(seqLenght);
+    const [start, end] = calculateDisplayStartAndEnd(rulerStart, seqLenght);
 
 
     /**
