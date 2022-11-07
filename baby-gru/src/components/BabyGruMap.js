@@ -9,6 +9,7 @@ export function BabyGruMap(commandCentre) {
     this.webMGContour = false
     this.cootContour = true
     this.displayObjects = { Coot: [] }
+    this.litLines = true
 }
 
 BabyGruMap.prototype.loadToCootFromURL = function (url, mapName, selectedColumns) {
@@ -150,9 +151,13 @@ BabyGruMap.prototype.doCootContour = function (gl, x, y, z, radius, contourLevel
 
     const $this = this
 
+    let returnType =  "lines_mesh"
+    if(this.litLines)
+        returnType =  "lit_lines_mesh"
+
     return new Promise((resolve, reject) => {
         this.commandCentre.current.cootCommand( {
-            returnType: "lines_mesh",
+            returnType: returnType,
             command: "get_map_contours_mesh",
             commandArgs: [$this.mapMolNo, x, y, z, radius, contourLevel]
         }).then(response => {
