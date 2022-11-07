@@ -3794,7 +3794,6 @@ function analyzeSequenceType(thisSeq) {
 
 function parseMMCIF(lines,structureName) {
 
-
     let start = new Date().getTime();
     console.log(lines.length);
 
