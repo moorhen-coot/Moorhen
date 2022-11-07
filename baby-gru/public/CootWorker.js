@@ -57,7 +57,7 @@ const residueCodesToJSArray = (residueCodes) => {
 
 }
 
-const simpleMeshToLineMeshData = (simpleMesh) => {
+const simpleMeshToLineMeshData = (simpleMesh,normalLighting) => {
     const vertices = simpleMesh.vertices;
     const triangles = simpleMesh.triangles;
     let totIdxs = [];
@@ -74,7 +74,12 @@ const simpleMeshToLineMeshData = (simpleMesh) => {
         totNorm.push(...vert.normal);
         totCol.push(...vert.color);
     }
-    return { prim_types: [["LINES"]], useIndices: [[true]], idx_tri: [[totIdxs]], vert_tri: [[totPos]], norm_tri: [[totNorm]], col_tri: [[totCol]] };
+
+    if(normalLighting)
+        return { prim_types: [["NORMALLINES"]], useIndices: [[true]], idx_tri: [[totIdxs]], vert_tri: [[totPos]], additional_norm_tri:[[totNorm]], norm_tri: [[totNorm]], col_tri: [[totCol]] };
+    else
+        return { prim_types: [["LINES"]], useIndices: [[true]], idx_tri: [[totIdxs]], vert_tri: [[totPos]], norm_tri: [[totNorm]], col_tri: [[totCol]] };
+    
 }
 
 const read_pdb = (coordData, name) => {
@@ -86,6 +91,17 @@ const read_pdb = (coordData, name) => {
     console.log(`Read coordinates as molecule ${coordMolNo}`)
     cootModule.FS_unlink(tempFilename)
     return coordMolNo
+}
+
+const read_dictionary = (coordData, associatedMolNo) => {
+    const theGuid = guid()
+    cootModule.FS_createDataFile(".", `${theGuid}.cif`, coordData, true, true);
+    const tempFilename = `./${theGuid}.cif`
+    console.log(`Off to read dictionary into coot ${tempFilename} ${associatedMolNo}`)
+    const returnVal = molecules_container.import_cif_dictionary(tempFilename, associatedMolNo)
+    console.log(`Read Dictionary with status ${returnVal}`)
+    cootModule.FS_unlink(tempFilename)
+    return returnVal
 }
 
 function base64ToArrayBuffer(base64) {
@@ -270,6 +286,9 @@ onmessage = function (e) {
             else if (command === 'shim_read_mtz') {
                 cootResult = read_mtz(...commandArgs)
             }
+            else if (command === 'shim_read_dictionary') {
+                cootResult = read_dictionary(...commandArgs)
+            }
             else {
                 cootResult = molecules_container[command](...commandArgs)
             }
@@ -280,8 +299,11 @@ onmessage = function (e) {
                 case 'mesh':
                     returnResult = simpleMeshToMeshData(cootResult)
                     break;
+                case 'lit_lines_mesh':
+                    returnResult = simpleMeshToLineMeshData(cootResult,true)
+                    break;
                 case 'lines_mesh':
-                    returnResult = simpleMeshToLineMeshData(cootResult)
+                    returnResult = simpleMeshToLineMeshData(cootResult,false)
                     break;
                 case 'float_array':
                     returnResult = floatArrayToJSArray(cootResult)

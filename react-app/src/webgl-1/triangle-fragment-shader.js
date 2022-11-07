@@ -48,6 +48,7 @@ var triangle_fragment_shader_source = `
       vec3 norm = normalize(vNormal);
 
       if(gl_FrontFacing!=true){
+          discard;
         //gl_FragColor = vec4(1.0,0.0,0.0,1.0);
         //gl_FragColor = gl_FragColor;
         norm = -norm;

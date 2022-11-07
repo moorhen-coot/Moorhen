@@ -204,8 +204,9 @@ export const BabyGruMoleculeCard = (props) => {
 
 const BabyGruMapCard = (props) => {
     const [cootContour, setCootContour] = useState(true)
-    const [mapRadius, setMapRadius] = useState(13.)
-    const [mapContourLevel, setMapContourLevel] = useState(0.5)
+    const [mapRadius, setMapRadius] = useState(props.initialRadius)
+    const [mapContourLevel, setMapContourLevel] = useState(props.initialContour)
+    const [mapLitLines, setMapLitLines] = useState(props.initialMapLitLines)
     const nextOrigin = createRef([])
     const busyContouring = createRef(false)
 
@@ -262,8 +263,9 @@ const BabyGruMapCard = (props) => {
 
     useEffect(() => {
         setCootContour(props.map.cootContour)
-        setMapContourLevel(0.5)
-        setMapRadius(13)
+        setMapContourLevel(props.initialContour)
+        setMapLitLines(props.initialMapLitLines)
+        setMapRadius(props.initialRadius)
     }, [])
 
     useEffect(() => {
@@ -272,6 +274,7 @@ const BabyGruMapCard = (props) => {
             busyContouring.current = true
             console.log(props.commandCentre.current)
             props.commandCentre.current.extendConsoleMessage('Because I can')
+            props.map.litLines = mapLitLines
             props.map.contourLevel = mapContourLevel
             props.map.doCootContour(props.glRef.current,
                 ...props.glRef.current.origin.map(coord => -coord),
@@ -281,7 +284,7 @@ const BabyGruMapCard = (props) => {
                     busyContouring.current = false
                 })
         }
-    }, [mapRadius, mapContourLevel])
+    }, [mapRadius, mapContourLevel, mapLitLines])
 
     return <Card className="px-0"  style={{marginBottom:'0.5rem', padding:'0'}} key={props.map.mapMolNo}>
         <Card.Header>
@@ -321,12 +324,13 @@ const BabyGruMapCard = (props) => {
             </Row>
         </Card.Header>
         <Card.Body>
-            <Row style={{ height: '100%', justifyContent:'between', display:'flex'}}>
+            <Row className="align-items-center" style={{ height: '100%', justifyContent:'between', display:'flex'}}>
                 <Col classNane="border-left" style={{justifyContent:'left', display:'flex'}}> 
+                <Row>
                         <Form.Check checked={props.map === props.activeMap}
                                     style={{margin:'0'}}
                                     inline
-                                    label={'Active Map'}
+                                    label={'Active'}
                                     name={`setActiveMap ${props.map.mapMolNo}`}
                                     type="checkbox"
                                     variant="outline"
@@ -336,13 +340,29 @@ const BabyGruMapCard = (props) => {
                                         }
                                     }}
                         />
+                </Row>
+                <Row>
+                        <Form.Check checked={props.map.litLines}
+                                    style={{margin:'0'}}
+                                    inline
+                                    label={'Lit lines'}
+                                    name={`litLines ${props.map.mapMolNo}`}
+                                    type="checkbox"
+                                    variant="outline"
+                                    onChange={(e) => {
+                                        setMapLitLines(e.target.checked)
+                                    }}
+                        />
+                </Row>
                 </Col>
                 <Col>
-                <Form.Group style={{ width: '20rem' }} controlId="Contouring level" className="mb-3">
-                            <BabyGruSlider minVal={0.01} maxVal={5} logScale={true} sliderTitle="Countour Level" intialValue={62} externalValue={mapContourLevel} setExternalValue={setMapContourLevel}/>
+                    <Form.Group controlId="contouringLevel" className="mb-3">
+                            <BabyGruSlider minVal={0.01} maxVal={5} logScale={true} sliderTitle="Level" intialValue={props.initialContour} externalValue={mapContourLevel} setExternalValue={setMapContourLevel}/>
                     </Form.Group>
-                    <Form.Group style={{ width: '20rem' }} controlId="Contouring level" className="mb-3">
-                            <BabyGruSlider minVal={0.01} maxVal={50} logScale={false} sliderTitle="Contour Radius" intialValue={24.5} externalValue={mapRadius} setExternalValue={setMapRadius}/>
+                </Col>
+                <Col>
+                    <Form.Group controlId="contouringRadius" className="mb-3">
+                            <BabyGruSlider minVal={0.01} maxVal={50} logScale={false} sliderTitle="Radius" intialValue={props.initialRadius} externalValue={mapRadius} setExternalValue={setMapRadius}/>
                     </Form.Group>
                 </Col>
             </Row>
@@ -354,7 +374,6 @@ const BabyGruMapCard = (props) => {
 export const BabyGruDisplayObjects = (props) => {
 
     let displayData = [];
-    // TODO: Concatenate molecules and maps, sort them by coordMolNo and then push them in that order...
     if (props.molecules.length!=0) {
         props.molecules.forEach(molecule => displayData.push(
             <BabyGruMoleculeCard 
@@ -371,7 +390,7 @@ export const BabyGruDisplayObjects = (props) => {
     
     if (props.maps.length!=0) {
         props.maps.forEach(map => displayData.push(
-            <BabyGruMapCard {...props} index={map.mapMolNo} map={map}/>
+            <BabyGruMapCard {...props} index={map.mapMolNo} map={map} initialContour={0.5} initialRadius={13} initialMapLitLines={false} />
         ))
     }   
 

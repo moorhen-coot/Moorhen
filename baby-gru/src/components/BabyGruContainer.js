@@ -3,7 +3,7 @@ import { Navbar, Container, Nav, Tabs, Tab, Accordion, Button, Col, Row, Card, S
 import { BabyGruDisplayObjects } from './BabyGruDisplayObjects';
 import { BabyGruWebMG } from './BabyGruWebMG';
 import { v4 as uuidv4 } from 'uuid';
-import { BabyGruCommandCentre } from '../BabyGruUtils';
+import { BabyGruCommandCentre, convertRemToPx, convertViewtoPx } from '../BabyGruUtils';
 import { BabyGruButtonBar } from './BabyGruButtonBar';
 import { BabyGruFileMenu } from './BabyGruFileMenu';
 import { BabyGruRamachandran } from './BabyGruRamachandran';
@@ -13,13 +13,6 @@ import './BabyGruContainer.css'
 import { BabyGruHistoryMenu } from './BabyGruHistoryMenu';
 import { BabyGruViewMenu } from './BabyGruViewMenu';
 
-function convertPxtoVh(input, height) {
-    return 100 * input / height
-}
-
-function convertViewtoPx(input, height) {
-    return height * (input / 100)
-}
 
 const initialHistoryState = { commands: [] }
 
@@ -52,9 +45,9 @@ export const BabyGruContainer = (props) => {
     const [commandHistory, dispatchHistoryReducer] = useReducer(historyReducer, initialHistoryState)
     const [backgroundColor, setBackgroundColor] = useState([0., 0., 0., 1.])
 
-    const sideBarWidth = convertViewtoPx(50, windowWidth)
-    const innerWindowMarginHeight = windowHeight * 0.04
-    const innerWindowMarginWidth = windowWidth * 0.04
+    const sideBarWidth = convertViewtoPx(30, windowWidth)
+    const innerWindowMarginHeight = convertRemToPx(2.1)
+    const innerWindowMarginWidth = convertRemToPx(5)
 
     const setWindowDimensions = () => {
         setWindowWidth(window.innerWidth)
@@ -159,6 +152,7 @@ export const BabyGruContainer = (props) => {
                     <BabyGruViewMenu
                         backgroundColor={backgroundColor}
                         setBackgroundColor={(color)=>{setBackgroundColor(color)}}
+                        glRef={glRef}
                     />
                 </Nav>
             </Navbar.Collapse>

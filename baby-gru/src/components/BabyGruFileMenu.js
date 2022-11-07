@@ -2,16 +2,17 @@ import { NavDropdown, Form, Button, InputGroup, Modal, FormSelect, Col, Row, Ove
 import { BabyGruMolecule } from "./BabyGruMolecule";
 import { BabyGruMap } from "./BabyGruMap";
 import { useEffect, useState, useRef, createRef } from "react";
-import { BabyGruMtzWrapper } from '../BabyGruUtils';
+import { BabyGruMtzWrapper, cootCommand, readTextFile } from '../BabyGruUtils';
 import { InsertDriveFile } from "@mui/icons-material";
 
 export const BabyGruFileMenu = (props) => {
 
     const { molecules, setMolecules, maps, setMaps, commandCentre, glRef } = props;
-    const [disambiguateColumnsVisible, setDisambiguateColumnsVisible] = useState(false)
-    const [disambiguateColumnsResolve, setDisambiguateColumnsResolve] = useState(() => { })
-    const [columns, setColumns] = useState({})
-    const target = useRef(null);
+    const [overlayVisible, setOverlayVisible] = useState(false)
+    const [overlayContent, setOverlayContent] = useState(<></>)
+    const [overlayTarget, setOverlayTarget] = useState(null)
+    const readMtzTarget = useRef(null);
+    const readDictionaryTarget = useRef(null);
     const pdbCodeFetchInputRef = useRef(null);
 
     const awaitingPromiseRef = useRef({
@@ -41,6 +42,7 @@ export const BabyGruFileMenu = (props) => {
         return newMolecule.loadToCootFromFile(file)
     }
 
+
     const loadMtzFiles = async (files) => {
         let readPromises = []
         for (const file of files) {
@@ -51,11 +53,25 @@ export const BabyGruFileMenu = (props) => {
         props.setActiveMap(newMaps.at(-1))
     }
 
-    const disambiguateColumns = async (newColumns) => {
+    const readMtzFile = async (file) => {
+        const newMap = new BabyGruMap(commandCentre)
+        const babyGruMtzWrapper = new BabyGruMtzWrapper()
+        const newColumns = await babyGruMtzWrapper.loadHeaderFromFile(file)
+        setOverlayVisible(true)
+        const selectedColumns = await selectColumns(newColumns)
+        setOverlayVisible(false)
+        return newMap.loadToCootFromFile(file, selectedColumns)
+    }
+
+    const selectColumns = async (newColumns) => {
         return new Promise((resolve, reject) => {
             awaitingPromiseRef.current = { resolve, reject };
-            setDisambiguateColumnsVisible(true)
-            setDisambiguateColumnsResolve(awaitingPromiseRef)
+            setOverlayVisible(true)
+            setOverlayContent(<BabyGruDisambiguateColumns
+                resolveOrReject={awaitingPromiseRef}
+                columns={newColumns}
+            />)
+            setOverlayTarget(readMtzTarget.current)
             const fColumns = Object.keys(newColumns)
                 .filter(key => newColumns[key] === 'F')
             const pColumns = Object.keys(newColumns)
@@ -67,25 +83,53 @@ export const BabyGruFileMenu = (props) => {
                 let result = { F: 'FWT', PHI: 'PHWT', W: '', isDifference: false, useWeight: false }
                 resolve(result)
             }
-            else {
-                setColumns(newColumns)
-            }
         })
     }
 
-    const readMtzFile = async (file) => {
-        const newMap = new BabyGruMap(commandCentre)
-        const babyGruMtzWrapper = new BabyGruMtzWrapper()
-        const newColumns = await babyGruMtzWrapper.loadHeaderFromFile(file)
-        setDisambiguateColumnsVisible(true)
-        const selectedColumns = await disambiguateColumns(newColumns)
-        setDisambiguateColumnsVisible(false)
-        return newMap.loadToCootFromFile(file, selectedColumns)
+    const loadMmcifFiles = async (files) => {
+        let readPromises = []
+        for (const file of files) {
+            readPromises.push(readMmcifFile(file))
+        }
+        let mmcifReads = await Promise.all(readPromises)
+    }
+
+    const readMmcifFile = async (file) => {
+        const selectedMolecule = await selectMolecule()
+        setOverlayVisible(false)
+        return readTextFile(file)
+            .then(fileContent => {
+                return props.commandCentre.current.cootCommand({
+                    returnType: "status",
+                    command: 'shim_read_dictionary',
+                    commandArgs: [fileContent, selectedMolecule]
+                })
+            }).then(result => {
+                console.log('selected is', selectedMolecule)
+                props.molecules
+                    .filter(molecule => molecule.coordMolNo === parseInt(selectedMolecule.coordMolNo))
+                    .forEach(molecule => {
+                        console.log('redrawing, molecule')
+                        molecule.redraw(props.glRef)
+                    })
+            })
+    }
+
+    const selectMolecule = async () => {
+        return new Promise((resolve, reject) => {
+            awaitingPromiseRef.current = { resolve, reject };
+            setOverlayVisible(true)
+            setOverlayContent(<BabyGruSelectMolecule
+                resolveOrReject={awaitingPromiseRef}
+                molecules={props.molecules}
+            />)
+            setOverlayTarget(readDictionaryTarget.current)
+        })
     }
 
     const fetchFileFromEBI = () => {
         let pdbCode = pdbCodeFetchInputRef.current.value.toLowerCase()
-        if (pdbCode){
+        if (pdbCode) {
             return fetchFileFromURL(`https://www.ebi.ac.uk/pdbe/entry-files/download/pdb${pdbCode}.ent`, pdbCode)
         }
     }
@@ -125,7 +169,6 @@ export const BabyGruFileMenu = (props) => {
                 setMaps([...maps, newMap, newDiffMap])
                 props.setActiveMap(newMap)
             })
-            
     }
 
     return <>
@@ -135,20 +178,27 @@ export const BabyGruFileMenu = (props) => {
                 <Form.Control type="file" accept=".pdb, .mmcif, .ent" multiple={true} onChange={(e) => { loadPdbFiles(e.target.files) }} />
             </Form.Group>
             <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="downloadCoords" className="mb-3">
-            <Form.Label>From PDBe</Form.Label>
+                <Form.Label>From PDBe</Form.Label>
                 <InputGroup>
                     <Form.Control type="text" ref={pdbCodeFetchInputRef} onKeyDown={(e) => {
                         if (e.code === 'Enter') {
                             fetchFileFromEBI()
-                        }}}/>
+                        }
+                    }} />
                     <Button variant="outline-secondary" onClick={fetchFileFromEBI}>
                         Fetch
                     </Button>
                 </InputGroup>
             </Form.Group>
+
             <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="uploadMTZs" className="mb-3">
                 <Form.Label>Map coefficients</Form.Label>
-                <Form.Control ref={target} type="file" accept=".mtz" multiple={true} onChange={(e) => { loadMtzFiles(e.target.files) }} />
+                <Form.Control ref={readMtzTarget} type="file" accept=".mtz" multiple={true} onChange={(e) => { loadMtzFiles(e.target.files) }} />
+            </Form.Group>
+
+            <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="uploadMTZs" className="mb-3">
+                <Form.Label>Dictionaries</Form.Label>
+                <Form.Control ref={readDictionaryTarget} type="file" accept={[".pdb", ".cif", ".dict", ".mmcif"]} multiple={true} onChange={(e) => { loadMmcifFiles(e.target.files) }} />
             </Form.Group>
 
             <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="uploadMTZs" className="mb-3">
@@ -166,8 +216,8 @@ export const BabyGruFileMenu = (props) => {
 
         </NavDropdown>
         <Overlay
-            target={target.current}
-            show={disambiguateColumnsVisible}
+            target={overlayTarget}
+            show={overlayVisible}
             placement={"right"}
         >
             {({ placement, arrowProps, show: _show, popper, ...props }) => (
@@ -182,11 +232,7 @@ export const BabyGruFileMenu = (props) => {
                         borderRadius: 3,
                         ...props.style,
                     }}
-                >
-                    <BabyGruDisambiguateColumns
-                        resolveOrReject={disambiguateColumnsResolve}
-                        columns={columns} />
-
+                >{overlayContent}
                 </div>
             )}
         </Overlay>
@@ -265,6 +311,40 @@ const BabyGruDisambiguateColumns = (props) => {
                             WEIGHT: wRef.current.value,
                             isDifference: isDif.current.checked,
                             useWeight: useWeight.current.checked
+                        }
+                        console.log(result)
+                        props.resolveOrReject.current.resolve(result)
+                    }}>OK</Button>
+                </Row>
+            </Card.Body>
+        </Card>
+    </div>
+}
+
+const BabyGruSelectMolecule = (props) => {
+
+    const moleculeSelectRef = useRef(null)
+
+    return <div>
+        <Card>
+            <Card.Title>
+                Select molecule
+            </Card.Title>
+            <Card.Body>
+                <Row key="Row1" style={{ marginBottom: "1rem" }}>
+                    <Col key="F">
+                        Molecule
+                        <FormSelect size="sm" ref={moleculeSelectRef} defaultValue="" onChange={(val) => { }}>
+                            {props.molecules
+                                .map(molecule => <option value={molecule.coordMolNo} key={molecule.coordMolNo}>{molecule.name}</option>
+                                )}
+                        </FormSelect>
+                    </Col>
+                </Row>
+                <Row key="Row3" style={{ marginBottom: "1rem" }}>
+                    <Button onClick={() => {
+                        const result = {
+                            coordMolNo: moleculeSelectRef.current.value
                         }
                         console.log(result)
                         props.resolveOrReject.current.resolve(result)

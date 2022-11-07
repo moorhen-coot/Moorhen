@@ -4,10 +4,7 @@ import { RamaPlot } from "../WebGL/Ramachandran"
 import { cootCommand, postCootMessage } from "../BabyGruUtils"
 import { inspect } from 'util'
 import { height } from "@mui/system";
-
-function convertRemToPixels(rem) {
-    return rem * parseFloat(getComputedStyle(document.documentElement).fontSize);
-}
+import { convertRemToPx } from '../BabyGruUtils';
 
 export const BabyGruRamachandran = (props) => {
     const ramachandranRef = useRef();
@@ -35,7 +32,7 @@ export const BabyGruRamachandran = (props) => {
             let plotHeigth = (ramaPlotDivRef.current.clientHeight)
             let plotWidth = (ramaPlotDivRef.current.clientWidth)
             if (plotHeigth > 0 && plotWidth > 0) {
-                plotHeigth > plotWidth ? setRamaPlotDimensions(plotWidth - convertRemToPixels(3)) : setRamaPlotDimensions(plotHeigth - convertRemToPixels(3))
+                plotHeigth > plotWidth ? setRamaPlotDimensions(plotWidth - convertRemToPx(3)) : setRamaPlotDimensions(plotHeigth - convertRemToPx(3))
             }
         }, 50);
 
