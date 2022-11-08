@@ -173,6 +173,26 @@ export const BabyGruMoleculeCard = (props) => {
                     </div>
                 </Col>
             </Row>
+                <hr></hr>
+                <Row style={{ height: '100%' }}>
+                    <Col>
+                        <Form.Check checked={props.molecule === props.activeMolecule}
+                            style={{margin:'0'}}
+                            inline
+                            label={`Move/Rotate`}
+                            type="checkbox"
+                            variant="outline"
+                            onChange={(e) => {
+                                if (e.target.checked) {
+                                    props.setActiveMolecule(props.molecule)
+                                } else {
+                                    props.setActiveMolecule(null)
+                                }
+                            }}
+                        />
+                    </Col>
+                </Row>
+
             <hr></hr>
             <Row style={{ height: '100%' }}>
                 <Col>

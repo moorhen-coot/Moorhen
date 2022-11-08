@@ -23,7 +23,8 @@ export function BabyGruMolecule(commandCentre) {
         sticks: [],
         rama: [],
         rotamer: [],
-        CBs: []
+        CBs: [],
+        transformation:{origin:[0,0,0],quat: null, centre:[0,0,0] }
     }
 };
 
