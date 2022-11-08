@@ -179,7 +179,7 @@ export const BabyGruMoleculeCard = (props) => {
                         <Form.Check checked={props.molecule === props.activeMolecule}
                             style={{margin:'0'}}
                             inline
-                            label={`Move/Rotate`}
+                            label={`Rotate`}
                             type="checkbox"
                             variant="outline"
                             onChange={(e) => {
@@ -192,7 +192,6 @@ export const BabyGruMoleculeCard = (props) => {
                         />
                     </Col>
                 </Row>
-
             <hr></hr>
             <Row style={{ height: '100%' }}>
                 <Col>
