@@ -91,7 +91,7 @@ export const BabyGruGetMonomerMenuItem = (props) => {
 export const BabyGruDeleteEverythingMenuItem = (props) => {
 
     const panelContent = <>
-        <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="BabyGruGetDeleteEverythingMenuItem" className="mb-3">
+        <Form.Group style={{ width: '18rem', margin: '0.5rem' }} controlId="BabyGruGetDeleteEverythingMenuItem" className="mb-3">
             <span style={{fontWeight:'bold'}}>Warning: this action cannot be reversed.</span>
         </Form.Group>
     </>
