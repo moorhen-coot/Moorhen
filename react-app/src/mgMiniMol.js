@@ -3288,75 +3288,6 @@ _atom_site.label_entity_id : "1"
     let currentSeqChain = "XXX_UNKNOWN_XXX";
 
     for(let il=0;il<lines.length;il++){
-        if(lines[il].substr(0,6)==="SEQRES"){
-            inSeqRes = true;
-            let theChain = lines[il][11];
-            let nSeqRes = parseInt(lines[il].substr(13,4));
-            let thisSeqResSeq = [];
-            try {
-                let res1 = lines[il].substr(19,3).trim();
-                if(res1.length>0) thisSeqResSeq.push(res1);
-                let res2 = lines[il].substr(23,3).trim();
-                if(res2.length>0) thisSeqResSeq.push(res2);
-                let res3 = lines[il].substr(27,3).trim();
-                if(res3.length>0) thisSeqResSeq.push(res3);
-                let res4 = lines[il].substr(31,3).trim();
-                if(res4.length>0) thisSeqResSeq.push(res4);
-                let res5 = lines[il].substr(35,3).trim();
-                if(res5.length>0) thisSeqResSeq.push(res5);
-                let res6 = lines[il].substr(39,3).trim();
-                if(res6.length>0) thisSeqResSeq.push(res6);
-                let res7 = lines[il].substr(43,3).trim();
-                if(res7.length>0) thisSeqResSeq.push(res7);
-                let res8 = lines[il].substr(47,3).trim();
-                if(res8.length>0) thisSeqResSeq.push(res8);
-                let res9 = lines[il].substr(51,3).trim();
-                if(res9.length>0) thisSeqResSeq.push(res9);
-                let res10 = lines[il].substr(55,3).trim();
-                if(res10.length>0) thisSeqResSeq.push(res10);
-                let res11 = lines[il].substr(59,3).trim();
-                if(res11.length>0) thisSeqResSeq.push(res11);
-                let res12 = lines[il].substr(63,3).trim();
-                if(res12.length>0) thisSeqResSeq.push(res12);
-                let res13 = lines[il].substr(67,3).trim();
-                if(res13.length>0) thisSeqResSeq.push(res13);
-            } catch(e) {
-                console.log("Ran out of residues - not a problem hopefully.");
-            }
-            if(theChain===currentSeqChain){
-                currentSeqRes.push(...thisSeqResSeq);
-            } else {
-                if(currentSeqRes.length>0){
-                    //Push the old one
-                    let nposs_nuc = countPossibleNucleotide(currentSeqRes);
-                    if(nposs_nuc/currentSeqRes.length>0.9){
-                        let sequenceShort = currentSeqRes.map(x => sequenceNucleicThreeLetterMap[x]).join('');
-                        let theType = analyzeSequenceType(sequenceShort);//this had better return one of the RNA/DNA types
-                        sequences.push({name:structureName+"_"+currentSeqChain,id:guid(),"sequence":sequenceShort,chain:currentSeqChain,type:theType});
-                    } else {
-                        let sequenceShort = currentSeqRes.map(x => sequenceAminoThreeLetterMap[x]).join('');
-                        sequences.push({name:structureName+"_"+currentSeqChain,id:guid(),"sequence":sequenceShort,chain:currentSeqChain,type:"polypeptide(L)"});
-                    }
-                }
-                currentSeqRes = thisSeqResSeq;
-                currentSeqChain = theChain;
-            }
-        } else {
-            if(inSeqRes){
-                //Reset this in case more SEQRES cards come along. (Probably not).
-                inSeqRes = false;
-                //Push the remaining one
-                let nposs_nuc = countPossibleNucleotide(currentSeqRes);
-                if(nposs_nuc/currentSeqRes.length>0.9){
-                    let sequenceShort = currentSeqRes.map(x => sequenceNucleicThreeLetterMap[x]).join('');
-                    let theType = analyzeSequenceType(sequenceShort);//this had better return one of the RNA/DNA types
-                    sequences.push({name:structureName+"_"+currentSeqChain,id:guid(),"sequence":sequenceShort,chain:currentSeqChain,type:theType});
-                } else {
-                    let sequenceShort = currentSeqRes.map(x => sequenceAminoThreeLetterMap[x]).join('');
-                    sequences.push({name:structureName+"_"+currentSeqChain,id:guid(),"sequence":sequenceShort,chain:currentSeqChain,type:"polypeptide(L)"});
-                }
-            }
-        }
 
         if(lines[il].substr(0,6)==="MODEL "){
             current_model = parseInt(lines[il].substr(10,4).trim());
@@ -3496,6 +3427,28 @@ _atom_site.label_entity_id : "1"
         }
     }
 
+    let chainIDs = [...new Set(atoms.filter(atom => atom["_atom_site.group_PDB"] === "ATOM").map(atom => atom['_atom_site.auth_asym_id']))]
+    let chainAtoms = null
+    let chainAtomsMap = null
+    let chainResidues = null
+    let sequenceType = null;
+    chainIDs.forEach(chainID => {
+        chainAtoms = atoms.filter(atom => atom["_atom_site.group_PDB"] === "ATOM" && atom['_atom_site.auth_asym_id'] === chainID)
+        chainAtomsMap = new Map(chainAtoms.map(atom => [atom['_atom_site.label_seq_id'], atom['_atom_site.label_comp_id']]))
+        sequenceType = analyzeSequenceType(chainAtoms.map(atom => atom['_atom_site.label_comp_id']).join(''))
+        if (sequenceType === 'polypeptide(L)') {
+            chainResidues = Array.from(chainAtomsMap).map(([key, value]) => ({ "resNum": Number(key), "resCode": sequenceAminoThreeLetterMap[value] }));
+        } else {
+            chainResidues = Array.from(chainAtomsMap).map(([key, value]) => ({ "resNum": Number(key), "resCode": sequenceNucleicThreeLetterMap[value] }));
+        }
+        sequences.push({
+            "name": `${structureName}_${chainID}`,
+            "chain": chainID,
+            "sequence": chainResidues,
+            "type": sequenceType
+        })
+    })
+    
     atoms = atomsToHierarchy(atoms);
     let res = {};
     res["atoms"] = atoms;
@@ -3973,6 +3926,31 @@ function parseMMCIF(lines,structureName) {
             altlocs[iloc] = "";
         }
     }
+
+    // NOTE: This will override previous SEQRES sequence data
+    sequences = []
+    let chainIDs = [...new Set(atoms.filter(atom => atom["_atom_site.group_PDB"] === "ATOM").map(atom => atom['_atom_site.auth_asym_id']))]
+    let chainAtoms = null
+    let chainAtomsMap = null
+    let chainResidues = null
+    let sequenceType = null;
+    chainIDs.forEach(chainID => {
+        chainAtoms = atoms.filter(atom => atom["_atom_site.group_PDB"] === "ATOM" && atom['_atom_site.auth_asym_id'] === chainID)
+        chainAtomsMap = new Map(chainAtoms.map(atom => [atom['_atom_site.label_seq_id'], atom['_atom_site.label_comp_id']]))
+        sequenceType = analyzeSequenceType(chainAtoms.map(atom => atom['_atom_site.label_comp_id']).join(''))
+        if (sequenceType === 'polypeptide(L)') {
+            chainResidues = Array.from(chainAtomsMap).map(([key, value]) => ({ "resNum": Number(key), "resCode": sequenceAminoThreeLetterMap[value] }));
+        } else {
+            chainResidues = Array.from(chainAtomsMap).map(([key, value]) => ({ "resNum": Number(key), "resCode": sequenceNucleicThreeLetterMap[value] }));
+        }
+        sequences.push({
+            "name": `${structureName}_${chainID}`,
+            "chain": chainID,
+            "sequence": chainResidues,
+            "type": sequenceType
+        })
+    })
+
 
     let anisou = parseLoop(getLoop(lines,"_atom_site_anisotrop"),["_atom_site_anisotrop.U[1][1]","_atom_site_anisotrop.U[2][2]","_atom_site_anisotrop.U[3][3]","_atom_site_anisotrop.U[1][2]","_atom_site_anisotrop.U[1][3]","_atom_site_anisotrop.U[2][3]","_atom_site_anisotrop.U[1][1]_esd","_atom_site_anisotrop.U[2][2]_esd","_atom_site_anisotrop.U[3][3]_esd","_atom_site_anisotrop.U[1][2]_esd","_atom_site_anisotrop.U[1][3]_esd","_atom_site_anisotrop.U[2][3]_esd"]);
     //console.log(anisou);
