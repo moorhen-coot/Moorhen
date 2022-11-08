@@ -115,7 +115,7 @@ export const BabyGruBackgroundColorMenuItem = (props) => {
                 <Form.Control style={{
                     backgroundColor: `rgba(  ${backgroundColor.r}, ${backgroundColor.g},  ${backgroundColor.b},  ${backgroundColor.a})`
                 }} type="text" />
-                <Button variant="outline-secondary">Change</Button>
+                <Button variant="light">Change</Button>
             </InputGroup >
         </Form.Group>}
         onCompleted={onCompleted} />

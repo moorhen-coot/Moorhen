@@ -185,7 +185,7 @@ export const BabyGruFileMenu = (props) => {
                             fetchFileFromEBI()
                         }
                     }} />
-                    <Button variant="outline-secondary" onClick={fetchFileFromEBI}>
+                    <Button variant="light" onClick={fetchFileFromEBI}>
                         Fetch
                     </Button>
                 </InputGroup>
@@ -230,8 +230,6 @@ export const BabyGruFileMenu = (props) => {
                         position: 'absolute',
                         marginBottom: '0.5rem',
                         marginLeft: '1rem',
-                        backgroundColor: 'rgba(200, 200, 200, 0.65)',
-                        color: 'black',
                         borderRadius: 3,
                         ...props.style,
                     }}
