@@ -241,7 +241,7 @@ export const BabyGruImportMapCoefficientsMenuItem = (props) => {
         const newMap = new BabyGruMap(props.commandCentre)
         await newMap.loadToCootFromFile(file, selectedColumns)
         props.setMaps([...props.maps, newMap])
-        props.setActiveMap(newMap.mapMolNo)
+        props.setActiveMap(newMap)
     }
 
     const onCompleted = async () => {

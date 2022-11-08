@@ -1,5 +1,5 @@
 import { Tooltip } from "@mui/material";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ButtonGroup, Button, Overlay, Container, Row, FormSelect, FormGroup, FormLabel } from "react-bootstrap"
 
 const BabyGruRefinementPanel = (props) => {
@@ -274,30 +274,36 @@ export const BabyGruSimpleEditButton = (props) => {
         setLocalParameters(props.panelParameters)
     }, [props.panelParameters])
 
-    const atomClickedCallback = event => {
-        console.log('in atomClickedcallback', event)
+    const atomClickedCallback = useCallback(event => {
+        console.log('in atomClickedcallback', event, props.molecules.length)
         document.removeEventListener('atomClicked', atomClickedCallback, { once: true })
         props.molecules.forEach(molecule => {
             console.log('Testing molecule ', molecule.coordMolNo)
-            if (molecule.buffersInclude(event.detail.buffer)) {
-                props.setCursorStyle("default")
-                const chosenAtom = cidToSpec(event.detail.atom.label)
-                let formattedArgs = props.formatArgs(molecule, chosenAtom, localParameters)
-                props.commandCentre.current.cootCommand({
-                    returnType: "status",
-                    command: props.cootCommand,
-                    commandArgs: formattedArgs
-                }, true).then(_ => {
-                    molecule.setAtomsDirty(true)
-                    molecule.redraw(props.glRef)
-                    props.setSelectedbuttonIndex(null)
-                })
+            try {
+                if (molecule.buffersInclude(event.detail.buffer)) {
+                    console.log('Succeeded')
+                    props.setCursorStyle("default")
+                    const chosenAtom = cidToSpec(event.detail.atom.label)
+                    let formattedArgs = props.formatArgs(molecule, chosenAtom, localParameters)
+                    props.commandCentre.current.cootCommand({
+                        returnType: "status",
+                        command: props.cootCommand,
+                        commandArgs: formattedArgs
+                    }, true).then(_ => {
+                        molecule.setAtomsDirty(true)
+                        molecule.redraw(props.glRef)
+                        props.setSelectedbuttonIndex(null)
+                    })
+                }
+                else {
+                    console.log('molecule for buffer not found')
+                }
             }
-            else {
-                console.log('molecule for buffer not found')
+            catch (err) {
+                console.log('Encountered', err)
             }
         })
-    }
+    }, [props.molecules.length])
 
     return <>
         <Tooltip title={props.toolTip}>
