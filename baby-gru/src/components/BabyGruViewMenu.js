@@ -83,7 +83,7 @@ export const BabyGruViewMenu = (props) => {
             <BabyGruBackgroundColorMenuItem {...props} />
             <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="zclip" className="mb-3">
                 <Button ref={clipTrigger}
-                    style={{ width: '20rem' }} variant="outline-secondary" onClick={(e) => {
+                    style={{ width: '20rem' }} variant="light" onClick={(e) => {
                         setOverlayTarget(clipTrigger)
                         setOverlayVisible(true)
                         setOverlayContent(clipContent)

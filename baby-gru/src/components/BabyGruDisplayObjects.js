@@ -21,7 +21,7 @@ export const BabyGruDisplayObjects = (props) => {
     
     if (props.maps.length!=0) {
         props.maps.forEach(map => displayData.push(
-            <BabyGruMapCard {...props} index={map.mapMolNo} map={map} initialContour={0.5} initialRadius={13} initialMapLitLines={false} />
+            <BabyGruMapCard {...props} index={map.mapMolNo} map={map} initialContour={0.8} initialRadius={13} initialMapLitLines={false} />
         ))
     }   
 
