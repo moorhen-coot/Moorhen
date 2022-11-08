@@ -8,7 +8,7 @@ import { BabyGruButtonBar } from './BabyGruButtonBar';
 import { BabyGruFileMenu } from './BabyGruFileMenu';
 import { BabyGruRamachandran } from './BabyGruRamachandran';
 import { BabyGruTimingTest } from './BabyGruTimingTest';
-import { ArrowBackIosOutlined, ArrowForwardIosOutlined } from '@mui/icons-material';
+import { ArrowBackIosOutlined, ArrowForwardIosOutlined, DarkModeOutlined, LightModeOutlined } from '@mui/icons-material';
 import './BabyGruContainer.css'
 import { BabyGruHistoryMenu } from './BabyGruHistoryMenu';
 import { BabyGruViewMenu } from './BabyGruViewMenu';
@@ -28,6 +28,7 @@ export const BabyGruContainer = (props) => {
     const graphicsDiv = createRef()
     const sequenceViewerRef = useRef()
     const [showSideBar, setShowSideBar] = useState(false)
+    const [darkMode, setDarkMode] = useState(false)
     const [activeMap, setActiveMap] = useState(null)
     const [consoleMessage, setConsoleMessage] = useState("")
     const [molecules, setMolecules] = useState([])
@@ -54,6 +55,27 @@ export const BabyGruContainer = (props) => {
         setWindowWidth(window.innerWidth)
         setWindowHeight(window.innerHeight)
     }
+
+    useEffect(() => {
+        let head = document.head;
+        let style = document.createElement("link");
+        
+        if (darkMode){
+            style.href = "/darkly.css"
+            setBackgroundColor([0., 0., 0., 1.])
+        } else {
+            style.href = "/flatly.css"
+            setBackgroundColor([1., 1., 1., 1.])
+        }
+    
+        style.rel = "stylesheet";
+        style.async = true
+        style.type = 'text/css'
+
+        head.appendChild(style);
+        return () => { head.removeChild(style); }
+        
+    }, [darkMode])
 
     useEffect(() => {
         commandCentre.current = new BabyGruCommandCentre({
@@ -128,7 +150,7 @@ export const BabyGruContainer = (props) => {
 
     return <> <div className="border" ref={headerRef}>
 
-        <Navbar id='navbar-baby-gru' style={{ height: '3rem', justifyContent: 'between', margin: '0.5rem', padding: '0.5rem' }}>
+        <Navbar id='navbar-baby-gru' className={darkMode ? "navbar-dark" : "navbar-light"} style={{ height: '3rem', justifyContent: 'between', margin: '0.5rem', padding: '0.5rem' }}>
             <Navbar.Brand href="#home">Baby Gru</Navbar.Brand>
             <Navbar.Toggle aria-controls="basic-navbar-nav" />
             <Navbar.Collapse id="basic-navbar-nav">
@@ -162,8 +184,11 @@ export const BabyGruContainer = (props) => {
             </Navbar.Collapse>
             <Nav className="justify-content-right">
                 {busy && <Spinner animation="border" style={{ marginRight: '0.5rem' }} />}
-                <Button style={{ height: '100%', backgroundColor: 'white', border: 0 }} onClick={() => { setShowSideBar(!showSideBar) }}>
-                    {showSideBar ? <ArrowForwardIosOutlined style={{ color: 'black' }} /> : <ArrowBackIosOutlined style={{ color: 'black' }} />}
+                <Button style={{ height: '100%', backgroundColor: darkMode ? '#222' : 'white', border: 0 }} onClick={() => {setDarkMode(darkMode ? false : true)}}>
+                    {darkMode ? <LightModeOutlined style={{ color: 'white' }} /> : <DarkModeOutlined style={{ color: 'black' }} />}
+                </Button>
+                <Button style={{ height: '100%', backgroundColor: darkMode ? '#222' : 'white', border: 0 }} onClick={() => { setShowSideBar(!showSideBar) }}>
+                    {showSideBar ? <ArrowForwardIosOutlined style={{ color: darkMode ? 'white' : 'black' }} /> : <ArrowBackIosOutlined style={{ color: darkMode ? 'white' : 'black' }} />}
                 </Button>
             </Nav>
         </Navbar>
@@ -191,13 +216,13 @@ export const BabyGruContainer = (props) => {
                             backgroundColor={backgroundColor}
                         />
                     </div>
-                    <div style={{ height: '4rem' }} id='button-bar-baby-gru'>
+                    <div style={{ height: '4rem', backgroundColor: darkMode ? 'black' : 'white'}} id='button-bar-baby-gru'>
                         <BabyGruButtonBar setCursorStyle={setCursorStyle}
                             molecules={molecules}
                             commandCentre={commandCentre}
                             activeMap={activeMap}
-                            glRef={glRef} />
-
+                            glRef={glRef} 
+                            darkMode={darkMode}/>
                     </div>
                 </Col>
                 <Col style={{ padding: '0.5rem', margin: '0', display: showSideBar ? "Block" : "None" }} >
