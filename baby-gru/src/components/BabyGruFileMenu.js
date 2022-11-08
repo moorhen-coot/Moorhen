@@ -4,6 +4,7 @@ import { BabyGruMap } from "./BabyGruMap";
 import { useEffect, useState, useRef, createRef } from "react";
 import { BabyGruMtzWrapper, cootCommand, readTextFile } from '../BabyGruUtils';
 import { InsertDriveFile } from "@mui/icons-material";
+import { BabyGruMoleculeSelect } from "./BabyGruMoleculeSelect";
 
 export const BabyGruFileMenu = (props) => {
 
@@ -217,7 +218,7 @@ export const BabyGruFileMenu = (props) => {
         </NavDropdown>
 
 
-        
+
         <Overlay
             target={overlayTarget}
             show={overlayVisible}
@@ -334,13 +335,7 @@ const BabyGruSelectMolecule = (props) => {
             <Card.Body>
                 <Row key="Row1" style={{ marginBottom: "1rem" }}>
                     <Col key="F">
-                        Molecule
-                        <FormSelect size="sm" ref={moleculeSelectRef} defaultValue={-999999} onChange={(val) => { }}>
-                            <option value={-999999} key={-999999}>Any molecule</option>
-                            {props.molecules
-                                .map(molecule => <option value={molecule.coordMolNo} key={molecule.coordMolNo}>{molecule.name}</option>
-                                )}
-                        </FormSelect>
+                        <BabyGruMoleculeSelect {...props} ref={moleculeSelectRef} />
                     </Col>
                 </Row>
                 <Row key="Row3" style={{ marginBottom: "1rem" }}>
