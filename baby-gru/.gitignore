@@ -24,4 +24,6 @@ yarn-error.log*
 
 /public/wasm
 /public/pixmaps
+/public/tutorials
 /src/WebGL
+/monomers
