@@ -623,6 +623,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("go_to_blob",&molecules_container_t::go_to_blob)
     .function("set_map_sampling_rate",&molecules_container_t::set_map_sampling_rate)
     .function("get_monomer",&molecules_container_t::get_monomer)
+    .function("get_monomer_and_position_at",&molecules_container_t::get_monomer_and_position_at)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<>()

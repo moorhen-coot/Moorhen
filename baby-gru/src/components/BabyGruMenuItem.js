@@ -52,15 +52,22 @@ export const BabyGruGetMonomerMenuItem = (props) => {
     const onCompleted = () => {
         props.commandCentre.current.cootCommand({
             returnType: 'status',
+
             command: 'get_monomer',
             commandArgs: [tlcRef.current.value]
+            /*
+                        command: 'get_monomer_and_position_at',
+                        commandArgs: [tlcRef.current.value, ...props.glRef.current.origin.map(coord => -coord)]
+                        */
         }, true)
             .then(result => {
+                console.log(result)
                 if (result.data.result.status === "Completed") {
                     const newMolecule = new BabyGruMolecule(props.commandCentre)
                     newMolecule.coordMolNo = result.data.result.result
-                    newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef)
-                    props.setMolecules([...props.molecules, newMolecule])
+                    newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef).then(_ => {
+                        props.setMolecules([...props.molecules, newMolecule])
+                    })
                 }
             })
     }
