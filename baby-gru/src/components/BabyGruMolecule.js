@@ -23,7 +23,8 @@ export function BabyGruMolecule(commandCentre) {
         sticks: [],
         rama: [],
         rotamer: [],
-        CBs: []
+        CBs: [],
+        transformation:{origin:[0,0,0],quat: null, centre:[0,0,0] }
     }
 };
 
@@ -31,7 +32,7 @@ export function BabyGruMolecule(commandCentre) {
 BabyGruMolecule.prototype.delete = async function (gl) {
     const $this = this
     Object.getOwnPropertyNames(this.displayObjects).forEach(displayObject => {
-        if(this.displayObjects[displayObject].length > 0) {this.hide(displayObject, gl)}
+        if(this.displayObjects[displayObject].length > 0) {this.clearBuffersOfStyle(displayObject, gl)}
     })
     const inputData = {message:"delete", coordMolNo:$this.coordMolNo}
     const response = await $this.commandCentre.current.postMessage(inputData)
@@ -51,7 +52,10 @@ BabyGruMolecule.prototype.copyFragment = async function (chainId, res_no_start, 
     const sequenceInputData = { returnType: "residue_codes", command:"get_single_letter_codes_for_chain", commandArgs:[response.data.result, chainId]}
     const sequenceResponse = await $this.commandCentre.current.cootCommand(sequenceInputData)
     newMolecule.cachedAtoms.sequences = [{
-        sequence: sequenceResponse.data.result.result.map(residue => residue.resCode).join('')
+        "sequence": sequenceResponse.data.result.result,
+        "name": `${$this.name} fragment`,
+        "chain": chainId,
+        "type": this.cachedAtoms.sequences[0].type 
     }]
 
     return newMolecule

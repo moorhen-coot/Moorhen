@@ -12,6 +12,17 @@ export function BabyGruMap(commandCentre) {
     this.litLines = true
 }
 
+BabyGruMap.prototype.delete = async function (gl) {
+    const $this = this
+    Object.getOwnPropertyNames(this.displayObjects).forEach(displayObject => {
+        if(this.displayObjects[displayObject].length > 0) {this.clearBuffersOfStyle(gl, displayObject)}
+    })
+    const inputData = {message:"delete", coordMolNo:$this.mapMolNo}
+    const response = await $this.commandCentre.current.postMessage(inputData)
+    return response
+}
+
+
 BabyGruMap.prototype.loadToCootFromURL = function (url, mapName, selectedColumns) {
     const $this = this
     console.log('Off to fetch url', url)
@@ -142,7 +153,7 @@ BabyGruMap.prototype.clearBuffersOfStyle = function (gl, style) {
     //Empty existing buffers of this type
     $this.displayObjects[style].forEach((buffer) => {
         buffer.clearBuffers()
-        gl.displayBuffers = gl.displayBuffers.filter(glBuffer => glBuffer.id !== buffer.id)
+        gl.displayBuffers = gl.displayBuffers?.filter(glBuffer => glBuffer.id !== buffer.id)
     })
     $this.displayObjects[style] = []
 }

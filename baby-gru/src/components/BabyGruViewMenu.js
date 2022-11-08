@@ -1,12 +1,11 @@
-import { NavDropdown, Form, Overlay, InputGroup, Button, OverlayTrigger } from "react-bootstrap";
-import { createRef, useEffect, useRef, useState } from "react";
-import { SketchPicker } from 'react-color'
+import { NavDropdown, Form, Overlay, Button } from "react-bootstrap";
+import { useEffect, useRef, useState } from "react";
 import BabyGruSlider from "./BabyGruSlider";
+import { BabyGruBackgroundColorMenuItem } from "./BabyGruMenuItem";
 
 
 export const BabyGruViewMenu = (props) => {
     const [overlayVisible, setOverlayVisible] = useState(false)
-    const [backgroundColor, setBackgroundColor] = useState({ r: 255, g: 255, b: 255, a: 1 })
     const [zclipFront, setZclipFront] = useState(5)
     const [zclipBack, setZclipBack] = useState(5)
     const [zfogFront, setZfogFront] = useState(5)
@@ -17,15 +16,6 @@ export const BabyGruViewMenu = (props) => {
     const clipTrigger = useRef(null)
 
     useEffect(() => {
-        setBackgroundColor({
-            r: 255 * props.backgroundColor[0],
-            g: 255 * props.backgroundColor[1],
-            b: 255 * props.backgroundColor[2],
-            a: props.backgroundColor[3]
-        })
-    }, [props.backgroundColor])
-
-    useEffect(() => {
         if (props.glRef.current && props.glRef.current.gl_clipPlane0) {
             setZclipFront(500 + props.glRef.current.gl_clipPlane0[3])
             setZclipBack(props.glRef.current.gl_clipPlane1[3] - 500)
@@ -34,17 +24,6 @@ export const BabyGruViewMenu = (props) => {
         }
     })
 
-    const handleColorChange = (color) => {
-        try {
-            setOverlayVisible(false)
-            props.setBackgroundColor([color.rgb.r / 255., color.rgb.g / 255., color.rgb.b / 255., color.rgb.a])
-            setBackgroundColor(color)
-        }
-        catch (err) {
-            console.log('err', err)
-        }
-    }
-
     const fractionalLog = (minVal, maxVal, val) => {
         if (minVal < 0.00001) minVal = 0.0001
         if (maxVal < 0.0001) maxVal = 0.0001
@@ -52,10 +31,10 @@ export const BabyGruViewMenu = (props) => {
         return 1 + 99 * ((Math.log10(val) - Math.log10(minVal)) / (Math.log10(maxVal) - Math.log10(minVal)))
     }
     const clipContent = () => {
-        const initialClipFront = fractionalLog(0.1, 1000, 500+props.glRef.current.gl_clipPlane0[3])
+        const initialClipFront = fractionalLog(0.1, 1000, 500 + props.glRef.current.gl_clipPlane0[3])
         const initialClipBack = fractionalLog(0.1, 1000, props.glRef.current.gl_clipPlane1[3])
-        const initialFogFront = fractionalLog(0.1, 1000, 500-props.glRef.current.gl_fog_end)
-        const initialFogBack = fractionalLog(0.1, 1000, props.glRef.current.gl_fog_end-500)
+        const initialFogFront = fractionalLog(0.1, 1000, 500 - props.glRef.current.gl_fog_end)
+        const initialFogBack = fractionalLog(0.1, 1000, props.glRef.current.gl_fog_end - 500)
         console.log('initialFogBack', initialFogBack)
         return props.glRef.current && props.glRef.current.gl_clipPlane0 &&
             <div style={{ margin: "1rem" }}>
@@ -99,35 +78,12 @@ export const BabyGruViewMenu = (props) => {
             </div>
     }
 
-
     return <>
         < NavDropdown title="View" id="basic-nav-dropdown" >
-            <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="setBackground" className="mb-3">
-                <Form.Label>Set background color</Form.Label>
-                <InputGroup>
-                    <Form.Control
-                        style={{
-                            backgroundColor: `rgba(  ${backgroundColor.r}, ${backgroundColor.g},
-                                ${backgroundColor.b},  ${backgroundColor.a})`
-                        }}
-                        type="text" onKeyDown={(e) => {
-                        }} />
-                    <Button ref={target}
-                        variant="outline-secondary" onClick={(e) => {
-                            setOverlayTarget(target)
-                            setOverlayVisible(true)
-                            setOverlayContent(<SketchPicker
-                                color={backgroundColor}
-                                onChange={handleColorChange}
-                            />)
-                        }}>
-                        Change
-                    </Button>
-                </InputGroup>
-            </Form.Group>
+            <BabyGruBackgroundColorMenuItem {...props} />
             <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="zclip" className="mb-3">
                 <Button ref={clipTrigger}
-                    style={{ width: '20rem' }} variant="outline-secondary" onClick={(e) => {
+                    style={{ width: '20rem' }} variant="light" onClick={(e) => {
                         setOverlayTarget(clipTrigger)
                         setOverlayVisible(true)
                         setOverlayContent(clipContent)

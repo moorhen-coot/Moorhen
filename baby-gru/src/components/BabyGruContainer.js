@@ -8,10 +8,11 @@ import { BabyGruButtonBar } from './BabyGruButtonBar';
 import { BabyGruFileMenu } from './BabyGruFileMenu';
 import { BabyGruRamachandran } from './BabyGruRamachandran';
 import { BabyGruTimingTest } from './BabyGruTimingTest';
-import { ArrowBackIosOutlined, ArrowForwardIosOutlined } from '@mui/icons-material';
+import { ArrowBackIosOutlined, ArrowForwardIosOutlined, DarkModeOutlined, LightModeOutlined } from '@mui/icons-material';
 import './BabyGruContainer.css'
 import { BabyGruHistoryMenu } from './BabyGruHistoryMenu';
 import { BabyGruViewMenu } from './BabyGruViewMenu';
+import { BabyGruLigandMenu } from './BabyGruLigandMenu';
 
 
 const initialHistoryState = { commands: [] }
@@ -27,7 +28,9 @@ export const BabyGruContainer = (props) => {
     const graphicsDiv = createRef()
     const sequenceViewerRef = useRef()
     const [showSideBar, setShowSideBar] = useState(false)
+    const [darkMode, setDarkMode] = useState(false)
     const [activeMap, setActiveMap] = useState(null)
+    const [activeMolecule, setActiveMolecule] = useState(null)
     const [consoleMessage, setConsoleMessage] = useState("")
     const [molecules, setMolecules] = useState([])
     const [maps, setMaps] = useState([])
@@ -53,6 +56,27 @@ export const BabyGruContainer = (props) => {
         setWindowWidth(window.innerWidth)
         setWindowHeight(window.innerHeight)
     }
+
+    useEffect(() => {
+        let head = document.head;
+        let style = document.createElement("link");
+        
+        if (darkMode){
+            style.href = "/darkly.css"
+            setBackgroundColor([0., 0., 0., 1.])
+        } else {
+            style.href = "/flatly.css"
+            setBackgroundColor([1., 1., 1., 1.])
+        }
+    
+        style.rel = "stylesheet";
+        style.async = true
+        style.type = 'text/css'
+
+        head.appendChild(style);
+        return () => { head.removeChild(style); }
+        
+    }, [darkMode])
 
     useEffect(() => {
         commandCentre.current = new BabyGruCommandCentre({
@@ -101,6 +125,13 @@ export const BabyGruContainer = (props) => {
         }
     }, [activeMap])
 
+    useEffect(() => {
+        if(activeMolecule)
+            glRef.current.setActiveDisplayObjects(activeMolecule.displayObjects)
+        else
+            glRef.current.setActiveDisplayObjects({})
+    }, [activeMolecule])
+
     const glResize = () => {
         glRef.current.resize(webGLWidth(), webGLHeight())
         glRef.current.drawScene()
@@ -123,14 +154,17 @@ export const BabyGruContainer = (props) => {
         return windowHeight - (navBarHeight + innerWindowMarginHeight)
     }
 
+    const collectedProps = { molecules, setMolecules, maps, setMaps, glRef, setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor }
+
     return <> <div className="border" ref={headerRef}>
 
-        <Navbar id='navbar-baby-gru' style={{ height: '3rem', justifyContent: 'between', margin: '0.5rem', padding: '0.5rem' }}>
+        <Navbar id='navbar-baby-gru' className={darkMode ? "navbar-dark" : "navbar-light"} style={{ height: '3rem', justifyContent: 'between', margin: '0.5rem', padding: '0.5rem' }}>
             <Navbar.Brand href="#home">Baby Gru</Navbar.Brand>
             <Navbar.Toggle aria-controls="basic-navbar-nav" />
             <Navbar.Collapse id="basic-navbar-nav">
                 <Nav className="justify-content-left">
-                    <BabyGruFileMenu
+                    <BabyGruFileMenu {...collectedProps}
+                    /*
                         molecules={molecules}
                         setMolecules={setMolecules}
                         maps={maps}
@@ -138,8 +172,10 @@ export const BabyGruContainer = (props) => {
                         commandCentre={commandCentre}
                         setActiveMap={setActiveMap}
                         glRef={glRef}
+                        */
                     />
-                    <BabyGruHistoryMenu
+                    <BabyGruHistoryMenu {...collectedProps}
+                    /*
                         molecules={molecules}
                         setMolecules={setMolecules}
                         maps={maps}
@@ -148,18 +184,19 @@ export const BabyGruContainer = (props) => {
                         commandHistory={commandHistory}
                         setActiveMap={setActiveMap}
                         glRef={glRef}
+                        */
                     />
-                    <BabyGruViewMenu
-                        backgroundColor={backgroundColor}
-                        setBackgroundColor={(color)=>{setBackgroundColor(color)}}
-                        glRef={glRef}
-                    />
+                    <BabyGruViewMenu {...collectedProps} />
+                    <BabyGruLigandMenu {...collectedProps} />
                 </Nav>
             </Navbar.Collapse>
             <Nav className="justify-content-right">
                 {busy && <Spinner animation="border" style={{ marginRight: '0.5rem' }} />}
-                <Button style={{ height: '100%', backgroundColor: 'white', border: 0 }} onClick={() => { setShowSideBar(!showSideBar) }}>
-                    {showSideBar ? <ArrowForwardIosOutlined style={{ color: 'black' }} /> : <ArrowBackIosOutlined style={{ color: 'black' }} />}
+                <Button style={{ height: '100%', backgroundColor: darkMode ? '#222' : 'white', border: 0 }} onClick={() => {setDarkMode(darkMode ? false : true)}}>
+                    {darkMode ? <LightModeOutlined style={{ color: 'white' }} /> : <DarkModeOutlined style={{ color: 'black' }} />}
+                </Button>
+                <Button style={{ height: '100%', backgroundColor: darkMode ? '#222' : 'white', border: 0 }} onClick={() => { setShowSideBar(!showSideBar) }}>
+                    {showSideBar ? <ArrowForwardIosOutlined style={{ color: darkMode ? 'white' : 'black' }} /> : <ArrowBackIosOutlined style={{ color: darkMode ? 'white' : 'black' }} />}
                 </Button>
             </Nav>
         </Navbar>
@@ -187,13 +224,20 @@ export const BabyGruContainer = (props) => {
                             backgroundColor={backgroundColor}
                         />
                     </div>
-                    <div style={{ height: '4rem' }} id='button-bar-baby-gru'>
+                    <div    id='button-bar-baby-gru'
+                            style={{ 
+                                height: '4rem',
+                                backgroundColor:  `rgba(
+                                    ${255 * backgroundColor[0]},
+                                    ${255 * backgroundColor[1]},
+                                    ${255 * backgroundColor[2]}, 
+                                    ${backgroundColor[3]})`}}>
                         <BabyGruButtonBar setCursorStyle={setCursorStyle}
                             molecules={molecules}
                             commandCentre={commandCentre}
                             activeMap={activeMap}
-                            glRef={glRef} />
-
+                            glRef={glRef} 
+                            backgroundColor={backgroundColor}/>
                     </div>
                 </Col>
                 <Col style={{ padding: '0.5rem', margin: '0', display: showSideBar ? "Block" : "None" }} >
@@ -224,7 +268,7 @@ export const BabyGruContainer = (props) => {
                         <Accordion.Item eventKey="showDisplayObjects" style={{ width: sideBarWidth, padding: '0', margin: '0' }} >
                             <Accordion.Header style={{ padding: '0', margin: '0', height: '4rem' }}>Display Objects</Accordion.Header>
                             <Accordion.Body style={{ overflowY: 'auto', height: displayObjectsAccordionBodyHeight }}>
-                                {molecules.length === 0 && maps.length === 0 ? "No data files loaded" : <BabyGruDisplayObjects molecules={molecules} setMolecules={setMolecules} glRef={glRef} commandCentre={commandCentre} maps={maps} activeMap={activeMap} setActiveMap={setActiveMap} />}
+                                {molecules.length === 0 && maps.length === 0 ? "No data files loaded" : <BabyGruDisplayObjects molecules={molecules} setMolecules={setMolecules} glRef={glRef} commandCentre={commandCentre} maps={maps} setMaps={setMaps} activeMap={activeMap} setActiveMap={setActiveMap} activeMolecule={activeMolecule} setActiveMolecule={setActiveMolecule} />}
                             </Accordion.Body>
                         </Accordion.Item>
                         <Accordion.Item eventKey="showTools" style={{ width: sideBarWidth, padding: '0', margin: '0' }} >

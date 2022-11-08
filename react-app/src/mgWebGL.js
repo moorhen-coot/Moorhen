@@ -1274,6 +1274,7 @@ class DisplayBuffer {
         this.bufferTypes = [];
         this.symmetry = null;
         this.transformMatrix = null;
+        this.transformMatrixInteractive = null;
         this.symopnums = [];
         this.supplementary = {};
         this.isDirty = true;
@@ -1378,6 +1379,7 @@ class MGWebGL extends Component {
         this.canvas = this.canvasRef.current;
         console.log(this.canvasReact);
         var self = this;
+        this.activeDisplayObjects = {};
         /*
         window.addEventListener('resize',
                 function(evt){
@@ -1955,6 +1957,10 @@ class MGWebGL extends Component {
         }
         self.buildBuffers();
         self.drawScene();
+    }
+
+    setActiveDisplayObjects(displayObjects) {
+        this.activeDisplayObjects = displayObjects;
     }
 
     appendOtherData(jsondata,skipRebuild,name) {
@@ -6185,6 +6191,68 @@ class MGWebGL extends Component {
     }
 
 
+    drawTransformMatrixInteractive(transformMatrix,buffer,shader,vertexType,bufferIdx,specialDrawBuffer) {
+        var triangleVertexIndexBuffer = buffer.triangleVertexIndexBuffer;
+
+        var drawBuffer;
+        if(specialDrawBuffer){
+            drawBuffer = specialDrawBuffer;
+        } else {
+            drawBuffer = triangleVertexIndexBuffer[bufferIdx];
+        }
+
+        var pmvMatrix = mat4.create();
+        var screenZ = vec3.create();
+        var tempMVMatrix = mat4.create();
+        var tempMVInvMatrix = mat4.create();
+        var symt_t = mat4.create();
+        var symt = mat4.create();
+        mat4.set(symt,
+                transformMatrix[0],
+                transformMatrix[1],
+                transformMatrix[2],
+                transformMatrix[3],
+                transformMatrix[4],
+                transformMatrix[5],
+                transformMatrix[6],
+                transformMatrix[7],
+                transformMatrix[8],
+                transformMatrix[9],
+                transformMatrix[10],
+                transformMatrix[11],
+                transformMatrix[12],
+                transformMatrix[13],
+                transformMatrix[14],
+                transformMatrix[15],
+                );
+        //mat4.transpose(symt,symt_t);
+
+        mat4.translate(this.mvMatrix,this.mvMatrix, [-this.origin[0],-this.origin[1],-this.origin[2]]);
+        mat4.multiply(tempMVMatrix,this.mvMatrix,symt);
+        mat4.translate(this.mvMatrix,this.mvMatrix, this.origin);
+        mat4.translate(tempMVMatrix,tempMVMatrix, this.origin);
+
+        this.gl.uniformMatrix4fv(shader.mvMatrixUniform, false, tempMVMatrix);
+        tempMVMatrix[12] = 0.0;
+        tempMVMatrix[13] = 0.0;
+        tempMVMatrix[14] = 0.0;
+        mat4.invert(tempMVInvMatrix,tempMVMatrix);
+        this.gl.uniformMatrix4fv(shader.mvInvMatrixUniform, false, tempMVInvMatrix);// All else
+        screenZ[0] = 0.0;
+        screenZ[1] = 0.0;
+        screenZ[2] = 1.0;
+        vec3.transformMat4(screenZ,screenZ,tempMVInvMatrix);
+        this.gl.uniform3fv(shader.screenZ,screenZ);
+        if(this.ext){
+            this.gl.drawElements(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_INT, 0);
+        }else{
+            this.gl.drawElements(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_SHORT, 0);
+        }
+        this.gl.uniformMatrix4fv(shader.mvMatrixUniform, false, this.mvMatrix);
+        this.gl.uniformMatrix4fv(shader.mvInvMatrixUniform, false, this.mvInvMatrix);// All else
+
+    }
+
     drawTransformMatrix(transformMatrix,buffer,shader,vertexType,bufferIdx,specialDrawBuffer) {
         var triangleVertexIndexBuffer = buffer.triangleVertexIndexBuffer;
 
@@ -6221,6 +6289,7 @@ class MGWebGL extends Component {
                 );
         mat4.transpose(symt,symt_t);
         mat4.multiply(tempMVMatrix,this.mvMatrix,symt);
+
         this.gl.uniformMatrix4fv(shader.mvMatrixUniform, false, tempMVMatrix);
         tempMVMatrix[12] = 0.0;
         tempMVMatrix[13] = 0.0;
@@ -6796,6 +6865,8 @@ class MGWebGL extends Component {
                 if(bufferTypes[j]==="TRIANGLES"||bufferTypes[j]==="CYLINDERS"||bufferTypes[j]==="CAPCYLINDERS"||this.displayBuffers[idx].bufferTypes[j]==="TORUSES"){
                     if(this.displayBuffers[idx].transformMatrix){
                         this.drawTransformMatrix(this.displayBuffers[idx].transformMatrix,this.displayBuffers[idx],this.shaderProgram,this.gl.TRIANGLES,j);
+                    } else if(this.displayBuffers[idx].transformMatrixInteractive){
+                        this.drawTransformMatrixInteractive(this.displayBuffers[idx].transformMatrixInteractive,this.displayBuffers[idx],this.shaderProgram,this.gl.TRIANGLES,j);
                     } else {
                         if(this.ext){
                             this.gl.drawElements(this.gl.TRIANGLES, triangleVertexIndexBuffer[j].numItems, this.gl.UNSIGNED_INT, 0);
@@ -6807,6 +6878,8 @@ class MGWebGL extends Component {
                 }else if(bufferTypes[j]==="TRIANGLE_STRIP"||bufferTypes[j]==="SPLINE"||bufferTypes[j]==="WORM"){
                     if(this.displayBuffers[idx].transformMatrix){
                         this.drawTransformMatrix(this.displayBuffers[idx].transformMatrix,this.displayBuffers[idx],this.shaderProgram,this.gl.TRIANGLE_STRIP,j);
+                    } else if(this.displayBuffers[idx].transformMatrixInteractive){
+                        this.drawTransformMatrixInteractive(this.displayBuffers[idx].transformMatrixInteractive,this.displayBuffers[idx],this.shaderProgram,this.gl.TRIANGLE_STRIP,j);
                     } else {
                         if(this.ext){
                             this.gl.drawElements(this.gl.TRIANGLE_STRIP, triangleVertexIndexBuffer[j].numItems, this.gl.UNSIGNED_INT, 0);
@@ -6885,10 +6958,16 @@ class MGWebGL extends Component {
                         this.gl.vertexAttrib4f(sphereProgram.vertexColourAttribute,triangleColours[j][isphere*4], triangleColours[j][isphere*4+1], triangleColours[j][isphere*4+2], triangleColours[j][isphere*4+3]);
                         this.gl.uniform3fv(sphereProgram.offset, theOffSet);
                         this.gl.uniform1f(sphereProgram.size, primitiveSizes[j][isphere]*radMult);
-                        if(this.ext){
-                            this.gl.drawElements(this.gl.TRIANGLES, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_INT, 0);
-                        }else{
-                            this.gl.drawElements(this.gl.TRIANGLES, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_SHORT, 0);
+                        if(this.displayBuffers[idx].transformMatrix){
+                            this.drawTransformMatrix(this.displayBuffers[idx].transformMatrix,buffer,sphereProgram,this.gl.TRIANGLES,j);
+                        } else if(this.displayBuffers[idx].transformMatrixInteractive){
+                            this.drawTransformMatrixInteractive(this.displayBuffers[idx].transformMatrixInteractive,buffer,sphereProgram,this.gl.TRIANGLES,j);
+                        } else {
+                            if(this.ext){
+                                this.gl.drawElements(this.gl.TRIANGLES, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_INT, 0);
+                            }else{
+                                this.gl.drawElements(this.gl.TRIANGLES, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_SHORT, 0);
+                            }
                         }
                         nprims += triangleVertexIndexBuffer[j].numItems;
                     }
@@ -6901,10 +6980,16 @@ class MGWebGL extends Component {
                         this.gl.vertexAttrib4f(sphereProgram.vertexColourAttribute,triangleColours[j][isphere*4], triangleColours[j][isphere*4+1], triangleColours[j][isphere*4+2], triangleColours[j][isphere*4+3]);
                         this.gl.uniform3fv(sphereProgram.offset, theOffSet);
                         this.gl.uniform1f(sphereProgram.size, primitiveSizes[j][isphere]*radMult);
-                        if(this.ext){
-                            this.gl.drawElements(this.gl.TRIANGLES, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_INT, 0);
-                        }else{
-                            this.gl.drawElements(this.gl.TRIANGLES, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_SHORT, 0);
+                        if(this.displayBuffers[idx].transformMatrix){
+                            this.drawTransformMatrix(this.displayBuffers[idx].transformMatrix,buffer,sphereProgram,this.gl.TRIANGLES,j);
+                        } else if(this.displayBuffers[idx].transformMatrixInteractive){
+                            this.drawTransformMatrixInteractive(this.displayBuffers[idx].transformMatrixInteractive,buffer,sphereProgram,this.gl.TRIANGLES,j);
+                        } else {
+                            if(this.ext){
+                                this.gl.drawElements(this.gl.TRIANGLES, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_INT, 0);
+                            }else{
+                                this.gl.drawElements(this.gl.TRIANGLES, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_SHORT, 0);
+                            }
                         }
                         if(symmetry){
                             this.drawSymmetry(symmetry,this.displayBuffers[idx],sphereProgram,this.gl.TRIANGLES,0,buffer.triangleVertexIndexBuffer[0]);
@@ -9994,16 +10079,7 @@ class MGWebGL extends Component {
                 return coord + (self.zoom * xshift[coordIndex]/8.) - (self.zoom * yshift[coordIndex]/8.)
             })
             self.setOrigin(newOrigin, false)
-            /*
-            self.origin[0] += xshift[0]/8.*self.zoom;
-            self.origin[1] += xshift[1]/8.*self.zoom;
-            self.origin[2] += xshift[2]/8.*self.zoom;
-            self.origin[0] -= yshift[0]/8.*self.zoom;
-            self.origin[1] -= yshift[1]/8.*self.zoom;
-            self.origin[2] -= yshift[2]/8.*self.zoom;
-            */
             self.drawSceneDirty();
-            //console.log(self.origin);
             self.reContourMaps();
             return;
         }
@@ -10041,7 +10117,41 @@ class MGWebGL extends Component {
             //console.log(xQ);
             //console.log(yQ);
             quat4.multiply(xQ,xQ,yQ);
-            quat4.multiply(self.myQuat,self.myQuat,xQ);
+            if(Object.keys(this.activeDisplayObjects).length===0){
+                quat4.multiply(self.myQuat,self.myQuat,xQ);
+            } else {
+                const centreOfMass = function(atoms){
+                    let totX = 0.0;
+                    let totY = 0.0;
+                    let totZ = 0.0;
+                    if(atoms.length>0){
+                        for(let iat=0;iat<atoms.length;iat++){
+                            totX += atoms[iat].x;
+                            totY += atoms[iat].y;
+                            totZ += atoms[iat].z;
+                        }
+                        totX /= atoms.length;
+                        totY /= atoms.length;
+                        totZ /= atoms.length;
+                    }
+                    return [totX,totY,totZ];
+                }
+                if(!this.activeDisplayObjects.transformation.quat){
+                    this.activeDisplayObjects.transformation.quat = quat4.create();
+                    quat4.set(this.activeDisplayObjects.transformation.quat,0,0,0,-1);
+                }
+                quat4.multiply(this.activeDisplayObjects.transformation.quat,this.activeDisplayObjects.transformation.quat,xQ);
+                for (const [key, value] of Object.entries(this.activeDisplayObjects)) {
+                    for(let ibuf=0;ibuf<value.length;ibuf++){
+                        let uniqueLabels = [];
+                        const com = centreOfMass(value[ibuf].atoms);
+                        const theMatrix = quatToMat4(this.activeDisplayObjects.transformation.quat);
+                        value[ibuf].transformMatrixInteractive = theMatrix;
+                    }
+                }
+
+
+            }
         }
 
         var theMatrix = quatToMat4(self.myQuat);
