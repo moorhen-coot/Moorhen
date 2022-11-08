@@ -5,6 +5,7 @@ import { useEffect, useState, useRef, createRef } from "react";
 import { BabyGruMtzWrapper, cootCommand, readTextFile } from '../BabyGruUtils';
 import { InsertDriveFile } from "@mui/icons-material";
 import { BabyGruMoleculeSelect } from "./BabyGruMoleculeSelect";
+import { BabyGruImportDictionaryMenuItem } from "./BabyGruMenuItem";
 
 export const BabyGruFileMenu = (props) => {
 
@@ -87,47 +88,6 @@ export const BabyGruFileMenu = (props) => {
         })
     }
 
-    const loadMmcifFiles = async (files) => {
-        let readPromises = []
-        for (const file of files) {
-            readPromises.push(readMmcifFile(file))
-        }
-        let mmcifReads = await Promise.all(readPromises)
-    }
-
-    const readMmcifFile = async (file) => {
-        const selectedMolecule = await selectMolecule()
-        setOverlayVisible(false)
-        return readTextFile(file)
-            .then(fileContent => {
-                return props.commandCentre.current.cootCommand({
-                    returnType: "status",
-                    command: 'shim_read_dictionary',
-                    commandArgs: [fileContent, selectedMolecule]
-                })
-            }).then(result => {
-                console.log('selected is', selectedMolecule)
-                props.molecules
-                    .filter(molecule => molecule.coordMolNo === parseInt(selectedMolecule.coordMolNo))
-                    .forEach(molecule => {
-                        console.log('redrawing, molecule')
-                        molecule.redraw(props.glRef)
-                    })
-            })
-    }
-
-    const selectMolecule = async () => {
-        return new Promise((resolve, reject) => {
-            awaitingPromiseRef.current = { resolve, reject };
-            setOverlayVisible(true)
-            setOverlayContent(<BabyGruSelectMolecule
-                resolveOrReject={awaitingPromiseRef}
-                molecules={props.molecules}
-            />)
-            setOverlayTarget(readDictionaryTarget.current)
-        })
-    }
-
     const fetchFileFromEBI = () => {
         let pdbCode = pdbCodeFetchInputRef.current.value.toLowerCase()
         if (pdbCode) {
@@ -197,10 +157,7 @@ export const BabyGruFileMenu = (props) => {
                 <Form.Control ref={readMtzTarget} type="file" accept=".mtz" multiple={true} onChange={(e) => { loadMtzFiles(e.target.files) }} />
             </Form.Group>
 
-            <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="uploadMTZs" className="mb-3">
-                <Form.Label>Dictionaries</Form.Label>
-                <Form.Control ref={readDictionaryTarget} type="file" accept={[".pdb", ".cif", ".dict", ".mmcif"]} multiple={true} onChange={(e) => { loadMmcifFiles(e.target.files) }} />
-            </Form.Group>
+            <BabyGruImportDictionaryMenuItem {...props}/>
 
             <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="uploadMTZs" className="mb-3">
                 <Form.Label>Tutorial data</Form.Label>

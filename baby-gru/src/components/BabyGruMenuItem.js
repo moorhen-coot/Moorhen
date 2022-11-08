@@ -2,6 +2,7 @@ import { MenuItem } from "@mui/material";
 import { createRef, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { OverlayTrigger, Popover, PopoverBody, PopoverHeader, Form, InputGroup, Button } from "react-bootstrap";
 import { SketchPicker } from "react-color";
+import { readTextFile } from "../BabyGruUtils";
 import { BabyGruMolecule } from "./BabyGruMolecule";
 import { BabyGruMoleculeSelect } from "./BabyGruMoleculeSelect";
 
@@ -122,4 +123,50 @@ export const BabyGruBackgroundColorMenuItem = (props) => {
             </InputGroup >
         </Form.Group>}
         onCompleted={onCompleted} />
+}
+
+export const BabyGruImportDictionaryMenuItem = (props) => {
+    const filesRef = useRef(null)
+    const moleculeSelectRef = useRef(null)
+    const panelContent = <>
+        <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="uploadDicts" className="mb-3">
+            <Form.Label>Dictionaries</Form.Label>
+            <Form.Control ref={filesRef} type="file" multiple={true} accept={[".cif", ".dict", ".mmcif"]} multiple={false} />
+        </Form.Group>
+        <BabyGruMoleculeSelect {...props} allowAny={true} ref={moleculeSelectRef} />
+    </>
+
+    const readMmcifFile = async (file) => {
+        return readTextFile(file)
+            .then(fileContent => {
+                return props.commandCentre.current.cootCommand({
+                    returnType: "status",
+                    command: 'shim_read_dictionary',
+                    commandArgs: [fileContent, moleculeSelectRef.current.value]
+                })
+            }).then(result => {
+                console.log('selected is', moleculeSelectRef.current.value)
+                props.molecules
+                    .filter(molecule => molecule.coordMolNo === parseInt(moleculeSelectRef.current.value))
+                    .forEach(molecule => {
+                        molecule.redraw(props.glRef)
+                    })
+                return Promise.resolve()
+            })
+    }
+
+    const onCompleted = async () => {
+        console.log(filesRef.current)
+        let readPromises = []
+        for (const file of filesRef.current.files) {
+            readPromises.push(readMmcifFile(file))
+        }
+        let mmcifReads = await Promise.all(readPromises)
+    }
+
+    return <BabyGruMenuItem
+        popoverContent={panelContent}
+        menuItemText="Import dictionary..."
+        onCompleted={onCompleted}
+    />
 }
