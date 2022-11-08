@@ -1,8 +1,9 @@
 import { MenuItem } from "@mui/material";
 import { createRef, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { OverlayTrigger, Popover, PopoverBody, PopoverHeader, Form, InputGroup, Button } from "react-bootstrap";
+import { OverlayTrigger, Popover, PopoverBody, PopoverHeader, Form, InputGroup, Button, FormSelect, Row, Col } from "react-bootstrap";
 import { SketchPicker } from "react-color";
-import { readTextFile } from "../BabyGruUtils";
+import { BabyGruMtzWrapper, readTextFile } from "../BabyGruUtils";
+import { BabyGruMap } from "./BabyGruMap";
 import { BabyGruMolecule } from "./BabyGruMolecule";
 import { BabyGruMoleculeSelect } from "./BabyGruMoleculeSelect";
 
@@ -63,7 +64,6 @@ export const BabyGruGetMonomerMenuItem = (props) => {
 
         }, true)
             .then(result => {
-                console.log(result)
                 if (result.data.result.status === "Completed") {
                     const newMolecule = new BabyGruMolecule(props.commandCentre)
                     newMolecule.coordMolNo = result.data.result.result
@@ -145,7 +145,6 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
                     commandArgs: [fileContent, moleculeSelectRef.current.value]
                 })
             }).then(result => {
-                console.log('selected is', moleculeSelectRef.current.value)
                 props.molecules
                     .filter(molecule => molecule.coordMolNo === parseInt(moleculeSelectRef.current.value))
                     .forEach(molecule => {
@@ -156,7 +155,6 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
     }
 
     const onCompleted = async () => {
-        console.log(filesRef.current)
         let readPromises = []
         for (const file of filesRef.current.files) {
             readPromises.push(readMmcifFile(file))
@@ -167,6 +165,104 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
     return <BabyGruMenuItem
         popoverContent={panelContent}
         menuItemText="Import dictionary..."
+        onCompleted={onCompleted}
+    />
+}
+
+export const BabyGruImportMapCoefficientsMenuItem = (props) => {
+    const filesRef = useRef(null)
+    const fSelectRef = useRef()
+    const phiSelectRef = useRef()
+    const wSelectRef = useRef()
+    const isDiffRef = useRef()
+    const useWeightRef = useRef()
+    const [columns, setColumns] = useState({})
+
+    const handleFileRead = async (e) => {
+        const newMap = new BabyGruMap(props.commandCentre)
+        const babyGruMtzWrapper = new BabyGruMtzWrapper()
+        const newColumns = await babyGruMtzWrapper.loadHeaderFromFile(e.target.files[0])
+        const fColumns = Object.keys(newColumns)
+            .filter(key => newColumns[key] === 'F')
+        const pColumns = Object.keys(newColumns)
+            .filter(key => newColumns[key] === 'P')
+        const wColumns = Object.keys(newColumns)
+            .filter(key => newColumns[key] === 'W')
+        if (fColumns.length === 1 && fColumns.includes('FWT') &&
+            pColumns.length === 1 && pColumns.includes('PHWT')) {
+            let selectedColumns = { F: 'FWT', PHI: 'PHWT', W: '', isDifference: false, useWeight: false }
+            await handleFile(e.target.files[0], selectedColumns)
+        }
+        else {
+            setColumns(newColumns)
+        }
+    }
+
+    const handleFile = async (file, selectedColumns) => {
+        const newMap = new BabyGruMap(props.commandCentre)
+        await newMap.loadToCootFromFile(file, selectedColumns)
+        props.setMaps([...props.maps, newMap])
+    }
+
+    const onCompleted = async () => {
+        let selectedColumns = {
+            F: fSelectRef.current.value, PHI: phiSelectRef.current.value, W: wSelectRef.current.value,
+            isDifference: isDiffRef.current.checked, useWeight: useWeightRef.current.checked
+        }
+        return await handleFile(filesRef.current.files[0], selectedColumns)
+    }
+
+    const panelContent = <>
+        <Row>
+            <Form.Group style={{ width: '30rem', margin: '0.5rem' }} controlId="uploadDicts" className="mb-3">
+                <Form.Label>Map coefficient files</Form.Label>
+                <Form.Control ref={filesRef} type="file" multiple={false} accept={[".mtz"]} onChange={(e) => {
+                    handleFileRead(e)
+                }} />
+            </Form.Group>
+        </Row>
+        <Row key="Row1" style={{ marginBottom: "1rem" }}>
+            <Col key="F">
+                Amplitude
+                <FormSelect size="sm" ref={fSelectRef} defaultValue="FWT" onChange={(val) => { }}>
+                    {Object.keys(columns)
+                        .filter(key => columns[key] === 'F')
+                        .map(key => <option value={key} key={key}>{key}</option>
+                        )}
+                </FormSelect>
+            </Col>
+            <Col key="Phi">
+                Phase
+                <FormSelect size="sm" ref={phiSelectRef} defaultValue="PHWT" onChange={(val) => { }}>
+                    {Object.keys(columns)
+                        .filter(key => columns[key] === 'P')
+                        .map(key => <option value={key} key={key}>{key}</option>
+                        )}
+                </FormSelect>
+            </Col>
+            <Col key="Weight">
+                Weight
+                <FormSelect size="sm" ref={wSelectRef} defaultValue="FOM" onChange={(val) => { }}>
+                    {Object.keys(columns)
+                        .filter(key => columns[key] === 'W')
+                        .map(key => <option value={key} key={key}>{key}</option>
+                        )}
+                </FormSelect>
+            </Col>
+        </Row>
+        <Row style={{ marginBottom: "1rem" }}>
+            <Col>
+                <Form.Check label={'is diff map'} name={`isDifference`} type="checkbox" ref={isDiffRef} variant="outline" />
+            </Col>
+            <Col>
+                <Form.Check label={'use weight'} name={`useWeight`} type="checkbox" ref={useWeightRef} variant="outline" />
+            </Col>
+        </Row>
+    </>
+
+    return <BabyGruMenuItem
+        popoverContent={panelContent}
+        menuItemText="Map coefficients..."
         onCompleted={onCompleted}
     />
 }
