@@ -143,7 +143,7 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
                     returnType: "status",
                     command: 'shim_read_dictionary',
                     commandArgs: [fileContent, moleculeSelectRef.current.value]
-                })
+                }, true)
             }).then(result => {
                 props.molecules
                     .filter(molecule => molecule.coordMolNo === parseInt(moleculeSelectRef.current.value))
@@ -260,6 +260,18 @@ export const BabyGruImportMapCoefficientsMenuItem = (props) => {
         </Row>
     </>
 
+    return <BabyGruMenuItem
+        popoverContent={panelContent}
+        menuItemText="Map coefficients..."
+        onCompleted={onCompleted}
+    />
+}
+
+const BabyGruImportCoordinatesFromEBI = (props) => {
+    const panelContent = {
+
+    }
+    const onCompleted = () => { }
     return <BabyGruMenuItem
         popoverContent={panelContent}
         menuItemText="Map coefficients..."
