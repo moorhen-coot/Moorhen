@@ -1,6 +1,7 @@
 import { MenuItem } from "@mui/material";
 import { createRef, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { OverlayTrigger, Popover, PopoverBody, PopoverHeader, Form, InputGroup, Button } from "react-bootstrap";
+import { BabyGruMolecule } from "./BabyGruMolecule";
 
 export const BabyGruMenuItem = (props) => {
 
@@ -48,7 +49,18 @@ export const BabyGruGetMonomerMenuItem = (props) => {
         </Form.Group>
 
     const onCompleted = () => {
-        props.commandCentre.cootCommand('get_monomer', [tlcRef.current.value], true)
+        props.commandCentre.current.cootCommand({
+            returnType: 'status',
+            command: 'get_monomer',
+            commandArgs: [tlcRef.current.value]
+        }, true)
+            .then(result => {
+                if (result.data.result.status === "Completed") {
+                    const newMolecule = new BabyGruMolecule(props.commandCentre)
+                    newMolecule.coordMolNo = result.data.result.result
+                    newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef)
+                }
+            })
     }
 
     return <BabyGruMenuItem

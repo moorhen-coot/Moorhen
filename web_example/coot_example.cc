@@ -622,6 +622,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("get_bonds_mesh",&molecules_container_t::get_bonds_mesh)
     .function("go_to_blob",&molecules_container_t::go_to_blob)
     .function("set_map_sampling_rate",&molecules_container_t::set_map_sampling_rate)
+    .function("get_monomer",&molecules_container_t::get_monomer)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<>()

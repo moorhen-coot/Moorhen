@@ -152,12 +152,11 @@ export const BabyGruContainer = (props) => {
                     />
                     <BabyGruViewMenu
                         backgroundColor={backgroundColor}
-                        setBackgroundColor={(color)=>{setBackgroundColor(color)}}
+                        setBackgroundColor={(color) => { setBackgroundColor(color) }}
                         glRef={glRef}
                     />
                     <BabyGruLigandMenu
-                        backgroundColor={backgroundColor}
-                        setBackgroundColor={(color)=>{setBackgroundColor(color)}}
+                        commandCentre={commandCentre}
                         glRef={glRef}
                     />
                 </Nav>

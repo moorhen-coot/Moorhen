@@ -8,10 +8,9 @@ import { MenuItem } from "@mui/material";
 import { BabyGruGetMonomerMenuItem, BabyGruMenuItem } from "./BabyGruMenuItem";
 
 export const BabyGruLigandMenu = (props) => {
-
     return <>
         <NavDropdown title="Ligand" id="basic-nav-dropdown">
-            <BabyGruGetMonomerMenuItem />
+            <BabyGruGetMonomerMenuItem {...props}/>
         </NavDropdown>
     </>
 }
