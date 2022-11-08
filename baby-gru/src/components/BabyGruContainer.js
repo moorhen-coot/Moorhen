@@ -216,13 +216,20 @@ export const BabyGruContainer = (props) => {
                             backgroundColor={backgroundColor}
                         />
                     </div>
-                    <div style={{ height: '4rem', backgroundColor: darkMode ? 'black' : 'white'}} id='button-bar-baby-gru'>
+                    <div    id='button-bar-baby-gru'
+                            style={{ 
+                                height: '4rem',
+                                backgroundColor:  `rgba(
+                                    ${255 * backgroundColor[0]},
+                                    ${255 * backgroundColor[1]},
+                                    ${255 * backgroundColor[2]}, 
+                                    ${backgroundColor[3]})`}}>
                         <BabyGruButtonBar setCursorStyle={setCursorStyle}
                             molecules={molecules}
                             commandCentre={commandCentre}
                             activeMap={activeMap}
                             glRef={glRef} 
-                            darkMode={darkMode}/>
+                            backgroundColor={backgroundColor}/>
                     </div>
                 </Col>
                 <Col style={{ padding: '0.5rem', margin: '0', display: showSideBar ? "Block" : "None" }} >
