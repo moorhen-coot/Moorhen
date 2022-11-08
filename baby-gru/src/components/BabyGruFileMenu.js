@@ -89,6 +89,17 @@ export const BabyGruFileMenu = (props) => {
             })
     }
 
+    const deleteEverything = () => {
+        maps.forEach(map => {
+            map.delete(glRef)
+        })
+        molecules.forEach(molecule => {
+            molecule.delete(glRef)
+        })
+        setMaps([])
+        setMolecules([])
+    }
+
     return <>
         <NavDropdown title="File" id="basic-nav-dropdown">
             <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="uploadCoords" className="mb-3">
@@ -116,6 +127,10 @@ export const BabyGruFileMenu = (props) => {
             <MenuItem variant="success" onClick={(e) => {
                 loadTutorialData()
             }}>Load tutorial data</MenuItem>
+            
+            <MenuItem className="text-danger" onClick={(e) => {
+                deleteEverything()
+            }}>Delete everything</MenuItem>
 
         </NavDropdown>
 
