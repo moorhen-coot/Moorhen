@@ -5,7 +5,7 @@ import { useEffect, useState, useRef, createRef } from "react";
 import { BabyGruMtzWrapper, cootCommand, readTextFile } from '../BabyGruUtils';
 import { InsertDriveFile } from "@mui/icons-material";
 import { BabyGruMoleculeSelect } from "./BabyGruMoleculeSelect";
-import { BabyGruImportDictionaryMenuItem, BabyGruImportMapCoefficientsMenuItem } from "./BabyGruMenuItem";
+import { BabyGruImportDictionaryMenuItem, BabyGruImportMapCoefficientsMenuItem, BabyGruDeleteEverythingMenuItem } from "./BabyGruMenuItem";
 import { MenuItem } from "@mui/material";
 
 export const BabyGruFileMenu = (props) => {
@@ -89,17 +89,6 @@ export const BabyGruFileMenu = (props) => {
             })
     }
 
-    const deleteEverything = () => {
-        maps.forEach(map => {
-            map.delete(glRef)
-        })
-        molecules.forEach(molecule => {
-            molecule.delete(glRef)
-        })
-        setMaps([])
-        setMolecules([])
-    }
-
     return <>
         <NavDropdown title="File" id="basic-nav-dropdown">
             <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="uploadCoords" className="mb-3">
@@ -127,10 +116,8 @@ export const BabyGruFileMenu = (props) => {
             <MenuItem variant="success" onClick={(e) => {
                 loadTutorialData()
             }}>Load tutorial data</MenuItem>
-            
-            <MenuItem className="text-danger" onClick={(e) => {
-                deleteEverything()
-            }}>Delete everything</MenuItem>
+
+            <BabyGruDeleteEverythingMenuItem {...props}/>
 
         </NavDropdown>
 

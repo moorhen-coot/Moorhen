@@ -31,16 +31,22 @@ export const BabyGruMenuItem = (props) => {
                     <PopoverHeader as="h3">{props.menuItemTitle}</PopoverHeader>
                     <PopoverBody>
                         {props.popoverContent}
-                        <Button onClick={() => { resolveOrRejectRef.current.resolve() }}>OK</Button>
+                        <Button variant={props.buttonVariant} onClick={() => { resolveOrRejectRef.current.resolve() }}>{props.buttonText}</Button>
                     </PopoverBody>
                 </Popover>}
             trigger="click"
         >
-            <MenuItem variant="success">{props.menuItemText}</MenuItem>
+            <MenuItem className={props.textClassName}  variant="success">{props.menuItemText}</MenuItem>
         </OverlayTrigger> :
             <MenuItem variant="success">{props.menuItemText}</MenuItem>
         }
     </>
+}
+
+BabyGruMenuItem.defaultProps = {
+    buttonText: "OK",
+    buttonVariant: "primary",
+    textClassName: ""
 }
 
 export const BabyGruGetMonomerMenuItem = (props) => {
@@ -81,6 +87,38 @@ export const BabyGruGetMonomerMenuItem = (props) => {
         onCompleted={onCompleted}
     />
 }
+
+export const BabyGruDeleteEverythingMenuItem = (props) => {
+
+    const panelContent = <>
+        <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="BabyGruGetDeleteEverythingMenuItem" className="mb-3">
+            <span style={{fontWeight:'bold'}}>Warning: this action cannot be reversed.</span>
+        </Form.Group>
+    </>
+
+
+    const onCompleted = () => {
+        props.maps.forEach(map => {
+            map.delete(props.glRef)
+        })
+        props.molecules.forEach(molecule => {
+            molecule.delete(props.glRef)
+        })
+        props.setMaps([])
+        props.setMolecules([])
+
+    }
+
+    return <BabyGruMenuItem
+        textClassName="text-danger"
+        buttonVariant="danger"
+        buttonText="I understand, delete"
+        popoverContent={panelContent}
+        menuItemText="Delete everything"
+        onCompleted={onCompleted}
+    />
+}
+
 
 export const BabyGruBackgroundColorMenuItem = (props) => {
     const [backgroundColor, setBackgroundColor] = useState({
