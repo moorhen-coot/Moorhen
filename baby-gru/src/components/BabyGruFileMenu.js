@@ -32,7 +32,7 @@ export const BabyGruFileMenu = (props) => {
 
         let drawPromises = []
         for (const newMolecule of newMolecules) {
-            drawPromises.push(newMolecule.fetchIfDirtyAndDraw('bonds', glRef, true))
+            drawPromises.push(newMolecule.fetchIfDirtyAndDraw('CBs', glRef, true))
         }
         await Promise.all(drawPromises)
 
@@ -56,7 +56,7 @@ export const BabyGruFileMenu = (props) => {
         const newMolecule = new BabyGruMolecule(commandCentre)
         return newMolecule.loadToCootFromURL(url, molName)
             .then(result => {
-                newMolecule.fetchIfDirtyAndDraw('bonds', glRef, true)
+                newMolecule.fetchIfDirtyAndDraw('CBs', glRef, true)
             }).then(result => {
                 setMolecules([...molecules, newMolecule])
                 return Promise.resolve(newMolecule)
@@ -71,7 +71,7 @@ export const BabyGruFileMenu = (props) => {
         const newDiffMap = new BabyGruMap(commandCentre)
         newMolecule.loadToCootFromURL(`./tutorials/moorhen-tutorial-structure-number-1.pdb`, "moorhen-tutorial-1")
             .then(result => {
-                newMolecule.fetchIfDirtyAndDraw('bonds', glRef, true)
+                newMolecule.fetchIfDirtyAndDraw('CBs', glRef, true)
             }).then(result => {
                 setMolecules([...molecules, newMolecule])
                 Promise.resolve(newMolecule)

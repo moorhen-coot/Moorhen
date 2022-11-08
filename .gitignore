@@ -42,3 +42,11 @@
 /web_example/papaparse.min.js
 /web_example/RDKit_minimal.js
 /web_example/web_example.js
+coot/density_fit_analysis-test.js
+coot/fix-nomenclature.js
+coot/mini-rsr-web.data
+coot/mini-rsr-web.js
+coot/mini-rsr-web.worker.js
+coot/mini-rsr.js
+coot/mini-rsr.worker.js
+tests/moorhen.data
