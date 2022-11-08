@@ -52,13 +52,12 @@ export const BabyGruGetMonomerMenuItem = (props) => {
     const onCompleted = () => {
         props.commandCentre.current.cootCommand({
             returnType: 'status',
-
             command: 'get_monomer',
-            commandArgs: [tlcRef.current.value]
+            commandArgs: [tlcRef.current.value],
             /*
-                        command: 'get_monomer_and_position_at',
-                        commandArgs: [tlcRef.current.value, ...props.glRef.current.origin.map(coord => -coord)]
-                        */
+command: 'get_monomer_and_position_at',
+commandArgs: [tlcRef.current.value, ...props.glRef.current.origin.map(coord => -coord)]
+*/
         }, true)
             .then(result => {
                 console.log(result)
