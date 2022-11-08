@@ -114,7 +114,11 @@ export const BabyGruButtonBar = (props) => {
     return <div
         style={{
             overflow: "auto",
-            backgroundColor: props.darkMode ? "black" : "white",
+            backgroundColor:  `rgba(
+                ${255 * props.backgroundColor[0]},
+                ${255 * props.backgroundColor[1]},
+                ${255 * props.backgroundColor[2]}, 
+                ${props.backgroundColor[3]})`,
         }}>
         <ButtonGroup horizontal>
 
