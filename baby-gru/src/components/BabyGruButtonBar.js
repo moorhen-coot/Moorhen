@@ -1,3 +1,4 @@
+import { Tooltip } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 import { ButtonGroup, Button, Overlay, Container, Row, FormSelect, FormGroup, FormLabel } from "react-bootstrap"
 
@@ -114,7 +115,7 @@ export const BabyGruButtonBar = (props) => {
     return <div
         style={{
             overflow: "auto",
-            backgroundColor:  `rgba(
+            backgroundColor: `rgba(
                 ${255 * props.backgroundColor[0]},
                 ${255 * props.backgroundColor[1]},
                 ${255 * props.backgroundColor[2]}, 
@@ -240,6 +241,7 @@ export const BabyGruButtonBar = (props) => {
                 }} />
 
             <BabyGruSimpleEditButton {...props}
+                toolTip="Jed_flip: wag the dog"
                 buttonIndex={"9"}
                 selectedbuttonIndex={selectedbuttonIndex}
                 setSelectedbuttonIndex={setSelectedbuttonIndex}
@@ -298,27 +300,29 @@ export const BabyGruSimpleEditButton = (props) => {
     }
 
     return <>
-        <Button value={props.buttonIndex}
-            size="sm"
-            ref={target}
-            active={props.buttonIndex === props.selectedbuttonIndex}
-            variant='light'
-            disabled={props.needsMapData && !props.activeMap || props.molecules.length === 0}
-            onClick={(e) => {
-                if (props.selectedbuttonIndex === e.currentTarget.value) {
-                    props.setSelectedbuttonIndex(null)
-                    props.setCursorStyle("default")
-                    document.removeEventListener('atomClicked', atomClickedCallback, { once: true })
-                    return
-                }
-                props.setSelectedbuttonIndex(props.buttonIndex)
-                props.setCursorStyle("crosshair")
-                document.addEventListener('atomClicked', atomClickedCallback, { once: true })
-                if (props.prompt) {
-                }
-            }}>
-            {props.icon}
-        </Button>
+        <Tooltip title={props.toolTip}>
+            <Button value={props.buttonIndex}
+                size="sm"
+                ref={target}
+                active={props.buttonIndex === props.selectedbuttonIndex}
+                variant='light'
+                disabled={props.needsMapData && !props.activeMap || props.molecules.length === 0}
+                onClick={(e) => {
+                    if (props.selectedbuttonIndex === e.currentTarget.value) {
+                        props.setSelectedbuttonIndex(null)
+                        props.setCursorStyle("default")
+                        document.removeEventListener('atomClicked', atomClickedCallback, { once: true })
+                        return
+                    }
+                    props.setSelectedbuttonIndex(props.buttonIndex)
+                    props.setCursorStyle("crosshair")
+                    document.addEventListener('atomClicked', atomClickedCallback, { once: true })
+                    if (props.prompt) {
+                    }
+                }}>
+                {props.icon}
+            </Button>
+        </Tooltip>
 
         {
             prompt && <Overlay target={target.current} show={props.buttonIndex === props.selectedbuttonIndex} placement="top">
@@ -341,7 +345,7 @@ export const BabyGruSimpleEditButton = (props) => {
         }
     </>
 }
-BabyGruSimpleEditButton.defaultProps = { setCursorStyle: () => { }, setselectedButtonIndex: () => { }, selectedButtonIndex: 0, prompt: null }
+BabyGruSimpleEditButton.defaultProps = { toolTip: "", setCursorStyle: () => { }, setselectedButtonIndex: () => { }, selectedButtonIndex: 0, prompt: null }
 
 const cidToSpec = (cid) => {
     //coordMolNo, chain_id, res_no, ins_code, alt_conf
