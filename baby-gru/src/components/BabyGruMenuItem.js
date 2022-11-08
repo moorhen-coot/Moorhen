@@ -70,6 +70,7 @@ export const BabyGruGetMonomerMenuItem = (props) => {
                 if (result.data.result.status === "Completed") {
                     const newMolecule = new BabyGruMolecule(props.commandCentre)
                     newMolecule.coordMolNo = result.data.result.result
+                    newMolecule.name = tlcRef.current.value
                     newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef).then(_ => {
                         props.setMolecules([...props.molecules, newMolecule])
                     })
