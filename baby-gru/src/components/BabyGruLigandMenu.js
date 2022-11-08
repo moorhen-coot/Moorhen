@@ -5,16 +5,13 @@ import { useEffect, useState, useRef, createRef } from "react";
 import { BabyGruMtzWrapper, cootCommand, readTextFile } from '../BabyGruUtils';
 import { InsertDriveFile } from "@mui/icons-material";
 import { MenuItem } from "@mui/material";
-import { BabyGruMenuItem } from "./BabyGruMenuItem";
+import { BabyGruGetMonomerMenuItem, BabyGruMenuItem } from "./BabyGruMenuItem";
 
 export const BabyGruLigandMenu = (props) => {
 
     return <>
         <NavDropdown title="Ligand" id="basic-nav-dropdown">
-            <BabyGruMenuItem
-                popoverContent="Hello"
-                menuItemTitle="Hiya"
-            />
+            <BabyGruGetMonomerMenuItem />
         </NavDropdown>
     </>
 }

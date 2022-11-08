@@ -12,6 +12,7 @@ import { ArrowBackIosOutlined, ArrowForwardIosOutlined } from '@mui/icons-materi
 import './BabyGruContainer.css'
 import { BabyGruHistoryMenu } from './BabyGruHistoryMenu';
 import { BabyGruViewMenu } from './BabyGruViewMenu';
+import { BabyGruLigandMenu } from './BabyGruLigandMenu';
 
 
 const initialHistoryState = { commands: [] }
@@ -150,6 +151,11 @@ export const BabyGruContainer = (props) => {
                         glRef={glRef}
                     />
                     <BabyGruViewMenu
+                        backgroundColor={backgroundColor}
+                        setBackgroundColor={(color)=>{setBackgroundColor(color)}}
+                        glRef={glRef}
+                    />
+                    <BabyGruLigandMenu
                         backgroundColor={backgroundColor}
                         setBackgroundColor={(color)=>{setBackgroundColor(color)}}
                         glRef={glRef}
