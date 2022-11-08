@@ -3,6 +3,7 @@ import { BabyGruMolecule } from "./BabyGruMolecule";
 import { BabyGruMap } from "./BabyGruMap";
 import { useEffect, useState } from "react";
 import { cootCommand, doDownload, doDownloadText, readTextFile } from "../BabyGruUtils";
+import { MenuItem } from "@mui/material";
 
 
 export const BabyGruHistoryMenu = (props) => {
@@ -76,31 +77,13 @@ export const BabyGruHistoryMenu = (props) => {
 
     return <>
         <NavDropdown title="History" id="basic-nav-dropdown">
-            <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="showHistory" className="mb-3">
-                <Form.Label>Show command history</Form.Label>
-                <Form.Control
-                    type="button"
-                    value="Show"
-                    placeholder="Show"
-                    aria-label="Session history"
-                    onClick={(e) => {
-                        setShowHistory(true)
-                    }}
-                />
-            </Form.Group>
-            <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="downloadHistory" className="mb-3">
-                <Form.Label>Download history as JSON</Form.Label>
-                <Form.Control
-                    type="button"
-                    value="Download"
-                    placeholder="Download"
-                    aria-label="Download history"
-                    onClick={(e) => {
-                        const json = JSON.stringify(sessionHistory, null, 2)
-                        doDownloadText(json, "BabyGruSession.json")
-                    }}
-                />
-            </Form.Group>
+            <MenuItem variant="success" onClick={(e) => {
+                setShowHistory(true)
+            }}>Show command history</MenuItem>
+            <MenuItem variant="success" onClick={(e) => {
+                const json = JSON.stringify(sessionHistory, null, 2)
+                doDownloadText(json, "BabyGruSession.json")
+            }}>Download history</MenuItem>
 
             <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="uploadJournal" className="mb-3">
                 <Form.Label>Execute history</Form.Label>
