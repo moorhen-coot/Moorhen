@@ -3,6 +3,7 @@ import { createRef, useCallback, useEffect, useMemo, useRef, useState } from "re
 import { OverlayTrigger, Popover, PopoverBody, PopoverHeader, Form, InputGroup, Button } from "react-bootstrap";
 import { SketchPicker } from "react-color";
 import { BabyGruMolecule } from "./BabyGruMolecule";
+import { BabyGruMoleculeSelect } from "./BabyGruMoleculeSelect";
 
 export const BabyGruMenuItem = (props) => {
 
@@ -42,22 +43,27 @@ export const BabyGruMenuItem = (props) => {
 
 export const BabyGruGetMonomerMenuItem = (props) => {
     const tlcRef = useRef()
+    const selectRef = useRef(null)
 
-    const panelContent =
+    const panelContent = <>
         <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="BabyGruGetMonomerMenuItem" className="mb-3">
             <Form.Label>Monomer identifier</Form.Label>
             <Form.Control ref={tlcRef} type="text" />
         </Form.Group>
+        <BabyGruMoleculeSelect {...props} allowAny={true} ref={selectRef} />
+    </>
+
 
     const onCompleted = () => {
         props.commandCentre.current.cootCommand({
             returnType: 'status',
+            /*
             command: 'get_monomer',
             commandArgs: [tlcRef.current.value],
-            /*
-command: 'get_monomer_and_position_at',
-commandArgs: [tlcRef.current.value, ...props.glRef.current.origin.map(coord => -coord)]
-*/
+            */
+            command: 'get_monomer_and_position_at',
+            commandArgs: [tlcRef.current.value, selectRef.current.value, ...props.glRef.current.origin.map(coord => -coord)]
+
         }, true)
             .then(result => {
                 console.log(result)
