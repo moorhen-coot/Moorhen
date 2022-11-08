@@ -8,7 +8,7 @@ window.customElements.define("protvista-navigation", ProtvistaNavigation);
 window.customElements.define("protvista-sequence", ProtvistaSequence);
 window.customElements.define("protvista-manager", ProtvistaManager);
 
-const oneToThree = {'C': 'CYS',
+const residueCodesOneToThree = {'C': 'CYS',
                     'D': 'ASP',
                     'S': 'SER',
                     'Q': 'GLN',
@@ -27,29 +27,57 @@ const oneToThree = {'C': 'CYS',
                     'V': 'VAL',
                     'E': 'GLU',
                     'Y': 'TYR',
-                    'M': 'MET'
+                    'M': 'MET',
+                    'UNK': 'UNKOWN',
+                    '-': 'MISSING'
                 }
+
+const nucleotideCodesOneToThree = {"A": "A",
+            "T": "T",
+            "G": "G",
+            "C": "C",
+            "U": "U",
+            "N": "N",
+            "I": "I",
+            "X": "UNKOWN",
+            'UNK': 'UNKOWN',
+            '-': 'MISSING'
+            }
 
 /**
  * For a given sequence length, calculate the range of 40 residues in the middle
  * @param {Number} sequenceLength sequence lenght
  * @returns {Array} An array containing the display start and display end consisting of a range of 40 residues
  */
-const calculateDisplayStartAndEnd = (sequenceLength) => {
+const calculateDisplayStartAndEnd = (rulerStart, sequenceLength) => {
     if (sequenceLength <= 40) {
-        return [parseFloat("1"), parseFloat(sequenceLength)]
+        return [parseFloat(rulerStart), parseFloat(sequenceLength + rulerStart)]
     }
     let middleIndex = Math.round((sequenceLength) / 2)
-    return [parseFloat(middleIndex-20), parseFloat( middleIndex+20)]        
+    return [parseFloat(middleIndex - 20 + rulerStart), parseFloat(middleIndex + 20 + rulerStart)]        
 }
 
+
+const parseSequenceData = (sequence) => {
+    let rulerStart = sequence[0].resNum
+    let finalSequence = Array(sequence[sequence.length-1].resNum).fill('-')
+    let seqLenght = sequence[sequence.length-1].resNum - rulerStart + 1
+    
+    sequence.forEach(residue => {
+        finalSequence[residue.resNum - 1] = residue.resCode
+    })
+            
+    return [rulerStart, seqLenght, finalSequence.join('')]
+}
 
 export const BabyGruSequenceViewer = (props) => {
     const managerRef = useRef(null);
     const sequenceRef = useRef(null);
     const navigationRef = useRef(null);
     const [message, setMessage] = useState("");
-    const [start, end] = calculateDisplayStartAndEnd(props.sequence.sequence.length);
+    const [rulerStart, seqLenght, displaySequence] = parseSequenceData(props.sequence.sequence)
+    const [start, end] = calculateDisplayStartAndEnd(rulerStart, seqLenght);
+
 
     /**
      * Clear highlighted residue range
@@ -89,7 +117,7 @@ export const BabyGruSequenceViewer = (props) => {
                 }
             } else if (evt.detail.eventtype === "mouseover") {
                 if (evt.detail.feature !== null) {
-                    setMessage(`/${evt.detail.feature.start} (${oneToThree[evt.detail.feature.aa]})`)
+                    setMessage(`/${evt.detail.feature.start} (${props.sequence.type==="polypeptide(L)" ? residueCodesOneToThree[evt.detail.feature.aa] : nucleotideCodesOneToThree[evt.detail.feature.aa]})`)
                 }
             } else if (evt.detail.eventtype === "mouseout") {
                 setMessage("")
@@ -155,15 +183,16 @@ export const BabyGruSequenceViewer = (props) => {
                 <protvista-manager ref={managerRef}>
                     <protvista-navigation 
                         ref={navigationRef}
-                        length={props.sequence.sequence.length}
+                        length={seqLenght}
+                        rulerStart={rulerStart}
                         displaystart={start}
                         displayend={end}
                         />
                     <protvista-sequence
                         ref={sequenceRef}
-                        sequence={props.sequence.sequence}
-                        length={props.sequence.sequence.length} 
-                        numberofticks={Math.floor(props.sequence.sequence.length/20)}
+                        sequence={displaySequence}
+                        length={seqLenght} 
+                        numberofticks="10"
                         displaystart={start}
                         displayend={end}
                         />
