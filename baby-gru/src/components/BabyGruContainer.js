@@ -124,6 +124,8 @@ export const BabyGruContainer = (props) => {
         return windowHeight - (navBarHeight + innerWindowMarginHeight)
     }
 
+    const collectedProps = { molecules, setMolecules, maps, setMaps, glRef, setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor }
+
     return <> <div className="border" ref={headerRef}>
 
         <Navbar id='navbar-baby-gru' style={{ height: '3rem', justifyContent: 'between', margin: '0.5rem', padding: '0.5rem' }}>
@@ -131,7 +133,8 @@ export const BabyGruContainer = (props) => {
             <Navbar.Toggle aria-controls="basic-navbar-nav" />
             <Navbar.Collapse id="basic-navbar-nav">
                 <Nav className="justify-content-left">
-                    <BabyGruFileMenu
+                    <BabyGruFileMenu {...collectedProps}
+                    /*
                         molecules={molecules}
                         setMolecules={setMolecules}
                         maps={maps}
@@ -139,8 +142,10 @@ export const BabyGruContainer = (props) => {
                         commandCentre={commandCentre}
                         setActiveMap={setActiveMap}
                         glRef={glRef}
+                        */
                     />
-                    <BabyGruHistoryMenu
+                    <BabyGruHistoryMenu {...collectedProps}
+                    /*
                         molecules={molecules}
                         setMolecules={setMolecules}
                         maps={maps}
@@ -149,16 +154,10 @@ export const BabyGruContainer = (props) => {
                         commandHistory={commandHistory}
                         setActiveMap={setActiveMap}
                         glRef={glRef}
+                        */
                     />
-                    <BabyGruViewMenu
-                        backgroundColor={backgroundColor}
-                        setBackgroundColor={(color) => { setBackgroundColor(color) }}
-                        glRef={glRef}
-                    />
-                    <BabyGruLigandMenu
-                        commandCentre={commandCentre}
-                        glRef={glRef}
-                    />
+                    <BabyGruViewMenu {...collectedProps} />
+                    <BabyGruLigandMenu {...collectedProps} />
                 </Nav>
             </Navbar.Collapse>
             <Nav className="justify-content-right">

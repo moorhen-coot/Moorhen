@@ -5,7 +5,7 @@ import { useEffect, useState, useRef, createRef } from "react";
 import { BabyGruMtzWrapper, cootCommand, readTextFile } from '../BabyGruUtils';
 import { InsertDriveFile } from "@mui/icons-material";
 import { MenuItem } from "@mui/material";
-import { BabyGruGetMonomerMenuItem, BabyGruMenuItem } from "./BabyGruMenuItem";
+import { BabyGruGetMonomerMenuItem, BabyGruBackgroundColorMenuItem } from "./BabyGruMenuItem";
 
 export const BabyGruLigandMenu = (props) => {
     return <>

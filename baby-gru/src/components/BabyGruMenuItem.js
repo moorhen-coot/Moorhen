@@ -1,6 +1,7 @@
 import { MenuItem } from "@mui/material";
 import { createRef, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { OverlayTrigger, Popover, PopoverBody, PopoverHeader, Form, InputGroup, Button } from "react-bootstrap";
+import { SketchPicker } from "react-color";
 import { BabyGruMolecule } from "./BabyGruMolecule";
 
 export const BabyGruMenuItem = (props) => {
@@ -59,13 +60,57 @@ export const BabyGruGetMonomerMenuItem = (props) => {
                     const newMolecule = new BabyGruMolecule(props.commandCentre)
                     newMolecule.coordMolNo = result.data.result.result
                     newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef)
+                    props.setMolecules([...props.molecules, newMolecule])
                 }
             })
     }
 
     return <BabyGruMenuItem
         popoverContent={panelContent}
-        menuItemText="Get monomer"
+        menuItemText="Get monomer..."
         onCompleted={onCompleted}
     />
+}
+
+export const BabyGruBackgroundColorMenuItem = (props) => {
+    const [backgroundColor, setBackgroundColor] = useState({
+        r: 128, g: 128, b: 128, a: 0.5
+    })
+
+    useEffect(() => {
+        setBackgroundColor({
+            r: 255 * props.backgroundColor[0],
+            g: 255 * props.backgroundColor[1],
+            b: 255 * props.backgroundColor[2],
+            a: props.backgroundColor[3]
+        })
+    }, [props.backgroundColor])
+
+    const handleColorChange = (color) => {
+        try {
+            props.setBackgroundColor([color.rgb.r / 255., color.rgb.g / 255., color.rgb.b / 255., color.rgb.a])
+            setBackgroundColor(color)
+        }
+        catch (err) {
+            console.log('err', err)
+        }
+    }
+    const onCompleted = () => { }
+
+    const panelContent = <>
+        <SketchPicker color={backgroundColor} onChange={handleColorChange} />
+    </>
+
+    return <BabyGruMenuItem
+        popoverContent={panelContent}
+        menuItemText={<Form.Group style={{ minWidth: "20rem" }}>
+            <Form.Label>BackgroundColor</Form.Label>
+            <InputGroup>
+                <Form.Control style={{
+                    backgroundColor: `rgba(  ${backgroundColor.r}, ${backgroundColor.g},  ${backgroundColor.b},  ${backgroundColor.a})`
+                }} type="text" />
+                <Button variant="outline-secondary">Change</Button>
+            </InputGroup >
+        </Form.Group>}
+        onCompleted={onCompleted} />
 }
