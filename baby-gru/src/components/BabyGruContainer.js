@@ -30,6 +30,7 @@ export const BabyGruContainer = (props) => {
     const [showSideBar, setShowSideBar] = useState(false)
     const [darkMode, setDarkMode] = useState(false)
     const [activeMap, setActiveMap] = useState(null)
+    const [activeMolecule, setActiveMolecule] = useState(null)
     const [consoleMessage, setConsoleMessage] = useState("")
     const [molecules, setMolecules] = useState([])
     const [maps, setMaps] = useState([])
@@ -123,6 +124,13 @@ export const BabyGruContainer = (props) => {
             })
         }
     }, [activeMap])
+
+    useEffect(() => {
+        if(activeMolecule)
+            glRef.current.setActiveDisplayObjects(activeMolecule.displayObjects)
+        else
+            glRef.current.setActiveDisplayObjects({})
+    }, [activeMolecule])
 
     const glResize = () => {
         glRef.current.resize(webGLWidth(), webGLHeight())
@@ -260,7 +268,7 @@ export const BabyGruContainer = (props) => {
                         <Accordion.Item eventKey="showDisplayObjects" style={{ width: sideBarWidth, padding: '0', margin: '0' }} >
                             <Accordion.Header style={{ padding: '0', margin: '0', height: '4rem' }}>Display Objects</Accordion.Header>
                             <Accordion.Body style={{ overflowY: 'auto', height: displayObjectsAccordionBodyHeight }}>
-                                {molecules.length === 0 && maps.length === 0 ? "No data files loaded" : <BabyGruDisplayObjects molecules={molecules} setMolecules={setMolecules} glRef={glRef} commandCentre={commandCentre} maps={maps} setMaps={setMaps} activeMap={activeMap} setActiveMap={setActiveMap} />}
+                                {molecules.length === 0 && maps.length === 0 ? "No data files loaded" : <BabyGruDisplayObjects molecules={molecules} setMolecules={setMolecules} glRef={glRef} commandCentre={commandCentre} maps={maps} setMaps={setMaps} activeMap={activeMap} setActiveMap={setActiveMap} activeMolecule={activeMolecule} setActiveMolecule={setActiveMolecule} />}
                             </Accordion.Body>
                         </Accordion.Item>
                         <Accordion.Item eventKey="showTools" style={{ width: sideBarWidth, padding: '0', margin: '0' }} >

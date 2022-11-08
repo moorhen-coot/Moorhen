@@ -12,6 +12,8 @@ export const BabyGruDisplayObjects = (props) => {
                 molecule={molecule}
                 molecules={props.molecules}
                 setMolecules={props.setMolecules}
+                setActiveMolecule={props.setActiveMolecule}
+                activeMolecule={props.activeMolecule}
                 glRef={props.glRef}
                 commandCentre={props.commandCentre}>
             </BabyGruMoleculeCard>
