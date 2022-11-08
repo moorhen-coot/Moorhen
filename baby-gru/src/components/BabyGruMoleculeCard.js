@@ -25,6 +25,7 @@ export const BabyGruMoleculeCard = (props) => {
         props.molecule.displayObjects.ribbons.length,
         props.molecule.displayObjects.rama.length,
         props.molecule.displayObjects.rotamer.length,
+        props.molecule.displayObjects.CBs.length,
     ])
 
     useEffect(() => {

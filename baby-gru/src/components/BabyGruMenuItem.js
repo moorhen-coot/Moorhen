@@ -241,6 +241,7 @@ export const BabyGruImportMapCoefficientsMenuItem = (props) => {
         const newMap = new BabyGruMap(props.commandCentre)
         await newMap.loadToCootFromFile(file, selectedColumns)
         props.setMaps([...props.maps, newMap])
+        props.setActiveMap(newMap.mapMolNo)
     }
 
     const onCompleted = async () => {
@@ -386,6 +387,7 @@ export const BabyGruClipFogMenuItem = (props) => {
     </div>
 
     const onCompleted = () => { }
+
     return <BabyGruMenuItem
         popoverContent={panelContent}
         menuItemText="Clipping and fogging..."
