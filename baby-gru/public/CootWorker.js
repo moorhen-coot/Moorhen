@@ -54,7 +54,23 @@ const residueCodesToJSArray = (residueCodes) => {
         returnResult.push({"resNum": residueCodes.get(ic).first.res_no, "resCode": residueCodes.get(ic).second})
     }
     return returnResult
+}
 
+const densityFitToJSArray = (densityFitData, chainID) => {
+    const chainIndex = densityFitData.get_index_for_chain(chainID);
+    const resInfo = densityFitData.cviv.get(chainIndex).rviv;
+
+    let returnResult = [];
+    for(let ir=0; ir < resInfo.size(); ir++){
+        returnResult.push({
+            chainId: resInfo.get(ir).residue_spec.chain_id,
+            insCode: resInfo.get(ir).residue_spec.ins_code, 
+            seqNum: resInfo.get(ir).residue_spec.res_no, 
+            restype: "UNK",
+            value: 1./resInfo.get(ir).distortion
+        });
+    }
+    return returnResult
 }
 
 const simpleMeshToLineMeshData = (simpleMesh,normalLighting) => {
@@ -300,17 +316,20 @@ onmessage = function (e) {
                     returnResult = simpleMeshToMeshData(cootResult)
                     break;
                 case 'lit_lines_mesh':
-                    returnResult = simpleMeshToLineMeshData(cootResult,true)
+                    returnResult = simpleMeshToLineMeshData(cootResult, true)
                     break;
                 case 'lines_mesh':
-                    returnResult = simpleMeshToLineMeshData(cootResult,false)
+                    returnResult = simpleMeshToLineMeshData(cootResult, false)
                     break;
                 case 'float_array':
                     returnResult = floatArrayToJSArray(cootResult)
                     break;
                 case 'residue_codes':
                     returnResult = residueCodesToJSArray(cootResult)
-                    break;                    
+                    break;      
+                case 'density_fit':
+                    returnResult = densityFitToJSArray(cootResult, e.data.chainID)
+                    break;     
                 case 'status':
                 default:
                     returnResult = cootResult
