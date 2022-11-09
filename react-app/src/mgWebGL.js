@@ -1384,7 +1384,7 @@ class MGWebGL extends Component {
         this.canvas = this.canvasRef.current;
         console.log(this.canvasReact);
         var self = this;
-        this.activeDisplayObjects = {};
+        this.activeMolecule = null;
         /*
         window.addEventListener('resize',
                 function(evt){
@@ -1964,8 +1964,8 @@ class MGWebGL extends Component {
         self.drawScene();
     }
 
-    setActiveDisplayObjects(displayObjects) {
-        this.activeDisplayObjects = displayObjects;
+    setActiveMolecule(molecule) {
+        this.activeMolecule = molecule;
     }
 
     appendOtherData(jsondata,skipRebuild,name) {
@@ -6316,6 +6316,71 @@ class MGWebGL extends Component {
 
     }
 
+    drawTransformMatrixInteractivePMV(transformMatrix,buffer,shader,vertexType,bufferIdx,specialDrawBuffer) {
+        var triangleVertexIndexBuffer = buffer.triangleVertexIndexBuffer;
+
+        var drawBuffer;
+        if(specialDrawBuffer){
+            drawBuffer = specialDrawBuffer;
+        } else {
+            drawBuffer = triangleVertexIndexBuffer[bufferIdx];
+        }
+
+        var pmvMatrix = mat4.create();
+        var screenZ = vec3.create();
+        var tempMVMatrix = mat4.create();
+        var tempMVInvMatrix = mat4.create();
+        var symt_t = mat4.create();
+        var symt = mat4.create();
+        mat4.set(symt,
+                transformMatrix[0],
+                transformMatrix[1],
+                transformMatrix[2],
+                transformMatrix[3],
+                transformMatrix[4],
+                transformMatrix[5],
+                transformMatrix[6],
+                transformMatrix[7],
+                transformMatrix[8],
+                transformMatrix[9],
+                transformMatrix[10],
+                transformMatrix[11],
+                transformMatrix[12],
+                transformMatrix[13],
+                transformMatrix[14],
+                transformMatrix[15],
+                );
+        //mat4.transpose(symt,symt_t);
+
+        mat4.translate(this.mvMatrix,this.mvMatrix, [-this.origin[0],-this.origin[1],-this.origin[2]]);
+        mat4.multiply(tempMVMatrix,this.mvMatrix,symt);
+        mat4.translate(this.mvMatrix,this.mvMatrix, this.origin);
+        mat4.translate(tempMVMatrix,tempMVMatrix, this.origin);
+        mat4.multiply(pmvMatrix,this.pMatrix,tempMVMatrix); // Lines
+
+        this.gl.uniformMatrix4fv(shader.pMatrixUniform, false, pmvMatrix); // Lines
+        this.gl.uniformMatrix4fv(shader.mvMatrixUniform, false, tempMVMatrix);
+
+        tempMVMatrix[12] = 0.0;
+        tempMVMatrix[13] = 0.0;
+        tempMVMatrix[14] = 0.0;
+        mat4.invert(tempMVInvMatrix,tempMVMatrix);
+        screenZ[0] = 0.0;
+        screenZ[1] = 0.0;
+        screenZ[2] = 1.0;
+        vec3.transformMat4(screenZ,screenZ,tempMVInvMatrix);
+        this.gl.uniform3fv(shader.screenZ,screenZ);
+        if(this.ext){
+            this.gl.drawElements(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_INT, 0);
+        }else{
+            this.gl.drawElements(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_SHORT, 0);
+        }
+        this.gl.uniformMatrix4fv(shader.pMatrixUniform, false, this.pmvMatrix); // Lines
+        this.gl.uniformMatrix4fv(shader.mvMatrixUniform, false, this.mvMatrix); // Lines
+        this.gl.uniform3fv(shader.screenZ,this.screenZ); // Lines
+
+    }
+
     drawTransformMatrixPMV(transformMatrix,buffer,shader,vertexType,bufferIdx,specialDrawBuffer) {
         var triangleVertexIndexBuffer = buffer.triangleVertexIndexBuffer;
 
@@ -7301,6 +7366,8 @@ class MGWebGL extends Component {
 
                 if(this.displayBuffers[idx].transformMatrix){
                     this.drawTransformMatrixPMV(this.displayBuffers[idx].transformMatrix,this.displayBuffers[idx],this.shaderProgramThickLines,this.gl.TRIANGLES,j);
+                } else if(this.displayBuffers[idx].transformMatrixInteractive){
+                    this.drawTransformMatrixInteractivePMV(this.displayBuffers[idx].transformMatrixInteractive,this.displayBuffers[idx],this.shaderProgramThickLines,this.gl.TRIANGLES,j);
                 } else {
                     if(this.ext){
                         this.gl.drawElements(this.gl.TRIANGLES, triangleVertexIndexBuffer[j].numItems, this.gl.UNSIGNED_INT, 0);
@@ -10080,25 +10147,25 @@ class MGWebGL extends Component {
             vec3.transformMat4(xshift,xshift,theMatrix);
             vec3.transformMat4(yshift,yshift,theMatrix);
 
-            if(Object.keys(this.activeDisplayObjects).length===0){
+            if(!this.activeMolecule||Object.keys(this.activeMolecule.displayObjects).length===0){
                 const newOrigin = self.origin.map((coord, coordIndex)=>{
                         return coord + (self.zoom * xshift[coordIndex]/8.) - (self.zoom * yshift[coordIndex]/8.)
                         })
                 self.setOrigin(newOrigin, false)
             } else {
-                const newOrigin = this.activeDisplayObjects.transformation.origin.map((coord, coordIndex)=>{
+                const newOrigin = this.activeMolecule.displayObjects.transformation.origin.map((coord, coordIndex)=>{
                         return coord + (self.zoom * xshift[coordIndex]/8.) - (self.zoom * yshift[coordIndex]/8.)
                         })
-                this.activeDisplayObjects.transformation.origin = newOrigin;
-                if(!this.activeDisplayObjects.transformation.quat){
-                    this.activeDisplayObjects.transformation.quat = quat4.create();
-                    quat4.set(this.activeDisplayObjects.transformation.quat,0,0,0,-1);
+                this.activeMolecule.displayObjects.transformation.origin = newOrigin;
+                if(!this.activeMolecule.displayObjects.transformation.quat){
+                    this.activeMolecule.displayObjects.transformation.quat = quat4.create();
+                    quat4.set(this.activeMolecule.displayObjects.transformation.quat,0,0,0,-1);
                 }
-                const theMatrix = quatToMat4(this.activeDisplayObjects.transformation.quat);
-                theMatrix[12] = this.activeDisplayObjects.transformation.origin[0];
-                theMatrix[13] = this.activeDisplayObjects.transformation.origin[1];
-                theMatrix[14] = this.activeDisplayObjects.transformation.origin[2];
-                for (const [key, value] of Object.entries(this.activeDisplayObjects)) {
+                const theMatrix = quatToMat4(this.activeMolecule.displayObjects.transformation.quat);
+                theMatrix[12] = this.activeMolecule.displayObjects.transformation.origin[0];
+                theMatrix[13] = this.activeMolecule.displayObjects.transformation.origin[1];
+                theMatrix[14] = this.activeMolecule.displayObjects.transformation.origin[2];
+                for (const [key, value] of Object.entries(this.activeMolecule.displayObjects)) {
                     for(let ibuf=0;ibuf<value.length;ibuf++){
                         let uniqueLabels = [];
                         value[ibuf].transformMatrixInteractive = theMatrix;
@@ -10143,7 +10210,7 @@ class MGWebGL extends Component {
             //console.log(xQ);
             //console.log(yQ);
             quat4.multiply(xQ,xQ,yQ);
-            if(Object.keys(this.activeDisplayObjects).length===0){
+            if(!this.activeMolecule||Object.keys(this.activeMolecule.displayObjects).length===0){
                 quat4.multiply(self.myQuat,self.myQuat,xQ);
             } else {
                 // ###############
@@ -10163,16 +10230,16 @@ class MGWebGL extends Component {
                 let yQp = createQuatFromDXAngle(-self.dx,y_rot);
                 quat4.multiply(xQp,xQp,yQp);
 
-                if(!this.activeDisplayObjects.transformation.quat){
-                    this.activeDisplayObjects.transformation.quat = quat4.create();
-                    quat4.set(this.activeDisplayObjects.transformation.quat,0,0,0,-1);
+                if(!this.activeMolecule.displayObjects.transformation.quat){
+                    this.activeMolecule.displayObjects.transformation.quat = quat4.create();
+                    quat4.set(this.activeMolecule.displayObjects.transformation.quat,0,0,0,-1);
                 }
-                quat4.multiply(this.activeDisplayObjects.transformation.quat,this.activeDisplayObjects.transformation.quat,xQp);
-                const theMatrix = quatToMat4(this.activeDisplayObjects.transformation.quat);
-                theMatrix[12] = this.activeDisplayObjects.transformation.origin[0];
-                theMatrix[13] = this.activeDisplayObjects.transformation.origin[1];
-                theMatrix[14] = this.activeDisplayObjects.transformation.origin[2];
-                for (const [key, value] of Object.entries(this.activeDisplayObjects)) {
+                quat4.multiply(this.activeMolecule.displayObjects.transformation.quat,this.activeMolecule.displayObjects.transformation.quat,xQp);
+                const theMatrix = quatToMat4(this.activeMolecule.displayObjects.transformation.quat);
+                theMatrix[12] = this.activeMolecule.displayObjects.transformation.origin[0];
+                theMatrix[13] = this.activeMolecule.displayObjects.transformation.origin[1];
+                theMatrix[14] = this.activeMolecule.displayObjects.transformation.origin[2];
+                for (const [key, value] of Object.entries(this.activeMolecule.displayObjects)) {
                     for(let ibuf=0;ibuf<value.length;ibuf++){
                         let uniqueLabels = [];
                         value[ibuf].transformMatrixInteractive = theMatrix;

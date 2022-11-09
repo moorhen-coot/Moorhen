@@ -127,9 +127,9 @@ export const BabyGruContainer = (props) => {
 
     useEffect(() => {
         if(activeMolecule)
-            glRef.current.setActiveDisplayObjects(activeMolecule.displayObjects)
+            glRef.current.setActiveMolecule(activeMolecule)
         else
-            glRef.current.setActiveDisplayObjects({})
+            glRef.current.setActiveMolecule(null)
     }, [activeMolecule])
 
     const glResize = () => {
