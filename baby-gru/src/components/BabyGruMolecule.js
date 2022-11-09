@@ -46,7 +46,7 @@ BabyGruMolecule.prototype.copyFragment = async function (chainId, res_no_start, 
     const newMolecule = new BabyGruMolecule($this.commandCentre)
     newMolecule.name = `${$this.name} fragment`
     newMolecule.coordMolNo = response.data.result
-    await newMolecule.fetchIfDirtyAndDraw('bonds', gl)
+    await newMolecule.fetchIfDirtyAndDraw('CBs', gl)
     await newMolecule.centreOn(gl)
     
     const sequenceInputData = { returnType: "residue_codes", command:"get_single_letter_codes_for_chain", commandArgs:[response.data.result, chainId]}
@@ -344,7 +344,7 @@ BabyGruMolecule.prototype.buffersInclude = function (bufferIn) {
     const $this = this
     //console.log(bufferIn)
     //console.log($this.displayObjects)
-    var BreakException = {};
+    const BreakException = {};
     try {
         Object.keys($this.displayObjects).forEach(style => {
             const objectBuffers = $this.displayObjects[style].filter(buffer => bufferIn.id === buffer.id)

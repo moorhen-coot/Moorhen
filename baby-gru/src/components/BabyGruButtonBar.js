@@ -45,6 +45,9 @@ export const BabyGruButtonBar = (props) => {
             <BabyGruJedFlipTrueButton {...props} selectedButtonIndex={selectedButtonIndex}
                 setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="9" />
 
+            <BabyGruRotateTranslateZoneButton {...props} selectedButtonIndex={selectedButtonIndex}
+                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="10" />
+
         </ButtonGroup>
     </div>
 }
@@ -78,15 +81,20 @@ export const BabyGruSimpleEditButton = (props) => {
                     props.setCursorStyle("default")
                     const chosenAtom = cidToSpec(event.detail.atom.label)
                     let formattedArgs = props.formatArgs(molecule, chosenAtom, localParameters)
-                    props.commandCentre.current.cootCommand({
-                        returnType: "status",
-                        command: props.cootCommand,
-                        commandArgs: formattedArgs
-                    }, true).then(_ => {
-                        molecule.setAtomsDirty(true)
-                        molecule.redraw(props.glRef)
-                        props.setSelectedButtonIndex(null)
-                    })
+                    props.setSelectedButtonIndex(null)
+                    if (props.cootCommand) {
+                        props.commandCentre.current.cootCommand({
+                            returnType: "status",
+                            command: props.cootCommand,
+                            commandArgs: formattedArgs
+                        }, true).then(_ => {
+                            molecule.setAtomsDirty(true)
+                            molecule.redraw(props.glRef)
+                        })
+                    }
+                    else if (props.nonCootCommand) {
+                        props.nonCootCommand(molecule, chosenAtom, localParameters)
+                    }
                 }
                 else {
                     console.log('molecule for buffer not found')
@@ -415,6 +423,32 @@ export const BabyGruJedFlipTrueButton = (props) => {
         cootCommand="jed_flip"
         prompt="Click atom in residue to flip around that rotatable bond - wag the dog"
         icon={<img className="baby-gru-button-icon" src="pixmaps/jed-flip-reverse.svg" />}
+        formatArgs={(molecule, chosenAtom) => {
+            return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, true]
+        }} />
+}
+
+export const BabyGruRotateTranslateZoneButton = (props) => {
+    return <BabyGruSimpleEditButton {...props}
+        toolTip="Rotate/Translate zone"
+        buttonIndex={props.buttonIndex}
+        selectedButtonIndex={props.selectedButtonIndex}
+        setSelectedButtonIndex={props.setSelectedButtonIndex}
+        needsMapData={false}
+        nonCootCommand={async (m, c, p) => {
+            const newMolecule = await m.copyFragment(c.chain_id, c.res_no, c.res_no, props.glRef)
+            const result = await props.commandCentre.current.cootCommand({
+                command: 'delete_using_cid',
+                commandArgs: [m.coordMolNo, `/1/${c.chain_id}/${c.res_no}`, 'RESIDUE'],
+                returnType: "Status"
+            }, true)
+            //console.log('Result is', result)
+            m.redraw(props.glRef)
+            props.setMolecules([...props.molecules, newMolecule])
+            props.setActiveMolecule(newMolecule)
+        }}
+        prompt="Click atom in residue to flip around that rotatable bond - wag the dog"
+        icon={<img className="baby-gru-button-icon" src="pixmaps/rtz.svg" />}
         formatArgs={(molecule, chosenAtom) => {
             return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, true]
         }} />

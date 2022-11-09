@@ -588,6 +588,22 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("GetNumberOfAtoms", select_overload<int(void)>(&mmdb::Residue::GetNumberOfAtoms))
     .function("GetNumberOfAtoms_countTers", select_overload<int(bool)>(&mmdb::Residue::GetNumberOfAtoms))
     ;
+    class_<coot::molecule_t::moved_atom_t>("moved_atom_t")
+    .constructor<const std::string&, const std::string&, float, float, float, int>()
+    .property("atom_name", &coot::molecule_t::moved_atom_t::atom_name)
+    .property("alt_conf", &coot::molecule_t::moved_atom_t::alt_conf)
+    .property("x", &coot::molecule_t::moved_atom_t::x)
+    .property("y", &coot::molecule_t::moved_atom_t::y)
+    .property("z", &coot::molecule_t::moved_atom_t::z)
+    .property("index", &coot::molecule_t::moved_atom_t::index)
+    ;
+    class_<coot::molecule_t::moved_residue_t>("moved_residue_t")
+    .constructor<const std::string&, int, const std::string&>()
+    .property("chain_id", &coot::molecule_t::moved_residue_t::chain_id)
+    .property("res_no", &coot::molecule_t::moved_residue_t::res_no)
+    .property("ins_code", &coot::molecule_t::moved_residue_t::ins_code)
+    .property("moved_atoms", &coot::molecule_t::moved_residue_t::moved_atoms)
+    ;
     class_<molecules_container_t>("molecules_container_t")
     .constructor<>()
     .function("is_valid_model_molecule",&molecules_container_t::is_valid_model_molecule)
@@ -626,6 +642,10 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("set_map_sampling_rate",&molecules_container_t::set_map_sampling_rate)
     .function("get_monomer",&molecules_container_t::get_monomer)
     .function("get_monomer_and_position_at",&molecules_container_t::get_monomer_and_position_at)
+    .function("move_molecule_to_new_centre",&molecules_container_t::move_molecule_to_new_centre)
+    .function("apply_transformation_to_atom_selection",&molecules_container_t::apply_transformation_to_atom_selection)
+    .function("new_positions_for_residue_atoms",&molecules_container_t::new_positions_for_residue_atoms)
+    .function("new_positions_for_atoms_in_residues",&molecules_container_t::new_positions_for_atoms_in_residues)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<>()
@@ -693,6 +713,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("vertices",&coot::simple_mesh_t::vertices)
     .property("triangles",&coot::simple_mesh_t::triangles)
     ;
+    register_vector<coot::molecule_t::moved_residue_t>("Vectormoved_residue_t");
+    register_vector<coot::molecule_t::moved_atom_t>("Vectormoved_atom_t");
     register_vector<std::string>("VectorString");
     register_vector<float>("VectorFloat");
     register_vector<RamachandranInfo>("VectorResidueIdentifier");

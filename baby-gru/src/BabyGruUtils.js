@@ -3,7 +3,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 
-export function convertRemToPx(rem) {    
+export function convertRemToPx(rem) {
     return rem * parseFloat(getComputedStyle(document.documentElement).fontSize);
 }
 
@@ -145,9 +145,9 @@ export const BabyGruCommandCentre = class {
         this.cootWorker.removeEventListener("message", this.handleMessage)
         this.cootWorker.terminate()
     }
-    cootCommand(kwargs, doJournal) {
+    async cootCommand(kwargs, doJournal) {
         //doJournal defaults to true
-        if (typeof doJournal === 'undefined'){
+        if (typeof doJournal === 'undefined') {
             doJournal = false
         }
         const message = "coot_command"

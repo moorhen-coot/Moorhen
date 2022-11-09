@@ -50,6 +50,53 @@ BabyGruMenuItem.defaultProps = {
     textClassName: ""
 }
 
+export const BabyGruLoadTutorialDataMenuItem = (props) => {
+    const tutorialNumberSelectorRef = useRef(null);
+
+    const panelContent = <>
+        <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="loadTutorialData" className="mb-3">
+            <Form.Label>Select tutorial number</Form.Label>
+            <Form.Select ref={tutorialNumberSelectorRef}  >
+                    <option key={1} value={1}>{"Tutorial 1"}</option>
+                    <option key={2} value={2}>{"Tutorial 2"}</option>
+            </Form.Select>
+        </Form.Group>
+    </>
+
+    const onCompleted = () => {
+        const tutorialNumber = tutorialNumberSelectorRef.current.value
+        console.log(`Loading data for tutorial number ${tutorialNumber}`)
+        const newMolecule = new BabyGruMolecule(props.commandCentre)
+        const newMap = new BabyGruMap(props.commandCentre)
+        const newDiffMap = new BabyGruMap(props.commandCentre)
+        newMolecule.loadToCootFromURL(`./tutorials/moorhen-tutorial-structure-number-${tutorialNumber}.pdb`, `moorhen-tutorial-${tutorialNumber}`)
+            .then(result => {
+                newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef, true)
+            }).then(result => {
+                props.setMolecules([...props.molecules, newMolecule])
+                Promise.resolve(newMolecule)
+            }).then(_ => {
+                newMolecule.centreOn(props.glRef)
+            }).then(_ => {
+                return newMap.loadToCootFromURL(`./tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`, `moorhen-tutorial-${tutorialNumber}`,
+                    { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false })
+            }).then(_ => {
+                return newDiffMap.loadToCootFromURL(`./tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`, `moorhen-tutorial-${tutorialNumber}`,
+                    { F: "DELFWT", PHI: "PHDELWT", isDifference: true, useWeight: false })
+            }).then(_ => {
+                props.setMaps([...props.maps, newMap, newDiffMap])
+                props.setActiveMap(newMap)
+            })
+}
+
+    return <BabyGruMenuItem
+        popoverContent={panelContent}
+        menuItemText="Load tutorial data..."
+        onCompleted={onCompleted}
+    />
+}
+
+
 export const BabyGruGetMonomerMenuItem = (props) => {
     const tlcRef = useRef()
     const selectRef = useRef(null)

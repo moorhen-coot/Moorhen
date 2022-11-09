@@ -21,6 +21,12 @@ describe('Testing molecules_container_js', () => {
         setupFunctions.copyExampleDataToFauxFS()
     })
 
+    test('Test add', () => {
+        const molecules_container = new cootModule.molecules_container_js()
+        const ret = molecules_container.add(0)
+        expect(ret).toBe(1)
+    })
+
     test('Test read_pdb from faux file system', () => {
         const molecules_container = new cootModule.molecules_container_js()
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
@@ -86,6 +92,25 @@ describe('Testing molecules_container_js', () => {
         expect(atom.GetLabelSeqID()).toBe(217)
         expect(atom.GetLabelEntityID()).toBe(1)
         expect(atom.GetNBonds()).toBe(0)
+        const movedN = new cootModule.moved_atom_t(" N  ","",2.468,26.274,12.957,-1)
+        const movedCA = new cootModule.moved_atom_t(" CA ","",1.178,26.922,13.361,-1)
+        const movedC = new cootModule.moved_atom_t(" C  ","",1.439,28.343,13.878,-1)
+        const movedO = new cootModule.moved_atom_t(" O  ","",2.486,28.630,14.460,-1)
+        const movedCB = new cootModule.moved_atom_t(" CB ","",0.480,26.082,14.404,-1)
+        let movedVector = new cootModule.Vectormoved_atom_t()
+        movedVector.push_back(movedN)
+        movedVector.push_back(movedCA)
+        movedVector.push_back(movedC)
+        movedVector.push_back(movedO)
+        movedVector.push_back(movedCB)
+        expect(movedVector.size()).toBe(5)
+        const success = molecules_container.new_positions_for_residue_atoms(coordMolNo,"A/217",movedVector)
+        expect(success).toBe(5)
+        const resUpdate = molecules_container.get_residue(coordMolNo,resSpec)
+        const atomUpdate = resUpdate.GetAtom(0);
+        expect(atomUpdate.x).toBeCloseTo(2.468,3)
+        expect(atomUpdate.y).toBeCloseTo(26.274,3)
+        expect(atomUpdate.z).toBeCloseTo(12.957,3)
     })
 
     test('Test Fill Rotamer tables', () => {

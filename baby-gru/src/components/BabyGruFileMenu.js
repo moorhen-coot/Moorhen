@@ -5,7 +5,7 @@ import { useEffect, useState, useRef, createRef } from "react";
 import { BabyGruMtzWrapper, cootCommand, readTextFile } from '../BabyGruUtils';
 import { InsertDriveFile } from "@mui/icons-material";
 import { BabyGruMoleculeSelect } from "./BabyGruMoleculeSelect";
-import { BabyGruImportDictionaryMenuItem, BabyGruImportMapCoefficientsMenuItem, BabyGruDeleteEverythingMenuItem } from "./BabyGruMenuItem";
+import { BabyGruImportDictionaryMenuItem, BabyGruImportMapCoefficientsMenuItem, BabyGruDeleteEverythingMenuItem, BabyGruLoadTutorialDataMenuItem } from "./BabyGruMenuItem";
 import { MenuItem } from "@mui/material";
 
 export const BabyGruFileMenu = (props) => {
@@ -65,30 +65,6 @@ export const BabyGruFileMenu = (props) => {
             })
     }
 
-    const loadTutorialData = () => {
-        const newMolecule = new BabyGruMolecule(commandCentre)
-        const newMap = new BabyGruMap(commandCentre)
-        const newDiffMap = new BabyGruMap(commandCentre)
-        newMolecule.loadToCootFromURL(`./tutorials/moorhen-tutorial-structure-number-1.pdb`, "moorhen-tutorial-1")
-            .then(result => {
-                newMolecule.fetchIfDirtyAndDraw('CBs', glRef, true)
-            }).then(result => {
-                setMolecules([...molecules, newMolecule])
-                Promise.resolve(newMolecule)
-            }).then(_ => {
-                newMolecule.centreOn(glRef)
-            }).then(_ => {
-                return newMap.loadToCootFromURL(`./tutorials/moorhen-tutorial-map-number-1.mtz`, "moorhen-tutorial-1",
-                    { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false })
-            }).then(_ => {
-                return newDiffMap.loadToCootFromURL(`./tutorials/moorhen-tutorial-map-number-1.mtz`, "moorhen-tutorial-1",
-                    { F: "DELFWT", PHI: "PHDELWT", isDifference: true, useWeight: false })
-            }).then(_ => {
-                setMaps([...maps, newMap, newDiffMap])
-                props.setActiveMap(newMap)
-            })
-    }
-
     return <>
         <NavDropdown title="File" id="basic-nav-dropdown">
             <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="uploadCoords" className="mb-3">
@@ -113,9 +89,7 @@ export const BabyGruFileMenu = (props) => {
 
             <BabyGruImportDictionaryMenuItem {...props} />
 
-            <MenuItem variant="success" onClick={(e) => {
-                loadTutorialData()
-            }}>Load tutorial data</MenuItem>
+            <BabyGruLoadTutorialDataMenuItem {...props} />
 
             <BabyGruDeleteEverythingMenuItem {...props}/>
 

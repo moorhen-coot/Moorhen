@@ -132,7 +132,7 @@ export const BabyGruMapCard = (props) => {
         </Card.Header>
         <Card.Body>
             <Row className="align-items-center" style={{ height: '100%', justifyContent:'between', display:'flex'}}>
-                <Col classNane="border-left" style={{justifyContent:'left', display:'flex'}}> 
+                <Col className="border-left" style={{justifyContent:'left', display:'flex'}}> 
                 <Row>
                         <Form.Check checked={props.map === props.activeMap}
                                     style={{margin:'0'}}

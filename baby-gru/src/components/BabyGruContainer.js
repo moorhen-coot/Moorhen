@@ -7,6 +7,7 @@ import { BabyGruCommandCentre, convertRemToPx, convertViewtoPx } from '../BabyGr
 import { BabyGruButtonBar } from './BabyGruButtonBar';
 import { BabyGruFileMenu } from './BabyGruFileMenu';
 import { BabyGruRamachandran } from './BabyGruRamachandran';
+import { BabyGruValidationPlot } from './BabyGruValidation';
 import { BabyGruTimingTest } from './BabyGruTimingTest';
 import { ArrowBackIosOutlined, ArrowForwardIosOutlined, DarkModeOutlined, LightModeOutlined } from '@mui/icons-material';
 import './BabyGruContainer.css'
@@ -126,10 +127,10 @@ export const BabyGruContainer = (props) => {
     }, [activeMap])
 
     useEffect(() => {
-        if (activeMolecule)
-            glRef.current.setActiveDisplayObjects(activeMolecule.displayObjects)
+        if(activeMolecule)
+            glRef.current.setActiveMolecule(activeMolecule)
         else
-            glRef.current.setActiveDisplayObjects({})
+            glRef.current.setActiveMolecule(null)
     }, [activeMolecule])
 
     const glResize = () => {
@@ -263,8 +264,9 @@ export const BabyGruContainer = (props) => {
                                     <Tab eventKey='ramachandran' title='Ramachandran' style={{ height: '100%' }}>
                                         <BabyGruRamachandran molecules={molecules} commandCentre={commandCentre} glRef={glRef} toolAccordionBodyHeight={toolAccordionBodyHeight} sideBarWidth={sideBarWidth} windowHeight={windowHeight} windowWidth={windowWidth} />
                                     </Tab>
-                                    <Tab eventKey='densityFit' title='Density Fit'>
-                                        Not ready yet...
+                                    <Tab eventKey='validationPlot' title='Validation' style={{ height: '100%' }}>
+                                        Not ready yet
+                                        {/**<BabyGruValidationPlot darkMode={darkMode} molecules={molecules} maps={maps} commandCentre={commandCentre} glRef={glRef} toolAccordionBodyHeight={toolAccordionBodyHeight} sideBarWidth={sideBarWidth} windowHeight={windowHeight} windowWidth={windowWidth} />*/}
                                     </Tab>
                                     <Tab eventKey='more' title='More...'>
                                         <BabyGruTimingTest commandCentre={commandCentre} />
