@@ -1,7 +1,7 @@
 import { CheckOutlined } from "@mui/icons-material";
 import { Tooltip } from "@mui/material";
 import { createRef, forwardRef, useCallback, useEffect, useRef, useState } from "react";
-import { ButtonGroup, Button, Overlay, Container, Row, FormSelect, FormGroup, FormLabel } from "react-bootstrap"
+import { ButtonGroup, Button, Overlay, Container, Row, FormSelect, FormGroup, FormLabel, Card } from "react-bootstrap"
 
 export const BabyGruButtonBar = (props) => {
     const [selectedButtonIndex, setSelectedButtonIndex] = useState(null);
@@ -432,24 +432,7 @@ export const BabyGruJedFlipTrueButton = (props) => {
 export const BabyGruRotateTranslateZoneButton = (props) => {
     const [showAccept, setShowAccept] = useState(false)
     const theButton = useRef(null)
-
-    const acceptOverlay = <Overlay target={theButton.current} show={showAccept} placement="top">
-        {({ placement, arrowProps, show: _show, popper, ...props }) => (
-            <div
-                {...props}
-                style={{
-                    position: 'absolute',
-                    padding: '2px 10px',
-                    color: 'white',
-                    borderRadius: 3,
-                    ...props.style,
-                }}
-            >
-                <Button onClick={()=>{}}><CheckOutlined/></Button>
-                <Button onClick={()=>{}}>X</Button>
-            </div>
-        )}
-    </Overlay>
+    const { setActiveMolecule, backgroundColor } = props
 
     return <><BabyGruSimpleEditButton ref={theButton} {...props}
         toolTip="Rotate/Translate zone"
@@ -478,7 +461,34 @@ export const BabyGruRotateTranslateZoneButton = (props) => {
         formatArgs={(molecule, chosenAtom) => {
             return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, true]
         }} />
-        {acceptOverlay}
+        <Overlay target={theButton.current} show={showAccept} placement="top">
+            {({ placement, arrowProps, show: _show, popper, ...props }) => (
+                <div
+                    {...props}
+                    style={{
+                        position: 'absolute', padding: '2px 10px', color: 'white', borderRadius: 3,
+                        backgroundColor: backgroundColor,
+                        ...props.style,
+                    }}
+                >
+                    <Card>
+                        <Card.Header className="px-0"  style={{marginBottom:'0.5rem', padding:'0'}} >Accept rotation ?</Card.Header> 
+                        <Card.Body>
+                            <Button onClick={(e) => {
+                                console.log(e)
+                                setShowAccept(false)
+                                setActiveMolecule(null)
+                            }}><CheckOutlined /></Button>
+                            <Button onClick={(e) => {
+                                console.log(e)
+                                setShowAccept(false)
+                                setActiveMolecule(null)
+                            }}>X</Button>
+                        </Card.Body>
+                    </Card>
+                </div>
+            )}
+        </Overlay>
     </>
 }
 

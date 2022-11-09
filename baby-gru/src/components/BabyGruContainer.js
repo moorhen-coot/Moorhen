@@ -169,7 +169,7 @@ export const BabyGruContainer = (props) => {
                 returnType: "status",
                 command: "shim_new_positions_for_residue_atoms",
                 commandArgs: [prevActiveMoleculeRef.current.coordMolNo,movedResidues]
-            })
+            }, true)
             prevActiveMoleculeRef.current.displayObjects.transformation.origin = [0,0,0]
             prevActiveMoleculeRef.current.displayObjects.transformation.quat = null
         }
@@ -264,14 +264,7 @@ export const BabyGruContainer = (props) => {
                                     ${255 * backgroundColor[2]}, 
                                     ${backgroundColor[3]})`
                         }}>
-                        <BabyGruButtonBar {...collectedProps}
-                        /*setCursorStyle={setCursorStyle}
-                            molecules={molecules}
-                            commandCentre={commandCentre}
-                            activeMap={activeMap}
-                            glRef={glRef} 
-                            backgroundColor={backgroundColor}
-                            *//>
+                        <BabyGruButtonBar {...collectedProps} />
                     </div>
                 </Col>
                 <Col style={{ padding: '0.5rem', margin: '0', display: showSideBar ? "Block" : "None" }} >
@@ -302,7 +295,7 @@ export const BabyGruContainer = (props) => {
                         <Accordion.Item eventKey="showDisplayObjects" style={{ width: sideBarWidth, padding: '0', margin: '0' }} >
                             <Accordion.Header style={{ padding: '0', margin: '0', height: '4rem' }}>Display Objects</Accordion.Header>
                             <Accordion.Body style={{ overflowY: 'auto', height: displayObjectsAccordionBodyHeight }}>
-                                {molecules.length === 0 && maps.length === 0 ? "No data files loaded" : <BabyGruDisplayObjects molecules={molecules} setMolecules={setMolecules} glRef={glRef} commandCentre={commandCentre} maps={maps} setMaps={setMaps} activeMap={activeMap} setActiveMap={setActiveMap} activeMolecule={activeMolecule} setActiveMolecule={setActiveMolecule} />}
+                                {molecules.length === 0 && maps.length === 0 ? "No data files loaded" : <BabyGruDisplayObjects {...collectedProps} />}
                             </Accordion.Body>
                         </Accordion.Item>
                         <Accordion.Item eventKey="showTools" style={{ width: sideBarWidth, padding: '0', margin: '0' }} >
@@ -335,7 +328,6 @@ export const BabyGruContainer = (props) => {
                                 </div>
                             </Accordion.Body>
                         </Accordion.Item>
-
                     </Accordion>
                 </Col>
             </Row>
