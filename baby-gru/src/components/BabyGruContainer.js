@@ -147,13 +147,11 @@ export const BabyGruContainer = (props) => {
                                 const origin = prevActiveMoleculeRef.current.displayObjects.transformation.origin
                                 const quat = prevActiveMoleculeRef.current.displayObjects.transformation.quat
                                 if(quat){
-                                     console.log(origin,quat)
                                      const theMatrix = quatToMat4(quat)
                                      theMatrix[12] = origin[0]
                                      theMatrix[13] = origin[1]
                                      theMatrix[14] = origin[2]
                                      // And then transform ...
-                                     console.log(theMatrix)
                                      const atomPos = vec3.create()
                                      const transPos = vec3.create()
                                      vec3.set(atomPos,x,y,z)
