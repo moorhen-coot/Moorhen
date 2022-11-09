@@ -9,3 +9,7 @@
 .rama-plot-div{
     height: calc(100% - 3rem);
 }
+
+.validation-plot-div{
+    height: calc(100% - 4rem);
+}
