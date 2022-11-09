@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Card, Form, Button, Row, Col, Dropdown, DropdownButton, Modal } from "react-bootstrap";
 import { doDownload } from '../BabyGruUtils';
-import { DownloadOutlined, UndoOutlined, RedoOutlined, CenterFocusWeakOutlined } from '@mui/icons-material';
+import { DownloadOutlined, UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined, ExpandLessOutlined } from '@mui/icons-material';
 import { BabyGruSequenceViewer } from "./BabyGruSequenceViewer";
 
 export const BabyGruMoleculeCard = (props) => {
@@ -10,6 +10,7 @@ export const BabyGruMoleculeCard = (props) => {
     const [clickedResidue, setClickedResidue] = useState(null);
     const [moleculeName, setMoleculeName] = useState(props.molecule.name);
     const [showRenameModal, setShowRenameModal] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(false);
     const newNameInputRef = useRef();
 
     useEffect(() => {
@@ -131,6 +132,12 @@ export const BabyGruMoleculeCard = (props) => {
                         }}>
                         <DownloadOutlined />
                     </Button>
+                    <Button size="sm" variant="outlined"
+                        onClick={() => {
+                            setIsCollapsed(!isCollapsed)
+                        }}>
+                        {isCollapsed ? < ExpandMoreOutlined/> : <ExpandLessOutlined />}
+                    </Button>
                     <DropdownButton size="sm" variant="outlined">
                         <Dropdown.Item as="button" onClick={handleCopyFragment}>Copy selected residues into fragment</Dropdown.Item>
                         <Dropdown.Item as="button" onClick={handleDeleteMolecule}>Delete molecule</Dropdown.Item>
@@ -139,7 +146,7 @@ export const BabyGruMoleculeCard = (props) => {
                 </Col>
             </Row>
         </Card.Header>
-        <Card.Body>
+        <Card.Body style={{display: isCollapsed ? 'none' : ''}}>
             <Row style={{ height: '100%' }}>
                 <Col>
                     <div>

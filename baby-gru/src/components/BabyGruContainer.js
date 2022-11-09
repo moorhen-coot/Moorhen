@@ -203,7 +203,7 @@ export const BabyGruContainer = (props) => {
 
     const collectedProps = {
         molecules, setMolecules, maps, setMaps, glRef, activeMolecule, setActiveMolecule,
-        setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor
+        activeMap, setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor
     }
 
     return <> <div className="border" ref={headerRef}>
