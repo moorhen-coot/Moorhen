@@ -99,7 +99,7 @@ const mutateFormatArgs = (molecule, chosenAtom, pp) => {
 
 
 export const BabyGruButtonBar = (props) => {
-    const [selectedbuttonIndex, setSelectedbuttonIndex] = useState(null);
+    const [selectedButtonIndex, setSelectedButtonIndex] = useState(null);
     const [panelParameters, setPanelParameters] = useState({
         refine: { mode: 'TRIPLE' },
         delete: { mode: 'ATOM' },
@@ -123,30 +123,14 @@ export const BabyGruButtonBar = (props) => {
         }}>
         <ButtonGroup horizontal>
 
-            <BabyGruSimpleEditButton {...props}
-                toolTip="Auto-fit Rotamer"
-                buttonIndex={"0"}
-                selectedbuttonIndex={selectedbuttonIndex}
-                setSelectedbuttonIndex={setSelectedbuttonIndex}
-                needsMapData={true}
-                cootCommand="auto_fit_rotamer"
-                prompt="Click atom in residue to fit rotamer"
-                icon={<img className="baby-gru-button-icon" src="pixmaps/auto-fit-rotamer.svg" />}
-                formatArgs={(molecule, chosenAtom) => {
-                    return [
-                        molecule.coordMolNo,
-                        chosenAtom.chain_id,
-                        chosenAtom.res_no,
-                        chosenAtom.ins_code,
-                        chosenAtom.alt_conf,
-                        props.activeMap.mapMolNo]
-                }} />
+            <BabyGruAutofitRotamerButton {...props} selectedButtonIndex={selectedButtonIndex}
+                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="0" />
 
             <BabyGruSimpleEditButton {...props}
                 toolTip="Flip Peptide"
                 buttonIndex={"1"}
-                selectedbuttonIndex={selectedbuttonIndex}
-                setSelectedbuttonIndex={setSelectedbuttonIndex}
+                selectedButtonIndex={selectedButtonIndex}
+                setSelectedButtonIndex={setSelectedButtonIndex}
                 needsMapData={false}
                 cootCommand="flipPeptide_cid"
                 prompt="Click atom in residue to flip"
@@ -158,8 +142,8 @@ export const BabyGruButtonBar = (props) => {
             <BabyGruSimpleEditButton {...props}
                 toolTip="Rotate side-chain 180 degrees"
                 buttonIndex={"2"}
-                selectedbuttonIndex={selectedbuttonIndex}
-                setSelectedbuttonIndex={setSelectedbuttonIndex}
+                selectedButtonIndex={selectedButtonIndex}
+                setSelectedButtonIndex={setSelectedButtonIndex}
                 needsMapData={false}
                 cootCommand="side_chain_180"
                 prompt="Click atom in residue to flip sidechain"
@@ -171,8 +155,8 @@ export const BabyGruButtonBar = (props) => {
             <BabyGruSimpleEditButton {...props}
                 toolTip="Refine Residues"
                 buttonIndex={"3"}
-                selectedbuttonIndex={selectedbuttonIndex}
-                setSelectedbuttonIndex={setSelectedbuttonIndex}
+                selectedButtonIndex={selectedButtonIndex}
+                setSelectedButtonIndex={setSelectedButtonIndex}
                 needsMapData={true}
                 cootCommand="refine_residues_using_atom_cid"
                 panelParameters={panelParameters}
@@ -185,8 +169,8 @@ export const BabyGruButtonBar = (props) => {
             <BabyGruSimpleEditButton {...props}
                 toolTip="Delete Item"
                 buttonIndex={"4"}
-                selectedbuttonIndex={selectedbuttonIndex}
-                setSelectedbuttonIndex={setSelectedbuttonIndex}
+                selectedButtonIndex={selectedButtonIndex}
+                setSelectedButtonIndex={setSelectedButtonIndex}
                 needsMapData={false}
                 cootCommand="delete_using_cid"
                 panelParameters={panelParameters}
@@ -199,8 +183,8 @@ export const BabyGruButtonBar = (props) => {
             <BabyGruSimpleEditButton {...props}
                 toolTip="Simple Mutate"
                 buttonIndex={"5"}
-                selectedbuttonIndex={selectedbuttonIndex}
-                setSelectedbuttonIndex={setSelectedbuttonIndex}
+                selectedButtonIndex={selectedButtonIndex}
+                setSelectedButtonIndex={setSelectedButtonIndex}
                 needsMapData={false}
                 cootCommand="mutate"
                 panelParameters={panelParameters}
@@ -213,8 +197,8 @@ export const BabyGruButtonBar = (props) => {
             <BabyGruSimpleEditButton {...props}
                 toolTip="Add Residue"
                 buttonIndex={"6"}
-                selectedbuttonIndex={selectedbuttonIndex}
-                setSelectedbuttonIndex={setSelectedbuttonIndex}
+                selectedButtonIndex={selectedButtonIndex}
+                setSelectedButtonIndex={setSelectedButtonIndex}
                 needsMapData={false}
                 cootCommand="add_terminal_residue_directly_using_cid"
                 prompt="Click atom in residue to add a residue to that residue"
@@ -226,8 +210,8 @@ export const BabyGruButtonBar = (props) => {
             <BabyGruSimpleEditButton {...props}
                 toolTip="Eigen Flip: flip the ligand around its eigenvectors"
                 buttonIndex={"7"}
-                selectedbuttonIndex={selectedbuttonIndex}
-                setSelectedbuttonIndex={setSelectedbuttonIndex}
+                selectedButtonIndex={selectedButtonIndex}
+                setSelectedButtonIndex={setSelectedButtonIndex}
                 needsMapData={false}
                 cootCommand="eigen_flip_ligand"
                 prompt="Click atom in residue to eigen flip it"
@@ -239,8 +223,8 @@ export const BabyGruButtonBar = (props) => {
             <BabyGruSimpleEditButton {...props}
                 toolTip="JED Flip: wag the tail"
                 buttonIndex={"8"}
-                selectedbuttonIndex={selectedbuttonIndex}
-                setSelectedbuttonIndex={setSelectedbuttonIndex}
+                selectedButtonIndex={selectedButtonIndex}
+                setSelectedButtonIndex={setSelectedButtonIndex}
                 needsMapData={false}
                 cootCommand="jed_flip"
                 prompt="Click atom in residue to flip around that rotatable bond - wag the tail"
@@ -252,8 +236,8 @@ export const BabyGruButtonBar = (props) => {
             <BabyGruSimpleEditButton {...props}
                 toolTip="JED Flip: wag the dog"
                 buttonIndex={"9"}
-                selectedbuttonIndex={selectedbuttonIndex}
-                setSelectedbuttonIndex={setSelectedbuttonIndex}
+                selectedButtonIndex={selectedButtonIndex}
+                setSelectedButtonIndex={setSelectedButtonIndex}
                 needsMapData={false}
                 cootCommand="jed_flip"
                 prompt="Click atom in residue to flip around that rotatable bond - wag the dog"
@@ -301,7 +285,7 @@ export const BabyGruSimpleEditButton = (props) => {
                     }, true).then(_ => {
                         molecule.setAtomsDirty(true)
                         molecule.redraw(props.glRef)
-                        props.setSelectedbuttonIndex(null)
+                        props.setSelectedButtonIndex(null)
                     })
                 }
                 else {
@@ -312,24 +296,24 @@ export const BabyGruSimpleEditButton = (props) => {
                 console.log('Encountered', err)
             }
         })
-    }, [props.molecules.length])
+    }, [props.molecules.length, props.activeMap])
 
     return <>
         <Tooltip title={props.toolTip}>
             <Button value={props.buttonIndex}
                 size="sm"
                 ref={target}
-                active={props.buttonIndex === props.selectedbuttonIndex}
+                active={props.buttonIndex === props.selectedButtonIndex}
                 variant='light'
                 disabled={props.needsMapData && !props.activeMap || props.molecules.length === 0}
                 onClick={(e) => {
-                    if (props.selectedbuttonIndex === e.currentTarget.value) {
-                        props.setSelectedbuttonIndex(null)
+                    if (props.selectedButtonIndex === e.currentTarget.value) {
+                        props.setSelectedButtonIndex(null)
                         props.setCursorStyle("default")
                         document.removeEventListener('atomClicked', atomClickedCallback, { once: true })
                         return
                     }
-                    props.setSelectedbuttonIndex(props.buttonIndex)
+                    props.setSelectedButtonIndex(props.buttonIndex)
                     props.setCursorStyle("crosshair")
                     document.addEventListener('atomClicked', atomClickedCallback, { once: true })
                     if (props.prompt) {
@@ -340,7 +324,7 @@ export const BabyGruSimpleEditButton = (props) => {
         </Tooltip>
 
         {
-            prompt && <Overlay target={target.current} show={props.buttonIndex === props.selectedbuttonIndex} placement="top">
+            prompt && <Overlay target={target.current} show={props.buttonIndex === props.selectedButtonIndex} placement="top">
                 {({ placement, arrowProps, show: _show, popper, ...props }) => (
                     <div
                         {...props}
@@ -360,7 +344,7 @@ export const BabyGruSimpleEditButton = (props) => {
         }
     </>
 }
-BabyGruSimpleEditButton.defaultProps = { toolTip: "", setCursorStyle: () => { }, setselectedButtonIndex: () => { }, selectedButtonIndex: 0, prompt: null }
+BabyGruSimpleEditButton.defaultProps = { toolTip: "", setCursorStyle: () => { }, setSelectedButtonIndex: () => { }, selectedButtonIndex: 0, prompt: null }
 
 const cidToSpec = (cid) => {
     //coordMolNo, chain_id, res_no, ins_code, alt_conf
@@ -371,4 +355,25 @@ const cidToSpec = (cid) => {
     const ins_code = ""
     const alt_conf = ""
     return { chain_id, res_no, atom_name, ins_code, alt_conf }
+}
+
+export const BabyGruAutofitRotamerButton = (props) => {
+    return <BabyGruSimpleEditButton {...props}
+        toolTip="Auto-fit Rotamer"
+        buttonIndex={props.buttonIndex}
+        selectedButtonIndex={props.selectedButtonIndex}
+        setSelectedButtonIndex={props.setSelectedButtonIndex}
+        needsMapData={true}
+        cootCommand="auto_fit_rotamer"
+        prompt="Click atom in residue to fit rotamer"
+        icon={<img className="baby-gru-button-icon" src="pixmaps/auto-fit-rotamer.svg" />}
+        formatArgs={(molecule, chosenAtom) => {
+            return [
+                molecule.coordMolNo,
+                chosenAtom.chain_id,
+                chosenAtom.res_no,
+                chosenAtom.ins_code,
+                chosenAtom.alt_conf,
+                props.activeMap.mapMolNo]
+        }} />
 }
