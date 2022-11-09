@@ -1,5 +1,6 @@
+import { CheckOutlined } from "@mui/icons-material";
 import { Tooltip } from "@mui/material";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { createRef, forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import { ButtonGroup, Button, Overlay, Container, Row, FormSelect, FormGroup, FormLabel } from "react-bootstrap"
 
 export const BabyGruButtonBar = (props) => {
@@ -52,9 +53,9 @@ export const BabyGruButtonBar = (props) => {
     </div>
 }
 
-export const BabyGruSimpleEditButton = (props) => {
-    const target = useRef(null);
+export const BabyGruSimpleEditButton = forwardRef((props, buttonRef) => {
     const [prompt, setPrompt] = useState(null)
+    const target = useRef(null)
     const [localParameters, setLocalParameters] = useState({})
 
     useEffect(() => {
@@ -110,7 +111,7 @@ export const BabyGruSimpleEditButton = (props) => {
         <Tooltip title={props.toolTip}>
             <Button value={props.buttonIndex}
                 size="sm"
-                ref={target}
+                ref={buttonRef ? buttonRef : target}
                 active={props.buttonIndex === props.selectedButtonIndex}
                 variant='light'
                 disabled={props.needsMapData && !props.activeMap || props.molecules.length === 0}
@@ -132,7 +133,7 @@ export const BabyGruSimpleEditButton = (props) => {
         </Tooltip>
 
         {
-            prompt && <Overlay target={target.current} show={props.buttonIndex === props.selectedButtonIndex} placement="top">
+            prompt && <Overlay target={buttonRef ? buttonRef.current : target.currrent} show={props.buttonIndex === props.selectedButtonIndex} placement="top">
                 {({ placement, arrowProps, show: _show, popper, ...props }) => (
                     <div
                         {...props}
@@ -151,7 +152,7 @@ export const BabyGruSimpleEditButton = (props) => {
             </Overlay>
         }
     </>
-}
+})
 BabyGruSimpleEditButton.defaultProps = { toolTip: "", setCursorStyle: () => { }, setSelectedButtonIndex: () => { }, selectedButtonIndex: 0, prompt: null }
 
 const cidToSpec = (cid) => {
@@ -429,28 +430,55 @@ export const BabyGruJedFlipTrueButton = (props) => {
 }
 
 export const BabyGruRotateTranslateZoneButton = (props) => {
-    return <BabyGruSimpleEditButton {...props}
+    const [showAccept, setShowAccept] = useState(false)
+    const theButton = useRef(null)
+
+    const acceptOverlay = <Overlay target={theButton.current} show={showAccept} placement="top">
+        {({ placement, arrowProps, show: _show, popper, ...props }) => (
+            <div
+                {...props}
+                style={{
+                    position: 'absolute',
+                    padding: '2px 10px',
+                    color: 'white',
+                    borderRadius: 3,
+                    ...props.style,
+                }}
+            >
+                <Button onClick={()=>{}}><CheckOutlined/></Button>
+                <Button onClick={()=>{}}>X</Button>
+            </div>
+        )}
+    </Overlay>
+
+    return <><BabyGruSimpleEditButton ref={theButton} {...props}
         toolTip="Rotate/Translate zone"
         buttonIndex={props.buttonIndex}
         selectedButtonIndex={props.selectedButtonIndex}
         setSelectedButtonIndex={props.setSelectedButtonIndex}
         needsMapData={false}
-        nonCootCommand={async (m, c, p) => {
-            const newMolecule = await m.copyFragment(c.chain_id, c.res_no, c.res_no, props.glRef)
+        nonCootCommand={async (molecule, chosenAtom, p) => {
+            const newMolecule = await molecule.copyFragment(
+                chosenAtom.chain_id, chosenAtom.res_no, chosenAtom.res_no, props.glRef
+            )
             const result = await props.commandCentre.current.cootCommand({
                 command: 'delete_using_cid',
-                commandArgs: [m.coordMolNo, `/1/${c.chain_id}/${c.res_no}`, 'RESIDUE'],
+                commandArgs: [
+                    molecule.coordMolNo, `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}`, 'RESIDUE'
+                ],
                 returnType: "Status"
             }, true)
-            //console.log('Result is', result)
-            m.redraw(props.glRef)
+            molecule.redraw(props.glRef)
             props.setMolecules([...props.molecules, newMolecule])
             props.setActiveMolecule(newMolecule)
+            setShowAccept(true)
         }}
-        prompt="Click atom in residue to flip around that rotatable bond - wag the dog"
+        prompt="Click atom in residue to totate/translate around"
         icon={<img className="baby-gru-button-icon" src="pixmaps/rtz.svg" />}
         formatArgs={(molecule, chosenAtom) => {
             return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, true]
         }} />
+        {acceptOverlay}
+    </>
 }
 

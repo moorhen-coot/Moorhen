@@ -28,6 +28,7 @@ export const BabyGruContainer = (props) => {
     const commandCentre = useRef(null)
     const graphicsDiv = createRef()
     const sequenceViewerRef = useRef()
+    const navBarRef = useRef()
     const [showSideBar, setShowSideBar] = useState(false)
     const [darkMode, setDarkMode] = useState(false)
     const [activeMap, setActiveMap] = useState(null)
@@ -157,12 +158,13 @@ export const BabyGruContainer = (props) => {
 
     const collectedProps = {
         molecules, setMolecules, maps, setMaps, glRef, activeMolecule, setActiveMolecule,
-        setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor
+        setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor,
+        navBarRef
     }
 
     return <> <div className="border" ref={headerRef}>
 
-        <Navbar id='navbar-baby-gru' className={darkMode ? "navbar-dark" : "navbar-light"} style={{ height: '3rem', justifyContent: 'between', margin: '0.5rem', padding: '0.5rem' }}>
+        <Navbar ref={navBarRef} id='navbar-baby-gru' className={darkMode ? "navbar-dark" : "navbar-light"} style={{ height: '3rem', justifyContent: 'between', margin: '0.5rem', padding: '0.5rem' }}>
             <Navbar.Brand href="#home">Baby Gru</Navbar.Brand>
             <Navbar.Toggle aria-controls="basic-navbar-nav" />
             <Navbar.Collapse id="basic-navbar-nav">
