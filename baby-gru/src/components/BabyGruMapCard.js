@@ -1,7 +1,7 @@
 import { useEffect, useState, createRef, useCallback } from "react";
 import { Card, Form, Button, Row, Col, Dropdown, DropdownButton } from "react-bootstrap";
 import { doDownload } from '../BabyGruUtils';
-import { DownloadOutlined, MoreVertOutlined, VisibilityOffOutlined, VisibilityOutlined, SettingsAccessibilitySharp } from '@mui/icons-material';
+import { DownloadOutlined, VisibilityOffOutlined, VisibilityOutlined, ExpandMoreOutlined, ExpandLessOutlined } from '@mui/icons-material';
 import BabyGruSlider from "./BabyGruSlider";
 
 export const BabyGruMapCard = (props) => {
@@ -9,6 +9,7 @@ export const BabyGruMapCard = (props) => {
     const [mapRadius, setMapRadius] = useState(props.initialRadius)
     const [mapContourLevel, setMapContourLevel] = useState(props.initialContour)
     const [mapLitLines, setMapLitLines] = useState(props.initialMapLitLines)    
+    const [isCollapsed, setIsCollapsed] = useState(false);
     const nextOrigin = createRef([])
     const busyContouring = createRef(false)
 
@@ -124,13 +125,19 @@ export const BabyGruMapCard = (props) => {
                         }}>
                         <DownloadOutlined />
                     </Button>
+                    <Button size="sm" variant="outlined"
+                        onClick={() => {
+                            setIsCollapsed(!isCollapsed)
+                        }}>
+                        {isCollapsed ? < ExpandMoreOutlined/> : <ExpandLessOutlined />}
+                    </Button>
                     <DropdownButton size="sm" variant="outlined">
                         <Dropdown.Item as="button" onClick={handleDeleteMap}>Delete map</Dropdown.Item>
                     </DropdownButton>
                 </Col>
             </Row>
         </Card.Header>
-        <Card.Body>
+        <Card.Body style={{display: isCollapsed ? 'none' : ''}}>
             <Row className="align-items-center" style={{ height: '100%', justifyContent:'between', display:'flex'}}>
                 <Col className="border-left" style={{justifyContent:'left', display:'flex'}}> 
                 <Row>

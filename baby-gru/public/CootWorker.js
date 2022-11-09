@@ -130,6 +130,25 @@ function base64ToArrayBuffer(base64) {
     return bytes.buffer;
 }
 
+const new_positions_for_residue_atoms = (molToUpDate,residues) => {
+    console.log("committal",molToUpDate,residues)
+    let success = 0
+    residues.forEach(atoms => {
+        if(atoms.length>0){
+            const cid = atoms[0].resCid
+            let movedVector = new cootModule.Vectormoved_atom_t()
+            atoms.forEach(atom => {
+                const movedAtom = new cootModule.moved_atom_t(atom.name,"",atom.x,atom.y,atom.z,-1)
+                movedVector.push_back(movedAtom)
+            })
+            const thisSuccess = molecules_container.new_positions_for_residue_atoms(molToUpDate,cid,movedVector)
+            success += thisSuccess
+        }
+    })
+    console.log("Success?",success)
+    return success
+}
+
 const read_mtz = (mapData, name, selectedColumns) => {
     const theGuid = guid()
     const asUint8Array = new Uint8Array(mapData)
@@ -298,6 +317,9 @@ onmessage = function (e) {
             let cootResult
             if (command === 'shim_read_pdb') {
                 cootResult = read_pdb(...commandArgs)
+            }
+            else if (command === 'shim_new_positions_for_residue_atoms') {
+                cootResult = new_positions_for_residue_atoms(...commandArgs)
             }
             else if (command === 'shim_read_mtz') {
                 cootResult = read_mtz(...commandArgs)

@@ -14,6 +14,8 @@ import './BabyGruContainer.css'
 import { BabyGruHistoryMenu } from './BabyGruHistoryMenu';
 import { BabyGruViewMenu } from './BabyGruViewMenu';
 import { BabyGruLigandMenu } from './BabyGruLigandMenu';
+import { quatToMat4, quat4Inverse } from '../WebGL/quatToMat4.js';
+import * as vec3 from 'gl-matrix/vec3';
 
 
 const initialHistoryState = { commands: [] }
@@ -127,7 +129,51 @@ export const BabyGruContainer = (props) => {
         }
     }, [activeMap])
 
+    const prevActiveMoleculeRef = useRef();
     useEffect(() => {
+        if(prevActiveMoleculeRef.current){
+            let movedResidues = [];
+            prevActiveMoleculeRef.current.cachedAtoms.atoms.forEach(mod => {
+                mod.chains.forEach(chain => {
+                    chain.residues.forEach(res => {
+                        if(res.atoms.length>0){
+                            const cid = res.atoms[0].getChainID()+"/"+res.atoms[0].getResidueID()
+                            let movedAtoms = [];
+                            res.atoms.forEach(atom => {
+                                //FIXME - I am not sure why mgMiniMol has stripped whitespace. This is probably bad.
+                                const atomName = atom["_atom_site.label_atom_id"];
+                                let x = atom.x()
+                                let y = atom.y()
+                                let z = atom.z()
+                                const origin = prevActiveMoleculeRef.current.displayObjects.transformation.origin
+                                const quat = prevActiveMoleculeRef.current.displayObjects.transformation.quat
+                                if(quat){
+                                     const theMatrix = quatToMat4(quat)
+                                     theMatrix[12] = origin[0]
+                                     theMatrix[13] = origin[1]
+                                     theMatrix[14] = origin[2]
+                                     // And then transform ...
+                                     const atomPos = vec3.create()
+                                     const transPos = vec3.create()
+                                     vec3.set(atomPos,x,y,z)
+                                     vec3.transformMat4(transPos,atomPos,theMatrix);
+                                     movedAtoms.push({name:(" "+atomName).padEnd(4," "),x:transPos[0],y:transPos[0],z:transPos[0],resCid:cid})
+                                }
+                            })
+                            movedResidues.push(movedAtoms)
+                        }
+                    })
+                })
+            })
+            commandCentre.current.cootCommand({
+                returnType: "status",
+                command: "shim_new_positions_for_residue_atoms",
+                commandArgs: [prevActiveMoleculeRef.current.coordMolNo,movedResidues]
+            })
+            prevActiveMoleculeRef.current.displayObjects.transformation.origin = [0,0,0]
+            prevActiveMoleculeRef.current.displayObjects.transformation.quat = null
+        }
+        prevActiveMoleculeRef.current = activeMolecule;
         if(activeMolecule)
             glRef.current.setActiveMolecule(activeMolecule)
         else
@@ -158,7 +204,7 @@ export const BabyGruContainer = (props) => {
 
     const collectedProps = {
         molecules, setMolecules, maps, setMaps, glRef, activeMolecule, setActiveMolecule,
-        setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor,
+        activeMap, setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor,
         navBarRef
     }
 
