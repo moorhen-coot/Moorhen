@@ -60,22 +60,22 @@ export const BabyGruContainer = (props) => {
     useEffect(() => {
         let head = document.head;
         let style = document.createElement("link");
-        
-        if (darkMode){
+
+        if (darkMode) {
             style.href = "/darkly.css"
             setBackgroundColor([0., 0., 0., 1.])
         } else {
             style.href = "/flatly.css"
             setBackgroundColor([1., 1., 1., 1.])
         }
-    
+
         style.rel = "stylesheet";
         style.async = true
         style.type = 'text/css'
 
         head.appendChild(style);
         return () => { head.removeChild(style); }
-        
+
     }, [darkMode])
 
     useEffect(() => {
@@ -126,7 +126,7 @@ export const BabyGruContainer = (props) => {
     }, [activeMap])
 
     useEffect(() => {
-        if(activeMolecule)
+        if (activeMolecule)
             glRef.current.setActiveDisplayObjects(activeMolecule.displayObjects)
         else
             glRef.current.setActiveDisplayObjects({})
@@ -154,7 +154,10 @@ export const BabyGruContainer = (props) => {
         return windowHeight - (navBarHeight + innerWindowMarginHeight)
     }
 
-    const collectedProps = { molecules, setMolecules, maps, setMaps, glRef, setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor }
+    const collectedProps = {
+        molecules, setMolecules, maps, setMaps, glRef, activeMolecule, setActiveMolecule,
+        setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor
+    }
 
     return <> <div className="border" ref={headerRef}>
 
@@ -163,36 +166,15 @@ export const BabyGruContainer = (props) => {
             <Navbar.Toggle aria-controls="basic-navbar-nav" />
             <Navbar.Collapse id="basic-navbar-nav">
                 <Nav className="justify-content-left">
-                    <BabyGruFileMenu {...collectedProps}
-                    /*
-                        molecules={molecules}
-                        setMolecules={setMolecules}
-                        maps={maps}
-                        setMaps={setMaps}
-                        commandCentre={commandCentre}
-                        setActiveMap={setActiveMap}
-                        glRef={glRef}
-                        */
-                    />
-                    <BabyGruHistoryMenu {...collectedProps}
-                    /*
-                        molecules={molecules}
-                        setMolecules={setMolecules}
-                        maps={maps}
-                        setMaps={setMaps}
-                        commandCentre={commandCentre}
-                        commandHistory={commandHistory}
-                        setActiveMap={setActiveMap}
-                        glRef={glRef}
-                        */
-                    />
+                    <BabyGruFileMenu {...collectedProps} />
+                    <BabyGruHistoryMenu {...collectedProps} />
                     <BabyGruViewMenu {...collectedProps} />
                     <BabyGruLigandMenu {...collectedProps} />
                 </Nav>
             </Navbar.Collapse>
             <Nav className="justify-content-right">
                 {busy && <Spinner animation="border" style={{ marginRight: '0.5rem' }} />}
-                <Button style={{ height: '100%', backgroundColor: darkMode ? '#222' : 'white', border: 0 }} onClick={() => {setDarkMode(darkMode ? false : true)}}>
+                <Button style={{ height: '100%', backgroundColor: darkMode ? '#222' : 'white', border: 0 }} onClick={() => { setDarkMode(darkMode ? false : true) }}>
                     {darkMode ? <LightModeOutlined style={{ color: 'white' }} /> : <DarkModeOutlined style={{ color: 'black' }} />}
                 </Button>
                 <Button style={{ height: '100%', backgroundColor: darkMode ? '#222' : 'white', border: 0 }} onClick={() => { setShowSideBar(!showSideBar) }}>
@@ -224,20 +206,23 @@ export const BabyGruContainer = (props) => {
                             backgroundColor={backgroundColor}
                         />
                     </div>
-                    <div    id='button-bar-baby-gru'
-                            style={{ 
-                                height: '4rem',
-                                backgroundColor:  `rgba(
+                    <div id='button-bar-baby-gru'
+                        style={{
+                            height: '4rem',
+                            backgroundColor: `rgba(
                                     ${255 * backgroundColor[0]},
                                     ${255 * backgroundColor[1]},
                                     ${255 * backgroundColor[2]}, 
-                                    ${backgroundColor[3]})`}}>
-                        <BabyGruButtonBar setCursorStyle={setCursorStyle}
+                                    ${backgroundColor[3]})`
+                        }}>
+                        <BabyGruButtonBar {...collectedProps}
+                        /*setCursorStyle={setCursorStyle}
                             molecules={molecules}
                             commandCentre={commandCentre}
                             activeMap={activeMap}
                             glRef={glRef} 
-                            backgroundColor={backgroundColor}/>
+                            backgroundColor={backgroundColor}
+                            *//>
                     </div>
                 </Col>
                 <Col style={{ padding: '0.5rem', margin: '0', display: showSideBar ? "Block" : "None" }} >
