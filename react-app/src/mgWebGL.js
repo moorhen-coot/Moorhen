@@ -10080,10 +10080,31 @@ class MGWebGL extends Component {
             vec3.transformMat4(xshift,xshift,theMatrix);
             vec3.transformMat4(yshift,yshift,theMatrix);
 
-            const newOrigin = self.origin.map((coord, coordIndex)=>{
-                return coord + (self.zoom * xshift[coordIndex]/8.) - (self.zoom * yshift[coordIndex]/8.)
-            })
-            self.setOrigin(newOrigin, false)
+            if(Object.keys(this.activeDisplayObjects).length===0){
+                const newOrigin = self.origin.map((coord, coordIndex)=>{
+                        return coord + (self.zoom * xshift[coordIndex]/8.) - (self.zoom * yshift[coordIndex]/8.)
+                        })
+                self.setOrigin(newOrigin, false)
+            } else {
+                const newOrigin = this.activeDisplayObjects.transformation.origin.map((coord, coordIndex)=>{
+                        return coord + (self.zoom * xshift[coordIndex]/8.) - (self.zoom * yshift[coordIndex]/8.)
+                        })
+                this.activeDisplayObjects.transformation.origin = newOrigin;
+                if(!this.activeDisplayObjects.transformation.quat){
+                    this.activeDisplayObjects.transformation.quat = quat4.create();
+                    quat4.set(this.activeDisplayObjects.transformation.quat,0,0,0,-1);
+                }
+                const theMatrix = quatToMat4(this.activeDisplayObjects.transformation.quat);
+                theMatrix[12] = this.activeDisplayObjects.transformation.origin[0];
+                theMatrix[13] = this.activeDisplayObjects.transformation.origin[1];
+                theMatrix[14] = this.activeDisplayObjects.transformation.origin[2];
+                for (const [key, value] of Object.entries(this.activeDisplayObjects)) {
+                    for(let ibuf=0;ibuf<value.length;ibuf++){
+                        let uniqueLabels = [];
+                        value[ibuf].transformMatrixInteractive = theMatrix;
+                    }
+                }
+            }
             self.drawSceneDirty();
             self.reContourMaps();
             return;
@@ -10142,32 +10163,18 @@ class MGWebGL extends Component {
                 let yQp = createQuatFromDXAngle(-self.dx,y_rot);
                 quat4.multiply(xQp,xQp,yQp);
 
-                const centreOfMass = function(atoms){
-                    let totX = 0.0;
-                    let totY = 0.0;
-                    let totZ = 0.0;
-                    if(atoms.length>0){
-                        for(let iat=0;iat<atoms.length;iat++){
-                            totX += atoms[iat].x;
-                            totY += atoms[iat].y;
-                            totZ += atoms[iat].z;
-                        }
-                        totX /= atoms.length;
-                        totY /= atoms.length;
-                        totZ /= atoms.length;
-                    }
-                    return [totX,totY,totZ];
-                }
                 if(!this.activeDisplayObjects.transformation.quat){
                     this.activeDisplayObjects.transformation.quat = quat4.create();
                     quat4.set(this.activeDisplayObjects.transformation.quat,0,0,0,-1);
                 }
                 quat4.multiply(this.activeDisplayObjects.transformation.quat,this.activeDisplayObjects.transformation.quat,xQp);
+                const theMatrix = quatToMat4(this.activeDisplayObjects.transformation.quat);
+                theMatrix[12] = this.activeDisplayObjects.transformation.origin[0];
+                theMatrix[13] = this.activeDisplayObjects.transformation.origin[1];
+                theMatrix[14] = this.activeDisplayObjects.transformation.origin[2];
                 for (const [key, value] of Object.entries(this.activeDisplayObjects)) {
                     for(let ibuf=0;ibuf<value.length;ibuf++){
                         let uniqueLabels = [];
-                        const com = centreOfMass(value[ibuf].atoms);
-                        const theMatrix = quatToMat4(this.activeDisplayObjects.transformation.quat);
                         value[ibuf].transformMatrixInteractive = theMatrix;
                     }
                 }

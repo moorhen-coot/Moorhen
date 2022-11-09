@@ -180,7 +180,7 @@ export const BabyGruMoleculeCard = (props) => {
                         <Form.Check checked={props.molecule === props.activeMolecule}
                             style={{margin:'0'}}
                             inline
-                            label={`Rotate`}
+                            label={`Rotate/Translate`}
                             type="checkbox"
                             variant="outline"
                             onChange={(e) => {
