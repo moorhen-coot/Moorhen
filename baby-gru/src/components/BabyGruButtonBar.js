@@ -124,6 +124,7 @@ export const BabyGruButtonBar = (props) => {
         <ButtonGroup horizontal>
 
             <BabyGruSimpleEditButton {...props}
+                toolTip="Auto-fit Rotamer"
                 buttonIndex={"0"}
                 selectedbuttonIndex={selectedbuttonIndex}
                 setSelectedbuttonIndex={setSelectedbuttonIndex}
@@ -142,6 +143,7 @@ export const BabyGruButtonBar = (props) => {
                 }} />
 
             <BabyGruSimpleEditButton {...props}
+                toolTip="Flip Peptide"
                 buttonIndex={"1"}
                 selectedbuttonIndex={selectedbuttonIndex}
                 setSelectedbuttonIndex={setSelectedbuttonIndex}
@@ -154,6 +156,7 @@ export const BabyGruButtonBar = (props) => {
                 }} />
 
             <BabyGruSimpleEditButton {...props}
+                toolTip="Rotate side-chain 180 degrees"
                 buttonIndex={"2"}
                 selectedbuttonIndex={selectedbuttonIndex}
                 setSelectedbuttonIndex={setSelectedbuttonIndex}
@@ -166,6 +169,7 @@ export const BabyGruButtonBar = (props) => {
                 }} />
 
             <BabyGruSimpleEditButton {...props}
+                toolTip="Refine Residues"
                 buttonIndex={"3"}
                 selectedbuttonIndex={selectedbuttonIndex}
                 setSelectedbuttonIndex={setSelectedbuttonIndex}
@@ -179,6 +183,7 @@ export const BabyGruButtonBar = (props) => {
                 formatArgs={(m, c, p) => refinementFormatArgs(m, c, p)} />
 
             <BabyGruSimpleEditButton {...props}
+                toolTip="Delete Item"
                 buttonIndex={"4"}
                 selectedbuttonIndex={selectedbuttonIndex}
                 setSelectedbuttonIndex={setSelectedbuttonIndex}
@@ -192,6 +197,7 @@ export const BabyGruButtonBar = (props) => {
                 formatArgs={(m, c, p) => deleteFormatArgs(m, c, p)} />
 
             <BabyGruSimpleEditButton {...props}
+                toolTip="Simple Mutate"
                 buttonIndex={"5"}
                 selectedbuttonIndex={selectedbuttonIndex}
                 setSelectedbuttonIndex={setSelectedbuttonIndex}
@@ -205,6 +211,7 @@ export const BabyGruButtonBar = (props) => {
                 formatArgs={(m, c, p) => mutateFormatArgs(m, c, p)} />
 
             <BabyGruSimpleEditButton {...props}
+                toolTip="Add Residue"
                 buttonIndex={"6"}
                 selectedbuttonIndex={selectedbuttonIndex}
                 setSelectedbuttonIndex={setSelectedbuttonIndex}
@@ -217,6 +224,7 @@ export const BabyGruButtonBar = (props) => {
                 }} />
 
             <BabyGruSimpleEditButton {...props}
+                toolTip="Eigen Flip: flip the ligand around its eigenvectors"
                 buttonIndex={"7"}
                 selectedbuttonIndex={selectedbuttonIndex}
                 setSelectedbuttonIndex={setSelectedbuttonIndex}
@@ -229,6 +237,7 @@ export const BabyGruButtonBar = (props) => {
                 }} />
 
             <BabyGruSimpleEditButton {...props}
+                toolTip="JED Flip: wag the tail"
                 buttonIndex={"8"}
                 selectedbuttonIndex={selectedbuttonIndex}
                 setSelectedbuttonIndex={setSelectedbuttonIndex}
@@ -241,7 +250,7 @@ export const BabyGruButtonBar = (props) => {
                 }} />
 
             <BabyGruSimpleEditButton {...props}
-                toolTip="Jed_flip: wag the dog"
+                toolTip="JED Flip: wag the dog"
                 buttonIndex={"9"}
                 selectedbuttonIndex={selectedbuttonIndex}
                 setSelectedbuttonIndex={setSelectedbuttonIndex}
