@@ -2,77 +2,8 @@ import { Tooltip } from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ButtonGroup, Button, Overlay, Container, Row, FormSelect, FormGroup, FormLabel } from "react-bootstrap"
 
-
-const BabyGruDeletePanel = (props) => {
-    const deleteModes = ['ATOM', 'RESIDUE', 'CHAIN']
-    return <Container>
-        <Row>Please click an atom for core of deletion</Row>
-        <Row>
-            <FormGroup>
-                <FormLabel>Delete mode</FormLabel>
-                <FormSelect defaultValue={props.panelParameters.delete.mode}
-                    onChange={(e) => {
-                        const newParameters = { ...props.panelParameters }
-                        newParameters.delete.mode = e.target.value
-                        props.setPanelParameters(newParameters)
-                    }}>
-                    {deleteModes.map(optionName => {
-                        return <option value={optionName}>{optionName}</option>
-                    })}
-                </FormSelect>
-            </FormGroup>
-        </Row>
-    </Container>
-}
-const deleteFormatArgs = (molecule, chosenAtom, pp) => {
-    //console.log({ molecule, chosenAtom, pp })
-    return pp.delete.mode === 'RESIDUE' ?
-        [molecule.coordMolNo,
-        `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}`,
-        pp.delete.mode] :
-        [molecule.coordMolNo,
-        `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`,
-        pp.delete.mode]
-}
-
-
-const BabyGruMutatePanel = (props) => {
-    const toTypes = ['ALA', 'CYS', 'ASP', 'GLU', 'PHE', 'GLY', 'HIS', 'ILE',
-        'LYS', 'LEU', 'MET', 'ASN', 'PRO', 'GLN', 'ARG', 'SER', 'THR', 'VAL', 'TRP', 'TYR']
-    return <Container>
-        <Row>Please identify residue to mutate</Row>
-        <Row>
-            <FormGroup>
-                <FormLabel>To residue of type</FormLabel>
-                <FormSelect defaultValue={props.panelParameters.mutate.toType}
-                    onChange={(e) => {
-                        const newParameters = { ...props.panelParameters }
-                        newParameters.mutate.toType = e.target.value
-                        props.setPanelParameters(newParameters)
-                    }}>
-                    {toTypes.map(optionName => {
-                        return <option value={optionName}>{optionName}</option>
-                    })}
-                </FormSelect>
-            </FormGroup>
-        </Row>
-    </Container>
-}
-const mutateFormatArgs = (molecule, chosenAtom, pp) => {
-    return [
-        molecule.coordMolNo,
-        `//${chosenAtom.chain_id}/${chosenAtom.res_no}`,
-        pp.mutate.toType]
-}
-
-
 export const BabyGruButtonBar = (props) => {
     const [selectedButtonIndex, setSelectedButtonIndex] = useState(null);
-    const [panelParameters, setPanelParameters] = useState({
-        refine: { mode: 'TRIPLE' },
-        delete: { mode: 'ATOM' },
-        mutate: { toType: "ALA" }
-    })
     return <div
         style={{
             overflow: "auto",
@@ -91,90 +22,29 @@ export const BabyGruButtonBar = (props) => {
                 setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="1" />
 
             <BabyGruSideChain180Button {...props} selectedButtonIndex={selectedButtonIndex}
-                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="3" />
+                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="2" />
 
             <BabyGruRefineResiduesUsingAtomCidButton {...props} selectedButtonIndex={selectedButtonIndex}
-                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="10" />
+                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="3" />
 
-            <BabyGruSimpleEditButton {...props}
-                toolTip="Delete Item"
-                buttonIndex={"4"}
-                selectedButtonIndex={selectedButtonIndex}
-                setSelectedButtonIndex={setSelectedButtonIndex}
-                needsMapData={false}
-                cootCommand="delete_using_cid"
-                panelParameters={panelParameters}
-                prompt={<BabyGruDeletePanel
-                    setPanelParameters={setPanelParameters}
-                    panelParameters={panelParameters} />}
-                icon={<img className="baby-gru-button-icon" src="pixmaps/delete.svg" />}
-                formatArgs={(m, c, p) => deleteFormatArgs(m, c, p)} />
+            <BabyGruDeleteUsingCidButton {...props} selectedButtonIndex={selectedButtonIndex}
+                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="4" />
 
-            <BabyGruSimpleEditButton {...props}
-                toolTip="Simple Mutate"
-                buttonIndex={"5"}
-                selectedButtonIndex={selectedButtonIndex}
-                setSelectedButtonIndex={setSelectedButtonIndex}
-                needsMapData={false}
-                cootCommand="mutate"
-                panelParameters={panelParameters}
-                prompt={<BabyGruMutatePanel
-                    setPanelParameters={setPanelParameters}
-                    panelParameters={panelParameters} />}
-                icon={<img className="baby-gru-button-icon" src="pixmaps/mutate.svg" />}
-                formatArgs={(m, c, p) => mutateFormatArgs(m, c, p)} />
+            <BabyGruMutateButton {...props} selectedButtonIndex={selectedButtonIndex}
+                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="5" />
 
-            <BabyGruSimpleEditButton {...props}
-                toolTip="Add Residue"
-                buttonIndex={"6"}
-                selectedButtonIndex={selectedButtonIndex}
-                setSelectedButtonIndex={setSelectedButtonIndex}
-                needsMapData={false}
-                cootCommand="add_terminal_residue_directly_using_cid"
-                prompt="Click atom in residue to add a residue to that residue"
-                icon={<img className="baby-gru-button-icon" src="pixmaps/add-peptide-1.svg" />}
-                formatArgs={(molecule, chosenAtom) => {
-                    return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
-                }} />
+            <BabyGruAddTerminalResidueDirectlyUsingCidButton {...props} selectedButtonIndex={selectedButtonIndex}
+                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="6" />
 
-            <BabyGruSimpleEditButton {...props}
-                toolTip="Eigen Flip: flip the ligand around its eigenvectors"
-                buttonIndex={"7"}
-                selectedButtonIndex={selectedButtonIndex}
-                setSelectedButtonIndex={setSelectedButtonIndex}
-                needsMapData={false}
-                cootCommand="eigen_flip_ligand"
-                prompt="Click atom in residue to eigen flip it"
-                icon={<img className="baby-gru-button-icon" src="pixmaps/spin-view.svg" />}
-                formatArgs={(molecule, chosenAtom) => {
-                    return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
-                }} />
+            <BabyGruEigenFlipLigandButton {...props} selectedButtonIndex={selectedButtonIndex}
+                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="7" />
 
-            <BabyGruSimpleEditButton {...props}
-                toolTip="JED Flip: wag the tail"
-                buttonIndex={"8"}
-                selectedButtonIndex={selectedButtonIndex}
-                setSelectedButtonIndex={setSelectedButtonIndex}
-                needsMapData={false}
-                cootCommand="jed_flip"
-                prompt="Click atom in residue to flip around that rotatable bond - wag the tail"
-                icon={<img className="baby-gru-button-icon" src="pixmaps/edit-chi.svg" />}
-                formatArgs={(molecule, chosenAtom) => {
-                    return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, false]
-                }} />
+            <BabyGruJedFlipFalseButton {...props} selectedButtonIndex={selectedButtonIndex}
+                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="8" />
 
-            <BabyGruSimpleEditButton {...props}
-                toolTip="JED Flip: wag the dog"
-                buttonIndex={"9"}
-                selectedButtonIndex={selectedButtonIndex}
-                setSelectedButtonIndex={setSelectedButtonIndex}
-                needsMapData={false}
-                cootCommand="jed_flip"
-                prompt="Click atom in residue to flip around that rotatable bond - wag the dog"
-                icon={<img className="baby-gru-button-icon" src="pixmaps/jed-flip-reverse.svg" />}
-                formatArgs={(molecule, chosenAtom) => {
-                    return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, true]
-                }} />
+            <BabyGruJedFlipTrueButton {...props} selectedButtonIndex={selectedButtonIndex}
+                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="9" />
+
         </ButtonGroup>
     </div>
 }
@@ -387,5 +257,166 @@ export const BabyGruRefineResiduesUsingAtomCidButton = (props) => {
             panelParameters={panelParameters} />}
         icon={<img className="baby-gru-button-icon" src="pixmaps/refine-1.svg" />}
         formatArgs={(m, c, p) => refinementFormatArgs(m, c, p)} />
+}
+
+export const BabyGruDeleteUsingCidButton = (props) => {
+    const [panelParameters, setPanelParameters] = useState({
+        refine: { mode: 'TRIPLE' },
+        delete: { mode: 'ATOM' },
+        mutate: { toType: "ALA" }
+    })
+    const BabyGruDeletePanel = (props) => {
+        const deleteModes = ['ATOM', 'RESIDUE', 'CHAIN']
+        return <Container>
+            <Row>Please click an atom for core of deletion</Row>
+            <Row>
+                <FormGroup>
+                    <FormLabel>Delete mode</FormLabel>
+                    <FormSelect defaultValue={props.panelParameters.delete.mode}
+                        onChange={(e) => {
+                            const newParameters = { ...props.panelParameters }
+                            newParameters.delete.mode = e.target.value
+                            props.setPanelParameters(newParameters)
+                        }}>
+                        {deleteModes.map(optionName => {
+                            return <option value={optionName}>{optionName}</option>
+                        })}
+                    </FormSelect>
+                </FormGroup>
+            </Row>
+        </Container>
+    }
+    const deleteFormatArgs = (molecule, chosenAtom, pp) => {
+        //console.log({ molecule, chosenAtom, pp })
+        return pp.delete.mode === 'RESIDUE' ?
+            [molecule.coordMolNo,
+            `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}`,
+            pp.delete.mode] :
+            [molecule.coordMolNo,
+            `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`,
+            pp.delete.mode]
+    }
+    return <BabyGruSimpleEditButton {...props}
+        toolTip="Delete Item"
+        buttonIndex={props.buttonIndex}
+        selectedButtonIndex={props.selectedButtonIndex}
+        setSelectedButtonIndex={props.setSelectedButtonIndex}
+        needsMapData={false}
+        cootCommand="delete_using_cid"
+        panelParameters={panelParameters}
+        prompt={<BabyGruDeletePanel
+            setPanelParameters={setPanelParameters}
+            panelParameters={panelParameters} />}
+        icon={<img className="baby-gru-button-icon" src="pixmaps/delete.svg" />}
+        formatArgs={(m, c, p) => deleteFormatArgs(m, c, p)} />
+}
+
+export const BabyGruMutateButton = (props) => {
+    const [panelParameters, setPanelParameters] = useState({
+        refine: { mode: 'TRIPLE' },
+        delete: { mode: 'ATOM' },
+        mutate: { toType: "ALA" }
+    })
+    const BabyGruMutatePanel = (props) => {
+        const toTypes = ['ALA', 'CYS', 'ASP', 'GLU', 'PHE', 'GLY', 'HIS', 'ILE',
+            'LYS', 'LEU', 'MET', 'ASN', 'PRO', 'GLN', 'ARG', 'SER', 'THR', 'VAL', 'TRP', 'TYR']
+        return <Container>
+            <Row>Please identify residue to mutate</Row>
+            <Row>
+                <FormGroup>
+                    <FormLabel>To residue of type</FormLabel>
+                    <FormSelect defaultValue={props.panelParameters.mutate.toType}
+                        onChange={(e) => {
+                            const newParameters = { ...props.panelParameters }
+                            newParameters.mutate.toType = e.target.value
+                            props.setPanelParameters(newParameters)
+                        }}>
+                        {toTypes.map(optionName => {
+                            return <option value={optionName}>{optionName}</option>
+                        })}
+                    </FormSelect>
+                </FormGroup>
+            </Row>
+        </Container>
+    }
+    const mutateFormatArgs = (molecule, chosenAtom, pp) => {
+        return [
+            molecule.coordMolNo,
+            `//${chosenAtom.chain_id}/${chosenAtom.res_no}`,
+            pp.mutate.toType]
+    }
+    return <BabyGruSimpleEditButton {...props}
+        toolTip="Simple Mutate"
+        buttonIndex={props.buttonIndex}
+        selectedButtonIndex={props.selectedButtonIndex}
+        setSelectedButtonIndex={props.setSelectedButtonIndex}
+        needsMapData={false}
+        cootCommand="mutate"
+        panelParameters={panelParameters}
+        prompt={<BabyGruMutatePanel
+            setPanelParameters={setPanelParameters}
+            panelParameters={panelParameters} />}
+        icon={<img className="baby-gru-button-icon" src="pixmaps/mutate.svg" />}
+        formatArgs={(m, c, p) => mutateFormatArgs(m, c, p)} />
+}
+
+export const BabyGruAddTerminalResidueDirectlyUsingCidButton = (props) => {
+    return <BabyGruSimpleEditButton {...props}
+        toolTip="Add Residue"
+        buttonIndex={props.buttonIndex}
+        selectedButtonIndex={props.selectedButtonIndex}
+        setSelectedButtonIndex={props.setSelectedButtonIndex}
+        needsMapData={false}
+        cootCommand="add_terminal_residue_directly_using_cid"
+        prompt="Click atom in residue to add a residue to that residue"
+        icon={<img className="baby-gru-button-icon" src="pixmaps/add-peptide-1.svg" />}
+        formatArgs={(molecule, chosenAtom) => {
+            return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
+        }} />
+}
+
+export const BabyGruEigenFlipLigandButton = (props) => {
+    return <BabyGruSimpleEditButton {...props}
+        toolTip="Eigen Flip: flip the ligand around its eigenvectors"
+        buttonIndex={props.buttonIndex}
+        selectedButtonIndex={props.selectedButtonIndex}
+        setSelectedButtonIndex={props.setSelectedButtonIndex}
+        needsMapData={false}
+        cootCommand="eigen_flip_ligand"
+        prompt="Click atom in residue to eigen flip it"
+        icon={<img className="baby-gru-button-icon" src="pixmaps/spin-view.svg" />}
+        formatArgs={(molecule, chosenAtom) => {
+            return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
+        }} />
+}
+
+export const BabyGruJedFlipFalseButton = (props) => {
+    return <BabyGruSimpleEditButton {...props}
+        toolTip="JED Flip: wag the tail"
+        buttonIndex={props.buttonIndex}
+        selectedButtonIndex={props.selectedButtonIndex}
+        setSelectedButtonIndex={props.setSelectedButtonIndex}
+        needsMapData={false}
+        cootCommand="jed_flip"
+        prompt="Click atom in residue to flip around that rotatable bond - wag the tail"
+        icon={<img className="baby-gru-button-icon" src="pixmaps/edit-chi.svg" />}
+        formatArgs={(molecule, chosenAtom) => {
+            return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, false]
+        }} />
+}
+
+export const BabyGruJedFlipTrueButton = (props) => {
+    return <BabyGruSimpleEditButton {...props}
+        toolTip="JED Flip: wag the dog"
+        buttonIndex={props.buttonIndex}
+        selectedButtonIndex={props.selectedButtonIndex}
+        setSelectedButtonIndex={props.setSelectedButtonIndex}
+        needsMapData={false}
+        cootCommand="jed_flip"
+        prompt="Click atom in residue to flip around that rotatable bond - wag the dog"
+        icon={<img className="baby-gru-button-icon" src="pixmaps/jed-flip-reverse.svg" />}
+        formatArgs={(molecule, chosenAtom) => {
+            return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, true]
+        }} />
 }
 
