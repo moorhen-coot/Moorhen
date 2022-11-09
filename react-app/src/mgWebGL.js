@@ -1290,19 +1290,24 @@ class DisplayBuffer {
 
 }
 
-// FIXME - Definite funniness here!
+function createQuatFromDXAngle(angle_in,axis){
+    var angle = angle_in*Math.PI/180.0;
+    var q = quat4.create();
+    quat4.set(q,Math.sin(angle/2.0)*axis[0],Math.sin(angle/2.0)*axis[1],Math.sin(angle/2.0)*axis[2],Math.cos(angle/2.0));
+    return q;
+}
 
 function createXQuatFromDX(angle_in){
     var angle = angle_in*Math.PI/180.0;
     var q = quat4.create();
-    quat4.set(q,Math.cos(angle/2.0),0.0,0.0,Math.sin(angle/2.0));
+    quat4.set(q,Math.sin(angle/2.0),0.0,0.0,Math.cos(angle/2.0));
     return q;
 }
 
 function createYQuatFromDY(angle_in){
     var angle = angle_in*Math.PI/180.0;
     var q = quat4.create();
-    quat4.set(q,Math.cos(angle/2.0),0.0,Math.sin(angle/2.0),0.0);
+    quat4.set(q,0.0,Math.sin(angle/2.0),0.0,Math.cos(angle/2.0));
     return q;
 }
 
@@ -10112,7 +10117,7 @@ class MGWebGL extends Component {
             quat4.multiply(self.myQuat,self.myQuat,zQ);
         } else {
             //console.log("mouse move",self.dx,self.dy);
-            var xQ = createXQuatFromDX(self.dy);
+            var xQ = createXQuatFromDX(-self.dy);
             var yQ = createYQuatFromDY(-self.dx);
             //console.log(xQ);
             //console.log(yQ);
@@ -10120,6 +10125,23 @@ class MGWebGL extends Component {
             if(Object.keys(this.activeDisplayObjects).length===0){
                 quat4.multiply(self.myQuat,self.myQuat,xQ);
             } else {
+                // ###############
+                //TODO - Move all this somewhere else ...
+
+                let invQuat = quat4.create();
+                quat4Inverse(this.myQuat,invQuat);
+                const invMat =  quatToMat4(invQuat);
+                let x_rot = vec3.create();
+                let y_rot = vec3.create();
+                vec3.set(x_rot,1.0,0.0,0.0);
+                vec3.set(y_rot,0.0,1.0,0.0);
+                vec3.transformMat4(x_rot,x_rot,invMat);
+                vec3.transformMat4(y_rot,y_rot,invMat);
+
+                let xQp = createQuatFromDXAngle(-self.dy,x_rot);
+                let yQp = createQuatFromDXAngle(-self.dx,y_rot);
+                quat4.multiply(xQp,xQp,yQp);
+
                 const centreOfMass = function(atoms){
                     let totX = 0.0;
                     let totY = 0.0;
@@ -10140,7 +10162,7 @@ class MGWebGL extends Component {
                     this.activeDisplayObjects.transformation.quat = quat4.create();
                     quat4.set(this.activeDisplayObjects.transformation.quat,0,0,0,-1);
                 }
-                quat4.multiply(this.activeDisplayObjects.transformation.quat,this.activeDisplayObjects.transformation.quat,xQ);
+                quat4.multiply(this.activeDisplayObjects.transformation.quat,this.activeDisplayObjects.transformation.quat,xQp);
                 for (const [key, value] of Object.entries(this.activeDisplayObjects)) {
                     for(let ibuf=0;ibuf<value.length;ibuf++){
                         let uniqueLabels = [];
@@ -10149,8 +10171,7 @@ class MGWebGL extends Component {
                         value[ibuf].transformMatrixInteractive = theMatrix;
                     }
                 }
-
-
+                // ###############
             }
         }
 
