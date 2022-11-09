@@ -219,7 +219,7 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
     const panelContent = <>
         <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="uploadDicts" className="mb-3">
             <Form.Label>Dictionaries</Form.Label>
-            <Form.Control ref={filesRef} type="file" multiple={true} accept={[".cif", ".dict", ".mmcif"]} multiple={false} />
+            <Form.Control ref={filesRef} type="file" accept={[".cif", ".dict", ".mmcif"]} multiple={false} />
         </Form.Group>
         <BabyGruMoleculeSelect {...props} allowAny={true} ref={moleculeSelectRef} />
     </>
