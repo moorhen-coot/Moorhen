@@ -2,36 +2,6 @@ import { Tooltip } from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ButtonGroup, Button, Overlay, Container, Row, FormSelect, FormGroup, FormLabel } from "react-bootstrap"
 
-const BabyGruRefinementPanel = (props) => {
-    const refinementModes = ['SINGLE', 'TRIPLE', 'QUINTUPLE', 'HEPTUPLE', 'SPHERE', 'BIG_SPHERE', 'CHAIN', 'ALL']
-    return <Container>
-        <Row>Please click an atom for centre of refinement</Row>
-        <Row>
-            <FormGroup>
-                <FormLabel>Refinement mode</FormLabel>
-                <FormSelect defaultValue={props.panelParameters.refine.mode}
-                    onChange={(e) => {
-                        const newParameters = { ...props.panelParameters }
-                        newParameters.refine.mode = e.target.value
-                        props.setPanelParameters(newParameters)
-                    }}>
-                    {refinementModes.map(optionName => {
-                        return <option value={optionName}>{optionName}</option>
-                    })}
-                </FormSelect>
-            </FormGroup>
-        </Row>
-    </Container>
-}
-const refinementFormatArgs = (molecule, chosenAtom, pp) => {
-    //console.log({ molecule, chosenAtom, pp })
-    return [
-        molecule.coordMolNo,
-        `//${chosenAtom.chain_id}/${chosenAtom.res_no}`,
-        pp.refine.mode]
-}
-
-
 
 const BabyGruDeletePanel = (props) => {
     const deleteModes = ['ATOM', 'RESIDUE', 'CHAIN']
@@ -96,8 +66,6 @@ const mutateFormatArgs = (molecule, chosenAtom, pp) => {
 }
 
 
-
-
 export const BabyGruButtonBar = (props) => {
     const [selectedButtonIndex, setSelectedButtonIndex] = useState(null);
     const [panelParameters, setPanelParameters] = useState({
@@ -105,13 +73,6 @@ export const BabyGruButtonBar = (props) => {
         delete: { mode: 'ATOM' },
         mutate: { toType: "ALA" }
     })
-    /*
-    * debug to observe and respond to changes in panelParameters
-
-        useEffect(() => {
-            console.log('panelParameters', panelParameters)
-        }, [panelParameters])
-    */
     return <div
         style={{
             overflow: "auto",
@@ -126,45 +87,14 @@ export const BabyGruButtonBar = (props) => {
             <BabyGruAutofitRotamerButton {...props} selectedButtonIndex={selectedButtonIndex}
                 setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="0" />
 
-            <BabyGruSimpleEditButton {...props}
-                toolTip="Flip Peptide"
-                buttonIndex={"1"}
-                selectedButtonIndex={selectedButtonIndex}
-                setSelectedButtonIndex={setSelectedButtonIndex}
-                needsMapData={false}
-                cootCommand="flipPeptide_cid"
-                prompt="Click atom in residue to flip"
-                icon={<img className="baby-gru-button-icon" src="pixmaps/flip-peptide.svg" />}
-                formatArgs={(molecule, chosenAtom) => {
-                    return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, '']
-                }} />
+            <BabyGruFlipPeptideButton {...props} selectedButtonIndex={selectedButtonIndex}
+                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="1" />
 
-            <BabyGruSimpleEditButton {...props}
-                toolTip="Rotate side-chain 180 degrees"
-                buttonIndex={"2"}
-                selectedButtonIndex={selectedButtonIndex}
-                setSelectedButtonIndex={setSelectedButtonIndex}
-                needsMapData={false}
-                cootCommand="side_chain_180"
-                prompt="Click atom in residue to flip sidechain"
-                icon={<img className="baby-gru-button-icon" src="pixmaps/side-chain-180.svg" />}
-                formatArgs={(molecule, chosenAtom) => {
-                    return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
-                }} />
+            <BabyGruSideChain180Button {...props} selectedButtonIndex={selectedButtonIndex}
+                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="3" />
 
-            <BabyGruSimpleEditButton {...props}
-                toolTip="Refine Residues"
-                buttonIndex={"3"}
-                selectedButtonIndex={selectedButtonIndex}
-                setSelectedButtonIndex={setSelectedButtonIndex}
-                needsMapData={true}
-                cootCommand="refine_residues_using_atom_cid"
-                panelParameters={panelParameters}
-                prompt={<BabyGruRefinementPanel
-                    setPanelParameters={setPanelParameters}
-                    panelParameters={panelParameters} />}
-                icon={<img className="baby-gru-button-icon" src="pixmaps/refine-1.svg" />}
-                formatArgs={(m, c, p) => refinementFormatArgs(m, c, p)} />
+            <BabyGruRefineResiduesUsingAtomCidButton {...props} selectedButtonIndex={selectedButtonIndex}
+                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="10" />
 
             <BabyGruSimpleEditButton {...props}
                 toolTip="Delete Item"
@@ -268,7 +198,7 @@ export const BabyGruSimpleEditButton = (props) => {
     }, [props.panelParameters])
 
     const atomClickedCallback = useCallback(event => {
-        console.log('in atomClickedcallback', event, props.molecules.length)
+        //console.log('in atomClickedcallback', event, props.molecules.length)
         document.removeEventListener('atomClicked', atomClickedCallback, { once: true })
         props.molecules.forEach(molecule => {
             console.log('Testing molecule ', molecule.coordMolNo)
@@ -377,3 +307,85 @@ export const BabyGruAutofitRotamerButton = (props) => {
                 props.activeMap.mapMolNo]
         }} />
 }
+
+export const BabyGruFlipPeptideButton = (props) => {
+    return <BabyGruSimpleEditButton {...props}
+        toolTip="Flip Peptide"
+        buttonIndex={props.buttonIndex}
+        selectedButtonIndex={props.selectedButtonIndex}
+        setSelectedButtonIndex={props.setSelectedButtonIndex}
+        needsMapData={false}
+        cootCommand="flipPeptide_cid"
+        prompt="Click atom in residue to flip"
+        icon={<img className="baby-gru-button-icon" src="pixmaps/flip-peptide.svg" />}
+        formatArgs={(molecule, chosenAtom) => {
+            return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, '']
+        }} />
+}
+
+export const BabyGruSideChain180Button = (props) => {
+    return <BabyGruSimpleEditButton {...props}
+        toolTip="Rotate side-chain 180 degrees"
+        buttonIndex={props.buttonIndex}
+        selectedButtonIndex={props.selectedButtonIndex}
+        setSelectedButtonIndex={props.setSelectedButtonIndex}
+        needsMapData={false}
+        cootCommand="side_chain_180"
+        prompt="Click atom in residue to flip sidechain"
+        icon={<img className="baby-gru-button-icon" src="pixmaps/side-chain-180.svg" />}
+        formatArgs={(molecule, chosenAtom) => {
+            return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
+        }} />
+}
+
+export const BabyGruRefineResiduesUsingAtomCidButton = (props) => {
+
+    const [panelParameters, setPanelParameters] = useState({
+        refine: { mode: 'TRIPLE' },
+        delete: { mode: 'ATOM' },
+        mutate: { toType: "ALA" }
+    })
+
+    const refinementFormatArgs = (molecule, chosenAtom, pp) => {
+        return [
+            molecule.coordMolNo,
+            `//${chosenAtom.chain_id}/${chosenAtom.res_no}`,
+            pp.refine.mode]
+    }
+
+    const BabyGruRefinementPanel = (props) => {
+        const refinementModes = ['SINGLE', 'TRIPLE', 'QUINTUPLE', 'HEPTUPLE', 'SPHERE', 'BIG_SPHERE', 'CHAIN', 'ALL']
+        return <Container>
+            <Row>Please click an atom for centre of refinement</Row>
+            <Row>
+                <FormGroup>
+                    <FormLabel>Refinement mode</FormLabel>
+                    <FormSelect defaultValue={props.panelParameters.refine.mode}
+                        onChange={(e) => {
+                            const newParameters = { ...props.panelParameters }
+                            newParameters.refine.mode = e.target.value
+                            props.setPanelParameters(newParameters)
+                        }}>
+                        {refinementModes.map(optionName => {
+                            return <option value={optionName}>{optionName}</option>
+                        })}
+                    </FormSelect>
+                </FormGroup>
+            </Row>
+        </Container>
+    }
+    return <BabyGruSimpleEditButton {...props}
+        toolTip="Refine Residues"
+        buttonIndex={props.buttonIndex}
+        selectedButtonIndex={props.selectedButtonIndex}
+        setSelectedButtonIndex={props.setSelectedButtonIndex}
+        needsMapData={true}
+        cootCommand="refine_residues_using_atom_cid"
+        panelParameters={panelParameters}
+        prompt={<BabyGruRefinementPanel
+            setPanelParameters={setPanelParameters}
+            panelParameters={panelParameters} />}
+        icon={<img className="baby-gru-button-icon" src="pixmaps/refine-1.svg" />}
+        formatArgs={(m, c, p) => refinementFormatArgs(m, c, p)} />
+}
+
