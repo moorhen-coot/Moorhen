@@ -52,13 +52,15 @@ BabyGruMenuItem.defaultProps = {
 
 export const BabyGruLoadTutorialDataMenuItem = (props) => {
     const tutorialNumberSelectorRef = useRef(null);
+    const allTutorialNumbers = [1, 2]
 
     const panelContent = <>
         <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="loadTutorialData" className="mb-3">
             <Form.Label>Select tutorial number</Form.Label>
-            <Form.Select ref={tutorialNumberSelectorRef}  >
-                    <option key={1} value={1}>{"Tutorial 1"}</option>
-                    <option key={2} value={2}>{"Tutorial 2"}</option>
+            <Form.Select ref={tutorialNumberSelectorRef} >
+                {allTutorialNumbers.map(tutorialNumber => {
+                    return <option key={tutorialNumber} value={tutorialNumber}>{`Tutorial ${tutorialNumber}`}</option>
+                })}
             </Form.Select>
         </Form.Group>
     </>
