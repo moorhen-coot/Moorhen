@@ -1,17 +1,17 @@
-import { useEffect, useState, useRef } from "react";
-import { Card, Form, Button, Row, Col, Dropdown, DropdownButton, Modal } from "react-bootstrap";
+import { MenuItem } from "@mui/material";
+import { useEffect, useState, useMemo } from "react";
+import { Card, Form, Button, Row, Col, DropdownButton } from "react-bootstrap";
 import { doDownload } from '../BabyGruUtils';
 import { DownloadOutlined, UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined, ExpandLessOutlined } from '@mui/icons-material';
 import { BabyGruSequenceViewer } from "./BabyGruSequenceViewer";
+import { BabyGruDeleteMoleculeMenuItem, BabyGruRenameMoleculeMenuItem } from "./BabyGruMenuItem";
 
 export const BabyGruMoleculeCard = (props) => {
     const [showState, setShowState] = useState({})
     const [selectedResidues, setSelectedResidues] = useState(null);
     const [clickedResidue, setClickedResidue] = useState(null);
     const [moleculeName, setMoleculeName] = useState(props.molecule.name);
-    const [showRenameModal, setShowRenameModal] = useState(false);
     const [isCollapsed, setIsCollapsed] = useState(false);
-    const newNameInputRef = useRef();
 
     useEffect(() => {
         const initialState = {}
@@ -28,6 +28,16 @@ export const BabyGruMoleculeCard = (props) => {
         props.molecule.displayObjects.rotamer.length,
         props.molecule.displayObjects.CBs.length,
     ])
+
+    useMemo(() => {
+        
+        if (moleculeName == "") {
+            return
+        }
+        props.molecule.name = moleculeName
+    
+    
+    }, [moleculeName]);
 
     useEffect(() => {
         if (!clickedResidue) {
@@ -50,51 +60,11 @@ export const BabyGruMoleculeCard = (props) => {
         }
     }
 
-    const handleDeleteMolecule = () => {
-        let newMoleculesList = props.molecules.filter(molecule => molecule.coordMolNo !== props.molecule.coordMolNo)
-        props.setMolecules(newMoleculesList)
-        props.molecule.delete(props.glRef);
-    }
-
-    const handleMoleculeRename = () => {
-        let newName = newNameInputRef.current.value
-        setShowRenameModal(false)
-        if (newName == "") {
-            return
-        }
-        props.molecule.name = newName
-        setShowRenameModal(false)
-        setMoleculeName(newName)
-    }
-
     return <Card className="px-0" style={{ marginBottom: '0.5rem', padding: '0' }} key={props.molecule.coordMolNo}>
-        <Modal show={showRenameModal} onHide={handleMoleculeRename}>
-            <Modal.Body>
-                <Form>
-                    <Form.Group className="mb-3" controlId="renameMoleculeNewNameInput">
-                        <Form.Label>Rename Molecule</Form.Label>
-                        <Form.Control
-                            ref={newNameInputRef}
-                            name="newMoleculeName"
-                            placeholder="New name"
-                            autoFocus
-                        />
-                    </Form.Group>
-                </Form>
-                <div>
-                    <Button variant="secondary" onClick={() => { setShowRenameModal(false) }}>
-                        Close
-                    </Button>
-                    <Button style={{ marginLeft: '0.2rem' }} variant="primary" onClick={handleMoleculeRename}>
-                        Rename
-                    </Button>
-                </div>
-            </Modal.Body>
-        </Modal>
         <Card.Header>
             <Row className='align-items-center'>
                 <Col style={{ display: 'flex', justifyContent: 'left' }}>
-                    {`#${props.molecule.coordMolNo} Mol. ${moleculeName}`}
+                    {`#${props.molecule.coordMolNo} Mol. ${props.molecule.name}`}
                 </Col>
                 <Col style={{ display: 'flex', justifyContent: 'right' }}>
                     <Button size="sm" variant="outlined"
@@ -127,7 +97,7 @@ export const BabyGruMoleculeCard = (props) => {
                         onClick={() => {
                             props.molecule.getAtoms()
                                 .then(reply => {
-                                    doDownload([reply.data.result.pdbData], `${moleculeName}`)
+                                    doDownload([reply.data.result.pdbData], `${props.molecule.name}`)
                                 })
                         }}>
                         <DownloadOutlined />
@@ -139,9 +109,9 @@ export const BabyGruMoleculeCard = (props) => {
                         {isCollapsed ? < ExpandMoreOutlined/> : <ExpandLessOutlined />}
                     </Button>
                     <DropdownButton size="sm" variant="outlined">
-                        <Dropdown.Item as="button" onClick={handleCopyFragment}>Copy selected residues into fragment</Dropdown.Item>
-                        <Dropdown.Item as="button" onClick={handleDeleteMolecule}>Delete molecule</Dropdown.Item>
-                        <Dropdown.Item as="button" onClick={() => { setShowRenameModal(true) }}>Rename molecule</Dropdown.Item>
+                        <MenuItem variant="success" onClick={handleCopyFragment}>Copy selected residues into fragment</MenuItem>
+                        <BabyGruRenameMoleculeMenuItem setMoleculeName={setMoleculeName} {...props} />
+                        <BabyGruDeleteMoleculeMenuItem {...props}/>
                     </DropdownButton>
                 </Col>
             </Row>
