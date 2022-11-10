@@ -133,6 +133,7 @@ export const BabyGruMapCard = (props) => {
                     </Button>
                     <DropdownButton size="sm" variant="outlined">
                         <Dropdown.Item as="button" onClick={handleDeleteMap}>Delete map</Dropdown.Item>
+                        <Dropdown.Item as="button" onClick={() => {setMapLitLines(!mapLitLines)}}>{mapLitLines ? "Deactivate lit lines" : "Activate lit lines"}</Dropdown.Item>
                     </DropdownButton>
                 </Col>
             </Row>
@@ -152,19 +153,6 @@ export const BabyGruMapCard = (props) => {
                                         if (e.target.checked) {
                                             props.setActiveMap(props.map)
                                         }
-                                    }}
-                        />
-                </Row>
-                <Row>
-                        <Form.Check checked={props.map.litLines}
-                                    style={{margin:'0'}}
-                                    inline
-                                    label={'Lit lines'}
-                                    name={`litLines ${props.map.mapMolNo}`}
-                                    type="checkbox"
-                                    variant="outline"
-                                    onChange={(e) => {
-                                        setMapLitLines(e.target.checked)
                                     }}
                         />
                 </Row>

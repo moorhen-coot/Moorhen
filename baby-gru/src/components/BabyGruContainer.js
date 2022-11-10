@@ -54,7 +54,7 @@ export const BabyGruContainer = (props) => {
 
     const sideBarWidth = convertViewtoPx(30, windowWidth)
     const innerWindowMarginHeight = convertRemToPx(2.1)
-    const innerWindowMarginWidth = convertRemToPx(5)
+    const innerWindowMarginWidth = convertRemToPx(1)
 
     const setWindowDimensions = () => {
         setWindowWidth(window.innerWidth)
