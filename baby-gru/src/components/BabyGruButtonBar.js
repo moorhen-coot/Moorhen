@@ -1,4 +1,4 @@
-import { CheckOutlined, CloseOutlined, PropaneSharp } from "@mui/icons-material";
+import { CheckOutlined, CloseOutlined } from "@mui/icons-material";
 import { Tooltip } from "@mui/material";
 import { createRef, forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import { ButtonGroup, Button, Overlay, Container, Row, FormSelect, FormGroup, FormLabel, Card } from "react-bootstrap"
@@ -437,8 +437,6 @@ export const BabyGruRotateTranslateZoneButton = (props) => {
     const chosenMolecule = useRef(null)
 
     const acceptTransform = useCallback((e) => {
-        console.log('E is', e)
-        console.log('fragmentMolecule is', fragmentMolecule)
         fragmentMolecule.current.applyTransform(glRef)
             .then(result => {
                 return props.commandCentre.current.cootCommand({
@@ -453,6 +451,9 @@ export const BabyGruRotateTranslateZoneButton = (props) => {
             })
         glRef.current.setActiveMolecule(null)
         glRef.current.drawScene()
+        const newMolecules = props.molecules.filter(molecule => molecule.coordMolNo !== fragmentMolecule.current.coordMolNo)
+        props.setMolecules(newMolecules)
+        fragmentMolecule.current.delete(props.glRef)
         setShowAccept(false)
     }, [fragmentMolecule.current, chosenMolecule.current])
 

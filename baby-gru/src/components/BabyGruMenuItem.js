@@ -25,7 +25,7 @@ export const BabyGruMenuItem = (props) => {
                 document.body.click()
             })
         }}
-            placement={props.popoverPlacement} 
+            placement={props.popoverPlacement}
             delay={{ show: 250, hide: 400 }}
             overlay={
                 <Popover style={{ maxWidth: "40rem" }} ref={popoverRef}>
@@ -90,7 +90,7 @@ export const BabyGruLoadTutorialDataMenuItem = (props) => {
                 props.setMaps([...props.maps, newMap, newDiffMap])
                 props.setActiveMap(newMap)
             })
-}
+    }
 
     return <BabyGruMenuItem
         popoverContent={panelContent}
@@ -126,6 +126,7 @@ export const BabyGruGetMonomerMenuItem = (props) => {
                     newMolecule.coordMolNo = result.data.result.result
                     newMolecule.name = tlcRef.current.value
                     newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef).then(_ => {
+                        newMolecule.cachedAtoms.sequences = []
                         props.setMolecules([...props.molecules, newMolecule])
                     })
                 }
@@ -140,7 +141,7 @@ export const BabyGruGetMonomerMenuItem = (props) => {
 }
 
 export const BabyGruDeleteMoleculeMenuItem = (props) => {
-    
+
     const panelContent = <>
         <Form.Group style={{ width: '10rem', margin: '0.5rem' }} controlId="BabyGruGetDeleteMoleculeMenuItem" className="mb-3">
             <span style={{ fontWeight: 'bold' }}>Are you sure?</span>
@@ -165,7 +166,7 @@ export const BabyGruDeleteMoleculeMenuItem = (props) => {
 }
 
 export const BabyGruRenameMoleculeMenuItem = (props) => {
-    const  newNameInputRef = useRef(null)
+    const newNameInputRef = useRef(null)
 
     const panelContent = <>
         <Form.Group style={{ width: '10rem', margin: '0' }} controlId="BabyGruGetRenameMoleculeMenuItem" className="mb-3">
@@ -270,12 +271,22 @@ export const BabyGruBackgroundColorMenuItem = (props) => {
 export const BabyGruImportDictionaryMenuItem = (props) => {
     const filesRef = useRef(null)
     const moleculeSelectRef = useRef(null)
+    const [createInstance, setCreateInstance] = useState(false)
+    const createInstanceRef = useRef()
+
     const panelContent = <>
         <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="uploadDicts" className="mb-3">
             <Form.Label>Dictionaries</Form.Label>
             <Form.Control ref={filesRef} type="file" accept={[".cif", ".dict", ".mmcif"]} multiple={false} />
         </Form.Group>
         <BabyGruMoleculeSelect {...props} allowAny={true} ref={moleculeSelectRef} />
+        <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="createInstance" className="mb-3">
+            <Form.Label>Create instance on read</Form.Label>
+            <Form.Check ref={createInstanceRef} checked={createInstance} onChange={(e) => {
+                setCreateInstance(e.target.checked)
+            }}
+            />
+        </Form.Group>
     </>
 
     const readMmcifFile = async (file) => {
@@ -293,6 +304,26 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
                         molecule.redraw(props.glRef)
                     })
                 return Promise.resolve()
+            }).then(result => {
+                if (createInstance) {
+                    props.commandCentre.current.cootCommand({
+                        returnType: 'status',
+                        command: 'get_monomer_and_position_at',
+                        commandArgs: ['NUT', moleculeSelectRef.current.value, ...props.glRef.current.origin.map(coord => -coord)]
+
+                    }, true)
+                        .then(result => {
+                            if (result.data.result.status === "Completed") {
+                                const newMolecule = new BabyGruMolecule(props.commandCentre)
+                                newMolecule.coordMolNo = result.data.result.result
+                                newMolecule.name = 'NUT'
+                                newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef).then(_ => {
+                                    newMolecule.cachedAtoms.sequences = []
+                                    props.setMolecules([...props.molecules, newMolecule])
+                                })
+                            }
+                        })
+                }
             })
     }
 
@@ -410,18 +441,6 @@ export const BabyGruImportMapCoefficientsMenuItem = (props) => {
     />
 }
 
-const BabyGruImportCoordinatesFromEBI = (props) => {
-    const panelContent = {
-
-    }
-    const onCompleted = () => { }
-    return <BabyGruMenuItem
-        popoverContent={panelContent}
-        menuItemText="Map coefficients..."
-        onCompleted={onCompleted}
-    />
-}
-
 export const BabyGruClipFogMenuItem = (props) => {
 
     const [zclipFront, setZclipFront] = useState(5)
@@ -494,6 +513,45 @@ export const BabyGruClipFogMenuItem = (props) => {
     return <BabyGruMenuItem
         popoverContent={panelContent}
         menuItemText="Clipping and fogging..."
+        onCompleted={onCompleted}
+    />
+}
+
+export const BabyGruMergeMoleculesMenuItem = (props) => {
+    const toRef = useRef(null)
+    const fromRef = useRef(null)
+    const [selectedMolecules, setSelectedMolecules] = useState([])
+
+    const panelContent = <>
+        <BabyGruMoleculeSelect {...props} ref={toRef} />
+        <Form.Group style={{ width: '20rem', margin: '0' }} controlId="BabyGruMergeMoleculeFromMenuItem" className="mb-3">
+            <Form.Label>Molecule into which to merge</Form.Label>
+            <Form.Select
+                vaue={selectedMolecules}
+                ref={fromRef}
+                type="text"
+                multiple={true}
+                name="newMoleculeName"
+                placeholder="New name"
+                onChange={(e) => {
+                    console.log(e)
+                }}
+            >
+                {props.molecules.map(molecule => molecule.coordMolNo !== 0 && <option value={molecule}>{molecule.coordMolNo}: {molecule.name}</option>)}
+            </Form.Select>
+        </Form.Group>
+    </>
+
+    const onCompleted = useCallback(() => {
+        for (let val of fromRef.current.value) {
+            console.log('Val', val)
+        }
+    }, [fromRef.current])
+
+    return <BabyGruMenuItem
+        popoverPlacement='right'
+        popoverContent={panelContent}
+        menuItemText="Merge molecules..."
         onCompleted={onCompleted}
     />
 }
