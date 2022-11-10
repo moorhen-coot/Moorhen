@@ -635,6 +635,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("redo",&molecules_container_t::redo)
     .function("refine_residues_using_atom_cid",&molecules_container_t::refine_residues_using_atom_cid)
     .function("set_imol_refinement_map",&molecules_container_t::set_imol_refinement_map)
+    .function("merge_molecules",&molecules_container_t::merge_molecules)
     .function("mutate",&molecules_container_t::mutate)
     .function("delete_using_cid",&molecules_container_t::delete_using_cid)
     .function("get_bonds_mesh",&molecules_container_t::get_bonds_mesh)

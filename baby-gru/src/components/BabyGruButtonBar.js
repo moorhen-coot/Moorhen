@@ -1,4 +1,4 @@
-import { CheckOutlined } from "@mui/icons-material";
+import { CheckOutlined, CloseOutlined, PropaneSharp } from "@mui/icons-material";
 import { Tooltip } from "@mui/material";
 import { createRef, forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import { ButtonGroup, Button, Overlay, Container, Row, FormSelect, FormGroup, FormLabel, Card } from "react-bootstrap"
@@ -432,7 +432,28 @@ export const BabyGruJedFlipTrueButton = (props) => {
 export const BabyGruRotateTranslateZoneButton = (props) => {
     const [showAccept, setShowAccept] = useState(false)
     const theButton = useRef(null)
-    const { setActiveMolecule, backgroundColor } = props
+    const { setActiveMolecule, backgroundColor, glRef } = props
+    const fragmentMolecule = useRef(null)
+    const chosenMolecule = useRef(null)
+
+    const acceptTransform = useCallback((e) => {
+        console.log('E is', e)
+        console.log('fragmentMolecule is', fragmentMolecule)
+        fragmentMolecule.current.applyTransform()
+            .then(result => {
+                return props.commandCentre.current.cootCommand({
+                    command: 'merge_molecules',
+                    commandArgs: [chosenMolecule.current.coordMolNo, `${fragmentMolecule.current.coordMolNo}`],
+                    returnType: "Status"
+                }, true)
+            }).then(result => {
+                console.log('Merge molecules result', result)
+                chosenMolecule.current.redraw(props.glRef)
+            })
+        glRef.current.setActiveMolecule(null)
+        glRef.current.drawScene()
+        setShowAccept(false)
+    }, [fragmentMolecule.current, chosenMolecule.current])
 
     return <><BabyGruSimpleEditButton ref={theButton} {...props}
         toolTip="Rotate/Translate zone"
@@ -441,9 +462,13 @@ export const BabyGruRotateTranslateZoneButton = (props) => {
         setSelectedButtonIndex={props.setSelectedButtonIndex}
         needsMapData={false}
         nonCootCommand={async (molecule, chosenAtom, p) => {
+            chosenMolecule.current = molecule
+            /* Copy the component to move into a new molecule */
             const newMolecule = await molecule.copyFragment(
                 chosenAtom.chain_id, chosenAtom.res_no, chosenAtom.res_no, props.glRef
             )
+            fragmentMolecule.current = newMolecule
+            /* Delete the component from current molecule */
             const result = await props.commandCentre.current.cootCommand({
                 command: 'delete_using_cid',
                 commandArgs: [
@@ -452,8 +477,9 @@ export const BabyGruRotateTranslateZoneButton = (props) => {
                 returnType: "Status"
             }, true)
             molecule.redraw(props.glRef)
+            /* redraw */
             props.setMolecules([...props.molecules, newMolecule])
-            props.setActiveMolecule(newMolecule)
+            props.glRef.current.setActiveMolecule(newMolecule)
             setShowAccept(true)
         }}
         prompt="Click atom in residue to totate/translate around"
@@ -466,24 +492,20 @@ export const BabyGruRotateTranslateZoneButton = (props) => {
                 <div
                     {...props}
                     style={{
-                        position: 'absolute', padding: '2px 10px', color: 'white', borderRadius: 3,
+                        position: 'absolute', padding: '2px 10px', borderRadius: 3,
                         backgroundColor: backgroundColor,
                         ...props.style,
                     }}
                 >
-                    <Card>
-                        <Card.Header className="px-0"  style={{marginBottom:'0.5rem', padding:'0'}} >Accept rotation ?</Card.Header> 
-                        <Card.Body>
-                            <Button onClick={(e) => {
+                    <Card className="mx-2">
+                        <Card.Header >Accept rotation ?</Card.Header>
+                        <Card.Body className="">
+                            <Button onClick={acceptTransform}><CheckOutlined /></Button>
+                            <Button className="mx-2" onClick={(e) => {
                                 console.log(e)
                                 setShowAccept(false)
-                                setActiveMolecule(null)
-                            }}><CheckOutlined /></Button>
-                            <Button onClick={(e) => {
-                                console.log(e)
-                                setShowAccept(false)
-                                setActiveMolecule(null)
-                            }}>X</Button>
+                                glRef.current.setActiveMolecule(null)
+                            }}><CloseOutlined /></Button>
                         </Card.Body>
                     </Card>
                 </div>

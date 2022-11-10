@@ -8,6 +8,8 @@ import { atomsToSpheresInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { contactsToCylindersInfo, contactsToLinesInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { singletonsToLinesInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { postCootMessage, readTextFile, readDataFile, cootCommand } from '../BabyGruUtils'
+import { quatToMat4, quat4Inverse } from '../WebGL/quatToMat4.js';
+import * as vec3 from 'gl-matrix/vec3';
 
 export function BabyGruMolecule(commandCentre) {
     this.commandCentre = commandCentre
@@ -24,7 +26,7 @@ export function BabyGruMolecule(commandCentre) {
         rama: [],
         rotamer: [],
         CBs: [],
-        transformation:{origin:[0,0,0],quat: null, centre:[0,0,0] }
+        transformation: { origin: [0, 0, 0], quat: null, centre: [0, 0, 0] }
     }
 };
 
@@ -32,30 +34,30 @@ export function BabyGruMolecule(commandCentre) {
 BabyGruMolecule.prototype.delete = async function (gl) {
     const $this = this
     Object.getOwnPropertyNames(this.displayObjects).forEach(displayObject => {
-        if(this.displayObjects[displayObject].length > 0) {this.clearBuffersOfStyle(displayObject, gl)}
+        if (this.displayObjects[displayObject].length > 0) { this.clearBuffersOfStyle(displayObject, gl) }
     })
-    const inputData = {message:"delete", coordMolNo:$this.coordMolNo}
+    const inputData = { message: "delete", coordMolNo: $this.coordMolNo }
     const response = await $this.commandCentre.current.postMessage(inputData)
     return response
 }
 
 BabyGruMolecule.prototype.copyFragment = async function (chainId, res_no_start, res_no_end, gl) {
     const $this = this
-    const inputData = {message:"copy_fragment", coordMolNo:$this.coordMolNo, chainId:chainId, res_no_start:res_no_start, res_no_end:res_no_end}
+    const inputData = { message: "copy_fragment", coordMolNo: $this.coordMolNo, chainId: chainId, res_no_start: res_no_start, res_no_end: res_no_end }
     const response = await $this.commandCentre.current.postMessage(inputData)
     const newMolecule = new BabyGruMolecule($this.commandCentre)
     newMolecule.name = `${$this.name} fragment`
     newMolecule.coordMolNo = response.data.result
     await newMolecule.fetchIfDirtyAndDraw('CBs', gl)
     await newMolecule.centreOn(gl)
-    
-    const sequenceInputData = { returnType: "residue_codes", command:"get_single_letter_codes_for_chain", commandArgs:[response.data.result, chainId]}
+
+    const sequenceInputData = { returnType: "residue_codes", command: "get_single_letter_codes_for_chain", commandArgs: [response.data.result, chainId] }
     const sequenceResponse = await $this.commandCentre.current.cootCommand(sequenceInputData)
     newMolecule.cachedAtoms.sequences = [{
         "sequence": sequenceResponse.data.result.result,
         "name": `${$this.name} fragment`,
         "chain": chainId,
-        "type": this.cachedAtoms.sequences[0].type 
+        "type": this.cachedAtoms.sequences[0].type
     }]
 
     return newMolecule
@@ -116,7 +118,7 @@ BabyGruMolecule.prototype.loadToCootFromURL = function (url, molName) {
 
 BabyGruMolecule.prototype.getAtoms = function () {
     const $this = this;
-    return $this.commandCentre.current.postMessage( {
+    return $this.commandCentre.current.postMessage({
         message: "get_atoms",
         coordMolNo: $this.coordMolNo
     })
@@ -525,4 +527,50 @@ BabyGruMolecule.prototype.redraw = function (gl) {
             )
         }
     )
+}
+
+BabyGruMolecule.prototype.applyTransform = async function () {
+    const $this = this
+    let movedResidues = [];
+    console.log('In applyTransform', $this.cachedAtoms)
+    $this.cachedAtoms.atoms.forEach(mod => {
+        mod.chains.forEach(chain => {
+            chain.residues.forEach(res => {
+                if (res.atoms.length > 0) {
+                    const cid = res.atoms[0].getChainID() + "/" + res.atoms[0].getResidueID()
+                    let movedAtoms = [];
+                    res.atoms.forEach(atom => {
+                        //FIXME - I am not sure why mgMiniMol has stripped whitespace. This is probably bad.
+                        const atomName = atom["_atom_site.label_atom_id"];
+                        let x = atom.x()
+                        let y = atom.y()
+                        let z = atom.z()
+                        const origin = $this.displayObjects.transformation.origin
+                        const quat = $this.displayObjects.transformation.quat
+                        if (quat) {
+                            const theMatrix = quatToMat4(quat)
+                            theMatrix[12] = origin[0]
+                            theMatrix[13] = origin[1]
+                            theMatrix[14] = origin[2]
+                            // And then transform ...
+                            const atomPos = vec3.create()
+                            const transPos = vec3.create()
+                            vec3.set(atomPos, x, y, z)
+                            vec3.transformMat4(transPos, atomPos, theMatrix);
+                            movedAtoms.push({ name: (" " + atomName).padEnd(4, " "), x: transPos[0], y: transPos[0], z: transPos[0], resCid: cid })
+                        }
+                    })
+                    movedResidues.push(movedAtoms)
+                }
+            })
+        })
+    })
+    $this.displayObjects.transformation.origin = [0, 0, 0]
+    $this.displayObjects.transformation.quat = null
+    console.log('movedResidues are', movedResidues)
+    return $this.commandCentre.current.cootCommand({
+        returnType: "status",
+        command: "shim_new_positions_for_residue_atoms",
+        commandArgs: [$this.coordMolNo, movedResidues]
+    }, true)
 }
