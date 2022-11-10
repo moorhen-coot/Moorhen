@@ -133,53 +133,8 @@ export const BabyGruContainer = (props) => {
     useEffect(() => {
         if (prevActiveMoleculeRef.current) {
             let movedResidues = [];
-            prevActiveMoleculeRef.current.cachedAtoms.atoms.forEach(mod => {
-                mod.chains.forEach(chain => {
-                    chain.residues.forEach(res => {
-                        if (res.atoms.length > 0) {
-                            const cid = res.atoms[0].getChainID() + "/" + res.atoms[0].getResidueID()
-                            let movedAtoms = [];
-                            res.atoms.forEach(atom => {
-                                const atomName = atom["_atom_site.label_atom_id"];
-                                const atomSymbol = atom["_atom_site.type_symbol"];
-                                let x = atom.x() + glRef.current.origin[0]
-                                let y = atom.y() + glRef.current.origin[1]
-                                let z = atom.z() + glRef.current.origin[2]
-                                const origin = prevActiveMoleculeRef.current.displayObjects.transformation.origin
-                                const quat = prevActiveMoleculeRef.current.displayObjects.transformation.quat
-                                if(quat){
-                                     const theMatrix = quatToMat4(quat)
-                                     theMatrix[12] = origin[0]
-                                     theMatrix[13] = origin[1]
-                                     theMatrix[14] = origin[2]
-                                     // And then transform ...
-                                     const atomPos = vec3.create()
-                                     const transPos = vec3.create()
-                                     vec3.set(atomPos,x,y,z)
-                                     console.log("Old posn.",x,y,z)
-                                     vec3.transformMat4(transPos,atomPos,theMatrix);
-                                     console.log("New posn.",transPos[0],transPos[1],transPos[2])
-                                     if(atomSymbol.length==2)
-                                         movedAtoms.push({name:(atomName).padEnd(4," "),x:transPos[0]-glRef.current.origin[0],y:transPos[1]-glRef.current.origin[1],z:transPos[2]-glRef.current.origin[2],resCid:cid})
-                                     else
-                                         movedAtoms.push({name:(" "+atomName).padEnd(4," "),x:transPos[0]-glRef.current.origin[0],y:transPos[1]-glRef.current.origin[1],z:transPos[2]-glRef.current.origin[2],resCid:cid})
-                                     //movedAtoms.push({name:(" "+atomName).padEnd(4," "),x:x,y:y,z:z,resCid:cid})
-                                }
-                            })
-                            movedResidues.push(movedAtoms)
-                        }
-                    })
-                })
-            })
-            commandCentre.current.cootCommand({
-                returnType: "status",
-                command: "shim_new_positions_for_residue_atoms",
-                commandArgs: [prevActiveMoleculeRef.current.coordMolNo,movedResidues]
-            }).then(response => {
-                prevActiveMoleculeRef.current.displayObjects.transformation.origin = [0,0,0]
-                prevActiveMoleculeRef.current.displayObjects.transformation.quat = null
-                prevActiveMoleculeRef.current.setAtomsDirty(true)
-                prevActiveMoleculeRef.current.redraw(glRef)
+            prevActiveMoleculeRef.current.applyTransform(glRef)
+            .then(response => {
                 console.log("Setting/unsetting active molecule (promise)")
                 prevActiveMoleculeRef.current = activeMolecule;
                 if(activeMolecule)
