@@ -25,7 +25,7 @@ export const BabyGruMenuItem = (props) => {
                 document.body.click()
             })
         }}
-            placement={props.popoverPlacement} 
+            placement={props.popoverPlacement}
             delay={{ show: 250, hide: 400 }}
             overlay={
                 <Popover style={{ maxWidth: "40rem" }} ref={popoverRef}>
@@ -90,7 +90,7 @@ export const BabyGruLoadTutorialDataMenuItem = (props) => {
                 props.setMaps([...props.maps, newMap, newDiffMap])
                 props.setActiveMap(newMap)
             })
-}
+    }
 
     return <BabyGruMenuItem
         popoverContent={panelContent}
@@ -126,6 +126,7 @@ export const BabyGruGetMonomerMenuItem = (props) => {
                     newMolecule.coordMolNo = result.data.result.result
                     newMolecule.name = tlcRef.current.value
                     newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef).then(_ => {
+                        newMolecule.cachedAtoms.sequences = []
                         props.setMolecules([...props.molecules, newMolecule])
                     })
                 }
@@ -140,7 +141,7 @@ export const BabyGruGetMonomerMenuItem = (props) => {
 }
 
 export const BabyGruDeleteMoleculeMenuItem = (props) => {
-    
+
     const panelContent = <>
         <Form.Group style={{ width: '10rem', margin: '0.5rem' }} controlId="BabyGruGetDeleteMoleculeMenuItem" className="mb-3">
             <span style={{ fontWeight: 'bold' }}>Are you sure?</span>
@@ -165,7 +166,7 @@ export const BabyGruDeleteMoleculeMenuItem = (props) => {
 }
 
 export const BabyGruRenameMoleculeMenuItem = (props) => {
-    const  newNameInputRef = useRef(null)
+    const newNameInputRef = useRef(null)
 
     const panelContent = <>
         <Form.Group style={{ width: '10rem', margin: '0' }} controlId="BabyGruGetRenameMoleculeMenuItem" className="mb-3">
@@ -270,6 +271,7 @@ export const BabyGruBackgroundColorMenuItem = (props) => {
 export const BabyGruImportDictionaryMenuItem = (props) => {
     const filesRef = useRef(null)
     const moleculeSelectRef = useRef(null)
+
     const panelContent = <>
         <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="uploadDicts" className="mb-3">
             <Form.Label>Dictionaries</Form.Label>
@@ -403,18 +405,6 @@ export const BabyGruImportMapCoefficientsMenuItem = (props) => {
         </Row>
     </>
 
-    return <BabyGruMenuItem
-        popoverContent={panelContent}
-        menuItemText="Map coefficients..."
-        onCompleted={onCompleted}
-    />
-}
-
-const BabyGruImportCoordinatesFromEBI = (props) => {
-    const panelContent = {
-
-    }
-    const onCompleted = () => { }
     return <BabyGruMenuItem
         popoverContent={panelContent}
         menuItemText="Map coefficients..."

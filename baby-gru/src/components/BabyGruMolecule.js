@@ -57,7 +57,7 @@ BabyGruMolecule.prototype.copyFragment = async function (chainId, res_no_start, 
         "sequence": sequenceResponse.data.result.result,
         "name": `${$this.name} fragment`,
         "chain": chainId,
-        "type": this.cachedAtoms.sequences[0].type
+        "type": this.cachedAtoms.sequences.length > 0 ? this.cachedAtoms.sequences[0].type : 'ligand'
     }]
 
     return newMolecule
