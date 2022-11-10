@@ -539,8 +539,8 @@ BabyGruMolecule.prototype.applyTransform = async function (glRef) {
                     const cid = res.atoms[0].getChainID() + "/" + res.atoms[0].getResidueID()
                     let movedAtoms = [];
                     res.atoms.forEach(atom => {
-                        //FIXME - I am not sure why mgMiniMol has stripped whitespace. This is probably bad.
                         const atomName = atom["_atom_site.label_atom_id"];
+                        const atomSymbol = atom["_atom_site.type_symbol"];
                         let x = atom.x() + glRef.current.origin[0]
                         let y = atom.y() + glRef.current.origin[1]
                         let z = atom.z() + glRef.current.origin[2]
@@ -556,7 +556,10 @@ BabyGruMolecule.prototype.applyTransform = async function (glRef) {
                             const transPos = vec3.create()
                             vec3.set(atomPos, x, y, z)
                             vec3.transformMat4(transPos, atomPos, theMatrix);
-                            movedAtoms.push({name:(" "+atomName).padEnd(4," "),x:transPos[0]-glRef.current.origin[0],y:transPos[1]-glRef.current.origin[1],z:transPos[2]-glRef.current.origin[2],resCid:cid})
+                            if(atomSymbol.length==2)
+                                movedAtoms.push({name:(atomName).padEnd(4," "),x:transPos[0]-glRef.current.origin[0],y:transPos[1]-glRef.current.origin[1],z:transPos[2]-glRef.current.origin[2],resCid:cid})
+                            else
+                                movedAtoms.push({name:(" "+atomName).padEnd(4," "),x:transPos[0]-glRef.current.origin[0],y:transPos[1]-glRef.current.origin[1],z:transPos[2]-glRef.current.origin[2],resCid:cid})
                         }
                     })
                     movedResidues.push(movedAtoms)
