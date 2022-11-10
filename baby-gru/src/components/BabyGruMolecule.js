@@ -532,7 +532,6 @@ BabyGruMolecule.prototype.redraw = function (gl) {
 BabyGruMolecule.prototype.applyTransform = async function () {
     const $this = this
     let movedResidues = [];
-    console.log('In applyTransform', $this.cachedAtoms)
     $this.cachedAtoms.atoms.forEach(mod => {
         mod.chains.forEach(chain => {
             chain.residues.forEach(res => {
@@ -557,7 +556,7 @@ BabyGruMolecule.prototype.applyTransform = async function () {
                             const transPos = vec3.create()
                             vec3.set(atomPos, x, y, z)
                             vec3.transformMat4(transPos, atomPos, theMatrix);
-                            movedAtoms.push({ name: (" " + atomName).padEnd(4, " "), x: transPos[0], y: transPos[0], z: transPos[0], resCid: cid })
+                            movedAtoms.push({ name: (" " + atomName).padEnd(4, " "), x: transPos[0], y: transPos[1], z: transPos[2], resCid: cid })
                         }
                     })
                     movedResidues.push(movedAtoms)
