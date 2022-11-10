@@ -133,7 +133,7 @@ export const BabyGruSimpleEditButton = forwardRef((props, buttonRef) => {
         </Tooltip>
 
         {
-            prompt && <Overlay target={buttonRef ? buttonRef.current : target.currrent} show={props.buttonIndex === props.selectedButtonIndex} placement="top">
+            prompt && <Overlay target={buttonRef ? buttonRef.current : target.current} show={props.buttonIndex === props.selectedButtonIndex} placement="top">
                 {({ placement, arrowProps, show: _show, popper, ...props }) => (
                     <div
                         {...props}
@@ -448,6 +448,7 @@ export const BabyGruRotateTranslateZoneButton = (props) => {
                 }, true)
             }).then(result => {
                 console.log('Merge molecules result', result)
+                chosenMolecule.current.setAtomsDirty(true)
                 chosenMolecule.current.redraw(props.glRef)
             })
         glRef.current.setActiveMolecule(null)
@@ -455,33 +456,35 @@ export const BabyGruRotateTranslateZoneButton = (props) => {
         setShowAccept(false)
     }, [fragmentMolecule.current, chosenMolecule.current])
 
+    const nonCootCommand = async (molecule, chosenAtom, p) => {
+        chosenMolecule.current = molecule
+        /* Copy the component to move into a new molecule */
+        const newMolecule = await molecule.copyFragment(
+            chosenAtom.chain_id, chosenAtom.res_no, chosenAtom.res_no, props.glRef
+        )
+        fragmentMolecule.current = newMolecule
+        /* Delete the component from current molecule */
+        const result = await props.commandCentre.current.cootCommand({
+            command: 'delete_using_cid',
+            commandArgs: [
+                molecule.coordMolNo, `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}`, 'RESIDUE'
+            ],
+            returnType: "Status"
+        }, true)
+        molecule.redraw(props.glRef)
+        /* redraw */
+        props.setMolecules([...props.molecules, newMolecule])
+        props.glRef.current.setActiveMolecule(newMolecule)
+        setShowAccept(true)
+    }
+
     return <><BabyGruSimpleEditButton ref={theButton} {...props}
         toolTip="Rotate/Translate zone"
         buttonIndex={props.buttonIndex}
         selectedButtonIndex={props.selectedButtonIndex}
         setSelectedButtonIndex={props.setSelectedButtonIndex}
         needsMapData={false}
-        nonCootCommand={async (molecule, chosenAtom, p) => {
-            chosenMolecule.current = molecule
-            /* Copy the component to move into a new molecule */
-            const newMolecule = await molecule.copyFragment(
-                chosenAtom.chain_id, chosenAtom.res_no, chosenAtom.res_no, props.glRef
-            )
-            fragmentMolecule.current = newMolecule
-            /* Delete the component from current molecule */
-            const result = await props.commandCentre.current.cootCommand({
-                command: 'delete_using_cid',
-                commandArgs: [
-                    molecule.coordMolNo, `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}`, 'RESIDUE'
-                ],
-                returnType: "Status"
-            }, true)
-            molecule.redraw(props.glRef)
-            /* redraw */
-            props.setMolecules([...props.molecules, newMolecule])
-            props.glRef.current.setActiveMolecule(newMolecule)
-            setShowAccept(true)
-        }}
+        nonCootCommand={nonCootCommand}
         prompt="Click atom in residue to totate/translate around"
         icon={<img className="baby-gru-button-icon" src="pixmaps/rtz.svg" />}
         formatArgs={(molecule, chosenAtom) => {
