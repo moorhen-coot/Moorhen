@@ -498,7 +498,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("get_chi",&coot::simple_rotamer::get_chi)
     ;
     class_<coot::residue_validation_information_t>("residue_validation_information_t")
-    .property("distortion", &coot::residue_validation_information_t::distortion)
+    .property("function_value", &coot::residue_validation_information_t::function_value)
     .property("label", &coot::residue_validation_information_t::label)
     .property("residue_spec", &coot::residue_validation_information_t::residue_spec)
     .property("atom_spec", &coot::residue_validation_information_t::atom_spec)
