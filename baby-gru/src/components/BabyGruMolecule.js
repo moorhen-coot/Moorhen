@@ -529,7 +529,7 @@ BabyGruMolecule.prototype.redraw = function (gl) {
     )
 }
 
-BabyGruMolecule.prototype.applyTransform = async function () {
+BabyGruMolecule.prototype.applyTransform = async function (glRef) {
     const $this = this
     let movedResidues = [];
     $this.cachedAtoms.atoms.forEach(mod => {
@@ -541,9 +541,9 @@ BabyGruMolecule.prototype.applyTransform = async function () {
                     res.atoms.forEach(atom => {
                         //FIXME - I am not sure why mgMiniMol has stripped whitespace. This is probably bad.
                         const atomName = atom["_atom_site.label_atom_id"];
-                        let x = atom.x()
-                        let y = atom.y()
-                        let z = atom.z()
+                        let x = atom.x() + glRef.current.origin[0]
+                        let y = atom.y() + glRef.current.origin[1]
+                        let z = atom.z() + glRef.current.origin[2]
                         const origin = $this.displayObjects.transformation.origin
                         const quat = $this.displayObjects.transformation.quat
                         if (quat) {
@@ -556,7 +556,7 @@ BabyGruMolecule.prototype.applyTransform = async function () {
                             const transPos = vec3.create()
                             vec3.set(atomPos, x, y, z)
                             vec3.transformMat4(transPos, atomPos, theMatrix);
-                            movedAtoms.push({ name: (" " + atomName).padEnd(4, " "), x: transPos[0], y: transPos[1], z: transPos[2], resCid: cid })
+                            movedAtoms.push({name:(" "+atomName).padEnd(4," "),x:transPos[0]-glRef.current.origin[0],y:transPos[1]-glRef.current.origin[1],z:transPos[2]-glRef.current.origin[2],resCid:cid})
                         }
                     })
                     movedResidues.push(movedAtoms)
@@ -564,12 +564,15 @@ BabyGruMolecule.prototype.applyTransform = async function () {
             })
         })
     })
-    $this.displayObjects.transformation.origin = [0, 0, 0]
-    $this.displayObjects.transformation.quat = null
     console.log('movedResidues are', movedResidues)
     return $this.commandCentre.current.cootCommand({
         returnType: "status",
         command: "shim_new_positions_for_residue_atoms",
         commandArgs: [$this.coordMolNo, movedResidues]
-    }, true)
+    }).then(response => {
+        $this.displayObjects.transformation.origin = [0, 0, 0]
+        $this.displayObjects.transformation.quat = null
+        $this.setAtomsDirty(true)
+        $this.redraw(glRef)
+    })
 }

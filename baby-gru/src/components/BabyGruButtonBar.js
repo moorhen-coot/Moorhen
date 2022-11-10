@@ -439,7 +439,7 @@ export const BabyGruRotateTranslateZoneButton = (props) => {
     const acceptTransform = useCallback((e) => {
         console.log('E is', e)
         console.log('fragmentMolecule is', fragmentMolecule)
-        fragmentMolecule.current.applyTransform()
+        fragmentMolecule.current.applyTransform(glRef)
             .then(result => {
                 return props.commandCentre.current.cootCommand({
                     command: 'merge_molecules',
