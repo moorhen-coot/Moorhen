@@ -25,7 +25,7 @@ export const BabyGruMenuItem = (props) => {
                 document.body.click()
             })
         }}
-            placement="right"
+            placement={props.popoverPlacement} 
             delay={{ show: 250, hide: 400 }}
             overlay={
                 <Popover style={{ maxWidth: "40rem" }} ref={popoverRef}>
@@ -47,7 +47,8 @@ export const BabyGruMenuItem = (props) => {
 BabyGruMenuItem.defaultProps = {
     buttonText: "OK",
     buttonVariant: "primary",
-    textClassName: ""
+    textClassName: "",
+    popoverPlacement: "right"
 }
 
 export const BabyGruLoadTutorialDataMenuItem = (props) => {
@@ -137,6 +138,59 @@ export const BabyGruGetMonomerMenuItem = (props) => {
         onCompleted={onCompleted}
     />
 }
+
+export const BabyGruDeleteMoleculeMenuItem = (props) => {
+    
+    const panelContent = <>
+        <Form.Group style={{ width: '10rem', margin: '0.5rem' }} controlId="BabyGruGetDeleteMoleculeMenuItem" className="mb-3">
+            <span style={{ fontWeight: 'bold' }}>Are you sure?</span>
+        </Form.Group>
+    </>
+
+    const onCompleted = () => {
+        let newMoleculesList = props.molecules.filter(molecule => molecule.coordMolNo !== props.molecule.coordMolNo)
+        props.setMolecules(newMoleculesList)
+        props.molecule.delete(props.glRef);
+    }
+
+    return <BabyGruMenuItem
+        textClassName="text-danger"
+        buttonVariant="danger"
+        buttonText="Delete"
+        popoverPlacement='left'
+        popoverContent={panelContent}
+        menuItemText="Delete molecule"
+        onCompleted={onCompleted}
+    />
+}
+
+export const BabyGruRenameMoleculeMenuItem = (props) => {
+    const  newNameInputRef = useRef(null)
+
+    const panelContent = <>
+        <Form.Group style={{ width: '10rem', margin: '0' }} controlId="BabyGruGetRenameMoleculeMenuItem" className="mb-3">
+            <Form.Control
+                ref={newNameInputRef}
+                type="text"
+                name="newMoleculeName"
+                placeholder="New name"
+            />
+        </Form.Group>
+    </>
+
+    const onCompleted = () => {
+        let newName = newNameInputRef.current.value
+        props.setMoleculeName(newName)
+    }
+
+    return <BabyGruMenuItem
+        popoverPlacement='left'
+        popoverContent={panelContent}
+        menuItemText="Rename molecule"
+        onCompleted={onCompleted}
+    />
+}
+
 
 export const BabyGruDeleteEverythingMenuItem = (props) => {
 
