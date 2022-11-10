@@ -131,24 +131,23 @@ export const BabyGruContainer = (props) => {
 
     const prevActiveMoleculeRef = useRef();
     useEffect(() => {
-        if (prevActiveMoleculeRef.current) {
-            let movedResidues = [];
-            prevActiveMoleculeRef.current.applyTransform(glRef)
-            .then(response => {
-                console.log("Setting/unsetting active molecule (promise)")
+        function resetActiveGL() {
                 prevActiveMoleculeRef.current = activeMolecule;
                 if(activeMolecule)
                     glRef.current.setActiveMolecule(activeMolecule)
                 else
                     glRef.current.setActiveMolecule(null)
+        }
+        if (prevActiveMoleculeRef.current) {
+            let movedResidues = [];
+            prevActiveMoleculeRef.current.applyTransform(glRef)
+            .then(response => {
+                console.log("Setting/unsetting active molecule (promise)")
+                resetActiveGL()
             })
         } else {
             console.log("Setting/unsetting active molecule")
-            prevActiveMoleculeRef.current = activeMolecule;
-            if(activeMolecule)
-                glRef.current.setActiveMolecule(activeMolecule)
-            else
-                glRef.current.setActiveMolecule(null)
+            resetActiveGL()
         }
     }, [activeMolecule])
 
