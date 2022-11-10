@@ -13,3 +13,9 @@
 .validation-plot-div{
     height: calc(100% - 4rem);
 }
+
+::-webkit-scrollbar {
+    width: 0px;
+    background: transparent; 
+    -webkit-padding-end: 16px;
+  }

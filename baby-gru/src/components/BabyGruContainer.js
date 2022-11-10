@@ -54,7 +54,7 @@ export const BabyGruContainer = (props) => {
 
     const sideBarWidth = convertViewtoPx(30, windowWidth)
     const innerWindowMarginHeight = convertRemToPx(2.1)
-    const innerWindowMarginWidth = convertRemToPx(5)
+    const innerWindowMarginWidth = convertRemToPx(1)
 
     const setWindowDimensions = () => {
         setWindowWidth(window.innerWidth)
@@ -142,22 +142,25 @@ export const BabyGruContainer = (props) => {
                             res.atoms.forEach(atom => {
                                 //FIXME - I am not sure why mgMiniMol has stripped whitespace. This is probably bad.
                                 const atomName = atom["_atom_site.label_atom_id"];
-                                let x = atom.x()
-                                let y = atom.y()
-                                let z = atom.z()
+                                let x = atom.x() + glRef.current.origin[0]
+                                let y = atom.y() + glRef.current.origin[1]
+                                let z = atom.z() + glRef.current.origin[2]
                                 const origin = prevActiveMoleculeRef.current.displayObjects.transformation.origin
                                 const quat = prevActiveMoleculeRef.current.displayObjects.transformation.quat
-                                if (quat) {
-                                    const theMatrix = quatToMat4(quat)
-                                    theMatrix[12] = origin[0]
-                                    theMatrix[13] = origin[1]
-                                    theMatrix[14] = origin[2]
-                                    // And then transform ...
-                                    const atomPos = vec3.create()
-                                    const transPos = vec3.create()
-                                    vec3.set(atomPos, x, y, z)
-                                    vec3.transformMat4(transPos, atomPos, theMatrix);
-                                    movedAtoms.push({ name: (" " + atomName).padEnd(4, " "), x: transPos[0], y: transPos[0], z: transPos[0], resCid: cid })
+                                if(quat){
+                                     const theMatrix = quatToMat4(quat)
+                                     theMatrix[12] = origin[0]
+                                     theMatrix[13] = origin[1]
+                                     theMatrix[14] = origin[2]
+                                     // And then transform ...
+                                     const atomPos = vec3.create()
+                                     const transPos = vec3.create()
+                                     vec3.set(atomPos,x,y,z)
+                                     console.log("Old posn.",x,y,z)
+                                     vec3.transformMat4(transPos,atomPos,theMatrix);
+                                     console.log("New posn.",transPos[0],transPos[1],transPos[2])
+                                     movedAtoms.push({name:(" "+atomName).padEnd(4," "),x:transPos[0]-glRef.current.origin[0],y:transPos[1]-glRef.current.origin[1],z:transPos[2]-glRef.current.origin[2],resCid:cid})
+                                     //movedAtoms.push({name:(" "+atomName).padEnd(4," "),x:x,y:y,z:z,resCid:cid})
                                 }
                             })
                             movedResidues.push(movedAtoms)
@@ -168,16 +171,27 @@ export const BabyGruContainer = (props) => {
             commandCentre.current.cootCommand({
                 returnType: "status",
                 command: "shim_new_positions_for_residue_atoms",
-                commandArgs: [prevActiveMoleculeRef.current.coordMolNo, movedResidues]
-            }, true)
-            prevActiveMoleculeRef.current.displayObjects.transformation.origin = [0, 0, 0]
-            prevActiveMoleculeRef.current.displayObjects.transformation.quat = null
+                commandArgs: [prevActiveMoleculeRef.current.coordMolNo,movedResidues]
+            }).then(response => {
+                prevActiveMoleculeRef.current.displayObjects.transformation.origin = [0,0,0]
+                prevActiveMoleculeRef.current.displayObjects.transformation.quat = null
+                prevActiveMoleculeRef.current.setAtomsDirty(true)
+                prevActiveMoleculeRef.current.redraw(glRef)
+                console.log("Setting/unsetting active molecule (promise)")
+                prevActiveMoleculeRef.current = activeMolecule;
+                if(activeMolecule)
+                    glRef.current.setActiveMolecule(activeMolecule)
+                else
+                    glRef.current.setActiveMolecule(null)
+            })
+        } else {
+            console.log("Setting/unsetting active molecule")
+            prevActiveMoleculeRef.current = activeMolecule;
+            if(activeMolecule)
+                glRef.current.setActiveMolecule(activeMolecule)
+            else
+                glRef.current.setActiveMolecule(null)
         }
-        prevActiveMoleculeRef.current = activeMolecule;
-        if (activeMolecule)
-            glRef.current.setActiveMolecule(activeMolecule)
-        else
-            glRef.current.setActiveMolecule(null)
     }, [activeMolecule])
 
     const glResize = () => {
