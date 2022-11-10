@@ -4,6 +4,7 @@ import { BabyGruMap } from "./BabyGruMap";
 import { useEffect, useState } from "react";
 import { cootCommand, doDownload, doDownloadText, readTextFile } from "../BabyGruUtils";
 import { MenuItem } from "@mui/material";
+import { BabyGruMergeMoleculesMenuItem } from "./BabyGruMenuItem";
 
 
 export const BabyGruHistoryMenu = (props) => {
@@ -91,6 +92,8 @@ export const BabyGruHistoryMenu = (props) => {
                     executeJournalFiles(e.target.files)
                 }} />
             </Form.Group>
+
+            <BabyGruMergeMoleculesMenuItem {...props} />
 
         </NavDropdown>
         <Modal size="xl" show={showHistory} onHide={() => { setShowHistory(false) }}>

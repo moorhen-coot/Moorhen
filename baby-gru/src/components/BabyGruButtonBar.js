@@ -452,7 +452,7 @@ export const BabyGruRotateTranslateZoneButton = (props) => {
         glRef.current.drawScene()
         const newMolecules = props.molecules.filter(molecule => molecule.coordMolNo !== fragmentMolecule.current.coordMolNo)
         props.setMolecules(newMolecules)
-        //fragmentMolecule.current.delete(props.glRef)
+        fragmentMolecule.current.delete(props.glRef)
         setShowAccept(false)
     }, [fragmentMolecule.current, chosenMolecule.current])
 
