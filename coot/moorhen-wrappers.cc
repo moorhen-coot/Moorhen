@@ -596,6 +596,18 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("z", &coot::molecule_t::moved_atom_t::z)
     .property("index", &coot::molecule_t::moved_atom_t::index)
     ;
+    class_<coot::molecule_t::interesting_place_t>("interesting_place_t")
+    .constructor<const std::string &, const coot::residue_spec_t &, const clipper::Coord_orth &, const std::string &>()
+    .constructor<const std::string &, const clipper::Coord_orth &, const std::string &>()
+    .property("feature_type", &coot::molecule_t::interesting_place_t::feature_type)
+    .property("residue_spec", &coot::molecule_t::interesting_place_t::residue_spec)
+    .property("button_label", &coot::molecule_t::interesting_place_t::button_label)
+    .property("feature_value", &coot::molecule_t::interesting_place_t::feature_value)
+    .property("badness", &coot::molecule_t::interesting_place_t::badness)
+    .property("x", &coot::molecule_t::interesting_place_t::x)
+    .property("y", &coot::molecule_t::interesting_place_t::y)
+    .property("z", &coot::molecule_t::interesting_place_t::z)
+    ;
     class_<coot::molecule_t::moved_residue_t>("moved_residue_t")
     .constructor<const std::string&, int, const std::string&>()
     .property("chain_id", &coot::molecule_t::moved_residue_t::chain_id)
@@ -646,6 +658,9 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("apply_transformation_to_atom_selection",&molecules_container_t::apply_transformation_to_atom_selection)
     .function("new_positions_for_residue_atoms",&molecules_container_t::new_positions_for_residue_atoms)
     .function("new_positions_for_atoms_in_residues",&molecules_container_t::new_positions_for_atoms_in_residues)
+    //.function("get_interesting_places",&molecules_container_t::get_interesting_places)
+    .function("difference_map_peaks",&molecules_container_t::difference_map_peaks)
+    .function("pepflips_using_difference_map",&molecules_container_t::pepflips_using_difference_map)
     .function("add_waters",&molecules_container_t::add_waters)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
@@ -725,6 +740,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<coot::simple_rotamer>("Vectorsimple_rotamer");
     register_vector<coot::residue_spec_t>("Vectorresidue_spec_t");
     register_vector<coot::api::vnc_vertex>("Vectorvnc_veertex");
+    register_vector<coot::molecule_t::interesting_place_t>("Vectorinteresting_place_t");
     register_vector<g_triangle>("Vectorg_triangle");
     register_vector<ResSpecStringPair>("VectorResSpecStringPair");
     value_array<glm::vec3>("array_float_3")
