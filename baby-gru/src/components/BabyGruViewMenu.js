@@ -4,14 +4,19 @@ import { BabyGruBackgroundColorMenuItem, BabyGruClipFogMenuItem } from "./BabyGr
 
 
 export const BabyGruViewMenu = (props) => {
-    const [dropdownIsShown, setDropdownIsShown] = useState(false)
     const [popoverIsShown, setPopoverIsShown] = useState(false)
+    const menuItemProps = {setPopoverIsShown, ...props}
 
-return <>
-        < NavDropdown title="View" id="basic-nav-dropdown" autoClose={popoverIsShown ? false : 'outside'} onToggle={() => setDropdownIsShown(!dropdownIsShown)} show={dropdownIsShown} >
-            <BabyGruBackgroundColorMenuItem setPopoverIsShown={setPopoverIsShown} {...props} />
-            <BabyGruClipFogMenuItem setPopoverIsShown={setPopoverIsShown} {...props} />
-        </NavDropdown >
-    </>
-}
+    return <>
+            < NavDropdown 
+                    title="View" 
+                    id="basic-nav-dropdown" 
+                    autoClose={popoverIsShown ? false : 'outside'}
+                    show={props.currentDropdownId === props.dropdownId}
+                    onToggle={() => {props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId(-1)}}>
+                <BabyGruBackgroundColorMenuItem {...menuItemProps} />
+                <BabyGruClipFogMenuItem {...menuItemProps} />
+            </NavDropdown >
+        </>
+    }
 

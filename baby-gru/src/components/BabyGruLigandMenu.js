@@ -3,14 +3,19 @@ import { useState } from "react";
 import { BabyGruGetMonomerMenuItem, BabyGruImportDictionaryMenuItem, BabyGruMergeMoleculesMenuItem } from "./BabyGruMenuItem";
 
 export const BabyGruLigandMenu = (props) => {
-    const [dropdownIsShown, setDropdownIsShown] = useState(false)
     const [popoverIsShown, setPopoverIsShown] = useState(false)
+    const menuItemProps = {setPopoverIsShown, ...props}
 
     return <>
-        <NavDropdown title="Ligand" id="basic-nav-dropdown" autoClose={popoverIsShown ? false : 'outside'} onToggle={() => setDropdownIsShown(!dropdownIsShown)} show={dropdownIsShown} >
-            <BabyGruGetMonomerMenuItem setPopoverIsShown={setPopoverIsShown} {...props} />
-            <BabyGruImportDictionaryMenuItem setPopoverIsShown={setPopoverIsShown} {...props} />
-            <BabyGruMergeMoleculesMenuItem setPopoverIsShown={setPopoverIsShown} {...props} />
+        <NavDropdown 
+                title="Ligand" 
+                id="basic-nav-dropdown" 
+                autoClose={popoverIsShown ? false : 'outside'} 
+                show={props.currentDropdownId === props.dropdownId} 
+                onToggle={() => {props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId(-1)}}>
+            <BabyGruGetMonomerMenuItem {...menuItemProps} />
+            <BabyGruImportDictionaryMenuItem {...menuItemProps} />
+            <BabyGruMergeMoleculesMenuItem {...menuItemProps} />
         </NavDropdown>
     </>
 }
