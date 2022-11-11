@@ -348,14 +348,14 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
                     props.commandCentre.current.cootCommand({
                         returnType: 'status',
                         command: 'get_monomer_and_position_at',
-                        commandArgs: ['NUT', moleculeSelectRef.current.value, ...props.glRef.current.origin.map(coord => -coord)]
+                        commandArgs: [tlcRef.current.value.toUpperCase(), moleculeSelectRef.current.value, ...props.glRef.current.origin.map(coord => -coord)]
 
                     }, true)
                         .then(result => {
                             if (result.data.result.status === "Completed") {
                                 const newMolecule = new BabyGruMolecule(props.commandCentre)
                                 newMolecule.coordMolNo = result.data.result.result
-                                newMolecule.name = 'NUT'
+                                newMolecule.name = tlcRef.current.value.toUpperCase()
                                 newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef).then(_ => {
                                     newMolecule.cachedAtoms.sequences = []
                                     props.setMolecules([...props.molecules, newMolecule])
