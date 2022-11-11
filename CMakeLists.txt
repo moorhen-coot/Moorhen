@@ -22,7 +22,7 @@ ExternalProject_Add(boost-src
   SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/boost
   CONFIGURE_COMMAND COMMAND ./bootstrap.sh --with-libraries=serialization,regex,chrono,date_time,filesystem,iostreams,program_options,thread,math,random,system
   BUILD_COMMAND ./b2 toolset=emscripten link=static threading=multi
-  INSTALL_COMMAND true
+  INSTALL_COMMAND ./b2 toolset=emscripten link=static threading=multi install --prefix=${CMAKE_CURRENT_SOURCE_DIR}/install
   BUILD_IN_SOURCE 1
 )
 
