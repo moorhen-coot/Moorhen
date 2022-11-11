@@ -1,18 +1,16 @@
-import { NavDropdown, Form, Button, InputGroup, Modal, FormSelect, Col, Row, Overlay, Card, FormCheck, OverlayTrigger, Tooltip, Popover } from "react-bootstrap";
-import { BabyGruMolecule } from "./BabyGruMolecule";
-import { BabyGruMap } from "./BabyGruMap";
-import { useEffect, useState, useRef, createRef } from "react";
-import { BabyGruMtzWrapper, cootCommand, readTextFile } from '../BabyGruUtils';
-import { InsertDriveFile } from "@mui/icons-material";
-import { MenuItem } from "@mui/material";
-import { BabyGruGetMonomerMenuItem, BabyGruBackgroundColorMenuItem, BabyGruImportDictionaryMenuItem, BabyGruMergeMoleculesMenuItem } from "./BabyGruMenuItem";
+import { NavDropdown } from "react-bootstrap";
+import { useState } from "react";
+import { BabyGruGetMonomerMenuItem, BabyGruImportDictionaryMenuItem, BabyGruMergeMoleculesMenuItem } from "./BabyGruMenuItem";
 
 export const BabyGruLigandMenu = (props) => {
+    const [dropdownIsShown, setDropdownIsShown] = useState(false)
+    const [popoverIsShown, setPopoverIsShown] = useState(false)
+
     return <>
-        <NavDropdown title="Ligand" id="basic-nav-dropdown">
-            <BabyGruGetMonomerMenuItem {...props} />
-            <BabyGruImportDictionaryMenuItem {...props} />
-            <BabyGruMergeMoleculesMenuItem {...props} />
+        <NavDropdown title="Ligand" id="basic-nav-dropdown" autoClose={popoverIsShown ? false : 'outside'} onToggle={() => setDropdownIsShown(!dropdownIsShown)} show={dropdownIsShown} >
+            <BabyGruGetMonomerMenuItem setPopoverIsShown={setPopoverIsShown} {...props} />
+            <BabyGruImportDictionaryMenuItem setPopoverIsShown={setPopoverIsShown} {...props} />
+            <BabyGruMergeMoleculesMenuItem setPopoverIsShown={setPopoverIsShown} {...props} />
         </NavDropdown>
     </>
 }

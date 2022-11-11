@@ -4,14 +4,16 @@ import { Card, Form, Button, Row, Col, DropdownButton } from "react-bootstrap";
 import { doDownload } from '../BabyGruUtils';
 import { DownloadOutlined, UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined, ExpandLessOutlined } from '@mui/icons-material';
 import { BabyGruSequenceViewer } from "./BabyGruSequenceViewer";
-import { BabyGruDeleteMoleculeMenuItem, BabyGruRenameMoleculeMenuItem } from "./BabyGruMenuItem";
+import { BabyGruDeleteDisplayObjectMenuItem, BabyGruRenameDisplayObjectMenuItem } from "./BabyGruMenuItem";
 
 export const BabyGruMoleculeCard = (props) => {
     const [showState, setShowState] = useState({})
     const [selectedResidues, setSelectedResidues] = useState(null);
     const [clickedResidue, setClickedResidue] = useState(null);
-    const [moleculeName, setMoleculeName] = useState(props.molecule.name);
+    const [currentName, setCurrentName] = useState(props.molecule.name);
     const [isCollapsed, setIsCollapsed] = useState(false);
+    const [dropdownIsShown, setDropdownIsShown] = useState(false)
+    const [popoverIsShown, setPopoverIsShown] = useState(false)
 
     useEffect(() => {
         const initialState = {}
@@ -30,14 +32,12 @@ export const BabyGruMoleculeCard = (props) => {
     ])
 
     useMemo(() => {
-        
-        if (moleculeName == "") {
+        if (currentName == "") {
             return
         }
-        props.molecule.name = moleculeName
-    
-    
-    }, [moleculeName]);
+        props.molecule.name = currentName
+
+    }, [currentName]);
 
     useEffect(() => {
         if (!clickedResidue) {
@@ -108,10 +108,10 @@ export const BabyGruMoleculeCard = (props) => {
                         }}>
                         {isCollapsed ? < ExpandMoreOutlined/> : <ExpandLessOutlined />}
                     </Button>
-                    <DropdownButton size="sm" variant="outlined">
+                    <DropdownButton size="sm" variant="outlined" autoClose={popoverIsShown ? false : 'outside'} onToggle={() => setDropdownIsShown(!dropdownIsShown)} show={dropdownIsShown} >
                         <MenuItem variant="success" onClick={handleCopyFragment}>Copy selected residues into fragment</MenuItem>
-                        <BabyGruRenameMoleculeMenuItem setMoleculeName={setMoleculeName} {...props} />
-                        <BabyGruDeleteMoleculeMenuItem {...props}/>
+                        <BabyGruRenameDisplayObjectMenuItem setPopoverIsShown={setPopoverIsShown} setCurrentName={setCurrentName} item={props.molecule} />
+                        <BabyGruDeleteDisplayObjectMenuItem setPopoverIsShown={setPopoverIsShown} glRef={props.glRef} setItemList={props.setMolecules} itemList={props.molecules} item={props.molecule}/>
                     </DropdownButton>
                 </Col>
             </Row>

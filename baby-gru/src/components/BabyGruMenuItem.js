@@ -14,32 +14,42 @@ export const BabyGruMenuItem = (props) => {
         resolve: () => { },
         reject: () => { }
     })
-    const popoverRef = createRef()
 
     return <>
-        {props.popoverContent ? <OverlayTrigger rootClose onEnter={() => {
-            new Promise((resolve, reject) => {
-                resolveOrRejectRef.current = { resolve, reject }
-            }).then(result => {
-                props.onCompleted("Resolve")
-                document.body.click()
-            })
-        }}
-            placement={props.popoverPlacement}
-            delay={{ show: 250, hide: 400 }}
+        {props.popoverContent ? <OverlayTrigger 
+            rootClose 
+            placement={props.popoverPlacement} 
+            trigger="click"
+
+            onEntered={() => {
+                props.setPopoverIsShown(true)
+            }}
+
+            onExited={() => {
+                props.setPopoverIsShown(false)
+            }}
+
+            onEnter={() => {            
+                new Promise((resolve, reject) => {
+                    resolveOrRejectRef.current = { resolve, reject }
+                }).then(result => {
+                    props.onCompleted("Resolve")
+                    document.body.click()
+                })
+            }}
+            
             overlay={
-                <Popover style={{ maxWidth: "40rem" }} ref={popoverRef}>
+                <Popover style={{ maxWidth: "40rem" }}>
                     <PopoverHeader as="h3">{props.menuItemTitle}</PopoverHeader>
                     <PopoverBody>
                         {props.popoverContent}
                         <Button variant={props.buttonVariant} onClick={() => { resolveOrRejectRef.current.resolve() }}>{props.buttonText}</Button>
                     </PopoverBody>
                 </Popover>}
-            trigger="click"
         >
             <MenuItem className={props.textClassName} variant="success">{props.menuItemText}</MenuItem>
         </OverlayTrigger> :
-            <MenuItem variant="success">{props.menuItemText}</MenuItem>
+            <MenuItem className={props.textClassName} variant="success">{props.menuItemText}</MenuItem>
         }
     </>
 }
@@ -90,12 +100,14 @@ export const BabyGruLoadTutorialDataMenuItem = (props) => {
                 props.setMaps([...props.maps, newMap, newDiffMap])
                 props.setActiveMap(newMap)
             })
+            props.setPopoverIsShown(false)
     }
 
     return <BabyGruMenuItem
         popoverContent={panelContent}
         menuItemText="Load tutorial data..."
         onCompleted={onCompleted}
+        setPopoverIsShown={props.setPopoverIsShown}
     />
 }
 
@@ -125,6 +137,7 @@ export const BabyGruGetMonomerMenuItem = (props) => {
                     const newMolecule = new BabyGruMolecule(props.commandCentre)
                     newMolecule.coordMolNo = result.data.result.result
                     newMolecule.name = tlcRef.current.value
+                    props.setPopoverIsShown(false)
                     newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef).then(_ => {
                         newMolecule.cachedAtoms.sequences = []
                         props.setMolecules([...props.molecules, newMolecule])
@@ -137,21 +150,23 @@ export const BabyGruGetMonomerMenuItem = (props) => {
         popoverContent={panelContent}
         menuItemText="Get monomer..."
         onCompleted={onCompleted}
+        setPopoverIsShown={props.setPopoverIsShown}
     />
 }
 
-export const BabyGruDeleteMoleculeMenuItem = (props) => {
-
+export const BabyGruDeleteDisplayObjectMenuItem = (props) => {
+    
     const panelContent = <>
-        <Form.Group style={{ width: '10rem', margin: '0.5rem' }} controlId="BabyGruGetDeleteMoleculeMenuItem" className="mb-3">
+        <Form.Group style={{ width: '10rem', margin: '0.5rem' }} controlId="BabyGruGetDeleteMenuItem" className="mb-3">
             <span style={{ fontWeight: 'bold' }}>Are you sure?</span>
         </Form.Group>
     </>
 
     const onCompleted = () => {
-        let newMoleculesList = props.molecules.filter(molecule => molecule.coordMolNo !== props.molecule.coordMolNo)
-        props.setMolecules(newMoleculesList)
-        props.molecule.delete(props.glRef);
+        let newItemList = props.itemList.filter(item => props.item.mapMolNo ? item.mapMolNo !== props.item.mapMolNo : item.coordMolNo !== props.item.coordMolNo)
+        props.setItemList(newItemList)
+        props.item.delete(props.glRef);
+        props.setPopoverIsShown(false)
     }
 
     return <BabyGruMenuItem
@@ -162,18 +177,19 @@ export const BabyGruDeleteMoleculeMenuItem = (props) => {
         popoverContent={panelContent}
         menuItemText="Delete molecule"
         onCompleted={onCompleted}
+        setPopoverIsShown={props.setPopoverIsShown}
     />
 }
 
-export const BabyGruRenameMoleculeMenuItem = (props) => {
+export const BabyGruRenameDisplayObjectMenuItem = (props) => {
     const newNameInputRef = useRef(null)
 
     const panelContent = <>
-        <Form.Group style={{ width: '10rem', margin: '0' }} controlId="BabyGruGetRenameMoleculeMenuItem" className="mb-3">
+        <Form.Group style={{ width: '10rem', margin: '0' }} controlId="BabyGruGetRenameMenuItem" className="mb-3">
             <Form.Control
                 ref={newNameInputRef}
                 type="text"
-                name="newMoleculeName"
+                name="newItemName"
                 placeholder="New name"
             />
         </Form.Group>
@@ -181,14 +197,20 @@ export const BabyGruRenameMoleculeMenuItem = (props) => {
 
     const onCompleted = () => {
         let newName = newNameInputRef.current.value
-        props.setMoleculeName(newName)
+        if (newName == "") {
+            return
+        }
+        props.item.name ? props.item.name = newName : props.item.mapName = newName
+        props.setCurrentName(newName)
+        props.setPopoverIsShown(false)
     }
 
     return <BabyGruMenuItem
         popoverPlacement='left'
         popoverContent={panelContent}
-        menuItemText="Rename molecule"
+        menuItemText={props.item.name ? "Rename molecule" : "Rename map"}
         onCompleted={onCompleted}
+        setPopoverIsShown={props.setPopoverIsShown}
     />
 }
 
@@ -211,7 +233,7 @@ export const BabyGruDeleteEverythingMenuItem = (props) => {
         })
         props.setMaps([])
         props.setMolecules([])
-
+        props.setPopoverIsShown(false)
     }
 
     return <BabyGruMenuItem
@@ -221,6 +243,7 @@ export const BabyGruDeleteEverythingMenuItem = (props) => {
         popoverContent={panelContent}
         menuItemText="Delete everything"
         onCompleted={onCompleted}
+        setPopoverIsShown={props.setPopoverIsShown}
     />
 }
 
@@ -248,7 +271,7 @@ export const BabyGruBackgroundColorMenuItem = (props) => {
             console.log('err', err)
         }
     }
-    const onCompleted = () => { }
+    const onCompleted = () => { props.setPopoverIsShown(false) }
 
     const panelContent = <>
         <SketchPicker color={backgroundColor} onChange={handleColorChange} />
@@ -265,7 +288,8 @@ export const BabyGruBackgroundColorMenuItem = (props) => {
                 <Button variant="light">Change</Button>
             </InputGroup >
         </Form.Group>}
-        onCompleted={onCompleted} />
+        onCompleted={onCompleted}
+        setPopoverIsShown={props.setPopoverIsShown} />
 }
 
 export const BabyGruImportDictionaryMenuItem = (props) => {
@@ -333,12 +357,14 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
             readPromises.push(readMmcifFile(file))
         }
         let mmcifReads = await Promise.all(readPromises)
+        props.setPopoverIsShown(false)
     }
 
     return <BabyGruMenuItem
         popoverContent={panelContent}
         menuItemText="Import dictionary..."
         onCompleted={onCompleted}
+        setPopoverIsShown={props.setPopoverIsShown}
     />
 }
 
@@ -383,6 +409,7 @@ export const BabyGruImportMapCoefficientsMenuItem = (props) => {
             F: fSelectRef.current.value, PHI: phiSelectRef.current.value, W: wSelectRef.current.value,
             isDifference: isDiffRef.current.checked, useWeight: useWeightRef.current.checked
         }
+        props.setPopoverIsShown(false)
         return await handleFile(filesRef.current.files[0], selectedColumns)
     }
 
@@ -438,6 +465,7 @@ export const BabyGruImportMapCoefficientsMenuItem = (props) => {
         popoverContent={panelContent}
         menuItemText="Map coefficients..."
         onCompleted={onCompleted}
+        setPopoverIsShown={props.setPopoverIsShown}
     />
 }
 
@@ -508,12 +536,13 @@ export const BabyGruClipFogMenuItem = (props) => {
             }} />
     </div>
 
-    const onCompleted = () => { }
+    const onCompleted = () => { props.setPopoverIsShown(false) }
 
     return <BabyGruMenuItem
         popoverContent={panelContent}
         menuItemText="Clipping and fogging..."
         onCompleted={onCompleted}
+        setPopoverIsShown={props.setPopoverIsShown}
     />
 }
 
@@ -546,6 +575,7 @@ export const BabyGruMergeMoleculesMenuItem = (props) => {
                         molecule.hide(style, props.glRef)
                     })
                 })
+            props.setPopoverIsShown(false)
         })
     }, [toRef.current, fromRef.current, props.molecules])
 
@@ -554,5 +584,6 @@ export const BabyGruMergeMoleculesMenuItem = (props) => {
         popoverContent={panelContent}
         menuItemText="Merge molecules..."
         onCompleted={onCompleted}
+        setPopoverIsShown={props.setPopoverIsShown}
     />
 }

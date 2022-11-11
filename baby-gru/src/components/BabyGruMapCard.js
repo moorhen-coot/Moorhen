@@ -1,8 +1,10 @@
-import { useEffect, useState, createRef, useCallback } from "react";
-import { Card, Form, Button, Row, Col, Dropdown, DropdownButton } from "react-bootstrap";
+import { useEffect, useState, createRef, useCallback, useMemo } from "react";
+import { Card, Form, Button, Row, Col, DropdownButton } from "react-bootstrap";
 import { doDownload } from '../BabyGruUtils';
 import { DownloadOutlined, VisibilityOffOutlined, VisibilityOutlined, ExpandMoreOutlined, ExpandLessOutlined } from '@mui/icons-material';
 import BabyGruSlider from "./BabyGruSlider";
+import { BabyGruDeleteDisplayObjectMenuItem, BabyGruRenameDisplayObjectMenuItem } from "./BabyGruMenuItem";
+import { MenuItem } from "@mui/material";
 
 export const BabyGruMapCard = (props) => {
     const [cootContour, setCootContour] = useState(true)
@@ -10,14 +12,11 @@ export const BabyGruMapCard = (props) => {
     const [mapContourLevel, setMapContourLevel] = useState(props.initialContour)
     const [mapLitLines, setMapLitLines] = useState(props.initialMapLitLines)    
     const [isCollapsed, setIsCollapsed] = useState(false);
+    const [currentName, setCurrentName] = useState(props.map.mapName);
     const nextOrigin = createRef([])
     const busyContouring = createRef(false)
-
-    const handleDeleteMap = () => {
-        let newMapList = props.maps.filter(map => map.mapMolNo !== props.map.mapMolNo)
-        props.setMaps(newMapList)
-        props.map.delete(props.glRef);
-    }
+    const [dropdownIsShown, setDropdownIsShown] = useState(false)
+    const [popoverIsShown, setPopoverIsShown] = useState(false)
 
     const handleOriginCallback = useCallback(e => {
         nextOrigin.current = [...e.detail.map(coord => -coord)]
@@ -60,6 +59,14 @@ export const BabyGruMapCard = (props) => {
             }
         }
     }, [mapContourLevel, mapRadius])
+
+    useMemo(() => {
+        if (currentName == "") {
+            return
+        }
+        props.map.mapName = currentName
+
+    }, [currentName]);
 
     useEffect(() => {
         document.addEventListener("originChanged", handleOriginCallback);
@@ -131,9 +138,10 @@ export const BabyGruMapCard = (props) => {
                         }}>
                         {isCollapsed ? < ExpandMoreOutlined/> : <ExpandLessOutlined />}
                     </Button>
-                    <DropdownButton size="sm" variant="outlined">
-                        <Dropdown.Item as="button" onClick={handleDeleteMap}>Delete map</Dropdown.Item>
-                        <Dropdown.Item as="button" onClick={() => {setMapLitLines(!mapLitLines)}}>{mapLitLines ? "Deactivate lit lines" : "Activate lit lines"}</Dropdown.Item>
+                    <DropdownButton size="sm" variant="outlined" autoClose={popoverIsShown ? false : 'outside'} onToggle={() => setDropdownIsShown(!dropdownIsShown)} show={dropdownIsShown} >
+                        <MenuItem variant="success" onClick={() => {setMapLitLines(!mapLitLines)}}>{mapLitLines ? "Deactivate lit lines" : "Activate lit lines"}</MenuItem>
+                        <BabyGruRenameDisplayObjectMenuItem setPopoverIsShown={setPopoverIsShown} setCurrentName={setCurrentName} item={props.map} />
+                        <BabyGruDeleteDisplayObjectMenuItem setPopoverIsShown={setPopoverIsShown} glRef={props.glRef} setItemList={props.setMaps} itemList={props.maps} item={props.map}/>
                     </DropdownButton>
                 </Col>
             </Row>
