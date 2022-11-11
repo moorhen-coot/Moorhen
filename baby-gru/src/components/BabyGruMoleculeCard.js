@@ -108,7 +108,12 @@ export const BabyGruMoleculeCard = (props) => {
                         }}>
                         {isCollapsed ? < ExpandMoreOutlined/> : <ExpandLessOutlined />}
                     </Button>
-                    <DropdownButton size="sm" variant="outlined" autoClose={popoverIsShown ? false : 'outside'} onToggle={() => setDropdownIsShown(!dropdownIsShown)} show={dropdownIsShown} >
+                    <DropdownButton 
+                            size="sm" 
+                            variant="outlined" 
+                            autoClose={popoverIsShown ? false : 'outside'} 
+                            show={props.currentDropdownMolNo === props.molecule.coordMolNo} 
+                            onToggle={() => {props.molecule.coordMolNo !== props.currentDropdownMolNo ? props.setCurrentDropdownMolNo(props.molecule.coordMolNo) : props.setCurrentDropdownMolNo(-1)}}>
                         <MenuItem variant="success" onClick={handleCopyFragment}>Copy selected residues into fragment</MenuItem>
                         <BabyGruRenameDisplayObjectMenuItem setPopoverIsShown={setPopoverIsShown} setCurrentName={setCurrentName} item={props.molecule} />
                         <BabyGruDeleteDisplayObjectMenuItem setPopoverIsShown={setPopoverIsShown} glRef={props.glRef} setItemList={props.setMolecules} itemList={props.molecules} item={props.molecule}/>
