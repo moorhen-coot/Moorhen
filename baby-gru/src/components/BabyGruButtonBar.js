@@ -432,28 +432,15 @@ export const BabyGruJedFlipTrueButton = (props) => {
 export const BabyGruRotateTranslateZoneButton = (props) => {
     const [showAccept, setShowAccept] = useState(false)
     const theButton = useRef(null)
-    const { setActiveMolecule, backgroundColor, glRef } = props
+    const { backgroundColor, glRef } = props
     const fragmentMolecule = useRef(null)
     const chosenMolecule = useRef(null)
 
-    const acceptTransform = useCallback((e) => {
-        fragmentMolecule.current.applyTransform(glRef)
-            .then(result => {
-                return props.commandCentre.current.cootCommand({
-                    command: 'merge_molecules',
-                    commandArgs: [chosenMolecule.current.coordMolNo, `${fragmentMolecule.current.coordMolNo}`],
-                    returnType: "Status"
-                }, true)
-            }).then(result => {
-                console.log('Merge molecules result', result)
-                chosenMolecule.current.setAtomsDirty(true)
-                chosenMolecule.current.redraw(props.glRef)
-            })
+    const acceptTransform = useCallback(async (e) => {
         glRef.current.setActiveMolecule(null)
-        glRef.current.drawScene()
-        const newMolecules = props.molecules.filter(molecule => molecule.coordMolNo !== fragmentMolecule.current.coordMolNo)
-        props.setMolecules(newMolecules)
-        fragmentMolecule.current.delete(props.glRef)
+        const transformedAtoms = fragmentMolecule.current.transformedCachedAtomsAsMovedAtoms(glRef)
+        await chosenMolecule.current.updateWithMovedAtoms(transformedAtoms, glRef)
+        await fragmentMolecule.delete()
         setShowAccept(false)
     }, [fragmentMolecule.current, chosenMolecule.current])
 
@@ -464,15 +451,6 @@ export const BabyGruRotateTranslateZoneButton = (props) => {
             chosenAtom.chain_id, chosenAtom.res_no, chosenAtom.res_no, props.glRef
         )
         fragmentMolecule.current = newMolecule
-        /* Delete the component from current molecule */
-        const result = await props.commandCentre.current.cootCommand({
-            command: 'delete_using_cid',
-            commandArgs: [
-                molecule.coordMolNo, `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}`, 'RESIDUE'
-            ],
-            returnType: "Status"
-        }, true)
-        molecule.redraw(props.glRef)
         /* redraw */
         props.setMolecules([...props.molecules, newMolecule])
         props.glRef.current.setActiveMolecule(newMolecule)

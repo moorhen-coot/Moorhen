@@ -529,7 +529,7 @@ BabyGruMolecule.prototype.redraw = function (gl) {
     )
 }
 
-BabyGruMolecule.prototype.applyTransform = async function (glRef) {
+BabyGruMolecule.prototype.transformedCachedAtomsAsMovedAtoms = function (glRef) {
     const $this = this
     let movedResidues = [];
     $this.cachedAtoms.atoms.forEach(mod => {
@@ -556,10 +556,10 @@ BabyGruMolecule.prototype.applyTransform = async function (glRef) {
                             const transPos = vec3.create()
                             vec3.set(atomPos, x, y, z)
                             vec3.transformMat4(transPos, atomPos, theMatrix);
-                            if(atomSymbol.length==2)
-                                movedAtoms.push({name:(atomName).padEnd(4," "),x:transPos[0]-glRef.current.origin[0],y:transPos[1]-glRef.current.origin[1],z:transPos[2]-glRef.current.origin[2],resCid:cid})
+                            if (atomSymbol.length == 2)
+                                movedAtoms.push({ name: (atomName).padEnd(4, " "), x: transPos[0] - glRef.current.origin[0], y: transPos[1] - glRef.current.origin[1], z: transPos[2] - glRef.current.origin[2], resCid: cid })
                             else
-                                movedAtoms.push({name:(" "+atomName).padEnd(4," "),x:transPos[0]-glRef.current.origin[0],y:transPos[1]-glRef.current.origin[1],z:transPos[2]-glRef.current.origin[2],resCid:cid})
+                                movedAtoms.push({ name: (" " + atomName).padEnd(4, " "), x: transPos[0] - glRef.current.origin[0], y: transPos[1] - glRef.current.origin[1], z: transPos[2] - glRef.current.origin[2], resCid: cid })
                         }
                     })
                     movedResidues.push(movedAtoms)
@@ -567,7 +567,11 @@ BabyGruMolecule.prototype.applyTransform = async function (glRef) {
             })
         })
     })
-    console.log('movedResidues are', movedResidues)
+    return movedResidues
+}
+
+BabyGruMolecule.prototype.updateWithMovedAtoms = async function (movedResidues, glRef) {
+    const $this = this
     return $this.commandCentre.current.cootCommand({
         returnType: "status",
         command: "shim_new_positions_for_residue_atoms",
@@ -576,6 +580,14 @@ BabyGruMolecule.prototype.applyTransform = async function (glRef) {
         $this.displayObjects.transformation.origin = [0, 0, 0]
         $this.displayObjects.transformation.quat = null
         $this.setAtomsDirty(true)
-        $this.redraw(glRef)
+        return $this.redraw(glRef)
     })
+
+}
+
+BabyGruMolecule.prototype.applyTransform = async function (glRef) {
+    const $this = this
+    const movedResidues = $this.transformedCachedAtomsAsMovedAtoms(glRef)
+    console.log({movedResidues})
+    return $this.updateWithMovedAtoms(movedResidues, glRef)
 }

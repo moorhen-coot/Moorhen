@@ -271,7 +271,7 @@ export const BabyGruBackgroundColorMenuItem = (props) => {
 export const BabyGruImportDictionaryMenuItem = (props) => {
     const filesRef = useRef(null)
     const moleculeSelectRef = useRef(null)
-    const [createInstance, setCreateInstance] = useState(false)
+    const [createInstance, setCreateInstance] = useState(true)
     const createInstanceRef = useRef()
 
     const panelContent = <>
@@ -523,30 +523,19 @@ export const BabyGruMergeMoleculesMenuItem = (props) => {
     const [selectedMolecules, setSelectedMolecules] = useState([])
 
     const panelContent = <>
-        <BabyGruMoleculeSelect {...props} ref={toRef} />
-        <Form.Group style={{ width: '20rem', margin: '0' }} controlId="BabyGruMergeMoleculeFromMenuItem" className="mb-3">
-            <Form.Label>Molecule into which to merge</Form.Label>
-            <Form.Select
-                vaue={selectedMolecules}
-                ref={fromRef}
-                type="text"
-                multiple={true}
-                name="newMoleculeName"
-                placeholder="New name"
-                onChange={(e) => {
-                    console.log(e)
-                }}
-            >
-                {props.molecules.map(molecule => molecule.coordMolNo !== 0 && <option value={molecule}>{molecule.coordMolNo}: {molecule.name}</option>)}
-            </Form.Select>
-        </Form.Group>
+        <BabyGruMoleculeSelect {...props} label="Into molecule" allowAny={false} ref={toRef} />
+        <BabyGruMoleculeSelect {...props} label="From molecule" allowAny={false} ref={fromRef} />
     </>
 
-    const onCompleted = useCallback(() => {
-        for (let val of fromRef.current.value) {
-            console.log('Val', val)
-        }
-    }, [fromRef.current])
+    const onCompleted = async () => {
+        return props.commandCentre.current.cootCommand({
+            command: 'merge_molecules',
+            commandArgs: [parseInt(toRef.current.value), `${fromRef.current.value}`],
+            returnType: "Status"
+        }, true).then(result => {
+            console.log('Merge molecules result', result)
+        })
+    }
 
     return <BabyGruMenuItem
         popoverPlacement='right'
