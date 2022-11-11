@@ -527,15 +527,27 @@ export const BabyGruMergeMoleculesMenuItem = (props) => {
         <BabyGruMoleculeSelect {...props} label="From molecule" allowAny={false} ref={fromRef} />
     </>
 
-    const onCompleted = async () => {
+    const onCompleted = useCallback(async () => {
         return props.commandCentre.current.cootCommand({
             command: 'merge_molecules',
             commandArgs: [parseInt(toRef.current.value), `${fromRef.current.value}`],
             returnType: "Status"
         }, true).then(result => {
-            console.log('Merge molecules result', result)
+            props.molecules
+                .filter(molecule => molecule.coordMolNo === parseInt(toRef.current.value))
+                .forEach(molecule => {
+                    molecule.setAtomsDirty(true)
+                    molecule.redraw(props.glRef)
+                })
+            props.molecules
+                .filter(molecule => molecule.coordMolNo === parseInt(fromRef.current.value))
+                .forEach(molecule => {
+                    Object.keys(molecule.displayObjects).forEach(style => {
+                        molecule.hide(style, props.glRef)
+                    })
+                })
         })
-    }
+    }, [toRef.current, fromRef.current, props.molecules])
 
     return <BabyGruMenuItem
         popoverPlacement='right'
