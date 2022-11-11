@@ -1,3 +1,4 @@
+import { ConnectingAirportsOutlined } from "@mui/icons-material";
 import { MenuItem } from "@mui/material";
 import { createRef, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { OverlayTrigger, Popover, PopoverBody, PopoverHeader, Form, InputGroup, Button, FormSelect, Row, Col } from "react-bootstrap";
@@ -271,14 +272,31 @@ export const BabyGruBackgroundColorMenuItem = (props) => {
 export const BabyGruImportDictionaryMenuItem = (props) => {
     const filesRef = useRef(null)
     const moleculeSelectRef = useRef(null)
+    const tlcRef = useRef(null)
+    const [fileOrLibrary, setFileOrLibrary] = useState("Library")
     const [createInstance, setCreateInstance] = useState(true)
     const createInstanceRef = useRef()
 
     const panelContent = <>
-        <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="uploadDicts" className="mb-3">
-            <Form.Label>Dictionaries</Form.Label>
-            <Form.Control ref={filesRef} type="file" accept={[".cif", ".dict", ".mmcif"]} multiple={false} />
+        <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="fileOrLibrary" className="mb-3">
+            <Form.Label>From file or monomer library</Form.Label>
+            <Form.Select value={fileOrLibrary} onChange={(e) => { setFileOrLibrary(e.target.value) }}>
+                <option value="File">From file</option>
+                <option value="Library">From monomer library</option>
+            </Form.Select>
         </Form.Group>
+        {fileOrLibrary === 'File' &&
+            <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="uploadDicts" className="mb-3">
+                <Form.Label>Browse...</Form.Label>
+                <Form.Control ref={filesRef} type="file" accept={[".cif", ".dict", ".mmcif"]} multiple={false} />
+            </Form.Group>
+        }
+        {fileOrLibrary === 'Library' &&
+            <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="uploadDicts" className="mb-3">
+                <Form.Label>TLC from monomer lib</Form.Label>
+                <Form.Control ref={tlcRef} type="text" />
+            </Form.Group>
+        }
         <BabyGruMoleculeSelect {...props} allowAny={true} ref={moleculeSelectRef} />
         <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="createInstance" className="mb-3">
             <Form.Label>Create instance on read</Form.Label>
@@ -289,15 +307,13 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
         </Form.Group>
     </>
 
-    const readMmcifFile = async (file) => {
-        return readTextFile(file)
-            .then(fileContent => {
-                return props.commandCentre.current.cootCommand({
-                    returnType: "status",
-                    command: 'shim_read_dictionary',
-                    commandArgs: [fileContent, moleculeSelectRef.current.value]
-                }, true)
-            }).then(result => {
+    const handleFileContent = (fileContent) => {
+        return props.commandCentre.current.cootCommand({
+            returnType: "status",
+            command: 'shim_read_dictionary',
+            commandArgs: [fileContent, moleculeSelectRef.current.value]
+        }, true)
+            .then(result => {
                 props.molecules
                     .filter(molecule => molecule.coordMolNo === parseInt(moleculeSelectRef.current.value))
                     .forEach(molecule => {
@@ -327,12 +343,33 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
             })
     }
 
+    const readMmcifFile = async (file) => {
+        return readTextFile(file)
+            .then(fileContent => {
+                handleFileContent(fileContent)
+            })
+    }
+
+    const readMonomerFile = async (tlc) => {
+        console.log({ tlc })
+        return fetch(`./monomers/${tlc.toLowerCase()[0]}/${tlc.toUpperCase()}.cif`)
+            .then(response => response.text())
+            .then(fileContent => {
+                handleFileContent(fileContent)
+            })
+    }
+
     const onCompleted = async () => {
-        let readPromises = []
-        for (const file of filesRef.current.files) {
-            readPromises.push(readMmcifFile(file))
+        if (fileOrLibrary === "File") {
+            let readPromises = []
+            for (const file of filesRef.current.files) {
+                readPromises.push(readMmcifFile(file))
+            }
+            let mmcifReads = await Promise.all(readPromises)
         }
-        let mmcifReads = await Promise.all(readPromises)
+        else {
+            readMonomerFile(tlcRef.current.value)
+        }
     }
 
     return <BabyGruMenuItem
