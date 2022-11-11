@@ -8519,11 +8519,11 @@ class MGWebGL extends Component {
     }
 
     doWheel(event) {
-        var factor;
+        let factor;
         if( event.deltaY>0){
-            factor = 1. + 5/50.;
+            factor = 1. + 1/50.;
         } else {
-            factor = 1. - 5/50.;
+            factor = 1. - 1/50.;
         }
         let newZoom = this.zoom * factor;
         if(newZoom < .01){
