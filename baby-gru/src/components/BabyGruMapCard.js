@@ -138,7 +138,12 @@ export const BabyGruMapCard = (props) => {
                         }}>
                         {isCollapsed ? < ExpandMoreOutlined/> : <ExpandLessOutlined />}
                     </Button>
-                    <DropdownButton size="sm" variant="outlined" autoClose={popoverIsShown ? false : 'outside'} onToggle={() => setDropdownIsShown(!dropdownIsShown)} show={dropdownIsShown} >
+                    <DropdownButton 
+                            size="sm" 
+                            variant="outlined" 
+                            autoClose={popoverIsShown ? false : 'outside'} 
+                            show={props.currentDropdownMolNo === props.map.mapMolNo} 
+                            onToggle={() => {props.map.mapMolNo !== props.currentDropdownMolNo ? props.setCurrentDropdownMolNo(props.map.mapMolNo) : props.setCurrentDropdownMolNo(-1)}}>
                         <MenuItem variant="success" onClick={() => {setMapLitLines(!mapLitLines)}}>{mapLitLines ? "Deactivate lit lines" : "Activate lit lines"}</MenuItem>
                         <BabyGruRenameDisplayObjectMenuItem setPopoverIsShown={setPopoverIsShown} setCurrentName={setCurrentName} item={props.map} />
                         <BabyGruDeleteDisplayObjectMenuItem setPopoverIsShown={setPopoverIsShown} glRef={props.glRef} setItemList={props.setMaps} itemList={props.maps} item={props.map}/>

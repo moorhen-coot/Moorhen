@@ -1,8 +1,9 @@
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
 import { BabyGruMoleculeCard } from "./BabyGruMoleculeCard"
 import { BabyGruMapCard } from "./BabyGruMapCard"
 
 export const BabyGruDisplayObjects = (props) => {
+    const [currentDropdownMolNo, setCurrentDropdownMolNo] = useState(-1)
 
     let displayData = [];
     if (props.molecules.length!=0) {
@@ -10,20 +11,24 @@ export const BabyGruDisplayObjects = (props) => {
             <BabyGruMoleculeCard 
                 index={molecule.coordMolNo}
                 molecule={molecule}
-                molecules={props.molecules}
-                setMolecules={props.setMolecules}
-                setActiveMolecule={props.setActiveMolecule}
-                activeMolecule={props.activeMolecule}
-                glRef={props.glRef}
-                commandCentre={props.commandCentre}>
-            </BabyGruMoleculeCard>
+                currentDropdownMolNo={currentDropdownMolNo}
+                setCurrentDropdownMolNo={setCurrentDropdownMolNo}
+                {...props}/>
             )
         )
     } 
     
     if (props.maps.length!=0) {
         props.maps.forEach(map => displayData.push(
-            <BabyGruMapCard {...props} index={map.mapMolNo} map={map} initialContour={0.8} initialRadius={13} initialMapLitLines={false} />
+            <BabyGruMapCard 
+                index={map.mapMolNo}
+                map={map} 
+                initialContour={0.8} 
+                initialRadius={13} 
+                initialMapLitLines={false} 
+                currentDropdownMolNo={currentDropdownMolNo}
+                setCurrentDropdownMolNo={setCurrentDropdownMolNo}
+                {...props}/>
         ))
     }   
 

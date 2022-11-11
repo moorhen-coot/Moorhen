@@ -16,9 +16,9 @@ export const BabyGruMenuItem = (props) => {
     })
 
     return <>
-        {props.popoverContent ? <OverlayTrigger 
-            rootClose 
-            placement={props.popoverPlacement} 
+        {props.popoverContent ? <OverlayTrigger
+            rootClose
+            placement={props.popoverPlacement}
             trigger="click"
 
             onEntered={() => {
@@ -29,7 +29,7 @@ export const BabyGruMenuItem = (props) => {
                 props.setPopoverIsShown(false)
             }}
 
-            onEnter={() => {            
+            onEnter={() => {
                 new Promise((resolve, reject) => {
                     resolveOrRejectRef.current = { resolve, reject }
                 }).then(result => {
@@ -37,7 +37,7 @@ export const BabyGruMenuItem = (props) => {
                     document.body.click()
                 })
             }}
-            
+
             overlay={
                 <Popover style={{ maxWidth: "40rem" }}>
                     <PopoverHeader as="h3">{props.menuItemTitle}</PopoverHeader>
@@ -100,7 +100,7 @@ export const BabyGruLoadTutorialDataMenuItem = (props) => {
                 props.setMaps([...props.maps, newMap, newDiffMap])
                 props.setActiveMap(newMap)
             })
-            props.setPopoverIsShown(false)
+        props.setPopoverIsShown(false)
     }
 
     return <BabyGruMenuItem
@@ -155,7 +155,7 @@ export const BabyGruGetMonomerMenuItem = (props) => {
 }
 
 export const BabyGruDeleteDisplayObjectMenuItem = (props) => {
-    
+
     const panelContent = <>
         <Form.Group style={{ width: '10rem', margin: '0.5rem' }} controlId="BabyGruGetDeleteMenuItem" className="mb-3">
             <span style={{ fontWeight: 'bold' }}>Are you sure?</span>
@@ -348,14 +348,14 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
                     props.commandCentre.current.cootCommand({
                         returnType: 'status',
                         command: 'get_monomer_and_position_at',
-                        commandArgs: ['NUT', moleculeSelectRef.current.value, ...props.glRef.current.origin.map(coord => -coord)]
+                        commandArgs: [tlcRef.current.value.toUpperCase(), moleculeSelectRef.current.value, ...props.glRef.current.origin.map(coord => -coord)]
 
                     }, true)
                         .then(result => {
                             if (result.data.result.status === "Completed") {
                                 const newMolecule = new BabyGruMolecule(props.commandCentre)
                                 newMolecule.coordMolNo = result.data.result.result
-                                newMolecule.name = 'NUT'
+                                newMolecule.name = tlcRef.current.value.toUpperCase()
                                 newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef).then(_ => {
                                     newMolecule.cachedAtoms.sequences = []
                                     props.setMolecules([...props.molecules, newMolecule])
@@ -619,6 +619,36 @@ export const BabyGruMergeMoleculesMenuItem = (props) => {
         popoverPlacement='right'
         popoverContent={panelContent}
         menuItemText="Merge molecules..."
+        onCompleted={onCompleted}
+        setPopoverIsShown={props.setPopoverIsShown}
+    />
+}
+
+export const BabyGruAddWatersMenuItem = (props) => {
+    const moleculeRef = useRef(null)
+
+    const panelContent = <>
+        <BabyGruMoleculeSelect {...props} ref={moleculeRef} allowAny={false} />
+    </>
+
+    const onCompleted = () => {
+        return props.commandCentre.current.cootCommand({
+            command: 'add_waters',
+            commandArgs: [parseInt(moleculeRef.current.value), props.activeMap.mapMolNo],
+            returnType: "Status"
+        }, true).then(result => {
+            props.molecules
+                .filter(molecule => molecule.coordMolNo === parseInt(moleculeRef.current.value))
+                .forEach(molecule => {
+                    molecule.setAtomsDirty(true)
+                    molecule.redraw(props.glRef)
+                })
+        })
+    }
+
+    return <BabyGruMenuItem
+        popoverContent={panelContent}
+        menuItemText="Add waters..."
         onCompleted={onCompleted}
         setPopoverIsShown={props.setPopoverIsShown}
     />

@@ -662,6 +662,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     //.function("get_interesting_places",&molecules_container_t::get_interesting_places)
     .function("difference_map_peaks",&molecules_container_t::difference_map_peaks)
     .function("pepflips_using_difference_map",&molecules_container_t::pepflips_using_difference_map)
+    .function("add_waters",&molecules_container_t::add_waters)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<>()

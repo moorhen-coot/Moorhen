@@ -50,3 +50,5 @@ coot/mini-rsr-web.worker.js
 coot/mini-rsr.js
 coot/mini-rsr.worker.js
 tests/moorhen.data
+install/*
+

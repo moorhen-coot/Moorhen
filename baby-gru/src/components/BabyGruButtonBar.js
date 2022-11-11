@@ -445,11 +445,19 @@ export const BabyGruRotateTranslateZoneButton = (props) => {
         setShowAccept(false)
     }, [fragmentMolecule.current, chosenMolecule.current, molecules, setMolecules])
 
+    const rejectTransform = useCallback(async (e) => {
+        glRef.current.setActiveMolecule(null)
+        setMolecules(molecules.filter(molecule => molecule.coordMolNo !== fragmentMolecule.current.coordMolNo))
+        const response = fragmentMolecule.current.delete()
+        setShowAccept(false)
+    }, [fragmentMolecule.current, chosenMolecule.current, molecules, setMolecules])
+
+
     const nonCootCommand = async (molecule, chosenAtom, p) => {
         chosenMolecule.current = molecule
         /* Copy the component to move into a new molecule */
         const newMolecule = await molecule.copyFragment(
-            chosenAtom.chain_id, chosenAtom.res_no, chosenAtom.res_no, props.glRef
+            chosenAtom.chain_id, chosenAtom.res_no, chosenAtom.res_no, props.glRef, false
         )
         fragmentMolecule.current = newMolecule
         /* redraw */
@@ -484,11 +492,7 @@ export const BabyGruRotateTranslateZoneButton = (props) => {
                         <Card.Header >Accept rotate/translate ?</Card.Header>
                         <Card.Body className="">
                             <Button onClick={acceptTransform}><CheckOutlined /></Button>
-                            <Button className="mx-2" onClick={(e) => {
-                                console.log(e)
-                                setShowAccept(false)
-                                glRef.current.setActiveMolecule(null)
-                            }}><CloseOutlined /></Button>
+                            <Button className="mx-2" onClick={rejectTransform}><CloseOutlined /></Button>
                         </Card.Body>
                     </Card>
                 </div>
