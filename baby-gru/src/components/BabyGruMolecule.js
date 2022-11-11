@@ -41,7 +41,10 @@ BabyGruMolecule.prototype.delete = async function (gl) {
     return response
 }
 
-BabyGruMolecule.prototype.copyFragment = async function (chainId, res_no_start, res_no_end, gl) {
+BabyGruMolecule.prototype.copyFragment = async function (chainId, res_no_start, res_no_end, gl, doRecentre) {
+    if (typeof doRecentre === 'undefined') {
+        doRecentre = true
+    }
     const $this = this
     const inputData = { message: "copy_fragment", coordMolNo: $this.coordMolNo, chainId: chainId, res_no_start: res_no_start, res_no_end: res_no_end }
     const response = await $this.commandCentre.current.postMessage(inputData)
@@ -49,7 +52,7 @@ BabyGruMolecule.prototype.copyFragment = async function (chainId, res_no_start, 
     newMolecule.name = `${$this.name} fragment`
     newMolecule.coordMolNo = response.data.result
     await newMolecule.fetchIfDirtyAndDraw('CBs', gl)
-    await newMolecule.centreOn(gl)
+    if (doRecentre) await newMolecule.centreOn(gl)
 
     const sequenceInputData = { returnType: "residue_codes", command: "get_single_letter_codes_for_chain", commandArgs: [response.data.result, chainId] }
     const sequenceResponse = await $this.commandCentre.current.cootCommand(sequenceInputData)

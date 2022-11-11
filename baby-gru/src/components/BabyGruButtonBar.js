@@ -449,7 +449,7 @@ export const BabyGruRotateTranslateZoneButton = (props) => {
         chosenMolecule.current = molecule
         /* Copy the component to move into a new molecule */
         const newMolecule = await molecule.copyFragment(
-            chosenAtom.chain_id, chosenAtom.res_no, chosenAtom.res_no, props.glRef
+            chosenAtom.chain_id, chosenAtom.res_no, chosenAtom.res_no, props.glRef, false
         )
         fragmentMolecule.current = newMolecule
         /* redraw */
