@@ -182,7 +182,7 @@ export const BabyGruDeleteDisplayObjectMenuItem = (props) => {
 }
 
 export const BabyGruRenameDisplayObjectMenuItem = (props) => {
-    const  newNameInputRef = useRef(null)
+    const newNameInputRef = useRef(null)
 
     const panelContent = <>
         <Form.Group style={{ width: '10rem', margin: '0' }} controlId="BabyGruGetRenameMenuItem" className="mb-3">
