@@ -440,10 +440,10 @@ export const BabyGruRotateTranslateZoneButton = (props) => {
         glRef.current.setActiveMolecule(null)
         const transformedAtoms = fragmentMolecule.current.transformedCachedAtomsAsMovedAtoms(glRef)
         await chosenMolecule.current.updateWithMovedAtoms(transformedAtoms, glRef)
-        setMolecules(molecules.filter(molecule => molecule.ccordMolNo !== fragmentMolecule.current.coordMolNo))
+        setMolecules(molecules.filter(molecule => molecule.coordMolNo !== fragmentMolecule.current.coordMolNo))
         const response = fragmentMolecule.current.delete()
         setShowAccept(false)
-    }, [fragmentMolecule.current, chosenMolecule.current])
+    }, [fragmentMolecule.current, chosenMolecule.current, molecules, setMolecules])
 
     const nonCootCommand = async (molecule, chosenAtom, p) => {
         chosenMolecule.current = molecule
@@ -481,7 +481,7 @@ export const BabyGruRotateTranslateZoneButton = (props) => {
                     }}
                 >
                     <Card className="mx-2">
-                        <Card.Header >Accept rotation ?</Card.Header>
+                        <Card.Header >Accept rotate/translate ?</Card.Header>
                         <Card.Body className="">
                             <Button onClick={acceptTransform}><CheckOutlined /></Button>
                             <Button className="mx-2" onClick={(e) => {

@@ -5,14 +5,14 @@ import { useEffect, useState, useRef, createRef } from "react";
 import { BabyGruMtzWrapper, cootCommand, readTextFile } from '../BabyGruUtils';
 import { InsertDriveFile } from "@mui/icons-material";
 import { MenuItem } from "@mui/material";
-import { BabyGruGetMonomerMenuItem, BabyGruBackgroundColorMenuItem, BabyGruImportDictionaryMenuItem } from "./BabyGruMenuItem";
+import { BabyGruGetMonomerMenuItem, BabyGruBackgroundColorMenuItem, BabyGruImportDictionaryMenuItem, BabyGruMergeMoleculesMenuItem } from "./BabyGruMenuItem";
 
 export const BabyGruLigandMenu = (props) => {
     return <>
         <NavDropdown title="Ligand" id="basic-nav-dropdown">
             <BabyGruGetMonomerMenuItem {...props} />
             <BabyGruImportDictionaryMenuItem {...props} />
-
+            <BabyGruMergeMoleculesMenuItem {...props} />
         </NavDropdown>
     </>
 }

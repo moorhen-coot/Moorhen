@@ -93,8 +93,6 @@ export const BabyGruHistoryMenu = (props) => {
                 }} />
             </Form.Group>
 
-            <BabyGruMergeMoleculesMenuItem {...props} />
-
         </NavDropdown>
         <Modal size="xl" show={showHistory} onHide={() => { setShowHistory(false) }}>
             <Modal.Header closeButton>
