@@ -505,7 +505,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<coot::chain_validation_information_t>("chain_validation_information_t")
     .property("name", &coot::chain_validation_information_t::name)
-    .property("type", &coot::chain_validation_information_t::type)
     .property("chain_id", &coot::chain_validation_information_t::chain_id)
     .property("rviv", &coot::chain_validation_information_t::rviv)
     ;
