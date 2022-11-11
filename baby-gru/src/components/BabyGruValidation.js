@@ -1,11 +1,6 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from "react"
 import { Col, Row, Form } from 'react-bootstrap';
-import { Ramachandran } from "../WebGL/Ramachandran"
-import { cootCommand, postCootMessage } from "../BabyGruUtils"
-import { inspect } from 'util'
 import { Chart, registerables } from 'chart.js';
-import { convertRemToPx } from '../BabyGruUtils';
-import { ConnectingAirportsOutlined } from "@mui/icons-material";
 
 Chart.register(...registerables);
 
