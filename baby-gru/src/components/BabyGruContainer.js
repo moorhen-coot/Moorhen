@@ -238,7 +238,7 @@ export const BabyGruContainer = (props) => {
                         <BabyGruButtonBar {...collectedProps} />
                     </div>
                 </Col>
-                <Col style={{ padding: '0.5rem', margin: '0', display: showSideBar ? "Block" : "None" }} >
+                <Col style={{ padding: '0.5rem', margin: '0', display: showSideBar ? "block" : "none" }} >
                     <Accordion style={{ height: accordionHeight, overflowY: 'scroll' }}
                         alwaysOpen={true}
                         defaultActiveKey={''}

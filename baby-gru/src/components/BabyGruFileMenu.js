@@ -14,6 +14,8 @@ export const BabyGruFileMenu = (props) => {
     const [overlayVisible, setOverlayVisible] = useState(false)
     const [overlayContent, setOverlayContent] = useState(<></>)
     const [overlayTarget, setOverlayTarget] = useState(null)
+    const [dropdownIsShown, setDropdownIsShown] = useState(false)
+    const [popoverIsShown, setPopoverIsShown] = useState(false)
     const readMtzTarget = useRef(null);
     const readDictionaryTarget = useRef(null);
     const pdbCodeFetchInputRef = useRef(null);
@@ -66,7 +68,7 @@ export const BabyGruFileMenu = (props) => {
     }
 
     return <>
-        <NavDropdown title="File" id="basic-nav-dropdown">
+        <NavDropdown title="File" id="basic-nav-dropdown" autoClose={popoverIsShown ? false : 'outside'} onToggle={() => setDropdownIsShown(!dropdownIsShown)} show={dropdownIsShown}>
             <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="uploadCoords" className="mb-3">
                 <Form.Label>Coordinates</Form.Label>
                 <Form.Control type="file" accept=".pdb, .mmcif, .ent" multiple={true} onChange={(e) => { loadPdbFiles(e.target.files) }} />
@@ -85,13 +87,13 @@ export const BabyGruFileMenu = (props) => {
                 </InputGroup>
             </Form.Group>
 
-            <BabyGruImportMapCoefficientsMenuItem {...props} />
+            <BabyGruImportMapCoefficientsMenuItem setPopoverIsShown={setPopoverIsShown} {...props} />
 
-            <BabyGruImportDictionaryMenuItem {...props} />
+            <BabyGruImportDictionaryMenuItem setPopoverIsShown={setPopoverIsShown} {...props} />
 
-            <BabyGruLoadTutorialDataMenuItem {...props} />
+            <BabyGruLoadTutorialDataMenuItem setPopoverIsShown={setPopoverIsShown} {...props} />
 
-            <BabyGruDeleteEverythingMenuItem {...props}/>
+            <BabyGruDeleteEverythingMenuItem setPopoverIsShown={setPopoverIsShown} {...props}/>
 
         </NavDropdown>
 
