@@ -647,6 +647,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("apply_transformation_to_atom_selection",&molecules_container_t::apply_transformation_to_atom_selection)
     .function("new_positions_for_residue_atoms",&molecules_container_t::new_positions_for_residue_atoms)
     .function("new_positions_for_atoms_in_residues",&molecules_container_t::new_positions_for_atoms_in_residues)
+    .function("add_waters",&molecules_container_t::add_waters)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<>()
