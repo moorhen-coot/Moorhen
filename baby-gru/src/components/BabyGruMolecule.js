@@ -515,9 +515,8 @@ BabyGruMolecule.prototype.redraw = function (gl) {
     else {
         promise = Promise.resolve()
     }
-    promise.then(
-        _ => {
-            itemsToRedraw.reduce(
+    return promise.then(_ => {
+            return itemsToRedraw.reduce(
                 (p, style) => {
                     //console.log(`Redrawing ${style}`, $this.atomsDirty)
                     return p.then(() => $this.fetchIfDirtyAndDraw(style, gl)
@@ -588,6 +587,5 @@ BabyGruMolecule.prototype.updateWithMovedAtoms = async function (movedResidues, 
 BabyGruMolecule.prototype.applyTransform = async function (glRef) {
     const $this = this
     const movedResidues = $this.transformedCachedAtomsAsMovedAtoms(glRef)
-    console.log({movedResidues})
     return $this.updateWithMovedAtoms(movedResidues, glRef)
 }

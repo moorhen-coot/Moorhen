@@ -432,7 +432,7 @@ export const BabyGruJedFlipTrueButton = (props) => {
 export const BabyGruRotateTranslateZoneButton = (props) => {
     const [showAccept, setShowAccept] = useState(false)
     const theButton = useRef(null)
-    const { backgroundColor, glRef } = props
+    const { setMolecules, molecules, backgroundColor, glRef } = props
     const fragmentMolecule = useRef(null)
     const chosenMolecule = useRef(null)
 
@@ -440,7 +440,8 @@ export const BabyGruRotateTranslateZoneButton = (props) => {
         glRef.current.setActiveMolecule(null)
         const transformedAtoms = fragmentMolecule.current.transformedCachedAtomsAsMovedAtoms(glRef)
         await chosenMolecule.current.updateWithMovedAtoms(transformedAtoms, glRef)
-        await fragmentMolecule.delete()
+        setMolecules(molecules.filter(molecule => molecule.ccordMolNo !== fragmentMolecule.current.coordMolNo))
+        const response = fragmentMolecule.current.delete()
         setShowAccept(false)
     }, [fragmentMolecule.current, chosenMolecule.current])
 
