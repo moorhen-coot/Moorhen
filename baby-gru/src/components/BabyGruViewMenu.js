@@ -1,17 +1,16 @@
-import { NavDropdown, Form, Overlay, Button } from "react-bootstrap";
-import { useEffect, useRef, useState } from "react";
-import BabyGruSlider from "./BabyGruSlider";
+import { NavDropdown } from "react-bootstrap";
+import { useState } from "react";
 import { BabyGruBackgroundColorMenuItem, BabyGruClipFogMenuItem } from "./BabyGruMenuItem";
 
 
 export const BabyGruViewMenu = (props) => {
-    const [overlayVisible, setOverlayVisible] = useState(false)
-    const [overlayContent, setOverlayContent] = useState(<></>)
+    const [dropdownIsShown, setDropdownIsShown] = useState(false)
+    const [popoverIsShown, setPopoverIsShown] = useState(false)
 
-    return <>
-        < NavDropdown title="View" id="basic-nav-dropdown" >
-            <BabyGruBackgroundColorMenuItem {...props} />
-            <BabyGruClipFogMenuItem {...props} />
+return <>
+        < NavDropdown title="View" id="basic-nav-dropdown" autoClose={popoverIsShown ? false : 'outside'} onToggle={() => setDropdownIsShown(!dropdownIsShown)} show={dropdownIsShown} >
+            <BabyGruBackgroundColorMenuItem setPopoverIsShown={setPopoverIsShown} {...props} />
+            <BabyGruClipFogMenuItem setPopoverIsShown={setPopoverIsShown} {...props} />
         </NavDropdown >
     </>
 }
