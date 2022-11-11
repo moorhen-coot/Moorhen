@@ -26,7 +26,7 @@ export const BabyGruMenuItem = (props) => {
                 props.setPopoverIsShown(true)
             }}
 
-            onExited={() => {
+            onExit={() => {
                 props.setPopoverIsShown(false)
             }}
 
