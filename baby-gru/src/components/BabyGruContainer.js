@@ -51,6 +51,7 @@ export const BabyGruContainer = (props) => {
     const [accordionHeight, setAccordionHeight] = useState(convertViewtoPx(90, windowHeight))
     const [commandHistory, dispatchHistoryReducer] = useReducer(historyReducer, initialHistoryState)
     const [backgroundColor, setBackgroundColor] = useState([0., 0., 0., 1.])
+    const [currentDropdownId, setCurrentDropdownId] = useState(-1)
 
     const sideBarWidth = convertViewtoPx(30, windowWidth)
     const innerWindowMarginHeight = convertRemToPx(2.1)
@@ -176,7 +177,7 @@ export const BabyGruContainer = (props) => {
     const collectedProps = {
         molecules, setMolecules, maps, setMaps, glRef, activeMolecule, setActiveMolecule,
         activeMap, setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor,
-        navBarRef
+        navBarRef, currentDropdownId, setCurrentDropdownId
     }
 
     return <> <div className="border" ref={headerRef}>
@@ -186,10 +187,10 @@ export const BabyGruContainer = (props) => {
             <Navbar.Toggle aria-controls="basic-navbar-nav" />
             <Navbar.Collapse id="basic-navbar-nav">
                 <Nav className="justify-content-left">
-                    <BabyGruFileMenu {...collectedProps} />
-                    <BabyGruHistoryMenu {...collectedProps} />
-                    <BabyGruViewMenu {...collectedProps} />
-                    <BabyGruLigandMenu {...collectedProps} />
+                    <BabyGruFileMenu dropdownId={1} {...collectedProps} />
+                    <BabyGruHistoryMenu dropdownId={2} {...collectedProps} />
+                    <BabyGruViewMenu dropdownId={3} {...collectedProps} />
+                    <BabyGruLigandMenu dropdownId={4} {...collectedProps} />
                 </Nav>
             </Navbar.Collapse>
             <Nav className="justify-content-right">
