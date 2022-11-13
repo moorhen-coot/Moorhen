@@ -177,7 +177,7 @@ export const BabyGruMapCard = (props) => {
                 </Col>
                 <Col>
                     <Form.Group controlId="contouringRadius" className="mb-3">
-                            <BabyGruSlider minVal={0.01} maxVal={50} logScale={false} sliderTitle="Radius" intialValue={props.initialRadius} externalValue={mapRadius} setExternalValue={setMapRadius}/>
+                            <BabyGruSlider minVal={0.01} maxVal={100} logScale={false} sliderTitle="Radius" intialValue={props.initialRadius} externalValue={mapRadius} setExternalValue={setMapRadius}/>
                     </Form.Group>
                 </Col>
             </Row>
