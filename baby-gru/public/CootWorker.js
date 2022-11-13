@@ -50,8 +50,8 @@ const floatArrayToJSArray = (floatArray) => {
 
 const residueCodesToJSArray = (residueCodes) => {
     let returnResult = []
-    for(let ic=0; ic < residueCodes.size(); ic++){
-        returnResult.push({"resNum": residueCodes.get(ic).first.res_no, "resCode": residueCodes.get(ic).second})
+    for (let ic = 0; ic < residueCodes.size(); ic++) {
+        returnResult.push({ "resNum": residueCodes.get(ic).first.res_no, "resCode": residueCodes.get(ic).second })
     }
     return returnResult
 }
@@ -61,19 +61,19 @@ const densityFitToJSArray = (densityFitData, chainID) => {
     const resInfo = densityFitData.cviv.get(chainIndex).rviv;
 
     let returnResult = [];
-    for(let ir=0; ir < resInfo.size(); ir++){
+    for (let ir = 0; ir < resInfo.size(); ir++) {
         returnResult.push({
             chainId: resInfo.get(ir).residue_spec.chain_id,
-            insCode: resInfo.get(ir).residue_spec.ins_code, 
-            seqNum: resInfo.get(ir).residue_spec.res_no, 
+            insCode: resInfo.get(ir).residue_spec.ins_code,
+            seqNum: resInfo.get(ir).residue_spec.res_no,
             restype: "UNK",
-            value: 1./resInfo.get(ir).distortion
+            value: 1. / resInfo.get(ir).distortion
         });
     }
     return returnResult
 }
 
-const simpleMeshToLineMeshData = (simpleMesh,normalLighting) => {
+const simpleMeshToLineMeshData = (simpleMesh, normalLighting) => {
     const vertices = simpleMesh.vertices;
     const triangles = simpleMesh.triangles;
     let totIdxs = [];
@@ -91,11 +91,11 @@ const simpleMeshToLineMeshData = (simpleMesh,normalLighting) => {
         totCol.push(...vert.color);
     }
 
-    if(normalLighting)
-        return { prim_types: [["NORMALLINES"]], useIndices: [[true]], idx_tri: [[totIdxs]], vert_tri: [[totPos]], additional_norm_tri:[[totNorm]], norm_tri: [[totNorm]], col_tri: [[totCol]] };
+    if (normalLighting)
+        return { prim_types: [["NORMALLINES"]], useIndices: [[true]], idx_tri: [[totIdxs]], vert_tri: [[totPos]], additional_norm_tri: [[totNorm]], norm_tri: [[totNorm]], col_tri: [[totCol]] };
     else
         return { prim_types: [["LINES"]], useIndices: [[true]], idx_tri: [[totIdxs]], vert_tri: [[totPos]], norm_tri: [[totNorm]], col_tri: [[totCol]] };
-    
+
 }
 
 const read_pdb = (coordData, name) => {
@@ -130,22 +130,22 @@ function base64ToArrayBuffer(base64) {
     return bytes.buffer;
 }
 
-const new_positions_for_residue_atoms = (molToUpDate,residues) => {
-    console.log("committal",molToUpDate,residues)
+const new_positions_for_residue_atoms = (molToUpDate, residues) => {
+    console.log("committal", molToUpDate, residues)
     let success = 0
     residues.forEach(atoms => {
-        if(atoms.length>0){
+        if (atoms.length > 0) {
             const cid = atoms[0].resCid
             let movedVector = new cootModule.Vectormoved_atom_t()
             atoms.forEach(atom => {
-                const movedAtom = new cootModule.moved_atom_t(atom.name,"",atom.x,atom.y,atom.z,-1)
+                const movedAtom = new cootModule.moved_atom_t(atom.name, "", atom.x, atom.y, atom.z, -1)
                 movedVector.push_back(movedAtom)
             })
-            const thisSuccess = molecules_container.new_positions_for_residue_atoms(molToUpDate,cid,movedVector)
+            const thisSuccess = molecules_container.new_positions_for_residue_atoms(molToUpDate, cid, movedVector)
             success += thisSuccess
         }
     })
-    console.log("Success?",success)
+    console.log("Success?", success)
     return success
 }
 
@@ -158,6 +158,19 @@ const read_mtz = (mapData, name, selectedColumns) => {
         selectedColumns.PHI, "", false, selectedColumns.isDifference]
     postMessage({ message: `read_mtz args ${read_mtz_args}` })
     const mapMolNo = molecules_container.read_mtz(...read_mtz_args)
+    cootModule.FS_unlink(tempFilename)
+    return mapMolNo
+}
+
+const read_ccp4_map = (mapData, name, isDiffMap) => {
+    const theGuid = guid()
+    const asUint8Array = new Uint8Array(mapData)
+    cootModule.FS_createDataFile(".", `${theGuid}.map`, asUint8Array, true, true);
+    const tempFilename = `./${theGuid}.map`
+    const read_map_args = [tempFilename, isDiffMap]
+    console.log({ read_map_args, length: asUint8Array })
+    postMessage({ message: `read_ccp4_map args ${read_map_args}` })
+    const mapMolNo = molecules_container.read_ccp4_map(...read_map_args)
     cootModule.FS_unlink(tempFilename)
     return mapMolNo
 }
@@ -283,7 +296,7 @@ onmessage = function (e) {
 
     else if (e.data.message === 'copy_fragment') {
         const newCoordMolNo = molecules_container.copy_fragment_using_residue_range(e.data.coordMolNo, e.data.chainId, e.data.res_no_start, e.data.res_no_end)
- 
+
         postMessage({
             messageId: e.data.messageId,
             myTimeStamp: e.data.myTimeStamp,
@@ -294,7 +307,7 @@ onmessage = function (e) {
 
     else if (e.data.message === 'delete') {
         const result = molecules_container.close_molecule(e.data.coordMolNo)
- 
+
         postMessage({
             messageId: e.data.messageId,
             myTimeStamp: e.data.myTimeStamp,
@@ -324,6 +337,9 @@ onmessage = function (e) {
             else if (command === 'shim_read_mtz') {
                 cootResult = read_mtz(...commandArgs)
             }
+            else if (command === 'shim_read_ccp4_map') {
+                cootResult = read_ccp4_map(...commandArgs)
+            }
             else if (command === 'shim_read_dictionary') {
                 cootResult = read_dictionary(...commandArgs)
             }
@@ -348,10 +364,10 @@ onmessage = function (e) {
                     break;
                 case 'residue_codes':
                     returnResult = residueCodesToJSArray(cootResult)
-                    break;      
+                    break;
                 case 'density_fit':
                     returnResult = densityFitToJSArray(cootResult, e.data.chainID)
-                    break;     
+                    break;
                 case 'status':
                 default:
                     returnResult = cootResult

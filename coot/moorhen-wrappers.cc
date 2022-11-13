@@ -620,6 +620,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("is_valid_model_molecule",&molecules_container_t::is_valid_model_molecule)
     .function("is_valid_map_molecule",&molecules_container_t::is_valid_map_molecule)
     .function("read_pdb",&molecules_container_t::read_pdb)
+    .function("read_ccp4_map",&molecules_container_t::read_ccp4_map)
     .function("read_mtz",&molecules_container_t::read_mtz)
     //   int import_cif_dictionary(const std::string &cif_file_name, int imol_enc);
     .function("import_cif_dictionary",&molecules_container_t::import_cif_dictionary)
