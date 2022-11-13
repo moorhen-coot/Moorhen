@@ -15,7 +15,7 @@ export function BabyGruMolecule(commandCentre) {
     this.commandCentre = commandCentre
     this.enerLib = new EnerLib()
     this.HBondsAssigned = false
-    this.cachedAtoms = null
+    this.cachedAtoms = {}
     this.atomsDirty = true
     this.name = "unnamed"
     this.coordMolNo = null
@@ -308,9 +308,13 @@ BabyGruMolecule.prototype.show = function (style, gl) {
 }
 
 BabyGruMolecule.prototype.hide = function (style, gl) {
-    this.displayObjects[style].forEach(displayBuffer => {
-        displayBuffer.visible = false
-    })
+    //console.log({style})
+    if (Array.isArray(this.displayObjects[style])) {
+        //console.log('is Array')
+        this.displayObjects[style].forEach(displayBuffer => {
+            displayBuffer.visible = false
+        })
+    }
     gl.current.drawScene()
 }
 
@@ -323,12 +327,12 @@ BabyGruMolecule.prototype.webMGAtomsFromFileString = function (fileString) {
         result = parseMMCIF(unindentedLines, $this.name);
         if (typeof result.atoms === 'undefined') {
             result = parsePDB(unindentedLines, $this.name)
-            console.log('Parsed file as PDB')
+            //console.log('Parsed file as PDB')
         }
     }
     catch (err) {
         result = parsePDB(unindentedLines, $this.name)
-        console.log('Parsed file as PDB')
+        //console.log('Parsed file as PDB')
     }
     return result
 }
@@ -497,6 +501,7 @@ BabyGruMolecule.prototype.drawSticks = function (webMGAtoms, gl) {
 }
 
 BabyGruMolecule.prototype.redraw = function (gl) {
+    //console.log('In redraw')
     const $this = this
     const itemsToRedraw = []
     Object.keys($this.displayObjects).forEach(style => {
@@ -519,19 +524,18 @@ BabyGruMolecule.prototype.redraw = function (gl) {
         promise = Promise.resolve()
     }
     return promise.then(_ => {
-            return itemsToRedraw.reduce(
-                (p, style) => {
-                    //console.log(`Redrawing ${style}`, $this.atomsDirty)
-                    return p.then(() => $this.fetchIfDirtyAndDraw(style, gl)
-                    )
-                },
-                Promise.resolve()
-            )
-        }
-    )
+        return itemsToRedraw.reduce(
+            (p, style) => {
+                //console.log(`Redrawing ${style}`, $this.atomsDirty)
+                return p.then(() => $this.fetchIfDirtyAndDraw(style, gl)
+                )
+            },
+            Promise.resolve()
+        )
+    })
 }
 
-BabyGruMolecule.prototype.transformedCachedAtomsAsMovedAtoms = function (glRef) {
+BabyGruMolecule.prototype.transformedCachedAtomsAsMovedAtoms = async function (glRef) {
     const $this = this
     let movedResidues = [];
     $this.cachedAtoms.atoms.forEach(mod => {
@@ -591,4 +595,25 @@ BabyGruMolecule.prototype.applyTransform = async function (glRef) {
     const $this = this
     const movedResidues = $this.transformedCachedAtomsAsMovedAtoms(glRef)
     return $this.updateWithMovedAtoms(movedResidues, glRef)
+}
+
+BabyGruMolecule.prototype.mergeMolecules = async function (otherMolecules, glRef, doHide) {
+    //console.log('In merge molecules')
+    const $this = this
+    if (typeof doHide === 'undefined') doHide = false
+    return $this.commandCentre.current.cootCommand({
+        command: 'merge_molecules',
+        commandArgs: [$this.coordMolNo, `${otherMolecules.map(molecule => molecule.coordMolNo).join(':')}`],
+        returnType: "Status"
+    }, true).then(_ => {
+        $this.setAtomsDirty(true)
+        if (doHide) otherMolecules.forEach(molecule => {
+            //console.log('Hiding', { molecule })
+            Object.keys(molecule.displayObjects).forEach(style => {
+                //console.log('Hiding', { style })
+                molecule.hide(style, glRef)
+            })
+        })
+        return $this.redraw(glRef)
+    })
 }

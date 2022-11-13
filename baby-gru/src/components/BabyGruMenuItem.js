@@ -1,8 +1,8 @@
 import { MenuItem } from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { OverlayTrigger, Popover, PopoverBody, PopoverHeader, Form, InputGroup, Button, FormSelect, Row, Col } from "react-bootstrap";
+import { OverlayTrigger, Popover, PopoverBody, PopoverHeader, Form, InputGroup, Button, FormSelect, Row, Col, SplitButton, Dropdown } from "react-bootstrap";
 import { SketchPicker } from "react-color";
-import { BabyGruMtzWrapper, readTextFile } from "../BabyGruUtils";
+import { BabyGruMtzWrapper, cootCommand, readTextFile } from "../BabyGruUtils";
 import { BabyGruMap } from "./BabyGruMap";
 import { BabyGruMolecule } from "./BabyGruMolecule";
 import { BabyGruMoleculeSelect } from "./BabyGruMoleculeSelect";
@@ -296,9 +296,11 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
     const filesRef = useRef(null)
     const moleculeSelectRef = useRef(null)
     const tlcRef = useRef(null)
+    const addToRef = useRef(null)
     const [fileOrLibrary, setFileOrLibrary] = useState("Library")
     const [createInstance, setCreateInstance] = useState(true)
     const createInstanceRef = useRef()
+    const createRef = useRef(true)
 
     const panelContent = <>
         <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="fileOrLibrary" className="mb-3">
@@ -320,17 +322,34 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
                 <Form.Control ref={tlcRef} type="text" />
             </Form.Group>
         }
-        <BabyGruMoleculeSelect {...props} allowAny={true} ref={moleculeSelectRef} />
+        <BabyGruMoleculeSelect {...props} allowAny={true} ref={moleculeSelectRef} label="Make monomer available to" />
         <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="createInstance" className="mb-3">
             <Form.Label>Create instance on read</Form.Label>
-            <Form.Check ref={createInstanceRef} checked={createInstance} onChange={(e) => {
-                setCreateInstance(e.target.checked)
-            }}
-            />
+            <InputGroup>
+                <SplitButton
+                    variant="outline-secondary"
+                    title={createInstance ? "Yes" : "No"}
+                    id="segmented-button-dropdown-1"
+                >
+                    <Dropdown.Item href="#" onClick={() => {
+                        createRef.current = true
+                        setCreateInstance(true)
+                    }}>Yes</Dropdown.Item>
+                    <Dropdown.Item href="#" onClick={() => {
+                        createRef.current = false
+                        setCreateInstance(false)
+                    }}>No</Dropdown.Item>
+                </SplitButton>
+                <Form.Select style={{ visibility: createInstance ? "visible" : "hidden" }} ref={addToRef}>
+                    <option value={"-1"}>...craete new molecule</option>
+                    {props.molecules.map(molecule => <option value={molecule.coordMolNo}>...add to {molecule.name}</option>)}
+                </Form.Select>
+            </InputGroup>
         </Form.Group>
     </>
 
-    const handleFileContent = (fileContent) => {
+    const handleFileContent = useCallback((fileContent) => {
+        let newMolecule = null
         return props.commandCentre.current.cootCommand({
             returnType: "status",
             command: 'shim_read_dictionary',
@@ -344,27 +363,70 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
                     })
                 return Promise.resolve()
             }).then(result => {
-                if (createInstance) {
-                    props.commandCentre.current.cootCommand({
+                console.log({ createInstance })
+                if (createRef.current) {
+                    return props.commandCentre.current.cootCommand({
                         returnType: 'status',
                         command: 'get_monomer_and_position_at',
-                        commandArgs: [tlcRef.current.value.toUpperCase(), moleculeSelectRef.current.value, ...props.glRef.current.origin.map(coord => -coord)]
-
+                        commandArgs: [tlcRef.current.value.toUpperCase(),
+                        moleculeSelectRef.current.value,
+                        ...props.glRef.current.origin.map(coord => -coord)]
                     }, true)
                         .then(result => {
                             if (result.data.result.status === "Completed") {
-                                const newMolecule = new BabyGruMolecule(props.commandCentre)
+                                newMolecule = new BabyGruMolecule(props.commandCentre)
                                 newMolecule.coordMolNo = result.data.result.result
                                 newMolecule.name = tlcRef.current.value.toUpperCase()
-                                newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef).then(_ => {
-                                    newMolecule.cachedAtoms.sequences = []
-                                    props.setMolecules([...props.molecules, newMolecule])
-                                })
+                                newMolecule.cachedAtoms.sequences = []
+                                props.setMolecules([...props.molecules, newMolecule])
+                                return newMolecule.fetchIfDirtyAndDraw("CBs", props.glRef)
                             }
                         })
                 }
+                else {
+                    return Promise.resolve(false)
+                }
             })
-    }
+            .then(result => {
+                console.log('Instance created', { result, newMolecule })
+                if (newMolecule) {
+                    //Here if instance created
+                    if (parseInt(addToRef.current.value) !== -1) {
+                        const toMolecule = props.molecules
+                            .filter(molecule => molecule.coordMolNo === parseInt(addToRef.current.value))[0]
+                        const otherMolecules = [newMolecule]
+                        return toMolecule.mergeMolecules(otherMolecules, props.glRef, true)
+                            .then(_ => { return toMolecule.redraw(props.glRef) })
+                    }
+                }
+                console.log('After create instance', { result })
+            })
+    }, [moleculeSelectRef.current, props.molecules, tlcRef.current, addToRef.current, createInstance])
+
+    /*
+    .then(result => {
+                    console.log("Added", { "add to": addToRef.current.value })
+                    if (result.data.result.status === "Completed") {
+                        const newMolecule = new BabyGruMolecule(props.commandCentre)
+                        newMolecule.coordMolNo = result.data.result.result
+                        newMolecule.name = tlcRef.current.value.toUpperCase()
+                        if (parseInt(addToRef.current.value) !== -1) {
+                            const toMolecule = props.molecules
+                                .filter(molecule => molecule.coordMolNo === parseInt(addToRef.current.value))[0]
+                            const otherMolecules = props.molecules
+                                .filter(molecule => molecule.coordMolNo === newMolecule.coordMolNo)
+                            return toMolecule.mergeMolecules(otherMolecules, props.glRef, true)
+                                .then(_ => { return toMolecule.redraw(props.glRef) })
+                        }
+                    }
+                    else {
+                        return newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef).then(_ => {
+                            newMolecule.cachedAtoms.sequences = []
+                            props.setMolecules([...props.molecules, newMolecule])
+                        })
+                    }
+                })
+                */
 
     const readMmcifFile = async (file) => {
         return readTextFile(file)
@@ -593,26 +655,14 @@ export const BabyGruMergeMoleculesMenuItem = (props) => {
     </>
 
     const onCompleted = useCallback(async () => {
-        return props.commandCentre.current.cootCommand({
-            command: 'merge_molecules',
-            commandArgs: [parseInt(toRef.current.value), `${fromRef.current.value}`],
-            returnType: "Status"
-        }, true).then(result => {
-            props.molecules
-                .filter(molecule => molecule.coordMolNo === parseInt(toRef.current.value))
-                .forEach(molecule => {
-                    molecule.setAtomsDirty(true)
-                    molecule.redraw(props.glRef)
-                })
-            props.molecules
-                .filter(molecule => molecule.coordMolNo === parseInt(fromRef.current.value))
-                .forEach(molecule => {
-                    Object.keys(molecule.displayObjects).forEach(style => {
-                        molecule.hide(style, props.glRef)
-                    })
-                })
-            props.setPopoverIsShown(false)
-        })
+        const toMolecule = props.molecules
+            .filter(molecule => molecule.coordMolNo === parseInt(toRef.current.value))[0]
+        const otherMolecules = props.molecules
+            .filter(molecule => molecule.coordMolNo === parseInt(fromRef.current.value))
+        console.log({ toMolecule, otherMolecules })
+        let banan = await toMolecule.mergeMolecules(otherMolecules, props.glRef, true)
+        console.log({ banan })
+        props.setPopoverIsShown(false)
     }, [toRef.current, fromRef.current, props.molecules])
 
     return <BabyGruMenuItem
