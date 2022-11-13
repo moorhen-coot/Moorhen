@@ -156,7 +156,7 @@ const read_mtz = (mapData, name, selectedColumns) => {
     const tempFilename = `./${theGuid}.mtz`
     const read_mtz_args = [tempFilename, selectedColumns.F,
         selectedColumns.PHI, "", false, selectedColumns.isDifference]
-    postMessage({ message: `read_mtz args ${read_mtz_args}` })
+    //postMessage({ message: `read_mtz args ${read_mtz_args}` })
     const mapMolNo = molecules_container.read_mtz(...read_mtz_args)
     cootModule.FS_unlink(tempFilename)
     return mapMolNo
@@ -169,8 +169,9 @@ const read_ccp4_map = (mapData, name, isDiffMap) => {
     const tempFilename = `./${theGuid}.map`
     const read_map_args = [tempFilename, isDiffMap]
     console.log({ read_map_args, length: asUint8Array })
-    postMessage({ message: `read_ccp4_map args ${read_map_args}` })
+    //postMessage({ message: `read_ccp4_map args ${read_map_args}` })
     const mapMolNo = molecules_container.read_ccp4_map(...read_map_args)
+    console.log('Read map into number', mapMolNo)
     cootModule.FS_unlink(tempFilename)
     return mapMolNo
 }
