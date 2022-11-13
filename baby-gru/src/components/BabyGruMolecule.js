@@ -506,13 +506,16 @@ BabyGruMolecule.prototype.redraw = function (gl) {
     const itemsToRedraw = []
     Object.keys($this.displayObjects).forEach(style => {
         const objectCategoryBuffers = $this.displayObjects[style]
-        if (objectCategoryBuffers.length > 0) {
-            if (objectCategoryBuffers[0].visible) {
-                //FOr currently visible display types, put them on a list for redraw
-                itemsToRedraw.push(style)
-            }
-            else {
-                $this.clearBuffersOfStyle(style, gl)
+        //Note with transforamtion, not all properties of displayObjects are lists of buffer
+        if (Array.isArray(objectCategoryBuffers)) {
+            if (objectCategoryBuffers.length > 0) {
+                if (objectCategoryBuffers[0].visible) {
+                    //FOr currently visible display types, put them on a list for redraw
+                    itemsToRedraw.push(style)
+                }
+                else {
+                    $this.clearBuffersOfStyle(style, gl)
+                }
             }
         }
     })
@@ -535,7 +538,7 @@ BabyGruMolecule.prototype.redraw = function (gl) {
     })
 }
 
-BabyGruMolecule.prototype.transformedCachedAtomsAsMovedAtoms = async function (glRef) {
+BabyGruMolecule.prototype.transformedCachedAtomsAsMovedAtoms = function (glRef) {
     const $this = this
     let movedResidues = [];
     $this.cachedAtoms.atoms.forEach(mod => {
@@ -586,12 +589,13 @@ BabyGruMolecule.prototype.updateWithMovedAtoms = async function (movedResidues, 
         $this.displayObjects.transformation.origin = [0, 0, 0]
         $this.displayObjects.transformation.quat = null
         $this.setAtomsDirty(true)
+        //console.log('In updateWithMoved')
         return $this.redraw(glRef)
     })
 
 }
 
-BabyGruMolecule.prototype.applyTransform = async function (glRef) {
+BabyGruMolecule.prototype.applyTransform = function (glRef) {
     const $this = this
     const movedResidues = $this.transformedCachedAtomsAsMovedAtoms(glRef)
     return $this.updateWithMovedAtoms(movedResidues, glRef)
