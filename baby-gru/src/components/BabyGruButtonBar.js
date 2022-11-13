@@ -1,5 +1,5 @@
 import { CheckOutlined, CloseOutlined } from "@mui/icons-material";
-import { Tooltip } from "@mui/material";
+import { Menu, MenuItem, MenuList, Tooltip } from "@mui/material";
 import { createRef, forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import { ButtonGroup, Button, Overlay, Container, Row, FormSelect, FormGroup, FormLabel, Card } from "react-bootstrap"
 
@@ -48,6 +48,9 @@ export const BabyGruButtonBar = (props) => {
 
             <BabyGruRotateTranslateZoneButton {...props} selectedButtonIndex={selectedButtonIndex}
                 setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="10" />
+
+            <BabyGruAddSimpleButton {...props} selectedButtonIndex={selectedButtonIndex}
+                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="11" />
 
         </ButtonGroup>
     </div>
@@ -441,14 +444,14 @@ export const BabyGruRotateTranslateZoneButton = (props) => {
         const transformedAtoms = fragmentMolecule.current.transformedCachedAtomsAsMovedAtoms(glRef)
         await chosenMolecule.current.updateWithMovedAtoms(transformedAtoms, glRef)
         setMolecules(molecules.filter(molecule => molecule.coordMolNo !== fragmentMolecule.current.coordMolNo))
-        const response = fragmentMolecule.current.delete()
+        const response = fragmentMolecule.current.delete(glRef)
         setShowAccept(false)
     }, [fragmentMolecule.current, chosenMolecule.current, molecules, setMolecules])
 
     const rejectTransform = useCallback(async (e) => {
         glRef.current.setActiveMolecule(null)
         setMolecules(molecules.filter(molecule => molecule.coordMolNo !== fragmentMolecule.current.coordMolNo))
-        const response = fragmentMolecule.current.delete()
+        const response = fragmentMolecule.current.delete(glRef)
         setShowAccept(false)
     }, [fragmentMolecule.current, chosenMolecule.current, molecules, setMolecules])
 
@@ -501,3 +504,37 @@ export const BabyGruRotateTranslateZoneButton = (props) => {
     </>
 }
 
+export const BabyGruAddSimpleButton = (props) => {
+    const [panelParameters, setPanelParameters] = useState({
+        refine: { mode: 'TRIPLE' },
+        delete: { mode: 'ATOM' },
+        mutate: { toType: "ALA" }
+    })
+    const BabyGruAddSimplePanel = (props) => {
+        const molTypes = ['HOH', 'SO4']
+        return <Container>
+            <MenuList>
+                {molTypes.map(molType => <MenuItem onClick={() => {
+                    props.typeSelected(molType)
+                }}>{molType}</MenuItem>)}
+            </MenuList>
+        </Container>
+    }
+    const typeSelected = useCallback(item => {
+        console.log(item)
+    })
+    return <BabyGruSimpleEditButton {...props}
+        toolTip="Add simple"
+        buttonIndex={props.buttonIndex}
+        selectedButtonIndex={props.selectedButtonIndex}
+        setSelectedButtonIndex={props.setSelectedButtonIndex}
+        needsMapData={false}
+        nonCootCommand={() => { }}
+        panelParameters={panelParameters}
+        prompt={<BabyGruAddSimplePanel
+            setPanelParameters={setPanelParameters}
+            panelParameters={panelParameters}
+            typeSelected={typeSelected} />}
+        icon={<img className="baby-gru-button-icon" src="pixmaps/atom-at-pointer.svg" />}
+    />
+}
