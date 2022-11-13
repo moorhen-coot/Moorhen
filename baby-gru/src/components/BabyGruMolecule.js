@@ -399,7 +399,6 @@ BabyGruMolecule.prototype.drawBonds = function (webMGAtoms, gl, colourSchemeInde
     var nonHydrogenPrimitiveInfo = atomsToSpheresInfo(nonHydrogenAtoms, 0.13, atomColours);
     linesAndSpheres.push(nonHydrogenPrimitiveInfo);
 
-
     const objects = linesAndSpheres.filter(item => {
         return typeof item.sizes !== "undefined" &&
             item.sizes.length > 0 &&
@@ -607,18 +606,44 @@ BabyGruMolecule.prototype.mergeMolecules = async function (otherMolecules, glRef
     return $this.commandCentre.current.cootCommand({
         command: 'merge_molecules',
         commandArgs: [$this.coordMolNo, `${otherMolecules.map(molecule => molecule.coordMolNo).join(':')}`],
-        returnType: "Status"
-    }, true).then(_ => {
+        returnType: "status"
+    }, true).then(async result => {
+        console.log("Merge molecule result", { result })
         $this.setAtomsDirty(true)
         if (doHide) otherMolecules.forEach(molecule => {
-            //console.log('Hiding', { molecule })
+            console.log('Hiding', { molecule })
             Object.keys(molecule.displayObjects).forEach(style => {
                 if (Array.isArray(molecule.displayObjects[style])) {
-                    //console.log('Hiding', { style })
+                    console.log('Hiding', { style })
                     molecule.hide(style, glRef)
                 }
             })
         })
-        return $this.redraw(glRef)
+        let answer = await $this.redraw(glRef)
+        console.log({ answer })
+        return Promise.resolve(true)
     })
+}
+
+BabyGruMolecule.prototype.addLigandOfType = async function (resType, at, glRef) {
+    const $this = this
+    let newMolecule = null
+    return $this.commandCentre.current.cootCommand({
+        returnType: 'status',
+        command: 'get_monomer_and_position_at',
+        commandArgs: [resType.toUpperCase(), -999999, ...at]
+    }, true)
+        .then(async result => {
+            if (result.data.result.status === "Completed") {
+                newMolecule = new BabyGruMolecule($this.commandCentre)
+                newMolecule.setAtomsDirty(true)
+                newMolecule.coordMolNo = result.data.result.result
+                newMolecule.name = resType.toUpperCase()
+                const _ = await $this.mergeMolecules([newMolecule], glRef, true);
+                return newMolecule.delete(glRef);
+            }
+            else {
+                return Promise.resolve(false)
+            }
+        })
 }

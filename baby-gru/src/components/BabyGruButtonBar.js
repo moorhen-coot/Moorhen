@@ -2,6 +2,7 @@ import { CheckOutlined, CloseOutlined } from "@mui/icons-material";
 import { Menu, MenuItem, MenuList, Tooltip } from "@mui/material";
 import { createRef, forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import { ButtonGroup, Button, Overlay, Container, Row, FormSelect, FormGroup, FormLabel, Card } from "react-bootstrap"
+import { BabyGruMoleculeSelect } from "./BabyGruMoleculeSelect";
 
 export const BabyGruButtonBar = (props) => {
     const [selectedButtonIndex, setSelectedButtonIndex] = useState(null);
@@ -117,7 +118,8 @@ export const BabyGruSimpleEditButton = forwardRef((props, buttonRef) => {
                 ref={buttonRef ? buttonRef : target}
                 active={props.buttonIndex === props.selectedButtonIndex}
                 variant='light'
-                disabled={props.needsMapData && !props.activeMap || props.molecules.length === 0}
+                disabled={props.needsMapData && !props.activeMap ||
+                    (props.needsAtomData && props.molecules.length === 0)}
                 onClick={(e) => {
                     if (props.selectedButtonIndex === e.currentTarget.value) {
                         props.setSelectedButtonIndex(null)
@@ -127,8 +129,8 @@ export const BabyGruSimpleEditButton = forwardRef((props, buttonRef) => {
                     }
                     props.setSelectedButtonIndex(props.buttonIndex)
                     props.setCursorStyle("crosshair")
-                    document.addEventListener('atomClicked', atomClickedCallback, { once: true })
-                    if (props.prompt) {
+                    if (props.awaitAtomClick) {
+                        document.addEventListener('atomClicked', atomClickedCallback, { once: true })
                     }
                 }}>
                 {props.icon}
@@ -143,7 +145,7 @@ export const BabyGruSimpleEditButton = forwardRef((props, buttonRef) => {
                         style={{
                             position: 'absolute',
                             marginBottom: '0.5rem',
-                            backgroundColor: 'rgba(100, 255, 100, 0.85)',
+                            backgroundColor: 'rgba(150, 200, 150, 0.5)',
                             padding: '2px 10px',
                             color: 'black',
                             borderRadius: 3,
@@ -156,7 +158,11 @@ export const BabyGruSimpleEditButton = forwardRef((props, buttonRef) => {
         }
     </>
 })
-BabyGruSimpleEditButton.defaultProps = { toolTip: "", setCursorStyle: () => { }, setSelectedButtonIndex: () => { }, selectedButtonIndex: 0, prompt: null }
+BabyGruSimpleEditButton.defaultProps = {
+    toolTip: "", setCursorStyle: () => { },
+    needsAtomData: true,
+    setSelectedButtonIndex: () => { }, selectedButtonIndex: 0, prompt: null, awaitAtomClick: true
+}
 
 const cidToSpec = (cid) => {
     //coordMolNo, chain_id, res_no, ins_code, alt_conf
@@ -504,37 +510,56 @@ export const BabyGruRotateTranslateZoneButton = (props) => {
     </>
 }
 
+
+
 export const BabyGruAddSimpleButton = (props) => {
+    const molType = createRef("HOH")
+    const selectRef = useRef()
+
     const [panelParameters, setPanelParameters] = useState({
         refine: { mode: 'TRIPLE' },
         delete: { mode: 'ATOM' },
         mutate: { toType: "ALA" }
     })
+
     const BabyGruAddSimplePanel = (props) => {
-        const molTypes = ['HOH', 'SO4']
+        const molTypes = ['HOH', 'SO4', 'PO4', 'GOL', 'CIT', 'EDO']
         return <Container>
             <MenuList>
-                {molTypes.map(molType => <MenuItem onClick={() => {
+                {molTypes.map(molType => <MenuItem key={molType} onClick={() => {
                     props.typeSelected(molType)
                 }}>{molType}</MenuItem>)}
             </MenuList>
+            <BabyGruMoleculeSelect {...props} allowAny={false} ref={props.selectRef} />
         </Container>
     }
-    const typeSelected = useCallback(item => {
-        console.log(item)
+
+    const typeSelected = useCallback(value => {
+        props.molecules
+            .filter(molecule => molecule.coordMolNo == parseInt(selectRef.current.value))
+            .forEach(molecule => {
+                molecule.addLigandOfType(value,
+                    props.glRef.current.origin.map(coord => -coord),
+                    props.glRef)
+            })
     })
+
     return <BabyGruSimpleEditButton {...props}
         toolTip="Add simple"
         buttonIndex={props.buttonIndex}
         selectedButtonIndex={props.selectedButtonIndex}
         setSelectedButtonIndex={props.setSelectedButtonIndex}
         needsMapData={false}
-        nonCootCommand={() => { }}
+        needsAtomData={true}
         panelParameters={panelParameters}
         prompt={<BabyGruAddSimplePanel
+            {...props}
             setPanelParameters={setPanelParameters}
             panelParameters={panelParameters}
-            typeSelected={typeSelected} />}
+            typeSelected={typeSelected}
+            selectRef={selectRef}
+            awaitAtomClick={false}
+        />}
         icon={<img className="baby-gru-button-icon" src="pixmaps/atom-at-pointer.svg" />}
     />
 }
