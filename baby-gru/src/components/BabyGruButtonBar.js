@@ -437,22 +437,18 @@ export const BabyGruRotateTranslateZoneButton = (props) => {
     const chosenMolecule = useRef(null)
 
     const acceptTransform = useCallback(async (e) => {
-        console.log(1)
         glRef.current.setActiveMolecule(null)
-        console.log(2)
         const transformedAtoms = fragmentMolecule.current.transformedCachedAtomsAsMovedAtoms(glRef)
-        console.log(3)
         await chosenMolecule.current.updateWithMovedAtoms(transformedAtoms, glRef)
-        console.log(4)
         setMolecules(molecules.filter(molecule => molecule.coordMolNo !== fragmentMolecule.current.coordMolNo))
-        const response = fragmentMolecule.current.delete()
+        const response = fragmentMolecule.current.delete(glRef)
         setShowAccept(false)
     }, [fragmentMolecule.current, chosenMolecule.current, molecules, setMolecules])
 
     const rejectTransform = useCallback(async (e) => {
         glRef.current.setActiveMolecule(null)
         setMolecules(molecules.filter(molecule => molecule.coordMolNo !== fragmentMolecule.current.coordMolNo))
-        const response = fragmentMolecule.current.delete()
+        const response = fragmentMolecule.current.delete(glRef)
         setShowAccept(false)
     }, [fragmentMolecule.current, chosenMolecule.current, molecules, setMolecules])
 

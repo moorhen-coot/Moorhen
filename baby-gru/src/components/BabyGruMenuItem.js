@@ -341,7 +341,7 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
                     }}>No</Dropdown.Item>
                 </SplitButton>
                 <Form.Select style={{ visibility: createInstance ? "visible" : "hidden" }} ref={addToRef}>
-                    <option value={"-1"}>...craete new molecule</option>
+                    <option value={"-1"}>...create new molecule</option>
                     {props.molecules.map(molecule => <option value={molecule.coordMolNo}>...add to {molecule.name}</option>)}
                 </Form.Select>
             </InputGroup>
@@ -676,25 +676,29 @@ export const BabyGruMergeMoleculesMenuItem = (props) => {
 
 export const BabyGruAddWatersMenuItem = (props) => {
     const moleculeRef = useRef(null)
+    const molNo = useRef(null)
 
     const panelContent = <>
         <BabyGruMoleculeSelect {...props} ref={moleculeRef} allowAny={false} />
     </>
 
-    const onCompleted = () => {
+    const onCompleted = useCallback(() => {
+        molNo.current = parseInt(moleculeRef.current.value)
         return props.commandCentre.current.cootCommand({
             command: 'add_waters',
-            commandArgs: [parseInt(moleculeRef.current.value), props.activeMap.mapMolNo],
-            returnType: "Status"
+            commandArgs: [parseInt(molNo.current), props.activeMap.mapMolNo],
+            returnType: "status"
         }, true).then(result => {
+            console.log('Added water', moleculeRef)
             props.molecules
-                .filter(molecule => molecule.coordMolNo === parseInt(moleculeRef.current.value))
+                .filter(molecule => molecule.coordMolNo === parseInt(molNo.current))
                 .forEach(molecule => {
+                    console.log('Considering molecule',{molecule})
                     molecule.setAtomsDirty(true)
                     molecule.redraw(props.glRef)
                 })
         })
-    }
+    }, [props.molecules, moleculeRef, moleculeRef.current])
 
     return <BabyGruMenuItem
         popoverContent={panelContent}

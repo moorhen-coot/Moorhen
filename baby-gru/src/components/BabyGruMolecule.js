@@ -35,9 +35,7 @@ export function BabyGruMolecule(commandCentre) {
 BabyGruMolecule.prototype.delete = async function (gl) {
     const $this = this
     Object.getOwnPropertyNames(this.displayObjects).forEach(displayObject => {
-        if (Array.isArray(displayObject)) {
-            if (this.displayObjects[displayObject].length > 0) { this.clearBuffersOfStyle(displayObject, gl) }
-        }
+        if (this.displayObjects[displayObject].length > 0) { this.clearBuffersOfStyle(displayObject, gl) }
     })
     const inputData = { message: "delete", coordMolNo: $this.coordMolNo }
     const response = await $this.commandCentre.current.postMessage(inputData)
@@ -356,13 +354,11 @@ BabyGruMolecule.prototype.buffersInclude = function (bufferIn) {
     //console.log($this.displayObjects)
     const BreakException = {};
     try {
-        Object.keys($this.displayObjects).forEach(style => {
-            if (Array.isArray($this.displayObjects[style])) {
-                const objectBuffers = $this.displayObjects[style].filter(buffer => bufferIn.id === buffer.id)
-                //console.log('Object buffer length', objectBuffers.length, objectBuffers.length > 0)
-                if (objectBuffers.length > 0) {
-                    throw BreakException;
-                }
+        Object.getOwnPropertyNames($this.displayObjects).forEach(style => {
+            const objectBuffers = $this.displayObjects[style].filter(buffer => bufferIn.id === buffer.id)
+            //console.log('Object buffer length', objectBuffers.length, objectBuffers.length > 0)
+            if (objectBuffers.length > 0) {
+                throw BreakException;
             }
         })
     }
