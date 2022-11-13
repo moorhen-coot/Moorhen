@@ -10,6 +10,7 @@ import { singletonsToLinesInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { postCootMessage, readTextFile, readDataFile, cootCommand } from '../BabyGruUtils'
 import { quatToMat4, quat4Inverse } from '../WebGL/quatToMat4.js';
 import * as vec3 from 'gl-matrix/vec3';
+import { object } from 'prop-types';
 
 export function BabyGruMolecule(commandCentre) {
     this.commandCentre = commandCentre
@@ -34,7 +35,9 @@ export function BabyGruMolecule(commandCentre) {
 BabyGruMolecule.prototype.delete = async function (gl) {
     const $this = this
     Object.getOwnPropertyNames(this.displayObjects).forEach(displayObject => {
-        if (this.displayObjects[displayObject].length > 0) { this.clearBuffersOfStyle(displayObject, gl) }
+        if (Array.isArray(displayObject)) {
+            if (this.displayObjects[displayObject].length > 0) { this.clearBuffersOfStyle(displayObject, gl) }
+        }
     })
     const inputData = { message: "delete", coordMolNo: $this.coordMolNo }
     const response = await $this.commandCentre.current.postMessage(inputData)
@@ -309,12 +312,10 @@ BabyGruMolecule.prototype.show = function (style, gl) {
 
 BabyGruMolecule.prototype.hide = function (style, gl) {
     //console.log({style})
-    if (Array.isArray(this.displayObjects[style])) {
-        //console.log('is Array')
-        this.displayObjects[style].forEach(displayBuffer => {
-            displayBuffer.visible = false
-        })
-    }
+    //console.log('is Array')
+    this.displayObjects[style].forEach(displayBuffer => {
+        displayBuffer.visible = false
+    })
     gl.current.drawScene()
 }
 
@@ -356,10 +357,12 @@ BabyGruMolecule.prototype.buffersInclude = function (bufferIn) {
     const BreakException = {};
     try {
         Object.keys($this.displayObjects).forEach(style => {
-            const objectBuffers = $this.displayObjects[style].filter(buffer => bufferIn.id === buffer.id)
-            //console.log('Object buffer length', objectBuffers.length, objectBuffers.length > 0)
-            if (objectBuffers.length > 0) {
-                throw BreakException;
+            if (Array.isArray($this.displayObjects[style])) {
+                const objectBuffers = $this.displayObjects[style].filter(buffer => bufferIn.id === buffer.id)
+                //console.log('Object buffer length', objectBuffers.length, objectBuffers.length > 0)
+                if (objectBuffers.length > 0) {
+                    throw BreakException;
+                }
             }
         })
     }
@@ -614,8 +617,10 @@ BabyGruMolecule.prototype.mergeMolecules = async function (otherMolecules, glRef
         if (doHide) otherMolecules.forEach(molecule => {
             //console.log('Hiding', { molecule })
             Object.keys(molecule.displayObjects).forEach(style => {
-                //console.log('Hiding', { style })
-                molecule.hide(style, glRef)
+                if (Array.isArray(molecule.displayObjects[style])) {
+                    //console.log('Hiding', { style })
+                    molecule.hide(style, glRef)
+                }
             })
         })
         return $this.redraw(glRef)
