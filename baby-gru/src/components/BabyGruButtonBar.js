@@ -145,7 +145,7 @@ export const BabyGruSimpleEditButton = forwardRef((props, buttonRef) => {
                         style={{
                             position: 'absolute',
                             marginBottom: '0.5rem',
-                            backgroundColor: 'rgba(150, 200, 150, 0.5)',
+                            backgroundColor: 'rgba(150, 200, 15 0, 0.5)',
                             padding: '2px 10px',
                             color: 'black',
                             borderRadius: 3,
@@ -536,8 +536,9 @@ export const BabyGruAddSimpleButton = (props) => {
 
     const typeSelected = useCallback(value => {
         props.molecules
-            .filter(molecule => molecule.coordMolNo == parseInt(selectRef.current.value))
+            .filter(molecule => molecule.coordMolNo === parseInt(selectRef.current.value))
             .forEach(molecule => {
+                console.log({molecule})
                 molecule.addLigandOfType(value,
                     props.glRef.current.origin.map(coord => -coord),
                     props.glRef)
