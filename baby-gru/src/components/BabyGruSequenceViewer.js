@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react"
+import { residueCodesOneToThree, nucleotideCodesOneToThree } from '../utils/BabyGruUtils'
 import ProtvistaManager from "protvista-manager";
 import ProtvistaSequence from "protvista-sequence";
 import ProtvistaNavigation from "protvista-navigation";
@@ -6,42 +7,6 @@ import ProtvistaNavigation from "protvista-navigation";
 window.customElements.define("protvista-navigation", ProtvistaNavigation);
 window.customElements.define("protvista-sequence", ProtvistaSequence);
 window.customElements.define("protvista-manager", ProtvistaManager);
-
-const residueCodesOneToThree = {'C': 'CYS',
-                    'D': 'ASP',
-                    'S': 'SER',
-                    'Q': 'GLN',
-                    'K': 'LYS',
-                    'I': 'ILE',
-                    'P': 'PRO',
-                    'T': 'THR',
-                    'F': 'PHE',
-                    'N': 'ASN',
-                    'G': 'GLY',
-                    'H': 'HIS',
-                    'L': 'LEU',
-                    'R': 'ARG',
-                    'W': 'TRP',
-                    'A': 'ALA',
-                    'V': 'VAL',
-                    'E': 'GLU',
-                    'Y': 'TYR',
-                    'M': 'MET',
-                    'UNK': 'UNKOWN',
-                    '-': 'MISSING'
-                }
-
-const nucleotideCodesOneToThree = {"A": "A",
-            "T": "T",
-            "G": "G",
-            "C": "C",
-            "U": "U",
-            "N": "N",
-            "I": "I",
-            "X": "UNKOWN",
-            'UNK': 'UNKOWN',
-            '-': 'MISSING'
-            }
 
 /**
  * For a given sequence length, calculate the range of 40 residues in the middle
