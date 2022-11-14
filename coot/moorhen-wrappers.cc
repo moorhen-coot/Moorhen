@@ -348,6 +348,12 @@ int mini_rsr(const std::vector<std::string> &args){
 }
 */
 
+class IntVectorMergeMolInfoPair {
+    public:
+        int first;
+        std::vector<merge_molecule_results_info_t> second;
+};
+
 class ResSpecStringPair {
     public:
         coot::residue_spec_t first;
@@ -370,6 +376,15 @@ class molecules_container_js : public molecules_container_t {
             const char *fname_cp = file_name.c_str();
             return get_mol(imol)->WritePDBASCII(fname_cp);
         }
+
+        IntVectorMergeMolInfoPair merge_molecules(int imol, const std::string &list_of_other_molecules) {
+            IntVectorMergeMolInfoPair retval;
+            std::pair<int, std::vector<merge_molecule_results_info_t> > p = molecules_container_t::merge_molecules(imol,list_of_other_molecules);
+            retval.first = p.first;
+            retval.second = p.second;
+            return retval;
+        }
+
         std::vector<ResSpecStringPair> get_single_letter_codes_for_chain(int imol, const std::string &chain_id) {
             std::vector<ResSpecStringPair> retval;
             std::vector<std::pair<coot::residue_spec_t, std::string> > seq = molecules_container_t::get_single_letter_codes_for_chain(imol, chain_id);
@@ -496,6 +511,11 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("P_r1234",&coot::simple_rotamer::P_r1234)
     .function("Probability_rich",&coot::simple_rotamer::Probability_rich)
     .function("get_chi",&coot::simple_rotamer::get_chi)
+    ;
+    class_<merge_molecule_results_info_t>("merge_molecule_results_info_t")
+    .property("chain_id", &merge_molecule_results_info_t::chain_id)
+    .property("spec", &merge_molecule_results_info_t::spec)
+    .property("is_chain", &merge_molecule_results_info_t::is_chain)
     ;
     class_<coot::residue_validation_information_t>("residue_validation_information_t")
     .property("function_value", &coot::residue_validation_information_t::function_value)
@@ -647,7 +667,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("redo",&molecules_container_t::redo)
     .function("refine_residues_using_atom_cid",&molecules_container_t::refine_residues_using_atom_cid)
     .function("set_imol_refinement_map",&molecules_container_t::set_imol_refinement_map)
-    .function("merge_molecules",&molecules_container_t::merge_molecules)
     .function("mutate",&molecules_container_t::mutate)
     .function("delete_using_cid",&molecules_container_t::delete_using_cid)
     .function("get_bonds_mesh",&molecules_container_t::get_bonds_mesh)
@@ -663,6 +682,9 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("difference_map_peaks",&molecules_container_t::difference_map_peaks)
     .function("pepflips_using_difference_map",&molecules_container_t::pepflips_using_difference_map)
     .function("add_waters",&molecules_container_t::add_waters)
+    .function("ramachandran_analysis",&molecules_container_t::ramachandran_analysis)
+    .function("density_correlation_analysis",&molecules_container_t::density_correlation_analysis)
+    .function("rotamer_analysis",&molecules_container_t::rotamer_analysis)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<>()
@@ -673,6 +695,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("get_single_letter_codes_for_chain",&molecules_container_js::get_single_letter_codes_for_chain)
     .function("add",&molecules_container_js::add)
     .function("getFloats",&molecules_container_js::getFloats)
+    .function("merge_molecules",&molecules_container_js::merge_molecules)
     ;
     class_<RamachandranInfo>("RamachandranInfo")
     .constructor<>()
@@ -709,6 +732,10 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("first",&ResSpecStringPair::first)
     .property("second",&ResSpecStringPair::second)
     ;
+    class_<IntVectorMergeMolInfoPair>("IntVectorMergeMolInfoPair")
+    .property("first",&IntVectorMergeMolInfoPair::first)
+    .property("second",&IntVectorMergeMolInfoPair::second)
+    ;
     class_<coot::residue_spec_t>("residue_spec_t")
     .constructor<const std::string &, int, const std::string &>()
     .property("model_number",&coot::residue_spec_t::model_number)
@@ -744,6 +771,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<coot::molecule_t::interesting_place_t>("Vectorinteresting_place_t");
     register_vector<g_triangle>("Vectorg_triangle");
     register_vector<ResSpecStringPair>("VectorResSpecStringPair");
+    register_vector<merge_molecule_results_info_t>("Vectormerge_molecule_results_info_t");
     value_array<glm::vec3>("array_float_3")
         .element(emscripten::index<0>())
         .element(emscripten::index<1>())
