@@ -1,6 +1,11 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from "react"
 import { Col, Row, Form } from 'react-bootstrap';
 import { Chart, registerables } from 'chart.js';
+import { BabyGruChainSelect } from './BabyGruChainSelect'
+import { BabyGruMapSelect } from './BabyGruMapSelect'
+import { BabyGruMoleculeSelect } from './BabyGruMoleculeSelect'
+import { BabyGruMap } from "../utils/BabyGruMap";
+
 
 Chart.register(...registerables);
 
@@ -45,6 +50,9 @@ export const BabyGruValidationPlot = (props) => {
     const containerRef = useRef();
     const containerBodyRef = useRef();
     const canvasRef = useRef();
+    const chainSelectRef = useRef();
+    const mapSelectRef = useRef();
+    const moleculeSelectRef = useRef();
     const [plotData, setPlotData] = useState(null)
     const [selectedModel, setSelectedModel] = useState(null)
     const [selectedMap, setSelectedMap] = useState(null)
@@ -286,21 +294,13 @@ export const BabyGruValidationPlot = (props) => {
                     <Form.Group>
                         <Row>
                         <Col>
-                            <Form.Select value={selectedModel} onChange={handleModelChange} >
-                            {props.molecules.map(molecule => {
-                                return <option key={molecule.coordMolNo} value={molecule.coordMolNo}>{molecule.name}</option>
-                            })}
-                            </Form.Select>
+                            <BabyGruMoleculeSelect width="" onChange={handleModelChange} molecules={props.molecules} ref={moleculeSelectRef}/>
                         </Col>
                         <Col>
-                            <Form.Control required type="text" onChange={handleChainChange} placeholder="Chain id" value={selectedChain} />
+                            <BabyGruChainSelect width="" molecules={props.molecules} onChange={handleChainChange} selectedCoordMolNo={selectedModel} ref={chainSelectRef}/>
                         </Col>
                         <Col>
-                            <Form.Select value={selectedMap} onChange={handleMapChange} >
-                            {props.maps.map(map => {
-                                return <option key={map.mapMolNo} value={map.mapMolNo}>{map.mapName}</option>
-                            })}
-                            </Form.Select>
+                            <BabyGruMapSelect width="" onChange={handleMapChange} maps={props.maps} ref={mapSelectRef}/>
                         </Col>
                         </Row>
                     </Form.Group>

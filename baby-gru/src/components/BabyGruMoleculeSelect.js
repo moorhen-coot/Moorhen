@@ -2,7 +2,7 @@ import { forwardRef } from "react";
 import { Form, FormSelect } from "react-bootstrap";
 
 export const BabyGruMoleculeSelect = forwardRef((props, selectRef) => {
-    return <Form.Group style={{ width: '20rem', margin: '0.5rem' }}>
+    return <Form.Group style={{ width: props.width, margin: '0.5rem' }}>
         <Form.Label>{props.label}</Form.Label>
         <FormSelect size="sm" ref={selectRef} defaultValue={-999999} onChange={(val) => {
             if (props.onChange) {
@@ -16,4 +16,5 @@ export const BabyGruMoleculeSelect = forwardRef((props, selectRef) => {
         </FormSelect>
     </Form.Group>
 })
-BabyGruMoleculeSelect.defaultProps = { allowAny: false, label: "Molecule" }
+
+BabyGruMoleculeSelect.defaultProps = { width: '20rem', allowAny: false, label: "Molecule" }
