@@ -17,7 +17,7 @@ const plugin = {
         for(let datasetIndex=0; datasetIndex<chart._metasets.length; datasetIndex++){
           for(let dataPoint=0; dataPoint<chart._metasets[datasetIndex].data.length; dataPoint++){
             ctx.beginPath();
-            if(chart._metasets[datasetIndex].data[dataPoint]['$context'].raw<0){
+            if(chart._metasets[datasetIndex].data[dataPoint]['$context'].raw < 0){
               ctx.rect(chart._metasets[datasetIndex].data[dataPoint].x-chart._metasets[datasetIndex].data[dataPoint].width/2, chart._metasets[datasetIndex].data[dataPoint].y, chart._metasets[datasetIndex].data[dataPoint].width, chart._metasets[datasetIndex].data[dataPoint].height*-1);
             } else {
               ctx.rect(chart._metasets[datasetIndex].data[dataPoint].x-chart._metasets[datasetIndex].data[dataPoint].width/2, chart._metasets[datasetIndex].data[dataPoint].y, chart._metasets[datasetIndex].data[dataPoint].width, chart._metasets[datasetIndex].data[dataPoint].height);
