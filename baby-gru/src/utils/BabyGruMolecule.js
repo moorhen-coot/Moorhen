@@ -504,10 +504,10 @@ BabyGruMolecule.prototype.redraw = function (gl) {
                 if (objectCategoryBuffers[0].visible) {
                     //FOr currently visible display types, put them on a list for redraw
                     itemsToRedraw.push(style)
-                    }
-                    else {
-                        $this.clearBuffersOfStyle(style, gl)
-                    }
+                }
+                else {
+                    $this.clearBuffersOfStyle(style, gl)
+                }
             }
         }
     })
