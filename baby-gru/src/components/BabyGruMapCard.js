@@ -1,6 +1,6 @@
 import { useEffect, useState, createRef, useCallback, useMemo } from "react";
 import { Card, Form, Button, Row, Col, DropdownButton } from "react-bootstrap";
-import { doDownload } from '../BabyGruUtils';
+import { doDownload } from '../utils/BabyGruUtils';
 import { DownloadOutlined, VisibilityOffOutlined, VisibilityOutlined, ExpandMoreOutlined, ExpandLessOutlined } from '@mui/icons-material';
 import BabyGruSlider from "./BabyGruSlider";
 import { BabyGruDeleteDisplayObjectMenuItem, BabyGruRenameDisplayObjectMenuItem } from "./BabyGruMenuItem";

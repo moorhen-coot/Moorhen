@@ -1,4 +1,4 @@
-import { cootCommand, postCootMessage, readDataFile } from "../BabyGruUtils"
+import { cootCommand, postCootMessage, readDataFile } from "./BabyGruUtils"
 import { readMapFromArrayBuffer, mapToMapGrid } from '../WebGL/mgWebGLReadMap';
 
 export function BabyGruMap(commandCentre) {
@@ -60,31 +60,6 @@ BabyGruMap.prototype.loadToCootFromFile = function (source, selectedColumns) {
         .then(reflectionData => {
             const asUIntArray = new Uint8Array(reflectionData)
             return $this.loadToCootFromData(asUIntArray, source.name, selectedColumns)
-        })
-}
-
-BabyGruMap.prototype.loadToCootFromMapData = function (data, mapName, isDiffMap) {
-    const $this = this
-    $this.mapName = mapName
-    return new Promise((resolve, reject) => {
-        return this.commandCentre.current.cootCommand({
-            returnType: "status",
-            command: "shim_read_ccp4_map",
-            commandArgs: [data, mapName, isDiffMap]
-        })
-            .then(reply => {
-                $this.mapMolNo = reply.data.result.result
-                resolve($this)
-            })
-    })
-}
-
-BabyGruMap.prototype.loadToCootFromMapFile = async function (source, isDiffMap) {
-    const $this = this
-    return readDataFile(source)
-        .then(mapData => {
-            const asUIntArray = new Uint8Array(mapData)
-            return $this.loadToCootFromMapData(asUIntArray, source.name, isDiffMap)
         })
 }
 

@@ -187,6 +187,7 @@ export const BabyGruSequenceViewer = (props) => {
                         rulerStart={rulerStart}
                         displaystart={start}
                         displayend={end}
+                        use-ctrl-to-zoom
                         />
                     <protvista-sequence
                         ref={sequenceRef}
@@ -195,6 +196,7 @@ export const BabyGruSequenceViewer = (props) => {
                         numberofticks="10"
                         displaystart={start}
                         displayend={end}
+                        use-ctrl-to-zoom
                         />
                 </protvista-manager>
             </div>    

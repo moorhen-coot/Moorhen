@@ -30,6 +30,7 @@ class RamaPlot extends Component {
         this.fixContext();
         var ctx = this.context;
         var c = this.canvasRef.current;
+        let pointSize = c.width*0.02
 
         ctx.clearRect(0, 0, c.width, c.height);
 
@@ -113,19 +114,19 @@ class RamaPlot extends Component {
 
                 if(this.state.plotInfo[ip].isOutlier){
                     if(this.state.plotInfo[ip].restype==="PRO"){
-                        ctx.drawImage(this.imgProOutlier, x-4, y-4, 8, 8);
+                        ctx.drawImage(this.imgProOutlier, x-4, y-4, pointSize, pointSize);
                     } else if(this.state.plotInfo[ip].restype==="GLY"){
-                        ctx.drawImage(this.imgGlyOutlier, x-4, y-4, 8, 8);
+                        ctx.drawImage(this.imgGlyOutlier, x-4, y-4, pointSize, pointSize);
                     } else {
-                        ctx.drawImage(this.imgOtherOutlier, x-4, y-4, 8, 8);
+                        ctx.drawImage(this.imgOtherOutlier, x-4, y-4, pointSize, pointSize);
                     }
                 } else {
                     if(this.state.plotInfo[ip].restype==="PRO"){
-                        ctx.drawImage(this.imgProNormal, x-4, y-4, 8, 8);
+                        ctx.drawImage(this.imgProNormal, x-4, y-4, pointSize, pointSize);
                     } else if(this.state.plotInfo[ip].restype==="GLY"){
-                        ctx.drawImage(this.imgGlyNormal, x-4, y-4, 8, 8);
+                        ctx.drawImage(this.imgGlyNormal, x-4, y-4, pointSize, pointSize);
                     } else {
-                        ctx.drawImage(this.imgOtherNormal, x-4, y-4, 8, 8);
+                        ctx.drawImage(this.imgOtherNormal, x-4, y-4, pointSize, pointSize);
                     }
                 }
             }
@@ -137,19 +138,19 @@ class RamaPlot extends Component {
 
                 if(this.state.plotInfo[this.hit].isOutlier){
                     if(this.state.plotInfo[this.hit].restype==="PRO"){
-                        ctx.drawImage(this.imgProOutlier, x-4-iframe/this.nAnimationFrames*2, y-4-iframe/this.nAnimationFrames*2, 8+iframe/this.nAnimationFrames*4, 8+iframe/this.nAnimationFrames*4);
+                        ctx.drawImage(this.imgProOutlier, x-4-iframe/this.nAnimationFrames*2, y-4-iframe/this.nAnimationFrames*2, pointSize+iframe/this.nAnimationFrames*4, pointSize+iframe/this.nAnimationFrames*4);
                     } else if(this.state.plotInfo[this.hit].restype==="GLY"){
-                        ctx.drawImage(this.imgGlyOutlier, x-4-iframe/this.nAnimationFrames*2, y-4-iframe/this.nAnimationFrames*2, 8+iframe/this.nAnimationFrames*4, 8+iframe/this.nAnimationFrames*4);
+                        ctx.drawImage(this.imgGlyOutlier, x-4-iframe/this.nAnimationFrames*2, y-4-iframe/this.nAnimationFrames*2, pointSize+iframe/this.nAnimationFrames*4, pointSize+iframe/this.nAnimationFrames*4);
                     } else {
-                        ctx.drawImage(this.imgOtherOutlier, x-4-iframe/this.nAnimationFrames*2, y-4-iframe/this.nAnimationFrames*2, 8+iframe/this.nAnimationFrames*4, 8+iframe/this.nAnimationFrames*4);
+                        ctx.drawImage(this.imgOtherOutlier, x-4-iframe/this.nAnimationFrames*2, y-4-iframe/this.nAnimationFrames*2, pointSize+iframe/this.nAnimationFrames*4, pointSize+iframe/this.nAnimationFrames*4);
                     }
                 } else {
                     if(this.state.plotInfo[this.hit].restype==="PRO"){
-                        ctx.drawImage(this.imgProNormal, x-4-iframe/this.nAnimationFrames*2, y-4-iframe/this.nAnimationFrames*2, 8+iframe/this.nAnimationFrames*4, 8+iframe/this.nAnimationFrames*4);
+                        ctx.drawImage(this.imgProNormal, x-4-iframe/this.nAnimationFrames*2, y-4-iframe/this.nAnimationFrames*2, pointSize+iframe/this.nAnimationFrames*4, pointSize+iframe/this.nAnimationFrames*4);
                     } else if(this.state.plotInfo[this.hit].restype==="GLY"){
-                        ctx.drawImage(this.imgGlyNormal, x-4-iframe/this.nAnimationFrames*2, y-4-iframe/this.nAnimationFrames*2, 8+iframe/this.nAnimationFrames*4, 8+iframe/this.nAnimationFrames*4);
+                        ctx.drawImage(this.imgGlyNormal, x-4-iframe/this.nAnimationFrames*2, y-4-iframe/this.nAnimationFrames*2, pointSize+iframe/this.nAnimationFrames*4, pointSize+iframe/this.nAnimationFrames*4);
                     } else {
-                        ctx.drawImage(this.imgOtherNormal, x-4-iframe/this.nAnimationFrames*2, y-4-iframe/this.nAnimationFrames*2, 8+iframe/this.nAnimationFrames*4, 8+iframe/this.nAnimationFrames*4);
+                        ctx.drawImage(this.imgOtherNormal, x-4-iframe/this.nAnimationFrames*2, y-4-iframe/this.nAnimationFrames*2, pointSize+iframe/this.nAnimationFrames*4, pointSize+iframe/this.nAnimationFrames*4);
                     }
                 }
             }

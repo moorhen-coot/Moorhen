@@ -23,6 +23,10 @@ export default function BabyGruSlider(props) {
         props.setExternalValue(parseFloat(externalValue))
     }, [externalValue])
 
+    React.useEffect(() => {
+        handleChange(null, convertInitValueToScale(props.externalValue))
+    }, [])
+
     const handleChange = (event, newValue) => {
         setValue(newValue);
         if (props.logScale) {

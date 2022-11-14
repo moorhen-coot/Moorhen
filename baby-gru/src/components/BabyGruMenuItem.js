@@ -2,9 +2,9 @@ import { MenuItem } from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { OverlayTrigger, Popover, PopoverBody, PopoverHeader, Form, InputGroup, Button, FormSelect, Row, Col, SplitButton, Dropdown } from "react-bootstrap";
 import { SketchPicker } from "react-color";
-import { BabyGruMtzWrapper, cootCommand, readTextFile } from "../BabyGruUtils";
-import { BabyGruMap } from "./BabyGruMap";
-import { BabyGruMolecule } from "./BabyGruMolecule";
+import { BabyGruMtzWrapper, readTextFile } from "../utils/BabyGruUtils";
+import { BabyGruMap } from "../utils/BabyGruMap";
+import { BabyGruMolecule } from "../utils/BabyGruMolecule";
 import { BabyGruMoleculeSelect } from "./BabyGruMoleculeSelect";
 import BabyGruSlider from "./BabyGruSlider";
 
@@ -175,7 +175,7 @@ export const BabyGruDeleteDisplayObjectMenuItem = (props) => {
         buttonText="Delete"
         popoverPlacement='left'
         popoverContent={panelContent}
-        menuItemText="Delete molecule"
+        menuItemText={props.item.name ? "Delete molecule" : "Delete map"}
         onCompleted={onCompleted}
         setPopoverIsShown={props.setPopoverIsShown}
     />
@@ -567,47 +567,6 @@ export const BabyGruImportMapCoefficientsMenuItem = (props) => {
     />
 }
 
-export const BabyGruImportMapMenuItem = (props) => {
-    const filesRef = useRef(null)
-    const isDiffRef = useRef()
-
-    const panelContent = <>
-        <Row>
-            <Form.Group style={{ width: '30rem', margin: '0.5rem' }} controlId="uploadDicts" className="mb-3">
-                <Form.Label>CCP4/MRC Map...</Form.Label>
-                <Form.Control ref={filesRef} type="file" multiple={false} accept={[".map", ".mrc"]} onChange={(e) => {
-                    handleFileRead(e)
-                }} />
-            </Form.Group>
-        </Row>
-        <Row style={{ marginBottom: "1rem" }}>
-            <Col>
-                <Form.Check label={'is diff map'} name={`isDifference`} type="checkbox" ref={isDiffRef} variant="outline" />
-            </Col>
-        </Row>
-    </>
-
-    const handleFileRead = async (e) => {
-        "Here I would suggest we parse the file provided and give feedback on contents"
-    }
-
-    const onCompleted = useCallback(async (e) => {
-        const file = filesRef.current.files[0]
-        console.log('file is', file, isDiffRef.current.checked)
-        const newMap = new BabyGruMap(props.commandCentre)
-        await newMap.loadToCootFromMapFile(file, isDiffRef.current.checked)
-        props.setMaps([...props.maps, newMap])
-        props.setActiveMap(newMap)
-    }, [props.maps, filesRef.current, isDiffRef.current])
-
-    return <BabyGruMenuItem
-        popoverContent={panelContent}
-        menuItemText="CCP4/MRC map..."
-        onCompleted={onCompleted}
-        setPopoverIsShown={props.setPopoverIsShown}
-    />
-}
-
 export const BabyGruClipFogMenuItem = (props) => {
 
     const [zclipFront, setZclipFront] = useState(5)
@@ -727,14 +686,12 @@ export const BabyGruAddWatersMenuItem = (props) => {
         molNo.current = parseInt(moleculeRef.current.value)
         return props.commandCentre.current.cootCommand({
             command: 'add_waters',
-            commandArgs: [parseInt(molNo.current), props.activeMap.mapMolNo],
-            returnType: "status"
+            commandArgs: [parseInt(moleculeRef.current.value), props.activeMap.mapMolNo],
+            returnType: "Status"
         }, true).then(result => {
-            //console.log('Added water', moleculeRef)
             props.molecules
-                .filter(molecule => molecule.coordMolNo === parseInt(molNo.current))
+                .filter(molecule => molecule.coordMolNo === parseInt(moleculeRef.current.value))
                 .forEach(molecule => {
-                    //console.log('Considering molecule',{molecule})
                     molecule.setAtomsDirty(true)
                     molecule.redraw(props.glRef)
                 })

@@ -1,10 +1,8 @@
 import { Fragment, useEffect, useRef, useState, useLayoutEffect } from "react"
 import { Col, Row, Form } from 'react-bootstrap';
 import { RamaPlot } from "../WebGL/Ramachandran"
-import { cootCommand, postCootMessage } from "../BabyGruUtils"
-import { inspect } from 'util'
-import { height } from "@mui/system";
-import { convertRemToPx } from '../BabyGruUtils';
+import { cootCommand, postCootMessage } from "../utils/BabyGruUtils"
+import { convertRemToPx } from '../utils/BabyGruUtils';
 
 export const BabyGruRamachandran = (props) => {
     const ramachandranRef = useRef();
