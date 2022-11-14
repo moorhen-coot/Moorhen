@@ -727,12 +727,12 @@ export const BabyGruAddWatersMenuItem = (props) => {
         molNo.current = parseInt(moleculeRef.current.value)
         return props.commandCentre.current.cootCommand({
             command: 'add_waters',
-            commandArgs: [parseInt(moleculeRef.current.value), props.activeMap.mapMolNo],
-            returnType: "Status"
+            commandArgs: [parseInt(molNo.current), props.activeMap.mapMolNo],
+            returnType: "status"
         }, true).then(result => {
             props.molecules
-                .filter(molecule => molecule.coordMolNo === parseInt(moleculeRef.current.value))
-                .forEach(molecule => {
+            .filter(molecule => molecule.coordMolNo === parseInt(moleculeRef.current.value))
+            .forEach(molecule => {
                     molecule.setAtomsDirty(true)
                     molecule.redraw(props.glRef)
                 })
