@@ -695,7 +695,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("get_single_letter_codes_for_chain",&molecules_container_js::get_single_letter_codes_for_chain)
     .function("add",&molecules_container_js::add)
     .function("getFloats",&molecules_container_js::getFloats)
-    .function("merge_molecules",&molecules_container_t::merge_molecules)
+    .function("merge_molecules",&molecules_container_js::merge_molecules)
     ;
     class_<RamachandranInfo>("RamachandranInfo")
     .constructor<>()
@@ -731,6 +731,10 @@ EMSCRIPTEN_BINDINGS(my_module) {
     class_<ResSpecStringPair>("ResSpecStringPair")
     .property("first",&ResSpecStringPair::first)
     .property("second",&ResSpecStringPair::second)
+    ;
+    class_<IntVectorMergeMolInfoPair>("IntVectorMergeMolInfoPair")
+    .property("first",&IntVectorMergeMolInfoPair::first)
+    .property("second",&IntVectorMergeMolInfoPair::second)
     ;
     class_<coot::residue_spec_t>("residue_spec_t")
     .constructor<const std::string &, int, const std::string &>()
