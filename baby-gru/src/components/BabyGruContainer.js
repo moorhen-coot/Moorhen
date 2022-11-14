@@ -1,4 +1,4 @@
-import { useRef, useLayoutEffect, useState, useEffect, createRef, useReducer, useCallback } from 'react';
+import { useRef, useState, useEffect, createRef, useReducer, useCallback } from 'react';
 import { Navbar, Container, Nav, Tabs, Tab, Accordion, Button, Col, Row, Card, Spinner } from 'react-bootstrap';
 import { BabyGruDisplayObjects } from './BabyGruDisplayObjects';
 import { BabyGruWebMG } from './BabyGruWebMG';

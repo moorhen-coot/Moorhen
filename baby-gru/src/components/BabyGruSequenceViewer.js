@@ -1,5 +1,4 @@
-import { Fragment, useEffect, useRef, useState } from "react"
-import { Card, Form, Button, Row, Col, FormCheck } from "react-bootstrap";
+import { useEffect, useRef, useState } from "react"
 import ProtvistaManager from "protvista-manager";
 import ProtvistaSequence from "protvista-sequence";
 import ProtvistaNavigation from "protvista-navigation";
