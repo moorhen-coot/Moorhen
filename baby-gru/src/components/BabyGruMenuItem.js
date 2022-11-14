@@ -731,7 +731,7 @@ export const BabyGruAddWatersMenuItem = (props) => {
             returnType: "status"
         }, true).then(result => {
             props.molecules
-                .filter(molecule => molecule.coordMolNo === parseInt(moleculeRef.current.value))
+                .filter(molecule => molecule.coordMolNo === parseInt(molNo.current))
                 .forEach(molecule => {
                     molecule.setAtomsDirty(true)
                     molecule.redraw(props.glRef)
