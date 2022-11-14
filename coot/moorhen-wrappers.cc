@@ -663,6 +663,9 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("difference_map_peaks",&molecules_container_t::difference_map_peaks)
     .function("pepflips_using_difference_map",&molecules_container_t::pepflips_using_difference_map)
     .function("add_waters",&molecules_container_t::add_waters)
+    .function("ramachandran_analysis",&molecules_container_t::ramachandran_analysis)
+    .function("density_correlation_analysis",&molecules_container_t::density_correlation_analysis)
+    .function("rotamer_analysis",&molecules_container_t::rotamer_analysis)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<>()
