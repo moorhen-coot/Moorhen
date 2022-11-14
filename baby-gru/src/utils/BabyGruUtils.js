@@ -11,6 +11,42 @@ export function convertViewtoPx(input, height) {
     return height * (input / 100)
 }
 
+export const residueCodesOneToThree = {'C': 'CYS',
+'D': 'ASP',
+'S': 'SER',
+'Q': 'GLN',
+'K': 'LYS',
+'I': 'ILE',
+'P': 'PRO',
+'T': 'THR',
+'F': 'PHE',
+'N': 'ASN',
+'G': 'GLY',
+'H': 'HIS',
+'L': 'LEU',
+'R': 'ARG',
+'W': 'TRP',
+'A': 'ALA',
+'V': 'VAL',
+'E': 'GLU',
+'Y': 'TYR',
+'M': 'MET',
+'UNK': 'UNKOWN',
+'-': 'MISSING'
+}
+
+export const nucleotideCodesOneToThree = {"A": "A",
+    "T": "T",
+    "G": "G",
+    "C": "C",
+    "U": "U",
+    "N": "N",
+    "I": "I",
+    "X": "UNKOWN",
+    'UNK': 'UNKOWN',
+    '-': 'MISSING'
+}
+
 export const postCootMessage = (cootWorker, kwargs) => {
     const messageId = uuidv4()
     return new Promise((resolve, reject) => {
