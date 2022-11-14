@@ -1,0 +1,11 @@
+version: "2"
+services:
+  nginx-react:
+    container_name: ngixreactapp
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 1080:80
+    environment:
+      NODE_ENV: production
