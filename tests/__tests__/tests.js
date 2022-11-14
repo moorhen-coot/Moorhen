@@ -27,6 +27,17 @@ describe('Testing molecules_container_js', () => {
         expect(ret).toBe(1)
     })
 
+    test('Test merge molecules', () => {
+        const molecules_container = new cootModule.molecules_container_js()
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        const coordMolNo2 = molecules_container.read_pdb('./tm-A.pdb')
+        const mergeMols = coordMolNo2.toString()
+        const merge_info = molecules_container.merge_molecules(coordMolNo,mergeMols)
+        expect(merge_info.second.size()).toBe(1)
+        const mi0 = merge_info.second.get(0)
+        expect(mi0.chain_id).toBe("C")
+    })
+
     test('Test read_pdb from faux file system', () => {
         const molecules_container = new cootModule.molecules_container_js()
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
