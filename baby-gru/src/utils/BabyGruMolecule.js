@@ -599,12 +599,12 @@ BabyGruMolecule.prototype.mergeMolecules = async function (otherMolecules, glRef
     return $this.commandCentre.current.cootCommand({
         command: 'merge_molecules',
         commandArgs: [$this.coordMolNo, `${otherMolecules.map(molecule => molecule.coordMolNo).join(':')}`],
-        returnType: "status"
+        returnType: "merge_molecules_return"
     }, true).then(async result => {
-        console.log("Merge molecule result", { result })
+        //console.log("Merge molecule result", { result })
         $this.setAtomsDirty(true)
         if (doHide) otherMolecules.forEach(molecule => {
-            console.log('Hiding', { molecule })
+            //console.log('Hiding', { molecule })
             Object.keys(molecule.displayObjects).forEach(style => {
                 if (Array.isArray(molecule.displayObjects[style])) {
                     console.log('Hiding', { style })
@@ -613,7 +613,7 @@ BabyGruMolecule.prototype.mergeMolecules = async function (otherMolecules, glRef
             })
         })
         let answer = await $this.redraw(glRef)
-        console.log({ answer })
+        //console.log({ answer })
         return Promise.resolve(true)
     })
 }
