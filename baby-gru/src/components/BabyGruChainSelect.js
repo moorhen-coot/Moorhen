@@ -9,12 +9,20 @@ export const BabyGruChainSelect = forwardRef((props, selectRef) => {
         }
     }
 
-    return <Form.Group style={{ width: '20rem', margin: '0.5rem' }}>
+    const getChainOptions = (selectedCoordMolNo) => {
+        let selectedMolecule = props.molecules.find(molecule => molecule.coordMolNo == selectedCoordMolNo)
+        if (selectedMolecule) {
+            return selectedMolecule.cachedAtoms.sequences.map(sequence => <option value={sequence.chain} key={`${selectedMolecule.coordMolNo}_${sequence.chain}`}>{sequence.chain}</option>)
+        }
+        
+    }
+
+    return <Form.Group style={{ width: props.width, margin: '0.5rem' }}>
         <Form.Label>{props.label}</Form.Label>
         <FormSelect size="sm" ref={selectRef} defaultValue={''} onChange={handleChange}>
-            { props.molecule ? props.molecule.sequnces.map(sequence => <option value={sequence.chain} key={`${props.molecule.coordMolNo}_${sequence.chain}`}>{sequence.chain}</option>) :  null}
+            {props.selectedCoordMolNo !== null ? getChainOptions(props.selectedCoordMolNo) :  null}
         </FormSelect>
     </Form.Group>
 })
 
-BabyGruChainSelect.defaultProps = { molecule:null, label: "Chain" }
+BabyGruChainSelect.defaultProps = { width: '20rem', molecule:null, label: "Chain" }
