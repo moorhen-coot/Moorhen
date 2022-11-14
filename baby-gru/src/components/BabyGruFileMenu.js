@@ -5,7 +5,7 @@ import { useEffect, useState, useRef, createRef } from "react";
 import { BabyGruMtzWrapper, cootCommand, readTextFile } from '../utils/BabyGruUtils';
 import { InsertDriveFile } from "@mui/icons-material";
 import { BabyGruMoleculeSelect } from "./BabyGruMoleculeSelect";
-import { BabyGruImportDictionaryMenuItem, BabyGruImportMapCoefficientsMenuItem, BabyGruDeleteEverythingMenuItem, BabyGruLoadTutorialDataMenuItem } from "./BabyGruMenuItem";
+import { BabyGruImportDictionaryMenuItem, BabyGruImportMapCoefficientsMenuItem, BabyGruDeleteEverythingMenuItem, BabyGruLoadTutorialDataMenuItem, BabyGruImportMapMenuItem } from "./BabyGruMenuItem";
 import { MenuItem } from "@mui/material";
 
 export const BabyGruFileMenu = (props) => {
