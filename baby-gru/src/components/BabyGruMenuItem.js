@@ -2,9 +2,9 @@ import { MenuItem } from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { OverlayTrigger, Popover, PopoverBody, PopoverHeader, Form, InputGroup, Button, FormSelect, Row, Col, SplitButton, Dropdown } from "react-bootstrap";
 import { SketchPicker } from "react-color";
-import { BabyGruMtzWrapper, cootCommand, readTextFile } from "../BabyGruUtils";
-import { BabyGruMap } from "./BabyGruMap";
-import { BabyGruMolecule } from "./BabyGruMolecule";
+import { BabyGruMtzWrapper, readTextFile } from "../utils/BabyGruUtils";
+import { BabyGruMap } from "../utils/BabyGruMap";
+import { BabyGruMolecule } from "../utils/BabyGruMolecule";
 import { BabyGruMoleculeSelect } from "./BabyGruMoleculeSelect";
 import BabyGruSlider from "./BabyGruSlider";
 
@@ -175,7 +175,7 @@ export const BabyGruDeleteDisplayObjectMenuItem = (props) => {
         buttonText="Delete"
         popoverPlacement='left'
         popoverContent={panelContent}
-        menuItemText="Delete molecule"
+        menuItemText={props.item.name ? "Delete molecule" : "Delete map"}
         onCompleted={onCompleted}
         setPopoverIsShown={props.setPopoverIsShown}
     />
@@ -730,11 +730,9 @@ export const BabyGruAddWatersMenuItem = (props) => {
             commandArgs: [parseInt(molNo.current), props.activeMap.mapMolNo],
             returnType: "status"
         }, true).then(result => {
-            //console.log('Added water', moleculeRef)
             props.molecules
                 .filter(molecule => molecule.coordMolNo === parseInt(molNo.current))
                 .forEach(molecule => {
-                    //console.log('Considering molecule',{molecule})
                     molecule.setAtomsDirty(true)
                     molecule.redraw(props.glRef)
                 })

@@ -1,9 +1,8 @@
-import { useRef, useLayoutEffect, useState, useEffect, createRef, useReducer, useCallback } from 'react';
+import { useRef, useState, useEffect, createRef, useReducer, useCallback } from 'react';
 import { Navbar, Container, Nav, Tabs, Tab, Accordion, Button, Col, Row, Card, Spinner } from 'react-bootstrap';
 import { BabyGruDisplayObjects } from './BabyGruDisplayObjects';
 import { BabyGruWebMG } from './BabyGruWebMG';
-import { v4 as uuidv4 } from 'uuid';
-import { BabyGruCommandCentre, convertRemToPx, convertViewtoPx } from '../BabyGruUtils';
+import { BabyGruCommandCentre, convertRemToPx, convertViewtoPx } from '../utils/BabyGruUtils';
 import { BabyGruButtonBar } from './BabyGruButtonBar';
 import { BabyGruFileMenu } from './BabyGruFileMenu';
 import { BabyGruRamachandran } from './BabyGruRamachandran';
@@ -14,8 +13,6 @@ import './BabyGruContainer.css'
 import { BabyGruHistoryMenu } from './BabyGruHistoryMenu';
 import { BabyGruViewMenu } from './BabyGruViewMenu';
 import { BabyGruLigandMenu } from './BabyGruLigandMenu';
-import { quatToMat4, quat4Inverse } from '../WebGL/quatToMat4.js';
-import * as vec3 from 'gl-matrix/vec3';
 
 
 const initialHistoryState = { commands: [] }

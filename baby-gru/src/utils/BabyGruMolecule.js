@@ -7,10 +7,9 @@ import { getMultipleBonds } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { atomsToSpheresInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { contactsToCylindersInfo, contactsToLinesInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { singletonsToLinesInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
-import { postCootMessage, readTextFile, readDataFile, cootCommand } from '../BabyGruUtils'
+import { postCootMessage, readTextFile, readDataFile, cootCommand } from '../utils/BabyGruUtils'
 import { quatToMat4, quat4Inverse } from '../WebGL/quatToMat4.js';
 import * as vec3 from 'gl-matrix/vec3';
-import { object } from 'prop-types';
 
 export function BabyGruMolecule(commandCentre) {
     this.commandCentre = commandCentre
@@ -309,8 +308,6 @@ BabyGruMolecule.prototype.show = function (style, gl) {
 }
 
 BabyGruMolecule.prototype.hide = function (style, gl) {
-    //console.log({style})
-    //console.log('is Array')
     this.displayObjects[style].forEach(displayBuffer => {
         displayBuffer.visible = false
     })
@@ -326,12 +323,10 @@ BabyGruMolecule.prototype.webMGAtomsFromFileString = function (fileString) {
         result = parseMMCIF(unindentedLines, $this.name);
         if (typeof result.atoms === 'undefined') {
             result = parsePDB(unindentedLines, $this.name)
-            //console.log('Parsed file as PDB')
         }
     }
     catch (err) {
         result = parsePDB(unindentedLines, $this.name)
-        //console.log('Parsed file as PDB')
     }
     return result
 }
@@ -499,7 +494,6 @@ BabyGruMolecule.prototype.drawSticks = function (webMGAtoms, gl) {
 }
 
 BabyGruMolecule.prototype.redraw = function (gl) {
-    //console.log('In redraw')
     const $this = this
     const itemsToRedraw = []
     Object.keys($this.displayObjects).forEach(style => {
@@ -587,7 +581,6 @@ BabyGruMolecule.prototype.updateWithMovedAtoms = async function (movedResidues, 
         $this.displayObjects.transformation.origin = [0, 0, 0]
         $this.displayObjects.transformation.quat = null
         $this.setAtomsDirty(true)
-        //console.log('In updateWithMoved')
         return $this.redraw(glRef)
     })
 

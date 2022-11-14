@@ -1,5 +1,4 @@
-import { Fragment, useEffect, useRef, useState } from "react"
-import { Card, Form, Button, Row, Col, FormCheck } from "react-bootstrap";
+import { useEffect, useRef, useState } from "react"
 import ProtvistaManager from "protvista-manager";
 import ProtvistaSequence from "protvista-sequence";
 import ProtvistaNavigation from "protvista-navigation";
@@ -187,6 +186,7 @@ export const BabyGruSequenceViewer = (props) => {
                         rulerStart={rulerStart}
                         displaystart={start}
                         displayend={end}
+                        use-ctrl-to-zoom
                         />
                     <protvista-sequence
                         ref={sequenceRef}
@@ -195,6 +195,7 @@ export const BabyGruSequenceViewer = (props) => {
                         numberofticks="10"
                         displaystart={start}
                         displayend={end}
+                        use-ctrl-to-zoom
                         />
                 </protvista-manager>
             </div>    
