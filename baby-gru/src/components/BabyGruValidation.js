@@ -58,8 +58,7 @@ export const BabyGruValidationPlot = (props) => {
     const [selectedModel, setSelectedModel] = useState(null)
     const [selectedMap, setSelectedMap] = useState(null)
     const [selectedChain, setSelectedChain] = useState(null)
-    const [currentChart, setCurrentChart] = useState(null)
-    
+    const [cachedAtoms, setCachedAtoms] = useState(null)
 
     const getSequenceData = () => {
         let selectedMolecule = props.molecules.find(molecule => molecule.coordMolNo == selectedModel)
@@ -91,28 +90,6 @@ export const BabyGruValidationPlot = (props) => {
         return currentlyAvailable
     }
 
-    useEffect(() => {
-        if (props.molecules.length === 0) {
-            setSelectedModel(null)
-        } else if (selectedModel === null) {
-            setSelectedModel(props.molecules[0].coordMolNo)
-        } else if (!props.molecules.map(molecule => molecule.coordMolNo).includes(selectedModel)) {
-            setSelectedModel(props.molecules[0].coordMolNo)
-        }
-
-    }, [props.molecules.length])
-
-    useEffect(() => {
-        if (props.maps.length === 0) {
-            setSelectedMap(null)
-        } else if (selectedMap === null) {
-            setSelectedMap(props.maps[0].mapMolNo)
-        } else if (!props.maps.map(map => map.mapMolNo).includes(selectedMap)) {
-            setSelectedMap(props.maps[0].mapMolNo)
-        }
-
-    }, [props.maps.length])
-
     const handleModelChange = (evt) => {
         console.log(`Selected model ${evt.target.value}`)
         setSelectedModel(evt.target.value)
@@ -128,31 +105,6 @@ export const BabyGruValidationPlot = (props) => {
         console.log(`Selected chain ${evt.target.value}`)
         setSelectedChain(evt.target.value)
     }
-    
-    useEffect(() => {
-        async function fetchData(availableMetrics) {
-            let promises = []
-            availableMetrics.forEach(metric => {
-                const inputData = { message:'coot_command', ...metric }
-                promises.push(props.commandCentre.current.cootCommand(inputData)    )
-            })
-            let responses = await Promise.all(promises) 
-            
-            let newPlotData = []
-            responses.forEach(response => {
-                newPlotData.push(response.data.result.result)
-            })
-            setPlotData(newPlotData)
-        }
-
-        if (selectedModel === null || chainSelectRef.current.value === null) {
-                return
-        }
-        let availableMetrics = getAvailableMetrics()
-        fetchData(availableMetrics)   
-
-    }, [selectedChain, selectedMap, selectedModel])
-
 
     const getResidueInfo = (selectedMolecule, residueIndex) => {
         const sequenceData =  getSequenceData()
@@ -207,10 +159,60 @@ export const BabyGruValidationPlot = (props) => {
         return "UNK"
     }
 
+    useEffect(() => {
+        if (props.molecules.length === 0) {
+            setSelectedModel(null)
+        } else if (selectedModel === null) {
+            setSelectedModel(props.molecules[0].coordMolNo)
+        } else if (!props.molecules.map(molecule => molecule.coordMolNo).includes(selectedModel)) {
+            setSelectedModel(props.molecules[0].coordMolNo)
+        }
 
+    }, [props.molecules.length])
 
     useEffect(() => {
-        if (chainSelectRef.current.value === null || selectedMap === null || selectedModel === null) {
+        if (props.maps.length === 0) {
+            setSelectedMap(null)
+        } else if (selectedMap === null) {
+            setSelectedMap(props.maps[0].mapMolNo)
+        } else if (!props.maps.map(map => map.mapMolNo).includes(selectedMap)) {
+            setSelectedMap(props.maps[0].mapMolNo)
+        }
+
+    }, [props.maps.length])
+    
+    useEffect(() => {
+        if (selectedModel !== null && props.molecules[selectedModel]) {
+            setCachedAtoms(props.molecules[selectedModel].cachedAtoms)
+        }
+    })
+    
+    useEffect(() => {
+        async function fetchData(availableMetrics) {
+            let promises = []
+            availableMetrics.forEach(metric => {
+                const inputData = { message:'coot_command', ...metric }
+                promises.push(props.commandCentre.current.cootCommand(inputData)    )
+            })
+            let responses = await Promise.all(promises) 
+            
+            let newPlotData = []
+            responses.forEach(response => {
+                newPlotData.push(response.data.result.result)
+            })
+            setPlotData(newPlotData)
+        }
+
+        if (selectedModel === null || chainSelectRef.current.value === null) {
+                return
+        }
+        let availableMetrics = getAvailableMetrics()
+        fetchData(availableMetrics)   
+
+    }, [selectedChain, selectedMap, selectedModel, cachedAtoms])
+
+    useEffect(() => {
+        if (chainSelectRef.current.value === null || selectedModel === null) {
             return;
         }
         
