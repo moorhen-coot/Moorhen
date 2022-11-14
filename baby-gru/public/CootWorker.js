@@ -56,7 +56,7 @@ const residueCodesToJSArray = (residueCodes) => {
     return returnResult
 }
 
-const densityFitToJSArray = (densityFitData, chainID) => {
+const validationDataToJSArray = (densityFitData, chainID) => {
     const chainIndex = densityFitData.get_index_for_chain(chainID);
     const resInfo = densityFitData.cviv.get(chainIndex).rviv;
 
@@ -67,7 +67,7 @@ const densityFitToJSArray = (densityFitData, chainID) => {
             insCode: resInfo.get(ir).residue_spec.ins_code,
             seqNum: resInfo.get(ir).residue_spec.res_no,
             restype: "UNK",
-            value: 1. / resInfo.get(ir).distortion
+            value: 1. / resInfo.get(ir).function_value
         });
     }
     return returnResult
@@ -366,8 +366,8 @@ onmessage = function (e) {
                 case 'residue_codes':
                     returnResult = residueCodesToJSArray(cootResult)
                     break;
-                case 'density_fit':
-                    returnResult = densityFitToJSArray(cootResult, e.data.chainID)
+                case 'validation_data':
+                    returnResult = validationDataToJSArray(cootResult, e.data.chainID)
                     break;
                 case 'status':
                 default:
