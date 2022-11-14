@@ -2,10 +2,14 @@ import { Fragment, useEffect, useRef, useState, useLayoutEffect } from "react"
 import { Col, Row, Form } from 'react-bootstrap';
 import { RamaPlot } from "../WebGL/Ramachandran"
 import { convertRemToPx } from '../utils/BabyGruUtils';
+import { BabyGruChainSelect } from './BabyGruChainSelect'
+import { BabyGruMoleculeSelect } from './BabyGruMoleculeSelect'
 
 export const BabyGruRamachandran = (props) => {
     const ramachandranRef = useRef();
     const ramaPlotDivRef = useRef();
+    const moleculeSelectRef = useRef();
+    const chainSelectRef = useRef();
     const [clickedResidue, setClickedResidue] = useState(null)
     const [message, setMessage] = useState("")
     const [ramaPlotDimensions, setRamaPlotDimensions] = useState(230)
@@ -41,11 +45,11 @@ export const BabyGruRamachandran = (props) => {
 
     useEffect(() => {
         async function fetchRamaData() {
-            if (selectedModel === null || selectedChain === null) {
+            if (moleculeSelectRef.current.value === null || chainSelectRef.current.value === null) {
                 setRamaPlotData(null)
                 return
             }
-            const inputData = { message: "get_rama", coordMolNo: selectedModel, chainId: selectedChain }
+            const inputData = { message: "get_rama", coordMolNo: moleculeSelectRef.current.value, chainId: chainSelectRef.current.value }
             let response = await props.commandCentre.current.postMessage(inputData)
             setRamaPlotData(response.data.result)
         }
@@ -55,7 +59,7 @@ export const BabyGruRamachandran = (props) => {
 
     useEffect(() => {
 
-        ramachandranRef.current?.updatePlotData({ info: ramaPlotData, molName: getMolName(selectedModel), chainId: selectedChain, coordMolNo: selectedModel });
+        ramachandranRef.current?.updatePlotData({ info: ramaPlotData, molName: getMolName(selectedModel), chainId: chainSelectRef.current.value, coordMolNo: selectedModel });
 
     }, [ramaPlotData])
 
@@ -85,11 +89,11 @@ export const BabyGruRamachandran = (props) => {
         }
 
         async function fetchRamaData() {
-            if (selectedModel === null || selectedChain === null) {
+            if (moleculeSelectRef.current.value === null || chainSelectRef.current.value === null) {
                 setRamaPlotData(null)
                 return
             }
-            const inputData = { message: "get_rama", coordMolNo: selectedModel, chainId: selectedChain }
+            const inputData = { message: "get_rama", coordMolNo: moleculeSelectRef.current.value, chainId: chainSelectRef.current.value }
             let response = await props.commandCentre.current.postMessage(inputData)
             setRamaPlotData(response.data.result)
         }
@@ -115,6 +119,7 @@ export const BabyGruRamachandran = (props) => {
     const handleModelChange = (evt) => {
         console.log(`Ramachandran selected model ${evt.target.value}`)
         setSelectedModel(evt.target.value)
+        setSelectedChain(chainSelectRef.current.value)
     }
 
     const handleChainChange = (evt) => {
@@ -128,14 +133,10 @@ export const BabyGruRamachandran = (props) => {
             <Form.Group>
                 <Row style={{ padding: '0', margin: '0' }}>
                     <Col>
-                        <Form.Select value={selectedModel} onChange={handleModelChange} >
-                            {props.molecules.map(molecule => {
-                                return <option key={molecule.coordMolNo} value={molecule.coordMolNo}>{molecule.name}</option>
-                            })}
-                        </Form.Select>
+                        <BabyGruMoleculeSelect width="" onChange={handleModelChange} molecules={props.molecules} ref={moleculeSelectRef}/>
                     </Col>
                     <Col>
-                        <Form.Control required type="text" onChange={handleChainChange} placeholder="Chain id" value={selectedChain} />
+                        <BabyGruChainSelect width="" molecules={props.molecules} onChange={handleChainChange} selectedCoordMolNo={selectedModel} ref={chainSelectRef}/>
                     </Col>
                 </Row>
             </Form.Group>
