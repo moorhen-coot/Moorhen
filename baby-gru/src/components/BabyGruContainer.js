@@ -26,7 +26,6 @@ export const BabyGruContainer = (props) => {
     const glRef = useRef(null)
     const commandCentre = useRef(null)
     const graphicsDiv = createRef()
-    const sequenceViewerRef = useRef()
     const navBarRef = useRef()
     const [showSideBar, setShowSideBar] = useState(false)
     const [darkMode, setDarkMode] = useState(false)
@@ -236,8 +235,8 @@ export const BabyGruContainer = (props) => {
                         <BabyGruButtonBar {...collectedProps} />
                     </div>
                 </Col>
-                <Col style={{ padding: '0.5rem', margin: '0', display: showSideBar ? "block" : "none" }} >
-                    <Accordion style={{ height: accordionHeight, overflowY: 'scroll' }}
+                <Col className='side-bar-column' style={{ padding: '0.5rem', margin: '0', display: showSideBar ? "block" : "none" }} >
+                    <Accordion className='side-bar-accordion' style={{ height: accordionHeight, overflowY: 'scroll' }}
                         alwaysOpen={true}
                         defaultActiveKey={''}
                         onSelect={(openPanels) => {
@@ -263,7 +262,7 @@ export const BabyGruContainer = (props) => {
                         }}>
                         <Accordion.Item eventKey="showDisplayObjects" style={{ width: sideBarWidth, padding: '0', margin: '0' }} >
                             <Accordion.Header style={{ padding: '0', margin: '0', height: '4rem' }}>Display Objects</Accordion.Header>
-                            <Accordion.Body style={{ overflowY: 'auto', height: displayObjectsAccordionBodyHeight }}>
+                            <Accordion.Body className='side-bar-accordion-body'  style={{ overflowY: 'auto', height: displayObjectsAccordionBodyHeight }}>
                                 {molecules.length === 0 && maps.length === 0 ? "No data files loaded" : <BabyGruDisplayObjects {...collectedProps} />}
                             </Accordion.Body>
                         </Accordion.Item>
@@ -275,8 +274,7 @@ export const BabyGruContainer = (props) => {
                                         <BabyGruRamachandran molecules={molecules} commandCentre={commandCentre} glRef={glRef} toolAccordionBodyHeight={toolAccordionBodyHeight} sideBarWidth={sideBarWidth} windowHeight={windowHeight} windowWidth={windowWidth} />
                                     </Tab>
                                     <Tab eventKey='validationPlot' title='Validation' style={{ height: '100%' }}>
-                                        Not ready yet
-                                        {/**<BabyGruValidationPlot darkMode={darkMode} molecules={molecules} maps={maps} commandCentre={commandCentre} glRef={glRef} toolAccordionBodyHeight={toolAccordionBodyHeight} sideBarWidth={sideBarWidth} windowHeight={windowHeight} windowWidth={windowWidth} />*/}
+                                        <BabyGruValidationPlot darkMode={darkMode} molecules={molecules} maps={maps} commandCentre={commandCentre} glRef={glRef} toolAccordionBodyHeight={toolAccordionBodyHeight} sideBarWidth={sideBarWidth} windowHeight={windowHeight} windowWidth={windowWidth} />
                                     </Tab>
                                     <Tab eventKey='more' title='More...'>
                                         <BabyGruTimingTest commandCentre={commandCentre} />
