@@ -72,10 +72,10 @@ export const BabyGruContainer = (props) => {
         let style = document.createElement("link");
 
         if (darkMode) {
-            style.href = "/darkly.css"
+            style.href = "/baby-gru/darkly.css"
             setBackgroundColor([0., 0., 0., 1.])
         } else {
-            style.href = "/flatly.css"
+            style.href = "/baby-gru/flatly.css"
             setBackgroundColor([1., 1., 1., 1.])
         }
 

@@ -544,11 +544,11 @@ ${CMAKE_CURRENT_BINARY_DIR}/moorhen.worker.js
 ${CMAKE_CURRENT_BINARY_DIR}/moorhen.js
 ${CMAKE_CURRENT_BINARY_DIR}/moorhen.data
 ${CMAKE_CURRENT_BINARY_DIR}/coot_env_web.js
-DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../baby-gru/public/wasm)
+DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../baby-gru/public/baby-gru/wasm)
 
 install(DIRECTORY 
 ${coot_src}/pixmaps
-DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../baby-gru/public)
+DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../baby-gru/public/baby-gru)
 
 install(FILES ${coot_src}/pixmaps/rama2_all.png
 ${coot_src}/textures/rama-plot-gly-normal.png
@@ -557,12 +557,12 @@ ${coot_src}/textures/rama-plot-other-normal.png
 ${coot_src}/textures/rama-plot-other-outlier.png
 ${coot_src}/textures/rama-plot-pro-normal.png
 ${coot_src}/textures/rama-plot-pro-outlier.png
-DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../baby-gru/public/pixmaps/)
+DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../baby-gru/public/baby-gru/pixmaps/)
 
 install(FILES 
 ${coot_src}/api/gideondoesntapprove.mtz
-DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../baby-gru/public/tutorials RENAME moorhen-tutorial-map-number-1.mtz)
+DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../baby-gru/public/baby-gru/tutorials RENAME moorhen-tutorial-map-number-1.mtz)
 
 install(FILES 
 ${coot_src}/api/gideondoesntapprove.pdb
-DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../baby-gru/public/tutorials RENAME moorhen-tutorial-structure-number-1.pdb)
+DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../baby-gru/public/baby-gru/tutorials RENAME moorhen-tutorial-structure-number-1.pdb)

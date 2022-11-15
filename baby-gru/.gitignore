@@ -24,6 +24,11 @@ yarn-error.log*
 
 /public/wasm
 /public/pixmaps
-/public/tutorials
+/public/tutorials/moorhen-tutorial-map-number-1.mtz
+/public/tutorials/moorhen-tutorial-structure-number-1.pdb
+/public/baby-gru/wasm
+/public/baby-gru/pixmaps
+/public/baby-gru/tutorials/moorhen-tutorial-map-number-1.mtz
+/public/baby-gru/tutorials/moorhen-tutorial-structure-number-1.pdb
 /src/WebGL
 /monomers
