@@ -557,7 +557,7 @@ ${coot_src}/textures/rama-plot-other-normal.png
 ${coot_src}/textures/rama-plot-other-outlier.png
 ${coot_src}/textures/rama-plot-pro-normal.png
 ${coot_src}/textures/rama-plot-pro-outlier.png
-DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../baby-gru/public/baby-gru/pixmaps/)
+DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../baby-gru/public/pixmaps/)
 
 install(FILES 
 ${coot_src}/api/gideondoesntapprove.mtz

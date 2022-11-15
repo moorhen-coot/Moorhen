@@ -437,7 +437,7 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
 
     const readMonomerFile = async (tlc) => {
         console.log({ tlc })
-        return fetch(`./monomers/${tlc.toLowerCase()[0]}/${tlc.toUpperCase()}.cif`)
+        return fetch(`/baby-gru/monomers/${tlc.toLowerCase()[0]}/${tlc.toUpperCase()}.cif`)
             .then(response => response.text())
             .then(fileContent => {
                 handleFileContent(fileContent)
