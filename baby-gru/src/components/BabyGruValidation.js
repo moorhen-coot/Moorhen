@@ -38,10 +38,10 @@ const colourPalettes = {
 }
 
 const metricInfoScaling = {
-    density_correlation_analysis: (value) => {return value * 1},
-    density_fit_analysis: (value) => {return value * 1},
-    rotamer_analysis: (value) => {return value * 1},
-    ramachandran_analysis: (value) => {return Math.log(value) * -1},
+    density_correlation_analysis: (value) => {return value},
+    density_fit_analysis: (value) => {return 1. / value},
+    rotamer_analysis: (value) => {return 1. / value},
+    ramachandran_analysis: (value) => {return Math.log(value)},
 }
 
 export const BabyGruValidationPlot = (props) => {
@@ -182,8 +182,11 @@ export const BabyGruValidationPlot = (props) => {
     }, [props.maps.length])
     
     useEffect(() => {
-        if (selectedModel !== null && props.molecules[selectedModel]) {
-            setCachedAtoms(props.molecules[selectedModel].cachedAtoms)
+        if (selectedModel !== null) {
+            let selectedMoleculeIndex = props.molecules.findIndex(molecule => molecule.coordMolNo == selectedModel);
+            if (selectedMoleculeIndex != -1 && props.molecules[selectedMoleculeIndex]){
+                setCachedAtoms(props.molecules[selectedMoleculeIndex].cachedAtoms)
+            }
         }
     })
     
@@ -204,17 +207,45 @@ export const BabyGruValidationPlot = (props) => {
         }
 
         if (selectedModel === null || chainSelectRef.current.value === null) {
-                return
+            setPlotData(null)
+            return
         }
+        
         let availableMetrics = getAvailableMetrics()
         fetchData(availableMetrics)   
 
     }, [selectedChain, selectedMap, selectedModel, cachedAtoms])
 
     useEffect(() => {
-        if (chainSelectRef.current.value === null || selectedModel === null) {
+        if (chartRef.current) {
+            chartRef.current.destroy()
+        }
+
+        if (chainSelectRef.current.value === null || selectedModel === null || !props.toolAccordionBodyHeight || !props.showSideBar) {
             return;
         }
+
+        let sequenceData =  getSequenceData()
+        if (!sequenceData) {
+            return
+        }
+        
+        let labels = []
+        sequenceData.forEach((residue, index) => {
+            if (index % 10 !== 0) {
+                labels.push(residue.resCode)
+            } else {
+                labels.push([residue.resCode, residue.resNum])
+            }
+        })
+       
+        const barWidth = props.sideBarWidth / 40
+        const tooltipFontSize = 12
+        const axisLabelsFontSize = props.toolAccordionBodyHeight / 60
+        
+        const containerBody = document.getElementById('myContainerBody')
+        containerBody.style.width = (labels.length*barWidth)+ "px";
+        let ctx = document.getElementById("myChart").getContext("2d")
         
         let scales = {
             x: {
@@ -222,7 +253,7 @@ export const BabyGruValidationPlot = (props) => {
                 beginAtZero: true,
                 display:true,
                 ticks: {color: props.darkMode ? 'white' : 'black',
-                        font:{size:20, family:'sans-serif-mono'},
+                        font:{size:barWidth, family:'Helvetica'},
                         maxRotation: 0, 
                         minRotation: 0,
                         autoSkip: false,                                
@@ -234,16 +265,6 @@ export const BabyGruValidationPlot = (props) => {
                 },
             }
         }
-
-        let labels = []
-        let sequenceData =  getSequenceData()
-        sequenceData.forEach((residue, index) => {
-            if (index % 10 !== 0) {
-                labels.push(residue.resCode)
-            } else {
-                labels.push([residue.resCode, residue.resNum])
-            }
-        })
 
         let datasets = []
         let availableMetrics = getAvailableMetrics()
@@ -281,7 +302,7 @@ export const BabyGruValidationPlot = (props) => {
                 beginAtZero: true,
                 title: {
                     display: true,
-                    font:{size:15, family:'sans-serif', weight:800},
+                    font:{size:axisLabelsFontSize, family:'Helvetica', weight:800},
                     text: availableMetrics[methodIndex].displayName,
                     color: props.darkMode ? 'white' : 'black'
                 },
@@ -292,14 +313,6 @@ export const BabyGruValidationPlot = (props) => {
             }
         }
       
-        const containerBody = document.getElementById('myContainerBody')
-        containerBody.style.width = (labels.length*24)+ "px";
-        let ctx = document.getElementById("myChart").getContext("2d")
-
-        if (chartRef.current) {
-            chartRef.current.destroy()
-        }
-
         chartRef.current = new Chart(ctx, {
             plugins: [plugin],
             type: 'bar',
@@ -324,15 +337,15 @@ export const BabyGruValidationPlot = (props) => {
                         title: setTooltipTitle,
                         },
                         titleFont: {
-                            size:15,
-                            family:'serif'
+                            size:tooltipFontSize,
+                            family:'Helvetica'
                         },
                         bodyFont: {
-                            size:15,
-                            family:'serif'
+                            size:tooltipFontSize,
+                            family:'Helvetica'
                         },
                         footerFont: {
-                            family:'serif'
+                            family:'Helvetica'
                         }
                     }
                 },
@@ -344,7 +357,7 @@ export const BabyGruValidationPlot = (props) => {
             }            
         });
 
-    }, [plotData, props.darkMode])
+    }, [plotData, props.darkMode, props.toolAccordionBodyHeight, props.sideBarWidth, props.showSideBar])
 
     return <Fragment>
                 <Form style={{ padding: '0.5rem', margin: '0' }}>
@@ -354,7 +367,7 @@ export const BabyGruValidationPlot = (props) => {
                             <BabyGruMoleculeSelect width="" onChange={handleModelChange} molecules={props.molecules} ref={moleculeSelectRef}/>
                         </Col>
                         <Col>
-                            <BabyGruChainSelect width="" molecules={props.molecules} onChange={handleChainChange} selectedCoordMolNo={selectedModel} ref={chainSelectRef}/>
+                            <BabyGruChainSelect width="" onChange={handleChainChange} molecules={props.molecules} selectedCoordMolNo={selectedModel} allowedTypes={['polypeptide(L)']} ref={chainSelectRef}/>
                         </Col>
                         <Col>
                             <BabyGruMapSelect width="" onChange={handleMapChange} maps={props.maps} ref={mapSelectRef}/>
@@ -363,7 +376,7 @@ export const BabyGruValidationPlot = (props) => {
                     </Form.Group>
                 </Form>
                 <div ref={chartCardRef} className="validation-plot-div">
-                    <div ref={chartBoxRef} style={{height: '100%'}} className="chartBox">
+                    <div ref={chartBoxRef} style={{height: '100%'}} className="chartBox" id="myChartBox">
                         <div ref={containerRef} className="validation-plot-container" style={{height: '100%', overflowX:'scroll'}}>
                             <div ref={containerBodyRef} style={{height: '100%'}} className="containerBody" id="myContainerBody">
                                 <canvas ref={canvasRef} id="myChart"></canvas>

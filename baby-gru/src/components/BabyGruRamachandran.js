@@ -45,7 +45,7 @@ export const BabyGruRamachandran = (props) => {
 
     useEffect(() => {
         async function fetchRamaData() {
-            if (moleculeSelectRef.current.value === null || chainSelectRef.current.value === null) {
+            if (!moleculeSelectRef.current.value || !chainSelectRef.current.value) {
                 setRamaPlotData(null)
                 return
             }
@@ -77,19 +77,22 @@ export const BabyGruRamachandran = (props) => {
     }, [props.molecules.length])
 
     useEffect(() => {
-        if (selectedModel !== null && props.molecules[selectedModel]) {
-            setCachedAtoms(props.molecules[selectedModel].cachedAtoms)
+        if (selectedModel !== null) {
+            let selectedMoleculeIndex = props.molecules.findIndex(molecule => molecule.coordMolNo == selectedModel);
+            if (selectedMoleculeIndex != -1 && props.molecules[selectedMoleculeIndex]){
+                setCachedAtoms(props.molecules[selectedMoleculeIndex].cachedAtoms)
+            }
         }
     })
 
     useEffect(() => {
         console.log('cachedAtoms changed')
-        if (ramaPlotData === null || selectedModel === null || selectedChain === null || props.molecules.length === 0) {
+        if (ramaPlotData === null || selectedModel === null || chainSelectRef.current.value === null || props.molecules.length === 0) {
             return;
         }
 
         async function fetchRamaData() {
-            if (moleculeSelectRef.current.value === null || chainSelectRef.current.value === null) {
+            if (!moleculeSelectRef.current.value || !chainSelectRef.current.value) {
                 setRamaPlotData(null)
                 return
             }

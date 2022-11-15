@@ -56,9 +56,9 @@ const residueCodesToJSArray = (residueCodes) => {
     return returnResult
 }
 
-const validationDataToJSArray = (densityFitData, chainID) => {
-    const chainIndex = densityFitData.get_index_for_chain(chainID);
-    const resInfo = densityFitData.cviv.get(chainIndex).rviv;
+const validationDataToJSArray = (validationData, chainID) => {
+    const chainIndex = validationData.get_index_for_chain(chainID);
+    const resInfo = validationData.cviv.get(chainIndex).rviv;
 
     let returnResult = [];
     for (let ir = 0; ir < resInfo.size(); ir++) {
@@ -67,7 +67,7 @@ const validationDataToJSArray = (densityFitData, chainID) => {
             insCode: resInfo.get(ir).residue_spec.ins_code,
             seqNum: resInfo.get(ir).residue_spec.res_no,
             restype: "UNK",
-            value: 1. / resInfo.get(ir).function_value
+            value: resInfo.get(ir).function_value
         });
     }
     return returnResult
