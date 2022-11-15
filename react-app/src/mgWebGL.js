@@ -1705,6 +1705,12 @@ class MGWebGL extends Component {
                 evt.stopPropagation();
                 },
                 false);
+        self.canvas.addEventListener("dblclick",
+                function(evt){
+                self.doDoubleClick(evt,self);
+                evt.stopPropagation();
+                },
+                false);
         self.canvas.addEventListener("mousemove",
                 function(evt){
                 self.doMouseMove(evt,self);
@@ -8415,14 +8421,14 @@ class MGWebGL extends Component {
                     self.reContourMaps();
                     return;
                 }
-
-                if(self.clickedAtoms.length===0||(self.clickedAtoms[self.clickedAtoms.length-1].length>1&&!event.shiftKey)){
-                    self.clickedAtoms.push([]);
-                    self.clickedAtoms[self.clickedAtoms.length-1].push(theAtom);
-                } else {
-                    self.clickedAtoms[self.clickedAtoms.length-1].push(theAtom);
+                if(self.keysDown.m){
+                    if(self.clickedAtoms.length===0||(self.clickedAtoms[self.clickedAtoms.length-1].length>1&&!event.shiftKey)){
+                        self.clickedAtoms.push([]);
+                        self.clickedAtoms[self.clickedAtoms.length-1].push(theAtom);
+                    } else {
+                        self.clickedAtoms[self.clickedAtoms.length-1].push(theAtom);
+                    }
                 }
-
             }
             //console.log(dpl);
         }
@@ -10101,6 +10107,20 @@ class MGWebGL extends Component {
                 }
             }
         }
+    }
+
+    doDoubleClick(event,self) {
+        const frontAndBack = self.getFrontAndBackPos(event);
+        const goToBlobEvent = new CustomEvent("keyPressWithMousePosition", {
+                "detail": {
+                        front:[frontAndBack[0][0],frontAndBack[0][1],frontAndBack[0][2]],
+                        back:[frontAndBack[1][0],frontAndBack[1][1],frontAndBack[1][2]],
+                        windowX: frontAndBack[2],
+                        windowY: frontAndBack[3],
+                        key: 'G'
+                    }
+        });
+        document.dispatchEvent(goToBlobEvent);
     }
 
     doMouseMove(event,self) {
