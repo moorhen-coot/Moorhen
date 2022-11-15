@@ -86,7 +86,7 @@ For reason of file searching, you will have to make a symbolic link to allow jes
 `npm test`  
 When testing is completed, you will have to issue a `<ctrl-C>`.  
 
-7. To run the Baby-Gru prototype application:  
+7. To run the Baby-Gru molecular graphics application:  
 `make install` (This copies some files from `web_example` to `baby-gru/public/wasm`  
 `cd baby-gru`  
 `npm install`  
