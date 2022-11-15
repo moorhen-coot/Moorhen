@@ -1,7 +1,7 @@
 # CCP4/Coot/Privateer Web Assembly
 
 This project is a set of scripts, patches and CMakeLists.txt files
-which enable the compilation of  some of the [CCP4](https://www.ccp4.ac.uk/) libraries and programs, some of [Coot](https://www2.mrc-lmb.cam.ac.uk/personal/pemsley/coot/), [FFTW2](https://www.fftw.org/), [Privateer](https://github.com/glycojones/privateer) and the [Gnu Scientific Library](https://www.gnu.org/software/gsl/) to Web Assembly. The most interesting part for the end user is a prototype port of Coot to WebGL, web assembly, JavaScript, etc. currently code named `Baby Gru`
+which enable the compilation of  some of the [CCP4](https://www.ccp4.ac.uk/) libraries and programs, some of [Coot](https://www2.mrc-lmb.cam.ac.uk/personal/pemsley/coot/), [FFTW2](https://www.fftw.org/), [Privateer](https://github.com/glycojones/privateer) and the [Gnu Scientific Library](https://www.gnu.org/software/gsl/) to Web Assembly. The most interesting part for the end user is a prototype port of Coot to WebGL, web assembly, JavaScript, etc. currently codenamed `Baby Gru`
 
 Contained are some examples of using the generated JS/Web Assembly:
 
