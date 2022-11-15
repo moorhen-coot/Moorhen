@@ -49,6 +49,7 @@ export const BabyGruContainer = (props) => {
     const [backgroundColor, setBackgroundColor] = useState([0., 0., 0., 1.])
     const [currentDropdownId, setCurrentDropdownId] = useState(-1)
     const [appTitle, setAppTitle] = useState('BabyGru')
+    const [cootInitialized, setCootInitialized] = useState(false)
 
     const sideBarWidth = convertViewtoPx(30, windowWidth)
     const innerWindowMarginHeight = convertRemToPx(2.1)
@@ -62,10 +63,11 @@ export const BabyGruContainer = (props) => {
     //The purpose here is to return the functions that define and control BabyGruContainer state to a 
     //containing React component
     useEffect(() => {
-        if (props.forwardControls) {
+        console.log('Coot initialized', cootInitialized, props.forwardControls)
+        if (cootInitialized && props.forwardControls) {
             props.forwardControls(collectedProps)
         }
-    }, [])
+    }, [cootInitialized, props.forwardControls])
 
     useEffect(() => {
         let head = document.head;
@@ -98,6 +100,10 @@ export const BabyGruContainer = (props) => {
             },
             onNewCommand: (newCommand) => {
                 dispatchHistoryReducer(newCommand)
+            },
+            onCootInitialized: () => {
+                console.log('Being notified of coot initialized')
+                setCootInitialized(true)
             }
         })
         window.addEventListener('resize', setWindowDimensions)

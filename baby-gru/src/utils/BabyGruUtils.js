@@ -143,7 +143,9 @@ export const BabyGruCommandCentre = class {
         this.cootWorker = new Worker('/baby-gru/CootWorker.js')
         this.cootWorker.onmessage = this.handleMessage.bind(this)
         this.postMessage({ message: 'CootInitialize', data: {} })
-            .then(reply => { console.log(reply) })
+            .then(reply => { 
+                if (this.onCootInitialized) this.onCootInitialized()
+            })
     }
     handleMessage(reply) {
         if (this.onConsoleChanged && reply.data.consoleMessage) {
