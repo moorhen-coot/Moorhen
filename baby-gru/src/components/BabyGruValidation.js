@@ -182,8 +182,11 @@ export const BabyGruValidationPlot = (props) => {
     }, [props.maps.length])
     
     useEffect(() => {
-        if (selectedModel !== null && props.molecules[selectedModel]) {
-            setCachedAtoms(props.molecules[selectedModel].cachedAtoms)
+        if (selectedModel !== null) {
+            let selectedMoleculeIndex = props.molecules.findIndex(molecule => molecule.coordMolNo == selectedModel);
+            if (selectedMoleculeIndex != -1 && props.molecules[selectedMoleculeIndex]){
+                setCachedAtoms(props.molecules[selectedMoleculeIndex].cachedAtoms)
+            }
         }
     })
     
