@@ -95,13 +95,6 @@ And then point a web browser at `http://localhost:3000/` .
 Again you will need to set up `ligandServer` as in the non-react example (in `baby-gru/public`):  
 `ln -s $CCP4/lib/data/monomers`  
 
-
-![Web example ligands and glycotrees](web_example/screenshot.png)
-*Ligands pictures produced by interrogating file with MMDB2 and rendering with RDKit. Glycosylation trees produced by privateer.*
-![Web example text output](web_example/screenshot_text.png)
-*Text output trapped from printf/cout and displayed asynchronously in browser div element.*
-![Web example gesamt output](web_example/screenshot_graph.png)
-*Chart.js plot of gesamt alignment distances.*
 ![React-bootstrap gesamt output and 3D display](web_example/screenshot_gesamt.png)
 *Chart.js and WebGL 3D view of gesamt superposition*
 
@@ -112,17 +105,12 @@ latter is quite long and a patched version of the original privateer code. It mi
 `patches/privateer-emscripten.patch`. This should show how to patch an existing command line program which reads files to one
 that will work within node.
 
-See `web_example/web_example.cc` to see use of `EMSCRIPTEN_BINDINGS` to expose a couple of Clipper classes
-and Privateer, GSL and custom methods to the web browser. In due course, more Clipper classes may be added to this and thus
-be made available to JavaScript in the browser.
-
-Studying the way `mmd2_example` is defined and exported in `web_example/web_example.cc` and
-then used in `web_example/pdb_worker.js` should help with understanding how to use C++ classes which read files in browser Worker Threads.
+See `coot/moorhen-wrappers.cc` to see use of `EMSCRIPTEN_BINDINGS` to expose Coot methods to the web browser.
 
 Any program you write, which uses the *subset* of Coot, Clipper, Privateer code which this project compiles to WASM, can
 itself be compiled to WASM and used within node or Web Browser. Studying the examples should show you to do I/O, which is
 different in the 2 cases. If you require more classes or methods from the libraries to be exposed to JavaScript, then changes need to be made to
-`web_example/web_example.cc`. This should only be necessary for browser usage - in node your whole program can be written in C++.
+`coot/moorhen-wrappers.cc`. This should only be necessary for browser usage - in node your whole program can be written in C++.
 
 ## **References**
 
