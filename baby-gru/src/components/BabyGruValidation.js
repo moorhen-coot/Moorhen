@@ -204,14 +204,20 @@ export const BabyGruValidationPlot = (props) => {
         }
 
         if (selectedModel === null || chainSelectRef.current.value === null) {
-                return
+            setPlotData(null)
+            return
         }
+        
         let availableMetrics = getAvailableMetrics()
         fetchData(availableMetrics)   
 
     }, [selectedChain, selectedMap, selectedModel, cachedAtoms])
 
     useEffect(() => {
+        if (chartRef.current) {
+            chartRef.current.destroy()
+        }
+
         if (chainSelectRef.current.value === null || selectedModel === null) {
             return;
         }
@@ -299,10 +305,6 @@ export const BabyGruValidationPlot = (props) => {
         const containerBody = document.getElementById('myContainerBody')
         containerBody.style.width = (labels.length*16)+ "px";
         let ctx = document.getElementById("myChart").getContext("2d")
-
-        if (chartRef.current) {
-            chartRef.current.destroy()
-        }
 
         chartRef.current = new Chart(ctx, {
             plugins: [plugin],
