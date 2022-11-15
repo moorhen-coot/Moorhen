@@ -542,9 +542,10 @@ BabyGruMolecule.prototype.transformedCachedAtomsAsMovedAtoms = function (glRef) 
                     res.atoms.forEach(atom => {
                         const atomName = atom["_atom_site.label_atom_id"];
                         const atomSymbol = atom["_atom_site.type_symbol"];
-                        let x = atom.x() + glRef.current.origin[0]
-                        let y = atom.y() + glRef.current.origin[1]
-                        let z = atom.z() + glRef.current.origin[2]
+                        const diff = $this.displayObjects.transformation.centre
+                        let x = atom.x() + glRef.current.origin[0] - diff[0]
+                        let y = atom.y() + glRef.current.origin[1] - diff[1]
+                        let z = atom.z() + glRef.current.origin[2] - diff[2]
                         const origin = $this.displayObjects.transformation.origin
                         const quat = $this.displayObjects.transformation.quat
                         if (quat) {
@@ -558,9 +559,9 @@ BabyGruMolecule.prototype.transformedCachedAtomsAsMovedAtoms = function (glRef) 
                             vec3.set(atomPos, x, y, z)
                             vec3.transformMat4(transPos, atomPos, theMatrix);
                             if (atomSymbol.length == 2)
-                                movedAtoms.push({ name: (atomName).padEnd(4, " "), x: transPos[0] - glRef.current.origin[0], y: transPos[1] - glRef.current.origin[1], z: transPos[2] - glRef.current.origin[2], resCid: cid })
+                                movedAtoms.push({ name: (atomName).padEnd(4, " "), x: transPos[0] - glRef.current.origin[0] + diff[0], y: transPos[1] - glRef.current.origin[1] + diff[1], z: transPos[2] - glRef.current.origin[2] + diff[2], resCid: cid })
                             else
-                                movedAtoms.push({ name: (" " + atomName).padEnd(4, " "), x: transPos[0] - glRef.current.origin[0], y: transPos[1] - glRef.current.origin[1], z: transPos[2] - glRef.current.origin[2], resCid: cid })
+                                movedAtoms.push({ name: (" " + atomName).padEnd(4, " "), x: transPos[0] - glRef.current.origin[0] + diff[0], y: transPos[1] - glRef.current.origin[1] + diff[1], z: transPos[2] - glRef.current.origin[2] + diff[2], resCid: cid })
                         }
                     })
                     movedResidues.push(movedAtoms)
