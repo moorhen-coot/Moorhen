@@ -95,8 +95,8 @@ And then point a web browser at `http://localhost:3000/` .
 Again you will need to set up `ligandServer` as in the non-react example (in `baby-gru/public`):  
 `ln -s $CCP4/lib/data/monomers`  
 
-![React-bootstrap gesamt output and 3D display](web_example/screenshot_gesamt.png)
-*Chart.js and WebGL 3D view of gesamt superposition*
+![BabyGru in action](web_example/baby_gru.png)
+*The BabyGru prototype WebGL application*
 
 ## **What else can do with the compiled libraries?**
 
