@@ -218,7 +218,7 @@ export const BabyGruValidationPlot = (props) => {
             chartRef.current.destroy()
         }
 
-        if (chainSelectRef.current.value === null || selectedModel === null) {
+        if (chainSelectRef.current.value === null || selectedModel === null || !props.toolAccordionBodyHeight || !props.showSideBar) {
             return;
         }
 
@@ -227,13 +227,30 @@ export const BabyGruValidationPlot = (props) => {
             return
         }
         
+        let labels = []
+        sequenceData.forEach((residue, index) => {
+            if (index % 10 !== 0) {
+                labels.push(residue.resCode)
+            } else {
+                labels.push([residue.resCode, residue.resNum])
+            }
+        })
+       
+        const barWidth = props.sideBarWidth / 40
+        const tooltipFontSize = 12
+        const axisLabelsFontSize = props.toolAccordionBodyHeight / 60
+        
+        const containerBody = document.getElementById('myContainerBody')
+        containerBody.style.width = (labels.length*barWidth)+ "px";
+        let ctx = document.getElementById("myChart").getContext("2d")
+        
         let scales = {
             x: {
                 stacked: true,
                 beginAtZero: true,
                 display:true,
                 ticks: {color: props.darkMode ? 'white' : 'black',
-                        font:{size:20, family:'Helvetica'},
+                        font:{size:barWidth, family:'Helvetica'},
                         maxRotation: 0, 
                         minRotation: 0,
                         autoSkip: false,                                
@@ -245,15 +262,6 @@ export const BabyGruValidationPlot = (props) => {
                 },
             }
         }
-
-        let labels = []
-        sequenceData.forEach((residue, index) => {
-            if (index % 10 !== 0) {
-                labels.push(residue.resCode)
-            } else {
-                labels.push([residue.resCode, residue.resNum])
-            }
-        })
 
         let datasets = []
         let availableMetrics = getAvailableMetrics()
@@ -291,7 +299,7 @@ export const BabyGruValidationPlot = (props) => {
                 beginAtZero: true,
                 title: {
                     display: true,
-                    font:{size:15, family:'Helvetica', weight:800},
+                    font:{size:axisLabelsFontSize, family:'Helvetica', weight:800},
                     text: availableMetrics[methodIndex].displayName,
                     color: props.darkMode ? 'white' : 'black'
                 },
@@ -302,10 +310,6 @@ export const BabyGruValidationPlot = (props) => {
             }
         }
       
-        const containerBody = document.getElementById('myContainerBody')
-        containerBody.style.width = (labels.length*16)+ "px";
-        let ctx = document.getElementById("myChart").getContext("2d")
-
         chartRef.current = new Chart(ctx, {
             plugins: [plugin],
             type: 'bar',
@@ -330,11 +334,11 @@ export const BabyGruValidationPlot = (props) => {
                         title: setTooltipTitle,
                         },
                         titleFont: {
-                            size:15,
+                            size:tooltipFontSize,
                             family:'Helvetica'
                         },
                         bodyFont: {
-                            size:15,
+                            size:tooltipFontSize,
                             family:'Helvetica'
                         },
                         footerFont: {
@@ -350,7 +354,7 @@ export const BabyGruValidationPlot = (props) => {
             }            
         });
 
-    }, [plotData, props.darkMode])
+    }, [plotData, props.darkMode, props.toolAccordionBodyHeight, props.sideBarWidth, props.showSideBar])
 
     return <Fragment>
                 <Form style={{ padding: '0.5rem', margin: '0' }}>
@@ -369,7 +373,7 @@ export const BabyGruValidationPlot = (props) => {
                     </Form.Group>
                 </Form>
                 <div ref={chartCardRef} className="validation-plot-div">
-                    <div ref={chartBoxRef} style={{height: '100%'}} className="chartBox">
+                    <div ref={chartBoxRef} style={{height: '100%'}} className="chartBox" id="myChartBox">
                         <div ref={containerRef} className="validation-plot-container" style={{height: '100%', overflowX:'scroll'}}>
                             <div ref={containerBodyRef} style={{height: '100%'}} className="containerBody" id="myContainerBody">
                                 <canvas ref={canvasRef} id="myChart"></canvas>
