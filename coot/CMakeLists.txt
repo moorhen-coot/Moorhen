@@ -539,6 +539,21 @@ ${coot_src}/textures/rama-plot-pro-normal.png
 ${coot_src}/textures/rama-plot-pro-outlier.png
 DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../react-app/public)
 
+install(FILES ${coot_src}/pixmaps/rama2_all.png
+${coot_src}/pixmaps/rama2_gly.png
+${coot_src}/pixmaps/rama2_pro.png
+${coot_src}/pixmaps/rama2_ileval.png
+${coot_src}/pixmaps/rama2_non_gly_pro.png
+${coot_src}/pixmaps/rama2_non_gly_pro_pre_pro_ileval.png
+${coot_src}/pixmaps/rama2_pre_pro.png
+${coot_src}/textures/rama-plot-gly-normal.png
+${coot_src}/textures/rama-plot-gly-outlier.png
+${coot_src}/textures/rama-plot-other-normal.png
+${coot_src}/textures/rama-plot-other-outlier.png
+${coot_src}/textures/rama-plot-pro-normal.png
+${coot_src}/textures/rama-plot-pro-outlier.png
+DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../baby-gru/public/pixmaps/)
+
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/moorhen.wasm
 ${CMAKE_CURRENT_BINARY_DIR}/moorhen.worker.js
 ${CMAKE_CURRENT_BINARY_DIR}/moorhen.js
