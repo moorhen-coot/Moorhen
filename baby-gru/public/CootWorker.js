@@ -67,7 +67,7 @@ const validationDataToJSArray = (validationData, chainID) => {
             insCode: resInfo.get(ir).residue_spec.ins_code,
             seqNum: resInfo.get(ir).residue_spec.res_no,
             restype: "UNK",
-            value: 1. / resInfo.get(ir).function_value
+            value: resInfo.get(ir).function_value
         });
     }
     return returnResult
