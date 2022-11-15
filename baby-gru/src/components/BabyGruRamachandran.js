@@ -22,7 +22,7 @@ export const BabyGruRamachandran = (props) => {
         if (selectedModel === null || props.molecules.length === 0) {
             return;
         }
-        const coordMolNums = props.molecules.map(molecule => molecule.coordMolNo);
+        const coordMolNums = props.molecules.map(molecule => molecule.molNo);
         const molNames = props.molecules.map(molecule => molecule.name);
         let moleculeIndex = coordMolNums.findIndex(num => num == selectedModel)
         return molNames[moleculeIndex];
@@ -49,7 +49,7 @@ export const BabyGruRamachandran = (props) => {
                 setRamaPlotData(null)
                 return
             }
-            const inputData = { message: "get_rama", coordMolNo: moleculeSelectRef.current.value, chainId: chainSelectRef.current.value }
+            const inputData = { message: "get_rama", molNo: moleculeSelectRef.current.value, chainId: chainSelectRef.current.value }
             let response = await props.commandCentre.current.postMessage(inputData)
             setRamaPlotData(response.data.result)
         }
@@ -59,7 +59,7 @@ export const BabyGruRamachandran = (props) => {
 
     useEffect(() => {
 
-        ramachandranRef.current?.updatePlotData({ info: ramaPlotData, molName: getMolName(selectedModel), chainId: chainSelectRef.current.value, coordMolNo: selectedModel });
+        ramachandranRef.current?.updatePlotData({ info: ramaPlotData, molName: getMolName(selectedModel), chainId: chainSelectRef.current.value, molNo: selectedModel });
 
     }, [ramaPlotData])
 
@@ -69,16 +69,16 @@ export const BabyGruRamachandran = (props) => {
         if (props.molecules.length === 0) {
             setSelectedModel(null)
         } else if (selectedModel === null) {
-            setSelectedModel(props.molecules[0].coordMolNo)
-        } else if (!props.molecules.map(molecule => molecule.coordMolNo).includes(selectedModel)) {
-            setSelectedModel(props.molecules[0].coordMolNo)
+            setSelectedModel(props.molecules[0].molNo)
+        } else if (!props.molecules.map(molecule => molecule.molNo).includes(selectedModel)) {
+            setSelectedModel(props.molecules[0].molNo)
         }
 
     }, [props.molecules.length])
 
     useEffect(() => {
         if (selectedModel !== null) {
-            let selectedMoleculeIndex = props.molecules.findIndex(molecule => molecule.coordMolNo == selectedModel);
+            let selectedMoleculeIndex = props.molecules.findIndex(molecule => molecule.molNo == selectedModel);
             if (selectedMoleculeIndex != -1 && props.molecules[selectedMoleculeIndex]){
                 setCachedAtoms(props.molecules[selectedMoleculeIndex].cachedAtoms)
             }
@@ -96,7 +96,7 @@ export const BabyGruRamachandran = (props) => {
                 setRamaPlotData(null)
                 return
             }
-            const inputData = { message: "get_rama", coordMolNo: moleculeSelectRef.current.value, chainId: chainSelectRef.current.value }
+            const inputData = { message: "get_rama", molNo: moleculeSelectRef.current.value, chainId: chainSelectRef.current.value }
             let response = await props.commandCentre.current.postMessage(inputData)
             setRamaPlotData(response.data.result)
         }

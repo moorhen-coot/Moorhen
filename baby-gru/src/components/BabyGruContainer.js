@@ -21,6 +21,25 @@ const historyReducer = (oldHistory, newCommand) => {
     return { commands: [...oldHistory.commands, newCommand] }
 }
 
+const initialMoleculesState = []
+
+const initialMapsState = []
+
+const itemReducer = (oldList, change) => {
+    if (change.action === 'Add') {
+        return [...oldList, change.item]
+    }
+    else if (change.action === 'Remove') {
+        return oldList.filter(item => item.molNo !== change.item.molNo)
+    }
+    else if (change.action === 'AddList') {
+        return oldList.concat(change.items)
+    }
+    else if (change.action === 'Empty') {
+        return []
+    }
+}
+
 export const BabyGruContainer = (props) => {
 
     const glRef = useRef(null)
@@ -32,8 +51,6 @@ export const BabyGruContainer = (props) => {
     const [activeMap, setActiveMap] = useState(null)
     const [activeMolecule, setActiveMolecule] = useState(null)
     const [consoleMessage, setConsoleMessage] = useState("")
-    const [molecules, setMolecules] = useState([])
-    const [maps, setMaps] = useState([])
     const [cursorStyle, setCursorStyle] = useState("default")
     const headerRef = useRef()
     const consoleDivRef = useRef()
@@ -46,6 +63,8 @@ export const BabyGruContainer = (props) => {
     const [consoleBodyHeight, setConsoleBodyHeight] = useState(convertViewtoPx(0, windowHeight))
     const [accordionHeight, setAccordionHeight] = useState(convertViewtoPx(90, windowHeight))
     const [commandHistory, dispatchHistoryReducer] = useReducer(historyReducer, initialHistoryState)
+    const [molecules, changeMolecules] = useReducer(itemReducer, initialMoleculesState)
+    const [maps, changeMaps] = useReducer(itemReducer, initialMapsState)
     const [backgroundColor, setBackgroundColor] = useState([0., 0., 0., 1.])
     const [currentDropdownId, setCurrentDropdownId] = useState(-1)
     const [appTitle, setAppTitle] = useState('BabyGru')
@@ -136,7 +155,7 @@ export const BabyGruContainer = (props) => {
             commandCentre.current.cootCommand({
                 returnType: "status",
                 command: "set_imol_refinement_map",
-                commandArgs: [activeMap.mapMolNo]
+                commandArgs: [activeMap.molNo]
             })
         }
     }, [activeMap])
@@ -186,7 +205,7 @@ export const BabyGruContainer = (props) => {
     }
 
     const collectedProps = {
-        molecules, setMolecules, appTitle, setAppTitle, maps, setMaps, glRef, activeMolecule, setActiveMolecule,
+        molecules, changeMolecules, appTitle, setAppTitle, maps, changeMaps, glRef, activeMolecule, setActiveMolecule,
         activeMap, setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor,
         navBarRef, currentDropdownId, setCurrentDropdownId
     }

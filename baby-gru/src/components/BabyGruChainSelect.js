@@ -10,9 +10,9 @@ export const BabyGruChainSelect = forwardRef((props, selectRef) => {
     }
 
     const getChainOptions = (selectedCoordMolNo) => {
-        let selectedMolecule = props.molecules.find(molecule => molecule.coordMolNo == selectedCoordMolNo)
+        let selectedMolecule = props.molecules.find(molecule => molecule.molNo == selectedCoordMolNo)
         if (selectedMolecule) {
-            return selectedMolecule.cachedAtoms.sequences.map(sequence => props.allowedTypes.includes(sequence.type) ? <option value={sequence.chain} key={`${selectedMolecule.coordMolNo}_${sequence.chain}`}>{sequence.chain}</option> : null)
+            return selectedMolecule.cachedAtoms.sequences.map(sequence => props.allowedTypes.includes(sequence.type) ? <option value={sequence.chain} key={`${selectedMolecule.molNo}_${sequence.chain}`}>{sequence.chain}</option> : null)
         }
         
     }

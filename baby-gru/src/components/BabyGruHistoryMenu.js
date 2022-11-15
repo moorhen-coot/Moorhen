@@ -48,18 +48,18 @@ export const BabyGruHistoryMenu = (props) => {
                     //BabyGruMolecule has to be created
                     if (nextCommand.command === 'shim_read_pdb') {
                         const newMolecule = new BabyGruMolecule(props.commandCentre)
-                        newMolecule.coordMolNo = reply.data.result.result
+                        newMolecule.molNo = reply.data.result.result
                         newMolecule.cachedAtoms = newMolecule.webMGAtomsFromFileString(
                             nextCommand.commandArgs[0])
                         newMolecule.name = nextCommand.commandArgs[1]
                         newMolecule.centreOn(props.glRef)
-                        props.setMolecules([...props.molecules, newMolecule])
+                        props.changeMolecules({action:"Add", item:newMolecule})
                         return newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef, true)
                     }
                     else if (nextCommand.command === 'shim_read_mtz') {
                         const newMap = new BabyGruMap(props.commandCentre)
-                        newMap.mapMolNo = reply.data.result.result
-                        props.setMaps([...props.maps, newMap])
+                        newMap.molNo = reply.data.result.result
+                        props.changeMaps({action:'Add', newMap})
                         return newMap
                     }
                     return Promise.resolve()

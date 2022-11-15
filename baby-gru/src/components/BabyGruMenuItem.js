@@ -86,7 +86,7 @@ export const BabyGruLoadTutorialDataMenuItem = (props) => {
             .then(result => {
                 newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef, true)
             }).then(result => {
-                props.setMolecules([...props.molecules, newMolecule])
+                props.changeMolecules({ action: "Add", item: newMolecule })
                 Promise.resolve(newMolecule)
             }).then(_ => {
                 newMolecule.centreOn(props.glRef)
@@ -97,7 +97,7 @@ export const BabyGruLoadTutorialDataMenuItem = (props) => {
                 return newDiffMap.loadToCootFromURL(`/baby-gru/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`, `moorhen-tutorial-${tutorialNumber}`,
                     { F: "DELFWT", PHI: "PHDELWT", isDifference: true, useWeight: false })
             }).then(_ => {
-                props.setMaps([...props.maps, newMap, newDiffMap])
+                props.changeMaps({ action: 'AddList', items: [newMap, newDiffMap] })
                 props.setActiveMap(newMap)
             })
         props.setPopoverIsShown(false)
@@ -135,12 +135,12 @@ export const BabyGruGetMonomerMenuItem = (props) => {
             .then(result => {
                 if (result.data.result.status === "Completed") {
                     const newMolecule = new BabyGruMolecule(props.commandCentre)
-                    newMolecule.coordMolNo = result.data.result.result
+                    newMolecule.molNo = result.data.result.result
                     newMolecule.name = tlcRef.current.value
                     props.setPopoverIsShown(false)
                     newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef).then(_ => {
                         newMolecule.cachedAtoms.sequences = []
-                        props.setMolecules([...props.molecules, newMolecule])
+                        props.changeMolecules({ action: "Add", item: newMolecule })
                     })
                 }
             })
@@ -163,8 +163,7 @@ export const BabyGruDeleteDisplayObjectMenuItem = (props) => {
     </>
 
     const onCompleted = () => {
-        let newItemList = props.itemList.filter(item => props.item.mapMolNo ? item.mapMolNo !== props.item.mapMolNo : item.coordMolNo !== props.item.coordMolNo)
-        props.setItemList(newItemList)
+        props.changeItemList({action:'Remove', item:props.item})
         props.item.delete(props.glRef);
         props.setPopoverIsShown(false)
     }
@@ -231,8 +230,8 @@ export const BabyGruDeleteEverythingMenuItem = (props) => {
         props.molecules.forEach(molecule => {
             molecule.delete(props.glRef)
         })
-        props.setMaps([])
-        props.setMolecules([])
+        props.changeMaps({action:'Empty'})
+        props.changeMolecules({ action: "Empty" })
         props.setPopoverIsShown(false)
     }
 
@@ -342,7 +341,7 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
                 </SplitButton>
                 <Form.Select style={{ visibility: createInstance ? "visible" : "hidden" }} ref={addToRef}>
                     <option value={"-1"}>...create new molecule</option>
-                    {props.molecules.map(molecule => <option value={molecule.coordMolNo}>...add to {molecule.name}</option>)}
+                    {props.molecules.map(molecule => <option value={molecule.molNo}>...add to {molecule.name}</option>)}
                 </Form.Select>
             </InputGroup>
         </Form.Group>
@@ -357,7 +356,7 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
         }, true)
             .then(result => {
                 props.molecules
-                    .filter(molecule => molecule.coordMolNo === parseInt(moleculeSelectRef.current.value))
+                    .filter(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
                     .forEach(molecule => {
                         molecule.redraw(props.glRef)
                     })
@@ -375,10 +374,10 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
                         .then(result => {
                             if (result.data.result.status === "Completed") {
                                 newMolecule = new BabyGruMolecule(props.commandCentre)
-                                newMolecule.coordMolNo = result.data.result.result
+                                newMolecule.molNo = result.data.result.result
                                 newMolecule.name = tlcRef.current.value.toUpperCase()
                                 newMolecule.cachedAtoms.sequences = []
-                                props.setMolecules([...props.molecules, newMolecule])
+                                props.changeMolecules({ action: "Add", item: newMolecule })
                                 return newMolecule.fetchIfDirtyAndDraw("CBs", props.glRef)
                             }
                         })
@@ -393,7 +392,7 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
                     //Here if instance created
                     if (parseInt(addToRef.current.value) !== -1) {
                         const toMolecule = props.molecules
-                            .filter(molecule => molecule.coordMolNo === parseInt(addToRef.current.value))[0]
+                            .filter(molecule => molecule.molNo === parseInt(addToRef.current.value))[0]
                         const otherMolecules = [newMolecule]
                         return toMolecule.mergeMolecules(otherMolecules, props.glRef, true)
                             .then(_ => { return toMolecule.redraw(props.glRef) })
@@ -408,13 +407,13 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
                     console.log("Added", { "add to": addToRef.current.value })
                     if (result.data.result.status === "Completed") {
                         const newMolecule = new BabyGruMolecule(props.commandCentre)
-                        newMolecule.coordMolNo = result.data.result.result
+                        newMolecule.molNo = result.data.result.result
                         newMolecule.name = tlcRef.current.value.toUpperCase()
                         if (parseInt(addToRef.current.value) !== -1) {
                             const toMolecule = props.molecules
-                                .filter(molecule => molecule.coordMolNo === parseInt(addToRef.current.value))[0]
+                                .filter(molecule => molecule.molNo === parseInt(addToRef.current.value))[0]
                             const otherMolecules = props.molecules
-                                .filter(molecule => molecule.coordMolNo === newMolecule.coordMolNo)
+                                .filter(molecule => molecule.molNo === newMolecule.molNo)
                             return toMolecule.mergeMolecules(otherMolecules, props.glRef, true)
                                 .then(_ => { return toMolecule.redraw(props.glRef) })
                         }
@@ -422,7 +421,7 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
                     else {
                         return newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef).then(_ => {
                             newMolecule.cachedAtoms.sequences = []
-                            props.setMolecules([...props.molecules, newMolecule])
+                            props.changeMolecules({action:"Add", item:newMolecule})
                         })
                     }
                 })
@@ -498,7 +497,7 @@ export const BabyGruImportMapCoefficientsMenuItem = (props) => {
     const handleFile = async (file, selectedColumns) => {
         const newMap = new BabyGruMap(props.commandCentre)
         await newMap.loadToCootFromFile(file, selectedColumns)
-        props.setMaps([...props.maps, newMap])
+        props.changeMaps({ action: 'Add', item: newMap })
         props.setActiveMap(newMap)
     }
 
@@ -596,7 +595,7 @@ export const BabyGruImportMapMenuItem = (props) => {
         console.log('file is', file, isDiffRef.current.checked)
         const newMap = new BabyGruMap(props.commandCentre)
         await newMap.loadToCootFromMapFile(file, isDiffRef.current.checked)
-        props.setMaps([...props.maps, newMap])
+        props.changeMaps({ action: 'Add', item: newMap })
         props.setActiveMap(newMap)
     }, [props.maps, filesRef.current, isDiffRef.current])
 
@@ -697,9 +696,9 @@ export const BabyGruMergeMoleculesMenuItem = (props) => {
 
     const onCompleted = useCallback(async () => {
         const toMolecule = props.molecules
-            .filter(molecule => molecule.coordMolNo === parseInt(toRef.current.value))[0]
+            .filter(molecule => molecule.molNo === parseInt(toRef.current.value))[0]
         const otherMolecules = props.molecules
-            .filter(molecule => molecule.coordMolNo === parseInt(fromRef.current.value))
+            .filter(molecule => molecule.molNo === parseInt(fromRef.current.value))
         console.log({ toMolecule, otherMolecules })
         let banan = await toMolecule.mergeMolecules(otherMolecules, props.glRef, true)
         console.log({ banan })
@@ -727,11 +726,11 @@ export const BabyGruAddWatersMenuItem = (props) => {
         molNo.current = parseInt(moleculeRef.current.value)
         return props.commandCentre.current.cootCommand({
             command: 'add_waters',
-            commandArgs: [parseInt(molNo.current), props.activeMap.mapMolNo],
+            commandArgs: [parseInt(molNo.current), props.activeMap.molNo],
             returnType: "status"
         }, true).then(result => {
             props.molecules
-                .filter(molecule => molecule.coordMolNo === parseInt(molNo.current))
+                .filter(molecule => molecule.molNo === parseInt(molNo.current))
                 .forEach(molecule => {
                     molecule.setAtomsDirty(true)
                     molecule.redraw(props.glRef)

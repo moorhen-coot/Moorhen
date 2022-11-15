@@ -18,7 +18,7 @@ export function BabyGruMolecule(commandCentre) {
     this.cachedAtoms = {}
     this.atomsDirty = true
     this.name = "unnamed"
-    this.coordMolNo = null
+    this.molNo = null
     this.displayObjects = {
         ribbons: [],
         bonds: [],
@@ -36,7 +36,7 @@ BabyGruMolecule.prototype.delete = async function (gl) {
     Object.getOwnPropertyNames(this.displayObjects).forEach(displayObject => {
         if (this.displayObjects[displayObject].length > 0) { this.clearBuffersOfStyle(displayObject, gl) }
     })
-    const inputData = { message: "delete", coordMolNo: $this.coordMolNo }
+    const inputData = { message: "delete", molNo: $this.molNo }
     const response = await $this.commandCentre.current.postMessage(inputData)
     return response
 }
@@ -46,11 +46,11 @@ BabyGruMolecule.prototype.copyFragment = async function (chainId, res_no_start, 
         doRecentre = true
     }
     const $this = this
-    const inputData = { message: "copy_fragment", coordMolNo: $this.coordMolNo, chainId: chainId, res_no_start: res_no_start, res_no_end: res_no_end }
+    const inputData = { message: "copy_fragment", molNo: $this.molNo, chainId: chainId, res_no_start: res_no_start, res_no_end: res_no_end }
     const response = await $this.commandCentre.current.postMessage(inputData)
     const newMolecule = new BabyGruMolecule($this.commandCentre)
     newMolecule.name = `${$this.name} fragment`
-    newMolecule.coordMolNo = response.data.result
+    newMolecule.molNo = response.data.result
     await newMolecule.fetchIfDirtyAndDraw('CBs', gl)
     if (doRecentre) await newMolecule.centreOn(gl)
 
@@ -82,7 +82,7 @@ BabyGruMolecule.prototype.loadToCootFromFile = function (source) {
                     commandArgs: [coordData, $this.name]
                 })
                     .then(reply => {
-                        $this.coordMolNo = reply.data.result.result
+                        $this.molNo = reply.data.result.result
                         resolve($this)
                     })
             })
@@ -111,7 +111,7 @@ BabyGruMolecule.prototype.loadToCootFromURL = function (url, molName) {
                     commandArgs: [coordData, $this.name]
                 })
                     .then(reply => {
-                        $this.coordMolNo = reply.data.result.result
+                        $this.molNo = reply.data.result.result
                         resolve($this)
                     })
             })
@@ -123,7 +123,7 @@ BabyGruMolecule.prototype.getAtoms = function () {
     const $this = this;
     return $this.commandCentre.current.postMessage({
         message: "get_atoms",
-        coordMolNo: $this.coordMolNo
+        molNo: $this.molNo
     })
 }
 
@@ -238,7 +238,7 @@ BabyGruMolecule.prototype.drawRamachandranBalls = function (gl) {
     return this.commandCentre.current.cootCommand({
         returnType: "mesh",
         command: "ramachandran_validation_markup_mesh",
-        commandArgs: [$this.coordMolNo]
+        commandArgs: [$this.molNo]
     }).then(response => {
         const objects = [response.data.result.result]
         //Empty existing buffers of this type
@@ -253,7 +253,7 @@ BabyGruMolecule.prototype.drawRotamerDodecahedra = function (gl) {
     return this.commandCentre.current.cootCommand({
         returnType: "mesh",
         command: "get_rotamer_dodecs",
-        commandArgs: [$this.coordMolNo]
+        commandArgs: [$this.molNo]
     }).then(response => {
         const objects = [response.data.result.result]
 
@@ -269,7 +269,7 @@ BabyGruMolecule.prototype.drawCootBonds = function (webMGAtoms, gl) {
     return this.commandCentre.current.cootCommand({
         returnType: "mesh",
         command: "get_bonds_mesh",
-        commandArgs: [$this.coordMolNo, "COLOUR-BY-CHAIN-AND-DICTIONARY"]
+        commandArgs: [$this.molNo, "COLOUR-BY-CHAIN-AND-DICTIONARY"]
     }).then(response => {
         const objects = [response.data.result.result]
         if (objects.length > 0) {
@@ -577,7 +577,7 @@ BabyGruMolecule.prototype.updateWithMovedAtoms = async function (movedResidues, 
     return $this.commandCentre.current.cootCommand({
         returnType: "status",
         command: "shim_new_positions_for_residue_atoms",
-        commandArgs: [$this.coordMolNo, movedResidues]
+        commandArgs: [$this.molNo, movedResidues]
     }).then(response => {
         $this.displayObjects.transformation.origin = [0, 0, 0]
         $this.displayObjects.transformation.quat = null
@@ -599,7 +599,7 @@ BabyGruMolecule.prototype.mergeMolecules = async function (otherMolecules, glRef
     if (typeof doHide === 'undefined') doHide = false
     return $this.commandCentre.current.cootCommand({
         command: 'merge_molecules',
-        commandArgs: [$this.coordMolNo, `${otherMolecules.map(molecule => molecule.coordMolNo).join(':')}`],
+        commandArgs: [$this.molNo, `${otherMolecules.map(molecule => molecule.molNo).join(':')}`],
         returnType: "merge_molecules_return"
     }, true).then(async result => {
         //console.log("Merge molecule result", { result })
@@ -631,7 +631,7 @@ BabyGruMolecule.prototype.addLigandOfType = async function (resType, at, glRef) 
             if (result.data.result.status === "Completed") {
                 newMolecule = new BabyGruMolecule($this.commandCentre)
                 newMolecule.setAtomsDirty(true)
-                newMolecule.coordMolNo = result.data.result.result
+                newMolecule.molNo = result.data.result.result
                 newMolecule.name = resType.toUpperCase()
                 const _ = await $this.mergeMolecules([newMolecule], glRef, true);
                 return newMolecule.delete(glRef);

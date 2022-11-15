@@ -102,11 +102,11 @@ export const BabyGruMapCard = (props) => {
         }
     }, [mapRadius, mapContourLevel, mapLitLines])
 
-    return <Card className="px-0"  style={{marginBottom:'0.5rem', padding:'0'}} key={props.map.mapMolNo}>
+    return <Card className="px-0"  style={{marginBottom:'0.5rem', padding:'0'}} key={props.map.molNo}>
         <Card.Header>
             <Row className='align-items-center'>
             <Col style={{display:'flex', justifyContent:'left'}}>
-                    {`#${props.map.mapMolNo} Map ${props.map.mapName}`}
+                    {`#${props.map.molNo} Map ${props.map.mapName}`}
                 </Col>
                 <Col style={{display:'flex', justifyContent:'right'}}>
                     <Button size="sm" variant="outlined" onClick={() => {
@@ -142,11 +142,11 @@ export const BabyGruMapCard = (props) => {
                             size="sm" 
                             variant="outlined" 
                             autoClose={popoverIsShown ? false : 'outside'} 
-                            show={props.currentDropdownMolNo === props.map.mapMolNo} 
-                            onToggle={() => {props.map.mapMolNo !== props.currentDropdownMolNo ? props.setCurrentDropdownMolNo(props.map.mapMolNo) : props.setCurrentDropdownMolNo(-1)}}>
+                            show={props.currentDropdownMolNo === props.map.molNo} 
+                            onToggle={() => {props.map.molNo !== props.currentDropdownMolNo ? props.setCurrentDropdownMolNo(props.map.molNo) : props.setCurrentDropdownMolNo(-1)}}>
                         <MenuItem variant="success" onClick={() => {setMapLitLines(!mapLitLines)}}>{mapLitLines ? "Deactivate lit lines" : "Activate lit lines"}</MenuItem>
                         <BabyGruRenameDisplayObjectMenuItem setPopoverIsShown={setPopoverIsShown} setCurrentName={setCurrentName} item={props.map} />
-                        <BabyGruDeleteDisplayObjectMenuItem setPopoverIsShown={setPopoverIsShown} glRef={props.glRef} setItemList={props.setMaps} itemList={props.maps} item={props.map}/>
+                        <BabyGruDeleteDisplayObjectMenuItem setPopoverIsShown={setPopoverIsShown} glRef={props.glRef} changeItemList={props.changeMaps} itemList={props.maps} item={props.map}/>
                     </DropdownButton>
                 </Col>
             </Row>
@@ -159,7 +159,7 @@ export const BabyGruMapCard = (props) => {
                                     style={{margin:'0'}}
                                     inline
                                     label={'Active'}
-                                    name={`setActiveMap ${props.map.mapMolNo}`}
+                                    name={`setActiveMap ${props.map.molNo}`}
                                     type="checkbox"
                                     variant="outline"
                                     onChange={(e) => {

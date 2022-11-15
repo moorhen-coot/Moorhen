@@ -9,7 +9,7 @@ export const BabyGruDisplayObjects = (props) => {
     if (props.molecules.length!=0) {
         props.molecules.forEach(molecule => displayData.push(
             <BabyGruMoleculeCard 
-                index={molecule.coordMolNo}
+                index={molecule.molNo}
                 molecule={molecule}
                 currentDropdownMolNo={currentDropdownMolNo}
                 setCurrentDropdownMolNo={setCurrentDropdownMolNo}
@@ -21,7 +21,7 @@ export const BabyGruDisplayObjects = (props) => {
     if (props.maps.length!=0) {
         props.maps.forEach(map => displayData.push(
             <BabyGruMapCard 
-                index={map.mapMolNo}
+                index={map.molNo}
                 map={map} 
                 initialContour={0.8} 
                 initialRadius={13} 

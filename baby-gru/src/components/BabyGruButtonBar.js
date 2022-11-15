@@ -79,7 +79,7 @@ export const BabyGruSimpleEditButton = forwardRef((props, buttonRef) => {
         //console.log('in atomClickedcallback', event, props.molecules.length)
         document.removeEventListener('atomClicked', atomClickedCallback, { once: true })
         props.molecules.forEach(molecule => {
-            console.log('Testing molecule ', molecule.coordMolNo)
+            console.log('Testing molecule ', molecule.molNo)
             try {
                 if (molecule.buffersInclude(event.detail.buffer)) {
                     console.log('Succeeded')
@@ -165,7 +165,7 @@ BabyGruSimpleEditButton.defaultProps = {
 }
 
 const cidToSpec = (cid) => {
-    //coordMolNo, chain_id, res_no, ins_code, alt_conf
+    //molNo, chain_id, res_no, ins_code, alt_conf
     const cidTokens = cid.split('/')
     const chain_id = cidTokens[2]
     const res_no = parseInt(cidTokens[3])
@@ -187,12 +187,12 @@ export const BabyGruAutofitRotamerButton = (props) => {
         icon={<img className="baby-gru-button-icon" src="/baby-gru/pixmaps/auto-fit-rotamer.svg" />}
         formatArgs={(molecule, chosenAtom) => {
             return [
-                molecule.coordMolNo,
+                molecule.molNo,
                 chosenAtom.chain_id,
                 chosenAtom.res_no,
                 chosenAtom.ins_code,
                 chosenAtom.alt_conf,
-                props.activeMap.mapMolNo]
+                props.activeMap.molNo]
         }} />
 }
 
@@ -207,7 +207,7 @@ export const BabyGruFlipPeptideButton = (props) => {
         prompt="Click atom in residue to flip"
         icon={<img className="baby-gru-button-icon" src="/baby-gru/pixmaps/flip-peptide.svg" />}
         formatArgs={(molecule, chosenAtom) => {
-            return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, '']
+            return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, '']
         }} />
 }
 
@@ -222,7 +222,7 @@ export const BabyGruSideChain180Button = (props) => {
         prompt="Click atom in residue to flip sidechain"
         icon={<img className="baby-gru-button-icon" src="/baby-gru/pixmaps/side-chain-180.svg" />}
         formatArgs={(molecule, chosenAtom) => {
-            return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
+            return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
         }} />
 }
 
@@ -236,7 +236,7 @@ export const BabyGruRefineResiduesUsingAtomCidButton = (props) => {
 
     const refinementFormatArgs = (molecule, chosenAtom, pp) => {
         return [
-            molecule.coordMolNo,
+            molecule.molNo,
             `//${chosenAtom.chain_id}/${chosenAtom.res_no}`,
             pp.refine.mode]
     }
@@ -307,10 +307,10 @@ export const BabyGruDeleteUsingCidButton = (props) => {
     const deleteFormatArgs = (molecule, chosenAtom, pp) => {
         //console.log({ molecule, chosenAtom, pp })
         return pp.delete.mode === 'RESIDUE' ?
-            [molecule.coordMolNo,
+            [molecule.molNo,
             `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}`,
             pp.delete.mode] :
-            [molecule.coordMolNo,
+            [molecule.molNo,
             `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`,
             pp.delete.mode]
     }
@@ -359,7 +359,7 @@ export const BabyGruMutateButton = (props) => {
     }
     const mutateFormatArgs = (molecule, chosenAtom, pp) => {
         return [
-            molecule.coordMolNo,
+            molecule.molNo,
             `//${chosenAtom.chain_id}/${chosenAtom.res_no}`,
             pp.mutate.toType]
     }
@@ -389,7 +389,7 @@ export const BabyGruAddTerminalResidueDirectlyUsingCidButton = (props) => {
         prompt="Click atom in residue to add a residue to that residue"
         icon={<img className="baby-gru-button-icon" src="/baby-gru/pixmaps/add-peptide-1.svg" />}
         formatArgs={(molecule, chosenAtom) => {
-            return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
+            return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
         }} />
 }
 
@@ -404,7 +404,7 @@ export const BabyGruEigenFlipLigandButton = (props) => {
         prompt="Click atom in residue to eigen flip it"
         icon={<img className="baby-gru-button-icon" src="/baby-gru/pixmaps/spin-view.svg" />}
         formatArgs={(molecule, chosenAtom) => {
-            return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
+            return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
         }} />
 }
 
@@ -419,7 +419,7 @@ export const BabyGruJedFlipFalseButton = (props) => {
         prompt="Click atom in residue to flip around that rotatable bond - wag the tail"
         icon={<img className="baby-gru-button-icon" src="/baby-gru/pixmaps/edit-chi.svg" />}
         formatArgs={(molecule, chosenAtom) => {
-            return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, false]
+            return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, false]
         }} />
 }
 
@@ -434,14 +434,14 @@ export const BabyGruJedFlipTrueButton = (props) => {
         prompt="Click atom in residue to flip around that rotatable bond - wag the dog"
         icon={<img className="baby-gru-button-icon" src="/baby-gru/pixmaps/jed-flip-reverse.svg" />}
         formatArgs={(molecule, chosenAtom) => {
-            return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, true]
+            return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, true]
         }} />
 }
 
 export const BabyGruRotateTranslateZoneButton = (props) => {
     const [showAccept, setShowAccept] = useState(false)
     const theButton = useRef(null)
-    const { setMolecules, molecules, backgroundColor, glRef } = props
+    const { changeMolecules, molecules, backgroundColor, glRef } = props
     const fragmentMolecule = useRef(null)
     const chosenMolecule = useRef(null)
 
@@ -449,18 +449,17 @@ export const BabyGruRotateTranslateZoneButton = (props) => {
         glRef.current.setActiveMolecule(null)
         const transformedAtoms = fragmentMolecule.current.transformedCachedAtomsAsMovedAtoms(glRef)
         await chosenMolecule.current.updateWithMovedAtoms(transformedAtoms, glRef)
-        setMolecules(molecules.filter(molecule => molecule.coordMolNo !== fragmentMolecule.current.coordMolNo))
+        changeMolecules({ action: 'Remove', item: fragmentMolecule.current })
         const response = fragmentMolecule.current.delete(glRef)
         setShowAccept(false)
-    }, [fragmentMolecule.current, chosenMolecule.current, molecules, setMolecules])
+    }, [fragmentMolecule.current, chosenMolecule.current, molecules, changeMolecules])
 
     const rejectTransform = useCallback(async (e) => {
         glRef.current.setActiveMolecule(null)
-        setMolecules(molecules.filter(molecule => molecule.coordMolNo !== fragmentMolecule.current.coordMolNo))
+        changeMolecules({ action: 'Remove', item: fragmentMolecule.current })
         const response = fragmentMolecule.current.delete(glRef)
         setShowAccept(false)
-    }, [fragmentMolecule.current, chosenMolecule.current, molecules, setMolecules])
-
+    }, [fragmentMolecule.current, chosenMolecule.current, molecules, changeMolecules])
 
     const nonCootCommand = async (molecule, chosenAtom, p) => {
         chosenMolecule.current = molecule
@@ -470,7 +469,7 @@ export const BabyGruRotateTranslateZoneButton = (props) => {
         )
         fragmentMolecule.current = newMolecule
         /* redraw */
-        props.setMolecules([...props.molecules, newMolecule])
+        props.changeMolecules({ action: "Add", item: newMolecule })
         props.glRef.current.setActiveMolecule(newMolecule)
         setShowAccept(true)
     }
@@ -485,7 +484,7 @@ export const BabyGruRotateTranslateZoneButton = (props) => {
         prompt="Click atom in residue to totate/translate around"
         icon={<img className="baby-gru-button-icon" src="/baby-gru/pixmaps/rtz.svg" />}
         formatArgs={(molecule, chosenAtom) => {
-            return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, true]
+            return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, true]
         }} />
         <Overlay target={theButton.current} show={showAccept} placement="top">
             {({ placement, arrowProps, show: _show, popper, ...props }) => (
@@ -536,9 +535,9 @@ export const BabyGruAddSimpleButton = (props) => {
 
     const typeSelected = useCallback(value => {
         props.molecules
-            .filter(molecule => molecule.coordMolNo === parseInt(selectRef.current.value))
+            .filter(molecule => molecule.molNo === parseInt(selectRef.current.value))
             .forEach(molecule => {
-                console.log({molecule})
+                console.log({ molecule })
                 molecule.addLigandOfType(value,
                     props.glRef.current.origin.map(coord => -coord),
                     props.glRef)

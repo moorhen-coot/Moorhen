@@ -51,7 +51,7 @@ export const BabyGruMoleculeCard = (props) => {
     const handleCopyFragment = () => {
         async function createNewFragmentMolecule() {
             const newMolecule = await props.molecule.copyFragment(clickedResidue.chain, selectedResidues[0], selectedResidues[1], props.glRef)
-            props.setMolecules([...props.molecules, newMolecule])
+            props.changeMolecules({action:"Add", item:newMolecule})
         }
 
         // TODO: Test that residue start and residue end are valid (i.e. not missing from the structure)
@@ -60,11 +60,11 @@ export const BabyGruMoleculeCard = (props) => {
         }
     }
 
-    return <Card className="px-0" style={{ marginBottom: '0.5rem', padding: '0' }} key={props.molecule.coordMolNo}>
+    return <Card className="px-0" style={{ marginBottom: '0.5rem', padding: '0' }} key={props.molecule.molNo}>
         <Card.Header>
             <Row className='align-items-center'>
                 <Col style={{ display: 'flex', justifyContent: 'left' }}>
-                    {`#${props.molecule.coordMolNo} Mol. ${props.molecule.name}`}
+                    {`#${props.molecule.molNo} Mol. ${props.molecule.name}`}
                 </Col>
                 <Col style={{ display: 'flex', justifyContent: 'right' }}>
                     <Button size="sm" variant="outlined"
@@ -72,7 +72,7 @@ export const BabyGruMoleculeCard = (props) => {
                             props.commandCentre.current.cootCommand({
                                 returnType: "status",
                                 command: "undo",
-                                commandArgs: [props.molecule.coordMolNo]
+                                commandArgs: [props.molecule.molNo]
                             }).then(_ => {
                                 props.molecule.setAtomsDirty(true)
                                 props.molecule.redraw(props.glRef)
@@ -83,7 +83,7 @@ export const BabyGruMoleculeCard = (props) => {
                             props.commandCentre.current.cootCommand({
                                 returnType: "status",
                                 command: "redo",
-                                commandArgs: [props.molecule.coordMolNo]
+                                commandArgs: [props.molecule.molNo]
                             }).then(_ => {
                                 props.molecule.setAtomsDirty(true)
                                 props.molecule.redraw(props.glRef)
@@ -112,11 +112,11 @@ export const BabyGruMoleculeCard = (props) => {
                             size="sm" 
                             variant="outlined" 
                             autoClose={popoverIsShown ? false : 'outside'} 
-                            show={props.currentDropdownMolNo === props.molecule.coordMolNo} 
-                            onToggle={() => {props.molecule.coordMolNo !== props.currentDropdownMolNo ? props.setCurrentDropdownMolNo(props.molecule.coordMolNo) : props.setCurrentDropdownMolNo(-1)}}>
+                            show={props.currentDropdownMolNo === props.molecule.molNo} 
+                            onToggle={() => {props.molecule.molNo !== props.currentDropdownMolNo ? props.setCurrentDropdownMolNo(props.molecule.molNo) : props.setCurrentDropdownMolNo(-1)}}>
                         <MenuItem variant="success" onClick={handleCopyFragment}>Copy selected residues into fragment</MenuItem>
                         <BabyGruRenameDisplayObjectMenuItem setPopoverIsShown={setPopoverIsShown} setCurrentName={setCurrentName} item={props.molecule} />
-                        <BabyGruDeleteDisplayObjectMenuItem setPopoverIsShown={setPopoverIsShown} glRef={props.glRef} setItemList={props.setMolecules} itemList={props.molecules} item={props.molecule}/>
+                        <BabyGruDeleteDisplayObjectMenuItem setPopoverIsShown={setPopoverIsShown} glRef={props.glRef} changeItemList={props.changeMolecules} itemList={props.molecules} item={props.molecule}/>
                     </DropdownButton>
                 </Col>
             </Row>

@@ -17,7 +17,7 @@ BabyGruMap.prototype.delete = async function (gl) {
     Object.getOwnPropertyNames(this.displayObjects).forEach(displayObject => {
         if(this.displayObjects[displayObject].length > 0) {this.clearBuffersOfStyle(gl, displayObject)}
     })
-    const inputData = {message:"delete", coordMolNo:$this.mapMolNo}
+    const inputData = {message:"delete", molNo:$this.molNo}
     const response = await $this.commandCentre.current.postMessage(inputData)
     return response
 }
@@ -48,7 +48,7 @@ BabyGruMap.prototype.loadToCootFromData = function (data, mapName, selectedColum
             commandArgs: [data, mapName, selectedColumns]
         })
             .then(reply => {
-                $this.mapMolNo = reply.data.result.result
+                $this.molNo = reply.data.result.result
                 resolve($this)
             })
     })
@@ -73,7 +73,7 @@ BabyGruMap.prototype.loadToCootFromMapData = function (data, mapName, isDiffMap)
             commandArgs: [data, mapName, isDiffMap]
         })
             .then(reply => {
-                $this.mapMolNo = reply.data.result.result
+                $this.molNo = reply.data.result.result
                 resolve($this)
             })
     })
@@ -92,7 +92,7 @@ BabyGruMap.prototype.getMap = function () {
     const $this = this
     return this.commandCentre.current.postMessage({
         message: 'get_map',
-        mapMolNo: $this.mapMolNo
+        molNo: $this.molNo
     })
 }
 
@@ -195,7 +195,7 @@ BabyGruMap.prototype.doCootContour = function (gl, x, y, z, radius, contourLevel
         this.commandCentre.current.cootCommand( {
             returnType: returnType,
             command: "get_map_contours_mesh",
-            commandArgs: [$this.mapMolNo, x, y, z, radius, contourLevel]
+            commandArgs: [$this.molNo, x, y, z, radius, contourLevel]
         }).then(response => {
             const objects = [response.data.result.result]
             $this.clearBuffersOfStyle(gl, "Coot")

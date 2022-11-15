@@ -10,7 +10,7 @@ import { MenuItem } from "@mui/material";
 
 export const BabyGruFileMenu = (props) => {
 
-    const { molecules, setMolecules, maps, setMaps, commandCentre, glRef } = props;
+    const { molecules, changeMolecules, maps, changeMaps, commandCentre, glRef } = props;
     const [overlayVisible, setOverlayVisible] = useState(false)
     const [overlayContent, setOverlayContent] = useState(<></>)
     const [overlayTarget, setOverlayTarget] = useState(null)
@@ -19,8 +19,8 @@ export const BabyGruFileMenu = (props) => {
     const readDictionaryTarget = useRef(null);
     const pdbCodeFetchInputRef = useRef(null);
 
-    const menuItemProps = {setPopoverIsShown, ...props}
-    
+    const menuItemProps = { setPopoverIsShown, ...props }
+
     const awaitingPromiseRef = useRef({
         resolve: () => { },
         reject: () => { }
@@ -39,7 +39,7 @@ export const BabyGruFileMenu = (props) => {
         }
         await Promise.all(drawPromises)
 
-        setMolecules(molecules.concat(newMolecules))
+        changeMolecules({ action: "AddList", items: newMolecules })
         newMolecules.at(-1).centreOn(glRef)
     }
 
@@ -61,7 +61,7 @@ export const BabyGruFileMenu = (props) => {
             .then(result => {
                 newMolecule.fetchIfDirtyAndDraw('CBs', glRef, true)
             }).then(result => {
-                setMolecules([...molecules, newMolecule])
+                changeMolecules({ action: "Add", item: newMolecule })
                 return Promise.resolve(newMolecule)
             }).then(_ => {
                 newMolecule.centreOn(glRef)
@@ -69,12 +69,12 @@ export const BabyGruFileMenu = (props) => {
     }
 
     return <>
-        <NavDropdown 
-                title="File" 
-                id="basic-nav-dropdown" 
-                autoClose={popoverIsShown ? false : 'outside'} 
-                show={props.currentDropdownId === props.dropdownId} 
-                onToggle={() => {props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId(-1)}}>
+        <NavDropdown
+            title="File"
+            id="basic-nav-dropdown"
+            autoClose={popoverIsShown ? false : 'outside'}
+            show={props.currentDropdownId === props.dropdownId}
+            onToggle={() => { props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId(-1) }}>
             <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="uploadCoords" className="mb-3">
                 <Form.Label>Coordinates</Form.Label>
                 <Form.Control type="file" accept=".pdb, .mmcif, .ent" multiple={true} onChange={(e) => { loadPdbFiles(e.target.files) }} />
@@ -101,7 +101,7 @@ export const BabyGruFileMenu = (props) => {
 
             <BabyGruLoadTutorialDataMenuItem {...menuItemProps} />
 
-            <BabyGruDeleteEverythingMenuItem {...menuItemProps}/>
+            <BabyGruDeleteEverythingMenuItem {...menuItemProps} />
 
         </NavDropdown>
 

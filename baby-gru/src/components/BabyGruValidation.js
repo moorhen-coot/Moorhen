@@ -61,7 +61,7 @@ export const BabyGruValidationPlot = (props) => {
     const [cachedAtoms, setCachedAtoms] = useState(null)
 
     const getSequenceData = () => {
-        let selectedMolecule = props.molecules.find(molecule => molecule.coordMolNo == selectedModel)
+        let selectedMolecule = props.molecules.find(molecule => molecule.molNo == selectedModel)
         if (selectedMolecule) {
             let sequenceData = selectedMolecule.cachedAtoms.sequences.find(sequence => sequence.chain == chainSelectRef.current.value)
             if (sequenceData) {
@@ -133,7 +133,7 @@ export const BabyGruValidationPlot = (props) => {
         }
         
         const residueIndex = points[0].index
-        const selectedMolecule = props.molecules.find(molecule => molecule.coordMolNo == selectedModel)
+        const selectedMolecule = props.molecules.find(molecule => molecule.molNo == selectedModel)
         if(selectedMolecule) {
             const clickedResidue = getResidueInfo(selectedMolecule, residueIndex)
             if (clickedResidue) {
@@ -148,7 +148,7 @@ export const BabyGruValidationPlot = (props) => {
         }
         
         const residueIndex = args[0].dataIndex
-        const selectedMolecule = props.molecules.find(molecule => molecule.coordMolNo == selectedModel)
+        const selectedMolecule = props.molecules.find(molecule => molecule.molNo == selectedModel)
         if(selectedMolecule) {
             const clickedResidue = getResidueInfo(selectedMolecule, residueIndex)
             if (clickedResidue) {
@@ -163,9 +163,9 @@ export const BabyGruValidationPlot = (props) => {
         if (props.molecules.length === 0) {
             setSelectedModel(null)
         } else if (selectedModel === null) {
-            setSelectedModel(props.molecules[0].coordMolNo)
-        } else if (!props.molecules.map(molecule => molecule.coordMolNo).includes(selectedModel)) {
-            setSelectedModel(props.molecules[0].coordMolNo)
+            setSelectedModel(props.molecules[0].molNo)
+        } else if (!props.molecules.map(molecule => molecule.molNo).includes(selectedModel)) {
+            setSelectedModel(props.molecules[0].molNo)
         }
 
     }, [props.molecules.length])
@@ -174,16 +174,16 @@ export const BabyGruValidationPlot = (props) => {
         if (props.maps.length === 0) {
             setSelectedMap(null)
         } else if (selectedMap === null) {
-            setSelectedMap(props.maps[0].mapMolNo)
-        } else if (!props.maps.map(map => map.mapMolNo).includes(selectedMap)) {
-            setSelectedMap(props.maps[0].mapMolNo)
+            setSelectedMap(props.maps[0].molNo)
+        } else if (!props.maps.map(map => map.molNo).includes(selectedMap)) {
+            setSelectedMap(props.maps[0].molNo)
         }
 
     }, [props.maps.length])
     
     useEffect(() => {
         if (selectedModel !== null) {
-            let selectedMoleculeIndex = props.molecules.findIndex(molecule => molecule.coordMolNo == selectedModel);
+            let selectedMoleculeIndex = props.molecules.findIndex(molecule => molecule.molNo == selectedModel);
             if (selectedMoleculeIndex != -1 && props.molecules[selectedMoleculeIndex]){
                 setCachedAtoms(props.molecules[selectedMoleculeIndex].cachedAtoms)
             }
