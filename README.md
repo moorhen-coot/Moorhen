@@ -8,9 +8,7 @@ Contained are some examples of using the generated JS/Web Assembly:
 * A command line example which offers some of the functionality of the CCP4 program `superpose`.
 * A command line example which offers some of the functionality of the CCP4 program `gesamt`.
 * A command line example which does a structure factor calculation with `clipper`.
-* A web server example which does superposition, structure factor calculations, map calculations, 2D ligand viewing with
-[RDKit](https://github.com/rdkit/rdkit/tree/master/Code/MinimalLib) and glycosolation tree visualisation with privateer.
-* A React-Bootstrap web server example which does superposition and shows results in 3D.
+* A React-Bootstrap example (Baby-Gru) which implements some of the tools from the `Coot` molecular graphics program.
 
 The emscripten suite of tools is required to do the
 compilation.
