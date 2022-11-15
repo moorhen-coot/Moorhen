@@ -1354,6 +1354,7 @@ class MGWebGL extends Component {
         this.dataInfo = [];
         this.animations = [];
         this.canvasRef = createRef();
+        this.keysDown = {};
 
     }
 
@@ -1720,6 +1721,9 @@ class MGWebGL extends Component {
                 function(evt){
                 document.onkeydown = function(evt2){
                 self.handleKeyDown(evt2,self);
+                }
+                document.onkeyup = function(evt2){
+                self.handleKeyUp(evt2,self);
                 }
                 },
                 false);
@@ -10101,23 +10105,25 @@ class MGWebGL extends Component {
 
     doMouseMove(event,self) {
 
-                const centreOfMass = function(atoms){
-                    let totX = 0.0;
-                    let totY = 0.0;
-                    let totZ = 0.0;
-                    if(atoms.length>0){
-                        for(let iat=0;iat<atoms.length;iat++){
-                            totX += atoms[iat].x;
-                            totY += atoms[iat].y;
-                            totZ += atoms[iat].z;
-                        }
-                        totX /= atoms.length;
-                        totY /= atoms.length;
-                        totZ /= atoms.length;
-                    }
-                    return [totX,totY,totZ];
+        const activeMoleculeMotion = (this.activeMolecule != null) && (Object.keys(this.activeMolecule.displayObjects).length>0) &&!self.keysDown.KeyZ;
+
+        const centreOfMass = function(atoms){
+            let totX = 0.0;
+            let totY = 0.0;
+            let totZ = 0.0;
+            if(atoms.length>0){
+                for(let iat=0;iat<atoms.length;iat++){
+                    totX += atoms[iat].x;
+                    totY += atoms[iat].y;
+                    totZ += atoms[iat].z;
                 }
- 
+                totX /= atoms.length;
+                totY /= atoms.length;
+                totZ /= atoms.length;
+            }
+            return [totX,totY,totZ];
+        }
+
         self.mouseMoved = true;
 
         if(true){
@@ -10166,7 +10172,7 @@ class MGWebGL extends Component {
             vec3.transformMat4(xshift,xshift,theMatrix);
             vec3.transformMat4(yshift,yshift,theMatrix);
 
-            if(!this.activeMolecule||Object.keys(this.activeMolecule.displayObjects).length===0){
+            if(!activeMoleculeMotion){
                 const newOrigin = self.origin.map((coord, coordIndex)=>{
                         return coord + (self.zoom * xshift[coordIndex]/8.) - (self.zoom * yshift[coordIndex]/8.)
                         })
@@ -10229,7 +10235,7 @@ class MGWebGL extends Component {
             //console.log(xQ);
             //console.log(yQ);
             quat4.multiply(xQ,xQ,yQ);
-            if(!this.activeMolecule||Object.keys(this.activeMolecule.displayObjects).length===0){
+            if(!activeMoleculeMotion){
                 quat4.multiply(self.myQuat,self.myQuat,xQ);
             } else {
                 // ###############
@@ -10291,8 +10297,13 @@ class MGWebGL extends Component {
         self.mouseMoved = false;
     }
 
+    handleKeyUp(event,self) {
+        self.keysDown[event.code] = false;
+    }
+
     handleKeyDown(event,self) {
-        if(event.keyCode===115||event.keyCode===83){
+        self.keysDown[event.code] = true;
+        if(event.code==="KeyS"){
             // Screenshot
 
 
@@ -10375,7 +10386,7 @@ class MGWebGL extends Component {
             newwindow.document.close();
         }
         // FIXME, we need an active map, like Coot.
-        if(event.keyCode===71||event.keyCode===103){
+        if(event.code==="KeyG"){
             const frontAndBack = self.getFrontAndBackPos(event);
             var goToBlobEvent = new CustomEvent("keyPressWithMousePosition", {
                     "detail": {
@@ -10389,7 +10400,7 @@ class MGWebGL extends Component {
             document.dispatchEvent(goToBlobEvent);
         }
 
-        if(event.keyCode===187){ //+ (actually equals, sigh)
+        if(event.code==="Equal"){ //+ (actually equals, sigh)
             for(let ilm=0;ilm<self.liveUpdatingMaps.length;ilm++){
                 self.liveUpdatingMaps[ilm].contourLevel += 0.05;
             }
@@ -10401,7 +10412,7 @@ class MGWebGL extends Component {
                 document.dispatchEvent(contourLevelChangeEvent);
             }
         }
-        if(event.keyCode===189){ //-
+        if(event.code==="Minus"){ //-
             for(let ilm=0;ilm<self.liveUpdatingMaps.length;ilm++){
                 self.liveUpdatingMaps[ilm].contourLevel -= 0.05;
             }
@@ -10413,18 +10424,18 @@ class MGWebGL extends Component {
                 document.dispatchEvent(contourLevelChangeEvent);
             }
         }
-        if(event.keyCode===114||event.keyCode===82){
+        if(event.code==="KeyR"){
             self.myQuat = quat4.create();
             quat4.set(self.myQuat,0,0,0,-1);
             self.setZoom(1.0)
             self.clickedAtoms = [];
             self.drawScene();
         }
-        if(event.keyCode===99||event.keyCode===67){
+        if(event.code==="KeyC"){
             self.clickedAtoms = [];
             self.drawScene();
         }
-        if(event.keyCode===37){
+        if(event.code==="ArrowLeft"){
             var invQuat = quat4.create();
             quat4Inverse(self.myQuat,invQuat);
             var theMatrix = quatToMat4(invQuat);
@@ -10439,7 +10450,7 @@ class MGWebGL extends Component {
             //console.log(self.origin);
             self.reContourMaps();
         }
-        if(event.keyCode===39){
+        if(event.code==="ArrowRight"){
             var invQuat = quat4.create();
             quat4Inverse(self.myQuat,invQuat);
             var theMatrix = quatToMat4(invQuat);
@@ -10454,7 +10465,7 @@ class MGWebGL extends Component {
             //console.log(self.origin);
             self.reContourMaps();
         }
-        if(event.keyCode===38){
+        if(event.code==="ArrowUp"){
             var invQuat = quat4.create();
             quat4Inverse(self.myQuat,invQuat);
             var theMatrix = quatToMat4(invQuat);
@@ -10469,7 +10480,7 @@ class MGWebGL extends Component {
             //console.log(self.origin);
             self.reContourMaps();
         }
-        if(event.keyCode===40){
+        if(event.code==="ArrowDown"){
             var invQuat = quat4.create();
             quat4Inverse(self.myQuat,invQuat);
             var theMatrix = quatToMat4(invQuat);
