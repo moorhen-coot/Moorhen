@@ -184,7 +184,7 @@ export const BabyGruAutofitRotamerButton = (props) => {
         needsMapData={true}
         cootCommand="auto_fit_rotamer"
         prompt="Click atom in residue to fit rotamer"
-        icon={<img className="baby-gru-button-icon" src="pixmaps/auto-fit-rotamer.svg" />}
+        icon={<img className="baby-gru-button-icon" src="/pixmaps/auto-fit-rotamer.svg" />}
         formatArgs={(molecule, chosenAtom) => {
             return [
                 molecule.coordMolNo,
@@ -205,7 +205,7 @@ export const BabyGruFlipPeptideButton = (props) => {
         needsMapData={false}
         cootCommand="flipPeptide_cid"
         prompt="Click atom in residue to flip"
-        icon={<img className="baby-gru-button-icon" src="pixmaps/flip-peptide.svg" />}
+        icon={<img className="baby-gru-button-icon" src="/pixmaps/flip-peptide.svg" />}
         formatArgs={(molecule, chosenAtom) => {
             return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, '']
         }} />
@@ -220,7 +220,7 @@ export const BabyGruSideChain180Button = (props) => {
         needsMapData={false}
         cootCommand="side_chain_180"
         prompt="Click atom in residue to flip sidechain"
-        icon={<img className="baby-gru-button-icon" src="pixmaps/side-chain-180.svg" />}
+        icon={<img className="baby-gru-button-icon" src="/pixmaps/side-chain-180.svg" />}
         formatArgs={(molecule, chosenAtom) => {
             return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
         }} />
@@ -273,7 +273,7 @@ export const BabyGruRefineResiduesUsingAtomCidButton = (props) => {
         prompt={<BabyGruRefinementPanel
             setPanelParameters={setPanelParameters}
             panelParameters={panelParameters} />}
-        icon={<img className="baby-gru-button-icon" src="pixmaps/refine-1.svg" />}
+        icon={<img className="baby-gru-button-icon" src="/pixmaps/refine-1.svg" />}
         formatArgs={(m, c, p) => refinementFormatArgs(m, c, p)} />
 }
 
@@ -325,7 +325,7 @@ export const BabyGruDeleteUsingCidButton = (props) => {
         prompt={<BabyGruDeletePanel
             setPanelParameters={setPanelParameters}
             panelParameters={panelParameters} />}
-        icon={<img className="baby-gru-button-icon" src="pixmaps/delete.svg" />}
+        icon={<img className="baby-gru-button-icon" src="/pixmaps/delete.svg" />}
         formatArgs={(m, c, p) => deleteFormatArgs(m, c, p)} />
 }
 
@@ -374,7 +374,7 @@ export const BabyGruMutateButton = (props) => {
         prompt={<BabyGruMutatePanel
             setPanelParameters={setPanelParameters}
             panelParameters={panelParameters} />}
-        icon={<img className="baby-gru-button-icon" src="pixmaps/mutate.svg" />}
+        icon={<img className="baby-gru-button-icon" src="/pixmaps/mutate.svg" />}
         formatArgs={(m, c, p) => mutateFormatArgs(m, c, p)} />
 }
 
@@ -387,7 +387,7 @@ export const BabyGruAddTerminalResidueDirectlyUsingCidButton = (props) => {
         needsMapData={false}
         cootCommand="add_terminal_residue_directly_using_cid"
         prompt="Click atom in residue to add a residue to that residue"
-        icon={<img className="baby-gru-button-icon" src="pixmaps/add-peptide-1.svg" />}
+        icon={<img className="baby-gru-button-icon" src="/pixmaps/add-peptide-1.svg" />}
         formatArgs={(molecule, chosenAtom) => {
             return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
         }} />
@@ -402,7 +402,7 @@ export const BabyGruEigenFlipLigandButton = (props) => {
         needsMapData={false}
         cootCommand="eigen_flip_ligand"
         prompt="Click atom in residue to eigen flip it"
-        icon={<img className="baby-gru-button-icon" src="pixmaps/spin-view.svg" />}
+        icon={<img className="baby-gru-button-icon" src="/pixmaps/spin-view.svg" />}
         formatArgs={(molecule, chosenAtom) => {
             return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
         }} />
@@ -417,7 +417,7 @@ export const BabyGruJedFlipFalseButton = (props) => {
         needsMapData={false}
         cootCommand="jed_flip"
         prompt="Click atom in residue to flip around that rotatable bond - wag the tail"
-        icon={<img className="baby-gru-button-icon" src="pixmaps/edit-chi.svg" />}
+        icon={<img className="baby-gru-button-icon" src="/pixmaps/edit-chi.svg" />}
         formatArgs={(molecule, chosenAtom) => {
             return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, false]
         }} />
@@ -432,7 +432,7 @@ export const BabyGruJedFlipTrueButton = (props) => {
         needsMapData={false}
         cootCommand="jed_flip"
         prompt="Click atom in residue to flip around that rotatable bond - wag the dog"
-        icon={<img className="baby-gru-button-icon" src="pixmaps/jed-flip-reverse.svg" />}
+        icon={<img className="baby-gru-button-icon" src="/pixmaps/jed-flip-reverse.svg" />}
         formatArgs={(molecule, chosenAtom) => {
             return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, true]
         }} />
@@ -483,7 +483,7 @@ export const BabyGruRotateTranslateZoneButton = (props) => {
         needsMapData={false}
         nonCootCommand={nonCootCommand}
         prompt="Click atom in residue to totate/translate around"
-        icon={<img className="baby-gru-button-icon" src="pixmaps/rtz.svg" />}
+        icon={<img className="baby-gru-button-icon" src="/pixmaps/rtz.svg" />}
         formatArgs={(molecule, chosenAtom) => {
             return [molecule.coordMolNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, true]
         }} />
@@ -561,6 +561,6 @@ export const BabyGruAddSimpleButton = (props) => {
             selectRef={selectRef}
             awaitAtomClick={false}
         />}
-        icon={<img className="baby-gru-button-icon" src="pixmaps/atom-at-pointer.svg" />}
+        icon={<img className="baby-gru-button-icon" src="/pixmaps/atom-at-pointer.svg" />}
     />
 }
