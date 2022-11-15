@@ -185,6 +185,10 @@ export const BabyGruContainer = (props) => {
         navBarRef, currentDropdownId, setCurrentDropdownId
     }
 
+    const accordionToolsItemProps = {
+        molecules, commandCentre, glRef, toolAccordionBodyHeight, sideBarWidth, windowHeight, windowWidth, darkMode, maps, showSideBar
+    }
+
     return <> <div className="border" ref={headerRef}>
 
         <Navbar ref={navBarRef} id='navbar-baby-gru' className={darkMode ? "navbar-dark" : "navbar-light"} style={{ height: '3rem', justifyContent: 'between', margin: '0.5rem', padding: '0.5rem' }}>
@@ -280,10 +284,10 @@ export const BabyGruContainer = (props) => {
                             <Accordion.Body style={{ height: toolAccordionBodyHeight, padding: '0', margin: '0', }}>
                                 <Tabs defaultActiveKey='ramachandran'>
                                     <Tab eventKey='ramachandran' title='Ramachandran' style={{ height: '100%' }}>
-                                        <BabyGruRamachandran molecules={molecules} commandCentre={commandCentre} glRef={glRef} toolAccordionBodyHeight={toolAccordionBodyHeight} sideBarWidth={sideBarWidth} windowHeight={windowHeight} windowWidth={windowWidth} />
+                                        <BabyGruRamachandran {...accordionToolsItemProps} />
                                     </Tab>
                                     <Tab eventKey='validationPlot' title='Validation' style={{ height: '100%' }}>
-                                        <BabyGruValidationPlot darkMode={darkMode} molecules={molecules} maps={maps} commandCentre={commandCentre} glRef={glRef} toolAccordionBodyHeight={toolAccordionBodyHeight} sideBarWidth={sideBarWidth} windowHeight={windowHeight} windowWidth={windowWidth} />
+                                        <BabyGruValidationPlot {...accordionToolsItemProps} />
                                     </Tab>
                                     <Tab eventKey='more' title='More...'>
                                         <BabyGruTimingTest commandCentre={commandCentre} />
