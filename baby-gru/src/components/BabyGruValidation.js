@@ -293,7 +293,7 @@ export const BabyGruValidationPlot = (props) => {
         }
       
         const containerBody = document.getElementById('myContainerBody')
-        containerBody.style.width = (labels.length*24)+ "px";
+        containerBody.style.width = (labels.length*16)+ "px";
         let ctx = document.getElementById("myChart").getContext("2d")
 
         if (chartRef.current) {
