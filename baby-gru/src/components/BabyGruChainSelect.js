@@ -12,7 +12,7 @@ export const BabyGruChainSelect = forwardRef((props, selectRef) => {
     const getChainOptions = (selectedCoordMolNo) => {
         let selectedMolecule = props.molecules.find(molecule => molecule.coordMolNo == selectedCoordMolNo)
         if (selectedMolecule) {
-            return selectedMolecule.cachedAtoms.sequences.map(sequence => <option value={sequence.chain} key={`${selectedMolecule.coordMolNo}_${sequence.chain}`}>{sequence.chain}</option>)
+            return selectedMolecule.cachedAtoms.sequences.map(sequence => props.allowedTypes.includes(sequence.type) ? <option value={sequence.chain} key={`${selectedMolecule.coordMolNo}_${sequence.chain}`}>{sequence.chain}</option> : null)
         }
         
     }
@@ -25,4 +25,4 @@ export const BabyGruChainSelect = forwardRef((props, selectRef) => {
     </Form.Group>
 })
 
-BabyGruChainSelect.defaultProps = { width: '20rem', molecule:null, label: "Chain" }
+BabyGruChainSelect.defaultProps = { allowedTypes:['polypeptide(L)', 'polyribonucleotide', 'polydeoxyribonucleotide'], width: '20rem', molecule:null, label: "Chain" }
