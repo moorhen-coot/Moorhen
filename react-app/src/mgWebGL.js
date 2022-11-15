@@ -10105,7 +10105,7 @@ class MGWebGL extends Component {
 
     doMouseMove(event,self) {
 
-        const activeMoleculeMotion = (this.activeMolecule != null) && (Object.keys(this.activeMolecule.displayObjects).length>0) &&!self.keysDown.KeyZ;
+        const activeMoleculeMotion = (this.activeMolecule != null) && (Object.keys(this.activeMolecule.displayObjects).length>0) &&!self.keysDown.z;
 
         const centreOfMass = function(atoms){
             let totX = 0.0;
@@ -10298,12 +10298,12 @@ class MGWebGL extends Component {
     }
 
     handleKeyUp(event,self) {
-        self.keysDown[event.code] = false;
+        self.keysDown[event.key] = false;
     }
 
     handleKeyDown(event,self) {
-        self.keysDown[event.code] = true;
-        if(event.code==="KeyS"){
+        self.keysDown[event.key] = true;
+        if(event.key.toLowerCase()==="s"){
             // Screenshot
 
 
@@ -10386,7 +10386,7 @@ class MGWebGL extends Component {
             newwindow.document.close();
         }
         // FIXME, we need an active map, like Coot.
-        if(event.code==="KeyG"){
+        if(event.key.toLowerCase()==="g"){
             const frontAndBack = self.getFrontAndBackPos(event);
             var goToBlobEvent = new CustomEvent("keyPressWithMousePosition", {
                     "detail": {
@@ -10424,18 +10424,18 @@ class MGWebGL extends Component {
                 document.dispatchEvent(contourLevelChangeEvent);
             }
         }
-        if(event.code==="KeyR"){
+        if(event.key.toLowerCase()==="r"){
             self.myQuat = quat4.create();
             quat4.set(self.myQuat,0,0,0,-1);
             self.setZoom(1.0)
             self.clickedAtoms = [];
             self.drawScene();
         }
-        if(event.code==="KeyC"){
+        if(event.key.toLowerCase()==="c"){
             self.clickedAtoms = [];
             self.drawScene();
         }
-        if(event.code==="ArrowLeft"){
+        if(event.key==="ArrowLeft"){
             var invQuat = quat4.create();
             quat4Inverse(self.myQuat,invQuat);
             var theMatrix = quatToMat4(invQuat);
@@ -10450,7 +10450,7 @@ class MGWebGL extends Component {
             //console.log(self.origin);
             self.reContourMaps();
         }
-        if(event.code==="ArrowRight"){
+        if(event.key==="ArrowRight"){
             var invQuat = quat4.create();
             quat4Inverse(self.myQuat,invQuat);
             var theMatrix = quatToMat4(invQuat);
@@ -10465,7 +10465,7 @@ class MGWebGL extends Component {
             //console.log(self.origin);
             self.reContourMaps();
         }
-        if(event.code==="ArrowUp"){
+        if(event.key==="ArrowUp"){
             var invQuat = quat4.create();
             quat4Inverse(self.myQuat,invQuat);
             var theMatrix = quatToMat4(invQuat);
@@ -10480,7 +10480,7 @@ class MGWebGL extends Component {
             //console.log(self.origin);
             self.reContourMaps();
         }
-        if(event.code==="ArrowDown"){
+        if(event.key==="ArrowDown"){
             var invQuat = quat4.create();
             quat4Inverse(self.myQuat,invQuat);
             var theMatrix = quatToMat4(invQuat);
