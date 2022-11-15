@@ -38,10 +38,10 @@ const colourPalettes = {
 }
 
 const metricInfoScaling = {
-    density_correlation_analysis: (value) => {return value * 1},
-    density_fit_analysis: (value) => {return value * 1},
-    rotamer_analysis: (value) => {return value * 1},
-    ramachandran_analysis: (value) => {return Math.log(value) * 1},
+    density_correlation_analysis: (value) => {return value},
+    density_fit_analysis: (value) => {return 1. / value},
+    rotamer_analysis: (value) => {return 1. / value},
+    ramachandran_analysis: (value) => {return Math.log(value)},
 }
 
 export const BabyGruValidationPlot = (props) => {
