@@ -222,7 +222,7 @@ export const BabyGruValidationPlot = (props) => {
                 beginAtZero: true,
                 display:true,
                 ticks: {color: props.darkMode ? 'white' : 'black',
-                        font:{size:20, family:'sans-serif-mono'},
+                        font:{size:20, family:'Helvetica'},
                         maxRotation: 0, 
                         minRotation: 0,
                         autoSkip: false,                                
@@ -281,7 +281,7 @@ export const BabyGruValidationPlot = (props) => {
                 beginAtZero: true,
                 title: {
                     display: true,
-                    font:{size:15, family:'sans-serif', weight:800},
+                    font:{size:15, family:'Helvetica', weight:800},
                     text: availableMetrics[methodIndex].displayName,
                     color: props.darkMode ? 'white' : 'black'
                 },
@@ -325,14 +325,14 @@ export const BabyGruValidationPlot = (props) => {
                         },
                         titleFont: {
                             size:15,
-                            family:'serif'
+                            family:'Helvetica'
                         },
                         bodyFont: {
                             size:15,
-                            family:'serif'
+                            family:'Helvetica'
                         },
                         footerFont: {
-                            family:'serif'
+                            family:'Helvetica'
                         }
                     }
                 },
