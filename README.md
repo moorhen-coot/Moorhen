@@ -80,24 +80,7 @@ not itself compiled by this project.
 `cd ../gesamt`  
 `node gesamt.js ../example/4dfr.pdb ../example/8dfr.pdb`  
 
-6. To run the web example, put the contents of the `web_example` directory on a web server.  
-This can be a full-scale web server, or a simple one, e.g:  
-`cd web_example`  
-`python3 -m http.server 7800 &`  
-And then point a web browser at `http://localhost:7800/test.html` .  
-In either case you will have to set `ligandServer` in `pdb_worker.js` to point to the CCP4 monomer library. One way to do this is to leave it as `"/monomers/"` and create a symbolic link to a local CCP4 monomer library, e.g. (in `web_example`):  
-`ln -s /Applications/ccp4-8.0/lib/data/monomers`
-
-7. To run an example using React-Bootstrap:  
-`make install` (This copies some files from `web_example` to `react-app/public/wasm`  
-`cd react-app`  
-`npm start`  
-And then point a web browser at `http://localhost:3000/` .  
-Again you will need to set up `ligandServer` as in the non-react example (in `react-app/public`):  
-`ln -s /Applications/ccp4-8.0/lib/data/monomers`  
-This example demonstrates CCP4 web assembly only by the use of `RDKit` to make ligand pictures; it further demonstrates React-Bootstrap and WebGL.
-
-8. To run a suite of javascript tests:  
+6. To run a suite of javascript tests:  
 For reason of file searching, you will have to make a symbolic link to allow jest (the javascript testing framework) to find the data associated with the moorhen javascript file which defines the coot interface.  You will then need to install jest, but subsequently testing should be straightforward.  
 `cd tests`  
 `ln -s ../coot/moorhen.data`  
@@ -105,7 +88,7 @@ For reason of file searching, you will have to make a symbolic link to allow jes
 `npm test`  
 When testing is completed, you will have to issue a `<ctrl-C>`.  
 
-7. To run an example using Martin's clean slate baby-gru application:  
+7. To run the Baby-Gru prototype application:  
 `make install` (This copies some files from `web_example` to `baby-gru/public/wasm`  
 `cd baby-gru`  
 `npm install`  
