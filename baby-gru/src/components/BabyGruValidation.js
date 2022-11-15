@@ -215,6 +215,11 @@ export const BabyGruValidationPlot = (props) => {
         if (chainSelectRef.current.value === null || selectedModel === null) {
             return;
         }
+
+        let sequenceData =  getSequenceData()
+        if (!sequenceData) {
+            return
+        }
         
         let scales = {
             x: {
@@ -236,7 +241,6 @@ export const BabyGruValidationPlot = (props) => {
         }
 
         let labels = []
-        let sequenceData =  getSequenceData()
         sequenceData.forEach((residue, index) => {
             if (index % 10 !== 0) {
                 labels.push(residue.resCode)
@@ -354,7 +358,7 @@ export const BabyGruValidationPlot = (props) => {
                             <BabyGruMoleculeSelect width="" onChange={handleModelChange} molecules={props.molecules} ref={moleculeSelectRef}/>
                         </Col>
                         <Col>
-                            <BabyGruChainSelect width="" molecules={props.molecules} onChange={handleChainChange} selectedCoordMolNo={selectedModel} ref={chainSelectRef}/>
+                            <BabyGruChainSelect width="" onChange={handleChainChange} molecules={props.molecules} selectedCoordMolNo={selectedModel} allowedTypes={['polypeptide(L)']} ref={chainSelectRef}/>
                         </Col>
                         <Col>
                             <BabyGruMapSelect width="" onChange={handleMapChange} maps={props.maps} ref={mapSelectRef}/>
