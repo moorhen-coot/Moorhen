@@ -8421,14 +8421,14 @@ class MGWebGL extends Component {
                     self.reContourMaps();
                     return;
                 }
-
-                if(self.clickedAtoms.length===0||(self.clickedAtoms[self.clickedAtoms.length-1].length>1&&!event.shiftKey)){
-                    self.clickedAtoms.push([]);
-                    self.clickedAtoms[self.clickedAtoms.length-1].push(theAtom);
-                } else {
-                    self.clickedAtoms[self.clickedAtoms.length-1].push(theAtom);
+                if(self.keysDown.m){
+                    if(self.clickedAtoms.length===0||(self.clickedAtoms[self.clickedAtoms.length-1].length>1&&!event.shiftKey)){
+                        self.clickedAtoms.push([]);
+                        self.clickedAtoms[self.clickedAtoms.length-1].push(theAtom);
+                    } else {
+                        self.clickedAtoms[self.clickedAtoms.length-1].push(theAtom);
+                    }
                 }
-
             }
             //console.log(dpl);
         }
