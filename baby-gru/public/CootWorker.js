@@ -56,9 +56,9 @@ const residueCodesToJSArray = (residueCodes) => {
     return returnResult
 }
 
-const validationDataToJSArray = (densityFitData, chainID) => {
-    const chainIndex = densityFitData.get_index_for_chain(chainID);
-    const resInfo = densityFitData.cviv.get(chainIndex).rviv;
+const validationDataToJSArray = (validationData, chainID) => {
+    const chainIndex = validationData.get_index_for_chain(chainID);
+    const resInfo = validationData.cviv.get(chainIndex).rviv;
 
     let returnResult = [];
     for (let ir = 0; ir < resInfo.size(); ir++) {
