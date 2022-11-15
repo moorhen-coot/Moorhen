@@ -5,7 +5,9 @@ import { BabyGruContainer } from './components/BabyGruContainer';
 function App() {
   return (
     <div className="App">
-      <BabyGruContainer/>
+      <BabyGruContainer forwardControls={(controls) => {
+        console.log('Fetched controls', {controls})
+      }} />
     </div>
   );
 }

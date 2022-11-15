@@ -48,6 +48,7 @@ export const BabyGruContainer = (props) => {
     const [commandHistory, dispatchHistoryReducer] = useReducer(historyReducer, initialHistoryState)
     const [backgroundColor, setBackgroundColor] = useState([0., 0., 0., 1.])
     const [currentDropdownId, setCurrentDropdownId] = useState(-1)
+    const [appTitle, setAppTitle] = useState('BabyGru')
 
     const sideBarWidth = convertViewtoPx(30, windowWidth)
     const innerWindowMarginHeight = convertRemToPx(2.1)
@@ -57,6 +58,14 @@ export const BabyGruContainer = (props) => {
         setWindowWidth(window.innerWidth)
         setWindowHeight(window.innerHeight)
     }
+
+    //The purpose here is to return the functions that define and control BabyGruContainer state to a 
+    //containing React component
+    useEffect(() => {
+        if (props.forwardControls) {
+            props.forwardControls(collectedProps)
+        }
+    }, [])
 
     useEffect(() => {
         let head = document.head;
@@ -129,19 +138,19 @@ export const BabyGruContainer = (props) => {
     const prevActiveMoleculeRef = useRef();
     useEffect(() => {
         function resetActiveGL() {
-                prevActiveMoleculeRef.current = activeMolecule;
-                if(activeMolecule)
-                    glRef.current.setActiveMolecule(activeMolecule)
-                else
-                    glRef.current.setActiveMolecule(null)
+            prevActiveMoleculeRef.current = activeMolecule;
+            if (activeMolecule)
+                glRef.current.setActiveMolecule(activeMolecule)
+            else
+                glRef.current.setActiveMolecule(null)
         }
         if (prevActiveMoleculeRef.current) {
             let movedResidues = [];
             prevActiveMoleculeRef.current.applyTransform(glRef)
-            .then(response => {
-                console.log("Setting/unsetting active molecule (promise)")
-                resetActiveGL()
-            })
+                .then(response => {
+                    console.log("Setting/unsetting active molecule (promise)")
+                    resetActiveGL()
+                })
         } else {
             console.log("Setting/unsetting active molecule")
             resetActiveGL()
@@ -171,7 +180,7 @@ export const BabyGruContainer = (props) => {
     }
 
     const collectedProps = {
-        molecules, setMolecules, maps, setMaps, glRef, activeMolecule, setActiveMolecule,
+        molecules, setMolecules, appTitle, setAppTitle, maps, setMaps, glRef, activeMolecule, setActiveMolecule,
         activeMap, setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor,
         navBarRef, currentDropdownId, setCurrentDropdownId
     }
@@ -179,7 +188,7 @@ export const BabyGruContainer = (props) => {
     return <> <div className="border" ref={headerRef}>
 
         <Navbar ref={navBarRef} id='navbar-baby-gru' className={darkMode ? "navbar-dark" : "navbar-light"} style={{ height: '3rem', justifyContent: 'between', margin: '0.5rem', padding: '0.5rem' }}>
-            <Navbar.Brand href="#home">Baby Gru</Navbar.Brand>
+            <Navbar.Brand href="#home">{appTitle}</Navbar.Brand>
             <Navbar.Toggle aria-controls="basic-navbar-nav" />
             <Navbar.Collapse id="basic-navbar-nav">
                 <Nav className="justify-content-left">
@@ -262,7 +271,7 @@ export const BabyGruContainer = (props) => {
                         }}>
                         <Accordion.Item eventKey="showDisplayObjects" style={{ width: sideBarWidth, padding: '0', margin: '0' }} >
                             <Accordion.Header style={{ padding: '0', margin: '0', height: '4rem' }}>Display Objects</Accordion.Header>
-                            <Accordion.Body className='side-bar-accordion-body'  style={{ overflowY: 'auto', height: displayObjectsAccordionBodyHeight }}>
+                            <Accordion.Body className='side-bar-accordion-body' style={{ overflowY: 'auto', height: displayObjectsAccordionBodyHeight }}>
                                 {molecules.length === 0 && maps.length === 0 ? "No data files loaded" : <BabyGruDisplayObjects {...collectedProps} />}
                             </Accordion.Body>
                         </Accordion.Item>
