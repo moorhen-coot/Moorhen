@@ -295,6 +295,7 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
     const filesRef = useRef(null)
     const moleculeSelectRef = useRef(null)
     const tlcRef = useRef(null)
+    const tlc = useRef(null)
     const addToRef = useRef(null)
     const [fileOrLibrary, setFileOrLibrary] = useState("Library")
     const [createInstance, setCreateInstance] = useState(true)
@@ -375,7 +376,7 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
                             if (result.data.result.status === "Completed") {
                                 newMolecule = new BabyGruMolecule(props.commandCentre)
                                 newMolecule.molNo = result.data.result.result
-                                newMolecule.name = tlcRef.current.value.toUpperCase()
+                                newMolecule.name = tlc.current.toUpperCase()
                                 newMolecule.cachedAtoms.sequences = []
                                 props.changeMolecules({ action: "Add", item: newMolecule })
                                 return newMolecule.fetchIfDirtyAndDraw("CBs", props.glRef)
@@ -400,32 +401,7 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
                 }
                 console.log('After create instance', { result })
             })
-    }, [moleculeSelectRef.current, props.molecules, tlcRef.current, addToRef.current, createInstance])
-
-    /*
-    .then(result => {
-                    console.log("Added", { "add to": addToRef.current.value })
-                    if (result.data.result.status === "Completed") {
-                        const newMolecule = new BabyGruMolecule(props.commandCentre)
-                        newMolecule.molNo = result.data.result.result
-                        newMolecule.name = tlcRef.current.value.toUpperCase()
-                        if (parseInt(addToRef.current.value) !== -1) {
-                            const toMolecule = props.molecules
-                                .filter(molecule => molecule.molNo === parseInt(addToRef.current.value))[0]
-                            const otherMolecules = props.molecules
-                                .filter(molecule => molecule.molNo === newMolecule.molNo)
-                            return toMolecule.mergeMolecules(otherMolecules, props.glRef, true)
-                                .then(_ => { return toMolecule.redraw(props.glRef) })
-                        }
-                    }
-                    else {
-                        return newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef).then(_ => {
-                            newMolecule.cachedAtoms.sequences = []
-                            props.changeMolecules({action:"Add", item:newMolecule})
-                        })
-                    }
-                })
-                */
+    }, [moleculeSelectRef.current, props.molecules, tlcRef, addToRef, createInstance])
 
     const readMmcifFile = async (file) => {
         return readTextFile(file)
@@ -434,9 +410,10 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
             })
     }
 
-    const readMonomerFile = async (tlc) => {
-        console.log({ tlc })
-        return fetch(`/baby-gru/monomers/${tlc.toLowerCase()[0]}/${tlc.toUpperCase()}.cif`)
+    const readMonomerFile = async (newTlc) => {
+        tlc.current = newTlc
+        console.log({ newTlc })
+        return fetch(`/baby-gru/monomers/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`)
             .then(response => response.text())
             .then(fileContent => {
                 handleFileContent(fileContent)

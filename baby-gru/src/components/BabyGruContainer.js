@@ -82,7 +82,7 @@ export const BabyGruContainer = (props) => {
     //The purpose here is to return the functions that define and control BabyGruContainer state to a 
     //containing React component
     useEffect(() => {
-        console.log('Coot initialized', cootInitialized, props.forwardControls)
+        //console.log('Coot initialized', cootInitialized, props.forwardControls)
         if (cootInitialized && props.forwardControls) {
             props.forwardControls(collectedProps)
         }
@@ -121,7 +121,7 @@ export const BabyGruContainer = (props) => {
                 dispatchHistoryReducer(newCommand)
             },
             onCootInitialized: () => {
-                console.log('Being notified of coot initialized')
+                //console.log('Being notified of coot initialized')
                 setCootInitialized(true)
             }
         })
@@ -145,11 +145,11 @@ export const BabyGruContainer = (props) => {
         consoleBodyHeight !== 0 ? setConsoleBodyHeight(convertViewtoPx(30, windowHeight)) : setConsoleBodyHeight(convertViewtoPx(0, windowHeight))
         consoleDivRef.current.scrollTop = consoleDivRef.current.scrollHeight;
     }, [showSideBar, windowHeight, windowWidth])
-
+/*
     useEffect(() => {
         console.log('backgroundColor changed', backgroundColor)
     }, [backgroundColor])
-
+*/
     useEffect(() => {
         if (activeMap && commandCentre.current) {
             commandCentre.current.cootCommand({
@@ -173,11 +173,11 @@ export const BabyGruContainer = (props) => {
             let movedResidues = [];
             prevActiveMoleculeRef.current.applyTransform(glRef)
                 .then(response => {
-                    console.log("Setting/unsetting active molecule (promise)")
+                    //console.log("Setting/unsetting active molecule (promise)")
                     resetActiveGL()
                 })
         } else {
-            console.log("Setting/unsetting active molecule")
+            //console.log("Setting/unsetting active molecule")
             resetActiveGL()
         }
     }, [activeMolecule])
@@ -232,7 +232,7 @@ export const BabyGruContainer = (props) => {
                 <Button style={{ height: '100%', backgroundColor: darkMode ? '#222' : 'white', border: 0 }} onClick={() => { setDarkMode(darkMode ? false : true) }}>
                     {darkMode ? <LightModeOutlined style={{ color: 'white' }} /> : <DarkModeOutlined style={{ color: 'black' }} />}
                 </Button>
-                <Button style={{ height: '100%', backgroundColor: darkMode ? '#222' : 'white', border: 0 }} onClick={() => { setShowSideBar(!showSideBar) }}>
+                <Button className="baby-gru-sidebar-button" style={{ height: '100%', backgroundColor: darkMode ? '#222' : 'white', border: 0 }} onClick={() => { setShowSideBar(!showSideBar) }}>
                     {showSideBar ? <ArrowForwardIosOutlined style={{ color: darkMode ? 'white' : 'black' }} /> : <ArrowBackIosOutlined style={{ color: darkMode ? 'white' : 'black' }} />}
                 </Button>
             </Nav>
