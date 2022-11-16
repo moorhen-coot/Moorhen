@@ -38,6 +38,19 @@ describe('Testing molecules_container_js', () => {
         expect(mi0.chain_id).toBe("C")
     })
 
+    test('Get new rama info', () => {
+        const molecules_container = new cootModule.molecules_container_js()
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        const rama_info = molecules_container.ramachandran_validation(coordMolNo)
+        for(let i=0;i<rama_info.size();i++){
+            const ri = rama_info.get(i)
+            const cart = ri.first
+            const phi_psi = ri.second
+            console.log(cart.x(),cart.y(),cart.z())
+            console.log(phi_psi.phi(),phi_psi.psi())
+        }
+    })
+
     test('Test read_pdb from faux file system', () => {
         const molecules_container = new cootModule.molecules_container_js()
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
