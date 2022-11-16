@@ -10113,8 +10113,8 @@ class MGWebGL extends Component {
         const frontAndBack = self.getFrontAndBackPos(event);
         const goToBlobEvent = new CustomEvent("keyPressWithMousePosition", {
                 "detail": {
-                        front:[frontAndBack[0][0],frontAndBack[0][1],frontAndBack[0][2]],
-                        back:[frontAndBack[1][0],frontAndBack[1][1],frontAndBack[1][2]],
+                        back:[frontAndBack[0][0],frontAndBack[0][1],frontAndBack[0][2]],
+                        front:[frontAndBack[1][0],frontAndBack[1][1],frontAndBack[1][2]],
                         windowX: frontAndBack[2],
                         windowY: frontAndBack[3],
                         key: 'G'
@@ -10410,8 +10410,8 @@ class MGWebGL extends Component {
             const frontAndBack = self.getFrontAndBackPos(event);
             var goToBlobEvent = new CustomEvent("keyPressWithMousePosition", {
                     "detail": {
-                        front:[frontAndBack[0][0],frontAndBack[0][1],frontAndBack[0][2]],
-                        back:[frontAndBack[1][0],frontAndBack[1][1],frontAndBack[1][2]],
+                        back:[frontAndBack[0][0],frontAndBack[0][1],frontAndBack[0][2]],
+                        front:[frontAndBack[1][0],frontAndBack[1][1],frontAndBack[1][2]],
                         windowX: frontAndBack[2],
                         windowY: frontAndBack[3],
                         key: 'G'

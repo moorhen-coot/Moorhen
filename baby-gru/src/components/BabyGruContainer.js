@@ -13,7 +13,7 @@ import './BabyGruContainer.css'
 import { BabyGruHistoryMenu } from './BabyGruHistoryMenu';
 import { BabyGruViewMenu } from './BabyGruViewMenu';
 import { BabyGruLigandMenu } from './BabyGruLigandMenu';
-
+import { BabyGruToolsAccordion } from './BabyGruToolsAccordion'
 
 const initialHistoryState = { commands: [] }
 
@@ -307,17 +307,7 @@ export const BabyGruContainer = (props) => {
                         <Accordion.Item eventKey="showTools" style={{ width: sideBarWidth, padding: '0', margin: '0' }} >
                             <Accordion.Header style={{ height: '4rem' }}>Tools</Accordion.Header>
                             <Accordion.Body style={{ height: toolAccordionBodyHeight, padding: '0', margin: '0', }}>
-                                <Tabs defaultActiveKey='ramachandran'>
-                                    <Tab eventKey='ramachandran' title='Ramachandran' style={{ height: '100%' }}>
-                                        <BabyGruRamachandran {...accordionToolsItemProps} />
-                                    </Tab>
-                                    <Tab eventKey='validationPlot' title='Validation' style={{ height: '100%' }}>
-                                        <BabyGruValidationPlot {...accordionToolsItemProps} />
-                                    </Tab>
-                                    <Tab eventKey='more' title='More...'>
-                                        <BabyGruTimingTest commandCentre={commandCentre} />
-                                    </Tab>
-                                </Tabs>
+                                <BabyGruToolsAccordion {...accordionToolsItemProps}/>
                             </Accordion.Body>
                         </Accordion.Item>
                         <Accordion.Item eventKey="showConsole" style={{ width: sideBarWidth, padding: '0', margin: '0' }} >
