@@ -132,7 +132,7 @@ export const BabyGruRamachandran = (props) => {
 
 
     return <Fragment>
-        <Form style={{ paddingTop: '0.5rem', margin: '0' }}>
+        <Form style={{ padding:'0', margin: '0' }}>
             <Form.Group>
                 <Row style={{ padding: '0', margin: '0' }}>
                     <Col>
@@ -144,7 +144,7 @@ export const BabyGruRamachandran = (props) => {
                 </Row>
             </Form.Group>
         </Form>
-        <div ref={ramaPlotDivRef} id="ramaPlotDiv" className="rama-plot-div">
+        <div ref={ramaPlotDivRef} id="ramaPlotDiv" className="rama-plot-div" style={{height: '100%'}}>
             <RamaPlot ref={ramachandranRef}
                 onClick={(result) => setClickedResidue(result)}
                 setMessage={setMessage} />

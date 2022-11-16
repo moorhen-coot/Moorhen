@@ -44,7 +44,7 @@ const metricInfoScaling = {
     ramachandran_analysis: (value) => {return Math.log(value)},
 }
 
-export const BabyGruValidationPlot = (props) => {
+export const BabyGruValidation = (props) => {
     const chartCardRef = useRef();
     const chartBoxRef = useRef();
     const containerRef = useRef();
@@ -360,22 +360,22 @@ export const BabyGruValidationPlot = (props) => {
     }, [plotData, props.darkMode, props.toolAccordionBodyHeight, props.sideBarWidth, props.showSideBar])
 
     return <Fragment>
-                <Form style={{ padding: '0.5rem', margin: '0' }}>
+                <Form style={{ padding:'0', margin: '0' }}>
                     <Form.Group>
-                        <Row>
-                        <Col>
-                            <BabyGruMoleculeSelect width="" onChange={handleModelChange} molecules={props.molecules} ref={moleculeSelectRef}/>
-                        </Col>
-                        <Col>
-                            <BabyGruChainSelect width="" onChange={handleChainChange} molecules={props.molecules} selectedCoordMolNo={selectedModel} allowedTypes={['polypeptide(L)']} ref={chainSelectRef}/>
-                        </Col>
-                        <Col>
-                            <BabyGruMapSelect width="" onChange={handleMapChange} maps={props.maps} ref={mapSelectRef}/>
-                        </Col>
+                        <Row style={{ padding:'0', margin: '0' }}>
+                            <Col>
+                                <BabyGruMoleculeSelect width="" onChange={handleModelChange} molecules={props.molecules} ref={moleculeSelectRef}/>
+                            </Col>
+                            <Col>
+                                <BabyGruChainSelect width="" onChange={handleChainChange} molecules={props.molecules} selectedCoordMolNo={selectedModel} allowedTypes={['polypeptide(L)']} ref={chainSelectRef}/>
+                            </Col>
+                            <Col>
+                                <BabyGruMapSelect width="" onChange={handleMapChange} maps={props.maps} ref={mapSelectRef}/>
+                            </Col>
                         </Row>
                     </Form.Group>
                 </Form>
-                <div ref={chartCardRef} className="validation-plot-div">
+                <div ref={chartCardRef} className="validation-plot-div" >
                     <div ref={chartBoxRef} style={{height: '100%'}} className="chartBox" id="myChartBox">
                         <div ref={containerRef} className="validation-plot-container" style={{height: '100%', overflowX:'scroll'}}>
                             <div ref={containerBodyRef} style={{height: '100%'}} className="containerBody" id="myContainerBody">
