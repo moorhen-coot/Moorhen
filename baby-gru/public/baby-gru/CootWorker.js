@@ -103,10 +103,10 @@ const read_pdb = (coordData, name) => {
     cootModule.FS_createDataFile(".", `${theGuid}.pdb`, coordData, true, true);
     const tempFilename = `./${theGuid}.pdb`
     console.log(`Off to read coords into coot ${tempFilename} ${name}`)
-    const coordMolNo = molecules_container.read_pdb(tempFilename)
-    console.log(`Read coordinates as molecule ${coordMolNo}`)
+    const molNo = molecules_container.read_pdb(tempFilename)
+    console.log(`Read coordinates as molecule ${molNo}`)
     cootModule.FS_unlink(tempFilename)
-    return coordMolNo
+    return molNo
 }
 
 const read_dictionary = (coordData, associatedMolNo) => {
@@ -157,9 +157,9 @@ const read_mtz = (mapData, name, selectedColumns) => {
     const read_mtz_args = [tempFilename, selectedColumns.F,
         selectedColumns.PHI, "", false, selectedColumns.isDifference]
     //postMessage({ message: `read_mtz args ${read_mtz_args}` })
-    const mapMolNo = molecules_container.read_mtz(...read_mtz_args)
+    const molNo = molecules_container.read_mtz(...read_mtz_args)
     cootModule.FS_unlink(tempFilename)
-    return mapMolNo
+    return molNo
 }
 
 const read_ccp4_map = (mapData, name, isDiffMap) => {
@@ -170,10 +170,10 @@ const read_ccp4_map = (mapData, name, isDiffMap) => {
     const read_map_args = [tempFilename, isDiffMap]
     console.log({ read_map_args, length: asUint8Array })
     //postMessage({ message: `read_ccp4_map args ${read_map_args}` })
-    const mapMolNo = molecules_container.read_ccp4_map(...read_map_args)
-    console.log('Read map into number', mapMolNo)
+    const molNo = molecules_container.read_ccp4_map(...read_map_args)
+    console.log('Read map into number', molNo)
     cootModule.FS_unlink(tempFilename)
-    return mapMolNo
+    return molNo
 }
 
 onmessage = function (e) {
@@ -224,31 +224,31 @@ onmessage = function (e) {
     else if (e.data.message === 'get_atoms') {
         const theGuid = guid()
         const tempFilename = `./${theGuid}.pdb`
-        molecules_container.writePDBASCII(e.data.coordMolNo, tempFilename)
+        molecules_container.writePDBASCII(e.data.molNo, tempFilename)
         const pdbData = cootModule.FS.readFile(tempFilename, { encoding: 'utf8' });
         cootModule.FS_unlink(tempFilename)
         postMessage({
             messageId: e.data.messageId,
             myTimeStamp: e.data.myTimeStamp,
-            consoleMessage: `Fetched coordinates of molecule ${e.data.coordMolNo}`,
+            consoleMessage: `Fetched coordinates of molecule ${e.data.molNo}`,
             message: e.data.message,
-            result: { coordMolNo: e.data.coordMolNo, pdbData: pdbData }
+            result: { molNo: e.data.molNo, pdbData: pdbData }
         })
     }
 
     else if (e.data.message === 'get_map') {
         const theGuid = guid()
         const tempFilename = `./${theGuid}.map`
-        molecules_container.writeCCP4Map(e.data.mapMolNo, tempFilename)
+        molecules_container.writeCCP4Map(e.data.molNo, tempFilename)
 
         const mapData = cootModule.FS.readFile(tempFilename, { encoding: 'binary' });
         cootModule.FS_unlink(tempFilename)
         postMessage({
             messageId: e.data.messageId,
             myTimeStamp: e.data.myTimeStamp,
-            consoleMessage: `Fetched map of map ${e.data.mapMolNo}`,
+            consoleMessage: `Fetched map of map ${e.data.molNo}`,
             message: e.data.message,
-            result: { mapMolNo: e.data.mapMolNo, mapData: mapData.buffer }
+            result: { molNo: e.data.molNo, mapData: mapData.buffer }
         })
     }
 
@@ -258,14 +258,14 @@ onmessage = function (e) {
             //console.log('e.data.data type', typeof e.data.data, e.data.data.length)
             cootModule.FS_createDataFile(".", `${theGuid}.mtz`, e.data.data, true, true, true);
             const tempFilename = `./${theGuid}.mtz`
-            const mapMolNo = molecules_container.read_mtz(tempFilename, 'FWT', 'PHWT', "", false, false)
+            const molNo = molecules_container.read_mtz(tempFilename, 'FWT', 'PHWT', "", false, false)
             cootModule.FS_unlink(tempFilename)
             postMessage({
                 messageId: e.data.messageId,
                 myTimeStamp: e.data.myTimeStamp,
-                consoleMessage: `Read map MTZ as molecule ${mapMolNo}`,
+                consoleMessage: `Read map MTZ as molecule ${molNo}`,
                 message: e.data.message,
-                result: { mapMolNo: mapMolNo, name: e.data.name }
+                result: { molNo: molNo, name: e.data.name }
             })
         }
         catch (err) {
@@ -276,7 +276,7 @@ onmessage = function (e) {
     else if (e.data.message === 'get_rama') {
         const theGuid = guid()
         const tempFilename = `./${theGuid}.pdb`
-        molecules_container.writePDBASCII(e.data.coordMolNo, tempFilename)
+        molecules_container.writePDBASCII(e.data.molNo, tempFilename)
         const result = cootModule.getRamachandranData(tempFilename, e.data.chainId);
         cootModule.FS_unlink(tempFilename)
         let resInfo = [];
@@ -296,18 +296,18 @@ onmessage = function (e) {
     }
 
     else if (e.data.message === 'copy_fragment') {
-        const newCoordMolNo = molecules_container.copy_fragment_using_residue_range(e.data.coordMolNo, e.data.chainId, e.data.res_no_start, e.data.res_no_end)
+        const newmolNo = molecules_container.copy_fragment_using_residue_range(e.data.molNo, e.data.chainId, e.data.res_no_start, e.data.res_no_end)
 
         postMessage({
             messageId: e.data.messageId,
             myTimeStamp: e.data.myTimeStamp,
             messageTag: "result",
-            result: newCoordMolNo,
+            result: newmolNo,
         })
     }
 
     else if (e.data.message === 'delete') {
-        const result = molecules_container.close_molecule(e.data.coordMolNo)
+        const result = molecules_container.close_molecule(e.data.molNo)
 
         postMessage({
             messageId: e.data.messageId,

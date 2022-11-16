@@ -137,10 +137,10 @@ export const BabyGruGetMonomerMenuItem = (props) => {
                     const newMolecule = new BabyGruMolecule(props.commandCentre)
                     newMolecule.molNo = result.data.result.result
                     newMolecule.name = tlcRef.current.value
-                    props.setPopoverIsShown(false)
-                    newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef).then(_ => {
-                        newMolecule.cachedAtoms.sequences = []
+                    newMolecule.cachedAtoms.sequences = []
+                    return newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef).then(_ => {
                         props.changeMolecules({ action: "Add", item: newMolecule })
+                        props.setPopoverIsShown(false)
                     })
                 }
             })
@@ -163,7 +163,7 @@ export const BabyGruDeleteDisplayObjectMenuItem = (props) => {
     </>
 
     const onCompleted = () => {
-        props.changeItemList({action:'Remove', item:props.item})
+        props.changeItemList({ action: 'Remove', item: props.item })
         props.item.delete(props.glRef);
         props.setPopoverIsShown(false)
     }
@@ -230,7 +230,7 @@ export const BabyGruDeleteEverythingMenuItem = (props) => {
         props.molecules.forEach(molecule => {
             molecule.delete(props.glRef)
         })
-        props.changeMaps({action:'Empty'})
+        props.changeMaps({ action: 'Empty' })
         props.changeMolecules({ action: "Empty" })
         props.setPopoverIsShown(false)
     }
