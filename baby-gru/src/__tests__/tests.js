@@ -24,15 +24,15 @@ describe('Testing molecules_container_js', () => {
 
     test('Test read_pdb from faux file system', () => {
         const molecules_container = new cootModule.molecules_container_js()
-        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
-        expect(coordMolNo).toBe(0)
+        const molNo = molecules_container.read_pdb('./5a3h.pdb')
+        expect(molNo).toBe(0)
     })
 
     test('Test read_mtz from faux file system', () => {
         const molecules_container = new cootModule.molecules_container_js()
-        const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz',
+        const molNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz',
             'FWT', 'PHWT', "", false, false)
-        expect(mapMolNo).toBe(0)
+        expect(molNo).toBe(0)
     })
 
     test('Create res spec', () => {
@@ -41,19 +41,19 @@ describe('Testing molecules_container_js', () => {
 
     test('Test flip_peptide by residue spec', () => {
         const molecules_container = new cootModule.molecules_container_js()
-        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
-        expect(coordMolNo).toBe(0)
+        const molNo = molecules_container.read_pdb('./5a3h.pdb')
+        expect(molNo).toBe(0)
 
-        const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz',
+        const molNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz',
             'FWT', 'PHWT', "", false, false)
-        expect(mapMolNo).toBe(1)
+        expect(molNo).toBe(1)
 
         const resSpec = new cootModule.residue_spec_t("A", 217, "");
-        const status = molecules_container.flipPeptide_rs(coordMolNo, resSpec, "")
+        const status = molecules_container.flipPeptide_rs(molNo, resSpec, "")
         expect(status).toBe(1)
 
         const resSpecFalse = new cootModule.residue_spec_t("A", 999, "");
-        const failedStatus = molecules_container.flipPeptide_rs(coordMolNo, resSpecFalse, "")
+        const failedStatus = molecules_container.flipPeptide_rs(molNo, resSpecFalse, "")
         expect(failedStatus).toBe(0)
     })
 
