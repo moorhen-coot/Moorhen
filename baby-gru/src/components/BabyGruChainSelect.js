@@ -17,7 +17,7 @@ export const BabyGruChainSelect = forwardRef((props, selectRef) => {
         
     }
 
-    return <Form.Group style={{ width: props.width, margin: '0.5rem' }}>
+    return <Form.Group style={{ width: props.width, margin: '0.5rem', height:props.height }}>
         <Form.Label>{props.label}</Form.Label>
         <FormSelect size="sm" ref={selectRef} defaultValue={''} onChange={handleChange}>
             {props.selectedCoordMolNo !== null ? getChainOptions(props.selectedCoordMolNo) :  null}
@@ -25,4 +25,4 @@ export const BabyGruChainSelect = forwardRef((props, selectRef) => {
     </Form.Group>
 })
 
-BabyGruChainSelect.defaultProps = { allowedTypes:['polypeptide(L)', 'polyribonucleotide', 'polydeoxyribonucleotide'], width: '20rem', molecule:null, label: "Chain" }
+BabyGruChainSelect.defaultProps = { allowedTypes:['polypeptide(L)', 'polyribonucleotide', 'polydeoxyribonucleotide'], height: '4rem', width: '20rem', molecule:null, label: "Chain" }
