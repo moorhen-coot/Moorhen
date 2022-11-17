@@ -256,6 +256,7 @@ export const BabyGruMoleculeCard = (props) => {
                             label={`Rotate/Translate`}
                             type="checkbox"
                             variant="outline"
+                            disabled={!isVisible}
                             onChange={(e) => {
                                 if (e.target.checked) {
                                     props.setActiveMolecule(props.molecule)
