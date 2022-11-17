@@ -5,7 +5,7 @@ import { useEffect, useState, useRef, createRef } from "react";
 import { BabyGruMtzWrapper, cootCommand, readTextFile } from '../utils/BabyGruUtils';
 import { InsertDriveFile } from "@mui/icons-material";
 import { BabyGruMoleculeSelect } from "./BabyGruMoleculeSelect";
-import { BabyGruImportDictionaryMenuItem, BabyGruImportMapCoefficientsMenuItem, BabyGruDeleteEverythingMenuItem, BabyGruLoadTutorialDataMenuItem, BabyGruImportMapMenuItem } from "./BabyGruMenuItem";
+import { BabyGruImportDictionaryMenuItem, BabyGruImportMapCoefficientsMenuItem, BabyGruDeleteEverythingMenuItem, BabyGruLoadTutorialDataMenuItem, BabyGruImportMapMenuItem, BabyGruImportFSigFMenuItem } from "./BabyGruMenuItem";
 import { MenuItem } from "@mui/material";
 
 export const BabyGruFileMenu = (props) => {
@@ -77,7 +77,7 @@ export const BabyGruFileMenu = (props) => {
             onToggle={() => { props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId(-1) }}>
             <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="uploadCoords" className="mb-3">
                 <Form.Label>Coordinates</Form.Label>
-                <Form.Control type="file" accept=".pdb, .mmcif, .ent" multiple={true} onChange={(e) => { loadPdbFiles(e.target.files) }} />
+                <Form.Control type="file" accept=".pdb, .mmcif, .cif, .ent" multiple={true} onChange={(e) => { loadPdbFiles(e.target.files) }} />
             </Form.Group>
             <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="downloadCoords" className="mb-3">
                 <Form.Label>Fetch coords from PDBe</Form.Label>
@@ -94,6 +94,8 @@ export const BabyGruFileMenu = (props) => {
             </Form.Group>
 
             <BabyGruImportMapCoefficientsMenuItem {...menuItemProps} />
+
+            <BabyGruImportFSigFMenuItem {...menuItemProps} />
 
             <BabyGruImportMapMenuItem {...menuItemProps} />
 

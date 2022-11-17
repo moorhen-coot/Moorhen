@@ -2,11 +2,12 @@ import { MenuItem } from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { OverlayTrigger, Popover, PopoverBody, PopoverHeader, Form, InputGroup, Button, FormSelect, Row, Col, SplitButton, Dropdown } from "react-bootstrap";
 import { SketchPicker } from "react-color";
-import { BabyGruMtzWrapper, readTextFile } from "../utils/BabyGruUtils";
+import { BabyGruMtzWrapper, readDataFile, readTextFile } from "../utils/BabyGruUtils";
 import { BabyGruMap } from "../utils/BabyGruMap";
 import { BabyGruMolecule } from "../utils/BabyGruMolecule";
 import { BabyGruMoleculeSelect } from "./BabyGruMoleculeSelect";
 import BabyGruSlider from "./BabyGruSlider";
+import { BabyGruMapSelect } from "./BabyGruMapSelect";
 
 export const BabyGruMenuItem = (props) => {
 
@@ -538,6 +539,140 @@ export const BabyGruImportMapCoefficientsMenuItem = (props) => {
     return <BabyGruMenuItem
         popoverContent={panelContent}
         menuItemText="Map coefficients..."
+        onCompleted={onCompleted}
+        setPopoverIsShown={props.setPopoverIsShown}
+    />
+}
+
+export const BabyGruImportFSigFMenuItem = (props) => {
+    const filesRef = useRef(null)
+    const fSelectRef = useRef()
+    const sigFSelectRef = useRef()
+    const freeRSelectRef = useRef()
+    const mapSelectRef = useRef()
+    const twoFoFcSelectRef = useRef()
+    const foFcSelectRef = useRef()
+    const moleculeSelectRef = useRef()
+    const [columns, setColumns] = useState({})
+
+    const handleFileRead = async (e) => {
+        const babyGruMtzWrapper = new BabyGruMtzWrapper()
+        const newColumns = await babyGruMtzWrapper.loadHeaderFromFile(e.target.files[0])
+        const fColumns = Object.keys(newColumns)
+            .filter(key => newColumns[key] === 'F')
+        const sigFColumns = Object.keys(newColumns)
+            .filter(key => newColumns[key] === 'Q')
+        const freeRColumns = Object.keys(newColumns)
+            .filter(key => newColumns[key] === 'I')
+        if (fColumns.length === 1 && sigFColumns.length === 1 && freeRColumns.length === 1) {
+            let selectedColumns = { F: fColumns[0], SigF: sigFColumns[0], FreeR: freeRColumns[0] }
+            await handleFile(e.target.files[0], selectedColumns)
+        }
+        else {
+            setColumns(newColumns)
+        }
+    }
+
+    const handleFile = async (source, selectedColumns) => {
+        const $this = this
+        const reflectionData = await readDataFile(source)
+        const asUIntArray = new Uint8Array(reflectionData)
+
+        const commandArgs = [selectedColumns.iMol, { name: source.name, data: asUIntArray },
+        selectedColumns.F, selectedColumns.SigF, selectedColumns.FreeR]
+        console.log(commandArgs)
+        const result = props.commandCentre.current.cootCommand({
+            command: 'shim_associate_data_mtz_file_with_map',
+            commandArgs: commandArgs,
+            returnType: 'status'
+        }, true).then(result=>{
+            console.log('shim_associate_data_mtz_file_with_map result was ', { result })
+            const commandArgs = [
+                moleculeSelectRef.current.value,
+                mapSelectRef.current.value,
+                twoFoFcSelectRef.current.value,
+                foFcSelectRef.current.value,
+            ]
+            props.commandCentre.current.cootCommand({
+                command: 'connect_updating_maps',
+                commandArgs: commandArgs,
+                returnType: 'status'
+            }, true)
+        })
+    }
+
+    const onCompleted = async () => {
+        console.log({ F: fSelectRef.current.value, })
+        console.log({ SigF: sigFSelectRef.current.value, })
+        console.log({ FreeR: freeRSelectRef.current.value, })
+        console.log({ iMol: mapSelectRef.current.value })
+        let selectedColumns = {
+            F: fSelectRef.current.value,
+            SigF: sigFSelectRef.current.value,
+            FreeR: freeRSelectRef.current.value,
+            iMol: mapSelectRef.current.value
+        }
+        props.setPopoverIsShown(false)
+        return await handleFile(filesRef.current.files[0], selectedColumns)
+    }
+
+    const panelContent = <>
+        <Row>
+            <Form.Group style={{ width: '30rem', margin: '0.5rem' }} controlId="uploadDicts" className="mb-3">
+                <Form.Label>FP, SIGFP file</Form.Label>
+                <Form.Control ref={filesRef} type="file" multiple={false} accept={[".mtz"]} onChange={(e) => {
+                    handleFileRead(e)
+                }} />
+            </Form.Group>
+        </Row>
+        <Row key="Row1" style={{ marginBottom: "1rem" }}>
+            <Col key="F">
+                FP
+                <FormSelect size="sm" ref={fSelectRef} defaultValue="F" onChange={(val) => { }}>
+                    {Object.keys(columns)
+                        .filter(key => columns[key] === 'F')
+                        .map(key => <option value={key} key={key}>{key}</option>
+                        )}
+                </FormSelect>
+            </Col>
+            <Col key="SigF">
+                SIGFP
+                <FormSelect size="sm" ref={sigFSelectRef} defaultValue="SIGF" onChange={(val) => { }}>
+                    {Object.keys(columns)
+                        .filter(key => columns[key] === 'Q')
+                        .map(key => <option value={key} key={key}>{key}</option>
+                        )}
+                </FormSelect>
+            </Col>
+            <Col key="FreeR">
+                Free R
+                <FormSelect size="sm" ref={freeRSelectRef} defaultValue="FREER" onChange={(val) => { }}>
+                    {Object.keys(columns)
+                        .filter(key => columns[key] === 'I')
+                        .map(key => <option value={key} key={key}>{key}</option>
+                        )}
+                </FormSelect>
+            </Col>
+        </Row>
+        <Row style={{ marginBottom: "1rem" }}>
+            <BabyGruMapSelect {...props} ref={mapSelectRef} allowAny={false} />
+        </Row>
+        <Row style={{ marginBottom: "1rem" }}>
+            <Col key="Col1">
+                <BabyGruMapSelect {...props} ref={twoFoFcSelectRef} label="2foFc" allowAny={false} />
+            </Col>
+            <Col key="Col2">
+                <BabyGruMapSelect {...props} ref={foFcSelectRef} label="FoFc" allowAny={false} />
+            </Col>
+            <Col key="Col3">
+                <BabyGruMoleculeSelect {...props} ref={moleculeSelectRef} label="Molecule for phases" allowAny={false} />
+            </Col>
+        </Row>
+    </>
+
+    return <BabyGruMenuItem
+        popoverContent={panelContent}
+        menuItemText="FP, SIGFP for map updating..."
         onCompleted={onCompleted}
         setPopoverIsShown={props.setPopoverIsShown}
     />
