@@ -15,12 +15,12 @@ export const BabyGruMapCard = (props) => {
     const [currentName, setCurrentName] = useState(props.map.mapName);
     const nextOrigin = createRef([])
     const busyContouring = createRef(false)
-    const [dropdownIsShown, setDropdownIsShown] = useState(false)
     const [popoverIsShown, setPopoverIsShown] = useState(false)
 
     const handleDownload = async () => {
         let response = await props.map.getMap()
         doDownload([response.data.result.mapData], `${props.map.mapName.replace('.mtz', '.map')}`)
+        props.setCurrentDropdownMolNo(-1)
     }
 
     const handleVisibility = () => {
@@ -31,6 +31,12 @@ export const BabyGruMapCard = (props) => {
             props.map.makeCootUnlive(props.glRef.current)
             setCootContour(false)
         }
+        props.setCurrentDropdownMolNo(-1)
+    }
+
+    const handleLitLines = () => {
+        setMapLitLines(!mapLitLines)
+        props.setCurrentDropdownMolNo(-1)
     }
 
     const actionButtons = {
@@ -50,7 +56,7 @@ export const BabyGruMapCard = (props) => {
         },
         3: {
             label: mapLitLines ? "Deactivate lit lines" : "Activate lit lines",
-            compressed: () => {return (<MenuItem variant="success" onClick={() => {setMapLitLines(!mapLitLines)}}>{mapLitLines ? "Deactivate lit lines" : "Activate lit lines"}</MenuItem>)},
+            compressed: () => {return (<MenuItem variant="success" onClick={handleLitLines}>{mapLitLines ? "Deactivate lit lines" : "Activate lit lines"}</MenuItem>)},
             expanded: null
         },
         4: {

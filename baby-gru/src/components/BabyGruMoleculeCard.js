@@ -12,7 +12,6 @@ export const BabyGruMoleculeCard = (props) => {
     const [clickedResidue, setClickedResidue] = useState(null);
     const [currentName, setCurrentName] = useState(props.molecule.name);
     const [isCollapsed, setIsCollapsed] = useState(false);
-    const [dropdownIsShown, setDropdownIsShown] = useState(false)
     const [popoverIsShown, setPopoverIsShown] = useState(false)
     const [isVisible, setIsVisible] = useState(true)
 
@@ -61,11 +60,13 @@ export const BabyGruMoleculeCard = (props) => {
             })
             setIsVisible(true)
         }
+        props.setCurrentDropdownMolNo(-1)
     }
 
     const handleDownload = async () => {
         let response = await props.molecule.getAtoms()
         doDownload([response.data.result.pdbData], `${props.molecule.name}`)
+        props.setCurrentDropdownMolNo(-1)
     }
 
     const handleCopyFragment = () => {
@@ -78,6 +79,7 @@ export const BabyGruMoleculeCard = (props) => {
         if (clickedResidue && selectedResidues) {
             createNewFragmentMolecule()
         }
+        props.setCurrentDropdownMolNo(-1)
     }
 
     const handleUndo = async () => {
@@ -88,6 +90,7 @@ export const BabyGruMoleculeCard = (props) => {
         })
         props.molecule.setAtomsDirty(true)
         props.molecule.redraw(props.glRef)
+        props.setCurrentDropdownMolNo(-1)
     }
 
     const handleRedo = async () => {
@@ -98,6 +101,12 @@ export const BabyGruMoleculeCard = (props) => {
         })
         props.molecule.setAtomsDirty(true)
         props.molecule.redraw(props.glRef)
+        props.setCurrentDropdownMolNo(-1)
+    }
+
+    const handleCentering = () => {
+        props.molecule.centreOn(props.glRef)
+        props.setCurrentDropdownMolNo(-1)
     }
 
     const actionButtons = {
@@ -117,8 +126,8 @@ export const BabyGruMoleculeCard = (props) => {
         },
         3: {
             label: "Center on molecule", 
-            compressed: () => {return (<MenuItem variant="success" onClick={() => { props.molecule.centreOn(props.glRef) }}>Center on molecule</MenuItem>)},
-            expanded:  () => {return (<Button size="sm" variant="outlined" onClick={() => { props.molecule.centreOn(props.glRef) }}>
+            compressed: () => {return (<MenuItem variant="success" onClick={handleCentering}>Center on molecule</MenuItem>)},
+            expanded:  () => {return (<Button size="sm" variant="outlined" onClick={handleCentering}>
                                         <CenterFocusWeakOutlined />
                                       </Button>)}
         },
