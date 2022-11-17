@@ -1,7 +1,7 @@
 import { MenuItem } from "@mui/material";
 import { useEffect, useState, useMemo, Fragment } from "react";
 import { Card, Form, Button, Row, Col, DropdownButton } from "react-bootstrap";
-import { doDownload } from '../utils/BabyGruUtils';
+import { doDownload, sequenceIsValid } from '../utils/BabyGruUtils';
 import { UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined, ExpandLessOutlined, VisibilityOffOutlined, VisibilityOutlined, DownloadOutlined } from '@mui/icons-material';
 import { BabyGruSequenceViewer } from "./BabyGruSequenceViewer";
 import { BabyGruDeleteDisplayObjectMenuItem, BabyGruRenameDisplayObjectMenuItem } from "./BabyGruMenuItem";
@@ -11,8 +11,7 @@ export const BabyGruMoleculeCard = (props) => {
     const [selectedResidues, setSelectedResidues] = useState(null);
     const [clickedResidue, setClickedResidue] = useState(null);
     const [currentName, setCurrentName] = useState(props.molecule.name);
-    const [isCollapsed, setIsCollapsed] = useState(false);
-    const [dropdownIsShown, setDropdownIsShown] = useState(false)
+    const [isCollapsed, setIsCollapsed] = useState(!props.defaultExpandDisplayCards);
     const [popoverIsShown, setPopoverIsShown] = useState(false)
     const [isVisible, setIsVisible] = useState(true)
 
@@ -61,11 +60,13 @@ export const BabyGruMoleculeCard = (props) => {
             })
             setIsVisible(true)
         }
+        props.setCurrentDropdownMolNo(-1)
     }
 
     const handleDownload = async () => {
         let response = await props.molecule.getAtoms()
         doDownload([response.data.result.pdbData], `${props.molecule.name}`)
+        props.setCurrentDropdownMolNo(-1)
     }
 
     const handleCopyFragment = () => {
@@ -78,6 +79,7 @@ export const BabyGruMoleculeCard = (props) => {
         if (clickedResidue && selectedResidues) {
             createNewFragmentMolecule()
         }
+        props.setCurrentDropdownMolNo(-1)
     }
 
     const handleUndo = async () => {
@@ -88,6 +90,7 @@ export const BabyGruMoleculeCard = (props) => {
         })
         props.molecule.setAtomsDirty(true)
         props.molecule.redraw(props.glRef)
+        props.setCurrentDropdownMolNo(-1)
     }
 
     const handleRedo = async () => {
@@ -98,72 +101,103 @@ export const BabyGruMoleculeCard = (props) => {
         })
         props.molecule.setAtomsDirty(true)
         props.molecule.redraw(props.glRef)
+        props.setCurrentDropdownMolNo(-1)
     }
 
-    const getButtonBar = (availableWidth) => {
+    const handleCentering = () => {
+        props.molecule.centreOn(props.glRef)
+        props.setCurrentDropdownMolNo(-1)
+    }
 
-        if (availableWidth <= 600) {
-            return <Fragment>
-                        <Button size="sm" variant="outlined" onClick={handleVisibility}>
-                            {isVisible ? <VisibilityOffOutlined /> : <VisibilityOutlined />}
-                        </Button>
-                        <DropdownButton 
-                                size="sm" 
-                                variant="outlined" 
-                                autoClose={popoverIsShown ? false : 'outside'} 
-                                show={props.currentDropdownMolNo === props.molecule.molNo} 
-                                onToggle={() => {props.molecule.molNo !== props.currentDropdownMolNo ? props.setCurrentDropdownMolNo(props.molecule.molNo) : props.setCurrentDropdownMolNo(-1)}}>
-                            <MenuItem variant="success" onClick={() => { props.molecule.centreOn(props.glRef) }}>Center on molecule</MenuItem>
-                            <MenuItem variant="success" onClick={handleCopyFragment}>Copy selected residues into fragment</MenuItem>
-                            <MenuItem variant="success" onClick={handleDownload}>Download molecule</MenuItem>
-                            <MenuItem variant="success" onClick={handleUndo}>Undo last action</MenuItem>
-                            <MenuItem variant="success" onClick={handleRedo}>Redo last action</MenuItem>
-                            <BabyGruRenameDisplayObjectMenuItem setPopoverIsShown={setPopoverIsShown} setCurrentName={setCurrentName} item={props.molecule} />
-                            <BabyGruDeleteDisplayObjectMenuItem setPopoverIsShown={setPopoverIsShown} glRef={props.glRef} changeItemList={props.changeMolecules} itemList={props.molecules} item={props.molecule}/>
-                        </DropdownButton>
-                        <Button size="sm" variant="outlined"
-                            onClick={() => {
-                                setIsCollapsed(!isCollapsed)
-                            }}>
-                            {isCollapsed ? < ExpandMoreOutlined/> : <ExpandLessOutlined />}
-                        </Button>
-                    </Fragment>
-        } else {
-            return <Fragment>
-                        <Button size="sm" variant="outlined" onClick={handleUndo}>
-                            <UndoOutlined />
-                        </Button>
-                        <Button size="sm" variant="outlined" onClick={handleRedo}>
-                            <RedoOutlined />
-                        </Button>
-                        <Button size="sm" variant="outlined"
-                            onClick={() => { props.molecule.centreOn(props.glRef) }}>
-                            <CenterFocusWeakOutlined />
-                        </Button>
-                        <Button size="sm" variant="outlined" onClick={handleVisibility}>
-                            {isVisible ? <VisibilityOffOutlined /> : <VisibilityOutlined />}
-                        </Button>
-                        <Button size="sm" variant="outlined" onClick={handleDownload}>
-                            <DownloadOutlined />
-                        </Button>
-                        <DropdownButton 
-                                size="sm" 
-                                variant="outlined" 
-                                autoClose={popoverIsShown ? false : 'outside'} 
-                                show={props.currentDropdownMolNo === props.molecule.molNo} 
-                                onToggle={() => {props.molecule.molNo !== props.currentDropdownMolNo ? props.setCurrentDropdownMolNo(props.molecule.molNo) : props.setCurrentDropdownMolNo(-1)}}>
-                            <MenuItem variant="success" onClick={handleCopyFragment}>Copy selected residues into fragment</MenuItem>
-                            <BabyGruRenameDisplayObjectMenuItem setPopoverIsShown={setPopoverIsShown} setCurrentName={setCurrentName} item={props.molecule} />
-                            <BabyGruDeleteDisplayObjectMenuItem setPopoverIsShown={setPopoverIsShown} glRef={props.glRef} changeItemList={props.changeMolecules} itemList={props.molecules} item={props.molecule}/>
-                        </DropdownButton>
-                        <Button size="sm" variant="outlined"
-                            onClick={() => {
-                                setIsCollapsed(!isCollapsed)
-                            }}>
-                            {isCollapsed ? < ExpandMoreOutlined/> : <ExpandLessOutlined />}
-                        </Button>
-                    </Fragment>
+    const actionButtons = {
+        1: {
+            label: "Undo last action",
+            compressed: () => {return (<MenuItem variant="success" onClick={handleUndo}>Undo last action</MenuItem>)},
+            expanded: () => {return (<Button size="sm" variant="outlined" onClick={handleUndo}>
+                                        <UndoOutlined />
+                                     </Button>)}
+        },
+        2: {
+            label: "Redo previous action",
+            compressed: () => {return (<MenuItem variant="success" onClick={handleRedo}>Redo previous action</MenuItem>)},
+            expanded: () => {return (<Button size="sm" variant="outlined" onClick={handleRedo}>
+                                        <RedoOutlined />
+                                     </Button>)}
+        },
+        3: {
+            label: "Center on molecule", 
+            compressed: () => {return (<MenuItem variant="success" onClick={handleCentering}>Center on molecule</MenuItem>)},
+            expanded:  () => {return (<Button size="sm" variant="outlined" onClick={handleCentering}>
+                                        <CenterFocusWeakOutlined />
+                                      </Button>)}
+        },
+        4: {
+            label: isVisible ? "Hide molecule" : "Show molecule", 
+            compressed: () => {return (<MenuItem variant="success" onClick={handleVisibility}>{isVisible ? "Hide molecule" : "Show molecule"}</MenuItem>)},
+            expanded: () => {return (<Button size="sm" variant="outlined" onClick={handleVisibility}>
+                                        {isVisible ? <VisibilityOffOutlined /> : <VisibilityOutlined />}
+                                      </Button>)}
+        },
+        5: {
+            label: "Download Molecule", 
+            compressed: () => {return (<MenuItem variant="success" onClick={handleDownload}>Download molecule</MenuItem>)},
+            expanded:  () => {return (<Button size="sm" variant="outlined" onClick={handleDownload}>
+                                        <DownloadOutlined />
+                                       </Button> )}
+        },
+        6: {
+            label: 'Rename molecule',
+            compressed: () => {return (<BabyGruRenameDisplayObjectMenuItem setPopoverIsShown={setPopoverIsShown} setCurrentName={setCurrentName} item={props.molecule} />)},
+            expanded: null
+        },
+        7: {
+            label: 'Copy selected residues into fragment',
+            compressed: () => {return (<MenuItem variant="success" onClick={handleCopyFragment}>Copy selected residues into fragment</MenuItem>)},
+            expanded: null
         }
+    }
+
+    const getButtonBar = (sideBarWidth) => {
+        const maximumAllowedWidth = sideBarWidth * 0.35
+        let currentlyUsedWidth = 0
+        let expandedButtons = []
+        let compressedButtons = []
+
+        Object.keys(actionButtons).forEach(key => {
+            if (actionButtons[key].expanded === null) {
+                compressedButtons.push(actionButtons[key].compressed())
+            } else {
+                currentlyUsedWidth += 60
+                if (currentlyUsedWidth < maximumAllowedWidth) {
+                    expandedButtons.push(actionButtons[key].expanded())
+                } else {
+                    compressedButtons.push(actionButtons[key].compressed())
+                }
+            }
+        })
+
+        compressedButtons.push((
+            <BabyGruDeleteDisplayObjectMenuItem setPopoverIsShown={setPopoverIsShown} glRef={props.glRef} changeItemList={props.changeMolecules} itemList={props.molecules} item={props.molecule}/>
+        ))
+        
+        return  <Fragment>
+                    {expandedButtons}
+                    <DropdownButton 
+                            size="sm" 
+                            variant="outlined" 
+                            autoClose={popoverIsShown ? false : 'outside'} 
+                            show={props.currentDropdownMolNo === props.molecule.molNo} 
+                            onToggle={() => {props.molecule.molNo !== props.currentDropdownMolNo ? props.setCurrentDropdownMolNo(props.molecule.molNo) : props.setCurrentDropdownMolNo(-1)}}>
+                        {compressedButtons}
+                    </DropdownButton>
+                    <Button size="sm" variant="outlined"
+                        onClick={() => {
+                            setIsCollapsed(!isCollapsed)
+                        }}>
+                        {isCollapsed ? < ExpandMoreOutlined/> : <ExpandLessOutlined />}
+                    </Button>
+                </Fragment>
+
     }
 
     return <Card className="px-0" style={{ marginBottom: '0.5rem', padding: '0' }} key={props.molecule.molNo}>
@@ -240,17 +274,24 @@ export const BabyGruMoleculeCard = (props) => {
                     </div>
                     {props.molecule.cachedAtoms.sequences &&
                         props.molecule.cachedAtoms.sequences.map(
-                            sequence => (
-                                <BabyGruSequenceViewer
-                                    sequence={sequence}
-                                    molecule={props.molecule}
-                                    glRef={props.glRef}
-                                    clickedResidue={clickedResidue}
-                                    setClickedResidue={setClickedResidue}
-                                    selectedResidues={selectedResidues}
-                                    setSelectedResidues={setSelectedResidues}
-                                />
-                            )
+                            sequence => {
+                                if(!sequenceIsValid(sequence.sequence)) {
+                                    return (
+                                        <div>
+                                            <p>{`Unable to parse sequence data for chain ${sequence?.chain}`}</p>
+                                        </div>                
+                                    )
+                                }
+                                return (<BabyGruSequenceViewer
+                                            sequence={sequence}
+                                            molecule={props.molecule}
+                                            glRef={props.glRef}
+                                            clickedResidue={clickedResidue}
+                                            setClickedResidue={setClickedResidue}
+                                            selectedResidues={selectedResidues}
+                                            setSelectedResidues={setSelectedResidues}
+                                        />)
+                            }
                         )
                     }
                 </Col>

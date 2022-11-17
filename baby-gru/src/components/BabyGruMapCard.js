@@ -11,16 +11,16 @@ export const BabyGruMapCard = (props) => {
     const [mapRadius, setMapRadius] = useState(props.initialRadius)
     const [mapContourLevel, setMapContourLevel] = useState(props.initialContour)
     const [mapLitLines, setMapLitLines] = useState(props.initialMapLitLines)    
-    const [isCollapsed, setIsCollapsed] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(!props.defaultExpandDisplayCards);
     const [currentName, setCurrentName] = useState(props.map.mapName);
     const nextOrigin = createRef([])
     const busyContouring = createRef(false)
-    const [dropdownIsShown, setDropdownIsShown] = useState(false)
     const [popoverIsShown, setPopoverIsShown] = useState(false)
 
     const handleDownload = async () => {
         let response = await props.map.getMap()
         doDownload([response.data.result.mapData], `${props.map.mapName.replace('.mtz', '.map')}`)
+        props.setCurrentDropdownMolNo(-1)
     }
 
     const handleVisibility = () => {
@@ -31,59 +31,82 @@ export const BabyGruMapCard = (props) => {
             props.map.makeCootUnlive(props.glRef.current)
             setCootContour(false)
         }
+        props.setCurrentDropdownMolNo(-1)
     }
 
-    const getButtonBar = (availableWidth) => {
+    const handleLitLines = () => {
+        setMapLitLines(!mapLitLines)
+        props.setCurrentDropdownMolNo(-1)
+    }
 
-        if (availableWidth <= 600) {
-            return <Fragment>
-                        <Button size="sm" variant="outlined" onClick={handleVisibility}>
-                            {cootContour ? <VisibilityOffOutlined /> : <VisibilityOutlined />}
-                        </Button>
-                        <DropdownButton 
-                                size="sm" 
-                                variant="outlined" 
-                                autoClose={popoverIsShown ? false : 'outside'} 
-                                show={props.currentDropdownMolNo === props.map.molNo} 
-                                onToggle={() => {props.map.molNo !== props.currentDropdownMolNo ? props.setCurrentDropdownMolNo(props.map.molNo) : props.setCurrentDropdownMolNo(-1)}}>
-                            <MenuItem variant="success" onClick={() => {setMapLitLines(!mapLitLines)}}>{mapLitLines ? "Deactivate lit lines" : "Activate lit lines"}</MenuItem>
-                            <MenuItem variant="success" onClick={handleDownload}>Download map</MenuItem>
-                            <BabyGruRenameDisplayObjectMenuItem setPopoverIsShown={setPopoverIsShown} setCurrentName={setCurrentName} item={props.map} />
-                            <BabyGruDeleteDisplayObjectMenuItem setPopoverIsShown={setPopoverIsShown} glRef={props.glRef} changeItemList={props.changeMaps} itemList={props.maps} item={props.map}/>
-                        </DropdownButton>
-                        <Button size="sm" variant="outlined"
-                            onClick={() => {
-                                setIsCollapsed(!isCollapsed)
-                            }}>
-                            {isCollapsed ? < ExpandMoreOutlined/> : <ExpandLessOutlined />}
-                        </Button>
-                    </Fragment>
-        } else {
-            return <Fragment>
-                        <Button size="sm" variant="outlined" onClick={handleVisibility}>
-                            {cootContour ? <VisibilityOffOutlined /> : <VisibilityOutlined />}
-                        </Button>
-                        <Button size="sm" variant="outlined" onClick={handleDownload}>
-                            <DownloadOutlined />
-                        </Button>
-                        <DropdownButton 
-                                size="sm" 
-                                variant="outlined" 
-                                autoClose={popoverIsShown ? false : 'outside'} 
-                                show={props.currentDropdownMolNo === props.map.molNo} 
-                                onToggle={() => {props.map.molNo !== props.currentDropdownMolNo ? props.setCurrentDropdownMolNo(props.map.molNo) : props.setCurrentDropdownMolNo(-1)}}>
-                            <MenuItem variant="success" onClick={() => {setMapLitLines(!mapLitLines)}}>{mapLitLines ? "Deactivate lit lines" : "Activate lit lines"}</MenuItem>
-                            <BabyGruRenameDisplayObjectMenuItem setPopoverIsShown={setPopoverIsShown} setCurrentName={setCurrentName} item={props.map} />
-                            <BabyGruDeleteDisplayObjectMenuItem setPopoverIsShown={setPopoverIsShown} glRef={props.glRef} changeItemList={props.changeMaps} itemList={props.maps} item={props.map}/>
-                        </DropdownButton>
-                        <Button size="sm" variant="outlined"
-                            onClick={() => {
-                                setIsCollapsed(!isCollapsed)
-                            }}>
-                            {isCollapsed ? < ExpandMoreOutlined/> : <ExpandLessOutlined />}
-                        </Button>
-                    </Fragment>
+    const actionButtons = {
+        1: {
+            label: cootContour ? "Hide map" : "Show map", 
+            compressed: () => {return (<MenuItem variant="success" onClick={handleVisibility}>{cootContour ? "Hide map" : "Show map"}</MenuItem>)},
+            expanded: () => {return (<Button size="sm" variant="outlined" onClick={handleVisibility}>
+                                        {cootContour ? <VisibilityOffOutlined /> : <VisibilityOutlined />}
+                                    </Button>)},
+        },
+        2: {
+            label: "Download Map", 
+            compressed: () => {return (<MenuItem variant="success" onClick={handleDownload}>Download map</MenuItem>)},
+            expanded:  () => {return (<Button size="sm" variant="outlined" onClick={handleDownload}>
+                                        <DownloadOutlined />
+                                      </Button> )},
+        },
+        3: {
+            label: mapLitLines ? "Deactivate lit lines" : "Activate lit lines",
+            compressed: () => {return (<MenuItem variant="success" disabled={!cootContour}  onClick={handleLitLines}>{mapLitLines ? "Deactivate lit lines" : "Activate lit lines"}</MenuItem>)},
+            expanded: null
+        },
+        4: {
+            label: 'Rename map',
+            compressed: () => {return (<BabyGruRenameDisplayObjectMenuItem setPopoverIsShown={setPopoverIsShown} setCurrentName={setCurrentName} item={props.map} />)},
+            expanded: null
         }
+    }
+
+    const getButtonBar = (sideBarWidth) => {
+        const maximumAllowedWidth = sideBarWidth * 0.35
+        let currentlyUsedWidth = 0
+        let expandedButtons = []
+        let compressedButtons = []
+
+        Object.keys(actionButtons).forEach(key => {
+            if (actionButtons[key].expanded === null) {
+                compressedButtons.push(actionButtons[key].compressed())
+            } else {
+                currentlyUsedWidth += 60
+                if (currentlyUsedWidth < maximumAllowedWidth) {
+                    expandedButtons.push(actionButtons[key].expanded())
+                } else {
+                    compressedButtons.push(actionButtons[key].compressed())
+                }
+            }
+        })
+
+        compressedButtons.push((
+            <BabyGruDeleteDisplayObjectMenuItem setPopoverIsShown={setPopoverIsShown} glRef={props.glRef} changeItemList={props.changeMaps} itemList={props.maps} item={props.map}/>
+        ))
+        
+        return  <Fragment>
+                    {expandedButtons}
+                    <DropdownButton 
+                            size="sm" 
+                            variant="outlined" 
+                            autoClose={popoverIsShown ? false : 'outside'} 
+                            show={props.currentDropdownMolNo === props.map.molNo} 
+                            onToggle={() => {props.map.molNo !== props.currentDropdownMolNo ? props.setCurrentDropdownMolNo(props.map.molNo) : props.setCurrentDropdownMolNo(-1)}}>
+                        {compressedButtons}
+                    </DropdownButton>
+                    <Button size="sm" variant="outlined"
+                        onClick={() => {
+                            setIsCollapsed(!isCollapsed)
+                        }}>
+                        {isCollapsed ? < ExpandMoreOutlined/> : <ExpandLessOutlined />}
+                    </Button>
+                </Fragment>
+
     }
 
     const handleOriginCallback = useCallback(e => {
@@ -202,12 +225,12 @@ export const BabyGruMapCard = (props) => {
                 </Col>
                 <Col>
                     <Form.Group controlId="contouringLevel" className="mb-3">
-                            <BabyGruSlider minVal={0.01} maxVal={5} logScale={true} sliderTitle="Level" intialValue={props.initialContour} externalValue={mapContourLevel} setExternalValue={setMapContourLevel}/>
+                            <BabyGruSlider minVal={0.01} maxVal={5} logScale={true} sliderTitle="Level" isDisabled={!cootContour} intialValue={props.initialContour} externalValue={mapContourLevel} setExternalValue={setMapContourLevel}/>
                     </Form.Group>
                 </Col>
                 <Col>
                     <Form.Group controlId="contouringRadius" className="mb-3">
-                            <BabyGruSlider minVal={0.01} maxVal={100} logScale={false} sliderTitle="Radius" intialValue={props.initialRadius} externalValue={mapRadius} setExternalValue={setMapRadius}/>
+                            <BabyGruSlider minVal={0.01} maxVal={100} logScale={false} sliderTitle="Radius" isDisabled={!cootContour} intialValue={props.initialRadius} externalValue={mapRadius} setExternalValue={setMapRadius}/>
                     </Form.Group>
                 </Col>
             </Row>

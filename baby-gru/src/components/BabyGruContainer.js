@@ -5,10 +5,8 @@ import { BabyGruWebMG } from './BabyGruWebMG';
 import { BabyGruCommandCentre, convertRemToPx, convertViewtoPx } from '../utils/BabyGruUtils';
 import { BabyGruButtonBar } from './BabyGruButtonBar';
 import { BabyGruFileMenu } from './BabyGruFileMenu';
-import { BabyGruRamachandran } from './BabyGruRamachandran';
-import { BabyGruValidationPlot } from './BabyGruValidation';
-import { BabyGruTimingTest } from './BabyGruTimingTest';
-import { ArrowBackIosOutlined, ArrowForwardIosOutlined, DarkModeOutlined, LightModeOutlined } from '@mui/icons-material';
+import { BabyGruPreferencesMenu } from './BabyGruPreferencesMenu';
+import { ArrowBackIosOutlined, ArrowForwardIosOutlined } from '@mui/icons-material';
 import './BabyGruContainer.css'
 import { BabyGruHistoryMenu } from './BabyGruHistoryMenu';
 import { BabyGruViewMenu } from './BabyGruViewMenu';
@@ -48,6 +46,7 @@ export const BabyGruContainer = (props) => {
     const navBarRef = useRef()
     const [showSideBar, setShowSideBar] = useState(false)
     const [darkMode, setDarkMode] = useState(false)
+    const [defaultExpandDisplayCards, setDefaultExpandDisplayCards] = useState(true)
     const [activeMap, setActiveMap] = useState(null)
     const [activeMolecule, setActiveMolecule] = useState(null)
     const [consoleMessage, setConsoleMessage] = useState("")
@@ -206,12 +205,13 @@ export const BabyGruContainer = (props) => {
 
     const collectedProps = {
         molecules, changeMolecules, appTitle, setAppTitle, maps, changeMaps, glRef, activeMolecule, setActiveMolecule,
-        activeMap, setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor,
-        navBarRef, currentDropdownId, setCurrentDropdownId
+        activeMap, setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor, sideBarWidth,
+        navBarRef, currentDropdownId, setCurrentDropdownId, darkMode, setDarkMode, defaultExpandDisplayCards, 
+        setDefaultExpandDisplayCards
     }
 
     const accordionToolsItemProps = {
-        molecules, commandCentre, glRef, toolAccordionBodyHeight, sideBarWidth, windowHeight, windowWidth, darkMode, maps, showSideBar
+        molecules, commandCentre, glRef, toolAccordionBodyHeight, sideBarWidth, windowHeight, windowWidth, darkMode, maps, showSideBar,
     }
 
     return <> <div className="border" ref={headerRef}>
@@ -225,13 +225,11 @@ export const BabyGruContainer = (props) => {
                     <BabyGruHistoryMenu dropdownId={2} {...collectedProps} />
                     <BabyGruViewMenu dropdownId={3} {...collectedProps} />
                     <BabyGruLigandMenu dropdownId={4} {...collectedProps} />
+                    <BabyGruPreferencesMenu dropdownId={5} {...collectedProps} />
                 </Nav>
             </Navbar.Collapse>
             <Nav className="justify-content-right">
                 {busy && <Spinner animation="border" style={{ marginRight: '0.5rem' }} />}
-                <Button style={{ height: '100%', backgroundColor: darkMode ? '#222' : 'white', border: 0 }} onClick={() => { setDarkMode(darkMode ? false : true) }}>
-                    {darkMode ? <LightModeOutlined style={{ color: 'white' }} /> : <DarkModeOutlined style={{ color: 'black' }} />}
-                </Button>
                 <Button className="baby-gru-sidebar-button" style={{ height: '100%', backgroundColor: darkMode ? '#222' : 'white', border: 0 }} onClick={() => { setShowSideBar(!showSideBar) }}>
                     {showSideBar ? <ArrowForwardIosOutlined style={{ color: darkMode ? 'white' : 'black' }} /> : <ArrowBackIosOutlined style={{ color: darkMode ? 'white' : 'black' }} />}
                 </Button>
