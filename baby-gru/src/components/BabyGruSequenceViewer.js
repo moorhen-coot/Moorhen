@@ -7,13 +7,14 @@ import ProtvistaNavigation from "protvista-navigation";
 window.customElements.define("protvista-navigation", ProtvistaNavigation);
 window.customElements.define("protvista-sequence", ProtvistaSequence);
 window.customElements.define("protvista-manager", ProtvistaManager);
-
+    
 /**
- * For a given sequence length, calculate the range of 40 residues in the middle
- * @param {Number} sequenceLength sequence lenght
- * @returns {Array} An array containing the display start and display end consisting of a range of 40 residues
- */
-const calculateDisplayStartAndEnd = (rulerStart, sequenceLength) => {
+* For a given sequence length, calculate the range of 40 residues in the middle
+* @param {Number} rulerStart integer that determines where to start the ruler numbering
+* @param {Number} sequenceLength sequence lenght
+* @returns {Array} An array containing the display start and display end consisting of a range of 40 residues
+*/
+ const calculateDisplayStartAndEnd = (rulerStart, sequenceLength) => {
     if (sequenceLength <= 40) {
         return [parseFloat(rulerStart), parseFloat(sequenceLength + rulerStart)]
     }
@@ -21,18 +22,23 @@ const calculateDisplayStartAndEnd = (rulerStart, sequenceLength) => {
     return [parseFloat(middleIndex - 20 + rulerStart), parseFloat(middleIndex + 20 + rulerStart)]        
 }
 
-
+/**
+* For a given sequence, obtain the actual sequence to be displayed with "-" as gaps
+* @param {BabyGruMolecule.sequence.sequence} sequence
+* @returns {Array} An array containing the ruler start, actual sequence length with gaps and the final sequence to be displayed
+*/
 const parseSequenceData = (sequence) => {
     let rulerStart = sequence[0].resNum
     let finalSequence = Array(sequence[sequence.length-1].resNum).fill('-')
     let seqLenght = sequence[sequence.length-1].resNum - rulerStart + 1
-    
+
     sequence.forEach(residue => {
         finalSequence[residue.resNum - 1] = residue.resCode
     })
-            
+
     return [rulerStart, seqLenght, finalSequence.join('')]
 }
+
 
 export const BabyGruSequenceViewer = (props) => {
     const managerRef = useRef(null);
