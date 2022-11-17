@@ -5,9 +5,6 @@ import { BabyGruWebMG } from './BabyGruWebMG';
 import { BabyGruCommandCentre, convertRemToPx, convertViewtoPx } from '../utils/BabyGruUtils';
 import { BabyGruButtonBar } from './BabyGruButtonBar';
 import { BabyGruFileMenu } from './BabyGruFileMenu';
-import { BabyGruRamachandran } from './BabyGruRamachandran';
-import { BabyGruValidationPlot } from './BabyGruValidation';
-import { BabyGruTimingTest } from './BabyGruTimingTest';
 import { ArrowBackIosOutlined, ArrowForwardIosOutlined, DarkModeOutlined, LightModeOutlined } from '@mui/icons-material';
 import './BabyGruContainer.css'
 import { BabyGruHistoryMenu } from './BabyGruHistoryMenu';
@@ -206,7 +203,7 @@ export const BabyGruContainer = (props) => {
 
     const collectedProps = {
         molecules, changeMolecules, appTitle, setAppTitle, maps, changeMaps, glRef, activeMolecule, setActiveMolecule,
-        activeMap, setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor,
+        activeMap, setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor, sideBarWidth,
         navBarRef, currentDropdownId, setCurrentDropdownId
     }
 
