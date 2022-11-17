@@ -2,6 +2,21 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
+export function sequenceIsValid(sequence) {
+    // If no sequence is present
+    if (!sequence || sequence.length === 0){
+        return false
+    }
+    // If any residue doesn't have rigth attributes
+    if (sequence.some(residue => !Object.keys(residue).includes('resNum') || !Object.keys(residue).includes('resCode'))){
+        return false
+    }
+    // If any of the residues has undefined or Nan as the residue code or residue number
+    if (sequence.some(residue => residue.resNum === null || typeof residue.resNum === 'undefined' || residue.resCode === null || typeof residue.resCode === 'undefined')){
+        return false
+    }
+    return true
+}
 
 export function convertRemToPx(rem) {
     return rem * parseFloat(getComputedStyle(document.documentElement).fontSize);
