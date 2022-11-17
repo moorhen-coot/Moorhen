@@ -11,7 +11,7 @@ export const BabyGruMapCard = (props) => {
     const [mapRadius, setMapRadius] = useState(props.initialRadius)
     const [mapContourLevel, setMapContourLevel] = useState(props.initialContour)
     const [mapLitLines, setMapLitLines] = useState(props.initialMapLitLines)    
-    const [isCollapsed, setIsCollapsed] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(!props.defaultExpandDisplayCards);
     const [currentName, setCurrentName] = useState(props.map.mapName);
     const nextOrigin = createRef([])
     const busyContouring = createRef(false)

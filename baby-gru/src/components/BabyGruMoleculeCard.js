@@ -11,7 +11,7 @@ export const BabyGruMoleculeCard = (props) => {
     const [selectedResidues, setSelectedResidues] = useState(null);
     const [clickedResidue, setClickedResidue] = useState(null);
     const [currentName, setCurrentName] = useState(props.molecule.name);
-    const [isCollapsed, setIsCollapsed] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(!props.defaultExpandDisplayCards);
     const [popoverIsShown, setPopoverIsShown] = useState(false)
     const [isVisible, setIsVisible] = useState(true)
 
