@@ -68,6 +68,7 @@ export const BabyGruContainer = (props) => {
     const [currentDropdownId, setCurrentDropdownId] = useState(-1)
     const [appTitle, setAppTitle] = useState('BabyGru')
     const [cootInitialized, setCootInitialized] = useState(false)
+    const [theme, setTheme] = useState("flatly")
 
     const sideBarWidth = convertViewtoPx(30, windowWidth)
     const innerWindowMarginHeight = convertRemToPx(2.1)
@@ -93,9 +94,11 @@ export const BabyGruContainer = (props) => {
 
         if (darkMode) {
             style.href = "/baby-gru/darkly.css"
+            setTheme("darkly")
             setBackgroundColor([0., 0., 0., 1.])
         } else {
             style.href = "/baby-gru/flatly.css"
+            setTheme("flatly")
             setBackgroundColor([1., 1., 1., 1.])
         }
 
@@ -214,7 +217,7 @@ export const BabyGruContainer = (props) => {
         molecules, commandCentre, glRef, toolAccordionBodyHeight, sideBarWidth, windowHeight, windowWidth, darkMode, maps, showSideBar,
     }
 
-    return <> <div className="border" ref={headerRef}>
+    return <> <div className={`border ${theme}`} ref={headerRef}>
 
         <Navbar ref={navBarRef} id='navbar-baby-gru' className={darkMode ? "navbar-dark" : "navbar-light"} style={{ height: '3rem', justifyContent: 'between', margin: '0.5rem', padding: '0.5rem' }}>
             <Navbar.Brand href="#home">{appTitle}</Navbar.Brand>
@@ -271,7 +274,7 @@ export const BabyGruContainer = (props) => {
                         <BabyGruButtonBar {...collectedProps} />
                     </div>
                 </Col>
-                <Col className='side-bar-column' style={{ padding: '0.5rem', margin: '0', display: showSideBar ? "block" : "none" }} >
+                <Col className={`side-bar-column ${theme}`} style={{ padding: '0.5rem', margin: '0', display: showSideBar ? "block" : "none" }} >
                     <Accordion className='side-bar-accordion' style={{ height: accordionHeight, overflowY: 'scroll' }}
                         alwaysOpen={true}
                         defaultActiveKey={''}

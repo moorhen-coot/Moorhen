@@ -162,6 +162,21 @@ const read_mtz = (mapData, name, selectedColumns) => {
     return molNo
 }
 
+const associate_data_mtz_file_with_map = (iMol, mtzData, F, SIGF, FREE) => {
+    const theGuid = guid()
+    const asUint8Array = new Uint8Array(mtzData.data)
+    cootModule.FS_createDataFile(".", `${theGuid}.mtz`, asUint8Array, true, true);
+    const tempFilename = `./${theGuid}.mtz`
+    /*associate_data_mtz_file_with_map(int imol, const std::string &data_mtz_file_name,
+        const std::string &f_col, const std::string &sigf_col,
+        const std::string &free_r_col);
+        */
+    const args = [iMol, tempFilename, F, SIGF, FREE]
+
+    console.log('associate_data with args', { args })
+    return molecules_container.associate_data_mtz_file_with_map(...args)
+}
+
 const read_ccp4_map = (mapData, name, isDiffMap) => {
     const theGuid = guid()
     const asUint8Array = new Uint8Array(mapData)
@@ -343,6 +358,9 @@ onmessage = function (e) {
             }
             else if (command === 'shim_read_dictionary') {
                 cootResult = read_dictionary(...commandArgs)
+            }
+            else if (command === 'shim_associate_data_mtz_file_with_map') {
+                cootResult = associate_data_mtz_file_with_map(...commandArgs)
             }
             else {
                 cootResult = molecules_container[command](...commandArgs)

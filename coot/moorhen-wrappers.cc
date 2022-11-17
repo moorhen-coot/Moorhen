@@ -703,6 +703,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("ramachandran_analysis",&molecules_container_t::ramachandran_analysis)
     .function("density_correlation_analysis",&molecules_container_t::density_correlation_analysis)
     .function("rotamer_analysis",&molecules_container_t::rotamer_analysis)
+    .function("associate_data_mtz_file_with_map",&molecules_container_t::associate_data_mtz_file_with_map)
+    .function("connect_updating_maps",&molecules_container_t::connect_updating_maps)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<>()
