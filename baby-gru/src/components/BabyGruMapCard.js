@@ -35,18 +35,18 @@ export const BabyGruMapCard = (props) => {
 
     const actionButtons = {
         1: {
-            label: "Download Map", 
-            compressed: () => {return (<MenuItem variant="success" onClick={handleDownload}>Download map</MenuItem>)},
-            expanded:  () => {return (<Button size="sm" variant="outlined" onClick={handleDownload}>
-                                        <DownloadOutlined />
-                                      </Button> )},
-        },
-        2: {
             label: cootContour ? "Hide map" : "Show map", 
             compressed: () => {return (<MenuItem variant="success" onClick={handleVisibility}>{cootContour ? "Hide map" : "Show map"}</MenuItem>)},
             expanded: () => {return (<Button size="sm" variant="outlined" onClick={handleVisibility}>
                                         {cootContour ? <VisibilityOffOutlined /> : <VisibilityOutlined />}
                                     </Button>)},
+        },
+        2: {
+            label: "Download Map", 
+            compressed: () => {return (<MenuItem variant="success" onClick={handleDownload}>Download map</MenuItem>)},
+            expanded:  () => {return (<Button size="sm" variant="outlined" onClick={handleDownload}>
+                                        <DownloadOutlined />
+                                      </Button> )},
         },
         3: {
             label: mapLitLines ? "Deactivate lit lines" : "Activate lit lines",
@@ -61,7 +61,7 @@ export const BabyGruMapCard = (props) => {
     }
 
     const getButtonBar = (sideBarWidth) => {
-        const maximumAllowedWidth = sideBarWidth * 0.3
+        const maximumAllowedWidth = sideBarWidth * 0.35
         let currentlyUsedWidth = 0
         let expandedButtons = []
         let compressedButtons = []
@@ -70,7 +70,7 @@ export const BabyGruMapCard = (props) => {
             if (actionButtons[key].expanded === null) {
                 compressedButtons.push(actionButtons[key].compressed())
             } else {
-                currentlyUsedWidth += 75
+                currentlyUsedWidth += 60
                 if (currentlyUsedWidth < maximumAllowedWidth) {
                     expandedButtons.push(actionButtons[key].expanded())
                 } else {
@@ -78,6 +78,10 @@ export const BabyGruMapCard = (props) => {
                 }
             }
         })
+
+        compressedButtons.push((
+            <BabyGruDeleteDisplayObjectMenuItem setPopoverIsShown={setPopoverIsShown} glRef={props.glRef} changeItemList={props.changeMaps} itemList={props.maps} item={props.map}/>
+        ))
         
         return  <Fragment>
                     {expandedButtons}
@@ -88,7 +92,6 @@ export const BabyGruMapCard = (props) => {
                             show={props.currentDropdownMolNo === props.map.molNo} 
                             onToggle={() => {props.map.molNo !== props.currentDropdownMolNo ? props.setCurrentDropdownMolNo(props.map.molNo) : props.setCurrentDropdownMolNo(-1)}}>
                         {compressedButtons}
-                        <BabyGruDeleteDisplayObjectMenuItem setPopoverIsShown={setPopoverIsShown} glRef={props.glRef} changeItemList={props.changeMaps} itemList={props.maps} item={props.map}/>
                     </DropdownButton>
                     <Button size="sm" variant="outlined"
                         onClick={() => {
