@@ -1,7 +1,7 @@
 import { MenuItem } from "@mui/material";
 import { useEffect, useState, useMemo, Fragment } from "react";
 import { Card, Form, Button, Row, Col, DropdownButton } from "react-bootstrap";
-import { doDownload, sequenceIsSane } from '../utils/BabyGruUtils';
+import { doDownload, sequenceIsValid } from '../utils/BabyGruUtils';
 import { UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined, ExpandLessOutlined, VisibilityOffOutlined, VisibilityOutlined, DownloadOutlined } from '@mui/icons-material';
 import { BabyGruSequenceViewer } from "./BabyGruSequenceViewer";
 import { BabyGruDeleteDisplayObjectMenuItem, BabyGruRenameDisplayObjectMenuItem } from "./BabyGruMenuItem";
@@ -266,7 +266,7 @@ export const BabyGruMoleculeCard = (props) => {
                     {props.molecule.cachedAtoms.sequences &&
                         props.molecule.cachedAtoms.sequences.map(
                             sequence => {
-                                if(!sequenceIsSane(sequence.sequence)) {
+                                if(!sequenceIsValid(sequence.sequence)) {
                                     return (
                                         <div>
                                             <p>{`Unable to parse sequence data for chain ${sequence?.chain}`}</p>

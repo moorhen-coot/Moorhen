@@ -2,7 +2,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-export function sequenceIsSane(sequence) {
+export function sequenceIsValid(sequence) {
     // If no sequence is present
     if (!sequence || sequence.length === 0){
         return false
