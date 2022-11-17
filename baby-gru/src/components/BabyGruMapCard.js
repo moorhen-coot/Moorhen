@@ -56,7 +56,7 @@ export const BabyGruMapCard = (props) => {
         },
         3: {
             label: mapLitLines ? "Deactivate lit lines" : "Activate lit lines",
-            compressed: () => {return (<MenuItem variant="success" onClick={handleLitLines}>{mapLitLines ? "Deactivate lit lines" : "Activate lit lines"}</MenuItem>)},
+            compressed: () => {return (<MenuItem variant="success" disabled={!cootContour}  onClick={handleLitLines}>{mapLitLines ? "Deactivate lit lines" : "Activate lit lines"}</MenuItem>)},
             expanded: null
         },
         4: {
