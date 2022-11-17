@@ -11,7 +11,7 @@ export const BabyGruMoleculeSelect = forwardRef((props, selectRef) => {
         }}>
             {props.allowAny && <option value={-999999} key={-999999}>Any molecule</option>}
             {props.molecules
-                .map(molecule => <option value={molecule.molNo} key={molecule.molNo}>{molecule.name}</option>
+                .map(molecule => <option value={molecule.molNo} key={molecule.molNo}>{molecule.molNo}: {molecule.name}</option>
                 )}
         </FormSelect>
     </Form.Group>

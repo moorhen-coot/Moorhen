@@ -95,6 +95,9 @@ export const BabyGruSimpleEditButton = forwardRef((props, buttonRef) => {
                         }, true).then(_ => {
                             molecule.setAtomsDirty(true)
                             molecule.redraw(props.glRef)
+                            const originChangedEvent = new CustomEvent("originChanged",
+                                { "detail": props.glRef.current.origin });
+                            document.dispatchEvent(originChangedEvent);
                         })
                     }
                     else if (props.nonCootCommand) {
