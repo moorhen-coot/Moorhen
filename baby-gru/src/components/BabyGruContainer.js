@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, createRef, useReducer, useCallback } from 'react';
-import { Navbar, Container, Nav, Tabs, Tab, Accordion, Button, Col, Row, Card, Spinner } from 'react-bootstrap';
+import { Navbar, Container, Nav, Tabs, Tab, Accordion, Button, Col, Row, Card, Spinner, Form } from 'react-bootstrap';
 import { BabyGruDisplayObjects } from './BabyGruDisplayObjects';
 import { BabyGruWebMG } from './BabyGruWebMG';
 import { BabyGruCommandCentre, convertRemToPx, convertViewtoPx } from '../utils/BabyGruUtils';
@@ -49,6 +49,7 @@ export const BabyGruContainer = (props) => {
     const [defaultExpandDisplayCards, setDefaultExpandDisplayCards] = useState(true)
     const [activeMap, setActiveMap] = useState(null)
     const [activeMolecule, setActiveMolecule] = useState(null)
+    const [hoveredAtom, setHoveredAtom] = useState({ molecule: { name: null }, cid: null })
     const [consoleMessage, setConsoleMessage] = useState("")
     const [cursorStyle, setCursorStyle] = useState("default")
     const headerRef = useRef()
@@ -111,6 +112,7 @@ export const BabyGruContainer = (props) => {
 
     }, [darkMode])
 
+
     useEffect(() => {
         commandCentre.current = new BabyGruCommandCentre({
             onConsoleChanged: (newMessage) => {
@@ -138,6 +140,27 @@ export const BabyGruContainer = (props) => {
         consoleDivRef.current.scrollTop = consoleDivRef.current.scrollHeight;
     }, [consoleMessage])
 
+    const onAtomHovered = useCallback(identifier => {
+        molecules.forEach(molecule => {
+            if (molecule.buffersInclude(identifier.buffer)) {
+                if (molecule.name !== hoveredAtom.molecule.name || identifier.atom.label !== hoveredAtom.cid) {
+                    setHoveredAtom({ molecule: molecule, cid: identifier.atom.label })
+                }
+            }
+        })
+    }, [molecules])
+
+    useEffect(() => {
+        //console.log({ hoveredAtom })
+    }, [hoveredAtom])
+
+    useEffect(() => {
+        document.addEventListener('atomHovered', onAtomHovered)
+        return () => {
+            document.removeEventListener('atomHovered', onAtomHovered)
+        }
+    }, [document])
+
     useEffect(() => {
         glResize()
         setAccordionHeight(getAccordionHeight())
@@ -147,11 +170,11 @@ export const BabyGruContainer = (props) => {
         consoleBodyHeight !== 0 ? setConsoleBodyHeight(convertViewtoPx(30, windowHeight)) : setConsoleBodyHeight(convertViewtoPx(0, windowHeight))
         consoleDivRef.current.scrollTop = consoleDivRef.current.scrollHeight;
     }, [showSideBar, windowHeight, windowWidth])
-/*
-    useEffect(() => {
-        console.log('backgroundColor changed', backgroundColor)
-    }, [backgroundColor])
-*/
+    /*
+        useEffect(() => {
+            console.log('backgroundColor changed', backgroundColor)
+        }, [backgroundColor])
+    */
     useEffect(() => {
         if (activeMap && commandCentre.current) {
             commandCentre.current.cootCommand({
@@ -209,7 +232,7 @@ export const BabyGruContainer = (props) => {
     const collectedProps = {
         molecules, changeMolecules, appTitle, setAppTitle, maps, changeMaps, glRef, activeMolecule, setActiveMolecule,
         activeMap, setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor, sideBarWidth,
-        navBarRef, currentDropdownId, setCurrentDropdownId, darkMode, setDarkMode, defaultExpandDisplayCards, 
+        navBarRef, currentDropdownId, setCurrentDropdownId, darkMode, setDarkMode, defaultExpandDisplayCards,
         setDefaultExpandDisplayCards
     }
 
@@ -232,6 +255,7 @@ export const BabyGruContainer = (props) => {
                 </Nav>
             </Navbar.Collapse>
             <Nav className="justify-content-right">
+            {hoveredAtom.cid && <Form.Control style={{width:"20rem"}} type="text" value={`${hoveredAtom.molecule.name}:${hoveredAtom.cid}`}/>}
                 {busy && <Spinner animation="border" style={{ marginRight: '0.5rem' }} />}
                 <Button className="baby-gru-sidebar-button" style={{ height: '100%', backgroundColor: darkMode ? '#222' : 'white', border: 0 }} onClick={() => { setShowSideBar(!showSideBar) }}>
                     {showSideBar ? <ArrowForwardIosOutlined style={{ color: darkMode ? 'white' : 'black' }} /> : <ArrowBackIosOutlined style={{ color: darkMode ? 'white' : 'black' }} />}
@@ -260,6 +284,7 @@ export const BabyGruContainer = (props) => {
                             width={webGLWidth}
                             height={webGLHeight}
                             backgroundColor={backgroundColor}
+                            onAtomHovered={onAtomHovered}
                         />
                     </div>
                     <div id='button-bar-baby-gru'
@@ -308,7 +333,7 @@ export const BabyGruContainer = (props) => {
                         <Accordion.Item eventKey="showTools" style={{ width: sideBarWidth, padding: '0', margin: '0' }} >
                             <Accordion.Header style={{ height: '4rem' }}>Tools</Accordion.Header>
                             <Accordion.Body style={{ height: toolAccordionBodyHeight, padding: '0', margin: '0', }}>
-                                <BabyGruToolsAccordion {...accordionToolsItemProps}/>
+                                <BabyGruToolsAccordion {...accordionToolsItemProps} />
                             </Accordion.Body>
                         </Accordion.Item>
                         <Accordion.Item eventKey="showConsole" style={{ width: sideBarWidth, padding: '0', margin: '0' }} >

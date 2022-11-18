@@ -359,7 +359,7 @@ BabyGruMolecule.prototype.buffersInclude = function (bufferIn) {
     }
     catch (e) {
         if (e !== BreakException) throw e;
-        console.log('Catching Break Exception')
+        //console.log('Catching Break Exception')
         return true
     }
     return false
