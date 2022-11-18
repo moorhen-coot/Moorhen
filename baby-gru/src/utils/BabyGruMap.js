@@ -10,6 +10,7 @@ export function BabyGruMap(commandCentre) {
     this.cootContour = true
     this.displayObjects = { Coot: [] }
     this.litLines = true
+    this.isDifference = false
 }
 
 BabyGruMap.prototype.delete = async function (gl) {
@@ -49,6 +50,9 @@ BabyGruMap.prototype.loadToCootFromData = function (data, mapName, selectedColum
         })
             .then(reply => {
                 $this.molNo = reply.data.result.result
+                if (Object.keys(selectedColumns).includes('isDifference')){
+                    $this.isDifference = selectedColumns.isDifference
+                }
                 resolve($this)
             })
     })
@@ -74,6 +78,7 @@ BabyGruMap.prototype.loadToCootFromMapData = function (data, mapName, isDiffMap)
         })
             .then(reply => {
                 $this.molNo = reply.data.result.result
+                $this.isDifference = isDiffMap
                 resolve($this)
             })
     })
