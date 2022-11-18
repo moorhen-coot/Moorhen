@@ -27,6 +27,10 @@ function getOffsetRect(elem) {
 class RamaPlot extends Component {
 
     draw(iframe,oldHit,newHit) {
+        if(this.canvasRef.current === null) {
+            return
+        }
+
         this.fixContext();
         var ctx = this.context;
         var c = this.canvasRef.current;
