@@ -155,13 +155,6 @@ export const BabyGruContainer = (props) => {
     }, [hoveredAtom])
 
     useEffect(() => {
-        document.addEventListener('atomHovered', onAtomHovered)
-        return () => {
-            document.removeEventListener('atomHovered', onAtomHovered)
-        }
-    }, [document])
-
-    useEffect(() => {
         glResize()
         setAccordionHeight(getAccordionHeight())
         displayObjectsAccordionBodyHeight !== 0 ? setDisplayObjectsAccordionBodyHeight(convertViewtoPx(40, windowHeight)) : setDisplayObjectsAccordionBodyHeight(convertViewtoPx(0, windowHeight))
@@ -233,7 +226,7 @@ export const BabyGruContainer = (props) => {
         molecules, changeMolecules, appTitle, setAppTitle, maps, changeMaps, glRef, activeMolecule, setActiveMolecule,
         activeMap, setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor, sideBarWidth,
         navBarRef, currentDropdownId, setCurrentDropdownId, darkMode, setDarkMode, defaultExpandDisplayCards,
-        setDefaultExpandDisplayCards
+        setDefaultExpandDisplayCards, hoveredAtom
     }
 
     const accordionToolsItemProps = {
