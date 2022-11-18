@@ -3507,7 +3507,7 @@ function getNonLoopPreSplit(lines,loopName_in,filterName,filterValue){
             headerLines.push(name);
         }
     }
-    return [headerLines,[loopLines]];
+    return [headerLines,loopLines];
 }
 
 function getLoopPreSplit(lines,loopName_in,filterName,filterValue){
@@ -3936,7 +3936,13 @@ function parseMMCIF(lines,structureName) {
     let sequenceType = null;
     chainIDs.forEach(chainID => {
         chainAtoms = atoms.filter(atom => atom["_atom_site.group_PDB"] === "ATOM" && atom['_atom_site.auth_asym_id'] === chainID)
-        chainAtomsMap = new Map(chainAtoms.map(atom => [atom['_atom_site.label_seq_id'], atom['_atom_site.label_comp_id']]))
+        const chainAtomsMapAuth = new Map(chainAtoms.map(atom => [atom['_atom_site.auth_seq_id'], atom['_atom_site.auth_comp_id']]))
+        const chainAtomsMapLabel = new Map(chainAtoms.map(atom => [atom['_atom_site.label_seq_id'], atom['_atom_site.label_comp_id']]))
+        if(chainAtomsMapAuth.size>chainAtomsMapLabel.size){
+            chainAtomsMap = chainAtomsMapAuth;
+        } else {
+            chainAtomsMap = chainAtomsMapLabel;
+        }
         sequenceType = analyzeSequenceType(chainAtoms.map(atom => atom['_atom_site.label_comp_id']).join(''))
         if (sequenceType === 'polypeptide(L)') {
             chainResidues = Array.from(chainAtomsMap).map(([key, value]) => ({ "resNum": Number(key), "resCode": sequenceAminoThreeLetterMap[value] }));
