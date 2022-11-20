@@ -1,5 +1,7 @@
 import { useRef, useState, useEffect, createRef, useReducer, useCallback } from 'react';
 import { Navbar, Container, Nav, Tabs, Tab, Accordion, Button, Col, Row, Card, Spinner, Form } from 'react-bootstrap';
+import Toast from 'react-bootstrap/Toast';
+import ToastContainer from 'react-bootstrap/ToastContainer';
 import { BabyGruDisplayObjects } from './BabyGruDisplayObjects';
 import { BabyGruWebMG } from './BabyGruWebMG';
 import { BabyGruCommandCentre, cidToSpec, convertRemToPx, convertViewtoPx } from '../utils/BabyGruUtils';
@@ -12,6 +14,7 @@ import { BabyGruHistoryMenu } from './BabyGruHistoryMenu';
 import { BabyGruViewMenu } from './BabyGruViewMenu';
 import { BabyGruLigandMenu } from './BabyGruLigandMenu';
 import { BabyGruToolsAccordion } from './BabyGruToolsAccordion'
+
 
 const initialHistoryState = { commands: [] }
 
@@ -71,6 +74,8 @@ export const BabyGruContainer = (props) => {
     const [cootInitialized, setCootInitialized] = useState(false)
     const [theme, setTheme] = useState("flatly")
     const lastHoveredAtom = useRef(null)
+    const [showToast, setShowToast] = useState(false)
+    const [toastText, setToastText] = useState("")
 
     const sideBarWidth = convertViewtoPx(30, windowWidth)
     const innerWindowMarginHeight = convertRemToPx(2.1)
@@ -160,6 +165,8 @@ export const BabyGruContainer = (props) => {
 
     //Make this so that the keyPress returns true or false, depending on whether mgWebGL is to continue processing event
     const onKeyPress = useCallback(event => {
+        setToastText(`${event.shiftKey?"<Shift>":""}-${event.key} pushed`)
+        setShowToast(true)
         if (event.key.toLowerCase() === "r" && event.shiftKey && activeMap && hoveredAtom.molecule) {
             const [molecule, cid] = [hoveredAtom.molecule, hoveredAtom.cid]
             const chosenAtom = cidToSpec(cid)
@@ -174,7 +181,7 @@ export const BabyGruContainer = (props) => {
             }, true).then(_ => {
                 molecule.setAtomsDirty(true)
                 molecule.redraw(glRef)
-                setHoveredAtom({molecule:null, cid:null})
+                setHoveredAtom({ molecule: null, cid: null })
             })
             return false
         }
@@ -394,6 +401,22 @@ export const BabyGruContainer = (props) => {
                     </Accordion>
                 </Col>
             </Row>
+            <ToastContainer style={{ marginTop: "5rem" }} position='top-start' >
+                <Toast onClose={() => setShowToast(false)} autohide={true} delay={2000} show={showToast}>
+                    <Toast.Header closeButton={false} >
+                        <strong className="me-auto">{toastText}</strong>
+                    </Toast.Header>
+                </Toast>
+            </ToastContainer>
         </Container>
+
+
+
+
+
+
+
+
+
     </>
 }
