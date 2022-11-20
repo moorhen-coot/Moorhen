@@ -10517,6 +10517,16 @@ class MGWebGL extends Component {
             newwindow.document.write('<img src="' + image + '"/>');
             newwindow.document.close();
         }
+
+        //MN Here invoke a keypress callback of provided in widget instantiation
+        //If callback returns false, then event response is terminated, and the 
+        //subsequent code is ignored
+        let doContinue = true
+        if (this.props.onKeyPress) {
+            doContinue = this.props.onKeyPress(event)
+        }
+        if (! doContinue) return
+
         // FIXME, we need an active map, like Coot.
         if (event.key.toLowerCase() === "g") {
             const frontAndBack = self.getFrontAndBackPos(event);

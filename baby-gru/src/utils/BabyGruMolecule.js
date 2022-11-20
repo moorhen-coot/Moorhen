@@ -546,7 +546,7 @@ BabyGruMolecule.prototype.drawSticks = function (webMGAtoms, gl) {
 BabyGruMolecule.prototype.redraw = function (gl) {
     const $this = this
     const itemsToRedraw = []
-    Object.keys($this.displayObjects).forEach(style => {
+    Object.keys($this.displayObjects).filter(style=>!["transformation", "hover"].includes(style)).forEach(style => {
         const objectCategoryBuffers = $this.displayObjects[style]
         //Note with transforamtion, not all properties of displayObjects are lists of buffer
         if (Array.isArray(objectCategoryBuffers)) {

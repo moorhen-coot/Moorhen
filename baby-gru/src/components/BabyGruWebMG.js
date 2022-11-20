@@ -98,6 +98,7 @@ export const BabyGruWebMG = forwardRef((props, glRef) => {
         ref={glRef}
         dataChanged={(d) => { console.log(d) }}
         onAtomHovered={props.onAtomHovered}
+        onKeyPress={props.onKeyPress}
         messageChanged={() => { }} />
 });
 

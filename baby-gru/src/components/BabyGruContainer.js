@@ -2,7 +2,7 @@ import { useRef, useState, useEffect, createRef, useReducer, useCallback } from 
 import { Navbar, Container, Nav, Tabs, Tab, Accordion, Button, Col, Row, Card, Spinner, Form } from 'react-bootstrap';
 import { BabyGruDisplayObjects } from './BabyGruDisplayObjects';
 import { BabyGruWebMG } from './BabyGruWebMG';
-import { BabyGruCommandCentre, convertRemToPx, convertViewtoPx } from '../utils/BabyGruUtils';
+import { BabyGruCommandCentre, cidToSpec, convertRemToPx, convertViewtoPx } from '../utils/BabyGruUtils';
 import { BabyGruButtonBar } from './BabyGruButtonBar';
 import { BabyGruFileMenu } from './BabyGruFileMenu';
 import { BabyGruPreferencesMenu } from './BabyGruPreferencesMenu';
@@ -144,7 +144,7 @@ export const BabyGruContainer = (props) => {
     const onAtomHovered = useCallback(identifier => {
         if (identifier == null) {
             if (lastHoveredAtom.current !== null && lastHoveredAtom.current.molecule !== null) {
-                setHoveredAtom({molecule:null, cid:null})
+                setHoveredAtom({ molecule: null, cid: null })
             }
         }
         else {
@@ -158,6 +158,29 @@ export const BabyGruContainer = (props) => {
         }
     }, [molecules])
 
+    //Make this so that the keyPress returns true or false, depending on whether mgWebGL is to continue processing event
+    const onKeyPress = useCallback(event => {
+        if (event.key.toLowerCase() === "r" && event.shiftKey && activeMap && hoveredAtom.molecule) {
+            const [molecule, cid] = [hoveredAtom.molecule, hoveredAtom.cid]
+            const chosenAtom = cidToSpec(cid)
+            const commandArgs = [
+                `${molecule.molNo}`,
+                `//${chosenAtom.chain_id}/${chosenAtom.res_no}`,
+                "SPHERE"]
+            commandCentre.current.cootCommand({
+                returnType: "status",
+                command: "refine_residues_using_atom_cid",
+                commandArgs: commandArgs
+            }, true).then(_ => {
+                molecule.setAtomsDirty(true)
+                molecule.redraw(glRef)
+                setHoveredAtom({molecule:null, cid:null})
+            })
+            return false
+        }
+        return true
+    }, [molecules, activeMolecule, activeMap, hoveredAtom])
+
     useEffect(() => {
         if (hoveredAtom && hoveredAtom.molecule && hoveredAtom.cid) {
             if (lastHoveredAtom.current == null ||
@@ -168,14 +191,14 @@ export const BabyGruContainer = (props) => {
                 //if we have changed molecule, might have to clean up hover display item of previous molecule
             }
         }
-        
+
         if (lastHoveredAtom.current !== null &&
             lastHoveredAtom.current.molecule !== null &&
             lastHoveredAtom.current.molecule !== hoveredAtom.molecule
         ) {
             lastHoveredAtom.current.molecule.clearBuffersOfStyle("hover", glRef.current)
         }
-        
+
         lastHoveredAtom.current = hoveredAtom
     }, [hoveredAtom])
 
@@ -303,6 +326,7 @@ export const BabyGruContainer = (props) => {
                             height={webGLHeight}
                             backgroundColor={backgroundColor}
                             onAtomHovered={onAtomHovered}
+                            onKeyPress={onKeyPress}
                         />
                     </div>
                     <div id='button-bar-baby-gru'
