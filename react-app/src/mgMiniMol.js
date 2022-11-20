@@ -2478,7 +2478,11 @@ getAtoms(selin) {
             let selResidues = getChainResidues(this.chains[ic]);
             for(let ir=0;ir<residues.length;ir++){
                 let res = residues[ir];
-                if(selResidues.indexOf(res.atoms[0].getSeqID())>-1){
+                let seqId = res.atoms[0].getSeqIDAuth()
+                if (typeof (seqId) === 'undefined'){
+                    seqId = res.atoms[0].getSeqIDLabel()
+                }
+                if(selResidues.indexOf(seqId)>-1){
                     let resAtoms = getResidueAtoms(residues[ir]);
                     for(let ip=0;ip<resAtoms.length;ip++) atoms.push(resAtoms[ip]);
                 }
@@ -3507,7 +3511,8 @@ function getNonLoopPreSplit(lines,loopName_in,filterName,filterValue){
             headerLines.push(name);
         }
     }
-    return [headerLines,loopLines];
+    console.log({headerLines, loopLines})
+    return [headerLines,[loopLines]];
 }
 
 function getLoopPreSplit(lines,loopName_in,filterName,filterValue){
@@ -3936,13 +3941,7 @@ function parseMMCIF(lines,structureName) {
     let sequenceType = null;
     chainIDs.forEach(chainID => {
         chainAtoms = atoms.filter(atom => atom["_atom_site.group_PDB"] === "ATOM" && atom['_atom_site.auth_asym_id'] === chainID)
-        const chainAtomsMapAuth = new Map(chainAtoms.map(atom => [atom['_atom_site.auth_seq_id'], atom['_atom_site.auth_comp_id']]))
-        const chainAtomsMapLabel = new Map(chainAtoms.map(atom => [atom['_atom_site.label_seq_id'], atom['_atom_site.label_comp_id']]))
-        if(chainAtomsMapAuth.size>chainAtomsMapLabel.size){
-            chainAtomsMap = chainAtomsMapAuth;
-        } else {
-            chainAtomsMap = chainAtomsMapLabel;
-        }
+        chainAtomsMap = new Map(chainAtoms.map(atom => [atom['_atom_site.label_seq_id'], atom['_atom_site.label_comp_id']]))
         sequenceType = analyzeSequenceType(chainAtoms.map(atom => atom['_atom_site.label_comp_id']).join(''))
         if (sequenceType === 'polypeptide(L)') {
             chainResidues = Array.from(chainAtomsMap).map(([key, value]) => ({ "resNum": Number(key), "resCode": sequenceAminoThreeLetterMap[value] }));

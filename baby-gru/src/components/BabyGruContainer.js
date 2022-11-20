@@ -49,7 +49,7 @@ export const BabyGruContainer = (props) => {
     const [defaultExpandDisplayCards, setDefaultExpandDisplayCards] = useState(true)
     const [activeMap, setActiveMap] = useState(null)
     const [activeMolecule, setActiveMolecule] = useState(null)
-    const [hoveredAtom, setHoveredAtom] = useState({ molecule: { name: null }, cid: null })
+    const [hoveredAtom, setHoveredAtom] = useState({ molecule: null, cid: null })
     const [consoleMessage, setConsoleMessage] = useState("")
     const [cursorStyle, setCursorStyle] = useState("default")
     const headerRef = useRef()
@@ -70,6 +70,7 @@ export const BabyGruContainer = (props) => {
     const [appTitle, setAppTitle] = useState('BabyGru')
     const [cootInitialized, setCootInitialized] = useState(false)
     const [theme, setTheme] = useState("flatly")
+    const lastHoveredAtom = useRef(null)
 
     const sideBarWidth = convertViewtoPx(30, windowWidth)
     const innerWindowMarginHeight = convertRemToPx(2.1)
@@ -141,17 +142,41 @@ export const BabyGruContainer = (props) => {
     }, [consoleMessage])
 
     const onAtomHovered = useCallback(identifier => {
-        molecules.forEach(molecule => {
-            if (molecule.buffersInclude(identifier.buffer)) {
-                if (molecule.name !== hoveredAtom.molecule.name || identifier.atom.label !== hoveredAtom.cid) {
-                    setHoveredAtom({ molecule: molecule, cid: identifier.atom.label })
-                }
+        if (identifier == null) {
+            if (lastHoveredAtom.current !== null && lastHoveredAtom.current.molecule !== null) {
+                setHoveredAtom({molecule:null, cid:null})
             }
-        })
+        }
+        else {
+            molecules.forEach(molecule => {
+                if (molecule.buffersInclude(identifier.buffer)) {
+                    if (molecule !== hoveredAtom.molecule || identifier.atom.label !== hoveredAtom.cid) {
+                        setHoveredAtom({ molecule: molecule, cid: identifier.atom.label })
+                    }
+                }
+            })
+        }
     }, [molecules])
 
     useEffect(() => {
-        //console.log({ hoveredAtom })
+        if (hoveredAtom && hoveredAtom.molecule && hoveredAtom.cid) {
+            if (lastHoveredAtom.current == null ||
+                hoveredAtom.molecule !== lastHoveredAtom.current.molecule ||
+                hoveredAtom.cid !== lastHoveredAtom.current.cid
+            ) {
+                hoveredAtom.molecule.drawHover(glRef.current, hoveredAtom.cid)
+                //if we have changed molecule, might have to clean up hover display item of previous molecule
+            }
+        }
+        
+        if (lastHoveredAtom.current !== null &&
+            lastHoveredAtom.current.molecule !== null &&
+            lastHoveredAtom.current.molecule !== hoveredAtom.molecule
+        ) {
+            lastHoveredAtom.current.molecule.clearBuffersOfStyle("hover", glRef.current)
+        }
+        
+        lastHoveredAtom.current = hoveredAtom
     }, [hoveredAtom])
 
     useEffect(() => {
@@ -248,7 +273,7 @@ export const BabyGruContainer = (props) => {
                 </Nav>
             </Navbar.Collapse>
             <Nav className="justify-content-right">
-            {hoveredAtom.cid && <Form.Control style={{width:"20rem"}} type="text" value={`${hoveredAtom.molecule.name}:${hoveredAtom.cid}`}/>}
+                {hoveredAtom.cid && <Form.Control style={{ width: "20rem" }} type="text" value={`${hoveredAtom.molecule.name}:${hoveredAtom.cid}`} />}
                 {busy && <Spinner animation="border" style={{ marginRight: '0.5rem' }} />}
                 <Button className="baby-gru-sidebar-button" style={{ height: '100%', backgroundColor: darkMode ? '#222' : 'white', border: 0 }} onClick={() => { setShowSideBar(!showSideBar) }}>
                     {showSideBar ? <ArrowForwardIosOutlined style={{ color: darkMode ? 'white' : 'black' }} /> : <ArrowBackIosOutlined style={{ color: darkMode ? 'white' : 'black' }} />}

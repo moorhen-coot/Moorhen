@@ -26,6 +26,7 @@ export function BabyGruMolecule(commandCentre) {
         rama: [],
         rotamer: [],
         CBs: [],
+        hover: [],
         transformation: { origin: [0, 0, 0], quat: null, centre: [0, 0, 0] }
     }
 };
@@ -139,7 +140,7 @@ BabyGruMolecule.prototype.updateAtoms = function () {
 }
 
 BabyGruMolecule.prototype.fetchIfDirtyAndDraw = function (style, gl) {
-    //console.log('fetchIfDirtyAndDraw', style, gl)
+    console.log('fetchIfDirtyAndDraw', style, gl)
     const $this = this
     let promise
     if ($this.atomsDirty) {
@@ -393,6 +394,55 @@ BabyGruMolecule.prototype.drawBonds = function (webMGAtoms, gl, colourSchemeInde
     var nonHydrogenAtoms = model.getAtoms("not [H]");
     var nonHydrogenPrimitiveInfo = atomsToSpheresInfo(nonHydrogenAtoms, 0.13, atomColours);
     linesAndSpheres.push(nonHydrogenPrimitiveInfo);
+
+    const objects = linesAndSpheres.filter(item => {
+        return typeof item.sizes !== "undefined" &&
+            item.sizes.length > 0 &&
+            item.sizes[0].length > 0 &&
+            item.sizes[0][0].length > 0
+    })
+    //console.log('clearing', style, gl)
+    $this.clearBuffersOfStyle(style, gl)
+    this.addBuffersOfStyle(gl, objects, style)
+}
+
+BabyGruMolecule.prototype.drawHover = function (gl, selectionString) {
+    const $this = this
+    const style = "hover"
+    const webMGAtoms = $this.cachedAtoms
+    if (typeof webMGAtoms["atoms"] === 'undefined') return;
+
+    //Attempt to apply selection, storing old hierarchy
+    const oldHierarchy = webMGAtoms.atoms
+    let selectedAtoms = null
+    if (typeof selectionString === 'string') {
+        const selectionElements = selectionString.split("/")
+        const modifiedSelection = `/*/${selectionElements[2]}/${selectionElements[3].split("(")[0]}/*`
+        try {
+            selectedAtoms = webMGAtoms.atoms[0].getAtoms(modifiedSelection)
+            if (selectedAtoms.length === 0) {
+                webMGAtoms.atoms = oldHierarchy
+                return
+            }
+            webMGAtoms.atoms = atomsToHierarchy(selectedAtoms)
+        }
+        catch (err) {
+            webMGAtoms.atoms = oldHierarchy
+            return
+        }
+    }
+    if (selectedAtoms == null) return
+    var model = webMGAtoms.atoms[0];
+
+    const colourScheme = new ColourScheme(webMGAtoms);
+    var atomColours = colourScheme.colourOneColour([0.8, 0.5, 0.2, 0.3])
+    let linesAndSpheres = []
+    var nonHydrogenAtoms = model.getAtoms("not [H]");
+    var nonHydrogenPrimitiveInfo = atomsToSpheresInfo(nonHydrogenAtoms, 0.3, atomColours);
+    linesAndSpheres.push(nonHydrogenPrimitiveInfo);
+
+    //Restore old hierarchy
+    webMGAtoms.atoms = oldHierarchy
 
     const objects = linesAndSpheres.filter(item => {
         return typeof item.sizes !== "undefined" &&

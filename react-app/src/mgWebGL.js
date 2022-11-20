@@ -6906,7 +6906,7 @@ class MGWebGL extends Component {
                     continue;
                 }
                 if (this.displayBuffers[idx].transparent) {
-                    console.log("Not doing normal drawing way ....");
+                    //console.log("Not doing normal drawing way ....");
                     continue;
                 }
 
@@ -8585,6 +8585,11 @@ class MGWebGL extends Component {
                     })
                 }
 
+            }
+            else {
+                if (this.props.onAtomHovered) {
+                    this.props.onAtomHovered(null)
+                }
             }
             //console.log(dpl);
 
