@@ -1,54 +1,79 @@
-import React, { createContext, useState, useEffect } from "react";
+import React, { createContext, useState, useEffect, useMemo } from "react";
 import localforage from 'localforage';
+
+const updateStoredPreferences = async (key, value) => {
+    console.log(`Storing ${key}: ${value} preferences in local storage...`)
+    try {
+        await localforage.setItem(key, value)
+    } catch (err) {
+        console.log(err)
+    }
+}
 
 const PreferencesContext = createContext();
 
 const PreferencesContextProvider = ({ children }) => {
     const [darkMode, setDarkMode] = useState(null);
-    const [expandDisplayCards, setExpandDisplayCards] = useState(null);
+    const [defaultExpandDisplayCards, setDefaultExpandDisplayCards] = useState(null);
 
     /**
-     * Hook used after component mounts to retrieve user preferences from local storage
+     * Hook used after component mounts to retrieve user preferences from 
+     * local storage. If no previously stored data is found, default values 
+     * are used.
      */
      useEffect(() => {       
         const fetchStoredPreferences = async () => {
+            console.log('Retrieving stored preferences...')
             try {
-                let promises = [localforage.getItem('darkMode'), localforage.getItem('expandDisplayCards')]
-                let reponse = await Promise.all(promises)
-                setDarkMode(response[0])
-                setExpandDisplayCards(response[1])            
+                let promises = [localforage.getItem('darkMode'), localforage.getItem('defaultExpandDisplayCards')]
+                let response = await Promise.all(promises)
+                
+                console.log('Retrieved the following preferences from local storage: ', response)
+                
+                if (!response.every(item => item !== null)) {
+                    console.log('Cannot find stored preferences, using defaults')
+                    setDarkMode(false)
+                    setDefaultExpandDisplayCards(true)            
+                } else {
+                    console.log(`Stored preferences retrieved successfully: ${response}`)
+                    setDarkMode(response[0])
+                    setDefaultExpandDisplayCards(response[1])            
+                }                
+                
             } catch (err) {
                 console.log(err)
                 console.log('Unable to fetch preferences from local storage...')
             }
         }
+        
         localforage.config({
             driver: [localforage.INDEXEDDB, localforage.LOCALSTORAGE],
             name: 'babyGru-localStorage'
-        });
+        });   
 
         fetchStoredPreferences();
         
     }, []);
 
-    /**
-     * Hook to update user preferences in local storage
-     */
-     useEffect(() => {
-        const updateStoredPreferences = async () => {
-            try {
-                let promises = [localforage.setItem('darkMode', darkMode), localforage.setItem('expandDisplayCards', expandDisplayCards)]
-                await Promise.all(promises)      
-            } catch (err) {
-                console.log(err)
-                console.log('Unable to store preferences in local storage...')
-            }
-        }
-        
-        updateStoredPreferences();
-    }, [darkMode, expandDisplayCards]);
+    useMemo(() => {
 
-    const collectedContextValues = {darkMode, setDarkMode, expandDisplayCards, setExpandDisplayCards}
+        if (darkMode === null) {
+            return
+        }
+       
+        updateStoredPreferences('darkMode', darkMode);
+    }, [darkMode]);
+    
+    useMemo(() => {
+
+        if (defaultExpandDisplayCards === null) {
+            return
+        }
+       
+        updateStoredPreferences('defaultExpandDisplayCards', defaultExpandDisplayCards);
+    }, [defaultExpandDisplayCards]);
+
+    const collectedContextValues = {darkMode, setDarkMode, defaultExpandDisplayCards, setDefaultExpandDisplayCards}
 
     return (
       <PreferencesContext.Provider value={collectedContextValues}>

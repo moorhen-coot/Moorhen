@@ -1,5 +1,5 @@
-import { useRef, useState, useEffect, createRef, useReducer, useCallback } from 'react';
-import { Navbar, Container, Nav, Tabs, Tab, Accordion, Button, Col, Row, Card, Spinner, Form } from 'react-bootstrap';
+import { useRef, useState, useEffect, createRef, useReducer, useCallback, useContext } from 'react';
+import { Navbar, Container, Nav, Accordion, Button, Col, Row, Spinner, Form } from 'react-bootstrap';
 import Toast from 'react-bootstrap/Toast';
 import ToastContainer from 'react-bootstrap/ToastContainer';
 import { BabyGruDisplayObjects } from './BabyGruDisplayObjects';
@@ -14,6 +14,7 @@ import { BabyGruHistoryMenu } from './BabyGruHistoryMenu';
 import { BabyGruViewMenu } from './BabyGruViewMenu';
 import { BabyGruLigandMenu } from './BabyGruLigandMenu';
 import { BabyGruToolsAccordion } from './BabyGruToolsAccordion'
+import { PreferencesContext } from "../utils/BabyGruPreferences";
 import { babyGruKeyPress } from './BabyGruKeyboardAccelerators';
 
 const initialHistoryState = { commands: [] }
@@ -48,8 +49,6 @@ export const BabyGruContainer = (props) => {
     const graphicsDiv = createRef()
     const navBarRef = useRef()
     const [showSideBar, setShowSideBar] = useState(false)
-    const [darkMode, setDarkMode] = useState(false)
-    const [defaultExpandDisplayCards, setDefaultExpandDisplayCards] = useState(true)
     const [activeMap, setActiveMap] = useState(null)
     const [activeMolecule, setActiveMolecule] = useState(null)
     const [hoveredAtom, setHoveredAtom] = useState({ molecule: null, cid: null })
@@ -75,6 +74,8 @@ export const BabyGruContainer = (props) => {
     const [theme, setTheme] = useState("flatly")
     const lastHoveredAtom = useRef(null)
     const [showToast, setShowToast] = useState(false)
+    const [toastText, setToastText] = useState("")
+    const preferences = useContext(PreferencesContext);
     const [toastContent, setToastContent] = useState("")
 
     const sideBarWidth = convertViewtoPx(30, windowWidth)
@@ -99,7 +100,7 @@ export const BabyGruContainer = (props) => {
         let head = document.head;
         let style = document.createElement("link");
 
-        if (darkMode) {
+        if (preferences.darkMode) {
             style.href = "/baby-gru/darkly.css"
             setTheme("darkly")
             setBackgroundColor([0., 0., 0., 1.])
@@ -116,7 +117,7 @@ export const BabyGruContainer = (props) => {
         head.appendChild(style);
         return () => { head.removeChild(style); }
 
-    }, [darkMode])
+    }, [preferences.darkMode])
 
 
     useEffect(() => {
@@ -265,16 +266,17 @@ export const BabyGruContainer = (props) => {
         molecules, changeMolecules, appTitle, setAppTitle, maps, changeMaps, glRef, activeMolecule, setActiveMolecule,
         activeMap, setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor, sideBarWidth,
         navBarRef, currentDropdownId, setCurrentDropdownId, darkMode, setDarkMode, defaultExpandDisplayCards,
-        setDefaultExpandDisplayCards, hoveredAtom, toastContent, setToastContent, showToast, setShowToast
+        setDefaultExpandDisplayCards, hoveredAtom, toastContent, setToastContent, showToast, setShowToast, 
+        ...preferences
     }
 
     const accordionToolsItemProps = {
-        molecules, commandCentre, glRef, toolAccordionBodyHeight, sideBarWidth, windowHeight, windowWidth, darkMode, maps, showSideBar,
+        molecules, commandCentre, glRef, toolAccordionBodyHeight, sideBarWidth, windowHeight, windowWidth,maps, showSideBar, ...preferences
     }
 
     return <> <div className={`border ${theme}`} ref={headerRef}>
 
-        <Navbar ref={navBarRef} id='navbar-baby-gru' className={darkMode ? "navbar-dark" : "navbar-light"} style={{ height: '3rem', justifyContent: 'between', margin: '0.5rem', padding: '0.5rem' }}>
+        <Navbar ref={navBarRef} id='navbar-baby-gru' className={preferences.darkMode ? "navbar-dark" : "navbar-light"} style={{ height: '3rem', justifyContent: 'between', margin: '0.5rem', padding: '0.5rem' }}>
             <Navbar.Brand href="#home">{appTitle}</Navbar.Brand>
             <Navbar.Toggle aria-controls="basic-navbar-nav" />
             <Navbar.Collapse id="basic-navbar-nav">
@@ -289,8 +291,8 @@ export const BabyGruContainer = (props) => {
             <Nav className="justify-content-right">
                 {hoveredAtom.cid && <Form.Control style={{ width: "20rem" }} type="text" value={`${hoveredAtom.molecule.name}:${hoveredAtom.cid}`} />}
                 {busy && <Spinner animation="border" style={{ marginRight: '0.5rem' }} />}
-                <Button className="baby-gru-sidebar-button" style={{ height: '100%', backgroundColor: darkMode ? '#222' : 'white', border: 0 }} onClick={() => { setShowSideBar(!showSideBar) }}>
-                    {showSideBar ? <ArrowForwardIosOutlined style={{ color: darkMode ? 'white' : 'black' }} /> : <ArrowBackIosOutlined style={{ color: darkMode ? 'white' : 'black' }} />}
+                <Button className="baby-gru-sidebar-button" style={{ height: '100%', backgroundColor: preferences.darkMode ? '#222' : 'white', border: 0 }} onClick={() => { setShowSideBar(!showSideBar) }}>
+                    {showSideBar ? <ArrowForwardIosOutlined style={{ color: preferences.darkMode ? 'white' : 'black' }} /> : <ArrowBackIosOutlined style={{ color: preferences.darkMode ? 'white' : 'black' }} />}
                 </Button>
             </Nav>
         </Navbar>
