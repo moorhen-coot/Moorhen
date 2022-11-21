@@ -387,7 +387,7 @@ export const BabyGruContainer = (props) => {
                 </Col>
             </Row>
             <ToastContainer style={{ marginTop: "5rem" }} position='top-center' >
-                <Toast bg='light' onClose={() => setShowToast(false)} autohide={true} delay={2000} show={showToast}>
+                <Toast bg='light' onClose={() => setShowToast(false)} autohide={true} delay={4000} show={showToast}>
                     <Toast.Header closeButton={false} >
                         {toastContent}
                     </Toast.Header>
