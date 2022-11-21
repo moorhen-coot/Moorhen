@@ -265,8 +265,7 @@ export const BabyGruContainer = (props) => {
     const collectedProps = {
         molecules, changeMolecules, appTitle, setAppTitle, maps, changeMaps, glRef, activeMolecule, setActiveMolecule,
         activeMap, setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor, sideBarWidth,
-        navBarRef, currentDropdownId, setCurrentDropdownId, darkMode, setDarkMode, defaultExpandDisplayCards,
-        setDefaultExpandDisplayCards, hoveredAtom, toastContent, setToastContent, showToast, setShowToast, 
+        navBarRef, currentDropdownId, setCurrentDropdownId, hoveredAtom, toastContent, setToastContent, showToast, setShowToast, 
         ...preferences
     }
 
