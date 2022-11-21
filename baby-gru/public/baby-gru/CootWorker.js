@@ -93,6 +93,24 @@ const interestingPlaceDataToJSArray = (interestingPlaceData) => {
     return returnResult
 }
 
+const ramachandranDataToJSArray = (ramachandraData) => {
+    let returnResult = [];
+
+    for (let ir = 0; ir < ramachandraData.size(); ir++) {
+        returnResult.push({
+            chainId: ramachandraData.get(ir).phi_psi.chain_id,
+            insCode: ramachandraData.get(ir).phi_psi.ins_code,
+            seqNum: ramachandraData.get(ir).phi_psi.residue_number,
+            restype: ramachandraData.get(ir).residue_name,
+            isOutlier: !ramachandraData.get(ir).is_allowed_flag,
+            phi: ramachandraData.get(ir).phi_psi.phi(),
+            psi: ramachandraData.get(ir).phi_psi.psi(),
+            is_pre_pro: ramachandraData.get(ir).residue_name === 'PRO'
+        });
+    }
+    return returnResult
+}
+
 const simpleMeshToLineMeshData = (simpleMesh, normalLighting) => {
     const vertices = simpleMesh.vertices;
     const triangles = simpleMesh.triangles;
@@ -404,6 +422,9 @@ onmessage = function (e) {
                 case 'residue_codes':
                     returnResult = residueCodesToJSArray(cootResult)
                     break;
+                case 'ramachandran_data':
+                    returnResult = ramachandranDataToJSArray(cootResult)
+                    break;
                 case 'validation_data':
                     returnResult = validationDataToJSArray(cootResult, e.data.chainID)
                     break;
@@ -423,6 +444,7 @@ onmessage = function (e) {
             })
         }
         catch (err) {
+            console.log(err)
             postMessage({
                 messageId: e.data.messageId,
                 myTimeStamp: e.data.myTimeStamp,
