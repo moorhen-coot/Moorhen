@@ -348,12 +348,6 @@ int mini_rsr(const std::vector<std::string> &args){
 }
 */
 
-class CartPhiPsiPair {
-    public:
-        coot::Cartesian first;
-        coot::util::phi_psi_t second;
-};
-
 class IntVectorMergeMolInfoPair {
     public:
         int first;
@@ -381,18 +375,6 @@ class molecules_container_js : public molecules_container_t {
         int writePDBASCII(int imol, const std::string &file_name) { 
             const char *fname_cp = file_name.c_str();
             return get_mol(imol)->WritePDBASCII(fname_cp);
-        }
-
-        std::vector<CartPhiPsiPair> ramachandran_validation(int imol) {
-            std::vector<CartPhiPsiPair> retval;
-            std::vector<std::pair<coot::Cartesian, coot::util::phi_psi_t> > rama = molecules_container_t::ramachandran_validation(imol);
-            for(unsigned i=0;i<rama.size();i++){
-                CartPhiPsiPair p;
-                p.first = rama[i].first;
-                p.second = rama[i].second;
-                retval.push_back(p);
-            }
-            return retval;
         }
 
         IntVectorMergeMolInfoPair merge_molecules(int imol, const std::string &list_of_other_molecules) {
@@ -625,6 +607,13 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("GetNumberOfAtoms", select_overload<int(void)>(&mmdb::Residue::GetNumberOfAtoms))
     .function("GetNumberOfAtoms_countTers", select_overload<int(bool)>(&mmdb::Residue::GetNumberOfAtoms))
     ;
+    class_<coot::phi_psi_prob_t>("phi_psi_prob_t")
+    .property("phi_psi", &coot::phi_psi_prob_t::phi_psi)
+    .property("position", &coot::phi_psi_prob_t::position)
+    .property("is_allowed_flag", &coot::phi_psi_prob_t::is_allowed_flag)
+    .property("residue_name", &coot::phi_psi_prob_t::residue_name)
+    .function("is_allowed", &coot::phi_psi_prob_t::is_allowed)
+    ;
     class_<coot::molecule_t::moved_atom_t>("moved_atom_t")
     .constructor<const std::string&, const std::string&, float, float, float, int>()
     .property("atom_name", &coot::molecule_t::moved_atom_t::atom_name)
@@ -705,6 +694,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("rotamer_analysis",&molecules_container_t::rotamer_analysis)
     .function("associate_data_mtz_file_with_map",&molecules_container_t::associate_data_mtz_file_with_map)
     .function("connect_updating_maps",&molecules_container_t::connect_updating_maps)
+    .function("ramachandran_validation",&molecules_container_t::ramachandran_validation)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<>()
@@ -716,7 +706,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("add",&molecules_container_js::add)
     .function("getFloats",&molecules_container_js::getFloats)
     .function("merge_molecules",&molecules_container_js::merge_molecules)
-    .function("ramachandran_validation",&molecules_container_js::ramachandran_validation)
     ;
     class_<RamachandranInfo>("RamachandranInfo")
     .constructor<>()
@@ -756,10 +745,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
     class_<IntVectorMergeMolInfoPair>("IntVectorMergeMolInfoPair")
     .property("first",&IntVectorMergeMolInfoPair::first)
     .property("second",&IntVectorMergeMolInfoPair::second)
-    ;
-    class_<CartPhiPsiPair>("CartPhiPsiPair")
-    .property("first",&CartPhiPsiPair::first)
-    .property("second",&CartPhiPsiPair::second)
     ;
     class_<coot::util::phi_psi_t>("phi_psi_t")
     .function("phi",&coot::util::phi_psi_t::phi)
@@ -813,7 +798,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<g_triangle>("Vectorg_triangle");
     register_vector<ResSpecStringPair>("VectorResSpecStringPair");
     register_vector<merge_molecule_results_info_t>("Vectormerge_molecule_results_info_t");
-    register_vector<CartPhiPsiPair>("VectorCartPhiPsiPair");
+    register_vector<coot::phi_psi_prob_t>("Vectophi_psi_prob_t");
     value_array<glm::vec3>("array_float_3")
         .element(emscripten::index<0>())
         .element(emscripten::index<1>())
