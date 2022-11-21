@@ -1,13 +1,15 @@
-import logo from './logo.svg';
 import './App.css';
 import { BabyGruContainer } from './components/BabyGruContainer';
+import { PreferencesContextProvider } from "./utils/BabyGruPreferences";
 
 function App() {
   return (
     <div className="App">
-      <BabyGruContainer forwardControls={(controls) => {
-        console.log('Fetched controls', {controls})
-      }} />
+      <PreferencesContextProvider>
+        <BabyGruContainer forwardControls={(controls) => {
+          console.log('Fetched controls', {controls})
+        }}/>
+      </PreferencesContextProvider>
     </div>
   );
 }
