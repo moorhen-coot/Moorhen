@@ -28,7 +28,7 @@ const PreferencesContextProvider = ({ children }) => {
                 let promises = [localforage.getItem('darkMode'), localforage.getItem('defaultExpandDisplayCards')]
                 let response = await Promise.all(promises)
                 
-                console.log('THIS IS WHAT IS STORED AT THE MOMENT ', response)
+                console.log('Retrieved the following preferences from local storage: ', response)
                 
                 if (!response.every(item => item !== null)) {
                     console.log('Cannot find stored preferences, using defaults')
