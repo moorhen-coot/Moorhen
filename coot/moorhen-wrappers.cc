@@ -691,6 +691,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("add_waters",&molecules_container_t::add_waters)
     .function("ramachandran_analysis",&molecules_container_t::ramachandran_analysis)
     .function("density_correlation_analysis",&molecules_container_t::density_correlation_analysis)
+    .function("difference_map_peaks",&molecules_container_t::difference_map_peaks)
     .function("rotamer_analysis",&molecules_container_t::rotamer_analysis)
     .function("associate_data_mtz_file_with_map",&molecules_container_t::associate_data_mtz_file_with_map)
     .function("connect_updating_maps",&molecules_container_t::connect_updating_maps)
