@@ -44,8 +44,8 @@ describe('Testing molecules_container_js', () => {
         const rama_info = molecules_container.ramachandran_validation(coordMolNo)
         for(let i=0;i<rama_info.size();i++){
             const ri = rama_info.get(i)
-            const cart = ri.first
-            const phi_psi = ri.second
+            const cart = ri.position
+            const phi_psi = ri.phi_psi
             console.log(cart.x(),cart.y(),cart.z())
             console.log(phi_psi.phi(),phi_psi.psi())
         }
