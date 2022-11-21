@@ -15,7 +15,7 @@ import { BabyGruViewMenu } from './BabyGruViewMenu';
 import { BabyGruLigandMenu } from './BabyGruLigandMenu';
 import { BabyGruToolsAccordion } from './BabyGruToolsAccordion'
 import { PreferencesContext } from "../utils/BabyGruPreferences";
-
+import { babyGruKeyPress } from './BabyGruKeyboardAccelerators';
 
 const initialHistoryState = { commands: [] }
 
@@ -76,6 +76,7 @@ export const BabyGruContainer = (props) => {
     const [showToast, setShowToast] = useState(false)
     const [toastText, setToastText] = useState("")
     const preferences = useContext(PreferencesContext);
+    const [toastContent, setToastContent] = useState("")
 
     const sideBarWidth = convertViewtoPx(30, windowWidth)
     const innerWindowMarginHeight = convertRemToPx(2.1)
@@ -163,29 +164,13 @@ export const BabyGruContainer = (props) => {
         }
     }, [molecules])
 
+    useEffect(() => {
+        if (toastContent) setShowToast(true)
+    }, [toastContent])
+
     //Make this so that the keyPress returns true or false, depending on whether mgWebGL is to continue processing event
     const onKeyPress = useCallback(event => {
-        setToastText(`${event.shiftKey?"<Shift>":""}-${event.key} pushed`)
-        setShowToast(true)
-        if (event.key.toLowerCase() === "r" && event.shiftKey && activeMap && hoveredAtom.molecule) {
-            const [molecule, cid] = [hoveredAtom.molecule, hoveredAtom.cid]
-            const chosenAtom = cidToSpec(cid)
-            const commandArgs = [
-                `${molecule.molNo}`,
-                `//${chosenAtom.chain_id}/${chosenAtom.res_no}`,
-                "SPHERE"]
-            commandCentre.current.cootCommand({
-                returnType: "status",
-                command: "refine_residues_using_atom_cid",
-                commandArgs: commandArgs
-            }, true).then(_ => {
-                molecule.setAtomsDirty(true)
-                molecule.redraw(glRef)
-                setHoveredAtom({ molecule: null, cid: null })
-            })
-            return false
-        }
-        return true
+        return babyGruKeyPress(event, collectedProps)
     }, [molecules, activeMolecule, activeMap, hoveredAtom])
 
     useEffect(() => {
@@ -280,7 +265,9 @@ export const BabyGruContainer = (props) => {
     const collectedProps = {
         molecules, changeMolecules, appTitle, setAppTitle, maps, changeMaps, glRef, activeMolecule, setActiveMolecule,
         activeMap, setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor, sideBarWidth,
-        navBarRef, currentDropdownId, setCurrentDropdownId, hoveredAtom, ...preferences
+        navBarRef, currentDropdownId, setCurrentDropdownId, darkMode, setDarkMode, defaultExpandDisplayCards,
+        setDefaultExpandDisplayCards, hoveredAtom, toastContent, setToastContent, showToast, setShowToast, 
+        ...preferences
     }
 
     const accordionToolsItemProps = {
@@ -400,10 +387,10 @@ export const BabyGruContainer = (props) => {
                     </Accordion>
                 </Col>
             </Row>
-            <ToastContainer style={{ marginTop: "5rem" }} position='top-start' >
-                <Toast onClose={() => setShowToast(false)} autohide={true} delay={2000} show={showToast}>
+            <ToastContainer style={{ marginTop: "5rem" }} position='top-center' >
+                <Toast bg='light' onClose={() => setShowToast(false)} autohide={true} delay={2000} show={showToast}>
                     <Toast.Header closeButton={false} >
-                        <strong className="me-auto">{toastText}</strong>
+                        {toastContent}
                     </Toast.Header>
                 </Toast>
             </ToastContainer>
