@@ -15,6 +15,7 @@
     "d3": "^5.15.0",
     "gl-matrix": "^3.4.3",
     "html-react-parser": "^1.4.12",
+    "localforage": "^1.10.0",
     "pako": "^2.0.4",
     "pca-js": "^1.0.2",
     "plotly.js": "^2.12.1",
