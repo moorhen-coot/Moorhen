@@ -73,6 +73,26 @@ const validationDataToJSArray = (validationData, chainID) => {
     return returnResult
 }
 
+const interestingPlaceDataToJSArray = (interestingPlaceData) => {
+
+    let returnResult = [];
+    for (let ir = 0; ir < interestingPlaceData.size(); ir++) {
+        returnResult.push({
+            chainId: interestingPlaceData.get(ir).residue_spec.chain_id,
+            insCode: interestingPlaceData.get(ir).residue_spec.ins_code,
+            seqNum: interestingPlaceData.get(ir).residue_spec.res_no,
+            featureType: interestingPlaceData.get(ir).feature_type,
+            featureValue: interestingPlaceData.get(ir).feature_value,
+            buttonLabel: interestingPlaceData.get(ir).button_label,
+            badness: interestingPlaceData.get(ir).badness,
+            coordX: interestingPlaceData.get(ir).x,
+            coordY: interestingPlaceData.get(ir).y,
+            coordZ: interestingPlaceData.get(ir).z
+        });
+    }
+    return returnResult
+}
+
 const simpleMeshToLineMeshData = (simpleMesh, normalLighting) => {
     const vertices = simpleMesh.vertices;
     const triangles = simpleMesh.triangles;
@@ -386,6 +406,9 @@ onmessage = function (e) {
                     break;
                 case 'validation_data':
                     returnResult = validationDataToJSArray(cootResult, e.data.chainID)
+                    break;
+                case 'interesting_places_data':
+                    returnResult = interestingPlaceDataToJSArray(cootResult)
                     break;
                 case 'status':
                 default:

@@ -2,6 +2,7 @@ import { Fragment, useState, useRef, useEffect } from "react";
 import { Row } from "react-bootstrap";
 import { BabyGruRamachandran } from "./BabyGruRamachandran"
 import { BabyGruValidation } from "./BabyGruValidation"
+import { BabyGruDifferenceMapPeaks } from "./BabyGruDifferenceMapPeaks"
 import { Autocomplete, TextField } from "@mui/material";
 
 export const BabyGruToolsAccordion = (props) => {
@@ -10,6 +11,7 @@ export const BabyGruToolsAccordion = (props) => {
     const [selectedToolKey, setSelectedToolKey] = useState(null)
 
     const toolOptions = [
+            {label: "Difference Map Peaks", toolWidget: <BabyGruDifferenceMapPeaks {...props}/>},
             {label: "Ramachandran Plot", toolWidget: <BabyGruRamachandran {...props}/>},
             {label: "Validation", toolWidget: <BabyGruValidation {...props}/>},
     ]
