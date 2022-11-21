@@ -3,6 +3,7 @@ import { Menu, MenuItem, MenuList, Tooltip } from "@mui/material";
 import { createRef, forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import { ButtonGroup, Button, Overlay, Container, Row, FormSelect, FormGroup, FormLabel, Card } from "react-bootstrap"
 import { BabyGruMoleculeSelect } from "./BabyGruMoleculeSelect";
+import { cidToSpec } from "../utils/BabyGruUtils";
 
 export const BabyGruButtonBar = (props) => {
     const [selectedButtonIndex, setSelectedButtonIndex] = useState(null);
@@ -167,16 +168,6 @@ BabyGruSimpleEditButton.defaultProps = {
     setSelectedButtonIndex: () => { }, selectedButtonIndex: 0, prompt: null, awaitAtomClick: true
 }
 
-const cidToSpec = (cid) => {
-    //molNo, chain_id, res_no, ins_code, alt_conf
-    const cidTokens = cid.split('/')
-    const chain_id = cidTokens[2]
-    const res_no = parseInt(cidTokens[3])
-    const atom_name = cidTokens[4]
-    const ins_code = ""
-    const alt_conf = ""
-    return { chain_id, res_no, atom_name, ins_code, alt_conf }
-}
 
 export const BabyGruAutofitRotamerButton = (props) => {
     return <BabyGruSimpleEditButton {...props}

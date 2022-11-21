@@ -842,13 +842,13 @@ export const BabyGruAddWatersMenuItem = (props) => {
             returnType: "status"
         }, true).then(result => {
             props.molecules
-                .filter(molecule => molecule.molNo === parseInt(molNo.current))
+                .filter(molecule => molecule.molNo == molNo.current)
                 .forEach(molecule => {
                     molecule.setAtomsDirty(true)
                     molecule.redraw(props.glRef)
                 })
         })
-    }, [props.molecules, moleculeRef, moleculeRef.current])
+    }, [props.molecules])
 
     return <BabyGruMenuItem
         popoverContent={panelContent}
