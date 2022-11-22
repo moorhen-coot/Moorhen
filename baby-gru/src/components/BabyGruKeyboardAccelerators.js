@@ -88,6 +88,37 @@ export const babyGruKeyPress = (event, collectedProps) => {
         return false
     }
 
+    if (event.key.toLowerCase() === "y" && event.shiftKey && activeMap && hoveredAtom.molecule) {
+        const chosenAtom = cidToSpec(hoveredAtom.cid)
+        const commandArgs = [
+            hoveredAtom.molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
+        commandCentre.current.cootCommand({
+            returnType: "status",
+            command: "add_terminal_residue_directly_using_cid",
+            commandArgs: commandArgs
+        }, true).then(_ => {
+            apresEdit(hoveredAtom.molecule, glRef, setHoveredAtom)
+        })
+        return false
+    }
+    
+    if (event.key.toLowerCase() === "d" && event.shiftKey && activeMap && hoveredAtom.molecule) {
+        const chosenAtom = cidToSpec(hoveredAtom.cid)
+        const commandArgs = [
+            hoveredAtom.molecule.molNo,
+            `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}`,
+            "RESIDUE"
+        ]
+        commandCentre.current.cootCommand({
+            returnType: "status",
+            command: "delete_using_cid",
+            commandArgs: commandArgs
+        }, true).then(_ => {
+            apresEdit(hoveredAtom.molecule, glRef, setHoveredAtom)
+        })
+        return false
+    }
+    
     if (event.key.toLowerCase() === "e" && event.shiftKey && activeMap && hoveredAtom.molecule) {
         const chosenAtom = cidToSpec(hoveredAtom.cid)
         const commandArgs = [hoveredAtom.molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
@@ -103,11 +134,13 @@ export const babyGruKeyPress = (event, collectedProps) => {
 
     else if (event.key == "Meta" && event.metaKey) {
         setToastContent(<h4><List>
-            <ListItem>Shift-R: Refine sphere</ListItem>
-            <ListItem>Shift-Q: Flip peptide</ListItem>
+            <ListItem>Shift-D: Delete residue</ListItem>
+            <ListItem>Shift-E: Eigen flip ligand</ListItem>
             <ListItem>Shift-H: Refine triplet</ListItem>
             <ListItem>Shift-J: Autofit rotamer</ListItem>
-            <ListItem>Shift-E: Eigen flip ligand</ListItem>
+            <ListItem>Shift-Q: Flip peptide</ListItem>
+            <ListItem>Shift-R: Refine sphere</ListItem>
+            <ListItem>Shift-Y: Add residue</ListItem>
         </List></h4>)
         setShowToast(true)
         return false
