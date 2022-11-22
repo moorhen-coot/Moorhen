@@ -32,17 +32,18 @@ export function BabyGruMolecule(commandCentre) {
 };
 
 
-BabyGruMolecule.prototype.delete = async function (gl) {
+BabyGruMolecule.prototype.delete = async function (glRef) {
     const $this = this
     Object.getOwnPropertyNames(this.displayObjects).forEach(displayObject => {
-        if (this.displayObjects[displayObject].length > 0) { this.clearBuffersOfStyle(displayObject, gl) }
+        if (this.displayObjects[displayObject].length > 0) { this.clearBuffersOfStyle(displayObject, glRef) }
     })
+    glRef.current.drawScene()
     const inputData = { message: "delete", molNo: $this.molNo }
     const response = await $this.commandCentre.current.postMessage(inputData)
     return response
 }
 
-BabyGruMolecule.prototype.copyFragment = async function (chainId, res_no_start, res_no_end, gl, doRecentre) {
+BabyGruMolecule.prototype.copyFragment = async function (chainId, res_no_start, res_no_end, glRef, doRecentre) {
     if (typeof doRecentre === 'undefined') {
         doRecentre = true
     }
@@ -52,8 +53,8 @@ BabyGruMolecule.prototype.copyFragment = async function (chainId, res_no_start, 
     const newMolecule = new BabyGruMolecule($this.commandCentre)
     newMolecule.name = `${$this.name} fragment`
     newMolecule.molNo = response.data.result
-    await newMolecule.fetchIfDirtyAndDraw('CBs', gl)
-    if (doRecentre) await newMolecule.centreOn(gl)
+    await newMolecule.fetchIfDirtyAndDraw('CBs', glRef)
+    if (doRecentre) await newMolecule.centreOn(glRef)
 
     const sequenceInputData = { returnType: "residue_codes", command: "get_single_letter_codes_for_chain", commandArgs: [response.data.result, chainId] }
     const sequenceResponse = await $this.commandCentre.current.cootCommand(sequenceInputData)
@@ -139,25 +140,21 @@ BabyGruMolecule.prototype.updateAtoms = function () {
     })
 }
 
-BabyGruMolecule.prototype.fetchIfDirtyAndDraw = function (style, gl) {
-    console.log('fetchIfDirtyAndDraw', style, gl)
+BabyGruMolecule.prototype.fetchIfDirtyAndDraw = async function (style, glRef) {
     const $this = this
     let promise
     if ($this.atomsDirty) {
         promise = this.updateAtoms()
     }
     else {
-        promise = new Promise((resolve, reject) => { resolve($this.cachedAtoms) })
+        promise = Promise.resolve($this.cachedAtoms)
     }
     return promise.then(webMGAtoms => {
-        return new Promise((resolve, reject) => {
-            $this.drawWithStyleFromAtoms(style, gl, webMGAtoms)
-            resolve(true)
-        })
+        return $this.drawWithStyleFromAtoms(style, glRef, webMGAtoms)
     })
 }
 
-BabyGruMolecule.prototype.centreOn = function (gl, selection) {
+BabyGruMolecule.prototype.centreOn = function (glRef, selection) {
     //Note add selection to permit centringh on subset
     const $this = this
     let promise
@@ -190,47 +187,48 @@ BabyGruMolecule.prototype.centreOn = function (gl, selection) {
         }
 
         return new Promise((resolve, reject) => {
-            gl.current.setOrigin(selectionCentre);
+            glRef.current.setOrigin(selectionCentre);
             resolve(true);
         })
     })
 }
 
 
-BabyGruMolecule.prototype.drawWithStyleFromAtoms = function (style, gl, webMGAtoms) {
+BabyGruMolecule.prototype.drawWithStyleFromAtoms = async function (style, glRef, webMGAtoms) {
 
     switch (style) {
         case 'ribbons':
-            this.drawRibbons(webMGAtoms, gl.current)
+            this.drawRibbons(webMGAtoms, glRef)
             break;
         case 'bonds':
-            this.drawBonds(webMGAtoms, gl.current, 0)
+            this.drawBonds(webMGAtoms, glRef, 0)
             break;
         case 'sticks':
-            this.drawSticks(webMGAtoms, gl.current, 0)
+            this.drawSticks(webMGAtoms, glRef, 0)
             break;
         case 'rama':
-            this.drawRamachandranBalls(gl.current)
+            this.drawRamachandranBalls(glRef)
             break;
         case 'rotamer':
-            this.drawRotamerDodecahedra(gl.current)
+            this.drawRotamerDodecahedra(glRef)
             break;
         case 'CBs':
-            this.drawCootBonds(webMGAtoms, gl.current)
+            await this.drawCootBonds(webMGAtoms, glRef)
             break;
         default:
             break;
     }
+    return Promise.resolve(true)
 }
 
-BabyGruMolecule.prototype.addBuffersOfStyle = function (gl, objects, style) {
+BabyGruMolecule.prototype.addBuffersOfStyle = function (glRef, objects, style) {
     const $this = this
     objects.forEach(object => {
-        var a = gl.appendOtherData(object, true);
+        var a = glRef.current.appendOtherData(object, true);
         $this.displayObjects[style] = $this.displayObjects[style].concat(a)
     })
-    gl.buildBuffers();
-    gl.drawScene();
+    glRef.current.buildBuffers();
+    glRef.current.drawScene();
 }
 
 BabyGruMolecule.prototype.drawRamachandranBalls = function (gl) {
@@ -264,7 +262,7 @@ BabyGruMolecule.prototype.drawRotamerDodecahedra = function (gl) {
     })
 }
 
-BabyGruMolecule.prototype.drawCootBonds = function (webMGAtoms, gl) {
+BabyGruMolecule.prototype.drawCootBonds = async function (webMGAtoms, glRef) {
     const $this = this
     const style = "CBs"
     return this.commandCentre.current.cootCommand({
@@ -288,24 +286,29 @@ BabyGruMolecule.prototype.drawCootBonds = function (webMGAtoms, gl) {
                 bufferAtoms.push(atom);
             })
             //Empty existing buffers of this type
-            this.clearBuffersOfStyle(style, gl)
-            this.addBuffersOfStyle(gl, objects, style)
+            this.clearBuffersOfStyle(style, glRef)
+            this.addBuffersOfStyle(glRef, objects, style)
             this.displayObjects[style][0].atoms = bufferAtoms
         }
+        return Promise.resolve(true)
     })
 }
 
 
-BabyGruMolecule.prototype.show = function (style, gl) {
+BabyGruMolecule.prototype.show = function (style, glRef) {
+    //console.log("show",{style})
     if (this.displayObjects[style].length == 0) {
-        this.fetchIfDirtyAndDraw(style, gl)
+        return this.fetchIfDirtyAndDraw(style, glRef)
+            .then(_ => { glRef.current.drawScene() })
     }
     else {
         this.displayObjects[style].forEach(displayBuffer => {
             displayBuffer.visible = true
         })
+        glRef.current.drawScene()
+        return Promise.resolve(true)
     }
-    gl.current.drawScene()
+
 }
 
 BabyGruMolecule.prototype.hide = function (style, gl) {
@@ -332,15 +335,16 @@ BabyGruMolecule.prototype.webMGAtomsFromFileString = function (fileString) {
     return result
 }
 
-BabyGruMolecule.prototype.clearBuffersOfStyle = function (style, gl) {
+BabyGruMolecule.prototype.clearBuffersOfStyle = function (style, glRef) {
     const $this = this
     //Empty existing buffers of this type
     $this.displayObjects[style].forEach((buffer) => {
         buffer.clearBuffers()
-        if (gl.displayBuffers) {
-            gl.displayBuffers = gl.displayBuffers.filter(glBuffer => glBuffer !== buffer)
+        if (glRef.current.displayBuffers) {
+            glRef.current.displayBuffers = glRef.current.displayBuffers.filter(glBuffer => glBuffer !== buffer)
         }
     })
+    glRef.current.buildBuffers()
     $this.displayObjects[style] = []
 }
 
@@ -351,10 +355,12 @@ BabyGruMolecule.prototype.buffersInclude = function (bufferIn) {
     const BreakException = {};
     try {
         Object.getOwnPropertyNames($this.displayObjects).forEach(style => {
-            const objectBuffers = $this.displayObjects[style].filter(buffer => bufferIn.id === buffer.id)
-            //console.log('Object buffer length', objectBuffers.length, objectBuffers.length > 0)
-            if (objectBuffers.length > 0) {
-                throw BreakException;
+            if (Array.isArray($this.displayObjects[style])) {
+                const objectBuffers = $this.displayObjects[style].filter(buffer => bufferIn.id === buffer.id)
+                //console.log('Object buffer length', objectBuffers.length, objectBuffers.length > 0)
+                if (objectBuffers.length > 0) {
+                    throw BreakException;
+                }
             }
         })
     }
@@ -366,7 +372,7 @@ BabyGruMolecule.prototype.buffersInclude = function (bufferIn) {
     return false
 }
 
-BabyGruMolecule.prototype.drawBonds = function (webMGAtoms, gl, colourSchemeIndex) {
+BabyGruMolecule.prototype.drawBonds = function (webMGAtoms, glRef, colourSchemeIndex) {
     const $this = this
     const style = "bonds"
 
@@ -402,11 +408,11 @@ BabyGruMolecule.prototype.drawBonds = function (webMGAtoms, gl, colourSchemeInde
             item.sizes[0][0].length > 0
     })
     //console.log('clearing', style, gl)
-    $this.clearBuffersOfStyle(style, gl)
-    this.addBuffersOfStyle(gl, objects, style)
+    $this.clearBuffersOfStyle(style, glRef)
+    this.addBuffersOfStyle(glRef, objects, style)
 }
 
-BabyGruMolecule.prototype.drawHover = function (gl, selectionString) {
+BabyGruMolecule.prototype.drawHover = function (glRef, selectionString) {
     const $this = this
     const style = "hover"
     const webMGAtoms = $this.cachedAtoms
@@ -451,36 +457,13 @@ BabyGruMolecule.prototype.drawHover = function (gl, selectionString) {
             item.sizes[0][0].length > 0
     })
     //console.log('clearing', style, gl)
-    $this.clearBuffersOfStyle(style, gl)
-    this.addBuffersOfStyle(gl, objects, style)
+    $this.clearBuffersOfStyle(style, glRef)
+    this.addBuffersOfStyle(glRef, objects, style)
 }
 
-BabyGruMolecule.prototype.drawRibbons = function (webMGAtoms, gl) {
+BabyGruMolecule.prototype.drawRibbons = function (webMGAtoms, glRef) {
     const $this = this
     const style = "ribbons"
-    const selectionString = '/*/*'
-
-    //Attempt to apply selection, storing old hierarchy
-    const oldHierarchy = webMGAtoms.atoms
-    if (typeof selectionString === 'string') {
-        try {
-            const selectedAtoms = webMGAtoms.atoms[0].getAtoms(selectionString)
-            if (selectedAtoms.length === 0) {
-                webMGAtoms.atoms = oldHierarchy
-                return
-            }
-            webMGAtoms.atoms = atomsToHierarchy(selectedAtoms)
-        }
-        catch (err) {
-            webMGAtoms.atoms = oldHierarchy
-            return
-        }
-    }
-
-    if (typeof webMGAtoms.atoms === 'undefined' || webMGAtoms.atoms.length === 0) {
-        webMGAtoms.atoms = oldHierarchy
-        return;
-    }
 
     if (typeof (webMGAtoms["modamino"]) !== "undefined") {
         webMGAtoms["modamino"].forEach(modifiedResidue => {
@@ -507,15 +490,14 @@ BabyGruMolecule.prototype.drawRibbons = function (webMGAtoms, gl) {
             item.sizes[0][0].length > 0
     })
 
-    $this.clearBuffersOfStyle(style, gl)
-    this.addBuffersOfStyle(gl, objects, style)
+    $this.clearBuffersOfStyle(style, glRef)
+    this.addBuffersOfStyle(glRef, objects, style)
 
     //Restore odlHierarchy
-    webMGAtoms.atoms = oldHierarchy
     return
 }
 
-BabyGruMolecule.prototype.drawSticks = function (webMGAtoms, gl) {
+BabyGruMolecule.prototype.drawSticks = function (webMGAtoms, glRef) {
     const $this = this
     const style = "sticks"
     let hier = webMGAtoms["atoms"];
@@ -538,15 +520,15 @@ BabyGruMolecule.prototype.drawSticks = function (webMGAtoms, gl) {
 
     let objects = [linePrimitiveInfo, singletonPrimitiveInfo];
 
-    $this.clearBuffersOfStyle(style, gl)
-    this.addBuffersOfStyle(gl, objects, style)
+    $this.clearBuffersOfStyle(style, glRef)
+    this.addBuffersOfStyle(glRef, objects, style)
 
 }
 
-BabyGruMolecule.prototype.redraw = function (gl) {
+BabyGruMolecule.prototype.redraw = function (glRef) {
     const $this = this
     const itemsToRedraw = []
-    Object.keys($this.displayObjects).filter(style=>!["transformation", "hover"].includes(style)).forEach(style => {
+    Object.keys($this.displayObjects).filter(style => !["transformation"].includes(style)).forEach(style => {
         const objectCategoryBuffers = $this.displayObjects[style]
         //Note with transforamtion, not all properties of displayObjects are lists of buffer
         if (Array.isArray(objectCategoryBuffers)) {
@@ -556,7 +538,7 @@ BabyGruMolecule.prototype.redraw = function (gl) {
                     itemsToRedraw.push(style)
                 }
                 else {
-                    $this.clearBuffersOfStyle(style, gl)
+                    $this.clearBuffersOfStyle(style, glRef)
                 }
             }
         }
@@ -572,7 +554,7 @@ BabyGruMolecule.prototype.redraw = function (gl) {
         return itemsToRedraw.reduce(
             (p, style) => {
                 //console.log(`Redrawing ${style}`, $this.atomsDirty)
-                return p.then(() => $this.fetchIfDirtyAndDraw(style, gl)
+                return p.then(() => $this.fetchIfDirtyAndDraw(style, glRef)
                 )
             },
             Promise.resolve()
@@ -658,7 +640,6 @@ BabyGruMolecule.prototype.mergeMolecules = async function (otherMolecules, glRef
             //console.log('Hiding', { molecule })
             Object.keys(molecule.displayObjects).forEach(style => {
                 if (Array.isArray(molecule.displayObjects[style])) {
-                    console.log('Hiding', { style })
                     molecule.hide(style, glRef)
                 }
             })

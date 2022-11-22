@@ -102,7 +102,7 @@ export const babyGruKeyPress = (event, collectedProps) => {
         return false
     }
     
-    if (event.key.toLowerCase() === "d" && event.shiftKey && activeMap && hoveredAtom.molecule) {
+    if (event.key.toLowerCase() === "d" && event.shiftKey && hoveredAtom.molecule) {
         const chosenAtom = cidToSpec(hoveredAtom.cid)
         const commandArgs = [
             hoveredAtom.molecule.molNo,

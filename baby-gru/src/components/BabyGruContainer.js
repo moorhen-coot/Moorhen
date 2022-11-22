@@ -179,7 +179,7 @@ export const BabyGruContainer = (props) => {
                 hoveredAtom.molecule !== lastHoveredAtom.current.molecule ||
                 hoveredAtom.cid !== lastHoveredAtom.current.cid
             ) {
-                hoveredAtom.molecule.drawHover(glRef.current, hoveredAtom.cid)
+                hoveredAtom.molecule.drawHover(glRef, hoveredAtom.cid)
                 //if we have changed molecule, might have to clean up hover display item of previous molecule
             }
         }
@@ -188,7 +188,7 @@ export const BabyGruContainer = (props) => {
             lastHoveredAtom.current.molecule !== null &&
             lastHoveredAtom.current.molecule !== hoveredAtom.molecule
         ) {
-            lastHoveredAtom.current.molecule.clearBuffersOfStyle("hover", glRef.current)
+            lastHoveredAtom.current.molecule.clearBuffersOfStyle("hover", glRef)
         }
 
         lastHoveredAtom.current = hoveredAtom
