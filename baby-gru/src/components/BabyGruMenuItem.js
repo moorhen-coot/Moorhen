@@ -662,7 +662,7 @@ export const BabyGruImportFSigFMenuItem = (props) => {
                 <BabyGruMapSelect {...props} ref={twoFoFcSelectRef} label="2foFc" allowAny={false} />
             </Col>
             <Col key="Col2">
-                <BabyGruMapSelect {...props} ref={foFcSelectRef} label="FoFc" allowAny={false} />
+                <BabyGruMapSelect {...props} ref={foFcSelectRef} label="FoFc" onlyDifferenceMaps={true} allowAny={false} />
             </Col>
             <Col key="Col3">
                 <BabyGruMoleculeSelect {...props} ref={moleculeSelectRef} label="Molecule for phases" allowAny={false} />
