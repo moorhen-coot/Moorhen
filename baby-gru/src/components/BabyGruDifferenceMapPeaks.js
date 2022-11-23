@@ -3,6 +3,7 @@ import { Col, Row, Form } from 'react-bootstrap';
 import { Chart, registerables } from 'chart.js';
 import { BabyGruMapSelect } from './BabyGruMapSelect'
 import { BabyGruMoleculeSelect } from './BabyGruMoleculeSelect'
+import BabyGruSlider from './BabyGruSlider' 
 
 Chart.register(...registerables);
 
@@ -297,16 +298,9 @@ export const BabyGruDifferenceMapPeaks = (props) => {
                             <Col>
                                 <BabyGruMapSelect onlyDifferenceMaps={true} width="" onChange={handleMapChange} maps={props.maps} ref={mapSelectRef}/>
                             </Col>
-                            <Col>
-                                <Form.Group style={{ margin: '0.5rem', height: '4rem' }}>
-                                    <Form.Label>RMSD</Form.Label>
-                                    <Form.Control 
-                                        style={{borderColor: isValidRmsd(selectedRmsd) ? 'grey': 'red'}} 
-                                        size='sm'
-                                        type="number" 
-                                        step={0.1} min={2.5} max={7} defaultValue={4.5} 
-                                        onChange={handleRmsdChange} 
-                                        onKeyDown={(evt) => evt.which == 13 ? evt.preventDefault() : null}/>
+                            <Col style={{justifyContent:'center', alignContent:'center', alignItems:'center', display:'flex'}}>
+                                <Form.Group controlId="rmsdSlider" style={{margin:'0.5rem', width: '100%'}}>
+                                    <BabyGruSlider minVal={2.5} maxVal={7.0} logScale={false} sliderTitle="RMSD" intialValue={4.5} externalValue={selectedRmsd} setExternalValue={setSelectedRmsd}/>
                                 </Form.Group>
                             </Col>
                         </Row>

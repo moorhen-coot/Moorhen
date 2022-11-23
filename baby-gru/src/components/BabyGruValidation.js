@@ -195,7 +195,7 @@ export const BabyGruValidation = (props) => {
             let promises = []
             availableMetrics.forEach(metric => {
                 const inputData = { message:'coot_command', ...metric }
-                promises.push(props.commandCentre.current.cootCommand(inputData)    )
+                promises.push(props.commandCentre.current.cootCommand(inputData))
             })
             let responses = await Promise.all(promises) 
             
