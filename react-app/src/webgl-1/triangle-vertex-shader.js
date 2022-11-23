@@ -1,6 +1,5 @@
 var triangle_vertex_shader_source = `
     // This shader is basic
-    attribute vec3 aVertexOrigin;
     attribute vec3 aVertexPosition;
     attribute vec4 aVertexColour;
     attribute vec3 aVertexNormal;
