@@ -6,36 +6,38 @@ export const BabyGruDisplayObjects = (props) => {
     const [currentDropdownMolNo, setCurrentDropdownMolNo] = useState(-1)
 
     let displayData = [];
-    if (props.molecules.length!=0) {
+    if (props.molecules.length != 0) {
         props.molecules.forEach(molecule => displayData.push(
-            <BabyGruMoleculeCard 
+            <BabyGruMoleculeCard
+                key={molecule.molNo}
                 index={molecule.molNo}
                 molecule={molecule}
                 currentDropdownMolNo={currentDropdownMolNo}
                 setCurrentDropdownMolNo={setCurrentDropdownMolNo}
-                {...props}/>
-            )
+                {...props} />
         )
-    } 
-    
-    if (props.maps.length!=0) {
+        )
+    }
+
+    if (props.maps.length != 0) {
         props.maps.forEach(map => displayData.push(
-            <BabyGruMapCard 
+            <BabyGruMapCard
+                key={map.molNo}
                 index={map.molNo}
-                map={map} 
-                initialContour={0.8} 
-                initialRadius={13} 
-                initialMapLitLines={false} 
+                map={map}
+                initialContour={0.8}
+                initialRadius={13}
+                initialMapLitLines={false}
                 currentDropdownMolNo={currentDropdownMolNo}
                 setCurrentDropdownMolNo={setCurrentDropdownMolNo}
-                {...props}/>
+                {...props} />
         ))
-    }   
+    }
 
-    displayData.sort((a,b) => (a.props.index > b.props.index) ? 1 : ((b.props.index > a.props.index) ? -1 : 0))
+    displayData.sort((a, b) => (a.props.index > b.props.index) ? 1 : ((b.props.index > a.props.index) ? -1 : 0))
 
     return <Fragment>
-                {displayData}
-            </Fragment>
+        {displayData}
+    </Fragment>
 }
 

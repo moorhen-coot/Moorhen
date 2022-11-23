@@ -307,27 +307,27 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
     const createRef = useRef(true)
 
     const panelContent = <>
-        <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="fileOrLibrary" className="mb-3">
+        <Form.Group key="fileOrLibrary" style={{ width: '20rem', margin: '0.5rem' }} controlId="fileOrLibrary" className="mb-3">
             <Form.Label>From file or monomer library</Form.Label>
             <Form.Select value={fileOrLibrary} onChange={(e) => { setFileOrLibrary(e.target.value) }}>
-                <option value="File">From file</option>
-                <option value="Library">From monomer library</option>
+                <option key="File" value="File">From file</option>
+                <option key="Library" value="Library">From monomer library</option>
             </Form.Select>
         </Form.Group>
         {fileOrLibrary === 'File' &&
-            <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="uploadDicts" className="mb-3">
+            <Form.Group key="uploadDicts" style={{ width: '20rem', margin: '0.5rem' }} controlId="uploadDicts" className="mb-3">
                 <Form.Label>Browse...</Form.Label>
                 <Form.Control ref={filesRef} type="file" accept={[".cif", ".dict", ".mmcif"]} multiple={false} />
             </Form.Group>
         }
         {fileOrLibrary === 'Library' &&
-            <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="uploadDicts" className="mb-3">
+            <Form.Group key="tlc" style={{ width: '20rem', margin: '0.5rem' }} controlId="tlc" className="mb-3">
                 <Form.Label>TLC from monomer lib</Form.Label>
                 <Form.Control ref={tlcRef} type="text" />
             </Form.Group>
         }
-        <BabyGruMoleculeSelect {...props} allowAny={true} ref={moleculeSelectRef} label="Make monomer available to" />
-        <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="createInstance" className="mb-3">
+        <BabyGruMoleculeSelect key="moleculeSelectRef" {...props} allowAny={true} ref={moleculeSelectRef} label="Make monomer available to" />
+        <Form.Group key="createInstance" style={{ width: '20rem', margin: '0.5rem' }} controlId="createInstance" className="mb-3">
             <Form.Label>Create instance on read</Form.Label>
             <InputGroup>
                 <SplitButton
@@ -335,18 +335,18 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
                     title={createInstance ? "Yes" : "No"}
                     id="segmented-button-dropdown-1"
                 >
-                    <Dropdown.Item href="#" onClick={() => {
+                    <Dropdown.Item key="Yes" href="#" onClick={() => {
                         createRef.current = true
                         setCreateInstance(true)
                     }}>Yes</Dropdown.Item>
-                    <Dropdown.Item href="#" onClick={() => {
+                    <Dropdown.Item key="No" href="#" onClick={() => {
                         createRef.current = false
                         setCreateInstance(false)
                     }}>No</Dropdown.Item>
                 </SplitButton>
                 <Form.Select style={{ visibility: createInstance ? "visible" : "hidden" }} ref={addToRef}>
-                    <option value={"-1"}>...create new molecule</option>
-                    {props.molecules.map(molecule => <option value={molecule.molNo}>...add to {molecule.name}</option>)}
+                    <option key={-1} value={"-1"}>...create new molecule</option>
+                    {props.molecules.map(molecule => <option key={molecule.molNo} value={molecule.molNo}>...add to {molecule.name}</option>)}
                 </Form.Select>
             </InputGroup>
         </Form.Group>
