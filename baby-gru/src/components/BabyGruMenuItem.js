@@ -356,14 +356,25 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
             command: 'shim_read_dictionary',
             commandArgs: [fileContent, moleculeSelectRef.current.value]
         }, true)
+            .then(_ => {
+                props.molecules.forEach(molecule => {
+                    if (molecule.molNo == parseInt(moleculeSelectRef.current.value) ||
+                        -999999 == parseInt(moleculeSelectRef.current.value)) {
+                        molecule.addDict(fileContent)
+                    }
+                })
+                return Promise.resolve(true)
+            })
             .then(result => {
-                props.molecules
-                    .filter(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
-                    .forEach(molecule => {
+                props.molecules.forEach(molecule => {
+                    if (molecule.molNo == parseInt(moleculeSelectRef.current.value) ||
+                        -999999 == parseInt(moleculeSelectRef.current.value)) {
                         molecule.redraw(props.glRef)
-                    })
+                    }
+                })
                 return Promise.resolve()
-            }).then(result => {
+            })
+            .then(result => {
                 console.log({ createInstance })
                 if (createRef.current) {
                     return props.commandCentre.current.cootCommand({
@@ -379,6 +390,7 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
                                 newMolecule.molNo = result.data.result.result
                                 newMolecule.name = tlc.current.toUpperCase()
                                 newMolecule.cachedAtoms.sequences = []
+                                newMolecule.addDict(fileContent)
                                 props.changeMolecules({ action: "Add", item: newMolecule })
                                 return newMolecule.fetchIfDirtyAndDraw("CBs", props.glRef)
                             }
@@ -585,7 +597,7 @@ export const BabyGruImportFSigFMenuItem = (props) => {
             command: 'shim_associate_data_mtz_file_with_map',
             commandArgs: commandArgs,
             returnType: 'status'
-        }, true).then(result=>{
+        }, true).then(result => {
             console.log('shim_associate_data_mtz_file_with_map result was ', { result })
             const commandArgs = [
                 moleculeSelectRef.current.value,
