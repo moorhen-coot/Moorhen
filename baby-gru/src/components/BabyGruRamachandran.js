@@ -49,10 +49,11 @@ export const BabyGruRamachandran = (props) => {
                 setRamaPlotData(null)
                 return
             }
-            const inputData = { message: "get_rama", molNo: moleculeSelectRef.current.value, chainId: chainSelectRef.current.value }
-            let response = await props.commandCentre.current.postMessage(inputData)
-            setRamaPlotData(response.data.result)
+            const inputData = {message:'coot_command', command:'ramachandran_validation', returnType:'ramachandran_data', commandArgs:[moleculeSelectRef.current.value]}
+            let response = await props.commandCentre.current.cootCommand(inputData)
+            setRamaPlotData(response.data.result.result)
         }
+
         fetchRamaData()
 
     }, [selectedModel, selectedChain])
@@ -96,10 +97,11 @@ export const BabyGruRamachandran = (props) => {
                 setRamaPlotData(null)
                 return
             }
-            const inputData = { message: "get_rama", molNo: moleculeSelectRef.current.value, chainId: chainSelectRef.current.value }
-            let response = await props.commandCentre.current.postMessage(inputData)
-            setRamaPlotData(response.data.result)
+            const inputData = {message:'coot_command', command:'ramachandran_validation', returnType:'ramachandran_data', commandArgs:[moleculeSelectRef.current.value]}
+            let response = await props.commandCentre.current.cootCommand(inputData)
+            setRamaPlotData(response.data.result.result)
         }
+        
         fetchRamaData()
 
     }, [cachedAtoms])

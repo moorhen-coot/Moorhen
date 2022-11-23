@@ -4399,7 +4399,6 @@ class MGWebGL extends Component {
         this.gl.bindAttribLocation(this.shaderProgramThickLines, 0, "aVertexPosition");
         this.gl.bindAttribLocation(this.shaderProgramThickLines, 1, "aVertexColour");
         this.gl.bindAttribLocation(this.shaderProgramThickLines, 2, "aVertexNormal");
-        this.gl.bindAttribLocation(this.shaderProgramThickLines, 3, "aVertexTexture");
         this.gl.linkProgram(this.shaderProgramThickLines);
 
         if (!this.gl.getProgramParameter(this.shaderProgramThickLines, this.gl.LINK_STATUS)) {
@@ -6132,7 +6131,6 @@ class MGWebGL extends Component {
                     } else {
                         return;
                     }
-                    console.log(thickLines);
                     var Normals_new = thickLines["normals"];
                     var RealNormals_new = thickLines["realNormals"];
                     var Vertices_new = thickLines["vertices"];
@@ -6159,8 +6157,8 @@ class MGWebGL extends Component {
                     this.displayBuffers[idx].triangleColourBuffer[j].itemSize = 4;
 
                     this.displayBuffers[idx].triangleVertexIndexBuffer[j].numItems = Indexs_new.length;
-                    this.displayBuffers[idx].triangleVertexNormalBuffer[j].numItems = RealNormals_new.length / 3;
-                    this.displayBuffers[idx].triangleVertexRealNormalBuffer[j].numItems = Normals_new.length / 3;
+                    this.displayBuffers[idx].triangleVertexNormalBuffer[j].numItems = Normals_new.length / 3;
+                    this.displayBuffers[idx].triangleVertexRealNormalBuffer[j].numItems = RealNormals_new.length / 3;
                     this.displayBuffers[idx].triangleVertexPositionBuffer[j].numItems = Vertices_new.length / 3;
                     this.displayBuffers[idx].triangleColourBuffer[j].numItems = Colours_new.length / 4;
 
@@ -6720,8 +6718,9 @@ class MGWebGL extends Component {
         this.drawTriangles(calculatingShadowMap, invMat);
         this.drawImagesAndText(invMat);
         this.drawTransparent(theMatrix);
-        this.drawTextLabels(up, right);
         this.drawClickedAtoms(up, right);
+        this.drawTextLabels(up, right);
+
         this.drawCircles(up, right);
 
         this.myQuat = quat4.clone(oldQuat);
@@ -7986,8 +7985,12 @@ class MGWebGL extends Component {
                 if(theBuffer.textNormals.length===0||theBuffer.atoms.length===0)
                     continue;
 
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, theBuffer.textTexCoordBuffer);
+                this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexTextureAttribute, 2, this.gl.FLOAT, false, 0, 0);
+
                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, theBuffer.textNormalBuffer);
                 this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexNormalAttribute, 3, this.gl.FLOAT, false, 0, 0);
+
                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, theBuffer.textColourBuffer);
                 this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexColourAttribute, 4, this.gl.FLOAT, false, 0, 0);
 

@@ -11,7 +11,7 @@ export default function BabyGruSlider(props) {
         if (props.logScale) {
             return 100 * ((Math.log10(value) - Math.log10(props.minVal)) / ((Math.log10(props.maxVal) - Math.log10(props.minVal))));
         } else {
-            return (100 * value) / props.maxVal;
+            return (100 * (value - props.minVal)) / (props.maxVal - props.minVal);
         }
     }
 
