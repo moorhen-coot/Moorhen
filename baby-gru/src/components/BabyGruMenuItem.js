@@ -331,7 +331,7 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
             <Form.Label>Create instance on read</Form.Label>
             <InputGroup>
                 <SplitButton
-                    variant="outline-secondary"
+                    variant="outline"
                     title={createInstance ? "Yes" : "No"}
                     id="segmented-button-dropdown-1"
                 >
