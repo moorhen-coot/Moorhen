@@ -299,10 +299,16 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
     const filesRef = useRef(null)
     const moleculeSelectRef = useRef(null)
     const tlcRef = useRef(null)
-    const tlc = useRef(null)
+    const [tlc, setTlc] = useState(null)
     const addToRef = useRef(null)
+    const [addToMolecule, setAddToMolecule] = useState(null)
+    const addToMoleculeValue = useRef(null)
     const [fileOrLibrary, setFileOrLibrary] = useState("Library")
+    const fileOrLibraryRef = useRef("Library")
     const [createInstance, setCreateInstance] = useState(true)
+    const [tlcsOfFile, setTlcsOfFile] = useState([])
+    const tlcSelectRef = useRef()
+    const tlcValueRef = useRef(null)
     const createInstanceRef = useRef()
     const createRef = useRef(true)
 
@@ -314,16 +320,41 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
                 <option key="Library" value="Library">From monomer library</option>
             </Form.Select>
         </Form.Group>
-        {fileOrLibrary === 'File' &&
-            <Form.Group key="uploadDicts" style={{ width: '20rem', margin: '0.5rem' }} controlId="uploadDicts" className="mb-3">
+        {fileOrLibrary === 'File' ? <>
+            <Form.Group key="uploadDicts" style={{ width: '20rem', margin: '0.5rem' }} controlId="uploadDicts" className="mb-3"
+                onChange={(e) => {
+                    readTextFile(e.target.files[0])
+                        .then(fileContent => {
+                            const rx = /data_comp_(.*)/g;
+                            const tlcs = [...fileContent.matchAll(rx)]
+                                .map(array => array[1])
+                                .filter(item => item !== 'list')
+                            if (tlcs.length > 0) {
+                                setTlcsOfFile(tlcs)
+                                setTlc(tlcs[0])
+                                tlcValueRef.current = tlcs[0]
+                            }
+                        })
+                }}>
                 <Form.Label>Browse...</Form.Label>
                 <Form.Control ref={filesRef} type="file" accept={[".cif", ".dict", ".mmcif"]} multiple={false} />
             </Form.Group>
-        }
-        {fileOrLibrary === 'Library' &&
+            {createInstance &&
+                <Form.Select ref={tlcSelectRef} value={tlc} onChange={(newVal) => { setTlc(newVal) }}>
+                    {tlcsOfFile.map(tlcOfFile => <option key={tlcOfFile} value={tlcOfFile}
+                    >{tlcOfFile}</option>)}
+                </Form.Select>
+            }
+        </>
+            :
             <Form.Group key="tlc" style={{ width: '20rem', margin: '0.5rem' }} controlId="tlc" className="mb-3">
-                <Form.Label>TLC from monomer lib</Form.Label>
-                <Form.Control ref={tlcRef} type="text" />
+                <Form.Label>Three letter code</Form.Label>
+                <Form.Control ref={tlcRef} value={tlc}
+                    onChange={(e) => {
+                        setTlc(e.target.value)
+                        tlcValueRef.current = e.target.value
+                    }}
+                    type="text" />
             </Form.Group>
         }
         <BabyGruMoleculeSelect key="moleculeSelectRef" {...props} allowAny={true} ref={moleculeSelectRef} label="Make monomer available to" />
@@ -344,15 +375,25 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
                         setCreateInstance(false)
                     }}>No</Dropdown.Item>
                 </SplitButton>
-                <Form.Select style={{ visibility: createInstance ? "visible" : "hidden" }} ref={addToRef}>
+                <Form.Select style={{ visibility: createInstance ? "visible" : "hidden" }} ref={addToRef}
+                    defaultValue={"-1"} value={addToMolecule} onChange={(e) => {
+                        setAddToMolecule(parseInt(e.target.value))
+                        addToMoleculeValue.current = parseInt(e.target.value)
+                    }}>
                     <option key={-1} value={"-1"}>...create new molecule</option>
-                    {props.molecules.map(molecule => <option key={molecule.molNo} value={molecule.molNo}>...add to {molecule.name}</option>)}
+                    {props.molecules.map(molecule => <option key={molecule.molNo} value={molecule.molNo}>
+                        ...add to {molecule.name}
+                    </option>)}
                 </Form.Select>
             </InputGroup>
         </Form.Group>
     </>
 
-    const handleFileContent = useCallback((fileContent) => {
+    useEffect(() => {
+        fileOrLibraryRef.current = fileOrLibrary
+    }, [fileOrLibrary])
+
+    const handleFileContent = useCallback(async (fileContent) => {
         let newMolecule = null
         return props.commandCentre.current.cootCommand({
             returnType: "status",
@@ -381,18 +422,20 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
             .then(result => {
                 console.log({ createInstance })
                 if (createRef.current) {
+                    const instanceName = tlcValueRef.current
+                    console.log({ instanceName })
                     return props.commandCentre.current.cootCommand({
                         returnType: 'status',
                         command: 'get_monomer_and_position_at',
-                        commandArgs: [tlcRef.current.value.toUpperCase(),
-                        moleculeSelectRef.current.value,
-                        ...props.glRef.current.origin.map(coord => -coord)]
+                        commandArgs: [instanceName,
+                            moleculeSelectRef.current.value,
+                            ...props.glRef.current.origin.map(coord => -coord)]
                     }, true)
                         .then(result => {
                             if (result.data.result.status === "Completed") {
                                 newMolecule = new BabyGruMolecule(props.commandCentre)
                                 newMolecule.molNo = result.data.result.result
-                                newMolecule.name = tlc.current.toUpperCase()
+                                newMolecule.name = instanceName
                                 newMolecule.cachedAtoms.sequences = []
                                 newMolecule.addDict(fileContent)
                                 props.changeMolecules({ action: "Add", item: newMolecule })
@@ -408,37 +451,44 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
                 console.log('Instance created', { result, newMolecule })
                 if (newMolecule) {
                     //Here if instance created
-                    if (parseInt(addToRef.current.value) !== -1) {
+                    console.log({ addToMoleculeValue: addToMoleculeValue.current })
+                    if (addToMoleculeValue.current !== -1) {
                         const toMolecule = props.molecules
-                            .filter(molecule => molecule.molNo === parseInt(addToRef.current.value))[0]
+                            .filter(molecule => molecule.molNo === addToMoleculeValue.current)[0]
+                        props.setPopoverIsShown(false)
                         const otherMolecules = [newMolecule]
                         return toMolecule.mergeMolecules(otherMolecules, props.glRef, true)
-                            .then(_ => { return toMolecule.redraw(props.glRef) })
+                            .then(_ => {
+                                return toMolecule.redraw(props.glRef)
+                            })
+                    }
+                    else {
+                        props.setPopoverIsShown(false)
                     }
                 }
                 console.log('After create instance', { result })
             })
-    }, [moleculeSelectRef.current, props.molecules, tlcRef, addToRef, createInstance])
+    }, [moleculeSelectRef.current, props.molecules, tlcRef, tlc, addToRef, createInstance])
 
     const readMmcifFile = async (file) => {
         return readTextFile(file)
             .then(fileContent => {
-                handleFileContent(fileContent)
+                return handleFileContent(fileContent)
             })
     }
 
     const readMonomerFile = async (newTlc) => {
-        tlc.current = newTlc
         console.log({ newTlc })
         return fetch(`/baby-gru/monomers/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`)
             .then(response => response.text())
             .then(fileContent => {
-                handleFileContent(fileContent)
+                return handleFileContent(fileContent)
             })
     }
 
-    const onCompleted = async () => {
-        if (fileOrLibrary === "File") {
+    const onCompleted = useCallback(async () => {
+        console.log({ fileOrLibrary, ref: fileOrLibraryRef.current })
+        if (fileOrLibraryRef.current === "File") {
             let readPromises = []
             for (const file of filesRef.current.files) {
                 readPromises.push(readMmcifFile(file))
@@ -448,8 +498,7 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
         else {
             readMonomerFile(tlcRef.current.value)
         }
-        props.setPopoverIsShown(false)
-    }
+    }, [fileOrLibrary])
 
     return <BabyGruMenuItem
         popoverContent={panelContent}
