@@ -27,6 +27,7 @@ export function BabyGruMolecule(commandCentre) {
         rotamer: [],
         CBs: [],
         hover: [],
+        ligands: [],
         transformation: { origin: [0, 0, 0], quat: null, centre: [0, 0, 0] }
     }
 };
@@ -201,10 +202,10 @@ BabyGruMolecule.prototype.drawWithStyleFromAtoms = async function (style, glRef,
             this.drawRibbons(webMGAtoms, glRef)
             break;
         case 'bonds':
-            this.drawBonds(webMGAtoms, glRef, 0)
+            this.drawBonds(webMGAtoms, glRef, this.molNo)
             break;
         case 'sticks':
-            this.drawSticks(webMGAtoms, glRef, 0)
+            this.drawSticks(webMGAtoms, glRef, this.molNo)
             break;
         case 'rama':
             this.drawRamachandranBalls(glRef)
@@ -214,6 +215,9 @@ BabyGruMolecule.prototype.drawWithStyleFromAtoms = async function (style, glRef,
             break;
         case 'CBs':
             await this.drawCootBonds(webMGAtoms, glRef)
+            break;
+        case 'ligands':
+            this.drawLigands(webMGAtoms, glRef, this.molNo)
             break;
         default:
             break;
@@ -231,7 +235,7 @@ BabyGruMolecule.prototype.addBuffersOfStyle = function (glRef, objects, style) {
     glRef.current.drawScene();
 }
 
-BabyGruMolecule.prototype.drawRamachandranBalls = function (gl) {
+BabyGruMolecule.prototype.drawRamachandranBalls = function (glRef) {
     const $this = this
     const style = "rama"
     return this.commandCentre.current.cootCommand({
@@ -241,12 +245,12 @@ BabyGruMolecule.prototype.drawRamachandranBalls = function (gl) {
     }).then(response => {
         const objects = [response.data.result.result]
         //Empty existing buffers of this type
-        this.clearBuffersOfStyle(style, gl)
-        this.addBuffersOfStyle(gl, objects, style)
+        this.clearBuffersOfStyle(style, glRef)
+        this.addBuffersOfStyle(glRef, objects, style)
     })
 }
 
-BabyGruMolecule.prototype.drawRotamerDodecahedra = function (gl) {
+BabyGruMolecule.prototype.drawRotamerDodecahedra = function (glRef) {
     const $this = this
     const style = "rotamer"
     return this.commandCentre.current.cootCommand({
@@ -257,8 +261,8 @@ BabyGruMolecule.prototype.drawRotamerDodecahedra = function (gl) {
         const objects = [response.data.result.result]
 
         //Empty existing buffers of this type
-        this.clearBuffersOfStyle(style, gl)
-        this.addBuffersOfStyle(gl, objects, style)
+        this.clearBuffersOfStyle(style, glRef)
+        this.addBuffersOfStyle(glRef, objects, style)
     })
 }
 
@@ -271,24 +275,29 @@ BabyGruMolecule.prototype.drawCootBonds = async function (webMGAtoms, glRef) {
         commandArgs: [$this.molNo, "COLOUR-BY-CHAIN-AND-DICTIONARY"]
     }).then(response => {
         const objects = [response.data.result.result]
+        console.log('drawCootBonds', { result: response.data.result })
         if (objects.length > 0) {
-            //console.log('atoms are ', webMGAtoms)
-            let bufferAtoms = []
-            webMGAtoms.atoms[0].getAllAtoms().forEach(at1 => {
-                let atom = {};
-                atom["x"] = at1.x();
-                atom["y"] = at1.y();
-                atom["z"] = at1.z();
-                atom["tempFactor"] = at1["_atom_site.B_iso_or_equiv"];
-                atom["charge"] = at1["_atom_site.pdbx_formal_charge"];
-                atom["symbol"] = at1["_atom_site.type_symbol"];
-                atom["label"] = at1.getAtomID();
-                bufferAtoms.push(atom);
-            })
             //Empty existing buffers of this type
             this.clearBuffersOfStyle(style, glRef)
             this.addBuffersOfStyle(glRef, objects, style)
-            this.displayObjects[style][0].atoms = bufferAtoms
+            if (webMGAtoms.atoms.length > 0){
+                let bufferAtoms = []
+                webMGAtoms.atoms[0].getAllAtoms().forEach(at1 => {
+                    let atom = {};
+                    atom["x"] = at1.x();
+                    atom["y"] = at1.y();
+                    atom["z"] = at1.z();
+                    atom["tempFactor"] = at1["_atom_site.B_iso_or_equiv"];
+                    atom["charge"] = at1["_atom_site.pdbx_formal_charge"];
+                    atom["symbol"] = at1["_atom_site.type_symbol"];
+                    atom["label"] = at1.getAtomID();
+                    bufferAtoms.push(atom);
+                    this.displayObjects[style][0].atoms = bufferAtoms
+                })    
+            }
+        }
+        else {
+            this.clearBuffersOfStyle(style, glRef)
         }
         return Promise.resolve(true)
     })
@@ -410,6 +419,40 @@ BabyGruMolecule.prototype.drawBonds = function (webMGAtoms, glRef, colourSchemeI
     //console.log('clearing', style, gl)
     $this.clearBuffersOfStyle(style, glRef)
     this.addBuffersOfStyle(glRef, objects, style)
+}
+
+BabyGruMolecule.prototype.drawLigands = function (webMGAtoms, glRef, colourSchemeIndex) {
+    const $this = this
+    if (typeof webMGAtoms["atoms"] === 'undefined') return;
+
+    let ligandAtoms = webMGAtoms.atoms[0].getAtoms("ligands");
+    const colourScheme = new ColourScheme(webMGAtoms);
+    var atomColours = colourScheme.colourByChain({
+        "nonCByAtomType": true,
+        'C': colourScheme.order_colours[colourSchemeIndex % colourScheme.order_colours.length]
+    });
+
+    const objects = []
+    var contactsAndSingletons = webMGAtoms.atoms[0].getBondsContactsAndSingletons();
+    var contacts = contactsAndSingletons["contacts"];
+    var linePrimitiveInfo = contactsToCylindersInfo(contacts, 0.15, atomColours);
+    objects.push(linePrimitiveInfo)
+
+    //console.log("Time to get ligands atoms: "+(new Date().getTime()-start));
+    ligandAtoms = webMGAtoms.atoms[0].getAtoms("ligands");
+    const multipleBonds = getMultipleBonds(ligandAtoms, $this.enerLib, 0.15, atomColours);
+    //console.log("Time to get ligands multiple bonds: "+(new Date().getTime()-start));
+    objects = objects.concat(multipleBonds)
+    console.log({ objects })
+    //console.log("Time to get ligands bonds objects: "+(new Date().getTime()-start));
+    const spheres = atomsToSpheresInfo(ligandAtoms, 0.4, atomColours);
+    //console.log("Time to get ligands spheres: "+(new Date().getTime()-start));
+    objects.push(spheres);
+    //console.log("Time to get ligands objects: "+(new Date().getTime()-start));
+    console.log({ objects })
+    $this.clearBuffersOfStyle("ligands", glRef)
+    $this.addBuffersOfStyle(glRef, objects, "ligands")
+
 }
 
 BabyGruMolecule.prototype.drawHover = function (glRef, selectionString) {
@@ -671,4 +714,37 @@ BabyGruMolecule.prototype.addLigandOfType = async function (resType, at, glRef) 
                 return Promise.resolve(false)
             }
         })
+}
+
+BabyGruMolecule.prototype.addDictShim = function (comp_id, unindentedLines) {
+    var $this = this
+    console.log({ comp_id, unindentedLines })
+    var reassembledCif = unindentedLines.join("\n")
+    $this.enerLib.addCIFAtomTypes(comp_id, reassembledCif);
+    $this.enerLib.addCIFBondTypes(comp_id, reassembledCif);
+}
+
+BabyGruMolecule.prototype.addDict = function (theData) {
+    var $this = this
+    console.log('In addDict', theData)
+    var possibleIndentedLines = theData.split("\n");
+    var unindentedLines = []
+    var comp_id = 'list'
+    var rx = /data_comp_(.*)/;
+    for (var line of possibleIndentedLines) {
+        var trimmedLine = line.trim()
+        var arr = rx.exec(trimmedLine);
+        if (arr !== null) {
+            //Had we encountered a previous compound ?  If so, add it into the energy lib
+            if (comp_id !== 'list') {
+                $this.addDictShim(comp_id, unindentedLines)
+                unindentedLines = []
+            }
+            comp_id = arr[1]
+        }
+        unindentedLines.push(line.trim())
+    }
+    if (comp_id !== 'list') {
+        $this.addDictShim(comp_id, unindentedLines)
+    }
 }
