@@ -30,7 +30,8 @@ export const babyGruKeyPress = (event, collectedProps) => {
         commandCentre.current.cootCommand({
             returnType: "status",
             command: "refine_residues_using_atom_cid",
-            commandArgs: commandArgs
+            commandArgs: commandArgs,
+            changesMolecules:[hoveredAtom.molecule.molNo]
         }, true).then(_ => {
             apresEdit(hoveredAtom.molecule, glRef, setHoveredAtom)
         })
@@ -46,7 +47,8 @@ export const babyGruKeyPress = (event, collectedProps) => {
         commandCentre.current.cootCommand({
             returnType: "status",
             command: "flipPeptide_cid",
-            commandArgs: commandArgs
+            commandArgs: commandArgs,
+            changesMolecules:[hoveredAtom.molecule.molNo]
         }, true).then(_ => {
             apresEdit(hoveredAtom.molecule, glRef, setHoveredAtom)
         })
@@ -62,7 +64,8 @@ export const babyGruKeyPress = (event, collectedProps) => {
         commandCentre.current.cootCommand({
             returnType: "status",
             command: "refine_residues_using_atom_cid",
-            commandArgs: commandArgs
+            commandArgs: commandArgs,
+            changesMolecules:[hoveredAtom.molecule.molNo]
         }, true).then(_ => {
             apresEdit(hoveredAtom.molecule, glRef, setHoveredAtom)
         })
@@ -81,7 +84,8 @@ export const babyGruKeyPress = (event, collectedProps) => {
         commandCentre.current.cootCommand({
             returnType: "status",
             command: "auto_fit_rotamer",
-            commandArgs: commandArgs
+            commandArgs: commandArgs,
+            changesMolecules:[hoveredAtom.molecule.molNo]
         }, true).then(_ => {
             apresEdit(hoveredAtom.molecule, glRef, setHoveredAtom)
         })
@@ -95,7 +99,8 @@ export const babyGruKeyPress = (event, collectedProps) => {
         commandCentre.current.cootCommand({
             returnType: "status",
             command: "add_terminal_residue_directly_using_cid",
-            commandArgs: commandArgs
+            commandArgs: commandArgs,
+            changesMolecules:[hoveredAtom.molecule.molNo]
         }, true).then(_ => {
             apresEdit(hoveredAtom.molecule, glRef, setHoveredAtom)
         })
@@ -112,7 +117,8 @@ export const babyGruKeyPress = (event, collectedProps) => {
         commandCentre.current.cootCommand({
             returnType: "status",
             command: "delete_using_cid",
-            commandArgs: commandArgs
+            commandArgs: commandArgs,
+            changesMolecules:[hoveredAtom.molecule.molNo]
         }, true).then(_ => {
             apresEdit(hoveredAtom.molecule, glRef, setHoveredAtom)
         })
@@ -125,7 +131,8 @@ export const babyGruKeyPress = (event, collectedProps) => {
         commandCentre.current.cootCommand({
             returnType: "status",
             command: "eigen_flip_ligand",
-            commandArgs: commandArgs
+            commandArgs: commandArgs,
+            changesMolecules:[hoveredAtom.molecule.molNo]
         }, true).then(_ => {
             apresEdit(hoveredAtom.molecule, glRef, setHoveredAtom)
         })

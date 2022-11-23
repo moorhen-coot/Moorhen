@@ -73,53 +73,50 @@ BabyGruMolecule.prototype.loadToCootFromFile = function (source) {
     const $this = this
     const pdbRegex = /.pdb$/;
     const entRegex = /.ent$/;
-    return new Promise((resolve, reject) => {
-        return readTextFile(source)
-            .then(coordData => {
-                $this.name = source.name.replace(pdbRegex, "").replace(entRegex, "");
-                $this.cachedAtoms = $this.webMGAtomsFromFileString(coordData)
-                $this.atomsDirty = false
-                this.commandCentre.current.cootCommand({
-                    returnType: "status",
-                    command: 'shim_read_pdb',
-                    commandArgs: [coordData, $this.name]
-                })
-                    .then(reply => {
-                        $this.molNo = reply.data.result.result
-                        resolve($this)
-                    })
-            })
-    })
+    return readTextFile(source)
+        .then(coordData => {
+            $this.name = source.name.replace(pdbRegex, "").replace(entRegex, "");
+            $this.cachedAtoms = $this.webMGAtomsFromFileString(coordData)
+            $this.atomsDirty = false
+            return this.commandCentre.current.cootCommand({
+                returnType: "status",
+                command: 'shim_read_pdb',
+                commandArgs: [coordData, $this.name],
+                changesMolecules: [$this.molNo]
+            }, true)
+        })
+        .then(reply => {
+            $this.molNo = reply.data.result.result
+            return Promise.resolve($this)
+        })
 }
+
 BabyGruMolecule.prototype.setAtomsDirty = function (state) {
     this.atomsDirty = state
 }
 
 BabyGruMolecule.prototype.loadToCootFromURL = function (url, molName) {
     const $this = this
-    return new Promise((resolve, reject) => {
-        //console.log('Off to fetch url', url)
-        //Remember to change this to an appropriate URL for downloads in produciton, and to deal with the consequent CORS headache
-        return fetch(url)
-            .then(response => {
-                return response.text()
-            }).then((coordData) => {
-                $this.name = molName
-                $this.cachedAtoms = $this.webMGAtomsFromFileString(coordData)
-                $this.atomsDirty = false
+    //console.log('Off to fetch url', url)
+    //Remember to change this to an appropriate URL for downloads in produciton, and to deal with the consequent CORS headache
+    return fetch(url)
+        .then(response => {
+            return response.text()
+        }).then((coordData) => {
+            $this.name = molName
+            $this.cachedAtoms = $this.webMGAtomsFromFileString(coordData)
+            $this.atomsDirty = false
 
-                return this.commandCentre.current.cootCommand({
-                    returnType: "status",
-                    command: 'shim_read_pdb',
-                    commandArgs: [coordData, $this.name]
-                })
-                    .then(reply => {
-                        $this.molNo = reply.data.result.result
-                        resolve($this)
-                    })
-            })
-            .catch((err) => { console.log(err) })
-    })
+            return this.commandCentre.current.cootCommand({
+                returnType: "status",
+                command: 'shim_read_pdb',
+                commandArgs: [coordData, $this.name]
+            }, true)
+        }).then(reply => {
+            $this.molNo = reply.data.result.result
+            return Promise.resolve($this)
+        })
+        .catch((err) => { console.log(err) })
 }
 
 BabyGruMolecule.prototype.getAtoms = function () {
@@ -259,7 +256,7 @@ BabyGruMolecule.prototype.drawRotamerDodecahedra = function (glRef) {
         commandArgs: [$this.molNo]
     }).then(response => {
         const objects = [response.data.result.result]
-
+        //console.log('rota', { objects })
         //Empty existing buffers of this type
         this.clearBuffersOfStyle(style, glRef)
         this.addBuffersOfStyle(glRef, objects, style)
@@ -275,12 +272,12 @@ BabyGruMolecule.prototype.drawCootBonds = async function (webMGAtoms, glRef) {
         commandArgs: [$this.molNo, "COLOUR-BY-CHAIN-AND-DICTIONARY"]
     }).then(response => {
         const objects = [response.data.result.result]
-        console.log('drawCootBonds', { result: response.data.result })
+        //console.log('drawCootBonds', { result: response.data.result })
         if (objects.length > 0) {
             //Empty existing buffers of this type
             this.clearBuffersOfStyle(style, glRef)
             this.addBuffersOfStyle(glRef, objects, style)
-            if (webMGAtoms.atoms.length > 0){
+            if (webMGAtoms.atoms.length > 0) {
                 let bufferAtoms = []
                 webMGAtoms.atoms[0].getAllAtoms().forEach(at1 => {
                     let atom = {};
@@ -293,7 +290,7 @@ BabyGruMolecule.prototype.drawCootBonds = async function (webMGAtoms, glRef) {
                     atom["label"] = at1.getAtomID();
                     bufferAtoms.push(atom);
                     this.displayObjects[style][0].atoms = bufferAtoms
-                })    
+                })
             }
         }
         else {
@@ -652,7 +649,8 @@ BabyGruMolecule.prototype.updateWithMovedAtoms = async function (movedResidues, 
     return $this.commandCentre.current.cootCommand({
         returnType: "status",
         command: "shim_new_positions_for_residue_atoms",
-        commandArgs: [$this.molNo, movedResidues]
+        commandArgs: [$this.molNo, movedResidues],
+        changesMolecules: [$this.molNo]
     }).then(response => {
         $this.displayObjects.transformation.origin = [0, 0, 0]
         $this.displayObjects.transformation.quat = null
@@ -675,7 +673,8 @@ BabyGruMolecule.prototype.mergeMolecules = async function (otherMolecules, glRef
     return $this.commandCentre.current.cootCommand({
         command: 'merge_molecules',
         commandArgs: [$this.molNo, `${otherMolecules.map(molecule => molecule.molNo).join(':')}`],
-        returnType: "merge_molecules_return"
+        returnType: "merge_molecules_return",
+        changesMolecules: [$this.molNo]
     }, true).then(async result => {
         //console.log("Merge molecule result", { result })
         $this.setAtomsDirty(true)
@@ -718,7 +717,7 @@ BabyGruMolecule.prototype.addLigandOfType = async function (resType, at, glRef) 
 
 BabyGruMolecule.prototype.addDictShim = function (comp_id, unindentedLines) {
     var $this = this
-    console.log({ comp_id, unindentedLines })
+    //console.log({ comp_id, unindentedLines })
     var reassembledCif = unindentedLines.join("\n")
     $this.enerLib.addCIFAtomTypes(comp_id, reassembledCif);
     $this.enerLib.addCIFBondTypes(comp_id, reassembledCif);
@@ -726,7 +725,7 @@ BabyGruMolecule.prototype.addDictShim = function (comp_id, unindentedLines) {
 
 BabyGruMolecule.prototype.addDict = function (theData) {
     var $this = this
-    console.log('In addDict', theData)
+    //console.log('In addDict', theData)
     var possibleIndentedLines = theData.split("\n");
     var unindentedLines = []
     var comp_id = 'list'
@@ -747,4 +746,26 @@ BabyGruMolecule.prototype.addDict = function (theData) {
     if (comp_id !== 'list') {
         $this.addDictShim(comp_id, unindentedLines)
     }
+}
+
+BabyGruMolecule.prototype.undo = async function (glRef) {
+    const $this = this
+    await $this.commandCentre.current.cootCommand({
+        returnType: "status",
+        command: "undo",
+        commandArgs: [$this.molNo]
+    })
+    $this.setAtomsDirty(true)
+    return $this.redraw(glRef)
+}
+
+BabyGruMolecule.prototype.redo = async function (glRef) {
+    const $this = this
+    await $this.commandCentre.current.cootCommand({
+        returnType: "status",
+        command: "redo",
+        commandArgs: [$this.molNo]
+    })
+    $this.setAtomsDirty(true)
+    return $this.redraw(glRef)
 }

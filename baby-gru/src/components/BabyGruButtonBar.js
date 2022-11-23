@@ -16,7 +16,7 @@ export const BabyGruButtonBar = (props) => {
                 ${255 * props.backgroundColor[2]}, 
                 ${props.backgroundColor[3]})`,
         }}>
-        <ButtonGroup horizontal>
+        <ButtonGroup>
 
             <BabyGruAutofitRotamerButton {...props} selectedButtonIndex={selectedButtonIndex}
                 setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="0" />
@@ -83,7 +83,7 @@ export const BabyGruSimpleEditButton = forwardRef((props, buttonRef) => {
             console.log('Testing molecule ', molecule.molNo)
             try {
                 if (molecule.buffersInclude(event.detail.buffer)) {
-                    console.log('Succeeded')
+                    //console.log('Succeeded')
                     props.setCursorStyle("default")
                     const chosenAtom = cidToSpec(event.detail.atom.label)
                     let formattedArgs = props.formatArgs(molecule, chosenAtom, localParameters)
@@ -92,10 +92,12 @@ export const BabyGruSimpleEditButton = forwardRef((props, buttonRef) => {
                         props.commandCentre.current.cootCommand({
                             returnType: "status",
                             command: props.cootCommand,
-                            commandArgs: formattedArgs
+                            commandArgs: formattedArgs,
+                            changesMolecules: props.changesMolecule ? [molecule.molNo] : []
                         }, true).then(_ => {
                             molecule.setAtomsDirty(true)
                             molecule.redraw(props.glRef)
+                            //Here use originChanged event to force recontour (relevant for live updating maps)
                             const originChangedEvent = new CustomEvent("originChanged",
                                 { "detail": props.glRef.current.origin });
                             document.dispatchEvent(originChangedEvent);
@@ -164,8 +166,8 @@ export const BabyGruSimpleEditButton = forwardRef((props, buttonRef) => {
 })
 BabyGruSimpleEditButton.defaultProps = {
     toolTip: "", setCursorStyle: () => { },
-    needsAtomData: true,
-    setSelectedButtonIndex: () => { }, selectedButtonIndex: 0, prompt: null, awaitAtomClick: true
+    needsAtomData: true, setSelectedButtonIndex: () => { }, selectedButtonIndex: 0, prompt: null,
+    awaitAtomClick: true, changesMolecule: true
 }
 
 

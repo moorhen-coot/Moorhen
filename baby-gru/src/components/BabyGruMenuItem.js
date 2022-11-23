@@ -130,7 +130,10 @@ export const BabyGruGetMonomerMenuItem = (props) => {
         props.commandCentre.current.cootCommand({
             returnType: 'status',
             command: 'get_monomer_and_position_at',
-            commandArgs: [tlcRef.current.value, selectRef.current.value, ...props.glRef.current.origin.map(coord => -coord)]
+            commandArgs: [tlcRef.current.value,
+            selectRef.current.value,
+            ...props.glRef.current.origin.map(coord => -coord)
+            ]
 
         }, true)
             .then(result => {
@@ -354,7 +357,8 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
         return props.commandCentre.current.cootCommand({
             returnType: "status",
             command: 'shim_read_dictionary',
-            commandArgs: [fileContent, moleculeSelectRef.current.value]
+            commandArgs: [fileContent, moleculeSelectRef.current.value],
+            changesMolecules: []
         }, true)
             .then(_ => {
                 props.molecules.forEach(molecule => {
@@ -598,7 +602,6 @@ export const BabyGruImportFSigFMenuItem = (props) => {
             commandArgs: commandArgs,
             returnType: 'status'
         }, true).then(result => {
-            console.log('shim_associate_data_mtz_file_with_map result was ', { result })
             const commandArgs = [
                 moleculeSelectRef.current.value,
                 mapSelectRef.current.value,
@@ -851,7 +854,8 @@ export const BabyGruAddWatersMenuItem = (props) => {
         return props.commandCentre.current.cootCommand({
             command: 'add_waters',
             commandArgs: [parseInt(molNo.current), props.activeMap.molNo],
-            returnType: "status"
+            returnType: "status",
+            changesMolecules: [parseInt(molNo.current)]
         }, true).then(result => {
             props.molecules
                 .filter(molecule => molecule.molNo == molNo.current)

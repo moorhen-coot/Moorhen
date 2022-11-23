@@ -4,15 +4,15 @@ import { v4 as uuidv4 } from 'uuid';
 
 export function sequenceIsValid(sequence) {
     // If no sequence is present
-    if (!sequence || sequence.length === 0){
+    if (!sequence || sequence.length === 0) {
         return false
     }
     // If any residue doesn't have rigth attributes
-    if (sequence.some(residue => !Object.keys(residue).includes('resNum') || !Object.keys(residue).includes('resCode'))){
+    if (sequence.some(residue => !Object.keys(residue).includes('resNum') || !Object.keys(residue).includes('resCode'))) {
         return false
     }
     // If any of the residues has undefined or Nan as the residue code or residue number
-    if (sequence.some(residue => residue.resNum === null || typeof residue.resNum === 'undefined' || residue.resCode === null || typeof residue.resCode === 'undefined')){
+    if (sequence.some(residue => residue.resNum === null || typeof residue.resNum === 'undefined' || residue.resCode === null || typeof residue.resCode === 'undefined')) {
         return false
     }
     return true
@@ -26,31 +26,33 @@ export function convertViewtoPx(input, height) {
     return height * (input / 100)
 }
 
-export const residueCodesOneToThree = {'C': 'CYS',
-'D': 'ASP',
-'S': 'SER',
-'Q': 'GLN',
-'K': 'LYS',
-'I': 'ILE',
-'P': 'PRO',
-'T': 'THR',
-'F': 'PHE',
-'N': 'ASN',
-'G': 'GLY',
-'H': 'HIS',
-'L': 'LEU',
-'R': 'ARG',
-'W': 'TRP',
-'A': 'ALA',
-'V': 'VAL',
-'E': 'GLU',
-'Y': 'TYR',
-'M': 'MET',
-'UNK': 'UNKOWN',
-'-': 'MISSING'
+export const residueCodesOneToThree = {
+    'C': 'CYS',
+    'D': 'ASP',
+    'S': 'SER',
+    'Q': 'GLN',
+    'K': 'LYS',
+    'I': 'ILE',
+    'P': 'PRO',
+    'T': 'THR',
+    'F': 'PHE',
+    'N': 'ASN',
+    'G': 'GLY',
+    'H': 'HIS',
+    'L': 'LEU',
+    'R': 'ARG',
+    'W': 'TRP',
+    'A': 'ALA',
+    'V': 'VAL',
+    'E': 'GLU',
+    'Y': 'TYR',
+    'M': 'MET',
+    'UNK': 'UNKOWN',
+    '-': 'MISSING'
 }
 
-export const nucleotideCodesOneToThree = {"A": "A",
+export const nucleotideCodesOneToThree = {
+    "A": "A",
     "T": "T",
     "G": "G",
     "C": "C",
@@ -145,7 +147,6 @@ export const doDownloadText = (text, filename) => {
 
 export const BabyGruCommandCentre = class {
     banana = 12
-    commands = []
     consoleMessage = ""
     activeMessages = []
 
@@ -158,7 +159,7 @@ export const BabyGruCommandCentre = class {
         this.cootWorker = new Worker('/baby-gru/CootWorker.js')
         this.cootWorker.onmessage = this.handleMessage.bind(this)
         this.postMessage({ message: 'CootInitialize', data: {} })
-            .then(reply => { 
+            .then(reply => {
                 if (this.onCootInitialized) this.onCootInitialized()
             })
     }
@@ -205,8 +206,8 @@ export const BabyGruCommandCentre = class {
         }
         const message = "coot_command"
         const returnType = kwargs.returnType
-        this.commands.push(kwargs)
         if (this.onNewCommand && doJournal) {
+            console.log('In cootCommand', kwargs.command)
             this.onNewCommand(kwargs)
         }
         return this.postMessage({ message, returnType, ...kwargs })

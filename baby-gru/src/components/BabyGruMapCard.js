@@ -42,26 +42,26 @@ export const BabyGruMapCard = (props) => {
     const actionButtons = {
         1: {
             label: cootContour ? "Hide map" : "Show map", 
-            compressed: () => {return (<MenuItem variant="success" onClick={handleVisibility}>{cootContour ? "Hide map" : "Show map"}</MenuItem>)},
+            compressed: () => {return (<MenuItem key={1} variant="success" onClick={handleVisibility}>{cootContour ? "Hide map" : "Show map"}</MenuItem>)},
             expanded: () => {return (<Button size="sm" variant="outlined" onClick={handleVisibility}>
                                         {cootContour ? <VisibilityOffOutlined /> : <VisibilityOutlined />}
                                     </Button>)},
         },
         2: {
             label: "Download Map", 
-            compressed: () => {return (<MenuItem variant="success" onClick={handleDownload}>Download map</MenuItem>)},
+            compressed: () => {return (<MenuItem key={2} variant="success" onClick={handleDownload}>Download map</MenuItem>)},
             expanded:  () => {return (<Button size="sm" variant="outlined" onClick={handleDownload}>
                                         <DownloadOutlined />
                                       </Button> )},
         },
         3: {
             label: mapLitLines ? "Deactivate lit lines" : "Activate lit lines",
-            compressed: () => {return (<MenuItem variant="success" disabled={!cootContour}  onClick={handleLitLines}>{mapLitLines ? "Deactivate lit lines" : "Activate lit lines"}</MenuItem>)},
+            compressed: () => {return (<MenuItem key={3} variant="success" disabled={!cootContour}  onClick={handleLitLines}>{mapLitLines ? "Deactivate lit lines" : "Activate lit lines"}</MenuItem>)},
             expanded: null
         },
         4: {
             label: 'Rename map',
-            compressed: () => {return (<BabyGruRenameDisplayObjectMenuItem setPopoverIsShown={setPopoverIsShown} setCurrentName={setCurrentName} item={props.map} />)},
+            compressed: () => {return (<BabyGruRenameDisplayObjectMenuItem key={4} setPopoverIsShown={setPopoverIsShown} setCurrentName={setCurrentName} item={props.map} />)},
             expanded: null
         }
     }

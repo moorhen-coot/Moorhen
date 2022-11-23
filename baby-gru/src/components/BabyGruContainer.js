@@ -10,18 +10,12 @@ import { BabyGruFileMenu } from './BabyGruFileMenu';
 import { BabyGruPreferencesMenu } from './BabyGruPreferencesMenu';
 import { ArrowBackIosOutlined, ArrowForwardIosOutlined } from '@mui/icons-material';
 import './BabyGruContainer.css'
-import { BabyGruHistoryMenu } from './BabyGruHistoryMenu';
+import { BabyGruHistoryMenu, historyReducer, initialHistoryState } from './BabyGruHistoryMenu';
 import { BabyGruViewMenu } from './BabyGruViewMenu';
 import { BabyGruLigandMenu } from './BabyGruLigandMenu';
 import { BabyGruToolsAccordion } from './BabyGruToolsAccordion'
 import { PreferencesContext } from "../utils/BabyGruPreferences";
 import { babyGruKeyPress } from './BabyGruKeyboardAccelerators';
-
-const initialHistoryState = { commands: [] }
-
-const historyReducer = (oldHistory, newCommand) => {
-    return { commands: [...oldHistory.commands, newCommand] }
-}
 
 const initialMoleculesState = []
 
@@ -129,7 +123,7 @@ export const BabyGruContainer = (props) => {
                 setBusy(newActiveMessages.length !== 0)
             },
             onNewCommand: (newCommand) => {
-                dispatchHistoryReducer(newCommand)
+                dispatchHistoryReducer({ action: "add", command: newCommand })
             },
             onCootInitialized: () => {
                 //console.log('Being notified of coot initialized')
@@ -265,12 +259,12 @@ export const BabyGruContainer = (props) => {
     const collectedProps = {
         molecules, changeMolecules, appTitle, setAppTitle, maps, changeMaps, glRef, activeMolecule, setActiveMolecule,
         activeMap, setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor, sideBarWidth,
-        navBarRef, currentDropdownId, setCurrentDropdownId, hoveredAtom, toastContent, setToastContent, showToast, setShowToast, 
+        navBarRef, currentDropdownId, setCurrentDropdownId, hoveredAtom, setHoveredAtom, toastContent, setToastContent, showToast, setShowToast,
         ...preferences
     }
 
     const accordionToolsItemProps = {
-        molecules, commandCentre, glRef, toolAccordionBodyHeight, sideBarWidth, windowHeight, windowWidth,maps, showSideBar, ...preferences
+        molecules, commandCentre, glRef, toolAccordionBodyHeight, sideBarWidth, windowHeight, windowWidth, maps, showSideBar, ...preferences
     }
 
     return <> <div className={`border ${theme}`} ref={headerRef}>
@@ -288,7 +282,7 @@ export const BabyGruContainer = (props) => {
                 </Nav>
             </Navbar.Collapse>
             <Nav className="justify-content-right">
-                {hoveredAtom.cid && <Form.Control style={{ width: "20rem" }} type="text" value={`${hoveredAtom.molecule.name}:${hoveredAtom.cid}`} />}
+                {hoveredAtom.cid && <Form.Control style={{ width: "20rem" }} type="text" readOnly={true} value={`${hoveredAtom.molecule.name}:${hoveredAtom.cid}`} />}
                 {busy && <Spinner animation="border" style={{ marginRight: '0.5rem' }} />}
                 <Button className="baby-gru-sidebar-button" style={{ height: '100%', backgroundColor: preferences.darkMode ? '#222' : 'white', border: 0 }} onClick={() => { setShowSideBar(!showSideBar) }}>
                     {showSideBar ? <ArrowForwardIosOutlined style={{ color: preferences.darkMode ? 'white' : 'black' }} /> : <ArrowBackIosOutlined style={{ color: preferences.darkMode ? 'white' : 'black' }} />}

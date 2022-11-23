@@ -83,24 +83,12 @@ export const BabyGruMoleculeCard = (props) => {
     }
 
     const handleUndo = async () => {
-        await props.commandCentre.current.cootCommand({
-            returnType: "status",
-            command: "undo",
-            commandArgs: [props.molecule.molNo]
-        })
-        props.molecule.setAtomsDirty(true)
-        props.molecule.redraw(props.glRef)
+        await props.molecule.undo(props.glRef)
         props.setCurrentDropdownMolNo(-1)
     }
 
     const handleRedo = async () => {
-        await props.commandCentre.current.cootCommand({
-            returnType: "status",
-            command: "redo",
-            commandArgs: [props.molecule.molNo]
-        })
-        props.molecule.setAtomsDirty(true)
-        props.molecule.redraw(props.glRef)
+        await props.molecule.redo(props.glRef)
         props.setCurrentDropdownMolNo(-1)
     }
 
