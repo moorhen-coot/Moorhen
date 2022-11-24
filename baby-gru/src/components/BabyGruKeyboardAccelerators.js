@@ -1,5 +1,4 @@
 import { List, ListItem } from "@mui/material"
-import { active } from "d3"
 import { cidToSpec } from "../utils/BabyGruUtils"
 
 const apresEdit = (molecule, glRef, setHoveredAtom) => {
