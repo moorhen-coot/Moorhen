@@ -7993,7 +7993,7 @@ class MGWebGL extends Component {
             this.gl.uniform1f(this.shaderProgramTextBackground.fog_end, this.gl_fog_end);
         } else {
             //If we want them to be on top
-        this.gl.depthFunc(this.gl.ALWAYS);
+            this.gl.depthFunc(this.gl.ALWAYS);
             this.gl.uniform1f(this.shaderProgramTextBackground.fog_start, 1000.0);
             this.gl.uniform1f(this.shaderProgramTextBackground.fog_end, 1000.0);
         }
