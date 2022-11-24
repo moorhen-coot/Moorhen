@@ -164,8 +164,8 @@ export const BabyGruContainer = (props) => {
 
     //Make this so that the keyPress returns true or false, depending on whether mgWebGL is to continue processing event
     const onKeyPress = useCallback(event => {
-        return babyGruKeyPress(event, collectedProps)
-    }, [molecules, activeMolecule, activeMap, hoveredAtom])
+        return babyGruKeyPress(event, collectedProps, JSON.parse(preferences.shortCuts))
+    }, [molecules, activeMolecule, activeMap, hoveredAtom, preferences])
 
     useEffect(() => {
         if (hoveredAtom && hoveredAtom.molecule && hoveredAtom.cid) {
