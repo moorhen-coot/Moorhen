@@ -7993,7 +7993,7 @@ class MGWebGL extends Component {
             this.gl.uniform1f(this.shaderProgramTextBackground.fog_end, this.gl_fog_end);
         } else {
             //If we want them to be on top
-            this.gl.depthFunc(this.gl.ALWAYS);
+        this.gl.depthFunc(this.gl.ALWAYS);
             this.gl.uniform1f(this.shaderProgramTextBackground.fog_start, 1000.0);
             this.gl.uniform1f(this.shaderProgramTextBackground.fog_end, 1000.0);
         }
@@ -8556,8 +8556,8 @@ class MGWebGL extends Component {
                     self.reContourMaps();
                     return;
                 }
-                if (self.keysDown.m||self.keysDown.M) {
-                    if (self.clickedAtoms.length === 0 || (self.clickedAtoms[self.clickedAtoms.length - 1].length > 1 && self.keysDown.m)) {
+                if (self.keysDown['label_atom']) {
+                    if (self.clickedAtoms.length === 0 || (self.clickedAtoms[self.clickedAtoms.length - 1].length > 1 && self.keysDown['label_atom'])) {
                         self.clickedAtoms.push([]);
                         self.clickedAtoms[self.clickedAtoms.length - 1].push(theAtom);
                     } else {
@@ -10570,217 +10570,180 @@ class MGWebGL extends Component {
     }
 
     handleKeyUp(event, self) {
-        self.keysDown[event.key] = false;
+        for (const key of Object.keys(self.props.keyboardAccelerators)){
+            if(self.props.keyboardAccelerators[key].keyPress === event.key.toLowerCase() && self.props.keyboardAccelerators[key].modifiers.every(modifier => event[modifier])) {
+                self.keysDown[key] = false;
+            }
+        }
+    }
+
+    restoreScene(self) {
+        self.myQuat = quat4.create();
+        quat4.set(self.myQuat, 0, 0, 0, -1);
+        self.setZoom(1.0)
+        self.clickedAtoms = [];
+        self.drawScene();
+    }
+
+    moveLeft(self){
+        var invQuat = quat4.create();
+        quat4Inverse(self.myQuat, invQuat);
+        var theMatrix = quatToMat4(invQuat);
+        var xshift = vec3Create([-4. / getDeviceScale(), 0, 0]);
+        vec3.transformMat4(xshift, xshift, theMatrix);
+        self.origin[0] += xshift[0] / 8. * self.zoom;
+        self.origin[1] += xshift[1] / 8. * self.zoom;
+        self.origin[2] += xshift[2] / 8. * self.zoom;
+        const originChangeEvent = new CustomEvent("originChange", { "detail": self.origin });
+        document.dispatchEvent(originChangeEvent);
+        self.drawSceneDirty();
+        self.reContourMaps();
+    }
+    
+    moveRight(self){
+        var invQuat = quat4.create();
+        quat4Inverse(self.myQuat, invQuat);
+        var theMatrix = quatToMat4(invQuat);
+        var xshift = vec3Create([4. / getDeviceScale(), 0, 0]);
+        vec3.transformMat4(xshift, xshift, theMatrix);
+        self.origin[0] += xshift[0] / 8. * self.zoom;
+        self.origin[1] += xshift[1] / 8. * self.zoom;
+        self.origin[2] += xshift[2] / 8. * self.zoom;
+        const originChangeEvent = new CustomEvent("originChange", { "detail": self.origin });
+        document.dispatchEvent(originChangeEvent);
+        self.drawSceneDirty();
+        self.reContourMaps();
+    }
+
+    moveUp(self){
+        var invQuat = quat4.create();
+        quat4Inverse(self.myQuat, invQuat);
+        var theMatrix = quatToMat4(invQuat);
+        var yshift = vec3Create([0, 4. / getDeviceScale(), 0]);
+        vec3.transformMat4(yshift, yshift, theMatrix);
+        self.origin[0] += yshift[0] / 8. * self.zoom;
+        self.origin[1] += yshift[1] / 8. * self.zoom;
+        self.origin[2] += yshift[2] / 8. * self.zoom;
+        const originChangeEvent = new CustomEvent("originChange", { "detail": self.origin });
+        document.dispatchEvent(originChangeEvent);
+        self.drawSceneDirty();
+        self.reContourMaps();
+    }
+        
+    moveDown(self){
+        var invQuat = quat4.create();
+        quat4Inverse(self.myQuat, invQuat);
+        var theMatrix = quatToMat4(invQuat);
+        var yshift = vec3Create([0, -4. / getDeviceScale(), 0]);
+        vec3.transformMat4(yshift, yshift, theMatrix);
+        self.origin[0] += yshift[0] / 8. * self.zoom;
+        self.origin[1] += yshift[1] / 8. * self.zoom;
+        self.origin[2] += yshift[2] / 8. * self.zoom;
+        const originChangeEvent = new CustomEvent("originChange", { "detail": self.origin });
+        document.dispatchEvent(originChangeEvent);
+        self.drawSceneDirty();
+        self.reContourMaps();
+    }
+
+    takeScreenShot(event, self) {
+        var oldOrigin = [this.origin[0], this.origin[1], this.origin[2]];
+
+        // Getting up and right for doing tiling (in future?)
+        var invQuat = quat4.create();
+        quat4Inverse(this.myQuat, invQuat);
+
+        var invMat = quatToMat4(invQuat);
+
+        var right = vec3.create();
+        vec3.set(right, 1.0, 0.0, 0.0);
+        var up = vec3.create();
+        vec3.set(up, 0.0, 1.0, 0.0);
+
+        vec3.transformMat4(up, up, invMat);
+        vec3.transformMat4(right, right, invMat);
+
+        console.log(right);
+        console.log(up);
+        console.log(this.zoom);
+
+        var mag = 1;
+
+        var ncells_x = mag;
+        var ncells_y = mag;
+
+        var saveCanvas = document.createElement("canvas");
+        saveCanvas.width = this.canvas.width * ncells_x;
+        saveCanvas.height = this.canvas.height * ncells_y;
+        var ctx = saveCanvas.getContext("2d");
+
+        let newZoom = this.zoom / ncells_x
+        this.setZoom(newZoom)
+
+        var jj = 0;
+        for (var j = Math.floor(-ncells_y / 2); j < Math.floor(ncells_y / 2); j++) {
+            var ii = 0;
+            for (var i = Math.floor(-ncells_x / 2); i < Math.floor(ncells_x / 2); i++) {
+                var x_off = (2.0 * i + 1 + ncells_x % 2);
+                var y_off = (2.0 * j + 1 + ncells_y % 2);
+
+                this.origin = [oldOrigin[0], oldOrigin[1], oldOrigin[2]];
+                this.origin[0] += this.zoom * right[0] * 24.0 * x_off + this.zoom * up[0] * 24.0 * y_off;
+                this.origin[1] += this.zoom * right[1] * 24.0 * x_off + this.zoom * up[1] * 24.0 * y_off;
+                this.origin[2] += this.zoom * right[2] * 24.0 * x_off + this.zoom * up[2] * 24.0 * y_off;
+
+
+                self.save_pixel_data = true;
+                this.drawScene();
+                var pixels = self.pixel_data;
+
+                var imgData = ctx.createImageData(this.canvas.width, this.canvas.height);
+                var data = imgData.data;
+
+                for (var pixi = 0; pixi < this.canvas.height; pixi++) {
+                    for (var pixj = 0; pixj < this.canvas.width * 4; pixj++) {
+                        data[(this.canvas.height - pixi - 1) * this.canvas.width * 4 + pixj] = pixels[pixi * this.canvas.width * 4 + pixj];
+                    }
+                }
+                ctx.putImageData(imgData, (ncells_x - ii - 1) * this.canvas.width, jj * this.canvas.height);
+                ii++;
+            }
+            jj++;
+        }
+
+        newZoom = this.zoom * ncells_x
+        this.setZoom(newZoom)
+
+        this.origin = [oldOrigin[0], oldOrigin[1], oldOrigin[2]];
+        self.save_pixel_data = false;
+        this.drawScene();
+
+        let link = document.getElementById('download_image_link');
+        if(!link){
+            link = document.createElement('a');
+            link.id = 'download_image_link';
+            link.download = 'moorhen.png';
+            document.body.appendChild(link);
+        }
+        link.href = saveCanvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+        link.click();
     }
 
     handleKeyDown(event, self) {
-        self.keysDown[event.key] = true;
-        if (event.key.toLowerCase() === "s") {
-            // Screenshot
-
-
-            var oldOrigin = [this.origin[0], this.origin[1], this.origin[2]];
-
-            // Getting up and right for doing tiling (in future?)
-            var invQuat = quat4.create();
-            quat4Inverse(this.myQuat, invQuat);
-
-            var invMat = quatToMat4(invQuat);
-
-            var right = vec3.create();
-            vec3.set(right, 1.0, 0.0, 0.0);
-            var up = vec3.create();
-            vec3.set(up, 0.0, 1.0, 0.0);
-
-            vec3.transformMat4(up, up, invMat);
-            vec3.transformMat4(right, right, invMat);
-
-            console.log(right);
-            console.log(up);
-            console.log(this.zoom);
-
-            var mag = 1;
-
-            var ncells_x = mag;
-            var ncells_y = mag;
-
-            var saveCanvas = document.createElement("canvas");
-            saveCanvas.width = this.canvas.width * ncells_x;
-            saveCanvas.height = this.canvas.height * ncells_y;
-            var ctx = saveCanvas.getContext("2d");
-
-            let newZoom = this.zoom / ncells_x
-            this.setZoom(newZoom)
-
-            var jj = 0;
-            for (var j = Math.floor(-ncells_y / 2); j < Math.floor(ncells_y / 2); j++) {
-                var ii = 0;
-                for (var i = Math.floor(-ncells_x / 2); i < Math.floor(ncells_x / 2); i++) {
-                    var x_off = (2.0 * i + 1 + ncells_x % 2);
-                    var y_off = (2.0 * j + 1 + ncells_y % 2);
-
-                    this.origin = [oldOrigin[0], oldOrigin[1], oldOrigin[2]];
-                    this.origin[0] += this.zoom * right[0] * 24.0 * x_off + this.zoom * up[0] * 24.0 * y_off;
-                    this.origin[1] += this.zoom * right[1] * 24.0 * x_off + this.zoom * up[1] * 24.0 * y_off;
-                    this.origin[2] += this.zoom * right[2] * 24.0 * x_off + this.zoom * up[2] * 24.0 * y_off;
-
-
-                    self.save_pixel_data = true;
-                    this.drawScene();
-                    var pixels = self.pixel_data;
-
-                    var imgData = ctx.createImageData(this.canvas.width, this.canvas.height);
-                    var data = imgData.data;
-
-                    for (var pixi = 0; pixi < this.canvas.height; pixi++) {
-                        for (var pixj = 0; pixj < this.canvas.width * 4; pixj++) {
-                            data[(this.canvas.height - pixi - 1) * this.canvas.width * 4 + pixj] = pixels[pixi * this.canvas.width * 4 + pixj];
-                        }
-                    }
-                    ctx.putImageData(imgData, (ncells_x - ii - 1) * this.canvas.width, jj * this.canvas.height);
-                    ii++;
-                }
-                jj++;
+        for (const key of Object.keys(self.props.keyboardAccelerators)){
+            if(self.props.keyboardAccelerators[key].keyPress === event.key.toLowerCase() && self.props.keyboardAccelerators[key].modifiers.every(modifier => event[modifier])) {
+                self.keysDown[key] = true;
             }
-
-            newZoom = this.zoom * ncells_x
-            this.setZoom(newZoom)
-
-            this.origin = [oldOrigin[0], oldOrigin[1], oldOrigin[2]];
-            self.save_pixel_data = false;
-            this.drawScene();
-
-            let link = document.getElementById('download_image_link');
-            if(!link){
-                link = document.createElement('a');
-                link.id = 'download_image_link';
-                link.download = 'moorhen.png';
-                document.body.appendChild(link);
-            }
-            link.href = saveCanvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
-            link.click();
         }
-
-        //MN Here invoke a keypress callback of provided in widget instantiation
-        //If callback returns false, then event response is terminated, and the 
-        //subsequent code is ignored
+       
         let doContinue = true
         if (this.props.onKeyPress) {
             doContinue = this.props.onKeyPress(event)
         }
+        /**
+         * No longer necessary but leaving it here in case we want to handle something
+         * not taken care of upstairs 
+         */
         if (! doContinue) return
-
-        // FIXME, we need an active map, like Coot.
-        if (event.key.toLowerCase() === "g") {
-            const frontAndBack = self.getFrontAndBackPos(event);
-            var goToBlobEvent = new CustomEvent("keyPressWithMousePosition", {
-                "detail": {
-                    back: [frontAndBack[0][0], frontAndBack[0][1], frontAndBack[0][2]],
-                    front: [frontAndBack[1][0], frontAndBack[1][1], frontAndBack[1][2]],
-                    windowX: frontAndBack[2],
-                    windowY: frontAndBack[3],
-                    key: 'G'
-                }
-            });
-            document.dispatchEvent(goToBlobEvent);
-        }
-
-        if (event.code === "Equal") { //+ (actually equals, sigh)
-            for (let ilm = 0; ilm < self.liveUpdatingMaps.length; ilm++) {
-                self.liveUpdatingMaps[ilm].contourLevel += 0.05;
-            }
-            self.drawSceneDirty();
-            self.reContourMaps();
-            self.drawScene();
-            if (self.liveUpdatingMaps.length > 0) {
-                var contourLevelChangeEvent = new CustomEvent("contourlevelchange", { "detail": self.liveUpdatingMaps[0].contourLevel });
-                document.dispatchEvent(contourLevelChangeEvent);
-            }
-        }
-        if (event.code === "Minus") { //-
-            for (let ilm = 0; ilm < self.liveUpdatingMaps.length; ilm++) {
-                self.liveUpdatingMaps[ilm].contourLevel -= 0.05;
-            }
-            self.drawSceneDirty();
-            self.reContourMaps();
-            self.drawScene();
-            if (self.liveUpdatingMaps.length > 0) {
-                var contourLevelChangeEvent = new CustomEvent("contourlevelchange", { "detail": self.liveUpdatingMaps[0].contourLevel });
-                document.dispatchEvent(contourLevelChangeEvent);
-            }
-        }
-        if (event.key.toLowerCase() === "r") {
-            self.myQuat = quat4.create();
-            quat4.set(self.myQuat, 0, 0, 0, -1);
-            self.setZoom(1.0)
-            self.clickedAtoms = [];
-            self.drawScene();
-        }
-        if (event.key.toLowerCase() === "c") {
-            self.clickedAtoms = [];
-            self.drawScene();
-        }
-        if (event.key === "ArrowLeft") {
-            var invQuat = quat4.create();
-            quat4Inverse(self.myQuat, invQuat);
-            var theMatrix = quatToMat4(invQuat);
-            var xshift = vec3Create([-4. / getDeviceScale(), 0, 0]);
-            vec3.transformMat4(xshift, xshift, theMatrix);
-            self.origin[0] += xshift[0] / 8. * self.zoom;
-            self.origin[1] += xshift[1] / 8. * self.zoom;
-            self.origin[2] += xshift[2] / 8. * self.zoom;
-            const originChangeEvent = new CustomEvent("originChange", { "detail": self.origin });
-            document.dispatchEvent(originChangeEvent);
-            self.drawSceneDirty();
-            //console.log(self.origin);
-            self.reContourMaps();
-        }
-        if (event.key === "ArrowRight") {
-            var invQuat = quat4.create();
-            quat4Inverse(self.myQuat, invQuat);
-            var theMatrix = quatToMat4(invQuat);
-            var xshift = vec3Create([4. / getDeviceScale(), 0, 0]);
-            vec3.transformMat4(xshift, xshift, theMatrix);
-            self.origin[0] += xshift[0] / 8. * self.zoom;
-            self.origin[1] += xshift[1] / 8. * self.zoom;
-            self.origin[2] += xshift[2] / 8. * self.zoom;
-            const originChangeEvent = new CustomEvent("originChange", { "detail": self.origin });
-            document.dispatchEvent(originChangeEvent);
-            self.drawSceneDirty();
-            //console.log(self.origin);
-            self.reContourMaps();
-        }
-        if (event.key === "ArrowUp") {
-            var invQuat = quat4.create();
-            quat4Inverse(self.myQuat, invQuat);
-            var theMatrix = quatToMat4(invQuat);
-            var yshift = vec3Create([0, 4. / getDeviceScale(), 0]);
-            vec3.transformMat4(yshift, yshift, theMatrix);
-            self.origin[0] += yshift[0] / 8. * self.zoom;
-            self.origin[1] += yshift[1] / 8. * self.zoom;
-            self.origin[2] += yshift[2] / 8. * self.zoom;
-            const originChangeEvent = new CustomEvent("originChange", { "detail": self.origin });
-            document.dispatchEvent(originChangeEvent);
-            self.drawSceneDirty();
-            //console.log(self.origin);
-            self.reContourMaps();
-        }
-        if (event.key === "ArrowDown") {
-            var invQuat = quat4.create();
-            quat4Inverse(self.myQuat, invQuat);
-            var theMatrix = quatToMat4(invQuat);
-            var yshift = vec3Create([0, -4. / getDeviceScale(), 0]);
-            vec3.transformMat4(yshift, yshift, theMatrix);
-            self.origin[0] += yshift[0] / 8. * self.zoom;
-            self.origin[1] += yshift[1] / 8. * self.zoom;
-            self.origin[2] += yshift[2] / 8. * self.zoom;
-            const originChangeEvent = new CustomEvent("originChange", { "detail": self.origin });
-            document.dispatchEvent(originChangeEvent);
-            self.drawSceneDirty();
-            //console.log(self.origin);
-            self.reContourMaps();
-        }
-
     }
 
     makeCircleCanvas(text, width, height, circleColour) {
