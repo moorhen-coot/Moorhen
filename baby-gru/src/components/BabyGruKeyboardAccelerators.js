@@ -179,7 +179,6 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     if (action === 'clear_labels') {
         glRef.current.clickedAtoms = [];
         glRef.current.drawScene();
-
     }
 
     if (action === 'move_up') {
