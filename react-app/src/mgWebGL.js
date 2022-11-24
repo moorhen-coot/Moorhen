@@ -1366,6 +1366,7 @@ class MGWebGL extends Component {
         this.animations = [];
         this.canvasRef = createRef();
         this.keysDown = {};
+        this.previousTextColour = "";
 
     }
 
@@ -7858,6 +7859,15 @@ class MGWebGL extends Component {
 
     drawClickedAtoms(up, right) {
 
+        let textTextureDirty = false;
+        let textColour = "black";
+        const bright_y = this.background_colour[0] * 0.299 + this.background_colour[1] * 0.587 + this.background_colour[2] * 0.114;
+        if (bright_y < 0.5) {
+            textColour = "white";
+        }
+        if(textColour!==this.previousTextColour) textTextureDirty = true;
+        this.previousTextColour = textColour;
+
         for (let iat = 0; iat < this.clickedAtoms.length; iat++) {
             for (let jat = 0; jat < this.clickedAtoms[iat].length; jat++) {
 
@@ -7973,11 +7983,6 @@ class MGWebGL extends Component {
         this.gl.depthFunc(this.gl.ALWAYS);
 
         for (var iat = 0; iat < this.clickedAtoms.length; iat++) {
-            var textColour = "black";
-            var y = this.background_colour[0] * 0.299 + this.background_colour[1] * 0.587 + this.background_colour[2] * 0.114;
-            if (y < 0.5) {
-                textColour = "white";
-            }
             for (var jat = 0; jat < this.clickedAtoms[iat].length; jat++) {
 
                 const theAtom = this.clickedAtoms[iat][jat];
@@ -7994,14 +7999,14 @@ class MGWebGL extends Component {
                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, theBuffer.textColourBuffer);
                 this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexColourAttribute, 4, this.gl.FLOAT, false, 0, 0);
 
-                this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, theBuffer.textIndexesBuffer);
                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, theBuffer.textPositionBuffer);
                 this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
 
+                this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, theBuffer.textIndexesBuffer);
 
                 theBuffer.textVertices = [];
 
-                if (typeof (this.clickedAtoms[iat][jat].imgData) === "undefined") {
+                if (textTextureDirty||typeof (this.clickedAtoms[iat][jat].imgData) === "undefined") {
                     this.makeTextCanvas(this.clickedAtoms[iat][jat].label, 512, 32, textColour);
                     this.clickedAtoms[iat][jat].imgData = this.textCtx.getImageData(0, 0, 512, 32);
                 }
@@ -8064,7 +8069,7 @@ class MGWebGL extends Component {
                 var y = v1plusv2[1] * 0.5;
                 var z = v1plusv2[2] * 0.5;
 
-                if (typeof (this.clickedAtoms[iat][jat].lengthImgData) === "undefined") {
+                if (textTextureDirty||typeof (this.clickedAtoms[iat][jat].lengthImgData) === "undefined") {
                     this.makeTextCanvas(linesize.toFixed(3), 512, 32, textColour);
                     this.clickedAtoms[iat][jat].lengthImgData = this.textCtx.getImageData(0, 0, 512, 32);
                 }
@@ -8140,7 +8145,7 @@ class MGWebGL extends Component {
 
                 var textWidth = this.textCtx.canvas.width;
                 var textHeight = this.textCtx.canvas.height;
-                if (typeof (this.clickedAtoms[iat][jat].angleImgData) === "undefined") {
+                if (textTextureDirty||typeof (this.clickedAtoms[iat][jat].angleImgData) === "undefined") {
                     this.makeTextCanvas(angle.toFixed(1), 512, 32, textColour);
                     this.clickedAtoms[iat][jat].angleImgData = this.textCtx.getImageData(0, 0, 512, 32);
                 }
@@ -8214,7 +8219,7 @@ class MGWebGL extends Component {
                     var textWidth = this.textCtx.canvas.width;
                     var textHeight = this.textCtx.canvas.height;
                     //this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.textCtx.canvas);
-                    if (typeof (this.clickedAtoms[iat][jat].dihedralImgData) === "undefined") {
+                    if (textTextureDirty||typeof (this.clickedAtoms[iat][jat].dihedralImgData) === "undefined") {
                         this.makeTextCanvas(angle.toFixed(1), 512, 32, textColour);
                         this.clickedAtoms[iat][jat].dihedralImgData = this.textCtx.getImageData(0, 0, 512, 32);
                     }
