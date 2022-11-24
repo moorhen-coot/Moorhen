@@ -170,6 +170,9 @@ export const BabyGruDeleteDisplayObjectMenuItem = (props) => {
         props.changeItemList({ action: 'Remove', item: props.item })
         props.item.delete(props.glRef);
         props.setPopoverIsShown(false)
+        if(props.item.type === "map" && props.activeMap.molNo === props.item.molNo) {
+            props.setActiveMap(null)
+        }
     }
 
     return <BabyGruMenuItem
@@ -178,7 +181,7 @@ export const BabyGruDeleteDisplayObjectMenuItem = (props) => {
         buttonText="Delete"
         popoverPlacement='left'
         popoverContent={panelContent}
-        menuItemText={props.item.name ? "Delete molecule" : "Delete map"}
+        menuItemText={props.item.type === 'molecule' ? "Delete molecule" : "Delete map"}
         onCompleted={onCompleted}
         setPopoverIsShown={props.setPopoverIsShown}
     />
@@ -203,7 +206,7 @@ export const BabyGruRenameDisplayObjectMenuItem = (props) => {
         if (newName == "") {
             return
         }
-        props.item.name ? props.item.name = newName : props.item.mapName = newName
+        props.item.name ? props.item.name = newName : props.item.name = newName
         props.setCurrentName(newName)
         props.setPopoverIsShown(false)
     }
