@@ -88,6 +88,7 @@ export const BabyGruContainer = (props) => {
         if (cootInitialized && props.forwardControls) {
             props.forwardControls(collectedProps)
         }
+        //console.log({extraMenus:props.extraMenus})
     }, [cootInitialized, props.forwardControls])
 
     useEffect(() => {
@@ -279,6 +280,7 @@ export const BabyGruContainer = (props) => {
                     <BabyGruViewMenu dropdownId={3} {...collectedProps} />
                     <BabyGruLigandMenu dropdownId={4} {...collectedProps} />
                     <BabyGruPreferencesMenu dropdownId={5} {...collectedProps} />
+                    {props.extraMenus && props.extraMenus.map(menu=>menu)}
                 </Nav>
             </Navbar.Collapse>
             <Nav className="justify-content-right">

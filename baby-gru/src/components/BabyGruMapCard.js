@@ -1,7 +1,7 @@
 import { useEffect, useState, createRef, useCallback, useMemo, Fragment } from "react";
 import { Card, Form, Button, Row, Col, DropdownButton } from "react-bootstrap";
 import { doDownload } from '../utils/BabyGruUtils';
-import { VisibilityOffOutlined, VisibilityOutlined, ExpandMoreOutlined, ExpandLessOutlined, DownloadOutlined } from '@mui/icons-material';
+import { VisibilityOffOutlined, VisibilityOutlined, ExpandMoreOutlined, ExpandLessOutlined, DownloadOutlined, Settings } from '@mui/icons-material';
 import BabyGruSlider from "./BabyGruSlider";
 import { BabyGruDeleteDisplayObjectMenuItem, BabyGruRenameDisplayObjectMenuItem } from "./BabyGruMenuItem";
 import { MenuItem } from "@mui/material";
@@ -93,6 +93,7 @@ export const BabyGruMapCard = (props) => {
                     {expandedButtons}
                     <DropdownButton 
                             size="sm" 
+                            title={<Settings />}
                             variant="outlined" 
                             autoClose={popoverIsShown ? false : 'outside'} 
                             show={props.currentDropdownMolNo === props.map.molNo} 

@@ -393,7 +393,7 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
         fileOrLibraryRef.current = fileOrLibrary
     }, [fileOrLibrary])
 
-    const handleFileContent = useCallback(async (fileContent) => {
+    const handleFileContent = async (fileContent) => {
         let newMolecule = null
         return props.commandCentre.current.cootCommand({
             returnType: "status",
@@ -448,10 +448,8 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
                 }
             })
             .then(result => {
-                console.log('Instance created', { result, newMolecule })
                 if (newMolecule) {
                     //Here if instance created
-                    console.log({ addToMoleculeValue: addToMoleculeValue.current })
                     if (addToMoleculeValue.current !== -1) {
                         const toMolecule = props.molecules
                             .filter(molecule => molecule.molNo === addToMoleculeValue.current)[0]
@@ -468,7 +466,7 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
                 }
                 console.log('After create instance', { result })
             })
-    }, [moleculeSelectRef.current, props.molecules, tlcRef, tlc, addToRef, createInstance])
+    }//, [moleculeSelectRef.current, props.molecules, tlcRef, tlc, addToRef, createInstance])
 
     const readMmcifFile = async (file) => {
         return readTextFile(file)
