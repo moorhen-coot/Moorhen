@@ -12,6 +12,7 @@ import { quatToMat4, quat4Inverse } from '../WebGL/quatToMat4.js';
 import * as vec3 from 'gl-matrix/vec3';
 
 export function BabyGruMolecule(commandCentre) {
+    this.type = 'molecule'
     this.commandCentre = commandCentre
     this.enerLib = new EnerLib()
     this.HBondsAssigned = false

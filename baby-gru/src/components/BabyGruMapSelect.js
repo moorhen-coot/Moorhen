@@ -17,7 +17,7 @@ export const BabyGruMapSelect = forwardRef((props, selectRef) => {
                 if(props.onlyDifferenceMaps && !map.isDifference){
                     return
                 }
-                mapOptions.push(<option key={map.molNo} value={map.molNo}>{map.molNo}: {map.mapName}</option>)
+                mapOptions.push(<option key={map.molNo} value={map.molNo}>{map.molNo}: {map.name}</option>)
             })
         }
 

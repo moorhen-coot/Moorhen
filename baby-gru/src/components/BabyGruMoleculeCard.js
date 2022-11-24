@@ -175,7 +175,13 @@ export const BabyGruMoleculeCard = (props) => {
         })
 
         compressedButtons.push((
-            <BabyGruDeleteDisplayObjectMenuItem key="BabyGruDeleteDisplayObjectMenuItem" setPopoverIsShown={setPopoverIsShown} glRef={props.glRef} changeItemList={props.changeMolecules} itemList={props.molecules} item={props.molecule} />
+            <BabyGruDeleteDisplayObjectMenuItem 
+                key="deleteDisplayObjectMenuItem"
+                setPopoverIsShown={setPopoverIsShown} 
+                glRef={props.glRef} 
+                changeItemList={props.changeMolecules} 
+                itemList={props.molecules} 
+                item={props.molecule} />
         ))
 
         return <Fragment>

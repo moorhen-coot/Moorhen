@@ -12,23 +12,23 @@ export const BabyGruMapCard = (props) => {
     const [mapContourLevel, setMapContourLevel] = useState(props.initialContour)
     const [mapLitLines, setMapLitLines] = useState(props.initialMapLitLines)    
     const [isCollapsed, setIsCollapsed] = useState(!props.defaultExpandDisplayCards);
-    const [currentName, setCurrentName] = useState(props.map.mapName);
+    const [currentName, setCurrentName] = useState(props.map.name);
     const nextOrigin = createRef([])
     const busyContouring = createRef(false)
     const [popoverIsShown, setPopoverIsShown] = useState(false)
 
     const handleDownload = async () => {
         let response = await props.map.getMap()
-        doDownload([response.data.result.mapData], `${props.map.mapName.replace('.mtz', '.map')}`)
+        doDownload([response.data.result.mapData], `${props.map.name.replace('.mtz', '.map')}`)
         props.setCurrentDropdownMolNo(-1)
     }
 
     const handleVisibility = () => {
         if (!cootContour) {
-            props.map.makeCootLive(props.glRef.current, mapRadius)
+            props.map.makeCootLive(props.glRef, mapRadius)
             setCootContour(true)
         } else {
-            props.map.makeCootUnlive(props.glRef.current)
+            props.map.makeCootUnlive(props.glRef)
             setCootContour(false)
         }
         props.setCurrentDropdownMolNo(-1)
@@ -86,12 +86,20 @@ export const BabyGruMapCard = (props) => {
         })
 
         compressedButtons.push((
-            <BabyGruDeleteDisplayObjectMenuItem setPopoverIsShown={setPopoverIsShown} glRef={props.glRef} changeItemList={props.changeMaps} itemList={props.maps} item={props.map}/>
+            <BabyGruDeleteDisplayObjectMenuItem 
+                setPopoverIsShown={setPopoverIsShown} 
+                glRef={props.glRef} 
+                changeItemList={props.changeMaps}
+                 itemList={props.maps} 
+                 item={props.map}
+                  setActiveMap={props.setActiveMap}
+                   activeMap={props.activeMap}/>
         ))
         
         return  <Fragment>
                     {expandedButtons}
                     <DropdownButton 
+                            title={<Settings/>}
                             size="sm" 
                             title={<Settings />}
                             variant="outlined" 
@@ -120,7 +128,7 @@ export const BabyGruMapCard = (props) => {
                 props.map.contourLevel = mapContourLevel
                 busyContouring.current = true
                 props.commandCentre.current.extendConsoleMessage("Because contourLevel or mapRadius changed useCallback")
-                props.map.doCootContour(props.glRef.current,
+                props.map.doCootContour(props.glRef,
                     ...nextOrigin.current,
                     mapRadius,
                     props.map.contourLevel)
@@ -141,7 +149,7 @@ export const BabyGruMapCard = (props) => {
             else {
                 props.map.contourLevel = mapContourLevel
                 busyContouring.current = true
-                props.map.doCootContour(props.glRef.current,
+                props.map.doCootContour(props.glRef,
                     ...nextOrigin.current,
                     mapRadius,
                     props.map.contourLevel)
@@ -156,7 +164,7 @@ export const BabyGruMapCard = (props) => {
         if (currentName == "") {
             return
         }
-        props.map.mapName = currentName
+        props.map.name = currentName
 
     }, [currentName]);
 
@@ -184,7 +192,7 @@ export const BabyGruMapCard = (props) => {
             props.commandCentre.current.extendConsoleMessage('Because I can')
             props.map.litLines = mapLitLines            
             props.map.contourLevel = mapContourLevel
-            props.map.doCootContour(props.glRef.current,
+            props.map.doCootContour(props.glRef,
                 ...props.glRef.current.origin.map(coord => -coord),
                 mapRadius,
                 props.map.contourLevel)
@@ -198,7 +206,7 @@ export const BabyGruMapCard = (props) => {
         <Card.Header>
             <Row className='align-items-center'>
             <Col style={{display:'flex', justifyContent:'left'}}>
-                    {`#${props.map.molNo} Map ${props.map.mapName}`}
+                    {`#${props.map.molNo} Map ${props.map.name}`}
             </Col>
             <Col style={{display:'flex', justifyContent:'right'}}>
                 {getButtonBar(props.sideBarWidth)}
