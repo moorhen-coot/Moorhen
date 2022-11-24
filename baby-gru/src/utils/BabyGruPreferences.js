@@ -14,10 +14,12 @@ const PreferencesContext = createContext();
 
 const PreferencesContextProvider = ({ children }) => {
     const [darkMode, setDarkMode] = useState(null);
+    const [atomLabelDepthMode, setAtomLabelDepthMode] = useState(null);
     const [defaultExpandDisplayCards, setDefaultExpandDisplayCards] = useState(null);
     const [shortCuts, setShortCuts] = useState(null);
     const defaultValues = {
         darkMode: false, 
+        atomLabelDepthMode: true, 
         defaultExpandDisplayCards: true,
         shortCuts: {
             "sphere_refine": {
@@ -83,11 +85,13 @@ const PreferencesContextProvider = ({ children }) => {
                     setDarkMode(defaultValues.darkMode)
                     setDefaultExpandDisplayCards(defaultValues.defaultExpandDisplayCards)            
                     setShortCuts(JSON.stringify(defaultValues.shortCuts))            
+                    setAtomLabelDepthMode(defaultValues.atomLabelDepthMode)
                 } else {
                     console.log(`Stored preferences retrieved successfully: ${response}`)
                     setDarkMode(response[0])
                     setDefaultExpandDisplayCards(response[1])
                     setShortCuts(response[2])
+                    setAtomLabelDepthMode(response[3])
                 }                
                 
             } catch (err) {
@@ -132,7 +136,7 @@ const PreferencesContextProvider = ({ children }) => {
         updateStoredPreferences('shortCuts', shortCuts);
     }, [shortCuts]);
 
-    const collectedContextValues = {darkMode, setDarkMode, defaultExpandDisplayCards, setDefaultExpandDisplayCards, shortCuts, setShortCuts}
+    const collectedContextValues = {darkMode, setDarkMode, atomLabelDepthMode, setAtomLabelDepthMode, defaultExpandDisplayCards, setDefaultExpandDisplayCards, shortCuts, setShortCuts}
 
     return (
       <PreferencesContext.Provider value={collectedContextValues}>

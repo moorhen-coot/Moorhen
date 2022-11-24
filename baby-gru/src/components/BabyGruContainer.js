@@ -311,6 +311,7 @@ export const BabyGruContainer = (props) => {
                             width={webGLWidth}
                             height={webGLHeight}
                             backgroundColor={backgroundColor}
+                            atomLabelDepthMode={preferences.atomLabelDepthMode}
                             onAtomHovered={onAtomHovered}
                             onKeyPress={onKeyPress}
                         />
