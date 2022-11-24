@@ -75,7 +75,7 @@ const PreferencesContextProvider = ({ children }) => {
         const fetchStoredPreferences = async () => {
             console.log('Retrieving stored preferences...')
             try {
-                let promises = [localforage.getItem('darkMode'), localforage.getItem('defaultExpandDisplayCards'), localforage.getItem('shortCuts')]
+                let promises = [localforage.getItem('darkMode'), localforage.getItem('defaultExpandDisplayCards'), localforage.getItem('shortCuts'), localforage.getItem('atomLabelDepthMode')]
                 let response = await Promise.all(promises)
                 
                 console.log('Retrieved the following preferences from local storage: ', response)
@@ -109,6 +109,15 @@ const PreferencesContextProvider = ({ children }) => {
         
     }, []);
 
+    useMemo(() => {
+
+        if (atomLabelDepthMode === null) {
+            return
+        }
+       
+        updateStoredPreferences('atomLabelDepthMode', atomLabelDepthMode);
+    }, [atomLabelDepthMode]);
+ 
     useMemo(() => {
 
         if (darkMode === null) {
