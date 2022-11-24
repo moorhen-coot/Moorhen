@@ -10650,12 +10650,15 @@ class MGWebGL extends Component {
             self.save_pixel_data = false;
             this.drawScene();
 
-            var image = saveCanvas.toDataURL();
-
-
-            var newwindow = window.open();
-            newwindow.document.write('<img src="' + image + '"/>');
-            newwindow.document.close();
+            let link = document.getElementById('download_image_link');
+            if(!link){
+                link = document.createElement('a');
+                link.id = 'download_image_link';
+                link.download = 'moorhen.png';
+                document.body.appendChild(link);
+            }
+            link.href = saveCanvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+            link.click();
         }
 
         //MN Here invoke a keypress callback of provided in widget instantiation
