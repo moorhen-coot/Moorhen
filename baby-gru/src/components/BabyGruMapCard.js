@@ -12,14 +12,14 @@ export const BabyGruMapCard = (props) => {
     const [mapContourLevel, setMapContourLevel] = useState(props.initialContour)
     const [mapLitLines, setMapLitLines] = useState(props.initialMapLitLines)    
     const [isCollapsed, setIsCollapsed] = useState(!props.defaultExpandDisplayCards);
-    const [currentName, setCurrentName] = useState(props.map.mapName);
+    const [currentName, setCurrentName] = useState(props.map.name);
     const nextOrigin = createRef([])
     const busyContouring = createRef(false)
     const [popoverIsShown, setPopoverIsShown] = useState(false)
 
     const handleDownload = async () => {
         let response = await props.map.getMap()
-        doDownload([response.data.result.mapData], `${props.map.mapName.replace('.mtz', '.map')}`)
+        doDownload([response.data.result.mapData], `${props.map.name.replace('.mtz', '.map')}`)
         props.setCurrentDropdownMolNo(-1)
     }
 
@@ -86,7 +86,14 @@ export const BabyGruMapCard = (props) => {
         })
 
         compressedButtons.push((
-            <BabyGruDeleteDisplayObjectMenuItem setPopoverIsShown={setPopoverIsShown} glRef={props.glRef} changeItemList={props.changeMaps} itemList={props.maps} item={props.map}/>
+            <BabyGruDeleteDisplayObjectMenuItem 
+                setPopoverIsShown={setPopoverIsShown} 
+                glRef={props.glRef} 
+                changeItemList={props.changeMaps}
+                 itemList={props.maps} 
+                 item={props.map}
+                  setActiveMap={props.setActiveMap}
+                   activeMap={props.activeMap}/>
         ))
         
         return  <Fragment>
@@ -156,7 +163,7 @@ export const BabyGruMapCard = (props) => {
         if (currentName == "") {
             return
         }
-        props.map.mapName = currentName
+        props.map.name = currentName
 
     }, [currentName]);
 
@@ -198,7 +205,7 @@ export const BabyGruMapCard = (props) => {
         <Card.Header>
             <Row className='align-items-center'>
             <Col style={{display:'flex', justifyContent:'left'}}>
-                    {`#${props.map.molNo} Map ${props.map.mapName}`}
+                    {`#${props.map.molNo} Map ${props.map.name}`}
             </Col>
             <Col style={{display:'flex', justifyContent:'right'}}>
                 {getButtonBar(props.sideBarWidth)}

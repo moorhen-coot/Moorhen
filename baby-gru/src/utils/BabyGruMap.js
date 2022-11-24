@@ -2,6 +2,7 @@ import { readDataFile } from "./BabyGruUtils"
 import { readMapFromArrayBuffer, mapToMapGrid } from '../WebGL/mgWebGLReadMap';
 
 export function BabyGruMap(commandCentre) {
+    this.type = 'map'
     this.commandCentre = commandCentre
     this.contourLevel = 0.5
     this.mapColour = [0.3, 0.3, 1.0, 1.0]
@@ -25,7 +26,7 @@ BabyGruMap.prototype.delete = async function (glRef) {
 }
 
 
-BabyGruMap.prototype.loadToCootFromURL = function (url, mapName, selectedColumns) {
+BabyGruMap.prototype.loadToCootFromURL = function (url, name, selectedColumns) {
     const $this = this
     console.log('Off to fetch url', url)
     //Remember to change this to an appropriate URL for downloads in produciton, and to deal with the consequent CORS headache
@@ -34,20 +35,20 @@ BabyGruMap.prototype.loadToCootFromURL = function (url, mapName, selectedColumns
             return response.blob()
         }).then(reflectionData => reflectionData.arrayBuffer())
         .then(arrayBuffer => {
-            return $this.loadToCootFromData(new Uint8Array(arrayBuffer), mapName, selectedColumns)
+            return $this.loadToCootFromData(new Uint8Array(arrayBuffer), name, selectedColumns)
         })
         .catch((err) => { console.log(err) })
 }
 
 
-BabyGruMap.prototype.loadToCootFromData = function (data, mapName, selectedColumns) {
+BabyGruMap.prototype.loadToCootFromData = function (data, name, selectedColumns) {
     const $this = this
-    $this.mapName = mapName
+    $this.name = name
     return new Promise((resolve, reject) => {
         return this.commandCentre.current.cootCommand({
             returnType: "status",
             command: "shim_read_mtz",
-            commandArgs: [data, mapName, selectedColumns]
+            commandArgs: [data, name, selectedColumns]
         })
             .then(reply => {
                 $this.molNo = reply.data.result.result
@@ -68,14 +69,14 @@ BabyGruMap.prototype.loadToCootFromFile = function (source, selectedColumns) {
         })
 }
 
-BabyGruMap.prototype.loadToCootFromMapData = function (data, mapName, isDiffMap) {
+BabyGruMap.prototype.loadToCootFromMapData = function (data, name, isDiffMap) {
     const $this = this
-    $this.mapName = mapName
+    $this.name = name
     return new Promise((resolve, reject) => {
         return this.commandCentre.current.cootCommand({
             returnType: "status",
             command: "shim_read_ccp4_map",
-            commandArgs: [data, mapName, isDiffMap]
+            commandArgs: [data, name, isDiffMap]
         })
             .then(reply => {
                 $this.molNo = reply.data.result.result
