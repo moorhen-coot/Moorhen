@@ -154,6 +154,58 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         return false
     }
 
+    if (action === 'go_to_blob' && activeMap) {
+        
+        const frontAndBack = glRef.current.getFrontAndBackPos(event);
+        const goToBlobEvent = {
+                back: [frontAndBack[0][0], frontAndBack[0][1], frontAndBack[0][2]],
+                front: [frontAndBack[1][0], frontAndBack[1][1], frontAndBack[1][2]],
+                windowX: frontAndBack[2],
+                windowY: frontAndBack[3],
+        };
+
+        commandCentre.current.cootCommand({
+            returnType: "float_array",
+            command: "go_to_blob_array",
+            commandArgs: [goToBlobEvent.front[0], goToBlobEvent.front[1], goToBlobEvent.front[2], goToBlobEvent.back[0], goToBlobEvent.back[1], goToBlobEvent.back[2], 0.5]
+        }).then(response => {
+            let newOrigin = response.data.result.result;
+            if (newOrigin.length === 3) {
+                glRef.current.setOrigin([-newOrigin[0], -newOrigin[1], -newOrigin[2]])
+            }
+        })
+    }
+
+    if (action === 'move_up') {
+        glRef.current.moveUp(glRef.current)
+    }
+
+    if (action === 'move_down') {
+        glRef.current.moveDown(glRef.current)
+    }
+
+    if (action === 'move_left') {
+        glRef.current.moveLeft(glRef.current)
+    }
+
+    if (action === 'move_right') {
+        glRef.current.moveRight(glRef.current)
+    }
+
+    if (action === 'restore_scene') {
+        glRef.current.restoreScene(glRef.current)
+    }
+
+    if (action === 'take_screenshot') {
+        glRef.current.takeScreenShot(event, glRef.current)
+    }
+
+    if (action === 'clear_labels') {
+        glRef.current.clickedAtoms = [];
+        glRef.current.drawScene();
+
+    }
+
     else if (action === 'show_shortcuts') {
         setToastContent(<h4><List>
             {Object.keys(shortCuts).map(key => {
@@ -162,11 +214,13 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
                 if (shortCuts[key].modifiers.includes('ctrlKey')) modifiers.push("<Ctrl>")
                 if (shortCuts[key].modifiers.includes('metaKey')) modifiers.push("<Meta>")
                 if (shortCuts[key].modifiers.includes('altKey')) modifiers.push("<Alt>")                
-                return <ListItem>{`${modifiers.join("-")} ${shortCuts[key].label}`}</ListItem>
+                return <ListItem>{`${modifiers.join("-")} ${shortCuts[key].keyPress} ${shortCuts[key].label}`}</ListItem>
             })}
         </List></h4>)
         setShowToast(true)
         return false
     }
+
     return true
+
 }
