@@ -176,6 +176,12 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         })
     }
 
+    if (action === 'clear_labels') {
+        glRef.current.clickedAtoms = [];
+        glRef.current.drawScene();
+
+    }
+
     if (action === 'move_up') {
         glRef.current.moveUp(glRef.current)
     }
@@ -198,12 +204,6 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
 
     if (action === 'take_screenshot') {
         glRef.current.takeScreenShot(event, glRef.current)
-    }
-
-    if (action === 'clear_labels') {
-        glRef.current.clickedAtoms = [];
-        glRef.current.drawScene();
-
     }
 
     else if (action === 'show_shortcuts') {
