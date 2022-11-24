@@ -14,12 +14,57 @@ const PreferencesContext = createContext();
 
 const PreferencesContextProvider = ({ children }) => {
     const [darkMode, setDarkMode] = useState(null);
+    const [atomLabelDepthMode, setAtomLabelDepthMode] = useState(null);
     const [defaultExpandDisplayCards, setDefaultExpandDisplayCards] = useState(null);
+    const [shortCuts, setShortCuts] = useState(null);
     const defaultValues = {
         darkMode: false, 
+        atomLabelDepthMode: true, 
         defaultExpandDisplayCards: true,
-        
-    }
+        shortCuts: {
+            "sphere_refine": {
+                modifiers: ["shiftKey"],
+                keyPress: "r",
+                label: "Refine sphere"
+            },
+            "flip_peptide": {
+                modifiers: ["shiftKey"],
+                keyPress: "q",
+                label: "Flip peptide"
+            },
+            "triple_refine": {
+                modifiers: ["shiftKey"],
+                keyPress: "h",
+                label: "Refine triplet"
+            },
+            "auto_fit_rotamer": {
+                modifiers: ["shiftKey"],
+                keyPress: "j",
+                label: "Autofit rotamer"
+            },
+            "add_terminal_residue": {
+                modifiers: ["shiftKey"],
+                keyPress: "y",
+                label: "Add terminal residue"
+            },
+            "delete_residue": {
+                modifiers: ["shiftKey"],
+                keyPress: "d",
+                label: "Delete residue"
+            },
+            "eigen_flip": {
+                modifiers: ["shiftKey"],
+                keyPress: "e",
+                label: "Eigen flip ligand"
+            },
+            "show_shortcuts": {
+                modifiers: ["metaKey"],
+                keyPress: "Meta",
+                label: "Show shortcuts"
+            }
+        }
+    }  
+
 
     /**
      * Hook used after component mounts to retrieve user preferences from 
@@ -30,19 +75,23 @@ const PreferencesContextProvider = ({ children }) => {
         const fetchStoredPreferences = async () => {
             console.log('Retrieving stored preferences...')
             try {
-                let promises = [localforage.getItem('darkMode'), localforage.getItem('defaultExpandDisplayCards')]
+                let promises = [localforage.getItem('darkMode'), localforage.getItem('defaultExpandDisplayCards'), localforage.getItem('shortCuts'), localforage.getItem('atomLabelDepthMode')]
                 let response = await Promise.all(promises)
                 
                 console.log('Retrieved the following preferences from local storage: ', response)
                 
-                if (!response.every(item => item !== null)) {
+                if (!response.every(item => item !== null) || response.length < Object.keys(defaultValues).length) {
                     console.log('Cannot find stored preferences, using defaults')
                     setDarkMode(defaultValues.darkMode)
                     setDefaultExpandDisplayCards(defaultValues.defaultExpandDisplayCards)            
+                    setShortCuts(JSON.stringify(defaultValues.shortCuts))            
+                    setAtomLabelDepthMode(defaultValues.atomLabelDepthMode)
                 } else {
                     console.log(`Stored preferences retrieved successfully: ${response}`)
                     setDarkMode(response[0])
-                    setDefaultExpandDisplayCards(response[1])            
+                    setDefaultExpandDisplayCards(response[1])
+                    setShortCuts(response[2])
+                    setAtomLabelDepthMode(response[3])
                 }                
                 
             } catch (err) {
@@ -62,6 +111,15 @@ const PreferencesContextProvider = ({ children }) => {
 
     useMemo(() => {
 
+        if (atomLabelDepthMode === null) {
+            return
+        }
+       
+        updateStoredPreferences('atomLabelDepthMode', atomLabelDepthMode);
+    }, [atomLabelDepthMode]);
+ 
+    useMemo(() => {
+
         if (darkMode === null) {
             return
         }
@@ -78,7 +136,16 @@ const PreferencesContextProvider = ({ children }) => {
         updateStoredPreferences('defaultExpandDisplayCards', defaultExpandDisplayCards);
     }, [defaultExpandDisplayCards]);
 
-    const collectedContextValues = {darkMode, setDarkMode, defaultExpandDisplayCards, setDefaultExpandDisplayCards}
+    useMemo(() => {
+
+        if (shortCuts === null) {
+            return
+        }
+       
+        updateStoredPreferences('shortCuts', shortCuts);
+    }, [shortCuts]);
+
+    const collectedContextValues = {darkMode, setDarkMode, atomLabelDepthMode, setAtomLabelDepthMode, defaultExpandDisplayCards, setDefaultExpandDisplayCards, shortCuts, setShortCuts}
 
     return (
       <PreferencesContext.Provider value={collectedContextValues}>

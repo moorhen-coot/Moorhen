@@ -2,7 +2,7 @@ import { NavDropdown, Form, InputGroup } from "react-bootstrap";
 import { useState } from "react";
 
 export const BabyGruPreferencesMenu = (props) => {
-    const { darkMode, setDarkMode, defaultExpandDisplayCards, setDefaultExpandDisplayCards } = props;
+    const { atomLabelDepthMode, setAtomLabelDepthMode, darkMode, setDarkMode, defaultExpandDisplayCards, setDefaultExpandDisplayCards } = props;
     
     return <NavDropdown
                     title="Preferences"
@@ -24,6 +24,13 @@ export const BabyGruPreferencesMenu = (props) => {
                         checked={darkMode}
                         onChange={() => { setDarkMode(!darkMode) }}
                         label={darkMode ? "Switch lights on": "Switch lights off"}/>
+                </InputGroup>
+                <InputGroup style={{ padding:'0.5rem', width: '20rem'}}>
+                    <Form.Check 
+                        type="switch"
+                        checked={atomLabelDepthMode}
+                        onChange={() => { setAtomLabelDepthMode(!atomLabelDepthMode) }}
+                        label="Depth cue atom labels"/>
                 </InputGroup>
             </NavDropdown>
 

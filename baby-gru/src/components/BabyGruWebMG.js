@@ -63,6 +63,7 @@ export const BabyGruWebMG = forwardRef((props, glRef) => {
     useEffect(() => {
         if (glRef.current) {
             console.log('Stuff', glRef.current.background_colour, props.backgroundColor)
+            console.log(props)
             glRef.current.background_colour = props.backgroundColor
             glRef.current.drawScene()
         }
@@ -71,7 +72,16 @@ export const BabyGruWebMG = forwardRef((props, glRef) => {
         glRef.current
     ])
 
-
+    useEffect(() => {
+        if (glRef.current) {
+            //console.log('Stuff', glRef.current.atomLabelDepthMode, props.atomLabelDepthMode)
+            glRef.current.atomLabelDepthMode = props.atomLabelDepthMode
+            glRef.current.drawScene()
+        }
+    }, [
+        props.atomLabelDepthMode,
+        glRef.current
+    ])
 
     useEffect(() => {
         props.molecules.forEach(molecule => {

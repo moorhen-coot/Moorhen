@@ -1367,6 +1367,7 @@ class MGWebGL extends Component {
         this.canvasRef = createRef();
         this.keysDown = {};
         this.previousTextColour = "";
+        this.atomLabelDepthMode = true;
 
     }
 
@@ -4267,6 +4268,10 @@ class MGWebGL extends Component {
         this.shaderProgramTextBackground.fog_start = this.gl.getUniformLocation(this.shaderProgramTextBackground, "fog_start");
         this.shaderProgramTextBackground.fog_end = this.gl.getUniformLocation(this.shaderProgramTextBackground, "fog_end");
         this.shaderProgramTextBackground.fogColour = this.gl.getUniformLocation(this.shaderProgramTextBackground, "fogColour");
+        this.shaderProgramTextBackground.maxTextureS = this.gl.getUniformLocation(this.shaderProgramTextBackground, "maxTextureS");
+        this.gl.uniform1f(this.shaderProgramTextBackground.fog_start, 1000.0);
+        this.gl.uniform1f(this.shaderProgramTextBackground.fog_end, 1000.0);
+        this.gl.uniform4fv(this.shaderProgramTextBackground.fogColour, new Float32Array(1.0,1.0,1.0,1.0,1.0));
 
         this.shaderProgramTextBackground.clipPlane0 = this.gl.getUniformLocation(this.shaderProgramTextBackground, "clipPlane0");
         this.shaderProgramTextBackground.clipPlane1 = this.gl.getUniformLocation(this.shaderProgramTextBackground, "clipPlane1");
@@ -7780,7 +7785,7 @@ class MGWebGL extends Component {
                 } else {
                     this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.displayBuffers[0].textIndexs), this.gl.STATIC_DRAW);
                 }
-                this.makeTextCanvas("Fluffy", 512, 32, textColour);
+                const maxTextureS = this.makeTextCanvas("Fluffy", 512, 32, textColour);
                 this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.textCtx.canvas);
 
                 this.displayBuffers[0].textNormals = [];
@@ -7822,7 +7827,7 @@ class MGWebGL extends Component {
                 for (var jtl = 0; jtl < this.textLabels[itl].length; jtl++) {
                     this.displayBuffers[0].textVertices = [];
 
-                    this.makeTextCanvas(this.textLabels[itl][jtl].label, 512, 32, textColour);
+                    const maxTextureS = this.makeTextCanvas(this.textLabels[itl][jtl].label, 512, 32, textColour);
                     var textWidth = this.textCtx.canvas.width;
                     var textHeight = this.textCtx.canvas.height;
 
@@ -7859,6 +7864,7 @@ class MGWebGL extends Component {
 
     drawClickedAtoms(up, right) {
 
+        this.gl.uniform1f(this.shaderProgramTextBackground.maxTextureS, 1.0);
         let textTextureDirty = false;
         let textColour = "black";
         const bright_y = this.background_colour[0] * 0.299 + this.background_colour[1] * 0.587 + this.background_colour[2] * 0.114;
@@ -7892,7 +7898,7 @@ class MGWebGL extends Component {
                     } else {
                         this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(theBuffer.textIndexs), this.gl.STATIC_DRAW);
                     }
-                    this.makeTextCanvas("Fluffy", 512, 32, textColour);
+                    const maxTextureS = this.makeTextCanvas("Fluffy", 512, 32, textColour);
                     this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.textCtx.canvas);
 
                     theBuffer.textNormals = [];
@@ -7980,7 +7986,18 @@ class MGWebGL extends Component {
         this.gl.enableVertexAttribArray(this.shaderProgramTextBackground.vertexTextureAttribute);
         this.setMatrixUniforms(this.shaderProgramTextBackground);
 
-        this.gl.depthFunc(this.gl.ALWAYS);
+        if(this.atomLabelDepthMode){
+            //If we want to fog them
+            this.gl.depthFunc(this.gl.LESS);
+            this.gl.uniform1f(this.shaderProgramTextBackground.fog_start, this.gl_fog_start);
+            this.gl.uniform1f(this.shaderProgramTextBackground.fog_end, this.gl_fog_end);
+        } else {
+            //If we want them to be on top
+            this.gl.depthFunc(this.gl.ALWAYS);
+            this.gl.uniform1f(this.shaderProgramTextBackground.fog_start, 1000.0);
+            this.gl.uniform1f(this.shaderProgramTextBackground.fog_end, 1000.0);
+        }
+        this.gl.uniform4fv(this.shaderProgramTextBackground.fogColour, new Float32Array(this.background_colour));
 
         for (var iat = 0; iat < this.clickedAtoms.length; iat++) {
             for (var jat = 0; jat < this.clickedAtoms[iat].length; jat++) {
@@ -8007,9 +8024,11 @@ class MGWebGL extends Component {
                 theBuffer.textVertices = [];
 
                 if (textTextureDirty||typeof (this.clickedAtoms[iat][jat].imgData) === "undefined") {
-                    this.makeTextCanvas(this.clickedAtoms[iat][jat].label, 512, 32, textColour);
+                    const maxTextureS = this.makeTextCanvas(this.clickedAtoms[iat][jat].label, 512, 32, textColour);
                     this.clickedAtoms[iat][jat].imgData = this.textCtx.getImageData(0, 0, 512, 32);
+                    this.clickedAtoms[iat][jat].maxImgTextureS = maxTextureS;
                 }
+                this.gl.uniform1f(this.shaderProgramTextBackground.maxTextureS, this.clickedAtoms[iat][jat].maxImgTextureS);
                 this.gl.texSubImage2D(this.gl.TEXTURE_2D, 0, 0, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.clickedAtoms[iat][jat].imgData);
 
                 var x = this.clickedAtoms[iat][jat].x;
@@ -8070,9 +8089,11 @@ class MGWebGL extends Component {
                 var z = v1plusv2[2] * 0.5;
 
                 if (textTextureDirty||typeof (this.clickedAtoms[iat][jat].lengthImgData) === "undefined") {
-                    this.makeTextCanvas(linesize.toFixed(3), 512, 32, textColour);
+                    const maxTextureS = this.makeTextCanvas(linesize.toFixed(3), 512, 32, textColour);
                     this.clickedAtoms[iat][jat].lengthImgData = this.textCtx.getImageData(0, 0, 512, 32);
+                    this.clickedAtoms[iat][jat].maxLengthImgTextureS = maxTextureS;
                 }
+                this.gl.uniform1f(this.shaderProgramTextBackground.maxTextureS, this.clickedAtoms[iat][jat].maxLengthImgTextureS);
                 this.gl.texSubImage2D(this.gl.TEXTURE_2D, 0, 0, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.clickedAtoms[iat][jat].lengthImgData);
 
                 var tSizeX = 2.0 * this.textCtx.canvas.width / this.textCtx.canvas.height * this.zoom;
@@ -8146,9 +8167,11 @@ class MGWebGL extends Component {
                 var textWidth = this.textCtx.canvas.width;
                 var textHeight = this.textCtx.canvas.height;
                 if (textTextureDirty||typeof (this.clickedAtoms[iat][jat].angleImgData) === "undefined") {
-                    this.makeTextCanvas(angle.toFixed(1), 512, 32, textColour);
+                    const maxTextureS = this.makeTextCanvas(angle.toFixed(1), 512, 32, textColour);
                     this.clickedAtoms[iat][jat].angleImgData = this.textCtx.getImageData(0, 0, 512, 32);
+                    this.clickedAtoms[iat][jat].maxAngleImgTextureS = maxTextureS;
                 }
+                this.gl.uniform1f(this.shaderProgramTextBackground.maxTextureS, this.clickedAtoms[iat][jat].maxAngleImgTextureS);
                 this.gl.texSubImage2D(this.gl.TEXTURE_2D, 0, 0, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.clickedAtoms[iat][jat].angleImgData);
 
                 var tSizeX = 2.0 * this.textCtx.canvas.width / this.textCtx.canvas.height * this.zoom;
@@ -8220,9 +8243,11 @@ class MGWebGL extends Component {
                     var textHeight = this.textCtx.canvas.height;
                     //this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.textCtx.canvas);
                     if (textTextureDirty||typeof (this.clickedAtoms[iat][jat].dihedralImgData) === "undefined") {
-                        this.makeTextCanvas(angle.toFixed(1), 512, 32, textColour);
+                        const maxTextureS = this.makeTextCanvas(angle.toFixed(1), 512, 32, textColour);
                         this.clickedAtoms[iat][jat].dihedralImgData = this.textCtx.getImageData(0, 0, 512, 32);
+                    this.clickedAtoms[iat][jat].maxDihedralImgTextureS = maxTextureS;
                     }
+                    this.gl.uniform1f(this.shaderProgramTextBackground.maxTextureS, this.clickedAtoms[iat][jat].maxDihedralImgTextureS);
                     this.gl.texSubImage2D(this.gl.TEXTURE_2D, 0, 0, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.clickedAtoms[iat][jat].dihedralImgData);
 
                     var tSizeX = 2.0 * this.textCtx.canvas.width / this.textCtx.canvas.height * this.zoom;
@@ -8243,6 +8268,7 @@ class MGWebGL extends Component {
 
         }
 
+        this.gl.uniform1f(this.shaderProgramTextBackground.maxTextureS, 1.0);
         this.gl.disableVertexAttribArray(this.shaderProgramTextBackground.vertexTextureAttribute);
         this.gl.depthFunc(this.gl.LESS);
 
@@ -9059,6 +9085,9 @@ class MGWebGL extends Component {
     }
 
     drawAxes(invMat) {
+        this.gl.depthFunc(this.gl.ALWAYS);
+        this.gl.uniform1f(this.shaderProgramTextBackground.fog_start, 1000.0);
+        this.gl.uniform1f(this.shaderProgramTextBackground.fog_end, 1000.0);
         var axesOffset = vec3.create();
         vec3.set(axesOffset, 20, 20, 0);
         vec3.transformMat4(axesOffset, axesOffset, invMat);
@@ -9357,7 +9386,7 @@ class MGWebGL extends Component {
         }
 
         // Draw an x
-        this.makeTextCanvas("x", 512, 32, textColour);
+        const maxTextureSX = this.makeTextCanvas("x", 512, 32, textColour);
         var data = this.textCtx.getImageData(0, 0, 512, 32);
         this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, data);
         this.gl.texSubImage2D(this.gl.TEXTURE_2D, 0, 0, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, data);
@@ -9382,7 +9411,7 @@ class MGWebGL extends Component {
         }
 
         // Draw an y
-        this.makeTextCanvas("y", 512, 32, textColour);
+        const maxTextureSY = this.makeTextCanvas("y", 512, 32, textColour);
         var data = this.textCtx.getImageData(0, 0, 512, 32);
         this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, data);
         this.gl.texSubImage2D(this.gl.TEXTURE_2D, 0, 0, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, data);
@@ -9404,7 +9433,7 @@ class MGWebGL extends Component {
         }
 
         // Draw an z
-        this.makeTextCanvas("z", 512, 32, textColour);
+        const maxTextureSZ = this.makeTextCanvas("z", 512, 32, textColour);
         var data = this.textCtx.getImageData(0, 0, 512, 32);
         this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, data);
         this.gl.texSubImage2D(this.gl.TEXTURE_2D, 0, 0, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, data);
@@ -10621,12 +10650,15 @@ class MGWebGL extends Component {
             self.save_pixel_data = false;
             this.drawScene();
 
-            var image = saveCanvas.toDataURL();
-
-
-            var newwindow = window.open();
-            newwindow.document.write('<img src="' + image + '"/>');
-            newwindow.document.close();
+            let link = document.getElementById('download_image_link');
+            if(!link){
+                link = document.createElement('a');
+                link.id = 'download_image_link';
+                link.download = 'moorhen.png';
+                document.body.appendChild(link);
+            }
+            link.href = saveCanvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+            link.click();
         }
 
         //MN Here invoke a keypress callback of provided in widget instantiation
@@ -10788,6 +10820,9 @@ class MGWebGL extends Component {
         this.textCtx.fillStyle = textColour;
         this.textCtx.clearRect(0, 0, this.textCtx.canvas.width, this.textCtx.canvas.height);
         this.textCtx.fillText(text, 0, height / 2);
+        const textMetric = this.textCtx.measureText(text);
+        //Return the maximum width in fractional box coordinates
+        return textMetric.actualBoundingBoxRight/width;
     }
 
     createVertexBuffer(tri) {
