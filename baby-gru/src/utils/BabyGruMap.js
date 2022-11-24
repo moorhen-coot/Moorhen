@@ -18,6 +18,7 @@ BabyGruMap.prototype.delete = async function (gl) {
     Object.getOwnPropertyNames(this.displayObjects).forEach(displayObject => {
         if(this.displayObjects[displayObject].length > 0) {this.clearBuffersOfStyle(gl, displayObject)}
     })
+    gl.current.drawScene()
     const inputData = {message:"delete", molNo:$this.molNo}
     const response = await $this.commandCentre.current.postMessage(inputData)
     return response
