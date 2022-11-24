@@ -1,4 +1,5 @@
 import { List, ListItem } from "@mui/material"
+import { active } from "d3"
 import { cidToSpec } from "../utils/BabyGruUtils"
 
 const apresEdit = (molecule, glRef, setHoveredAtom) => {
@@ -7,7 +8,7 @@ const apresEdit = (molecule, glRef, setHoveredAtom) => {
     setHoveredAtom({ molecule: null, cid: null })
 }
 
-export const babyGruKeyPress = (event, collectedProps) => {
+export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     console.log(event)
     let modifiers = []
 
@@ -21,7 +22,22 @@ export const babyGruKeyPress = (event, collectedProps) => {
     setToastContent(<h3>{`${modifiers.join("-")} ${event.key} pushed`}</h3>)
     setShowToast(true)
 
-    if (event.key.toLowerCase() === "r" && event.shiftKey && activeMap && hoveredAtom.molecule) {
+    let action = null;
+
+    for (const key of Object.keys(shortCuts)) {
+        if(shortCuts[key].keyPress === event.key.toLowerCase() && shortCuts[key].modifiers.every(modifier => event[modifier])) {
+            action = key
+            break
+        }
+    }
+
+    if (!action) {
+        return true
+    }
+
+    console.log(`Shortcut for action ${action} detected...`)
+    
+    if (action === 'sphere_refine' && activeMap && hoveredAtom.molecule) {
         const chosenAtom = cidToSpec(hoveredAtom.cid)
         const commandArgs = [
             `${hoveredAtom.molecule.molNo}`,
@@ -38,7 +54,7 @@ export const babyGruKeyPress = (event, collectedProps) => {
         return false
     }
 
-    else if (event.key.toLowerCase() === "q" && event.shiftKey && activeMap && hoveredAtom.molecule) {
+    else if (action === 'flip_peptide' && activeMap && hoveredAtom.molecule) {
         const chosenAtom = cidToSpec(hoveredAtom.cid)
         const commandArgs = [
             `${hoveredAtom.molecule.molNo}`,
@@ -55,7 +71,7 @@ export const babyGruKeyPress = (event, collectedProps) => {
         return false
     }
 
-    if (event.key.toLowerCase() === "h" && event.shiftKey && activeMap && hoveredAtom.molecule) {
+    if (action === 'triple_refine' && activeMap && hoveredAtom.molecule) {
         const chosenAtom = cidToSpec(hoveredAtom.cid)
         const commandArgs = [
             `${hoveredAtom.molecule.molNo}`,
@@ -72,7 +88,7 @@ export const babyGruKeyPress = (event, collectedProps) => {
         return false
     }
 
-    if (event.key.toLowerCase() === "j" && event.shiftKey && activeMap && hoveredAtom.molecule) {
+    if (action === 'auto_fit_rotamer' && activeMap && hoveredAtom.molecule) {
         const chosenAtom = cidToSpec(hoveredAtom.cid)
         const commandArgs = [
             hoveredAtom.molecule.molNo,
@@ -92,7 +108,7 @@ export const babyGruKeyPress = (event, collectedProps) => {
         return false
     }
 
-    if (event.key.toLowerCase() === "y" && event.shiftKey && activeMap && hoveredAtom.molecule) {
+    if (action === 'add_terminal_residue' && activeMap && hoveredAtom.molecule) {
         const chosenAtom = cidToSpec(hoveredAtom.cid)
         const commandArgs = [
             hoveredAtom.molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
@@ -107,7 +123,7 @@ export const babyGruKeyPress = (event, collectedProps) => {
         return false
     }
     
-    if (event.key.toLowerCase() === "d" && event.shiftKey && hoveredAtom.molecule) {
+    if (action === 'delete_residue' && hoveredAtom.molecule) {
         const chosenAtom = cidToSpec(hoveredAtom.cid)
         const commandArgs = [
             hoveredAtom.molecule.molNo,
@@ -125,7 +141,7 @@ export const babyGruKeyPress = (event, collectedProps) => {
         return false
     }
     
-    if (event.key.toLowerCase() === "e" && event.shiftKey && activeMap && hoveredAtom.molecule) {
+    if (action === 'eigen_flip'  && hoveredAtom.molecule) {
         const chosenAtom = cidToSpec(hoveredAtom.cid)
         const commandArgs = [hoveredAtom.molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
         commandCentre.current.cootCommand({
@@ -139,15 +155,16 @@ export const babyGruKeyPress = (event, collectedProps) => {
         return false
     }
 
-    else if (event.key == "Meta" && event.metaKey) {
+    else if (action === 'show_shortcuts') {
         setToastContent(<h4><List>
-            <ListItem>Shift-D: Delete residue</ListItem>
-            <ListItem>Shift-E: Eigen flip ligand</ListItem>
-            <ListItem>Shift-H: Refine triplet</ListItem>
-            <ListItem>Shift-J: Autofit rotamer</ListItem>
-            <ListItem>Shift-Q: Flip peptide</ListItem>
-            <ListItem>Shift-R: Refine sphere</ListItem>
-            <ListItem>Shift-Y: Add residue</ListItem>
+            {Object.keys(shortCuts).map(key => {
+                let modifiers = []
+                if (shortCuts[key].modifiers.includes('shiftKey')) modifiers.push("<Shift>")
+                if (shortCuts[key].modifiers.includes('ctrlKey')) modifiers.push("<Ctrl>")
+                if (shortCuts[key].modifiers.includes('metaKey')) modifiers.push("<Meta>")
+                if (shortCuts[key].modifiers.includes('altKey')) modifiers.push("<Alt>")                
+                return <ListItem>{`${modifiers.join("-")} ${shortCuts[key].label}`}</ListItem>
+            })}
         </List></h4>)
         setShowToast(true)
         return false
