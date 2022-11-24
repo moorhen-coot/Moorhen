@@ -15,6 +15,11 @@ const PreferencesContext = createContext();
 const PreferencesContextProvider = ({ children }) => {
     const [darkMode, setDarkMode] = useState(null);
     const [defaultExpandDisplayCards, setDefaultExpandDisplayCards] = useState(null);
+    const defaultValues = {
+        darkMode: false, 
+        defaultExpandDisplayCards: true,
+        
+    }
 
     /**
      * Hook used after component mounts to retrieve user preferences from 
@@ -32,8 +37,8 @@ const PreferencesContextProvider = ({ children }) => {
                 
                 if (!response.every(item => item !== null)) {
                     console.log('Cannot find stored preferences, using defaults')
-                    setDarkMode(false)
-                    setDefaultExpandDisplayCards(true)            
+                    setDarkMode(defaultValues.darkMode)
+                    setDefaultExpandDisplayCards(defaultValues.defaultExpandDisplayCards)            
                 } else {
                     console.log(`Stored preferences retrieved successfully: ${response}`)
                     setDarkMode(response[0])
