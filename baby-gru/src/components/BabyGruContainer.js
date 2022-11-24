@@ -314,6 +314,7 @@ export const BabyGruContainer = (props) => {
                             atomLabelDepthMode={preferences.atomLabelDepthMode}
                             onAtomHovered={onAtomHovered}
                             onKeyPress={onKeyPress}
+                            preferences={preferences}
                         />
                     </div>
                     <div id='button-bar-baby-gru'
