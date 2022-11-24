@@ -13,12 +13,12 @@ export function BabyGruMap(commandCentre) {
     this.isDifference = false
 }
 
-BabyGruMap.prototype.delete = async function (gl) {
+BabyGruMap.prototype.delete = async function (glRef) {
     const $this = this
     Object.getOwnPropertyNames(this.displayObjects).forEach(displayObject => {
-        if(this.displayObjects[displayObject].length > 0) {this.clearBuffersOfStyle(gl, displayObject)}
+        if(this.displayObjects[displayObject].length > 0) {this.clearBuffersOfStyle(glRef, displayObject)}
     })
-    gl.current.drawScene()
+    glRef.current.drawScene()
     const inputData = {message:"delete", molNo:$this.molNo}
     const response = await $this.commandCentre.current.postMessage(inputData)
     return response
@@ -102,94 +102,94 @@ BabyGruMap.prototype.getMap = function () {
     })
 }
 
-BabyGruMap.prototype.makeWebMGLive = function (gl) {
+BabyGruMap.prototype.makeWebMGLive = function (glRef) {
     const $this = this
     $this.webMGContour = true
     let promise
     if (!Object.keys($this.liveUpdatingMaps).includes("WebMG")){
-        promise = $this.contour(gl)
+        promise = $this.contour(glRef)
     }
     else {
         promise = Promise.resolve(true)
     }
     promise.then(()=>{
-        if (!gl.liveUpdatingMaps.includes($this.liveUpdatingMaps['WebMG'])) {
-            gl.liveUpdatingMaps.push($this.liveUpdatingMaps['WebMG'])
+        if (!glRef.current.liveUpdatingMaps.includes($this.liveUpdatingMaps['WebMG'])) {
+            glRef.current.liveUpdatingMaps.push($this.liveUpdatingMaps['WebMG'])
         }
-        gl.reContourMaps()
-        gl.drawScene()
+        glRef.current.reContourMaps()
+        glRef.current.drawScene()
     })
 
 }
 
-BabyGruMap.prototype.makeWebMGUnlive = function (gl) {
+BabyGruMap.prototype.makeWebMGUnlive = function (glRef) {
     const $this = this
     $this.webMGContour = false
-    gl.liveUpdatingMaps = gl.liveUpdatingMaps.filter(item => item !== $this.liveUpdatingMaps['WebMG'])
+    glRef.current.liveUpdatingMaps = glRef.current.liveUpdatingMaps.filter(item => item !== $this.liveUpdatingMaps['WebMG'])
     $this.liveUpdatingMaps['WebMG'].theseBuffers.forEach(buffer => {
         buffer.clearBuffers()
     })
-    gl.reContourMaps()
-    gl.drawScene()
+    glRef.current.reContourMaps()
+    glRef.current.drawScene()
 }
 
-BabyGruMap.prototype.makeCootLive = function (gl, mapRadius) {
+BabyGruMap.prototype.makeCootLive = function (glRef, mapRadius) {
     const $this = this
     $this.cootContour = true
-    $this.doCootContour(gl,
-        -gl.origin[0],
-        -gl.origin[1],
-        -gl.origin[2],
+    $this.doCootContour(glRef,
+        -glRef.current.origin[0],
+        -glRef.current.origin[1],
+        -glRef.current.origin[2],
         mapRadius, $this.contourLevel)
-    gl.drawScene()
+    glRef.current.drawScene()
 }
 
-BabyGruMap.prototype.makeCootUnlive = function (gl) {
+BabyGruMap.prototype.makeCootUnlive = function (glRef) {
     const $this = this
     $this.cootContour = false
-    $this.clearBuffersOfStyle(gl, 'Coot')
-    gl.buildBuffers();
-    gl.drawScene();
+    $this.clearBuffersOfStyle(glRef, 'Coot')
+    glRef.current.buildBuffers();
+    glRef.current.drawScene();
 }
 
 
-BabyGruMap.prototype.contour = function (gl) {
+BabyGruMap.prototype.contour = function (glRef) {
     const $this = this
     $this.getMap()
         .then(reply => {
             let map = readMapFromArrayBuffer(reply.data.result.mapData);
             var mapGrid = mapToMapGrid(map);
             var mapTriangleData = { "mapGrids": [mapGrid], "col_tri": [[]], "norm_tri": [[]], "vert_tri": [[]], "idx_tri": [[]], "prim_types": [[]] };
-            let _ = gl.appendOtherData(mapTriangleData);
-            var newMap = gl.liveUpdatingMaps[gl.liveUpdatingMaps.length - 1]
+            glRef.current.appendOtherData(mapTriangleData);
+            var newMap = glRef.current.liveUpdatingMaps[glRef.current.liveUpdatingMaps.length - 1]
 
             newMap.contourLevel = $this.contourLevel
             newMap.mapColour = $this.mapColour
             $this.liveUpdatingMaps['WebMG'] = newMap
 
             if (!$this.webMGContour) {
-                gl.liveUpdatingMaps = gl.liveUpdatingMaps.filter(item => item !== newMap)
+                glRef.current.liveUpdatingMaps = glRef.current.liveUpdatingMaps.filter(item => item !== newMap)
             }
             else {
-                gl.reContourMaps()
+                glRef.current.reContourMaps()
             }
 
-            gl.drawScene()
+            glRef.current.drawScene()
         })
 }
 
-BabyGruMap.prototype.clearBuffersOfStyle = function (gl, style) {
+BabyGruMap.prototype.clearBuffersOfStyle = function (glRef, style) {
     const $this = this
     //console.log('In clear buffers', style, $this.displayObjects)
     //Empty existing buffers of this type
     $this.displayObjects[style].forEach((buffer) => {
         buffer.clearBuffers()
-        gl.displayBuffers = gl.displayBuffers?.filter(glBuffer => glBuffer.id !== buffer.id)
+        glRef.current.displayBuffers = glRef.current.displayBuffers?.filter(glBuffer => glBuffer.id !== buffer.id)
     })
     $this.displayObjects[style] = []
 }
 
-BabyGruMap.prototype.doCootContour = function (gl, x, y, z, radius, contourLevel) {
+BabyGruMap.prototype.doCootContour = function (glRef, x, y, z, radius, contourLevel) {
 
     const $this = this
 
@@ -204,14 +204,14 @@ BabyGruMap.prototype.doCootContour = function (gl, x, y, z, radius, contourLevel
             commandArgs: [$this.molNo, x, y, z, radius, contourLevel]
         }).then(response => {
             const objects = [response.data.result.result]
-            $this.clearBuffersOfStyle(gl, "Coot")
+            $this.clearBuffersOfStyle(glRef, "Coot")
             //$this.displayObjects['Coot'] = [...$this.displayObjects['Coot'], ...objects.map(object=>gl.appendOtherData(object, true))]
             objects.forEach(object => {
-                var a = gl.appendOtherData(object, true);
+                var a = glRef.current.appendOtherData(object, true);
                 $this.displayObjects['Coot'] = $this.displayObjects['Coot'].concat(a)
             })
-            gl.buildBuffers();
-            gl.drawScene();
+            glRef.current.buildBuffers();
+            glRef.current.drawScene();
             resolve(true)
         })
     })

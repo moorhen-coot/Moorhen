@@ -1,7 +1,7 @@
 import { useEffect, useState, createRef, useCallback, useMemo, Fragment } from "react";
 import { Card, Form, Button, Row, Col, DropdownButton } from "react-bootstrap";
 import { doDownload } from '../utils/BabyGruUtils';
-import { VisibilityOffOutlined, VisibilityOutlined, ExpandMoreOutlined, ExpandLessOutlined, DownloadOutlined } from '@mui/icons-material';
+import { VisibilityOffOutlined, VisibilityOutlined, ExpandMoreOutlined, ExpandLessOutlined, DownloadOutlined, Settings } from '@mui/icons-material';
 import BabyGruSlider from "./BabyGruSlider";
 import { BabyGruDeleteDisplayObjectMenuItem, BabyGruRenameDisplayObjectMenuItem } from "./BabyGruMenuItem";
 import { MenuItem } from "@mui/material";
@@ -25,10 +25,10 @@ export const BabyGruMapCard = (props) => {
 
     const handleVisibility = () => {
         if (!cootContour) {
-            props.map.makeCootLive(props.glRef.current, mapRadius)
+            props.map.makeCootLive(props.glRef, mapRadius)
             setCootContour(true)
         } else {
-            props.map.makeCootUnlive(props.glRef.current)
+            props.map.makeCootUnlive(props.glRef)
             setCootContour(false)
         }
         props.setCurrentDropdownMolNo(-1)
@@ -92,6 +92,7 @@ export const BabyGruMapCard = (props) => {
         return  <Fragment>
                     {expandedButtons}
                     <DropdownButton 
+                            title={<Settings/>}
                             size="sm" 
                             variant="outlined" 
                             autoClose={popoverIsShown ? false : 'outside'} 
@@ -119,7 +120,7 @@ export const BabyGruMapCard = (props) => {
                 props.map.contourLevel = mapContourLevel
                 busyContouring.current = true
                 props.commandCentre.current.extendConsoleMessage("Because contourLevel or mapRadius changed useCallback")
-                props.map.doCootContour(props.glRef.current,
+                props.map.doCootContour(props.glRef,
                     ...nextOrigin.current,
                     mapRadius,
                     props.map.contourLevel)
@@ -140,7 +141,7 @@ export const BabyGruMapCard = (props) => {
             else {
                 props.map.contourLevel = mapContourLevel
                 busyContouring.current = true
-                props.map.doCootContour(props.glRef.current,
+                props.map.doCootContour(props.glRef,
                     ...nextOrigin.current,
                     mapRadius,
                     props.map.contourLevel)
@@ -183,7 +184,7 @@ export const BabyGruMapCard = (props) => {
             props.commandCentre.current.extendConsoleMessage('Because I can')
             props.map.litLines = mapLitLines            
             props.map.contourLevel = mapContourLevel
-            props.map.doCootContour(props.glRef.current,
+            props.map.doCootContour(props.glRef,
                 ...props.glRef.current.origin.map(coord => -coord),
                 mapRadius,
                 props.map.contourLevel)
