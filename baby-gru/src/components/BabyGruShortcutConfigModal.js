@@ -112,7 +112,7 @@ export const BabyGruShortcutConfigModal = (props) => {
                 </Modal>
                 <Modal ref={newShortCutModalRef} centered backdrop="static" size='sm' keyboard={false} show={waitingNewShortCut}>
                     <Modal.Header>
-                        Press new shortcut
+                        Define a new shortcut
                     </Modal.Header>
                     <Modal.Body>
                         {shortCutMessage}
