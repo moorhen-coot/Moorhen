@@ -1,9 +1,12 @@
-import { NavDropdown, Form, InputGroup } from "react-bootstrap";
 import { useState } from "react";
+import { NavDropdown, Form, InputGroup } from "react-bootstrap";
+import { BabyGruShortcutConfigModal } from "./BabyGruShortcutConfigModal"
+import { MenuItem } from "@mui/material";
 
 export const BabyGruPreferencesMenu = (props) => {
     const { atomLabelDepthMode, setAtomLabelDepthMode, darkMode, setDarkMode, defaultExpandDisplayCards, setDefaultExpandDisplayCards } = props;
-    
+    const [showModal, setShowModal] = useState(null);
+
     return <NavDropdown
                     title="Preferences"
                     id="basic-nav-dropdown"
@@ -32,6 +35,10 @@ export const BabyGruPreferencesMenu = (props) => {
                         onChange={() => { setAtomLabelDepthMode(!atomLabelDepthMode) }}
                         label="Depth cue atom labels"/>
                 </InputGroup>
+                <MenuItem variant="success" onClick={() => setShowModal(true)}>
+                    Configure shortcuts
+                </MenuItem>
+                <BabyGruShortcutConfigModal showModal={showModal} setShowModal={setShowModal} setShortCuts={props.setShortCuts} shortCuts={JSON.parse(props.shortCuts)}/>
             </NavDropdown>
 
 }
