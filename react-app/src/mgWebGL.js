@@ -10711,4 +10711,4 @@ class MGWebGL extends Component {
     }
 }
 
-export { MGWebGL, icosaIndices1, icosaVertices1, icosaIndices2, icosaVertices2 };
+export { MGWebGL, icosaIndices1, icosaVertices1, icosaIndices2, icosaVertices2, getDeviceScale, vec3Create };
