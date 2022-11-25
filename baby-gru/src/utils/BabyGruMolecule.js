@@ -421,6 +421,53 @@ BabyGruMolecule.prototype.drawBonds = function (webMGAtoms, glRef, colourSchemeI
 
 BabyGruMolecule.prototype.drawLigands = function (webMGAtoms, glRef, colourSchemeIndex) {
     const $this = this
+    const style = "ligands"
+    if (typeof webMGAtoms["atoms"] === 'undefined') return;
+
+    //Attempt to apply selection, storing old hierarchy
+    const selectionString = "ligands_old"
+    const oldHierarchy = webMGAtoms.atoms
+    let selectedAtoms = null
+    if (typeof selectionString === 'string') {
+        try {
+            selectedAtoms = webMGAtoms.atoms[0].getAtoms(selectionString)
+            if (selectedAtoms.length === 0) {
+                webMGAtoms.atoms = oldHierarchy
+                return
+            }
+            webMGAtoms.atoms = atomsToHierarchy(selectedAtoms)
+        }
+        catch (err) {
+            webMGAtoms.atoms = oldHierarchy
+            return
+        }
+    }
+    if (selectedAtoms == null) return
+    var model = webMGAtoms.atoms[0];
+
+    const colourScheme = new ColourScheme(webMGAtoms);
+    var atomColours = colourScheme.colourOneColour([0.8, 0.5, 0.2, 0.3])
+    let linesAndSpheres = []
+    var nonHydrogenAtoms = model.getAtoms("not [H]");
+    var nonHydrogenPrimitiveInfo = atomsToSpheresInfo(nonHydrogenAtoms, 0.3, atomColours);
+    linesAndSpheres.push(nonHydrogenPrimitiveInfo);
+
+    //Restore old hierarchy
+    webMGAtoms.atoms = oldHierarchy
+
+    const objects = linesAndSpheres.filter(item => {
+        return typeof item.sizes !== "undefined" &&
+            item.sizes.length > 0 &&
+            item.sizes[0].length > 0 &&
+            item.sizes[0][0].length > 0
+    })
+    //console.log('clearing', style, gl)
+    $this.clearBuffersOfStyle(style, glRef)
+    this.addBuffersOfStyle(glRef, objects, style)
+
+    return
+    /*
+    const $this = this
     if (typeof webMGAtoms["atoms"] === 'undefined') return;
 
     let ligandAtoms = webMGAtoms.atoms[0].getAtoms("ligands");
@@ -450,7 +497,7 @@ BabyGruMolecule.prototype.drawLigands = function (webMGAtoms, glRef, colourSchem
     console.log({ objects })
     $this.clearBuffersOfStyle("ligands", glRef)
     $this.addBuffersOfStyle(glRef, objects, "ligands")
-
+*/
 }
 
 BabyGruMolecule.prototype.drawHover = function (glRef, selectionString) {

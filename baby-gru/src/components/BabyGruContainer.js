@@ -68,7 +68,6 @@ export const BabyGruContainer = (props) => {
     const [theme, setTheme] = useState("flatly")
     const lastHoveredAtom = useRef(null)
     const [showToast, setShowToast] = useState(false)
-    const [toastText, setToastText] = useState("")
     const preferences = useContext(PreferencesContext);
     const [toastContent, setToastContent] = useState("")
 
@@ -292,7 +291,7 @@ export const BabyGruContainer = (props) => {
             </Nav>
         </Navbar>
     </div>
-        <Container fluid>
+        <Container fluid className={`baby-gru ${theme}`}>
             <Row>
                 <Col style={{ paddingLeft: '0', paddingRight: '0' }}>
                     <div

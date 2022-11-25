@@ -42,3 +42,12 @@ img.baby-gru-button-icon {
   height: 3rem;
   width: 3rem;
 }
+
+.baby-gru.flatly .toast-header {
+  color: black !important;
+}
+
+.baby-gru.darkly .toast-header {
+  color: white !important;
+}
+
