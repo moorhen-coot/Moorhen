@@ -147,8 +147,7 @@ const PreferencesContextProvider = ({ children }) => {
                 if (response[0] !== defaultValues.version) {
                     console.log('Different storage version detected, using defaults')
                     restoreDefaults()
-                }
-                else if(!response.every(item => item !== null) || response.length < Object.keys(defaultValues).length) {
+                } else if(!response.every(item => item !== null) || response.length < Object.keys(defaultValues).length) {
                     console.log('Cannot find stored preferences, using defaults')
                     restoreDefaults()
                 } else {
