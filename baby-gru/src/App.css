@@ -43,11 +43,11 @@ img.baby-gru-button-icon {
   width: 3rem;
 }
 
-.baby-gru.flatly .toast-header {
+.baby-gru.flatly h3 {
   color: black !important;
 }
 
-.baby-gru.darkly .toast-header {
+.baby-gru.darkly h3 {
   color: white !important;
 }
 
