@@ -34,7 +34,6 @@ export const BabyGruShortcutConfigModal = (props) => {
         setStagedShortCuts((prev) => {
             prev[waitingNewShortCut].keyPress = evt.key.toLowerCase()
             prev[waitingNewShortCut].modifiers = modifiers
-            console.log(prev)
             return prev
         })
 
