@@ -107,7 +107,6 @@ const PreferencesContextProvider = ({ children }) => {
                 keyPress: "m",
                 label: "Label an atom on click"
             }
-
         }
     }  
 
