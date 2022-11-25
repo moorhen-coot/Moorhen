@@ -270,10 +270,6 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         vec3.transformMat4(up, up, invMat);
         vec3.transformMat4(right, right, invMat);
 
-        console.log(right);
-        console.log(up);
-        console.log(glRef.current.zoom);
-
         const mag = 1;
 
         const ncells_x = mag;
@@ -287,18 +283,18 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         let newZoom = glRef.current.zoom / ncells_x
         glRef.current.setZoom(newZoom)
 
+        const ratio = 1.0 * glRef.current.gl.viewportWidth / glRef.current.gl.viewportHeight;
         let jj = 0;
         for (let j = Math.floor(-ncells_y / 2); j < Math.floor(ncells_y / 2); j++) {
             let ii = 0;
             for (let i = Math.floor(-ncells_x / 2); i < Math.floor(ncells_x / 2); i++) {
-                const x_off = (2.0 * i + 1 + ncells_x % 2);
+                const x_off = ratio*(2.0 * i + 1 + ncells_x % 2);
                 const y_off = (2.0 * j + 1 + ncells_y % 2);
 
                 glRef.current.origin = [oldOrigin[0], oldOrigin[1], oldOrigin[2]];
                 glRef.current.origin[0] += glRef.current.zoom * right[0] * 24.0 * x_off + glRef.current.zoom * up[0] * 24.0 * y_off;
                 glRef.current.origin[1] += glRef.current.zoom * right[1] * 24.0 * x_off + glRef.current.zoom * up[1] * 24.0 * y_off;
                 glRef.current.origin[2] += glRef.current.zoom * right[2] * 24.0 * x_off + glRef.current.zoom * up[2] * 24.0 * y_off;
-
 
                 glRef.current.save_pixel_data = true;
                 glRef.current.drawScene();
