@@ -74,7 +74,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         return false
     }
 
-    if (action === 'triple_refine' && activeMap && hoveredAtom.molecule) {
+    else if (action === 'triple_refine' && activeMap && hoveredAtom.molecule) {
         const chosenAtom = cidToSpec(hoveredAtom.cid)
         const commandArgs = [
             `${hoveredAtom.molecule.molNo}`,
@@ -91,7 +91,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         return false
     }
 
-    if (action === 'auto_fit_rotamer' && activeMap && hoveredAtom.molecule) {
+    else if (action === 'auto_fit_rotamer' && activeMap && hoveredAtom.molecule) {
         const chosenAtom = cidToSpec(hoveredAtom.cid)
         const commandArgs = [
             hoveredAtom.molecule.molNo,
@@ -111,7 +111,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         return false
     }
 
-    if (action === 'add_terminal_residue' && activeMap && hoveredAtom.molecule) {
+    else if (action === 'add_terminal_residue' && activeMap && hoveredAtom.molecule) {
         const chosenAtom = cidToSpec(hoveredAtom.cid)
         const commandArgs = [
             hoveredAtom.molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
@@ -126,7 +126,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         return false
     }
     
-    if (action === 'delete_residue' && hoveredAtom.molecule) {
+    else if (action === 'delete_residue' && hoveredAtom.molecule) {
         const chosenAtom = cidToSpec(hoveredAtom.cid)
         const commandArgs = [
             hoveredAtom.molecule.molNo,
@@ -144,7 +144,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         return false
     }
     
-    if (action === 'eigen_flip'  && hoveredAtom.molecule) {
+    else if (action === 'eigen_flip'  && hoveredAtom.molecule) {
         const chosenAtom = cidToSpec(hoveredAtom.cid)
         const commandArgs = [hoveredAtom.molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
         commandCentre.current.cootCommand({
@@ -158,7 +158,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         return false
     }
 
-    if (action === 'go_to_blob' && activeMap) {
+    else if (action === 'go_to_blob' && activeMap) {
         
         const frontAndBack = glRef.current.getFrontAndBackPos(event);
         const goToBlobEvent = {
@@ -180,12 +180,12 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         })
     }
 
-    if (action === 'clear_labels') {
+    else if (action === 'clear_labels') {
         glRef.current.clickedAtoms = [];
         glRef.current.drawScene();
     }
 
-    if (action === 'move_up') {
+    else if (action === 'move_up') {
         const invQuat = quat4.create();
         quat4Inverse(glRef.current.myQuat, invQuat);
         const theMatrix = quatToMat4(invQuat);
@@ -200,7 +200,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         glRef.current.reContourMaps();
     }
 
-    if (action === 'move_down') {
+    else if (action === 'move_down') {
         const invQuat = quat4.create();
         quat4Inverse(glRef.current.myQuat, invQuat);
         const theMatrix = quatToMat4(invQuat);
@@ -215,7 +215,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         glRef.current.reContourMaps();
     }
 
-    if (action === 'move_left') {
+    else if (action === 'move_left') {
         const invQuat = quat4.create();
         quat4Inverse(glRef.current.myQuat, invQuat);
         const theMatrix = quatToMat4(invQuat);
@@ -230,7 +230,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         glRef.current.reContourMaps();
     }
 
-    if (action === 'move_right') {
+    else if (action === 'move_right') {
         const invQuat = quat4.create();
         quat4Inverse(glRef.current.myQuat, invQuat);
         const theMatrix = quatToMat4(invQuat);
@@ -245,7 +245,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         glRef.current.reContourMaps();
     }
 
-    if (action === 'restore_scene') {
+    else if (action === 'restore_scene') {
         glRef.current.myQuat = quat4.create()
         quat4.set(glRef.current.myQuat, 0, 0, 0, -1)
         glRef.current.setZoom(1.0)
@@ -253,7 +253,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         glRef.current.drawScene()
     }
 
-    if (action === 'take_screenshot') {
+    else if (action === 'take_screenshot') {
         const oldOrigin = [glRef.current.origin[0], glRef.current.origin[1], glRef.current.origin[2]];
 
         // Getting up and right for doing tiling (in future?)
