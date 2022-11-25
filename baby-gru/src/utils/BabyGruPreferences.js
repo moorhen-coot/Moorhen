@@ -10,6 +10,105 @@ const updateStoredPreferences = async (key, value) => {
     }
 }
 
+const defaultValues = {
+    version: '0.1',
+    darkMode: false, 
+    atomLabelDepthMode: true, 
+    defaultExpandDisplayCards: true,
+    shortCuts: {
+        "sphere_refine": {
+            modifiers: ["shiftKey"],
+            keyPress: "r",
+            label: "Refine sphere"
+        },
+        "flip_peptide": {
+            modifiers: ["shiftKey"],
+            keyPress: "q",
+            label: "Flip peptide"
+        },
+        "triple_refine": {
+            modifiers: ["shiftKey"],
+            keyPress: "h",
+            label: "Refine triplet"
+        },
+        "auto_fit_rotamer": {
+            modifiers: ["shiftKey"],
+            keyPress: "j",
+            label: "Autofit rotamer"
+        },
+        "add_terminal_residue": {
+            modifiers: ["shiftKey"],
+            keyPress: "y",
+            label: "Add terminal residue"
+        },
+        "delete_residue": {
+            modifiers: ["shiftKey"],
+            keyPress: "d",
+            label: "Delete residue"
+        },
+        "eigen_flip": {
+            modifiers: ["shiftKey"],
+            keyPress: "e",
+            label: "Eigen flip ligand"
+        },
+        "show_shortcuts": {
+            modifiers: ["ctrlKey"],
+            keyPress: "control",
+            label: "Show shortcuts"
+        },
+        "restore_scene": {
+            modifiers: [],
+            keyPress: "r",
+            label: "Restore scene"
+        },
+        "clear_labels": {
+            modifiers: [],
+            keyPress: "c",
+            label: "Clear labels"
+        },
+        "move_up": {
+            modifiers: [],
+            keyPress: "arrowup",
+            label: "Move model up"
+        },
+        "move_down": {
+            modifiers: [],
+            keyPress: "arrowdown",
+            label: "Move model down"
+        },
+        "move_left": {
+            modifiers: [],
+            keyPress: "arrowleft",
+            label: "Move model left"
+        },
+        "move_right": {
+            modifiers: [],
+            keyPress: "arrowright",
+            label: "Move model right"
+        },
+        "go_to_blob": {
+            modifiers: [],
+            keyPress: "g",
+            label: "Go to blob"
+        },
+        "take_screenshot": {
+            modifiers: [],
+            keyPress: "s",
+            label: "Take a screenshot"
+        },
+        "ligand_camera_wiggle": {
+            modifiers: [],
+            keyPress: "z",
+            label: "Wiggle camera while fitting a ligand"
+        },
+        "label_atom": {
+            modifiers: [],
+            keyPress: "m",
+            label: "Label an atom on click"
+        }
+    }
+}
+
 const PreferencesContext = createContext();
 
 const PreferencesContextProvider = ({ children }) => {
@@ -17,99 +116,14 @@ const PreferencesContextProvider = ({ children }) => {
     const [atomLabelDepthMode, setAtomLabelDepthMode] = useState(null);
     const [defaultExpandDisplayCards, setDefaultExpandDisplayCards] = useState(null);
     const [shortCuts, setShortCuts] = useState(null);
-    const defaultValues = {
-        darkMode: false, 
-        atomLabelDepthMode: true, 
-        defaultExpandDisplayCards: true,
-        shortCuts: {
-            "sphere_refine": {
-                modifiers: ["shiftKey"],
-                keyPress: "r",
-                label: "Refine sphere"
-            },
-            "flip_peptide": {
-                modifiers: ["shiftKey"],
-                keyPress: "q",
-                label: "Flip peptide"
-            },
-            "triple_refine": {
-                modifiers: ["shiftKey"],
-                keyPress: "h",
-                label: "Refine triplet"
-            },
-            "auto_fit_rotamer": {
-                modifiers: ["shiftKey"],
-                keyPress: "j",
-                label: "Autofit rotamer"
-            },
-            "add_terminal_residue": {
-                modifiers: ["shiftKey"],
-                keyPress: "y",
-                label: "Add terminal residue"
-            },
-            "delete_residue": {
-                modifiers: ["shiftKey"],
-                keyPress: "d",
-                label: "Delete residue"
-            },
-            "eigen_flip": {
-                modifiers: ["shiftKey"],
-                keyPress: "e",
-                label: "Eigen flip ligand"
-            },
-            "show_shortcuts": {
-                modifiers: ["metaKey"],
-                keyPress: "Meta",
-                label: "Show shortcuts"
-            },
-            "restore_scene": {
-                modifiers: [],
-                keyPress: "r",
-                label: "Restore scene"
-            },
-            "clear_labels": {
-                modifiers: [],
-                keyPress: "c",
-                label: "Clear labels"
-            },
-            "move_up": {
-                modifiers: [],
-                keyPress: "arrowup",
-                label: "Move model up"
-            },
-            "move_down": {
-                modifiers: [],
-                keyPress: "arrowdown",
-                label: "Move model down"
-            },
-            "move_left": {
-                modifiers: [],
-                keyPress: "arrowleft",
-                label: "Move model left"
-            },
-            "move_right": {
-                modifiers: [],
-                keyPress: "arrowright",
-                label: "Move model right"
-            },
-            "go_to_blob": {
-                modifiers: [],
-                keyPress: "g",
-                label: "Go to blob"
-            },
-            "take_screenshot": {
-                modifiers: [],
-                keyPress: "s",
-                label: "Take a screenshot"
-            },
-            "label_atom": {
-                modifiers: [],
-                keyPress: "m",
-                label: "Label an atom on click"
-            }
-        }
-    }  
 
+    const restoreDefaults = ( )=> {
+        updateStoredPreferences('version', defaultValues.version);
+        setDarkMode(defaultValues.darkMode)
+        setDefaultExpandDisplayCards(defaultValues.defaultExpandDisplayCards)            
+        setShortCuts(JSON.stringify(defaultValues.shortCuts))            
+        setAtomLabelDepthMode(defaultValues.atomLabelDepthMode)
+    }
 
     /**
      * Hook used after component mounts to retrieve user preferences from 
@@ -120,23 +134,28 @@ const PreferencesContextProvider = ({ children }) => {
         const fetchStoredPreferences = async () => {
             console.log('Retrieving stored preferences...')
             try {
-                let promises = [localforage.getItem('darkMode'), localforage.getItem('defaultExpandDisplayCards'), localforage.getItem('shortCuts'), localforage.getItem('atomLabelDepthMode')]
-                let response = await Promise.all(promises)
+                let response = await Promise.all([
+                    localforage.getItem('version'), 
+                    localforage.getItem('darkMode'), 
+                    localforage.getItem('defaultExpandDisplayCards'),
+                    localforage.getItem('shortCuts'),
+                    localforage.getItem('atomLabelDepthMode')
+                    ])
                 
                 console.log('Retrieved the following preferences from local storage: ', response)
                 
-                if (!response.every(item => item !== null) || response.length < Object.keys(defaultValues).length) {
+                if (response[0] !== defaultValues.version) {
+                    console.log('Different storage version detected, using defaults')
+                    restoreDefaults()
+                } else if(!response.every(item => item !== null) || response.length < Object.keys(defaultValues).length) {
                     console.log('Cannot find stored preferences, using defaults')
-                    setDarkMode(defaultValues.darkMode)
-                    setDefaultExpandDisplayCards(defaultValues.defaultExpandDisplayCards)            
-                    setShortCuts(JSON.stringify(defaultValues.shortCuts))            
-                    setAtomLabelDepthMode(defaultValues.atomLabelDepthMode)
+                    restoreDefaults()
                 } else {
                     console.log(`Stored preferences retrieved successfully: ${response}`)
-                    setDarkMode(response[0])
-                    setDefaultExpandDisplayCards(response[1])
-                    setShortCuts(response[2])
-                    setAtomLabelDepthMode(response[3])
+                    setDarkMode(response[1])
+                    setDefaultExpandDisplayCards(response[2])
+                    setShortCuts(response[3])
+                    setAtomLabelDepthMode(response[4])
                 }                
                 
             } catch (err) {
@@ -200,4 +219,4 @@ const PreferencesContextProvider = ({ children }) => {
 };
   
 
-export { PreferencesContext, PreferencesContextProvider };
+export { PreferencesContext, PreferencesContextProvider, defaultValues };
