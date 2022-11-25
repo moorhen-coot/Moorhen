@@ -61,6 +61,51 @@ const PreferencesContextProvider = ({ children }) => {
                 modifiers: ["metaKey"],
                 keyPress: "Meta",
                 label: "Show shortcuts"
+            },
+            "restore_scene": {
+                modifiers: [],
+                keyPress: "r",
+                label: "Restore scene"
+            },
+            "clear_labels": {
+                modifiers: [],
+                keyPress: "c",
+                label: "Clear labels"
+            },
+            "move_up": {
+                modifiers: [],
+                keyPress: "arrowup",
+                label: "Move model up"
+            },
+            "move_down": {
+                modifiers: [],
+                keyPress: "arrowdown",
+                label: "Move model down"
+            },
+            "move_left": {
+                modifiers: [],
+                keyPress: "arrowleft",
+                label: "Move model left"
+            },
+            "move_right": {
+                modifiers: [],
+                keyPress: "arrowright",
+                label: "Move model right"
+            },
+            "go_to_blob": {
+                modifiers: [],
+                keyPress: "g",
+                label: "Go to blob"
+            },
+            "take_screenshot": {
+                modifiers: [],
+                keyPress: "s",
+                label: "Take a screenshot"
+            },
+            "label_atom": {
+                modifiers: [],
+                keyPress: "m",
+                label: "Label an atom on click"
             }
         }
     }  
