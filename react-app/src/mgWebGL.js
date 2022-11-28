@@ -3044,6 +3044,17 @@ class MGWebGL extends Component {
         this.drawScene();
     }
 
+    setWheelContour(contourFactor, drawScene) {
+        var wheelContourChanged = new CustomEvent("wheelContourLevelChanged", {
+            "detail": {
+                factor: contourFactor,
+            }
+        });
+        document.dispatchEvent(wheelContourChanged);
+
+        if (drawScene) this.drawScene();
+    }
+
     setZoom(z, drawScene) {
         const oldZoom = this.zoom
         this.zoom = z;
@@ -7993,7 +8004,7 @@ class MGWebGL extends Component {
             this.gl.uniform1f(this.shaderProgramTextBackground.fog_end, this.gl_fog_end);
         } else {
             //If we want them to be on top
-            this.gl.depthFunc(this.gl.ALWAYS);
+        this.gl.depthFunc(this.gl.ALWAYS);
             this.gl.uniform1f(this.shaderProgramTextBackground.fog_start, 1000.0);
             this.gl.uniform1f(this.shaderProgramTextBackground.fog_end, 1000.0);
         }
@@ -8776,18 +8787,24 @@ class MGWebGL extends Component {
     }
 
     doWheel(event) {
+        const self = this
         let factor;
         if (event.deltaY > 0) {
             factor = 1. + 1 / 50.;
         } else {
             factor = 1. - 1 / 50.;
         }
-        let newZoom = this.zoom * factor;
-        if (newZoom < .01) {
-            newZoom = 0.01;
+
+        if (self.keysDown['set_map_contour']) {
+            this.setWheelContour(factor, true)
+        } else {
+            let newZoom = this.zoom * factor;
+            if (newZoom < .01) {
+                newZoom = 0.01;
+            }
+            this.setZoom(newZoom, true)
         }
-        this.setZoom(newZoom, true)
-        return;
+        
     }
 
     linesToThickLinesWithIndicesAndNormals(axesVertices, axesNormals, axesColours, axesIndices, size) {
@@ -10571,7 +10588,7 @@ class MGWebGL extends Component {
 
     handleKeyUp(event, self) {
         for (const key of Object.keys(self.props.keyboardAccelerators)){
-            if(self.props.keyboardAccelerators[key].keyPress === event.key.toLowerCase() && self.props.keyboardAccelerators[key].modifiers.every(modifier => event[modifier])) {
+            if(self.props.keyboardAccelerators[key].keyPress === event.key.toLowerCase() && self.props.keyboardAccelerators[key]) {
                 self.keysDown[key] = false;
             }
         }

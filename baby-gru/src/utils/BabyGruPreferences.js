@@ -16,6 +16,7 @@ const getDefaultValues = () => {
         darkMode: false, 
         atomLabelDepthMode: true, 
         defaultExpandDisplayCards: true,
+        defaultLitLines: false,
         shortCuts: {
             "sphere_refine": {
                 modifiers: ["shiftKey"],
@@ -53,8 +54,8 @@ const getDefaultValues = () => {
                 label: "Eigen flip ligand"
             },
             "show_shortcuts": {
-                modifiers: ["ctrlKey"],
-                keyPress: "control",
+                modifiers: [],
+                keyPress: "escape",
                 label: "Show shortcuts"
             },
             "restore_scene": {
@@ -106,7 +107,13 @@ const getDefaultValues = () => {
                 modifiers: [],
                 keyPress: "m",
                 label: "Label an atom on click"
-            }
+            },
+            "set_map_contour": {
+                modifiers: ["ctrlKey"],
+                keyPress: "control",
+                label: "Set active map contour"
+            },
+
         }
     }
 }
@@ -118,6 +125,7 @@ const PreferencesContextProvider = ({ children }) => {
     const [atomLabelDepthMode, setAtomLabelDepthMode] = useState(null);
     const [defaultExpandDisplayCards, setDefaultExpandDisplayCards] = useState(null);
     const [shortCuts, setShortCuts] = useState(null);
+    const [defaultLitLines, setDefaultLitLines] = useState(null);
 
     const restoreDefaults = ( )=> {
         const defaultValues = getDefaultValues()
@@ -126,6 +134,7 @@ const PreferencesContextProvider = ({ children }) => {
         setDefaultExpandDisplayCards(defaultValues.defaultExpandDisplayCards)            
         setShortCuts(JSON.stringify(defaultValues.shortCuts))            
         setAtomLabelDepthMode(defaultValues.atomLabelDepthMode)
+        setDefaultLitLines(defaultValues.defaultLitLines)
     }
 
     /**
@@ -142,7 +151,8 @@ const PreferencesContextProvider = ({ children }) => {
                     localforage.getItem('darkMode'), 
                     localforage.getItem('defaultExpandDisplayCards'),
                     localforage.getItem('shortCuts'),
-                    localforage.getItem('atomLabelDepthMode')
+                    localforage.getItem('atomLabelDepthMode'),
+                    localforage.getItem('defaultLitLines')
                     ])
                 
                 console.log('Retrieved the following preferences from local storage: ', response)
@@ -160,6 +170,7 @@ const PreferencesContextProvider = ({ children }) => {
                     setDefaultExpandDisplayCards(response[2])
                     setShortCuts(response[3])
                     setAtomLabelDepthMode(response[4])
+                    setDefaultLitLines(response[5])
                 }                
                 
             } catch (err) {
@@ -213,7 +224,16 @@ const PreferencesContextProvider = ({ children }) => {
         updateStoredPreferences('shortCuts', shortCuts);
     }, [shortCuts]);
 
-    const collectedContextValues = {darkMode, setDarkMode, atomLabelDepthMode, setAtomLabelDepthMode, defaultExpandDisplayCards, setDefaultExpandDisplayCards, shortCuts, setShortCuts}
+    useMemo(() => {
+
+        if (defaultLitLines === null) {
+            return
+        }
+       
+        updateStoredPreferences('defaultLitLines', defaultLitLines);
+    }, [defaultLitLines]);
+
+    const collectedContextValues = {darkMode, setDarkMode, atomLabelDepthMode, setAtomLabelDepthMode, defaultExpandDisplayCards, setDefaultExpandDisplayCards, shortCuts, setShortCuts, defaultLitLines, setDefaultLitLines}
 
     return (
       <PreferencesContext.Provider value={collectedContextValues}>
