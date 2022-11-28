@@ -542,6 +542,9 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<gemmi::Helix>("VectorGemmiHelix");
     register_vector<gemmi::Sheet>("VectorGemmiSheet");
     register_vector<gemmi::Assembly>("VectorGemmiAssembly");
+    register_vector<gemmi::Chain>("VectorGemmiChain");
+    register_vector<gemmi::ResidueSpan>("VectorGemmiResidueSpan");
+    register_vector<gemmi::ConstResidueSpan>("VectorGemmiConstResidueSpan");
 
     value_array<glm::vec3>("array_float_3")
         .element(emscripten::index<0>())
@@ -570,28 +573,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .value("ChemComp", gemmi::CoorFormat::ChemComp)
     ;
 
-    //TODO Wrap the following
-      //UnitCell
-      //Model
-      //NcsOp
-      //Entity
-      //Connection
-      //Helix
-      //Sheet
-      //Assembly
-      //Metadata
-      //Transform
-      //FTransform
-      //Mat33
-      //Vec3
-      //Op
-      //GroupOps
-      //SpaceGroup
-      //Position
-      //Fractional
-      //NearestImage
-      //Miller
-
     class_<gemmi::UnitCell>("UnitCell")
     .constructor<>()
     .constructor<double,  double, double, double, double, double>()
@@ -619,15 +600,12 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("calculate_properties",&gemmi::UnitCell::calculate_properties)
     .function("cos_alpha",&gemmi::UnitCell::cos_alpha)
     .function("calculate_matrix_B",&gemmi::UnitCell::calculate_matrix_B)
-    //.function("calculate_u_eq",&gemmi::UnitCell::calculate_u_eq) //This requires const SMat33<double>
     .function("set_matrices_from_fract",&gemmi::UnitCell::set_matrices_from_fract)
     .function("set",&gemmi::UnitCell::set)
     .function("set_from_vectors",&gemmi::UnitCell::set_from_vectors)
     .function("changed_basis_backward",&gemmi::UnitCell::changed_basis_backward)
     .function("changed_basis_forward",&gemmi::UnitCell::changed_basis_forward)
     .function("is_compatible_with_groupops",&gemmi::UnitCell::is_compatible_with_groupops)
-    //.function("is_compatible_with_spacegroup",&gemmi::UnitCell::is_compatible_with_spacegroup) // Requires const SpaceGroup* sg
-    //.function("set_cell_images_from_spacegroup",&gemmi::UnitCell::set_cell_images_from_spacegroup) // Requires const SpaceGroup* sg
     .function("add_ncs_images_to_cs_images",&gemmi::UnitCell::add_ncs_images_to_cs_images)
     .function("get_ncs_transforms",&gemmi::UnitCell::get_ncs_transforms)
     .function("orthogonalize",&gemmi::UnitCell::orthogonalize)
@@ -651,13 +629,59 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("calculate_1_d2",&gemmi::UnitCell::calculate_1_d2)
     .function("calculate_d",&gemmi::UnitCell::calculate_d)
     .function("calculate_stol_sq",&gemmi::UnitCell::calculate_stol_sq)
-    //.function("metric_tensor",&gemmi::UnitCell::metric_tensor) //This requires SMat33<double>
-    //.function("reciprocal_metric_tensor",&gemmi::UnitCell::reciprocal_metric_tensor) //This requires SMat33<double>
     .function("reciprocal",&gemmi::UnitCell::reciprocal)
     .function("get_hkl_limits",&gemmi::UnitCell::get_hkl_limits)
     .function("primitive_orth_matrix",&gemmi::UnitCell::primitive_orth_matrix)
+    //.function("calculate_u_eq",&gemmi::UnitCell::calculate_u_eq) //This requires const SMat33<double>
+    //.function("metric_tensor",&gemmi::UnitCell::metric_tensor) //This requires SMat33<double>
+    //.function("reciprocal_metric_tensor",&gemmi::UnitCell::reciprocal_metric_tensor) //This requires SMat33<double>
+    //.function("is_compatible_with_spacegroup",&gemmi::UnitCell::is_compatible_with_spacegroup) // Requires const SpaceGroup* sg
+    //.function("set_cell_images_from_spacegroup",&gemmi::UnitCell::set_cell_images_from_spacegroup) // Requires const SpaceGroup* sg
     ;
     class_<gemmi::Model>("Model")
+    .property("name",&gemmi::Model::name)
+    .property("chains",&gemmi::Model::chains)
+    .function("remove_chain",&gemmi::Model::remove_chain)
+    .function("merge_chain_parts",&gemmi::Model::merge_chain_parts)
+    .function("get_subchain",select_overload<gemmi::ResidueSpan(const std::string&)>(&gemmi::Model::get_subchain))
+    .function("get_subchain_const",select_overload<gemmi::ConstResidueSpan(const std::string&)const>(&gemmi::Model::get_subchain))
+    .function("subchains",select_overload<std::vector<gemmi::ResidueSpan> ()>(&gemmi::Model::subchains))
+    .function("subchains",select_overload<std::vector<gemmi::ConstResidueSpan> ()const>(&gemmi::Model::subchains))
+    .function("get_all_residue_names",&gemmi::Model::get_all_residue_names)
+    .function("find_residue_group",&gemmi::Model::find_residue_group)
+    .function("sole_residue",&gemmi::Model::sole_residue)
+    .function("find_cra",select_overload<gemmi::CRA(const gemmi::AtomAddress&, bool)>(&gemmi::Model::find_cra))
+    .function("find_cra_const",select_overload<gemmi::const_CRA(const gemmi::AtomAddress&, bool)const>(&gemmi::Model::find_cra))
+    .function("all",select_overload<gemmi::CraProxy()>(&gemmi::Model::all))
+    .function("all",select_overload<gemmi::ConstCraProxy()const>(&gemmi::Model::all))
+    .function("empty_copy",&gemmi::Model::empty_copy)
+    .function("children",select_overload<std::vector<gemmi::Chain>&()>(&gemmi::Model::children))
+    .function("children_const",select_overload<const std::vector<gemmi::Chain>&()const>(&gemmi::Model::children))
+    ;
+
+    //TODO Wrap the following
+
+    class_<gemmi::CraProxy>("CraProxy")
+    ;
+    class_<gemmi::ConstCraProxy>("ConstCraProxy")
+    ;
+    class_<gemmi::const_CRA>("const_CRA")
+    ;
+    class_<gemmi::AtomAddress>("AtomAddress")
+    ;
+    class_<gemmi::Chain>("Chain")
+    ;
+    class_<gemmi::ResidueSpan>("ResidueSpan")
+    ;
+    class_<gemmi::ResidueId>("ResidueId")
+    ;
+    class_<gemmi::ResidueGroup>("ResidueGroup")
+    ;
+    class_<gemmi::SeqId>("SeqId")
+    ;
+    class_<gemmi::Residue>("GemmiResidue")
+    ;
+    class_<gemmi::ConstResidueSpan>("ConstResidueSpan")
     ;
     class_<gemmi::NcsOp>("NcsOp")
     ;
