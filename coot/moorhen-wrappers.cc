@@ -578,9 +578,27 @@ EMSCRIPTEN_BINDINGS(my_module) {
       //Connection
       //Helix
       //Sheet
-      //Assembl
+      //Assembly
       //Metadata
 
+    class_<gemmi::UnitCell>("UnitCell")
+    ;
+    class_<gemmi::Model>("Model")
+    ;
+    class_<gemmi::NcsOp>("NcsOp")
+    ;
+    class_<gemmi::Entity>("Entity")
+    ;
+    class_<gemmi::Connection>("Connection")
+    ;
+    class_<gemmi::Helix>("Helix")
+    ;
+    class_<gemmi::Sheet>("Sheet")
+    ;
+    class_<gemmi::Assembly>("Assembly")
+    ;
+    class_<gemmi::Metadata>("Metadata")
+    ;
     class_<gemmi::Structure>("Structure")
     .constructor<>()
     .property("name",&gemmi::Structure::name)
@@ -609,6 +627,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("remove_empty_chains",&gemmi::Structure::remove_empty_chains)
     .function("empty_copy",&gemmi::Structure::empty_copy)
     .function("setup_cell_images",&gemmi::Structure::setup_cell_images)
+    .function("first_model",select_overload<const gemmi::Model&(void)const>(&gemmi::Structure::first_model))
     ;
     function("read_structure_file",&gemmi::read_structure_file);
 }
