@@ -4,7 +4,7 @@ import { BabyGruShortcutConfigModal } from "./BabyGruShortcutConfigModal"
 import { MenuItem } from "@mui/material";
 
 export const BabyGruPreferencesMenu = (props) => {
-    const { atomLabelDepthMode, setAtomLabelDepthMode, darkMode, setDarkMode, defaultExpandDisplayCards, setDefaultExpandDisplayCards } = props;
+    const { atomLabelDepthMode, setAtomLabelDepthMode, darkMode, setDarkMode, defaultExpandDisplayCards, setDefaultExpandDisplayCards, defaultLitLines, setDefaultLitLines } = props;
     const [showModal, setShowModal] = useState(null);
 
     return <NavDropdown
@@ -34,6 +34,13 @@ export const BabyGruPreferencesMenu = (props) => {
                         checked={atomLabelDepthMode}
                         onChange={() => { setAtomLabelDepthMode(!atomLabelDepthMode) }}
                         label="Depth cue atom labels"/>
+                </InputGroup>
+                <InputGroup style={{ padding:'0.5rem', width: '20rem'}}>
+                    <Form.Check 
+                        type="switch"
+                        checked={defaultLitLines}
+                        onChange={() => { setDefaultLitLines(!defaultLitLines) }}
+                        label="Activate map lit lines by default"/>
                 </InputGroup>
                 <MenuItem variant="success" onClick={() => setShowModal(true)}>
                     Configure shortcuts
