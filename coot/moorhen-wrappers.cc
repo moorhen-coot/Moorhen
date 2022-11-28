@@ -39,11 +39,13 @@
 #include "cartesian.h"
 #include "geomutil.h"
 
-//int mini_rsr_main(int argc, char **argv);
+#include <gemmi/mmread.hpp>
+#include <gemmi/gz.hpp>
+#include <gemmi/model.hpp>
+
+#define _SAJSON_H_INCLUDED_
 
 using namespace emscripten;
-
-//extern void clear_getopt_initialized();
 
 struct RamachandranInfo {
     std::string chainId;
@@ -64,103 +66,6 @@ struct ResiduePropertyInfo {
     double property;
 };
 
-std::vector<ResiduePropertyInfo> getBVals(const std::string &pdbin, const std::string &chainId){
-    std::vector<ResiduePropertyInfo> info;
-    const char *filename_cp = pdbin.c_str();
-    mmdb::InitMatType();
-    mmdb::Manager *molHnd = new mmdb::Manager();
-
-    int RC = molHnd->ReadCoorFile(filename_cp);
-    int selHnd = molHnd->NewSelection();
-    std::string selStr = std::string("/*/")+chainId+std::string("/(GLY,ALA,VAL,PRO,SER,THR,LEU,ILE,CYS,ASP,GLU,ASN,GLN,ARG,LYS,MET,MSE,HIS,PHE,TYR,TRP,HCS,ALO,PDD,UNK)");
-    const char *sel_cp = selStr.c_str();
-    molHnd->Select(selHnd,mmdb::STYPE_RESIDUE,sel_cp,mmdb::SKEY_NEW);
-    mmdb::Residue** SelRes=0;
-    int nRes;
-    molHnd->GetSelIndex(selHnd,SelRes,nRes);
-    for(int ires=0;ires<nRes;ires++){
-        mmdb::Atom *N = SelRes[ires]->GetAtom(" N");
-        mmdb::Atom *CA = SelRes[ires]->GetAtom("CA");
-        mmdb::Atom *C = SelRes[ires]->GetAtom(" C");
-        if(N&&CA&&C){
-            ResiduePropertyInfo resInfo;
-            resInfo.chainId = chainId;
-            resInfo.seqNum = N->GetSeqNum();
-            resInfo.insCode = std::string(N->GetInsCode());
-            resInfo.restype = std::string(N->GetResidue()->GetResName());
-            resInfo.property = CA->tempFactor;
-            info.push_back(resInfo);
-        }
-    }
-
-    return info;
-}
-
-std::vector<coot::residue_spec_t> getResidueSpecListForChain(const std::string &pdbin, const std::string &chainId_in){
-
-    std::vector<coot::residue_spec_t> resSpecList;
-
-    const char *filename_cp = pdbin.c_str();
-    mmdb::InitMatType();
-    mmdb::Manager *molHnd = new mmdb::Manager();
-    int RC = molHnd->ReadCoorFile(filename_cp);
-
-    mmdb::Model *model_p = molHnd->GetModel(1);
-    int nchains = model_p->GetNumberOfChains();
-    for (int ichain=0; ichain<nchains; ichain++) {
-        mmdb::Chain *chain_p = model_p->GetChain(ichain);
-        std::string chain_id = chain_p->GetChainID();
-        if (chain_id == chainId_in) {
-            int nres = chain_p->GetNumberOfResidues();
-            mmdb::Residue *residue_p;
-            for (int ires=0; ires<nres; ires++) { 
-                residue_p = chain_p->GetResidue(ires);
-                int resno = residue_p->GetSeqNum();
-                std::string res_name(residue_p->GetResName());
-                coot::residue_spec_t res_spec;
-                res_spec.model_number = 1;
-                res_spec.chain_id = chain_id;
-                res_spec.res_no = residue_p->GetSeqNum();
-                res_spec.ins_code = residue_p->GetInsCode();
-                resSpecList.push_back(res_spec);
-            }
-        }
-    }
-
-    return resSpecList;
-
-}
-
-std::vector<std::string> getResidueListForChain(const std::string &pdbin, const std::string &chainId_in){
-
-    std::vector<std::string> resList;
-
-    const char *filename_cp = pdbin.c_str();
-    mmdb::InitMatType();
-    mmdb::Manager *molHnd = new mmdb::Manager();
-    int RC = molHnd->ReadCoorFile(filename_cp);
-
-    mmdb::Model *model_p = molHnd->GetModel(1);
-    int nchains = model_p->GetNumberOfChains();
-    for (int ichain=0; ichain<nchains; ichain++) {
-        mmdb::Chain *chain_p = model_p->GetChain(ichain);
-        std::string chain_id = chain_p->GetChainID();
-        if (chain_id == chainId_in) {
-            int nres = chain_p->GetNumberOfResidues();
-            mmdb::Residue *residue_p;
-            for (int ires=0; ires<nres; ires++) { 
-                residue_p = chain_p->GetResidue(ires);
-                int resno = residue_p->GetSeqNum();
-                std::string res_name(residue_p->GetResName());
-                resList.push_back(res_name);
-            }
-        }
-    }
-
-    return resList;
-
-}
-
 std::map<std::string,std::vector<coot::simple_rotamer> > getRotamersMap(){
 
     std::map<std::string,std::vector<coot::simple_rotamer> > all_rots;
@@ -176,177 +81,6 @@ std::map<std::string,std::vector<coot::simple_rotamer> > getRotamersMap(){
 
     return all_rots;
 }
-
-std::vector<RamachandranInfo> getRamachandranData(const std::string &pdbin, const std::string &chainId){
-    std::cout << "std::vector<RamachandranInfo> getRamachandranData" << std::endl;
-    std::vector<RamachandranInfo> info;
-    const char *filename_cp = pdbin.c_str();
-    mmdb::InitMatType();
-    mmdb::Manager *molHnd = new mmdb::Manager();
-
-    int RC = molHnd->ReadCoorFile(filename_cp);
-    int selHnd = molHnd->NewSelection();
-    std::string selStr = std::string("/*/")+chainId+std::string("/(GLY,ALA,VAL,PRO,SER,THR,LEU,ILE,CYS,ASP,GLU,ASN,GLN,ARG,LYS,MET,MSE,HIS,PHE,TYR,TRP,HCS,ALO,PDD,UNK)");
-    const char *sel_cp = selStr.c_str();
-    molHnd->Select(selHnd,mmdb::STYPE_RESIDUE,sel_cp,mmdb::SKEY_NEW);
-    mmdb::Residue** SelRes=0;
-    int nRes;
-    molHnd->GetSelIndex(selHnd,SelRes,nRes);
-
-
-    clipper::Ramachandran rama;
-    clipper::Ramachandran r_gly, r_pro, r_non_gly_pro;
-    clipper::Ramachandran r_ileval, r_pre_pro, r_non_gly_pro_pre_pro_ileval;
-    rama.init(clipper::Ramachandran::All2);
-
-    // Lovell et al. 2003, 50, 437 Protein Structure, Function and Genetics values:
-    double rama_threshold_preferred = 0.02; 
-    double rama_threshold_allowed = 0.002;
-    float level_prefered = 0.02;
-    float level_allowed = 0.002;
-
-    //clipper defaults: 0.01 0.0005
-
-    rama.set_thresholds(level_prefered, level_allowed);
-    //
-    r_gly.init(clipper::Ramachandran::Gly2);
-    r_gly.set_thresholds(level_prefered, level_allowed);
-    //
-    r_pro.init(clipper::Ramachandran::Pro2);
-    r_pro.set_thresholds(level_prefered, level_allowed);
-    // first approximation; shouldnt be used if top8000 is available anyway
-    r_non_gly_pro.init(clipper::Ramachandran::NoGPIVpreP2);
-    r_non_gly_pro.set_thresholds(level_prefered, level_allowed);
-    // new
-    r_ileval.init(clipper::Ramachandran::IleVal2);
-    r_ileval.set_thresholds(level_prefered, level_allowed);
-    //
-    r_pre_pro.init(clipper::Ramachandran::PrePro2);
-    r_pre_pro.set_thresholds(level_prefered, level_allowed);
-    //
-    r_non_gly_pro_pre_pro_ileval.init(clipper::Ramachandran::NoGPIVpreP2);
-    r_non_gly_pro_pre_pro_ileval.set_thresholds(level_prefered, level_allowed);
-
-
-    //std::cout << nRes << " residues" << std::endl;
-
-    for(int ires=1;ires<nRes-1;ires++){
-        mmdb::Atom *N = SelRes[ires]->GetAtom(" N");
-        mmdb::Atom *CA = SelRes[ires]->GetAtom("CA");
-        mmdb::Atom *C = SelRes[ires]->GetAtom(" C");
-        mmdb::Atom *Cm = SelRes[ires-1]->GetAtom(" C");
-        mmdb::Atom *Np = SelRes[ires+1]->GetAtom(" N");
-        if(N&&CA&&C&&Cm&&Np){
-            RamachandranInfo resInfo;
-            resInfo.chainId = chainId;
-            resInfo.seqNum = N->GetSeqNum();
-            resInfo.insCode = std::string(N->GetInsCode());
-            resInfo.restype = std::string(N->GetResidue()->GetResName());
-            std::string restypeP = std::string(Np->GetResidue()->GetResName());
-            resInfo.is_pre_pro = false;
-            if(restypeP=="PRO") resInfo.is_pre_pro = true;
-            //Phi: C-N-CA-C
-            //Psi: N-CA-C-N
-            Cartesian Ncart(N->x,N->y,N->z);
-            Cartesian CAcart(CA->x,CA->y,CA->z);
-            Cartesian Ccart(C->x,C->y,C->z);
-            Cartesian CMcart(Cm->x,Cm->y,Cm->z);
-            Cartesian NPcart(Np->x,Np->y,Np->z);
-            double phi = DihedralAngle(CMcart,Ncart,CAcart,Ccart);
-            double psi = DihedralAngle(Ncart,CAcart,Ccart,NPcart);
-            //std::cout << N->GetSeqNum() << " " << N->name << " " << CA->name << " " << C->name << " " << Cm->name << " " << Np->name << " " << phi*180.0/M_PI << " " << psi*180.0/M_PI << std::endl;
-            resInfo.phi = phi*180.0/M_PI;
-            resInfo.psi = psi*180.0/M_PI;
-            bool r = false; //isOutlier
-            if (resInfo.restype == "GLY") {
-                if (! r_gly.allowed(phi, psi))
-                    if (! r_gly.favored(phi, psi))
-                        r = true;
-            } else {
-                if (resInfo.restype == "PRO") {
-                    if (! r_pro.allowed(phi, psi))
-                        if (! r_pro.favored(phi, psi))
-                            r = true;
-                } else {
-                    if (resInfo.is_pre_pro) {
-                        if (! r_pre_pro.allowed(phi, psi))
-                            if (! r_pre_pro.favored(phi, psi))
-                                r = true;
-                    } else {
-                        if ((resInfo.restype == "ILE") ||
-                                (resInfo.restype == "VAL")) {
-                            if (! r_ileval.allowed(phi, psi))
-                                if (! r_ileval.favored(phi, psi))
-                                    r = true;
-                        } else {
-                            if (! rama.allowed(phi, psi))
-                                if (! rama.favored(phi, psi))
-                                    r = true;
-                        }
-                    }
-                }
-            }
-            resInfo.isOutlier = r;
-
-            info.push_back(resInfo);
-        }
-    }
-
-    return info;
-}
-
-/*
-int flipPeptide(const std::string &pdbin, const std::string &chainId, const int resno, const std::string &pdbout){
-    int retval = 0;
-    std::cout << "In flipPeptide in C++. This does nothing useful." << std::endl;
-    std::cout << "PDBIN: " << pdbin << std::endl;
-    std::cout << "CHAIN: " << chainId << std::endl;
-    std::cout << "RESNO: " << resno << std::endl;
-    std::cout << "PDBOUT: " << pdbout << std::endl;
-
-    const char *filename_cp = pdbin.c_str();
-    const char *filename_out_cp = pdbout.c_str();
-
-    //TODO - So this is where we should implement/call a proper function.
-    //BEGIN STUB
-    mmdb::InitMatType();
-    mmdb::Manager *molHnd = new mmdb::Manager();
-
-    int RC = molHnd->ReadCoorFile(filename_cp);
-    assert(RC==0);
-
-    RC = molHnd->WritePDBASCII(filename_out_cp);
-    assert(RC==0);
-    //END STUB
-
-    return retval;
-}
-*/
-
-/*
-int mini_rsr(const std::vector<std::string> &args){
-
-    int argc = args.size();
-    char **argv = new char*[argc];
-
-    clear_getopt_initialized();
-
-    for(int i=0;i<argc;i++){
-        argv[i] = new char[args[i].size()+1];
-        const char* arg_c = args[i].c_str();
-        strcpy(argv[i], (char*)arg_c);
-    }
-
-    int retval = mini_rsr_main(argc,argv);
-
-    for(int i=0;i<argc;i++){
-        delete [] argv[i];
-    }
-    delete [] argv;
-
-    return retval;
-}
-*/
 
 class IntVectorMergeMolInfoPair {
     public:
@@ -800,6 +534,15 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<ResSpecStringPair>("VectorResSpecStringPair");
     register_vector<merge_molecule_results_info_t>("Vectormerge_molecule_results_info_t");
     register_vector<coot::phi_psi_prob_t>("Vectophi_psi_prob_t");
+
+    register_vector<gemmi::Model>("VectorGemmiModel");
+    register_vector<gemmi::NcsOp>("VectorGemmiNcsOp");
+    register_vector<gemmi::Entity>("VectorGemmiEntity");
+    register_vector<gemmi::Connection>("VectorGemmiConnection");
+    register_vector<gemmi::Helix>("VectorGemmiHelix");
+    register_vector<gemmi::Sheet>("VectorGemmiSheet");
+    register_vector<gemmi::Assembly>("VectorGemmiAssembly");
+
     value_array<glm::vec3>("array_float_3")
         .element(emscripten::index<0>())
         .element(emscripten::index<1>())
@@ -816,11 +559,56 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .element(emscripten::index<1>())
         .element(emscripten::index<2>())
     ;
-    //function("mini_rsr",&mini_rsr);
-    function("flipPeptide",&flipPeptide);
-    function("getRamachandranData",&getRamachandranData);
     function("getRotamersMap",&getRotamersMap);
-    function("getResidueListForChain",&getResidueListForChain);
-    function("getResidueSpecListForChain",&getResidueSpecListForChain);
-    function("getBVals",&getBVals);
+
+    enum_<gemmi::CoorFormat>("CoorFormat")
+        .value("Unknown", gemmi::CoorFormat::Unknown)
+        .value("Detect", gemmi::CoorFormat::Detect)
+        .value("Pdb", gemmi::CoorFormat::Pdb)
+        .value("Mmcif", gemmi::CoorFormat::Mmcif)
+        .value("Mmjson", gemmi::CoorFormat::Mmjson)
+        .value("ChemComp", gemmi::CoorFormat::ChemComp)
+    ;
+
+    //TODO Wrap the following
+      //UnitCell
+      //Model
+      //NcsOp
+      //Entity
+      //Connection
+      //Helix
+      //Sheet
+      //Assembl
+      //Metadata
+
+    class_<gemmi::Structure>("Structure")
+    .constructor<>()
+    .property("name",&gemmi::Structure::name)
+    .property("spacegroup_hm",&gemmi::Structure::spacegroup_hm)
+    .property("has_origx",&gemmi::Structure::has_origx)
+    .property("models",&gemmi::Structure::models)
+    .property("ncs",&gemmi::Structure::ncs)
+    .property("entities",&gemmi::Structure::entities)
+    .property("connections",&gemmi::Structure::connections)
+    .property("helices",&gemmi::Structure::helices)
+    .property("sheets",&gemmi::Structure::sheets)
+    .property("assemblies",&gemmi::Structure::assemblies)
+    .property("cell",&gemmi::Structure::cell)
+    .property("meta",&gemmi::Structure::meta)
+    .property("origx",&gemmi::Structure::origx)
+    .property("resolution",&gemmi::Structure::resolution)
+    .property("raw_remarks",&gemmi::Structure::raw_remarks)
+    .property("input_format",&gemmi::Structure::input_format)
+    .function("get_info",&gemmi::Structure::get_info)
+    .function("remove_model",&gemmi::Structure::remove_model)
+    .function("renumber_models",&gemmi::Structure::renumber_models)
+    .function("ncs_given_count",&gemmi::Structure::ncs_given_count)
+    .function("get_ncs_multiplier",&gemmi::Structure::get_ncs_multiplier)
+    .function("ncs_not_expanded",&gemmi::Structure::ncs_not_expanded)
+    .function("merge_chain_parts",&gemmi::Structure::merge_chain_parts)
+    .function("remove_empty_chains",&gemmi::Structure::remove_empty_chains)
+    .function("empty_copy",&gemmi::Structure::empty_copy)
+    .function("setup_cell_images",&gemmi::Structure::setup_cell_images)
+    ;
+    function("read_structure_file",&gemmi::read_structure_file);
 }
