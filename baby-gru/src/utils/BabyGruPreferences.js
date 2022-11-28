@@ -54,8 +54,8 @@ const getDefaultValues = () => {
                 label: "Eigen flip ligand"
             },
             "show_shortcuts": {
-                modifiers: ["ctrlKey"],
-                keyPress: "control",
+                modifiers: [],
+                keyPress: "escape",
                 label: "Show shortcuts"
             },
             "restore_scene": {
@@ -107,7 +107,13 @@ const getDefaultValues = () => {
                 modifiers: [],
                 keyPress: "m",
                 label: "Label an atom on click"
-            }
+            },
+            "set_map_contour": {
+                modifiers: ["ctrlKey"],
+                keyPress: "control",
+                label: "Set active map contour"
+            },
+
         }
     }
 }
