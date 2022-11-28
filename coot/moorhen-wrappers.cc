@@ -580,8 +580,82 @@ EMSCRIPTEN_BINDINGS(my_module) {
       //Sheet
       //Assembly
       //Metadata
+      //Transform
+      //FTransform
+      //Mat33
+      //Vec3
+      //Op
+      //GroupOps
+      //SpaceGroup
+      //Position
+      //Fractional
+      //NearestImage
+      //Miller
 
     class_<gemmi::UnitCell>("UnitCell")
+    .constructor<>()
+    .constructor<double,  double, double, double, double, double>()
+    .property("a",&gemmi::UnitCell::a)
+    .property("b",&gemmi::UnitCell::b)
+    .property("c",&gemmi::UnitCell::c)
+    .property("alpha",&gemmi::UnitCell::alpha)
+    .property("beta",&gemmi::UnitCell::beta)
+    .property("gamma",&gemmi::UnitCell::gamma)
+    .property("orth",&gemmi::UnitCell::orth)
+    .property("frac",&gemmi::UnitCell::frac)
+    .property("volume",&gemmi::UnitCell::volume)
+    .property("ar",&gemmi::UnitCell::ar)
+    .property("br",&gemmi::UnitCell::br)
+    .property("cr",&gemmi::UnitCell::cr)
+    .property("cos_alphar",&gemmi::UnitCell::cos_alphar)
+    .property("cos_betar",&gemmi::UnitCell::cos_betar)
+    .property("cos_gammar",&gemmi::UnitCell::cos_gammar)
+    .property("explicit_matrices",&gemmi::UnitCell::explicit_matrices)
+    .property("cs_count",&gemmi::UnitCell::cs_count)
+    .property("images",&gemmi::UnitCell::images)
+    .function("is_crystal",&gemmi::UnitCell::is_crystal)
+    .function("approx",&gemmi::UnitCell::approx)
+    .function("is_similar",&gemmi::UnitCell::is_similar)
+    .function("calculate_properties",&gemmi::UnitCell::calculate_properties)
+    .function("cos_alpha",&gemmi::UnitCell::cos_alpha)
+    .function("calculate_matrix_B",&gemmi::UnitCell::calculate_matrix_B)
+    //.function("calculate_u_eq",&gemmi::UnitCell::calculate_u_eq) //This requires const SMat33<double>
+    .function("set_matrices_from_fract",&gemmi::UnitCell::set_matrices_from_fract)
+    .function("set",&gemmi::UnitCell::set)
+    .function("set_from_vectors",&gemmi::UnitCell::set_from_vectors)
+    .function("changed_basis_backward",&gemmi::UnitCell::changed_basis_backward)
+    .function("changed_basis_forward",&gemmi::UnitCell::changed_basis_forward)
+    .function("is_compatible_with_groupops",&gemmi::UnitCell::is_compatible_with_groupops)
+    //.function("is_compatible_with_spacegroup",&gemmi::UnitCell::is_compatible_with_spacegroup) // Requires const SpaceGroup* sg
+    //.function("set_cell_images_from_spacegroup",&gemmi::UnitCell::set_cell_images_from_spacegroup) // Requires const SpaceGroup* sg
+    .function("add_ncs_images_to_cs_images",&gemmi::UnitCell::add_ncs_images_to_cs_images)
+    .function("get_ncs_transforms",&gemmi::UnitCell::get_ncs_transforms)
+    .function("orthogonalize",&gemmi::UnitCell::orthogonalize)
+    .function("fractionalize",&gemmi::UnitCell::fractionalize)
+    .function("orthogonalize_difference",&gemmi::UnitCell::orthogonalize_difference)
+    .function("fractionalize_difference",&gemmi::UnitCell::fractionalize_difference)
+    .function("op_as_transform",&gemmi::UnitCell::op_as_transform)
+    .function("distance_sq_frac",select_overload<double(const gemmi::Fractional&,const gemmi::Fractional&)const>(&gemmi::UnitCell::distance_sq))
+    .function("distance_sq_pos",select_overload<double(const gemmi::Position&,const gemmi::Position&)const>(&gemmi::UnitCell::distance_sq))
+    .function("volume_per_image",&gemmi::UnitCell::volume_per_image)
+    .function("search_pbc_images",&gemmi::UnitCell::search_pbc_images)
+    .function("find_nearest_image",&gemmi::UnitCell::find_nearest_image)
+    .function("apply_transform",&gemmi::UnitCell::apply_transform)
+    .function("find_nearest_pbc_image_frac",select_overload<gemmi::NearestImage(const gemmi::Fractional&,gemmi::Fractional,int)const>(&gemmi::UnitCell::find_nearest_pbc_image))
+    .function("find_nearest_pbc_image_pos",select_overload<gemmi::NearestImage(const gemmi::Position&,const gemmi::Position&,int)const>(&gemmi::UnitCell::find_nearest_pbc_image))
+    .function("orthogonalize_in_pbc",&gemmi::UnitCell::orthogonalize_in_pbc)
+    .function("find_nearest_pbc_position",&gemmi::UnitCell::find_nearest_pbc_position)
+    .function("is_special_position_frac",select_overload<int(const gemmi::Fractional&,double)const>(&gemmi::UnitCell::is_special_position))
+    .function("is_special_position_pos",select_overload<int(const gemmi::Position&,double)const>(&gemmi::UnitCell::is_special_position))
+    .function("calculate_1_d2_double",&gemmi::UnitCell::calculate_1_d2_double)
+    .function("calculate_1_d2",&gemmi::UnitCell::calculate_1_d2)
+    .function("calculate_d",&gemmi::UnitCell::calculate_d)
+    .function("calculate_stol_sq",&gemmi::UnitCell::calculate_stol_sq)
+    //.function("metric_tensor",&gemmi::UnitCell::metric_tensor) //This requires SMat33<double>
+    //.function("reciprocal_metric_tensor",&gemmi::UnitCell::reciprocal_metric_tensor) //This requires SMat33<double>
+    .function("reciprocal",&gemmi::UnitCell::reciprocal)
+    .function("get_hkl_limits",&gemmi::UnitCell::get_hkl_limits)
+    .function("primitive_orth_matrix",&gemmi::UnitCell::primitive_orth_matrix)
     ;
     class_<gemmi::Model>("Model")
     ;
@@ -598,6 +672,28 @@ EMSCRIPTEN_BINDINGS(my_module) {
     class_<gemmi::Assembly>("Assembly")
     ;
     class_<gemmi::Metadata>("Metadata")
+    ;
+    class_<gemmi::Transform>("Transform")
+    ;
+    class_<gemmi::FTransform>("FTransform")
+    ;
+    class_<gemmi::Mat33>("Mat33")
+    ;
+    class_<gemmi::Vec3>("Vec3")
+    ;
+    class_<gemmi::Op>("Op")
+    ;
+    class_<gemmi::GroupOps>("GroupOps")
+    ;
+    class_<gemmi::SpaceGroup>("SpaceGroup")
+    ;
+    class_<gemmi::Position>("Position")
+    ;
+    class_<gemmi::Fractional>("Fractional")
+    ;
+    class_<gemmi::NearestImage>("NearestImage")
+    ;
+    class_<gemmi::Miller>("Miller")
     ;
     class_<gemmi::Structure>("Structure")
     .constructor<>()
