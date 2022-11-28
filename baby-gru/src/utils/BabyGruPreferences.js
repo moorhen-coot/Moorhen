@@ -12,11 +12,12 @@ const updateStoredPreferences = async (key, value) => {
 
 const getDefaultValues = () => {
     return {
-        version: '0.1',
+        version: '0.0.1',
         darkMode: false, 
         atomLabelDepthMode: true, 
         defaultExpandDisplayCards: true,
         defaultLitLines: false,
+        refineAfterMod: true,        
         shortCuts: {
             "sphere_refine": {
                 modifiers: ["shiftKey"],
@@ -126,15 +127,16 @@ const PreferencesContextProvider = ({ children }) => {
     const [defaultExpandDisplayCards, setDefaultExpandDisplayCards] = useState(null);
     const [shortCuts, setShortCuts] = useState(null);
     const [defaultLitLines, setDefaultLitLines] = useState(null);
+    const [refineAfterMod, setRefineAfterMod] = useState(null)
 
-    const restoreDefaults = ( )=> {
-        const defaultValues = getDefaultValues()
+    const restoreDefaults = (defaultValues)=> {
         updateStoredPreferences('version', defaultValues.version);
         setDarkMode(defaultValues.darkMode)
         setDefaultExpandDisplayCards(defaultValues.defaultExpandDisplayCards)            
         setShortCuts(JSON.stringify(defaultValues.shortCuts))            
         setAtomLabelDepthMode(defaultValues.atomLabelDepthMode)
         setDefaultLitLines(defaultValues.defaultLitLines)
+        setRefineAfterMod(defaultValues.refineAfterMod)
     }
 
     /**
@@ -152,7 +154,8 @@ const PreferencesContextProvider = ({ children }) => {
                     localforage.getItem('defaultExpandDisplayCards'),
                     localforage.getItem('shortCuts'),
                     localforage.getItem('atomLabelDepthMode'),
-                    localforage.getItem('defaultLitLines')
+                    localforage.getItem('defaultLitLines'),
+                    localforage.getItem('refineAfterMod')
                     ])
                 
                 console.log('Retrieved the following preferences from local storage: ', response)
@@ -160,10 +163,10 @@ const PreferencesContextProvider = ({ children }) => {
                 const defaultValues = getDefaultValues()                
                 if (response[0] !== defaultValues.version) {
                     console.log('Different storage version detected, using defaults')
-                    restoreDefaults()
+                    restoreDefaults(defaultValues)
                 } else if(!response.every(item => item !== null) || response.length < Object.keys(defaultValues).length) {
                     console.log('Cannot find stored preferences, using defaults')
-                    restoreDefaults()
+                    restoreDefaults(defaultValues)
                 } else {
                     console.log(`Stored preferences retrieved successfully: ${response}`)
                     setDarkMode(response[1])
@@ -171,6 +174,7 @@ const PreferencesContextProvider = ({ children }) => {
                     setShortCuts(response[3])
                     setAtomLabelDepthMode(response[4])
                     setDefaultLitLines(response[5])
+                    setRefineAfterMod(response[6])
                 }                
                 
             } catch (err) {
@@ -187,6 +191,15 @@ const PreferencesContextProvider = ({ children }) => {
         fetchStoredPreferences();
         
     }, []);
+
+    useMemo(() => {
+
+        if (refineAfterMod === null) {
+            return
+        }
+       
+        updateStoredPreferences('refineAfterMod', refineAfterMod);
+    }, [refineAfterMod]);
 
     useMemo(() => {
 
@@ -233,7 +246,11 @@ const PreferencesContextProvider = ({ children }) => {
         updateStoredPreferences('defaultLitLines', defaultLitLines);
     }, [defaultLitLines]);
 
-    const collectedContextValues = {darkMode, setDarkMode, atomLabelDepthMode, setAtomLabelDepthMode, defaultExpandDisplayCards, setDefaultExpandDisplayCards, shortCuts, setShortCuts, defaultLitLines, setDefaultLitLines}
+    const collectedContextValues = {
+        darkMode, setDarkMode, atomLabelDepthMode, setAtomLabelDepthMode, defaultExpandDisplayCards,
+        setDefaultExpandDisplayCards, shortCuts, setShortCuts, defaultLitLines, setDefaultLitLines,
+        refineAfterMod, setRefineAfterMod
+    }
 
     return (
       <PreferencesContext.Provider value={collectedContextValues}>

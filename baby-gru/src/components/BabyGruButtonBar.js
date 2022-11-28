@@ -5,6 +5,13 @@ import { ButtonGroup, Button, Overlay, Container, Row, FormSelect, FormGroup, Fo
 import { BabyGruMoleculeSelect } from "./BabyGruMoleculeSelect";
 import { cidToSpec } from "../utils/BabyGruUtils";
 
+const refinementFormatArgs = (molecule, chosenAtom, pp) => {
+    return [
+        molecule.molNo,
+        `//${chosenAtom.chain_id}/${chosenAtom.res_no}`,
+        pp.refine.mode]
+}
+
 export const BabyGruButtonBar = (props) => {
     const [selectedButtonIndex, setSelectedButtonIndex] = useState(null);
     return <div
@@ -79,7 +86,7 @@ export const BabyGruSimpleEditButton = forwardRef((props, buttonRef) => {
     const atomClickedCallback = useCallback(event => {
         //console.log('in atomClickedcallback', event, props.molecules.length)
         document.removeEventListener('atomClicked', atomClickedCallback, { once: true })
-        props.molecules.forEach(molecule => {
+        props.molecules.forEach(async (molecule) => {
             console.log('Testing molecule ', molecule.molNo)
             try {
                 if (molecule.buffersInclude(event.detail.buffer)) {
@@ -89,19 +96,28 @@ export const BabyGruSimpleEditButton = forwardRef((props, buttonRef) => {
                     let formattedArgs = props.formatArgs(molecule, chosenAtom, localParameters)
                     props.setSelectedButtonIndex(null)
                     if (props.cootCommand) {
-                        props.commandCentre.current.cootCommand({
+                        await props.commandCentre.current.cootCommand({
                             returnType: "status",
                             command: props.cootCommand,
                             commandArgs: formattedArgs,
                             changesMolecules: props.changesMolecule ? [molecule.molNo] : []
-                        }, true).then(_ => {
-                            molecule.setAtomsDirty(true)
-                            molecule.redraw(props.glRef)
-                            //Here use originChanged event to force recontour (relevant for live updating maps)
-                            const originChangedEvent = new CustomEvent("originChanged",
-                                { "detail": props.glRef.current.origin });
-                            document.dispatchEvent(originChangedEvent);
-                        })
+                        }, true)
+                        if (props.refineAfterMod) {
+                            console.log('Triggering post-modification triple refinement...')
+                            await props.commandCentre.current.cootCommand({
+                                returnType: "status",
+                                command: 'refine_residues_using_atom_cid',
+                                commandArgs: refinementFormatArgs(molecule, chosenAtom, {refine: {mode: 'TRIPLE'}}),
+                                changesMolecules: [molecule.molNo]
+                            }, true)    
+                        }
+                        molecule.setAtomsDirty(true)
+                        molecule.redraw(props.glRef)
+                        //Here use originChanged event to force recontour (relevant for live updating maps)
+                        const originChangedEvent = new CustomEvent("originChanged",
+                            { "detail": props.glRef.current.origin });
+                        document.dispatchEvent(originChangedEvent);
+                        
                     }
                     else if (props.nonCootCommand) {
                         props.nonCootCommand(molecule, chosenAtom, localParameters)
@@ -115,7 +131,7 @@ export const BabyGruSimpleEditButton = forwardRef((props, buttonRef) => {
                 console.log('Encountered', err)
             }
         })
-    }, [props.molecules.length, props.activeMap])
+    }, [props.molecules.length, props.activeMap, props.refineAfterMod])
 
     return <>
         <Tooltip title={props.toolTip}>
@@ -167,7 +183,7 @@ export const BabyGruSimpleEditButton = forwardRef((props, buttonRef) => {
 BabyGruSimpleEditButton.defaultProps = {
     toolTip: "", setCursorStyle: () => { },
     needsAtomData: true, setSelectedButtonIndex: () => { }, selectedButtonIndex: 0, prompt: null,
-    awaitAtomClick: true, changesMolecule: true
+    awaitAtomClick: true, changesMolecule: true, refineAfterMod: false
 }
 
 
@@ -230,13 +246,6 @@ export const BabyGruRefineResiduesUsingAtomCidButton = (props) => {
         mutate: { toType: "ALA" }
     })
 
-    const refinementFormatArgs = (molecule, chosenAtom, pp) => {
-        return [
-            molecule.molNo,
-            `//${chosenAtom.chain_id}/${chosenAtom.res_no}`,
-            pp.refine.mode]
-    }
-
     const BabyGruRefinementPanel = (props) => {
         const refinementModes = ['SINGLE', 'TRIPLE', 'QUINTUPLE', 'HEPTUPLE', 'SPHERE', 'BIG_SPHERE', 'CHAIN', 'ALL']
         return <Container>
@@ -270,7 +279,8 @@ export const BabyGruRefineResiduesUsingAtomCidButton = (props) => {
             setPanelParameters={setPanelParameters}
             panelParameters={panelParameters} />}
         icon={<img className="baby-gru-button-icon" src="/baby-gru/pixmaps/refine-1.svg" />}
-        formatArgs={(m, c, p) => refinementFormatArgs(m, c, p)} />
+        formatArgs={(m, c, p) => refinementFormatArgs(m, c, p)}
+        refineAfterMod={false} />
 }
 
 export const BabyGruDeleteUsingCidButton = (props) => {
