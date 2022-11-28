@@ -32,7 +32,7 @@ int main(int argc, char* argv[]) {
           char *fn =(char*) malloc(strlen(CWD)+strlen(argv[i]));
           fn[0] = '\0';
           strncat(fn,CWD,strlen(CWD));
-          strncat(fn,argv[i],strlen(CWD));
+          strncat(fn,argv[i],strlen(argv[1]));
 
           try {
               auto st = gemmi::read_structure(gemmi::MaybeGzipped(fn));
