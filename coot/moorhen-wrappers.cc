@@ -543,6 +543,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<gemmi::Sheet>("VectorGemmiSheet");
     register_vector<gemmi::Assembly>("VectorGemmiAssembly");
     register_vector<gemmi::Chain>("VectorGemmiChain");
+    register_vector<gemmi::Residue>("VectorGemmiResidue");
     register_vector<gemmi::ResidueSpan>("VectorGemmiResidueSpan");
     register_vector<gemmi::ConstResidueSpan>("VectorGemmiConstResidueSpan");
 
@@ -638,6 +639,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     //.function("is_compatible_with_spacegroup",&gemmi::UnitCell::is_compatible_with_spacegroup) // Requires const SpaceGroup* sg
     //.function("set_cell_images_from_spacegroup",&gemmi::UnitCell::set_cell_images_from_spacegroup) // Requires const SpaceGroup* sg
     ;
+
     class_<gemmi::Model>("Model")
     .property("name",&gemmi::Model::name)
     .property("chains",&gemmi::Model::chains)
@@ -653,14 +655,23 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("find_cra",select_overload<gemmi::CRA(const gemmi::AtomAddress&, bool)>(&gemmi::Model::find_cra))
     .function("find_cra_const",select_overload<gemmi::const_CRA(const gemmi::AtomAddress&, bool)const>(&gemmi::Model::find_cra))
     .function("all",select_overload<gemmi::CraProxy()>(&gemmi::Model::all))
-    .function("all",select_overload<gemmi::ConstCraProxy()const>(&gemmi::Model::all))
+    .function("all_const",select_overload<gemmi::ConstCraProxy()const>(&gemmi::Model::all))
     .function("empty_copy",&gemmi::Model::empty_copy)
     .function("children",select_overload<std::vector<gemmi::Chain>&()>(&gemmi::Model::children))
     .function("children_const",select_overload<const std::vector<gemmi::Chain>&()const>(&gemmi::Model::children))
     ;
 
+    class_<gemmi::Chain>("Chain")
+    .property("name",&gemmi::Chain::name)
+    .property("residues",&gemmi::Chain::residues)
+    //.function("whole",select_overload<gemmi::ResidueSpan>()>(&gemmi::Chain::whole))
+    //.function("whole_const",select_overload<gemmi::ConstResidueSpan>()const>(&gemmi::Chain::whole))
+    ;
+
     //TODO Wrap the following
 
+    class_<gemmi::Residue>("GemmiResidue")
+    ;
     class_<gemmi::CraProxy>("CraProxy")
     ;
     class_<gemmi::ConstCraProxy>("ConstCraProxy")
@@ -669,8 +680,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<gemmi::AtomAddress>("AtomAddress")
     ;
-    class_<gemmi::Chain>("Chain")
-    ;
     class_<gemmi::ResidueSpan>("ResidueSpan")
     ;
     class_<gemmi::ResidueId>("ResidueId")
@@ -678,8 +687,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
     class_<gemmi::ResidueGroup>("ResidueGroup")
     ;
     class_<gemmi::SeqId>("SeqId")
-    ;
-    class_<gemmi::Residue>("GemmiResidue")
     ;
     class_<gemmi::ConstResidueSpan>("ConstResidueSpan")
     ;
