@@ -16,6 +16,7 @@ const getDefaultValues = () => {
         darkMode: false, 
         atomLabelDepthMode: true, 
         defaultExpandDisplayCards: true,
+        defaultLitLines: false,
         shortCuts: {
             "sphere_refine": {
                 modifiers: ["shiftKey"],
@@ -118,6 +119,7 @@ const PreferencesContextProvider = ({ children }) => {
     const [atomLabelDepthMode, setAtomLabelDepthMode] = useState(null);
     const [defaultExpandDisplayCards, setDefaultExpandDisplayCards] = useState(null);
     const [shortCuts, setShortCuts] = useState(null);
+    const [defaultLitLines, setDefaultLitLines] = useState(null);
 
     const restoreDefaults = ( )=> {
         const defaultValues = getDefaultValues()
@@ -126,6 +128,7 @@ const PreferencesContextProvider = ({ children }) => {
         setDefaultExpandDisplayCards(defaultValues.defaultExpandDisplayCards)            
         setShortCuts(JSON.stringify(defaultValues.shortCuts))            
         setAtomLabelDepthMode(defaultValues.atomLabelDepthMode)
+        setDefaultLitLines(defaultValues.defaultLitLines)
     }
 
     /**
@@ -142,7 +145,8 @@ const PreferencesContextProvider = ({ children }) => {
                     localforage.getItem('darkMode'), 
                     localforage.getItem('defaultExpandDisplayCards'),
                     localforage.getItem('shortCuts'),
-                    localforage.getItem('atomLabelDepthMode')
+                    localforage.getItem('atomLabelDepthMode'),
+                    localforage.getItem('defaultLitLines')
                     ])
                 
                 console.log('Retrieved the following preferences from local storage: ', response)
@@ -160,6 +164,7 @@ const PreferencesContextProvider = ({ children }) => {
                     setDefaultExpandDisplayCards(response[2])
                     setShortCuts(response[3])
                     setAtomLabelDepthMode(response[4])
+                    setDefaultLitLines(response[5])
                 }                
                 
             } catch (err) {
@@ -213,7 +218,16 @@ const PreferencesContextProvider = ({ children }) => {
         updateStoredPreferences('shortCuts', shortCuts);
     }, [shortCuts]);
 
-    const collectedContextValues = {darkMode, setDarkMode, atomLabelDepthMode, setAtomLabelDepthMode, defaultExpandDisplayCards, setDefaultExpandDisplayCards, shortCuts, setShortCuts}
+    useMemo(() => {
+
+        if (defaultLitLines === null) {
+            return
+        }
+       
+        updateStoredPreferences('defaultLitLines', defaultLitLines);
+    }, [defaultLitLines]);
+
+    const collectedContextValues = {darkMode, setDarkMode, atomLabelDepthMode, setAtomLabelDepthMode, defaultExpandDisplayCards, setDefaultExpandDisplayCards, shortCuts, setShortCuts, defaultLitLines, setDefaultLitLines}
 
     return (
       <PreferencesContext.Provider value={collectedContextValues}>
