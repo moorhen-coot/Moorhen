@@ -10,101 +10,103 @@ const updateStoredPreferences = async (key, value) => {
     }
 }
 
-const defaultValues = {
-    version: '0.1',
-    darkMode: false, 
-    atomLabelDepthMode: true, 
-    defaultExpandDisplayCards: true,
-    shortCuts: {
-        "sphere_refine": {
-            modifiers: ["shiftKey"],
-            keyPress: "r",
-            label: "Refine sphere"
-        },
-        "flip_peptide": {
-            modifiers: ["shiftKey"],
-            keyPress: "q",
-            label: "Flip peptide"
-        },
-        "triple_refine": {
-            modifiers: ["shiftKey"],
-            keyPress: "h",
-            label: "Refine triplet"
-        },
-        "auto_fit_rotamer": {
-            modifiers: ["shiftKey"],
-            keyPress: "j",
-            label: "Autofit rotamer"
-        },
-        "add_terminal_residue": {
-            modifiers: ["shiftKey"],
-            keyPress: "y",
-            label: "Add terminal residue"
-        },
-        "delete_residue": {
-            modifiers: ["shiftKey"],
-            keyPress: "d",
-            label: "Delete residue"
-        },
-        "eigen_flip": {
-            modifiers: ["shiftKey"],
-            keyPress: "e",
-            label: "Eigen flip ligand"
-        },
-        "show_shortcuts": {
-            modifiers: ["ctrlKey"],
-            keyPress: "control",
-            label: "Show shortcuts"
-        },
-        "restore_scene": {
-            modifiers: [],
-            keyPress: "r",
-            label: "Restore scene"
-        },
-        "clear_labels": {
-            modifiers: [],
-            keyPress: "c",
-            label: "Clear labels"
-        },
-        "move_up": {
-            modifiers: [],
-            keyPress: "arrowup",
-            label: "Move model up"
-        },
-        "move_down": {
-            modifiers: [],
-            keyPress: "arrowdown",
-            label: "Move model down"
-        },
-        "move_left": {
-            modifiers: [],
-            keyPress: "arrowleft",
-            label: "Move model left"
-        },
-        "move_right": {
-            modifiers: [],
-            keyPress: "arrowright",
-            label: "Move model right"
-        },
-        "go_to_blob": {
-            modifiers: [],
-            keyPress: "g",
-            label: "Go to blob"
-        },
-        "take_screenshot": {
-            modifiers: [],
-            keyPress: "s",
-            label: "Take a screenshot"
-        },
-        "ligand_camera_wiggle": {
-            modifiers: [],
-            keyPress: "z",
-            label: "Wiggle camera while fitting a ligand"
-        },
-        "label_atom": {
-            modifiers: [],
-            keyPress: "m",
-            label: "Label an atom on click"
+const getDefaultValues = () => {
+    return {
+        version: '0.1',
+        darkMode: false, 
+        atomLabelDepthMode: true, 
+        defaultExpandDisplayCards: true,
+        shortCuts: {
+            "sphere_refine": {
+                modifiers: ["shiftKey"],
+                keyPress: "r",
+                label: "Refine sphere"
+            },
+            "flip_peptide": {
+                modifiers: ["shiftKey"],
+                keyPress: "q",
+                label: "Flip peptide"
+            },
+            "triple_refine": {
+                modifiers: ["shiftKey"],
+                keyPress: "h",
+                label: "Refine triplet"
+            },
+            "auto_fit_rotamer": {
+                modifiers: ["shiftKey"],
+                keyPress: "j",
+                label: "Autofit rotamer"
+            },
+            "add_terminal_residue": {
+                modifiers: ["shiftKey"],
+                keyPress: "y",
+                label: "Add terminal residue"
+            },
+            "delete_residue": {
+                modifiers: ["shiftKey"],
+                keyPress: "d",
+                label: "Delete residue"
+            },
+            "eigen_flip": {
+                modifiers: ["shiftKey"],
+                keyPress: "e",
+                label: "Eigen flip ligand"
+            },
+            "show_shortcuts": {
+                modifiers: ["ctrlKey"],
+                keyPress: "control",
+                label: "Show shortcuts"
+            },
+            "restore_scene": {
+                modifiers: [],
+                keyPress: "r",
+                label: "Restore scene"
+            },
+            "clear_labels": {
+                modifiers: [],
+                keyPress: "c",
+                label: "Clear labels"
+            },
+            "move_up": {
+                modifiers: [],
+                keyPress: "arrowup",
+                label: "Move model up"
+            },
+            "move_down": {
+                modifiers: [],
+                keyPress: "arrowdown",
+                label: "Move model down"
+            },
+            "move_left": {
+                modifiers: [],
+                keyPress: "arrowleft",
+                label: "Move model left"
+            },
+            "move_right": {
+                modifiers: [],
+                keyPress: "arrowright",
+                label: "Move model right"
+            },
+            "go_to_blob": {
+                modifiers: [],
+                keyPress: "g",
+                label: "Go to blob"
+            },
+            "take_screenshot": {
+                modifiers: [],
+                keyPress: "s",
+                label: "Take a screenshot"
+            },
+            "ligand_camera_wiggle": {
+                modifiers: [],
+                keyPress: "z",
+                label: "Wiggle camera while fitting a ligand"
+            },
+            "label_atom": {
+                modifiers: [],
+                keyPress: "m",
+                label: "Label an atom on click"
+            }
         }
     }
 }
@@ -118,6 +120,7 @@ const PreferencesContextProvider = ({ children }) => {
     const [shortCuts, setShortCuts] = useState(null);
 
     const restoreDefaults = ( )=> {
+        const defaultValues = getDefaultValues()
         updateStoredPreferences('version', defaultValues.version);
         setDarkMode(defaultValues.darkMode)
         setDefaultExpandDisplayCards(defaultValues.defaultExpandDisplayCards)            
@@ -143,7 +146,8 @@ const PreferencesContextProvider = ({ children }) => {
                     ])
                 
                 console.log('Retrieved the following preferences from local storage: ', response)
-                
+
+                const defaultValues = getDefaultValues()                
                 if (response[0] !== defaultValues.version) {
                     console.log('Different storage version detected, using defaults')
                     restoreDefaults()
@@ -219,4 +223,4 @@ const PreferencesContextProvider = ({ children }) => {
 };
   
 
-export { PreferencesContext, PreferencesContextProvider, defaultValues };
+export { PreferencesContext, PreferencesContextProvider, getDefaultValues };

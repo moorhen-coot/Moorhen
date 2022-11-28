@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Modal, Button, Card, Row, Col } from "react-bootstrap";
-import { defaultValues } from "../utils/BabyGruPreferences";
+import { getDefaultValues } from "../utils/BabyGruPreferences";
 
 export const BabyGruShortcutConfigModal = (props) => {
     const newShortCutModalRef = useRef();
@@ -14,6 +14,7 @@ export const BabyGruShortcutConfigModal = (props) => {
     }
 
     const restoreDefaults = () => {
+        const defaultValues = getDefaultValues()
         props.setShowModal(false)
         setStagedShortCuts(defaultValues.shortCuts)
         props.setShortCuts(JSON.stringify(defaultValues.shortCuts))
