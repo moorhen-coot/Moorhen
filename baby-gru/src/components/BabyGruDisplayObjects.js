@@ -27,7 +27,6 @@ export const BabyGruDisplayObjects = (props) => {
                 map={map}
                 initialContour={0.8}
                 initialRadius={13}
-                initialMapLitLines={false}
                 currentDropdownMolNo={currentDropdownMolNo}
                 setCurrentDropdownMolNo={setCurrentDropdownMolNo}
                 {...props} />

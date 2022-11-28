@@ -10,7 +10,7 @@ export const BabyGruMapCard = (props) => {
     const [cootContour, setCootContour] = useState(true)
     const [mapRadius, setMapRadius] = useState(props.initialRadius)
     const [mapContourLevel, setMapContourLevel] = useState(props.initialContour)
-    const [mapLitLines, setMapLitLines] = useState(props.initialMapLitLines)    
+    const [mapLitLines, setMapLitLines] = useState(props.defaultLitLines)    
     const [isCollapsed, setIsCollapsed] = useState(!props.defaultExpandDisplayCards);
     const [currentName, setCurrentName] = useState(props.map.name);
     const nextOrigin = createRef([])
@@ -101,7 +101,6 @@ export const BabyGruMapCard = (props) => {
                     <DropdownButton 
                             title={<Settings/>}
                             size="sm" 
-                            title={<Settings />}
                             variant="outlined" 
                             autoClose={popoverIsShown ? false : 'outside'} 
                             show={props.currentDropdownMolNo === props.map.molNo} 
@@ -180,7 +179,7 @@ export const BabyGruMapCard = (props) => {
     useEffect(() => {
         setCootContour(props.map.cootContour)
         setMapContourLevel(props.initialContour)
-        setMapLitLines(props.initialMapLitLines)
+        setMapLitLines(props.defaultLitLines)
         setMapRadius(props.initialRadius)
     }, [])
 
