@@ -1018,9 +1018,21 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("first_mon",&gemmi::Entity::first_mon)
     ;
 
-    //TODO Wrap the following
-    class_<gemmi::AtomGroup>("AtomGroup")
+    class_<gemmi::ItemGroup<gemmi::Atom>>("ItemGroupAtom")
+    .function("size",&gemmi::ItemGroup<gemmi::Atom>::size)
+    .function("extent",&gemmi::ItemGroup<gemmi::Atom>::extent)
+    .function("empty",&gemmi::ItemGroup<gemmi::Atom>::empty)
+    .function("front",select_overload<gemmi::Atom&()>(&gemmi::ItemGroup<gemmi::Atom>::front))
+    .function("front_const",select_overload<const gemmi::Atom&()const>(&gemmi::ItemGroup<gemmi::Atom>::front))
+    .function("back",select_overload<gemmi::Atom&()>(&gemmi::ItemGroup<gemmi::Atom>::back))
+    .function("back_const",select_overload<const gemmi::Atom&()const>(&gemmi::ItemGroup<gemmi::Atom>::back))
     ;
+    class_<gemmi::AtomGroup, base<gemmi::ItemGroup<gemmi::Atom>>>("AtomGroup")
+    .function("name",&gemmi::AtomGroup::name)
+    .function("by_altloc",&gemmi::AtomGroup::by_altloc)
+    ;
+
+    //TODO Wrap the following
     class_<gemmi::CraProxy>("CraProxy")
     ;
     class_<gemmi::ConstCraProxy>("ConstCraProxy")
