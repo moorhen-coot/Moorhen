@@ -536,6 +536,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<merge_molecule_results_info_t>("Vectormerge_molecule_results_info_t");
     register_vector<coot::phi_psi_prob_t>("Vectophi_psi_prob_t");
 
+    register_vector<gemmi::Atom>("VectorGemmiAtom");
     register_vector<gemmi::Model>("VectorGemmiModel");
     register_vector<gemmi::NcsOp>("VectorGemmiNcsOp");
     register_vector<gemmi::Entity>("VectorGemmiEntity");
@@ -565,6 +566,144 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .element(emscripten::index<2>())
     ;
     function("getRotamersMap",&getRotamersMap);
+
+    enum_<gemmi::El>("El")
+        .value("X", gemmi::El::X)
+        .value("He", gemmi::El::He)
+        .value("Li", gemmi::El::Li)
+        .value("Be", gemmi::El::Be)
+        .value("B", gemmi::El::B)
+        .value("C", gemmi::El::C)
+        .value("N", gemmi::El::N)
+        .value("O", gemmi::El::O)
+        .value("F", gemmi::El::F)
+        .value("Ne", gemmi::El::Ne)
+        .value("Na", gemmi::El::Na)
+        .value("Mg", gemmi::El::Mg)
+        .value("Al", gemmi::El::Al)
+        .value("Si", gemmi::El::Si)
+        .value("P", gemmi::El::P)
+        .value("S", gemmi::El::S)
+        .value("Cl", gemmi::El::Cl)
+        .value("Ar", gemmi::El::Ar)
+        .value("K", gemmi::El::K)
+        .value("Ca", gemmi::El::Ca)
+        .value("Sc", gemmi::El::Sc)
+        .value("Ti", gemmi::El::Ti)
+        .value("V", gemmi::El::V)
+        .value("Cr", gemmi::El::Cr)
+        .value("Mn", gemmi::El::Mn)
+        .value("Fe", gemmi::El::Fe)
+        .value("Co", gemmi::El::Co)
+        .value("Ni", gemmi::El::Ni)
+        .value("Cu", gemmi::El::Cu)
+        .value("Zn", gemmi::El::Zn)
+        .value("Ga", gemmi::El::Ga)
+        .value("Ge", gemmi::El::Ge)
+        .value("As", gemmi::El::As)
+        .value("Se", gemmi::El::Se)
+        .value("Br", gemmi::El::Br)
+        .value("Kr", gemmi::El::Kr)
+        .value("Rb", gemmi::El::Rb)
+        .value("Sr", gemmi::El::Sr)
+        .value("Y", gemmi::El::Y)
+        .value("Zr", gemmi::El::Zr)
+        .value("Nb", gemmi::El::Nb)
+        .value("Mo", gemmi::El::Mo)
+        .value("Tc", gemmi::El::Tc)
+        .value("Ru", gemmi::El::Ru)
+        .value("Rh", gemmi::El::Rh)
+        .value("Pd", gemmi::El::Pd)
+        .value("Ag", gemmi::El::Ag)
+        .value("Cd", gemmi::El::Cd)
+        .value("In", gemmi::El::In)
+        .value("Sn", gemmi::El::Sn)
+        .value("Sb", gemmi::El::Sb)
+        .value("Te", gemmi::El::Te)
+        .value("I", gemmi::El::I)
+        .value("Xe", gemmi::El::Xe)
+        .value("Cs", gemmi::El::Cs)
+        .value("Ba", gemmi::El::Ba)
+        .value("La", gemmi::El::La)
+        .value("Ce", gemmi::El::Ce)
+        .value("Pr", gemmi::El::Pr)
+        .value("Nd", gemmi::El::Nd)
+        .value("Pm", gemmi::El::Pm)
+        .value("Sm", gemmi::El::Sm)
+        .value("Eu", gemmi::El::Eu)
+        .value("Gd", gemmi::El::Gd)
+        .value("Tb", gemmi::El::Tb)
+        .value("Dy", gemmi::El::Dy)
+        .value("Ho", gemmi::El::Ho)
+        .value("Er", gemmi::El::Er)
+        .value("Tm", gemmi::El::Tm)
+        .value("Yb", gemmi::El::Yb)
+        .value("Lu", gemmi::El::Lu)
+        .value("Hf", gemmi::El::Hf)
+        .value("Ta", gemmi::El::Ta)
+        .value("W", gemmi::El::W)
+        .value("Re", gemmi::El::Re)
+        .value("Os", gemmi::El::Os)
+        .value("Ir", gemmi::El::Ir)
+        .value("Pt", gemmi::El::Pt)
+        .value("Au", gemmi::El::Au)
+        .value("Hg", gemmi::El::Hg)
+        .value("Tl", gemmi::El::Tl)
+        .value("Pb", gemmi::El::Pb)
+        .value("Bi", gemmi::El::Bi)
+        .value("Po", gemmi::El::Po)
+        .value("At", gemmi::El::At)
+        .value("Rn", gemmi::El::Rn)
+        .value("Fr", gemmi::El::Fr)
+        .value("Ra", gemmi::El::Ra)
+        .value("Ac", gemmi::El::Ac)
+        .value("Th", gemmi::El::Th)
+        .value("Pa", gemmi::El::Pa)
+        .value("U", gemmi::El::U)
+        .value("Np", gemmi::El::Np)
+        .value("Pu", gemmi::El::Pu)
+        .value("Am", gemmi::El::Am)
+        .value("Cm", gemmi::El::Cm)
+        .value("Bk", gemmi::El::Bk)
+        .value("Cf", gemmi::El::Cf)
+        .value("Es", gemmi::El::Es)
+        .value("Fm", gemmi::El::Fm)
+        .value("Md", gemmi::El::Md)
+        .value("No", gemmi::El::No)
+        .value("Lr", gemmi::El::Lr)
+        .value("Rf", gemmi::El::Rf)
+        .value("Db", gemmi::El::Db)
+        .value("Sg", gemmi::El::Sg)
+        .value("Bh", gemmi::El::Bh)
+        .value("Hs", gemmi::El::Hs)
+        .value("Mt", gemmi::El::Mt)
+        .value("Ds", gemmi::El::Ds)
+        .value("Rg", gemmi::El::Rg)
+        .value("Cn", gemmi::El::Cn)
+        .value("Nh", gemmi::El::Nh)
+        .value("Fl", gemmi::El::Fl)
+        .value("Mc", gemmi::El::Mc)
+        .value("Lv", gemmi::El::Lv)
+        .value("Ts", gemmi::El::Ts)
+        .value("Og", gemmi::El::Og)
+        .value("D", gemmi::El::D)
+        .value("END", gemmi::El::END)
+    ;
+
+    enum_<gemmi::EntityType>("EntityType")
+        .value("Unknown", gemmi::EntityType::Unknown)
+        .value("Polymer", gemmi::EntityType::Polymer)
+        .value("NonPolymer", gemmi::EntityType::NonPolymer)
+        .value("Branched", gemmi::EntityType::Branched)
+        .value("Water", gemmi::EntityType::Water)
+    ;
+
+    enum_<gemmi::CalcFlag>("CalcFlag")
+        .value("NotSet", gemmi::CalcFlag::NotSet)
+        .value("Determined", gemmi::CalcFlag::Determined)
+        .value("Calculated", gemmi::CalcFlag::Calculated)
+        .value("Dummy", gemmi::CalcFlag::Dummy)
+    ;
 
     enum_<gemmi::CoorFormat>("CoorFormat")
         .value("Unknown", gemmi::CoorFormat::Unknown)
@@ -709,7 +848,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("children",select_overload<std::vector<gemmi::Residue>&()>(&gemmi::Chain::children))
     //.function("first_conformer_const",select_overload<gemmi::ConstUniqProxy<gemmi::Residue>()const>(&gemmi::Chain::first_conformer))
     //.function("first_conformer_const",select_overload<gemmi::UniqProxy<gemmi::Residue>()>(&gemmi::Chain::first_conformer))
-    //And various pointer return  methods ...
+    //And various pointer return methods ...
     ;
 
     class_<gemmi::ConstResidueSpan, base<gemmi::Span<const gemmi::Residue>>>("ConstResidueSpan")
@@ -717,19 +856,21 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("subchain_id",&gemmi::ConstResidueSpan::subchain_id)
     .function("find_residue_group",&gemmi::ConstResidueSpan::find_residue_group)
     .function("extract_sequence",&gemmi::ConstResidueSpan::extract_sequence)
+    .function("extreme_num",&gemmi::ConstResidueSpan::extreme_num)
+    .function("label_seq_id_to_auth",&gemmi::ConstResidueSpan::label_seq_id_to_auth)
+    .function("auth_seq_id_to_label",&gemmi::ConstResidueSpan::auth_seq_id_to_label)
     //ConstUniqProxy<Residue, ConstResidueSpan> first_conformer() const {
-    //SeqId::OptionalNum extreme_num(bool label, int sign) const {
     //ConstUniqProxy<Residue, ConstResidueSpan> first_conformer() const {
-    //SeqId label_seq_id_to_auth(SeqId::OptionalNum label_seq_id) const {
-    //SeqId::OptionalNum auth_seq_id_to_label(SeqId auth_seq_id) const {
     ;
 
     class_<gemmi::ResidueSpan, base<gemmi::MutableVectorSpan<gemmi::Residue>>>("ResidueSpan")
-    .function("length",&gemmi::ConstResidueSpan::length)
-    .function("subchain_id",&gemmi::ConstResidueSpan::subchain_id)
+    .function("length",&gemmi::ResidueSpan::length)
+    .function("subchain_id",&gemmi::ResidueSpan::subchain_id)
     .function("find_residue_group",select_overload<gemmi::ResidueGroup(gemmi::SeqId)>(&gemmi::ResidueSpan::find_residue_group))
     .function("find_residue_group_const",select_overload<gemmi::ConstResidueGroup(gemmi::SeqId)const>(&gemmi::ResidueSpan::find_residue_group))
-    // etc.
+    .function("extreme_num",&gemmi::ResidueSpan::extreme_num)
+    .function("label_seq_id_to_auth",&gemmi::ResidueSpan::label_seq_id_to_auth)
+    .function("auth_seq_id_to_label",&gemmi::ResidueSpan::auth_seq_id_to_label)
     ;
 
     class_<gemmi::ConstResidueGroup,base<gemmi::ConstResidueSpan>>("ConstResidueGroup")
@@ -741,10 +882,89 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("remove_residue",&gemmi::ResidueGroup::remove_residue)
     ;
 
-    //TODO Wrap the following
-    class_<gemmi::Residue>("GemmiResidue")
+    class_<gemmi::SeqId::OptionalNum>("OptionalNum")
+    .property("value",&gemmi::SeqId::OptionalNum::value)
+    .function("has_value",&gemmi::SeqId::OptionalNum::has_value)
+    .function("str",&gemmi::SeqId::OptionalNum::str)
     ;
 
+    class_<gemmi::SeqId>("SeqId")
+    .property("num",&gemmi::SeqId::num)
+    .property("icode",&gemmi::SeqId::icode)
+    .function("has_icode",&gemmi::SeqId::has_icode)
+    .function("str",&gemmi::SeqId::str)
+    ;
+
+    class_<gemmi::ResidueId>("ResidueId")
+    .property("seqid",&gemmi::ResidueId::seqid)
+    .property("segment",&gemmi::ResidueId::segment)
+    .property("name",&gemmi::ResidueId::name)
+    .function("group_key",&gemmi::ResidueId::group_key)
+    .function("matches",&gemmi::ResidueId::matches)
+    .function("matches_noseg",&gemmi::ResidueId::matches_noseg)
+    ;
+
+    class_<gemmi::Residue, base<gemmi::ResidueId>>("GemmiResidue")
+    .property("subchain",&gemmi::Residue::subchain)
+    .property("entity_id",&gemmi::Residue::entity_id)
+    .property("label_seq",&gemmi::Residue::label_seq)
+    .property("entity_type",&gemmi::Residue::entity_type)
+    .property("het_flag",&gemmi::Residue::het_flag)
+    .property("is_cis",&gemmi::Residue::is_cis)
+    .property("flag",&gemmi::Residue::flag)
+    .property("atoms",&gemmi::Residue::atoms)
+    .function("empty_copy",&gemmi::Residue::empty_copy)
+    .function("children",select_overload<std::vector<gemmi::Atom>&()>(&gemmi::Residue::children))
+    .function("children_const",select_overload<const std::vector<gemmi::Atom>&()const>(&gemmi::Residue::children))
+    .function("get",&gemmi::Residue::get)
+    .function("sole_atom",&gemmi::Residue::sole_atom)
+    .function("same_conformer",&gemmi::Residue::same_conformer)
+    .function("is_water",&gemmi::Residue::is_water)
+    //.property("sifts_unp",&gemmi::Residue::sifts_unp) //SiftsUnpResidue
+    //UniqProxy<Atom> first_conformer() { return {atoms}; }
+    //ConstUniqProxy<Atom> first_conformer() const { return {atoms}; }
+    //And various pointer return methods ...
+    ;
+
+    class_<gemmi::Atom>("GemmiAtom")
+    .property("name",&gemmi::Atom::name)
+    .property("altloc",&gemmi::Atom::altloc)
+    .property("charge",&gemmi::Atom::charge)
+    .property("element",&gemmi::Atom::element)
+    .property("calc_flag",&gemmi::Atom::calc_flag)
+    .property("flag",&gemmi::Atom::flag)
+    .property("tls_group_id",&gemmi::Atom::tls_group_id)
+    .property("serial",&gemmi::Atom::serial)
+    .property("pos",&gemmi::Atom::pos)
+    .property("occ",&gemmi::Atom::occ)
+    .property("b_iso",&gemmi::Atom::b_iso)
+    .function("altloc_or",&gemmi::Atom::altloc_or)
+    .function("altloc_matches",&gemmi::Atom::altloc_matches)
+    .function("group_key",&gemmi::Atom::group_key)
+    .function("has_altloc",&gemmi::Atom::has_altloc)
+    .function("b_eq",&gemmi::Atom::b_eq)
+    .function("is_hydrogen",&gemmi::Atom::is_hydrogen)
+    .function("padded_name",&gemmi::Atom::padded_name)
+    .function("empty_copy",&gemmi::Atom::empty_copy)
+    //.property("aniso",&gemmi::Atom::aniso)//SMat33<float>
+    ;
+
+    //TODO Wrap the following
+    class_<gemmi::Element>("Element")
+    .property("elem",&gemmi::Element::elem)
+    .function("ordinal",&gemmi::Element::ordinal)
+    .function("atomic_number",&gemmi::Element::atomic_number)
+    .function("is_hydrogen",&gemmi::Element::is_hydrogen)
+    .function("weight",&gemmi::Element::weight)
+    .function("covalent_r",&gemmi::Element::covalent_r)
+    .function("vdw_r",&gemmi::Element::vdw_r)
+    .function("is_metal",&gemmi::Element::is_metal)
+    .function("name",&gemmi::Element::name, allow_raw_pointers())
+    .function("uname",&gemmi::Element::uname, allow_raw_pointers())
+    ;
+
+    class_<gemmi::AtomGroup>("AtomGroup")
+    ;
     class_<gemmi::CraProxy>("CraProxy")
     ;
     class_<gemmi::ConstCraProxy>("ConstCraProxy")
@@ -752,10 +972,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
     class_<gemmi::const_CRA>("const_CRA")
     ;
     class_<gemmi::AtomAddress>("AtomAddress")
-    ;
-    class_<gemmi::ResidueId>("ResidueId")
-    ;
-    class_<gemmi::SeqId>("SeqId")
     ;
     class_<gemmi::NcsOp>("NcsOp")
     ;
