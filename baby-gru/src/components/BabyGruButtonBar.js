@@ -1,7 +1,7 @@
 import { CheckOutlined, CloseOutlined } from "@mui/icons-material";
-import { Menu, MenuItem, MenuList, Tooltip } from "@mui/material";
+import { MenuItem, MenuList, Tooltip } from "@mui/material";
 import { createRef, forwardRef, useCallback, useEffect, useRef, useState } from "react";
-import { ButtonGroup, Button, Overlay, Container, Row, FormSelect, FormGroup, FormLabel, Card } from "react-bootstrap"
+import { ButtonGroup, Button, Overlay, Container, Row, FormSelect, FormGroup, FormLabel, Card, Carousel } from "react-bootstrap"
 import { BabyGruMoleculeSelect } from "./BabyGruMoleculeSelect";
 import { cidToSpec } from "../utils/BabyGruUtils";
 
@@ -14,6 +14,72 @@ const refinementFormatArgs = (molecule, chosenAtom, pp) => {
 
 export const BabyGruButtonBar = (props) => {
     const [selectedButtonIndex, setSelectedButtonIndex] = useState(null);
+
+    const editButtons = [
+        (<BabyGruAutofitRotamerButton {...props} selectedButtonIndex={selectedButtonIndex}
+            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="0" />),
+
+        (<BabyGruFlipPeptideButton {...props} selectedButtonIndex={selectedButtonIndex}
+            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="1" />),
+
+        (<BabyGruSideChain180Button {...props} selectedButtonIndex={selectedButtonIndex}
+            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="2" />),
+
+        (<BabyGruRefineResiduesUsingAtomCidButton {...props} selectedButtonIndex={selectedButtonIndex}
+            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="3" />),
+
+        (<BabyGruDeleteUsingCidButton {...props} selectedButtonIndex={selectedButtonIndex}
+            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="4" />),
+
+        (<BabyGruMutateButton {...props} selectedButtonIndex={selectedButtonIndex}
+            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="5" />),
+
+        (<BabyGruAddTerminalResidueDirectlyUsingCidButton {...props} selectedButtonIndex={selectedButtonIndex}
+            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="6" />),
+
+        (<BabyGruEigenFlipLigandButton {...props} selectedButtonIndex={selectedButtonIndex}
+            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="7" />),
+
+        (<BabyGruJedFlipFalseButton {...props} selectedButtonIndex={selectedButtonIndex}
+            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="8" />),
+
+        (<BabyGruJedFlipTrueButton {...props} selectedButtonIndex={selectedButtonIndex}
+            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="9" />),
+
+        (<BabyGruRotateTranslateZoneButton {...props} selectedButtonIndex={selectedButtonIndex}
+            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="10" />),
+
+        (<BabyGruAddSimpleButton {...props} selectedButtonIndex={selectedButtonIndex}
+            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="11" />)
+    
+    ]
+
+    const getCarouselItems = () => {
+        const maximumAllowedWidth = props.windowWidth - (props.innerWindowMarginWidth + (props.showSideBar ? props.sideBarWidth : 0))
+
+        let currentlyUsedWidth = 0
+        let carouselItems = []
+        let currentItem = []
+
+        editButtons.forEach(button => {
+            currentItem.push(button)
+            currentlyUsedWidth += 120
+            if (currentlyUsedWidth >= maximumAllowedWidth) {
+                carouselItems.push(currentItem)
+                currentItem = []
+                currentlyUsedWidth = 0
+            }
+        })
+        
+        if (currentItem.length > 0) {
+            carouselItems.push(currentItem)
+        }
+
+        return carouselItems
+    }
+
+    const carouselItems = getCarouselItems()
+
     return <div
         style={{
             overflow: "auto",
@@ -23,45 +89,17 @@ export const BabyGruButtonBar = (props) => {
                 ${255 * props.backgroundColor[2]}, 
                 ${props.backgroundColor[3]})`,
         }}>
-        <ButtonGroup>
-
-            <BabyGruAutofitRotamerButton {...props} selectedButtonIndex={selectedButtonIndex}
-                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="0" />
-
-            <BabyGruFlipPeptideButton {...props} selectedButtonIndex={selectedButtonIndex}
-                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="1" />
-
-            <BabyGruSideChain180Button {...props} selectedButtonIndex={selectedButtonIndex}
-                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="2" />
-
-            <BabyGruRefineResiduesUsingAtomCidButton {...props} selectedButtonIndex={selectedButtonIndex}
-                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="3" />
-
-            <BabyGruDeleteUsingCidButton {...props} selectedButtonIndex={selectedButtonIndex}
-                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="4" />
-
-            <BabyGruMutateButton {...props} selectedButtonIndex={selectedButtonIndex}
-                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="5" />
-
-            <BabyGruAddTerminalResidueDirectlyUsingCidButton {...props} selectedButtonIndex={selectedButtonIndex}
-                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="6" />
-
-            <BabyGruEigenFlipLigandButton {...props} selectedButtonIndex={selectedButtonIndex}
-                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="7" />
-
-            <BabyGruJedFlipFalseButton {...props} selectedButtonIndex={selectedButtonIndex}
-                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="8" />
-
-            <BabyGruJedFlipTrueButton {...props} selectedButtonIndex={selectedButtonIndex}
-                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="9" />
-
-            <BabyGruRotateTranslateZoneButton {...props} selectedButtonIndex={selectedButtonIndex}
-                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="10" />
-
-            <BabyGruAddSimpleButton {...props} selectedButtonIndex={selectedButtonIndex}
-                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="11" />
-
-        </ButtonGroup>
+            <Carousel variant={props.darkMode ? "light" : "dark"} interval={null} keyboard={false} indicators={false} controls={carouselItems.length > 1}>
+                {carouselItems.map(item => {
+                    return (
+                        <Carousel.Item>
+                        <ButtonGroup>
+                            {item}
+                        </ButtonGroup>
+                        </Carousel.Item>
+                    )
+                })}
+            </Carousel>
     </div>
 }
 
