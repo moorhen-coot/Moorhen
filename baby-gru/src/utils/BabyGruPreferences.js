@@ -291,7 +291,8 @@ const PreferencesContextProvider = ({ children }) => {
     const collectedContextValues = {
         darkMode, setDarkMode, atomLabelDepthMode, setAtomLabelDepthMode, defaultExpandDisplayCards,
         setDefaultExpandDisplayCards, shortCuts, setShortCuts, defaultLitLines, setDefaultLitLines,
-        refineAfterMod, setRefineAfterMod, mouseSensitivity, setMouseSensitivity
+        refineAfterMod, setRefineAfterMod, mouseSensitivity, setMouseSensitivity, drawCrosshairs, 
+        setDrawCrosshairs, drawMissingLoops, setDrawMissingLoops
     }
 
     return (
