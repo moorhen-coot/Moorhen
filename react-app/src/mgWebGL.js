@@ -10445,8 +10445,8 @@ class MGWebGL extends Component {
             self.doHover(event, self);
             return;
         }
-        self.dx = event.pageX - self.init_x;
-        self.dy = event.pageY - self.init_y;
+        self.dx = (event.pageX - self.init_x) * self.props.mouseSensitivityFactor;
+        self.dy = (event.pageY - self.init_y) * self.props.mouseSensitivityFactor;
         self.init_x = event.pageX;
         self.init_y = event.pageY;
 
