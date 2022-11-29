@@ -63,7 +63,7 @@ export const BabyGruButtonBar = (props) => {
 
         editButtons.forEach(button => {
             currentItem.push(button)
-            currentlyUsedWidth += 120
+            currentlyUsedWidth += 90
             if (currentlyUsedWidth >= maximumAllowedWidth) {
                 carouselItems.push(currentItem)
                 currentItem = []
