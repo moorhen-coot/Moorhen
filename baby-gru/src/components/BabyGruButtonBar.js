@@ -63,7 +63,7 @@ export const BabyGruButtonBar = (props) => {
 
         editButtons.forEach(button => {
             currentItem.push(button)
-            currentlyUsedWidth += 120
+            currentlyUsedWidth += 90
             if (currentlyUsedWidth >= maximumAllowedWidth) {
                 carouselItems.push(currentItem)
                 currentItem = []
@@ -177,6 +177,19 @@ export const BabyGruSimpleEditButton = forwardRef((props, buttonRef) => {
         })
     }, [props.molecules.length, props.activeMap, props.refineAfterMod])
 
+    useEffect(() => {
+        props.setCursorStyle("crosshair")
+        if (props.awaitAtomClick && props.selectedButtonIndex === props.buttonIndex) {
+            props.setCursorStyle("crosshair")
+            document.addEventListener('atomClicked', atomClickedCallback, { once: true })
+        }
+
+        return () => {
+            props.setCursorStyle("default")
+            document.removeEventListener('atomClicked', atomClickedCallback, { once: true })
+        }
+    }, [props.selectedButtonIndex])
+
     return <>
         <Tooltip title={props.toolTip}>
             <Button value={props.buttonIndex}
@@ -187,18 +200,8 @@ export const BabyGruSimpleEditButton = forwardRef((props, buttonRef) => {
                 style={{borderColor: props.buttonIndex === props.selectedButtonIndex ? 'red' : ''}}
                 disabled={props.needsMapData && !props.activeMap ||
                     (props.needsAtomData && props.molecules.length === 0)}
-                onClick={(e) => {
-                    if (props.selectedButtonIndex === e.currentTarget.value) {
-                        props.setSelectedButtonIndex(null)
-                        props.setCursorStyle("default")
-                        document.removeEventListener('atomClicked', atomClickedCallback, { once: true })
-                        return
-                    }
-                    props.setSelectedButtonIndex(props.buttonIndex)
-                    props.setCursorStyle("crosshair")
-                    if (props.awaitAtomClick) {
-                        document.addEventListener('atomClicked', atomClickedCallback, { once: true })
-                    }
+                onClick={(evt) => {
+                    props.setSelectedButtonIndex(props.buttonIndex !== props.selectedButtonIndex ? props.buttonIndex : null)
                 }}>
                 {props.icon}
             </Button>
