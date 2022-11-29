@@ -4271,7 +4271,7 @@ class MGWebGL extends Component {
         this.shaderProgramTextBackground.maxTextureS = this.gl.getUniformLocation(this.shaderProgramTextBackground, "maxTextureS");
         this.gl.uniform1f(this.shaderProgramTextBackground.fog_start, 1000.0);
         this.gl.uniform1f(this.shaderProgramTextBackground.fog_end, 1000.0);
-        this.gl.uniform4fv(this.shaderProgramTextBackground.fogColour, new Float32Array(1.0,1.0,1.0,1.0,1.0));
+        this.gl.uniform4fv(this.shaderProgramTextBackground.fogColour, new Float32Array(1.0, 1.0, 1.0, 1.0, 1.0));
 
         this.shaderProgramTextBackground.clipPlane0 = this.gl.getUniformLocation(this.shaderProgramTextBackground, "clipPlane0");
         this.shaderProgramTextBackground.clipPlane1 = this.gl.getUniformLocation(this.shaderProgramTextBackground, "clipPlane1");
@@ -7871,7 +7871,7 @@ class MGWebGL extends Component {
         if (bright_y < 0.5) {
             textColour = "white";
         }
-        if(textColour!==this.previousTextColour) textTextureDirty = true;
+        if (textColour !== this.previousTextColour) textTextureDirty = true;
         this.previousTextColour = textColour;
 
         for (let iat = 0; iat < this.clickedAtoms.length; iat++) {
@@ -7880,7 +7880,7 @@ class MGWebGL extends Component {
                 const theAtom = this.clickedAtoms[iat][jat];
                 const theBuffer = theAtom.displayBuffer;
 
-                if (this.displayBuffers.indexOf(theBuffer)>-1 && theBuffer.atoms.length>0 && !theBuffer.textPositionBuffer) {
+                if (this.displayBuffers.indexOf(theBuffer) > -1 && theBuffer.atoms.length > 0 && !theBuffer.textPositionBuffer) {
                     this.initTextBuffersBuffer(theBuffer);
                     theBuffer.textIndexs = [];
                     theBuffer.textTexCoords = [];
@@ -7929,13 +7929,13 @@ class MGWebGL extends Component {
 
                 const theAtom = this.clickedAtoms[iat][jat];
                 const theBuffer = theAtom.displayBuffer;
-                if(theBuffer.textNormals.length===0||theBuffer.atoms.length===0){
+                if (theBuffer.textNormals.length === 0 || theBuffer.atoms.length === 0) {
                     continue;
                 }
 
-                const theAtom2 = this.clickedAtoms[iat][jat-1];
+                const theAtom2 = this.clickedAtoms[iat][jat - 1];
                 const theBuffer2 = theAtom2.displayBuffer;
-                if(theBuffer2.textNormals.length===0||theBuffer2.atoms.length===0){
+                if (theBuffer2.textNormals.length === 0 || theBuffer2.atoms.length === 0) {
                     continue;
                 }
 
@@ -7986,7 +7986,7 @@ class MGWebGL extends Component {
         this.gl.enableVertexAttribArray(this.shaderProgramTextBackground.vertexTextureAttribute);
         this.setMatrixUniforms(this.shaderProgramTextBackground);
 
-        if(this.atomLabelDepthMode){
+        if (this.atomLabelDepthMode) {
             //If we want to fog them
             this.gl.depthFunc(this.gl.LESS);
             this.gl.uniform1f(this.shaderProgramTextBackground.fog_start, this.gl_fog_start);
@@ -8004,7 +8004,7 @@ class MGWebGL extends Component {
 
                 const theAtom = this.clickedAtoms[iat][jat];
                 const theBuffer = theAtom.displayBuffer;
-                if(theBuffer.textNormals.length===0||theBuffer.atoms.length===0)
+                if (theBuffer.textNormals.length === 0 || theBuffer.atoms.length === 0)
                     continue;
 
                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, theBuffer.textTexCoordBuffer);
@@ -8023,7 +8023,7 @@ class MGWebGL extends Component {
 
                 theBuffer.textVertices = [];
 
-                if (textTextureDirty||typeof (this.clickedAtoms[iat][jat].imgData) === "undefined") {
+                if (textTextureDirty || typeof (this.clickedAtoms[iat][jat].imgData) === "undefined") {
                     const maxTextureS = this.makeTextCanvas(this.clickedAtoms[iat][jat].label, 512, 32, textColour);
                     this.clickedAtoms[iat][jat].imgData = this.textCtx.getImageData(0, 0, 512, 32);
                     this.clickedAtoms[iat][jat].maxImgTextureS = maxTextureS;
@@ -8063,13 +8063,13 @@ class MGWebGL extends Component {
 
                 const theAtom = this.clickedAtoms[iat][jat];
                 const theBuffer = theAtom.displayBuffer;
-                if(theBuffer.textNormals.length===0||theBuffer.atoms.length===0){
+                if (theBuffer.textNormals.length === 0 || theBuffer.atoms.length === 0) {
                     continue;
                 }
 
-                const theAtom2 = this.clickedAtoms[iat][jat-1];
+                const theAtom2 = this.clickedAtoms[iat][jat - 1];
                 const theBuffer2 = theAtom2.displayBuffer;
-                if(theBuffer2.textNormals.length===0||theBuffer2.atoms.length===0){
+                if (theBuffer2.textNormals.length === 0 || theBuffer2.atoms.length === 0) {
                     continue;
                 }
 
@@ -8088,7 +8088,7 @@ class MGWebGL extends Component {
                 var y = v1plusv2[1] * 0.5;
                 var z = v1plusv2[2] * 0.5;
 
-                if (textTextureDirty||typeof (this.clickedAtoms[iat][jat].lengthImgData) === "undefined") {
+                if (textTextureDirty || typeof (this.clickedAtoms[iat][jat].lengthImgData) === "undefined") {
                     const maxTextureS = this.makeTextCanvas(linesize.toFixed(3), 512, 32, textColour);
                     this.clickedAtoms[iat][jat].lengthImgData = this.textCtx.getImageData(0, 0, 512, 32);
                     this.clickedAtoms[iat][jat].maxLengthImgTextureS = maxTextureS;
@@ -8126,19 +8126,19 @@ class MGWebGL extends Component {
 
                 const theAtom = this.clickedAtoms[iat][jat];
                 const theBuffer = theAtom.displayBuffer;
-                if(theBuffer.textNormals.length===0||theBuffer.atoms.length===0){
+                if (theBuffer.textNormals.length === 0 || theBuffer.atoms.length === 0) {
                     continue;
                 }
 
-                const theAtom2 = this.clickedAtoms[iat][jat-1];
+                const theAtom2 = this.clickedAtoms[iat][jat - 1];
                 const theBuffer2 = theAtom2.displayBuffer;
-                if(theBuffer2.textNormals.length===0||theBuffer2.atoms.length===0){
+                if (theBuffer2.textNormals.length === 0 || theBuffer2.atoms.length === 0) {
                     continue;
                 }
 
-                const theAtom3 = this.clickedAtoms[iat][jat-2];
+                const theAtom3 = this.clickedAtoms[iat][jat - 2];
                 const theBuffer3 = theAtom3.displayBuffer;
-                if(theBuffer3.textNormals.length===0||theBuffer3.atoms.length===0){
+                if (theBuffer3.textNormals.length === 0 || theBuffer3.atoms.length === 0) {
                     continue;
                 }
 
@@ -8166,7 +8166,7 @@ class MGWebGL extends Component {
 
                 var textWidth = this.textCtx.canvas.width;
                 var textHeight = this.textCtx.canvas.height;
-                if (textTextureDirty||typeof (this.clickedAtoms[iat][jat].angleImgData) === "undefined") {
+                if (textTextureDirty || typeof (this.clickedAtoms[iat][jat].angleImgData) === "undefined") {
                     const maxTextureS = this.makeTextCanvas(angle.toFixed(1), 512, 32, textColour);
                     this.clickedAtoms[iat][jat].angleImgData = this.textCtx.getImageData(0, 0, 512, 32);
                     this.clickedAtoms[iat][jat].maxAngleImgTextureS = maxTextureS;
@@ -8190,78 +8190,78 @@ class MGWebGL extends Component {
 
             for (var jat = 3; jat < this.clickedAtoms[iat].length; jat++) {
 
-                    var x1 = this.clickedAtoms[iat][jat - 3].x;
-                    var y1 = this.clickedAtoms[iat][jat - 3].y;
-                    var z1 = this.clickedAtoms[iat][jat - 3].z;
+                var x1 = this.clickedAtoms[iat][jat - 3].x;
+                var y1 = this.clickedAtoms[iat][jat - 3].y;
+                var z1 = this.clickedAtoms[iat][jat - 3].z;
 
-                    var x2 = this.clickedAtoms[iat][jat - 2].x;
-                    var y2 = this.clickedAtoms[iat][jat - 2].y;
-                    var z2 = this.clickedAtoms[iat][jat - 2].z;
+                var x2 = this.clickedAtoms[iat][jat - 2].x;
+                var y2 = this.clickedAtoms[iat][jat - 2].y;
+                var z2 = this.clickedAtoms[iat][jat - 2].z;
 
-                    var x3 = this.clickedAtoms[iat][jat - 1].x;
-                    var y3 = this.clickedAtoms[iat][jat - 1].y;
-                    var z3 = this.clickedAtoms[iat][jat - 1].z;
+                var x3 = this.clickedAtoms[iat][jat - 1].x;
+                var y3 = this.clickedAtoms[iat][jat - 1].y;
+                var z3 = this.clickedAtoms[iat][jat - 1].z;
 
-                    var x4 = this.clickedAtoms[iat][jat].x;
-                    var y4 = this.clickedAtoms[iat][jat].y;
-                    var z4 = this.clickedAtoms[iat][jat].z;
+                var x4 = this.clickedAtoms[iat][jat].x;
+                var y4 = this.clickedAtoms[iat][jat].y;
+                var z4 = this.clickedAtoms[iat][jat].z;
 
-                    const theAtom = this.clickedAtoms[iat][jat];
-                    const theBuffer = theAtom.displayBuffer;
-                    if(theBuffer.textNormals.length===0||theBuffer.atoms.length===0){
-                        continue;
-                    }
+                const theAtom = this.clickedAtoms[iat][jat];
+                const theBuffer = theAtom.displayBuffer;
+                if (theBuffer.textNormals.length === 0 || theBuffer.atoms.length === 0) {
+                    continue;
+                }
 
-                    const theAtom2 = this.clickedAtoms[iat][jat-1];
-                    const theBuffer2 = theAtom2.displayBuffer;
-                    if(theBuffer2.textNormals.length===0||theBuffer2.atoms.length===0){
-                        continue;
-                    }
+                const theAtom2 = this.clickedAtoms[iat][jat - 1];
+                const theBuffer2 = theAtom2.displayBuffer;
+                if (theBuffer2.textNormals.length === 0 || theBuffer2.atoms.length === 0) {
+                    continue;
+                }
 
-                    const theAtom3 = this.clickedAtoms[iat][jat-2];
-                    const theBuffer3 = theAtom3.displayBuffer;
-                    if(theBuffer3.textNormals.length===0||theBuffer3.atoms.length===0){
-                        continue;
-                    }
+                const theAtom3 = this.clickedAtoms[iat][jat - 2];
+                const theBuffer3 = theAtom3.displayBuffer;
+                if (theBuffer3.textNormals.length === 0 || theBuffer3.atoms.length === 0) {
+                    continue;
+                }
 
-                    theBuffer.textVertices = [];
+                theBuffer.textVertices = [];
 
-                    var v1 = vec3Create([x1, y1, z1]);
-                    var v2 = vec3Create([x2, y2, z2]);
-                    var v3 = vec3Create([x3, y3, z3]);
-                    var v4 = vec3Create([x4, y4, z4]);
+                var v1 = vec3Create([x1, y1, z1]);
+                var v2 = vec3Create([x2, y2, z2]);
+                var v3 = vec3Create([x3, y3, z3]);
+                var v4 = vec3Create([x4, y4, z4]);
 
-                    var v3plusv2 = vec3.create();
-                    vec3Add(v3, v2, v3plusv2);
-                    var x = v3plusv2[0] * 0.5 - tSizeY * .5 * up[0];
-                    var y = v3plusv2[1] * 0.5 - tSizeY * .5 * up[0];
-                    var z = v3plusv2[2] * 0.5 - tSizeY * .5 * up[0];
+                var v3plusv2 = vec3.create();
+                vec3Add(v3, v2, v3plusv2);
+                var x = v3plusv2[0] * 0.5 - tSizeY * .5 * up[0];
+                var y = v3plusv2[1] * 0.5 - tSizeY * .5 * up[0];
+                var z = v3plusv2[2] * 0.5 - tSizeY * .5 * up[0];
 
-                    var angle = DihedralAngle(v1, v2, v3, v4) * 180.0 / Math.PI;
+                var angle = DihedralAngle(v1, v2, v3, v4) * 180.0 / Math.PI;
 
-                    var textWidth = this.textCtx.canvas.width;
-                    var textHeight = this.textCtx.canvas.height;
-                    //this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.textCtx.canvas);
-                    if (textTextureDirty||typeof (this.clickedAtoms[iat][jat].dihedralImgData) === "undefined") {
-                        const maxTextureS = this.makeTextCanvas(angle.toFixed(1), 512, 32, textColour);
-                        this.clickedAtoms[iat][jat].dihedralImgData = this.textCtx.getImageData(0, 0, 512, 32);
+                var textWidth = this.textCtx.canvas.width;
+                var textHeight = this.textCtx.canvas.height;
+                //this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.textCtx.canvas);
+                if (textTextureDirty || typeof (this.clickedAtoms[iat][jat].dihedralImgData) === "undefined") {
+                    const maxTextureS = this.makeTextCanvas(angle.toFixed(1), 512, 32, textColour);
+                    this.clickedAtoms[iat][jat].dihedralImgData = this.textCtx.getImageData(0, 0, 512, 32);
                     this.clickedAtoms[iat][jat].maxDihedralImgTextureS = maxTextureS;
-                    }
-                    this.gl.uniform1f(this.shaderProgramTextBackground.maxTextureS, this.clickedAtoms[iat][jat].maxDihedralImgTextureS);
-                    this.gl.texSubImage2D(this.gl.TEXTURE_2D, 0, 0, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.clickedAtoms[iat][jat].dihedralImgData);
+                }
+                this.gl.uniform1f(this.shaderProgramTextBackground.maxTextureS, this.clickedAtoms[iat][jat].maxDihedralImgTextureS);
+                this.gl.texSubImage2D(this.gl.TEXTURE_2D, 0, 0, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.clickedAtoms[iat][jat].dihedralImgData);
 
-                    var tSizeX = 2.0 * this.textCtx.canvas.width / this.textCtx.canvas.height * this.zoom;
-                    var tSizeY = 2.0 * this.zoom;
-                    theBuffer.textVertices = theBuffer.textVertices.concat([x, y, z, x + tSizeX * right[0], y + tSizeX * right[1], z + tSizeX * right[2], x + tSizeY * up[0] + tSizeX * right[0], y + tSizeY * up[1] + tSizeX * right[1], z + tSizeY * up[2] + tSizeX * right[2]]);
-                    theBuffer.textVertices = theBuffer.textVertices.concat([x, y, z, x + tSizeY * up[0] + tSizeX * right[0], y + tSizeY * up[1] + tSizeX * right[1], z + tSizeY * up[2] + tSizeX * right[2], x + tSizeY * up[0], y + tSizeY * up[1], z + tSizeY * up[2]]);
+                var tSizeX = 2.0 * this.textCtx.canvas.width / this.textCtx.canvas.height * this.zoom;
+                var tSizeY = 2.0 * this.zoom;
+                theBuffer.textVertices = theBuffer.textVertices.concat([x, y, z, x + tSizeX * right[0], y + tSizeX * right[1], z + tSizeX * right[2], x + tSizeY * up[0] + tSizeX * right[0], y + tSizeY * up[1] + tSizeX * right[1], z + tSizeY * up[2] + tSizeX * right[2]]);
+                theBuffer.textVertices = theBuffer.textVertices.concat([x, y, z, x + tSizeY * up[0] + tSizeX * right[0], y + tSizeY * up[1] + tSizeX * right[1], z + tSizeY * up[2] + tSizeX * right[2], x + tSizeY * up[0], y + tSizeY * up[1], z + tSizeY * up[2]]);
 
-                    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(theBuffer.textVertices), this.gl.DYNAMIC_DRAW);
+                this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(theBuffer.textVertices), this.gl.DYNAMIC_DRAW);
 
-                    if (this.ext) {
-                        this.gl.drawElements(this.gl.TRIANGLES, theBuffer.textIndexs.length, this.gl.UNSIGNED_INT, 0);
-                    } else {
-                        this.gl.drawElements(this.gl.TRIANGLES, theBuffer.textIndexs.length, this.gl.UNSIGNED_SHORT, 0);
-                    }
+                if (this.ext) {
+                    this.gl.drawElements(this.gl.TRIANGLES, theBuffer.textIndexs.length, this.gl.UNSIGNED_INT, 0);
+                } else {
+                    this.gl.drawElements(this.gl.TRIANGLES, theBuffer.textIndexs.length, this.gl.UNSIGNED_SHORT, 0);
+                }
             }
             //this.gl.enableVertexAttribArray(this.shaderProgram.vertexColourAttribute);
             //this.gl.enableVertexAttribArray(this.shaderProgram.vertexNormalAttribute);
@@ -9085,6 +9085,234 @@ class MGWebGL extends Component {
     }
 
     drawAxes(invMat) {
+
+        this.gl.depthFunc(this.gl.ALWAYS);
+        this.gl.uniform1f(this.shaderProgramTextBackground.fog_start, 1000.0);
+        this.gl.uniform1f(this.shaderProgramTextBackground.fog_end, 1000.0);
+        var axesOffset = vec3.create();
+        vec3.set(axesOffset, 20, 20, 0);
+        vec3.transformMat4(axesOffset, axesOffset, invMat);
+        var right = vec3.create();
+        vec3.set(right, 1.0, 0.0, 0.0);
+        var up = vec3.create();
+        vec3.set(up, 0.0, 1.0, 0.0);
+        vec3.transformMat4(up, up, invMat);
+        vec3.transformMat4(right, right, invMat);
+        const xyzOff = this.origin.map((coord, iCoord) => -coord + this.zoom * axesOffset[iCoord])
+        //console.log("offset",xoff,yoff,zoff);
+        this.gl.useProgram(this.shaderProgramThickLines);
+        this.setMatrixUniforms(this.shaderProgramThickLines);
+        this.gl.uniformMatrix4fv(this.shaderProgramThickLines.pMatrixUniform, false, this.pmvMatrix);
+        this.gl.uniform3fv(this.shaderProgramThickLines.screenZ, this.screenZ);
+        this.gl.uniform1f(this.shaderProgramThickLines.pixelZoom, 0.04 * this.zoom);
+
+        if (typeof (this.axesPositionBuffer) === "undefined") {
+            this.axesPositionBuffer = this.gl.createBuffer();
+            this.axesColourBuffer = this.gl.createBuffer();
+            this.axesIndexBuffer = this.gl.createBuffer();
+            this.axesNormalBuffer = this.gl.createBuffer();
+            this.axesTextNormalBuffer = this.gl.createBuffer();
+            this.axesTextColourBuffer = this.gl.createBuffer();
+            this.axesTextPositionBuffer = this.gl.createBuffer();
+            this.axesTextTexCoordBuffer = this.gl.createBuffer();
+            this.axesTextIndexesBuffer = this.gl.createBuffer();
+        }
+        const renderArrays = {
+            axesVertices: [],
+            axesColours: [],
+            axesIdx: []
+        }
+        const addSegment = (renderArrays, point1, point2, colour1, colour2) => {
+            renderArrays.axesIdx.push(renderArrays.axesVertices.length)
+            renderArrays.axesVertices = renderArrays.axesVertices.concat(point1)
+            renderArrays.axesIdx.push(renderArrays.axesVertices.length)
+            renderArrays.axesVertices = renderArrays.axesVertices.concat(point2)
+            renderArrays.axesColours = renderArrays.axesColours.concat([...colour1, ...colour2])
+        }
+
+        // Actual axes
+        let xyz1 = [0.0, 0.0, 0.0];
+        let xyz2 = [this.zoom * 3.0, 0., 0.];
+
+        addSegment(renderArrays,
+            xyz1.map((coord, iCoord) => coord + xyzOff[iCoord]),
+            xyz2.map((coord, iCoord) => coord + xyzOff[iCoord]),
+            [1., 0., 0., 1.],
+            [1., 0., 0., 1.],
+        )
+
+        xyz1 = [0.0, 0.0, 0.0];
+        xyz2 = [0.0, this.zoom * 3.0, 0.0]
+        addSegment(renderArrays,
+            xyz1.map((coord, iCoord) => coord + xyzOff[iCoord]),
+            xyz2.map((coord, iCoord) => coord + xyzOff[iCoord]),
+            [0., 1., 0., 1.],
+            [0., 1., 0., 1.],
+        )
+
+        xyz1 = [0.0, 0.0, 0.0];
+        xyz2 = [0.0, 0.0, this.zoom * 3.0]
+        addSegment(renderArrays,
+            xyz1.map((coord, iCoord) => coord + xyzOff[iCoord]),
+            xyz2.map((coord, iCoord) => coord + xyzOff[iCoord]),
+            [0., 0., 1., 1.],
+            [0., 0., 1., 1.],
+        )
+
+        //Arrow heads
+        xyz1 = [2.0 * this.zoom, 0.5 * this.zoom, 0.0]
+        xyz2 = [this.zoom * 3.0, 0.0, 0.0]
+        addSegment(renderArrays,
+            xyz1.map((coord, iCoord) => coord + xyzOff[iCoord]),
+            xyz2.map((coord, iCoord) => coord + xyzOff[iCoord]),
+            [1., 0., 0., 1.],
+            [1., 0., 0., 1.],
+        )
+
+        xyz1 = [2.0 * this.zoom, -0.5 * this.zoom, 0.0]
+        xyz2 = [this.zoom * 3.0, 0.0, 0.0]
+        addSegment(renderArrays,
+            xyz1.map((coord, iCoord) => coord + xyzOff[iCoord]),
+            xyz2.map((coord, iCoord) => coord + xyzOff[iCoord]),
+            [1., 0., 0., 1.],
+            [1., 0., 0., 1.],
+        )
+
+        xyz1 = [0.0, 2.0 * this.zoom, 0.5 * this.zoom]
+        xyz2 = [0.0, this.zoom * 3.0, 0.0]
+        addSegment(renderArrays,
+            xyz1.map((coord, iCoord) => coord + xyzOff[iCoord]),
+            xyz2.map((coord, iCoord) => coord + xyzOff[iCoord]),
+            [0., 1., 0., 1.],
+            [0., 1., 0., 1.],
+        )
+
+        xyz1 = [0.0, 2.0 * this.zoom, -0.5 * this.zoom]
+        xyz2 = [0.0, this.zoom * 3.0, 0.0]
+        addSegment(renderArrays,
+            xyz1.map((coord, iCoord) => coord + xyzOff[iCoord]),
+            xyz2.map((coord, iCoord) => coord + xyzOff[iCoord]),
+            [0., 1., 0., 1.],
+            [0., 1., 0., 1.],
+        )
+
+        xyz1 = [0.5 * this.zoom, 0.0, 2.0 * this.zoom]
+        xyz2 = [0.0, 0.0, this.zoom * 3.0]
+        addSegment(renderArrays,
+            xyz1.map((coord, iCoord) => coord + xyzOff[iCoord]),
+            xyz2.map((coord, iCoord) => coord + xyzOff[iCoord]),
+            [0., 0., 1., 1.],
+            [0., 0., 1., 1.],
+        )
+
+        xyz1 = [-0.5 * this.zoom, 0.0, 2.0 * this.zoom]
+        xyz2 = [0.0, 0.0, this.zoom * 3.0]
+        addSegment(renderArrays,
+            xyz1.map((coord, iCoord) => coord + xyzOff[iCoord]),
+            xyz2.map((coord, iCoord) => coord + xyzOff[iCoord]),
+            [0., 0., 1., 1.],
+            [0., 0., 1., 1.],
+        )
+        //console.log("axesVertices",axesVertices);
+        //console.log("zoom",this.zoom);
+
+        var size = 1.0;
+        var thickLines = this.linesToThickLines(renderArrays.axesVertices, renderArrays.axesColours, size);
+        var axesNormals = thickLines["normals"];
+        var axesVertices_new = thickLines["vertices"];
+        var axesColours_new = thickLines["colours"];
+        var axesIndexs_new = thickLines["indices"];
+
+        //console.log("thickLines",thickLines);
+        this.gl.depthFunc(this.gl.ALWAYS);
+
+        this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexNormalAttribute);
+
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesNormalBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(axesNormals), this.gl.DYNAMIC_DRAW);
+        this.gl.vertexAttribPointer(this.shaderProgramThickLines.vertexNormalAttribute, 3, this.gl.FLOAT, false, 0, 0);
+
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesPositionBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(axesVertices_new), this.gl.DYNAMIC_DRAW);
+        this.gl.vertexAttribPointer(this.shaderProgramThickLines.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
+
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesColourBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(axesColours_new), this.gl.DYNAMIC_DRAW);
+        this.gl.vertexAttribPointer(this.shaderProgramThickLines.vertexColourAttribute, 4, this.gl.FLOAT, false, 0, 0);
+
+        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.axesIndexBuffer);
+        if (this.ext) {
+            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(axesIndexs_new), this.gl.DYNAMIC_DRAW);
+            this.gl.drawElements(this.gl.TRIANGLES, axesIndexs_new.length, this.gl.UNSIGNED_INT, 0);
+        } else {
+            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(axesIndexs_new), this.gl.DYNAMIC_DRAW);
+            this.gl.drawElements(this.gl.TRIANGLES, axesIndexs_new.length, this.gl.UNSIGNED_SHORT, 0);
+        }
+
+        this.gl.useProgram(this.shaderProgramTextBackground);
+        this.gl.enableVertexAttribArray(this.shaderProgramTextBackground.vertexTextureAttribute);
+        this.setMatrixUniforms(this.shaderProgramTextBackground);
+
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesTextNormalBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1]), this.gl.STATIC_DRAW);
+        this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexNormalAttribute, 3, this.gl.FLOAT, false, 0, 0);
+
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesTextColourBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1]), this.gl.STATIC_DRAW);
+        this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexColourAttribute, 4, this.gl.FLOAT, false, 0, 0);
+
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesTextTexCoordBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0]), this.gl.STATIC_DRAW);
+        this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexTextureAttribute, 2, this.gl.FLOAT, false, 0, 0);
+
+        var textColour = "black";
+        var y = this.background_colour[0] * 0.299 + this.background_colour[1] * 0.587 + this.background_colour[2] * 0.114;
+        if (y < 0.5) {
+            textColour = "white";
+        }
+
+        const drawStringAt = (string, colour, location, up, right) => {
+            const [base_x, base_y, base_z] = location
+            const maxTextureSX = this.makeTextCanvas(string, 512, 32, colour);
+            var tSizeX = 2.0 * this.textCtx.canvas.width / this.textCtx.canvas.height * this.zoom;
+            var tSizeY = 2.0 * this.zoom;
+            var data = this.textCtx.getImageData(0, 0, 512, 32);
+            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, data);
+            this.gl.texSubImage2D(this.gl.TEXTURE_2D, 0, 0, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, data);
+            let textPositions = [base_x, base_y, base_z, base_x + tSizeX * right[0], base_y + tSizeX * right[1], base_z + tSizeX * right[2], base_x + tSizeY * up[0] + tSizeX * right[0], base_y + tSizeY * up[1] + tSizeX * right[1], base_z + tSizeY * up[2] + tSizeX * right[2]];
+            textPositions = textPositions.concat([base_x, base_y, base_z, base_x + tSizeY * up[0] + tSizeX * right[0], base_y + tSizeY * up[1] + tSizeX * right[1], base_z + tSizeY * up[2] + tSizeX * right[2], base_x + tSizeY * up[0], base_y + tSizeY * up[1], base_z + tSizeY * up[2]]);
+            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesTextPositionBuffer);
+            this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(textPositions), this.gl.DYNAMIC_DRAW);
+            this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
+            this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.axesTextIndexesBuffer);
+            if (this.ext) {
+                this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array([0, 1, 2, 3, 4, 5]), this.gl.STATIC_DRAW);
+                this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_INT, 0);
+            } else {
+                this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array([0, 1, 2, 3, 4, 5]), this.gl.STATIC_DRAW);
+                this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_SHORT, 0);
+            }
+        }
+
+        let base_x = xyzOff[0] + 3.0 * this.zoom;
+        let base_y = xyzOff[1];
+        let base_z = xyzOff[2];
+        drawStringAt("x", textColour, [base_x, base_y, base_z], up, right)
+        base_x = xyzOff[0];
+        base_y = xyzOff[1] + 3.0 * this.zoom;
+        base_z = xyzOff[2];
+        drawStringAt("y", textColour, [base_x, base_y, base_z], up, right)
+        base_x = xyzOff[0];
+        base_y = xyzOff[1];
+        base_z = xyzOff[2] + 3.0 * this.zoom;
+        drawStringAt("z", textColour, [base_x, base_y, base_z], up, right)
+
+        this.gl.disableVertexAttribArray(this.shaderProgramTextBackground.vertexTextureAttribute);
+        this.gl.depthFunc(this.gl.LESS)
+
+    }
+
+    drawAxesOld(invMat) {
         this.gl.depthFunc(this.gl.ALWAYS);
         this.gl.uniform1f(this.shaderProgramTextBackground.fog_start, 1000.0);
         this.gl.uniform1f(this.shaderProgramTextBackground.fog_end, 1000.0);
@@ -10570,16 +10798,16 @@ class MGWebGL extends Component {
     }
 
     handleKeyUp(event, self) {
-        for (const key of Object.keys(self.props.keyboardAccelerators)){
-            if(self.props.keyboardAccelerators[key].keyPress === event.key.toLowerCase() && self.props.keyboardAccelerators[key].modifiers.every(modifier => event[modifier])) {
+        for (const key of Object.keys(self.props.keyboardAccelerators)) {
+            if (self.props.keyboardAccelerators[key].keyPress === event.key.toLowerCase() && self.props.keyboardAccelerators[key].modifiers.every(modifier => event[modifier])) {
                 self.keysDown[key] = false;
             }
         }
     }
 
     handleKeyDown(event, self) {
-        for (const key of Object.keys(self.props.keyboardAccelerators)){
-            if(self.props.keyboardAccelerators[key].keyPress === event.key.toLowerCase() && self.props.keyboardAccelerators[key].modifiers.every(modifier => event[modifier])) {
+        for (const key of Object.keys(self.props.keyboardAccelerators)) {
+            if (self.props.keyboardAccelerators[key].keyPress === event.key.toLowerCase() && self.props.keyboardAccelerators[key].modifiers.every(modifier => event[modifier])) {
                 self.keysDown[key] = true;
             }
         }
@@ -10594,7 +10822,7 @@ class MGWebGL extends Component {
             doContinue = this.props.onKeyPress(event)
         }
 
-        if (! doContinue) return
+        if (!doContinue) return
     }
 
     makeCircleCanvas(text, width, height, circleColour) {
@@ -10636,7 +10864,7 @@ class MGWebGL extends Component {
         this.textCtx.fillText(text, 0, height / 2);
         const textMetric = this.textCtx.measureText(text);
         //Return the maximum width in fractional box coordinates
-        return textMetric.actualBoundingBoxRight/width;
+        return textMetric.actualBoundingBoxRight / width;
     }
 
     createVertexBuffer(tri) {
