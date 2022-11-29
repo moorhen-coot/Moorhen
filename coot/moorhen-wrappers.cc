@@ -594,6 +594,11 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("children",select_overload<gemmi::Span<gemmi::Residue>&()>(&gemmi::Span<gemmi::Residue>::children))
     ;
 
+    class_<gemmi::MutableVectorSpan<gemmi::Residue>, base<gemmi::Span<gemmi::Residue>>>("MutableVectorSpanResidue")
+    .function("is_beginning",&gemmi::MutableVectorSpan<gemmi::Residue>::is_beginning)
+    .function("is_ending",&gemmi::MutableVectorSpan<gemmi::Residue>::is_ending)
+    ;
+
     class_<gemmi::UnitCell>("UnitCell")
     .constructor<>()
     .constructor<double,  double, double, double, double, double>()
@@ -712,8 +717,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("subchain_id",&gemmi::ConstResidueSpan::subchain_id)
     .function("find_residue_group",&gemmi::ConstResidueSpan::find_residue_group)
     .function("extract_sequence",&gemmi::ConstResidueSpan::extract_sequence)
-    //.function("front",&gemmi::ConstResidueSpan::front)
-    //.function("back",&gemmi::ConstResidueSpan::back)
     //ConstUniqProxy<Residue, ConstResidueSpan> first_conformer() const {
     //SeqId::OptionalNum extreme_num(bool label, int sign) const {
     //ConstUniqProxy<Residue, ConstResidueSpan> first_conformer() const {
@@ -721,9 +724,15 @@ EMSCRIPTEN_BINDINGS(my_module) {
     //SeqId::OptionalNum auth_seq_id_to_label(SeqId auth_seq_id) const {
     ;
 
-    //TODO Wrap the following
-    class_<gemmi::ResidueSpan>("ResidueSpan")
+    class_<gemmi::ResidueSpan, base<gemmi::MutableVectorSpan<gemmi::Residue>>>("ResidueSpan")
+    .function("length",&gemmi::ConstResidueSpan::length)
+    .function("subchain_id",&gemmi::ConstResidueSpan::subchain_id)
+    .function("find_residue_group",select_overload<gemmi::ResidueGroup(gemmi::SeqId)>(&gemmi::ResidueSpan::find_residue_group))
+    .function("find_residue_group_const",select_overload<gemmi::ConstResidueGroup(gemmi::SeqId)const>(&gemmi::ResidueSpan::find_residue_group))
+    // etc.
     ;
+
+    //TODO Wrap the following
     class_<gemmi::Residue>("GemmiResidue")
     ;
     class_<gemmi::CraProxy>("CraProxy")
