@@ -9,7 +9,8 @@ export const BabyGruPreferencesMenu = (props) => {
         atomLabelDepthMode, setAtomLabelDepthMode, darkMode, setDarkMode, 
         defaultExpandDisplayCards, setDefaultExpandDisplayCards, defaultLitLines,
         setDefaultLitLines, refineAfterMod, setRefineAfterMod, mouseSensitivity,
-        setMouseSensitivity
+        setMouseSensitivity, drawCrosshairs, setDrawCrosshairs, drawMissingLoops,
+        setDrawMissingLoops
      } = props;
     const [showModal, setShowModal] = useState(null);
 
@@ -54,6 +55,20 @@ export const BabyGruPreferencesMenu = (props) => {
                         checked={refineAfterMod}
                         onChange={() => { setRefineAfterMod(!refineAfterMod) }}
                         label="Automatic triple refine post-modification"/>
+                </InputGroup>
+                <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                    <Form.Check 
+                        type="switch"
+                        checked={drawCrosshairs}
+                        onChange={() => { setDrawCrosshairs(!drawCrosshairs) }}
+                        label="Show crosshairs"/>
+                </InputGroup>
+                <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                    <Form.Check 
+                        type="switch"
+                        checked={drawMissingLoops}
+                        onChange={() => { setDrawMissingLoops(!drawMissingLoops) }}
+                        label="Show missing loops"/>
                 </InputGroup>
                 <Form.Group controlId="mouseSensitivitySlider" style={{paddingTop:'0.5rem', paddingBottom:'0.5rem', paddingRight:'0.5rem', paddingLeft:'1rem', width: '25rem'}}>
                     <BabyGruSlider minVal={0.1} maxVal={10.0} logScale={false} sliderTitle="Mouse sensitivity" intialValue={2.5} externalValue={mouseSensitivity} setExternalValue={setMouseSensitivity}/>
