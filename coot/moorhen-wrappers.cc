@@ -711,6 +711,55 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .value("Other", gemmi::PolymerType::Other)
     ;
 
+    enum_<gemmi::PointGroup>("PointGroup")
+        .value("C1", gemmi::PointGroup::C1)
+        .value("Ci", gemmi::PointGroup::Ci)
+        .value("C2", gemmi::PointGroup::C2)
+        .value("Cs", gemmi::PointGroup::Cs)
+        .value("C2h", gemmi::PointGroup::C2h)
+        .value("D2", gemmi::PointGroup::D2)
+        .value("C2v", gemmi::PointGroup::C2v)
+        .value("D2h", gemmi::PointGroup::D2h)
+        .value("C4", gemmi::PointGroup::C4)
+        .value("S4", gemmi::PointGroup::S4)
+        .value("C4h", gemmi::PointGroup::C4h)
+        .value("D4", gemmi::PointGroup::D4)
+        .value("C4v", gemmi::PointGroup::C4v)
+        .value("D2d", gemmi::PointGroup::D2d)
+        .value("D4h", gemmi::PointGroup::D4h)
+        .value("C3", gemmi::PointGroup::C3)
+        .value("C3i", gemmi::PointGroup::C3i)
+        .value("D3", gemmi::PointGroup::D3)
+        .value("C3v", gemmi::PointGroup::C3v)
+        .value("D3d", gemmi::PointGroup::D3d)
+        .value("C6", gemmi::PointGroup::C6)
+        .value("C3h", gemmi::PointGroup::C3h)
+        .value("C6h", gemmi::PointGroup::C6h)
+        .value("D6", gemmi::PointGroup::D6)
+        .value("C6v", gemmi::PointGroup::C6v)
+        .value("D3h", gemmi::PointGroup::D3h)
+        .value("D6h", gemmi::PointGroup::D6h)
+        .value("T", gemmi::PointGroup::T)
+        .value("Th", gemmi::PointGroup::Th)
+        .value("O", gemmi::PointGroup::O)
+        .value("Td", gemmi::PointGroup::Td)
+        .value("Oh", gemmi::PointGroup::Oh)
+    ;
+
+    enum_<gemmi::Laue>("Laue")
+        .value("L1", gemmi::Laue::L1)
+        .value("L2m", gemmi::Laue::L2m)
+        .value("Lmmm", gemmi::Laue::Lmmm)
+        .value("L4m", gemmi::Laue::L4m)
+        .value("L4mmm", gemmi::Laue::L4mmm)
+        .value("L3", gemmi::Laue::L3)
+        .value("L3m", gemmi::Laue::L3m)
+        .value("L6m", gemmi::Laue::L6m)
+        .value("L6mmm", gemmi::Laue::L6mmm)
+        .value("Lm3", gemmi::Laue::Lm3)
+        .value("Lm3m", gemmi::Laue::Lm3m)
+    ;
+
     enum_<gemmi::EntityType>("EntityType")
         .value("Unknown", gemmi::EntityType::Unknown)
         .value("Polymer", gemmi::EntityType::Polymer)
@@ -1033,6 +1082,42 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
 
     //TODO Wrap the following
+    class_<gemmi::SpaceGroup>("SpaceGroup")
+    .property("number",&gemmi::SpaceGroup::number)
+    .property("ccp4",&gemmi::SpaceGroup::ccp4)
+    .property("ext",&gemmi::SpaceGroup::ext)
+    .property("basisop_idx",&gemmi::SpaceGroup::basisop_idx)
+    .function("xhm",&gemmi::SpaceGroup::xhm)
+    .function("centring_type",&gemmi::SpaceGroup::centring_type)
+    .function("ccp4_lattice_type",&gemmi::SpaceGroup::ccp4_lattice_type)
+    .function("short_name",&gemmi::SpaceGroup::short_name)
+    .function("pdb_name",&gemmi::SpaceGroup::pdb_name)
+    .function("is_sohncke",&gemmi::SpaceGroup::is_sohncke)
+    .function("is_enantiomorphic",&gemmi::SpaceGroup::is_enantiomorphic)
+    .function("is_symmorphic",&gemmi::SpaceGroup::is_symmorphic)
+    .function("is_centrosymmetric",&gemmi::SpaceGroup::is_centrosymmetric)
+    .function("point_group",&gemmi::SpaceGroup::point_group)
+    .function("laue_class",&gemmi::SpaceGroup::laue_class)
+    .function("basisop",&gemmi::SpaceGroup::basisop)
+    .function("centred_to_primitive",&gemmi::SpaceGroup::centred_to_primitive)
+    .function("operations",&gemmi::SpaceGroup::operations)
+    ;
+    class_<gemmi::Op>("Op")
+    ;
+    class_<gemmi::GroupOps>("GroupOps")
+    ;
+    class_<gemmi::Helix>("Helix")
+    ;
+    class_<gemmi::Sheet>("Sheet")
+    ;
+    class_<gemmi::Assembly>("Assembly")
+    ;
+    class_<gemmi::Connection>("Connection")
+    ;
+    class_<gemmi::Mat33>("Mat33")
+    ;
+    class_<gemmi::Vec3>("Vec3")
+    ;
     class_<gemmi::CraProxy>("CraProxy")
     ;
     class_<gemmi::ConstCraProxy>("ConstCraProxy")
@@ -1043,34 +1128,17 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<gemmi::NcsOp>("NcsOp")
     ;
-    class_<gemmi::Connection>("Connection")
-    ;
-    class_<gemmi::Helix>("Helix")
-    ;
-    class_<gemmi::Sheet>("Sheet")
-    ;
-    class_<gemmi::Assembly>("Assembly")
-    ;
     class_<gemmi::Metadata>("Metadata")
     ;
     class_<gemmi::Transform>("Transform")
     ;
     class_<gemmi::FTransform>("FTransform")
     ;
-    class_<gemmi::Mat33>("Mat33")
-    ;
-    class_<gemmi::Vec3>("Vec3")
-    ;
-    class_<gemmi::Op>("Op")
-    ;
-    class_<gemmi::GroupOps>("GroupOps")
-    ;
-    class_<gemmi::SpaceGroup>("SpaceGroup")
-    ;
     class_<gemmi::NearestImage>("NearestImage")
     ;
     class_<gemmi::Miller>("Miller")
     ;
+
     class_<gemmi::Structure>("Structure")
     .constructor<>()
     .property("name",&gemmi::Structure::name)
