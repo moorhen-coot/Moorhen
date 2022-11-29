@@ -732,9 +732,19 @@ EMSCRIPTEN_BINDINGS(my_module) {
     // etc.
     ;
 
+    class_<gemmi::ConstResidueGroup,base<gemmi::ConstResidueSpan>>("ConstResidueGroup")
+    .function("by_resname",&gemmi::ConstResidueGroup::by_resname)
+    ;
+
+    class_<gemmi::ResidueGroup>("ResidueGroup")
+    .function("by_resname",&gemmi::ResidueGroup::by_resname)
+    .function("remove_residue",&gemmi::ResidueGroup::remove_residue)
+    ;
+
     //TODO Wrap the following
     class_<gemmi::Residue>("GemmiResidue")
     ;
+
     class_<gemmi::CraProxy>("CraProxy")
     ;
     class_<gemmi::ConstCraProxy>("ConstCraProxy")
@@ -745,11 +755,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<gemmi::ResidueId>("ResidueId")
     ;
-    class_<gemmi::ResidueGroup>("ResidueGroup")
-    ;
     class_<gemmi::SeqId>("SeqId")
-    ;
-    class_<gemmi::ConstResidueGroup>("ConstResidueGroup")
     ;
     class_<gemmi::NcsOp>("NcsOp")
     ;
