@@ -39,6 +39,7 @@
 #include "cartesian.h"
 #include "geomutil.h"
 
+#include <gemmi/span.hpp>
 #include <gemmi/mmread.hpp>
 #include <gemmi/gz.hpp>
 #include <gemmi/model.hpp>
@@ -574,6 +575,25 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .value("ChemComp", gemmi::CoorFormat::ChemComp)
     ;
 
+    class_<gemmi::Span<const gemmi::Residue>>("SpanConstResidue")
+    .function("front",select_overload<const gemmi::Residue&()const>(&gemmi::Span<const gemmi::Residue>::front))
+    .function("back",select_overload<const gemmi::Residue&()const>(&gemmi::Span<const gemmi::Residue>::back))
+    .function("at",select_overload<const gemmi::Residue&(std::size_t)const>(&gemmi::Span<const gemmi::Residue>::at))
+    .function("size",&gemmi::Span<const gemmi::Residue>::size)
+    .function("empty",&gemmi::Span<const gemmi::Residue>::empty)
+    .function("children",select_overload<const gemmi::Span<const gemmi::Residue>&()const>(&gemmi::Span<const gemmi::Residue>::children))
+    ;
+
+    class_<gemmi::Span<gemmi::Residue>>("SpanResidue")
+    .function("front",select_overload<gemmi::Residue&()>(&gemmi::Span<gemmi::Residue>::front))
+    .function("back",select_overload<gemmi::Residue&()>(&gemmi::Span<gemmi::Residue>::back))
+    .function("at",select_overload<gemmi::Residue&(std::size_t)>(&gemmi::Span<gemmi::Residue>::at))
+    .function("size",&gemmi::Span<gemmi::Residue>::size)
+    .function("set_size",&gemmi::Span<gemmi::Residue>::set_size)
+    .function("empty",&gemmi::Span<gemmi::Residue>::empty)
+    .function("children",select_overload<gemmi::Span<gemmi::Residue>&()>(&gemmi::Span<gemmi::Residue>::children))
+    ;
+
     class_<gemmi::UnitCell>("UnitCell")
     .constructor<>()
     .constructor<double,  double, double, double, double, double>()
@@ -687,11 +707,13 @@ EMSCRIPTEN_BINDINGS(my_module) {
     //And various pointer return  methods ...
     ;
 
-    class_<gemmi::ConstResidueSpan>("ConstResidueSpan")
+    class_<gemmi::ConstResidueSpan, base<gemmi::Span<const gemmi::Residue>>>("ConstResidueSpan")
     .function("length",&gemmi::ConstResidueSpan::length)
     .function("subchain_id",&gemmi::ConstResidueSpan::subchain_id)
     .function("find_residue_group",&gemmi::ConstResidueSpan::find_residue_group)
     .function("extract_sequence",&gemmi::ConstResidueSpan::extract_sequence)
+    //.function("front",&gemmi::ConstResidueSpan::front)
+    //.function("back",&gemmi::ConstResidueSpan::back)
     //ConstUniqProxy<Residue, ConstResidueSpan> first_conformer() const {
     //SeqId::OptionalNum extreme_num(bool label, int sign) const {
     //ConstUniqProxy<Residue, ConstResidueSpan> first_conformer() const {
