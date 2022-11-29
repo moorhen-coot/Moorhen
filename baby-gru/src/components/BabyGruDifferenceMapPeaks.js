@@ -174,7 +174,6 @@ export const BabyGruDifferenceMapPeaks = (props) => {
             command: "difference_map_peaks", 
             returnType:'interesting_places_data',
             commandArgs:[selectedMap, selectedModel, selectedRmsd], 
-            displayName:'Difference Peaks'
         }
     
         fetchData(inputData)   
