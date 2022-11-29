@@ -184,6 +184,7 @@ export const BabyGruSimpleEditButton = forwardRef((props, buttonRef) => {
                 ref={buttonRef ? buttonRef : target}
                 active={props.buttonIndex === props.selectedButtonIndex}
                 variant='light'
+                style={{borderColor: props.buttonIndex === props.selectedButtonIndex ? 'red' : ''}}
                 disabled={props.needsMapData && !props.activeMap ||
                     (props.needsAtomData && props.molecules.length === 0)}
                 onClick={(e) => {
