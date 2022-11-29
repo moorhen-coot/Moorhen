@@ -88,6 +88,7 @@ export const BabyGruWebMG = forwardRef((props, glRef) => {
         onAtomHovered={props.onAtomHovered}
         onKeyPress={props.onKeyPress}
         messageChanged={() => { }}
+        showCrosshairs={props.preferences.showCrosshairs}
         mouseSensitivityFactor={props.preferences.mouseSensitivity}
         keyboardAccelerators={JSON.parse(props.preferences.shortCuts)}/>
 });

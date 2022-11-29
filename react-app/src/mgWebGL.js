@@ -1368,6 +1368,10 @@ class MGWebGL extends Component {
         this.keysDown = {};
         this.previousTextColour = "";
         this.atomLabelDepthMode = true;
+        this.showCrosshairs = false
+        if (this.props.showCrosshairs !== null) {
+            this.showCrosshairs = this.props.showCrosshairs
+        }
 
     }
 
@@ -6780,6 +6784,9 @@ class MGWebGL extends Component {
         if (this.showAxes && !calculatingShadowMap) {
             this.drawAxes(invMat);
         }
+        if (this.showCrosshairs && !calculatingShadowMap) {
+            this.drawCrosshairs(invMat);
+        }
 
         this.mouseDown = oldMouseDown;
 
@@ -8004,7 +8011,7 @@ class MGWebGL extends Component {
             this.gl.uniform1f(this.shaderProgramTextBackground.fog_end, this.gl_fog_end);
         } else {
             //If we want them to be on top
-        this.gl.depthFunc(this.gl.ALWAYS);
+            this.gl.depthFunc(this.gl.ALWAYS);
             this.gl.uniform1f(this.shaderProgramTextBackground.fog_start, 1000.0);
             this.gl.uniform1f(this.shaderProgramTextBackground.fog_end, 1000.0);
         }
@@ -8804,7 +8811,7 @@ class MGWebGL extends Component {
             }
             this.setZoom(newZoom, true)
         }
-        
+
     }
 
     linesToThickLinesWithIndicesAndNormals(axesVertices, axesNormals, axesColours, axesIndices, size) {
@@ -9101,8 +9108,116 @@ class MGWebGL extends Component {
 
     }
 
-    drawAxes(invMat) {
 
+    drawCrosshairs(invMat) {
+
+        this.gl.depthFunc(this.gl.ALWAYS);
+        this.gl.uniform1f(this.shaderProgramTextBackground.fog_start, 1000.0);
+        this.gl.uniform1f(this.shaderProgramTextBackground.fog_end, 1000.0);
+        var axesOffset = vec3.create();
+        vec3.set(axesOffset, 0, 0, 0);
+        const xyzOff = this.origin.map((coord, iCoord) => -coord + this.zoom * axesOffset[iCoord])
+        this.gl.useProgram(this.shaderProgramThickLines);
+        this.setMatrixUniforms(this.shaderProgramThickLines);
+        this.gl.uniformMatrix4fv(this.shaderProgramThickLines.pMatrixUniform, false, this.pmvMatrix);
+        this.gl.uniform3fv(this.shaderProgramThickLines.screenZ, this.screenZ);
+        this.gl.uniform1f(this.shaderProgramThickLines.pixelZoom, 0.04 * this.zoom);
+
+        if (typeof (this.axesPositionBuffer) === "undefined") {
+            this.axesPositionBuffer = this.gl.createBuffer();
+            this.axesColourBuffer = this.gl.createBuffer();
+            this.axesIndexBuffer = this.gl.createBuffer();
+            this.axesNormalBuffer = this.gl.createBuffer();
+            this.axesTextNormalBuffer = this.gl.createBuffer();
+            this.axesTextColourBuffer = this.gl.createBuffer();
+            this.axesTextPositionBuffer = this.gl.createBuffer();
+            this.axesTextTexCoordBuffer = this.gl.createBuffer();
+            this.axesTextIndexesBuffer = this.gl.createBuffer();
+        }
+        const renderArrays = {
+            axesVertices: [],
+            axesColours: [],
+            axesIdx: []
+        }
+        const addSegment = (renderArrays, point1, point2, colour1, colour2) => {
+            renderArrays.axesIdx.push(renderArrays.axesVertices.length)
+            renderArrays.axesVertices = renderArrays.axesVertices.concat(point1)
+            renderArrays.axesIdx.push(renderArrays.axesVertices.length)
+            renderArrays.axesVertices = renderArrays.axesVertices.concat(point2)
+            renderArrays.axesColours = renderArrays.axesColours.concat([...colour1, ...colour2])
+        }
+
+        var hairColour = [0., 0., 0., 1.];
+        var y = this.background_colour[0] * 0.299 + this.background_colour[1] * 0.587 + this.background_colour[2] * 0.114;
+        if (y < 0.5) {
+            var hairColour = [1., 1., 1., 1.];
+        }
+
+        // Actual axes
+        var horizontalHairStart = vec3.create();
+        vec3.set(horizontalHairStart, -3.0 * this.zoom, 0.0, 0.0);
+        vec3.transformMat4(horizontalHairStart, horizontalHairStart, invMat);
+        var horizontalHairEnd = vec3.create();
+        vec3.set(horizontalHairEnd, 3.0 * this.zoom, 0.0, 0.0);
+        vec3.transformMat4(horizontalHairEnd, horizontalHairEnd, invMat);
+
+        addSegment(renderArrays,
+            xyzOff.map((coord, iCoord) => coord + horizontalHairStart[iCoord]),
+            xyzOff.map((coord, iCoord) => coord + horizontalHairEnd[iCoord]),
+            hairColour, hairColour
+        )
+
+        var verticalHairStart = vec3.create();
+        vec3.set(verticalHairStart, 0.0, -3.0 * this.zoom, 0.0);
+        vec3.transformMat4(verticalHairStart, verticalHairStart, invMat);
+        var verticalHairEnd = vec3.create();
+        vec3.set(verticalHairEnd, 0.0, 3.0 * this.zoom, 0.0);
+        vec3.transformMat4(verticalHairEnd, verticalHairEnd, invMat);
+
+        addSegment(renderArrays,
+            xyzOff.map((coord, iCoord) => coord + verticalHairStart[iCoord]),
+            xyzOff.map((coord, iCoord) => coord + verticalHairEnd[iCoord]),
+            hairColour, hairColour
+        )
+
+        var size = 1.0;
+        var thickLines = this.linesToThickLines(renderArrays.axesVertices, renderArrays.axesColours, size);
+        var axesNormals = thickLines["normals"];
+        var axesVertices_new = thickLines["vertices"];
+        var axesColours_new = thickLines["colours"];
+        var axesIndexs_new = thickLines["indices"];
+
+        //console.log("thickLines",thickLines);
+        this.gl.depthFunc(this.gl.ALWAYS);
+
+        this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexNormalAttribute);
+
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesNormalBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(axesNormals), this.gl.DYNAMIC_DRAW);
+        this.gl.vertexAttribPointer(this.shaderProgramThickLines.vertexNormalAttribute, 3, this.gl.FLOAT, false, 0, 0);
+
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesPositionBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(axesVertices_new), this.gl.DYNAMIC_DRAW);
+        this.gl.vertexAttribPointer(this.shaderProgramThickLines.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
+
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesColourBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(axesColours_new), this.gl.DYNAMIC_DRAW);
+        this.gl.vertexAttribPointer(this.shaderProgramThickLines.vertexColourAttribute, 4, this.gl.FLOAT, false, 0, 0);
+
+        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.axesIndexBuffer);
+        if (this.ext) {
+            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(axesIndexs_new), this.gl.DYNAMIC_DRAW);
+            this.gl.drawElements(this.gl.TRIANGLES, axesIndexs_new.length, this.gl.UNSIGNED_INT, 0);
+        } else {
+            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(axesIndexs_new), this.gl.DYNAMIC_DRAW);
+            this.gl.drawElements(this.gl.TRIANGLES, axesIndexs_new.length, this.gl.UNSIGNED_SHORT, 0);
+        }
+
+        this.gl.depthFunc(this.gl.LESS)
+
+    }
+
+    drawAxes(invMat) {
         this.gl.depthFunc(this.gl.ALWAYS);
         this.gl.uniform1f(this.shaderProgramTextBackground.fog_start, 1000.0);
         this.gl.uniform1f(this.shaderProgramTextBackground.fog_end, 1000.0);
@@ -10815,8 +10930,8 @@ class MGWebGL extends Component {
     }
 
     handleKeyUp(event, self) {
-        for (const key of Object.keys(self.props.keyboardAccelerators)){
-            if(self.props.keyboardAccelerators[key].keyPress === event.key.toLowerCase() && self.props.keyboardAccelerators[key]) {
+        for (const key of Object.keys(self.props.keyboardAccelerators)) {
+            if (self.props.keyboardAccelerators[key].keyPress === event.key.toLowerCase() && self.props.keyboardAccelerators[key]) {
                 self.keysDown[key] = false;
             }
         }
