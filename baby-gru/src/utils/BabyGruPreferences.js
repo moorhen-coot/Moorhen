@@ -12,12 +12,14 @@ const updateStoredPreferences = async (key, value) => {
 
 const getDefaultValues = () => {
     return {
-        version: '0.0.2',
+        version: '0.0.3',
         darkMode: false, 
         atomLabelDepthMode: true, 
         defaultExpandDisplayCards: true,
         defaultLitLines: false,
         refineAfterMod: true,
+        drawCrosshairs: true,
+        drawMissingLoops: true,
         mouseSensitivity: 2.0,
         shortCuts: {
             "sphere_refine": {
@@ -130,6 +132,8 @@ const PreferencesContextProvider = ({ children }) => {
     const [defaultLitLines, setDefaultLitLines] = useState(null)
     const [refineAfterMod, setRefineAfterMod] = useState(null)
     const [mouseSensitivity, setMouseSensitivity] = useState(null)
+    const [drawCrosshairs, setDrawCrosshairs] = useState(null)
+    const [drawMissingLoops, setDrawMissingLoops] = useState(null)
 
     const restoreDefaults = (defaultValues)=> {
         updateStoredPreferences('version', defaultValues.version)
@@ -140,6 +144,8 @@ const PreferencesContextProvider = ({ children }) => {
         setDefaultLitLines(defaultValues.defaultLitLines)
         setRefineAfterMod(defaultValues.refineAfterMod)
         setMouseSensitivity(defaultValues.mouseSensitivity)
+        setDrawCrosshairs(defaultValues.drawCrosshairs)
+        setDrawMissingLoops(defaultValues.drawMissingLoops)
     }
 
     /**
@@ -159,7 +165,9 @@ const PreferencesContextProvider = ({ children }) => {
                     localforage.getItem('atomLabelDepthMode'),
                     localforage.getItem('defaultLitLines'),
                     localforage.getItem('refineAfterMod'),
-                    localforage.getItem('mouseSensitivity')
+                    localforage.getItem('mouseSensitivity'),
+                    localforage.getItem('drawCrosshairs'),
+                    localforage.getItem('drawMissingLoops')
                     ])
                 
                 console.log('Retrieved the following preferences from local storage: ', response)
@@ -180,6 +188,8 @@ const PreferencesContextProvider = ({ children }) => {
                     setDefaultLitLines(response[5])
                     setRefineAfterMod(response[6])
                     setMouseSensitivity(response[7])
+                    setDrawCrosshairs(response[8])
+                    setDrawMissingLoops(response[9])
                 }                
                 
             } catch (err) {
@@ -205,6 +215,24 @@ const PreferencesContextProvider = ({ children }) => {
        
         updateStoredPreferences('refineAfterMod', refineAfterMod);
     }, [refineAfterMod]);
+
+    useMemo(() => {
+
+        if (drawCrosshairs === null) {
+            return
+        }
+       
+        updateStoredPreferences('drawCrosshairs', drawCrosshairs);
+    }, [drawCrosshairs]);
+
+    useMemo(() => {
+
+        if (drawMissingLoops === null) {
+            return
+        }
+       
+        updateStoredPreferences('drawMissingLoops', drawMissingLoops);
+    }, [drawMissingLoops]);
 
     useMemo(() => {
 
