@@ -664,12 +664,44 @@ EMSCRIPTEN_BINDINGS(my_module) {
     class_<gemmi::Chain>("Chain")
     .property("name",&gemmi::Chain::name)
     .property("residues",&gemmi::Chain::residues)
-    //.function("whole",select_overload<gemmi::ResidueSpan>()>(&gemmi::Chain::whole))
-    //.function("whole_const",select_overload<gemmi::ConstResidueSpan>()const>(&gemmi::Chain::whole))
+    .property("empty_copy",&gemmi::Chain::empty_copy)
+    .function("is_first_in_group",&gemmi::Chain::is_first_in_group)
+    .function("whole_const",select_overload<gemmi::ConstResidueSpan()const>(&gemmi::Chain::whole))
+    .function("get_polymer_const",select_overload<gemmi::ConstResidueSpan()const>(&gemmi::Chain::get_polymer))
+    .function("get_ligands_const",select_overload<gemmi::ConstResidueSpan()const>(&gemmi::Chain::get_ligands))
+    .function("get_waters_const",select_overload<gemmi::ConstResidueSpan()const>(&gemmi::Chain::get_waters))
+    .function("get_subchain_const",select_overload<gemmi::ConstResidueSpan(const std::string&)const>(&gemmi::Chain::get_subchain))
+    .function("subchains_const",select_overload<std::vector<gemmi::ConstResidueSpan> ()const>(&gemmi::Chain::subchains))
+    .function("find_residue_group_const",select_overload<gemmi::ConstResidueGroup(gemmi::SeqId id)const>(&gemmi::Chain::find_residue_group))
+    .function("children_const",select_overload<const std::vector<gemmi::Residue>&()const>(&gemmi::Chain::children))
+    .function("whole",select_overload<gemmi::ResidueSpan()>(&gemmi::Chain::whole))
+    .function("get_polymer",select_overload<gemmi::ResidueSpan()>(&gemmi::Chain::get_polymer))
+    .function("get_ligands",select_overload<gemmi::ResidueSpan()>(&gemmi::Chain::get_ligands))
+    .function("get_waters",select_overload<gemmi::ResidueSpan()>(&gemmi::Chain::get_waters))
+    .function("get_subchain",select_overload<gemmi::ResidueSpan(const std::string&)>(&gemmi::Chain::get_subchain))
+    .function("subchains",select_overload<std::vector<gemmi::ResidueSpan> ()>(&gemmi::Chain::subchains))
+    .function("find_residue_group",select_overload<gemmi::ResidueGroup(gemmi::SeqId id)>(&gemmi::Chain::find_residue_group))
+    .function("children",select_overload<std::vector<gemmi::Residue>&()>(&gemmi::Chain::children))
+    //.function("first_conformer_const",select_overload<gemmi::ConstUniqProxy<gemmi::Residue>()const>(&gemmi::Chain::first_conformer))
+    //.function("first_conformer_const",select_overload<gemmi::UniqProxy<gemmi::Residue>()>(&gemmi::Chain::first_conformer))
+    //And various pointer return  methods ...
+    ;
+
+    class_<gemmi::ConstResidueSpan>("ConstResidueSpan")
+    .function("length",&gemmi::ConstResidueSpan::length)
+    .function("subchain_id",&gemmi::ConstResidueSpan::subchain_id)
+    .function("find_residue_group",&gemmi::ConstResidueSpan::find_residue_group)
+    .function("extract_sequence",&gemmi::ConstResidueSpan::extract_sequence)
+    //ConstUniqProxy<Residue, ConstResidueSpan> first_conformer() const {
+    //SeqId::OptionalNum extreme_num(bool label, int sign) const {
+    //ConstUniqProxy<Residue, ConstResidueSpan> first_conformer() const {
+    //SeqId label_seq_id_to_auth(SeqId::OptionalNum label_seq_id) const {
+    //SeqId::OptionalNum auth_seq_id_to_label(SeqId auth_seq_id) const {
     ;
 
     //TODO Wrap the following
-
+    class_<gemmi::ResidueSpan>("ResidueSpan")
+    ;
     class_<gemmi::Residue>("GemmiResidue")
     ;
     class_<gemmi::CraProxy>("CraProxy")
@@ -680,15 +712,13 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<gemmi::AtomAddress>("AtomAddress")
     ;
-    class_<gemmi::ResidueSpan>("ResidueSpan")
-    ;
     class_<gemmi::ResidueId>("ResidueId")
     ;
     class_<gemmi::ResidueGroup>("ResidueGroup")
     ;
     class_<gemmi::SeqId>("SeqId")
     ;
-    class_<gemmi::ConstResidueSpan>("ConstResidueSpan")
+    class_<gemmi::ConstResidueGroup>("ConstResidueGroup")
     ;
     class_<gemmi::NcsOp>("NcsOp")
     ;
