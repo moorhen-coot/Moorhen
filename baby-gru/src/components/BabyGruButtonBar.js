@@ -89,16 +89,22 @@ export const BabyGruButtonBar = (props) => {
                 ${255 * props.backgroundColor[2]}, 
                 ${props.backgroundColor[3]})`,
         }}>
-            <Carousel variant={props.darkMode ? "light" : "dark"} interval={null} keyboard={false} indicators={false} controls={carouselItems.length > 1}>
-                {carouselItems.map(item => {
-                    return (
-                        <Carousel.Item>
-                        <ButtonGroup>
-                            {item}
-                        </ButtonGroup>
-                        </Carousel.Item>
-                    )
-                })}
+            <Carousel 
+                variant={props.darkMode ? "light" : "dark"} 
+                interval={null} 
+                keyboard={false} 
+                indicators={false} 
+                onSlide={() => setSelectedButtonIndex(-1)}
+                controls={carouselItems.length > 1}>
+                    {carouselItems.map(item => {
+                        return (
+                            <Carousel.Item>
+                            <ButtonGroup>
+                                {item}
+                            </ButtonGroup>
+                            </Carousel.Item>
+                        )
+                    })}
             </Carousel>
     </div>
 }
