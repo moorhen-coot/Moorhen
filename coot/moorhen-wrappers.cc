@@ -536,6 +536,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<merge_molecule_results_info_t>("Vectormerge_molecule_results_info_t");
     register_vector<coot::phi_psi_prob_t>("Vectophi_psi_prob_t");
 
+    register_vector<gemmi::Entity::DbRef>("VectorGemmiEntityDbRef");
     register_vector<gemmi::Atom>("VectorGemmiAtom");
     register_vector<gemmi::Model>("VectorGemmiModel");
     register_vector<gemmi::NcsOp>("VectorGemmiNcsOp");
@@ -566,6 +567,12 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .element(emscripten::index<2>())
     ;
     function("getRotamersMap",&getRotamersMap);
+
+    enum_<gemmi::Asu>("Asu")
+        .value("Same", gemmi::Asu::Same)
+        .value("Different", gemmi::Asu::Different)
+        .value("Any", gemmi::Asu::Any)
+    ;
 
     enum_<gemmi::El>("El")
         .value("X", gemmi::El::X)
@@ -688,6 +695,20 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .value("Og", gemmi::El::Og)
         .value("D", gemmi::El::D)
         .value("END", gemmi::El::END)
+    ;
+
+    enum_<gemmi::PolymerType>("PolymerType")
+        .value("Unknown", gemmi::PolymerType::Unknown)
+        .value("PeptideL", gemmi::PolymerType::PeptideL)
+        .value("PeptideD", gemmi::PolymerType::PeptideD)
+        .value("Dna", gemmi::PolymerType::Dna)
+        .value("Rna", gemmi::PolymerType::Rna)
+        .value("DnaRnaHybrid", gemmi::PolymerType::DnaRnaHybrid)
+        .value("SaccharideD", gemmi::PolymerType::SaccharideD)
+        .value("SaccharideL", gemmi::PolymerType::SaccharideL)
+        .value("Pna", gemmi::PolymerType::Pna)
+        .value("CyclicPseudoPeptide", gemmi::PolymerType::CyclicPseudoPeptide)
+        .value("Other", gemmi::PolymerType::Other)
     ;
 
     enum_<gemmi::EntityType>("EntityType")
@@ -949,7 +970,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
     //.property("aniso",&gemmi::Atom::aniso)//SMat33<float>
     ;
 
-    //TODO Wrap the following
     class_<gemmi::Element>("Element")
     .property("elem",&gemmi::Element::elem)
     .function("ordinal",&gemmi::Element::ordinal)
@@ -963,6 +983,42 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("uname",&gemmi::Element::uname, allow_raw_pointers())
     ;
 
+    class_<gemmi::Fractional>("Fractional")
+    .function("wrap_to_unit",&gemmi::Fractional::wrap_to_unit)
+    .function("wrap_to_zero",&gemmi::Fractional::wrap_to_zero)
+    .function("round",&gemmi::Fractional::round)
+    .function("move_toward_zero_by_one",&gemmi::Fractional::move_toward_zero_by_one)
+    ;
+
+    class_<gemmi::Position>("Position")
+    //??
+    ;
+
+    class_<gemmi::Entity::DbRef>("EntityDbRef")
+    .property("db_name",&gemmi::Entity::DbRef::db_name)
+    .property("accession_code",&gemmi::Entity::DbRef::accession_code)
+    .property("id_code",&gemmi::Entity::DbRef::id_code)
+    .property("isoform",&gemmi::Entity::DbRef::isoform)
+    .property("seq_begin",&gemmi::Entity::DbRef::seq_begin)
+    .property("seq_end",&gemmi::Entity::DbRef::seq_end)
+    .property("db_begin",&gemmi::Entity::DbRef::db_begin)
+    .property("db_end",&gemmi::Entity::DbRef::db_end)
+    .property("label_seq_begin",&gemmi::Entity::DbRef::label_seq_begin)
+    .property("label_seq_end",&gemmi::Entity::DbRef::label_seq_end)
+    ;
+
+    class_<gemmi::Entity>("Entity")
+    .property("name",&gemmi::Entity::name)
+    .property("subchains",&gemmi::Entity::subchains)
+    .property("entity_type",&gemmi::Entity::entity_type)
+    .property("polymer_type",&gemmi::Entity::polymer_type)
+    .property("sifts_unp_acc",&gemmi::Entity::sifts_unp_acc)
+    .property("full_sequence",&gemmi::Entity::full_sequence)
+    .property("dbrefs",&gemmi::Entity::dbrefs)
+    .function("first_mon",&gemmi::Entity::first_mon)
+    ;
+
+    //TODO Wrap the following
     class_<gemmi::AtomGroup>("AtomGroup")
     ;
     class_<gemmi::CraProxy>("CraProxy")
@@ -974,8 +1030,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
     class_<gemmi::AtomAddress>("AtomAddress")
     ;
     class_<gemmi::NcsOp>("NcsOp")
-    ;
-    class_<gemmi::Entity>("Entity")
     ;
     class_<gemmi::Connection>("Connection")
     ;
@@ -1000,10 +1054,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
     class_<gemmi::GroupOps>("GroupOps")
     ;
     class_<gemmi::SpaceGroup>("SpaceGroup")
-    ;
-    class_<gemmi::Position>("Position")
-    ;
-    class_<gemmi::Fractional>("Fractional")
     ;
     class_<gemmi::NearestImage>("NearestImage")
     ;
