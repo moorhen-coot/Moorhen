@@ -259,8 +259,8 @@ export const BabyGruContainer = (props) => {
     const collectedProps = {
         molecules, changeMolecules, appTitle, setAppTitle, maps, changeMaps, glRef, activeMolecule, setActiveMolecule,
         activeMap, setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor, sideBarWidth,
-        navBarRef, currentDropdownId, setCurrentDropdownId, hoveredAtom, setHoveredAtom, toastContent, setToastContent, showToast, setShowToast,
-        ...preferences
+        navBarRef, currentDropdownId, setCurrentDropdownId, hoveredAtom, setHoveredAtom, toastContent, setToastContent, 
+        showToast, setShowToast, windowWidth, windowHeight, showSideBar, innerWindowMarginWidth, ...preferences
     }
 
     const accordionToolsItemProps = {

@@ -10,101 +10,112 @@ const updateStoredPreferences = async (key, value) => {
     }
 }
 
-const defaultValues = {
-    version: '0.1',
-    darkMode: false, 
-    atomLabelDepthMode: true, 
-    defaultExpandDisplayCards: true,
-    shortCuts: {
-        "sphere_refine": {
-            modifiers: ["shiftKey"],
-            keyPress: "r",
-            label: "Refine sphere"
-        },
-        "flip_peptide": {
-            modifiers: ["shiftKey"],
-            keyPress: "q",
-            label: "Flip peptide"
-        },
-        "triple_refine": {
-            modifiers: ["shiftKey"],
-            keyPress: "h",
-            label: "Refine triplet"
-        },
-        "auto_fit_rotamer": {
-            modifiers: ["shiftKey"],
-            keyPress: "j",
-            label: "Autofit rotamer"
-        },
-        "add_terminal_residue": {
-            modifiers: ["shiftKey"],
-            keyPress: "y",
-            label: "Add terminal residue"
-        },
-        "delete_residue": {
-            modifiers: ["shiftKey"],
-            keyPress: "d",
-            label: "Delete residue"
-        },
-        "eigen_flip": {
-            modifiers: ["shiftKey"],
-            keyPress: "e",
-            label: "Eigen flip ligand"
-        },
-        "show_shortcuts": {
-            modifiers: ["ctrlKey"],
-            keyPress: "control",
-            label: "Show shortcuts"
-        },
-        "restore_scene": {
-            modifiers: [],
-            keyPress: "r",
-            label: "Restore scene"
-        },
-        "clear_labels": {
-            modifiers: [],
-            keyPress: "c",
-            label: "Clear labels"
-        },
-        "move_up": {
-            modifiers: [],
-            keyPress: "arrowup",
-            label: "Move model up"
-        },
-        "move_down": {
-            modifiers: [],
-            keyPress: "arrowdown",
-            label: "Move model down"
-        },
-        "move_left": {
-            modifiers: [],
-            keyPress: "arrowleft",
-            label: "Move model left"
-        },
-        "move_right": {
-            modifiers: [],
-            keyPress: "arrowright",
-            label: "Move model right"
-        },
-        "go_to_blob": {
-            modifiers: [],
-            keyPress: "g",
-            label: "Go to blob"
-        },
-        "take_screenshot": {
-            modifiers: [],
-            keyPress: "s",
-            label: "Take a screenshot"
-        },
-        "ligand_camera_wiggle": {
-            modifiers: [],
-            keyPress: "z",
-            label: "Wiggle camera while fitting a ligand"
-        },
-        "label_atom": {
-            modifiers: [],
-            keyPress: "m",
-            label: "Label an atom on click"
+const getDefaultValues = () => {
+    return {
+        version: '0.0.2',
+        darkMode: false, 
+        atomLabelDepthMode: true, 
+        defaultExpandDisplayCards: true,
+        defaultLitLines: false,
+        refineAfterMod: true,
+        mouseSensitivity: 2.0,
+        shortCuts: {
+            "sphere_refine": {
+                modifiers: ["shiftKey"],
+                keyPress: "r",
+                label: "Refine sphere"
+            },
+            "flip_peptide": {
+                modifiers: ["shiftKey"],
+                keyPress: "q",
+                label: "Flip peptide"
+            },
+            "triple_refine": {
+                modifiers: ["shiftKey"],
+                keyPress: "h",
+                label: "Refine triplet"
+            },
+            "auto_fit_rotamer": {
+                modifiers: ["shiftKey"],
+                keyPress: "j",
+                label: "Autofit rotamer"
+            },
+            "add_terminal_residue": {
+                modifiers: ["shiftKey"],
+                keyPress: "y",
+                label: "Add terminal residue"
+            },
+            "delete_residue": {
+                modifiers: ["shiftKey"],
+                keyPress: "d",
+                label: "Delete residue"
+            },
+            "eigen_flip": {
+                modifiers: ["shiftKey"],
+                keyPress: "e",
+                label: "Eigen flip ligand"
+            },
+            "show_shortcuts": {
+                modifiers: [],
+                keyPress: "escape",
+                label: "Show shortcuts"
+            },
+            "restore_scene": {
+                modifiers: [],
+                keyPress: "r",
+                label: "Restore scene"
+            },
+            "clear_labels": {
+                modifiers: [],
+                keyPress: "c",
+                label: "Clear labels"
+            },
+            "move_up": {
+                modifiers: [],
+                keyPress: "arrowup",
+                label: "Move model up"
+            },
+            "move_down": {
+                modifiers: [],
+                keyPress: "arrowdown",
+                label: "Move model down"
+            },
+            "move_left": {
+                modifiers: [],
+                keyPress: "arrowleft",
+                label: "Move model left"
+            },
+            "move_right": {
+                modifiers: [],
+                keyPress: "arrowright",
+                label: "Move model right"
+            },
+            "go_to_blob": {
+                modifiers: [],
+                keyPress: "g",
+                label: "Go to blob"
+            },
+            "take_screenshot": {
+                modifiers: [],
+                keyPress: "s",
+                label: "Take a screenshot"
+            },
+            "ligand_camera_wiggle": {
+                modifiers: [],
+                keyPress: "z",
+                label: "Wiggle camera while fitting a ligand"
+            },
+            "label_atom": {
+                modifiers: [],
+                keyPress: "m",
+                label: "Label an atom on click"
+            },
+            "set_map_contour": {
+                modifiers: ["ctrlKey"],
+                keyPress: "control",
+                label: "Set active map contour"
+            },
+
         }
     }
 }
@@ -112,17 +123,23 @@ const defaultValues = {
 const PreferencesContext = createContext();
 
 const PreferencesContextProvider = ({ children }) => {
-    const [darkMode, setDarkMode] = useState(null);
-    const [atomLabelDepthMode, setAtomLabelDepthMode] = useState(null);
-    const [defaultExpandDisplayCards, setDefaultExpandDisplayCards] = useState(null);
-    const [shortCuts, setShortCuts] = useState(null);
+    const [darkMode, setDarkMode] = useState(null)
+    const [atomLabelDepthMode, setAtomLabelDepthMode] = useState(null)
+    const [defaultExpandDisplayCards, setDefaultExpandDisplayCards] = useState(null)
+    const [shortCuts, setShortCuts] = useState(null)
+    const [defaultLitLines, setDefaultLitLines] = useState(null)
+    const [refineAfterMod, setRefineAfterMod] = useState(null)
+    const [mouseSensitivity, setMouseSensitivity] = useState(null)
 
-    const restoreDefaults = ( )=> {
-        updateStoredPreferences('version', defaultValues.version);
+    const restoreDefaults = (defaultValues)=> {
+        updateStoredPreferences('version', defaultValues.version)
         setDarkMode(defaultValues.darkMode)
         setDefaultExpandDisplayCards(defaultValues.defaultExpandDisplayCards)            
         setShortCuts(JSON.stringify(defaultValues.shortCuts))            
         setAtomLabelDepthMode(defaultValues.atomLabelDepthMode)
+        setDefaultLitLines(defaultValues.defaultLitLines)
+        setRefineAfterMod(defaultValues.refineAfterMod)
+        setMouseSensitivity(defaultValues.mouseSensitivity)
     }
 
     /**
@@ -139,23 +156,30 @@ const PreferencesContextProvider = ({ children }) => {
                     localforage.getItem('darkMode'), 
                     localforage.getItem('defaultExpandDisplayCards'),
                     localforage.getItem('shortCuts'),
-                    localforage.getItem('atomLabelDepthMode')
+                    localforage.getItem('atomLabelDepthMode'),
+                    localforage.getItem('defaultLitLines'),
+                    localforage.getItem('refineAfterMod'),
+                    localforage.getItem('mouseSensitivity')
                     ])
                 
                 console.log('Retrieved the following preferences from local storage: ', response)
-                
+
+                const defaultValues = getDefaultValues()                
                 if (response[0] !== defaultValues.version) {
                     console.log('Different storage version detected, using defaults')
-                    restoreDefaults()
+                    restoreDefaults(defaultValues)
                 } else if(!response.every(item => item !== null) || response.length < Object.keys(defaultValues).length) {
                     console.log('Cannot find stored preferences, using defaults')
-                    restoreDefaults()
+                    restoreDefaults(defaultValues)
                 } else {
                     console.log(`Stored preferences retrieved successfully: ${response}`)
                     setDarkMode(response[1])
                     setDefaultExpandDisplayCards(response[2])
                     setShortCuts(response[3])
                     setAtomLabelDepthMode(response[4])
+                    setDefaultLitLines(response[5])
+                    setRefineAfterMod(response[6])
+                    setMouseSensitivity(response[7])
                 }                
                 
             } catch (err) {
@@ -172,6 +196,24 @@ const PreferencesContextProvider = ({ children }) => {
         fetchStoredPreferences();
         
     }, []);
+
+    useMemo(() => {
+
+        if (refineAfterMod === null) {
+            return
+        }
+       
+        updateStoredPreferences('refineAfterMod', refineAfterMod);
+    }, [refineAfterMod]);
+
+    useMemo(() => {
+
+        if (mouseSensitivity === null) {
+            return
+        }
+       
+        updateStoredPreferences('mouseSensitivity', mouseSensitivity);
+    }, [mouseSensitivity]);
 
     useMemo(() => {
 
@@ -209,7 +251,20 @@ const PreferencesContextProvider = ({ children }) => {
         updateStoredPreferences('shortCuts', shortCuts);
     }, [shortCuts]);
 
-    const collectedContextValues = {darkMode, setDarkMode, atomLabelDepthMode, setAtomLabelDepthMode, defaultExpandDisplayCards, setDefaultExpandDisplayCards, shortCuts, setShortCuts}
+    useMemo(() => {
+
+        if (defaultLitLines === null) {
+            return
+        }
+       
+        updateStoredPreferences('defaultLitLines', defaultLitLines);
+    }, [defaultLitLines]);
+
+    const collectedContextValues = {
+        darkMode, setDarkMode, atomLabelDepthMode, setAtomLabelDepthMode, defaultExpandDisplayCards,
+        setDefaultExpandDisplayCards, shortCuts, setShortCuts, defaultLitLines, setDefaultLitLines,
+        refineAfterMod, setRefineAfterMod, mouseSensitivity, setMouseSensitivity
+    }
 
     return (
       <PreferencesContext.Provider value={collectedContextValues}>
@@ -219,4 +274,4 @@ const PreferencesContextProvider = ({ children }) => {
 };
   
 
-export { PreferencesContext, PreferencesContextProvider, defaultValues };
+export { PreferencesContext, PreferencesContextProvider, getDefaultValues };

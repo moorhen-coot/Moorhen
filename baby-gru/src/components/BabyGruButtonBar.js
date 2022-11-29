@@ -1,12 +1,85 @@
 import { CheckOutlined, CloseOutlined } from "@mui/icons-material";
-import { Menu, MenuItem, MenuList, Tooltip } from "@mui/material";
+import { MenuItem, MenuList, Tooltip } from "@mui/material";
 import { createRef, forwardRef, useCallback, useEffect, useRef, useState } from "react";
-import { ButtonGroup, Button, Overlay, Container, Row, FormSelect, FormGroup, FormLabel, Card } from "react-bootstrap"
+import { ButtonGroup, Button, Overlay, Container, Row, FormSelect, FormGroup, FormLabel, Card, Carousel } from "react-bootstrap"
 import { BabyGruMoleculeSelect } from "./BabyGruMoleculeSelect";
 import { cidToSpec } from "../utils/BabyGruUtils";
 
+const refinementFormatArgs = (molecule, chosenAtom, pp) => {
+    return [
+        molecule.molNo,
+        `//${chosenAtom.chain_id}/${chosenAtom.res_no}`,
+        pp.refine.mode]
+}
+
 export const BabyGruButtonBar = (props) => {
     const [selectedButtonIndex, setSelectedButtonIndex] = useState(null);
+
+    const editButtons = [
+        (<BabyGruAutofitRotamerButton {...props} selectedButtonIndex={selectedButtonIndex}
+            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="0" />),
+
+        (<BabyGruFlipPeptideButton {...props} selectedButtonIndex={selectedButtonIndex}
+            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="1" />),
+
+        (<BabyGruSideChain180Button {...props} selectedButtonIndex={selectedButtonIndex}
+            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="2" />),
+
+        (<BabyGruRefineResiduesUsingAtomCidButton {...props} selectedButtonIndex={selectedButtonIndex}
+            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="3" />),
+
+        (<BabyGruDeleteUsingCidButton {...props} selectedButtonIndex={selectedButtonIndex}
+            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="4" />),
+
+        (<BabyGruMutateButton {...props} selectedButtonIndex={selectedButtonIndex}
+            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="5" />),
+
+        (<BabyGruAddTerminalResidueDirectlyUsingCidButton {...props} selectedButtonIndex={selectedButtonIndex}
+            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="6" />),
+
+        (<BabyGruEigenFlipLigandButton {...props} selectedButtonIndex={selectedButtonIndex}
+            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="7" />),
+
+        (<BabyGruJedFlipFalseButton {...props} selectedButtonIndex={selectedButtonIndex}
+            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="8" />),
+
+        (<BabyGruJedFlipTrueButton {...props} selectedButtonIndex={selectedButtonIndex}
+            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="9" />),
+
+        (<BabyGruRotateTranslateZoneButton {...props} selectedButtonIndex={selectedButtonIndex}
+            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="10" />),
+
+        (<BabyGruAddSimpleButton {...props} selectedButtonIndex={selectedButtonIndex}
+            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="11" />)
+    
+    ]
+
+    const getCarouselItems = () => {
+        const maximumAllowedWidth = props.windowWidth - (props.innerWindowMarginWidth + (props.showSideBar ? props.sideBarWidth : 0))
+
+        let currentlyUsedWidth = 0
+        let carouselItems = []
+        let currentItem = []
+
+        editButtons.forEach(button => {
+            currentItem.push(button)
+            currentlyUsedWidth += 90
+            if (currentlyUsedWidth >= maximumAllowedWidth) {
+                carouselItems.push(currentItem)
+                currentItem = []
+                currentlyUsedWidth = 0
+            }
+        })
+        
+        if (currentItem.length > 0) {
+            carouselItems.push(currentItem)
+        }
+
+        return carouselItems
+    }
+
+    const carouselItems = getCarouselItems()
+
     return <div
         style={{
             overflow: "auto",
@@ -16,45 +89,23 @@ export const BabyGruButtonBar = (props) => {
                 ${255 * props.backgroundColor[2]}, 
                 ${props.backgroundColor[3]})`,
         }}>
-        <ButtonGroup>
-
-            <BabyGruAutofitRotamerButton {...props} selectedButtonIndex={selectedButtonIndex}
-                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="0" />
-
-            <BabyGruFlipPeptideButton {...props} selectedButtonIndex={selectedButtonIndex}
-                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="1" />
-
-            <BabyGruSideChain180Button {...props} selectedButtonIndex={selectedButtonIndex}
-                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="2" />
-
-            <BabyGruRefineResiduesUsingAtomCidButton {...props} selectedButtonIndex={selectedButtonIndex}
-                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="3" />
-
-            <BabyGruDeleteUsingCidButton {...props} selectedButtonIndex={selectedButtonIndex}
-                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="4" />
-
-            <BabyGruMutateButton {...props} selectedButtonIndex={selectedButtonIndex}
-                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="5" />
-
-            <BabyGruAddTerminalResidueDirectlyUsingCidButton {...props} selectedButtonIndex={selectedButtonIndex}
-                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="6" />
-
-            <BabyGruEigenFlipLigandButton {...props} selectedButtonIndex={selectedButtonIndex}
-                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="7" />
-
-            <BabyGruJedFlipFalseButton {...props} selectedButtonIndex={selectedButtonIndex}
-                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="8" />
-
-            <BabyGruJedFlipTrueButton {...props} selectedButtonIndex={selectedButtonIndex}
-                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="9" />
-
-            <BabyGruRotateTranslateZoneButton {...props} selectedButtonIndex={selectedButtonIndex}
-                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="10" />
-
-            <BabyGruAddSimpleButton {...props} selectedButtonIndex={selectedButtonIndex}
-                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="11" />
-
-        </ButtonGroup>
+            <Carousel 
+                variant={props.darkMode ? "light" : "dark"} 
+                interval={null} 
+                keyboard={false} 
+                indicators={false} 
+                onSlide={() => setSelectedButtonIndex(-1)}
+                controls={carouselItems.length > 1}>
+                    {carouselItems.map(item => {
+                        return (
+                            <Carousel.Item>
+                            <ButtonGroup>
+                                {item}
+                            </ButtonGroup>
+                            </Carousel.Item>
+                        )
+                    })}
+            </Carousel>
     </div>
 }
 
@@ -79,7 +130,7 @@ export const BabyGruSimpleEditButton = forwardRef((props, buttonRef) => {
     const atomClickedCallback = useCallback(event => {
         //console.log('in atomClickedcallback', event, props.molecules.length)
         document.removeEventListener('atomClicked', atomClickedCallback, { once: true })
-        props.molecules.forEach(molecule => {
+        props.molecules.forEach(async (molecule) => {
             console.log('Testing molecule ', molecule.molNo)
             try {
                 if (molecule.buffersInclude(event.detail.buffer)) {
@@ -89,19 +140,28 @@ export const BabyGruSimpleEditButton = forwardRef((props, buttonRef) => {
                     let formattedArgs = props.formatArgs(molecule, chosenAtom, localParameters)
                     props.setSelectedButtonIndex(null)
                     if (props.cootCommand) {
-                        props.commandCentre.current.cootCommand({
+                        await props.commandCentre.current.cootCommand({
                             returnType: "status",
                             command: props.cootCommand,
                             commandArgs: formattedArgs,
                             changesMolecules: props.changesMolecule ? [molecule.molNo] : []
-                        }, true).then(_ => {
-                            molecule.setAtomsDirty(true)
-                            molecule.redraw(props.glRef)
-                            //Here use originChanged event to force recontour (relevant for live updating maps)
-                            const originChangedEvent = new CustomEvent("originChanged",
-                                { "detail": props.glRef.current.origin });
-                            document.dispatchEvent(originChangedEvent);
-                        })
+                        }, true)
+                        if (props.refineAfterMod) {
+                            console.log('Triggering post-modification triple refinement...')
+                            await props.commandCentre.current.cootCommand({
+                                returnType: "status",
+                                command: 'refine_residues_using_atom_cid',
+                                commandArgs: refinementFormatArgs(molecule, chosenAtom, {refine: {mode: 'TRIPLE'}}),
+                                changesMolecules: [molecule.molNo]
+                            }, true)    
+                        }
+                        molecule.setAtomsDirty(true)
+                        molecule.redraw(props.glRef)
+                        //Here use originChanged event to force recontour (relevant for live updating maps)
+                        const originChangedEvent = new CustomEvent("originChanged",
+                            { "detail": props.glRef.current.origin });
+                        document.dispatchEvent(originChangedEvent);
+                        
                     }
                     else if (props.nonCootCommand) {
                         props.nonCootCommand(molecule, chosenAtom, localParameters)
@@ -115,7 +175,20 @@ export const BabyGruSimpleEditButton = forwardRef((props, buttonRef) => {
                 console.log('Encountered', err)
             }
         })
-    }, [props.molecules.length, props.activeMap])
+    }, [props.molecules.length, props.activeMap, props.refineAfterMod])
+
+    useEffect(() => {
+        props.setCursorStyle("crosshair")
+        if (props.awaitAtomClick && props.selectedButtonIndex === props.buttonIndex) {
+            props.setCursorStyle("crosshair")
+            document.addEventListener('atomClicked', atomClickedCallback, { once: true })
+        }
+
+        return () => {
+            props.setCursorStyle("default")
+            document.removeEventListener('atomClicked', atomClickedCallback, { once: true })
+        }
+    }, [props.selectedButtonIndex])
 
     return <>
         <Tooltip title={props.toolTip}>
@@ -124,20 +197,11 @@ export const BabyGruSimpleEditButton = forwardRef((props, buttonRef) => {
                 ref={buttonRef ? buttonRef : target}
                 active={props.buttonIndex === props.selectedButtonIndex}
                 variant='light'
+                style={{borderColor: props.buttonIndex === props.selectedButtonIndex ? 'red' : ''}}
                 disabled={props.needsMapData && !props.activeMap ||
                     (props.needsAtomData && props.molecules.length === 0)}
-                onClick={(e) => {
-                    if (props.selectedButtonIndex === e.currentTarget.value) {
-                        props.setSelectedButtonIndex(null)
-                        props.setCursorStyle("default")
-                        document.removeEventListener('atomClicked', atomClickedCallback, { once: true })
-                        return
-                    }
-                    props.setSelectedButtonIndex(props.buttonIndex)
-                    props.setCursorStyle("crosshair")
-                    if (props.awaitAtomClick) {
-                        document.addEventListener('atomClicked', atomClickedCallback, { once: true })
-                    }
+                onClick={(evt) => {
+                    props.setSelectedButtonIndex(props.buttonIndex !== props.selectedButtonIndex ? props.buttonIndex : null)
                 }}>
                 {props.icon}
             </Button>
@@ -167,7 +231,7 @@ export const BabyGruSimpleEditButton = forwardRef((props, buttonRef) => {
 BabyGruSimpleEditButton.defaultProps = {
     toolTip: "", setCursorStyle: () => { },
     needsAtomData: true, setSelectedButtonIndex: () => { }, selectedButtonIndex: 0, prompt: null,
-    awaitAtomClick: true, changesMolecule: true
+    awaitAtomClick: true, changesMolecule: true, refineAfterMod: false
 }
 
 
@@ -230,13 +294,6 @@ export const BabyGruRefineResiduesUsingAtomCidButton = (props) => {
         mutate: { toType: "ALA" }
     })
 
-    const refinementFormatArgs = (molecule, chosenAtom, pp) => {
-        return [
-            molecule.molNo,
-            `//${chosenAtom.chain_id}/${chosenAtom.res_no}`,
-            pp.refine.mode]
-    }
-
     const BabyGruRefinementPanel = (props) => {
         const refinementModes = ['SINGLE', 'TRIPLE', 'QUINTUPLE', 'HEPTUPLE', 'SPHERE', 'BIG_SPHERE', 'CHAIN', 'ALL']
         return <Container>
@@ -270,7 +327,8 @@ export const BabyGruRefineResiduesUsingAtomCidButton = (props) => {
             setPanelParameters={setPanelParameters}
             panelParameters={panelParameters} />}
         icon={<img className="baby-gru-button-icon" src="/baby-gru/pixmaps/refine-1.svg" />}
-        formatArgs={(m, c, p) => refinementFormatArgs(m, c, p)} />
+        formatArgs={(m, c, p) => refinementFormatArgs(m, c, p)}
+        refineAfterMod={false} />
 }
 
 export const BabyGruDeleteUsingCidButton = (props) => {

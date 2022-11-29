@@ -39,11 +39,14 @@
 #include "cartesian.h"
 #include "geomutil.h"
 
-//int mini_rsr_main(int argc, char **argv);
+#include <gemmi/span.hpp>
+#include <gemmi/mmread.hpp>
+#include <gemmi/gz.hpp>
+#include <gemmi/model.hpp>
+
+#define _SAJSON_H_INCLUDED_
 
 using namespace emscripten;
-
-//extern void clear_getopt_initialized();
 
 struct RamachandranInfo {
     std::string chainId;
@@ -64,103 +67,6 @@ struct ResiduePropertyInfo {
     double property;
 };
 
-std::vector<ResiduePropertyInfo> getBVals(const std::string &pdbin, const std::string &chainId){
-    std::vector<ResiduePropertyInfo> info;
-    const char *filename_cp = pdbin.c_str();
-    mmdb::InitMatType();
-    mmdb::Manager *molHnd = new mmdb::Manager();
-
-    int RC = molHnd->ReadCoorFile(filename_cp);
-    int selHnd = molHnd->NewSelection();
-    std::string selStr = std::string("/*/")+chainId+std::string("/(GLY,ALA,VAL,PRO,SER,THR,LEU,ILE,CYS,ASP,GLU,ASN,GLN,ARG,LYS,MET,MSE,HIS,PHE,TYR,TRP,HCS,ALO,PDD,UNK)");
-    const char *sel_cp = selStr.c_str();
-    molHnd->Select(selHnd,mmdb::STYPE_RESIDUE,sel_cp,mmdb::SKEY_NEW);
-    mmdb::Residue** SelRes=0;
-    int nRes;
-    molHnd->GetSelIndex(selHnd,SelRes,nRes);
-    for(int ires=0;ires<nRes;ires++){
-        mmdb::Atom *N = SelRes[ires]->GetAtom(" N");
-        mmdb::Atom *CA = SelRes[ires]->GetAtom("CA");
-        mmdb::Atom *C = SelRes[ires]->GetAtom(" C");
-        if(N&&CA&&C){
-            ResiduePropertyInfo resInfo;
-            resInfo.chainId = chainId;
-            resInfo.seqNum = N->GetSeqNum();
-            resInfo.insCode = std::string(N->GetInsCode());
-            resInfo.restype = std::string(N->GetResidue()->GetResName());
-            resInfo.property = CA->tempFactor;
-            info.push_back(resInfo);
-        }
-    }
-
-    return info;
-}
-
-std::vector<coot::residue_spec_t> getResidueSpecListForChain(const std::string &pdbin, const std::string &chainId_in){
-
-    std::vector<coot::residue_spec_t> resSpecList;
-
-    const char *filename_cp = pdbin.c_str();
-    mmdb::InitMatType();
-    mmdb::Manager *molHnd = new mmdb::Manager();
-    int RC = molHnd->ReadCoorFile(filename_cp);
-
-    mmdb::Model *model_p = molHnd->GetModel(1);
-    int nchains = model_p->GetNumberOfChains();
-    for (int ichain=0; ichain<nchains; ichain++) {
-        mmdb::Chain *chain_p = model_p->GetChain(ichain);
-        std::string chain_id = chain_p->GetChainID();
-        if (chain_id == chainId_in) {
-            int nres = chain_p->GetNumberOfResidues();
-            mmdb::Residue *residue_p;
-            for (int ires=0; ires<nres; ires++) { 
-                residue_p = chain_p->GetResidue(ires);
-                int resno = residue_p->GetSeqNum();
-                std::string res_name(residue_p->GetResName());
-                coot::residue_spec_t res_spec;
-                res_spec.model_number = 1;
-                res_spec.chain_id = chain_id;
-                res_spec.res_no = residue_p->GetSeqNum();
-                res_spec.ins_code = residue_p->GetInsCode();
-                resSpecList.push_back(res_spec);
-            }
-        }
-    }
-
-    return resSpecList;
-
-}
-
-std::vector<std::string> getResidueListForChain(const std::string &pdbin, const std::string &chainId_in){
-
-    std::vector<std::string> resList;
-
-    const char *filename_cp = pdbin.c_str();
-    mmdb::InitMatType();
-    mmdb::Manager *molHnd = new mmdb::Manager();
-    int RC = molHnd->ReadCoorFile(filename_cp);
-
-    mmdb::Model *model_p = molHnd->GetModel(1);
-    int nchains = model_p->GetNumberOfChains();
-    for (int ichain=0; ichain<nchains; ichain++) {
-        mmdb::Chain *chain_p = model_p->GetChain(ichain);
-        std::string chain_id = chain_p->GetChainID();
-        if (chain_id == chainId_in) {
-            int nres = chain_p->GetNumberOfResidues();
-            mmdb::Residue *residue_p;
-            for (int ires=0; ires<nres; ires++) { 
-                residue_p = chain_p->GetResidue(ires);
-                int resno = residue_p->GetSeqNum();
-                std::string res_name(residue_p->GetResName());
-                resList.push_back(res_name);
-            }
-        }
-    }
-
-    return resList;
-
-}
-
 std::map<std::string,std::vector<coot::simple_rotamer> > getRotamersMap(){
 
     std::map<std::string,std::vector<coot::simple_rotamer> > all_rots;
@@ -176,177 +82,6 @@ std::map<std::string,std::vector<coot::simple_rotamer> > getRotamersMap(){
 
     return all_rots;
 }
-
-std::vector<RamachandranInfo> getRamachandranData(const std::string &pdbin, const std::string &chainId){
-    std::cout << "std::vector<RamachandranInfo> getRamachandranData" << std::endl;
-    std::vector<RamachandranInfo> info;
-    const char *filename_cp = pdbin.c_str();
-    mmdb::InitMatType();
-    mmdb::Manager *molHnd = new mmdb::Manager();
-
-    int RC = molHnd->ReadCoorFile(filename_cp);
-    int selHnd = molHnd->NewSelection();
-    std::string selStr = std::string("/*/")+chainId+std::string("/(GLY,ALA,VAL,PRO,SER,THR,LEU,ILE,CYS,ASP,GLU,ASN,GLN,ARG,LYS,MET,MSE,HIS,PHE,TYR,TRP,HCS,ALO,PDD,UNK)");
-    const char *sel_cp = selStr.c_str();
-    molHnd->Select(selHnd,mmdb::STYPE_RESIDUE,sel_cp,mmdb::SKEY_NEW);
-    mmdb::Residue** SelRes=0;
-    int nRes;
-    molHnd->GetSelIndex(selHnd,SelRes,nRes);
-
-
-    clipper::Ramachandran rama;
-    clipper::Ramachandran r_gly, r_pro, r_non_gly_pro;
-    clipper::Ramachandran r_ileval, r_pre_pro, r_non_gly_pro_pre_pro_ileval;
-    rama.init(clipper::Ramachandran::All2);
-
-    // Lovell et al. 2003, 50, 437 Protein Structure, Function and Genetics values:
-    double rama_threshold_preferred = 0.02; 
-    double rama_threshold_allowed = 0.002;
-    float level_prefered = 0.02;
-    float level_allowed = 0.002;
-
-    //clipper defaults: 0.01 0.0005
-
-    rama.set_thresholds(level_prefered, level_allowed);
-    //
-    r_gly.init(clipper::Ramachandran::Gly2);
-    r_gly.set_thresholds(level_prefered, level_allowed);
-    //
-    r_pro.init(clipper::Ramachandran::Pro2);
-    r_pro.set_thresholds(level_prefered, level_allowed);
-    // first approximation; shouldnt be used if top8000 is available anyway
-    r_non_gly_pro.init(clipper::Ramachandran::NoGPIVpreP2);
-    r_non_gly_pro.set_thresholds(level_prefered, level_allowed);
-    // new
-    r_ileval.init(clipper::Ramachandran::IleVal2);
-    r_ileval.set_thresholds(level_prefered, level_allowed);
-    //
-    r_pre_pro.init(clipper::Ramachandran::PrePro2);
-    r_pre_pro.set_thresholds(level_prefered, level_allowed);
-    //
-    r_non_gly_pro_pre_pro_ileval.init(clipper::Ramachandran::NoGPIVpreP2);
-    r_non_gly_pro_pre_pro_ileval.set_thresholds(level_prefered, level_allowed);
-
-
-    //std::cout << nRes << " residues" << std::endl;
-
-    for(int ires=1;ires<nRes-1;ires++){
-        mmdb::Atom *N = SelRes[ires]->GetAtom(" N");
-        mmdb::Atom *CA = SelRes[ires]->GetAtom("CA");
-        mmdb::Atom *C = SelRes[ires]->GetAtom(" C");
-        mmdb::Atom *Cm = SelRes[ires-1]->GetAtom(" C");
-        mmdb::Atom *Np = SelRes[ires+1]->GetAtom(" N");
-        if(N&&CA&&C&&Cm&&Np){
-            RamachandranInfo resInfo;
-            resInfo.chainId = chainId;
-            resInfo.seqNum = N->GetSeqNum();
-            resInfo.insCode = std::string(N->GetInsCode());
-            resInfo.restype = std::string(N->GetResidue()->GetResName());
-            std::string restypeP = std::string(Np->GetResidue()->GetResName());
-            resInfo.is_pre_pro = false;
-            if(restypeP=="PRO") resInfo.is_pre_pro = true;
-            //Phi: C-N-CA-C
-            //Psi: N-CA-C-N
-            Cartesian Ncart(N->x,N->y,N->z);
-            Cartesian CAcart(CA->x,CA->y,CA->z);
-            Cartesian Ccart(C->x,C->y,C->z);
-            Cartesian CMcart(Cm->x,Cm->y,Cm->z);
-            Cartesian NPcart(Np->x,Np->y,Np->z);
-            double phi = DihedralAngle(CMcart,Ncart,CAcart,Ccart);
-            double psi = DihedralAngle(Ncart,CAcart,Ccart,NPcart);
-            //std::cout << N->GetSeqNum() << " " << N->name << " " << CA->name << " " << C->name << " " << Cm->name << " " << Np->name << " " << phi*180.0/M_PI << " " << psi*180.0/M_PI << std::endl;
-            resInfo.phi = phi*180.0/M_PI;
-            resInfo.psi = psi*180.0/M_PI;
-            bool r = false; //isOutlier
-            if (resInfo.restype == "GLY") {
-                if (! r_gly.allowed(phi, psi))
-                    if (! r_gly.favored(phi, psi))
-                        r = true;
-            } else {
-                if (resInfo.restype == "PRO") {
-                    if (! r_pro.allowed(phi, psi))
-                        if (! r_pro.favored(phi, psi))
-                            r = true;
-                } else {
-                    if (resInfo.is_pre_pro) {
-                        if (! r_pre_pro.allowed(phi, psi))
-                            if (! r_pre_pro.favored(phi, psi))
-                                r = true;
-                    } else {
-                        if ((resInfo.restype == "ILE") ||
-                                (resInfo.restype == "VAL")) {
-                            if (! r_ileval.allowed(phi, psi))
-                                if (! r_ileval.favored(phi, psi))
-                                    r = true;
-                        } else {
-                            if (! rama.allowed(phi, psi))
-                                if (! rama.favored(phi, psi))
-                                    r = true;
-                        }
-                    }
-                }
-            }
-            resInfo.isOutlier = r;
-
-            info.push_back(resInfo);
-        }
-    }
-
-    return info;
-}
-
-/*
-int flipPeptide(const std::string &pdbin, const std::string &chainId, const int resno, const std::string &pdbout){
-    int retval = 0;
-    std::cout << "In flipPeptide in C++. This does nothing useful." << std::endl;
-    std::cout << "PDBIN: " << pdbin << std::endl;
-    std::cout << "CHAIN: " << chainId << std::endl;
-    std::cout << "RESNO: " << resno << std::endl;
-    std::cout << "PDBOUT: " << pdbout << std::endl;
-
-    const char *filename_cp = pdbin.c_str();
-    const char *filename_out_cp = pdbout.c_str();
-
-    //TODO - So this is where we should implement/call a proper function.
-    //BEGIN STUB
-    mmdb::InitMatType();
-    mmdb::Manager *molHnd = new mmdb::Manager();
-
-    int RC = molHnd->ReadCoorFile(filename_cp);
-    assert(RC==0);
-
-    RC = molHnd->WritePDBASCII(filename_out_cp);
-    assert(RC==0);
-    //END STUB
-
-    return retval;
-}
-*/
-
-/*
-int mini_rsr(const std::vector<std::string> &args){
-
-    int argc = args.size();
-    char **argv = new char*[argc];
-
-    clear_getopt_initialized();
-
-    for(int i=0;i<argc;i++){
-        argv[i] = new char[args[i].size()+1];
-        const char* arg_c = args[i].c_str();
-        strcpy(argv[i], (char*)arg_c);
-    }
-
-    int retval = mini_rsr_main(argc,argv);
-
-    for(int i=0;i<argc;i++){
-        delete [] argv[i];
-    }
-    delete [] argv;
-
-    return retval;
-}
-*/
 
 class IntVectorMergeMolInfoPair {
     public:
@@ -800,6 +535,20 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<ResSpecStringPair>("VectorResSpecStringPair");
     register_vector<merge_molecule_results_info_t>("Vectormerge_molecule_results_info_t");
     register_vector<coot::phi_psi_prob_t>("Vectophi_psi_prob_t");
+
+    register_vector<gemmi::Atom>("VectorGemmiAtom");
+    register_vector<gemmi::Model>("VectorGemmiModel");
+    register_vector<gemmi::NcsOp>("VectorGemmiNcsOp");
+    register_vector<gemmi::Entity>("VectorGemmiEntity");
+    register_vector<gemmi::Connection>("VectorGemmiConnection");
+    register_vector<gemmi::Helix>("VectorGemmiHelix");
+    register_vector<gemmi::Sheet>("VectorGemmiSheet");
+    register_vector<gemmi::Assembly>("VectorGemmiAssembly");
+    register_vector<gemmi::Chain>("VectorGemmiChain");
+    register_vector<gemmi::Residue>("VectorGemmiResidue");
+    register_vector<gemmi::ResidueSpan>("VectorGemmiResidueSpan");
+    register_vector<gemmi::ConstResidueSpan>("VectorGemmiConstResidueSpan");
+
     value_array<glm::vec3>("array_float_3")
         .element(emscripten::index<0>())
         .element(emscripten::index<1>())
@@ -816,11 +565,479 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .element(emscripten::index<1>())
         .element(emscripten::index<2>())
     ;
-    //function("mini_rsr",&mini_rsr);
-    function("flipPeptide",&flipPeptide);
-    function("getRamachandranData",&getRamachandranData);
     function("getRotamersMap",&getRotamersMap);
-    function("getResidueListForChain",&getResidueListForChain);
-    function("getResidueSpecListForChain",&getResidueSpecListForChain);
-    function("getBVals",&getBVals);
+
+    enum_<gemmi::El>("El")
+        .value("X", gemmi::El::X)
+        .value("He", gemmi::El::He)
+        .value("Li", gemmi::El::Li)
+        .value("Be", gemmi::El::Be)
+        .value("B", gemmi::El::B)
+        .value("C", gemmi::El::C)
+        .value("N", gemmi::El::N)
+        .value("O", gemmi::El::O)
+        .value("F", gemmi::El::F)
+        .value("Ne", gemmi::El::Ne)
+        .value("Na", gemmi::El::Na)
+        .value("Mg", gemmi::El::Mg)
+        .value("Al", gemmi::El::Al)
+        .value("Si", gemmi::El::Si)
+        .value("P", gemmi::El::P)
+        .value("S", gemmi::El::S)
+        .value("Cl", gemmi::El::Cl)
+        .value("Ar", gemmi::El::Ar)
+        .value("K", gemmi::El::K)
+        .value("Ca", gemmi::El::Ca)
+        .value("Sc", gemmi::El::Sc)
+        .value("Ti", gemmi::El::Ti)
+        .value("V", gemmi::El::V)
+        .value("Cr", gemmi::El::Cr)
+        .value("Mn", gemmi::El::Mn)
+        .value("Fe", gemmi::El::Fe)
+        .value("Co", gemmi::El::Co)
+        .value("Ni", gemmi::El::Ni)
+        .value("Cu", gemmi::El::Cu)
+        .value("Zn", gemmi::El::Zn)
+        .value("Ga", gemmi::El::Ga)
+        .value("Ge", gemmi::El::Ge)
+        .value("As", gemmi::El::As)
+        .value("Se", gemmi::El::Se)
+        .value("Br", gemmi::El::Br)
+        .value("Kr", gemmi::El::Kr)
+        .value("Rb", gemmi::El::Rb)
+        .value("Sr", gemmi::El::Sr)
+        .value("Y", gemmi::El::Y)
+        .value("Zr", gemmi::El::Zr)
+        .value("Nb", gemmi::El::Nb)
+        .value("Mo", gemmi::El::Mo)
+        .value("Tc", gemmi::El::Tc)
+        .value("Ru", gemmi::El::Ru)
+        .value("Rh", gemmi::El::Rh)
+        .value("Pd", gemmi::El::Pd)
+        .value("Ag", gemmi::El::Ag)
+        .value("Cd", gemmi::El::Cd)
+        .value("In", gemmi::El::In)
+        .value("Sn", gemmi::El::Sn)
+        .value("Sb", gemmi::El::Sb)
+        .value("Te", gemmi::El::Te)
+        .value("I", gemmi::El::I)
+        .value("Xe", gemmi::El::Xe)
+        .value("Cs", gemmi::El::Cs)
+        .value("Ba", gemmi::El::Ba)
+        .value("La", gemmi::El::La)
+        .value("Ce", gemmi::El::Ce)
+        .value("Pr", gemmi::El::Pr)
+        .value("Nd", gemmi::El::Nd)
+        .value("Pm", gemmi::El::Pm)
+        .value("Sm", gemmi::El::Sm)
+        .value("Eu", gemmi::El::Eu)
+        .value("Gd", gemmi::El::Gd)
+        .value("Tb", gemmi::El::Tb)
+        .value("Dy", gemmi::El::Dy)
+        .value("Ho", gemmi::El::Ho)
+        .value("Er", gemmi::El::Er)
+        .value("Tm", gemmi::El::Tm)
+        .value("Yb", gemmi::El::Yb)
+        .value("Lu", gemmi::El::Lu)
+        .value("Hf", gemmi::El::Hf)
+        .value("Ta", gemmi::El::Ta)
+        .value("W", gemmi::El::W)
+        .value("Re", gemmi::El::Re)
+        .value("Os", gemmi::El::Os)
+        .value("Ir", gemmi::El::Ir)
+        .value("Pt", gemmi::El::Pt)
+        .value("Au", gemmi::El::Au)
+        .value("Hg", gemmi::El::Hg)
+        .value("Tl", gemmi::El::Tl)
+        .value("Pb", gemmi::El::Pb)
+        .value("Bi", gemmi::El::Bi)
+        .value("Po", gemmi::El::Po)
+        .value("At", gemmi::El::At)
+        .value("Rn", gemmi::El::Rn)
+        .value("Fr", gemmi::El::Fr)
+        .value("Ra", gemmi::El::Ra)
+        .value("Ac", gemmi::El::Ac)
+        .value("Th", gemmi::El::Th)
+        .value("Pa", gemmi::El::Pa)
+        .value("U", gemmi::El::U)
+        .value("Np", gemmi::El::Np)
+        .value("Pu", gemmi::El::Pu)
+        .value("Am", gemmi::El::Am)
+        .value("Cm", gemmi::El::Cm)
+        .value("Bk", gemmi::El::Bk)
+        .value("Cf", gemmi::El::Cf)
+        .value("Es", gemmi::El::Es)
+        .value("Fm", gemmi::El::Fm)
+        .value("Md", gemmi::El::Md)
+        .value("No", gemmi::El::No)
+        .value("Lr", gemmi::El::Lr)
+        .value("Rf", gemmi::El::Rf)
+        .value("Db", gemmi::El::Db)
+        .value("Sg", gemmi::El::Sg)
+        .value("Bh", gemmi::El::Bh)
+        .value("Hs", gemmi::El::Hs)
+        .value("Mt", gemmi::El::Mt)
+        .value("Ds", gemmi::El::Ds)
+        .value("Rg", gemmi::El::Rg)
+        .value("Cn", gemmi::El::Cn)
+        .value("Nh", gemmi::El::Nh)
+        .value("Fl", gemmi::El::Fl)
+        .value("Mc", gemmi::El::Mc)
+        .value("Lv", gemmi::El::Lv)
+        .value("Ts", gemmi::El::Ts)
+        .value("Og", gemmi::El::Og)
+        .value("D", gemmi::El::D)
+        .value("END", gemmi::El::END)
+    ;
+
+    enum_<gemmi::EntityType>("EntityType")
+        .value("Unknown", gemmi::EntityType::Unknown)
+        .value("Polymer", gemmi::EntityType::Polymer)
+        .value("NonPolymer", gemmi::EntityType::NonPolymer)
+        .value("Branched", gemmi::EntityType::Branched)
+        .value("Water", gemmi::EntityType::Water)
+    ;
+
+    enum_<gemmi::CalcFlag>("CalcFlag")
+        .value("NotSet", gemmi::CalcFlag::NotSet)
+        .value("Determined", gemmi::CalcFlag::Determined)
+        .value("Calculated", gemmi::CalcFlag::Calculated)
+        .value("Dummy", gemmi::CalcFlag::Dummy)
+    ;
+
+    enum_<gemmi::CoorFormat>("CoorFormat")
+        .value("Unknown", gemmi::CoorFormat::Unknown)
+        .value("Detect", gemmi::CoorFormat::Detect)
+        .value("Pdb", gemmi::CoorFormat::Pdb)
+        .value("Mmcif", gemmi::CoorFormat::Mmcif)
+        .value("Mmjson", gemmi::CoorFormat::Mmjson)
+        .value("ChemComp", gemmi::CoorFormat::ChemComp)
+    ;
+
+    class_<gemmi::Span<const gemmi::Residue>>("SpanConstResidue")
+    .function("front",select_overload<const gemmi::Residue&()const>(&gemmi::Span<const gemmi::Residue>::front))
+    .function("back",select_overload<const gemmi::Residue&()const>(&gemmi::Span<const gemmi::Residue>::back))
+    .function("at",select_overload<const gemmi::Residue&(std::size_t)const>(&gemmi::Span<const gemmi::Residue>::at))
+    .function("size",&gemmi::Span<const gemmi::Residue>::size)
+    .function("empty",&gemmi::Span<const gemmi::Residue>::empty)
+    .function("children",select_overload<const gemmi::Span<const gemmi::Residue>&()const>(&gemmi::Span<const gemmi::Residue>::children))
+    ;
+
+    class_<gemmi::Span<gemmi::Residue>>("SpanResidue")
+    .function("front",select_overload<gemmi::Residue&()>(&gemmi::Span<gemmi::Residue>::front))
+    .function("back",select_overload<gemmi::Residue&()>(&gemmi::Span<gemmi::Residue>::back))
+    .function("at",select_overload<gemmi::Residue&(std::size_t)>(&gemmi::Span<gemmi::Residue>::at))
+    .function("size",&gemmi::Span<gemmi::Residue>::size)
+    .function("set_size",&gemmi::Span<gemmi::Residue>::set_size)
+    .function("empty",&gemmi::Span<gemmi::Residue>::empty)
+    .function("children",select_overload<gemmi::Span<gemmi::Residue>&()>(&gemmi::Span<gemmi::Residue>::children))
+    ;
+
+    class_<gemmi::MutableVectorSpan<gemmi::Residue>, base<gemmi::Span<gemmi::Residue>>>("MutableVectorSpanResidue")
+    .function("is_beginning",&gemmi::MutableVectorSpan<gemmi::Residue>::is_beginning)
+    .function("is_ending",&gemmi::MutableVectorSpan<gemmi::Residue>::is_ending)
+    ;
+
+    class_<gemmi::UnitCell>("UnitCell")
+    .constructor<>()
+    .constructor<double,  double, double, double, double, double>()
+    .property("a",&gemmi::UnitCell::a)
+    .property("b",&gemmi::UnitCell::b)
+    .property("c",&gemmi::UnitCell::c)
+    .property("alpha",&gemmi::UnitCell::alpha)
+    .property("beta",&gemmi::UnitCell::beta)
+    .property("gamma",&gemmi::UnitCell::gamma)
+    .property("orth",&gemmi::UnitCell::orth)
+    .property("frac",&gemmi::UnitCell::frac)
+    .property("volume",&gemmi::UnitCell::volume)
+    .property("ar",&gemmi::UnitCell::ar)
+    .property("br",&gemmi::UnitCell::br)
+    .property("cr",&gemmi::UnitCell::cr)
+    .property("cos_alphar",&gemmi::UnitCell::cos_alphar)
+    .property("cos_betar",&gemmi::UnitCell::cos_betar)
+    .property("cos_gammar",&gemmi::UnitCell::cos_gammar)
+    .property("explicit_matrices",&gemmi::UnitCell::explicit_matrices)
+    .property("cs_count",&gemmi::UnitCell::cs_count)
+    .property("images",&gemmi::UnitCell::images)
+    .function("is_crystal",&gemmi::UnitCell::is_crystal)
+    .function("approx",&gemmi::UnitCell::approx)
+    .function("is_similar",&gemmi::UnitCell::is_similar)
+    .function("calculate_properties",&gemmi::UnitCell::calculate_properties)
+    .function("cos_alpha",&gemmi::UnitCell::cos_alpha)
+    .function("calculate_matrix_B",&gemmi::UnitCell::calculate_matrix_B)
+    .function("set_matrices_from_fract",&gemmi::UnitCell::set_matrices_from_fract)
+    .function("set",&gemmi::UnitCell::set)
+    .function("set_from_vectors",&gemmi::UnitCell::set_from_vectors)
+    .function("changed_basis_backward",&gemmi::UnitCell::changed_basis_backward)
+    .function("changed_basis_forward",&gemmi::UnitCell::changed_basis_forward)
+    .function("is_compatible_with_groupops",&gemmi::UnitCell::is_compatible_with_groupops)
+    .function("add_ncs_images_to_cs_images",&gemmi::UnitCell::add_ncs_images_to_cs_images)
+    .function("get_ncs_transforms",&gemmi::UnitCell::get_ncs_transforms)
+    .function("orthogonalize",&gemmi::UnitCell::orthogonalize)
+    .function("fractionalize",&gemmi::UnitCell::fractionalize)
+    .function("orthogonalize_difference",&gemmi::UnitCell::orthogonalize_difference)
+    .function("fractionalize_difference",&gemmi::UnitCell::fractionalize_difference)
+    .function("op_as_transform",&gemmi::UnitCell::op_as_transform)
+    .function("distance_sq_frac",select_overload<double(const gemmi::Fractional&,const gemmi::Fractional&)const>(&gemmi::UnitCell::distance_sq))
+    .function("distance_sq_pos",select_overload<double(const gemmi::Position&,const gemmi::Position&)const>(&gemmi::UnitCell::distance_sq))
+    .function("volume_per_image",&gemmi::UnitCell::volume_per_image)
+    .function("search_pbc_images",&gemmi::UnitCell::search_pbc_images)
+    .function("find_nearest_image",&gemmi::UnitCell::find_nearest_image)
+    .function("apply_transform",&gemmi::UnitCell::apply_transform)
+    .function("find_nearest_pbc_image_frac",select_overload<gemmi::NearestImage(const gemmi::Fractional&,gemmi::Fractional,int)const>(&gemmi::UnitCell::find_nearest_pbc_image))
+    .function("find_nearest_pbc_image_pos",select_overload<gemmi::NearestImage(const gemmi::Position&,const gemmi::Position&,int)const>(&gemmi::UnitCell::find_nearest_pbc_image))
+    .function("orthogonalize_in_pbc",&gemmi::UnitCell::orthogonalize_in_pbc)
+    .function("find_nearest_pbc_position",&gemmi::UnitCell::find_nearest_pbc_position)
+    .function("is_special_position_frac",select_overload<int(const gemmi::Fractional&,double)const>(&gemmi::UnitCell::is_special_position))
+    .function("is_special_position_pos",select_overload<int(const gemmi::Position&,double)const>(&gemmi::UnitCell::is_special_position))
+    .function("calculate_1_d2_double",&gemmi::UnitCell::calculate_1_d2_double)
+    .function("calculate_1_d2",&gemmi::UnitCell::calculate_1_d2)
+    .function("calculate_d",&gemmi::UnitCell::calculate_d)
+    .function("calculate_stol_sq",&gemmi::UnitCell::calculate_stol_sq)
+    .function("reciprocal",&gemmi::UnitCell::reciprocal)
+    .function("get_hkl_limits",&gemmi::UnitCell::get_hkl_limits)
+    .function("primitive_orth_matrix",&gemmi::UnitCell::primitive_orth_matrix)
+    //.function("calculate_u_eq",&gemmi::UnitCell::calculate_u_eq) //This requires const SMat33<double>
+    //.function("metric_tensor",&gemmi::UnitCell::metric_tensor) //This requires SMat33<double>
+    //.function("reciprocal_metric_tensor",&gemmi::UnitCell::reciprocal_metric_tensor) //This requires SMat33<double>
+    //.function("is_compatible_with_spacegroup",&gemmi::UnitCell::is_compatible_with_spacegroup) // Requires const SpaceGroup* sg
+    //.function("set_cell_images_from_spacegroup",&gemmi::UnitCell::set_cell_images_from_spacegroup) // Requires const SpaceGroup* sg
+    ;
+
+    class_<gemmi::Model>("Model")
+    .property("name",&gemmi::Model::name)
+    .property("chains",&gemmi::Model::chains)
+    .function("remove_chain",&gemmi::Model::remove_chain)
+    .function("merge_chain_parts",&gemmi::Model::merge_chain_parts)
+    .function("get_subchain",select_overload<gemmi::ResidueSpan(const std::string&)>(&gemmi::Model::get_subchain))
+    .function("get_subchain_const",select_overload<gemmi::ConstResidueSpan(const std::string&)const>(&gemmi::Model::get_subchain))
+    .function("subchains",select_overload<std::vector<gemmi::ResidueSpan> ()>(&gemmi::Model::subchains))
+    .function("subchains",select_overload<std::vector<gemmi::ConstResidueSpan> ()const>(&gemmi::Model::subchains))
+    .function("get_all_residue_names",&gemmi::Model::get_all_residue_names)
+    .function("find_residue_group",&gemmi::Model::find_residue_group)
+    .function("sole_residue",&gemmi::Model::sole_residue)
+    .function("find_cra",select_overload<gemmi::CRA(const gemmi::AtomAddress&, bool)>(&gemmi::Model::find_cra))
+    .function("find_cra_const",select_overload<gemmi::const_CRA(const gemmi::AtomAddress&, bool)const>(&gemmi::Model::find_cra))
+    .function("all",select_overload<gemmi::CraProxy()>(&gemmi::Model::all))
+    .function("all_const",select_overload<gemmi::ConstCraProxy()const>(&gemmi::Model::all))
+    .function("empty_copy",&gemmi::Model::empty_copy)
+    .function("children",select_overload<std::vector<gemmi::Chain>&()>(&gemmi::Model::children))
+    .function("children_const",select_overload<const std::vector<gemmi::Chain>&()const>(&gemmi::Model::children))
+    ;
+
+    class_<gemmi::Chain>("Chain")
+    .property("name",&gemmi::Chain::name)
+    .property("residues",&gemmi::Chain::residues)
+    .property("empty_copy",&gemmi::Chain::empty_copy)
+    .function("is_first_in_group",&gemmi::Chain::is_first_in_group)
+    .function("whole_const",select_overload<gemmi::ConstResidueSpan()const>(&gemmi::Chain::whole))
+    .function("get_polymer_const",select_overload<gemmi::ConstResidueSpan()const>(&gemmi::Chain::get_polymer))
+    .function("get_ligands_const",select_overload<gemmi::ConstResidueSpan()const>(&gemmi::Chain::get_ligands))
+    .function("get_waters_const",select_overload<gemmi::ConstResidueSpan()const>(&gemmi::Chain::get_waters))
+    .function("get_subchain_const",select_overload<gemmi::ConstResidueSpan(const std::string&)const>(&gemmi::Chain::get_subchain))
+    .function("subchains_const",select_overload<std::vector<gemmi::ConstResidueSpan> ()const>(&gemmi::Chain::subchains))
+    .function("find_residue_group_const",select_overload<gemmi::ConstResidueGroup(gemmi::SeqId id)const>(&gemmi::Chain::find_residue_group))
+    .function("children_const",select_overload<const std::vector<gemmi::Residue>&()const>(&gemmi::Chain::children))
+    .function("whole",select_overload<gemmi::ResidueSpan()>(&gemmi::Chain::whole))
+    .function("get_polymer",select_overload<gemmi::ResidueSpan()>(&gemmi::Chain::get_polymer))
+    .function("get_ligands",select_overload<gemmi::ResidueSpan()>(&gemmi::Chain::get_ligands))
+    .function("get_waters",select_overload<gemmi::ResidueSpan()>(&gemmi::Chain::get_waters))
+    .function("get_subchain",select_overload<gemmi::ResidueSpan(const std::string&)>(&gemmi::Chain::get_subchain))
+    .function("subchains",select_overload<std::vector<gemmi::ResidueSpan> ()>(&gemmi::Chain::subchains))
+    .function("find_residue_group",select_overload<gemmi::ResidueGroup(gemmi::SeqId id)>(&gemmi::Chain::find_residue_group))
+    .function("children",select_overload<std::vector<gemmi::Residue>&()>(&gemmi::Chain::children))
+    //.function("first_conformer_const",select_overload<gemmi::ConstUniqProxy<gemmi::Residue>()const>(&gemmi::Chain::first_conformer))
+    //.function("first_conformer_const",select_overload<gemmi::UniqProxy<gemmi::Residue>()>(&gemmi::Chain::first_conformer))
+    //And various pointer return methods ...
+    ;
+
+    class_<gemmi::ConstResidueSpan, base<gemmi::Span<const gemmi::Residue>>>("ConstResidueSpan")
+    .function("length",&gemmi::ConstResidueSpan::length)
+    .function("subchain_id",&gemmi::ConstResidueSpan::subchain_id)
+    .function("find_residue_group",&gemmi::ConstResidueSpan::find_residue_group)
+    .function("extract_sequence",&gemmi::ConstResidueSpan::extract_sequence)
+    .function("extreme_num",&gemmi::ConstResidueSpan::extreme_num)
+    .function("label_seq_id_to_auth",&gemmi::ConstResidueSpan::label_seq_id_to_auth)
+    .function("auth_seq_id_to_label",&gemmi::ConstResidueSpan::auth_seq_id_to_label)
+    //ConstUniqProxy<Residue, ConstResidueSpan> first_conformer() const {
+    //ConstUniqProxy<Residue, ConstResidueSpan> first_conformer() const {
+    ;
+
+    class_<gemmi::ResidueSpan, base<gemmi::MutableVectorSpan<gemmi::Residue>>>("ResidueSpan")
+    .function("length",&gemmi::ResidueSpan::length)
+    .function("subchain_id",&gemmi::ResidueSpan::subchain_id)
+    .function("find_residue_group",select_overload<gemmi::ResidueGroup(gemmi::SeqId)>(&gemmi::ResidueSpan::find_residue_group))
+    .function("find_residue_group_const",select_overload<gemmi::ConstResidueGroup(gemmi::SeqId)const>(&gemmi::ResidueSpan::find_residue_group))
+    .function("extreme_num",&gemmi::ResidueSpan::extreme_num)
+    .function("label_seq_id_to_auth",&gemmi::ResidueSpan::label_seq_id_to_auth)
+    .function("auth_seq_id_to_label",&gemmi::ResidueSpan::auth_seq_id_to_label)
+    ;
+
+    class_<gemmi::ConstResidueGroup,base<gemmi::ConstResidueSpan>>("ConstResidueGroup")
+    .function("by_resname",&gemmi::ConstResidueGroup::by_resname)
+    ;
+
+    class_<gemmi::ResidueGroup>("ResidueGroup")
+    .function("by_resname",&gemmi::ResidueGroup::by_resname)
+    .function("remove_residue",&gemmi::ResidueGroup::remove_residue)
+    ;
+
+    class_<gemmi::SeqId::OptionalNum>("OptionalNum")
+    .property("value",&gemmi::SeqId::OptionalNum::value)
+    .function("has_value",&gemmi::SeqId::OptionalNum::has_value)
+    .function("str",&gemmi::SeqId::OptionalNum::str)
+    ;
+
+    class_<gemmi::SeqId>("SeqId")
+    .property("num",&gemmi::SeqId::num)
+    .property("icode",&gemmi::SeqId::icode)
+    .function("has_icode",&gemmi::SeqId::has_icode)
+    .function("str",&gemmi::SeqId::str)
+    ;
+
+    class_<gemmi::ResidueId>("ResidueId")
+    .property("seqid",&gemmi::ResidueId::seqid)
+    .property("segment",&gemmi::ResidueId::segment)
+    .property("name",&gemmi::ResidueId::name)
+    .function("group_key",&gemmi::ResidueId::group_key)
+    .function("matches",&gemmi::ResidueId::matches)
+    .function("matches_noseg",&gemmi::ResidueId::matches_noseg)
+    ;
+
+    class_<gemmi::Residue, base<gemmi::ResidueId>>("GemmiResidue")
+    .property("subchain",&gemmi::Residue::subchain)
+    .property("entity_id",&gemmi::Residue::entity_id)
+    .property("label_seq",&gemmi::Residue::label_seq)
+    .property("entity_type",&gemmi::Residue::entity_type)
+    .property("het_flag",&gemmi::Residue::het_flag)
+    .property("is_cis",&gemmi::Residue::is_cis)
+    .property("flag",&gemmi::Residue::flag)
+    .property("atoms",&gemmi::Residue::atoms)
+    .function("empty_copy",&gemmi::Residue::empty_copy)
+    .function("children",select_overload<std::vector<gemmi::Atom>&()>(&gemmi::Residue::children))
+    .function("children_const",select_overload<const std::vector<gemmi::Atom>&()const>(&gemmi::Residue::children))
+    .function("get",&gemmi::Residue::get)
+    .function("sole_atom",&gemmi::Residue::sole_atom)
+    .function("same_conformer",&gemmi::Residue::same_conformer)
+    .function("is_water",&gemmi::Residue::is_water)
+    //.property("sifts_unp",&gemmi::Residue::sifts_unp) //SiftsUnpResidue
+    //UniqProxy<Atom> first_conformer() { return {atoms}; }
+    //ConstUniqProxy<Atom> first_conformer() const { return {atoms}; }
+    //And various pointer return methods ...
+    ;
+
+    class_<gemmi::Atom>("GemmiAtom")
+    .property("name",&gemmi::Atom::name)
+    .property("altloc",&gemmi::Atom::altloc)
+    .property("charge",&gemmi::Atom::charge)
+    .property("element",&gemmi::Atom::element)
+    .property("calc_flag",&gemmi::Atom::calc_flag)
+    .property("flag",&gemmi::Atom::flag)
+    .property("tls_group_id",&gemmi::Atom::tls_group_id)
+    .property("serial",&gemmi::Atom::serial)
+    .property("pos",&gemmi::Atom::pos)
+    .property("occ",&gemmi::Atom::occ)
+    .property("b_iso",&gemmi::Atom::b_iso)
+    .function("altloc_or",&gemmi::Atom::altloc_or)
+    .function("altloc_matches",&gemmi::Atom::altloc_matches)
+    .function("group_key",&gemmi::Atom::group_key)
+    .function("has_altloc",&gemmi::Atom::has_altloc)
+    .function("b_eq",&gemmi::Atom::b_eq)
+    .function("is_hydrogen",&gemmi::Atom::is_hydrogen)
+    .function("padded_name",&gemmi::Atom::padded_name)
+    .function("empty_copy",&gemmi::Atom::empty_copy)
+    //.property("aniso",&gemmi::Atom::aniso)//SMat33<float>
+    ;
+
+    //TODO Wrap the following
+    class_<gemmi::Element>("Element")
+    .property("elem",&gemmi::Element::elem)
+    .function("ordinal",&gemmi::Element::ordinal)
+    .function("atomic_number",&gemmi::Element::atomic_number)
+    .function("is_hydrogen",&gemmi::Element::is_hydrogen)
+    .function("weight",&gemmi::Element::weight)
+    .function("covalent_r",&gemmi::Element::covalent_r)
+    .function("vdw_r",&gemmi::Element::vdw_r)
+    .function("is_metal",&gemmi::Element::is_metal)
+    .function("name",&gemmi::Element::name, allow_raw_pointers())
+    .function("uname",&gemmi::Element::uname, allow_raw_pointers())
+    ;
+
+    class_<gemmi::AtomGroup>("AtomGroup")
+    ;
+    class_<gemmi::CraProxy>("CraProxy")
+    ;
+    class_<gemmi::ConstCraProxy>("ConstCraProxy")
+    ;
+    class_<gemmi::const_CRA>("const_CRA")
+    ;
+    class_<gemmi::AtomAddress>("AtomAddress")
+    ;
+    class_<gemmi::NcsOp>("NcsOp")
+    ;
+    class_<gemmi::Entity>("Entity")
+    ;
+    class_<gemmi::Connection>("Connection")
+    ;
+    class_<gemmi::Helix>("Helix")
+    ;
+    class_<gemmi::Sheet>("Sheet")
+    ;
+    class_<gemmi::Assembly>("Assembly")
+    ;
+    class_<gemmi::Metadata>("Metadata")
+    ;
+    class_<gemmi::Transform>("Transform")
+    ;
+    class_<gemmi::FTransform>("FTransform")
+    ;
+    class_<gemmi::Mat33>("Mat33")
+    ;
+    class_<gemmi::Vec3>("Vec3")
+    ;
+    class_<gemmi::Op>("Op")
+    ;
+    class_<gemmi::GroupOps>("GroupOps")
+    ;
+    class_<gemmi::SpaceGroup>("SpaceGroup")
+    ;
+    class_<gemmi::Position>("Position")
+    ;
+    class_<gemmi::Fractional>("Fractional")
+    ;
+    class_<gemmi::NearestImage>("NearestImage")
+    ;
+    class_<gemmi::Miller>("Miller")
+    ;
+    class_<gemmi::Structure>("Structure")
+    .constructor<>()
+    .property("name",&gemmi::Structure::name)
+    .property("spacegroup_hm",&gemmi::Structure::spacegroup_hm)
+    .property("has_origx",&gemmi::Structure::has_origx)
+    .property("models",&gemmi::Structure::models)
+    .property("ncs",&gemmi::Structure::ncs)
+    .property("entities",&gemmi::Structure::entities)
+    .property("connections",&gemmi::Structure::connections)
+    .property("helices",&gemmi::Structure::helices)
+    .property("sheets",&gemmi::Structure::sheets)
+    .property("assemblies",&gemmi::Structure::assemblies)
+    .property("cell",&gemmi::Structure::cell)
+    .property("meta",&gemmi::Structure::meta)
+    .property("origx",&gemmi::Structure::origx)
+    .property("resolution",&gemmi::Structure::resolution)
+    .property("raw_remarks",&gemmi::Structure::raw_remarks)
+    .property("input_format",&gemmi::Structure::input_format)
+    .function("get_info",&gemmi::Structure::get_info)
+    .function("remove_model",&gemmi::Structure::remove_model)
+    .function("renumber_models",&gemmi::Structure::renumber_models)
+    .function("ncs_given_count",&gemmi::Structure::ncs_given_count)
+    .function("get_ncs_multiplier",&gemmi::Structure::get_ncs_multiplier)
+    .function("ncs_not_expanded",&gemmi::Structure::ncs_not_expanded)
+    .function("merge_chain_parts",&gemmi::Structure::merge_chain_parts)
+    .function("remove_empty_chains",&gemmi::Structure::remove_empty_chains)
+    .function("empty_copy",&gemmi::Structure::empty_copy)
+    .function("setup_cell_images",&gemmi::Structure::setup_cell_images)
+    .function("first_model",select_overload<const gemmi::Model&(void)const>(&gemmi::Structure::first_model))
+    ;
+    function("read_structure_file",&gemmi::read_structure_file);
 }

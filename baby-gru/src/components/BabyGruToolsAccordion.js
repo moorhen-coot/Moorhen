@@ -3,6 +3,7 @@ import { Row } from "react-bootstrap";
 import { BabyGruRamachandran } from "./BabyGruRamachandran"
 import { BabyGruValidation } from "./BabyGruValidation"
 import { BabyGruDifferenceMapPeaks } from "./BabyGruDifferenceMapPeaks"
+import { BabyGruPepflipsDifferenceMap } from "./BabyGruPepflipsDifferenceMap"
 import { Autocomplete, TextField } from "@mui/material";
 
 export const BabyGruToolsAccordion = (props) => {
@@ -14,6 +15,7 @@ export const BabyGruToolsAccordion = (props) => {
             {label: "Difference Map Peaks", toolWidget: <BabyGruDifferenceMapPeaks {...props}/>},
             {label: "Ramachandran Plot", toolWidget: <BabyGruRamachandran {...props}/>},
             {label: "Validation", toolWidget: <BabyGruValidation {...props}/>},
+            {label: "Peptide flips using difference map", toolWidget: <BabyGruPepflipsDifferenceMap {...props}/>}
     ]
 
     const handleChange = (evt, newSelection) => {
