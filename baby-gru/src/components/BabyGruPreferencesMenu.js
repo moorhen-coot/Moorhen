@@ -2,12 +2,14 @@ import { useState } from "react";
 import { NavDropdown, Form, InputGroup } from "react-bootstrap";
 import { BabyGruShortcutConfigModal } from "./BabyGruShortcutConfigModal"
 import { MenuItem } from "@mui/material";
+import BabyGruSlider from './BabyGruSlider' 
 
 export const BabyGruPreferencesMenu = (props) => {
     const { 
         atomLabelDepthMode, setAtomLabelDepthMode, darkMode, setDarkMode, 
         defaultExpandDisplayCards, setDefaultExpandDisplayCards, defaultLitLines,
-        setDefaultLitLines, refineAfterMod, setRefineAfterMod
+        setDefaultLitLines, refineAfterMod, setRefineAfterMod, mouseSensitivity,
+        setMouseSensitivity
      } = props;
     const [showModal, setShowModal] = useState(null);
 
@@ -17,7 +19,7 @@ export const BabyGruPreferencesMenu = (props) => {
                     autoClose="outside"
                     show={props.currentDropdownId === props.dropdownId}
                     onToggle={() => { props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId(-1) }}>
-                <InputGroup style={{ padding:'0.5rem', width: '20rem'}}>
+                <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
                     <Form.Check 
                         type="switch"
                         label="Expand display cards after file upload"
@@ -25,35 +27,38 @@ export const BabyGruPreferencesMenu = (props) => {
                         onChange={() => { setDefaultExpandDisplayCards(!defaultExpandDisplayCards) }}
                     />
                 </InputGroup>
-                <InputGroup style={{ padding:'0.5rem', width: '20rem'}}>
+                <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
                     <Form.Check 
                         type="switch"
                         checked={darkMode}
                         onChange={() => { setDarkMode(!darkMode) }}
                         label={darkMode ? "Switch lights on": "Switch lights off"}/>
                 </InputGroup>
-                <InputGroup style={{ padding:'0.5rem', width: '20rem'}}>
+                <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
                     <Form.Check 
                         type="switch"
                         checked={atomLabelDepthMode}
                         onChange={() => { setAtomLabelDepthMode(!atomLabelDepthMode) }}
                         label="Depth cue atom labels"/>
                 </InputGroup>
-                <InputGroup style={{ padding:'0.5rem', width: '20rem'}}>
+                <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
                     <Form.Check 
                         type="switch"
                         checked={defaultLitLines}
                         onChange={() => { setDefaultLitLines(!defaultLitLines) }}
                         label="Activate map lit lines by default"/>
                 </InputGroup>
-                <InputGroup style={{ padding:'0.5rem', width: '20rem'}}>
+                <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
                     <Form.Check 
                         type="switch"
                         checked={refineAfterMod}
                         onChange={() => { setRefineAfterMod(!refineAfterMod) }}
                         label="Automatic triple refine post-modification"/>
                 </InputGroup>
-                <MenuItem variant="success" onClick={() => setShowModal(true)}>
+                <Form.Group controlId="mouseSensitivitySlider" style={{paddingTop:'0.5rem', paddingBottom:'0.5rem', paddingRight:'0.5rem', paddingLeft:'1rem', width: '25rem'}}>
+                    <BabyGruSlider minVal={0.1} maxVal={10.0} logScale={false} sliderTitle="Mouse sensitivity" intialValue={2.5} externalValue={mouseSensitivity} setExternalValue={setMouseSensitivity}/>
+                </Form.Group>
+                <MenuItem variant="success" onClick={() => setShowModal(true)} >
                     Configure shortcuts
                 </MenuItem>
                 <BabyGruShortcutConfigModal showModal={showModal} setShowModal={setShowModal} setShortCuts={props.setShortCuts} shortCuts={JSON.parse(props.shortCuts)}/>

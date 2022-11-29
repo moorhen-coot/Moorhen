@@ -12,12 +12,13 @@ const updateStoredPreferences = async (key, value) => {
 
 const getDefaultValues = () => {
     return {
-        version: '0.0.1',
+        version: '0.0.2',
         darkMode: false, 
         atomLabelDepthMode: true, 
         defaultExpandDisplayCards: true,
         defaultLitLines: false,
-        refineAfterMod: true,        
+        refineAfterMod: true,
+        mouseSensitivity: 2.0,
         shortCuts: {
             "sphere_refine": {
                 modifiers: ["shiftKey"],
@@ -122,21 +123,23 @@ const getDefaultValues = () => {
 const PreferencesContext = createContext();
 
 const PreferencesContextProvider = ({ children }) => {
-    const [darkMode, setDarkMode] = useState(null);
-    const [atomLabelDepthMode, setAtomLabelDepthMode] = useState(null);
-    const [defaultExpandDisplayCards, setDefaultExpandDisplayCards] = useState(null);
-    const [shortCuts, setShortCuts] = useState(null);
-    const [defaultLitLines, setDefaultLitLines] = useState(null);
+    const [darkMode, setDarkMode] = useState(null)
+    const [atomLabelDepthMode, setAtomLabelDepthMode] = useState(null)
+    const [defaultExpandDisplayCards, setDefaultExpandDisplayCards] = useState(null)
+    const [shortCuts, setShortCuts] = useState(null)
+    const [defaultLitLines, setDefaultLitLines] = useState(null)
     const [refineAfterMod, setRefineAfterMod] = useState(null)
+    const [mouseSensitivity, setMouseSensitivity] = useState(null)
 
     const restoreDefaults = (defaultValues)=> {
-        updateStoredPreferences('version', defaultValues.version);
+        updateStoredPreferences('version', defaultValues.version)
         setDarkMode(defaultValues.darkMode)
         setDefaultExpandDisplayCards(defaultValues.defaultExpandDisplayCards)            
         setShortCuts(JSON.stringify(defaultValues.shortCuts))            
         setAtomLabelDepthMode(defaultValues.atomLabelDepthMode)
         setDefaultLitLines(defaultValues.defaultLitLines)
         setRefineAfterMod(defaultValues.refineAfterMod)
+        setMouseSensitivity(defaultValues.mouseSensitivity)
     }
 
     /**
@@ -155,7 +158,8 @@ const PreferencesContextProvider = ({ children }) => {
                     localforage.getItem('shortCuts'),
                     localforage.getItem('atomLabelDepthMode'),
                     localforage.getItem('defaultLitLines'),
-                    localforage.getItem('refineAfterMod')
+                    localforage.getItem('refineAfterMod'),
+                    localforage.getItem('mouseSensitivity')
                     ])
                 
                 console.log('Retrieved the following preferences from local storage: ', response)
@@ -175,6 +179,7 @@ const PreferencesContextProvider = ({ children }) => {
                     setAtomLabelDepthMode(response[4])
                     setDefaultLitLines(response[5])
                     setRefineAfterMod(response[6])
+                    setMouseSensitivity(response[7])
                 }                
                 
             } catch (err) {
@@ -200,6 +205,15 @@ const PreferencesContextProvider = ({ children }) => {
        
         updateStoredPreferences('refineAfterMod', refineAfterMod);
     }, [refineAfterMod]);
+
+    useMemo(() => {
+
+        if (mouseSensitivity === null) {
+            return
+        }
+       
+        updateStoredPreferences('mouseSensitivity', mouseSensitivity);
+    }, [mouseSensitivity]);
 
     useMemo(() => {
 
@@ -249,7 +263,7 @@ const PreferencesContextProvider = ({ children }) => {
     const collectedContextValues = {
         darkMode, setDarkMode, atomLabelDepthMode, setAtomLabelDepthMode, defaultExpandDisplayCards,
         setDefaultExpandDisplayCards, shortCuts, setShortCuts, defaultLitLines, setDefaultLitLines,
-        refineAfterMod, setRefineAfterMod
+        refineAfterMod, setRefineAfterMod, mouseSensitivity, setMouseSensitivity
     }
 
     return (
