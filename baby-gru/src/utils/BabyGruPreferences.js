@@ -115,7 +115,7 @@ const getDefaultValues = () => {
             "set_map_contour": {
                 modifiers: ["ctrlKey"],
                 keyPress: "control",
-                label: "Set active map contour"
+                label: "Set map contour on scroll"
             },
 
         }
