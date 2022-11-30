@@ -47,6 +47,8 @@
 #define _SAJSON_H_INCLUDED_
 
 using namespace emscripten;
+using GemmiSMat33double = gemmi::SMat33<double>;
+using GemmiSMat33float = gemmi::SMat33<float>;
 
 struct RamachandranInfo {
     std::string chainId;
@@ -881,11 +883,11 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("reciprocal",&gemmi::UnitCell::reciprocal)
     .function("get_hkl_limits",&gemmi::UnitCell::get_hkl_limits)
     .function("primitive_orth_matrix",&gemmi::UnitCell::primitive_orth_matrix)
-    //.function("calculate_u_eq",&gemmi::UnitCell::calculate_u_eq) //This requires const SMat33<double>
-    //.function("metric_tensor",&gemmi::UnitCell::metric_tensor) //This requires SMat33<double>
-    //.function("reciprocal_metric_tensor",&gemmi::UnitCell::reciprocal_metric_tensor) //This requires SMat33<double>
-    //.function("is_compatible_with_spacegroup",&gemmi::UnitCell::is_compatible_with_spacegroup) // Requires const SpaceGroup* sg
-    //.function("set_cell_images_from_spacegroup",&gemmi::UnitCell::set_cell_images_from_spacegroup) // Requires const SpaceGroup* sg
+    .function("calculate_u_eq",&gemmi::UnitCell::calculate_u_eq)
+    .function("metric_tensor",&gemmi::UnitCell::metric_tensor)
+    .function("reciprocal_metric_tensor",&gemmi::UnitCell::reciprocal_metric_tensor)
+    .function("is_compatible_with_spacegroup",&gemmi::UnitCell::is_compatible_with_spacegroup, allow_raw_pointers())
+    .function("set_cell_images_from_spacegroup",&gemmi::UnitCell::set_cell_images_from_spacegroup, allow_raw_pointers())
     ;
 
     class_<gemmi::Model>("Model")
@@ -931,7 +933,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("find_residue_group",select_overload<gemmi::ResidueGroup(gemmi::SeqId id)>(&gemmi::Chain::find_residue_group))
     .function("children",select_overload<std::vector<gemmi::Residue>&()>(&gemmi::Chain::children))
     //.function("first_conformer_const",select_overload<gemmi::ConstUniqProxy<gemmi::Residue>()const>(&gemmi::Chain::first_conformer))
-    //.function("first_conformer_const",select_overload<gemmi::UniqProxy<gemmi::Residue>()>(&gemmi::Chain::first_conformer))
+    //.function("first_conformer",select_overload<gemmi::UniqProxy<gemmi::Residue>()>(&gemmi::Chain::first_conformer))
     //And various pointer return methods ...
     ;
 
@@ -1030,7 +1032,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("is_hydrogen",&gemmi::Atom::is_hydrogen)
     .function("padded_name",&gemmi::Atom::padded_name)
     .function("empty_copy",&gemmi::Atom::empty_copy)
-    //.property("aniso",&gemmi::Atom::aniso)//SMat33<float>
+    .property("aniso",&gemmi::Atom::aniso)//SMat33<float>
     ;
 
     class_<gemmi::Element>("Element")
@@ -1044,6 +1046,56 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("is_metal",&gemmi::Element::is_metal)
     //.function("name",&gemmi::Element::name, allow_raw_pointers())// These 2 do not work! PKc (char*) is unbound type/
     //.function("uname",&gemmi::Element::uname, allow_raw_pointers())
+    ;
+
+    class_<gemmi::Mat33>("Mat33")
+    .function("row_copy",&gemmi::Mat33::row_copy)
+    .function("column_copy",&gemmi::Mat33::column_copy)
+    .function("multiplyVec3",select_overload<gemmi::Vec3(const gemmi::Vec3&)const>(&gemmi::Mat33::multiply))
+    .function("multiplyMat33",select_overload<gemmi::Mat33(const gemmi::Mat33&)const>(&gemmi::Mat33::multiply))
+    .function("left_multiply",&gemmi::Mat33::left_multiply)
+    .function("multiply_by_diagonal",&gemmi::Mat33::multiply_by_diagonal)
+    .function("transpose",&gemmi::Mat33::transpose)
+    .function("trace",&gemmi::Mat33::trace)
+    .function("approx",&gemmi::Mat33::approx)
+    .function("determinant",&gemmi::Mat33::determinant)
+    .function("inverse",&gemmi::Mat33::inverse)
+    .function("is_identity",&gemmi::Mat33::is_identity)
+    .function("column_dot",&gemmi::Mat33::column_dot)
+    ;
+
+    class_<GemmiSMat33double>("SMat33double")
+    .function("as_mat33",&GemmiSMat33double::as_mat33)
+    .function("trace",&GemmiSMat33double::trace)
+    .function("all_zero",&GemmiSMat33double::all_zero)
+    //.function("scale",&GemmiSMat33double::scale) // this causes compiler to give a const usage error.
+    //.function("scaled",&GemmiSMat33double::scaled) // this causes all kinds of trouble
+    .function("added_kI",&GemmiSMat33double::added_kI)
+    .function("r_u_r",select_overload<double(const gemmi::Vec3&)const>(&GemmiSMat33double::r_u_r))
+    .function("r_u_rArray",select_overload<double(const std::array<int,3>&)const>(&GemmiSMat33double::r_u_r))
+    .function("multiply",&GemmiSMat33double::multiply)
+    //.function("transformed_by",&GemmiSMat33double::transformed_by)
+    .function("determinant",&GemmiSMat33double::determinant)
+    .function("inverse",&GemmiSMat33double::inverse)
+    .function("calculate_eigenvalues",&gemmi::SMat33<double>::calculate_eigenvalues) //Hmm, returns std::array<double, 3>
+    .function("calculate_eigenvector",&GemmiSMat33double::calculate_eigenvector)
+    ;
+
+    class_<GemmiSMat33float>("SMat33float")
+    .function("as_mat33",&GemmiSMat33float::as_mat33)
+    .function("trace",&GemmiSMat33float::trace)
+    .function("all_zero",&GemmiSMat33float::all_zero)
+    //.function("scale",&GemmiSMat33float::scale) // this causes compiler to give a const usage error.
+    //.function("scaled",&GemmiSMat33float::scaled) // this causes all kinds of trouble
+    .function("added_kI",&GemmiSMat33float::added_kI)
+    .function("r_u_r",select_overload<double(const gemmi::Vec3&)const>(&GemmiSMat33float::r_u_r))
+    .function("r_u_rArray",select_overload<double(const std::array<int,3>&)const>(&GemmiSMat33float::r_u_r))
+    .function("multiply",&GemmiSMat33float::multiply)
+    //.function("transformed_by",&GemmiSMat33float::transformed_by)
+    .function("determinant",&GemmiSMat33float::determinant)
+    .function("inverse",&GemmiSMat33float::inverse)
+    .function("calculate_eigenvalues",&gemmi::SMat33<float>::calculate_eigenvalues) //Hmm, returns std::array<double, 3>
+    .function("calculate_eigenvector",&GemmiSMat33float::calculate_eigenvector)
     ;
 
     class_<gemmi::Vec3>("GemmiVec3")
@@ -1152,8 +1204,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
     class_<gemmi::Assembly>("Assembly")
     ;
     class_<gemmi::Connection>("Connection")
-    ;
-    class_<gemmi::Mat33>("Mat33")
     ;
     class_<gemmi::CraProxy>("CraProxy")
     ;
