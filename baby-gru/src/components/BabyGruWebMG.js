@@ -88,10 +88,9 @@ export const BabyGruWebMG = forwardRef((props, glRef) => {
         onAtomHovered={props.onAtomHovered}
         onKeyPress={props.onKeyPress}
         messageChanged={() => { }}
-        showCrosshairs={props.preferences.showCrosshairs}
         mouseSensitivityFactor={props.preferences.mouseSensitivity}
         keyboardAccelerators={JSON.parse(props.preferences.shortCuts)}
-        drawCrosshairs={props.preferences.drawCrosshairs}
+        showCrosshairs={props.preferences.drawCrosshairs}
         drawMissingLoops={props.drawMissingLoops}/>
 });
 
