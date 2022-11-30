@@ -81,6 +81,7 @@ export const BabyGruSequenceViewer = (props) => {
             if (evt.detail.eventtype === "click") {
                 if (evt.detail.feature !== null && !(evt.detail.highlight.includes(','))) {
                     props.setClickedResidue({modelIndex:0, molName:props.molecule.name, chain:props.sequence.chain, seqNum:evt.detail.feature.start})
+                    props.setSelectedResidues(null)
                 } else if (evt.detail.highlight.includes(',')) {
                     let residues = evt.detail.highlight.split(',').map(residue => parseInt(residue.split(':')[0]))
                     props.setSelectedResidues([Math.min(...residues), Math.max(...residues)])
