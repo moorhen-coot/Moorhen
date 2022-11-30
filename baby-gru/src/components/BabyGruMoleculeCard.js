@@ -165,17 +165,17 @@ export const BabyGruMoleculeCard = (props) => {
         },
         6: {
             label: 'Refine selected residues',
-            compressed: () => { return (<MenuItem key={8} variant="success" onClick={handleResidueRangeRefinement}>Refine selected residues</MenuItem>) },
+            compressed: () => { return (<MenuItem key={6} variant="success" disabled={(!clickedResidue || !selectedResidues)} onClick={handleResidueRangeRefinement}>Refine selected residues</MenuItem>) },
             expanded: null
         },
         7: {
             label: 'Rename molecule',
-            compressed: () => { return (<BabyGruRenameDisplayObjectMenuItem key={6} setPopoverIsShown={setPopoverIsShown} setCurrentName={setCurrentName} item={props.molecule} />) },
+            compressed: () => { return (<BabyGruRenameDisplayObjectMenuItem key={7} setPopoverIsShown={setPopoverIsShown} setCurrentName={setCurrentName} item={props.molecule} />) },
             expanded: null
         },
         8: {
             label: 'Copy selected residues into fragment',
-            compressed: () => { return (<MenuItem key={7} variant="success" onClick={handleCopyFragment}>Copy selected residues into fragment</MenuItem>) },
+            compressed: () => { return (<MenuItem key={8} variant="success" disabled={(!clickedResidue || !selectedResidues)} onClick={handleCopyFragment}>Copy selected residues into fragment</MenuItem>) },
             expanded: null
         },
     }
