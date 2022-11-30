@@ -67,14 +67,17 @@ struct ResiduePropertyInfo {
     double property;
 };
 
-std::string get_hm(const gemmi::SpaceGroup &sg){
+std::string get_spacegroup_hm(const gemmi::SpaceGroup &sg){
     return std::string(sg.hm);
 }
-std::string get_hall(const gemmi::SpaceGroup &sg){
+std::string get_spacegroup_hall(const gemmi::SpaceGroup &sg){
     return std::string(sg.hall);
 }
-std::string get_qualifier(const gemmi::SpaceGroup &sg){
+std::string get_spacegroup_qualifier(const gemmi::SpaceGroup &sg){
     return std::string(sg.qualifier);
+}
+std::string get_element_name_as_string(const gemmi::Element &el){
+    return std::string(el.name());
 }
 
 std::map<std::string,std::vector<coot::simple_rotamer> > getRotamersMap(){
@@ -418,6 +421,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("undo",&molecules_container_t::undo)
     .function("redo",&molecules_container_t::redo)
     .function("refine_residues_using_atom_cid",&molecules_container_t::refine_residues_using_atom_cid)
+    .function("refine_residue_range",&molecules_container_t::refine_residue_range)
     .function("set_imol_refinement_map",&molecules_container_t::set_imol_refinement_map)
     .function("mutate",&molecules_container_t::mutate)
     .function("delete_using_cid",&molecules_container_t::delete_using_cid)
@@ -1038,19 +1042,38 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("covalent_r",&gemmi::Element::covalent_r)
     .function("vdw_r",&gemmi::Element::vdw_r)
     .function("is_metal",&gemmi::Element::is_metal)
-    .function("name",&gemmi::Element::name, allow_raw_pointers())
-    .function("uname",&gemmi::Element::uname, allow_raw_pointers())
+    //.function("name",&gemmi::Element::name, allow_raw_pointers())// These 2 do not work! PKc (char*) is unbound type/
+    //.function("uname",&gemmi::Element::uname, allow_raw_pointers())
     ;
 
-    class_<gemmi::Fractional>("Fractional")
+    class_<gemmi::Vec3>("GemmiVec3")
+    .property("x",&gemmi::Vec3::x)
+    .property("y",&gemmi::Vec3::y)
+    .property("z",&gemmi::Vec3::z)
+    .function("at",select_overload<double(int)const>(&gemmi::Vec3::at))
+    .function("negated",&gemmi::Vec3::negated)
+    .function("dot",&gemmi::Vec3::dot)
+    .function("cross",&gemmi::Vec3::cross)
+    .function("length_sq",&gemmi::Vec3::length_sq)
+    .function("length",&gemmi::Vec3::length)
+    .function("changed_magnitude",&gemmi::Vec3::changed_magnitude)
+    .function("normalized",&gemmi::Vec3::normalized)
+    .function("dist_sq",&gemmi::Vec3::dist_sq)
+    .function("dist",&gemmi::Vec3::dist)
+    .function("cos_angle",&gemmi::Vec3::cos_angle)
+    .function("angle",&gemmi::Vec3::angle)
+    .function("approx",&gemmi::Vec3::approx)
+    .function("str",&gemmi::Vec3::str)
+    ;
+
+    class_<gemmi::Fractional, base<gemmi::Vec3>>("Fractional")
     .function("wrap_to_unit",&gemmi::Fractional::wrap_to_unit)
     .function("wrap_to_zero",&gemmi::Fractional::wrap_to_zero)
     .function("round",&gemmi::Fractional::round)
     .function("move_toward_zero_by_one",&gemmi::Fractional::move_toward_zero_by_one)
     ;
 
-    class_<gemmi::Position>("Position")
-    //??
+    class_<gemmi::Position, base<gemmi::Vec3>>("Position")
     ;
 
     class_<gemmi::Entity::DbRef>("EntityDbRef")
@@ -1091,7 +1114,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("by_altloc",&gemmi::AtomGroup::by_altloc)
     ;
 
-    //TODO Wrap the following
     class_<gemmi::SpaceGroup>("SpaceGroup")
     .property("number",&gemmi::SpaceGroup::number)
     .property("ccp4",&gemmi::SpaceGroup::ccp4)
@@ -1117,6 +1139,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     //.property("qualifier",&gemmi::SpaceGroup::qualifier)
     //.property("hall",&gemmi::SpaceGroup::hall)
     ;
+
+    //TODO Wrap the following
     class_<gemmi::Op>("Op")
     ;
     class_<gemmi::GroupOps>("GroupOps")
@@ -1130,8 +1154,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
     class_<gemmi::Connection>("Connection")
     ;
     class_<gemmi::Mat33>("Mat33")
-    ;
-    class_<gemmi::Vec3>("Vec3")
     ;
     class_<gemmi::CraProxy>("CraProxy")
     ;
@@ -1153,6 +1175,144 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<gemmi::Miller>("Miller")
     ;
+
+    // And possibly all/some of these
+    /*
+Binner
+HklMatch
+CenterOfMass
+IT92
+C4322
+NeighborSearch
+TwoFoldData
+AsuBrick
+SolventMasker
+NodeInfo
+FloodFill
+MillerHash
+ChemLink
+ChemMod
+EnerLib
+MonLib
+BondIndex
+Topo
+ComplexCorrelation
+HklValue
+ValueSigma
+AsuData
+DensityCalculator
+AtomNameElement
+GridOp
+GridMeta
+GridBase
+Grid
+ContactSearch
+ReciprocalGrid
+LinkHunt
+PdbReadOptions
+ResidueSpan::GroupingProxy
+const_CRA
+CRA
+SoftwareItem
+ReflectionsInfo
+ExperimentInfo
+DiffractionInfo
+CrystalInfo
+TlsGroup
+BasicRefinementInfo
+RefinementInfo
+SiftsUnpResidue
+Helix
+Sheet
+Assembly
+MmcifOutputGroups
+Blob
+BlobCriteria
+GridConstPoint
+Box
+Variance
+Covariance
+Correlation
+DataStats
+UnmergedHklMover
+Mtz
+MtzDataProxy
+MtzExternalDataProxy
+Intensities
+from_chars_result
+parse_options
+span
+value128
+adjusted_mantissa
+parsed_number_string
+powers_template
+stackvec
+bigint
+parsed_number_string
+util
+ExecC2C
+ExecHartley
+ExecDcst
+ExecR2R
+XdsAscii
+Restraints
+ChemComp
+Scaling
+Gaus
+Point
+OrbitalCoef
+SellingVector;
+GruberVector
+SellingVector
+ExpSum
+ExpAnisoSum
+GaussianCoef
+AlignmentScoring
+AlignmentResult
+Addends
+SpaceGroupAltName
+Tables_
+ReciprocalAsu
+Neutron92
+PdbWriteOptions
+LoopArg
+FrameArg
+CommentArg
+Loop
+Table
+Document
+ChainNameGenerator
+AssemblyMapping
+FileStream
+MemoryStream
+ReflnBlock
+ReflnDataProxy
+Selection
+ResidueInfo
+FPhiProxy
+CifToMtz
+Element
+Ccp4Base
+Ccp4
+BidirIterator
+UniqProxy
+ConstUniqProxy
+FilterProxy
+ConstFilterProxy
+SmallStructure
+SupResult
+Ofstream
+Ifstream
+LevMar
+BesselTables_
+IsMmCifFile
+IsCifFile
+IsPdbFile
+IsCoordinateFile
+IsAnyFile
+IsMatchingFile
+GlobWalk
+    */
 
     class_<gemmi::Structure>("Structure")
     .constructor<>()
@@ -1186,7 +1346,9 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     function("read_structure_file",&gemmi::read_structure_file);
     function("get_spacegroup_by_name",&gemmi::get_spacegroup_by_name);
-    function("getSpaceGroupHMAsString",&get_hm);
-    function("getSpaceGroupHallAsString",&get_hall);
-    function("getSpaceGroupQualifierAsString",&get_qualifier);
+
+    function("getSpaceGroupHMAsString",&get_spacegroup_hm);
+    function("getSpaceGroupHallAsString",&get_spacegroup_hall);
+    function("getSpaceGroupQualifierAsString",&get_spacegroup_qualifier);
+    function("getElementNameAsString",&get_element_name_as_string);
 }
