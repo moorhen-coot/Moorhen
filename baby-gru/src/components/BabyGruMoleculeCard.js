@@ -4,7 +4,7 @@ import { Card, Form, Button, Row, Col, DropdownButton } from "react-bootstrap";
 import { doDownload, sequenceIsValid } from '../utils/BabyGruUtils';
 import { UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined, ExpandLessOutlined, VisibilityOffOutlined, VisibilityOutlined, DownloadOutlined, Settings } from '@mui/icons-material';
 import { BabyGruSequenceViewer } from "./BabyGruSequenceViewer";
-import { BabyGruDeleteDisplayObjectMenuItem, BabyGruRenameDisplayObjectMenuItem } from "./BabyGruMenuItem";
+import { BabyGruDeleteDisplayObjectMenuItem, BabyGruRenameDisplayObjectMenuItem, BabyGruMergeMoleculesMenuItem } from "./BabyGruMenuItem";
 
 export const BabyGruMoleculeCard = (props) => {
     const [showState, setShowState] = useState({})
@@ -164,18 +164,23 @@ export const BabyGruMoleculeCard = (props) => {
             }
         },
         6: {
-            label: 'Refine selected residues',
-            compressed: () => { return (<MenuItem key={6} variant="success" disabled={(!clickedResidue || !selectedResidues)} onClick={handleResidueRangeRefinement}>Refine selected residues</MenuItem>) },
+            label: 'Merge molecules',
+            compressed: () => { return (<BabyGruMergeMoleculesMenuItem key={6} glRef={props.glRef} molecules={props.molecules} setPopoverIsShown={setPopoverIsShown} menuItemText="Merge molecule into..." popoverPlacement='left' fromMolNo={props.molecule.molNo}/>) },
             expanded: null
         },
         7: {
-            label: 'Rename molecule',
-            compressed: () => { return (<BabyGruRenameDisplayObjectMenuItem key={7} setPopoverIsShown={setPopoverIsShown} setCurrentName={setCurrentName} item={props.molecule} />) },
+            label: 'Refine selected residues',
+            compressed: () => { return (<MenuItem key={7} variant="success" disabled={(!clickedResidue || !selectedResidues)} onClick={handleResidueRangeRefinement}>Refine selected residues</MenuItem>) },
             expanded: null
         },
         8: {
+            label: 'Rename molecule',
+            compressed: () => { return (<BabyGruRenameDisplayObjectMenuItem key={8} setPopoverIsShown={setPopoverIsShown} setCurrentName={setCurrentName} item={props.molecule} />) },
+            expanded: null
+        },
+        9: {
             label: 'Copy selected residues into fragment',
-            compressed: () => { return (<MenuItem key={8} variant="success" disabled={(!clickedResidue || !selectedResidues)} onClick={handleCopyFragment}>Copy selected residues into fragment</MenuItem>) },
+            compressed: () => { return (<MenuItem key={9} variant="success" disabled={(!clickedResidue || !selectedResidues)} onClick={handleCopyFragment}>Copy selected residues into fragment</MenuItem>) },
             expanded: null
         },
     }
