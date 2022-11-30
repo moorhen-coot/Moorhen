@@ -97,6 +97,26 @@ export const BabyGruMoleculeCard = (props) => {
         props.setCurrentDropdownMolNo(-1)
     }
 
+    const handleResidueRefinement = () => {
+        async function refineResidueRange() {
+            await props.commandCentre.current.cootCommand({
+                returnType: "status",
+                command: 'refine_residue_range',
+                commandArgs: [props.molecule.molNo, clickedResidue.chain, ...selectedResidues],
+                changesMolecules: [props.molecule.molNo]
+            }, true)
+            
+            props.molecule.setAtomsDirty(true)
+            props.molecule.redraw(props.glRef)    
+        }
+
+        if (clickedResidue && selectedResidues) {
+            refineResidueRange()
+        }
+
+        props.setCurrentDropdownMolNo(-1)
+    }
+
     const actionButtons = {
         1: {
             label: "Undo last action",
@@ -144,15 +164,20 @@ export const BabyGruMoleculeCard = (props) => {
             }
         },
         6: {
+            label: 'Refine selected residues',
+            compressed: () => { return (<MenuItem key={8} variant="success" onClick={handleResidueRefinement}>Refine selected residues</MenuItem>) },
+            expanded: null
+        },
+        7: {
             label: 'Rename molecule',
             compressed: () => { return (<BabyGruRenameDisplayObjectMenuItem key={6} setPopoverIsShown={setPopoverIsShown} setCurrentName={setCurrentName} item={props.molecule} />) },
             expanded: null
         },
-        7: {
+        8: {
             label: 'Copy selected residues into fragment',
             compressed: () => { return (<MenuItem key={7} variant="success" onClick={handleCopyFragment}>Copy selected residues into fragment</MenuItem>) },
             expanded: null
-        }
+        },
     }
 
     const getButtonBar = (sideBarWidth) => {
