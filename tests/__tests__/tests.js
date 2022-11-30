@@ -21,6 +21,71 @@ describe('Testing molecules_container_js', () => {
         setupFunctions.copyExampleDataToFauxFS()
     })
 
+    test('Test gemmi', () => {
+        console.log(cootModule.CoorFormat.Pdb)
+        console.log(cootModule.CoorFormat.ChemComp)
+        const st = cootModule.read_structure_file('./5a3h.pdb',cootModule.CoorFormat.Pdb)
+        console.log(st)
+        console.log(st.has_origx)
+        console.log(st.cell)
+        console.log(st.models.size())
+        console.log(st.first_model())
+        console.log(st.origx)
+        const model = st.first_model()
+        const chains = model.chains
+        console.log(chains)
+        console.log(chains.size())
+        const sgp1 = cootModule.get_spacegroup_by_name('P1')
+        console.log(sgp1)
+        console.log("hm",cootModule.getSpaceGroupHMAsString(sgp1))
+        console.log("hall",cootModule.getSpaceGroupHallAsString(sgp1))
+        console.log("qualifier",cootModule.getSpaceGroupQualifierAsString(sgp1))
+        console.log(st.spacegroup_hm)
+        
+        for(let i=0;i<chains.size();i++){
+            const ch = chains.get(i)
+            console.log(ch.name)
+            const residues = ch.residues
+            console.log(residues,residues.size())
+            if(residues.size()>0){
+                const res = residues.get(0)
+                console.log(res)
+                console.log(res.name)
+                const atoms = res.atoms
+                console.log(atoms,atoms.size())
+                if(atoms.size()>0){
+                    const at = atoms.get(0)
+                    console.log(at)
+                    console.log(at.name)
+                    console.log(cootModule.getElementNameAsString(at.element))
+                    console.log(at.serial)
+                    console.log(at.pos.x,at.pos.y,at.pos.z)
+                    console.log(at.occ)
+                    console.log(at.b_iso)
+                    console.log(at.padded_name())
+                    const anisoRow0 = at.aniso.as_mat33().row_copy(0)
+                    const anisoRow1 = at.aniso.as_mat33().row_copy(1)
+                    const anisoRow2 = at.aniso.as_mat33().row_copy(2)
+                    console.log(anisoRow0.x,anisoRow0.y,anisoRow0.z)
+                    console.log(anisoRow1.x,anisoRow1.y,anisoRow1.z)
+                    console.log(anisoRow2.x,anisoRow2.y,anisoRow2.z)
+                }
+            }
+            const waters = ch.get_waters_const()
+            console.log(waters,waters.length())
+            if(waters.length()>0){
+                console.log("water",waters.at(0))
+                console.log(waters.subchain_id())
+                const seq = waters.extract_sequence()
+            }
+            const ligands = ch.get_ligands_const()
+            if(ligands.length()>0){
+                console.log("ligand",ligands.at(0))
+                console.log(ligands.subchain_id())
+            }
+        }
+    })
+
     test('Test add', () => {
         const molecules_container = new cootModule.molecules_container_js()
         const ret = molecules_container.add(0)

@@ -552,9 +552,17 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<merge_molecule_results_info_t>("Vectormerge_molecule_results_info_t");
     register_vector<coot::phi_psi_prob_t>("Vectophi_psi_prob_t");
 
+    register_vector<gemmi::BasicRefinementInfo>("VectorGemmiBasicRefinementInfo");
+    register_vector<gemmi::ExperimentInfo>("VectorGemmiExperimentInfo");
+    register_vector<gemmi::CrystalInfo>("VectorGemmiCrystalInfo");
+    register_vector<gemmi::RefinementInfo>("VectorGemmiRefinementInfo");
+    register_vector<gemmi::SoftwareItem>("VectorGemmiSoftwareItem");
+    register_vector<gemmi::Assembly::Gen>("VectorGemmiAssemblyGen");
+    register_vector<gemmi::Sheet::Strand>("VectorGemmiSheetStrand");
     register_vector<gemmi::Entity::DbRef>("VectorGemmiEntityDbRef");
     register_vector<gemmi::Atom>("VectorGemmiAtom");
     register_vector<gemmi::Model>("VectorGemmiModel");
+    register_vector<gemmi::Op>("VectorGemmiOp");
     register_vector<gemmi::NcsOp>("VectorGemmiNcsOp");
     register_vector<gemmi::Entity>("VectorGemmiEntity");
     register_vector<gemmi::Connection>("VectorGemmiConnection");
@@ -583,6 +591,35 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .element(emscripten::index<2>())
     ;
     function("getRotamersMap",&getRotamersMap);
+
+    enum_<gemmi::Assembly::SpecialKind>("SpecialKind")
+        .value("NA", gemmi::Assembly::SpecialKind::NA)
+        .value("CompleteIcosahedral", gemmi::Assembly::SpecialKind::CompleteIcosahedral)
+        .value("RepresentativeHelical", gemmi::Assembly::SpecialKind::RepresentativeHelical)
+        .value("CompletePoint", gemmi::Assembly::SpecialKind::CompletePoint)
+    ;
+
+    enum_<gemmi::Connection::Type>("ConnectionType")
+        .value("Covale", gemmi::Connection::Type::Covale)
+        .value("Disulf", gemmi::Connection::Type::Disulf)
+        .value("Hydrog", gemmi::Connection::Type::Hydrog)
+        .value("MetalC", gemmi::Connection::Type::MetalC)
+        .value("Unknown", gemmi::Connection::Type::Unknown)
+    ;
+
+    enum_<gemmi::Helix::HelixClass>("HelixClass")
+        .value("UnknownHelix", gemmi::Helix::HelixClass::UnknownHelix)
+        .value("RAlpha", gemmi::Helix::HelixClass::RAlpha)
+        .value("ROmega", gemmi::Helix::HelixClass::ROmega)
+        .value("RPi", gemmi::Helix::HelixClass::RPi)
+        .value("RGamma", gemmi::Helix::HelixClass::RGamma)
+        .value("R310", gemmi::Helix::HelixClass::R310)
+        .value("LAlpha", gemmi::Helix::HelixClass::LAlpha)
+        .value("LOmega", gemmi::Helix::HelixClass::LOmega)
+        .value("LGamma", gemmi::Helix::HelixClass::LGamma)
+        .value("Helix27", gemmi::Helix::HelixClass::Helix27)
+        .value("HelixPolyProlineNone", gemmi::Helix::HelixClass::HelixPolyProlineNone)
+    ;
 
     enum_<gemmi::Asu>("Asu")
         .value("Same", gemmi::Asu::Same)
@@ -1192,38 +1229,180 @@ EMSCRIPTEN_BINDINGS(my_module) {
     //.property("hall",&gemmi::SpaceGroup::hall)
     ;
 
-    //TODO Wrap the following
+    class_<gemmi::Transform>("Transform")
+    .property("mat",&gemmi::Transform::mat)
+    .property("vec",&gemmi::Transform::vec)
+    .function("inverse",&gemmi::Transform::inverse)
+    .function("apply",&gemmi::Transform::apply)
+    .function("combine",&gemmi::Transform::combine)
+    .function("is_identity",&gemmi::Transform::is_identity)
+    .function("set_identity",&gemmi::Transform::set_identity)
+    .function("approx",&gemmi::Transform::approx)
+    ;
+
+    class_<gemmi::FTransform,base<gemmi::Transform>>("FTransform")
+    .function("apply",&gemmi::FTransform::apply)
+    ;
+
     class_<gemmi::Op>("Op")
+    .property("rot",&gemmi::Op::rot) //No idea if this can work - Rot
+    .property("tran",&gemmi::Op::tran) //No idea if this can work - Tran
+    .function("triplet",&gemmi::Op::triplet)
+    .function("inverse",&gemmi::Op::inverse)
+    .function("wrap",&gemmi::Op::wrap)
+    .function("translate",&gemmi::Op::translate)
+    .function("translated",&gemmi::Op::translated) //No idea if this can work - Tran
+    .function("add_centering",&gemmi::Op::add_centering) //No idea if this can work - Tran
+    .function("negated_rot",&gemmi::Op::negated_rot) //No idea if this can work - Rot
+    .function("transposed_rot",&gemmi::Op::transposed_rot) //No idea if this can work - Rot
+    .function("det_rot",&gemmi::Op::det_rot)
+    .function("rot_type",&gemmi::Op::rot_type)
+    .function("combine",&gemmi::Op::combine)
+    .function("apply_to_xyz",&gemmi::Op::apply_to_xyz)// ? const std::array<double, 3> arg and return
+    .function("apply_to_hkl_without_division",&gemmi::Op::apply_to_hkl_without_division) //No idea if this can work - Miller
+    .function("divide_hkl_by_DEN",&gemmi::Op::divide_hkl_by_DEN) //No idea if this can work - Miller std::array<int, 3>
+    .function("apply_to_hkl",&gemmi::Op::apply_to_hkl) //No idea if this can work - Miller std::array<int, 3>
+    .function("phase_shift",&gemmi::Op::phase_shift) //No idea if this can work - Miller std::array<int, 3>
+    .function("int_seitz",&gemmi::Op::int_seitz)// ? std::array<std::array<int, 4>, 4> return
+    .function("float_seitz",&gemmi::Op::float_seitz)// ? std::array<std::array<int, 4>, 4> return
+    //.function("identity",&gemmi::Op::identity) // does not work. Because static?
     ;
+
     class_<gemmi::GroupOps>("GroupOps")
+    .property("sym_ops",&gemmi::GroupOps::sym_ops)
+    .function("order",&gemmi::GroupOps::order)
+    .function("add_missing_elements",&gemmi::GroupOps::add_missing_elements)
+    .function("add_missing_elements_part2",&gemmi::GroupOps::add_missing_elements_part2)
+    .function("add_inversion",&gemmi::GroupOps::add_inversion)
+    .function("find_centering",&gemmi::GroupOps::find_centering)
+    .function("is_centrosymmetric",&gemmi::GroupOps::is_centrosymmetric)
+    .function("is_reflection_centric",&gemmi::GroupOps::is_reflection_centric)
+    .function("epsilon_factor",&gemmi::GroupOps::epsilon_factor)
+    .function("epsilon_factor_without_centering",&gemmi::GroupOps::epsilon_factor_without_centering)
+    .function("has_phase_shift",&gemmi::GroupOps::has_phase_shift)
+    .function("is_systematically_absent",&gemmi::GroupOps::is_systematically_absent)
+    .function("change_basis_impl",&gemmi::GroupOps::change_basis_impl)
+    .function("change_basis_forward",&gemmi::GroupOps::change_basis_forward)
+    .function("change_basis_backward",&gemmi::GroupOps::change_basis_backward)
+    .function("all_ops_sorted",&gemmi::GroupOps::all_ops_sorted)
+    .function("get_op",&gemmi::GroupOps::get_op)
+    .function("is_same_as",&gemmi::GroupOps::is_same_as)
+    .function("has_same_centring",&gemmi::GroupOps::has_same_centring)
+    .function("has_same_rotations",&gemmi::GroupOps::has_same_rotations)
+    .function("find_grid_factors",&gemmi::GroupOps::find_grid_factors)// return std::array<int, 3>
+    .function("are_directions_symmetry_related",&gemmi::GroupOps::are_directions_symmetry_related)
+    .function("derive_symmorphic",&gemmi::GroupOps::derive_symmorphic)
+    //.property("sym_ops",&gemmi::GroupOps::sym_ops) // Op::Tran
     ;
+
     class_<gemmi::Helix>("Helix")
+    .property("start",&gemmi::Helix::start)
+    .property("end",&gemmi::Helix::end)
+    .property("pdb_helix_class",&gemmi::Helix::pdb_helix_class)
+    .property("length",&gemmi::Helix::length)
+    .function("set_helix_class_as_int",&gemmi::Helix::set_helix_class_as_int)
+    ;
+    class_<gemmi::Sheet::Strand>("Strand")
+    .property("start",&gemmi::Sheet::Strand::start)
+    .property("end",&gemmi::Sheet::Strand::end)
+    .property("hbond_atom2",&gemmi::Sheet::Strand::hbond_atom2)
+    .property("hbond_atom1",&gemmi::Sheet::Strand::hbond_atom1)
+    .property("sense",&gemmi::Sheet::Strand::sense)
+    .property("name",&gemmi::Sheet::Strand::name)
     ;
     class_<gemmi::Sheet>("Sheet")
-    ;
-    class_<gemmi::Assembly>("Assembly")
+    .property("name",&gemmi::Sheet::name)
+    .property("strands",&gemmi::Sheet::strands)
     ;
     class_<gemmi::Connection>("Connection")
+    .property("name",&gemmi::Connection::name)
+    .property("link_id",&gemmi::Connection::link_id)
+    .property("type",&gemmi::Connection::type)
+    .property("asu",&gemmi::Connection::asu)
+    .property("partner1",&gemmi::Connection::partner1)
+    .property("partner2",&gemmi::Connection::partner2)
+    .property("reported_distance",&gemmi::Connection::reported_distance)
     ;
+    class_<gemmi::AtomAddress>("AtomAddress")
+    .property("chain_name",&gemmi::AtomAddress::chain_name)
+    .property("res_id",&gemmi::AtomAddress::res_id)
+    .property("atom_name",&gemmi::AtomAddress::atom_name)
+    .property("altloc",&gemmi::AtomAddress::altloc)
+    .function("str",&gemmi::AtomAddress::str)
+    ;
+
+    class_<gemmi::Assembly::Operator>("AssemblyOperator")
+    .property("name",&gemmi::Assembly::Operator::name)
+    .property("type",&gemmi::Assembly::Operator::type)
+    .property("transform",&gemmi::Assembly::Operator::transform)
+    ;
+
+    class_<gemmi::Assembly::Gen>("AssemblyGen")
+    .property("chains",&gemmi::Assembly::Gen::chains)
+    .property("subchains",&gemmi::Assembly::Gen::subchains)
+    .property("operators",&gemmi::Assembly::Gen::operators)
+    ;
+
+    class_<gemmi::Assembly>("Assembly")
+    .property("name",&gemmi::Assembly::name)
+    .property("author_determined",&gemmi::Assembly::author_determined)
+    .property("software_determined",&gemmi::Assembly::software_determined)
+    .property("special_kind",&gemmi::Assembly::special_kind)
+    .property("oligomeric_count",&gemmi::Assembly::oligomeric_count)
+    .property("oligomeric_details",&gemmi::Assembly::oligomeric_details)
+    .property("software_name",&gemmi::Assembly::software_name)
+    .property("absa",&gemmi::Assembly::absa)
+    .property("ssa",&gemmi::Assembly::ssa)
+    .property("more",&gemmi::Assembly::more)
+    .property("generators",&gemmi::Assembly::generators)
+    ;
+
+    class_<gemmi::NcsOp>("NcsOp")
+    .property("id",&gemmi::NcsOp::id)
+    .property("given",&gemmi::NcsOp::given)
+    .property("tr",&gemmi::NcsOp::tr)
+    .function("apply",&gemmi::NcsOp::apply)
+    ;
+
+    //TODO Wrap the following
+    class_<gemmi::Metadata>("Metadata")
+    .property("authors",&gemmi::Metadata::authors)
+    .property("experiments",&gemmi::Metadata::experiments)
+    .property("crystals",&gemmi::Metadata::crystals)
+    .property("refinement",&gemmi::Metadata::refinement)
+    .property("software",&gemmi::Metadata::software)
+    .property("solved_by",&gemmi::Metadata::solved_by)
+    .property("starting_model",&gemmi::Metadata::starting_model)
+    .property("remark_300_detail",&gemmi::Metadata::remark_300_detail)
+    .function("has_restr",&gemmi::Metadata::has_restr)
+    .function("has_tls",&gemmi::Metadata::has_tls)
+    /*
+    .function("has_d",select_overload<bool(double gemmi::RefinementInfo::*field)const>(&gemmi::Metadata::has))
+    .function("has_i",select_overload<bool(int gemmi::RefinementInfo::*field)const>(&gemmi::Metadata::has))
+    .function("has_s",select_overload<bool(std::string gemmi::RefinementInfo::*field)const>(&gemmi::Metadata::has))
+    .function("has_m33",select_overload<bool(gemmi::Mat33 gemmi::RefinementInfo::*field)const>(&gemmi::Metadata::has))
+    */
+    ;
+    class_<gemmi::SoftwareItem>("SoftwareItem")
+    ;
+    class_<gemmi::ExperimentInfo>("ExperimentInfo")
+    ;
+    class_<gemmi::CrystalInfo>("CrystalInfo")
+    ;
+    class_<gemmi::BasicRefinementInfo>("BasicRefinementInfo")
+    ;
+    class_<gemmi::RefinementInfo,base<gemmi::BasicRefinementInfo>>("RefinementInfo")
+    ;
+
     class_<gemmi::CraProxy>("CraProxy")
     ;
     class_<gemmi::ConstCraProxy>("ConstCraProxy")
     ;
     class_<gemmi::const_CRA>("const_CRA")
     ;
-    class_<gemmi::AtomAddress>("AtomAddress")
-    ;
-    class_<gemmi::NcsOp>("NcsOp")
-    ;
-    class_<gemmi::Metadata>("Metadata")
-    ;
-    class_<gemmi::Transform>("Transform")
-    ;
-    class_<gemmi::FTransform>("FTransform")
-    ;
     class_<gemmi::NearestImage>("NearestImage")
     ;
-    class_<gemmi::Miller>("Miller")
+    class_<gemmi::Miller>("MillerHash")
     ;
 
     // And possibly all/some of these
@@ -1239,7 +1418,6 @@ AsuBrick
 SolventMasker
 NodeInfo
 FloodFill
-MillerHash
 ChemLink
 ChemMod
 EnerLib
@@ -1261,20 +1439,11 @@ ReciprocalGrid
 LinkHunt
 PdbReadOptions
 ResidueSpan::GroupingProxy
-const_CRA
-CRA
-SoftwareItem
 ReflectionsInfo
-ExperimentInfo
 DiffractionInfo
-CrystalInfo
 TlsGroup
 BasicRefinementInfo
-RefinementInfo
 SiftsUnpResidue
-Helix
-Sheet
-Assembly
 MmcifOutputGroups
 Blob
 BlobCriteria
