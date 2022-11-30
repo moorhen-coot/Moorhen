@@ -329,6 +329,8 @@ export const BabyGruMoleculeCard = (props) => {
                                     setClickedResidue={setClickedResidue}
                                     selectedResidues={selectedResidues}
                                     setSelectedResidues={setSelectedResidues}
+                                    hoveredAtom={props.hoveredAtom}
+                                    setHoveredAtom={props.setHoveredAtom}
                                 />)
                             }
                         )

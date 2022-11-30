@@ -124,6 +124,32 @@ export const BabyGruSequenceViewer = (props) => {
         sequenceRef.current.trackHighlighter.changedCallBack('highlightstart', resNum)
         sequenceRef.current.trackHighlighter.changedCallBack('highlightend', resNum)
     } 
+
+    /**
+     * Hook used to handle hovering events on the visualisation panel
+     */
+    useEffect(() => {
+        if (props.hoveredAtom===null || props.hoveredAtom.molecule === null || props.hoveredAtom.cid === null || sequenceRef.current === null) {
+            return
+        }
+
+        const [_, insCode, chainId, resInfo, atomName]   = props.hoveredAtom.cid.split('/')
+
+        if (chainId !== props.sequence.chain || !resInfo) {
+            return
+        }
+        
+        const resNum = resInfo.split('(')[0]
+        
+        if (!resNum) {
+            return
+        }
+        
+        setMessage(props.hoveredAtom.cid)
+        setHighlight(resNum)
+
+    }, [props.hoveredAtom])
+
     
     /**
      * Callback to handle changes in the protvista component
@@ -140,8 +166,8 @@ export const BabyGruSequenceViewer = (props) => {
             }
         } else if (evt.detail.eventtype === "mouseover") {
             if (evt.detail.feature !== null) {
-                setMessage(`/${evt.detail.feature.start} (${props.sequence.type==="polypeptide(L)" ? residueCodesOneToThree[evt.detail.feature.aa] : nucleotideCodesOneToThree[evt.detail.feature.aa]})`)
-                setHighlight(evt.detail.feature.start)
+                const cid =`//${props.sequence.chain}/${evt.detail.feature.start}(${props.sequence.type==="polypeptide(L)" ? residueCodesOneToThree[evt.detail.feature.aa] : nucleotideCodesOneToThree[evt.detail.feature.aa]})/CA`
+                props.setHoveredAtom({ molecule: props.molecule, cid: cid })
             }
         } else if (evt.detail.eventtype === "mouseout") {
             setMessage("")
@@ -235,7 +261,7 @@ export const BabyGruSequenceViewer = (props) => {
 
     return (
         <div className='align-items-center' style={{marginBottom:'0', padding:'0'}}>
-            <span>{`${props.molecule.name}/${props.sequence.chain}${message}`}</span>
+            <span>{`${props.molecule.name}${message ? "" : "/" + props.sequence.chain}${message}`}</span>
             <div style={{width: '100%'}}>
                 <protvista-manager ref={managerRef}>
                     <protvista-navigation 
