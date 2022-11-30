@@ -16,6 +16,7 @@ import { BabyGruLigandMenu } from './BabyGruLigandMenu';
 import { BabyGruToolsAccordion } from './BabyGruToolsAccordion'
 import { PreferencesContext } from "../utils/BabyGruPreferences";
 import { babyGruKeyPress } from './BabyGruKeyboardAccelerators';
+import { BabyGruEditMenu } from './BabyGruEditMenu';
 
 const initialMoleculesState = []
 
@@ -274,11 +275,12 @@ export const BabyGruContainer = (props) => {
             <Navbar.Toggle aria-controls="basic-navbar-nav" />
             <Navbar.Collapse id="basic-navbar-nav">
                 <Nav className="justify-content-left">
-                    <BabyGruFileMenu dropdownId={1} {...collectedProps} />
-                    <BabyGruHistoryMenu dropdownId={2} {...collectedProps} />
-                    <BabyGruViewMenu dropdownId={3} {...collectedProps} />
-                    <BabyGruLigandMenu dropdownId={4} {...collectedProps} />
-                    <BabyGruPreferencesMenu dropdownId={5} {...collectedProps} />
+                    <BabyGruFileMenu dropdownId="File" {...collectedProps} />
+                    <BabyGruEditMenu dropdownId="Edit" {...collectedProps} />
+                    <BabyGruHistoryMenu dropdownId="History" {...collectedProps} />
+                    <BabyGruViewMenu dropdownId="View" {...collectedProps} />
+                    <BabyGruLigandMenu dropdownId="Ligand" {...collectedProps} />
+                    <BabyGruPreferencesMenu dropdownId="Preferences" {...collectedProps} />
                     {props.extraMenus && props.extraMenus.map(menu=>menu)}
                 </Nav>
             </Navbar.Collapse>

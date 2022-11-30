@@ -170,7 +170,7 @@ export const BabyGruDeleteDisplayObjectMenuItem = (props) => {
         props.changeItemList({ action: 'Remove', item: props.item })
         props.item.delete(props.glRef);
         props.setPopoverIsShown(false)
-        if(props.item.type === "map" && props.activeMap.molNo === props.item.molNo) {
+        if (props.item.type === "map" && props.activeMap.molNo === props.item.molNo) {
             props.setActiveMap(null)
         }
     }
@@ -886,6 +886,115 @@ export const BabyGruMergeMoleculesMenuItem = (props) => {
         popoverPlacement='right'
         popoverContent={panelContent}
         menuItemText="Merge molecules..."
+        onCompleted={onCompleted}
+        setPopoverIsShown={props.setPopoverIsShown}
+    />
+}
+
+export const BabyGruDeleteUsingCidMenuItem = (props) => {
+    const fromRef = useRef(null)
+    const cidRef = useRef(null)
+    const [cid, setCid] = useState("")
+
+    const panelContent = <>
+        <BabyGruMoleculeSelect {...props} label="From molecule" allowAny={false} ref={fromRef} />
+        <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="cid" className="mb-3">
+            <Form.Label>Selection to delete</Form.Label>
+            <Form.Control ref={cidRef} type="text" value={cid} onChange={(e) => {
+                setCid(e.target.value)
+            }} />
+        </Form.Group>
+
+    </>
+
+    const onCompleted = async () => {
+        const fromMolecules = props.molecules
+            .filter(molecule => molecule.molNo === parseInt(fromRef.current.value))
+        const cidToDelete = cidRef.current.value
+
+        const commandArgs = [
+            parseInt(fromRef.current.value),
+            `${cidToDelete}`,
+            "LITERAL"
+        ]
+
+        props.commandCentre.current.cootCommand({
+            returnType: "status",
+            command: "delete_using_cid",
+            commandArgs: commandArgs,
+            changesMolecules: [parseInt(fromRef.current.value)]
+        }, true).then(_ => {
+            fromMolecules[0].setAtomsDirty(true)
+            fromMolecules[0].redraw(props.glRef)
+        })
+
+        props.setPopoverIsShown(false)
+    }
+
+    return <BabyGruMenuItem
+        popoverPlacement='right'
+        popoverContent={panelContent}
+        menuItemText="Delete Cid..."
+        onCompleted={onCompleted}
+        setPopoverIsShown={props.setPopoverIsShown}
+    />
+}
+
+export const BabyGruCopyFragmentUsingCidMenuItem = (props) => {
+    const fromRef = useRef(null)
+    const cidRef = useRef(null)
+    const [cid, setCid] = useState("")
+
+    const panelContent = <>
+        <BabyGruMoleculeSelect {...props} label="From molecule" allowAny={false} ref={fromRef} />
+        <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="cid" className="mb-3">
+            <Form.Label>Selection to delete</Form.Label>
+            <Form.Control ref={cidRef} type="text" value={cid} onChange={(e) => {
+                setCid(e.target.value)
+            }} />
+        </Form.Group>
+
+    </>
+
+    const onCompleted = async () => {
+        const fromMolecules = props.molecules
+            .filter(molecule => molecule.molNo === parseInt(fromRef.current.value))
+        const cidToCopy = cidRef.current.value
+
+        const commandArgs = [
+            parseInt(fromRef.current.value),
+            `${cidToCopy}`,
+        ]
+
+        props.commandCentre.current.cootCommand({
+            returnType: "status",
+            command: "copy_fragment_using_cid",
+            commandArgs: commandArgs,
+            changesMolecules: [parseInt(fromRef.current.value)]
+        }, true).then(async response => {
+            const newMolecule = new BabyGruMolecule(props.commandCentre)
+            newMolecule.name = `${fromMolecules[0].name} fragment`
+            newMolecule.molNo = response.data.result.result
+            await newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef)
+            props.changeMolecules({ action: "Add", item: newMolecule })
+
+            const sequenceInputData = { returnType: "residue_codes", command: "get_single_letter_codes_for_chain", commandArgs: [response.data.result.result, 'A'] }
+            const sequenceResponse = await props.commandCentre.current.cootCommand(sequenceInputData)
+            newMolecule.cachedAtoms.sequences = [{
+                "sequence": sequenceResponse.data.result.result,
+                "name": newMolecule.name,
+                "chain": 'A',
+                "type": newMolecule.cachedAtoms.sequences.length > 0 ? newMolecule.cachedAtoms.sequences[0].type : 'ligand'
+            }]
+        })
+
+        props.setPopoverIsShown(false)
+    }
+
+    return <BabyGruMenuItem
+        popoverPlacement='right'
+        popoverContent={panelContent}
+        menuItemText="Copy fragment..."
         onCompleted={onCompleted}
         setPopoverIsShown={props.setPopoverIsShown}
     />
