@@ -868,14 +868,18 @@ export const BabyGruMergeMoleculesMenuItem = (props) => {
 
     const panelContent = <>
         <BabyGruMoleculeSelect {...props} label="Into molecule" allowAny={false} ref={toRef} />
-        <BabyGruMoleculeSelect {...props} label="From molecule" allowAny={false} ref={fromRef} />
+        {props.fromMolNo === null ? <BabyGruMoleculeSelect {...props} label="From molecule" allowAny={false} ref={fromRef}/> : null}
     </>
 
     const onCompleted = useCallback(async () => {
         const toMolecule = props.molecules
             .filter(molecule => molecule.molNo === parseInt(toRef.current.value))[0]
         const otherMolecules = props.molecules
-            .filter(molecule => molecule.molNo === parseInt(fromRef.current.value))
+            .filter(molecule => molecule.molNo === parseInt(props.fromMolNo !== null ? props.fromMolNo : fromRef.current.value) && molecule.molNo !== toMolecule.molNo)
+        if (!otherMolecules.length > 0){
+            console.log('No valid molecules selected, skipping merge...')
+            return
+        }
         console.log({ toMolecule, otherMolecules })
         let banan = await toMolecule.mergeMolecules(otherMolecules, props.glRef, true)
         console.log({ banan })
@@ -883,9 +887,9 @@ export const BabyGruMergeMoleculesMenuItem = (props) => {
     }, [toRef.current, fromRef.current, props.molecules])
 
     return <BabyGruMenuItem
-        popoverPlacement='right'
+        popoverPlacement={props.popoverPlacement}
         popoverContent={panelContent}
-        menuItemText="Merge molecules..."
+        menuItemText={props.menuItemText}
         onCompleted={onCompleted}
         setPopoverIsShown={props.setPopoverIsShown}
     />
@@ -998,6 +1002,12 @@ export const BabyGruCopyFragmentUsingCidMenuItem = (props) => {
         onCompleted={onCompleted}
         setPopoverIsShown={props.setPopoverIsShown}
     />
+}
+
+BabyGruMergeMoleculesMenuItem.defaultProps = {
+    popoverPlacement: "right",
+    menuItemText: 'Merge molecules...',
+    fromMolNo: null
 }
 
 export const BabyGruAddWatersMenuItem = (props) => {
