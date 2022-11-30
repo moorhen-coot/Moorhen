@@ -1069,7 +1069,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("sole_atom",&gemmi::Residue::sole_atom)
     .function("same_conformer",&gemmi::Residue::same_conformer)
     .function("is_water",&gemmi::Residue::is_water)
-    //.property("sifts_unp",&gemmi::Residue::sifts_unp) //SiftsUnpResidue
+    .property("sifts_unp",&gemmi::Residue::sifts_unp)
     //UniqProxy<Atom> first_conformer() { return {atoms}; }
     //ConstUniqProxy<Atom> first_conformer() const { return {atoms}; }
     //And various pointer return methods ...
@@ -1555,9 +1555,41 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("symmetry_code",&gemmi::NearestImage::symmetry_code)
     ;
 
+    class_<gemmi::SiftsUnpResidue>("SiftsUnpResidue")
+    .property("res",&gemmi::SiftsUnpResidue::res)
+    .property("acc_index",&gemmi::SiftsUnpResidue::acc_index)
+    .property("num",&gemmi::SiftsUnpResidue::num)
+    ;
     //TODO Wrap some of these gemmi classes
     /*
+
+ChemLink
+ChemMod
+EnerLib
+MonLib
+BondIndex
 Binner
+AsuData
+Restraints
+ChemComp
+ReflnBlock
+ReflnDataProxy
+CifToMtz
+Element
+Ccp4Base
+Ccp4
+LoopArg
+FrameArg
+CommentArg
+Loop
+Table
+Document
+Selection
+ResidueInfo
+SmallStructure
+
+UniqProxy
+ConstUniqProxy
 HklMatch
 CenterOfMass
 IT92
@@ -1568,16 +1600,10 @@ AsuBrick
 SolventMasker
 NodeInfo
 FloodFill
-ChemLink
-ChemMod
-EnerLib
-MonLib
-BondIndex
 Topo
 ComplexCorrelation
 HklValue
 ValueSigma
-AsuData
 DensityCalculator
 AtomNameElement
 GridOp
@@ -1589,7 +1615,6 @@ ReciprocalGrid
 LinkHunt
 PdbReadOptions
 ResidueSpan::GroupingProxy
-SiftsUnpResidue
 MmcifOutputGroups
 Blob
 BlobCriteria
@@ -1620,8 +1645,6 @@ ExecHartley
 ExecDcst
 ExecR2R
 XdsAscii
-Restraints
-ChemComp
 Scaling
 Gaus
 Point
@@ -1640,31 +1663,14 @@ Tables_
 ReciprocalAsu
 Neutron92
 PdbWriteOptions
-LoopArg
-FrameArg
-CommentArg
-Loop
-Table
-Document
 ChainNameGenerator
 AssemblyMapping
 FileStream
 MemoryStream
-ReflnBlock
-ReflnDataProxy
-Selection
-ResidueInfo
 FPhiProxy
-CifToMtz
-Element
-Ccp4Base
-Ccp4
 BidirIterator
-UniqProxy
-ConstUniqProxy
 FilterProxy
 ConstFilterProxy
-SmallStructure
 SupResult
 Ofstream
 Ifstream
