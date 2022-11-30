@@ -252,7 +252,6 @@ export const BabyGruContainer = (props) => {
 
     const getAccordionHeight = () => {
         let navBarHeight = parseFloat(window.getComputedStyle(document.getElementById('navbar-baby-gru')).height);
-        let buttonBarHeight = parseFloat(window.getComputedStyle(document.getElementById('button-bar-baby-gru')).height);
         return windowHeight - (navBarHeight + innerWindowMarginHeight)
     }
 
@@ -264,7 +263,8 @@ export const BabyGruContainer = (props) => {
     }
 
     const accordionToolsItemProps = {
-        molecules, commandCentre, glRef, toolAccordionBodyHeight, sideBarWidth, windowHeight, windowWidth, maps, showSideBar, ...preferences
+        molecules, commandCentre, glRef, toolAccordionBodyHeight, sideBarWidth, windowHeight, windowWidth, maps, showSideBar, 
+        hoveredAtom, setHoveredAtom,...preferences
     }
 
     return <> <div className={`border ${theme}`} ref={headerRef}>
@@ -275,9 +275,9 @@ export const BabyGruContainer = (props) => {
             <Navbar.Collapse id="basic-navbar-nav">
                 <Nav className="justify-content-left">
                     <BabyGruFileMenu dropdownId={1} {...collectedProps} />
-                    <BabyGruHistoryMenu dropdownId={2} {...collectedProps} />
+                    <BabyGruLigandMenu dropdownId={2} {...collectedProps} />
                     <BabyGruViewMenu dropdownId={3} {...collectedProps} />
-                    <BabyGruLigandMenu dropdownId={4} {...collectedProps} />
+                    <BabyGruHistoryMenu dropdownId={4} {...collectedProps} />
                     <BabyGruPreferencesMenu dropdownId={5} {...collectedProps} />
                     {props.extraMenus && props.extraMenus.map(menu=>menu)}
                 </Nav>
