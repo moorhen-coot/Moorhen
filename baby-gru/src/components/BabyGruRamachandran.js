@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState, useLayoutEffect } from "react"
+import { Fragment, useEffect, useRef, useState } from "react"
 import { Col, Row, Form } from 'react-bootstrap';
 import { RamaPlot } from "../WebGL/Ramachandran"
 import { convertRemToPx } from '../utils/BabyGruUtils';
@@ -11,7 +11,6 @@ export const BabyGruRamachandran = (props) => {
     const moleculeSelectRef = useRef();
     const chainSelectRef = useRef();
     const [clickedResidue, setClickedResidue] = useState(null)
-    const [message, setMessage] = useState("")
     const [ramaPlotDimensions, setRamaPlotDimensions] = useState(230)
     const [ramaPlotData, setRamaPlotData] = useState(null)
     const [selectedModel, setSelectedModel] = useState(null)
@@ -132,6 +131,40 @@ export const BabyGruRamachandran = (props) => {
         setSelectedChain(evt.target.value)
     }
 
+    const handleHoveredAtom = (cid) => {
+        if (selectedModel !== null) {
+            let selectedMoleculeIndex = props.molecules.findIndex(molecule => molecule.molNo == selectedModel);
+            if (selectedMoleculeIndex != -1 && props.molecules[selectedMoleculeIndex]){
+                props.setHoveredAtom({ molecule:props.molecules[selectedMoleculeIndex] , cid: cid })
+            }
+        }
+    }
+
+    useEffect(() => {
+        if (props.hoveredAtom===null || props.hoveredAtom.molecule === null || props.hoveredAtom.cid === null || ramaPlotData === null || selectedModel === null || chainSelectRef.current.value === null || selectedModel !==  props.hoveredAtom.molecule.molNo || ramachandranRef.current === null) {
+            return
+        }
+
+        const [_, insCode, chainId, resInfo, atomName]   = props.hoveredAtom.cid.split('/')
+
+        if (chainSelectRef.current.value !== chainId || !resInfo) {
+            return
+        }
+        
+        const resNum = resInfo.split('(')[0]
+        const oldHit = ramachandranRef.current.hit        
+        const newHit = ramaPlotData.findIndex(residue => residue.seqNum == resNum)
+
+        if (newHit === -1 || newHit === oldHit) {
+            return
+        }
+
+        ramachandranRef.current.hit = newHit
+        ramachandranRef.current.doAnimation(oldHit, ramachandranRef.current)
+
+    }, [props.hoveredAtom])
+
+
 
     return <Fragment>
         <Form style={{ padding:'0', margin: '0' }}>
@@ -149,9 +182,7 @@ export const BabyGruRamachandran = (props) => {
         <div ref={ramaPlotDivRef} id="ramaPlotDiv" className="rama-plot-div" style={{height: '100%'}}>
             <RamaPlot ref={ramachandranRef}
                 onClick={(result) => setClickedResidue(result)}
-                setMessage={setMessage} />
-            <br></br>
-            <span>{message}</span>
+                setHoveredAtom={handleHoveredAtom} />
         </div>
     </Fragment>
 

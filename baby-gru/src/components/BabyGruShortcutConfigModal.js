@@ -70,7 +70,7 @@ export const BabyGruShortcutConfigModal = (props) => {
                     <Modal.Header>
                         <Modal.Title>Shortcuts</Modal.Title>
                     </Modal.Header>
-                    <Modal.Body>
+                    <Modal.Body style={{height:'65vh', overflowY: 'scroll'}}>
                         {Object.keys(stagedShortCuts).map(key => {
                             let modifiers = []
                             if (stagedShortCuts[key].modifiers.includes('shiftKey')) modifiers.push("<Shift>")
