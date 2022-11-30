@@ -1397,6 +1397,10 @@ class MGWebGL extends Component {
         if (oldProps.width !== this.props.width || oldProps.height !== this.props.height) {
             this.resize(this.props.width, this.props.height)
         }
+        if (oldProps.showCrosshairs !== this.props.showCrosshairs){
+            this.showCrosshairs = this.props.showCrosshairs
+            this.drawScene()
+        }
     }
     componentDidMount() {
         console.log("MGWebGL.componentDidMount");
