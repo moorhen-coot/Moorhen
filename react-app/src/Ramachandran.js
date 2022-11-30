@@ -197,20 +197,22 @@ class RamaPlot extends Component {
             }
         }
     }
+    
+    doAnimation(oldHit, self) {
+        if(oldHit===self.hit) return;
+        if(self.reqRef) cancelAnimationFrame(self.reqRef);
+        self.reqRef = requestAnimationFrame(self.draw.bind(self,0,oldHit,self.hit));
+    }
 
     doMouseMove(event,self) {
         let oldHit = this.hit;
-        function animate() {
-            if(oldHit===self.hit) return;
-            if(self.reqRef) cancelAnimationFrame(self.reqRef);
-            self.reqRef = requestAnimationFrame(self.draw.bind(self,0,oldHit,self.hit));
-        }
+
         if(this.state.plotInfo){
             const hit = this.getHit(event,self);
             this.hit = hit;
             if(hit>-1){
-                animate()
-                this.props.setMessage(`${this.state.molName} / ${this.state.chainId} / ${this.state.plotInfo[hit].seqNum} (${this.state.plotInfo[hit].restype})`)
+                this.doAnimation(oldHit, self)
+                this.props.setHoveredAtom(`/${this.state.plotInfo[hit].insCode}/${this.state.chainId}/${this.state.plotInfo[hit].seqNum}(${this.state.plotInfo[hit].restype})/CA`)
             };
         }
     }
@@ -521,7 +523,7 @@ class Ramachandran extends Component {
                 </Col>
             </Form.Group>
         </Form>
-        <RamaPlot onClick={this.props.onClick} setMessage={this.props.setMessage} ref={this.ramaRef} toolAccordionBodyHeight={this.state.toolAccordionBodyHeight} sideBarWidth={this.state.sideBarWidth}/>
+        <RamaPlot onClick={this.props.onClick} ref={this.ramaRef} toolAccordionBodyHeight={this.state.toolAccordionBodyHeight} sideBarWidth={this.state.sideBarWidth}/>
         </>
         );
     }

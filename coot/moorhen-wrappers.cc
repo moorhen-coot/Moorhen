@@ -67,6 +67,16 @@ struct ResiduePropertyInfo {
     double property;
 };
 
+std::string get_hm(const gemmi::SpaceGroup &sg){
+    return std::string(sg.hm);
+}
+std::string get_hall(const gemmi::SpaceGroup &sg){
+    return std::string(sg.hall);
+}
+std::string get_qualifier(const gemmi::SpaceGroup &sg){
+    return std::string(sg.qualifier);
+}
+
 std::map<std::string,std::vector<coot::simple_rotamer> > getRotamersMap(){
 
     std::map<std::string,std::vector<coot::simple_rotamer> > all_rots;
@@ -1101,6 +1111,11 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("basisop",&gemmi::SpaceGroup::basisop)
     .function("centred_to_primitive",&gemmi::SpaceGroup::centred_to_primitive)
     .function("operations",&gemmi::SpaceGroup::operations)
+    //I do not see a way to wrap these, so I have created utility methods above.
+    //I guess adding accessors to class would be only solution?
+    //.property("hm",&gemmi::SpaceGroup::hm)
+    //.property("qualifier",&gemmi::SpaceGroup::qualifier)
+    //.property("hall",&gemmi::SpaceGroup::hall)
     ;
     class_<gemmi::Op>("Op")
     ;
@@ -1170,4 +1185,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("first_model",select_overload<const gemmi::Model&(void)const>(&gemmi::Structure::first_model))
     ;
     function("read_structure_file",&gemmi::read_structure_file);
+    function("get_spacegroup_by_name",&gemmi::get_spacegroup_by_name);
+    function("getSpaceGroupHMAsString",&get_hm);
+    function("getSpaceGroupHallAsString",&get_hall);
+    function("getSpaceGroupQualifierAsString",&get_qualifier);
 }
