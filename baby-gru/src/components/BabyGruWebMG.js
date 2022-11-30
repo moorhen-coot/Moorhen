@@ -62,6 +62,10 @@ export const BabyGruWebMG = forwardRef((props, glRef) => {
     ])
 
     useEffect(() => {
+        console.log(props.preferences)
+    }, [props.preferences])
+
+    useEffect(() => {
         props.molecules.forEach(molecule => {
             //molecule.fetchIfDirtyAndDraw('bonds', glRef)
         })
@@ -91,7 +95,7 @@ export const BabyGruWebMG = forwardRef((props, glRef) => {
         mouseSensitivityFactor={props.preferences.mouseSensitivity}
         keyboardAccelerators={JSON.parse(props.preferences.shortCuts)}
         showCrosshairs={props.preferences.drawCrosshairs}
-        drawMissingLoops={props.drawMissingLoops}/>
+        drawMissingLoops={props.drawMissingLoops} />
 });
 
 
