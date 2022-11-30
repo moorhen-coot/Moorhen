@@ -214,7 +214,7 @@ export const BabyGruRenameDisplayObjectMenuItem = (props) => {
     return <BabyGruMenuItem
         popoverPlacement='left'
         popoverContent={panelContent}
-        menuItemText={props.item.name ? "Rename molecule" : "Rename map"}
+        menuItemText={props.item.type === 'molecule' ? "Rename molecule" : "Rename map"}
         onCompleted={onCompleted}
         setPopoverIsShown={props.setPopoverIsShown}
     />
