@@ -10,7 +10,7 @@ export const BabyGruPreferencesMenu = (props) => {
         defaultExpandDisplayCards, setDefaultExpandDisplayCards, defaultLitLines,
         setDefaultLitLines, refineAfterMod, setRefineAfterMod, mouseSensitivity,
         setMouseSensitivity, drawCrosshairs, setDrawCrosshairs, drawMissingLoops,
-        setDrawMissingLoops
+        setDrawMissingLoops, mapLineWidth, setMapLineWidth
      } = props;
     const [showModal, setShowModal] = useState(null);
 
@@ -72,6 +72,9 @@ export const BabyGruPreferencesMenu = (props) => {
                 </InputGroup>
                 <Form.Group controlId="mouseSensitivitySlider" style={{paddingTop:'0.5rem', paddingBottom:'0.5rem', paddingRight:'0.5rem', paddingLeft:'1rem', width: '25rem'}}>
                     <BabyGruSlider minVal={0.1} maxVal={10.0} logScale={false} sliderTitle="Mouse sensitivity" intialValue={2.5} externalValue={mouseSensitivity} setExternalValue={setMouseSensitivity}/>
+                </Form.Group>
+                <Form.Group controlId="mapLineWidthSensitivitySlider" style={{paddingTop:'0.5rem', paddingBottom:'0.5rem', paddingRight:'0.5rem', paddingLeft:'1rem', width: '25rem'}}>
+                    <BabyGruSlider minVal={0.1} maxVal={5.0} logScale={true} sliderTitle="Map lines thickness" intialValue={2.5} externalValue={mapLineWidth} setExternalValue={setMapLineWidth}/>
                 </Form.Group>
                 <MenuItem variant="success" onClick={() => setShowModal(true)} >
                     Configure shortcuts

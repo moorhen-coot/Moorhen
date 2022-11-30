@@ -1,11 +1,13 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, useCallback } from "react"
 import { residueCodesOneToThree, nucleotideCodesOneToThree } from '../utils/BabyGruUtils'
 import ProtvistaManager from "protvista-manager";
 import ProtvistaSequence from "protvista-sequence";
 import ProtvistaNavigation from "protvista-navigation";
+import ProtvistaTrack from "protvista-track";
 
 window.customElements.define("protvista-navigation", ProtvistaNavigation);
 window.customElements.define("protvista-sequence", ProtvistaSequence);
+window.customElements.define("protvista-track", ProtvistaTrack);
 window.customElements.define("protvista-manager", ProtvistaManager);
     
 /**
@@ -44,17 +46,35 @@ export const BabyGruSequenceViewer = (props) => {
     const managerRef = useRef(null);
     const sequenceRef = useRef(null);
     const navigationRef = useRef(null);
+    const selectedResiduesTrackRef = useRef(null)
     const [message, setMessage] = useState("");
     const [rulerStart, seqLenght, displaySequence] = parseSequenceData(props.sequence.sequence)
     const [start, end] = calculateDisplayStartAndEnd(rulerStart, seqLenght);
+    const hoveredResidueColor = '#FFEB3B66'
+    const transparentColor = '#FFEB3B00'
 
 
     /**
      * Clear highlighted residue range
      */
     const clearSelection = () => {
-        sequenceRef.current.trackHighlighter.changedCallBack('highlightstart', null)
-        sequenceRef.current.trackHighlighter.changedCallBack('highlightend', null)
+        const dummyData = [
+            {
+                "accession": "backgroundLine",
+                "color": "red",
+                "shape": "line",
+                "start": "",
+                "end": ""
+            },
+            {
+                "accession": "Outliers",
+                "shape": "triangle",
+                "color": "red",
+                "locations": [{"fragments": []}]
+            }
+        ]
+
+        selectedResiduesTrackRef.current.data = dummyData
     }
     
     /**
@@ -63,9 +83,97 @@ export const BabyGruSequenceViewer = (props) => {
      * @param {Number} end The last residue of the range
      */
     const setSelection = (start, end) => {
-        sequenceRef.current.trackHighlighter.changedCallBack('highlightstart', start)
-        sequenceRef.current.trackHighlighter.changedCallBack('highlightend', end)
+
+        let fragments = [{
+            "start": start,
+            "end": start
+        }]
+
+        if (end !== null) {
+            fragments.push({
+                "start": end,
+                "end": end
+            })
+        }
+
+        const selectedResiduesTrackData  = [
+            {
+                "accession": "backgroundLine",
+                "color": "red",
+                "shape": "line",
+                "start": start,
+                "end": end ? end : start
+            },
+            {
+                "accession": "Outliers",
+                "shape": "triangle",
+                "color": "red",
+                "locations": [{"fragments": fragments}]
+            }
+        ]
+      
+        selectedResiduesTrackRef.current.data = selectedResiduesTrackData
     }
+
+    /**
+     * Sets a highlighted residue in the sequence viewer 
+     * @param {Number} start The first residues of the range
+     * @param {Number} end The last residue of the range
+     */
+    const setHighlight = (resNum) => {
+        sequenceRef.current.trackHighlighter.changedCallBack('highlightstart', resNum)
+        sequenceRef.current.trackHighlighter.changedCallBack('highlightend', resNum)
+    } 
+
+    /**
+     * Hook used to handle hovering events on the visualisation panel
+     */
+    useEffect(() => {
+        if (props.hoveredAtom===null || props.hoveredAtom.molecule === null || props.hoveredAtom.cid === null || sequenceRef.current === null) {
+            return
+        }
+
+        const [_, insCode, chainId, resInfo, atomName]   = props.hoveredAtom.cid.split('/')
+
+        if (chainId !== props.sequence.chain || !resInfo) {
+            return
+        }
+        
+        const resNum = resInfo.split('(')[0]
+        
+        if (!resNum) {
+            return
+        }
+        
+        setMessage(props.hoveredAtom.cid)
+        setHighlight(resNum)
+
+    }, [props.hoveredAtom])
+
+    
+    /**
+     * Callback to handle changes in the protvista component
+     */
+    const handleChange = useCallback((evt) => {
+        if (evt.detail.eventtype === "click") {
+            if (evt.detail.feature !== null && !(evt.detail.highlight.includes(','))) {
+                props.setClickedResidue({modelIndex:0, molName:props.molecule.name, chain:props.sequence.chain, seqNum:evt.detail.feature.start})
+                props.setSelectedResidues(null)
+            } else if (evt.detail.highlight.includes(',')) {
+                let residues = [props.clickedResidue.seqNum, evt.detail.feature.start]
+                props.setSelectedResidues([Math.min(...residues), Math.max(...residues)])
+                props.setClickedResidue({modelIndex:0, molName:props.molecule.name, chain:props.sequence.chain, seqNum:evt.detail.feature.start})
+            }
+        } else if (evt.detail.eventtype === "mouseover") {
+            if (evt.detail.feature !== null) {
+                const cid =`//${props.sequence.chain}/${evt.detail.feature.start}(${props.sequence.type==="polypeptide(L)" ? residueCodesOneToThree[evt.detail.feature.aa] : nucleotideCodesOneToThree[evt.detail.feature.aa]})/CA`
+                props.setHoveredAtom({ molecule: props.molecule, cid: cid })
+            }
+        } else if (evt.detail.eventtype === "mouseout") {
+            setMessage("")
+        }
+    }, [props.clickedResidue])
+
 
     /**
      * Hook used to control mouse events. Adds an event listener on the protvista-sequence component for mouse clicks 
@@ -75,24 +183,6 @@ export const BabyGruSequenceViewer = (props) => {
         
         if (sequenceRef.current === null) {
             return;
-        }
-
-        const handleChange = (evt) => {
-            if (evt.detail.eventtype === "click") {
-                if (evt.detail.feature !== null && !(evt.detail.highlight.includes(','))) {
-                    props.setClickedResidue({modelIndex:0, molName:props.molecule.name, chain:props.sequence.chain, seqNum:evt.detail.feature.start})
-                    props.setSelectedResidues(null)
-                } else if (evt.detail.highlight.includes(',')) {
-                    let residues = evt.detail.highlight.split(',').map(residue => parseInt(residue.split(':')[0]))
-                    props.setSelectedResidues([Math.min(...residues), Math.max(...residues)])
-                }
-            } else if (evt.detail.eventtype === "mouseover") {
-                if (evt.detail.feature !== null) {
-                    setMessage(`/${evt.detail.feature.start} (${props.sequence.type==="polypeptide(L)" ? residueCodesOneToThree[evt.detail.feature.aa] : nucleotideCodesOneToThree[evt.detail.feature.aa]})`)
-                }
-            } else if (evt.detail.eventtype === "mouseout") {
-                setMessage("")
-            }
         }
 
         const disableDoubleClick = (evt) => {
@@ -111,15 +201,33 @@ export const BabyGruSequenceViewer = (props) => {
             }
         };
         
-      }, []);    
+    }, [handleChange]);    
+    
+    /**
+     * Hook used to control mouse events. Adds an event listener on the protvista-sequence component for mouse clicks 
+     * and mouse over. It will also disable mouse double click.
+     */
+    useEffect(()=> {
+        
+        if (selectedResiduesTrackRef.current === null) {
+            return;
+        }
+        
+        sequenceRef.current.trackHighlighter.element._highlightcolor = hoveredResidueColor
+        selectedResiduesTrackRef.current.trackHighlighter.element._highlightcolor = transparentColor
+        
+    }, []);    
     
     /**
      * Hook used to clear the current selection if user selects residue from different chain
      */
-     useEffect(() => {       
+    useEffect(() => {       
         if (props.clickedResidue && props.clickedResidue.chain != props.sequence.chain) {
             clearSelection()
+        } else if (props.clickedResidue && !props.selectedResidues) {
+            setSelection(props.clickedResidue.seqNum, null)
         }
+
     }, [props.clickedResidue]);
 
     /**
@@ -144,12 +252,16 @@ export const BabyGruSequenceViewer = (props) => {
             navigationRef.current._displaystart = start
             navigationRef.current._displayend = end
         }
+        if(selectedResiduesTrackRef){
+            selectedResiduesTrackRef.current._displaystart = start
+            selectedResiduesTrackRef.current._displayend = end
+        }
         
     }, [props.sequence]);
 
     return (
-        <div className='align-items-center' style={{marginBottom:'1rem', padding:'0'}}>
-            <span>{`${props.molecule.name}/${props.sequence.chain}${message}`}</span>
+        <div className='align-items-center' style={{marginBottom:'0', padding:'0'}}>
+            <span>{`${props.molecule.name}${message ? "" : "/" + props.sequence.chain}${message}`}</span>
             <div style={{width: '100%'}}>
                 <protvista-manager ref={managerRef}>
                     <protvista-navigation 
@@ -167,6 +279,14 @@ export const BabyGruSequenceViewer = (props) => {
                         numberofticks="10"
                         displaystart={start}
                         displayend={end}
+                        use-ctrl-to-zoom
+                        />
+                    <protvista-track 
+                        ref={selectedResiduesTrackRef}
+                        length={seqLenght} 
+                        displaystart={start}
+                        displayend={end}
+                        height='10'
                         use-ctrl-to-zoom
                         />
                 </protvista-manager>
