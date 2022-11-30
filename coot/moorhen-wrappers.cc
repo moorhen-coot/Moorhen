@@ -552,6 +552,11 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<merge_molecule_results_info_t>("Vectormerge_molecule_results_info_t");
     register_vector<coot::phi_psi_prob_t>("Vectophi_psi_prob_t");
 
+    register_vector<gemmi::TlsGroup::Selection>("VectorGemmiTlsGroupSelection");
+    register_vector<gemmi::TlsGroup>("VectorGemmiTlsGroup");
+    register_vector<gemmi::RefinementInfo::Restr>("VectorGemmiRefinementInfoRestr");
+    register_vector<gemmi::DiffractionInfo>("VectorGemmiDiffractionInfo");
+    register_vector<gemmi::ReflectionsInfo>("VectorGemmiReflectionsInfo");
     register_vector<gemmi::BasicRefinementInfo>("VectorGemmiBasicRefinementInfo");
     register_vector<gemmi::ExperimentInfo>("VectorGemmiExperimentInfo");
     register_vector<gemmi::CrystalInfo>("VectorGemmiCrystalInfo");
@@ -591,6 +596,18 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .element(emscripten::index<2>())
     ;
     function("getRotamersMap",&getRotamersMap);
+
+    enum_<gemmi::SoftwareItem::Classification>("Classification")
+        .value("DataCollection", gemmi::SoftwareItem::Classification::DataCollection)
+        .value("DataExtraction", gemmi::SoftwareItem::Classification::DataExtraction)
+        .value("DataProcessing", gemmi::SoftwareItem::Classification::DataProcessing)
+        .value("DataReduction", gemmi::SoftwareItem::Classification::DataReduction)
+        .value("DataScaling", gemmi::SoftwareItem::Classification::DataScaling)
+        .value("ModelBuilding", gemmi::SoftwareItem::Classification::ModelBuilding)
+        .value("Phasing", gemmi::SoftwareItem::Classification::Phasing)
+        .value("Refinement", gemmi::SoftwareItem::Classification::Refinement)
+        .value("Unspecified", gemmi::SoftwareItem::Classification::Unspecified)
+    ;
 
     enum_<gemmi::Assembly::SpecialKind>("SpecialKind")
         .value("NA", gemmi::Assembly::SpecialKind::NA)
@@ -1364,7 +1381,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("apply",&gemmi::NcsOp::apply)
     ;
 
-    //TODO Wrap the following
     class_<gemmi::Metadata>("Metadata")
     .property("authors",&gemmi::Metadata::authors)
     .property("experiments",&gemmi::Metadata::experiments)
@@ -1376,24 +1392,152 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("remark_300_detail",&gemmi::Metadata::remark_300_detail)
     .function("has_restr",&gemmi::Metadata::has_restr)
     .function("has_tls",&gemmi::Metadata::has_tls)
-    /*
     .function("has_d",select_overload<bool(double gemmi::RefinementInfo::*field)const>(&gemmi::Metadata::has))
     .function("has_i",select_overload<bool(int gemmi::RefinementInfo::*field)const>(&gemmi::Metadata::has))
     .function("has_s",select_overload<bool(std::string gemmi::RefinementInfo::*field)const>(&gemmi::Metadata::has))
     .function("has_m33",select_overload<bool(gemmi::Mat33 gemmi::RefinementInfo::*field)const>(&gemmi::Metadata::has))
-    */
-    ;
-    class_<gemmi::SoftwareItem>("SoftwareItem")
-    ;
-    class_<gemmi::ExperimentInfo>("ExperimentInfo")
-    ;
-    class_<gemmi::CrystalInfo>("CrystalInfo")
-    ;
-    class_<gemmi::BasicRefinementInfo>("BasicRefinementInfo")
-    ;
-    class_<gemmi::RefinementInfo,base<gemmi::BasicRefinementInfo>>("RefinementInfo")
     ;
 
+    class_<gemmi::SoftwareItem>("SoftwareItem")
+    .property("name",&gemmi::SoftwareItem::name)
+    .property("version",&gemmi::SoftwareItem::version)
+    .property("date",&gemmi::SoftwareItem::date)
+    .property("classification",&gemmi::SoftwareItem::classification)
+    .property("pdbx_ordinal",&gemmi::SoftwareItem::pdbx_ordinal)
+    ;
+
+    class_<gemmi::ExperimentInfo>("ExperimentInfo")
+    .property("method",&gemmi::ExperimentInfo::method)
+    .property("number_of_crystals",&gemmi::ExperimentInfo::number_of_crystals)
+    .property("unique_reflections",&gemmi::ExperimentInfo::unique_reflections)
+    .property("reflections",&gemmi::ExperimentInfo::reflections)
+    .property("b_wilson",&gemmi::ExperimentInfo::b_wilson)
+    .property("shells",&gemmi::ExperimentInfo::shells)
+    .property("diffraction_ids",&gemmi::ExperimentInfo::diffraction_ids)
+    ;
+
+    class_<gemmi::DiffractionInfo>("DiffractionInfo")
+    .property("id",&gemmi::DiffractionInfo::id)
+    .property("temperature",&gemmi::DiffractionInfo::temperature)
+    .property("source",&gemmi::DiffractionInfo::source)
+    .property("source_type",&gemmi::DiffractionInfo::source_type)
+    .property("synchrotron",&gemmi::DiffractionInfo::synchrotron)
+    .property("beamline",&gemmi::DiffractionInfo::beamline)
+    .property("wavelengths",&gemmi::DiffractionInfo::wavelengths)
+    .property("scattering_type",&gemmi::DiffractionInfo::scattering_type)
+    .property("mono_or_laue",&gemmi::DiffractionInfo::mono_or_laue)
+    .property("monochromator",&gemmi::DiffractionInfo::monochromator)
+    .property("collection_date",&gemmi::DiffractionInfo::collection_date)
+    .property("optics",&gemmi::DiffractionInfo::optics)
+    .property("detector",&gemmi::DiffractionInfo::detector)
+    .property("detector_make",&gemmi::DiffractionInfo::detector_make)
+    ;
+
+    class_<gemmi::ReflectionsInfo>("ReflectionsInfo")
+    .property("resolution_high",&gemmi::ReflectionsInfo::resolution_high)
+    .property("resolution_low",&gemmi::ReflectionsInfo::resolution_low)
+    .property("completeness",&gemmi::ReflectionsInfo::completeness)
+    .property("redundancy",&gemmi::ReflectionsInfo::redundancy)
+    .property("r_merge",&gemmi::ReflectionsInfo::r_merge)
+    .property("r_sym",&gemmi::ReflectionsInfo::r_sym)
+    .property("mean_I_over_sigma",&gemmi::ReflectionsInfo::mean_I_over_sigma)
+    ;
+
+    class_<gemmi::CrystalInfo>("CrystalInfo")
+    .property("id",&gemmi::CrystalInfo::id)
+    .property("description",&gemmi::CrystalInfo::description)
+    .property("ph",&gemmi::CrystalInfo::ph)
+    .property("ph_range",&gemmi::CrystalInfo::ph_range)
+    .property("diffractions",&gemmi::CrystalInfo::diffractions)
+    ;
+
+    class_<gemmi::BasicRefinementInfo>("BasicRefinementInfo")
+    .property("resolution_high",&gemmi::BasicRefinementInfo::resolution_high)
+    .property("resolution_low",&gemmi::BasicRefinementInfo::resolution_low)
+    .property("completeness",&gemmi::BasicRefinementInfo::completeness)
+    .property("reflection_count",&gemmi::BasicRefinementInfo::reflection_count)
+    .property("rfree_set_count",&gemmi::BasicRefinementInfo::rfree_set_count)
+    .property("r_all",&gemmi::BasicRefinementInfo::r_all)
+    .property("r_work",&gemmi::BasicRefinementInfo::r_work)
+    .property("r_free",&gemmi::BasicRefinementInfo::r_free)
+    ;
+
+    class_<gemmi::TlsGroup::Selection>("TlsGroupSelection")
+    .property("chain",&gemmi::TlsGroup::Selection::chain)
+    .property("res_begin",&gemmi::TlsGroup::Selection::res_begin)
+    .property("res_end",&gemmi::TlsGroup::Selection::res_end)
+    .property("details",&gemmi::TlsGroup::Selection::details)
+    ;
+
+    class_<gemmi::TlsGroup>("TlsGroup")
+    .property("id",&gemmi::TlsGroup::id)
+    .property("selections",&gemmi::TlsGroup::selections)
+    .property("origin",&gemmi::TlsGroup::origin)
+    .property("T",&gemmi::TlsGroup::T)
+    .property("L",&gemmi::TlsGroup::L)
+    .property("S",&gemmi::TlsGroup::S)
+    ;
+
+    class_<gemmi::RefinementInfo::Restr>("Restr")
+    .property("name",&gemmi::RefinementInfo::Restr::name)
+    .property("count",&gemmi::RefinementInfo::Restr::count)
+    .property("weight",&gemmi::RefinementInfo::Restr::weight)
+    .property("function",&gemmi::RefinementInfo::Restr::function)
+    .property("dev_ideal",&gemmi::RefinementInfo::Restr::dev_ideal)
+    ;
+
+    class_<gemmi::RefinementInfo,base<gemmi::BasicRefinementInfo>>("RefinementInfo")
+    .property("id",&gemmi::RefinementInfo::id)
+    .property("cross_validation_method",&gemmi::RefinementInfo::cross_validation_method)
+    .property("rfree_selection_method",&gemmi::RefinementInfo::rfree_selection_method)
+    .property("bin_count",&gemmi::RefinementInfo::bin_count)
+    .property("bins",&gemmi::RefinementInfo::bins)
+    .property("mean_b",&gemmi::RefinementInfo::mean_b)
+    .property("aniso_b",&gemmi::RefinementInfo::aniso_b)
+    .property("luzzati_error",&gemmi::RefinementInfo::luzzati_error)
+    .property("dpi_blow_r",&gemmi::RefinementInfo::dpi_blow_r)
+    .property("dpi_blow_rfree",&gemmi::RefinementInfo::dpi_blow_rfree)
+    .property("dpi_cruickshank_r",&gemmi::RefinementInfo::dpi_cruickshank_r)
+    .property("dpi_cruickshank_rfree",&gemmi::RefinementInfo::dpi_cruickshank_rfree)
+    .property("cc_fo_fc",&gemmi::RefinementInfo::cc_fo_fc)
+    .property("cc_fo_fc_free",&gemmi::RefinementInfo::cc_fo_fc_free)
+    .property("restr_stats",&gemmi::RefinementInfo::restr_stats)
+    .property("tls_groups",&gemmi::RefinementInfo::tls_groups)
+    .property("remarks",&gemmi::RefinementInfo::remarks)
+    ;
+
+    class_<gemmi::Structure>("Structure")
+    .constructor<>()
+    .property("name",&gemmi::Structure::name)
+    .property("spacegroup_hm",&gemmi::Structure::spacegroup_hm)
+    .property("has_origx",&gemmi::Structure::has_origx)
+    .property("models",&gemmi::Structure::models)
+    .property("ncs",&gemmi::Structure::ncs)
+    .property("entities",&gemmi::Structure::entities)
+    .property("connections",&gemmi::Structure::connections)
+    .property("helices",&gemmi::Structure::helices)
+    .property("sheets",&gemmi::Structure::sheets)
+    .property("assemblies",&gemmi::Structure::assemblies)
+    .property("cell",&gemmi::Structure::cell)
+    .property("meta",&gemmi::Structure::meta)
+    .property("origx",&gemmi::Structure::origx)
+    .property("resolution",&gemmi::Structure::resolution)
+    .property("raw_remarks",&gemmi::Structure::raw_remarks)
+    .property("input_format",&gemmi::Structure::input_format)
+    .function("get_info",&gemmi::Structure::get_info)
+    .function("remove_model",&gemmi::Structure::remove_model)
+    .function("renumber_models",&gemmi::Structure::renumber_models)
+    .function("ncs_given_count",&gemmi::Structure::ncs_given_count)
+    .function("get_ncs_multiplier",&gemmi::Structure::get_ncs_multiplier)
+    .function("ncs_not_expanded",&gemmi::Structure::ncs_not_expanded)
+    .function("merge_chain_parts",&gemmi::Structure::merge_chain_parts)
+    .function("remove_empty_chains",&gemmi::Structure::remove_empty_chains)
+    .function("empty_copy",&gemmi::Structure::empty_copy)
+    .function("setup_cell_images",&gemmi::Structure::setup_cell_images)
+    .function("first_model",select_overload<const gemmi::Model&(void)const>(&gemmi::Structure::first_model))
+    ;
+
+    //TODO Wrap the following
     class_<gemmi::CraProxy>("CraProxy")
     ;
     class_<gemmi::ConstCraProxy>("ConstCraProxy")
@@ -1439,10 +1583,6 @@ ReciprocalGrid
 LinkHunt
 PdbReadOptions
 ResidueSpan::GroupingProxy
-ReflectionsInfo
-DiffractionInfo
-TlsGroup
-BasicRefinementInfo
 SiftsUnpResidue
 MmcifOutputGroups
 Blob
@@ -1533,39 +1673,11 @@ IsMatchingFile
 GlobWalk
     */
 
-    class_<gemmi::Structure>("Structure")
-    .constructor<>()
-    .property("name",&gemmi::Structure::name)
-    .property("spacegroup_hm",&gemmi::Structure::spacegroup_hm)
-    .property("has_origx",&gemmi::Structure::has_origx)
-    .property("models",&gemmi::Structure::models)
-    .property("ncs",&gemmi::Structure::ncs)
-    .property("entities",&gemmi::Structure::entities)
-    .property("connections",&gemmi::Structure::connections)
-    .property("helices",&gemmi::Structure::helices)
-    .property("sheets",&gemmi::Structure::sheets)
-    .property("assemblies",&gemmi::Structure::assemblies)
-    .property("cell",&gemmi::Structure::cell)
-    .property("meta",&gemmi::Structure::meta)
-    .property("origx",&gemmi::Structure::origx)
-    .property("resolution",&gemmi::Structure::resolution)
-    .property("raw_remarks",&gemmi::Structure::raw_remarks)
-    .property("input_format",&gemmi::Structure::input_format)
-    .function("get_info",&gemmi::Structure::get_info)
-    .function("remove_model",&gemmi::Structure::remove_model)
-    .function("renumber_models",&gemmi::Structure::renumber_models)
-    .function("ncs_given_count",&gemmi::Structure::ncs_given_count)
-    .function("get_ncs_multiplier",&gemmi::Structure::get_ncs_multiplier)
-    .function("ncs_not_expanded",&gemmi::Structure::ncs_not_expanded)
-    .function("merge_chain_parts",&gemmi::Structure::merge_chain_parts)
-    .function("remove_empty_chains",&gemmi::Structure::remove_empty_chains)
-    .function("empty_copy",&gemmi::Structure::empty_copy)
-    .function("setup_cell_images",&gemmi::Structure::setup_cell_images)
-    .function("first_model",select_overload<const gemmi::Model&(void)const>(&gemmi::Structure::first_model))
-    ;
+    //TODO Here we need to put *lots* of gemmi functions
     function("read_structure_file",&gemmi::read_structure_file);
     function("get_spacegroup_by_name",&gemmi::get_spacegroup_by_name);
 
+    //Utilities to deal with char*/[]
     function("getSpaceGroupHMAsString",&get_spacegroup_hm);
     function("getSpaceGroupHallAsString",&get_spacegroup_hall);
     function("getSpaceGroupQualifierAsString",&get_spacegroup_qualifier);
