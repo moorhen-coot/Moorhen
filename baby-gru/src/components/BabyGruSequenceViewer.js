@@ -125,6 +125,9 @@ export const BabyGruSequenceViewer = (props) => {
         sequenceRef.current.trackHighlighter.changedCallBack('highlightend', resNum)
     } 
     
+    /**
+     * Callback to handle changes in the protvista component
+     */
     const handleChange = useCallback((evt) => {
         if (evt.detail.eventtype === "click") {
             if (evt.detail.feature !== null && !(evt.detail.highlight.includes(','))) {
@@ -150,7 +153,7 @@ export const BabyGruSequenceViewer = (props) => {
      * Hook used to control mouse events. Adds an event listener on the protvista-sequence component for mouse clicks 
      * and mouse over. It will also disable mouse double click.
      */
-     useEffect(()=> {
+    useEffect(()=> {
         
         if (sequenceRef.current === null) {
             return;
@@ -172,13 +175,13 @@ export const BabyGruSequenceViewer = (props) => {
             }
         };
         
-      }, [handleChange]);    
+    }, [handleChange]);    
     
     /**
      * Hook used to control mouse events. Adds an event listener on the protvista-sequence component for mouse clicks 
      * and mouse over. It will also disable mouse double click.
      */
-     useEffect(()=> {
+    useEffect(()=> {
         
         if (selectedResiduesTrackRef.current === null) {
             return;
@@ -187,12 +190,12 @@ export const BabyGruSequenceViewer = (props) => {
         sequenceRef.current.trackHighlighter.element._highlightcolor = hoveredResidueColor
         selectedResiduesTrackRef.current.trackHighlighter.element._highlightcolor = transparentColor
         
-      }, []);    
+    }, []);    
     
     /**
      * Hook used to clear the current selection if user selects residue from different chain
      */
-     useEffect(() => {       
+    useEffect(() => {       
         if (props.clickedResidue && props.clickedResidue.chain != props.sequence.chain) {
             clearSelection()
         } else if (props.clickedResidue && !props.selectedResidues) {
@@ -205,7 +208,6 @@ export const BabyGruSequenceViewer = (props) => {
      * Hook used to set a range of highlighted residues
      */
     useEffect(()=> {
-        console.log(props.clickedResidue)
         if (props.selectedResidues !== null  && props.clickedResidue.chain === props.sequence.chain) {
           setSelection(...props.selectedResidues)
         }
