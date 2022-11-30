@@ -69,6 +69,13 @@ struct ResiduePropertyInfo {
     double property;
 };
 
+std::vector<int> get_nearest_image_pbc_shift(const gemmi::NearestImage &ni){
+    std::vector<int> ret;
+    ret.push_back(ni.pbc_shift[0]);
+    ret.push_back(ni.pbc_shift[1]);
+    ret.push_back(ni.pbc_shift[2]);
+    return ret;
+}
 std::string get_spacegroup_hm(const gemmi::SpaceGroup &sg){
     return std::string(sg.hm);
 }
@@ -540,6 +547,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<coot::molecule_t::moved_atom_t>("Vectormoved_atom_t");
     register_vector<std::string>("VectorString");
     register_vector<float>("VectorFloat");
+    register_vector<int>("VectorInt");
     register_vector<RamachandranInfo>("VectorResidueIdentifier");
     register_vector<ResiduePropertyInfo>("VectorResiduePropertyInfo");
     register_vector<coot::chain_validation_information_t>("Vectorchain_validation_information_t");
@@ -1538,19 +1546,16 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("first_model",select_overload<const gemmi::Model&(void)const>(&gemmi::Structure::first_model))
     ;
 
-    //TODO Wrap the following
-    class_<gemmi::CraProxy>("CraProxy")
-    ;
-    class_<gemmi::ConstCraProxy>("ConstCraProxy")
-    ;
-    class_<gemmi::const_CRA>("const_CRA")
-    ;
     class_<gemmi::NearestImage>("NearestImage")
-    ;
-    class_<gemmi::Miller>("MillerHash")
+    .property("dist_sq",&gemmi::NearestImage::dist_sq)
+    //Need accessor for int pbc_shift[3]
+    .property("sym_idx",&gemmi::NearestImage::sym_idx)
+    .function("dist",&gemmi::NearestImage::dist)
+    .function("same_asu",&gemmi::NearestImage::same_asu)
+    .function("symmetry_code",&gemmi::NearestImage::symmetry_code)
     ;
 
-    // And possibly all/some of these
+    //TODO Wrap some of these gemmi classes
     /*
 Binner
 HklMatch
@@ -1680,6 +1685,7 @@ GlobWalk
 
     //Utilities to deal with char*/[]
     function("getSpaceGroupHMAsString",&get_spacegroup_hm);
+    function("getNearestImagePBCShiftAsVector",&get_nearest_image_pbc_shift);
     function("getSpaceGroupHallAsString",&get_spacegroup_hall);
     function("getSpaceGroupQualifierAsString",&get_spacegroup_qualifier);
     function("getElementNameAsString",&get_element_name_as_string);
