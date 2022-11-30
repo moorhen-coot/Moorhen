@@ -97,7 +97,7 @@ export const BabyGruMoleculeCard = (props) => {
         props.setCurrentDropdownMolNo(-1)
     }
 
-    const handleResidueRefinement = () => {
+    const handleResidueRangeRefinement = () => {
         async function refineResidueRange() {
             await props.commandCentre.current.cootCommand({
                 returnType: "status",
@@ -105,7 +105,7 @@ export const BabyGruMoleculeCard = (props) => {
                 commandArgs: [props.molecule.molNo, clickedResidue.chain, ...selectedResidues],
                 changesMolecules: [props.molecule.molNo]
             }, true)
-            
+
             props.molecule.setAtomsDirty(true)
             props.molecule.redraw(props.glRef)    
         }
@@ -165,7 +165,7 @@ export const BabyGruMoleculeCard = (props) => {
         },
         6: {
             label: 'Refine selected residues',
-            compressed: () => { return (<MenuItem key={8} variant="success" onClick={handleResidueRefinement}>Refine selected residues</MenuItem>) },
+            compressed: () => { return (<MenuItem key={8} variant="success" onClick={handleResidueRangeRefinement}>Refine selected residues</MenuItem>) },
             expanded: null
         },
         7: {
