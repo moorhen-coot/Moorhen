@@ -270,7 +270,12 @@ BabyGruMolecule.prototype.drawCootBonds = async function (webMGAtoms, glRef) {
     return this.commandCentre.current.cootCommand({
         returnType: "mesh",
         command: "get_bonds_mesh",
-        commandArgs: [$this.molNo, "COLOUR-BY-CHAIN-AND-DICTIONARY"]
+        /*
+   coot::simple_mesh_t get_bonds_mesh(int imol, const std::string &mode,
+                                      bool against_a_dark_background, float bond_width, float atom_radius_to_bond_width_ratio,
+                                      int smoothness_factor);
+        */
+        commandArgs: [$this.molNo, "COLOUR-BY-CHAIN-AND-DICTIONARY",true,0.12,1.5,1]
     }).then(response => {
         const objects = [response.data.result.result]
         //console.log('drawCootBonds', { result: response.data.result })
