@@ -152,6 +152,10 @@ export const BabyGruValidation = (props) => {
         if(selectedMolecule) {
             const clickedResidue = getResidueInfo(selectedMolecule, residueIndex)
             if (clickedResidue) {
+                props.setHoveredAtom({
+                    molecule: selectedMolecule,
+                    cid:  `//${clickedResidue.chain}/${clickedResidue.seqNum}(${residueCodesOneToThree[clickedResidue.resCode]})`
+                })
                 return `${clickedResidue.seqNum} (${residueCodesOneToThree[clickedResidue.resCode]})`
             }
         }
