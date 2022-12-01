@@ -3,12 +3,11 @@ import { EnerLib, Model, parseMMCIF, parsePDB, atomsToHierarchy } from '../WebGL
 import { CalcSecStructure } from '../WebGL/mgSecStr';
 import { ColourScheme } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { GetSplinesColoured } from '../WebGL/mgSecStr';
-import { getMultipleBonds } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { atomsToSpheresInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { contactsToCylindersInfo, contactsToLinesInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { singletonsToLinesInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
-import { postCootMessage, readTextFile, readDataFile, cootCommand } from '../utils/BabyGruUtils'
-import { quatToMat4, quat4Inverse } from '../WebGL/quatToMat4.js';
+import { readTextFile } from '../utils/BabyGruUtils'
+import { quatToMat4 } from '../WebGL/quatToMat4.js';
 import * as vec3 from 'gl-matrix/vec3';
 
 export function BabyGruMolecule(commandCentre) {
@@ -20,6 +19,12 @@ export function BabyGruMolecule(commandCentre) {
     this.atomsDirty = true
     this.name = "unnamed"
     this.molNo = null
+    this.cootBondsOptions = {
+        isDarkBackground: false,
+        smoothness: 1,
+        width: 0.1,
+        atomRadiusBondRatio: 1
+    }
     this.displayObjects = {
         ribbons: [],
         bonds: [],
@@ -269,16 +274,14 @@ BabyGruMolecule.prototype.drawCootBonds = async function (webMGAtoms, glRef) {
     const style = "CBs"
     return this.commandCentre.current.cootCommand({
         returnType: "mesh",
-        command: "get_bonds_mesh",
-        /*
-   coot::simple_mesh_t get_bonds_mesh(int imol, const std::string &mode,
-                                      bool against_a_dark_background, float bond_width, float atom_radius_to_bond_width_ratio,
-                                      int smoothness_factor);
-        */
-        commandArgs: [$this.molNo, "COLOUR-BY-CHAIN-AND-DICTIONARY",true,0.12,1.5,2]
+        command: "get_bonds_mesh",      
+        commandArgs: [
+            $this.molNo, "COLOUR-BY-CHAIN-AND-DICTIONARY", $this.cootBondsOptions.isDarkBackground,
+            $this.cootBondsOptions.width, $this.cootBondsOptions.atomRadiusBondRatio,
+            $this.cootBondsOptions.smoothness
+        ]
     }).then(response => {
         const objects = [response.data.result.result]
-        //console.log('drawCootBonds', { result: response.data.result })
         if (objects.length > 0) {
             //Empty existing buffers of this type
             this.clearBuffersOfStyle(style, glRef)
