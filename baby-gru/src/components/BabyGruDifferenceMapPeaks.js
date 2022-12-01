@@ -44,14 +44,8 @@ export const BabyGruDifferenceMapPeaks = (props) => {
     const [selectedMap, setSelectedMap] = useState(null)
     const [cachedAtoms, setCachedAtoms] = useState(null)
     const [selectedRmsd, setSelectedRmsd] = useState(4.5)
+    const [mapRmsd, setMapRmsd] = useState(null)
     
-    const isValidRmsd = (value) => {
-        if(value < 2.5 || value > 7.0) {
-            return false
-        } 
-        return true
-    }
-
     const getDifferenceMaps = () => {
         let differenceMaps = []
         
@@ -87,16 +81,6 @@ export const BabyGruDifferenceMapPeaks = (props) => {
         setSelectedMap(evt.target.value)
     }
 
-    const handleRmsdChange = (evt) => {
-        if (isValidRmsd(evt.target.value)){
-            console.log(`Selected RMSD ${evt.target.value}`)
-            setSelectedRmsd(evt.target.value)
-        } else {
-            console.log('Invalid RMSD selected...')
-            setSelectedRmsd(null)
-        }
-    }
-
     const handleClick = (evt) => {
         if (chartRef.current === null){
             return
@@ -120,7 +104,7 @@ export const BabyGruDifferenceMapPeaks = (props) => {
         const peakIndex = args[0].dataIndex
         return [
             `Position (${plotData[peakIndex].coordX.toFixed(2)}, ${plotData[peakIndex].coordY.toFixed(2)}, ${plotData[peakIndex].coordZ.toFixed(2)})`,
-            `Height ${plotData[peakIndex].featureValue.toFixed(2)}`
+            `Height ${(plotData[peakIndex].featureValue / mapRmsd).toFixed(2)}`
         ]
     }
 
@@ -158,25 +142,36 @@ export const BabyGruDifferenceMapPeaks = (props) => {
     })
     
     useEffect(() => {
-        async function fetchData(inputData) {
-            let response = await props.commandCentre.current.cootCommand(inputData)
-            let newPlotData = response.data.result.result
+        async function fetchData() {
+            let promises = [
+                props.commandCentre.current.cootCommand({
+                    message:'coot_command',
+                    command: "difference_map_peaks", 
+                    returnType:'interesting_places_data',
+                    commandArgs:[selectedMap, selectedModel, selectedRmsd], 
+                }),
+                props.commandCentre.current.cootCommand({
+                    message:'coot_command',
+                    command: "get_map_rmsd_approx", 
+                    returnType:'float',
+                    commandArgs:[selectedMap], 
+                })
+            ]
+    
+            let responses = await Promise.all(promises)
+            let newPlotData = responses[0].data.result.result
+            let newMapRmsd = responses[1].data.result.result
+            setMapRmsd(newMapRmsd)
             setPlotData(newPlotData)
         }
 
         if (selectedModel === null || selectedMap === null || selectedRmsd === null) {
+            setMapRmsd(null)
             setPlotData(null)
             return
         }
-        
-        const inputData = {
-            message:'coot_command',
-            command: "difference_map_peaks", 
-            returnType:'interesting_places_data',
-            commandArgs:[selectedMap, selectedModel, selectedRmsd], 
-        }
-    
-        fetchData(inputData)   
+            
+        fetchData()
 
     }, [selectedMap, selectedModel, cachedAtoms, selectedRmsd])
 
@@ -185,7 +180,7 @@ export const BabyGruDifferenceMapPeaks = (props) => {
             chartRef.current.destroy()
         }
 
-        if (selectedMap === null || selectedModel === null || selectedRmsd === null || plotData === null || !props.toolAccordionBodyHeight || !props.showSideBar) {
+        if (selectedMap === null || selectedModel === null || selectedRmsd === null || plotData === null || mapRmsd === null || !props.toolAccordionBodyHeight || !props.showSideBar) {
             return;
         }
        
