@@ -617,6 +617,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<merge_molecule_results_info_t>("Vectormerge_molecule_results_info_t");
     register_vector<coot::phi_psi_prob_t>("Vectophi_psi_prob_t");
 
+    register_vector<gemmi::ChemComp::Aliasing>("VectorGemmiChemCompAliasing");
+    register_vector<gemmi::ChemMod::AtomMod>("VectorGemmiChemModAtomMod");
     register_vector<gemmi::cif::Item>("VectorGemmiCifItem");
     register_vector<gemmi::cif::Block>("VectorGemmiCifBlock");
     register_vector<gemmi::Restraints::Bond>("VectorGemmiRestraintsBond");
@@ -670,6 +672,12 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     function("getRotamersMap",&getRotamersMap);
 
+    enum_<gemmi::EnerLib::RadiusType>("EnerLibRadiusType")
+        .value("Vdw", gemmi::EnerLib::RadiusType::Vdw)
+        .value("Vdwh", gemmi::EnerLib::RadiusType::Vdwh)
+        .value("Ion", gemmi::EnerLib::RadiusType::Ion)
+    ;
+
     enum_<gemmi::cif::ItemType>("CifItemType")
         .value("Pair", gemmi::cif::ItemType::Pair)
         .value("Loop", gemmi::cif::ItemType::Loop)
@@ -711,7 +719,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .value("Both", gemmi::ChiralityType::Both)
     ;
 
-    enum_<gemmi::ChemComp::Group>("Group")
+    enum_<gemmi::ChemComp::Group>("ChemCompGroup")
         .value("Peptide", gemmi::ChemComp::Group::Peptide)
         .value("PPeptide", gemmi::ChemComp::Group::PPeptide)
         .value("MPeptide", gemmi::ChemComp::Group::MPeptide)
@@ -1682,7 +1690,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("side1",&gemmi::ChemLink::side1)
     .property("side2",&gemmi::ChemLink::side2)
     .property("rt",&gemmi::ChemLink::rt)
-    .property("block",&gemmi::ChemLink::block)//cif::Block TODO
+    .property("block",&gemmi::ChemLink::block)
     //.function("calculate_score",&gemmi::ChemLink::calculate_score) //Takes a pointer as 2nd arg: (const Residue&, const Residue*, ...
     ;
 
@@ -1865,14 +1873,121 @@ EMSCRIPTEN_BINDINGS(my_module) {
     class_<gemmi::cif::CommentArg>("cifCommentArg")
     ;
 
+    class_<gemmi::ChemMod::AtomMod>("AtomMod")
+    .property("func",&gemmi::ChemMod::AtomMod::func)
+    .property("old_id",&gemmi::ChemMod::AtomMod::old_id)
+    .property("new_id",&gemmi::ChemMod::AtomMod::new_id)
+    .property("el",&gemmi::ChemMod::AtomMod::el)
+    .property("charge",&gemmi::ChemMod::AtomMod::charge)
+    .property("chem_type",&gemmi::ChemMod::AtomMod::chem_type)
+    ;
+
+    class_<gemmi::ChemComp::Atom>("ChemCompAtom")
+    .property("id",&gemmi::ChemComp::Atom::id)
+    .property("el",&gemmi::ChemComp::Atom::el)
+    .property("charge",&gemmi::ChemComp::Atom::charge)
+    .property("chem_type",&gemmi::ChemComp::Atom::chem_type)
+    .function("is_hydrogen",&gemmi::ChemComp::Atom::is_hydrogen)
+    ;
+
+    class_<gemmi::ChemComp::Aliasing>("ChemCompAliasing")
+    .property("group",&gemmi::ChemComp::Aliasing::group)
+    ;
+
+    class_<gemmi::ChemComp>("ChemComp")
+    .property("name",&gemmi::ChemComp::name)
+    .property("type_or_group",&gemmi::ChemComp::type_or_group)
+    .property("group",&gemmi::ChemComp::group)
+    .property("atoms",&gemmi::ChemComp::atoms)
+    .property("aliases",&gemmi::ChemComp::aliases)
+    .property("rt",&gemmi::ChemComp::rt)
+    .function("get_aliasing",&gemmi::ChemComp::get_aliasing)
+    .function("read_group",&gemmi::ChemComp::read_group)
+    .function("set_group",&gemmi::ChemComp::set_group)
+    .function("has_atom",&gemmi::ChemComp::has_atom)
+    .function("get_atom_index",&gemmi::ChemComp::get_atom_index)
+    .function("get_atom",&gemmi::ChemComp::get_atom)
+    .function("is_peptide_group",&gemmi::ChemComp::is_peptide_group)
+    .function("is_nucleotide_group",&gemmi::ChemComp::is_nucleotide_group)
+    .function("remove_nonmatching_restraints",&gemmi::ChemComp::remove_nonmatching_restraints)
+    .function("remove_hydrogens",&gemmi::ChemComp::remove_hydrogens)
+    ;
+
+    class_<gemmi::ChemMod>("ChemMod")
+    .property("id",&gemmi::ChemMod::id)
+    .property("name",&gemmi::ChemMod::name)
+    .property("comp_id",&gemmi::ChemMod::comp_id)
+    .property("group_id",&gemmi::ChemMod::group_id)
+    .property("atom_mods",&gemmi::ChemMod::atom_mods)
+    .property("rt",&gemmi::ChemMod::rt)
+    .property("block",&gemmi::ChemMod::block)
+    .function("apply_to",&gemmi::ChemMod::apply_to)
+    ;
+
+    class_<gemmi::EnerLib::Atom>("EnerLibAtom")
+    .property("element",&gemmi::EnerLib::Atom::element)
+    .property("hb_type",&gemmi::EnerLib::Atom::hb_type)
+    .property("vdw_radius",&gemmi::EnerLib::Atom::vdw_radius)
+    .property("vdwh_radius",&gemmi::EnerLib::Atom::vdwh_radius)
+    .property("ion_radius",&gemmi::EnerLib::Atom::ion_radius)
+    .property("valency",&gemmi::EnerLib::Atom::valency)
+    .property("sp",&gemmi::EnerLib::Atom::sp)
+    ;
+
+    class_<gemmi::EnerLib::Bond>("EnerLibBond")
+    .property("atom_type_2",&gemmi::EnerLib::Bond::atom_type_2)
+    .property("type",&gemmi::EnerLib::Bond::type)
+    .property("length",&gemmi::EnerLib::Bond::length)
+    .property("value_esd",&gemmi::EnerLib::Bond::value_esd)
+    ;
+
+    class_<gemmi::EnerLib>("EnerLib")
+    .function("read",&gemmi::EnerLib::read)
+    //std::map<std::string, Atom> atoms; // type->Atom TODO
+    //std::multimap<std::string, Bond> bonds; // atom_type_1->Bond TODO
+    ;
+
+    class_<gemmi::MonLib>("MonLib")
+    .property("monomer_dir",&gemmi::MonLib::monomer_dir)
+    .property("lib_version",&gemmi::MonLib::lib_version)
+    .property("ener_lib",&gemmi::MonLib::ener_lib)
+    /* TODO
+  std::map<std::string, ChemComp> monomers;
+  std::map<std::string, ChemLink> links;
+  std::map<std::string, ChemMod> modifications;
+  std::map<std::string, ChemComp::Group> cc_groups;
+    */
+    .function("add_monomer_if_present",&gemmi::MonLib::add_monomer_if_present)
+    .function("path",&gemmi::MonLib::path)
+    .function("relative_monomer_path",&gemmi::MonLib::relative_monomer_path)
+    .function("read_monomer_doc",&gemmi::MonLib::read_monomer_doc)
+    .function("insert_chemcomps",&gemmi::MonLib::insert_chemcomps)
+    .function("insert_chemlinks",&gemmi::MonLib::insert_chemlinks)
+    .function("insert_chemmods",&gemmi::MonLib::insert_chemmods)
+    //.function("read_monomer_cif",&gemmi::MonLib::read_monomer_cif) TODO
+    .function("set_monomer_dir",&gemmi::MonLib::set_monomer_dir)
+    .function("find_radius",&gemmi::MonLib::find_radius)
+    .function("find_ideal_distance",&gemmi::MonLib::find_ideal_distance)
+    .function("add_auto_chemlink",&gemmi::MonLib::add_auto_chemlink)
+    ;
+
+    class_<gemmi::BondIndex::AtomImage>("BondIndexAtomImage")
+    .property("atom_serial",&gemmi::BondIndex::AtomImage::atom_serial)
+    .property("same_image",&gemmi::BondIndex::AtomImage::same_image)
+    ;
+
+    class_<gemmi::BondIndex>("BondIndex")
+    .function("add_oneway_link",&gemmi::BondIndex::add_oneway_link)
+    .function("add_link",&gemmi::BondIndex::add_link)
+    .function("add_monomer_bonds",&gemmi::BondIndex::add_monomer_bonds)
+    .function("are_linked",&gemmi::BondIndex::are_linked)
+    .function("graph_distance",&gemmi::BondIndex::graph_distance)
+    ;
+
     //TODO Wrap some of these gemmi classes
     /*
 
-ChemMod
-EnerLib
-MonLib
-BondIndex
-
+CRA, const_CRA
 AsuData
 ReflnBlock
 ReflnDataProxy
@@ -1880,7 +1995,6 @@ CifToMtz
 Element
 Ccp4Base
 Ccp4
-Document
 Selection
 ResidueInfo
 SmallStructure
