@@ -6157,7 +6157,7 @@ class MGWebGL extends Component {
 
                 } else if (this.displayBuffers[idx].bufferTypes[j] === "NORMALLINES") {
                     console.log("Treating normal lines specially");
-                    var size = 1.0;
+                    var size = this.mapLineWidth;//1.0;
                     const useIndices = this.displayBuffers[idx].supplementary["useIndices"];
                     let thickLines;
                     if (useIndices) {
