@@ -238,7 +238,7 @@ BabyGruMolecule.prototype.drawRamachandranBalls = function (glRef) {
     const style = "rama"
     return this.commandCentre.current.cootCommand({
         returnType: "mesh",
-        command: "ramachandran_validation_markup_mesh",
+        command: "get_ramachandran_validation_markup_mesh",
         commandArgs: [$this.molNo]
     }).then(response => {
         const objects = [response.data.result.result]

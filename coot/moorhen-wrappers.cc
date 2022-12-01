@@ -282,7 +282,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("atom_spec", &coot::residue_validation_information_t::atom_spec)
     ;
     class_<coot::chain_validation_information_t>("chain_validation_information_t")
-    .property("name", &coot::chain_validation_information_t::name)
     .property("chain_id", &coot::chain_validation_information_t::chain_id)
     .property("rviv", &coot::chain_validation_information_t::rviv)
     ;
@@ -420,7 +419,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("jed_flip",          select_overload<std::string(int, const std::string&, bool)>           (&molecules_container_t::jed_flip))
     .function("add_terminal_residue_directly_using_cid", select_overload<int(int,  const std::string&)>(&molecules_container_t::add_terminal_residue_directly_using_cid))
     .function("test_origin_cube",&molecules_container_t::test_origin_cube)
-    .function("ramachandran_validation_markup_mesh",&molecules_container_t::ramachandran_validation_markup_mesh)
+    .function("get_ramachandran_validation_markup_mesh",&molecules_container_t::get_ramachandran_validation_markup_mesh)
     .function("get_rotamer_dodecs",&molecules_container_t::get_rotamer_dodecs)
     .function("auto_fit_rotamer",&molecules_container_t::auto_fit_rotamer)
     .function("get_map_contours_mesh",&molecules_container_t::get_map_contours_mesh)
