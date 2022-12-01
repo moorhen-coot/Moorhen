@@ -220,6 +220,35 @@ export const BabyGruRenameDisplayObjectMenuItem = (props) => {
     />
 }
 
+export const BabyGruMoleculeBondSettingsMenuItem = (props) => {
+    const smoothnesSelectRef = useRef(null)
+
+    const panelContent = 
+    <>
+        <Form.Group className="mb-3" style={{ width: '10rem', margin: '0' }} controlId="BabyGruBondWidthSlider">
+            <BabyGruSlider minVal={0.05} maxVal={0.5} logScale={false} sliderTitle="Bond width" intialValue={0.1} externalValue={props.bondWidth} setExternalValue={props.setBondWidth}/>
+        </Form.Group>
+        <Form.Group className="mb-3" style={{ width: '10rem', margin: '0' }} controlId="BabyGruRadiusBondRatioSlider">
+            <BabyGruSlider minVal={1.0} maxVal={3.5} logScale={false} sliderTitle="Radius-Bond ratio" intialValue={1.5} externalValue={props.atomRadiusBondRatio} setExternalValue={props.setAtomRadiusBondRatio}/>
+        </Form.Group>
+        <Form.Group className="mb-3" style={{ width: '10rem', margin: '0' }} controlId="BabyGruSmoothnessSelector">
+            <Form.Label>Smoothness</Form.Label>
+            <FormSelect size="sm" ref={smoothnesSelectRef} defaultValue={props.bondSmoothness} onChange={(evt) => {props.setBondSmoothness(evt.target.value)}}>
+                <option value={1} key={1}>Coarse</option>
+                <option value={2} key={2}>Nice</option>
+                <option value={3} key={3}>Smooth</option>
+            </FormSelect>
+        </Form.Group>
+    </>
+
+    return <BabyGruMenuItem
+        popoverPlacement='left'
+        popoverContent={panelContent}
+        menuItemText={"Bond settings"}
+        onCompleted={() => {}}
+        setPopoverIsShown={props.setPopoverIsShown}
+    />
+}
 
 export const BabyGruDeleteEverythingMenuItem = (props) => {
 
