@@ -36,16 +36,16 @@ export const BabyGruMoleculeCard = (props) => {
             return
         }
 
-        const newBackgroundIsDark = isDarkBackground(props.backgroundColor)
-        if (props.molecule.cootBondsOptions.isDarkBackground !== newBackgroundIsDark) {
-            props.molecule.cootBondsOptions.isDarkBackground = newBackgroundIsDark
-            if (isVisible && showState['CBs']) {
+        if (isVisible && showState['CBs']) {
+            const newBackgroundIsDark = isDarkBackground(props.backgroundColor)
+            if (props.molecule.cootBondsOptions.isDarkBackground !== newBackgroundIsDark){
+                props.molecule.cootBondsOptions.isDarkBackground = newBackgroundIsDark
                 props.molecule.setAtomsDirty(true)
                 props.molecule.redraw(props.glRef)        
-            }    
+            }
         }
 
-    }, [props.backgroundColor]);
+    }, [props.backgroundColor, showState]);
 
     useEffect(() => {
         if (bondSmoothness === null) {
