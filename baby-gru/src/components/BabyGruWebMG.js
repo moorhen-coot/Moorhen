@@ -1,9 +1,10 @@
-import React, { createRef, useEffect, useCallback, forwardRef } from 'react';
+import React, { createRef, useEffect, useCallback, forwardRef, useState } from 'react';
 
 import { MGWebGL } from '../WebGL/mgWebGL.js';
 
 export const BabyGruWebMG = forwardRef((props, glRef) => {
     const windowResizedBinding = createRef(null)
+    const [mapLineWidth, setMapLineWidth] = useState(1.0)
 
     const setClipFogByZoom = () => {
         const fieldDepthFront = 8;
@@ -62,7 +63,9 @@ export const BabyGruWebMG = forwardRef((props, glRef) => {
     ])
 
     useEffect(() => {
-        console.log(props.preferences)
+        if (props.preferences.mapLineWidth !== mapLineWidth){
+            setMapLineWidth(props.preferences.mapLineWidth)
+        }
     }, [props.preferences])
 
     useEffect(() => {
@@ -95,6 +98,7 @@ export const BabyGruWebMG = forwardRef((props, glRef) => {
         mouseSensitivityFactor={props.preferences.mouseSensitivity}
         keyboardAccelerators={JSON.parse(props.preferences.shortCuts)}
         showCrosshairs={props.preferences.drawCrosshairs}
+        mapLineWidth={mapLineWidth}
         drawMissingLoops={props.drawMissingLoops} />
 });
 

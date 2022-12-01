@@ -1372,6 +1372,10 @@ class MGWebGL extends Component {
         if (this.props.showCrosshairs !== null) {
             this.showCrosshairs = this.props.showCrosshairs
         }
+        this.mapLineWidth = 1.0
+        if (this.props.mapLineWidth !== null) {
+            this.mapLineWidth = this.props.mapLineWidth
+        }
 
     }
 
@@ -1399,6 +1403,11 @@ class MGWebGL extends Component {
         }
         if (oldProps.showCrosshairs !== this.props.showCrosshairs){
             this.showCrosshairs = this.props.showCrosshairs
+            this.drawScene()
+        }
+        if (oldProps.mapLineWidth !== this.props.mapLineWidth){
+            this.mapLineWidth = this.props.mapLineWidth
+            this.setOrigin(this.origin, true)
             this.drawScene()
         }
     }
@@ -6189,7 +6198,7 @@ class MGWebGL extends Component {
 
                 } else if (this.displayBuffers[idx].bufferTypes[j] === "LINES") {
                     console.log("Treating lines specially");
-                    var size = 1.0;
+                    var size = this.mapLineWidth;
                     const useIndices = this.displayBuffers[idx].supplementary["useIndices"];
                     var thickLines;
                     if (useIndices) {
@@ -9352,7 +9361,7 @@ class MGWebGL extends Component {
         //console.log("axesVertices",axesVertices);
         //console.log("zoom",this.zoom);
 
-        var size = 1.0;
+        var size = 1.5;
         var thickLines = this.linesToThickLines(renderArrays.axesVertices, renderArrays.axesColours, size);
         var axesNormals = thickLines["normals"];
         var axesVertices_new = thickLines["vertices"];
