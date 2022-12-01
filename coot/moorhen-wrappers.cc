@@ -77,6 +77,31 @@ std::vector<int> get_nearest_image_pbc_shift(const gemmi::NearestImage &ni){
     ret.push_back(ni.pbc_shift[2]);
     return ret;
 }
+
+void set_cif_item_pair(gemmi::cif::Item &item, const gemmi::cif::Pair pair){
+    item.pair = pair;
+}
+
+void set_cif_item_loop(gemmi::cif::Item &item, const gemmi::cif::Loop &loop){
+    item.loop = loop;
+}
+
+void set_cif_item_frame(gemmi::cif::Item &item, const gemmi::cif::Block &frame){
+    item.frame = frame;
+}
+
+gemmi::cif::Pair get_cif_item_pair(const gemmi::cif::Item &item){
+    return item.pair;
+}
+
+gemmi::cif::Loop get_cif_item_loop(const gemmi::cif::Item &item){
+    return item.loop;
+}
+
+gemmi::cif::Block get_cif_item_frame(const gemmi::cif::Item &item){
+    return item.frame;
+}
+
 std::string get_spacegroup_hm(const gemmi::SpaceGroup &sg){
     return std::string(sg.hm);
 }
@@ -576,6 +601,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<coot::molecule_t::moved_residue_t>("Vectormoved_residue_t");
     register_vector<coot::molecule_t::moved_atom_t>("Vectormoved_atom_t");
     register_vector<std::string>("VectorString");
+    register_vector<std::vector<std::string>>("VectorVectorString");
     register_vector<float>("VectorFloat");
     register_vector<int>("VectorInt");
     register_vector<RamachandranInfo>("VectorResidueIdentifier");
@@ -591,6 +617,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<merge_molecule_results_info_t>("Vectormerge_molecule_results_info_t");
     register_vector<coot::phi_psi_prob_t>("Vectophi_psi_prob_t");
 
+    register_vector<gemmi::cif::Item>("VectorGemmiCifItem");
+    register_vector<gemmi::cif::Block>("VectorGemmiCifBlock");
     register_vector<gemmi::Restraints::Bond>("VectorGemmiRestraintsBond");
     register_vector<gemmi::Restraints::Angle>("VectorGemmiRestraintsAngle");
     register_vector<gemmi::Restraints::Torsion>("VectorGemmiRestraintsTorsion");
@@ -641,6 +669,14 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .element(emscripten::index<2>())
     ;
     function("getRotamersMap",&getRotamersMap);
+
+    enum_<gemmi::cif::ItemType>("CifItemType")
+        .value("Pair", gemmi::cif::ItemType::Pair)
+        .value("Loop", gemmi::cif::ItemType::Loop)
+        .value("Frame", gemmi::cif::ItemType::Frame)
+        .value("Comment", gemmi::cif::ItemType::Comment)
+        .value("Erased", gemmi::cif::ItemType::Erased)
+    ;
 
     enum_<gemmi::SoftwareItem::Classification>("Classification")
         .value("DataCollection", gemmi::SoftwareItem::Classification::DataCollection)
@@ -1719,28 +1755,131 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("lexicographic_str",&gemmi::Restraints::lexicographic_str)
     ;
 
+    class_<gemmi::cif::Block>("cifBlock")
+    .property("name",&gemmi::cif::Block::name)
+    .property("items",&gemmi::cif::Block::items)
+    .function("swap",&gemmi::cif::Block::swap)
+    .function("find_values",&gemmi::cif::Block::find_values)
+    .function("has_tag",&gemmi::cif::Block::has_tag)
+    .function("has_any_value",&gemmi::cif::Block::has_any_value)
+    .function("find_with_prefix",select_overload<gemmi::cif::Table(const std::string&, const std::vector<std::string>&)>(&gemmi::cif::Block::find))
+    .function("find",select_overload<gemmi::cif::Table(const std::vector<std::string>&)>(&gemmi::cif::Block::find))
+    .function("find_any",&gemmi::cif::Block::find_any)
+    .function("find_or_add",&gemmi::cif::Block::find_or_add)
+    .function("get_index",&gemmi::cif::Block::get_index)
+    .function("set_pair",&gemmi::cif::Block::set_pair)
+    .function("init_loop",&gemmi::cif::Block::init_loop)
+    .function("move_item",&gemmi::cif::Block::move_item)
+    .function("get_mmcif_category_names",&gemmi::cif::Block::get_mmcif_category_names)
+    .function("find_mmcif_category",&gemmi::cif::Block::find_mmcif_category)
+    .function("has_mmcif_category",&gemmi::cif::Block::has_mmcif_category)
+    .function("init_mmcif_loop",&gemmi::cif::Block::init_mmcif_loop)
+    ;
+
+    class_<gemmi::cif::Document>("cifDocument")
+    .property("source",&gemmi::cif::Document::source)
+    .property("blocks",&gemmi::cif::Document::blocks)
+    .function("add_new_block",&gemmi::cif::Document::add_new_block)
+    .function("clear",&gemmi::cif::Document::clear)
+    .function("sole_block",select_overload<gemmi::cif::Block&()>(&gemmi::cif::Document::sole_block))
+    .function("sole_block_const",select_overload<const gemmi::cif::Block&()const>(&gemmi::cif::Document::sole_block))
+    ;
+
+    class_<gemmi::cif::Column>("cifColumn")
+    .function("length",&gemmi::cif::Column::length)
+    .function("at",select_overload<std::string&(int)>(&gemmi::cif::Column::at))
+    .function("at_const",select_overload<const std::string&(int)const>(&gemmi::cif::Column::at))
+    .function("str",&gemmi::cif::Column::str)
+    .function("col",&gemmi::cif::Column::col)
+    ;
+
+    class_<gemmi::cif::Table::Row>("cifTableRow")
+    .property("row_index",&gemmi::cif::Table::Row::row_index)
+    .function("value_at_unsafe",&gemmi::cif::Table::Row::value_at_unsafe)
+    .function("value_at",select_overload<std::string&(int)>(&gemmi::cif::Table::Row::value_at))
+    .function("value_at_const",select_overload<const std::string&(int)const>(&gemmi::cif::Table::Row::value_at))
+    .function("at",select_overload<std::string&(int)>(&gemmi::cif::Table::Row::at))
+    .function("at_const",select_overload<const std::string&(int)const>(&gemmi::cif::Table::Row::at))
+    .function("has",&gemmi::cif::Table::Row::has)
+    .function("has2",&gemmi::cif::Table::Row::has2)
+    .function("one_of",&gemmi::cif::Table::Row::one_of)
+    .function("size",&gemmi::cif::Table::Row::size)
+    .function("str",&gemmi::cif::Table::Row::str)
+    ;
+
+    class_<gemmi::cif::Table>("cifTable")
+    .property("positions",&gemmi::cif::Table::positions)
+    .property("prefix_length",&gemmi::cif::Table::prefix_length)
+    .function("ok",&gemmi::cif::Table::ok)
+    .function("width",&gemmi::cif::Table::width)
+    .function("length",&gemmi::cif::Table::length)
+    .function("size",&gemmi::cif::Table::size)
+    .function("has_column",&gemmi::cif::Table::has_column)
+    .function("first_of",&gemmi::cif::Table::first_of)
+    .function("at",&gemmi::cif::Table::at)
+    .function("one",&gemmi::cif::Table::one)
+    .function("get_prefix",&gemmi::cif::Table::get_prefix)
+    .function("find_row",&gemmi::cif::Table::find_row)
+    .function("remove_row",&gemmi::cif::Table::remove_row)
+    .function("remove_rows",&gemmi::cif::Table::remove_rows)
+    .function("column_at_pos",&gemmi::cif::Table::column_at_pos)
+    .function("column",&gemmi::cif::Table::column)
+    .function("move_row",&gemmi::cif::Table::move_row)
+    .function("find_column_position",&gemmi::cif::Table::find_column_position)
+    .function("find_column",&gemmi::cif::Table::find_column)
+    .function("erase",&gemmi::cif::Table::erase)
+    .function("convert_pair_to_loop",&gemmi::cif::Table::convert_pair_to_loop)
+    ;
+
+    class_<gemmi::cif::Item>("cifItem")
+    .property("type",&gemmi::cif::Item::type)
+    .property("line_number",&gemmi::cif::Item::line_number)
+    .function("erase",&gemmi::cif::Item::erase)
+    .function("has_prefix",&gemmi::cif::Item::has_prefix)
+    .function("set_value",&gemmi::cif::Item::set_value)
+    ;
+
+    class_<gemmi::cif::Loop>("cifLoop")
+    .property("tags",&gemmi::cif::Loop::tags)
+    .property("values",&gemmi::cif::Loop::values)
+    .function("find_tag_lc",&gemmi::cif::Loop::find_tag_lc)
+    .function("has_tag",&gemmi::cif::Loop::has_tag)
+    .function("width",&gemmi::cif::Loop::width)
+    .function("val",&gemmi::cif::Loop::val)
+    .function("clear",&gemmi::cif::Loop::clear)
+    .function("pop_row",&gemmi::cif::Loop::pop_row)
+    .function("move_row",&gemmi::cif::Loop::move_row)
+    .function("set_all_values",&gemmi::cif::Loop::set_all_values)
+    ;
+
+    class_<gemmi::cif::ItemSpan>("cifItemSpan")
+    .function("set_pair",&gemmi::cif::ItemSpan::set_pair)
+    ;
+
+    class_<gemmi::cif::LoopArg>("cifLoopArg")
+    ;
+
+    class_<gemmi::cif::FrameArg>("cifFrameArg")
+    ;
+
+    class_<gemmi::cif::CommentArg>("cifCommentArg")
+    ;
+
     //TODO Wrap some of these gemmi classes
     /*
 
-cif::Block
 ChemMod
 EnerLib
 MonLib
 BondIndex
 
 AsuData
-ChemComp
 ReflnBlock
 ReflnDataProxy
 CifToMtz
 Element
 Ccp4Base
 Ccp4
-LoopArg
-FrameArg
-CommentArg
-Loop
-Table
 Document
 Selection
 ResidueInfo
@@ -1849,6 +1988,12 @@ GlobWalk
     function("get_spacegroup_by_name",&gemmi::get_spacegroup_by_name);
 
     //Utilities to deal with char*/[]
+    function("setCifItemPair",&set_cif_item_pair);
+    function("setCifItemLoop",&set_cif_item_loop);
+    function("setCifItemFrame",&set_cif_item_frame);
+    function("getCifItemPair",&get_cif_item_pair);
+    function("getCifItemLoop",&get_cif_item_loop);
+    function("getCifItemFrame",&get_cif_item_frame);
     function("getSpaceGroupHMAsString",&get_spacegroup_hm);
     function("getNearestImagePBCShiftAsVector",&get_nearest_image_pbc_shift);
     function("getSpaceGroupHallAsString",&get_spacegroup_hall);
