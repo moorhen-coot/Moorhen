@@ -58,9 +58,9 @@ export const BabyGruPepflipsDifferenceMap = (props) => {
                 }, true)    
             }
 
-            let selectedMoleculeIndex = props.molecules.findIndex(molecule => molecule.molNo == selectedModel);
-            props.molecules[selectedMoleculeIndex].setAtomsDirty(true)
-            props.molecules[selectedMoleculeIndex].redraw(props.glRef)
+            const selectedMolecule = props.molecules.find(molecule => molecule.molNo == selectedModel)
+            selectedMolecule.setAtomsDirty(true)
+            selectedMolecule.redraw(props.glRef)
             //Here use originChanged event to force recontour (relevant for live updating maps)
             const originChangedEvent = new CustomEvent("originChanged",
                 { "detail": props.glRef.current.origin });
