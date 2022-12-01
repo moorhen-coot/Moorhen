@@ -43,6 +43,7 @@
 #include <gemmi/mmread.hpp>
 #include <gemmi/gz.hpp>
 #include <gemmi/model.hpp>
+#include <gemmi/monlib.hpp>
 
 #define _SAJSON_H_INCLUDED_
 
@@ -618,6 +619,41 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .value("Unspecified", gemmi::SoftwareItem::Classification::Unspecified)
     ;
 
+    enum_<gemmi::Restraints::DistanceOf>("DistanceOf")
+        .value("ElectronCloud", gemmi::Restraints::DistanceOf::ElectronCloud)
+        .value("Nucleus", gemmi::Restraints::DistanceOf::Nucleus)
+    ;
+
+    enum_<gemmi::BondType>("BondType")
+        .value("Unspec", gemmi::BondType::Unspec)
+        .value("Single", gemmi::BondType::Single)
+        .value("Double", gemmi::BondType::Double)
+        .value("Triple", gemmi::BondType::Triple)
+        .value("Aromatic", gemmi::BondType::Aromatic)
+        .value("Deloc", gemmi::BondType::Deloc)
+        .value("Metal", gemmi::BondType::Metal)
+    ;
+
+    enum_<gemmi::ChiralityType>("ChiralityType")
+        .value("Positive", gemmi::ChiralityType::Positive)
+        .value("Negative", gemmi::ChiralityType::Negative)
+        .value("Both", gemmi::ChiralityType::Both)
+    ;
+
+    enum_<gemmi::ChemComp::Group>("Group")
+        .value("Peptide", gemmi::ChemComp::Group::Peptide)
+        .value("PPeptide", gemmi::ChemComp::Group::PPeptide)
+        .value("MPeptide", gemmi::ChemComp::Group::MPeptide)
+        .value("Dna", gemmi::ChemComp::Group::Dna)
+        .value("Rna", gemmi::ChemComp::Group::Rna)
+        .value("DnaRna", gemmi::ChemComp::Group::DnaRna)
+        .value("Pyranose", gemmi::ChemComp::Group::Pyranose)
+        .value("Ketopyranose", gemmi::ChemComp::Group::Ketopyranose)
+        .value("Furanose", gemmi::ChemComp::Group::Furanose)
+        .value("NonPolymer", gemmi::ChemComp::Group::NonPolymer)
+        .value("Null", gemmi::ChemComp::Group::Null)
+    ;
+
     enum_<gemmi::Assembly::SpecialKind>("SpecialKind")
         .value("NA", gemmi::Assembly::SpecialKind::NA)
         .value("CompleteIcosahedral", gemmi::Assembly::SpecialKind::CompleteIcosahedral)
@@ -1178,7 +1214,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("cos_angle",&gemmi::Vec3::cos_angle)
     .function("angle",&gemmi::Vec3::angle)
     .function("approx",&gemmi::Vec3::approx)
-    .function("str",&gemmi::Vec3::str)
+    .function("has_nan",&gemmi::Vec3::has_nan)
     ;
 
     class_<gemmi::Fractional, base<gemmi::Vec3>>("Fractional")
@@ -1560,17 +1596,69 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("acc_index",&gemmi::SiftsUnpResidue::acc_index)
     .property("num",&gemmi::SiftsUnpResidue::num)
     ;
+
+    class_<gemmi::ChemLink::Side>("Side")
+    .property("comp",&gemmi::ChemLink::Side::comp)
+    .property("mod",&gemmi::ChemLink::Side::mod)
+    .property("group",&gemmi::ChemLink::Side::group)
+    .function("matches_group",&gemmi::ChemLink::Side::matches_group)
+    .function("specificity",&gemmi::ChemLink::Side::specificity)
+    ;
+
+    class_<gemmi::ChemLink>("ChemLink")
+    .property("id",&gemmi::ChemLink::id)
+    .property("name",&gemmi::ChemLink::name)
+    .property("side1",&gemmi::ChemLink::side1)
+    .property("side2",&gemmi::ChemLink::side2)
+    .property("rt",&gemmi::ChemLink::rt)
+    .property("block",&gemmi::ChemLink::block)//cif::Block TODO
+    //.function("calculate_score",&gemmi::ChemLink::calculate_score) //Takes a pointer as 2nd arg: (const Residue&, const Residue*, char)
+    ;
+
+    class_<gemmi::Restraints::Plane>("Plane")
+    ;
+
+    class_<gemmi::Restraints::Chirality>("Chirality")
+    ;
+
+    class_<gemmi::Restraints::Torsion>("Torsion")
+    ;
+
+    class_<gemmi::Restraints::Angle>("Angle")
+    ;
+
+    class_<gemmi::Restraints::Bond>("Bond")
+    .property("id1",&gemmi::Restraints::Bond::id1)
+    .property("id2",&gemmi::Restraints::Bond::id2)
+    .property("type",&gemmi::Restraints::Bond::type)
+    .property("aromatic",&gemmi::Restraints::Bond::aromatic)
+    .property("value",&gemmi::Restraints::Bond::value)
+    .property("esd",&gemmi::Restraints::Bond::esd)
+    .property("value_nucleus",&gemmi::Restraints::Bond::value_nucleus)
+    .property("esd_nucleus",&gemmi::Restraints::Bond::esd_nucleus)
+    .function("str",&gemmi::Restraints::Bond::str)
+    .function("lexicographic_str",&gemmi::Restraints::Bond::lexicographic_str)
+    .function("distance",&gemmi::Restraints::Bond::distance)
+    ;
+
+    class_<gemmi::Restraints::AtomId>("AtomId")
+    .property("comp",&gemmi::Restraints::AtomId::comp)
+    .property("atom",&gemmi::Restraints::AtomId::atom)
+    ;
+
+    class_<gemmi::Restraints>("Restraints")
+    .function("lexicographic_str",&gemmi::Restraints::lexicographic_str)
+    ;
+
     //TODO Wrap some of these gemmi classes
     /*
 
-ChemLink
+
 ChemMod
 EnerLib
 MonLib
 BondIndex
-Binner
 AsuData
-Restraints
 ChemComp
 ReflnBlock
 ReflnDataProxy
@@ -1590,6 +1678,7 @@ SmallStructure
 
 UniqProxy
 ConstUniqProxy
+Binner
 HklMatch
 CenterOfMass
 IT92
