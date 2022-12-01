@@ -14,13 +14,6 @@ export const BabyGruPepflipsDifferenceMap = (props) => {
     const [selectedRmsd, setSelectedRmsd] = useState(4.5)
     const [cardList, setCardList] = useState([])
     
-    const isValidRmsd = (value) => {
-        if(value < 2.5 || value > 7.0) {
-            return false
-        } 
-        return true
-    }
-
     const getDifferenceMaps = () => {
         let differenceMaps = []
         
@@ -46,14 +39,38 @@ export const BabyGruPepflipsDifferenceMap = (props) => {
         setSelectedMap(evt.target.value)
     }
 
-    const handleRmsdChange = (evt) => {
-        if (isValidRmsd(evt.target.value)){
-            console.log(`Selected RMSD ${evt.target.value}`)
-            setSelectedRmsd(evt.target.value)
-        } else {
-            console.log('Invalid RMSD selected...')
-            setSelectedRmsd(null)
+    const handleFlip = (...args) => {
+        const flipPeptide = async (selectedMolNo, chainId, insCode, seqNum) => {
+            await props.commandCentre.current.cootCommand({
+                returnType: "status",
+                command: "flipPeptide_cid",
+                commandArgs: [selectedMolNo, `/${insCode}/${chainId}/${seqNum}/C`, ''],
+                changesMolecules: [selectedMolNo]
+            }, true)
+
+            if (props.refineAfterMod) {
+                console.log('Triggering post-modification triple refinement...')
+                await props.commandCentre.current.cootCommand({
+                    returnType: "status",
+                    command: 'refine_residues_using_atom_cid',
+                    commandArgs: [selectedMolNo, `/${insCode}/${chainId}/${seqNum}`, 'TRIPLE'],
+                    changesMolecules: [selectedMolNo]
+                }, true)    
+            }
+
+            let selectedMoleculeIndex = props.molecules.findIndex(molecule => molecule.molNo == selectedModel);
+            props.molecules[selectedMoleculeIndex].setAtomsDirty(true)
+            props.molecules[selectedMoleculeIndex].redraw(props.glRef)
+            //Here use originChanged event to force recontour (relevant for live updating maps)
+            const originChangedEvent = new CustomEvent("originChanged",
+                { "detail": props.glRef.current.origin });
+            document.dispatchEvent(originChangedEvent);
         }
+
+        if (args.every(arg => arg !== null)) {
+            flipPeptide(...args)
+        }
+
     }
 
     useEffect(() => {
@@ -129,6 +146,11 @@ export const BabyGruPepflipsDifferenceMap = (props) => {
                                 {flip.buttonLabel}
                             </Col>
                             <Col className='col-3' style={{margin: '0', padding:'0', justifyContent: 'right', display:'flex'}}>
+                            <Button style={{marginRight:'0.5rem'}} onClick={() => {
+                                            handleFlip(selectedModel, flip.chainId, flip.insCode,  flip.seqNum)
+                                }}>
+                                    Flip
+                                </Button>
                                 <Button onClick={() => {
                                             props.glRef.current.setOrigin([-flip.coordX, -flip.coordY, -flip.coordZ])
                                 }}>
