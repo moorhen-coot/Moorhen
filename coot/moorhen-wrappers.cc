@@ -77,6 +77,31 @@ std::vector<int> get_nearest_image_pbc_shift(const gemmi::NearestImage &ni){
     ret.push_back(ni.pbc_shift[2]);
     return ret;
 }
+
+void set_cif_item_pair(gemmi::cif::Item &item, const gemmi::cif::Pair pair){
+    item.pair = pair;
+}
+
+void set_cif_item_loop(gemmi::cif::Item &item, const gemmi::cif::Loop &loop){
+    item.loop = loop;
+}
+
+void set_cif_item_frame(gemmi::cif::Item &item, const gemmi::cif::Block &frame){
+    item.frame = frame;
+}
+
+gemmi::cif::Pair get_cif_item_pair(const gemmi::cif::Item &item){
+    return item.pair;
+}
+
+gemmi::cif::Loop get_cif_item_loop(const gemmi::cif::Item &item){
+    return item.loop;
+}
+
+gemmi::cif::Block get_cif_item_frame(const gemmi::cif::Item &item){
+    return item.frame;
+}
+
 std::string get_spacegroup_hm(const gemmi::SpaceGroup &sg){
     return std::string(sg.hm);
 }
@@ -576,6 +601,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<coot::molecule_t::moved_residue_t>("Vectormoved_residue_t");
     register_vector<coot::molecule_t::moved_atom_t>("Vectormoved_atom_t");
     register_vector<std::string>("VectorString");
+    register_vector<std::vector<std::string>>("VectorVectorString");
     register_vector<float>("VectorFloat");
     register_vector<int>("VectorInt");
     register_vector<RamachandranInfo>("VectorResidueIdentifier");
@@ -1806,12 +1832,28 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
 
     class_<gemmi::cif::Item>("cifItem")
+    .property("type",&gemmi::cif::Item::type)
+    .property("line_number",&gemmi::cif::Item::line_number)
+    .function("erase",&gemmi::cif::Item::erase)
+    .function("has_prefix",&gemmi::cif::Item::has_prefix)
+    .function("set_value",&gemmi::cif::Item::set_value)
     ;
 
     class_<gemmi::cif::Loop>("cifLoop")
+    .property("tags",&gemmi::cif::Loop::tags)
+    .property("values",&gemmi::cif::Loop::values)
+    .function("find_tag_lc",&gemmi::cif::Loop::find_tag_lc)
+    .function("has_tag",&gemmi::cif::Loop::has_tag)
+    .function("width",&gemmi::cif::Loop::width)
+    .function("val",&gemmi::cif::Loop::val)
+    .function("clear",&gemmi::cif::Loop::clear)
+    .function("pop_row",&gemmi::cif::Loop::pop_row)
+    .function("move_row",&gemmi::cif::Loop::move_row)
+    .function("set_all_values",&gemmi::cif::Loop::set_all_values)
     ;
 
     class_<gemmi::cif::ItemSpan>("cifItemSpan")
+    .function("set_pair",&gemmi::cif::ItemSpan::set_pair)
     ;
 
     class_<gemmi::cif::LoopArg>("cifLoopArg")
@@ -1946,6 +1988,12 @@ GlobWalk
     function("get_spacegroup_by_name",&gemmi::get_spacegroup_by_name);
 
     //Utilities to deal with char*/[]
+    function("setCifItemPair",&set_cif_item_pair);
+    function("setCifItemLoop",&set_cif_item_loop);
+    function("setCifItemFrame",&set_cif_item_frame);
+    function("getCifItemPair",&get_cif_item_pair);
+    function("getCifItemLoop",&get_cif_item_loop);
+    function("getCifItemFrame",&get_cif_item_frame);
     function("getSpaceGroupHMAsString",&get_spacegroup_hm);
     function("getNearestImagePBCShiftAsVector",&get_nearest_image_pbc_shift);
     function("getSpaceGroupHallAsString",&get_spacegroup_hall);
