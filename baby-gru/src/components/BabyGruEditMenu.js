@@ -16,6 +16,7 @@ export const BabyGruEditMenu = (props) => {
         <NavDropdown
             title="Edit"
             id="basic-nav-dropdown-edit"
+            autoClose={popoverIsShown ? false : 'outside'}
             show={props.currentDropdownId === props.dropdownId}
             onToggle={() => { props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId(-1) }}>
             <BabyGruMergeMoleculesMenuItem key="merge" {...menuItemProps} />
