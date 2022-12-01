@@ -2,6 +2,7 @@ import { MenuItem } from "@mui/material";
 import { useEffect, useState, useMemo, Fragment } from "react";
 import { Card, Form, Button, Row, Col, DropdownButton } from "react-bootstrap";
 import { doDownload, sequenceIsValid } from '../utils/BabyGruUtils';
+import { isDarkBackground } from '../WebGL/mgWebGL'
 import { UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined, ExpandLessOutlined, VisibilityOffOutlined, VisibilityOutlined, DownloadOutlined, Settings } from '@mui/icons-material';
 import { BabyGruSequenceViewer } from "./BabyGruSequenceViewer";
 import { BabyGruDeleteDisplayObjectMenuItem, BabyGruRenameDisplayObjectMenuItem, BabyGruMoleculeBondSettingsMenuItem } from "./BabyGruMenuItem";
@@ -18,14 +19,6 @@ export const BabyGruMoleculeCard = (props) => {
     const [atomRadiusBondRatio, setAtomRadiusBondRatio] = useState(1.5)
     const [bondSmoothness, setBondSmoothness] = useState(1)
 
-    const isDarkBackground = (backgroundColor) => {
-        const bright_y = backgroundColor[0] * 0.299 + backgroundColor[1] * 0.587 + backgroundColor[2] * 0.114
-        if (bright_y >= 0.5) {
-            return false
-        }
-        return true
-    }
-
     const  bondSettingsProps = {
         bondWidth, setBondWidth, atomRadiusBondRatio, 
         setAtomRadiusBondRatio, bondSmoothness, setBondSmoothness
@@ -37,7 +30,7 @@ export const BabyGruMoleculeCard = (props) => {
         }
 
         if (isVisible && showState['CBs']) {
-            const newBackgroundIsDark = isDarkBackground(props.backgroundColor)
+            const newBackgroundIsDark = isDarkBackground(...props.backgroundColor)
             if (props.molecule.cootBondsOptions.isDarkBackground !== newBackgroundIsDark){
                 props.molecule.cootBondsOptions.isDarkBackground = newBackgroundIsDark
                 props.molecule.setAtomsDirty(true)
