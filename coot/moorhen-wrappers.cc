@@ -562,6 +562,12 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<merge_molecule_results_info_t>("Vectormerge_molecule_results_info_t");
     register_vector<coot::phi_psi_prob_t>("Vectophi_psi_prob_t");
 
+    register_vector<gemmi::Restraints::Bond>("VectorGemmiRestraintsBond");
+    register_vector<gemmi::Restraints::Angle>("VectorGemmiRestraintsAngle");
+    register_vector<gemmi::Restraints::Torsion>("VectorGemmiRestraintsTorsion");
+    register_vector<gemmi::Restraints::Chirality>("VectorGemmiRestraintsChirality");
+    register_vector<gemmi::Restraints::Plane>("VectorGemmiRestraintsPlane");
+    register_vector<gemmi::Restraints::AtomId>("VectorGemmiRestraintsAtomId");
     register_vector<gemmi::TlsGroup::Selection>("VectorGemmiTlsGroupSelection");
     register_vector<gemmi::TlsGroup>("VectorGemmiTlsGroup");
     register_vector<gemmi::RefinementInfo::Restr>("VectorGemmiRefinementInfoRestr");
@@ -1612,19 +1618,43 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("side2",&gemmi::ChemLink::side2)
     .property("rt",&gemmi::ChemLink::rt)
     .property("block",&gemmi::ChemLink::block)//cif::Block TODO
-    //.function("calculate_score",&gemmi::ChemLink::calculate_score) //Takes a pointer as 2nd arg: (const Residue&, const Residue*, char)
+    //.function("calculate_score",&gemmi::ChemLink::calculate_score) //Takes a pointer as 2nd arg: (const Residue&, const Residue*, ...
     ;
 
     class_<gemmi::Restraints::Plane>("Plane")
+    .property("label",&gemmi::Restraints::Plane::label)
+    .property("ids",&gemmi::Restraints::Plane::ids)
+    .property("esd",&gemmi::Restraints::Plane::esd)
+    .function("str",&gemmi::Restraints::Plane::str)
     ;
 
     class_<gemmi::Restraints::Chirality>("Chirality")
+    .property("id_ctr",&gemmi::Restraints::Chirality::id_ctr)
+    .property("id1",&gemmi::Restraints::Chirality::id1)
+    .property("id2",&gemmi::Restraints::Chirality::id2)
+    .property("id3",&gemmi::Restraints::Chirality::id3)
+    .property("sign",&gemmi::Restraints::Chirality::sign)
+    .function("is_wrong",&gemmi::Restraints::Chirality::is_wrong)
+    .function("str",&gemmi::Restraints::Chirality::str)
     ;
 
     class_<gemmi::Restraints::Torsion>("Torsion")
+    .property("id1",&gemmi::Restraints::Torsion::id1)
+    .property("id2",&gemmi::Restraints::Torsion::id2)
+    .property("id3",&gemmi::Restraints::Torsion::id3)
+    .property("id4",&gemmi::Restraints::Torsion::id4)
+    .property("value",&gemmi::Restraints::Torsion::value)
+    .property("esd",&gemmi::Restraints::Torsion::esd)
+    .property("period",&gemmi::Restraints::Torsion::period)
+    .function("str",&gemmi::Restraints::Chirality::str)
     ;
 
     class_<gemmi::Restraints::Angle>("Angle")
+    .property("id1",&gemmi::Restraints::Angle::id1)
+    .property("id2",&gemmi::Restraints::Angle::id2)
+    .property("id3",&gemmi::Restraints::Angle::id3)
+    .function("radians",&gemmi::Restraints::Angle::radians)
+    .function("str",&gemmi::Restraints::Angle::str)
     ;
 
     class_<gemmi::Restraints::Bond>("Bond")
@@ -1647,17 +1677,28 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
 
     class_<gemmi::Restraints>("Restraints")
+    .property("bonds",&gemmi::Restraints::bonds)
+    .property("angles",&gemmi::Restraints::angles)
+    .property("torsions",&gemmi::Restraints::torsions)
+    .property("chirs",&gemmi::Restraints::chirs)
+    .property("planes",&gemmi::Restraints::planes)
+    .function("empty",&gemmi::Restraints::empty)
+    .function("find_shortest_path",&gemmi::Restraints::find_shortest_path)
+    .function("chiral_abs_volume",&gemmi::Restraints::chiral_abs_volume)
+    .function("get_or_add_plane",&gemmi::Restraints::get_or_add_plane)
+    .function("rename_atom",&gemmi::Restraints::rename_atom)
     .function("lexicographic_str",&gemmi::Restraints::lexicographic_str)
     ;
 
     //TODO Wrap some of these gemmi classes
     /*
 
-
+cif::Block
 ChemMod
 EnerLib
 MonLib
 BondIndex
+
 AsuData
 ChemComp
 ReflnBlock
