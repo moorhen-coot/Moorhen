@@ -105,7 +105,7 @@ export const BabyGruPepflipsDifferenceMap = (props) => {
             message:'coot_command',
             command: "pepflips_using_difference_map", 
             returnType:'interesting_places_data',
-            commandArgs:[selectedMap, selectedModel, selectedRmsd]
+            commandArgs:[selectedModel, selectedMap, selectedRmsd]
         }
     
         fetchData(inputData)   
