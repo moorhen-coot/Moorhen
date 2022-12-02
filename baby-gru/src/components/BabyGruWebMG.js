@@ -18,7 +18,7 @@ export const BabyGruWebMG = forwardRef((props, glRef) => {
         setClipFogByZoom()
     })
 
-    const handleKeyPressWithMousePosition = useCallback(e => {
+    const handleGoToBlobDoubleClick = useCallback(e => {
         props.commandCentre.current.cootCommand({
             returnType: "float_array",
             command: "go_to_blob_array",
@@ -32,12 +32,12 @@ export const BabyGruWebMG = forwardRef((props, glRef) => {
     })
 
     useEffect(() => {
-        document.addEventListener("keyPressWithMousePosition", handleKeyPressWithMousePosition);
+        document.addEventListener("goToBlobDoubleClick", handleGoToBlobDoubleClick);
         return () => {
-            document.removeEventListener("keyPressWithMousePosition", handleKeyPressWithMousePosition);
+            document.removeEventListener("goToBlobDoubleClick", handleGoToBlobDoubleClick);
         };
 
-    }, [handleKeyPressWithMousePosition]);
+    }, [handleGoToBlobDoubleClick]);
 
     useEffect(() => {
         document.addEventListener("zoomChanged", handleZoomChanged);

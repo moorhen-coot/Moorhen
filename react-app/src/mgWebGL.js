@@ -10745,7 +10745,7 @@ class MGWebGL extends Component {
 
     doDoubleClick(event, self) {
         const frontAndBack = self.getFrontAndBackPos(event);
-        const goToBlobEvent = new CustomEvent("keyPressWithMousePosition", {
+        const goToBlobEvent = new CustomEvent("goToBlobDoubleClick", {
             "detail": {
                 back: [frontAndBack[0][0], frontAndBack[0][1], frontAndBack[0][2]],
                 front: [frontAndBack[1][0], frontAndBack[1][1], frontAndBack[1][2]],
