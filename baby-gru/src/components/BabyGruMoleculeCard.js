@@ -25,6 +25,18 @@ export const BabyGruMoleculeCard = (props) => {
     }
 
     useEffect(() => {
+        if (props.drawMissingLoops === null) {
+            return
+        }
+
+        if (isVisible && showState['CBs']) {
+            props.molecule.setAtomsDirty(true)
+            props.molecule.redraw(props.glRef)        
+        }
+
+    }, [props.drawMissingLoops])
+
+    useEffect(() => {
         if (props.backgroundColor === null) {
             return
         }
