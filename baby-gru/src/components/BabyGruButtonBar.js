@@ -285,7 +285,7 @@ export const BabyGruConvertCisTransButton = (props) => {
         prompt="Click atom in residue to convert"
         icon={<img className="baby-gru-button-icon" alt="Cis/Trans" src="/baby-gru/pixmaps/cis-trans.svg" />}
         formatArgs={(molecule, chosenAtom) => {
-            return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, '']
+            return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`]
         }} />
 }
 
