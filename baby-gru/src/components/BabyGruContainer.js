@@ -95,7 +95,9 @@ export const BabyGruContainer = (props) => {
         let head = document.head;
         let style = document.createElement("link");
 
-        if (preferences.darkMode) {
+        if (preferences.darkMode === null) {
+            return
+        } else if (preferences.darkMode) {
             style.href = "/baby-gru/darkly.css"
             setTheme("darkly")
             setBackgroundColor([0., 0., 0., 1.])
@@ -114,6 +116,20 @@ export const BabyGruContainer = (props) => {
 
     }, [preferences.darkMode])
 
+    useEffect(() => {
+        async function setDrawMissingLoopAPI() {
+            await commandCentre.current.cootCommand({
+                command: 'set_draw_missing_residue_loops',
+                commandArgs: [preferences.drawMissingLoops],
+                returnType: "status"
+            })
+        }
+
+        if (commandCentre.current && preferences.drawMissingLoops !== null && cootInitialized) {
+            setDrawMissingLoopAPI()
+        }
+
+    }, [preferences.drawMissingLoops, cootInitialized])
 
     useEffect(() => {
         commandCentre.current = new BabyGruCommandCentre({

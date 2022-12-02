@@ -2,9 +2,10 @@ import { MenuItem } from "@mui/material";
 import { useEffect, useState, useMemo, Fragment } from "react";
 import { Card, Form, Button, Row, Col, DropdownButton } from "react-bootstrap";
 import { doDownload, sequenceIsValid } from '../utils/BabyGruUtils';
+import { isDarkBackground } from '../WebGL/mgWebGL'
 import { UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined, ExpandLessOutlined, VisibilityOffOutlined, VisibilityOutlined, DownloadOutlined, Settings } from '@mui/icons-material';
 import { BabyGruSequenceViewer } from "./BabyGruSequenceViewer";
-import { BabyGruDeleteDisplayObjectMenuItem, BabyGruRenameDisplayObjectMenuItem, BabyGruMergeMoleculesMenuItem } from "./BabyGruMenuItem";
+import { BabyGruDeleteDisplayObjectMenuItem, BabyGruRenameDisplayObjectMenuItem, BabyGruMoleculeBondSettingsMenuItem } from "./BabyGruMenuItem";
 
 export const BabyGruMoleculeCard = (props) => {
     const [showState, setShowState] = useState({})
@@ -14,6 +15,81 @@ export const BabyGruMoleculeCard = (props) => {
     const [isCollapsed, setIsCollapsed] = useState(!props.defaultExpandDisplayCards);
     const [popoverIsShown, setPopoverIsShown] = useState(false)
     const [isVisible, setIsVisible] = useState(true)
+    const [bondWidth, setBondWidth] = useState(0.1)
+    const [atomRadiusBondRatio, setAtomRadiusBondRatio] = useState(1.5)
+    const [bondSmoothness, setBondSmoothness] = useState(1)
+
+    const  bondSettingsProps = {
+        bondWidth, setBondWidth, atomRadiusBondRatio, 
+        setAtomRadiusBondRatio, bondSmoothness, setBondSmoothness
+    }
+
+    useEffect(() => {
+        if (props.drawMissingLoops === null) {
+            return
+        }
+
+        if (isVisible && showState['CBs']) {
+            props.molecule.setAtomsDirty(true)
+            props.molecule.redraw(props.glRef)        
+        }
+
+    }, [props.drawMissingLoops])
+
+    useEffect(() => {
+        if (props.backgroundColor === null) {
+            return
+        }
+
+        if (isVisible && showState['CBs']) {
+            const newBackgroundIsDark = isDarkBackground(...props.backgroundColor)
+            if (props.molecule.cootBondsOptions.isDarkBackground !== newBackgroundIsDark){
+                props.molecule.cootBondsOptions.isDarkBackground = newBackgroundIsDark
+                props.molecule.setAtomsDirty(true)
+                props.molecule.redraw(props.glRef)        
+            }
+        }
+
+    }, [props.backgroundColor, showState]);
+
+    useEffect(() => {
+        if (bondSmoothness === null) {
+            return
+        }
+        
+        props.molecule.cootBondsOptions.smoothness = bondSmoothness
+        if (isVisible && showState['CBs']) {
+            props.molecule.setAtomsDirty(true)
+            props.molecule.redraw(props.glRef)        
+        }
+
+    }, [bondSmoothness]);
+
+    useEffect(() => {
+        if (bondWidth === null) {
+            return
+        }
+
+        props.molecule.cootBondsOptions.width = bondWidth
+        if (isVisible && showState['CBs']) {
+            props.molecule.setAtomsDirty(true)
+            props.molecule.redraw(props.glRef)        
+        }
+
+    }, [bondWidth]);
+
+    useEffect(() => {
+        if (atomRadiusBondRatio === null) {
+            return
+        }
+        
+        props.molecule.cootBondsOptions.atomRadiusBondRatio = atomRadiusBondRatio
+        if (isVisible && showState['CBs']) {
+            props.molecule.setAtomsDirty(true)
+            props.molecule.redraw(props.glRef)        
+        }
+
+    }, [atomRadiusBondRatio]);
 
     useEffect(() => {
         const initialState = {}
@@ -164,23 +240,23 @@ export const BabyGruMoleculeCard = (props) => {
             }
         },
         6: {
-            label: 'Merge molecules',
-            compressed: () => { return (<BabyGruMergeMoleculesMenuItem key={6} glRef={props.glRef} molecules={props.molecules} setPopoverIsShown={setPopoverIsShown} menuItemText="Merge molecule into..." popoverPlacement='left' fromMolNo={props.molecule.molNo}/>) },
+            label: 'Refine selected residues',
+            compressed: () => { return (<MenuItem key={6} variant="success" disabled={(!clickedResidue || !selectedResidues)} onClick={handleResidueRangeRefinement}>Refine selected residues</MenuItem>) },
             expanded: null
         },
         7: {
-            label: 'Refine selected residues',
-            compressed: () => { return (<MenuItem key={7} variant="success" disabled={(!clickedResidue || !selectedResidues)} onClick={handleResidueRangeRefinement}>Refine selected residues</MenuItem>) },
+            label: 'Rename molecule',
+            compressed: () => { return (<BabyGruRenameDisplayObjectMenuItem key={7} setPopoverIsShown={setPopoverIsShown} setCurrentName={setCurrentName} item={props.molecule} />) },
             expanded: null
         },
         8: {
-            label: 'Rename molecule',
-            compressed: () => { return (<BabyGruRenameDisplayObjectMenuItem key={8} setPopoverIsShown={setPopoverIsShown} setCurrentName={setCurrentName} item={props.molecule} />) },
+            label: 'Copy selected residues into fragment',
+            compressed: () => { return (<MenuItem key={8} variant="success" disabled={(!clickedResidue || !selectedResidues)} onClick={handleCopyFragment}>Copy selected residues into fragment</MenuItem>) },
             expanded: null
         },
         9: {
-            label: 'Copy selected residues into fragment',
-            compressed: () => { return (<MenuItem key={9} variant="success" disabled={(!clickedResidue || !selectedResidues)} onClick={handleCopyFragment}>Copy selected residues into fragment</MenuItem>) },
+            label: 'Display settings',
+            compressed: () => { return (<BabyGruMoleculeBondSettingsMenuItem key={9} setPopoverIsShown={setPopoverIsShown} molecule={props.molecule} {...bondSettingsProps}/>) },
             expanded: null
         },
     }
@@ -240,8 +316,9 @@ export const BabyGruMoleculeCard = (props) => {
     return <Card className="px-0" style={{ marginBottom: '0.5rem', padding: '0' }} key={props.molecule.molNo}>
         <Card.Header>
             <Row className='align-items-center'>
-                <Col style={{ display: 'flex', justifyContent: 'left' }}>
+            <Col className='align-items-center' style={{display:'flex', justifyContent:'left'}}>
                     {`#${props.molecule.molNo} Mol. ${props.molecule.name}`}
+                    <img className="baby-gru-map-icon" alt="..." src= "/baby-gru/pixmaps/secondary-structure.svg" style={{width: '20px', height: '20px', margin:'0.5rem', padding:'0'}}/>
                 </Col>
                 <Col style={{ display: 'flex', justifyContent: 'right' }}>
                     {getButtonBar(props.sideBarWidth)}

@@ -50,8 +50,11 @@ export const BabyGruButtonBar = (props) => {
             setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="10" />),
 
         (<BabyGruAddSimpleButton {...props} selectedButtonIndex={selectedButtonIndex}
-            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="11" />)
-    
+            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="11" />),
+        
+        (<BabyGruConvertCisTransButton {...props} selectedButtonIndex={selectedButtonIndex}
+                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="12" />),
+
     ]
 
     const getCarouselItems = () => {
@@ -266,6 +269,21 @@ export const BabyGruFlipPeptideButton = (props) => {
         cootCommand="flipPeptide_cid"
         prompt="Click atom in residue to flip"
         icon={<img className="baby-gru-button-icon" src="/baby-gru/pixmaps/flip-peptide.svg" />}
+        formatArgs={(molecule, chosenAtom) => {
+            return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, '']
+        }} />
+}
+
+export const BabyGruConvertCisTransButton = (props) => {
+    return <BabyGruSimpleEditButton {...props}
+        toolTip="Cis/Trans isomerisation"
+        buttonIndex={props.buttonIndex}
+        selectedButtonIndex={props.selectedButtonIndex}
+        setSelectedButtonIndex={props.setSelectedButtonIndex}
+        needsMapData={false}
+        cootCommand="cis_trans_convert"
+        prompt="Click atom in residue to convert"
+        icon={<img className="baby-gru-button-icon" alt="Cis/Trans" src="/baby-gru/pixmaps/cis-trans.svg" />}
         formatArgs={(molecule, chosenAtom) => {
             return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, '']
         }} />

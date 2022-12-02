@@ -883,6 +883,14 @@ var icosaIndices = icosaIndices2;
 
 var icosaNormals = icosaVertices;
 
+function isDarkBackground(r, g, b) {
+    const brightness = r * 0.299 + g * 0.587 + b * 0.114
+    if (brightness >= 0.5) {
+        return false
+    }
+    return true
+}
+
 function flatNormalMesh(vertices, indices) {
     var newVertices = [];
     var newNormals = [];
@@ -7898,10 +7906,10 @@ class MGWebGL extends Component {
         this.gl.uniform1f(this.shaderProgramTextBackground.maxTextureS, 1.0);
         let textTextureDirty = false;
         let textColour = "black";
-        const bright_y = this.background_colour[0] * 0.299 + this.background_colour[1] * 0.587 + this.background_colour[2] * 0.114;
-        if (bright_y < 0.5) {
+        if (isDarkBackground(...this.background_colour)) {
             textColour = "white";
-        }
+        } 
+        
         if (textColour !== this.previousTextColour) textTextureDirty = true;
         this.previousTextColour = textColour;
 
@@ -11084,4 +11092,4 @@ class MGWebGL extends Component {
     }
 }
 
-export { MGWebGL, icosaIndices1, icosaVertices1, icosaIndices2, icosaVertices2, getDeviceScale, vec3Create };
+export { MGWebGL, icosaIndices1, icosaVertices1, icosaIndices2, icosaVertices2, getDeviceScale, vec3Create, isDarkBackground };
