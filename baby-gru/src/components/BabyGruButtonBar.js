@@ -149,7 +149,7 @@ export const BabyGruSimpleEditButton = forwardRef((props, buttonRef) => {
                             commandArgs: formattedArgs,
                             changesMolecules: props.changesMolecule ? [molecule.molNo] : []
                         }, true)
-                        if (props.refineAfterMod) {
+                        if (props.refineAfterMod && props.activeMap) {
                             console.log('Triggering post-modification triple refinement...')
                             await props.commandCentre.current.cootCommand({
                                 returnType: "status",
