@@ -304,8 +304,9 @@ export const BabyGruMoleculeCard = (props) => {
     return <Card className="px-0" style={{ marginBottom: '0.5rem', padding: '0' }} key={props.molecule.molNo}>
         <Card.Header>
             <Row className='align-items-center'>
-                <Col style={{ display: 'flex', justifyContent: 'left' }}>
+            <Col className='align-items-center' style={{display:'flex', justifyContent:'left'}}>
                     {`#${props.molecule.molNo} Mol. ${props.molecule.name}`}
+                    <img className="baby-gru-map-icon" alt="..." src= "/baby-gru/pixmaps/secondary-structure.svg" style={{width: '20px', height: '20px', margin:'0.5rem', padding:'0'}}/>
                 </Col>
                 <Col style={{ display: 'flex', justifyContent: 'right' }}>
                     {getButtonBar(props.sideBarWidth)}
