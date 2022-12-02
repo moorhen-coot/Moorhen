@@ -10,6 +10,7 @@
 #include <string.h>
 #include <errno.h>
 
+#include <complex>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -44,6 +45,11 @@
 #include <gemmi/gz.hpp>
 #include <gemmi/model.hpp>
 #include <gemmi/monlib.hpp>
+#include <gemmi/select.hpp>
+#include <gemmi/small.hpp>
+#include <gemmi/asudata.hpp>
+#include <gemmi/refln.hpp>
+#include <gemmi/cif2mtz.hpp>
 
 #define _SAJSON_H_INCLUDED_
 
@@ -605,7 +611,9 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<std::string>("VectorString");
     register_vector<std::vector<std::string>>("VectorVectorString");
     register_vector<float>("VectorFloat");
+    register_vector<double>("VectorDouble");
     register_vector<int>("VectorInt");
+    register_vector<char>("VectorChar");
     register_vector<RamachandranInfo>("VectorResidueIdentifier");
     register_vector<ResiduePropertyInfo>("VectorResiduePropertyInfo");
     register_vector<coot::chain_validation_information_t>("Vectorchain_validation_information_t");
@@ -619,6 +627,14 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<merge_molecule_results_info_t>("Vectormerge_molecule_results_info_t");
     register_vector<coot::phi_psi_prob_t>("Vectophi_psi_prob_t");
 
+    register_vector<gemmi::Mtz::Dataset>("VectorGemmiMtzDataset");
+    register_vector<gemmi::Mtz::Column>("VectorGemmiMtzColumn");
+    register_vector<gemmi::Mtz::Batch>("VectorGemmiMtzBatch");
+    //register_vector<gemmi::ReflnBlock>("VectorGemmiReflnBlock"); //Causes compiler problems ...
+    register_vector<gemmi::HklValue<std::complex<float>>>("VectorGemmiHklValueComplexFloat");
+    register_vector<gemmi::SmallStructure::Site>("VectorGemmiSmallStructureSite");
+    register_vector<gemmi::SmallStructure::AtomType>("VectorGemmiSmallStructureAtomType");
+    register_vector<gemmi::Selection::AtomInequality>("VectorGemmiSelectionAtomInequality");
     register_vector<gemmi::ChemComp::Aliasing>("VectorGemmiChemCompAliasing");
     register_vector<gemmi::ChemMod::AtomMod>("VectorGemmiChemModAtomMod");
     register_vector<gemmi::cif::Item>("VectorGemmiCifItem");
@@ -673,6 +689,28 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .element(emscripten::index<2>())
     ;
     function("getRotamersMap",&getRotamersMap);
+
+    enum_<gemmi::DataType>("DataType")
+        .value("Unknown", gemmi::DataType::Unknown)
+        .value("Unmerged", gemmi::DataType::Unmerged)
+        .value("Mean", gemmi::DataType::Mean)
+        .value("Anomalous", gemmi::DataType::Anomalous)
+    ;
+
+    enum_<gemmi::ResidueInfo::Kind>("ResidueInfoKind")
+        .value("UNKNOWN", gemmi::ResidueInfo::Kind::UNKNOWN)
+        .value("AA", gemmi::ResidueInfo::Kind::AA)
+        .value("AAD", gemmi::ResidueInfo::Kind::AAD)
+        .value("PAA", gemmi::ResidueInfo::Kind::PAA)
+        .value("MAA", gemmi::ResidueInfo::Kind::MAA)
+        .value("RNA", gemmi::ResidueInfo::Kind::RNA)
+        .value("DNA", gemmi::ResidueInfo::Kind::DNA)
+        .value("BUF", gemmi::ResidueInfo::Kind::BUF)
+        .value("HOH", gemmi::ResidueInfo::Kind::HOH)
+        .value("PYR", gemmi::ResidueInfo::Kind::PYR)
+        .value("KET", gemmi::ResidueInfo::Kind::KET)
+        .value("ELS", gemmi::ResidueInfo::Kind::ELS)
+    ;
 
     enum_<gemmi::EnerLib::RadiusType>("EnerLibRadiusType")
         .value("Vdw", gemmi::EnerLib::RadiusType::Vdw)
@@ -1986,63 +2024,389 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("graph_distance",&gemmi::BondIndex::graph_distance)
     ;
 
+    class_<gemmi::CRA>("CRA")
+    ;
+
+    class_<gemmi::const_CRA>("const_CRA")
+    ;
+
+    class_<gemmi::Selection::List>("SelectionList")
+    .property("all",&gemmi::Selection::List::all)
+    .property("inverted",&gemmi::Selection::List::inverted)
+    .property("list",&gemmi::Selection::List::list)
+    .function("str",&gemmi::Selection::List::str)
+    .function("has",&gemmi::Selection::List::has)
+    ;
+
+    class_<gemmi::Selection::FlagList>("SelectionFlagList")
+    .property("pattern",&gemmi::Selection::FlagList::pattern)
+    .function("has",&gemmi::Selection::FlagList::has)
+    ;
+
+    class_<gemmi::Selection::SequenceId>("SelectionSequenceId")
+    .property("seqnum",&gemmi::Selection::SequenceId::seqnum)
+    .property("icode",&gemmi::Selection::SequenceId::icode)
+    .function("empty",&gemmi::Selection::SequenceId::empty)
+    .function("str",&gemmi::Selection::SequenceId::str)
+    .function("compare",&gemmi::Selection::SequenceId::compare)
+    ;
+
+    class_<gemmi::Selection::AtomInequality>("SelectionAtomInequality")
+    .property("property",&gemmi::Selection::AtomInequality::property)
+    .property("relation",&gemmi::Selection::AtomInequality::relation)
+    .property("value",&gemmi::Selection::AtomInequality::value)
+    .function("matches",&gemmi::Selection::AtomInequality::matches)
+    .function("str",&gemmi::Selection::AtomInequality::str)
+    ;
+
+    class_<gemmi::Selection>("Selection")
+    .property("mdl",&gemmi::Selection::mdl)
+    .property("chain_ids",&gemmi::Selection::chain_ids)
+    .property("from_seqid",&gemmi::Selection::from_seqid)
+    .property("to_seqid",&gemmi::Selection::to_seqid)
+    .property("residue_names",&gemmi::Selection::residue_names)
+    .property("entity_types",&gemmi::Selection::entity_types)
+    //.property("et_flags",&gemmi::Selection::et_flags) // std::array<char, 6>
+    .property("atom_names",&gemmi::Selection::atom_names)
+    .property("elements",&gemmi::Selection::elements)
+    .property("altlocs",&gemmi::Selection::altlocs)
+    .property("residue_flags",&gemmi::Selection::residue_flags)
+    .property("atom_flags",&gemmi::Selection::atom_flags)
+    .property("atom_inequalities",&gemmi::Selection::atom_inequalities)
+    .function("str",&gemmi::Selection::str)
+    .function("matches_structure",select_overload<bool(const gemmi::Structure&)const>(&gemmi::Selection::matches))
+    .function("matches_model",select_overload<bool(const gemmi::Model&)const>(&gemmi::Selection::matches))
+    .function("matches_chain",select_overload<bool(const gemmi::Chain&)const>(&gemmi::Selection::matches))
+    .function("matches_residue",select_overload<bool(const gemmi::Residue&)const>(&gemmi::Selection::matches))
+    .function("matches_atom",select_overload<bool(const gemmi::Atom&)const>(&gemmi::Selection::matches))
+    .function("matches_cra",select_overload<bool(const gemmi::CRA&)const>(&gemmi::Selection::matches))
+    .function("first_in_model",&gemmi::Selection::first_in_model)
+    .function("set_residue_flags",&gemmi::Selection::set_residue_flags)
+    .function("set_atom_flags",&gemmi::Selection::set_atom_flags)
+    //I have no ide what is wrong with these 2.
+    //.function("remove_not_selected",select_overload<void(gemmi::Atom&)const>(&gemmi::Selection::remove_not_selected))
+    //.function("add_matching_children",select_overload<void(const gemmi::Atom&, gemmi::Atom&)const>(&gemmi::Selection::add_matching_children))
+    ;
+
+    class_<gemmi::ResidueInfo>("ResidueInfo")
+    .property("kind",&gemmi::ResidueInfo::kind)
+    .property("one_letter_code",&gemmi::ResidueInfo::one_letter_code)
+    .property("hydrogen_count",&gemmi::ResidueInfo::hydrogen_count)
+    .property("weight",&gemmi::ResidueInfo::weight)
+    .function("found",&gemmi::ResidueInfo::found)
+    .function("is_water",&gemmi::ResidueInfo::is_water)
+    .function("is_dna",&gemmi::ResidueInfo::is_dna)
+    .function("is_rna",&gemmi::ResidueInfo::is_rna)
+    .function("is_nucleic_acid",&gemmi::ResidueInfo::is_nucleic_acid)
+    .function("is_amino_acid",&gemmi::ResidueInfo::is_amino_acid)
+    .function("is_buffer_or_water",&gemmi::ResidueInfo::is_buffer_or_water)
+    .function("is_standard",&gemmi::ResidueInfo::is_standard)
+    .function("fasta_code",&gemmi::ResidueInfo::fasta_code)
+    ;
+
+    class_<gemmi::SmallStructure::Site>("SmallStructureSite")
+    .property("label",&gemmi::SmallStructure::Site::label)
+    .property("type_symbol",&gemmi::SmallStructure::Site::type_symbol)
+    .property("fract",&gemmi::SmallStructure::Site::fract)
+    .property("occ",&gemmi::SmallStructure::Site::occ)
+    .property("u_iso",&gemmi::SmallStructure::Site::u_iso)
+    .property("aniso",&gemmi::SmallStructure::Site::aniso)
+    .property("disorder_group",&gemmi::SmallStructure::Site::disorder_group)
+    .property("element",&gemmi::SmallStructure::Site::element)
+    .property("charge",&gemmi::SmallStructure::Site::charge)
+    .function("orth",&gemmi::SmallStructure::Site::orth)
+    .function("element_and_charge_symbol",&gemmi::SmallStructure::Site::element_and_charge_symbol)
+    ;
+
+    class_<gemmi::SmallStructure::AtomType>("SmallStructureAtomType")
+    .property("symbol",&gemmi::SmallStructure::AtomType::symbol)
+    .property("element",&gemmi::SmallStructure::AtomType::element)
+    .property("charge",&gemmi::SmallStructure::AtomType::charge)
+    .property("dispersion_real",&gemmi::SmallStructure::AtomType::dispersion_real)
+    .property("dispersion_imag",&gemmi::SmallStructure::AtomType::dispersion_imag)
+    ;
+
+    class_<gemmi::SmallStructure>("SmallStructure")
+    .property("name",&gemmi::SmallStructure::name)
+    .property("cell",&gemmi::SmallStructure::cell)
+    .property("spacegroup_hm",&gemmi::SmallStructure::spacegroup_hm)
+    .property("sites",&gemmi::SmallStructure::sites)
+    .property("atom_types",&gemmi::SmallStructure::atom_types)
+    .property("wavelength",&gemmi::SmallStructure::wavelength)
+    .function("get_all_unit_cell_sites",&gemmi::SmallStructure::get_all_unit_cell_sites)
+    .function("remove_hydrogens",&gemmi::SmallStructure::remove_hydrogens)
+    .function("change_occupancies_to_crystallographic",&gemmi::SmallStructure::change_occupancies_to_crystallographic)
+    .function("setup_cell_images",&gemmi::SmallStructure::setup_cell_images)
+    ;
+
+    class_<std::complex<float>>("complexfloat")
+    .constructor<float, float>()
+    .constructor<const std::complex<float>&>()
+    //.constructor<const std::complex<double>&>()
+    //.constructor<const std::complex<long double>&>()
+    .function("real",select_overload<float(void)const>(&std::complex<float>::real))
+    .function("imag",select_overload<float(void)const>(&std::complex<float>::imag))
+    ;
+
+    class_<std::complex<double>>("complexdouble")
+    .constructor<double, double>()
+    .constructor<const std::complex<float>&>()
+    //.constructor<const std::complex<double>&>()
+    //.constructor<const std::complex<long double>&>()
+    .function("real",select_overload<double(void)const>(&std::complex<double>::real))
+    .function("imag",select_overload<double(void)const>(&std::complex<double>::imag))
+    ;
+
+    class_<std::complex<long double>>("complexlongdouble")
+    .constructor<long double, long double>()
+    .constructor<const std::complex<float>&>()
+    //.constructor<const std::complex<double>&>()
+    //.constructor<const std::complex<long double>&>()
+    .function("real",select_overload<long double(void)const>(&std::complex<long double>::real))
+    .function("imag",select_overload<long double(void)const>(&std::complex<long double>::imag))
+    ;
+
+    class_<gemmi::HklValue<std::complex<float>>>("HklValueComplexFloat")
+    .property("hkl",&gemmi::HklValue<std::complex<float>>::hkl)// Miller - std::array<int, 3>
+    .property("value",&gemmi::HklValue<std::complex<float>>::value)
+    ;
+
+    class_<gemmi::AsuData<std::complex<float>>>("AsuDataComplexFloat")
+    .property("v",&gemmi::AsuData<std::complex<float>>::v)
+    .property("unit_cell_",&gemmi::AsuData<std::complex<float>>::unit_cell_)
+    .function("stride",&gemmi::AsuData<std::complex<float>>::stride)
+    .function("size",&gemmi::AsuData<std::complex<float>>::size)
+    .function("get_hkl",&gemmi::AsuData<std::complex<float>>::get_hkl)
+    .function("get_f",&gemmi::AsuData<std::complex<float>>::get_f)
+    .function("get_phi",&gemmi::AsuData<std::complex<float>>::get_phi)
+    .function("unit_cell",&gemmi::AsuData<std::complex<float>>::unit_cell)
+    //.function("spacegroup",&gemmi::AsuData<std::complex<float>>::spacegroup) // SpaceGroup*
+    .function("ensure_sorted",&gemmi::AsuData<std::complex<float>>::ensure_sorted)
+    .function("ensure_asu",&gemmi::AsuData<std::complex<float>>::ensure_asu)
+    ;
+
+    class_<gemmi::ReflnBlock>("ReflnBlock")
+    .property("block",&gemmi::ReflnBlock::block)
+    .property("entry_id",&gemmi::ReflnBlock::entry_id)
+    .property("cell",&gemmi::ReflnBlock::cell)
+    .property("wavelength",&gemmi::ReflnBlock::wavelength)
+    .function("ok",&gemmi::ReflnBlock::ok)
+    .function("check_ok",&gemmi::ReflnBlock::check_ok)
+    .function("tag_offset",&gemmi::ReflnBlock::tag_offset)
+    .function("use_unmerged",&gemmi::ReflnBlock::use_unmerged)
+    .function("is_unmerged",&gemmi::ReflnBlock::is_unmerged)
+    .function("column_labels",&gemmi::ReflnBlock::column_labels)
+    .function("find_column_index",&gemmi::ReflnBlock::find_column_index)
+    .function("get_column_index",&gemmi::ReflnBlock::get_column_index)
+    .function("get_hkl_column_indices",&gemmi::ReflnBlock::get_hkl_column_indices)//std::array<size_t,3>
+    .function("make_miller_vector",&gemmi::ReflnBlock::make_miller_vector)//std::vector<Miller>
+    .function("make_1_d2_vector",&gemmi::ReflnBlock::make_1_d2_vector)
+    .function("make_d_vector",&gemmi::ReflnBlock::make_d_vector)
+    ;
+
+    class_<gemmi::ReflnDataProxy>("ReflnDataProxy")
+    .property("hkl_cols_",&gemmi::ReflnDataProxy::hkl_cols_)//std::array<size_t,3>
+    .function("stride",&gemmi::ReflnDataProxy::stride)
+    .function("size",&gemmi::ReflnDataProxy::size)
+    .function("get_num",&gemmi::ReflnDataProxy::get_num)
+    .function("unit_cell",&gemmi::ReflnDataProxy::unit_cell)
+    .function("get_hkl",&gemmi::ReflnDataProxy::get_hkl)//Miller
+    .function("column_index",&gemmi::ReflnDataProxy::column_index)
+    ;
+
+    class_<gemmi::CifToMtz::Entry>("CifToMtzEntry")
+    .property("refln_tag",&gemmi::CifToMtz::Entry::refln_tag)
+    .property("col_label",&gemmi::CifToMtz::Entry::col_label)
+    .property("col_type",&gemmi::CifToMtz::Entry::col_type)
+    .property("dataset_id",&gemmi::CifToMtz::Entry::dataset_id)
+    //std::vector<std::pair<std::string, float>> code_to_number; - Util method required?
+    .function("translate_code_to_number",&gemmi::CifToMtz::Entry::translate_code_to_number)
+    ;
+
+    class_<gemmi::CifToMtz>("CifToMtz")
+    .property("verbose",&gemmi::CifToMtz::verbose)
+    .property("force_unmerged",&gemmi::CifToMtz::force_unmerged)
+    .property("title",&gemmi::CifToMtz::title)
+    .property("history",&gemmi::CifToMtz::history)
+    .property("spec_lines",&gemmi::CifToMtz::spec_lines)
+     //Mtz convert_block_to_mtz(const ReflnBlock& rb, std::ostream& out) const {
+    ;
+
+    class_<gemmi::Mtz::Dataset>("MtzDataset")
+    .property("id",&gemmi::Mtz::Dataset::id)
+    .property("project_name",&gemmi::Mtz::Dataset::project_name)
+    .property("crystal_name",&gemmi::Mtz::Dataset::crystal_name)
+    .property("dataset_name",&gemmi::Mtz::Dataset::dataset_name)
+    .property("cell",&gemmi::Mtz::Dataset::cell)
+    .property("wavelength",&gemmi::Mtz::Dataset::wavelength)
+    ;
+
+    class_<gemmi::Mtz::Column>("MtzColumn")
+    .property("dataset_id",&gemmi::Mtz::Column::dataset_id)
+    .property("type",&gemmi::Mtz::Column::type)
+    .property("label",&gemmi::Mtz::Column::label)
+    .property("min_value",&gemmi::Mtz::Column::min_value)
+    .property("max_value",&gemmi::Mtz::Column::max_value)
+    .property("source",&gemmi::Mtz::Column::source)
+    .property("idx",&gemmi::Mtz::Column::idx)
+    .function("dataset",select_overload<gemmi::Mtz::Dataset&()>(&gemmi::Mtz::Column::dataset))
+    .function("dataset_const",select_overload<const gemmi::Mtz::Dataset&()const>(&gemmi::Mtz::Column::dataset))
+    .function("has_data",&gemmi::Mtz::Column::has_data)
+    .function("size",&gemmi::Mtz::Column::size)
+    .function("stride",&gemmi::Mtz::Column::stride)
+    .function("is_integer",&gemmi::Mtz::Column::is_integer)
+    ;
+
+    class_<gemmi::Mtz::Batch>("MtzBatch")
+    .property("number",&gemmi::Mtz::Batch::number)
+    .property("title",&gemmi::Mtz::Batch::title)
+    .property("ints",&gemmi::Mtz::Batch::ints)
+    .property("floats",&gemmi::Mtz::Batch::floats)
+    .property("axes",&gemmi::Mtz::Batch::axes)
+    .function("get_cell",&gemmi::Mtz::Batch::get_cell)
+    .function("set_cell",&gemmi::Mtz::Batch::set_cell)
+    .function("dataset_id",&gemmi::Mtz::Batch::dataset_id)
+    .function("set_dataset_id",&gemmi::Mtz::Batch::set_dataset_id)
+    .function("wavelength",&gemmi::Mtz::Batch::wavelength)
+    .function("set_wavelength",&gemmi::Mtz::Batch::set_wavelength)
+    .function("phi_start",&gemmi::Mtz::Batch::phi_start)
+    .function("phi_end",&gemmi::Mtz::Batch::phi_end)
+    .function("matrix_U",&gemmi::Mtz::Batch::matrix_U)
+    ;
+
+    class_<gemmi::Mtz>("Mtz")
+    .property("source_path",&gemmi::Mtz::source_path)
+    .property("same_byte_order",&gemmi::Mtz::same_byte_order)
+    .property("indices_switched_to_original",&gemmi::Mtz::indices_switched_to_original)
+    .property("header_offset",&gemmi::Mtz::header_offset)
+    .property("version_stamp",&gemmi::Mtz::version_stamp)
+    .property("title",&gemmi::Mtz::title)
+    .property("nreflections",&gemmi::Mtz::nreflections)
+    .property("sort_order",&gemmi::Mtz::sort_order)//std::array<int, 5>
+    .property("min_1_d2",&gemmi::Mtz::min_1_d2)
+    .property("max_1_d2",&gemmi::Mtz::max_1_d2)
+    .property("valm",&gemmi::Mtz::valm)
+    .property("title",&gemmi::Mtz::title)
+    .property("nsymop",&gemmi::Mtz::nsymop)
+    .property("cell",&gemmi::Mtz::cell)
+    .property("spacegroup_number",&gemmi::Mtz::spacegroup_number)
+    .property("spacegroup_name",&gemmi::Mtz::spacegroup_name)
+    .property("symops",&gemmi::Mtz::symops)
+    .property("datasets",&gemmi::Mtz::datasets)
+    .property("columns",&gemmi::Mtz::columns)
+    .property("batches",&gemmi::Mtz::batches)
+    .property("history",&gemmi::Mtz::history)
+    .property("appended_text",&gemmi::Mtz::appended_text)
+    .property("data",&gemmi::Mtz::data)
+    .function("add_base",&gemmi::Mtz::add_base)
+    .function("resolution_high",&gemmi::Mtz::resolution_high)
+    .function("resolution_low",&gemmi::Mtz::resolution_low)
+    .function("get_cell",select_overload<gemmi::UnitCell&(int)>(&gemmi::Mtz::get_cell))
+    .function("get_cell_const",select_overload<const gemmi::UnitCell&(int)const>(&gemmi::Mtz::get_cell))
+    .function("set_cell_for_all",&gemmi::Mtz::set_cell_for_all)
+    .function("last_dataset",&gemmi::Mtz::last_dataset)
+    .function("dataset",select_overload<gemmi::Mtz::Dataset&(int)>(&gemmi::Mtz::dataset))
+    .function("dataset_const",select_overload<const gemmi::Mtz::Dataset&(int)const>(&gemmi::Mtz::dataset))
+    .function("count",&gemmi::Mtz::count)
+    .function("count_type",&gemmi::Mtz::count_type)
+    .function("positions_of_columns_with_type",&gemmi::Mtz::positions_of_columns_with_type)
+    .function("has_data",&gemmi::Mtz::has_data)
+    .function("is_merged",&gemmi::Mtz::is_merged)
+    //.function("extend_min_max_1_d2",&gemmi::Mtz::extend_min_max_1_d2)// Does not compile ... ?
+    .function("calculate_min_max_1_d2",&gemmi::Mtz::calculate_min_max_1_d2)//std::array<double,2>
+    .function("update_reso",&gemmi::Mtz::update_reso)
+    .function("toggle_endiannes",&gemmi::Mtz::toggle_endiannes)
+    .function("warn",&gemmi::Mtz::warn)
+    .function("setup_spacegroup",&gemmi::Mtz::setup_spacegroup)
+    .function("read_file",&gemmi::Mtz::read_file)
+    .function("sorted_row_indices",&gemmi::Mtz::sorted_row_indices)
+    .function("sort",&gemmi::Mtz::sort)
+    .function("get_hkl",&gemmi::Mtz::get_hkl)//Miller
+    .function("set_hkl",&gemmi::Mtz::set_hkl)//Miller
+    .function("ensure_asu",&gemmi::Mtz::ensure_asu)
+    .function("switch_to_original_hkl",&gemmi::Mtz::switch_to_original_hkl)
+    .function("switch_to_asu_hkl",&gemmi::Mtz::switch_to_asu_hkl)
+    .function("add_dataset",&gemmi::Mtz::add_dataset)
+    .function("add_column",&gemmi::Mtz::add_column)
+    .function("check_trailing_cols",&gemmi::Mtz::check_trailing_cols)
+    .function("do_replace_column",&gemmi::Mtz::do_replace_column)
+    .function("replace_column",&gemmi::Mtz::replace_column)
+    .function("copy_column",&gemmi::Mtz::copy_column)
+    .function("remove_column",&gemmi::Mtz::remove_column)
+    .function("expand_data_rows",&gemmi::Mtz::expand_data_rows)
+    ;
+
+    class_<gemmi::MtzDataProxy>("MtzDataProxy")
+    .function("stride",&gemmi::MtzDataProxy::stride)
+    .function("size",&gemmi::MtzDataProxy::size)
+    .function("get_num",&gemmi::MtzDataProxy::get_num)
+    .function("unit_cell",&gemmi::MtzDataProxy::unit_cell)
+    .function("get_hkl",&gemmi::MtzDataProxy::get_hkl)//Miller
+    .function("column_index",&gemmi::MtzDataProxy::column_index)
+    ;
+
+    class_<gemmi::MtzExternalDataProxy, base<gemmi::MtzDataProxy>>("MtzExternalDataProxy")
+    .function("size",&gemmi::MtzExternalDataProxy::size)
+    .function("get_num",&gemmi::MtzExternalDataProxy::get_num)
+    .function("get_hkl",&gemmi::MtzExternalDataProxy::get_hkl)//Miller
+    ;
+
+
     //TODO Wrap some of these gemmi classes
     /*
 
-CRA, const_CRA
-AsuData
-ReflnBlock
-ReflnDataProxy
-CifToMtz
-Element
 Ccp4Base
 Ccp4
-Selection
-ResidueInfo
-SmallStructure
-
-UniqProxy
-ConstUniqProxy
-Binner
-HklMatch
-CenterOfMass
-IT92
-C4322
-NeighborSearch
-TwoFoldData
-AsuBrick
-SolventMasker
-NodeInfo
-FloodFill
-Topo
-ComplexCorrelation
-HklValue
-ValueSigma
-DensityCalculator
-AtomNameElement
-GridOp
-GridMeta
-GridBase
-Grid
-ContactSearch
-ReciprocalGrid
-LinkHunt
-PdbReadOptions
-ResidueSpan::GroupingProxy
-MmcifOutputGroups
-Blob
-BlobCriteria
-GridConstPoint
-Box
+XdsAscii
 Variance
 Covariance
 Correlation
 DataStats
 UnmergedHklMover
-Mtz
-MtzDataProxy
 MtzExternalDataProxy
 Intensities
+IsMmCifFile
+IsCifFile
+IsPdbFile
+IsCoordinateFile
+IsAnyFile
+IsMatchingFile
+PdbReadOptions
+PdbWriteOptions
+ChainNameGenerator
+ContactSearch
+HklMatch
+HklValue
+ValueSigma
+DensityCalculator
+TwoFoldData
+SolventMasker
+NeighborSearch
+GridOp
+GridMeta
+GridBase
+Grid
+ReciprocalGrid
+GridConstPoint
+
+UniqProxy
+ConstUniqProxy
+Binner
+CenterOfMass
+IT92
+C4322
+AsuBrick
+NodeInfo
+FloodFill
+Topo
+ComplexCorrelation
+AtomNameElement
+LinkHunt
+ResidueSpan::GroupingProxy
+MmcifOutputGroups
+Blob
+BlobCriteria
+Box
 from_chars_result
 parse_options
 span
@@ -2058,7 +2422,6 @@ ExecC2C
 ExecHartley
 ExecDcst
 ExecR2R
-XdsAscii
 Scaling
 Gaus
 Point
@@ -2076,8 +2439,6 @@ SpaceGroupAltName
 Tables_
 ReciprocalAsu
 Neutron92
-PdbWriteOptions
-ChainNameGenerator
 AssemblyMapping
 FileStream
 MemoryStream
@@ -2090,17 +2451,12 @@ Ofstream
 Ifstream
 LevMar
 BesselTables_
-IsMmCifFile
-IsCifFile
-IsPdbFile
-IsCoordinateFile
-IsAnyFile
-IsMatchingFile
 GlobWalk
     */
 
     //TODO Here we need to put *lots* of gemmi functions
     function("read_structure_file",&gemmi::read_structure_file);
+    function("read_mtz_file",&gemmi::read_mtz_file);
     function("get_spacegroup_by_name",&gemmi::get_spacegroup_by_name);
 
     //Utilities to deal with char*/[]
