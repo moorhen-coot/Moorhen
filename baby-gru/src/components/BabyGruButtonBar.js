@@ -283,7 +283,7 @@ export const BabyGruConvertCisTransButton = (props) => {
         needsMapData={false}
         cootCommand="cis_trans_convert"
         prompt="Click atom in residue to convert"
-        icon={<img className="baby-gru-button-icon" alt="Cis/Trans" src="/baby-gru/pixmaps/cis-trans.png" />}
+        icon={<img className="baby-gru-button-icon" alt="Cis/Trans" src="/baby-gru/pixmaps/cis-trans.svg" />}
         formatArgs={(molecule, chosenAtom) => {
             return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, '']
         }} />
