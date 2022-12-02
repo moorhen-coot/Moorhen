@@ -216,8 +216,9 @@ export const BabyGruMapCard = (props) => {
     return <Card className="px-0"  style={{marginBottom:'0.5rem', padding:'0'}} key={props.map.molNo}>
         <Card.Header>
             <Row className='align-items-center'>
-            <Col style={{display:'flex', justifyContent:'left'}}>
+            <Col className='align-items-center' style={{display:'flex', justifyContent:'left'}}>
                     {`#${props.map.molNo} Map ${props.map.name}`}
+                    <img className="baby-gru-map-icon" alt="..." src={props.map.isDifference ? "/baby-gru/pixmaps/diff-map.png" : "/baby-gru/pixmaps/map.svg"} style={{width: '20px', height: '20px', margin:'0.5rem', padding:'0'}}/>
             </Col>
             <Col style={{display:'flex', justifyContent:'right'}}>
                 {getButtonBar(props.sideBarWidth)}
