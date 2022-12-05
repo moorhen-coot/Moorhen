@@ -170,7 +170,7 @@ export const BabyGruDeleteDisplayObjectMenuItem = (props) => {
         props.changeItemList({ action: 'Remove', item: props.item })
         props.item.delete(props.glRef);
         props.setPopoverIsShown(false)
-        if (props.item.type === "map" && props.activeMap.molNo === props.item.molNo) {
+        if (props.item.type === "map" && props.activeMap?.molNo === props.item.molNo) {
             props.setActiveMap(null)
         }
     }
