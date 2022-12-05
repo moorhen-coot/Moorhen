@@ -188,7 +188,6 @@ export const BabyGruSequenceViewer = (props) => {
      * and mouse over. It will also disable mouse double click.
      */
     useEffect(()=> {
-        
         if (sequenceRef.current === null) {
             return;
         }
@@ -215,15 +214,15 @@ export const BabyGruSequenceViewer = (props) => {
      * Hook used to control mouse events. Adds an event listener on the protvista-sequence component for mouse clicks 
      * and mouse over. It will also disable mouse double click.
      */
-    useEffect(()=> {
-        
-        if (selectedResiduesTrackRef.current === null) {
-            return;
-        }
-        
+    useEffect(()=> {       
+        sequenceRef.current._displaystart = start
+        sequenceRef.current._displayend = end
         sequenceRef.current.trackHighlighter.element._highlightcolor = hoveredResidueColor
+        navigationRef.current._displaystart = start
+        navigationRef.current._displayend = end
+        selectedResiduesTrackRef.current._displaystart = start
+        selectedResiduesTrackRef.current._displayend = end
         selectedResiduesTrackRef.current.trackHighlighter.element._highlightcolor = transparentColor
-        
     }, []);    
     
     /**
@@ -246,26 +245,6 @@ export const BabyGruSequenceViewer = (props) => {
           setSelection(...props.selectedResidues)
         }
     }, [props.selectedResidues]);
-
-    /**
-     * Hook used on component start-up to define the protvista-navigation and protvista-sequence display start and end
-     */
-    useEffect(()=> {
-       
-        if(sequenceRef){
-            sequenceRef.current._displaystart = start
-            sequenceRef.current._displayend = end
-        }
-        if(navigationRef){
-            navigationRef.current._displaystart = start
-            navigationRef.current._displayend = end
-        }
-        if(selectedResiduesTrackRef){
-            selectedResiduesTrackRef.current._displaystart = start
-            selectedResiduesTrackRef.current._displayend = end
-        }
-        
-    }, [props.sequence]);
 
     return (
         <div className='align-items-center' style={{marginBottom:'0', padding:'0'}}>
