@@ -211,8 +211,7 @@ export const BabyGruSequenceViewer = (props) => {
     }, [handleChange]);    
     
     /**
-     * Hook used to control mouse events. Adds an event listener on the protvista-sequence component for mouse clicks 
-     * and mouse over. It will also disable mouse double click.
+     * Hook used when the component mounts to set the display start and end.
      */
     useEffect(()=> {       
         sequenceRef.current._displaystart = start
