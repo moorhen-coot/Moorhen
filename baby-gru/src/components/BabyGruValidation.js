@@ -83,11 +83,10 @@ export const BabyGruValidation = (props) => {
         
         let currentlyAvailable = []
         allMetrics.forEach(metric => {
-            if (metric.needsMapData && selectedMap !== null && selectedModel !== null && chainSelectRef.current.value !== null) {
-                currentlyAvailable.push(metric)
-            } else if (selectedModel !== null && chainSelectRef.current.value !== null) {
-                currentlyAvailable.push(metric)
+            if ((metric.needsMapData && selectedMap === null) || selectedModel === null || chainSelectRef.current.value === null) {
+                return
             }
+            currentlyAvailable.push(metric)
         })
         
         return currentlyAvailable
