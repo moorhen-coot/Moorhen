@@ -146,7 +146,7 @@ export const BabyGruMapCard = (props) => {
                 setMapContourLevel(mapContourLevel - 0.1)
             }
         }
-    }, [mapContourLevel, mapRadius, props.activeMap.molNo, props.map.molNo, props.map.cootContour])
+    }, [mapContourLevel, mapRadius, props.activeMap?.molNo, props.map.molNo, props.map.cootContour])
 
     const handleContourLevelCallback = useCallback(e => {
         props.map.contourLevel = mapContourLevel
@@ -186,7 +186,7 @@ export const BabyGruMapCard = (props) => {
             document.removeEventListener("contourLevelChanged", handleContourLevelCallback);
             document.removeEventListener("wheelContourLevelChanged", handleWheelContourLevelCallback);
         };
-    }, [handleOriginCallback, props.activeMap.molNo]);
+    }, [handleOriginCallback, props.activeMap?.molNo]);
 
     useEffect(() => {
         setCootContour(props.map.cootContour)
