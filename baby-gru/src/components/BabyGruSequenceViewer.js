@@ -223,6 +223,7 @@ export const BabyGruSequenceViewer = (props) => {
         selectedResiduesTrackRef.current._displaystart = start
         selectedResiduesTrackRef.current._displayend = end
         selectedResiduesTrackRef.current.trackHighlighter.element._highlightcolor = transparentColor
+        
     }, []);    
     
     /**
