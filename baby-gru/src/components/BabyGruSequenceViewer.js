@@ -160,9 +160,17 @@ export const BabyGruSequenceViewer = (props) => {
                 props.setClickedResidue({modelIndex:0, molName:props.molecule.name, chain:props.sequence.chain, seqNum:evt.detail.feature.start})
                 props.setSelectedResidues(null)
             } else if (evt.detail.highlight.includes(',')) {
-                let residues = [props.clickedResidue.seqNum, evt.detail.feature.start]
+                let residues;
+                if (props.clickedResidue === null) {
+                    props.setClickedResidue({modelIndex: 0, molName: props.molecule.name, chain: props.sequence.chain, seqNum: evt.detail.feature.start})
+                    return
+                } else if (props.selectedResidues === null || props.selectedResidues.length < 2){
+                    residues = [props.clickedResidue.seqNum, evt.detail.feature.start]
+                } else {
+                    residues = [evt.detail.feature.start, ...props.selectedResidues]
+                }
                 props.setSelectedResidues([Math.min(...residues), Math.max(...residues)])
-                props.setClickedResidue({modelIndex:0, molName:props.molecule.name, chain:props.sequence.chain, seqNum:evt.detail.feature.start})
+                props.setClickedResidue({modelIndex: 0, molName: props.molecule.name, chain: props.sequence.chain, seqNum: evt.detail.feature.start})
             }
         } else if (evt.detail.eventtype === "mouseover") {
             if (evt.detail.feature !== null) {
