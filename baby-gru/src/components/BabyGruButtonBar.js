@@ -81,13 +81,7 @@ export const BabyGruButtonBar = (props) => {
         return carouselItems
     }
 
-    const [carouselItems, setCarouselItems] = useState(getCarouselItems());
-
-    useEffect(() => {
-
-        setCarouselItems(getCarouselItems())
-    
-    }, [props.windowWidth, props.showSideBar])
+    const carouselItems = getCarouselItems()
 
     return <div
         style={{
