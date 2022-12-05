@@ -81,7 +81,14 @@ export const BabyGruButtonBar = (props) => {
         return carouselItems
     }
 
-    const carouselItems = getCarouselItems()
+    const [carouselItems, setCarouselItems] = useState(getCarouselItems());
+
+
+    useEffect(() => {
+
+        setCarouselItems(getCarouselItems())
+    
+    }, [props.windowWidth])
 
     return <div
         style={{
@@ -93,6 +100,7 @@ export const BabyGruButtonBar = (props) => {
                 ${props.backgroundColor[3]})`,
         }}>
             <Carousel 
+                key={carouselItems.length}
                 variant={props.darkMode ? "light" : "dark"} 
                 interval={null} 
                 keyboard={false} 
@@ -108,8 +116,8 @@ export const BabyGruButtonBar = (props) => {
                             </Carousel.Item>
                         )
                     })}
-            </Carousel>
-    </div>
+            </Carousel>   
+        </div>
 }
 
 export const BabyGruSimpleEditButton = forwardRef((props, buttonRef) => {
