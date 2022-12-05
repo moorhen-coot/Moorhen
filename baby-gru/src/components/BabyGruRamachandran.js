@@ -50,7 +50,7 @@ export const BabyGruRamachandran = (props) => {
             }
             const inputData = {message:'coot_command', command:'ramachandran_validation', returnType:'ramachandran_data', commandArgs:[moleculeSelectRef.current.value]}
             let response = await props.commandCentre.current.cootCommand(inputData)
-            setRamaPlotData(response.data.result.result)
+            setRamaPlotData(response.data.result.result.filter(resInfo => resInfo.chainId === chainSelectRef.current.value))
         }
 
         fetchRamaData()
@@ -98,7 +98,7 @@ export const BabyGruRamachandran = (props) => {
             }
             const inputData = {message:'coot_command', command:'ramachandran_validation', returnType:'ramachandran_data', commandArgs:[moleculeSelectRef.current.value]}
             let response = await props.commandCentre.current.cootCommand(inputData)
-            setRamaPlotData(response.data.result.result)
+            setRamaPlotData(response.data.result.result.filter(resInfo => resInfo.chainId === chainSelectRef.current.value))
         }
         
         fetchRamaData()
@@ -141,7 +141,7 @@ export const BabyGruRamachandran = (props) => {
     }
 
     useEffect(() => {
-        if (props.hoveredAtom===null || props.hoveredAtom.molecule === null || props.hoveredAtom.cid === null || ramaPlotData === null || selectedModel === null || chainSelectRef.current.value === null || selectedModel !==  props.hoveredAtom.molecule.molNo || ramachandranRef.current === null) {
+        if (props.hoveredAtom===null || props.hoveredAtom.molecule === null || props.hoveredAtom.cid === null || ramaPlotData === null || selectedModel === null || chainSelectRef.current.value === null || selectedModel !=  props.hoveredAtom.molecule.molNo || ramachandranRef.current === null) {
             return
         }
 
