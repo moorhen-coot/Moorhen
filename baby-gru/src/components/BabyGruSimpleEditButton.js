@@ -249,6 +249,21 @@ export const BabyGruRefineResiduesUsingAtomCidButton = (props) => {
         refineAfterMod={false} />
 }
 
+export const BabyGruAddSideChainButton = (props) => {
+    return <BabyGruSimpleEditButton {...props}
+        toolTip="Add a side chain"
+        buttonIndex={props.buttonIndex}
+        selectedButtonIndex={props.selectedButtonIndex}
+        setSelectedButtonIndex={props.setSelectedButtonIndex}
+        needsMapData={false}
+        cootCommand="fill_side_chain"
+        prompt="Click atom in residue to add a side chain"
+        icon={<img className="baby-gru-button-icon" alt="Add side chain" src="/baby-gru/pixmaps/add-sidechain.svg" />}
+        formatArgs={(molecule, chosenAtom) => {
+            return [molecule.molNo, chosenAtom.chain_id, chosenAtom.res_no, chosenAtom.ins_code]
+        }} />
+}
+
 export const BabyGruDeleteUsingCidButton = (props) => {
     const [panelParameters, setPanelParameters] = useState({
         refine: { mode: 'TRIPLE' },
