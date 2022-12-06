@@ -1,12 +1,7 @@
-import { NavDropdown, Form, Button, Modal, Table } from "react-bootstrap";
-import { BabyGruMolecule } from "../utils/BabyGruMolecule";
-import { BabyGruMap } from "../utils/BabyGruMap";
-import { useEffect, useState } from "react";
-import { doDownloadText, readTextFile } from "../utils/BabyGruUtils";
-import { MenuItem } from "@mui/material";
+import { NavDropdown } from "react-bootstrap";
+import { useState } from "react";
 import "rc-tree/assets/index.css"
-import Tree from 'rc-tree';
-import { BabyGruCopyFragmentUsingCidMenuItem, BabyGruDeleteUsingCidMenuItem, BabyGruMergeMoleculesMenuItem } from "./BabyGruMenuItem";
+import { BabyGruCopyFragmentUsingCidMenuItem, BabyGruDeleteUsingCidMenuItem, BabyGruMergeMoleculesMenuItem, BabyGruGoToMenuItem } from "./BabyGruMenuItem";
 
 export const BabyGruEditMenu = (props) => {
     const [popoverIsShown, setPopoverIsShown] = useState(false)
@@ -22,6 +17,7 @@ export const BabyGruEditMenu = (props) => {
             <BabyGruMergeMoleculesMenuItem key="merge" {...menuItemProps} />
             <BabyGruDeleteUsingCidMenuItem key="delete" {...menuItemProps} />
             <BabyGruCopyFragmentUsingCidMenuItem key="copy_fragment" {...menuItemProps} />
+            <BabyGruGoToMenuItem key="go_to_cid" {...menuItemProps} />
         </NavDropdown>
     </>
 }
