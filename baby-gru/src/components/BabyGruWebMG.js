@@ -65,9 +65,9 @@ export const BabyGruWebMG = forwardRef((props, glRef) => {
     }, [props.hoveredAtom])
 
     useEffect(() => {
-        document.addEventListener("auxclick", handleMiddleClickGoToAtom);
+        document.addEventListener("goToAtomMiddleClick", handleMiddleClickGoToAtom);
         return () => {
-            document.removeEventListener("auxclick", handleMiddleClickGoToAtom);
+            document.removeEventListener("goToAtomMiddleClick", handleMiddleClickGoToAtom);
         };
 
     }, [handleMiddleClickGoToAtom]);

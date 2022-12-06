@@ -1737,9 +1737,15 @@ class MGWebGL extends Component {
                     evt.stopPropagation();
                 },
                 false);
-            self.canvas.addEventListener("mouseup",
+                self.canvas.addEventListener("mouseup",
                 function (evt) {
                     self.doMouseUp(evt, self);
+                    evt.stopPropagation();
+                },
+                false);
+            self.canvas.addEventListener("auxclick",
+                function (evt) {
+                    self.doMiddleClick(evt, self);
                     evt.stopPropagation();
                 },
                 false);
@@ -10741,6 +10747,11 @@ class MGWebGL extends Component {
                 }
             }
         }
+    }
+
+    doMiddleClick(evt, self) {
+        const goToAtomEvent = new CustomEvent("goToAtomMiddleClick");
+        document.dispatchEvent(goToAtomEvent);
     }
 
     doDoubleClick(event, self) {

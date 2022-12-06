@@ -943,7 +943,7 @@ export const BabyGruGoToMenuItem = (props) => {
             return
         }
         
-        const [molName, insCode, chainId, resInfo, atomName]   = selectedCid.split('/')
+        const [molName, insCode, chainId, resInfo, atomName] = selectedCid.split('/')
         if (!molName || !chainId || !resInfo) {
             return
         }
