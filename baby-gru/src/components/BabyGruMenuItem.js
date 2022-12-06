@@ -924,6 +924,54 @@ export const BabyGruMergeMoleculesMenuItem = (props) => {
     />
 }
 
+export const BabyGruGoToMenuItem = (props) => {
+    const cidRef = useRef(null)
+    const [cid, setCid] = useState("")
+
+    const panelContent = <>
+        <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="cid" className="mb-3">
+            <Form.Label>Residue cid...</Form.Label>
+            <Form.Control ref={cidRef} type="text" value={cid} onChange={(e) => {
+                setCid(e.target.value)
+            }} />
+        </Form.Group>
+    </>
+
+    const onCompleted = () => {
+        const selectedCid = cidRef.current.value
+        if (!selectedCid) {
+            return
+        }
+        
+        const [molName, insCode, chainId, resInfo, atomName]   = selectedCid.split('/')
+        if (!molName || !chainId || !resInfo) {
+            return
+        }
+        
+        const molecule = props.molecules.find(molecule => molecule.name == molName)
+        if (!molecule) {
+            return
+        }
+        
+        const resNum = resInfo.split("(")[0]
+        const selectedResidue = {
+                molName: molName,
+                modelIndex: 0,
+                seqNum: resNum,
+                chain: chainId
+        }
+        molecule.centreOn(props.glRef, selectedResidue)
+    }
+
+    return <BabyGruMenuItem
+        popoverPlacement={props.popoverPlacement}
+        popoverContent={panelContent}
+        menuItemText="Go to..."
+        onCompleted={onCompleted}
+        setPopoverIsShown={props.setPopoverIsShown}
+    />
+}
+
 export const BabyGruDeleteUsingCidMenuItem = (props) => {
     const fromRef = useRef(null)
     const cidRef = useRef(null)
