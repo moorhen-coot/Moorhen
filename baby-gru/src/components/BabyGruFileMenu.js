@@ -1,12 +1,7 @@
-import { NavDropdown, Form, Button, InputGroup, Modal, FormSelect, Col, Row, Overlay, Card, FormCheck } from "react-bootstrap";
+import { NavDropdown, Form, Button, InputGroup, Overlay } from "react-bootstrap";
 import { BabyGruMolecule } from "../utils/BabyGruMolecule";
-import { BabyGruMap } from "../utils/BabyGruMap";
-import { useEffect, useState, useRef, createRef } from "react";
-import { BabyGruMtzWrapper, cootCommand, readTextFile } from '../utils/BabyGruUtils';
-import { InsertDriveFile } from "@mui/icons-material";
-import { BabyGruMoleculeSelect } from "./BabyGruMoleculeSelect";
+import { useState, useRef } from "react";
 import { BabyGruImportDictionaryMenuItem, BabyGruImportMapCoefficientsMenuItem, BabyGruDeleteEverythingMenuItem, BabyGruLoadTutorialDataMenuItem, BabyGruImportMapMenuItem, BabyGruImportFSigFMenuItem } from "./BabyGruMenuItem";
-import { MenuItem } from "@mui/material";
 
 export const BabyGruFileMenu = (props) => {
 

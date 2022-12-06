@@ -35,6 +35,7 @@ const colourPalettes = {
     density_fit_analysis: (value) => {return 'rgb(0, ' + parseInt(256 * value) + ', 255)'},
     rotamer_analysis: (value) => {return 'rgb(' + parseInt(256 * value) + ', 255, 132)'},
     ramachandran_analysis: (value) => {return 'rgb(' + parseInt(256 * value) + ', 132, 255)'},
+    peptide_omega_analysis: (value) => {return 'rgb(' + parseInt(256 * value) + ', 132, 132)'},
 }
 
 const metricInfoScaling = {
@@ -42,6 +43,7 @@ const metricInfoScaling = {
     density_fit_analysis: (value) => {return 1. / value},
     rotamer_analysis: (value) => {return 1. / value},
     ramachandran_analysis: (value) => {return Math.log(value)},
+    peptide_omega_analysis: (value) => {return value - 180},
 }
 
 export const BabyGruValidation = (props) => {
@@ -74,17 +76,17 @@ export const BabyGruValidation = (props) => {
         const allMetrics = [
             {command: "density_correlation_analysis", returnType:'validation_data', chainID: chainSelectRef.current.value, commandArgs:[selectedModel, selectedMap], needsMapData: true, displayName:'Density Corr.'},
             {command: "density_fit_analysis", returnType:'validation_data', chainID: chainSelectRef.current.value, commandArgs:[selectedModel, selectedMap], needsMapData: true, displayName:'Density Fit'},            
-            {command: "rotamer_analysis", returnType:'validation_data', chainID: chainSelectRef.current.value, commandArgs:[selectedModel], needsMapData: true, displayName:'Rotamers'},
-            {command: "ramachandran_analysis", returnType:'validation_data', chainID: chainSelectRef.current.value, commandArgs:[selectedModel], needsMapData: true, displayName:'Ramachandran'},
+            {command: "rotamer_analysis", returnType:'validation_data', chainID: chainSelectRef.current.value, commandArgs:[selectedModel], needsMapData: false, displayName:'Rotamers'},
+            {command: "ramachandran_analysis", returnType:'validation_data', chainID: chainSelectRef.current.value, commandArgs:[selectedModel], needsMapData: false, displayName:'Ramachandran'},
+            {command: "peptide_omega_analysis", returnType:'validation_data', chainID: chainSelectRef.current.value, commandArgs:[selectedModel], needsMapData: false, displayName:'Pept. Omega'},
         ]    
         
         let currentlyAvailable = []
         allMetrics.forEach(metric => {
-            if (metric.needsMapData && selectedMap !== null && selectedModel !== null && chainSelectRef.current.value !== null) {
-                currentlyAvailable.push(metric)
-            } else if (selectedModel !== null && chainSelectRef.current.value !== null) {
-                currentlyAvailable.push(metric)
+            if ((metric.needsMapData && selectedMap === null) || selectedModel === null || chainSelectRef.current.value === null) {
+                return
             }
+            currentlyAvailable.push(metric)
         })
         
         return currentlyAvailable

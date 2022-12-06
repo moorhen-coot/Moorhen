@@ -4,7 +4,7 @@ import Toast from 'react-bootstrap/Toast';
 import ToastContainer from 'react-bootstrap/ToastContainer';
 import { BabyGruDisplayObjects } from './BabyGruDisplayObjects';
 import { BabyGruWebMG } from './BabyGruWebMG';
-import { BabyGruCommandCentre, cidToSpec, convertRemToPx, convertViewtoPx } from '../utils/BabyGruUtils';
+import { BabyGruCommandCentre, convertRemToPx, convertViewtoPx } from '../utils/BabyGruUtils';
 import { BabyGruButtonBar } from './BabyGruButtonBar';
 import { BabyGruFileMenu } from './BabyGruFileMenu';
 import { BabyGruPreferencesMenu } from './BabyGruPreferencesMenu';
@@ -84,11 +84,9 @@ export const BabyGruContainer = (props) => {
     //The purpose here is to return the functions that define and control BabyGruContainer state to a 
     //containing React component
     useEffect(() => {
-        //console.log('Coot initialized', cootInitialized, props.forwardControls)
         if (cootInitialized && props.forwardControls) {
             props.forwardControls(collectedProps)
         }
-        //console.log({extraMenus:props.extraMenus})
     }, [cootInitialized, props.forwardControls])
 
     useEffect(() => {
@@ -333,6 +331,7 @@ export const BabyGruContainer = (props) => {
                             atomLabelDepthMode={preferences.atomLabelDepthMode}
                             onAtomHovered={onAtomHovered}
                             onKeyPress={onKeyPress}
+                            hoveredAtom={hoveredAtom}
                             preferences={preferences}
                         />
                     </div>
