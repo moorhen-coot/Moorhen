@@ -1,5 +1,4 @@
 import React, { createRef, useEffect, useCallback, forwardRef, useState } from 'react';
-
 import { MGWebGL } from '../WebGL/mgWebGL.js';
 
 export const BabyGruWebMG = forwardRef((props, glRef) => {
@@ -45,6 +44,33 @@ export const BabyGruWebMG = forwardRef((props, glRef) => {
             document.removeEventListener("zoomChanged", handleZoomChanged);
         };
     }, [handleZoomChanged]);
+
+    const handleMiddleClickGoToAtom = useCallback(e => {
+        if (props.hoveredAtom?.molecule && props.hoveredAtom?.cid){
+
+            const [molName, insCode, chainId, resInfo, atomName] = props.hoveredAtom.cid.split('/')
+            if (!chainId || !resInfo) {
+                return
+            }
+                        
+            const resNum = resInfo.split("(")[0]
+            const selectedResidue = {
+                molName: props.hoveredAtom.molecule.name,
+                modelIndex: 0,
+                seqNum: resNum,
+                chain: chainId
+            }
+            props.hoveredAtom.molecule.centreOn(glRef, selectedResidue)
+        }
+    }, [props.hoveredAtom])
+
+    useEffect(() => {
+        document.addEventListener("auxclick", handleMiddleClickGoToAtom);
+        return () => {
+            document.removeEventListener("auxclick", handleMiddleClickGoToAtom);
+        };
+
+    }, [handleMiddleClickGoToAtom]);
 
     useEffect(() => {
         glRef.current.setAmbientLightNoUpdate(0.2, 0.2, 0.2);

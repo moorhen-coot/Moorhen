@@ -331,6 +331,7 @@ export const BabyGruContainer = (props) => {
                             atomLabelDepthMode={preferences.atomLabelDepthMode}
                             onAtomHovered={onAtomHovered}
                             onKeyPress={onKeyPress}
+                            hoveredAtom={hoveredAtom}
                             preferences={preferences}
                         />
                     </div>
