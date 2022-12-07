@@ -10,7 +10,8 @@ export const BabyGruViewMenu = (props) => {
     return <>
             < NavDropdown 
                     title="View" 
-                    id="basic-nav-dropdown" 
+                    id="view-nav-dropdown" 
+                    style={{display:'flex', alignItems:'center'}}
                     autoClose={popoverIsShown ? false : 'outside'}
                     show={props.currentDropdownId === props.dropdownId}
                     onToggle={() => {props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId(-1)}}>

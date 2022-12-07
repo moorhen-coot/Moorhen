@@ -66,15 +66,16 @@ export const BabyGruFileMenu = (props) => {
     return <>
         <NavDropdown
             title="File"
-            id="basic-nav-dropdown"
+            id="file-nav-dropdown"
             autoClose={popoverIsShown ? false : 'outside'}
             show={props.currentDropdownId === props.dropdownId}
+            style={{display:'flex', alignItems:'center'}}
             onToggle={() => { props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId(-1) }}>
-            <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="uploadCoords" className="mb-3">
+            <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="upload-coordinates-form" className="mb-3">
                 <Form.Label>Coordinates</Form.Label>
-                <Form.Control type="file" accept=".pdb, .mmcif, .cif, .ent" multiple={true} onChange={(e) => { loadPdbFiles(e.target.files) }} />
+                <Form.Control type="file" accept=".pdb, .mmcif, .cif, .ent" multiple={true} onChange={(e) => { loadPdbFiles(e.target.files) }}/>
             </Form.Group>
-            <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="downloadCoords" className="mb-3">
+            <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="fetch-pdbe-form" className="mb-3">
                 <Form.Label>Fetch coords from PDBe</Form.Label>
                 <InputGroup>
                     <Form.Control type="text" ref={pdbCodeFetchInputRef} onKeyDown={(e) => {

@@ -96,6 +96,7 @@ const BabyGruSimpleEditButton = forwardRef((props, buttonRef) => {
     return <>
         <Tooltip title={props.toolTip}>
             <Button value={props.buttonIndex}
+                id={props.id}
                 size="sm"
                 ref={buttonRef ? buttonRef : target}
                 active={props.buttonIndex === props.selectedButtonIndex}
@@ -132,6 +133,7 @@ const BabyGruSimpleEditButton = forwardRef((props, buttonRef) => {
     </>
 })
 BabyGruSimpleEditButton.defaultProps = {
+    id: '',
     toolTip: "", setCursorStyle: () => { },
     needsAtomData: true, setSelectedButtonIndex: () => { }, selectedButtonIndex: 0, prompt: null,
     awaitAtomClick: true, changesMolecule: true, refineAfterMod: false
@@ -161,6 +163,7 @@ export const BabyGruAutofitRotamerButton = (props) => {
 
 export const BabyGruFlipPeptideButton = (props) => {
     return <BabyGruSimpleEditButton {...props}
+        id="flip-peptide-edit-button"
         toolTip="Flip Peptide"
         buttonIndex={props.buttonIndex}
         selectedButtonIndex={props.selectedButtonIndex}
