@@ -13,7 +13,7 @@ export const BabyGruMoleculeCardButtonBar = (props) => {
 
     useEffect(() => {
         setDropdownMenuItemShown(0)
-    }, [props.windowHeight]);
+    }, [props.windowHeight, props.sideBarWidth]);
 
     useMemo(() => {
         if (currentName == "") {
