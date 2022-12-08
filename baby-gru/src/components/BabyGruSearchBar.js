@@ -70,6 +70,16 @@ export const BabyGruSearchBar = (props) => {
     }
 
     const searchOptions = [
+        {label: "Add waters", actions: [
+            {type: 'click', elementId: 'ligand-nav-dropdown', condition: props.currentDropdownId !== "Ligand"}, 
+            {type: 'setValue', newValue:'Ligand', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "Ligand"},
+            {type: 'click', elementId: 'add-waters-menu-item', condition: true}
+        ]},
+        {label: "Delete everything", actions: [
+            {type: 'click', elementId: 'file-nav-dropdown', condition: props.currentDropdownId !== "File"}, 
+            {type: 'setValue', newValue:'File', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "File"},
+            {type: 'click', elementId: 'delete-everything-menu-item', condition: true}
+        ]},
         {label: "Difference Map Peaks", actions: [
             {type: 'click', condition: !props.showSideBar , elementId: 'show-sidebar-button'}, 
             {type: 'click', condition: props.toolAccordionBodyHeight == 0, elementId: 'tools-accordion-button'},
@@ -77,38 +87,81 @@ export const BabyGruSearchBar = (props) => {
         ]},
         {label: "Change Background Colour", actions: [
             {type: 'click', elementId: 'view-nav-dropdown', condition: props.currentDropdownId !== "View"}, 
+            {type: 'setValue', newValue:'View', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "View"},
             {type: 'click', elementId: 'change-background-colour-menu-item', condition: true}
+        ]},
+        {label: "Clipping and fogging", actions: [
+            {type: 'click', elementId: 'view-nav-dropdown', condition: props.currentDropdownId !== "View"}, 
+            {type: 'setValue', newValue:'View', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "View"},
+            {type: 'click', elementId: 'clipping-fogging-menu-item', condition: true}
         ]},
         {label: "Eigen Flip Ligand", actions: [
             {type: 'carousel', elementId: 'eigen-flip-edit-button', condition: true}
         ]},
         {label: "Fetch from PDBe", actions: [
             {type: 'click', elementId: 'file-nav-dropdown', condition: props.currentDropdownId !== "File"}, 
+            {type: 'setValue', newValue:'File', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "File"},
             {type: 'setFocus', elementId: 'fetch-pdbe-form', condition: true}
         ]},
         {label: "Flip Peptide", actions: [
             {type: 'carousel', elementId: 'flip-peptide-edit-button', condition: true}
         ]},
+        {label: "Go to...", actions: [
+            {type: 'click', elementId: 'edit-nav-dropdown', condition: props.currentDropdownId !== "Edit"}, 
+            {type: 'setValue', newValue:'Edit', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "Edit"},
+            {type: 'click', elementId: 'go-to-menu-item', condition: true}
+        ]},
+        {label: "Import dictionary", actions: [
+            {type: 'click', elementId: 'file-nav-dropdown', condition: props.currentDropdownId !== "File"},
+            {type: 'setValue', newValue:'File', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "File"},
+            {type: 'click', elementId: 'import-dict-menu-item', condition: true}
+        ]},
         {label: "Load Coordinates", actions: [
             {type: 'click', elementId: 'file-nav-dropdown', condition: props.currentDropdownId !== "File"},
-            {type: 'setValue', newValue:'File', valueSetter: props.setCurrentDropdownId, condition: true},
+            {type: 'setValue', newValue:'File', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "File"},
             {type: 'click', elementId: 'upload-coordinates-form', condition: true}
         ]},
         {label: "Load Tutorial Data", actions: [
             {type: 'click', elementId: 'file-nav-dropdown', condition: props.currentDropdownId !== "File"},
-            {type: 'setValue', newValue:'File', valueSetter: props.setCurrentDropdownId, condition: true},
+            {type: 'setValue', newValue:'File', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "File"},
             {type: 'click', elementId: 'load-tutorial-data-menu-item', condition: true}
+        ]},
+        {label: "Merge Molecules", actions: [
+            {type: 'click', elementId: 'edit-nav-dropdown', condition: props.currentDropdownId !== "Edit"},
+            {type: 'setValue', newValue:'Edit', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "Edit"},
+            {type: 'click', elementId: 'merge-molecules-menu-item', condition: true}
+        ]},
+        {label: "Model Validation", actions: [
+            {type: 'click', condition: !props.showSideBar , elementId: 'show-sidebar-button'}, 
+            {type: 'click', condition: props.toolAccordionBodyHeight == 0, elementId: 'tools-accordion-button'},
+            {type: 'setValue', newValue: 2, condition: true, valueSetter: props.setSelectedToolKey}
         ]},
         {label: "Mutate Residue", actions: [
             {type: 'carousel', elementId: 'mutate-residue-edit-button', condition: true}
+        ]},
+        {label: "Peptide Flips List", actions: [
+            {type: 'click', condition: !props.showSideBar , elementId: 'show-sidebar-button'}, 
+            {type: 'click', condition: props.toolAccordionBodyHeight == 0, elementId: 'tools-accordion-button'},
+            {type: 'setValue', newValue: 3, condition: true, valueSetter: props.setSelectedToolKey}
         ]},
         {label: "Ramachandran Plot", actions: [
             {type: 'click', condition: !props.showSideBar , elementId: 'show-sidebar-button'}, 
             {type: 'click', condition: props.toolAccordionBodyHeight == 0, elementId: 'tools-accordion-button'},
             {type: 'setValue', newValue: 1, condition: true, valueSetter: props.setSelectedToolKey}
         ]},
+        {label: "Read mtz", actions: [
+            {type: 'click', elementId: 'file-nav-dropdown', condition: props.currentDropdownId !== "File"},
+            {type: 'setValue', newValue:'File', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "File"},
+            {type: 'click', elementId: 'import-map-coeff-menu-item', condition: true}
+        ]},
+        {label: "Read map", actions: [
+            {type: 'click', elementId: 'file-nav-dropdown', condition: props.currentDropdownId !== "File"},
+            {type: 'setValue', newValue:'File', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "File"},
+            {type: 'click', elementId: 'import-map-menu-item', condition: true}
+        ]},
         {label: "Show Shortcuts", actions: [
             {type: 'click', elementId: 'preferences-nav-dropdown', condition: props.currentDropdownId !== "Preferences"}, 
+            {type: 'setValue', newValue:'Preferences', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "Preferences"},
             {type: 'click', elementId: 'configure-shortcuts-menu-item', condition: true}
         ]},
     ]

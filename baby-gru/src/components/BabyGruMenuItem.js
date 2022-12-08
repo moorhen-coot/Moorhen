@@ -274,6 +274,7 @@ export const BabyGruDeleteEverythingMenuItem = (props) => {
     }
 
     return <BabyGruMenuItem
+        id='delete-everything-menu-item'
         textClassName="text-danger"
         buttonVariant="danger"
         buttonText="I understand, delete"
@@ -534,6 +535,7 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
     }, [fileOrLibrary])
 
     return <BabyGruMenuItem
+        id='import-dict-menu-item'
         popoverContent={panelContent}
         menuItemText="Import dictionary..."
         onCompleted={onCompleted}
@@ -635,6 +637,7 @@ export const BabyGruImportMapCoefficientsMenuItem = (props) => {
     </>
 
     return <BabyGruMenuItem
+        id='import-map-coeff-menu-item'
         popoverContent={panelContent}
         menuItemText="Map coefficients..."
         onCompleted={onCompleted}
@@ -809,6 +812,7 @@ export const BabyGruImportMapMenuItem = (props) => {
     }, [props.maps, filesRef.current, isDiffRef.current])
 
     return <BabyGruMenuItem
+        id='import-map-menu-item'
         popoverContent={panelContent}
         menuItemText="CCP4/MRC map..."
         onCompleted={onCompleted}
@@ -886,6 +890,7 @@ export const BabyGruClipFogMenuItem = (props) => {
     const onCompleted = () => { props.setPopoverIsShown(false) }
 
     return <BabyGruMenuItem
+        id='clipping-fogging-menu-item'
         popoverContent={panelContent}
         menuItemText="Clipping and fogging..."
         onCompleted={onCompleted}
@@ -967,6 +972,7 @@ export const BabyGruGoToMenuItem = (props) => {
     }
 
     return <BabyGruMenuItem
+        id='go-to-menu-item'
         popoverPlacement={props.popoverPlacement}
         popoverContent={panelContent}
         menuItemText="Go to..."
@@ -1076,6 +1082,7 @@ export const BabyGruCopyFragmentUsingCidMenuItem = (props) => {
     }
 
     return <BabyGruMenuItem
+        id='merge-molecules-menu-item'
         popoverPlacement='right'
         popoverContent={panelContent}
         menuItemText="Copy fragment..."
@@ -1116,6 +1123,7 @@ export const BabyGruAddWatersMenuItem = (props) => {
     }, [props.molecules])
 
     return <BabyGruMenuItem
+        id='add-waters-menu-item'
         popoverContent={panelContent}
         menuItemText="Add waters..."
         onCompleted={onCompleted}
