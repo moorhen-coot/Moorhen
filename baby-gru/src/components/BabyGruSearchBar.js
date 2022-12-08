@@ -9,7 +9,7 @@ export const BabyGruSearchBar = (props) => {
     const [selectedItemKey, setSelectedItemKey] = useState(null)
     const [openPopup, setOpenPopup] = useState(null)
 
-    const handleClick = (element) => {
+    const doClick = (element) => {
         console.log(`Search bar is clicking on ${element.id}`)
         let clickEvent = new MouseEvent("click", {
             "view": window,
@@ -41,7 +41,7 @@ export const BabyGruSearchBar = (props) => {
                 }
                 if (action.type === 'click'){
                     let element = document.getElementById(action.elementId)
-                    handleClick(element)
+                    doClick(element)
                 } else if (action.type === 'setValue') {
                     console.log(`Search bar is setting a new value ${action.newValue}`)
                     action.valueSetter(action.newValue)
@@ -60,10 +60,10 @@ export const BabyGruSearchBar = (props) => {
                             if (computedStyle.display !== 'none') {
                                 break
                             }
-                            handleClick(elements[0])
+                            doClick(elements[0])
                         }
                     } 
-                    handleClick(targetElement)
+                    doClick(targetElement)
                 }
             }, parseInt(50 * actionIndex));
         })
