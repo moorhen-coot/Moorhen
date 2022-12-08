@@ -29,7 +29,7 @@ export const BabyGruSearchBar = (props) => {
         })
     }
 
-    const handleActions = (...actions) => {
+    const doActions = (...actions) => {
         actions.forEach((action, actionIndex) => {
             if (!action.condition) {
                 return
@@ -203,7 +203,7 @@ export const BabyGruSearchBar = (props) => {
             searchBarRef.current.value = "" 
         } 
         if (selectedItemKey !== null && searchOptions[selectedItemKey]) {
-            handleActions(...searchOptions[selectedItemKey].actions)
+            doActions(...searchOptions[selectedItemKey].actions)
         }
     }, [selectedItemKey])
 
