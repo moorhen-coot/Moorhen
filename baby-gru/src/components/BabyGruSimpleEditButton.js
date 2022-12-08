@@ -354,6 +354,7 @@ export const BabyGruMutateButton = (props) => {
             pp.mutate.toType]
     }
     return <BabyGruSimpleEditButton {...props}
+        id='mutate-residue-edit-button'
         toolTip="Simple Mutate"
         buttonIndex={props.buttonIndex}
         selectedButtonIndex={props.selectedButtonIndex}
@@ -385,6 +386,7 @@ export const BabyGruAddTerminalResidueDirectlyUsingCidButton = (props) => {
 
 export const BabyGruEigenFlipLigandButton = (props) => {
     return <BabyGruSimpleEditButton {...props}
+        id='eigen-flip-edit-button'
         toolTip="Eigen Flip: flip the ligand around its eigenvectors"
         buttonIndex={props.buttonIndex}
         selectedButtonIndex={props.selectedButtonIndex}
