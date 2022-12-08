@@ -75,6 +75,10 @@ export const BabyGruSearchBar = (props) => {
             {type: 'click', condition: props.toolAccordionBodyHeight == 0, elementId: 'tools-accordion-button'},
             {type: 'setValue', newValue: 0, condition: true, valueSetter: props.setSelectedToolKey}
         ]},
+        {label: "Change Background Colour", actions: [
+            {type: 'click', elementId: 'view-nav-dropdown', condition: props.currentDropdownId !== "View"}, 
+            {type: 'click', elementId: 'change-background-colour-menu-item', condition: true}
+        ]},
         {label: "Eigen Flip Ligand", actions: [
             {type: 'carousel', elementId: 'eigen-flip-edit-button', condition: true}
         ]},
@@ -102,6 +106,10 @@ export const BabyGruSearchBar = (props) => {
             {type: 'click', condition: !props.showSideBar , elementId: 'show-sidebar-button'}, 
             {type: 'click', condition: props.toolAccordionBodyHeight == 0, elementId: 'tools-accordion-button'},
             {type: 'setValue', newValue: 1, condition: true, valueSetter: props.setSelectedToolKey}
+        ]},
+        {label: "Show Shortcuts", actions: [
+            {type: 'click', elementId: 'preferences-nav-dropdown', condition: props.currentDropdownId !== "Preferences"}, 
+            {type: 'click', elementId: 'configure-shortcuts-menu-item', condition: true}
         ]},
     ]
 

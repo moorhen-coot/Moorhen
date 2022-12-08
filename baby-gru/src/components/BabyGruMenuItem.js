@@ -315,9 +315,10 @@ export const BabyGruBackgroundColorMenuItem = (props) => {
     </>
 
     return <BabyGruMenuItem
+        id="change-background-colour-menu-item"
         popoverContent={panelContent}
         menuItemText={<Form.Group style={{ minWidth: "20rem" }}>
-            <Form.Label>BackgroundColor</Form.Label>
+            <Form.Label>Background Color</Form.Label>
             <InputGroup>
                 <Form.Control style={{
                     backgroundColor: `rgba(  ${backgroundColor.r}, ${backgroundColor.g},  ${backgroundColor.b},  ${backgroundColor.a})`
