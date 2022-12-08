@@ -1,4 +1,4 @@
-import { Fragment, useState, useRef, useEffect } from "react";
+import { useRef, Fragment, useEffect } from "react";
 import { Row } from "react-bootstrap";
 import { BabyGruRamachandran } from "./BabyGruRamachandran"
 import { BabyGruValidation } from "./BabyGruValidation"
@@ -7,9 +7,7 @@ import { BabyGruPepflipsDifferenceMap } from "./BabyGruPepflipsDifferenceMap"
 import { Autocomplete, TextField } from "@mui/material";
 
 export const BabyGruToolsAccordion = (props) => {
-    const selectRef = useRef()
-    const searchBarRef = useRef()
-    const [selectedToolKey, setSelectedToolKey] = useState(null)
+    const toolsAccordionSelectRef = useRef()
 
     const toolOptions = [
             {label: "Difference Map Peaks", toolWidget: <BabyGruDifferenceMapPeaks {...props}/>},
@@ -21,18 +19,15 @@ export const BabyGruToolsAccordion = (props) => {
     const handleChange = (evt, newSelection) => {
         if (newSelection) {
             const newToolIndex = toolOptions.findIndex(tool => tool.label == newSelection)
-            setSelectedToolKey(newToolIndex)
+            props.setSelectedToolKey(newToolIndex)
         } else {
-            setSelectedToolKey(null)
+            props.setSelectedToolKey(null)
         }
     }
 
     useEffect(() => {
-        selectRef.current.value = selectedToolKey
-        if(searchBarRef.current) {
-            searchBarRef.current.value = "" 
-        } 
-    }, [selectedToolKey])
+        toolsAccordionSelectRef.current.value = props.selectedToolKey
+    }, [props.selectedToolKey])
             
     return <Fragment> 
             <Row style={{padding: '0.5rem'}}>
@@ -53,7 +48,7 @@ export const BabyGruToolsAccordion = (props) => {
                                 color: props.darkMode ? 'white' : '#222',
                               },
                             }}                        
-                        ref={selectRef}
+                        ref={toolsAccordionSelectRef}
                         onChange={handleChange}
                         size='small'
                         options={toolOptions.map(tool => tool.label)}
@@ -61,7 +56,7 @@ export const BabyGruToolsAccordion = (props) => {
                     />
             </Row>
             <Row className="tool-container-row">
-                {selectedToolKey !== null ? toolOptions[selectedToolKey].toolWidget : null}
+                {props.selectedToolKey !== null ? toolOptions[props.selectedToolKey].toolWidget : null}
             </Row>
         </Fragment> 
 }

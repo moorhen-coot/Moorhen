@@ -48,7 +48,7 @@ export const BabyGruMenuItem = (props) => {
                     </PopoverBody>
                 </Popover>}
         >
-            <MenuItem className={props.textClassName} variant="success">{props.menuItemText}</MenuItem>
+            <MenuItem className={props.textClassName} id={props.id} variant="success">{props.menuItemText}</MenuItem>
         </OverlayTrigger> :
             <MenuItem className={props.textClassName} variant="success">{props.menuItemText}</MenuItem>
         }
@@ -56,6 +56,7 @@ export const BabyGruMenuItem = (props) => {
 }
 
 BabyGruMenuItem.defaultProps = {
+    id: '',
     buttonText: "OK",
     buttonVariant: "primary",
     textClassName: "",
@@ -105,6 +106,7 @@ export const BabyGruLoadTutorialDataMenuItem = (props) => {
     }
 
     return <BabyGruMenuItem
+        id='load-tutorial-data-menu-item' 
         popoverContent={panelContent}
         menuItemText="Load tutorial data..."
         onCompleted={onCompleted}

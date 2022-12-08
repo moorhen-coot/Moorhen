@@ -227,7 +227,7 @@ export const BabyGruValidation = (props) => {
             chartRef.current.destroy()
         }
 
-        if (chainSelectRef.current.value === null || selectedModel === null || !props.toolAccordionBodyHeight || !props.showSideBar) {
+        if (chainSelectRef.current.value === null || selectedModel === null || !props.toolAccordionBodyHeight || !props.showSideBar || plotData === null) {
             return;
         }
 

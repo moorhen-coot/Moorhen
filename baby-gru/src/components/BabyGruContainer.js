@@ -9,7 +9,6 @@ import { BabyGruButtonBar } from './BabyGruButtonBar';
 import { BabyGruFileMenu } from './BabyGruFileMenu';
 import { BabyGruPreferencesMenu } from './BabyGruPreferencesMenu';
 import { ArrowBackIosOutlined, ArrowForwardIosOutlined } from '@mui/icons-material';
-import './BabyGruContainer.css'
 import { BabyGruHistoryMenu, historyReducer, initialHistoryState } from './BabyGruHistoryMenu';
 import { BabyGruViewMenu } from './BabyGruViewMenu';
 import { BabyGruLigandMenu } from './BabyGruLigandMenu';
@@ -17,6 +16,8 @@ import { BabyGruToolsAccordion } from './BabyGruToolsAccordion'
 import { PreferencesContext } from "../utils/BabyGruPreferences";
 import { babyGruKeyPress } from './BabyGruKeyboardAccelerators';
 import { BabyGruEditMenu } from './BabyGruEditMenu';
+import { BabyGruSearchBar } from './BabyGruSearchBar';
+import './BabyGruContainer.css'
 
 const initialMoleculesState = []
 
@@ -43,6 +44,7 @@ export const BabyGruContainer = (props) => {
     const commandCentre = useRef(null)
     const graphicsDiv = createRef()
     const navBarRef = useRef()
+    const [selectedToolKey, setSelectedToolKey] = useState(null)
     const [showSideBar, setShowSideBar] = useState(false)
     const [activeMap, setActiveMap] = useState(null)
     const [activeMolecule, setActiveMolecule] = useState(null)
@@ -274,12 +276,13 @@ export const BabyGruContainer = (props) => {
         molecules, changeMolecules, appTitle, setAppTitle, maps, changeMaps, glRef, activeMolecule, setActiveMolecule,
         activeMap, setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor, sideBarWidth,
         navBarRef, currentDropdownId, setCurrentDropdownId, hoveredAtom, setHoveredAtom, toastContent, setToastContent, 
-        showToast, setShowToast, windowWidth, windowHeight, showSideBar, innerWindowMarginWidth, ...preferences
+        showToast, setShowToast, windowWidth, windowHeight, showSideBar, innerWindowMarginWidth, toolAccordionBodyHeight,
+        ...preferences
     }
 
     const accordionToolsItemProps = {
-        molecules, commandCentre, glRef, toolAccordionBodyHeight, sideBarWidth, windowHeight, windowWidth, maps, showSideBar, 
-        hoveredAtom, setHoveredAtom,...preferences
+        molecules, commandCentre, glRef, toolAccordionBodyHeight, setToolAccordionBodyHeight, sideBarWidth, windowHeight, 
+        windowWidth, maps, showSideBar, hoveredAtom, setHoveredAtom, selectedToolKey, setSelectedToolKey, ...preferences
     }
 
     return <> <div className={`border ${theme}`} ref={headerRef}>
@@ -295,13 +298,14 @@ export const BabyGruContainer = (props) => {
                     <BabyGruViewMenu dropdownId="View" {...collectedProps} />
                     <BabyGruHistoryMenu dropdownId="Ligand" {...collectedProps} />
                     <BabyGruPreferencesMenu dropdownId="Preferences" {...collectedProps} />
+                    {/**<BabyGruSearchBar setSelectedToolKey={setSelectedToolKey} {...collectedProps}/>*/}
                     {props.extraMenus && props.extraMenus.map(menu=>menu)}
                 </Nav>
             </Navbar.Collapse>
             <Nav className="justify-content-right">
                 {hoveredAtom.cid && <Form.Control style={{ width: "20rem" }} type="text" readOnly={true} value={`${hoveredAtom.molecule.name}:${hoveredAtom.cid}`} />}
                 {busy && <Spinner animation="border" style={{ marginRight: '0.5rem' }} />}
-                <Button className="baby-gru-sidebar-button" style={{ height: '100%', backgroundColor: preferences.darkMode ? '#222' : 'white', border: 0 }} onClick={() => { setShowSideBar(!showSideBar) }}>
+                <Button id='show-sidebar-button' className="baby-gru-sidebar-button" style={{ height: '100%', backgroundColor: preferences.darkMode ? '#222' : 'white', border: 0 }} onClick={() => { setShowSideBar(!showSideBar) }}>
                     {showSideBar ? <ArrowForwardIosOutlined style={{ color: preferences.darkMode ? 'white' : 'black' }} /> : <ArrowBackIosOutlined style={{ color: preferences.darkMode ? 'white' : 'black' }} />}
                 </Button>
             </Nav>
@@ -379,7 +383,9 @@ export const BabyGruContainer = (props) => {
                             </Accordion.Body>
                         </Accordion.Item>
                         <Accordion.Item eventKey="showTools" style={{ width: sideBarWidth, padding: '0', margin: '0' }} >
-                            <Accordion.Header style={{ height: '4rem' }}>Tools</Accordion.Header>
+                                <Accordion.Button id='tools-accordion-button'>
+                                    Tools
+                                </Accordion.Button>
                             <Accordion.Body style={{ height: toolAccordionBodyHeight, padding: '0', margin: '0', }}>
                                 <BabyGruToolsAccordion {...accordionToolsItemProps} />
                             </Accordion.Body>
