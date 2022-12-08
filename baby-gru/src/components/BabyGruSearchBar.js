@@ -75,6 +75,9 @@ export const BabyGruSearchBar = (props) => {
             {type: 'setValue', newValue:'Ligand', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "Ligand"},
             {type: 'click', elementId: 'add-waters-menu-item', condition: true}
         ]},
+        {label: "Auto-fit rotamer", actions: [
+            {type: 'carousel', elementId: 'auto-fit-rotamer-edit-button', condition: true}
+        ]},
         {label: "Copy fragment", actions: [
             {type: 'click', elementId: 'edit-nav-dropdown', condition: props.currentDropdownId !== "Edit"}, 
             {type: 'setValue', newValue:'Edit', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "Edit"},
@@ -99,6 +102,9 @@ export const BabyGruSearchBar = (props) => {
             {type: 'click', elementId: 'view-nav-dropdown', condition: props.currentDropdownId !== "View"}, 
             {type: 'setValue', newValue:'View', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "View"},
             {type: 'click', elementId: 'clipping-fogging-menu-item', condition: true}
+        ]},
+        {label: "Cis/Trans isomerisation", actions: [
+            {type: 'carousel', elementId: 'cis-trans-edit-button', condition: true}
         ]},
         {label: "Eigen Flip Ligand", actions: [
             {type: 'carousel', elementId: 'eigen-flip-edit-button', condition: true}
@@ -168,6 +174,12 @@ export const BabyGruSearchBar = (props) => {
             {type: 'click', elementId: 'file-nav-dropdown', condition: props.currentDropdownId !== "File"},
             {type: 'setValue', newValue:'File', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "File"},
             {type: 'click', elementId: 'import-map-menu-item', condition: true}
+        ]},
+        {label: "Refine residues", actions: [
+            {type: 'carousel', elementId: 'refine-residues-edit-button', condition: true}
+        ]},
+        {label: "Rotate sidechain", actions: [
+            {type: 'carousel', elementId: 'rotate-sidechain-edit-button', condition: true}
         ]},
         {label: "Show Console", actions: [
             {type: 'click', condition: !props.showSideBar , elementId: 'show-sidebar-button'}, 
