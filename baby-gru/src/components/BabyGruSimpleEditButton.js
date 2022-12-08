@@ -142,6 +142,7 @@ BabyGruSimpleEditButton.defaultProps = {
 
 export const BabyGruAutofitRotamerButton = (props) => {
     return <BabyGruSimpleEditButton {...props}
+        id='auto-fit-rotamer-edit-button'
         toolTip="Auto-fit Rotamer"
         buttonIndex={props.buttonIndex}
         selectedButtonIndex={props.selectedButtonIndex}
@@ -179,6 +180,7 @@ export const BabyGruFlipPeptideButton = (props) => {
 
 export const BabyGruConvertCisTransButton = (props) => {
     return <BabyGruSimpleEditButton {...props}
+        id='cis-trans-edit-button'
         toolTip="Cis/Trans isomerisation"
         buttonIndex={props.buttonIndex}
         selectedButtonIndex={props.selectedButtonIndex}
@@ -194,6 +196,7 @@ export const BabyGruConvertCisTransButton = (props) => {
 
 export const BabyGruSideChain180Button = (props) => {
     return <BabyGruSimpleEditButton {...props}
+        id='rotate-sidechain-edit-button'
         toolTip="Rotate side-chain 180 degrees"
         buttonIndex={props.buttonIndex}
         selectedButtonIndex={props.selectedButtonIndex}
@@ -237,6 +240,7 @@ export const BabyGruRefineResiduesUsingAtomCidButton = (props) => {
         </Container>
     }
     return <BabyGruSimpleEditButton {...props}
+        id='refine-residues-edit-button'
         toolTip="Refine Residues"
         buttonIndex={props.buttonIndex}
         selectedButtonIndex={props.selectedButtonIndex}

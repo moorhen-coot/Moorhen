@@ -9,7 +9,7 @@ export const BabyGruSearchBar = (props) => {
     const [selectedItemKey, setSelectedItemKey] = useState(null)
     const [openPopup, setOpenPopup] = useState(null)
 
-    const handleClick = (element) => {
+    const doClick = (element) => {
         console.log(`Search bar is clicking on ${element.id}`)
         let clickEvent = new MouseEvent("click", {
             "view": window,
@@ -29,7 +29,7 @@ export const BabyGruSearchBar = (props) => {
         })
     }
 
-    const handleActions = (...actions) => {
+    const doActions = (...actions) => {
         actions.forEach((action, actionIndex) => {
             if (!action.condition) {
                 return
@@ -41,7 +41,7 @@ export const BabyGruSearchBar = (props) => {
                 }
                 if (action.type === 'click'){
                     let element = document.getElementById(action.elementId)
-                    handleClick(element)
+                    doClick(element)
                 } else if (action.type === 'setValue') {
                     console.log(`Search bar is setting a new value ${action.newValue}`)
                     action.valueSetter(action.newValue)
@@ -60,16 +60,34 @@ export const BabyGruSearchBar = (props) => {
                             if (computedStyle.display !== 'none') {
                                 break
                             }
-                            handleClick(elements[0])
+                            doClick(elements[0])
                         }
                     } 
-                    handleClick(targetElement)
+                    doClick(targetElement)
                 }
             }, parseInt(50 * actionIndex));
         })
     }
 
     const searchOptions = [
+        {label: "Add waters", actions: [
+            {type: 'click', elementId: 'ligand-nav-dropdown', condition: props.currentDropdownId !== "Ligand"}, 
+            {type: 'setValue', newValue:'Ligand', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "Ligand"},
+            {type: 'click', elementId: 'add-waters-menu-item', condition: true}
+        ]},
+        {label: "Auto-fit rotamer", actions: [
+            {type: 'carousel', elementId: 'auto-fit-rotamer-edit-button', condition: true}
+        ]},
+        {label: "Copy fragment", actions: [
+            {type: 'click', elementId: 'edit-nav-dropdown', condition: props.currentDropdownId !== "Edit"}, 
+            {type: 'setValue', newValue:'Edit', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "Edit"},
+            {type: 'click', elementId: 'copy-fragment-menu-item', condition: true}
+        ]},
+        {label: "Delete everything", actions: [
+            {type: 'click', elementId: 'file-nav-dropdown', condition: props.currentDropdownId !== "File"}, 
+            {type: 'setValue', newValue:'File', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "File"},
+            {type: 'click', elementId: 'delete-everything-menu-item', condition: true}
+        ]},
         {label: "Difference Map Peaks", actions: [
             {type: 'click', condition: !props.showSideBar , elementId: 'show-sidebar-button'}, 
             {type: 'click', condition: props.toolAccordionBodyHeight == 0, elementId: 'tools-accordion-button'},
@@ -77,38 +95,104 @@ export const BabyGruSearchBar = (props) => {
         ]},
         {label: "Change Background Colour", actions: [
             {type: 'click', elementId: 'view-nav-dropdown', condition: props.currentDropdownId !== "View"}, 
+            {type: 'setValue', newValue:'View', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "View"},
             {type: 'click', elementId: 'change-background-colour-menu-item', condition: true}
+        ]},
+        {label: "Clipping and fogging", actions: [
+            {type: 'click', elementId: 'view-nav-dropdown', condition: props.currentDropdownId !== "View"}, 
+            {type: 'setValue', newValue:'View', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "View"},
+            {type: 'click', elementId: 'clipping-fogging-menu-item', condition: true}
+        ]},
+        {label: "Cis/Trans isomerisation", actions: [
+            {type: 'carousel', elementId: 'cis-trans-edit-button', condition: true}
         ]},
         {label: "Eigen Flip Ligand", actions: [
             {type: 'carousel', elementId: 'eigen-flip-edit-button', condition: true}
         ]},
         {label: "Fetch from PDBe", actions: [
             {type: 'click', elementId: 'file-nav-dropdown', condition: props.currentDropdownId !== "File"}, 
+            {type: 'setValue', newValue:'File', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "File"},
             {type: 'setFocus', elementId: 'fetch-pdbe-form', condition: true}
         ]},
         {label: "Flip Peptide", actions: [
             {type: 'carousel', elementId: 'flip-peptide-edit-button', condition: true}
         ]},
+        {label: "Get monomer", actions: [
+            {type: 'click', elementId: 'ligand-nav-dropdown', condition: props.currentDropdownId !== "Ligand"}, 
+            {type: 'setValue', newValue:'Ligand', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "Ligand"},
+            {type: 'click', elementId: 'get-monomer-menu-item', condition: true}
+        ]},
+        {label: "Go to cid", actions: [
+            {type: 'click', elementId: 'edit-nav-dropdown', condition: props.currentDropdownId !== "Edit"}, 
+            {type: 'setValue', newValue:'Edit', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "Edit"},
+            {type: 'click', elementId: 'go-to-menu-item', condition: true}
+        ]},
+        {label: "Import dictionary", actions: [
+            {type: 'click', elementId: 'file-nav-dropdown', condition: props.currentDropdownId !== "File"},
+            {type: 'setValue', newValue:'File', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "File"},
+            {type: 'click', elementId: 'import-dict-menu-item', condition: true}
+        ]},
         {label: "Load Coordinates", actions: [
             {type: 'click', elementId: 'file-nav-dropdown', condition: props.currentDropdownId !== "File"},
-            {type: 'setValue', newValue:'File', valueSetter: props.setCurrentDropdownId, condition: true},
+            {type: 'setValue', newValue:'File', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "File"},
             {type: 'click', elementId: 'upload-coordinates-form', condition: true}
         ]},
         {label: "Load Tutorial Data", actions: [
             {type: 'click', elementId: 'file-nav-dropdown', condition: props.currentDropdownId !== "File"},
-            {type: 'setValue', newValue:'File', valueSetter: props.setCurrentDropdownId, condition: true},
+            {type: 'setValue', newValue:'File', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "File"},
             {type: 'click', elementId: 'load-tutorial-data-menu-item', condition: true}
+        ]},
+        {label: "Merge Molecules", actions: [
+            {type: 'click', elementId: 'edit-nav-dropdown', condition: props.currentDropdownId !== "Edit"},
+            {type: 'setValue', newValue:'Edit', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "Edit"},
+            {type: 'click', elementId: 'merge-molecules-menu-item', condition: true}
+        ]},
+        {label: "Model Validation", actions: [
+            {type: 'click', condition: !props.showSideBar , elementId: 'show-sidebar-button'}, 
+            {type: 'click', condition: props.toolAccordionBodyHeight == 0, elementId: 'tools-accordion-button'},
+            {type: 'setValue', newValue: 2, condition: true, valueSetter: props.setSelectedToolKey}
         ]},
         {label: "Mutate Residue", actions: [
             {type: 'carousel', elementId: 'mutate-residue-edit-button', condition: true}
+        ]},
+        {label: "Peptide Flips List", actions: [
+            {type: 'click', condition: !props.showSideBar , elementId: 'show-sidebar-button'}, 
+            {type: 'click', condition: props.toolAccordionBodyHeight == 0, elementId: 'tools-accordion-button'},
+            {type: 'setValue', newValue: 3, condition: true, valueSetter: props.setSelectedToolKey}
         ]},
         {label: "Ramachandran Plot", actions: [
             {type: 'click', condition: !props.showSideBar , elementId: 'show-sidebar-button'}, 
             {type: 'click', condition: props.toolAccordionBodyHeight == 0, elementId: 'tools-accordion-button'},
             {type: 'setValue', newValue: 1, condition: true, valueSetter: props.setSelectedToolKey}
         ]},
+        {label: "Read mtz", actions: [
+            {type: 'click', elementId: 'file-nav-dropdown', condition: props.currentDropdownId !== "File"},
+            {type: 'setValue', newValue:'File', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "File"},
+            {type: 'click', elementId: 'import-map-coeff-menu-item', condition: true}
+        ]},
+        {label: "Read map", actions: [
+            {type: 'click', elementId: 'file-nav-dropdown', condition: props.currentDropdownId !== "File"},
+            {type: 'setValue', newValue:'File', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "File"},
+            {type: 'click', elementId: 'import-map-menu-item', condition: true}
+        ]},
+        {label: "Refine residues", actions: [
+            {type: 'carousel', elementId: 'refine-residues-edit-button', condition: true}
+        ]},
+        {label: "Rotate sidechain", actions: [
+            {type: 'carousel', elementId: 'rotate-sidechain-edit-button', condition: true}
+        ]},
+        {label: "Show Console", actions: [
+            {type: 'click', condition: !props.showSideBar , elementId: 'show-sidebar-button'}, 
+            {type: 'click', condition: props.consoleBodyHeight == 0, elementId: 'console-accordion-button'},
+        ]},
+        {label: "Show history", actions: [
+            {type: 'click', elementId: 'history-nav-dropdown', condition: props.currentDropdownId !== "History"}, 
+            {type: 'setValue', newValue:'History', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "History"},
+            {type: 'click', elementId: 'show-history-menu-item', condition: true}
+        ]},
         {label: "Show Shortcuts", actions: [
             {type: 'click', elementId: 'preferences-nav-dropdown', condition: props.currentDropdownId !== "Preferences"}, 
+            {type: 'setValue', newValue:'Preferences', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "Preferences"},
             {type: 'click', elementId: 'configure-shortcuts-menu-item', condition: true}
         ]},
     ]
@@ -131,7 +215,7 @@ export const BabyGruSearchBar = (props) => {
             searchBarRef.current.value = "" 
         } 
         if (selectedItemKey !== null && searchOptions[selectedItemKey]) {
-            handleActions(...searchOptions[selectedItemKey].actions)
+            doActions(...searchOptions[selectedItemKey].actions)
         }
     }, [selectedItemKey])
 
