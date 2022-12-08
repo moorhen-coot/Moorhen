@@ -77,7 +77,7 @@ export const BabyGruPreferencesMenu = (props) => {
                 <Form.Group controlId="mapLineWidthSensitivitySlider" style={{paddingTop:'0.5rem', paddingBottom:'0.5rem', paddingRight:'0.5rem', paddingLeft:'1rem', width: '25rem'}}>
                     <BabyGruSlider minVal={0.1} maxVal={5.0} logScale={true} sliderTitle="Map lines thickness" intialValue={2.5} externalValue={mapLineWidth} setExternalValue={setMapLineWidth}/>
                 </Form.Group>
-                <MenuItem variant="success" onClick={() => setShowModal(true)} >
+                <MenuItem variant="success" onClick={() => setShowModal(true)} id='configure-shortcuts-menu-item'>
                     Configure shortcuts
                 </MenuItem>
                 <BabyGruShortcutConfigModal showModal={showModal} setShowModal={setShowModal} setShortCuts={props.setShortCuts} shortCuts={JSON.parse(props.shortCuts)}/>

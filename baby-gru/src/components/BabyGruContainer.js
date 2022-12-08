@@ -298,7 +298,7 @@ export const BabyGruContainer = (props) => {
                     <BabyGruViewMenu dropdownId="View" {...collectedProps} />
                     <BabyGruHistoryMenu dropdownId="Ligand" {...collectedProps} />
                     <BabyGruPreferencesMenu dropdownId="Preferences" {...collectedProps} />
-                    {/**<BabyGruSearchBar setSelectedToolKey={setSelectedToolKey} {...collectedProps}/>*/}
+                    <BabyGruSearchBar setSelectedToolKey={setSelectedToolKey} {...collectedProps}/>
                     {props.extraMenus && props.extraMenus.map(menu=>menu)}
                 </Nav>
             </Navbar.Collapse>
