@@ -433,6 +433,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     class_<molecules_container_t>("molecules_container_t")
     .constructor<>()
     .function("get_monomer_from_dictionary",&molecules_container_t::get_monomer_from_dictionary)
+    .function("get_molecular_representation_mesh",&molecules_container_t::get_molecular_representation_mesh)
     .function("get_map_weight",&molecules_container_t::get_map_weight)
     .function("set_map_weight",&molecules_container_t::set_map_weight)
     .function("set_show_timings",&molecules_container_t::set_show_timings)

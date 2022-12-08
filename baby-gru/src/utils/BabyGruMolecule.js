@@ -34,6 +34,8 @@ export function BabyGruMolecule(commandCentre) {
         CBs: [],
         hover: [],
         ligands: [],
+        CRs: [],
+        ProtSurf: [],
         transformation: { origin: [0, 0, 0], quat: null, centre: [0, 0, 0] }
     }
 };
@@ -219,6 +221,12 @@ BabyGruMolecule.prototype.drawWithStyleFromAtoms = async function (style, glRef,
         case 'CBs':
             await this.drawCootBonds(webMGAtoms, glRef)
             break;
+        case 'CRs':
+            await this.drawCootRepresentation(webMGAtoms, glRef, style)
+            break;
+        case 'ProtSurf':
+            await this.drawCootRepresentation(webMGAtoms, glRef, style)
+            break;
         case 'ligands':
             this.drawLigands(webMGAtoms, glRef, this.molNo)
             break;
@@ -274,7 +282,7 @@ BabyGruMolecule.prototype.drawCootBonds = async function (webMGAtoms, glRef) {
     const style = "CBs"
     return this.commandCentre.current.cootCommand({
         returnType: "mesh",
-        command: "get_bonds_mesh",      
+        command: "get_bonds_mesh",
         commandArgs: [
             $this.molNo, "COLOUR-BY-CHAIN-AND-DICTIONARY", $this.cootBondsOptions.isDarkBackground,
             $this.cootBondsOptions.width, $this.cootBondsOptions.atomRadiusBondRatio,
@@ -309,6 +317,57 @@ BabyGruMolecule.prototype.drawCootBonds = async function (webMGAtoms, glRef) {
     })
 }
 
+BabyGruMolecule.prototype.drawCootRepresentation = async function (webMGAtoms, glRef, style) {
+    const $this = this
+    let m2tStyle
+    let m2tSelection
+    switch (style) {
+        case "CRs":
+            m2tStyle = "Ribbon"
+            m2tSelection = "//"
+            break;
+        case "ProtSurf":
+            m2tStyle = "MolecularSurface"
+            m2tSelection = "(ALA,CYS,ASP,GLU,PHE,GLY,HIS,ILE,LYS,LEU,MET,ASN,PRO,GLN,ARG,SER,THR,VAL,TRP,TYR)"
+            break;
+        default:
+            m2tStyle = "BallAndStick"
+            break;
+    }
+    return this.commandCentre.current.cootCommand({
+        returnType: "mesh",
+        command: "get_molecular_representation_mesh",
+        commandArgs: [
+            $this.molNo, m2tSelection, "colorRampChainsScheme", m2tStyle
+        ]
+    }).then(response => {
+        const objects = [response.data.result.result]
+        if (objects.length > 0) {
+            //Empty existing buffers of this type
+            this.clearBuffersOfStyle(style, glRef)
+            this.addBuffersOfStyle(glRef, objects, style)
+            if (webMGAtoms.atoms.length > 0) {
+                let bufferAtoms = []
+                webMGAtoms.atoms[0].getAllAtoms().forEach(at1 => {
+                    let atom = {};
+                    atom["x"] = at1.x();
+                    atom["y"] = at1.y();
+                    atom["z"] = at1.z();
+                    atom["tempFactor"] = at1["_atom_site.B_iso_or_equiv"];
+                    atom["charge"] = at1["_atom_site.pdbx_formal_charge"];
+                    atom["symbol"] = at1["_atom_site.type_symbol"];
+                    atom["label"] = at1.getAtomID();
+                    bufferAtoms.push(atom);
+                    this.displayObjects[style][0].atoms = bufferAtoms
+                })
+            }
+        }
+        else {
+            this.clearBuffersOfStyle(style, glRef)
+        }
+        return Promise.resolve(true)
+    })
+}
 
 BabyGruMolecule.prototype.show = function (style, glRef) {
     //console.log("show",{style})
