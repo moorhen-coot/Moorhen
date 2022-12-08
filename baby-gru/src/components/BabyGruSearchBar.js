@@ -9,34 +9,59 @@ export const BabyGruSearchBar = (props) => {
     const [selectedItemKey, setSelectedItemKey] = useState(null)
     const [openPopup, setOpenPopup] = useState(null)
 
+    const handleClick = (element) => {
+        console.log(`Search bar is clicking on ${element.id}`)
+        let clickEvent = new MouseEvent("click", {
+            "view": window,
+            "bubbles": true,
+            "cancelable": false
+        })
+        element.dispatchEvent(clickEvent)    
+    }
+
+    const getComputedStyle = (element, timeOut=800) => {
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                console.log('HELO')
+                console.log(window.getComputedStyle(element).display)
+                resolve(window.getComputedStyle(element))
+            }, timeOut)    
+        })
+    }
+
     const handleActions = (...actions) => {
         actions.forEach((action, actionIndex) => {
             if (!action.condition) {
                 return
             }
 
-            setTimeout(() => {
-                if (action.componentId && !document.getElementById(action.componentId)){
+            setTimeout(async () => {
+                if (action.elementId && !document.getElementById(action.elementId)){
                     return
                 }
-                let element;
-                let clickEvent;
                 if (action.type === 'click'){
-                    console.log(`Search bar is clicking on ${action.componentId}`)
-                    clickEvent = new MouseEvent("click", {
-                        "view": window,
-                        "bubbles": true,
-                        "cancelable": false
-                    })
-                    element = document.getElementById(action.componentId)
-                    element.dispatchEvent(clickEvent)    
+                    let element = document.getElementById(action.elementId)
+                    handleClick(element)
                 } else if (action.type === 'setValue') {
                     console.log(`Search bar is setting a new value ${action.newValue}`)
                     action.valueSetter(action.newValue)
                 } else if (action.type === 'setFocus') {
-                    console.log(`Search bar is setting focus on component ${action.componentId}`)
-                    element = document.getElementById(action.componentId)
+                    console.log(`Search bar is setting focus on component ${action.elementId}`)
+                    let element = document.getElementById(action.elementId)
                     element.focus()
+                } else if (action.type == 'carousel') {
+                    let elements = document.getElementsByClassName('carousel-control-next')
+                    let targetElement = document.getElementById(action.elementId)
+                    if (elements.length > 0) {
+                        while (true) {
+                            let computedStyle = await getComputedStyle(targetElement.parentElement.parentElement)
+                            if (computedStyle.display !== 'none') {
+                                break
+                            }
+                            handleClick(elements[0])
+                        }
+                    } 
+                    handleClick(targetElement)
                 }
             }, parseInt(50 * actionIndex));
         })
@@ -44,30 +69,30 @@ export const BabyGruSearchBar = (props) => {
 
     const searchOptions = [
         {label: "Difference Map Peaks", actions: [
-            {type: 'click', condition: !props.showSideBar , componentId: 'show-sidebar-button'}, 
-            {type: 'click', condition: props.toolAccordionBodyHeight == 0, componentId: 'tools-accordion-button'},
+            {type: 'click', condition: !props.showSideBar , elementId: 'show-sidebar-button'}, 
+            {type: 'click', condition: props.toolAccordionBodyHeight == 0, elementId: 'tools-accordion-button'},
             {type: 'setValue', newValue: 0, condition: true, valueSetter: props.setSelectedToolKey}
         ]},
         {label: "Fetch from PDBe", actions: [
-            {type: 'click', componentId: 'file-nav-dropdown', condition: props.currentDropdownId !== "File"}, 
-            {type: 'setFocus', componentId: 'fetch-pdbe-form', condition: true}
+            {type: 'click', elementId: 'file-nav-dropdown', condition: props.currentDropdownId !== "File"}, 
+            {type: 'setFocus', elementId: 'fetch-pdbe-form', condition: true}
         ]},
         {label: "Flip Peptide", actions: [
-            {type: 'click', componentId: 'flip-peptide-edit-button', condition: true}
+            {type: 'carousel', elementId: 'flip-peptide-edit-button', condition: true}
         ]},
         {label: "Load coordinates", actions: [
-            {type: 'click', componentId: 'file-nav-dropdown', condition: props.currentDropdownId !== "File"},
+            {type: 'click', elementId: 'file-nav-dropdown', condition: props.currentDropdownId !== "File"},
             {type: 'setValue', newValue:'File', valueSetter: props.setCurrentDropdownId, condition: true},
-            {type: 'click', componentId: 'upload-coordinates-form', condition: true}
+            {type: 'click', elementId: 'upload-coordinates-form', condition: true}
         ]},
         {label: "Load tutorial data", actions: [
-            {type: 'click', componentId: 'file-nav-dropdown', condition: props.currentDropdownId !== "File"},
+            {type: 'click', elementId: 'file-nav-dropdown', condition: props.currentDropdownId !== "File"},
             {type: 'setValue', newValue:'File', valueSetter: props.setCurrentDropdownId, condition: true},
-            {type: 'click', componentId: 'load-tutorial-data-menu-item', condition: true}
+            {type: 'click', elementId: 'load-tutorial-data-menu-item', condition: true}
         ]},
         {label: "Ramachandran Plot", actions: [
-            {type: 'click', condition: !props.showSideBar , componentId: 'show-sidebar-button'}, 
-            {type: 'click', condition: props.toolAccordionBodyHeight == 0, componentId: 'tools-accordion-button'},
+            {type: 'click', condition: !props.showSideBar , elementId: 'show-sidebar-button'}, 
+            {type: 'click', condition: props.toolAccordionBodyHeight == 0, elementId: 'tools-accordion-button'},
             {type: 'setValue', newValue: 1, condition: true, valueSetter: props.setSelectedToolKey}
         ]},
     ]
@@ -89,7 +114,7 @@ export const BabyGruSearchBar = (props) => {
         if(searchBarRef.current) {
             searchBarRef.current.value = "" 
         } 
-        if (selectedItemKey !== null) {
+        if (selectedItemKey !== null && searchOptions[selectedItemKey]) {
             handleActions(...searchOptions[selectedItemKey].actions)
         }
     }, [selectedItemKey])
