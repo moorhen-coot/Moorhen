@@ -52,8 +52,10 @@ export const BabyGruSearchBar = (props) => {
                 } else if (action.type == 'carousel') {
                     let elements = document.getElementsByClassName('carousel-control-next')
                     let targetElement = document.getElementById(action.elementId)
+                    let iterationCount = 0
                     if (elements.length > 0) {
-                        while (true) {
+                        while (true && iterationCount < 5) {
+                            iterationCount ++
                             let computedStyle = await getComputedStyle(targetElement.parentElement.parentElement)
                             if (computedStyle.display !== 'none') {
                                 break
@@ -73,6 +75,9 @@ export const BabyGruSearchBar = (props) => {
             {type: 'click', condition: props.toolAccordionBodyHeight == 0, elementId: 'tools-accordion-button'},
             {type: 'setValue', newValue: 0, condition: true, valueSetter: props.setSelectedToolKey}
         ]},
+        {label: "Eigen Flip Ligand", actions: [
+            {type: 'carousel', elementId: 'eigen-flip-edit-button', condition: true}
+        ]},
         {label: "Fetch from PDBe", actions: [
             {type: 'click', elementId: 'file-nav-dropdown', condition: props.currentDropdownId !== "File"}, 
             {type: 'setFocus', elementId: 'fetch-pdbe-form', condition: true}
@@ -80,15 +85,18 @@ export const BabyGruSearchBar = (props) => {
         {label: "Flip Peptide", actions: [
             {type: 'carousel', elementId: 'flip-peptide-edit-button', condition: true}
         ]},
-        {label: "Load coordinates", actions: [
+        {label: "Load Coordinates", actions: [
             {type: 'click', elementId: 'file-nav-dropdown', condition: props.currentDropdownId !== "File"},
             {type: 'setValue', newValue:'File', valueSetter: props.setCurrentDropdownId, condition: true},
             {type: 'click', elementId: 'upload-coordinates-form', condition: true}
         ]},
-        {label: "Load tutorial data", actions: [
+        {label: "Load Tutorial Data", actions: [
             {type: 'click', elementId: 'file-nav-dropdown', condition: props.currentDropdownId !== "File"},
             {type: 'setValue', newValue:'File', valueSetter: props.setCurrentDropdownId, condition: true},
             {type: 'click', elementId: 'load-tutorial-data-menu-item', condition: true}
+        ]},
+        {label: "Mutate Residue", actions: [
+            {type: 'carousel', elementId: 'mutate-residue-edit-button', condition: true}
         ]},
         {label: "Ramachandran Plot", actions: [
             {type: 'click', condition: !props.showSideBar , elementId: 'show-sidebar-button'}, 
