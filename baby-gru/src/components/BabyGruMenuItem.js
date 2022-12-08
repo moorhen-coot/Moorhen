@@ -153,6 +153,7 @@ export const BabyGruGetMonomerMenuItem = (props) => {
     }
 
     return <BabyGruMenuItem
+        id='get-monomer-menu-item'
         popoverContent={panelContent}
         menuItemText="Get monomer..."
         onCompleted={onCompleted}
@@ -924,12 +925,19 @@ export const BabyGruMergeMoleculesMenuItem = (props) => {
     }, [toRef.current, fromRef.current, props.molecules])
 
     return <BabyGruMenuItem
+        id='merge-molecules-menu-item'
         popoverPlacement={props.popoverPlacement}
         popoverContent={panelContent}
         menuItemText={props.menuItemText}
         onCompleted={onCompleted}
         setPopoverIsShown={props.setPopoverIsShown}
     />
+}
+
+BabyGruMergeMoleculesMenuItem.defaultProps = {
+    popoverPlacement: "right",
+    menuItemText: 'Merge molecules...',
+    fromMolNo: null
 }
 
 export const BabyGruGoToMenuItem = (props) => {
@@ -1082,19 +1090,13 @@ export const BabyGruCopyFragmentUsingCidMenuItem = (props) => {
     }
 
     return <BabyGruMenuItem
-        id='merge-molecules-menu-item'
+        id='copy-fragment-menu-item'
         popoverPlacement='right'
         popoverContent={panelContent}
         menuItemText="Copy fragment..."
         onCompleted={onCompleted}
         setPopoverIsShown={props.setPopoverIsShown}
     />
-}
-
-BabyGruMergeMoleculesMenuItem.defaultProps = {
-    popoverPlacement: "right",
-    menuItemText: 'Merge molecules...',
-    fromMolNo: null
 }
 
 export const BabyGruAddWatersMenuItem = (props) => {

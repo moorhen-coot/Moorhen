@@ -75,6 +75,11 @@ export const BabyGruSearchBar = (props) => {
             {type: 'setValue', newValue:'Ligand', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "Ligand"},
             {type: 'click', elementId: 'add-waters-menu-item', condition: true}
         ]},
+        {label: "Copy fragment", actions: [
+            {type: 'click', elementId: 'edit-nav-dropdown', condition: props.currentDropdownId !== "Edit"}, 
+            {type: 'setValue', newValue:'Edit', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "Edit"},
+            {type: 'click', elementId: 'copy-fragment-menu-item', condition: true}
+        ]},
         {label: "Delete everything", actions: [
             {type: 'click', elementId: 'file-nav-dropdown', condition: props.currentDropdownId !== "File"}, 
             {type: 'setValue', newValue:'File', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "File"},
@@ -106,7 +111,12 @@ export const BabyGruSearchBar = (props) => {
         {label: "Flip Peptide", actions: [
             {type: 'carousel', elementId: 'flip-peptide-edit-button', condition: true}
         ]},
-        {label: "Go to...", actions: [
+        {label: "Get monomer", actions: [
+            {type: 'click', elementId: 'ligand-nav-dropdown', condition: props.currentDropdownId !== "Ligand"}, 
+            {type: 'setValue', newValue:'Ligand', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "Ligand"},
+            {type: 'click', elementId: 'get-monomer-menu-item', condition: true}
+        ]},
+        {label: "Go to cid", actions: [
             {type: 'click', elementId: 'edit-nav-dropdown', condition: props.currentDropdownId !== "Edit"}, 
             {type: 'setValue', newValue:'Edit', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "Edit"},
             {type: 'click', elementId: 'go-to-menu-item', condition: true}
@@ -158,6 +168,11 @@ export const BabyGruSearchBar = (props) => {
             {type: 'click', elementId: 'file-nav-dropdown', condition: props.currentDropdownId !== "File"},
             {type: 'setValue', newValue:'File', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "File"},
             {type: 'click', elementId: 'import-map-menu-item', condition: true}
+        ]},
+        {label: "Show history", actions: [
+            {type: 'click', elementId: 'history-nav-dropdown', condition: props.currentDropdownId !== "History"}, 
+            {type: 'setValue', newValue:'History', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "History"},
+            {type: 'click', elementId: 'show-history-menu-item', condition: true}
         ]},
         {label: "Show Shortcuts", actions: [
             {type: 'click', elementId: 'preferences-nav-dropdown', condition: props.currentDropdownId !== "Preferences"}, 
