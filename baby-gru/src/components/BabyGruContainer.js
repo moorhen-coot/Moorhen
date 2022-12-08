@@ -298,7 +298,7 @@ export const BabyGruContainer = (props) => {
                     <BabyGruViewMenu dropdownId="View" {...collectedProps} />
                     <BabyGruHistoryMenu dropdownId="History" {...collectedProps} />
                     <BabyGruPreferencesMenu dropdownId="Preferences" {...collectedProps} />
-                    <BabyGruSearchBar setSelectedToolKey={setSelectedToolKey} {...collectedProps}/>
+                    <BabyGruSearchBar setSelectedToolKey={setSelectedToolKey} consoleBodyHeight={consoleBodyHeight} {...collectedProps}/>
                     {props.extraMenus && props.extraMenus.map(menu=>menu)}
                 </Nav>
             </Navbar.Collapse>
@@ -391,7 +391,9 @@ export const BabyGruContainer = (props) => {
                             </Accordion.Body>
                         </Accordion.Item>
                         <Accordion.Item eventKey="showConsole" style={{ width: sideBarWidth, padding: '0', margin: '0' }} >
-                            <Accordion.Header style={{ height: '4rem' }}>Console</Accordion.Header>
+                            <Accordion.Button id='console-accordion-button'>
+                                Console
+                            </Accordion.Button>
                             <Accordion.Body style={{ height: consoleBodyHeight }}>
                                 <div ref={consoleDivRef} style={{
                                     overflowY: "scroll",

@@ -169,6 +169,10 @@ export const BabyGruSearchBar = (props) => {
             {type: 'setValue', newValue:'File', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "File"},
             {type: 'click', elementId: 'import-map-menu-item', condition: true}
         ]},
+        {label: "Show Console", actions: [
+            {type: 'click', condition: !props.showSideBar , elementId: 'show-sidebar-button'}, 
+            {type: 'click', condition: props.consoleBodyHeight == 0, elementId: 'console-accordion-button'},
+        ]},
         {label: "Show history", actions: [
             {type: 'click', elementId: 'history-nav-dropdown', condition: props.currentDropdownId !== "History"}, 
             {type: 'setValue', newValue:'History', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "History"},
