@@ -56,3 +56,34 @@ set_target_properties(privateer-validate PROPERTIES OUTPUT_NAME privateer)
 target_link_options(privateer-validate PRIVATE -s ALLOW_MEMORY_GROWTH=1)
 
 SET_SOURCE_FILES_PROPERTIES(privateer-frontend_scripting.i PROPERTIES CPLUSPLUS ON)
+
+set(privateer_HEADERS
+${CMAKE_SOURCE_DIR}/checkout/privateer-MKIV/src/privateer-restraints.h
+${CMAKE_SOURCE_DIR}/checkout/privateer-MKIV/src/privateer-xray.h
+${CMAKE_SOURCE_DIR}/checkout/privateer-MKIV/src/privateer-blobs.h
+${CMAKE_SOURCE_DIR}/checkout/privateer-MKIV/src/privateer-dbquery.h
+${CMAKE_SOURCE_DIR}/checkout/privateer-MKIV/src/privateer-error.h
+${CMAKE_SOURCE_DIR}/checkout/privateer-MKIV/src/clipper-glyco_data.h
+${CMAKE_SOURCE_DIR}/checkout/privateer-MKIV/src/privateer-composition.h
+${CMAKE_SOURCE_DIR}/checkout/privateer-MKIV/src/privateer-lib.h
+${CMAKE_SOURCE_DIR}/checkout/privateer-MKIV/src/privateer-json.h
+${CMAKE_SOURCE_DIR}/checkout/privateer-MKIV/src/clipper-glyco.h
+${CMAKE_SOURCE_DIR}/checkout/privateer-MKIV/src/privateer-parallelism.h
+${CMAKE_SOURCE_DIR}/checkout/privateer-MKIV/src/privateer-cryo_em.h
+)
+
+set_target_properties(privateer PROPERTIES PUBLIC_HEADER "${privateer_HEADERS}")
+
+install(TARGETS privateer
+LIBRARY DESTINATION lib
+PUBLIC_HEADER DESTINATION include/privateer
+)
+
+set(privateer_third_party-headers_HEADERS
+${CMAKE_SOURCE_DIR}/checkout/privateer-MKIV/src/third-party/sajson.h
+)
+
+install(FILES 
+${privateer_third_party-headers_HEADERS}
+DESTINATION include/privateer/third-party
+)

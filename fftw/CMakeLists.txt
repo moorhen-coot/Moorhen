@@ -76,4 +76,22 @@ add_library(fftw STATIC
 ../checkout/fftw-2.1.5/fftw/wisdomio.c
 )
 
+set(fftw_HEADERS
+${CMAKE_SOURCE_DIR}/checkout/fftw-2.1.5//fftw/fftw.h
+${CMAKE_SOURCE_DIR}/checkout/fftw-2.1.5//fftw/fftw-int.h
+${CMAKE_SOURCE_DIR}/checkout/fftw-2.1.5//fftw/config.h
+)
+
+set(fftw_HEADERS
+${CMAKE_SOURCE_DIR}/checkout/fftw-2.1.5/fftw/fftw.h
+${CMAKE_SOURCE_DIR}/checkout/fftw-2.1.5/fftw/fftw-int.h
+${CMAKE_SOURCE_DIR}/checkout/fftw-2.1.5/fftw/config.h
+)
+
 target_compile_options(fftw PUBLIC "-DFFTW_ENABLE_FLOAT")
+set_target_properties(fftw PROPERTIES PUBLIC_HEADER "${fftw_HEADERS}")
+
+install(TARGETS fftw
+LIBRARY DESTINATION lib
+PUBLIC_HEADER DESTINATION include/fftw
+)

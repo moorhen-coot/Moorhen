@@ -80,3 +80,54 @@ target_include_directories(gesamtlib PRIVATE ../checkout/gesamt/ ../checkout/mmd
 target_include_directories(gesamt PRIVATE ../checkout/gesamt/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2  ../checkout/libccp4/ccp4 ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_options(gesamt PRIVATE -s ALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1)
 target_compile_options(gesamt PUBLIC -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
+
+set(gesamt_HEADERS
+${CMAKE_SOURCE_DIR}/checkout/gesamt//gesamtlib/gsmt_superpose.h
+${CMAKE_SOURCE_DIR}/checkout/gesamt//gesamtlib/gsmt_threadbase.h
+${CMAKE_SOURCE_DIR}/checkout/gesamt//gesamtlib/gsmt_aligner.h
+${CMAKE_SOURCE_DIR}/checkout/gesamt//gesamtlib/gsmt_dynam.h
+${CMAKE_SOURCE_DIR}/checkout/gesamt//gesamtlib/gsmt_clusterer.h
+${CMAKE_SOURCE_DIR}/checkout/gesamt//gesamtlib/gsmt_mastructure.h
+${CMAKE_SOURCE_DIR}/checkout/gesamt//gesamtlib/gsmt_domdata.h
+${CMAKE_SOURCE_DIR}/checkout/gesamt//gesamtlib/gsmt_hits.h
+${CMAKE_SOURCE_DIR}/checkout/gesamt//gesamtlib/gsmt_refiner.h
+${CMAKE_SOURCE_DIR}/checkout/gesamt//gesamtlib/gsmt_svd.h
+${CMAKE_SOURCE_DIR}/checkout/gesamt//gesamtlib/gsmt_pdbscanthread.h
+${CMAKE_SOURCE_DIR}/checkout/gesamt//gesamtlib/shiftsort_.h
+${CMAKE_SOURCE_DIR}/checkout/gesamt//gesamtlib/gsmt_mamap.h
+${CMAKE_SOURCE_DIR}/checkout/gesamt//gesamtlib/gsmt_sequence.h
+${CMAKE_SOURCE_DIR}/checkout/gesamt//gesamtlib/gsmt_msuperposition.h
+${CMAKE_SOURCE_DIR}/checkout/gesamt//gesamtlib/gsmt_sheafdata.h
+${CMAKE_SOURCE_DIR}/checkout/gesamt//gesamtlib/gsmt_superposition.h
+${CMAKE_SOURCE_DIR}/checkout/gesamt//gesamtlib/gsmt_model.h
+${CMAKE_SOURCE_DIR}/checkout/gesamt//gesamtlib/memio_.h
+${CMAKE_SOURCE_DIR}/checkout/gesamt//gesamtlib/json_.h
+${CMAKE_SOURCE_DIR}/checkout/gesamt//gesamtlib/gsmt_base.h
+${CMAKE_SOURCE_DIR}/checkout/gesamt//gesamtlib/gsmt_seqscanthread.h
+${CMAKE_SOURCE_DIR}/checkout/gesamt//gesamtlib/gsmt_sheaf.h
+${CMAKE_SOURCE_DIR}/checkout/gesamt//gesamtlib/gsmt_structure.h
+${CMAKE_SOURCE_DIR}/checkout/gesamt//gesamtlib/gsmt_segcluster.h
+${CMAKE_SOURCE_DIR}/checkout/gesamt//gesamtlib/gsmt_defs.h
+${CMAKE_SOURCE_DIR}/checkout/gesamt//gesamtlib/gsmt_maoutput.h
+${CMAKE_SOURCE_DIR}/checkout/gesamt//gesamtlib/gsmt_viewer.h
+${CMAKE_SOURCE_DIR}/checkout/gesamt//gesamtlib/gsmt_subseqscanthread.h
+${CMAKE_SOURCE_DIR}/checkout/gesamt//gesamtlib/gsmt_structscanthread.h
+${CMAKE_SOURCE_DIR}/checkout/gesamt//gesamtlib/gsmt_domains.h
+${CMAKE_SOURCE_DIR}/checkout/gesamt//gesamtlib/gsmt_archive.h
+${CMAKE_SOURCE_DIR}/checkout/gesamt//gesamtlib/gsmt_seqsheafs.h
+${CMAKE_SOURCE_DIR}/checkout/gesamt//gesamtlib/gsmt_output.h
+${CMAKE_SOURCE_DIR}/checkout/gesamt//gesamtlib/gsmt_index.h
+${CMAKE_SOURCE_DIR}/checkout/gesamt//gesamtlib/gsmt_sortpairs.h
+${CMAKE_SOURCE_DIR}/checkout/gesamt//gesamtlib/gsmt_utils.h
+${CMAKE_SOURCE_DIR}/checkout/gesamt//gesamtlib/gsmt_maligner.h
+${CMAKE_SOURCE_DIR}/checkout/gesamt//gesamtlib/gsmt_sortclusters.h
+)
+
+set_target_properties(gesamt PROPERTIES PUBLIC_HEADER "${gesamt_HEADERS}")
+
+install(TARGETS gesamt
+LIBRARY DESTINATION lib
+PUBLIC_HEADER DESTINATION include/gesamt
+)
+
+

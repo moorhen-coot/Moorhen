@@ -18,3 +18,9 @@ ${CMAKE_CURRENT_SOURCE_DIR}/../checkout/ccp4mg/util/quat.cc
 ${CMAKE_CURRENT_SOURCE_DIR}/../checkout/ccp4mg/util/volume.cc)
 
 target_include_directories(ccp4mg PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../checkout/clipper ${CMAKE_CURRENT_SOURCE_DIR}/../checkout/ccp4mg/util ${CMAKE_CURRENT_SOURCE_DIR}/../checkout/ccp4mg/mmut)
+
+install(TARGETS ccp4mg
+LIBRARY DESTINATION lib
+)
+
+

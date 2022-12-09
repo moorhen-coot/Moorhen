@@ -72,4 +72,13 @@ add_library(rfftw STATIC
 
 target_include_directories(rfftw PRIVATE ../checkout/fftw-2.1.5/fftw)
 
+set(rfftw_HEADERS
+${CMAKE_SOURCE_DIR}/checkout/fftw-2.1.5/rfftw/rfftw.h
+)
 target_compile_options(rfftw PUBLIC "-DFFTW_ENABLE_FLOAT")
+set_target_properties(rfftw PROPERTIES PUBLIC_HEADER "${rfftw_HEADERS}")
+
+install(TARGETS rfftw
+LIBRARY DESTINATION lib
+PUBLIC_HEADER DESTINATION include/rfftw
+)

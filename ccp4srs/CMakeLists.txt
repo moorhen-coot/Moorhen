@@ -158,3 +158,8 @@ target_include_directories(srsgen PRIVATE .
     .. ../checkout/mmdb2 ../checkout/libccp4/ccp4
     ${CMAKE_BINARY_DIR}
 )
+
+install(TARGETS ccp4srs
+LIBRARY DESTINATION lib
+PUBLIC_HEADER DESTINATION include/ccp4srs
+)

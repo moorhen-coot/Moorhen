@@ -465,9 +465,9 @@ target_compile_options(mini-rsr PUBLIC -fexceptions -pthread -D_MINI_RSR_MAIN_ -
 ]]
 
 add_executable(moorhen moorhen-wrappers.cc)
-target_link_options(moorhen PRIVATE -fexceptions -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sUSE_PTHREADS=1 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createRSRModule -sEXPORTED_RUNTIME_METHODS=['FS','readFile'] --preload-file data  --pre-js coot_env_web.js)
-target_link_directories(moorhen PUBLIC ../ssm ../mmdb2 ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4 ../fftw ../rfftw ../ccp4 ../privateer ../rvapi ../gesamt ../ccp4mg ../lib ../boost/stage/lib)
-target_link_libraries(moorhen ssm rvapi gesamtlib mmdb2 clipper-minimol clipper-phs clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 privateer clipper-minimol ccp4mg coot gsl gslcblas boost_thread m z idbfs.js)
+target_link_options(moorhen PRIVATE -fexceptions -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sUSE_PTHREADS=1 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createRSRModule -sEXPORTED_RUNTIME_METHODS=['FS','readFile'] --preload-file data  --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
+target_link_directories(moorhen PUBLIC ../ssm ../mmdb2 ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4 ../fftw ../rfftw ../ccp4 ../privateer ../rvapi ../gesamt ../ccp4mg ../lib ../install/lib)
+target_link_libraries(moorhen ssm rvapi gesamtlib mmdb2 clipper-minimol clipper-phs clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 privateer clipper-minimol ccp4mg coot gsl gslcblas m z idbfs.js)
 target_include_directories(moorhen PRIVATE ${coot_src} ${coot_src}/src ../checkout/boost_1_80_0 ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw ../include ../checkout/gemmi/include )
 target_compile_options(moorhen PUBLIC -DGEMMI_WRITE_IMPLEMENTATION -fexceptions -sUSE_PTHREADS=1 -pthread -DFFTW_ENABLE_FLOAT -D_CCP4_WEB_EXAMPLE_)
 
@@ -587,14 +587,6 @@ target_link_libraries(test-molecules-container mmdb2 ssm clipper-mmdb clipper-ci
 target_include_directories(test-molecules-container PRIVATE ${coot_src} ${coot_src}/src ../include ../checkout/boost_1_80_0 ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw ${dependency_install_dir}/include ../checkout/glm-0.9.9.8)
 target_compile_options(test-molecules-container PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
 
-install(TARGETS moorhen DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../react-app/public/wasm)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/moorhen.wasm
-${CMAKE_CURRENT_BINARY_DIR}/moorhen.worker.js
-${CMAKE_CURRENT_BINARY_DIR}/moorhen.js
-${CMAKE_CURRENT_BINARY_DIR}/moorhen.data
-${CMAKE_CURRENT_BINARY_DIR}/coot_env_web.js
-DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../react-app/public/wasm)
-
 install(FILES ${coot_src}/pixmaps/rama2_all.png
 ${coot_src}/pixmaps/rama2_gly.png
 ${coot_src}/pixmaps/rama2_pro.png
@@ -608,47 +600,23 @@ ${coot_src}/textures/rama-plot-other-normal.png
 ${coot_src}/textures/rama-plot-other-outlier.png
 ${coot_src}/textures/rama-plot-pro-normal.png
 ${coot_src}/textures/rama-plot-pro-outlier.png
-DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../react-app/public)
-
-install(FILES ${coot_src}/pixmaps/rama2_all.png
-${coot_src}/pixmaps/rama2_gly.png
-${coot_src}/pixmaps/rama2_pro.png
-${coot_src}/pixmaps/rama2_ileval.png
-${coot_src}/pixmaps/rama2_non_gly_pro.png
-${coot_src}/pixmaps/rama2_non_gly_pro_pre_pro_ileval.png
-${coot_src}/pixmaps/rama2_pre_pro.png
-${coot_src}/textures/rama-plot-gly-normal.png
-${coot_src}/textures/rama-plot-gly-outlier.png
-${coot_src}/textures/rama-plot-other-normal.png
-${coot_src}/textures/rama-plot-other-outlier.png
-${coot_src}/textures/rama-plot-pro-normal.png
-${coot_src}/textures/rama-plot-pro-outlier.png
-DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../baby-gru/public/pixmaps/)
+DESTINATION web_packages/baby-gru/public/pixmaps/)
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/moorhen.wasm
 ${CMAKE_CURRENT_BINARY_DIR}/moorhen.worker.js
 ${CMAKE_CURRENT_BINARY_DIR}/moorhen.js
 ${CMAKE_CURRENT_BINARY_DIR}/moorhen.data
-${CMAKE_CURRENT_BINARY_DIR}/coot_env_web.js
-DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../baby-gru/public/baby-gru/wasm)
+${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js
+DESTINATION web_packages/baby-gru/public/baby-gru/wasm)
 
 install(DIRECTORY 
 ${coot_src}/pixmaps
-DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../baby-gru/public/baby-gru)
-
-install(FILES ${coot_src}/pixmaps/rama2_all.png
-${coot_src}/textures/rama-plot-gly-normal.png
-${coot_src}/textures/rama-plot-gly-outlier.png
-${coot_src}/textures/rama-plot-other-normal.png
-${coot_src}/textures/rama-plot-other-outlier.png
-${coot_src}/textures/rama-plot-pro-normal.png
-${coot_src}/textures/rama-plot-pro-outlier.png
-DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../baby-gru/public/pixmaps/)
+DESTINATION web_packages/baby-gru/public/baby-gru)
 
 install(FILES 
 ${coot_src}/api/gideondoesntapprove.mtz
-DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../baby-gru/public/baby-gru/tutorials RENAME moorhen-tutorial-map-number-1.mtz)
+DESTINATION web_packages/baby-gru/public/baby-gru/tutorials RENAME moorhen-tutorial-map-number-1.mtz)
 
 install(FILES 
 ${coot_src}/api/gideondoesntapprove.pdb
-DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../baby-gru/public/baby-gru/tutorials RENAME moorhen-tutorial-structure-number-1.pdb)
+DESTINATION web_packages/baby-gru/public/baby-gru/tutorials RENAME moorhen-tutorial-structure-number-1.pdb)

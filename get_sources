@@ -52,6 +52,12 @@ echo
 echo "Downloading glm"
 curl -L https://github.com/g-truc/glm/archive/refs/tags/0.9.9.8.tar.gz -o glm-0.9.9.8.tar.gz
 
+echo "Downloading RDKit source"
+curl -L https://github.com/rdkit/rdkit/archive/refs/tags/Release_2022_09_2.tar.gz -o Release_2022_09_2.tar.gz
+
+echo "Unpacking RDKit source"
+tar xf Release_2022_09_2.tar.gz
+
 echo "Unpacking privateer MKIV"
 tar xf privateer-MKIV.tar.gz
 echo "Unpacking fftw-2.1.5"
@@ -78,7 +84,7 @@ echo
 echo "Attempting to get emsdk zlib/png ports"
 echo
 echo "" > silly.c
-emcc silly.c -s USE_ZLIB=1 -s USE_LIBPNG=1
+emcc silly.c -s USE_ZLIB=1 -s USE_LIBPNG=1 -s USE_FREETYPE=1
 rm -f silly.c
 
 #Get RDKit
@@ -124,8 +130,9 @@ cd ..
 ln -s checkout/boost_1_80_0 boost
 echo
 patch -p0 < patches/boost-emscripten.patch
-patch -p0 < patches/boost-clang.patch
 patch -p0 < patches/boost-cxx-17.patch
+
+ln -s checkout/rdkit-Release_2022_09_2 rdkit
 
 echo "Linking glm headers"
 mkdir -p include
