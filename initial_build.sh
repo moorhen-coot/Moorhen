@@ -1,8 +1,14 @@
 #!/bin/sh
 
+#This script will compile and install Moorhen and its dependencies.
+#builing will happen by default in subdirectory CCP4_WASM_BUILD of
+#where it is exececuted from. This can be changed below. Moorhen will
+#installed (by default) in install/web_packages/baby-gru. The "install"
+#part of this can also be changed below.
+
 SOURCE_DIR=`dirname -- "$( readlink -f -- "$0"; )"`
-BUILD_DIR=${PWD}
-INSTALL_DIR=${BUILD_DIR}/install
+BUILD_DIR=${PWD}/CCP4_WASM_BUILD
+INSTALL_DIR=${PWD}/install
 
 NUMPROCS=8
 
@@ -10,11 +16,11 @@ echo "Sources are in ${SOURCE_DIR}"
 echo "Building in ${BUILD_DIR}"
 echo "Installing in ${INSTALL_DIR}"
 
-mkdir -p install
+mkdir -p ${INSTALL_DIR}
 
 #gsl
-mkdir -p gsl_build
-cd gsl_build
+mkdir -p ${BUILD_DIR}/gsl_build
+cd ${BUILD_DIR}/gsl_build
 emconfigure ${SOURCE_DIR}/gsl-2.7.1/configure --prefix=${INSTALL_DIR}
 emmake make LDFLAGS=-all-static -j ${NUMPROCS}
 emmake make install
@@ -28,25 +34,29 @@ cd ${SOURCE_DIR}/boost
 cd ${BUILD_DIR}
 
 #RDKit
-mkdir -p rdkit_build
-cd rdkit_build
+mkdir -p ${BUILD_DIR}/rdkit_build
+cd ${BUILD_DIR}/rdkit_build
 emcmake cmake -Dboost_iostreams_DIR=${INSTALL_DIR}/lib/cmake/boost_iostreams-1.80.0/ -Dboost_system_DIR=${INSTALL_DIR}/lib/cmake/boost_system-1.80.0/  -Dboost_headers_DIR=${INSTALL_DIR}/lib/cmake/boost_headers-1.80.0/ -DBoost_DIR=${INSTALL_DIR}/lib/cmake/Boost-1.80.0 -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_INSTALL_STATIC_LIBS=ON -DRDK_INSTALL_INTREE=OFF -DRDK_BUILD_SLN_SUPPORT=OFF -DRDK_TEST_MMFF_COMPLIANCE=OFF -DRDK_BUILD_CPP_TESTS=OFF -DRDK_USE_BOOST_SERIALIZATION=ON -DRDK_BUILD_THREADSAFE_SSS=OFF -DBoost_INCLUDE_DIR=${INSTALL_DIR}/include -DBoost_USE_STATIC_LIBS=ON -DBoost_USE_STATIC_RUNTIME=ON -DBoost_DEBUG=TRUE -DCMAKE_CXX_FLAGS="-Wno-enum-constexpr-conversion" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/rdkit
 emmake make -j ${NUMPROCS}
 emmake make install
 cd ${BUILD_DIR}
 
 #rvapi
-mkdir -p rvapi_build
-cd rvapi_build
+mkdir -p ${BUILD_DIR}/rvapi_build
+cd ${BUILD_DIR}/rvapi_build
 emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/rvapi
 emmake make -j ${NUMPROCS}
 emmake make install
 cd ${BUILD_DIR}
 
 #Moorhen
-mkdir -p moorhen_build
-cd moorhen_build
+mkdir -p ${BUILD_DIR}/moorhen_build
+cd ${BUILD_DIR}/moorhen_build
 emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}
 emmake make -j ${NUMPROCS}
 emmake make install
+cd ${BUILD_DIR}
+
+cd ${INSTALL_DIR}/web_packages/baby-gru/
+npm install
 cd ${BUILD_DIR}
