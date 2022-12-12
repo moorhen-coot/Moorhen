@@ -114,7 +114,7 @@ export const BabyGruHistoryMenu = (props) => {
             style={{display:'flex', alignItems:'center'}}
             show={props.currentDropdownId === props.dropdownId}
             onToggle={() => { props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId(-1) }}>
-            <MenuItem variant="success" onClick={(e) => {
+            <MenuItem id='show-history-menu-item' variant="success" onClick={(e) => {
                 setShowHistory(true)
             }}>Show command history</MenuItem>
             <MenuItem variant="success" onClick={(e) => {
