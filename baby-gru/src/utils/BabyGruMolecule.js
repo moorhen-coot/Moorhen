@@ -35,7 +35,8 @@ export function BabyGruMolecule(commandCentre) {
         hover: [],
         ligands: [],
         CRs: [],
-        ProtSurf: [],
+        MolecularSurface: [],
+        VdWSurface: [],
         transformation: { origin: [0, 0, 0], quat: null, centre: [0, 0, 0] }
     }
 };
@@ -224,11 +225,17 @@ BabyGruMolecule.prototype.drawWithStyleFromAtoms = async function (style, glRef,
         case 'CRs':
             await this.drawCootRepresentation(webMGAtoms, glRef, style)
             break;
-        case 'ProtSurf':
+        case 'MolecularSurface':
+            await this.drawCootRepresentation(webMGAtoms, glRef, style)
+            break;
+        case 'VdWSurface':
+            await this.drawCootRepresentation(webMGAtoms, glRef, style)
+            break;
+        case 'Calpha':
             await this.drawCootRepresentation(webMGAtoms, glRef, style)
             break;
         case 'ligands':
-            this.drawLigands(webMGAtoms, glRef, this.molNo)
+            await this.drawCootRepresentation(webMGAtoms, glRef, style)
             break;
         default:
             break;
@@ -326,12 +333,25 @@ BabyGruMolecule.prototype.drawCootRepresentation = async function (webMGAtoms, g
             m2tStyle = "Ribbon"
             m2tSelection = "//"
             break;
-        case "ProtSurf":
+        case "MolecularSurface":
             m2tStyle = "MolecularSurface"
             m2tSelection = "(ALA,CYS,ASP,GLU,PHE,GLY,HIS,ILE,LYS,LEU,MET,ASN,PRO,GLN,ARG,SER,THR,VAL,TRP,TYR)"
             break;
+        case "VdWSurface":
+            m2tStyle = "VdWSurface"
+            m2tSelection = "(ALA,CYS,ASP,GLU,PHE,GLY,HIS,ILE,LYS,LEU,MET,ASN,PRO,GLN,ARG,SER,THR,VAL,TRP,TYR)"
+            break;
+        case "Calpha":
+            m2tStyle = "Calpha"
+            m2tSelection = "(ALA,CYS,ASP,GLU,PHE,GLY,HIS,ILE,LYS,LEU,MET,ASN,PRO,GLN,ARG,SER,THR,VAL,TRP,TYR)"
+            break;
+        case "ligands":
+            m2tStyle = "Cylinders"
+            m2tSelection = "(!ALA,CYS,ASP,GLU,PHE,GLY,HIS,ILE,LYS,LEU,MET,ASN,PRO,GLN,ARG,SER,THR,VAL,TRP,TYR)"
+            break;
         default:
-            m2tStyle = "BallAndStick"
+            m2tStyle = "Ribbon"
+            m2tSelection = "//"
             break;
     }
     return this.commandCentre.current.cootCommand({
