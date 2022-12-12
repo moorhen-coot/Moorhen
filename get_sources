@@ -71,9 +71,6 @@ patch -p0 < ../patches/ccp4-emscripten.patch
 patch -p0 < ../patches/superpose-emscripten.patch
 patch -p0 < ../patches/gesamt-emscripten.patch
 patch -p0 < ../patches/privateer-emscripten.patch
-#patch -p0 < ../patches/coot-fixnomenclature.patch
-#patch -p0 < ../patches/coot-getopt.patch
-#patch -p0 < ../patches/coot-mini-rsr.patch
 cd ..
 echo
 echo "Unpacking gsl-2.7.1"
@@ -114,9 +111,7 @@ curl -L https://www.ebi.ac.uk/pdbe/entry-files/download/pdb5fjj.ent -o privateer
 curl -L https://www.ebi.ac.uk/pdbe/entry-files/download/r5a3hsf.ent -o example/r5a3hsf.ent
 curl -L https://www.ebi.ac.uk/pdbe/entry-files/download/5a3h_map.mtz -o example/5a3h_sigmaa.mtz
 
-cd ..
 echo "Checking out boost"
-#git clone --recursive https://github.com/boostorg/boost.git boost
 cd checkout
 curl -L https://boostorg.jfrog.io/artifactory/main/release/1.80.0/source/boost_1_80_0.tar.bz2 -o boost_1_80_0.tar.bz2
 tar xf boost_1_80_0.tar.bz2
