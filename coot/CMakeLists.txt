@@ -141,6 +141,7 @@ ${coot_src}/api/coot-colour.cc
 ${coot_src}/api/coot_molecule.cc
 ${coot_src}/api/coot_molecule_bonds.cc
 ${coot_src}/api/coot_molecule_maps.cc
+${coot_src}/api/coot_molecule_moltris.cc
 ${coot_src}/api/phi-psi-prob.cc
 ${coot_src}/api/molecules_container_ligand_fitting.cc
 ${coot_src}/api/coot_molecule_merge_molecules.cc
