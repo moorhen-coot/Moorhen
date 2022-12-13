@@ -81,8 +81,9 @@ And then point a web browser at `http://localhost:3000/` .
 You will need to set up `ligandServer` (in `baby-gru/public`):  
 `ln -s $CCP4/lib/data/monomers`  
 
+## **Updating**
 
-6. When you wish to update the application from this git repository and the `Coot` git repository, do the following steps:  
+1. When you wish to update the application from this git repository and the `Coot` git repository, do the following steps:  
     1. `cd <source directory>` (your "`ccp4_wasm`" in which you checkout out)
     2. `git pull`
     3. `cd checkout/coot-1.0`
