@@ -5,9 +5,12 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 
-set(CMAKE_CXX_FLAGS_RELEASE "-O2 -Wno-enum-constexpr-conversion -I${CMAKE_INSTALL_PREFIX}/include")
+set(CMAKE_CXX_FLAGS_RELEASE "-O2 -Wno-enum-constexpr-conversion -I${CMAKE_INSTALL_PREFIX}/include -s USE_PTHREADS=1 -pthread")
 set(CMAKE_C_FLAGS_RELEASE "-O2")
+set(CMAKE_CXX_STANDARD 17)
+
 link_directories(${CMAKE_INSTALL_PREFIX}/lib)
+include_directories(${CMAKE_INSTALL_PREFIX}/include/rdkit)
 
 add_subdirectory(ccp4)
 add_subdirectory(fftw)

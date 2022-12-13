@@ -1,21 +1,68 @@
 project(coot)
 cmake_minimum_required(VERSION 3.13)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 
 set(CMAKE_EXECUTABLE_SUFFIX ".js")
 
 set(coot_src ${CMAKE_CURRENT_SOURCE_DIR}/../checkout/coot-1.0)
-add_definitions(-DANALYSE_REFINEMENT_TIMING -DVERSION="1.0" -DPACKAGE_VERSION="1.0" -DHAVE_CXX_THREAD -DHAVE_BOOST -DHAVE_GSL -DPKGDATADIR="${coot_src}/pixmaps" -DDATADIR="${coot_src}/data")
-
-#  pyrogen, compat, auxil, goograph, src ignored.
+add_definitions(-DMAKE_ENHANCED_LIGAND_TOOLS -DANALYSE_REFINEMENT_TIMING -DVERSION="1.0" -DPACKAGE_VERSION="1.0" -DHAVE_CXX_THREAD -DHAVE_BOOST -DHAVE_GSL -DPKGDATADIR="${coot_src}/pixmaps" -DDATADIR="${coot_src}/data")
 
 file(GLOB coot_rotamer_data
 ${coot_src}/rama-data/*.data
 )
 
-file(GLOB coot_exception_srcs
+#These ones do not compile for various reasons - mostly Python
+#[[
+${coot_src}/pyrogen/cairo-molecule.cc
+${coot_src}/pyrogen/restraints-boost.cc
+${coot_src}/coot-utils/test-cod-atom-types.cc
+${coot_src}/coot-utils/test-cod-atom-types-from-sm-cif.cc
+${coot_src}/coot-utils/test-chem-feat.cc
+${coot_src}/coords/mmdb.cc
+${coot_src}/lbg/lbg.cc
+${coot_src}/lbg/test_lbg_functions.cc
+${coot_src}/lbg/alerts-list.cc
+${coot_src}/lbg/qed-interface.cc
+${coot_src}/lbg/lidia-main.cc
+${coot_src}/lbg/alerts.cc
+${coot_src}/lbg/qed-properties.cc
+${coot_src}/lidia-core/svg-molecule.cc
+${coot_src}/lidia-core/cod-types.cc
+${coot_src}/lidia-core/cod-atom-types.cc
+${coot_src}/lidia-core/chemical-feature-clusters.cc
+${coot_src}/lidia-core/bond-record-container-t.cc
+${coot_src}/lidia-core/atom-types.cc
+${coot_src}/lidia-core/cod-atom-type-t.cc
+${coot_src}/lidia-core/rdkit-interface.cc
+${coot_src}/lidia-core/bond-table-record-t.cc
+${coot_src}/src/main.cc
+${coot_src}/src/testing.cc
+${coot_src}/src/molecule-class-info-maps-2.cc
+${coot_src}/src/coot-extended.cc
+${coot_src}/src/molecule-class-info-residues.cc
+${coot_src}/src/flev.cc
+${coot_src}/src/coot-embedded.cc
+${coot_src}/src/lbg-interface.cc
+${coot_src}/src/c-interface-ligands.cc
+${coot_src}/src/graphics-ligand-view.cc
+${coot_src}/src/sdf-interface.cc
+${coot_src}/src/command-line.cc
+${coot_src}/src/graphics-ligand-mesh-molecule.cc
+${coot_src}/src/c-interface-image.cc
+]]
 
+set(coot_exception_srcs
+${coot_src}/pli/pi-stacking.cc
+${coot_src}/coot-utils/lidia-core-functions.cc
+${coot_src}/coot-utils/atom-selection-container.cc
+${coot_src}/coot-utils/dictionary-atom-types.cc
+${coot_src}/coot-utils/cod-db-access.cc
+${coot_src}/lbg/lbg-search.cc
+${coot_src}/lbg/some-coot-utils.cc
+${coot_src}/lbg/lbg-drag-and-drop.cc
+${coot_src}/src/coot-hydrogens.cc
+${coot_src}/src/cfc.cc
 ${coot_src}/MoleculesToTriangles/CXXSurface/CXXBall.cpp
 ${coot_src}/MoleculesToTriangles/CXXSurface/CXXChargeTable.cpp
 ${coot_src}/MoleculesToTriangles/CXXSurface/CXXCircle.cpp
@@ -467,7 +514,7 @@ target_compile_options(mini-rsr PUBLIC -fexceptions -pthread -D_MINI_RSR_MAIN_ -
 add_executable(moorhen moorhen-wrappers.cc)
 target_link_options(moorhen PRIVATE -fexceptions -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sUSE_PTHREADS=1 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createRSRModule -sEXPORTED_RUNTIME_METHODS=['FS','readFile'] --preload-file data  --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
 target_link_directories(moorhen PUBLIC ../ssm ../mmdb2 ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4 ../fftw ../rfftw ../ccp4 ../privateer ../rvapi ../gesamt ../ccp4mg ../lib ../install/lib)
-target_link_libraries(moorhen ssm rvapi gesamtlib mmdb2 clipper-minimol clipper-phs clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 privateer clipper-minimol ccp4mg coot gsl gslcblas m z idbfs.js)
+target_link_libraries(moorhen ssm rvapi gesamtlib mmdb2 clipper-minimol clipper-phs clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 privateer clipper-minimol ccp4mg coot gsl gslcblas RDKitMolDraw2D RDKitForceFieldHelpers RDKitDescriptors RDKitForceField RDKitSubstructMatch RDKitOptimizer RDKitDistGeomHelpers RDKitDistGeometry RDKitChemReactions RDKitAlignment RDKitEigenSolvers RDKitDepictor RDKitcoordgen RDKitMolChemicalFeatures RDKitPartialCharges RDKitFileParsers RDKitRDGeometryLib RDKitGraphMol RDKitShapeHelpers RDKitFingerprints RDKitMolAlign RDKitMolTransforms RDKitChemTransforms RDKitSmilesParse RDKitFilterCatalog RDKitCatalogs RDKitSubgraphs RDKitRDGeneral RDKitDataStructs RDKitGenericGroups boost_serialization m z idbfs.js)
 target_include_directories(moorhen PRIVATE ${coot_src} ${coot_src}/src ../checkout/boost_1_80_0 ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw ../include ../checkout/gemmi/include )
 target_compile_options(moorhen PUBLIC -DGEMMI_WRITE_IMPLEMENTATION -fexceptions -sUSE_PTHREADS=1 -pthread -DFFTW_ENABLE_FLOAT -D_CCP4_WEB_EXAMPLE_)
 
@@ -583,7 +630,7 @@ target_compile_options(density-score-by-residue-src PUBLIC -DFFTW_ENABLE_FLOAT -
 add_executable(test-molecules-container ${coot_src}/api/test_molecules_container.cc)
 target_link_options(test-molecules-container PRIVATE -sEXIT_RUNTIME=1 -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sUSE_PTHREADS=1 -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 --pre-js coot_env.js)
 target_link_directories(test-molecules-container PUBLIC ../mmdb2 ../ssm ../ccp4 ../lib ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4)
-target_link_libraries(test-molecules-container mmdb2 ssm clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 coot gsl gslcblas nodefs.js)
+target_link_libraries(test-molecules-container mmdb2 ssm clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 coot gsl gslcblas RDKitMolDraw2D RDKitForceFieldHelpers RDKitDescriptors RDKitForceField RDKitSubstructMatch RDKitOptimizer RDKitDistGeomHelpers RDKitDistGeometry RDKitChemReactions RDKitAlignment RDKitEigenSolvers RDKitDepictor RDKitcoordgen RDKitMolChemicalFeatures RDKitPartialCharges RDKitFileParsers RDKitRDGeometryLib RDKitGraphMol RDKitShapeHelpers RDKitFingerprints RDKitMolAlign RDKitMolTransforms RDKitChemTransforms RDKitSmilesParse RDKitFilterCatalog RDKitCatalogs RDKitSubgraphs RDKitRDGeneral RDKitDataStructs RDKitGenericGroups boost_serialization m z nodefs.js)
 target_include_directories(test-molecules-container PRIVATE ${coot_src} ${coot_src}/src ../include ../checkout/boost_1_80_0 ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw ${dependency_install_dir}/include ../checkout/glm-0.9.9.8)
 target_compile_options(test-molecules-container PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
 
