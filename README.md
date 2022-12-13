@@ -64,15 +64,15 @@ not itself compiled by this project.
 `./get_sources`
 
 4. Build gsl, Coot, the CCP4 libraries and examples:  
-In this branch, it is intended that you do the build "out-of-tree", i.e. in a dedicated build directory that is not
+<br>In this branch, it is intended that you do the build "out-of-tree", i.e. in a dedicated build directory that is not
 a subdirectory of the source directory. (Actually this is true for most of the build, but `boost` is still built in-tree.)  
-So first you need to make a directory "somewhere else", e.g. your home:  
+<br/>So first you need to make a directory "somewhere else", e.g. your home:  
 `cd`
 `mkdir webcoot_build`  
 `cd webcoot/build`  
-Then you need to run the `initial_build.sh` script in the source directory, e.g.:  
+<br/>Then you need to run the `initial_build.sh` script in the source directory, e.g.:  
 `/parent/of/where/you/installed/the_source/ccp4_wasm/initial_build.sh`  
-This should build all dependencies and then `WebCoot`/`BabyGru`.
+This should build all dependencies and then `WebCoot`/`BabyGru`. 
 
 5. To run the Baby-Gru molecular graphics application:  
 `cd install/web_packages/baby-gru`  
@@ -80,6 +80,16 @@ This should build all dependencies and then `WebCoot`/`BabyGru`.
 And then point a web browser at `http://localhost:3000/` .  
 You will need to set up `ligandServer` (in `baby-gru/public`):  
 `ln -s $CCP4/lib/data/monomers`  
+
+
+6. When you wish to update the application from this git repository and the `Coot` git repository, do the following steps:  
+    1. `cd <source directory>` (your "`ccp4_wasm`" in which you checkout out)
+    2. `git pull`
+    3. `cd checkout/coot-1.0`
+    4. `git pull`
+    5. `cd <build/install directory>` (your "`webcoot_build`")
+    6. `cd CCP4_WASM_BUILD/moorhen_build`
+    7. `make install` (or e.g. `make -j8 install` to build on 8 processors).
 
 ![BabyGru](web_example/baby_gru.png)
 *The BabyGru prototype WebGL application*
@@ -126,3 +136,4 @@ different in the 2 cases. If you require more classes or methods from the librar
 * RDKit
     *  RDKit for JavaScript (Official) [https://github.com/rdkit/rdkit/tree/master/Code/MinimalLib](https://github.com/rdkit/rdkit/tree/master/Code/MinimalLib)
     *  RDKit: Open-source cheminformatics [https://www.rdkit.org](https://www.rdkit.org)
+
