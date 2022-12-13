@@ -67,7 +67,7 @@ not itself compiled by this project.
 <br>In this branch, it is intended that you do the build "out-of-tree", i.e. in a dedicated build directory that is not
 a subdirectory of the source directory. (Actually this is true for most of the build, but `boost` is still built in-tree.)  
 <br/>So first you need to make a directory "somewhere else", e.g. your home:  
-`cd`
+`cd`  
 `mkdir webcoot_build`  
 `cd webcoot/build`  
 <br/>Then you need to run the `initial_build.sh` script in the source directory, e.g.:  
