@@ -66,20 +66,20 @@ not itself compiled by this project.
 4. Build gsl, Coot, the CCP4 libraries and examples:  
 *In this branch*, it is intended that you do the build "out-of-tree", i.e. in a dedicated build directory that is not
 a subdirectory of the source directory. (Actually this is tru for most of the build - `boost` is still built in-tree.  
-
+  
 So first you need to make a directory "somewhere else", e.g. your home:  
-
+  
 `cd`
 `mkdir webcoot_build`  
 `cd webcoot/build`  
-
+  
 Then you need to run the `initial_build.sh` script in the source directory, e.g.:  
-
+  
 `/parent/of/where/you/installed/the_source/ccp4_wasm/initial_build.sh`  
-
+  
 This should build all dependencies and then `WebCoot`/`BabyGru`.
-
-7. To run the Baby-Gru molecular graphics application:  
+  
+5. To run the Baby-Gru molecular graphics application:  
 `cd install/web_packages/baby-gru`  
 `npm start`  
 And then point a web browser at `http://localhost:3000/` .  
