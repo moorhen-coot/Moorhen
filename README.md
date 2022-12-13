@@ -65,7 +65,7 @@ not itself compiled by this project.
 
 4. Build gsl, Coot, the CCP4 libraries and examples:  
 *In this branch*, it is intended that you do the build "out-of-tree", i.e. in a dedicated build directory that is not
-a subdirectory of the source directory. (Actually this is tru for most of the build - `boost` is still built in-tree.  
+a subdirectory of the source directory. (Actually this is true for most of the build, but `boost` is still built in-tree.)  
   
 So first you need to make a directory "somewhere else", e.g. your home:  
   
