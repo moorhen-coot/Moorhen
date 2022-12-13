@@ -25,17 +25,7 @@ ${coot_src}/lbg/test_lbg_functions.cc
 ${coot_src}/lbg/alerts-list.cc
 ${coot_src}/lbg/qed-interface.cc
 ${coot_src}/lbg/lidia-main.cc
-${coot_src}/lbg/alerts.cc
 ${coot_src}/lbg/qed-properties.cc
-${coot_src}/lidia-core/svg-molecule.cc
-${coot_src}/lidia-core/cod-types.cc
-${coot_src}/lidia-core/cod-atom-types.cc
-${coot_src}/lidia-core/chemical-feature-clusters.cc
-${coot_src}/lidia-core/bond-record-container-t.cc
-${coot_src}/lidia-core/atom-types.cc
-${coot_src}/lidia-core/cod-atom-type-t.cc
-${coot_src}/lidia-core/rdkit-interface.cc
-${coot_src}/lidia-core/bond-table-record-t.cc
 ${coot_src}/src/main.cc
 ${coot_src}/src/testing.cc
 ${coot_src}/src/molecule-class-info-maps-2.cc
@@ -53,6 +43,16 @@ ${coot_src}/src/c-interface-image.cc
 ]]
 
 set(coot_exception_srcs
+${coot_src}/lidia-core/svg-molecule.cc
+${coot_src}/lidia-core/cod-types.cc
+${coot_src}/lidia-core/cod-atom-types.cc
+${coot_src}/lidia-core/chemical-feature-clusters.cc
+${coot_src}/lidia-core/bond-record-container-t.cc
+${coot_src}/lidia-core/atom-types.cc
+${coot_src}/lidia-core/cod-atom-type-t.cc
+${coot_src}/lidia-core/rdkit-interface.cc
+${coot_src}/lidia-core/bond-table-record-t.cc
+
 ${coot_src}/pli/pi-stacking.cc
 ${coot_src}/coot-utils/lidia-core-functions.cc
 ${coot_src}/coot-utils/atom-selection-container.cc
