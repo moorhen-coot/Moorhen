@@ -64,32 +64,23 @@ not itself compiled by this project.
 `./get_sources`
 
 4. Build gsl, Coot, the CCP4 libraries and examples:  
-`emcmake cmake .`  
-`emmake make`
+*In this branch*, it is intended that you do the build "out-of-tree", i.e. in a dedicated build directory that is not
+a subdirectory of the source directory. (Actually this is tru for most of the build - `boost` is still built in-tree.  
 
-5. Run the command line examples:  
-`cd example`  
-`node ccp4_example.js`  
-`node superpose.js 4dfr.pdb 8dfr.pdb`  
-`cd ../privateer`  
-`node privateer.js -pdbin 5fjj.pdb -cores 1`  
-`cd ../coot`  
-`node fix-nomenclature.js ../example/4dfr.pdb out.pdb`  
-`cd ../gesamt`  
-`node gesamt.js ../example/4dfr.pdb ../example/8dfr.pdb`  
+So first you need to make a directory "somewhere else", e.g. your home:  
 
-6. To run a suite of javascript tests:  
-For reason of file searching, you will have to make a symbolic link to allow jest (the javascript testing framework) to find the data associated with the moorhen javascript file which defines the coot interface.  You will then need to install jest, but subsequently testing should be straightforward.  
-`cd tests`  
-`ln -s ../coot/moorhen.data`  
-`npm install`  
-`npm test`  
-When testing is completed, you will have to issue a `<ctrl-C>`.  
+`cd`
+`mkdir webcoot_build`  
+`cd webcoot/build`  
+
+Then you need to run the `initial_build.sh` script in the source directory, e.g.:  
+
+`/parent/of/where/you/installed/the_source/ccp4_wasm/initial_build.sh`  
+
+This should build all dependencies and then `WebCoot`/`BabyGru`.
 
 7. To run the Baby-Gru molecular graphics application:  
-`make install` (This copies some files from `web_example` to `baby-gru/public/wasm`  
-`cd baby-gru`  
-`npm install`  
+`cd install/web_packages/baby-gru`  
 `npm start`  
 And then point a web browser at `http://localhost:3000/` .  
 You will need to set up `ligandServer` (in `baby-gru/public`):  
