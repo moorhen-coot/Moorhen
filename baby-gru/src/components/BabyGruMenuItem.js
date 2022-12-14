@@ -351,10 +351,11 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
 
     const panelContent = <>
         <Form.Group key="fileOrLibrary" style={{ width: '20rem', margin: '0.5rem' }} controlId="fileOrLibrary" className="mb-3">
-            <Form.Label>From file or monomer library</Form.Label>
+            <Form.Label>Select a source</Form.Label>
             <Form.Select value={fileOrLibrary} onChange={(e) => { setFileOrLibrary(e.target.value) }}>
-                <option key="File" value="File">From file</option>
+                <option key="File" value="File">From local file</option>
                 <option key="Library" value="Library">From monomer library</option>
+                <option key="MRC" value="MRC">Fetch from MRC-LMB</option>
             </Form.Select>
         </Form.Group>
         {fileOrLibrary === 'File' ? <>
@@ -430,16 +431,17 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
 
     const handleFileContent = async (fileContent) => {
         let newMolecule = null
+        const selectedMoleculeIndex = moleculeSelectRef.current.value
         return props.commandCentre.current.cootCommand({
             returnType: "status",
             command: 'shim_read_dictionary',
-            commandArgs: [fileContent, moleculeSelectRef.current.value],
+            commandArgs: [fileContent, selectedMoleculeIndex],
             changesMolecules: []
         }, true)
             .then(_ => {
                 props.molecules.forEach(molecule => {
-                    if (molecule.molNo == parseInt(moleculeSelectRef.current.value) ||
-                        -999999 == parseInt(moleculeSelectRef.current.value)) {
+                    if (molecule.molNo == parseInt(selectedMoleculeIndex) ||
+                        -999999 == parseInt(selectedMoleculeIndex)) {
                         molecule.addDict(fileContent)
                     }
                 })
@@ -447,8 +449,8 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
             })
             .then(result => {
                 props.molecules.forEach(molecule => {
-                    if (molecule.molNo == parseInt(moleculeSelectRef.current.value) ||
-                        -999999 == parseInt(moleculeSelectRef.current.value)) {
+                    if (molecule.molNo == parseInt(selectedMoleculeIndex) ||
+                        -999999 == parseInt(selectedMoleculeIndex)) {
                         molecule.redraw(props.glRef)
                     }
                 })
@@ -463,7 +465,7 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
                         returnType: 'status',
                         command: 'get_monomer_and_position_at',
                         commandArgs: [instanceName,
-                            moleculeSelectRef.current.value,
+                            selectedMoleculeIndex,
                             ...props.glRef.current.origin.map(coord => -coord)]
                     }, true)
                         .then(result => {
@@ -519,6 +521,17 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
             })
     }
 
+    const fetchFromMrcLmb = async (newTlc) => {
+        const url = `https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/${newTlc.toLowerCase()[0]}/${newTlc.toLowerCase()}.cif`
+        const response = await fetch(url)
+        if (response.status != 200) {
+            console.log(`Cannot fetch data from https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/${newTlc.toLowerCase()[0]}/${newTlc.toLowerCase()}.cif`)
+        } else {
+            const fileContent = await response.text()
+            return handleFileContent(fileContent)    
+        }
+    }
+
     const onCompleted = useCallback(async () => {
         console.log({ fileOrLibrary, ref: fileOrLibraryRef.current })
         if (fileOrLibraryRef.current === "File") {
@@ -528,9 +541,14 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
             }
             let mmcifReads = await Promise.all(readPromises)
         }
-        else {
+        else if (fileOrLibraryRef.current === "Library") {
             readMonomerFile(tlcRef.current.value)
+        } else if (fileOrLibraryRef.current === "MRC") {
+            fetchFromMrcLmb(tlcRef.current.value)
+        } else {
+            console.log(`Unkown ligand source ${fileOrLibraryRef.current}`)
         }
+        
     }, [fileOrLibrary])
 
     return <BabyGruMenuItem
