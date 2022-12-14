@@ -8,6 +8,10 @@ endif()
 set(CMAKE_CXX_FLAGS_RELEASE "-O2")
 set(CMAKE_C_FLAGS_RELEASE "-O2")
 
+if("${EMSCRIPTEN_VERSION}" VERSION_GREATER 3.1.26)
+add_link_options(-sDEFAULT_PTHREAD_STACK_SIZE=2MB -sSTACK_SIZE=5MB)
+endif()
+
 include(ExternalProject)
 ExternalProject_Add(gsl-src
   SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/gsl-2.7.1
