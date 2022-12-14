@@ -1,25 +1,20 @@
-import { NavDropdown, Form, Button, InputGroup, Overlay } from "react-bootstrap";
+import { NavDropdown, Form, Button, InputGroup, Overlay, SplitButton, Dropdown } from "react-bootstrap";
 import { BabyGruMolecule } from "../utils/BabyGruMolecule";
+import { BabyGruMap } from "../utils/BabyGruMap";
 import { useState, useRef } from "react";
 import { BabyGruImportDictionaryMenuItem, BabyGruImportMapCoefficientsMenuItem, BabyGruDeleteEverythingMenuItem, BabyGruLoadTutorialDataMenuItem, BabyGruImportMapMenuItem, BabyGruImportFSigFMenuItem } from "./BabyGruMenuItem";
 
 export const BabyGruFileMenu = (props) => {
 
-    const { molecules, changeMolecules, maps, changeMaps, commandCentre, glRef } = props;
+    const { changeMolecules, changeMaps, commandCentre, glRef } = props;
     const [overlayVisible, setOverlayVisible] = useState(false)
     const [overlayContent, setOverlayContent] = useState(<></>)
     const [overlayTarget, setOverlayTarget] = useState(null)
     const [popoverIsShown, setPopoverIsShown] = useState(false)
-    const readMtzTarget = useRef(null);
-    const readDictionaryTarget = useRef(null);
+    const [remoteSource, setRemoteSource] = useState("PDBe")
     const pdbCodeFetchInputRef = useRef(null);
 
     const menuItemProps = { setPopoverIsShown, ...props }
-
-    const awaitingPromiseRef = useRef({
-        resolve: () => { },
-        reject: () => { }
-    })
 
     const loadPdbFiles = async (files) => {
         let readPromises = []
@@ -43,24 +38,66 @@ export const BabyGruFileMenu = (props) => {
         return newMolecule.loadToCootFromFile(file)
     }
 
-    const fetchFileFromEBI = () => {
-        let pdbCode = pdbCodeFetchInputRef.current.value.toLowerCase()
-        if (pdbCode) {
-            return fetchFileFromURL(`https://www.ebi.ac.uk/pdbe/entry-files/download/pdb${pdbCode}.ent`, pdbCode)
+    const fetchFiles = () => {
+        if (remoteSource === "PDBe") {
+            fetchFilesFromEBI()
+        } else {
+            fetchFilesFromPDBRedo()
         }
     }
 
-    const fetchFileFromURL = (url, molName) => {
+    const fetchFilesFromEBI = () => {
+        let pdbCode = pdbCodeFetchInputRef.current.value.toLowerCase()
+        let coordUrl = `https://www.ebi.ac.uk/pdbe/entry-files/download/pdb${pdbCode}.ent`
+        let mapUrl = `https://www.ebi.ac.uk/pdbe/entry-files/${pdbCode}.ccp4`
+        if (pdbCode) {
+            fetchMoleculeFromURL(coordUrl, pdbCode)
+            fetchMapFromURL(mapUrl, `${pdbCode}-map`)
+        }
+    }
+
+    const fetchFilesFromPDBRedo = () => {
+        let pdbCode = pdbCodeFetchInputRef.current.value.toLowerCase()
+        let coordUrl = `https://pdb-redo.eu/db/${pdbCode}/${pdbCode}_final.pdb`
+        let mtzUrl = `https://pdb-redo.eu/db/${pdbCode}/${pdbCode}_final.mtz/`
+        if (pdbCode) {
+            fetchMoleculeFromURL(coordUrl, `${pdbCode}-redo`)
+            fetchMtzFromURL(mtzUrl, `${pdbCode}-map-redo`,  {F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false})
+        }
+    }
+
+    const fetchMoleculeFromURL = async (url, molName) => {
         const newMolecule = new BabyGruMolecule(commandCentre)
-        return newMolecule.loadToCootFromURL(url, molName)
-            .then(result => {
-                newMolecule.fetchIfDirtyAndDraw('CBs', glRef, true)
-            }).then(result => {
-                changeMolecules({ action: "Add", item: newMolecule })
-                return Promise.resolve(newMolecule)
-            }).then(_ => {
-                newMolecule.centreOn(glRef)
-            })
+        try {
+            await newMolecule.loadToCootFromURL(url, molName)
+            await newMolecule.fetchIfDirtyAndDraw('CBs', glRef, true)
+            changeMolecules({ action: "Add", item: newMolecule })
+            newMolecule.centreOn(glRef)
+        } catch {
+            console.log(`Cannot fetch map from ${url}`)
+        }
+    }
+
+    const fetchMapFromURL = async (url, mapName) => {
+        const newMap = new BabyGruMap(props.commandCentre)
+        try {
+            await newMap.loadToCootFromMapURL(url, mapName)
+            changeMaps({ action: 'Add', item: newMap })
+            props.setActiveMap(newMap)
+        } catch {
+            console.log(`Cannot fetch map from ${url}`)
+        }
+    }
+
+    const fetchMtzFromURL = async (url, mapName, selectedColumns) => {
+        const newMap = new BabyGruMap(props.commandCentre)
+        try {
+            await newMap.loadToCootFromMtzURL(url, mapName, selectedColumns)
+            changeMaps({ action: 'Add', item: newMap })
+            props.setActiveMap(newMap)
+        } catch {
+            console.log(`Cannot fetch mtz from ${url}`)
+        }
     }
 
     return <>
@@ -76,14 +113,22 @@ export const BabyGruFileMenu = (props) => {
                 <Form.Control type="file" accept=".pdb, .mmcif, .cif, .ent" multiple={true} onChange={(e) => { loadPdbFiles(e.target.files) }}/>
             </Form.Group>
             <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="fetch-pdbe-form" className="mb-3">
-                <Form.Label>Fetch coords from PDBe</Form.Label>
+                <Form.Label>Fetch coords from online services</Form.Label>
                 <InputGroup>
+                <SplitButton title={remoteSource} id="fetch-coords-online-source-select">
+                    <Dropdown.Item key="PDBe" href="#" onClick={() => {
+                        setRemoteSource("PDBe")
+                    }}>PDBe</Dropdown.Item>
+                    <Dropdown.Item key="PDB-REDO" href="#" onClick={() => {
+                        setRemoteSource("PDB-REDO")
+                    }}>PDB-REDO</Dropdown.Item>
+                </SplitButton>
                     <Form.Control type="text" ref={pdbCodeFetchInputRef} onKeyDown={(e) => {
                         if (e.code === 'Enter') {
-                            fetchFileFromEBI()
+                            fetchFiles()
                         }
                     }} />
-                    <Button variant="light" onClick={fetchFileFromEBI}>
+                    <Button variant="light" onClick={fetchFiles}>
                         Fetch
                     </Button>
                 </InputGroup>

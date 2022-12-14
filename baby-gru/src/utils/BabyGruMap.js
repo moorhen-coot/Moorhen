@@ -26,22 +26,24 @@ BabyGruMap.prototype.delete = async function (glRef) {
 }
 
 
-BabyGruMap.prototype.loadToCootFromURL = function (url, name, selectedColumns) {
+BabyGruMap.prototype.loadToCootFromMtzURL = function (url, name, selectedColumns) {
     const $this = this
     console.log('Off to fetch url', url)
     //Remember to change this to an appropriate URL for downloads in produciton, and to deal with the consequent CORS headache
-    return fetch(url, { mode: "no-cors" })
+    return fetch(url)
         .then(response => {
             return response.blob()
         }).then(reflectionData => reflectionData.arrayBuffer())
         .then(arrayBuffer => {
-            return $this.loadToCootFromData(new Uint8Array(arrayBuffer), name, selectedColumns)
+            return $this.loadToCootFromMtzData(new Uint8Array(arrayBuffer), name, selectedColumns)
         })
-        .catch((err) => { console.log(err) })
+        .catch((err) => { 
+            console.log(err)
+            return Promise.reject(err)
+         })
 }
 
-
-BabyGruMap.prototype.loadToCootFromData = function (data, name, selectedColumns) {
+BabyGruMap.prototype.loadToCootFromMtzData = function (data, name, selectedColumns) {
     const $this = this
     $this.name = name
     return new Promise((resolve, reject) => {
@@ -60,13 +62,29 @@ BabyGruMap.prototype.loadToCootFromData = function (data, name, selectedColumns)
     })
 }
 
-BabyGruMap.prototype.loadToCootFromFile = function (source, selectedColumns) {
+BabyGruMap.prototype.loadToCootFromMtzFile = function (source, selectedColumns) {
     const $this = this
     return readDataFile(source)
         .then(reflectionData => {
             const asUIntArray = new Uint8Array(reflectionData)
-            return $this.loadToCootFromData(asUIntArray, source.name, selectedColumns)
+            return $this.loadToCootFromMtzData(asUIntArray, source.name, selectedColumns)
         })
+}
+
+BabyGruMap.prototype.loadToCootFromMapURL = function (url, name) {
+    const $this = this
+    console.log('Off to fetch url', url)
+
+    return fetch(url)
+        .then(response => {
+            return response.blob()
+        }).then(mapData => mapData.arrayBuffer())
+        .then(arrayBuffer => {
+            return $this.loadToCootFromMapData(new Uint8Array(arrayBuffer), name)
+        })
+        .catch((err) => { 
+            return Promise.reject(err)
+         })
 }
 
 BabyGruMap.prototype.loadToCootFromMapData = function (data, name, isDiffMap) {

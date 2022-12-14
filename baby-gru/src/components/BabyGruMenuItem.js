@@ -93,10 +93,10 @@ export const BabyGruLoadTutorialDataMenuItem = (props) => {
             }).then(_ => {
                 newMolecule.centreOn(props.glRef)
             }).then(_ => {
-                return newMap.loadToCootFromURL(`/baby-gru/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`, `moorhen-tutorial-${tutorialNumber}`,
+                return newMap.loadToCootFromMtzURL(`/baby-gru/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`, `moorhen-tutorial-${tutorialNumber}`,
                     { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false })
             }).then(_ => {
-                return newDiffMap.loadToCootFromURL(`/baby-gru/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`, `moorhen-tutorial-${tutorialNumber}`,
+                return newDiffMap.loadToCootFromMtzURL(`/baby-gru/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`, `moorhen-tutorial-${tutorialNumber}`,
                     { F: "DELFWT", PHI: "PHDELWT", isDifference: true, useWeight: false })
             }).then(_ => {
                 props.changeMaps({ action: 'AddList', items: [newMap, newDiffMap] })
@@ -399,7 +399,6 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
             <Form.Label>Create instance on read</Form.Label>
             <InputGroup>
                 <SplitButton
-                    variant="outline"
                     title={createInstance ? "Yes" : "No"}
                     id="segmented-button-dropdown-1"
                 >
@@ -412,12 +411,11 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
                         setCreateInstance(false)
                     }}>No</Dropdown.Item>
                 </SplitButton>
-                <Form.Select style={{ visibility: createInstance ? "visible" : "hidden" }} ref={addToRef}
-                    defaultValue={"-1"} value={addToMolecule} onChange={(e) => {
+                <Form.Select disabled={!createInstance} ref={addToRef} defaultValue={"-1"} value={addToMolecule} onChange={(e) => {
                         setAddToMolecule(parseInt(e.target.value))
                         addToMoleculeValue.current = parseInt(e.target.value)
                     }}>
-                    <option key={-1} value={"-1"}>...create new molecule</option>
+                    <option key={-1} value={"-1"}>{createInstance ? "...create new molecule" : ""}</option>
                     {props.molecules.map(molecule => <option key={molecule.molNo} value={molecule.molNo}>
                         ...add to {molecule.name}
                     </option>)}
@@ -575,7 +573,7 @@ export const BabyGruImportMapCoefficientsMenuItem = (props) => {
 
     const handleFile = async (file, selectedColumns) => {
         const newMap = new BabyGruMap(props.commandCentre)
-        await newMap.loadToCootFromFile(file, selectedColumns)
+        await newMap.loadToCootFromMtzFile(file, selectedColumns)
         props.changeMaps({ action: 'Add', item: newMap })
         props.setActiveMap(newMap)
     }
