@@ -3,7 +3,7 @@ jest.setTimeout(40000)
 
 const fs = require('fs')
 const path = require('path')
-const createCootModule = require('../../coot/moorhen.js')
+const createCootModule = require('../moorhen.js')
 
 let cootModule;
 
@@ -374,13 +374,13 @@ describe('Testing molecules_container_js', () => {
 
 const setupFunctions = {
     copyExampleDataToFauxFS: () => {
-        const coordData = fs.readFileSync(path.join(__dirname, '..', '..', 'example', '5a3h.pdb'), { encoding: 'utf8', flag: 'r' })
+        const coordData = fs.readFileSync(path.join(__dirname, '..', 'example', '5a3h.pdb'), { encoding: 'utf8', flag: 'r' })
         cootModule.FS_createDataFile(".", '5a3h.pdb', coordData, true, true);
-        const sigmaaData = fs.readFileSync(path.join(__dirname, '..', '..', 'example', '5a3h_sigmaa.mtz'), { encoding: null, flag: 'r' })
+        const sigmaaData = fs.readFileSync(path.join(__dirname, '..', 'example', '5a3h_sigmaa.mtz'), { encoding: null, flag: 'r' })
         cootModule.FS_createDataFile(".", '5a3h_sigmaa.mtz', sigmaaData, true, true);
-        const rnaseSigmaaData = fs.readFileSync(path.join(__dirname, '..', '..', 'checkout', 'coot-1.0', 'data', 'rnasa-1.8-all_refmac1.mtz'), { encoding: null, flag: 'r' })
+        const rnaseSigmaaData = fs.readFileSync(path.join(__dirname, '..', 'example', 'rnasa-1.8-all_refmac1.mtz'), { encoding: null, flag: 'r' })
         cootModule.FS_createDataFile(".", 'rnasa-1.8-all_refmac1.mtz', rnaseSigmaaData, true, true);
-        const tmCoordData = fs.readFileSync(path.join(__dirname, '..', '..', 'checkout', 'coot-1.0', 'api', 'tm-A.pdb'), { encoding: 'utf8', flag: 'r' })
+        const tmCoordData = fs.readFileSync(path.join(__dirname, '..', 'example', 'tm-A.pdb'), { encoding: 'utf8', flag: 'r' })
         cootModule.FS_createDataFile(".", 'tm-A.pdb', tmCoordData, true, true);
         cootModule.FS.mkdir("COOT_BACKUP");
     }

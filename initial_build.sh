@@ -77,3 +77,7 @@ cd ${BUILD_DIR}
 cd ${INSTALL_DIR}/web_packages/baby-gru/
 npm install
 cd ${BUILD_DIR}
+
+cd ${INSTALL_DIR}/web_packages/moorhen_tests/
+npm install
+cd ${BUILD_DIR}
