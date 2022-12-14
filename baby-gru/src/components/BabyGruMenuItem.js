@@ -488,18 +488,18 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
                 if (newMolecule) {
                     //Here if instance created
                     if (addToMoleculeValue.current !== -1) {
-                        const toMolecule = props.molecules
-                            .filter(molecule => molecule.molNo === addToMoleculeValue.current)[0]
-                        props.setPopoverIsShown(false)
-                        const otherMolecules = [newMolecule]
-                        return toMolecule.mergeMolecules(otherMolecules, props.glRef, true)
-                            .then(_ => {
-                                return toMolecule.redraw(props.glRef)
-                            })
+                        const toMolecule = props.molecules.filter(molecule => molecule.molNo === addToMoleculeValue.current)[0]
+                        if (toMolecule) {
+                            const otherMolecules = [newMolecule]
+                            return toMolecule.mergeMolecules(otherMolecules, props.glRef, true)
+                                .then(_ => {
+                                    return toMolecule.redraw(props.glRef)
+                                })    
+                        } else {
+                            newMolecule.redraw(props.glRef)
+                        }
                     }
-                    else {
-                        props.setPopoverIsShown(false)
-                    }
+                    props.setPopoverIsShown(false)
                 }
                 console.log('After create instance', { result })
             })
@@ -524,7 +524,7 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
     const fetchFromMrcLmb = async (newTlc) => {
         const url = `https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/${newTlc.toLowerCase()[0]}/${newTlc.toLowerCase()}.cif`
         const response = await fetch(url)
-        if (response.status != 200) {
+        if (!response.ok) {
             console.log(`Cannot fetch data from https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/${newTlc.toLowerCase()[0]}/${newTlc.toLowerCase()}.cif`)
         } else {
             const fileContent = await response.text()
