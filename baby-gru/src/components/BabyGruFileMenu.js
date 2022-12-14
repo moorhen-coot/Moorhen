@@ -1,5 +1,6 @@
 import { NavDropdown, Form, Button, InputGroup, Overlay } from "react-bootstrap";
 import { BabyGruMolecule } from "../utils/BabyGruMolecule";
+import { BabyGruMap } from "../utils/BabyGruMap";
 import { useState, useRef } from "react";
 import { BabyGruImportDictionaryMenuItem, BabyGruImportMapCoefficientsMenuItem, BabyGruDeleteEverythingMenuItem, BabyGruLoadTutorialDataMenuItem, BabyGruImportMapMenuItem, BabyGruImportFSigFMenuItem } from "./BabyGruMenuItem";
 
@@ -43,24 +44,29 @@ export const BabyGruFileMenu = (props) => {
         return newMolecule.loadToCootFromFile(file)
     }
 
-    const fetchFileFromEBI = () => {
+    const fetchFilesFromEBI = () => {
         let pdbCode = pdbCodeFetchInputRef.current.value.toLowerCase()
+        let coordUrl = `https://www.ebi.ac.uk/pdbe/entry-files/download/pdb${pdbCode}.ent`
+        let mapUrl = `https://www.ebi.ac.uk/pdbe/entry-files/${pdbCode}.ccp4`
         if (pdbCode) {
-            return fetchFileFromURL(`https://www.ebi.ac.uk/pdbe/entry-files/download/pdb${pdbCode}.ent`, pdbCode)
+            fetchMoleculeFromURL(coordUrl, pdbCode)
+            fetchMapFromURL(mapUrl, `${pdbCode}-map`)
         }
     }
 
-    const fetchFileFromURL = (url, molName) => {
+    const fetchMoleculeFromURL = async (url, molName) => {
         const newMolecule = new BabyGruMolecule(commandCentre)
-        return newMolecule.loadToCootFromURL(url, molName)
-            .then(result => {
-                newMolecule.fetchIfDirtyAndDraw('CBs', glRef, true)
-            }).then(result => {
-                changeMolecules({ action: "Add", item: newMolecule })
-                return Promise.resolve(newMolecule)
-            }).then(_ => {
-                newMolecule.centreOn(glRef)
-            })
+        await newMolecule.loadToCootFromURL(url, molName)
+        await newMolecule.fetchIfDirtyAndDraw('CBs', glRef, true)
+        changeMolecules({ action: "Add", item: newMolecule })
+        newMolecule.centreOn(glRef)
+    }
+
+    const fetchMapFromURL = async (url, mapName) => {
+        const newMap = new BabyGruMap(props.commandCentre)
+        await newMap.loadToCootFromMapURL(url, mapName)
+        changeMaps({ action: 'Add', item: newMap })
+        props.setActiveMap(newMap)
     }
 
     return <>
@@ -80,10 +86,10 @@ export const BabyGruFileMenu = (props) => {
                 <InputGroup>
                     <Form.Control type="text" ref={pdbCodeFetchInputRef} onKeyDown={(e) => {
                         if (e.code === 'Enter') {
-                            fetchFileFromEBI()
+                            fetchFilesFromEBI()
                         }
                     }} />
-                    <Button variant="light" onClick={fetchFileFromEBI}>
+                    <Button variant="light" onClick={fetchFilesFromEBI}>
                         Fetch
                     </Button>
                 </InputGroup>
