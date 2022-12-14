@@ -11,6 +11,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 link_directories(${CMAKE_INSTALL_PREFIX}/lib)
 include_directories(${CMAKE_INSTALL_PREFIX}/include/rdkit)
+add_link_options(-sDEFAULT_PTHREAD_STACK_SIZE=2MB -sSTACK_SIZE=5MB)
 
 add_subdirectory(ccp4)
 add_subdirectory(fftw)
