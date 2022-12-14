@@ -83,7 +83,6 @@ BabyGruMap.prototype.loadToCootFromMapURL = function (url, name) {
             return $this.loadToCootFromMapData(new Uint8Array(arrayBuffer), name)
         })
         .catch((err) => { 
-            console.log(err)
             return Promise.reject(err)
          })
 }

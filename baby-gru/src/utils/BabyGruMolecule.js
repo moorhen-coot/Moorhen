@@ -126,8 +126,7 @@ BabyGruMolecule.prototype.loadToCootFromURL = function (url, molName) {
             return Promise.resolve($this)
         })
         .catch((err) => {
-            console.log(err)
-            Promise.reject(err)
+            return Promise.reject(err)
         })
 }
 
