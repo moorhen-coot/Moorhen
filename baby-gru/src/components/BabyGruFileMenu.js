@@ -16,11 +16,6 @@ export const BabyGruFileMenu = (props) => {
 
     const menuItemProps = { setPopoverIsShown, ...props }
 
-    const awaitingPromiseRef = useRef({
-        resolve: () => { },
-        reject: () => { }
-    })
-
     const loadPdbFiles = async (files) => {
         let readPromises = []
         for (const file of files) {
