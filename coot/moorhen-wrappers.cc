@@ -77,6 +77,11 @@ struct ResiduePropertyInfo {
     double property;
 };
 
+gemmi::Structure read_structure_from_string(const std::string data, size_t size, const std::string& path){
+    char *c_data = (char *)data.c_str();
+    return gemmi::read_structure_from_char_array(c_data,size,path);
+}
+
 std::vector<int> get_nearest_image_pbc_shift(const gemmi::NearestImage &ni){
     std::vector<int> ret;
     ret.push_back(ni.pbc_shift[0]);
@@ -2618,6 +2623,7 @@ GlobWalk
     */
 
     //TODO Here we need to put *lots* of gemmi functions
+    function("read_structure_from_string",&read_structure_from_string);
     function("read_structure_file",&gemmi::read_structure_file);
     function("read_mtz_file",&gemmi::read_mtz_file);
     function("get_spacegroup_by_name",&gemmi::get_spacegroup_by_name);
