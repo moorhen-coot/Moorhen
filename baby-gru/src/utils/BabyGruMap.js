@@ -37,7 +37,10 @@ BabyGruMap.prototype.loadToCootFromMtzURL = function (url, name, selectedColumns
         .then(arrayBuffer => {
             return $this.loadToCootFromMtzData(new Uint8Array(arrayBuffer), name, selectedColumns)
         })
-        .catch((err) => { console.log(err) })
+        .catch((err) => { 
+            console.log(err)
+            return Promise.reject(err)
+         })
 }
 
 BabyGruMap.prototype.loadToCootFromMtzData = function (data, name, selectedColumns) {
@@ -79,7 +82,10 @@ BabyGruMap.prototype.loadToCootFromMapURL = function (url, name) {
         .then(arrayBuffer => {
             return $this.loadToCootFromMapData(new Uint8Array(arrayBuffer), name)
         })
-        .catch((err) => { console.log(err) })
+        .catch((err) => { 
+            console.log(err)
+            return Promise.reject(err)
+         })
 }
 
 BabyGruMap.prototype.loadToCootFromMapData = function (data, name, isDiffMap) {

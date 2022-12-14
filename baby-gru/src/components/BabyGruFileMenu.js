@@ -56,17 +56,25 @@ export const BabyGruFileMenu = (props) => {
 
     const fetchMoleculeFromURL = async (url, molName) => {
         const newMolecule = new BabyGruMolecule(commandCentre)
-        await newMolecule.loadToCootFromURL(url, molName)
-        await newMolecule.fetchIfDirtyAndDraw('CBs', glRef, true)
-        changeMolecules({ action: "Add", item: newMolecule })
-        newMolecule.centreOn(glRef)
+        try {
+            await newMolecule.loadToCootFromURL(url, molName)
+            await newMolecule.fetchIfDirtyAndDraw('CBs', glRef, true)
+            changeMolecules({ action: "Add", item: newMolecule })
+            newMolecule.centreOn(glRef)
+        } catch {
+            console.log(`Cannot fetch map from ${url}`)
+        }
     }
 
     const fetchMapFromURL = async (url, mapName) => {
         const newMap = new BabyGruMap(props.commandCentre)
-        await newMap.loadToCootFromMapURL(url, mapName)
-        changeMaps({ action: 'Add', item: newMap })
-        props.setActiveMap(newMap)
+        try {
+            await newMap.loadToCootFromMapURL(url, mapName)
+            changeMaps({ action: 'Add', item: newMap })
+            props.setActiveMap(newMap)
+        } catch {
+            console.log(`Cannot fetch map from ${url}`)
+        }
     }
 
     return <>
