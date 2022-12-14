@@ -93,10 +93,10 @@ export const BabyGruLoadTutorialDataMenuItem = (props) => {
             }).then(_ => {
                 newMolecule.centreOn(props.glRef)
             }).then(_ => {
-                return newMap.loadToCootFromURL(`/baby-gru/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`, `moorhen-tutorial-${tutorialNumber}`,
+                return newMap.loadToCootFromMtzURL(`/baby-gru/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`, `moorhen-tutorial-${tutorialNumber}`,
                     { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false })
             }).then(_ => {
-                return newDiffMap.loadToCootFromURL(`/baby-gru/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`, `moorhen-tutorial-${tutorialNumber}`,
+                return newDiffMap.loadToCootFromMtzURL(`/baby-gru/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`, `moorhen-tutorial-${tutorialNumber}`,
                     { F: "DELFWT", PHI: "PHDELWT", isDifference: true, useWeight: false })
             }).then(_ => {
                 props.changeMaps({ action: 'AddList', items: [newMap, newDiffMap] })
@@ -575,7 +575,7 @@ export const BabyGruImportMapCoefficientsMenuItem = (props) => {
 
     const handleFile = async (file, selectedColumns) => {
         const newMap = new BabyGruMap(props.commandCentre)
-        await newMap.loadToCootFromFile(file, selectedColumns)
+        await newMap.loadToCootFromMtzFile(file, selectedColumns)
         props.changeMaps({ action: 'Add', item: newMap })
         props.setActiveMap(newMap)
     }
