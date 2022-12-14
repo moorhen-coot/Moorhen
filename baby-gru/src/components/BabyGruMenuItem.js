@@ -399,7 +399,6 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
             <Form.Label>Create instance on read</Form.Label>
             <InputGroup>
                 <SplitButton
-                    variant="outline"
                     title={createInstance ? "Yes" : "No"}
                     id="segmented-button-dropdown-1"
                 >
@@ -412,12 +411,11 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
                         setCreateInstance(false)
                     }}>No</Dropdown.Item>
                 </SplitButton>
-                <Form.Select style={{ visibility: createInstance ? "visible" : "hidden" }} ref={addToRef}
-                    defaultValue={"-1"} value={addToMolecule} onChange={(e) => {
+                <Form.Select disabled={!createInstance} ref={addToRef} defaultValue={"-1"} value={addToMolecule} onChange={(e) => {
                         setAddToMolecule(parseInt(e.target.value))
                         addToMoleculeValue.current = parseInt(e.target.value)
                     }}>
-                    <option key={-1} value={"-1"}>...create new molecule</option>
+                    <option key={-1} value={"-1"}>{createInstance ? "...create new molecule" : ""}</option>
                     {props.molecules.map(molecule => <option key={molecule.molNo} value={molecule.molNo}>
                         ...add to {molecule.name}
                     </option>)}
