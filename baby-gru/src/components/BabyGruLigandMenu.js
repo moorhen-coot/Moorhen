@@ -16,7 +16,6 @@ export const BabyGruLigandMenu = (props) => {
             onToggle={() => { props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId(-1) }}>
             <BabyGruGetMonomerMenuItem {...menuItemProps} />
             <BabyGruImportDictionaryMenuItem {...menuItemProps} />
-            <BabyGruMergeMoleculesMenuItem {...menuItemProps} />
             <BabyGruAddWatersMenuItem {...menuItemProps} />
         </NavDropdown>
     </>
