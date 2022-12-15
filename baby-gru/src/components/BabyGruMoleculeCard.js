@@ -182,7 +182,7 @@ export const BabyGruMoleculeCard = (props) => {
     }
 
     const handleProps = { handleCentering, handleCopyFragment, handleDownload, handleRedo, handleUndo, handleResidueRangeRefinement, handleVisibility}
-    const ligandList = props.molecule.getLigands()
+    //const ligandList = props.molecule.getLigands()
 
     return <Card className="px-0" style={{ marginBottom: '0.5rem', padding: '0' }} key={props.molecule.molNo}>
         <Card.Header>
