@@ -152,7 +152,6 @@ export const BabyGruFileMenu = (props) => {
         glRef.current.background_colour = sessionData.backgroundColor
         glRef.current.setOrigin(sessionData.origin, false)
         glRef.current.setQuat(sessionData.quat4)
-
     }
 
     const downloadSession = async () => {
