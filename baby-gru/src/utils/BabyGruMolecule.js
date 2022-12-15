@@ -100,6 +100,27 @@ BabyGruMolecule.prototype.loadToCootFromFile = function (source) {
         })
 }
 
+BabyGruMolecule.prototype.loadToCootFromString = async function (coordData, name) {
+    const $this = this
+    const pdbRegex = /.pdb$/;
+    const entRegex = /.ent$/;
+
+    $this.name = name.replace(pdbRegex, "").replace(entRegex, "");
+    $this.cachedAtoms = $this.webMGAtomsFromFileString(coordData)
+    $this.atomsDirty = false
+
+    let response  = await this.commandCentre.current.cootCommand({
+        returnType: "status",
+        command: 'shim_read_pdb',
+        commandArgs: [coordData, $this.name],
+        changesMolecules: [$this.molNo]
+    }, true)
+
+    $this.molNo = response.data.result.result
+    return Promise.resolve($this)
+
+}
+
 BabyGruMolecule.prototype.setAtomsDirty = function (state) {
     this.atomsDirty = state
 }
