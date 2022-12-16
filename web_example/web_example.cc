@@ -54,8 +54,9 @@
 
 #include "headers.h"
 
-gemmi::Structure read_structure_from_string(const std::string data, size_t size, const std::string& path){
+gemmi::Structure read_structure_from_string(const std::string data, const std::string& path){
     char *c_data = (char *)data.c_str();
+    size_t size = data.length();
     return gemmi::read_structure_from_char_array(c_data,size,path);
 }
 
