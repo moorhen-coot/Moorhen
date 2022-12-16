@@ -106,6 +106,7 @@ export const BabyGruFileMenu = (props) => {
         // Load session data
         let sessionData = await readTextFile(file)
         sessionData = JSON.parse(sessionData)
+        console.log('Loaded the following session data...')
         console.log(sessionData)
         
         // Delete current scene
@@ -113,6 +114,11 @@ export const BabyGruFileMenu = (props) => {
             molecule.delete(props.glRef)
         })
         changeMolecules({ action: "Empty" })
+
+        props.maps.forEach(map => {
+            map.delete(props.glRef)
+        })
+        changeMaps({ action: "Empty" })
 
         // Load molecules stored in session from pdb string
         let newMoleculePromises = [];
@@ -139,6 +145,22 @@ export const BabyGruFileMenu = (props) => {
             changeMolecules({ action: "Add", item: molecule })
         })
 
+        // Load maps stored in session
+        let newMapPromises = [];
+        sessionData.mapsMapData.forEach((decodedData, index) => {
+            let mapData = Uint8Array.from(Object.values(decodedData)).buffer
+            let newMap = new BabyGruMap(commandCentre)
+            newMapPromises.push(
+                newMap.loadToCootFromMapData(mapData, sessionData.mapsNames[index], sessionData.mapsIsDifference[index])
+            )
+        })
+        let newMaps = await Promise.all(newMapPromises)
+
+        // Change props.maps
+        newMaps.forEach(map => {
+            changeMaps({ action: "Add", item: map })
+        })
+
         // Set camera details
         glRef.current.setAmbientLightNoUpdate(...Object.values(sessionData.ambientLight))
         glRef.current.setSpecularLightNoUpdate(...Object.values(sessionData.specularLight))
@@ -152,17 +174,46 @@ export const BabyGruFileMenu = (props) => {
         glRef.current.background_colour = sessionData.backgroundColor
         glRef.current.setOrigin(sessionData.origin, false)
         glRef.current.setQuat(sessionData.quat4)
+
+        // Set map visualisation details after map card is created using a timeout
+        setTimeout(() => {
+            newMaps.forEach((map, index) => {
+                map.mapColour = sessionData.mapColour
+                let contourOnSessionLoad = new CustomEvent("contourOnSessionLoad", {
+                    "detail": {
+                        molNo: map.molNo,
+                        mapRadius: sessionData.mapsRadius[index],
+                        cootContour: sessionData.mapsCootContours[index],
+                        contourLevel: sessionData.mapsContourLevels[index],
+                        mapColour: sessionData.mapsColours[index],
+                        litLines: sessionData.mapsLitLines[index],
+                    }
+                });               
+                document.dispatchEvent(contourOnSessionLoad);       
+            })
+        }, 2500);
     }
 
     const downloadSession = async () => {
-        let promises = props.molecules.map(molecule => {return molecule.getAtoms()})
-        let response = await Promise.all(promises)
+        let moleculePromises = props.molecules.map(molecule => {return molecule.getAtoms()})
+        let moleculeAtoms = await Promise.all(moleculePromises)
+        let mapPromises = props.maps.map(map => {return map.getMap()})
+        let mapData = await Promise.all(mapPromises)
 
         let session = {
             moleculesNames: props.molecules.map(molecule => molecule.name),
-            moleculesPdbData: response.map(item => item.data.result.pdbData),
+            mapsNames: props.maps.map(map => map.name),
+            moleculesPdbData: moleculeAtoms.map(item => item.data.result.pdbData),
+            mapsMapData: mapData.map(item => new Uint8Array(item.data.result.mapData)),
+            activeMapMolNo: props.activeMap ? props.activeMap.molNo : null,
             moleculesDisplayObjectsKeys: props.molecules.map(molecule => Object.keys(molecule.displayObjects).filter(key => molecule.displayObjects[key].length > 0)),
             moleculesCootBondsOptions: props.molecules.map(molecule => molecule.cootBondsOptions),
+            mapsCootContours: props.maps.map(map => map.cootContour),
+            mapsContourLevels: props.maps.map(map => map.contourLevel),
+            mapsColours: props.maps.map(map => map.mapColour),
+            mapsLitLines: props.maps.map(map => map.litLines),
+            mapsRadius: props.maps.map(map => map.mapRadius),
+            mapsIsDifference: props.maps.map(map => map.isDifference),
             origin: props.glRef.current.origin,
             backgroundColor: props.backgroundColor,
             atomLabelDepthMode: props.atomLabelDepthMode,

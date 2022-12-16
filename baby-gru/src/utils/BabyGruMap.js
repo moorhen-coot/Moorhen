@@ -5,6 +5,7 @@ export function BabyGruMap(commandCentre) {
     this.type = 'map'
     this.commandCentre = commandCentre
     this.contourLevel = 0.5
+    this.mapRadius = 13
     this.mapColour = [0.3, 0.3, 1.0, 1.0]
     this.liveUpdatingMaps = {}
     this.webMGContour = false
@@ -154,12 +155,13 @@ BabyGruMap.prototype.makeWebMGUnlive = function (glRef) {
 
 BabyGruMap.prototype.makeCootLive = function (glRef, mapRadius) {
     const $this = this
+    $this.mapRadius = mapRadius
     $this.cootContour = true
     $this.doCootContour(glRef,
         -glRef.current.origin[0],
         -glRef.current.origin[1],
         -glRef.current.origin[2],
-        mapRadius, $this.contourLevel)
+        $this.mapRadius, $this.contourLevel)
     glRef.current.drawScene()
 }
 
@@ -211,6 +213,7 @@ BabyGruMap.prototype.clearBuffersOfStyle = function (glRef, style) {
 BabyGruMap.prototype.doCootContour = function (glRef, x, y, z, radius, contourLevel) {
 
     const $this = this
+    $this.mapRadius = radius
 
     let returnType =  "lines_mesh"
     if(this.litLines)
