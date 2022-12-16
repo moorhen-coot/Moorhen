@@ -44,7 +44,7 @@ export function BabyGruMolecule(commandCentre) {
 
 BabyGruMolecule.prototype.updateGemmiStructure = async function () {
     let response = await this.getAtoms()
-    this.gemmiStructure = readGemmiStructure(response.data.result.pdbData)
+    this.gemmiStructure = readGemmiStructure(response.data.result.pdbData, this.name)
 }
 
 
@@ -92,7 +92,7 @@ BabyGruMolecule.prototype.loadToCootFromFile = function (source) {
         .then(coordData => {
             $this.name = source.name.replace(pdbRegex, "").replace(entRegex, "");
             $this.cachedAtoms = $this.webMGAtomsFromFileString(coordData)
-            $this.gemmiStructure = readGemmiStructure(coordData)
+            $this.gemmiStructure = readGemmiStructure(coordData, $this.name)
             $this.atomsDirty = false
             return this.commandCentre.current.cootCommand({
                 returnType: "status",
@@ -114,7 +114,7 @@ BabyGruMolecule.prototype.loadToCootFromString = async function (coordData, name
 
     $this.name = name.replace(pdbRegex, "").replace(entRegex, "");
     $this.cachedAtoms = $this.webMGAtomsFromFileString(coordData)
-    $this.gemmiStructure = readGemmiStructure(coordData)
+    $this.gemmiStructure = readGemmiStructure(coordData, $this.name)
     $this.atomsDirty = false
 
     let response  = await this.commandCentre.current.cootCommand({
@@ -143,7 +143,7 @@ BabyGruMolecule.prototype.loadToCootFromURL = function (url, molName) {
         }).then((coordData) => {
             $this.name = molName
             $this.cachedAtoms = $this.webMGAtomsFromFileString(coordData)
-            $this.gemmiStructure = readGemmiStructure(coordData)
+            $this.gemmiStructure = readGemmiStructure(coordData, $this.name)
             $this.atomsDirty = false
 
             return this.commandCentre.current.cootCommand({
@@ -173,7 +173,7 @@ BabyGruMolecule.prototype.updateAtoms = function () {
     return $this.getAtoms().then((result) => {
         return new Promise((resolve, reject) => {
             $this.cachedAtoms = $this.webMGAtomsFromFileString(result.data.result.pdbData)
-            $this.gemmiStructure = readGemmiStructure(result.data.result.pdbData)
+            $this.gemmiStructure = readGemmiStructure(result.data.result.pdbData, $this.name)
             $this.atomsDirty = false
             resolve($this.cachedAtoms)
         })
