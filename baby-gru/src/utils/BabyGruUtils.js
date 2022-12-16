@@ -145,6 +145,14 @@ export const doDownloadText = (text, filename) => {
     document.body.removeChild(element);
 }
 
+export const readGemmiStructure = async (pdbData) => {
+    const fileName = `File_${uuidv4()}`
+    window.CCP4Module.FS_createDataFile(".", fileName, pdbData, true, true);
+    const structure = window.CCP4Module.read_structure_file(`./${fileName}`, window.CCP4Module.CoorFormat.Pdb)
+    window.CCP4Module.FS_unlink(`./${fileName}`)
+    return structure
+}
+
 export const BabyGruCommandCentre = class {
     banana = 12
     consoleMessage = ""
