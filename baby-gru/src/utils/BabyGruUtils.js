@@ -145,6 +145,11 @@ export const doDownloadText = (text, filename) => {
     document.body.removeChild(element);
 }
 
+export const readGemmiStructure = async (pdbData, molName) => {
+    const structure = window.CCP4Module.read_structure_from_string(pdbData, molName)
+    return structure
+}
+
 export const BabyGruCommandCentre = class {
     banana = 12
     consoleMessage = ""
