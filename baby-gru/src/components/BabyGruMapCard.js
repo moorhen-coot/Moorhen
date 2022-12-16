@@ -148,6 +148,15 @@ export const BabyGruMapCard = (props) => {
         }
     }, [mapContourLevel, mapRadius, props.activeMap?.molNo, props.map.molNo, props.map.cootContour])
 
+    const handleContourOnSessionLoad = useCallback(e => {
+        if (props.map.molNo === e.detail.molNo) {
+            setCootContour(e.detail.cootContour)
+            setMapContourLevel(e.detail.contourLevel)
+            setMapLitLines(e.detail.litLines)
+            setMapRadius(e.detail.mapRadius)
+        }
+    }, [props.map.molNo])
+
     const handleContourLevelCallback = useCallback(e => {
         props.map.contourLevel = mapContourLevel
         nextOrigin.current = [...e.detail.map(coord => -coord)]
@@ -181,10 +190,12 @@ export const BabyGruMapCard = (props) => {
         document.addEventListener("originChanged", handleOriginCallback);
         document.addEventListener("contourLevelChanged", handleContourLevelCallback);
         document.addEventListener("wheelContourLevelChanged", handleWheelContourLevelCallback);
+        document.addEventListener("contourOnSessionLoad", handleContourOnSessionLoad);
         return () => {
             document.removeEventListener("originChanged", handleOriginCallback);
             document.removeEventListener("contourLevelChanged", handleContourLevelCallback);
             document.removeEventListener("wheelContourLevelChanged", handleWheelContourLevelCallback);
+            document.removeEventListener("contourOnSessionLoad", handleContourOnSessionLoad);
         };
     }, [handleOriginCallback, props.activeMap?.molNo]);
 
