@@ -50,6 +50,7 @@
 #include <gemmi/asudata.hpp>
 #include <gemmi/refln.hpp>
 #include <gemmi/cif2mtz.hpp>
+#include <gemmi/ccp4.hpp>
 
 #define _SAJSON_H_INCLUDED_
 
@@ -75,6 +76,11 @@ struct ResiduePropertyInfo {
     std::string restype;
     double property;
 };
+
+gemmi::Structure read_structure_from_string(const std::string data, size_t size, const std::string& path){
+    char *c_data = (char *)data.c_str();
+    return gemmi::read_structure_from_char_array(c_data,size,path);
+}
 
 std::vector<int> get_nearest_image_pbc_shift(const gemmi::NearestImage &ni){
     std::vector<int> ret;
@@ -607,6 +613,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("vertices",&coot::simple_mesh_t::vertices)
     .property("triangles",&coot::simple_mesh_t::triangles)
     ;
+
     register_vector<coot::molecule_t::moved_residue_t>("Vectormoved_residue_t");
     register_vector<coot::molecule_t::moved_atom_t>("Vectormoved_atom_t");
     register_vector<std::string>("VectorString");
@@ -628,6 +635,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<merge_molecule_results_info_t>("Vectormerge_molecule_results_info_t");
     register_vector<coot::phi_psi_prob_t>("Vectophi_psi_prob_t");
 
+    register_vector<gemmi::GridOp>("VectorGemmiGridOp");
     register_vector<gemmi::Mtz::Dataset>("VectorGemmiMtzDataset");
     register_vector<gemmi::Mtz::Column>("VectorGemmiMtzColumn");
     register_vector<gemmi::Mtz::Batch>("VectorGemmiMtzBatch");
@@ -690,6 +698,24 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .element(emscripten::index<2>())
     ;
     function("getRotamersMap",&getRotamersMap);
+
+    enum_<gemmi::GridSizeRounding>("GridSizeRounding")
+        .value("Nearest", gemmi::GridSizeRounding::Nearest)
+        .value("Up", gemmi::GridSizeRounding::Up)
+        .value("Down", gemmi::GridSizeRounding::Down)
+    ;
+
+    enum_<gemmi::AxisOrder>("AxisOrder")
+        .value("Unknown", gemmi::AxisOrder::Unknown)
+        .value("XYZ", gemmi::AxisOrder::XYZ)
+        .value("ZYX", gemmi::AxisOrder::ZYX)
+    ;
+
+    enum_<gemmi::MapSetup>("MapSetup")
+        .value("Full", gemmi::MapSetup::Full)
+        .value("NoSymmetry", gemmi::MapSetup::NoSymmetry)
+        .value("ReorderOnly", gemmi::MapSetup::ReorderOnly)
+    ;
 
     enum_<gemmi::DataType>("DataType")
         .value("Unknown", gemmi::DataType::Unknown)
@@ -2352,17 +2378,164 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("get_hkl",&gemmi::MtzExternalDataProxy::get_hkl)//Miller
     ;
 
+    class_<gemmi::Ccp4Base>("Ccp4Base")
+    .property("hstats",&gemmi::Ccp4Base::hstats)
+    .property("ccp4_header",&gemmi::Ccp4Base::ccp4_header)
+    .property("same_byte_order",&gemmi::Ccp4Base::same_byte_order)
+    .function("header_i32",&gemmi::Ccp4Base::header_i32)
+    //.function("header_3i32",&gemmi::Ccp4Base::header_i32) std::array<int, 3>
+    .function("header_float",&gemmi::Ccp4Base::header_float)
+    .function("header_str",&gemmi::Ccp4Base::header_str)
+    .function("set_header_i32",&gemmi::Ccp4Base::set_header_i32)
+    .function("set_header_3i32",&gemmi::Ccp4Base::set_header_3i32)
+    .function("set_header_float",&gemmi::Ccp4Base::set_header_float)
+    .function("set_header_str",&gemmi::Ccp4Base::set_header_str)
+    //.function("axis_positions",&gemmi::Ccp4Base::axis_positions) std::array<int, 3>
+    .function("header_rfloat",&gemmi::Ccp4Base::header_rfloat)
+    .function("get_extent",&gemmi::Ccp4Base::get_extent)
+    .function("has_skew_transformation",&gemmi::Ccp4Base::has_skew_transformation)
+    .function("get_skew_transformation",&gemmi::Ccp4Base::get_skew_transformation)
+    ;
+
+    class_<gemmi::Ccp4<float>, base<gemmi::Ccp4Base>>("Ccp4")
+    .function("prepare_ccp4_header_except_mode_and_stats",&gemmi::Ccp4<float>::prepare_ccp4_header_except_mode_and_stats)
+    .function("update_ccp4_header",&gemmi::Ccp4<float>::update_ccp4_header)
+    //.function("mode_for_data",&gemmi::Ccp4<float>::mode_for_data) //static ?
+    .function("full_cell",&gemmi::Ccp4<float>::full_cell)
+    //.function("read_ccp4_header",&gemmi::Ccp4<float>::read_ccp4_header) template<typename Stream> void read_ccp4_header(Stream& f, const std::string& path
+    .function("setup",&gemmi::Ccp4<float>::setup)
+    .function("set_extent",&gemmi::Ccp4<float>::set_extent)
+    //.function("read_ccp4_stream",&gemmi::Ccp4<float>::read_ccp4_stream) template<typename Stream> void read_ccp4_stream(Stream& f, const std::string& path
+    .function("read_ccp4_file",&gemmi::Ccp4<float>::read_ccp4_file)
+    //.function("read_ccp4",&gemmi::Ccp4<float>::read_ccp4) template<typename Input> void read_ccp4(Input&& input)
+    .function("write_ccp4_map",&gemmi::Ccp4<float>::write_ccp4_map)
+    ;
+
+    class_<gemmi::Ccp4<int8_t>, base<gemmi::Ccp4Base>>("Ccp4Int8_t")
+    .function("prepare_ccp4_header_except_mode_and_stats",&gemmi::Ccp4<int8_t>::prepare_ccp4_header_except_mode_and_stats)
+    .function("update_ccp4_header",&gemmi::Ccp4<int8_t>::update_ccp4_header)
+    //.function("mode_for_data",&gemmi::Ccp4<int8_t>::mode_for_data) //static ?
+    .function("full_cell",&gemmi::Ccp4<int8_t>::full_cell)
+    //.function("read_ccp4_header",&gemmi::Ccp4<int8_t>::read_ccp4_header) template<typename Stream> void read_ccp4_header(Stream& f, const std::string& path
+    .function("setup",&gemmi::Ccp4<int8_t>::setup)
+    .function("set_extent",&gemmi::Ccp4<int8_t>::set_extent)
+    //.function("read_ccp4_stream",&gemmi::Ccp4<int8_t>::read_ccp4_stream) template<typename Stream> void read_ccp4_stream(Stream& f, const std::string& path
+    .function("read_ccp4_file",&gemmi::Ccp4<int8_t>::read_ccp4_file)
+    //.function("read_ccp4",&gemmi::Ccp4<int8_t>::read_ccp4) template<typename Input> void read_ccp4(Input&& input)
+    .function("write_ccp4_map",&gemmi::Ccp4<int8_t>::write_ccp4_map)
+    ;
+
+    class_<gemmi::DataStats>("DataStats")
+    .property("dmin",&gemmi::DataStats::dmin)
+    .property("dmax",&gemmi::DataStats::dmax)
+    .property("dmean",&gemmi::DataStats::dmean)
+    .property("rms",&gemmi::DataStats::rms)
+    .property("nan_count",&gemmi::DataStats::nan_count)
+    ;
+
+    class_<gemmi::GridOp>("GridOp")
+    .property("scaled_op",&gemmi::GridOp::scaled_op)
+    //.function("apply",&gemmi::GridOp::apply) std::array<int, 3>
+    ;
+
+    class_<gemmi::GridMeta>("GridMeta")
+    .property("unit_cell",&gemmi::GridMeta::unit_cell)
+    .property("nu",&gemmi::GridMeta::nu)
+    .property("nv",&gemmi::GridMeta::nv)
+    .property("nw",&gemmi::GridMeta::nw)
+    .property("axis_order",&gemmi::GridMeta::axis_order)
+    .function("point_count",&gemmi::GridMeta::point_count)
+    .function("get_fractional",&gemmi::GridMeta::get_fractional)
+    .function("get_position",&gemmi::GridMeta::get_position)
+    .function("get_scaled_ops_except_id",&gemmi::GridMeta::get_scaled_ops_except_id)
+    .function("index_q",&gemmi::GridMeta::index_q)
+    .function("index_n",&gemmi::GridMeta::index_n)
+    //.function("index_n_ref",&gemmi::GridMeta::index_n_ref) references?
+    .function("index_near_zero",&gemmi::GridMeta::index_near_zero)
+    ;
+
+    class_<gemmi::GridBase<float>::Point>("GridBasePoint")
+    .property("u",&gemmi::GridBase<float>::Point::u)
+    .property("v",&gemmi::GridBase<float>::Point::v)
+    .property("w",&gemmi::GridBase<float>::Point::w)
+    ;
+
+    class_<gemmi::GridBase<int8_t>::Point>("GridBasePointInt8_t")
+    .property("u",&gemmi::GridBase<int8_t>::Point::u)
+    .property("v",&gemmi::GridBase<int8_t>::Point::v)
+    .property("w",&gemmi::GridBase<int8_t>::Point::w)
+    ;
+
+    class_<gemmi::GridBase<float>, base<gemmi::GridMeta>>("GridBase")
+    .property("data",&gemmi::GridBase<float>::data)
+    .function("check_not_empty",&gemmi::GridBase<float>::check_not_empty)
+    .function("set_size_without_checking",&gemmi::GridBase<float>::set_size_without_checking)
+    .function("get_value_q",&gemmi::GridBase<float>::get_value_q)
+    .function("index_to_point",&gemmi::GridBase<float>::index_to_point)
+    .function("fill",&gemmi::GridBase<float>::fill)
+    ;
+
+    class_<gemmi::GridBase<int8_t>, base<gemmi::GridMeta>>("GridBaseInt8_t")
+    .property("data",&gemmi::GridBase<int8_t>::data)
+    .function("check_not_empty",&gemmi::GridBase<int8_t>::check_not_empty)
+    .function("set_size_without_checking",&gemmi::GridBase<int8_t>::set_size_without_checking)
+    .function("get_value_q",&gemmi::GridBase<int8_t>::get_value_q)
+    .function("index_to_point",&gemmi::GridBase<int8_t>::index_to_point)
+    .function("fill",&gemmi::GridBase<int8_t>::fill)
+    ;
+
+    class_<gemmi::Grid<float>, base<gemmi::GridBase<float>>>("Grid")
+    .function("calculate_spacing",&gemmi::Grid<float>::calculate_spacing)
+    .function("min_spacing",&gemmi::Grid<float>::min_spacing)
+    .function("set_size_without_checking",&gemmi::Grid<float>::set_size_without_checking)
+    .function("set_size",&gemmi::Grid<float>::set_size)
+    .function("set_size_from_spacing",&gemmi::Grid<float>::set_size_from_spacing)
+    .function("set_unit_cell",select_overload<void(double, double, double, double, double, double)>(&gemmi::Grid<float>::set_unit_cell))
+    .function("index_s",&gemmi::Grid<float>::index_s)
+    .function("get_value",&gemmi::Grid<float>::get_value)
+    .function("set_value",&gemmi::Grid<float>::set_value)
+    .function("get_point",&gemmi::Grid<float>::get_point)
+    .function("interpolate_value",select_overload<float(double, double, double)const>(&gemmi::Grid<float>::interpolate_value))
+    .function("tricubic_interpolation",select_overload<double(double, double, double)const>(&gemmi::Grid<float>::tricubic_interpolation))
+    .function("symmetrize_min",&gemmi::Grid<float>::symmetrize_min)
+    .function("symmetrize_max",&gemmi::Grid<float>::symmetrize_max)
+    .function("symmetrize_abs_max",&gemmi::Grid<float>::symmetrize_abs_max)
+    .function("symmetrize_sum",&gemmi::Grid<float>::symmetrize_sum)
+    .function("symmetrize_nondefault",&gemmi::Grid<float>::symmetrize_nondefault)
+    .function("normalize",&gemmi::Grid<float>::normalize)
+    .function("resample_to",&gemmi::Grid<float>::resample_to)
+    ;
+
+    class_<gemmi::Grid<int8_t>, base<gemmi::GridBase<int8_t>>>("GridInt8_t")
+    // Does this actually ever get instantiated?
+    ;
+
+    class_<gemmi::Box<gemmi::Fractional>>("BoxFractional")
+    .property("minimum",&gemmi::Box<gemmi::Fractional>::minimum)
+    .property("maximum",&gemmi::Box<gemmi::Fractional>::maximum)
+    .function("get_size",&gemmi::Box<gemmi::Fractional>::get_size)
+    .function("add_margin",&gemmi::Box<gemmi::Fractional>::add_margin)
+    ;
+
+    class_<gemmi::Box<gemmi::Position>>("BoxPosition")
+    .property("minimum",&gemmi::Box<gemmi::Position>::minimum)
+    .property("maximum",&gemmi::Box<gemmi::Position>::maximum)
+    .function("get_size",&gemmi::Box<gemmi::Position>::get_size)
+    .function("add_margin",&gemmi::Box<gemmi::Position>::add_margin)
+    ;
+
+    class_<gemmi::AtomNameElement>("AtomNameElement")
+    .property("atom_name",&gemmi::AtomNameElement::atom_name)
+    .property("el",&gemmi::AtomNameElement::el)
+    ;
 
     //TODO Wrap some of these gemmi classes
     /*
 
-Ccp4Base
-Ccp4
 XdsAscii
 Variance
 Covariance
 Correlation
-DataStats
 UnmergedHklMover
 MtzExternalDataProxy
 Intensities
@@ -2383,10 +2556,6 @@ DensityCalculator
 TwoFoldData
 SolventMasker
 NeighborSearch
-GridOp
-GridMeta
-GridBase
-Grid
 ReciprocalGrid
 GridConstPoint
 
@@ -2401,13 +2570,11 @@ NodeInfo
 FloodFill
 Topo
 ComplexCorrelation
-AtomNameElement
 LinkHunt
 ResidueSpan::GroupingProxy
 MmcifOutputGroups
 Blob
 BlobCriteria
-Box
 from_chars_result
 parse_options
 span
@@ -2456,6 +2623,7 @@ GlobWalk
     */
 
     //TODO Here we need to put *lots* of gemmi functions
+    function("read_structure_from_string",&read_structure_from_string);
     function("read_structure_file",&gemmi::read_structure_file);
     function("read_mtz_file",&gemmi::read_mtz_file);
     function("get_spacegroup_by_name",&gemmi::get_spacegroup_by_name);
