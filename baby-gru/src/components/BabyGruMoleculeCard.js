@@ -14,6 +14,8 @@ export const BabyGruMoleculeCard = (props) => {
     const [bondWidth, setBondWidth] = useState(0.1)
     const [atomRadiusBondRatio, setAtomRadiusBondRatio] = useState(1.5)
     const [bondSmoothness, setBondSmoothness] = useState(1)
+    const [ligandList, setLigandList] = useState([])
+    const [cachedAtoms, setCachedAtoms] = useState(null)
 
     const  bondSettingsProps = {
         bondWidth, setBondWidth, atomRadiusBondRatio, 
@@ -181,8 +183,39 @@ export const BabyGruMoleculeCard = (props) => {
         props.setCurrentDropdownMolNo(-1)
     }
 
+    useEffect(() => {
+        async function updateMoleculeAtoms() {
+            await props.molecule.updateAtoms()
+        }
+
+        if (props.molecule.gemmiStructure === null || props.molecule.atomsDirty) {
+            updateMoleculeAtoms()
+        }
+        if (props.molecule.gemmiStructure === null) {
+            return
+        }
+        
+        let ligandList = []
+        const model = props.molecule.gemmiStructure.first_model()
+        const chains = model.chains
+        for (let i = 0; i < chains.size(); i++) {
+            let chain = chains.get(i)
+            const ligands = chain.get_ligands_const()
+            for (let j = 0; j < ligands.size(); j++) {
+                let ligand = ligands.at(j)
+                ligandList.push({res: ligand, chainName: chain.name})
+            }
+        }
+        setLigandList(ligandList)
+    
+    }, [cachedAtoms])
+
+    useEffect(() => {
+        setCachedAtoms(props.molecule.cachedAtoms)
+    })
+
+
     const handleProps = { handleCentering, handleCopyFragment, handleDownload, handleRedo, handleUndo, handleResidueRangeRefinement, handleVisibility}
-    //const ligandList = props.molecule.getLigands()
 
     return <Card className="px-0" style={{ marginBottom: '0.5rem', padding: '0' }} key={props.molecule.molNo}>
         <Card.Header>
@@ -300,7 +333,7 @@ export const BabyGruMoleculeCard = (props) => {
                     }
                 </Col>
             </Row>
-            {/**props.molecule.ligands?.length > 0 && 
+            {ligandList.length > 0 && 
                 <>
                     <hr></hr>
                     <Row style={{ height: '100%' }}>
@@ -308,24 +341,26 @@ export const BabyGruMoleculeCard = (props) => {
                             <div>
                                 <b>Ligands</b>
                             </div>
-                            <Card style={{margin: '0.5rem'}}>
-                                <Card.Body>
-                                    <Row style={{display:'flex', justifyContent:'between'}}>
-                                        <Col style={{alignItems:'center', justifyContent:'left', display:'flex'}}>
-                                            {"flip.buttonLabel"}
-                                        </Col>
-                                        <Col className='col-3' style={{margin: '0', padding:'0', justifyContent: 'right', display:'flex'}}>
-                                            <Button>
-                                                View
-                                            </Button>
-                                        </Col>
-                                    </Row>
-                                </Card.Body>
-                            </Card>
+                            {ligandList.map(ligand => {
+                                return <Card style={{margin: '0.5rem'}}>
+                                            <Card.Body>
+                                                <Row style={{display:'flex', justifyContent:'between'}}>
+                                                    <Col style={{alignItems:'center', justifyContent:'left', display:'flex'}}>
+                                                        {`${ligand.chainName}/${ligand.res.seqid.str()}(${ligand.res.name})`}
+                                                    </Col>
+                                                    <Col className='col-3' style={{justifyContent: 'right', display:'flex'}}>
+                                                        <Button onClick={() => {props.molecule.centreOn(props.glRef, {chain: ligand.chainName, molName: props.molecule.name, molNo: props.molecule.molNo, modelIndex: 0, seqNum: ligand.res.seqid.str()})}}>
+                                                            View
+                                                        </Button>
+                                                    </Col>
+                                                </Row>
+                                            </Card.Body>
+                                        </Card>
+                            })}
                         </Col>
                     </Row>
                 </>
-            */}
+            }
         </Card.Body>
     </Card >
 }
