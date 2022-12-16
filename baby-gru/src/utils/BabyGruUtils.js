@@ -145,7 +145,7 @@ export const doDownloadText = (text, filename) => {
     document.body.removeChild(element);
 }
 
-export const readGemmiStructure = async (pdbData, molName) => {
+export const readGemmiStructure = (pdbData, molName) => {
     const structure = window.CCP4Module.read_structure_from_string(pdbData, molName)
     return structure
 }
