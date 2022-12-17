@@ -523,10 +523,10 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
     }
 
     const fetchFromMrcLmb = async (newTlc) => {
-        const url = `https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`
+        const url = `https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/${newTlc.toLowerCase()[0]}/${newTlc.toLowerCase()}.cif`
         const response = await fetch(url)
         if (!response.ok) {
-            console.log(`Cannot fetch data from https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`)
+            console.log(`Cannot fetch data from https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/${newTlc.toLowerCase()[0]}/${newTlc.toLowerCase()}.cif`)
         } else {
             const fileContent = await response.text()
             return handleFileContent(fileContent)
@@ -1162,8 +1162,9 @@ export const BabyGruCentreOnLigandMenuItem = (props) => {
                     key={molecule.name}
                     trigger="click"
                     placement="right"
-                    onEnter={() => {
-                        setLigandsOfMolecule(["Here's one"])
+                    onEnter={async () => {
+                        await molecule.updateGemmiStructure()
+                        setLigandsOfMolecule([`Here's one ${molecule.gemmisStructure}`])
                     }}
                     overlay={
                         <Popover>

@@ -2024,9 +2024,9 @@ class MGWebGL extends Component {
     }
 
     appendOtherData(jsondata, skipRebuild, name) {
-        console.log("**************************************************");
-        console.log("appendOtherData");
-        console.log("**************************************************");
+        //console.log("**************************************************");
+        //console.log("appendOtherData");
+        //console.log("**************************************************");
         //This can be used to *add* arbitrary triangles to a scene. Not much luck with replacing scene by this, yet.
         //This currently deals with actual numbers rather than the uuencoded stuff we get from server, but it will
         //be changed to handle both.
@@ -11067,7 +11067,7 @@ class MGWebGL extends Component {
         this.displayBuffers[this.currentBufferIdx].triangleColourBuffer[this.displayBuffers[this.currentBufferIdx].triangleColourBuffer.length - 1].numItems = 0;
         this.displayBuffers[this.currentBufferIdx].triangleColours.push([]);
         if (Math.abs(parseFloat(colour[3])) < 0.99) {
-            console.log("This is transparent");
+            //console.log("This is transparent");
             this.displayBuffers[this.currentBufferIdx].transparent = true;
         }
         for (var j = 0; j < colour.length; j++) {

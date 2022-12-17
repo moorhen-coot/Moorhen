@@ -45,6 +45,7 @@ export function BabyGruMolecule(commandCentre) {
 BabyGruMolecule.prototype.updateGemmiStructure = async function () {
     let response = await this.getAtoms()
     this.gemmiStructure = readGemmiStructure(response.data.result.pdbData, this.name)
+    return Promise.resolve()
 }
 
 

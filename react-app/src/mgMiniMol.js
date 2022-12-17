@@ -2128,7 +2128,7 @@ getAtoms(selin) {
         for(let ip=0;ip<atoms2.length;ip++) atoms.push(atoms2[ip]);
         return atoms;
     } else if(selin.indexOf(" not ")>-1 || selin.substring(0,4)==="not "){
-        console.log("Doing some notting");
+        //console.log("Doing some notting");
         let sel1;
         if(selin.substring(0,4)==="not "){
             sel1 = selin.substring(4).trim();
