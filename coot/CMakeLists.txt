@@ -41,7 +41,7 @@ ${coot_src}/MoleculesToTriangles/CXXSurface/CXXTorusNode.cpp
 ${coot_src}/MoleculesToTriangles/CXXSurface/CXXTriangle.cpp
 ${coot_src}/MoleculesToTriangles/CXXSurface/CXXUtils.cpp
 ${coot_src}/MoleculesToTriangles/CXXSurface/CXXVCN.cpp
-${coot_src}/MoleculesToTriangles/CXXSurface/ElectroSurface.cpp
+#${coot_src}/MoleculesToTriangles/CXXSurface/ElectroSurface.cpp
 ${coot_src}/MoleculesToTriangles/CXXClasses/AtomPropertyRampColorRule.cpp
 ${coot_src}/MoleculesToTriangles/CXXClasses/BallsPrimitive.cpp
 ${coot_src}/MoleculesToTriangles/CXXClasses/BondsPrimitive.cpp
