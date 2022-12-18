@@ -450,17 +450,17 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
                 })
                 return Promise.resolve(true)
             })
-            .then(result => {
-                props.molecules.forEach(molecule => {
+            .then(async (result) => {
+                props.molecules.forEach(async molecule => {
                     if (molecule.molNo == parseInt(selectedMoleculeIndex) ||
                         -999999 == parseInt(selectedMoleculeIndex)) {
-                        molecule.redraw(props.glRef)
+                        let a = await molecule.redraw(props.glRef)
                     }
                 })
                 return Promise.resolve()
             })
             .then(result => {
-                console.log({ createInstance })
+                //console.log({ createInstance })
                 if (createRef.current) {
                     const instanceName = tlcValueRef.current
                     console.log({ instanceName })
