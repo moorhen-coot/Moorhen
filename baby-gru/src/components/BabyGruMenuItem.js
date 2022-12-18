@@ -1,4 +1,4 @@
-import { Menu, MenuItem } from "@mui/material";
+import { Divider, Menu, MenuItem, Modal } from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { OverlayTrigger, Popover, PopoverBody, PopoverHeader, Form, InputGroup, Button, FormSelect, Row, Col, SplitButton, Dropdown } from "react-bootstrap";
 import { SketchPicker } from "react-color";
@@ -8,7 +8,9 @@ import { BabyGruMolecule } from "../utils/BabyGruMolecule";
 import { BabyGruMoleculeSelect } from "./BabyGruMoleculeSelect";
 import BabyGruSlider from "./BabyGruSlider";
 import { BabyGruMapSelect } from "./BabyGruMapSelect";
-import { BabyGruLigandMenu } from "./BabyGruLigandMenu";
+import "rc-tree/assets/index.css"
+import Tree from 'rc-tree';
+import { FolderOpen } from "@mui/icons-material";
 
 export const BabyGruMenuItem = (props) => {
 
@@ -1151,38 +1153,85 @@ export const BabyGruAddWatersMenuItem = (props) => {
 }
 
 export const BabyGruCentreOnLigandMenuItem = (props) => {
-    const [molMenu, setMolMenu] = useState(<></>)
-    const [ligandsOfMolecule, setLigandsOfMolecule] = useState([])
+    const [molTreeData, setMolTreeData] = useState([])
 
     useEffect(() => {
-        console.log(props.molecules)
-        setMolMenu(<div>
-            {props.molecules.map(molecule =>
-                <OverlayTrigger
-                    key={molecule.name}
-                    trigger="click"
-                    placement="right"
-                    onEnter={async () => {
-                        await molecule.updateGemmiStructure()
-                        setLigandsOfMolecule([`Here's one ${molecule.gemmisStructure}`])
-                    }}
-                    overlay={
-                        <Popover>
-                            {ligandsOfMolecule.map(ligand => <span>{ligand}</span>)}
-                        </Popover>
-                    }
-                >
-                    <MenuItem key={molecule.name}>{molecule.name}</MenuItem>
-                </OverlayTrigger>)
-            }
-        </div>)
-    }, [props.molecules.length])
+        const newTreeData = []
+        props.molecules.forEach(molecule => {
+            let newMoleculeNode = { title: molecule.name, key: molecule.molNo, type: "molecule" }
 
-    return <BabyGruMenuItem
-        id='centre-on-ligand-menu-item'
-        popoverContent={molMenu}
-        menuItemText="Centre on ligand..."
-        onCompleted={() => { }}
-        setPopoverIsShown={props.setPopoverIsShown}
-    />
+            const model = molecule.gemmiStructure.first_model()
+            const ligandCids = []
+            for (let i = 0; i < model.chains.size(); i++) {
+                const chain = model.chains.get(i)
+                const ligands = chain.get_ligands()
+                for (let j = 0; j < ligands.length(); j++) {
+                    const ligand = ligands.at(j)
+                    const ligandCid = `/${model.name}/${chain.name}/${ligand.seqid.num?.value}(${ligand.name})`
+                    ligandCids.push({ molecule: molecule, title: ligandCid, key: ligandCid, type: "ligand" })
+                }
+            }
+            if (ligandCids.length > 0) {
+                newMoleculeNode.children = ligandCids
+            }
+            newTreeData.push(newMoleculeNode)
+        })
+        setMolTreeData(newTreeData)
+    }, [props.molecules])
+
+    return <>
+        <BabyGruMenuItem
+            key='centre-on-ligand-menu-item'
+            id='centre-on-ligand-menu-item'
+            popoverContent={
+                <Tree treeData={molTreeData}
+                    onSelect={(selectedKeys, e) => {
+                        if (e.node.type === "ligand") {
+                            const selection = new window.CCP4Module.Selection(e.node.title)
+                            let sumXyz = [0., 0., 0.]
+                            let countXyz = 0
+                            const model = e.node.molecule.gemmiStructure.first_model()
+                            if (selection.matches_model(model)) {
+                                const chains = model.chains
+                                for (let i = 0; i < chains.size(); i++) {
+                                    const ch = chains.get(i)
+                                    if (selection.matches_chain(ch)) {
+                                        const residues = ch.residues
+                                        for (let j = 0; j < residues.size(); j++) {
+                                            const res = residues.get(j)
+                                            if (selection.matches_residue(res)) {
+                                                const atoms = res.atoms
+                                                for (let k = 0; k < atoms.size(); k++) {
+                                                    const at = atoms.get(k)
+                                                    if (selection.matches_atom(at)) {
+                                                        countXyz += 1
+                                                        sumXyz[0] += at.pos.x
+                                                        sumXyz[1] += at.pos.y
+                                                        sumXyz[2] += at.pos.z
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                if (countXyz > 0) {
+                                    console.log(sumXyz, countXyz)
+                                    props.glRef.current.setOrigin([
+                                        -sumXyz[0] / countXyz,
+                                        -sumXyz[1] / countXyz,
+                                        -sumXyz[2] / countXyz], true)
+                                }
+                            }
+
+                        }
+                    }}
+                >
+                </Tree>
+            }
+            menuItemText="Centre on ligand..."
+            onCompleted={() => { }}
+            setPopoverIsShown={props.setPopoverIsShown}
+        />
+    </>
+
 }

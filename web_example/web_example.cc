@@ -2102,6 +2102,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
 
     class_<gemmi::Selection>("Selection")
+    .constructor<std::string>()
     .property("mdl",&gemmi::Selection::mdl)
     .property("chain_ids",&gemmi::Selection::chain_ids)
     .property("from_seqid",&gemmi::Selection::from_seqid)
