@@ -66,11 +66,11 @@ export const BabyGruFileMenu = (props) => {
         let pdbCode = pdbCodeFetchInputRef.current.value.toLowerCase()
         let coordUrl = `https://pdb-redo.eu/db/${pdbCode.toLowerCase()}/${pdbCode.toLowerCase()}_final.pdb`
         let mtzUrl = `https://pdb-redo.eu/db/${pdbCode.toLowerCase()}/${pdbCode.toLowerCase()}_final.mtz/`
-        let diffMtzUrl = `https://pdb-redo.eu/db/${pdbCode.toLowerCase()}/${pdbCode.toLowerCase()}_final.mtz/`
         if (pdbCode) {
             Promise.all([
                 fetchMoleculeFromURL(coordUrl, `${pdbCode}-redo`),
-                fetchMtzFromURL(mtzUrl, `${pdbCode}-map-redo`,  {F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false})    
+                fetchMtzFromURL(mtzUrl, `${pdbCode}-map-redo`,  {F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false}),  
+                fetchMtzFromURL(mtzUrl, `${pdbCode}-map-redo`,  {F: "DELFWT", PHI: "PHDELWT", isDifference: true, useWeight: false})    
             ])
         }
     }
