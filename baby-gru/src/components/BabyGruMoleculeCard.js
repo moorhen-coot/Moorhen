@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { Card, Form, Row, Col, Button } from "react-bootstrap";
+import { Card, Form, Row, Col } from "react-bootstrap";
 import { doDownload, sequenceIsValid } from '../utils/BabyGruUtils';
 import { isDarkBackground } from '../WebGL/mgWebGL'
 import { BabyGruSequenceViewer } from "./BabyGruSequenceViewer";
 import { BabyGruMoleculeCardButtonBar } from "./BabyGruMoleculeCardButtonBar"
+import { BabyGruLigandList } from "./BabyGruLigandList"
 
 export const BabyGruMoleculeCard = (props) => {
     const [showState, setShowState] = useState({})
@@ -182,7 +183,6 @@ export const BabyGruMoleculeCard = (props) => {
     }
 
     const handleProps = { handleCentering, handleCopyFragment, handleDownload, handleRedo, handleUndo, handleResidueRangeRefinement, handleVisibility}
-    //const ligandList = props.molecule.getLigands()
 
     return <Card className="px-0" style={{ marginBottom: '0.5rem', padding: '0' }} key={props.molecule.molNo}>
         <Card.Header>
@@ -300,32 +300,7 @@ export const BabyGruMoleculeCard = (props) => {
                     }
                 </Col>
             </Row>
-            {/**props.molecule.ligands?.length > 0 && 
-                <>
-                    <hr></hr>
-                    <Row style={{ height: '100%' }}>
-                        <Col>
-                            <div>
-                                <b>Ligands</b>
-                            </div>
-                            <Card style={{margin: '0.5rem'}}>
-                                <Card.Body>
-                                    <Row style={{display:'flex', justifyContent:'between'}}>
-                                        <Col style={{alignItems:'center', justifyContent:'left', display:'flex'}}>
-                                            {"flip.buttonLabel"}
-                                        </Col>
-                                        <Col className='col-3' style={{margin: '0', padding:'0', justifyContent: 'right', display:'flex'}}>
-                                            <Button>
-                                                View
-                                            </Button>
-                                        </Col>
-                                    </Row>
-                                </Card.Body>
-                            </Card>
-                        </Col>
-                    </Row>
-                </>
-            */}
+            <BabyGruLigandList molecule={props.molecule} glRef={props.glRef}/>
         </Card.Body>
     </Card >
 }

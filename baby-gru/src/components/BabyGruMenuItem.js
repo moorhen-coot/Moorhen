@@ -1,4 +1,4 @@
-import { MenuItem } from "@mui/material";
+import { Divider, Menu, MenuItem, Modal } from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { OverlayTrigger, Popover, PopoverBody, PopoverHeader, Form, InputGroup, Button, FormSelect, Row, Col, SplitButton, Dropdown } from "react-bootstrap";
 import { SketchPicker } from "react-color";
@@ -8,6 +8,9 @@ import { BabyGruMolecule } from "../utils/BabyGruMolecule";
 import { BabyGruMoleculeSelect } from "./BabyGruMoleculeSelect";
 import BabyGruSlider from "./BabyGruSlider";
 import { BabyGruMapSelect } from "./BabyGruMapSelect";
+import "rc-tree/assets/index.css"
+import Tree from 'rc-tree';
+import { FolderOpen } from "@mui/icons-material";
 
 export const BabyGruMenuItem = (props) => {
 
@@ -106,7 +109,7 @@ export const BabyGruLoadTutorialDataMenuItem = (props) => {
     }
 
     return <BabyGruMenuItem
-        id='load-tutorial-data-menu-item' 
+        id='load-tutorial-data-menu-item'
         popoverContent={panelContent}
         menuItemText="Load tutorial data..."
         onCompleted={onCompleted}
@@ -226,29 +229,29 @@ export const BabyGruRenameDisplayObjectMenuItem = (props) => {
 export const BabyGruMoleculeBondSettingsMenuItem = (props) => {
     const smoothnesSelectRef = useRef(null)
 
-    const panelContent = 
-    <>
-        <Form.Group className="mb-3" style={{ width: '10rem', margin: '0' }} controlId="BabyGruBondWidthSlider">
-            <BabyGruSlider minVal={0.05} maxVal={0.5} logScale={false} sliderTitle="Bond width" intialValue={0.1} externalValue={props.bondWidth} setExternalValue={props.setBondWidth}/>
-        </Form.Group>
-        <Form.Group className="mb-3" style={{ width: '10rem', margin: '0' }} controlId="BabyGruRadiusBondRatioSlider">
-            <BabyGruSlider minVal={1.0} maxVal={3.5} logScale={false} sliderTitle="Radius-Bond ratio" intialValue={1.5} externalValue={props.atomRadiusBondRatio} setExternalValue={props.setAtomRadiusBondRatio}/>
-        </Form.Group>
-        <Form.Group className="mb-3" style={{ width: '10rem', margin: '0' }} controlId="BabyGruSmoothnessSelector">
-            <Form.Label>Smoothness</Form.Label>
-            <FormSelect size="sm" ref={smoothnesSelectRef} defaultValue={props.bondSmoothness} onChange={(evt) => {props.setBondSmoothness(evt.target.value)}}>
-                <option value={1} key={1}>Coarse</option>
-                <option value={2} key={2}>Nice</option>
-                <option value={3} key={3}>Smooth</option>
-            </FormSelect>
-        </Form.Group>
-    </>
+    const panelContent =
+        <>
+            <Form.Group className="mb-3" style={{ width: '10rem', margin: '0' }} controlId="BabyGruBondWidthSlider">
+                <BabyGruSlider minVal={0.05} maxVal={0.5} logScale={false} sliderTitle="Bond width" intialValue={0.1} externalValue={props.bondWidth} setExternalValue={props.setBondWidth} />
+            </Form.Group>
+            <Form.Group className="mb-3" style={{ width: '10rem', margin: '0' }} controlId="BabyGruRadiusBondRatioSlider">
+                <BabyGruSlider minVal={1.0} maxVal={3.5} logScale={false} sliderTitle="Radius-Bond ratio" intialValue={1.5} externalValue={props.atomRadiusBondRatio} setExternalValue={props.setAtomRadiusBondRatio} />
+            </Form.Group>
+            <Form.Group className="mb-3" style={{ width: '10rem', margin: '0' }} controlId="BabyGruSmoothnessSelector">
+                <Form.Label>Smoothness</Form.Label>
+                <FormSelect size="sm" ref={smoothnesSelectRef} defaultValue={props.bondSmoothness} onChange={(evt) => { props.setBondSmoothness(evt.target.value) }}>
+                    <option value={1} key={1}>Coarse</option>
+                    <option value={2} key={2}>Nice</option>
+                    <option value={3} key={3}>Smooth</option>
+                </FormSelect>
+            </Form.Group>
+        </>
 
     return <BabyGruMenuItem
         popoverPlacement='left'
         popoverContent={panelContent}
         menuItemText={"Bond settings"}
-        onCompleted={() => {}}
+        onCompleted={() => { }}
         setPopoverIsShown={props.setPopoverIsShown}
     />
 }
@@ -413,9 +416,9 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
                     }}>No</Dropdown.Item>
                 </SplitButton>
                 <Form.Select disabled={!createInstance} ref={addToRef} defaultValue={"-1"} value={addToMolecule} onChange={(e) => {
-                        setAddToMolecule(parseInt(e.target.value))
-                        addToMoleculeValue.current = parseInt(e.target.value)
-                    }}>
+                    setAddToMolecule(parseInt(e.target.value))
+                    addToMoleculeValue.current = parseInt(e.target.value)
+                }}>
                     <option key={-1} value={"-1"}>{createInstance ? "...create new molecule" : ""}</option>
                     {props.molecules.map(molecule => <option key={molecule.molNo} value={molecule.molNo}>
                         ...add to {molecule.name}
@@ -447,17 +450,17 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
                 })
                 return Promise.resolve(true)
             })
-            .then(result => {
-                props.molecules.forEach(molecule => {
+            .then(async (result) => {
+                props.molecules.forEach(async molecule => {
                     if (molecule.molNo == parseInt(selectedMoleculeIndex) ||
                         -999999 == parseInt(selectedMoleculeIndex)) {
-                        molecule.redraw(props.glRef)
+                        let a = await molecule.redraw(props.glRef)
                     }
                 })
                 return Promise.resolve()
             })
             .then(result => {
-                console.log({ createInstance })
+                //console.log({ createInstance })
                 if (createRef.current) {
                     const instanceName = tlcValueRef.current
                     console.log({ instanceName })
@@ -494,7 +497,7 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
                             return toMolecule.mergeMolecules(otherMolecules, props.glRef, true)
                                 .then(_ => {
                                     return toMolecule.redraw(props.glRef)
-                                })    
+                                })
                         } else {
                             newMolecule.redraw(props.glRef)
                         }
@@ -522,13 +525,13 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
     }
 
     const fetchFromMrcLmb = async (newTlc) => {
-        const url = `https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/${newTlc.toLowerCase()[0]}/${newTlc.toLowerCase()}.cif`
+        const url = `https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`
         const response = await fetch(url)
         if (!response.ok) {
-            console.log(`Cannot fetch data from https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/${newTlc.toLowerCase()[0]}/${newTlc.toLowerCase()}.cif`)
+            console.log(`Cannot fetch data from https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`)
         } else {
             const fileContent = await response.text()
-            return handleFileContent(fileContent)    
+            return handleFileContent(fileContent)
         }
     }
 
@@ -548,7 +551,7 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
         } else {
             console.log(`Unkown ligand source ${fileOrLibraryRef.current}`)
         }
-        
+
     }, [fileOrLibrary])
 
     return <BabyGruMenuItem
@@ -922,7 +925,7 @@ export const BabyGruMergeMoleculesMenuItem = (props) => {
 
     const panelContent = <>
         <BabyGruMoleculeSelect {...props} label="Into molecule" allowAny={false} ref={toRef} />
-        {props.fromMolNo === null ? <BabyGruMoleculeSelect {...props} label="From molecule" allowAny={false} ref={fromRef}/> : null}
+        {props.fromMolNo === null ? <BabyGruMoleculeSelect {...props} label="From molecule" allowAny={false} ref={fromRef} /> : null}
     </>
 
     const onCompleted = useCallback(async () => {
@@ -930,7 +933,7 @@ export const BabyGruMergeMoleculesMenuItem = (props) => {
             .filter(molecule => molecule.molNo === parseInt(toRef.current.value))[0]
         const otherMolecules = props.molecules
             .filter(molecule => molecule.molNo === parseInt(props.fromMolNo !== null ? props.fromMolNo : fromRef.current.value) && molecule.molNo !== toMolecule.molNo)
-        if (!otherMolecules.length > 0){
+        if (!otherMolecules.length > 0) {
             console.log('No valid molecules selected, skipping merge...')
             return
         }
@@ -974,23 +977,23 @@ export const BabyGruGoToMenuItem = (props) => {
         if (!selectedCid) {
             return
         }
-        
+
         const [molName, insCode, chainId, resInfo, atomName] = selectedCid.split('/')
         if (!molName || !chainId || !resInfo) {
             return
         }
-        
+
         const molecule = props.molecules.find(molecule => molecule.name == molName)
         if (!molecule) {
             return
         }
-        
+
         const resNum = resInfo.split("(")[0]
         const selectedResidue = {
-                molName: molName,
-                modelIndex: 0,
-                seqNum: resNum,
-                chain: chainId
+            molName: molName,
+            modelIndex: 0,
+            seqNum: resNum,
+            chain: chainId
         }
         molecule.centreOn(props.glRef, selectedResidue)
     }
@@ -1147,4 +1150,88 @@ export const BabyGruAddWatersMenuItem = (props) => {
         onCompleted={onCompleted}
         setPopoverIsShown={props.setPopoverIsShown}
     />
+}
+
+export const BabyGruCentreOnLigandMenuItem = (props) => {
+    const [molTreeData, setMolTreeData] = useState([])
+
+    useEffect(() => {
+        const newTreeData = []
+        props.molecules.forEach(molecule => {
+            let newMoleculeNode = { title: molecule.name, key: molecule.molNo, type: "molecule" }
+
+            const model = molecule.gemmiStructure.first_model()
+            const ligandCids = []
+            for (let i = 0; i < model.chains.size(); i++) {
+                const chain = model.chains.get(i)
+                const ligands = chain.get_ligands()
+                for (let j = 0; j < ligands.length(); j++) {
+                    const ligand = ligands.at(j)
+                    const ligandCid = `/${model.name}/${chain.name}/${ligand.seqid.num?.value}(${ligand.name})`
+                    ligandCids.push({ molecule: molecule, title: ligandCid, key: ligandCid, type: "ligand" })
+                }
+            }
+            if (ligandCids.length > 0) {
+                newMoleculeNode.children = ligandCids
+            }
+            newTreeData.push(newMoleculeNode)
+        })
+        setMolTreeData(newTreeData)
+    }, [props.molecules])
+
+    return <>
+        <BabyGruMenuItem
+            key='centre-on-ligand-menu-item'
+            id='centre-on-ligand-menu-item'
+            popoverContent={
+                <Tree treeData={molTreeData}
+                    onSelect={(selectedKeys, e) => {
+                        if (e.node.type === "ligand") {
+                            const selection = new window.CCP4Module.Selection(e.node.title)
+                            let sumXyz = [0., 0., 0.]
+                            let countXyz = 0
+                            const model = e.node.molecule.gemmiStructure.first_model()
+                            if (selection.matches_model(model)) {
+                                const chains = model.chains
+                                for (let i = 0; i < chains.size(); i++) {
+                                    const ch = chains.get(i)
+                                    if (selection.matches_chain(ch)) {
+                                        const residues = ch.residues
+                                        for (let j = 0; j < residues.size(); j++) {
+                                            const res = residues.get(j)
+                                            if (selection.matches_residue(res)) {
+                                                const atoms = res.atoms
+                                                for (let k = 0; k < atoms.size(); k++) {
+                                                    const at = atoms.get(k)
+                                                    if (selection.matches_atom(at)) {
+                                                        countXyz += 1
+                                                        sumXyz[0] += at.pos.x
+                                                        sumXyz[1] += at.pos.y
+                                                        sumXyz[2] += at.pos.z
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                if (countXyz > 0) {
+                                    console.log(sumXyz, countXyz)
+                                    props.glRef.current.setOrigin([
+                                        -sumXyz[0] / countXyz,
+                                        -sumXyz[1] / countXyz,
+                                        -sumXyz[2] / countXyz], true)
+                                }
+                            }
+
+                        }
+                    }}
+                >
+                </Tree>
+            }
+            menuItemText="Centre on ligand..."
+            onCompleted={() => { }}
+            setPopoverIsShown={props.setPopoverIsShown}
+        />
+    </>
+
 }

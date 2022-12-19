@@ -88,7 +88,7 @@ ${coot_src}/MoleculesToTriangles/CXXSurface/CXXTorusNode.cpp
 ${coot_src}/MoleculesToTriangles/CXXSurface/CXXTriangle.cpp
 ${coot_src}/MoleculesToTriangles/CXXSurface/CXXUtils.cpp
 ${coot_src}/MoleculesToTriangles/CXXSurface/CXXVCN.cpp
-${coot_src}/MoleculesToTriangles/CXXSurface/ElectroSurface.cpp
+#${coot_src}/MoleculesToTriangles/CXXSurface/ElectroSurface.cpp
 ${coot_src}/MoleculesToTriangles/CXXClasses/AtomPropertyRampColorRule.cpp
 ${coot_src}/MoleculesToTriangles/CXXClasses/BallsPrimitive.cpp
 ${coot_src}/MoleculesToTriangles/CXXClasses/BondsPrimitive.cpp
@@ -145,6 +145,7 @@ ${coot_src}/api/coot_molecule_moltris.cc
 ${coot_src}/api/phi-psi-prob.cc
 ${coot_src}/api/molecules_container_ligand_fitting.cc
 ${coot_src}/api/coot_molecule_merge_molecules.cc
+${coot_src}/api/coot_molecule_replace_fragment.cc
 ${coot_src}/api/add-terminal-residue.cc
 ${coot_src}/api/molecules_container.cc
 ${coot_src}/api/oct.cc
