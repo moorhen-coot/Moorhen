@@ -268,38 +268,40 @@ export const BabyGruMoleculeCard = (props) => {
                     />
                 </Col>
             </Row>
-            <hr></hr>
-            <Row style={{ height: '100%' }}>
-                <Col>
-                    <div>
-                        <b>Sequences</b>
-                    </div>
-                    {props.molecule.cachedAtoms.sequences &&
-                        props.molecule.cachedAtoms.sequences.map(
-                            sequence => {
-                                if (!sequenceIsValid(sequence.sequence)) {
-                                    return (
-                                        <div>
-                                            <p>{`Unable to parse sequence data for chain ${sequence?.chain}`}</p>
-                                        </div>
-                                    )
+            {props.molecule.cachedAtoms.sequences && props.molecule.cachedAtoms.sequences.length > 0 &&
+                <>
+                    <hr></hr>
+                    <Row style={{ height: '100%' }}>
+                        <Col>
+                            <div>
+                                <b>Sequences</b>
+                            </div>
+                            {props.molecule.cachedAtoms.sequences.map(
+                                sequence => {
+                                    if (!sequenceIsValid(sequence.sequence)) {
+                                        return (
+                                            <div>
+                                                <p>{`Unable to parse sequence data for chain ${sequence?.chain}`}</p>
+                                            </div>
+                                        )
+                                    }
+                                    return (<BabyGruSequenceViewer
+                                        sequence={sequence}
+                                        molecule={props.molecule}
+                                        glRef={props.glRef}
+                                        clickedResidue={clickedResidue}
+                                        setClickedResidue={setClickedResidue}
+                                        selectedResidues={selectedResidues}
+                                        setSelectedResidues={setSelectedResidues}
+                                        hoveredAtom={props.hoveredAtom}
+                                        setHoveredAtom={props.setHoveredAtom}
+                                    />)
                                 }
-                                return (<BabyGruSequenceViewer
-                                    sequence={sequence}
-                                    molecule={props.molecule}
-                                    glRef={props.glRef}
-                                    clickedResidue={clickedResidue}
-                                    setClickedResidue={setClickedResidue}
-                                    selectedResidues={selectedResidues}
-                                    setSelectedResidues={setSelectedResidues}
-                                    hoveredAtom={props.hoveredAtom}
-                                    setHoveredAtom={props.setHoveredAtom}
-                                />)
-                            }
-                        )
-                    }
-                </Col>
-            </Row>
+                            )}
+                        </Col>
+                    </Row>
+                </>
+            }
             <BabyGruLigandList molecule={props.molecule} glRef={props.glRef}/>
         </Card.Body>
     </Card >
