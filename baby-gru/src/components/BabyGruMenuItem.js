@@ -398,7 +398,7 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
                     type="text" />
             </Form.Group>
         }
-        <BabyGruMoleculeSelect key="moleculeSelectRef" {...props} allowAny={true} ref={moleculeSelectRef} label="Make monomer available to" />
+        <BabyGruMoleculeSelect {...props} allowAny={true} ref={moleculeSelectRef} label="Make monomer available to" />
         <Form.Group key="createInstance" style={{ width: '20rem', margin: '0.5rem' }} controlId="createInstance" className="mb-3">
             <Form.Label>Create instance on read</Form.Label>
             <InputGroup>
