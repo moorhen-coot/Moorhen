@@ -1156,10 +1156,21 @@ export const BabyGruCentreOnLigandMenuItem = (props) => {
     const [molTreeData, setMolTreeData] = useState([])
 
     useEffect(() => {
+        async function updateMoleculeAtoms(molecule) {
+            await molecule.updateAtoms()
+        }
+
         const newTreeData = []
         props.molecules.forEach(molecule => {
-            let newMoleculeNode = { title: molecule.name, key: molecule.molNo, type: "molecule" }
 
+            if (molecule.gemmiStructure === null || molecule.atomsDirty) {
+                updateMoleculeAtoms(molecule)
+            }
+            if (molecule.gemmiStructure === null) {
+                return
+            }
+            
+            let newMoleculeNode = { title: molecule.name, key: molecule.molNo, type: "molecule" }   
             const model = molecule.gemmiStructure.first_model()
             const ligandCids = []
             for (let i = 0; i < model.chains.size(); i++) {
