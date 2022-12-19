@@ -106,6 +106,9 @@ BabyGruMolecule.prototype.loadToCootFromFile = function (source) {
             $this.molNo = reply.data.result.result
             return Promise.resolve($this)
         })
+        .catch((err) => {
+            return Promise.reject(err)
+        })
 }
 
 BabyGruMolecule.prototype.loadToCootFromString = async function (coordData, name) {
@@ -127,7 +130,6 @@ BabyGruMolecule.prototype.loadToCootFromString = async function (coordData, name
 
     $this.molNo = response.data.result.result
     return Promise.resolve($this)
-
 }
 
 BabyGruMolecule.prototype.setAtomsDirty = function (state) {
@@ -136,8 +138,7 @@ BabyGruMolecule.prototype.setAtomsDirty = function (state) {
 
 BabyGruMolecule.prototype.loadToCootFromURL = function (url, molName) {
     const $this = this
-    //console.log('Off to fetch url', url)
-    //Remember to change this to an appropriate URL for downloads in produciton, and to deal with the consequent CORS headache
+
     return fetch(url)
         .then(response => {
             return response.text()
@@ -153,6 +154,9 @@ BabyGruMolecule.prototype.loadToCootFromURL = function (url, molName) {
                 commandArgs: [coordData, $this.name]
             }, true)
         }).then(reply => {
+            if (reply.data.result.result === -1) {
+                return Promise.reject('Failed to parse fetched PDB data')
+            }
             $this.molNo = reply.data.result.result
             return Promise.resolve($this)
         })

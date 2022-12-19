@@ -54,12 +54,19 @@ BabyGruMap.prototype.loadToCootFromMtzData = function (data, name, selectedColum
             commandArgs: [data, name, selectedColumns]
         })
             .then(reply => {
+                if (reply.data.result.status === 'Exception') {
+                    reject(reply.data.result.consoleMessage)
+                }
                 $this.molNo = reply.data.result.result
                 if (Object.keys(selectedColumns).includes('isDifference')){
                     $this.isDifference = selectedColumns.isDifference
                 }
                 resolve($this)
+            })        
+            .catch((err) => {
+                return Promise.reject(err)
             })
+    
     })
 }
 
@@ -72,7 +79,7 @@ BabyGruMap.prototype.loadToCootFromMtzFile = function (source, selectedColumns) 
         })
 }
 
-BabyGruMap.prototype.loadToCootFromMapURL = function (url, name) {
+BabyGruMap.prototype.loadToCootFromMapURL = function (url, name, isDiffMap=false) {
     const $this = this
     console.log('Off to fetch url', url)
 
@@ -81,7 +88,7 @@ BabyGruMap.prototype.loadToCootFromMapURL = function (url, name) {
             return response.blob()
         }).then(mapData => mapData.arrayBuffer())
         .then(arrayBuffer => {
-            return $this.loadToCootFromMapData(new Uint8Array(arrayBuffer), name)
+            return $this.loadToCootFromMapData(new Uint8Array(arrayBuffer), name, isDiffMap)
         })
         .catch((err) => { 
             return Promise.reject(err)
@@ -98,10 +105,16 @@ BabyGruMap.prototype.loadToCootFromMapData = function (data, name, isDiffMap) {
             commandArgs: [data, name, isDiffMap]
         })
             .then(reply => {
+                if (reply.data.result?.status === 'Exception') {
+                    reject(reply.data.result.consoleMessage)
+                }
                 $this.molNo = reply.data.result.result
                 $this.isDifference = isDiffMap
                 resolve($this)
             })
+            .catch((err) => { 
+                return Promise.reject(err)
+             })    
     })
 }
 
