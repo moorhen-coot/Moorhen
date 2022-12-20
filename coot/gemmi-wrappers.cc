@@ -2115,17 +2115,17 @@ GlobWalk
     function("calculate_mass_chain", select_overload<double(const gemmi::Chain&)>(&gemmi::calculate_mass));
     function("add_residue_chain", select_overload<gemmi::Residue&(gemmi::Chain&, gemmi::Residue, int)>(&add_child));
     function("add_residue_residuespan", select_overload<gemmi::Residue&(gemmi::ResidueSpan&, gemmi::Residue, int)>(&add_item));
+    function("remove_hydrogens_structure",select_overload<void(gemmi::Structure&)>(&gemmi::remove_hydrogens));
+    function("remove_hydrogens_model",    select_overload<void(gemmi::Model&)>(&gemmi::remove_hydrogens));
+    function("remove_hydrogens_residue",    select_overload<void(gemmi::Residue&)>(&gemmi::remove_hydrogens));
+    function("trim_to_alanine_chain",    select_overload<void(gemmi::Chain&)>(&gemmi::trim_to_alanine));
+    function("trim_to_alanine_residue",    select_overload<bool(gemmi::Residue&)>(&gemmi::trim_to_alanine));
 
 /*
     function("check_polymer_type", [](const ResidueSpan& span);
     function("make_one_letter_sequence", [](const ResidueSpan& span);
     function("transform_pos_and_adp", transform_pos_and_adp<ResidueSpan>);
     function("add_atom", add_child<Residue, Atom>);
-    function("remove_hydrogens", remove_hydrogens<Structure>);
-    function("remove_hydrogens", remove_hydrogens<Model>);
-    function("remove_hydrogens", remove_hydrogens<Residue>);
-    function("trim_to_alanine", (Chain&)) &trim_to_alanine);
-    function("trim_to_alanine", (Residue&) &trim_to_alanine);
     */
 
     //Utilities to deal with char*/[]
