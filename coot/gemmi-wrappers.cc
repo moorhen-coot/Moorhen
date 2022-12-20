@@ -27,6 +27,9 @@
 #include <gemmi/refln.hpp>
 #include <gemmi/cif2mtz.hpp>
 #include <gemmi/ccp4.hpp>
+#include <gemmi/modify.hpp>
+#include <gemmi/assembly.hpp>
+#include <gemmi/calculate.hpp>
 
 using namespace emscripten;
 
@@ -2073,6 +2076,45 @@ GlobWalk
     function("read_mtz_file",&gemmi::read_mtz_file);
     function("get_spacegroup_by_name",&gemmi::get_spacegroup_by_name);
     function("gemmi_setup_entities",&gemmi::setup_entities);
+
+    function("assign_subchains", &gemmi::assign_subchains);
+    function("ensure_entities", &gemmi::ensure_entities);
+    function("deduplicate_entities", &gemmi::deduplicate_entities);
+    function("expand_hd_mixture", &gemmi::expand_hd_mixture);
+    function("collapse_hd_mixture", &gemmi::collapse_hd_mixture);
+    function("shorten_chain_names", &gemmi::shorten_chain_names);
+    function("split_chains_by_segments", &gemmi::split_chains_by_segments);
+    function("has_entity_types_and_subchains", &gemmi::has_entity_types_and_subchains);
+    function("assign_cis_flags_structure", select_overload<void(gemmi::Structure&)>(&gemmi::assign_cis_flags));
+    function("assign_cis_flags_model",     select_overload<void(gemmi::Model&)>(&gemmi::assign_cis_flags));
+    function("assign_cis_flags_chain",     select_overload<void(gemmi::Chain&)>(&gemmi::assign_cis_flags));
+    function("remove_alternative_conformations_structure",select_overload<void(gemmi::Structure&)>(&gemmi::remove_alternative_conformations));
+    function("remove_alternative_conformations_model",    select_overload<void(gemmi::Model&)>(&gemmi::remove_alternative_conformations));
+    function("remove_alternative_conformations_chain",    select_overload<void(gemmi::Chain&)>(&gemmi::remove_alternative_conformations));
+    function("remove_waters_structure",select_overload<void(gemmi::Structure&)>(&gemmi::remove_waters));
+    function("remove_waters_model",    select_overload<void(gemmi::Model&)>(&gemmi::remove_waters));
+    function("remove_waters_chain",    select_overload<void(gemmi::Chain&)>(&gemmi::remove_waters));
+    function("remove_ligands_and_waters_structure",select_overload<void(gemmi::Structure&)>(&gemmi::remove_ligands_and_waters));
+    function("remove_ligands_and_waters_model",    select_overload<void(gemmi::Model&)>(&gemmi::remove_ligands_and_waters));
+    function("remove_ligands_and_waters_chain",    select_overload<void(gemmi::Chain&)>(&gemmi::remove_ligands_and_waters));
+    function("has_hydrogen", select_overload<bool(const gemmi::Model&)>(&gemmi::has_hydrogen));
+    function("count_hydrogen_sites", select_overload<size_t(const gemmi::Model&)>(&gemmi::count_hydrogen_sites));
+    function("calculate_mass_model", select_overload<double(const gemmi::Model&)>(&gemmi::calculate_mass));
+    function("calculate_mass_chain", select_overload<double(const gemmi::Chain&)>(&gemmi::calculate_mass));
+
+/*
+    function("add_residue", add_child<Chain, Residue>);
+    function("add_residue", add_item<ResidueSpan, Residue>);
+    function("check_polymer_type", [](const ResidueSpan& span);
+    function("make_one_letter_sequence", [](const ResidueSpan& span);
+    function("transform_pos_and_adp", transform_pos_and_adp<ResidueSpan>);
+    function("add_atom", add_child<Residue, Atom>);
+    function("remove_hydrogens", remove_hydrogens<Structure>);
+    function("remove_hydrogens", remove_hydrogens<Model>);
+    function("remove_hydrogens", remove_hydrogens<Residue>);
+    function("trim_to_alanine", (Chain&)) &trim_to_alanine);
+    function("trim_to_alanine", (Residue&) &trim_to_alanine);
+    */
 
     //Utilities to deal with char*/[]
     function("setCifItemPair",&set_cif_item_pair);
