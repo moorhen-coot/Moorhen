@@ -667,6 +667,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     function("gsl_sf_bessel_J0",&gsl_sf_bessel_J0);
     function("gsl_cdf_hypergeometric_P",&gsl_cdf_hypergeometric_P);
 
+    function("gemmi_setup_entities",&gemmi::setup_entities);
 
     register_vector<gemmi::GridOp>("VectorGemmiGridOp");
     register_vector<gemmi::Mtz::Dataset>("VectorGemmiMtzDataset");
