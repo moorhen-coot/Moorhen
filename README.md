@@ -69,7 +69,7 @@ a subdirectory of the source directory. (Actually this is true for most of the b
 <br/>So first you need to make a directory "somewhere else", e.g. your home:  
 `cd`  
 `mkdir webcoot_build`  
-`cd webcoot/build`  
+`cd webcoot_build`  
 <br/>Then you need to run the `initial_build.sh` script in the source directory, e.g.:  
 `/parent/of/where/you/installed/the_source/ccp4_wasm/initial_build.sh`  
 This should build all dependencies and then `WebCoot`/`BabyGru`. 

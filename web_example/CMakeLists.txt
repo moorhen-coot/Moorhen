@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.13)
 
 set(CMAKE_EXECUTABLE_SUFFIX ".js")
 
-add_executable(web_example web_example.cc ../checkout/ssm/superpose.cpp ../checkout/ssm/sup_pairwise.cpp ../checkout/ssm/sup_multiple.cpp
+add_executable(web_example web_example.cc ../coot/gemmi-wrappers.cc ../checkout/ssm/superpose.cpp ../checkout/ssm/sup_pairwise.cpp ../checkout/ssm/sup_multiple.cpp
 ../checkout/gesamt/src/gesamt.cpp
 ../checkout/gesamt/src/gesamt_domains.cpp
 ../checkout/gesamt/src/gesamt_domains.h

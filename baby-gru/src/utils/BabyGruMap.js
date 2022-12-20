@@ -13,6 +13,7 @@ export function BabyGruMap(commandCentre) {
     this.displayObjects = { Coot: [] }
     this.litLines = true
     this.isDifference = false
+    this.hasReflectionData = false
 }
 
 BabyGruMap.prototype.delete = async function (glRef) {
@@ -27,21 +28,25 @@ BabyGruMap.prototype.delete = async function (glRef) {
 }
 
 
-BabyGruMap.prototype.loadToCootFromMtzURL = function (url, name, selectedColumns) {
+BabyGruMap.prototype.loadToCootFromMtzURL = async function (url, name, selectedColumns) {
     const $this = this
     console.log('Off to fetch url', url)
-    //Remember to change this to an appropriate URL for downloads in produciton, and to deal with the consequent CORS headache
-    return fetch(url)
-        .then(response => {
-            return response.blob()
-        }).then(reflectionData => reflectionData.arrayBuffer())
-        .then(arrayBuffer => {
-            return $this.loadToCootFromMtzData(new Uint8Array(arrayBuffer), name, selectedColumns)
-        })
-        .catch((err) => { 
-            console.log(err)
-            return Promise.reject(err)
-         })
+
+    try {
+        const response = await fetch(url)
+        const reflectionData = await response.blob()
+        const arrayBuffer = await reflectionData.arrayBuffer()
+        const asUIntArray = new Uint8Array(arrayBuffer)
+        await $this.loadToCootFromMtzData(asUIntArray, name, selectedColumns)
+        if (selectedColumns.calcStructFact) {
+            await $this.associateToReflectionData(selectedColumns, asUIntArray)
+            $this.hasReflectionData = true
+        }
+        return $this
+    } catch (err) {
+        console.log(err)
+        return Promise.reject(err)
+    }
 }
 
 BabyGruMap.prototype.loadToCootFromMtzData = function (data, name, selectedColumns) {
@@ -54,25 +59,35 @@ BabyGruMap.prototype.loadToCootFromMtzData = function (data, name, selectedColum
             commandArgs: [data, name, selectedColumns]
         })
             .then(reply => {
+                if (reply.data.result.status === 'Exception') {
+                    reject(reply.data.result.consoleMessage)
+                }
                 $this.molNo = reply.data.result.result
                 if (Object.keys(selectedColumns).includes('isDifference')){
                     $this.isDifference = selectedColumns.isDifference
                 }
                 resolve($this)
+            })        
+            .catch((err) => {
+                return Promise.reject(err)
             })
+    
     })
 }
 
-BabyGruMap.prototype.loadToCootFromMtzFile = function (source, selectedColumns) {
+BabyGruMap.prototype.loadToCootFromMtzFile = async function (source, selectedColumns) {
     const $this = this
-    return readDataFile(source)
-        .then(reflectionData => {
-            const asUIntArray = new Uint8Array(reflectionData)
-            return $this.loadToCootFromMtzData(asUIntArray, source.name, selectedColumns)
-        })
+    let reflectionData = await readDataFile(source)
+    const asUIntArray = new Uint8Array(reflectionData)
+    await $this.loadToCootFromMtzData(asUIntArray, source.name, selectedColumns)
+    if (selectedColumns.calcStructFact) {
+        await $this.associateToReflectionData(selectedColumns, asUIntArray)
+        $this.hasReflectionData = true
+    } 
+    return $this
 }
 
-BabyGruMap.prototype.loadToCootFromMapURL = function (url, name) {
+BabyGruMap.prototype.loadToCootFromMapURL = function (url, name, isDiffMap=false) {
     const $this = this
     console.log('Off to fetch url', url)
 
@@ -81,7 +96,7 @@ BabyGruMap.prototype.loadToCootFromMapURL = function (url, name) {
             return response.blob()
         }).then(mapData => mapData.arrayBuffer())
         .then(arrayBuffer => {
-            return $this.loadToCootFromMapData(new Uint8Array(arrayBuffer), name)
+            return $this.loadToCootFromMapData(new Uint8Array(arrayBuffer), name, isDiffMap)
         })
         .catch((err) => { 
             return Promise.reject(err)
@@ -98,10 +113,16 @@ BabyGruMap.prototype.loadToCootFromMapData = function (data, name, isDiffMap) {
             commandArgs: [data, name, isDiffMap]
         })
             .then(reply => {
+                if (reply.data.result?.status === 'Exception') {
+                    reject(reply.data.result.consoleMessage)
+                }
                 $this.molNo = reply.data.result.result
                 $this.isDifference = isDiffMap
                 resolve($this)
             })
+            .catch((err) => { 
+                return Promise.reject(err)
+             })    
     })
 }
 
@@ -238,5 +259,23 @@ BabyGruMap.prototype.doCootContour = function (glRef, x, y, z, radius, contourLe
         })
     })
 
+}
+
+BabyGruMap.prototype.associateToReflectionData = async function (selectedColumns, reflectionData) {
+    if (!selectedColumns.Fobs || !selectedColumns.SigFobs || !selectedColumns.FreeR) {
+        return Promise.reject('Missing column data')
+    }
+    let commandArgs = [
+        this.molNo, { name: this.name, data: reflectionData },
+        selectedColumns.Fobs, selectedColumns.SigFobs, selectedColumns.FreeR
+    ]
+
+    let result = await this.commandCentre.current.cootCommand({
+        command: 'shim_associate_data_mtz_file_with_map',
+        commandArgs: commandArgs,
+        returnType: 'status'
+    }, true)
+
+    return result
 }
 

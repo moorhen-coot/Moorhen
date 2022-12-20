@@ -265,8 +265,8 @@ export const cidToSpec = (cid) => {
     const cidTokens = cid.split('/')
     const chain_id = cidTokens[2]
     const res_no = parseInt(cidTokens[3])
-    const atom_name = cidTokens[4]
-    const ins_code = ""
-    const alt_conf = ""
+    const atom_name = cidTokens[4].split(":")[0]
+    const ins_code = cidTokens[3].split(".").length > 1 ? cidTokens[3].split(".")[1] : ""
+    const alt_conf = cidTokens[4].split(":").length > 1 ? cidTokens[4].split(":")[1] : ""
     return { chain_id, res_no, atom_name, ins_code, alt_conf }
 }

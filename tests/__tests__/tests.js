@@ -40,8 +40,11 @@ describe('Testing molecules_container_js', () => {
         const sgp1 = cootModule.get_spacegroup_by_name('P1')
         console.log(sgp1)
         console.log("hm", cootModule.getSpaceGroupHMAsString(sgp1))
+        console.log("hm(oo)", sgp1.hm())
         console.log("hall", cootModule.getSpaceGroupHallAsString(sgp1))
+        console.log("hall(oo)", sgp1.hall())
         console.log("qualifier", cootModule.getSpaceGroupQualifierAsString(sgp1))
+        console.log("qualifier(oo)", sgp1.qualifier())
         console.log(st.spacegroup_hm)
 
         for (let i = 0; i < chains.size(); i++) {

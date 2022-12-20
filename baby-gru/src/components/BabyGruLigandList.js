@@ -37,14 +37,10 @@ export const BabyGruLigandList = (props) => {
     })
 
     return <>
-            {ligandList.length > 0 && 
+            {ligandList.length > 0 ? 
                 <>
-                    <hr></hr>
                     <Row style={{ height: '100%' }}>
                         <Col>
-                            <div>
-                                <b>Ligands</b>
-                            </div>
                             {ligandList.map(ligand => {
                                 return <Card style={{margin: '0.5rem'}}>
                                             <Card.Body>
@@ -64,6 +60,10 @@ export const BabyGruLigandList = (props) => {
                         </Col>
                     </Row>
                 </>
+                :
+                <div>
+                    <b>No ligands</b>
+                </div>
             }
         </>
 }

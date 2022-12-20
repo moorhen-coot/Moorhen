@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Card, Form, Row, Col } from "react-bootstrap";
+import { Card, Form, Row, Col, Accordion } from "react-bootstrap";
 import { doDownload, sequenceIsValid } from '../utils/BabyGruUtils';
 import { isDarkBackground } from '../WebGL/mgWebGL'
 import { BabyGruSequenceViewer } from "./BabyGruSequenceViewer";
@@ -212,95 +212,117 @@ export const BabyGruMoleculeCard = (props) => {
             </Row>
         </Card.Header>
         <Card.Body style={{ display: isCollapsed ? 'none' : '' }}>
-            <Row style={{ height: '100%' }}>
-                <Col>
-                    <div>
-                        <b>Display Options</b>
-                    </div>
-                    <div>
-                        {Object.keys(props.molecule.displayObjects).map(key => {
-                            return <Form.Check
-                                key={key}
-                                inline
-                                label={`${key.substring(0, 3)}.`}
-                                feedbackTooltip={"Toggle on"}
-                                name={key}
-                                type="checkbox"
-                                variant="outline"
-                                checked={showState[key]}
-                                disabled={!isVisible}
-                                onChange={(e) => {
-                                    if (e.target.checked) {
-                                        props.molecule.show(key, props.glRef)
-                                        const changedState = { ...showState }
-                                        changedState[key] = true
-                                        setShowState(changedState)
+            <Accordion  alwaysOpen={true} defaultActiveKey={['displayOpytions', 'sequences']}>
+
+                <Accordion.Item eventKey="displayOpytions" style={{ padding: '0', margin: '0' }} >
+                    <Accordion.Header style={{ padding: '0', margin: '0' }}>Display Options</Accordion.Header>
+                    <Accordion.Body>
+                        <Row style={{ height: '100%' }}>
+                            <Col>
+                                <div>
+                                    {Object.keys(props.molecule.displayObjects).map(key => {
+                                        return <Form.Check
+                                            key={key}
+                                            inline
+                                            label={`${key.substring(0, 3)}.`}
+                                            feedbackTooltip={"Toggle on"}
+                                            name={key}
+                                            type="checkbox"
+                                            variant="outline"
+                                            checked={showState[key]}
+                                            disabled={!isVisible}
+                                            onChange={(e) => {
+                                                if (e.target.checked) {
+                                                    props.molecule.show(key, props.glRef)
+                                                    const changedState = { ...showState }
+                                                    changedState[key] = true
+                                                    setShowState(changedState)
+                                                }
+                                                else {
+                                                    props.molecule.hide(key, props.glRef)
+                                                    const changedState = { ...showState }
+                                                    changedState[key] = false
+                                                    setShowState(changedState)
+                                                }
+                                            }} />
+                                    })
                                     }
-                                    else {
-                                        props.molecule.hide(key, props.glRef)
-                                        const changedState = { ...showState }
-                                        changedState[key] = false
-                                        setShowState(changedState)
-                                    }
-                                }} />
-                        })
+                                </div>
+                            </Col>
+                        </Row>
+                        <hr></hr>
+                        <Row style={{ height: '100%' }}>
+                            <Col>
+                                <Form.Check checked={props.molecule === props.activeMolecule}
+                                    style={{ margin: '0' }}
+                                    inline
+                                    label={`Rotate/Translate`}
+                                    type="checkbox"
+                                    variant="outline"
+                                    disabled={!isVisible}
+                                    onChange={(e) => {
+                                        if (e.target.checked) {
+                                            props.setActiveMolecule(props.molecule)
+                                        } else {
+                                            props.setActiveMolecule(null)
+                                        }
+                                    }}
+                                />
+                            </Col>
+                        </Row>
+                    </Accordion.Body>
+                </Accordion.Item>
+
+
+                <Accordion.Item eventKey="sequences" style={{ padding: '0', margin: '0' }} >
+                    <Accordion.Header style={{ padding: '0', margin: '0' }}>Sequences</Accordion.Header>
+                    <Accordion.Body>
+                        {props.molecule.cachedAtoms.sequences && props.molecule.cachedAtoms.sequences.length > 0 ?
+                            <>
+                                <Row style={{ height: '100%' }}>
+                                    <Col>
+                                        {props.molecule.cachedAtoms.sequences.map(
+                                            sequence => {
+                                                if (!sequenceIsValid(sequence.sequence)) {
+                                                    return (
+                                                        <div>
+                                                            <p>{`Unable to parse sequence data for chain ${sequence?.chain}`}</p>
+                                                        </div>
+                                                    )
+                                                }
+                                                return (<BabyGruSequenceViewer
+                                                    sequence={sequence}
+                                                    molecule={props.molecule}
+                                                    glRef={props.glRef}
+                                                    clickedResidue={clickedResidue}
+                                                    setClickedResidue={setClickedResidue}
+                                                    selectedResidues={selectedResidues}
+                                                    setSelectedResidues={setSelectedResidues}
+                                                    hoveredAtom={props.hoveredAtom}
+                                                    setHoveredAtom={props.setHoveredAtom}
+                                                />)
+                                            }
+                                        )}
+                                    </Col>
+                                </Row>
+                            </>
+                            :
+                            <div>
+                                <b>No sequence data</b>
+                            </div>
                         }
-                    </div>
-                </Col>
-            </Row>
-            <hr></hr>
-            <Row style={{ height: '100%' }}>
-                <Col>
-                    <Form.Check checked={props.molecule === props.activeMolecule}
-                        style={{ margin: '0' }}
-                        inline
-                        label={`Rotate/Translate`}
-                        type="checkbox"
-                        variant="outline"
-                        disabled={!isVisible}
-                        onChange={(e) => {
-                            if (e.target.checked) {
-                                props.setActiveMolecule(props.molecule)
-                            } else {
-                                props.setActiveMolecule(null)
-                            }
-                        }}
-                    />
-                </Col>
-            </Row>
-            <hr></hr>
-            <Row style={{ height: '100%' }}>
-                <Col>
-                    <div>
-                        <b>Sequences</b>
-                    </div>
-                    {props.molecule.cachedAtoms.sequences &&
-                        props.molecule.cachedAtoms.sequences.map(
-                            sequence => {
-                                if (!sequenceIsValid(sequence.sequence)) {
-                                    return (
-                                        <div>
-                                            <p>{`Unable to parse sequence data for chain ${sequence?.chain}`}</p>
-                                        </div>
-                                    )
-                                }
-                                return (<BabyGruSequenceViewer
-                                    sequence={sequence}
-                                    molecule={props.molecule}
-                                    glRef={props.glRef}
-                                    clickedResidue={clickedResidue}
-                                    setClickedResidue={setClickedResidue}
-                                    selectedResidues={selectedResidues}
-                                    setSelectedResidues={setSelectedResidues}
-                                    hoveredAtom={props.hoveredAtom}
-                                    setHoveredAtom={props.setHoveredAtom}
-                                />)
-                            }
-                        )
-                    }
-                </Col>
-            </Row>
-            <BabyGruLigandList molecule={props.molecule} glRef={props.glRef}/>
+
+                    </Accordion.Body>
+                </Accordion.Item>
+
+
+                <Accordion.Item eventKey="ligands" style={{ padding: '0', margin: '0' }} >
+                    <Accordion.Header style={{ padding: '0', margin: '0' }}>Ligands</Accordion.Header>
+                    <Accordion.Body>
+                        <BabyGruLigandList molecule={props.molecule} glRef={props.glRef}/>
+                    </Accordion.Body>
+                </Accordion.Item>
+            </Accordion>
         </Card.Body>
     </Card >
 }

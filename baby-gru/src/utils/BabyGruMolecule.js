@@ -6,7 +6,7 @@ import { GetSplinesColoured } from '../WebGL/mgSecStr';
 import { atomsToSpheresInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { contactsToCylindersInfo, contactsToLinesInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { singletonsToLinesInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
-import { readTextFile, readGemmiStructure } from '../utils/BabyGruUtils'
+import { readTextFile, readGemmiStructure, cidToSpec } from '../utils/BabyGruUtils'
 import { quatToMat4 } from '../WebGL/quatToMat4.js';
 import * as vec3 from 'gl-matrix/vec3';
 
@@ -45,6 +45,7 @@ export function BabyGruMolecule(commandCentre) {
 BabyGruMolecule.prototype.updateGemmiStructure = async function () {
     let response = await this.getAtoms()
     this.gemmiStructure = readGemmiStructure(response.data.result.pdbData, this.name)
+    window.CCP4Module.gemmi_setup_entities(this.gemmiStructure)
     return Promise.resolve()
 }
 
@@ -94,6 +95,7 @@ BabyGruMolecule.prototype.loadToCootFromFile = function (source) {
             $this.name = source.name.replace(pdbRegex, "").replace(entRegex, "");
             $this.cachedAtoms = $this.webMGAtomsFromFileString(coordData)
             $this.gemmiStructure = readGemmiStructure(coordData, $this.name)
+            window.CCP4Module.gemmi_setup_entities($this.gemmiStructure)
             $this.atomsDirty = false
             return this.commandCentre.current.cootCommand({
                 returnType: "status",
@@ -106,6 +108,9 @@ BabyGruMolecule.prototype.loadToCootFromFile = function (source) {
             $this.molNo = reply.data.result.result
             return Promise.resolve($this)
         })
+        .catch((err) => {
+            return Promise.reject(err)
+        })
 }
 
 BabyGruMolecule.prototype.loadToCootFromString = async function (coordData, name) {
@@ -116,6 +121,7 @@ BabyGruMolecule.prototype.loadToCootFromString = async function (coordData, name
     $this.name = name.replace(pdbRegex, "").replace(entRegex, "");
     $this.cachedAtoms = $this.webMGAtomsFromFileString(coordData)
     $this.gemmiStructure = readGemmiStructure(coordData, $this.name)
+    window.CCP4Module.gemmi_setup_entities($this.gemmiStructure)
     $this.atomsDirty = false
 
     let response  = await this.commandCentre.current.cootCommand({
@@ -127,7 +133,6 @@ BabyGruMolecule.prototype.loadToCootFromString = async function (coordData, name
 
     $this.molNo = response.data.result.result
     return Promise.resolve($this)
-
 }
 
 BabyGruMolecule.prototype.setAtomsDirty = function (state) {
@@ -136,8 +141,7 @@ BabyGruMolecule.prototype.setAtomsDirty = function (state) {
 
 BabyGruMolecule.prototype.loadToCootFromURL = function (url, molName) {
     const $this = this
-    //console.log('Off to fetch url', url)
-    //Remember to change this to an appropriate URL for downloads in produciton, and to deal with the consequent CORS headache
+
     return fetch(url)
         .then(response => {
             return response.text()
@@ -145,6 +149,7 @@ BabyGruMolecule.prototype.loadToCootFromURL = function (url, molName) {
             $this.name = molName
             $this.cachedAtoms = $this.webMGAtomsFromFileString(coordData)
             $this.gemmiStructure = readGemmiStructure(coordData, $this.name)
+            window.CCP4Module.gemmi_setup_entities($this.gemmiStructure)
             $this.atomsDirty = false
 
             return this.commandCentre.current.cootCommand({
@@ -153,6 +158,9 @@ BabyGruMolecule.prototype.loadToCootFromURL = function (url, molName) {
                 commandArgs: [coordData, $this.name]
             }, true)
         }).then(reply => {
+            if (reply.data.result.result === -1) {
+                return Promise.reject('Failed to parse fetched PDB data')
+            }
             $this.molNo = reply.data.result.result
             return Promise.resolve($this)
         })
@@ -175,6 +183,7 @@ BabyGruMolecule.prototype.updateAtoms = function () {
         return new Promise((resolve, reject) => {
             $this.cachedAtoms = $this.webMGAtomsFromFileString(result.data.result.pdbData)
             $this.gemmiStructure = readGemmiStructure(result.data.result.pdbData, $this.name)
+            window.CCP4Module.gemmi_setup_entities($this.gemmiStructure)
             $this.atomsDirty = false
             resolve($this.cachedAtoms)
         })
@@ -631,8 +640,9 @@ BabyGruMolecule.prototype.drawHover = function (glRef, selectionString) {
     const oldHierarchy = webMGAtoms.atoms
     let selectedAtoms = null
     if (typeof selectionString === 'string') {
-        const selectionElements = selectionString.split("/")
-        const modifiedSelection = `/*/${selectionElements[2]}/${selectionElements[3].split("(")[0]}/*`
+        //const selectionElements = selectionString.split("/")
+        const resSpec = cidToSpec(selectionString)
+        const modifiedSelection = `/*/${resSpec.chain_id}/${resSpec.res_no}/*${resSpec.alt_conf === "" ? "" : ":"}${resSpec.alt_conf}`
         try {
             selectedAtoms = webMGAtoms.atoms[0].getAtoms(modifiedSelection)
             if (selectedAtoms.length === 0) {

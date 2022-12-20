@@ -50,56 +50,69 @@ export const BabyGruFileMenu = (props) => {
 
     const fetchFilesFromEBI = () => {
         let pdbCode = pdbCodeFetchInputRef.current.value.toLowerCase()
-        let coordUrl = `https://www.ebi.ac.uk/pdbe/entry-files/download/pdb${pdbCode}.ent`
-        let mapUrl = `https://www.ebi.ac.uk/pdbe/entry-files/${pdbCode}.ccp4`
+        let coordUrl = `https://www.ebi.ac.uk/pdbe/entry-files/download/pdb${pdbCode.toLowerCase()}.ent`
+        let mapUrl = `https://www.ebi.ac.uk/pdbe/entry-files/${pdbCode.toLowerCase()}.ccp4`
+        let diffMapUrl = `https://www.ebi.ac.uk/pdbe/entry-files/${pdbCode.toLowerCase()}_diff.ccp4`
         if (pdbCode) {
-            fetchMoleculeFromURL(coordUrl, pdbCode)
-            fetchMapFromURL(mapUrl, `${pdbCode}-map`)
+            Promise.all([
+                fetchMoleculeFromURL(coordUrl, pdbCode),
+                fetchMapFromURL(mapUrl, `${pdbCode}-map`),
+                fetchMapFromURL(diffMapUrl, `${pdbCode}-map`, true)
+            ])
         }
     }
 
     const fetchFilesFromPDBRedo = () => {
         let pdbCode = pdbCodeFetchInputRef.current.value.toLowerCase()
-        let coordUrl = `https://pdb-redo.eu/db/${pdbCode}/${pdbCode}_final.pdb`
-        let mtzUrl = `https://pdb-redo.eu/db/${pdbCode}/${pdbCode}_final.mtz/`
+        let coordUrl = `https://pdb-redo.eu/db/${pdbCode.toLowerCase()}/${pdbCode.toLowerCase()}_final.pdb`
+        let mtzUrl = `https://pdb-redo.eu/db/${pdbCode.toLowerCase()}/${pdbCode.toLowerCase()}_final.mtz/`
         if (pdbCode) {
-            fetchMoleculeFromURL(coordUrl, `${pdbCode}-redo`)
-            fetchMtzFromURL(mtzUrl, `${pdbCode}-map-redo`,  {F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false})
+            Promise.all([
+                fetchMoleculeFromURL(coordUrl, `${pdbCode}-redo`),
+                fetchMtzFromURL(mtzUrl, `${pdbCode}-map-redo`,  {F: "FWT", PHI: "PHWT", Fobs: 'FP', SigFobs: 'SIGFP', FreeR: 'FREE', isDifference: false, useWeight: false, calcStructFact: true}),  
+                fetchMtzFromURL(mtzUrl, `${pdbCode}-map-redo`,  {F: "DELFWT", PHI: "PHDELWT", isDifference: true, useWeight: false})    
+            ])
         }
     }
 
-    const fetchMoleculeFromURL = async (url, molName) => {
+    const fetchMoleculeFromURL = (url, molName) => {
         const newMolecule = new BabyGruMolecule(commandCentre)
-        try {
-            await newMolecule.loadToCootFromURL(url, molName)
-            await newMolecule.fetchIfDirtyAndDraw('CBs', glRef, true)
-            changeMolecules({ action: "Add", item: newMolecule })
-            newMolecule.centreOn(glRef)
-        } catch {
-            console.log(`Cannot fetch map from ${url}`)
-        }
+        return new Promise(async () => {
+            try {
+                await newMolecule.loadToCootFromURL(url, molName)
+                await newMolecule.fetchIfDirtyAndDraw('CBs', glRef, true)
+                changeMolecules({ action: "Add", item: newMolecule })
+                newMolecule.centreOn(glRef)
+            } catch {
+                console.log(`Cannot fetch molecule from ${url}`)
+            }   
+        })
     }
 
-    const fetchMapFromURL = async (url, mapName) => {
+    const fetchMapFromURL = (url, mapName, isDiffMap=false) => {
         const newMap = new BabyGruMap(props.commandCentre)
-        try {
-            await newMap.loadToCootFromMapURL(url, mapName)
-            changeMaps({ action: 'Add', item: newMap })
-            props.setActiveMap(newMap)
-        } catch {
-            console.log(`Cannot fetch map from ${url}`)
-        }
+        return new Promise(async () => {
+            try {
+                await newMap.loadToCootFromMapURL(url, mapName, isDiffMap)
+                changeMaps({ action: 'Add', item: newMap })
+                props.setActiveMap(newMap)
+            } catch {
+                console.log(`Cannot fetch map from ${url}`)
+            }
+        })
     }
 
     const fetchMtzFromURL = async (url, mapName, selectedColumns) => {
         const newMap = new BabyGruMap(props.commandCentre)
-        try {
-            await newMap.loadToCootFromMtzURL(url, mapName, selectedColumns)
-            changeMaps({ action: 'Add', item: newMap })
-            props.setActiveMap(newMap)
-        } catch {
-            console.log(`Cannot fetch mtz from ${url}`)
-        }
+        return new Promise(async () => {
+            try {
+                await newMap.loadToCootFromMtzURL(url, mapName, selectedColumns)
+                changeMaps({ action: 'Add', item: newMap })
+                props.setActiveMap(newMap)
+            } catch {
+                console.log(`Cannot fetch mtz from ${url}`)
+            }   
+        })
     }
 
     const loadSession = async (file) => {
