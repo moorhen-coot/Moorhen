@@ -589,6 +589,7 @@ export const BabyGruImportMapCoefficientsMenuItem = (props) => {
             const reflectionData = await readDataFile(file)
             const asUIntArray = new Uint8Array(reflectionData)
             await newMap.associateToReflectionData(selectedColumns, asUIntArray)
+            newMap.hasReflectionData = true
         }
         props.changeMaps({ action: 'Add', item: newMap })
         props.setActiveMap(newMap)
@@ -728,14 +729,16 @@ export const BabyGruImportFSigFMenuItem = (props) => {
 
     const panelContent = <>
         <Row>
-            <BabyGruMapSelect {...props} ref={mapSelectRef} allowAny={false} width='30rem' />
+            <Col style={{width:'30rem'}}>
+                <BabyGruMapSelect {...props} ref={mapSelectRef} filterFunction={(map) => map.hasReflectionData} allowAny={false} width='100%' label='Reflection data' />
+            </Col>
         </Row>
         <Row style={{ marginBottom: "1rem" }}>
             <Col key="Col1">
                 <BabyGruMapSelect {...props} ref={twoFoFcSelectRef} label="2foFc" allowAny={false} width='100%' />
             </Col>
             <Col key="Col2">
-                <BabyGruMapSelect {...props} ref={foFcSelectRef} label="FoFc" onlyDifferenceMaps={true} allowAny={false} width='100%' />
+                <BabyGruMapSelect {...props} ref={foFcSelectRef} label="FoFc" filterFunction={(map) => map.isDifference} allowAny={false} width='100%' />
             </Col>
             <Col key="Col3">
                 <BabyGruMoleculeSelect {...props} ref={moleculeSelectRef} label="Molecule" allowAny={false} width='100%' />

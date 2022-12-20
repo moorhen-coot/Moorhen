@@ -13,6 +13,7 @@ export function BabyGruMap(commandCentre) {
     this.displayObjects = { Coot: [] }
     this.litLines = true
     this.isDifference = false
+    this.hasReflectionData = false
 }
 
 BabyGruMap.prototype.delete = async function (glRef) {
