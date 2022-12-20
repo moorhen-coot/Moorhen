@@ -39,7 +39,6 @@ export const BabyGruLigandList = (props) => {
     return <>
             {ligandList.length > 0 ? 
                 <>
-                    <hr></hr>
                     <Row style={{ height: '100%' }}>
                         <Col>
                             {ligandList.map(ligand => {

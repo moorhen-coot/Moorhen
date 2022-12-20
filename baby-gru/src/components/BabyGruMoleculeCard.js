@@ -212,7 +212,7 @@ export const BabyGruMoleculeCard = (props) => {
             </Row>
         </Card.Header>
         <Card.Body style={{ display: isCollapsed ? 'none' : '' }}>
-            <Accordion  alwaysOpen={true} defaultActiveKey={''}>
+            <Accordion  alwaysOpen={true} defaultActiveKey={['displayOpytions', 'sequences']}>
 
                 <Accordion.Item eventKey="displayOpytions" style={{ padding: '0', margin: '0' }} >
                     <Accordion.Header style={{ padding: '0', margin: '0' }}>Display Options</Accordion.Header>
