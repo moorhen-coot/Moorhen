@@ -290,7 +290,7 @@ export const BabyGruDifferenceMapPeaks = (props) => {
                                 <BabyGruMoleculeSelect width="" onChange={handleModelChange} molecules={props.molecules} ref={moleculeSelectRef}/>
                             </Col>
                             <Col>
-                                <BabyGruMapSelect onlyDifferenceMaps={true} width="" onChange={handleMapChange} maps={props.maps} ref={mapSelectRef}/>
+                                <BabyGruMapSelect filterFunction={(map) => map.isDifference} width="" onChange={handleMapChange} maps={props.maps} ref={mapSelectRef}/>
                             </Col>
                             <Col style={{justifyContent:'center', alignContent:'center', alignItems:'center', display:'flex'}}>
                                 <Form.Group controlId="rmsdSlider" style={{margin:'0.5rem', width: '100%'}}>
