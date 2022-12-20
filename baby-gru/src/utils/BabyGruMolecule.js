@@ -6,7 +6,7 @@ import { GetSplinesColoured } from '../WebGL/mgSecStr';
 import { atomsToSpheresInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { contactsToCylindersInfo, contactsToLinesInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { singletonsToLinesInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
-import { readTextFile, readGemmiStructure } from '../utils/BabyGruUtils'
+import { readTextFile, readGemmiStructure, cidToSpec } from '../utils/BabyGruUtils'
 import { quatToMat4 } from '../WebGL/quatToMat4.js';
 import * as vec3 from 'gl-matrix/vec3';
 
@@ -640,8 +640,9 @@ BabyGruMolecule.prototype.drawHover = function (glRef, selectionString) {
     const oldHierarchy = webMGAtoms.atoms
     let selectedAtoms = null
     if (typeof selectionString === 'string') {
-        const selectionElements = selectionString.split("/")
-        const modifiedSelection = `/*/${selectionElements[2]}/${selectionElements[3].split("(")[0]}/*`
+        //const selectionElements = selectionString.split("/")
+        const resSpec = cidToSpec(selectionString)
+        const modifiedSelection = `/*/${resSpec.chain_id}/${resSpec.res_no}/*${resSpec.alt_conf === "" ? "" : ":"}${resSpec.alt_conf}`
         try {
             selectedAtoms = webMGAtoms.atoms[0].getAtoms(modifiedSelection)
             if (selectedAtoms.length === 0) {

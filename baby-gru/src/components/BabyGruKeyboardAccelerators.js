@@ -28,7 +28,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     let action = null;
 
     for (const key of Object.keys(shortCuts)) {
-        if(shortCuts[key].keyPress === event.key.toLowerCase() && shortCuts[key].modifiers.every(modifier => event[modifier])) {
+        if (shortCuts[key].keyPress === event.key.toLowerCase() && shortCuts[key].modifiers.every(modifier => event[modifier])) {
             action = key
             break
         }
@@ -39,7 +39,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     }
 
     console.log(`Shortcut for action ${action} detected...`)
-    
+
     if (action === 'sphere_refine' && activeMap && hoveredAtom.molecule) {
         const chosenAtom = cidToSpec(hoveredAtom.cid)
         const commandArgs = [
@@ -50,7 +50,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
             returnType: "status",
             command: "refine_residues_using_atom_cid",
             commandArgs: commandArgs,
-            changesMolecules:[hoveredAtom.molecule.molNo]
+            changesMolecules: [hoveredAtom.molecule.molNo]
         }, true).then(_ => {
             apresEdit(hoveredAtom.molecule, glRef, setHoveredAtom)
         })
@@ -67,7 +67,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
             returnType: "status",
             command: "flipPeptide_cid",
             commandArgs: commandArgs,
-            changesMolecules:[hoveredAtom.molecule.molNo]
+            changesMolecules: [hoveredAtom.molecule.molNo]
         }, true).then(_ => {
             apresEdit(hoveredAtom.molecule, glRef, setHoveredAtom)
         })
@@ -84,7 +84,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
             returnType: "status",
             command: "refine_residues_using_atom_cid",
             commandArgs: commandArgs,
-            changesMolecules:[hoveredAtom.molecule.molNo]
+            changesMolecules: [hoveredAtom.molecule.molNo]
         }, true).then(_ => {
             apresEdit(hoveredAtom.molecule, glRef, setHoveredAtom)
         })
@@ -104,7 +104,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
             returnType: "status",
             command: "auto_fit_rotamer",
             commandArgs: commandArgs,
-            changesMolecules:[hoveredAtom.molecule.molNo]
+            changesMolecules: [hoveredAtom.molecule.molNo]
         }, true).then(_ => {
             apresEdit(hoveredAtom.molecule, glRef, setHoveredAtom)
         })
@@ -119,39 +119,39 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
             returnType: "status",
             command: "add_terminal_residue_directly_using_cid",
             commandArgs: commandArgs,
-            changesMolecules:[hoveredAtom.molecule.molNo]
+            changesMolecules: [hoveredAtom.molecule.molNo]
         }, true).then(_ => {
             apresEdit(hoveredAtom.molecule, glRef, setHoveredAtom)
         })
         return false
     }
-    
+
     else if (action === 'delete_residue' && hoveredAtom.molecule) {
+
+
         const chosenAtom = cidToSpec(hoveredAtom.cid)
-        const commandArgs = [
-            hoveredAtom.molecule.molNo,
-            `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}`,
-            "RESIDUE"
-        ]
+        const commandArgs = [hoveredAtom.molecule.molNo,
+        `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/*${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`,
+            'LITERAL']
         commandCentre.current.cootCommand({
             returnType: "status",
             command: "delete_using_cid",
             commandArgs: commandArgs,
-            changesMolecules:[hoveredAtom.molecule.molNo]
+            changesMolecules: [hoveredAtom.molecule.molNo]
         }, true).then(_ => {
             apresEdit(hoveredAtom.molecule, glRef, setHoveredAtom)
         })
         return false
     }
-    
-    else if (action === 'eigen_flip'  && hoveredAtom.molecule) {
+
+    else if (action === 'eigen_flip' && hoveredAtom.molecule) {
         const chosenAtom = cidToSpec(hoveredAtom.cid)
         const commandArgs = [hoveredAtom.molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
         commandCentre.current.cootCommand({
             returnType: "status",
             command: "eigen_flip_ligand",
             commandArgs: commandArgs,
-            changesMolecules:[hoveredAtom.molecule.molNo]
+            changesMolecules: [hoveredAtom.molecule.molNo]
         }, true).then(_ => {
             apresEdit(hoveredAtom.molecule, glRef, setHoveredAtom)
         })
@@ -159,13 +159,13 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     }
 
     else if (action === 'go_to_blob' && activeMap) {
-        
+
         const frontAndBack = glRef.current.getFrontAndBackPos(event);
         const goToBlobEvent = {
-                back: [frontAndBack[0][0], frontAndBack[0][1], frontAndBack[0][2]],
-                front: [frontAndBack[1][0], frontAndBack[1][1], frontAndBack[1][2]],
-                windowX: frontAndBack[2],
-                windowY: frontAndBack[3],
+            back: [frontAndBack[0][0], frontAndBack[0][1], frontAndBack[0][2]],
+            front: [frontAndBack[1][0], frontAndBack[1][1], frontAndBack[1][2]],
+            windowX: frontAndBack[2],
+            windowY: frontAndBack[3],
         };
 
         commandCentre.current.cootCommand({
@@ -288,7 +288,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         for (let j = Math.floor(-ncells_y / 2); j < Math.floor(ncells_y / 2); j++) {
             let ii = 0;
             for (let i = Math.floor(-ncells_x / 2); i < Math.floor(ncells_x / 2); i++) {
-                const x_off = ratio*(2.0 * i + 1 + ncells_x % 2);
+                const x_off = ratio * (2.0 * i + 1 + ncells_x % 2);
                 const y_off = (2.0 * j + 1 + ncells_y % 2);
 
                 glRef.current.origin = [oldOrigin[0], oldOrigin[1], oldOrigin[2]];
@@ -322,7 +322,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         glRef.current.drawScene();
 
         let link = document.getElementById('download_image_link');
-        if(!link){
+        if (!link) {
             link = document.createElement('a');
             link.id = 'download_image_link';
             link.download = 'moorhen.png';
@@ -339,7 +339,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
                 if (shortCuts[key].modifiers.includes('shiftKey')) modifiers.push("<Shift>")
                 if (shortCuts[key].modifiers.includes('ctrlKey')) modifiers.push("<Ctrl>")
                 if (shortCuts[key].modifiers.includes('metaKey')) modifiers.push("<Meta>")
-                if (shortCuts[key].modifiers.includes('altKey')) modifiers.push("<Alt>")                
+                if (shortCuts[key].modifiers.includes('altKey')) modifiers.push("<Alt>")
                 return <ListItem>{`${modifiers.join("-")} ${shortCuts[key].keyPress} ${shortCuts[key].label}`}</ListItem>
             })}
         </List></h4>)
