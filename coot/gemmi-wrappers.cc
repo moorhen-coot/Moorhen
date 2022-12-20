@@ -86,6 +86,9 @@ std::string get_spacegroup_qualifier(const gemmi::SpaceGroup &sg){
 std::string get_element_name_as_string(const gemmi::Element &el){
     return std::string(el.name());
 }
+std::string get_element_upper_name_as_string(const gemmi::Element &el){
+    return std::string(el.uname());
+}
 
 EMSCRIPTEN_BINDINGS(gemmi_module) {
     //complex could be generally useful, but only used by gemmi at present?
@@ -746,6 +749,8 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .function("is_metal",&gemmi::Element::is_metal)
     //.function("name",&gemmi::Element::name, allow_raw_pointers())// These 2 do not work! PKc (char*) is unbound type/
     //.function("uname",&gemmi::Element::uname, allow_raw_pointers())
+    .function("name", &get_element_name_as_string)
+    .function("uname", &get_element_upper_name_as_string)
     ;
 
     class_<gemmi::Mat33>("Mat33")
@@ -890,6 +895,9 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     //.property("hm",&gemmi::SpaceGroup::hm)
     //.property("qualifier",&gemmi::SpaceGroup::qualifier)
     //.property("hall",&gemmi::SpaceGroup::hall)
+    .function("hm", &get_spacegroup_hm)
+    .function("hall", &get_spacegroup_hall)
+    .function("qualifier", &get_spacegroup_qualifier)
     ;
 
     class_<gemmi::Transform>("Transform")
