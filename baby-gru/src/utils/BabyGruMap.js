@@ -253,3 +253,21 @@ BabyGruMap.prototype.doCootContour = function (glRef, x, y, z, radius, contourLe
 
 }
 
+BabyGruMap.prototype.associateToReflectionData = async function (selectedColumns, reflectionData) {
+    if (!selectedColumns.Fobs || !selectedColumns.SigFobs || !selectedColumns.FreeR) {
+        return Promise.reject('Missing column data')
+    }
+    let commandArgs = [
+        this.molNo, { name: this.name, data: reflectionData },
+        selectedColumns.Fobs, selectedColumns.SigFobs, selectedColumns.FreeR
+    ]
+
+    let result = await this.commandCentre.current.cootCommand({
+        command: 'shim_associate_data_mtz_file_with_map',
+        commandArgs: commandArgs,
+        returnType: 'status'
+    }, true)
+
+    return result
+}
+
