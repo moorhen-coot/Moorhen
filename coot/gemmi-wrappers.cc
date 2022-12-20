@@ -2096,6 +2096,8 @@ GlobWalk
     function("collapse_hd_mixture", &gemmi::collapse_hd_mixture);
     function("shorten_chain_names", &gemmi::shorten_chain_names);
     function("split_chains_by_segments", &gemmi::split_chains_by_segments);
+    function("check_polymer_type", &gemmi::check_polymer_type);
+    function("make_one_letter_sequence", &gemmi::make_one_letter_sequence);
     function("has_entity_types_and_subchains", &gemmi::has_entity_types_and_subchains);
     function("assign_cis_flags_structure", select_overload<void(gemmi::Structure&)>(&gemmi::assign_cis_flags));
     function("assign_cis_flags_model",     select_overload<void(gemmi::Model&)>(&gemmi::assign_cis_flags));
@@ -2122,8 +2124,6 @@ GlobWalk
     function("trim_to_alanine_residue",    select_overload<bool(gemmi::Residue&)>(&gemmi::trim_to_alanine));
 
 /*
-    function("check_polymer_type", [](const ResidueSpan& span);
-    function("make_one_letter_sequence", [](const ResidueSpan& span);
     function("transform_pos_and_adp", transform_pos_and_adp<ResidueSpan>);
     function("add_atom", add_child<Residue, Atom>);
     */
