@@ -93,6 +93,18 @@ std::string get_element_upper_name_as_string(const gemmi::Element &el){
     return std::string(el.uname());
 }
 
+template<typename T, typename C>
+C& add_item(T& container, C child, int pos) {
+  if ((size_t) pos > container.size()) // true also for negative pos
+    pos = (int) container.size();
+  return *container.insert(container.begin() + pos, std::move(child));
+}
+
+template<typename P, typename C>
+C& add_child(P& parent, C child, int pos) {
+  return add_item(parent.children(), std::move(child), pos);
+}
+
 EMSCRIPTEN_BINDINGS(gemmi_module) {
     //complex could be generally useful, but only used by gemmi at present?
     class_<std::complex<double>>("complexdouble")
@@ -2101,10 +2113,10 @@ GlobWalk
     function("count_hydrogen_sites", select_overload<size_t(const gemmi::Model&)>(&gemmi::count_hydrogen_sites));
     function("calculate_mass_model", select_overload<double(const gemmi::Model&)>(&gemmi::calculate_mass));
     function("calculate_mass_chain", select_overload<double(const gemmi::Chain&)>(&gemmi::calculate_mass));
+    function("add_residue_chain", select_overload<gemmi::Residue&(gemmi::Chain&, gemmi::Residue, int)>(&add_child));
+    function("add_residue_residuespan", select_overload<gemmi::Residue&(gemmi::ResidueSpan&, gemmi::Residue, int)>(&add_item));
 
 /*
-    function("add_residue", add_child<Chain, Residue>);
-    function("add_residue", add_item<ResidueSpan, Residue>);
     function("check_polymer_type", [](const ResidueSpan& span);
     function("make_one_letter_sequence", [](const ResidueSpan& span);
     function("transform_pos_and_adp", transform_pos_and_adp<ResidueSpan>);
