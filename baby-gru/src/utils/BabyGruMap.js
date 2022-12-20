@@ -28,21 +28,25 @@ BabyGruMap.prototype.delete = async function (glRef) {
 }
 
 
-BabyGruMap.prototype.loadToCootFromMtzURL = function (url, name, selectedColumns) {
+BabyGruMap.prototype.loadToCootFromMtzURL = async function (url, name, selectedColumns) {
     const $this = this
     console.log('Off to fetch url', url)
-    //Remember to change this to an appropriate URL for downloads in produciton, and to deal with the consequent CORS headache
-    return fetch(url)
-        .then(response => {
-            return response.blob()
-        }).then(reflectionData => reflectionData.arrayBuffer())
-        .then(arrayBuffer => {
-            return $this.loadToCootFromMtzData(new Uint8Array(arrayBuffer), name, selectedColumns)
-        })
-        .catch((err) => { 
-            console.log(err)
-            return Promise.reject(err)
-         })
+
+    try {
+        const response = await fetch(url)
+        const reflectionData = await response.blob()
+        const arrayBuffer = await reflectionData.arrayBuffer()
+        const asUIntArray = new Uint8Array(arrayBuffer)
+        await $this.loadToCootFromMtzData(asUIntArray, name, selectedColumns)
+        if (selectedColumns.calcStructFact) {
+            await $this.associateToReflectionData(selectedColumns, asUIntArray)
+            $this.hasReflectionData = true
+        }
+        return $this
+    } catch (err) {
+        console.log(err)
+        return Promise.reject(err)
+    }
 }
 
 BabyGruMap.prototype.loadToCootFromMtzData = function (data, name, selectedColumns) {
@@ -71,13 +75,16 @@ BabyGruMap.prototype.loadToCootFromMtzData = function (data, name, selectedColum
     })
 }
 
-BabyGruMap.prototype.loadToCootFromMtzFile = function (source, selectedColumns) {
+BabyGruMap.prototype.loadToCootFromMtzFile = async function (source, selectedColumns) {
     const $this = this
-    return readDataFile(source)
-        .then(reflectionData => {
-            const asUIntArray = new Uint8Array(reflectionData)
-            return $this.loadToCootFromMtzData(asUIntArray, source.name, selectedColumns)
-        })
+    let reflectionData = await readDataFile(source)
+    const asUIntArray = new Uint8Array(reflectionData)
+    await $this.loadToCootFromMtzData(asUIntArray, source.name, selectedColumns)
+    if (selectedColumns.calcStructFact) {
+        await $this.associateToReflectionData(selectedColumns, asUIntArray)
+        $this.hasReflectionData = true
+    } 
+    return $this
 }
 
 BabyGruMap.prototype.loadToCootFromMapURL = function (url, name, isDiffMap=false) {

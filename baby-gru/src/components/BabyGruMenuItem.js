@@ -2,7 +2,7 @@ import { MenuItem } from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { OverlayTrigger, Popover, PopoverBody, PopoverHeader, Form, InputGroup, Button, FormSelect, Row, Col, SplitButton, Dropdown } from "react-bootstrap";
 import { SketchPicker } from "react-color";
-import { BabyGruMtzWrapper, readDataFile, readTextFile } from "../utils/BabyGruUtils";
+import { BabyGruMtzWrapper, readTextFile } from "../utils/BabyGruUtils";
 import { BabyGruMap } from "../utils/BabyGruMap";
 import { BabyGruMolecule } from "../utils/BabyGruMolecule";
 import { BabyGruMoleculeSelect } from "./BabyGruMoleculeSelect";
@@ -585,12 +585,6 @@ export const BabyGruImportMapCoefficientsMenuItem = (props) => {
     const handleFile = async (file, selectedColumns) => {
         const newMap = new BabyGruMap(props.commandCentre)
         await newMap.loadToCootFromMtzFile(file, selectedColumns)
-        if (selectedColumns.calcStructFact) {
-            const reflectionData = await readDataFile(file)
-            const asUIntArray = new Uint8Array(reflectionData)
-            await newMap.associateToReflectionData(selectedColumns, asUIntArray)
-            newMap.hasReflectionData = true
-        }
         props.changeMaps({ action: 'Add', item: newMap })
         props.setActiveMap(newMap)
         setCalcStructFact(false)
