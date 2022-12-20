@@ -14,10 +14,9 @@ export const BabyGruMapSelect = forwardRef((props, selectRef) => {
         
         if (props.maps) {
             props.maps.forEach(map => {
-                if(props.onlyDifferenceMaps && !map.isDifference){
-                    return
+                if(props.filterFunction(map)){
+                    mapOptions.push(<option key={map.molNo} value={map.molNo}>{map.molNo}: {map.name}</option>)
                 }
-                mapOptions.push(<option key={map.molNo} value={map.molNo}>{map.molNo}: {map.name}</option>)
             })
         }
 
@@ -32,4 +31,4 @@ export const BabyGruMapSelect = forwardRef((props, selectRef) => {
     </Form.Group>
 })
 
-BabyGruMapSelect.defaultProps = { height: '4rem', width: '20rem', maps: null, label: "Map", onlyDifferenceMaps:false }
+BabyGruMapSelect.defaultProps = { height: '4rem', width: '20rem', maps: null, label: "Map", filterFunction: () => true }
