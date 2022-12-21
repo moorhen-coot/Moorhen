@@ -86,7 +86,7 @@ export const BabyGruLoadTutorialDataMenuItem = (props) => {
         const newMolecule = new BabyGruMolecule(props.commandCentre)
         const newMap = new BabyGruMap(props.commandCentre)
         const newDiffMap = new BabyGruMap(props.commandCentre)
-        newMolecule.loadToCootFromURL(`/baby-gru/tutorials/moorhen-tutorial-structure-number-${tutorialNumber}.pdb`, `moorhen-tutorial-${tutorialNumber}`)
+        newMolecule.loadToCootFromURL(`${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-structure-number-${tutorialNumber}.pdb`, `moorhen-tutorial-${tutorialNumber}`)
             .then(result => {
                 newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef, true)
             }).then(result => {
@@ -95,11 +95,11 @@ export const BabyGruLoadTutorialDataMenuItem = (props) => {
             }).then(_ => {
                 newMolecule.centreOn(props.glRef)
             }).then(_ => {
-                return newMap.loadToCootFromMtzURL(`/baby-gru/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`, `moorhen-tutorial-${tutorialNumber}`,
+                return newMap.loadToCootFromMtzURL(`${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`, `moorhen-tutorial-${tutorialNumber}`,
                     { F: "FWT", PHI: "PHWT", Fobs: tutorialNumber == 1 ? 'F' : 'FP', SigFobs: tutorialNumber == 1 ? 'SIGF' : 'SIGFP', FreeR: tutorialNumber == 1 ? 'FREER' : 'FREE',
                      isDifference: false, useWeight: false, calcStructFact: true })
             }).then(_ => {
-                return newDiffMap.loadToCootFromMtzURL(`/baby-gru/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`, `moorhen-tutorial-${tutorialNumber}`,
+                return newDiffMap.loadToCootFromMtzURL(`${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`, `moorhen-tutorial-${tutorialNumber}`,
                     { F: "DELFWT", PHI: "PHDELWT", isDifference: true, useWeight: false })
             }).then(_ => {
                 props.changeMaps({ action: 'AddList', items: [newMap, newDiffMap] })
@@ -517,7 +517,7 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
 
     const readMonomerFile = async (newTlc) => {
         console.log({ newTlc })
-        return fetch(`/baby-gru/monomers/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`)
+        return fetch(`${props.urlPrefix}/baby-gru/monomers/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`)
             .then(response => response.text())
             .then(fileContent => {
                 return handleFileContent(fileContent)
