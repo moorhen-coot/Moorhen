@@ -89,15 +89,16 @@ BabyGruMolecule.prototype.copyFragment = async function (chainId, res_no_start, 
 BabyGruMolecule.prototype.loadToCootFromURL = function (url, molName) {
     const $this = this
     return fetch(url)
-        .then(response => {
-            return response.text()
-        }).then(coordData => $this.loadToCootFromString(coordData, molName))
+        .then(response => response.text())
+        .then(coordData => $this.loadToCootFromString(coordData, molName))
+        .catch(err => Promise.reject(err))
 }
 
 BabyGruMolecule.prototype.loadToCootFromFile = function (source) {
     const $this = this
     return readTextFile(source)
         .then(coordData => $this.loadToCootFromString(coordData, source.name))
+        .catch(err => Promise.reject(err))
 }
 
 BabyGruMolecule.prototype.loadToCootFromString = async function (coordData, name) {
@@ -116,13 +117,46 @@ BabyGruMolecule.prototype.loadToCootFromString = async function (coordData, name
         command: 'shim_read_pdb',
         commandArgs: [coordData, $this.name],
         changesMolecules: [$this.molNo]
-    }, true).then(response => {
-        $this.molNo = response.data.result.result
+    }, true)
+        .then(response => {
+            $this.molNo = response.data.result.result
+            return Promise.resolve($this)
+        })
+        .then(molecule => molecule.loadMissingMonomers())
+        .catch(err => {
+            console.log('Error in loadToCootFromString', err);
+            return Promise.reject(err)
+        })
+}
+
+BabyGruMolecule.prototype.loadMissingMonomers = async function () {
+    const $this = this
+    return $this.commandCentre.current.cootCommand({
+        returnType: "string_array",
+        command: 'get_residue_names_with_no_dictionary',
+        commandArgs: [$this.molNo],
+    }, false).then(async response => {
+        if (response.data.result.status === 'Completed') {
+            let monomerPromises = []
+            response.data.result.result.forEach(newTlc => {
+                const newPromise = fetch(`./baby-gru/monomers/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`)
+                    .then(response => response.text())
+                    .then(fileContent => $this.commandCentre.current.cootCommand({
+                        returnType: "status",
+                        command: 'shim_read_dictionary',
+                        commandArgs: [fileContent, -999999],
+                        changesMolecules: []
+                    }, true))
+                monomerPromises.push(newPromise)
+            })
+            await Promise.all(monomerPromises)
+            console.log('Fetched all')
+        }
         return Promise.resolve($this)
-    }).catch((err) => {
+    }).catch(err => {
+        console.log('Error in loadMissingMonomers', err);
         return Promise.reject(err)
     })
-
 }
 
 BabyGruMolecule.prototype.setAtomsDirty = function (state) {

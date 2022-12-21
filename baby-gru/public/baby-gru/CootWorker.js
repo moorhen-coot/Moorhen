@@ -48,6 +48,14 @@ const floatArrayToJSArray = (floatArray) => {
     return returnResult;
 }
 
+const stringArrayToJSArray = (stringArray) => {
+    let returnResult = []
+    for (let i = 0; i < stringArray.size(); i++) {
+        returnResult.push(stringArray.get(i));
+    }
+    return returnResult;
+}
+
 const residueCodesToJSArray = (residueCodes) => {
     let returnResult = []
     for (let ic = 0; ic < residueCodes.size(); ic++) {
@@ -418,6 +426,9 @@ onmessage = function (e) {
                     break;
                 case 'float_array':
                     returnResult = floatArrayToJSArray(cootResult)
+                    break;
+                case 'string_array':
+                    returnResult = stringArrayToJSArray(cootResult)
                     break;
                 case 'residue_codes':
                     returnResult = residueCodesToJSArray(cootResult)
