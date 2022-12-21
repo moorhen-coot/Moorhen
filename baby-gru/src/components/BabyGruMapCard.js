@@ -233,7 +233,7 @@ export const BabyGruMapCard = (props) => {
                         className="baby-gru-map-icon"
                         alt="..."
                         style={{width: '20px', height: '20px', margin:'0.5rem', padding:'0'}}
-                        src={props.map.isDifference ? `${props.homepage}/baby-gru/pixmaps/diff-map.png` : `${props.homepage}/baby-gru/pixmaps/map.svg`}
+                        src={props.map.isDifference ? `${props.urlPrefix}/baby-gru/pixmaps/diff-map.png` : `${props.urlPrefix}/baby-gru/pixmaps/map.svg`}
                     />
             </Col>
             <Col style={{display:'flex', justifyContent:'right'}}>

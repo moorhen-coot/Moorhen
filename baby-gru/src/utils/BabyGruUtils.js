@@ -161,7 +161,7 @@ export const BabyGruCommandCentre = class {
 
     constructor(props) {
         Object.keys(props).forEach(key => this[key] = props[key])
-        this.cootWorker = new Worker(`${this.homepage}/baby-gru/CootWorker.js`)
+        this.cootWorker = new Worker(`${this.urlPrefix}/baby-gru/CootWorker.js`)
         this.cootWorker.onmessage = this.handleMessage.bind(this)
         this.postMessage({ message: 'CootInitialize', data: {} })
             .then(reply => {

@@ -98,11 +98,11 @@ export const BabyGruContainer = (props) => {
         if (preferences.darkMode === null) {
             return
         } else if (preferences.darkMode) {
-            style.href = `${props.homepage}/baby-gru/darkly.css`
+            style.href = `${props.urlPrefix}/baby-gru/darkly.css`
             setTheme("darkly")
             setBackgroundColor([0., 0., 0., 1.])
         } else {
-            style.href = `${props.homepage}/baby-gru/flatly.css`
+            style.href = `${props.urlPrefix}/baby-gru/flatly.css`
             setTheme("flatly")
             setBackgroundColor([1., 1., 1., 1.])
         }
@@ -146,7 +146,7 @@ export const BabyGruContainer = (props) => {
                 //console.log('Being notified of coot initialized')
                 setCootInitialized(true)
             },
-            homepage: props.homepage
+            urlPrefix: props.urlPrefix
         })
         window.addEventListener('resize', setWindowDimensions)
         return () => {
@@ -278,7 +278,7 @@ export const BabyGruContainer = (props) => {
         activeMap, setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor, sideBarWidth,
         navBarRef, currentDropdownId, setCurrentDropdownId, hoveredAtom, setHoveredAtom, toastContent, setToastContent, 
         showToast, setShowToast, windowWidth, windowHeight, showSideBar, innerWindowMarginWidth, toolAccordionBodyHeight,
-        homepage: props.homepage, ...preferences
+        urlPrefix: props.urlPrefix, ...preferences
     }
 
     const accordionToolsItemProps = {
@@ -421,5 +421,5 @@ export const BabyGruContainer = (props) => {
 }
 
 BabyGruContainer.defaultProps = {
-    homepage: ''
+    urlPrefix: ''
 }
