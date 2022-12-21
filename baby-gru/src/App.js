@@ -6,7 +6,7 @@ function App() {
   return (
     <div className="App">
       <PreferencesContextProvider>
-        <BabyGruContainer forwardControls={(controls) => {
+        <BabyGruContainer homepage="." forwardControls={(controls) => {
           console.log('Fetched controls', {controls})
         }}/>
       </PreferencesContextProvider>
