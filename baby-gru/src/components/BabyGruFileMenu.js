@@ -36,7 +36,7 @@ export const BabyGruFileMenu = (props) => {
     }
 
     const readPdbFile = (file) => {
-        const newMolecule = new BabyGruMolecule(commandCentre)
+        const newMolecule = new BabyGruMolecule(commandCentre, props.urlPrefix)
         return newMolecule.loadToCootFromFile(file)
     }
 
@@ -76,7 +76,7 @@ export const BabyGruFileMenu = (props) => {
     }
 
     const fetchMoleculeFromURL = (url, molName) => {
-        const newMolecule = new BabyGruMolecule(commandCentre)
+        const newMolecule = new BabyGruMolecule(commandCentre, props.urlPrefix)
         return new Promise(async () => {
             try {
                 await newMolecule.loadToCootFromURL(url, molName)
@@ -137,7 +137,7 @@ export const BabyGruFileMenu = (props) => {
         let newMoleculePromises = [];
         let newMolecule;
         sessionData.moleculesPdbData.forEach((pdbData, index) => {
-            newMolecule = new BabyGruMolecule(commandCentre)
+            newMolecule = new BabyGruMolecule(commandCentre, props.urlPrefix)
             newMoleculePromises.push(
                 newMolecule.loadToCootFromString(pdbData, sessionData.moleculesNames[index])
             )

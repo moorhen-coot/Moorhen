@@ -10,7 +10,7 @@ import { readTextFile, readGemmiStructure, cidToSpec } from '../utils/BabyGruUti
 import { quatToMat4 } from '../WebGL/quatToMat4.js';
 import * as vec3 from 'gl-matrix/vec3';
 
-export function BabyGruMolecule(commandCentre) {
+export function BabyGruMolecule(commandCentre, urlPrefix) {
     this.type = 'molecule'
     this.commandCentre = commandCentre
     this.enerLib = new EnerLib()
@@ -40,6 +40,7 @@ export function BabyGruMolecule(commandCentre) {
         VdWSurface: [],
         transformation: { origin: [0, 0, 0], quat: null, centre: [0, 0, 0] }
     }
+    this.urlPrefix = (typeof urlPrefix === 'undefined' ? "." : urlPrefix);
 };
 
 BabyGruMolecule.prototype.updateGemmiStructure = async function () {
@@ -68,7 +69,7 @@ BabyGruMolecule.prototype.copyFragment = async function (chainId, res_no_start, 
     const $this = this
     const inputData = { message: "copy_fragment", molNo: $this.molNo, chainId: chainId, res_no_start: res_no_start, res_no_end: res_no_end }
     const response = await $this.commandCentre.current.postMessage(inputData)
-    const newMolecule = new BabyGruMolecule($this.commandCentre)
+    const newMolecule = new BabyGruMolecule($this.commandCentre, $this.urlPrefix)
     newMolecule.name = `${$this.name} fragment`
     newMolecule.molNo = response.data.result
     await newMolecule.fetchIfDirtyAndDraw('CBs', glRef)
@@ -139,7 +140,7 @@ BabyGruMolecule.prototype.loadMissingMonomers = async function () {
         if (response.data.result.status === 'Completed') {
             let monomerPromises = []
             response.data.result.result.forEach(newTlc => {
-                const newPromise = fetch(`./baby-gru/monomers/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`)
+                const newPromise = fetch(`${$this.urlPrefix}/baby-gru/monomers/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`)
                     .then(response => response.text())
                     .then(fileContent => $this.commandCentre.current.cootCommand({
                         returnType: "status",
@@ -875,7 +876,7 @@ BabyGruMolecule.prototype.addLigandOfType = async function (resType, at, glRef) 
     }, true)
         .then(async result => {
             if (result.data.result.status === "Completed") {
-                newMolecule = new BabyGruMolecule($this.commandCentre)
+                newMolecule = new BabyGruMolecule($this.commandCentre, $this.urlPrefix)
                 newMolecule.setAtomsDirty(true)
                 newMolecule.molNo = result.data.result.result
                 newMolecule.name = resType.toUpperCase()
