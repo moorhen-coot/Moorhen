@@ -421,5 +421,5 @@ export const BabyGruContainer = (props) => {
 }
 
 BabyGruContainer.defaultProps = {
-    urlPrefix: ''
+    urlPrefix: '.'
 }
