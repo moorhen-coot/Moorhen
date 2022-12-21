@@ -86,31 +86,18 @@ BabyGruMolecule.prototype.copyFragment = async function (chainId, res_no_start, 
     return newMolecule
 }
 
+BabyGruMolecule.prototype.loadToCootFromURL = function (url, molName) {
+    const $this = this
+    return fetch(url)
+        .then(response => {
+            return response.text()
+        }).then(coordData => $this.loadToCootFromString(coordData, molName))
+}
+
 BabyGruMolecule.prototype.loadToCootFromFile = function (source) {
     const $this = this
-    const pdbRegex = /.pdb$/;
-    const entRegex = /.ent$/;
     return readTextFile(source)
-        .then(coordData => {
-            $this.name = source.name.replace(pdbRegex, "").replace(entRegex, "");
-            $this.cachedAtoms = $this.webMGAtomsFromFileString(coordData)
-            $this.gemmiStructure = readGemmiStructure(coordData, $this.name)
-            window.CCP4Module.gemmi_setup_entities($this.gemmiStructure)
-            $this.atomsDirty = false
-            return this.commandCentre.current.cootCommand({
-                returnType: "status",
-                command: 'shim_read_pdb',
-                commandArgs: [coordData, $this.name],
-                changesMolecules: [$this.molNo]
-            }, true)
-        })
-        .then(reply => {
-            $this.molNo = reply.data.result.result
-            return Promise.resolve($this)
-        })
-        .catch((err) => {
-            return Promise.reject(err)
-        })
+        .then(coordData => $this.loadToCootFromString(coordData, source.name))
 }
 
 BabyGruMolecule.prototype.loadToCootFromString = async function (coordData, name) {
@@ -124,49 +111,22 @@ BabyGruMolecule.prototype.loadToCootFromString = async function (coordData, name
     window.CCP4Module.gemmi_setup_entities($this.gemmiStructure)
     $this.atomsDirty = false
 
-    let response  = await this.commandCentre.current.cootCommand({
+    return this.commandCentre.current.cootCommand({
         returnType: "status",
         command: 'shim_read_pdb',
         commandArgs: [coordData, $this.name],
         changesMolecules: [$this.molNo]
-    }, true)
+    }, true).then(response => {
+        $this.molNo = response.data.result.result
+        return Promise.resolve($this)
+    }).catch((err) => {
+        return Promise.reject(err)
+    })
 
-    $this.molNo = response.data.result.result
-    return Promise.resolve($this)
 }
 
 BabyGruMolecule.prototype.setAtomsDirty = function (state) {
     this.atomsDirty = state
-}
-
-BabyGruMolecule.prototype.loadToCootFromURL = function (url, molName) {
-    const $this = this
-
-    return fetch(url)
-        .then(response => {
-            return response.text()
-        }).then((coordData) => {
-            $this.name = molName
-            $this.cachedAtoms = $this.webMGAtomsFromFileString(coordData)
-            $this.gemmiStructure = readGemmiStructure(coordData, $this.name)
-            window.CCP4Module.gemmi_setup_entities($this.gemmiStructure)
-            $this.atomsDirty = false
-
-            return this.commandCentre.current.cootCommand({
-                returnType: "status",
-                command: 'shim_read_pdb',
-                commandArgs: [coordData, $this.name]
-            }, true)
-        }).then(reply => {
-            if (reply.data.result.result === -1) {
-                return Promise.reject('Failed to parse fetched PDB data')
-            }
-            $this.molNo = reply.data.result.result
-            return Promise.resolve($this)
-        })
-        .catch((err) => {
-            return Promise.reject(err)
-        })
 }
 
 BabyGruMolecule.prototype.getAtoms = function () {

@@ -96,8 +96,10 @@ export const BabyGruLoadTutorialDataMenuItem = (props) => {
                 newMolecule.centreOn(props.glRef)
             }).then(_ => {
                 return newMap.loadToCootFromMtzURL(`${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`, `moorhen-tutorial-${tutorialNumber}`,
-                    { F: "FWT", PHI: "PHWT", Fobs: tutorialNumber == 1 ? 'F' : 'FP', SigFobs: tutorialNumber == 1 ? 'SIGF' : 'SIGFP', FreeR: tutorialNumber == 1 ? 'FREER' : 'FREE',
-                     isDifference: false, useWeight: false, calcStructFact: true })
+                    {
+                        F: "FWT", PHI: "PHWT", Fobs: tutorialNumber == 1 ? 'F' : 'FP', SigFobs: tutorialNumber == 1 ? 'SIGF' : 'SIGFP', FreeR: tutorialNumber == 1 ? 'FREER' : 'FREE',
+                        isDifference: false, useWeight: false, calcStructFact: true
+                    })
             }).then(_ => {
                 return newDiffMap.loadToCootFromMtzURL(`${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`, `moorhen-tutorial-${tutorialNumber}`,
                     { F: "DELFWT", PHI: "PHDELWT", isDifference: true, useWeight: false })
@@ -604,7 +606,7 @@ export const BabyGruImportMapCoefficientsMenuItem = (props) => {
 
     const panelContent = <>
         <Row>
-            <Form.Group style={{ width: '30rem', margin: '0.5rem', padding: '0rem'}} controlId="uploadDicts" className="mb-3">
+            <Form.Group style={{ width: '30rem', margin: '0.5rem', padding: '0rem' }} controlId="uploadDicts" className="mb-3">
                 <Form.Label>Map coefficient files</Form.Label>
                 <Form.Control ref={filesRef} type="file" multiple={false} accept={[".mtz"]} onChange={(e) => {
                     handleFileRead(e)
@@ -648,14 +650,14 @@ export const BabyGruImportMapCoefficientsMenuItem = (props) => {
                 <Form.Check label={'use weight'} name={`useWeight`} type="checkbox" ref={useWeightRef} variant="outline" />
             </Col>
             <Row key="Row4" style={{ marginTop: "1rem" }}>
-            <Col>
-                <Form.Check ref={calcStructFactRef} label={'assing labels for structure factor calculation?'} name={`calcStructFactors`} type="checkbox" variant="outline"
-                    onChange={() => setCalcStructFact(
-                        (prev) => {return !prev}
-                    )} 
-                />
-            </Col>
-        </Row>            
+                <Col>
+                    <Form.Check ref={calcStructFactRef} label={'assing labels for structure factor calculation?'} name={`calcStructFactors`} type="checkbox" variant="outline"
+                        onChange={() => setCalcStructFact(
+                            (prev) => { return !prev }
+                        )}
+                    />
+                </Col>
+            </Row>
         </Row>
         <Row key="Row3" style={{ marginBottom: "1rem" }}>
             <Col key="F">
@@ -703,17 +705,17 @@ export const BabyGruImportFSigFMenuItem = (props) => {
     const foFcSelectRef = useRef()
     const moleculeSelectRef = useRef()
 
-    const connectMap = async () => {       
+    const connectMap = async () => {
         const commandArgs = [
-                moleculeSelectRef.current.value,
-                mapSelectRef.current.value,
-                twoFoFcSelectRef.current.value,
-                foFcSelectRef.current.value,
+            moleculeSelectRef.current.value,
+            mapSelectRef.current.value,
+            twoFoFcSelectRef.current.value,
+            foFcSelectRef.current.value,
         ]
         await props.commandCentre.current.cootCommand({
-                command: 'connect_updating_maps',
-                commandArgs: commandArgs,
-                returnType: 'status'
+            command: 'connect_updating_maps',
+            commandArgs: commandArgs,
+            returnType: 'status'
         }, true)
     }
 
@@ -724,7 +726,7 @@ export const BabyGruImportFSigFMenuItem = (props) => {
 
     const panelContent = <>
         <Row>
-            <Col style={{width:'30rem'}}>
+            <Col style={{ width: '30rem' }}>
                 <BabyGruMapSelect {...props} ref={mapSelectRef} filterFunction={(map) => map.hasReflectionData} allowAny={false} width='100%' label='Reflection data' />
             </Col>
         </Row>
@@ -755,7 +757,7 @@ export const BabyGruImportMapMenuItem = (props) => {
 
     const panelContent = <>
         <Row>
-            <Form.Group style={{ width: '30rem', margin: '0.5rem', padding:'0rem' }} controlId="uploadCCP4Map" className="mb-3">
+            <Form.Group style={{ width: '30rem', margin: '0.5rem', padding: '0rem' }} controlId="uploadCCP4Map" className="mb-3">
                 <Form.Label>CCP4/MRC Map...</Form.Label>
                 <Form.Control ref={filesRef} type="file" multiple={false} accept={[".map", ".mrc"]} onChange={(e) => {
                     handleFileRead(e)
@@ -1120,8 +1122,8 @@ export const BabyGruCentreOnLigandMenuItem = (props) => {
             if (molecule.gemmiStructure === null) {
                 return
             }
-            
-            let newMoleculeNode = { title: molecule.name, key: molecule.molNo, type: "molecule" }   
+
+            let newMoleculeNode = { title: molecule.name, key: molecule.molNo, type: "molecule" }
             const model = molecule.gemmiStructure.first_model()
             const ligandCids = []
             for (let i = 0; i < model.chains.size(); i++) {

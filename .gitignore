@@ -52,3 +52,4 @@ coot/mini-rsr.worker.js
 tests/moorhen.data
 install/*
 
+example/gemmi_test.js
