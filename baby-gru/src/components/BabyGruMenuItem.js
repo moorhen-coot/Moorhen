@@ -83,7 +83,7 @@ export const BabyGruLoadTutorialDataMenuItem = (props) => {
     const onCompleted = () => {
         const tutorialNumber = tutorialNumberSelectorRef.current.value
         console.log(`Loading data for tutorial number ${tutorialNumber}`)
-        const newMolecule = new BabyGruMolecule(props.commandCentre)
+        const newMolecule = new BabyGruMolecule(props.commandCentre, props.urlPrefix)
         const newMap = new BabyGruMap(props.commandCentre)
         const newDiffMap = new BabyGruMap(props.commandCentre)
         newMolecule.loadToCootFromURL(`${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-structure-number-${tutorialNumber}.pdb`, `moorhen-tutorial-${tutorialNumber}`)
@@ -145,7 +145,7 @@ export const BabyGruGetMonomerMenuItem = (props) => {
         }, true)
             .then(result => {
                 if (result.data.result.status === "Completed") {
-                    const newMolecule = new BabyGruMolecule(props.commandCentre)
+                    const newMolecule = new BabyGruMolecule(props.commandCentre, props.urlPrefix)
                     newMolecule.molNo = result.data.result.result
                     newMolecule.name = tlcRef.current.value
                     newMolecule.cachedAtoms.sequences = []
@@ -475,7 +475,7 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
                     }, true)
                         .then(result => {
                             if (result.data.result.status === "Completed") {
-                                newMolecule = new BabyGruMolecule(props.commandCentre)
+                                newMolecule = new BabyGruMolecule(props.commandCentre, props.urlPrefix)
                                 newMolecule.molNo = result.data.result.result
                                 newMolecule.name = instanceName
                                 newMolecule.cachedAtoms.sequences = []
@@ -1042,7 +1042,7 @@ export const BabyGruCopyFragmentUsingCidMenuItem = (props) => {
             commandArgs: commandArgs,
             changesMolecules: [parseInt(fromRef.current.value)]
         }, true).then(async response => {
-            const newMolecule = new BabyGruMolecule(props.commandCentre)
+            const newMolecule = new BabyGruMolecule(props.commandCentre, props.urlPrefix)
             newMolecule.name = `${fromMolecules[0].name} fragment`
             newMolecule.molNo = response.data.result.result
             await newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef)
@@ -1149,42 +1149,23 @@ export const BabyGruCentreOnLigandMenuItem = (props) => {
             id='centre-on-ligand-menu-item'
             popoverContent={
                 <Tree treeData={molTreeData}
-                    onSelect={(selectedKeys, e) => {
+                    onSelect={async (selectedKeys, e) => {
                         if (e.node.type === "ligand") {
-                            const selection = new window.CCP4Module.Selection(e.node.title)
-                            let sumXyz = [0., 0., 0.]
-                            let countXyz = 0
-                            const model = e.node.molecule.gemmiStructure.first_model()
-                            if (selection.matches_model(model)) {
-                                const chains = model.chains
-                                for (let i = 0; i < chains.size(); i++) {
-                                    const ch = chains.get(i)
-                                    if (selection.matches_chain(ch)) {
-                                        const residues = ch.residues
-                                        for (let j = 0; j < residues.size(); j++) {
-                                            const res = residues.get(j)
-                                            if (selection.matches_residue(res)) {
-                                                const atoms = res.atoms
-                                                for (let k = 0; k < atoms.size(); k++) {
-                                                    const at = atoms.get(k)
-                                                    if (selection.matches_atom(at)) {
-                                                        countXyz += 1
-                                                        sumXyz[0] += at.pos.x
-                                                        sumXyz[1] += at.pos.y
-                                                        sumXyz[2] += at.pos.z
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                if (countXyz > 0) {
-                                    console.log(sumXyz, countXyz)
-                                    props.glRef.current.setOrigin([
-                                        -sumXyz[0] / countXyz,
-                                        -sumXyz[1] / countXyz,
-                                        -sumXyz[2] / countXyz], true)
-                                }
+
+                            const selAtoms = await e.node.molecule.gemmiAtomsForCid(e.node.title)
+                            const reducedValue = selAtoms.reduce(
+                                (accumulator, currentValue) => {
+                                    const newSum = accumulator.sumXyz.map((coord, i) => coord + currentValue.pos.at(i))
+                                    const newCount = accumulator.count + 1
+                                    return { sumXyz: newSum, count: newCount }
+                                },
+                                { sumXyz: [0., 0., 0.], count: 0 }
+                            )
+                            console.log({reducedValue})
+                            if (reducedValue.count > 0) {
+                                props.glRef.current.setOrigin(
+                                    reducedValue.sumXyz.map(coord => -coord / reducedValue.count)
+                                    , true)
                             }
 
                         }

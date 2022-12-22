@@ -625,54 +625,64 @@ BabyGruMolecule.prototype.drawLigands = function (webMGAtoms, glRef, colourSchem
 */
 }
 
-BabyGruMolecule.prototype.drawHover = function (glRef, selectionString) {
+const gemmiAtomsToCirclesSpheresInfo = (atoms, size, primType, colourScheme) => {
+
+    let sphere_sizes = [];
+    let sphere_col_tri = [];
+    let sphere_vert_tri = [];
+    let sphere_idx_tri = [];
+    let sphere_atoms = [];
+
+    for (let iat = 0; iat < atoms.length; iat++) {
+        sphere_idx_tri.push(iat);
+        sphere_vert_tri.push(atoms[iat].pos.at(0));
+        sphere_vert_tri.push(atoms[iat].pos.at(1));
+        sphere_vert_tri.push(atoms[iat].pos.at(2));
+        for (let ip = 0; ip < colourScheme[`${atoms[iat].serial}`].length; ip++) {
+            sphere_col_tri.push(colourScheme[`${atoms[iat].serial}`][ip])
+        }
+        sphere_sizes.push(size);
+        let atom = {};
+        atom["x"] = atoms[iat].pos.at(0);
+        atom["y"] = atoms[iat].pos.at(1);
+        atom["z"] = atoms[iat].pos.at(2);
+        atom["tempFactor"] = atoms[iat].b_iso;
+        atom["charge"] = atoms[iat].charge;
+        atom["symbol"] = atoms[iat].element;
+        atom["label"] = ""
+        sphere_atoms.push(atom);
+    }
+
+    const spherePrimitiveInfo = {
+        atoms: [[sphere_atoms]],
+        sizes: [[sphere_sizes]],
+        col_tri: [[sphere_col_tri]],
+        norm_tri: [[[]]],
+        vert_tri: [[sphere_vert_tri]],
+        idx_tri: [[sphere_idx_tri]],
+        prim_types: [[primType]]
+    }
+    return spherePrimitiveInfo;
+}
+
+BabyGruMolecule.prototype.drawHover = async function (glRef, selectionString) {
     const $this = this
     const style = "hover"
-    const webMGAtoms = $this.cachedAtoms
-    if (typeof webMGAtoms["atoms"] === 'undefined') return;
 
-    //Attempt to apply selection, storing old hierarchy
-    const oldHierarchy = webMGAtoms.atoms
-    let selectedAtoms = null
     if (typeof selectionString === 'string') {
-        //const selectionElements = selectionString.split("/")
         const resSpec = cidToSpec(selectionString)
-        const modifiedSelection = `/*/${resSpec.chain_id}/${resSpec.res_no}/*${resSpec.alt_conf === "" ? "" : ":"}${resSpec.alt_conf}`
-        try {
-            selectedAtoms = webMGAtoms.atoms[0].getAtoms(modifiedSelection)
-            if (selectedAtoms.length === 0) {
-                webMGAtoms.atoms = oldHierarchy
-                return
-            }
-            webMGAtoms.atoms = atomsToHierarchy(selectedAtoms)
-        }
-        catch (err) {
-            webMGAtoms.atoms = oldHierarchy
-            return
-        }
+        const modifiedSelection = `/*/${resSpec.chain_id}/${resSpec.res_no}-${resSpec.res_no}/*${resSpec.alt_conf === "" ? "" : ":"}${resSpec.alt_conf}`
+        const selectedGemmiAtoms = await $this.gemmiAtomsForCid(modifiedSelection)
+        const atomColours = {}
+        selectedGemmiAtoms.forEach(atom => { atomColours[`${atom.serial}`] = [1.0, 0.5, 0.0, 0.35] })
+        let objects = [
+            gemmiAtomsToCirclesSpheresInfo(selectedGemmiAtoms, 0.3, "POINTS_SPHERES", atomColours)
+        ]
+        $this.clearBuffersOfStyle(style, glRef)
+        this.addBuffersOfStyle(glRef, objects, style)
     }
-    if (selectedAtoms == null) return
-    var model = webMGAtoms.atoms[0];
+    return
 
-    const colourScheme = new ColourScheme(webMGAtoms);
-    var atomColours = colourScheme.colourOneColour([0.8, 0.5, 0.2, 0.3])
-    let linesAndSpheres = []
-    var nonHydrogenAtoms = model.getAtoms("not [H]");
-    var nonHydrogenPrimitiveInfo = atomsToSpheresInfo(nonHydrogenAtoms, 0.3, atomColours);
-    linesAndSpheres.push(nonHydrogenPrimitiveInfo);
-
-    //Restore old hierarchy
-    webMGAtoms.atoms = oldHierarchy
-
-    const objects = linesAndSpheres.filter(item => {
-        return typeof item.sizes !== "undefined" &&
-            item.sizes.length > 0 &&
-            item.sizes[0].length > 0 &&
-            item.sizes[0][0].length > 0
-    })
-    //console.log('clearing', style, gl)
-    $this.clearBuffersOfStyle(style, glRef)
-    this.addBuffersOfStyle(glRef, objects, style)
 }
 
 BabyGruMolecule.prototype.drawRibbons = function (webMGAtoms, glRef) {
@@ -942,4 +952,36 @@ BabyGruMolecule.prototype.redo = async function (glRef) {
     })
     $this.setAtomsDirty(true)
     return $this.redraw(glRef)
+}
+
+BabyGruMolecule.prototype.gemmiAtomsForCid = async function (cid) {
+    const $this = this
+    if ($this.atomsDirty) {
+        const cachedAtoms = await $this.updateAtoms()
+    }
+    let result = []
+    const selection = new window.CCP4Module.Selection(cid)
+    const model = $this.gemmiStructure.first_model()
+    if (selection.matches_model(model)) {
+        const chains = model.chains
+        for (let i = 0; i < chains.size(); i++) {
+            const ch = chains.get(i)
+            if (selection.matches_chain(ch)) {
+                const residues = ch.residues
+                for (let j = 0; j < residues.size(); j++) {
+                    const res = residues.get(j)
+                    if (selection.matches_residue(res)) {
+                        const atoms = res.atoms
+                        for (let k = 0; k < atoms.size(); k++) {
+                            const at = atoms.get(k)
+                            if (selection.matches_atom(at)) {
+                                result.push(at)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return Promise.resolve(result)
 }
