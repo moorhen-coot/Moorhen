@@ -83,10 +83,10 @@ export const BabyGruLoadTutorialDataMenuItem = (props) => {
     const onCompleted = () => {
         const tutorialNumber = tutorialNumberSelectorRef.current.value
         console.log(`Loading data for tutorial number ${tutorialNumber}`)
-        const newMolecule = new BabyGruMolecule(props.commandCentre)
+        const newMolecule = new BabyGruMolecule(props.commandCentre, props.urlPrefix)
         const newMap = new BabyGruMap(props.commandCentre)
         const newDiffMap = new BabyGruMap(props.commandCentre)
-        newMolecule.loadToCootFromURL(`/baby-gru/tutorials/moorhen-tutorial-structure-number-${tutorialNumber}.pdb`, `moorhen-tutorial-${tutorialNumber}`)
+        newMolecule.loadToCootFromURL(`${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-structure-number-${tutorialNumber}.pdb`, `moorhen-tutorial-${tutorialNumber}`)
             .then(result => {
                 newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef, true)
             }).then(result => {
@@ -95,11 +95,13 @@ export const BabyGruLoadTutorialDataMenuItem = (props) => {
             }).then(_ => {
                 newMolecule.centreOn(props.glRef)
             }).then(_ => {
-                return newMap.loadToCootFromMtzURL(`/baby-gru/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`, `moorhen-tutorial-${tutorialNumber}`,
-                    { F: "FWT", PHI: "PHWT", Fobs: tutorialNumber == 1 ? 'F' : 'FP', SigFobs: tutorialNumber == 1 ? 'SIGF' : 'SIGFP', FreeR: tutorialNumber == 1 ? 'FREER' : 'FREE',
-                     isDifference: false, useWeight: false, calcStructFact: true })
+                return newMap.loadToCootFromMtzURL(`${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`, `moorhen-tutorial-${tutorialNumber}`,
+                    {
+                        F: "FWT", PHI: "PHWT", Fobs: tutorialNumber == 1 ? 'F' : 'FP', SigFobs: tutorialNumber == 1 ? 'SIGF' : 'SIGFP', FreeR: tutorialNumber == 1 ? 'FREER' : 'FREE',
+                        isDifference: false, useWeight: false, calcStructFact: true
+                    })
             }).then(_ => {
-                return newDiffMap.loadToCootFromMtzURL(`/baby-gru/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`, `moorhen-tutorial-${tutorialNumber}`,
+                return newDiffMap.loadToCootFromMtzURL(`${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`, `moorhen-tutorial-${tutorialNumber}`,
                     { F: "DELFWT", PHI: "PHDELWT", isDifference: true, useWeight: false })
             }).then(_ => {
                 props.changeMaps({ action: 'AddList', items: [newMap, newDiffMap] })
@@ -143,7 +145,7 @@ export const BabyGruGetMonomerMenuItem = (props) => {
         }, true)
             .then(result => {
                 if (result.data.result.status === "Completed") {
-                    const newMolecule = new BabyGruMolecule(props.commandCentre)
+                    const newMolecule = new BabyGruMolecule(props.commandCentre, props.urlPrefix)
                     newMolecule.molNo = result.data.result.result
                     newMolecule.name = tlcRef.current.value
                     newMolecule.cachedAtoms.sequences = []
@@ -473,7 +475,7 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
                     }, true)
                         .then(result => {
                             if (result.data.result.status === "Completed") {
-                                newMolecule = new BabyGruMolecule(props.commandCentre)
+                                newMolecule = new BabyGruMolecule(props.commandCentre, props.urlPrefix)
                                 newMolecule.molNo = result.data.result.result
                                 newMolecule.name = instanceName
                                 newMolecule.cachedAtoms.sequences = []
@@ -517,7 +519,7 @@ export const BabyGruImportDictionaryMenuItem = (props) => {
 
     const readMonomerFile = async (newTlc) => {
         console.log({ newTlc })
-        return fetch(`/baby-gru/monomers/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`)
+        return fetch(`${props.urlPrefix}/baby-gru/monomers/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`)
             .then(response => response.text())
             .then(fileContent => {
                 return handleFileContent(fileContent)
@@ -604,7 +606,7 @@ export const BabyGruImportMapCoefficientsMenuItem = (props) => {
 
     const panelContent = <>
         <Row>
-            <Form.Group style={{ width: '30rem', margin: '0.5rem', padding: '0rem'}} controlId="uploadDicts" className="mb-3">
+            <Form.Group style={{ width: '30rem', margin: '0.5rem', padding: '0rem' }} controlId="uploadDicts" className="mb-3">
                 <Form.Label>Map coefficient files</Form.Label>
                 <Form.Control ref={filesRef} type="file" multiple={false} accept={[".mtz"]} onChange={(e) => {
                     handleFileRead(e)
@@ -648,14 +650,14 @@ export const BabyGruImportMapCoefficientsMenuItem = (props) => {
                 <Form.Check label={'use weight'} name={`useWeight`} type="checkbox" ref={useWeightRef} variant="outline" />
             </Col>
             <Row key="Row4" style={{ marginTop: "1rem" }}>
-            <Col>
-                <Form.Check ref={calcStructFactRef} label={'assing labels for structure factor calculation?'} name={`calcStructFactors`} type="checkbox" variant="outline"
-                    onChange={() => setCalcStructFact(
-                        (prev) => {return !prev}
-                    )} 
-                />
-            </Col>
-        </Row>            
+                <Col>
+                    <Form.Check ref={calcStructFactRef} label={'assing labels for structure factor calculation?'} name={`calcStructFactors`} type="checkbox" variant="outline"
+                        onChange={() => setCalcStructFact(
+                            (prev) => { return !prev }
+                        )}
+                    />
+                </Col>
+            </Row>
         </Row>
         <Row key="Row3" style={{ marginBottom: "1rem" }}>
             <Col key="F">
@@ -703,17 +705,17 @@ export const BabyGruImportFSigFMenuItem = (props) => {
     const foFcSelectRef = useRef()
     const moleculeSelectRef = useRef()
 
-    const connectMap = async () => {       
+    const connectMap = async () => {
         const commandArgs = [
-                moleculeSelectRef.current.value,
-                mapSelectRef.current.value,
-                twoFoFcSelectRef.current.value,
-                foFcSelectRef.current.value,
+            moleculeSelectRef.current.value,
+            mapSelectRef.current.value,
+            twoFoFcSelectRef.current.value,
+            foFcSelectRef.current.value,
         ]
         await props.commandCentre.current.cootCommand({
-                command: 'connect_updating_maps',
-                commandArgs: commandArgs,
-                returnType: 'status'
+            command: 'connect_updating_maps',
+            commandArgs: commandArgs,
+            returnType: 'status'
         }, true)
     }
 
@@ -724,7 +726,7 @@ export const BabyGruImportFSigFMenuItem = (props) => {
 
     const panelContent = <>
         <Row>
-            <Col style={{width:'30rem'}}>
+            <Col style={{ width: '30rem' }}>
                 <BabyGruMapSelect {...props} ref={mapSelectRef} filterFunction={(map) => map.hasReflectionData} allowAny={false} width='100%' label='Reflection data' />
             </Col>
         </Row>
@@ -755,7 +757,7 @@ export const BabyGruImportMapMenuItem = (props) => {
 
     const panelContent = <>
         <Row>
-            <Form.Group style={{ width: '30rem', margin: '0.5rem', padding:'0rem' }} controlId="uploadCCP4Map" className="mb-3">
+            <Form.Group style={{ width: '30rem', margin: '0.5rem', padding: '0rem' }} controlId="uploadCCP4Map" className="mb-3">
                 <Form.Label>CCP4/MRC Map...</Form.Label>
                 <Form.Control ref={filesRef} type="file" multiple={false} accept={[".map", ".mrc"]} onChange={(e) => {
                     handleFileRead(e)
@@ -1040,7 +1042,7 @@ export const BabyGruCopyFragmentUsingCidMenuItem = (props) => {
             commandArgs: commandArgs,
             changesMolecules: [parseInt(fromRef.current.value)]
         }, true).then(async response => {
-            const newMolecule = new BabyGruMolecule(props.commandCentre)
+            const newMolecule = new BabyGruMolecule(props.commandCentre, props.urlPrefix)
             newMolecule.name = `${fromMolecules[0].name} fragment`
             newMolecule.molNo = response.data.result.result
             await newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef)
@@ -1120,8 +1122,8 @@ export const BabyGruCentreOnLigandMenuItem = (props) => {
             if (molecule.gemmiStructure === null) {
                 return
             }
-            
-            let newMoleculeNode = { title: molecule.name, key: molecule.molNo, type: "molecule" }   
+
+            let newMoleculeNode = { title: molecule.name, key: molecule.molNo, type: "molecule" }
             const model = molecule.gemmiStructure.first_model()
             const ligandCids = []
             for (let i = 0; i < model.chains.size(); i++) {
@@ -1147,42 +1149,23 @@ export const BabyGruCentreOnLigandMenuItem = (props) => {
             id='centre-on-ligand-menu-item'
             popoverContent={
                 <Tree treeData={molTreeData}
-                    onSelect={(selectedKeys, e) => {
+                    onSelect={async (selectedKeys, e) => {
                         if (e.node.type === "ligand") {
-                            const selection = new window.CCP4Module.Selection(e.node.title)
-                            let sumXyz = [0., 0., 0.]
-                            let countXyz = 0
-                            const model = e.node.molecule.gemmiStructure.first_model()
-                            if (selection.matches_model(model)) {
-                                const chains = model.chains
-                                for (let i = 0; i < chains.size(); i++) {
-                                    const ch = chains.get(i)
-                                    if (selection.matches_chain(ch)) {
-                                        const residues = ch.residues
-                                        for (let j = 0; j < residues.size(); j++) {
-                                            const res = residues.get(j)
-                                            if (selection.matches_residue(res)) {
-                                                const atoms = res.atoms
-                                                for (let k = 0; k < atoms.size(); k++) {
-                                                    const at = atoms.get(k)
-                                                    if (selection.matches_atom(at)) {
-                                                        countXyz += 1
-                                                        sumXyz[0] += at.pos.x
-                                                        sumXyz[1] += at.pos.y
-                                                        sumXyz[2] += at.pos.z
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                if (countXyz > 0) {
-                                    console.log(sumXyz, countXyz)
-                                    props.glRef.current.setOrigin([
-                                        -sumXyz[0] / countXyz,
-                                        -sumXyz[1] / countXyz,
-                                        -sumXyz[2] / countXyz], true)
-                                }
+
+                            const selAtoms = await e.node.molecule.gemmiAtomsForCid(e.node.title)
+                            const reducedValue = selAtoms.reduce(
+                                (accumulator, currentValue) => {
+                                    const newSum = accumulator.sumXyz.map((coord, i) => coord + currentValue.pos.at(i))
+                                    const newCount = accumulator.count + 1
+                                    return { sumXyz: newSum, count: newCount }
+                                },
+                                { sumXyz: [0., 0., 0.], count: 0 }
+                            )
+                            console.log({reducedValue})
+                            if (reducedValue.count > 0) {
+                                props.glRef.current.setOrigin(
+                                    reducedValue.sumXyz.map(coord => -coord / reducedValue.count)
+                                    , true)
                             }
 
                         }

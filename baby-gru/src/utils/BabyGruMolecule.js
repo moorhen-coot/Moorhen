@@ -10,7 +10,7 @@ import { readTextFile, readGemmiStructure, cidToSpec } from '../utils/BabyGruUti
 import { quatToMat4 } from '../WebGL/quatToMat4.js';
 import * as vec3 from 'gl-matrix/vec3';
 
-export function BabyGruMolecule(commandCentre) {
+export function BabyGruMolecule(commandCentre, urlPrefix) {
     this.type = 'molecule'
     this.commandCentre = commandCentre
     this.enerLib = new EnerLib()
@@ -40,6 +40,7 @@ export function BabyGruMolecule(commandCentre) {
         VdWSurface: [],
         transformation: { origin: [0, 0, 0], quat: null, centre: [0, 0, 0] }
     }
+    this.urlPrefix = (typeof urlPrefix === 'undefined' ? "." : urlPrefix);
 };
 
 BabyGruMolecule.prototype.updateGemmiStructure = async function () {
@@ -68,7 +69,7 @@ BabyGruMolecule.prototype.copyFragment = async function (chainId, res_no_start, 
     const $this = this
     const inputData = { message: "copy_fragment", molNo: $this.molNo, chainId: chainId, res_no_start: res_no_start, res_no_end: res_no_end }
     const response = await $this.commandCentre.current.postMessage(inputData)
-    const newMolecule = new BabyGruMolecule($this.commandCentre)
+    const newMolecule = new BabyGruMolecule($this.commandCentre, $this.urlPrefix)
     newMolecule.name = `${$this.name} fragment`
     newMolecule.molNo = response.data.result
     await newMolecule.fetchIfDirtyAndDraw('CBs', glRef)
@@ -86,31 +87,19 @@ BabyGruMolecule.prototype.copyFragment = async function (chainId, res_no_start, 
     return newMolecule
 }
 
+BabyGruMolecule.prototype.loadToCootFromURL = function (url, molName) {
+    const $this = this
+    return fetch(url)
+        .then(response => response.text())
+        .then(coordData => $this.loadToCootFromString(coordData, molName))
+        .catch(err => Promise.reject(err))
+}
+
 BabyGruMolecule.prototype.loadToCootFromFile = function (source) {
     const $this = this
-    const pdbRegex = /.pdb$/;
-    const entRegex = /.ent$/;
     return readTextFile(source)
-        .then(coordData => {
-            $this.name = source.name.replace(pdbRegex, "").replace(entRegex, "");
-            $this.cachedAtoms = $this.webMGAtomsFromFileString(coordData)
-            $this.gemmiStructure = readGemmiStructure(coordData, $this.name)
-            window.CCP4Module.gemmi_setup_entities($this.gemmiStructure)
-            $this.atomsDirty = false
-            return this.commandCentre.current.cootCommand({
-                returnType: "status",
-                command: 'shim_read_pdb',
-                commandArgs: [coordData, $this.name],
-                changesMolecules: [$this.molNo]
-            }, true)
-        })
-        .then(reply => {
-            $this.molNo = reply.data.result.result
-            return Promise.resolve($this)
-        })
-        .catch((err) => {
-            return Promise.reject(err)
-        })
+        .then(coordData => $this.loadToCootFromString(coordData, source.name))
+        .catch(err => Promise.reject(err))
 }
 
 BabyGruMolecule.prototype.loadToCootFromString = async function (coordData, name) {
@@ -124,49 +113,55 @@ BabyGruMolecule.prototype.loadToCootFromString = async function (coordData, name
     window.CCP4Module.gemmi_setup_entities($this.gemmiStructure)
     $this.atomsDirty = false
 
-    let response  = await this.commandCentre.current.cootCommand({
+    return this.commandCentre.current.cootCommand({
         returnType: "status",
         command: 'shim_read_pdb',
         commandArgs: [coordData, $this.name],
         changesMolecules: [$this.molNo]
     }, true)
+        .then(response => {
+            $this.molNo = response.data.result.result
+            return Promise.resolve($this)
+        })
+        .then(molecule => molecule.loadMissingMonomers())
+        .catch(err => {
+            console.log('Error in loadToCootFromString', err);
+            return Promise.reject(err)
+        })
+}
 
-    $this.molNo = response.data.result.result
-    return Promise.resolve($this)
+BabyGruMolecule.prototype.loadMissingMonomers = async function () {
+    const $this = this
+    return $this.commandCentre.current.cootCommand({
+        returnType: "string_array",
+        command: 'get_residue_names_with_no_dictionary',
+        commandArgs: [$this.molNo],
+    }, false).then(async response => {
+        if (response.data.result.status === 'Completed') {
+            let monomerPromises = []
+            response.data.result.result.forEach(newTlc => {
+                const newPromise = fetch(`${$this.urlPrefix}/baby-gru/monomers/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`)
+                    .then(response => response.text())
+                    .then(fileContent => $this.commandCentre.current.cootCommand({
+                        returnType: "status",
+                        command: 'shim_read_dictionary',
+                        commandArgs: [fileContent, -999999],
+                        changesMolecules: []
+                    }, true))
+                monomerPromises.push(newPromise)
+            })
+            await Promise.all(monomerPromises)
+            console.log('Fetched all')
+        }
+        return Promise.resolve($this)
+    }).catch(err => {
+        console.log('Error in loadMissingMonomers', err);
+        return Promise.reject(err)
+    })
 }
 
 BabyGruMolecule.prototype.setAtomsDirty = function (state) {
     this.atomsDirty = state
-}
-
-BabyGruMolecule.prototype.loadToCootFromURL = function (url, molName) {
-    const $this = this
-
-    return fetch(url)
-        .then(response => {
-            return response.text()
-        }).then((coordData) => {
-            $this.name = molName
-            $this.cachedAtoms = $this.webMGAtomsFromFileString(coordData)
-            $this.gemmiStructure = readGemmiStructure(coordData, $this.name)
-            window.CCP4Module.gemmi_setup_entities($this.gemmiStructure)
-            $this.atomsDirty = false
-
-            return this.commandCentre.current.cootCommand({
-                returnType: "status",
-                command: 'shim_read_pdb',
-                commandArgs: [coordData, $this.name]
-            }, true)
-        }).then(reply => {
-            if (reply.data.result.result === -1) {
-                return Promise.reject('Failed to parse fetched PDB data')
-            }
-            $this.molNo = reply.data.result.result
-            return Promise.resolve($this)
-        })
-        .catch((err) => {
-            return Promise.reject(err)
-        })
 }
 
 BabyGruMolecule.prototype.getAtoms = function () {
@@ -630,54 +625,64 @@ BabyGruMolecule.prototype.drawLigands = function (webMGAtoms, glRef, colourSchem
 */
 }
 
-BabyGruMolecule.prototype.drawHover = function (glRef, selectionString) {
+const gemmiAtomsToCirclesSpheresInfo = (atoms, size, primType, colourScheme) => {
+
+    let sphere_sizes = [];
+    let sphere_col_tri = [];
+    let sphere_vert_tri = [];
+    let sphere_idx_tri = [];
+    let sphere_atoms = [];
+
+    for (let iat = 0; iat < atoms.length; iat++) {
+        sphere_idx_tri.push(iat);
+        sphere_vert_tri.push(atoms[iat].pos.at(0));
+        sphere_vert_tri.push(atoms[iat].pos.at(1));
+        sphere_vert_tri.push(atoms[iat].pos.at(2));
+        for (let ip = 0; ip < colourScheme[`${atoms[iat].serial}`].length; ip++) {
+            sphere_col_tri.push(colourScheme[`${atoms[iat].serial}`][ip])
+        }
+        sphere_sizes.push(size);
+        let atom = {};
+        atom["x"] = atoms[iat].pos.at(0);
+        atom["y"] = atoms[iat].pos.at(1);
+        atom["z"] = atoms[iat].pos.at(2);
+        atom["tempFactor"] = atoms[iat].b_iso;
+        atom["charge"] = atoms[iat].charge;
+        atom["symbol"] = atoms[iat].element;
+        atom["label"] = ""
+        sphere_atoms.push(atom);
+    }
+
+    const spherePrimitiveInfo = {
+        atoms: [[sphere_atoms]],
+        sizes: [[sphere_sizes]],
+        col_tri: [[sphere_col_tri]],
+        norm_tri: [[[]]],
+        vert_tri: [[sphere_vert_tri]],
+        idx_tri: [[sphere_idx_tri]],
+        prim_types: [[primType]]
+    }
+    return spherePrimitiveInfo;
+}
+
+BabyGruMolecule.prototype.drawHover = async function (glRef, selectionString) {
     const $this = this
     const style = "hover"
-    const webMGAtoms = $this.cachedAtoms
-    if (typeof webMGAtoms["atoms"] === 'undefined') return;
 
-    //Attempt to apply selection, storing old hierarchy
-    const oldHierarchy = webMGAtoms.atoms
-    let selectedAtoms = null
     if (typeof selectionString === 'string') {
-        //const selectionElements = selectionString.split("/")
         const resSpec = cidToSpec(selectionString)
-        const modifiedSelection = `/*/${resSpec.chain_id}/${resSpec.res_no}/*${resSpec.alt_conf === "" ? "" : ":"}${resSpec.alt_conf}`
-        try {
-            selectedAtoms = webMGAtoms.atoms[0].getAtoms(modifiedSelection)
-            if (selectedAtoms.length === 0) {
-                webMGAtoms.atoms = oldHierarchy
-                return
-            }
-            webMGAtoms.atoms = atomsToHierarchy(selectedAtoms)
-        }
-        catch (err) {
-            webMGAtoms.atoms = oldHierarchy
-            return
-        }
+        const modifiedSelection = `/*/${resSpec.chain_id}/${resSpec.res_no}-${resSpec.res_no}/*${resSpec.alt_conf === "" ? "" : ":"}${resSpec.alt_conf}`
+        const selectedGemmiAtoms = await $this.gemmiAtomsForCid(modifiedSelection)
+        const atomColours = {}
+        selectedGemmiAtoms.forEach(atom => { atomColours[`${atom.serial}`] = [1.0, 0.5, 0.0, 0.35] })
+        let objects = [
+            gemmiAtomsToCirclesSpheresInfo(selectedGemmiAtoms, 0.3, "POINTS_SPHERES", atomColours)
+        ]
+        $this.clearBuffersOfStyle(style, glRef)
+        this.addBuffersOfStyle(glRef, objects, style)
     }
-    if (selectedAtoms == null) return
-    var model = webMGAtoms.atoms[0];
+    return
 
-    const colourScheme = new ColourScheme(webMGAtoms);
-    var atomColours = colourScheme.colourOneColour([0.8, 0.5, 0.2, 0.3])
-    let linesAndSpheres = []
-    var nonHydrogenAtoms = model.getAtoms("not [H]");
-    var nonHydrogenPrimitiveInfo = atomsToSpheresInfo(nonHydrogenAtoms, 0.3, atomColours);
-    linesAndSpheres.push(nonHydrogenPrimitiveInfo);
-
-    //Restore old hierarchy
-    webMGAtoms.atoms = oldHierarchy
-
-    const objects = linesAndSpheres.filter(item => {
-        return typeof item.sizes !== "undefined" &&
-            item.sizes.length > 0 &&
-            item.sizes[0].length > 0 &&
-            item.sizes[0][0].length > 0
-    })
-    //console.log('clearing', style, gl)
-    $this.clearBuffersOfStyle(style, glRef)
-    this.addBuffersOfStyle(glRef, objects, style)
 }
 
 BabyGruMolecule.prototype.drawRibbons = function (webMGAtoms, glRef) {
@@ -881,7 +886,7 @@ BabyGruMolecule.prototype.addLigandOfType = async function (resType, at, glRef) 
     }, true)
         .then(async result => {
             if (result.data.result.status === "Completed") {
-                newMolecule = new BabyGruMolecule($this.commandCentre)
+                newMolecule = new BabyGruMolecule($this.commandCentre, $this.urlPrefix)
                 newMolecule.setAtomsDirty(true)
                 newMolecule.molNo = result.data.result.result
                 newMolecule.name = resType.toUpperCase()
@@ -947,4 +952,36 @@ BabyGruMolecule.prototype.redo = async function (glRef) {
     })
     $this.setAtomsDirty(true)
     return $this.redraw(glRef)
+}
+
+BabyGruMolecule.prototype.gemmiAtomsForCid = async function (cid) {
+    const $this = this
+    if ($this.atomsDirty) {
+        const cachedAtoms = await $this.updateAtoms()
+    }
+    let result = []
+    const selection = new window.CCP4Module.Selection(cid)
+    const model = $this.gemmiStructure.first_model()
+    if (selection.matches_model(model)) {
+        const chains = model.chains
+        for (let i = 0; i < chains.size(); i++) {
+            const ch = chains.get(i)
+            if (selection.matches_chain(ch)) {
+                const residues = ch.residues
+                for (let j = 0; j < residues.size(); j++) {
+                    const res = residues.get(j)
+                    if (selection.matches_residue(res)) {
+                        const atoms = res.atoms
+                        for (let k = 0; k < atoms.size(); k++) {
+                            const at = atoms.get(k)
+                            if (selection.matches_atom(at)) {
+                                result.push(at)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return Promise.resolve(result)
 }
