@@ -19,10 +19,6 @@ add_executable(web_example web_example.cc ../coot/gemmi-wrappers.cc ../checkout/
 ../checkout/gesamt/src/gesamt_usage.h
 ../checkout/gesamt/src/gesamt_utils.cpp
 ../checkout/gesamt/src/gesamt_utils.h
-../checkout/gemmi/src/polyheur.cpp
-../checkout/gemmi/src/resinfo.cpp
-../checkout/gemmi/src/riding_h.cpp
-../checkout/gemmi/src/topo.cpp
 )
 
 target_link_options(web_example PRIVATE -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCCP4Module -sEXPORTED_RUNTIME_METHODS=['FS','readFile'])
