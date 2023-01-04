@@ -78,7 +78,7 @@ const BabyGruSimpleEditButton = forwardRef((props, buttonRef) => {
                 console.log('Encountered', err)
             }
         })
-    }, [props.molecules.length, props.activeMap, props.refineAfterMod])
+    }, [props.molecules.length, props.activeMap, props.refineAfterMod,localParameters])
 
     useEffect(() => {
         props.setCursorStyle("crosshair")
