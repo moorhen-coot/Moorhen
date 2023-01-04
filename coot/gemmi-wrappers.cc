@@ -2099,7 +2099,6 @@ GlobWalk
     function("split_chains_by_segments", &gemmi::split_chains_by_segments);
     function("check_polymer_type", &gemmi::check_polymer_type);
     function("make_one_letter_sequence", &gemmi::make_one_letter_sequence);
-    function("has_entity_types_and_subchains", &gemmi::has_entity_types_and_subchains);
     function("assign_cis_flags_structure", select_overload<void(gemmi::Structure&)>(&gemmi::assign_cis_flags));
     function("assign_cis_flags_model",     select_overload<void(gemmi::Model&)>(&gemmi::assign_cis_flags));
     function("assign_cis_flags_chain",     select_overload<void(gemmi::Chain&)>(&gemmi::assign_cis_flags));

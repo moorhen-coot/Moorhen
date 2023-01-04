@@ -24,9 +24,9 @@ echo
 echo "Checking out gesamt"
 bzr checkout --lightweight  http://fg.oisin.rc-harwell.ac.uk/anonscm/bzr/gesamt/trunk/ gesamt
 echo
-echo "Checking out gemmi"
-git clone https://github.com/project-gemmi/gemmi.git gemmi
-echo
+#echo "Checking out gemmi"
+#git clone https://github.com/project-gemmi/gemmi.git gemmi
+#echo
 echo "Checking out ccp4mg"
 bzr checkout --lightweight http://fg.oisin.rc-harwell.ac.uk/anonscm/bzr/ccp4mg/ccp4-pyside2-opengl33/ ccp4mg
 echo
@@ -37,6 +37,9 @@ echo "Checking out monomers"
 bzr checkout --lightweight  http://fg.oisin.rc-harwell.ac.uk/anonscm/bzr/monomers/trunk/ monomers
 echo
 
+echo "Downloading gemmi v0.5.8"
+curl -L https://github.com/project-gemmi/gemmi/archive/refs/tags/v0.5.8.tar.gz -o gemmi-v0.5.8.tar.gz
+echo
 echo "Downloading privateer MKIV"
 curl -L https://github.com/agirre/privateer/archive/refs/tags/MKIV.tar.gz -o privateer-MKIV.tar.gz
 echo
@@ -57,9 +60,14 @@ curl -L https://github.com/rdkit/rdkit/archive/refs/tags/Release_2022_09_2.tar.g
 
 echo "Unpacking RDKit source"
 tar xf Release_2022_09_2.tar.gz
-
+echo
+echo "Unpacking gemmi v0.5.8"
+tar xf gemmi-v0.5.8.tar.gz
+ln -s gemmi-0.5.8 gemmi
+echo
 echo "Unpacking privateer MKIV"
 tar xf privateer-MKIV.tar.gz
+echo
 echo "Unpacking fftw-2.1.5"
 tar xf fftw-2.1.5.tar.gz
 echo

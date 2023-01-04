@@ -8,8 +8,26 @@ set(CMAKE_EXECUTABLE_SUFFIX ".js")
 set(coot_src ${CMAKE_CURRENT_SOURCE_DIR}/../checkout/coot-1.0)
 add_definitions(-DMAKE_ENHANCED_LIGAND_TOOLS -DANALYSE_REFINEMENT_TIMING -DVERSION="1.0" -DPACKAGE_VERSION="1.0" -DHAVE_CXX_THREAD -DHAVE_BOOST -DHAVE_GSL -DPKGDATADIR="${coot_src}/pixmaps" -DDATADIR="${coot_src}/data")
 
-file(GLOB coot_rotamer_data
-${coot_src}/rama-data/*.data
+set(coot_rotamer_data
+${coot_src}/rama-data/rota500-pro.data
+${coot_src}/rama-data/rota500-cys.data
+${coot_src}/rama-data/rota500-ser.data
+${coot_src}/rama-data/rota500-thr.data
+${coot_src}/rama-data/rota500-val.data
+${coot_src}/rama-data/rota500-phetyr.data
+${coot_src}/rama-data/rota500-asp.data
+${coot_src}/rama-data/rota500-trp.data
+${coot_src}/rama-data/rota500-ile.data
+${coot_src}/rama-data/rota500-leu.data
+${coot_src}/rama-data/rota500-his.data
+${coot_src}/rama-data/rota500-asn.data
+${coot_src}/rama-data/rama500-pro.data
+${coot_src}/rama-data/rama500-prepro.data
+${coot_src}/rama-data/rama500-general.data
+${coot_src}/rama-data/rama500-gly-sym.data
+${coot_src}/rama-data/rota500-met.data
+${coot_src}/rama-data/rota500-glu.data
+${coot_src}/rama-data/rota500-gln.data
 )
 
 #These ones do not compile for various reasons - mostly Python
