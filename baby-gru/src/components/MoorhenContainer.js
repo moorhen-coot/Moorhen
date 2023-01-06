@@ -16,7 +16,7 @@ import { MoorhenToolsAccordion } from './MoorhenToolsAccordion'
 import { PreferencesContext } from "../utils/MoorhenPreferences";
 import { babyGruKeyPress } from './MoorhenKeyboardAccelerators';
 import { MoorhenEditMenu } from './MoorhenEditMenu';
-import { MoorhenSearchBar } from './MorhenSearchBar';
+import { MoorhenSearchBar } from './MoorhenSearchBar';
 import './MoorhenContainer.css'
 
 const initialMoleculesState = []
