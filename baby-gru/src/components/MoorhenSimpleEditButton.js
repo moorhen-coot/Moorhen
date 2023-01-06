@@ -54,9 +54,9 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
                             await props.commandCentre.current.cootCommand({
                                 returnType: "status",
                                 command: 'refine_residues_using_atom_cid',
-                                commandArgs: refinementFormatArgs(molecule, chosenAtom, {refine: {mode: 'TRIPLE'}}),
+                                commandArgs: refinementFormatArgs(molecule, chosenAtom, { refine: { mode: 'TRIPLE' } }),
                                 changesMolecules: [molecule.molNo]
-                            }, true)    
+                            }, true)
                         }
                         molecule.setAtomsDirty(true)
                         molecule.redraw(props.glRef)
@@ -64,7 +64,7 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
                         const originChangedEvent = new CustomEvent("originChanged",
                             { "detail": props.glRef.current.origin });
                         document.dispatchEvent(originChangedEvent);
-                        
+
                     }
                     else if (props.nonCootCommand) {
                         props.nonCootCommand(molecule, chosenAtom, localParameters)
@@ -78,7 +78,7 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
                 console.log('Encountered', err)
             }
         })
-    }, [props.molecules.length, props.activeMap, props.refineAfterMod,localParameters])
+    }, [props.molecules.length, props.activeMap, props.refineAfterMod, localParameters])
 
     useEffect(() => {
         props.setCursorStyle("crosshair")
@@ -101,7 +101,7 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
                 ref={buttonRef ? buttonRef : target}
                 active={props.buttonIndex === props.selectedButtonIndex}
                 variant='light'
-                style={{borderColor: props.buttonIndex === props.selectedButtonIndex ? 'red' : ''}}
+                style={{ borderColor: props.buttonIndex === props.selectedButtonIndex ? 'red' : '' }}
                 disabled={props.needsMapData && !props.activeMap ||
                     (props.needsAtomData && props.molecules.length === 0)}
                 onClick={(evt) => {
@@ -190,9 +190,8 @@ export const MoorhenConvertCisTransButton = (props) => {
         prompt="Click atom in residue to convert"
         icon={<img className="baby-gru-button-icon" alt="Cis/Trans" src={`${props.urlPrefix}/baby-gru/pixmaps/cis-trans.svg`} />}
         formatArgs={(molecule, chosenAtom) => {
-            return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}${
-                chosenAtom.alt_conf === "" ? "" : ":"+chosenAtom.alt_conf
-            }`]
+            return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf
+                }`]
         }} />
 }
 
@@ -302,16 +301,16 @@ export const MoorhenDeleteUsingCidButton = (props) => {
     }
     const deleteFormatArgs = (molecule, chosenAtom, pp) => {
         //console.log({ molecule, chosenAtom, pp })
-        return pp.delete.mode === 'RESIDUE' ?
-            [molecule.molNo,
-            `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/*${
-                chosenAtom.alt_conf === "" ? "" : ":"+chosenAtom.alt_conf}`,
-            'LITERAL'] :
-            [molecule.molNo,
-            `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}${
-                chosenAtom.alt_conf === "" ? "" : ":"+chosenAtom.alt_conf
-            }`,
-            'LITERAL']
+        return pp.delete.mode === 'CHAIN' ?
+            [molecule.molNo, `/1/${chosenAtom.chain_id}/*/*:*`, 'LITERAL'] :
+            pp.delete.mode === 'RESIDUE' ?
+                [molecule.molNo,
+                `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/*${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`,
+                    'LITERAL'] :
+                [molecule.molNo,
+                `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf
+                }`,
+                    'LITERAL']
     }
     return <MoorhenSimpleEditButton {...props}
         toolTip="Delete Item"
