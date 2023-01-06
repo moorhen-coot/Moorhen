@@ -1,12 +1,12 @@
 import './App.css';
-import { BabyGruContainer } from './components/BabyGruContainer';
-import { PreferencesContextProvider } from "./utils/BabyGruPreferences";
+import { MoorhenContainer } from './components/MoorhenContainer';
+import { PreferencesContextProvider } from "./utils/MoorhenPreferences";
 
 function App() {
   return (
     <div className="App">
       <PreferencesContextProvider>
-        <BabyGruContainer forwardControls={(controls) => {
+        <MoorhenContainer forwardControls={(controls) => {
           console.log('Fetched controls', {controls})
         }}/>
       </PreferencesContextProvider>
