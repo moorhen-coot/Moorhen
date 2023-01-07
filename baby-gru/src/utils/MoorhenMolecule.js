@@ -399,9 +399,18 @@ MoorhenMolecule.prototype.drawCootRepresentation = async function (webMGAtoms, g
             $this.molNo, m2tSelection, "colorRampChainsScheme", m2tStyle
         ]
     }).then(response => {
-        const objects = [response.data.result.result]
+        let objects = [response.data.result.result]
         if (objects.length > 0) {
             //Empty existing buffers of this type
+            if (m2tStyle === "Cylinders") {
+                objects = objects.map(object => {
+                    const flippedNormalsObject = { ...object }
+                    flippedNormalsObject.norm_tri = object.norm_tri.map(
+                        element => element.map(subElement => subElement.map(coord => coord * -1.))
+                    )
+                    return flippedNormalsObject
+                })
+            }
             this.clearBuffersOfStyle(style, glRef)
             this.addBuffersOfStyle(glRef, objects, style)
             if (webMGAtoms.atoms.length > 0) {
