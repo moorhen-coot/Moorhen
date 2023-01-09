@@ -98,13 +98,13 @@ class MoorhenWrapper {
         <React.StrictMode>
           <div className="App">
             <PreferencesContextProvider>
-              <MoorhenContainer forwardControls={this.forwardControls.bind(this)} enableCloudExport={true}/>
+              <MoorhenContainer forwardControls={this.forwardControls.bind(this)} enableCloudMenu={true}/>
             </PreferencesContextProvider>
           </div>
         </React.StrictMode>
       );
     }
-  }
+}
   
 let moorhenWrapper = new MoorhenWrapper(window.moorhenInput.urlPrefix)
 moorhenWrapper.renderMoorhen(window.moorhenInput.rootId);

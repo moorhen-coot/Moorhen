@@ -7,6 +7,7 @@ import { MoorhenWebMG } from './MoorhenWebMG';
 import { MoorhenCommandCentre, convertRemToPx, convertViewtoPx } from '../utils/MoorhenUtils';
 import { MoorhenButtonBar } from './MoorhenButtonBar';
 import { MoorhenFileMenu } from './MoorhenFileMenu';
+import { MoorhenCloudMenu } from './MoorhenCloudMenu';
 import { MoorhenPreferencesMenu } from './MoorhenPreferencesMenu';
 import { ArrowBackIosOutlined, ArrowForwardIosOutlined } from '@mui/icons-material';
 import { MoorhenHistoryMenu, historyReducer, initialHistoryState } from './MoorhenHistoryMenu';
@@ -299,6 +300,7 @@ export const MoorhenContainer = (props) => {
                     <MoorhenViewMenu dropdownId="View" {...collectedProps} />
                     <MoorhenHistoryMenu dropdownId="History" {...collectedProps} />
                     <MoorhenPreferencesMenu dropdownId="Preferences" {...collectedProps} />
+                    {props.enableCloudMenu && <MoorhenCloudMenu dropdownId="CloudExport" {...collectedProps}/>}
                     <MoorhenSearchBar setSelectedToolKey={setSelectedToolKey} consoleBodyHeight={consoleBodyHeight} {...collectedProps}/>
                     {props.extraMenus && props.extraMenus.map(menu=>menu)}
                 </Nav>
@@ -421,5 +423,6 @@ export const MoorhenContainer = (props) => {
 }
 
 MoorhenContainer.defaultProps = {
-    urlPrefix: '.'
+    urlPrefix: '.',
+    enableCloudMenu: true
 }
