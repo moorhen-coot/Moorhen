@@ -48,26 +48,25 @@ main UI thread (as opposed to the CootWorker)-->
   <script src="./baby-gru/wasm/web_example.js"></script>
 
 <!--Define the div ID where the app has to be rendered and uri the input PDB-->
-<script>
-    window.moorhenInput = {
-      rootId: "root",
-      urlPrefix: ".",
-      inputFiles: [
-        {type: 'pdb', args: ["./baby-gru/tutorials/moorhen-tutorial-structure-number-1.pdb", "molecule"]},
-        {type: 'mtz', args: [
-          "./baby-gru/tutorials/moorhen-tutorial-map-number-1.mtz", "map", 
-          {F: "FWT", PHI: "PHWT", Fobs: 'F', SigFobs: 'SIGF', FreeR: 'FREER', isDifference: false, useWeight: false, calcStructFact: true}
-        ]},
-        {type: 'mtz', args: [
-          "./baby-gru/tutorials/moorhen-tutorial-map-number-1.mtz", 'diff-map',
-          {F: "DELFWT", PHI: "PHDELWT", isDifference: true, useWeight: false, calcStructFact: false}
-        ]}
-      ]
-    }
+  <script>
+      window.moorhenInput = {
+        rootId: "root",
+        urlPrefix: ".",
+        inputFiles: [
+          {type: 'pdb', args: ["./baby-gru/tutorials/moorhen-tutorial-structure-number-1.pdb", "molecule"]},
+          {type: 'mtz', args: [
+            "./baby-gru/tutorials/moorhen-tutorial-map-number-1.mtz", "map", 
+            {F: "FWT", PHI: "PHWT", Fobs: 'F', SigFobs: 'SIGF', FreeR: 'FREER', isDifference: false, useWeight: false, calcStructFact: true}
+          ]},
+          {type: 'mtz', args: [
+            "./baby-gru/tutorials/moorhen-tutorial-map-number-1.mtz", 'diff-map',
+            {F: "DELFWT", PHI: "PHDELWT", isDifference: true, useWeight: false, calcStructFact: false}
+          ]}
+        ]
+      }
+  </script>
 
-</script>
-
-  <title>Baby Gru</title>
+  <title>Moorhen</title>
 </head>
 
 <body>
