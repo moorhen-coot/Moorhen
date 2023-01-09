@@ -1,6 +1,7 @@
 import { Fragment, useState, useRef, useEffect } from "react";
-import { Row } from "react-bootstrap";
+import { Button, Row } from "react-bootstrap";
 import { Autocomplete, TextField } from "@mui/material";
+import { SearchOutlined, SearchOffOutlined, ArrowRightOutlined, ArrowLeftOutlined } from '@mui/icons-material';
 
 export const MoorhenSearchBar = (props) => {
 
@@ -8,6 +9,7 @@ export const MoorhenSearchBar = (props) => {
     const searchBarRef = useRef()
     const [selectedItemKey, setSelectedItemKey] = useState(null)
     const [openPopup, setOpenPopup] = useState(null)
+    const [isVisible, setIsVisible] = useState(false)
 
     const doClick = (element) => {
         console.log(`Search bar is clicking on ${element.id}`)
@@ -221,7 +223,19 @@ export const MoorhenSearchBar = (props) => {
 
 
     return <Fragment> 
-        <Row style={{padding: '0.5rem', width: '20rem'}}>
+        <Button className="nav-link" size="sm" variant="outlined" onClick={() => {setIsVisible(!isVisible)}}>
+            {isVisible ?
+            (<div>
+                 <SearchOffOutlined/>
+                 <ArrowLeftOutlined/>
+            </div>)
+             : 
+            (<div>
+                <SearchOutlined/>
+                <ArrowRightOutlined/>
+            </div>)}
+        </Button>   
+        <Row style={{padding: '0.5rem', width: '20rem', display: isVisible ? 'inline-block' : 'none'}}>
             <Autocomplete 
                     ref={selectRef}
                     disablePortal
