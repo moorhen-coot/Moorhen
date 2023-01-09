@@ -18,6 +18,28 @@ export function sequenceIsValid(sequence) {
     return true
 }
 
+export function analyzeSequenceType(thisSeq) {
+    // We need to try to determine saccharide chains as well.
+    let theType = "unknown";
+    let nposs_nuc = (thisSeq.match(/A/g)|| []).length + (thisSeq.match(/G/g)|| []).length + (thisSeq.match(/C/g)|| []).length + (thisSeq.match(/T/g)|| []).length + (thisSeq.match(/U/g)|| []).length + (thisSeq.match(/N/g)|| []).length;
+    if(nposs_nuc/thisSeq.length>0.9){
+        //Probably nucleic
+        if((thisSeq.match(/U/g)|| []).length > 0){
+            //Probably RNA
+            theType = "polyribonucleotide";
+        } else {
+            //Probably DNA
+            theType = "polydeoxyribonucleotide";
+        }
+    } else {
+        //Possibly/probably peptide
+        theType = "polypeptide(L)";
+    }
+
+    return theType;
+
+}
+
 export function convertRemToPx(rem) {
     return rem * parseFloat(getComputedStyle(document.documentElement).fontSize);
 }
@@ -51,6 +73,30 @@ export const residueCodesOneToThree = {
     '-': 'MISSING'
 }
 
+export const residueCodesThreeToOne = {
+        "ALA":'A',
+        "ARG":'R',
+        "ASN":'N',
+        "ASP":'D',
+        "CYS":'C',
+        "GLN":'Q',
+        "GLU":'E',
+        "GLY":'G',
+        "HIS":'H',
+        "ILE":'I',
+        "LEU":'L',
+        "LYS":'K',
+        "MET":'M',
+        "PHE":'F',
+        "PRO":'P',
+        "SER":'S',
+        "THR":'T',
+        "TRP":'W',
+        "TYR":'Y',
+        "VAL":'V',
+        "UNK":'X',
+}
+
 export const nucleotideCodesOneToThree = {
     "A": "A",
     "T": "T",
@@ -62,6 +108,30 @@ export const nucleotideCodesOneToThree = {
     "X": "UNKOWN",
     'UNK': 'UNKOWN',
     '-': 'MISSING'
+}
+
+export const nucleotideCodesThreeToOne = {
+    "A": "A",
+    "T": "T",
+    "G": "G",
+    "C": "C",
+    "U": "U",
+    "N": "N",
+    "I": "I",
+    "DT": "T",
+    "DG": "G",
+    "DC": "C",
+    "DA": "A",
+    "DU": "U",
+    "ADE": "A",
+    "THY": "T",
+    "GUA": "G",
+    "CYT": "C",
+    "URA": "U",
+    "PSU": "U",
+    "UNKOWN": "X",
+    'UNK': 'X',
+    'MISSING': '-'
 }
 
 export const postCootMessage = (cootWorker, kwargs) => {

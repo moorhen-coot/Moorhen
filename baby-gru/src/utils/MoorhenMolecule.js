@@ -6,7 +6,7 @@ import { GetSplinesColoured } from '../WebGL/mgSecStr';
 import { atomsToSpheresInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { contactsToCylindersInfo, contactsToLinesInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { singletonsToLinesInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
-import { readTextFile, readGemmiStructure, cidToSpec } from './MoorhenUtils'
+import { readTextFile, readGemmiStructure, cidToSpec, residueCodesThreeToOne, analyzeSequenceType } from './MoorhenUtils'
 import { quatToMat4 } from '../WebGL/quatToMat4.js';
 import * as vec3 from 'gl-matrix/vec3';
 
@@ -20,6 +20,7 @@ export function MoorhenMolecule(commandCentre, urlPrefix) {
     this.name = "unnamed"
     this.molNo = null
     this.gemmiStructure = null
+    this.sequences = []
     this.cootBondsOptions = {
         isDarkBackground: false,
         smoothness: 1,
@@ -47,9 +48,46 @@ MoorhenMolecule.prototype.updateGemmiStructure = async function () {
     let response = await this.getAtoms()
     this.gemmiStructure = readGemmiStructure(response.data.result.pdbData, this.name)
     window.CCP4Module.gemmi_setup_entities(this.gemmiStructure)
+    this.parseSequences()
     return Promise.resolve()
 }
 
+MoorhenMolecule.prototype.parseSequences = function () {
+    if (this.gemmiStructure === null) {
+        return
+    }
+    
+    let sequences = []
+    for (let modelIndex = 0; modelIndex < this.gemmiStructure.models.size(); modelIndex++) {
+        const model = this.gemmiStructure.models.get(modelIndex).clone()
+        window.CCP4Module.remove_ligands_and_waters_model(model)
+        for (let chainIndex = 0; chainIndex < model.chains.size(); chainIndex++) {
+            let currentSequence = []
+            const chain = model.chains.get(chainIndex)
+            const residues = chain.residues
+            for (let residueIndex = 0; residueIndex < residues.size(); residueIndex++) {
+                const residue = residues.get(residueIndex)
+                currentSequence.push({
+                    resNum: Number(residue.seqid.str()),
+                    resCode: residueCodesThreeToOne[residue.name]
+                })
+            }
+            if (currentSequence.length > 0){
+                sequences.push({
+                    name: `${this.name}_${chain.name}`,
+                    chain: chain.name,
+                    type: analyzeSequenceType(currentSequence.map(item => item.resCode).join('')),
+                    sequence: currentSequence
+                    
+                })
+            }
+            
+        }
+    }
+    console.log('Parsed the following sequences')
+    console.log(sequences)
+    this.sequences = sequences
+}
 
 MoorhenMolecule.prototype.delete = async function (glRef) {
     const $this = this
@@ -77,11 +115,11 @@ MoorhenMolecule.prototype.copyFragment = async function (chainId, res_no_start, 
 
     const sequenceInputData = { returnType: "residue_codes", command: "get_single_letter_codes_for_chain", commandArgs: [response.data.result, chainId] }
     const sequenceResponse = await $this.commandCentre.current.cootCommand(sequenceInputData)
-    newMolecule.cachedAtoms.sequences = [{
+    newMolecule.sequences = [{
         "sequence": sequenceResponse.data.result.result,
         "name": `${$this.name} fragment`,
         "chain": chainId,
-        "type": this.cachedAtoms.sequences.length > 0 ? this.cachedAtoms.sequences[0].type : 'ligand'
+        "type": this.sequences.length > 0 ? this.sequences[0].type : 'ligand'
     }]
 
     return newMolecule
@@ -111,6 +149,7 @@ MoorhenMolecule.prototype.loadToCootFromString = async function (coordData, name
     $this.cachedAtoms = $this.webMGAtomsFromFileString(coordData)
     $this.gemmiStructure = readGemmiStructure(coordData, $this.name)
     window.CCP4Module.gemmi_setup_entities($this.gemmiStructure)
+    $this.parseSequences()
     $this.atomsDirty = false
 
     return this.commandCentre.current.cootCommand({
@@ -179,6 +218,7 @@ MoorhenMolecule.prototype.updateAtoms = function () {
             $this.cachedAtoms = $this.webMGAtomsFromFileString(result.data.result.pdbData)
             $this.gemmiStructure = readGemmiStructure(result.data.result.pdbData, $this.name)
             window.CCP4Module.gemmi_setup_entities($this.gemmiStructure)
+            $this.parseSequences()
             $this.atomsDirty = false
             resolve($this.cachedAtoms)
         })

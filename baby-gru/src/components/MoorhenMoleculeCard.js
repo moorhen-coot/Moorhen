@@ -277,11 +277,11 @@ export const MoorhenMoleculeCard = (props) => {
                 <Accordion.Item eventKey="sequences" style={{ padding: '0', margin: '0' }} >
                     <Accordion.Header style={{ padding: '0', margin: '0' }}>Sequences</Accordion.Header>
                     <Accordion.Body>
-                        {props.molecule.cachedAtoms.sequences && props.molecule.cachedAtoms.sequences.length > 0 ?
+                        {props.molecule.sequences && props.molecule.sequences.length > 0 ?
                             <>
                                 <Row style={{ height: '100%' }}>
                                     <Col>
-                                        {props.molecule.cachedAtoms.sequences.map(
+                                        {props.molecule.sequences.map(
                                             sequence => {
                                                 if (!sequenceIsValid(sequence.sequence)) {
                                                     return (

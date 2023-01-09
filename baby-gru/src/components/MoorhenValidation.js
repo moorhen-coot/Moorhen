@@ -65,7 +65,7 @@ export const MoorhenValidation = (props) => {
     const getSequenceData = () => {
         let selectedMolecule = props.molecules.find(molecule => molecule.molNo == selectedModel)
         if (selectedMolecule) {
-            let sequenceData = selectedMolecule.cachedAtoms.sequences.find(sequence => sequence.chain == chainSelectRef.current.value)
+            let sequenceData = selectedMolecule.sequences.find(sequence => sequence.chain == chainSelectRef.current.value)
             if (sequenceData) {
                 return sequenceData.sequence
             }    

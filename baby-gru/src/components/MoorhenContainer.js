@@ -10,6 +10,7 @@ import { MoorhenFileMenu } from './MoorhenFileMenu';
 import { MoorhenCloudMenu } from './MoorhenCloudMenu';
 import { MoorhenPreferencesMenu } from './MoorhenPreferencesMenu';
 import { ArrowBackIosOutlined, ArrowForwardIosOutlined } from '@mui/icons-material';
+import { Backdrop } from '@mui/material';
 import { MoorhenHistoryMenu, historyReducer, initialHistoryState } from './MoorhenHistoryMenu';
 import { MoorhenViewMenu } from './MoorhenViewMenu';
 import { MoorhenLigandMenu } from './MoorhenLigandMenu';
@@ -289,8 +290,15 @@ export const MoorhenContainer = (props) => {
 
     return <> <div className={`border ${theme}`} ref={headerRef}>
 
+        <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={!cootInitialized}>
+            <Spinner animation="border" style={{ marginRight: '0.5rem' }}/>
+            <span>Starting moorhen...</span>
+        </Backdrop>
+
         <Navbar ref={navBarRef} id='navbar-baby-gru' className={preferences.darkMode ? "navbar-dark" : "navbar-light"} style={{ height: '3rem', justifyContent: 'between', margin: '0.5rem', padding: '0.5rem' }}>
-            <Navbar.Brand href="#home">{appTitle}</Navbar.Brand>
+            <Navbar.Brand href="#home">
+                <img src={`${props.urlPrefix}/baby-gru/pixmaps/MoorhenLogo.png`} alt={appTitle} style={{height: '3rem'}}/>
+            </Navbar.Brand>
             <Navbar.Toggle aria-controls="basic-navbar-nav" />
             <Navbar.Collapse id="basic-navbar-nav">
                 <Nav className="justify-content-left">
@@ -424,5 +432,5 @@ export const MoorhenContainer = (props) => {
 
 MoorhenContainer.defaultProps = {
     urlPrefix: '.',
-    enableCloudMenu: true
+    enableCloudMenu: false
 }
