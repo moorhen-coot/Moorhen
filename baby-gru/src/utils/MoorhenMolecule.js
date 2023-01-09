@@ -84,6 +84,8 @@ MoorhenMolecule.prototype.parseSequences = function () {
             
         }
     }
+    console.log('Parsed the following sequences')
+    console.log(sequences)
     this.sequences = sequences
 }
 
@@ -148,8 +150,6 @@ MoorhenMolecule.prototype.loadToCootFromString = async function (coordData, name
     $this.gemmiStructure = readGemmiStructure(coordData, $this.name)
     window.CCP4Module.gemmi_setup_entities($this.gemmiStructure)
     $this.parseSequences()
-    console.log('HEL:OOOO')
-    console.log($this.sequences)
     $this.atomsDirty = false
 
     return this.commandCentre.current.cootCommand({

@@ -24,8 +24,6 @@ export const MoorhenSearchBar = (props) => {
     const getComputedStyle = (element, timeOut=800) => {
         return new Promise((resolve, reject) => {
             setTimeout(() => {
-                console.log('HELO')
-                console.log(window.getComputedStyle(element).display)
                 resolve(window.getComputedStyle(element))
             }, timeOut)    
         })
