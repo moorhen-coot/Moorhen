@@ -296,7 +296,9 @@ export const MoorhenContainer = (props) => {
         </Backdrop>
 
         <Navbar ref={navBarRef} id='navbar-baby-gru' className={preferences.darkMode ? "navbar-dark" : "navbar-light"} style={{ height: '3rem', justifyContent: 'between', margin: '0.5rem', padding: '0.5rem' }}>
-            <Navbar.Brand href="#home">{appTitle}</Navbar.Brand>
+            <Navbar.Brand href="#home">
+                <img src={`${props.urlPrefix}/baby-gru/pixmaps/MoorhenLogo.png`} alt={appTitle} style={{height: '3rem'}}/>
+            </Navbar.Brand>
             <Navbar.Toggle aria-controls="basic-navbar-nav" />
             <Navbar.Collapse id="basic-navbar-nav">
                 <Nav className="justify-content-left">
@@ -430,5 +432,5 @@ export const MoorhenContainer = (props) => {
 
 MoorhenContainer.defaultProps = {
     urlPrefix: '.',
-    enableCloudMenu: true
+    enableCloudMenu: false
 }
