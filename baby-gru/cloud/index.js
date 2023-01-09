@@ -33,9 +33,9 @@ class MoorhenWrapper {
     async loadInputFiles(inputFiles) {
       let promises = []
       for (const file of inputFiles) {
-        if (file.type == 'pdb') {
+        if (file.type === 'pdb') {
           promises.push(this.loadPdbData(...file.args))
-        } else if (file.type == 'mtz') {
+        } else if (file.type === 'mtz') {
           promises.push(this.loadMtzData(...file.args))
         }
       }
@@ -44,7 +44,7 @@ class MoorhenWrapper {
 
       setTimeout(() => {
         results.forEach((result, index) => {
-          if (result?.type == 'map') {
+          if (result?.type === 'map') {
             let contourOnSessionLoad = new CustomEvent("contourOnSessionLoad", {
               "detail": {
                   molNo: result.molNo,
@@ -77,11 +77,11 @@ class MoorhenWrapper {
       })
     }
 
-    async loadMtzData(inputFile, mapName, selectedColumns, isDiffMap, useWeights) {
+    async loadMtzData(inputFile, mapName, selectedColumns) {
       const newMap = new MoorhenMap(this.controls.commandCentre)
       return new Promise(async (resolve, reject) => {
           try {
-              await newMap.loadToCootFromMtzURL(inputFile, mapName, selectedColumns, isDiffMap, useWeights)
+              await newMap.loadToCootFromMtzURL(inputFile, mapName, selectedColumns)
               this.controls.changeMaps({ action: 'Add', item: newMap })
               this.controls.setActiveMap(newMap)
               return resolve(newMap)

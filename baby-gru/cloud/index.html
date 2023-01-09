@@ -56,12 +56,11 @@ main UI thread (as opposed to the CootWorker)-->
         {type: 'pdb', args: ["./baby-gru/tutorials/moorhen-tutorial-structure-number-1.pdb", "molecule"]},
         {type: 'mtz', args: [
           "./baby-gru/tutorials/moorhen-tutorial-map-number-1.mtz", "map", 
-          {F: "FWT", PHI: "PHWT", Fobs: 'F', SigFobs: 'SIGF', FreeR: 'FREER'},
-          false, false
+          {F: "FWT", PHI: "PHWT", Fobs: 'F', SigFobs: 'SIGF', FreeR: 'FREER', isDifference: false, useWeight: false, calcStructFact: true}
         ]},
         {type: 'mtz', args: [
           "./baby-gru/tutorials/moorhen-tutorial-map-number-1.mtz", 'diff-map',
-          {F: "DELFWT", PHI: "PHDELWT"}, true, false
+          {F: "DELFWT", PHI: "PHDELWT", isDifference: true, useWeight: false, calcStructFact: false}
         ]}
       ]
     }
