@@ -15,57 +15,56 @@ import * as mat3 from 'gl-matrix/mat3';
 import { base64encode, base64decode } from './mgBase64.js';
 
 //WebGL2 shaders
-/*
-import {lines_fragment_shader_source} from './lines-fragment-shader.js';
-import {lines_vertex_shader_source} from './lines-vertex-shader.js';
-import {perfect_sphere_fragment_shader_source} from './perfect-sphere-fragment-shader.js';
-import {perfect_sphere_shadow_fragment_shader_source} from './perfect-sphere-shadow-fragment-shader.js';
-import {pointspheres_fragment_shader_source} from './pointspheres-fragment-shader.js';
-import {pointspheres_shadow_fragment_shader_source} from './pointspheres-shadow-fragment-shader.js';
-import {pointspheres_shadow_vertex_shader_source} from './pointspheres-shadow-vertex-shader.js';
-import {pointspheres_vertex_shader_source} from './pointspheres-vertex-shader.js';
-import {render_framebuffer_fragment_shader_source} from './render-framebuffer-fragment-shader.js';
-import {shadow_fragment_shader_source} from './shadow-fragment-shader.js';
-import {shadow_vertex_shader_source} from './shadow-vertex-shader.js';
-import {text_fragment_shader_source} from './text-fragment-shader.js';
-import {circles_fragment_shader_source} from './circle-fragment-shader.js';
-import {circles_vertex_shader_source} from './circle-vertex-shader.js';
-import {thick_lines_vertex_shader_source} from './thick-lines-vertex-shader.js';
-import {thick_lines_normal_vertex_shader_source} from './thick-lines-normal-vertex-shader.js';
-import {triangle_fragment_shader_source} from './triangle-fragment-shader.js';
-import {triangle_shadow_fragment_shader_source} from './triangle-shadow-fragment-shader.js';
-import {triangle_shadow_vertex_shader_source} from './triangle-shadow-vertex-shader.js';
-import {triangle_vertex_shader_source} from './triangle-vertex-shader.js';
-import {twod_fragment_shader_source} from './twodshapes-fragment-shader.js';
-import {twod_vertex_shadow_shader_source} from './twodshapes-shadow-vertex-shader.js';
-import {twod_vertex_shader_source} from './twodshapes-vertex-shader.js';
-*/
+import { lines_fragment_shader_source as lines_fragment_shader_source_webgl2 } from './lines-fragment-shader.js';
+import { lines_vertex_shader_source as lines_vertex_shader_source_webgl2 } from './lines-vertex-shader.js';
+import { perfect_sphere_fragment_shader_source as perfect_sphere_fragment_shader_source_webgl2 } from './perfect-sphere-fragment-shader.js';
+import { perfect_sphere_shadow_fragment_shader_source as perfect_sphere_shadow_fragment_shader_source_webgl2 } from './perfect-sphere-shadow-fragment-shader.js';
+import { pointspheres_fragment_shader_source as pointspheres_fragment_shader_source_webgl2 } from './pointspheres-fragment-shader.js';
+import { pointspheres_shadow_fragment_shader_source as pointspheres_shadow_fragment_shader_source_webgl2 } from './pointspheres-shadow-fragment-shader.js';
+import { pointspheres_shadow_vertex_shader_source as pointspheres_shadow_vertex_shader_source_webgl2 } from './pointspheres-shadow-vertex-shader.js';
+import { pointspheres_vertex_shader_source as pointspheres_vertex_shader_source_webgl2 } from './pointspheres-vertex-shader.js';
+import { render_framebuffer_fragment_shader_source as render_framebuffer_fragment_shader_source_webgl2 } from './render-framebuffer-fragment-shader.js';
+import { shadow_fragment_shader_source as shadow_fragment_shader_source_webgl2 } from './shadow-fragment-shader.js';
+import { shadow_vertex_shader_source as shadow_vertex_shader_source_webgl2 } from './shadow-vertex-shader.js';
+import { text_fragment_shader_source as text_fragment_shader_source_webgl2 } from './text-fragment-shader.js';
+import { circles_fragment_shader_source as circles_fragment_shader_source_webgl2 } from './circle-fragment-shader.js';
+import { circles_vertex_shader_source as circles_vertex_shader_source_webgl2 } from './circle-vertex-shader.js';
+import { thick_lines_vertex_shader_source as thick_lines_vertex_shader_source_webgl2 } from './thick-lines-vertex-shader.js';
+import { thick_lines_normal_vertex_shader_source as thick_lines_normal_vertex_shader_source_webgl2 } from './thick-lines-normal-vertex-shader.js';
+import { triangle_fragment_shader_source as triangle_fragment_shader_source_webgl2 } from './triangle-fragment-shader.js';
+import { triangle_shadow_fragment_shader_source as triangle_shadow_fragment_shader_source_webgl2 } from './triangle-shadow-fragment-shader.js';
+import { triangle_shadow_vertex_shader_source as triangle_shadow_vertex_shader_source_webgl2 } from './triangle-shadow-vertex-shader.js';
+import { triangle_vertex_shader_source as triangle_vertex_shader_source_webgl2 } from './triangle-vertex-shader.js';
+import { twod_fragment_shader_source as twod_fragment_shader_source_webgl2 } from './twodshapes-fragment-shader.js';
+import { twod_vertex_shadow_shader_source as twod_vertex_shadow_shader_source_webgl2 } from './twodshapes-shadow-vertex-shader.js';
+import { twod_vertex_shader_source as twod_vertex_shader_source_webgl2 } from './twodshapes-vertex-shader.js';
+import { triangle_instanced_vertex_shader_source as triangle_instanced_vertex_shader_source_webgl2 } from './triangle-instanced-vertex-shader.js';
 
 //WebGL1 shaders
-import { lines_fragment_shader_source } from './webgl-1/lines-fragment-shader.js';
-import { lines_vertex_shader_source } from './webgl-1/lines-vertex-shader.js';
-import { perfect_sphere_fragment_shader_source } from './webgl-1/perfect-sphere-fragment-shader.js';
-import { perfect_sphere_shadow_fragment_shader_source } from './webgl-1/perfect-sphere-shadow-fragment-shader.js';
-import { pointspheres_fragment_shader_source } from './webgl-1/pointspheres-fragment-shader.js';
-import { pointspheres_shadow_fragment_shader_source } from './webgl-1/pointspheres-shadow-fragment-shader.js';
-import { pointspheres_shadow_vertex_shader_source } from './webgl-1/pointspheres-shadow-vertex-shader.js';
-import { pointspheres_vertex_shader_source } from './webgl-1/pointspheres-vertex-shader.js';
-import { render_framebuffer_fragment_shader_source } from './webgl-1/render-framebuffer-fragment-shader.js';
-import { shadow_fragment_shader_source } from './webgl-1/shadow-fragment-shader.js';
-import { shadow_vertex_shader_source } from './webgl-1/shadow-vertex-shader.js';
-import { text_fragment_shader_source } from './webgl-1/text-fragment-shader.js';
-import { circles_fragment_shader_source } from './webgl-1/circle-fragment-shader.js';
-import { circles_vertex_shader_source } from './webgl-1/circle-vertex-shader.js';
-import { thick_lines_vertex_shader_source } from './webgl-1/thick-lines-vertex-shader.js';
-import { thick_lines_normal_vertex_shader_source } from './webgl-1/thick-lines-normal-vertex-shader.js';
-import { triangle_fragment_shader_source } from './webgl-1/triangle-fragment-shader.js';
-import { triangle_shadow_fragment_shader_source } from './webgl-1/triangle-shadow-fragment-shader.js';
-import { triangle_shadow_vertex_shader_source } from './webgl-1/triangle-shadow-vertex-shader.js';
-import { triangle_vertex_shader_source } from './webgl-1/triangle-vertex-shader.js';
-import { twod_fragment_shader_source } from './webgl-1/twodshapes-fragment-shader.js';
-import { twod_vertex_shadow_shader_source } from './webgl-1/twodshapes-shadow-vertex-shader.js';
-import { twod_vertex_shader_source } from './webgl-1/twodshapes-vertex-shader.js';
-import { triangle_instanced_vertex_shader_source } from './webgl-1/triangle-instanced-vertex-shader.js';
+import { lines_fragment_shader_source as lines_fragment_shader_source_webgl1 } from './webgl-1/lines-fragment-shader.js';
+import { lines_vertex_shader_source as lines_vertex_shader_source_webgl1 } from './webgl-1/lines-vertex-shader.js';
+import { perfect_sphere_fragment_shader_source as perfect_sphere_fragment_shader_source_webgl1 } from './webgl-1/perfect-sphere-fragment-shader.js';
+import { perfect_sphere_shadow_fragment_shader_source as perfect_sphere_shadow_fragment_shader_source_webgl1 } from './webgl-1/perfect-sphere-shadow-fragment-shader.js';
+import { pointspheres_fragment_shader_source as pointspheres_fragment_shader_source_webgl1 } from './webgl-1/pointspheres-fragment-shader.js';
+import { pointspheres_shadow_fragment_shader_source as pointspheres_shadow_fragment_shader_source_webgl1 } from './webgl-1/pointspheres-shadow-fragment-shader.js';
+import { pointspheres_shadow_vertex_shader_source as pointspheres_shadow_vertex_shader_source_webgl1 } from './webgl-1/pointspheres-shadow-vertex-shader.js';
+import { pointspheres_vertex_shader_source as pointspheres_vertex_shader_source_webgl1 } from './webgl-1/pointspheres-vertex-shader.js';
+import { render_framebuffer_fragment_shader_source as render_framebuffer_fragment_shader_source_webgl1 } from './webgl-1/render-framebuffer-fragment-shader.js';
+import { shadow_fragment_shader_source as shadow_fragment_shader_source_webgl1 } from './webgl-1/shadow-fragment-shader.js';
+import { shadow_vertex_shader_source as shadow_vertex_shader_source_webgl1 } from './webgl-1/shadow-vertex-shader.js';
+import { text_fragment_shader_source as text_fragment_shader_source_webgl1 } from './webgl-1/text-fragment-shader.js';
+import { circles_fragment_shader_source as circles_fragment_shader_source_webgl1 } from './webgl-1/circle-fragment-shader.js';
+import { circles_vertex_shader_source as circles_vertex_shader_source_webgl1 } from './webgl-1/circle-vertex-shader.js';
+import { thick_lines_vertex_shader_source as thick_lines_vertex_shader_source_webgl1 } from './webgl-1/thick-lines-vertex-shader.js';
+import { thick_lines_normal_vertex_shader_source as thick_lines_normal_vertex_shader_source_webgl1 } from './webgl-1/thick-lines-normal-vertex-shader.js';
+import { triangle_fragment_shader_source as triangle_fragment_shader_source_webgl1 } from './webgl-1/triangle-fragment-shader.js';
+import { triangle_shadow_fragment_shader_source as triangle_shadow_fragment_shader_source_webgl1 } from './webgl-1/triangle-shadow-fragment-shader.js';
+import { triangle_shadow_vertex_shader_source as triangle_shadow_vertex_shader_source_webgl1 } from './webgl-1/triangle-shadow-vertex-shader.js';
+import { triangle_vertex_shader_source as triangle_vertex_shader_source_webgl1 } from './webgl-1/triangle-vertex-shader.js';
+import { twod_fragment_shader_source as twod_fragment_shader_source_webgl1 } from './webgl-1/twodshapes-fragment-shader.js';
+import { twod_vertex_shadow_shader_source as twod_vertex_shadow_shader_source_webgl1 } from './webgl-1/twodshapes-shadow-vertex-shader.js';
+import { twod_vertex_shader_source as twod_vertex_shader_source_webgl1 } from './webgl-1/twodshapes-vertex-shader.js';
+import { triangle_instanced_vertex_shader_source as triangle_instanced_vertex_shader_source_webgl1 } from './webgl-1/triangle-instanced-vertex-shader.js';
 
 import { CIsoSurface } from './CIsoSurface.js';
 import { SplineCurve, BezierCurve, DistanceBetweenPointAndLine, DistanceBetweenTwoLines, DihedralAngle } from './mgMaths.js';
@@ -1679,6 +1678,58 @@ class MGWebGL extends Component {
 
         this.doRedraw = false;
         var myVar = setInterval(function () { self.drawSceneIfDirty() }, 16);
+
+        let lines_fragment_shader_source = lines_fragment_shader_source_webgl1;
+        let lines_vertex_shader_source = lines_vertex_shader_source_webgl1;
+        let perfect_sphere_fragment_shader_source = perfect_sphere_fragment_shader_source_webgl1;
+        let perfect_sphere_shadow_fragment_shader_source = perfect_sphere_shadow_fragment_shader_source_webgl1;
+        let pointspheres_fragment_shader_source = pointspheres_fragment_shader_source_webgl1;
+        let pointspheres_shadow_fragment_shader_source = pointspheres_shadow_fragment_shader_source_webgl1;
+        let pointspheres_shadow_vertex_shader_source = pointspheres_shadow_vertex_shader_source_webgl1;
+        let pointspheres_vertex_shader_source = pointspheres_vertex_shader_source_webgl1;
+        let render_framebuffer_fragment_shader_source = render_framebuffer_fragment_shader_source_webgl1;
+        let shadow_fragment_shader_source = shadow_fragment_shader_source_webgl1;
+        let shadow_vertex_shader_source = shadow_vertex_shader_source_webgl1;
+        let text_fragment_shader_source = text_fragment_shader_source_webgl1;
+        let circles_fragment_shader_source = circles_fragment_shader_source_webgl1;
+        let circles_vertex_shader_source = circles_vertex_shader_source_webgl1;
+        let thick_lines_vertex_shader_source = thick_lines_vertex_shader_source_webgl1;
+        let thick_lines_normal_vertex_shader_source = thick_lines_normal_vertex_shader_source_webgl1;
+        let triangle_fragment_shader_source = triangle_fragment_shader_source_webgl1;
+        let triangle_shadow_fragment_shader_source = triangle_shadow_fragment_shader_source_webgl1;
+        let triangle_shadow_vertex_shader_source = triangle_shadow_vertex_shader_source_webgl1;
+        let triangle_vertex_shader_source = triangle_vertex_shader_source_webgl1;
+        let twod_fragment_shader_source = twod_fragment_shader_source_webgl1;
+        let twod_vertex_shadow_shader_source = twod_vertex_shadow_shader_source_webgl1;
+        let twod_vertex_shader_source = twod_vertex_shader_source_webgl1;
+        let triangle_instanced_vertex_shader_source = triangle_instanced_vertex_shader_source_webgl1;
+
+        if(this.WEBGL2){
+            lines_fragment_shader_source = lines_fragment_shader_source_webgl2;
+            lines_vertex_shader_source = lines_vertex_shader_source_webgl2;
+            perfect_sphere_fragment_shader_source = perfect_sphere_fragment_shader_source_webgl2;
+            perfect_sphere_shadow_fragment_shader_source = perfect_sphere_shadow_fragment_shader_source_webgl2;
+            pointspheres_fragment_shader_source = pointspheres_fragment_shader_source_webgl2;
+            pointspheres_shadow_fragment_shader_source = pointspheres_shadow_fragment_shader_source_webgl2;
+            pointspheres_shadow_vertex_shader_source = pointspheres_shadow_vertex_shader_source_webgl2;
+            pointspheres_vertex_shader_source = pointspheres_vertex_shader_source_webgl2;
+            render_framebuffer_fragment_shader_source = render_framebuffer_fragment_shader_source_webgl2;
+            shadow_fragment_shader_source = shadow_fragment_shader_source_webgl2;
+            shadow_vertex_shader_source = shadow_vertex_shader_source_webgl2;
+            text_fragment_shader_source = text_fragment_shader_source_webgl2;
+            circles_fragment_shader_source = circles_fragment_shader_source_webgl2;
+            circles_vertex_shader_source = circles_vertex_shader_source_webgl2;
+            thick_lines_vertex_shader_source = thick_lines_vertex_shader_source_webgl2;
+            thick_lines_normal_vertex_shader_source = thick_lines_normal_vertex_shader_source_webgl2;
+            triangle_fragment_shader_source = triangle_fragment_shader_source_webgl2;
+            triangle_shadow_fragment_shader_source = triangle_shadow_fragment_shader_source_webgl2;
+            triangle_shadow_vertex_shader_source = triangle_shadow_vertex_shader_source_webgl2;
+            triangle_vertex_shader_source = triangle_vertex_shader_source_webgl2;
+            twod_fragment_shader_source = twod_fragment_shader_source_webgl2;
+            twod_vertex_shadow_shader_source = twod_vertex_shadow_shader_source_webgl2;
+            twod_vertex_shader_source = twod_vertex_shader_source_webgl2;
+            triangle_instanced_vertex_shader_source = triangle_instanced_vertex_shader_source_webgl2;
+        }
 
         vertexShader = getShader(self.gl, triangle_vertex_shader_source, "vertex");
         const vertexShaderInstanced = getShader(self.gl, triangle_instanced_vertex_shader_source, "vertex");
@@ -7179,23 +7230,42 @@ class MGWebGL extends Component {
                                 this.gl.enableVertexAttribArray(theShader.vertexInstanceOriginAttribute);
                                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleInstanceOriginBuffer[j]);
                                 this.gl.vertexAttribPointer(theShader.vertexInstanceOriginAttribute, this.displayBuffers[idx].triangleInstanceOriginBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
-                                this.instanced_ext.vertexAttribDivisorANGLE(theShader.vertexInstanceOriginAttribute, 1);
+                                if (this.WEBGL2) {
+                                    this.gl.vertexAttribDivisor(theShader.vertexInstanceOriginAttribute, 1);
+                                } else {
+                                    this.instanced_ext.vertexAttribDivisorANGLE(theShader.vertexInstanceOriginAttribute, 1);
+                                }
                                 if(this.displayBuffers[idx].triangleInstanceSizeBuffer[j]){
                                     this.gl.enableVertexAttribArray(theShader.vertexInstanceSizeAttribute);
                                     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleInstanceSizeBuffer[j]);
                                     this.gl.vertexAttribPointer(theShader.vertexInstanceSizeAttribute, this.displayBuffers[idx].triangleInstanceSizeBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
-                                    this.instanced_ext.vertexAttribDivisorANGLE(theShader.vertexInstanceSizeAttribute, 1);
-                                    
+                                    if (this.WEBGL2) {
+                                        this.gl.vertexAttribDivisor(theShader.vertexInstanceSizeAttribute, 1);
+                                    } else {
+                                        this.instanced_ext.vertexAttribDivisorANGLE(theShader.vertexInstanceSizeAttribute, 1);
+                                    }
                                 }
                                 if(this.displayBuffers[idx].supplementary["instance_use_colors"]){
                                     if(this.displayBuffers[idx].supplementary["instance_use_colors"][j]){
-                                        this.instanced_ext.vertexAttribDivisorANGLE(theShader.vertexColourAttribute, 1);
+                                        if (this.WEBGL2) {
+                                            this.gl.vertexAttribDivisor(theShader.vertexColourAttribute, 1);
+                                        } else {
+                                            this.instanced_ext.vertexAttribDivisorANGLE(theShader.vertexColourAttribute, 1);
+                                        }
                                     }
                                 }
-                                this.instanced_ext.drawElementsInstancedANGLE(this.gl.TRIANGLES, triangleVertexIndexBuffer[j].numItems, this.gl.UNSIGNED_INT, 0, this.displayBuffers[idx].triangleInstanceOriginBuffer[j].numItems);
+                                if (this.WEBGL2) {
+                                    this.gl.drawElementsInstanced(this.gl.TRIANGLES, triangleVertexIndexBuffer[j].numItems, this.gl.UNSIGNED_INT, 0, this.displayBuffers[idx].triangleInstanceOriginBuffer[j].numItems);
+                                } else {
+                                    this.instanced_ext.drawElementsInstancedANGLE(this.gl.TRIANGLES, triangleVertexIndexBuffer[j].numItems, this.gl.UNSIGNED_INT, 0, this.displayBuffers[idx].triangleInstanceOriginBuffer[j].numItems);
+                                }
                                 this.gl.disableVertexAttribArray(theShader.vertexInstanceOriginAttribute);
                                 this.gl.disableVertexAttribArray(theShader.vertexInstanceSizeAttribute);
-                                this.instanced_ext.vertexAttribDivisorANGLE(theShader.vertexColourAttribute, 0);
+                                if (this.WEBGL2) {
+                                    this.gl.vertexAttribDivisor(theShader.vertexColourAttribute, 0);
+                                } else {
+                                    this.instanced_ext.vertexAttribDivisorANGLE(theShader.vertexColourAttribute, 0);
+                                }
                             } else {
                                 this.gl.drawElements(this.gl.TRIANGLES, triangleVertexIndexBuffer[j].numItems, this.gl.UNSIGNED_INT, 0);
                             }
