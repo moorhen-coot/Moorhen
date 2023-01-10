@@ -174,7 +174,7 @@ export const MoorhenSequenceViewer = (props) => {
             }
         } else if (evt.detail.eventtype === "mouseover") {
             if (evt.detail.feature !== null) {
-                const cid =`//${props.sequence.chain}/${evt.detail.feature.start}(${props.sequence.type==="polypeptide(L)" ? residueCodesOneToThree[evt.detail.feature.aa] : nucleotideCodesOneToThree[evt.detail.feature.aa]})/CA`
+                const cid =`//${props.sequence.chain}/${evt.detail.feature.start}(${[1, 2].includes(props.sequence.type.value) ? residueCodesOneToThree[evt.detail.feature.aa] : nucleotideCodesOneToThree[evt.detail.feature.aa]})/`
                 props.setHoveredAtom({ molecule: props.molecule, cid: cid })
             }
         } else if (evt.detail.eventtype === "mouseout") {

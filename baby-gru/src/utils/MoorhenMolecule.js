@@ -6,7 +6,7 @@ import { GetSplinesColoured } from '../WebGL/mgSecStr';
 import { atomsToSpheresInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { contactsToCylindersInfo, contactsToLinesInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { singletonsToLinesInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
-import { readTextFile, readGemmiStructure, cidToSpec, residueCodesThreeToOne, analyzeSequenceType } from './MoorhenUtils'
+import { readTextFile, readGemmiStructure, cidToSpec, residueCodesThreeToOne } from './MoorhenUtils'
 import { quatToMat4 } from '../WebGL/quatToMat4.js';
 import * as vec3 from 'gl-matrix/vec3';
 
@@ -76,12 +76,10 @@ MoorhenMolecule.prototype.parseSequences = function () {
                 sequences.push({
                     name: `${this.name}_${chain.name}`,
                     chain: chain.name,
-                    type: analyzeSequenceType(currentSequence.map(item => item.resCode).join('')),
-                    sequence: currentSequence
-                    
+                    type: window.CCP4Module.check_polymer_type(chain.get_polymer_const()),
+                    sequence: currentSequence,
                 })
             }
-            
         }
     }
     console.log('Parsed the following sequences')
@@ -112,16 +110,7 @@ MoorhenMolecule.prototype.copyFragment = async function (chainId, res_no_start, 
     newMolecule.molNo = response.data.result
     await newMolecule.fetchIfDirtyAndDraw('CBs', glRef)
     if (doRecentre) await newMolecule.centreOn(glRef)
-
-    const sequenceInputData = { returnType: "residue_codes", command: "get_single_letter_codes_for_chain", commandArgs: [response.data.result, chainId] }
-    const sequenceResponse = await $this.commandCentre.current.cootCommand(sequenceInputData)
-    newMolecule.sequences = [{
-        "sequence": sequenceResponse.data.result.result,
-        "name": `${$this.name} fragment`,
-        "chain": chainId,
-        "type": this.sequences.length > 0 ? this.sequences[0].type : 'ligand'
-    }]
-
+    
     return newMolecule
 }
 

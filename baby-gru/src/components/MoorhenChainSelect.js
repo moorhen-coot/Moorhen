@@ -12,7 +12,7 @@ export const MoorhenChainSelect = forwardRef((props, selectRef) => {
     const getChainOptions = (selectedCoordMolNo) => {
         let selectedMolecule = props.molecules.find(molecule => molecule.molNo == selectedCoordMolNo)
         if (selectedMolecule) {
-            return selectedMolecule.sequences.map(sequence => props.allowedTypes.includes(sequence.type) ? <option value={sequence.chain} key={`${selectedMolecule.molNo}_${sequence.chain}`}>{sequence.chain}</option> : null)
+            return selectedMolecule.sequences.map(sequence => props.allowedTypes.includes(sequence.type.value) ? <option value={sequence.chain} key={`${selectedMolecule.molNo}_${sequence.chain}`}>{sequence.chain}</option> : null)
         }
         
     }
@@ -25,4 +25,5 @@ export const MoorhenChainSelect = forwardRef((props, selectRef) => {
     </Form.Group>
 })
 
-MoorhenChainSelect.defaultProps = { allowedTypes:['polypeptide(L)', 'polyribonucleotide', 'polydeoxyribonucleotide'], height: '4rem', width: '20rem', molecule:null, label: "Chain" }
+// props.allowedTypes refers to gemmi::PolymerType member values -> https://project-gemmi.github.io/python-api/gemmi.html#PolymerType
+MoorhenChainSelect.defaultProps = { allowedTypes:[1, 2, 3, 4, 5], height: '4rem', width: '20rem', molecule:null, label: "Chain" }

@@ -212,7 +212,7 @@ class RamaPlot extends Component {
             this.hit = hit;
             if(hit>-1){
                 this.doAnimation(oldHit, self)
-                this.props.setHoveredAtom(`/${this.state.plotInfo[hit].insCode}/${this.state.chainId}/${this.state.plotInfo[hit].seqNum}(${this.state.plotInfo[hit].restype})/CA`)
+                this.props.setHoveredAtom(`/${this.state.plotInfo[hit].insCode}/${this.state.chainId}/${this.state.plotInfo[hit].seqNum}(${this.state.plotInfo[hit].restype})/`)
             };
         }
     }
