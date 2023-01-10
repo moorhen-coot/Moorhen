@@ -373,7 +373,7 @@ export const MoorhenValidation = (props) => {
                                 <MoorhenMoleculeSelect width="" onChange={handleModelChange} molecules={props.molecules} ref={moleculeSelectRef}/>
                             </Col>
                             <Col>
-                                <MoorhenChainSelect width="" onChange={handleChainChange} molecules={props.molecules} selectedCoordMolNo={selectedModel} allowedTypes={['polypeptide(L)']} ref={chainSelectRef}/>
+                                <MoorhenChainSelect width="" onChange={handleChainChange} molecules={props.molecules} selectedCoordMolNo={selectedModel} allowedTypes={[1, 2]} ref={chainSelectRef}/>
                             </Col>
                             <Col>
                                 <MoorhenMapSelect width="" onChange={handleMapChange} maps={props.maps} ref={mapSelectRef}/>

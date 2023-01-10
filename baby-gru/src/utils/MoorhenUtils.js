@@ -18,28 +18,6 @@ export function sequenceIsValid(sequence) {
     return true
 }
 
-export function analyzeSequenceType(thisSeq) {
-    // We need to try to determine saccharide chains as well.
-    let theType = "unknown";
-    let nposs_nuc = (thisSeq.match(/A/g)|| []).length + (thisSeq.match(/G/g)|| []).length + (thisSeq.match(/C/g)|| []).length + (thisSeq.match(/T/g)|| []).length + (thisSeq.match(/U/g)|| []).length + (thisSeq.match(/N/g)|| []).length;
-    if(nposs_nuc/thisSeq.length>0.9){
-        //Probably nucleic
-        if((thisSeq.match(/U/g)|| []).length > 0){
-            //Probably RNA
-            theType = "polyribonucleotide";
-        } else {
-            //Probably DNA
-            theType = "polydeoxyribonucleotide";
-        }
-    } else {
-        //Possibly/probably peptide
-        theType = "polypeptide(L)";
-    }
-
-    return theType;
-
-}
-
 export function convertRemToPx(rem) {
     return rem * parseFloat(getComputedStyle(document.documentElement).fontSize);
 }
