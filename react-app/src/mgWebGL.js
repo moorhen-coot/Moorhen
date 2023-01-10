@@ -2120,6 +2120,15 @@ class MGWebGL extends Component {
                 self.createIndexBuffer(idxs[i]);
             }
 
+            if (typeof (jsondata.instance_use_colors) !== "undefined") {
+                if (typeof (jsondata.instance_use_colors[idat]) !== "undefined") {
+                    rssentries = jsondata.instance_use_colors[idat];
+                    for (let i = 0; i < rssentries.length; i++) {
+                        self.addSupplementaryInfo(rssentries[i], "instance_use_colors");
+                    }
+                }
+            }
+
             if (typeof (jsondata.useIndices) !== "undefined") {
                 if (typeof (jsondata.useIndices[idat]) !== "undefined") {
                     rssentries = getEncodedData(jsondata.useIndices[idat]);
@@ -7171,8 +7180,22 @@ class MGWebGL extends Component {
                                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleInstanceOriginBuffer[j]);
                                 this.gl.vertexAttribPointer(theShader.vertexInstanceOriginAttribute, this.displayBuffers[idx].triangleInstanceOriginBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
                                 this.instanced_ext.vertexAttribDivisorANGLE(theShader.vertexInstanceOriginAttribute, 1);
+                                if(this.displayBuffers[idx].triangleInstanceSizeBuffer[j]){
+                                    this.gl.enableVertexAttribArray(theShader.vertexInstanceSizeAttribute);
+                                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleInstanceSizeBuffer[j]);
+                                    this.gl.vertexAttribPointer(theShader.vertexInstanceSizeAttribute, this.displayBuffers[idx].triangleInstanceSizeBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
+                                    this.instanced_ext.vertexAttribDivisorANGLE(theShader.vertexInstanceSizeAttribute, 1);
+                                    
+                                }
+                                if(this.displayBuffers[idx].supplementary["instance_use_colors"]){
+                                    if(this.displayBuffers[idx].supplementary["instance_use_colors"][j]){
+                                        this.instanced_ext.vertexAttribDivisorANGLE(theShader.vertexColourAttribute, 1);
+                                    }
+                                }
                                 this.instanced_ext.drawElementsInstancedANGLE(this.gl.TRIANGLES, triangleVertexIndexBuffer[j].numItems, this.gl.UNSIGNED_INT, 0, this.displayBuffers[idx].triangleInstanceOriginBuffer[j].numItems);
                                 this.gl.disableVertexAttribArray(theShader.vertexInstanceOriginAttribute);
+                                this.gl.disableVertexAttribArray(theShader.vertexInstanceSizeAttribute);
+                                this.instanced_ext.vertexAttribDivisorANGLE(theShader.vertexColourAttribute, 0);
                             } else {
                                 this.gl.drawElements(this.gl.TRIANGLES, triangleVertexIndexBuffer[j].numItems, this.gl.UNSIGNED_INT, 0);
                             }
