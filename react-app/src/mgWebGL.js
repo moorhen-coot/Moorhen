@@ -1524,7 +1524,7 @@ class MGWebGL extends Component {
 
         var self = this;
 
-        this.textCtx = document.createElement("canvas").getContext("2d");
+        this.textCtx = document.createElement("canvas").getContext("2d", {willReadFrequently: true});
         this.circleCtx = document.createElement("canvas").getContext("2d");
 
         this.myQuat = quat4.create();
@@ -4234,8 +4234,6 @@ class MGWebGL extends Component {
         this.gl.attachShader(this.shaderProgramShadow, fragmentShaderShadow);
         this.gl.bindAttribLocation(this.shaderProgramShadow, 0, "aVertexPosition");
         this.gl.bindAttribLocation(this.shaderProgramShadow, 1, "aVertexColour");
-        this.gl.bindAttribLocation(this.shaderProgramShadow, 2, "aVertexNormal");
-        this.gl.bindAttribLocation(this.shaderProgramShadow, 3, "aVertexTexture");
         this.gl.linkProgram(this.shaderProgramShadow);
 
         if (!this.gl.getProgramParameter(this.shaderProgramShadow, this.gl.LINK_STATUS)) {
@@ -4244,17 +4242,11 @@ class MGWebGL extends Component {
 
         this.gl.useProgram(this.shaderProgramShadow);
 
-        this.shaderProgramShadow.vertexNormalAttribute = this.gl.getAttribLocation(this.shaderProgramShadow, "aVertexNormal");
-        this.gl.enableVertexAttribArray(this.shaderProgramShadow.vertexNormalAttribute);
-
         this.shaderProgramShadow.vertexPositionAttribute = this.gl.getAttribLocation(this.shaderProgramShadow, "aVertexPosition");
         this.gl.enableVertexAttribArray(this.shaderProgramShadow.vertexPositionAttribute);
 
         this.shaderProgramShadow.vertexColourAttribute = this.gl.getAttribLocation(this.shaderProgramShadow, "aVertexColour");
         this.gl.enableVertexAttribArray(this.shaderProgramShadow.vertexColourAttribute);
-
-        this.shaderProgramShadow.vertexTextureAttribute = this.gl.getAttribLocation(this.shaderProgramShadow, "aVertexTexture");
-        this.gl.enableVertexAttribArray(this.shaderProgramShadow.vertexTextureAttribute);
 
         this.shaderProgramShadow.pMatrixUniform = this.gl.getUniformLocation(this.shaderProgramShadow, "uPMatrix");
         this.shaderProgramShadow.mvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramShadow, "uMVMatrix");
@@ -8157,6 +8149,7 @@ class MGWebGL extends Component {
 
     drawClickedAtoms(up, right) {
 
+        this.gl.useProgram(this.shaderProgramTextBackground);
         this.gl.uniform1f(this.shaderProgramTextBackground.maxTextureS, 1.0);
         let textTextureDirty = false;
         let textColour = "black";
@@ -9494,6 +9487,7 @@ class MGWebGL extends Component {
 
     drawAxes(invMat) {
         this.gl.depthFunc(this.gl.ALWAYS);
+        this.gl.useProgram(this.shaderProgramTextBackground);
         this.gl.uniform1f(this.shaderProgramTextBackground.fog_start, 1000.0);
         this.gl.uniform1f(this.shaderProgramTextBackground.fog_end, 1000.0);
         var axesOffset = vec3.create();
