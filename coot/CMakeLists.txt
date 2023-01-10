@@ -112,6 +112,7 @@ ${coot_src}/density-contour/density-contour-triangles.cc
 ${coot_src}/density-contour/Vectors.cpp
 ${coot_src}/density-contour/CIsoSurface.cpp
 ${coot_src}/density-contour/occlusion.cc
+${coot_src}/density-contour/gaussian-surface.cc
 ${coot_src}/ccp4mg-utils/ppmutil.cc
 ${coot_src}/ccp4mg-utils/quat.cc
 ${coot_src}/ccp4mg-utils/mgtree.cc
