@@ -148,7 +148,6 @@ export const MoorhenGetMonomerMenuItem = (props) => {
                     const newMolecule = new MoorhenMolecule(props.commandCentre, props.urlPrefix)
                     newMolecule.molNo = result.data.result.result
                     newMolecule.name = tlcRef.current.value
-                    newMolecule.sequences = []
                     return newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef).then(_ => {
                         props.changeMolecules({ action: "Add", item: newMolecule })
                         props.setPopoverIsShown(false)
@@ -478,7 +477,6 @@ export const MoorhenImportDictionaryMenuItem = (props) => {
                                 newMolecule = new MoorhenMolecule(props.commandCentre, props.urlPrefix)
                                 newMolecule.molNo = result.data.result.result
                                 newMolecule.name = instanceName
-                                newMolecule.sequences = []
                                 newMolecule.addDict(fileContent)
                                 props.changeMolecules({ action: "Add", item: newMolecule })
                                 return newMolecule.fetchIfDirtyAndDraw("CBs", props.glRef)
@@ -1047,15 +1045,6 @@ export const MoorhenCopyFragmentUsingCidMenuItem = (props) => {
             newMolecule.molNo = response.data.result.result
             await newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef)
             props.changeMolecules({ action: "Add", item: newMolecule })
-
-            const sequenceInputData = { returnType: "residue_codes", command: "get_single_letter_codes_for_chain", commandArgs: [response.data.result.result, 'A'] }
-            const sequenceResponse = await props.commandCentre.current.cootCommand(sequenceInputData)
-            newMolecule.sequences = [{
-                "sequence": sequenceResponse.data.result.result,
-                "name": newMolecule.name,
-                "chain": 'A',
-                "type": newMolecule.sequences.length > 0 ? newMolecule.sequences[0].type : 'ligand'
-            }]
         })
 
         props.setPopoverIsShown(false)
