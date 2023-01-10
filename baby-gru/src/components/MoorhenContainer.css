@@ -20,6 +20,10 @@
     -webkit-padding-end: 16px;  
 }
 
+.scroller {
+  scrollbar-width: none;
+} 
+
 .validation-plot-container::-webkit-scrollbar {
     width: 1rem;
   }

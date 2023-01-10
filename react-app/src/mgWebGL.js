@@ -9423,10 +9423,10 @@ class MGWebGL extends Component {
 
         // Actual axes
         var horizontalHairStart = vec3.create();
-        vec3.set(horizontalHairStart, -3.0 * this.zoom, 0.0, 0.0);
+        vec3.set(horizontalHairStart, -1.0 * this.zoom, 0.0, 0.0);
         vec3.transformMat4(horizontalHairStart, horizontalHairStart, invMat);
         var horizontalHairEnd = vec3.create();
-        vec3.set(horizontalHairEnd, 3.0 * this.zoom, 0.0, 0.0);
+        vec3.set(horizontalHairEnd, 1.0 * this.zoom, 0.0, 0.0);
         vec3.transformMat4(horizontalHairEnd, horizontalHairEnd, invMat);
 
         addSegment(renderArrays,
@@ -9436,10 +9436,10 @@ class MGWebGL extends Component {
         )
 
         var verticalHairStart = vec3.create();
-        vec3.set(verticalHairStart, 0.0, -3.0 * this.zoom, 0.0);
+        vec3.set(verticalHairStart, 0.0, -1.0 * this.zoom, 0.0);
         vec3.transformMat4(verticalHairStart, verticalHairStart, invMat);
         var verticalHairEnd = vec3.create();
-        vec3.set(verticalHairEnd, 0.0, 3.0 * this.zoom, 0.0);
+        vec3.set(verticalHairEnd, 0.0, 1.0 * this.zoom, 0.0);
         vec3.transformMat4(verticalHairEnd, verticalHairEnd, invMat);
 
         addSegment(renderArrays,

@@ -285,6 +285,8 @@ export const MoorhenFileMenu = (props) => {
                 <Form.Control type="file" accept=".json" multiple={false} onChange={(e) => { loadSession(e.target.files[0]) }}/>
             </Form.Group>
 
+            <hr></hr>
+
             <MoorhenImportMapCoefficientsMenuItem {...menuItemProps} />
 
             <MoorhenImportFSigFMenuItem {...menuItemProps} />
@@ -298,6 +300,8 @@ export const MoorhenFileMenu = (props) => {
             <MenuItem id='download-session-menu-item' variant="success" onClick={downloadSession}>
                 Download session
             </MenuItem>
+            
+            <hr></hr>
 
             <MoorhenDeleteEverythingMenuItem {...menuItemProps} />
 
