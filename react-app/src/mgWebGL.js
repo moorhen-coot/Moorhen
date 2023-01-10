@@ -9627,7 +9627,12 @@ class MGWebGL extends Component {
         //console.log("thickLines",thickLines);
         this.gl.depthFunc(this.gl.ALWAYS);
 
+        for(let i = 0; i<7; i++)
+            this.gl.disableVertexAttribArray(i);
+
         this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexNormalAttribute);
+        this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexPositionAttribute);
+        this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexColourAttribute);
 
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesNormalBuffer);
         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(axesNormals), this.gl.DYNAMIC_DRAW);
