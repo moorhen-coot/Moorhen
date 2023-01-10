@@ -16,6 +16,7 @@ export const MoorhenViewMenu = (props) => {
                     show={props.currentDropdownId === props.dropdownId}
                     onToggle={() => {props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId(-1)}}>
                 <MoorhenBackgroundColorMenuItem {...menuItemProps} />
+                <hr></hr>
                 <MoorhenClipFogMenuItem {...menuItemProps} />
             </NavDropdown >
         </>

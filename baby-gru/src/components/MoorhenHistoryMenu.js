@@ -121,7 +121,7 @@ export const MoorhenHistoryMenu = (props) => {
                 const json = JSON.stringify(sessionHistory.rootNode, null, 2)
                 doDownloadText(json, "MoorhenSession.json")
             }}>Download history</MenuItem>
-
+            <hr></hr>
             <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="uploadJournal" className="mb-3">
                 <Form.Label>Execute history</Form.Label>
                 <Form.Control type="file" accept=".json" multiple={true} onChange={(e) => {
