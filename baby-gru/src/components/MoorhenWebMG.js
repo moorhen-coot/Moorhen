@@ -54,13 +54,8 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
             }
                         
             const resNum = resInfo.split("(")[0]
-            const selectedResidue = {
-                molName: props.hoveredAtom.molecule.name,
-                modelIndex: 0,
-                seqNum: resNum,
-                chain: chainId
-            }
-            props.hoveredAtom.molecule.centreOn(glRef, selectedResidue)
+
+            props.hoveredAtom.molecule.centreOn(glRef, `/*/${chainId}/${resNum}-${resNum}/*`)
         }
     }, [props.hoveredAtom])
 

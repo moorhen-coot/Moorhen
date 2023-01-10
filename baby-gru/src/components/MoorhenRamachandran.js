@@ -116,7 +116,7 @@ export const MoorhenRamachandran = (props) => {
             return
         }
 
-        props.molecules[selectedMoleculeIndex].centreOn(props.glRef, clickedResidue)
+        props.molecules[selectedMoleculeIndex].centreOn(props.glRef, `/*/${clickedResidue.chain}/${clickedResidue.seqNum}-${clickedResidue.seqNum}/*`)
 
     }, [clickedResidue])
 

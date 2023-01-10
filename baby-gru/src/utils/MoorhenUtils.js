@@ -308,6 +308,26 @@ export const MoorhenMtzWrapper = class {
     }
 }
 
+export const centreOnGemmiAtoms = (atoms) => {
+    const atomCount = atoms.length
+    if (atomCount === 0) {
+        return [0, 0, 0]
+    }
+
+    let xtot = 0.0
+    let ytot = 0.0
+    let ztot = 0.0
+    
+    for (const atom of atoms) {
+        xtot += atom.pos.x
+        ytot += atom.pos.y
+        ztot += atom.pos.z
+    }
+    
+    return [-xtot/atomCount, -ytot/atomCount, -ztot/atomCount]
+    
+}
+
 export const cidToSpec = (cid) => {
     //molNo, chain_id, res_no, ins_code, alt_conf
     const cidTokens = cid.split('/')
