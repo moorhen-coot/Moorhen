@@ -1,9 +1,12 @@
 var triangle_instanced_vertex_shader_source = `
-    // This shader is not yet instanced!!!
+    // This shader is not working!!!
     attribute vec3 aVertexPosition;
     attribute vec4 aVertexColour;
     attribute vec3 aVertexNormal;
     attribute vec2 aVertexTexture;
+    attribute vec3 instancePosition;
+    attribute float instanceSize;
+    attribute mat4 instanceOrientation;
 
     uniform mat4 uMVMatrix;
     uniform mat4 uMVINVMatrix;
@@ -19,7 +22,7 @@ var triangle_instanced_vertex_shader_source = `
 
     void main(void) {
 
-      vec4 theVert = vec4(aVertexPosition,1.0);
+      vec4 theVert = vec4(instancePosition+aVertexPosition,1.0);
 
       gl_Position = uPMatrix * uMVMatrix * theVert;
       vColor = aVertexColour;
