@@ -817,42 +817,47 @@ MoorhenMolecule.prototype.redraw = function (glRef) {
 MoorhenMolecule.prototype.transformedCachedAtomsAsMovedAtoms = function (glRef) {
     const $this = this
     let movedResidues = [];
-    $this.cachedAtoms.atoms.forEach(mod => {
-        mod.chains.forEach(chain => {
-            chain.residues.forEach(res => {
-                if (res.atoms.length > 0) {
-                    const cid = res.atoms[0].getChainID() + "/" + res.atoms[0].getResidueID()
-                    let movedAtoms = [];
-                    res.atoms.forEach(atom => {
-                        const atomName = atom["_atom_site.label_atom_id"];
-                        const atomSymbol = atom["_atom_site.type_symbol"];
-                        const diff = $this.displayObjects.transformation.centre
-                        let x = atom.x() + glRef.current.origin[0] - diff[0]
-                        let y = atom.y() + glRef.current.origin[1] - diff[1]
-                        let z = atom.z() + glRef.current.origin[2] - diff[2]
-                        const origin = $this.displayObjects.transformation.origin
-                        const quat = $this.displayObjects.transformation.quat
-                        if (quat) {
-                            const theMatrix = quatToMat4(quat)
-                            theMatrix[12] = origin[0]
-                            theMatrix[13] = origin[1]
-                            theMatrix[14] = origin[2]
-                            // And then transform ...
-                            const atomPos = vec3.create()
-                            const transPos = vec3.create()
-                            vec3.set(atomPos, x, y, z)
-                            vec3.transformMat4(transPos, atomPos, theMatrix);
-                            if (atomSymbol.length == 2)
-                                movedAtoms.push({ name: (atomName).padEnd(4, " "), x: transPos[0] - glRef.current.origin[0] + diff[0], y: transPos[1] - glRef.current.origin[1] + diff[1], z: transPos[2] - glRef.current.origin[2] + diff[2], resCid: cid })
-                            else
-                                movedAtoms.push({ name: (" " + atomName).padEnd(4, " "), x: transPos[0] - glRef.current.origin[0] + diff[0], y: transPos[1] - glRef.current.origin[1] + diff[1], z: transPos[2] - glRef.current.origin[2] + diff[2], resCid: cid })
+    
+    for (let modelIndex = 0; modelIndex < this.gemmiStructure.models.size(); modelIndex++) {
+        const model = this.gemmiStructure.models.get(modelIndex)
+        for (let chainIndex = 0; chainIndex < model.chains.size(); chainIndex++) {
+            const chain = model.chains.get(chainIndex)
+            for (let residueIndex = 0; residueIndex < chain.residues.size(); residueIndex++) {
+                const residue = chain.residues.get(residueIndex)
+                const cid = `${chain.name}/${residue.seqid.str()}`
+                let movedAtoms = []
+                for (let atomIndex = 0; atomIndex < residue.atoms.size(); atomIndex++) {
+                    const atom = residue.atoms.get(atomIndex)
+                    const atomName = atom.name
+                    const atomSymbol = window.CCP4Module.getElementNameAsString(atom.element)
+                    const diff = $this.displayObjects.transformation.centre
+                    let x = atom.pos.x + glRef.current.origin[0] - diff[0]
+                    let y = atom.pos.y + glRef.current.origin[1] - diff[1]
+                    let z = atom.pos.z + glRef.current.origin[2] - diff[2]
+                    const origin = $this.displayObjects.transformation.origin
+                    const quat = $this.displayObjects.transformation.quat
+                    if (quat) {
+                        const theMatrix = quatToMat4(quat)
+                        theMatrix[12] = origin[0]
+                        theMatrix[13] = origin[1]
+                        theMatrix[14] = origin[2]
+                        // And then transform ...
+                        const atomPos = vec3.create()
+                        const transPos = vec3.create()
+                        vec3.set(atomPos, x, y, z)
+                        vec3.transformMat4(transPos, atomPos, theMatrix);
+                        if (atomSymbol.length == 2) {
+                            movedAtoms.push({ name: (atomName).padEnd(4, " "), x: transPos[0] - glRef.current.origin[0] + diff[0], y: transPos[1] - glRef.current.origin[1] + diff[1], z: transPos[2] - glRef.current.origin[2] + diff[2], resCid: cid })
+                        } else {
+                            movedAtoms.push({ name: (" " + atomName).padEnd(4, " "), x: transPos[0] - glRef.current.origin[0] + diff[0], y: transPos[1] - glRef.current.origin[1] + diff[1], z: transPos[2] - glRef.current.origin[2] + diff[2], resCid: cid })
                         }
-                    })
-                    movedResidues.push(movedAtoms)
+                    }
                 }
-            })
-        })
-    })
+                movedResidues.push(movedAtoms)
+            }
+        }
+    }
+
     return movedResidues
 }
 
