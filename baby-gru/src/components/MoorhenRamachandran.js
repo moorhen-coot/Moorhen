@@ -15,7 +15,7 @@ export const MoorhenRamachandran = (props) => {
     const [ramaPlotData, setRamaPlotData] = useState(null)
     const [selectedModel, setSelectedModel] = useState(null)
     const [selectedChain, setSelectedChain] = useState(null)
-    const [cachedAtoms, setCachedAtoms] = useState(null)
+    const [cachedStructure, setCachedStructure] = useState(null)
 
     const getMolName = () => {
         if (selectedModel === null || props.molecules.length === 0) {
@@ -80,13 +80,13 @@ export const MoorhenRamachandran = (props) => {
         if (selectedModel !== null) {
             let selectedMoleculeIndex = props.molecules.findIndex(molecule => molecule.molNo == selectedModel);
             if (selectedMoleculeIndex != -1 && props.molecules[selectedMoleculeIndex]){
-                setCachedAtoms(props.molecules[selectedMoleculeIndex].cachedAtoms)
+                setCachedStructure(props.molecules[selectedMoleculeIndex].gemmiStructure)
             }
         }
     })
 
     useEffect(() => {
-        console.log('cachedAtoms changed')
+        console.log('cachedStructure changed')
         if (ramaPlotData === null || selectedModel === null || chainSelectRef.current.value === null || props.molecules.length === 0) {
             return;
         }
@@ -103,7 +103,7 @@ export const MoorhenRamachandran = (props) => {
         
         fetchRamaData()
 
-    }, [cachedAtoms])
+    }, [cachedStructure])
 
     useEffect(() => {
         if (!clickedResidue) {
@@ -116,7 +116,7 @@ export const MoorhenRamachandran = (props) => {
             return
         }
 
-        props.molecules[selectedMoleculeIndex].centreOn(props.glRef, clickedResidue)
+        props.molecules[selectedMoleculeIndex].centreOn(props.glRef, `/*/${clickedResidue.chain}/${clickedResidue.seqNum}-${clickedResidue.seqNum}/*`)
 
     }, [clickedResidue])
 

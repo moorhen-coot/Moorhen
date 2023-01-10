@@ -60,7 +60,7 @@ export const MoorhenValidation = (props) => {
     const [selectedModel, setSelectedModel] = useState(null)
     const [selectedMap, setSelectedMap] = useState(null)
     const [selectedChain, setSelectedChain] = useState(null)
-    const [cachedAtoms, setCachedAtoms] = useState(null)
+    const [cachedStructure, setCachedStructure] = useState(null)
 
     const getSequenceData = () => {
         let selectedMolecule = props.molecules.find(molecule => molecule.molNo == selectedModel)
@@ -139,7 +139,7 @@ export const MoorhenValidation = (props) => {
         if(selectedMolecule) {
             const clickedResidue = getResidueInfo(selectedMolecule, residueIndex)
             if (clickedResidue) {
-                selectedMolecule.centreOn(props.glRef, clickedResidue)
+                selectedMolecule.centreOn(props.glRef, `/*/${clickedResidue.chain}/${clickedResidue.seqNum}-${clickedResidue.seqNum}/*`)
             }
         }
     }
@@ -191,7 +191,7 @@ export const MoorhenValidation = (props) => {
         if (selectedModel !== null) {
             let selectedMoleculeIndex = props.molecules.findIndex(molecule => molecule.molNo == selectedModel);
             if (selectedMoleculeIndex != -1 && props.molecules[selectedMoleculeIndex]){
-                setCachedAtoms(props.molecules[selectedMoleculeIndex].cachedAtoms)
+                setCachedStructure(props.molecules[selectedMoleculeIndex].gemmiStructure)
             }
         }
     })
@@ -220,7 +220,7 @@ export const MoorhenValidation = (props) => {
         let availableMetrics = getAvailableMetrics()
         fetchData(availableMetrics)   
 
-    }, [selectedChain, selectedMap, selectedModel, cachedAtoms])
+    }, [selectedChain, selectedMap, selectedModel, cachedStructure])
 
     useEffect(() => {
         if (chartRef.current) {

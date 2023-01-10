@@ -109,7 +109,7 @@ export const MoorhenMoleculeCard = (props) => {
             return
         }
 
-        props.molecule.centreOn(props.glRef, clickedResidue)
+        props.molecule.centreOn(props.glRef, `/*/${clickedResidue.chain}/${clickedResidue.seqNum}-${clickedResidue.seqNum}/*`)
 
     }, [clickedResidue]);
 

@@ -42,7 +42,7 @@ export const MoorhenDifferenceMapPeaks = (props) => {
     const [plotData, setPlotData] = useState(null)
     const [selectedModel, setSelectedModel] = useState(null)
     const [selectedMap, setSelectedMap] = useState(null)
-    const [cachedAtoms, setCachedAtoms] = useState(null)
+    const [cachedStructure, setCachedStructure] = useState(null)
     const [selectedRmsd, setSelectedRmsd] = useState(4.5)
     const [mapRmsd, setMapRmsd] = useState(null)
     
@@ -136,7 +136,7 @@ export const MoorhenDifferenceMapPeaks = (props) => {
         if (selectedModel !== null) {
             let selectedMoleculeIndex = props.molecules.findIndex(molecule => molecule.molNo == selectedModel);
             if (selectedMoleculeIndex != -1 && props.molecules[selectedMoleculeIndex]){
-                setCachedAtoms(props.molecules[selectedMoleculeIndex].cachedAtoms)
+                setCachedStructure(props.molecules[selectedMoleculeIndex].gemmiStructure)
             }
         }
     })
@@ -173,7 +173,7 @@ export const MoorhenDifferenceMapPeaks = (props) => {
             
         fetchData()
 
-    }, [selectedMap, selectedModel, cachedAtoms, selectedRmsd])
+    }, [selectedMap, selectedModel, cachedStructure, selectedRmsd])
 
     useEffect(() => {
         if (chartRef.current) {
