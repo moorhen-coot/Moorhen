@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useRef, useState } from "react"
+import { Fragment, useEffect, useRef, useState } from "react"
 import { Col, Row, Form } from 'react-bootstrap';
 import { Chart, registerables } from 'chart.js';
 import { MoorhenChainSelect } from './MoorhenChainSelect'
@@ -156,7 +156,7 @@ export const MoorhenValidation = (props) => {
             if (clickedResidue) {
                 props.setHoveredAtom({
                     molecule: selectedMolecule,
-                    cid:  `//${clickedResidue.chain}/${clickedResidue.seqNum}(${residueCodesOneToThree[clickedResidue.resCode]})`
+                    cid:  `//${clickedResidue.chain}/${clickedResidue.seqNum}(${residueCodesOneToThree[clickedResidue.resCode]})/`
                 })
                 return `${clickedResidue.seqNum} (${residueCodesOneToThree[clickedResidue.resCode]})`
             }
@@ -275,6 +275,9 @@ export const MoorhenValidation = (props) => {
         let datasets = []
         let availableMetrics = getAvailableMetrics()
         for(let methodIndex=0; methodIndex < plotData.length; methodIndex++){
+            if (!plotData[methodIndex]) {
+                continue
+            }
             let metricScale = metricInfoScaling[availableMetrics[methodIndex].command]
             let palette = colourPalettes[availableMetrics[methodIndex].command]
             datasets.push({
