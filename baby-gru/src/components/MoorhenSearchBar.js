@@ -222,20 +222,6 @@ export const MoorhenSearchBar = (props) => {
 
 
     return <Fragment> 
-            <Button className="nav-link" size="sm" variant="outlined" onClick={() => {setIsVisible(!isVisible)}}>
-                {isVisible ?
-                (<div>
-                    <SearchOffOutlined/>
-                    <ArrowLeftOutlined/>
-                </div>)
-                : 
-                (<div>
-                    <SearchOutlined/>
-                    <ArrowRightOutlined/>
-                </div>)}
-            </Button>
-            <div ref={searchBarContainerRef}>
-                <Slide direction={isVisible ? "right" : "right"} in={isVisible} container={searchBarContainerRef.current}>
                     <Row style={{padding: '0.5rem', width: '20rem'}}>
                         <Autocomplete 
                                 ref={selectRef}
@@ -276,8 +262,6 @@ export const MoorhenSearchBar = (props) => {
                                 renderInput={(params) => <TextField {...params} label="Search" />}
                         />
                     </Row>
-                </Slide>
-            </div>
     </Fragment> 
 
 }

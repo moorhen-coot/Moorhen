@@ -18,7 +18,7 @@ import { MoorhenToolsAccordion } from './MoorhenToolsAccordion'
 import { PreferencesContext } from "../utils/MoorhenPreferences";
 import { babyGruKeyPress } from './MoorhenKeyboardAccelerators';
 import { MoorhenEditMenu } from './MoorhenEditMenu';
-import { MoorhenSearchBar } from './MoorhenSearchBar';
+import { MoorhenHelpMenu } from './MoorhenHelpMenu'
 import './MoorhenContainer.css'
 
 const initialMoleculesState = []
@@ -308,8 +308,8 @@ export const MoorhenContainer = (props) => {
                     <MoorhenViewMenu dropdownId="View" {...collectedProps} />
                     <MoorhenHistoryMenu dropdownId="History" {...collectedProps} />
                     <MoorhenPreferencesMenu dropdownId="Preferences" {...collectedProps} />
+                    <MoorhenHelpMenu dropdownId="Help" setSelectedToolKey={setSelectedToolKey} consoleBodyHeight={consoleBodyHeight} {...collectedProps}/>
                     {props.enableCloudMenu && <MoorhenCloudMenu dropdownId="CloudExport" {...collectedProps}/>}
-                    <MoorhenSearchBar setSelectedToolKey={setSelectedToolKey} consoleBodyHeight={consoleBodyHeight} {...collectedProps}/>
                     {props.extraMenus && props.extraMenus.map(menu=>menu)}
                 </Nav>
             </Navbar.Collapse>
