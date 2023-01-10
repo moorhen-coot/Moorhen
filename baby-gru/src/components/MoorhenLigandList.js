@@ -3,7 +3,7 @@ import { Card, Row, Col, Button } from "react-bootstrap";
 
 export const MoorhenLigandList = (props) => {
     const [ligandList, setLigandList] = useState([])
-    const [cachedAtoms, setCachedAtoms] = useState(null)
+    const [cachedStructure, setCachedStructure] = useState(null)
 
     useEffect(() => {
         async function updateMoleculeAtoms() {
@@ -30,10 +30,10 @@ export const MoorhenLigandList = (props) => {
         }
         setLigandList(ligandList)
 
-    }, [cachedAtoms])
+    }, [cachedStructure])
 
     useEffect(() => {
-        setCachedAtoms(props.molecule.cachedAtoms)
+        setCachedStructure(props.molecule.gemmiStructure)
     })
 
     return <>
