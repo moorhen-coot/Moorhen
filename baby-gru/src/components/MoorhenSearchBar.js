@@ -1,12 +1,13 @@
 import { Fragment, useState, useRef, useEffect } from "react";
 import { Button, Row } from "react-bootstrap";
-import { Autocomplete, TextField } from "@mui/material";
+import { Autocomplete, Slide, TextField } from "@mui/material";
 import { SearchOutlined, SearchOffOutlined, ArrowRightOutlined, ArrowLeftOutlined } from '@mui/icons-material';
 
 export const MoorhenSearchBar = (props) => {
 
     const selectRef = useRef()
     const searchBarRef = useRef()
+    const searchBarContainerRef = useRef()
     const [selectedItemKey, setSelectedItemKey] = useState(null)
     const [openPopup, setOpenPopup] = useState(null)
     const [isVisible, setIsVisible] = useState(false)
@@ -221,58 +222,62 @@ export const MoorhenSearchBar = (props) => {
 
 
     return <Fragment> 
-        <Button className="nav-link" size="sm" variant="outlined" onClick={() => {setIsVisible(!isVisible)}}>
-            {isVisible ?
-            (<div>
-                 <SearchOffOutlined/>
-                 <ArrowLeftOutlined/>
-            </div>)
-             : 
-            (<div>
-                <SearchOutlined/>
-                <ArrowRightOutlined/>
-            </div>)}
-        </Button>   
-        <Row style={{padding: '0.5rem', width: '20rem', display: isVisible ? 'inline-block' : 'none'}}>
-            <Autocomplete 
-                    ref={selectRef}
-                    disablePortal
-                    selectOnFocus
-                    clearOnBlur
-                    handleHomeEndKeys
-                    freeSolo
-                    includeInputInList
-                    filterSelectedOptions
-                    open={openPopup}
-                    onInputChange={(_, value) => {
-                        if (value.length === 0) {
-                            if (openPopup) setOpenPopup(false);
-                        } else {
-                              if (!openPopup) setOpenPopup(true);
-                        }
-                    }}
-                    onClose={() => setOpenPopup(false)}
-                    sx={{
-                        '& .MuiInputBase-root': {
-                            backgroundColor:  props.darkMode ? '#222' : 'white',
-                            color: props.darkMode ? 'white' : '#222',
-                        },
-                        '& .MuiOutlinedInput-notchedOutline': {
-                            borderColor: props.darkMode ? 'white' : 'grey',
-                        },
-                        '& .MuiButtonBase-root': {
-                            color: props.darkMode ? 'white' : 'grey',
-                        },
-                        '& .MuiFormLabel-root': {
-                            color: props.darkMode ? 'white' : '#222',
-                        },
-                    }}               
-                    onChange={handleChange}
-                    size='small'
-                    options={searchOptions.map(item => item.label)}
-                    renderInput={(params) => <TextField {...params} label="Search" />}
-                />
-        </Row>
+            <Button className="nav-link" size="sm" variant="outlined" onClick={() => {setIsVisible(!isVisible)}}>
+                {isVisible ?
+                (<div>
+                    <SearchOffOutlined/>
+                    <ArrowLeftOutlined/>
+                </div>)
+                : 
+                (<div>
+                    <SearchOutlined/>
+                    <ArrowRightOutlined/>
+                </div>)}
+            </Button>
+            <div ref={searchBarContainerRef}>
+                <Slide direction={isVisible ? "right" : "right"} in={isVisible} container={searchBarContainerRef.current}>
+                    <Row style={{padding: '0.5rem', width: '20rem'}}>
+                        <Autocomplete 
+                                ref={selectRef}
+                                disablePortal
+                                selectOnFocus
+                                clearOnBlur
+                                handleHomeEndKeys
+                                freeSolo
+                                includeInputInList
+                                filterSelectedOptions
+                                open={openPopup}
+                                onInputChange={(_, value) => {
+                                    if (value.length === 0) {
+                                        if (openPopup) setOpenPopup(false);
+                                    } else {
+                                        if (!openPopup) setOpenPopup(true);
+                                    }
+                                }}
+                                onClose={() => setOpenPopup(false)}
+                                sx={{
+                                    '& .MuiInputBase-root': {
+                                        backgroundColor:  props.darkMode ? '#222' : 'white',
+                                        color: props.darkMode ? 'white' : '#222',
+                                    },
+                                    '& .MuiOutlinedInput-notchedOutline': {
+                                        borderColor: props.darkMode ? 'white' : 'grey',
+                                    },
+                                    '& .MuiButtonBase-root': {
+                                        color: props.darkMode ? 'white' : 'grey',
+                                    },
+                                    '& .MuiFormLabel-root': {
+                                        color: props.darkMode ? 'white' : '#222',
+                                    },
+                                }}               
+                                onChange={handleChange}
+                                size='small'
+                                options={searchOptions.map(item => item.label)}
+                                renderInput={(params) => <TextField {...params} label="Search" />}
+                        />
+                    </Row>
+                </Slide>
+            </div>
     </Fragment> 
 
 }
