@@ -940,13 +940,8 @@ export const MoorhenGoToMenuItem = (props) => {
         }
 
         const resNum = resInfo.split("(")[0]
-        const selectedResidue = {
-            molName: molName,
-            modelIndex: 0,
-            seqNum: resNum,
-            chain: chainId
-        }
-        molecule.centreOn(props.glRef, selectedResidue)
+
+        molecule.centreOn(props.glRef, `/*/${chainId}/${resNum}-${resNum}/*`)
     }
 
     return <MoorhenMenuItem

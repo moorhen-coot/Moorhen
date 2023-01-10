@@ -6,7 +6,7 @@ import { GetSplinesColoured } from '../WebGL/mgSecStr';
 import { atomsToSpheresInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { contactsToCylindersInfo, contactsToLinesInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { singletonsToLinesInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
-import { readTextFile, readGemmiStructure, cidToSpec, residueCodesThreeToOne } from './MoorhenUtils'
+import { readTextFile, readGemmiStructure, cidToSpec, residueCodesThreeToOne, centreOnGemmiAtoms } from './MoorhenUtils'
 import { quatToMat4 } from '../WebGL/quatToMat4.js';
 import * as vec3 from 'gl-matrix/vec3';
 
@@ -228,9 +228,8 @@ MoorhenMolecule.prototype.fetchIfDirtyAndDraw = async function (style, glRef) {
     })
 }
 
-MoorhenMolecule.prototype.centreOn = function (glRef, selection) {
+MoorhenMolecule.prototype.centreOn = function (glRef, selectionCid) {
     //Note add selection to permit centringh on subset
-    const $this = this
     let promise
     if (this.atomsDirty) {
         promise = this.updateAtoms()
@@ -239,26 +238,17 @@ MoorhenMolecule.prototype.centreOn = function (glRef, selection) {
         promise = Promise.resolve()
     }
 
-    return promise.then(() => {
+    return promise.then(async () => {
 
-        let selectionCentre = null;
-        if (selection) {
-            let selectedChainIndex = $this.cachedAtoms.atoms[selection.modelIndex].chains.findIndex(chain => chain.residues[0].atoms[0]["_atom_site.auth_asym_id"] === selection.chain);
-            if (selectedChainIndex === -1) {
-                console.log(`Cannot find chain ${selection.molName}/${selection.chain}`);
-                return;
-            }
-            let selectedResidueIndex = $this.cachedAtoms.atoms[selection.modelIndex].chains[selectedChainIndex].residues.findIndex(residue => residue.atoms[0]["_atom_site.label_seq_id"] == selection.seqNum);
-            if (selectedResidueIndex === -1) {
-                console.log(`Cannot find residue ${selection.molName}/${selection.chain}/${selection.seqNum}`);
-                return;
-            } else {
-                let selectedAtoms = $this.cachedAtoms.atoms[selection.modelIndex].chains[selectedChainIndex].residues[selectedResidueIndex].atoms;
-                selectionCentre = $this.cachedAtoms.atoms[selection.modelIndex].centreOnAtoms(selectedAtoms);
-            }
+        let selectionAtoms = []
+        if (selectionCid) {
+            selectionAtoms = await this.gemmiAtomsForCid(selectionCid)
+
         } else {
-            selectionCentre = $this.cachedAtoms.atoms[0].centre();
+            selectionAtoms = await this.gemmiAtomsForCid('/*/*/*/*')
         }
+
+        let selectionCentre = centreOnGemmiAtoms(selectionAtoms)
 
         return new Promise((resolve, reject) => {
             glRef.current.setOrigin(selectionCentre);
@@ -994,7 +984,9 @@ MoorhenMolecule.prototype.redo = async function (glRef) {
 
 MoorhenMolecule.prototype.gemmiAtomsForCid = async function (cid) {
     const $this = this
-    if ($this.atomsDirty) { const cachedAtoms = await $this.updateAtoms() }
+    if ($this.atomsDirty) {
+        await $this.updateAtoms()
+    }
     let result = []
     const selection = new window.CCP4Module.Selection(cid)
     const model = $this.gemmiStructure.first_model()

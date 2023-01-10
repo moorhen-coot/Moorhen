@@ -3,7 +3,7 @@ import { Card, Row, Col, Button } from "react-bootstrap";
 
 export const MoorhenLigandList = (props) => {
     const [ligandList, setLigandList] = useState([])
-    const [cachedAtoms, setCachedAtoms] = useState(null)
+    const [cachedStructure, setCachedStructure] = useState(null)
 
     useEffect(() => {
         async function updateMoleculeAtoms() {
@@ -30,10 +30,10 @@ export const MoorhenLigandList = (props) => {
         }
         setLigandList(ligandList)
 
-    }, [cachedAtoms])
+    }, [cachedStructure])
 
     useEffect(() => {
-        setCachedAtoms(props.molecule.cachedAtoms)
+        setCachedStructure(props.molecule.gemmiStructure)
     })
 
     return <>
@@ -49,7 +49,7 @@ export const MoorhenLigandList = (props) => {
                                                         {`${ligand.chainName}/${ligand.res.seqid.str()}(${ligand.res.name})`}
                                                     </Col>
                                                     <Col className='col-3' style={{justifyContent: 'right', display:'flex'}}>
-                                                        <Button onClick={() => {props.molecule.centreOn(props.glRef, {chain: ligand.chainName, molName: props.molecule.name, molNo: props.molecule.molNo, modelIndex: 0, seqNum: ligand.res.seqid.str()})}}>
+                                                        <Button onClick={() => {props.molecule.centreOn(props.glRef, `/*/${ligand.chainName}/${ligand.res.seqid.str()}-${ligand.res.seqid.str()}/*`)}}>
                                                             View
                                                         </Button>
                                                     </Col>
