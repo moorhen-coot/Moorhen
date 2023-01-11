@@ -48,6 +48,7 @@ export const residueCodesOneToThree = {
     'Y': 'TYR',
     'M': 'MET',
     'UNK': 'UNKOWN',
+    'X': 'UNKOWN',
     '-': 'MISSING'
 }
 
