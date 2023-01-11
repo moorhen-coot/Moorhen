@@ -109,8 +109,8 @@ MoorhenMolecule.prototype.copyMolecule = async function (glRef) {
         returnType: "status",
         command: 'shim_read_pdb',
         commandArgs: [moleculeAtoms.data.result.pdbData, newMolecule.name]
-    }, true)    
-    
+    }, true)
+
     newMolecule.molNo = response.data.result.result
 
     await newMolecule.fetchIfDirtyAndDraw('CBs', glRef)
@@ -415,10 +415,21 @@ MoorhenMolecule.prototype.drawCootGaussianSurface = async function (glRef) {
     }).then(response => {
         const objects = [response.data.result.result]
         if (objects.length > 0) {
-            console.log({objects})
+            const flippedNormObjects = objects.map(object => {
+                const flippedNormalsObject = { ...object }
+                /*
+                flippedNormalsObject.norm_tri = object.norm_tri.map(
+                    element => element.map(subElement => subElement.map(coord => coord * -1.))
+                )
+                */
+                flippedNormalsObject.idx_tri = object.idx_tri.map(
+                    element => element.map(subElement => subElement.reverse())
+                )
+                return flippedNormalsObject
+            })
             //Empty existing buffers of this type
             this.clearBuffersOfStyle(style, glRef)
-            this.addBuffersOfStyle(glRef, objects, style)
+            this.addBuffersOfStyle(glRef, flippedNormObjects, style)
         }
         else {
             this.clearBuffersOfStyle(style, glRef)
