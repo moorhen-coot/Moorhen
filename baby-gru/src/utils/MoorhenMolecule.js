@@ -72,7 +72,8 @@ MoorhenMolecule.prototype.parseSequences = function () {
                 const residue = residues.get(residueIndex)
                 currentSequence.push({
                     resNum: Number(residue.seqid.str()),
-                    resCode: Object.keys(threeToOne).includes(residue.name) ? threeToOne[residue.name] : 'X'
+                    resCode: Object.keys(threeToOne).includes(residue.name) ? threeToOne[residue.name] : 'X',
+                    cid: `//${chain.name}/${residue.seqid.str()}(${residue.name})/`
                 })
             }
             if (currentSequence.length > 0) {
