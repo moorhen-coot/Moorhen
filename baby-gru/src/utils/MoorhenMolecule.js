@@ -6,7 +6,7 @@ import { GetSplinesColoured } from '../WebGL/mgSecStr';
 import { atomsToSpheresInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { contactsToCylindersInfo, contactsToLinesInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { singletonsToLinesInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
-import { readTextFile, readGemmiStructure, cidToSpec, residueCodesThreeToOne, centreOnGemmiAtoms } from './MoorhenUtils'
+import { readTextFile, readGemmiStructure, cidToSpec, residueCodesThreeToOne, centreOnGemmiAtoms, getBufferAtoms, nucleotideCodesThreeToOne } from './MoorhenUtils'
 import { quatToMat4 } from '../WebGL/quatToMat4.js';
 import * as vec3 from 'gl-matrix/vec3';
 
@@ -65,19 +65,21 @@ MoorhenMolecule.prototype.parseSequences = function () {
         for (let chainIndex = 0; chainIndex < model.chains.size(); chainIndex++) {
             let currentSequence = []
             const chain = model.chains.get(chainIndex)
+            const polymerType = window.CCP4Module.check_polymer_type(chain.get_polymer_const())
+            let threeToOne = [3, 4, 5].includes(polymerType.value) ? nucleotideCodesThreeToOne : residueCodesThreeToOne
             const residues = chain.residues
             for (let residueIndex = 0; residueIndex < residues.size(); residueIndex++) {
                 const residue = residues.get(residueIndex)
                 currentSequence.push({
                     resNum: Number(residue.seqid.str()),
-                    resCode: residueCodesThreeToOne[residue.name]
+                    resCode: Object.keys(threeToOne).includes(residue.name) ? threeToOne[residue.name] : 'X'
                 })
             }
             if (currentSequence.length > 0) {
                 sequences.push({
                     name: `${this.name}_${chain.name}`,
                     chain: chain.name,
-                    type: window.CCP4Module.check_polymer_type(chain.get_polymer_const()),
+                    type: polymerType,
                     sequence: currentSequence,
                 })
             }
@@ -296,25 +298,25 @@ MoorhenMolecule.prototype.drawWithStyleFromAtoms = async function (style, glRef,
             this.drawRotamerDodecahedra(glRef)
             break;
         case 'CBs':
-            await this.drawCootBonds(webMGAtoms, glRef)
+            await this.drawCootBonds(glRef)
             break;
         case 'gaussian':
             await this.drawCootGaussianSurface(glRef)
             break;
         case 'CRs':
-            await this.drawCootRepresentation(webMGAtoms, glRef, style)
+            await this.drawCootRepresentation(glRef, style)
             break;
         case 'MolecularSurface':
-            await this.drawCootRepresentation(webMGAtoms, glRef, style)
+            await this.drawCootRepresentation(glRef, style)
             break;
         case 'VdWSurface':
-            await this.drawCootRepresentation(webMGAtoms, glRef, style)
+            await this.drawCootRepresentation(glRef, style)
             break;
         case 'Calpha':
-            await this.drawCootRepresentation(webMGAtoms, glRef, style)
+            await this.drawCootRepresentation(glRef, style)
             break;
         case 'ligands':
-            await this.drawCootRepresentation(webMGAtoms, glRef, style)
+            await this.drawCootRepresentation(glRef, style)
             break;
         default:
             break;
@@ -363,7 +365,7 @@ MoorhenMolecule.prototype.drawRotamerDodecahedra = function (glRef) {
     })
 }
 
-MoorhenMolecule.prototype.drawCootBonds = async function (webMGAtoms, glRef) {
+MoorhenMolecule.prototype.drawCootBonds = async function (glRef) {
     const $this = this
     const style = "CBs"
     return this.commandCentre.current.cootCommand({
@@ -380,20 +382,9 @@ MoorhenMolecule.prototype.drawCootBonds = async function (webMGAtoms, glRef) {
             //Empty existing buffers of this type
             this.clearBuffersOfStyle(style, glRef)
             this.addBuffersOfStyle(glRef, objects, style)
-            if (webMGAtoms.atoms.length > 0) {
-                let bufferAtoms = []
-                webMGAtoms.atoms[0].getAllAtoms().forEach(at1 => {
-                    let atom = {};
-                    atom["x"] = at1.x();
-                    atom["y"] = at1.y();
-                    atom["z"] = at1.z();
-                    atom["tempFactor"] = at1["_atom_site.B_iso_or_equiv"];
-                    atom["charge"] = at1["_atom_site.pdbx_formal_charge"];
-                    atom["symbol"] = at1["_atom_site.type_symbol"];
-                    atom["label"] = at1.getAtomID();
-                    bufferAtoms.push(atom);
-                    this.displayObjects[style][0].atoms = bufferAtoms
-                })
+            let bufferAtoms = getBufferAtoms(this.gemmiStructure)
+            if (bufferAtoms.length > 0) {
+                this.displayObjects[style][0].atoms = bufferAtoms
             }
         }
         else {
@@ -438,7 +429,7 @@ MoorhenMolecule.prototype.drawCootGaussianSurface = async function (glRef) {
     })
 }
 
-MoorhenMolecule.prototype.drawCootRepresentation = async function (webMGAtoms, glRef, style) {
+MoorhenMolecule.prototype.drawCootRepresentation = async function (glRef, style) {
     const $this = this
     let m2tStyle
     let m2tSelection
@@ -489,23 +480,11 @@ MoorhenMolecule.prototype.drawCootRepresentation = async function (webMGAtoms, g
             }
             this.clearBuffersOfStyle(style, glRef)
             this.addBuffersOfStyle(glRef, objects, style)
-            if (webMGAtoms.atoms.length > 0) {
-                let bufferAtoms = []
-                webMGAtoms.atoms[0].getAllAtoms().forEach(at1 => {
-                    let atom = {};
-                    atom["x"] = at1.x();
-                    atom["y"] = at1.y();
-                    atom["z"] = at1.z();
-                    atom["tempFactor"] = at1["_atom_site.B_iso_or_equiv"];
-                    atom["charge"] = at1["_atom_site.pdbx_formal_charge"];
-                    atom["symbol"] = at1["_atom_site.type_symbol"];
-                    atom["label"] = at1.getAtomID();
-                    bufferAtoms.push(atom);
-                    this.displayObjects[style][0].atoms = bufferAtoms
-                })
+            let bufferAtoms = getBufferAtoms(this.gemmiStructure)
+            if (bufferAtoms.length > 0) {
+                this.displayObjects[style][0].atoms = bufferAtoms
             }
-        }
-        else {
+        } else {
             this.clearBuffersOfStyle(style, glRef)
         }
         return Promise.resolve(true)

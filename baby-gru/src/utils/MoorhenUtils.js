@@ -48,6 +48,7 @@ export const residueCodesOneToThree = {
     'Y': 'TYR',
     'M': 'MET',
     'UNK': 'UNKOWN',
+    'X': 'UNKOWN',
     '-': 'MISSING'
 }
 
@@ -325,7 +326,39 @@ export const centreOnGemmiAtoms = (atoms) => {
     }
     
     return [-xtot/atomCount, -ytot/atomCount, -ztot/atomCount]
-    
+}
+
+export const getBufferAtoms = (gemmiStructure, exclude_ligands_and_waters=false) => {
+        let structure = gemmiStructure.clone()        
+        if (exclude_ligands_and_waters) {
+            window.CCP4Module.remove_ligands_and_waters_structure(structure)
+        }
+   
+        let atomList = []
+        for (let modelIndex = 0; modelIndex < structure.models.size(); modelIndex++) {
+            const model = structure.models.get(modelIndex)
+            for (let chainIndex = 0; chainIndex < model.chains.size(); chainIndex++) {
+                const chain = model.chains.get(chainIndex)
+                for (let residueIndex = 0; residueIndex < chain.residues.size(); residueIndex++) {
+                    const residue = chain.residues.get(residueIndex)
+                    for (let atomIndex = 0; atomIndex < residue.atoms.size(); atomIndex++) {
+                        const atom = residue.atoms.get(atomIndex)
+                        const atomElement = window.CCP4Module.getElementNameAsString(atom.element)
+                        console.log(atom.has_altloc())
+                        atomList.push({
+                            x: atom.pos.x,
+                            y: atom.pos.y,
+                            z: atom.pos.z,
+                            tempFactor: atom.b_iso,
+                            charge: atom.charge,
+                            symbol: atomElement,
+                            label: `/${atom.has_altloc() ? atom.altloc : ''}/${chain.name}/${residue.seqid.str()}(${residue.name})/${atomElement}`
+                        })
+                    }
+                }
+            }
+        }
+        return atomList
 }
 
 export const cidToSpec = (cid) => {
