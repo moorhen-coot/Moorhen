@@ -104,10 +104,8 @@ ${coot_src}/MoleculesToTriangles/CXXClasses/VertexColorNormalPrimitive.cpp
 ${coot_src}/MoleculesToTriangles/CXXClasses/lfit.c
 ${coot_src}/api/molecules_container_modelling.cc
 ${coot_src}/api/add-terminal-residue.cc
-${coot_src}/api/simple-mesh.cc
 ${coot_src}/api/interfaces.cc
 ${coot_src}/api/colour-functions.cc
-${coot_src}/api/cylinder.cc
 ${coot_src}/api/coot-colour.cc
 ${coot_src}/api/coot_molecule.cc
 ${coot_src}/api/coot_molecule_bonds.cc
@@ -119,8 +117,6 @@ ${coot_src}/api/coot_molecule_merge_molecules.cc
 ${coot_src}/api/coot_molecule_replace_fragment.cc
 ${coot_src}/api/add-terminal-residue.cc
 ${coot_src}/api/molecules_container.cc
-${coot_src}/api/oct.cc
-${coot_src}/api/prideout-octasphere.cc
 ${coot_src}/api/rama-plot-phi-psi.cc
 ${coot_src}/analysis/daca.cc
 ${coot_src}/analysis/kolmogorov.cc
@@ -134,6 +130,7 @@ ${coot_src}/density-contour/density-contour-triangles.cc
 ${coot_src}/density-contour/Vectors.cpp
 ${coot_src}/density-contour/CIsoSurface.cpp
 ${coot_src}/density-contour/occlusion.cc
+${coot_src}/density-contour/gaussian-surface.cc
 ${coot_src}/ccp4mg-utils/ppmutil.cc
 ${coot_src}/ccp4mg-utils/quat.cc
 ${coot_src}/ccp4mg-utils/mgtree.cc
@@ -258,6 +255,12 @@ ${coot_src}/coot-utils/hole.cc
 ${coot_src}/coot-utils/slurp-map.cc
 ${coot_src}/coot-utils/read-sm-cif.cc
 ${coot_src}/coot-utils/exp-fit.cc
+${coot_src}/coot-utils/cylinder.cc
+${coot_src}/coot-utils/cylinder-with-rotation-translation.cc
+${coot_src}/coot-utils/prideout-octasphere.cc
+${coot_src}/coot-utils/oct.cc
+${coot_src}/coot-utils/shapes.cc
+${coot_src}/coot-utils/simple-mesh.cc
 ${coot_src}/coords/phenix-geo-bonds.cc
 ${coot_src}/coords/Bond_lines_ext.cc
 ${coot_src}/coords/mmdb-crystal.cc

@@ -30,8 +30,8 @@
 #include "api/interfaces.hh"
 #include "api/molecules_container.hh"
 #include "api/validation-information.hh"
-#include "api/g_triangle.hh"
-#include "api/vertex.hh"
+#include "coot-utils/g_triangle.hh"
+#include "coot-utils/vertex.hh"
 
 #include "mmdb_manager.h"
 #include "clipper/core/ramachandran.h"
