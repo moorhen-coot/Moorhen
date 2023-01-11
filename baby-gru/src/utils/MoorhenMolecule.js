@@ -6,7 +6,7 @@ import { GetSplinesColoured } from '../WebGL/mgSecStr';
 import { atomsToSpheresInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { contactsToCylindersInfo, contactsToLinesInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { singletonsToLinesInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
-import { readTextFile, readGemmiStructure, cidToSpec, residueCodesThreeToOne, centreOnGemmiAtoms, getAtomInfo } from './MoorhenUtils'
+import { readTextFile, readGemmiStructure, cidToSpec, residueCodesThreeToOne, centreOnGemmiAtoms, getBufferAtoms } from './MoorhenUtils'
 import { quatToMat4 } from '../WebGL/quatToMat4.js';
 import * as vec3 from 'gl-matrix/vec3';
 
@@ -478,9 +478,9 @@ MoorhenMolecule.prototype.drawCootRepresentation = async function (glRef, style)
             }
             this.clearBuffersOfStyle(style, glRef)
             this.addBuffersOfStyle(glRef, objects, style)
-            let atomInfo = getAtomInfo(this.gemmiStructure)
-            if (atomInfo.length > 0) {
-                this.displayObjects[style][0].atoms = atomInfo
+            let bufferAtoms = getBufferAtoms(this.gemmiStructure)
+            if (bufferAtoms.length > 0) {
+                this.displayObjects[style][0].atoms = bufferAtoms
             }
         } else {
             this.clearBuffersOfStyle(style, glRef)
