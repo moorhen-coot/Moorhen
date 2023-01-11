@@ -296,7 +296,7 @@ MoorhenMolecule.prototype.drawWithStyleFromAtoms = async function (style, glRef,
             this.drawRotamerDodecahedra(glRef)
             break;
         case 'CBs':
-            await this.drawCootBonds(webMGAtoms, glRef)
+            await this.drawCootBonds(glRef)
             break;
         case 'gaussian':
             await this.drawCootGaussianSurface(glRef)
@@ -363,7 +363,7 @@ MoorhenMolecule.prototype.drawRotamerDodecahedra = function (glRef) {
     })
 }
 
-MoorhenMolecule.prototype.drawCootBonds = async function (webMGAtoms, glRef) {
+MoorhenMolecule.prototype.drawCootBonds = async function (glRef) {
     const $this = this
     const style = "CBs"
     return this.commandCentre.current.cootCommand({
@@ -380,20 +380,9 @@ MoorhenMolecule.prototype.drawCootBonds = async function (webMGAtoms, glRef) {
             //Empty existing buffers of this type
             this.clearBuffersOfStyle(style, glRef)
             this.addBuffersOfStyle(glRef, objects, style)
-            if (webMGAtoms.atoms.length > 0) {
-                let bufferAtoms = []
-                webMGAtoms.atoms[0].getAllAtoms().forEach(at1 => {
-                    let atom = {};
-                    atom["x"] = at1.x();
-                    atom["y"] = at1.y();
-                    atom["z"] = at1.z();
-                    atom["tempFactor"] = at1["_atom_site.B_iso_or_equiv"];
-                    atom["charge"] = at1["_atom_site.pdbx_formal_charge"];
-                    atom["symbol"] = at1["_atom_site.type_symbol"];
-                    atom["label"] = at1.getAtomID();
-                    bufferAtoms.push(atom);
-                    this.displayObjects[style][0].atoms = bufferAtoms
-                })
+            let bufferAtoms = getBufferAtoms(this.gemmiStructure)
+            if (bufferAtoms.length > 0) {
+                this.displayObjects[style][0].atoms = bufferAtoms
             }
         }
         else {
