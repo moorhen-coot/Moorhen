@@ -20,6 +20,72 @@ let print = (stuff) => {
     postMessage({ consoleMessage: JSON.stringify(stuff) })
 }
 
+const instancedMeshToMeshData = (instanceMesh) => {
+
+    let totIdxs = []
+    let totPos = []
+    let totNorm = []
+    let totInstance_sizes = []
+    let totInstance_colours = []
+    let totInstance_origins = []
+    let totInstance_orientations = []
+    let totInstanceUseColours = []
+    let totInstancePrimTypes = []
+
+    const geom = instanceMesh.geom
+    for(let i=0;i<geom.size();i++){
+        let thisIdxs = []
+        let thisPos = []
+        let thisNorm = []
+        let thisInstance_sizes = []
+        let thisInstance_colours = []
+        let thisInstance_origins = []
+        let thisInstance_orientations = []
+        const inst = geom.get(i);
+        const vertices = inst.vertices;
+        const triangles = inst.triangles;
+        for (let i = 0; i < triangles.size(); i++) {
+            const idxs = triangles.get(i).point_id;
+            thisIdxs.push(...idxs);
+        }
+        for (let i = 0; i < vertices.size(); i++) {
+            const vert = vertices.get(i);
+            thisPos.push(...vert.pos);
+            thisNorm.push(...vert.normal);
+        }
+        //Cannot (yet?) cope with mix of type A and B. (I think!)
+        if(inst.instancing_data_A.size()>0){
+            for(let j=0;j<inst.instancing_data_A.size();j++){
+                const inst_data = inst.instancing_data_A.get(j)
+                thisInstance_origins.push(...inst_data.position)
+                thisInstance_colours.push(...inst_data.colour)
+                thisInstance_sizes.push(inst_data.size)
+                thisInstance_orientations.push(...[
+                1.0, 0.0, 0.0, 0.0,
+                0.0, 1.0, 0.0, 0.0,
+                0.0, 0.0, 1.0, 0.0,
+                0.0, 0.0, 0.0, 1.0,
+                ])
+            }
+        } else {
+        }
+
+        totNorm.push(thisNorm)
+        totPos.push(thisPos)
+        totIdxs.push(thisIdxs)
+        totInstance_sizes.push(thisInstance_sizes)
+        totInstance_origins.push(thisInstance_origins)
+        totInstance_orientations.push(thisInstance_orientations)
+        totInstance_colours.push(thisInstance_colours)
+        totInstanceUseColours.push(true)
+        totInstancePrimTypes.push("TRIANGLES")
+
+    }
+
+    return { prim_types: [totInstancePrimTypes], idx_tri: [totIdxs], vert_tri: [totPos], norm_tri: [totNorm], col_tri: [totInstance_colours], instance_use_colors:[totInstanceUseColours], instance_sizes:[totInstance_sizes], instance_origins:[totInstance_origins], instance_orientations:[totInstance_orientations]};
+
+}
+
 const simpleMeshToMeshData = (simpleMesh) => {
     const vertices = simpleMesh.vertices;
     const triangles = simpleMesh.triangles;
@@ -415,6 +481,9 @@ onmessage = function (e) {
             let returnResult;
 
             switch (returnType) {
+                case 'instanced_mesh':
+                    returnResult = instancedMeshToMeshData(cootResult)
+                    break;
                 case 'mesh':
                     returnResult = simpleMeshToMeshData(cootResult)
                     break;
