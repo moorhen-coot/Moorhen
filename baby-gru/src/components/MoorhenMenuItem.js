@@ -269,7 +269,6 @@ export const MoorhenRotateTranslateMoleculeMenuItem = (props) => {
         document.body.click()
     }
 
-
     const startTransform = async () => {
         const newMolecule = await props.molecule.copyMolecule(props.glRef)
         props.changeMolecules({ action: "Add", item: newMolecule })

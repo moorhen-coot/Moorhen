@@ -96,7 +96,7 @@ export const MoorhenMoleculeCardButtonBar = (props) => {
             expanded: null
         },
     }
- 
+
     const maximumAllowedWidth = props.sideBarWidth * 0.35
     let currentlyUsedWidth = 0
     let expandedButtons = []
