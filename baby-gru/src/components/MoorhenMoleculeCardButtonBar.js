@@ -1,19 +1,14 @@
-import React, { useEffect, useState, useMemo, Fragment, forwardRef, useRef, useCallback } from "react";
+import React, { useState, useMemo, Fragment, useRef } from "react";
 import { Button, DropdownButton } from "react-bootstrap";
 import { convertViewtoPx } from '../utils/MoorhenUtils';
 import { MenuItem } from "@mui/material";
 import { UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined, ExpandLessOutlined, VisibilityOffOutlined, VisibilityOutlined, DownloadOutlined, Settings } from '@mui/icons-material';
-import { MoorhenDeleteDisplayObjectMenuItem, MoorhenRenameDisplayObjectMenuItem, MoorhenMoleculeBondSettingsMenuItem, MoorhenMergeMoleculesMenuItem } from "./MoorhenMenuItem";
+import { MoorhenDeleteDisplayObjectMenuItem, MoorhenRenameDisplayObjectMenuItem, MoorhenMoleculeBondSettingsMenuItem, MoorhenMergeMoleculesMenuItem, MoorhenRotateTranslateMoleculeMenuItem } from "./MoorhenMenuItem";
 
 export const MoorhenMoleculeCardButtonBar = (props) => {
     const dropdownCardButtonRef = useRef()
     const [popoverIsShown, setPopoverIsShown] = useState(false)
-    const [dropdownMenuItemShown, setDropdownMenuItemShown] = useState(0)
     const [currentName, setCurrentName] = useState(props.molecule.name);
-
-    useEffect(() => {
-        setDropdownMenuItemShown(0)
-    }, [props.windowHeight, props.sideBarWidth]);
 
     useMemo(() => {
         if (currentName == "") {
@@ -95,72 +90,32 @@ export const MoorhenMoleculeCardButtonBar = (props) => {
             compressed: () => { return (<MoorhenMoleculeBondSettingsMenuItem key={10} setPopoverIsShown={setPopoverIsShown} molecule={props.molecule} {...props.bondSettingsProps}/>) },
             expanded: null
         },
+        11: {
+            label: 'Rotate/Translate molecule',
+            compressed: () => { return (<MoorhenRotateTranslateMoleculeMenuItem key={11} setPopoverIsShown={setPopoverIsShown} molecule={props.molecule} changeMolecules={props.changeMolecules} glRef={props.glRef}/>) },
+            expanded: null
+        },
     }
 
     const maximumAllowedWidth = props.sideBarWidth * 0.35
-    const maximumAllowedHeight = convertViewtoPx(40, props.windowHeight) * 0.5
     let currentlyUsedWidth = 0
-    let currentlyUsedHeight = 0
     let expandedButtons = []
-    let compressedButtons = [[]]
-    let currentCompressedButtonItemIndex = 0
-    
-    const handleTransition = useCallback(() => {
-        setDropdownMenuItemShown((prev) => {
-            let newValue = prev + 1
-            if (newValue !== compressedButtons.length) {
-                return newValue
-            } else {
-                return 0
-            }
-        })
-    }, [compressedButtons.length])
-
-    const getTransitionButton = (index) => {
-        return  <MenuItem style={{width: '20rem', justifyContent:'between', display:'flex'}} key={`${index}_next_item`} variant="success" onClick={handleTransition}>
-                    <ExpandMoreOutlined/> More...
-                </MenuItem>
-    }
-
-    const SlideItem = forwardRef((props, ref) => {
-        return (
-          <div ref={ref} style={{display: props.index == dropdownMenuItemShown ? "" : "none"}}>
-            {compressedButtons[props.index]}
-          </div>
-        );
-      })
-      
+    let compressedButtons = []
 
     Object.keys(actionButtons).forEach(key => {
         if (actionButtons[key].expanded === null) {
-            currentlyUsedHeight += 35
-            if (currentlyUsedHeight < maximumAllowedHeight) {
-                compressedButtons[currentCompressedButtonItemIndex].push(actionButtons[key].compressed())
-            } else {
-                compressedButtons[currentCompressedButtonItemIndex].push(getTransitionButton(currentCompressedButtonItemIndex))
-                currentCompressedButtonItemIndex ++
-                compressedButtons.push([actionButtons[key].compressed()])
-                currentlyUsedHeight = 35
-            }
+            compressedButtons.push(actionButtons[key].compressed())
         } else {
             currentlyUsedWidth += 60
             if (currentlyUsedWidth < maximumAllowedWidth) {
                 expandedButtons.push(actionButtons[key].expanded())
             } else {
-                currentlyUsedHeight += 35
-                if (currentlyUsedHeight < maximumAllowedHeight) {
-                    compressedButtons[currentCompressedButtonItemIndex].push(actionButtons[key].compressed())
-                } else {
-                    compressedButtons[currentCompressedButtonItemIndex].push(getTransitionButton(currentCompressedButtonItemIndex))
-                    currentCompressedButtonItemIndex ++
-                    compressedButtons.push([actionButtons[key].compressed()])
-                    currentlyUsedHeight = 35
-                }
+                compressedButtons.push(actionButtons[key].compressed())
             }
         }
     })
 
-    compressedButtons[currentCompressedButtonItemIndex].push(
+    compressedButtons.push(
         <MoorhenDeleteDisplayObjectMenuItem 
         key="deleteDisplayObjectMenuItem"
         setPopoverIsShown={setPopoverIsShown} 
@@ -169,10 +124,6 @@ export const MoorhenMoleculeCardButtonBar = (props) => {
         itemList={props.molecules} 
         item={props.molecule} />
     )
-
-    if (compressedButtons.length > 1) {
-        compressedButtons[currentCompressedButtonItemIndex].push(getTransitionButton(currentCompressedButtonItemIndex))
-    }
 
     return <Fragment>
         {expandedButtons}
@@ -186,7 +137,9 @@ export const MoorhenMoleculeCardButtonBar = (props) => {
             show={props.currentDropdownMolNo === props.molecule.molNo}
             onToggle={() => { props.molecule.molNo !== props.currentDropdownMolNo ? props.setCurrentDropdownMolNo(props.molecule.molNo) : props.setCurrentDropdownMolNo(-1) }}
             >
-                {compressedButtons[dropdownMenuItemShown]}
+                <div style={{height: convertViewtoPx(40, props.windowHeight) * 0.5, overflowY: 'scroll'}}>
+                    {compressedButtons}
+                </div>
             </DropdownButton>
         <Button key="expandButton"
             size="sm" variant="outlined"

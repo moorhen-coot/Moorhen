@@ -98,6 +98,24 @@ MoorhenMolecule.prototype.delete = async function (glRef) {
     return response
 }
 
+MoorhenMolecule.prototype.copyMolecule = async function (glRef) {
+
+    let moleculeAtoms = await this.getAtoms()
+    let newMolecule = new MoorhenMolecule(this.commandCentre, this.urlPrefix)
+    newMolecule.name = `${this.name}-placeholder`
+
+    let response = await this.commandCentre.current.cootCommand({
+        returnType: "status",
+        command: 'shim_read_pdb',
+        commandArgs: [moleculeAtoms.data.result.pdbData, newMolecule.name]
+    }, true)    
+    
+    newMolecule.molNo = response.data.result.result
+
+    await newMolecule.fetchIfDirtyAndDraw('CBs', glRef)
+    return newMolecule
+}
+
 MoorhenMolecule.prototype.copyFragment = async function (chainId, res_no_start, res_no_end, glRef, doRecentre) {
     if (typeof doRecentre === 'undefined') {
         doRecentre = true

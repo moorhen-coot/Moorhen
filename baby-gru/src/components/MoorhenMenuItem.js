@@ -1,6 +1,7 @@
 import { MenuItem } from "@mui/material";
+import { CheckOutlined, CloseOutlined } from "@mui/icons-material";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { OverlayTrigger, Popover, PopoverBody, PopoverHeader, Form, InputGroup, Button, FormSelect, Row, Col, SplitButton, Dropdown } from "react-bootstrap";
+import { OverlayTrigger, Popover, PopoverBody, PopoverHeader, Form, InputGroup, Button, FormSelect, Row, Col, SplitButton, Dropdown, Toast, ToastContainer } from "react-bootstrap";
 import { SketchPicker } from "react-color";
 import { MoorhenMtzWrapper, readTextFile } from "../utils/MoorhenUtils";
 import { MoorhenMap } from "../utils/MoorhenMap";
@@ -24,12 +25,8 @@ export const MoorhenMenuItem = (props) => {
             placement={props.popoverPlacement}
             trigger="click"
 
-            onEntered={() => {
-                props.setPopoverIsShown(true)
-            }}
-
-            onExit={() => {
-                props.setPopoverIsShown(false)
+            onEntering={() =>{
+                props.onEntering()
             }}
 
             onEnter={() => {
@@ -41,12 +38,29 @@ export const MoorhenMenuItem = (props) => {
                 })
             }}
 
+            onEntered={() => {
+                props.setPopoverIsShown(true)
+            }}
+
+            onExit={() => {
+                props.setPopoverIsShown(false)
+            }}
+
+            onExiting={() => {
+                props.onExiting()
+            }}
+
             overlay={
                 <Popover style={{ maxWidth: "40rem" }}>
                     <PopoverHeader as="h3">{props.menuItemTitle}</PopoverHeader>
                     <PopoverBody>
                         {props.popoverContent}
-                        <Button variant={props.buttonVariant} onClick={() => { resolveOrRejectRef.current.resolve() }}>{props.buttonText}</Button>
+                        {props.showOkButton && 
+                            <Button variant={props.buttonVariant} onClick={() => { resolveOrRejectRef.current.resolve() }}>
+                                {props.buttonText}
+                            </Button>
+                        }
+                        
                     </PopoverBody>
                 </Popover>}
         >
@@ -59,10 +73,14 @@ export const MoorhenMenuItem = (props) => {
 
 MoorhenMenuItem.defaultProps = {
     id: '',
+    showOkButton: true,
     buttonText: "OK",
     buttonVariant: "primary",
     textClassName: "",
-    popoverPlacement: "right"
+    popoverPlacement: "right",
+    onEntering: () => { },
+    onExiting: () => { },
+    onCompleted: () => { }
 }
 
 export const MoorhenLoadTutorialDataMenuItem = (props) => {
@@ -227,6 +245,57 @@ export const MoorhenRenameDisplayObjectMenuItem = (props) => {
     />
 }
 
+export const MoorhenRotateTranslateMoleculeMenuItem = (props) => {
+    const ghostMolecule = useRef(null)
+
+    const onExiting = () => {
+        props.glRef.current.setActiveMolecule(null)
+        props.changeMolecules({ action: 'Remove', item: ghostMolecule.current })
+        ghostMolecule.current.delete(props.glRef)
+    }
+
+    const acceptTransform = async () => {
+        props.setPopoverIsShown(false)
+        props.glRef.current.setActiveMolecule(null)
+        const transformedAtoms = ghostMolecule.current.transformedCachedAtomsAsMovedAtoms(props.glRef)
+        await props.molecule.updateWithMovedAtoms(transformedAtoms, props.glRef)
+        props.changeMolecules({ action: 'Remove', item: ghostMolecule.current })
+        ghostMolecule.current.delete(props.glRef)
+        document.body.click()
+    }
+
+    const rejectTransform = () => {
+        onExiting()
+        document.body.click()
+    }
+
+    const startTransform = async () => {
+        const newMolecule = await props.molecule.copyMolecule(props.glRef)
+        props.changeMolecules({ action: "Add", item: newMolecule })
+        props.glRef.current.setActiveMolecule(newMolecule)
+        ghostMolecule.current = newMolecule
+    }
+
+    const panelContent =
+        <>
+            <Form.Group className="mb-3" style={{ width: '10rem', margin: '0' }} controlId="MoorhenRotateTranslateMolecule">
+                <Form.Label>Accept rotate/translate ?</Form.Label>
+                <Button onClick={acceptTransform}><CheckOutlined /></Button>
+                <Button className="mx-2" onClick={rejectTransform}><CloseOutlined /></Button>
+            </Form.Group>        
+        </>
+
+    return <MoorhenMenuItem
+    showOkButton={false}
+    popoverPlacement='left'
+    popoverContent={panelContent}
+    menuItemText={"Rotate/Translate molecule"}
+    onEntering={startTransform}
+    onExiting={onExiting}
+    setPopoverIsShown={props.setPopoverIsShown}
+/>
+}
+
 export const MoorhenMoleculeBondSettingsMenuItem = (props) => {
     const smoothnesSelectRef = useRef(null)
 
@@ -252,7 +321,6 @@ export const MoorhenMoleculeBondSettingsMenuItem = (props) => {
         popoverPlacement='left'
         popoverContent={panelContent}
         menuItemText={"Bond settings"}
-        onCompleted={() => { }}
         setPopoverIsShown={props.setPopoverIsShown}
     />
 }
@@ -1158,7 +1226,6 @@ export const MoorhenCentreOnLigandMenuItem = (props) => {
                 </Tree>
             }
             menuItemText="Centre on ligand..."
-            onCompleted={() => { }}
             setPopoverIsShown={props.setPopoverIsShown}
         />
     </>

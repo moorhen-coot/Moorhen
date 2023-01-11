@@ -1,7 +1,5 @@
 import { useRef, useState, useEffect, createRef, useReducer, useCallback, useContext } from 'react';
-import { Navbar, Container, Nav, Accordion, Button, Col, Row, Spinner, Form } from 'react-bootstrap';
-import Toast from 'react-bootstrap/Toast';
-import ToastContainer from 'react-bootstrap/ToastContainer';
+import { Navbar, Container, Nav, Accordion, Button, Col, Row, Spinner, Form, Toast, ToastContainer } from 'react-bootstrap';
 import { MoorhenDisplayObjects } from './MoorhenDisplayObjects';
 import { MoorhenWebMG } from './MoorhenWebMG';
 import { MoorhenCommandCentre, convertRemToPx, convertViewtoPx } from '../utils/MoorhenUtils';
