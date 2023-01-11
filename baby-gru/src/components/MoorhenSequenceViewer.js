@@ -160,7 +160,10 @@ export const MoorhenSequenceViewer = (props) => {
      */
     const handleChange = useCallback((evt) => {
         if (evt.detail.eventtype === "click") {
-            if (evt.detail.feature !== null && !(evt.detail.highlight.includes(','))) {
+            let residue = sequence.sequence.find(residue => residue.resNum == evt.detail.feature.start)
+            if (!residue) {
+                return
+            } else if (evt.detail.feature !== null && !(evt.detail.highlight.includes(','))) {
                 setClickedResidue({modelIndex:0, molName: molecule.name, chain: sequence.chain, seqNum: evt.detail.feature.start})
                 setSelectedResidues(null)
             } else if (evt.detail.highlight.includes(',')) {
