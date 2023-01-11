@@ -560,6 +560,11 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("normal",&coot::api::vnc_vertex::normal)
     .property("color",&coot::api::vnc_vertex::color)
     ;
+    class_<coot::api::vn_vertex>("vn_vertex")
+    .constructor<const glm::vec3 &, const glm::vec3 &>()
+    .property("pos",&coot::api::vn_vertex::pos)
+    .property("normal",&coot::api::vn_vertex::normal)
+    ;
     value_object<g_triangle>("g_triangle")
     .field("point_id", &g_triangle::point_id)
     ;
@@ -584,11 +589,11 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<coot::simple_rotamer>("Vectorsimple_rotamer");
     register_vector<coot::residue_spec_t>("Vectorresidue_spec_t");
     register_vector<coot::api::vnc_vertex>("Vectorvnc_veertex");
+    register_vector<coot::api::vn_vertex>("Vectorvn_vertex");
     register_vector<coot::molecule_t::interesting_place_t>("Vectorinteresting_place_t");
     register_vector<g_triangle>("Vectorg_triangle");
     register_vector<coot::instancing_data_type_A_t>("Vectorinstancing_data_type_A_t");
     register_vector<coot::instancing_data_type_B_t>("Vectorinstancing_data_type_B_t");
-    register_vector<coot::api::vn_vertex>("Vectorvn_vertex");
     register_vector<ResSpecStringPair>("VectorResSpecStringPair");
     register_vector<merge_molecule_results_info_t>("Vectormerge_molecule_results_info_t");
     register_vector<coot::phi_psi_prob_t>("Vectophi_psi_prob_t");
