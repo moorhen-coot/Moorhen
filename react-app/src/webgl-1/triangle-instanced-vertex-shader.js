@@ -22,7 +22,7 @@ var triangle_instanced_vertex_shader_source = `
 
     void main(void) {
 
-      vec4 theVert = vec4(instancePosition+instanceSize*aVertexPosition,1.0);
+      vec4 theVert = vec4(instancePosition,1.0)+instanceOrientation*vec4(instanceSize*aVertexPosition,1.0);
 
       gl_Position = uPMatrix * uMVMatrix * theVert;
       vColor = aVertexColour;

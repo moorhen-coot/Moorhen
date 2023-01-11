@@ -7237,6 +7237,28 @@ class MGWebGL extends Component {
                                         this.instanced_ext.vertexAttribDivisorANGLE(theShader.vertexInstanceSizeAttribute, 1);
                                     }
                                 }
+                                if(this.displayBuffers[idx].triangleInstanceOrientationBuffer[j]){
+                                    this.gl.enableVertexAttribArray(theShader.vertexInstanceOrientationAttribute);
+                                    this.gl.enableVertexAttribArray(theShader.vertexInstanceOrientationAttribute+1);
+                                    this.gl.enableVertexAttribArray(theShader.vertexInstanceOrientationAttribute+2);
+                                    this.gl.enableVertexAttribArray(theShader.vertexInstanceOrientationAttribute+3);
+                                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleInstanceOrientationBuffer[j]);
+                                    this.gl.vertexAttribPointer(theShader.vertexInstanceOrientationAttribute, 4, this.gl.FLOAT, false, 64, 0);
+                                    this.gl.vertexAttribPointer(theShader.vertexInstanceOrientationAttribute+1, 4, this.gl.FLOAT, false, 64, 16);
+                                    this.gl.vertexAttribPointer(theShader.vertexInstanceOrientationAttribute+2, 4, this.gl.FLOAT, false, 64, 32);
+                                    this.gl.vertexAttribPointer(theShader.vertexInstanceOrientationAttribute+3, 4, this.gl.FLOAT, false, 64, 48);
+                                    if (this.WEBGL2) {
+                                        this.gl.vertexAttribDivisor(theShader.vertexInstanceOrientationAttribute, 1);
+                                        this.gl.vertexAttribDivisor(theShader.vertexInstanceOrientationAttribute+1, 1);
+                                        this.gl.vertexAttribDivisor(theShader.vertexInstanceOrientationAttribute+2, 1);
+                                        this.gl.vertexAttribDivisor(theShader.vertexInstanceOrientationAttribute+3, 1);
+                                    } else {
+                                        this.instanced_ext.vertexAttribDivisorANGLE(theShader.vertexInstanceOrientationAttribute, 1);
+                                        this.instanced_ext.vertexAttribDivisorANGLE(theShader.vertexInstanceOrientationAttribute+1, 1);
+                                        this.instanced_ext.vertexAttribDivisorANGLE(theShader.vertexInstanceOrientationAttribute+2, 1);
+                                        this.instanced_ext.vertexAttribDivisorANGLE(theShader.vertexInstanceOrientationAttribute+3, 1);
+                                    }
+                                }
                                 if(this.displayBuffers[idx].supplementary["instance_use_colors"]){
                                     if(this.displayBuffers[idx].supplementary["instance_use_colors"][j]){
                                         if (this.WEBGL2) {
@@ -7253,6 +7275,10 @@ class MGWebGL extends Component {
                                 }
                                 this.gl.disableVertexAttribArray(theShader.vertexInstanceOriginAttribute);
                                 this.gl.disableVertexAttribArray(theShader.vertexInstanceSizeAttribute);
+                                this.gl.disableVertexAttribArray(theShader.vertexInstanceOrientationAttribute);
+                                this.gl.disableVertexAttribArray(theShader.vertexInstanceOrientationAttribute+1);
+                                this.gl.disableVertexAttribArray(theShader.vertexInstanceOrientationAttribute+2);
+                                this.gl.disableVertexAttribArray(theShader.vertexInstanceOrientationAttribute+3);
                                 if (this.WEBGL2) {
                                     this.gl.vertexAttribDivisor(theShader.vertexColourAttribute, 0);
                                 } else {
