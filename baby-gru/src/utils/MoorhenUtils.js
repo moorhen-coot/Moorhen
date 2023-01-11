@@ -327,7 +327,7 @@ export const centreOnGemmiAtoms = (atoms) => {
     return [-xtot/atomCount, -ytot/atomCount, -ztot/atomCount]
 }
 
-export const getAtomInfo = (gemmiStructure, exclude_ligands_and_waters=false) => {
+export const getBufferAtoms = (gemmiStructure, exclude_ligands_and_waters=false) => {
         let structure = gemmiStructure.clone()        
         if (exclude_ligands_and_waters) {
             window.CCP4Module.remove_ligands_and_waters_structure(structure)
