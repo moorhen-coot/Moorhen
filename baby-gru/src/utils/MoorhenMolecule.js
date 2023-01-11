@@ -6,7 +6,7 @@ import { GetSplinesColoured } from '../WebGL/mgSecStr';
 import { atomsToSpheresInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { contactsToCylindersInfo, contactsToLinesInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { singletonsToLinesInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
-import { readTextFile, readGemmiStructure, cidToSpec, residueCodesThreeToOne, centreOnGemmiAtoms, getBufferAtoms } from './MoorhenUtils'
+import { readTextFile, readGemmiStructure, cidToSpec, residueCodesThreeToOne, centreOnGemmiAtoms, getBufferAtoms, nucleotideCodesThreeToOne } from './MoorhenUtils'
 import { quatToMat4 } from '../WebGL/quatToMat4.js';
 import * as vec3 from 'gl-matrix/vec3';
 
@@ -65,19 +65,21 @@ MoorhenMolecule.prototype.parseSequences = function () {
         for (let chainIndex = 0; chainIndex < model.chains.size(); chainIndex++) {
             let currentSequence = []
             const chain = model.chains.get(chainIndex)
+            const polymerType = window.CCP4Module.check_polymer_type(chain.get_polymer_const())
+            let threeToOne = [3, 4, 5].includes(polymerType.value) ? nucleotideCodesThreeToOne : residueCodesThreeToOne
             const residues = chain.residues
             for (let residueIndex = 0; residueIndex < residues.size(); residueIndex++) {
                 const residue = residues.get(residueIndex)
                 currentSequence.push({
                     resNum: Number(residue.seqid.str()),
-                    resCode: residueCodesThreeToOne[residue.name]
+                    resCode: Object.keys(threeToOne).includes(residue.name) ? threeToOne[residue.name] : 'X'
                 })
             }
             if (currentSequence.length > 0) {
                 sequences.push({
                     name: `${this.name}_${chain.name}`,
                     chain: chain.name,
-                    type: window.CCP4Module.check_polymer_type(chain.get_polymer_const()),
+                    type: polymerType,
                     sequence: currentSequence,
                 })
             }
