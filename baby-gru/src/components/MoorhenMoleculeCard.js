@@ -250,26 +250,6 @@ export const MoorhenMoleculeCard = (props) => {
                                 </div>
                             </Col>
                         </Row>
-                        <hr></hr>
-                        <Row style={{ height: '100%' }}>
-                            <Col>
-                                <Form.Check checked={props.molecule === props.activeMolecule}
-                                    style={{ margin: '0' }}
-                                    inline
-                                    label={`Rotate/Translate`}
-                                    type="checkbox"
-                                    variant="outline"
-                                    disabled={!isVisible}
-                                    onChange={(e) => {
-                                        if (e.target.checked) {
-                                            props.setActiveMolecule(props.molecule)
-                                        } else {
-                                            props.setActiveMolecule(null)
-                                        }
-                                    }}
-                                />
-                            </Col>
-                        </Row>
                     </Accordion.Body>
                 </Accordion.Item>
 
