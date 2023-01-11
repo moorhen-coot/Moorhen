@@ -423,6 +423,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("test_origin_cube",&molecules_container_t::test_origin_cube)
     .function("get_ramachandran_validation_markup_mesh",&molecules_container_t::get_ramachandran_validation_markup_mesh)
     .function("get_rotamer_dodecs",&molecules_container_t::get_rotamer_dodecs)
+    .function("get_rotamer_dodecs_instanced",&molecules_container_t::get_rotamer_dodecs_instanced)
     .function("auto_fit_rotamer",&molecules_container_t::auto_fit_rotamer)
     .function("cis_trans_convert",&molecules_container_t::cis_trans_convert)
     .function("set_draw_missing_residue_loops",&molecules_container_t::set_draw_missing_residue_loops)
@@ -489,6 +490,26 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("restype", &ResiduePropertyInfo::restype)
     .property("property", &ResiduePropertyInfo::property)
     ;
+    class_<coot::instancing_data_type_A_t>("instancing_data_type_A_t")
+    .property("position",&coot::instancing_data_type_A_t::position)
+    .property("colour",&coot::instancing_data_type_A_t::colour)
+    .property("size",&coot::instancing_data_type_A_t::size)
+    ;
+    class_<coot::instancing_data_type_B_t>("instancing_data_type_B_t")
+    .property("position",&coot::instancing_data_type_B_t::position)
+    .property("colour",&coot::instancing_data_type_B_t::colour)
+    .property("size",&coot::instancing_data_type_B_t::size)
+    .property("orientation",&coot::instancing_data_type_B_t::orientation)
+    ;
+    class_<coot::instanced_geometry_t>("instanced_geometry_t")
+    .property("vertices",&coot::instanced_geometry_t::vertices)
+    .property("triangles",&coot::instanced_geometry_t::triangles)
+    .property("instancing_data_A",&coot::instanced_geometry_t::instancing_data_A)
+    .property("instancing_data_B",&coot::instanced_geometry_t::instancing_data_B)
+    ;
+    class_<coot::instanced_mesh_t>("instanced_mesh_t")
+    .property("geom",&coot::instanced_mesh_t::geom)
+    ;
     class_<coot::atom_spec_t>("atom_spec_t")
     .constructor<const std::string &, int, const std::string &, const std::string &, const std::string &>()
     .property("chain_id",&coot::atom_spec_t::chain_id)
@@ -547,6 +568,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("triangles",&coot::simple_mesh_t::triangles)
     ;
 
+    register_vector<coot::instanced_geometry_t>("Vectorinstanced_geometry_t");
     register_vector<coot::molecule_t::moved_residue_t>("Vectormoved_residue_t");
     register_vector<coot::molecule_t::moved_atom_t>("Vectormoved_atom_t");
     register_vector<std::string>("VectorString");
@@ -564,6 +586,9 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<coot::api::vnc_vertex>("Vectorvnc_veertex");
     register_vector<coot::molecule_t::interesting_place_t>("Vectorinteresting_place_t");
     register_vector<g_triangle>("Vectorg_triangle");
+    register_vector<coot::instancing_data_type_A_t>("Vectorinstancing_data_type_A_t");
+    register_vector<coot::instancing_data_type_B_t>("Vectorinstancing_data_type_B_t");
+    register_vector<coot::api::vn_vertex>("Vectorvn_vertex");
     register_vector<ResSpecStringPair>("VectorResSpecStringPair");
     register_vector<merge_molecule_results_info_t>("Vectormerge_molecule_results_info_t");
     register_vector<coot::phi_psi_prob_t>("Vectophi_psi_prob_t");

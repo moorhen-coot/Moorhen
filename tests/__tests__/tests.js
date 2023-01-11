@@ -257,6 +257,20 @@ describe('Testing molecules_container_js', () => {
         expect(simpleMesh.triangles.size()).toBe(23400)
     })
 
+    test('Test Dodo instanced mesh', () => {
+        const molecules_container = new cootModule.molecules_container_js()
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        const instanceMesh = molecules_container.get_rotamer_dodecs_instanced(coordMolNo);
+        const geom = instanceMesh.geom
+        for(let i=0;i<geom.size();i++){
+            const inst = geom.get(i);
+            expect(inst.vertices.size()).toBe(60)
+            expect(inst.triangles.size()).toBe(36)
+            expect(inst.instancing_data_A.size()).toBe(650)
+            expect(inst.instancing_data_B.size()).toBe(0)
+        }
+    })
+
     test('Test backups', () => {
         const molecules_container = new cootModule.molecules_container_js()
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
