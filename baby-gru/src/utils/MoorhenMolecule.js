@@ -415,7 +415,7 @@ MoorhenMolecule.prototype.drawCootGaussianSurface = async function (glRef) {
     }).then(response => {
         const objects = [response.data.result.result]
         if (objects.length > 0) {
-            const flippedNormObjects = objects.map(object => {
+            const flippedNormalsObjects = objects.map(object => {
                 const flippedNormalsObject = { ...object }
                 /*
                 flippedNormalsObject.norm_tri = object.norm_tri.map(
@@ -429,7 +429,7 @@ MoorhenMolecule.prototype.drawCootGaussianSurface = async function (glRef) {
             })
             //Empty existing buffers of this type
             this.clearBuffersOfStyle(style, glRef)
-            this.addBuffersOfStyle(glRef, flippedNormObjects, style)
+            this.addBuffersOfStyle(glRef, flippedNormalsObjects, style)
         }
         else {
             this.clearBuffersOfStyle(style, glRef)
