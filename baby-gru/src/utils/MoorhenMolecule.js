@@ -6,7 +6,7 @@ import { GetSplinesColoured } from '../WebGL/mgSecStr';
 import { atomsToSpheresInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { contactsToCylindersInfo, contactsToLinesInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
 import { singletonsToLinesInfo } from '../WebGL/mgWebGLAtomsToPrimitives';
-import { readTextFile, readGemmiStructure, cidToSpec, residueCodesThreeToOne, centreOnGemmiAtoms } from './MoorhenUtils'
+import { readTextFile, readGemmiStructure, cidToSpec, residueCodesThreeToOne, centreOnGemmiAtoms, getAtomInfo } from './MoorhenUtils'
 import { quatToMat4 } from '../WebGL/quatToMat4.js';
 import * as vec3 from 'gl-matrix/vec3';
 
@@ -302,19 +302,19 @@ MoorhenMolecule.prototype.drawWithStyleFromAtoms = async function (style, glRef,
             await this.drawCootGaussianSurface(glRef)
             break;
         case 'CRs':
-            await this.drawCootRepresentation(webMGAtoms, glRef, style)
+            await this.drawCootRepresentation(glRef, style)
             break;
         case 'MolecularSurface':
-            await this.drawCootRepresentation(webMGAtoms, glRef, style)
+            await this.drawCootRepresentation(glRef, style)
             break;
         case 'VdWSurface':
-            await this.drawCootRepresentation(webMGAtoms, glRef, style)
+            await this.drawCootRepresentation(glRef, style)
             break;
         case 'Calpha':
-            await this.drawCootRepresentation(webMGAtoms, glRef, style)
+            await this.drawCootRepresentation(glRef, style)
             break;
         case 'ligands':
-            await this.drawCootRepresentation(webMGAtoms, glRef, style)
+            await this.drawCootRepresentation(glRef, style)
             break;
         default:
             break;
@@ -438,7 +438,7 @@ MoorhenMolecule.prototype.drawCootGaussianSurface = async function (glRef) {
     })
 }
 
-MoorhenMolecule.prototype.drawCootRepresentation = async function (webMGAtoms, glRef, style) {
+MoorhenMolecule.prototype.drawCootRepresentation = async function (glRef, style) {
     const $this = this
     let m2tStyle
     let m2tSelection
@@ -489,23 +489,11 @@ MoorhenMolecule.prototype.drawCootRepresentation = async function (webMGAtoms, g
             }
             this.clearBuffersOfStyle(style, glRef)
             this.addBuffersOfStyle(glRef, objects, style)
-            if (webMGAtoms.atoms.length > 0) {
-                let bufferAtoms = []
-                webMGAtoms.atoms[0].getAllAtoms().forEach(at1 => {
-                    let atom = {};
-                    atom["x"] = at1.x();
-                    atom["y"] = at1.y();
-                    atom["z"] = at1.z();
-                    atom["tempFactor"] = at1["_atom_site.B_iso_or_equiv"];
-                    atom["charge"] = at1["_atom_site.pdbx_formal_charge"];
-                    atom["symbol"] = at1["_atom_site.type_symbol"];
-                    atom["label"] = at1.getAtomID();
-                    bufferAtoms.push(atom);
-                    this.displayObjects[style][0].atoms = bufferAtoms
-                })
+            let atomInfo = getAtomInfo(this.gemmiStructure)
+            if (atomInfo.length > 0) {
+                this.displayObjects[style][0].atoms = atomInfo
             }
-        }
-        else {
+        } else {
             this.clearBuffersOfStyle(style, glRef)
         }
         return Promise.resolve(true)
