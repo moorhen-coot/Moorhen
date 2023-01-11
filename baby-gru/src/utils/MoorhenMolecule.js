@@ -34,6 +34,7 @@ export function MoorhenMolecule(commandCentre, urlPrefix) {
         rama: [],
         rotamer: [],
         CBs: [],
+        gaussian: [],
         hover: [],
         ligands: [],
         CRs: [],
@@ -56,7 +57,7 @@ MoorhenMolecule.prototype.parseSequences = function () {
     if (this.gemmiStructure === null) {
         return
     }
-    
+
     let sequences = []
     for (let modelIndex = 0; modelIndex < this.gemmiStructure.models.size(); modelIndex++) {
         const model = this.gemmiStructure.models.get(modelIndex).clone()
@@ -72,7 +73,7 @@ MoorhenMolecule.prototype.parseSequences = function () {
                     resCode: residueCodesThreeToOne[residue.name]
                 })
             }
-            if (currentSequence.length > 0){
+            if (currentSequence.length > 0) {
                 sequences.push({
                     name: `${this.name}_${chain.name}`,
                     chain: chain.name,
@@ -110,7 +111,7 @@ MoorhenMolecule.prototype.copyFragment = async function (chainId, res_no_start, 
     newMolecule.molNo = response.data.result
     await newMolecule.fetchIfDirtyAndDraw('CBs', glRef)
     if (doRecentre) await newMolecule.centreOn(glRef)
-    
+
     return newMolecule
 }
 
@@ -279,6 +280,9 @@ MoorhenMolecule.prototype.drawWithStyleFromAtoms = async function (style, glRef,
         case 'CBs':
             await this.drawCootBonds(webMGAtoms, glRef)
             break;
+        case 'gaussian':
+            await this.drawCootGaussianSurface(glRef)
+            break;
         case 'CRs':
             await this.drawCootRepresentation(webMGAtoms, glRef, style)
             break;
@@ -373,6 +377,30 @@ MoorhenMolecule.prototype.drawCootBonds = async function (webMGAtoms, glRef) {
                     this.displayObjects[style][0].atoms = bufferAtoms
                 })
             }
+        }
+        else {
+            this.clearBuffersOfStyle(style, glRef)
+        }
+        return Promise.resolve(true)
+    })
+}
+
+MoorhenMolecule.prototype.drawCootGaussianSurface = async function (glRef) {
+    const $this = this
+    const style = "gaussian"
+    return this.commandCentre.current.cootCommand({
+        returnType: "mesh",
+        command: "get_gaussian_surface",
+        commandArgs: [
+            $this.molNo
+        ]
+    }).then(response => {
+        const objects = [response.data.result.result]
+        if (objects.length > 0) {
+            console.log({objects})
+            //Empty existing buffers of this type
+            this.clearBuffersOfStyle(style, glRef)
+            this.addBuffersOfStyle(glRef, objects, style)
         }
         else {
             this.clearBuffersOfStyle(style, glRef)
@@ -817,7 +845,7 @@ MoorhenMolecule.prototype.redraw = function (glRef) {
 MoorhenMolecule.prototype.transformedCachedAtomsAsMovedAtoms = function (glRef) {
     const $this = this
     let movedResidues = [];
-    
+
     for (let modelIndex = 0; modelIndex < this.gemmiStructure.models.size(); modelIndex++) {
         const model = this.gemmiStructure.models.get(modelIndex)
         for (let chainIndex = 0; chainIndex < model.chains.size(); chainIndex++) {
