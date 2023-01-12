@@ -54,3 +54,4 @@ install/*
 
 example/gemmi_test.js
 /digitalocean-baby-gru
+**/.DS_Store
