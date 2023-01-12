@@ -96,9 +96,6 @@ export const MoorhenMoleculeCard = (props) => {
         })
         setShowState(initialState)
     }, [
-        props.molecule.displayObjects.bonds.length,
-        props.molecule.displayObjects.sticks.length,
-        props.molecule.displayObjects.ribbons.length,
         props.molecule.displayObjects.rama.length,
         props.molecule.displayObjects.rotamer.length,
         props.molecule.displayObjects.CBs.length,
@@ -221,7 +218,7 @@ export const MoorhenMoleculeCard = (props) => {
                             <Col>
                                 <div>
                                     {Object.keys(props.molecule.displayObjects)
-                                        .filter(key => !['bonds', 'ribbons', 'sticks', 'hover', 'transformation'].includes(key))
+                                        .filter(key => !['hover', 'transformation'].includes(key))
                                         .map(key => {
                                             return <Form.Check
                                                 key={key}
