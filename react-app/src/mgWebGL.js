@@ -7416,6 +7416,8 @@ class MGWebGL extends Component {
                     }
                 }
             }
+            this.gl.enableVertexAttribArray(sphereProgram.vertexColourAttribute);
+
             this.gl.useProgram(this.shaderProgramTwoDShapes);
             this.setMatrixUniforms(this.shaderProgramTwoDShapes);
             this.gl.disableVertexAttribArray(this.shaderProgramTwoDShapes.vertexColourAttribute);
@@ -7611,6 +7613,7 @@ class MGWebGL extends Component {
                     }
                 }
             }
+
             this.gl.enableVertexAttribArray(this.shaderProgramTwoDShapes.vertexColourAttribute);
 
             this.gl.useProgram(this.shaderProgramLines);
@@ -7686,6 +7689,8 @@ class MGWebGL extends Component {
 
                 nprims += triangleVertexIndexBuffer[j].numItems;
             }
+
+            this.gl.disableVertexAttribArray(this.shaderProgramThickLinesNormal.vertexRealNormalAttribute);
 
             this.gl.useProgram(this.shaderProgramThickLines);
             this.gl.uniform3fv(this.shaderProgramThickLines.screenZ, this.screenZ);
