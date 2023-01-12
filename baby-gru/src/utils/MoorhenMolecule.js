@@ -27,9 +27,6 @@ export function MoorhenMolecule(commandCentre, urlPrefix) {
         atomRadiusBondRatio: 1
     }
     this.displayObjects = {
-        ribbons: [],
-        bonds: [],
-        sticks: [],
         rama: [],
         rotamer: [],
         CBs: [],
