@@ -27,7 +27,7 @@ var triangle_instanced_vertex_shader_source = `
 
       gl_Position = uPMatrix * uMVMatrix * theVert;
       vColor = aVertexColour;
-      vNormal = aVertexNormal;
+      vNormal = (instanceOrientation*vec4(aVertexNormal,1.0)).xyz;
       eyePos = uMVMatrix * theVert;
       mvInvMatrix = uMVINVMatrix;
       v = vec3(uMVMatrix * theVert);
