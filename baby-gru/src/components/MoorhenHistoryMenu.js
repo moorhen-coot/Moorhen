@@ -1,4 +1,4 @@
-import { NavDropdown, Form, Button, Modal, Table } from "react-bootstrap";
+import { NavDropdown, Form, Button, Modal } from "react-bootstrap";
 import { MoorhenMolecule } from "../utils/MoorhenMolecule";
 import { MoorhenMap } from "../utils/MoorhenMap";
 import { useEffect, useState } from "react";
