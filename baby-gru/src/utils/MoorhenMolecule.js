@@ -354,8 +354,8 @@ MoorhenMolecule.prototype.drawRotamerDodecahedra = function (glRef) {
     const $this = this
     const style = "rotamer"
     return this.commandCentre.current.cootCommand({
-        returnType: "mesh",
-        command: "get_rotamer_dodecs",
+        returnType: "instanced_mesh",
+        command: "get_rotamer_dodecs_instanced",
         commandArgs: [$this.molNo]
     }).then(response => {
         const objects = [response.data.result.result]

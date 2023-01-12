@@ -46,7 +46,7 @@ const instancedMeshToMeshData = (instanceMesh) => {
         const triangles = inst.triangles;
         for (let i = 0; i < triangles.size(); i++) {
             const idxs = triangles.get(i).point_id;
-            thisIdxs.push(...idxs);
+            thisIdxs.push(...[idxs[0],idxs[2],idxs[1]]);
         }
         for (let i = 0; i < vertices.size(); i++) {
             const vert = vertices.get(i);
@@ -59,7 +59,8 @@ const instancedMeshToMeshData = (instanceMesh) => {
                 const inst_data = inst.instancing_data_A.get(j)
                 thisInstance_origins.push(...inst_data.position)
                 thisInstance_colours.push(...inst_data.colour)
-                thisInstance_sizes.push(inst_data.size)
+                //Ah! I am assuming one scaling parameter; Coot provides 3.
+                thisInstance_sizes.push(inst_data.size[0])
                 thisInstance_orientations.push(...[
                 1.0, 0.0, 0.0, 0.0,
                 0.0, 1.0, 0.0, 0.0,
