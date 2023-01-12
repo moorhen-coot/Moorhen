@@ -53,6 +53,10 @@ export const MoorhenSequenceViewer = (props) => {
     const hoveredResidueColor = '#FFEB3B66'
     const transparentColor = '#FFEB3B00'
 
+    const {
+        molecule, sequence, setHoveredAtom, hoveredAtom, clickedResidue,
+        setClickedResidue, selectedResidues, setSelectedResidues
+    } = props;
 
     /**
      * Clear highlighted residue range
@@ -129,13 +133,13 @@ export const MoorhenSequenceViewer = (props) => {
      * Hook used to handle hovering events on the visualisation panel
      */
     useEffect(() => {
-        if (props.hoveredAtom===null || props.hoveredAtom.molecule === null || props.hoveredAtom.cid === null || sequenceRef.current === null) {
+        if (hoveredAtom===null || hoveredAtom.molecule === null || hoveredAtom.cid === null || sequenceRef.current === null) {
             return
         }
 
-        const [_, insCode, chainId, resInfo, atomName]   = props.hoveredAtom.cid.split('/')
+        const [_, insCode, chainId, resInfo, atomName]   = hoveredAtom.cid.split('/')
 
-        if (chainId !== props.sequence.chain || !resInfo) {
+        if (chainId !== sequence.chain || !resInfo) {
             return
         }
         
@@ -145,10 +149,10 @@ export const MoorhenSequenceViewer = (props) => {
             return
         }
         
-        setMessage(props.hoveredAtom.cid)
+        setMessage(hoveredAtom.cid)
         setHighlight(resNum)
 
-    }, [props.hoveredAtom])
+    }, [hoveredAtom])
 
     
     /**
@@ -156,31 +160,37 @@ export const MoorhenSequenceViewer = (props) => {
      */
     const handleChange = useCallback((evt) => {
         if (evt.detail.eventtype === "click") {
-            if (evt.detail.feature !== null && !(evt.detail.highlight.includes(','))) {
-                props.setClickedResidue({modelIndex:0, molName:props.molecule.name, chain:props.sequence.chain, seqNum:evt.detail.feature.start})
-                props.setSelectedResidues(null)
+            let residue = sequence.sequence.find(residue => residue.resNum == evt.detail.feature.start)
+            if (!residue) {
+                return
+            } else if (evt.detail.feature !== null && !(evt.detail.highlight.includes(','))) {
+                setClickedResidue({modelIndex:0, molName: molecule.name, chain: sequence.chain, seqNum: evt.detail.feature.start})
+                setSelectedResidues(null)
             } else if (evt.detail.highlight.includes(',')) {
                 let residues;
-                if (props.clickedResidue === null) {
-                    props.setClickedResidue({modelIndex: 0, molName: props.molecule.name, chain: props.sequence.chain, seqNum: evt.detail.feature.start})
+                if (clickedResidue === null) {
+                    setClickedResidue({modelIndex: 0, molName: molecule.name, chain: sequence.chain, seqNum: evt.detail.feature.start})
                     return
-                } else if (props.selectedResidues === null || props.selectedResidues.length < 2){
-                    residues = [props.clickedResidue.seqNum, evt.detail.feature.start]
+                } else if (selectedResidues === null || selectedResidues.length < 2){
+                    residues = [clickedResidue.seqNum, evt.detail.feature.start]
                 } else {
-                    residues = [evt.detail.feature.start, ...props.selectedResidues]
+                    residues = [evt.detail.feature.start, ...selectedResidues]
                 }
-                props.setSelectedResidues([Math.min(...residues), Math.max(...residues)])
-                props.setClickedResidue({modelIndex: 0, molName: props.molecule.name, chain: props.sequence.chain, seqNum: evt.detail.feature.start})
+                setSelectedResidues([Math.min(...residues), Math.max(...residues)])
+                setClickedResidue({modelIndex: 0, molName: molecule.name, chain: sequence.chain, seqNum: evt.detail.feature.start})
             }
         } else if (evt.detail.eventtype === "mouseover") {
             if (evt.detail.feature !== null) {
-                const cid =`//${props.sequence.chain}/${evt.detail.feature.start}(${[1, 2].includes(props.sequence.type.value) ? residueCodesOneToThree[evt.detail.feature.aa] : nucleotideCodesOneToThree[evt.detail.feature.aa]})/`
-                props.setHoveredAtom({ molecule: props.molecule, cid: cid })
+                let hoveredResidue = sequence.sequence.find(residue => residue.resNum == evt.detail.feature.start)
+                if (hoveredResidue) {
+                    let cid = hoveredResidue.cid
+                    setHoveredAtom({ molecule: molecule, cid: cid })
+                }
             }
         } else if (evt.detail.eventtype === "mouseout") {
             setMessage("")
         }
-    }, [props.clickedResidue])
+    }, [clickedResidue, sequence, selectedResidues, molecule, setHoveredAtom, setSelectedResidues, setClickedResidue])
 
 
     /**
@@ -229,26 +239,26 @@ export const MoorhenSequenceViewer = (props) => {
      * Hook used to clear the current selection if user selects residue from different chain
      */
     useEffect(() => {       
-        if (props.clickedResidue && props.clickedResidue.chain != props.sequence.chain) {
+        if (clickedResidue && clickedResidue.chain != sequence.chain) {
             clearSelection()
-        } else if (props.clickedResidue && !props.selectedResidues) {
-            setSelection(props.clickedResidue.seqNum, null)
+        } else if (clickedResidue && !selectedResidues) {
+            setSelection(clickedResidue.seqNum, null)
         }
 
-    }, [props.clickedResidue]);
+    }, [clickedResidue]);
 
     /**
      * Hook used to set a range of highlighted residues
      */
     useEffect(()=> {
-        if (props.selectedResidues !== null  && props.clickedResidue.chain === props.sequence.chain) {
-          setSelection(...props.selectedResidues)
+        if (selectedResidues !== null  && clickedResidue.chain === sequence.chain) {
+          setSelection(...selectedResidues)
         }
-    }, [props.selectedResidues]);
+    }, [selectedResidues]);
 
     return (
         <div className='align-items-center' style={{marginBottom:'0', padding:'0'}}>
-            <span>{`${props.molecule.name}${message ? "" : "/" + props.sequence.chain}${message}`}</span>
+            <span>{`${molecule.name}${message ? "" : "/" + sequence.chain}${message}`}</span>
             <div style={{width: '100%'}}>
                 <protvista-manager ref={managerRef}>
                     <protvista-navigation 
