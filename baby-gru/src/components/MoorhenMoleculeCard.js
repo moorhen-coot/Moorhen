@@ -16,8 +16,8 @@ export const MoorhenMoleculeCard = (props) => {
     const [atomRadiusBondRatio, setAtomRadiusBondRatio] = useState(1.5)
     const [bondSmoothness, setBondSmoothness] = useState(1)
 
-    const  bondSettingsProps = {
-        bondWidth, setBondWidth, atomRadiusBondRatio, 
+    const bondSettingsProps = {
+        bondWidth, setBondWidth, atomRadiusBondRatio,
         setAtomRadiusBondRatio, bondSmoothness, setBondSmoothness
     }
 
@@ -28,7 +28,7 @@ export const MoorhenMoleculeCard = (props) => {
 
         if (isVisible && showState['CBs']) {
             props.molecule.setAtomsDirty(true)
-            props.molecule.redraw(props.glRef)        
+            props.molecule.redraw(props.glRef)
         }
 
     }, [props.drawMissingLoops])
@@ -40,10 +40,10 @@ export const MoorhenMoleculeCard = (props) => {
 
         if (isVisible && showState['CBs']) {
             const newBackgroundIsDark = isDarkBackground(...props.backgroundColor)
-            if (props.molecule.cootBondsOptions.isDarkBackground !== newBackgroundIsDark){
+            if (props.molecule.cootBondsOptions.isDarkBackground !== newBackgroundIsDark) {
                 props.molecule.cootBondsOptions.isDarkBackground = newBackgroundIsDark
                 props.molecule.setAtomsDirty(true)
-                props.molecule.redraw(props.glRef)        
+                props.molecule.redraw(props.glRef)
             }
         }
 
@@ -53,11 +53,11 @@ export const MoorhenMoleculeCard = (props) => {
         if (bondSmoothness === null) {
             return
         }
-        
+
         props.molecule.cootBondsOptions.smoothness = bondSmoothness
         if (isVisible && showState['CBs']) {
             props.molecule.setAtomsDirty(true)
-            props.molecule.redraw(props.glRef)        
+            props.molecule.redraw(props.glRef)
         }
 
     }, [bondSmoothness]);
@@ -70,7 +70,7 @@ export const MoorhenMoleculeCard = (props) => {
         props.molecule.cootBondsOptions.width = bondWidth
         if (isVisible && showState['CBs']) {
             props.molecule.setAtomsDirty(true)
-            props.molecule.redraw(props.glRef)        
+            props.molecule.redraw(props.glRef)
         }
 
     }, [bondWidth]);
@@ -79,11 +79,11 @@ export const MoorhenMoleculeCard = (props) => {
         if (atomRadiusBondRatio === null) {
             return
         }
-        
+
         props.molecule.cootBondsOptions.atomRadiusBondRatio = atomRadiusBondRatio
         if (isVisible && showState['CBs']) {
             props.molecule.setAtomsDirty(true)
-            props.molecule.redraw(props.glRef)        
+            props.molecule.redraw(props.glRef)
         }
 
     }, [atomRadiusBondRatio]);
@@ -172,7 +172,7 @@ export const MoorhenMoleculeCard = (props) => {
             }, true)
 
             props.molecule.setAtomsDirty(true)
-            props.molecule.redraw(props.glRef)    
+            props.molecule.redraw(props.glRef)
         }
 
         if (clickedResidue && selectedResidues) {
@@ -182,12 +182,12 @@ export const MoorhenMoleculeCard = (props) => {
         props.setCurrentDropdownMolNo(-1)
     }
 
-    const handleProps = { handleCentering, handleCopyFragment, handleDownload, handleRedo, handleUndo, handleResidueRangeRefinement, handleVisibility}
+    const handleProps = { handleCentering, handleCopyFragment, handleDownload, handleRedo, handleUndo, handleResidueRangeRefinement, handleVisibility }
 
     return <Card className="px-0" style={{ marginBottom: '0.5rem', padding: '0' }} key={props.molecule.molNo}>
         <Card.Header>
             <Row className='align-items-center'>
-            <Col className='align-items-center' style={{display:'flex', justifyContent:'left'}}>
+                <Col className='align-items-center' style={{ display: 'flex', justifyContent: 'left' }}>
                     {`#${props.molecule.molNo} Mol. ${props.molecule.name}`}
                 </Col>
                 <Col style={{ display: 'flex', justifyContent: 'right' }}>
@@ -212,7 +212,7 @@ export const MoorhenMoleculeCard = (props) => {
             </Row>
         </Card.Header>
         <Card.Body style={{ display: isCollapsed ? 'none' : '' }}>
-            <Accordion  alwaysOpen={true} defaultActiveKey={['displayOpytions', 'sequences']}>
+            <Accordion alwaysOpen={true} defaultActiveKey={['displayOpytions', 'sequences']}>
 
                 <Accordion.Item eventKey="displayOpytions" style={{ padding: '0', margin: '0' }} >
                     <Accordion.Header style={{ padding: '0', margin: '0' }}>Display Options</Accordion.Header>
@@ -220,32 +220,34 @@ export const MoorhenMoleculeCard = (props) => {
                         <Row style={{ height: '100%' }}>
                             <Col>
                                 <div>
-                                    {Object.keys(props.molecule.displayObjects).map(key => {
-                                        return <Form.Check
-                                            key={key}
-                                            inline
-                                            label={`${key.substring(0, 3)}.`}
-                                            feedbackTooltip={"Toggle on"}
-                                            name={key}
-                                            type="checkbox"
-                                            variant="outline"
-                                            checked={showState[key]}
-                                            disabled={!isVisible}
-                                            onChange={(e) => {
-                                                if (e.target.checked) {
-                                                    props.molecule.show(key, props.glRef)
-                                                    const changedState = { ...showState }
-                                                    changedState[key] = true
-                                                    setShowState(changedState)
-                                                }
-                                                else {
-                                                    props.molecule.hide(key, props.glRef)
-                                                    const changedState = { ...showState }
-                                                    changedState[key] = false
-                                                    setShowState(changedState)
-                                                }
-                                            }} />
-                                    })
+                                    {Object.keys(props.molecule.displayObjects)
+                                        .filter(key => !['bonds', 'ribbons', 'sticks', 'hover', 'transformation'].includes(key))
+                                        .map(key => {
+                                            return <Form.Check
+                                                key={key}
+                                                inline
+                                                label={`${key.substring(0, 3)}.`}
+                                                feedbackTooltip={"Toggle on"}
+                                                name={key}
+                                                type="checkbox"
+                                                variant="outline"
+                                                checked={showState[key]}
+                                                disabled={!isVisible}
+                                                onChange={(e) => {
+                                                    if (e.target.checked) {
+                                                        props.molecule.show(key, props.glRef)
+                                                        const changedState = { ...showState }
+                                                        changedState[key] = true
+                                                        setShowState(changedState)
+                                                    }
+                                                    else {
+                                                        props.molecule.hide(key, props.glRef)
+                                                        const changedState = { ...showState }
+                                                        changedState[key] = false
+                                                        setShowState(changedState)
+                                                    }
+                                                }} />
+                                        })
                                     }
                                 </div>
                             </Col>
@@ -299,7 +301,7 @@ export const MoorhenMoleculeCard = (props) => {
                 <Accordion.Item eventKey="ligands" style={{ padding: '0', margin: '0' }} >
                     <Accordion.Header style={{ padding: '0', margin: '0' }}>Ligands</Accordion.Header>
                     <Accordion.Body>
-                        <MoorhenLigandList molecule={props.molecule} glRef={props.glRef}/>
+                        <MoorhenLigandList molecule={props.molecule} glRef={props.glRef} />
                     </Accordion.Body>
                 </Accordion.Item>
             </Accordion>
