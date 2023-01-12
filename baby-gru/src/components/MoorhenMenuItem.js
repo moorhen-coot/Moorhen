@@ -106,7 +106,7 @@ export const MoorhenLoadTutorialDataMenuItem = (props) => {
         const newDiffMap = new MoorhenMap(props.commandCentre)
         newMolecule.loadToCootFromURL(`${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-structure-number-${tutorialNumber}.pdb`, `moorhen-tutorial-${tutorialNumber}`)
             .then(result => {
-                newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef, true)
+                newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef)
             }).then(result => {
                 props.changeMolecules({ action: "Add", item: newMolecule })
                 Promise.resolve(newMolecule)

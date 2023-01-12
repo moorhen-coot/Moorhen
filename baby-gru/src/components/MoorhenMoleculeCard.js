@@ -255,7 +255,6 @@ export const MoorhenMoleculeCard = (props) => {
                     </Accordion.Body>
                 </Accordion.Item>
 
-
                 <Accordion.Item eventKey="sequences" style={{ padding: '0', margin: '0' }} >
                     <Accordion.Header style={{ padding: '0', margin: '0' }}>Sequences</Accordion.Header>
                     <Accordion.Body>
@@ -296,7 +295,6 @@ export const MoorhenMoleculeCard = (props) => {
 
                     </Accordion.Body>
                 </Accordion.Item>
-
 
                 <Accordion.Item eventKey="ligands" style={{ padding: '0', margin: '0' }} >
                     <Accordion.Header style={{ padding: '0', margin: '0' }}>Ligands</Accordion.Header>

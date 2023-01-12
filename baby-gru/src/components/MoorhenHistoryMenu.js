@@ -81,12 +81,10 @@ export const MoorhenHistoryMenu = (props) => {
                     if (nextCommand.command === 'shim_read_pdb') {
                         const newMolecule = new MoorhenMolecule(props.commandCentre, props.urlPrefix)
                         newMolecule.molNo = reply.data.result.result
-                        newMolecule.cachedAtoms = newMolecule.webMGAtomsFromFileString(
-                            nextCommand.commandArgs[0])
                         newMolecule.name = nextCommand.commandArgs[1]
                         newMolecule.centreOn(props.glRef)
                         props.changeMolecules({ action: "Add", item: newMolecule })
-                        return newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef, true)
+                        return newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef)
                     }
                     else if (nextCommand.command === 'shim_read_mtz') {
                         const newMap = new MoorhenMap(props.commandCentre)
