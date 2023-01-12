@@ -351,7 +351,7 @@ export const getBufferAtoms = (gemmiStructure, exclude_ligands_and_waters=false)
                             tempFactor: atom.b_iso,
                             charge: atom.charge,
                             symbol: atomElement,
-                            label: `/${model.name}/${chain.name}/${residue.seqid.str()}(${residue.name})/${atomElement}${atom.has_altloc() ? ':' + atom.altloc : ''}`
+                            label: `/${model.name}/${chain.name}/${residue.seqid.str()}(${residue.name})/${atomElement}${atom.has_altloc() ? ':' + String.fromCharCode(atom.altloc) : ''}`
                         })
                     }
                 }
