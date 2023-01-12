@@ -344,7 +344,6 @@ export const getBufferAtoms = (gemmiStructure, exclude_ligands_and_waters=false)
                     for (let atomIndex = 0; atomIndex < residue.atoms.size(); atomIndex++) {
                         const atom = residue.atoms.get(atomIndex)
                         const atomElement = window.CCP4Module.getElementNameAsString(atom.element)
-                        console.log(atom.has_altloc())
                         atomList.push({
                             x: atom.pos.x,
                             y: atom.pos.y,
