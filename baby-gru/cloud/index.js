@@ -66,7 +66,7 @@ class MoorhenWrapper {
       return new Promise(async (resolve, reject) => {
           try {
               await newMolecule.loadToCootFromURL(inputFile, molName)
-              await newMolecule.fetchIfDirtyAndDraw('CBs', this.controls.glRef, true)
+              await newMolecule.fetchIfDirtyAndDraw('CBs', this.controls.glRef)
               this.controls.changeMolecules({ action: "Add", item: newMolecule })
               newMolecule.centreOn(this.controls.glRef)
               return resolve(newMolecule)

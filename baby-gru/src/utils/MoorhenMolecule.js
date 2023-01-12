@@ -15,7 +15,6 @@ export function MoorhenMolecule(commandCentre, urlPrefix) {
     this.commandCentre = commandCentre
     this.enerLib = new EnerLib()
     this.HBondsAssigned = false
-    this.cachedAtoms = {}
     this.atomsDirty = true
     this.name = "unnamed"
     this.molNo = null
@@ -157,7 +156,6 @@ MoorhenMolecule.prototype.loadToCootFromString = async function (coordData, name
     const entRegex = /.ent$/;
 
     $this.name = name.replace(pdbRegex, "").replace(entRegex, "");
-    $this.cachedAtoms = $this.webMGAtomsFromFileString(coordData)
     $this.gemmiStructure = readGemmiStructure(coordData, $this.name)
     window.CCP4Module.gemmi_setup_entities($this.gemmiStructure)
     $this.parseSequences()
@@ -226,12 +224,11 @@ MoorhenMolecule.prototype.updateAtoms = function () {
     const $this = this;
     return $this.getAtoms().then((result) => {
         return new Promise((resolve, reject) => {
-            $this.cachedAtoms = $this.webMGAtomsFromFileString(result.data.result.pdbData)
             $this.gemmiStructure = readGemmiStructure(result.data.result.pdbData, $this.name)
             window.CCP4Module.gemmi_setup_entities($this.gemmiStructure)
             $this.parseSequences()
             $this.atomsDirty = false
-            resolve($this.cachedAtoms)
+            resolve()
         })
     })
 }
@@ -243,10 +240,10 @@ MoorhenMolecule.prototype.fetchIfDirtyAndDraw = async function (style, glRef) {
         promise = this.updateAtoms()
     }
     else {
-        promise = Promise.resolve($this.cachedAtoms)
+        promise = Promise.resolve()
     }
-    return promise.then(webMGAtoms => {
-        return $this.drawWithStyleFromAtoms(style, glRef, webMGAtoms)
+    return promise.then(_ => {
+        return $this.drawWithStyleFromAtoms(style, glRef)
     })
 }
 
@@ -280,18 +277,9 @@ MoorhenMolecule.prototype.centreOn = function (glRef, selectionCid) {
 }
 
 
-MoorhenMolecule.prototype.drawWithStyleFromAtoms = async function (style, glRef, webMGAtoms) {
+MoorhenMolecule.prototype.drawWithStyleFromAtoms = async function (style, glRef) {
 
     switch (style) {
-        case 'ribbons':
-            this.drawRibbons(webMGAtoms, glRef)
-            break;
-        case 'bonds':
-            this.drawBonds(webMGAtoms, glRef, this.molNo)
-            break;
-        case 'sticks':
-            this.drawSticks(webMGAtoms, glRef, this.molNo)
-            break;
         case 'rama':
             this.drawRamachandranBalls(glRef)
             break;

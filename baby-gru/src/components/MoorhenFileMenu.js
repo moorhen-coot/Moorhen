@@ -27,7 +27,7 @@ export const MoorhenFileMenu = (props) => {
 
         let drawPromises = []
         for (const newMolecule of newMolecules) {
-            drawPromises.push(newMolecule.fetchIfDirtyAndDraw('CBs', glRef, true))
+            drawPromises.push(newMolecule.fetchIfDirtyAndDraw('CBs', glRef))
         }
         await Promise.all(drawPromises)
 
@@ -80,7 +80,7 @@ export const MoorhenFileMenu = (props) => {
         return new Promise(async () => {
             try {
                 await newMolecule.loadToCootFromURL(url, molName)
-                await newMolecule.fetchIfDirtyAndDraw('CBs', glRef, true)
+                await newMolecule.fetchIfDirtyAndDraw('CBs', glRef)
                 changeMolecules({ action: "Add", item: newMolecule })
                 newMolecule.centreOn(glRef)
             } catch {
@@ -149,7 +149,7 @@ export const MoorhenFileMenu = (props) => {
         newMolecules.forEach((molecule, moleculeIndex) => {
             molecule.cootBondsOptions = sessionData.moleculesCootBondsOptions[moleculeIndex]
             const styles = sessionData.moleculesDisplayObjectsKeys[moleculeIndex]
-            styles.forEach(style => drawPromises.push(molecule.fetchIfDirtyAndDraw(style, glRef, true)))
+            styles.forEach(style => drawPromises.push(molecule.fetchIfDirtyAndDraw(style, glRef)))
         })
         await Promise.all(drawPromises)
         
