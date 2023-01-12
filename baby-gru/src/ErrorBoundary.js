@@ -1,16 +1,16 @@
 import React from 'react';
-import { Modal, Button } from "react-bootstrap";
+import { Modal, Button } from "react-bootstrap"
 import { doDownload } from "./utils/MoorhenUtils"
 
 export class ErrorBoundary extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { hasError: false };
+        this.state = { hasError: false }
     }
 
     static getDerivedStateFromError(error) {
         // Update state so the next render will show the fallback UI.
-        console.log("I got you ")
+        console.log("Error boundary triggered ")
         return { hasError: true }
 
     }
@@ -54,4 +54,4 @@ export class ErrorBoundary extends React.Component {
     }
 }
 
-ErrorBoundary.defaultProps = { urlPrefix: "." };
+ErrorBoundary.defaultProps = { urlPrefix: "." }
