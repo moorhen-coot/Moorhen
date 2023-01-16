@@ -117,6 +117,21 @@ export const MoorhenContainer = (props) => {
     }, [preferences.darkMode])
 
     useEffect(() => {
+        async function setMakeBackupsAPI() {
+            await commandCentre.current.cootCommand({
+                command: 'set_make_backup',
+                commandArgs: [preferences.makeBackups],
+                returnType: "status"
+            })
+        }
+
+        if (commandCentre.current && preferences.makeBackups !== null && cootInitialized) {
+            setMakeBackupsAPI()
+        }
+
+    }, [preferences.makeBackups, cootInitialized])
+
+    useEffect(() => {
         async function setDrawMissingLoopAPI() {
             await commandCentre.current.cootCommand({
                 command: 'set_draw_missing_residue_loops',
