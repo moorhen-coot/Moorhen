@@ -381,6 +381,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("non_standard_residue_types_in_model",&molecules_container_t::non_standard_residue_types_in_model)
     .function("get_map_rmsd_approx",&molecules_container_t::get_map_rmsd_approx)
     .function("set_draw_missing_residue_loops",&molecules_container_t::set_draw_missing_residue_loops)
+    .function("set_make_backups",&molecules_container_t::set_make_backups)
     .function("get_chains_in_model",&molecules_container_t::get_chains_in_model)
     .function("get_residue_names_with_no_dictionary",&molecules_container_t::get_residue_names_with_no_dictionary)
     .function("write_map",&molecules_container_t::write_map)
