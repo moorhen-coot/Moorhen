@@ -58,7 +58,7 @@ export const MoorhenPepflipsDifferenceMap = (props) => {
                 }, true)    
             }
 
-            const selectedMolecule = props.molecules.find(molecule => molecule.molNo == selectedModel)
+            const selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedModel)
             selectedMolecule.setAtomsDirty(true)
             selectedMolecule.redraw(props.glRef)
             //Here use originChanged event to force recontour (relevant for live updating maps)
@@ -99,8 +99,8 @@ export const MoorhenPepflipsDifferenceMap = (props) => {
    
     useEffect(() => {
         if (selectedModel !== null) {
-            let selectedMoleculeIndex = props.molecules.findIndex(molecule => molecule.molNo == selectedModel);
-            if (selectedMoleculeIndex != -1 && props.molecules[selectedMoleculeIndex]){
+            let selectedMoleculeIndex = props.molecules.findIndex(molecule => molecule.molNo === selectedModel);
+            if (selectedMoleculeIndex !== -1 && props.molecules[selectedMoleculeIndex]){
                 setCachedGemmiStructure(props.molecules[selectedMoleculeIndex].gemmiStructure)
             }
         }

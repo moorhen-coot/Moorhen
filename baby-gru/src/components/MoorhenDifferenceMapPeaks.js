@@ -134,8 +134,8 @@ export const MoorhenDifferenceMapPeaks = (props) => {
    
     useEffect(() => {
         if (selectedModel !== null) {
-            let selectedMoleculeIndex = props.molecules.findIndex(molecule => molecule.molNo == selectedModel);
-            if (selectedMoleculeIndex != -1 && props.molecules[selectedMoleculeIndex]){
+            let selectedMoleculeIndex = props.molecules.findIndex(molecule => molecule.molNo === selectedModel);
+            if (selectedMoleculeIndex !== -1 && props.molecules[selectedMoleculeIndex]){
                 setCachedGemmiStructure(props.molecules[selectedMoleculeIndex].gemmiStructure)
             }
         }

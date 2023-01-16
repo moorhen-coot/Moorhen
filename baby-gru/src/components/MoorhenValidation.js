@@ -63,9 +63,9 @@ export const MoorhenValidation = (props) => {
     const [cachedGemmiStructure, setCachedGemmiStructure] = useState(null)
 
     const getSequenceData = () => {
-        let selectedMolecule = props.molecules.find(molecule => molecule.molNo == selectedModel)
+        let selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedModel)
         if (selectedMolecule) {
-            let sequenceData = selectedMolecule.sequences.find(sequence => sequence.chain == chainSelectRef.current.value)
+            let sequenceData = selectedMolecule.sequences.find(sequence => sequence.chain === chainSelectRef.current.value)
             if (sequenceData) {
                 return sequenceData.sequence
             }    
@@ -135,7 +135,7 @@ export const MoorhenValidation = (props) => {
         }
         
         const residueIndex = points[0].index
-        const selectedMolecule = props.molecules.find(molecule => molecule.molNo == selectedModel)
+        const selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedModel)
         if(selectedMolecule) {
             const clickedResidue = getResidueInfo(selectedMolecule, residueIndex)
             if (clickedResidue) {
@@ -150,7 +150,7 @@ export const MoorhenValidation = (props) => {
         }
         
         const residueIndex = args[0].dataIndex
-        const selectedMolecule = props.molecules.find(molecule => molecule.molNo == selectedModel)
+        const selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedModel)
         if(selectedMolecule) {
             const clickedResidue = getResidueInfo(selectedMolecule, residueIndex)
             if (clickedResidue) {
@@ -189,8 +189,8 @@ export const MoorhenValidation = (props) => {
     
     useEffect(() => {
         if (selectedModel !== null) {
-            let selectedMoleculeIndex = props.molecules.findIndex(molecule => molecule.molNo == selectedModel);
-            if (selectedMoleculeIndex != -1 && props.molecules[selectedMoleculeIndex]){
+            let selectedMoleculeIndex = props.molecules.findIndex(molecule => molecule.molNo === selectedModel);
+            if (selectedMoleculeIndex !== -1 && props.molecules[selectedMoleculeIndex]){
                 setCachedGemmiStructure(props.molecules[selectedMoleculeIndex].gemmiStructure)
             }
         }
@@ -283,7 +283,7 @@ export const MoorhenValidation = (props) => {
             datasets.push({
                 label: availableMetrics[methodIndex].displayName,
                 data: sequenceData.map(currentResidue => {
-                    let residue = plotData[methodIndex].find(res => res.seqNum == currentResidue.resNum)
+                    let residue = plotData[methodIndex].find(res => res.seqNum === currentResidue.resNum)
                     if (residue) {
                         return metricScale(residue.value)
                     } else {
@@ -291,7 +291,7 @@ export const MoorhenValidation = (props) => {
                     }
                 }),
                 backgroundColor: sequenceData.map(currentResidue => {
-                    let residue = plotData[methodIndex].find(res => res.seqNum == currentResidue.resNum)
+                    let residue = plotData[methodIndex].find(res => res.seqNum === currentResidue.resNum)
                     if (residue) {
                         let gFrac = 1.0 - metricScale(residue.value)
                         return palette(gFrac)

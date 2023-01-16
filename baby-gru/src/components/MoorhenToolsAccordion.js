@@ -18,7 +18,7 @@ export const MoorhenToolsAccordion = (props) => {
 
     const handleChange = (evt, newSelection) => {
         if (newSelection) {
-            const newToolIndex = toolOptions.findIndex(tool => tool.label == newSelection)
+            const newToolIndex = toolOptions.findIndex(tool => tool.label === newSelection)
             props.setSelectedToolKey(newToolIndex)
         } else {
             props.setSelectedToolKey(null)

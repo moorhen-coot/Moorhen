@@ -10,7 +10,7 @@ export const MoorhenChainSelect = forwardRef((props, selectRef) => {
     }
 
     const getChainOptions = (selectedCoordMolNo) => {
-        let selectedMolecule = props.molecules.find(molecule => molecule.molNo == selectedCoordMolNo)
+        let selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedCoordMolNo)
         if (selectedMolecule) {
             return selectedMolecule.sequences.map(sequence => props.allowedTypes.includes(sequence.type) ? <option value={sequence.chain} key={`${selectedMolecule.molNo}_${sequence.chain}`}>{sequence.chain}</option> : null)
         }

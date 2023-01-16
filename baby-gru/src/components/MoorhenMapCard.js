@@ -179,7 +179,7 @@ export const MoorhenMapCard = (props) => {
     }, [mapContourLevel, mapRadius])
 
     useMemo(() => {
-        if (currentName == "") {
+        if (currentName === "") {
             return
         }
         props.map.name = currentName

@@ -11,7 +11,7 @@ export const MoorhenMoleculeCardButtonBar = (props) => {
     const [currentName, setCurrentName] = useState(props.molecule.name);
 
     useMemo(() => {
-        if (currentName == "") {
+        if (currentName === "") {
             return
         }
         props.molecule.name = currentName

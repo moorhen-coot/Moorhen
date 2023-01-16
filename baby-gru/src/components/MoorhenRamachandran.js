@@ -23,7 +23,7 @@ export const MoorhenRamachandran = (props) => {
         }
         const coordMolNums = props.molecules.map(molecule => molecule.molNo);
         const molNames = props.molecules.map(molecule => molecule.name);
-        let moleculeIndex = coordMolNums.findIndex(num => num == selectedModel)
+        let moleculeIndex = coordMolNums.findIndex(num => num === selectedModel)
         return molNames[moleculeIndex];
     }
 
@@ -78,8 +78,8 @@ export const MoorhenRamachandran = (props) => {
 
     useEffect(() => {
         if (selectedModel !== null) {
-            let selectedMoleculeIndex = props.molecules.findIndex(molecule => molecule.molNo == selectedModel);
-            if (selectedMoleculeIndex != -1 && props.molecules[selectedMoleculeIndex]){
+            let selectedMoleculeIndex = props.molecules.findIndex(molecule => molecule.molNo === selectedModel);
+            if (selectedMoleculeIndex !== -1 && props.molecules[selectedMoleculeIndex]){
                 setCachedGemmiStructure(props.molecules[selectedMoleculeIndex].gemmiStructure)
             }
         }
@@ -133,15 +133,15 @@ export const MoorhenRamachandran = (props) => {
 
     const handleHoveredAtom = (cid) => {
         if (selectedModel !== null) {
-            let selectedMoleculeIndex = props.molecules.findIndex(molecule => molecule.molNo == selectedModel);
-            if (selectedMoleculeIndex != -1 && props.molecules[selectedMoleculeIndex]){
+            let selectedMoleculeIndex = props.molecules.findIndex(molecule => molecule.molNo === selectedModel);
+            if (selectedMoleculeIndex !== -1 && props.molecules[selectedMoleculeIndex]){
                 props.setHoveredAtom({ molecule:props.molecules[selectedMoleculeIndex] , cid: cid })
             }
         }
     }
 
     useEffect(() => {
-        if (props.hoveredAtom===null || props.hoveredAtom.molecule === null || props.hoveredAtom.cid === null || ramaPlotData === null || selectedModel === null || chainSelectRef.current.value === null || selectedModel !=  props.hoveredAtom.molecule.molNo || ramachandranRef.current === null) {
+        if (props.hoveredAtom===null || props.hoveredAtom.molecule === null || props.hoveredAtom.cid === null || ramaPlotData === null || selectedModel === null || chainSelectRef.current.value === null || selectedModel !==  props.hoveredAtom.molecule.molNo || ramachandranRef.current === null) {
             return
         }
 
@@ -153,7 +153,7 @@ export const MoorhenRamachandran = (props) => {
         
         const resNum = resInfo.split('(')[0]
         const oldHit = ramachandranRef.current.hit        
-        const newHit = ramaPlotData.findIndex(residue => residue.seqNum == resNum)
+        const newHit = ramaPlotData.findIndex(residue => residue.seqNum === resNum)
 
         if (newHit === -1 || newHit === oldHit) {
             return

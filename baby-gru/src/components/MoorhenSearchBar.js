@@ -47,7 +47,7 @@ export const MoorhenSearchBar = (props) => {
                     console.log(`Search bar is setting focus on component ${action.elementId}`)
                     let element = document.getElementById(action.elementId)
                     element.focus()
-                } else if (action.type == 'carousel') {
+                } else if (action.type === 'carousel') {
                     let elements = document.getElementsByClassName('carousel-control-next')
                     let targetElement = document.getElementById(action.elementId)
                     let iterationCount = 0
@@ -88,7 +88,7 @@ export const MoorhenSearchBar = (props) => {
         ]},
         {label: "Difference Map Peaks", actions: [
             {type: 'click', condition: !props.showSideBar , elementId: 'show-sidebar-button'}, 
-            {type: 'click', condition: props.toolAccordionBodyHeight == 0, elementId: 'tools-accordion-button'},
+            {type: 'click', condition: props.toolAccordionBodyHeight === 0, elementId: 'tools-accordion-button'},
             {type: 'setValue', newValue: 0, condition: true, valueSetter: props.setSelectedToolKey}
         ]},
         {label: "Change Background Colour", actions: [
@@ -147,7 +147,7 @@ export const MoorhenSearchBar = (props) => {
         ]},
         {label: "Model Validation", actions: [
             {type: 'click', condition: !props.showSideBar , elementId: 'show-sidebar-button'}, 
-            {type: 'click', condition: props.toolAccordionBodyHeight == 0, elementId: 'tools-accordion-button'},
+            {type: 'click', condition: props.toolAccordionBodyHeight === 0, elementId: 'tools-accordion-button'},
             {type: 'setValue', newValue: 2, condition: true, valueSetter: props.setSelectedToolKey}
         ]},
         {label: "Mutate Residue", actions: [
@@ -155,12 +155,12 @@ export const MoorhenSearchBar = (props) => {
         ]},
         {label: "Peptide Flips List", actions: [
             {type: 'click', condition: !props.showSideBar , elementId: 'show-sidebar-button'}, 
-            {type: 'click', condition: props.toolAccordionBodyHeight == 0, elementId: 'tools-accordion-button'},
+            {type: 'click', condition: props.toolAccordionBodyHeight === 0, elementId: 'tools-accordion-button'},
             {type: 'setValue', newValue: 3, condition: true, valueSetter: props.setSelectedToolKey}
         ]},
         {label: "Ramachandran Plot", actions: [
             {type: 'click', condition: !props.showSideBar , elementId: 'show-sidebar-button'}, 
-            {type: 'click', condition: props.toolAccordionBodyHeight == 0, elementId: 'tools-accordion-button'},
+            {type: 'click', condition: props.toolAccordionBodyHeight === 0, elementId: 'tools-accordion-button'},
             {type: 'setValue', newValue: 1, condition: true, valueSetter: props.setSelectedToolKey}
         ]},
         {label: "Read mtz", actions: [
@@ -181,7 +181,7 @@ export const MoorhenSearchBar = (props) => {
         ]},
         {label: "Show Console", actions: [
             {type: 'click', condition: !props.showSideBar , elementId: 'show-sidebar-button'}, 
-            {type: 'click', condition: props.consoleBodyHeight == 0, elementId: 'console-accordion-button'},
+            {type: 'click', condition: props.consoleBodyHeight === 0, elementId: 'console-accordion-button'},
         ]},
         {label: "Show history", actions: [
             {type: 'click', elementId: 'history-nav-dropdown', condition: props.currentDropdownId !== "History"}, 
@@ -197,7 +197,7 @@ export const MoorhenSearchBar = (props) => {
 
     const handleChange = (evt, newSelection) => {
         if (newSelection) {
-            const newItemIndex = searchOptions.findIndex(item => item.label == newSelection)
+            const newItemIndex = searchOptions.findIndex(item => item.label === newSelection)
             setSelectedItemKey(newItemIndex)
         } else {
             setSelectedItemKey(null)

@@ -6,7 +6,7 @@ export const MoorhenDisplayObjects = (props) => {
     const [currentDropdownMolNo, setCurrentDropdownMolNo] = useState(-1)
 
     let displayData = [];
-    if (props.molecules.length != 0) {
+    if (props.molecules.length !== 0) {
         props.molecules.forEach(molecule => displayData.push(
             <MoorhenMoleculeCard
                 key={molecule.molNo}
@@ -19,7 +19,7 @@ export const MoorhenDisplayObjects = (props) => {
         )
     }
 
-    if (props.maps.length != 0) {
+    if (props.maps.length !== 0) {
         props.maps.forEach(map => displayData.push(
             <MoorhenMapCard
                 key={map.molNo}
