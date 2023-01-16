@@ -24,7 +24,7 @@ export const MoorhenMoleculeCardButtonBar = (props) => {
             label: "Undo last action",
             compressed: () => { return (<MenuItem key={1} variant="success" onClick={props.handleUndo} disabled={!props.backupsEnabled}>Undo last action</MenuItem>) },
             expanded: () => {
-                return (<Button key={1} size="sm" variant="outlined" onClick={props.handleUndo} disabled={!props.backupsEnabled}>
+                return (<Button key={1} size="sm" variant="outlined" style={{borderWidth: props.backupsEnabled ? '' : '0px'}} onClick={props.handleUndo} disabled={!props.backupsEnabled}>
                     <UndoOutlined />
                 </Button>)
             }
@@ -33,7 +33,7 @@ export const MoorhenMoleculeCardButtonBar = (props) => {
             label: "Redo previous action",
             compressed: () => { return (<MenuItem key={2} variant="success" onClick={props.handleRedo} disabled={!props.backupsEnabled}>Redo previous action</MenuItem>) },
             expanded: () => {
-                return (<Button key={2} size="sm" variant="outlined" onClick={props.handleRedo} disabled={!props.backupsEnabled}>
+                return (<Button key={2} size="sm" variant="outlined" style={{borderWidth: props.backupsEnabled ? '': '0px'}} onClick={props.handleRedo} disabled={!props.backupsEnabled}>
                     <RedoOutlined />
                 </Button>)
             }
