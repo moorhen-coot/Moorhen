@@ -42,6 +42,9 @@ export function MoorhenMolecule(commandCentre, urlPrefix) {
 };
 
 MoorhenMolecule.prototype.updateGemmiStructure = async function () {
+    if (this.gemmiStructure) {
+        this.gemmiStructure.delete()
+    }
     let response = await this.getAtoms()
     this.gemmiStructure = readGemmiStructure(response.data.result.pdbData, this.name)
     window.CCP4Module.gemmi_setup_entities(this.gemmiStructure)
@@ -78,16 +81,19 @@ MoorhenMolecule.prototype.parseSequences = function () {
                         resCode: Object.keys(threeToOne).includes(resName) ? threeToOne[resName] : 'X',
                         cid: `//${chainName}/${resNum}(${resName})/`
                     })
+                    residue.delete()
                 }
                 if (currentSequence.length > 0) {
                     sequences.push({
-                        name: `${this.name}_${chain.name}`,
-                        chain: chain.name,
+                        name: `${this.name}_${chainName}`,
+                        chain: chainName,
                         type: polymerType,
                         sequence: currentSequence,
                     })
                 }
+                chain.delete()
             }
+            model.delete()
         }
     } finally {
         structure.delete()
@@ -106,6 +112,9 @@ MoorhenMolecule.prototype.delete = async function (glRef) {
     glRef.current.drawScene()
     const inputData = { message: "delete", molNo: $this.molNo }
     const response = await $this.commandCentre.current.postMessage(inputData)
+    if (this.gemmiStructure) {
+        this.gemmiStructure.delete()
+    }
     return response
 }
 
@@ -162,6 +171,10 @@ MoorhenMolecule.prototype.loadToCootFromString = async function (coordData, name
     const $this = this
     const pdbRegex = /.pdb$/;
     const entRegex = /.ent$/;
+
+    if ($this.gemmiStructure) {
+        $this.gemmiStructure.delete()
+    }
 
     $this.name = name.replace(pdbRegex, "").replace(entRegex, "");
     $this.gemmiStructure = readGemmiStructure(coordData, $this.name)
@@ -230,6 +243,9 @@ MoorhenMolecule.prototype.getAtoms = function () {
 
 MoorhenMolecule.prototype.updateAtoms = function () {
     const $this = this;
+    if ($this.gemmiStructure) {
+        $this.gemmiStructure.delete()
+    }
     return $this.getAtoms().then((result) => {
         return new Promise((resolve, reject) => {
             $this.gemmiStructure = readGemmiStructure(result.data.result.pdbData, $this.name)
@@ -1022,32 +1038,41 @@ MoorhenMolecule.prototype.redo = async function (glRef) {
 
 MoorhenMolecule.prototype.gemmiAtomsForCid = async function (cid) {
     const $this = this
+   
     if ($this.atomsDirty) {
         await $this.updateAtoms()
     }
+    
     let result = []
     const selection = new window.CCP4Module.Selection(cid)
     const model = $this.gemmiStructure.first_model()
+    
     if (selection.matches_model(model)) {
         const chains = model.chains
         for (let i = 0; i < chains.size(); i++) {
-            const ch = chains.get(i)
-            if (selection.matches_chain(ch)) {
-                const residues = ch.residues
+            const chain = chains.get(i)
+            if (selection.matches_chain(chain)) {
+                const residues = chain.residues
                 for (let j = 0; j < residues.size(); j++) {
-                    const res = residues.get(j)
-                    if (selection.matches_residue(res)) {
-                        const atoms = res.atoms
+                    const residue = residues.get(j)
+                    if (selection.matches_residue(residue)) {
+                        const atoms = residue.atoms
                         for (let k = 0; k < atoms.size(); k++) {
-                            const at = atoms.get(k)
-                            if (selection.matches_atom(at)) {
-                                result.push(at)
+                            const atom = atoms.get(k)
+                            if (selection.matches_atom(atom)) {
+                                result.push(atom)
                             }
                         }
                     }
+                    residue.delete()
                 }
             }
+            chain.delete()
         }
     }
+    
+    selection.delete()
+    model.delete()
+    
     return Promise.resolve(result)
 }

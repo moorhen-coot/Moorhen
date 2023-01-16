@@ -369,9 +369,13 @@ export const getBufferAtoms = (gemmiStructure, exclude_ligands_and_waters=false)
                                 symbol: atomElementString,
                                 label: `/${modelName}/${chainName}/${resNum}(${residueName})/${atomElementString}${atom.has_altloc() ? ':' + String.fromCharCode(atomAltLoc) : ''}`
                             })
+                            atom.delete()
                         }
+                        residue.delete()
                     }
+                    chain.delete()
                 }
+                model.delete()
             }
         } finally {
             gemmiStructure.delete()
