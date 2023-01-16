@@ -53,35 +53,46 @@ MoorhenMolecule.prototype.parseSequences = function () {
     if (this.gemmiStructure === null) {
         return
     }
-
+    
     let sequences = []
-    for (let modelIndex = 0; modelIndex < this.gemmiStructure.models.size(); modelIndex++) {
-        const model = this.gemmiStructure.models.get(modelIndex).clone()
-        window.CCP4Module.remove_ligands_and_waters_model(model)
-        for (let chainIndex = 0; chainIndex < model.chains.size(); chainIndex++) {
-            let currentSequence = []
-            const chain = model.chains.get(chainIndex)
-            const polymerType = window.CCP4Module.check_polymer_type(chain.get_polymer_const())
-            let threeToOne = [3, 4, 5].includes(polymerType.value) ? nucleotideCodesThreeToOne : residueCodesThreeToOne
-            const residues = chain.residues
-            for (let residueIndex = 0; residueIndex < residues.size(); residueIndex++) {
-                const residue = residues.get(residueIndex)
-                currentSequence.push({
-                    resNum: Number(residue.seqid.str()),
-                    resCode: Object.keys(threeToOne).includes(residue.name) ? threeToOne[residue.name] : 'X',
-                    cid: `//${chain.name}/${residue.seqid.str()}(${residue.name})/`
-                })
-            }
-            if (currentSequence.length > 0) {
-                sequences.push({
-                    name: `${this.name}_${chain.name}`,
-                    chain: chain.name,
-                    type: polymerType,
-                    sequence: currentSequence,
-                })
+    const structure = this.gemmiStructure.clone()
+    try {
+        const models = structure.models
+        for (let modelIndex = 0; modelIndex < models.size(); modelIndex++) {
+            const model = models.get(modelIndex)
+            const chains = model.chains
+            for (let chainIndex = 0; chainIndex < chains.size(); chainIndex++) {
+                let currentSequence = []
+                const chain = chains.get(chainIndex)
+                window.CCP4Module.remove_ligands_and_waters_chain(chain)
+                const residues = chain.residues
+                const chainName = chain.name
+                const polymerType = window.CCP4Module.check_polymer_type(chain.get_polymer_const()).value
+                let threeToOne = [3, 4, 5].includes(polymerType) ? nucleotideCodesThreeToOne : residueCodesThreeToOne
+                for (let residueIndex = 0; residueIndex < residues.size(); residueIndex++) {
+                    const residue = residues.get(residueIndex)
+                    const resName = residue.name
+                    const resNum = Number(residue.seqid.str())
+                    currentSequence.push({
+                        resNum: resNum,
+                        resCode: Object.keys(threeToOne).includes(resName) ? threeToOne[resName] : 'X',
+                        cid: `//${chainName}/${resNum}(${resName})/`
+                    })
+                }
+                if (currentSequence.length > 0) {
+                    sequences.push({
+                        name: `${this.name}_${chain.name}`,
+                        chain: chain.name,
+                        type: polymerType,
+                        sequence: currentSequence,
+                    })
+                }
             }
         }
+    } finally {
+        structure.delete()
     }
+
     console.log('Parsed the following sequences')
     console.log(sequences)
     this.sequences = sequences
@@ -368,7 +379,7 @@ MoorhenMolecule.prototype.drawCootBonds = async function (glRef) {
             //Empty existing buffers of this type
             this.clearBuffersOfStyle(style, glRef)
             this.addBuffersOfStyle(glRef, objects, style)
-            let bufferAtoms = getBufferAtoms(this.gemmiStructure)
+            let bufferAtoms = getBufferAtoms(this.gemmiStructure.clone())
             if (bufferAtoms.length > 0) {
                 this.displayObjects[style][0].atoms = bufferAtoms
             }
@@ -466,7 +477,7 @@ MoorhenMolecule.prototype.drawCootRepresentation = async function (glRef, style)
             }
             this.clearBuffersOfStyle(style, glRef)
             this.addBuffersOfStyle(glRef, objects, style)
-            let bufferAtoms = getBufferAtoms(this.gemmiStructure)
+            let bufferAtoms = getBufferAtoms(this.gemmiStructure.clone())
             if (bufferAtoms.length > 0) {
                 this.displayObjects[style][0].atoms = bufferAtoms
             }
