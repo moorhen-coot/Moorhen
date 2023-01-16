@@ -12,7 +12,7 @@ const updateStoredPreferences = async (key, value) => {
 
 const getDefaultValues = () => {
     return {
-        version: '0.0.4',
+        version: '0.0.5',
         darkMode: false, 
         atomLabelDepthMode: true, 
         defaultExpandDisplayCards: true,
@@ -22,6 +22,7 @@ const getDefaultValues = () => {
         drawMissingLoops: true,
         mouseSensitivity: 2.0,
         mapLineWidth: 1.0,
+        makeBackups: true,
         shortCuts: {
             "sphere_refine": {
                 modifiers: ["shiftKey"],
@@ -136,6 +137,7 @@ const PreferencesContextProvider = ({ children }) => {
     const [drawCrosshairs, setDrawCrosshairs] = useState(null)
     const [drawMissingLoops, setDrawMissingLoops] = useState(null)
     const [mapLineWidth, setMapLineWidth] = useState(null)
+    const [makeBackups, setMakeBackups] = useState(null)
 
     const restoreDefaults = (defaultValues)=> {
         updateStoredPreferences('version', defaultValues.version)
@@ -149,6 +151,7 @@ const PreferencesContextProvider = ({ children }) => {
         setDrawCrosshairs(defaultValues.drawCrosshairs)
         setDrawMissingLoops(defaultValues.drawMissingLoops)
         setMapLineWidth(defaultValues.mapLineWidth)
+        setMakeBackups(defaultValues.makeBackups)
     }
 
     /**
@@ -171,7 +174,8 @@ const PreferencesContextProvider = ({ children }) => {
                     localforage.getItem('mouseSensitivity'),
                     localforage.getItem('drawCrosshairs'),
                     localforage.getItem('drawMissingLoops'),
-                    localforage.getItem('mapLineWidth')
+                    localforage.getItem('mapLineWidth'),
+                    localforage.getItem('makeBackups')
                     ])
                 
                 console.log('Retrieved the following preferences from local storage: ', response)
@@ -195,6 +199,7 @@ const PreferencesContextProvider = ({ children }) => {
                     setDrawCrosshairs(response[8])
                     setDrawMissingLoops(response[9])
                     setMapLineWidth(response[10])
+                    setMakeBackups(response[11])
                 }                
                 
             } catch (err) {
@@ -211,6 +216,15 @@ const PreferencesContextProvider = ({ children }) => {
         fetchStoredPreferences();
         
     }, []);
+
+    useMemo(() => {
+
+        if (makeBackups === null) {
+            return
+        }
+       
+        updateStoredPreferences('makeBackups', makeBackups);
+    }, [makeBackups]);
 
     useMemo(() => {
 
@@ -306,7 +320,8 @@ const PreferencesContextProvider = ({ children }) => {
         darkMode, setDarkMode, atomLabelDepthMode, setAtomLabelDepthMode, defaultExpandDisplayCards,
         setDefaultExpandDisplayCards, shortCuts, setShortCuts, defaultLitLines, setDefaultLitLines,
         refineAfterMod, setRefineAfterMod, mouseSensitivity, setMouseSensitivity, drawCrosshairs, 
-        setDrawCrosshairs, drawMissingLoops, setDrawMissingLoops, mapLineWidth, setMapLineWidth
+        setDrawCrosshairs, drawMissingLoops, setDrawMissingLoops, mapLineWidth, setMapLineWidth,
+        makeBackups, setMakeBackups
     }
 
     return (
