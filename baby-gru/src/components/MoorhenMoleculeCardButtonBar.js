@@ -137,7 +137,7 @@ export const MoorhenMoleculeCardButtonBar = (props) => {
             show={props.currentDropdownMolNo === props.molecule.molNo}
             onToggle={() => { props.molecule.molNo !== props.currentDropdownMolNo ? props.setCurrentDropdownMolNo(props.molecule.molNo) : props.setCurrentDropdownMolNo(-1) }}
             >
-                <div style={{height: convertViewtoPx(40, props.windowHeight) * 0.5, overflowY: 'scroll'}}>
+                <div style={{maxHeight: convertViewtoPx(40, props.windowHeight) * 0.5, overflowY: 'auto'}}>
                     {compressedButtons}
                 </div>
             </DropdownButton>

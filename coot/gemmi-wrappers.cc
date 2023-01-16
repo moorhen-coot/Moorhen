@@ -39,7 +39,7 @@ using namespace emscripten;
 using GemmiSMat33double = gemmi::SMat33<double>;
 using GemmiSMat33float = gemmi::SMat33<float>;
 
-gemmi::Structure read_structure_from_string(const std::string data, const std::string& path){
+gemmi::Structure read_structure_from_string(const std::string &data, const std::string& path){
     char *c_data = (char *)data.c_str();
     size_t size = data.length();
     return gemmi::read_structure_from_char_array(c_data,size,path);

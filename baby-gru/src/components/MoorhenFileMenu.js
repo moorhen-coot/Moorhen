@@ -4,7 +4,7 @@ import { MoorhenMap } from "../utils/MoorhenMap";
 import { useState, useRef } from "react";
 import { MoorhenImportDictionaryMenuItem, MoorhenImportMapCoefficientsMenuItem, MoorhenDeleteEverythingMenuItem, MoorhenLoadTutorialDataMenuItem, MoorhenImportMapMenuItem, MoorhenImportFSigFMenuItem } from "./MoorhenMenuItem";
 import { MenuItem } from "@mui/material";
-import { doDownload, readTextFile } from "../utils/MoorhenUtils";
+import { convertViewtoPx, doDownload, readTextFile } from "../utils/MoorhenUtils";
 
 export const MoorhenFileMenu = (props) => {
 
@@ -15,6 +15,7 @@ export const MoorhenFileMenu = (props) => {
     const [popoverIsShown, setPopoverIsShown] = useState(false)
     const [remoteSource, setRemoteSource] = useState("PDBe")
     const pdbCodeFetchInputRef = useRef(null);
+    const fetchMapDataCheckRef = useRef(null);
 
     const menuItemProps = { setPopoverIsShown, ...props }
 
@@ -53,12 +54,14 @@ export const MoorhenFileMenu = (props) => {
         let coordUrl = `https://www.ebi.ac.uk/pdbe/entry-files/download/pdb${pdbCode.toLowerCase()}.ent`
         let mapUrl = `https://www.ebi.ac.uk/pdbe/entry-files/${pdbCode.toLowerCase()}.ccp4`
         let diffMapUrl = `https://www.ebi.ac.uk/pdbe/entry-files/${pdbCode.toLowerCase()}_diff.ccp4`
-        if (pdbCode) {
+        if (pdbCode && fetchMapDataCheckRef.current.checked) {
             Promise.all([
                 fetchMoleculeFromURL(coordUrl, pdbCode),
                 fetchMapFromURL(mapUrl, `${pdbCode}-map`),
                 fetchMapFromURL(diffMapUrl, `${pdbCode}-map`, true)
             ])
+        } else if (pdbCode) {
+            fetchMoleculeFromURL(coordUrl, pdbCode)
         }
     }
 
@@ -66,12 +69,14 @@ export const MoorhenFileMenu = (props) => {
         let pdbCode = pdbCodeFetchInputRef.current.value.toLowerCase()
         let coordUrl = `https://pdb-redo.eu/db/${pdbCode.toLowerCase()}/${pdbCode.toLowerCase()}_final.pdb`
         let mtzUrl = `https://pdb-redo.eu/db/${pdbCode.toLowerCase()}/${pdbCode.toLowerCase()}_final.mtz/`
-        if (pdbCode) {
+        if (pdbCode && fetchMapDataCheckRef.current.checked) {
             Promise.all([
                 fetchMoleculeFromURL(coordUrl, `${pdbCode}-redo`),
                 fetchMtzFromURL(mtzUrl, `${pdbCode}-map-redo`,  {F: "FWT", PHI: "PHWT", Fobs: 'FP', SigFobs: 'SIGFP', FreeR: 'FREE', isDifference: false, useWeight: false, calcStructFact: true}),  
                 fetchMtzFromURL(mtzUrl, `${pdbCode}-map-redo`,  {F: "DELFWT", PHI: "PHDELWT", isDifference: true, useWeight: false})    
             ])
+        } else if (pdbCode) {
+            fetchMoleculeFromURL(coordUrl, `${pdbCode}-redo`)
         }
     }
 
@@ -254,57 +259,58 @@ export const MoorhenFileMenu = (props) => {
             show={props.currentDropdownId === props.dropdownId}
             style={{display:'flex', alignItems:'center'}}
             onToggle={() => { props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId(-1) }}>
-            <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="upload-coordinates-form" className="mb-3">
-                <Form.Label>Coordinates</Form.Label>
-                <Form.Control type="file" accept=".pdb, .mmcif, .cif, .ent" multiple={true} onChange={(e) => { loadPdbFiles(e.target.files) }}/>
-            </Form.Group>
-            <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="fetch-pdbe-form" className="mb-3">
-                <Form.Label>Fetch coords from online services</Form.Label>
-                <InputGroup>
-                <SplitButton title={remoteSource} id="fetch-coords-online-source-select">
-                    <Dropdown.Item key="PDBe" href="#" onClick={() => {
-                        setRemoteSource("PDBe")
-                    }}>PDBe</Dropdown.Item>
-                    <Dropdown.Item key="PDB-REDO" href="#" onClick={() => {
-                        setRemoteSource("PDB-REDO")
-                    }}>PDB-REDO</Dropdown.Item>
-                </SplitButton>
-                    <Form.Control type="text" ref={pdbCodeFetchInputRef} onKeyDown={(e) => {
-                        if (e.code === 'Enter') {
-                            fetchFiles()
-                        }
-                    }} />
-                    <Button variant="light" onClick={fetchFiles}>
-                        Fetch
-                    </Button>
-                </InputGroup>
-            </Form.Group>
+                <div style={{maxHeight: convertViewtoPx(60, props.windowHeight), overflowY: 'auto'}}>
+                    <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="upload-coordinates-form" className="mb-3">
+                        <Form.Label>Coordinates</Form.Label>
+                        <Form.Control type="file" accept=".pdb, .mmcif, .cif, .ent" multiple={true} onChange={(e) => { loadPdbFiles(e.target.files) }}/>
+                    </Form.Group>
+                    <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="fetch-pdbe-form" className="mb-3">
+                        <Form.Label>Fetch coords from online services</Form.Label>
+                        <InputGroup>
+                            <SplitButton title={remoteSource} id="fetch-coords-online-source-select">
+                                <Dropdown.Item key="PDBe" href="#" onClick={() => {
+                                    setRemoteSource("PDBe")
+                                }}>PDBe</Dropdown.Item>
+                                <Dropdown.Item key="PDB-REDO" href="#" onClick={() => {
+                                    setRemoteSource("PDB-REDO")
+                                }}>PDB-REDO</Dropdown.Item>
+                            </SplitButton>
+                            <Form.Control type="text" ref={pdbCodeFetchInputRef} onKeyDown={(e) => {
+                                if (e.code === 'Enter') {
+                                    fetchFiles()
+                                }
+                            }} />
+                            <Button variant="light" onClick={fetchFiles}>
+                                Fetch
+                            </Button>
+                        </InputGroup>
+                        <Form.Check style={{ marginTop: '0.5rem' }} ref={fetchMapDataCheckRef} label={'fetch map data'} name={`fetchMapData`} type="checkbox" variant="outline" />
+                    </Form.Group>
+                    <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="upload-session-form" className="mb-3">
+                        <Form.Label>Load from stored session</Form.Label>
+                        <Form.Control type="file" accept=".json" multiple={false} onChange={(e) => { loadSession(e.target.files[0]) }}/>
+                    </Form.Group>
 
-            <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="upload-session-form" className="mb-3">
-                <Form.Label>Load from stored session</Form.Label>
-                <Form.Control type="file" accept=".json" multiple={false} onChange={(e) => { loadSession(e.target.files[0]) }}/>
-            </Form.Group>
+                    <hr></hr>
 
-            <hr></hr>
+                    <MoorhenImportMapCoefficientsMenuItem {...menuItemProps} />
 
-            <MoorhenImportMapCoefficientsMenuItem {...menuItemProps} />
+                    <MoorhenImportFSigFMenuItem {...menuItemProps} />
 
-            <MoorhenImportFSigFMenuItem {...menuItemProps} />
+                    <MoorhenImportMapMenuItem {...menuItemProps} />
 
-            <MoorhenImportMapMenuItem {...menuItemProps} />
+                    <MoorhenImportDictionaryMenuItem {...menuItemProps} />
 
-            <MoorhenImportDictionaryMenuItem {...menuItemProps} />
+                    <MoorhenLoadTutorialDataMenuItem {...menuItemProps} />
 
-            <MoorhenLoadTutorialDataMenuItem {...menuItemProps} />
+                    <MenuItem id='download-session-menu-item' variant="success" onClick={downloadSession}>
+                        Download session
+                    </MenuItem>
+                    
+                    <hr></hr>
 
-            <MenuItem id='download-session-menu-item' variant="success" onClick={downloadSession}>
-                Download session
-            </MenuItem>
-            
-            <hr></hr>
-
-            <MoorhenDeleteEverythingMenuItem {...menuItemProps} />
-
+                    <MoorhenDeleteEverythingMenuItem {...menuItemProps} />
+                </div>
         </NavDropdown>
 
 
