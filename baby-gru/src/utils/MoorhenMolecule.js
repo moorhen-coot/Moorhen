@@ -350,7 +350,7 @@ MoorhenMolecule.prototype.drawRotamerDodecahedra = function (glRef) {
     const $this = this
     const style = "rotamer"
     return this.commandCentre.current.cootCommand({
-        returnType: "instanced_mesh",
+        returnType: "instanced_mesh_perm",
         command: "get_rotamer_dodecs_instanced",
         commandArgs: [$this.molNo]
     }).then(response => {
@@ -366,6 +366,8 @@ MoorhenMolecule.prototype.drawCootBonds = async function (glRef) {
     const $this = this
     const style = "CBs"
     return this.commandCentre.current.cootCommand({
+        //returnType: "instanced_mesh",
+        //command: "get_bonds_mesh_instanced",
         returnType: "mesh",
         command: "get_bonds_mesh",
         commandArgs: [

@@ -1184,12 +1184,13 @@ function getEncodedData(rssentries, createFun) {
     return allBuffers;
 }
 
-function initGL(canvas, WEBGL2) {
+function initGL(canvas) {
     let gl;
-    if (WEBGL2) {
-        gl = canvas.getContext("webgl2");
-    } else {
+    gl = canvas.getContext("webgl2");
+    let WEBGL2 = true;
+    if (!gl) {
         gl = canvas.getContext("webgl");
+        WEBGL2 = false;
     }
     if (!gl) {
         alert("Could not initialise WebGL, sorry :-(");
@@ -1200,7 +1201,7 @@ function initGL(canvas, WEBGL2) {
     console.log(gl.viewportWidth, gl.viewportHeight);
     console.log(gl.getContextAttributes());
     console.log("Max varying vectors: " + gl.getParameter(gl.MAX_VARYING_VECTORS));
-    return gl;
+    return {gl:gl,WEBGL2:WEBGL2};
 }
 
 function getShader(gl, str, type) {
@@ -1544,7 +1545,10 @@ class MGWebGL extends Component {
         this.gl_cursorPos[0] = this.canvas.width / 2.;
         this.gl_cursorPos[1] = this.canvas.height / 2.;
 
-        this.gl = initGL(this.canvas, this.WEBGL2);
+        const glc = initGL(this.canvas);
+        this.gl = glc.gl;
+        this.WEBGL2 = glc.WEBGL2;
+
         //self.setState({width:window.innerWidth/3, height:window.innerHeight/3}, ()=> self.resize(window.innerWidth/3, window.innerHeight/3));
         const extensionArray = this.gl.getSupportedExtensions();
         console.log(extensionArray);
@@ -6375,7 +6379,7 @@ class MGWebGL extends Component {
                     if(this.displayBuffers[idx].triangleInstanceSizeBuffer[j]){
                         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleInstanceSizeBuffer[j]);
                         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[idx].triangleInstanceSizes[j]), this.gl.STATIC_DRAW);
-                        this.displayBuffers[idx].triangleInstanceSizeBuffer[j].itemSize = 1;
+                        this.displayBuffers[idx].triangleInstanceSizeBuffer[j].itemSize = 3;
                     }
                     if(this.displayBuffers[idx].triangleInstanceOriginBuffer[j]){
                         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleInstanceOriginBuffer[j]);
@@ -11160,6 +11164,7 @@ class MGWebGL extends Component {
             this.displayBuffers[this.currentBufferIdx].triangleInstanceSizes[this.displayBuffers[this.currentBufferIdx].triangleInstanceSizes.length - 1].push(parseFloat(tri[j]));
             this.displayBuffers[this.currentBufferIdx].triangleInstanceSizeBuffer[this.displayBuffers[this.currentBufferIdx].triangleInstanceSizeBuffer.length - 1].numItems++;
         }
+        this.displayBuffers[this.currentBufferIdx].triangleInstanceSizeBuffer[this.displayBuffers[this.currentBufferIdx].triangleInstanceSizeBuffer.length - 1].numItems /= 3;
     }
 
     createVertexBuffer(tri) {

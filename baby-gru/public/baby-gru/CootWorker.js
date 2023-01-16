@@ -20,7 +20,7 @@ let print = (stuff) => {
     postMessage({ consoleMessage: JSON.stringify(stuff) })
 }
 
-const instancedMeshToMeshData = (instanceMesh) => {
+const instancedMeshToMeshData = (instanceMesh,perm) => {
 
     let totIdxs = []
     let totPos = []
@@ -46,21 +46,24 @@ const instancedMeshToMeshData = (instanceMesh) => {
         const triangles = inst.triangles;
         for (let i = 0; i < triangles.size(); i++) {
             const idxs = triangles.get(i).point_id;
-            thisIdxs.push(...[idxs[0],idxs[2],idxs[1]]);
+            if(perm)
+                thisIdxs.push(...[idxs[0],idxs[2],idxs[1]]);
+            else
+                thisIdxs.push(...[idxs[0],idxs[1],idxs[2]]);
         }
         for (let i = 0; i < vertices.size(); i++) {
             const vert = vertices.get(i);
             thisPos.push(...vert.pos);
             thisNorm.push(...vert.normal);
         }
-        //Cannot (yet?) cope with mix of type A and B. (I think!)
-        if(inst.instancing_data_A.size()>0){
-            for(let j=0;j<inst.instancing_data_A.size();j++){
+
+        const As = inst.instancing_data_A;
+        if(As.size()>0){
+            for(let j=0;j<As.size();j++){
                 const inst_data = inst.instancing_data_A.get(j)
                 thisInstance_origins.push(...inst_data.position)
                 thisInstance_colours.push(...inst_data.colour)
-                //Ah! I am assuming one scaling parameter; Coot provides 3.
-                thisInstance_sizes.push(inst_data.size[0])
+                thisInstance_sizes.push(...inst_data.size)
                 thisInstance_orientations.push(...[
                 1.0, 0.0, 0.0, 0.0,
                 0.0, 1.0, 0.0, 0.0,
@@ -68,7 +71,23 @@ const instancedMeshToMeshData = (instanceMesh) => {
                 0.0, 0.0, 0.0, 1.0,
                 ])
             }
-        } else {
+        }
+
+        console.log("Bs",inst.instancing_data_B.size())
+        const Bs = inst.instancing_data_B;
+        if(Bs.size()>0){
+            console.log("This B",Bs.size())
+            for(let j=0;j<Bs.size();j++){
+                const inst_data = Bs.get(j)
+                thisInstance_origins.push(...inst_data.position)
+                thisInstance_colours.push(...inst_data.colour)
+                thisInstance_sizes.push(...inst_data.size)
+
+                thisInstance_orientations.push(...inst_data.orientation[0])
+                thisInstance_orientations.push(...inst_data.orientation[1])
+                thisInstance_orientations.push(...inst_data.orientation[2])
+                thisInstance_orientations.push(...inst_data.orientation[3])
+            }
         }
 
         totNorm.push(thisNorm)
@@ -482,6 +501,9 @@ onmessage = function (e) {
             let returnResult;
 
             switch (returnType) {
+                case 'instanced_mesh_perm':
+                    returnResult = instancedMeshToMeshData(cootResult,true)
+                    break;
                 case 'instanced_mesh':
                     returnResult = instancedMeshToMeshData(cootResult)
                     break;

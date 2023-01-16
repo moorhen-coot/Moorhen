@@ -443,6 +443,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("mutate",&molecules_container_t::mutate)
     .function("delete_using_cid",&molecules_container_t::delete_using_cid)
     .function("get_bonds_mesh",&molecules_container_t::get_bonds_mesh)
+    .function("get_bonds_mesh_instanced",&molecules_container_t::get_bonds_mesh_instanced)
     .function("go_to_blob",&molecules_container_t::go_to_blob)
     .function("set_map_sampling_rate",&molecules_container_t::set_map_sampling_rate)
     .function("get_monomer",&molecules_container_t::get_monomer)
@@ -600,7 +601,13 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<merge_molecule_results_info_t>("Vectormerge_molecule_results_info_t");
     register_vector<coot::phi_psi_prob_t>("Vectophi_psi_prob_t");
 
-    value_array<glm::vec3>("array_float_3")
+    value_array<glm::mat4>("array_mat4")
+        .element(emscripten::index<0>())
+        .element(emscripten::index<1>())
+        .element(emscripten::index<2>())
+        .element(emscripten::index<3>())
+    ;
+     value_array<glm::vec3>("array_float_3")
         .element(emscripten::index<0>())
         .element(emscripten::index<1>())
         .element(emscripten::index<2>())

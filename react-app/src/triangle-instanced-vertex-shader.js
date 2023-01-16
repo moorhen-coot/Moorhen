@@ -5,7 +5,7 @@ var triangle_instanced_vertex_shader_source = `#version 300 es\n
     in vec3 aVertexNormal;
     in vec2 aVertexTexture;
     in vec3 instancePosition;
-    in float instanceSize;
+    in vec3 instanceSize;
     in mat4 instanceOrientation;
 
     uniform mat4 uMVMatrix;

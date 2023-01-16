@@ -5,7 +5,7 @@ var triangle_instanced_vertex_shader_source = `
     attribute vec3 aVertexNormal;
     attribute vec2 aVertexTexture;
     attribute vec3 instancePosition;
-    attribute float instanceSize;
+    attribute vec3 instanceSize;
     attribute mat4 instanceOrientation;
 
     uniform mat4 uMVMatrix;
