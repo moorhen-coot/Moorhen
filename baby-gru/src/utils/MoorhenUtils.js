@@ -339,24 +339,35 @@ export const getBufferAtoms = (gemmiStructure, exclude_ligands_and_waters=false)
             const models = gemmiStructure.models
             for (let modelIndex = 0; modelIndex < models.size(); modelIndex++) {
                 const model = models.get(modelIndex)
+                const modelName = model.name
                 const chains  = model.chains
                 for (let chainIndex = 0; chainIndex < chains.size(); chainIndex++) {
                     const chain = chains.get(chainIndex)
+                    const chainName = chain.name
                     const residues = chain.residues
                     for (let residueIndex = 0; residueIndex < residues.size(); residueIndex++) {
                         const residue = residues.get(residueIndex)
+                        const residueName = residue.name
+                        const resNum = residue.seqid.str()
                         const atoms = residue.atoms
                         for (let atomIndex = 0; atomIndex < atoms.size(); atomIndex++) {
                             const atom = atoms.get(atomIndex)
-                            const atomElement = window.CCP4Module.getElementNameAsString(atom.element)
+                            const atomPosX = atom.pos.x
+                            const atomPosY = atom.pos.y
+                            const atomPosZ = atom.pos.z
+                            const atomElement = atom.element
+                            const atomElementString = window.CCP4Module.getElementNameAsString(atomElement)
+                            const atomCharge = atom.charge
+                            const atomTemp = atom.b_iso
+                            const atomAltLoc = atom.altloc
                             atomList.push({
-                                x: atom.pos.x,
-                                y: atom.pos.y,
-                                z: atom.pos.z,
-                                tempFactor: atom.b_iso,
-                                charge: atom.charge,
-                                symbol: atomElement,
-                                label: `/${model.name}/${chain.name}/${residue.seqid.str()}(${residue.name})/${atomElement}${atom.has_altloc() ? ':' + String.fromCharCode(atom.altloc) : ''}`
+                                x: atomPosX,
+                                y: atomPosY,
+                                z: atomPosZ,
+                                tempFactor: atomTemp,
+                                charge: atomCharge,
+                                symbol: atomElementString,
+                                label: `/${modelName}/${chainName}/${resNum}(${residueName})/${atomElementString}${atom.has_altloc() ? ':' + String.fromCharCode(atomAltLoc) : ''}`
                             })
                         }
                     }

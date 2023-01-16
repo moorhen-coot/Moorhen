@@ -66,14 +66,17 @@ MoorhenMolecule.prototype.parseSequences = function () {
                 let currentSequence = []
                 const chain = chains.get(chainIndex)
                 const residues = chain.residues
-                const polymerType = window.CCP4Module.check_polymer_type(chain.get_polymer_const())
-                let threeToOne = [3, 4, 5].includes(polymerType.value) ? nucleotideCodesThreeToOne : residueCodesThreeToOne
+                const chainName = chain.name
+                const polymerType = window.CCP4Module.check_polymer_type(chain.get_polymer_const()).value
+                let threeToOne = [3, 4, 5].includes(polymerType) ? nucleotideCodesThreeToOne : residueCodesThreeToOne
                 for (let residueIndex = 0; residueIndex < residues.size(); residueIndex++) {
                     const residue = residues.get(residueIndex)
+                    const resName = residue.name
+                    const resNum = Number(residue.seqid.str())
                     currentSequence.push({
-                        resNum: Number(residue.seqid.str()),
-                        resCode: Object.keys(threeToOne).includes(residue.name) ? threeToOne[residue.name] : 'X',
-                        cid: `//${chain.name}/${residue.seqid.str()}(${residue.name})/`
+                        resNum: resNum,
+                        resCode: Object.keys(threeToOne).includes(resName) ? threeToOne[resName] : 'X',
+                        cid: `//${chainName}/${resNum}(${resName})/`
                     })
                 }
                 if (currentSequence.length > 0) {
