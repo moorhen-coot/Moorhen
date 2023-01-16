@@ -108,7 +108,9 @@ ${coot_src}/api/interfaces.cc
 ${coot_src}/api/colour-functions.cc
 ${coot_src}/api/coot-colour.cc
 ${coot_src}/api/coot_molecule.cc
+${coot_src}/api/coot_molecule_backup.cc
 ${coot_src}/api/coot_molecule_bonds.cc
+${coot_src}/api/coot_molecule_bonds_instanced.cc
 ${coot_src}/api/coot_molecule_maps.cc
 ${coot_src}/api/coot_molecule_moltris.cc
 ${coot_src}/api/phi-psi-prob.cc
