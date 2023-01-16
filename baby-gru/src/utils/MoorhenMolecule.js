@@ -81,16 +81,19 @@ MoorhenMolecule.prototype.parseSequences = function () {
                         resCode: Object.keys(threeToOne).includes(resName) ? threeToOne[resName] : 'X',
                         cid: `//${chainName}/${resNum}(${resName})/`
                     })
+                    residue.delete()
                 }
                 if (currentSequence.length > 0) {
                     sequences.push({
-                        name: `${this.name}_${chain.name}`,
-                        chain: chain.name,
+                        name: `${this.name}_${chainName}`,
+                        chain: chainName,
                         type: polymerType,
                         sequence: currentSequence,
                     })
                 }
+                chain.delete()
             }
+            model.delete()
         }
     } finally {
         structure.delete()
@@ -1035,32 +1038,41 @@ MoorhenMolecule.prototype.redo = async function (glRef) {
 
 MoorhenMolecule.prototype.gemmiAtomsForCid = async function (cid) {
     const $this = this
+   
     if ($this.atomsDirty) {
         await $this.updateAtoms()
     }
+    
     let result = []
     const selection = new window.CCP4Module.Selection(cid)
     const model = $this.gemmiStructure.first_model()
+    
     if (selection.matches_model(model)) {
         const chains = model.chains
         for (let i = 0; i < chains.size(); i++) {
-            const ch = chains.get(i)
-            if (selection.matches_chain(ch)) {
-                const residues = ch.residues
+            const chain = chains.get(i)
+            if (selection.matches_chain(chain)) {
+                const residues = chain.residues
                 for (let j = 0; j < residues.size(); j++) {
-                    const res = residues.get(j)
-                    if (selection.matches_residue(res)) {
-                        const atoms = res.atoms
+                    const residue = residues.get(j)
+                    if (selection.matches_residue(residue)) {
+                        const atoms = residue.atoms
                         for (let k = 0; k < atoms.size(); k++) {
-                            const at = atoms.get(k)
-                            if (selection.matches_atom(at)) {
-                                result.push(at)
+                            const atom = atoms.get(k)
+                            if (selection.matches_atom(atom)) {
+                                result.push(atom)
                             }
                         }
                     }
+                    residue.delete()
                 }
             }
+            chain.delete()
         }
     }
+    
+    selection.delete()
+    model.delete()
+    
     return Promise.resolve(result)
 }
