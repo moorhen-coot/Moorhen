@@ -119,7 +119,7 @@ export const MoorhenContainer = (props) => {
     useEffect(() => {
         async function setMakeBackupsAPI() {
             await commandCentre.current.cootCommand({
-                command: 'set_make_backup',
+                command: 'set_make_backups',
                 commandArgs: [preferences.makeBackups],
                 returnType: "status"
             })
