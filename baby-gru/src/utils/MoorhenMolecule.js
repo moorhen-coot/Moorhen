@@ -61,10 +61,10 @@ MoorhenMolecule.prototype.parseSequences = function () {
         for (let modelIndex = 0; modelIndex < models.size(); modelIndex++) {
             const model = models.get(modelIndex)
             const chains = model.chains
-            window.CCP4Module.remove_ligands_and_waters_model(model)
             for (let chainIndex = 0; chainIndex < chains.size(); chainIndex++) {
                 let currentSequence = []
                 const chain = chains.get(chainIndex)
+                window.CCP4Module.remove_ligands_and_waters_chain(chain)
                 const residues = chain.residues
                 const chainName = chain.name
                 const polymerType = window.CCP4Module.check_polymer_type(chain.get_polymer_const()).value
