@@ -329,34 +329,43 @@ export const centreOnGemmiAtoms = (atoms) => {
 }
 
 export const getBufferAtoms = (gemmiStructure, exclude_ligands_and_waters=false) => {
-        let structure = gemmiStructure.clone()        
         if (exclude_ligands_and_waters) {
-            window.CCP4Module.remove_ligands_and_waters_structure(structure)
+            window.CCP4Module.remove_ligands_and_waters_structure(gemmiStructure)
         }
    
         let atomList = []
-        for (let modelIndex = 0; modelIndex < structure.models.size(); modelIndex++) {
-            const model = structure.models.get(modelIndex)
-            for (let chainIndex = 0; chainIndex < model.chains.size(); chainIndex++) {
-                const chain = model.chains.get(chainIndex)
-                for (let residueIndex = 0; residueIndex < chain.residues.size(); residueIndex++) {
-                    const residue = chain.residues.get(residueIndex)
-                    for (let atomIndex = 0; atomIndex < residue.atoms.size(); atomIndex++) {
-                        const atom = residue.atoms.get(atomIndex)
-                        const atomElement = window.CCP4Module.getElementNameAsString(atom.element)
-                        atomList.push({
-                            x: atom.pos.x,
-                            y: atom.pos.y,
-                            z: atom.pos.z,
-                            tempFactor: atom.b_iso,
-                            charge: atom.charge,
-                            symbol: atomElement,
-                            label: `/${model.name}/${chain.name}/${residue.seqid.str()}(${residue.name})/${atomElement}${atom.has_altloc() ? ':' + String.fromCharCode(atom.altloc) : ''}`
-                        })
+
+        try {
+            const models = gemmiStructure.models
+            for (let modelIndex = 0; modelIndex < models.size(); modelIndex++) {
+                const model = models.get(modelIndex)
+                const chains  = model.chains
+                for (let chainIndex = 0; chainIndex < chains.size(); chainIndex++) {
+                    const chain = chains.get(chainIndex)
+                    const residues = chain.residues
+                    for (let residueIndex = 0; residueIndex < residues.size(); residueIndex++) {
+                        const residue = residues.get(residueIndex)
+                        const atoms = residue.atoms
+                        for (let atomIndex = 0; atomIndex < atoms.size(); atomIndex++) {
+                            const atom = atoms.get(atomIndex)
+                            const atomElement = window.CCP4Module.getElementNameAsString(atom.element)
+                            atomList.push({
+                                x: atom.pos.x,
+                                y: atom.pos.y,
+                                z: atom.pos.z,
+                                tempFactor: atom.b_iso,
+                                charge: atom.charge,
+                                symbol: atomElement,
+                                label: `/${model.name}/${chain.name}/${residue.seqid.str()}(${residue.name})/${atomElement}${atom.has_altloc() ? ':' + String.fromCharCode(atom.altloc) : ''}`
+                            })
+                        }
                     }
                 }
             }
+        } finally {
+            gemmiStructure.delete()
         }
+
         return atomList
 }
 
