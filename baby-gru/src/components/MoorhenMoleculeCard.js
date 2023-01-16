@@ -203,6 +203,7 @@ export const MoorhenMoleculeCard = (props) => {
                         currentDropdownMolNo={props.currentDropdownMolNo}
                         setCurrentDropdownMolNo={props.setCurrentDropdownMolNo}
                         bondSettingsProps={bondSettingsProps}
+                        backupsEnabled={props.makeBackups}
                         {...handleProps}
                     />
                 </Col>
