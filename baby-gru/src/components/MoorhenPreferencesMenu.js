@@ -11,7 +11,7 @@ export const MoorhenPreferencesMenu = (props) => {
         defaultExpandDisplayCards, setDefaultExpandDisplayCards, defaultLitLines,
         setDefaultLitLines, refineAfterMod, setRefineAfterMod, mouseSensitivity,
         setMouseSensitivity, drawCrosshairs, setDrawCrosshairs, drawMissingLoops,
-        setDrawMissingLoops, mapLineWidth, setMapLineWidth
+        setDrawMissingLoops, mapLineWidth, setMapLineWidth, makeBackups, setMakeBackups
      } = props;
     const [showModal, setShowModal] = useState(null);
 
@@ -72,6 +72,13 @@ export const MoorhenPreferencesMenu = (props) => {
                             checked={drawMissingLoops}
                             onChange={() => { setDrawMissingLoops(!drawMissingLoops) }}
                             label="Show missing loops"/>
+                    </InputGroup>
+                    <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                        <Form.Check 
+                            type="switch"
+                            checked={makeBackups}
+                            onChange={() => { setMakeBackups(!makeBackups) }}
+                            label="Make molecule backups"/>
                     </InputGroup>
                     <hr></hr>
                     <Form.Group controlId="mouseSensitivitySlider" style={{paddingTop:'0rem', paddingBottom:'0.5rem', paddingRight:'0.5rem', paddingLeft:'1rem', width: '25rem'}}>
