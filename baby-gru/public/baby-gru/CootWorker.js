@@ -519,8 +519,8 @@ onmessage = function (e) {
             }
 
             postMessage({
-                returnType, command, commandArgs, message, messageId, myTimeStamp,
-                consoleMessage: `Completed ${command} with args ${commandArgs} in ${Date.now() - e.data.myTimeStamp} ms`,
+                returnType, command, message, messageId, myTimeStamp,
+                consoleMessage: `Completed ${command} in ${Date.now() - e.data.myTimeStamp} ms`,
                 result: { status: 'Completed', result: returnResult }
             })
         }
@@ -530,7 +530,7 @@ onmessage = function (e) {
                 messageId: e.data.messageId,
                 myTimeStamp: e.data.myTimeStamp,
                 message: e.data.message,
-                consoleMessage: `EXCEPTION RAISED IN ${command} with args ${commandArgs}, ${err}`,
+                consoleMessage: `EXCEPTION RAISED IN ${command}, ${err}`,
                 result: { status: 'Exception' }
             })
         }
