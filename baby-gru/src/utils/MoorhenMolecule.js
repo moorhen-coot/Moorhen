@@ -490,7 +490,7 @@ MoorhenMolecule.prototype.drawCootRepresentation = async function (glRef, style)
 
 MoorhenMolecule.prototype.show = function (style, glRef) {
     //console.log("show",{style})
-    if (this.displayObjects[style].length == 0) {
+    if (this.displayObjects[style].length === 0) {
         return this.fetchIfDirtyAndDraw(style, glRef)
             .then(_ => { glRef.current.drawScene() })
     }
@@ -879,7 +879,7 @@ MoorhenMolecule.prototype.transformedCachedAtomsAsMovedAtoms = function (glRef) 
                         const transPos = vec3.create()
                         vec3.set(atomPos, x, y, z)
                         vec3.transformMat4(transPos, atomPos, theMatrix);
-                        if (atomSymbol.length == 2) {
+                        if (atomSymbol.length === 2) {
                             movedAtoms.push({ name: (atomName).padEnd(4, " "), x: transPos[0] - glRef.current.origin[0] + diff[0], y: transPos[1] - glRef.current.origin[1] + diff[1], z: transPos[2] - glRef.current.origin[2] + diff[2], resCid: cid })
                         } else {
                             movedAtoms.push({ name: (" " + atomName).padEnd(4, " "), x: transPos[0] - glRef.current.origin[0] + diff[0], y: transPos[1] - glRef.current.origin[1] + diff[1], z: transPos[2] - glRef.current.origin[2] + diff[2], resCid: cid })
