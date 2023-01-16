@@ -268,6 +268,18 @@ describe('Testing molecules_container_js', () => {
             expect(inst.triangles.size()).toBe(36)
             expect(inst.instancing_data_A.size()).toBe(650)
             expect(inst.instancing_data_B.size()).toBe(0)
+            for(let j=0;j<inst.vertices.size();j++){
+                const vert = inst.vertices.get(j)
+                console.log(vert)
+                console.log(vert.pos)
+                console.log(vert.normal)
+            }
+            for(let j=0;j<inst.instancing_data_A.size();j++){
+                const inst_data = inst.instancing_data_A.get(j)
+                console.log("pos:",inst_data.position)
+                console.log("col",inst_data.colour)
+                console.log("size",inst_data.size)
+            }
         }
     })
 
