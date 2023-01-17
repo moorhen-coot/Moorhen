@@ -132,11 +132,27 @@ const instancedMeshToMeshData = (instanceMesh,perm) => {
                 thisInstance_sizes.push(instDataSize[2])
 
                 const instDataOrientation = inst_data.orientation
-                thisInstance_orientations.push(...instDataOrientation[0])
-                thisInstance_orientations.push(...instDataOrientation[1])
-                thisInstance_orientations.push(...instDataOrientation[2])
-                thisInstance_orientations.push(...instDataOrientation[3])
-                
+
+                thisInstance_orientations.push(instDataOrientation[0][0])
+                thisInstance_orientations.push(instDataOrientation[0][1])
+                thisInstance_orientations.push(instDataOrientation[0][2])
+                thisInstance_orientations.push(instDataOrientation[0][3])
+
+                thisInstance_orientations.push(instDataOrientation[1][0])
+                thisInstance_orientations.push(instDataOrientation[1][1])
+                thisInstance_orientations.push(instDataOrientation[1][2])
+                thisInstance_orientations.push(instDataOrientation[1][3])
+
+                thisInstance_orientations.push(instDataOrientation[2][0])
+                thisInstance_orientations.push(instDataOrientation[2][1])
+                thisInstance_orientations.push(instDataOrientation[2][2])
+                thisInstance_orientations.push(instDataOrientation[2][3])
+
+                thisInstance_orientations.push(instDataOrientation[3][0])
+                thisInstance_orientations.push(instDataOrientation[3][1])
+                thisInstance_orientations.push(instDataOrientation[3][2])
+                thisInstance_orientations.push(instDataOrientation[3][3])
+
                 inst_data.delete()
             }
         }
