@@ -47,7 +47,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     if (action === 'sphere_refine' && activeMap && hoveredAtom.molecule) {
         const chosenAtom = cidToSpec(hoveredAtom.cid)
         const commandArgs = [
-            `${hoveredAtom.molecule.molNo}`,
+            hoveredAtom.molecule.molNo,
             `//${chosenAtom.chain_id}/${chosenAtom.res_no}`,
             "SPHERE"]
         commandCentre.current.cootCommand({
@@ -64,7 +64,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     else if (action === 'flip_peptide' && activeMap && hoveredAtom.molecule) {
         const chosenAtom = cidToSpec(hoveredAtom.cid)
         const commandArgs = [
-            `${hoveredAtom.molecule.molNo}`,
+            hoveredAtom.molecule.molNo,
             `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`,
             '']
         commandCentre.current.cootCommand({
@@ -81,7 +81,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     else if (action === 'triple_refine' && activeMap && hoveredAtom.molecule) {
         const chosenAtom = cidToSpec(hoveredAtom.cid)
         const commandArgs = [
-            `${hoveredAtom.molecule.molNo}`,
+            hoveredAtom.molecule.molNo,
             `//${chosenAtom.chain_id}/${chosenAtom.res_no}`,
             "TRIPLE"]
         commandCentre.current.cootCommand({
