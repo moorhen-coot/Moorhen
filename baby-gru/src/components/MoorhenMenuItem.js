@@ -1178,15 +1178,29 @@ export const MoorhenCentreOnLigandMenuItem = (props) => {
             let newMoleculeNode = { title: molecule.name, key: molecule.molNo, type: "molecule" }
             const model = molecule.gemmiStructure.first_model()
             const ligandCids = []
-            for (let i = 0; i < model.chains.size(); i++) {
-                const chain = model.chains.get(i)
-                const ligands = chain.get_ligands()
-                for (let j = 0; j < ligands.length(); j++) {
-                    const ligand = ligands.at(j)
-                    const ligandCid = `/${model.name}/${chain.name}/${ligand.seqid.num?.value}(${ligand.name})`
-                    ligandCids.push({ molecule: molecule, title: ligandCid, key: ligandCid, type: "ligand" })
+            
+            try {
+                const chains = model.chains
+                const chainsSize = chains.size()
+                for (let i = 0; i < chainsSize; i++) {
+                    const chain = chains.get(i)
+                    const ligands = chain.get_ligands()
+                    for (let j = 0; j < ligands.length(); j++) {
+                        const ligand = ligands.at(j)
+                        const ligandSeqId = ligand.seqid
+                        const ligandCid = `/${model.name}/${chain.name}/${ligandSeqId.num?.value}(${ligand.name})`
+                        ligandCids.push({ molecule: molecule, title: ligandCid, key: ligandCid, type: "ligand" })
+                        ligand.delete()
+                        ligandSeqId.delete()
+                    }
+                    chains.delete()
+                    ligands.delete()
                 }
+                chains.delete()   
+            } finally {
+                model.delete()
             }
+
             if (ligandCids.length > 0) {
                 newMoleculeNode.children = ligandCids
             }
@@ -1207,7 +1221,7 @@ export const MoorhenCentreOnLigandMenuItem = (props) => {
                             const selAtoms = await e.node.molecule.gemmiAtomsForCid(e.node.title)
                             const reducedValue = selAtoms.reduce(
                                 (accumulator, currentValue) => {
-                                    const newSum = accumulator.sumXyz.map((coord, i) => coord + currentValue.pos.at(i))
+                                    const newSum = accumulator.sumXyz.map((coord, i) => coord + currentValue.pos[i])
                                     const newCount = accumulator.count + 1
                                     return { sumXyz: newSum, count: newCount }
                                 },
@@ -1219,7 +1233,6 @@ export const MoorhenCentreOnLigandMenuItem = (props) => {
                                     reducedValue.sumXyz.map(coord => -coord / reducedValue.count)
                                     , true)
                             }
-                            selAtoms.forEach(atom => atom.delete())
                         }
                     }}
                 >

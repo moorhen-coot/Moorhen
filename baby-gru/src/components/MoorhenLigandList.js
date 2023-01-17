@@ -19,15 +19,33 @@ export const MoorhenLigandList = (props) => {
         
         let ligandList = []
         const model = props.molecule.gemmiStructure.first_model()
-        const chains = model.chains
-        for (let i = 0; i < chains.size(); i++) {
-            let chain = chains.get(i)
-            const ligands = chain.get_ligands_const()
-            for (let j = 0; j < ligands.size(); j++) {
-                let ligand = ligands.at(j)
-                ligandList.push({res: ligand, chainName: chain.name})
+
+        try{
+            const chains = model.chains
+            const chainsSize = chains.size()
+            for (let i = 0; i < chainsSize; i++) {
+                const chain = chains.get(i)
+                const chainName = chain.name
+                const ligands = chain.get_ligands_const()
+                const ligandsSize = ligands.size()
+                for (let j = 0; j < ligandsSize; j++) {
+                    let ligand = ligands.at(j)
+                    const resName = ligand.name
+                    const ligandSeqId = ligand.seqid
+                    const resNum = ligandSeqId.str()
+                    ligandList.push({resName: resName, chainName: chainName, resNum: resNum})
+                    ligand.delete()
+                    ligandSeqId.delete()
+                }
+                chain.delete()
+                ligands.delete()
             }
+            chains.delete()
+    
+        } finally {
+            model.delete()
         }
+
         setLigandList(ligandList)
 
     }, [cachedGemmiStructure])
@@ -46,10 +64,10 @@ export const MoorhenLigandList = (props) => {
                                             <Card.Body>
                                                 <Row style={{display:'flex', justifyContent:'between'}}>
                                                     <Col style={{alignItems:'center', justifyContent:'left', display:'flex'}}>
-                                                        {`${ligand.chainName}/${ligand.res.seqid.str()}(${ligand.res.name})`}
+                                                        {`${ligand.chainName}/${ligand.resNum}(${ligand.resName})`}
                                                     </Col>
                                                     <Col className='col-3' style={{justifyContent: 'right', display:'flex'}}>
-                                                        <Button onClick={() => {props.molecule.centreOn(props.glRef, `/*/${ligand.chainName}/${ligand.res.seqid.str()}-${ligand.res.seqid.str()}/*`)}}>
+                                                        <Button onClick={() => {props.molecule.centreOn(props.glRef, `/*/${ligand.chainName}/${ligand.resNum}-${ligand.resNum}/*`)}}>
                                                             View
                                                         </Button>
                                                     </Col>

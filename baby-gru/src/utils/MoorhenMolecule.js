@@ -61,40 +61,51 @@ MoorhenMolecule.prototype.parseSequences = function () {
     const structure = this.gemmiStructure.clone()
     try {
         const models = structure.models
-        for (let modelIndex = 0; modelIndex < models.size(); modelIndex++) {
+        const modelsSize = models.size()
+        for (let modelIndex = 0; modelIndex < modelsSize; modelIndex++) {
             const model = models.get(modelIndex)
             const chains = model.chains
-            for (let chainIndex = 0; chainIndex < chains.size(); chainIndex++) {
+            const chainsSize = chains.size()
+            for (let chainIndex = 0; chainIndex < chainsSize; chainIndex++) {
                 let currentSequence = []
                 const chain = chains.get(chainIndex)
                 window.CCP4Module.remove_ligands_and_waters_chain(chain)
                 const residues = chain.residues
                 const chainName = chain.name
-                const polymerType = window.CCP4Module.check_polymer_type(chain.get_polymer_const()).value
-                let threeToOne = [3, 4, 5].includes(polymerType) ? nucleotideCodesThreeToOne : residueCodesThreeToOne
-                for (let residueIndex = 0; residueIndex < residues.size(); residueIndex++) {
+                const polymerConst = chain.get_polymer_const()
+                const polymerType = window.CCP4Module.check_polymer_type(polymerConst)
+                const polymerTypeValue = polymerType.value
+                let threeToOne = [3, 4, 5].includes(polymerTypeValue) ? nucleotideCodesThreeToOne : residueCodesThreeToOne
+                const residuesSize = residues.size()
+                for (let residueIndex = 0; residueIndex < residuesSize; residueIndex++) {
                     const residue = residues.get(residueIndex)
                     const resName = residue.name
-                    const resNum = Number(residue.seqid.str())
+                    const residueSeqId = residue.seqid
+                    const resNum = residueSeqId.str()
                     currentSequence.push({
-                        resNum: resNum,
+                        resNum: Number(resNum),
                         resCode: Object.keys(threeToOne).includes(resName) ? threeToOne[resName] : 'X',
                         cid: `//${chainName}/${resNum}(${resName})/`
                     })
                     residue.delete()
+                    residueSeqId.delete()
                 }
                 if (currentSequence.length > 0) {
                     sequences.push({
                         name: `${this.name}_${chainName}`,
                         chain: chainName,
-                        type: polymerType,
+                        type: polymerTypeValue,
                         sequence: currentSequence,
                     })
                 }
                 chain.delete()
+                residues.delete()
+                polymerConst.delete()
             }
             model.delete()
+            chains.delete()
         }
+        models.delete()
     } finally {
         structure.delete()
     }
@@ -292,7 +303,6 @@ MoorhenMolecule.prototype.centreOn = function (glRef, selectionCid) {
         }
 
         let selectionCentre = centreOnGemmiAtoms(selectionAtoms)
-        selectionAtoms.forEach(atom => atom.delete())
 
         return new Promise((resolve, reject) => {
             glRef.current.setOrigin(selectionCentre);
@@ -715,17 +725,17 @@ const gemmiAtomsToCirclesSpheresInfo = (atoms, size, primType, colourScheme) => 
 
     for (let iat = 0; iat < atoms.length; iat++) {
         sphere_idx_tri.push(iat);
-        sphere_vert_tri.push(atoms[iat].pos.at(0));
-        sphere_vert_tri.push(atoms[iat].pos.at(1));
-        sphere_vert_tri.push(atoms[iat].pos.at(2));
+        sphere_vert_tri.push(atoms[iat].pos[0]);
+        sphere_vert_tri.push(atoms[iat].pos[1]);
+        sphere_vert_tri.push(atoms[iat].pos[2]);
         for (let ip = 0; ip < colourScheme[`${atoms[iat].serial}`].length; ip++) {
             sphere_col_tri.push(colourScheme[`${atoms[iat].serial}`][ip])
         }
         sphere_sizes.push(size);
         let atom = {};
-        atom["x"] = atoms[iat].pos.at(0);
-        atom["y"] = atoms[iat].pos.at(1);
-        atom["z"] = atoms[iat].pos.at(2);
+        atom["x"] = atoms[iat].pos[0];
+        atom["y"] = atoms[iat].pos[1];
+        atom["z"] = atoms[iat].pos[2];
         atom["tempFactor"] = atoms[iat].b_iso;
         atom["charge"] = atoms[iat].charge;
         atom["symbol"] = atoms[iat].element;
@@ -760,7 +770,6 @@ MoorhenMolecule.prototype.drawHover = async function (glRef, selectionString) {
         ]
         $this.clearBuffersOfStyle(style, glRef)
         this.addBuffersOfStyle(glRef, objects, style)
-        selectedGemmiAtoms.forEach(atom => atom.delete())
     }
     return
 
@@ -871,22 +880,33 @@ MoorhenMolecule.prototype.transformedCachedAtomsAsMovedAtoms = function (glRef) 
     const $this = this
     let movedResidues = [];
 
-    for (let modelIndex = 0; modelIndex < this.gemmiStructure.models.size(); modelIndex++) {
-        const model = this.gemmiStructure.models.get(modelIndex)
-        for (let chainIndex = 0; chainIndex < model.chains.size(); chainIndex++) {
-            const chain = model.chains.get(chainIndex)
-            for (let residueIndex = 0; residueIndex < chain.residues.size(); residueIndex++) {
-                const residue = chain.residues.get(residueIndex)
-                const cid = `${chain.name}/${residue.seqid.str()}`
+    const models = this.gemmiStructure.models
+    const modelsSize = this.gemmiStructure.models.size()
+    for (let modelIndex = 0; modelIndex < modelsSize; modelIndex++) {
+        const model = models.get(modelIndex)
+        const chains = model.chains
+        const chainsSize = models.chains.size()
+        for (let chainIndex = 0; chainIndex < chainsSize; chainIndex++) {
+            const chain = chains.get(chainIndex)
+            const residues = chain.residues
+            const residuesSize = residues.size()
+            for (let residueIndex = 0; residueIndex < residuesSize; residueIndex++) {
+                const residue = residues.get(residueIndex)
+                const residueSeqId = residue.seqid
+                const cid = `${chain.name}/${residueSeqId.str()}`
                 let movedAtoms = []
-                for (let atomIndex = 0; atomIndex < residue.atoms.size(); atomIndex++) {
-                    const atom = residue.atoms.get(atomIndex)
+                const atoms = residue.atoms
+                const atomsSize = atoms.size()
+                for (let atomIndex = 0; atomIndex < atomsSize; atomIndex++) {
+                    const atom = atoms.get(atomIndex)
                     const atomName = atom.name
-                    const atomSymbol = window.CCP4Module.getElementNameAsString(atom.element)
+                    const atomElement = atom.element
+                    const gemmiAtomPos = atom.pos
+                    const atomSymbol = window.CCP4Module.getElementNameAsString(atomElement)
                     const diff = $this.displayObjects.transformation.centre
-                    let x = atom.pos.x + glRef.current.origin[0] - diff[0]
-                    let y = atom.pos.y + glRef.current.origin[1] - diff[1]
-                    let z = atom.pos.z + glRef.current.origin[2] - diff[2]
+                    let x = gemmiAtomPos.x + glRef.current.origin[0] - diff[0]
+                    let y = gemmiAtomPos.y + glRef.current.origin[1] - diff[1]
+                    let z = gemmiAtomPos.z + glRef.current.origin[2] - diff[2]
                     const origin = $this.displayObjects.transformation.origin
                     const quat = $this.displayObjects.transformation.quat
                     if (quat) {
@@ -905,11 +925,22 @@ MoorhenMolecule.prototype.transformedCachedAtomsAsMovedAtoms = function (glRef) 
                             movedAtoms.push({ name: (" " + atomName).padEnd(4, " "), x: transPos[0] - glRef.current.origin[0] + diff[0], y: transPos[1] - glRef.current.origin[1] + diff[1], z: transPos[2] - glRef.current.origin[2] + diff[2], resCid: cid })
                         }
                     }
+                    atom.delete()
+                    atomElement.delete()
+                    gemmiAtomPos.delete()
                 }
                 movedResidues.push(movedAtoms)
+                residue.delete()
+                residueSeqId.delete()
+                atoms.delete()
             }
+            chain.delete()
+            residues.delete()
         }
+        model.delete()
+        chains.delete()
     }
+    models.delete()
 
     return movedResidues
 }
@@ -1053,26 +1084,53 @@ MoorhenMolecule.prototype.gemmiAtomsForCid = async function (cid) {
     
     if (selection.matches_model(model)) {
         const chains = model.chains
-        for (let i = 0; i < chains.size(); i++) {
+        const chainsSize = chains.size()
+        for (let i = 0; i < chainsSize; i++) {
             const chain = chains.get(i)
             if (selection.matches_chain(chain)) {
                 const residues = chain.residues
-                for (let j = 0; j < residues.size(); j++) {
+                const residuesSize = residues.size()
+                for (let j = 0; j < residuesSize; j++) {
                     const residue = residues.get(j)
                     if (selection.matches_residue(residue)) {
                         const atoms = residue.atoms
-                        for (let k = 0; k < atoms.size(); k++) {
+                        const atomsSize = atoms.size()
+                        for (let k = 0; k < atomsSize; k++) {
                             const atom = atoms.get(k)
                             if (selection.matches_atom(atom)) {
-                                result.push(atom)
+                                const atomCharge = atom.charge
+                                const atomPos = atom.pos
+                                const atomPosX = atomPos.x
+                                const atomPosY = atomPos.y
+                                const atomPosZ = atomPos.z    
+                                const atomElement = atom.element
+                                const atomTempFactor = atom.b_iso
+                                const atomSerial = atom.serial
+                                const atomInfo = {
+                                    pos: [atomPosX, atomPosY, atomPosZ],
+                                    x: atomPosX,
+                                    y: atomPosY,
+                                    z: atomPosZ,
+                                    charge: atomCharge,
+                                    element: atomElement,
+                                    b_iso: atomTempFactor,
+                                    serial: atomSerial
+                                }
+                                result.push(atomInfo)
+                                atomPos.delete()
+                                atomElement.delete()
                             }
+                            atom.delete()
                         }
+                        atoms.delete()
                     }
                     residue.delete()
                 }
+                residues.delete()
             }
             chain.delete()
         }
+        chains.delete()
     }
     
     selection.delete()
