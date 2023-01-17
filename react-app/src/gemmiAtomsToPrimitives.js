@@ -8,15 +8,15 @@ export const gemmiAtomsToCirclesSpheresInfo = (atoms,size,primType,colourScheme)
 
     for(let iat=0;iat<atoms.length;iat++){
         sphere_idx_tri.push(iat);
-        sphere_vert_tri.push(atoms[iat].pos.at(0));
-        sphere_vert_tri.push(atoms[iat].pos.at(1));
-        sphere_vert_tri.push(atoms[iat].pos.at(2));
+        sphere_vert_tri.push(atoms[iat].pos[0]);
+        sphere_vert_tri.push(atoms[iat].pos[1]);
+        sphere_vert_tri.push(atoms[iat].pos[2]);
         for(let ip=0;ip<colourScheme[`${atoms[iat].serial}`].length;ip++) sphere_col_tri.push(colourScheme[`${atoms[iat].serial}`][ip]);
         sphere_sizes.push(size);
         let atom = {};
-        atom["x"] = atoms[iat].pos.at(0);
-        atom["y"] = atoms[iat].pos.at(1);
-        atom["z"] = atoms[iat].pos.at(2);
+        atom["x"] = atoms[iat].pos[0];
+        atom["y"] = atoms[iat].pos[1];
+        atom["z"] = atoms[iat].pos[2];
         atom["tempFactor"] = atoms[iat].b_iso;//atoms[iat]["_atom_site.B_iso_or_equiv"];
         atom["charge"] = atoms[iat].charge;//atoms[iat]["_atom_site.pdbx_formal_charge"];
         atom["symbol"] = atoms[iat].element;//atoms[iat]["_atom_site.type_symbol"];
