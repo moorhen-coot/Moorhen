@@ -33,7 +33,8 @@ const instancedMeshToMeshData = (instanceMesh,perm) => {
     let totInstancePrimTypes = []
 
     const geom = instanceMesh.geom
-    for(let i=0;i<geom.size();i++){
+    const geomSize = geom.size()
+    for(let i=0; i<geomSize; i++){
         let thisIdxs = []
         let thisPos = []
         let thisNorm = []
@@ -44,51 +45,103 @@ const instancedMeshToMeshData = (instanceMesh,perm) => {
         const inst = geom.get(i);
         const vertices = inst.vertices;
         const triangles = inst.triangles;
-        for (let i = 0; i < triangles.size(); i++) {
-            const idxs = triangles.get(i).point_id;
-            if(perm)
-                thisIdxs.push(...[idxs[0],idxs[2],idxs[1]]);
-            else
-                thisIdxs.push(...[idxs[0],idxs[1],idxs[2]]);
+        const trianglesSize = triangles.size()
+        for (let i = 0; i < trianglesSize; i++) {
+            const triangle = triangles.get(i)
+            const idxs = triangle.point_id
+            if(perm) {
+                thisIdxs.push(idxs[0])
+                thisIdxs.push(idxs[2])
+                thisIdxs.push(idxs[1])
+            } else {
+                thisIdxs.push(idxs[0])
+                thisIdxs.push(idxs[1])
+                thisIdxs.push(idxs[2])
+            }
         }
-        for (let i = 0; i < vertices.size(); i++) {
+        triangles.delete()
+
+        const verticesSize = vertices.size()
+        for (let i = 0; i < verticesSize; i++) {
             const vert = vertices.get(i);
-            thisPos.push(...vert.pos);
-            thisNorm.push(...vert.normal);
+            const vertPos = vert.pos
+            thisPos.push(vertPos[0])
+            thisPos.push(vertPos[1])
+            thisPos.push(vertPos[2])
+            const vertNormal = vert.normal
+            thisNorm.push(vertNormal[0])
+            thisNorm.push(vertNormal[1])
+            thisNorm.push(vertNormal[2])
+            vert.delete()
         }
+        vertices.delete()
 
         const As = inst.instancing_data_A;
-        if(As.size()>0){
-            const Asize = As.size();
-            for(let j=0;j<Asize;j++){
+        const Asize = As.size();
+        if(Asize>0){
+            for(let j=0; j<Asize; j++){
                 const inst_data = As.get(j)
-                thisInstance_origins.push(...inst_data.position)
-                thisInstance_colours.push(...inst_data.colour)
-                thisInstance_sizes.push(...inst_data.size)
+                
+                const instDataPosition = inst_data.position
+                thisInstance_origins.push(instDataPosition[0])
+                thisInstance_origins.push(instDataPosition[1])
+                thisInstance_origins.push(instDataPosition[2])
+
+                const instDataColour = inst_data.colour
+                thisInstance_colours.push(instDataColour[0])
+                thisInstance_colours.push(instDataColour[1])
+                thisInstance_colours.push(instDataColour[2])
+                thisInstance_colours.push(instDataColour[3])
+
+                const instDataSize = inst_data.size
+                thisInstance_sizes.push(instDataSize[0])
+                thisInstance_sizes.push(instDataSize[1])
+                thisInstance_sizes.push(instDataSize[2])
+
                 thisInstance_orientations.push(...[
                 1.0, 0.0, 0.0, 0.0,
                 0.0, 1.0, 0.0, 0.0,
                 0.0, 0.0, 1.0, 0.0,
                 0.0, 0.0, 0.0, 1.0,
                 ])
+
+                inst_data.delete()
             }
         }
+        As.delete()
 
         const Bs = inst.instancing_data_B;
-        if(Bs.size()>0){
-            const Bsize = Bs.size();
-            for(let j=0;j<Bsize;j++){
+        const Bsize = Bs.size();
+        if(Bsize>0){
+            for(let j=0; j<Bsize; j++){
                 const inst_data = Bs.get(j)
-                thisInstance_origins.push(...inst_data.position)
-                thisInstance_colours.push(...inst_data.colour)
-                thisInstance_sizes.push(...inst_data.size)
+                const instDataPosition = inst_data.position
+                thisInstance_origins.push(instDataPosition[0])
+                thisInstance_origins.push(instDataPosition[1])
+                thisInstance_origins.push(instDataPosition[2])
 
-                thisInstance_orientations.push(...inst_data.orientation[0])
-                thisInstance_orientations.push(...inst_data.orientation[1])
-                thisInstance_orientations.push(...inst_data.orientation[2])
-                thisInstance_orientations.push(...inst_data.orientation[3])
+                const instDataColour = inst_data.colour
+                thisInstance_colours.push(instDataColour[0])
+                thisInstance_colours.push(instDataColour[1])
+                thisInstance_colours.push(instDataColour[2])
+                thisInstance_colours.push(instDataColour[3])
+
+                const instDataSize = inst_data.size
+                thisInstance_sizes.push(instDataSize[0])
+                thisInstance_sizes.push(instDataSize[1])
+                thisInstance_sizes.push(instDataSize[2])
+
+                const instDataOrientation = inst_data.orientation
+                thisInstance_orientations.push(...instDataOrientation[0])
+                thisInstance_orientations.push(...instDataOrientation[1])
+                thisInstance_orientations.push(...instDataOrientation[2])
+                thisInstance_orientations.push(...instDataOrientation[3])
+                
+                inst_data.delete()
             }
         }
+        Bs.delete()
+        inst.delete()
 
         totNorm.push(thisNorm)
         totPos.push(thisPos)
@@ -101,6 +154,9 @@ const instancedMeshToMeshData = (instanceMesh,perm) => {
         totInstancePrimTypes.push("TRIANGLES")
 
     }
+    
+    geom.delete()
+    instanceMesh.delete()
 
     return { prim_types: [totInstancePrimTypes], idx_tri: [totIdxs], vert_tri: [totPos], norm_tri: [totNorm], col_tri: [totInstance_colours], instance_use_colors:[totInstanceUseColours], instance_sizes:[totInstance_sizes], instance_origins:[totInstance_origins], instance_orientations:[totInstance_orientations]};
 
