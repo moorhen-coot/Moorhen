@@ -9,6 +9,8 @@ const apresEdit = (molecule, glRef, setHoveredAtom) => {
     molecule.setAtomsDirty(true)
     molecule.redraw(glRef)
     setHoveredAtom({ molecule: null, cid: null })
+    const originChangedEvent = new CustomEvent("originChanged", { "detail": glRef.current.origin })
+    document.dispatchEvent(originChangedEvent)
 }
 
 export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
@@ -22,9 +24,11 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
 
     const { setShowToast, setToastContent, hoveredAtom, setHoveredAtom, commandCentre, activeMap, glRef } = collectedProps;
 
-    setToastContent(<h3>{`${modifiers.join("-")} ${event.key} pushed`}</h3>)
-    setShowToast(true)
-
+    if (collectedProps.showShortcutToast) {
+        setToastContent(<h3>{`${modifiers.join("-")} ${event.key} pushed`}</h3>)
+        setShowToast(true)    
+    }
+    
     let action = null;
 
     for (const key of Object.keys(shortCuts)) {
