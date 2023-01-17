@@ -11,7 +11,8 @@ export const MoorhenPreferencesMenu = (props) => {
         defaultExpandDisplayCards, setDefaultExpandDisplayCards, defaultLitLines,
         setDefaultLitLines, refineAfterMod, setRefineAfterMod, mouseSensitivity,
         setMouseSensitivity, drawCrosshairs, setDrawCrosshairs, drawMissingLoops,
-        setDrawMissingLoops, mapLineWidth, setMapLineWidth, makeBackups, setMakeBackups
+        setDrawMissingLoops, mapLineWidth, setMapLineWidth, makeBackups, setMakeBackups,
+        showShortcutToast, setShowShortcutToast
      } = props;
     const [showModal, setShowModal] = useState(null);
 
@@ -65,6 +66,13 @@ export const MoorhenPreferencesMenu = (props) => {
                             checked={drawCrosshairs}
                             onChange={() => { setDrawCrosshairs(!drawCrosshairs) }}
                             label="Show crosshairs"/>
+                    </InputGroup>
+                    <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                        <Form.Check 
+                            type="switch"
+                            checked={showShortcutToast}
+                            onChange={() => { setShowShortcutToast(!showShortcutToast) }}
+                            label="Show shortcut toast"/>
                     </InputGroup>
                     <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
                         <Form.Check 

@@ -24,9 +24,11 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
 
     const { setShowToast, setToastContent, hoveredAtom, setHoveredAtom, commandCentre, activeMap, glRef } = collectedProps;
 
-    setToastContent(<h3>{`${modifiers.join("-")} ${event.key} pushed`}</h3>)
-    setShowToast(true)
-
+    if (collectedProps.showShortcutToast) {
+        setToastContent(<h3>{`${modifiers.join("-")} ${event.key} pushed`}</h3>)
+        setShowToast(true)    
+    }
+    
     let action = null;
 
     for (const key of Object.keys(shortCuts)) {

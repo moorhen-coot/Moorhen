@@ -23,6 +23,7 @@ const getDefaultValues = () => {
         mouseSensitivity: 2.0,
         mapLineWidth: 1.0,
         makeBackups: true,
+        showShortcutToast: true,
         shortCuts: {
             "sphere_refine": {
                 modifiers: ["shiftKey"],
@@ -138,6 +139,7 @@ const PreferencesContextProvider = ({ children }) => {
     const [drawMissingLoops, setDrawMissingLoops] = useState(null)
     const [mapLineWidth, setMapLineWidth] = useState(null)
     const [makeBackups, setMakeBackups] = useState(null)
+    const [showShortcutToast, setShowShortcutToast] = useState(null)
 
     const restoreDefaults = (defaultValues)=> {
         updateStoredPreferences('version', defaultValues.version)
@@ -152,6 +154,7 @@ const PreferencesContextProvider = ({ children }) => {
         setDrawMissingLoops(defaultValues.drawMissingLoops)
         setMapLineWidth(defaultValues.mapLineWidth)
         setMakeBackups(defaultValues.makeBackups)
+        setShowShortcutToast(defaultValues.showShortcutToast)
     }
 
     /**
@@ -175,7 +178,8 @@ const PreferencesContextProvider = ({ children }) => {
                     localforage.getItem('drawCrosshairs'),
                     localforage.getItem('drawMissingLoops'),
                     localforage.getItem('mapLineWidth'),
-                    localforage.getItem('makeBackups')
+                    localforage.getItem('makeBackups'),
+                    localforage.getItem('showShortcutToast')
                     ])
                 
                 console.log('Retrieved the following preferences from local storage: ', response)
@@ -200,6 +204,7 @@ const PreferencesContextProvider = ({ children }) => {
                     setDrawMissingLoops(response[9])
                     setMapLineWidth(response[10])
                     setMakeBackups(response[11])
+                    setShowShortcutToast(response[12])
                 }                
                 
             } catch (err) {
@@ -216,6 +221,15 @@ const PreferencesContextProvider = ({ children }) => {
         fetchStoredPreferences();
         
     }, []);
+
+    useMemo(() => {
+
+        if (showShortcutToast === null) {
+            return
+        }
+       
+        updateStoredPreferences('showShortcutToast', showShortcutToast);
+    }, [showShortcutToast]);
 
     useMemo(() => {
 
@@ -321,7 +335,7 @@ const PreferencesContextProvider = ({ children }) => {
         setDefaultExpandDisplayCards, shortCuts, setShortCuts, defaultLitLines, setDefaultLitLines,
         refineAfterMod, setRefineAfterMod, mouseSensitivity, setMouseSensitivity, drawCrosshairs, 
         setDrawCrosshairs, drawMissingLoops, setDrawMissingLoops, mapLineWidth, setMapLineWidth,
-        makeBackups, setMakeBackups
+        makeBackups, setMakeBackups, showShortcutToast, setShowShortcutToast
     }
 
     return (
