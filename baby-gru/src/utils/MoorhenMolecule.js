@@ -292,6 +292,7 @@ MoorhenMolecule.prototype.centreOn = function (glRef, selectionCid) {
         }
 
         let selectionCentre = centreOnGemmiAtoms(selectionAtoms)
+        selectionAtoms.forEach(atom => atom.delete())
 
         return new Promise((resolve, reject) => {
             glRef.current.setOrigin(selectionCentre);
@@ -759,6 +760,7 @@ MoorhenMolecule.prototype.drawHover = async function (glRef, selectionString) {
         ]
         $this.clearBuffersOfStyle(style, glRef)
         this.addBuffersOfStyle(glRef, objects, style)
+        selectedGemmiAtoms.forEach(atom => atom.delete())
     }
     return
 

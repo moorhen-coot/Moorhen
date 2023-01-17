@@ -1219,7 +1219,7 @@ export const MoorhenCentreOnLigandMenuItem = (props) => {
                                     reducedValue.sumXyz.map(coord => -coord / reducedValue.count)
                                     , true)
                             }
-
+                            selAtoms.forEach(atom => atom.delete())
                         }
                     }}
                 >
