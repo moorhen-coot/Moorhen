@@ -320,9 +320,9 @@ export const centreOnGemmiAtoms = (atoms) => {
     let ztot = 0.0
     
     for (const atom of atoms) {
-        xtot += atom.pos.x
-        ytot += atom.pos.y
-        ztot += atom.pos.z
+        xtot += atom.x
+        ytot += atom.y
+        ztot += atom.z
     }
     
     return [-xtot/atomCount, -ytot/atomCount, -ztot/atomCount]
@@ -341,42 +341,56 @@ export const getBufferAtoms = (gemmiStructure, exclude_ligands_and_waters=false)
                 const model = models.get(modelIndex)
                 const modelName = model.name
                 const chains  = model.chains
-                for (let chainIndex = 0; chainIndex < chains.size(); chainIndex++) {
+                const chainsSize = chains.size()
+                for (let chainIndex = 0; chainIndex < chainsSize; chainIndex++) {
                     const chain = chains.get(chainIndex)
                     const chainName = chain.name
                     const residues = chain.residues
-                    for (let residueIndex = 0; residueIndex < residues.size(); residueIndex++) {
+                    const residuesSize = residues.size()
+                    for (let residueIndex = 0; residueIndex < residuesSize; residueIndex++) {
                         const residue = residues.get(residueIndex)
                         const residueName = residue.name
-                        const resNum = residue.seqid.str()
+                        const residueSeqId = residue.seqid
+                        const resNum = residueSeqId.str()
                         const atoms = residue.atoms
-                        for (let atomIndex = 0; atomIndex < atoms.size(); atomIndex++) {
+                        const atomsSize = atoms.size()
+                        for (let atomIndex = 0; atomIndex < atomsSize; atomIndex++) {
                             const atom = atoms.get(atomIndex)
-                            const atomPosX = atom.pos.x
-                            const atomPosY = atom.pos.y
-                            const atomPosZ = atom.pos.z
+                            const atomPos = atom.pos
+                            const atomPosX = atomPos.x
+                            const atomPosY = atomPos.y
+                            const atomPosZ = atomPos.z
                             const atomElement = atom.element
                             const atomElementString = window.CCP4Module.getElementNameAsString(atomElement)
                             const atomCharge = atom.charge
                             const atomTemp = atom.b_iso
                             const atomAltLoc = atom.altloc
+                            const atomHasAltLoc = atom.has_altloc()
                             atomList.push({
+                                pos: [atomPosX, atomPosY, atomPosZ],
                                 x: atomPosX,
                                 y: atomPosY,
                                 z: atomPosZ,
                                 tempFactor: atomTemp,
                                 charge: atomCharge,
                                 symbol: atomElementString,
-                                label: `/${modelName}/${chainName}/${resNum}(${residueName})/${atomElementString}${atom.has_altloc() ? ':' + String.fromCharCode(atomAltLoc) : ''}`
+                                label: `/${modelName}/${chainName}/${resNum}(${residueName})/${atomElementString}${atomHasAltLoc ? ':' + String.fromCharCode(atomAltLoc) : ''}`
                             })
                             atom.delete()
+                            atomPos.delete()
+                            atomElement.delete()
                         }
                         residue.delete()
+                        residueSeqId.delete()
+                        atoms.delete()
                     }
                     chain.delete()
+                    residues.delete()
                 }
                 model.delete()
+                chains.delete()
             }
+            models.delete()
         } finally {
             gemmiStructure.delete()
         }
