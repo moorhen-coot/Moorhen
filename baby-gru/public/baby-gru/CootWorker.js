@@ -59,8 +59,9 @@ const instancedMeshToMeshData = (instanceMesh,perm) => {
 
         const As = inst.instancing_data_A;
         if(As.size()>0){
-            for(let j=0;j<As.size();j++){
-                const inst_data = inst.instancing_data_A.get(j)
+            const Asize = As.size();
+            for(let j=0;j<Asize;j++){
+                const inst_data = As.get(j)
                 thisInstance_origins.push(...inst_data.position)
                 thisInstance_colours.push(...inst_data.colour)
                 thisInstance_sizes.push(...inst_data.size)
@@ -73,11 +74,10 @@ const instancedMeshToMeshData = (instanceMesh,perm) => {
             }
         }
 
-        console.log("Bs",inst.instancing_data_B.size())
         const Bs = inst.instancing_data_B;
         if(Bs.size()>0){
-            console.log("This B",Bs.size())
-            for(let j=0;j<Bs.size();j++){
+            const Bsize = Bs.size();
+            for(let j=0;j<Bsize;j++){
                 const inst_data = Bs.get(j)
                 thisInstance_origins.push(...inst_data.position)
                 thisInstance_colours.push(...inst_data.colour)
