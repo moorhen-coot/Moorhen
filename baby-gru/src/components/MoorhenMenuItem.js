@@ -115,7 +115,7 @@ export const MoorhenLoadTutorialDataMenuItem = (props) => {
             }).then(_ => {
                 return newMap.loadToCootFromMtzURL(`${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`, `moorhen-tutorial-${tutorialNumber}`,
                     {
-                        F: "FWT", PHI: "PHWT", Fobs: tutorialNumber === "1" ? 'F' : 'FP', SigFobs: tutorialNumber === "1" ? 'SIGF' : 'SIGFP', FreeR: tutorialNumber === "1" ? 'FREER' : 'FREE',
+                        F: "FWT", PHI: "PHWT", Fobs: tutorialNumber === 1 ? 'F' : 'FP', SigFobs: tutorialNumber === 1 ? 'SIGF' : 'SIGFP', FreeR: tutorialNumber === 1 ? 'FREER' : 'FREE',
                         isDifference: false, useWeight: false, calcStructFact: true
                     })
             }).then(_ => {
