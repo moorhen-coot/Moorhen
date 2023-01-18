@@ -42,7 +42,7 @@ export function MoorhenMolecule(commandCentre, urlPrefix) {
 };
 
 MoorhenMolecule.prototype.updateGemmiStructure = async function () {
-    if (this.gemmiStructure) {
+    if (this.gemmiStructure && !this.gemmiStructure.isDeleted()) {
         this.gemmiStructure.delete()
     }
     let response = await this.getAtoms()
@@ -123,8 +123,8 @@ MoorhenMolecule.prototype.delete = async function (glRef) {
     glRef.current.drawScene()
     const inputData = { message: "delete", molNo: $this.molNo }
     const response = await $this.commandCentre.current.postMessage(inputData)
-    if (this.gemmiStructure) {
-        this.gemmiStructure.delete()
+    if ($this.gemmiStructure && !$this.gemmiStructure.isDeleted()) {
+        $this.gemmiStructure.delete()
     }
     return response
 }
@@ -183,7 +183,7 @@ MoorhenMolecule.prototype.loadToCootFromString = async function (coordData, name
     const pdbRegex = /.pdb$/;
     const entRegex = /.ent$/;
 
-    if ($this.gemmiStructure) {
+    if ($this.gemmiStructure && !$this.gemmiStructure.isDeleted()) {
         $this.gemmiStructure.delete()
     }
 
@@ -254,7 +254,7 @@ MoorhenMolecule.prototype.getAtoms = function () {
 
 MoorhenMolecule.prototype.updateAtoms = function () {
     const $this = this;
-    if ($this.gemmiStructure) {
+    if ($this.gemmiStructure && !$this.gemmiStructure.isDeleted()) {
         $this.gemmiStructure.delete()
     }
     return $this.getAtoms().then((result) => {
