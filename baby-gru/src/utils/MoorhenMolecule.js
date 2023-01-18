@@ -393,10 +393,10 @@ MoorhenMolecule.prototype.drawCootBonds = async function (glRef) {
     const $this = this
     const style = "CBs"
     return this.commandCentre.current.cootCommand({
-        //returnType: "instanced_mesh",
-        //command: "get_bonds_mesh_instanced",
-        returnType: "mesh",
-        command: "get_bonds_mesh",
+        returnType: "instanced_mesh",
+        command: "get_bonds_mesh_instanced",
+        //returnType: "mesh",
+        //command: "get_bonds_mesh",
         commandArgs: [
             $this.molNo, "COLOUR-BY-CHAIN-AND-DICTIONARY", $this.cootBondsOptions.isDarkBackground,
             $this.cootBondsOptions.width, $this.cootBondsOptions.atomRadiusBondRatio,
