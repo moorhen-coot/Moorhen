@@ -25,17 +25,19 @@ export const MoorhenMenuItem = (props) => {
             placement={props.popoverPlacement}
             trigger="click"
 
-            onEntering={() =>{
-                props.onEntering()
+            onToggle={(doShow) => {
+                if (doShow) {
+                    new Promise((resolve, reject) => {
+                        resolveOrRejectRef.current = { resolve, reject }
+                    }).then(result => {
+                        props.onCompleted("Resolve")
+                        document.body.click()
+                    })
+                }
             }}
 
-            onEnter={() => {
-                new Promise((resolve, reject) => {
-                    resolveOrRejectRef.current = { resolve, reject }
-                }).then(result => {
-                    props.onCompleted("Resolve")
-                    document.body.click()
-                })
+            onEntering={() => {
+                props.onEntering()
             }}
 
             onEntered={() => {
@@ -52,15 +54,19 @@ export const MoorhenMenuItem = (props) => {
 
             overlay={
                 <Popover style={{ maxWidth: "40rem" }}>
+
                     <PopoverHeader as="h3">{props.menuItemTitle}</PopoverHeader>
                     <PopoverBody>
                         {props.popoverContent}
-                        {props.showOkButton && 
-                            <Button variant={props.buttonVariant} onClick={() => { resolveOrRejectRef.current.resolve() }}>
+                        {props.showOkButton &&
+                            <Button variant={props.buttonVariant} onClick={() => {
+                                console.log('Popover clicked')
+                                resolveOrRejectRef.current.resolve()
+                            }}>
                                 {props.buttonText}
                             </Button>
                         }
-                        
+
                     </PopoverBody>
                 </Popover>}
         >
@@ -98,7 +104,8 @@ export const MoorhenLoadTutorialDataMenuItem = (props) => {
         </Form.Group>
     </>
 
-    const onCompleted = () => {
+    const onCompleted = (onCompletedArg) => {
+        console.log({ onCompletedArg })
         const tutorialNumber = tutorialNumberSelectorRef.current.value
         console.log(`Loading data for tutorial number ${tutorialNumber}`)
         const newMolecule = new MoorhenMolecule(props.commandCentre, props.urlPrefix)
@@ -282,18 +289,18 @@ export const MoorhenRotateTranslateMoleculeMenuItem = (props) => {
                 <Form.Label>Accept rotate/translate ?</Form.Label>
                 <Button onClick={acceptTransform}><CheckOutlined /></Button>
                 <Button className="mx-2" onClick={rejectTransform}><CloseOutlined /></Button>
-            </Form.Group>        
+            </Form.Group>
         </>
 
     return <MoorhenMenuItem
-    showOkButton={false}
-    popoverPlacement='left'
-    popoverContent={panelContent}
-    menuItemText={"Rotate/Translate molecule"}
-    onEntering={startTransform}
-    onExiting={onExiting}
-    setPopoverIsShown={props.setPopoverIsShown}
-/>
+        showOkButton={false}
+        popoverPlacement='left'
+        popoverContent={panelContent}
+        menuItemText={"Rotate/Translate molecule"}
+        onEntering={startTransform}
+        onExiting={onExiting}
+        setPopoverIsShown={props.setPopoverIsShown}
+    />
 }
 
 export const MoorhenMoleculeBondSettingsMenuItem = (props) => {
@@ -1178,7 +1185,7 @@ export const MoorhenCentreOnLigandMenuItem = (props) => {
             let newMoleculeNode = { title: molecule.name, key: molecule.molNo, type: "molecule" }
             const model = molecule.gemmiStructure.first_model()
             const ligandCids = []
-            
+
             try {
                 const chains = model.chains
                 const chainsSize = chains.size()
@@ -1196,7 +1203,7 @@ export const MoorhenCentreOnLigandMenuItem = (props) => {
                     chains.delete()
                     ligands.delete()
                 }
-                chains.delete()   
+                chains.delete()
             } finally {
                 model.delete()
             }
@@ -1227,7 +1234,7 @@ export const MoorhenCentreOnLigandMenuItem = (props) => {
                                 },
                                 { sumXyz: [0., 0., 0.], count: 0 }
                             )
-                            console.log({reducedValue})
+                            console.log({ reducedValue })
                             if (reducedValue.count > 0) {
                                 props.glRef.current.setOrigin(
                                     reducedValue.sumXyz.map(coord => -coord / reducedValue.count)
