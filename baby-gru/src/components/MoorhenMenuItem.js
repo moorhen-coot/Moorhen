@@ -780,10 +780,10 @@ export const MoorhenImportFSigFMenuItem = (props) => {
 
     const connectMap = async () => {
         const commandArgs = [
-            moleculeSelectRef.current.value,
-            mapSelectRef.current.value,
-            twoFoFcSelectRef.current.value,
-            foFcSelectRef.current.value,
+            parseInt(moleculeSelectRef.current.value),
+            parseInt(mapSelectRef.current.value),
+            parseInt(twoFoFcSelectRef.current.value),
+            parseInt(foFcSelectRef.current.value),
         ]
         await props.commandCentre.current.cootCommand({
             command: 'connect_updating_maps',
