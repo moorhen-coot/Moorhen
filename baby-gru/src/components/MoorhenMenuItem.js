@@ -163,7 +163,7 @@ export const MoorhenGetMonomerMenuItem = (props) => {
             returnType: 'status',
             command: 'get_monomer_and_position_at',
             commandArgs: [tlcRef.current.value,
-            selectRef.current.value,
+            parseInt(selectRef.current.value),
             ...props.glRef.current.origin.map(coord => -coord)
             ]
 
@@ -510,7 +510,7 @@ export const MoorhenImportDictionaryMenuItem = (props) => {
 
     const handleFileContent = async (fileContent) => {
         let newMolecule = null
-        const selectedMoleculeIndex = moleculeSelectRef.current.value
+        const selectedMoleculeIndex = parseInt(moleculeSelectRef.current.value)
         return props.commandCentre.current.cootCommand({
             returnType: "status",
             command: 'shim_read_dictionary',

@@ -55,3 +55,16 @@ install/*
 example/gemmi_test.js
 /digitalocean-baby-gru
 **/.DS_Store
+.vscode/settings.json
+coot/compare-dictionaries.js
+coot/cootilus-demo.cpp.js
+coot/dictionary-bond-distributions.js
+coot/find-waters.js
+coot/identify-protein.js
+coot/make-shelx-restraints.js
+coot/mmrrcc.js
+coot/test-ccp4srs.js
+coot/test-chem-feat.js
+coot/test-geometry.js
+coot/test-ligand.js
+coot/test-srs-standalone.js
