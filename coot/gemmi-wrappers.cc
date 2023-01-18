@@ -105,6 +105,112 @@ C& add_child(P& parent, C child, int pos) {
   return add_item(parent.children(), std::move(child), pos);
 }
 
+std::map<std::string,std::string> residueCodesThreeToOne = {
+        {"ALA","A"},
+        {"ARG","R"},
+        {"ASN","N"},
+        {"ASP","D"},
+        {"CYS","C"},
+        {"GLN","Q"},
+        {"GLU","E"},
+        {"GLY","G"},
+        {"HIS","H"},
+        {"ILE","I"},
+        {"LEU","L"},
+        {"LYS","K"},
+        {"MET","M"},
+        {"PHE","F"},
+        {"PRO","P"},
+        {"SER","S"},
+        {"THR","T"},
+        {"TRP","W"},
+        {"TYR","Y"},
+        {"VAL","V"},
+        {"UNK","X"},
+};
+
+std::map<std::string,std::string> nucleotideCodesThreeToOne = {
+    {"A", "A"},
+    {"T", "T"},
+    {"G", "G"},
+    {"C", "C"},
+    {"U", "U"},
+    {"N", "N"},
+    {"I", "I"},
+    {"DT", "T"},
+    {"DG", "G"},
+    {"DC", "C"},
+    {"DA", "A"},
+    {"DU", "U"},
+    {"ADE", "A"},
+    {"THY", "T"},
+    {"GUA", "G"},
+    {"CYT", "C"},
+    {"URA", "U"},
+    {"PSU", "U"},
+    {"UNKOWN", "X"},
+    {"UNK", "X"},
+    {"MISSING", "-"}
+};
+
+struct SequenceEntry {
+    int resNum;
+    std::string resCode;
+    std::string cid;
+};
+
+struct SequenceChain {
+    int type;
+    std::string name;
+    std::string chain;
+    std::vector<SequenceEntry> sequence;
+};
+
+std::vector<SequenceChain> parseSequences(const gemmi::Structure &structure, const std::string &data_name){
+
+    std::vector<SequenceChain> sequences;
+
+    const auto models = structure.models;
+    for (auto modelIndex = 0; modelIndex < models.size(); modelIndex++) {
+        const auto model = models[modelIndex];
+        const auto chains = model.chains;
+        for (auto chainIndex = 0; chainIndex < chains.size(); chainIndex++) {
+            std::vector<SequenceEntry> currentSequence;
+            auto chain = chains[chainIndex];
+            gemmi::remove_ligands_and_waters(chain);
+            const auto residues = chain.residues;
+            const auto chainName = chain.name;
+            const auto polymerType = gemmi::check_polymer_type(chain.get_polymer());
+            for (auto residueIndex = 0; residueIndex < residues.size(); residueIndex++) {
+                const auto residue = residues[residueIndex];
+                const auto resName = residue.name;
+                const auto resNum = std::stoi(residue.seqid.str());
+                SequenceEntry seq_entry;
+                seq_entry.resNum = resNum;
+                seq_entry.cid = "//"+chainName+"/"+residue.seqid.str()+"("+resName+")/";
+                if(polymerType==gemmi::PolymerType::Dna||polymerType==gemmi::PolymerType::Rna||polymerType==gemmi::PolymerType::DnaRnaHybrid){ // More than just nucleic and peptide ...
+                    seq_entry.resCode = nucleotideCodesThreeToOne[resName];
+                } else {
+                    seq_entry.resCode = residueCodesThreeToOne[resName];
+                }
+                currentSequence.push_back(seq_entry);
+            }
+            if (currentSequence.size() > 0) {
+                SequenceChain seq_chain;
+                seq_chain.name = data_name + "_" + chainName;
+                seq_chain.chain = chainName;
+                seq_chain.sequence = currentSequence;
+                seq_chain.type = int(polymerType);
+                sequences.push_back(seq_chain);
+            }
+        }
+    }
+
+    return sequences;
+
+}
+
+
 EMSCRIPTEN_BINDINGS(gemmi_module) {
     //complex could be generally useful, but only used by gemmi at present?
     class_<std::complex<double>>("complexdouble")
