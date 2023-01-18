@@ -85,7 +85,7 @@ MoorhenMenuItem.defaultProps = {
 
 export const MoorhenLoadTutorialDataMenuItem = (props) => {
     const tutorialNumberSelectorRef = useRef(null);
-    const allTutorialNumbers = [1, 2]
+    const allTutorialNumbers = ['1', '2']
 
     const panelContent = <>
         <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="loadTutorialData" className="mb-3">
@@ -115,7 +115,7 @@ export const MoorhenLoadTutorialDataMenuItem = (props) => {
             }).then(_ => {
                 return newMap.loadToCootFromMtzURL(`${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`, `moorhen-tutorial-${tutorialNumber}`,
                     {
-                        F: "FWT", PHI: "PHWT", Fobs: tutorialNumber === 1 ? 'F' : 'FP', SigFobs: tutorialNumber === 1 ? 'SIGF' : 'SIGFP', FreeR: tutorialNumber === 1 ? 'FREER' : 'FREE',
+                        F: "FWT", PHI: "PHWT", Fobs: tutorialNumber === '1' ? 'F' : 'FP', SigFobs: tutorialNumber === '1' ? 'SIGF' : 'SIGFP', FreeR: tutorialNumber === '1' ? 'FREER' : 'FREE',
                         isDifference: false, useWeight: false, calcStructFact: true
                     })
             }).then(_ => {
