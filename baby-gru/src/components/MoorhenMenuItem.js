@@ -1193,7 +1193,7 @@ export const MoorhenCentreOnLigandMenuItem = (props) => {
                         ligand.delete()
                         ligandSeqId.delete()
                     }
-                    chains.delete()
+                    chain.delete()
                     ligands.delete()
                 }
                 chains.delete()   
