@@ -48,7 +48,7 @@ export const MoorhenRamachandran = (props) => {
                 setRamaPlotData(null)
                 return
             }
-            const inputData = {message:'coot_command', command:'ramachandran_validation', returnType:'ramachandran_data', commandArgs:[moleculeSelectRef.current.value]}
+            const inputData = {message:'coot_command', command:'ramachandran_validation', returnType:'ramachandran_data', commandArgs:[parseInt(moleculeSelectRef.current.value)]}
             let response = await props.commandCentre.current.cootCommand(inputData)
             setRamaPlotData(response.data.result.result.filter(resInfo => resInfo.chainId === chainSelectRef.current.value))
         }
