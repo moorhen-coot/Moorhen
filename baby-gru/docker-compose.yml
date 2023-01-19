@@ -1,7 +1,7 @@
 version: "2"
 services:
   nginx-react:
-    container_name: ngixreactapp
+    container_name: moorhen
     build:
       context: .
       dockerfile: Dockerfile

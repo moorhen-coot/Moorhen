@@ -149,15 +149,16 @@ ${coot_src}/MoleculesToTriangles/CXXClasses/Vector2.cpp
 ${coot_src}/MoleculesToTriangles/CXXClasses/Vector3.cpp
 ${coot_src}/MoleculesToTriangles/CXXClasses/VertexColorNormalPrimitive.cpp
 ${coot_src}/MoleculesToTriangles/CXXClasses/lfit.c
+${coot_src}/api/coot_molecule_validation.cc
 ${coot_src}/api/molecules_container_modelling.cc
 ${coot_src}/api/add-terminal-residue.cc
-${coot_src}/api/simple-mesh.cc
 ${coot_src}/api/interfaces.cc
 ${coot_src}/api/colour-functions.cc
-${coot_src}/api/cylinder.cc
 ${coot_src}/api/coot-colour.cc
 ${coot_src}/api/coot_molecule.cc
+${coot_src}/api/coot_molecule_backup.cc
 ${coot_src}/api/coot_molecule_bonds.cc
+${coot_src}/api/coot_molecule_bonds_instanced.cc
 ${coot_src}/api/coot_molecule_maps.cc
 ${coot_src}/api/coot_molecule_moltris.cc
 ${coot_src}/api/phi-psi-prob.cc
@@ -166,8 +167,6 @@ ${coot_src}/api/coot_molecule_merge_molecules.cc
 ${coot_src}/api/coot_molecule_replace_fragment.cc
 ${coot_src}/api/add-terminal-residue.cc
 ${coot_src}/api/molecules_container.cc
-${coot_src}/api/oct.cc
-${coot_src}/api/prideout-octasphere.cc
 ${coot_src}/api/rama-plot-phi-psi.cc
 ${coot_src}/analysis/daca.cc
 ${coot_src}/analysis/kolmogorov.cc
@@ -181,6 +180,7 @@ ${coot_src}/density-contour/density-contour-triangles.cc
 ${coot_src}/density-contour/Vectors.cpp
 ${coot_src}/density-contour/CIsoSurface.cpp
 ${coot_src}/density-contour/occlusion.cc
+${coot_src}/density-contour/gaussian-surface.cc
 ${coot_src}/ccp4mg-utils/ppmutil.cc
 ${coot_src}/ccp4mg-utils/quat.cc
 ${coot_src}/ccp4mg-utils/mgtree.cc
@@ -219,6 +219,7 @@ ${coot_src}/ideal/lograma.cpp
 ${coot_src}/ideal/process-dfs-in-range.cc
 ${coot_src}/ideal/zo-rama.cc
 ${coot_src}/tw/tw.cc
+${coot_src}/utils/colour-holder.cc
 ${coot_src}/utils/radix.cc
 ${coot_src}/utils/coot-utils.cc
 ${coot_src}/utils/hsv-rgb.cc
@@ -305,6 +306,12 @@ ${coot_src}/coot-utils/hole.cc
 ${coot_src}/coot-utils/slurp-map.cc
 ${coot_src}/coot-utils/read-sm-cif.cc
 ${coot_src}/coot-utils/exp-fit.cc
+${coot_src}/coot-utils/cylinder.cc
+${coot_src}/coot-utils/cylinder-with-rotation-translation.cc
+${coot_src}/coot-utils/prideout-octasphere.cc
+${coot_src}/coot-utils/oct.cc
+${coot_src}/coot-utils/shapes.cc
+${coot_src}/coot-utils/simple-mesh.cc
 ${coot_src}/coords/phenix-geo-bonds.cc
 ${coot_src}/coords/Bond_lines_ext.cc
 ${coot_src}/coords/mmdb-crystal.cc
@@ -414,7 +421,7 @@ ${coot_src}/ideal/write-png.cc
 
 target_include_directories(coot PRIVATE ${coot_src} ${coot_src}/coords ${coot_src}/utils ${coot_src}/src ../include ../example ../checkout/ssm ../checkout/mmdb2 ../checkout/clipper ../checkout/fftw-2.1.5/fftw ../checkout/fftw-2.1.5/rfftw ../checkout/libccp4/ccp4 ../boost)
 
-set_target_properties(coot PROPERTIES COMPILE_FLAGS "-pthread -DHAVE_BOOST -DNODERAWFS -DFFTW_ENABLE_FLOAT -s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_PTHREADS=1" LINK_FLAGS "-fexceptions -pthread -s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_PTHREADS=1")
+set_target_properties(coot PROPERTIES COMPILE_FLAGS "-pthread -DHAVE_BOOST -DNODERAWFS -DFFTW_ENABLE_FLOAT -s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_PTHREADS=1" LINK_FLAGS "-fexceptions -pthread -s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_PTHREADS=1 -sDEMANGLE_SUPPORT=1 -sASSERTIONS=2")
 
 set_source_files_properties(${coot_exception_srcs} PROPERTIES COMPILE_FLAGS "-fexceptions -pthread -DHAVE_BOOST -DNODERAWFS -DFFTW_ENABLE_FLOAT -s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_PTHREADS=1" )
 
@@ -532,7 +539,7 @@ target_compile_options(mini-rsr PUBLIC -fexceptions -pthread -D_MINI_RSR_MAIN_ -
 ]]
 
 add_executable(moorhen moorhen-wrappers.cc gemmi-wrappers.cc)
-target_link_options(moorhen PRIVATE -fexceptions -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sUSE_PTHREADS=1 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createRSRModule -sEXPORTED_RUNTIME_METHODS=['FS','readFile'] --preload-file data  --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
+target_link_options(moorhen PRIVATE -sDEMANGLE_SUPPORT=1 -sASSERTIONS=2 -fexceptions -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sUSE_PTHREADS=1 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createRSRModule -sEXPORTED_RUNTIME_METHODS=['FS','readFile'] --preload-file data  --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
 target_link_directories(moorhen PUBLIC ../ssm ../mmdb2 ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4 ../fftw ../rfftw ../ccp4 ../privateer ../rvapi ../gesamt ../ccp4mg ../lib ../install/lib)
 target_link_libraries(moorhen ssm rvapi gesamtlib mmdb2 clipper-minimol clipper-phs clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 privateer clipper-minimol ccp4mg coot gsl gslcblas RDKitMolDraw2D RDKitForceFieldHelpers RDKitDescriptors RDKitForceField RDKitSubstructMatch RDKitOptimizer RDKitDistGeomHelpers RDKitDistGeometry RDKitChemReactions RDKitAlignment RDKitEigenSolvers RDKitDepictor RDKitcoordgen RDKitMolChemicalFeatures RDKitPartialCharges RDKitFileParsers RDKitRDGeometryLib RDKitGraphMol RDKitShapeHelpers RDKitFingerprints RDKitMolAlign RDKitMolTransforms RDKitChemTransforms RDKitSmilesParse RDKitFilterCatalog RDKitCatalogs RDKitSubgraphs RDKitRDGeneral RDKitDataStructs RDKitGenericGroups boost_serialization m z idbfs.js)
 target_include_directories(moorhen PRIVATE ${coot_src} ${coot_src}/src ../checkout/boost_1_80_0 ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw ../include ../checkout/gemmi/include )

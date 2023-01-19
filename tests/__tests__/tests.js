@@ -27,16 +27,16 @@ describe('Testing molecules_container_js', () => {
         console.log(cootModule.CoorFormat.Pdb)
         console.log(cootModule.CoorFormat.ChemComp)
         const st = cootModule.read_structure_file('./5a3h.pdb', cootModule.CoorFormat.Pdb)
-        console.log(st)
-        console.log(st.has_origx)
-        console.log(st.cell)
-        console.log(st.models.size())
-        console.log(st.first_model())
-        console.log(st.origx)
+        console.log("structure",st)
+        console.log("has_origx",st.has_origx)
+        console.log("has_origx",st.has_origx)
+        console.log("size",st.models.size())
         const model = st.first_model()
+        console.log("mass of model",cootModule.calculate_mass_model(model))
+        cootModule.assign_cis_flags_structure(st)
         const chains = model.chains
-        console.log(chains)
-        console.log(chains.size())
+        console.log("chains",chains)
+        console.log("chains.size",chains.size())
         const sgp1 = cootModule.get_spacegroup_by_name('P1')
         console.log(sgp1)
         console.log("hm", cootModule.getSpaceGroupHMAsString(sgp1))
@@ -45,11 +45,12 @@ describe('Testing molecules_container_js', () => {
         console.log("hall(oo)", sgp1.hall())
         console.log("qualifier", cootModule.getSpaceGroupQualifierAsString(sgp1))
         console.log("qualifier(oo)", sgp1.qualifier())
-        console.log(st.spacegroup_hm)
+        console.log("st.spacegroup_hm", st.spacegroup_hm)
 
         for (let i = 0; i < chains.size(); i++) {
             const ch = chains.get(i)
-            console.log(ch.name)
+            console.log("chain mass",cootModule.calculate_mass_chain(ch))
+            console.log("chain name",ch.name)
             const residues = ch.residues
             console.log(residues, residues.size())
             if (residues.size() > 0) {
@@ -60,33 +61,33 @@ describe('Testing molecules_container_js', () => {
                 console.log(atoms, atoms.size())
                 if (atoms.size() > 0) {
                     const at = atoms.get(0)
-                    console.log(at)
-                    console.log(at.name)
-                    console.log(cootModule.getElementNameAsString(at.element))
-                    console.log(at.serial)
-                    console.log(at.pos.x, at.pos.y, at.pos.z)
-                    console.log(at.occ)
-                    console.log(at.b_iso)
-                    console.log(at.padded_name())
+                    console.log("atom",at)
+                    console.log("atom name",at.name)
+                    console.log("atom element name",cootModule.getElementNameAsString(at.element))
+                    console.log("atom serial no.",at.serial)
+                    console.log("atom pos",at.pos.x, at.pos.y, at.pos.z)
+                    console.log("atom occ",at.occ)
+                    console.log("atom b_iso",at.b_iso)
+                    console.log("atom padded name",at.padded_name())
                     const anisoRow0 = at.aniso.as_mat33().row_copy(0)
                     const anisoRow1 = at.aniso.as_mat33().row_copy(1)
                     const anisoRow2 = at.aniso.as_mat33().row_copy(2)
-                    console.log(anisoRow0.x, anisoRow0.y, anisoRow0.z)
-                    console.log(anisoRow1.x, anisoRow1.y, anisoRow1.z)
-                    console.log(anisoRow2.x, anisoRow2.y, anisoRow2.z)
+                    console.log("atom aniso row 1",anisoRow0.x, anisoRow0.y, anisoRow0.z)
+                    console.log("atom aniso row 2",anisoRow1.x, anisoRow1.y, anisoRow1.z)
+                    console.log("atom aniso row 3",anisoRow2.x, anisoRow2.y, anisoRow2.z)
                 }
             }
             const waters = ch.get_waters_const()
             console.log(waters, waters.length())
             if (waters.length() > 0) {
                 console.log("water", waters.at(0))
-                console.log(waters.subchain_id())
+                console.log("water subchain_id", waters.subchain_id())
                 const seq = waters.extract_sequence()
             }
             const ligands = ch.get_ligands_const()
             if (ligands.length() > 0) {
                 console.log("ligand", ligands.at(0))
-                console.log(ligands.subchain_id())
+                console.log("ligand subchain_id", ligands.subchain_id())
             }
         }
     })
@@ -256,6 +257,32 @@ describe('Testing molecules_container_js', () => {
         expect(simpleMesh.triangles.size()).toBe(23400)
     })
 
+    test('Test Dodo instanced mesh', () => {
+        const molecules_container = new cootModule.molecules_container_js()
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        const instanceMesh = molecules_container.get_rotamer_dodecs_instanced(coordMolNo);
+        const geom = instanceMesh.geom
+        for(let i=0;i<geom.size();i++){
+            const inst = geom.get(i);
+            expect(inst.vertices.size()).toBe(60)
+            expect(inst.triangles.size()).toBe(36)
+            expect(inst.instancing_data_A.size()).toBe(650)
+            expect(inst.instancing_data_B.size()).toBe(0)
+            for(let j=0;j<inst.vertices.size();j++){
+                const vert = inst.vertices.get(j)
+                console.log(vert)
+                console.log(vert.pos)
+                console.log(vert.normal)
+            }
+            for(let j=0;j<inst.instancing_data_A.size();j++){
+                const inst_data = inst.instancing_data_A.get(j)
+                console.log("pos:",inst_data.position)
+                console.log("col",inst_data.colour)
+                console.log("size",inst_data.size)
+            }
+        }
+    })
+
     test('Test backups', () => {
         const molecules_container = new cootModule.molecules_container_js()
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
@@ -371,7 +398,6 @@ describe('Testing molecules_container_js', () => {
         expect(simpleMesh.vertices.size()).toBeCloseTo(143439, -3)
         expect(simpleMesh.triangles.size()).toBeCloseTo(174034, -3)
     })
-
 
 })
 

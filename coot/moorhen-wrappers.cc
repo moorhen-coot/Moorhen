@@ -30,8 +30,8 @@
 #include "api/interfaces.hh"
 #include "api/molecules_container.hh"
 #include "api/validation-information.hh"
-#include "api/g_triangle.hh"
-#include "api/vertex.hh"
+#include "coot-utils/g_triangle.hh"
+#include "coot-utils/vertex.hh"
 
 #include "mmdb_manager.h"
 #include "clipper/core/ramachandran.h"
@@ -371,6 +371,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<molecules_container_t>("molecules_container_t")
     .constructor<>()
+    .function("get_gaussian_surface",&molecules_container_t::get_gaussian_surface)
     .function("get_monomer_from_dictionary",&molecules_container_t::get_monomer_from_dictionary)
     .function("get_molecular_representation_mesh",&molecules_container_t::get_molecular_representation_mesh)
     .function("get_map_weight",&molecules_container_t::get_map_weight)
@@ -380,6 +381,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("non_standard_residue_types_in_model",&molecules_container_t::non_standard_residue_types_in_model)
     .function("get_map_rmsd_approx",&molecules_container_t::get_map_rmsd_approx)
     .function("set_draw_missing_residue_loops",&molecules_container_t::set_draw_missing_residue_loops)
+    .function("set_make_backups",&molecules_container_t::set_make_backups)
     .function("get_chains_in_model",&molecules_container_t::get_chains_in_model)
     .function("get_residue_names_with_no_dictionary",&molecules_container_t::get_residue_names_with_no_dictionary)
     .function("write_map",&molecules_container_t::write_map)
@@ -423,6 +425,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("test_origin_cube",&molecules_container_t::test_origin_cube)
     .function("get_ramachandran_validation_markup_mesh",&molecules_container_t::get_ramachandran_validation_markup_mesh)
     .function("get_rotamer_dodecs",&molecules_container_t::get_rotamer_dodecs)
+    .function("get_rotamer_dodecs_instanced",&molecules_container_t::get_rotamer_dodecs_instanced)
     .function("auto_fit_rotamer",&molecules_container_t::auto_fit_rotamer)
     .function("cis_trans_convert",&molecules_container_t::cis_trans_convert)
     .function("set_draw_missing_residue_loops",&molecules_container_t::set_draw_missing_residue_loops)
@@ -440,6 +443,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("mutate",&molecules_container_t::mutate)
     .function("delete_using_cid",&molecules_container_t::delete_using_cid)
     .function("get_bonds_mesh",&molecules_container_t::get_bonds_mesh)
+    .function("get_bonds_mesh_instanced",&molecules_container_t::get_bonds_mesh_instanced)
     .function("go_to_blob",&molecules_container_t::go_to_blob)
     .function("set_map_sampling_rate",&molecules_container_t::set_map_sampling_rate)
     .function("get_monomer",&molecules_container_t::get_monomer)
@@ -488,6 +492,26 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("insCode", &ResiduePropertyInfo::insCode)
     .property("restype", &ResiduePropertyInfo::restype)
     .property("property", &ResiduePropertyInfo::property)
+    ;
+    class_<coot::instancing_data_type_A_t>("instancing_data_type_A_t")
+    .property("position",&coot::instancing_data_type_A_t::position)
+    .property("colour",&coot::instancing_data_type_A_t::colour)
+    .property("size",&coot::instancing_data_type_A_t::size)
+    ;
+    class_<coot::instancing_data_type_B_t>("instancing_data_type_B_t")
+    .property("position",&coot::instancing_data_type_B_t::position)
+    .property("colour",&coot::instancing_data_type_B_t::colour)
+    .property("size",&coot::instancing_data_type_B_t::size)
+    .property("orientation",&coot::instancing_data_type_B_t::orientation)
+    ;
+    class_<coot::instanced_geometry_t>("instanced_geometry_t")
+    .property("vertices",&coot::instanced_geometry_t::vertices)
+    .property("triangles",&coot::instanced_geometry_t::triangles)
+    .property("instancing_data_A",&coot::instanced_geometry_t::instancing_data_A)
+    .property("instancing_data_B",&coot::instanced_geometry_t::instancing_data_B)
+    ;
+    class_<coot::instanced_mesh_t>("instanced_mesh_t")
+    .property("geom",&coot::instanced_mesh_t::geom)
     ;
     class_<coot::atom_spec_t>("atom_spec_t")
     .constructor<const std::string &, int, const std::string &, const std::string &, const std::string &>()
@@ -539,6 +563,11 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("normal",&coot::api::vnc_vertex::normal)
     .property("color",&coot::api::vnc_vertex::color)
     ;
+    class_<coot::api::vn_vertex>("vn_vertex")
+    .constructor<const glm::vec3 &, const glm::vec3 &>()
+    .property("pos",&coot::api::vn_vertex::pos)
+    .property("normal",&coot::api::vn_vertex::normal)
+    ;
     value_object<g_triangle>("g_triangle")
     .field("point_id", &g_triangle::point_id)
     ;
@@ -547,6 +576,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("triangles",&coot::simple_mesh_t::triangles)
     ;
 
+    register_vector<coot::instanced_geometry_t>("Vectorinstanced_geometry_t");
     register_vector<coot::molecule_t::moved_residue_t>("Vectormoved_residue_t");
     register_vector<coot::molecule_t::moved_atom_t>("Vectormoved_atom_t");
     register_vector<std::string>("VectorString");
@@ -562,13 +592,22 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<coot::simple_rotamer>("Vectorsimple_rotamer");
     register_vector<coot::residue_spec_t>("Vectorresidue_spec_t");
     register_vector<coot::api::vnc_vertex>("Vectorvnc_veertex");
+    register_vector<coot::api::vn_vertex>("Vectorvn_vertex");
     register_vector<coot::molecule_t::interesting_place_t>("Vectorinteresting_place_t");
     register_vector<g_triangle>("Vectorg_triangle");
+    register_vector<coot::instancing_data_type_A_t>("Vectorinstancing_data_type_A_t");
+    register_vector<coot::instancing_data_type_B_t>("Vectorinstancing_data_type_B_t");
     register_vector<ResSpecStringPair>("VectorResSpecStringPair");
     register_vector<merge_molecule_results_info_t>("Vectormerge_molecule_results_info_t");
     register_vector<coot::phi_psi_prob_t>("Vectophi_psi_prob_t");
 
-    value_array<glm::vec3>("array_float_3")
+    value_array<glm::mat4>("array_mat4")
+        .element(emscripten::index<0>())
+        .element(emscripten::index<1>())
+        .element(emscripten::index<2>())
+        .element(emscripten::index<3>())
+    ;
+     value_array<glm::vec3>("array_float_3")
         .element(emscripten::index<0>())
         .element(emscripten::index<1>())
         .element(emscripten::index<2>())

@@ -1,9 +1,12 @@
-var triangle_vertex_shader_source = `#version 300 es\n
-    // This shader is basic
+var triangle_instanced_vertex_shader_source = `#version 300 es\n
+    // This shader is not yet fully working!!!
     in vec3 aVertexPosition;
     in vec4 aVertexColour;
     in vec3 aVertexNormal;
     in vec2 aVertexTexture;
+    in vec3 instancePosition;
+    in vec3 instanceSize;
+    in mat4 instanceOrientation;
 
     uniform mat4 uMVMatrix;
     uniform mat4 uMVINVMatrix;
@@ -19,11 +22,12 @@ var triangle_vertex_shader_source = `#version 300 es\n
 
     void main(void) {
 
-      vec4 theVert = vec4(aVertexPosition,1.0);
+      vec4 theVert = vec4(instancePosition,1.0)+instanceOrientation*vec4(instanceSize*aVertexPosition,1.0);
+      theVert.a = 1.0;
 
       gl_Position = uPMatrix * uMVMatrix * theVert;
       vColor = aVertexColour;
-      vNormal = aVertexNormal;
+      vNormal = (instanceOrientation*vec4(aVertexNormal,1.0)).xyz;
       eyePos = uMVMatrix * theVert;
       mvInvMatrix = uMVINVMatrix;
       v = vec3(uMVMatrix * theVert);
@@ -32,4 +36,4 @@ var triangle_vertex_shader_source = `#version 300 es\n
     }
 `;
 
-export {triangle_vertex_shader_source};
+export {triangle_instanced_vertex_shader_source};

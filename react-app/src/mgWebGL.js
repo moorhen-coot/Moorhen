@@ -6,75 +6,74 @@ import React, { createRef, Component } from 'react';
 
 import pako from 'pako';
 import * as vec3 from 'gl-matrix/vec3';
-import * as vec4 from 'gl-matrix/vec4';
 import * as quat4 from 'gl-matrix/quat';
 import * as mat4 from 'gl-matrix/mat4';
 import * as mat3 from 'gl-matrix/mat3';
 //import {vec3,mat4,mat3} from 'gl-matrix/esm';
 //import {quat as quat4} from 'gl-matrix/esm';
-import { base64encode, base64decode } from './mgBase64.js';
+import { base64decode } from './mgBase64.js';
 
 //WebGL2 shaders
-/*
-import {lines_fragment_shader_source} from './lines-fragment-shader.js';
-import {lines_vertex_shader_source} from './lines-vertex-shader.js';
-import {perfect_sphere_fragment_shader_source} from './perfect-sphere-fragment-shader.js';
-import {perfect_sphere_shadow_fragment_shader_source} from './perfect-sphere-shadow-fragment-shader.js';
-import {pointspheres_fragment_shader_source} from './pointspheres-fragment-shader.js';
-import {pointspheres_shadow_fragment_shader_source} from './pointspheres-shadow-fragment-shader.js';
-import {pointspheres_shadow_vertex_shader_source} from './pointspheres-shadow-vertex-shader.js';
-import {pointspheres_vertex_shader_source} from './pointspheres-vertex-shader.js';
-import {render_framebuffer_fragment_shader_source} from './render-framebuffer-fragment-shader.js';
-import {shadow_fragment_shader_source} from './shadow-fragment-shader.js';
-import {shadow_vertex_shader_source} from './shadow-vertex-shader.js';
-import {text_fragment_shader_source} from './text-fragment-shader.js';
-import {circles_fragment_shader_source} from './circle-fragment-shader.js';
-import {circles_vertex_shader_source} from './circle-vertex-shader.js';
-import {thick_lines_vertex_shader_source} from './thick-lines-vertex-shader.js';
-import {thick_lines_normal_vertex_shader_source} from './thick-lines-normal-vertex-shader.js';
-import {triangle_fragment_shader_source} from './triangle-fragment-shader.js';
-import {triangle_shadow_fragment_shader_source} from './triangle-shadow-fragment-shader.js';
-import {triangle_shadow_vertex_shader_source} from './triangle-shadow-vertex-shader.js';
-import {triangle_vertex_shader_source} from './triangle-vertex-shader.js';
-import {twod_fragment_shader_source} from './twodshapes-fragment-shader.js';
-import {twod_vertex_shadow_shader_source} from './twodshapes-shadow-vertex-shader.js';
-import {twod_vertex_shader_source} from './twodshapes-vertex-shader.js';
-*/
+import { lines_fragment_shader_source as lines_fragment_shader_source_webgl2 } from './lines-fragment-shader.js';
+import { lines_vertex_shader_source as lines_vertex_shader_source_webgl2 } from './lines-vertex-shader.js';
+import { perfect_sphere_fragment_shader_source as perfect_sphere_fragment_shader_source_webgl2 } from './perfect-sphere-fragment-shader.js';
+import { perfect_sphere_shadow_fragment_shader_source as perfect_sphere_shadow_fragment_shader_source_webgl2 } from './perfect-sphere-shadow-fragment-shader.js';
+import { pointspheres_fragment_shader_source as pointspheres_fragment_shader_source_webgl2 } from './pointspheres-fragment-shader.js';
+import { pointspheres_shadow_fragment_shader_source as pointspheres_shadow_fragment_shader_source_webgl2 } from './pointspheres-shadow-fragment-shader.js';
+import { pointspheres_shadow_vertex_shader_source as pointspheres_shadow_vertex_shader_source_webgl2 } from './pointspheres-shadow-vertex-shader.js';
+import { pointspheres_vertex_shader_source as pointspheres_vertex_shader_source_webgl2 } from './pointspheres-vertex-shader.js';
+import { render_framebuffer_fragment_shader_source as render_framebuffer_fragment_shader_source_webgl2 } from './render-framebuffer-fragment-shader.js';
+import { shadow_fragment_shader_source as shadow_fragment_shader_source_webgl2 } from './shadow-fragment-shader.js';
+import { shadow_vertex_shader_source as shadow_vertex_shader_source_webgl2 } from './shadow-vertex-shader.js';
+import { text_fragment_shader_source as text_fragment_shader_source_webgl2 } from './text-fragment-shader.js';
+import { circles_fragment_shader_source as circles_fragment_shader_source_webgl2 } from './circle-fragment-shader.js';
+import { circles_vertex_shader_source as circles_vertex_shader_source_webgl2 } from './circle-vertex-shader.js';
+import { thick_lines_vertex_shader_source as thick_lines_vertex_shader_source_webgl2 } from './thick-lines-vertex-shader.js';
+import { thick_lines_normal_vertex_shader_source as thick_lines_normal_vertex_shader_source_webgl2 } from './thick-lines-normal-vertex-shader.js';
+import { triangle_fragment_shader_source as triangle_fragment_shader_source_webgl2 } from './triangle-fragment-shader.js';
+import { triangle_shadow_fragment_shader_source as triangle_shadow_fragment_shader_source_webgl2 } from './triangle-shadow-fragment-shader.js';
+import { triangle_shadow_vertex_shader_source as triangle_shadow_vertex_shader_source_webgl2 } from './triangle-shadow-vertex-shader.js';
+import { triangle_vertex_shader_source as triangle_vertex_shader_source_webgl2 } from './triangle-vertex-shader.js';
+import { twod_fragment_shader_source as twod_fragment_shader_source_webgl2 } from './twodshapes-fragment-shader.js';
+import { twod_vertex_shadow_shader_source as twod_vertex_shadow_shader_source_webgl2 } from './twodshapes-shadow-vertex-shader.js';
+import { twod_vertex_shader_source as twod_vertex_shader_source_webgl2 } from './twodshapes-vertex-shader.js';
+import { triangle_instanced_vertex_shader_source as triangle_instanced_vertex_shader_source_webgl2 } from './triangle-instanced-vertex-shader.js';
 
 //WebGL1 shaders
-import { lines_fragment_shader_source } from './webgl-1/lines-fragment-shader.js';
-import { lines_vertex_shader_source } from './webgl-1/lines-vertex-shader.js';
-import { perfect_sphere_fragment_shader_source } from './webgl-1/perfect-sphere-fragment-shader.js';
-import { perfect_sphere_shadow_fragment_shader_source } from './webgl-1/perfect-sphere-shadow-fragment-shader.js';
-import { pointspheres_fragment_shader_source } from './webgl-1/pointspheres-fragment-shader.js';
-import { pointspheres_shadow_fragment_shader_source } from './webgl-1/pointspheres-shadow-fragment-shader.js';
-import { pointspheres_shadow_vertex_shader_source } from './webgl-1/pointspheres-shadow-vertex-shader.js';
-import { pointspheres_vertex_shader_source } from './webgl-1/pointspheres-vertex-shader.js';
-import { render_framebuffer_fragment_shader_source } from './webgl-1/render-framebuffer-fragment-shader.js';
-import { shadow_fragment_shader_source } from './webgl-1/shadow-fragment-shader.js';
-import { shadow_vertex_shader_source } from './webgl-1/shadow-vertex-shader.js';
-import { text_fragment_shader_source } from './webgl-1/text-fragment-shader.js';
-import { circles_fragment_shader_source } from './webgl-1/circle-fragment-shader.js';
-import { circles_vertex_shader_source } from './webgl-1/circle-vertex-shader.js';
-import { thick_lines_vertex_shader_source } from './webgl-1/thick-lines-vertex-shader.js';
-import { thick_lines_normal_vertex_shader_source } from './webgl-1/thick-lines-normal-vertex-shader.js';
-import { triangle_fragment_shader_source } from './webgl-1/triangle-fragment-shader.js';
-import { triangle_shadow_fragment_shader_source } from './webgl-1/triangle-shadow-fragment-shader.js';
-import { triangle_shadow_vertex_shader_source } from './webgl-1/triangle-shadow-vertex-shader.js';
-import { triangle_vertex_shader_source } from './webgl-1/triangle-vertex-shader.js';
-import { twod_fragment_shader_source } from './webgl-1/twodshapes-fragment-shader.js';
-import { twod_vertex_shadow_shader_source } from './webgl-1/twodshapes-shadow-vertex-shader.js';
-import { twod_vertex_shader_source } from './webgl-1/twodshapes-vertex-shader.js';
+import { lines_fragment_shader_source as lines_fragment_shader_source_webgl1 } from './webgl-1/lines-fragment-shader.js';
+import { lines_vertex_shader_source as lines_vertex_shader_source_webgl1 } from './webgl-1/lines-vertex-shader.js';
+import { perfect_sphere_fragment_shader_source as perfect_sphere_fragment_shader_source_webgl1 } from './webgl-1/perfect-sphere-fragment-shader.js';
+import { perfect_sphere_shadow_fragment_shader_source as perfect_sphere_shadow_fragment_shader_source_webgl1 } from './webgl-1/perfect-sphere-shadow-fragment-shader.js';
+import { pointspheres_fragment_shader_source as pointspheres_fragment_shader_source_webgl1 } from './webgl-1/pointspheres-fragment-shader.js';
+import { pointspheres_shadow_fragment_shader_source as pointspheres_shadow_fragment_shader_source_webgl1 } from './webgl-1/pointspheres-shadow-fragment-shader.js';
+import { pointspheres_shadow_vertex_shader_source as pointspheres_shadow_vertex_shader_source_webgl1 } from './webgl-1/pointspheres-shadow-vertex-shader.js';
+import { pointspheres_vertex_shader_source as pointspheres_vertex_shader_source_webgl1 } from './webgl-1/pointspheres-vertex-shader.js';
+import { render_framebuffer_fragment_shader_source as render_framebuffer_fragment_shader_source_webgl1 } from './webgl-1/render-framebuffer-fragment-shader.js';
+import { shadow_fragment_shader_source as shadow_fragment_shader_source_webgl1 } from './webgl-1/shadow-fragment-shader.js';
+import { shadow_vertex_shader_source as shadow_vertex_shader_source_webgl1 } from './webgl-1/shadow-vertex-shader.js';
+import { text_fragment_shader_source as text_fragment_shader_source_webgl1 } from './webgl-1/text-fragment-shader.js';
+import { circles_fragment_shader_source as circles_fragment_shader_source_webgl1 } from './webgl-1/circle-fragment-shader.js';
+import { circles_vertex_shader_source as circles_vertex_shader_source_webgl1 } from './webgl-1/circle-vertex-shader.js';
+import { thick_lines_vertex_shader_source as thick_lines_vertex_shader_source_webgl1 } from './webgl-1/thick-lines-vertex-shader.js';
+import { thick_lines_normal_vertex_shader_source as thick_lines_normal_vertex_shader_source_webgl1 } from './webgl-1/thick-lines-normal-vertex-shader.js';
+import { triangle_fragment_shader_source as triangle_fragment_shader_source_webgl1 } from './webgl-1/triangle-fragment-shader.js';
+import { triangle_shadow_fragment_shader_source as triangle_shadow_fragment_shader_source_webgl1 } from './webgl-1/triangle-shadow-fragment-shader.js';
+import { triangle_shadow_vertex_shader_source as triangle_shadow_vertex_shader_source_webgl1 } from './webgl-1/triangle-shadow-vertex-shader.js';
+import { triangle_vertex_shader_source as triangle_vertex_shader_source_webgl1 } from './webgl-1/triangle-vertex-shader.js';
+import { twod_fragment_shader_source as twod_fragment_shader_source_webgl1 } from './webgl-1/twodshapes-fragment-shader.js';
+import { twod_vertex_shadow_shader_source as twod_vertex_shadow_shader_source_webgl1 } from './webgl-1/twodshapes-shadow-vertex-shader.js';
+import { twod_vertex_shader_source as twod_vertex_shader_source_webgl1 } from './webgl-1/twodshapes-vertex-shader.js';
+import { triangle_instanced_vertex_shader_source as triangle_instanced_vertex_shader_source_webgl1 } from './webgl-1/triangle-instanced-vertex-shader.js';
 
 import { CIsoSurface } from './CIsoSurface.js';
-import { SplineCurve, BezierCurve, DistanceBetweenPointAndLine, DistanceBetweenTwoLines, DihedralAngle } from './mgMaths.js';
+import { SplineCurve, BezierCurve, DistanceBetweenPointAndLine, DihedralAngle } from './mgMaths.js';
 import { determineFontHeight } from './fontHeight.js';
 
 import { wizards } from './mgWizard.js';
 import { objectsFromAtomColourStyle } from './mgWebGLAtomsToPrimitives.js';
 
 import { guid } from './guid.js';
-import { parseMMCIF, parsePDB } from './mgMiniMol.js';
+import { parseMMCIF } from './mgMiniMol.js';
 
 import { quatToMat4, quat4Inverse } from './quatToMat4.js';
 
@@ -96,51 +95,43 @@ function vec3Subtract(v1, v2, out) {
 }
 
 function vec3Create(v) {
-    var theVec = vec3.create();
+    let theVec = vec3.create();
     vec3.set(theVec, v[0], v[1], v[2], v[3]);
     return theVec;
 }
 
-const hexToRgb = hex =>
-    hex.replace(/^#?([a-f\d])([a-f\d])([a-f\d])$/i, (m, r, g, b) => '#' + r + r + g + g + b + b).substring(1).match(/.{2}/g).map(x => parseInt(x, 16));
-
-var tetraColours = [1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1];
-var tetraNormals = [1, 1, 1, -1, -1, 1, 1, -1, -1, -1, 1, -1];
-var tetraVertices = [1, 1, 1, -1, -1, 1, 1, -1, -1, -1, 1, -1];
-var tetraIndices = [0, 1, 2, 0, 3, 1, 1, 3, 2, 0, 2, 3];
-
-var X_1_0 = 0.525731112119;
-var X_1_1 = 0.000000000000;
-var X_1_2 = 0.850650808352;
-var X_1_3 = 0.309016994375;
-var X_1_4 = 0.500000000000;
-var X_1_5 = 0.809016994375;
-var X_1_6 = 1.000000000000;
+const X_1_0 = 0.525731112119;
+const X_1_1 = 0.000000000000;
+const X_1_2 = 0.850650808352;
+const X_1_3 = 0.309016994375;
+const X_1_4 = 0.500000000000;
+const X_1_5 = 0.809016994375;
+const X_1_6 = 1.000000000000;
 
 
-var X_2_0 = 0.525731112119;
-var X_2_1 = 0.000000000000;
-var X_2_2 = 0.850650808352;
-var X_2_3 = 0.433888564553;
-var X_2_4 = 0.259891913008;
-var X_2_5 = 0.862668480416;
-var X_2_6 = 0.273266528913;
-var X_2_7 = 0.961938357784;
-var X_2_8 = 0.309016994375;
-var X_2_9 = 0.500000000000;
-var X_2_10 = 0.809016994375;
-var X_2_11 = 0.162459848116;
-var X_2_12 = 0.262865556060;
-var X_2_13 = 0.951056516295;
-var X_2_14 = 1.000000000000;
-var X_2_15 = 0.160622035640;
-var X_2_16 = 0.702046444776;
-var X_2_17 = 0.693780477560;
-var X_2_18 = 0.587785252292;
-var X_2_19 = 0.425325404176;
-var X_2_20 = 0.688190960236;
+const X_2_0 = 0.525731112119;
+const X_2_1 = 0.000000000000;
+const X_2_2 = 0.850650808352;
+const X_2_3 = 0.433888564553;
+const X_2_4 = 0.259891913008;
+const X_2_5 = 0.862668480416;
+const X_2_6 = 0.273266528913;
+const X_2_7 = 0.961938357784;
+const X_2_8 = 0.309016994375;
+const X_2_9 = 0.500000000000;
+const X_2_10 = 0.809016994375;
+const X_2_11 = 0.162459848116;
+const X_2_12 = 0.262865556060;
+const X_2_13 = 0.951056516295;
+const X_2_14 = 1.000000000000;
+const X_2_15 = 0.160622035640;
+const X_2_16 = 0.702046444776;
+const X_2_17 = 0.693780477560;
+const X_2_18 = 0.587785252292;
+const X_2_19 = 0.425325404176;
+const X_2_20 = 0.688190960236;
 
-var icosaVertices1 = [
+const icosaVertices1 = [
     -X_1_0, X_1_2, X_1_1,
     -X_1_3, X_1_5, X_1_4,
     X_1_1, X_1_6, X_1_1,
@@ -185,7 +176,7 @@ var icosaVertices1 = [
     -X_1_5, -X_1_4, -X_1_3
 ];
 
-var icosaVertices2 = [
+const icosaVertices2 = [
     -X_2_0, X_2_2, X_2_1,
     -X_2_3, X_2_5, X_2_4,
     -X_2_6, X_2_7, X_2_1,
@@ -350,7 +341,7 @@ var icosaVertices2 = [
     -X_2_20, -X_2_19, -X_2_18
 ];
 
-var icosaIndices1 = [
+const icosaIndices1 = [
     0, 1, 2,
     3, 4, 1,
     5, 2, 4,
@@ -433,7 +424,7 @@ var icosaIndices1 = [
     26, 41, 33
 ];
 
-var icosaIndices2 = [
+const icosaIndices2 = [
     0, 1, 2,
     3, 4, 1,
     5, 2, 4,
@@ -756,15 +747,15 @@ var icosaIndices2 = [
     160, 161, 159
 ];
 
-var icosaphi = (1 + Math.sqrt(5)) / 2.;
-var stellatedScale = 1.64;
-var icosaX = stellatedScale;
-var icosaZ = stellatedScale * icosaphi;
+const icosaphi = (1 + Math.sqrt(5)) / 2.;
+const stellatedScale = 1.64;
+const icosaX = stellatedScale;
+const icosaZ = stellatedScale * icosaphi;
 
-var dodecaphi = (1 + Math.sqrt(5)) / 2.;
-var dodecaX = 1;
-var dodecaZ = dodecaphi;
-var stellatedDodecaVertices = [
+const dodecaphi = (1 + Math.sqrt(5)) / 2.;
+const dodecaX = 1;
+const dodecaZ = dodecaphi;
+const stellatedDodecaVertices = [
     // dodecahedron vertices
     dodecaX, dodecaX, dodecaX,
     -dodecaX, dodecaX, dodecaX,
@@ -801,7 +792,7 @@ var stellatedDodecaVertices = [
     -icosaZ, -icosaX, 0.0, //31
 ];
 
-var stellatedDodecaIndices = [
+const stellatedDodecaIndices = [
 
     // Stellated-Dodecahedron indices
 
@@ -878,10 +869,10 @@ var stellatedDodecaIndices = [
     15, 4, 31,
 ];
 
-var icosaVertices = icosaVertices2;
-var icosaIndices = icosaIndices2;
+let icosaVertices = icosaVertices2;
+let icosaIndices = icosaIndices2;
 
-var icosaNormals = icosaVertices;
+let icosaNormals = icosaVertices;
 
 function isDarkBackground(r, g, b) {
     const brightness = r * 0.299 + g * 0.587 + b * 0.114
@@ -892,33 +883,33 @@ function isDarkBackground(r, g, b) {
 }
 
 function flatNormalMesh(vertices, indices) {
-    var newVertices = [];
-    var newNormals = [];
-    var newIndices = [];
-    var idx = 0;
+    let newVertices = [];
+    let newNormals = [];
+    let newIndices = [];
+    let idx = 0;
 
     for (let i = 0; i < indices.length; i += 3) {
-        var i0 = indices[i];
-        var i1 = indices[i + 1];
-        var i2 = indices[i + 2];
-        var x0 = vertices[3 * i0];
-        var y0 = vertices[3 * i0 + 1];
-        var z0 = vertices[3 * i0 + 2];
-        var x1 = vertices[3 * i1];
-        var y1 = vertices[3 * i1 + 1];
-        var z1 = vertices[3 * i1 + 2];
-        var x2 = vertices[3 * i2];
-        var y2 = vertices[3 * i2 + 1];
-        var z2 = vertices[3 * i2 + 2];
+        let i0 = indices[i];
+        let i1 = indices[i + 1];
+        let i2 = indices[i + 2];
+        let x0 = vertices[3 * i0];
+        let y0 = vertices[3 * i0 + 1];
+        let z0 = vertices[3 * i0 + 2];
+        let x1 = vertices[3 * i1];
+        let y1 = vertices[3 * i1 + 1];
+        let z1 = vertices[3 * i1 + 2];
+        let x2 = vertices[3 * i2];
+        let y2 = vertices[3 * i2 + 1];
+        let z2 = vertices[3 * i2 + 2];
         //console.log("Indices: "+i0+" "+i1+" "+i2);
         //console.log("p0: "+x0+" "+y0+" "+z0);
         //console.log("p1: "+x1+" "+y1+" "+z1);
         //console.log("p2: "+x2+" "+y2+" "+z2);
-        var p0p1 = vec3Create([x1 - x0, y1 - y0, z1 - z0]);
-        var p0p2 = vec3Create([x2 - x0, y2 - y0, z2 - z0]);
+        let p0p1 = vec3Create([x1 - x0, y1 - y0, z1 - z0]);
+        let p0p2 = vec3Create([x2 - x0, y2 - y0, z2 - z0]);
         NormalizeVec3(p0p1);
         NormalizeVec3(p0p2);
-        var n = vec3.create();
+        let n = vec3.create();
         vec3Cross(p0p1, p0p2, n);
         NormalizeVec3(n);
         //console.log("P0P1: "+p0p1[0]+" "+p0p1[1]+" "+p0p1[2]);
@@ -940,7 +931,7 @@ function flatNormalMesh(vertices, indices) {
     //console.log(newNormals);
     //console.log(newIndices);
 
-    var ret = {};
+    let ret = {};
     ret["vertices"] = newVertices;
     ret["normals"] = newNormals;
     ret["indices"] = newIndices;
@@ -949,47 +940,47 @@ function flatNormalMesh(vertices, indices) {
 
 }
 
-var starMesh = flatNormalMesh(stellatedDodecaVertices, stellatedDodecaIndices);
+let starMesh = flatNormalMesh(stellatedDodecaVertices, stellatedDodecaIndices);
 
-//var starNormals = stellatedDodecaVertices;
-//var starVertices = stellatedDodecaVertices;
-//var starIndices = stellatedDodecaIndices;
-var starNormals = starMesh["normals"];
-var starVertices = starMesh["vertices"];
-var starIndices = starMesh["indices"];
+//let starNormals = stellatedDodecaVertices;
+//let starVertices = stellatedDodecaVertices;
+//let starIndices = stellatedDodecaIndices;
+let starNormals = starMesh["normals"];
+let starVertices = starMesh["vertices"];
+let starIndices = starMesh["indices"];
 
 function genSymMats(RO, RF, symmats, origin, radius, centre) {
-    var TMats = [];
-    var isymops = [];
+    let TMats = [];
+    let isymops = [];
     // FIXME We should work out shift limits on the fly also. Currently this only works in box of +/- shift.
-    var transOrigin = vec3.create();
-    var diffO = vec3.create();
+    let transOrigin = vec3.create();
+    let diffO = vec3.create();
 
-    var xyz = vec3Create([1.0, 1.0, 1.0]);
+    let xyz = vec3Create([1.0, 1.0, 1.0]);
     vec3.transformMat4(xyz, xyz, RO);
 
-    var ofrac = vec3Create(origin);
+    let ofrac = vec3Create(origin);
     vec3.transformMat4(ofrac, ofrac, RF);
 
-    var x_shifts = Math.ceil(2 * radius / xyz[0]);
-    var y_shifts = Math.ceil(2 * radius / xyz[1]);
-    var z_shifts = Math.ceil(2 * radius / xyz[2]);
+    let x_shifts = Math.ceil(2 * radius / xyz[0]);
+    let y_shifts = Math.ceil(2 * radius / xyz[1]);
+    let z_shifts = Math.ceil(2 * radius / xyz[2]);
 
-    var x_shift_base = Math.floor(ofrac[0]);
-    var y_shift_base = Math.floor(ofrac[1]);
-    var z_shift_base = Math.floor(ofrac[2]);
+    let x_shift_base = Math.floor(ofrac[0]);
+    let y_shift_base = Math.floor(ofrac[1]);
+    let z_shift_base = Math.floor(ofrac[2]);
 
     for (let i = 0; i < symmats.length; i++) {
-        var tm = symmats[i];
+        let tm = symmats[i];
         //console.log(tm);
-        for (var xshift = -x_shifts + x_shift_base; xshift < x_shifts + x_shift_base; xshift++) {
-            for (var yshift = -y_shifts + y_shift_base; yshift < y_shifts + y_shift_base; yshift++) {
-                for (var zshift = -z_shifts + z_shift_base; zshift < z_shifts + z_shift_base; zshift++) {
-                    var tmt = mat4.create();
+        for (let xshift = -x_shifts + x_shift_base; xshift < x_shifts + x_shift_base; xshift++) {
+            for (let yshift = -y_shifts + y_shift_base; yshift < y_shifts + y_shift_base; yshift++) {
+                for (let zshift = -z_shifts + z_shift_base; zshift < z_shifts + z_shift_base; zshift++) {
+                    let tmt = mat4.create();
                     mat4.transpose(tmt, tm);
-                    var fm = mat4.create();
-                    var theTMatrix = mat4.create();
-                    var invTMat = mat4.create();
+                    let fm = mat4.create();
+                    let theTMatrix = mat4.create();
+                    let invTMat = mat4.create();
                     tmt[12] += xshift;
                     tmt[13] += yshift;
                     tmt[14] += zshift;
@@ -1002,7 +993,7 @@ function genSymMats(RO, RF, symmats, origin, radius, centre) {
                     //printMat(theTMatrix);
                     vec3.transformMat4(transOrigin, centre, theTMatrix);
                     vec3Subtract(transOrigin, origin, diffO);
-                    var diffO2 = vec3.length(diffO);
+                    let diffO2 = vec3.length(diffO);
                     if (diffO2 < radius) {
                         TMats.push(theTMatrix);
                         isymops.push(i);
@@ -1017,10 +1008,10 @@ function genSymMats(RO, RF, symmats, origin, radius, centre) {
 function handleTextureLoaded(gl, image, texture, text, tex_size, font) {
 
     // FIXME - For text, need to fathom how to create a quad of appropriate size to draw on, and how to create correct sized canvas for that.
-    var acanvas = document.createElement("canvas");
+    let acanvas = document.createElement("canvas");
 
-    var nptw;
-    var npth;
+    let nptw;
+    let npth;
     if (image) {
         nptw = next_power_of_2(image.width);
         npth = next_power_of_2(image.height);
@@ -1029,10 +1020,10 @@ function handleTextureLoaded(gl, image, texture, text, tex_size, font) {
         npth = 256;
     }
 
-    var ctx = acanvas.getContext("2d");
+    let ctx = acanvas.getContext("2d");
 
-    var scalew = 1.0;
-    var scaleh = 1.0;
+    let scalew = 1.0;
+    let scaleh = 1.0;
     if (nptw > 1024) {
         scalew = 1024.0 / nptw;
         nptw = 1024;
@@ -1048,10 +1039,10 @@ function handleTextureLoaded(gl, image, texture, text, tex_size, font) {
         ctx.scale(scalew, scaleh);
         ctx.drawImage(image, 0, 0);
     } else {
-        var fnsize = font.match(/^\d+|\d+\b|\d+(?=\w)/g)[0];
+        let fnsize = font.match(/^\d+|\d+\b|\d+(?=\w)/g)[0];
         ctx.font = font;
-        var textWidth = ctx.measureText(text).width;
-        var textHeight = 1.0 * determineFontHeight(font, fnsize);
+        let textWidth = ctx.measureText(text).width;
+        let textHeight = 1.0 * determineFontHeight(font, fnsize);
         nptw = next_power_of_2(parseInt(textWidth));
         npth = next_power_of_2(parseInt(textHeight));
         console.log(nptw + " " + npth);
@@ -1079,15 +1070,15 @@ function handleTextureLoaded(gl, image, texture, text, tex_size, font) {
 }
 
 function initStringTextures(gl, text, tex_size, font) {
-    var cubeTexture = gl.createTexture();
+    let cubeTexture = gl.createTexture();
     handleTextureLoaded(gl, null, cubeTexture, text, tex_size, font);
     return cubeTexture;
 }
 
 function initTextures(gl, fname) {
-    var cubeTexture = gl.createTexture();
-    var cubeImage = new Image();
-    var tex_size = {};
+    let cubeTexture = gl.createTexture();
+    let cubeImage = new Image();
+    let tex_size = {};
 
     cubeImage.src = fname;
 
@@ -1097,24 +1088,24 @@ function initTextures(gl, fname) {
 }
 
 function getNodeText(node) {
-    var r = "";
-    for (var x = 0; x < node.childNodes.length; x++) {
+    let r = "";
+    for (let x = 0; x < node.childNodes.length; x++) {
         r = r + node.childNodes[x].nodeValue;
     }
     return r;
 }
 
 function getOffsetRect(elem) {
-    var box = elem.getBoundingClientRect();
-    var body = document.body;
-    var docElem = document.documentElement;
+    let box = elem.getBoundingClientRect();
+    let body = document.body;
+    let docElem = document.documentElement;
 
-    var scrollTop = window.pageYOffset || docElem.scrollTop || body.scrollTop;
-    var scrollLeft = window.pageXOffset || docElem.scrollLeft || body.scrollLeft;
-    var clientTop = docElem.clientTop || body.clientTop || 0;
-    var clientLeft = docElem.clientLeft || body.clientLeft || 0;
-    var top = box.top + scrollTop - clientTop;
-    var left = box.left + scrollLeft - clientLeft;
+    let scrollTop = window.pageYOffset || docElem.scrollTop || body.scrollTop;
+    let scrollLeft = window.pageXOffset || docElem.scrollLeft || body.scrollLeft;
+    let clientTop = docElem.clientTop || body.clientTop || 0;
+    let clientLeft = docElem.clientLeft || body.clientLeft || 0;
+    let top = box.top + scrollTop - clientTop;
+    let left = box.left + scrollLeft - clientLeft;
     return { top: Math.round(top), left: Math.round(left) };
 }
 
@@ -1133,46 +1124,38 @@ function next_power_of_2(v) {
     return v;
 }
 
-function appendBuffer(buffer1, buffer2) {
-    var tmp = new Uint8Array(buffer1.byteLength + buffer2.byteLength);
-    tmp.set(new Uint8Array(buffer1), 0);
-    tmp.set(new Uint8Array(buffer2), buffer1.byteLength);
-    return tmp;
-}
-
 function getEncodedData(rssentries, createFun) {
-    var allBuffers = [];
+    let allBuffers = [];
     for (let i = 0; i < rssentries.length; i++) {
         if (typeof (rssentries[i]) === "string") {
-            var b64Data = rssentries[i];
-            var strData;
+            const b64Data = rssentries[i];
+            let strData;
             if (window.atob && window.btoa) {
                 strData = atob(b64Data.replace(/\s/g, ''));
             } else {
                 strData = base64decode(b64Data.replace(/\s/g, ''));
             }
-            //var binData     = new Uint8Array();
-            var j;
+            //let binData     = new Uint8Array();
+            let j;
 
-            var binData = new Uint8Array(strData.length);
+            let binData = new Uint8Array(strData.length);
             for (j = 0; j < strData.length; j++) {
                 binData[j] = strData[j].charCodeAt(0);
             }
 
-            var data = pako.inflate(binData);
+            let data = pako.inflate(binData);
 
-            var strData = "";
+            strData = "";
 
             if (window.TextDecoder) {
                 // THIS'LL only work in Firefox 19+, Opera 25+ and Chrome 38+.
-                var decoder = new TextDecoder('utf-8');
-                var strData = decoder.decode(data);
+                let decoder = new TextDecoder('utf-8');
+                strData = decoder.decode(data);
             } else {
-                var unpackBufferLength = 60000;
-                var theSlice = new Uint8Array(60000);
+                let unpackBufferLength = 60000;
                 for (j = 0; j < data.length / unpackBufferLength; j++) {
-                    var lower = j * unpackBufferLength;
-                    var upper = (j + 1) * unpackBufferLength;
+                    let lower = j * unpackBufferLength;
+                    let upper = (j + 1) * unpackBufferLength;
                     if (upper > data.length) {
                         upper = data.length;
                     }
@@ -1182,8 +1165,9 @@ function getEncodedData(rssentries, createFun) {
             }
 
 
+            let thisBuffer;
             try {
-                var thisBuffer = JSON.parse(strData);
+                thisBuffer = JSON.parse(strData);
             } catch (e) {
                 console.log(strData);
             }
@@ -1200,12 +1184,13 @@ function getEncodedData(rssentries, createFun) {
     return allBuffers;
 }
 
-function initGL(canvas, WEBGL2) {
+function initGL(canvas) {
     let gl;
-    if (WEBGL2) {
-        gl = canvas.getContext("webgl2");
-    } else {
+    gl = canvas.getContext("webgl2");
+    let WEBGL2 = true;
+    if (!gl) {
         gl = canvas.getContext("webgl");
+        WEBGL2 = false;
     }
     if (!gl) {
         alert("Could not initialise WebGL, sorry :-(");
@@ -1216,12 +1201,12 @@ function initGL(canvas, WEBGL2) {
     console.log(gl.viewportWidth, gl.viewportHeight);
     console.log(gl.getContextAttributes());
     console.log("Max varying vectors: " + gl.getParameter(gl.MAX_VARYING_VECTORS));
-    return gl;
+    return {gl:gl,WEBGL2:WEBGL2};
 }
 
 function getShader(gl, str, type) {
 
-    var shader;
+    let shader;
     if (type === "fragment") {
         shader = gl.createShader(gl.FRAGMENT_SHADER);
     } else if (type === "vertex") {
@@ -1273,9 +1258,15 @@ class DisplayBuffer {
         this.triangleVertexPositionBuffer = [];
         this.triangleVertexIndexBuffer = [];
         this.triangleVertexTextureBuffer = [];
+        this.triangleInstanceOriginBuffer = [];
+        this.triangleInstanceOrientationBuffer = [];
+        this.triangleInstanceSizeBuffer = [];
         this.triangleColourBuffer = [];
         this.triangleIndexs = [];
         this.triangleVertices = [];
+        this.triangleInstanceOrigins = [];
+        this.triangleInstanceSizes = [];
+        this.triangleInstanceOrientations = [];
         this.triangleColours = [];
         this.triangleNormals = [];
         this.primitiveSizes = [];
@@ -1311,35 +1302,35 @@ class DisplayBuffer {
 }
 
 function createQuatFromDXAngle(angle_in, axis) {
-    var angle = angle_in * Math.PI / 180.0;
-    var q = quat4.create();
+    let angle = angle_in * Math.PI / 180.0;
+    let q = quat4.create();
     quat4.set(q, Math.sin(angle / 2.0) * axis[0], Math.sin(angle / 2.0) * axis[1], Math.sin(angle / 2.0) * axis[2], Math.cos(angle / 2.0));
     return q;
 }
 
 function createXQuatFromDX(angle_in) {
-    var angle = angle_in * Math.PI / 180.0;
-    var q = quat4.create();
+    let angle = angle_in * Math.PI / 180.0;
+    let q = quat4.create();
     quat4.set(q, Math.sin(angle / 2.0), 0.0, 0.0, Math.cos(angle / 2.0));
     return q;
 }
 
 function createYQuatFromDY(angle_in) {
-    var angle = angle_in * Math.PI / 180.0;
-    var q = quat4.create();
+    let angle = angle_in * Math.PI / 180.0;
+    let q = quat4.create();
     quat4.set(q, 0.0, Math.sin(angle / 2.0), 0.0, Math.cos(angle / 2.0));
     return q;
 }
 
 function createZQuatFromDX(angle_in) {
-    var angle = angle_in * Math.PI / 180.0;
-    var q = quat4.create();
+    let angle = angle_in * Math.PI / 180.0;
+    let q = quat4.create();
     quat4.set(q, 0.0, 0.0, Math.sin(angle / 2.0), Math.cos(angle / 2.0));
     return q;
 }
 
 function getDeviceScale() {
-    var deviceScale = 1.0;
+    let deviceScale = 1.0;
     if (typeof (window.devicePixelRatio) !== 'undefined') {
         deviceScale = Math.min(1.5, Math.max(1.0, 0.75 * window.devicePixelRatio));
     }
@@ -1350,8 +1341,8 @@ class MGWebGL extends Component {
 
     resize(width, height) {
         //TODO We need to be cleverer than this.
-        var theWidth = width;
-        var theHeight = height; //Keep it square for now
+        let theWidth = width;
+        let theHeight = height; //Keep it square for now
 
         this.canvas.style.width = parseInt(theWidth) + "px";
         this.canvas.style.height = parseInt(theHeight) + "px";
@@ -1395,8 +1386,8 @@ class MGWebGL extends Component {
     draw() {
 
         this.context = this.canvasRef.current.getContext('2d');
-        var ctx = this.context;
-        var c = this.canvasRef.current;
+        let ctx = this.context;
+        let c = this.canvasRef.current;
 
         ctx.clearRect(0, 0, c.width, c.height);
 
@@ -1423,7 +1414,7 @@ class MGWebGL extends Component {
         console.log("MGWebGL.componentDidMount");
         this.canvas = this.canvasRef.current;
         console.log(this.canvasReact);
-        var self = this;
+        const self = this;
         this.activeMolecule = null;
         /*
         window.addEventListener('resize',
@@ -1432,29 +1423,27 @@ class MGWebGL extends Component {
                 },
                 false);
                 */
-        var ice_blue = [0.0039 * 156, 0.0039 * 176, 0.0039 * 254, 1.0];
-        var gold = [0.0039 * 179, 0.0039 * 177, 0.0039 * 61, 1.0];
-        var coral = [0.0039 * 255, 0.0039 * 127, 0.0039 * 80, 1.0];
-        var grey = [0.0039 * 128, 0.0039 * 128, 0.0039 * 128, 1.0];
-        var pink = [0.0039 * 255, 0.0039 * 146, 0.0039 * 255, 1.0];
-        var sea_green = [0.0039 * 127, 0.0039 * 187, 0.0039 * 181, 1.0];
-        var pale_brown = [0.0039 * 169, 0.0039 * 125, 0.0039 * 94, 1.0];
-        var lilac = [0.0039 * 174, 0.0039 * 135, 0.0039 * 185, 1.0];
-        var lemon = [0.0039 * 255, 0.0039 * 255, 0.0039 * 128, 1.0];
-        var lawn_green = [0.0039 * 69, 0.0039 * 156, 0.0039 * 79, 1.0];
-        var pale_crimson = [0.0039 * 210, 0.0039 * 60, 0.0039 * 62, 1.0];
-        var light_blue = [0.0039 * 65, 0.0039 * 154, 0.0039 * 225, 1.0];
-        var tan = [0.0039 * 120, 0.0039 * 0, 0.0039 * 0, 1.0];
-        var light_green = [0.0039 * 154, 0.0039 * 255, 0.0039 * 154, 1.0];
+        const ice_blue = [0.0039 * 156, 0.0039 * 176, 0.0039 * 254, 1.0];
+        const gold = [0.0039 * 179, 0.0039 * 177, 0.0039 * 61, 1.0];
+        const coral = [0.0039 * 255, 0.0039 * 127, 0.0039 * 80, 1.0];
+        const grey = [0.0039 * 128, 0.0039 * 128, 0.0039 * 128, 1.0];
+        const pink = [0.0039 * 255, 0.0039 * 146, 0.0039 * 255, 1.0];
+        const sea_green = [0.0039 * 127, 0.0039 * 187, 0.0039 * 181, 1.0];
+        const pale_brown = [0.0039 * 169, 0.0039 * 125, 0.0039 * 94, 1.0];
+        const lilac = [0.0039 * 174, 0.0039 * 135, 0.0039 * 185, 1.0];
+        const lemon = [0.0039 * 255, 0.0039 * 255, 0.0039 * 128, 1.0];
+        const lawn_green = [0.0039 * 69, 0.0039 * 156, 0.0039 * 79, 1.0];
+        const pale_crimson = [0.0039 * 210, 0.0039 * 60, 0.0039 * 62, 1.0];
+        const light_blue = [0.0039 * 65, 0.0039 * 154, 0.0039 * 225, 1.0];
+        const tan = [0.0039 * 120, 0.0039 * 0, 0.0039 * 0, 1.0];
+        const light_green = [0.0039 * 154, 0.0039 * 255, 0.0039 * 154, 1.0];
 
-        var red = [1.0, 0.0, 0.0, 1.0];
-        var green = [0.0, 1.0, 0.0, 1.0];
-        var blue = [0.0, 0.0, 1.0, 1.0];
-        var magenta = [1.0, 0.0, 1.0, 1.0];
+        const red = [1.0, 0.0, 0.0, 1.0];
+        const green = [0.0, 1.0, 0.0, 1.0];
+        const blue = [0.0, 0.0, 1.0, 1.0];
+        const magenta = [1.0, 0.0, 1.0, 1.0];
 
         this.symcols = [ice_blue, gold, coral, grey, pink, sea_green, pale_brown, lilac, lemon, lawn_green, pale_crimson, light_blue, tan, light_green, red, green, blue, magenta];
-
-        var asyncShaders = false;
 
         this.shinyBack = true;
         this.backColour = "default";
@@ -1474,6 +1463,8 @@ class MGWebGL extends Component {
         this.mouseMoved = null;
         this.zoom = null;
         this.ext = null;
+        this.instanced_ext = null;
+        this.frag_depth_ext = null;
         this.gl_fog_start = null;
         this.gl_fog_end = null;
         this.gl_nClipPlanes = null;
@@ -1514,9 +1505,7 @@ class MGWebGL extends Component {
         this.doShadow = false;
         this.doShadowDepthDebug = false;
 
-        var self = this;
-
-        this.textCtx = document.createElement("canvas").getContext("2d");
+        this.textCtx = document.createElement("canvas").getContext("2d", {willReadFrequently: true});
         this.circleCtx = document.createElement("canvas").getContext("2d");
 
         this.myQuat = quat4.create();
@@ -1556,9 +1545,12 @@ class MGWebGL extends Component {
         this.gl_cursorPos[0] = this.canvas.width / 2.;
         this.gl_cursorPos[1] = this.canvas.height / 2.;
 
-        this.gl = initGL(this.canvas, this.WEBGL2);
+        const glc = initGL(this.canvas);
+        this.gl = glc.gl;
+        this.WEBGL2 = glc.WEBGL2;
+
         //self.setState({width:window.innerWidth/3, height:window.innerHeight/3}, ()=> self.resize(window.innerWidth/3, window.innerHeight/3));
-        var extensionArray = this.gl.getSupportedExtensions();
+        const extensionArray = this.gl.getSupportedExtensions();
         console.log(extensionArray);
 
         //this.stuartTexture = initTextures(this.gl);
@@ -1568,6 +1560,7 @@ class MGWebGL extends Component {
         if (this.WEBGL2) {
             this.ext = true;
             this.frag_depth_ext = true;
+            this.instanced_ext = true;
             this.depth_texture = true;
         } else {
             this.ext = this.gl.getExtension("OES_element_index_uint");
@@ -1576,6 +1569,10 @@ class MGWebGL extends Component {
             }
             this.frag_depth_ext = this.gl.getExtension("EXT_frag_depth");
             this.depth_texture = this.gl.getExtension("WEBGL_depth_texture");
+            this.instanced_ext = this.gl.getExtension("ANGLE_instanced_arrays");
+            if (!this.instanced_ext) {
+                alert("No instancing support");
+            }
             if (!this.depth_texture) {
                 this.depth_texture = this.gl.getExtension("MOZ_WEBGL_depth_texture");
                 if (!this.depth_texture) {
@@ -1622,38 +1619,38 @@ class MGWebGL extends Component {
         this.clipChangedEvent = document.createEvent('Event');
         this.clipChangedEvent.initEvent('clipChanged', true, true);
 
-        var vertexShader;
-        var fragmentShader;
-        var lineVertexShader;
-        var thickLineVertexShader;
-        var thickLineNormalVertexShader;
-        var lineFragmentShader;
-        var textVertexShader;
-        var circlesVertexShader;
-        var textFragmentShader;
-        var circlesFragmentShader;
-        var pointSpheresVertexShader;
-        var pointSpheresFragmentShader;
-        var twoDShapesFragmentShader;
-        var twoDShapesVertexShader;
-        var renderFrameBufferVertexShader;
-        var renderFrameBufferFragmentShader;
-        var perfectSphereFragmentShader;
-        var shadowVertexShader;
-        var shadowFragmentShader;
-        var triangleShadowVertexShader;
-        var triangleShadowFragmentShader;
-        var twoDShapesShadowVertexShader;
-        var perfectSphereShadowFragmentShader;
-        var pointSpheresShadowVertexShader;
-        var pointSpheresShadowFragmentShader;
+        let vertexShader;
+        let fragmentShader;
+        let lineVertexShader;
+        let thickLineVertexShader;
+        let thickLineNormalVertexShader;
+        let lineFragmentShader;
+        let textVertexShader;
+        let circlesVertexShader;
+        let textFragmentShader;
+        let circlesFragmentShader;
+        let pointSpheresVertexShader;
+        let pointSpheresFragmentShader;
+        let twoDShapesFragmentShader;
+        let twoDShapesVertexShader;
+        let renderFrameBufferVertexShader;
+        let renderFrameBufferFragmentShader;
+        let perfectSphereFragmentShader;
+        let shadowVertexShader;
+        let shadowFragmentShader;
+        let triangleShadowVertexShader;
+        let triangleShadowFragmentShader;
+        let twoDShapesShadowVertexShader;
+        let perfectSphereShadowFragmentShader;
+        let pointSpheresShadowVertexShader;
+        let pointSpheresShadowFragmentShader;
 
         this.mygetrequest = new ajaxRequest();
 
         self.mygetrequest.onreadystatechange = function () {
             if (self.mygetrequest.readyState === 4) {
                 if (self.mygetrequest.status === 200 || window.location.href.indexOf("http") === -1) {
-                    var jsondata = JSON.parse(self.mygetrequest.responseText);
+                    const jsondata = JSON.parse(self.mygetrequest.responseText);
                     self.loadJSON(jsondata);
                 } else {
                     alert("An error has occured making the request")
@@ -1661,12 +1658,63 @@ class MGWebGL extends Component {
             }
         }
 
-        var self = this;
-
         this.doRedraw = false;
-        var myVar = setInterval(function () { self.drawSceneIfDirty() }, 16);
+        let myVar = setInterval(function () { self.drawSceneIfDirty() }, 16);
+
+        let lines_fragment_shader_source = lines_fragment_shader_source_webgl1;
+        let lines_vertex_shader_source = lines_vertex_shader_source_webgl1;
+        let perfect_sphere_fragment_shader_source = perfect_sphere_fragment_shader_source_webgl1;
+        let perfect_sphere_shadow_fragment_shader_source = perfect_sphere_shadow_fragment_shader_source_webgl1;
+        let pointspheres_fragment_shader_source = pointspheres_fragment_shader_source_webgl1;
+        let pointspheres_shadow_fragment_shader_source = pointspheres_shadow_fragment_shader_source_webgl1;
+        let pointspheres_shadow_vertex_shader_source = pointspheres_shadow_vertex_shader_source_webgl1;
+        let pointspheres_vertex_shader_source = pointspheres_vertex_shader_source_webgl1;
+        let render_framebuffer_fragment_shader_source = render_framebuffer_fragment_shader_source_webgl1;
+        let shadow_fragment_shader_source = shadow_fragment_shader_source_webgl1;
+        let shadow_vertex_shader_source = shadow_vertex_shader_source_webgl1;
+        let text_fragment_shader_source = text_fragment_shader_source_webgl1;
+        let circles_fragment_shader_source = circles_fragment_shader_source_webgl1;
+        let circles_vertex_shader_source = circles_vertex_shader_source_webgl1;
+        let thick_lines_vertex_shader_source = thick_lines_vertex_shader_source_webgl1;
+        let thick_lines_normal_vertex_shader_source = thick_lines_normal_vertex_shader_source_webgl1;
+        let triangle_fragment_shader_source = triangle_fragment_shader_source_webgl1;
+        let triangle_shadow_fragment_shader_source = triangle_shadow_fragment_shader_source_webgl1;
+        let triangle_shadow_vertex_shader_source = triangle_shadow_vertex_shader_source_webgl1;
+        let triangle_vertex_shader_source = triangle_vertex_shader_source_webgl1;
+        let twod_fragment_shader_source = twod_fragment_shader_source_webgl1;
+        let twod_vertex_shadow_shader_source = twod_vertex_shadow_shader_source_webgl1;
+        let twod_vertex_shader_source = twod_vertex_shader_source_webgl1;
+        let triangle_instanced_vertex_shader_source = triangle_instanced_vertex_shader_source_webgl1;
+
+        if(this.WEBGL2){
+            lines_fragment_shader_source = lines_fragment_shader_source_webgl2;
+            lines_vertex_shader_source = lines_vertex_shader_source_webgl2;
+            perfect_sphere_fragment_shader_source = perfect_sphere_fragment_shader_source_webgl2;
+            perfect_sphere_shadow_fragment_shader_source = perfect_sphere_shadow_fragment_shader_source_webgl2;
+            pointspheres_fragment_shader_source = pointspheres_fragment_shader_source_webgl2;
+            pointspheres_shadow_fragment_shader_source = pointspheres_shadow_fragment_shader_source_webgl2;
+            pointspheres_shadow_vertex_shader_source = pointspheres_shadow_vertex_shader_source_webgl2;
+            pointspheres_vertex_shader_source = pointspheres_vertex_shader_source_webgl2;
+            render_framebuffer_fragment_shader_source = render_framebuffer_fragment_shader_source_webgl2;
+            shadow_fragment_shader_source = shadow_fragment_shader_source_webgl2;
+            shadow_vertex_shader_source = shadow_vertex_shader_source_webgl2;
+            text_fragment_shader_source = text_fragment_shader_source_webgl2;
+            circles_fragment_shader_source = circles_fragment_shader_source_webgl2;
+            circles_vertex_shader_source = circles_vertex_shader_source_webgl2;
+            thick_lines_vertex_shader_source = thick_lines_vertex_shader_source_webgl2;
+            thick_lines_normal_vertex_shader_source = thick_lines_normal_vertex_shader_source_webgl2;
+            triangle_fragment_shader_source = triangle_fragment_shader_source_webgl2;
+            triangle_shadow_fragment_shader_source = triangle_shadow_fragment_shader_source_webgl2;
+            triangle_shadow_vertex_shader_source = triangle_shadow_vertex_shader_source_webgl2;
+            triangle_vertex_shader_source = triangle_vertex_shader_source_webgl2;
+            twod_fragment_shader_source = twod_fragment_shader_source_webgl2;
+            twod_vertex_shadow_shader_source = twod_vertex_shadow_shader_source_webgl2;
+            twod_vertex_shader_source = twod_vertex_shader_source_webgl2;
+            triangle_instanced_vertex_shader_source = triangle_instanced_vertex_shader_source_webgl2;
+        }
 
         vertexShader = getShader(self.gl, triangle_vertex_shader_source, "vertex");
+        const vertexShaderInstanced = getShader(self.gl, triangle_instanced_vertex_shader_source, "vertex");
         fragmentShader = getShader(self.gl, triangle_fragment_shader_source, "fragment");
         lineVertexShader = getShader(self.gl, lines_vertex_shader_source, "vertex");
         thickLineVertexShader = getShader(self.gl, thick_lines_vertex_shader_source, "vertex");
@@ -1713,6 +1761,7 @@ class MGWebGL extends Component {
         self.initCirclesShaders(circlesVertexShader, circlesFragmentShader);
         self.gl.disableVertexAttribArray(self.shaderProgramCircles.vertexTextureAttribute);
         self.initShaders(vertexShader, fragmentShader);
+        self.initShadersInstanced(vertexShaderInstanced, fragmentShader);
 
         self.buildBuffers();
 
@@ -1723,7 +1772,7 @@ class MGWebGL extends Component {
         console.log(self.background_colour);
 
         self.origin = [0.0, 0.0, 0.0];
-        var shader_version = self.gl.getParameter(self.gl.SHADING_LANGUAGE_VERSION);
+        const shader_version = self.gl.getParameter(self.gl.SHADING_LANGUAGE_VERSION);
         console.log(shader_version);
         //self.infoNode.innerHTML=shader_version;
 
@@ -1794,8 +1843,8 @@ class MGWebGL extends Component {
                 function (e) {
                     e.stopPropagation();
                     e.preventDefault();
-                    var touchobj = e.changedTouches[0];
-                    var evt = { pageX: touchobj.pageX, pageY: touchobj.pageY, shiftKey: false, altKey: false, button: 0 };
+                    const touchobj = e.changedTouches[0];
+                    let evt = { pageX: touchobj.pageX, pageY: touchobj.pageY, shiftKey: false, altKey: false, button: 0 };
                     //alert(e.changedTouches.length)
                     if (e.changedTouches.length === 1) {
                     }
@@ -1812,8 +1861,8 @@ class MGWebGL extends Component {
                 function (e) {
                     e.stopPropagation();
                     e.preventDefault();
-                    var touchobj = e.touches[0]; // reference first touch point for this event
-                    var evt = { pageX: touchobj.pageX, pageY: touchobj.pageY, shiftKey: false, altKey: false, button: 0 };
+                    const touchobj = e.touches[0]; // reference first touch point for this event
+                    let evt = { pageX: touchobj.pageX, pageY: touchobj.pageY, shiftKey: false, altKey: false, button: 0 };
                     if (e.touches.length === 1) {
                     }
                     else if (e.touches.length === 2) {
@@ -1952,7 +2001,7 @@ class MGWebGL extends Component {
 
     updateBuffers(jsondata, theseBuffers) {
         var self = this;
-        for (var idat = 0; idat < theseBuffers.length; idat++) {
+        for (let idat = 0; idat < theseBuffers.length; idat++) {
 
             self.currentBufferIdx = self.displayBuffers.indexOf(theseBuffers[idat]);
 
@@ -1969,11 +2018,8 @@ class MGWebGL extends Component {
             }
 
             rssentries = jsondata.vert_tri[idat];
-            var start = new Date().getTime();
-            var tris = rssentries;
+            const tris = rssentries;
             //console.log(rssentries);
-            var end = new Date().getTime();
-            var time = end - start;
 
             for (let i = 0; i < tris.length; i++) {
                 self.createVertexBuffer(tris[i]);
@@ -2033,22 +2079,46 @@ class MGWebGL extends Component {
 
         //Might also be nice to use this as a test-bed for creating more abstract primitives: circles, squares, stars, etc.
 
-        var self = this;
+        const self = this;
         //console.log("appendOtherData");
         //console.log(jsondata);
 
         var theseBuffers = [];
 
-        for (var idat = 0; idat < jsondata.norm_tri.length; idat++) {
+        for (let idat = 0; idat < jsondata.norm_tri.length; idat++) {
             //self.currentBufferIdx = idat;
             self.currentBufferIdx = self.displayBuffers.length;
             self.displayBuffers.push(new DisplayBuffer());
             theseBuffers.push(self.displayBuffers[self.currentBufferIdx]);
 
             let rssentries = jsondata.norm_tri[idat];
-            var norms = rssentries;
+            const norms = rssentries;
             for (let i = 0; i < norms.length; i++) {
                 self.createNormalBuffer(norms[i]);
+            }
+
+            if (jsondata.instance_origins) {
+                rssentries = jsondata.instance_origins[idat];
+                let instance_origins = rssentries;
+                for (let i = 0; i < instance_origins.length; i++) {
+                    self.createInstanceOriginsBuffer(instance_origins[i]);
+                }
+            }
+
+            if (jsondata.instance_sizes) {
+                rssentries = jsondata.instance_sizes[idat];
+                let instance_sizes = rssentries;
+                for (let i = 0; i < instance_sizes.length; i++) {
+                    self.createInstanceSizesBuffer(instance_sizes[i]);
+                }
+            }
+
+            if (jsondata.instance_orientations) {
+                rssentries = jsondata.instance_orientations[idat];
+                let instance_orientations = rssentries;
+                for (let i = 0; i < instance_orientations.length; i++) {
+                    self.createInstanceOrientationsBuffer(instance_orientations[i]);
+                }
             }
 
             if (jsondata.additional_norm_tri) {
@@ -2060,11 +2130,8 @@ class MGWebGL extends Component {
             }
 
             rssentries = jsondata.vert_tri[idat];
-            var start = new Date().getTime();
-            var tris = rssentries;
+            const tris = rssentries;
             //console.log(rssentries);
-            var end = new Date().getTime();
-            var time = end - start;
 
             for (let i = 0; i < tris.length; i++) {
                 self.createVertexBuffer(tris[i]);
@@ -2078,6 +2145,15 @@ class MGWebGL extends Component {
                 for (var j = 0; j < idxs[i].length; j++) {
                 }
                 self.createIndexBuffer(idxs[i]);
+            }
+
+            if (typeof (jsondata.instance_use_colors) !== "undefined") {
+                if (typeof (jsondata.instance_use_colors[idat]) !== "undefined") {
+                    rssentries = jsondata.instance_use_colors[idat];
+                    for (let i = 0; i < rssentries.length; i++) {
+                        self.addSupplementaryInfo(rssentries[i], "instance_use_colors");
+                    }
+                }
             }
 
             if (typeof (jsondata.useIndices) !== "undefined") {
@@ -2196,8 +2272,8 @@ class MGWebGL extends Component {
                 // FIXME - need to do same as lines 2379-
                 console.log("Got a mapgrid!!!!!!!!!!!!!!!!!!!!!!");
                 rssentries = jsondata.mapGrids[idat];
-                var mapColour = [0.0, 0.0, 1.0, 1.0];
-                var contourLevel = 0.7;
+                let mapColour = [0.0, 0.0, 1.0, 1.0];
+                let contourLevel = 0.7;
                 if (typeof (jsondata.mapColours) !== 'undefined') {
                     if (typeof (jsondata.mapColours[idat]) !== 'undefined') {
                         mapColour = jsondata.mapColours[idat];
@@ -2208,38 +2284,38 @@ class MGWebGL extends Component {
                         contourLevel = jsondata.mapContourLevels[idat];
                     }
                 }
-                var nCells_x = rssentries.nCells_x;
-                var nCells_y = rssentries.nCells_y;
-                var nCells_z = rssentries.nCells_z;
-                var cellLength_x = rssentries.cellLength_x;
-                var cellLength_y = rssentries.cellLength_y;
-                var cellLength_z = rssentries.cellLength_z;
-                var cell = rssentries.cell;
-                var orthMat = rssentries.fracToOrthMat;
-                var fracMat = rssentries.orthToFracMat;
+                const nCells_x = rssentries.nCells_x;
+                const nCells_y = rssentries.nCells_y;
+                const nCells_z = rssentries.nCells_z;
+                const cellLength_x = rssentries.cellLength_x;
+                const cellLength_y = rssentries.cellLength_y;
+                const cellLength_z = rssentries.cellLength_z;
+                const cell = rssentries.cell;
+                const orthMat = rssentries.fracToOrthMat;
+                const fracMat = rssentries.orthToFracMat;
                 console.log(nCells_x + " " + nCells_y + " " + nCells_z);
                 console.log(cellLength_x + " " + cellLength_y + " " + cellLength_z);
                 console.log(orthMat);
                 console.log(fracMat);
-                var map = new CIsoSurface();
-                var start = new Date().getTime();
+                const map = new CIsoSurface();
+                let start = new Date().getTime();
                 console.log(rssentries.grid);
                 map.GenerateSurfacePartial(rssentries.grid, 0.9, nCells_x, nCells_y, nCells_z, cellLength_x, cellLength_y, cellLength_z, 0, 0, 0, 0, nCells_y / 4, nCells_z / 4);
-                var end = new Date().getTime();
-                var time = end - start;
+                let end = new Date().getTime();
+                let time = end - start;
                 console.log('generate map: ' + time * 0.001 + "s");
-                var start = new Date().getTime();
-                var vertices = map.returnVertices(0, 0, 0);
+                start = new Date().getTime();
+                const vertices = map.returnVertices(0, 0, 0);
                 console.log(vertices.length);
-                var normals = map.returnNormals_new();
+                const normals = map.returnNormals_new();
                 console.log(normals.length);
-                var indices = map.returnIndices();
+                const indices = map.returnIndices();
                 console.log(indices.length);
-                var end = new Date().getTime();
-                var time = end - start;
+                end = new Date().getTime();
+                time = end - start;
                 console.log('copy buffers: ' + time * 0.001 + "s");
 
-                colours = [];
+                let colours = [];
                 for (let i = 0; i < vertices.length / 3; i++) {
                     colours.push(0.0);
                     colours.push(0.0);
@@ -2251,10 +2327,10 @@ class MGWebGL extends Component {
                 //console.log(indices);
                 //console.log(colours);
                 var mapTriangleData = { "col_tri": [[colours], [], [], [], [], [], [], []], "norm_tri": [[normals], [], [], [], [], [], [], []], "vert_tri": [[vertices], [], [], [], [], [], [], []], "idx_tri": [[indices], [], [], [], [], [], [], []], "prim_types": [["TRIANGLES"], ["TRIANGLES"], ["TRIANGLES"], ["TRIANGLES"], ["TRIANGLES"], ["TRIANGLES"], ["TRIANGLES"], ["TRIANGLES"]] };
-                var theseBuffers = self.appendOtherData(mapTriangleData);
+                const theseBuffers = self.appendOtherData(mapTriangleData);
 
                 var liveUpdatingMap = {};
-                var gridData = rssentries.grid;
+                const gridData = rssentries.grid;
                 liveUpdatingMap["gridData"] = gridData;
                 liveUpdatingMap["nCells_x"] = nCells_x;
                 liveUpdatingMap["nCells_y"] = nCells_y;
@@ -2278,7 +2354,7 @@ class MGWebGL extends Component {
             }
 
             rssentries = jsondata.col_tri[idat];
-            var colours = rssentries;
+            let colours = rssentries;
             //console.log(rssentries);
 
             for (let i = 0; i < colours.length; i++) {
@@ -2294,12 +2370,12 @@ class MGWebGL extends Component {
             //console.log(jsondata);
             if (typeof (jsondata.visibility) !== "undefined") {
                 if (typeof (jsondata.visibility[idat]) !== "undefined") {
-                    var thisVis = jsondata.visibility[idat];
+                    const thisVis = jsondata.visibility[idat];
                     self.displayBuffers[self.currentBufferIdx].visible = thisVis;
                 }
             } else {
                 // Don't know when this can be triggered ...
-                var thisVis = true;
+                const thisVis = true;
                 if (!thisVis) {
                     self.displayBuffers[self.currentBufferIdx].visible = false;
                 }
@@ -2540,14 +2616,14 @@ class MGWebGL extends Component {
 
         //console.log("Length of buffers: "+jsondata.norm_tri.length);
 
-        for (var idat = 0; idat < jsondata.norm_tri.length; idat++) {
+        for (let idat = 0; idat < jsondata.norm_tri.length; idat++) {
             self.displayBuffers.push(new DisplayBuffer());
             self.currentBufferIdx = idat;
             let rssentries = jsondata.norm_tri[idat];
-            var start = new Date().getTime();
-            var norms = getEncodedData(rssentries);
-            var end = new Date().getTime();
-            var time = end - start;
+            let start = new Date().getTime();
+            const norms = getEncodedData(rssentries);
+            let end = new Date().getTime();
+            let time = end - start;
             //console.log('getEncodedData(normals): ' + time*0.001+"s");
             for (let i = 0; i < norms.length; i++) {
                 self.createNormalBuffer(norms[i]);
@@ -2562,10 +2638,10 @@ class MGWebGL extends Component {
                 }
             }
             rssentries = jsondata.vert_tri[idat];
-            var start = new Date().getTime();
-            var tris = getEncodedData(rssentries);
-            var end = new Date().getTime();
-            var time = end - start;
+            start = new Date().getTime();
+            const tris = getEncodedData(rssentries);
+            end = new Date().getTime();
+            time = end - start;
             //console.log('getEncodedData(triangles): ' + time*0.001+"s");
 
             for (let i = 0; i < tris.length; i++) {
@@ -2574,10 +2650,10 @@ class MGWebGL extends Component {
             //console.log("Num vertex buffers "+tris.length);
 
             rssentries = jsondata.idx_tri[idat];
-            var start = new Date().getTime();
-            var idxs = getEncodedData(rssentries);
-            var end = new Date().getTime();
-            var time = end - start;
+            start = new Date().getTime();
+            const idxs = getEncodedData(rssentries);
+            end = new Date().getTime();
+            time = end - start;
             //console.log('getEncodedData(indices): ' + time*0.001+"s");
 
             for (let i = 0; i < idxs.length; i++) {
@@ -2589,10 +2665,10 @@ class MGWebGL extends Component {
             //console.log("Num index buffers "+idxs.length);
 
             rssentries = jsondata.col_tri[idat];
-            var start = new Date().getTime();
-            var colours = getEncodedData(rssentries);
-            var end = new Date().getTime();
-            var time = end - start;
+            start = new Date().getTime();
+            const colours = getEncodedData(rssentries);
+            end = new Date().getTime();
+            time = end - start;
             //console.log('getEncodedData(colours): ' + time*0.001+"s");
 
             for (let i = 0; i < colours.length; i++) {
@@ -2619,12 +2695,10 @@ class MGWebGL extends Component {
                 //console.log(atoms[0]);
             }
 
-            var thisDisplayClass = jsondata.display_classes[idat];
-
         }
 
         var bgcolour = jsondata.background;
-        if (bgcolour && bgcolour.length == 3) {
+        if (bgcolour && bgcolour.length === 3) {
             self.background_colour[0] = bgcolour[0] / 255.;
             self.background_colour[1] = bgcolour[1] / 255.;
             self.background_colour[2] = bgcolour[2] / 255.;
@@ -2645,10 +2719,10 @@ class MGWebGL extends Component {
 
         // This turns "grids" from json into isosurfaces. Originally of null size. Recentering recalculates.
         if (typeof (jsondata.mapGrids) !== "undefined") {
-            for (var idat = 0; idat < jsondata.mapGrids.length; idat++) {
+            for (let idat = 0; idat < jsondata.mapGrids.length; idat++) {
                 rssentries = jsondata.mapGrids[idat];
-                var mapColour = [0.0, 0.0, 1.0, 1.0];
-                var contourLevel = 0.7;
+                let mapColour = [0.0, 0.0, 1.0, 1.0];
+                let contourLevel = 0.7;
                 if (typeof (jsondata.mapColours) !== 'undefined') {
                     if (typeof (jsondata.mapColours[idat]) !== 'undefined') {
                         mapColour = jsondata.mapColours[idat];
@@ -2659,42 +2733,42 @@ class MGWebGL extends Component {
                         contourLevel = jsondata.mapContourLevels[idat];
                     }
                 }
-                var nCells_x = rssentries.nCells_x;
-                var nCells_y = rssentries.nCells_y;
-                var nCells_z = rssentries.nCells_z;
-                var cellLength_x = rssentries.cellLength_x;
-                var cellLength_y = rssentries.cellLength_y;
-                var cellLength_z = rssentries.cellLength_z;
-                var cell = rssentries.cell;
-                var orthMat = rssentries.fracToOrthMat;
-                var fracMat = rssentries.orthToFracMat;
+                const nCells_x = rssentries.nCells_x;
+                const nCells_y = rssentries.nCells_y;
+                const nCells_z = rssentries.nCells_z;
+                const cellLength_x = rssentries.cellLength_x;
+                const cellLength_y = rssentries.cellLength_y;
+                const cellLength_z = rssentries.cellLength_z;
+                const cell = rssentries.cell;
+                const orthMat = rssentries.fracToOrthMat;
+                const fracMat = rssentries.orthToFracMat;
                 console.log(nCells_x + " " + nCells_y + " " + nCells_z + " " + cellLength_x + " " + cellLength_y + " " + cellLength_z + " " + rssentries.grid.length);
-                var start = new Date().getTime();
-                var gridData = getEncodedData([rssentries.grid]);
-                var end = new Date().getTime();
-                var time = end - start;
+                let start = new Date().getTime();
+                const gridData = getEncodedData([rssentries.grid]);
+                let end = new Date().getTime();
+                let time = end - start;
                 console.log('getEncodedData(mapGrid): ' + time * 0.001 + "s");
                 console.log(gridData[0].length);
-                var map = new CIsoSurface();
-                var start = new Date().getTime();
+                let map = new CIsoSurface();
+                start = new Date().getTime();
                 map.GenerateSurfacePartial(gridData[0], 0.7, nCells_x, nCells_y, nCells_z, cellLength_x, cellLength_y, cellLength_z, 0, 0, 0, 0, nCells_y / 4, nCells_z / 4);
                 //map.GenerateSurfacePartial(gridData[0],0.7,nCells_x,nCells_y,nCells_z,cellLength_x,cellLength_y,cellLength_z,nCells_x/4,nCells_y/4,nCells_z/4,3*nCells_x/4,3*nCells_y/4,3*nCells_z/4);
                 //map.GenerateSurface(gridData[0],0.7,nCells_x,nCells_y,nCells_z,cellLength_x,cellLength_y,cellLength_z);
-                var end = new Date().getTime();
-                var time = end - start;
+                end = new Date().getTime();
+                time = end - start;
                 console.log('generate map: ' + time * 0.001 + "s");
-                var start = new Date().getTime();
-                var vertices = map.returnVertices(0, 0, 0);
+                start = new Date().getTime();
+                const vertices = map.returnVertices(0, 0, 0);
                 console.log(vertices.length);
-                var normals = map.returnNormals_new();
+                const normals = map.returnNormals_new();
                 console.log(normals.length);
-                var indices = map.returnIndices();
+                const indices = map.returnIndices();
                 console.log(indices.length);
-                var end = new Date().getTime();
-                var time = end - start;
+                end = new Date().getTime();
+                time = end - start;
                 console.log('copy buffers: ' + time * 0.001 + "s");
 
-                colours = [];
+                let colours = [];
                 for (let i = 0; i < vertices.length / 3; i++) {
                     colours.push(0.0);
                     colours.push(0.0);
@@ -2972,20 +3046,20 @@ class MGWebGL extends Component {
             dval[3] = (m[1 * 4 + 0] - m[0 * 4 + 1]) * s;
         } else {
             if (m[0 * 4 + 0] > m[1 * 4 + 1] && m[0 * 4 + 0] > m[2 * 4 + 2]) {
-                var s = 2.0 * Math.sqrt(1.0 + m[0 * 4 + 0] - m[1 * 4 + 1] - m[2 * 4 + 2]);
+                const s = 2.0 * Math.sqrt(1.0 + m[0 * 4 + 0] - m[1 * 4 + 1] - m[2 * 4 + 2]);
                 dval[1] = 0.25 * s;
                 dval[2] = (m[0 * 4 + 1] + m[1 * 4 + 0]) / s;
                 dval[3] = (m[0 * 4 + 2] + m[2 * 4 + 0]) / s;
                 dval[0] = (m[1 * 4 + 2] - m[2 * 4 + 1]) / s;
 
             } else if (m[1 * 4 + 1] > m[2 * 4 + 2]) {
-                var s = 2.0 * Math.sqrt(1.0 + m[1 * 4 + 1] - m[0 * 4 + 0] - m[2 * 4 + 2]);
+                const s = 2.0 * Math.sqrt(1.0 + m[1 * 4 + 1] - m[0 * 4 + 0] - m[2 * 4 + 2]);
                 dval[1] = (m[0 * 4 + 1] + m[1 * 4 + 0]) / s;
                 dval[2] = 0.25 * s;
                 dval[3] = (m[1 * 4 + 2] + m[2 * 4 + 1]) / s;
                 dval[0] = (m[0 * 4 + 2] - m[2 * 4 + 0]) / s;
             } else {
-                var s = 2.0 * Math.sqrt(1.0 + m[2 * 4 + 2] - m[0 * 4 + 0] - m[1 * 4 + 1]);
+                const s = 2.0 * Math.sqrt(1.0 + m[2 * 4 + 2] - m[0 * 4 + 0] - m[1 * 4 + 1]);
                 dval[1] = (m[0 * 4 + 2] + m[2 * 4 + 0]) / s;
                 dval[2] = (m[1 * 4 + 2] + m[2 * 4 + 1]) / s;
                 dval[3] = 0.25 * s;
@@ -2994,22 +3068,22 @@ class MGWebGL extends Component {
         }
         // FIXME: My C++ quat has different order/sign from glMatrix version. So I cheat and fudge here.
         //        I should rewrite above.
-        var dval_new = [];
+        let dval_new = [];
         dval_new[3] = -dval[0];
         dval_new[0] = dval[1];
         dval_new[1] = dval[2];
         dval_new[2] = dval[3];
 
-        var q = quat4.create();
+        let q = quat4.create();
         quat4.set(q, dval_new[3], dval_new[0], dval_new[1], dval_new[2]);
-        var invQuat = quat4.create();
-        var theMatrix = quatToMat4(q);
+        let invQuat = quat4.create();
+        let theMatrix = quatToMat4(q);
         quat4Inverse(q, invQuat);
 
         this.myQuat = invQuat;
-        var x = vec3Create([1, 0, 0]);
-        var y = vec3Create([0, 1, 0]);
-        var z = vec3Create([0, 0, 1]);
+        let x = vec3Create([1, 0, 0]);
+        let y = vec3Create([0, 1, 0]);
+        let z = vec3Create([0, 0, 1]);
         vec3.transformMat4(x, x, theMatrix);
         vec3.transformMat4(y, y, theMatrix);
         vec3.transformMat4(z, z, theMatrix);
@@ -3143,7 +3217,7 @@ class MGWebGL extends Component {
             //this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_COMPARE_MODE, this.gl.COMPARE_R_TO_TEXTURE);
             //this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_COMPARE_FUNC, this.gl.LEQUAL);
             if (this.WEBGL2) {
-                this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.DEPTH_COMPONENT, this.rttFramebufferDepth.width, this.rttFramebufferDepth.height, 0, this.gl.DEPTH_COMPONENT, this.gl.UNSIGNED_INT_24_8, null);
+                this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.DEPTH_COMPONENT24, this.rttFramebufferDepth.width, this.rttFramebufferDepth.height, 0, this.gl.DEPTH_COMPONENT, this.gl.UNSIGNED_INT, null);
             } else {
                 this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.DEPTH_COMPONENT, this.rttFramebufferDepth.width, this.rttFramebufferDepth.height, 0, this.gl.DEPTH_COMPONENT, this.gl.UNSIGNED_SHORT, null);
             }
@@ -3163,7 +3237,7 @@ class MGWebGL extends Component {
         if (this.xmlDoc) {
             var root = this.xmlDoc.getElementsByTagName("CCP4MG_Status")[0];
             var data = root.getElementsByTagName(type);
-            for (var idat = 0; idat < data.length; idat++) {
+            for (let idat = 0; idat < data.length; idat++) {
                 var dataUUID = getNodeText(data[idat].getElementsByTagName("uuid")[0]);
                 if (dataUUID === id) {
                     console.log("Match");
@@ -3190,7 +3264,7 @@ class MGWebGL extends Component {
         if (this.xmlDoc) {
             var root = this.xmlDoc.getElementsByTagName("CCP4MG_Status")[0];
             var data = root.getElementsByTagName("MolData");
-            for (var idat = 0; idat < data.length; idat++) {
+            for (let idat = 0; idat < data.length; idat++) {
                 var dataUUID = getNodeText(data[idat].getElementsByTagName("uuid")[0]);
                 if (dataUUID === id) {
                     console.log("Match");
@@ -3231,23 +3305,23 @@ class MGWebGL extends Component {
                         thisDataCopy.removeChild(thisDataCopy.getElementsByTagName("SurfaceDispobj")[0]);
                     }
 
-                    var newDisp = newDoc.createElement("MolDisp");
+                    let newDisp = newDoc.createElement("MolDisp");
 
-                    var newSelParam = newDoc.createElement("selection_parameters");
-                    var newSelect = newDoc.createElement("select");
-                    var newCid = newDoc.createElement("cid");
+                    let newSelParam = newDoc.createElement("selection_parameters");
+                    let newSelect = newDoc.createElement("select");
+                    let newCid = newDoc.createElement("cid");
                     newSelect.textContent = "cid";
                     newCid.textContent = "all";
                     newSelParam.appendChild(newSelect);
                     newSelParam.appendChild(newCid);
                     newDisp.appendChild(newSelParam);
 
-                    var newStyleMode = newDoc.createElement("style");
+                    let newStyleMode = newDoc.createElement("style");
                     newStyleMode.textContent = "BONDS";
                     newDisp.appendChild(newStyleMode);
 
-                    var newColParam = newDoc.createElement("colour_parameters");
-                    var newColMode = newDoc.createElement("colour_mode");
+                    let newColParam = newDoc.createElement("colour_parameters");
+                    let newColMode = newDoc.createElement("colour_mode");
                     newColMode.textContent = "atomtype";
                     newColParam.appendChild(newColMode);
                     newDisp.appendChild(newColParam);
@@ -3255,24 +3329,24 @@ class MGWebGL extends Component {
                     thisDataCopy.appendChild(newDisp);
                     newRoot.appendChild(thisDataCopy);
 
-                    var snippet = (new XMLSerializer()).serializeToString(newDoc);
+                    let snippet = (new XMLSerializer()).serializeToString(newDoc);
                     console.log(snippet);
-                    var blob = new Blob([snippet], { type: "text/plain" });
-                    var formData = new FormData();
-                    var theFile = guid() + ".mgpic.xml";
-                    var client = new XMLHttpRequest();
+                    let blob = new Blob([snippet], { type: "text/plain" });
+                    let formData = new FormData();
+                    let theFile = guid() + ".mgpic.xml";
+                    let client = new XMLHttpRequest();
                     formData.append("upfile", blob, theFile);
                     client.onreadystatechange = function () {
                         if (client.readyState === 4 && client.status === 200) {
                             console.log("Sent snippet");
-                            var client2 = new XMLHttpRequest();
+                            let client2 = new XMLHttpRequest();
                             client2.onreadystatechange = function () {
                                 if (client2.readyState === 4 && client2.status === 200) {
                                     console.log("Executed snippet");
-                                    var jsondata = JSON.parse(client2.responseText);
-                                    var idx = 0;
-                                    for (var idat2 = 0; idat2 < data.length; idat2++) {
-                                        var thisDataId = getNodeText(data[idat2].getElementsByTagName("uuid")[0]);
+                                    const jsondata = JSON.parse(client2.responseText);
+                                    let idx = 0;
+                                    for (let idat2 = 0; idat2 < data.length; idat2++) {
+                                        const thisDataId = getNodeText(data[idat2].getElementsByTagName("uuid")[0]);
                                         // FIXME - These are the only four we are currently dealing with. Others may come later.
                                         idx += data[idat2].getElementsByTagName("MolDisp").length;
                                         idx += data[idat2].getElementsByTagName("HBonds").length;
@@ -3437,18 +3511,15 @@ class MGWebGL extends Component {
         if (this.xmlDoc) {
             var root = this.xmlDoc.getElementsByTagName("CCP4MG_Status")[0];
             var data = root.getElementsByTagName("MolData");
-            for (var idat = 0; idat < data.length; idat++) {
-                var dataUUID = getNodeText(data[idat].getElementsByTagName("uuid")[0]);
-                var dispobjs = data[idat].getElementsByTagName("MolDisp");
-                var hbobjs = data[idat].getElementsByTagName("HBonds");
-                var contactobjs = data[idat].getElementsByTagName("Contacts");
-                var surfobs = data[idat].getElementsByTagName("SurfaceDispobj");
+            for (let idat = 0; idat < data.length; idat++) {
+                const dataUUID = getNodeText(data[idat].getElementsByTagName("uuid")[0]);
+                const dispobjs = data[idat].getElementsByTagName("MolDisp");
                 //console.log(idat+": "+dataUUID+" "+this.ids[num]);
                 //console.log("All ids");
                 //console.log(this.ids);
                 // FIXME - Once again we are only dealing with DispObjs....
-                for (var iobj = 0; iobj < dispobjs.length; iobj++) {
-                    var theUUID = dataUUID + "_" + getNodeText(dispobjs[iobj].getElementsByTagName("uuid")[0]);
+                for (let iobj = 0; iobj < dispobjs.length; iobj++) {
+                    const theUUID = dataUUID + "_" + getNodeText(dispobjs[iobj].getElementsByTagName("uuid")[0]);
                     //console.log("Test DispObj uuid: "+getNodeText(dispobjs[iobj].getElementsByTagName("uuid")[0]));
                     if (theUUID && theUUID === this.ids[num]) {
                         console.log("Match a delete ......." + theUUID);
@@ -3499,7 +3570,6 @@ class MGWebGL extends Component {
                 var red = parseInt(redHex, 16) / 255.;
                 var green = parseInt(greenHex, 16) / 255.;
                 var blue = parseInt(blueHex, 16) / 255.;
-                var alpha = 1.0;
                 var r = doc.createElement("red");
                 r.textContent = "" + red;
                 newCol.appendChild(r);
@@ -3518,7 +3588,7 @@ class MGWebGL extends Component {
         if (this.xmlDoc) {
             var root = this.xmlDoc.getElementsByTagName("CCP4MG_Status")[0];
             var data = root.getElementsByTagName("MolData");
-            for (var idat = 0; idat < data.length; idat++) {
+            for (let idat = 0; idat < data.length; idat++) {
                 var dataUUID = getNodeText(data[idat].getElementsByTagName("uuid")[0]);
                 var dispobjs = data[idat].getElementsByTagName("MolDisp");
                 var hbobjs = data[idat].getElementsByTagName("HBonds");
@@ -3570,14 +3640,14 @@ class MGWebGL extends Component {
                         }
                         if (property === "Colour") {
                             if (thisDispCopy.getElementsByTagName("colour_parameters").length > 0) {
-                                var colparam = thisDispCopy.getElementsByTagName("colour_parameters")[0];
+                                let colparam = thisDispCopy.getElementsByTagName("colour_parameters")[0];
                                 if (colparam.getElementsByTagName("colour_mode").length > 0) {
                                     if (value.substring(0, 11) === "one_colour_") {
                                         colparam.getElementsByTagName("colour_mode")[0].textContent = "one_colour";
                                         dispobjs[iobj].getElementsByTagName("colour_parameters")[0].getElementsByTagName("colour_mode")[0].textContent = "one_colour";
                                         if (colparam.getElementsByTagName("one_colour").length === 0) {
-                                            var newOneCol = newDoc.createElement("one_colour");
-                                            var newOneColThis = this.xmlDoc.createElement("one_colour");
+                                            let newOneCol = newDoc.createElement("one_colour");
+                                            let newOneColThis = this.xmlDoc.createElement("one_colour");
                                             colparam.appendChild(newOneCol);
                                             dispobjs[iobj].getElementsByTagName("colour_parameters")[0].appendChild(newOneColThis);
                                         }
@@ -3590,14 +3660,14 @@ class MGWebGL extends Component {
                                         dispobjs[iobj].getElementsByTagName("colour_parameters")[0].getElementsByTagName("colour_mode")[0].textContent = value;
                                     }
                                 } else {
-                                    var newColMode = newDoc.createElement("colour_mode");
+                                    let newColMode = newDoc.createElement("colour_mode");
                                     colparam.appendChild(newColMode);
-                                    var newColModeThis = this.xmlDoc.createElement("colour_mode");
+                                    let newColModeThis = this.xmlDoc.createElement("colour_mode");
                                     if (value.substring(0, 11) === "one_colour_") {
                                         newColMode.textContent = "one_colour";
                                         newColModeThis.textContent = "one_colour";
-                                        var newOneCol = newDoc.createElement("one_colour");
-                                        var newOneColThis = this.xmlDoc.createElement("one_colour");
+                                        let newOneCol = newDoc.createElement("one_colour");
+                                        let newOneColThis = this.xmlDoc.createElement("one_colour");
                                         colparam.appendChild(newOneCol);
                                         dispobjs[iobj].getElementsByTagName("colour_parameters")[0].appendChild(newOneColThis);
                                         newOneCol.textContent = "#" + value.substring(11);
@@ -3611,17 +3681,18 @@ class MGWebGL extends Component {
                                     dispobjs[iobj].getElementsByTagName("colour_parameters")[0].appendChild(newColModeThis);
                                 }
                             } else {
-                                var newColParam = newDoc.createElement("colour_parameters");
-                                var newColMode = newDoc.createElement("colour_mode");
+                                let colparam = thisDispCopy.getElementsByTagName("colour_parameters")[0];
+                                let newColParam = newDoc.createElement("colour_parameters");
+                                let newColMode = newDoc.createElement("colour_mode");
                                 newColParam.appendChild(newColMode);
                                 thisDispCopy.appendChild(newColParam);
-                                var newColParamThis = this.xmlDoc.createElement("colour_parameters");
-                                var newColModeThis = this.xmlDoc.createElement("colour_mode");
+                                let newColParamThis = this.xmlDoc.createElement("colour_parameters");
+                                let newColModeThis = this.xmlDoc.createElement("colour_mode");
                                 if (value.substring(0, 11) === "one_colour_") {
                                     newColMode.textContent = "one_colour";
                                     newColModeThis.textContent = "one_colour";
-                                    var newOneCol = newDoc.createElement("one_colour");
-                                    var newOneColThis = this.xmlDoc.createElement("one_colour");
+                                    let newOneCol = newDoc.createElement("one_colour");
+                                    let newOneColThis = this.xmlDoc.createElement("one_colour");
                                     colparam.appendChild(newOneCol);
                                     dispobjs[iobj].getElementsByTagName("colour_parameters")[0].appendChild(newOneColThis);
                                     newOneCol.textContent = "#" + value.substring(11);
@@ -3640,7 +3711,7 @@ class MGWebGL extends Component {
                             // Sigh we could have <style>SPLINE</style> or <style_parameters><style_mode>SPLINE</style_mode></style_parameters>
                             // I'll deal with both.
                             if (thisDispCopy.getElementsByTagName("style_parameters").length > 0 && thisDispCopy.getElementsByTagName("style_parameters")[0].getElementsByTagName("style_mode").length > 0) {
-                                var styleparam = thisDispCopy.getElementsByTagName("style_parameters")[0];
+                                const styleparam = thisDispCopy.getElementsByTagName("style_parameters")[0];
                                 styleparam.getElementsByTagName("style_mode")[0].textContent = value;
                                 // Is it wise to do this so early?
                                 dispobjs[iobj].getElementsByTagName("style_parameters")[0].getElementsByTagName("style_mode")[0].textContent = value;
@@ -3648,10 +3719,10 @@ class MGWebGL extends Component {
                                 thisDispCopy.getElementsByTagName("style")[0].textContent = value;
                                 dispobjs[iobj].getElementsByTagName("style")[0].textContent = value;
                             } else {
-                                var newStyleMode = newDoc.createElement("style");
+                                let newStyleMode = newDoc.createElement("style");
                                 newStyleMode.textContent = value;
                                 thisDispCopy.appendChild(newStyleMode);
-                                var newStyleModeThis = this.xmlDoc.createElement("style");
+                                let newStyleModeThis = this.xmlDoc.createElement("style");
                                 newStyleModeThis.textContent = value;
                                 dispobjs[iobj].appendChild(newStyleModeThis);
                             }
@@ -3661,15 +3732,15 @@ class MGWebGL extends Component {
                             if (value.substring(0, 14) === "complex_neighb") {
                                 console.log("Complex neighbourhood!!!");
                                 if (thisDispCopy.getElementsByTagName("selection_parameters").length > 0) {
-                                    var selparam = thisDispCopy.getElementsByTagName("selection_parameters")[0];
+                                    const selparam = thisDispCopy.getElementsByTagName("selection_parameters")[0];
                                     if (selparam.getElementsByTagName("select").length > 0) {
                                         selparam.getElementsByTagName("select")[0].textContent = "neighb";
                                         dispobjs[iobj].getElementsByTagName("selection_parameters")[0].getElementsByTagName("select")[0].textContent = "neighb";
                                     } else {
-                                        var newSelect = newDoc.createElement("select");
+                                        let newSelect = newDoc.createElement("select");
                                         newSelect.textContent = "neighb";
                                         selparam.appendChild(newSelect);
-                                        var newSelectThis = newDoc.createElement("select");
+                                        let newSelectThis = newDoc.createElement("select");
                                         newSelect.textContent = "neighb";
                                         dispobjs[iobj].getElementsByTagName("selection_parameters")[0].appendChild(newSelectThis);
                                     }
@@ -3677,25 +3748,25 @@ class MGWebGL extends Component {
                                         selparam.getElementsByTagName("neighb_sel")[0].textContent = value.substring(15);
                                         dispobjs[iobj].getElementsByTagName("selection_parameters")[0].getElementsByTagName("neighb_sel")[0].textContent = value.substring(15);
                                     } else {
-                                        var newCid = newDoc.createElement("neighb_sel");
+                                        let newCid = newDoc.createElement("neighb_sel");
                                         newCid.textContent = value.substring(15);
                                         selparam.appendChild(newCid);
-                                        var newCidThis = this.xmlDoc.createElement("neighb_sel");
+                                        let newCidThis = this.xmlDoc.createElement("neighb_sel");
                                         newCidThis.textContent = value.substring(15);
                                         dispobjs[iobj].getElementsByTagName("selection_parameters")[0].appendChild(newCidThis);
                                     }
                                 } else {
-                                    var newSelParam = newDoc.createElement("selection_parameters");
-                                    var newSelect = newDoc.createElement("select");
-                                    var newCid = newDoc.createElement("neighb_sel");
+                                    let newSelParam = newDoc.createElement("selection_parameters");
+                                    let newSelect = newDoc.createElement("select");
+                                    let newCid = newDoc.createElement("neighb_sel");
                                     newSelect.textContent = "neighb";
                                     newCid.textContent = value.substring(15);
                                     newSelParam.appendChild(newSelect);
                                     newSelParam.appendChild(newCid);
                                     thisDispCopy.appendChild(newSelParam);
-                                    var newSelParamThis = this.xmlDoc.createElement("selection_parameters");
-                                    var newSelectThis = this.xmlDoc.createElement("select");
-                                    var newCidThis = this.xmlDoc.createElement("neighb_sel");
+                                    let newSelParamThis = this.xmlDoc.createElement("selection_parameters");
+                                    let newSelectThis = this.xmlDoc.createElement("select");
+                                    let newCidThis = this.xmlDoc.createElement("neighb_sel");
                                     newSelectThis.textContent = "neighb";
                                     newCidThis.textContent = value.substring(15);
                                     newSelParamThis.appendChild(newSelectThis);
@@ -3704,15 +3775,15 @@ class MGWebGL extends Component {
                                 }
                             } else if (value.substring(0, 7) === "neighb_") {
                                 if (thisDispCopy.getElementsByTagName("selection_parameters").length > 0) {
-                                    var selparam = thisDispCopy.getElementsByTagName("selection_parameters")[0];
+                                    const selparam = thisDispCopy.getElementsByTagName("selection_parameters")[0];
                                     if (selparam.getElementsByTagName("select").length > 0) {
                                         selparam.getElementsByTagName("select")[0].textContent = "neighb";
                                         dispobjs[iobj].getElementsByTagName("selection_parameters")[0].getElementsByTagName("select")[0].textContent = "neighb";
                                     } else {
-                                        var newSelect = newDoc.createElement("select");
+                                        let newSelect = newDoc.createElement("select");
                                         newSelect.textContent = "neighb";
                                         selparam.appendChild(newSelect);
-                                        var newSelectThis = newDoc.createElement("select");
+                                        let newSelectThis = newDoc.createElement("select");
                                         newSelect.textContent = "neighb";
                                         dispobjs[iobj].getElementsByTagName("selection_parameters")[0].appendChild(newSelectThis);
                                     }
@@ -3720,25 +3791,25 @@ class MGWebGL extends Component {
                                         selparam.getElementsByTagName("neighb_sel")[0].textContent = value.substring(7);
                                         dispobjs[iobj].getElementsByTagName("selection_parameters")[0].getElementsByTagName("neighb_sel")[0].textContent = value.substring(7);
                                     } else {
-                                        var newCid = newDoc.createElement("neighb_sel");
+                                        let newCid = newDoc.createElement("neighb_sel");
                                         newCid.textContent = value.substring(7);
                                         selparam.appendChild(newCid);
-                                        var newCidThis = this.xmlDoc.createElement("neighb_sel");
+                                        let newCidThis = this.xmlDoc.createElement("neighb_sel");
                                         newCidThis.textContent = value.substring(7);
                                         dispobjs[iobj].getElementsByTagName("selection_parameters")[0].appendChild(newCidThis);
                                     }
                                 } else {
-                                    var newSelParam = newDoc.createElement("selection_parameters");
-                                    var newSelect = newDoc.createElement("select");
-                                    var newCid = newDoc.createElement("neighb_sel");
+                                    let newSelParam = newDoc.createElement("selection_parameters");
+                                    let newSelect = newDoc.createElement("select");
+                                    let newCid = newDoc.createElement("neighb_sel");
                                     newSelect.textContent = "neighb";
                                     newCid.textContent = value.substring(7);
                                     newSelParam.appendChild(newSelect);
                                     newSelParam.appendChild(newCid);
                                     thisDispCopy.appendChild(newSelParam);
-                                    var newSelParamThis = this.xmlDoc.createElement("selection_parameters");
-                                    var newSelectThis = this.xmlDoc.createElement("select");
-                                    var newCidThis = this.xmlDoc.createElement("neighb_sel");
+                                    let newSelParamThis = this.xmlDoc.createElement("selection_parameters");
+                                    let newSelectThis = this.xmlDoc.createElement("select");
+                                    let newCidThis = this.xmlDoc.createElement("neighb_sel");
                                     newSelectThis.textContent = "neighb";
                                     newCidThis.textContent = value.substring(7);
                                     newSelParamThis.appendChild(newSelectThis);
@@ -3750,23 +3821,23 @@ class MGWebGL extends Component {
                                     while (node.firstChild) {
                                         node.removeChild(node.firstChild);
                                     }
-                                    var sites = value.substring(6).split(" or ");
-                                    for (var isite = 0; isite < sites.length; isite++) {
-                                        var site = theDoc.createElement("site");
+                                    const sites = value.substring(6).split(" or ");
+                                    for (let isite = 0; isite < sites.length; isite++) {
+                                        let site = theDoc.createElement("site");
                                         site.textContent = sites[isite];
                                         node.appendChild(site);
                                     }
                                 }
                                 if (thisDispCopy.getElementsByTagName("selection_parameters").length > 0) {
-                                    var selparam = thisDispCopy.getElementsByTagName("selection_parameters")[0];
+                                    const selparam = thisDispCopy.getElementsByTagName("selection_parameters")[0];
                                     if (selparam.getElementsByTagName("select").length > 0) {
                                         selparam.getElementsByTagName("select")[0].textContent = "sites";
                                         dispobjs[iobj].getElementsByTagName("selection_parameters")[0].getElementsByTagName("select")[0].textContent = "sites";
                                     } else {
-                                        var newSelect = newDoc.createElement("select");
+                                        let newSelect = newDoc.createElement("select");
                                         newSelect.textContent = "sites";
                                         selparam.appendChild(newSelect);
-                                        var newSelectThis = newDoc.createElement("select");
+                                        let newSelectThis = newDoc.createElement("select");
                                         newSelect.textContent = "sites";
                                         dispobjs[iobj].getElementsByTagName("selection_parameters")[0].appendChild(newSelectThis);
                                     }
@@ -3774,25 +3845,25 @@ class MGWebGL extends Component {
                                         fillSites(selparam.getElementsByTagName("sites")[0], newDoc);
                                         fillSites(dispobjs[iobj].getElementsByTagName("selection_parameters")[0].getElementsByTagName("sites")[0], this.xmlDoc);
                                     } else {
-                                        var newCid = newDoc.createElement("sites");
+                                        let newCid = newDoc.createElement("sites");
                                         fillSites(newCid, newDoc);
                                         selparam.appendChild(newCid);
-                                        var newCidThis = this.xmlDoc.createElement("sites");
+                                        let newCidThis = this.xmlDoc.createElement("sites");
                                         fillSites(newCidThis, this.xmlDoc);
                                         dispobjs[iobj].getElementsByTagName("selection_parameters")[0].appendChild(newCidThis);
                                     }
                                 } else {
-                                    var newSelParam = newDoc.createElement("selection_parameters");
-                                    var newSelect = newDoc.createElement("select");
-                                    var newCid = newDoc.createElement("sites");
+                                    let newSelParam = newDoc.createElement("selection_parameters");
+                                    let newSelect = newDoc.createElement("select");
+                                    let newCid = newDoc.createElement("sites");
                                     newSelect.textContent = "sites";
                                     fillSites(newCid, newDoc);
                                     newSelParam.appendChild(newSelect);
                                     newSelParam.appendChild(newCid);
                                     thisDispCopy.appendChild(newSelParam);
-                                    var newSelParamThis = this.xmlDoc.createElement("selection_parameters");
-                                    var newSelectThis = this.xmlDoc.createElement("select");
-                                    var newCidThis = this.xmlDoc.createElement("sites");
+                                    let newSelParamThis = this.xmlDoc.createElement("selection_parameters");
+                                    let newSelectThis = this.xmlDoc.createElement("select");
+                                    let newCidThis = this.xmlDoc.createElement("sites");
                                     newSelectThis.textContent = "sites";
                                     fillSites(newCidThis, this.xmlDoc);
                                     newSelParamThis.appendChild(newSelectThis);
@@ -3801,16 +3872,16 @@ class MGWebGL extends Component {
                                 }
                             } else {
                                 if (thisDispCopy.getElementsByTagName("selection_parameters").length > 0) {
-                                    var selparam = thisDispCopy.getElementsByTagName("selection_parameters")[0];
+                                    let selparam = thisDispCopy.getElementsByTagName("selection_parameters")[0];
                                     if (selparam.getElementsByTagName("select").length > 0) {
                                         selparam.getElementsByTagName("select")[0].textContent = "cid";
                                         // Is it wise to do this so early?
                                         dispobjs[iobj].getElementsByTagName("selection_parameters")[0].getElementsByTagName("select")[0].textContent = "cid";
                                     } else {
-                                        var newSelect = newDoc.createElement("select");
+                                        let newSelect = newDoc.createElement("select");
                                         newSelect.textContent = "cid";
                                         selparam.appendChild(newSelect);
-                                        var newSelectThis = newDoc.createElement("select");
+                                        let newSelectThis = newDoc.createElement("select");
                                         newSelect.textContent = "cid";
                                         dispobjs[iobj].getElementsByTagName("selection_parameters")[0].appendChild(newSelectThis);
                                     }
@@ -3818,26 +3889,26 @@ class MGWebGL extends Component {
                                         selparam.getElementsByTagName("cid")[0].textContent = value;
                                         dispobjs[iobj].getElementsByTagName("selection_parameters")[0].getElementsByTagName("cid")[0].textContent = value;
                                     } else {
-                                        var newCid = newDoc.createElement("cid");
+                                        let newCid = newDoc.createElement("cid");
                                         newCid.textContent = value;
                                         selparam.appendChild(newCid);
-                                        var newCidThis = this.xmlDoc.createElement("cid");
+                                        let newCidThis = this.xmlDoc.createElement("cid");
                                         newCidThis.textContent = value;
                                         dispobjs[iobj].getElementsByTagName("selection_parameters")[0].appendChild(newCidThis);
                                     }
                                 } else {
-                                    var newSelParam = newDoc.createElement("selection_parameters");
-                                    var newSelect = newDoc.createElement("select");
-                                    var newCid = newDoc.createElement("cid");
+                                    let newSelParam = newDoc.createElement("selection_parameters");
+                                    let newSelect = newDoc.createElement("select");
+                                    let newCid = newDoc.createElement("cid");
                                     newSelect.textContent = "cid";
                                     newCid.textContent = value;
                                     newSelParam.appendChild(newSelect);
                                     newSelParam.appendChild(newCid);
                                     thisDispCopy.appendChild(newSelParam);
 
-                                    var newSelParamThis = this.xmlDoc.createElement("selection_parameters");
-                                    var newSelectThis = this.xmlDoc.createElement("select");
-                                    var newCidThis = this.xmlDoc.createElement("cid");
+                                    let newSelParamThis = this.xmlDoc.createElement("selection_parameters");
+                                    let newSelectThis = this.xmlDoc.createElement("select");
+                                    let newCidThis = this.xmlDoc.createElement("cid");
                                     newSelectThis.textContent = "cid";
                                     newCidThis.textContent = value;
                                     newSelParamThis.appendChild(newSelectThis);
@@ -3851,23 +3922,23 @@ class MGWebGL extends Component {
 
                         // This could/should probably all go in new function.
                         //console.log("Doing snippet stuff");
-                        var snippet = (new XMLSerializer()).serializeToString(newDoc);
+                        let snippet = (new XMLSerializer()).serializeToString(newDoc);
                         //console.log(snippet);
-                        var blob = new Blob([snippet], { type: "text/plain" });
-                        var formData = new FormData();
-                        var theFile = guid() + ".mgpic.xml";
-                        var client = new XMLHttpRequest();
+                        let blob = new Blob([snippet], { type: "text/plain" });
+                        let formData = new FormData();
+                        let theFile = guid() + ".mgpic.xml";
+                        let client = new XMLHttpRequest();
                         formData.append("upfile", blob, theFile);
                         client.onreadystatechange = function () {
                             if (client.readyState === 4 && client.status === 200) {
                                 //console.log("Sent snippet");
-                                var client2 = new XMLHttpRequest();
+                                let client2 = new XMLHttpRequest();
                                 client2.onreadystatechange = function () {
                                     if (client2.readyState === 4 && client2.status === 200) {
                                         console.log("Executed snippet");
                                         // FIXME In general create new child node, give newChild the uuid of old child, data[idat].replaceChild(newChild).
                                         // But we're OK, I think for colours - we've only change colour_mode.
-                                        var jsondata = JSON.parse(client2.responseText);
+                                        const jsondata = JSON.parse(client2.responseText);
                                         //console.log(jsondata.status);
                                         // idat had better only be 0. Not checked that yet.
                                         //console.log(jsondata.norm_tri.length);
@@ -3879,21 +3950,21 @@ class MGWebGL extends Component {
                                         //console.log(jsondata.vert_tri[0].length);
                                         //console.log(jsondata.col_tri[0].length);
                                         //console.log(jsondata.idx_tri[0].length);
-                                        //for(var idat=0;idat<jsondata.norm_tri.length;idat++){
+                                        //for(let idat=0;idat<jsondata.norm_tri.length;idat++){
                                         self.currentBufferIdx = num;
                                         let rssentries = jsondata.norm_tri[0];
-                                        var norms = getEncodedData(rssentries);
+                                        const norms = getEncodedData(rssentries);
                                         //console.log("norms");
                                         //console.log(norms.length);
                                         //console.log(norms);
                                         self.displayBuffers[num].clearBuffers();
-                                        var thisName = jsondata.names[0];
+                                        const thisName = jsondata.names[0];
                                         self.displayBuffers[self.currentBufferIdx].name_label = thisName;
                                         for (let i = 0; i < norms.length; i++) {
                                             self.createNormalBuffer(norms[i]);
                                         }
                                         rssentries = jsondata.vert_tri[0];
-                                        var tris = getEncodedData(rssentries);
+                                        const tris = getEncodedData(rssentries);
                                         //console.log("tris");
                                         //console.log(tris.length);
                                         //console.log(tris);
@@ -3901,7 +3972,7 @@ class MGWebGL extends Component {
                                             self.createVertexBuffer(tris[i]);
                                         }
                                         rssentries = jsondata.col_tri[0];
-                                        var theColours = getEncodedData(rssentries);
+                                        const theColours = getEncodedData(rssentries);
                                         //console.log("theColours");
                                         //console.log(theColours.length);
                                         //console.log(theColours);
@@ -3909,7 +3980,7 @@ class MGWebGL extends Component {
                                             self.createColourBuffer(theColours[i]);
                                         }
                                         rssentries = jsondata.idx_tri[0];
-                                        var idxs = getEncodedData(rssentries);
+                                        const idxs = getEncodedData(rssentries);
                                         for (let i = 0; i < idxs.length; i++) {
                                             self.createIndexBuffer(idxs[i]);
                                         }
@@ -3924,7 +3995,7 @@ class MGWebGL extends Component {
                                                 self.createSizeBuffer(rssentries[i]);
                                             }
                                         }
-                                        var atoms = jsondata.atoms[0];
+                                        const atoms = jsondata.atoms[0];
                                         self.displayBuffers[self.currentBufferIdx].atoms = atoms;
                                         self.displayBuffers[self.currentBufferIdx].isDirty = true;
                                         self.buildBuffers();
@@ -3942,20 +4013,20 @@ class MGWebGL extends Component {
                     }
                 }
                 // FIXME - All these other objects. And Annotations.
-                for (var iobj = 0; iobj < hbobjs.length; iobj++) {
-                    var theUUID = dataUUID + "_" + getNodeText(hbobjs[iobj].getElementsByTagName("uuid")[0]);
+                for (let iobj = 0; iobj < hbobjs.length; iobj++) {
+                    const theUUID = dataUUID + "_" + getNodeText(hbobjs[iobj].getElementsByTagName("uuid")[0]);
                     if (theUUID && theUUID === this.ids[num]) {
                         console.log("Update " + hbobjs[iobj] + " " + property + " " + value);
                     }
                 }
-                for (var iobj = 0; iobj < contactobjs.length; iobj++) {
-                    var theUUID = dataUUID + "_" + getNodeText(contactobjs[iobj].getElementsByTagName("uuid")[0]);
+                for (let iobj = 0; iobj < contactobjs.length; iobj++) {
+                    const theUUID = dataUUID + "_" + getNodeText(contactobjs[iobj].getElementsByTagName("uuid")[0]);
                     if (theUUID && theUUID === this.ids[num]) {
                         console.log("Update " + contactobjs[iobj] + " " + property + " " + value);
                     }
                 }
-                for (var iobj = 0; iobj < surfobs.length; iobj++) {
-                    var theUUID = dataUUID + "_" + getNodeText(surfobs[iobj].getElementsByTagName("uuid")[0]);
+                for (let iobj = 0; iobj < surfobs.length; iobj++) {
+                    const theUUID = dataUUID + "_" + getNodeText(surfobs[iobj].getElementsByTagName("uuid")[0]);
                     if (theUUID && theUUID === this.ids[num]) {
                         console.log("Update " + surfobs[iobj] + " " + property + " " + value);
                     }
@@ -3966,13 +4037,13 @@ class MGWebGL extends Component {
 
     loadPDBCode(pdbid) {
 
-        var self = this;
+        const self = this;
 
         function loadPDBCodeMain() {
-            var client = new XMLHttpRequest();
-            var theFile = guid() + pdbid + ".ent";
+            let client = new XMLHttpRequest();
+            const theFile = guid() + pdbid + ".ent";
             // Create a FormData instance
-            var formData = new FormData();
+            let formData = new FormData();
             // Add the file
             //console.log("Adding to form 2 "+file.files[0]);
             formData.append("pdbcode", pdbid);
@@ -4134,8 +4205,6 @@ class MGWebGL extends Component {
         this.gl.attachShader(this.shaderProgramShadow, fragmentShaderShadow);
         this.gl.bindAttribLocation(this.shaderProgramShadow, 0, "aVertexPosition");
         this.gl.bindAttribLocation(this.shaderProgramShadow, 1, "aVertexColour");
-        this.gl.bindAttribLocation(this.shaderProgramShadow, 2, "aVertexNormal");
-        this.gl.bindAttribLocation(this.shaderProgramShadow, 3, "aVertexTexture");
         this.gl.linkProgram(this.shaderProgramShadow);
 
         if (!this.gl.getProgramParameter(this.shaderProgramShadow, this.gl.LINK_STATUS)) {
@@ -4144,17 +4213,11 @@ class MGWebGL extends Component {
 
         this.gl.useProgram(this.shaderProgramShadow);
 
-        this.shaderProgramShadow.vertexNormalAttribute = this.gl.getAttribLocation(this.shaderProgramShadow, "aVertexNormal");
-        this.gl.enableVertexAttribArray(this.shaderProgramShadow.vertexNormalAttribute);
-
         this.shaderProgramShadow.vertexPositionAttribute = this.gl.getAttribLocation(this.shaderProgramShadow, "aVertexPosition");
         this.gl.enableVertexAttribArray(this.shaderProgramShadow.vertexPositionAttribute);
 
         this.shaderProgramShadow.vertexColourAttribute = this.gl.getAttribLocation(this.shaderProgramShadow, "aVertexColour");
         this.gl.enableVertexAttribArray(this.shaderProgramShadow.vertexColourAttribute);
-
-        this.shaderProgramShadow.vertexTextureAttribute = this.gl.getAttribLocation(this.shaderProgramShadow, "aVertexTexture");
-        this.gl.enableVertexAttribArray(this.shaderProgramShadow.vertexTextureAttribute);
 
         this.shaderProgramShadow.pMatrixUniform = this.gl.getUniformLocation(this.shaderProgramShadow, "uPMatrix");
         this.shaderProgramShadow.mvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramShadow, "uMVMatrix");
@@ -4381,6 +4444,72 @@ class MGWebGL extends Component {
         this.shaderProgram.light_colours_ambient = this.gl.getUniformLocation(this.shaderProgram, "light_colours_ambient");
         this.shaderProgram.light_colours_specular = this.gl.getUniformLocation(this.shaderProgram, "light_colours_specular");
         this.shaderProgram.light_colours_diffuse = this.gl.getUniformLocation(this.shaderProgram, "light_colours_diffuse");
+    }
+
+    initShadersInstanced(vertexShader, fragmentShader) {
+
+        this.shaderProgramInstanced = this.gl.createProgram();
+
+        this.gl.attachShader(this.shaderProgramInstanced, vertexShader);
+        this.gl.attachShader(this.shaderProgramInstanced, fragmentShader);
+        this.gl.bindAttribLocation(this.shaderProgramInstanced, 0, "aVertexPosition");
+        this.gl.bindAttribLocation(this.shaderProgramInstanced, 1, "aVertexColour");
+        this.gl.bindAttribLocation(this.shaderProgramInstanced, 2, "aVertexNormal");
+        this.gl.bindAttribLocation(this.shaderProgramInstanced, 3, "aVertexTexture");
+        this.gl.bindAttribLocation(this.shaderProgramInstanced, 4, "instancePosition");
+        this.gl.bindAttribLocation(this.shaderProgramInstanced, 5, "instanceSize");
+        this.gl.bindAttribLocation(this.shaderProgramInstanced, 6, "instanceOrientation");
+        this.gl.linkProgram(this.shaderProgramInstanced);
+
+        if (!this.gl.getProgramParameter(this.shaderProgramInstanced, this.gl.LINK_STATUS)) {
+            alert("Could not initialise shaders (initShadersInstanced)");
+        }
+
+        this.gl.useProgram(this.shaderProgramInstanced);
+
+        this.shaderProgramInstanced.vertexNormalAttribute = this.gl.getAttribLocation(this.shaderProgramInstanced, "aVertexNormal");
+        this.gl.enableVertexAttribArray(this.shaderProgramInstanced.vertexNormalAttribute);
+
+        this.shaderProgramInstanced.vertexPositionAttribute = this.gl.getAttribLocation(this.shaderProgramInstanced, "aVertexPosition");
+        this.gl.enableVertexAttribArray(this.shaderProgramInstanced.vertexPositionAttribute);
+
+        this.shaderProgramInstanced.vertexColourAttribute = this.gl.getAttribLocation(this.shaderProgramInstanced, "aVertexColour");
+        this.gl.enableVertexAttribArray(this.shaderProgramInstanced.vertexColourAttribute);
+
+        this.shaderProgramInstanced.vertexInstanceOriginAttribute = this.gl.getAttribLocation(this.shaderProgramInstanced, "instancePosition");
+        this.shaderProgramInstanced.vertexInstanceSizeAttribute = this.gl.getAttribLocation(this.shaderProgramInstanced, "instanceSize");
+        this.shaderProgramInstanced.vertexInstanceOrientationAttribute = this.gl.getAttribLocation(this.shaderProgramInstanced, "instanceOrientation");
+
+        this.gl.enableVertexAttribArray(this.shaderProgramInstanced.vertexColourAttribute);
+
+        this.shaderProgramInstanced.pMatrixUniform = this.gl.getUniformLocation(this.shaderProgramInstanced, "uPMatrix");
+        this.shaderProgramInstanced.mvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramInstanced, "uMVMatrix");
+        this.shaderProgramInstanced.mvInvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramInstanced, "uMVINVMatrix");
+
+        this.shaderProgramInstanced.fog_start = this.gl.getUniformLocation(this.shaderProgramInstanced, "fog_start");
+        this.shaderProgramInstanced.fog_end = this.gl.getUniformLocation(this.shaderProgramInstanced, "fog_end");
+        this.shaderProgramInstanced.fogColour = this.gl.getUniformLocation(this.shaderProgramInstanced, "fogColour");
+
+        this.shaderProgramInstanced.clipPlane0 = this.gl.getUniformLocation(this.shaderProgramInstanced, "clipPlane0");
+        this.shaderProgramInstanced.clipPlane1 = this.gl.getUniformLocation(this.shaderProgramInstanced, "clipPlane1");
+        this.shaderProgramInstanced.clipPlane2 = this.gl.getUniformLocation(this.shaderProgramInstanced, "clipPlane2");
+        this.shaderProgramInstanced.clipPlane3 = this.gl.getUniformLocation(this.shaderProgramInstanced, "clipPlane3");
+        this.shaderProgramInstanced.clipPlane4 = this.gl.getUniformLocation(this.shaderProgramInstanced, "clipPlane4");
+        this.shaderProgramInstanced.clipPlane5 = this.gl.getUniformLocation(this.shaderProgramInstanced, "clipPlane5");
+        this.shaderProgramInstanced.clipPlane6 = this.gl.getUniformLocation(this.shaderProgramInstanced, "clipPlane6");
+        this.shaderProgramInstanced.clipPlane7 = this.gl.getUniformLocation(this.shaderProgramInstanced, "clipPlane7");
+        this.shaderProgramInstanced.nClipPlanes = this.gl.getUniformLocation(this.shaderProgramInstanced, "nClipPlanes");
+
+        this.shaderProgramInstanced.cursorPos = this.gl.getUniformLocation(this.shaderProgramInstanced, "cursorPos");
+
+        this.shaderProgramInstanced.shinyBack = this.gl.getUniformLocation(this.shaderProgramInstanced, "shinyBack");
+        this.shaderProgramInstanced.defaultColour = this.gl.getUniformLocation(this.shaderProgramInstanced, "defaultColour");
+        this.shaderProgramInstanced.backColour = this.gl.getUniformLocation(this.shaderProgramInstanced, "backColour");
+
+        this.shaderProgramInstanced.light_positions = this.gl.getUniformLocation(this.shaderProgramInstanced, "light_positions");
+        this.shaderProgramInstanced.light_colours_ambient = this.gl.getUniformLocation(this.shaderProgramInstanced, "light_colours_ambient");
+        this.shaderProgramInstanced.light_colours_specular = this.gl.getUniformLocation(this.shaderProgramInstanced, "light_colours_specular");
+        this.shaderProgramInstanced.light_colours_diffuse = this.gl.getUniformLocation(this.shaderProgramInstanced, "light_colours_diffuse");
     }
 
     initThickLineNormalShaders(vertexShader, fragmentShader) {
@@ -4851,36 +4980,33 @@ class MGWebGL extends Component {
 
     buildBuffers() {
 
-        var xaxis = vec3Create([1.0, 0.0, 0.0]);
-        var yaxis = vec3Create([0.0, 1.0, 0.0]);
-        var zaxis = vec3Create([0.0, 0.0, 1.0]);
-        var Q = vec3.create();
-        var R = vec3.create();
-        var cylinder = vec3.create();
-        var Q1 = vec3.create();
-        var Q2 = vec3.create();
-        var Q3 = vec3.create();
-        var Q4 = vec3.create();
+        let xaxis = vec3Create([1.0, 0.0, 0.0]);
+        let yaxis = vec3Create([0.0, 1.0, 0.0]);
+        let zaxis = vec3Create([0.0, 0.0, 1.0]);
+        let Q = vec3.create();
+        let R = vec3.create();
+        let cylinder = vec3.create();
+        let Q1 = vec3.create();
+        let Q2 = vec3.create();
 
         // FIXME - These need to be global preferences or properties of primitive.
         // spline_accu = 4 is OK for 5kcr on QtWebKit, 8 runs out of memory.
-        var spline_accu = 8;
-        var wormWidth = 0.2;
-        var smoothArrow = true;
-        var accuStep = 20;
+        let spline_accu = 8;
+        let wormWidth = 0.2;
+        let smoothArrow = true;
+        let accuStep = 20;
 
-        var start = new Date().getTime();
-        var thisdisplayBufferslength = this.displayBuffers.length;
+        const thisdisplayBufferslength = this.displayBuffers.length;
         //console.log(thisdisplayBufferslength+" buffers to build");
 
-        for (var idx = 0; idx < thisdisplayBufferslength; idx++) {
+        for (let idx = 0; idx < thisdisplayBufferslength; idx++) {
             if (!this.displayBuffers[idx].isDirty) {
                 continue;
             }
-            for (var j = 0; j < this.displayBuffers[idx].triangleVertexIndexBuffer.length; j++) {
+            for (let j = 0; j < this.displayBuffers[idx].triangleVertexIndexBuffer.length; j++) {
                 this.displayBuffers[idx].isDirty = false;
                 if (this.displayBuffers[idx].bufferTypes[j] === "CYLINDERS" || this.displayBuffers[idx].bufferTypes[j] === "CAPCYLINDERS") {
-                    var accuStep = 20;
+                    accuStep = 20;
 
                     // Construct cylinder from original start and end. 
                     // FIXME - The original indices are ignored at the moment. We will deal with that in due course.
@@ -4888,24 +5014,23 @@ class MGWebGL extends Component {
                     //console.log(this.displayBuffers[idx].triangleVertices[j].length);
                     //console.log(this.displayBuffers[idx].triangleNormals[j].length);
                     //console.log(this.displayBuffers[idx].triangleColours[j].length);
-                    var primitiveSizes = this.displayBuffers[idx].primitiveSizes[j];
+                    const primitiveSizes = this.displayBuffers[idx].primitiveSizes[j];
                     //console.log(primitiveSizes.length);
-                    var triangleIndexs = [];
-                    var triangleNormals = [];
-                    var triangleVertices = [];
-                    var triangleColours = [];
-                    var newIndex = 0;
-                    var icol = 0;
-                    for (var k = 0; k < this.displayBuffers[idx].triangleVertices[j].length; k += 6, icol += 8) {
+                    let triangleIndexs = [];
+                    let triangleNormals = [];
+                    let triangleVertices = [];
+                    let triangleColours = [];
+                    let icol = 0;
+                    for (let k = 0; k < this.displayBuffers[idx].triangleVertices[j].length; k += 6, icol += 8) {
                         //triangleVertices.push(this.displayBuffers[idx].triangleVertices[j][k]);
-                        var cylinderStart = vec3Create([this.displayBuffers[idx].triangleVertices[j][k], this.displayBuffers[idx].triangleVertices[j][k + 1], this.displayBuffers[idx].triangleVertices[j][k + 2]]);
-                        var cylinderEnd = vec3Create([this.displayBuffers[idx].triangleVertices[j][k + 3], this.displayBuffers[idx].triangleVertices[j][k + 4], this.displayBuffers[idx].triangleVertices[j][k + 5]]);
-                        var colStart = [this.displayBuffers[idx].triangleColours[j][icol], this.displayBuffers[idx].triangleColours[j][icol + 1], this.displayBuffers[idx].triangleColours[j][icol + 2], this.displayBuffers[idx].triangleColours[j][icol + 3]];
-                        var colEnd = [this.displayBuffers[idx].triangleColours[j][icol + 4], this.displayBuffers[idx].triangleColours[j][icol + 5], this.displayBuffers[idx].triangleColours[j][icol + 6], this.displayBuffers[idx].triangleColours[j][icol + 7]];
+                        let cylinderStart = vec3Create([this.displayBuffers[idx].triangleVertices[j][k], this.displayBuffers[idx].triangleVertices[j][k + 1], this.displayBuffers[idx].triangleVertices[j][k + 2]]);
+                        let cylinderEnd = vec3Create([this.displayBuffers[idx].triangleVertices[j][k + 3], this.displayBuffers[idx].triangleVertices[j][k + 4], this.displayBuffers[idx].triangleVertices[j][k + 5]]);
+                        let colStart = [this.displayBuffers[idx].triangleColours[j][icol], this.displayBuffers[idx].triangleColours[j][icol + 1], this.displayBuffers[idx].triangleColours[j][icol + 2], this.displayBuffers[idx].triangleColours[j][icol + 3]];
+                        let colEnd = [this.displayBuffers[idx].triangleColours[j][icol + 4], this.displayBuffers[idx].triangleColours[j][icol + 5], this.displayBuffers[idx].triangleColours[j][icol + 6], this.displayBuffers[idx].triangleColours[j][icol + 7]];
                         vec3Subtract(cylinderEnd, cylinderStart, cylinder);
                         NormalizeVec3(cylinder);
                         vec3Cross(xaxis, cylinder, Q);
-                        var valid = false;
+                        let valid = false;
                         if (vec3.length(Q) > 1e-5) {
                             NormalizeVec3(Q);
                             vec3Cross(cylinder, Q, R);
@@ -4926,16 +5051,16 @@ class MGWebGL extends Component {
                             }
                         }
                         if (valid) {
-                            var size = primitiveSizes[icol / 8];
+                            let size = primitiveSizes[icol / 8];
                             vec3.scale(Q, Q, size);
                             vec3.scale(R, R, size);
-                            var istep = 0;
-                            var offset = triangleVertices.length / 3;
-                            for (var theta = 0; theta < 360; theta += accuStep, istep++) {
-                                var theta1 = Math.PI * (theta) / 180.0;
-                                var c1 = Math.cos(theta1);
-                                var s1 = Math.sin(theta1);
-                                var p1 = vec3Create([c1 * Q[0] + s1 * R[0], c1 * Q[1] + s1 * R[1], c1 * Q[2] + s1 * R[2]]);
+                            let istep = 0;
+                            let offset = triangleVertices.length / 3;
+                            for (let theta = 0; theta < 360; theta += accuStep, istep++) {
+                                let theta1 = Math.PI * (theta) / 180.0;
+                                let c1 = Math.cos(theta1);
+                                let s1 = Math.sin(theta1);
+                                let p1 = vec3Create([c1 * Q[0] + s1 * R[0], c1 * Q[1] + s1 * R[1], c1 * Q[2] + s1 * R[2]]);
                                 vec3Add(cylinderStart, p1, Q1);
                                 vec3Add(cylinderEnd, p1, Q2);
                                 triangleVertices.push(Q1[0]); triangleVertices.push(Q1[1]); triangleVertices.push(Q1[2]);
@@ -4963,19 +5088,19 @@ class MGWebGL extends Component {
 
                             if (this.displayBuffers[idx].bufferTypes[j] === "CAPCYLINDERS") {
 
-                                var lastOffset = 1 + triangleIndexs[triangleIndexs.length - 3];
+                                let lastOffset = 1 + triangleIndexs[triangleIndexs.length - 3];
 
                                 // Circle cap at start of cylinder.
-                                var istep = 0;
-                                for (var theta = 0; theta < 360; theta += accuStep, istep++) {
-                                    var theta1 = Math.PI * (theta) / 180.0;
-                                    var theta2 = Math.PI * (theta + accuStep) / 180.0;
-                                    var c1 = Math.cos(theta1);
-                                    var s1 = Math.sin(theta1);
-                                    var c2 = Math.cos(theta2);
-                                    var s2 = Math.sin(theta2);
-                                    var p1 = vec3Create([c1 * Q[0] + s1 * R[0], c1 * Q[1] + s1 * R[1], c1 * Q[2] + s1 * R[2]]);
-                                    var p2 = vec3Create([c2 * Q[0] + s2 * R[0], c2 * Q[1] + s2 * R[1], c2 * Q[2] + s2 * R[2]]);
+                                let istep = 0;
+                                for (let theta = 0; theta < 360; theta += accuStep, istep++) {
+                                    let theta1 = Math.PI * (theta) / 180.0;
+                                    let theta2 = Math.PI * (theta + accuStep) / 180.0;
+                                    let c1 = Math.cos(theta1);
+                                    let s1 = Math.sin(theta1);
+                                    let c2 = Math.cos(theta2);
+                                    let s2 = Math.sin(theta2);
+                                    let p1 = vec3Create([c1 * Q[0] + s1 * R[0], c1 * Q[1] + s1 * R[1], c1 * Q[2] + s1 * R[2]]);
+                                    let p2 = vec3Create([c2 * Q[0] + s2 * R[0], c2 * Q[1] + s2 * R[1], c2 * Q[2] + s2 * R[2]]);
                                     vec3Add(cylinderStart, p1, Q1);
                                     vec3Add(cylinderStart, p2, Q2);
                                     triangleVertices.push(cylinderStart[0]); triangleVertices.push(cylinderStart[1]); triangleVertices.push(cylinderStart[2]);
@@ -4993,15 +5118,15 @@ class MGWebGL extends Component {
                                 }
 
                                 // Circle cap at end of cylinder.
-                                for (var theta = 0; theta < 360; theta += accuStep, istep++) {
-                                    var theta1 = Math.PI * (theta) / 180.0;
-                                    var theta2 = Math.PI * (theta + accuStep) / 180.0;
-                                    var c1 = Math.cos(theta1);
-                                    var s1 = Math.sin(theta1);
-                                    var c2 = Math.cos(theta2);
-                                    var s2 = Math.sin(theta2);
-                                    var p1 = vec3Create([c1 * Q[0] + s1 * R[0], c1 * Q[1] + s1 * R[1], c1 * Q[2] + s1 * R[2]]);
-                                    var p2 = vec3Create([c2 * Q[0] + s2 * R[0], c2 * Q[1] + s2 * R[1], c2 * Q[2] + s2 * R[2]]);
+                                for (let theta = 0; theta < 360; theta += accuStep, istep++) {
+                                    let theta1 = Math.PI * (theta) / 180.0;
+                                    let theta2 = Math.PI * (theta + accuStep) / 180.0;
+                                    let c1 = Math.cos(theta1);
+                                    let s1 = Math.sin(theta1);
+                                    let c2 = Math.cos(theta2);
+                                    let s2 = Math.sin(theta2);
+                                    let p1 = vec3Create([c1 * Q[0] + s1 * R[0], c1 * Q[1] + s1 * R[1], c1 * Q[2] + s1 * R[2]]);
+                                    let p2 = vec3Create([c2 * Q[0] + s2 * R[0], c2 * Q[1] + s2 * R[1], c2 * Q[2] + s2 * R[2]]);
                                     vec3Add(cylinderEnd, p1, Q1);
                                     vec3Add(cylinderEnd, p2, Q2);
                                     triangleVertices.push(cylinderEnd[0]); triangleVertices.push(cylinderEnd[1]); triangleVertices.push(cylinderEnd[2]);
@@ -5050,47 +5175,47 @@ class MGWebGL extends Component {
                     this.displayBuffers[idx].triangleColourBuffer[j].itemSize = 4;
 
                 } else if (this.displayBuffers[idx].bufferTypes[j] === "SPLINE" || this.displayBuffers[idx].bufferTypes[j] === "WORM") {
-                    var accuStep = 20;
-                    var thisSplineAccu = spline_accu;
-                    var thisAccuStep = accuStep;
+                    accuStep = 20;
+                    let thisSplineAccu = spline_accu;
+                    let thisAccuStep = accuStep;
                     if (typeof (this.displayBuffers[idx].supplementary["spline_accu"]) !== "undefined" && this.displayBuffers[idx].supplementary["spline_accu"][j].length > 0) {
                         thisSplineAccu = this.displayBuffers[idx].supplementary["spline_accu"][j][0];
                     }
                     if (typeof (this.displayBuffers[idx].supplementary["accu"]) !== "undefined" && this.displayBuffers[idx].supplementary["accu"][j].length > 0) {
                         thisAccuStep = this.displayBuffers[idx].supplementary["accu"][j][0];
                     }
-                    var isWorm = false;
+                    let isWorm = false;
                     if (this.displayBuffers[idx].bufferTypes[j] === "WORM") {
                         isWorm = true;
                     }
-                    var primitiveSizes = this.displayBuffers[idx].primitiveSizes;
-                    var normals = [];
-                    var N = vec3.create();
-                    var prevN = vec3.create();
-                    var ca1ca2 = vec3.create();
-                    var ca1ca3 = vec3.create();
+                    let primitiveSizes = this.displayBuffers[idx].primitiveSizes;
+                    let normals = [];
+                    let N = vec3.create();
+                    let prevN = vec3.create();
+                    let ca1ca2 = vec3.create();
+                    let ca1ca3 = vec3.create();
 
                     if (typeof (this.displayBuffers[idx].supplementary["customSplineNormals"]) !== "undefined" && this.displayBuffers[idx].supplementary["customSplineNormals"][j].length > 0) {
-                        var customSplineNormals = this.displayBuffers[idx].supplementary["customSplineNormals"][j];
-                        for (var k = 0; k < customSplineNormals.length; k++) {
+                        let customSplineNormals = this.displayBuffers[idx].supplementary["customSplineNormals"][j];
+                        for (let k = 0; k < customSplineNormals.length; k++) {
                             normals.push(customSplineNormals[k][0]);
                             normals.push(customSplineNormals[k][1]);
                             normals.push(customSplineNormals[k][2]);
                         }
                     } else {
-                        for (var k = 3; k < this.displayBuffers[idx].triangleVertices[j].length - 3; k += 3) {
-                            var x1 = this.displayBuffers[idx].triangleVertices[j][k];
-                            var y1 = this.displayBuffers[idx].triangleVertices[j][k + 1];
-                            var z1 = this.displayBuffers[idx].triangleVertices[j][k + 2];
-                            var ca1 = vec3Create([x1, y1, z1]);
-                            var x2 = this.displayBuffers[idx].triangleVertices[j][k + 3];
-                            var y2 = this.displayBuffers[idx].triangleVertices[j][k + 4];
-                            var z2 = this.displayBuffers[idx].triangleVertices[j][k + 5];
-                            var ca2 = vec3Create([x2, y2, z2]);
-                            var x3 = this.displayBuffers[idx].triangleVertices[j][k - 3];
-                            var y3 = this.displayBuffers[idx].triangleVertices[j][k - 2];
-                            var z3 = this.displayBuffers[idx].triangleVertices[j][k - 1];
-                            var ca3 = vec3Create([x3, y3, z3]);
+                        for (let k = 3; k < this.displayBuffers[idx].triangleVertices[j].length - 3; k += 3) {
+                            let x1 = this.displayBuffers[idx].triangleVertices[j][k];
+                            let y1 = this.displayBuffers[idx].triangleVertices[j][k + 1];
+                            let z1 = this.displayBuffers[idx].triangleVertices[j][k + 2];
+                            let ca1 = vec3Create([x1, y1, z1]);
+                            let x2 = this.displayBuffers[idx].triangleVertices[j][k + 3];
+                            let y2 = this.displayBuffers[idx].triangleVertices[j][k + 4];
+                            let z2 = this.displayBuffers[idx].triangleVertices[j][k + 5];
+                            let ca2 = vec3Create([x2, y2, z2]);
+                            let x3 = this.displayBuffers[idx].triangleVertices[j][k - 3];
+                            let y3 = this.displayBuffers[idx].triangleVertices[j][k - 2];
+                            let z3 = this.displayBuffers[idx].triangleVertices[j][k - 1];
+                            let ca3 = vec3Create([x3, y3, z3]);
                             vec3Subtract(ca1, ca2, ca1ca2);
                             vec3Subtract(ca1, ca3, ca1ca3);
 
@@ -5100,7 +5225,7 @@ class MGWebGL extends Component {
                             NormalizeVec3(N);
                             if (k > 3) {
                                 prevN = vec3Create([normals[normals.length - 3], normals[normals.length - 2], normals[normals.length - 1]]);
-                                var isFlip = vec3.dot(N, prevN);
+                                let isFlip = vec3.dot(N, prevN);
                                 if (isFlip < 0.0) {
                                     normals.push(-N[0]);
                                     normals.push(-N[1]);
@@ -5124,8 +5249,8 @@ class MGWebGL extends Component {
                         normals.push(normals[normals.length - 3]);
                     }
 
-                    var spline = [];
-                    var nspline = [];
+                    let spline = [];
+                    let nspline = [];
                     if (thisSplineAccu > 1) {
                         spline = SplineCurve(this.displayBuffers[idx].triangleVertices[j], thisSplineAccu, 3, 1);
                         nspline = SplineCurve(normals, thisSplineAccu, 3, 1);
@@ -5134,31 +5259,31 @@ class MGWebGL extends Component {
                         nspline = normals;
                     }
 
-                    var sheetEnds = [];
+                    let sheetEnds = [];
 
                     if (typeof (this.displayBuffers[idx].supplementary["arrow"]) !== "undefined") {
-                        var bez = this.displayBuffers[idx].supplementary["arrow"][j];
-                        for (var ibez = 0; ibez < bez.length; ibez++) {
+                        let bez = this.displayBuffers[idx].supplementary["arrow"][j];
+                        for (let ibez = 0; ibez < bez.length; ibez++) {
                             //console.log(bez[ibez]);
-                            var sliceInStart = (bez[ibez][0] - 1) * 3;
+                            let sliceInStart = (bez[ibez][0] - 1) * 3;
                             if (sliceInStart < 0) sliceInStart = 0;
                             sheetEnds.push(bez[ibez][1] * 3);
                             if (smoothArrow) {
-                                var sliceInEnd = (bez[ibez][1] + 2) * 3;
+                                let sliceInEnd = (bez[ibez][1] + 2) * 3;
                                 if (sliceInEnd * thisSplineAccu > spline.length) sliceInEnd = spline.length / thisSplineAccu;
-                                var sliceIn = this.displayBuffers[idx].triangleVertices[j].slice(sliceInStart, sliceInEnd);
-                                var nsliceIn = normals.slice(sliceInStart, sliceInEnd);
-                                var flat_spline = BezierCurve(sliceIn, thisSplineAccu);
-                                var flat_nspline = BezierCurve(nsliceIn, thisSplineAccu);
+                                let sliceIn = this.displayBuffers[idx].triangleVertices[j].slice(sliceInStart, sliceInEnd);
+                                let nsliceIn = normals.slice(sliceInStart, sliceInEnd);
+                                let flat_spline = BezierCurve(sliceIn, thisSplineAccu);
+                                let flat_nspline = BezierCurve(nsliceIn, thisSplineAccu);
 
-                                var sliceOutStart = 0;
-                                var sliceOutLength = flat_spline.length;
-                                var sliceOutEnd = flat_spline.length;
+                                let sliceOutStart = 0;
+                                let sliceOutLength = flat_spline.length;
+                                let sliceOutEnd = flat_spline.length;
                                 if (sliceInStart > 6) {
                                     sliceOutStart += 3 * thisSplineAccu;
                                     sliceOutLength -= 3 * thisSplineAccu;
-                                    for (var isplice = 0; isplice < thisSplineAccu; isplice++) {
-                                        var frac = isplice * 1.0 / (1.0 * thisSplineAccu - 1);
+                                    for (let isplice = 0; isplice < thisSplineAccu; isplice++) {
+                                        let frac = isplice * 1.0 / (1.0 * thisSplineAccu - 1);
                                         //console.log("old "+spline[sliceInStart*thisSplineAccu+3*isplice]+" "+(sliceInStart*thisSplineAccu+3*isplice));
                                         //console.log("old "+spline[sliceInStart*thisSplineAccu+3*isplice+1]+" "+(sliceInStart*thisSplineAccu+3*isplice+1));
                                         //console.log("old "+spline[sliceInStart*thisSplineAccu+3*isplice+2]+" "+(sliceInStart*thisSplineAccu+3*isplice+2));
@@ -5176,8 +5301,8 @@ class MGWebGL extends Component {
                                 if (spline.length - sliceInEnd * thisSplineAccu > 6) {
                                     sliceOutLength -= 3 * thisSplineAccu;
                                     sliceOutEnd -= 3 * thisSplineAccu;
-                                    for (var isplice = 0; isplice < thisSplineAccu; isplice++) {
-                                        var frac = isplice * 1.0 / (1.0 * thisSplineAccu - 1);
+                                    for (let isplice = 0; isplice < thisSplineAccu; isplice++) {
+                                        let frac = isplice * 1.0 / (1.0 * thisSplineAccu - 1);
                                         //console.log("old "+spline[(sliceInEnd-3)*thisSplineAccu+3*isplice]+" "+((sliceInEnd-3)*thisSplineAccu+3*isplice));
                                         //console.log("old "+spline[(sliceInEnd-3)*thisSplineAccu+3*isplice+1]+" "+((sliceInEnd-3)*thisSplineAccu+3*isplice+1));
                                         //console.log("old "+spline[(sliceInEnd-3)*thisSplineAccu+3*isplice+2]+" "+((sliceInEnd-3)*thisSplineAccu+3*isplice+2));
@@ -5201,28 +5326,28 @@ class MGWebGL extends Component {
                     //console.log(sheetEnds);
                     //console.log(smoothArrow);
 
-                    var pdiff = vec3.create();
-                    var n2 = vec3.create();
-                    var n2spline = [];
+                    let pdiff = vec3.create();
+                    let n2 = vec3.create();
+                    let n2spline = [];
 
-                    for (var k = 0; k < nspline.length; k += 3) {
-                        var Nx = nspline[k];
-                        var Ny = nspline[k + 1];
-                        var Nz = nspline[k + 2];
-                        var N = vec3Create([Nx, Ny, Nz]);
+                    for (let k = 0; k < nspline.length; k += 3) {
+                        let Nx = nspline[k];
+                        let Ny = nspline[k + 1];
+                        let Nz = nspline[k + 2];
+                        let N = vec3Create([Nx, Ny, Nz]);
                         NormalizeVec3(N);
                         nspline[k] = N[0];
                         nspline[k + 1] = N[1];
                         nspline[k + 2] = N[2];
                         if (k < nspline.length - 3) {
-                            var p1x = spline[k];
-                            var p1y = spline[k + 1];
-                            var p1z = spline[k + 2];
-                            var p1 = vec3Create([p1x, p1y, p1z]);
-                            var p2x = spline[k + 3];
-                            var p2y = spline[k + 4];
-                            var p2z = spline[k + 5];
-                            var p2 = vec3Create([p2x, p2y, p2z]);
+                            let p1x = spline[k];
+                            let p1y = spline[k + 1];
+                            let p1z = spline[k + 2];
+                            let p1 = vec3Create([p1x, p1y, p1z]);
+                            let p2x = spline[k + 3];
+                            let p2y = spline[k + 4];
+                            let p2z = spline[k + 5];
+                            let p2 = vec3Create([p2x, p2y, p2z]);
                             vec3Subtract(p1, p2, pdiff);
                             vec3Cross(N, pdiff, n2);
                             //console.log(vec3.length(n2)+" "+k);
@@ -5236,17 +5361,17 @@ class MGWebGL extends Component {
                     n2spline.push(n2spline[n2spline.length - 3]);
                     n2spline.push(n2spline[n2spline.length - 3]);
 
-                    var triangleIndexs = [];
-                    var triangleNormals = [];
-                    var triangleVertices = [];
-                    var triangleColours = [];
+                    let triangleIndexs = [];
+                    let triangleNormals = [];
+                    let triangleVertices = [];
+                    let triangleColours = [];
 
-                    var scale = [];
-                    for (var k = 0; k < spline.length; k += 3) {
-                        var doneThis = false;
-                        for (var iarrow = 0; iarrow < thisSplineAccu; iarrow++) {
+                    let scale = [];
+                    for (let k = 0; k < spline.length; k += 3) {
+                        let doneThis = false;
+                        for (let iarrow = 0; iarrow < thisSplineAccu; iarrow++) {
                             if (sheetEnds.indexOf((k - 3 * iarrow) / thisSplineAccu) > -1) {
-                                var thisScale = (1.0 - ((1.0 * iarrow) / (thisSplineAccu - 1.0))) * 1.5 + wormWidth;
+                                let thisScale = (1.0 - ((1.0 * iarrow) / (thisSplineAccu - 1.0))) * 1.5 + wormWidth;
                                 scale.push(thisScale);
                                 scale.push(thisScale);
                                 scale.push(thisScale);
@@ -5262,40 +5387,41 @@ class MGWebGL extends Component {
                     }
                     //console.log(spline.length+" "+scale.length);
 
-                    var index = 0;
-                    for (var theta = 0; theta < 360; theta += thisAccuStep, istep++) {
-                        var theta1 = Math.PI * (theta) / 180.0;
-                        var theta2 = Math.PI * (theta + thisAccuStep) / 180.0;
-                        var c1 = Math.cos(theta1);
-                        var s1 = Math.sin(theta1);
-                        var c2 = Math.cos(theta2);
-                        var s2 = Math.sin(theta2);
+                    let index = 0;
+                    let istep = 0;
+                    for (let theta = 0; theta < 360; theta += thisAccuStep, istep++) {
+                        let theta1 = Math.PI * (theta) / 180.0;
+                        let theta2 = Math.PI * (theta + thisAccuStep) / 180.0;
+                        let c1 = Math.cos(theta1);
+                        let s1 = Math.sin(theta1);
+                        let c2 = Math.cos(theta2);
+                        let s2 = Math.sin(theta2);
                         if (index > 0) {
                             triangleIndexs.push(index);
                             triangleIndexs.push(index);
                         }
-                        var sizeIndex = 0;
+                        let sizeIndex = 0;
                         //console.log(spline.length/thisSplineAccu+" "+this.displayBuffers[idx].triangleColours[j].length);
-                        for (var k = 0; k < spline.length; k += 3) {
-                            var colIndex = parseInt(k / 3 / thisSplineAccu) * 4;
-                            var colr = this.displayBuffers[idx].triangleColours[j][colIndex];
-                            var colg = this.displayBuffers[idx].triangleColours[j][colIndex + 1];
-                            var colb = this.displayBuffers[idx].triangleColours[j][colIndex + 2];
-                            var cola = this.displayBuffers[idx].triangleColours[j][colIndex + 3];
+                        for (let k = 0; k < spline.length; k += 3) {
+                            let colIndex = parseInt(k / 3 / thisSplineAccu) * 4;
+                            let colr = this.displayBuffers[idx].triangleColours[j][colIndex];
+                            let colg = this.displayBuffers[idx].triangleColours[j][colIndex + 1];
+                            let colb = this.displayBuffers[idx].triangleColours[j][colIndex + 2];
+                            let cola = this.displayBuffers[idx].triangleColours[j][colIndex + 3];
                             //console.log(colr+" "+colg+" "+colb+" "+cola+" "+parseInt(k*4/3/thisSplineAccu)+" "+this.displayBuffers[idx].triangleColours[j].length);
                             //console.log(parseInt(colIndex/3)*3+" "+this.displayBuffers[idx].triangleColours[j].length);
-                            var thisSize2 = primitiveSizes[j][parseInt(sizeIndex / thisSplineAccu)] * scale[k];
-                            var thisSize1 = wormWidth;
+                            let thisSize2 = primitiveSizes[j][parseInt(sizeIndex / thisSplineAccu)] * scale[k];
+                            let thisSize1 = wormWidth;
                             if (isWorm) {
                                 thisSize1 = primitiveSizes[j][parseInt(sizeIndex / thisSplineAccu)] * scale[k];
                             }
                             sizeIndex++;
-                            var n1p = [c1 * thisSize2 * nspline[k] + s1 * thisSize1 * n2spline[k], c1 * thisSize2 * nspline[k + 1] + s1 * thisSize1 * n2spline[k + 1], c1 * thisSize2 * nspline[k + 2] + s1 * thisSize1 * n2spline[k + 2]];
-                            var n2p = [c2 * thisSize2 * nspline[k] + s2 * thisSize1 * n2spline[k], c2 * thisSize2 * nspline[k + 1] + s2 * thisSize1 * n2spline[k + 1], c2 * thisSize2 * nspline[k + 2] + s2 * thisSize1 * n2spline[k + 2]];
-                            var n1 = [c1 * nspline[k] / thisSize2 + s1 * n2spline[k] / thisSize1, c1 * nspline[k + 1] / thisSize2 + s1 * n2spline[k + 1] / thisSize1, c1 * nspline[k + 2] / thisSize2 + s1 * n2spline[k + 2] / thisSize1];
-                            var n2 = [c2 * nspline[k] / thisSize2 + s2 * n2spline[k] / thisSize1, c2 * nspline[k + 1] / thisSize2 + s2 * n2spline[k + 1] / thisSize1, c2 * nspline[k + 2] / thisSize2 + s2 * n2spline[k + 2] / thisSize1];
-                            var p1 = [spline[k] + n1p[0], spline[k + 1] + n1p[1], spline[k + 2] + n1p[2]];
-                            var p2 = [spline[k] + n2p[0], spline[k + 1] + n2p[1], spline[k + 2] + n2p[2]];
+                            let n1p = [c1 * thisSize2 * nspline[k] + s1 * thisSize1 * n2spline[k], c1 * thisSize2 * nspline[k + 1] + s1 * thisSize1 * n2spline[k + 1], c1 * thisSize2 * nspline[k + 2] + s1 * thisSize1 * n2spline[k + 2]];
+                            let n2p = [c2 * thisSize2 * nspline[k] + s2 * thisSize1 * n2spline[k], c2 * thisSize2 * nspline[k + 1] + s2 * thisSize1 * n2spline[k + 1], c2 * thisSize2 * nspline[k + 2] + s2 * thisSize1 * n2spline[k + 2]];
+                            let n1 = [c1 * nspline[k] / thisSize2 + s1 * n2spline[k] / thisSize1, c1 * nspline[k + 1] / thisSize2 + s1 * n2spline[k + 1] / thisSize1, c1 * nspline[k + 2] / thisSize2 + s1 * n2spline[k + 2] / thisSize1];
+                            let n2 = [c2 * nspline[k] / thisSize2 + s2 * n2spline[k] / thisSize1, c2 * nspline[k + 1] / thisSize2 + s2 * n2spline[k + 1] / thisSize1, c2 * nspline[k + 2] / thisSize2 + s2 * n2spline[k + 2] / thisSize1];
+                            let p1 = [spline[k] + n1p[0], spline[k + 1] + n1p[1], spline[k + 2] + n1p[2]];
+                            let p2 = [spline[k] + n2p[0], spline[k + 1] + n2p[1], spline[k + 2] + n2p[2]];
                             triangleNormals.push(n1[0]);
                             triangleNormals.push(n1[1]);
                             triangleNormals.push(n1[2]);
@@ -5399,12 +5525,12 @@ class MGWebGL extends Component {
                     }
                 } else if (this.displayBuffers[idx].bufferTypes[j].substring(0, 8) === "POLYSTAR") {
                     if (typeof (this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]]) === "undefined") {
-                        var npoints = parseInt(this.displayBuffers[idx].bufferTypes[j].substring(8));
-                        var diskIndices = [];
-                        var diskNormals = [];
+                        let npoints = parseInt(this.displayBuffers[idx].bufferTypes[j].substring(8));
+                        let diskIndices = [];
+                        let diskNormals = [];
                         this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]] = [];
-                        var accuStep = 360. / npoints;
-                        var diskIdx = 0;
+                        accuStep = 360. / npoints;
+                        let diskIdx = 0;
                         this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]].push(0.0);
                         this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]].push(0.0);
                         this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]].push(0.0);
@@ -5412,15 +5538,15 @@ class MGWebGL extends Component {
                         diskNormals.push(0.0);
                         diskNormals.push(-1.0);
                         diskIndices.push(diskIdx++);
-                        var theta = 0.0;
-                        var p = npoints;
-                        var q = 2;
-                        var S = 1. / (Math.cos(Math.PI / p));
-                        var R = Math.sin((p - 2 * q) / (2 * p) * Math.PI) / Math.sin((2 * q) / p * Math.PI) / S;
-                        for (var istep = 0; istep <= npoints; istep++) {
-                            var theta1 = Math.PI * (theta) / 180.0;
-                            var y1 = Math.cos(theta1) * R;
-                            var x1 = Math.sin(theta1) * R;
+                        let theta = 0.0;
+                        let p = npoints;
+                        let q = 2;
+                        let S = 1. / (Math.cos(Math.PI / p));
+                        let R = Math.sin((p - 2 * q) / (2 * p) * Math.PI) / Math.sin((2 * q) / p * Math.PI) / S;
+                        for (let istep = 0; istep <= npoints; istep++) {
+                            let theta1 = Math.PI * (theta) / 180.0;
+                            let y1 = Math.cos(theta1) * R;
+                            let x1 = Math.sin(theta1) * R;
                             this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]].push(x1);
                             this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]].push(y1);
                             this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]].push(0.0);
@@ -5465,12 +5591,12 @@ class MGWebGL extends Component {
                     }
                 } else if (this.displayBuffers[idx].bufferTypes[j].substring(0, 7) === "POLYGON") {
                     if (typeof (this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]]) === "undefined") {
-                        var npoints = parseInt(this.displayBuffers[idx].bufferTypes[j].substring(7));
-                        var diskIndices = [];
-                        var diskNormals = [];
+                        let npoints = parseInt(this.displayBuffers[idx].bufferTypes[j].substring(7));
+                        let diskIndices = [];
+                        let diskNormals = [];
                         this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]] = [];
-                        var accuStep = 360. / npoints;
-                        var diskIdx = 0;
+                        accuStep = 360. / npoints;
+                        let diskIdx = 0;
                         this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]].push(0.0);
                         this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]].push(0.0);
                         this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]].push(0.0);
@@ -5478,11 +5604,11 @@ class MGWebGL extends Component {
                         diskNormals.push(0.0);
                         diskNormals.push(-1.0);
                         diskIndices.push(diskIdx++);
-                        var theta = 0.0;
-                        for (var istep = 0; istep <= npoints; istep++) {
-                            var theta1 = Math.PI * (theta) / 180.0;
-                            var y1 = Math.cos(theta1);
-                            var x1 = Math.sin(theta1);
+                        let theta = 0.0;
+                        for (let istep = 0; istep <= npoints; istep++) {
+                            let theta1 = Math.PI * (theta) / 180.0;
+                            let y1 = Math.cos(theta1);
+                            let x1 = Math.sin(theta1);
                             this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]].push(x1);
                             this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]].push(y1);
                             this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]].push(0.0);
@@ -5515,11 +5641,11 @@ class MGWebGL extends Component {
                     }
                 } else if (this.displayBuffers[idx].bufferTypes[j] === "DIAMONDS") {
                     if (typeof (this.diamondBuffer) === "undefined") {
-                        var diskIndices = [];
-                        var diskNormals = [];
+                        let diskIndices = [];
+                        let diskNormals = [];
                         this.diamondVertices = [];
-                        var accuStep = 90;
-                        var diskIdx = 0;
+                        accuStep = 90;
+                        let diskIdx = 0;
                         this.diamondVertices.push(0.0);
                         this.diamondVertices.push(0.0);
                         this.diamondVertices.push(0.0);
@@ -5527,10 +5653,10 @@ class MGWebGL extends Component {
                         diskNormals.push(0.0);
                         diskNormals.push(-1.0);
                         diskIndices.push(diskIdx++);
-                        for (var theta = 0; theta <= 360; theta += accuStep) {
-                            var theta1 = Math.PI * (theta) / 180.0;
-                            var y1 = Math.cos(theta1);
-                            var x1 = Math.sin(theta1);
+                        for (let theta = 0; theta <= 360; theta += accuStep) {
+                            let theta1 = Math.PI * (theta) / 180.0;
+                            let y1 = Math.cos(theta1);
+                            let x1 = Math.sin(theta1);
                             this.diamondVertices.push(x1);
                             this.diamondVertices.push(y1);
                             this.diamondVertices.push(0.0);
@@ -5562,11 +5688,11 @@ class MGWebGL extends Component {
                     }
                 } else if (this.displayBuffers[idx].bufferTypes[j] === "PERFECT_SPHERES" || this.displayBuffers[idx].bufferTypes[j] === "IMAGES" || this.displayBuffers[idx].bufferTypes[j] === "TEXT") {
                     if (typeof (this.imageBuffer) === "undefined") {
-                        var diskIndices = [];
-                        var diskNormals = [];
+                        let diskIndices = [];
+                        let diskNormals = [];
                         this.imageVertices = [];
-                        var accuStep = 90;
-                        var diskIdx = 0;
+                        accuStep = 90;
+                        let diskIdx = 0;
                         this.imageVertices.push(0.0);
                         this.imageVertices.push(0.0);
                         this.imageVertices.push(0.0);
@@ -5574,10 +5700,10 @@ class MGWebGL extends Component {
                         diskNormals.push(0.0);
                         diskNormals.push(-1.0);
                         diskIndices.push(diskIdx++);
-                        for (var theta = 45; theta <= 405; theta += accuStep) {
-                            var theta1 = Math.PI * (theta) / 180.0;
-                            var x1 = Math.cos(theta1);
-                            var y1 = Math.sin(theta1);
+                        for (let theta = 45; theta <= 405; theta += accuStep) {
+                            let theta1 = Math.PI * (theta) / 180.0;
+                            let x1 = Math.cos(theta1);
+                            let y1 = Math.sin(theta1);
                             this.imageVertices.push(x1);
                             this.imageVertices.push(-y1);
                             this.imageVertices.push(0.0);
@@ -5608,7 +5734,7 @@ class MGWebGL extends Component {
                         this.imageBuffer.triangleVertexPositionBuffer[0].numItems = this.imageVertices.length / 3;
                         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.imageVertices), this.gl.DYNAMIC_DRAW);
 
-                        var imageTextures = [0.5, 0.5, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0];
+                        let imageTextures = [0.5, 0.5, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0];
                         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.imageBuffer.triangleVertexTextureBuffer[0]);
                         this.imageBuffer.triangleVertexTextureBuffer[0].itemSize = 2;
                         this.imageBuffer.triangleVertexTextureBuffer[0].numItems = imageTextures.length / 2;
@@ -5616,11 +5742,11 @@ class MGWebGL extends Component {
                     }
                 } else if (this.displayBuffers[idx].bufferTypes[j] === "SQUARES") {
                     if (typeof (this.squareBuffer) === "undefined") {
-                        var diskIndices = [];
-                        var diskNormals = [];
+                        let diskIndices = [];
+                        let diskNormals = [];
                         this.squareVertices = [];
-                        var accuStep = 90;
-                        var diskIdx = 0;
+                        accuStep = 90;
+                        let diskIdx = 0;
                         this.squareVertices.push(0.0);
                         this.squareVertices.push(0.0);
                         this.squareVertices.push(0.0);
@@ -5628,10 +5754,10 @@ class MGWebGL extends Component {
                         diskNormals.push(0.0);
                         diskNormals.push(-1.0);
                         diskIndices.push(diskIdx++);
-                        for (var theta = 45; theta <= 405; theta += accuStep) {
-                            var theta1 = Math.PI * (theta) / 180.0;
-                            var y1 = Math.cos(theta1);
-                            var x1 = Math.sin(theta1);
+                        for (let theta = 45; theta <= 405; theta += accuStep) {
+                            let theta1 = Math.PI * (theta) / 180.0;
+                            let y1 = Math.cos(theta1);
+                            let x1 = Math.sin(theta1);
                             this.squareVertices.push(x1);
                             this.squareVertices.push(y1);
                             this.squareVertices.push(0.0);
@@ -5663,11 +5789,11 @@ class MGWebGL extends Component {
                     }
                 } else if (this.displayBuffers[idx].bufferTypes[j] === "PENTAGONS") {
                     if (typeof (this.pentagonBuffer) === "undefined") {
-                        var diskIndices = [];
-                        var diskNormals = [];
+                        let diskIndices = [];
+                        let diskNormals = [];
                         this.pentagonVertices = [];
-                        var accuStep = 72;
-                        var diskIdx = 0;
+                        accuStep = 72;
+                        let diskIdx = 0;
                         this.pentagonVertices.push(0.0);
                         this.pentagonVertices.push(0.0);
                         this.pentagonVertices.push(0.0);
@@ -5675,10 +5801,10 @@ class MGWebGL extends Component {
                         diskNormals.push(0.0);
                         diskNormals.push(-1.0);
                         diskIndices.push(diskIdx++);
-                        for (var theta = 0; theta <= 360; theta += accuStep) {
-                            var theta1 = Math.PI * (theta) / 180.0;
-                            var y1 = Math.cos(theta1);
-                            var x1 = Math.sin(theta1);
+                        for (let theta = 0; theta <= 360; theta += accuStep) {
+                            let theta1 = Math.PI * (theta) / 180.0;
+                            let y1 = Math.cos(theta1);
+                            let x1 = Math.sin(theta1);
                             this.pentagonVertices.push(x1);
                             this.pentagonVertices.push(y1);
                             this.pentagonVertices.push(0.0);
@@ -5710,11 +5836,11 @@ class MGWebGL extends Component {
                     }
                 } else if (this.displayBuffers[idx].bufferTypes[j] === "HEXAGONS") {
                     if (typeof (this.hexagonBuffer) === "undefined") {
-                        var diskIndices = [];
-                        var diskNormals = [];
+                        let diskIndices = [];
+                        let diskNormals = [];
                         this.hexagonVertices = [];
-                        var accuStep = 60;
-                        var diskIdx = 0;
+                        accuStep = 60;
+                        let diskIdx = 0;
                         this.hexagonVertices.push(0.0);
                         this.hexagonVertices.push(0.0);
                         this.hexagonVertices.push(0.0);
@@ -5722,10 +5848,10 @@ class MGWebGL extends Component {
                         diskNormals.push(0.0);
                         diskNormals.push(-1.0);
                         diskIndices.push(diskIdx++);
-                        for (var theta = 0; theta <= 360; theta += accuStep) {
-                            var theta1 = Math.PI * (theta) / 180.0;
-                            var y1 = Math.cos(theta1);
-                            var x1 = Math.sin(theta1);
+                        for (let theta = 0; theta <= 360; theta += accuStep) {
+                            let theta1 = Math.PI * (theta) / 180.0;
+                            let y1 = Math.cos(theta1);
+                            let x1 = Math.sin(theta1);
                             this.hexagonVertices.push(y1);
                             this.hexagonVertices.push(x1);
                             this.hexagonVertices.push(0.0);
@@ -5757,11 +5883,11 @@ class MGWebGL extends Component {
                     }
                 } else if (this.displayBuffers[idx].bufferTypes[j] === "POINTS") {
                     if (typeof (this.diskBuffer) === "undefined") {
-                        var diskIndices = [];
-                        var diskNormals = [];
+                        let diskIndices = [];
+                        let diskNormals = [];
                         this.diskVertices = [];
-                        var accuStep = 10;
-                        var diskIdx = 0;
+                        accuStep = 10;
+                        let diskIdx = 0;
                         this.diskVertices.push(0.0);
                         this.diskVertices.push(0.0);
                         this.diskVertices.push(0.0);
@@ -5769,10 +5895,10 @@ class MGWebGL extends Component {
                         diskNormals.push(0.0);
                         diskNormals.push(-1.0);
                         diskIndices.push(diskIdx++);
-                        for (var theta = 0; theta <= 360; theta += accuStep) {
-                            var theta1 = Math.PI * (theta) / 180.0;
-                            var y1 = Math.cos(theta1);
-                            var x1 = Math.sin(theta1);
+                        for (let theta = 0; theta <= 360; theta += accuStep) {
+                            let theta1 = Math.PI * (theta) / 180.0;
+                            let y1 = Math.cos(theta1);
+                            let x1 = Math.sin(theta1);
                             this.diskVertices.push(x1);
                             this.diskVertices.push(y1);
                             this.diskVertices.push(0.0);
@@ -5803,7 +5929,7 @@ class MGWebGL extends Component {
                         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.diskVertices), this.gl.DYNAMIC_DRAW);
                     }
                 } else if (this.displayBuffers[idx].bufferTypes[j].substring(0, "CUSTOM_2D_SHAPE_".length) === "CUSTOM_2D_SHAPE_") {
-                    var customType = this.displayBuffers[idx].bufferTypes[j];
+                    let customType = this.displayBuffers[idx].bufferTypes[j];
                     console.log("A custom 2d shape:" + customType);
                     if (typeof (this.shapesBuffers[customType]) === "undefined") {
                         console.log("Make a custom buffer");
@@ -5812,12 +5938,12 @@ class MGWebGL extends Component {
                         this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]].triangleVertexPositionBuffer.push(this.gl.createBuffer());
                         this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]].triangleVertexIndexBuffer.push(this.gl.createBuffer());
                         console.log(this.displayBuffers[idx].supplementary);
-                        var vert2d = this.displayBuffers[idx].supplementary["vertices2d"];
+                        let vert2d = this.displayBuffers[idx].supplementary["vertices2d"];
                         this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]] = [];
-                        var idxs3d = [];
-                        var idx3d = 0;
-                        var diskNormals = [];
-                        for (var i2d = 0; i2d < vert2d[0].length; i2d += 2) {
+                        let idxs3d = [];
+                        let idx3d = 0;
+                        let diskNormals = [];
+                        for (let i2d = 0; i2d < vert2d[0].length; i2d += 2) {
                             this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]].push(vert2d[0][i2d]);
                             this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]].push(vert2d[0][i2d + 1]);
                             this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]].push(0.0);
@@ -5847,13 +5973,10 @@ class MGWebGL extends Component {
                 } else if (this.displayBuffers[idx].bufferTypes[j] === "CIRCLES2") {
                     console.log("Not implemented, do nothing yet ...");
                     console.log(this.displayBuffers[idx]);
-                    let icol = 0;
                     let circ_idx = 0;
-                    let triangleIndexs = [];
                     let triangleNormals = [];
                     let triangleVertices = [];
-                    let triangleColours = [];
-                    for (let k = 0; k < this.displayBuffers[idx].triangleVertices[j].length; k += 3, icol += 4, circ_idx++) {
+                    for (let k = 0; k < this.displayBuffers[idx].triangleVertices[j].length; k += 3, circ_idx++) {
                         let x = this.displayBuffers[idx].triangleVertices[j][k];
                         let y = this.displayBuffers[idx].triangleVertices[j][k + 1];
                         let z = this.displayBuffers[idx].triangleVertices[j][k + 2];
@@ -5879,48 +6002,42 @@ class MGWebGL extends Component {
 
                     }
                 } else if (this.displayBuffers[idx].bufferTypes[j] === "CIRCLES") {
-                    var PIBY2 = Math.PI * 2;
-                    var primitiveSizes = this.displayBuffers[idx].primitiveSizes[j];
-                    var triangleIndexs = [];
-                    var triangleNormals = [];
-                    var triangleVertices = [];
-                    var triangleColours = [];
-                    var torusIdx = 0;
-                    var icol = 0;
-                    var tor_idx = 0;
-                    for (var k = 0; k < this.displayBuffers[idx].triangleVertices[j].length; k += 3, icol += 4, tor_idx++) {
-                        var torusOrigin = vec3Create([this.displayBuffers[idx].triangleVertices[j][k], this.displayBuffers[idx].triangleVertices[j][k + 1], this.displayBuffers[idx].triangleVertices[j][k + 2]]);
-                        var torusNormal = vec3Create([this.displayBuffers[idx].triangleNormals[j][k], this.displayBuffers[idx].triangleNormals[j][k + 1], this.displayBuffers[idx].triangleNormals[j][k + 2]]);
-                        var torusColour = [this.displayBuffers[idx].triangleColours[j][icol], this.displayBuffers[idx].triangleColours[j][icol + 1], this.displayBuffers[idx].triangleColours[j][icol + 2], this.displayBuffers[idx].triangleColours[j][icol + 3]];
+                    let PIBY2 = Math.PI * 2;
+                    let triangleIndexs = [];
+                    let triangleVertices = [];
+                    let triangleColours = [];
+                    let torusIdx = 0;
+                    let icol = 0;
+                    let tor_idx = 0;
+                    for (let k = 0; k < this.displayBuffers[idx].triangleVertices[j].length; k += 3, icol += 4, tor_idx++) {
+                        let torusOrigin = vec3Create([this.displayBuffers[idx].triangleVertices[j][k], this.displayBuffers[idx].triangleVertices[j][k + 1], this.displayBuffers[idx].triangleVertices[j][k + 2]]);
+                        let torusNormal = vec3Create([this.displayBuffers[idx].triangleNormals[j][k], this.displayBuffers[idx].triangleNormals[j][k + 1], this.displayBuffers[idx].triangleNormals[j][k + 2]]);
+                        let torusColour = [this.displayBuffers[idx].triangleColours[j][icol], this.displayBuffers[idx].triangleColours[j][icol + 1], this.displayBuffers[idx].triangleColours[j][icol + 2], this.displayBuffers[idx].triangleColours[j][icol + 3]];
                         NormalizeVec3(torusNormal);
                         vec3Cross(xaxis, torusNormal, Q);
-                        var valid = false;
                         if (vec3.length(Q) > 1e-5) {
                             NormalizeVec3(Q);
                             vec3Cross(torusNormal, Q, R);
-                            valid = true;
                         } else {
                             vec3Cross(yaxis, torusNormal, Q);
                             if (vec3.length(Q) > 1e-5) {
                                 NormalizeVec3(Q);
                                 vec3Cross(torusNormal, Q, R);
-                                valid = true;
                             } else {
                                 vec3Cross(zaxis, torusNormal, Q);
                                 if (vec3.length(Q) > 1e-5) {
                                     NormalizeVec3(Q);
                                     vec3Cross(torusNormal, Q, R);
-                                    valid = true;
                                 }
                             }
                         }
-                        var mat = mat4.create();
+                        let mat = mat4.create();
                         mat4.set(mat, R[0], R[1], R[2], 0.0, Q[0], Q[1], Q[2], 0.0, torusNormal[0], torusNormal[1], torusNormal[2], 0.0, 0.0, 0.0, 0.0, 1.0);
-                        var nsectors = 180;
-                        var startAngle = 0.0;
-                        var sweepAngle = 360.0;
-                        var sa;
-                        var ea;
+                        let nsectors = 180;
+                        let startAngle = 0.0;
+                        let sweepAngle = 360.0;
+                        let sa;
+                        let ea;
                         if (sweepAngle > 0) {
                             sa = startAngle;
                             ea = startAngle + sweepAngle;
@@ -5928,28 +6045,25 @@ class MGWebGL extends Component {
                             sa = startAngle + sweepAngle;
                             ea = startAngle;
                         }
-                        var iloop = 0;
-                        var radius = this.displayBuffers[idx].supplementary["radii"][j][tor_idx];
-                        var majorRadius = radius;
-                        for (var jtor = sa; jtor < ea; jtor = jtor + 360 / nsectors, iloop++) {
-                            var phi = 1.0 * jtor / 360.0 * PIBY2;
-                            var phi2 = 1.0 * (jtor + 360.0 / nsectors) / 360.0 * PIBY2;
+                        let iloop = 0;
+                        let radius = this.displayBuffers[idx].supplementary["radii"][j][tor_idx];
+                        let majorRadius = radius;
+                        for (let jtor = sa; jtor < ea; jtor = jtor + 360 / nsectors, iloop++) {
+                            let phi = 1.0 * jtor / 360.0 * PIBY2;
+                            let phi2 = 1.0 * (jtor + 360.0 / nsectors) / 360.0 * PIBY2;
                             if (sweepAngle > 0 && jtor + 360.0 / nsectors > startAngle + sweepAngle) phi2 = 1.0 * (startAngle + sweepAngle) / 360.0 * PIBY2;
                             if (sweepAngle < 0 && jtor + 360.0 / nsectors > startAngle) phi2 = 1.0 * (startAngle) / 360.0 * PIBY2;
 
-                            var x = (majorRadius) * Math.cos(phi);
-                            var y = (majorRadius) * Math.sin(phi);
-                            var z = 0.0;
-                            var norm_x = 0.0;
-                            var norm_y = 0.0;
-                            var norm_z = 1.0;
+                            let x = (majorRadius) * Math.cos(phi);
+                            let y = (majorRadius) * Math.sin(phi);
+                            let z = 0.0;
 
-                            var x2 = (majorRadius) * Math.cos(phi2);
-                            var y2 = (majorRadius) * Math.sin(phi2);
-                            var z2 = 0.0;
+                            let x2 = (majorRadius) * Math.cos(phi2);
+                            let y2 = (majorRadius) * Math.sin(phi2);
+                            let z2 = 0.0;
 
-                            var p1 = vec3Create([x, y, z]);
-                            var p2 = vec3Create([x2, y2, z2]);
+                            let p1 = vec3Create([x, y, z]);
+                            let p2 = vec3Create([x2, y2, z2]);
 
                             vec3.transformMat4(p1, p1, mat);
                             vec3.transformMat4(p2, p2, mat);
@@ -5966,12 +6080,12 @@ class MGWebGL extends Component {
                     }
 
                     // Try thick lines
-                    var size = 1.0;
-                    var thickLines = this.linesToThickLines(triangleVertices, triangleColours, size);
-                    var Normals_new = thickLines["normals"];
-                    var Vertices_new = thickLines["vertices"];
-                    var Colours_new = thickLines["colours"];
-                    var Indexs_new = thickLines["indices"];
+                    let size = 1.0;
+                    let thickLines = this.linesToThickLines(triangleVertices, triangleColours, size);
+                    let Normals_new = thickLines["normals"];
+                    let Vertices_new = thickLines["vertices"];
+                    let Colours_new = thickLines["colours"];
+                    let Indexs_new = thickLines["indices"];
                     //console.log("Buffering "+Normals_new.length/3+" normals");
                     //console.log("Buffering "+Vertices_new.length/3+" vertices");
                     //console.log("Buffering "+Colours_new.length/4+" colours");
@@ -5999,48 +6113,44 @@ class MGWebGL extends Component {
                     this.displayBuffers[idx].triangleColourBuffer[j].numItems = Colours_new.length / 4;
 
                 } else if (this.displayBuffers[idx].bufferTypes[j] === "TORUSES") {
-                    var PIBY2 = Math.PI * 2;
-                    var primitiveSizes = this.displayBuffers[idx].primitiveSizes[j];
-                    var triangleIndexs = [];
-                    var triangleNormals = [];
-                    var triangleVertices = [];
-                    var triangleColours = [];
-                    var torusIdx = 0;
-                    var icol = 0;
-                    var tor_idx = 0;
-                    for (var k = 0; k < this.displayBuffers[idx].triangleVertices[j].length; k += 3, icol += 4, tor_idx++) {
-                        var torusOrigin = vec3Create([this.displayBuffers[idx].triangleVertices[j][k], this.displayBuffers[idx].triangleVertices[j][k + 1], this.displayBuffers[idx].triangleVertices[j][k + 2]]);
-                        var torusNormal = vec3Create([this.displayBuffers[idx].triangleNormals[j][k], this.displayBuffers[idx].triangleNormals[j][k + 1], this.displayBuffers[idx].triangleNormals[j][k + 2]]);
-                        var torusColour = [this.displayBuffers[idx].triangleColours[j][icol], this.displayBuffers[idx].triangleColours[j][icol + 1], this.displayBuffers[idx].triangleColours[j][icol + 2], this.displayBuffers[idx].triangleColours[j][icol + 3]];
+                    let PIBY2 = Math.PI * 2;
+                    let primitiveSizes = this.displayBuffers[idx].primitiveSizes[j];
+                    let triangleIndexs = [];
+                    let triangleNormals = [];
+                    let triangleVertices = [];
+                    let triangleColours = [];
+                    let torusIdx = 0;
+                    let icol = 0;
+                    let tor_idx = 0;
+                    for (let k = 0; k < this.displayBuffers[idx].triangleVertices[j].length; k += 3, icol += 4, tor_idx++) {
+                        let torusOrigin = vec3Create([this.displayBuffers[idx].triangleVertices[j][k], this.displayBuffers[idx].triangleVertices[j][k + 1], this.displayBuffers[idx].triangleVertices[j][k + 2]]);
+                        let torusNormal = vec3Create([this.displayBuffers[idx].triangleNormals[j][k], this.displayBuffers[idx].triangleNormals[j][k + 1], this.displayBuffers[idx].triangleNormals[j][k + 2]]);
+                        let torusColour = [this.displayBuffers[idx].triangleColours[j][icol], this.displayBuffers[idx].triangleColours[j][icol + 1], this.displayBuffers[idx].triangleColours[j][icol + 2], this.displayBuffers[idx].triangleColours[j][icol + 3]];
                         NormalizeVec3(torusNormal);
                         vec3Cross(xaxis, torusNormal, Q);
-                        var valid = false;
                         if (vec3.length(Q) > 1e-5) {
                             NormalizeVec3(Q);
                             vec3Cross(torusNormal, Q, R);
-                            valid = true;
                         } else {
                             vec3Cross(yaxis, torusNormal, Q);
                             if (vec3.length(Q) > 1e-5) {
                                 NormalizeVec3(Q);
                                 vec3Cross(torusNormal, Q, R);
-                                valid = true;
                             } else {
                                 vec3Cross(zaxis, torusNormal, Q);
                                 if (vec3.length(Q) > 1e-5) {
                                     NormalizeVec3(Q);
                                     vec3Cross(torusNormal, Q, R);
-                                    valid = true;
                                 }
                             }
                         }
-                        var mat = mat4.create();
+                        let mat = mat4.create();
                         mat4.set(mat, R[0], R[1], R[2], 0.0, Q[0], Q[1], Q[2], 0.0, torusNormal[0], torusNormal[1], torusNormal[2], 0.0, 0.0, 0.0, 0.0, 1.0);
-                        var nsectors = 36;
-                        var startAngle = 0.0;
-                        var sweepAngle = 360.0;
-                        var sa;
-                        var ea;
+                        let nsectors = 36;
+                        let startAngle = 0.0;
+                        let sweepAngle = 360.0;
+                        let sa;
+                        let ea;
                         if (sweepAngle > 0) {
                             sa = startAngle;
                             ea = startAngle + sweepAngle;
@@ -6212,18 +6322,18 @@ class MGWebGL extends Component {
 
                 } else if (this.displayBuffers[idx].bufferTypes[j] === "LINES") {
                     console.log("Treating lines specially");
-                    var size = this.mapLineWidth;
+                    let size = this.mapLineWidth;
                     const useIndices = this.displayBuffers[idx].supplementary["useIndices"];
-                    var thickLines;
+                    let thickLines;
                     if (useIndices) {
                         thickLines = this.linesToThickLinesWithIndices(this.displayBuffers[idx].triangleVertices[j], this.displayBuffers[idx].triangleColours[j], this.displayBuffers[idx].triangleIndexs[j], size);
                     } else {
                         thickLines = this.linesToThickLines(this.displayBuffers[idx].triangleVertices[j], this.displayBuffers[idx].triangleColours[j], size);
                     }
-                    var Normals_new = thickLines["normals"];
-                    var Vertices_new = thickLines["vertices"];
-                    var Colours_new = thickLines["colours"];
-                    var Indexs_new = thickLines["indices"];
+                    let Normals_new = thickLines["normals"];
+                    let Vertices_new = thickLines["vertices"];
+                    let Colours_new = thickLines["colours"];
+                    let Indexs_new = thickLines["indices"];
                     this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexIndexBuffer[j]);
                     if (this.ext) {
                         this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(Indexs_new), this.gl.STATIC_DRAW);
@@ -6266,6 +6376,22 @@ class MGWebGL extends Component {
                     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleColourBuffer[j]);
                     this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[idx].triangleColours[j]), this.gl.STATIC_DRAW);
                     this.displayBuffers[idx].triangleColourBuffer[j].itemSize = 4;
+                    if(this.displayBuffers[idx].triangleInstanceSizeBuffer[j]){
+                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleInstanceSizeBuffer[j]);
+                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[idx].triangleInstanceSizes[j]), this.gl.STATIC_DRAW);
+                        this.displayBuffers[idx].triangleInstanceSizeBuffer[j].itemSize = 3;
+                    }
+                    if(this.displayBuffers[idx].triangleInstanceOriginBuffer[j]){
+                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleInstanceOriginBuffer[j]);
+                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[idx].triangleInstanceOrigins[j]), this.gl.STATIC_DRAW);
+                        this.displayBuffers[idx].triangleInstanceOriginBuffer[j].itemSize = 3;
+                    }
+                    if(this.displayBuffers[idx].triangleInstanceOrientationBuffer[j]){
+                        console.log("Buffering instance orientations");
+                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleInstanceOrientationBuffer[j]);
+                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[idx].triangleInstanceOrientations[j]), this.gl.STATIC_DRAW);
+                        this.displayBuffers[idx].triangleInstanceOrientationBuffer[j].itemSize = 16;
+                    }
                 }
             }
         }
@@ -6274,20 +6400,104 @@ class MGWebGL extends Component {
 
 
     drawTransformMatrixInteractive(transformMatrix, transformOrigin, buffer, shader, vertexType, bufferIdx, specialDrawBuffer) {
-        var triangleVertexIndexBuffer = buffer.triangleVertexIndexBuffer;
+
+        this.setupModelViewTransformMatrixInteractive(transformMatrix, transformOrigin, buffer, shader, vertexType, bufferIdx, specialDrawBuffer);
+
+        this.drawBuffer(buffer,shader,bufferIdx,vertexType,specialDrawBuffer);
+
+        this.gl.uniformMatrix4fv(shader.mvMatrixUniform, false, this.mvMatrix);
+        this.gl.uniformMatrix4fv(shader.mvInvMatrixUniform, false, this.mvInvMatrix);// All else
+    }
+
+    drawBuffer(theBuffer,theShader,j,vertexType,specialDrawBuffer){
 
         var drawBuffer;
         if (specialDrawBuffer) {
             drawBuffer = specialDrawBuffer;
         } else {
-            drawBuffer = triangleVertexIndexBuffer[bufferIdx];
+            drawBuffer = theBuffer.triangleVertexIndexBuffer[j];
         }
 
-        var pmvMatrix = mat4.create();
+        if (this.ext) {
+            if(theBuffer.triangleInstanceOriginBuffer[j]){
+                this.gl.enableVertexAttribArray(theShader.vertexInstanceOriginAttribute);
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, theBuffer.triangleInstanceOriginBuffer[j]);
+                this.gl.vertexAttribPointer(theShader.vertexInstanceOriginAttribute, theBuffer.triangleInstanceOriginBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
+                if (this.WEBGL2) {
+                    this.gl.vertexAttribDivisor(theShader.vertexInstanceOriginAttribute, 1);
+                } else {
+                    this.instanced_ext.vertexAttribDivisorANGLE(theShader.vertexInstanceOriginAttribute, 1);
+                }
+                if(theBuffer.triangleInstanceSizeBuffer[j]){
+                    this.gl.enableVertexAttribArray(theShader.vertexInstanceSizeAttribute);
+                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, theBuffer.triangleInstanceSizeBuffer[j]);
+                    this.gl.vertexAttribPointer(theShader.vertexInstanceSizeAttribute, theBuffer.triangleInstanceSizeBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
+                    if (this.WEBGL2) {
+                        this.gl.vertexAttribDivisor(theShader.vertexInstanceSizeAttribute, 1);
+                    } else {
+                        this.instanced_ext.vertexAttribDivisorANGLE(theShader.vertexInstanceSizeAttribute, 1);
+                    }
+                }
+                if(theBuffer.triangleInstanceOrientationBuffer[j]){
+                    this.gl.enableVertexAttribArray(theShader.vertexInstanceOrientationAttribute);
+                    this.gl.enableVertexAttribArray(theShader.vertexInstanceOrientationAttribute+1);
+                    this.gl.enableVertexAttribArray(theShader.vertexInstanceOrientationAttribute+2);
+                    this.gl.enableVertexAttribArray(theShader.vertexInstanceOrientationAttribute+3);
+                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, theBuffer.triangleInstanceOrientationBuffer[j]);
+                    this.gl.vertexAttribPointer(theShader.vertexInstanceOrientationAttribute, 4, this.gl.FLOAT, false, 64, 0);
+                    this.gl.vertexAttribPointer(theShader.vertexInstanceOrientationAttribute+1, 4, this.gl.FLOAT, false, 64, 16);
+                    this.gl.vertexAttribPointer(theShader.vertexInstanceOrientationAttribute+2, 4, this.gl.FLOAT, false, 64, 32);
+                    this.gl.vertexAttribPointer(theShader.vertexInstanceOrientationAttribute+3, 4, this.gl.FLOAT, false, 64, 48);
+                    if (this.WEBGL2) {
+                        this.gl.vertexAttribDivisor(theShader.vertexInstanceOrientationAttribute, 1);
+                        this.gl.vertexAttribDivisor(theShader.vertexInstanceOrientationAttribute+1, 1);
+                        this.gl.vertexAttribDivisor(theShader.vertexInstanceOrientationAttribute+2, 1);
+                        this.gl.vertexAttribDivisor(theShader.vertexInstanceOrientationAttribute+3, 1);
+                    } else {
+                        this.instanced_ext.vertexAttribDivisorANGLE(theShader.vertexInstanceOrientationAttribute, 1);
+                        this.instanced_ext.vertexAttribDivisorANGLE(theShader.vertexInstanceOrientationAttribute+1, 1);
+                        this.instanced_ext.vertexAttribDivisorANGLE(theShader.vertexInstanceOrientationAttribute+2, 1);
+                        this.instanced_ext.vertexAttribDivisorANGLE(theShader.vertexInstanceOrientationAttribute+3, 1);
+                    }
+                }
+                if(theBuffer.supplementary["instance_use_colors"]){
+                    if(theBuffer.supplementary["instance_use_colors"][j]){
+                        if (this.WEBGL2) {
+                            this.gl.vertexAttribDivisor(theShader.vertexColourAttribute, 1);
+                        } else {
+                            this.instanced_ext.vertexAttribDivisorANGLE(theShader.vertexColourAttribute, 1);
+                        }
+                    }
+                }
+                if (this.WEBGL2) {
+                    this.gl.drawElementsInstanced(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_INT, 0, theBuffer.triangleInstanceOriginBuffer[j].numItems);
+                } else {
+                    this.instanced_ext.drawElementsInstancedANGLE(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_INT, 0, theBuffer.triangleInstanceOriginBuffer[j].numItems);
+                }
+                this.gl.disableVertexAttribArray(theShader.vertexInstanceOriginAttribute);
+                this.gl.disableVertexAttribArray(theShader.vertexInstanceSizeAttribute);
+                this.gl.disableVertexAttribArray(theShader.vertexInstanceOrientationAttribute);
+                this.gl.disableVertexAttribArray(theShader.vertexInstanceOrientationAttribute+1);
+                this.gl.disableVertexAttribArray(theShader.vertexInstanceOrientationAttribute+2);
+                this.gl.disableVertexAttribArray(theShader.vertexInstanceOrientationAttribute+3);
+                if (this.WEBGL2) {
+                    this.gl.vertexAttribDivisor(theShader.vertexColourAttribute, 0);
+                } else {
+                    this.instanced_ext.vertexAttribDivisorANGLE(theShader.vertexColourAttribute, 0);
+                }
+            } else {
+                this.gl.drawElements(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_INT, 0);
+            }
+        } else {
+            this.gl.drawElements(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_SHORT, 0);
+        }
+    }
+
+    setupModelViewTransformMatrixInteractive(transformMatrix, transformOrigin, buffer, shader, vertexType, bufferIdx, specialDrawBuffer) {
+
         var screenZ = vec3.create();
         var tempMVMatrix = mat4.create();
         var tempMVInvMatrix = mat4.create();
-        var symt_t = mat4.create();
         var symt = mat4.create();
         mat4.set(symt,
             transformMatrix[0],
@@ -6325,13 +6535,6 @@ class MGWebGL extends Component {
         screenZ[2] = 1.0;
         vec3.transformMat4(screenZ, screenZ, tempMVInvMatrix);
         this.gl.uniform3fv(shader.screenZ, screenZ);
-        if (this.ext) {
-            this.gl.drawElements(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_INT, 0);
-        } else {
-            this.gl.drawElements(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_SHORT, 0);
-        }
-        this.gl.uniformMatrix4fv(shader.mvMatrixUniform, false, this.mvMatrix);
-        this.gl.uniformMatrix4fv(shader.mvInvMatrixUniform, false, this.mvInvMatrix);// All else
 
     }
 
@@ -6345,7 +6548,6 @@ class MGWebGL extends Component {
             drawBuffer = triangleVertexIndexBuffer[bufferIdx];
         }
 
-        var pmvMatrix = mat4.create();
         var screenZ = vec3.create();
         var tempMVMatrix = mat4.create();
         var tempMVInvMatrix = mat4.create();
@@ -6407,7 +6609,6 @@ class MGWebGL extends Component {
         var screenZ = vec3.create();
         var tempMVMatrix = mat4.create();
         var tempMVInvMatrix = mat4.create();
-        var symt_t = mat4.create();
         var symt = mat4.create();
         mat4.set(symt,
             transformMatrix[0],
@@ -6594,7 +6795,6 @@ class MGWebGL extends Component {
         if (buffer.symmetry) {
             this.gl.disableVertexAttribArray(shader.vertexColourAttribute);
 
-            var pmvMatrix = mat4.create();
             var screenZ = vec3.create();
             for (var isym = 0; isym < symmetry["matrices"].length; isym++) {
                 var symcol = this.symcols[symmetry["symopnums"][isym] % this.symcols.length];
@@ -6744,14 +6944,28 @@ class MGWebGL extends Component {
         }
         this.gl.uniform1i(this.shaderProgram.shinyBack, this.shinyBack);
 
+        this.gl.useProgram(this.shaderProgramInstanced);
+        if (this.backColour === "default") {
+            this.gl.uniform1i(this.shaderProgramInstanced.defaultColour, true);
+        } else {
+            this.gl.uniform1i(this.shaderProgramInstanced.defaultColour, false);
+            this.gl.uniform4fv(this.shaderProgramInstanced.backColour, new Float32Array(this.backColour));
+        }
+        this.gl.uniform1i(this.shaderProgramInstanced.shinyBack, this.shinyBack);
+
         mat4.scale(this.pMatrix, this.pMatrix, [1. / this.zoom, 1. / this.zoom, 1]);
         mat4.translate(this.mvMatrix, this.mvMatrix, this.origin);
 
         this.pmvMatrix = mat4.create();
         mat4.multiply(this.pmvMatrix, this.pMatrix, this.mvMatrix);
 
+        this.gl.useProgram(this.shaderProgram);
         this.setMatrixUniforms(this.shaderProgram);
         this.setLightUniforms(this.shaderProgram);
+
+        this.gl.useProgram(this.shaderProgramInstanced);
+        this.setMatrixUniforms(this.shaderProgramInstanced);
+        this.setLightUniforms(this.shaderProgramInstanced);
 
         this.gl.useProgram(this.shaderProgramLines);
         this.setMatrixUniforms(this.shaderProgramLines);
@@ -6762,6 +6976,9 @@ class MGWebGL extends Component {
 
         this.gl.useProgram(this.shaderProgram);
         this.gl.enableVertexAttribArray(this.shaderProgram.vertexNormalAttribute);
+
+        this.gl.useProgram(this.shaderProgramInstanced);
+        this.gl.enableVertexAttribArray(this.shaderProgramInstanced.vertexNormalAttribute);
 
         this.drawTriangles(calculatingShadowMap, invMat);
         this.drawImagesAndText(invMat);
@@ -6919,15 +7136,15 @@ class MGWebGL extends Component {
     }
 
     drawTriangles(calculatingShadowMap, invMat) {
-        var nprims = 0;
+        let nprims = 0;
 
-        var symmetries = [];
-        var symms = [];
+        let symmetries = [];
+        let symms = [];
 
-        for (var idx = 0; idx < this.displayBuffers.length; idx++) {
+        for (let idx = 0; idx < this.displayBuffers.length; idx++) {
             if (this.displayBuffers[idx].symmetry) {
-                var symmetry;
-                var thisSym = this.displayBuffers[idx].symmetry;
+                let symmetry;
+                let thisSym = this.displayBuffers[idx].symmetry;
                 if (symms.indexOf(thisSym) === -1) {
                     symmetry = genSymMats(thisSym["RO"], thisSym["RF"], thisSym["symmats"], [-this.origin[0], -this.origin[1], -this.origin[2]], thisSym["radius"], thisSym["centre"]);
                 } else {
@@ -6941,39 +7158,36 @@ class MGWebGL extends Component {
             }
         }
 
-        for (var idx = 0; idx < this.displayBuffers.length; idx++) {
+        for (let idx = 0; idx < this.displayBuffers.length; idx++) {
 
             if (!this.displayBuffers[idx].visible) {
                 continue;
             }
 
-            var bufferTypes = this.displayBuffers[idx].bufferTypes;
+            let bufferTypes = this.displayBuffers[idx].bufferTypes;
 
-            var triangleVertexNormalBuffer = this.displayBuffers[idx].triangleVertexNormalBuffer;
-            var triangleVertexRealNormalBuffer = this.displayBuffers[idx].triangleVertexRealNormalBuffer;
-            var triangleVertexPositionBuffer = this.displayBuffers[idx].triangleVertexPositionBuffer;
-            var triangleVertexIndexBuffer = this.displayBuffers[idx].triangleVertexIndexBuffer;
-            var triangleColourBuffer = this.displayBuffers[idx].triangleColourBuffer;
+            let triangleVertexNormalBuffer = this.displayBuffers[idx].triangleVertexNormalBuffer;
+            let triangleVertexRealNormalBuffer = this.displayBuffers[idx].triangleVertexRealNormalBuffer;
+            let triangleVertexPositionBuffer = this.displayBuffers[idx].triangleVertexPositionBuffer;
+            let triangleVertexIndexBuffer = this.displayBuffers[idx].triangleVertexIndexBuffer;
+            let triangleColourBuffer = this.displayBuffers[idx].triangleColourBuffer;
 
-            var triangleIndexs = this.displayBuffers[idx].triangleIndexs;
-            var triangleVertices = this.displayBuffers[idx].triangleVertices;
-            var triangleColours = this.displayBuffers[idx].triangleColours;
-            var triangleNormals = this.displayBuffers[idx].triangleNormals;
+            let triangleVertices = this.displayBuffers[idx].triangleVertices;
+            let triangleColours = this.displayBuffers[idx].triangleColours;
 
-
-            var primitiveSizes = this.displayBuffers[idx].primitiveSizes;
+            let primitiveSizes = this.displayBuffers[idx].primitiveSizes;
 
             // FIXME - This is still way too slow, since there can be *lots* of displayBuffers per molecule. 
             //       - recalculating same symmetry for all of them is insane.
             //       - And should only be done when origin changes!
-            var symmetry = null;
+            let symmetry = null;
             if (this.displayBuffers[idx].symmetry) {
                 symmetry = symmetries[idx];
             }
 
             //console.log("Drawing object "+idx+" it has "+triangleVertexIndexBuffer.length+" parts");
 
-            for (var j = 0; j < triangleVertexIndexBuffer.length; j++) {
+            for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
                 if (bufferTypes[j] === "NORMALLINES" || bufferTypes[j] === "LINES" || bufferTypes[j] === "LINE_LOOP" || bufferTypes[j] === "LINE_STRIP" || bufferTypes[j] === "DIAMONDS" || bufferTypes[j] === "TEXT" || bufferTypes[j] === "IMAGES" || bufferTypes[j] === "SQUARES" || bufferTypes[j] === "PENTAGONS" || bufferTypes[j] === "HEXAGONS" || bufferTypes[j] === "POINTS" || bufferTypes[j] === "SPHEROIDS" || bufferTypes[j] === "POINTS_SPHERES" || bufferTypes[j] === "STARS" || bufferTypes[j].substring(0, 7) === "POLYGON" || bufferTypes[j].substring(0, 8) === "POLYSTAR" || bufferTypes[j].substring(0, "CUSTOM_2D_SHAPE_".length) === "CUSTOM_2D_SHAPE_" || bufferTypes[j] === "PERFECT_SPHERES") {
                     continue;
                 }
@@ -6982,6 +7196,7 @@ class MGWebGL extends Component {
                     continue;
                 }
 
+                let theShader;
                 if (this.doShadow) {
                     if (calculatingShadowMap) {
                         // We use a simple shader here.
@@ -6995,7 +7210,7 @@ class MGWebGL extends Component {
                         this.setLightUniforms(this.shaderProgramTriangleShadow);
                         //console.log(this.shaderProgramTriangleShadow.textureMatrixUniform);
                         //console.log(this.textureMatrix);
-                        var ShadowMapLoc = this.gl.getUniformLocation(this.shaderProgramTriangleShadow, "ShadowMap");
+                        let ShadowMapLoc = this.gl.getUniformLocation(this.shaderProgramTriangleShadow, "ShadowMap");
                         this.gl.uniform1i(ShadowMapLoc, 0);
                         this.gl.activeTexture(this.gl.TEXTURE0);
                         this.gl.bindTexture(this.gl.TEXTURE_2D, this.rttTextureDepth);
@@ -7003,29 +7218,31 @@ class MGWebGL extends Component {
                         this.gl.uniformMatrix4fv(this.shaderProgramTriangleShadow.textureMatrixUniform, false, this.textureMatrix);
                     }
                 } else {
-                    this.gl.useProgram(this.shaderProgram);
+                    if(this.displayBuffers[idx].triangleInstanceOriginBuffer[j]){
+                        theShader = this.shaderProgramInstanced;
+                    } else {
+                        theShader = this.shaderProgram;
+                    }
+                    this.gl.useProgram(theShader);
                 }
 
                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, triangleVertexNormalBuffer[j]);
-                this.gl.vertexAttribPointer(this.shaderProgram.vertexNormalAttribute, triangleVertexNormalBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
+                this.gl.vertexAttribPointer(theShader.vertexNormalAttribute, triangleVertexNormalBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, triangleVertexPositionBuffer[j]);
-                this.gl.vertexAttribPointer(this.shaderProgram.vertexPositionAttribute, triangleVertexPositionBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
+                this.gl.vertexAttribPointer(theShader.vertexPositionAttribute, triangleVertexPositionBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, triangleColourBuffer[j]);
-                this.gl.vertexAttribPointer(this.shaderProgram.vertexColourAttribute, triangleColourBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
+                this.gl.vertexAttribPointer(theShader.vertexColourAttribute, triangleColourBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
                 this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, triangleVertexIndexBuffer[j]);
+
                 if (bufferTypes[j] === "TRIANGLES" || bufferTypes[j] === "CYLINDERS" || bufferTypes[j] === "CAPCYLINDERS" || this.displayBuffers[idx].bufferTypes[j] === "TORUSES") {
                     if (this.displayBuffers[idx].transformMatrix) {
-                        this.drawTransformMatrix(this.displayBuffers[idx].transformMatrix, this.displayBuffers[idx], this.shaderProgram, this.gl.TRIANGLES, j);
+                        this.drawTransformMatrix(this.displayBuffers[idx].transformMatrix, this.displayBuffers[idx], theShader, this.gl.TRIANGLES, j);
                     } else if (this.displayBuffers[idx].transformMatrixInteractive) {
-                        this.drawTransformMatrixInteractive(this.displayBuffers[idx].transformMatrixInteractive, this.displayBuffers[idx].transformOriginInteractive, this.displayBuffers[idx], this.shaderProgram, this.gl.TRIANGLES, j);
+                        this.drawTransformMatrixInteractive(this.displayBuffers[idx].transformMatrixInteractive, this.displayBuffers[idx].transformOriginInteractive, this.displayBuffers[idx], theShader, this.gl.TRIANGLES, j);
                     } else {
-                        if (this.ext) {
-                            this.gl.drawElements(this.gl.TRIANGLES, triangleVertexIndexBuffer[j].numItems, this.gl.UNSIGNED_INT, 0);
-                        } else {
-                            this.gl.drawElements(this.gl.TRIANGLES, triangleVertexIndexBuffer[j].numItems, this.gl.UNSIGNED_SHORT, 0);
-                        }
+                        this.drawBuffer(this.displayBuffers[idx],theShader,j,this.gl.TRIANGLES);
                     }
-                    if (symmetry) this.drawSymmetry(symmetry, this.displayBuffers[idx], this.shaderProgram, this.gl.TRIANGLES, j);
+                    if (symmetry) this.drawSymmetry(symmetry, this.displayBuffers[idx], theShader, this.gl.TRIANGLES, j);
                 } else if (bufferTypes[j] === "TRIANGLE_STRIP" || bufferTypes[j] === "SPLINE" || bufferTypes[j] === "WORM") {
                     if (this.displayBuffers[idx].transformMatrix) {
                         this.drawTransformMatrix(this.displayBuffers[idx].transformMatrix, this.displayBuffers[idx], this.shaderProgram, this.gl.TRIANGLE_STRIP, j);
@@ -7045,17 +7262,17 @@ class MGWebGL extends Component {
 
             //Cylinders here
 
-            var sphereProgram = this.shaderProgramPointSpheres;
+            let sphereProgram = this.shaderProgramPointSpheres;
 
             if (this.frag_depth_ext) {
                 if (this.doShadow && !calculatingShadowMap) {
-                    var sphereProgram = this.shaderProgramPointSpheresShadow;
+                    let sphereProgram = this.shaderProgramPointSpheresShadow;
                     this.gl.useProgram(sphereProgram);
                     this.setMatrixUniforms(sphereProgram);
                     this.setLightUniforms(sphereProgram);
                     this.gl.disableVertexAttribArray(sphereProgram.vertexColourAttribute);
                     this.gl.enableVertexAttribArray(sphereProgram.vertexTextureAttribute);
-                    var ShadowMapLoc = this.gl.getUniformLocation(sphereProgram, "ShadowMap");
+                    let ShadowMapLoc = this.gl.getUniformLocation(sphereProgram, "ShadowMap");
                     this.gl.uniform1i(ShadowMapLoc, 0);
                     this.gl.activeTexture(this.gl.TEXTURE0);
                     this.gl.bindTexture(this.gl.TEXTURE_2D, this.rttTextureDepth);
@@ -7065,16 +7282,16 @@ class MGWebGL extends Component {
 
             this.gl.useProgram(sphereProgram);
 
-            var scaleMatrices = this.displayBuffers[idx].supplementary["scale_matrices"];
+            let scaleMatrices = this.displayBuffers[idx].supplementary["scale_matrices"];
             this.gl.disableVertexAttribArray(sphereProgram.vertexColourAttribute);
 
-            for (var j = 0; j < triangleVertexIndexBuffer.length; j++) {
-                var theseScaleMatrices = [];
+            for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
+                let theseScaleMatrices = [];
                 if (bufferTypes[j] !== "SPHEROIDS" && bufferTypes[j] !== "POINTS_SPHERES" && bufferTypes[j] !== "STARS") {
                     continue;
                 }
-                var buffer;
-                var radMult;
+                let buffer;
+                let radMult;
                 if (bufferTypes[j] === "POINTS_SPHERES" || bufferTypes[j] === "SPHEROIDS") {
                     buffer = this.sphereBuffer;
                     radMult = 1.0;
@@ -7090,14 +7307,14 @@ class MGWebGL extends Component {
                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer.triangleVertexPositionBuffer[0]);
                 this.gl.vertexAttribPointer(sphereProgram.vertexPositionAttribute, buffer.triangleVertexPositionBuffer[0].itemSize, this.gl.FLOAT, false, 0, 0);
                 this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, buffer.triangleVertexIndexBuffer[0]);
-                var isphere;
+                let isphere;
 
                 // FIXME - The scaling will be a property of each object. e.g. B/U factors.
                 //       - Perhaps we should have different shaders for scaled objects?
-                var scaleMatrix = mat3.clone([1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]);
+                let scaleMatrix = mat3.clone([1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]);
                 this.gl.uniformMatrix3fv(sphereProgram.scaleMatrix, false, scaleMatrix);
 
-                var theOffSet = new Float32Array(3);
+                let theOffSet = new Float32Array(3);
                 if (theseScaleMatrices.length === triangleVertices[j].length / 3) {
                     for (isphere = 0; isphere < triangleVertices[j].length / 3; isphere++) {
                         scaleMatrix = mat3.clone(theseScaleMatrices[isphere]);
@@ -7105,7 +7322,6 @@ class MGWebGL extends Component {
                         theOffSet[0] = triangleVertices[j][isphere * 3];
                         theOffSet[1] = triangleVertices[j][isphere * 3 + 1];
                         theOffSet[2] = triangleVertices[j][isphere * 3 + 2];
-                        var thisCol = [triangleColours[j][isphere * 4], triangleColours[j][isphere * 4 + 1], triangleColours[j][isphere * 4 + 2], triangleColours[j][isphere * 4 + 3]];
                         this.gl.vertexAttrib4f(sphereProgram.vertexColourAttribute, triangleColours[j][isphere * 4], triangleColours[j][isphere * 4 + 1], triangleColours[j][isphere * 4 + 2], triangleColours[j][isphere * 4 + 3]);
                         this.gl.uniform3fv(sphereProgram.offset, theOffSet);
                         this.gl.uniform1f(sphereProgram.size, primitiveSizes[j][isphere] * radMult);
@@ -7127,7 +7343,6 @@ class MGWebGL extends Component {
                         theOffSet[0] = triangleVertices[j][isphere * 3];
                         theOffSet[1] = triangleVertices[j][isphere * 3 + 1];
                         theOffSet[2] = triangleVertices[j][isphere * 3 + 2];
-                        var thisCol = [triangleColours[j][isphere * 4], triangleColours[j][isphere * 4 + 1], triangleColours[j][isphere * 4 + 2], triangleColours[j][isphere * 4 + 3]];
                         this.gl.vertexAttrib4f(sphereProgram.vertexColourAttribute, triangleColours[j][isphere * 4], triangleColours[j][isphere * 4 + 1], triangleColours[j][isphere * 4 + 2], triangleColours[j][isphere * 4 + 3]);
                         this.gl.uniform3fv(sphereProgram.offset, theOffSet);
                         this.gl.uniform1f(sphereProgram.size, primitiveSizes[j][isphere] * radMult);
@@ -7150,15 +7365,17 @@ class MGWebGL extends Component {
                     }
                 }
             }
+            this.gl.enableVertexAttribArray(sphereProgram.vertexColourAttribute);
+
             this.gl.useProgram(this.shaderProgramTwoDShapes);
             this.setMatrixUniforms(this.shaderProgramTwoDShapes);
             this.gl.disableVertexAttribArray(this.shaderProgramTwoDShapes.vertexColourAttribute);
             this.gl.vertexAttrib4f(this.shaderProgramTwoDShapes.vertexColourAttribute, 1.0, 1.0, 0.0, 1.0);
-            var diskVertices = [];
+            let diskVertices = [];
             if (typeof (this.diskVertices) !== "undefined") {
-                for (var iv = 0; iv < this.diskVertices.length; iv += 3) {
-                    var vold = vec3Create([this.diskVertices[iv], this.diskVertices[iv + 1], this.diskVertices[iv + 2]]);
-                    var vnew = vec3.create();
+                for (let iv = 0; iv < this.diskVertices.length; iv += 3) {
+                    let vold = vec3Create([this.diskVertices[iv], this.diskVertices[iv + 1], this.diskVertices[iv + 2]]);
+                    let vnew = vec3.create();
                     vec3.transformMat4(vnew, vold, invMat);
                     diskVertices[iv] = vnew[0];
                     diskVertices[iv + 1] = vnew[1];
@@ -7167,11 +7384,11 @@ class MGWebGL extends Component {
                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.diskBuffer.triangleVertexPositionBuffer[0]);
                 this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(diskVertices), this.gl.DYNAMIC_DRAW);
             }
-            var hexagonVertices = [];
+            let hexagonVertices = [];
             if (typeof (this.hexagonVertices) !== "undefined") {
-                for (var iv = 0; iv < this.hexagonVertices.length; iv += 3) {
-                    var vold = vec3Create([this.hexagonVertices[iv], this.hexagonVertices[iv + 1], this.hexagonVertices[iv + 2]]);
-                    var vnew = vec3.create();
+                for (let iv = 0; iv < this.hexagonVertices.length; iv += 3) {
+                    let vold = vec3Create([this.hexagonVertices[iv], this.hexagonVertices[iv + 1], this.hexagonVertices[iv + 2]]);
+                    let vnew = vec3.create();
                     vec3.transformMat4(vnew, vold, invMat);
                     hexagonVertices[iv] = vnew[0];
                     hexagonVertices[iv + 1] = vnew[1];
@@ -7180,11 +7397,11 @@ class MGWebGL extends Component {
                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.hexagonBuffer.triangleVertexPositionBuffer[0]);
                 this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(hexagonVertices), this.gl.DYNAMIC_DRAW);
             }
-            var pentagonVertices = [];
+            let pentagonVertices = [];
             if (typeof (this.pentagonVertices) !== "undefined") {
-                for (var iv = 0; iv < this.pentagonVertices.length; iv += 3) {
-                    var vold = vec3Create([this.pentagonVertices[iv], this.pentagonVertices[iv + 1], this.pentagonVertices[iv + 2]]);
-                    var vnew = vec3.create();
+                for (let iv = 0; iv < this.pentagonVertices.length; iv += 3) {
+                    let vold = vec3Create([this.pentagonVertices[iv], this.pentagonVertices[iv + 1], this.pentagonVertices[iv + 2]]);
+                    let vnew = vec3.create();
                     vec3.transformMat4(vnew, vold, invMat);
                     pentagonVertices[iv] = vnew[0];
                     pentagonVertices[iv + 1] = vnew[1];
@@ -7193,11 +7410,11 @@ class MGWebGL extends Component {
                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.pentagonBuffer.triangleVertexPositionBuffer[0]);
                 this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(pentagonVertices), this.gl.DYNAMIC_DRAW);
             }
-            var imageVertices = [];
+            let imageVertices = [];
             if (typeof (this.imageVertices) !== "undefined") {
-                for (var iv = 0; iv < this.imageVertices.length; iv += 3) {
-                    var vold = vec3Create([this.imageVertices[iv], this.imageVertices[iv + 1], this.imageVertices[iv + 2]]);
-                    var vnew = vec3.create();
+                for (let iv = 0; iv < this.imageVertices.length; iv += 3) {
+                    let vold = vec3Create([this.imageVertices[iv], this.imageVertices[iv + 1], this.imageVertices[iv + 2]]);
+                    let vnew = vec3.create();
                     vec3.transformMat4(vnew, vold, invMat);
                     imageVertices[iv] = vnew[0];
                     imageVertices[iv + 1] = vnew[1];
@@ -7206,11 +7423,11 @@ class MGWebGL extends Component {
                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.imageBuffer.triangleVertexPositionBuffer[0]);
                 this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(imageVertices), this.gl.DYNAMIC_DRAW);
             }
-            var squareVertices = [];
+            let squareVertices = [];
             if (typeof (this.squareVertices) !== "undefined") {
-                for (var iv = 0; iv < this.squareVertices.length; iv += 3) {
-                    var vold = vec3Create([this.squareVertices[iv], this.squareVertices[iv + 1], this.squareVertices[iv + 2]]);
-                    var vnew = vec3.create();
+                for (let iv = 0; iv < this.squareVertices.length; iv += 3) {
+                    let vold = vec3Create([this.squareVertices[iv], this.squareVertices[iv + 1], this.squareVertices[iv + 2]]);
+                    let vnew = vec3.create();
                     vec3.transformMat4(vnew, vold, invMat);
                     squareVertices[iv] = vnew[0];
                     squareVertices[iv + 1] = vnew[1];
@@ -7219,11 +7436,11 @@ class MGWebGL extends Component {
                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.squareBuffer.triangleVertexPositionBuffer[0]);
                 this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(squareVertices), this.gl.DYNAMIC_DRAW);
             }
-            var diamondVertices = [];
+            let diamondVertices = [];
             if (typeof (this.diamondVertices) !== "undefined") {
-                for (var iv = 0; iv < this.diamondVertices.length; iv += 3) {
-                    var vold = vec3Create([this.diamondVertices[iv], this.diamondVertices[iv + 1], this.diamondVertices[iv + 2]]);
-                    var vnew = vec3.create();
+                for (let iv = 0; iv < this.diamondVertices.length; iv += 3) {
+                    let vold = vec3Create([this.diamondVertices[iv], this.diamondVertices[iv + 1], this.diamondVertices[iv + 2]]);
+                    let vnew = vec3.create();
                     vec3.transformMat4(vnew, vold, invMat);
                     diamondVertices[iv] = vnew[0];
                     diamondVertices[iv + 1] = vnew[1];
@@ -7232,11 +7449,11 @@ class MGWebGL extends Component {
                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.diamondBuffer.triangleVertexPositionBuffer[0]);
                 this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(diamondVertices), this.gl.DYNAMIC_DRAW);
             }
-            for (var shapeVertices in this.shapesVertices) {
-                var theseVertices = [];
-                for (var iv = 0; iv < this.shapesVertices[shapeVertices].length; iv += 3) {
-                    var vold = vec3Create([this.shapesVertices[shapeVertices][iv], this.shapesVertices[shapeVertices][iv + 1], this.shapesVertices[shapeVertices][iv + 2]]);
-                    var vnew = vec3.create();
+            for (let shapeVertices in this.shapesVertices) {
+                let theseVertices = [];
+                for (let iv = 0; iv < this.shapesVertices[shapeVertices].length; iv += 3) {
+                    let vold = vec3Create([this.shapesVertices[shapeVertices][iv], this.shapesVertices[shapeVertices][iv + 1], this.shapesVertices[shapeVertices][iv + 2]]);
+                    let vnew = vec3.create();
                     vec3.transformMat4(vnew, vold, invMat);
                     theseVertices[iv] = vnew[0];
                     theseVertices[iv + 1] = vnew[1];
@@ -7245,12 +7462,12 @@ class MGWebGL extends Component {
                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.shapesBuffers[shapeVertices].triangleVertexPositionBuffer[0]);
                 this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(theseVertices), this.gl.DYNAMIC_DRAW);
             }
-            for (var j = 0; j < triangleVertexIndexBuffer.length; j++) {
+            for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
                 if (bufferTypes[j].substring(0, "CUSTOM_2D_SHAPE_".length) === "CUSTOM_2D_SHAPE_") {
-                    var buffer = this.shapesBuffers[bufferTypes[j]];
-                    var scaleImage = true;
+                    let buffer = this.shapesBuffers[bufferTypes[j]];
+                    let scaleImage = true;
                     if (typeof (this.gl, this.displayBuffers[idx].supplementary["vert_tri_2d"]) !== "undefined") {
-                        var tempMVMatrix = mat4.create();
+                        let tempMVMatrix = mat4.create();
                         mat4.set(tempMVMatrix, this.mvMatrix[0], this.mvMatrix[1], this.mvMatrix[2], this.mvMatrix[3], this.mvMatrix[4], this.mvMatrix[5], this.mvMatrix[6], this.mvMatrix[7], this.mvMatrix[8], this.mvMatrix[9], this.mvMatrix[10], this.mvMatrix[11], (-24.0 + this.displayBuffers[idx].supplementary["vert_tri_2d"][0][0] * 48.0) * this.zoom, (-24.0 + this.displayBuffers[idx].supplementary["vert_tri_2d"][0][1] * 48.0) * this.zoom, -500.0, 1.0);
                         this.gl.uniformMatrix4fv(this.shaderProgramTwoDShapes.mvMatrixUniform, false, tempMVMatrix);
                         scaleImage = false;
@@ -7261,7 +7478,7 @@ class MGWebGL extends Component {
                     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer.triangleVertexPositionBuffer[0]);
                     this.gl.vertexAttribPointer(this.shaderProgramTwoDShapes.vertexPositionAttribute, buffer.triangleVertexPositionBuffer[0].itemSize, this.gl.FLOAT, false, 0, 0);
                     this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, buffer.triangleVertexIndexBuffer[0]);
-                    var theOffSet = new Float32Array(3);
+                    let theOffSet = new Float32Array(3);
                     for (let ishape = 0; ishape < triangleVertices[j].length / 3; ishape++) {
                         theOffSet[0] = triangleVertices[j][ishape * 3];
                         theOffSet[1] = triangleVertices[j][ishape * 3 + 1];
@@ -7273,7 +7490,6 @@ class MGWebGL extends Component {
                             this.gl.uniform1f(this.shaderProgramTwoDShapes.size, primitiveSizes[j][ishape] * this.zoom);
                         }
 
-                        var thisCol = [triangleColours[j][ishape * 4], triangleColours[j][ishape * 4 + 1], triangleColours[j][ishape * 4 + 2], triangleColours[j][ishape * 4 + 3]];
                         this.gl.vertexAttrib4f(this.shaderProgramTwoDShapes.vertexColourAttribute, triangleColours[j][ishape * 4], triangleColours[j][ishape * 4 + 1], triangleColours[j][ishape * 4 + 2], triangleColours[j][ishape * 4 + 3]);
 
                         if (this.ext) {
@@ -7287,9 +7503,9 @@ class MGWebGL extends Component {
                     }
                 }
             }
-            for (var j = 0; j < triangleVertexIndexBuffer.length; j++) {
+            for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
                 if (bufferTypes[j] === "POINTS" || bufferTypes[j] === "HEXAGONS" || bufferTypes[j] === "PENTAGONS" || bufferTypes[j] === "SQUARES" || bufferTypes[j] === "DIAMONDS" || bufferTypes[j].substring(0, 7) === "POLYGON" || bufferTypes[j].substring(0, 8) === "POLYSTAR") {
-                    var buffer;
+                    let buffer;
                     if (bufferTypes[j] === "HEXAGONS") {
                         buffer = this.hexagonBuffer;
                     } else if (bufferTypes[j] === "DIAMONDS") {
@@ -7305,9 +7521,9 @@ class MGWebGL extends Component {
                     } else {
                         buffer = this.diskBuffer;
                     }
-                    var scaleImage = true;
+                    let scaleImage = true;
                     if (typeof (this.gl, this.displayBuffers[idx].supplementary["vert_tri_2d"]) !== "undefined") {
-                        var tempMVMatrix = mat4.create();
+                        let tempMVMatrix = mat4.create();
                         mat4.set(tempMVMatrix, this.mvMatrix[0], this.mvMatrix[1], this.mvMatrix[2], this.mvMatrix[3], this.mvMatrix[4], this.mvMatrix[5], this.mvMatrix[6], this.mvMatrix[7], this.mvMatrix[8], this.mvMatrix[9], this.mvMatrix[10], this.mvMatrix[11], (-24.0 + this.displayBuffers[idx].supplementary["vert_tri_2d"][0][0] * 48.0) * this.zoom, (-24.0 + this.displayBuffers[idx].supplementary["vert_tri_2d"][0][1] * 48.0) * this.zoom, -500.0, 1.0);
                         this.gl.uniformMatrix4fv(this.shaderProgramTwoDShapes.mvMatrixUniform, false, tempMVMatrix);
                         scaleImage = false;
@@ -7319,7 +7535,7 @@ class MGWebGL extends Component {
                     this.gl.vertexAttribPointer(this.shaderProgramTwoDShapes.vertexPositionAttribute, buffer.triangleVertexPositionBuffer[0].itemSize, this.gl.FLOAT, false, 0, 0);
                     this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, buffer.triangleVertexIndexBuffer[0]);
                     // FIXME - And loop here
-                    var theOffSet = new Float32Array(3);
+                    let theOffSet = new Float32Array(3);
                     for (let ishape = 0; ishape < triangleVertices[j].length / 3; ishape++) {
                         theOffSet[0] = triangleVertices[j][ishape * 3];
                         theOffSet[1] = triangleVertices[j][ishape * 3 + 1];
@@ -7331,7 +7547,6 @@ class MGWebGL extends Component {
                             this.gl.uniform1f(this.shaderProgramTwoDShapes.size, primitiveSizes[j][ishape] * this.zoom);
                         }
 
-                        var thisCol = [triangleColours[j][ishape * 4], triangleColours[j][ishape * 4 + 1], triangleColours[j][ishape * 4 + 2], triangleColours[j][ishape * 4 + 3]];
                         this.gl.vertexAttrib4f(this.shaderProgramTwoDShapes.vertexColourAttribute, triangleColours[j][ishape * 4], triangleColours[j][ishape * 4 + 1], triangleColours[j][ishape * 4 + 2], triangleColours[j][ishape * 4 + 3]);
 
                         if (this.ext) {
@@ -7345,10 +7560,11 @@ class MGWebGL extends Component {
                     }
                 }
             }
+
             this.gl.enableVertexAttribArray(this.shaderProgramTwoDShapes.vertexColourAttribute);
 
             this.gl.useProgram(this.shaderProgramLines);
-            for (var j = 0; j < triangleVertexIndexBuffer.length; j++) {
+            for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
                 if (bufferTypes[j] !== "LINE_LOOP" && bufferTypes[j] !== "LINE_STRIP") {
                     continue;
                 }
@@ -7386,7 +7602,7 @@ class MGWebGL extends Component {
             this.setMatrixUniforms(this.shaderProgramThickLinesNormal);
             this.gl.uniformMatrix4fv(this.shaderProgramThickLinesNormal.pMatrixUniform, false, this.pmvMatrix);
 
-            for (var j = 0; j < triangleVertexIndexBuffer.length; j++) {
+            for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
                 if (bufferTypes[j] !== "NORMALLINES") {
                     continue;
                 }
@@ -7421,13 +7637,15 @@ class MGWebGL extends Component {
                 nprims += triangleVertexIndexBuffer[j].numItems;
             }
 
+            this.gl.disableVertexAttribArray(this.shaderProgramThickLinesNormal.vertexRealNormalAttribute);
+
             this.gl.useProgram(this.shaderProgramThickLines);
             this.gl.uniform3fv(this.shaderProgramThickLines.screenZ, this.screenZ);
             this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexNormalAttribute);
             this.setMatrixUniforms(this.shaderProgramThickLines);
             this.gl.uniformMatrix4fv(this.shaderProgramThickLines.pMatrixUniform, false, this.pmvMatrix);
 
-            for (var j = 0; j < triangleVertexIndexBuffer.length; j++) {
+            for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
                 if (bufferTypes[j] !== "LINES" && bufferTypes[j] !== "CIRCLES") {
                     continue;
                 }
@@ -7464,7 +7682,7 @@ class MGWebGL extends Component {
 
             //shaderProgramPerfectSpheres
             if (this.frag_depth_ext) {
-                var program = this.shaderProgramPerfectSpheres;
+                let program = this.shaderProgramPerfectSpheres;
                 if (this.doShadow && !calculatingShadowMap) {
                     program = this.shaderProgramPerfectSpheresShadow;
                     this.gl.useProgram(program);
@@ -7472,7 +7690,7 @@ class MGWebGL extends Component {
                     this.setLightUniforms(program);
                     this.gl.disableVertexAttribArray(program.vertexColourAttribute);
                     this.gl.enableVertexAttribArray(program.vertexTextureAttribute);
-                    var ShadowMapLoc = this.gl.getUniformLocation(program, "ShadowMap");
+                    let ShadowMapLoc = this.gl.getUniformLocation(program, "ShadowMap");
                     this.gl.uniform1i(ShadowMapLoc, 0);
                     this.gl.activeTexture(this.gl.TEXTURE0);
                     this.gl.bindTexture(this.gl.TEXTURE_2D, this.rttTextureDepth);
@@ -7486,9 +7704,9 @@ class MGWebGL extends Component {
                     this.gl.enableVertexAttribArray(program.vertexTextureAttribute);
                 }
 
-                for (var j = 0; j < triangleVertexIndexBuffer.length; j++) {
+                for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
                     if (bufferTypes[j] === "PERFECT_SPHERES") {
-                        buffer = this.imageBuffer;
+                        let buffer = this.imageBuffer;
 
                         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer.triangleVertexTextureBuffer[0]);
                         this.gl.vertexAttribPointer(program.vertexTextureAttribute, buffer.triangleVertexTextureBuffer[0].itemSize, this.gl.FLOAT, false, 0, 0);
@@ -7498,17 +7716,16 @@ class MGWebGL extends Component {
                         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer.triangleVertexPositionBuffer[0]);
                         this.gl.vertexAttribPointer(program.vertexPositionAttribute, buffer.triangleVertexPositionBuffer[0].itemSize, this.gl.FLOAT, false, 0, 0);
                         this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, buffer.triangleVertexIndexBuffer[0]);
-                        var isphere;
+                        let isphere;
 
-                        var scaleMatrix = mat3.clone([1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]);
+                        //let scaleMatrix = mat3.clone([1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]);
                         //this.gl.uniformMatrix3fv(this.shaderProgramPerfectSpheres.scaleMatrix, false, scaleMatrix);
 
-                        var theOffSet = new Float32Array(3);
+                        let theOffSet = new Float32Array(3);
                         for (isphere = 0; isphere < triangleVertices[j].length / 3; isphere++) {
                             theOffSet[0] = triangleVertices[j][isphere * 3];
                             theOffSet[1] = triangleVertices[j][isphere * 3 + 1];
                             theOffSet[2] = triangleVertices[j][isphere * 3 + 2];
-                            var thisCol = [triangleColours[j][isphere * 4], triangleColours[j][isphere * 4 + 1], triangleColours[j][isphere * 4 + 2], triangleColours[j][isphere * 4 + 3]];
                             this.gl.vertexAttrib4f(program.vertexColourAttribute, triangleColours[j][isphere * 4], triangleColours[j][isphere * 4 + 1], triangleColours[j][isphere * 4 + 2], triangleColours[j][isphere * 4 + 3]);
                             this.gl.uniform3fv(program.offset, theOffSet);
                             this.gl.uniform1f(program.size, primitiveSizes[j][isphere] * Math.sqrt(2));
@@ -7532,23 +7749,20 @@ class MGWebGL extends Component {
 
     drawTransparent(theMatrix) {
 
-        for (var idx = 0; idx < this.displayBuffers.length; idx++) {
+        for (let idx = 0; idx < this.displayBuffers.length; idx++) {
 
             if (!this.displayBuffers[idx].visible) {
                 continue;
             }
 
-            var triangleVertexNormalBuffer = this.displayBuffers[idx].triangleVertexNormalBuffer;
-            var triangleVertexPositionBuffer = this.displayBuffers[idx].triangleVertexPositionBuffer;
-            var triangleVertexIndexBuffer = this.displayBuffers[idx].triangleVertexIndexBuffer;
-            var triangleColourBuffer = this.displayBuffers[idx].triangleColourBuffer;
+            let triangleVertexIndexBuffer = this.displayBuffers[idx].triangleVertexIndexBuffer;
 
-            var triangleIndexs = this.displayBuffers[idx].triangleIndexs;
-            var triangleVertices = this.displayBuffers[idx].triangleVertices;
-            var triangleColours = this.displayBuffers[idx].triangleColours;
-            var triangleNormals = this.displayBuffers[idx].triangleNormals;
+            let triangleIndexs = this.displayBuffers[idx].triangleIndexs;
+            let triangleVertices = this.displayBuffers[idx].triangleVertices;
+            let triangleColours = this.displayBuffers[idx].triangleColours;
+            let triangleNormals = this.displayBuffers[idx].triangleNormals;
 
-            var bufferTypes = this.displayBuffers[idx].bufferTypes;
+            let bufferTypes = this.displayBuffers[idx].bufferTypes;
 
             if (this.displayBuffers[idx].transparent) {
                 //console.log(idx+" is transparent ;-) "+bufferTypes[0]);
@@ -7563,9 +7777,9 @@ class MGWebGL extends Component {
                         this.displayBuffers[idx].allTriangleVertexPositionBuffer = this.gl.createBuffer();
                         this.displayBuffers[idx].allTriangleVertexColourBuffer = this.gl.createBuffer();
                         this.displayBuffers[idx].allIndexsBuffer = this.gl.createBuffer();
-                        var bufferOffset = 0;
+                        let bufferOffset = 0;
                         //console.log("Concatenating "+triangleVertexIndexBuffer.length+" buffers...");
-                        for (var j = 0; j < triangleVertexIndexBuffer.length; j++) {
+                        for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
                             //console.log("Concatenating "+triangleVertices[j].length/3+" triangles");
                             this.displayBuffers[idx].allVertices = this.displayBuffers[idx].allVertices.concat(triangleVertices[j]);
                             //console.log("Concatenating "+triangleNormals[j].length/3+" normals");
@@ -7574,7 +7788,7 @@ class MGWebGL extends Component {
                             //console.log("Concatenating "+triangleColours[j].length/4+" colours");
                             this.displayBuffers[idx].allColours = this.displayBuffers[idx].allColours.concat(triangleColours[j]);
                             //console.log("Pushing "+triangleIndexs[j].length+" indices");
-                            for (var i = 0; i < triangleIndexs[j].length; i++) {
+                            for (let i = 0; i < triangleIndexs[j].length; i++) {
                                 this.displayBuffers[idx].allIndexs.push(triangleIndexs[j][i] + bufferOffset);
                             }
                             bufferOffset += triangleVertices[j].length / 3;
@@ -7586,30 +7800,30 @@ class MGWebGL extends Component {
                         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].allTriangleVertexColourBuffer);
                         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[idx].allColours), this.gl.STATIC_DRAW);
                     }
-                    var sortThings = [];
+                    let sortThings = [];
                     //console.log("Big thing is of size "+this.displayBuffers[idx].allIndexs.length);
-                    for (var j = 0; j < this.displayBuffers[idx].allIndexs.length; j += 3) {
-                        var x1 = this.displayBuffers[idx].allVertices[3 * this.displayBuffers[idx].allIndexs[j]];
-                        var y1 = this.displayBuffers[idx].allVertices[3 * this.displayBuffers[idx].allIndexs[j] + 1];
-                        var z1 = this.displayBuffers[idx].allVertices[3 * this.displayBuffers[idx].allIndexs[j] + 2];
-                        var x2 = this.displayBuffers[idx].allVertices[3 * this.displayBuffers[idx].allIndexs[j + 1]];
-                        var y2 = this.displayBuffers[idx].allVertices[3 * this.displayBuffers[idx].allIndexs[j + 1] + 1];
-                        var z2 = this.displayBuffers[idx].allVertices[3 * this.displayBuffers[idx].allIndexs[j + 1] + 2];
-                        var x3 = this.displayBuffers[idx].allVertices[3 * this.displayBuffers[idx].allIndexs[j + 2]];
-                        var y3 = this.displayBuffers[idx].allVertices[3 * this.displayBuffers[idx].allIndexs[j + 2] + 1];
-                        var z3 = this.displayBuffers[idx].allVertices[3 * this.displayBuffers[idx].allIndexs[j + 2] + 2];
-                        var mid_x = (x1 + x2 + x3) / 3.0;
-                        var mid_y = (y1 + y2 + y3) / 3.0;
-                        var mid_z = (z1 + z2 + z3) / 3.0;
-                        var proj = mid_z; // FIXME - Need to calculate a projection along camera z-axis.
-                        var projP = vec3Create([mid_x, mid_y, mid_z]);
+                    for (let j = 0; j < this.displayBuffers[idx].allIndexs.length; j += 3) {
+                        let x1 = this.displayBuffers[idx].allVertices[3 * this.displayBuffers[idx].allIndexs[j]];
+                        let y1 = this.displayBuffers[idx].allVertices[3 * this.displayBuffers[idx].allIndexs[j] + 1];
+                        let z1 = this.displayBuffers[idx].allVertices[3 * this.displayBuffers[idx].allIndexs[j] + 2];
+                        let x2 = this.displayBuffers[idx].allVertices[3 * this.displayBuffers[idx].allIndexs[j + 1]];
+                        let y2 = this.displayBuffers[idx].allVertices[3 * this.displayBuffers[idx].allIndexs[j + 1] + 1];
+                        let z2 = this.displayBuffers[idx].allVertices[3 * this.displayBuffers[idx].allIndexs[j + 1] + 2];
+                        let x3 = this.displayBuffers[idx].allVertices[3 * this.displayBuffers[idx].allIndexs[j + 2]];
+                        let y3 = this.displayBuffers[idx].allVertices[3 * this.displayBuffers[idx].allIndexs[j + 2] + 1];
+                        let z3 = this.displayBuffers[idx].allVertices[3 * this.displayBuffers[idx].allIndexs[j + 2] + 2];
+                        let mid_x = (x1 + x2 + x3) / 3.0;
+                        let mid_y = (y1 + y2 + y3) / 3.0;
+                        let mid_z = (z1 + z2 + z3) / 3.0;
+                        //let proj = mid_z; // FIXME - Need to calculate a projection along camera z-axis.
+                        let projP = vec3Create([mid_x, mid_y, mid_z]);
                         vec3.transformMat4(projP, projP, theMatrix);
                         sortThings.push(new SortThing(projP[2], this.displayBuffers[idx].allIndexs[j], this.displayBuffers[idx].allIndexs[j + 1], this.displayBuffers[idx].allIndexs[j + 2]));
                     }
                     sortThings.sort(sortIndicesByProj);
-                    var allIndexs = [];
-                    var maxInd = 0;
-                    for (var j = 0; j < sortThings.length; j++) {
+                    let allIndexs = [];
+                    let maxInd = 0;
+                    for (let j = 0; j < sortThings.length; j++) {
                         allIndexs.push(sortThings[j].id1);
                         allIndexs.push(sortThings[j].id2);
                         allIndexs.push(sortThings[j].id3);
@@ -7646,25 +7860,20 @@ class MGWebGL extends Component {
 
     drawImagesAndText(invMat) {
         // Now the "see-through" primitives: images and text.
-        for (var idx = 0; idx < this.displayBuffers.length; idx++) {
+        for (let idx = 0; idx < this.displayBuffers.length; idx++) {
 
             if (!this.displayBuffers[idx].visible) {
                 continue;
             }
 
-            var bufferTypes = this.displayBuffers[idx].bufferTypes;
+            const bufferTypes = this.displayBuffers[idx].bufferTypes;
 
-            var triangleVertexNormalBuffer = this.displayBuffers[idx].triangleVertexNormalBuffer;
-            var triangleVertexPositionBuffer = this.displayBuffers[idx].triangleVertexPositionBuffer;
-            var triangleVertexIndexBuffer = this.displayBuffers[idx].triangleVertexIndexBuffer;
-            var triangleColourBuffer = this.displayBuffers[idx].triangleColourBuffer;
+            const triangleVertexIndexBuffer = this.displayBuffers[idx].triangleVertexIndexBuffer;
 
-            var triangleIndexs = this.displayBuffers[idx].triangleIndexs;
-            var triangleVertices = this.displayBuffers[idx].triangleVertices;
-            var triangleColours = this.displayBuffers[idx].triangleColours;
-            var triangleNormals = this.displayBuffers[idx].triangleNormals;
+            const triangleVertices = this.displayBuffers[idx].triangleVertices;
+            const triangleColours = this.displayBuffers[idx].triangleColours;
 
-            var primitiveSizes = this.displayBuffers[idx].primitiveSizes;
+            const primitiveSizes = this.displayBuffers[idx].primitiveSizes;
 
             this.gl.useProgram(this.shaderProgramImages);
             this.gl.depthFunc(this.gl.ALWAYS);
@@ -7674,17 +7883,17 @@ class MGWebGL extends Component {
             this.gl.disableVertexAttribArray(this.shaderProgramImages.vertexColourAttribute);
             this.gl.vertexAttrib4f(this.shaderProgramImages.vertexColourAttribute, 1.0, 1.0, 0.0, 1.0);
 
-            for (var j = 0; j < triangleVertexIndexBuffer.length; j++) {
+            for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
                 if (bufferTypes[j] === "IMAGES") {
-                    var buffer;
+                    let buffer;
                     buffer = this.imageBuffer;
 
                     if (!(this.displayBuffers[idx].texture)) {
                         this.displayBuffers[idx].texture = initTextures(this.gl, this.displayBuffers[idx].supplementary["imgsrc"][0]);
                     }
-                    var scaleImage = true;
+                    let scaleImage = true;
                     if (typeof (this.gl, this.displayBuffers[idx].supplementary["vert_tri_2d"]) !== "undefined") {
-                        var tempMVMatrix = mat4.create();
+                        let tempMVMatrix = mat4.create();
                         mat4.set(tempMVMatrix, this.mvMatrix[0], this.mvMatrix[1], this.mvMatrix[2], this.mvMatrix[3], this.mvMatrix[4], this.mvMatrix[5], this.mvMatrix[6], this.mvMatrix[7], this.mvMatrix[8], this.mvMatrix[9], this.mvMatrix[10], this.mvMatrix[11], (-24.0 + this.displayBuffers[idx].supplementary["vert_tri_2d"][0][0] * 48.0) * this.zoom, (-24.0 + this.displayBuffers[idx].supplementary["vert_tri_2d"][0][1] * 48.0) * this.zoom, -500.0, 1.0);
                         this.gl.uniformMatrix4fv(this.shaderProgramImages.mvMatrixUniform, false, tempMVMatrix);
                         scaleImage = false;
@@ -7699,7 +7908,7 @@ class MGWebGL extends Component {
                     this.gl.vertexAttribPointer(this.shaderProgramImages.vertexPositionAttribute, buffer.triangleVertexPositionBuffer[0].itemSize, this.gl.FLOAT, false, 0, 0);
                     this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, buffer.triangleVertexIndexBuffer[0]);
                     // FIXME - And loop here
-                    var theOffSet = new Float32Array(3);
+                    let theOffSet = new Float32Array(3);
                     for (let ishape = 0; ishape < triangleVertices[j].length / 3; ishape++) {
                         theOffSet[0] = triangleVertices[j][ishape * 3];
                         theOffSet[1] = triangleVertices[j][ishape * 3 + 1];
@@ -7711,7 +7920,6 @@ class MGWebGL extends Component {
                             this.gl.uniform1f(this.shaderProgramImages.size, primitiveSizes[j][ishape] * this.zoom);
                         }
 
-                        var thisCol = [triangleColours[j][ishape * 4], triangleColours[j][ishape * 4 + 1], triangleColours[j][ishape * 4 + 2], triangleColours[j][ishape * 4 + 3]];
                         this.gl.vertexAttrib4f(this.shaderProgramImages.vertexColourAttribute, triangleColours[j][ishape * 4], triangleColours[j][ishape * 4 + 1], triangleColours[j][ishape * 4 + 2], triangleColours[j][ishape * 4 + 3]);
 
                         if (this.ext) {
@@ -7726,26 +7934,26 @@ class MGWebGL extends Component {
                 }
             }
 
-            for (var j = 0; j < triangleVertexIndexBuffer.length; j++) {
+            for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
                 if (bufferTypes[j] === "TEXT") {
-                    var buffer;
+                    let buffer;
                     buffer = this.imageBuffer;
 
-                    var font = this.displayBuffers[idx].supplementary["font"][0][0];
-                    var fnsize = font.match(/^\d+|\d+\b|\d+(?=\w)/g)[0];
+                    const font = this.displayBuffers[idx].supplementary["font"][0][0];
+                    const fnsize = font.match(/^\d+|\d+\b|\d+(?=\w)/g)[0];
                     if (!(this.displayBuffers[idx].texture)) {
                         //this.displayBuffers[idx].texture = initStringTextures(this.gl,"Hello World !!!!");
                         console.log(this.displayBuffers[idx].supplementary["imgsrc"][0][0]);
-                        var tex_size = {};
+                        let tex_size = {};
                         console.log(font);
                         this.displayBuffers[idx].texture = initStringTextures(this.gl, this.displayBuffers[idx].supplementary["imgsrc"][0][0], tex_size, font);
                         console.log(tex_size);
                         this.displayBuffers[idx].tex_size = tex_size;
                     }
-                    var imageVertices = [];
-                    for (var iv = 0; iv < this.imageVertices.length; iv += 3) {
-                        var vold = vec3Create([this.imageVertices[iv] * this.displayBuffers[idx].tex_size["width"] / this.displayBuffers[idx].tex_size["height"], this.imageVertices[iv + 1], this.imageVertices[iv + 2]]);
-                        var vnew = vec3.create();
+                    let imageVertices = [];
+                    for (let iv = 0; iv < this.imageVertices.length; iv += 3) {
+                        let vold = vec3Create([this.imageVertices[iv] * this.displayBuffers[idx].tex_size["width"] / this.displayBuffers[idx].tex_size["height"], this.imageVertices[iv + 1], this.imageVertices[iv + 2]]);
+                        let vnew = vec3.create();
                         vec3.transformMat4(vnew, vold, invMat);
                         imageVertices[iv] = vnew[0];
                         imageVertices[iv + 1] = vnew[1];
@@ -7753,9 +7961,9 @@ class MGWebGL extends Component {
                     }
                     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.imageBuffer.triangleVertexPositionBuffer[0]);
                     this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(imageVertices), this.gl.DYNAMIC_DRAW);
-                    var scaleImage = false;
+                    let scaleImage = false;
                     if (typeof (this.gl, this.displayBuffers[idx].supplementary["vert_tri_2d"]) !== "undefined") {
-                        var tempMVMatrix = mat4.create();
+                        let tempMVMatrix = mat4.create();
                         mat4.set(tempMVMatrix, this.mvMatrix[0], this.mvMatrix[1], this.mvMatrix[2], this.mvMatrix[3], this.mvMatrix[4], this.mvMatrix[5], this.mvMatrix[6], this.mvMatrix[7], this.mvMatrix[8], this.mvMatrix[9], this.mvMatrix[10], this.mvMatrix[11], (-24.0 + this.displayBuffers[idx].supplementary["vert_tri_2d"][0][0] * 48.0) * this.zoom, (-24.0 + this.displayBuffers[idx].supplementary["vert_tri_2d"][0][1] * 48.0) * this.zoom, -500.0, 1.0);
                         this.gl.uniformMatrix4fv(this.shaderProgramImages.mvMatrixUniform, false, tempMVMatrix);
                         scaleImage = false;
@@ -7770,7 +7978,7 @@ class MGWebGL extends Component {
                     this.gl.vertexAttribPointer(this.shaderProgramImages.vertexPositionAttribute, buffer.triangleVertexPositionBuffer[0].itemSize, this.gl.FLOAT, false, 0, 0);
                     this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, buffer.triangleVertexIndexBuffer[0]);
                     // FIXME - And loop here ?!?
-                    var theOffSet = new Float32Array(3);
+                    let theOffSet = new Float32Array(3);
                     for (let ishape = 0; ishape < triangleVertices[j].length / 3; ishape++) {
                         theOffSet[0] = triangleVertices[j][ishape * 3];
                         theOffSet[1] = triangleVertices[j][ishape * 3 + 1];
@@ -7782,7 +7990,6 @@ class MGWebGL extends Component {
                             this.gl.uniform1f(this.shaderProgramImages.size, primitiveSizes[j][ishape] * this.zoom * fnsize / this.canvas.height * 48 * getDeviceScale());
                         }
 
-                        var thisCol = [triangleColours[j][ishape * 4], triangleColours[j][ishape * 4 + 1], triangleColours[j][ishape * 4 + 2], triangleColours[j][ishape * 4 + 3]];
                         this.gl.vertexAttrib4f(this.shaderProgramImages.vertexColourAttribute, triangleColours[j][ishape * 4], triangleColours[j][ishape * 4 + 1], triangleColours[j][ishape * 4 + 2], triangleColours[j][ishape * 4 + 3]);
 
                         if (this.ext) {
@@ -7811,6 +8018,7 @@ class MGWebGL extends Component {
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
 
+        let textColour = "black";
         if (this.textLabels.length > 0) {
             if (typeof this.displayBuffers[0].textPositionBuffer === "undefined") {
                 this.initTextBuffers();
@@ -7830,7 +8038,7 @@ class MGWebGL extends Component {
                 } else {
                     this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.displayBuffers[0].textIndexs), this.gl.STATIC_DRAW);
                 }
-                const maxTextureS = this.makeTextCanvas("Fluffy", 512, 32, textColour);
+                this.makeTextCanvas("Fluffy", 512, 32, textColour);
                 this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.textCtx.canvas);
 
                 this.displayBuffers[0].textNormals = [];
@@ -7854,27 +8062,24 @@ class MGWebGL extends Component {
             this.setMatrixUniforms(this.shaderProgramTextBackground);
             this.gl.depthFunc(this.gl.ALWAYS);
 
-            var textColour = "black";
-            var y = this.background_colour[0] * 0.299 + this.background_colour[1] * 0.587 + this.background_colour[2] * 0.114;
+            textColour = "black";
+            let y = this.background_colour[0] * 0.299 + this.background_colour[1] * 0.587 + this.background_colour[2] * 0.114;
             if (y < 0.5) {
                 textColour = "white";
             }
-            var idx = 0;
             this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.displayBuffers[0].textIndexesBuffer);
             this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[0].textPositionBuffer);
             this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
 
-            for (var itl = 0; itl < this.textLabels.length; itl++) {
-                var thisVis = this.displayBuffers[itl].visible;
+            for (let itl = 0; itl < this.textLabels.length; itl++) {
+                let thisVis = this.displayBuffers[itl].visible;
                 if (!thisVis) {
                     continue;
                 }
-                for (var jtl = 0; jtl < this.textLabels[itl].length; jtl++) {
+                for (let jtl = 0; jtl < this.textLabels[itl].length; jtl++) {
                     this.displayBuffers[0].textVertices = [];
 
-                    const maxTextureS = this.makeTextCanvas(this.textLabels[itl][jtl].label, 512, 32, textColour);
-                    var textWidth = this.textCtx.canvas.width;
-                    var textHeight = this.textCtx.canvas.height;
+                    this.makeTextCanvas(this.textLabels[itl][jtl].label, 512, 32, textColour);
 
                     // This is slow on FF on SL6.7
                     if (typeof (this.textLabels[itl][jtl].imgData) === "undefined") {
@@ -7882,11 +8087,11 @@ class MGWebGL extends Component {
                     }
                     this.gl.texSubImage2D(this.gl.TEXTURE_2D, 0, 0, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.textLabels[itl][jtl].imgData);
 
-                    var x = this.textLabels[itl][jtl].x;
-                    var y = this.textLabels[itl][jtl].y;
-                    var z = this.textLabels[itl][jtl].z;
-                    var tSizeX = 2.0 * this.textCtx.canvas.width / this.textCtx.canvas.height * this.zoom;
-                    var tSizeY = 2.0 * this.zoom;
+                    let x = this.textLabels[itl][jtl].x;
+                    let y = this.textLabels[itl][jtl].y;
+                    let z = this.textLabels[itl][jtl].z;
+                    let tSizeX = 2.0 * this.textCtx.canvas.width / this.textCtx.canvas.height * this.zoom;
+                    let tSizeY = 2.0 * this.zoom;
                     this.displayBuffers[0].textVertices = this.displayBuffers[0].textVertices.concat([x, y, z, x + tSizeX * right[0], y + tSizeX * right[1], z + tSizeX * right[2], x + tSizeY * up[0] + tSizeX * right[0], y + tSizeY * up[1] + tSizeX * right[1], z + tSizeY * up[2] + tSizeX * right[2]]);
                     this.displayBuffers[0].textVertices = this.displayBuffers[0].textVertices.concat([x, y, z, x + tSizeY * up[0] + tSizeX * right[0], y + tSizeY * up[1] + tSizeX * right[1], z + tSizeY * up[2] + tSizeX * right[2], x + tSizeY * up[0], y + tSizeY * up[1], z + tSizeY * up[2]]);
 
@@ -7909,6 +8114,7 @@ class MGWebGL extends Component {
 
     drawClickedAtoms(up, right) {
 
+        this.gl.useProgram(this.shaderProgramTextBackground);
         this.gl.uniform1f(this.shaderProgramTextBackground.maxTextureS, 1.0);
         let textTextureDirty = false;
         let textColour = "black";
@@ -7943,7 +8149,7 @@ class MGWebGL extends Component {
                     } else {
                         this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(theBuffer.textIndexs), this.gl.STATIC_DRAW);
                     }
-                    const maxTextureS = this.makeTextCanvas("Fluffy", 512, 32, textColour);
+                    this.makeTextCanvas("Fluffy", 512, 32, textColour);
                     this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.textCtx.canvas);
 
                     theBuffer.textNormals = [];
@@ -7963,14 +8169,14 @@ class MGWebGL extends Component {
         }
 
         this.gl.useProgram(this.shaderProgramLines);
-        var lineVertices = [];
-        var lineColours = [];
-        var lineIndexs = [];
-        var idx = 0;
+        let lineVertices = [];
+        let lineColours = [];
+        let lineIndexs = [];
+        let idx = 0;
 
         let okBuffer = null;
-        for (var iat = 0; iat < this.clickedAtoms.length; iat++) {
-            for (var jat = 1; jat < this.clickedAtoms[iat].length; jat++) {
+        for (let iat = 0; iat < this.clickedAtoms.length; iat++) {
+            for (let jat = 1; jat < this.clickedAtoms[iat].length; jat++) {
 
                 const theAtom = this.clickedAtoms[iat][jat];
                 const theBuffer = theAtom.displayBuffer;
@@ -7986,12 +8192,12 @@ class MGWebGL extends Component {
 
                 okBuffer = theBuffer;
 
-                var x1 = this.clickedAtoms[iat][jat - 1].x;
-                var y1 = this.clickedAtoms[iat][jat - 1].y;
-                var z1 = this.clickedAtoms[iat][jat - 1].z;
-                var x2 = this.clickedAtoms[iat][jat].x;
-                var y2 = this.clickedAtoms[iat][jat].y;
-                var z2 = this.clickedAtoms[iat][jat].z;
+                let x1 = this.clickedAtoms[iat][jat - 1].x;
+                let y1 = this.clickedAtoms[iat][jat - 1].y;
+                let z1 = this.clickedAtoms[iat][jat - 1].z;
+                let x2 = this.clickedAtoms[iat][jat].x;
+                let y2 = this.clickedAtoms[iat][jat].y;
+                let z2 = this.clickedAtoms[iat][jat].z;
                 lineVertices.push(x1);
                 lineVertices.push(y1);
                 lineVertices.push(z1);
@@ -8044,8 +8250,8 @@ class MGWebGL extends Component {
         }
         this.gl.uniform4fv(this.shaderProgramTextBackground.fogColour, new Float32Array(this.background_colour));
 
-        for (var iat = 0; iat < this.clickedAtoms.length; iat++) {
-            for (var jat = 0; jat < this.clickedAtoms[iat].length; jat++) {
+        for (let iat = 0; iat < this.clickedAtoms.length; iat++) {
+            for (let jat = 0; jat < this.clickedAtoms[iat].length; jat++) {
 
                 const theAtom = this.clickedAtoms[iat][jat];
                 const theBuffer = theAtom.displayBuffer;
@@ -8076,11 +8282,11 @@ class MGWebGL extends Component {
                 this.gl.uniform1f(this.shaderProgramTextBackground.maxTextureS, this.clickedAtoms[iat][jat].maxImgTextureS);
                 this.gl.texSubImage2D(this.gl.TEXTURE_2D, 0, 0, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.clickedAtoms[iat][jat].imgData);
 
-                var x = this.clickedAtoms[iat][jat].x;
-                var y = this.clickedAtoms[iat][jat].y;
-                var z = this.clickedAtoms[iat][jat].z;
-                var tSizeX = 2.0 * this.textCtx.canvas.width / this.textCtx.canvas.height * this.zoom;
-                var tSizeY = 2.0 * this.zoom;
+                let x = this.clickedAtoms[iat][jat].x;
+                let y = this.clickedAtoms[iat][jat].y;
+                let z = this.clickedAtoms[iat][jat].z;
+                let tSizeX = 2.0 * this.textCtx.canvas.width / this.textCtx.canvas.height * this.zoom;
+                let tSizeY = 2.0 * this.zoom;
                 theBuffer.textVertices = theBuffer.textVertices.concat([x, y, z, x + tSizeX * right[0], y + tSizeX * right[1], z + tSizeX * right[2], x + tSizeY * up[0] + tSizeX * right[0], y + tSizeY * up[1] + tSizeX * right[1], z + tSizeY * up[2] + tSizeX * right[2]]);
                 theBuffer.textVertices = theBuffer.textVertices.concat([x, y, z, x + tSizeY * up[0] + tSizeX * right[0], y + tSizeY * up[1] + tSizeX * right[1], z + tSizeY * up[2] + tSizeX * right[2], x + tSizeY * up[0], y + tSizeY * up[1], z + tSizeY * up[2]]);
 
@@ -8094,17 +8300,19 @@ class MGWebGL extends Component {
             }
         }
 
-        for (var iat = 0; iat < this.clickedAtoms.length; iat++) {
+        let tSizeX;
+        let tSizeY;
+        for (let iat = 0; iat < this.clickedAtoms.length; iat++) {
             // FIXME - This needs a tweak for at1-at2-at3-at4 dihedrals.
-            for (var jat = 1; jat < this.clickedAtoms[iat].length; jat++) {
+            for (let jat = 1; jat < this.clickedAtoms[iat].length; jat++) {
 
-                var x1 = this.clickedAtoms[iat][jat - 1].x;
-                var y1 = this.clickedAtoms[iat][jat - 1].y;
-                var z1 = this.clickedAtoms[iat][jat - 1].z;
+                let x1 = this.clickedAtoms[iat][jat - 1].x;
+                let y1 = this.clickedAtoms[iat][jat - 1].y;
+                let z1 = this.clickedAtoms[iat][jat - 1].z;
 
-                var x2 = this.clickedAtoms[iat][jat].x;
-                var y2 = this.clickedAtoms[iat][jat].y;
-                var z2 = this.clickedAtoms[iat][jat].z;
+                let x2 = this.clickedAtoms[iat][jat].x;
+                let y2 = this.clickedAtoms[iat][jat].y;
+                let z2 = this.clickedAtoms[iat][jat].z;
 
                 const theAtom = this.clickedAtoms[iat][jat];
                 const theBuffer = theAtom.displayBuffer;
@@ -8120,18 +8328,18 @@ class MGWebGL extends Component {
 
                 theBuffer.textVertices = [];
 
-                var v1 = vec3Create([x1, y1, z1]);
-                var v2 = vec3Create([x2, y2, z2]);
+                let v1 = vec3Create([x1, y1, z1]);
+                let v2 = vec3Create([x2, y2, z2]);
 
-                var v1diffv2 = vec3.create();
+                let v1diffv2 = vec3.create();
                 vec3Subtract(v1, v2, v1diffv2);
-                var linesize = vec3.length(v1diffv2);
+                let linesize = vec3.length(v1diffv2);
 
-                var v1plusv2 = vec3.create();
+                let v1plusv2 = vec3.create();
                 vec3Add(v1, v2, v1plusv2);
-                var x = v1plusv2[0] * 0.5;
-                var y = v1plusv2[1] * 0.5;
-                var z = v1plusv2[2] * 0.5;
+                let x = v1plusv2[0] * 0.5;
+                let y = v1plusv2[1] * 0.5;
+                let z = v1plusv2[2] * 0.5;
 
                 if (textTextureDirty || typeof (this.clickedAtoms[iat][jat].lengthImgData) === "undefined") {
                     const maxTextureS = this.makeTextCanvas(linesize.toFixed(3), 512, 32, textColour);
@@ -8141,8 +8349,8 @@ class MGWebGL extends Component {
                 this.gl.uniform1f(this.shaderProgramTextBackground.maxTextureS, this.clickedAtoms[iat][jat].maxLengthImgTextureS);
                 this.gl.texSubImage2D(this.gl.TEXTURE_2D, 0, 0, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.clickedAtoms[iat][jat].lengthImgData);
 
-                var tSizeX = 2.0 * this.textCtx.canvas.width / this.textCtx.canvas.height * this.zoom;
-                var tSizeY = 2.0 * this.zoom;
+                tSizeX = 2.0 * this.textCtx.canvas.width / this.textCtx.canvas.height * this.zoom;
+                tSizeY = 2.0 * this.zoom;
                 theBuffer.textVertices = theBuffer.textVertices.concat([x, y, z, x + tSizeX * right[0], y + tSizeX * right[1], z + tSizeX * right[2], x + tSizeY * up[0] + tSizeX * right[0], y + tSizeY * up[1] + tSizeX * right[1], z + tSizeY * up[2] + tSizeX * right[2]]);
                 theBuffer.textVertices = theBuffer.textVertices.concat([x, y, z, x + tSizeY * up[0] + tSizeX * right[0], y + tSizeY * up[1] + tSizeX * right[1], z + tSizeY * up[2] + tSizeX * right[2], x + tSizeY * up[0], y + tSizeY * up[1], z + tSizeY * up[2]]);
 
@@ -8155,19 +8363,19 @@ class MGWebGL extends Component {
                 }
             }
 
-            for (var jat = 2; jat < this.clickedAtoms[iat].length; jat++) {
+            for (let jat = 2; jat < this.clickedAtoms[iat].length; jat++) {
 
-                var x1 = this.clickedAtoms[iat][jat - 2].x;
-                var y1 = this.clickedAtoms[iat][jat - 2].y;
-                var z1 = this.clickedAtoms[iat][jat - 2].z;
+                let x1 = this.clickedAtoms[iat][jat - 2].x;
+                let y1 = this.clickedAtoms[iat][jat - 2].y;
+                let z1 = this.clickedAtoms[iat][jat - 2].z;
 
-                var x2 = this.clickedAtoms[iat][jat - 1].x;
-                var y2 = this.clickedAtoms[iat][jat - 1].y;
-                var z2 = this.clickedAtoms[iat][jat - 1].z;
+                let x2 = this.clickedAtoms[iat][jat - 1].x;
+                let y2 = this.clickedAtoms[iat][jat - 1].y;
+                let z2 = this.clickedAtoms[iat][jat - 1].z;
 
-                var x3 = this.clickedAtoms[iat][jat].x;
-                var y3 = this.clickedAtoms[iat][jat].y;
-                var z3 = this.clickedAtoms[iat][jat].z;
+                let x3 = this.clickedAtoms[iat][jat].x;
+                let y3 = this.clickedAtoms[iat][jat].y;
+                let z3 = this.clickedAtoms[iat][jat].z;
 
                 const theAtom = this.clickedAtoms[iat][jat];
                 const theBuffer = theAtom.displayBuffer;
@@ -8189,28 +8397,26 @@ class MGWebGL extends Component {
 
                 theBuffer.textVertices = [];
 
-                var v1 = vec3Create([x1, y1, z1]);
-                var v2 = vec3Create([x2, y2, z2]);
-                var v3 = vec3Create([x3, y3, z3]);
+                let v1 = vec3Create([x1, y1, z1]);
+                let v2 = vec3Create([x2, y2, z2]);
+                let v3 = vec3Create([x3, y3, z3]);
 
-                var v2diffv1 = vec3.create();
+                let v2diffv1 = vec3.create();
                 vec3Subtract(v2, v1, v2diffv1);
                 NormalizeVec3(v2diffv1);
 
-                var v2diffv3 = vec3.create();
+                let v2diffv3 = vec3.create();
                 vec3Subtract(v2, v3, v2diffv3);
                 NormalizeVec3(v2diffv3);
 
                 //console.log(vec3.dot(v2diffv1,v2diffv3));
 
-                var angle = Math.acos(vec3.dot(v2diffv1, v2diffv3)) * 180.0 / Math.PI;
+                let angle = Math.acos(vec3.dot(v2diffv1, v2diffv3)) * 180.0 / Math.PI;
 
-                var x = x2 - tSizeY * .5 * up[0];
-                var y = y2 - tSizeY * .5 * up[1];
-                var z = z2 - tSizeY * .5 * up[2];
+                let x = x2 - tSizeY * .5 * up[0];
+                let y = y2 - tSizeY * .5 * up[1];
+                let z = z2 - tSizeY * .5 * up[2];
 
-                var textWidth = this.textCtx.canvas.width;
-                var textHeight = this.textCtx.canvas.height;
                 if (textTextureDirty || typeof (this.clickedAtoms[iat][jat].angleImgData) === "undefined") {
                     const maxTextureS = this.makeTextCanvas(angle.toFixed(1), 512, 32, textColour);
                     this.clickedAtoms[iat][jat].angleImgData = this.textCtx.getImageData(0, 0, 512, 32);
@@ -8219,8 +8425,8 @@ class MGWebGL extends Component {
                 this.gl.uniform1f(this.shaderProgramTextBackground.maxTextureS, this.clickedAtoms[iat][jat].maxAngleImgTextureS);
                 this.gl.texSubImage2D(this.gl.TEXTURE_2D, 0, 0, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.clickedAtoms[iat][jat].angleImgData);
 
-                var tSizeX = 2.0 * this.textCtx.canvas.width / this.textCtx.canvas.height * this.zoom;
-                var tSizeY = 2.0 * this.zoom;
+                tSizeX = 2.0 * this.textCtx.canvas.width / this.textCtx.canvas.height * this.zoom;
+                tSizeY = 2.0 * this.zoom;
                 theBuffer.textVertices = theBuffer.textVertices.concat([x, y, z, x + tSizeX * right[0], y + tSizeX * right[1], z + tSizeX * right[2], x + tSizeY * up[0] + tSizeX * right[0], y + tSizeY * up[1] + tSizeX * right[1], z + tSizeY * up[2] + tSizeX * right[2]]);
                 theBuffer.textVertices = theBuffer.textVertices.concat([x, y, z, x + tSizeY * up[0] + tSizeX * right[0], y + tSizeY * up[1] + tSizeX * right[1], z + tSizeY * up[2] + tSizeX * right[2], x + tSizeY * up[0], y + tSizeY * up[1], z + tSizeY * up[2]]);
 
@@ -8233,23 +8439,23 @@ class MGWebGL extends Component {
                 }
             }
 
-            for (var jat = 3; jat < this.clickedAtoms[iat].length; jat++) {
+            for (let jat = 3; jat < this.clickedAtoms[iat].length; jat++) {
 
-                var x1 = this.clickedAtoms[iat][jat - 3].x;
-                var y1 = this.clickedAtoms[iat][jat - 3].y;
-                var z1 = this.clickedAtoms[iat][jat - 3].z;
+                let x1 = this.clickedAtoms[iat][jat - 3].x;
+                let y1 = this.clickedAtoms[iat][jat - 3].y;
+                let z1 = this.clickedAtoms[iat][jat - 3].z;
 
-                var x2 = this.clickedAtoms[iat][jat - 2].x;
-                var y2 = this.clickedAtoms[iat][jat - 2].y;
-                var z2 = this.clickedAtoms[iat][jat - 2].z;
+                let x2 = this.clickedAtoms[iat][jat - 2].x;
+                let y2 = this.clickedAtoms[iat][jat - 2].y;
+                let z2 = this.clickedAtoms[iat][jat - 2].z;
 
-                var x3 = this.clickedAtoms[iat][jat - 1].x;
-                var y3 = this.clickedAtoms[iat][jat - 1].y;
-                var z3 = this.clickedAtoms[iat][jat - 1].z;
+                let x3 = this.clickedAtoms[iat][jat - 1].x;
+                let y3 = this.clickedAtoms[iat][jat - 1].y;
+                let z3 = this.clickedAtoms[iat][jat - 1].z;
 
-                var x4 = this.clickedAtoms[iat][jat].x;
-                var y4 = this.clickedAtoms[iat][jat].y;
-                var z4 = this.clickedAtoms[iat][jat].z;
+                let x4 = this.clickedAtoms[iat][jat].x;
+                let y4 = this.clickedAtoms[iat][jat].y;
+                let z4 = this.clickedAtoms[iat][jat].z;
 
                 const theAtom = this.clickedAtoms[iat][jat];
                 const theBuffer = theAtom.displayBuffer;
@@ -8271,21 +8477,19 @@ class MGWebGL extends Component {
 
                 theBuffer.textVertices = [];
 
-                var v1 = vec3Create([x1, y1, z1]);
-                var v2 = vec3Create([x2, y2, z2]);
-                var v3 = vec3Create([x3, y3, z3]);
-                var v4 = vec3Create([x4, y4, z4]);
+                let v1 = vec3Create([x1, y1, z1]);
+                let v2 = vec3Create([x2, y2, z2]);
+                let v3 = vec3Create([x3, y3, z3]);
+                let v4 = vec3Create([x4, y4, z4]);
 
-                var v3plusv2 = vec3.create();
+                let v3plusv2 = vec3.create();
                 vec3Add(v3, v2, v3plusv2);
-                var x = v3plusv2[0] * 0.5 - tSizeY * .5 * up[0];
-                var y = v3plusv2[1] * 0.5 - tSizeY * .5 * up[0];
-                var z = v3plusv2[2] * 0.5 - tSizeY * .5 * up[0];
+                let x = v3plusv2[0] * 0.5 - tSizeY * .5 * up[0];
+                let y = v3plusv2[1] * 0.5 - tSizeY * .5 * up[0];
+                let z = v3plusv2[2] * 0.5 - tSizeY * .5 * up[0];
 
-                var angle = DihedralAngle(v1, v2, v3, v4) * 180.0 / Math.PI;
+                let angle = DihedralAngle(v1, v2, v3, v4) * 180.0 / Math.PI;
 
-                var textWidth = this.textCtx.canvas.width;
-                var textHeight = this.textCtx.canvas.height;
                 //this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.textCtx.canvas);
                 if (textTextureDirty || typeof (this.clickedAtoms[iat][jat].dihedralImgData) === "undefined") {
                     const maxTextureS = this.makeTextCanvas(angle.toFixed(1), 512, 32, textColour);
@@ -8295,8 +8499,8 @@ class MGWebGL extends Component {
                 this.gl.uniform1f(this.shaderProgramTextBackground.maxTextureS, this.clickedAtoms[iat][jat].maxDihedralImgTextureS);
                 this.gl.texSubImage2D(this.gl.TEXTURE_2D, 0, 0, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.clickedAtoms[iat][jat].dihedralImgData);
 
-                var tSizeX = 2.0 * this.textCtx.canvas.width / this.textCtx.canvas.height * this.zoom;
-                var tSizeY = 2.0 * this.zoom;
+                tSizeX = 2.0 * this.textCtx.canvas.width / this.textCtx.canvas.height * this.zoom;
+                tSizeY = 2.0 * this.zoom;
                 theBuffer.textVertices = theBuffer.textVertices.concat([x, y, z, x + tSizeX * right[0], y + tSizeX * right[1], z + tSizeX * right[2], x + tSizeY * up[0] + tSizeX * right[0], y + tSizeY * up[1] + tSizeX * right[1], z + tSizeY * up[2] + tSizeX * right[2]]);
                 theBuffer.textVertices = theBuffer.textVertices.concat([x, y, z, x + tSizeY * up[0] + tSizeX * right[0], y + tSizeY * up[1] + tSizeX * right[1], z + tSizeY * up[2] + tSizeX * right[2], x + tSizeY * up[0], y + tSizeY * up[1], z + tSizeY * up[2]]);
 
@@ -8355,14 +8559,9 @@ class MGWebGL extends Component {
             let circlesIndexes = [];
             let idx = 0;
 
-            for (var iat = 0; iat < this.clickedAtoms.length; iat++) {
-                var textColour = "black";
-                var y = this.background_colour[0] * 0.299 + this.background_colour[1] * 0.587 + this.background_colour[2] * 0.114;
-                if (y < 0.5) {
-                    textColour = "white";
-                }
+            for (let iat = 0; iat < this.clickedAtoms.length; iat++) {
                 //FIXME - Obviously not wanting to use clicked atom data ...
-                for (var jat = 0; jat < this.clickedAtoms[iat].length; jat++) {
+                for (let jat = 0; jat < this.clickedAtoms[iat].length; jat++) {
                     this.displayBuffers[0].textVertices = [];
 
                     if (typeof (this.clickedAtoms[iat][jat].circleData) === "undefined") {
@@ -8374,11 +8573,11 @@ class MGWebGL extends Component {
                     //console.log(this.clickedAtoms[iat][jat].circleData);
                     this.gl.texSubImage2D(this.gl.TEXTURE_2D, 0, 0, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.clickedAtoms[iat][jat].circleData);
 
-                    var x = this.clickedAtoms[iat][jat].x;
-                    var y = this.clickedAtoms[iat][jat].y;
-                    var z = this.clickedAtoms[iat][jat].z;
-                    var tSizeX = 0.5;
-                    var tSizeY = 0.5;
+                    let x = this.clickedAtoms[iat][jat].x;
+                    let y = this.clickedAtoms[iat][jat].y;
+                    let z = this.clickedAtoms[iat][jat].z;
+                    let tSizeX = 0.5;
+                    let tSizeY = 0.5;
 
                     circlesVertices = circlesVertices.concat([x, y, z, x, y, z, x, y, z])
                     circlesVertices = circlesVertices.concat([x, y, z, x, y, z, x, y, z])
@@ -8460,8 +8659,8 @@ class MGWebGL extends Component {
         const fracY = 1.0 * (y) / self.gl.viewportHeight;
         const theX = minX + fracX * (maxX - minX);
         const theY = maxY - fracY * (maxY - minY);
-        //var frontPos = vec3Create([theX,theY,-1000.0]);
-        //var backPos  = vec3Create([theX,theY,1000.0]);
+        //let frontPos = vec3Create([theX,theY,-1000.0]);
+        //let backPos  = vec3Create([theX,theY,1000.0]);
         //MN Changed to improve picking
         let frontPos = vec3Create([theX, theY, -this.gl_clipPlane0[3] - 500.]);
         let backPos = vec3Create([theX, theY, this.gl_clipPlane1[3] - 500.]);
@@ -8474,9 +8673,9 @@ class MGWebGL extends Component {
 
     doClick(event, self) {
         if (!self.mouseMoved) {
-            var x;
-            var y;
-            var e = event;
+            let x;
+            let y;
+            let e = event;
             if (e.pageX || e.pageY) {
                 x = e.pageX;
                 y = e.pageY;
@@ -8486,8 +8685,8 @@ class MGWebGL extends Component {
                 y = e.clientY;
             }
 
-            var c = this.canvasRef.current;
-            var offset = getOffsetRect(c);
+            let c = this.canvasRef.current;
+            let offset = getOffsetRect(c);
 
             x -= offset.left;
             y -= offset.top;
@@ -8495,49 +8694,48 @@ class MGWebGL extends Component {
             y *= getDeviceScale();
 
             //document.getElementById("info").innerHTML="Click: "+event.x+" "+event.y;
-            var invQuat = quat4.create();
+            let invQuat = quat4.create();
             quat4Inverse(self.myQuat, invQuat);
-            var theMatrix = quatToMat4(invQuat);
-            var ratio = 1.0 * self.gl.viewportWidth / self.gl.viewportHeight;
-            var minX = (-24. * ratio * self.zoom);
-            var maxX = (24. * ratio * self.zoom);
-            var minY = (-24. * self.zoom);
-            var maxY = (24. * self.zoom);
-            var fracX = 1.0 * x / self.gl.viewportWidth;
-            var fracY = 1.0 * (y) / self.gl.viewportHeight;
-            var theX = minX + fracX * (maxX - minX);
-            var theY = maxY - fracY * (maxY - minY);
-            //var frontPos = vec3Create([theX,theY,0.000001]);
-            //var backPos  = vec3Create([theX,theY,1000.0]);
+            let theMatrix = quatToMat4(invQuat);
+            let ratio = 1.0 * self.gl.viewportWidth / self.gl.viewportHeight;
+            let minX = (-24. * ratio * self.zoom);
+            let maxX = (24. * ratio * self.zoom);
+            let minY = (-24. * self.zoom);
+            let maxY = (24. * self.zoom);
+            let fracX = 1.0 * x / self.gl.viewportWidth;
+            let fracY = 1.0 * (y) / self.gl.viewportHeight;
+            let theX = minX + fracX * (maxX - minX);
+            let theY = maxY - fracY * (maxY - minY);
+            //let frontPos = vec3Create([theX,theY,0.000001]);
+            //let backPos  = vec3Create([theX,theY,1000.0]);
             //MN Changed to improve picking
-            var frontPos = vec3Create([theX, theY, this.gl_clipPlane0[3]]);
-            var backPos = vec3Create([theX, theY, this.gl_clipPlane1[3]]);
+            let frontPos = vec3Create([theX, theY, this.gl_clipPlane0[3]]);
+            let backPos = vec3Create([theX, theY, this.gl_clipPlane1[3]]);
             vec3.transformMat4(frontPos, frontPos, theMatrix);
             vec3.transformMat4(backPos, backPos, theMatrix);
             vec3.subtract(frontPos, frontPos, self.origin);
             vec3.subtract(backPos, backPos, self.origin);
 
-            var mindist = 100000.;
-            var mint = -100000.;
-            var minidx = -1;
-            var minj = -1;
-            var clickTol = 0.65 * this.zoom;
+            let mindist = 100000.;
+            let minidx = -1;
+            let minj = -1;
+            let clickTol = 0.65 * this.zoom;
 
-            for (var idx = 0; idx < self.displayBuffers.length; idx++) {
+            for (let idx = 0; idx < self.displayBuffers.length; idx++) {
                 if (!self.displayBuffers[idx].visible) {
                     continue;
                 }
-                for (var j = 0; j < self.displayBuffers[idx].atoms.length; j++) {
+                for (let j = 0; j < self.displayBuffers[idx].atoms.length; j++) {
                     //if(Math.abs(self.displayBuffers[idx].atoms[j].x-frontPos[0])>clickTol) continue;
                     //if(Math.abs(self.displayBuffers[idx].atoms[j].y-frontPos[1])>clickTol) continue;
-                    //var p = vec3Create([79.109,59.437,27.316]);
-                    var atx = self.displayBuffers[idx].atoms[j].x;
-                    var aty = self.displayBuffers[idx].atoms[j].y;
-                    var atz = self.displayBuffers[idx].atoms[j].z;
+                    //let p = vec3Create([79.109,59.437,27.316]);
+                    let atx = self.displayBuffers[idx].atoms[j].x;
+                    let aty = self.displayBuffers[idx].atoms[j].y;
+                    let atz = self.displayBuffers[idx].atoms[j].z;
                     //console.log(atx+" "+aty+" "+atz);
-                    var p = vec3Create([atx, aty, atz]);
+                    let p = vec3Create([atx, aty, atz]);
 
-                    var dpl = DistanceBetweenPointAndLine(frontPos, backPos, p);
+                    let dpl = DistanceBetweenPointAndLine(frontPos, backPos, p);
 
                     //MN Changed logic here
                     let atPos = vec3Create([atx, aty, atz])
@@ -8558,18 +8756,15 @@ class MGWebGL extends Component {
                         && aZ < fB_plus_fZ //In front of far clipping plane
                     ) {
 
-                        //if(dpl[0]<clickTol&&dpl[1]>mint){
                         minidx = idx;
                         minj = j;
                         mindist = dpl[0];
-                        mint = dpl[1];
                     }
                 }
             }
             //console.log(npass+" "+npass0+" "+npass1+" "+ntest);
             if (minidx > -1) {
-                //console.log("mint: "+mint+", mindist: "+mindist+", minidx: "+minidx+", minj: "+minj);
-                var theAtom = {};
+                let theAtom = {};
                 //console.log(self.displayBuffers[minidx].atoms[minj]);
                 theAtom.x = self.displayBuffers[minidx].atoms[minj].x;
                 theAtom.y = self.displayBuffers[minidx].atoms[minj].y;
@@ -8578,17 +8773,17 @@ class MGWebGL extends Component {
                 theAtom.label = self.displayBuffers[minidx].atoms[minj].label;
                 theAtom.symbol = self.displayBuffers[minidx].atoms[minj].symbol;
                 theAtom.displayBuffer = self.displayBuffers[minidx];
-                var atx = theAtom.x;
-                var aty = theAtom.y;
-                var atz = theAtom.z;
-                var label = theAtom.label;
+                let atx = theAtom.x;
+                let aty = theAtom.y;
+                let atz = theAtom.z;
+                let label = theAtom.label;
                 let tempFactorLabel = "";
                 if (self.displayBuffers[minidx].atoms[minj].tempFactor) {
                     tempFactorLabel = ", B: " + self.displayBuffers[minidx].atoms[minj].tempFactor;
                 }
                 this.props.messageChanged({ message: label + ", xyz:(" + atx + " " + aty + " " + atz + ")" + tempFactorLabel });
 
-                var atomClicked = new CustomEvent("atomClicked", {
+                let atomClicked = new CustomEvent("atomClicked", {
                     "detail": {
                         atom: self.displayBuffers[minidx].atoms[minj],
                         buffer: self.displayBuffers[minidx]
@@ -8617,9 +8812,9 @@ class MGWebGL extends Component {
 
     doHover(event, self) {
         if (true) {
-            var x;
-            var y;
-            var e = event;
+            let x;
+            let y;
+            let e = event;
             if (e.pageX || e.pageY) {
                 x = e.pageX;
                 y = e.pageY;
@@ -8629,87 +8824,56 @@ class MGWebGL extends Component {
                 y = e.clientY;
             }
 
-            var c = this.canvasRef.current;
-            var offset = getOffsetRect(c);
+            let c = this.canvasRef.current;
+            let offset = getOffsetRect(c);
 
             x -= offset.left;
             y -= offset.top;
             x *= getDeviceScale();
             y *= getDeviceScale();
 
-
-            /*
-            //document.getElementById("info").innerHTML="Click: "+event.x+" "+event.y;
-            var invQuat = quat4.create();
+            let invQuat = quat4.create();
             quat4Inverse(self.myQuat, invQuat);
-            var theMatrix = quatToMat4(invQuat);
-            var ratio = 1.0 * self.gl.viewportWidth / self.gl.viewportHeight;
-            var minX = (-24. * ratio * self.zoom);
-            var maxX = (24. * ratio * self.zoom);
-            var minY = (-24. * self.zoom);
-            var maxY = (24. * self.zoom);
-            var fracX = 1.0 * x / self.gl.viewportWidth;
-            var fracY = 1.0 * (y) / self.gl.viewportHeight;
-            var theX = minX + fracX * (maxX - minX);
-            var theY = maxY - fracY * (maxY - minY);
-            var frontPos = vec3Create([theX, theY, 0.000001]);
-            var backPos = vec3Create([theX, theY, 1000.0]);
-            //console.log(this.gl_clipPlane0[3],this.gl_clipPlane1[3]);
-            vec3.transformMat4(frontPos, frontPos, theMatrix);
-            vec3.transformMat4(backPos, backPos, theMatrix);
-            vec3.subtract(frontPos, frontPos, self.origin);
-            vec3.subtract(backPos, backPos, self.origin);
-
-            var mindist = 100000.;
-            var mint = -100000.;
-            var minidx = -1;
-            var minj = -1;
-            var clickTol = 0.65 * this.zoom;
-*/
-            //document.getElementById("info").innerHTML="Click: "+event.x+" "+event.y;
-            var invQuat = quat4.create();
-            quat4Inverse(self.myQuat, invQuat);
-            var theMatrix = quatToMat4(invQuat);
-            var ratio = 1.0 * self.gl.viewportWidth / self.gl.viewportHeight;
-            var minX = (-24. * ratio * self.zoom);
-            var maxX = (24. * ratio * self.zoom);
-            var minY = (-24. * self.zoom);
-            var maxY = (24. * self.zoom);
-            var fracX = 1.0 * x / self.gl.viewportWidth;
-            var fracY = 1.0 * (y) / self.gl.viewportHeight;
-            var theX = minX + fracX * (maxX - minX);
-            var theY = maxY - fracY * (maxY - minY);
-            //var frontPos = vec3Create([theX,theY,0.000001]);
-            //var backPos  = vec3Create([theX,theY,1000.0]);
+            let theMatrix = quatToMat4(invQuat);
+            let ratio = 1.0 * self.gl.viewportWidth / self.gl.viewportHeight;
+            let minX = (-24. * ratio * self.zoom);
+            let maxX = (24. * ratio * self.zoom);
+            let minY = (-24. * self.zoom);
+            let maxY = (24. * self.zoom);
+            let fracX = 1.0 * x / self.gl.viewportWidth;
+            let fracY = 1.0 * (y) / self.gl.viewportHeight;
+            let theX = minX + fracX * (maxX - minX);
+            let theY = maxY - fracY * (maxY - minY);
+            //let frontPos = vec3Create([theX,theY,0.000001]);
+            //let backPos  = vec3Create([theX,theY,1000.0]);
             //MN Changed to improve picking
-            var frontPos = vec3Create([theX, theY, this.gl_clipPlane0[3]]);
-            var backPos = vec3Create([theX, theY, this.gl_clipPlane1[3]]);
+            let frontPos = vec3Create([theX, theY, this.gl_clipPlane0[3]]);
+            let backPos = vec3Create([theX, theY, this.gl_clipPlane1[3]]);
             vec3.transformMat4(frontPos, frontPos, theMatrix);
             vec3.transformMat4(backPos, backPos, theMatrix);
             vec3.subtract(frontPos, frontPos, self.origin);
             vec3.subtract(backPos, backPos, self.origin);
 
-            var mindist = 100000.;
-            var mint = -100000.;
-            var minidx = -1;
-            var minj = -1;
-            var clickTol = 0.65 * this.zoom;
+            let mindist = 100000.;
+            let minidx = -1;
+            let minj = -1;
+            let clickTol = 0.65 * this.zoom;
 
-            for (var idx = 0; idx < self.displayBuffers.length; idx++) {
+            for (let idx = 0; idx < self.displayBuffers.length; idx++) {
                 if (!self.displayBuffers[idx].visible) {
                     continue;
                 }
-                for (var j = 0; j < self.displayBuffers[idx].atoms.length; j++) {
+                for (let j = 0; j < self.displayBuffers[idx].atoms.length; j++) {
                     //if(Math.abs(self.displayBuffers[idx].atoms[j].x-frontPos[0])>clickTol) continue;
                     //if(Math.abs(self.displayBuffers[idx].atoms[j].y-frontPos[1])>clickTol) continue;
-                    //var p = vec3Create([79.109,59.437,27.316]);
-                    var atx = self.displayBuffers[idx].atoms[j].x;
-                    var aty = self.displayBuffers[idx].atoms[j].y;
-                    var atz = self.displayBuffers[idx].atoms[j].z;
+                    //let p = vec3Create([79.109,59.437,27.316]);
+                    let atx = self.displayBuffers[idx].atoms[j].x;
+                    let aty = self.displayBuffers[idx].atoms[j].y;
+                    let atz = self.displayBuffers[idx].atoms[j].z;
                     //console.log(atx+" "+aty+" "+atz);
-                    var p = vec3Create([atx, aty, atz]);
+                    let p = vec3Create([atx, aty, atz]);
 
-                    var dpl = DistanceBetweenPointAndLine(frontPos, backPos, p);
+                    let dpl = DistanceBetweenPointAndLine(frontPos, backPos, p);
 
                     //MN Changed logic here
                     let atPos = vec3Create([atx, aty, atz])
@@ -8730,19 +8894,16 @@ class MGWebGL extends Component {
                         && aZ < fB_plus_fZ //In front of far clipping plane
                     ) {
 
-                        //if(dpl[0]<clickTol&&dpl[1]>mint){
                         minidx = idx;
                         minj = j;
                         mindist = dpl[0];
-                        mint = dpl[1];
                     }
                 }
             }
             //console.log({ minidx })
             //console.log(npass+" "+npass0+" "+npass1+" "+ntest);
             if (minidx > -1) {
-                //console.log("mint: "+mint+", mindist: "+mindist+", minidx: "+minidx+", minj: "+minj);
-                var theAtom = {};
+                let theAtom = {};
                 //console.log(self.displayBuffers[minidx].atoms[minj]);
                 theAtom.x = self.displayBuffers[minidx].atoms[minj].x;
                 theAtom.y = self.displayBuffers[minidx].atoms[minj].y;
@@ -8750,10 +8911,10 @@ class MGWebGL extends Component {
                 theAtom.charge = self.displayBuffers[minidx].atoms[minj].charge;
                 theAtom.label = self.displayBuffers[minidx].atoms[minj].label;
                 theAtom.symbol = self.displayBuffers[minidx].atoms[minj].symbol;
-                var atx = theAtom.x;
-                var aty = theAtom.y;
-                var atz = theAtom.z;
-                var label = theAtom.label;
+                let atx = theAtom.x;
+                let aty = theAtom.y;
+                let atz = theAtom.z;
+                let label = theAtom.label;
                 let tempFactorLabel = "";
                 if (self.displayBuffers[minidx].atoms[minj].tempFactor) {
                     tempFactorLabel = ", B: " + self.displayBuffers[minidx].atoms[minj].tempFactor;
@@ -8773,49 +8934,6 @@ class MGWebGL extends Component {
                     this.props.onAtomHovered(null)
                 }
             }
-            //console.log(dpl);
-
-            /*
-                        for (var idx = 0; idx < self.displayBuffers.length; idx++) {
-                            if (!self.displayBuffers[idx].visible) {
-                                continue;
-                            }
-                            for (var j = 0; j < self.displayBuffers[idx].atoms.length; j++) {
-                                //var p = vec3Create([79.109,59.437,27.316]);
-                                var atx = self.displayBuffers[idx].atoms[j].x;
-                                var aty = self.displayBuffers[idx].atoms[j].y;
-                                var atz = self.displayBuffers[idx].atoms[j].z;
-                                //console.log(atx+" "+aty+" "+atz);
-                                var p = vec3Create([atx, aty, atz]);
-            
-                                var dpl = DistanceBetweenPointAndLine(frontPos, backPos, p);
-                                if (dpl[0] < clickTol && dpl[1] > mint) {
-                                    minidx = idx;
-                                    minj = j;
-                                    mindist = dpl[0];
-                                    mint = dpl[1];
-                                }
-                            }
-                        }
-                        if (minidx > -1) {
-                            var theAtom = {};
-                            theAtom.x = self.displayBuffers[minidx].atoms[minj].x;
-                            theAtom.y = self.displayBuffers[minidx].atoms[minj].y;
-                            theAtom.z = self.displayBuffers[minidx].atoms[minj].z;
-                            theAtom.charge = self.displayBuffers[minidx].atoms[minj].charge;
-                            theAtom.label = self.displayBuffers[minidx].atoms[minj].label;
-                            var atx = theAtom.x;
-                            var aty = theAtom.y;
-                            var atz = theAtom.z;
-                            var label = theAtom.label;
-                            let tempFactorLabel = "";
-                            if (self.displayBuffers[minidx].atoms[minj].tempFactor) {
-                                tempFactorLabel = ", B: " + self.displayBuffers[minidx].atoms[minj].tempFactor;
-                            }
-                            this.props.messageChanged({ message: label + ", xyz:(" + atx + " " + aty + " " + atz + ")" + tempFactorLabel });
-                        }
-                        */
-
         }
         self.drawScene();
     }
@@ -8918,7 +9036,7 @@ class MGWebGL extends Component {
             axesNormals.push(axesVertices[il2 + 1] - axesVertices[il + 1]);
             axesNormals.push(axesVertices[il2 + 2] - axesVertices[il + 2]);
 
-            var d = Math.sqrt(axesNormals[axesNormals.length - 1 - 2] * axesNormals[axesNormals.length - 1 - 2] + axesNormals[axesNormals.length - 1 - 1] * axesNormals[axesNormals.length - 1 - 1] + axesNormals[axesNormals.length - 1 - 0] * axesNormals[axesNormals.length - 1 - 0]);
+            let d = Math.sqrt(axesNormals[axesNormals.length - 1 - 2] * axesNormals[axesNormals.length - 1 - 2] + axesNormals[axesNormals.length - 1 - 1] * axesNormals[axesNormals.length - 1 - 1] + axesNormals[axesNormals.length - 1 - 0] * axesNormals[axesNormals.length - 1 - 0]);
             if (d > 1e-8) {
                 axesNormals[axesNormals.length - 1 - 2] *= size / d;
                 axesNormals[axesNormals.length - 1 - 1] *= size / d;
@@ -9007,7 +9125,7 @@ class MGWebGL extends Component {
             axesIndexs_new.push(axesIdx_new++);
         }
 
-        var ret = {};
+        let ret = {};
         ret["vertices"] = axesVertices_new;
         ret["indices"] = axesIndexs_new;
         ret["normals"] = axesNormals;
@@ -9018,13 +9136,13 @@ class MGWebGL extends Component {
     }
 
     linesToThickLines(axesVertices, axesColours, size) {
-        var axesNormals = [];
-        var axesVertices_new = [];
-        var axesColours_new = [];
-        var axesIndexs_new = [];
-        var axesIdx_new = 0;
+        let axesNormals = [];
+        let axesVertices_new = [];
+        let axesColours_new = [];
+        let axesIndexs_new = [];
+        let axesIdx_new = 0;
 
-        for (var il = 0; il < axesVertices.length; il += 6) {
+        for (let il = 0; il < axesVertices.length; il += 6) {
             axesColours_new.push(axesColours[4 * il / 3]);
             axesColours_new.push(axesColours[4 * il / 3 + 1]);
             axesColours_new.push(axesColours[4 * il / 3 + 2]);
@@ -9062,7 +9180,7 @@ class MGWebGL extends Component {
             axesNormals.push(axesVertices[il + 3] - axesVertices[il]);
             axesNormals.push(axesVertices[il + 4] - axesVertices[il + 1]);
             axesNormals.push(axesVertices[il + 5] - axesVertices[il + 2]);
-            var d = Math.sqrt(axesNormals[axesNormals.length - 1 - 2] * axesNormals[axesNormals.length - 1 - 2] + axesNormals[axesNormals.length - 1 - 1] * axesNormals[axesNormals.length - 1 - 1] + axesNormals[axesNormals.length - 1 - 0] * axesNormals[axesNormals.length - 1 - 0]);
+            let d = Math.sqrt(axesNormals[axesNormals.length - 1 - 2] * axesNormals[axesNormals.length - 1 - 2] + axesNormals[axesNormals.length - 1 - 1] * axesNormals[axesNormals.length - 1 - 1] + axesNormals[axesNormals.length - 1 - 0] * axesNormals[axesNormals.length - 1 - 0]);
             if (d > 1e-8) {
                 axesNormals[axesNormals.length - 1 - 2] *= size / d;
                 axesNormals[axesNormals.length - 1 - 1] *= size / d;
@@ -9126,7 +9244,7 @@ class MGWebGL extends Component {
             axesIndexs_new.push(axesIdx_new++);
         }
 
-        var ret = {};
+        let ret = {};
         ret["vertices"] = axesVertices_new;
         ret["indices"] = axesIndexs_new;
         ret["normals"] = axesNormals;
@@ -9141,7 +9259,7 @@ class MGWebGL extends Component {
         this.gl.depthFunc(this.gl.ALWAYS);
         this.gl.uniform1f(this.shaderProgramTextBackground.fog_start, 1000.0);
         this.gl.uniform1f(this.shaderProgramTextBackground.fog_end, 1000.0);
-        var axesOffset = vec3.create();
+        let axesOffset = vec3.create();
         vec3.set(axesOffset, 0, 0, 0);
         const xyzOff = this.origin.map((coord, iCoord) => -coord + this.zoom * axesOffset[iCoord])
         this.gl.useProgram(this.shaderProgramThickLines);
@@ -9174,18 +9292,19 @@ class MGWebGL extends Component {
             renderArrays.axesColours = renderArrays.axesColours.concat([...colour1, ...colour2])
         }
 
-        var hairColour = [0., 0., 0., 1.];
-        var y = this.background_colour[0] * 0.299 + this.background_colour[1] * 0.587 + this.background_colour[2] * 0.114;
+        let hairColour = [0., 0., 0., 1.];
+        let y = this.background_colour[0] * 0.299 + this.background_colour[1] * 0.587 + this.background_colour[2] * 0.114;
         if (y < 0.5) {
-            var hairColour = [1., 1., 1., 1.];
+            hairColour = [1., 1., 1., 1.];
         }
 
         // Actual axes
-        var horizontalHairStart = vec3.create();
-        vec3.set(horizontalHairStart, -3.0 * this.zoom, 0.0, 0.0);
+        let cross_hair_scale_factor = 0.3;
+        let horizontalHairStart = vec3.create();
+        vec3.set(horizontalHairStart, -cross_hair_scale_factor * this.zoom, 0.0, 0.0);
         vec3.transformMat4(horizontalHairStart, horizontalHairStart, invMat);
-        var horizontalHairEnd = vec3.create();
-        vec3.set(horizontalHairEnd, 3.0 * this.zoom, 0.0, 0.0);
+        let horizontalHairEnd = vec3.create();
+        vec3.set(horizontalHairEnd, cross_hair_scale_factor * this.zoom, 0.0, 0.0);
         vec3.transformMat4(horizontalHairEnd, horizontalHairEnd, invMat);
 
         addSegment(renderArrays,
@@ -9194,11 +9313,11 @@ class MGWebGL extends Component {
             hairColour, hairColour
         )
 
-        var verticalHairStart = vec3.create();
-        vec3.set(verticalHairStart, 0.0, -3.0 * this.zoom, 0.0);
+        let verticalHairStart = vec3.create();
+        vec3.set(verticalHairStart, 0.0, -cross_hair_scale_factor * this.zoom, 0.0);
         vec3.transformMat4(verticalHairStart, verticalHairStart, invMat);
-        var verticalHairEnd = vec3.create();
-        vec3.set(verticalHairEnd, 0.0, 3.0 * this.zoom, 0.0);
+        let verticalHairEnd = vec3.create();
+        vec3.set(verticalHairEnd, 0.0, cross_hair_scale_factor * this.zoom, 0.0);
         vec3.transformMat4(verticalHairEnd, verticalHairEnd, invMat);
 
         addSegment(renderArrays,
@@ -9207,12 +9326,12 @@ class MGWebGL extends Component {
             hairColour, hairColour
         )
 
-        var size = 1.0;
-        var thickLines = this.linesToThickLines(renderArrays.axesVertices, renderArrays.axesColours, size);
-        var axesNormals = thickLines["normals"];
-        var axesVertices_new = thickLines["vertices"];
-        var axesColours_new = thickLines["colours"];
-        var axesIndexs_new = thickLines["indices"];
+        let size = 1.0;
+        const thickLines = this.linesToThickLines(renderArrays.axesVertices, renderArrays.axesColours, size);
+        let axesNormals = thickLines["normals"];
+        let axesVertices_new = thickLines["vertices"];
+        let axesColours_new = thickLines["colours"];
+        let axesIndexs_new = thickLines["indices"];
 
         //console.log("thickLines",thickLines);
         this.gl.depthFunc(this.gl.ALWAYS);
@@ -9246,14 +9365,15 @@ class MGWebGL extends Component {
 
     drawAxes(invMat) {
         this.gl.depthFunc(this.gl.ALWAYS);
+        this.gl.useProgram(this.shaderProgramTextBackground);
         this.gl.uniform1f(this.shaderProgramTextBackground.fog_start, 1000.0);
         this.gl.uniform1f(this.shaderProgramTextBackground.fog_end, 1000.0);
-        var axesOffset = vec3.create();
+        let axesOffset = vec3.create();
         vec3.set(axesOffset, 20, 20, 0);
         vec3.transformMat4(axesOffset, axesOffset, invMat);
-        var right = vec3.create();
+        let right = vec3.create();
         vec3.set(right, 1.0, 0.0, 0.0);
-        var up = vec3.create();
+        let up = vec3.create();
         vec3.set(up, 0.0, 1.0, 0.0);
         vec3.transformMat4(up, up, invMat);
         vec3.transformMat4(right, right, invMat);
@@ -9375,17 +9495,22 @@ class MGWebGL extends Component {
         //console.log("axesVertices",axesVertices);
         //console.log("zoom",this.zoom);
 
-        var size = 1.5;
-        var thickLines = this.linesToThickLines(renderArrays.axesVertices, renderArrays.axesColours, size);
-        var axesNormals = thickLines["normals"];
-        var axesVertices_new = thickLines["vertices"];
-        var axesColours_new = thickLines["colours"];
-        var axesIndexs_new = thickLines["indices"];
+        let size = 1.5;
+        let thickLines = this.linesToThickLines(renderArrays.axesVertices, renderArrays.axesColours, size);
+        let axesNormals = thickLines["normals"];
+        let axesVertices_new = thickLines["vertices"];
+        let axesColours_new = thickLines["colours"];
+        let axesIndexs_new = thickLines["indices"];
 
         //console.log("thickLines",thickLines);
         this.gl.depthFunc(this.gl.ALWAYS);
 
+        for(let i = 0; i<7; i++)
+            this.gl.disableVertexAttribArray(i);
+
         this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexNormalAttribute);
+        this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexPositionAttribute);
+        this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexColourAttribute);
 
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesNormalBuffer);
         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(axesNormals), this.gl.DYNAMIC_DRAW);
@@ -9424,18 +9549,18 @@ class MGWebGL extends Component {
         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0]), this.gl.STATIC_DRAW);
         this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexTextureAttribute, 2, this.gl.FLOAT, false, 0, 0);
 
-        var textColour = "black";
-        var y = this.background_colour[0] * 0.299 + this.background_colour[1] * 0.587 + this.background_colour[2] * 0.114;
+        let textColour = "black";
+        const y = this.background_colour[0] * 0.299 + this.background_colour[1] * 0.587 + this.background_colour[2] * 0.114;
         if (y < 0.5) {
             textColour = "white";
         }
 
         const drawStringAt = (string, colour, location, up, right) => {
             const [base_x, base_y, base_z] = location
-            const maxTextureSX = this.makeTextCanvas(string, 512, 32, colour);
-            var tSizeX = 2.0 * this.textCtx.canvas.width / this.textCtx.canvas.height * this.zoom;
-            var tSizeY = 2.0 * this.zoom;
-            var data = this.textCtx.getImageData(0, 0, 512, 32);
+            this.makeTextCanvas(string, 512, 32, colour);
+            const tSizeX = 2.0 * this.textCtx.canvas.width / this.textCtx.canvas.height * this.zoom;
+            const tSizeY = 2.0 * this.zoom;
+            const data = this.textCtx.getImageData(0, 0, 512, 32);
             this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, data);
             this.gl.texSubImage2D(this.gl.TEXTURE_2D, 0, 0, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, data);
             let textPositions = [base_x, base_y, base_z, base_x + tSizeX * right[0], base_y + tSizeX * right[1], base_z + tSizeX * right[2], base_x + tSizeY * up[0] + tSizeX * right[0], base_y + tSizeY * up[1] + tSizeX * right[1], base_z + tSizeY * up[2] + tSizeX * right[2]];
@@ -9475,18 +9600,18 @@ class MGWebGL extends Component {
         this.gl.depthFunc(this.gl.ALWAYS);
         this.gl.uniform1f(this.shaderProgramTextBackground.fog_start, 1000.0);
         this.gl.uniform1f(this.shaderProgramTextBackground.fog_end, 1000.0);
-        var axesOffset = vec3.create();
+        let axesOffset = vec3.create();
         vec3.set(axesOffset, 20, 20, 0);
         vec3.transformMat4(axesOffset, axesOffset, invMat);
-        var right = vec3.create();
+        let right = vec3.create();
         vec3.set(right, 1.0, 0.0, 0.0);
-        var up = vec3.create();
+        let up = vec3.create();
         vec3.set(up, 0.0, 1.0, 0.0);
         vec3.transformMat4(up, up, invMat);
         vec3.transformMat4(right, right, invMat);
-        var xoff = -this.origin[0] + this.zoom * axesOffset[0];
-        var yoff = -this.origin[1] + this.zoom * axesOffset[1];
-        var zoff = -this.origin[2] + this.zoom * axesOffset[2];
+        let xoff = -this.origin[0] + this.zoom * axesOffset[0];
+        let yoff = -this.origin[1] + this.zoom * axesOffset[1];
+        let zoff = -this.origin[2] + this.zoom * axesOffset[2];
         //console.log("offset",xoff,yoff,zoff);
         this.gl.useProgram(this.shaderProgramThickLines);
         this.setMatrixUniforms(this.shaderProgramThickLines);
@@ -9504,16 +9629,16 @@ class MGWebGL extends Component {
             this.axesTextTexCoordBuffer = this.gl.createBuffer();
             this.axesTextIndexesBuffer = this.gl.createBuffer();
         }
-        var x1 = 0.0;
-        var y1 = 0.0;
-        var z1 = 0.0;
-        var x2 = this.zoom * 3.0;
-        var y2 = 0.0;
-        var z2 = 0.0;
-        var axesVertices = [];
-        var axesColours = [];
-        var axesIndexs = [];
-        var axesIdx = 0;
+        let x1 = 0.0;
+        let y1 = 0.0;
+        let z1 = 0.0;
+        let x2 = this.zoom * 3.0;
+        let y2 = 0.0;
+        let z2 = 0.0;
+        let axesVertices = [];
+        let axesColours = [];
+        let axesIndexs = [];
+        let axesIdx = 0;
 
         axesVertices.push(x1 + xoff);
         axesVertices.push(y1 + yoff);
@@ -9713,12 +9838,12 @@ class MGWebGL extends Component {
         //console.log("axesVertices",axesVertices);
         //console.log("zoom",this.zoom);
 
-        var size = 1.0;
-        var thickLines = this.linesToThickLines(axesVertices, axesColours, size);
-        var axesNormals = thickLines["normals"];
-        var axesVertices_new = thickLines["vertices"];
-        var axesColours_new = thickLines["colours"];
-        var axesIndexs_new = thickLines["indices"];
+        const size = 1.0;
+        const thickLines = this.linesToThickLines(axesVertices, axesColours, size);
+        let axesNormals = thickLines["normals"];
+        let axesVertices_new = thickLines["vertices"];
+        let axesColours_new = thickLines["colours"];
+        let axesIndexs_new = thickLines["indices"];
 
         //console.log("thickLines",thickLines);
         this.gl.depthFunc(this.gl.ALWAYS);
@@ -9773,8 +9898,8 @@ class MGWebGL extends Component {
         }
 
         // Draw an x
-        const maxTextureSX = this.makeTextCanvas("x", 512, 32, textColour);
-        var data = this.textCtx.getImageData(0, 0, 512, 32);
+        this.makeTextCanvas("x", 512, 32, textColour);
+        let data = this.textCtx.getImageData(0, 0, 512, 32);
         this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, data);
         this.gl.texSubImage2D(this.gl.TEXTURE_2D, 0, 0, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, data);
 
@@ -9798,8 +9923,8 @@ class MGWebGL extends Component {
         }
 
         // Draw an y
-        const maxTextureSY = this.makeTextCanvas("y", 512, 32, textColour);
-        var data = this.textCtx.getImageData(0, 0, 512, 32);
+        this.makeTextCanvas("y", 512, 32, textColour);
+        data = this.textCtx.getImageData(0, 0, 512, 32);
         this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, data);
         this.gl.texSubImage2D(this.gl.TEXTURE_2D, 0, 0, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, data);
 
@@ -9820,8 +9945,8 @@ class MGWebGL extends Component {
         }
 
         // Draw an z
-        const maxTextureSZ = this.makeTextCanvas("z", 512, 32, textColour);
-        var data = this.textCtx.getImageData(0, 0, 512, 32);
+        this.makeTextCanvas("z", 512, 32, textColour);
+        data = this.textCtx.getImageData(0, 0, 512, 32);
         this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, data);
         this.gl.texSubImage2D(this.gl.TEXTURE_2D, 0, 0, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, data);
 
@@ -9863,6 +9988,9 @@ class MGWebGL extends Component {
     reContourMaps() {
         var self = this;
         let doLines = true;
+        let vertices = [];
+        let normals = [];
+        let indices = [];
         let vertices2 = [];
         let normals2 = [];
         let indices2 = [];
@@ -9897,7 +10025,6 @@ class MGWebGL extends Component {
                 let contourLevel = self.liveUpdatingMaps[ilm].contourLevel;
                 let mapColour = self.liveUpdatingMaps[ilm].mapColour;
                 //console.log(contourLevel);
-                let fracMat = self.liveUpdatingMaps[ilm].fracMat;
                 let nCells_x = self.liveUpdatingMaps[ilm].nCells_x;
                 let nCells_y = self.liveUpdatingMaps[ilm].nCells_y;
                 let nCells_z = self.liveUpdatingMaps[ilm].nCells_z;
@@ -9905,9 +10032,6 @@ class MGWebGL extends Component {
                 let cellLength_y = self.liveUpdatingMaps[ilm].cellLength_y;
                 let cellLength_z = self.liveUpdatingMaps[ilm].cellLength_z;
                 let cell = self.liveUpdatingMaps[ilm].cell;
-                //let xfrac = -(fracMat[0]*self.origin[0] + fracMat[1]*self.origin[1]+ fracMat[2]*self.origin[2]);
-                //let yfrac = -(fracMat[3]*self.origin[0] + fracMat[4]*self.origin[1]+ fracMat[5]*self.origin[2]);
-                //let zfrac = -(fracMat[6]*self.origin[0] + fracMat[7]*self.origin[1]+ fracMat[8]*self.origin[2]);
 
                 let xfrac = -(cell.matrix_frac[0] * self.origin[0] + cell.matrix_frac[4] * self.origin[1] + cell.matrix_frac[8] * self.origin[2]);
                 let yfrac = -(cell.matrix_frac[1] * self.origin[0] + cell.matrix_frac[5] * self.origin[1] + cell.matrix_frac[9] * self.origin[2]);
@@ -9920,9 +10044,6 @@ class MGWebGL extends Component {
                 let xCentre = (xfrac - Math.floor(xfrac)) * nCells_x;
                 let yCentre = (yfrac - Math.floor(yfrac)) * nCells_y;
                 let zCentre = (zfrac - Math.floor(zfrac)) * nCells_z;
-                let xshift_offset = xCentre - (xfrac - Math.floor(xfrac)) * nCells_x;
-                let yshift_offset = yCentre - (yfrac - Math.floor(yfrac)) * nCells_y;
-                let zshift_offset = zCentre - (zfrac - Math.floor(zfrac)) * nCells_z;
                 // A 10 angstrom parallelpiped
                 let radCells_x = 10. / cellLength_x;
                 let radCells_y = 10. / cellLength_y;
@@ -10298,7 +10419,7 @@ class MGWebGL extends Component {
 
                     let vertices = map.returnLinesVertices(xShift_new, yShift_new, zShift_new); // And is this where we add base (integral part of xfrac, etc.)?
                     let normals = map.returnNormals_new();
-                    let indices = map.returnIndices();
+                    indices = map.returnIndices();
                     end = new Date().getTime();
                     time = end - start;
                     //console.log('copy buffers on the fly: ' + time*0.001+"s");
@@ -10324,7 +10445,6 @@ class MGWebGL extends Component {
                 let contourLevel = self.liveUpdatingMaps[ilm].contourLevel;
                 let mapColour = self.liveUpdatingMaps[ilm].mapColour;
                 //console.log(contourLevel);
-                let fracMat = self.liveUpdatingMaps[ilm].fracMat;
                 let nCells_x = self.liveUpdatingMaps[ilm].nCells_x;
                 let nCells_y = self.liveUpdatingMaps[ilm].nCells_y;
                 let nCells_z = self.liveUpdatingMaps[ilm].nCells_z;
@@ -10332,9 +10452,6 @@ class MGWebGL extends Component {
                 let cellLength_y = self.liveUpdatingMaps[ilm].cellLength_y;
                 let cellLength_z = self.liveUpdatingMaps[ilm].cellLength_z;
                 let cell = self.liveUpdatingMaps[ilm].cell;
-                //let xfrac = -(fracMat[0]*self.origin[0] + fracMat[1]*self.origin[1]+ fracMat[2]*self.origin[2]);
-                //let yfrac = -(fracMat[3]*self.origin[0] + fracMat[4]*self.origin[1]+ fracMat[5]*self.origin[2]);
-                //let zfrac = -(fracMat[6]*self.origin[0] + fracMat[7]*self.origin[1]+ fracMat[8]*self.origin[2]);
 
                 let xfrac = -(cell.matrix_frac[0] * self.origin[0] + cell.matrix_frac[4] * self.origin[1] + cell.matrix_frac[8] * self.origin[2]);
                 let yfrac = -(cell.matrix_frac[1] * self.origin[0] + cell.matrix_frac[5] * self.origin[1] + cell.matrix_frac[9] * self.origin[2]);
@@ -10347,9 +10464,6 @@ class MGWebGL extends Component {
                 let xCentre = (xfrac - Math.floor(xfrac)) * nCells_x;
                 let yCentre = (yfrac - Math.floor(yfrac)) * nCells_y;
                 let zCentre = (zfrac - Math.floor(zfrac)) * nCells_z;
-                let xshift_offset = xCentre - (xfrac - Math.floor(xfrac)) * nCells_x;
-                let yshift_offset = yCentre - (yfrac - Math.floor(yfrac)) * nCells_y;
-                let zshift_offset = zCentre - (zfrac - Math.floor(zfrac)) * nCells_z;
                 // A 10 angstrom parallelpiped
                 let radCells_x = 10. / cellLength_x;
                 let radCells_y = 10. / cellLength_y;
@@ -10531,7 +10645,7 @@ class MGWebGL extends Component {
                         map2.GenerateSurfacePartial(self.liveUpdatingMaps[ilm].gridData[0], contourLevel, nCells_x, nCells_y, nCells_z, cellLength_x, cellLength_y, cellLength_z, 0, minY, minZ, maxXorig - nCells_x, maxY, maxZ);
                         vertices2 = map2.returnVertices(xShift2, yShift, zShift);
                         normals2 = map2.returnNormals_new();
-                        let indices2 = map2.returnIndices();
+                        indices2 = map2.returnIndices();
                         for (let i = 0; i < vertices2.length / 3; i++) {
                             colours2.push(mapColour[0]);
                             colours2.push(mapColour[1]);
@@ -10545,7 +10659,7 @@ class MGWebGL extends Component {
                         map2.GenerateSurfacePartial(self.liveUpdatingMaps[ilm].gridData[0], contourLevel, nCells_x, nCells_y, nCells_z, cellLength_x, cellLength_y, cellLength_z, nCells_x + minXorig, minY, minZ, nCells_x, maxY, maxZ);
                         vertices2 = map2.returnVertices(xShift2, yShift, zShift);
                         normals2 = map2.returnNormals_new();
-                        let indices2 = map2.returnIndices();
+                        indices2 = map2.returnIndices();
                         for (let i = 0; i < vertices2.length / 3; i++) {
                             colours2.push(mapColour[0]);
                             colours2.push(mapColour[1]);
@@ -10559,7 +10673,7 @@ class MGWebGL extends Component {
                         map3.GenerateSurfacePartial(self.liveUpdatingMaps[ilm].gridData[0], contourLevel, nCells_x, nCells_y, nCells_z, cellLength_x, cellLength_y, cellLength_z, minX, 0, minZ, maxX, maxYorig - nCells_y, maxZ);
                         vertices3 = map3.returnVertices(xShift3, yShift2, zShift);
                         normals3 = map3.returnNormals_new();
-                        let indices3 = map3.returnIndices();
+                        indices3 = map3.returnIndices();
                         for (let i = 0; i < vertices3.length / 3; i++) {
                             colours3.push(mapColour[0]);
                             colours3.push(mapColour[1]);
@@ -10573,7 +10687,7 @@ class MGWebGL extends Component {
                         map3.GenerateSurfacePartial(self.liveUpdatingMaps[ilm].gridData[0], contourLevel, nCells_x, nCells_y, nCells_z, cellLength_x, cellLength_y, cellLength_z, minX, nCells_y + minYorig, minZ, maxX, nCells_y, maxZ);
                         vertices3 = map3.returnVertices(xShift3, yShift2, zShift);
                         normals3 = map3.returnNormals_new();
-                        let indices3 = map3.returnIndices();
+                        indices3 = map3.returnIndices();
                         for (let i = 0; i < vertices3.length / 3; i++) {
                             colours3.push(mapColour[0]);
                             colours3.push(mapColour[1]);
@@ -10587,7 +10701,7 @@ class MGWebGL extends Component {
                         map4.GenerateSurfacePartial(self.liveUpdatingMaps[ilm].gridData[0], contourLevel, nCells_x, nCells_y, nCells_z, cellLength_x, cellLength_y, cellLength_z, minX, minY, 0, maxX, maxY, maxZorig - nCells_z);
                         vertices4 = map4.returnVertices(xShift, yShift, zShift2);
                         normals4 = map4.returnNormals_new();
-                        let indices4 = map4.returnIndices();
+                        indices4 = map4.returnIndices();
                         for (let i = 0; i < vertices4.length / 3; i++) {
                             colours4.push(mapColour[0]);
                             colours4.push(mapColour[1]);
@@ -10601,7 +10715,7 @@ class MGWebGL extends Component {
                         map4.GenerateSurfacePartial(self.liveUpdatingMaps[ilm].gridData[0], contourLevel, nCells_x, nCells_y, nCells_z, cellLength_x, cellLength_y, cellLength_z, minX, minY, nCells_z + minZorig, maxX, maxY, nCells_z);
                         vertices4 = map4.returnVertices(xShift, yShift, zShift2);
                         normals4 = map4.returnNormals_new();
-                        let indices4 = map4.returnIndices();
+                        indices4 = map4.returnIndices();
                         for (let i = 0; i < vertices4.length / 3; i++) {
                             colours4.push(mapColour[0]);
                             colours4.push(mapColour[1]);
@@ -10626,7 +10740,7 @@ class MGWebGL extends Component {
                     //Map 5 xShift2, yShift2, zShift
                     vertices5 = map5.returnVertices(xShift4, yShift2, zShift);
                     normals5 = map5.returnNormals_new();
-                    let indices5 = map5.returnIndices();
+                    indices5 = map5.returnIndices();
                     for (let i = 0; i < vertices5.length / 3; i++) {
                         colours5.push(mapColour[0]);
                         colours5.push(mapColour[1]);
@@ -10651,7 +10765,7 @@ class MGWebGL extends Component {
                     //Map 6 xShift2, yShift, zShift2
                     vertices6 = map6.returnVertices(xShift2, yShift, zShift2);
                     normals6 = map6.returnNormals_new();
-                    let indices6 = map6.returnIndices();
+                    indices6 = map6.returnIndices();
                     for (let i = 0; i < vertices6.length / 3; i++) {
                         colours6.push(mapColour[0]);
                         colours6.push(mapColour[1]);
@@ -10676,7 +10790,7 @@ class MGWebGL extends Component {
                     //Map 7 xShift, yShift2, zShift2
                     vertices7 = map7.returnVertices(xShift3, yShift2, zShift2);
                     normals7 = map7.returnNormals_new();
-                    let indices7 = map7.returnIndices();
+                    indices7 = map7.returnIndices();
                     for (let i = 0; i < vertices7.length / 3; i++) {
                         colours7.push(mapColour[0]);
                         colours7.push(mapColour[1]);
@@ -10715,7 +10829,7 @@ class MGWebGL extends Component {
                     //Map 8 xShift2, yShift2, zShift2
                     vertices8 = map8.returnVertices(xShift4, yShift2, zShift2);
                     normals8 = map8.returnNormals_new();
-                    let indices8 = map8.returnIndices();
+                    indices8 = map8.returnIndices();
                     for (let i = 0; i < vertices8.length / 3; i++) {
                         colours8.push(mapColour[0]);
                         colours8.push(mapColour[1]);
@@ -10723,9 +10837,9 @@ class MGWebGL extends Component {
                         colours8.push(mapColour[3]);
                     }
 
-                    let vertices = map.returnVertices(xShift_new, yShift_new, zShift_new); // And is this where we add base (integral part of xfrac, etc.)?
-                    let normals = map.returnNormals_new();
-                    let indices = map.returnIndices();
+                    vertices = map.returnVertices(xShift_new, yShift_new, zShift_new); // And is this where we add base (integral part of xfrac, etc.)?
+                    normals = map.returnNormals_new();
+                    indices = map.returnIndices();
                     end = new Date().getTime();
                     time = end - start;
                     //console.log('copy buffers on the fly: ' + time*0.001+"s");
@@ -10792,9 +10906,9 @@ class MGWebGL extends Component {
         self.mouseMoved = true;
 
         if (true) {
-            var x;
-            var y;
-            var e = event;
+            let x;
+            let y;
+            let e = event;
             if (e.pageX || e.pageY) {
                 x = e.pageX;
                 y = e.pageY;
@@ -10804,8 +10918,8 @@ class MGWebGL extends Component {
                 y = e.clientY;
             }
 
-            var c = this.canvasRef.current;
-            var offset = getOffsetRect(c);
+            let c = this.canvasRef.current;
+            let offset = getOffsetRect(c);
 
             x -= offset.left;
             y -= offset.top;
@@ -10826,12 +10940,12 @@ class MGWebGL extends Component {
         self.init_y = event.pageY;
 
         if ((event.altKey && event.shiftKey) || (self.mouseDownButton === 2 && event.shiftKey)) {
-            var invQuat = quat4.create();
+            let invQuat = quat4.create();
             quat4Inverse(self.myQuat, invQuat);
-            var theMatrix = quatToMat4(invQuat);
-            var xshift = vec3.create();
+            let theMatrix = quatToMat4(invQuat);
+            let xshift = vec3.create();
             vec3.set(xshift, self.dx / getDeviceScale(), 0, 0);
-            var yshift = vec3.create();
+            let yshift = vec3.create();
             vec3.set(yshift, 0, self.dy / getDeviceScale(), 0);
             vec3.transformMat4(xshift, xshift, theMatrix);
             vec3.transformMat4(yshift, yshift, theMatrix);
@@ -10856,7 +10970,6 @@ class MGWebGL extends Component {
                 theMatrix[14] = this.activeMolecule.displayObjects.transformation.origin[2];
                 for (const [key, value] of Object.entries(this.activeMolecule.displayObjects)) {
                     for (let ibuf = 0; ibuf < value.length; ibuf++) {
-                        let uniqueLabels = [];
                         value[ibuf].transformMatrixInteractive = theMatrix;
                     }
                 }
@@ -10867,7 +10980,7 @@ class MGWebGL extends Component {
         }
 
         if (event.altKey) {
-            var factor = 1. - self.dy / 50.;
+            let factor = 1. - self.dy / 50.;
             let newZoom = self.zoom * factor;
             if (newZoom < .01) {
                 newZoom = 0.01;
@@ -10878,13 +10991,13 @@ class MGWebGL extends Component {
         }
 
         if (event.shiftKey) {
-            var zQ = createYQuatFromDY(0);
+            let zQ = createYQuatFromDY(0);
             if (event.pageX < self.gl.viewportWidth / 2) {
                 zQ = createZQuatFromDX(-self.dy / 5.);
             } else {
                 zQ = createZQuatFromDX(self.dy / 5.);
             }
-            var yQ = createYQuatFromDY(0)
+            let yQ = createYQuatFromDY(0)
             if (event.pageY < self.gl.viewportHeight / 2) {
                 yQ = createZQuatFromDX(self.dx / 5.);
             } else {
@@ -10894,8 +11007,8 @@ class MGWebGL extends Component {
             quat4.multiply(self.myQuat, self.myQuat, zQ);
         } else {
             //console.log("mouse move",self.dx,self.dy);
-            var xQ = createXQuatFromDX(-self.dy);
-            var yQ = createYQuatFromDY(-self.dx);
+            let xQ = createXQuatFromDX(-self.dy);
+            let yQ = createYQuatFromDY(-self.dx);
             //console.log(xQ);
             //console.log(yQ);
             quat4.multiply(xQ, xQ, yQ);
@@ -10940,7 +11053,6 @@ class MGWebGL extends Component {
                 }
                 for (const [key, value] of Object.entries(this.activeMolecule.displayObjects)) {
                     for (let ibuf = 0; ibuf < value.length; ibuf++) {
-                        let uniqueLabels = [];
                         value[ibuf].transformMatrixInteractive = theMatrix;
                         value[ibuf].transformOriginInteractive = diff;
                     }
@@ -10949,7 +11061,6 @@ class MGWebGL extends Component {
             }
         }
 
-        var theMatrix = quatToMat4(self.myQuat);
         self.drawSceneDirty();
     }
 
@@ -11029,6 +11140,39 @@ class MGWebGL extends Component {
         const textMetric = this.textCtx.measureText(text);
         //Return the maximum width in fractional box coordinates
         return textMetric.actualBoundingBoxRight / width;
+    }
+
+    createInstanceOriginsBuffer(tri) {
+        this.displayBuffers[this.currentBufferIdx].triangleInstanceOriginBuffer.push(this.gl.createBuffer());
+        this.displayBuffers[this.currentBufferIdx].triangleInstanceOriginBuffer[this.displayBuffers[this.currentBufferIdx].triangleInstanceOriginBuffer.length - 1].numItems = 0;
+        this.displayBuffers[this.currentBufferIdx].triangleInstanceOrigins.push([]);
+        for (var j = 0; j < tri.length; j++) {
+            this.displayBuffers[this.currentBufferIdx].triangleInstanceOrigins[this.displayBuffers[this.currentBufferIdx].triangleInstanceOrigins.length - 1].push(parseFloat(tri[j]));
+            this.displayBuffers[this.currentBufferIdx].triangleInstanceOriginBuffer[this.displayBuffers[this.currentBufferIdx].triangleInstanceOriginBuffer.length - 1].numItems++;
+        }
+        this.displayBuffers[this.currentBufferIdx].triangleInstanceOriginBuffer[this.displayBuffers[this.currentBufferIdx].triangleInstanceOriginBuffer.length - 1].numItems /= 3;
+    }
+
+    createInstanceOrientationsBuffer(tri) {
+        this.displayBuffers[this.currentBufferIdx].triangleInstanceOrientationBuffer.push(this.gl.createBuffer());
+        this.displayBuffers[this.currentBufferIdx].triangleInstanceOrientationBuffer[this.displayBuffers[this.currentBufferIdx].triangleInstanceOrientationBuffer.length - 1].numItems = 0;
+        this.displayBuffers[this.currentBufferIdx].triangleInstanceOrientations.push([]);
+        for (var j = 0; j < tri.length; j++) {
+            this.displayBuffers[this.currentBufferIdx].triangleInstanceOrientations[this.displayBuffers[this.currentBufferIdx].triangleInstanceOrientations.length - 1].push(parseFloat(tri[j]));
+            this.displayBuffers[this.currentBufferIdx].triangleInstanceOrientationBuffer[this.displayBuffers[this.currentBufferIdx].triangleInstanceOrientationBuffer.length - 1].numItems++;
+        }
+        this.displayBuffers[this.currentBufferIdx].triangleInstanceOrientationBuffer[this.displayBuffers[this.currentBufferIdx].triangleInstanceOrientationBuffer.length - 1].numItems /= 16;
+    }
+
+    createInstanceSizesBuffer(tri) {
+        this.displayBuffers[this.currentBufferIdx].triangleInstanceSizeBuffer.push(this.gl.createBuffer());
+        this.displayBuffers[this.currentBufferIdx].triangleInstanceSizeBuffer[this.displayBuffers[this.currentBufferIdx].triangleInstanceSizeBuffer.length - 1].numItems = 0;
+        this.displayBuffers[this.currentBufferIdx].triangleInstanceSizes.push([]);
+        for (var j = 0; j < tri.length; j++) {
+            this.displayBuffers[this.currentBufferIdx].triangleInstanceSizes[this.displayBuffers[this.currentBufferIdx].triangleInstanceSizes.length - 1].push(parseFloat(tri[j]));
+            this.displayBuffers[this.currentBufferIdx].triangleInstanceSizeBuffer[this.displayBuffers[this.currentBufferIdx].triangleInstanceSizeBuffer.length - 1].numItems++;
+        }
+        this.displayBuffers[this.currentBufferIdx].triangleInstanceSizeBuffer[this.displayBuffers[this.currentBufferIdx].triangleInstanceSizeBuffer.length - 1].numItems /= 3;
     }
 
     createVertexBuffer(tri) {

@@ -20,6 +20,164 @@ let print = (stuff) => {
     postMessage({ consoleMessage: JSON.stringify(stuff) })
 }
 
+const instancedMeshToMeshData = (instanceMesh,perm) => {
+
+    let totIdxs = []
+    let totPos = []
+    let totNorm = []
+    let totInstance_sizes = []
+    let totInstance_colours = []
+    let totInstance_origins = []
+    let totInstance_orientations = []
+    let totInstanceUseColours = []
+    let totInstancePrimTypes = []
+
+    const geom = instanceMesh.geom
+    const geomSize = geom.size()
+    for(let i=0; i<geomSize; i++){
+        let thisIdxs = []
+        let thisPos = []
+        let thisNorm = []
+        let thisInstance_sizes = []
+        let thisInstance_colours = []
+        let thisInstance_origins = []
+        let thisInstance_orientations = []
+        const inst = geom.get(i);
+        const vertices = inst.vertices;
+        const triangles = inst.triangles;
+        const trianglesSize = triangles.size()
+        for (let i = 0; i < trianglesSize; i++) {
+            const triangle = triangles.get(i)
+            const idxs = triangle.point_id
+            if(perm) {
+                thisIdxs.push(idxs[0])
+                thisIdxs.push(idxs[2])
+                thisIdxs.push(idxs[1])
+            } else {
+                thisIdxs.push(idxs[0])
+                thisIdxs.push(idxs[1])
+                thisIdxs.push(idxs[2])
+            }
+        }
+        triangles.delete()
+
+        const verticesSize = vertices.size()
+        for (let i = 0; i < verticesSize; i++) {
+            const vert = vertices.get(i);
+            const vertPos = vert.pos
+            thisPos.push(vertPos[0])
+            thisPos.push(vertPos[1])
+            thisPos.push(vertPos[2])
+            const vertNormal = vert.normal
+            thisNorm.push(vertNormal[0])
+            thisNorm.push(vertNormal[1])
+            thisNorm.push(vertNormal[2])
+            vert.delete()
+        }
+        vertices.delete()
+
+        const As = inst.instancing_data_A;
+        const Asize = As.size();
+        if(Asize>0){
+            for(let j=0; j<Asize; j++){
+                const inst_data = As.get(j)
+                
+                const instDataPosition = inst_data.position
+                thisInstance_origins.push(instDataPosition[0])
+                thisInstance_origins.push(instDataPosition[1])
+                thisInstance_origins.push(instDataPosition[2])
+
+                const instDataColour = inst_data.colour
+                thisInstance_colours.push(instDataColour[0])
+                thisInstance_colours.push(instDataColour[1])
+                thisInstance_colours.push(instDataColour[2])
+                thisInstance_colours.push(instDataColour[3])
+
+                const instDataSize = inst_data.size
+                thisInstance_sizes.push(instDataSize[0])
+                thisInstance_sizes.push(instDataSize[1])
+                thisInstance_sizes.push(instDataSize[2])
+
+                thisInstance_orientations.push(...[
+                1.0, 0.0, 0.0, 0.0,
+                0.0, 1.0, 0.0, 0.0,
+                0.0, 0.0, 1.0, 0.0,
+                0.0, 0.0, 0.0, 1.0,
+                ])
+
+                inst_data.delete()
+            }
+        }
+        As.delete()
+
+        const Bs = inst.instancing_data_B;
+        const Bsize = Bs.size();
+        if(Bsize>0){
+            for(let j=0; j<Bsize; j++){
+                const inst_data = Bs.get(j)
+                const instDataPosition = inst_data.position
+                thisInstance_origins.push(instDataPosition[0])
+                thisInstance_origins.push(instDataPosition[1])
+                thisInstance_origins.push(instDataPosition[2])
+
+                const instDataColour = inst_data.colour
+                thisInstance_colours.push(instDataColour[0])
+                thisInstance_colours.push(instDataColour[1])
+                thisInstance_colours.push(instDataColour[2])
+                thisInstance_colours.push(instDataColour[3])
+
+                const instDataSize = inst_data.size
+                thisInstance_sizes.push(instDataSize[0])
+                thisInstance_sizes.push(instDataSize[1])
+                thisInstance_sizes.push(instDataSize[2])
+
+                const instDataOrientation = inst_data.orientation
+
+                thisInstance_orientations.push(instDataOrientation[0][0])
+                thisInstance_orientations.push(instDataOrientation[0][1])
+                thisInstance_orientations.push(instDataOrientation[0][2])
+                thisInstance_orientations.push(instDataOrientation[0][3])
+
+                thisInstance_orientations.push(instDataOrientation[1][0])
+                thisInstance_orientations.push(instDataOrientation[1][1])
+                thisInstance_orientations.push(instDataOrientation[1][2])
+                thisInstance_orientations.push(instDataOrientation[1][3])
+
+                thisInstance_orientations.push(instDataOrientation[2][0])
+                thisInstance_orientations.push(instDataOrientation[2][1])
+                thisInstance_orientations.push(instDataOrientation[2][2])
+                thisInstance_orientations.push(instDataOrientation[2][3])
+
+                thisInstance_orientations.push(instDataOrientation[3][0])
+                thisInstance_orientations.push(instDataOrientation[3][1])
+                thisInstance_orientations.push(instDataOrientation[3][2])
+                thisInstance_orientations.push(instDataOrientation[3][3])
+
+                inst_data.delete()
+            }
+        }
+        Bs.delete()
+        inst.delete()
+
+        totNorm.push(thisNorm)
+        totPos.push(thisPos)
+        totIdxs.push(thisIdxs)
+        totInstance_sizes.push(thisInstance_sizes)
+        totInstance_origins.push(thisInstance_origins)
+        totInstance_orientations.push(thisInstance_orientations)
+        totInstance_colours.push(thisInstance_colours)
+        totInstanceUseColours.push(true)
+        totInstancePrimTypes.push("TRIANGLES")
+
+    }
+    
+    geom.delete()
+    instanceMesh.delete()
+
+    return { prim_types: [totInstancePrimTypes], idx_tri: [totIdxs], vert_tri: [totPos], norm_tri: [totNorm], col_tri: [totInstance_colours], instance_use_colors:[totInstanceUseColours], instance_sizes:[totInstance_sizes], instance_origins:[totInstance_origins], instance_orientations:[totInstance_orientations]};
+
+}
+
 const simpleMeshToMeshData = (simpleMesh) => {
     const vertices = simpleMesh.vertices;
     const triangles = simpleMesh.triangles;
@@ -415,6 +573,12 @@ onmessage = function (e) {
             let returnResult;
 
             switch (returnType) {
+                case 'instanced_mesh_perm':
+                    returnResult = instancedMeshToMeshData(cootResult,true)
+                    break;
+                case 'instanced_mesh':
+                    returnResult = instancedMeshToMeshData(cootResult)
+                    break;
                 case 'mesh':
                     returnResult = simpleMeshToMeshData(cootResult)
                     break;
@@ -449,8 +613,8 @@ onmessage = function (e) {
             }
 
             postMessage({
-                returnType, command, commandArgs, message, messageId, myTimeStamp,
-                consoleMessage: `Completed ${command} with args ${commandArgs} in ${Date.now() - e.data.myTimeStamp} ms`,
+                returnType, command, message, messageId, myTimeStamp,
+                consoleMessage: `Completed ${command} in ${Date.now() - e.data.myTimeStamp} ms`,
                 result: { status: 'Completed', result: returnResult }
             })
         }
@@ -460,7 +624,7 @@ onmessage = function (e) {
                 messageId: e.data.messageId,
                 myTimeStamp: e.data.myTimeStamp,
                 message: e.data.message,
-                consoleMessage: `EXCEPTION RAISED IN ${command} with args ${commandArgs}, ${err}`,
+                consoleMessage: `EXCEPTION RAISED IN ${command}, ${err}`,
                 result: { status: 'Exception' }
             })
         }
