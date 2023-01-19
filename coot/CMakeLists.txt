@@ -102,6 +102,7 @@ ${coot_src}/MoleculesToTriangles/CXXClasses/Vector2.cpp
 ${coot_src}/MoleculesToTriangles/CXXClasses/Vector3.cpp
 ${coot_src}/MoleculesToTriangles/CXXClasses/VertexColorNormalPrimitive.cpp
 ${coot_src}/MoleculesToTriangles/CXXClasses/lfit.c
+${coot_src}/api/coot_molecule_validation.cc
 ${coot_src}/api/molecules_container_modelling.cc
 ${coot_src}/api/add-terminal-residue.cc
 ${coot_src}/api/interfaces.cc
@@ -171,6 +172,7 @@ ${coot_src}/ideal/lograma.cpp
 ${coot_src}/ideal/process-dfs-in-range.cc
 ${coot_src}/ideal/zo-rama.cc
 ${coot_src}/tw/tw.cc
+${coot_src}/utils/colour-holder.cc
 ${coot_src}/utils/radix.cc
 ${coot_src}/utils/coot-utils.cc
 ${coot_src}/utils/hsv-rgb.cc
