@@ -65,7 +65,7 @@ not itself compiled by this project.
 
 4. Build gsl, Coot, the CCP4 libraries and examples:  
 <br>In this branch, it is intended that you do the build in the source directory. 
-<br/>After first checkout you should run `initial_build.sh`
+<br/>After first checkout you should run the following script to build:  
 `./initial_build.sh`  
 This should build all dependencies and then `WebCoot`/`BabyGru`. 
 
