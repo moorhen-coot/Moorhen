@@ -92,7 +92,7 @@ When testing is completed, you will have to issue a `<ctrl-C>`.
 `npm install`  
 `npm start`  
 And then point a web browser at `http://localhost:3000/` .  
-You will need to set up `ligandServer` (in `baby-gru/public`):  
+You will need to set up `ligandServer` (in `baby-gru/public/baby-gru`):  
 `ln -s $CCP4/lib/data/monomers`  
 
 ![BabyGru](web_example/baby_gru.png)
