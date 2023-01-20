@@ -56,7 +56,7 @@ MoorhenMolecule.prototype.parseSequences = function () {
     if (this.gemmiStructure === null) {
         return
     }
-    
+
     let sequences = []
     const structure = this.gemmiStructure.clone()
     try {
@@ -498,8 +498,8 @@ MoorhenMolecule.prototype.drawCootRepresentation = async function (glRef, style)
             if (m2tStyle === "Cylinders") {
                 objects = objects.map(object => {
                     const flippedNormalsObject = { ...object }
-                    flippedNormalsObject.norm_tri = object.norm_tri.map(
-                        element => element.map(subElement => subElement.map(coord => coord * -1.))
+                    flippedNormalsObject.idx_tri = object.idx_tri.map(
+                        element => element.map(subElement => subElement.reverse())
                     )
                     return flippedNormalsObject
                 })
@@ -1073,15 +1073,15 @@ MoorhenMolecule.prototype.redo = async function (glRef) {
 
 MoorhenMolecule.prototype.gemmiAtomsForCid = async function (cid) {
     const $this = this
-   
+
     if ($this.atomsDirty) {
         await $this.updateAtoms()
     }
-    
+
     let result = []
     const selection = new window.CCP4Module.Selection(cid)
     const model = $this.gemmiStructure.first_model()
-    
+
     if (selection.matches_model(model)) {
         const chains = model.chains
         const chainsSize = chains.size()
@@ -1102,7 +1102,7 @@ MoorhenMolecule.prototype.gemmiAtomsForCid = async function (cid) {
                                 const atomPos = atom.pos
                                 const atomPosX = atomPos.x
                                 const atomPosY = atomPos.y
-                                const atomPosZ = atomPos.z    
+                                const atomPosZ = atomPos.z
                                 const atomElement = atom.element
                                 const atomTempFactor = atom.b_iso
                                 const atomSerial = atom.serial
@@ -1132,9 +1132,9 @@ MoorhenMolecule.prototype.gemmiAtomsForCid = async function (cid) {
         }
         chains.delete()
     }
-    
+
     selection.delete()
     model.delete()
-    
+
     return Promise.resolve(result)
 }
