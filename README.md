@@ -59,7 +59,7 @@ not itself compiled by this project.
 `source ./emsdk_env.sh`
 
 3. Get the sources:  
-`git clone https://github.com/stuartjamesmcnicholas/CCP4-Web-Assembly.git --branch build-test ccp4_wasm`  
+`git clone https://github.com/stuartjamesmcnicholas/CCP4-Web-Assembly.git --branch build-test-2 ccp4_wasm`  
 `cd ccp4_wasm`  
 `./get_sources`
 
