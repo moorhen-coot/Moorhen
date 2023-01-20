@@ -212,6 +212,7 @@ const simpleMeshToMeshData = (simpleMesh) => {
         totPos.push(...vertPos);
         totNorm.push(...vertNormal);
         totCol.push(...vertColor);
+        vert.delete()
     }
     vertices.delete()
 
