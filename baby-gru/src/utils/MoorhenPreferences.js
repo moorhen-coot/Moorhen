@@ -12,7 +12,7 @@ const updateStoredPreferences = async (key, value) => {
 
 const getDefaultValues = () => {
     return {
-        version: '0.0.5',
+        version: '0.0.6',
         darkMode: false, 
         atomLabelDepthMode: true, 
         defaultExpandDisplayCards: true,
@@ -105,10 +105,10 @@ const getDefaultValues = () => {
                 keyPress: "s",
                 label: "Take a screenshot"
             },
-            "ligand_camera_wiggle": {
+            "residue_camera_wiggle": {
                 modifiers: [],
                 keyPress: "z",
-                label: "Wiggle camera while fitting a ligand"
+                label: "Wiggle camera while rotating a residue or ligand"
             },
             "label_atom": {
                 modifiers: [],

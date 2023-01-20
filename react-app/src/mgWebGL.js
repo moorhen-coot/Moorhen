@@ -10884,7 +10884,7 @@ class MGWebGL extends Component {
 
     doMouseMove(event, self) {
 
-        const activeMoleculeMotion = (this.activeMolecule != null) && (Object.keys(this.activeMolecule.displayObjects).length > 0) && !self.keysDown.z;
+        const activeMoleculeMotion = (this.activeMolecule != null) && (Object.keys(this.activeMolecule.displayObjects).length > 0) && !self.keysDown['residue_camera_wiggle'];
 
         const centreOfMass = function (atoms) {
             let totX = 0.0;

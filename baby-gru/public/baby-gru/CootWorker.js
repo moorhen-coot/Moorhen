@@ -20,7 +20,7 @@ let print = (stuff) => {
     postMessage({ consoleMessage: JSON.stringify(stuff) })
 }
 
-const instancedMeshToMeshData = (instanceMesh,perm) => {
+const instancedMeshToMeshData = (instanceMesh, perm) => {
 
     let totIdxs = []
     let totPos = []
@@ -34,7 +34,7 @@ const instancedMeshToMeshData = (instanceMesh,perm) => {
 
     const geom = instanceMesh.geom
     const geomSize = geom.size()
-    for(let i=0; i<geomSize; i++){
+    for(let i=0; i < geomSize; i++){
         let thisIdxs = []
         let thisPos = []
         let thisNorm = []
@@ -78,8 +78,8 @@ const instancedMeshToMeshData = (instanceMesh,perm) => {
 
         const As = inst.instancing_data_A;
         const Asize = As.size();
-        if(Asize>0){
-            for(let j=0; j<Asize; j++){
+        if(Asize > 0){
+            for(let j=0; j < Asize; j++){
                 const inst_data = As.get(j)
                 
                 const instDataPosition = inst_data.position
@@ -112,8 +112,8 @@ const instancedMeshToMeshData = (instanceMesh,perm) => {
 
         const Bs = inst.instancing_data_B;
         const Bsize = Bs.size();
-        if(Bsize>0){
-            for(let j=0; j<Bsize; j++){
+        if(Bsize > 0){
+            for(let j=0; j < Bsize; j++){
                 const inst_data = Bs.get(j)
                 const instDataPosition = inst_data.position
                 thisInstance_origins.push(instDataPosition[0])
@@ -174,8 +174,17 @@ const instancedMeshToMeshData = (instanceMesh,perm) => {
     geom.delete()
     instanceMesh.delete()
 
-    return { prim_types: [totInstancePrimTypes], idx_tri: [totIdxs], vert_tri: [totPos], norm_tri: [totNorm], col_tri: [totInstance_colours], instance_use_colors:[totInstanceUseColours], instance_sizes:[totInstance_sizes], instance_origins:[totInstance_origins], instance_orientations:[totInstance_orientations]};
-
+    return {
+        prim_types: [totInstancePrimTypes], 
+        idx_tri: [totIdxs], 
+        vert_tri: [totPos],
+        norm_tri: [totNorm], 
+        col_tri: [totInstance_colours], 
+        instance_use_colors:[totInstanceUseColours], 
+        instance_sizes:[totInstance_sizes],
+        instance_origins:[totInstance_origins],
+        instance_orientations:[totInstance_orientations]
+    }
 }
 
 const simpleMeshToMeshData = (simpleMesh) => {
@@ -185,95 +194,146 @@ const simpleMeshToMeshData = (simpleMesh) => {
     let totPos = [];
     let totNorm = [];
     let totCol = [];
-    for (let i = 0; i < triangles.size(); i++) {
-        const idxs = triangles.get(i).point_id;
+    
+    const trianglesSize = triangles.size()
+    for (let i = 0; i < trianglesSize; i++) {
+        const triangle = triangles.get(i)
+        const idxs = triangle.point_id;
         totIdxs.push(...idxs);
     }
-    for (let i = 0; i < vertices.size(); i++) {
+    triangles.delete()
+
+    const verticesSize = vertices.size()
+    for (let i = 0; i < verticesSize; i++) {
         const vert = vertices.get(i);
-        totPos.push(...vert.pos);
-        totNorm.push(...vert.normal);
-        totCol.push(...vert.color);
+        const vertPos = vert.pos
+        const vertNormal = vert.normal
+        const vertColor = vert.color
+        totPos.push(...vertPos);
+        totNorm.push(...vertNormal);
+        totCol.push(...vertColor);
+        vert.delete()
     }
-    return { prim_types: [["TRIANGLES"]], idx_tri: [[totIdxs]], vert_tri: [[totPos]], norm_tri: [[totNorm]], col_tri: [[totCol]] };
+    vertices.delete()
+
+    simpleMesh.delete()
+    
+    return {
+        prim_types: [["TRIANGLES"]],
+        idx_tri: [[totIdxs]], 
+        vert_tri: [[totPos]], 
+        norm_tri: [[totNorm]], 
+        col_tri: [[totCol]] 
+    };
 }
 
 const floatArrayToJSArray = (floatArray) => {
     let returnResult = []
-    for (let i = 0; i < floatArray.size(); i++) {
-        returnResult.push(floatArray.get(i));
+    const floatArraySize = floatArray.size()
+    for (let i = 0; i < floatArraySize; i++) {
+        const f = floatArray.get(i)
+        returnResult.push(f);
     }
+    floatArray.delete()
     return returnResult;
 }
 
 const stringArrayToJSArray = (stringArray) => {
     let returnResult = []
-    for (let i = 0; i < stringArray.size(); i++) {
-        returnResult.push(stringArray.get(i));
+    const stringArraySize = stringArray.size()
+    for (let i = 0; i < stringArraySize; i++) {
+        const s = stringArray.get(i)
+        returnResult.push(s);
     }
+    stringArray.delete()
     return returnResult;
 }
 
 const residueCodesToJSArray = (residueCodes) => {
     let returnResult = []
-    for (let ic = 0; ic < residueCodes.size(); ic++) {
+    const residueCodesSize = residueCodes.size()
+    for (let ic = 0; ic < residueCodesSize; ic++) {
         returnResult.push({ "resNum": residueCodes.get(ic).first.res_no, "resCode": residueCodes.get(ic).second })
     }
+    returnResult.delete()
     return returnResult
 }
 
 const validationDataToJSArray = (validationData, chainID) => {
     const chainIndex = validationData.get_index_for_chain(chainID);
-    const resInfo = validationData.cviv.get(chainIndex).rviv;
+    const cviv = validationData.cviv
+    const chain = cviv.get(chainIndex)
+    const resInfo = chain.rviv;
 
     let returnResult = [];
-    for (let ir = 0; ir < resInfo.size(); ir++) {
+    const resInfoSize = resInfo.size()
+    for (let ir = 0; ir < resInfoSize; ir++) {
+        const residue = resInfo.get(ir)
+        const residueSpec = residue.residue_spec
         returnResult.push({
-            chainId: resInfo.get(ir).residue_spec.chain_id,
-            insCode: resInfo.get(ir).residue_spec.ins_code,
-            seqNum: resInfo.get(ir).residue_spec.res_no,
+            chainId: residueSpec.chain_id,
+            insCode: residueSpec.ins_code,
+            seqNum: residueSpec.res_no,
             restype: "UNK",
-            value: resInfo.get(ir).function_value
-        });
+            value: residue.function_value
+        })
+        residue.delete()
+        residueSpec.delete()
     }
+
+    cviv.delete()
+    chain.delete()
+    resInfo.delete()
+    validationData.delete()
     return returnResult
 }
 
 const interestingPlaceDataToJSArray = (interestingPlaceData) => {
-
     let returnResult = [];
-    for (let ir = 0; ir < interestingPlaceData.size(); ir++) {
+    const interestingPlaceDataSize = interestingPlaceData.size()
+    for (let ir = 0; ir < interestingPlaceDataSize; ir++) {
+        const residue = interestingPlaceData.get(ir)
+        const residueSpec = residue.residue_spec
         returnResult.push({
-            chainId: interestingPlaceData.get(ir).residue_spec.chain_id,
-            insCode: interestingPlaceData.get(ir).residue_spec.ins_code,
-            seqNum: interestingPlaceData.get(ir).residue_spec.res_no,
-            featureType: interestingPlaceData.get(ir).feature_type,
-            featureValue: interestingPlaceData.get(ir).feature_value,
-            buttonLabel: interestingPlaceData.get(ir).button_label,
-            badness: interestingPlaceData.get(ir).badness,
-            coordX: interestingPlaceData.get(ir).x,
-            coordY: interestingPlaceData.get(ir).y,
-            coordZ: interestingPlaceData.get(ir).z
-        });
+            chainId: residueSpec.chain_id,
+            insCode: residueSpec.ins_code,
+            seqNum: residueSpec.res_no,
+            featureType: residue.feature_type,
+            featureValue: residue.feature_value,
+            buttonLabel: residue.button_label,
+            badness: residue.badness,
+            coordX: residue.x,
+            coordY: residue.y,
+            coordZ: residue.z
+        })
+        residue.delete()
+        residueSpec.delete()
     }
+    interestingPlaceData.delete()
     return returnResult
 }
 
 const ramachandranDataToJSArray = (ramachandraData) => {
     let returnResult = [];
 
-    for (let ir = 0; ir < ramachandraData.size(); ir++) {
+    const ramachandraDataSize = ramachandraData.size()
+    for (let ir = 0; ir < ramachandraDataSize; ir++) {
+        const residue = ramachandraData.get(ir)
+        const phiPsi = residue.phi_psi
         returnResult.push({
-            chainId: ramachandraData.get(ir).phi_psi.chain_id,
-            insCode: ramachandraData.get(ir).phi_psi.ins_code,
-            seqNum: ramachandraData.get(ir).phi_psi.residue_number,
-            restype: ramachandraData.get(ir).residue_name,
-            isOutlier: !ramachandraData.get(ir).is_allowed_flag,
-            phi: ramachandraData.get(ir).phi_psi.phi(),
-            psi: ramachandraData.get(ir).phi_psi.psi(),
-            is_pre_pro: ramachandraData.get(ir).residue_name === 'PRO'
-        });
+            chainId: phiPsi.chain_id,
+            insCode: phiPsi.ins_code,
+            seqNum: phiPsi.residue_number,
+            restype: residue.residue_name,
+            isOutlier: !residue.is_allowed_flag,
+            phi: phiPsi.phi(),
+            psi: phiPsi.psi(),
+            is_pre_pro: residue.residue_name === 'PRO'
+        })
+        residue.delete()
+        phiPsi.delete()
     }
+    ramachandraData.delete()
     return returnResult
 }
 
@@ -284,16 +344,26 @@ const simpleMeshToLineMeshData = (simpleMesh, normalLighting) => {
     let totPos = [];
     let totNorm = [];
     let totCol = [];
-    for (let i = 0; i < triangles.size(); i++) {
-        const idxs = triangles.get(i).point_id;
+    
+    const trianglesSize = triangles.size()
+    for (let i = 0; i < trianglesSize; i++) {
+        const triangle = triangles.get(i)
+        const idxs = triangle.point_id;
         totIdxs.push(...[idxs[0], idxs[1], idxs[0], idxs[2], idxs[1], idxs[2]]);
     }
-    for (let i = 0; i < vertices.size(); i++) {
+    triangles.delete()
+
+    const verticesSize = vertices.size()
+    for (let i = 0; i < verticesSize; i++) {
         const vert = vertices.get(i);
         totPos.push(...vert.pos);
         totNorm.push(...vert.normal);
         totCol.push(...vert.color);
+        vert.delete()
     }
+    vertices.delete()
+
+    simpleMesh.delete()
 
     if (normalLighting)
         return { prim_types: [["NORMALLINES"]], useIndices: [[true]], idx_tri: [[totIdxs]], vert_tri: [[totPos]], additional_norm_tri: [[totNorm]], norm_tri: [[totNorm]], col_tri: [[totCol]] };
