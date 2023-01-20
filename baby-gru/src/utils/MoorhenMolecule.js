@@ -30,6 +30,7 @@ export function MoorhenMolecule(commandCentre, urlPrefix) {
         rama: [],
         rotamer: [],
         CBs: [],
+        CDs: [],
         gaussian: [],
         hover: [],
         ligands: [],
@@ -324,6 +325,9 @@ MoorhenMolecule.prototype.drawWithStyleFromAtoms = async function (style, glRef)
         case 'CBs':
             await this.drawCootBonds(glRef)
             break;
+        case 'CDs':
+            await this.drawCootContactDots(glRef)
+            break;
         case 'gaussian':
             await this.drawCootGaussianSurface(glRef)
             break;
@@ -367,6 +371,55 @@ MoorhenMolecule.prototype.drawRamachandranBalls = function (glRef) {
         commandArgs: [$this.molNo]
     }).then(response => {
         const objects = [response.data.result.result]
+        //Empty existing buffers of this type
+        this.clearBuffersOfStyle(style, glRef)
+        this.addBuffersOfStyle(glRef, objects, style)
+    })
+}
+
+MoorhenMolecule.prototype.drawCootContactDots = function (glRef) {
+    const $this = this
+    const style = "CDs"
+
+    let ligandList = []
+    const model = $this.gemmiStructure.first_model()
+
+    try{
+        const chains = model.chains
+        const chainsSize = chains.size()
+        for (let i = 0; i < chainsSize; i++) {
+            const chain = chains.get(i)
+            const chainName = chain.name
+            const ligands = chain.get_ligands_const()
+            const ligandsSize = ligands.size()
+            for (let j = 0; j < ligandsSize; j++) {
+                let ligand = ligands.at(j)
+                const resName = ligand.name
+                const ligandSeqId = ligand.seqid
+                const resNum = ligandSeqId.str()
+                ligandList.push({resName: resName, chainName: chainName, resNum: resNum})
+                ligand.delete()
+                ligandSeqId.delete()
+            }
+            chain.delete()
+            ligands.delete()
+        }
+        chains.delete()
+
+    } finally {
+        model.delete()
+    }
+    console.log(ligandList)
+    const ligand = ligandList[0];
+    const cid = `/*/${ligand.chainName}/${ligand.resNum}-${ligand.resNum}/*`
+
+    return this.commandCentre.current.cootCommand({
+        returnType: "instanced_mesh",
+        command: "contact_dots_for_ligand",
+        commandArgs: [$this.molNo,cid]
+    }).then(response => {
+        const objects = [response.data.result.result]
+        //console.log('rota', { objects })
         //Empty existing buffers of this type
         this.clearBuffersOfStyle(style, glRef)
         this.addBuffersOfStyle(glRef, objects, style)

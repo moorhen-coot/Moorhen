@@ -439,6 +439,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("redo",&molecules_container_t::redo)
     .function("refine_residues_using_atom_cid",&molecules_container_t::refine_residues_using_atom_cid)
     .function("refine_residue_range",&molecules_container_t::refine_residue_range)
+    .function("contact_dots_for_ligand",&molecules_container_t::contact_dots_for_ligand)
     .function("set_imol_refinement_map",&molecules_container_t::set_imol_refinement_map)
     .function("mutate",&molecules_container_t::mutate)
     .function("delete_using_cid",&molecules_container_t::delete_using_cid)
