@@ -105,10 +105,10 @@ const getDefaultValues = () => {
                 keyPress: "s",
                 label: "Take a screenshot"
             },
-            "ligand_camera_wiggle": {
+            "residue_camera_wiggle": {
                 modifiers: [],
                 keyPress: "z",
-                label: "Wiggle camera while fitting a ligand"
+                label: "Wiggle camera while rotating a residue or ligand"
             },
             "label_atom": {
                 modifiers: [],
