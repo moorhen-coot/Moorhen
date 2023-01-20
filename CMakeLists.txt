@@ -36,19 +36,6 @@ add_subdirectory(web_example)
 add_subdirectory(ccp4mg)
 add_subdirectory(coot)
 
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/baby-gru/ DESTINATION web_packages/baby-gru )
-
-#add_subdirectory(gemmi)
-#add_subdirectory(prosmart)
-
 install(DIRECTORY
 ${CMAKE_CURRENT_SOURCE_DIR}/react-app/src/
-DESTINATION web_packages/baby-gru/src/WebGL)
-
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests/ DESTINATION web_packages/moorhen_tests )
-install(FILES
-${CMAKE_CURRENT_SOURCE_DIR}/example/5a3h.pdb
-${CMAKE_CURRENT_SOURCE_DIR}/example/5a3h_sigmaa.mtz
-${CMAKE_CURRENT_SOURCE_DIR}/checkout/coot-1.0/data/rnasa-1.8-all_refmac1.mtz
-${CMAKE_CURRENT_SOURCE_DIR}/checkout/coot-1.0/api/tm-A.pdb
-DESTINATION web_packages/moorhen_tests/example )
+DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/baby-gru/src/WebGL)
