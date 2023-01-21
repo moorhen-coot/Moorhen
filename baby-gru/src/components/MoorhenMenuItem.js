@@ -190,6 +190,55 @@ export const MoorhenGetMonomerMenuItem = (props) => {
     />
 }
 
+export const MoorhenFitLigandRightHereMenuItem = (props) => {
+    const tlcRef = useRef()
+    const intoMoleculeRef = useRef(null)
+    const ligandMoleculeRef = useRef(null)
+
+    const panelContent = <>
+        <MoorhenMoleculeSelect {...props} label="Protein molecule" allowAny={true} ref={intoMoleculeRef} />
+        <MoorhenMoleculeSelect {...props} label="Ligand molecule" allowAny={true} ref={ligandMoleculeRef} />
+    </>
+
+
+    const onCompleted = () => {
+        props.commandCentre.current.cootCommand({
+            returnType: 'int_array',
+            command: 'fit_ligand_right_here',
+            commandArgs: [
+                parseInt(intoMoleculeRef.current.value),
+                props.activeMap.molNo,
+                parseInt(ligandMoleculeRef.current.value),
+                ...props.glRef.current.origin.map(coord => -coord),
+                1., false, 0
+            ]
+
+        }, true)
+            .then(result => {
+                console.log('result is', result)
+                if (result.data.result.status === "Completed") {
+                    result.data.result.result.forEach(iMol => {
+                        const newMolecule = new MoorhenMolecule(props.commandCentre, props.urlPrefix)
+                        newMolecule.molNo = iMol
+                        newMolecule.name = `lig_${iMol}`
+                        return newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef).then(_ => {
+                            props.changeMolecules({ action: "Add", item: newMolecule })
+                        })
+                    })
+                }
+                props.setPopoverIsShown(false)
+            })
+    }
+
+    return <MoorhenMenuItem
+        id='fit-ligand-right-here-menu-item'
+        popoverContent={panelContent}
+        menuItemText="Fit ligand here..."
+        onCompleted={onCompleted}
+        setPopoverIsShown={props.setPopoverIsShown}
+    />
+}
+
 export const MoorhenDeleteDisplayObjectMenuItem = (props) => {
 
     const panelContent = <>
