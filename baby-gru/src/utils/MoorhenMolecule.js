@@ -259,9 +259,14 @@ MoorhenMolecule.prototype.updateAtoms = function () {
     }
     return $this.getAtoms().then((result) => {
         return new Promise((resolve, reject) => {
-            $this.gemmiStructure = readGemmiStructure(result.data.result.pdbData, $this.name)
-            window.CCP4Module.gemmi_setup_entities($this.gemmiStructure)
-            $this.parseSequences()
+            try {
+                $this.gemmiStructure = readGemmiStructure(result.data.result.pdbData, $this.name)
+                window.CCP4Module.gemmi_setup_entities($this.gemmiStructure)
+                $this.parseSequences()
+            }
+            catch (err) {
+                console.log('Issue parsing coordinates into Gemmi structure', result.data.result.pdbData)
+            }
             $this.atomsDirty = false
             resolve()
         })
@@ -842,7 +847,7 @@ MoorhenMolecule.prototype.drawSticks = function (webMGAtoms, glRef) {
 MoorhenMolecule.prototype.redraw = function (glRef) {
     const $this = this
     const itemsToRedraw = []
-    Object.keys($this.displayObjects).filter(style => !["transformation"].includes(style)).forEach(style => {
+    Object.keys($this.displayObjects).filter(style => !["transformation", 'hover'].includes(style)).forEach(style => {
         const objectCategoryBuffers = $this.displayObjects[style]
         //Note with transforamtion, not all properties of displayObjects are lists of buffer
         if (Array.isArray(objectCategoryBuffers)) {
@@ -867,7 +872,7 @@ MoorhenMolecule.prototype.redraw = function (glRef) {
     return promise.then(_ => {
         return itemsToRedraw.reduce(
             (p, style) => {
-                //console.log(`Redrawing ${style}`, $this.atomsDirty)
+                console.log(`Redrawing ${style}`, $this.atomsDirty)
                 return p.then(() => $this.fetchIfDirtyAndDraw(style, glRef)
                 )
             },

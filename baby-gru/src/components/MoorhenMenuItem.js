@@ -194,10 +194,12 @@ export const MoorhenFitLigandRightHereMenuItem = (props) => {
     const tlcRef = useRef()
     const intoMoleculeRef = useRef(null)
     const ligandMoleculeRef = useRef(null)
+    const mapSelectRef = useRef(null)
 
     const panelContent = <>
-        <MoorhenMoleculeSelect {...props} label="Protein molecule" allowAny={true} ref={intoMoleculeRef} />
-        <MoorhenMoleculeSelect {...props} label="Ligand molecule" allowAny={true} ref={ligandMoleculeRef} />
+        <MoorhenMapSelect {...props} label="Map" allowAny={false} ref={mapSelectRef} />
+        <MoorhenMoleculeSelect {...props} label="Protein molecule" allowAny={false} ref={intoMoleculeRef} />
+        <MoorhenMoleculeSelect {...props} label="Ligand molecule" allowAny={false} ref={ligandMoleculeRef} />
     </>
 
 
@@ -207,15 +209,15 @@ export const MoorhenFitLigandRightHereMenuItem = (props) => {
             command: 'fit_ligand_right_here',
             commandArgs: [
                 parseInt(intoMoleculeRef.current.value),
-                props.activeMap.molNo,
+                parseInt(mapSelectRef.current.value),
                 parseInt(ligandMoleculeRef.current.value),
                 ...props.glRef.current.origin.map(coord => -coord),
-                1., false, 0
+                1., false, 1
             ]
 
         }, true)
             .then(result => {
-                console.log('result is', result)
+                //console.log('result is', result)
                 if (result.data.result.status === "Completed") {
                     result.data.result.result.forEach(iMol => {
                         const newMolecule = new MoorhenMolecule(props.commandCentre, props.urlPrefix)
