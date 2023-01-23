@@ -102,21 +102,23 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
     }, [props.selectedButtonIndex])
 
     return <>
-        <Tooltip title={props.toolTip}>
-            <Button value={props.buttonIndex}
-                id={props.id}
-                size="sm"
-                ref={buttonRef ? buttonRef : target}
-                active={props.buttonIndex === props.selectedButtonIndex}
-                variant='light'
-                style={{ borderColor: props.buttonIndex === props.selectedButtonIndex ? 'red' : '' }}
-                disabled={props.needsMapData && !props.activeMap ||
-                    (props.needsAtomData && props.molecules.length === 0)}
-                onClick={(evt) => {
-                    props.setSelectedButtonIndex(props.buttonIndex !== props.selectedButtonIndex ? props.buttonIndex : null)
-                }}>
-                {props.icon}
-            </Button>
+        <Tooltip title={(props.needsMapData && !props.activeMap) || (props.needsAtomData && props.molecules.length === 0) ? '' : props.toolTip}>
+            <div>
+                <Button value={props.buttonIndex}
+                    id={props.id}
+                    size="sm"
+                    ref={buttonRef ? buttonRef : target}
+                    active={props.buttonIndex === props.selectedButtonIndex}
+                    variant='light'
+                    style={{ borderColor: props.buttonIndex === props.selectedButtonIndex ? 'red' : '' }}
+                    disabled={props.needsMapData && !props.activeMap ||
+                        (props.needsAtomData && props.molecules.length === 0)}
+                    onClick={(evt) => {
+                        props.setSelectedButtonIndex(props.buttonIndex !== props.selectedButtonIndex ? props.buttonIndex : null)
+                    }}>
+                    {props.icon}
+                </Button>
+            </div>
         </Tooltip>
 
         {
@@ -241,7 +243,7 @@ export const MoorhenRefineResiduesUsingAtomCidButton = (props) => {
                             props.setPanelParameters(newParameters)
                         }}>
                         {refinementModes.map(optionName => {
-                            return <option value={optionName}>{optionName}</option>
+                            return <option key={optionName} value={optionName}>{optionName}</option>
                         })}
                     </FormSelect>
                 </FormGroup>
@@ -393,7 +395,7 @@ export const MoorhenMutateButton = (props) => {
                             props.setPanelParameters(newParameters)
                         }}>
                         {toTypes.map(optionName => {
-                            return <option value={optionName}>{optionName}</option>
+                            return <option key={optionName} value={optionName}>{optionName}</option>
                         })}
                     </FormSelect>
                 </FormGroup>
