@@ -48,8 +48,8 @@ export const MoorhenButtonBar = (props) => {
         (<MoorhenAddSideChainButton {...props} selectedButtonIndex={selectedButtonIndex}
             setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="12" />),
         
-        (<MoorhenAddAltConfButton {...props} selectedButtonIndex={selectedButtonIndex}
-            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="13" />),
+        /**(<MoorhenAddAltConfButton {...props} selectedButtonIndex={selectedButtonIndex}
+            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="13" />),*/
     
         (<MoorhenConvertCisTransButton {...props} selectedButtonIndex={selectedButtonIndex}
                 setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="14" />),
