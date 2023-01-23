@@ -34,7 +34,7 @@ const instancedMeshToMeshData = (instanceMesh, perm) => {
 
     const geom = instanceMesh.geom
     const geomSize = geom.size()
-    for(let i=0; i < geomSize; i++){
+    for (let i = 0; i < geomSize; i++) {
         let thisIdxs = []
         let thisPos = []
         let thisNorm = []
@@ -49,7 +49,7 @@ const instancedMeshToMeshData = (instanceMesh, perm) => {
         for (let i = 0; i < trianglesSize; i++) {
             const triangle = triangles.get(i)
             const idxs = triangle.point_id
-            if(perm) {
+            if (perm) {
                 thisIdxs.push(idxs[0])
                 thisIdxs.push(idxs[2])
                 thisIdxs.push(idxs[1])
@@ -78,10 +78,10 @@ const instancedMeshToMeshData = (instanceMesh, perm) => {
 
         const As = inst.instancing_data_A;
         const Asize = As.size();
-        if(Asize > 0){
-            for(let j=0; j < Asize; j++){
+        if (Asize > 0) {
+            for (let j = 0; j < Asize; j++) {
                 const inst_data = As.get(j)
-                
+
                 const instDataPosition = inst_data.position
                 thisInstance_origins.push(instDataPosition[0])
                 thisInstance_origins.push(instDataPosition[1])
@@ -99,10 +99,10 @@ const instancedMeshToMeshData = (instanceMesh, perm) => {
                 thisInstance_sizes.push(instDataSize[2])
 
                 thisInstance_orientations.push(...[
-                1.0, 0.0, 0.0, 0.0,
-                0.0, 1.0, 0.0, 0.0,
-                0.0, 0.0, 1.0, 0.0,
-                0.0, 0.0, 0.0, 1.0,
+                    1.0, 0.0, 0.0, 0.0,
+                    0.0, 1.0, 0.0, 0.0,
+                    0.0, 0.0, 1.0, 0.0,
+                    0.0, 0.0, 0.0, 1.0,
                 ])
 
                 inst_data.delete()
@@ -112,8 +112,8 @@ const instancedMeshToMeshData = (instanceMesh, perm) => {
 
         const Bs = inst.instancing_data_B;
         const Bsize = Bs.size();
-        if(Bsize > 0){
-            for(let j=0; j < Bsize; j++){
+        if (Bsize > 0) {
+            for (let j = 0; j < Bsize; j++) {
                 const inst_data = Bs.get(j)
                 const instDataPosition = inst_data.position
                 thisInstance_origins.push(instDataPosition[0])
@@ -170,20 +170,20 @@ const instancedMeshToMeshData = (instanceMesh, perm) => {
         totInstancePrimTypes.push("TRIANGLES")
 
     }
-    
+
     geom.delete()
     instanceMesh.delete()
 
     return {
-        prim_types: [totInstancePrimTypes], 
-        idx_tri: [totIdxs], 
+        prim_types: [totInstancePrimTypes],
+        idx_tri: [totIdxs],
         vert_tri: [totPos],
-        norm_tri: [totNorm], 
-        col_tri: [totInstance_colours], 
-        instance_use_colors:[totInstanceUseColours], 
-        instance_sizes:[totInstance_sizes],
-        instance_origins:[totInstance_origins],
-        instance_orientations:[totInstance_orientations]
+        norm_tri: [totNorm],
+        col_tri: [totInstance_colours],
+        instance_use_colors: [totInstanceUseColours],
+        instance_sizes: [totInstance_sizes],
+        instance_origins: [totInstance_origins],
+        instance_orientations: [totInstance_orientations]
     }
 }
 
@@ -194,7 +194,7 @@ const simpleMeshToMeshData = (simpleMesh) => {
     let totPos = [];
     let totNorm = [];
     let totCol = [];
-    
+
     const trianglesSize = triangles.size()
     for (let i = 0; i < trianglesSize; i++) {
         const triangle = triangles.get(i)
@@ -217,13 +217,13 @@ const simpleMeshToMeshData = (simpleMesh) => {
     vertices.delete()
 
     simpleMesh.delete()
-    
+
     return {
         prim_types: [["TRIANGLES"]],
-        idx_tri: [[totIdxs]], 
-        vert_tri: [[totPos]], 
-        norm_tri: [[totNorm]], 
-        col_tri: [[totCol]] 
+        idx_tri: [[totIdxs]],
+        vert_tri: [[totPos]],
+        norm_tri: [[totNorm]],
+        col_tri: [[totCol]]
     };
 }
 
@@ -235,6 +235,17 @@ const floatArrayToJSArray = (floatArray) => {
         returnResult.push(f);
     }
     floatArray.delete()
+    return returnResult;
+}
+
+const intArrayToJSArray = (intArray) => {
+    let returnResult = []
+    const intArraySize = intArray.size()
+    for (let i = 0; i < intArraySize; i++) {
+        const f = intArray.get(i)
+        returnResult.push(f);
+    }
+    intArray.delete()
     return returnResult;
 }
 
@@ -344,7 +355,7 @@ const simpleMeshToLineMeshData = (simpleMesh, normalLighting) => {
     let totPos = [];
     let totNorm = [];
     let totCol = [];
-    
+
     const trianglesSize = triangles.size()
     for (let i = 0; i < trianglesSize; i++) {
         const triangle = triangles.get(i)
@@ -644,7 +655,7 @@ onmessage = function (e) {
 
             switch (returnType) {
                 case 'instanced_mesh_perm':
-                    returnResult = instancedMeshToMeshData(cootResult,true)
+                    returnResult = instancedMeshToMeshData(cootResult, true)
                     break;
                 case 'instanced_mesh':
                     returnResult = instancedMeshToMeshData(cootResult)
@@ -660,6 +671,9 @@ onmessage = function (e) {
                     break;
                 case 'float_array':
                     returnResult = floatArrayToJSArray(cootResult)
+                    break;
+                case 'int_array':
+                    returnResult = intArrayToJSArray(cootResult)
                     break;
                 case 'string_array':
                     returnResult = stringArrayToJSArray(cootResult)

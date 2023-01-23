@@ -51,12 +51,18 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
                         }, true)
                         if (props.refineAfterMod && props.activeMap) {
                             console.log('Triggering post-modification triple refinement...')
-                            await props.commandCentre.current.cootCommand({
-                                returnType: "status",
-                                command: 'refine_residues_using_atom_cid',
-                                commandArgs: refinementFormatArgs(molecule, chosenAtom, { refine: { mode: 'TRIPLE' } }),
-                                changesMolecules: [molecule.molNo]
-                            }, true)
+                            try {
+                                const result = await props.commandCentre.current.cootCommand({
+                                    returnType: "status",
+                                    command: 'refine_residues_using_atom_cid',
+                                    commandArgs: refinementFormatArgs(molecule, chosenAtom, { refine: { mode: 'TRIPLE' } }),
+                                    changesMolecules: [molecule.molNo]
+                                }, true)
+                                console.log(`Refine result `, result)
+                            }
+                            catch (err) {
+                                console.log(`Exception raised in Refine [${err}]`)
+                            }
                         }
                         molecule.setAtomsDirty(true)
                         molecule.redraw(props.glRef)

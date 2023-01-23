@@ -1,6 +1,6 @@
 import { NavDropdown } from "react-bootstrap";
 import { useState } from "react";
-import { MoorhenAddWatersMenuItem, MoorhenCentreOnLigandMenuItem, MoorhenGetMonomerMenuItem, MoorhenImportDictionaryMenuItem } from "./MoorhenMenuItem";
+import { MoorhenAddWatersMenuItem, MoorhenCentreOnLigandMenuItem, MoorhenFitLigandRightHereMenuItem, MoorhenGetMonomerMenuItem, MoorhenImportDictionaryMenuItem } from "./MoorhenMenuItem";
 
 export const MoorhenLigandMenu = (props) => {
     const [popoverIsShown, setPopoverIsShown] = useState(false)
@@ -18,6 +18,7 @@ export const MoorhenLigandMenu = (props) => {
             <MoorhenImportDictionaryMenuItem {...menuItemProps} />
             <MoorhenCentreOnLigandMenuItem {...menuItemProps} />
             <MoorhenAddWatersMenuItem {...menuItemProps} />
+            <MoorhenFitLigandRightHereMenuItem {...menuItemProps} />
         </NavDropdown>
     </>
 }
