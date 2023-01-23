@@ -270,6 +270,7 @@ export const MoorhenMoleculeCard = (props) => {
                                                     )
                                                 }
                                                 return (<MoorhenSequenceViewer
+                                                    key={`${props.molecule.molNo}-${sequence.chain}`}
                                                     sequence={sequence}
                                                     molecule={props.molecule}
                                                     glRef={props.glRef}
