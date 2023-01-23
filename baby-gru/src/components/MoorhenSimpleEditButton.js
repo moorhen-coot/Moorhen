@@ -266,23 +266,6 @@ export const MoorhenRefineResiduesUsingAtomCidButton = (props) => {
 }
 
 export const MoorhenAddSideChainButton = (props) => {
-    const autoFitRotamer = useCallback(async (molecule, chosenAtom) => {
-        console.log('Autofit rotamer after adding side chain...')
-        const formattedArgs = [
-            molecule.molNo,
-            chosenAtom.chain_id,
-            chosenAtom.res_no,
-            chosenAtom.ins_code,
-            chosenAtom.alt_conf,
-            props.activeMap.molNo
-        ]
-        await props.commandCentre.current.cootCommand({
-            returnType: "status",
-            command: "auto_fit_rotamer",
-            commandArgs: formattedArgs,
-            changesMolecules: [molecule.molNo]
-        }, true)
-    }, [props.activeMap, props.commandCentre])
 
     return <MoorhenSimpleEditButton {...props}
         toolTip="Add a side chain"
@@ -290,12 +273,27 @@ export const MoorhenAddSideChainButton = (props) => {
         selectedButtonIndex={props.selectedButtonIndex}
         setSelectedButtonIndex={props.setSelectedButtonIndex}
         needsMapData={true}
-        onCompleted={autoFitRotamer}
         cootCommand="fill_partial_residue"
         prompt="Click atom in residue to add a side chain"
-        icon={<img className="baby-gru-button-icon" alt="Add side chain" src={`${props.urlPrefix}/baby-gru/pixmaps/smiles.svg`} />}
+        icon={<img className="baby-gru-button-icon" alt="Add side chain" src={`${props.urlPrefix}/baby-gru/pixmaps/fill-partial-residue.svg`} />}
         formatArgs={(molecule, chosenAtom) => {
             return [molecule.molNo, chosenAtom.chain_id, chosenAtom.res_no, chosenAtom.ins_code]
+        }} />
+}
+
+export const MoorhenAddAltConfButton = (props) => {
+
+    return <MoorhenSimpleEditButton {...props}
+        toolTip="Add alternative conformation"
+        buttonIndex={props.buttonIndex}
+        selectedButtonIndex={props.selectedButtonIndex}
+        setSelectedButtonIndex={props.setSelectedButtonIndex}
+        needsMapData={false}
+        cootCommand="add_alternative_conformation"
+        prompt="Click atom in residue to add alternative conformation"
+        icon={<img className="baby-gru-button-icon" alt="Add side chain" src={`${props.urlPrefix}/baby-gru/pixmaps/add-alt-conf.svg`} />}
+        formatArgs={(molecule, chosenAtom) => {
+            return [molecule.molNo, `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/*${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`]
         }} />
 }
 
