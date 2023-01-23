@@ -4,7 +4,7 @@ import { Chart, registerables } from 'chart.js';
 import { MoorhenChainSelect } from './MoorhenChainSelect'
 import { MoorhenMapSelect } from './MoorhenMapSelect'
 import { MoorhenMoleculeSelect } from './MoorhenMoleculeSelect'
-import { residueCodesOneToThree } from '../utils/MoorhenUtils'
+import { residueCodesOneToThree, getResidueInfo } from '../utils/MoorhenUtils'
 
 Chart.register(...registerables);
 
@@ -108,21 +108,6 @@ export const MoorhenValidation = (props) => {
         setSelectedChain(evt.target.value)
     }
 
-    const getResidueInfo = (selectedMolecule, residueIndex) => {
-        const sequenceData =  getSequenceData()
-        const {resNum, resCode} = sequenceData[residueIndex];
-
-        if(resNum && resNum > -1){
-            return {
-                modelIndex: 0,
-                molName: selectedMolecule.name, 
-                chain: chainSelectRef.current.value,
-                seqNum: resNum,
-                resCode: resCode
-            }
-        }
-    }
-
     const handleClick = (evt) => {
         if (chartRef.current === null){
             return
@@ -137,7 +122,7 @@ export const MoorhenValidation = (props) => {
         const residueIndex = points[0].index
         const selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedModel)
         if(selectedMolecule) {
-            const clickedResidue = getResidueInfo(selectedMolecule, residueIndex)
+            const clickedResidue = getResidueInfo(props.molecules, selectedMolecule.molNo, chainSelectRef.current.value, residueIndex)
             if (clickedResidue) {
                 selectedMolecule.centreOn(props.glRef, `/*/${clickedResidue.chain}/${clickedResidue.seqNum}-${clickedResidue.seqNum}/*`)
             }
@@ -152,7 +137,7 @@ export const MoorhenValidation = (props) => {
         const residueIndex = args[0].dataIndex
         const selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedModel)
         if(selectedMolecule) {
-            const clickedResidue = getResidueInfo(selectedMolecule, residueIndex)
+            const clickedResidue = getResidueInfo(props.molecules, selectedMolecule.molNo, chainSelectRef.current.value, residueIndex)
             if (clickedResidue) {
                 props.setHoveredAtom({
                     molecule: selectedMolecule,
