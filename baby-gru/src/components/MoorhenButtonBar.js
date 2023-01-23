@@ -2,7 +2,8 @@ import { useState } from "react";
 import { ButtonGroup, Carousel } from "react-bootstrap"
 import { MoorhenAutofitRotamerButton, MoorhenFlipPeptideButton, MoorhenSideChain180Button, MoorhenAddTerminalResidueDirectlyUsingCidButton,
         MoorhenEigenFlipLigandButton, MoorhenJedFlipFalseButton, MoorhenJedFlipTrueButton, MoorhenConvertCisTransButton, MoorhenAddSimpleButton,
-        MoorhenRefineResiduesUsingAtomCidButton, MoorhenDeleteUsingCidButton, MoorhenMutateButton, MoorhenRotateTranslateZoneButton } from "./MoorhenSimpleEditButton"
+        MoorhenRefineResiduesUsingAtomCidButton, MoorhenDeleteUsingCidButton, MoorhenMutateButton, MoorhenRotateTranslateZoneButton,
+        MoorhenAddSideChainButton } from "./MoorhenSimpleEditButton"
 
 export const MoorhenButtonBar = (props) => {
     const [selectedButtonIndex, setSelectedButtonIndex] = useState(null);
@@ -44,8 +45,11 @@ export const MoorhenButtonBar = (props) => {
         (<MoorhenAddSimpleButton {...props} selectedButtonIndex={selectedButtonIndex}
             setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="11" />),
         
-        (<MoorhenConvertCisTransButton {...props} selectedButtonIndex={selectedButtonIndex}
+        (<MoorhenAddSideChainButton {...props} selectedButtonIndex={selectedButtonIndex}
                 setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="12" />),
+    
+        (<MoorhenConvertCisTransButton {...props} selectedButtonIndex={selectedButtonIndex}
+                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="13" />),
 
     ]
 

@@ -441,6 +441,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("refine_residue_range",&molecules_container_t::refine_residue_range)
     .function("set_imol_refinement_map",&molecules_container_t::set_imol_refinement_map)
     .function("mutate",&molecules_container_t::mutate)
+    .function("fill_partial_residue",&molecules_container_t::fill_partial_residue)
     .function("delete_using_cid",&molecules_container_t::delete_using_cid)
     .function("get_bonds_mesh",&molecules_container_t::get_bonds_mesh)
     .function("get_bonds_mesh_instanced",&molecules_container_t::get_bonds_mesh_instanced)
