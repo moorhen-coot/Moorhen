@@ -8791,7 +8791,7 @@ class MGWebGL extends Component {
                 });
                 document.dispatchEvent(atomClicked);
 
-                if (event.altKey) {
+                if (self.keysDown['center_atom']) {
                     self.setOrigin([-atx, -aty, -atz], true);
                     self.reContourMaps();
                     return;

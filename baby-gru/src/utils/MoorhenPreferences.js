@@ -12,7 +12,7 @@ const updateStoredPreferences = async (key, value) => {
 
 const getDefaultValues = () => {
     return {
-        version: '0.0.6',
+        version: '0.0.7',
         darkMode: false, 
         atomLabelDepthMode: true, 
         defaultExpandDisplayCards: true,
@@ -114,6 +114,11 @@ const getDefaultValues = () => {
                 modifiers: [],
                 keyPress: "m",
                 label: "Label an atom on click"
+            },
+            "center_atom": {
+                modifiers: ["altKey"],
+                keyPress: "alt",
+                label: "Center on clicked atom"
             },
             "set_map_contour": {
                 modifiers: ["ctrlKey"],

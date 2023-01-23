@@ -443,6 +443,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("all_molecule_contact_dots",&molecules_container_t::all_molecule_contact_dots)
     .function("set_imol_refinement_map",&molecules_container_t::set_imol_refinement_map)
     .function("mutate",&molecules_container_t::mutate)
+    .function("fill_partial_residue",&molecules_container_t::fill_partial_residue)
+    .function("add_alternative_conformation",&molecules_container_t::add_alternative_conformation)
     .function("delete_using_cid",&molecules_container_t::delete_using_cid)
     .function("get_bonds_mesh",&molecules_container_t::get_bonds_mesh)
     .function("get_bonds_mesh_instanced",&molecules_container_t::get_bonds_mesh_instanced)
@@ -463,6 +465,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("rotamer_analysis",&molecules_container_t::rotamer_analysis)
     .function("associate_data_mtz_file_with_map",&molecules_container_t::associate_data_mtz_file_with_map)
     .function("connect_updating_maps",&molecules_container_t::connect_updating_maps)
+    .function("residues_with_missing_atoms",&molecules_container_t::residues_with_missing_atoms)
     .function("ramachandran_validation",&molecules_container_t::ramachandran_validation)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
