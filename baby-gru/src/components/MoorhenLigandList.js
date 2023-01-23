@@ -60,7 +60,7 @@ export const MoorhenLigandList = (props) => {
                     <Row style={{ height: '100%' }}>
                         <Col>
                             {ligandList.map(ligand => {
-                                return <Card style={{margin: '0.5rem'}}>
+                                return <Card key={`${props.molecule.molNo}/${ligand.chainName}/${ligand.resNum}(${ligand.resName})`} style={{margin: '0.5rem'}}>
                                             <Card.Body>
                                                 <Row style={{display:'flex', justifyContent:'between'}}>
                                                     <Col style={{alignItems:'center', justifyContent:'left', display:'flex'}}>
