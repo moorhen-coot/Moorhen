@@ -77,7 +77,7 @@ export const MoorhenShortcutConfigModal = (props) => {
                             if (stagedShortCuts[key].modifiers.includes('ctrlKey')) modifiers.push("<Ctrl>")
                             if (stagedShortCuts[key].modifiers.includes('metaKey')) modifiers.push("<Meta>")
                             if (stagedShortCuts[key].modifiers.includes('altKey')) modifiers.push("<Alt>")                
-                            return <Card style={{margin:'0.5rem'}}>
+                            return <Card key={key} style={{margin:'0.5rem'}}>
                                         <Card.Body style={{padding:'0.5rem'}}>
                                             <Row className="align-items-center">
                                                 <Col style={{justifyContent: 'left', display:'flex'}}>
