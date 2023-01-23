@@ -221,6 +221,7 @@ export const MoorhenMoleculeCard = (props) => {
                                     {Object.keys(props.molecule.displayObjects)
                                         .filter(key => !['hover', 'transformation'].includes(key))
                                         .map(key => {
+                                            if(!key.startsWith("contact_dots")){
                                             return <Form.Check
                                                 key={key}
                                                 inline
@@ -245,6 +246,7 @@ export const MoorhenMoleculeCard = (props) => {
                                                         setShowState(changedState)
                                                     }
                                                 }} />
+                                        }
                                         })
                                     }
                                 </div>
