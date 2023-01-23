@@ -260,13 +260,20 @@ const stringArrayToJSArray = (stringArray) => {
     return returnResult;
 }
 
-const residueCodesToJSArray = (residueCodes) => {
+const residueSpecToJSArray = (residueSpecs) => {
     let returnResult = []
-    const residueCodesSize = residueCodes.size()
-    for (let ic = 0; ic < residueCodesSize; ic++) {
-        returnResult.push({ "resNum": residueCodes.get(ic).first.res_no, "resCode": residueCodes.get(ic).second })
+    const residuesSize = residueSpecs.size()
+    for (let ic = 0; ic < residuesSize; ic++) {
+        const residue = residueSpecs.get(ic)
+        returnResult.push({
+            resNum: residue.res_no, 
+            insCode: residue.ins_code,
+            modelNumber: residue.model_number,
+            chainId: residue.chain_id 
+        })
+        residue.delete()
     }
-    returnResult.delete()
+    residueSpecs.delete()
     return returnResult
 }
 
@@ -678,8 +685,8 @@ onmessage = function (e) {
                 case 'string_array':
                     returnResult = stringArrayToJSArray(cootResult)
                     break;
-                case 'residue_codes':
-                    returnResult = residueCodesToJSArray(cootResult)
+                case 'residue_specs':
+                    returnResult = residueSpecToJSArray(cootResult)
                     break;
                 case 'ramachandran_data':
                     returnResult = ramachandranDataToJSArray(cootResult)

@@ -463,6 +463,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("rotamer_analysis",&molecules_container_t::rotamer_analysis)
     .function("associate_data_mtz_file_with_map",&molecules_container_t::associate_data_mtz_file_with_map)
     .function("connect_updating_maps",&molecules_container_t::connect_updating_maps)
+    .function("residues_with_missing_atoms",&molecules_container_t::residues_with_missing_atoms)
     .function("ramachandran_validation",&molecules_container_t::ramachandran_validation)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")

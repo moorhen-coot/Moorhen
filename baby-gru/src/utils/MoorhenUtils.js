@@ -408,3 +408,23 @@ export const cidToSpec = (cid) => {
     const alt_conf = cidTokens[4].split(":").length > 1 ? cidTokens[4].split(":")[1] : ""
     return { chain_id, res_no, atom_name, ins_code, alt_conf }
 }
+
+export const getResidueInfo = (molecules, selectedMolNo, selectedChain, selectedResidueIndex) => {
+    const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedMolNo)
+    if (selectedMolecule) {
+        const sequence = selectedMolecule.sequences.find(sequence => sequence.chain === selectedChain)
+        if (sequence) {
+            const sequenceData = sequence.sequence
+            const {resNum, resCode} = sequenceData[selectedResidueIndex];
+            if(resNum && resNum > -1){
+                return {
+                    modelIndex: 0,
+                    molName: selectedMolecule.name, 
+                    chain: selectedChain,
+                    seqNum: resNum,
+                    resCode: resCode
+                }
+            }        
+        }
+    }
+}
