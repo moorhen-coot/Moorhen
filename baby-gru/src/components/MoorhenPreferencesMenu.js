@@ -23,7 +23,7 @@ export const MoorhenPreferencesMenu = (props) => {
                     autoClose="outside"
                     show={props.currentDropdownId === props.dropdownId}
                     onToggle={() => { props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId(-1) }}>
-                <div style={{maxHeight: convertViewtoPx(60, props.windowHeight), overflowY: 'auto'}}>
+                <div style={{maxHeight: convertViewtoPx(65, props.windowHeight), overflowY: 'auto'}}>
                     <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
                         <Form.Check 
                             type="switch"

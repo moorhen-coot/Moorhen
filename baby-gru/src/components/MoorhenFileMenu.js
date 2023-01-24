@@ -259,7 +259,7 @@ export const MoorhenFileMenu = (props) => {
             show={props.currentDropdownId === props.dropdownId}
             style={{display:'flex', alignItems:'center'}}
             onToggle={() => { props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId(-1) }}>
-                <div style={{maxHeight: convertViewtoPx(60, props.windowHeight), overflowY: 'auto'}}>
+                <div style={{maxHeight: convertViewtoPx(65, props.windowHeight), overflowY: 'auto'}}>
                     <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="upload-coordinates-form" className="mb-3">
                         <Form.Label>Coordinates</Form.Label>
                         <Form.Control type="file" accept=".pdb, .mmcif, .cif, .ent" multiple={true} onChange={(e) => { loadPdbFiles(e.target.files) }}/>
