@@ -352,6 +352,9 @@ MoorhenMolecule.prototype.drawWithStyleFromAtoms = async function (style, glRef)
             await this.drawCootRepresentation(glRef, style)
             break;
         default:
+            if(style.startsWith("chemical_features")){
+                await this.drawCootChemicalFeaturesCid(glRef, style)
+            }
             if(style.startsWith("contact_dots")){
                 await this.drawCootContactDotsCid(glRef, style)
             }
@@ -392,6 +395,23 @@ MoorhenMolecule.prototype.drawCootContactDotsCid = function (glRef,style) {
     return this.commandCentre.current.cootCommand({
         returnType: "instanced_mesh",
         command: "contact_dots_for_ligand",
+        commandArgs: [$this.molNo,cid]
+    }).then(response => {
+        const objects = [response.data.result.result]
+        //console.log('rota', { objects })
+        //Empty existing buffers of this type
+        this.clearBuffersOfStyle(style, glRef)
+        this.addBuffersOfStyle(glRef, objects, style)
+    })
+}
+
+MoorhenMolecule.prototype.drawCootChemicalFeaturesCid = function (glRef,style) {
+    const $this = this
+    const cid = style.substr("chemical_features-".length)
+
+    return this.commandCentre.current.cootCommand({
+        returnType: "mesh",
+        command: "get_chemical_features_mesh",
         commandArgs: [$this.molNo,cid]
     }).then(response => {
         const objects = [response.data.result.result]

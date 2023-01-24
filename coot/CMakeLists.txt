@@ -54,7 +54,6 @@ ${coot_src}/src/coot-embedded.cc
 ${coot_src}/src/lbg-interface.cc
 ${coot_src}/src/c-interface-ligands.cc
 ${coot_src}/src/graphics-ligand-view.cc
-${coot_src}/src/sdf-interface.cc
 ${coot_src}/src/command-line.cc
 ${coot_src}/src/graphics-ligand-mesh-molecule.cc
 ${coot_src}/src/c-interface-image.cc
@@ -246,6 +245,7 @@ ${coot_src}/protein_db/rna_db.cpp
 ${coot_src}/pli/flev-annotations.cc
 ${coot_src}/pli/protein-ligand-interactions.cc
 ${coot_src}/pli/pi-stacking.cc
+${coot_src}/pli/sdf-interface.cc
 #${coot_src}/pli/specs.cc
 ${coot_src}/coot-utils/merge-atom-selections.cc
 ${coot_src}/coot-utils/coot-least-squares.cc
@@ -421,7 +421,7 @@ ${coot_src}/ideal/write-png.cc
 
 target_include_directories(coot PRIVATE ${coot_src} ${coot_src}/coords ${coot_src}/utils ${coot_src}/src ../include ../example ../checkout/ssm ../checkout/mmdb2 ../checkout/clipper ../checkout/fftw-2.1.5/fftw ../checkout/fftw-2.1.5/rfftw ../checkout/libccp4/ccp4 ../boost)
 
-set_target_properties(coot PROPERTIES COMPILE_FLAGS "-pthread -DHAVE_BOOST -DNODERAWFS -DFFTW_ENABLE_FLOAT -s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_PTHREADS=1" LINK_FLAGS "-fexceptions -pthread -s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_PTHREADS=1 -sDEMANGLE_SUPPORT=1 -sASSERTIONS=2")
+set_target_properties(coot PROPERTIES COMPILE_FLAGS "-pthread -DHAVE_CXX11=1 -DHAVE_BOOST -DNODERAWFS -DFFTW_ENABLE_FLOAT -s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_PTHREADS=1" LINK_FLAGS "-fexceptions -pthread -s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_PTHREADS=1 -sDEMANGLE_SUPPORT=1 -sASSERTIONS=2")
 
 set_source_files_properties(${coot_exception_srcs} PROPERTIES COMPILE_FLAGS "-fexceptions -pthread -DHAVE_BOOST -DNODERAWFS -DFFTW_ENABLE_FLOAT -s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_PTHREADS=1" )
 
@@ -472,6 +472,7 @@ FILE(COPY ../checkout/monomers/t/TYR.cif DESTINATION data/ccp4_lib/data/monomers
 FILE(COPY ../checkout/monomers/p/PO4.cif DESTINATION data/ccp4_lib/data/monomers/p )
 FILE(COPY ../checkout/monomers/s/SO4.cif DESTINATION data/ccp4_lib/data/monomers/s )
 FILE(COPY ../checkout/monomers/g/GOL.cif DESTINATION data/ccp4_lib/data/monomers/g )
+FILE(COPY ../checkout/monomers/p/PEG.cif DESTINATION data/ccp4_lib/data/monomers/p )
 FILE(COPY ../checkout/monomers/c/CIT.cif DESTINATION data/ccp4_lib/data/monomers/c )
 FILE(COPY ../checkout/monomers/e/EDO.cif DESTINATION data/ccp4_lib/data/monomers/e )
 FILE(COPY ../checkout/monomers/a/A.cif DESTINATION data/ccp4_lib/data/monomers/a )
@@ -484,6 +485,8 @@ FILE(COPY ../checkout/monomers/d/DG.cif DESTINATION data/ccp4_lib/data/monomers/
 FILE(COPY ../checkout/monomers/d/DT.cif DESTINATION data/ccp4_lib/data/monomers/d )
 FILE(COPY ../checkout/monomers/h/HOH.cif DESTINATION data/ccp4_lib/data/monomers/h )
 FILE(COPY ../checkout/monomers/n/NA.cif DESTINATION data/ccp4_lib/data/monomers/n )
+FILE(COPY ../checkout/monomers/a/ATP.cif DESTINATION data/ccp4_lib/data/monomers/a )
+FILE(COPY ../checkout/monomers/a/ADP.cif DESTINATION data/ccp4_lib/data/monomers/a )
 FILE(COPY ../checkout/monomers/ener_lib.cif DESTINATION data/ccp4_lib/data/monomers )
 FILE(COPY ../checkout/monomers/list/mon_lib_list.cif DESTINATION data/ccp4_lib/data/monomers/list )
 FILE(COPY ${coot_src}/standard-residues.pdb DESTINATION data/coot )
@@ -491,6 +494,7 @@ FILE(COPY ${coot_rotamer_data} DESTINATION data/coot/rama-data )
 FILE(COPY ${coot_src}/data/metal/metal-N-distance.table DESTINATION data/coot/data/metal )
 FILE(COPY ${coot_src}/data/metal/metal-O-distance.table DESTINATION data/coot/data/metal )
 FILE(COPY ${coot_src}/data/metal/metal-S-distance.table DESTINATION data/coot/data/metal )
+FILE(COPY ${CMAKE_INSTALL_PREFIX}/share/RDKit/Data/BaseFeatures.fdef DESTINATION data/RDKit/Data )
 
 add_executable(dynamic_read_lib ../example/dynamic_read_lib.cc)
 target_link_options(dynamic_read_lib PRIVATE  -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 --pre-js coot_env.js)

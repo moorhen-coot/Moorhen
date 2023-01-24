@@ -441,6 +441,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("refine_residue_range",&molecules_container_t::refine_residue_range)
     .function("contact_dots_for_ligand",&molecules_container_t::contact_dots_for_ligand)
     .function("all_molecule_contact_dots",&molecules_container_t::all_molecule_contact_dots)
+    .function("get_chemical_features_mesh",&molecules_container_t::get_chemical_features_mesh)
     .function("set_imol_refinement_map",&molecules_container_t::set_imol_refinement_map)
     .function("mutate",&molecules_container_t::mutate)
     .function("fill_partial_residue",&molecules_container_t::fill_partial_residue)

@@ -61,7 +61,8 @@ export const MoorhenLigandList = (props) => {
                     <Row style={{ height: '100%' }}>
                         <Col>
                             {ligandList.map(ligand => {
-                                const key = `contact_dots-${ligand.chainName}/${ligand.resNum}(${ligand.resName})`
+                                const keycd = `contact_dots-${ligand.chainName}/${ligand.resNum}(${ligand.resName})`
+                                const keycf = `chemical_features-${ligand.chainName}/${ligand.resNum}(${ligand.resName})`
                                 return <Card style={{margin: '0.5rem'}}>
                                             <Card.Body>
                                                 <Row style={{display:'flex', justifyContent:'between'}}>
@@ -77,23 +78,47 @@ export const MoorhenLigandList = (props) => {
                                                 <Row>
                                                     <Col style={{justifyContent: 'left', display:'flex'}}>
                                                         <Form.Check
-                                                            key={key}
+                                                            key={keycd}
                                                             inline
                                                             label={"Contact dots"}
                                                             type="checkbox"
                                                             variant="outline"
-                                                            checked={showState[key]}
+                                                            checked={showState[keycd]}
                                                             onChange={(e) => {
                                                     if (e.target.checked) {
-                                                        props.molecule.show(key, props.glRef)
+                                                        props.molecule.show(keycd, props.glRef)
                                                         const changedState = { ...showState }
-                                                        changedState[key] = true
+                                                        changedState[keycd] = true
                                                         setShowState(changedState)
                                                     }
                                                     else {
-                                                        props.molecule.hide(key, props.glRef)
+                                                        props.molecule.hide(keycd, props.glRef)
                                                         const changedState = { ...showState }
-                                                        changedState[key] = false
+                                                        changedState[keycd] = false
+                                                        setShowState(changedState)
+                                                    }
+                                                }}
+                                                        />
+                                                    </Col>
+                                                    <Col style={{justifyContent: 'left', display:'flex'}}>
+                                                        <Form.Check
+                                                            key={keycf}
+                                                            inline
+                                                            label={"Chemical features"}
+                                                            type="checkbox"
+                                                            variant="outline"
+                                                            checked={showState[keycf]}
+                                                            onChange={(e) => {
+                                                    if (e.target.checked) {
+                                                        props.molecule.show(keycf, props.glRef)
+                                                        const changedState = { ...showState }
+                                                        changedState[keycf] = true
+                                                        setShowState(changedState)
+                                                    }
+                                                    else {
+                                                        props.molecule.hide(keycf, props.glRef)
+                                                        const changedState = { ...showState }
+                                                        changedState[keycf] = false
                                                         setShowState(changedState)
                                                     }
                                                 }}
