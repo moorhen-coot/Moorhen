@@ -319,7 +319,7 @@ export const MoorhenDeleteUsingCidButton = (props) => {
                             props.setPanelParameters(newParameters)
                         }}>
                         {deleteModes.map(optionName => {
-                            return <option value={optionName}>{optionName}</option>
+                            return <option key={optionName} value={optionName}>{optionName}</option>
                         })}
                     </FormSelect>
                 </FormGroup>
