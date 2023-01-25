@@ -108,7 +108,9 @@ MoorhenMolecule.prototype.parseSequences = function () {
         }
         models.delete()
     } finally {
-        structure.delete()
+        if (structure && !structure.isDeleted()) {
+            structure.delete()
+        }
     }
 
     console.log('Parsed the following sequences')
@@ -267,6 +269,7 @@ MoorhenMolecule.prototype.updateAtoms = function () {
             }
             catch (err) {
                 console.log('Issue parsing coordinates into Gemmi structure', result.data.result.pdbData)
+                reject()
             }
             $this.atomsDirty = false
             resolve()
@@ -471,7 +474,7 @@ MoorhenMolecule.prototype.drawCootBonds = async function (glRef) {
         ]
     }).then(response => {
         const objects = [response.data.result.result]
-        if (objects.length > 0) {
+        if (objects.length > 0 && !this.gemmiStructure.isDeleted()) {
             //Empty existing buffers of this type
             this.clearBuffersOfStyle(style, glRef)
             this.addBuffersOfStyle(glRef, objects, style)
@@ -498,7 +501,7 @@ MoorhenMolecule.prototype.drawCootGaussianSurface = async function (glRef) {
         ]
     }).then(response => {
         const objects = [response.data.result.result]
-        if (objects.length > 0) {
+        if (objects.length > 0 && !this.gemmiStructure.isDeleted()) {
             const flippedNormalsObjects = objects.map(object => {
                 const flippedNormalsObject = { ...object }
                 /*
@@ -560,7 +563,7 @@ MoorhenMolecule.prototype.drawCootRepresentation = async function (glRef, style)
         ]
     }).then(response => {
         let objects = [response.data.result.result]
-        if (objects.length > 0) {
+        if (objects.length > 0 && !this.gemmiStructure.isDeleted()) {
             //Empty existing buffers of this type
             if (m2tStyle === "Cylinders") {
                 objects = objects.map(object => {
@@ -943,6 +946,8 @@ MoorhenMolecule.prototype.redraw = function (glRef) {
             },
             Promise.resolve()
         )
+    }).catch(_ => {
+        console.log('Error updating atoms when redrawing')
     })
 }
 

@@ -392,7 +392,9 @@ export const getBufferAtoms = (gemmiStructure, exclude_ligands_and_waters=false)
             }
             models.delete()
         } finally {
-            gemmiStructure.delete()
+            if (gemmiStructure && !gemmiStructure.isDeleted()) {
+                gemmiStructure.delete()
+            }
         }
 
         return atomList
