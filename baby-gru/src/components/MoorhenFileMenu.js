@@ -14,6 +14,7 @@ export const MoorhenFileMenu = (props) => {
     const [overlayTarget, setOverlayTarget] = useState(null)
     const [popoverIsShown, setPopoverIsShown] = useState(false)
     const [remoteSource, setRemoteSource] = useState("PDBe")
+    const [isValidPdbId, setIsValidPdbId] = useState(true)
     const pdbCodeFetchInputRef = useRef(null);
     const fetchMapDataCheckRef = useRef(null);
 
@@ -90,6 +91,7 @@ export const MoorhenFileMenu = (props) => {
                 newMolecule.centreOn(glRef)
             } catch {
                 console.log(`Cannot fetch molecule from ${url}`)
+                setIsValidPdbId(false)
             }   
         })
     }
@@ -275,15 +277,17 @@ export const MoorhenFileMenu = (props) => {
                                     setRemoteSource("PDB-REDO")
                                 }}>PDB-REDO</Dropdown.Item>
                             </SplitButton>
-                            <Form.Control type="text" ref={pdbCodeFetchInputRef} onKeyDown={(e) => {
+                            <Form.Control type="text" style={{borderColor: isValidPdbId ? '' : 'red'}}  ref={pdbCodeFetchInputRef} onKeyDown={(e) => {
+                                setIsValidPdbId(true)
                                 if (e.code === 'Enter') {
                                     fetchFiles()
                                 }
-                            }} />
+                            }}/>
                             <Button variant="light" onClick={fetchFiles}>
                                 Fetch
                             </Button>
                         </InputGroup>
+                        <Form.Label style={{display: isValidPdbId ? 'none' : 'block', alignContent: 'center' ,textAlign: 'center'}}>Problem fetching</Form.Label>
                         <Form.Check style={{ marginTop: '0.5rem' }} ref={fetchMapDataCheckRef} label={'fetch map data'} name={`fetchMapData`} type="checkbox" variant="outline" />
                     </Form.Group>
                     <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="upload-session-form" className="mb-3">
