@@ -367,7 +367,7 @@ export const MoorhenMoleculeBondSettingsMenuItem = (props) => {
             </Form.Group>
             <Form.Group className="mb-3" style={{ width: '10rem', margin: '0' }} controlId="MoorhenSmoothnessSelector">
                 <Form.Label>Smoothness</Form.Label>
-                <FormSelect size="sm" ref={smoothnesSelectRef} defaultValue={props.bondSmoothness} onChange={(evt) => { props.setBondSmoothness(evt.target.value) }}>
+                <FormSelect size="sm" ref={smoothnesSelectRef} defaultValue={props.bondSmoothness} onChange={(evt) => { props.setBondSmoothness(Number(evt.target.value)) }}>
                     <option value={1} key={1}>Coarse</option>
                     <option value={2} key={2}>Nice</option>
                     <option value={3} key={3}>Smooth</option>
