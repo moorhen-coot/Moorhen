@@ -1,14 +1,13 @@
-# CCP4/Coot/Privateer Web Assembly
+# Moorhen
 
-This project is a set of scripts, patches and CMakeLists.txt files
-which enable the compilation of  some of the [CCP4](https://www.ccp4.ac.uk/) libraries and programs, some of [Coot](https://www2.mrc-lmb.cam.ac.uk/personal/pemsley/coot/), [FFTW2](https://www.fftw.org/), [Privateer](https://github.com/glycojones/privateer) and the [Gnu Scientific Library](https://www.gnu.org/software/gsl/) to Web Assembly. The most interesting part for the end user is a prototype port of Coot to WebGL, web assembly, JavaScript, etc. currently codenamed `Baby Gru`
+Moorhen is a web browser molecular graphics program based on the Coot desktop program.
+It is developed by porting some [CCP4](https://www.ccp4.ac.uk/) libraries and programs, [Coot](https://www2.mrc-lmb.cam.ac.uk/personal/pemsley/coot/), [FFTW2](https://www.fftw.org/), [Privateer](https://github.com/glycojones/privateer) and the [Gnu Scientific Library](https://www.gnu.org/software/gsl/) to Web Assembly.
 
-Contained are some examples of using the generated JS/Web Assembly:
+Also contained are examples of using the generated JS/Web Assembly:
 
 * A command line example which offers some of the functionality of the CCP4 program `superpose`.
 * A command line example which offers some of the functionality of the CCP4 program `gesamt`.
 * A command line example which does a structure factor calculation with `clipper`.
-* A React-Bootstrap example (Baby-Gru) which implements some of the tools from the `Coot` molecular graphics program.
 
 The emscripten suite of tools is required to do the
 compilation.
@@ -67,9 +66,9 @@ not itself compiled by this project.
 <br>In this branch, it is intended that you do the build in the source directory. 
 <br/>After first checkout you should run the following script to build:  
 `./initial_build.sh`  
-This should build all dependencies and then `WebCoot`/`BabyGru`. 
+This should build all dependencies and then `Moorhen`. 
 
-5. To run the Baby-Gru molecular graphics application:  
+5. To run the Moorhen molecular graphics application:  
 `cd baby-gru`  
 `npm start`  
 And then point a web browser at `http://localhost:3000/` .  
@@ -86,8 +85,8 @@ You will need to set up `ligandServer` (in `baby-gru/public/baby-gru`):
     5. `cd CCP4_WASM_BUILD/moorhen_build`
     6. `make install` (or e.g. `make -j8 install` to build on 8 processors).
 
-![BabyGru](web_example/baby_gru.png)
-*The BabyGru prototype WebGL application*
+![Moorhen](web_example/baby_gru.png)
+*The Moorhen WebGL application*
 
 ## **What else can do with the compiled libraries?**
 
