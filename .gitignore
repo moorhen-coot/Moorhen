@@ -16,6 +16,9 @@
 /ccp4srs/*.js
 /ccp4srs/ccp4srs.*
 /checkout
+/rdkit
+/CCP4_WASM_BUILD
+/moorhen_tests
 /coot/bfactan.js
 /coot/coot_env.js
 /coot/data
