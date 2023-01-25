@@ -917,6 +917,30 @@ export const MoorhenImportMapMenuItem = (props) => {
     />
 }
 
+export const MoorhenAboutMenuItem = (props) => {
+    const onCompleted = () => { props.setPopoverIsShown(false) }
+
+    const panelContent = <div style={{ minWidth: "20rem" }}>
+    <p>Moorhen is a molecular graphics program based on the Coot desktop program.</p>
+    <p>Authors</p>
+    <ul>
+    <li>Paul Emsley</li>
+    <li>Filomeno Sanchez</li>
+    <li>Martin Noble</li>
+    <li>Stuart McNicholas</li>
+    </ul>
+    <p>Current version: 25th Jan 2023 10:31</p>
+    </div>
+
+    return <MoorhenMenuItem
+        id='help-about-menu-item'
+        popoverContent={panelContent}
+        menuItemText="About..."
+        onCompleted={onCompleted}
+        setPopoverIsShown={props.setPopoverIsShown}
+    />
+}
+
 export const MoorhenClipFogMenuItem = (props) => {
 
     const [zclipFront, setZclipFront] = useState(5)
