@@ -277,7 +277,7 @@ export const MoorhenAddSideChainButton = (props) => {
         needsMapData={true}
         cootCommand="fill_partial_residue"
         prompt="Click atom in residue to add a side chain"
-        icon={<img className="baby-gru-button-icon" alt="Add side chain" src={`${props.urlPrefix}/baby-gru/pixmaps/fill-partial-residue.svg`} />}
+        icon={<img className="baby-gru-button-icon" alt="Add side chain" src={`${props.urlPrefix}/baby-gru/pixmaps/add-side-chain.svg`} />}
         formatArgs={(molecule, chosenAtom) => {
             return [molecule.molNo, chosenAtom.chain_id, chosenAtom.res_no, chosenAtom.ins_code]
         }} />
@@ -319,7 +319,7 @@ export const MoorhenDeleteUsingCidButton = (props) => {
                             props.setPanelParameters(newParameters)
                         }}>
                         {deleteModes.map(optionName => {
-                            return <option value={optionName}>{optionName}</option>
+                            return <option key={optionName} value={optionName}>{optionName}</option>
                         })}
                     </FormSelect>
                 </FormGroup>
