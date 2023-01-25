@@ -81,3 +81,6 @@ cd ${BUILD_DIR}
 cd ${SOURCE_DIR}/tests/
 npm install
 cd ${BUILD_DIR}
+
+cd ${SOURCE_DIR}/baby-gru/public/baby-gru
+ln -s ${SOURCE_DIR}/checkout/monomers
