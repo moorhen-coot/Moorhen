@@ -364,6 +364,7 @@ export const getBufferAtoms = (gemmiStructure, exclude_ligands_and_waters=false)
                             const atomElementString = window.CCP4Module.getElementNameAsString(atomElement)
                             const atomCharge = atom.charge
                             const atomTemp = atom.b_iso
+                            const atomName = atom.name
                             const atomAltLoc = atom.altloc
                             const atomHasAltLoc = atom.has_altloc()
                             atomList.push({
@@ -374,7 +375,7 @@ export const getBufferAtoms = (gemmiStructure, exclude_ligands_and_waters=false)
                                 tempFactor: atomTemp,
                                 charge: atomCharge,
                                 symbol: atomElementString,
-                                label: `/${modelName}/${chainName}/${resNum}(${residueName})/${atomElementString}${atomHasAltLoc ? ':' + String.fromCharCode(atomAltLoc) : ''}`
+                                label: `/${modelName}/${chainName}/${resNum}(${residueName})/${atomName}${atomHasAltLoc ? ':' + String.fromCharCode(atomAltLoc) : ''}`
                             })
                             atom.delete()
                             atomPos.delete()
