@@ -158,7 +158,7 @@ export const MoorhenAutofitRotamerButton = (props) => {
         selectedButtonIndex={props.selectedButtonIndex}
         setSelectedButtonIndex={props.setSelectedButtonIndex}
         needsMapData={true}
-        cootCommand="auto_fit_rotamer"
+        cootCommand="fill_partial_residue"
         prompt="Click atom in residue to fit rotamer"
         icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/auto-fit-rotamer.svg`} />}
         formatArgs={(molecule, chosenAtom) => {
@@ -166,9 +166,8 @@ export const MoorhenAutofitRotamerButton = (props) => {
                 molecule.molNo,
                 chosenAtom.chain_id,
                 chosenAtom.res_no,
-                chosenAtom.ins_code,
-                chosenAtom.alt_conf,
-                props.activeMap.molNo]
+                chosenAtom.ins_code
+                ]
         }} />
 }
 
