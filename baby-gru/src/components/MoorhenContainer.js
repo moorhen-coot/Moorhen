@@ -224,7 +224,7 @@ export const MoorhenContainer = (props) => {
     useEffect(() => {
         glResize()
         setAccordionHeight(getAccordionHeight())
-        displayObjectsAccordionBodyHeight !== 0 ? setDisplayObjectsAccordionBodyHeight(convertViewtoPx(40, windowHeight)) : setDisplayObjectsAccordionBodyHeight(convertViewtoPx(0, windowHeight))
+        displayObjectsAccordionBodyHeight !== 0 ? setDisplayObjectsAccordionBodyHeight(convertViewtoPx(60, windowHeight)) : setDisplayObjectsAccordionBodyHeight(convertViewtoPx(0, windowHeight))
         toolAccordionBodyHeight !== 0 ? setToolAccordionBodyHeight(convertViewtoPx(70, windowHeight)) : setToolAccordionBodyHeight(convertViewtoPx(0, windowHeight))
         sequenceViewerBodyHeight !== 0 ? setSequenceViewerBodyHeight(convertViewtoPx(30, windowHeight)) : setSequenceViewerBodyHeight(convertViewtoPx(0, windowHeight))
         consoleBodyHeight !== 0 ? setConsoleBodyHeight(convertViewtoPx(30, windowHeight)) : setConsoleBodyHeight(convertViewtoPx(0, windowHeight))
@@ -388,7 +388,7 @@ export const MoorhenContainer = (props) => {
                                 return
                             }
                             if (openPanels.includes('showDisplayObjects')) {
-                                setDisplayObjectsAccordionBodyHeight(convertViewtoPx(40, windowHeight))
+                                setDisplayObjectsAccordionBodyHeight(convertViewtoPx(60, windowHeight))
                             }
                             if (openPanels.includes('showTools')) {
                                 setToolAccordionBodyHeight(convertViewtoPx(70, windowHeight))
