@@ -48,7 +48,6 @@ var triangle_fragment_shader_source = `
       vec3 norm = normalize(vNormal);
 
       if(gl_FrontFacing!=true){
-          discard;
         //gl_FragColor = vec4(1.0,0.0,0.0,1.0);
         //gl_FragColor = gl_FragColor;
         norm = -norm;
@@ -90,11 +89,14 @@ var triangle_fragment_shader_source = `
       fogFactor = 1.0 - clamp(fogFactor,0.0,1.0);
 
       vec4 theColor = vec4(vColor);
+      /*
+      //Do not do this for now. this causes trouble with 'lit lines'. SJM 25012023
       if(gl_FrontFacing!=true){
         if(defaultColour==false){
           theColor = vec4(backColour);
         }
       }
+      */
       vec4 color = (1.5*theColor*Iamb + 1.2*theColor* Idiff);
       color.a = vColor.a;
       color += Ispec;

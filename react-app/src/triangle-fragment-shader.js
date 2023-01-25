@@ -54,7 +54,6 @@ var triangle_fragment_shader_source = `#version 300 es\n
       }
 
       if(gl_FrontFacing!=true){
-          discard;
       E = (mvInvMatrix * vec4(normalize(-v),1.0)).xyz;
       //for (i = 0; i<nLights&&i<8; i++) {
        L = normalize((mvInvMatrix *light_positions).xyz);
@@ -90,11 +89,14 @@ var triangle_fragment_shader_source = `#version 300 es\n
       fogFactor = 1.0 - clamp(fogFactor,0.0,1.0);
 
       vec4 theColor = vec4(vColor);
+      /*
+      //Do not do this for now. this causes trouble with 'lit lines'. SJM 25012023
       if(gl_FrontFacing!=true){
         if(defaultColour==false){
           theColor = vec4(backColour);
         }
       }
+      */
       vec4 color = (1.5*theColor*Iamb + 1.2*theColor* Idiff);
       color.a = vColor.a;
       color += Ispec;
