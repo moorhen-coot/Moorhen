@@ -1,7 +1,6 @@
 import { BubbleChartOutlined } from "@mui/icons-material";
 import React, { useEffect, useState } from "react";
 import { Card, Form, Row, Col, Button, DropdownButton } from "react-bootstrap";
-import { convertViewtoPx } from '../utils/MoorhenUtils';
 
 export const MoorhenLigandList = (props) => {
     const [ligandList, setLigandList] = useState([])
@@ -77,7 +76,7 @@ export const MoorhenLigandList = (props) => {
                                                             title={<BubbleChartOutlined/>}
                                                             variant="outlined"
                                                         >
-                                                            <div style={{maxHeight: convertViewtoPx(50, props.windowHeight) * 0.5, overflowY: 'auto', width:'15rem'}}>
+                                                            <div style={{maxHeight: '6rem', overflowY: 'auto', width:'15rem'}}>
                                                             <Form.Check
                                                                 key={keycd}
                                                                 label={"Contact dots"}
