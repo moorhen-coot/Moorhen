@@ -12,6 +12,7 @@ export function MoorhenMap(commandCentre) {
     this.cootContour = true
     this.displayObjects = { Coot: [] }
     this.litLines = true
+    this.solid = false
     this.isDifference = false
     this.hasReflectionData = false
 }
@@ -239,6 +240,10 @@ MoorhenMap.prototype.doCootContour = function (glRef, x, y, z, radius, contourLe
     let returnType =  "lines_mesh"
     if(this.litLines)
         returnType =  "lit_lines_mesh"
+
+    if(this.solid){
+        returnType =  "mesh"
+    }
 
     return new Promise((resolve, reject) => {
         this.commandCentre.current.cootCommand( {

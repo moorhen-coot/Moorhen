@@ -10,7 +10,8 @@ export const MoorhenMapCard = (props) => {
     const [cootContour, setCootContour] = useState(true)
     const [mapRadius, setMapRadius] = useState(props.initialRadius)
     const [mapContourLevel, setMapContourLevel] = useState(props.initialContour)
-    const [mapLitLines, setMapLitLines] = useState(props.defaultLitLines)    
+    const [mapLitLines, setMapLitLines] = useState(props.defaultLitLines)
+    const [mapSolid, setMapSolid] = useState(false)
     const [isCollapsed, setIsCollapsed] = useState(!props.defaultExpandDisplayCards);
     const [currentName, setCurrentName] = useState(props.map.name);
     const nextOrigin = createRef([])
@@ -39,6 +40,11 @@ export const MoorhenMapCard = (props) => {
         props.setCurrentDropdownMolNo(-1)
     }
 
+    const handleSolid = () => {
+        setMapSolid(!mapSolid)
+        props.setCurrentDropdownMolNo(-1)
+    }
+
     const actionButtons = {
         1: {
             label: cootContour ? "Hide map" : "Show map", 
@@ -62,6 +68,11 @@ export const MoorhenMapCard = (props) => {
         4: {
             label: 'Rename map',
             compressed: () => {return (<MoorhenRenameDisplayObjectMenuItem key='rename-map' setPopoverIsShown={setPopoverIsShown} setCurrentName={setCurrentName} item={props.map} />)},
+            expanded: null
+        },
+        5: {
+            label: mapSolid ? "Chickenwire" : "Solid",
+            compressed: () => {return (<MenuItem key='solid-or-chickenwire' variant="success" disabled={!cootContour}  onClick={handleSolid}>{mapSolid ? "Chickenwire" : "Solid"}</MenuItem>)},
             expanded: null
         }
     }
@@ -213,7 +224,8 @@ export const MoorhenMapCard = (props) => {
             busyContouring.current = true
             console.log(props.commandCentre.current)
             props.commandCentre.current.extendConsoleMessage('Because I can')
-            props.map.litLines = mapLitLines            
+            props.map.litLines = mapLitLines
+            props.map.solid = mapSolid
             props.map.contourLevel = mapContourLevel
             props.map.doCootContour(props.glRef,
                 ...props.glRef.current.origin.map(coord => -coord),
@@ -223,7 +235,7 @@ export const MoorhenMapCard = (props) => {
                     busyContouring.current = false
                 })
         }
-    }, [mapRadius, mapContourLevel, mapLitLines])
+    }, [mapRadius, mapContourLevel, mapLitLines, mapSolid])
 
     return <Card className="px-0"  style={{marginBottom:'0.5rem', padding:'0'}} key={props.map.molNo}>
         <Card.Header>

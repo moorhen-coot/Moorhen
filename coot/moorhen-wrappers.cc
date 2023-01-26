@@ -564,7 +564,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<g_triangle>("Vectorg_triangle");
     register_vector<coot::instancing_data_type_A_t>("Vectorinstancing_data_type_A_t");
     register_vector<coot::instancing_data_type_B_t>("Vectorinstancing_data_type_B_t");
-    register_vector<std::pair<coot::residue_spec_t,std::string>>("Vectorresidue_spec_t_strint_pair");
+    register_vector<std::pair<coot::residue_spec_t,std::string>>("Vectorresidue_spec_t_string_pair");
     register_vector<merge_molecule_results_info_t>("Vectormerge_molecule_results_info_t");
     register_vector<coot::phi_psi_prob_t>("Vectophi_psi_prob_t");
 
@@ -572,7 +572,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .field("first",&std::pair<int,std::vector<merge_molecule_results_info_t>>::first)
         .field("second",&std::pair<int,std::vector<merge_molecule_results_info_t>>::second)
     ;
-    value_object<std::pair<coot::residue_spec_t,std::string>>("residue_spec_t_strint_pair")
+    value_object<std::pair<coot::residue_spec_t,std::string>>("residue_spec_t_string_pair")
         .field("first",&std::pair<coot::residue_spec_t,std::string>::first)
         .field("second",&std::pair<coot::residue_spec_t,std::string>::second)
     ;
