@@ -607,6 +607,18 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<merge_molecule_results_info_t>("Vectormerge_molecule_results_info_t");
     register_vector<coot::phi_psi_prob_t>("Vectophi_psi_prob_t");
 
+    value_object<std::pair<unsigned int,int>>("uint_int_pair")
+        .field("first",&std::pair<unsigned int,int>::first)
+        .field("second",&std::pair<unsigned int,int>::second)
+    ;
+    value_object<std::pair<int,unsigned int>>("int_uint_pair")
+        .field("first",&std::pair<int,unsigned int>::first)
+        .field("second",&std::pair<int,unsigned int>::second)
+    ;
+    value_object<std::pair<int,int>>("int_int_pair")
+        .field("first",&std::pair<int,int>::first)
+        .field("second",&std::pair<int,int>::second)
+    ;
     value_array<glm::mat4>("array_mat4")
         .element(emscripten::index<0>())
         .element(emscripten::index<1>())
