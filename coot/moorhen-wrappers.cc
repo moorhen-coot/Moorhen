@@ -77,18 +77,6 @@ std::map<std::string,std::vector<coot::simple_rotamer> > getRotamersMap(){
     return all_rots;
 }
 
-class IntVectorMergeMolInfoPair {
-    public:
-        int first;
-        std::vector<merge_molecule_results_info_t> second;
-};
-
-class ResSpecStringPair {
-    public:
-        coot::residue_spec_t first;
-        std::string second;
-};
-
 class molecules_container_js : public molecules_container_t {
     public:
         std::vector<float> getFloats(unsigned nFloats) { 
@@ -106,25 +94,6 @@ class molecules_container_js : public molecules_container_t {
             return get_mol(imol)->WritePDBASCII(fname_cp);
         }
 
-        IntVectorMergeMolInfoPair merge_molecules(int imol, const std::string &list_of_other_molecules) {
-            IntVectorMergeMolInfoPair retval;
-            std::pair<int, std::vector<merge_molecule_results_info_t> > p = molecules_container_t::merge_molecules(imol,list_of_other_molecules);
-            retval.first = p.first;
-            retval.second = p.second;
-            return retval;
-        }
-
-        std::vector<ResSpecStringPair> get_single_letter_codes_for_chain(int imol, const std::string &chain_id) {
-            std::vector<ResSpecStringPair> retval;
-            std::vector<std::pair<coot::residue_spec_t, std::string> > seq = molecules_container_t::get_single_letter_codes_for_chain(imol, chain_id);
-            for(unsigned i=0;i<seq.size();i++){
-                ResSpecStringPair p;
-                p.first = seq[i].first;
-                p.second = seq[i].second;
-                retval.push_back(p);
-            }
-            return retval;
-        }
         int writeCCP4Map(int imol, const std::string &file_name) {
             auto xMap = (*this)[imol].xmap;
             auto clipperMap = clipper::CCP4MAPfile();
@@ -468,6 +437,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("connect_updating_maps",&molecules_container_t::connect_updating_maps)
     .function("residues_with_missing_atoms",&molecules_container_t::residues_with_missing_atoms)
     .function("ramachandran_validation",&molecules_container_t::ramachandran_validation)
+    .function("merge_molecules", select_overload<std::pair<int, std::vector<merge_molecule_results_info_t> >(int,const std::string &)>(&molecules_container_t::merge_molecules))
+    .function("get_single_letter_codes_for_chain",&molecules_container_t::get_single_letter_codes_for_chain)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<>()
@@ -475,10 +446,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("writeCCP4Map",&molecules_container_js::writeCCP4Map)
     .function("count_simple_mesh_vertices",&molecules_container_js::count_simple_mesh_vertices)
     .function("go_to_blob_array",&molecules_container_js::go_to_blob_array)
-    .function("get_single_letter_codes_for_chain",&molecules_container_js::get_single_letter_codes_for_chain)
     .function("add",&molecules_container_js::add)
     .function("getFloats",&molecules_container_js::getFloats)
-    .function("merge_molecules",&molecules_container_js::merge_molecules)
     ;
     class_<RamachandranInfo>("RamachandranInfo")
     .constructor<>()
@@ -530,14 +499,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("float_user_data",&coot::atom_spec_t::float_user_data)
     .property("string_user_data",&coot::atom_spec_t::string_user_data)
     .property("model_number",&coot::atom_spec_t::model_number)
-    ;
-    class_<ResSpecStringPair>("ResSpecStringPair")
-    .property("first",&ResSpecStringPair::first)
-    .property("second",&ResSpecStringPair::second)
-    ;
-    class_<IntVectorMergeMolInfoPair>("IntVectorMergeMolInfoPair")
-    .property("first",&IntVectorMergeMolInfoPair::first)
-    .property("second",&IntVectorMergeMolInfoPair::second)
     ;
     class_<coot::util::phi_psi_t>("phi_psi_t")
     .function("phi",&coot::util::phi_psi_t::phi)
@@ -603,10 +564,18 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<g_triangle>("Vectorg_triangle");
     register_vector<coot::instancing_data_type_A_t>("Vectorinstancing_data_type_A_t");
     register_vector<coot::instancing_data_type_B_t>("Vectorinstancing_data_type_B_t");
-    register_vector<ResSpecStringPair>("VectorResSpecStringPair");
+    register_vector<std::pair<coot::residue_spec_t,std::string>>("Vectorresidue_spec_t_strint_pair");
     register_vector<merge_molecule_results_info_t>("Vectormerge_molecule_results_info_t");
     register_vector<coot::phi_psi_prob_t>("Vectophi_psi_prob_t");
 
+    value_object<std::pair<int,std::vector<merge_molecule_results_info_t>>>("int_vector_merge_molecule_results_info_t_pair")
+        .field("first",&std::pair<int,std::vector<merge_molecule_results_info_t>>::first)
+        .field("second",&std::pair<int,std::vector<merge_molecule_results_info_t>>::second)
+    ;
+    value_object<std::pair<coot::residue_spec_t,std::string>>("residue_spec_t_strint_pair")
+        .field("first",&std::pair<coot::residue_spec_t,std::string>::first)
+        .field("second",&std::pair<coot::residue_spec_t,std::string>::second)
+    ;
     value_object<std::pair<unsigned int,int>>("uint_int_pair")
         .field("first",&std::pair<unsigned int,int>::first)
         .field("second",&std::pair<unsigned int,int>::second)
