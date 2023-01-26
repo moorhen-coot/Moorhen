@@ -42,8 +42,8 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
                     let formattedArgs = props.formatArgs(molecule, chosenAtom, localParameters)
                     props.setSelectedButtonIndex(null)
                     if (props.cootCommand) {
-                        await props.commandCentre.current.cootCommand({
-                            returnType: "status",
+                        const result = await props.commandCentre.current.cootCommand({
+                            returnType: props.returnType,
                             command: props.cootCommand,
                             commandArgs: formattedArgs,
                             changesMolecules: props.changesMolecule ? [molecule.molNo] : []
@@ -72,6 +72,10 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
                         const originChangedEvent = new CustomEvent("originChanged",
                             { "detail": props.glRef.current.origin });
                         document.dispatchEvent(originChangedEvent);
+
+                        if(props.onExit) {
+                            props.onExit(molecule, chosenAtom, result)
+                        }
 
                     }
                     else if (props.nonCootCommand) {
@@ -144,9 +148,10 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
 })
 MoorhenSimpleEditButton.defaultProps = {
     id: '', toolTip: "", setCursorStyle: () => { }, 
-    needsAtomData: true, setSelectedButtonIndex: () => { }, 
-    selectedButtonIndex: 0, prompt: null, awaitAtomClick: true,
-    changesMolecule: true, refineAfterMod: false, onCompleted: null
+    returnType: 'status', needsAtomData: true, prompt: null,
+    setSelectedButtonIndex: () => { }, selectedButtonIndex: 0, 
+    changesMolecule: true, refineAfterMod: false, onCompleted: null,
+    awaitAtomClick: true, onExit: null
 }
 
 
@@ -304,6 +309,15 @@ export const MoorhenDeleteUsingCidButton = (props) => {
         delete: { mode: 'ATOM' },
         mutate: { toType: "ALA" }
     })
+
+    const deleteMoleculeIfEmpty = (molecule, chosenAtom, cootResult) => {
+        if (cootResult.data.result.result.second < 1) {
+            console.log('Empty molecule detected, deleting it now...')
+            molecule.delete(props.glRef)
+            props.changeMolecules({ action: 'Remove', item: molecule })
+        }
+    }
+
     const MoorhenDeletePanel = (props) => {
         const deleteModes = ['ATOM', 'RESIDUE', 'CHAIN']
         return <Container>
@@ -325,6 +339,7 @@ export const MoorhenDeleteUsingCidButton = (props) => {
             </Row>
         </Container>
     }
+
     const deleteFormatArgs = (molecule, chosenAtom, pp) => {
         //console.log({ molecule, chosenAtom, pp })
         return pp.delete.mode === 'CHAIN' ?
@@ -338,6 +353,7 @@ export const MoorhenDeleteUsingCidButton = (props) => {
                 }`,
                     'LITERAL']
     }
+
     return <MoorhenSimpleEditButton {...props}
         toolTip="Delete Item"
         buttonIndex={props.buttonIndex}
@@ -345,6 +361,8 @@ export const MoorhenDeleteUsingCidButton = (props) => {
         setSelectedButtonIndex={props.setSelectedButtonIndex}
         needsMapData={false}
         cootCommand="delete_using_cid"
+        returnType="pair"
+        onExit={deleteMoleculeIfEmpty}
         panelParameters={panelParameters}
         prompt={<MoorhenDeletePanel
             setPanelParameters={setPanelParameters}
