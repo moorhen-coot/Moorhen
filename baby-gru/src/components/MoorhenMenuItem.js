@@ -169,7 +169,7 @@ export const MoorhenGetMonomerMenuItem = (props) => {
 
         }, true)
             .then(result => {
-                if (result.data.result.status === "Completed") {
+                if (result.data.result.status === "Completed" && result.data.result.result !== -1) {
                     const newMolecule = new MoorhenMolecule(props.commandCentre, props.urlPrefix)
                     newMolecule.molNo = result.data.result.result
                     newMolecule.name = tlcRef.current.value
@@ -177,8 +177,12 @@ export const MoorhenGetMonomerMenuItem = (props) => {
                         props.changeMolecules({ action: "Add", item: newMolecule })
                         props.setPopoverIsShown(false)
                     })
+                } else {
+                    console.log('Error getting monomer... Missing dictionary?')
+                    props.commandCentre.current.extendConsoleMessage('Error getting monomer... Missing dictionary?')
                 }
             })
+            
     }
 
     return <MoorhenMenuItem
@@ -456,7 +460,7 @@ export const MoorhenBackgroundColorMenuItem = (props) => {
                     backgroundColor: `rgba(  ${backgroundColor.r}, ${backgroundColor.g},  ${backgroundColor.b},  ${backgroundColor.a})`
                 }} type="text" />
                 <Button variant="light">Change</Button>
-            </InputGroup >
+            </InputGroup>
         </Form.Group>}
         onCompleted={onCompleted}
         setPopoverIsShown={props.setPopoverIsShown} />
@@ -466,17 +470,17 @@ export const MoorhenImportDictionaryMenuItem = (props) => {
     const filesRef = useRef(null)
     const moleculeSelectRef = useRef(null)
     const tlcRef = useRef(null)
-    const [tlc, setTlc] = useState(null)
+    const [tlc, setTlc] = useState('')
     const addToRef = useRef(null)
-    const [addToMolecule, setAddToMolecule] = useState(null)
+    const [addToMolecule, setAddToMolecule] = useState('')
     const addToMoleculeValue = useRef(null)
     const [fileOrLibrary, setFileOrLibrary] = useState("Library")
     const fileOrLibraryRef = useRef("Library")
     const [createInstance, setCreateInstance] = useState(true)
     const [tlcsOfFile, setTlcsOfFile] = useState([])
-    const tlcSelectRef = useRef()
+    const tlcSelectRef = useRef(null)
     const tlcValueRef = useRef(null)
-    const createInstanceRef = useRef()
+    const createInstanceRef = useRef(null)
     const createRef = useRef(true)
 
     const panelContent = <>
@@ -509,8 +513,7 @@ export const MoorhenImportDictionaryMenuItem = (props) => {
             </Form.Group>
             {createInstance &&
                 <Form.Select ref={tlcSelectRef} value={tlc} onChange={(newVal) => { setTlc(newVal) }}>
-                    {tlcsOfFile.map(tlcOfFile => <option key={tlcOfFile} value={tlcOfFile}
-                    >{tlcOfFile}</option>)}
+                    {tlcsOfFile.map(tlcOfFile => <option key={tlcOfFile} value={tlcOfFile}>{tlcOfFile}</option>)}
                 </Form.Select>
             }
         </>
@@ -542,7 +545,7 @@ export const MoorhenImportDictionaryMenuItem = (props) => {
                         setCreateInstance(false)
                     }}>No</Dropdown.Item>
                 </SplitButton>
-                <Form.Select disabled={!createInstance} ref={addToRef} defaultValue={"-1"} value={addToMolecule} onChange={(e) => {
+                <Form.Select disabled={!createInstance} ref={addToRef} value={addToMolecule} onChange={(e) => {
                     setAddToMolecule(parseInt(e.target.value))
                     addToMoleculeValue.current = parseInt(e.target.value)
                 }}>
@@ -678,7 +681,7 @@ export const MoorhenImportDictionaryMenuItem = (props) => {
             console.log(`Unkown ligand source ${fileOrLibraryRef.current}`)
         }
 
-    }, [fileOrLibrary])
+    }, [fileOrLibrary.current, moleculeSelectRef.current, moleculeSelectRef.current, props.molecules, tlcRef.current, tlc, addToRef.current, createInstance])
 
     return <MoorhenMenuItem
         id='import-dict-menu-item'
