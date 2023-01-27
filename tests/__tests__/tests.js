@@ -23,8 +23,6 @@ describe('Testing molecules_container_js', () => {
         setupFunctions.copyExampleDataToFauxFS()
     })
 
-    /*
-
     test('Test gemmi', () => {
         console.log(cootModule.CoorFormat.Pdb)
         console.log(cootModule.CoorFormat.ChemComp)
@@ -99,7 +97,6 @@ describe('Testing molecules_container_js', () => {
         const ret = molecules_container.add(0)
         expect(ret).toBe(1)
     })
-    */
 
     test('Test delete methods', () => {
         const molecules_container = new cootModule.molecules_container_js()
@@ -110,7 +107,6 @@ describe('Testing molecules_container_js', () => {
         console.log(ret_side);
     })
 
-    /*
     test('Test merge molecules', () => {
         const molecules_container = new cootModule.molecules_container_js()
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
@@ -411,7 +407,6 @@ describe('Testing molecules_container_js', () => {
         expect(simpleMesh.vertices.size()).toBeCloseTo(143439, -3)
         expect(simpleMesh.triangles.size()).toBeCloseTo(174034, -3)
     })
-    */
 
 })
 
