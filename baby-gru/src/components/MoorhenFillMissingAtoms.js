@@ -11,7 +11,7 @@ export const MoorhenFillMissingAtoms = (props) => {
     
     const handleModelChange = (evt) => {
         console.log(`Selected model ${evt.target.value}`)
-        setSelectedModel(evt.target.value)
+        setSelectedModel(parseInt(evt.target.value))
     }
 
     const handleAtomFill = (...args) => {
