@@ -96,7 +96,7 @@ export const MoorhenRamachandran = (props) => {
                 setRamaPlotData(null)
                 return
             }
-            const inputData = {message:'coot_command', command:'ramachandran_validation', returnType:'ramachandran_data', commandArgs:[moleculeSelectRef.current.value], chainID: chainSelectRef.current.value}
+            const inputData = {message:'coot_command', command:'ramachandran_validation', returnType:'ramachandran_data', commandArgs:[parseInt(moleculeSelectRef.current.value)], chainID: chainSelectRef.current.value}
             let response = await props.commandCentre.current.cootCommand(inputData)
             setRamaPlotData(response.data.result.result)
         }
@@ -122,7 +122,7 @@ export const MoorhenRamachandran = (props) => {
 
     const handleModelChange = (evt) => {
         console.log(`Ramachandran selected model ${evt.target.value}`)
-        setSelectedModel(evt.target.value)
+        setSelectedModel(parseInt(evt.target.value))
         setSelectedChain(chainSelectRef.current.value)
     }
 

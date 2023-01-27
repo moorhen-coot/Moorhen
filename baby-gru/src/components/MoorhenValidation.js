@@ -94,13 +94,13 @@ export const MoorhenValidation = (props) => {
 
     const handleModelChange = (evt) => {
         console.log(`Selected model ${evt.target.value}`)
-        setSelectedModel(evt.target.value)
+        setSelectedModel(parseInt(evt.target.value))
         setSelectedChain(chainSelectRef.current.value)
     }
 
     const handleMapChange = (evt) => {
         console.log(`Selected map ${evt.target.value}`)
-        setSelectedMap(evt.target.value)
+        setSelectedMap(parseInt(evt.target.value))
     }
 
     const handleChainChange = (evt) => {
