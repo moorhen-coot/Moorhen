@@ -80,6 +80,9 @@ cd ${BUILD_DIR}
 
 cd ${SOURCE_DIR}/tests/
 npm install
+ln -s ${BUILD_DIR}/moorhen_build/coot/moorhen.data
+ln -s ${BUILD_DIR}/moorhen_build/coot/moorhen.js
+ln -s ${BUILD_DIR}/moorhen_build/coot/moorhen.wasm
 cd ${BUILD_DIR}
 
 cd ${SOURCE_DIR}/baby-gru/public/baby-gru
