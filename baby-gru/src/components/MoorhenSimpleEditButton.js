@@ -76,9 +76,7 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
                         if(props.onExit) {
                             props.onExit(molecule, chosenAtom, result)
                         }
-
-                    }
-                    else if (props.nonCootCommand) {
+                    } else if (props.nonCootCommand) {
                         props.nonCootCommand(molecule, chosenAtom, localParameters)
                     }
                 }
@@ -297,6 +295,7 @@ export const MoorhenAddAltConfButton = (props) => {
         needsMapData={false}
         cootCommand="add_alternative_conformation"
         prompt="Click atom in residue to add alternative conformation"
+        refineAfterMod={false}
         icon={<img className="baby-gru-button-icon" alt="Add side chain" src={`${props.urlPrefix}/baby-gru/pixmaps/add-alt-conf.svg`} />}
         formatArgs={(molecule, chosenAtom) => {
             return [molecule.molNo, `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/*${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`]
@@ -319,7 +318,7 @@ export const MoorhenDeleteUsingCidButton = (props) => {
     }
 
     const MoorhenDeletePanel = (props) => {
-        const deleteModes = ['ATOM', 'RESIDUE', 'CHAIN']
+        const deleteModes = ['ATOM', 'RESIDUE', 'SIDE-CHAIN', 'CHAIN']
         return <Container>
             <Row>Please click an atom for core of deletion</Row>
             <Row>
@@ -342,16 +341,17 @@ export const MoorhenDeleteUsingCidButton = (props) => {
 
     const deleteFormatArgs = (molecule, chosenAtom, pp) => {
         //console.log({ molecule, chosenAtom, pp })
-        return pp.delete.mode === 'CHAIN' ?
-            [molecule.molNo, `/1/${chosenAtom.chain_id}/*/*:*`, 'LITERAL'] :
-            pp.delete.mode === 'RESIDUE' ?
-                [molecule.molNo,
-                `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/*${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`,
-                    'LITERAL'] :
-                [molecule.molNo,
-                `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf
-                }`,
-                    'LITERAL']
+        let commandArgs
+        if (pp.delete.mode === 'CHAIN') {
+            commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/*/*:*`, 'LITERAL'] 
+        } else if (pp.delete.mode === 'RESIDUE') {
+            commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/*${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`, 'LITERAL'] 
+        } else if (pp.delete.mode === 'ATOM') {
+            commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`, 'LITERAL']
+        } else {
+            commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/!N,CA,CB,C,O,HA,H`, 'LITERAL']
+        }
+        return commandArgs
     }
 
     return <MoorhenSimpleEditButton {...props}
@@ -368,7 +368,8 @@ export const MoorhenDeleteUsingCidButton = (props) => {
             setPanelParameters={setPanelParameters}
             panelParameters={panelParameters} />}
         icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/delete.svg`} />}
-        formatArgs={(m, c, p) => deleteFormatArgs(m, c, p)} />
+        formatArgs={(m, c, p) => deleteFormatArgs(m, c, p)}
+        refineAfterMod={false} />
 }
 
 export const MoorhenMutateButton = (props) => {
