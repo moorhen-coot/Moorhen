@@ -278,30 +278,32 @@ const residueSpecToJSArray = (residueSpecs) => {
 }
 
 const validationDataToJSArray = (validationData, chainID) => {
-    const chainIndex = validationData.get_index_for_chain(chainID);
+    let returnResult = []
     const cviv = validationData.cviv
-    const chain = cviv.get(chainIndex)
-    const resInfo = chain.rviv;
-
-    let returnResult = [];
-    const resInfoSize = resInfo.size()
-    for (let ir = 0; ir < resInfoSize; ir++) {
-        const residue = resInfo.get(ir)
-        const residueSpec = residue.residue_spec
-        returnResult.push({
-            chainId: residueSpec.chain_id,
-            insCode: residueSpec.ins_code,
-            seqNum: residueSpec.res_no,
-            restype: "UNK",
-            value: residue.function_value
-        })
-        residue.delete()
-        residueSpec.delete()
+    const chainSize = cviv.size()
+    for (let chainIndex = 0; chainIndex < chainSize; chainIndex++) {
+        const chain = cviv.get(chainIndex)
+        if (chain.chain_id === chainID) {
+            const resInfo = chain.rviv;
+            const resInfoSize = resInfo.size()
+            for (let ir = 0; ir < resInfoSize; ir++) {
+                const residue = resInfo.get(ir)
+                const residueSpec = residue.residue_spec
+                returnResult.push({
+                    chainId: residueSpec.chain_id,
+                    insCode: residueSpec.ins_code,
+                    seqNum: residueSpec.res_no,
+                    restype: "UNK",
+                    value: residue.function_value
+                })
+                residue.delete()
+                residueSpec.delete()
+            }
+            resInfo.delete()      
+        }
+        chain.delete()
     }
-
     cviv.delete()
-    chain.delete()
-    resInfo.delete()
     validationData.delete()
     return returnResult
 }
@@ -331,23 +333,24 @@ const interestingPlaceDataToJSArray = (interestingPlaceData) => {
     return returnResult
 }
 
-const ramachandranDataToJSArray = (ramachandraData) => {
+const ramachandranDataToJSArray = (ramachandraData, chainID) => {
     let returnResult = [];
-
     const ramachandraDataSize = ramachandraData.size()
     for (let ir = 0; ir < ramachandraDataSize; ir++) {
         const residue = ramachandraData.get(ir)
         const phiPsi = residue.phi_psi
-        returnResult.push({
-            chainId: phiPsi.chain_id,
-            insCode: phiPsi.ins_code,
-            seqNum: phiPsi.residue_number,
-            restype: residue.residue_name,
-            isOutlier: !residue.is_allowed_flag,
-            phi: phiPsi.phi(),
-            psi: phiPsi.psi(),
-            is_pre_pro: residue.residue_name === 'PRO'
-        })
+        if (phiPsi.chain_id === chainID) {
+            returnResult.push({
+                chainId: phiPsi.chain_id,
+                insCode: phiPsi.ins_code,
+                seqNum: phiPsi.residue_number,
+                restype: residue.residue_name,
+                isOutlier: !residue.is_allowed_flag,
+                phi: phiPsi.phi(),
+                psi: phiPsi.psi(),
+                is_pre_pro: residue.residue_name === 'PRO'
+            })
+        }
         residue.delete()
         phiPsi.delete()
     }
@@ -689,7 +692,7 @@ onmessage = function (e) {
                     returnResult = residueSpecToJSArray(cootResult)
                     break;
                 case 'ramachandran_data':
-                    returnResult = ramachandranDataToJSArray(cootResult)
+                    returnResult = ramachandranDataToJSArray(cootResult, e.data.chainID)
                     break;
                 case 'validation_data':
                     returnResult = validationDataToJSArray(cootResult, e.data.chainID)
