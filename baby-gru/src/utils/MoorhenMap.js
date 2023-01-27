@@ -237,12 +237,13 @@ MoorhenMap.prototype.doCootContour = function (glRef, x, y, z, radius, contourLe
     const $this = this
     $this.mapRadius = radius
 
-    let returnType =  "lines_mesh"
-    if(this.litLines)
-        returnType =  "lit_lines_mesh"
-
-    if(this.solid){
-        returnType =  "mesh"
+    let returnType
+    if (this.litLines) {
+        returnType = "lit_lines_mesh"
+    } else if(this.solid){
+        returnType = "mesh"
+    } else {
+        returnType = "lines_mesh"
     }
 
     return new Promise((resolve, reject) => {
