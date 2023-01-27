@@ -26,14 +26,14 @@ jobs:
            cd /home/runner/work/CCP4-Web-Assembly/ccp4_wasm         
            source /home/runner/work/CCP4-Web-Assembly/emsdk/emsdk_env.sh
            ./get_sources
-           emcmake cmake .
-           emmake make
-           emmake make install
+           ./initial_build.sh
        - name: Run tests
          working-directory: /home/runner/work/CCP4-Web-Assembly/ccp4_wasm       
          run: |             
            cd /home/runner/work/CCP4-Web-Assembly/ccp4_wasm/tests
-           ln -s ../coot/moorhen.data .
+           ln -s ../CCP4_WASM_BUILD/moorhen_build/coot/moorhen.data
+           ln -s ../CCP4_WASM_BUILD/moorhen_build/coot/moorhen.js
+           ln -s ../CCP4_WASM_BUILD/moorhen_build/coot/moorhen.wasm
            source /home/runner/work/CCP4-Web-Assembly/emsdk/emsdk_env.sh
            npm install
            ./run_tests.sh
