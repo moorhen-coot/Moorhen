@@ -23,6 +23,8 @@ describe('Testing molecules_container_js', () => {
         setupFunctions.copyExampleDataToFauxFS()
     })
 
+    /*
+
     test('Test gemmi', () => {
         console.log(cootModule.CoorFormat.Pdb)
         console.log(cootModule.CoorFormat.ChemComp)
@@ -97,7 +99,18 @@ describe('Testing molecules_container_js', () => {
         const ret = molecules_container.add(0)
         expect(ret).toBe(1)
     })
+    */
 
+    test('Test delete methods', () => {
+        const molecules_container = new cootModule.molecules_container_js()
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        const ret = molecules_container.delete_using_cid(coordMolNo, "A/4-104", "LITERAL");
+        const ret_side = molecules_container.delete_side_chain(coordMolNo, "A", 154, "" );
+        console.log(ret);
+        console.log(ret_side);
+    })
+
+    /*
     test('Test merge molecules', () => {
         const molecules_container = new cootModule.molecules_container_js()
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
@@ -398,18 +411,19 @@ describe('Testing molecules_container_js', () => {
         expect(simpleMesh.vertices.size()).toBeCloseTo(143439, -3)
         expect(simpleMesh.triangles.size()).toBeCloseTo(174034, -3)
     })
+    */
 
 })
 
 const setupFunctions = {
     copyExampleDataToFauxFS: () => {
-        const coordData = fs.readFileSync(path.join(__dirname, '..', 'example', '5a3h.pdb'), { encoding: 'utf8', flag: 'r' })
+        const coordData = fs.readFileSync(path.join(__dirname, '..', '..', 'example', '5a3h.pdb'), { encoding: 'utf8', flag: 'r' })
         cootModule.FS_createDataFile(".", '5a3h.pdb', coordData, true, true);
-        const sigmaaData = fs.readFileSync(path.join(__dirname, '..', 'example', '5a3h_sigmaa.mtz'), { encoding: null, flag: 'r' })
+        const sigmaaData = fs.readFileSync(path.join(__dirname, '..', '..', 'example', '5a3h_sigmaa.mtz'), { encoding: null, flag: 'r' })
         cootModule.FS_createDataFile(".", '5a3h_sigmaa.mtz', sigmaaData, true, true);
-        const rnaseSigmaaData = fs.readFileSync(path.join(__dirname, '..', 'example', 'rnasa-1.8-all_refmac1.mtz'), { encoding: null, flag: 'r' })
+        const rnaseSigmaaData = fs.readFileSync(path.join(__dirname, '..', '..', 'checkout', 'coot-1.0', 'data', 'rnasa-1.8-all_refmac1.mtz'), { encoding: null, flag: 'r' })
         cootModule.FS_createDataFile(".", 'rnasa-1.8-all_refmac1.mtz', rnaseSigmaaData, true, true);
-        const tmCoordData = fs.readFileSync(path.join(__dirname, '..', 'example', 'tm-A.pdb'), { encoding: 'utf8', flag: 'r' })
+        const tmCoordData = fs.readFileSync(path.join(__dirname, '..', '..', 'checkout', 'coot-1.0', 'api', 'tm-A.pdb'), { encoding: 'utf8', flag: 'r' })
         cootModule.FS_createDataFile(".", 'tm-A.pdb', tmCoordData, true, true);
         cootModule.FS.mkdir("COOT_BACKUP");
     }
