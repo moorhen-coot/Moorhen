@@ -24,7 +24,7 @@ const getDefaultValues = () => {
         mapLineWidth: 1.0,
         makeBackups: true,
         showShortcutToast: true,
-        defaultMapSurface: true,
+        defaultMapSurface: false,
         defaultBondSmoothness: 1,
         shortCuts: {
             "sphere_refine": {
