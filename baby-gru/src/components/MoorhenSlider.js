@@ -22,10 +22,6 @@ export default function MoorhenSlider(props) {
         }
     }, [externalValue])
 
-    React.useEffect(() => {
-        handleChange(null, convertInitValueToScale(props.externalValue))
-    }, [])
-
     const handleChange = (event, newValue) => {
         setValue(newValue);
         if (props.logScale) {
