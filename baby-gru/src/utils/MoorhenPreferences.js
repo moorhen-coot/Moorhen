@@ -16,7 +16,7 @@ const getDefaultValues = () => {
         darkMode: false, 
         atomLabelDepthMode: true, 
         defaultExpandDisplayCards: true,
-        defaultLitLines: false,
+        defaultMapLitLines: false,
         refineAfterMod: true,
         drawCrosshairs: true,
         drawMissingLoops: true,
@@ -24,6 +24,7 @@ const getDefaultValues = () => {
         mapLineWidth: 1.0,
         makeBackups: true,
         showShortcutToast: true,
+        defaultMapSurface: true,
         shortCuts: {
             "sphere_refine": {
                 modifiers: ["shiftKey"],
@@ -137,7 +138,7 @@ const PreferencesContextProvider = ({ children }) => {
     const [atomLabelDepthMode, setAtomLabelDepthMode] = useState(null)
     const [defaultExpandDisplayCards, setDefaultExpandDisplayCards] = useState(null)
     const [shortCuts, setShortCuts] = useState(null)
-    const [defaultLitLines, setDefaultLitLines] = useState(null)
+    const [defaultMapLitLines, setDefaultMapLitLines] = useState(null)
     const [refineAfterMod, setRefineAfterMod] = useState(null)
     const [mouseSensitivity, setMouseSensitivity] = useState(null)
     const [drawCrosshairs, setDrawCrosshairs] = useState(null)
@@ -145,6 +146,7 @@ const PreferencesContextProvider = ({ children }) => {
     const [mapLineWidth, setMapLineWidth] = useState(null)
     const [makeBackups, setMakeBackups] = useState(null)
     const [showShortcutToast, setShowShortcutToast] = useState(null)
+    const [defaultMapSurface, setDefaultMapSurface] = useState(null)
 
     const restoreDefaults = (defaultValues)=> {
         updateStoredPreferences('version', defaultValues.version)
@@ -152,7 +154,7 @@ const PreferencesContextProvider = ({ children }) => {
         setDefaultExpandDisplayCards(defaultValues.defaultExpandDisplayCards)            
         setShortCuts(JSON.stringify(defaultValues.shortCuts))            
         setAtomLabelDepthMode(defaultValues.atomLabelDepthMode)
-        setDefaultLitLines(defaultValues.defaultLitLines)
+        setDefaultMapLitLines(defaultValues.defaultMapLitLines)
         setRefineAfterMod(defaultValues.refineAfterMod)
         setMouseSensitivity(defaultValues.mouseSensitivity)
         setDrawCrosshairs(defaultValues.drawCrosshairs)
@@ -160,6 +162,7 @@ const PreferencesContextProvider = ({ children }) => {
         setMapLineWidth(defaultValues.mapLineWidth)
         setMakeBackups(defaultValues.makeBackups)
         setShowShortcutToast(defaultValues.showShortcutToast)
+        setDefaultMapSurface(defaultValues.defaultMapSurface)
     }
 
     /**
@@ -177,14 +180,15 @@ const PreferencesContextProvider = ({ children }) => {
                     localforage.getItem('defaultExpandDisplayCards'),
                     localforage.getItem('shortCuts'),
                     localforage.getItem('atomLabelDepthMode'),
-                    localforage.getItem('defaultLitLines'),
+                    localforage.getItem('defaultMapLitLines'),
                     localforage.getItem('refineAfterMod'),
                     localforage.getItem('mouseSensitivity'),
                     localforage.getItem('drawCrosshairs'),
                     localforage.getItem('drawMissingLoops'),
                     localforage.getItem('mapLineWidth'),
                     localforage.getItem('makeBackups'),
-                    localforage.getItem('showShortcutToast')
+                    localforage.getItem('showShortcutToast'),
+                    localforage.getItem('defaultMapSurface')
                     ])
                 
                 console.log('Retrieved the following preferences from local storage: ', response)
@@ -202,7 +206,7 @@ const PreferencesContextProvider = ({ children }) => {
                     setDefaultExpandDisplayCards(response[2])
                     setShortCuts(response[3])
                     setAtomLabelDepthMode(response[4])
-                    setDefaultLitLines(response[5])
+                    setDefaultMapLitLines(response[5])
                     setRefineAfterMod(response[6])
                     setMouseSensitivity(response[7])
                     setDrawCrosshairs(response[8])
@@ -210,6 +214,7 @@ const PreferencesContextProvider = ({ children }) => {
                     setMapLineWidth(response[10])
                     setMakeBackups(response[11])
                     setShowShortcutToast(response[12])
+                    setDefaultMapSurface(response[13])
                 }                
                 
             } catch (err) {
@@ -235,6 +240,15 @@ const PreferencesContextProvider = ({ children }) => {
        
         updateStoredPreferences('showShortcutToast', showShortcutToast);
     }, [showShortcutToast]);
+
+    useMemo(() => {
+
+        if (defaultMapSurface === null) {
+            return
+        }
+       
+        updateStoredPreferences('defaultMapSurface', defaultMapSurface);
+    }, [defaultMapSurface]);
 
     useMemo(() => {
 
@@ -328,19 +342,20 @@ const PreferencesContextProvider = ({ children }) => {
 
     useMemo(() => {
 
-        if (defaultLitLines === null) {
+        if (defaultMapLitLines === null) {
             return
         }
        
-        updateStoredPreferences('defaultLitLines', defaultLitLines);
-    }, [defaultLitLines]);
+        updateStoredPreferences('defaultMapLitLines', defaultMapLitLines);
+    }, [defaultMapLitLines]);
 
     const collectedContextValues = {
         darkMode, setDarkMode, atomLabelDepthMode, setAtomLabelDepthMode, defaultExpandDisplayCards,
-        setDefaultExpandDisplayCards, shortCuts, setShortCuts, defaultLitLines, setDefaultLitLines,
+        setDefaultExpandDisplayCards, shortCuts, setShortCuts, defaultMapLitLines, setDefaultMapLitLines,
         refineAfterMod, setRefineAfterMod, mouseSensitivity, setMouseSensitivity, drawCrosshairs, 
         setDrawCrosshairs, drawMissingLoops, setDrawMissingLoops, mapLineWidth, setMapLineWidth,
-        makeBackups, setMakeBackups, showShortcutToast, setShowShortcutToast
+        makeBackups, setMakeBackups, showShortcutToast, setShowShortcutToast, defaultMapSurface,
+        setDefaultMapSurface
     }
 
     return (

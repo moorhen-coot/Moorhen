@@ -8,11 +8,11 @@ import MoorhenSlider from './MoorhenSlider'
 export const MoorhenPreferencesMenu = (props) => {
     const { 
         atomLabelDepthMode, setAtomLabelDepthMode, darkMode, setDarkMode, 
-        defaultExpandDisplayCards, setDefaultExpandDisplayCards, defaultLitLines,
-        setDefaultLitLines, refineAfterMod, setRefineAfterMod, mouseSensitivity,
+        defaultExpandDisplayCards, setDefaultExpandDisplayCards, defaultMapLitLines,
+        setDefaultMapLitLines, refineAfterMod, setRefineAfterMod, mouseSensitivity,
         setMouseSensitivity, drawCrosshairs, setDrawCrosshairs, drawMissingLoops,
         setDrawMissingLoops, mapLineWidth, setMapLineWidth, makeBackups, setMakeBackups,
-        showShortcutToast, setShowShortcutToast
+        showShortcutToast, setShowShortcutToast, defaultMapSurface, setDefaultMapSurface
      } = props;
     const [showModal, setShowModal] = useState(null);
 
@@ -49,9 +49,16 @@ export const MoorhenPreferencesMenu = (props) => {
                     <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
                         <Form.Check 
                             type="switch"
-                            checked={defaultLitLines}
-                            onChange={() => { setDefaultLitLines(!defaultLitLines) }}
+                            checked={defaultMapLitLines}
+                            onChange={() => { setDefaultMapLitLines(!defaultMapLitLines) }}
                             label="Activate map lit lines by default"/>
+                    </InputGroup>
+                    <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                        <Form.Check 
+                            type="switch"
+                            checked={defaultMapSurface}
+                            onChange={() => { setDefaultMapSurface(!defaultMapSurface) }}
+                            label="Show maps as surface by default"/>
                     </InputGroup>
                     <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
                         <Form.Check 

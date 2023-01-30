@@ -10,8 +10,8 @@ export const MoorhenMapCard = (props) => {
     const [cootContour, setCootContour] = useState(true)
     const [mapRadius, setMapRadius] = useState(props.initialRadius)
     const [mapContourLevel, setMapContourLevel] = useState(props.initialContour)
-    const [mapLitLines, setMapLitLines] = useState(props.defaultLitLines)
-    const [mapSolid, setMapSolid] = useState(false)
+    const [mapLitLines, setMapLitLines] = useState(props.defaultMapLitLines)
+    const [mapSolid, setMapSolid] = useState(props.defaultMapSurface)
     const [isCollapsed, setIsCollapsed] = useState(!props.defaultExpandDisplayCards);
     const [currentName, setCurrentName] = useState(props.map.name);
     const nextOrigin = createRef([])
@@ -214,7 +214,8 @@ export const MoorhenMapCard = (props) => {
     useEffect(() => {
         setCootContour(props.map.cootContour)
         setMapContourLevel(props.initialContour)
-        setMapLitLines(props.defaultLitLines)
+        setMapLitLines(props.defaultMapLitLines)
+        setMapSolid(props.defaultMapSurface)
         setMapRadius(props.initialRadius)
     }, [])
 
