@@ -99,11 +99,6 @@ export const MoorhenPreferencesMenu = (props) => {
                             onChange={() => { setDefaultBondSmoothness(!drawMissingLoops) }}
                             label="Default quality of molecule bonds"/>
                     </InputGroup>
-                    <MoorhenDefaultBondSmoothnessPreferencesMenuItem
-                        defaultBondSmoothness={defaultBondSmoothness}
-                        setDefaultBondSmoothness={setDefaultBondSmoothness}
-                        setPopoverIsShown={setPopoverIsShown}
-                    />
                     <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
                         <Form.Check 
                             type="switch"
@@ -111,6 +106,11 @@ export const MoorhenPreferencesMenu = (props) => {
                             onChange={() => { setMakeBackups(!makeBackups) }}
                             label="Make molecule backups"/>
                     </InputGroup>
+                    <MoorhenDefaultBondSmoothnessPreferencesMenuItem
+                        defaultBondSmoothness={defaultBondSmoothness}
+                        setDefaultBondSmoothness={setDefaultBondSmoothness}
+                        setPopoverIsShown={setPopoverIsShown}
+                    />
                     <hr></hr>
                     <Form.Group controlId="mouseSensitivitySlider" style={{paddingTop:'0rem', paddingBottom:'0.5rem', paddingRight:'0.5rem', paddingLeft:'1rem', width: '25rem'}}>
                         <MoorhenSlider minVal={0.1} maxVal={10.0} logScale={false} sliderTitle="Mouse sensitivity" intialValue={2.5} externalValue={mouseSensitivity} setExternalValue={setMouseSensitivity}/>

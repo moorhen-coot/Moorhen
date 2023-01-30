@@ -383,7 +383,7 @@ export const MoorhenDefaultBondSmoothnessPreferencesMenuItem = (props) => {
     return <MoorhenMenuItem
         popoverPlacement='right'
         popoverContent={panelContent}
-        menuItemText={"Default quality of molecule bonds"}
+        menuItemText={"Default smoothness of molecule bonds"}
         setPopoverIsShown={props.setPopoverIsShown}
         onCompleted={onCompleted}
     />
