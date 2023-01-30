@@ -3,24 +3,28 @@ import { NavDropdown, Form, InputGroup } from "react-bootstrap";
 import { MoorhenShortcutConfigModal } from "./MoorhenShortcutConfigModal"
 import { MenuItem } from "@mui/material";
 import { convertViewtoPx } from "../utils/MoorhenUtils";
+import { MoorhenDefaultBondSmoothnessPreferencesMenuItem } from './MoorhenMenuItem'
 import MoorhenSlider from './MoorhenSlider' 
 
 export const MoorhenPreferencesMenu = (props) => {
     const { 
         atomLabelDepthMode, setAtomLabelDepthMode, darkMode, setDarkMode, 
-        defaultExpandDisplayCards, setDefaultExpandDisplayCards, defaultLitLines,
-        setDefaultLitLines, refineAfterMod, setRefineAfterMod, mouseSensitivity,
+        defaultExpandDisplayCards, setDefaultExpandDisplayCards, defaultMapLitLines,
+        setDefaultMapLitLines, refineAfterMod, setRefineAfterMod, mouseSensitivity,
         setMouseSensitivity, drawCrosshairs, setDrawCrosshairs, drawMissingLoops,
         setDrawMissingLoops, mapLineWidth, setMapLineWidth, makeBackups, setMakeBackups,
-        showShortcutToast, setShowShortcutToast
+        showShortcutToast, setShowShortcutToast, defaultMapSurface, setDefaultMapSurface,
+        defaultBondSmoothness, setDefaultBondSmoothness
      } = props;
-    const [showModal, setShowModal] = useState(null);
+
+     const [showModal, setShowModal] = useState(null);
+    const [popoverIsShown, setPopoverIsShown] = useState(false)
 
     return <NavDropdown
                     title="Preferences"
                     id="preferences-nav-dropdown"
                     style={{display:'flex', alignItems:'center'}}
-                    autoClose="outside"
+                    autoClose={popoverIsShown ? false : 'outside'}
                     show={props.currentDropdownId === props.dropdownId}
                     onToggle={() => { props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId(-1) }}>
                 <div style={{maxHeight: convertViewtoPx(65, props.windowHeight), overflowY: 'auto'}}>
@@ -49,9 +53,16 @@ export const MoorhenPreferencesMenu = (props) => {
                     <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
                         <Form.Check 
                             type="switch"
-                            checked={defaultLitLines}
-                            onChange={() => { setDefaultLitLines(!defaultLitLines) }}
+                            checked={defaultMapLitLines}
+                            onChange={() => { setDefaultMapLitLines(!defaultMapLitLines) }}
                             label="Activate map lit lines by default"/>
+                    </InputGroup>
+                    <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                        <Form.Check 
+                            type="switch"
+                            checked={defaultMapSurface}
+                            onChange={() => { setDefaultMapSurface(!defaultMapSurface) }}
+                            label="Show maps as surface by default"/>
                     </InputGroup>
                     <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
                         <Form.Check 
@@ -84,10 +95,22 @@ export const MoorhenPreferencesMenu = (props) => {
                     <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
                         <Form.Check 
                             type="switch"
+                            checked={drawMissingLoops}
+                            onChange={() => { setDefaultBondSmoothness(!drawMissingLoops) }}
+                            label="Default quality of molecule bonds"/>
+                    </InputGroup>
+                    <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                        <Form.Check 
+                            type="switch"
                             checked={makeBackups}
                             onChange={() => { setMakeBackups(!makeBackups) }}
                             label="Make molecule backups"/>
                     </InputGroup>
+                    <MoorhenDefaultBondSmoothnessPreferencesMenuItem
+                        defaultBondSmoothness={defaultBondSmoothness}
+                        setDefaultBondSmoothness={setDefaultBondSmoothness}
+                        setPopoverIsShown={setPopoverIsShown}
+                    />
                     <hr></hr>
                     <Form.Group controlId="mouseSensitivitySlider" style={{paddingTop:'0rem', paddingBottom:'0.5rem', paddingRight:'0.5rem', paddingLeft:'1rem', width: '25rem'}}>
                         <MoorhenSlider minVal={0.1} maxVal={10.0} logScale={false} sliderTitle="Mouse sensitivity" intialValue={2.5} externalValue={mouseSensitivity} setExternalValue={setMouseSensitivity}/>

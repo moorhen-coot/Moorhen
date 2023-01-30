@@ -10,8 +10,8 @@ export const MoorhenMapCard = (props) => {
     const [cootContour, setCootContour] = useState(true)
     const [mapRadius, setMapRadius] = useState(props.initialRadius)
     const [mapContourLevel, setMapContourLevel] = useState(props.initialContour)
-    const [mapLitLines, setMapLitLines] = useState(props.defaultLitLines)
-    const [mapSolid, setMapSolid] = useState(false)
+    const [mapLitLines, setMapLitLines] = useState(props.defaultMapLitLines)
+    const [mapSolid, setMapSolid] = useState(props.defaultMapSurface)
     const [isCollapsed, setIsCollapsed] = useState(!props.defaultExpandDisplayCards);
     const [currentName, setCurrentName] = useState(props.map.name);
     const nextOrigin = createRef([])
@@ -213,13 +213,6 @@ export const MoorhenMapCard = (props) => {
 
     useEffect(() => {
         setCootContour(props.map.cootContour)
-        setMapContourLevel(props.initialContour)
-        setMapLitLines(props.defaultLitLines)
-        setMapRadius(props.initialRadius)
-    }, [])
-
-    useEffect(() => {
-        setCootContour(props.map.cootContour)
         if (props.map.cootContour && !busyContouring.current) {
             busyContouring.current = true
             console.log(props.commandCentre.current)
@@ -275,12 +268,12 @@ export const MoorhenMapCard = (props) => {
                 </Col>
                 <Col>
                     <Form.Group controlId="contouringLevel" className="mb-3">
-                            <MoorhenSlider minVal={0.01} maxVal={5} logScale={true} sliderTitle="Level" isDisabled={!cootContour} intialValue={props.initialContour} externalValue={mapContourLevel} setExternalValue={setMapContourLevel}/>
+                        <MoorhenSlider minVal={0.01} maxVal={5} logScale={true} sliderTitle="Level" isDisabled={!cootContour} intialValue={props.initialContour} externalValue={mapContourLevel} setExternalValue={setMapContourLevel}/>
                     </Form.Group>
                 </Col>
                 <Col>
                     <Form.Group controlId="contouringRadius" className="mb-3">
-                            <MoorhenSlider minVal={0.01} maxVal={100} logScale={false} sliderTitle="Radius" isDisabled={!cootContour} intialValue={props.initialRadius} externalValue={mapRadius} setExternalValue={setMapRadius}/>
+                        <MoorhenSlider minVal={0.01} maxVal={100} logScale={false} sliderTitle="Radius" isDisabled={!cootContour} intialValue={props.initialRadius} externalValue={mapRadius} setExternalValue={setMapRadius}/>
                     </Form.Group>
                 </Col>
             </Row>

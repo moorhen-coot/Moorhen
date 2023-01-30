@@ -14,7 +14,7 @@ export const MoorhenMoleculeCard = (props) => {
     const [isVisible, setIsVisible] = useState(true)
     const [bondWidth, setBondWidth] = useState(0.1)
     const [atomRadiusBondRatio, setAtomRadiusBondRatio] = useState(1.5)
-    const [bondSmoothness, setBondSmoothness] = useState(1)
+    const [bondSmoothness, setBondSmoothness] = useState(props.defaultBondSmoothness)
 
     const bondSettingsProps = {
         bondWidth, setBondWidth, atomRadiusBondRatio,
@@ -54,10 +54,12 @@ export const MoorhenMoleculeCard = (props) => {
             return
         }
 
-        props.molecule.cootBondsOptions.smoothness = bondSmoothness
-        if (isVisible && showState['CBs']) {
+        if (isVisible && showState['CBs'] && props.molecule.cootBondsOptions.smoothness !== bondSmoothness) {
+            props.molecule.cootBondsOptions.smoothness = bondSmoothness
             props.molecule.setAtomsDirty(true)
             props.molecule.redraw(props.glRef)
+        } else {
+            props.molecule.cootBondsOptions.smoothness = bondSmoothness
         }
 
     }, [bondSmoothness]);
@@ -67,10 +69,12 @@ export const MoorhenMoleculeCard = (props) => {
             return
         }
 
-        props.molecule.cootBondsOptions.width = bondWidth
-        if (isVisible && showState['CBs']) {
+        if (isVisible && showState['CBs'] && props.molecule.cootBondsOptions.width !== bondWidth) {
+            props.molecule.cootBondsOptions.width = bondWidth
             props.molecule.setAtomsDirty(true)
             props.molecule.redraw(props.glRef)
+        } else {
+            props.molecule.cootBondsOptions.width = bondWidth
         }
 
     }, [bondWidth]);
@@ -80,10 +84,12 @@ export const MoorhenMoleculeCard = (props) => {
             return
         }
 
-        props.molecule.cootBondsOptions.atomRadiusBondRatio = atomRadiusBondRatio
-        if (isVisible && showState['CBs']) {
+        if (isVisible && showState['CBs'] && props.molecule.cootBondsOptions.atomRadiusBondRatio !== atomRadiusBondRatio) {
+            props.molecule.cootBondsOptions.atomRadiusBondRatio = atomRadiusBondRatio
             props.molecule.setAtomsDirty(true)
             props.molecule.redraw(props.glRef)
+        } else {
+            props.molecule.cootBondsOptions.atomRadiusBondRatio = atomRadiusBondRatio
         }
 
     }, [atomRadiusBondRatio]);

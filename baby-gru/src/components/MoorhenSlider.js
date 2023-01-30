@@ -14,16 +14,13 @@ export default function MoorhenSlider(props) {
     }
 
     const [value, setValue] = React.useState(convertInitValueToScale(props.intialValue));
-    const setValueTimer = React.createRef(null)
-    const [externalValue, setExternalValue] = React.useState(5)
+    const [externalValue, setExternalValue] = React.useState(props.externalValue)
 
     React.useEffect(() => {
-        props.setExternalValue(parseFloat(externalValue))
+        if (props.externalValue !== parseFloat(externalValue)) {
+            props.setExternalValue(parseFloat(externalValue))
+        }
     }, [externalValue])
-
-    React.useEffect(() => {
-        handleChange(null, convertInitValueToScale(props.externalValue))
-    }, [])
 
     const handleChange = (event, newValue) => {
         setValue(newValue);
