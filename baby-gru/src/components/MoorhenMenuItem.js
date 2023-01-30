@@ -389,7 +389,6 @@ export const MoorhenDefaultBondSmoothnessPreferencesMenuItem = (props) => {
     />
 }
 
-
 export const MoorhenMoleculeBondSettingsMenuItem = (props) => {
     const smoothnesSelectRef = useRef(null)
 
