@@ -25,6 +25,7 @@ const getDefaultValues = () => {
         makeBackups: true,
         showShortcutToast: true,
         defaultMapSurface: true,
+        defaultBondSmoothness: 1,
         shortCuts: {
             "sphere_refine": {
                 modifiers: ["shiftKey"],
@@ -147,6 +148,7 @@ const PreferencesContextProvider = ({ children }) => {
     const [makeBackups, setMakeBackups] = useState(null)
     const [showShortcutToast, setShowShortcutToast] = useState(null)
     const [defaultMapSurface, setDefaultMapSurface] = useState(null)
+    const [defaultBondSmoothness, setDefaultBondSmoothness] = useState(null)
 
     const restoreDefaults = (defaultValues)=> {
         updateStoredPreferences('version', defaultValues.version)
@@ -163,6 +165,7 @@ const PreferencesContextProvider = ({ children }) => {
         setMakeBackups(defaultValues.makeBackups)
         setShowShortcutToast(defaultValues.showShortcutToast)
         setDefaultMapSurface(defaultValues.defaultMapSurface)
+        setDefaultBondSmoothness(defaultValues.defaultBondSmoothness)
     }
 
     /**
@@ -188,7 +191,8 @@ const PreferencesContextProvider = ({ children }) => {
                     localforage.getItem('mapLineWidth'),
                     localforage.getItem('makeBackups'),
                     localforage.getItem('showShortcutToast'),
-                    localforage.getItem('defaultMapSurface')
+                    localforage.getItem('defaultMapSurface'),
+                    localforage.getItem('defaultBondSmoothness')
                     ])
                 
                 console.log('Retrieved the following preferences from local storage: ', response)
@@ -215,6 +219,7 @@ const PreferencesContextProvider = ({ children }) => {
                     setMakeBackups(response[11])
                     setShowShortcutToast(response[12])
                     setDefaultMapSurface(response[13])
+                    setDefaultBondSmoothness(response[14])
                 }                
                 
             } catch (err) {
@@ -240,6 +245,15 @@ const PreferencesContextProvider = ({ children }) => {
        
         updateStoredPreferences('showShortcutToast', showShortcutToast);
     }, [showShortcutToast]);
+    
+    useMemo(() => {
+
+        if (defaultBondSmoothness === null) {
+            return
+        }
+       
+        updateStoredPreferences('defaultBondSmoothness', defaultBondSmoothness);
+    }, [defaultBondSmoothness]);
 
     useMemo(() => {
 
@@ -355,7 +369,7 @@ const PreferencesContextProvider = ({ children }) => {
         refineAfterMod, setRefineAfterMod, mouseSensitivity, setMouseSensitivity, drawCrosshairs, 
         setDrawCrosshairs, drawMissingLoops, setDrawMissingLoops, mapLineWidth, setMapLineWidth,
         makeBackups, setMakeBackups, showShortcutToast, setShowShortcutToast, defaultMapSurface,
-        setDefaultMapSurface
+        setDefaultMapSurface, defaultBondSmoothness, setDefaultBondSmoothness
     }
 
     return (

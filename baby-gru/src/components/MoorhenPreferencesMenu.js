@@ -3,6 +3,7 @@ import { NavDropdown, Form, InputGroup } from "react-bootstrap";
 import { MoorhenShortcutConfigModal } from "./MoorhenShortcutConfigModal"
 import { MenuItem } from "@mui/material";
 import { convertViewtoPx } from "../utils/MoorhenUtils";
+import { MoorhenDefaultBondSmoothnessPreferencesMenuItem } from './MoorhenMenuItem'
 import MoorhenSlider from './MoorhenSlider' 
 
 export const MoorhenPreferencesMenu = (props) => {
@@ -12,15 +13,18 @@ export const MoorhenPreferencesMenu = (props) => {
         setDefaultMapLitLines, refineAfterMod, setRefineAfterMod, mouseSensitivity,
         setMouseSensitivity, drawCrosshairs, setDrawCrosshairs, drawMissingLoops,
         setDrawMissingLoops, mapLineWidth, setMapLineWidth, makeBackups, setMakeBackups,
-        showShortcutToast, setShowShortcutToast, defaultMapSurface, setDefaultMapSurface
+        showShortcutToast, setShowShortcutToast, defaultMapSurface, setDefaultMapSurface,
+        defaultBondSmoothness, setDefaultBondSmoothness
      } = props;
-    const [showModal, setShowModal] = useState(null);
+
+     const [showModal, setShowModal] = useState(null);
+    const [popoverIsShown, setPopoverIsShown] = useState(false)
 
     return <NavDropdown
                     title="Preferences"
                     id="preferences-nav-dropdown"
                     style={{display:'flex', alignItems:'center'}}
-                    autoClose="outside"
+                    autoClose={popoverIsShown ? false : 'outside'}
                     show={props.currentDropdownId === props.dropdownId}
                     onToggle={() => { props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId(-1) }}>
                 <div style={{maxHeight: convertViewtoPx(65, props.windowHeight), overflowY: 'auto'}}>
@@ -88,6 +92,18 @@ export const MoorhenPreferencesMenu = (props) => {
                             onChange={() => { setDrawMissingLoops(!drawMissingLoops) }}
                             label="Show missing loops"/>
                     </InputGroup>
+                    <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                        <Form.Check 
+                            type="switch"
+                            checked={drawMissingLoops}
+                            onChange={() => { setDefaultBondSmoothness(!drawMissingLoops) }}
+                            label="Default quality of molecule bonds"/>
+                    </InputGroup>
+                    <MoorhenDefaultBondSmoothnessPreferencesMenuItem
+                        defaultBondSmoothness={defaultBondSmoothness}
+                        setDefaultBondSmoothness={setDefaultBondSmoothness}
+                        setPopoverIsShown={setPopoverIsShown}
+                    />
                     <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
                         <Form.Check 
                             type="switch"

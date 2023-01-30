@@ -14,7 +14,7 @@ export const MoorhenMoleculeCard = (props) => {
     const [isVisible, setIsVisible] = useState(true)
     const [bondWidth, setBondWidth] = useState(0.1)
     const [atomRadiusBondRatio, setAtomRadiusBondRatio] = useState(1.5)
-    const [bondSmoothness, setBondSmoothness] = useState(1)
+    const [bondSmoothness, setBondSmoothness] = useState(props.defaultBondSmoothness)
 
     const bondSettingsProps = {
         bondWidth, setBondWidth, atomRadiusBondRatio,
