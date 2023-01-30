@@ -9369,7 +9369,8 @@ class MGWebGL extends Component {
         this.gl.uniform1f(this.shaderProgramTextBackground.fog_start, 1000.0);
         this.gl.uniform1f(this.shaderProgramTextBackground.fog_end, 1000.0);
         let axesOffset = vec3.create();
-        vec3.set(axesOffset, 20, 20, 0);
+        const ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
+        vec3.set(axesOffset, 20*ratio, 18, 0);
         vec3.transformMat4(axesOffset, axesOffset, invMat);
         let right = vec3.create();
         vec3.set(right, 1.0, 0.0, 0.0);
