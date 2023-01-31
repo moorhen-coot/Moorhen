@@ -569,6 +569,15 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<merge_molecule_results_info_t>("Vectormerge_molecule_results_info_t");
     register_vector<coot::phi_psi_prob_t>("Vectophi_psi_prob_t");
 
+    value_object<coot::util::sfcalc_genmap_stats_t>("sfcalc_genmap_stats_t")
+        .field("r_factor",&coot::util::sfcalc_genmap_stats_t::r_factor)
+        .field("free_r_factor",&coot::util::sfcalc_genmap_stats_t::free_r_factor)
+        .field("bulk_solvent_volume",&coot::util::sfcalc_genmap_stats_t::bulk_solvent_volume)
+        .field("bulk_correction",&coot::util::sfcalc_genmap_stats_t::bulk_correction)
+        .field("n_splines",&coot::util::sfcalc_genmap_stats_t::n_splines)
+
+    ;
+
     value_object<molecules_container_t::r_factor_stats>("r_factor_stats")
         .field("r_factor",&molecules_container_t::r_factor_stats::r_factor)
         .field("free_r_factor",&molecules_container_t::r_factor_stats::free_r_factor)
