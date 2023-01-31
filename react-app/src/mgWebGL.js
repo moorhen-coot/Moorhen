@@ -1247,6 +1247,7 @@ class DisplayBuffer {
         this.name_label = "";
         this.display_class = "NONE";
         this.transparent = false;
+        this.alphaChanged = false;
         this.atoms = [];
         this.texture = null;
         this.clearBuffers();
@@ -7768,7 +7769,7 @@ class MGWebGL extends Component {
                 //console.log(idx+" is transparent ;-) "+bufferTypes[0]);
 
                 if (bufferTypes[0] === "TRIANGLES") {
-                    if (typeof this.displayBuffers[idx].allVertices === "undefined") {
+                    if (typeof this.displayBuffers[idx].allVertices === "undefined"||this.displayBuffers[idx].alphaChanged) {
                         this.displayBuffers[idx].allVertices = [];
                         this.displayBuffers[idx].allNormals = [];
                         this.displayBuffers[idx].allColours = [];
@@ -7799,6 +7800,7 @@ class MGWebGL extends Component {
                         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[idx].allVertices), this.gl.STATIC_DRAW);
                         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].allTriangleVertexColourBuffer);
                         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[idx].allColours), this.gl.STATIC_DRAW);
+                        this.displayBuffers[idx].alphaChanged = false;
                     }
                     let sortThings = [];
                     //console.log("Big thing is of size "+this.displayBuffers[idx].allIndexs.length);

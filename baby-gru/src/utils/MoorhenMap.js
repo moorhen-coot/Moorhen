@@ -13,6 +13,7 @@ export function MoorhenMap(commandCentre) {
     this.displayObjects = { Coot: [] }
     this.litLines = true
     this.solid = false
+    this.alpha = 1.0
     this.isDifference = false
     this.hasReflectionData = false
 }
@@ -256,6 +257,14 @@ MoorhenMap.prototype.doCootContour = function (glRef, x, y, z, radius, contourLe
             $this.clearBuffersOfStyle(glRef, "Coot")
             //$this.displayObjects['Coot'] = [...$this.displayObjects['Coot'], ...objects.map(object=>gl.appendOtherData(object, true))]
             objects.forEach(object => {
+                //I could inject alpha here ... ?
+                object.col_tri.forEach(cols => {
+                        cols.forEach(col => {
+                                for(let idx=3;idx<col.length;idx+=4){
+                                    col[idx] = $this.alpha
+                                }
+                        })
+                })
                 var a = glRef.current.appendOtherData(object, true);
                 $this.displayObjects['Coot'] = $this.displayObjects['Coot'].concat(a)
             })
@@ -265,6 +274,21 @@ MoorhenMap.prototype.doCootContour = function (glRef, x, y, z, radius, contourLe
         })
     })
 
+}
+
+MoorhenMap.prototype.setAlpha = async function (alpha,glRef) {
+    this.alpha = alpha
+    this.displayObjects['Coot'].forEach(buffer => {
+        buffer.triangleColours.forEach(colbuffer => {
+            for(let idx=3;idx<colbuffer.length;idx+=4){
+                colbuffer[idx] = alpha
+            }
+        })
+        buffer.isDirty = true
+        buffer.alphaChanged = true
+    })
+    glRef.current.buildBuffers();
+    glRef.current.drawScene();
 }
 
 MoorhenMap.prototype.associateToReflectionData = async function (selectedColumns, reflectionData) {

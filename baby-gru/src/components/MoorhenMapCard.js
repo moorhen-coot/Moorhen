@@ -5,6 +5,7 @@ import { VisibilityOffOutlined, VisibilityOutlined, ExpandMoreOutlined, ExpandLe
 import MoorhenSlider from "./MoorhenSlider";
 import { MoorhenDeleteDisplayObjectMenuItem, MoorhenRenameDisplayObjectMenuItem } from "./MoorhenMenuItem";
 import { MenuItem } from "@mui/material";
+import { MoorhenMapSettingsMenuItem } from "./MoorhenMenuItem";
 
 export const MoorhenMapCard = (props) => {
     const [cootContour, setCootContour] = useState(true)
@@ -12,11 +13,16 @@ export const MoorhenMapCard = (props) => {
     const [mapContourLevel, setMapContourLevel] = useState(props.initialContour)
     const [mapLitLines, setMapLitLines] = useState(props.defaultMapLitLines)
     const [mapSolid, setMapSolid] = useState(props.defaultMapSurface)
+    const [mapOpacity, setMapOpacity] = useState(1.0)
     const [isCollapsed, setIsCollapsed] = useState(!props.defaultExpandDisplayCards);
     const [currentName, setCurrentName] = useState(props.map.name);
     const nextOrigin = createRef([])
     const busyContouring = createRef(false)
     const [popoverIsShown, setPopoverIsShown] = useState(false)
+
+    const mapSettingsProps = {
+        mapOpacity, setMapOpacity
+    }
 
     const handleDownload = async () => {
         let response = await props.map.getMap()
@@ -73,6 +79,11 @@ export const MoorhenMapCard = (props) => {
         5: {
             label: mapSolid ? "Chickenwire" : "Solid",
             compressed: () => {return (<MenuItem key='solid-or-chickenwire' variant="success" disabled={!cootContour}  onClick={handleSolid}>{mapSolid ? "Chickenwire" : "Solid"}</MenuItem>)},
+            expanded: null
+        },
+        6: {
+            label: "Map draw settings",
+            compressed: () => {return (<MoorhenMapSettingsMenuItem key={6} setPopoverIsShown={setPopoverIsShown} map={props.map} {...mapSettingsProps} />)},
             expanded: null
         }
     }
@@ -210,6 +221,10 @@ export const MoorhenMapCard = (props) => {
             document.removeEventListener("contourOnSessionLoad", handleContourOnSessionLoad);
         };
     }, [handleOriginCallback, props.activeMap?.molNo]);
+
+    useEffect(() => {
+        props.map.setAlpha(mapOpacity,props.glRef)
+    }, [mapOpacity])
 
     useEffect(() => {
         setCootContour(props.map.cootContour)

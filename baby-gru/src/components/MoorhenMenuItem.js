@@ -387,6 +387,23 @@ export const MoorhenDefaultBondSmoothnessPreferencesMenuItem = (props) => {
         setPopoverIsShown={props.setPopoverIsShown}
         onCompleted={onCompleted}
     />
+
+}
+
+export const MoorhenMapSettingsMenuItem = (props) => {
+    const panelContent =
+        <>
+            <Form.Group className="mb-3" style={{ width: '10rem', margin: '0' }} controlId="MoorhenMapOpacitySlider">
+                <MoorhenSlider minVal={0.0} maxVal={1.0} logScale={false} sliderTitle="Opacity" intialValue={props.mapOpacity} externalValue={props.mapOpacity} setExternalValue={props.setMapOpacity} />
+            </Form.Group>
+        </>
+    return <MoorhenMenuItem
+        popoverPlacement='left'
+        popoverContent={panelContent}
+        menuItemText={"Draw settings"}
+        setPopoverIsShown={props.setPopoverIsShown}
+    />
+ 
 }
 
 export const MoorhenMoleculeBondSettingsMenuItem = (props) => {
