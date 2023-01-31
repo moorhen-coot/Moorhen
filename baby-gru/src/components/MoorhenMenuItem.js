@@ -391,8 +391,10 @@ export const MoorhenDefaultBondSmoothnessPreferencesMenuItem = (props) => {
 }
 
 export const MoorhenMapSettingsMenuItem = (props) => {
+    const mapSolid = props.mapSolid
     const panelContent =
         <>
+            <MenuItem key='solid-or-chickenwire' variant="success" onClick={() => {props.setMapSolid(!mapSolid) }}>Draw as {mapSolid ? "Chickenwire" : "Solid"}</MenuItem>
             <Form.Group className="mb-3" style={{ width: '10rem', margin: '0' }} controlId="MoorhenMapOpacitySlider">
                 <MoorhenSlider minVal={0.0} maxVal={1.0} logScale={false} sliderTitle="Opacity" intialValue={props.mapOpacity} externalValue={props.mapOpacity} setExternalValue={props.setMapOpacity} />
             </Form.Group>

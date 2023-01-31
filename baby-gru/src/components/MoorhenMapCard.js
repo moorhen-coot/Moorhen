@@ -21,7 +21,7 @@ export const MoorhenMapCard = (props) => {
     const [popoverIsShown, setPopoverIsShown] = useState(false)
 
     const mapSettingsProps = {
-        mapOpacity, setMapOpacity
+        mapOpacity, setMapOpacity, mapSolid, setMapSolid
     }
 
     const handleDownload = async () => {
@@ -77,13 +77,8 @@ export const MoorhenMapCard = (props) => {
             expanded: null
         },
         5: {
-            label: mapSolid ? "Chickenwire" : "Solid",
-            compressed: () => {return (<MenuItem key='solid-or-chickenwire' variant="success" disabled={!cootContour}  onClick={handleSolid}>{mapSolid ? "Chickenwire" : "Solid"}</MenuItem>)},
-            expanded: null
-        },
-        6: {
             label: "Map draw settings",
-            compressed: () => {return (<MoorhenMapSettingsMenuItem key={6} setPopoverIsShown={setPopoverIsShown} map={props.map} {...mapSettingsProps} />)},
+            compressed: () => {return (<MoorhenMapSettingsMenuItem key={5} disabled={!cootContour} setPopoverIsShown={setPopoverIsShown} map={props.map} {...mapSettingsProps} />)},
             expanded: null
         }
     }
