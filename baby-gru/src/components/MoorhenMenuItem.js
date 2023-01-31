@@ -939,23 +939,33 @@ export const MoorhenImportFSigFMenuItem = (props) => {
     const moleculeSelectRef = useRef(null)
 
     const connectMap = async () => {
-        const commandArgs = [
+        const connectMapsArgs = [
             parseInt(moleculeSelectRef.current.value),
             parseInt(mapSelectRef.current.value),
             parseInt(twoFoFcSelectRef.current.value),
             parseInt(foFcSelectRef.current.value),
         ]
+        const sFcalcArgs = [
+            parseInt(moleculeSelectRef.current.value),
+            parseInt(twoFoFcSelectRef.current.value),
+            parseInt(foFcSelectRef.current.value),
+            parseInt(mapSelectRef.current.value)
+        ]
         
-        if (commandArgs.every(arg => !isNaN(arg))) {
+        if (connectMapsArgs.every(arg => !isNaN(arg))) {
             await props.commandCentre.current.cootCommand({
                 command: 'connect_updating_maps',
-                commandArgs: commandArgs,
+                commandArgs: connectMapsArgs,
+                returnType: 'status'
+            }, true)
+
+            await props.commandCentre.current.cootCommand({
+                command: 'sfcalc_genmaps_using_bulk_solvent',
+                commandArgs: sFcalcArgs,
                 returnType: 'status'
             }, true)
             
-            const connectedMapsEvent = new CustomEvent("connectedMaps", { detail: {
-                molecule: parseInt(moleculeSelectRef.current.value), map: parseInt(mapSelectRef.current.value)
-            } })
+            const connectedMapsEvent = new CustomEvent("connectedMaps")
             document.dispatchEvent(connectedMapsEvent)    
         }
         
