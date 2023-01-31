@@ -878,10 +878,10 @@ export const MoorhenImportMapCoefficientsMenuItem = (props) => {
 }
 
 export const MoorhenImportFSigFMenuItem = (props) => {
-    const mapSelectRef = useRef()
-    const twoFoFcSelectRef = useRef()
-    const foFcSelectRef = useRef()
-    const moleculeSelectRef = useRef()
+    const mapSelectRef = useRef(null)
+    const twoFoFcSelectRef = useRef(null)
+    const foFcSelectRef = useRef(null)
+    const moleculeSelectRef = useRef(null)
 
     const connectMap = async () => {
         const commandArgs = [
@@ -890,11 +890,20 @@ export const MoorhenImportFSigFMenuItem = (props) => {
             parseInt(twoFoFcSelectRef.current.value),
             parseInt(foFcSelectRef.current.value),
         ]
-        await props.commandCentre.current.cootCommand({
-            command: 'connect_updating_maps',
-            commandArgs: commandArgs,
-            returnType: 'status'
-        }, true)
+        
+        if (commandArgs.every(arg => !isNaN(arg))) {
+            await props.commandCentre.current.cootCommand({
+                command: 'connect_updating_maps',
+                commandArgs: commandArgs,
+                returnType: 'status'
+            }, true)
+            
+            const connectedMapsEvent = new CustomEvent("connectedMaps", { detail: {
+                molecule: parseInt(moleculeSelectRef.current.value), map: parseInt(mapSelectRef.current.value)
+            } })
+            document.dispatchEvent(connectedMapsEvent)    
+        }
+        
     }
 
     const onCompleted = async () => {
