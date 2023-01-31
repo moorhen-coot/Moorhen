@@ -286,6 +286,11 @@ MoorhenMap.prototype.setAlpha = async function (alpha,glRef) {
         })
         buffer.isDirty = true
         buffer.alphaChanged = true
+        if(alpha<0.99) {
+            buffer.transparent = true
+        } else {
+            buffer.transparent = false
+        }
     })
     glRef.current.buildBuffers();
     glRef.current.drawScene();
