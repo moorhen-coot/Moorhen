@@ -432,7 +432,6 @@ export const MoorhenScoresToastPreferencesMenuItem = (props) => {
                     label="Show Moorhen points"/>
 
             </InputGroup>
-
         </>
     
     return <MoorhenMenuItem
@@ -968,7 +967,6 @@ export const MoorhenImportFSigFMenuItem = (props) => {
             const connectedMapsEvent = new CustomEvent("connectedMaps")
             document.dispatchEvent(connectedMapsEvent)    
         }
-        
     }
 
     const onCompleted = async () => {
