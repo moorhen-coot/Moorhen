@@ -69,7 +69,7 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
                         molecule.setAtomsDirty(true)
                         molecule.redraw(props.glRef)
 
-                        const mapUpdateEvent = new CustomEvent("mapUpdate", { "detail": props.glRef.current.origin });
+                        const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: {origin: props.glRef.current.origin,  modifiedMolecule: molecule.molNo} })
                         document.dispatchEvent(mapUpdateEvent);
 
                         if(props.onExit) {

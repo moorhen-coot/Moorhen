@@ -225,9 +225,8 @@ export const MoorhenMoleculeCard = (props) => {
                             <Col>
                                 <div>
                                     {Object.keys(props.molecule.displayObjects)
-                                        .filter(key => !['hover', 'transformation'].includes(key))
+                                        .filter(key => !['hover', 'transformation', 'contact_dots', 'chemical_features'].includes(key))
                                         .map(key => {
-                                            if(!key.startsWith("contact_dots")&&!key.startsWith("chemical_features")){
                                             return <Form.Check
                                                 key={key}
                                                 inline
@@ -251,8 +250,8 @@ export const MoorhenMoleculeCard = (props) => {
                                                         changedState[key] = false
                                                         setShowState(changedState)
                                                     }
-                                                }} />
-                                        }
+                                                }} 
+                                            />
                                         })
                                     }
                                 </div>
