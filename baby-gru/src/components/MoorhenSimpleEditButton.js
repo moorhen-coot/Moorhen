@@ -68,10 +68,9 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
                         }
                         molecule.setAtomsDirty(true)
                         molecule.redraw(props.glRef)
-                        //Here use originChanged event to force recontour (relevant for live updating maps)
-                        const originChangedEvent = new CustomEvent("originChanged",
-                            { "detail": props.glRef.current.origin });
-                        document.dispatchEvent(originChangedEvent);
+
+                        const mapUpdateEvent = new CustomEvent("mapUpdate", { "detail": props.glRef.current.origin });
+                        document.dispatchEvent(mapUpdateEvent);
 
                         if(props.onExit) {
                             props.onExit(molecule, chosenAtom, result)

@@ -16,7 +16,6 @@ export const MoorhenFillMissingAtoms = (props) => {
 
     const handleAtomFill = (...args) => {
         const fillPartialResidue = async (selectedMolecule, chainId, resNum, insCode) => {
-            console.log('HIIIII')
             console.log(selectedMolecule, chainId, resNum, insCode)
             await props.commandCentre.current.cootCommand({
                 returnType: "status",
@@ -36,9 +35,8 @@ export const MoorhenFillMissingAtoms = (props) => {
             }
             selectedMolecule.setAtomsDirty(true)
             selectedMolecule.redraw(props.glRef)
-            const originChangedEvent = new CustomEvent("originChanged",
-                { "detail": props.glRef.current.origin });
-            document.dispatchEvent(originChangedEvent);    
+            const mapUpdateEvent = new CustomEvent("mapUpdate", { "detail": props.glRef.current.origin })
+            document.dispatchEvent(mapUpdateEvent);    
         }
         if (args.every(arg => arg !== null)) {
             fillPartialResidue(...args)
