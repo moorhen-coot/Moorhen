@@ -390,6 +390,61 @@ export const MoorhenDefaultBondSmoothnessPreferencesMenuItem = (props) => {
 
 }
 
+export const MoorhenScoresToastPreferencesMenuItem = (props) => {
+   
+    const panelContent =
+        <>
+            <InputGroup style={{ padding:'0rem', width: '15rem'}}>
+                <Form.Check 
+                        type="switch"
+                        checked={props.showScoresToast}
+                        onChange={() => { props.setShowScoresToast(!props.showScoresToast) }}
+                        label="Show scores window"/>
+            </InputGroup>
+            <InputGroup style={{ padding:'0rem', width: '15rem'}}>
+                <Form.Check 
+                    type="switch"
+                    checked={props.defaultUpdatingScores.includes('Rfactor')}
+                    onChange={() => { props.setDefaultUpdatingScores({
+                        action: props.defaultUpdatingScores.includes('Rfactor') ? 'Remove' : 'Add',
+                        item: 'Rfactor'
+                    }) }}
+                    label="Show Rfactor"/>
+            </InputGroup>
+            <InputGroup style={{ padding:'0rem', width: '15rem'}}>
+                <Form.Check 
+                    type="switch"
+                    checked={props.defaultUpdatingScores.includes('Rfree')}
+                    onChange={() => { props.setDefaultUpdatingScores({
+                        action: props.defaultUpdatingScores.includes('Rfree') ? 'Remove' : 'Add',
+                        item: 'Rfree'
+                    }) }}
+                    label="Show Rfree"/>
+            </InputGroup>
+            <InputGroup style={{ padding:'0rem', width: '15rem'}}>
+                <Form.Check 
+                    type="switch"
+                    checked={props.defaultUpdatingScores.includes('Moorhen Points')}
+                    onChange={() => { props.setDefaultUpdatingScores({
+                        action: props.defaultUpdatingScores.includes('Moorhen Points') ? 'Remove' : 'Add',
+                        item: 'Moorhen Points'
+                    }) }}
+                    label="Show Moorhen points"/>
+
+            </InputGroup>
+
+        </>
+    
+    return <MoorhenMenuItem
+        popoverPlacement='right'
+        popoverContent={panelContent}
+        menuItemText={"Options for scores when updating maps"}
+        setPopoverIsShown={props.setPopoverIsShown}
+        showOkButton={false}
+    />
+
+}
+
 export const MoorhenMapSettingsMenuItem = (props) => {
     const mapSolid = props.mapSolid
     const panelContent =

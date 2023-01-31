@@ -57,12 +57,14 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
                 commandArgs: [],
             }, true)
             
-            setScoresDifference({
-                moorhenPoints: currentScores.data.result.result.rail_points_total - scores.moorhenPoints, 
-                rFactor: currentScores.data.result.result.r_factor - scores.rFactor,
-                rFree: currentScores.data.result.result.free_r_factor - scores.rFree,
-            })
-            
+            if (scores !== null) {
+                setScoresDifference({
+                    moorhenPoints: currentScores.data.result.result.rail_points_total - scores.moorhenPoints, 
+                    rFactor: currentScores.data.result.result.r_factor - scores.rFactor,
+                    rFree: currentScores.data.result.result.free_r_factor - scores.rFree,
+                })
+            }
+                        
             setScores({
                 moorhenPoints: currentScores.data.result.result.rail_points_total,
                 rFactor: currentScores.data.result.result.r_factor,
@@ -193,36 +195,48 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
 
 
     return  <>
-                {scores !== null && 
+                {scores !== null && props.preferences.showScoresToast &&
                     <ToastContainer style={{ zIndex: '0', marginTop: "5rem", marginLeft: '0.5rem', width:'15rem', textAlign:'left', alignItems: 'left'}} position='top-start' >
                         <Toast bg='light' onClose={() => {}} autohide={false} show={true}>
-                            <Toast.Body >
-                            <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
+                            <Toast.Body>
+                            {props.preferences.defaultUpdatingScores.includes('Rfactor') && 
+                                <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
                                     Clipper R-Factor {parseFloat(scores.rFactor).toFixed(3)}
                                 </p>
+                            }
+                            {props.preferences.defaultUpdatingScores.includes('Rfree') && 
                                 <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
                                     Clipper R-Free {parseFloat(scores.rFree).toFixed(3)}
                                 </p>
+                            }
+                            {props.preferences.defaultUpdatingScores.includes('Moorhen Points') && 
                                 <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
                                     Moorhen Points {scores.moorhenPoints}
                                 </p>
+                            }
                             </Toast.Body>
                         </Toast>
                     </ToastContainer>
                 }
-                {scoresDifference !== null &&
+                {scoresDifference !== null && props.preferences.showScoresToast &&
                     <ToastContainer style={{ zIndex: '0', marginTop: "5rem", marginLeft: '0.5rem', width:'15rem', textAlign:'left', alignItems: 'left'}} position='top-start' >
                         <Toast bg='light' onClose={() => setScoresDifference(null)} autohide={5000} show={scoresDifference !== null}>
-                            <Toast.Body >
-                            <p style={{paddingLeft: '0.5rem', marginBottom:'0rem', color: scoresDifference.rFactor < 0 ? 'green' : 'red'}}>
-                                    Clipper R-Factor {parseFloat(scores.rFactor).toFixed(3)} {`${scoresDifference.rFactor < 0 ? '' : '+'}${parseFloat(scoresDifference.rFactor).toFixed(3)}`}
-                                </p>
-                                <p style={{paddingLeft: '0.5rem', marginBottom:'0rem', color: scoresDifference.rFree < 0 ? 'green' : 'red'}}>
-                                    Clipper R-Free {parseFloat(scores.rFree).toFixed(3)} {`${scoresDifference.rFree < 0 ? '' : '+'}${parseFloat(scoresDifference.rFree).toFixed(3)}`}
-                                </p>
-                                <p style={{paddingLeft: '0.5rem', marginBottom:'0rem', color: scoresDifference.moorhenPoints < 0 ? 'red' : 'green'}}>
-                                    Moorhen Points {scores.moorhenPoints} {`${scoresDifference.moorhenPoints < 0 ? '' : '+'}${scoresDifference.moorhenPoints}`}
-                                </p>
+                            <Toast.Body>
+                                {props.preferences.defaultUpdatingScores.includes('Rfactor') && 
+                                    <p style={{paddingLeft: '0.5rem', marginBottom:'0rem', color: scoresDifference.rFactor < 0 ? 'green' : 'red'}}>
+                                        Clipper R-Factor {parseFloat(scores.rFactor).toFixed(3)} {`${scoresDifference.rFactor < 0 ? '' : '+'}${parseFloat(scoresDifference.rFactor).toFixed(3)}`}
+                                    </p>
+                                }
+                                {props.preferences.defaultUpdatingScores.includes('Rfree') && 
+                                    <p style={{paddingLeft: '0.5rem', marginBottom:'0rem', color: scoresDifference.rFree < 0 ? 'green' : 'red'}}>
+                                        Clipper R-Free {parseFloat(scores.rFree).toFixed(3)} {`${scoresDifference.rFree < 0 ? '' : '+'}${parseFloat(scoresDifference.rFree).toFixed(3)}`}
+                                    </p>
+                                }
+                                {props.preferences.defaultUpdatingScores.includes('Moorhen Points') && 
+                                    <p style={{paddingLeft: '0.5rem', marginBottom:'0rem', color: scoresDifference.moorhenPoints < 0 ? 'red' : 'green'}}>
+                                        Moorhen Points {scores.moorhenPoints} {`${scoresDifference.moorhenPoints < 0 ? '' : '+'}${scoresDifference.moorhenPoints}`}
+                                    </p>
+                                }
                             </Toast.Body>
                         </Toast>
                     </ToastContainer>
