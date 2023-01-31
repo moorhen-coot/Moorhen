@@ -1815,6 +1815,7 @@ class MGWebGL extends Component {
                 function (evt) {
                     self.doClick(evt, self);
                     evt.stopPropagation();
+                    document.body.click();
                 },
                 false);
             self.canvas.addEventListener("mouseenter",
