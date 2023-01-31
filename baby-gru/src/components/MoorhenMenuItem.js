@@ -430,7 +430,6 @@ export const MoorhenScoresToastPreferencesMenuItem = (props) => {
                         item: 'Moorhen Points'
                     }) }}
                     label="Show Moorhen points"/>
-
             </InputGroup>
         </>
     
