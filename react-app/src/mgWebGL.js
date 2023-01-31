@@ -3106,7 +3106,7 @@ class MGWebGL extends Component {
 
     setOrigin(o, doDrawScene) {
         this.origin = o;
-        const mapUpdateEvent = new CustomEvent("mapUpdate", { "detail": this.origin });
+        const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: {origin: this.origin,  modifiedMolecule: null} })
         document.dispatchEvent(mapUpdateEvent);
         //default is to drawScene, unless doDrawScene provided and value is false
         if (typeof doDrawScene === 'undefined' || doDrawScene === true) {

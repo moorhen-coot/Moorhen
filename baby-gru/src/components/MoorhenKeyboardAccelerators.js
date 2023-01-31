@@ -9,7 +9,7 @@ const apresEdit = (molecule, glRef, setHoveredAtom) => {
     molecule.setAtomsDirty(true)
     molecule.redraw(glRef)
     setHoveredAtom({ molecule: null, cid: null })
-    const mapUpdateEvent = new CustomEvent("mapUpdate", { "detail": glRef.current.origin })
+    const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: { origin: glRef.current.origin,  modifiedMolecule: molecule.molNo} })
     document.dispatchEvent(mapUpdateEvent)
 }
 

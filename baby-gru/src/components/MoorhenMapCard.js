@@ -136,7 +136,7 @@ export const MoorhenMapCard = (props) => {
 
     const handleUpdateMapCallback = useCallback(e => {
         props.map.contourLevel = mapContourLevel
-        nextOrigin.current = [...e.detail.map(coord => -coord)]
+        nextOrigin.current = [...e.detail.origin.map(coord => -coord)]
         if (props.map.cootContour) {
             if (busyContouring.current) {
                 console.log('Skipping map update because already busy ', nextOrigin.current)
