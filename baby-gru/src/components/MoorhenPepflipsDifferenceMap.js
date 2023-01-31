@@ -61,10 +61,8 @@ export const MoorhenPepflipsDifferenceMap = (props) => {
             const selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedModel)
             selectedMolecule.setAtomsDirty(true)
             selectedMolecule.redraw(props.glRef)
-            //Here use originChanged event to force recontour (relevant for live updating maps)
-            const originChangedEvent = new CustomEvent("originChanged",
-                { "detail": props.glRef.current.origin });
-            document.dispatchEvent(originChangedEvent);
+            const mapUpdateEvent = new CustomEvent("mapUpdate", { "detail": props.glRef.current.origin });
+            document.dispatchEvent(mapUpdateEvent);
         }
 
         if (args.every(arg => arg !== null)) {

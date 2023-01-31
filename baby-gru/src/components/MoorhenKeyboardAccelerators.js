@@ -9,8 +9,8 @@ const apresEdit = (molecule, glRef, setHoveredAtom) => {
     molecule.setAtomsDirty(true)
     molecule.redraw(glRef)
     setHoveredAtom({ molecule: null, cid: null })
-    const originChangedEvent = new CustomEvent("originChanged", { "detail": glRef.current.origin })
-    document.dispatchEvent(originChangedEvent)
+    const mapUpdateEvent = new CustomEvent("mapUpdate", { "detail": glRef.current.origin })
+    document.dispatchEvent(mapUpdateEvent)
 }
 
 export const babyGruKeyPress = (event, collectedProps, shortCuts) => {

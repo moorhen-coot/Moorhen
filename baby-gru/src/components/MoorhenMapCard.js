@@ -137,19 +137,18 @@ export const MoorhenMapCard = (props) => {
                         {isCollapsed ? < ExpandMoreOutlined/> : <ExpandLessOutlined />}
                     </Button>
                 </Fragment>
-
     }
 
-    const handleOriginCallback = useCallback(e => {
+    const handleUpdateMapCallback = useCallback(e => {
+        props.map.contourLevel = mapContourLevel
         nextOrigin.current = [...e.detail.map(coord => -coord)]
         if (props.map.cootContour) {
             if (busyContouring.current) {
-                console.log('Skipping originChanged ', nextOrigin.current)
-            }
-            else {
+                console.log('Skipping map update because already busy ', nextOrigin.current)
+            } else {
+                console.log(mapContourLevel)
                 props.map.contourLevel = mapContourLevel
                 busyContouring.current = true
-                props.commandCentre.current.extendConsoleMessage("Because contourLevel or mapRadius changed useCallback")
                 props.map.doCootContour(props.glRef,
                     ...nextOrigin.current,
                     mapRadius,
@@ -180,27 +179,6 @@ export const MoorhenMapCard = (props) => {
         }
     }, [props.map.molNo])
 
-    const handleContourLevelCallback = useCallback(e => {
-        props.map.contourLevel = mapContourLevel
-        nextOrigin.current = [...e.detail.map(coord => -coord)]
-        if (props.map.cootContour) {
-            if (busyContouring.current) {
-                console.log('Skipping originChanged ', nextOrigin.current)
-            }
-            else {
-                props.map.contourLevel = mapContourLevel
-                busyContouring.current = true
-                props.map.doCootContour(props.glRef,
-                    ...nextOrigin.current,
-                    mapRadius,
-                    props.map.contourLevel)
-                    .then(result => {
-                        busyContouring.current = false
-                    })
-            }
-        }
-    }, [mapContourLevel, mapRadius])
-
     useMemo(() => {
         if (currentName === "") {
             return
@@ -210,17 +188,15 @@ export const MoorhenMapCard = (props) => {
     }, [currentName]);
 
     useEffect(() => {
-        document.addEventListener("originChanged", handleOriginCallback);
-        document.addEventListener("contourLevelChanged", handleContourLevelCallback);
+        document.addEventListener("mapUpdate", handleUpdateMapCallback);
         document.addEventListener("wheelContourLevelChanged", handleWheelContourLevelCallback);
         document.addEventListener("contourOnSessionLoad", handleContourOnSessionLoad);
         return () => {
-            document.removeEventListener("originChanged", handleOriginCallback);
-            document.removeEventListener("contourLevelChanged", handleContourLevelCallback);
+            document.removeEventListener("mapUpdate", handleUpdateMapCallback);
             document.removeEventListener("wheelContourLevelChanged", handleWheelContourLevelCallback);
             document.removeEventListener("contourOnSessionLoad", handleContourOnSessionLoad);
         };
-    }, [handleOriginCallback, props.activeMap?.molNo]);
+    }, [handleUpdateMapCallback, props.activeMap?.molNo]);
 
     useEffect(() => {
         props.map.setAlpha(mapOpacity,props.glRef)
