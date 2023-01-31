@@ -439,6 +439,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("ramachandran_validation",&molecules_container_t::ramachandran_validation)
     .function("merge_molecules", select_overload<std::pair<int, std::vector<merge_molecule_results_info_t> >(int,const std::string &)>(&molecules_container_t::merge_molecules))
     .function("get_single_letter_codes_for_chain",&molecules_container_t::get_single_letter_codes_for_chain)
+    .function("get_r_factor_stats",&molecules_container_t::get_r_factor_stats)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<>()
@@ -567,6 +568,13 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<std::pair<coot::residue_spec_t,std::string>>("Vectorresidue_spec_t_string_pair");
     register_vector<merge_molecule_results_info_t>("Vectormerge_molecule_results_info_t");
     register_vector<coot::phi_psi_prob_t>("Vectophi_psi_prob_t");
+
+    value_object<molecules_container_t::r_factor_stats>("r_factor_stats")
+        .field("r_factor",&molecules_container_t::r_factor_stats::r_factor)
+        .field("free_r_factor",&molecules_container_t::r_factor_stats::free_r_factor)
+        .field("rail_points_total",&molecules_container_t::r_factor_stats::rail_points_total)
+        .field("rail_points_new",&molecules_container_t::r_factor_stats::rail_points_new)
+    ;
 
     value_object<std::pair<int,std::vector<merge_molecule_results_info_t>>>("int_vector_merge_molecule_results_info_t_pair")
         .field("first",&std::pair<int,std::vector<merge_molecule_results_info_t>>::first)
