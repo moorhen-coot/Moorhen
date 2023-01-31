@@ -3,7 +3,7 @@ import { NavDropdown, Form, InputGroup } from "react-bootstrap";
 import { MoorhenShortcutConfigModal } from "./MoorhenShortcutConfigModal"
 import { MenuItem } from "@mui/material";
 import { convertViewtoPx } from "../utils/MoorhenUtils";
-import { MoorhenDefaultBondSmoothnessPreferencesMenuItem } from './MoorhenMenuItem'
+import { MoorhenDefaultBondSmoothnessPreferencesMenuItem, MoorhenScoresToastPreferencesMenuItem } from './MoorhenMenuItem'
 import MoorhenSlider from './MoorhenSlider' 
 
 export const MoorhenPreferencesMenu = (props) => {
@@ -14,10 +14,11 @@ export const MoorhenPreferencesMenu = (props) => {
         setMouseSensitivity, drawCrosshairs, setDrawCrosshairs, drawMissingLoops,
         setDrawMissingLoops, mapLineWidth, setMapLineWidth, makeBackups, setMakeBackups,
         showShortcutToast, setShowShortcutToast, defaultMapSurface, setDefaultMapSurface,
-        defaultBondSmoothness, setDefaultBondSmoothness
+        defaultBondSmoothness, setDefaultBondSmoothness, showScoresToast, setShowScoresToast,
+        defaultUpdatingScores, setDefaultUpdatingScores
      } = props;
 
-     const [showModal, setShowModal] = useState(null);
+    const [showModal, setShowModal] = useState(null);
     const [popoverIsShown, setPopoverIsShown] = useState(false)
 
     return <NavDropdown
@@ -83,7 +84,7 @@ export const MoorhenPreferencesMenu = (props) => {
                             type="switch"
                             checked={showShortcutToast}
                             onChange={() => { setShowShortcutToast(!showShortcutToast) }}
-                            label="Show shortcut toast"/>
+                            label="Show shortcut popup"/>
                     </InputGroup>
                     <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
                         <Form.Check 
@@ -106,6 +107,13 @@ export const MoorhenPreferencesMenu = (props) => {
                             onChange={() => { setMakeBackups(!makeBackups) }}
                             label="Make molecule backups"/>
                     </InputGroup>
+                    <MoorhenScoresToastPreferencesMenuItem
+                        showScoresToast={showScoresToast}
+                        setShowScoresToast={setShowScoresToast}
+                        defaultUpdatingScores={defaultUpdatingScores}
+                        setDefaultUpdatingScores={setDefaultUpdatingScores}
+                        setPopoverIsShown={setPopoverIsShown}
+                    />
                     <MoorhenDefaultBondSmoothnessPreferencesMenuItem
                         defaultBondSmoothness={defaultBondSmoothness}
                         setDefaultBondSmoothness={setDefaultBondSmoothness}

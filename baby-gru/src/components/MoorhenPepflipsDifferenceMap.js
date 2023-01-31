@@ -135,9 +135,9 @@ export const MoorhenPepflipsDifferenceMap = (props) => {
 
         let newCardList = []
 
-        pepflips.forEach(flip => {
+        pepflips.forEach((flip, index) => {
             newCardList.push(
-                <Card style={{margin: '0.5rem'}}>
+                <Card key={index} style={{margin: '0.5rem'}}>
                     <Card.Body>
                         <Row style={{display:'flex', justifyContent:'between'}}>
                             <Col style={{alignItems:'center', justifyContent:'left', display:'flex'}}>

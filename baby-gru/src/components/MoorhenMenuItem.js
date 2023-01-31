@@ -390,6 +390,59 @@ export const MoorhenDefaultBondSmoothnessPreferencesMenuItem = (props) => {
 
 }
 
+export const MoorhenScoresToastPreferencesMenuItem = (props) => {
+   
+    const panelContent =
+        <>
+            <InputGroup style={{ padding:'0rem', width: '15rem'}}>
+                <Form.Check 
+                        type="switch"
+                        checked={props.showScoresToast}
+                        onChange={() => { props.setShowScoresToast(!props.showScoresToast) }}
+                        label="Show scores window"/>
+            </InputGroup>
+            <InputGroup style={{ padding:'0rem', width: '15rem'}}>
+                <Form.Check 
+                    type="switch"
+                    checked={props.defaultUpdatingScores.includes('Rfactor')}
+                    onChange={() => { props.setDefaultUpdatingScores({
+                        action: props.defaultUpdatingScores.includes('Rfactor') ? 'Remove' : 'Add',
+                        item: 'Rfactor'
+                    }) }}
+                    label="Show Rfactor"/>
+            </InputGroup>
+            <InputGroup style={{ padding:'0rem', width: '15rem'}}>
+                <Form.Check 
+                    type="switch"
+                    checked={props.defaultUpdatingScores.includes('Rfree')}
+                    onChange={() => { props.setDefaultUpdatingScores({
+                        action: props.defaultUpdatingScores.includes('Rfree') ? 'Remove' : 'Add',
+                        item: 'Rfree'
+                    }) }}
+                    label="Show Rfree"/>
+            </InputGroup>
+            <InputGroup style={{ padding:'0rem', width: '15rem'}}>
+                <Form.Check 
+                    type="switch"
+                    checked={props.defaultUpdatingScores.includes('Moorhen Points')}
+                    onChange={() => { props.setDefaultUpdatingScores({
+                        action: props.defaultUpdatingScores.includes('Moorhen Points') ? 'Remove' : 'Add',
+                        item: 'Moorhen Points'
+                    }) }}
+                    label="Show Moorhen points"/>
+            </InputGroup>
+        </>
+    
+    return <MoorhenMenuItem
+        popoverPlacement='right'
+        popoverContent={panelContent}
+        menuItemText={"Options for scores when updating maps"}
+        setPopoverIsShown={props.setPopoverIsShown}
+        showOkButton={false}
+    />
+
+}
+
 export const MoorhenMapSettingsMenuItem = (props) => {
     const mapSolid = props.mapSolid
     const panelContent =
@@ -884,26 +937,35 @@ export const MoorhenImportFSigFMenuItem = (props) => {
     const moleculeSelectRef = useRef(null)
 
     const connectMap = async () => {
-        const commandArgs = [
+        const connectMapsArgs = [
             parseInt(moleculeSelectRef.current.value),
             parseInt(mapSelectRef.current.value),
             parseInt(twoFoFcSelectRef.current.value),
             parseInt(foFcSelectRef.current.value),
         ]
+        const sFcalcArgs = [
+            parseInt(moleculeSelectRef.current.value),
+            parseInt(twoFoFcSelectRef.current.value),
+            parseInt(foFcSelectRef.current.value),
+            parseInt(mapSelectRef.current.value)
+        ]
         
-        if (commandArgs.every(arg => !isNaN(arg))) {
+        if (connectMapsArgs.every(arg => !isNaN(arg))) {
             await props.commandCentre.current.cootCommand({
                 command: 'connect_updating_maps',
-                commandArgs: commandArgs,
+                commandArgs: connectMapsArgs,
+                returnType: 'status'
+            }, true)
+
+            await props.commandCentre.current.cootCommand({
+                command: 'sfcalc_genmaps_using_bulk_solvent',
+                commandArgs: sFcalcArgs,
                 returnType: 'status'
             }, true)
             
-            const connectedMapsEvent = new CustomEvent("connectedMaps", { detail: {
-                molecule: parseInt(moleculeSelectRef.current.value), map: parseInt(mapSelectRef.current.value)
-            } })
+            const connectedMapsEvent = new CustomEvent("connectedMaps")
             document.dispatchEvent(connectedMapsEvent)    
         }
-        
     }
 
     const onCompleted = async () => {

@@ -1,5 +1,17 @@
-import React, { createContext, useState, useEffect, useMemo } from "react";
+import React, { createContext, useState, useEffect, useMemo, useReducer } from "react";
 import localforage from 'localforage';
+
+const itemReducer = (oldList, change) => {
+    if (change.action === 'Add') {
+        return [...oldList, change.item]
+    }
+    else if (change.action === 'Remove') {
+        return oldList.filter(item => item !== change.item)
+    }
+    else if (change.action === 'Overwrite') {
+        return [...change.items]
+    }
+}
 
 const updateStoredPreferences = async (key, value) => {
     console.log(`Storing ${key}: ${value} preferences in local storage...`)
@@ -12,7 +24,7 @@ const updateStoredPreferences = async (key, value) => {
 
 const getDefaultValues = () => {
     return {
-        version: '0.0.8',
+        version: '0.0.9',
         darkMode: false, 
         atomLabelDepthMode: true, 
         defaultExpandDisplayCards: true,
@@ -26,6 +38,8 @@ const getDefaultValues = () => {
         showShortcutToast: true,
         defaultMapSurface: false,
         defaultBondSmoothness: 1,
+        showScoresToast: true,
+        defaultUpdatingScores: ['Rfree', 'Rfactor', 'Moorhen Points'],
         shortCuts: {
             "sphere_refine": {
                 modifiers: ["shiftKey"],
@@ -149,6 +163,8 @@ const PreferencesContextProvider = ({ children }) => {
     const [showShortcutToast, setShowShortcutToast] = useState(null)
     const [defaultMapSurface, setDefaultMapSurface] = useState(null)
     const [defaultBondSmoothness, setDefaultBondSmoothness] = useState(null)
+    const [showScoresToast, setShowScoresToast] = useState(null)
+    const [defaultUpdatingScores, setDefaultUpdatingScores] = useReducer(itemReducer, [])
 
     const restoreDefaults = (defaultValues)=> {
         updateStoredPreferences('version', defaultValues.version)
@@ -166,6 +182,8 @@ const PreferencesContextProvider = ({ children }) => {
         setShowShortcutToast(defaultValues.showShortcutToast)
         setDefaultMapSurface(defaultValues.defaultMapSurface)
         setDefaultBondSmoothness(defaultValues.defaultBondSmoothness)
+        setShowScoresToast(defaultValues.showScoresToast)
+        setDefaultUpdatingScores({action: 'Overwrite', items: defaultValues.defaultUpdatingScores})
     }
 
     /**
@@ -192,7 +210,9 @@ const PreferencesContextProvider = ({ children }) => {
                     localforage.getItem('makeBackups'),
                     localforage.getItem('showShortcutToast'),
                     localforage.getItem('defaultMapSurface'),
-                    localforage.getItem('defaultBondSmoothness')
+                    localforage.getItem('defaultBondSmoothness'),
+                    localforage.getItem('showScoresToast'),
+                    localforage.getItem('defaultUpdatingScores')
                     ])
                 
                 console.log('Retrieved the following preferences from local storage: ', response)
@@ -220,6 +240,8 @@ const PreferencesContextProvider = ({ children }) => {
                     setShowShortcutToast(response[12])
                     setDefaultMapSurface(response[13])
                     setDefaultBondSmoothness(response[14])
+                    setShowScoresToast(response[15])
+                    setDefaultUpdatingScores({action: 'Overwrite', items: response[16]})
                 }                
                 
             } catch (err) {
@@ -245,6 +267,24 @@ const PreferencesContextProvider = ({ children }) => {
        
         updateStoredPreferences('showShortcutToast', showShortcutToast);
     }, [showShortcutToast]);
+    
+    useMemo(() => {
+
+        if (showScoresToast === null) {
+            return
+        }
+       
+        updateStoredPreferences('showScoresToast', showScoresToast);
+    }, [showScoresToast]);
+    
+    useMemo(() => {
+
+        if (defaultUpdatingScores === null || defaultUpdatingScores.length === 0) {
+            return
+        }
+       
+        updateStoredPreferences('defaultUpdatingScores', defaultUpdatingScores);
+    }, [defaultUpdatingScores]);
     
     useMemo(() => {
 
@@ -369,7 +409,8 @@ const PreferencesContextProvider = ({ children }) => {
         refineAfterMod, setRefineAfterMod, mouseSensitivity, setMouseSensitivity, drawCrosshairs, 
         setDrawCrosshairs, drawMissingLoops, setDrawMissingLoops, mapLineWidth, setMapLineWidth,
         makeBackups, setMakeBackups, showShortcutToast, setShowShortcutToast, defaultMapSurface,
-        setDefaultMapSurface, defaultBondSmoothness, setDefaultBondSmoothness
+        setDefaultMapSurface, defaultBondSmoothness, setDefaultBondSmoothness, showScoresToast, 
+        setShowScoresToast, defaultUpdatingScores, setDefaultUpdatingScores
     }
 
     return (
