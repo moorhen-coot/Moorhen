@@ -164,7 +164,7 @@ const PreferencesContextProvider = ({ children }) => {
     const [defaultMapSurface, setDefaultMapSurface] = useState(null)
     const [defaultBondSmoothness, setDefaultBondSmoothness] = useState(null)
     const [showScoresToast, setShowScoresToast] = useState(null)
-    const [defaultUpdatingScores, setDefaultUpdatingScores] = useReducer(itemReducer, [])
+    const [defaultUpdatingScores, setDefaultUpdatingScores] = useReducer(itemReducer, null)
 
     const restoreDefaults = (defaultValues)=> {
         updateStoredPreferences('version', defaultValues.version)
@@ -279,7 +279,7 @@ const PreferencesContextProvider = ({ children }) => {
     
     useMemo(() => {
 
-        if (defaultUpdatingScores === null || defaultUpdatingScores.length === 0) {
+        if (defaultUpdatingScores === null) {
             return
         }
        
