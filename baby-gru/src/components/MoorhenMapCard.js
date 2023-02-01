@@ -136,7 +136,7 @@ export const MoorhenMapCard = (props) => {
                 </Fragment>
     }
 
-    const reContourIfDirty = () => {
+    const doContourIfDirty = () => {
         if (isDirty.current) {
             busyContouring.current = true
             isDirty.current = false
@@ -146,7 +146,7 @@ export const MoorhenMapCard = (props) => {
                 props.map.contourLevel)
                 .then(result => {
                     busyContouring.current = false
-                    reContourIfDirty()
+                    doContourIfDirty()
                 })
         }
     }
@@ -160,7 +160,7 @@ export const MoorhenMapCard = (props) => {
             if (busyContouring.current) {
                 console.log('Skipping map update because already busy ')
             } else {
-                reContourIfDirty()
+                doContourIfDirty()
             }
         }
     }, [mapContourLevel, mapRadius])
@@ -216,7 +216,7 @@ export const MoorhenMapCard = (props) => {
         props.map.mapRadius = mapRadius
         isDirty.current = true
         if (props.map.cootContour && !busyContouring.current) {
-            reContourIfDirty()
+            doContourIfDirty()
         } else {
             console.log('Skipping map re-contour because already busy ')
         }
