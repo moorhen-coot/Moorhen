@@ -1,4 +1,4 @@
-import { useEffect, useState, createRef, useCallback, useMemo, Fragment } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo, Fragment } from "react";
 import { Card, Form, Button, Row, Col, DropdownButton } from "react-bootstrap";
 import { doDownload } from '../utils/MoorhenUtils';
 import { VisibilityOffOutlined, VisibilityOutlined, ExpandMoreOutlined, ExpandLessOutlined, DownloadOutlined, Settings } from '@mui/icons-material';
@@ -16,9 +16,10 @@ export const MoorhenMapCard = (props) => {
     const [mapOpacity, setMapOpacity] = useState(1.0)
     const [isCollapsed, setIsCollapsed] = useState(!props.defaultExpandDisplayCards);
     const [currentName, setCurrentName] = useState(props.map.name);
-    const nextOrigin = createRef([])
-    const busyContouring = createRef(false)
     const [popoverIsShown, setPopoverIsShown] = useState(false)
+    const nextOrigin = useRef([])
+    const busyContouring = useRef(false)
+    const isDirty = useRef(false)
 
     const mapSettingsProps = {
         mapOpacity, setMapOpacity, mapSolid, setMapSolid
@@ -32,7 +33,8 @@ export const MoorhenMapCard = (props) => {
 
     const handleVisibility = () => {
         if (!cootContour) {
-            props.map.makeCootLive(props.glRef, mapRadius)
+            props.map.mapRadius = mapRadius
+            props.map.makeCootLive(props.glRef)
             setCootContour(true)
         } else {
             props.map.makeCootUnlive(props.glRef)
@@ -134,22 +136,38 @@ export const MoorhenMapCard = (props) => {
                 </Fragment>
     }
 
+    const reContourIfDirty = () => {
+        if (isDirty.current) {
+            busyContouring.current = true
+            isDirty.current = false
+            props.map.doCootContour(props.glRef,
+                ...nextOrigin.current,
+                props.map.mapRadius,
+                props.map.contourLevel)
+                .then(result => {
+                    busyContouring.current = false
+                    reContourIfDirty()
+                })
+        }
+    }
+
     const handleUpdateMapCallback = useCallback(e => {
-        props.map.contourLevel = mapContourLevel
         nextOrigin.current = [...e.detail.origin.map(coord => -coord)]
+        props.map.contourLevel = mapContourLevel
+        props.map.mapRadius = mapRadius
         if (props.map.cootContour) {
             if (busyContouring.current) {
-                console.log('Skipping map update because already busy ', nextOrigin.current)
+                isDirty.current = true
+                console.log('Skipping map update because already busy ')
             } else {
-                console.log(mapContourLevel)
-                props.map.contourLevel = mapContourLevel
                 busyContouring.current = true
                 props.map.doCootContour(props.glRef,
                     ...nextOrigin.current,
-                    mapRadius,
+                    props.map.mapRadius,
                     props.map.contourLevel)
                     .then(result => {
                         busyContouring.current = false
+                        reContourIfDirty()
                     })
             }
         }
@@ -199,21 +217,26 @@ export const MoorhenMapCard = (props) => {
 
     useEffect(() => {
         setCootContour(props.map.cootContour)
+        nextOrigin.current = props.glRef.current.origin.map(coord => -coord)
+        props.map.litLines = mapLitLines
+        props.map.solid = mapSolid
+        props.map.contourLevel = mapContourLevel
+        props.map.mapRadius = mapRadius
         if (props.map.cootContour && !busyContouring.current) {
             busyContouring.current = true
-            console.log(props.commandCentre.current)
-            props.commandCentre.current.extendConsoleMessage('Because I can')
-            props.map.litLines = mapLitLines
-            props.map.solid = mapSolid
-            props.map.contourLevel = mapContourLevel
             props.map.doCootContour(props.glRef,
-                ...props.glRef.current.origin.map(coord => -coord),
-                mapRadius,
+                ...nextOrigin.current,
+                props.map.mapRadius,
                 props.map.contourLevel)
                 .then(result => {
                     busyContouring.current = false
+                    reContourIfDirty()
                 })
+        } else {
+            console.log('Skipping map re-contour because already busy ')
+            isDirty.current = true
         }
+
     }, [mapRadius, mapContourLevel, mapLitLines, mapSolid])
 
     return <Card className="px-0"  style={{marginBottom:'0.5rem', padding:'0'}} key={props.map.molNo}>

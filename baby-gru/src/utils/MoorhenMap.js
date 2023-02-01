@@ -176,9 +176,8 @@ MoorhenMap.prototype.makeWebMGUnlive = function (glRef) {
     glRef.current.drawScene()
 }
 
-MoorhenMap.prototype.makeCootLive = function (glRef, mapRadius) {
+MoorhenMap.prototype.makeCootLive = function (glRef) {
     const $this = this
-    $this.mapRadius = mapRadius
     $this.cootContour = true
     $this.doCootContour(glRef,
         -glRef.current.origin[0],
@@ -236,7 +235,6 @@ MoorhenMap.prototype.clearBuffersOfStyle = function (glRef, style) {
 MoorhenMap.prototype.doCootContour = function (glRef, x, y, z, radius, contourLevel) {
 
     const $this = this
-    $this.mapRadius = radius
 
     let returnType
     if (this.litLines) {
