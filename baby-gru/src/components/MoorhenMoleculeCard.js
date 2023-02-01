@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Card, Form, Row, Col, Accordion } from "react-bootstrap";
 import { doDownload, sequenceIsValid } from '../utils/MoorhenUtils';
-import { isDarkBackground } from '../WebGL/mgWebGL'
+import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
 import { MoorhenSequenceViewer } from "./MoorhenSequenceViewer";
 import { MoorhenMoleculeCardButtonBar } from "./MoorhenMoleculeCardButtonBar"
 import { MoorhenLigandList } from "./MoorhenLigandList"

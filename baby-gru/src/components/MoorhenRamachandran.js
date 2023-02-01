@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useRef, useState } from "react"
 import { Col, Row, Form } from 'react-bootstrap';
-import { RamaPlot } from "../WebGL/Ramachandran"
+import { RamaPlot } from "../WebGLgComponents/Ramachandran"
 import { convertRemToPx } from '../utils/MoorhenUtils';
 import { MoorhenChainSelect } from './MoorhenChainSelect'
 import { MoorhenMoleculeSelect } from './MoorhenMoleculeSelect'
