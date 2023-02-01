@@ -22,7 +22,7 @@ export const MoorhenMapCard = (props) => {
     const isDirty = useRef(false)
 
     const mapSettingsProps = {
-        mapOpacity, setMapOpacity, mapSolid, setMapSolid
+        mapOpacity, setMapOpacity, mapSolid, setMapSolid, mapLitLines, setMapLitLines
     }
 
     const handleDownload = async () => {
@@ -43,16 +43,6 @@ export const MoorhenMapCard = (props) => {
         props.setCurrentDropdownMolNo(-1)
     }
 
-    const handleLitLines = () => {
-        setMapLitLines(!mapLitLines)
-        props.setCurrentDropdownMolNo(-1)
-    }
-
-    const handleSolid = () => {
-        setMapSolid(!mapSolid)
-        props.setCurrentDropdownMolNo(-1)
-    }
-
     const actionButtons = {
         1: {
             label: cootContour ? "Hide map" : "Show map", 
@@ -69,18 +59,13 @@ export const MoorhenMapCard = (props) => {
                                       </Button> )},
         },
         3: {
-            label: mapLitLines ? "Deactivate lit lines" : "Activate lit lines",
-            compressed: () => {return (<MenuItem key='activate-deactivate-lit-lines' variant="success" disabled={!cootContour}  onClick={handleLitLines}>{mapLitLines ? "Deactivate lit lines" : "Activate lit lines"}</MenuItem>)},
-            expanded: null
-        },
-        4: {
             label: 'Rename map',
             compressed: () => {return (<MoorhenRenameDisplayObjectMenuItem key='rename-map' setPopoverIsShown={setPopoverIsShown} setCurrentName={setCurrentName} item={props.map} />)},
             expanded: null
         },
-        5: {
+        4: {
             label: "Map draw settings",
-            compressed: () => {return (<MoorhenMapSettingsMenuItem key={5} disabled={!cootContour} setPopoverIsShown={setPopoverIsShown} map={props.map} {...mapSettingsProps} />)},
+            compressed: () => {return (<MoorhenMapSettingsMenuItem key='map-draw-settings' disabled={!cootContour} setPopoverIsShown={setPopoverIsShown} map={props.map} {...mapSettingsProps} />)},
             expanded: null
         }
     }
