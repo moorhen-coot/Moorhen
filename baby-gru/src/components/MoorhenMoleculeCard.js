@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Card, Form, Row, Col, Accordion } from "react-bootstrap";
 import { doDownload, sequenceIsValid } from '../utils/MoorhenUtils';
 import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
@@ -17,10 +17,23 @@ export const MoorhenMoleculeCard = (props) => {
     const [bondWidth, setBondWidth] = useState(0.1)
     const [atomRadiusBondRatio, setAtomRadiusBondRatio] = useState(1.5)
     const [bondSmoothness, setBondSmoothness] = useState(props.defaultBondSmoothness)
+    const busyRedrawing = useRef(false)
+    const isDirty = useRef(false)
 
     const bondSettingsProps = {
         bondWidth, setBondWidth, atomRadiusBondRatio,
         setAtomRadiusBondRatio, bondSmoothness, setBondSmoothness
+    }
+
+    const redrawIfDirty = async () => {
+        if (isDirty.current) {
+            busyRedrawing.current = true
+            isDirty.current = false
+            props.molecule.setAtomsDirty(true)
+            await props.molecule.redraw(props.glRef)
+            busyRedrawing.current = false
+            redrawIfDirty()
+        }
     }
 
     useEffect(() => {
@@ -58,8 +71,12 @@ export const MoorhenMoleculeCard = (props) => {
 
         if (isVisible && showState['CBs'] && props.molecule.cootBondsOptions.smoothness !== bondSmoothness) {
             props.molecule.cootBondsOptions.smoothness = bondSmoothness
-            props.molecule.setAtomsDirty(true)
-            props.molecule.redraw(props.glRef)
+            isDirty.current = true
+            if (!busyRedrawing.current) {
+                redrawIfDirty()
+            } else {
+                console.log('Skipping molecule re-draw because already busy ')
+            }
         } else {
             props.molecule.cootBondsOptions.smoothness = bondSmoothness
         }
@@ -73,8 +90,14 @@ export const MoorhenMoleculeCard = (props) => {
 
         if (isVisible && showState['CBs'] && props.molecule.cootBondsOptions.width !== bondWidth) {
             props.molecule.cootBondsOptions.width = bondWidth
-            props.molecule.setAtomsDirty(true)
-            props.molecule.redraw(props.glRef)
+            isDirty.current = true
+            if (!busyRedrawing.current) {
+                console.log('HAHAHAHAHHA')
+                console.log(busyRedrawing.current)
+                redrawIfDirty()
+            } else {
+                console.log('Skipping molecule re-draw because already busy ')
+            }
         } else {
             props.molecule.cootBondsOptions.width = bondWidth
         }
@@ -88,8 +111,12 @@ export const MoorhenMoleculeCard = (props) => {
 
         if (isVisible && showState['CBs'] && props.molecule.cootBondsOptions.atomRadiusBondRatio !== atomRadiusBondRatio) {
             props.molecule.cootBondsOptions.atomRadiusBondRatio = atomRadiusBondRatio
-            props.molecule.setAtomsDirty(true)
-            props.molecule.redraw(props.glRef)
+            isDirty.current = true
+            if (!busyRedrawing.current) {
+                redrawIfDirty()
+            } else {
+                console.log('Skipping molecule re-draw because already busy ')
+            }
         } else {
             props.molecule.cootBondsOptions.atomRadiusBondRatio = atomRadiusBondRatio
         }
