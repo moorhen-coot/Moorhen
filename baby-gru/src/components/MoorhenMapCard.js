@@ -155,20 +155,12 @@ export const MoorhenMapCard = (props) => {
         nextOrigin.current = [...e.detail.origin.map(coord => -coord)]
         props.map.contourLevel = mapContourLevel
         props.map.mapRadius = mapRadius
+        isDirty.current = true
         if (props.map.cootContour) {
             if (busyContouring.current) {
-                isDirty.current = true
                 console.log('Skipping map update because already busy ')
             } else {
-                busyContouring.current = true
-                props.map.doCootContour(props.glRef,
-                    ...nextOrigin.current,
-                    props.map.mapRadius,
-                    props.map.contourLevel)
-                    .then(result => {
-                        busyContouring.current = false
-                        reContourIfDirty()
-                    })
+                reContourIfDirty()
             }
         }
     }, [mapContourLevel, mapRadius])
@@ -222,19 +214,11 @@ export const MoorhenMapCard = (props) => {
         props.map.solid = mapSolid
         props.map.contourLevel = mapContourLevel
         props.map.mapRadius = mapRadius
+        isDirty.current = true
         if (props.map.cootContour && !busyContouring.current) {
-            busyContouring.current = true
-            props.map.doCootContour(props.glRef,
-                ...nextOrigin.current,
-                props.map.mapRadius,
-                props.map.contourLevel)
-                .then(result => {
-                    busyContouring.current = false
-                    reContourIfDirty()
-                })
+            reContourIfDirty()
         } else {
             console.log('Skipping map re-contour because already busy ')
-            isDirty.current = true
         }
 
     }, [mapRadius, mapContourLevel, mapLitLines, mapSolid])
