@@ -5,6 +5,8 @@ import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
 import { MoorhenSequenceViewer } from "./MoorhenSequenceViewer";
 import { MoorhenMoleculeCardButtonBar } from "./MoorhenMoleculeCardButtonBar"
 import { MoorhenLigandList } from "./MoorhenLigandList"
+import { Checkbox, FormControlLabel, FormGroup, Typography } from "@mui/material";
+import { CheckBox } from "@mui/icons-material";
 
 export const MoorhenMoleculeCard = (props) => {
     const [showState, setShowState] = useState({})
@@ -165,6 +167,17 @@ export const MoorhenMoleculeCard = (props) => {
         props.setCurrentDropdownMolNo(-1)
     }
 
+    const labelMapping = {
+        rama: "Rama",
+        rotamer: "Rota",
+        CBs: "Bonds",
+        CRs: "Ribb.",
+        CDs: "Cont.",
+        MolecularSurface: "Surf.",
+        gaussian: "Gauss.",
+        ligands: "Lig.",
+    }
+
     const handleResidueRangeRefinement = () => {
         async function refineResidueRange() {
             await props.commandCentre.current.cootCommand({
@@ -224,36 +237,65 @@ export const MoorhenMoleculeCard = (props) => {
                         <Row style={{ height: '100%' }}>
                             <Col>
                                 <div>
-                                    {Object.keys(props.molecule.displayObjects)
-                                        .filter(key => !['hover', 'transformation', 'contact_dots', 'chemical_features'].includes(key))
-                                        .map(key => {
-                                            return <Form.Check
-                                                key={key}
-                                                inline
-                                                label={`${key.substring(0, 3)}.`}
-                                                feedbackTooltip={"Toggle on"}
-                                                name={key}
-                                                type="checkbox"
-                                                variant="outline"
-                                                checked={showState[key]}
-                                                disabled={!isVisible}
-                                                onChange={(e) => {
-                                                    if (e.target.checked) {
-                                                        props.molecule.show(key, props.glRef)
-                                                        const changedState = { ...showState }
-                                                        changedState[key] = true
-                                                        setShowState(changedState)
-                                                    }
-                                                    else {
-                                                        props.molecule.hide(key, props.glRef)
-                                                        const changedState = { ...showState }
-                                                        changedState[key] = false
-                                                        setShowState(changedState)
-                                                    }
-                                                }} 
-                                            />
-                                        })
-                                    }
+                                    <FormGroup style={{ margin: "0px", padding: "0px" }} row>
+                                        {Object.keys(props.molecule.displayObjects)
+                                            .filter(key => !['hover', 'transformation', 'contact_dots', 'chemical_features', 'VdWSurface'].includes(key))
+                                            .map(key => {
+                                                return <FormControlLabel
+                                                    key={key}
+                                                    control={<Checkbox
+                                                        disabled={!isVisible}
+                                                        checked={showState[key]}
+                                                        onChange={(e) => {
+                                                            if (e.target.checked) {
+                                                                props.molecule.show(key, props.glRef)
+                                                                const changedState = { ...showState }
+                                                                changedState[key] = true
+                                                                setShowState(changedState)
+                                                            }
+                                                            else {
+                                                                props.molecule.hide(key, props.glRef)
+                                                                const changedState = { ...showState }
+                                                                changedState[key] = false
+                                                                setShowState(changedState)
+                                                            }
+                                                        }}                                                 >
+                                                    </Checkbox>}
+                                                    style={{ marginLeft: "0px", marginRight: "0px" }}
+                                                    label={<Typography style={{ transform: 'rotate(-45deg)' }}>
+
+                                                        {Object.keys(labelMapping).includes(key) ? labelMapping[key] : key}
+                                                    </Typography>} labelPlacement="top" />
+
+                                                /*<Form.Check
+                                                    key={key}
+                                                    inline
+                                                    label={`${key.substring(0, 3)}.`}
+                                                    feedbackTooltip={"Toggle on"}
+                                                    name={key}
+                                                    type="checkbox"
+                                                    variant="outline"
+                                                    checked={showState[key]}
+                                                    disabled={!isVisible}
+                                                    onChange={(e) => {
+                                                        if (e.target.checked) {
+                                                            props.molecule.show(key, props.glRef)
+                                                            const changedState = { ...showState }
+                                                            changedState[key] = true
+                                                            setShowState(changedState)
+                                                        }
+                                                        else {
+                                                            props.molecule.hide(key, props.glRef)
+                                                            const changedState = { ...showState }
+                                                            changedState[key] = false
+                                                            setShowState(changedState)
+                                                        }
+                                                    }} 
+                                                />*/
+                                                
+                                            })
+                                        }
+                                    </FormGroup>
                                 </div>
                             </Col>
                         </Row>
