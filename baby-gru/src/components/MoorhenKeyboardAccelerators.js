@@ -2,8 +2,8 @@ import { List, ListItem } from "@mui/material"
 import { cidToSpec } from "../utils/MoorhenUtils"
 import * as vec3 from 'gl-matrix/vec3';
 import * as quat4 from 'gl-matrix/quat';
-import { quatToMat4, quat4Inverse } from '../WebGL/quatToMat4.js';
-import { getDeviceScale, vec3Create } from '../WebGL/mgWebGL';
+import { quatToMat4, quat4Inverse } from '../WebGLgComponents/quatToMat4.js';
+import { getDeviceScale, vec3Create } from '../WebGLgComponents/mgWebGL';
 
 const apresEdit = (molecule, glRef, setHoveredAtom) => {
     molecule.setAtomsDirty(true)

@@ -1,5 +1,5 @@
 import { readDataFile } from "./MoorhenUtils"
-import { readMapFromArrayBuffer, mapToMapGrid } from '../WebGL/mgWebGLReadMap';
+import { readMapFromArrayBuffer, mapToMapGrid } from '../WebGLgComponents/mgWebGLReadMap';
 
 export function MoorhenMap(commandCentre) {
     this.type = 'map'

@@ -35,7 +35,3 @@ add_subdirectory(gesamt)
 add_subdirectory(web_example)
 add_subdirectory(ccp4mg)
 add_subdirectory(coot)
-
-install(DIRECTORY
-${CMAKE_CURRENT_SOURCE_DIR}/react-app/src/
-DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/baby-gru/src/WebGL)

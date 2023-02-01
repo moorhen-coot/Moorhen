@@ -1,6 +1,6 @@
 import React, { createRef, useEffect, useCallback, forwardRef, useState } from 'react';
 import { Toast, ToastContainer } from 'react-bootstrap';
-import { MGWebGL } from '../WebGL/mgWebGL.js';
+import { MGWebGL } from '../WebGLgComponents/mgWebGL.js';
 
 export const MoorhenWebMG = forwardRef((props, glRef) => {
     const windowResizedBinding = createRef(null)
