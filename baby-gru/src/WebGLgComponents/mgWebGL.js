@@ -1357,9 +1357,25 @@ class MGWebGL extends Component {
 
     constructor(props) {
 
-        //Set to false to use WebGL 1
-        console.log("MGWebGL.constructor");
         super(props);
+
+        const self = this;
+        this.showFPS = true;
+        this.nFrames = 0;
+        this.nPrevFrames = 0;
+        this.prevTime = performance.now();
+        this.fpsText = "";
+
+        const frameCounterTimer = setInterval(() => {
+            if(!self.context) return;
+            const thisTime = performance.now();
+            const t = (thisTime-self.prevTime)/1000.;
+            self.fpsText = ((self.nFrames-self.nPrevFrames)/t).toFixed(0) + " fps";
+            self.prevTime = thisTime;
+            self.nPrevFrames = self.nFrames;
+            }, 1000);
+
+        //Set to false to use WebGL 1
         this.WEBGL2 = false;
         this.state = { width: this.props.width, height: this.props.height };
         this.dataInfo = [];
@@ -1371,6 +1387,9 @@ class MGWebGL extends Component {
         this.showCrosshairs = false
         if (this.props.showCrosshairs !== null) {
             this.showCrosshairs = this.props.showCrosshairs
+        }
+        if (this.props.showFPS !== null) {
+            this.showFPS = this.props.showFPS
         }
         this.mapLineWidth = 1.0
         if (this.props.mapLineWidth !== null) {
@@ -1403,6 +1422,11 @@ class MGWebGL extends Component {
         }
         if (oldProps.showCrosshairs !== this.props.showCrosshairs){
             this.showCrosshairs = this.props.showCrosshairs
+            this.drawScene()
+        }
+        if (oldProps.showFPS !== this.props.showFPS){
+            console.log("Update showFPS",this.props.showFPS);
+            this.showFPS = this.props.showFPS
             this.drawScene()
         }
         if (oldProps.mapLineWidth !== this.props.mapLineWidth){
@@ -1585,6 +1609,12 @@ class MGWebGL extends Component {
             }
         }
 
+        this.textLegends = [];
+        //this.textLegends.push({font:"40px helvetica",x:0,y:0,text:"So Moorhen is a cool program_œ∑´®¥¨^øπ“‘«æ…¬˚∆˙©ƒ∂ßåΩ≈ç√∫~µ≤≥¡€#¢∞§¶•ªº–≠§±;:|abcdefghijklmnopqrs"});
+        //this.textLegends.push({font:"40px times",x:0.25,y:0.25,text:"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@£$%^&*()"});
+        //this.textLegends.push({font:"20px helvetica",x:0,y:0,text:"Welcome to Moorhen"});
+
+        this.textHeightScaling = 800.;
         this.initTextureFramebuffer();
 
         if (!this.frag_depth_ext) {
@@ -7034,6 +7064,8 @@ class MGWebGL extends Component {
             this.drawCrosshairs(invMat);
         }
 
+        this.drawTextOverlays(invMat);
+
         this.mouseDown = oldMouseDown;
 
         //this.div.dispatchEvent(this.viewChangedEvent);
@@ -7046,6 +7078,7 @@ class MGWebGL extends Component {
         }
 
         if (!this.doShadowDepthDebug || !this.doShadow) {
+            this.nFrames += 1;
             return;
         }
 
@@ -8278,7 +8311,8 @@ class MGWebGL extends Component {
                 theBuffer.textVertices = [];
 
                 if (textTextureDirty || typeof (this.clickedAtoms[iat][jat].imgData) === "undefined") {
-                    const maxTextureS = this.makeTextCanvas(this.clickedAtoms[iat][jat].label, 512, 32, textColour);
+                    const ret = this.makeTextCanvas(this.clickedAtoms[iat][jat].label, 512, 32, textColour);
+                    const maxTextureS = ret[0];
                     this.clickedAtoms[iat][jat].imgData = this.textCtx.getImageData(0, 0, 512, 32);
                     this.clickedAtoms[iat][jat].maxImgTextureS = maxTextureS;
                 }
@@ -8345,7 +8379,8 @@ class MGWebGL extends Component {
                 let z = v1plusv2[2] * 0.5;
 
                 if (textTextureDirty || typeof (this.clickedAtoms[iat][jat].lengthImgData) === "undefined") {
-                    const maxTextureS = this.makeTextCanvas(linesize.toFixed(3), 512, 32, textColour);
+                    const ret = this.makeTextCanvas(linesize.toFixed(3), 512, 32, textColour);
+                    const maxTextureS = ret[0];
                     this.clickedAtoms[iat][jat].lengthImgData = this.textCtx.getImageData(0, 0, 512, 32);
                     this.clickedAtoms[iat][jat].maxLengthImgTextureS = maxTextureS;
                 }
@@ -8421,7 +8456,8 @@ class MGWebGL extends Component {
                 let z = z2 - tSizeY * .5 * up[2];
 
                 if (textTextureDirty || typeof (this.clickedAtoms[iat][jat].angleImgData) === "undefined") {
-                    const maxTextureS = this.makeTextCanvas(angle.toFixed(1), 512, 32, textColour);
+                    const ret = this.makeTextCanvas(angle.toFixed(1), 512, 32, textColour);
+                    const maxTextureS = ret[0];
                     this.clickedAtoms[iat][jat].angleImgData = this.textCtx.getImageData(0, 0, 512, 32);
                     this.clickedAtoms[iat][jat].maxAngleImgTextureS = maxTextureS;
                 }
@@ -8495,7 +8531,8 @@ class MGWebGL extends Component {
 
                 //this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.textCtx.canvas);
                 if (textTextureDirty || typeof (this.clickedAtoms[iat][jat].dihedralImgData) === "undefined") {
-                    const maxTextureS = this.makeTextCanvas(angle.toFixed(1), 512, 32, textColour);
+                    const ret = this.makeTextCanvas(angle.toFixed(1), 512, 32, textColour);
+                    const maxTextureS = ret[0];
                     this.clickedAtoms[iat][jat].dihedralImgData = this.textCtx.getImageData(0, 0, 512, 32);
                     this.clickedAtoms[iat][jat].maxDihedralImgTextureS = maxTextureS;
                 }
@@ -9598,6 +9635,148 @@ class MGWebGL extends Component {
         this.gl.disableVertexAttribArray(this.shaderProgramTextBackground.vertexTextureAttribute);
         this.gl.depthFunc(this.gl.LESS)
 
+    }
+
+    drawTextOverlays(invMat) {
+        this.gl.depthFunc(this.gl.ALWAYS);
+        const ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
+        let right = vec3.create();
+        vec3.set(right, 1.0, 0.0, 0.0);
+        let up = vec3.create();
+        vec3.set(up, 0.0, 1.0, 0.0);
+        vec3.transformMat4(up, up, invMat);
+        vec3.transformMat4(right, right, invMat);
+
+        if (typeof (this.axesPositionBuffer) === "undefined") {
+            this.axesPositionBuffer = this.gl.createBuffer();
+            this.axesColourBuffer = this.gl.createBuffer();
+            this.axesIndexBuffer = this.gl.createBuffer();
+            this.axesNormalBuffer = this.gl.createBuffer();
+            this.axesTextNormalBuffer = this.gl.createBuffer();
+            this.axesTextColourBuffer = this.gl.createBuffer();
+            this.axesTextPositionBuffer = this.gl.createBuffer();
+            this.axesTextTexCoordBuffer = this.gl.createBuffer();
+            this.axesTextIndexesBuffer = this.gl.createBuffer();
+        }
+        this.gl.depthFunc(this.gl.ALWAYS);
+
+        for(let i = 0; i<7; i++)
+            this.gl.disableVertexAttribArray(i);
+
+        this.gl.useProgram(this.shaderProgramTextBackground);
+        this.gl.uniform1f(this.shaderProgramTextBackground.fog_start, 1000.0);
+        this.gl.uniform1f(this.shaderProgramTextBackground.fog_end, 1000.0);
+        this.setMatrixUniforms(this.shaderProgramTextBackground);
+        this.gl.uniformMatrix4fv(this.shaderProgramTextBackground.pMatrixUniform, false, this.pmvMatrix);
+        this.gl.uniform3fv(this.shaderProgramTextBackground.screenZ, this.screenZ);
+        this.gl.uniform1f(this.shaderProgramTextBackground.pixelZoom, 0.04 * this.zoom);
+
+        this.gl.enableVertexAttribArray(this.shaderProgramTextBackground.vertexNormalAttribute);
+        this.gl.enableVertexAttribArray(this.shaderProgramTextBackground.vertexPositionAttribute);
+        this.gl.enableVertexAttribArray(this.shaderProgramTextBackground.vertexColourAttribute);
+
+        this.gl.enableVertexAttribArray(this.shaderProgramTextBackground.vertexTextureAttribute);
+        this.setMatrixUniforms(this.shaderProgramTextBackground);
+
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesTextNormalBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1]), this.gl.STATIC_DRAW);
+        this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexNormalAttribute, 3, this.gl.FLOAT, false, 0, 0);
+
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesTextColourBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1]), this.gl.STATIC_DRAW);
+        this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexColourAttribute, 4, this.gl.FLOAT, false, 0, 0);
+
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesTextTexCoordBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([0, 1, 1.0, 1, 1.0, 0, 0, 1, 1.0, 0, 0, 0]), this.gl.STATIC_DRAW);
+        this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexTextureAttribute, 2, this.gl.FLOAT, false, 0, 0);
+
+        let textColour = "black";
+        const y = this.background_colour[0] * 0.299 + this.background_colour[1] * 0.587 + this.background_colour[2] * 0.114;
+        if (y < 0.5) {
+            textColour = "white";
+        }
+
+        const drawStringAt = (string, colour, location, up, right, font) => {
+            const [base_x, base_y, base_z] = location
+//FIXME - Be cleverer, return bigger texture if need be and do not create this.textCtx.canvas as a side effect. Return it!
+            const [maxS,ctx] = this.makeTextCanvas(string, 512, 32, colour, font);
+            const tSizeX = this.textHeightScaling/this.gl.viewportHeight * ctx.canvas.height/32 * 2.0 * ctx.canvas.width / ctx.canvas.height * this.zoom;
+            const tSizeY = this.textHeightScaling/this.gl.viewportHeight * ctx.canvas.height/32 * 2.0 * this.zoom;
+            const data = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
+            this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, data);
+            this.gl.texSubImage2D(this.gl.TEXTURE_2D, 0, 0, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, data);
+            let textPositions = [base_x, base_y, base_z, base_x + tSizeX * right[0], base_y + tSizeX * right[1], base_z + tSizeX * right[2], base_x + tSizeY * up[0] + tSizeX * right[0], base_y + tSizeY * up[1] + tSizeX * right[1], base_z + tSizeY * up[2] + tSizeX * right[2]];
+            textPositions = textPositions.concat([base_x, base_y, base_z, base_x + tSizeY * up[0] + tSizeX * right[0], base_y + tSizeY * up[1] + tSizeX * right[1], base_z + tSizeY * up[2] + tSizeX * right[2], base_x + tSizeY * up[0], base_y + tSizeY * up[1], base_z + tSizeY * up[2]]);
+            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesTextPositionBuffer);
+            this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(textPositions), this.gl.DYNAMIC_DRAW);
+            this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
+            this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.axesTextIndexesBuffer);
+            if (this.ext) {
+                this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array([0, 1, 2, 3, 4, 5]), this.gl.STATIC_DRAW);
+                this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_INT, 0);
+            } else {
+                this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array([0, 1, 2, 3, 4, 5]), this.gl.STATIC_DRAW);
+                this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_SHORT, 0);
+            }
+        }
+
+
+        const drawString = (s, xpos, ypos, font) => {
+            if(font) this.textCtx.font = font;
+            let axesOffset = vec3.create();
+            vec3.set(axesOffset, xpos,ypos, 0);
+            vec3.transformMat4(axesOffset, axesOffset, invMat);
+
+            const xyzOff = this.origin.map((coord, iCoord) => -coord + this.zoom * axesOffset[iCoord]);
+            let base_x = xyzOff[0];
+            let base_y = xyzOff[1];
+            let base_z = xyzOff[2];
+
+            const textMetric = this.textCtx.measureText(s);
+            if(textMetric.width >=512){
+                const drawMultiStringAt = (s, colour, up, right, xpos, ypos, font) => {
+                    let axesOffset2 = vec3.create();
+                    vec3.set(axesOffset2, xpos, ypos, 0);
+                    vec3.transformMat4(axesOffset2, axesOffset2, invMat);
+                    let xyzOff2 = this.origin.map((coord, iCoord) => -coord + this.zoom * axesOffset2[iCoord]);
+                    let base_x = xyzOff2[0];
+                    let base_y = xyzOff2[1];
+                    let base_z = xyzOff2[2];
+                    const sLength = s.length;
+                    const textMetric = this.textCtx.measureText(s);
+                    if(textMetric.width <512){
+                        drawStringAt(s, colour, [base_x, base_y, base_z], up, right, font)
+                            return;
+                    }
+                    for(let ichomp=0;ichomp<s.length;ichomp++){
+                        const s2 = s.substr(0,ichomp);
+                        let textMetricSub = this.textCtx.measureText(s2);
+                        if(textMetricSub.width >512){
+                            textMetricSub = this.textCtx.measureText(s2.substr(0,s2.length-1));
+                            drawStringAt(s2, colour, [base_x, base_y, base_z], up, right, font);
+                            //FIXME Why a 1.5 fudge factor ... ?
+                            xpos += this.textHeightScaling/this.gl.viewportHeight * 512 / 24. *1.5 ;//textMetricSub.width /24. *1.5;
+                            const snew = s.substr(ichomp);
+                            drawMultiStringAt(snew, colour, up, right, xpos, ypos, font);
+                            break;
+                        }
+                    }
+                }
+                drawMultiStringAt(s, textColour, up, right, xpos, ypos, font);
+            } else {
+                drawStringAt(s, textColour, [base_x, base_y, base_z], up, right, font)
+            }
+        }
+
+        this.textLegends.forEach(label => {
+                let xpos = label.x * 48.0 -24.*ratio;
+                let ypos = label.y * 48.0 -24.;
+                drawString(label.text,xpos,ypos, label.font);
+        });
+        if(this.showFPS) drawString(this.fpsText,-23.5*ratio,-23.5,"20px helvetica");
+
+        this.gl.disableVertexAttribArray(this.shaderProgramTextBackground.vertexTextureAttribute);
+        this.gl.depthFunc(this.gl.LESS)
     }
 
     drawAxesOld(invMat) {
@@ -11128,7 +11307,39 @@ class MGWebGL extends Component {
     }
 
     // Puts text in center of canvas.
-    makeTextCanvas(text, width, height, textColour) {
+    makeTextCanvas(text, width, height, textColour, font) {
+        if(font){
+            let theCtx;
+            if(this.extraFontCtxs && (font in this.extraFontCtxs)){
+                theCtx = this.extraFontCtxs[font];
+            } else {
+                theCtx = document.createElement("canvas").getContext("2d", {willReadFrequently: true});
+            }
+            theCtx.canvas.width = width;
+            theCtx.canvas.height = height;
+            theCtx.textBaseline = "alphabetic";
+            theCtx.font = font;
+            let textMetric = theCtx.measureText("Mgq!^()\{\}|'\"~`√∫");
+            let actualHeight = textMetric.actualBoundingBoxAscent + textMetric.actualBoundingBoxDescent;
+            let loop = 0;
+            while(actualHeight>theCtx.canvas.height&&loop<3){
+                theCtx.canvas.height *= 2;
+                theCtx.font = font;
+                textMetric = theCtx.measureText("M");
+                actualHeight = textMetric.actualBoundingBoxAscent + textMetric.actualBoundingBoxDescent;
+                loop += 1;
+            }
+            theCtx.textAlign = "left";
+            theCtx.fillStyle = "#00000000";
+            theCtx.fillRect(0, 0, theCtx.canvas.width, theCtx.canvas.height);
+            theCtx.fillStyle = textColour;
+            theCtx.fillText(text, 0, theCtx.canvas.height / 2,theCtx.canvas.width);
+            if(!this.extraFontCtxs)
+                this.extraFontCtxs = {};
+            this.extraFontCtxs[font] = theCtx;
+            textMetric = theCtx.measureText(text);
+            return [textMetric.actualBoundingBoxRight / width,theCtx];
+        }
         this.textCanvasInitialized = false;
         if (!this.textCanvasInitialized) {
             this.textCtx.canvas.width = width;
@@ -11138,12 +11349,13 @@ class MGWebGL extends Component {
             this.textCtx.textBaseline = "middle";
             this.textCanvasInitialized = true;
         }
+        this.textCtx.fillStyle = "#00000000";
+        this.textCtx.fillRect(0, 0, this.textCtx.canvas.width, this.textCtx.canvas.height);
         this.textCtx.fillStyle = textColour;
-        this.textCtx.clearRect(0, 0, this.textCtx.canvas.width, this.textCtx.canvas.height);
-        this.textCtx.fillText(text, 0, height / 2);
+        this.textCtx.fillText(text, 0, height / 2,this.textCtx.canvas.width);
         const textMetric = this.textCtx.measureText(text);
         //Return the maximum width in fractional box coordinates
-        return textMetric.actualBoundingBoxRight / width;
+        return [textMetric.actualBoundingBoxRight / width,this.textCtx];
     }
 
     createInstanceOriginsBuffer(tri) {

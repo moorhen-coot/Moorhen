@@ -31,6 +31,7 @@ const getDefaultValues = () => {
         defaultMapLitLines: false,
         refineAfterMod: true,
         drawCrosshairs: true,
+        drawFPS: false,
         drawMissingLoops: true,
         mouseSensitivity: 2.0,
         mapLineWidth: 1.0,
@@ -157,6 +158,7 @@ const PreferencesContextProvider = ({ children }) => {
     const [refineAfterMod, setRefineAfterMod] = useState(null)
     const [mouseSensitivity, setMouseSensitivity] = useState(null)
     const [drawCrosshairs, setDrawCrosshairs] = useState(null)
+    const [drawFPS, setDrawFPS] = useState(null)
     const [drawMissingLoops, setDrawMissingLoops] = useState(null)
     const [mapLineWidth, setMapLineWidth] = useState(null)
     const [makeBackups, setMakeBackups] = useState(null)
@@ -176,6 +178,7 @@ const PreferencesContextProvider = ({ children }) => {
         setRefineAfterMod(defaultValues.refineAfterMod)
         setMouseSensitivity(defaultValues.mouseSensitivity)
         setDrawCrosshairs(defaultValues.drawCrosshairs)
+        setDrawFPS(defaultValues.drawFPS)
         setDrawMissingLoops(defaultValues.drawMissingLoops)
         setMapLineWidth(defaultValues.mapLineWidth)
         setMakeBackups(defaultValues.makeBackups)
@@ -205,6 +208,7 @@ const PreferencesContextProvider = ({ children }) => {
                     localforage.getItem('refineAfterMod'),
                     localforage.getItem('mouseSensitivity'),
                     localforage.getItem('drawCrosshairs'),
+                    localforage.getItem('drawFPS'),
                     localforage.getItem('drawMissingLoops'),
                     localforage.getItem('mapLineWidth'),
                     localforage.getItem('makeBackups'),
@@ -242,6 +246,7 @@ const PreferencesContextProvider = ({ children }) => {
                     setDefaultBondSmoothness(response[14])
                     setShowScoresToast(response[15])
                     setDefaultUpdatingScores({action: 'Overwrite', items: response[16]})
+                    setDrawFPS(response[17])
                 }                
                 
             } catch (err) {
@@ -342,6 +347,15 @@ const PreferencesContextProvider = ({ children }) => {
 
     useMemo(() => {
 
+        if (drawFPS === null) {
+            return
+        }
+       
+        updateStoredPreferences('drawFPS', drawFPS);
+    }, [drawFPS]);
+
+    useMemo(() => {
+
         if (drawMissingLoops === null) {
             return
         }
@@ -410,7 +424,7 @@ const PreferencesContextProvider = ({ children }) => {
         setDrawCrosshairs, drawMissingLoops, setDrawMissingLoops, mapLineWidth, setMapLineWidth,
         makeBackups, setMakeBackups, showShortcutToast, setShowShortcutToast, defaultMapSurface,
         setDefaultMapSurface, defaultBondSmoothness, setDefaultBondSmoothness, showScoresToast, 
-        setShowScoresToast, defaultUpdatingScores, setDefaultUpdatingScores
+        setShowScoresToast, defaultUpdatingScores, setDefaultUpdatingScores, drawFPS, setDrawFPS
     }
 
     return (
