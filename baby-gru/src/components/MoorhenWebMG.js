@@ -251,6 +251,7 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
                     mouseSensitivityFactor={props.preferences.mouseSensitivity}
                     keyboardAccelerators={JSON.parse(props.preferences.shortCuts)}
                     showCrosshairs={props.preferences.drawCrosshairs}
+                    showFPS={props.preferences.drawFPS}
                     mapLineWidth={mapLineWidth}
                     drawMissingLoops={props.drawMissingLoops} />
             </>

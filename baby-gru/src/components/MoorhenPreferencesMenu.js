@@ -15,7 +15,7 @@ export const MoorhenPreferencesMenu = (props) => {
         setDrawMissingLoops, mapLineWidth, setMapLineWidth, makeBackups, setMakeBackups,
         showShortcutToast, setShowShortcutToast, defaultMapSurface, setDefaultMapSurface,
         defaultBondSmoothness, setDefaultBondSmoothness, showScoresToast, setShowScoresToast,
-        defaultUpdatingScores, setDefaultUpdatingScores
+        defaultUpdatingScores, setDefaultUpdatingScores, drawFPS, setDrawFPS
      } = props;
 
     const [showModal, setShowModal] = useState(null);
@@ -71,6 +71,13 @@ export const MoorhenPreferencesMenu = (props) => {
                             checked={refineAfterMod}
                             onChange={() => { setRefineAfterMod(!refineAfterMod) }}
                             label="Automatic triple refine post-modification"/>
+                    </InputGroup>
+                    <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                        <Form.Check 
+                            type="switch"
+                            checked={drawFPS}
+                            onChange={() => { setDrawFPS(!drawFPS) }}
+                            label="Show frames per second counter"/>
                     </InputGroup>
                     <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
                         <Form.Check 
