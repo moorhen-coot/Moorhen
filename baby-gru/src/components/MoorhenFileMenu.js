@@ -5,6 +5,7 @@ import { useState, useRef } from "react";
 import { MoorhenImportDictionaryMenuItem, MoorhenImportMapCoefficientsMenuItem, MoorhenDeleteEverythingMenuItem, MoorhenLoadTutorialDataMenuItem, MoorhenImportMapMenuItem, MoorhenImportFSigFMenuItem } from "./MoorhenMenuItem";
 import { MenuItem } from "@mui/material";
 import { convertViewtoPx, doDownload, readTextFile } from "../utils/MoorhenUtils";
+import localforage from 'localforage';
 
 export const MoorhenFileMenu = (props) => {
 
@@ -124,9 +125,7 @@ export const MoorhenFileMenu = (props) => {
         })
     }
 
-    const loadSession = async (file) => {
-        // Load session data
-        let sessionData = await readTextFile(file)
+    const loadSessionJSON = async (sessionData) => {
         sessionData = JSON.parse(sessionData)
         console.log('Loaded the following session data...')
         console.log(sessionData)
@@ -216,7 +215,29 @@ export const MoorhenFileMenu = (props) => {
         }, 2500);
     }
 
-    const downloadSession = async () => {
+    const loadSession = async (file) => {
+        // Load session data
+        let sessionData = await readTextFile(file)
+        loadSessionJSON(sessionData)
+    }
+
+    const recoverSession = async () => {
+        console.log("Recover ....");
+        const ContactTable = localforage.createInstance({
+           name: "Moorhen-SessionStorage",
+           storeName: "Moorhen-SessionStorageTable"
+        });
+        try {
+            let backup = await ContactTable.getItem("backup")
+            console.log("successully got session from localforage")
+            loadSessionJSON(backup)
+        } catch (err) {
+            console.log(err)
+        }
+        
+    }
+
+    const downloadSession = async (download) => {
         let moleculePromises = props.molecules.map(molecule => {return molecule.getAtoms()})
         let moleculeAtoms = await Promise.all(moleculePromises)
         let mapPromises = props.maps.map(map => {return map.getMap()})
@@ -252,7 +273,22 @@ export const MoorhenFileMenu = (props) => {
             quat4: glRef.current.myQuat
         }
 
-        doDownload([JSON.stringify(session)], `session.json`)
+        if(download) {
+            doDownload([JSON.stringify(session)], `session.json`)
+        } else {
+
+            const ContactTable = localforage.createInstance({
+               name: "Moorhen-SessionStorage",
+               storeName: "Moorhen-SessionStorageTable"
+            });
+            try {
+                await ContactTable.setItem("backup", JSON.stringify(session))
+                console.log("successully stored session in localforage")
+            } catch (err) {
+                console.log(err)
+            }
+        }
+
     }
 
     return <>
@@ -309,8 +345,16 @@ export const MoorhenFileMenu = (props) => {
 
                     <MoorhenLoadTutorialDataMenuItem {...menuItemProps} />
 
-                    <MenuItem id='download-session-menu-item' variant="success" onClick={downloadSession}>
+                    <MenuItem id='download-session-menu-item' variant="success" onClick={() => {downloadSession(true)}}>
                         Download session
+                    </MenuItem>
+
+                    <MenuItem id='save-session-menu-item' variant="success" onClick={() => {downloadSession(false)}}>
+                        Save session
+                    </MenuItem>
+                    
+                    <MenuItem id='recover-session-menu-item' variant="success" onClick={recoverSession}>
+                        Recover previous session
                     </MenuItem>
                     
                     <hr></hr>
