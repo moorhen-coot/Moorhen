@@ -24,7 +24,7 @@ const updateStoredPreferences = async (key, value) => {
 
 const getDefaultValues = () => {
     return {
-        version: '0.0.9',
+        version: '0.0.10',
         darkMode: false, 
         atomLabelDepthMode: true, 
         defaultExpandDisplayCards: true,
@@ -178,7 +178,6 @@ const PreferencesContextProvider = ({ children }) => {
         setRefineAfterMod(defaultValues.refineAfterMod)
         setMouseSensitivity(defaultValues.mouseSensitivity)
         setDrawCrosshairs(defaultValues.drawCrosshairs)
-        setDrawFPS(defaultValues.drawFPS)
         setDrawMissingLoops(defaultValues.drawMissingLoops)
         setMapLineWidth(defaultValues.mapLineWidth)
         setMakeBackups(defaultValues.makeBackups)
@@ -187,6 +186,7 @@ const PreferencesContextProvider = ({ children }) => {
         setDefaultBondSmoothness(defaultValues.defaultBondSmoothness)
         setShowScoresToast(defaultValues.showScoresToast)
         setDefaultUpdatingScores({action: 'Overwrite', items: defaultValues.defaultUpdatingScores})
+        setDrawFPS(defaultValues.drawFPS)
     }
 
     /**
@@ -208,7 +208,6 @@ const PreferencesContextProvider = ({ children }) => {
                     localforage.getItem('refineAfterMod'),
                     localforage.getItem('mouseSensitivity'),
                     localforage.getItem('drawCrosshairs'),
-                    localforage.getItem('drawFPS'),
                     localforage.getItem('drawMissingLoops'),
                     localforage.getItem('mapLineWidth'),
                     localforage.getItem('makeBackups'),
@@ -216,7 +215,8 @@ const PreferencesContextProvider = ({ children }) => {
                     localforage.getItem('defaultMapSurface'),
                     localforage.getItem('defaultBondSmoothness'),
                     localforage.getItem('showScoresToast'),
-                    localforage.getItem('defaultUpdatingScores')
+                    localforage.getItem('defaultUpdatingScores'),
+                    localforage.getItem('drawFPS'),
                     ])
                 
                 console.log('Retrieved the following preferences from local storage: ', response)
