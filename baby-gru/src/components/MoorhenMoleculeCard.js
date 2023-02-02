@@ -225,6 +225,39 @@ export const MoorhenMoleculeCard = (props) => {
         props.setCurrentDropdownMolNo(-1)
     }
 
+    const getCheckBox = (key) => {
+        return  <FormControlLabel
+                    key={key}
+                    labelPlacement="top"
+                    style={{ marginLeft: "0px", marginRight: "0px" }}
+                    label={
+                        <Typography 
+                            style={{ transform: 'rotate(-45deg)' }}
+                            control={
+                                <Checkbox
+                                    disabled={!isVisible}
+                                    checked={showState[key]}
+                                    onChange={(e) => {
+                                        if (e.target.checked) {
+                                            props.molecule.show(key, props.glRef)
+                                            const changedState = { ...showState }
+                                            changedState[key] = true
+                                            setShowState(changedState)
+                                        }
+                                        else {
+                                            props.molecule.hide(key, props.glRef)
+                                            const changedState = { ...showState }
+                                            changedState[key] = false
+                                            setShowState(changedState)
+                                        }
+                                    }}/>
+                                }>
+                            {Object.keys(labelMapping).includes(key) ? labelMapping[key] : key}
+                        </Typography>
+                    }
+                />
+    } 
+
     const handleProps = { handleCentering, handleCopyFragment, handleDownload, handleRedo, handleUndo, handleResidueRangeRefinement, handleVisibility }
 
     return <Card className="px-0" style={{ marginBottom: '0.5rem', padding: '0' }} key={props.molecule.molNo}>
@@ -267,60 +300,7 @@ export const MoorhenMoleculeCard = (props) => {
                                     <FormGroup style={{ margin: "0px", padding: "0px" }} row>
                                         {Object.keys(props.molecule.displayObjects)
                                             .filter(key => !['hover', 'transformation', 'contact_dots', 'chemical_features', 'VdWSurface'].includes(key))
-                                            .map(key => {
-                                                return <FormControlLabel
-                                                    key={key}
-                                                    control={<Checkbox
-                                                        disabled={!isVisible}
-                                                        checked={showState[key]}
-                                                        onChange={(e) => {
-                                                            if (e.target.checked) {
-                                                                props.molecule.show(key, props.glRef)
-                                                                const changedState = { ...showState }
-                                                                changedState[key] = true
-                                                                setShowState(changedState)
-                                                            }
-                                                            else {
-                                                                props.molecule.hide(key, props.glRef)
-                                                                const changedState = { ...showState }
-                                                                changedState[key] = false
-                                                                setShowState(changedState)
-                                                            }
-                                                        }}                                                 >
-                                                    </Checkbox>}
-                                                    style={{ marginLeft: "0px", marginRight: "0px" }}
-                                                    label={<Typography style={{ transform: 'rotate(-45deg)' }}>
-
-                                                        {Object.keys(labelMapping).includes(key) ? labelMapping[key] : key}
-                                                    </Typography>} labelPlacement="top" />
-
-                                                /*<Form.Check
-                                                    key={key}
-                                                    inline
-                                                    label={`${key.substring(0, 3)}.`}
-                                                    feedbackTooltip={"Toggle on"}
-                                                    name={key}
-                                                    type="checkbox"
-                                                    variant="outline"
-                                                    checked={showState[key]}
-                                                    disabled={!isVisible}
-                                                    onChange={(e) => {
-                                                        if (e.target.checked) {
-                                                            props.molecule.show(key, props.glRef)
-                                                            const changedState = { ...showState }
-                                                            changedState[key] = true
-                                                            setShowState(changedState)
-                                                        }
-                                                        else {
-                                                            props.molecule.hide(key, props.glRef)
-                                                            const changedState = { ...showState }
-                                                            changedState[key] = false
-                                                            setShowState(changedState)
-                                                        }
-                                                    }} 
-                                                />*/
-                                                
-                                            })
+                                            .map(key => getCheckBox(key))
                                         }
                                     </FormGroup>
                                 </div>
