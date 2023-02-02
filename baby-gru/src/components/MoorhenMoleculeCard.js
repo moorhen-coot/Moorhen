@@ -393,6 +393,7 @@ const RepresentationCheckbox = (props) => {
     return <Checkbox
         disabled={!props.isVisible}
         checked={repState}
+        size="small"
         onChange={(e) => {
             props.changeShowState({ key: props.repKey, state: e.target.checked })
             if (e.target.checked) {
