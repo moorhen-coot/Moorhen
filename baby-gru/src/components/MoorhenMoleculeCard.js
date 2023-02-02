@@ -6,7 +6,6 @@ import { MoorhenSequenceViewer } from "./MoorhenSequenceViewer";
 import { MoorhenMoleculeCardButtonBar } from "./MoorhenMoleculeCardButtonBar"
 import { MoorhenLigandList } from "./MoorhenLigandList"
 import { Checkbox, FormControlLabel, FormGroup, Typography } from "@mui/material";
-import { CheckBox } from "@mui/icons-material";
 
 export const MoorhenMoleculeCard = (props) => {
     const [showState, setShowState] = useState({})
@@ -228,33 +227,28 @@ export const MoorhenMoleculeCard = (props) => {
     const getCheckBox = (key) => {
         return  <FormControlLabel
                     key={key}
-                    labelPlacement="top"
+                    labelPlacement="top" 
                     style={{ marginLeft: "0px", marginRight: "0px" }}
-                    label={
-                        <Typography 
-                            style={{ transform: 'rotate(-45deg)' }}
-                            control={
-                                <Checkbox
-                                    disabled={!isVisible}
-                                    checked={showState[key]}
-                                    onChange={(e) => {
-                                        if (e.target.checked) {
-                                            props.molecule.show(key, props.glRef)
-                                            const changedState = { ...showState }
-                                            changedState[key] = true
-                                            setShowState(changedState)
-                                        }
-                                        else {
-                                            props.molecule.hide(key, props.glRef)
-                                            const changedState = { ...showState }
-                                            changedState[key] = false
-                                            setShowState(changedState)
-                                        }
-                                    }}/>
-                                }>
-                            {Object.keys(labelMapping).includes(key) ? labelMapping[key] : key}
-                        </Typography>
-                    }
+                    control={<Checkbox
+                                disabled={!isVisible}
+                                checked={showState[key]}
+                                onChange={(e) => {
+                                    if (e.target.checked) {
+                                        props.molecule.show(key, props.glRef)
+                                        const changedState = { ...showState }
+                                        changedState[key] = true
+                                        setShowState(changedState)
+                                    }
+                                    else {
+                                        props.molecule.hide(key, props.glRef)
+                                        const changedState = { ...showState }
+                                        changedState[key] = false
+                                        setShowState(changedState)
+                                    }
+                                }}/>}
+                    label={ <Typography style={{ transform: 'rotate(-45deg)' }}>
+                                {Object.keys(labelMapping).includes(key) ? labelMapping[key] : key}
+                            </Typography>}
                 />
     } 
 
