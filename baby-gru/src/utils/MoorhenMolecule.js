@@ -27,16 +27,16 @@ export function MoorhenMolecule(commandCentre, urlPrefix) {
         atomRadiusBondRatio: 1
     }
     this.displayObjects = {
-        rama: [],
-        rotamer: [],
         CBs: [],
-        CDs: [],
-        gaussian: [],
-        hover: [],
-        ligands: [],
         CRs: [],
+        ligands: [],
+        gaussian: [],
         MolecularSurface: [],
         VdWSurface: [],
+        rama: [],
+        rotamer: [],
+        CDs: [],
+        hover: [],
         transformation: { origin: [0, 0, 0], quat: null, centre: [0, 0, 0] }
     }
     this.urlPrefix = (typeof urlPrefix === 'undefined' ? "." : urlPrefix);
