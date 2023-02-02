@@ -370,6 +370,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("rail_points_total",&molecules_container_t::rail_points_total)
     .function("sfcalc_genmap",&molecules_container_t::sfcalc_genmap)
     .function("sfcalc_genmaps_using_bulk_solvent",&molecules_container_t::sfcalc_genmaps_using_bulk_solvent)
+    .function("add_colour_rule",&molecules_container_t::add_colour_rule)
+    .function("delete_colour_rules",&molecules_container_t::delete_colour_rules)
     .function("fit_ligand_right_here",&molecules_container_t::fit_ligand_right_here)
     .function("fit_to_map_by_random_jiggle",&molecules_container_t::fit_to_map_by_random_jiggle)
     .function("fit_to_map_by_random_jiggle_using_cid",&molecules_container_t::fit_to_map_by_random_jiggle_using_cid)
