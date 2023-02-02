@@ -1,10 +1,13 @@
 import { NavDropdown } from "react-bootstrap";
 import { useState } from "react";
+import { MenuItem } from "@mui/material";
 import { MoorhenBackgroundColorMenuItem, MoorhenClipFogMenuItem } from "./MoorhenMenuItem";
+import { MoorhenAdvancedDisplayOptions } from "./MoorhenAdvancedDisplayOptions"
 
 
 export const MoorhenViewMenu = (props) => {
     const [popoverIsShown, setPopoverIsShown] = useState(false)
+    const [showAdvancedDisplayOptions, setShowAdvancedDisplayOptions] = useState(false)
     const menuItemProps = {setPopoverIsShown, ...props}
 
     return <>
@@ -18,7 +21,11 @@ export const MoorhenViewMenu = (props) => {
                 <MoorhenBackgroundColorMenuItem {...menuItemProps} />
                 <hr></hr>
                 <MoorhenClipFogMenuItem {...menuItemProps} />
+                <MenuItem onClick={() => setShowAdvancedDisplayOptions(true)}>
+                    Advanced Display Options
+                </MenuItem>
             </NavDropdown >
+            <MoorhenAdvancedDisplayOptions showAdvancedDisplayOptions={showAdvancedDisplayOptions} setShowAdvancedDisplayOptions={setShowAdvancedDisplayOptions} {...props}/>
         </>
     }
 

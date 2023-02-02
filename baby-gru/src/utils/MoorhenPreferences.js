@@ -24,13 +24,14 @@ const updateStoredPreferences = async (key, value) => {
 
 const getDefaultValues = () => {
     return {
-        version: '0.0.9',
+        version: '0.0.10',
         darkMode: false, 
         atomLabelDepthMode: true, 
         defaultExpandDisplayCards: true,
         defaultMapLitLines: false,
         refineAfterMod: true,
         drawCrosshairs: true,
+        drawFPS: false,
         drawMissingLoops: true,
         mouseSensitivity: 2.0,
         mapLineWidth: 1.0,
@@ -157,6 +158,7 @@ const PreferencesContextProvider = ({ children }) => {
     const [refineAfterMod, setRefineAfterMod] = useState(null)
     const [mouseSensitivity, setMouseSensitivity] = useState(null)
     const [drawCrosshairs, setDrawCrosshairs] = useState(null)
+    const [drawFPS, setDrawFPS] = useState(null)
     const [drawMissingLoops, setDrawMissingLoops] = useState(null)
     const [mapLineWidth, setMapLineWidth] = useState(null)
     const [makeBackups, setMakeBackups] = useState(null)
@@ -164,7 +166,7 @@ const PreferencesContextProvider = ({ children }) => {
     const [defaultMapSurface, setDefaultMapSurface] = useState(null)
     const [defaultBondSmoothness, setDefaultBondSmoothness] = useState(null)
     const [showScoresToast, setShowScoresToast] = useState(null)
-    const [defaultUpdatingScores, setDefaultUpdatingScores] = useReducer(itemReducer, [])
+    const [defaultUpdatingScores, setDefaultUpdatingScores] = useReducer(itemReducer, null)
 
     const restoreDefaults = (defaultValues)=> {
         updateStoredPreferences('version', defaultValues.version)
@@ -184,6 +186,7 @@ const PreferencesContextProvider = ({ children }) => {
         setDefaultBondSmoothness(defaultValues.defaultBondSmoothness)
         setShowScoresToast(defaultValues.showScoresToast)
         setDefaultUpdatingScores({action: 'Overwrite', items: defaultValues.defaultUpdatingScores})
+        setDrawFPS(defaultValues.drawFPS)
     }
 
     /**
@@ -212,7 +215,8 @@ const PreferencesContextProvider = ({ children }) => {
                     localforage.getItem('defaultMapSurface'),
                     localforage.getItem('defaultBondSmoothness'),
                     localforage.getItem('showScoresToast'),
-                    localforage.getItem('defaultUpdatingScores')
+                    localforage.getItem('defaultUpdatingScores'),
+                    localforage.getItem('drawFPS'),
                     ])
                 
                 console.log('Retrieved the following preferences from local storage: ', response)
@@ -242,6 +246,7 @@ const PreferencesContextProvider = ({ children }) => {
                     setDefaultBondSmoothness(response[14])
                     setShowScoresToast(response[15])
                     setDefaultUpdatingScores({action: 'Overwrite', items: response[16]})
+                    setDrawFPS(response[17])
                 }                
                 
             } catch (err) {
@@ -279,7 +284,7 @@ const PreferencesContextProvider = ({ children }) => {
     
     useMemo(() => {
 
-        if (defaultUpdatingScores === null || defaultUpdatingScores.length === 0) {
+        if (defaultUpdatingScores === null) {
             return
         }
        
@@ -339,6 +344,15 @@ const PreferencesContextProvider = ({ children }) => {
        
         updateStoredPreferences('drawCrosshairs', drawCrosshairs);
     }, [drawCrosshairs]);
+
+    useMemo(() => {
+
+        if (drawFPS === null) {
+            return
+        }
+       
+        updateStoredPreferences('drawFPS', drawFPS);
+    }, [drawFPS]);
 
     useMemo(() => {
 
@@ -410,7 +424,7 @@ const PreferencesContextProvider = ({ children }) => {
         setDrawCrosshairs, drawMissingLoops, setDrawMissingLoops, mapLineWidth, setMapLineWidth,
         makeBackups, setMakeBackups, showShortcutToast, setShowShortcutToast, defaultMapSurface,
         setDefaultMapSurface, defaultBondSmoothness, setDefaultBondSmoothness, showScoresToast, 
-        setShowScoresToast, defaultUpdatingScores, setDefaultUpdatingScores
+        setShowScoresToast, defaultUpdatingScores, setDefaultUpdatingScores, drawFPS, setDrawFPS
     }
 
     return (
