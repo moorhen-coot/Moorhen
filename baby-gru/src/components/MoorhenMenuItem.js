@@ -9,6 +9,7 @@ import { MoorhenMolecule } from "../utils/MoorhenMolecule";
 import { MoorhenMoleculeSelect } from "./MoorhenMoleculeSelect";
 import MoorhenSlider from "./MoorhenSlider";
 import { MoorhenMapSelect } from "./MoorhenMapSelect";
+import { MoorhenBackupSelect } from "./MoorhenBackupSelect";
 import "rc-tree/assets/index.css"
 import Tree from 'rc-tree';
 
@@ -939,6 +940,36 @@ export const MoorhenImportMapCoefficientsMenuItem = (props) => {
         onCompleted={onCompleted}
         setPopoverIsShown={props.setPopoverIsShown}
     />
+}
+
+export const MoorhenBackupsMenuItem = (props) => {
+
+    const backupSelectRef = useRef(null)
+
+    const onCompleted = async () => {
+        props.setPopoverIsShown(false)
+        if(props.onCompleted)
+            props.onCompleted(backupSelectRef.current.value)
+        return true
+    }
+
+    const panelContent = <>
+        <Row>
+            <Col style={{ width: '30rem' }}>
+                <MoorhenBackupSelect {...props} ref={backupSelectRef} allowAny={false} width='100%' label='Select backup' />
+            </Col>
+        </Row>
+     </>
+
+    return <MoorhenMenuItem
+        popoverContent={panelContent}
+        menuItemText="Recover previous session..."
+        onCompleted={onCompleted}
+        setPopoverIsShown={props.setPopoverIsShown}
+        storageKeysDirty={props.storageKeysDirty}
+        setStorageKeysDirty={props.setStorageKeysDirty}
+    />
+    
 }
 
 export const MoorhenImportFSigFMenuItem = (props) => {

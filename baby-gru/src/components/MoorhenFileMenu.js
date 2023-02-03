@@ -2,7 +2,7 @@ import { NavDropdown, Form, Button, InputGroup, Overlay, SplitButton, Dropdown }
 import { MoorhenMolecule } from "../utils/MoorhenMolecule";
 import { MoorhenMap } from "../utils/MoorhenMap";
 import { useState, useRef } from "react";
-import { MoorhenImportDictionaryMenuItem, MoorhenImportMapCoefficientsMenuItem, MoorhenDeleteEverythingMenuItem, MoorhenLoadTutorialDataMenuItem, MoorhenImportMapMenuItem, MoorhenImportFSigFMenuItem } from "./MoorhenMenuItem";
+import { MoorhenImportDictionaryMenuItem, MoorhenImportMapCoefficientsMenuItem, MoorhenDeleteEverythingMenuItem, MoorhenLoadTutorialDataMenuItem, MoorhenImportMapMenuItem, MoorhenImportFSigFMenuItem, MoorhenBackupsMenuItem } from "./MoorhenMenuItem";
 import { MenuItem } from "@mui/material";
 import { convertViewtoPx, doDownload, readTextFile } from "../utils/MoorhenUtils";
 import localforage from 'localforage';
@@ -18,8 +18,9 @@ export const MoorhenFileMenu = (props) => {
     const [isValidPdbId, setIsValidPdbId] = useState(true)
     const pdbCodeFetchInputRef = useRef(null);
     const fetchMapDataCheckRef = useRef(null);
+    const [storageKeysDirty, setStorageKeysDirty] = useState(true)
 
-    const menuItemProps = { setPopoverIsShown, ...props }
+    const menuItemProps = { storageKeysDirty, setStorageKeysDirty, setPopoverIsShown, ...props }
 
     const loadPdbFiles = async (files) => {
         let readPromises = []
@@ -221,20 +222,21 @@ export const MoorhenFileMenu = (props) => {
         loadSessionJSON(sessionData)
     }
 
-    const recoverSession = async () => {
-        console.log("Recover ....");
+    const recoverSession = async (name) => {
+        console.log("Recover ....",name);
         const ContactTable = localforage.createInstance({
            name: "Moorhen-SessionStorage",
            storeName: "Moorhen-SessionStorageTable"
         });
         try {
-            let backup = await ContactTable.getItem("backup")
-            console.log("successully got session from localforage")
-            loadSessionJSON(backup)
+            let backup = await ContactTable.getItem(name)
+            if(backup){
+                console.log("successully got session",name,"from localforage")
+                loadSessionJSON(backup)
+            }
         } catch (err) {
             console.log(err)
         }
-        
     }
 
     const downloadSession = async (download) => {
@@ -277,13 +279,16 @@ export const MoorhenFileMenu = (props) => {
             doDownload([JSON.stringify(session)], `session.json`)
         } else {
 
+            //TODO - This needs to be clever and only save say 20 states - delete the oldest one if more than 19 before saving new.
             const ContactTable = localforage.createInstance({
                name: "Moorhen-SessionStorage",
                storeName: "Moorhen-SessionStorageTable"
             });
             try {
-                await ContactTable.setItem("backup", JSON.stringify(session))
+                const d = Date.now()
+                await ContactTable.setItem("backup-"+d, JSON.stringify(session))
                 console.log("successully stored session in localforage")
+                setStorageKeysDirty(true)
             } catch (err) {
                 console.log(err)
             }
@@ -353,9 +358,7 @@ export const MoorhenFileMenu = (props) => {
                         Save session
                     </MenuItem>
                     
-                    <MenuItem id='recover-session-menu-item' variant="success" onClick={recoverSession}>
-                        Recover previous session
-                    </MenuItem>
+                    <MoorhenBackupsMenuItem {...menuItemProps} onCompleted={(e) => { recoverSession(e) }} />
                     
                     <hr></hr>
 
