@@ -9660,9 +9660,6 @@ class MGWebGL extends Component {
         }
         this.gl.depthFunc(this.gl.ALWAYS);
 
-        for(let i = 0; i<7; i++)
-            this.gl.disableVertexAttribArray(i);
-
         this.gl.useProgram(this.shaderProgramTextBackground);
         this.gl.uniform1f(this.shaderProgramTextBackground.fog_start, 1000.0);
         this.gl.uniform1f(this.shaderProgramTextBackground.fog_end, 1000.0);

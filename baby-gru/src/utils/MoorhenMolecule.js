@@ -394,7 +394,7 @@ MoorhenMolecule.prototype.drawCootContactDotsCid = function (glRef, style) {
     return this.commandCentre.current.cootCommand({
         returnType: "instanced_mesh",
         command: "contact_dots_for_ligand",
-        commandArgs: [$this.molNo, cid]
+        commandArgs: [$this.molNo, cid, $this.cootBondsOptions.smoothness]
     }).then(response => {
         const objects = [response.data.result.result]
         //console.log('rota', { objects })
@@ -429,7 +429,7 @@ MoorhenMolecule.prototype.drawCootContactDots = function (glRef) {
     return this.commandCentre.current.cootCommand({
         returnType: "instanced_mesh",
         command: "all_molecule_contact_dots",
-        commandArgs: [$this.molNo]
+        commandArgs: [$this.molNo, $this.cootBondsOptions.smoothness]
     }).then(response => {
         const objects = [response.data.result.result]
         //console.log('rota', { objects })
