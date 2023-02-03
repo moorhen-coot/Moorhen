@@ -33,6 +33,7 @@ export function MoorhenMolecule(commandCentre, urlPrefix) {
         gaussian: [],
         MolecularSurface: [],
         VdWSurface: [],
+        DishyBases: [],
         rama: [],
         rotamer: [],
         CDs: [],
@@ -342,25 +343,18 @@ MoorhenMolecule.prototype.drawWithStyleFromAtoms = async function (style, glRef)
             await this.drawCootGaussianSurface(glRef)
             break;
         case 'CRs':
-            await this.drawCootRepresentation(glRef, style)
-            break;
         case 'MolecularSurface':
-            await this.drawCootRepresentation(glRef, style)
-            break;
+        case 'DishyBases':
         case 'VdWSurface':
-            await this.drawCootRepresentation(glRef, style)
-            break;
         case 'Calpha':
-            await this.drawCootRepresentation(glRef, style)
-            break;
         case 'ligands':
             await this.drawCootRepresentation(glRef, style)
             break;
         default:
-            if(style.startsWith("chemical_features")){
+            if (style.startsWith("chemical_features")) {
                 await this.drawCootChemicalFeaturesCid(glRef, style)
             }
-            if(style.startsWith("contact_dots")){
+            if (style.startsWith("contact_dots")) {
                 await this.drawCootContactDotsCid(glRef, style)
             }
             break;
@@ -393,14 +387,14 @@ MoorhenMolecule.prototype.drawRamachandranBalls = function (glRef) {
     })
 }
 
-MoorhenMolecule.prototype.drawCootContactDotsCid = function (glRef,style) {
+MoorhenMolecule.prototype.drawCootContactDotsCid = function (glRef, style) {
     const $this = this
     const cid = style.substr("contact_dots-".length)
 
     return this.commandCentre.current.cootCommand({
         returnType: "instanced_mesh",
         command: "contact_dots_for_ligand",
-        commandArgs: [$this.molNo,cid]
+        commandArgs: [$this.molNo, cid]
     }).then(response => {
         const objects = [response.data.result.result]
         //console.log('rota', { objects })
@@ -410,14 +404,14 @@ MoorhenMolecule.prototype.drawCootContactDotsCid = function (glRef,style) {
     })
 }
 
-MoorhenMolecule.prototype.drawCootChemicalFeaturesCid = function (glRef,style) {
+MoorhenMolecule.prototype.drawCootChemicalFeaturesCid = function (glRef, style) {
     const $this = this
     const cid = style.substr("chemical_features-".length)
 
     return this.commandCentre.current.cootCommand({
         returnType: "mesh",
         command: "get_chemical_features_mesh",
-        commandArgs: [$this.molNo,cid]
+        commandArgs: [$this.molNo, cid]
     }).then(response => {
         const objects = [response.data.result.result]
         //console.log('rota', { objects })
@@ -544,6 +538,10 @@ MoorhenMolecule.prototype.drawCootRepresentation = async function (glRef, style)
             m2tStyle = "VdWSurface"
             m2tSelection = "(ALA,CYS,ASP,GLU,PHE,GLY,HIS,ILE,LYS,LEU,MET,ASN,PRO,GLN,ARG,SER,THR,VAL,TRP,TYR)"
             break;
+        case "DishyBases":
+            m2tStyle = "DishyBases"
+            m2tSelection = "(ALA,CYS,ASP,GLU,PHE,GLY,HIS,ILE,LYS,LEU,MET,ASN,PRO,GLN,ARG,SER,THR,VAL,TRP,TYR)"
+            break;
         case "Calpha":
             m2tStyle = "Calpha"
             m2tSelection = "(ALA,CYS,ASP,GLU,PHE,GLY,HIS,ILE,LYS,LEU,MET,ASN,PRO,GLN,ARG,SER,THR,VAL,TRP,TYR)"
@@ -567,7 +565,7 @@ MoorhenMolecule.prototype.drawCootRepresentation = async function (glRef, style)
         let objects = [response.data.result.result]
         if (objects.length > 0 && !this.gemmiStructure.isDeleted()) {
             //Empty existing buffers of this type
-            if (m2tStyle === "Cylinders") {
+            if (["Cylinders","DishyBases"].includes(m2tStyle)) {
                 objects = objects.map(object => {
                     const flippedNormalsObject = { ...object }
                     flippedNormalsObject.idx_tri = object.idx_tri.map(
@@ -591,7 +589,7 @@ MoorhenMolecule.prototype.drawCootRepresentation = async function (glRef, style)
 
 MoorhenMolecule.prototype.show = function (style, glRef) {
     //console.log("show",{style})
-    if (!this.displayObjects[style]){
+    if (!this.displayObjects[style]) {
         this.displayObjects[style] = []
     }
     if (this.displayObjects[style].length === 0) {
