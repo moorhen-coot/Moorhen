@@ -42,13 +42,15 @@ const itemReducer = (oldList, change) => {
 const initialRuleState = []
 
 const MoorhenColourRules = (props) => {
-    const moleculeSelectRef = useRef();
-    const chainSelectRef = useRef();
-    const ruleSelectRef = useRef();
+    const moleculeSelectRef = useRef()
+    const chainSelectRef = useRef()
+    const ruleSelectRef = useRef()
+    const residueCidFormRef = useRef()
     const [ruleType, setRuleType] = useState('molecule')
     const [selectedColour, setSelectedColour] = useState({r: 128, g: 128, b: 128, a: 0.5})
     const [selectedModel, setSelectedModel] = useState(null)
     const [selectedChain, setSelectedChain] = useState(null)
+    const [residueCid, setResidueCid] = useState(null)
     const [ruleList, setRuleList] = useReducer(itemReducer, initialRuleState)
 
     useEffect(() => {
@@ -68,8 +70,13 @@ const MoorhenColourRules = (props) => {
     }
 
     const handleChainChange = (evt) => {
-        console.log(`Ramachandran selected chain ${evt.target.value}`)
+        console.log(`Selected chain ${evt.target.value}`)
         setSelectedChain(evt.target.value)
+    }
+
+    const handleResidueCidChange = (evt) => {
+        console.log(`Selected residue CID ${evt.target.value}`)
+        setResidueCid(evt.target.value)
     }
 
     const handleColorChange = (color) => {
@@ -87,11 +94,11 @@ const MoorhenColourRules = (props) => {
             const newRule = {
                 commandArgs: [
                     selectedModel,
-                    ruleType === 'molecule' ? "//*" : `//${chainSelectRef.current.value}`, 
+                    ruleType === 'molecule' ? "//*" : ruleType === 'chain' ? `//${chainSelectRef.current.value}` : `//${chainSelectRef.current.value}/${residueCid}`, 
                     selectedColour
                 ],
                 color: selectedColour,
-                label: `/${selectedMolecule.name}/${ruleType=== 'molecule' ? '*' : chainSelectRef.current.value}/`,
+                label: `/${selectedMolecule.name}/${ruleType === 'molecule' ? '*' : chainSelectRef.current.value}/${ruleType === 'residueCid' ? residueCid : ''}`,
             }
             setRuleList({action: 'Add', item: newRule})
         }
@@ -118,7 +125,6 @@ const MoorhenColourRules = (props) => {
         }))
         await Promise.all(promises)
         
-        setRuleList({action: 'Empty' })
         selectedMolecule.setAtomsDirty(true)
         selectedMolecule.redraw(props.glRef)
 
@@ -155,11 +161,18 @@ const MoorhenColourRules = (props) => {
                         <FormSelect size="sm" ref={ruleSelectRef} defaultValue={'molecule'} onChange={(val) => setRuleType(val.target.value)}>
                             <option value={'molecule'} key={'molecule'}>By molecule</option>
                             <option value={'chain'} key={'chain'}>By chain</option>
+                            <option value={'residueCid'} key={'residueCid'}>By residue CID</option>
                         </FormSelect>
                     </Form.Group>
                         <Stack gap={2} style={{alignItems: 'center'}}>
                             <MoorhenMoleculeSelect width="90%" onChange={handleModelChange} molecules={props.molecules} ref={moleculeSelectRef}/>
-                            {ruleType==='chain' && <MoorhenChainSelect width="90%" molecules={props.molecules} onChange={handleChainChange} selectedCoordMolNo={selectedModel} ref={chainSelectRef} allowedTypes={[1, 2]}/>}
+                            {(ruleType==='chain' || ruleType==='residueCid') && <MoorhenChainSelect width="90%" molecules={props.molecules} onChange={handleChainChange} selectedCoordMolNo={selectedModel} ref={chainSelectRef} allowedTypes={[1, 2]}/>}
+                            {ruleType==='residueCid' && 
+                                <Form.Group style={{ width: "90%", margin: '0.5rem', height:props.height }}>
+                                    <Form.Label>Residue CID</Form.Label>
+                                    <Form.Control size="sm" type='text' defaultValue={''} style={{width: "90%"}} onChange={handleResidueCidChange} ref={residueCidFormRef}/>
+                                </Form.Group>
+                            }
                             <SketchPicker color={selectedColour} onChange={handleColorChange} />
                             <Button variant='secondary' onClick={createRule} style={{margin: '0.5rem'}}>
                                 Create rule
