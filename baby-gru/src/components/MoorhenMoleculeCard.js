@@ -211,6 +211,7 @@ export const MoorhenMoleculeCard = (props) => {
         MolecularSurface: "Surf.",
         gaussian: "Gauss.",
         ligands: "Lig.",
+        DishyBases: "Bases"
     }
 
     const handleResidueRangeRefinement = () => {
