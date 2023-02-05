@@ -227,13 +227,21 @@ MoorhenMolecule.prototype.loadMissingMonomers = async function () {
             let monomerPromises = []
             response.data.result.result.forEach(newTlc => {
                 const newPromise = fetch(`${$this.urlPrefix}/baby-gru/monomers/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`)
-                    .then(response => response.text())
+                    .then(response => { return response.text() })
+                    .then(fileContent => {
+                        if (!fileContent.includes('data_')) {
+                            return fetch(`https://www.ebi.ac.uk/pdbe/static/files/pdbechem_v2/${newTlc.toUpperCase()}.cif`)
+                                .then(response => { return response.text() })
+                        }
+                        else return Promise.resolve(fileContent)
+                    })
                     .then(fileContent => $this.commandCentre.current.cootCommand({
                         returnType: "status",
                         command: 'shim_read_dictionary',
                         commandArgs: [fileContent, -999999],
                         changesMolecules: []
-                    }, true))
+                    }, true)
+                    )
                 monomerPromises.push(newPromise)
             })
             await Promise.all(monomerPromises)
@@ -565,7 +573,7 @@ MoorhenMolecule.prototype.drawCootRepresentation = async function (glRef, style)
         let objects = [response.data.result.result]
         if (objects.length > 0 && !this.gemmiStructure.isDeleted()) {
             //Empty existing buffers of this type
-            if (["Cylinders","DishyBases"].includes(m2tStyle)) {
+            if (["Cylinders", "DishyBases"].includes(m2tStyle)) {
                 objects = objects.map(object => {
                     const flippedNormalsObject = { ...object }
                     flippedNormalsObject.idx_tri = object.idx_tri.map(
