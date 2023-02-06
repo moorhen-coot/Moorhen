@@ -442,6 +442,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("merge_molecules", select_overload<std::pair<int, std::vector<merge_molecule_results_info_t> >(int,const std::string &)>(&molecules_container_t::merge_molecules))
     .function("get_single_letter_codes_for_chain",&molecules_container_t::get_single_letter_codes_for_chain)
     .function("get_r_factor_stats",&molecules_container_t::get_r_factor_stats)
+    .function("get_colour_rules",&molecules_container_t::get_colour_rules)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<>()
