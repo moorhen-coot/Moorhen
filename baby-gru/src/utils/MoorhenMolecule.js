@@ -216,6 +216,26 @@ MoorhenMolecule.prototype.loadToCootFromString = async function (coordData, name
         })
 }
 
+MoorhenMolecule.prototype.loadMissingMonomer = async function (newTlc, attachToMolecule) {
+    const $this = this
+    return fetch(`${$this.urlPrefix}/baby-gru/monomers/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`)
+        .then(response => { return response.text() })
+        .then(fileContent => {
+            if (!fileContent.includes('data_')) {
+                return fetch(`https://www.ebi.ac.uk/pdbe/static/files/pdbechem_v2/${newTlc.toUpperCase()}.cif`)
+                    .then(response => { return response.text() })
+            }
+            else return Promise.resolve(fileContent)
+        })
+        .then(fileContent => $this.commandCentre.current.cootCommand({
+            returnType: "status",
+            command: 'shim_read_dictionary',
+            commandArgs: [fileContent, attachToMolecule],
+            changesMolecules: []
+        }, true))
+}
+
+
 MoorhenMolecule.prototype.loadMissingMonomers = async function () {
     const $this = this
     return $this.commandCentre.current.cootCommand({
@@ -226,22 +246,7 @@ MoorhenMolecule.prototype.loadMissingMonomers = async function () {
         if (response.data.result.status === 'Completed') {
             let monomerPromises = []
             response.data.result.result.forEach(newTlc => {
-                const newPromise = fetch(`${$this.urlPrefix}/baby-gru/monomers/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`)
-                    .then(response => { return response.text() })
-                    .then(fileContent => {
-                        if (!fileContent.includes('data_')) {
-                            return fetch(`https://www.ebi.ac.uk/pdbe/static/files/pdbechem_v2/${newTlc.toUpperCase()}.cif`)
-                                .then(response => { return response.text() })
-                        }
-                        else return Promise.resolve(fileContent)
-                    })
-                    .then(fileContent => $this.commandCentre.current.cootCommand({
-                        returnType: "status",
-                        command: 'shim_read_dictionary',
-                        commandArgs: [fileContent, -999999],
-                        changesMolecules: []
-                    }, true)
-                    )
+                const newPromise = $this.loadMissingMonomer(newTlc, -999999)
                 monomerPromises.push(newPromise)
             })
             await Promise.all(monomerPromises)

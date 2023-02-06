@@ -161,15 +161,40 @@ export const MoorhenGetMonomerMenuItem = (props) => {
 
 
     const onCompleted = () => {
-        props.commandCentre.current.cootCommand({
-            returnType: 'status',
-            command: 'get_monomer_and_position_at',
-            commandArgs: [tlcRef.current.value,
-            parseInt(selectRef.current.value),
-            ...props.glRef.current.origin.map(coord => -coord)
-            ]
+        const fromMolNo = parseInt(selectRef.current.value)
+        const newTlc = tlcRef.current.value
+        const newMolecule = new MoorhenMolecule(props.commandCentre, props.urlPrefix)
+        let monomerLoadedPromise;
+        if (fromMolNo === -999999) {
+            //Here if we should raid monomer library followed by EBI
+            monomerLoadedPromise = newMolecule.loadMissingMonomer(newTlc, fromMolNo)
+        }
+        else {
+            monomerLoadedPromise = props.commandCentre.current.cootCommand({
+                returnType: "string_array",
+                command: 'get_residue_names_with_no_dictionary',
+                commandArgs: [fromMolNo],
+            }, false)
+                .then(knownMonomers => {
+                    if (knownMonomers.includes(newTlc)) {
+                        return Promise.resolve(true)
+                    }
+                    else {
+                        return newMolecule.loadMissingMonomer(newTlc, -999999)
+                    }
+                })
+        }
+        monomerLoadedPromise
+            .then(_ => {
+                return props.commandCentre.current.cootCommand({
+                    returnType: 'status',
+                    command: 'get_monomer_and_position_at',
+                    commandArgs: [newTlc, fromMolNo,
+                        ...props.glRef.current.origin.map(coord => -coord)
+                    ]
 
-        }, true)
+                }, true)
+            })
             .then(result => {
                 if (result.data.result.status === "Completed" && result.data.result.result !== -1) {
                     const newMolecule = new MoorhenMolecule(props.commandCentre, props.urlPrefix)
@@ -185,7 +210,7 @@ export const MoorhenGetMonomerMenuItem = (props) => {
                     props.commandCentre.current.extendConsoleMessage('Error getting monomer... Missing dictionary?')
                 }
             })
-            
+
     }
 
     return <MoorhenMenuItem
@@ -368,7 +393,7 @@ export const MoorhenDefaultBondSmoothnessPreferencesMenuItem = (props) => {
     const onCompleted = () => {
         props.setDefaultBondSmoothness(parseInt(smoothnesSelectRef.current.value))
     }
-    
+
     const panelContent =
         <>
             <Form.Group className="mb-3" style={{ width: '10rem', margin: '0' }} controlId="MoorhenSmoothnessSelector">
@@ -392,48 +417,54 @@ export const MoorhenDefaultBondSmoothnessPreferencesMenuItem = (props) => {
 }
 
 export const MoorhenScoresToastPreferencesMenuItem = (props) => {
-   
+
     const panelContent =
         <>
-            <InputGroup style={{ padding:'0rem', width: '15rem'}}>
-                <Form.Check 
-                        type="switch"
-                        checked={props.showScoresToast}
-                        onChange={() => { props.setShowScoresToast(!props.showScoresToast) }}
-                        label="Show scores window"/>
+            <InputGroup style={{ padding: '0rem', width: '15rem' }}>
+                <Form.Check
+                    type="switch"
+                    checked={props.showScoresToast}
+                    onChange={() => { props.setShowScoresToast(!props.showScoresToast) }}
+                    label="Show scores window" />
             </InputGroup>
-            <InputGroup style={{ padding:'0rem', width: '15rem'}}>
-                <Form.Check 
+            <InputGroup style={{ padding: '0rem', width: '15rem' }}>
+                <Form.Check
                     type="switch"
                     checked={props.defaultUpdatingScores.includes('Rfactor')}
-                    onChange={() => { props.setDefaultUpdatingScores({
-                        action: props.defaultUpdatingScores.includes('Rfactor') ? 'Remove' : 'Add',
-                        item: 'Rfactor'
-                    }) }}
-                    label="Show Rfactor"/>
+                    onChange={() => {
+                        props.setDefaultUpdatingScores({
+                            action: props.defaultUpdatingScores.includes('Rfactor') ? 'Remove' : 'Add',
+                            item: 'Rfactor'
+                        })
+                    }}
+                    label="Show Rfactor" />
             </InputGroup>
-            <InputGroup style={{ padding:'0rem', width: '15rem'}}>
-                <Form.Check 
+            <InputGroup style={{ padding: '0rem', width: '15rem' }}>
+                <Form.Check
                     type="switch"
                     checked={props.defaultUpdatingScores.includes('Rfree')}
-                    onChange={() => { props.setDefaultUpdatingScores({
-                        action: props.defaultUpdatingScores.includes('Rfree') ? 'Remove' : 'Add',
-                        item: 'Rfree'
-                    }) }}
-                    label="Show Rfree"/>
+                    onChange={() => {
+                        props.setDefaultUpdatingScores({
+                            action: props.defaultUpdatingScores.includes('Rfree') ? 'Remove' : 'Add',
+                            item: 'Rfree'
+                        })
+                    }}
+                    label="Show Rfree" />
             </InputGroup>
-            <InputGroup style={{ padding:'0rem', width: '15rem'}}>
-                <Form.Check 
+            <InputGroup style={{ padding: '0rem', width: '15rem' }}>
+                <Form.Check
                     type="switch"
                     checked={props.defaultUpdatingScores.includes('Moorhen Points')}
-                    onChange={() => { props.setDefaultUpdatingScores({
-                        action: props.defaultUpdatingScores.includes('Moorhen Points') ? 'Remove' : 'Add',
-                        item: 'Moorhen Points'
-                    }) }}
-                    label="Show Moorhen points"/>
+                    onChange={() => {
+                        props.setDefaultUpdatingScores({
+                            action: props.defaultUpdatingScores.includes('Moorhen Points') ? 'Remove' : 'Add',
+                            item: 'Moorhen Points'
+                        })
+                    }}
+                    label="Show Moorhen points" />
             </InputGroup>
         </>
-    
+
     return <MoorhenMenuItem
         popoverPlacement='right'
         popoverContent={panelContent}
@@ -447,17 +478,17 @@ export const MoorhenScoresToastPreferencesMenuItem = (props) => {
 export const MoorhenMapSettingsMenuItem = (props) => {
     const panelContent =
         <>
-            <Form.Check 
+            <Form.Check
                 type="switch"
                 checked={props.mapSolid}
-                onChange={() => {props.setMapSolid(!props.mapSolid)}}
-                label="Draw as a surface"/>
+                onChange={() => { props.setMapSolid(!props.mapSolid) }}
+                label="Draw as a surface" />
             {!props.mapSolid &&
-                <Form.Check 
+                <Form.Check
                     type="switch"
                     checked={props.mapLitLines}
-                    onChange={() => {props.setMapLitLines(!props.mapLitLines)}}
-                    label="Activate lit lines"/>
+                    onChange={() => { props.setMapLitLines(!props.mapLitLines) }}
+                    label="Activate lit lines" />
             }
             <Form.Group className="mb-3" style={{ width: '10rem', margin: '0' }} controlId="MoorhenMapOpacitySlider">
                 <MoorhenSlider minVal={0.0} maxVal={1.0} logScale={false} sliderTitle="Opacity" intialValue={props.mapOpacity} externalValue={props.mapOpacity} setExternalValue={props.setMapOpacity} />
@@ -470,7 +501,7 @@ export const MoorhenMapSettingsMenuItem = (props) => {
         showOkButton={false}
         setPopoverIsShown={props.setPopoverIsShown}
     />
- 
+
 }
 
 export const MoorhenMoleculeBondSettingsMenuItem = (props) => {
@@ -948,7 +979,7 @@ export const MoorhenBackupsMenuItem = (props) => {
 
     const onCompleted = async () => {
         props.setPopoverIsShown(false)
-        if(props.onCompleted)
+        if (props.onCompleted)
             props.onCompleted(backupSelectRef.current.value)
         return true
     }
@@ -959,7 +990,7 @@ export const MoorhenBackupsMenuItem = (props) => {
                 <MoorhenBackupSelect {...props} ref={backupSelectRef} allowAny={false} width='100%' label='Select backup' />
             </Col>
         </Row>
-     </>
+    </>
 
     return <MoorhenMenuItem
         popoverContent={panelContent}
@@ -969,7 +1000,7 @@ export const MoorhenBackupsMenuItem = (props) => {
         storageKeysDirty={props.storageKeysDirty}
         setStorageKeysDirty={props.setStorageKeysDirty}
     />
-    
+
 }
 
 export const MoorhenImportFSigFMenuItem = (props) => {
@@ -991,7 +1022,7 @@ export const MoorhenImportFSigFMenuItem = (props) => {
             parseInt(foFcSelectRef.current.value),
             parseInt(mapSelectRef.current.value)
         ]
-        
+
         if (connectMapsArgs.every(arg => !isNaN(arg))) {
             await props.commandCentre.current.cootCommand({
                 command: 'connect_updating_maps',
@@ -1004,9 +1035,9 @@ export const MoorhenImportFSigFMenuItem = (props) => {
                 commandArgs: sFcalcArgs,
                 returnType: 'status'
             }, true)
-            
+
             const connectedMapsEvent = new CustomEvent("connectedMaps")
-            document.dispatchEvent(connectedMapsEvent)    
+            document.dispatchEvent(connectedMapsEvent)
         }
     }
 
@@ -1088,15 +1119,15 @@ export const MoorhenAboutMenuItem = (props) => {
     const onCompleted = () => { props.setPopoverIsShown(false) }
 
     const panelContent = <div style={{ minWidth: "20rem" }}>
-    <p>Moorhen is a molecular graphics program based on the Coot desktop program.</p>
-    <p>Authors</p>
-    <ul>
-    <li>Paul Emsley</li>
-    <li>Filomeno Sanchez</li>
-    <li>Martin Noble</li>
-    <li>Stuart McNicholas</li>
-    </ul>
-    <p>Current version: 25th Jan 2023 10:31</p>
+        <p>Moorhen is a molecular graphics program based on the Coot desktop program.</p>
+        <p>Authors</p>
+        <ul>
+            <li>Paul Emsley</li>
+            <li>Filomeno Sanchez</li>
+            <li>Martin Noble</li>
+            <li>Stuart McNicholas</li>
+        </ul>
+        <p>Current version: 25th Jan 2023 10:31</p>
     </div>
 
     return <MoorhenMenuItem
