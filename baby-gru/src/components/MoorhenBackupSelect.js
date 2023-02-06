@@ -4,8 +4,8 @@ import localforage from 'localforage';
 
 export const MoorhenBackupSelect = forwardRef((props, selectRef) => {
 
-  const [storageKeys, setStorageKeys] = useState([]);
-    
+    const [storageKeys, setStorageKeys] = useState([]);
+    const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
 
     useEffect(() => {
          async function getKeys() {
@@ -13,14 +13,14 @@ export const MoorhenBackupSelect = forwardRef((props, selectRef) => {
                name: "Moorhen-SessionStorage",
                storeName: "Moorhen-SessionStorageTable"
             });
-            let keys = await ContactTable.keys()
+            let keysLF = await ContactTable.keys()
+            const keys = keysLF.filter(key => key.indexOf("backup-") == 0).sort((a,b)=>{return parseInt(a.substr(7))-parseInt(b.substr(7))}).reverse()
             let theKeys = []
                 keys.forEach(key => {
-                    if(key.startsWith("backup-")){
-                        const intK = parseInt(key.substr(7))
-                        const d = "" + new Date(intK)
-                        theKeys.push([key,d])
-                    }
+                    const intK = parseInt(key.substr(7))
+                    const d = new Date(intK)
+                    const dateString = d.toLocaleDateString(Intl.NumberFormat().resolvedOptions().locale ,dateOptions) + " " + d.getHours()+":"+d.getMinutes()+":"+d.getSeconds()
+                    theKeys.push([key,dateString])
                 })
             setStorageKeys(theKeys)
         }
