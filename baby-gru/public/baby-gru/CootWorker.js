@@ -33,6 +33,7 @@ const instancedMeshToMeshData = (instanceMesh, perm) => {
     let totInstancePrimTypes = []
 
     const geom = instanceMesh.geom
+    const markup = instanceMesh.markup
     const geomSize = geom.size()
     for (let i = 0; i < geomSize; i++) {
         let thisIdxs = []
@@ -172,18 +173,33 @@ const instancedMeshToMeshData = (instanceMesh, perm) => {
     }
 
     geom.delete()
+    const simpleMeshData = simpleMeshToMeshData(markup) // simpleMeshToMeshData should do the "delete"
     instanceMesh.delete()
 
-    return {
-        prim_types: [totInstancePrimTypes],
-        idx_tri: [totIdxs],
-        vert_tri: [totPos],
-        norm_tri: [totNorm],
-        col_tri: [totInstance_colours],
-        instance_use_colors: [totInstanceUseColours],
-        instance_sizes: [totInstance_sizes],
-        instance_origins: [totInstance_origins],
-        instance_orientations: [totInstance_orientations]
+    if(simpleMeshData.idx_tri.length>0&&simpleMeshData.idx_tri[0].length>0&&simpleMeshData.idx_tri[0][0].length>0){
+        return {
+            prim_types: [totInstancePrimTypes,simpleMeshData.prim_types[0]],
+            idx_tri: [totIdxs,simpleMeshData.idx_tri[0]],
+            vert_tri: [totPos,simpleMeshData.vert_tri[0]],
+            norm_tri: [totNorm,simpleMeshData.norm_tri[0]],
+            col_tri: [totInstance_colours,simpleMeshData.col_tri[0]],
+            instance_use_colors: [totInstanceUseColours,null],
+            instance_sizes: [totInstance_sizes,null],
+            instance_origins: [totInstance_origins,null],
+            instance_orientations: [totInstance_orientations,null]
+        }
+    } else{
+        return {
+            prim_types: [totInstancePrimTypes],
+            idx_tri: [totIdxs],
+            vert_tri: [totPos],
+            norm_tri: [totNorm],
+            col_tri: [totInstance_colours],
+            instance_use_colors: [totInstanceUseColours],
+            instance_sizes: [totInstance_sizes],
+            instance_origins: [totInstance_origins],
+            instance_orientations: [totInstance_orientations]
+        }
     }
 }
 

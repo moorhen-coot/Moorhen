@@ -490,6 +490,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<coot::instanced_mesh_t>("instanced_mesh_t")
     .property("geom",&coot::instanced_mesh_t::geom)
+    .property("markup",&coot::instanced_mesh_t::markup)
     ;
     class_<coot::atom_spec_t>("atom_spec_t")
     .constructor<const std::string &, int, const std::string &, const std::string &, const std::string &>()

@@ -2131,25 +2131,31 @@ class MGWebGL extends Component {
 
             if (jsondata.instance_origins) {
                 rssentries = jsondata.instance_origins[idat];
-                let instance_origins = rssentries;
-                for (let i = 0; i < instance_origins.length; i++) {
-                    self.createInstanceOriginsBuffer(instance_origins[i]);
+                if(rssentries){
+                    let instance_origins = rssentries;
+                    for (let i = 0; i < instance_origins.length; i++) {
+                        self.createInstanceOriginsBuffer(instance_origins[i]);
+                    }
                 }
             }
 
             if (jsondata.instance_sizes) {
                 rssentries = jsondata.instance_sizes[idat];
-                let instance_sizes = rssentries;
-                for (let i = 0; i < instance_sizes.length; i++) {
-                    self.createInstanceSizesBuffer(instance_sizes[i]);
+                if(rssentries){
+                    let instance_sizes = rssentries;
+                    for (let i = 0; i < instance_sizes.length; i++) {
+                        self.createInstanceSizesBuffer(instance_sizes[i]);
+                    }
                 }
             }
 
             if (jsondata.instance_orientations) {
                 rssentries = jsondata.instance_orientations[idat];
-                let instance_orientations = rssentries;
-                for (let i = 0; i < instance_orientations.length; i++) {
-                    self.createInstanceOrientationsBuffer(instance_orientations[i]);
+                if(rssentries){
+                    let instance_orientations = rssentries;
+                    for (let i = 0; i < instance_orientations.length; i++) {
+                        self.createInstanceOrientationsBuffer(instance_orientations[i]);
+                    }
                 }
             }
 
@@ -2182,8 +2188,10 @@ class MGWebGL extends Component {
             if (typeof (jsondata.instance_use_colors) !== "undefined") {
                 if (typeof (jsondata.instance_use_colors[idat]) !== "undefined") {
                     rssentries = jsondata.instance_use_colors[idat];
-                    for (let i = 0; i < rssentries.length; i++) {
-                        self.addSupplementaryInfo(rssentries[i], "instance_use_colors");
+                    if(rssentries){
+                        for (let i = 0; i < rssentries.length; i++) {
+                            self.addSupplementaryInfo(rssentries[i], "instance_use_colors");
+                        }
                     }
                 }
             }
