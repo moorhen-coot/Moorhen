@@ -548,7 +548,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("triangles",&coot::simple_mesh_t::triangles)
     ;
 
-    register_vector<std::vector<std::pair<std::string, std::string> >>("Vectorstring_string_pair");
+    register_vector<std::pair<std::string, std::string>>("Vectorstring_string_pair");
     register_vector<coot::instanced_geometry_t>("Vectorinstanced_geometry_t");
     register_vector<coot::molecule_t::moved_residue_t>("Vectormoved_residue_t");
     register_vector<coot::molecule_t::moved_atom_t>("Vectormoved_atom_t");
