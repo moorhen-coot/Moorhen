@@ -20,6 +20,12 @@ export function MoorhenMolecule(commandCentre, urlPrefix) {
     this.molNo = null
     this.gemmiStructure = null
     this.sequences = []
+    this.gaussianSurfaceSettings = {
+        sigma: 4.4,
+        countourLevel: 4.0, 
+        boxRadius: 5.0, 
+        gridScale: 0.7
+    }
     this.cootBondsOptions = {
         isDarkBackground: false,
         smoothness: 1,
@@ -506,7 +512,10 @@ MoorhenMolecule.prototype.drawCootGaussianSurface = async function (glRef) {
         returnType: "mesh",
         command: "get_gaussian_surface",
         commandArgs: [
-            $this.molNo
+            $this.molNo, $this.gaussianSurfaceSettings.sigma, 
+            $this.gaussianSurfaceSettings.countourLevel, 
+            $this.gaussianSurfaceSettings.boxRadius, 
+            $this.gaussianSurfaceSettings.gridScale
         ]
     }).then(response => {
         const objects = [response.data.result.result]
