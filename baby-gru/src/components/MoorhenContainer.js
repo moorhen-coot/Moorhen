@@ -73,6 +73,7 @@ export const MoorhenContainer = (props) => {
     const [showToast, setShowToast] = useState(false)
     const preferences = useContext(PreferencesContext);
     const [toastContent, setToastContent] = useState("")
+    const [showAdvancedDisplayOptions, setShowAdvancedDisplayOptions] = useState(false)
 
     const sideBarWidth = convertViewtoPx(30, windowWidth)
     const innerWindowMarginHeight = convertRemToPx(2.1)
@@ -293,7 +294,7 @@ export const MoorhenContainer = (props) => {
         activeMap, setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor, sideBarWidth,
         navBarRef, currentDropdownId, setCurrentDropdownId, hoveredAtom, setHoveredAtom, toastContent, setToastContent, 
         showToast, setShowToast, windowWidth, windowHeight, showSideBar, innerWindowMarginWidth, toolAccordionBodyHeight,
-        urlPrefix: props.urlPrefix, ...preferences
+        urlPrefix: props.urlPrefix, showAdvancedDisplayOptions, setShowAdvancedDisplayOptions, ...preferences
     }
 
     const accordionToolsItemProps = {
@@ -361,6 +362,10 @@ export const MoorhenContainer = (props) => {
                             onKeyPress={onKeyPress}
                             hoveredAtom={hoveredAtom}
                             preferences={preferences}
+                            setShowAdvancedDisplayOptions={setShowAdvancedDisplayOptions}
+                            showAdvancedDisplayOptions={showAdvancedDisplayOptions}
+                            windowHeight={windowHeight}
+                            windowWidth={windowWidth}
                         />
                     </div>
                     <div id='button-bar-baby-gru'

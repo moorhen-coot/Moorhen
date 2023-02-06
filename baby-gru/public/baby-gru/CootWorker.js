@@ -243,6 +243,17 @@ const simpleMeshToMeshData = (simpleMesh) => {
     };
 }
 
+const colourRulesToJSArray = (colourRulesArray) => {
+    let returnResult = []
+    const colourRulesSize = colourRulesArray.size()
+    for (let i = 0; i < colourRulesSize; i++) {
+        const rule = colourRulesArray.get(i)
+        returnResult.push(rule)
+    }
+    colourRulesArray.delete()
+    return returnResult;
+}
+
 const floatArrayToJSArray = (floatArray) => {
     let returnResult = []
     const floatArraySize = floatArray.size()
@@ -682,6 +693,9 @@ onmessage = function (e) {
             switch (returnType) {
                 case 'instanced_mesh_perm':
                     returnResult = instancedMeshToMeshData(cootResult, true)
+                    break;
+                case 'colour_rules':
+                    returnResult = colourRulesToJSArray(cootResult)
                     break;
                 case 'instanced_mesh':
                     returnResult = instancedMeshToMeshData(cootResult)

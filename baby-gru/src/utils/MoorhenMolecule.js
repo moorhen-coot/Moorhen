@@ -968,7 +968,8 @@ MoorhenMolecule.prototype.redraw = function (glRef) {
             },
             Promise.resolve()
         )
-    }).catch(_ => {
+    }).catch(err => {
+        console.log(err)
         console.log('Error updating atoms when redrawing')
     })
 }
