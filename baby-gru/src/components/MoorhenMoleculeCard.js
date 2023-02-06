@@ -15,20 +15,29 @@ const showStateReducer = (oldMap, change) => {
 }
 
 export const MoorhenMoleculeCard = (props) => {
+    const busyRedrawing = useRef(false)
+    const isDirty = useRef(false)
     const [showState, changeShowState] = useReducer(showStateReducer, initialShowState)
     const [selectedResidues, setSelectedResidues] = useState(null);
     const [clickedResidue, setClickedResidue] = useState(null);
     const [isCollapsed, setIsCollapsed] = useState(!props.defaultExpandDisplayCards);
     const [isVisible, setIsVisible] = useState(true)
     const [bondWidth, setBondWidth] = useState(0.1)
-    const [atomRadiusBondRatio, setAtomRadiusBondRatio] = useState(1.5)
+    const [atomRadiusBondRatio, setAtomRadiusBondRatio] = useState(1)
     const [bondSmoothness, setBondSmoothness] = useState(props.defaultBondSmoothness)
-    const busyRedrawing = useRef(false)
-    const isDirty = useRef(false)
+    const [surfaceSigma, setSurfaceSigma] = useState(4.4)
+    const [surfaceLevel, setSurfaceLevel] = useState(4.0)
+    const [surfaceRadius, setSurfaceRadius] = useState(5.0)
+    const [surfaceGridScale, setSurfaceGridScale] = useState(0.7)
 
     const bondSettingsProps = {
         bondWidth, setBondWidth, atomRadiusBondRatio,
         setAtomRadiusBondRatio, bondSmoothness, setBondSmoothness
+    }
+
+    const gaussianSettingsProps = {
+        surfaceSigma, setSurfaceSigma, surfaceLevel, setSurfaceLevel, 
+        surfaceRadius, setSurfaceRadius, surfaceGridScale, setSurfaceGridScale
     }
 
     const redrawIfDirty = async () => {
@@ -98,8 +107,6 @@ export const MoorhenMoleculeCard = (props) => {
             props.molecule.cootBondsOptions.width = bondWidth
             isDirty.current = true
             if (!busyRedrawing.current) {
-                console.log('HAHAHAHAHHA')
-                console.log(busyRedrawing.current)
                 redrawIfDirty()
             } else {
                 console.log('Skipping molecule re-draw because already busy ')
@@ -128,6 +135,85 @@ export const MoorhenMoleculeCard = (props) => {
         }
 
     }, [atomRadiusBondRatio]);
+
+
+    useEffect(() => {
+        if (surfaceSigma === null) {
+            return
+        }
+
+        if (isVisible && showState['gaussian'] && props.molecule.gaussianSurfaceSettings.sigma !== surfaceSigma) {
+            props.molecule.gaussianSurfaceSettings.sigma = surfaceSigma
+            isDirty.current = true
+            if (!busyRedrawing.current) {
+                redrawIfDirty()
+            } else {
+                console.log('Skipping molecule re-draw because already busy ')
+            }
+        } else {
+            props.molecule.gaussianSurfaceSettings.sigma = surfaceSigma
+        }
+
+    }, [surfaceSigma]);
+
+    useEffect(() => {
+        if (surfaceLevel === null) {
+            return
+        }
+
+        if (isVisible && showState['gaussian'] && props.molecule.gaussianSurfaceSettings.countourLevel !== surfaceLevel) {
+            props.molecule.gaussianSurfaceSettings.countourLevel = surfaceLevel
+            isDirty.current = true
+            if (!busyRedrawing.current) {
+                redrawIfDirty()
+            } else {
+                console.log('Skipping molecule re-draw because already busy ')
+            }
+        } else {
+            props.molecule.gaussianSurfaceSettings.countourLevel = surfaceLevel
+        }
+
+    }, [surfaceLevel]);
+
+    useEffect(() => {
+        if (surfaceRadius === null) {
+            return
+        }
+
+        if (isVisible && showState['gaussian'] && props.molecule.gaussianSurfaceSettings.boxRadius !== surfaceRadius) {
+            props.molecule.gaussianSurfaceSettings.boxRadius = surfaceRadius
+            isDirty.current = true
+            if (!busyRedrawing.current) {
+                redrawIfDirty()
+            } else {
+                console.log('Skipping molecule re-draw because already busy ')
+            }
+        } else {
+            props.molecule.gaussianSurfaceSettings.boxRadius = surfaceRadius
+        }
+
+    }, [surfaceRadius]);
+
+    useEffect(() => {
+        if (surfaceGridScale === null) {
+            return
+        }
+
+        if (isVisible && showState['gaussian'] && props.molecule.gaussianSurfaceSettings.gridScale !== surfaceGridScale) {
+            props.molecule.gaussianSurfaceSettings.gridScale = surfaceGridScale
+            isDirty.current = true
+            if (!busyRedrawing.current) {
+                redrawIfDirty()
+            } else {
+                console.log('Skipping molecule re-draw because already busy ')
+            }
+        } else {
+            props.molecule.gaussianSurfaceSettings.gridScale = surfaceGridScale
+        }
+
+    }, [surfaceGridScale]);
+
+
 
     useEffect(() => {
         Object.keys(props.molecule.displayObjects).forEach(key => {
@@ -278,6 +364,7 @@ export const MoorhenMoleculeCard = (props) => {
                         currentDropdownMolNo={props.currentDropdownMolNo}
                         setCurrentDropdownMolNo={props.setCurrentDropdownMolNo}
                         bondSettingsProps={bondSettingsProps}
+                        gaussianSettingsProps={gaussianSettingsProps}
                         backupsEnabled={props.makeBackups}
                         {...handleProps}
                     />

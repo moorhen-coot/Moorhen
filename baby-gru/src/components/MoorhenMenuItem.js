@@ -533,6 +533,32 @@ export const MoorhenMoleculeBondSettingsMenuItem = (props) => {
     />
 }
 
+export const MoorhenMoleculeGaussianSurfaceSettingsMenuItem = (props) => {
+
+    const panelContent =
+        <>
+            <Form.Group className="mb-3" style={{ width: '10rem', margin: '0' }} controlId="MoorhenGausSurfSigmaSlider">
+                <MoorhenSlider minVal={0.01} maxVal={10} logScale={false} sliderTitle="Sigma" intialValue={4.4} externalValue={props.surfaceSigma} setExternalValue={props.setSurfaceSigma} />
+            </Form.Group>
+            <Form.Group className="mb-3" style={{ width: '10rem', margin: '0' }} controlId="MoorhenGausSurfLevelSlider">
+                <MoorhenSlider minVal={0.01} maxVal={10} logScale={false} sliderTitle="Contour level" intialValue={4.0} externalValue={props.surfaceLevel} setExternalValue={props.setSurfaceLevel} />
+            </Form.Group>
+            <Form.Group className="mb-3" style={{ width: '10rem', margin: '0' }} controlId="MoorhenGausSurfRadiusSlider">
+                <MoorhenSlider minVal={0.01} maxVal={10} logScale={false} sliderTitle="Box radius" intialValue={5.0} externalValue={props.surfaceRadius} setExternalValue={props.setSurfaceRadius} />
+            </Form.Group>
+            <Form.Group className="mb-3" style={{ width: '10rem', margin: '0' }} controlId="MoorhenSurfGridScaleSlider">
+                <MoorhenSlider minVal={0.01} maxVal={1.5} logScale={false} sliderTitle="Grid scale" intialValue={0.7} externalValue={props.surfaceGridScale} setExternalValue={props.setSurfaceGridScale} />
+            </Form.Group>
+        </>
+
+    return <MoorhenMenuItem
+        popoverPlacement='left'
+        popoverContent={panelContent}
+        menuItemText={"Gaussian surface settings"}
+        setPopoverIsShown={props.setPopoverIsShown}
+    />
+}
+
 export const MoorhenDeleteEverythingMenuItem = (props) => {
 
     const panelContent = <>

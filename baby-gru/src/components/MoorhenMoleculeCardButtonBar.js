@@ -3,7 +3,7 @@ import { Button, DropdownButton } from "react-bootstrap";
 import { convertViewtoPx } from '../utils/MoorhenUtils';
 import { MenuItem } from "@mui/material";
 import { UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined, ExpandLessOutlined, VisibilityOffOutlined, VisibilityOutlined, DownloadOutlined, Settings } from '@mui/icons-material';
-import { MoorhenDeleteDisplayObjectMenuItem, MoorhenRenameDisplayObjectMenuItem, MoorhenMoleculeBondSettingsMenuItem, MoorhenMergeMoleculesMenuItem, MoorhenRotateTranslateMoleculeMenuItem } from "./MoorhenMenuItem";
+import { MoorhenDeleteDisplayObjectMenuItem, MoorhenRenameDisplayObjectMenuItem, MoorhenMoleculeBondSettingsMenuItem, MoorhenMergeMoleculesMenuItem, MoorhenRotateTranslateMoleculeMenuItem, MoorhenMoleculeGaussianSurfaceSettingsMenuItem} from "./MoorhenMenuItem";
 
 export const MoorhenMoleculeCardButtonBar = (props) => {
     const dropdownCardButtonRef = useRef()
@@ -86,13 +86,18 @@ export const MoorhenMoleculeCardButtonBar = (props) => {
             expanded: null
         },
         10: {
-            label: 'Display settings',
+            label: 'Bond display settings',
             compressed: () => { return (<MoorhenMoleculeBondSettingsMenuItem key={10} setPopoverIsShown={setPopoverIsShown} molecule={props.molecule} {...props.bondSettingsProps}/>) },
             expanded: null
         },
         11: {
+            label: 'Gaussian surface display settings',
+            compressed: () => { return (<MoorhenMoleculeGaussianSurfaceSettingsMenuItem key={11} setPopoverIsShown={setPopoverIsShown} molecule={props.molecule} {...props.gaussianSettingsProps}/>) },
+            expanded: null
+        },
+        12: {
             label: 'Rotate/Translate molecule',
-            compressed: () => { return (<MoorhenRotateTranslateMoleculeMenuItem key={11} setPopoverIsShown={setPopoverIsShown} molecule={props.molecule} changeMolecules={props.changeMolecules} glRef={props.glRef}/>) },
+            compressed: () => { return (<MoorhenRotateTranslateMoleculeMenuItem key={12} setPopoverIsShown={setPopoverIsShown} molecule={props.molecule} changeMolecules={props.changeMolecules} glRef={props.glRef}/>) },
             expanded: null
         },
     }
