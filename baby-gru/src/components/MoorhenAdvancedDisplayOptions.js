@@ -1,11 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState, useReducer } from "react";
-import { Row, Offcanvas, Button, Stack, Form, FormSelect, Card, Col } from "react-bootstrap";
+import { Row, Button, Stack, Form, FormSelect, Card, Col, Toast } from "react-bootstrap";
 import { Autocomplete, TextField } from "@mui/material";
 import { MoorhenMoleculeSelect } from "./MoorhenMoleculeSelect";
 import { MoorhenChainSelect } from "./MoorhenChainSelect";
 import { SketchPicker } from "react-color";
 import { convertViewtoPx } from "../utils/MoorhenUtils";
-import { ArrowUpwardOutlined, ArrowDownwardOutlined } from '@mui/icons-material';
+import { ArrowUpwardOutlined, ArrowDownwardOutlined, AddOutlined, DeleteOutlined, DoneOutlined, DeleteForeverOutlined } from '@mui/icons-material';
 
 const itemReducer = (oldList, change) => {
     if (change.action === 'Add') {
@@ -16,6 +16,9 @@ const itemReducer = (oldList, change) => {
     }
     else if (change.action === 'Empty') {
         return []
+    }
+    else if (change.action === 'Overwrite') {
+        return [...change.items]
     }
     else if (change.action === 'MoveUp') {
         const itemIndex = oldList.findIndex(item => item === change.item)
@@ -45,24 +48,37 @@ const MoorhenColourRules = (props) => {
     const moleculeSelectRef = useRef()
     const chainSelectRef = useRef()
     const ruleSelectRef = useRef()
-    const residueCidFormRef = useRef()
+    const cidFormRef = useRef()
     const [ruleType, setRuleType] = useState('molecule')
     const [selectedColour, setSelectedColour] = useState({r: 128, g: 128, b: 128, a: 0.5})
     const [selectedModel, setSelectedModel] = useState(null)
     const [selectedChain, setSelectedChain] = useState(null)
-    const [residueCid, setResidueCid] = useState(null)
+    const [cid, setCid] = useState(null)
     const [ruleList, setRuleList] = useReducer(itemReducer, initialRuleState)
 
-    useEffect(() => {
-        if (props.molecules.length === 0) {
-            setSelectedModel(null)
-        } else if (selectedModel === null) {
-            setSelectedModel(props.molecules[0].molNo)
-        } else if (!props.molecules.map(molecule => molecule.molNo).includes(selectedModel)) {
-            setSelectedModel(props.molecules[0].molNo)
-        }
-
-    }, [props.molecules.length])
+    const getRules = async (imol, commandCentre) => {
+        let rules = []
+        const response = await commandCentre.current.cootCommand({
+            message:'coot_command',
+            command: "get_colour_rules", 
+            returnType:'colour_rules',
+            commandArgs:[imol], 
+        })
+        const currentMoleculeRules = response.data.result.result
+        currentMoleculeRules.forEach(rule => {
+            rules.push({
+                commandArgs: [
+                    imol,
+                    rule.first,
+                    rule.second
+                ],
+                color: rule.second,
+                label: rule.first,
+            })
+        })
+        
+        return rules
+    }
 
     const handleModelChange = (evt) => {
         console.log(`Selected model ${evt.target.value}`)
@@ -76,7 +92,7 @@ const MoorhenColourRules = (props) => {
 
     const handleResidueCidChange = (evt) => {
         console.log(`Selected residue CID ${evt.target.value}`)
-        setResidueCid(evt.target.value)
+        setCid(evt.target.value)
     }
 
     const handleColorChange = (color) => {
@@ -91,14 +107,15 @@ const MoorhenColourRules = (props) => {
     const createRule = () => {
         const selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedModel)
         if (selectedMolecule) {
+            const cidLabel = ruleType === 'molecule' ? "//*" : ruleType === 'chain' ? `//${chainSelectRef.current.value}` : cid
             const newRule = {
                 commandArgs: [
                     selectedModel,
-                    ruleType === 'molecule' ? "//*" : ruleType === 'chain' ? `//${chainSelectRef.current.value}` : `//${chainSelectRef.current.value}/${residueCid}`, 
+                    cidLabel, 
                     selectedColour
                 ],
                 color: selectedColour,
-                label: `/${selectedMolecule.name}/${ruleType === 'molecule' ? '*' : chainSelectRef.current.value}/${ruleType === 'residueCid' ? residueCid : ''}`,
+                label: cidLabel,
             }
             setRuleList({action: 'Add', item: newRule})
         }
@@ -118,17 +135,39 @@ const MoorhenColourRules = (props) => {
         })
 
         const promises = ruleList.map(rule => props.commandCentre.current.cootCommand({
-            message:'coot_command',
-            command: "add_colour_rule", 
-            returnType:'status',
-            commandArgs: rule.commandArgs, 
-        }))
+                message:'coot_command',
+                command: "add_colour_rule", 
+                returnType:'status',
+                commandArgs: rule.commandArgs, 
+            })
+        )
         await Promise.all(promises)
         
         selectedMolecule.setAtomsDirty(true)
         selectedMolecule.redraw(props.glRef)
 
     }, [selectedColour, selectedModel, ruleList, props.molecules])
+
+    useEffect(() => {
+        if (selectedModel !== null) {
+            getRules(selectedModel, props.commandCentre).then(currentRules => {
+                setRuleList({action: 'Overwrite', items: currentRules})
+            })            
+        } else {
+            setRuleList({action: 'Empty'})
+        }
+    }, [selectedModel])
+
+    useEffect(() => {
+        if (props.molecules.length === 0) {
+            setSelectedModel(null)
+        } else if (selectedModel === null) {
+            setSelectedModel(props.molecules[0].molNo)
+        } else if (!props.molecules.map(molecule => molecule.molNo).includes(selectedModel)) {
+            setSelectedModel(props.molecules[0].molNo)
+        }
+        
+    }, [props.molecules.length])
 
     const getRuleCard = (rule, index) => {
         return <Card key={index} style={{margin: '0.5rem', maxWidth: '100%', overflowX:'scroll'}}>
@@ -145,8 +184,8 @@ const MoorhenColourRules = (props) => {
                             <Button size='sm' style={{margin: '0.5rem'}} variant={props.darkMode ? "dark" : "light"} onClick={() => {setRuleList({action:'MoveDown', item:rule})}}>
                                 <ArrowDownwardOutlined/>
                             </Button>
-                            <Button variant='danger' style={{margin: '0.5rem'}} size='sm' onClick={() => {setRuleList({action:'Remove', item:rule})}}>
-                                Remove
+                            <Button size='sm' style={{margin: '0.5rem'}} variant={props.darkMode ? "dark" : "light"} onClick={() => {setRuleList({action:'Remove', item:rule})}}>
+                                <DeleteOutlined/>
                             </Button>
                         </Col>
                     </Row>
@@ -156,38 +195,45 @@ const MoorhenColourRules = (props) => {
 
     return <>
                 <Stack gap={2} style={{alignItems: 'center'}}>
-                    <Form.Group style={{ margin: '0.5rem', width: '90%' }}>
+                    <Form.Group style={{ margin: '0.5rem', width: '100%' }}>
                         <Form.Label>Rule type</Form.Label>
                         <FormSelect size="sm" ref={ruleSelectRef} defaultValue={'molecule'} onChange={(val) => setRuleType(val.target.value)}>
                             <option value={'molecule'} key={'molecule'}>By molecule</option>
                             <option value={'chain'} key={'chain'}>By chain</option>
-                            <option value={'residueCid'} key={'residueCid'}>By residue CID</option>
+                            <option value={'cid'} key={'cid'}>By CID</option>
                         </FormSelect>
                     </Form.Group>
                         <Stack gap={2} style={{alignItems: 'center'}}>
-                            <MoorhenMoleculeSelect width="90%" onChange={handleModelChange} molecules={props.molecules} ref={moleculeSelectRef}/>
-                            {(ruleType==='chain' || ruleType==='residueCid') && <MoorhenChainSelect width="90%" molecules={props.molecules} onChange={handleChainChange} selectedCoordMolNo={selectedModel} ref={chainSelectRef} allowedTypes={[1, 2]}/>}
-                            {ruleType==='residueCid' && 
-                                <Form.Group style={{ width: "90%", margin: '0.5rem', height:props.height }}>
-                                    <Form.Label>Residue CID</Form.Label>
-                                    <Form.Control size="sm" type='text' defaultValue={''} style={{width: "90%"}} onChange={handleResidueCidChange} ref={residueCidFormRef}/>
+                            <MoorhenMoleculeSelect width="100%" onChange={handleModelChange} molecules={props.molecules} ref={moleculeSelectRef}/>
+                            {ruleType==='chain'  && <MoorhenChainSelect width="100%" molecules={props.molecules} onChange={handleChainChange} selectedCoordMolNo={selectedModel} ref={chainSelectRef} allowedTypes={[1, 2]}/>}
+                            {ruleType==='cid' && 
+                                <Form.Group style={{ width: "100%", margin: '0.5rem', height:props.height }}>
+                                    <Form.Label>Selection CID</Form.Label>
+                                    <Form.Control size="sm" type='text' defaultValue={''} style={{width: "100%"}} onChange={handleResidueCidChange} ref={cidFormRef}/>
                                 </Form.Group>
                             }
-                            <SketchPicker color={selectedColour} onChange={handleColorChange} />
-                            <Button variant='secondary' onClick={createRule} style={{margin: '0.5rem'}}>
-                                Create rule
-                            </Button>
-                            <Card style={{width:'90%'}}>
-                                <Card.Body style={{maxHeight: convertViewtoPx(25, props.windowHeight), overflowY: 'auto', textAlign:'center'}}>
-                                    {ruleList.length === 0 ? 
-                                        "No rules created yet"
-                                    :
-                                    ruleList.map((rule, index) => getRuleCard(rule, index))}
-                                </Card.Body>
-                            </Card>
-                            <Button variant='primary' onClick={commitChanges} style={{margin: '0.5rem'}}>
-                                Apply rules
-                            </Button>
+                            <Stack direction="horizontal" gap={2} style={{alignItems: 'center'}}>
+                                <SketchPicker color={selectedColour} onChange={handleColorChange} />
+                                <Card style={{width:'100%'}}>
+                                    <Card.Body style={{maxHeight: convertViewtoPx(25, props.windowHeight), overflowY: 'auto', textAlign:'center'}}>
+                                        {ruleList.length === 0 ? 
+                                            "No rules created yet"
+                                        :
+                                        ruleList.map((rule, index) => getRuleCard(rule, index))}
+                                    </Card.Body>
+                                </Card>
+                            <Stack gap={2} style={{alignItems: 'center', justifyContent: 'center'}}>
+                                <Button variant={props.darkMode ? "dark" : "light"} size='sm' onClick={createRule} style={{margin: '0.5rem'}}>
+                                    <AddOutlined/>
+                                </Button>
+                                <Button variant={props.darkMode ? "dark" : "light"} size='sm' onClick={() => {setRuleList({action:'Empty'})}} style={{margin: '0.5rem'}}>
+                                    <DeleteForeverOutlined/>
+                                </Button>
+                                <Button variant={props.darkMode ? "dark" : "light"} size='sm' onClick={commitChanges} style={{margin: '0.5rem'}}>
+                                    <DoneOutlined/>
+                                </Button>
+                            </Stack>
+                        </Stack>
                         </Stack>
                 </Stack>
             </>
@@ -196,6 +242,8 @@ const MoorhenColourRules = (props) => {
 export const MoorhenAdvancedDisplayOptions = (props) => {
     const optionSelectRef = useRef()
     const [selectedOption, setSelectedOption] = useState(null)
+    const [opacity, setOpacity] = useState(0.5)
+    const [toastBodyWidth, setToastBodyWidth] = useState(convertViewtoPx(40, props.windowWidth))
 
     const options = [
             {label: "Create colour rules", widget: <MoorhenColourRules {...props}/>},
@@ -214,43 +262,56 @@ export const MoorhenAdvancedDisplayOptions = (props) => {
         optionSelectRef.current = selectedOption
     }, [selectedOption])
 
-    return <Offcanvas 
+    useEffect(() => {
+        if (props.windowWidth > 1800) {
+            setToastBodyWidth(convertViewtoPx(30, props.windowWidth))
+        } else {
+            setToastBodyWidth(convertViewtoPx(40, props.windowWidth))
+        }
+    }, [props.windowWidth])
+
+    return  <Toast 
+                bg='light'
                 show={props.showAdvancedDisplayOptions}
-                onHide={() => props.setShowAdvancedDisplayOptions(false)}
-                backdrop={false} 
-                placement="end" 
-                style={{width: props.sideBarWidth, overflowY: 'scroll'}}>
-                <Offcanvas.Header closeButton>
-                    <Offcanvas.Title>Advanced Display Options</Offcanvas.Title>
-                </Offcanvas.Header>
-                    <Row style={{padding: '0.5rem'}}>
-                        <Autocomplete 
-                            disablePortal
-                            sx={{
-                                '& .MuiInputBase-root': {
-                                    backgroundColor:  props.darkMode ? '#222' : 'white',
-                                    color: props.darkMode ? 'white' : '#222',
-                                },
+                onClose={() => props.setShowAdvancedDisplayOptions(false)}
+                autohide={false}
+                style={{opacity: opacity, width: toastBodyWidth}}
+                onMouseOver={() => setOpacity(1)}
+                onMouseOut={() => setOpacity(0.5)}
+                >
+            <Toast.Header style={{ justifyContent: 'space-between' }} closeButton>
+                Advanced Display Options
+            </Toast.Header>
+            <Toast.Body style={{maxHeight: convertViewtoPx(65, props.windowHeight), overflowY: 'scroll'}}>
+                <Row style={{padding: '0.5rem'}}>
+                    <Autocomplete 
+                        disablePortal
+                        sx={{
+                            '& .MuiInputBase-root': {
+                                backgroundColor:  props.darkMode ? '#222' : 'white',
+                                color: props.darkMode ? 'white' : '#222',
+                            },
                                 '& .MuiOutlinedInput-notchedOutline': {
-                                    borderColor: props.darkMode ? 'white' : 'grey',
-                                },
+                                borderColor: props.darkMode ? 'white' : 'grey',
+                            },
                                 '& .MuiButtonBase-root': {
-                                    color: props.darkMode ? 'white' : 'grey',
-                                },
+                                color: props.darkMode ? 'white' : 'grey',
+                            },
                                 '& .MuiFormLabel-root': {
-                                    color: props.darkMode ? 'white' : '#222',
-                                },
-                                }}                        
+                                color: props.darkMode ? 'white' : '#222',
+                            },
+                            }}                        
                             ref={optionSelectRef}
                             onChange={handleChange}
                             size='small'
                             options={options.map(option => option.label)}
                             renderInput={(params) => <TextField {...params} label="Tools" />}
-                        />
-                    </Row>
-                    <Row>
-                        {selectedOption !== null ? options[selectedOption].widget : null}
-                    </Row>
-            </Offcanvas>
-
+                    />
+                </Row>
+                <Row>
+                    {selectedOption !== null ? options[selectedOption].widget : null}
+                </Row>
+                </Toast.Body>
+            </Toast>
+                    
 }

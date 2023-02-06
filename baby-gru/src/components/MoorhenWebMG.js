@@ -1,13 +1,15 @@
-import React, { createRef, useEffect, useCallback, forwardRef, useState } from 'react';
+import React, { createRef, useEffect, useCallback, forwardRef, useState, useRef } from 'react';
 import { Toast, ToastContainer } from 'react-bootstrap';
 import { MGWebGL } from '../WebGLgComponents/mgWebGL.js';
+import { MoorhenAdvancedDisplayOptions } from "./MoorhenAdvancedDisplayOptions"
+import { convertViewtoPx } from '../utils/MoorhenUtils.js';
 
 export const MoorhenWebMG = forwardRef((props, glRef) => {
+    const scores = useRef({})
     const windowResizedBinding = createRef(null)
     const [mapLineWidth, setMapLineWidth] = useState(1.0)
-    const [scores, setScores] = useState(null)
-    const [scoresDifference, setScoresDifference] = useState(null)
     const [connectedMaps, setConnectedMaps] = useState(false)
+    const [scoresToastContents, setScoreToastContents] = useState(null)
 
     const setClipFogByZoom = () => {
         const fieldDepthFront = 8;
@@ -56,23 +58,66 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
                 command: "get_r_factor_stats",
                 commandArgs: [],
             }, true)
+
+            const newToastContents =   <Toast.Body>
+                                                {props.preferences.defaultUpdatingScores.includes('Rfactor') && 
+                                                    <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
+                                                        Clipper R-Factor {parseFloat(currentScores.data.result.result.r_factor).toFixed(3)}
+                                                    </p>
+                                                }
+                                                {props.preferences.defaultUpdatingScores.includes('Rfree') && 
+                                                    <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
+                                                        Clipper R-Free {parseFloat(currentScores.data.result.result.free_r_factor).toFixed(3)}
+                                                    </p>
+                                                }
+                                                {props.preferences.defaultUpdatingScores.includes('Moorhen Points') && 
+                                                    <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
+                                                        Moorhen Points {currentScores.data.result.result.rail_points_total}
+                                                    </p>
+                                                }
+                                            </Toast.Body>
             
             if (scores !== null) {
-                setScoresDifference({
-                    moorhenPoints: currentScores.data.result.result.rail_points_total - scores.moorhenPoints, 
-                    rFactor: currentScores.data.result.result.r_factor - scores.rFactor,
-                    rFree: currentScores.data.result.result.free_r_factor - scores.rFree,
-                })
+                const moorhenPointsDiff = currentScores.data.result.result.rail_points_total - scores.current.moorhenPoints
+                const rFactorDiff = currentScores.data.result.result.r_factor - scores.current.rFactor
+                const rFreeDiff = currentScores.data.result.result.free_r_factor - scores.current.rFree
+
+                setScoreToastContents(
+                        <Toast.Body>
+                            {props.preferences.defaultUpdatingScores.includes('Rfactor') && 
+                                <p style={{paddingLeft: '0.5rem', marginBottom:'0rem', color: rFactorDiff < 0 ? 'green' : 'red'}}>
+                                    Clipper R-Factor {parseFloat(scores.current.rFactor).toFixed(3)} {`${rFactorDiff < 0 ? '' : '+'}${parseFloat(rFactorDiff).toFixed(3)}`}
+                                </p>
+                            }
+                            {props.preferences.defaultUpdatingScores.includes('Rfree') && 
+                                <p style={{paddingLeft: '0.5rem', marginBottom:'0rem', color: rFreeDiff < 0 ? 'green' : 'red'}}>
+                                    Clipper R-Free {parseFloat(scores.current.rFree).toFixed(3)} {`${rFreeDiff < 0 ? '' : '+'}${parseFloat(rFreeDiff).toFixed(3)}`}
+                                </p>
+                            }
+                            {props.preferences.defaultUpdatingScores.includes('Moorhen Points') && 
+                                <p style={{paddingLeft: '0.5rem', marginBottom:'0rem', color: moorhenPointsDiff < 0 ? 'red' : 'green'}}>
+                                    Moorhen Points {scores.current.moorhenPoints} {`${moorhenPointsDiff < 0 ? '' : '+'}${moorhenPointsDiff}`}
+                                </p>
+                            }
+                        </Toast.Body>
+                )
+
+                setTimeout(() => {
+                    setScoreToastContents(newToastContents)
+                }, 3000);
+        
+            } else {
+                setScoreToastContents(newToastContents)
             }
                         
-            setScores({
+            scores.current = {
                 moorhenPoints: currentScores.data.result.result.rail_points_total,
                 rFactor: currentScores.data.result.result.r_factor,
                 rFree: currentScores.data.result.result.free_r_factor
-            })
+            }
         } 
 
-    }, [props.commandCentre, connectedMaps, scores])
+    }, [props.commandCentre, connectedMaps, scores, props.preferences.defaultUpdatingScores])
 
     const handleConnectedMaps = useCallback(async () => {
         
@@ -81,15 +126,35 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
             command: "get_r_factor_stats",
             commandArgs: [],
         }, true)
-               
-        setScores({
+
+        setScoreToastContents(
+                <Toast.Body>
+                    {props.preferences.defaultUpdatingScores.includes('Rfactor') && 
+                        <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
+                            Clipper R-Factor {parseFloat(currentScores.data.result.result.r_factor).toFixed(3)}
+                        </p>
+                    }
+                    {props.preferences.defaultUpdatingScores.includes('Rfree') && 
+                        <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
+                            Clipper R-Free {parseFloat(currentScores.data.result.result.free_r_factor).toFixed(3)}
+                        </p>
+                    }
+                    {props.preferences.defaultUpdatingScores.includes('Moorhen Points') && 
+                        <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
+                            Moorhen Points {currentScores.data.result.result.rail_points_total}
+                        </p>
+                    }
+                </Toast.Body>
+        )
+        
+        scores.current = {
             moorhenPoints: currentScores.data.result.result.rail_points_total,
             rFactor: currentScores.data.result.result.r_factor,
             rFree: currentScores.data.result.result.free_r_factor
-        })
-        
+        }
+
         setConnectedMaps(true)
-    }, [props.commandCentre])
+    }, [props.commandCentre, props.preferences.defaultUpdatingScores])
 
     useEffect(() => {
         document.addEventListener("connectedMaps", handleConnectedMaps);
@@ -193,54 +258,16 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
         glRef.current.drawScene()
     }
 
-
     return  <>
-                {scores !== null && props.preferences.showScoresToast &&
-                    <ToastContainer style={{ zIndex: '0', marginTop: "5rem", marginLeft: '0.5rem', width:'15rem', textAlign:'left', alignItems: 'left'}} position='top-start' >
-                        <Toast bg='light' onClose={() => {}} autohide={false} show={true}>
-                            <Toast.Body>
-                            {props.preferences.defaultUpdatingScores.includes('Rfactor') && 
-                                <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
-                                    Clipper R-Factor {parseFloat(scores.rFactor).toFixed(3)}
-                                </p>
-                            }
-                            {props.preferences.defaultUpdatingScores.includes('Rfree') && 
-                                <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
-                                    Clipper R-Free {parseFloat(scores.rFree).toFixed(3)}
-                                </p>
-                            }
-                            {props.preferences.defaultUpdatingScores.includes('Moorhen Points') && 
-                                <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
-                                    Moorhen Points {scores.moorhenPoints}
-                                </p>
-                            }
-                            </Toast.Body>
+                <ToastContainer style={{ zIndex: '0', marginTop: "5rem", marginLeft: '0.5rem', textAlign:'left', alignItems: 'left'}} position='top-start' >
+                    {scoresToastContents !== null && props.preferences.showScoresToast &&
+                        <Toast bg='light' onClose={() => {}} autohide={false} show={true} style={{maxWidth: convertViewtoPx(15, props.windowWidth)}}>
+                            {scoresToastContents}
                         </Toast>
-                    </ToastContainer>
-                }
-                {scoresDifference !== null && props.preferences.showScoresToast &&
-                    <ToastContainer style={{ zIndex: '0', marginTop: "5rem", marginLeft: '0.5rem', width:'15rem', textAlign:'left', alignItems: 'left'}} position='top-start' >
-                        <Toast bg='light' onClose={() => setScoresDifference(null)} autohide={5000} show={scoresDifference !== null}>
-                            <Toast.Body>
-                                {props.preferences.defaultUpdatingScores.includes('Rfactor') && 
-                                    <p style={{paddingLeft: '0.5rem', marginBottom:'0rem', color: scoresDifference.rFactor < 0 ? 'green' : 'red'}}>
-                                        Clipper R-Factor {parseFloat(scores.rFactor).toFixed(3)} {`${scoresDifference.rFactor < 0 ? '' : '+'}${parseFloat(scoresDifference.rFactor).toFixed(3)}`}
-                                    </p>
-                                }
-                                {props.preferences.defaultUpdatingScores.includes('Rfree') && 
-                                    <p style={{paddingLeft: '0.5rem', marginBottom:'0rem', color: scoresDifference.rFree < 0 ? 'green' : 'red'}}>
-                                        Clipper R-Free {parseFloat(scores.rFree).toFixed(3)} {`${scoresDifference.rFree < 0 ? '' : '+'}${parseFloat(scoresDifference.rFree).toFixed(3)}`}
-                                    </p>
-                                }
-                                {props.preferences.defaultUpdatingScores.includes('Moorhen Points') && 
-                                    <p style={{paddingLeft: '0.5rem', marginBottom:'0rem', color: scoresDifference.moorhenPoints < 0 ? 'red' : 'green'}}>
-                                        Moorhen Points {scores.moorhenPoints} {`${scoresDifference.moorhenPoints < 0 ? '' : '+'}${scoresDifference.moorhenPoints}`}
-                                    </p>
-                                }
-                            </Toast.Body>
-                        </Toast>
-                    </ToastContainer>
-                }
+                    }
+                    <MoorhenAdvancedDisplayOptions glRef={glRef} {...props}/>
+                </ToastContainer>
+
                 
                 <MGWebGL
                     ref={glRef}
