@@ -547,6 +547,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("triangles",&coot::simple_mesh_t::triangles)
     ;
 
+    register_vector<std::vector<std::pair<std::string, std::string> >>("Vectorstring_string_pair");
     register_vector<coot::instanced_geometry_t>("Vectorinstanced_geometry_t");
     register_vector<coot::molecule_t::moved_residue_t>("Vectormoved_residue_t");
     register_vector<coot::molecule_t::moved_atom_t>("Vectormoved_atom_t");
@@ -595,6 +596,10 @@ EMSCRIPTEN_BINDINGS(my_module) {
     value_object<std::pair<coot::residue_spec_t,std::string>>("residue_spec_t_string_pair")
         .field("first",&std::pair<coot::residue_spec_t,std::string>::first)
         .field("second",&std::pair<coot::residue_spec_t,std::string>::second)
+    ;
+    value_object<std::pair<std::string,std::string>>("string_string_pair")
+        .field("first",&std::pair<std::string, std::string>::first)
+        .field("second",&std::pair<std::string, std::string>::second)
     ;
     value_object<std::pair<unsigned int,int>>("uint_int_pair")
         .field("first",&std::pair<unsigned int,int>::first)
