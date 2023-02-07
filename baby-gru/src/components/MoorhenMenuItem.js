@@ -199,7 +199,7 @@ export const MoorhenGetMonomerMenuItem = (props) => {
                 if (result.data.result.status === "Completed" && result.data.result.result !== -1) {
                     const newMolecule = new MoorhenMolecule(props.commandCentre, props.urlPrefix)
                     newMolecule.molNo = result.data.result.result
-                    newMolecule.name = tlcRef.current.value
+                    newMolecule.name = newTlc
                     newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
                     return newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef).then(_ => {
                         props.changeMolecules({ action: "Add", item: newMolecule })
@@ -451,7 +451,7 @@ export const MoorhenAddRemoveHydrogenAtomsMenuItem = (props) => {
         id='add-hydrogens-menu-item'
         popoverPlacement={props.popoverPlacement}
         popoverContent={panelContent}
-        menuItemText="Add/Remove hydrogens"
+        menuItemText="Add/Remove hydrogen atoms"
         setPopoverIsShown={props.setPopoverIsShown}
         showOkButton={false}
     />
@@ -1331,7 +1331,7 @@ export const MoorhenGoToMenuItem = (props) => {
 
     const panelContent = <>
         <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="cid" className="mb-3">
-            <Form.Label>Residue cid...</Form.Label>
+            <Form.Label>Residue CID</Form.Label>
             <Form.Control ref={cidRef} type="text" value={cid} onChange={(e) => {
                 setCid(e.target.value)
             }} />
