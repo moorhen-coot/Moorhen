@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState, useReducer } from "react";
-import { Row, Button, Stack, Form, FormSelect, Card, Col, Toast } from "react-bootstrap";
+import { Row, Button, Stack, Form, FormSelect, Card, Col, Toast, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { Autocomplete, TextField } from "@mui/material";
 import { MoorhenMoleculeSelect } from "./MoorhenMoleculeSelect";
 import { MoorhenChainSelect } from "./MoorhenChainSelect";
@@ -178,15 +178,42 @@ const MoorhenColourRules = (props) => {
                         </Col>
                         <Col style={{ display: 'flex', justifyContent: 'right', alignItems:'center' }}>
                             <div style={{borderColor: 'black', borderWidth:'5px', backgroundColor: rule.color, height:'20px', width:'20px', margin: '0.5rem'}}/>
-                            <Button size='sm' style={{margin: '0.5rem'}} variant={props.darkMode ? "dark" : "light"} onClick={() => {setRuleList({action:'MoveUp', item:rule})}}>
-                                <ArrowUpwardOutlined/>
-                            </Button>
-                            <Button size='sm' style={{margin: '0.5rem'}} variant={props.darkMode ? "dark" : "light"} onClick={() => {setRuleList({action:'MoveDown', item:rule})}}>
-                                <ArrowDownwardOutlined/>
-                            </Button>
-                            <Button size='sm' style={{margin: '0.5rem'}} variant={props.darkMode ? "dark" : "light"} onClick={() => {setRuleList({action:'Remove', item:rule})}}>
-                                <DeleteOutlined/>
-                            </Button>
+                            <OverlayTrigger
+                                placement="top"
+                                delay={{ show: 400, hide: 400 }}
+                                overlay={
+                                    <Tooltip id="button-tooltip" {...props}>
+                                        Move up
+                                    </Tooltip>
+                                }>
+                                <Button size='sm' style={{margin: '0.5rem'}} variant={props.darkMode ? "dark" : "light"} onClick={() => {setRuleList({action:'MoveUp', item:rule})}}>
+                                    <ArrowUpwardOutlined/>
+                                </Button>
+                            </OverlayTrigger>
+                            <OverlayTrigger
+                                placement="top"
+                                delay={{ show: 400, hide: 400 }}
+                                overlay={
+                                    <Tooltip id="button-tooltip" {...props}>
+                                        Move down
+                                    </Tooltip>
+                                }>
+                                <Button size='sm' style={{margin: '0.5rem'}} variant={props.darkMode ? "dark" : "light"} onClick={() => {setRuleList({action:'MoveDown', item:rule})}}>
+                                    <ArrowDownwardOutlined/>
+                                </Button>
+                            </OverlayTrigger>
+                            <OverlayTrigger
+                                placement="top"
+                                delay={{ show: 400, hide: 400 }}
+                                overlay={
+                                    <Tooltip id="button-tooltip" {...props}>
+                                        Delete
+                                    </Tooltip>
+                                }>
+                                <Button size='sm' style={{margin: '0.5rem'}} variant={props.darkMode ? "dark" : "light"} onClick={() => {setRuleList({action:'Remove', item:rule})}}>
+                                    <DeleteOutlined/>
+                                </Button>
+                            </OverlayTrigger>
                         </Col>
                     </Row>
                 </Card.Body>
@@ -223,15 +250,42 @@ const MoorhenColourRules = (props) => {
                                     </Card.Body>
                                 </Card>
                             <Stack gap={2} style={{alignItems: 'center', justifyContent: 'center'}}>
-                                <Button variant={props.darkMode ? "dark" : "light"} size='sm' onClick={createRule} style={{margin: '0.5rem'}}>
-                                    <AddOutlined/>
-                                </Button>
-                                <Button variant={props.darkMode ? "dark" : "light"} size='sm' onClick={() => {setRuleList({action:'Empty'})}} style={{margin: '0.5rem'}}>
-                                    <DeleteForeverOutlined/>
-                                </Button>
-                                <Button variant={props.darkMode ? "dark" : "light"} size='sm' onClick={commitChanges} style={{margin: '0.5rem'}}>
-                                    <DoneOutlined/>
-                                </Button>
+                                <OverlayTrigger
+                                    placement="right"
+                                    delay={{ show: 400, hide: 400 }}
+                                    overlay={
+                                        <Tooltip id="button-tooltip" {...props}>
+                                            Add a rule
+                                        </Tooltip>
+                                    }>
+                                    <Button variant={props.darkMode ? "dark" : "light"} size='sm' onClick={createRule} style={{margin: '0.5rem'}}>
+                                        <AddOutlined/>
+                                    </Button>
+                                </OverlayTrigger>
+                                <OverlayTrigger
+                                    placement="right"
+                                    delay={{ show: 400, hide: 400 }}
+                                    overlay={
+                                        <Tooltip id="button-tooltip" {...props}>
+                                            Delete all rules
+                                        </Tooltip>
+                                    }>
+                                    <Button variant={props.darkMode ? "dark" : "light"} size='sm' onClick={() => {setRuleList({action:'Empty'})}} style={{margin: '0.5rem'}}>
+                                        <DeleteForeverOutlined/>
+                                    </Button>
+                                </OverlayTrigger>
+                                <OverlayTrigger
+                                    placement="right"
+                                    delay={{ show: 400, hide: 400 }}
+                                    overlay={
+                                        <Tooltip id="button-tooltip" {...props}>
+                                            Apply rules
+                                        </Tooltip>
+                                    }>
+                                    <Button variant={props.darkMode ? "dark" : "light"} size='sm' onClick={commitChanges} style={{margin: '0.5rem'}}>
+                                        <DoneOutlined/>
+                                    </Button>
+                                </OverlayTrigger>
                             </Stack>
                         </Stack>
                         </Stack>

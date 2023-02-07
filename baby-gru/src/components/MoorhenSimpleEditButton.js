@@ -3,7 +3,7 @@ import { MenuItem, MenuList, Tooltip } from "@mui/material";
 import { createRef, forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import { Button, Overlay, Container, Row, FormSelect, FormGroup, FormLabel, Card } from "react-bootstrap"
 import { MoorhenMoleculeSelect } from "./MoorhenMoleculeSelect";
-import { cidToSpec } from "../utils/MoorhenUtils";
+import { cidToSpec, getTooltipShortcutLabel } from "../utils/MoorhenUtils";
 
 const refinementFormatArgs = (molecule, chosenAtom, pp) => {
     return [
@@ -153,16 +153,25 @@ MoorhenSimpleEditButton.defaultProps = {
 
 
 export const MoorhenAutofitRotamerButton = (props) => {
+    const [toolTip, setToolTip] = useState("Auto-fit Rotamer")
+
+    useEffect(() => {
+        if (props.shortCuts) {
+            const shortCut = JSON.parse(props.shortCuts).auto_fit_rotamer
+            setToolTip(`Auto-fit Rotamer ${getTooltipShortcutLabel(shortCut)}`)
+        }     
+    }, [props.shortCuts])
+    
     return <MoorhenSimpleEditButton {...props}
         id='auto-fit-rotamer-edit-button'
-        toolTip="Auto-fit Rotamer"
+        toolTip={toolTip}
         buttonIndex={props.buttonIndex}
         selectedButtonIndex={props.selectedButtonIndex}
         setSelectedButtonIndex={props.setSelectedButtonIndex}
         needsMapData={true}
         cootCommand="fill_partial_residue"
         prompt="Click atom in residue to fit rotamer"
-        icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/auto-fit-rotamer.svg`} />}
+        icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/auto-fit-rotamer.svg`} alt='Auto-Fit rotamer' />}
         formatArgs={(molecule, chosenAtom) => {
             return [
                 molecule.molNo,
@@ -174,16 +183,25 @@ export const MoorhenAutofitRotamerButton = (props) => {
 }
 
 export const MoorhenFlipPeptideButton = (props) => {
+    const [toolTip, setToolTip] = useState("Flip Peptide")
+
+    useEffect(() => {
+        if (props.shortCuts) {
+            const shortCut = JSON.parse(props.shortCuts).flip_peptide
+            setToolTip(`Flip Peptide ${getTooltipShortcutLabel(shortCut)}`)
+        }     
+    }, [props.shortCuts])
+
     return <MoorhenSimpleEditButton {...props}
         id="flip-peptide-edit-button"
-        toolTip="Flip Peptide"
+        toolTip={toolTip}
         buttonIndex={props.buttonIndex}
         selectedButtonIndex={props.selectedButtonIndex}
         setSelectedButtonIndex={props.setSelectedButtonIndex}
         needsMapData={false}
         cootCommand="flipPeptide_cid"
         prompt="Click atom in residue to flip"
-        icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/flip-peptide.svg`} />}
+        icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/flip-peptide.svg`} alt='Flip Peptide' />}
         formatArgs={(molecule, chosenAtom) => {
             return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, '']
         }} />
@@ -216,19 +234,26 @@ export const MoorhenSideChain180Button = (props) => {
         needsMapData={false}
         cootCommand="side_chain_180"
         prompt="Click atom in residue to flip sidechain"
-        icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/side-chain-180.svg`} />}
+        icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/side-chain-180.svg`} alt='Rotate Side-chain'/>}
         formatArgs={(molecule, chosenAtom) => {
             return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
         }} />
 }
 
 export const MoorhenRefineResiduesUsingAtomCidButton = (props) => {
-
+    const [toolTip, setToolTip] = useState("Refine Residues")
     const [panelParameters, setPanelParameters] = useState({
         refine: { mode: 'TRIPLE' },
         delete: { mode: 'ATOM' },
         mutate: { toType: "ALA" }
     })
+
+    useEffect(() => {
+        if (props.shortCuts) {
+            const shortCut = JSON.parse(props.shortCuts).triple_refine
+            setToolTip(`Refine Residues ${getTooltipShortcutLabel(shortCut)}`)
+        }     
+    }, [props.shortCuts])
 
     const MoorhenRefinementPanel = (props) => {
         const refinementModes = ['SINGLE', 'TRIPLE', 'QUINTUPLE', 'HEPTUPLE', 'SPHERE', 'BIG_SPHERE', 'CHAIN', 'ALL']
@@ -253,7 +278,7 @@ export const MoorhenRefineResiduesUsingAtomCidButton = (props) => {
     }
     return <MoorhenSimpleEditButton {...props}
         id='refine-residues-edit-button'
-        toolTip="Refine Residues"
+        toolTip={toolTip}
         buttonIndex={props.buttonIndex}
         selectedButtonIndex={props.selectedButtonIndex}
         setSelectedButtonIndex={props.setSelectedButtonIndex}
@@ -263,7 +288,7 @@ export const MoorhenRefineResiduesUsingAtomCidButton = (props) => {
         prompt={<MoorhenRefinementPanel
             setPanelParameters={setPanelParameters}
             panelParameters={panelParameters} />}
-        icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/refine-1.svg`} />}
+        icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/refine-1.svg`} alt='Refine Residues'/>}
         formatArgs={(m, c, p) => refinementFormatArgs(m, c, p)}
         refineAfterMod={false} />
 }
@@ -302,11 +327,19 @@ export const MoorhenAddAltConfButton = (props) => {
 }
 
 export const MoorhenDeleteUsingCidButton = (props) => {
+    const [toolTip, setToolTip] = useState("Delete Item")
     const [panelParameters, setPanelParameters] = useState({
         refine: { mode: 'TRIPLE' },
         delete: { mode: 'ATOM' },
         mutate: { toType: "ALA" }
     })
+
+    useEffect(() => {
+        if (props.shortCuts) {
+            const shortCut = JSON.parse(props.shortCuts).delete_residue
+            setToolTip(`Delete Item ${getTooltipShortcutLabel(shortCut)}`)
+        }     
+    }, [props.shortCuts])
 
     const deleteMoleculeIfEmpty = (molecule, chosenAtom, cootResult) => {
         if (cootResult.data.result.result.second < 1) {
@@ -354,7 +387,7 @@ export const MoorhenDeleteUsingCidButton = (props) => {
     }
 
     return <MoorhenSimpleEditButton {...props}
-        toolTip="Delete Item"
+        toolTip={toolTip}
         buttonIndex={props.buttonIndex}
         selectedButtonIndex={props.selectedButtonIndex}
         setSelectedButtonIndex={props.setSelectedButtonIndex}
@@ -440,29 +473,47 @@ export const MoorhenMutateButton = (props) => {
         prompt={<MoorhenMutatePanel
             setPanelParameters={setPanelParameters}
             panelParameters={panelParameters} />}
-        icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/mutate.svg`} />}
+        icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/mutate.svg`} alt='Mutate'/>}
         formatArgs={(m, c, p) => mutateFormatArgs(m, c, p)} />
 }
 
 export const MoorhenAddTerminalResidueDirectlyUsingCidButton = (props) => {
+    const [toolTip, setToolTip] = useState("Add Residue")
+
+    useEffect(() => {
+        if (props.shortCuts) {
+            const shortCut = JSON.parse(props.shortCuts).add_terminal_residue
+            setToolTip(`Add Residue ${getTooltipShortcutLabel(shortCut)}`)
+        }     
+    }, [props.shortCuts])
+   
     return <MoorhenSimpleEditButton {...props}
-        toolTip="Add Residue"
+        toolTip={toolTip}
         buttonIndex={props.buttonIndex}
         selectedButtonIndex={props.selectedButtonIndex}
         setSelectedButtonIndex={props.setSelectedButtonIndex}
         needsMapData={true}
         cootCommand="add_terminal_residue_directly_using_cid"
         prompt="Click atom in residue to add a residue to that residue"
-        icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/add-peptide-1.svg`} />}
+        icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/add-peptide-1.svg`} alt='Add Residue'/>}
         formatArgs={(molecule, chosenAtom) => {
             return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
         }} />
 }
 
 export const MoorhenEigenFlipLigandButton = (props) => {
+    const [toolTip, setToolTip] = useState("Eigen Flip: flip the ligand around its eigenvectors")
+
+    useEffect(() => {
+        if (props.shortCuts) {
+            const shortCut = JSON.parse(props.shortCuts).eigen_flip
+            setToolTip(`Eigen Flip: flip the ligand around its eigenvectors ${getTooltipShortcutLabel(shortCut)}`)
+        }     
+    }, [props.shortCuts])
+
     return <MoorhenSimpleEditButton {...props}
         id='eigen-flip-edit-button'
-        toolTip="Eigen Flip: flip the ligand around its eigenvectors"
+        toolTip={toolTip}
         buttonIndex={props.buttonIndex}
         selectedButtonIndex={props.selectedButtonIndex}
         setSelectedButtonIndex={props.setSelectedButtonIndex}
