@@ -340,6 +340,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<molecules_container_t>("molecules_container_t")
     .constructor<>()
+    .function("is_a_difference_map",&molecules_container_t::is_a_difference_map)
     .function("add_hydrogen_atoms",&molecules_container_t::add_hydrogen_atoms)
     .function("delete_hydrogen_atoms",&molecules_container_t::delete_hydrogen_atoms)
     .function("get_gaussian_surface",&molecules_container_t::get_gaussian_surface)
