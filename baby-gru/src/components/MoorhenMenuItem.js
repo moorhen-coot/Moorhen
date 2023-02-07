@@ -1331,7 +1331,7 @@ export const MoorhenGoToMenuItem = (props) => {
 
     const panelContent = <>
         <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="cid" className="mb-3">
-            <Form.Label>Residue cid...</Form.Label>
+            <Form.Label>Residue CID</Form.Label>
             <Form.Control ref={cidRef} type="text" value={cid} onChange={(e) => {
                 setCid(e.target.value)
             }} />
