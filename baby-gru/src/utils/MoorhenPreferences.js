@@ -125,7 +125,7 @@ const getDefaultValues = () => {
             "residue_camera_wiggle": {
                 modifiers: [],
                 keyPress: "z",
-                label: "Wiggle camera while rotating a residue or ligand"
+                label: "Wiggle camera while rotating a residue"
             },
             "label_atom": {
                 modifiers: [],
