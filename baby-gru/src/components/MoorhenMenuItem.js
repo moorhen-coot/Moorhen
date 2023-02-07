@@ -1,7 +1,7 @@
 import { MenuItem } from "@mui/material";
 import { CheckOutlined, CloseOutlined } from "@mui/icons-material";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { OverlayTrigger, Popover, PopoverBody, PopoverHeader, Form, InputGroup, Button, FormSelect, Row, Col, SplitButton, Dropdown, Toast, ToastContainer } from "react-bootstrap";
+import { OverlayTrigger, Popover, PopoverBody, PopoverHeader, Form, InputGroup, Button, FormSelect, Row, Col, SplitButton, Dropdown } from "react-bootstrap";
 import { SketchPicker } from "react-color";
 import { MoorhenMtzWrapper, readTextFile } from "../utils/MoorhenUtils";
 import { MoorhenMap } from "../utils/MoorhenMap";
@@ -412,6 +412,48 @@ export const MoorhenDefaultBondSmoothnessPreferencesMenuItem = (props) => {
         menuItemText={"Default smoothness of molecule bonds"}
         setPopoverIsShown={props.setPopoverIsShown}
         onCompleted={onCompleted}
+    />
+
+}
+
+export const MoorhenAddRemoveHydrogenAtomsMenuItem = (props) => {
+    const moleculeSelectRef = useRef(null)
+
+    const handleClick = useCallback(async (cootCommand) => {
+        if (moleculeSelectRef.current !== null) {
+            const selectedMolNo = parseInt(moleculeSelectRef.current.value)
+            await props.commandCentre.current.cootCommand({
+                message: 'coot_command', 
+                command: cootCommand, 
+                returnType: 'status', 
+                commandArgs: [selectedMolNo], 
+            })
+            const selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedMolNo)
+            selectedMolecule.setAtomsDirty(true)
+            selectedMolecule.redraw(props.glRef)
+            document.body.click()
+            document.body.click()
+        }
+    }, [moleculeSelectRef, props.molecules, props.glRef, props.commandCentre])
+
+    const panelContent = <Form.Group>
+                            <MoorhenMoleculeSelect {...props} label="Molecule" allowAny={false} ref={moleculeSelectRef} />
+                            <Button className="mx-2" variant='primary' onClick={() => handleClick('add_hydrogen_atoms')}>
+                                Add
+                            </Button>
+                            <Button className="mx-2" variant='danger' onClick={() => handleClick('delete_hydrogen_atoms')}>
+                                Remove
+                            </Button>
+                        </Form.Group>
+
+
+    return <MoorhenMenuItem
+        id='add-hydrogens-menu-item'
+        popoverPlacement={props.popoverPlacement}
+        popoverContent={panelContent}
+        menuItemText="Add/Remove hydrogens"
+        setPopoverIsShown={props.setPopoverIsShown}
+        showOkButton={false}
     />
 
 }
@@ -1246,7 +1288,6 @@ export const MoorhenClipFogMenuItem = (props) => {
 export const MoorhenMergeMoleculesMenuItem = (props) => {
     const toRef = useRef(null)
     const fromRef = useRef(null)
-    const [selectedMolecules, setSelectedMolecules] = useState([])
 
     const panelContent = <>
         <MoorhenMoleculeSelect {...props} label="Into molecule" allowAny={false} ref={toRef} />
@@ -1266,7 +1307,7 @@ export const MoorhenMergeMoleculesMenuItem = (props) => {
         let banan = await toMolecule.mergeMolecules(otherMolecules, props.glRef, true)
         console.log({ banan })
         props.setPopoverIsShown(false)
-    }, [toRef.current, fromRef.current, props.molecules])
+    }, [toRef.current, fromRef.current, props.molecules, props.fromMolNo, props.glRef])
 
     return <MoorhenMenuItem
         id='merge-molecules-menu-item'
