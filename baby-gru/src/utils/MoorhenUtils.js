@@ -441,3 +441,12 @@ export const getResidueInfo = (molecules, selectedMolNo, selectedChain, selected
         }
     }
 }
+
+export const getTooltipShortcutLabel = (shortCut) => {
+    let modifiers = []
+    if (shortCut.modifiers.includes('shiftKey')) modifiers.push("Shift")
+    if (shortCut.modifiers.includes('ctrlKey')) modifiers.push("<Ctrl>")
+    if (shortCut.modifiers.includes('metaKey')) modifiers.push("<Meta>")
+    if (shortCut.modifiers.includes('altKey')) modifiers.push("<Alt>")
+    return `<${modifiers.join(" ")} ${shortCut.keyPress.toUpperCase()}>`
+}
