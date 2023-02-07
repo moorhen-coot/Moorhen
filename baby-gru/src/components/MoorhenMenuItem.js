@@ -199,7 +199,7 @@ export const MoorhenGetMonomerMenuItem = (props) => {
                 if (result.data.result.status === "Completed" && result.data.result.result !== -1) {
                     const newMolecule = new MoorhenMolecule(props.commandCentre, props.urlPrefix)
                     newMolecule.molNo = result.data.result.result
-                    newMolecule.name = tlcRef.current.value
+                    newMolecule.name = newTlc
                     newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
                     return newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef).then(_ => {
                         props.changeMolecules({ action: "Add", item: newMolecule })
