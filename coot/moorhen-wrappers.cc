@@ -443,6 +443,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("get_single_letter_codes_for_chain",&molecules_container_t::get_single_letter_codes_for_chain)
     .function("get_r_factor_stats",&molecules_container_t::get_r_factor_stats)
     .function("get_colour_rules",&molecules_container_t::get_colour_rules)
+    .function("mmrrcc",&molecules_container_t::mmrrcc)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<>()
@@ -548,6 +549,19 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("triangles",&coot::simple_mesh_t::triangles)
     ;
 
+    class_<coot::util::density_correlation_stats_info_t>("density_correlation_stats_info_t")
+    .property("n",&coot::util::density_correlation_stats_info_t::n)
+    .property("sum_xy",&coot::util::density_correlation_stats_info_t::sum_xy)
+    .property("sum_sqrd_x",&coot::util::density_correlation_stats_info_t::sum_sqrd_x)
+    .property("sum_sqrd_y",&coot::util::density_correlation_stats_info_t::sum_sqrd_y)
+    .property("sum_x",&coot::util::density_correlation_stats_info_t::sum_x)
+    .property("sum_x",&coot::util::density_correlation_stats_info_t::sum_x)
+    .function("var_x",&coot::util::density_correlation_stats_info_t::var_x)
+    .function("var_y",&coot::util::density_correlation_stats_info_t::var_y)
+    .function("correlation",&coot::util::density_correlation_stats_info_t::correlation)
+    ;
+
+    register_map<coot::residue_spec_t, coot::util::density_correlation_stats_info_t>("Map_residue_spec_t_density_correlation_stats_info_t");
     register_vector<std::pair<std::string, std::string>>("Vectorstring_string_pair");
     register_vector<coot::instanced_geometry_t>("Vectorinstanced_geometry_t");
     register_vector<coot::molecule_t::moved_residue_t>("Vectormoved_residue_t");
@@ -597,6 +611,10 @@ EMSCRIPTEN_BINDINGS(my_module) {
     value_object<std::pair<coot::residue_spec_t,std::string>>("residue_spec_t_string_pair")
         .field("first",&std::pair<coot::residue_spec_t,std::string>::first)
         .field("second",&std::pair<coot::residue_spec_t,std::string>::second)
+    ;
+    value_object<std::pair<std::map<coot::residue_spec_t, coot::util::density_correlation_stats_info_t>,std::map<coot::residue_spec_t, coot::util::density_correlation_stats_info_t>>>("map_residue_spec_t_:density_correlation_stats_info_t_pair")
+        .field("first",&std::pair<std::map<coot::residue_spec_t, coot::util::density_correlation_stats_info_t>,std::map<coot::residue_spec_t, coot::util::density_correlation_stats_info_t>>::first)
+        .field("second",&std::pair<std::map<coot::residue_spec_t, coot::util::density_correlation_stats_info_t>,std::map<coot::residue_spec_t, coot::util::density_correlation_stats_info_t>>::second)
     ;
     value_object<std::pair<std::string,std::string>>("string_string_pair")
         .field("first",&std::pair<std::string, std::string>::first)

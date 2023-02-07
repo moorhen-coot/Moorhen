@@ -148,6 +148,7 @@ ${coot_src}/MoleculesToTriangles/CXXClasses/Vector2.cpp
 ${coot_src}/MoleculesToTriangles/CXXClasses/Vector3.cpp
 ${coot_src}/MoleculesToTriangles/CXXClasses/VertexColorNormalPrimitive.cpp
 ${coot_src}/MoleculesToTriangles/CXXClasses/lfit.c
+${coot_src}/api/molecules_container_mmrrcc.cc
 ${coot_src}/api/coot_molecule_validation.cc
 ${coot_src}/api/molecules_container_modelling.cc
 ${coot_src}/api/add-terminal-residue.cc
