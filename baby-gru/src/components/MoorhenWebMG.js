@@ -157,6 +157,31 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
     }, [props.commandCentre, props.preferences.defaultUpdatingScores])
 
     useEffect(() => {
+        if (scores.current !== null && props.preferences.defaultUpdatingScores !== null && props.preferences.showScoresToast && connectedMaps) {
+            setScoreToastContents(
+                <Toast.Body>
+                    {props.preferences.defaultUpdatingScores.includes('Rfactor') && 
+                        <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
+                            Clipper R-Factor {parseFloat(scores.current.rFactor).toFixed(3)}
+                        </p>
+                    }
+                    {props.preferences.defaultUpdatingScores.includes('Rfree') && 
+                        <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
+                            Clipper R-Free {parseFloat(scores.current.rFree).toFixed(3)}
+                        </p>
+                    }
+                    {props.preferences.defaultUpdatingScores.includes('Moorhen Points') && 
+                        <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
+                            Moorhen Points {scores.current.moorhenPoints}
+                        </p>
+                    }
+                </Toast.Body>
+            )
+        }
+
+    }, [props.preferences.defaultUpdatingScores, props.preferences.showScoresToast]);
+
+    useEffect(() => {
         document.addEventListener("connectedMaps", handleConnectedMaps);
         return () => {
             document.removeEventListener("connectedMaps", handleConnectedMaps);
