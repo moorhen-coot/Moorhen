@@ -37,7 +37,7 @@ const parseSequenceData = (sequence) => {
         finalSequence[residue.resNum - 1] = residue.resCode
     })
 
-    return [rulerStart, seqLenght, finalSequence.join('')]
+    return [rulerStart, seqLenght, finalSequence.join(''), ...calculateDisplayStartAndEnd(rulerStart, seqLenght)]
 }
 
 
@@ -46,9 +46,16 @@ export const MoorhenSequenceViewer = (props) => {
     const sequenceRef = useRef(null);
     const navigationRef = useRef(null);
     const selectedResiduesTrackRef = useRef(null)
+    const [initialRulerStart, initialSeqLenght, initialDisplaySequence, intialStart, initialEnd] = parseSequenceData(props.sequence.sequence)
     const [message, setMessage] = useState("");
-    const [rulerStart, seqLenght, displaySequence] = parseSequenceData(props.sequence.sequence)
-    const [start, end] = calculateDisplayStartAndEnd(rulerStart, seqLenght);
+    const [displaySettings, setDisplaySettings] = useState({
+        rulerStart: initialRulerStart,
+        start: intialStart,
+        end: initialEnd,
+        seqLenght: initialSeqLenght,
+        displaySequence: initialDisplaySequence
+    });
+
     const hoveredResidueColor = '#FFEB3B66'
     const transparentColor = '#FFEB3B00'
 
@@ -223,16 +230,39 @@ export const MoorhenSequenceViewer = (props) => {
      * Hook used when the component mounts to set the display start and end.
      */
     useEffect(()=> {       
-        sequenceRef.current._displaystart = start
-        sequenceRef.current._displayend = end
+        sequenceRef.current._sequence = displaySettings.displaySequence
+        sequenceRef.current._displaystart = displaySettings.start
+        sequenceRef.current._displayend = displaySettings.end
         sequenceRef.current.trackHighlighter.element._highlightcolor = hoveredResidueColor
-        navigationRef.current._displaystart = start
-        navigationRef.current._displayend = end
-        selectedResiduesTrackRef.current._displaystart = start
-        selectedResiduesTrackRef.current._displayend = end
+        navigationRef.current._displaystart = displaySettings.start
+        navigationRef.current._displayend = displaySettings.end
+        selectedResiduesTrackRef.current._displaystart = displaySettings.start
+        selectedResiduesTrackRef.current._displayend = displaySettings.end
         selectedResiduesTrackRef.current.trackHighlighter.element._highlightcolor = transparentColor
         
-    }, []);    
+    }, [])
+
+    /**
+     * Hook used to update the displayed sequence after adding/removing/mutating a residue in the sequence
+     */
+    useEffect(()=> {
+        const [newRulerStart, newSeqLenght, newDisplaySequence, newStart, newEnd] = parseSequenceData(props.sequence.sequence)
+        
+        if (newDisplaySequence !== displaySettings.displaySequence) {
+            console.log('Updating sequence viewer now...')
+            sequenceRef.current.sequence = newDisplaySequence
+            navigationRef.current._rulerStart = newRulerStart
+            sequenceRef.current._createSequence()
+            setDisplaySettings({
+                rulerStart: newRulerStart,
+                start: newStart,
+                end: newEnd,
+                seqLenght: newSeqLenght,
+                displaySequence: newDisplaySequence     
+            })
+        }
+
+    }, [props.sequence.sequence])
     
     /**
      * Hook used to clear the current selection if user selects residue from different chain
@@ -262,26 +292,26 @@ export const MoorhenSequenceViewer = (props) => {
                 <protvista-manager ref={managerRef}>
                     <protvista-navigation 
                         ref={navigationRef}
-                        length={seqLenght}
-                        rulerStart={rulerStart}
-                        displaystart={start}
-                        displayend={end}
+                        length={displaySettings.seqLenght}
+                        rulerStart={displaySettings.rulerStart}
+                        displaystart={displaySettings.start}
+                        displayend={displaySettings.end}
                         use-ctrl-to-zoom
                         />
                     <protvista-sequence
                         ref={sequenceRef}
-                        sequence={displaySequence}
-                        length={seqLenght} 
+                        sequence={displaySettings.displaySequence}
+                        length={displaySettings.seqLenght} 
                         numberofticks="10"
-                        displaystart={start}
-                        displayend={end}
+                        displaystart={displaySettings.start}
+                        displayend={displaySettings.end}
                         use-ctrl-to-zoom
                         />
                     <protvista-track 
                         ref={selectedResiduesTrackRef}
-                        length={seqLenght} 
-                        displaystart={start}
-                        displayend={end}
+                        length={displaySettings.seqLenght} 
+                        displaystart={displaySettings.start}
+                        displayend={displaySettings.end}
                         height='10'
                         use-ctrl-to-zoom
                         />
