@@ -71,6 +71,7 @@ ${coot_src}/lidia-core/rdkit-interface.cc
 ${coot_src}/lidia-core/bond-table-record-t.cc
 
 ${coot_src}/pli/pi-stacking.cc
+${coot_src}/coot-utils/cmtz-interface.cc
 ${coot_src}/coot-utils/lidia-core-functions.cc
 ${coot_src}/coot-utils/atom-selection-container.cc
 ${coot_src}/coot-utils/dictionary-atom-types.cc

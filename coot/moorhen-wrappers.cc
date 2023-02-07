@@ -446,6 +446,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("get_r_factor_stats",&molecules_container_t::get_r_factor_stats)
     .function("get_colour_rules",&molecules_container_t::get_colour_rules)
     .function("mmrrcc",&molecules_container_t::mmrrcc)
+    .function("auto_read_mtz",&molecules_container_t::auto_read_mtz)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<>()
