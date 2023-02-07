@@ -1189,7 +1189,7 @@ export const MoorhenAutoOpenMtzMenuItem = (props) => {
     const panelContent = <>
         <Row>
             <Form.Group style={{ width: '30rem', margin: '0.5rem', padding: '0rem' }} controlId="uploadCCP4Map" className="mb-3">
-                <Form.Label>Auto-open MTZ file</Form.Label>
+                <Form.Label>Auto open MTZ file</Form.Label>
                 <Form.Control ref={filesRef} type="file" multiple={false} accept={[".mtz"]} />
             </Form.Group>
         </Row>
