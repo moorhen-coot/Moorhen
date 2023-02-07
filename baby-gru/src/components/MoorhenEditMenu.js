@@ -1,7 +1,7 @@
 import { NavDropdown } from "react-bootstrap";
 import { useState } from "react";
 import "rc-tree/assets/index.css"
-import { MoorhenCopyFragmentUsingCidMenuItem, MoorhenDeleteUsingCidMenuItem, MoorhenMergeMoleculesMenuItem, MoorhenGoToMenuItem } from "./MoorhenMenuItem";
+import { MoorhenCopyFragmentUsingCidMenuItem, MoorhenDeleteUsingCidMenuItem, MoorhenMergeMoleculesMenuItem, MoorhenGoToMenuItem, MoorhenAddRemoveHydrogenAtomsMenuItem } from "./MoorhenMenuItem";
 
 export const MoorhenEditMenu = (props) => {
     const [popoverIsShown, setPopoverIsShown] = useState(false)
@@ -19,6 +19,7 @@ export const MoorhenEditMenu = (props) => {
             <MoorhenDeleteUsingCidMenuItem key="delete" {...menuItemProps} />
             <MoorhenCopyFragmentUsingCidMenuItem key="copy_fragment" {...menuItemProps} />
             <MoorhenGoToMenuItem key="go_to_cid" {...menuItemProps} />
+            <MoorhenAddRemoveHydrogenAtomsMenuItem key='add_remove_hydrogens' {...menuItemProps}/>
         </NavDropdown>
     </>
 }
