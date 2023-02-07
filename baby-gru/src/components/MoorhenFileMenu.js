@@ -2,7 +2,7 @@ import { NavDropdown, Form, Button, InputGroup, Overlay, SplitButton, Dropdown }
 import { MoorhenMolecule } from "../utils/MoorhenMolecule";
 import { MoorhenMap } from "../utils/MoorhenMap";
 import { useState, useRef } from "react";
-import { MoorhenImportDictionaryMenuItem, MoorhenImportMapCoefficientsMenuItem, MoorhenDeleteEverythingMenuItem, MoorhenLoadTutorialDataMenuItem, MoorhenImportMapMenuItem, MoorhenImportFSigFMenuItem, MoorhenBackupsMenuItem } from "./MoorhenMenuItem";
+import { MoorhenImportDictionaryMenuItem, MoorhenImportMapCoefficientsMenuItem, MoorhenAutoOpenMtzMenuItem, MoorhenDeleteEverythingMenuItem, MoorhenLoadTutorialDataMenuItem, MoorhenImportMapMenuItem, MoorhenImportFSigFMenuItem, MoorhenBackupsMenuItem } from "./MoorhenMenuItem";
 import { MenuItem } from "@mui/material";
 import { convertViewtoPx, doDownload, readTextFile } from "../utils/MoorhenUtils";
 import localforage from 'localforage';
@@ -340,6 +340,8 @@ export const MoorhenFileMenu = (props) => {
 
                     <hr></hr>
 
+                    <MoorhenAutoOpenMtzMenuItem {...menuItemProps} />
+                    
                     <MoorhenImportMapCoefficientsMenuItem {...menuItemProps} />
 
                     <MoorhenImportFSigFMenuItem {...menuItemProps} />

@@ -431,6 +431,16 @@ const read_pdb = (coordData, name) => {
     return molNo
 }
 
+const auto_open_mtz = (mtzData) => {
+    const theGuid = guid()
+    const asUint8Array = new Uint8Array(mtzData)
+    cootModule.FS_createDataFile(".", `${theGuid}.mtz`, asUint8Array, true, true);
+    const tempFilename = `./${theGuid}.mtz`
+    const result = molecules_container.auto_read_mtz(tempFilename)
+    cootModule.FS_unlink(tempFilename)
+    return result
+}
+
 const read_dictionary = (coordData, associatedMolNo) => {
     const theGuid = guid()
     cootModule.FS_createDataFile(".", `${theGuid}.cif`, coordData, true, true);
@@ -674,6 +684,9 @@ onmessage = function (e) {
             }
             else if (command === 'shim_read_mtz') {
                 cootResult = read_mtz(...commandArgs)
+            }
+            else if (command === 'shim_auto_open_mtz') {
+                cootResult = auto_open_mtz(...commandArgs)
             }
             else if (command === 'shim_read_ccp4_map') {
                 cootResult = read_ccp4_map(...commandArgs)

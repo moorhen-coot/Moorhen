@@ -3,7 +3,7 @@ import { CheckOutlined, CloseOutlined } from "@mui/icons-material";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { OverlayTrigger, Popover, PopoverBody, PopoverHeader, Form, InputGroup, Button, FormSelect, Row, Col, SplitButton, Dropdown } from "react-bootstrap";
 import { SketchPicker } from "react-color";
-import { MoorhenMtzWrapper, readTextFile } from "../utils/MoorhenUtils";
+import { MoorhenMtzWrapper, readTextFile, readDataFile } from "../utils/MoorhenUtils";
 import { MoorhenMap } from "../utils/MoorhenMap";
 import { MoorhenMolecule } from "../utils/MoorhenMolecule";
 import { MoorhenMoleculeSelect } from "./MoorhenMoleculeSelect";
@@ -1178,6 +1178,63 @@ export const MoorhenImportMapMenuItem = (props) => {
         id='import-map-menu-item'
         popoverContent={panelContent}
         menuItemText="CCP4/MRC map..."
+        onCompleted={onCompleted}
+        setPopoverIsShown={props.setPopoverIsShown}
+    />
+}
+
+export const MoorhenAutoOpenMtzMenuItem = (props) => {
+    const filesRef = useRef(null)
+
+    const panelContent = <>
+        <Row>
+            <Form.Group style={{ width: '30rem', margin: '0.5rem', padding: '0rem' }} controlId="uploadCCP4Map" className="mb-3">
+                <Form.Label>Auto open MTZ file</Form.Label>
+                <Form.Control ref={filesRef} type="file" multiple={false} accept={[".mtz"]} />
+            </Form.Group>
+        </Row>
+    </>
+
+    const onCompleted = useCallback(async (e) => {
+        const file = filesRef.current.files[0]
+        console.log('file is', file)
+
+        const reflectionData = await readDataFile(file)
+        const mtzData = new Uint8Array(reflectionData)
+    
+        const response = await props.commandCentre.current.cootCommand({
+            returnType: "int_array",
+            command: "shim_auto_open_mtz",
+            commandArgs: [mtzData]
+        })
+
+        let promises = []
+        response.data.result.result.forEach(mapMolNo => {
+            promises.push(
+                props.commandCentre.current.cootCommand({
+                    returnType: "status",
+                    command: "is_a_difference_map",
+                    commandArgs: [mapMolNo]
+                })    
+            )
+        })
+        const isDiffMapResponses = await Promise.all(promises)
+        
+        response.data.result.result.forEach((mapMolNo, index) => {
+            const newMap = new MoorhenMap(props.commandCentre)
+            newMap.molNo = mapMolNo
+            newMap.name = `${file.name.replace('mtz', '')}-map-${index}`
+            newMap.isDifference = isDiffMapResponses[index]
+            props.changeMaps({ action: 'Add', item: newMap })
+            if(index === 0) props.setActiveMap(newMap)
+        })
+
+    }, [filesRef.current, props.changeMaps, props.commandCentre])
+
+    return <MoorhenMenuItem
+        id='auto-open-mtz-menu-item'
+        popoverContent={panelContent}
+        menuItemText="Auto open MTZ..."
         onCompleted={onCompleted}
         setPopoverIsShown={props.setPopoverIsShown}
     />
