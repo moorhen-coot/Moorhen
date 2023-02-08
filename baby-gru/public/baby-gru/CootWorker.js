@@ -287,6 +287,42 @@ const stringArrayToJSArray = (stringArray) => {
     return returnResult;
 }
 
+const mmrrccStatsToJSArray = (mmrrccStats) => {
+    const parseStats = (stats) => {
+        let result = []
+        const residueSpecs = stats.keys()
+        const mapSize = residueSpecs.size()
+        for (let i = 0; i < mapSize; i++) {
+            const residueSpec = residueSpecs.get(i)
+            const densityCorrStat = stats.get(residueSpec)
+            result.push({
+                resNum: residueSpec.res_no, 
+                insCode: residueSpec.ins_code,
+                modelNumber: residueSpec.model_number,
+                chainId: residueSpec.chain_id,
+                n: densityCorrStat.n,
+                correlation: densityCorrStat.correlation()
+            })
+            residueSpec.delete()
+            densityCorrStat.delete()
+        }
+        residueSpecs.delete()
+        return result
+    }
+
+    const first = mmrrccStats.first
+    const second = mmrrccStats.second
+
+    const returnResult = {
+        "All atoms": parseStats(first),
+        "Side-chains": parseStats(second)
+    }
+    
+    first.delete()
+    second.delete()
+    return returnResult
+}
+
 const residueSpecToJSArray = (residueSpecs) => {
     let returnResult = []
     const residuesSize = residueSpecs.size()
@@ -706,6 +742,9 @@ onmessage = function (e) {
             switch (returnType) {
                 case 'instanced_mesh_perm':
                     returnResult = instancedMeshToMeshData(cootResult, true)
+                    break;
+                case 'mmrrcc_stats':
+                    returnResult = mmrrccStatsToJSArray(cootResult)
                     break;
                 case 'colour_rules':
                     returnResult = colourRulesToJSArray(cootResult)

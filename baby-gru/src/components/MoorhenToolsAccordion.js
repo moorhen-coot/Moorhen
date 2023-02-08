@@ -5,6 +5,7 @@ import { MoorhenValidation } from "./MoorhenValidation"
 import { MoorhenDifferenceMapPeaks } from "./MoorhenDifferenceMapPeaks"
 import { MoorhenPepflipsDifferenceMap } from "./MoorhenPepflipsDifferenceMap"
 import { MoorhenFillMissingAtoms } from "./MoorhenFillMissingAtoms"
+import { MoorhenMMRRCCPlot } from "./MoorhenMMRRCCPlot"
 import { Autocomplete, TextField } from "@mui/material";
 
 export const MoorhenToolsAccordion = (props) => {
@@ -15,7 +16,8 @@ export const MoorhenToolsAccordion = (props) => {
             {label: "Ramachandran Plot", toolWidget: <MoorhenRamachandran {...props}/>},
             {label: "Validation", toolWidget: <MoorhenValidation {...props}/>},
             {label: "Peptide flips using difference map", toolWidget: <MoorhenPepflipsDifferenceMap {...props}/>},
-            {label: "Fill partial residues", toolWidget: <MoorhenFillMissingAtoms {...props}/>}
+            {label: "Fill partial residues", toolWidget: <MoorhenFillMissingAtoms {...props}/>},
+            {label: "MMRRCC plot", toolWidget: <MoorhenMMRRCCPlot {...props}/>}
     ]
 
     const handleChange = (evt, newSelection) => {
