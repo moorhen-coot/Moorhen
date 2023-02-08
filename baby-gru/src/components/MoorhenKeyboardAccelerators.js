@@ -351,6 +351,51 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         return false
     }
 
+    else if (action === 'jump_next_residue' || action === 'jump_previous_residue') {
+        const visibleMolecules = molecules.filter(molecule => molecule.isVisible)
+        if (visibleMolecules.length === 0) {
+            return
+        }
+        commandCentre.current.cootCommand({
+            returnType: "int_string_pair",
+            command: "get_active_atom",
+            commandArgs: [...glRef.current.origin.map(coord => coord * -1), visibleMolecules.map(molecule => molecule.molNo).join(':')]
+        }).then(response => {
+            const moleculeMolNo = response.data.result.result.first
+            const residueCid = response.data.result.result.second
+            const selectedMolecule = visibleMolecules.find(molecule => molecule.molNo === moleculeMolNo)
+
+            if (selectedMolecule === 'undefined' || !residueCid) {
+                return
+            }
+
+            const [moleculeName, modelNumber, resNum, atomName] = residueCid.split('/')
+            //if (!chainId || !resInfo) {
+            //    return
+            //}
+            const chainId = 'A'
+
+            const selectedSequence = selectedMolecule.sequences.find(sequence => sequence.chain === chainId)
+            if (selectedSequence === 'undefined') {
+                return
+            }
+            
+            let nextResNum
+            const selectedResidueIndex = selectedSequence.sequence.findIndex(res => res.resNum === parseInt(resNum))
+            if (selectedResidueIndex === -1) {
+                return
+            } else if (action === 'jump_next_residue' && selectedResidueIndex !== selectedSequence.sequence.length - 1) {
+                nextResNum = selectedSequence.sequence[selectedResidueIndex + 1].resNum
+            } else if (action === 'jump_previous_residue' && selectedResidueIndex !== 0) {
+                nextResNum = selectedSequence.sequence[selectedResidueIndex - 1].resNum
+            } else {
+                return
+            }
+            selectedMolecule.centreOn(glRef, `/*/${chainId}/${nextResNum}-${nextResNum}/*`)
+        })
+
+    }
+
     return true
 
 }
