@@ -3143,6 +3143,29 @@ class MGWebGL extends Component {
         this.drawScene();
     }
 
+    setOriginAnimated(o, doDrawScene) {
+        this.nAnimationFrames = 15;
+        const old_x = this.origin[0]
+        const old_y = this.origin[1]
+        const old_z = this.origin[2]
+        const new_x = o[0]
+        const new_y = o[1]
+        const new_z = o[2]
+        const DX = new_x - old_x
+        const DY = new_y - old_y
+        const DZ = new_z - old_z
+        const dx = DX/this.nAnimationFrames
+        const dy = DY/this.nAnimationFrames
+        const dz = DZ/this.nAnimationFrames
+        requestAnimationFrame(this.drawOriginFrame.bind(this,[old_x,old_y,old_z],[dx,dy,dz],1))
+    }
+
+    drawOriginFrame(oo,d,iframe){
+        this.setOrigin([oo[0]+iframe*d[0],oo[1]+iframe*d[1],oo[2]+iframe*d[2]],true)
+        if(iframe<this.nAnimationFrames)
+            requestAnimationFrame(this.drawOriginFrame.bind(this,oo,d,iframe+1))
+    }
+
     setOrigin(o, doDrawScene) {
         this.origin = o;
         const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: {origin: this.origin,  modifiedMolecule: null} })
@@ -3515,6 +3538,7 @@ class MGWebGL extends Component {
     }
 
     centreOn(idx) {
+        console.log("centreOn!!!!")
         var self = this;
         if (self.displayBuffers[idx].atoms.length > 0) {
             var xtot = 0;
@@ -8840,7 +8864,7 @@ class MGWebGL extends Component {
                 document.dispatchEvent(atomClicked);
 
                 if (self.keysDown['center_atom']) {
-                    self.setOrigin([-atx, -aty, -atz], true);
+                    self.setOriginAnimated([-atx, -aty, -atz], true);
                     self.reContourMaps();
                     return;
                 }
