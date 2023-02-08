@@ -24,7 +24,7 @@ const updateStoredPreferences = async (key, value) => {
 
 const getDefaultValues = () => {
     return {
-        version: '0.0.10',
+        version: '0.0.11',
         darkMode: false, 
         atomLabelDepthMode: true, 
         defaultExpandDisplayCards: true,
@@ -142,7 +142,16 @@ const getDefaultValues = () => {
                 keyPress: "control",
                 label: "Set map contour on scroll"
             },
-
+            "jump_next_residue": {
+                modifiers: [],
+                keyPress: " ",
+                label: "Jump to the next residue"
+            },
+            "jump_previous_residue": {
+                modifiers: ["shiftKey"],
+                keyPress: " ",
+                label: "Jump to the previous residue"
+            },
         }
     }
 }

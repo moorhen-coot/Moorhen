@@ -16,13 +16,15 @@ const apresEdit = (molecule, glRef, setHoveredAtom) => {
 export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     console.log(event)
     let modifiers = []
+    let eventModifiersCodes = []
 
-    if (event.shiftKey) modifiers.push("<Shift>")
-    if (event.ctrlKey) modifiers.push("<Ctrl>")
-    if (event.metaKey) modifiers.push("<Meta>")
-    if (event.altKey) modifiers.push("<Alt>")
+    if (event.shiftKey) modifiers.push("<Shift>") && eventModifiersCodes.push('shiftKey')
+    if (event.ctrlKey) modifiers.push("<Ctrl>") && eventModifiersCodes.push('ctrlKey')
+    if (event.metaKey) modifiers.push("<Meta>") && eventModifiersCodes.push('metaKey')
+    if (event.altKey) modifiers.push("<Alt>") && eventModifiersCodes.push('altKey')
+    if (event.key === " ") modifiers.push("<Space>")
 
-    const { setShowToast, setToastContent, hoveredAtom, setHoveredAtom, commandCentre, activeMap, glRef } = collectedProps;
+    const { setShowToast, setToastContent, hoveredAtom, setHoveredAtom, commandCentre, activeMap, glRef, molecules } = collectedProps;
 
     if (collectedProps.showShortcutToast) {
         setToastContent(<h3>{`${modifiers.join("-")} ${event.key} pushed`}</h3>)
@@ -32,7 +34,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     let action = null;
 
     for (const key of Object.keys(shortCuts)) {
-        if (shortCuts[key].keyPress === event.key.toLowerCase() && shortCuts[key].modifiers.every(modifier => event[modifier])) {
+        if (shortCuts[key].keyPress === event.key.toLowerCase() && shortCuts[key].modifiers.every(modifier => event[modifier]) && eventModifiersCodes.every(modifier => shortCuts[key].modifiers.includes(modifier))) {
             action = key
             break
         }
@@ -344,11 +346,56 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
                 if (shortCuts[key].modifiers.includes('ctrlKey')) modifiers.push("<Ctrl>")
                 if (shortCuts[key].modifiers.includes('metaKey')) modifiers.push("<Meta>")
                 if (shortCuts[key].modifiers.includes('altKey')) modifiers.push("<Alt>")
+                if (shortCuts[key].keyPress === " ") modifiers.push("<Space>")
                 return <ListItem>{`${modifiers.join("-")} ${shortCuts[key].keyPress} ${shortCuts[key].label}`}</ListItem>
             })}
         </List></h4>)
         setShowToast(true)
         return false
+    }
+
+    else if (action === 'jump_next_residue' || action === 'jump_previous_residue') {
+        const visibleMolecules = molecules.filter(molecule => molecule.isVisible && molecule.hasVisibleBuffers())
+        if (visibleMolecules.length === 0) {
+            return
+        }
+        commandCentre.current.cootCommand({
+            returnType: "int_string_pair",
+            command: "get_active_atom",
+            commandArgs: [...glRef.current.origin.map(coord => coord * -1), visibleMolecules.map(molecule => molecule.molNo).join(':')]
+        }).then(response => {
+            const moleculeMolNo = response.data.result.result.first
+            const residueCid = response.data.result.result.second
+            const selectedMolecule = visibleMolecules.find(molecule => molecule.molNo === moleculeMolNo)
+
+            if (selectedMolecule === 'undefined' || !residueCid) {
+                return
+            }
+
+            const [moleculeName, modelNumber, resNum, atomName] = residueCid.split('/')
+            
+            // ASSUMING FIRST CHAIN UNTIL RESIDUE CID INCLUDES BACK CHAIN NAME
+            const chainId = selectedMolecule.sequences[0].chain
+
+            const selectedSequence = selectedMolecule.sequences.find(sequence => sequence.chain === chainId)
+            if (selectedSequence === 'undefined') {
+                return
+            }
+            
+            let nextResNum
+            const selectedResidueIndex = selectedSequence.sequence.findIndex(res => res.resNum === parseInt(resNum))
+            if (selectedResidueIndex === -1) {
+                return
+            } else if (action === 'jump_next_residue' && selectedResidueIndex !== selectedSequence.sequence.length - 1) {
+                nextResNum = selectedSequence.sequence[selectedResidueIndex + 1].resNum
+            } else if (action === 'jump_previous_residue' && selectedResidueIndex !== 0) {
+                nextResNum = selectedSequence.sequence[selectedResidueIndex - 1].resNum
+            } else {
+                return
+            }
+            selectedMolecule.centreOn(glRef, `/*/${chainId}/${nextResNum}-${nextResNum}/*`)
+        })
+
     }
 
     return true
