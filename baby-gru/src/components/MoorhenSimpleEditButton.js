@@ -543,7 +543,7 @@ export const MoorhenJedFlipFalseButton = (props) => {
         prompt="Click atom in residue to flip around that rotatable bond - wag the tail"
         icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/edit-chi.svg`} />}
         formatArgs={(molecule, chosenAtom) => {
-            return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, false]
+            return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`, false]
         }} />
 }
 
@@ -558,7 +558,7 @@ export const MoorhenJedFlipTrueButton = (props) => {
         prompt="Click atom in residue to flip around that rotatable bond - wag the dog"
         icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/jed-flip-reverse.svg`} />}
         formatArgs={(molecule, chosenAtom) => {
-            return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, true]
+            return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`, true]
         }} />
 }
 
