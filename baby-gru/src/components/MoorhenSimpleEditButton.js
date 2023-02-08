@@ -350,7 +350,7 @@ export const MoorhenDeleteUsingCidButton = (props) => {
     }
 
     const MoorhenDeletePanel = (props) => {
-        const deleteModes = ['ATOM', 'RESIDUE', 'SIDE-CHAIN', 'CHAIN']
+        const deleteModes = ['ATOM', 'RESIDUE', 'RESIDUE HYDROGENS', 'RESIDUE SIDE-CHAIN', 'CHAIN', 'CHAIN HYDROGENS', 'MOLECULE HYDROGENS']
         return <Container>
             <Row>Please click an atom for core of deletion</Row>
             <Row>
@@ -380,8 +380,14 @@ export const MoorhenDeleteUsingCidButton = (props) => {
             commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/*${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`, 'LITERAL'] 
         } else if (pp.delete.mode === 'ATOM') {
             commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`, 'LITERAL']
-        } else {
+        } else if (pp.delete.mode === 'RESIDUE SIDE-CHAIN') {
             commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/!N,CA,CB,C,O,HA,H`, 'LITERAL']
+        } else if (pp.delete.mode === 'RESIDUE HYDROGENS') {
+            commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/[H,D]`, 'LITERAL']
+        } else if (pp.delete.mode === 'MOLECULE HYDROGENS') {
+            commandArgs = [molecule.molNo, `/1/*/*/[H,D]`, 'LITERAL']
+        } else {
+            commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/*/[H,D]`, 'LITERAL']
         }
         return commandArgs
     }
