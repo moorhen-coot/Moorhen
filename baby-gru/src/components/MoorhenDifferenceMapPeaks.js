@@ -93,7 +93,7 @@ export const MoorhenDifferenceMapPeaks = (props) => {
         }
         
         const peakIndex = points[0].index
-        props.glRef.current.setOrigin([-plotData[peakIndex].coordX, -plotData[peakIndex].coordY, -plotData[peakIndex].coordZ])
+        props.glRef.current.setOriginAnimated([-plotData[peakIndex].coordX, -plotData[peakIndex].coordY, -plotData[peakIndex].coordZ])
     }
 
     const setTooltipTitle = (args) => {

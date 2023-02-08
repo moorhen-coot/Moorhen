@@ -31,7 +31,7 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
         }).then(response => {
             let newOrigin = response.data.result.result;
             if (newOrigin.length === 3) {
-                glRef.current.setOrigin([-newOrigin[0], -newOrigin[1], -newOrigin[2]])
+                glRef.current.setOriginAnimated([-newOrigin[0], -newOrigin[1], -newOrigin[2]])
             }
         })
     }, [props.commandCentre, glRef])

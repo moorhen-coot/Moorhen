@@ -1634,7 +1634,7 @@ export const MoorhenCentreOnLigandMenuItem = (props) => {
                             )
                             console.log({ reducedValue })
                             if (reducedValue.count > 0) {
-                                props.glRef.current.setOrigin(
+                                props.glRef.current.setOriginAnimated(
                                     reducedValue.sumXyz.map(coord => -coord / reducedValue.count)
                                     , true)
                             }

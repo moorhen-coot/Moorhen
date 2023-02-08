@@ -336,7 +336,11 @@ MoorhenMolecule.prototype.centreOn = function (glRef, selectionCid) {
         let selectionCentre = centreOnGemmiAtoms(selectionAtoms)
 
         return new Promise((resolve, reject) => {
-            glRef.current.setOrigin(selectionCentre);
+            if (selectionCid) {
+                glRef.current.setOriginAnimated(selectionCentre);
+            } else {
+                glRef.current.setOrigin(selectionCentre);
+            }
             resolve(true);
         })
     })
