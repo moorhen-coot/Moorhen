@@ -150,7 +150,7 @@ export const MoorhenPepflipsDifferenceMap = (props) => {
                                     Flip
                                 </Button>
                                 <Button onClick={() => {
-                                            props.glRef.current.setOrigin([-flip.coordX, -flip.coordY, -flip.coordZ])
+                                            props.glRef.current.setOriginAnimated([-flip.coordX, -flip.coordY, -flip.coordZ])
                                 }}>
                                     View
                                 </Button>
