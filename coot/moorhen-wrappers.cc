@@ -340,6 +340,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<molecules_container_t>("molecules_container_t")
     .constructor<>()
+    .function("get_active_atom",&molecules_container_t::get_active_atom)
     .function("is_a_difference_map",&molecules_container_t::is_a_difference_map)
     .function("add_hydrogen_atoms",&molecules_container_t::add_hydrogen_atoms)
     .function("delete_hydrogen_atoms",&molecules_container_t::delete_hydrogen_atoms)
@@ -623,6 +624,10 @@ EMSCRIPTEN_BINDINGS(my_module) {
     value_object<std::pair<std::string,std::string>>("string_string_pair")
         .field("first",&std::pair<std::string, std::string>::first)
         .field("second",&std::pair<std::string, std::string>::second)
+    ;
+    value_object<std::pair<int,std::string>>("int_string_pair")
+        .field("first",&std::pair<int,std::string>::first)
+        .field("second",&std::pair<int,std::string>::second)
     ;
     value_object<std::pair<unsigned int,int>>("uint_int_pair")
         .field("first",&std::pair<unsigned int,int>::first)
