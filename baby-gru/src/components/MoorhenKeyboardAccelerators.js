@@ -373,10 +373,9 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
             }
 
             const [moleculeName, modelNumber, resNum, atomName] = residueCid.split('/')
-            //if (!chainId || !resInfo) {
-            //    return
-            //}
-            const chainId = 'A'
+            
+            // ASSUMING FIRST CHAIN UNTIL RESIDUE CID INCLUDES BACK CHAIN NAME
+            const chainId = selectedMolecule.sequences[0].chain
 
             const selectedSequence = selectedMolecule.sequences.find(sequence => sequence.chain === chainId)
             if (selectedSequence === 'undefined') {
