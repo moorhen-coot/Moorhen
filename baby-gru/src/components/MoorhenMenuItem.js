@@ -993,7 +993,7 @@ export const MoorhenImportMapCoefficientsMenuItem = (props) => {
             </Col>
             <Row key="Row4" style={{ marginTop: "1rem" }}>
                 <Col>
-                    <Form.Check ref={calcStructFactRef} label={'assing labels for structure factor calculation?'} name={`calcStructFactors`} type="checkbox" variant="outline"
+                    <Form.Check ref={calcStructFactRef} label={'assign labels for structure factor calculation?'} name={`calcStructFactors`} type="checkbox" variant="outline"
                         onChange={() => setCalcStructFact(
                             (prev) => { return !prev }
                         )}
