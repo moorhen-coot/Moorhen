@@ -16,6 +16,7 @@ const apresEdit = (molecule, glRef, setHoveredAtom) => {
 export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     console.log(event)
     let modifiers = []
+    let eventModifiersCodes = []
 
     if (event.shiftKey) modifiers.push("<Shift>")
     if (event.ctrlKey) modifiers.push("<Ctrl>")
@@ -32,7 +33,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     let action = null;
 
     for (const key of Object.keys(shortCuts)) {
-        if (shortCuts[key].keyPress === event.key.toLowerCase() && shortCuts[key].modifiers.every(modifier => event[modifier])) {
+        if (shortCuts[key].keyPress === event.key.toLowerCase() && shortCuts[key].modifiers.every(modifier => event[modifier]) && eventModifiersCodes.every(modifier => shortCuts[key].modifiers.includes(modifier))) {
             action = key
             break
         }
