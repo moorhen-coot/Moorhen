@@ -153,7 +153,7 @@ export const MoorhenRamachandran = (props) => {
         
         const resNum = resInfo.split('(')[0]
         const oldHit = ramachandranRef.current.hit        
-        const newHit = ramaPlotData.findIndex(residue => residue.seqNum === resNum)
+        const newHit = ramaPlotData.findIndex(residue => parseInt(residue.seqNum) === parseInt(resNum))
 
         if (newHit === -1 || newHit === oldHit) {
             return
