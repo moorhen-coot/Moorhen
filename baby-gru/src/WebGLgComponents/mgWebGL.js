@@ -3161,10 +3161,15 @@ class MGWebGL extends Component {
     }
 
     drawOriginFrame(oo,d,iframe){
-        this.setOrigin([oo[0]+iframe*d[0],oo[1]+iframe*d[1],oo[2]+iframe*d[2]],true)
-        if(iframe<this.nAnimationFrames)
+        this.origin = [oo[0]+iframe*d[0],oo[1]+iframe*d[1],oo[2]+iframe*d[2]];
+        this.drawScene()
+        if(iframe<this.nAnimationFrames){
             requestAnimationFrame(this.drawOriginFrame.bind(this,oo,d,iframe+1))
-    }
+            return
+        }
+        const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: {origin: this.origin,  modifiedMolecule: null} })
+        document.dispatchEvent(mapUpdateEvent);
+        }
 
     setOrigin(o, doDrawScene) {
         this.origin = o;
