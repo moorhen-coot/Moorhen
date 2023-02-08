@@ -1,52 +1,16 @@
 import { Fragment, useEffect, useRef, useState } from "react"
-import { Col, Row, Form } from 'react-bootstrap';
-import { Chart, registerables } from 'chart.js';
+import { Col, Row, Form, Button } from 'react-bootstrap'
+import { Chart, registerables } from 'chart.js'
+import annotationPlugin from 'chartjs-plugin-annotation'
 import { MoorhenChainSelect } from './MoorhenChainSelect'
 import { MoorhenMapSelect } from './MoorhenMapSelect'
 import { MoorhenMoleculeSelect } from './MoorhenMoleculeSelect'
 import { residueCodesOneToThree, getResidueInfo } from '../utils/MoorhenUtils'
 
 Chart.register(...registerables);
+Chart.register(annotationPlugin);
 
-const plugin = {
-    id: 'custom_bar_borders',
-    afterDatasetsDraw: (chart, args, options) => {
-        const {ctx} = chart;
-        ctx.save();
-        ctx.lineWidth = 3;
-        for(let datasetIndex=0; datasetIndex<chart._metasets.length; datasetIndex++){
-          for(let dataPoint=0; dataPoint<chart._metasets[datasetIndex].data.length; dataPoint++){
-            ctx.beginPath();
-            if(chart._metasets[datasetIndex].data[dataPoint]['$context'].raw < 0){
-              ctx.rect(chart._metasets[datasetIndex].data[dataPoint].x-chart._metasets[datasetIndex].data[dataPoint].width/2, chart._metasets[datasetIndex].data[dataPoint].y, chart._metasets[datasetIndex].data[dataPoint].width, chart._metasets[datasetIndex].data[dataPoint].height*-1);
-            } else {
-              ctx.rect(chart._metasets[datasetIndex].data[dataPoint].x-chart._metasets[datasetIndex].data[dataPoint].width/2, chart._metasets[datasetIndex].data[dataPoint].y, chart._metasets[datasetIndex].data[dataPoint].width, chart._metasets[datasetIndex].data[dataPoint].height);
-
-            }
-            ctx.stroke();
-          }
-        }
-      ctx.restore();
-    },
-}
-
-const colourPalettes = {
-    density_correlation_analysis: (value) => {return 'rgb(255, 255, '+ parseInt(256 * value) + ')'},
-    density_fit_analysis: (value) => {return 'rgb(0, ' + parseInt(256 * value) + ', 255)'},
-    rotamer_analysis: (value) => {return 'rgb(' + parseInt(256 * value) + ', 255, 132)'},
-    ramachandran_analysis: (value) => {return 'rgb(' + parseInt(256 * value) + ', 132, 255)'},
-    peptide_omega_analysis: (value) => {return 'rgb(' + parseInt(256 * value) + ', 132, 132)'},
-}
-
-const metricInfoScaling = {
-    density_correlation_analysis: (value) => {return value},
-    density_fit_analysis: (value) => {return 1. / value},
-    rotamer_analysis: (value) => {return 1. / value},
-    ramachandran_analysis: (value) => {return Math.log(value)},
-    peptide_omega_analysis: (value) => {return value - 180},
-}
-
-export const MoorhenValidation = (props) => {
+export const MoorhenMMRRCCPlot = (props) => {
     const chartCardRef = useRef();
     const chartBoxRef = useRef();
     const containerRef = useRef();
@@ -60,8 +24,7 @@ export const MoorhenValidation = (props) => {
     const [selectedModel, setSelectedModel] = useState(null)
     const [selectedMap, setSelectedMap] = useState(null)
     const [selectedChain, setSelectedChain] = useState(null)
-    const [cachedGemmiStructure, setCachedGemmiStructure] = useState(null)
-
+    
     const getSequenceData = () => {
         let selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedModel)
         if (selectedMolecule) {
@@ -70,26 +33,6 @@ export const MoorhenValidation = (props) => {
                 return sequenceData.sequence
             }    
         }
-    }
-
-    const getAvailableMetrics = () => {
-        const allMetrics = [
-            {command: "density_correlation_analysis", returnType:'validation_data', chainID: chainSelectRef.current.value, commandArgs:[selectedModel, selectedMap], needsMapData: true, displayName:'Density Corr.'},
-            {command: "density_fit_analysis", returnType:'validation_data', chainID: chainSelectRef.current.value, commandArgs:[selectedModel, selectedMap], needsMapData: true, displayName:'Density Fit'},            
-            {command: "rotamer_analysis", returnType:'validation_data', chainID: chainSelectRef.current.value, commandArgs:[selectedModel], needsMapData: false, displayName:'Rotamers'},
-            {command: "ramachandran_analysis", returnType:'validation_data', chainID: chainSelectRef.current.value, commandArgs:[selectedModel], needsMapData: false, displayName:'Ramachandran'},
-            {command: "peptide_omega_analysis", returnType:'validation_data', chainID: chainSelectRef.current.value, commandArgs:[selectedModel], needsMapData: false, displayName:'Pept. Omega'},
-        ]    
-        
-        let currentlyAvailable = []
-        allMetrics.forEach(metric => {
-            if ((metric.needsMapData && selectedMap === null) || selectedModel === null || chainSelectRef.current.value === null) {
-                return
-            }
-            currentlyAvailable.push(metric)
-        })
-        
-        return currentlyAvailable
     }
 
     const handleModelChange = (evt) => {
@@ -150,6 +93,22 @@ export const MoorhenValidation = (props) => {
         return "UNK"
     }
 
+    const fetchData = async () => {
+        let response = await props.commandCentre.current.cootCommand({
+            message: 'coot_command', 
+            command: 'mmrrcc', 
+            returnType: 'mmrrcc_stats', 
+            commandArgs: [parseInt(moleculeSelectRef.current.value), chainSelectRef.current.value, parseInt(mapSelectRef.current.value)], 
+        })
+
+        setPlotData(response.data.result.result)
+
+        if (selectedModel === null || chainSelectRef.current.value === null || selectedMap === null) {
+            setPlotData(null)
+            return
+        }
+    }
+
     useEffect(() => {
         if (props.molecules.length === 0) {
             setSelectedModel(null)
@@ -171,41 +130,6 @@ export const MoorhenValidation = (props) => {
         }
 
     }, [props.maps.length])
-    
-    useEffect(() => {
-        if (selectedModel !== null) {
-            let selectedMoleculeIndex = props.molecules.findIndex(molecule => molecule.molNo === selectedModel);
-            if (selectedMoleculeIndex !== -1 && props.molecules[selectedMoleculeIndex]){
-                setCachedGemmiStructure(props.molecules[selectedMoleculeIndex].gemmiStructure)
-            }
-        }
-    })
-    
-    useEffect(() => {
-        async function fetchData(availableMetrics) {
-            let promises = []
-            availableMetrics.forEach(metric => {
-                const inputData = { message:'coot_command', ...metric }
-                promises.push(props.commandCentre.current.cootCommand(inputData))
-            })
-            let responses = await Promise.all(promises) 
-            
-            let newPlotData = []
-            responses.forEach(response => {
-                newPlotData.push(response.data.result.result)
-            })
-            setPlotData(newPlotData)
-        }
-
-        if (selectedModel === null || chainSelectRef.current.value === null) {
-            setPlotData(null)
-            return
-        }
-        
-        let availableMetrics = getAvailableMetrics()
-        fetchData(availableMetrics)   
-
-    }, [selectedChain, selectedMap, selectedModel, cachedGemmiStructure])
 
     useEffect(() => {
         if (chartRef.current) {
@@ -229,7 +153,7 @@ export const MoorhenValidation = (props) => {
                 labels.push([residue.resCode, residue.resNum])
             }
         })
-       
+               
         const barWidth = props.sideBarWidth / 40
         const tooltipFontSize = 12
         const axisLabelsFontSize = props.toolAccordionBodyHeight / 60
@@ -237,7 +161,7 @@ export const MoorhenValidation = (props) => {
         const containerBody = document.getElementById('myContainerBody')
         containerBody.style.width = (labels.length*barWidth)+ "px";
         let ctx = document.getElementById("myChart").getContext("2d")
-        
+
         let scales = {
             x: {
                 stacked: true,
@@ -254,62 +178,49 @@ export const MoorhenValidation = (props) => {
                   borderWidth: 1,
                   borderColor: 'black'
                 },
+            },
+            y: {
+                display: true,
+                ticks: {display: true},
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    font: {size:axisLabelsFontSize, family:'Helvetica', weight:800},
+                    text: 'Correlation',
+                    color: props.darkMode ? 'white' : 'black'
+                },
+                grid: {
+                    display: true,
+                }           
             }
         }
 
         let datasets = []
-        let availableMetrics = getAvailableMetrics()
-        for(let methodIndex=0; methodIndex < plotData.length; methodIndex++){
-            if (!plotData[methodIndex]) {
+        
+        for(const metric of Object.keys(plotData)){
+            if (!plotData[metric]) {
                 continue
             }
-            let metricScale = metricInfoScaling[availableMetrics[methodIndex].command]
-            let palette = colourPalettes[availableMetrics[methodIndex].command]
+
             datasets.push({
-                label: availableMetrics[methodIndex].displayName,
+                label: metric,
                 data: sequenceData.map(currentResidue => {
-                    let residue = plotData[methodIndex].find(res => res.seqNum === currentResidue.resNum)
+                    let residue = plotData[metric].find(res => parseInt(res.resNum) === parseInt(currentResidue.resNum))
                     if (residue) {
-                        return metricScale(residue.value)
+                        return residue.correlation
                     } else {
                         return null
                     }
                 }),
-                backgroundColor: sequenceData.map(currentResidue => {
-                    let residue = plotData[methodIndex].find(res => res.seqNum === currentResidue.resNum)
-                    if (residue) {
-                        let gFrac = 1.0 - metricScale(residue.value)
-                        return palette(gFrac)
-                    } else {
-                        return null
-                    }
-                }),
-                borderWidth: 0,
                 clip: false,
-                yAxisID: methodIndex > 0 ? 'y' + (methodIndex + 1) : 'y',
+                fill: false,
+                borderColor: metric === 'All atoms' ? 'black' : 'blue',
+                tension: 0.1
             })
-            scales[methodIndex > 0 ? 'y' + (methodIndex + 1) : 'y'] = {
-                display: true,
-                ticks: {display:false},
-                stack: 'demo',
-                stackWeight: 1,
-                beginAtZero: true,
-                title: {
-                    display: true,
-                    font:{size:axisLabelsFontSize, family:'Helvetica', weight:800},
-                    text: availableMetrics[methodIndex].displayName,
-                    color: props.darkMode ? 'white' : 'black'
-                },
-                grid: {
-                    display:false,
-                    borderWidth: 0
-                }           
-            }
         }
-      
+     
         chartRef.current = new Chart(ctx, {
-            plugins: [plugin],
-            type: 'bar',
+            type: 'line',
             data: {
                 labels: labels,
                 datasets: datasets,
@@ -341,7 +252,20 @@ export const MoorhenValidation = (props) => {
                         footerFont: {
                             family:'Helvetica'
                         }
-                    }
+                    },
+                    annotation: {
+                        annotations: {
+                            thresholdLine: {
+                                type: 'line',
+                                mode: 'horizontal',
+                                scaleID: 'y-axis-0',
+                                yMin: 0.4,
+                                yMax: 0.4,
+                                borderColor: 'red',
+                                borderWidth: 1,
+                            }
+                        }  
+                    },    
                 },
                 onClick: handleClick,
                 responsive: true,
@@ -351,9 +275,10 @@ export const MoorhenValidation = (props) => {
             }
         });
 
-    }, [plotData, props.darkMode, props.toolAccordionBodyHeight, props.sideBarWidth, props.showSideBar])
 
-    return <Fragment>
+    }, [plotData, props.darkMode, props.toolAccordionBodyHeight, props.sideBarWidth, props.showSideBar])
+    
+    return  <Fragment>
                 <Form style={{ padding:'0', margin: '0' }}>
                     <Form.Group>
                         <Row style={{ padding:'0', margin: '0' }}>
@@ -365,6 +290,11 @@ export const MoorhenValidation = (props) => {
                             </Col>
                             <Col>
                                 <MoorhenMapSelect width="" onChange={handleMapChange} maps={props.maps} ref={mapSelectRef}/>
+                            </Col>
+                            <Col style={{ display:'flex', alignItems: 'center', alignContent: 'center', verticalAlign: 'center'}}>
+                                <Button variant="secondary" size='lg' onClick={fetchData} style={{width: '80%', marginTop:'10%'}}>
+                                    Plot
+                                </Button>
                             </Col>
                         </Row>
                     </Form.Group>
@@ -378,7 +308,7 @@ export const MoorhenValidation = (props) => {
                         </div>
                     </div>
                 <canvas id="myChartAxis"></canvas>
-                </div>               
+                </div> 
             </Fragment>
 
 }
