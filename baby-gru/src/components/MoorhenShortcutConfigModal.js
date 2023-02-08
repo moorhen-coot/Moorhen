@@ -48,7 +48,8 @@ export const MoorhenShortcutConfigModal = (props) => {
         if (evt.ctrlKey) modifiers.push("<Ctrl>")
         if (evt.metaKey) modifiers.push("<Meta>")
         if (evt.altKey) modifiers.push("<Alt>")
-    
+        if (evt.key === " ") modifiers.push("<Space>")
+
         setShortCutMessage(`${modifiers.join("-")} ${evt.key.toLowerCase()}`)
     }
 
@@ -77,6 +78,7 @@ export const MoorhenShortcutConfigModal = (props) => {
                             if (stagedShortCuts[key].modifiers.includes('ctrlKey')) modifiers.push("<Ctrl>")
                             if (stagedShortCuts[key].modifiers.includes('metaKey')) modifiers.push("<Meta>")
                             if (stagedShortCuts[key].modifiers.includes('altKey')) modifiers.push("<Alt>")                
+                            if (stagedShortCuts[key].keyPress === " ") modifiers.push("<Space>")
                             return <Card key={key} style={{margin:'0.5rem'}}>
                                         <Card.Body style={{padding:'0.5rem'}}>
                                             <Row className="align-items-center">

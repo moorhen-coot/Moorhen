@@ -18,12 +18,13 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     let modifiers = []
     let eventModifiersCodes = []
 
-    if (event.shiftKey) modifiers.push("<Shift>")
-    if (event.ctrlKey) modifiers.push("<Ctrl>")
-    if (event.metaKey) modifiers.push("<Meta>")
-    if (event.altKey) modifiers.push("<Alt>")
+    if (event.shiftKey) modifiers.push("<Shift>") && eventModifiersCodes.push('shiftKey')
+    if (event.ctrlKey) modifiers.push("<Ctrl>") && eventModifiersCodes.push('ctrlKey')
+    if (event.metaKey) modifiers.push("<Meta>") && eventModifiersCodes.push('metaKey')
+    if (event.altKey) modifiers.push("<Alt>") && eventModifiersCodes.push('altKey')
+    if (event.key === " ") modifiers.push("<Space>")
 
-    const { setShowToast, setToastContent, hoveredAtom, setHoveredAtom, commandCentre, activeMap, glRef } = collectedProps;
+    const { setShowToast, setToastContent, hoveredAtom, setHoveredAtom, commandCentre, activeMap, glRef, molecules } = collectedProps;
 
     if (collectedProps.showShortcutToast) {
         setToastContent(<h3>{`${modifiers.join("-")} ${event.key} pushed`}</h3>)
@@ -345,6 +346,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
                 if (shortCuts[key].modifiers.includes('ctrlKey')) modifiers.push("<Ctrl>")
                 if (shortCuts[key].modifiers.includes('metaKey')) modifiers.push("<Meta>")
                 if (shortCuts[key].modifiers.includes('altKey')) modifiers.push("<Alt>")
+                if (shortCuts[key].keyPress === " ") modifiers.push("<Space>")
                 return <ListItem>{`${modifiers.join("-")} ${shortCuts[key].keyPress} ${shortCuts[key].label}`}</ListItem>
             })}
         </List></h4>)
