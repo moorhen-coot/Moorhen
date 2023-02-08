@@ -1238,3 +1238,10 @@ MoorhenMolecule.prototype.gemmiAtomsForCid = async function (cid) {
 
     return Promise.resolve(result)
 }
+
+MoorhenMolecule.prototype.hasVisibleBuffers = function (excludeBuffers = ['hover', 'transformation', 'contact_dots', 'chemical_features', 'VdWSurface']) {
+    const styles = Object.keys(this.displayObjects).filter(key => !excludeBuffers.some(style => key.includes(style)))
+    const displayBuffers = styles.map(style => this.displayObjects[style])
+    const visibleDisplayBuffers = displayBuffers.filter(displayBuffer => displayBuffer.some(buffer => buffer.visible))
+    return visibleDisplayBuffers.length !== 0
+}

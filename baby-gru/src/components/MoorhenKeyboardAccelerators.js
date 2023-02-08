@@ -355,18 +355,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     }
 
     else if (action === 'jump_next_residue' || action === 'jump_previous_residue') {
-        const visibleMolecules = molecules.filter(molecule => {
-            if (!molecule.isVisible) {
-                return false
-            } 
-            const styles = Object.keys(molecule.displayObjects).filter(key => !['hover', 'transformation', 'contact_dots', 'chemical_features', 'VdWSurface'].some(style => key.includes(style)))
-            const displayBuffers = styles.map(style => molecule.displayObjects[style])
-            const visibleDisplayBuffers = displayBuffers.filter(displayBuffer => displayBuffer.some(buffer => buffer.visible))
-            if (visibleDisplayBuffers.length === 0) {
-                return false
-            }
-            return true
-        })
+        const visibleMolecules = molecules.filter(molecule => molecule.isVisible && molecule.hasVisibleBuffers())
         if (visibleMolecules.length === 0) {
             return
         }
