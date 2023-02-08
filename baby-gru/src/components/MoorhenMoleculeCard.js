@@ -213,7 +213,11 @@ export const MoorhenMoleculeCard = (props) => {
 
     }, [surfaceGridScale]);
 
-
+    useEffect(() => {
+        if (isVisible !== props.molecule.isVisible) {
+            props.molecule.isVisible = isVisible
+        }
+    }, [isVisible]);
 
     useEffect(() => {
         Object.keys(props.molecule.displayObjects).forEach(key => {

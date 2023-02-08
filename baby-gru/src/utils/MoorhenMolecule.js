@@ -16,6 +16,7 @@ export function MoorhenMolecule(commandCentre, urlPrefix) {
     this.enerLib = new EnerLib()
     this.HBondsAssigned = false
     this.atomsDirty = true
+    this.isVisible = true
     this.name = "unnamed"
     this.molNo = null
     this.gemmiStructure = null
