@@ -3169,7 +3169,7 @@ class MGWebGL extends Component {
         }
         const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: {origin: this.origin,  modifiedMolecule: null} })
         document.dispatchEvent(mapUpdateEvent);
-        }
+    }
 
     setOrigin(o, doDrawScene) {
         this.origin = o;
@@ -3518,6 +3518,25 @@ class MGWebGL extends Component {
                 }
             }
         }
+    }
+
+    quatDotProduct(q1,q2){
+        return q1.dval[0] * q2.dval[0] + q1.dval[1] * q2.dval[1] + q1.dval[2] * q2.dval[2] + q1.dval[3] * q2.dval[3];
+    }
+
+    quatSlerp(q1,q2,h) {
+        const cosw = this.quatDotProduct(q1,q2);
+        if(cosw>1.0) cosw = 1.0;
+        if(cosw<-1.0) cosw = -1.0;
+        const omega = Math.acos(cosw);
+        const q1Mult = Math.sin((1.0-h)*omega)
+        const q2Mult = Math.sin(h*omega)
+        let newQuat = quat4.create()
+        newQuat.dval[0] = (q1Mult * q1.dval[0] + q2Mult * q2.dval[0]) / Math.sin(omega)
+        newQuat.dval[1] = (q1Mult * q1.dval[1] + q2Mult * q2.dval[1]) / Math.sin(omega)
+        newQuat.dval[2] = (q1Mult * q1.dval[2] + q2Mult * q2.dval[2]) / Math.sin(omega)
+        newQuat.dval[3] = (q1Mult * q1.dval[3] + q2Mult * q2.dval[3]) / Math.sin(omega)
+        return newQuat
     }
 
     setOriginAnimate(o_in) {
