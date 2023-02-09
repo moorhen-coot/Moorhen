@@ -3157,7 +3157,7 @@ class MGWebGL extends Component {
         const frac = iframe / this.nAnimationFrames;
         const newQuat = this.quatSlerp(qOld, qNew,frac)
         quat4.set(this.myQuat,newQuat[0],newQuat[1],newQuat[2],newQuat[3])
-        this.zoom = oldZoom + iframe * zoomDelta
+        this.setZoom(oldZoom + iframe * zoomDelta)
         this.drawScene()
         if(iframe<this.nAnimationFrames){
             requestAnimationFrame(this.setOrientationAndZoomFrame.bind(this,qOld, qNew,oldZoom,zoomDelta,iframe+1))
@@ -3184,7 +3184,7 @@ class MGWebGL extends Component {
         const frac = iframe / this.nAnimationFrames;
         const newQuat = this.quatSlerp(qOld, qNew,frac)
         quat4.set(this.myQuat,newQuat[0],newQuat[1],newQuat[2],newQuat[3])
-        this.zoom = oldZoom + iframe * zoomDelta
+        this.setZoom(oldZoom + iframe * zoomDelta)
         this.origin = [oo[0]+iframe*d[0],oo[1]+iframe*d[1],oo[2]+iframe*d[2]];
         this.drawScene()
         if(iframe<this.nAnimationFrames){
