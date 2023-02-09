@@ -3153,7 +3153,7 @@ class MGWebGL extends Component {
         }
     }
 
-    setOrientatioAnimated(q) {
+    setOrientationAnimated(q) {
         this.nAnimationFrames = 15;
         let oldQuat = quat4.create()
         quat4.set(oldQuat,this.myQuat[0],this.myQuat[1],this.myQuat[2],this.myQuat[3])
