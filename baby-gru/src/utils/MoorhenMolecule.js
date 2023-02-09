@@ -314,7 +314,7 @@ MoorhenMolecule.prototype.fetchIfDirtyAndDraw = async function (style, glRef) {
     })
 }
 
-MoorhenMolecule.prototype.centreOn = function (glRef, selectionCid) {
+MoorhenMolecule.prototype.centreOn = function (glRef, selectionCid, animate=true) {
     //Note add selection to permit centringh on subset
     let promise
     if (this.atomsDirty) {
@@ -337,7 +337,11 @@ MoorhenMolecule.prototype.centreOn = function (glRef, selectionCid) {
         let selectionCentre = centreOnGemmiAtoms(selectionAtoms)
 
         return new Promise((resolve, reject) => {
-            glRef.current.setOriginAnimated(selectionCentre);
+            if (animate) {
+                glRef.current.setOriginAnimated(selectionCentre);
+            } else {
+                glRef.current.setOrigin(selectionCentre);
+            }
             resolve(true);
         })
     })

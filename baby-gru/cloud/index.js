@@ -68,7 +68,7 @@ class MoorhenWrapper {
               await newMolecule.loadToCootFromURL(inputFile, molName)
               await newMolecule.fetchIfDirtyAndDraw('CBs', this.controls.glRef)
               this.controls.changeMolecules({ action: "Add", item: newMolecule })
-              newMolecule.centreOn(this.controls.glRef)
+              newMolecule.centreOn(this.controls.glRef, null, false)
               return resolve(newMolecule)
           } catch (err) {
               console.log(`Cannot fetch molecule from ${inputFile}`)
