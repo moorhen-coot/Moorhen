@@ -3539,28 +3539,6 @@ class MGWebGL extends Component {
         return newQuat
     }
 
-    setOriginAnimate(o_in) {
-        const self = this;
-        const xtot = o_in[0];
-        const ytot = o_in[1];
-        const ztot = o_in[2];
-        const new_origin = [-xtot, -ytot, -ztot];
-        const old_origin = [self.origin[0], self.origin[1], self.origin[2]];
-
-        let myVar = setInterval(function () { myTimer() }, 10);
-        let frac = 0;
-        function myTimer() {
-            let ffrac = 0.01 * frac;
-            self.origin = [ffrac * new_origin[0] + (1.0 - ffrac) * old_origin[0], ffrac * new_origin[1] + (1.0 - ffrac) * old_origin[1], ffrac * new_origin[2] + (1.0 - ffrac) * old_origin[2]];
-            self.drawScene();
-            if (frac > 99) {
-                clearInterval(myVar);
-            }
-            frac += 1;
-        }
-
-    }
-
     centreOn(idx) {
         console.log("centreOn!!!!")
         var self = this;
