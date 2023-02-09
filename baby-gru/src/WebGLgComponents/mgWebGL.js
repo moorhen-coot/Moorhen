@@ -3195,6 +3195,10 @@ class MGWebGL extends Component {
         document.dispatchEvent(mapUpdateEvent);
     }
 
+    setViewAnimated(o,q,z) {
+        this.setOriginOrientationAndZoomAnimated(o,q,z)
+    }
+
     setOriginOrientationAndZoomAnimated(o,q,z) {
         this.nAnimationFrames = 15;
         const old_x = this.origin[0]
