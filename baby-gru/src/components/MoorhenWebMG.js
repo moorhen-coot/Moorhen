@@ -314,6 +314,7 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
                     onKeyPress={props.onKeyPress}
                     messageChanged={() => { }}
                     mouseSensitivityFactor={props.preferences.mouseSensitivity}
+                    wheelSensitivityFactor={props.preferences.wheelSensitivityFactor}
                     keyboardAccelerators={JSON.parse(props.preferences.shortCuts)}
                     showCrosshairs={props.preferences.drawCrosshairs}
                     showFPS={props.preferences.drawFPS}
