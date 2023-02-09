@@ -3143,21 +3143,41 @@ class MGWebGL extends Component {
         this.drawScene();
     }
 
-    setOrientatioFrame(qOld, qNew, iframe) {
+    setOrientationFrame(qOld, qNew, iframe) {
         const frac = iframe / this.nAnimationFrames;
         const newQuat = this.quatSlerp(qOld, qNew,frac)
         quat4.set(this.myQuat,newQuat[0],newQuat[1],newQuat[2],newQuat[3])
         this.drawScene()
         if(iframe<this.nAnimationFrames){
-            requestAnimationFrame(this.setOrientatioFrame.bind(this,qOld, qNew,iframe+1))
+            requestAnimationFrame(this.setOrientationFrame.bind(this,qOld, qNew,iframe+1))
         }
+    }
+
+    setOrientationAndZoomFrame(qOld, qNew, oldZoom, zoomDelta, iframe) {
+        const frac = iframe / this.nAnimationFrames;
+        const newQuat = this.quatSlerp(qOld, qNew,frac)
+        quat4.set(this.myQuat,newQuat[0],newQuat[1],newQuat[2],newQuat[3])
+        this.zoom = oldZoom + iframe * zoomDelta
+        this.drawScene()
+        if(iframe<this.nAnimationFrames){
+            requestAnimationFrame(this.setOrientationAndZoomFrame.bind(this,qOld, qNew,oldZoom,zoomDelta,iframe+1))
+        }
+    }
+
+    setOrientationAndZoomAnimated(q,z) {
+        this.nAnimationFrames = 15;
+        let oldQuat = quat4.create();
+        let oldZoom = this.zoom;
+        const zoomDelta = (z - this.zoom) / this.nAnimationFrames
+        quat4.set(oldQuat,this.myQuat[0],this.myQuat[1],this.myQuat[2],this.myQuat[3])
+        requestAnimationFrame(this.setOrientationAndZoomFrame.bind(this,oldQuat,q,oldZoom,zoomDelta,1))
     }
 
     setOrientationAnimated(q) {
         this.nAnimationFrames = 15;
         let oldQuat = quat4.create()
         quat4.set(oldQuat,this.myQuat[0],this.myQuat[1],this.myQuat[2],this.myQuat[3])
-        requestAnimationFrame(this.setOrientatioFrame.bind(this,oldQuat,q,1))
+        requestAnimationFrame(this.setOrientationFrame.bind(this,oldQuat,q,1))
     }
 
     setOriginAnimated(o, doDrawScene) {
@@ -3543,6 +3563,7 @@ class MGWebGL extends Component {
 
     quatSlerp(q1,q2,h) {
         const cosw = this.quatDotProduct(q1,q2);
+        if(Math.abs(cosw-1.0)<1e-5) return q1;
         if(cosw>1.0) cosw = 1.0;
         if(cosw<-1.0) cosw = -1.0;
         const omega = Math.acos(cosw);
