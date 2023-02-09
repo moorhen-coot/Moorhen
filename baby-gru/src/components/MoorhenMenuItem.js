@@ -353,6 +353,8 @@ export const MoorhenRotateTranslateMoleculeMenuItem = (props) => {
         props.changeMolecules({ action: 'Remove', item: ghostMolecule.current })
         ghostMolecule.current.delete(props.glRef)
         document.body.click()
+        const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: {origin: props.glRef.current.origin,  modifiedMolecule: props.molecule.molNo} })
+        document.dispatchEvent(mapUpdateEvent)
     }
 
     const rejectTransform = () => {
@@ -840,6 +842,8 @@ export const MoorhenImportDictionaryMenuItem = (props) => {
                             const otherMolecules = [newMolecule]
                             return toMolecule.mergeMolecules(otherMolecules, props.glRef, true)
                                 .then(_ => {
+                                    const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: {origin: props.glRef.current.origin,  modifiedMolecule: toMolecule.molNo} })
+                                    document.dispatchEvent(mapUpdateEvent)
                                     return toMolecule.redraw(props.glRef)
                                 })
                         } else {
@@ -1369,6 +1373,8 @@ export const MoorhenMergeMoleculesMenuItem = (props) => {
         let banan = await toMolecule.mergeMolecules(otherMolecules, props.glRef, true)
         console.log({ banan })
         props.setPopoverIsShown(false)
+        const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: {origin: props.glRef.current.origin,  modifiedMolecule: toMolecule.molNo} })
+        document.dispatchEvent(mapUpdateEvent)
     }, [toRef.current, fromRef.current, props.molecules, props.fromMolNo, props.glRef])
 
     return <MoorhenMenuItem
