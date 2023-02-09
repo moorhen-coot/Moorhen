@@ -24,7 +24,7 @@ const updateStoredPreferences = async (key, value) => {
 
 const getDefaultValues = () => {
     return {
-        version: '0.0.12',
+        version: '0.0.13',
         darkMode: false, 
         atomLabelDepthMode: true, 
         defaultExpandDisplayCards: true,
@@ -41,6 +41,7 @@ const getDefaultValues = () => {
         defaultMapSurface: false,
         defaultBondSmoothness: 1,
         showScoresToast: true,
+        shortcutOnHoveredAtom: true,
         defaultUpdatingScores: ['Rfree', 'Rfactor', 'Moorhen Points'],
         shortCuts: {
             "sphere_refine": {
@@ -177,6 +178,7 @@ const PreferencesContextProvider = ({ children }) => {
     const [defaultMapSurface, setDefaultMapSurface] = useState(null)
     const [defaultBondSmoothness, setDefaultBondSmoothness] = useState(null)
     const [showScoresToast, setShowScoresToast] = useState(null)
+    const [shortcutOnHoveredAtom, setShortcutOnHoveredAtom] = useState(null)
     const [defaultUpdatingScores, setDefaultUpdatingScores] = useReducer(itemReducer, null)
 
     const restoreDefaults = (defaultValues)=> {
@@ -199,6 +201,7 @@ const PreferencesContextProvider = ({ children }) => {
         setDefaultUpdatingScores({action: 'Overwrite', items: defaultValues.defaultUpdatingScores})
         setDrawFPS(defaultValues.drawFPS)
         setWheelSensitivityFactor(defaultValues.wheelSensitivityFactor)
+        setShortcutOnHoveredAtom(defaultValues.shortcutOnHoveredAtom)
     }
 
     /**
@@ -230,6 +233,7 @@ const PreferencesContextProvider = ({ children }) => {
                     localforage.getItem('defaultUpdatingScores'),
                     localforage.getItem('drawFPS'),
                     localforage.getItem('wheelSensitivityFactor'),
+                    localforage.getItem('shortcutOnHoveredAtom'),
                     ])
                 
                 console.log('Retrieved the following preferences from local storage: ', response)
@@ -261,6 +265,7 @@ const PreferencesContextProvider = ({ children }) => {
                     setDefaultUpdatingScores({action: 'Overwrite', items: response[16]})
                     setDrawFPS(response[17])
                     setWheelSensitivityFactor(response[18])
+                    setShortcutOnHoveredAtom(response[19])
                 }                
                 
             } catch (err) {
@@ -277,6 +282,15 @@ const PreferencesContextProvider = ({ children }) => {
         fetchStoredPreferences();
         
     }, []);
+
+    useMemo(() => {
+
+        if (shortcutOnHoveredAtom === null) {
+            return
+        }
+       
+        updateStoredPreferences('shortcutOnHoveredAtom', shortcutOnHoveredAtom);
+    }, [shortcutOnHoveredAtom]);
 
     useMemo(() => {
 
@@ -448,7 +462,7 @@ const PreferencesContextProvider = ({ children }) => {
         makeBackups, setMakeBackups, showShortcutToast, setShowShortcutToast, defaultMapSurface,
         setDefaultMapSurface, defaultBondSmoothness, setDefaultBondSmoothness, showScoresToast, 
         setShowScoresToast, defaultUpdatingScores, setDefaultUpdatingScores, drawFPS, setDrawFPS,
-        wheelSensitivityFactor, setWheelSensitivityFactor
+        wheelSensitivityFactor, setWheelSensitivityFactor, shortcutOnHoveredAtom, setShortcutOnHoveredAtom
     }
 
     return (

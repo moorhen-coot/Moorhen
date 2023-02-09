@@ -14,6 +14,67 @@ const apresEdit = (molecule, glRef, setHoveredAtom) => {
 }
 
 export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
+    
+    const { setShowToast, setToastContent, hoveredAtom, setHoveredAtom, commandCentre, activeMap, glRef, molecules } = collectedProps;
+
+    const getCentreAtom = async () => {
+        const visibleMolecules = molecules.filter(molecule => molecule.isVisible && molecule.hasVisibleBuffers())
+        if (visibleMolecules.length === 0) {
+            return
+        }
+        const response = await commandCentre.current.cootCommand({
+            returnType: "int_string_pair",
+            command: "get_active_atom",
+            commandArgs: [...glRef.current.origin.map(coord => coord * -1), visibleMolecules.map(molecule => molecule.molNo).join(':')]
+        })
+        const moleculeMolNo = response.data.result.result.first
+        const residueCid = response.data.result.result.second
+        const selectedMolecule = visibleMolecules.find(molecule => molecule.molNo === moleculeMolNo)
+        return [selectedMolecule, residueCid]
+    }
+    
+    const doShortCut = async (cootCommand, formatArgs) => {
+        let chosenMolecule
+        let chosenAtom
+        
+        if (!collectedProps.shortcutOnHoveredAtom) {
+            const [selectedMolecule, residueCid] = await getCentreAtom()
+            if (selectedMolecule === 'undefined' || !residueCid) {
+                console.log('Cannot find atom in the centre of the view...')
+                return true
+            }
+            // AT THE MOMENT THIS IS BROKEN SO SET CHOSEN ATOM DETAILS MANUALLY AND USE FIRST CHAIN
+            //chosenAtom = cidToSpec(residueCid)
+            const [moleculeName, modelNumber, resNum, atomName] = residueCid.split('/')
+            chosenAtom = {
+                chain_id: selectedMolecule.sequences[0].chain,
+                res_no: resNum,
+                atom_name: 'CA'
+            }
+            chosenMolecule = selectedMolecule
+        } else if (hoveredAtom.molecule) {
+            chosenAtom = cidToSpec(hoveredAtom.cid)
+            chosenMolecule = hoveredAtom.molecule
+        }
+        
+        if (chosenAtom && chosenMolecule) {
+            return commandCentre.current.cootCommand({
+                returnType: "status",
+                command: cootCommand,
+                commandArgs: formatArgs(chosenMolecule, chosenAtom),
+                changesMolecules: [chosenMolecule.molNo]
+            }, true).then(_ => {
+                apresEdit(chosenMolecule, glRef, setHoveredAtom)
+            })
+            .then(_ => false)
+            .catch(err => {
+                console.log(err)
+                return true
+            })
+        }
+        return true
+    }
+    
     console.log(event)
     let modifiers = []
     let eventModifiersCodes = []
@@ -23,8 +84,6 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     if (event.metaKey) modifiers.push("<Meta>") && eventModifiersCodes.push('metaKey')
     if (event.altKey) modifiers.push("<Alt>") && eventModifiersCodes.push('altKey')
     if (event.key === " ") modifiers.push("<Space>")
-
-    const { setShowToast, setToastContent, hoveredAtom, setHoveredAtom, commandCentre, activeMap, glRef, molecules } = collectedProps;
 
     if (collectedProps.showShortcutToast) {
         setToastContent(<h3>{`${modifiers.join("-")} ${event.key} pushed`}</h3>)
@@ -63,21 +122,12 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         return false
     }
 
-    else if (action === 'flip_peptide' && activeMap && hoveredAtom.molecule) {
-        const chosenAtom = cidToSpec(hoveredAtom.cid)
-        const commandArgs = [
-            hoveredAtom.molecule.molNo,
-            `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`,
-            '']
-        commandCentre.current.cootCommand({
-            returnType: "status",
-            command: "flipPeptide_cid",
-            commandArgs: commandArgs,
-            changesMolecules: [hoveredAtom.molecule.molNo]
-        }, true).then(_ => {
-            apresEdit(hoveredAtom.molecule, glRef, setHoveredAtom)
-        })
-        return false
+    else if (action === 'flip_peptide' && activeMap) {
+        const formatArgs = (chosenMolecule, chosenAtom) => {
+            return [chosenMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, '']
+        }
+
+        return doShortCut('flipPeptide_cid', formatArgs)
     }
 
     else if (action === 'triple_refine' && activeMap && hoveredAtom.molecule) {
@@ -355,19 +405,8 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     }
 
     else if (action === 'jump_next_residue' || action === 'jump_previous_residue') {
-        const visibleMolecules = molecules.filter(molecule => molecule.isVisible && molecule.hasVisibleBuffers())
-        if (visibleMolecules.length === 0) {
-            return
-        }
-        commandCentre.current.cootCommand({
-            returnType: "int_string_pair",
-            command: "get_active_atom",
-            commandArgs: [...glRef.current.origin.map(coord => coord * -1), visibleMolecules.map(molecule => molecule.molNo).join(':')]
-        }).then(response => {
-            const moleculeMolNo = response.data.result.result.first
-            const residueCid = response.data.result.result.second
-            const selectedMolecule = visibleMolecules.find(molecule => molecule.molNo === moleculeMolNo)
-
+        getCentreAtom().then(result => {
+            const [selectedMolecule, residueCid] = result
             if (selectedMolecule === 'undefined' || !residueCid) {
                 return
             }
