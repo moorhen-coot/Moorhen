@@ -3620,7 +3620,6 @@ class MGWebGL extends Component {
     }
 
     centreOn(idx) {
-        console.log("centreOn!!!!")
         var self = this;
         if (self.displayBuffers[idx].atoms.length > 0) {
             var xtot = 0;
