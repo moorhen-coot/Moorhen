@@ -3143,6 +3143,23 @@ class MGWebGL extends Component {
         this.drawScene();
     }
 
+    setOrientatioFrame(qOld, qNew, iframe) {
+        const frac = iframe / this.nAnimationFrames;
+        const newQuat = this.quatSlerp(qOld, qNew,frac)
+        quat4.set(this.myQuat,newQuat[0],newQuat[1],newQuat[2],newQuat[3])
+        this.drawScene()
+        if(iframe<this.nAnimationFrames){
+            requestAnimationFrame(this.setOrientatioFrame.bind(this,qOld, qNew,iframe+1))
+        }
+    }
+
+    setOrientatioAnimated(q) {
+        this.nAnimationFrames = 15;
+        let oldQuat = quat4.create()
+        quat4.set(oldQuat,this.myQuat[0],this.myQuat[1],this.myQuat[2],this.myQuat[3])
+        requestAnimationFrame(this.setOrientatioFrame.bind(this,oldQuat,q,1))
+    }
+
     setOriginAnimated(o, doDrawScene) {
         this.nAnimationFrames = 15;
         const old_x = this.origin[0]
@@ -3521,7 +3538,7 @@ class MGWebGL extends Component {
     }
 
     quatDotProduct(q1,q2){
-        return q1.dval[0] * q2.dval[0] + q1.dval[1] * q2.dval[1] + q1.dval[2] * q2.dval[2] + q1.dval[3] * q2.dval[3];
+        return q1[0] * q2[0] + q1[1] * q2[1] + q1[2] * q2[2] + q1[3] * q2[3];
     }
 
     quatSlerp(q1,q2,h) {
@@ -3532,10 +3549,11 @@ class MGWebGL extends Component {
         const q1Mult = Math.sin((1.0-h)*omega)
         const q2Mult = Math.sin(h*omega)
         let newQuat = quat4.create()
-        newQuat.dval[0] = (q1Mult * q1.dval[0] + q2Mult * q2.dval[0]) / Math.sin(omega)
-        newQuat.dval[1] = (q1Mult * q1.dval[1] + q2Mult * q2.dval[1]) / Math.sin(omega)
-        newQuat.dval[2] = (q1Mult * q1.dval[2] + q2Mult * q2.dval[2]) / Math.sin(omega)
-        newQuat.dval[3] = (q1Mult * q1.dval[3] + q2Mult * q2.dval[3]) / Math.sin(omega)
+        const newQuat0 = (q1Mult * q1[0] + q2Mult * q2[0]) / Math.sin(omega)
+        const newQuat1 = (q1Mult * q1[1] + q2Mult * q2[1]) / Math.sin(omega)
+        const newQuat2 = (q1Mult * q1[2] + q2Mult * q2[2]) / Math.sin(omega)
+        const newQuat3 = (q1Mult * q1[3] + q2Mult * q2[3]) / Math.sin(omega)
+        quat4.set(newQuat,newQuat0,newQuat1,newQuat2,newQuat3)
         return newQuat
     }
 
