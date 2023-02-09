@@ -1845,7 +1845,6 @@ class MGWebGL extends Component {
                 function (evt) {
                     self.doClick(evt, self);
                     evt.stopPropagation();
-                    document.body.click();
                 },
                 false);
             self.canvas.addEventListener("mouseenter",
@@ -8763,6 +8762,10 @@ class MGWebGL extends Component {
     }
 
     doClick(event, self) {
+        if (this.activeMolecule == null) {
+            document.body.click()
+        }
+        
         if (!self.mouseMoved) {
             let x;
             let y;
@@ -8896,8 +8899,7 @@ class MGWebGL extends Component {
                     }
                 }
             }
-            //console.log(dpl);
-        }
+        }        
         self.drawScene();
     }
 
