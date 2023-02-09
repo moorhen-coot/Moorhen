@@ -8,7 +8,7 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
     const scores = useRef({})
     const windowResizedBinding = createRef(null)
     const [mapLineWidth, setMapLineWidth] = useState(1.0)
-    const [connectedMaps, setConnectedMaps] = useState(false)
+    const [connectedMolNo, setConnectedMolNo] = useState(null)
     const [scoresToastContents, setScoreToastContents] = useState(null)
 
     const setClipFogByZoom = () => {
@@ -51,7 +51,7 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
     }, [props.hoveredAtom, glRef])
 
     const handleScoreUpdates = useCallback(async (e) => {
-        if (e.detail?.modifiedMolecule !== null && connectedMaps) {
+        if (e.detail?.modifiedMolecule !== null && connectedMolNo) {
             
             const currentScores = await props.commandCentre.current.cootCommand({
                 returnType: "r_factor_stats",
@@ -117,15 +117,15 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
             }
         } 
 
-    }, [props.commandCentre, connectedMaps, scores, props.preferences.defaultUpdatingScores])
+    }, [props.commandCentre, connectedMolNo, scores, props.preferences.defaultUpdatingScores])
 
     const handleDisconnectMaps = () => {
         scores.current = {}
-        setConnectedMaps(false)
+        setConnectedMolNo(null)
         setScoreToastContents(null)
     }
     
-    const handleConnectedMaps = useCallback(async () => {
+    const handleConnectMaps = useCallback(async (evt) => {
         
         const currentScores = await props.commandCentre.current.cootCommand({
             returnType: "r_factor_stats",
@@ -159,11 +159,11 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
             rFree: currentScores.data.result.result.free_r_factor
         }
 
-        setConnectedMaps(true)
+        setConnectedMolNo(evt.detail)
     }, [props.commandCentre, props.preferences.defaultUpdatingScores])
 
     useEffect(() => {
-        if (scores.current !== null && props.preferences.defaultUpdatingScores !== null && props.preferences.showScoresToast && connectedMaps) {
+        if (scores.current !== null && props.preferences.defaultUpdatingScores !== null && props.preferences.showScoresToast && connectedMolNo) {
             setScoreToastContents(
                 <Toast.Body>
                     {props.preferences.defaultUpdatingScores.includes('Rfactor') && 
@@ -188,20 +188,12 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
     }, [props.preferences.defaultUpdatingScores, props.preferences.showScoresToast]);
 
     useEffect(() => {
-        document.addEventListener("connectedMaps", handleConnectedMaps);
+        document.addEventListener("connectMaps", handleConnectMaps);
         return () => {
-            document.removeEventListener("connectedMaps", handleConnectedMaps);
+            document.removeEventListener("connectMaps", handleConnectMaps);
         };
 
-    }, [handleConnectedMaps]);
-
-    useEffect(() => {
-        document.addEventListener("disconnectMaps", handleDisconnectMaps);
-        return () => {
-            document.removeEventListener("disconnectMaps", handleDisconnectMaps);
-        }
-
-    }, [handleDisconnectMaps]);
+    }, [handleConnectMaps]);
 
     useEffect(() => {
         document.addEventListener("mapUpdate", handleScoreUpdates);
@@ -278,6 +270,19 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
     }, [props.preferences])
 
     useEffect(() => {
+        if (connectedMolNo && props.molecules.lenght === 0){
+            handleDisconnectMaps()
+        } else if (connectedMolNo && !props.molecules.includes(connectedMolNo.molecule)){
+            handleDisconnectMaps()
+        }
+    }, [props.molecules])
+
+    useEffect(() => {
+        if (connectedMolNo && props.maps.lenght === 0){
+            handleDisconnectMaps()
+        } else if (connectedMolNo && !connectedMolNo.maps.every(mapMolNo => props.maps.includes(mapMolNo))){
+            handleDisconnectMaps()
+        }
         props.maps.forEach(map => {
             console.log('in map changed useEffect')
             if (map.webMGContour) {

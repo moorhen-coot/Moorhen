@@ -1104,7 +1104,12 @@ export const MoorhenImportFSigFMenuItem = (props) => {
                 returnType: 'status'
             }, true)
 
-            const connectedMapsEvent = new CustomEvent("connectedMaps")
+            const connectedMapsEvent = new CustomEvent("connectMaps", {
+                "detail": {
+                    molecule: connectMapsArgs[0],
+                    maps: [...new Set(connectMapsArgs.slice(1))]
+                }
+            })
             document.dispatchEvent(connectedMapsEvent)
         }
     }
