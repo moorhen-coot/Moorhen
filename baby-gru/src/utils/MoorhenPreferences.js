@@ -24,7 +24,7 @@ const updateStoredPreferences = async (key, value) => {
 
 const getDefaultValues = () => {
     return {
-        version: '0.0.11',
+        version: '0.0.12',
         darkMode: false, 
         atomLabelDepthMode: true, 
         defaultExpandDisplayCards: true,
@@ -34,6 +34,7 @@ const getDefaultValues = () => {
         drawFPS: false,
         drawMissingLoops: true,
         mouseSensitivity: 2.0,
+        wheelSensitivityFactor: 1.0,
         mapLineWidth: 1.0,
         makeBackups: true,
         showShortcutToast: true,
@@ -166,6 +167,7 @@ const PreferencesContextProvider = ({ children }) => {
     const [defaultMapLitLines, setDefaultMapLitLines] = useState(null)
     const [refineAfterMod, setRefineAfterMod] = useState(null)
     const [mouseSensitivity, setMouseSensitivity] = useState(null)
+    const [wheelSensitivityFactor, setWheelSensitivityFactor] = useState(null)
     const [drawCrosshairs, setDrawCrosshairs] = useState(null)
     const [drawFPS, setDrawFPS] = useState(null)
     const [drawMissingLoops, setDrawMissingLoops] = useState(null)
@@ -196,6 +198,7 @@ const PreferencesContextProvider = ({ children }) => {
         setShowScoresToast(defaultValues.showScoresToast)
         setDefaultUpdatingScores({action: 'Overwrite', items: defaultValues.defaultUpdatingScores})
         setDrawFPS(defaultValues.drawFPS)
+        setWheelSensitivityFactor(defaultValues.wheelSensitivityFactor)
     }
 
     /**
@@ -226,6 +229,7 @@ const PreferencesContextProvider = ({ children }) => {
                     localforage.getItem('showScoresToast'),
                     localforage.getItem('defaultUpdatingScores'),
                     localforage.getItem('drawFPS'),
+                    localforage.getItem('wheelSensitivityFactor'),
                     ])
                 
                 console.log('Retrieved the following preferences from local storage: ', response)
@@ -256,6 +260,7 @@ const PreferencesContextProvider = ({ children }) => {
                     setShowScoresToast(response[15])
                     setDefaultUpdatingScores({action: 'Overwrite', items: response[16]})
                     setDrawFPS(response[17])
+                    setWheelSensitivityFactor(response[18])
                 }                
                 
             } catch (err) {
@@ -272,6 +277,15 @@ const PreferencesContextProvider = ({ children }) => {
         fetchStoredPreferences();
         
     }, []);
+
+    useMemo(() => {
+
+        if (wheelSensitivityFactor === null) {
+            return
+        }
+       
+        updateStoredPreferences('wheelSensitivityFactor', wheelSensitivityFactor);
+    }, [wheelSensitivityFactor]);
 
     useMemo(() => {
 
@@ -433,7 +447,8 @@ const PreferencesContextProvider = ({ children }) => {
         setDrawCrosshairs, drawMissingLoops, setDrawMissingLoops, mapLineWidth, setMapLineWidth,
         makeBackups, setMakeBackups, showShortcutToast, setShowShortcutToast, defaultMapSurface,
         setDefaultMapSurface, defaultBondSmoothness, setDefaultBondSmoothness, showScoresToast, 
-        setShowScoresToast, defaultUpdatingScores, setDefaultUpdatingScores, drawFPS, setDrawFPS
+        setShowScoresToast, defaultUpdatingScores, setDefaultUpdatingScores, drawFPS, setDrawFPS,
+        wheelSensitivityFactor, setWheelSensitivityFactor
     }
 
     return (
