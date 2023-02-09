@@ -132,7 +132,7 @@ export const MoorhenPreferencesMenu = (props) => {
                         <MoorhenSlider minVal={0.1} maxVal={10.0} logScale={false} sliderTitle="Mouse sensitivity" intialValue={2.5} externalValue={mouseSensitivity} setExternalValue={setMouseSensitivity}/>
                     </Form.Group>
                     <Form.Group controlId="wheelSensitivitySlider" style={{paddingTop:'0.5rem', paddingBottom:'0rem', paddingRight:'0.5rem', paddingLeft:'1rem', width: '25rem'}}>
-                        <MoorhenSlider minVal={0.1} maxVal={9.9} logScale={false} sliderTitle="Mouse wheel sensitivity" intialValue={1.0} externalValue={wheelSensitivityFactor} setExternalValue={setWheelSensitivityFactor}/>
+                        <MoorhenSlider minVal={0.1} maxVal={9.9} logScale={false} sliderTitle="Mouse wheel zoom sensitivity" intialValue={1.0} externalValue={wheelSensitivityFactor} setExternalValue={setWheelSensitivityFactor}/>
                     </Form.Group>
                     <Form.Group controlId="mapLineWidthSlider" style={{paddingTop:'0.5rem', paddingBottom:'0rem', paddingRight:'0.5rem', paddingLeft:'1rem', width: '25rem'}}>
                         <MoorhenSlider minVal={0.1} maxVal={5.0} logScale={true} sliderTitle="Map lines thickness" intialValue={2.5} externalValue={mapLineWidth} setExternalValue={setMapLineWidth}/>
