@@ -3180,6 +3180,42 @@ class MGWebGL extends Component {
         requestAnimationFrame(this.setOrientationFrame.bind(this,oldQuat,q,1))
     }
 
+    setOriginOrientationAndZoomFrame(oo,d,qOld, qNew, oldZoom, zoomDelta, iframe) {
+        const frac = iframe / this.nAnimationFrames;
+        const newQuat = this.quatSlerp(qOld, qNew,frac)
+        quat4.set(this.myQuat,newQuat[0],newQuat[1],newQuat[2],newQuat[3])
+        this.zoom = oldZoom + iframe * zoomDelta
+        this.origin = [oo[0]+iframe*d[0],oo[1]+iframe*d[1],oo[2]+iframe*d[2]];
+        this.drawScene()
+        if(iframe<this.nAnimationFrames){
+            requestAnimationFrame(this.setOriginOrientationAndZoomFrame.bind(this,oo,d,qOld,qNew,oldZoom,zoomDelta,iframe+1))
+            return
+        }
+        const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: {origin: this.origin,  modifiedMolecule: null} })
+        document.dispatchEvent(mapUpdateEvent);
+    }
+
+    setOriginOrientationAndZoomAnimated(o,q,z) {
+        this.nAnimationFrames = 15;
+        const old_x = this.origin[0]
+        const old_y = this.origin[1]
+        const old_z = this.origin[2]
+        const new_x = o[0]
+        const new_y = o[1]
+        const new_z = o[2]
+        const DX = new_x - old_x
+        const DY = new_y - old_y
+        const DZ = new_z - old_z
+        const dx = DX/this.nAnimationFrames
+        const dy = DY/this.nAnimationFrames
+        const dz = DZ/this.nAnimationFrames
+        let oldQuat = quat4.create();
+        let oldZoom = this.zoom;
+        const zoomDelta = (z - this.zoom) / this.nAnimationFrames
+        quat4.set(oldQuat,this.myQuat[0],this.myQuat[1],this.myQuat[2],this.myQuat[3])
+        requestAnimationFrame(this.setOriginOrientationAndZoomFrame.bind(this,[old_x,old_y,old_z],[dx,dy,dz],oldQuat,q,oldZoom,zoomDelta,1))
+    }
+
     setOriginAnimated(o, doDrawScene) {
         this.nAnimationFrames = 15;
         const old_x = this.origin[0]
@@ -3195,6 +3231,7 @@ class MGWebGL extends Component {
         const dy = DY/this.nAnimationFrames
         const dz = DZ/this.nAnimationFrames
         requestAnimationFrame(this.drawOriginFrame.bind(this,[old_x,old_y,old_z],[dx,dy,dz],1))
+        console.log(o)
     }
 
     drawOriginFrame(oo,d,iframe){
