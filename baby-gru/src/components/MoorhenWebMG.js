@@ -51,7 +51,7 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
     }, [props.hoveredAtom, glRef])
 
     const handleScoreUpdates = useCallback(async (e) => {
-        if (e.detail?.modifiedMolecule !== null && connectedMolNo) {
+        if (e.detail?.modifiedMolecule !== null && connectedMolNo && connectedMolNo.molecule === e.detail.modifiedMolecule) {
             
             const currentScores = await props.commandCentre.current.cootCommand({
                 returnType: "r_factor_stats",
@@ -272,7 +272,7 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
     useEffect(() => {
         if (connectedMolNo && props.molecules.lenght === 0){
             handleDisconnectMaps()
-        } else if (connectedMolNo && !props.molecules.includes(connectedMolNo.molecule)){
+        } else if (connectedMolNo && !props.molecules.map(molecule => molecule.molNo).includes(connectedMolNo.molecule)){
             handleDisconnectMaps()
         }
     }, [props.molecules])
