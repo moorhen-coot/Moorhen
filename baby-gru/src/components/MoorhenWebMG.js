@@ -109,7 +109,7 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
             } else {
                 setScoreToastContents(newToastContents)
             }
-                        
+
             scores.current = {
                 moorhenPoints: currentScores.data.result.result.rail_points_total,
                 rFactor: currentScores.data.result.result.r_factor,
@@ -119,6 +119,12 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
 
     }, [props.commandCentre, connectedMaps, scores, props.preferences.defaultUpdatingScores])
 
+    const handleDisconnectMaps = () => {
+        scores.current = {}
+        setConnectedMaps(false)
+        setScoreToastContents(null)
+    }
+    
     const handleConnectedMaps = useCallback(async () => {
         
         const currentScores = await props.commandCentre.current.cootCommand({
@@ -188,6 +194,14 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
         };
 
     }, [handleConnectedMaps]);
+
+    useEffect(() => {
+        document.addEventListener("disconnectMaps", handleDisconnectMaps);
+        return () => {
+            document.removeEventListener("disconnectMaps", handleDisconnectMaps);
+        }
+
+    }, [handleDisconnectMaps]);
 
     useEffect(() => {
         document.addEventListener("mapUpdate", handleScoreUpdates);
@@ -262,12 +276,6 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
             setMapLineWidth(props.preferences.mapLineWidth)
         }
     }, [props.preferences])
-
-    useEffect(() => {
-        props.molecules.forEach(molecule => {
-            //molecule.fetchIfDirtyAndDraw('bonds', glRef)
-        })
-    }, [props.molecules, props.molecules.length])
 
     useEffect(() => {
         props.maps.forEach(map => {
