@@ -1,6 +1,6 @@
 import { CheckOutlined, CloseOutlined } from "@mui/icons-material";
 import { MenuItem, MenuList, Tooltip } from "@mui/material";
-import { createRef, forwardRef, useCallback, useEffect, useRef, useState } from "react";
+import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import { Button, Overlay, Container, Row, FormSelect, FormGroup, FormLabel, Card } from "react-bootstrap"
 import { MoorhenMoleculeSelect } from "./MoorhenMoleculeSelect";
 import { cidToSpec, getTooltipShortcutLabel } from "../utils/MoorhenUtils";
@@ -638,7 +638,6 @@ export const MoorhenRotateTranslateZoneButton = (props) => {
 
 
 export const MoorhenAddSimpleButton = (props) => {
-    const molType = createRef("HOH")
     const selectRef = useRef()
 
     const [panelParameters, setPanelParameters] = useState({
@@ -660,15 +659,15 @@ export const MoorhenAddSimpleButton = (props) => {
     }
 
     const typeSelected = useCallback(value => {
-        props.molecules
-            .filter(molecule => molecule.molNo === parseInt(selectRef.current.value))
-            .forEach(molecule => {
-                console.log({ molecule })
-                molecule.addLigandOfType(value,
-                    props.glRef.current.origin.map(coord => -coord),
-                    props.glRef)
-            })
-    })
+        const selectedMolecule = props.molecules.find(molecule => molecule.molNo === parseInt(selectRef.current.value))
+        if (selectedMolecule) {
+            console.log({ selectedMolecule })
+            selectedMolecule.addLigandOfType(value,
+                props.glRef.current.origin.map(coord => -coord),
+                props.glRef)
+            props.setSelectedButtonIndex(null)
+        }
+    }, [props.molecules, props.glRef])
 
     return <MoorhenSimpleEditButton {...props}
         toolTip="Add simple"
@@ -686,6 +685,6 @@ export const MoorhenAddSimpleButton = (props) => {
             selectRef={selectRef}
             awaitAtomClick={false}
         />}
-        icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/atom-at-pointer.svg`} />}
+        icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/atom-at-pointer.svg`} alt='add...'/>}
     />
 }
