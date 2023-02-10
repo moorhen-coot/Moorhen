@@ -1066,7 +1066,7 @@ export const MoorhenBackupsMenuItem = (props) => {
 
     return <MoorhenMenuItem
         popoverContent={panelContent}
-        menuItemText="Recover previous session..."
+        menuItemText="Recover molecule backup..."
         onCompleted={onCompleted}
         setPopoverIsShown={props.setPopoverIsShown}
         storageKeysDirty={props.storageKeysDirty}

@@ -239,7 +239,7 @@ export const MoorhenFileMenu = (props) => {
         }
     }
 
-    const downloadSession = async (download) => {
+    const getSession = async (doDownload=false, storeMaps=false) => {
         let moleculePromises = props.molecules.map(molecule => {return molecule.getAtoms()})
         let moleculeAtoms = await Promise.all(moleculePromises)
         let mapPromises = props.maps.map(map => {return map.getMap()})
@@ -247,18 +247,18 @@ export const MoorhenFileMenu = (props) => {
 
         let session = {
             moleculesNames: props.molecules.map(molecule => molecule.name),
-            mapsNames: props.maps.map(map => map.name),
+            mapsNames: storeMaps ? props.maps.map(map => map.name) : [],
             moleculesPdbData: moleculeAtoms.map(item => item.data.result.pdbData),
-            mapsMapData: mapData.map(item => new Uint8Array(item.data.result.mapData)),
+            mapsMapData: storeMaps ? mapData.map(item => new Uint8Array(item.data.result.mapData)) : [],
             activeMapMolNo: props.activeMap ? props.activeMap.molNo : null,
             moleculesDisplayObjectsKeys: props.molecules.map(molecule => Object.keys(molecule.displayObjects).filter(key => molecule.displayObjects[key].length > 0)),
             moleculesCootBondsOptions: props.molecules.map(molecule => molecule.cootBondsOptions),
-            mapsCootContours: props.maps.map(map => map.cootContour),
-            mapsContourLevels: props.maps.map(map => map.contourLevel),
-            mapsColours: props.maps.map(map => map.mapColour),
-            mapsLitLines: props.maps.map(map => map.litLines),
-            mapsRadius: props.maps.map(map => map.mapRadius),
-            mapsIsDifference: props.maps.map(map => map.isDifference),
+            mapsCootContours: storeMaps ? props.maps.map(map => map.cootContour) : [],
+            mapsContourLevels: storeMaps ? props.maps.map(map => map.contourLevel) : [],
+            mapsColours: storeMaps ? props.maps.map(map => map.mapColour) : [],
+            mapsLitLines: storeMaps ? props.maps.map(map => map.litLines) : [],
+            mapsRadius: storeMaps ? props.maps.map(map => map.mapRadius) : [],
+            mapsIsDifference: storeMaps ? props.maps.map(map => map.isDifference) : [],
             origin: props.glRef.current.origin,
             backgroundColor: props.backgroundColor,
             atomLabelDepthMode: props.atomLabelDepthMode,
@@ -275,7 +275,7 @@ export const MoorhenFileMenu = (props) => {
             quat4: glRef.current.myQuat
         }
 
-        if(download) {
+        if(doDownload) {
             doDownload([JSON.stringify(session)], `session.json`)
         } else {
 
@@ -352,12 +352,12 @@ export const MoorhenFileMenu = (props) => {
 
                     <MoorhenLoadTutorialDataMenuItem {...menuItemProps} />
 
-                    <MenuItem id='download-session-menu-item' variant="success" onClick={() => {downloadSession(true)}}>
+                    <MenuItem id='download-session-menu-item' variant="success" onClick={() => {getSession(true, true)}}>
                         Download session
                     </MenuItem>
 
-                    <MenuItem id='save-session-menu-item' variant="success" onClick={() => {downloadSession(false)}}>
-                        Save session
+                    <MenuItem id='save-session-menu-item' variant="success" onClick={() => {getSession()}}>
+                        Store molecule backup
                     </MenuItem>
                     
                     <MoorhenBackupsMenuItem {...menuItemProps} onCompleted={(e) => { recoverSession(e) }} />
