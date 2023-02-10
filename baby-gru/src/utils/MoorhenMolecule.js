@@ -398,7 +398,7 @@ MoorhenMolecule.prototype.centreAndAlignViewOn = function (glRef, selectionCid, 
         let selectionCentre = centreOnGemmiAtoms(selectionAtomsCentre)
         return new Promise((resolve, reject) => {
             if(newQuat){
-                glRef.current.setOriginOrientationAndZoomAnimated(selectionCentre,newQuat,0.125);
+                glRef.current.setOriginOrientationAndZoomAnimated(selectionCentre,newQuat,0.20);
             }
             resolve(true);
         })
