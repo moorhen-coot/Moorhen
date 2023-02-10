@@ -411,18 +411,14 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
                 return
             }
 
-            const [moleculeName, modelNumber, resNum, atomName] = residueCid.split('/')
-            
-            // ASSUMING FIRST CHAIN UNTIL RESIDUE CID INCLUDES BACK CHAIN NAME
-            const chainId = selectedMolecule.sequences[0].chain
-
-            const selectedSequence = selectedMolecule.sequences.find(sequence => sequence.chain === chainId)
+            const chosenAtom = cidToSpec(residueCid)
+            const selectedSequence = selectedMolecule.sequences.find(sequence => sequence.chain === chosenAtom.chain_id)
             if (selectedSequence === 'undefined') {
                 return
             }
             
             let nextResNum
-            const selectedResidueIndex = selectedSequence.sequence.findIndex(res => res.resNum === parseInt(resNum))
+            const selectedResidueIndex = selectedSequence.sequence.findIndex(res => res.resNum === parseInt(chosenAtom.res_no))
             if (selectedResidueIndex === -1) {
                 return
             } else if (action === 'jump_next_residue' && selectedResidueIndex !== selectedSequence.sequence.length - 1) {
@@ -432,7 +428,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
             } else {
                 return
             }
-            selectedMolecule.centreOn(glRef, `/*/${chainId}/${nextResNum}-${nextResNum}/*`)
+            selectedMolecule.centreOn(glRef, `/*/${chosenAtom.chain_id}/${nextResNum}-${nextResNum}/*`)
         })
 
     }
