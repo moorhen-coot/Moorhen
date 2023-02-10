@@ -15,7 +15,8 @@ export const MoorhenPreferencesMenu = (props) => {
         setDrawMissingLoops, mapLineWidth, setMapLineWidth, makeBackups, setMakeBackups,
         showShortcutToast, setShowShortcutToast, defaultMapSurface, setDefaultMapSurface,
         defaultBondSmoothness, setDefaultBondSmoothness, showScoresToast, setShowScoresToast,
-        defaultUpdatingScores, setDefaultUpdatingScores, drawFPS, setDrawFPS
+        defaultUpdatingScores, setDefaultUpdatingScores, drawFPS, setDrawFPS, wheelSensitivityFactor,
+        setWheelSensitivityFactor, shortcutOnHoveredAtom, setShortcutOnHoveredAtom
      } = props;
 
     const [showModal, setShowModal] = useState(null);
@@ -114,6 +115,13 @@ export const MoorhenPreferencesMenu = (props) => {
                             onChange={() => { setMakeBackups(!makeBackups) }}
                             label="Make molecule backups"/>
                     </InputGroup>
+                    <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                        <Form.Check 
+                            type="switch"
+                            checked={shortcutOnHoveredAtom}
+                            onChange={() => { setShortcutOnHoveredAtom(!shortcutOnHoveredAtom) }}
+                            label="Hover on residue to use shortcuts"/>
+                    </InputGroup>
                     <MoorhenScoresToastPreferencesMenuItem
                         showScoresToast={showScoresToast}
                         setShowScoresToast={setShowScoresToast}
@@ -130,7 +138,10 @@ export const MoorhenPreferencesMenu = (props) => {
                     <Form.Group controlId="mouseSensitivitySlider" style={{paddingTop:'0rem', paddingBottom:'0.5rem', paddingRight:'0.5rem', paddingLeft:'1rem', width: '25rem'}}>
                         <MoorhenSlider minVal={0.1} maxVal={10.0} logScale={false} sliderTitle="Mouse sensitivity" intialValue={2.5} externalValue={mouseSensitivity} setExternalValue={setMouseSensitivity}/>
                     </Form.Group>
-                    <Form.Group controlId="mapLineWidthSensitivitySlider" style={{paddingTop:'0.5rem', paddingBottom:'0rem', paddingRight:'0.5rem', paddingLeft:'1rem', width: '25rem'}}>
+                    <Form.Group controlId="wheelSensitivitySlider" style={{paddingTop:'0.5rem', paddingBottom:'0rem', paddingRight:'0.5rem', paddingLeft:'1rem', width: '25rem'}}>
+                        <MoorhenSlider minVal={0.1} maxVal={9.9} logScale={false} sliderTitle="Mouse wheel zoom sensitivity" intialValue={1.0} externalValue={wheelSensitivityFactor} setExternalValue={setWheelSensitivityFactor}/>
+                    </Form.Group>
+                    <Form.Group controlId="mapLineWidthSlider" style={{paddingTop:'0.5rem', paddingBottom:'0rem', paddingRight:'0.5rem', paddingLeft:'1rem', width: '25rem'}}>
                         <MoorhenSlider minVal={0.1} maxVal={5.0} logScale={true} sliderTitle="Map lines thickness" intialValue={2.5} externalValue={mapLineWidth} setExternalValue={setMapLineWidth}/>
                     </Form.Group>
                     <hr></hr>

@@ -1845,7 +1845,6 @@ class MGWebGL extends Component {
                 function (evt) {
                     self.doClick(evt, self);
                     evt.stopPropagation();
-                    document.body.click();
                 },
                 false);
             self.canvas.addEventListener("mouseenter",
@@ -3143,6 +3142,83 @@ class MGWebGL extends Component {
         this.drawScene();
     }
 
+    setOrientationFrame(qOld, qNew, iframe) {
+        const frac = iframe / this.nAnimationFrames;
+        const newQuat = this.quatSlerp(qOld, qNew,frac)
+        quat4.set(this.myQuat,newQuat[0],newQuat[1],newQuat[2],newQuat[3])
+        this.drawScene()
+        if(iframe<this.nAnimationFrames){
+            requestAnimationFrame(this.setOrientationFrame.bind(this,qOld, qNew,iframe+1))
+        }
+    }
+
+    setOrientationAndZoomFrame(qOld, qNew, oldZoom, zoomDelta, iframe) {
+        const frac = iframe / this.nAnimationFrames;
+        const newQuat = this.quatSlerp(qOld, qNew,frac)
+        quat4.set(this.myQuat,newQuat[0],newQuat[1],newQuat[2],newQuat[3])
+        this.setZoom(oldZoom + iframe * zoomDelta)
+        this.drawScene()
+        if(iframe<this.nAnimationFrames){
+            requestAnimationFrame(this.setOrientationAndZoomFrame.bind(this,qOld, qNew,oldZoom,zoomDelta,iframe+1))
+        }
+    }
+
+    setOrientationAndZoomAnimated(q,z) {
+        this.nAnimationFrames = 15;
+        let oldQuat = quat4.create();
+        let oldZoom = this.zoom;
+        const zoomDelta = (z - this.zoom) / this.nAnimationFrames
+        quat4.set(oldQuat,this.myQuat[0],this.myQuat[1],this.myQuat[2],this.myQuat[3])
+        requestAnimationFrame(this.setOrientationAndZoomFrame.bind(this,oldQuat,q,oldZoom,zoomDelta,1))
+    }
+
+    setOrientationAnimated(q) {
+        this.nAnimationFrames = 15;
+        let oldQuat = quat4.create()
+        quat4.set(oldQuat,this.myQuat[0],this.myQuat[1],this.myQuat[2],this.myQuat[3])
+        requestAnimationFrame(this.setOrientationFrame.bind(this,oldQuat,q,1))
+    }
+
+    setOriginOrientationAndZoomFrame(oo,d,qOld, qNew, oldZoom, zoomDelta, iframe) {
+        const frac = iframe / this.nAnimationFrames;
+        const newQuat = this.quatSlerp(qOld, qNew,frac)
+        quat4.set(this.myQuat,newQuat[0],newQuat[1],newQuat[2],newQuat[3])
+        this.setZoom(oldZoom + iframe * zoomDelta)
+        this.origin = [oo[0]+iframe*d[0],oo[1]+iframe*d[1],oo[2]+iframe*d[2]];
+        this.drawScene()
+        if(iframe<this.nAnimationFrames){
+            requestAnimationFrame(this.setOriginOrientationAndZoomFrame.bind(this,oo,d,qOld,qNew,oldZoom,zoomDelta,iframe+1))
+            return
+        }
+        const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: {origin: this.origin,  modifiedMolecule: null} })
+        document.dispatchEvent(mapUpdateEvent);
+    }
+
+    setViewAnimated(o,q,z) {
+        this.setOriginOrientationAndZoomAnimated(o,q,z)
+    }
+
+    setOriginOrientationAndZoomAnimated(o,q,z) {
+        this.nAnimationFrames = 15;
+        const old_x = this.origin[0]
+        const old_y = this.origin[1]
+        const old_z = this.origin[2]
+        const new_x = o[0]
+        const new_y = o[1]
+        const new_z = o[2]
+        const DX = new_x - old_x
+        const DY = new_y - old_y
+        const DZ = new_z - old_z
+        const dx = DX/this.nAnimationFrames
+        const dy = DY/this.nAnimationFrames
+        const dz = DZ/this.nAnimationFrames
+        let oldQuat = quat4.create();
+        let oldZoom = this.zoom;
+        const zoomDelta = (z - this.zoom) / this.nAnimationFrames
+        quat4.set(oldQuat,this.myQuat[0],this.myQuat[1],this.myQuat[2],this.myQuat[3])
+        requestAnimationFrame(this.setOriginOrientationAndZoomFrame.bind(this,[old_x,old_y,old_z],[dx,dy,dz],oldQuat,q,oldZoom,zoomDelta,1))
+    }
+
     setOriginAnimated(o, doDrawScene) {
         this.nAnimationFrames = 15;
         const old_x = this.origin[0]
@@ -3158,6 +3234,7 @@ class MGWebGL extends Component {
         const dy = DY/this.nAnimationFrames
         const dz = DZ/this.nAnimationFrames
         requestAnimationFrame(this.drawOriginFrame.bind(this,[old_x,old_y,old_z],[dx,dy,dz],1))
+        console.log(o)
     }
 
     drawOriginFrame(oo,d,iframe){
@@ -3521,48 +3598,27 @@ class MGWebGL extends Component {
     }
 
     quatDotProduct(q1,q2){
-        return q1.dval[0] * q2.dval[0] + q1.dval[1] * q2.dval[1] + q1.dval[2] * q2.dval[2] + q1.dval[3] * q2.dval[3];
+        return q1[0] * q2[0] + q1[1] * q2[1] + q1[2] * q2[2] + q1[3] * q2[3];
     }
 
     quatSlerp(q1,q2,h) {
         const cosw = this.quatDotProduct(q1,q2);
+        if(Math.abs(cosw-1.0)<1e-5) return q1;
         if(cosw>1.0) cosw = 1.0;
         if(cosw<-1.0) cosw = -1.0;
         const omega = Math.acos(cosw);
         const q1Mult = Math.sin((1.0-h)*omega)
         const q2Mult = Math.sin(h*omega)
         let newQuat = quat4.create()
-        newQuat.dval[0] = (q1Mult * q1.dval[0] + q2Mult * q2.dval[0]) / Math.sin(omega)
-        newQuat.dval[1] = (q1Mult * q1.dval[1] + q2Mult * q2.dval[1]) / Math.sin(omega)
-        newQuat.dval[2] = (q1Mult * q1.dval[2] + q2Mult * q2.dval[2]) / Math.sin(omega)
-        newQuat.dval[3] = (q1Mult * q1.dval[3] + q2Mult * q2.dval[3]) / Math.sin(omega)
+        const newQuat0 = (q1Mult * q1[0] + q2Mult * q2[0]) / Math.sin(omega)
+        const newQuat1 = (q1Mult * q1[1] + q2Mult * q2[1]) / Math.sin(omega)
+        const newQuat2 = (q1Mult * q1[2] + q2Mult * q2[2]) / Math.sin(omega)
+        const newQuat3 = (q1Mult * q1[3] + q2Mult * q2[3]) / Math.sin(omega)
+        quat4.set(newQuat,newQuat0,newQuat1,newQuat2,newQuat3)
         return newQuat
     }
 
-    setOriginAnimate(o_in) {
-        const self = this;
-        const xtot = o_in[0];
-        const ytot = o_in[1];
-        const ztot = o_in[2];
-        const new_origin = [-xtot, -ytot, -ztot];
-        const old_origin = [self.origin[0], self.origin[1], self.origin[2]];
-
-        let myVar = setInterval(function () { myTimer() }, 10);
-        let frac = 0;
-        function myTimer() {
-            let ffrac = 0.01 * frac;
-            self.origin = [ffrac * new_origin[0] + (1.0 - ffrac) * old_origin[0], ffrac * new_origin[1] + (1.0 - ffrac) * old_origin[1], ffrac * new_origin[2] + (1.0 - ffrac) * old_origin[2]];
-            self.drawScene();
-            if (frac > 99) {
-                clearInterval(myVar);
-            }
-            frac += 1;
-        }
-
-    }
-
     centreOn(idx) {
-        console.log("centreOn!!!!")
         var self = this;
         if (self.displayBuffers[idx].atoms.length > 0) {
             var xtot = 0;
@@ -8768,6 +8824,10 @@ class MGWebGL extends Component {
     }
 
     doClick(event, self) {
+        if (this.activeMolecule == null) {
+            document.body.click()
+        }
+        
         if (!self.mouseMoved) {
             let x;
             let y;
@@ -8901,8 +8961,7 @@ class MGWebGL extends Component {
                     }
                 }
             }
-            //console.log(dpl);
-        }
+        }        
         self.drawScene();
     }
 
@@ -9038,9 +9097,9 @@ class MGWebGL extends Component {
         const self = this
         let factor;
         if (event.deltaY > 0) {
-            factor = 1. + 1 / 50.;
+            factor = 1. + 1 / (50.0 - self.props.wheelSensitivityFactor * 5);
         } else {
-            factor = 1. - 1 / 50.;
+            factor = 1. - 1 / (50.0 - self.props.wheelSensitivityFactor * 5);
         }
 
         if (self.keysDown['set_map_contour']) {

@@ -36,7 +36,7 @@ export const MoorhenFileMenu = (props) => {
         await Promise.all(drawPromises)
 
         changeMolecules({ action: "AddList", items: newMolecules })
-        newMolecules.at(-1).centreOn(glRef)
+        newMolecules.at(-1).centreOn(glRef, null, false)
     }
 
     const readPdbFile = (file) => {
@@ -92,7 +92,7 @@ export const MoorhenFileMenu = (props) => {
                 await newMolecule.loadToCootFromURL(url, molName)
                 await newMolecule.fetchIfDirtyAndDraw('CBs', glRef)
                 changeMolecules({ action: "Add", item: newMolecule })
-                newMolecule.centreOn(glRef)
+                newMolecule.centreOn(glRef, null, false)
             } catch {
                 console.log(`Cannot fetch molecule from ${url}`)
                 setIsValidPdbId(false)

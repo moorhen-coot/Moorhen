@@ -576,6 +576,8 @@ export const MoorhenRotateTranslateZoneButton = (props) => {
         changeMolecules({ action: 'Remove', item: fragmentMolecule.current })
         const response = fragmentMolecule.current.delete(glRef)
         setShowAccept(false)
+        const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: {origin: glRef.current.origin,  modifiedMolecule: chosenMolecule.current.molNo} })
+        document.dispatchEvent(mapUpdateEvent)
     }, [fragmentMolecule.current, chosenMolecule.current, molecules, changeMolecules])
 
     const rejectTransform = useCallback(async (e) => {
