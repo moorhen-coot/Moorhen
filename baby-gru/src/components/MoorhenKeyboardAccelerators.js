@@ -428,7 +428,8 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
             } else {
                 return
             }
-            selectedMolecule.centreOn(glRef, `/*/${chosenAtom.chain_id}/${nextResNum}-${nextResNum}/*`)
+            //selectedMolecule.centreOn(glRef, `/*/${chosenAtom.chain_id}/${nextResNum}-${nextResNum}/*`)
+            selectedMolecule.centreAndAlignViewOn(glRef, `/*/${chosenAtom.chain_id}/${nextResNum}-${nextResNum}/`)
         })
 
     }
