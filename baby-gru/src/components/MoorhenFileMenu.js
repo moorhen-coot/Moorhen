@@ -239,7 +239,7 @@ export const MoorhenFileMenu = (props) => {
         }
     }
 
-    const getSession = async (doDownload=false, storeMaps=false) => {
+    const getSession = async (download=false, storeMaps=false) => {
         let moleculePromises = props.molecules.map(molecule => {return molecule.getAtoms()})
         let moleculeAtoms = await Promise.all(moleculePromises)
         let mapPromises = props.maps.map(map => {return map.getMap()})
@@ -275,7 +275,7 @@ export const MoorhenFileMenu = (props) => {
             quat4: glRef.current.myQuat
         }
 
-        if(doDownload) {
+        if(download) {
             doDownload([JSON.stringify(session)], `session.json`)
         } else {
 
