@@ -36,22 +36,15 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     const doShortCut = async (cootCommand, formatArgs) => {
         let chosenMolecule
         let chosenAtom
+        let residueCid
         
         if (!collectedProps.shortcutOnHoveredAtom) {
-            const [selectedMolecule, residueCid] = await getCentreAtom()
-            if (selectedMolecule === 'undefined' || !residueCid) {
+            [chosenMolecule, residueCid] = await getCentreAtom()
+            if (chosenMolecule === 'undefined' || !residueCid) {
                 console.log('Cannot find atom in the centre of the view...')
                 return true
             }
-            // AT THE MOMENT THIS IS BROKEN SO SET CHOSEN ATOM DETAILS MANUALLY AND USE FIRST CHAIN
-            //chosenAtom = cidToSpec(residueCid)
-            const [moleculeName, modelNumber, resNum, atomName] = residueCid.split('/')
-            chosenAtom = {
-                chain_id: selectedMolecule.sequences[0].chain,
-                res_no: resNum,
-                atom_name: 'CA'
-            }
-            chosenMolecule = selectedMolecule
+            chosenAtom = cidToSpec(residueCid)
         } else if (hoveredAtom.molecule) {
             chosenAtom = cidToSpec(hoveredAtom.cid)
             chosenMolecule = hoveredAtom.molecule
