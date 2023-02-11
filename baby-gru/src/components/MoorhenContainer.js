@@ -449,8 +449,8 @@ export const MoorhenContainer = (props) => {
                 </Col>
             </Row>
             <ToastContainer style={{ marginTop: "5rem" }} position='top-center' >
-                <Toast bg='light' onClose={() => setShowToast(false)} autohide={true} delay={4000} show={showToast} style={{overflowY: 'scroll', maxHeight: convertViewtoPx(60, webGLHeight())}}>
-                    <Toast.Header closeButton={false} >
+                <Toast bg='light' onClose={() => setShowToast(false)} autohide={true} delay={4000} show={showToast} style={{overflowY: 'scroll', maxHeight: convertViewtoPx(80, webGLHeight())}}>
+                    <Toast.Header closeButton={false} style={{justifyContent:'center'}}>
                         {toastContent}
                     </Toast.Header>
                 </Toast>
