@@ -92,7 +92,12 @@ MoorhenMenuItem.defaultProps = {
 
 export const MoorhenLoadTutorialDataMenuItem = (props) => {
     const tutorialNumberSelectorRef = useRef(null);
-    const allTutorialNumbers = ['1', '2']
+    const allTutorialNumbers = ['1', '2', '3']
+    const tutorialMtzColumnNames = {
+        1: {F: "FWT", PHI: "PHWT", Fobs: 'F', SigFobs: 'SIGF', FreeR:'FREER'},
+        2: {F: "FWT", PHI: "PHWT", Fobs: 'FP', SigFobs: 'SIGFP', FreeR:'FREE'},
+        3: {F: "FWT", PHI: "PHWT", Fobs: 'F', SigFobs: 'SIGF', FreeR:'FREER'}
+    }
 
     const panelContent = <>
         <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="loadTutorialData" className="mb-3">
@@ -124,8 +129,7 @@ export const MoorhenLoadTutorialDataMenuItem = (props) => {
             }).then(_ => {
                 return newMap.loadToCootFromMtzURL(`${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`, `moorhen-tutorial-${tutorialNumber}`,
                     {
-                        F: "FWT", PHI: "PHWT", Fobs: tutorialNumber === '1' ? 'F' : 'FP', SigFobs: tutorialNumber === '1' ? 'SIGF' : 'SIGFP', FreeR: tutorialNumber === '1' ? 'FREER' : 'FREE',
-                        isDifference: false, useWeight: false, calcStructFact: true
+                        isDifference: false, useWeight: false, calcStructFact: true, ...tutorialMtzColumnNames[tutorialNumber]
                     })
             }).then(_ => {
                 return newDiffMap.loadToCootFromMtzURL(`${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`, `moorhen-tutorial-${tutorialNumber}`,
