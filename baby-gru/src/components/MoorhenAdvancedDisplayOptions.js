@@ -170,14 +170,14 @@ const MoorhenColourRules = (props) => {
     }, [props.molecules.length])
 
     const getRuleCard = (rule, index) => {
-        return <Card key={index} style={{margin: '0.5rem', maxWidth: '100%', overflowX:'scroll'}}>
+        return <Card key={index} style={{margin: '0.1rem', maxWidth: '100%', overflowX:'scroll'}}>
                 <Card.Body>
                     <Row className='align-items-center'>
                         <Col className='align-items-center' style={{ display: 'flex', justifyContent: 'left' }}>
                             {rule.label}
                         </Col>
                         <Col style={{ display: 'flex', justifyContent: 'right', alignItems:'center' }}>
-                            <div style={{borderColor: 'black', borderWidth:'5px', backgroundColor: rule.color, height:'20px', width:'20px', margin: '0.5rem'}}/>
+                            <div style={{borderColor: 'black', borderWidth:'5px', backgroundColor: rule.color, height:'20px', width:'20px', margin: '0.1rem'}}/>
                             <OverlayTrigger
                                 placement="top"
                                 delay={{ show: 400, hide: 400 }}
@@ -186,7 +186,7 @@ const MoorhenColourRules = (props) => {
                                         Move up
                                     </Tooltip>
                                 }>
-                                <Button size='sm' style={{margin: '0.5rem'}} variant={props.darkMode ? "dark" : "light"} onClick={() => {setRuleList({action:'MoveUp', item:rule})}}>
+                                <Button size='sm' style={{margin: '0.1rem'}} variant={props.darkMode ? "dark" : "light"} onClick={() => {setRuleList({action:'MoveUp', item:rule})}}>
                                     <ArrowUpwardOutlined/>
                                 </Button>
                             </OverlayTrigger>
@@ -198,7 +198,7 @@ const MoorhenColourRules = (props) => {
                                         Move down
                                     </Tooltip>
                                 }>
-                                <Button size='sm' style={{margin: '0.5rem'}} variant={props.darkMode ? "dark" : "light"} onClick={() => {setRuleList({action:'MoveDown', item:rule})}}>
+                                <Button size='sm' style={{margin: '0.1rem'}} variant={props.darkMode ? "dark" : "light"} onClick={() => {setRuleList({action:'MoveDown', item:rule})}}>
                                     <ArrowDownwardOutlined/>
                                 </Button>
                             </OverlayTrigger>
@@ -210,7 +210,7 @@ const MoorhenColourRules = (props) => {
                                         Delete
                                     </Tooltip>
                                 }>
-                                <Button size='sm' style={{margin: '0.5rem'}} variant={props.darkMode ? "dark" : "light"} onClick={() => {setRuleList({action:'Remove', item:rule})}}>
+                                <Button size='sm' style={{margin: '0.1rem'}} variant={props.darkMode ? "dark" : "light"} onClick={() => {setRuleList({action:'Remove', item:rule})}}>
                                     <DeleteOutlined/>
                                 </Button>
                             </OverlayTrigger>
@@ -222,7 +222,7 @@ const MoorhenColourRules = (props) => {
 
     return <>
                 <Stack gap={2} style={{alignItems: 'center'}}>
-                    <Form.Group style={{ margin: '0.5rem', width: '100%' }}>
+                    <Form.Group style={{ margin: '0.1rem', width: '100%' }}>
                         <Form.Label>Rule type</Form.Label>
                         <FormSelect size="sm" ref={ruleSelectRef} defaultValue={'molecule'} onChange={(val) => setRuleType(val.target.value)}>
                             <option value={'molecule'} key={'molecule'}>By molecule</option>
@@ -234,15 +234,15 @@ const MoorhenColourRules = (props) => {
                             <MoorhenMoleculeSelect width="100%" onChange={handleModelChange} molecules={props.molecules} ref={moleculeSelectRef}/>
                             {ruleType==='chain'  && <MoorhenChainSelect width="100%" molecules={props.molecules} onChange={handleChainChange} selectedCoordMolNo={selectedModel} ref={chainSelectRef} allowedTypes={[1, 2]}/>}
                             {ruleType==='cid' && 
-                                <Form.Group style={{ width: "100%", margin: '0.5rem', height:props.height }}>
+                                <Form.Group style={{ width: "100%", margin: '0.1rem', height:props.height }}>
                                     <Form.Label>Selection CID</Form.Label>
                                     <Form.Control size="sm" type='text' defaultValue={''} style={{width: "100%"}} onChange={handleResidueCidChange} ref={cidFormRef}/>
                                 </Form.Group>
                             }
                             <Stack direction="horizontal" gap={2} style={{alignItems: 'center'}}>
                                 <SketchPicker color={selectedColour} onChange={handleColorChange} />
-                                <Card style={{width:'100%'}}>
-                                    <Card.Body style={{maxHeight: convertViewtoPx(25, props.windowHeight), overflowY: 'auto', textAlign:'center'}}>
+                                <Card style={{width:'100%', margin:'0rem'}}>
+                                    <Card.Body style={{padding:'0.2rem', maxHeight: convertViewtoPx(25, props.windowHeight), overflowY: 'auto', textAlign:'center'}}>
                                         {ruleList.length === 0 ? 
                                             "No rules created yet"
                                         :
@@ -258,7 +258,7 @@ const MoorhenColourRules = (props) => {
                                             Add a rule
                                         </Tooltip>
                                     }>
-                                    <Button variant={props.darkMode ? "dark" : "light"} size='sm' onClick={createRule} style={{margin: '0.5rem'}}>
+                                    <Button variant={props.darkMode ? "dark" : "light"} size='sm' onClick={createRule} style={{margin: '0.1rem'}}>
                                         <AddOutlined/>
                                     </Button>
                                 </OverlayTrigger>
@@ -270,7 +270,7 @@ const MoorhenColourRules = (props) => {
                                             Delete all rules
                                         </Tooltip>
                                     }>
-                                    <Button variant={props.darkMode ? "dark" : "light"} size='sm' onClick={() => {setRuleList({action:'Empty'})}} style={{margin: '0.5rem'}}>
+                                    <Button variant={props.darkMode ? "dark" : "light"} size='sm' onClick={() => {setRuleList({action:'Empty'})}} style={{margin: '0.1rem'}}>
                                         <DeleteForeverOutlined/>
                                     </Button>
                                 </OverlayTrigger>
@@ -282,7 +282,7 @@ const MoorhenColourRules = (props) => {
                                             Apply rules
                                         </Tooltip>
                                     }>
-                                    <Button variant={props.darkMode ? "dark" : "light"} size='sm' onClick={commitChanges} style={{margin: '0.5rem'}}>
+                                    <Button variant={props.darkMode ? "dark" : "light"} size='sm' onClick={commitChanges} style={{margin: '0.1rem'}}>
                                         <DoneOutlined/>
                                     </Button>
                                 </OverlayTrigger>
@@ -336,8 +336,8 @@ export const MoorhenAdvancedDisplayOptions = (props) => {
             <Toast.Header style={{ justifyContent: 'space-between' }} closeButton>
                 Advanced Display Options
             </Toast.Header>
-            <Toast.Body style={{maxHeight: convertViewtoPx(65, props.windowHeight), overflowY: 'scroll'}}>
-                <Row style={{padding: '0.5rem'}}>
+            <Toast.Body style={{maxHeight: convertViewtoPx(60, props.height()), overflowY: 'scroll'}}>
+                <Row style={{padding: '0.1rem'}}>
                     <Autocomplete 
                         disablePortal
                         sx={{

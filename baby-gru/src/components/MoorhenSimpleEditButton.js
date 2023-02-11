@@ -3,7 +3,7 @@ import { MenuItem, MenuList, Tooltip } from "@mui/material";
 import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import { Button, Overlay, Container, Row, FormSelect, FormGroup, FormLabel, Card } from "react-bootstrap"
 import { MoorhenMoleculeSelect } from "./MoorhenMoleculeSelect";
-import { cidToSpec, getTooltipShortcutLabel } from "../utils/MoorhenUtils";
+import { cidToSpec, getTooltipShortcutLabel, residueCodesThreeToOne } from "../utils/MoorhenUtils";
 
 const refinementFormatArgs = (molecule, chosenAtom, pp) => {
     return [
@@ -451,7 +451,7 @@ export const MoorhenMutateButton = (props) => {
                             props.setPanelParameters(newParameters)
                         }}>
                         {toTypes.map(optionName => {
-                            return <option key={optionName} value={optionName}>{optionName}</option>
+                            return <option key={optionName} value={optionName}>{`${optionName} (${residueCodesThreeToOne[optionName]})`}</option>
                         })}
                     </FormSelect>
                 </FormGroup>
@@ -564,10 +564,25 @@ export const MoorhenJedFlipTrueButton = (props) => {
 
 export const MoorhenRotateTranslateZoneButton = (props) => {
     const [showAccept, setShowAccept] = useState(false)
+    const [tips, setTips] = useState(null)
     const theButton = useRef(null)
     const { changeMolecules, molecules, backgroundColor, glRef } = props
     const fragmentMolecule = useRef(null)
     const chosenMolecule = useRef(null)
+
+    useEffect(() => {
+        if (props.shortCuts) {
+            const shortCut = JSON.parse(props.shortCuts).residue_camera_wiggle
+            setTips( <>
+                        <em>{"Hold <Shift><Alt> to translate"}</em>
+                        <br></br>
+                        <em>{`Hold ${getTooltipShortcutLabel(shortCut)} to move view`}</em>
+                        <br></br>
+                        <br></br>
+                    </>
+            )
+        }     
+    }, [props.shortCuts])
 
     const acceptTransform = useCallback(async (e) => {
         glRef.current.setActiveMolecule(null)
@@ -624,7 +639,8 @@ export const MoorhenRotateTranslateZoneButton = (props) => {
                 >
                     <Card className="mx-2">
                         <Card.Header >Accept rotate/translate ?</Card.Header>
-                        <Card.Body className="">
+                        <Card.Body style={{alignItems: 'center', alignContent:'center', justifyContent:'center'}}>
+                            {tips}
                             <Button onClick={acceptTransform}><CheckOutlined /></Button>
                             <Button className="mx-2" onClick={rejectTransform}><CloseOutlined /></Button>
                         </Card.Body>

@@ -102,6 +102,14 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         const formatArgs = (chosenMolecule, chosenAtom) => {
             return [chosenMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`, "SPHERE"]
         }
+        setToastContent(
+            <h3>
+                <List>
+                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pushed`}</ListItem>
+                    <ListItem style={{justifyContent: 'center'}}>Sphere refine</ListItem>
+                </List>
+            </h3>
+        )
         return doShortCut('refine_residues_using_atom_cid', formatArgs)
     }
 
@@ -109,6 +117,14 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         const formatArgs = (chosenMolecule, chosenAtom) => {
             return [chosenMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, '']
         }
+        setToastContent(
+            <h3>
+                <List>
+                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pushed`}</ListItem>
+                    <ListItem style={{justifyContent: 'center'}}>Flip peptide</ListItem>
+                </List>
+            </h3>
+        )
         return doShortCut('flipPeptide_cid', formatArgs)
     }
 
@@ -116,6 +132,14 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         const formatArgs = (chosenMolecule, chosenAtom) => {
             return [chosenMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`, "TRIPLE"]
         }
+        setToastContent(
+            <h3>
+                <List>
+                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pushed`}</ListItem>
+                    <ListItem style={{justifyContent: 'center'}}>Triple refine</ListItem>
+                </List>
+            </h3>
+        )
         return doShortCut('refine_residues_using_atom_cid', formatArgs)
     }
 
@@ -130,6 +154,14 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
                 activeMap.molNo
             ]
         }
+        setToastContent(
+            <h3>
+                <List>
+                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pushed`}</ListItem>
+                    <ListItem style={{justifyContent: 'center'}}>Auto fit rotamer</ListItem>
+                </List>
+            </h3>
+        )
         return doShortCut('auto_fit_rotamer', formatArgs)
     }
 
@@ -137,6 +169,14 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         const formatArgs = (chosenMolecule, chosenAtom) => {
             return [chosenMolecule.molNo,  `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
         }
+        setToastContent(
+            <h3>
+                <List>
+                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pushed`}</ListItem>
+                    <ListItem style={{justifyContent: 'center'}}>Add residue</ListItem>
+                </List>
+            </h3>
+        )
         return doShortCut('add_terminal_residue_directly_using_cid', formatArgs)
     }
 
@@ -148,6 +188,14 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
                 'LITERAL'
             ]
         }
+        setToastContent(
+            <h3>
+                <List>
+                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pushed`}</ListItem>
+                    <ListItem style={{justifyContent: 'center'}}>Delete residue</ListItem>
+                </List>
+            </h3>
+        )
         return doShortCut('delete_using_cid', formatArgs)
     }
 
@@ -155,11 +203,26 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         const formatArgs = (chosenMolecule, chosenAtom) => {
             return [chosenMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
         }
+        setToastContent(
+            <h3>
+                <List>
+                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pushed`}</ListItem>
+                    <ListItem style={{justifyContent: 'center'}}>Eigen flip</ListItem>
+                </List>
+            </h3>
+        )
         return doShortCut('eigen_flip_ligand', formatArgs)
     }
 
     else if (action === 'go_to_blob' && activeMap) {
-
+        setToastContent(
+            <h3>
+                <List>
+                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pushed`}</ListItem>
+                    <ListItem style={{justifyContent: 'center'}}>Go to blob</ListItem>
+                </List>
+            </h3>
+        )
         const frontAndBack = glRef.current.getFrontAndBackPos(event);
         const goToBlobEvent = {
             back: [frontAndBack[0][0], frontAndBack[0][1], frontAndBack[0][2]],
@@ -181,8 +244,16 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     }
 
     else if (action === 'clear_labels') {
-        glRef.current.clickedAtoms = [];
-        glRef.current.drawScene();
+        glRef.current.clickedAtoms = []
+        glRef.current.drawScene()
+        setToastContent(
+            <h3>
+                <List>
+                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pushed`}</ListItem>
+                    <ListItem style={{justifyContent: 'center'}}>Clear labels</ListItem>
+                </List>
+            </h3>
+        )
     }
 
     else if (action === 'move_up') {
