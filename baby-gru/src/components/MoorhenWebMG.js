@@ -59,23 +59,23 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
                 commandArgs: [],
             }, true)
 
-            const newToastContents =   <Toast.Body>
-                                                {props.preferences.defaultUpdatingScores.includes('Rfactor') && 
-                                                    <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
-                                                        Clipper R-Factor {parseFloat(currentScores.data.result.result.r_factor).toFixed(3)}
-                                                    </p>
-                                                }
-                                                {props.preferences.defaultUpdatingScores.includes('Rfree') && 
-                                                    <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
-                                                        Clipper R-Free {parseFloat(currentScores.data.result.result.free_r_factor).toFixed(3)}
-                                                    </p>
-                                                }
-                                                {props.preferences.defaultUpdatingScores.includes('Moorhen Points') && 
-                                                    <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
-                                                        Moorhen Points {currentScores.data.result.result.rail_points_total}
-                                                    </p>
-                                                }
-                                            </Toast.Body>
+            const newToastContents =    <Toast.Body style={{width: '100%'}}>
+                                            {props.preferences.defaultUpdatingScores.includes('Rfactor') && 
+                                                <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
+                                                    Clipper R-Factor {parseFloat(currentScores.data.result.result.r_factor).toFixed(3)}
+                                                </p>
+                                            }
+                                            {props.preferences.defaultUpdatingScores.includes('Rfree') && 
+                                                <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
+                                                    Clipper R-Free {parseFloat(currentScores.data.result.result.free_r_factor).toFixed(3)}
+                                                </p>
+                                            }
+                                            {props.preferences.defaultUpdatingScores.includes('Moorhen Points') && 
+                                                <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
+                                                    Moorhen Points {currentScores.data.result.result.rail_points_total}
+                                                </p>
+                                            }
+                                        </Toast.Body>
             
             if (scores !== null) {
                 const moorhenPointsDiff = currentScores.data.result.result.rail_points_total - scores.current.moorhenPoints
@@ -83,7 +83,7 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
                 const rFreeDiff = currentScores.data.result.result.free_r_factor - scores.current.rFree
 
                 setScoreToastContents(
-                        <Toast.Body>
+                        <Toast.Body style={{width: '100%'}}>
                             {props.preferences.defaultUpdatingScores.includes('Rfactor') && 
                                 <p style={{paddingLeft: '0.5rem', marginBottom:'0rem', color: rFactorDiff < 0 ? 'green' : 'red'}}>
                                     Clipper R-Factor {parseFloat(scores.current.rFactor).toFixed(3)} {`${rFactorDiff < 0 ? '' : '+'}${parseFloat(rFactorDiff).toFixed(3)}`}
@@ -134,7 +134,7 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
         }, true)
 
         setScoreToastContents(
-                <Toast.Body>
+                <Toast.Body style={{width: '100%'}}>
                     {props.preferences.defaultUpdatingScores.includes('Rfactor') && 
                         <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
                             Clipper R-Factor {parseFloat(currentScores.data.result.result.r_factor).toFixed(3)}
@@ -165,7 +165,7 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
     useEffect(() => {
         if (scores.current !== null && props.preferences.defaultUpdatingScores !== null && props.preferences.showScoresToast && connectedMolNo) {
             setScoreToastContents(
-                <Toast.Body>
+                <Toast.Body style={{width: '100%'}}>
                     {props.preferences.defaultUpdatingScores.includes('Rfactor') && 
                         <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
                             Clipper R-Factor {parseFloat(scores.current.rFactor).toFixed(3)}
@@ -297,9 +297,9 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
     }
 
     return  <>
-                <ToastContainer style={{ zIndex: '0', marginTop: "5rem", marginLeft: '0.5rem', textAlign:'left', alignItems: 'left'}} position='top-start' >
+                <ToastContainer style={{ zIndex: '0', marginTop: "5rem", marginLeft: '0.5rem', textAlign:'left', alignItems: 'left', maxWidth: convertViewtoPx(40, props.windowWidth)}} position='top-start' >
                     {scoresToastContents !== null && props.preferences.showScoresToast &&
-                        <Toast bg='light' onClose={() => {}} autohide={false} show={true} style={{maxWidth: convertViewtoPx(15, props.windowWidth)}}>
+                        <Toast bg='light' onClose={() => {}} autohide={false} show={true} style={{width: '100%'}}>
                             {scoresToastContents}
                         </Toast>
                     }

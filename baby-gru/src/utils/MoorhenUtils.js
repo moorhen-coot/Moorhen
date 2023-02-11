@@ -449,5 +449,5 @@ export const getTooltipShortcutLabel = (shortCut) => {
     if (shortCut.modifiers.includes('metaKey')) modifiers.push("<Meta>")
     if (shortCut.modifiers.includes('altKey')) modifiers.push("<Alt>")
     if (shortCut.keyPress === " ") modifiers.push("<Space>")
-    return `<${modifiers.join(" ")} ${shortCut.keyPress.toUpperCase()}>`
+    return modifiers.length > 0 ? `<${modifiers.join(" ")} ${shortCut.keyPress.toUpperCase()}>` : `<${shortCut.keyPress.toUpperCase()}>`
 }
