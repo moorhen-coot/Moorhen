@@ -8,6 +8,7 @@ import { contactsToCylindersInfo, contactsToLinesInfo } from '../WebGLgComponent
 import { singletonsToLinesInfo } from '../WebGLgComponents/mgWebGLAtomsToPrimitives';
 import { readTextFile, readGemmiStructure, cidToSpec, residueCodesThreeToOne, centreOnGemmiAtoms, getBufferAtoms, nucleotideCodesThreeToOne } from './MoorhenUtils'
 import { quatToMat4 } from '../WebGLgComponents/quatToMat4.js';
+import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
 import * as vec3 from 'gl-matrix/vec3';
 import * as mat3 from 'gl-matrix/mat3';
 import * as quat4 from 'gl-matrix/quat';
@@ -51,6 +52,10 @@ export function MoorhenMolecule(commandCentre, urlPrefix) {
     }
     this.urlPrefix = (typeof urlPrefix === 'undefined' ? "." : urlPrefix);
 };
+
+MoorhenMolecule.prototype.setBackgroundColour = function (backgroundColour) {
+    this.cootBondsOptions.isDarkBackground = isDarkBackground(...backgroundColour)
+}
 
 MoorhenMolecule.prototype.updateGemmiStructure = async function () {
     if (this.gemmiStructure && !this.gemmiStructure.isDeleted()) {

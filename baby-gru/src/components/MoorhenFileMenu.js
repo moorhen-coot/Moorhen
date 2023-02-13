@@ -41,6 +41,7 @@ export const MoorhenFileMenu = (props) => {
 
     const readPdbFile = (file) => {
         const newMolecule = new MoorhenMolecule(commandCentre, props.urlPrefix)
+        newMolecule.setBackgroundColour(props.backgroundColor)
         newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
         return newMolecule.loadToCootFromFile(file)
     }
@@ -86,6 +87,7 @@ export const MoorhenFileMenu = (props) => {
 
     const fetchMoleculeFromURL = (url, molName) => {
         const newMolecule = new MoorhenMolecule(commandCentre, props.urlPrefix)
+        newMolecule.setBackgroundColour(props.backgroundColor)
         newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
         return new Promise(async () => {
             try {
