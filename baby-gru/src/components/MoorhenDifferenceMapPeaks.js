@@ -4,8 +4,10 @@ import { Chart, registerables } from 'chart.js';
 import { MoorhenMapSelect } from './MoorhenMapSelect'
 import { MoorhenMoleculeSelect } from './MoorhenMoleculeSelect'
 import MoorhenSlider from './MoorhenSlider' 
+import annotationPlugin from 'chartjs-plugin-annotation'
 
 Chart.register(...registerables);
+Chart.register(annotationPlugin);
 
 const plugin = {
     id: 'custom_bar_borders',
@@ -159,7 +161,7 @@ export const MoorhenDifferenceMapPeaks = (props) => {
             ]
     
             let responses = await Promise.all(promises)
-            let newPlotData = responses[0].data.result.result
+            let newPlotData = responses[0].data.result.result.reverse()
             let newMapRmsd = responses[1].data.result.result
             setMapRmsd(newMapRmsd)
             setPlotData(newPlotData)
@@ -270,7 +272,20 @@ export const MoorhenDifferenceMapPeaks = (props) => {
                         footerFont: {
                             family:'Helvetica'
                         }
-                    }
+                    },
+                    annotation: {
+                        annotations: {
+                            thresholdLine: {
+                                type: 'line',
+                                mode: 'horizontal',
+                                scaleID: 'y-axis-0',
+                                yMin: 0,
+                                yMax: 0,
+                                borderColor: 'black',
+                                borderWidth: 2,
+                            }
+                        }  
+                    },    
                 },
                 onClick: handleClick,
                 responsive: true,
