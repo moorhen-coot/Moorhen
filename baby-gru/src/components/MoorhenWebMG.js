@@ -20,8 +20,10 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
     }
 
     const handleZoomChanged = useCallback(e => {
-        setClipFogByZoom()
-    }, [glRef])
+        if (props.preferences.resetClippingFogging) {
+            setClipFogByZoom()
+        }
+    }, [glRef, props.preferences.resetClippingFogging])
 
     const handleGoToBlobDoubleClick = useCallback(e => {
         props.commandCentre.current.cootCommand({
