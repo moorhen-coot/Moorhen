@@ -36,7 +36,7 @@ export const MoorhenMoleculeCard = (props) => {
     }
 
     const gaussianSettingsProps = {
-        surfaceSigma, setSurfaceSigma, surfaceLevel, setSurfaceLevel, 
+        surfaceSigma, setSurfaceSigma, surfaceLevel, setSurfaceLevel,
         surfaceRadius, setSurfaceRadius, surfaceGridScale, setSurfaceGridScale
     }
 
@@ -280,14 +280,14 @@ export const MoorhenMoleculeCard = (props) => {
     const handleUndo = async () => {
         await props.molecule.undo(props.glRef)
         props.setCurrentDropdownMolNo(-1)
-        const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: {origin: props.glRef.current.origin,  modifiedMolecule: props.molecule.molNo} })
+        const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: props.molecule.molNo } })
         document.dispatchEvent(mapUpdateEvent)
     }
 
     const handleRedo = async () => {
         await props.molecule.redo(props.glRef)
         props.setCurrentDropdownMolNo(-1)
-        const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: {origin: props.glRef.current.origin,  modifiedMolecule: props.molecule.molNo} })
+        const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: props.molecule.molNo } })
         document.dispatchEvent(mapUpdateEvent)
     }
 
@@ -330,28 +330,28 @@ export const MoorhenMoleculeCard = (props) => {
 
     const getCheckBox = (key) => {
         return <FormControlLabel
-                    key={key}
-                    style={{ marginLeft: "0px", marginRight: "0px" }}
-                    labelPlacement="top"
-                    control={<RepresentationCheckbox
-                                key={key}
-                                repKey={key}
-                                glRef={props.glRef}
-                                changeShowState={changeShowState}
-                                molecule={props.molecule}
-                                isVisible={isVisible}
-                                showState={showState}
-                            />}
-                    label={<Typography style={{ transform: 'rotate(-45deg)' }}>
-                                {Object.keys(labelMapping).includes(key) ? labelMapping[key] : key}
-                            </Typography>
-                    }/>
+            key={key}
+            style={{ marginLeft: "0px", marginRight: "0px" }}
+            labelPlacement="top"
+            control={<RepresentationCheckbox
+                key={key}
+                repKey={key}
+                glRef={props.glRef}
+                changeShowState={changeShowState}
+                molecule={props.molecule}
+                isVisible={isVisible}
+                showState={showState}
+            />}
+            label={<Typography style={{ transform: 'rotate(-45deg)' }}>
+                {Object.keys(labelMapping).includes(key) ? labelMapping[key] : key}
+            </Typography>
+            } />
     }
 
     const handleProps = { handleCentering, handleCopyFragment, handleDownload, handleRedo, handleUndo, handleResidueRangeRefinement, handleVisibility }
 
     return <Card className="px-0" style={{ marginBottom: '0.5rem', padding: '0' }} key={props.molecule.molNo}>
-        <Card.Header style={{padding: '0.5rem'}}>
+        <Card.Header style={{ padding: '0.5rem' }}>
             <Row className='align-items-center'>
                 <Col className='align-items-center' style={{ display: 'flex', justifyContent: 'left' }}>
                     {`#${props.molecule.molNo} Mol. ${props.molecule.name}`}
@@ -380,28 +380,21 @@ export const MoorhenMoleculeCard = (props) => {
             </Row>
         </Card.Header>
         <Card.Body style={{ display: isCollapsed ? 'none' : '', padding: '0.5rem' }}>
-            <Accordion alwaysOpen={true} defaultActiveKey={['displayOpytions', 'sequences']}>
-
-                <Accordion.Item eventKey="displayOpytions" style={{ padding: '0', margin: '0' }} >
-                    <Accordion.Header style={{ padding: '0', margin: '0' }}>Display Options</Accordion.Header>
-                    <Accordion.Body style={{paddingLeft: '0.5rem', paddingRight: '0.5rem'}}>
-                        <Row style={{ height: '100%' }}>
-                            <Col>
-                                <div>
-                                    <FormGroup style={{ margin: "0px", padding: "0px" }} row>
-                                        {Object.keys(props.molecule.displayObjects)
-                                            .filter(key => !['hover', 'transformation', 'contact_dots', 'chemical_features', 'VdWSurface'].some(style => key.includes(style)))
-                                            .map(key => getCheckBox(key))}
-                                    </FormGroup>
-                                </div>
-                            </Col>
-                        </Row>
-                    </Accordion.Body>
-                </Accordion.Item>
-
+            <Row style={{ height: '100%' }}>
+                <Col>
+                    <div>
+                        <FormGroup style={{ margin: "0px", padding: "0px" }} row>
+                            {Object.keys(props.molecule.displayObjects)
+                                .filter(key => !['hover', 'transformation', 'contact_dots', 'chemical_features', 'VdWSurface'].some(style => key.includes(style)))
+                                .map(key => getCheckBox(key))}
+                        </FormGroup>
+                    </div>
+                </Col>
+            </Row>
+            <Accordion alwaysOpen={true} defaultActiveKey={['sequences']}>
                 <Accordion.Item eventKey="sequences" style={{ padding: '0', margin: '0' }} >
                     <Accordion.Header style={{ padding: '0', margin: '0' }}>Sequences</Accordion.Header>
-                    <Accordion.Body style={{padding: '0.5rem'}}>
+                    <Accordion.Body style={{ padding: '0.5rem' }}>
                         {props.molecule.sequences && props.molecule.sequences.length > 0 ?
                             <>
                                 <Row style={{ height: '100%' }}>
@@ -443,7 +436,7 @@ export const MoorhenMoleculeCard = (props) => {
 
                 <Accordion.Item eventKey="ligands" style={{ padding: '0', margin: '0' }} >
                     <Accordion.Header style={{ padding: '0', margin: '0' }}>Ligands</Accordion.Header>
-                    <Accordion.Body style={{padding: '0.5rem'}}>
+                    <Accordion.Body style={{ padding: '0.5rem' }}>
                         <MoorhenLigandList molecule={props.molecule} glRef={props.glRef} />
                     </Accordion.Body>
                 </Accordion.Item>
