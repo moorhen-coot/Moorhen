@@ -115,6 +115,7 @@ export const MoorhenLoadTutorialDataMenuItem = (props) => {
         const tutorialNumber = tutorialNumberSelectorRef.current.value
         console.log(`Loading data for tutorial number ${tutorialNumber}`)
         const newMolecule = new MoorhenMolecule(props.commandCentre, props.urlPrefix)
+        newMolecule.setBackgroundColour(props.backgroundColor)
         newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
         const newMap = new MoorhenMap(props.commandCentre)
         const newDiffMap = new MoorhenMap(props.commandCentre)
@@ -193,6 +194,7 @@ export const MoorhenGetMonomerMenuItem = (props) => {
                     const newMolecule = new MoorhenMolecule(props.commandCentre, props.urlPrefix)
                     newMolecule.molNo = result.data.result.result
                     newMolecule.name = newTlc
+                    newMolecule.setBackgroundColour(props.backgroundColor)
                     newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
                     return newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef).then(_ => {
                         props.changeMolecules({ action: "Add", item: newMolecule })
@@ -247,6 +249,7 @@ export const MoorhenFitLigandRightHereMenuItem = (props) => {
                         const newMolecule = new MoorhenMolecule(props.commandCentre, props.urlPrefix)
                         newMolecule.molNo = iMol
                         newMolecule.name = `lig_${iMol}`
+                        newMolecule.setBackgroundColour(props.backgroundColor)
                         newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
                         return newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef).then(_ => {
                             props.changeMolecules({ action: "Add", item: newMolecule })
@@ -814,6 +817,7 @@ export const MoorhenImportDictionaryMenuItem = (props) => {
                                 newMolecule = new MoorhenMolecule(props.commandCentre, props.urlPrefix)
                                 newMolecule.molNo = result.data.result.result
                                 newMolecule.name = instanceName
+                                newMolecule.setBackgroundColour(props.backgroundColor)
                                 newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
                                 newMolecule.addDict(fileContent)
                                 props.changeMolecules({ action: "Add", item: newMolecule })
@@ -1513,6 +1517,7 @@ export const MoorhenCopyFragmentUsingCidMenuItem = (props) => {
             const newMolecule = new MoorhenMolecule(props.commandCentre, props.urlPrefix)
             newMolecule.name = `${fromMolecules[0].name} fragment`
             newMolecule.molNo = response.data.result.result
+            newMolecule.setBackgroundColour(props.backgroundColor)
             newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
             await newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef)
             props.changeMolecules({ action: "Add", item: newMolecule })
