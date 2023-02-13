@@ -186,7 +186,13 @@ MoorhenMolecule.prototype.copyFragment = async function (chainId, res_no_start, 
 MoorhenMolecule.prototype.loadToCootFromURL = function (url, molName) {
     const $this = this
     return fetch(url)
-        .then(response => response.text())
+        .then(response => {
+            if (response.ok) {
+                return response.text()
+            } else {
+                return Promise.reject(`Error fetching data from url ${url}`)
+            }
+        })
         .then(coordData => $this.loadToCootFromString(coordData, molName))
         .catch(err => Promise.reject(err))
 }
