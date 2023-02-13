@@ -24,7 +24,7 @@ const updateStoredPreferences = async (key, value) => {
 
 const getDefaultValues = () => {
     return {
-        version: '0.0.13',
+        version: '0.0.14',
         darkMode: false, 
         atomLabelDepthMode: true, 
         defaultExpandDisplayCards: true,
@@ -42,6 +42,7 @@ const getDefaultValues = () => {
         defaultBondSmoothness: 1,
         showScoresToast: true,
         shortcutOnHoveredAtom: true,
+        resetClippingFogging: true,
         defaultUpdatingScores: ['Rfree', 'Rfactor', 'Moorhen Points'],
         shortCuts: {
             "sphere_refine": {
@@ -179,29 +180,41 @@ const PreferencesContextProvider = ({ children }) => {
     const [defaultBondSmoothness, setDefaultBondSmoothness] = useState(null)
     const [showScoresToast, setShowScoresToast] = useState(null)
     const [shortcutOnHoveredAtom, setShortcutOnHoveredAtom] = useState(null)
+    const [resetClippingFogging, setResetClippingFogging] = useState(null)
     const [defaultUpdatingScores, setDefaultUpdatingScores] = useReducer(itemReducer, null)
+
+    const preferencesMap = {
+        1: { label: "darkMode", value: darkMode, valueSetter: setDarkMode},
+        2: { label: "atomLabelDepthMode", value: atomLabelDepthMode, valueSetter: setAtomLabelDepthMode},
+        3: { label: "defaultExpandDisplayCards", value: defaultExpandDisplayCards, valueSetter: setDefaultExpandDisplayCards},
+        4: { label: "shortCuts", value: shortCuts, valueSetter: setShortCuts},
+        5: { label: "defaultMapLitLines", value: defaultMapLitLines, valueSetter: setDefaultMapLitLines},
+        6: { label: "refineAfterMod", value: refineAfterMod, valueSetter: setRefineAfterMod},
+        7: { label: "mouseSensitivity", value: mouseSensitivity, valueSetter: setMouseSensitivity},
+        8: { label: "wheelSensitivityFactor", value: wheelSensitivityFactor, valueSetter: setWheelSensitivityFactor},
+        9: { label: "drawCrosshairs", value: drawCrosshairs, valueSetter: setDrawCrosshairs},
+        10: { label: "drawFPS", value: drawFPS, valueSetter: setDrawFPS},
+        11: { label: "drawMissingLoops", value: drawMissingLoops, valueSetter: setDrawMissingLoops},
+        12: { label: "mapLineWidth", value: mapLineWidth, valueSetter: setMapLineWidth},
+        13: { label: "makeBackups", value: makeBackups, valueSetter: setMakeBackups},
+        14: { label: "showShortcutToast", value: showShortcutToast, valueSetter: setShowShortcutToast},
+        15: { label: "defaultMapSurface", value: defaultMapSurface, valueSetter: setDefaultMapSurface},
+        16: { label: "defaultBondSmoothness", value: defaultBondSmoothness, valueSetter: setDefaultBondSmoothness},
+        17: { label: "showScoresToast", value: showScoresToast, valueSetter: setShowScoresToast},
+        18: { label: "shortcutOnHoveredAtom", value: shortcutOnHoveredAtom, valueSetter: setShortcutOnHoveredAtom},
+        19: { label: "resetClippingFogging", value: resetClippingFogging, valueSetter: setResetClippingFogging},
+        20: { label: "defaultUpdatingScores", value: defaultUpdatingScores, valueSetter: (newValue) => {setDefaultUpdatingScores({action: 'Overwrite', items: newValue})}},
+    }
 
     const restoreDefaults = (defaultValues)=> {
         updateStoredPreferences('version', defaultValues.version)
-        setDarkMode(defaultValues.darkMode)
-        setDefaultExpandDisplayCards(defaultValues.defaultExpandDisplayCards)            
-        setShortCuts(JSON.stringify(defaultValues.shortCuts))            
-        setAtomLabelDepthMode(defaultValues.atomLabelDepthMode)
-        setDefaultMapLitLines(defaultValues.defaultMapLitLines)
-        setRefineAfterMod(defaultValues.refineAfterMod)
-        setMouseSensitivity(defaultValues.mouseSensitivity)
-        setDrawCrosshairs(defaultValues.drawCrosshairs)
-        setDrawMissingLoops(defaultValues.drawMissingLoops)
-        setMapLineWidth(defaultValues.mapLineWidth)
-        setMakeBackups(defaultValues.makeBackups)
-        setShowShortcutToast(defaultValues.showShortcutToast)
-        setDefaultMapSurface(defaultValues.defaultMapSurface)
-        setDefaultBondSmoothness(defaultValues.defaultBondSmoothness)
-        setShowScoresToast(defaultValues.showScoresToast)
-        setDefaultUpdatingScores({action: 'Overwrite', items: defaultValues.defaultUpdatingScores})
-        setDrawFPS(defaultValues.drawFPS)
-        setWheelSensitivityFactor(defaultValues.wheelSensitivityFactor)
-        setShortcutOnHoveredAtom(defaultValues.shortcutOnHoveredAtom)
+        Object.keys(preferencesMap).forEach(key => {
+            if (preferencesMap[key].label === 'shortCuts') {
+                preferencesMap[key].valueSetter(JSON.stringify(defaultValues[preferencesMap[key].label]))
+            } else {
+                preferencesMap[key].valueSetter(defaultValues[preferencesMap[key].label])
+            }
+        })
     }
 
     /**
@@ -213,59 +226,25 @@ const PreferencesContextProvider = ({ children }) => {
         const fetchStoredPreferences = async () => {
             console.log('Retrieving stored preferences...')
             try {
-                let response = await Promise.all([
-                    localforage.getItem('version'), 
-                    localforage.getItem('darkMode'), 
-                    localforage.getItem('defaultExpandDisplayCards'),
-                    localforage.getItem('shortCuts'),
-                    localforage.getItem('atomLabelDepthMode'),
-                    localforage.getItem('defaultMapLitLines'),
-                    localforage.getItem('refineAfterMod'),
-                    localforage.getItem('mouseSensitivity'),
-                    localforage.getItem('drawCrosshairs'),
-                    localforage.getItem('drawMissingLoops'),
-                    localforage.getItem('mapLineWidth'),
-                    localforage.getItem('makeBackups'),
-                    localforage.getItem('showShortcutToast'),
-                    localforage.getItem('defaultMapSurface'),
-                    localforage.getItem('defaultBondSmoothness'),
-                    localforage.getItem('showScoresToast'),
-                    localforage.getItem('defaultUpdatingScores'),
-                    localforage.getItem('drawFPS'),
-                    localforage.getItem('wheelSensitivityFactor'),
-                    localforage.getItem('shortcutOnHoveredAtom'),
-                    ])
-                
-                console.log('Retrieved the following preferences from local storage: ', response)
-
+                const storedVersion = await localforage.getItem('version')
                 const defaultValues = getDefaultValues()                
-                if (response[0] !== defaultValues.version) {
+                if (storedVersion !== defaultValues.version) {
                     console.log('Different storage version detected, using defaults')
                     restoreDefaults(defaultValues)
-                } else if(!response.every(item => item !== null) || response.length < Object.keys(defaultValues).length) {
+                    return
+                }
+                
+                const fetchPromises = Object.keys(preferencesMap).map(key => localforage.getItem(preferencesMap[key].label))
+                let responses = await Promise.all(fetchPromises)
+                
+                console.log('Retrieved the following preferences from local storage: ', responses)
+                
+                if(!responses.every(item => item !== null) || responses.length < Object.keys(preferencesMap).length) {
                     console.log('Cannot find stored preferences, using defaults')
                     restoreDefaults(defaultValues)
                 } else {
-                    console.log(`Stored preferences retrieved successfully: ${response}`)
-                    setDarkMode(response[1])
-                    setDefaultExpandDisplayCards(response[2])
-                    setShortCuts(response[3])
-                    setAtomLabelDepthMode(response[4])
-                    setDefaultMapLitLines(response[5])
-                    setRefineAfterMod(response[6])
-                    setMouseSensitivity(response[7])
-                    setDrawCrosshairs(response[8])
-                    setDrawMissingLoops(response[9])
-                    setMapLineWidth(response[10])
-                    setMakeBackups(response[11])
-                    setShowShortcutToast(response[12])
-                    setDefaultMapSurface(response[13])
-                    setDefaultBondSmoothness(response[14])
-                    setShowScoresToast(response[15])
-                    setDefaultUpdatingScores({action: 'Overwrite', items: response[16]})
-                    setDrawFPS(response[17])
-                    setWheelSensitivityFactor(response[18])
-                    setShortcutOnHoveredAtom(response[19])
+                    console.log(`Stored preferences retrieved successfully: ${responses}`)
+                    Object.keys(preferencesMap).forEach((key, index) => preferencesMap[key].valueSetter(responses[index]))
                 }                
                 
             } catch (err) {
@@ -291,6 +270,15 @@ const PreferencesContextProvider = ({ children }) => {
        
         updateStoredPreferences('shortcutOnHoveredAtom', shortcutOnHoveredAtom);
     }, [shortcutOnHoveredAtom]);
+
+    useMemo(() => {
+
+        if (resetClippingFogging === null) {
+            return
+        }
+       
+        updateStoredPreferences('resetClippingFogging', resetClippingFogging);
+    }, [resetClippingFogging]);
 
     useMemo(() => {
 
@@ -462,7 +450,8 @@ const PreferencesContextProvider = ({ children }) => {
         makeBackups, setMakeBackups, showShortcutToast, setShowShortcutToast, defaultMapSurface,
         setDefaultMapSurface, defaultBondSmoothness, setDefaultBondSmoothness, showScoresToast, 
         setShowScoresToast, defaultUpdatingScores, setDefaultUpdatingScores, drawFPS, setDrawFPS,
-        wheelSensitivityFactor, setWheelSensitivityFactor, shortcutOnHoveredAtom, setShortcutOnHoveredAtom
+        wheelSensitivityFactor, setWheelSensitivityFactor, shortcutOnHoveredAtom, setShortcutOnHoveredAtom,
+        resetClippingFogging, setResetClippingFogging
     }
 
     return (
