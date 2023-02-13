@@ -25,8 +25,8 @@ export function MoorhenMolecule(commandCentre, urlPrefix) {
     this.sequences = []
     this.gaussianSurfaceSettings = {
         sigma: 4.4,
-        countourLevel: 4.0, 
-        boxRadius: 5.0, 
+        countourLevel: 4.0,
+        boxRadius: 5.0,
         gridScale: 0.7
     }
     this.cootBondsOptions = {
@@ -316,7 +316,7 @@ MoorhenMolecule.prototype.fetchIfDirtyAndDraw = async function (style, glRef) {
     })
 }
 
-MoorhenMolecule.prototype.centreAndAlignViewOn = function (glRef, selectionCid, animate=true) {
+MoorhenMolecule.prototype.centreAndAlignViewOn = function (glRef, selectionCid, animate = true) {
 
     let promise
     if (this.atomsDirty) {
@@ -331,8 +331,8 @@ MoorhenMolecule.prototype.centreAndAlignViewOn = function (glRef, selectionCid, 
         let selectionAtomsAlign = []
         let selectionAtomsCentre = []
         if (selectionCid) {
-            selectionAtomsAlign = await this.gemmiAtomsForCid(selectionCid+"*")
-            selectionAtomsCentre = await this.gemmiAtomsForCid(selectionCid+"CA")
+            selectionAtomsAlign = await this.gemmiAtomsForCid(selectionCid + "*")
+            selectionAtomsCentre = await this.gemmiAtomsForCid(selectionCid + "CA")
 
         } else {
             selectionAtomsAlign = await this.gemmiAtomsForCid('/*/*/*/*')
@@ -344,14 +344,14 @@ MoorhenMolecule.prototype.centreAndAlignViewOn = function (glRef, selectionCid, 
         let O = null
 
         selectionAtomsAlign.forEach(atom => {
-            if(atom.name === "CA"){
-                CA = [atom.x,atom.y,atom.z]
+            if (atom.name === "CA") {
+                CA = [atom.x, atom.y, atom.z]
             }
-            if(atom.name === "C"){
-                C = [atom.x,atom.y,atom.z]
+            if (atom.name === "C") {
+                C = [atom.x, atom.y, atom.z]
             }
-            if(atom.name === "O"){
-                O = [atom.x,atom.y,atom.z]
+            if (atom.name === "O") {
+                O = [atom.x, atom.y, atom.z]
             }
         })
 
@@ -361,24 +361,24 @@ MoorhenMolecule.prototype.centreAndAlignViewOn = function (glRef, selectionCid, 
 
         let newQuat = null
 
-        if(C&&CA&&O){
+        if (C && CA && O) {
             let right = vec3.create()
-            vec3.set(right,C[0]-CA[0],C[1]-CA[1],C[2]-CA[2])
+            vec3.set(right, C[0] - CA[0], C[1] - CA[1], C[2] - CA[2])
             let rightNorm = vec3.create()
             vec3.normalize(rightNorm, right);
 
             let upInit = vec3.create()
-            vec3.set(upInit,O[0]-C[0],O[1]-C[1],O[2]-C[2])
+            vec3.set(upInit, O[0] - C[0], O[1] - C[1], O[2] - C[2])
             let upInitNorm = vec3.create()
             vec3.normalize(upInitNorm, upInit);
 
             let forward = vec3.create()
-            vec3.cross(forward,right,upInitNorm)
+            vec3.cross(forward, right, upInitNorm)
             let forwardNorm = vec3.create()
             vec3.normalize(forwardNorm, forward);
 
             let up = vec3.create()
-            vec3.cross(up,forwardNorm,rightNorm)
+            vec3.cross(up, forwardNorm, rightNorm)
             let upNorm = vec3.create()
             vec3.normalize(upNorm, up);
 
@@ -387,18 +387,18 @@ MoorhenMolecule.prototype.centreAndAlignViewOn = function (glRef, selectionCid, 
             console.log(forwardNorm)
             newQuat = quat4.create()
             let mat = mat3.create()
-            const [right_x,right_y,right_z]             = [rightNorm[0],rightNorm[1],rightNorm[2]]
-            const [up_x,up_y,up_z]                      = [upNorm[0],upNorm[1],upNorm[2]]
-            const [formaward_x,formaward_y,formaward_z] = [forwardNorm[0],forwardNorm[1],forwardNorm[2]]
-            mat3.set(mat,right_x,right_y,right_z, up_x,up_y,up_z, formaward_x,formaward_y,formaward_z)
-            quat4.fromMat3(newQuat,mat)
+            const [right_x, right_y, right_z] = [rightNorm[0], rightNorm[1], rightNorm[2]]
+            const [up_x, up_y, up_z] = [upNorm[0], upNorm[1], upNorm[2]]
+            const [formaward_x, formaward_y, formaward_z] = [forwardNorm[0], forwardNorm[1], forwardNorm[2]]
+            mat3.set(mat, right_x, right_y, right_z, up_x, up_y, up_z, formaward_x, formaward_y, formaward_z)
+            quat4.fromMat3(newQuat, mat)
             console.log(newQuat)
         }
 
         let selectionCentre = centreOnGemmiAtoms(selectionAtomsCentre)
         return new Promise((resolve, reject) => {
-            if(newQuat){
-                glRef.current.setOriginOrientationAndZoomAnimated(selectionCentre,newQuat,0.20);
+            if (newQuat) {
+                glRef.current.setOriginOrientationAndZoomAnimated(selectionCentre, newQuat, 0.20);
             }
             resolve(true);
         })
@@ -406,7 +406,7 @@ MoorhenMolecule.prototype.centreAndAlignViewOn = function (glRef, selectionCid, 
 
 }
 
-MoorhenMolecule.prototype.centreOn = function (glRef, selectionCid, animate=true) {
+MoorhenMolecule.prototype.centreOn = function (glRef, selectionCid, animate = true) {
     //Note add selection to permit centringh on subset
     let promise
     if (this.atomsDirty) {
@@ -463,8 +463,10 @@ MoorhenMolecule.prototype.drawWithStyleFromAtoms = async function (style, glRef)
         case 'DishyBases':
         case 'VdWSurface':
         case 'Calpha':
-        case 'ligands':
             await this.drawCootRepresentation(glRef, style)
+            break;
+        case 'ligands':
+            await this.drawCootLigands(glRef)
             break;
         default:
             if (style.startsWith("chemical_features")) {
@@ -571,6 +573,66 @@ MoorhenMolecule.prototype.drawRotamerDodecahedra = function (glRef) {
     })
 }
 
+MoorhenMolecule.prototype.drawCootLigands = async function (glRef) {
+    const $this = this
+    const style = "ligands"
+    const ligandsCID = "/*/*/(!ALA,CYS,ASP,GLU,PHE,GLY,HIS,ILE,LYS,LEU,MET,ASN,PRO,GLN,ARG,SER,THR,VAL,TRP,TYR,WAT,HOH,THP,SEP,TPO,TYP,PTR,OH2,H2O)"
+    return this.commandCentre.current.cootCommand({
+        returnType: "instanced_mesh",
+        command: "get_bonds_mesh_for_selection_instanced",
+        //returnType: "mesh",
+        //command: "get_bonds_mesh",
+        commandArgs: [
+            $this.molNo,
+            ligandsCID,
+            "COLOUR-BY-CHAIN-AND-DICTIONARY",
+            $this.cootBondsOptions.isDarkBackground,
+            $this.cootBondsOptions.width * 1.5, $this.cootBondsOptions.atomRadiusBondRatio * 1.5,
+            $this.cootBondsOptions.smoothness
+        ]
+    }).then(async response => {
+        const objects = [response.data.result.result]
+        if (objects.length > 0 && !this.gemmiStructure.isDeleted()) {
+            //Empty existing buffers of this type
+            this.clearBuffersOfStyle(style, glRef)
+            this.addBuffersOfStyle(glRef, objects, style)
+            let bufferAtoms = await this.gemmiAtomsForCid(ligandsCID)
+            if (bufferAtoms.length > 0) {
+                this.displayObjects[style][0].atoms = bufferAtoms.map(atom => {
+                    const { pos, x, y, z, charge, label } = atom
+                    const tempFactor = atom.b_iso
+                    const symbol = atom.element
+                    return { pos, x, y, z, charge, tempFactor, symbol, label }
+                })
+
+                /*  gemmiAtoms:     pos: [atomPosX, atomPosY, atomPosZ],
+                                    x: atomPosX,
+                                    y: atomPosY,
+                                    z: atomPosZ,
+                                    charge: atomCharge,
+                                    element: atomElement,
+                                    b_iso: atomTempFactor,
+                                    serial: atomSerial,
+                                    name: atomName
+                                }
+                    bufferAtoms:{   pos: [atomPosX, atomPosY, atomPosZ],
+                                    x: atomPosX,
+                                    y: atomPosY,
+                                    z: atomPosZ,
+                                    tempFactor: atomTemp,
+                                    charge: atomCharge,
+                                    symbol: atomElementString,
+                                    label: `/${modelName}/${chainName}/${resNum}(${residueName})/${atomName}${atomHasAltLoc ? ':' + String.fromCharCode(atomAltLoc) : ''}`
+                                }*/
+            }
+        }
+        else {
+            this.clearBuffersOfStyle(style, glRef)
+        }
+        return Promise.resolve(true)
+    })
+}
+
 MoorhenMolecule.prototype.drawCootBonds = async function (glRef) {
     const $this = this
     const style = "CBs"
@@ -609,9 +671,9 @@ MoorhenMolecule.prototype.drawCootGaussianSurface = async function (glRef) {
         returnType: "mesh",
         command: "get_gaussian_surface",
         commandArgs: [
-            $this.molNo, $this.gaussianSurfaceSettings.sigma, 
-            $this.gaussianSurfaceSettings.countourLevel, 
-            $this.gaussianSurfaceSettings.boxRadius, 
+            $this.molNo, $this.gaussianSurfaceSettings.sigma,
+            $this.gaussianSurfaceSettings.countourLevel,
+            $this.gaussianSurfaceSettings.boxRadius,
             $this.gaussianSurfaceSettings.gridScale
         ]
     }).then(response => {
@@ -1279,16 +1341,21 @@ MoorhenMolecule.prototype.gemmiAtomsForCid = async function (cid) {
     const model = $this.gemmiStructure.first_model()
 
     if (selection.matches_model(model)) {
+        const modelName = model.name
         const chains = model.chains
         const chainsSize = chains.size()
         for (let i = 0; i < chainsSize; i++) {
             const chain = chains.get(i)
             if (selection.matches_chain(chain)) {
+                const chainName = chain.name
                 const residues = chain.residues
                 const residuesSize = residues.size()
                 for (let j = 0; j < residuesSize; j++) {
                     const residue = residues.get(j)
                     if (selection.matches_residue(residue)) {
+                        const residueName = residue.name
+                        const residueSeqId = residue.seqid
+                        const resNum = residueSeqId.str()
                         const atoms = residue.atoms
                         const atomsSize = atoms.size()
                         for (let k = 0; k < atomsSize; k++) {
@@ -1303,6 +1370,8 @@ MoorhenMolecule.prototype.gemmiAtomsForCid = async function (cid) {
                                 const atomTempFactor = atom.b_iso
                                 const atomSerial = atom.serial
                                 const atomName = atom.name
+                                const atomAltLoc = atom.altloc
+                                const atomHasAltLoc = atom.has_altloc()
                                 const atomInfo = {
                                     pos: [atomPosX, atomPosY, atomPosZ],
                                     x: atomPosX,
@@ -1312,7 +1381,8 @@ MoorhenMolecule.prototype.gemmiAtomsForCid = async function (cid) {
                                     element: atomElement,
                                     b_iso: atomTempFactor,
                                     serial: atomSerial,
-                                    name: atomName
+                                    name: atomName,
+                                    label: `/${modelName}/${chainName}/${resNum}(${residueName})/${atomName}${atomHasAltLoc ? ':' + String.fromCharCode(atomAltLoc) : ''}`
                                 }
                                 result.push(atomInfo)
                                 atomPos.delete()

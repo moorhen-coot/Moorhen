@@ -424,6 +424,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("delete_using_cid",&molecules_container_t::delete_using_cid)
     .function("get_bonds_mesh",&molecules_container_t::get_bonds_mesh)
     .function("get_bonds_mesh_instanced",&molecules_container_t::get_bonds_mesh_instanced)
+    .function("get_bonds_mesh_for_selection_instanced",&molecules_container_t::get_bonds_mesh_for_selection_instanced)
     .function("go_to_blob",&molecules_container_t::go_to_blob)
     .function("set_map_sampling_rate",&molecules_container_t::set_map_sampling_rate)
     .function("get_monomer",&molecules_container_t::get_monomer)
