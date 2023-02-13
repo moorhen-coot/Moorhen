@@ -418,7 +418,7 @@ export const MoorhenContainer = (props) => {
                         }}>
                         <Accordion.Item eventKey="showDisplayObjects" style={{ width: sideBarWidth, padding: '0', margin: '0' }} >
                             <Accordion.Header style={{ padding: '0', margin: '0', height: '4rem' }}>Display Objects</Accordion.Header>
-                            <Accordion.Body className='side-bar-accordion-body scroller' style={{ overflowY: 'auto', height: displayObjectsAccordionBodyHeight }}>
+                            <Accordion.Body className='side-bar-accordion-body scroller' style={{ overflowY: 'auto', height: displayObjectsAccordionBodyHeight, padding: '0.5rem' }}>
                                 {molecules.length === 0 && maps.length === 0 ? "No data files loaded" : <MoorhenDisplayObjects {...collectedProps} />}
                             </Accordion.Body>
                         </Accordion.Item>

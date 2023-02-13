@@ -34,7 +34,7 @@ export const MoorhenToolsAccordion = (props) => {
     }, [props.selectedToolKey])
             
     return <Fragment> 
-            <Row style={{padding: '0.5rem'}}>
+            <Row style={{padding: '0.5rem', width:'100%', display:'inline-flex'}}>
                 <Autocomplete 
                         disablePortal
                         sx={{
@@ -59,7 +59,7 @@ export const MoorhenToolsAccordion = (props) => {
                         renderInput={(params) => <TextField {...params} label="Tool" />}
                     />
             </Row>
-            <Row className="tool-container-row">
+            <Row className="tool-container-row" style={{width:'100%', margin:'0rem', padding:'0rem'}}>
                 {props.selectedToolKey !== null ? toolOptions[props.selectedToolKey].toolWidget : null}
             </Row>
         </Fragment> 

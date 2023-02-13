@@ -351,7 +351,7 @@ export const MoorhenMoleculeCard = (props) => {
     const handleProps = { handleCentering, handleCopyFragment, handleDownload, handleRedo, handleUndo, handleResidueRangeRefinement, handleVisibility }
 
     return <Card className="px-0" style={{ marginBottom: '0.5rem', padding: '0' }} key={props.molecule.molNo}>
-        <Card.Header>
+        <Card.Header style={{padding: '0.5rem'}}>
             <Row className='align-items-center'>
                 <Col className='align-items-center' style={{ display: 'flex', justifyContent: 'left' }}>
                     {`#${props.molecule.molNo} Mol. ${props.molecule.name}`}
@@ -379,12 +379,12 @@ export const MoorhenMoleculeCard = (props) => {
                 </Col>
             </Row>
         </Card.Header>
-        <Card.Body style={{ display: isCollapsed ? 'none' : '' }}>
+        <Card.Body style={{ display: isCollapsed ? 'none' : '', padding: '0.5rem' }}>
             <Accordion alwaysOpen={true} defaultActiveKey={['displayOpytions', 'sequences']}>
 
                 <Accordion.Item eventKey="displayOpytions" style={{ padding: '0', margin: '0' }} >
                     <Accordion.Header style={{ padding: '0', margin: '0' }}>Display Options</Accordion.Header>
-                    <Accordion.Body>
+                    <Accordion.Body style={{paddingLeft: '0.5rem', paddingRight: '0.5rem'}}>
                         <Row style={{ height: '100%' }}>
                             <Col>
                                 <div>
@@ -401,7 +401,7 @@ export const MoorhenMoleculeCard = (props) => {
 
                 <Accordion.Item eventKey="sequences" style={{ padding: '0', margin: '0' }} >
                     <Accordion.Header style={{ padding: '0', margin: '0' }}>Sequences</Accordion.Header>
-                    <Accordion.Body>
+                    <Accordion.Body style={{padding: '0.5rem'}}>
                         {props.molecule.sequences && props.molecule.sequences.length > 0 ?
                             <>
                                 <Row style={{ height: '100%' }}>
@@ -443,7 +443,7 @@ export const MoorhenMoleculeCard = (props) => {
 
                 <Accordion.Item eventKey="ligands" style={{ padding: '0', margin: '0' }} >
                     <Accordion.Header style={{ padding: '0', margin: '0' }}>Ligands</Accordion.Header>
-                    <Accordion.Body>
+                    <Accordion.Body style={{padding: '0.5rem'}}>
                         <MoorhenLigandList molecule={props.molecule} glRef={props.glRef} />
                     </Accordion.Body>
                 </Accordion.Item>

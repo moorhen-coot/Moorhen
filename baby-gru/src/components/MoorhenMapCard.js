@@ -209,7 +209,7 @@ export const MoorhenMapCard = (props) => {
     }, [mapRadius, mapContourLevel, mapLitLines, mapSolid])
 
     return <Card className="px-0"  style={{marginBottom:'0.5rem', padding:'0'}} key={props.map.molNo}>
-        <Card.Header>
+        <Card.Header style={{padding: '0.5rem'}}>
             <Row className='align-items-center'>
             <Col className='align-items-center' style={{display:'flex', justifyContent:'left'}}>
                     {`#${props.map.molNo} Map ${props.map.name}`}
