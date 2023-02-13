@@ -137,14 +137,14 @@ export const MoorhenPepflipsDifferenceMap = (props) => {
 
         pepflips.forEach((flip, index) => {
             newCardList.push(
-                <Card key={index} style={{margin: '0.5rem'}}>
-                    <Card.Body>
+                <Card key={index} style={{marginTop: '0.5rem'}}>
+                    <Card.Body style={{padding:'0.5rem'}}>
                         <Row style={{display:'flex', justifyContent:'between'}}>
                             <Col style={{alignItems:'center', justifyContent:'left', display:'flex'}}>
                                 {flip.buttonLabel}
                             </Col>
                             <Col className='col-3' style={{margin: '0', padding:'0', justifyContent: 'right', display:'flex'}}>
-                                <Button onClick={() => {
+                                <Button style={{marginRight:'0.5rem'}} onClick={() => {
                                             props.glRef.current.setOriginAnimated([-flip.coordX, -flip.coordY, -flip.coordZ])
                                 }}>
                                     View
@@ -183,7 +183,7 @@ export const MoorhenPepflipsDifferenceMap = (props) => {
                         </Row>
                     </Form.Group>
                 </Form>
-                <div style={{overflowY:'scroll', height:'100%', paddingTop:'0.5rem'}} >
+                <div style={{overflowY:'scroll', height:'100%', paddingTop:'0.5rem', paddingLeft:'0.25rem', paddingRight:'0.25rem'}} >
                     {cardList}
                 </div>
             </Fragment>

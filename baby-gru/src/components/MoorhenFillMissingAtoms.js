@@ -98,14 +98,14 @@ export const MoorhenFillMissingAtoms = (props) => {
         residueList.forEach(residue => {
             const label = `/${residue.modelNumber}/${residue.chainId}/${residue.resNum}${residue.insCode ? '.' + residue.insCode : ''}/`
             newCardList.push(
-                <Card style={{margin: '0.5rem'}} key={label}>
-                    <Card.Body>
+                <Card style={{marginTop: '0.5rem'}} key={label}>
+                    <Card.Body style={{padding:'0.5rem'}}>
                         <Row style={{display:'flex', justifyContent:'between'}}>
                             <Col style={{alignItems:'center', justifyContent:'left', display:'flex'}}>
                                 {label}
                             </Col>
                             <Col className='col-3' style={{margin: '0', padding:'0', justifyContent: 'right', display:'flex'}}>
-                                <Button onClick={() => selectedMolecule.centreOn(props.glRef, `/*/${residue.chainId}/${residue.resNum}-${residue.resNum}/*`)}>
+                                <Button style={{marginRight:'0.5rem'}} onClick={() => selectedMolecule.centreOn(props.glRef, `/*/${residue.chainId}/${residue.resNum}-${residue.resNum}/*`)}>
                                     View
                                 </Button>
                                 <Button style={{marginRight:'0.5rem'}} onClick={() => {
@@ -134,7 +134,7 @@ export const MoorhenFillMissingAtoms = (props) => {
                         </Row>
                     </Form.Group>
                 </Form>
-                <div style={{overflowY:'scroll', height:'100%', paddingTop:'0.5rem'}} >
+                <div style={{overflowY:'scroll', height:'100%', paddingTop:'0.5rem', paddingLeft:'0.25rem', paddingRight:'0.25rem'}} >
                     {cardList}
                 </div>
             </Fragment>

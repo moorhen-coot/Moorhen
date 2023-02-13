@@ -60,12 +60,12 @@ export const MoorhenLigandList = (props) => {
             {ligandList.length > 0 ? 
                 <>
                     <Row style={{ height: '100%' }}>
-                        <Col>
+                        <Col style={{paddingLeft: '0.5rem', paddingRight: '0.5rem'}}>
                             {ligandList.map((ligand, index) => {
                                 const keycd = `contact_dots-${ligand.chainName}/${ligand.resNum}(${ligand.resName})`
                                 const keycf = `chemical_features-${ligand.chainName}/${ligand.resNum}(${ligand.resName})`
-                                return <Card key={index} style={{margin: '0.5rem'}}>
-                                            <Card.Body>
+                                return <Card key={index} style={{marginTop: '0.5rem'}}>
+                                            <Card.Body style={{padding:'0.5rem'}}>
                                                 <Row style={{display:'flex', justifyContent:'between'}}>
                                                     <Col style={{alignItems:'center', justifyContent:'left', display:'flex'}}>
                                                         {`${ligand.chainName}/${ligand.resNum}(${ligand.resName})`}
