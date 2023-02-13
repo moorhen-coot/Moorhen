@@ -383,7 +383,7 @@ export const MoorhenMoleculeCard = (props) => {
             <Row style={{ height: '100%' }}>
                 <Col>
                     <div>
-                        <FormGroup style={{ margin: "0px", padding: "0px" }} row>
+                        <FormGroup style={{ margin: "0px", paddingTop: '0.5rem'}} row>
                             {Object.keys(props.molecule.displayObjects)
                                 .filter(key => !['hover', 'transformation', 'contact_dots', 'chemical_features', 'VdWSurface'].some(style => key.includes(style)))
                                 .map(key => getCheckBox(key))}
