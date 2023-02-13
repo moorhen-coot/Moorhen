@@ -279,8 +279,19 @@ export const MoorhenContainer = (props) => {
     }
 
     const webGLHeight = () => {
-        let navBarHeight = parseFloat(window.getComputedStyle(document.getElementById('navbar-baby-gru')).height);
-        let buttonBarHeight = parseFloat(window.getComputedStyle(document.getElementById('button-bar-baby-gru')).height);
+        let buttonBarHeight
+        let navBarHeight
+        const buttonBarDomElement = document.getElementById('button-bar-baby-gru')
+        const navBarDomElement = document.getElementById('navbar-baby-gru')
+
+        if (buttonBarDomElement && navBarDomElement) {
+            navBarHeight = parseFloat(window.getComputedStyle(navBarDomElement).height)
+            buttonBarHeight = parseFloat(window.getComputedStyle(buttonBarDomElement).height)
+        } else {
+            navBarHeight = convertRemToPx(3);
+            buttonBarHeight = convertRemToPx(4);
+        }
+
         return windowHeight - (navBarHeight + buttonBarHeight + innerWindowMarginHeight)
     }
 
@@ -438,8 +449,8 @@ export const MoorhenContainer = (props) => {
                 </Col>
             </Row>
             <ToastContainer style={{ marginTop: "5rem" }} position='top-center' >
-                <Toast bg='light' onClose={() => setShowToast(false)} autohide={true} delay={4000} show={showToast}>
-                    <Toast.Header closeButton={false} >
+                <Toast bg='light' onClose={() => setShowToast(false)} autohide={true} delay={4000} show={showToast} style={{overflowY: 'scroll', maxHeight: convertViewtoPx(80, webGLHeight())}}>
+                    <Toast.Header closeButton={false} style={{justifyContent:'center'}}>
                         {toastContent}
                     </Toast.Header>
                 </Toast>
