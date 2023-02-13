@@ -379,10 +379,11 @@ export const MoorhenMoleculeCard = (props) => {
                 </Col>
             </Row>
         </Card.Header>
-        <Card.Body style={{ display: isCollapsed ? 'none' : '', padding: '0.5rem' }}>
+        <Card.Body style={{ display: isCollapsed ? 'none' : '', padding: '0.25rem' }}>
             <Row style={{ height: '100%' }}>
                 <Col>
-                    <div>
+                    <div style={{margin: '1px', paddingTop: '0.5rem', paddingBottom: '0.25rem',  border: '1px solid', borderRadius:'0.33rem', borderColor:
+                "#CCC"}}>
                         <FormGroup style={{ margin: "0px", padding: "0px" }} row>
                             {Object.keys(props.molecule.displayObjects)
                                 .filter(key => !['hover', 'transformation', 'contact_dots', 'chemical_features', 'VdWSurface'].some(style => key.includes(style)))
