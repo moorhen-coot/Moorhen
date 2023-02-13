@@ -42,6 +42,7 @@ const getDefaultValues = () => {
         defaultBondSmoothness: 1,
         showScoresToast: true,
         shortcutOnHoveredAtom: true,
+        resetClippingFogging: true,
         defaultUpdatingScores: ['Rfree', 'Rfactor', 'Moorhen Points'],
         shortCuts: {
             "sphere_refine": {
@@ -180,6 +181,7 @@ const PreferencesContextProvider = ({ children }) => {
     const [showScoresToast, setShowScoresToast] = useState(null)
     const [shortcutOnHoveredAtom, setShortcutOnHoveredAtom] = useState(null)
     const [defaultUpdatingScores, setDefaultUpdatingScores] = useReducer(itemReducer, null)
+    const [resetClippingFogging, setResetClippingFogging] = useState()
 
     const restoreDefaults = (defaultValues)=> {
         updateStoredPreferences('version', defaultValues.version)
@@ -202,6 +204,7 @@ const PreferencesContextProvider = ({ children }) => {
         setDrawFPS(defaultValues.drawFPS)
         setWheelSensitivityFactor(defaultValues.wheelSensitivityFactor)
         setShortcutOnHoveredAtom(defaultValues.shortcutOnHoveredAtom)
+        setResetClippingFogging(defaultValues.resetClippingFogging)
     }
 
     /**
@@ -234,6 +237,7 @@ const PreferencesContextProvider = ({ children }) => {
                     localforage.getItem('drawFPS'),
                     localforage.getItem('wheelSensitivityFactor'),
                     localforage.getItem('shortcutOnHoveredAtom'),
+                    localforage.getItem('resetClippingFogging'),
                     ])
                 
                 console.log('Retrieved the following preferences from local storage: ', response)
@@ -266,6 +270,7 @@ const PreferencesContextProvider = ({ children }) => {
                     setDrawFPS(response[17])
                     setWheelSensitivityFactor(response[18])
                     setShortcutOnHoveredAtom(response[19])
+                    setResetClippingFogging(response[20])
                 }                
                 
             } catch (err) {
@@ -291,6 +296,15 @@ const PreferencesContextProvider = ({ children }) => {
        
         updateStoredPreferences('shortcutOnHoveredAtom', shortcutOnHoveredAtom);
     }, [shortcutOnHoveredAtom]);
+
+    useMemo(() => {
+
+        if (resetClippingFogging === null) {
+            return
+        }
+       
+        updateStoredPreferences('resetClippingFogging', resetClippingFogging);
+    }, [resetClippingFogging]);
 
     useMemo(() => {
 
@@ -462,7 +476,8 @@ const PreferencesContextProvider = ({ children }) => {
         makeBackups, setMakeBackups, showShortcutToast, setShowShortcutToast, defaultMapSurface,
         setDefaultMapSurface, defaultBondSmoothness, setDefaultBondSmoothness, showScoresToast, 
         setShowScoresToast, defaultUpdatingScores, setDefaultUpdatingScores, drawFPS, setDrawFPS,
-        wheelSensitivityFactor, setWheelSensitivityFactor, shortcutOnHoveredAtom, setShortcutOnHoveredAtom
+        wheelSensitivityFactor, setWheelSensitivityFactor, shortcutOnHoveredAtom, setShortcutOnHoveredAtom,
+        resetClippingFogging, setResetClippingFogging
     }
 
     return (
