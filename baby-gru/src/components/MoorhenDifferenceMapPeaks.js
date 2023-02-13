@@ -4,31 +4,10 @@ import { Chart, registerables } from 'chart.js';
 import { MoorhenMapSelect } from './MoorhenMapSelect'
 import { MoorhenMoleculeSelect } from './MoorhenMoleculeSelect'
 import MoorhenSlider from './MoorhenSlider' 
+import annotationPlugin from 'chartjs-plugin-annotation'
 
 Chart.register(...registerables);
-
-const plugin = {
-    id: 'custom_bar_borders',
-    afterDatasetsDraw: (chart, args, options) => {
-        const {ctx} = chart;
-        ctx.save();
-        ctx.lineWidth = 3;
-        for(let datasetIndex=0; datasetIndex<chart._metasets.length; datasetIndex++){
-          for(let dataPoint=0; dataPoint<chart._metasets[datasetIndex].data.length; dataPoint++){
-            ctx.beginPath();
-            if(chart._metasets[datasetIndex].data[dataPoint]['$context'].raw < 0){
-              ctx.rect(chart._metasets[datasetIndex].data[dataPoint].x-chart._metasets[datasetIndex].data[dataPoint].width/2, chart._metasets[datasetIndex].data[dataPoint].y, chart._metasets[datasetIndex].data[dataPoint].width, chart._metasets[datasetIndex].data[dataPoint].height*-1);
-            } else {
-              ctx.rect(chart._metasets[datasetIndex].data[dataPoint].x-chart._metasets[datasetIndex].data[dataPoint].width/2, chart._metasets[datasetIndex].data[dataPoint].y, chart._metasets[datasetIndex].data[dataPoint].width, chart._metasets[datasetIndex].data[dataPoint].height);
-
-            }
-            ctx.stroke();
-          }
-        }
-      ctx.restore();
-    },
-}
-
+Chart.register(annotationPlugin);
 
 export const MoorhenDifferenceMapPeaks = (props) => {
     const chartCardRef = useRef();
@@ -46,6 +25,27 @@ export const MoorhenDifferenceMapPeaks = (props) => {
     const [selectedRmsd, setSelectedRmsd] = useState(4.5)
     const [mapRmsd, setMapRmsd] = useState(null)
     
+    const plugin = {
+        id: 'custom_bar_borders',
+        afterDatasetsDraw: (chart, args, options) => {
+            const {ctx} = chart;
+            ctx.save();
+            ctx.lineWidth = props.sideBarWidth / 250;
+            for(let datasetIndex=0; datasetIndex<chart._metasets.length; datasetIndex++){
+                for(let dataPoint=0; dataPoint<chart._metasets[datasetIndex].data.length; dataPoint++){
+                    ctx.beginPath();
+                    if(chart._metasets[datasetIndex].data[dataPoint]['$context'].raw < 0){
+                    ctx.rect(chart._metasets[datasetIndex].data[dataPoint].x-chart._metasets[datasetIndex].data[dataPoint].width/2, chart._metasets[datasetIndex].data[dataPoint].y, chart._metasets[datasetIndex].data[dataPoint].width, chart._metasets[datasetIndex].data[dataPoint].height*-1);
+                    } else {
+                    ctx.rect(chart._metasets[datasetIndex].data[dataPoint].x-chart._metasets[datasetIndex].data[dataPoint].width/2, chart._metasets[datasetIndex].data[dataPoint].y, chart._metasets[datasetIndex].data[dataPoint].width, chart._metasets[datasetIndex].data[dataPoint].height);
+                    }
+                    ctx.stroke();
+                }
+            }
+        ctx.restore();
+        },
+    }
+
     const getDifferenceMaps = () => {
         let differenceMaps = []
         
@@ -159,7 +159,7 @@ export const MoorhenDifferenceMapPeaks = (props) => {
             ]
     
             let responses = await Promise.all(promises)
-            let newPlotData = responses[0].data.result.result
+            let newPlotData = responses[0].data.result.result.reverse()
             let newMapRmsd = responses[1].data.result.result
             setMapRmsd(newMapRmsd)
             setPlotData(newPlotData)
@@ -270,7 +270,20 @@ export const MoorhenDifferenceMapPeaks = (props) => {
                         footerFont: {
                             family:'Helvetica'
                         }
-                    }
+                    },
+                    annotation: {
+                        annotations: {
+                            thresholdLine: {
+                                type: 'line',
+                                mode: 'horizontal',
+                                scaleID: 'y-axis-0',
+                                yMin: 0,
+                                yMax: 0,
+                                borderColor: 'black',
+                                borderWidth: 2,
+                            }
+                        }  
+                    },    
                 },
                 onClick: handleClick,
                 responsive: true,

@@ -334,7 +334,7 @@ export const MoorhenContainer = (props) => {
                     <MoorhenHistoryMenu dropdownId="History" {...collectedProps} />
                     <MoorhenPreferencesMenu dropdownId="Preferences" {...collectedProps} />
                     <MoorhenHelpMenu dropdownId="Help" setSelectedToolKey={setSelectedToolKey} consoleBodyHeight={consoleBodyHeight} {...collectedProps}/>
-                    {props.enableCloudMenu && <MoorhenCloudMenu dropdownId="CloudExport" {...collectedProps}/>}
+                    {props.exportToCloudCallback && <MoorhenCloudMenu dropdownId="CloudExport" exportToCloudCallback={props.exportToCloudCallback} {...collectedProps}/>}
                     {props.extraMenus && props.extraMenus.map(menu=>menu)}
                 </Nav>
             </Navbar.Collapse>
@@ -461,5 +461,5 @@ export const MoorhenContainer = (props) => {
 
 MoorhenContainer.defaultProps = {
     urlPrefix: '.',
-    enableCloudMenu: false
+    exportToCloudCallback: null
 }

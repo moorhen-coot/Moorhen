@@ -92,13 +92,13 @@ class MoorhenWrapper {
       })
   }
   
-  renderMoorhen(rootId) {
+  renderMoorhen(rootId, exportToCloudCallback) {
       const root = ReactDOM.createRoot(document.getElementById(rootId));
       root.render(
         <React.StrictMode>
           <div className="App">
             <PreferencesContextProvider>
-              <MoorhenContainer forwardControls={this.forwardControls.bind(this)} enableCloudMenu={true}/>
+              <MoorhenContainer forwardControls={this.forwardControls.bind(this)} exportToCloudCallback={exportToCloudCallback}/>
             </PreferencesContextProvider>
           </div>
         </React.StrictMode>
@@ -107,7 +107,7 @@ class MoorhenWrapper {
 }
   
 let moorhenWrapper = new MoorhenWrapper(window.moorhenInput.urlPrefix)
-moorhenWrapper.renderMoorhen(window.moorhenInput.rootId);
+moorhenWrapper.renderMoorhen(window.moorhenInput.rootId, window.moorhenInput.exportToCloudCallback);
 moorhenWrapper.waitForInitialisation().then(_ => moorhenWrapper.loadInputFiles(window.moorhenInput.inputFiles))
 
 reportWebVitals();

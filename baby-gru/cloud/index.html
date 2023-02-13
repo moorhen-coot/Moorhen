@@ -52,6 +52,7 @@ main UI thread (as opposed to the CootWorker)-->
       window.moorhenInput = {
         rootId: "root",
         urlPrefix: ".",
+        exportToCloudCallback: (molName, molData) => {console.log({name: molName, data: molData})},
         inputFiles: [
           {type: 'pdb', args: ["./baby-gru/tutorials/moorhen-tutorial-structure-number-1.pdb", "molecule"]},
           {type: 'mtz', args: [

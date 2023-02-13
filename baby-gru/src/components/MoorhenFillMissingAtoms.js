@@ -105,13 +105,13 @@ export const MoorhenFillMissingAtoms = (props) => {
                                 {label}
                             </Col>
                             <Col className='col-3' style={{margin: '0', padding:'0', justifyContent: 'right', display:'flex'}}>
-                            <Button style={{marginRight:'0.5rem'}} onClick={() => {
+                                <Button onClick={() => selectedMolecule.centreOn(props.glRef, `/*/${residue.chainId}/${residue.resNum}-${residue.resNum}/*`)}>
+                                    View
+                                </Button>
+                                <Button style={{marginRight:'0.5rem'}} onClick={() => {
                                             handleAtomFill(selectedMolecule, residue.chainId, residue.resNum, residue.insCode)
                                 }}>
                                     Fill
-                                </Button>
-                                <Button onClick={() => selectedMolecule.centreOn(props.glRef, `/*/${residue.chainId}/${residue.resNum}-${residue.resNum}/*`)}>
-                                    View
                                 </Button>
                             </Col>
                         </Row>

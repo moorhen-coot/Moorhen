@@ -5,30 +5,10 @@ import { MoorhenChainSelect } from './MoorhenChainSelect'
 import { MoorhenMapSelect } from './MoorhenMapSelect'
 import { MoorhenMoleculeSelect } from './MoorhenMoleculeSelect'
 import { residueCodesOneToThree, getResidueInfo } from '../utils/MoorhenUtils'
+import annotationPlugin from 'chartjs-plugin-annotation'
 
 Chart.register(...registerables);
-
-const plugin = {
-    id: 'custom_bar_borders',
-    afterDatasetsDraw: (chart, args, options) => {
-        const {ctx} = chart;
-        ctx.save();
-        ctx.lineWidth = 3;
-        for(let datasetIndex=0; datasetIndex<chart._metasets.length; datasetIndex++){
-          for(let dataPoint=0; dataPoint<chart._metasets[datasetIndex].data.length; dataPoint++){
-            ctx.beginPath();
-            if(chart._metasets[datasetIndex].data[dataPoint]['$context'].raw < 0){
-              ctx.rect(chart._metasets[datasetIndex].data[dataPoint].x-chart._metasets[datasetIndex].data[dataPoint].width/2, chart._metasets[datasetIndex].data[dataPoint].y, chart._metasets[datasetIndex].data[dataPoint].width, chart._metasets[datasetIndex].data[dataPoint].height*-1);
-            } else {
-              ctx.rect(chart._metasets[datasetIndex].data[dataPoint].x-chart._metasets[datasetIndex].data[dataPoint].width/2, chart._metasets[datasetIndex].data[dataPoint].y, chart._metasets[datasetIndex].data[dataPoint].width, chart._metasets[datasetIndex].data[dataPoint].height);
-
-            }
-            ctx.stroke();
-          }
-        }
-      ctx.restore();
-    },
-}
+Chart.register(annotationPlugin);
 
 const colourPalettes = {
     density_correlation_analysis: (value) => {return 'rgb(255, 255, '+ parseInt(256 * value) + ')'},
@@ -62,6 +42,38 @@ export const MoorhenValidation = (props) => {
     const [selectedChain, setSelectedChain] = useState(null)
     const [cachedGemmiStructure, setCachedGemmiStructure] = useState(null)
 
+    const plugin = {
+        id: 'custom_bar_borders',
+        afterDatasetsDraw: (chart, args, options) => {
+            const {ctx} = chart;
+            ctx.save();
+            ctx.lineWidth = props.sideBarWidth / 250;
+            for(let datasetIndex=0; datasetIndex<chart._metasets.length; datasetIndex++){
+                if(chart._metasets[datasetIndex].data.length > 0 && chart._metasets[datasetIndex].data[0]['$context'].raw < 0){
+                    ctx.beginPath();
+                    ctx.moveTo(chart._metasets[datasetIndex].data[0].x, chart._metasets[datasetIndex].data[0].base);
+                    ctx.lineTo(chart._metasets[datasetIndex].data[chart._metasets[datasetIndex].data.length - 1].x, chart._metasets[datasetIndex].data[0].base)
+                    ctx.stroke();    
+                } else if (chart._metasets[datasetIndex].data.length > 0 && chart._metasets[datasetIndex].data[0]['$context'].raw >= 0) {
+                    ctx.beginPath();
+                    ctx.moveTo(chart._metasets[datasetIndex].data[0].x, chart._metasets[datasetIndex].data[0].base);
+                    ctx.lineTo(chart._metasets[datasetIndex].data[chart._metasets[datasetIndex].data.length - 1].x,  chart._metasets[datasetIndex].data[0].base)
+                    ctx.stroke();    
+                }
+                for(let dataPoint=0; dataPoint<chart._metasets[datasetIndex].data.length; dataPoint++){
+                    ctx.beginPath();
+                    if(chart._metasets[datasetIndex].data[dataPoint]['$context'].raw < 0){
+                        ctx.rect(chart._metasets[datasetIndex].data[dataPoint].x-chart._metasets[datasetIndex].data[dataPoint].width/2, chart._metasets[datasetIndex].data[dataPoint].y, chart._metasets[datasetIndex].data[dataPoint].width, chart._metasets[datasetIndex].data[dataPoint].height*-1);
+                    } else {
+                        ctx.rect(chart._metasets[datasetIndex].data[dataPoint].x-chart._metasets[datasetIndex].data[dataPoint].width/2, chart._metasets[datasetIndex].data[dataPoint].y, chart._metasets[datasetIndex].data[dataPoint].width, chart._metasets[datasetIndex].data[dataPoint].height);
+                    }
+                    ctx.stroke();
+                }
+            }
+        ctx.restore();
+        },
+    }
+
     const getSequenceData = () => {
         let selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedModel)
         if (selectedMolecule) {
@@ -74,10 +86,10 @@ export const MoorhenValidation = (props) => {
 
     const getAvailableMetrics = () => {
         const allMetrics = [
-            {command: "density_correlation_analysis", returnType:'validation_data', chainID: chainSelectRef.current.value, commandArgs:[selectedModel, selectedMap], needsMapData: true, displayName:'Density Corr.'},
-            {command: "density_fit_analysis", returnType:'validation_data', chainID: chainSelectRef.current.value, commandArgs:[selectedModel, selectedMap], needsMapData: true, displayName:'Density Fit'},            
-            {command: "rotamer_analysis", returnType:'validation_data', chainID: chainSelectRef.current.value, commandArgs:[selectedModel], needsMapData: false, displayName:'Rotamers'},
-            {command: "ramachandran_analysis", returnType:'validation_data', chainID: chainSelectRef.current.value, commandArgs:[selectedModel], needsMapData: false, displayName:'Ramachandran'},
+            {command: "density_correlation_analysis", returnType:'validation_data', chainID: chainSelectRef.current.value, commandArgs:[selectedModel, selectedMap], needsMapData: true, displayName:'Dens. Corr.'},
+            {command: "density_fit_analysis", returnType:'validation_data', chainID: chainSelectRef.current.value, commandArgs:[selectedModel, selectedMap], needsMapData: true, displayName:'Dens. Fit'},            
+            {command: "rotamer_analysis", returnType:'validation_data', chainID: chainSelectRef.current.value, commandArgs:[selectedModel], needsMapData: false, displayName:'Rota.'},
+            {command: "ramachandran_analysis", returnType:'validation_data', chainID: chainSelectRef.current.value, commandArgs:[selectedModel], needsMapData: false, displayName:'Rama.'},
             {command: "peptide_omega_analysis", returnType:'validation_data', chainID: chainSelectRef.current.value, commandArgs:[selectedModel], needsMapData: false, displayName:'Pept. Omega'},
         ]    
         
