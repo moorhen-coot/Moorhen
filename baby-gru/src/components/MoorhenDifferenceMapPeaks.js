@@ -307,7 +307,7 @@ export const MoorhenDifferenceMapPeaks = (props) => {
                             </Col>
                             <Col style={{justifyContent:'center', alignContent:'center', alignItems:'center', display:'flex'}}>
                                 <Form.Group controlId="rmsdSlider" style={{margin:'0.5rem', width: '100%'}}>
-                                    <MoorhenSlider minVal={2.5} maxVal={7.0} logScale={false} sliderTitle="RMSD" intialValue={4.5} externalValue={selectedRmsd} setExternalValue={setSelectedRmsd}/>
+                                    <MoorhenSlider minVal={2.5} maxVal={7.0} logScale={false} sliderTitle="RMSD" initialValue={4.5} externalValue={selectedRmsd} setExternalValue={setSelectedRmsd}/>
                                 </Form.Group>
                             </Col>
                         </Row>

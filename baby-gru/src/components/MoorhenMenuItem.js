@@ -530,7 +530,7 @@ export const MoorhenMapSettingsMenuItem = (props) => {
                     label="Activate lit lines" />
             }
             <Form.Group className="mb-3" style={{ width: '10rem', margin: '0' }} controlId="MoorhenMapOpacitySlider">
-                <MoorhenSlider minVal={0.0} maxVal={1.0} logScale={false} sliderTitle="Opacity" intialValue={props.mapOpacity} externalValue={props.mapOpacity} setExternalValue={props.setMapOpacity} />
+                <MoorhenSlider minVal={0.0} maxVal={1.0} logScale={false} sliderTitle="Opacity" initialValue={props.mapOpacity} externalValue={props.mapOpacity} setExternalValue={props.setMapOpacity} />
             </Form.Group>
         </>
     return <MoorhenMenuItem
@@ -549,10 +549,10 @@ export const MoorhenMoleculeBondSettingsMenuItem = (props) => {
     const panelContent =
         <>
             <Form.Group className="mb-3" style={{ width: '10rem', margin: '0' }} controlId="MoorhenBondWidthSlider">
-                <MoorhenSlider minVal={0.05} maxVal={0.5} logScale={false} sliderTitle="Bond width" intialValue={0.1} externalValue={props.bondWidth} setExternalValue={props.setBondWidth} />
+                <MoorhenSlider minVal={0.05} maxVal={0.5} logScale={false} sliderTitle="Bond width" initialValue={0.1} externalValue={props.bondWidth} setExternalValue={props.setBondWidth} />
             </Form.Group>
             <Form.Group className="mb-3" style={{ width: '10rem', margin: '0' }} controlId="MoorhenRadiusBondRatioSlider">
-                <MoorhenSlider minVal={1.0} maxVal={3.5} logScale={false} sliderTitle="Radius-Bond ratio" intialValue={1.5} externalValue={props.atomRadiusBondRatio} setExternalValue={props.setAtomRadiusBondRatio} />
+                <MoorhenSlider minVal={1.0} maxVal={3.5} logScale={false} sliderTitle="Radius-Bond ratio" initialValue={1.5} externalValue={props.atomRadiusBondRatio} setExternalValue={props.setAtomRadiusBondRatio} />
             </Form.Group>
             <Form.Group className="mb-3" style={{ width: '10rem', margin: '0' }} controlId="MoorhenSmoothnessSelector">
                 <Form.Label>Smoothness</Form.Label>
@@ -577,16 +577,16 @@ export const MoorhenMoleculeGaussianSurfaceSettingsMenuItem = (props) => {
     const panelContent =
         <>
             <Form.Group className="mb-3" style={{ width: '10rem', margin: '0' }} controlId="MoorhenGausSurfSigmaSlider">
-                <MoorhenSlider minVal={0.01} maxVal={10} logScale={false} sliderTitle="Sigma" intialValue={4.4} externalValue={props.surfaceSigma} setExternalValue={props.setSurfaceSigma} />
+                <MoorhenSlider minVal={0.01} maxVal={10} logScale={false} sliderTitle="Sigma" initialValue={4.4} externalValue={props.surfaceSigma} setExternalValue={props.setSurfaceSigma} />
             </Form.Group>
             <Form.Group className="mb-3" style={{ width: '10rem', margin: '0' }} controlId="MoorhenGausSurfLevelSlider">
-                <MoorhenSlider minVal={0.01} maxVal={10} logScale={false} sliderTitle="Contour level" intialValue={4.0} externalValue={props.surfaceLevel} setExternalValue={props.setSurfaceLevel} />
+                <MoorhenSlider minVal={0.01} maxVal={10} logScale={false} sliderTitle="Contour level" initialValue={4.0} externalValue={props.surfaceLevel} setExternalValue={props.setSurfaceLevel} />
             </Form.Group>
             <Form.Group className="mb-3" style={{ width: '10rem', margin: '0' }} controlId="MoorhenGausSurfRadiusSlider">
-                <MoorhenSlider minVal={0.01} maxVal={10} logScale={false} sliderTitle="Box radius" intialValue={5.0} externalValue={props.surfaceRadius} setExternalValue={props.setSurfaceRadius} />
+                <MoorhenSlider minVal={0.01} maxVal={10} logScale={false} sliderTitle="Box radius" initialValue={5.0} externalValue={props.surfaceRadius} setExternalValue={props.setSurfaceRadius} />
             </Form.Group>
             <Form.Group className="mb-3" style={{ width: '10rem', margin: '0' }} controlId="MoorhenSurfGridScaleSlider">
-                <MoorhenSlider minVal={0.01} maxVal={1.5} logScale={false} sliderTitle="Grid scale" intialValue={0.7} externalValue={props.surfaceGridScale} setExternalValue={props.setSurfaceGridScale} />
+                <MoorhenSlider minVal={0.01} maxVal={1.5} logScale={false} sliderTitle="Grid scale" initialValue={0.7} externalValue={props.surfaceGridScale} setExternalValue={props.setSurfaceGridScale} />
             </Form.Group>
         </>
 
@@ -1287,7 +1287,7 @@ export const MoorhenClipFogMenuItem = (props) => {
     const panelContent = <div style={{ minWidth: "20rem" }}>
         <MoorhenSlider minVal={0.1} maxVal={1000} logScale={true}
             sliderTitle="Front clip"
-            intialValue={500 + props.glRef.current.gl_clipPlane0[3]}
+            initialValue={500 + props.glRef.current.gl_clipPlane0[3]}
             externalValue={zclipFront}
             setExternalValue={(newValue) => {
                 props.glRef.current.gl_clipPlane0[3] = newValue - 500
@@ -1296,7 +1296,7 @@ export const MoorhenClipFogMenuItem = (props) => {
             }} />
         <MoorhenSlider minVal={0.1} maxVal={1000} logScale={true}
             sliderTitle="Back clip"
-            intialValue={props.glRef.current.gl_clipPlane1[3] - 500}
+            initialValue={props.glRef.current.gl_clipPlane1[3] - 500}
             externalValue={zclipBack}
             setExternalValue={(newValue) => {
                 props.glRef.current.gl_clipPlane1[3] = 500 + newValue
@@ -1305,7 +1305,7 @@ export const MoorhenClipFogMenuItem = (props) => {
             }} />
         <MoorhenSlider minVal={0.1} maxVal={1000} logScale={true}
             sliderTitle="Front zFog"
-            intialValue={500 - props.glRef.current.gl_fog_start}
+            initialValue={500 - props.glRef.current.gl_fog_start}
             externalValue={zfogFront}
             setExternalValue={(newValue) => {
                 props.glRef.current.gl_fog_start = 500 - newValue
@@ -1315,7 +1315,7 @@ export const MoorhenClipFogMenuItem = (props) => {
         <MoorhenSlider minVal={0.1} maxVal={1000} logScale={true}
             sliderTitle="Back zFog"
             externalValue={zfogBack}
-            intialValue={props.glRef.current.gl_fog_end - 500}
+            initialValue={props.glRef.current.gl_fog_end - 500}
             setExternalValue={(newValue) => {
                 props.glRef.current.gl_fog_end = newValue + 500
                 props.glRef.current.drawScene()

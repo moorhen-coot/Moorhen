@@ -13,7 +13,7 @@ export default function MoorhenSlider(props) {
         }
     }
 
-    const [value, setValue] = React.useState(convertInitValueToScale(props.intialValue));
+    const [value, setValue] = React.useState(convertInitValueToScale(props.initialValue));
     const [externalValue, setExternalValue] = React.useState(props.externalValue)
 
     React.useEffect(() => {
