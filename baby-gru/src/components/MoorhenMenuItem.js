@@ -1270,11 +1270,10 @@ export const MoorhenAboutMenuItem = (props) => {
 }
 
 export const MoorhenClipFogMenuItem = (props) => {
-
-    const [zclipFront, setZclipFront] = useState(5)
-    const [zclipBack, setZclipBack] = useState(5)
-    const [zfogFront, setZfogFront] = useState(5)
-    const [zfogBack, setZfogBack] = useState(5)
+    const [zclipFront, setZclipFront] = useState(500 + props.glRef.current.gl_clipPlane0[3])
+    const [zclipBack, setZclipBack] = useState(props.glRef.current.gl_clipPlane1[3] - 500)
+    const [zfogFront, setZfogFront] = useState(500 - props.glRef.current.gl_fog_start)
+    const [zfogBack, setZfogBack] = useState(props.glRef.current.gl_fog_end - 500)
 
     useEffect(() => {
         if (props.glRef.current && props.glRef.current.gl_clipPlane0) {
@@ -1283,24 +1282,12 @@ export const MoorhenClipFogMenuItem = (props) => {
             setZfogFront(500 - props.glRef.current.gl_fog_start)
             setZfogBack(props.glRef.current.gl_fog_end - 500)
         }
-    })
-
-    const fractionalLog = (minVal, maxVal, val) => {
-        if (minVal < 0.00001) minVal = 0.0001
-        if (maxVal < 0.0001) maxVal = 0.0001
-        if (val < 0.0001) val = 0.0001
-        return 1 + 99 * ((Math.log10(val) - Math.log10(minVal)) / (Math.log10(maxVal) - Math.log10(minVal)))
-    }
-
-    const initialClipFront = fractionalLog(0.1, 1000, 500 + props.glRef.current.gl_clipPlane0[3])
-    const initialClipBack = fractionalLog(0.1, 1000, props.glRef.current.gl_clipPlane1[3])
-    const initialFogFront = fractionalLog(0.1, 1000, 500 - props.glRef.current.gl_fog_end)
-    const initialFogBack = fractionalLog(0.1, 1000, props.glRef.current.gl_fog_end - 500)
+    }, [props.glRef.current.gl_clipPlane, props.glRef.current.gl_clipPlane1, props.glRef.current.gl_fog_start, props.glRef.current.gl_fog_end])
 
     const panelContent = <div style={{ minWidth: "20rem" }}>
         <MoorhenSlider minVal={0.1} maxVal={1000} logScale={true}
             sliderTitle="Front clip"
-            initialValue={initialClipFront}
+            intialValue={500 + props.glRef.current.gl_clipPlane0[3]}
             externalValue={zclipFront}
             setExternalValue={(newValue) => {
                 props.glRef.current.gl_clipPlane0[3] = newValue - 500
@@ -1309,7 +1296,7 @@ export const MoorhenClipFogMenuItem = (props) => {
             }} />
         <MoorhenSlider minVal={0.1} maxVal={1000} logScale={true}
             sliderTitle="Back clip"
-            initialValue={initialClipBack}
+            intialValue={props.glRef.current.gl_clipPlane1[3] - 500}
             externalValue={zclipBack}
             setExternalValue={(newValue) => {
                 props.glRef.current.gl_clipPlane1[3] = 500 + newValue
@@ -1318,7 +1305,7 @@ export const MoorhenClipFogMenuItem = (props) => {
             }} />
         <MoorhenSlider minVal={0.1} maxVal={1000} logScale={true}
             sliderTitle="Front zFog"
-            initialValue={initialFogFront}
+            intialValue={500 - props.glRef.current.gl_fog_start}
             externalValue={zfogFront}
             setExternalValue={(newValue) => {
                 props.glRef.current.gl_fog_start = 500 - newValue
@@ -1328,7 +1315,7 @@ export const MoorhenClipFogMenuItem = (props) => {
         <MoorhenSlider minVal={0.1} maxVal={1000} logScale={true}
             sliderTitle="Back zFog"
             externalValue={zfogBack}
-            initialValue={initialFogBack}
+            intialValue={props.glRef.current.gl_fog_end - 500}
             setExternalValue={(newValue) => {
                 props.glRef.current.gl_fog_end = newValue + 500
                 props.glRef.current.drawScene()
