@@ -4,6 +4,7 @@ import { Card, Form, Row, Col, Button, DropdownButton } from "react-bootstrap";
 
 export const MoorhenLigandList = (props) => {
     const [ligandList, setLigandList] = useState([])
+    const [ligandListSVG, setLigandListSVG] = useState({})
     const [cachedGemmiStructure, setCachedGemmiStructure] = useState(null)
     const [showState, setShowState] = useState({})
 
@@ -49,6 +50,70 @@ export const MoorhenLigandList = (props) => {
         }
 
         setLigandList(ligandList)
+        ligandList.forEach(ligand => {
+            const compid = ligand.resName
+            props.commandCentre.current.cootCommand({
+                returnType: "string",
+                command: 'get_svg_for_residue_type',
+                commandArgs: [props.molecule.molNo,compid],
+            }, true).then(result => {
+                const parser = new DOMParser()
+                let doc = parser.parseFromString(result.data.result.result,"image/svg+xml")
+                let svgs = doc.getElementsByTagName("svg");
+                let theText = result.data.result.result
+                let xmin = 999
+                let ymin = 999
+                let xmax = -999
+                let ymax = -999
+                let lines = doc.getElementsByTagName("line");
+                for (let l of lines) {
+                    const x1 = parseFloat(l.getAttribute("x1"))
+                    const y1 = parseFloat(l.getAttribute("y1"))
+                    const x2 = parseFloat(l.getAttribute("x2"))
+                    const y2 = parseFloat(l.getAttribute("y2"))
+                    if(x1>xmax) xmax = x1
+                    if(x1<xmin) xmin = x1
+                    if(y1>ymax) ymax = y1
+                    if(y1<ymin) ymin = y1
+                    if(x2>xmax) xmax = x2
+                    if(x2<xmin) xmin = x2
+                    if(y2>ymax) ymax = y2
+                    if(y2<ymin) ymin = y2
+                }
+                let texts = doc.getElementsByTagName("text");
+                for (let t of texts) {
+                    const x = parseFloat(t.getAttribute("x"))
+                    const y = parseFloat(t.getAttribute("y"))
+                    if(x>xmax) xmax = x
+                    if(x<xmin) xmin = x
+                    if(y>ymax) ymax = y
+                    if(y<ymin) ymin = y
+                }
+                let polygons = doc.getElementsByTagName("polygon");
+                for (let poly of polygons) {
+                    const points = poly.getAttribute("points").trim().split(" ")
+                    points.forEach(point => {
+                        const xy = point.split(",")
+                        const x = parseFloat(xy[0])
+                        const y = parseFloat(xy[1])
+                        if(x>xmax) xmax = x
+                        if(x<xmin) xmin = x
+                        if(y>ymax) ymax = y
+                        if(y<ymin) ymin = y
+                    })
+                }
+                xmin -= 20
+                ymin -= 20
+                xmax += 20
+                ymax += 20
+                const viewBoxStr = xmin+" "+ymin+" "+xmax+" "+ymax
+                for (let item of svgs) {
+                    item.setAttribute("viewBox" , viewBoxStr)
+                    theText = item.outerHTML
+                }
+                ligandListSVG[compid] = theText
+        })
+        })
 
     }, [cachedGemmiStructure])
 
@@ -64,6 +129,11 @@ export const MoorhenLigandList = (props) => {
                             {ligandList.map((ligand, index) => {
                                 const keycd = `contact_dots-${ligand.chainName}/${ligand.resNum}(${ligand.resName})`
                                 const keycf = `chemical_features-${ligand.chainName}/${ligand.resNum}(${ligand.resName})`
+                                const compid = ligand.resName;
+                                let svg = ""
+                                if(compid in ligandListSVG){
+                                    svg = ligandListSVG[compid];
+                                }
                                 return <Card key={index} style={{marginTop: '0.5rem'}}>
                                             <Card.Body style={{padding:'0.5rem'}}>
                                                 <Row style={{display:'flex', justifyContent:'between'}}>
@@ -125,6 +195,9 @@ export const MoorhenLigandList = (props) => {
                                                             View
                                                         </Button>
                                                     </Col>
+                                                </Row>
+                                                <Row>
+                                                <div dangerouslySetInnerHTML={{__html: svg}}></div>
                                                 </Row>
                                             </Card.Body>
                                         </Card>
