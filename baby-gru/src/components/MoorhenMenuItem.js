@@ -7,9 +7,10 @@ import { MoorhenMtzWrapper, readTextFile, readDataFile } from "../utils/MoorhenU
 import { MoorhenMap } from "../utils/MoorhenMap";
 import { MoorhenMolecule } from "../utils/MoorhenMolecule";
 import { MoorhenMoleculeSelect } from "./MoorhenMoleculeSelect";
-import MoorhenSlider from "./MoorhenSlider";
 import { MoorhenMapSelect } from "./MoorhenMapSelect";
 import { MoorhenBackupSelect } from "./MoorhenBackupSelect";
+import { MoorhenChainSelect } from "./MoorhenChainSelect";
+import MoorhenSlider from "./MoorhenSlider";
 import "rc-tree/assets/index.css"
 import Tree from 'rc-tree';
 
@@ -675,6 +676,117 @@ export const MoorhenBackgroundColorMenuItem = (props) => {
         </Form.Group>}
         onCompleted={onCompleted}
         setPopoverIsShown={props.setPopoverIsShown} />
+}
+
+export const MoorhenSuperposeMenuItem = (props) => {
+    const refChainSelectRef = useRef(null);
+    const refMoleculeSelectRef = useRef(null);
+    const movChainSelectRef = useRef(null);
+    const movMoleculeSelectRef = useRef(null);
+    const [selectedRefModel, setSelectedRefModel] = useState(null)
+    const [selectedRefChain, setSelectedRefChain] = useState(null)
+    const [selectedMovModel, setSelectedMovModel] = useState(null)
+    const [selectedMovChain, setSelectedMovChain] = useState(null)
+
+    const handleModelChange = (evt, isReferenceModel) => {
+        const selectedMolecule = props.molecules.find(molecule => molecule.molNo === parseInt(evt.target.value))
+        if (isReferenceModel) {
+            console.log(`Selected reference model ${evt.target.value}`)
+            setSelectedRefModel(parseInt(evt.target.value))
+            setSelectedRefChain(selectedMolecule.sequences[0].chain)
+        } else {
+            console.log(`Selected moving model ${evt.target.value}`)
+            setSelectedMovModel(parseInt(evt.target.value))
+            setSelectedMovChain(selectedMolecule.sequences[0].chain)
+        }
+    }
+
+    const handleChainChange = (evt, isReferenceModel) => {
+        if (isReferenceModel) {
+            console.log(`Selected reference chain ${evt.target.value}`)
+            setSelectedRefChain(evt.target.value)    
+        } else {
+            console.log(`Selected moving chain ${evt.target.value}`)
+            setSelectedMovChain(evt.target.value)    
+        }
+    }
+
+    useEffect(() => {
+        if (props.molecules.length === 0) {
+            setSelectedRefModel(null)
+            setSelectedMovModel(null)
+            return
+        }
+
+        if (selectedRefModel === null || !props.molecules.map(molecule => molecule.molNo).includes(selectedRefModel)) {
+            setSelectedRefModel(props.molecules[0].molNo)
+        } 
+        
+        if (selectedMovModel === null || !props.molecules.map(molecule => molecule.molNo).includes(selectedMovModel)) {
+            setSelectedMovModel(props.molecules[0].molNo)
+        }
+
+    }, [props.molecules.length])
+
+    const panelContent = <>
+        <Form.Group key="reference-model-select" style={{ width: '20rem', margin: '0.5rem' }} controlId="refModelSelect" className="mb-3">
+            <Form.Label>
+                Reference structure
+            </Form.Label>
+            <MoorhenMoleculeSelect width="" molecules={props.molecules} ref={refMoleculeSelectRef} onChange={(evt) => handleModelChange(evt, true)}/>
+            <MoorhenChainSelect width="" molecules={props.molecules} onChange={(evt) => handleChainChange(evt, true)} selectedCoordMolNo={selectedRefModel} allowedTypes={[1, 2]} ref={refChainSelectRef}/>
+        </Form.Group>
+        <Form.Group key="moving-model-select" style={{ width: '20rem', margin: '0.5rem' }} controlId="movModelSelect" className="mb-3">
+            <Form.Label>
+                Moving structure
+            </Form.Label>
+            <MoorhenMoleculeSelect width="" molecules={props.molecules} ref={movMoleculeSelectRef} onChange={(evt) => handleModelChange(evt, false)}/>
+            <MoorhenChainSelect width="" molecules={props.molecules} onChange={(evt) => handleChainChange(evt, false)} selectedCoordMolNo={selectedMovModel} allowedTypes={[1, 2]} ref={movChainSelectRef}/>
+        </Form.Group>
+    </>
+    
+    const onCompleted = useCallback(async () => {
+        if (!refMoleculeSelectRef || !movMoleculeSelectRef) {
+            return
+        }
+
+        const refMolecule = props.molecules.find(molecule => molecule.molNo === parseInt(refMoleculeSelectRef.current.value))
+        const movMolecule = props.molecules.find(molecule => molecule.molNo === parseInt(movMoleculeSelectRef.current.value))
+
+        if (!refMolecule || !movMolecule) {
+            return
+        } else if (refMolecule.molNo === movMolecule.molNo && refChainSelectRef.current.value === movChainSelectRef.current.value) {
+            return
+        }
+
+        await props.commandCentre.current.cootCommand({
+            message: 'coot_command', 
+            command: 'SSM_superpose', 
+            returnType: 'status', 
+            commandArgs: [
+                refMolecule.molNo, 
+                refChainSelectRef.current.value, 
+                movMolecule.molNo,
+                movChainSelectRef.current.value
+            ], 
+        })
+        
+        refMolecule.atomsDirty = true
+        movMolecule.atomsDirty = true
+        await Promise.all([
+            refMolecule.redraw(props.glRef),
+            movMolecule.redraw(props.glRef)
+        ])
+
+    }, [props.molecules, props.glRef, props.commandCentre])
+
+    return <MoorhenMenuItem
+        id='superpose-models-menu-item'
+        popoverContent={panelContent}
+        menuItemText="Superpose structures..."
+        onCompleted={onCompleted}
+        setPopoverIsShown={props.setPopoverIsShown}
+    />
 }
 
 export const MoorhenImportDictionaryMenuItem = (props) => {
