@@ -50,6 +50,7 @@ export const MoorhenLigandList = (props) => {
         }
 
         setLigandList(ligandList)
+
         ligandList.forEach(ligand => {
             const compid = ligand.resName
             props.commandCentre.current.cootCommand({
@@ -132,7 +133,7 @@ export const MoorhenLigandList = (props) => {
                                 const compid = ligand.resName;
                                 let svg = ""
                                 if(compid in ligandListSVG){
-                                    svg = ligandListSVG[compid];
+                                    //svg = ligandListSVG[compid];
                                 }
                                 return <Card key={index} style={{marginTop: '0.5rem'}}>
                                             <Card.Body style={{padding:'0.5rem'}}>
