@@ -450,6 +450,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("get_colour_rules",&molecules_container_t::get_colour_rules)
     .function("mmrrcc",&molecules_container_t::mmrrcc)
     .function("auto_read_mtz",&molecules_container_t::auto_read_mtz)
+    .function("SSM_superpose",&molecules_container_t::SSM_superpose)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<>()
