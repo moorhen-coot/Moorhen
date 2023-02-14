@@ -133,6 +133,7 @@ export const MoorhenLigandList = (props) => {
                                 const compid = ligand.resName;
                                 let svg = ""
                                 if(compid in ligandListSVG){
+                                    //FIXME - Uncomment this to make ligand pictures appear.
                                     //svg = ligandListSVG[compid];
                                 }
                                 return <Card key={index} style={{marginTop: '0.5rem'}}>
