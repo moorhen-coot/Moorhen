@@ -49,7 +49,7 @@ export const MoorhenColourRules = (props) => {
     const ruleSelectRef = useRef()
     const cidFormRef = useRef()
     const [ruleType, setRuleType] = useState('molecule')
-    const [colourPreset, setColourPreset] = useState('b-factor')
+    const [colouProperty, setColouProperty] = useState('b-factor')
     const [selectedColour, setSelectedColour] = useState({r: 128, g: 128, b: 128, a: 0.5})
     const [selectedModel, setSelectedModel] = useState(null)
     const [selectedChain, setSelectedChain] = useState(null)
@@ -105,7 +105,7 @@ export const MoorhenColourRules = (props) => {
         }
 
         let newRule
-        if (ruleType !== 'preset') {
+        if (ruleType !== 'property') {
             const cidLabel = ruleType === 'molecule' ? "//*" : ruleType === 'chain' ? `//${chainSelectRef.current.value}` : cid
             newRule = {
                 commandInput: {
@@ -125,10 +125,10 @@ export const MoorhenColourRules = (props) => {
                     message:'coot_command',
                     command: 'add_colour_rules_multi', 
                     returnType:'status',
-                    commandArgs: getMultiColourRuleArgs(selectedMolecule, colourPreset)
+                    commandArgs: getMultiColourRuleArgs(selectedMolecule, colouProperty)
                 },
                 isMultiColourRule: true,
-                ruleType: `${colourPreset}`,
+                ruleType: `${colouProperty}`,
                 label: `//*`,
             }
         }
@@ -229,7 +229,7 @@ export const MoorhenColourRules = (props) => {
                             <option value={'molecule'} key={'molecule'}>By molecule</option>
                             <option value={'chain'} key={'chain'}>By chain</option>
                             <option value={'cid'} key={'cid'}>By CID</option>
-                            <option value={'preset'} key={'preset'}>By colour preset</option>
+                            <option value={'property'} key={'property'}>By property</option>
                         </FormSelect>
                     </Form.Group>
                         <Stack gap={2} style={{alignItems: 'center'}}>
@@ -241,17 +241,17 @@ export const MoorhenColourRules = (props) => {
                                     <Form.Control size="sm" type='text' defaultValue={''} style={{width: "100%"}} onChange={handleResidueCidChange} ref={cidFormRef}/>
                                 </Form.Group>
                             }
-                            {ruleType === 'preset' && 
+                            {ruleType === 'property' && 
                                 <Form.Group style={{ margin: '0.1rem', width: '100%' }}>
-                                    <Form.Label>Color preset</Form.Label>
-                                    <FormSelect size="sm" ref={ruleSelectRef} defaultValue={'b-factor'} onChange={(val) => setColourPreset(val.target.value)}>
+                                    <Form.Label>Property</Form.Label>
+                                    <FormSelect size="sm" ref={ruleSelectRef} defaultValue={'b-factor'} onChange={(val) => setColouProperty(val.target.value)}>
                                     <option value={'b-factor'} key={'b-factor'}>B-Factor</option>
                                     <option value={'af2-plddt'} key={'af2-plddt'}>AF2 PLDDT</option>
                                     </FormSelect>
                                 </Form.Group>
                             }
                             <Stack direction="horizontal" gap={2} style={{alignItems: 'center'}}>
-                                <div style={{display: ruleType === 'preset' ? 'none' : ''}}>
+                                <div style={{display: ruleType === 'property' ? 'none' : ''}}>
                                     <SketchPicker color={selectedColour} onChange={handleColorChange} />
                                 </div>
                                 <Card style={{width:'100%', margin:'0rem'}}>
