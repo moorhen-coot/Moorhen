@@ -4,7 +4,7 @@ import { MoorhenMap } from "../utils/MoorhenMap";
 import { useState, useRef } from "react";
 import { MoorhenImportDictionaryMenuItem, MoorhenImportMapCoefficientsMenuItem, MoorhenAutoOpenMtzMenuItem, MoorhenDeleteEverythingMenuItem, MoorhenLoadTutorialDataMenuItem, MoorhenImportMapMenuItem, MoorhenImportFSigFMenuItem, MoorhenBackupsMenuItem } from "./MoorhenMenuItem";
 import { MenuItem } from "@mui/material";
-import { convertViewtoPx, doDownload, readTextFile } from "../utils/MoorhenUtils";
+import { convertViewtoPx, doDownload, readTextFile, getMultiColourRuleArgs } from "../utils/MoorhenUtils";
 import localforage from 'localforage';
 
 export const MoorhenFileMenu = (props) => {
@@ -77,6 +77,21 @@ export const MoorhenFileMenu = (props) => {
         const coordUrl = `https://alphafold.ebi.ac.uk/files/AF-${uniprotID}-F1-model_v4.pdb`
         if (uniprotID ) {
             fetchMoleculeFromURL(coordUrl, `${uniprotID}`)
+                .then(newMolecule => {
+                    const newRule = [{
+                        commandInput: {
+                            message:'coot_command',
+                            command: 'add_colour_rules_multi', 
+                            returnType:'status',
+                            commandArgs: getMultiColourRuleArgs(newMolecule, 'af2-plddt')
+                        },
+                        isMultiColourRule: true,
+                        ruleType: 'af2-plddt',
+                        label: `//*`
+                    }]
+                    newMolecule.setColourRules(glRef, newRule, false)
+                })
+                .catch(err => console.log(err))
         }
     }
 
@@ -99,15 +114,17 @@ export const MoorhenFileMenu = (props) => {
         const newMolecule = new MoorhenMolecule(commandCentre, props.urlPrefix)
         newMolecule.setBackgroundColour(props.backgroundColor)
         newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
-        return new Promise(async () => {
+        return new Promise(async (resolve, reject) => {
             try {
                 await newMolecule.loadToCootFromURL(url, molName)
                 await newMolecule.fetchIfDirtyAndDraw('CBs', glRef)
                 changeMolecules({ action: "Add", item: newMolecule })
                 newMolecule.centreOn(glRef, null, false)
-            } catch {
+                resolve(newMolecule)
+            } catch (err) {
                 console.log(`Cannot fetch molecule from ${url}`)
                 setIsValidPdbId(false)
+                reject(err)
             }   
         })
     }

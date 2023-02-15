@@ -51,7 +51,7 @@ export function MoorhenMolecule(commandCentre, urlPrefix) {
         hover: [],
         transformation: { origin: [0, 0, 0], quat: null, centre: [0, 0, 0] }
     }
-    this.urlPrefix = (typeof urlPrefix === 'undefined' ? "." : urlPrefix);
+    this.urlPrefix = (typeof urlPrefix === 'undefined' ? "." : urlPrefix)
 };
 
 MoorhenMolecule.prototype.setBackgroundColour = function (backgroundColour) {
@@ -1499,4 +1499,53 @@ MoorhenMolecule.prototype.hasVisibleBuffers = function (excludeBuffers = ['hover
     const displayBuffers = styles.map(style => this.displayObjects[style])
     const visibleDisplayBuffers = displayBuffers.filter(displayBuffer => displayBuffer.some(buffer => buffer.visible))
     return visibleDisplayBuffers.length !== 0
+}
+
+MoorhenMolecule.prototype.fetchCurrentColourRules = async function() {
+    let rules = []
+    const response = await this.commandCentre.current.cootCommand({
+        message: 'coot_command',
+        command: "get_colour_rules", 
+        returnType: 'colour_rules',
+        commandArgs: [this.molNo], 
+    })
+
+    response.data.result.result.forEach(rule => {
+        rules.push({
+            commandInput: {
+                message: 'coot_command',
+                command: 'add_colour_rule', 
+                returnType: 'status',
+                commandArgs: [this.molNo, rule.first, rule.second]
+            },
+            isMultiColourRule: false,
+            ruleType: 'chain',
+            color: rule.second,
+            label: rule.first
+        })
+    })
+
+    this.colourRules = rules
+}
+
+MoorhenMolecule.prototype.setColourRules = async function(glRef, ruleList, redraw=false) {
+    this.colourRules = [...ruleList]
+
+    await this.commandCentre.current.cootCommand({
+        message: 'coot_command',
+        command: "delete_colour_rules", 
+        returnType: 'status',
+        commandArgs: [this.molNo], 
+    })
+
+    const promises = this.colourRules.map(rule => 
+        this.commandCentre.current.cootCommand(rule.commandInput)
+    )
+
+    await Promise.all(promises)
+    
+    if (redraw) {
+        this.setAtomsDirty(true)
+        await this.redraw(glRef)
+    }
 }

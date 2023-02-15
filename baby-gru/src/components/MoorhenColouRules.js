@@ -81,39 +81,22 @@ export const MoorhenColourRules = (props) => {
     }
 
     const getRules = async (imol, commandCentre) => {
-        
         const selectedMolecule = props.molecules.find(molecule => molecule.molNo === imol)
-        if (selectedMolecule && selectedMolecule.colourRules) {
-            return selectedMolecule.colourRules
+        if (!selectedMolecule) {
+            return 
+        } else if (!selectedMolecule.colourRules) {
+            await selectedMolecule.fetchCurrentColourRules()
         }
-
-        let rules = []
-        const response = await commandCentre.current.cootCommand({
-            message:'coot_command',
-            command: "get_colour_rules", 
-            returnType:'colour_rules',
-            commandArgs:[imol], 
-        })
-
-        response.data.result.result.forEach(rule => {
-            rules.push({
-                commandInput: {
-                    message:'coot_command',
-                    command: 'add_colour_rule', 
-                    returnType:'status',
-                    commandArgs: [imol, rule.first, rule.second]
-                },
-                isMultiColourRule: false,
-                ruleType: 'chain',
-                color: rule.second,
-                label: rule.first
-            })
-        })
-
-        selectedMolecule.colourRules = rules
-        
-        return rules
+        return selectedMolecule.colourRules
     }
+
+    const applyRules = useCallback(async () => {
+        if (ruleList.length === 0) {
+            return
+        }
+        const selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedModel)
+        await selectedMolecule.setColourRules(props.glRef, ruleList, true)
+    }, [selectedModel, ruleList, props.molecules, props.glRef])
 
     const createRule = () => {
         const selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedModel)
@@ -146,7 +129,6 @@ export const MoorhenColourRules = (props) => {
                 },
                 isMultiColourRule: true,
                 ruleType: `${colourPreset}`,
-                color: selectedColour,
                 label: `//*`,
             }
         }
@@ -155,31 +137,6 @@ export const MoorhenColourRules = (props) => {
             setRuleList({action: 'Add', item: newRule})    
         }
     }
-
-    const commitChanges = useCallback(async () => {
-        if (ruleList.length === 0) {
-            return
-        }
-        const selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedModel);
-        
-        await props.commandCentre.current.cootCommand({
-            message:'coot_command',
-            command: "delete_colour_rules", 
-            returnType:'status',
-            commandArgs: [selectedModel], 
-        })
-
-        const promises = ruleList.map(rule => 
-            props.commandCentre.current.cootCommand(rule.commandInput)
-        )
-
-        await Promise.all(promises)
-        
-        selectedMolecule.colourRules = [...ruleList]
-        selectedMolecule.setAtomsDirty(true)
-        selectedMolecule.redraw(props.glRef)
-
-    }, [selectedModel, ruleList, props.molecules, props.commandCentre, props.glRef])
 
     useEffect(() => {
         if (selectedModel !== null) {
@@ -210,10 +167,17 @@ export const MoorhenColourRules = (props) => {
                             {rule.label}
                         </Col>
                         <Col style={{ display: 'flex', justifyContent: 'right', alignItems:'center' }}>
-                            {rule.isMultiColourRule ?
-                            <img className="colour-rule-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/temperature.svg`} alt='b-factor' style={{height:'28px', width:'`12px', margin: '0.1rem'}}/>
+                            {!rule.isMultiColourRule ?
+                                <div style={{borderColor: 'black', borderWidth:'5px', backgroundColor: rule.color, height:'20px', width:'20px', margin: '0.1rem'}}/>
+                            : rule.ruleType === "b-factor" ?
+                                <img className="colour-rule-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/temperature.svg`} alt='b-factor' style={{height:'28px', width:'`12px', margin: '0.1rem'}}/>
                             :
-                             <div style={{borderColor: 'black', borderWidth:'5px', backgroundColor: rule.color, height:'20px', width:'20px', margin: '0.1rem'}}/>
+                            <>
+                                <div style={{borderColor: 'rgb(255, 125, 69)', borderWidth:'5px', backgroundColor:  'rgb(255, 125, 69)', height:'20px', width:'5px', margin: '0rem', padding: '0rem'}}/>
+                                <div style={{borderColor: 'rgb(255, 219, 19)', borderWidth:'5px', backgroundColor: 'rgb(255, 219, 19)', height:'20px', width:'5px', margin: '0rem', padding: '0rem'}}/>
+                                <div style={{borderColor: 'rgb(101, 203, 243)', borderWidth:'5px', backgroundColor: 'rgb(101, 203, 243)', height:'20px', width:'5px', margin: '0rem', padding: '0rem'}}/>
+                                <div style={{borderColor: 'rgb(0, 83, 214)', borderWidth:'5px', backgroundColor: 'rgb(0, 83, 214)', height:'20px', width:'5px', margin: '0rem', padding: '0rem'}}/>
+                            </>
                             }
                             <OverlayTrigger
                                 placement="top"
@@ -281,7 +245,8 @@ export const MoorhenColourRules = (props) => {
                                 <Form.Group style={{ margin: '0.1rem', width: '100%' }}>
                                     <Form.Label>Color preset</Form.Label>
                                     <FormSelect size="sm" ref={ruleSelectRef} defaultValue={'b-factor'} onChange={(val) => setColourPreset(val.target.value)}>
-                                        <option value={'b-factor'} key={'b-factor'}>B-Factor</option>
+                                    <option value={'b-factor'} key={'b-factor'}>B-Factor</option>
+                                    <option value={'af2-plddt'} key={'af2-plddt'}>AF2 PLDDT</option>
                                     </FormSelect>
                                 </Form.Group>
                             }
@@ -330,7 +295,7 @@ export const MoorhenColourRules = (props) => {
                                             Apply rules
                                         </Tooltip>
                                     }>
-                                    <Button variant={props.darkMode ? "dark" : "light"} size='sm' onClick={commitChanges} style={{margin: '0.1rem'}}>
+                                    <Button variant={props.darkMode ? "dark" : "light"} size='sm' onClick={applyRules} style={{margin: '0.1rem'}}>
                                         <DoneOutlined/>
                                     </Button>
                                 </OverlayTrigger>
