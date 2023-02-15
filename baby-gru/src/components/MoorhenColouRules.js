@@ -94,7 +94,7 @@ export const MoorhenColourRules = (props) => {
         if (ruleList.length === 0) {
             return
         }
-        const selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedModel);
+        const selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedModel)
         await selectedMolecule.setColourRules(props.glRef, ruleList, true)
     }, [selectedModel, ruleList, props.molecules, props.glRef])
 
@@ -129,7 +129,6 @@ export const MoorhenColourRules = (props) => {
                 },
                 isMultiColourRule: true,
                 ruleType: `${colourPreset}`,
-                color: selectedColour,
                 label: `//*`,
             }
         }
@@ -168,10 +167,17 @@ export const MoorhenColourRules = (props) => {
                             {rule.label}
                         </Col>
                         <Col style={{ display: 'flex', justifyContent: 'right', alignItems:'center' }}>
-                            {rule.isMultiColourRule ?
-                            <img className="colour-rule-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/temperature.svg`} alt='b-factor' style={{height:'28px', width:'`12px', margin: '0.1rem'}}/>
+                            {!rule.isMultiColourRule ?
+                                <div style={{borderColor: 'black', borderWidth:'5px', backgroundColor: rule.color, height:'20px', width:'20px', margin: '0.1rem'}}/>
+                            : rule.ruleType === "b-factor" ?
+                                <img className="colour-rule-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/temperature.svg`} alt='b-factor' style={{height:'28px', width:'`12px', margin: '0.1rem'}}/>
                             :
-                             <div style={{borderColor: 'black', borderWidth:'5px', backgroundColor: rule.color, height:'20px', width:'20px', margin: '0.1rem'}}/>
+                            <>
+                                <div style={{borderColor: 'rgb(255, 125, 69)', borderWidth:'5px', backgroundColor:  'rgb(255, 125, 69)', height:'20px', width:'5px', margin: '0rem', padding: '0rem'}}/>
+                                <div style={{borderColor: 'rgb(255, 219, 19)', borderWidth:'5px', backgroundColor: 'rgb(255, 219, 19)', height:'20px', width:'5px', margin: '0rem', padding: '0rem'}}/>
+                                <div style={{borderColor: 'rgb(101, 203, 243)', borderWidth:'5px', backgroundColor: 'rgb(101, 203, 243)', height:'20px', width:'5px', margin: '0rem', padding: '0rem'}}/>
+                                <div style={{borderColor: 'rgb(0, 83, 214)', borderWidth:'5px', backgroundColor: 'rgb(0, 83, 214)', height:'20px', width:'5px', margin: '0rem', padding: '0rem'}}/>
+                            </>
                             }
                             <OverlayTrigger
                                 placement="top"
@@ -239,7 +245,8 @@ export const MoorhenColourRules = (props) => {
                                 <Form.Group style={{ margin: '0.1rem', width: '100%' }}>
                                     <Form.Label>Color preset</Form.Label>
                                     <FormSelect size="sm" ref={ruleSelectRef} defaultValue={'b-factor'} onChange={(val) => setColourPreset(val.target.value)}>
-                                        <option value={'b-factor'} key={'b-factor'}>B-Factor</option>
+                                    <option value={'b-factor'} key={'b-factor'}>B-Factor</option>
+                                    <option value={'af2-plddt'} key={'af2-plddt'}>AF2 PLDDT</option>
                                     </FormSelect>
                                 </Form.Group>
                             }
