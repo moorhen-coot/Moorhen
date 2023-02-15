@@ -51,7 +51,7 @@ export function MoorhenMolecule(commandCentre, urlPrefix) {
         hover: [],
         transformation: { origin: [0, 0, 0], quat: null, centre: [0, 0, 0] }
     }
-    this.urlPrefix = (typeof urlPrefix === 'undefined' ? "." : urlPrefix);
+    this.urlPrefix = (typeof urlPrefix === 'undefined' ? "." : urlPrefix)
 };
 
 MoorhenMolecule.prototype.setBackgroundColour = function (backgroundColour) {
@@ -1501,21 +1501,21 @@ MoorhenMolecule.prototype.hasVisibleBuffers = function (excludeBuffers = ['hover
     return visibleDisplayBuffers.length !== 0
 }
 
-MoorhenMolecule.prototype.fetchCurrentColourRules = async () => {
+MoorhenMolecule.prototype.fetchCurrentColourRules = async function() {
     let rules = []
     const response = await this.commandCentre.current.cootCommand({
-        message:'coot_command',
+        message: 'coot_command',
         command: "get_colour_rules", 
-        returnType:'colour_rules',
-        commandArgs:[this.molNo], 
+        returnType: 'colour_rules',
+        commandArgs: [this.molNo], 
     })
 
     response.data.result.result.forEach(rule => {
         rules.push({
             commandInput: {
-                message:'coot_command',
+                message: 'coot_command',
                 command: 'add_colour_rule', 
-                returnType:'status',
+                returnType: 'status',
                 commandArgs: [this.molNo, rule.first, rule.second]
             },
             isMultiColourRule: false,
@@ -1528,13 +1528,13 @@ MoorhenMolecule.prototype.fetchCurrentColourRules = async () => {
     this.colourRules = rules
 }
 
-MoorhenMolecule.prototype.setColourRules = async (glRef, ruleList, redraw=false) => {
+MoorhenMolecule.prototype.setColourRules = async function(glRef, ruleList, redraw=false) {
     this.colourRules = [...ruleList]
 
     await this.commandCentre.current.cootCommand({
-        message:'coot_command',
+        message: 'coot_command',
         command: "delete_colour_rules", 
-        returnType:'status',
+        returnType: 'status',
         commandArgs: [this.molNo], 
     })
 

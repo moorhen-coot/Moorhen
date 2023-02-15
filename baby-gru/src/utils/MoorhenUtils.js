@@ -511,7 +511,7 @@ export  function rgbToHex(r, g, b) {
     return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b)
 }
 
-const getBfactorColourRules = (imol, bFactors) => {
+const getBfactorColourRules = (bFactors) => {
     const bFactorList = bFactors.map(item => item.bFactor)
     const min = Math.min(...bFactorList)
     const max = Math.max(...bFactorList)
@@ -542,6 +542,32 @@ const getBfactorColourRules = (imol, bFactors) => {
     return bFactors.map(item => `${item.cid}^${getColour(item.bFactor)}`).join('|')
 }
 
+const getPlddtColourRules = (plddtList) => {
+    const getColour = (plddt) => {
+        let r, g, b
+        if(plddt <= 50) {
+            r = 255
+            g = 125
+            b = 69
+        } else if (plddt <= 70) {
+            r = 255
+            g = 219
+            b = 19
+        } else if (plddt < 90) {
+            r = 101
+            g = 203
+            b = 243
+        } else {
+            r = 0
+            g = 83
+            b = 214
+        }
+        return rgbToHex(r, g, b)
+    }
+
+    return plddtList.map(item => `${item.cid}^${getColour(item.bFactor)}`).join('|')
+}
+
 export const getMultiColourRuleArgs = (molecule, ruleType) => {
 
     let multiRulesArgs
@@ -549,10 +575,11 @@ export const getMultiColourRuleArgs = (molecule, ruleType) => {
     switch (ruleType) {
         case 'b-factor':
             const bFactors = getMoleculeBfactors(molecule.gemmiStructure.clone())
-            multiRulesArgs = [molecule.molNo, getBfactorColourRules(molecule.molNo, bFactors)]
+            multiRulesArgs = [molecule.molNo, getBfactorColourRules(bFactors)]
             break;
         case 'af2-plddt':
-            //cootCommands = getPlddtColourRules(molecule)
+            const plddt = getMoleculeBfactors(molecule.gemmiStructure.clone())
+            multiRulesArgs = [molecule.molNo, getPlddtColourRules(plddt)]
             break;
         default:
             console.log('Unrecognised colour rule...')
