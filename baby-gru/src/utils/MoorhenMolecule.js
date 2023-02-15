@@ -24,6 +24,7 @@ export function MoorhenMolecule(commandCentre, urlPrefix) {
     this.molNo = null
     this.gemmiStructure = null
     this.sequences = []
+    this.colourRules = null
     this.gaussianSurfaceSettings = {
         sigma: 4.4,
         countourLevel: 4.0,

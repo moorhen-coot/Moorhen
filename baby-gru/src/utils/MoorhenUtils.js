@@ -451,3 +451,113 @@ export const getTooltipShortcutLabel = (shortCut) => {
     if (shortCut.keyPress === " ") modifiers.push("<Space>")
     return modifiers.length > 0 ? `<${modifiers.join(" ")} ${shortCut.keyPress.toUpperCase()}>` : `<${shortCut.keyPress.toUpperCase()}>`
 }
+
+const getMoleculeBfactors = (gemmiStructure) => {
+    let bFactors = []
+    try {
+        const models = gemmiStructure.models
+        for (let modelIndex = 0; modelIndex < models.size(); modelIndex++) {
+            const model = models.get(modelIndex)
+            const modelName = model.name
+            const chains  = model.chains
+            const chainsSize = chains.size()
+            for (let chainIndex = 0; chainIndex < chainsSize; chainIndex++) {
+                const chain = chains.get(chainIndex)
+                const chainName = chain.name
+                const residues = chain.residues
+                const residuesSize = residues.size()
+                for (let residueIndex = 0; residueIndex < residuesSize; residueIndex++) {
+                    let residueTemp = 0
+                    const residue = residues.get(residueIndex)
+                    const residueSeqId = residue.seqid
+                    const resNum = residueSeqId.str()
+                    const atoms = residue.atoms
+                    const atomsSize = atoms.size()
+                    for (let atomIndex = 0; atomIndex < atomsSize; atomIndex++) {
+                        const atom = atoms.get(atomIndex)
+                        const atomTemp = atom.b_iso
+                        residueTemp += atomTemp
+                        atom.delete()
+                    }
+                    bFactors.push({
+                        cid: `/${modelName}/${chainName}/${resNum}/*`,
+                        bFactor: residueTemp / atomsSize
+                    })
+                    residue.delete()
+                    residueSeqId.delete()
+                    atoms.delete()
+                }
+                chain.delete()
+                residues.delete()
+            }
+            model.delete()
+            chains.delete()
+        }
+        models.delete()
+    } finally {
+        if (gemmiStructure && !gemmiStructure.isDeleted()) {
+            gemmiStructure.delete()
+        }
+    }
+    return bFactors
+}
+
+export function componentToHex(c) {
+    const hex = c.toString(16)
+    return hex.length === 1 ? "0" + hex : hex
+  }
+  
+export  function rgbToHex(r, g, b) {
+    return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b)
+}
+
+const getBfactorColourRules = (imol, bFactors) => {
+    const bFactorList = bFactors.map(item => item.bFactor)
+    const min = Math.min(...bFactorList)
+    const max = Math.max(...bFactorList)
+
+    const getColour = (bFactor) => {
+        let r, g, b
+        const normalisedFactor = Math.round(100 * ( (bFactor - min) / (max - min) ))
+        if(normalisedFactor <= 25) {
+            r = 0
+            g = Math.round(10.2 * normalisedFactor)
+            b = 255
+        } else if (normalisedFactor <= 50) {
+            r = 0
+            g = 255
+            b = Math.round(510 - 10.2 * normalisedFactor)
+        } else if (normalisedFactor <= 75) {
+            r = Math.round(10.2 * (normalisedFactor - 50))
+            g = 255
+            b = 0
+        } else {
+            r = 255
+            g = Math.round(510 - 10.2 * (normalisedFactor - 50))
+            b = 0
+        }
+        return rgbToHex(r, g, b)
+    }
+
+    return bFactors.map(item => `${item.cid}^${getColour(item.bFactor)}`).join('|')
+}
+
+export const getMultiColourRuleArgs = (molecule, ruleType) => {
+
+    let multiRulesArgs
+
+    switch (ruleType) {
+        case 'b-factor':
+            const bFactors = getMoleculeBfactors(molecule.gemmiStructure.clone())
+            multiRulesArgs = [molecule.molNo, getBfactorColourRules(molecule.molNo, bFactors)]
+            break;
+        case 'af2-plddt':
+            //cootCommands = getPlddtColourRules(molecule)
+            break;
+        default:
+            console.log('Unrecognised colour rule...')
+            break;
+    }
+
+    return multiRulesArgs
+}
