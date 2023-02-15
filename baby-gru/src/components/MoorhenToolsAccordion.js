@@ -51,7 +51,7 @@ export const MoorhenToolsAccordion = (props) => {
                               '& .MuiFormLabel-root': {
                                 color: props.darkMode ? 'white' : '#222',
                               },
-                            }}                        
+                            }}
                         ref={toolsAccordionSelectRef}
                         onChange={handleChange}
                         size='small'
