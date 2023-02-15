@@ -333,6 +333,11 @@ export const MoorhenMoleculeCard = (props) => {
             key={key}
             style={{ marginLeft: "0px", marginRight: "0px" }}
             labelPlacement="top"
+            sx={{
+                '& .MuiCheckbox-root': {
+                    color: props.darkMode ? 'white' : '',
+                  },
+            }}
             control={<RepresentationCheckbox
                 key={key}
                 repKey={key}
