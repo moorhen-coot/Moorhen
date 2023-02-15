@@ -377,6 +377,7 @@ export const MoorhenContainer = (props) => {
                             showAdvancedDisplayOptions={showAdvancedDisplayOptions}
                             windowHeight={windowHeight}
                             windowWidth={windowWidth}
+                            urlPrefix={props.urlPrefix}
                         />
                     </div>
                     <div id='button-bar-baby-gru'
