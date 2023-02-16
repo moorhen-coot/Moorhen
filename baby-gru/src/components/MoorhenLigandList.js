@@ -63,7 +63,7 @@ export const MoorhenLigandList = (props) => {
             }
         }
 
-        xmin -= 20
+        //xmin -= 20
         ymin -= 20
         //xmax -= 120
         ymax -= 100
@@ -112,11 +112,7 @@ export const MoorhenLigandList = (props) => {
                                 return <Card key={index} style={{marginTop: '0.5rem'}}>
                                             <Card.Body style={{padding:'0.5rem'}}>
                                                 <Stack direction="horizontal" gap={2} style={{alignItems: 'center', height:'10rem'}}>
-                                                    <Col style={{height: '100%'}}>
-                                                        {ligand.svg ? parse(ligand.svg) : null}
-                                                    </Col>
-                                                    <Col className='col-3' style={{justifyContent: 'right', display:'flex'}}>
-                                                        <Stack gap={2} style={{alignItems: 'center'}}>
+                                                            {ligand.svg ? parse(ligand.svg) : null}
                                                             <DropdownButton
                                                                 key="dropDownButton"
                                                                 title={`${ligand.chainName}/${ligand.resNum}(${ligand.resName})`}
@@ -171,8 +167,6 @@ export const MoorhenLigandList = (props) => {
                                                                 }}/>
                                                                 </div>
                                                             </DropdownButton>
-                                                    </Stack>
-                                                    </Col>
                                                 </Stack>
                                             </Card.Body>
                                         </Card>
