@@ -593,9 +593,9 @@ export const MoorhenRotateTranslateZoneButton = (props) => {
                 </FormGroup>
 
                 {localRotateTranslateMode === 'CUSTOM' &&
-                    <TextField 
-                    style={{backgroundColor:"#EEEE"}}
-                    placeholder="Input custom cid e.g. //A,B"
+                    <TextField
+                        style={{ backgroundColor: "#EEEE" }}
+                        placeholder="Input custom cid e.g. //A,B"
                         onChange={(e) => { customCid.current = e.target.value }}
                     />
                 }
@@ -666,6 +666,16 @@ export const MoorhenRotateTranslateZoneButton = (props) => {
         const newMolecule = await molecule.copyFragmentUsingCid(
             fragmentCid.current, props.backgroundColor, props.defaultBondSmoothness, props.glRef, false
         )
+        await newMolecule.updateAtoms()
+        Object.keys(molecule.displayObjects)
+            .filter(style => { return ['CRs', 'CBs', 'ligands', 'gaussian', 'MolecularSurface', 'VdWSurface', 'DishyBases'].includes(style) })
+            .forEach(async style => {
+                console.log({ style }, molecule.displayObjects[style].length)
+                if (molecule.displayObjects[style].length > 0 &&
+                    molecule.displayObjects[style][0].visible) {
+                    await newMolecule.drawWithStyleFromAtoms(style, glRef)
+                }
+            })
         fragmentMolecule.current = newMolecule
         /* redraw */
         props.changeMolecules({ action: "Add", item: newMolecule })

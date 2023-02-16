@@ -202,7 +202,6 @@ MoorhenMolecule.prototype.copyFragmentUsingCid = async function (cid, background
         newMolecule.molNo = response.data.result.result
         newMolecule.setBackgroundColour(backgroundColor)
         newMolecule.cootBondsOptions.smoothness = defaultBondSmoothness
-        await newMolecule.fetchIfDirtyAndDraw('CBs', glRef)
         return Promise.resolve(newMolecule)
     })
 }
@@ -316,7 +315,7 @@ MoorhenMolecule.prototype.getAtoms = function () {
     })
 }
 
-MoorhenMolecule.prototype.updateAtoms = function () {
+MoorhenMolecule.prototype.updateAtoms = async function () {
     const $this = this;
     if ($this.gemmiStructure && !$this.gemmiStructure.isDeleted()) {
         $this.gemmiStructure.delete()
