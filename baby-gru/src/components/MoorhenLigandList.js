@@ -4,123 +4,98 @@ import { Card, Form, Row, Col, Button, DropdownButton } from "react-bootstrap";
 
 export const MoorhenLigandList = (props) => {
     const [ligandList, setLigandList] = useState([])
-    const [ligandListSVG, setLigandListSVG] = useState({})
-    const [cachedGemmiStructure, setCachedGemmiStructure] = useState(null)
     const [showState, setShowState] = useState({})
 
-    useEffect(() => {
-        async function updateMoleculeAtoms() {
-            await props.molecule.updateAtoms()
-        }
-
-        if (props.molecule.gemmiStructure === null || props.molecule.atomsDirty) {
-            updateMoleculeAtoms()
-        }
-        if (props.molecule.gemmiStructure === null) {
-            return
+    const getLigandSVG = async (imol, compId) => {
+        const result = await props.commandCentre.current.cootCommand({
+            returnType: "string",
+            command: 'get_svg_for_residue_type',
+            commandArgs: [imol, compId],
+        }, true)
+        
+        const parser = new DOMParser()
+        let theText = result.data.result.result
+        let doc = parser.parseFromString(theText, "image/svg+xml")
+        let xmin = 999
+        let ymin = 999
+        let xmax = -999
+        let ymax = -999
+        
+        let lines = doc.getElementsByTagName("line")
+        for (let l of lines) {
+            const x1 = parseFloat(l.getAttribute("x1"))
+            const y1 = parseFloat(l.getAttribute("y1"))
+            const x2 = parseFloat(l.getAttribute("x2"))
+            const y2 = parseFloat(l.getAttribute("y2"))
+            if(x1>xmax) xmax = x1
+            if(x1<xmin) xmin = x1
+            if(y1>ymax) ymax = y1
+            if(y1<ymin) ymin = y1
+            if(x2>xmax) xmax = x2
+            if(x2<xmin) xmin = x2
+            if(y2>ymax) ymax = y2
+            if(y2<ymin) ymin = y2
         }
         
-        let ligandList = []
-        const model = props.molecule.gemmiStructure.first_model()
-
-        try{
-            const chains = model.chains
-            const chainsSize = chains.size()
-            for (let i = 0; i < chainsSize; i++) {
-                const chain = chains.get(i)
-                const chainName = chain.name
-                const ligands = chain.get_ligands_const()
-                const ligandsSize = ligands.size()
-                for (let j = 0; j < ligandsSize; j++) {
-                    let ligand = ligands.at(j)
-                    const resName = ligand.name
-                    const ligandSeqId = ligand.seqid
-                    const resNum = ligandSeqId.str()
-                    ligandList.push({resName: resName, chainName: chainName, resNum: resNum})
-                    ligand.delete()
-                    ligandSeqId.delete()
-                }
-                chain.delete()
-                ligands.delete()
+        let texts = doc.getElementsByTagName("text");
+        for (let t of texts) {
+            const x = parseFloat(t.getAttribute("x"))
+            const y = parseFloat(t.getAttribute("y"))
+            if(x>xmax) xmax = x
+            if(x<xmin) xmin = x
+            if(y>ymax) ymax = y
+            if(y<ymin) ymin = y
+        }
+        
+        let polygons = doc.getElementsByTagName("polygon");
+        for (let poly of polygons) {
+            const points = poly.getAttribute("points").trim().split(" ")
+            for (const point of points) {
+                const xy = point.split(",")
+                const x = parseFloat(xy[0])
+                const y = parseFloat(xy[1])
+                if(x>xmax) xmax = x
+                if(x<xmin) xmin = x
+                if(y>ymax) ymax = y
+                if(y<ymin) ymin = y
             }
-            chains.delete()
-    
-        } finally {
-            model.delete()
         }
 
-        setLigandList(ligandList)
-
-        ligandList.forEach(ligand => {
-            const compid = ligand.resName
-            props.commandCentre.current.cootCommand({
-                returnType: "string",
-                command: 'get_svg_for_residue_type',
-                commandArgs: [props.molecule.molNo,compid],
-            }, true).then(result => {
-                const parser = new DOMParser()
-                let doc = parser.parseFromString(result.data.result.result,"image/svg+xml")
-                let svgs = doc.getElementsByTagName("svg");
-                let theText = result.data.result.result
-                let xmin = 999
-                let ymin = 999
-                let xmax = -999
-                let ymax = -999
-                let lines = doc.getElementsByTagName("line");
-                for (let l of lines) {
-                    const x1 = parseFloat(l.getAttribute("x1"))
-                    const y1 = parseFloat(l.getAttribute("y1"))
-                    const x2 = parseFloat(l.getAttribute("x2"))
-                    const y2 = parseFloat(l.getAttribute("y2"))
-                    if(x1>xmax) xmax = x1
-                    if(x1<xmin) xmin = x1
-                    if(y1>ymax) ymax = y1
-                    if(y1<ymin) ymin = y1
-                    if(x2>xmax) xmax = x2
-                    if(x2<xmin) xmin = x2
-                    if(y2>ymax) ymax = y2
-                    if(y2<ymin) ymin = y2
-                }
-                let texts = doc.getElementsByTagName("text");
-                for (let t of texts) {
-                    const x = parseFloat(t.getAttribute("x"))
-                    const y = parseFloat(t.getAttribute("y"))
-                    if(x>xmax) xmax = x
-                    if(x<xmin) xmin = x
-                    if(y>ymax) ymax = y
-                    if(y<ymin) ymin = y
-                }
-                let polygons = doc.getElementsByTagName("polygon");
-                for (let poly of polygons) {
-                    const points = poly.getAttribute("points").trim().split(" ")
-                    points.forEach(point => {
-                        const xy = point.split(",")
-                        const x = parseFloat(xy[0])
-                        const y = parseFloat(xy[1])
-                        if(x>xmax) xmax = x
-                        if(x<xmin) xmin = x
-                        if(y>ymax) ymax = y
-                        if(y<ymin) ymin = y
-                    })
-                }
-                xmin -= 20
-                ymin -= 20
-                xmax += 20
-                ymax += 20
-                const viewBoxStr = xmin+" "+ymin+" "+xmax+" "+ymax
-                for (let item of svgs) {
-                    item.setAttribute("viewBox" , viewBoxStr)
-                    theText = item.outerHTML
-                }
-                ligandListSVG[compid] = theText
-        })
-        })
-
-    }, [cachedGemmiStructure])
+        xmin -= 20
+        ymin -= 20
+        xmax += 20
+        ymax += 20
+        let svgs = doc.getElementsByTagName("svg")
+        const viewBoxStr = xmin+" "+ymin+" "+xmax+" "+ymax
+        for (let item of svgs) {
+            item.setAttribute("viewBox" , viewBoxStr)
+            theText = item.outerHTML
+        }
+        
+        return theText 
+    }
 
     useEffect(() => {
-        setCachedGemmiStructure(props.molecule.gemmiStructure)
-    })
+        async function updateLigandList() {
+            if (props.molecule.gemmiStructure === null || props.molecule.atomsDirty || props.molecule.ligands === null) {
+                await props.molecule.updateAtoms()
+            }
+            if (props.molecule.gemmiStructure === null || props.molecule.ligands === null) {
+                return
+            }
+
+            let ligandList = []
+            for (const ligand of props.molecule.ligands) {
+                const ligandSVG = await getLigandSVG(props.molecule.molNo, ligand.resName)
+                ligandList.push({svg: ligandSVG, ...ligand})
+            }
+    
+            setLigandList(ligandList)
+        }
+
+        updateLigandList()
+
+    }, [props.molecule.ligands])
 
     return <>
             {ligandList.length > 0 ? 
@@ -130,12 +105,6 @@ export const MoorhenLigandList = (props) => {
                             {ligandList.map((ligand, index) => {
                                 const keycd = `contact_dots-${ligand.chainName}/${ligand.resNum}(${ligand.resName})`
                                 const keycf = `chemical_features-${ligand.chainName}/${ligand.resNum}(${ligand.resName})`
-                                const compid = ligand.resName;
-                                let svg = ""
-                                if(compid in ligandListSVG){
-                                    //FIXME - Uncomment this to make ligand pictures appear.
-                                    //svg = ligandListSVG[compid];
-                                }
                                 return <Card key={index} style={{marginTop: '0.5rem'}}>
                                             <Card.Body style={{padding:'0.5rem'}}>
                                                 <Row style={{display:'flex', justifyContent:'between'}}>
@@ -199,7 +168,7 @@ export const MoorhenLigandList = (props) => {
                                                     </Col>
                                                 </Row>
                                                 <Row>
-                                                <div dangerouslySetInnerHTML={{__html: svg}}></div>
+                                                <div dangerouslySetInnerHTML={{__html: ligand.svg}}></div>
                                                 </Row>
                                             </Card.Body>
                                         </Card>
