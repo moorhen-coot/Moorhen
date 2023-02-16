@@ -1,13 +1,14 @@
-import { useRef, useState, useEffect, createRef, useReducer, useCallback, useContext } from 'react';
+import { useRef, useState, useEffect, useReducer, useCallback, useContext } from 'react';
 import { Navbar, Container, Nav, Accordion, Button, Col, Row, Spinner, Form, Toast, ToastContainer } from 'react-bootstrap';
 import { MoorhenDisplayObjects } from './MoorhenDisplayObjects';
 import { MoorhenWebMG } from './MoorhenWebMG';
 import { MoorhenCommandCentre, convertRemToPx, convertViewtoPx } from '../utils/MoorhenUtils';
+import { MoorhenTimeCapsule } from '../utils/MoorhenTimeCapsule';
 import { MoorhenButtonBar } from './MoorhenButtonBar';
 import { MoorhenFileMenu } from './MoorhenFileMenu';
 import { MoorhenCloudMenu } from './MoorhenCloudMenu';
 import { MoorhenPreferencesMenu } from './MoorhenPreferencesMenu';
-import { ArrowBackIosOutlined, ArrowForwardIosOutlined } from '@mui/icons-material';
+import { ArrowBackIosOutlined, ArrowForwardIosOutlined, SaveOutlined } from '@mui/icons-material';
 import { Backdrop } from '@mui/material';
 import { MoorhenHistoryMenu, historyReducer, initialHistoryState } from './MoorhenHistoryMenu';
 import { MoorhenViewMenu } from './MoorhenViewMenu';
@@ -39,11 +40,11 @@ const itemReducer = (oldList, change) => {
 }
 
 export const MoorhenContainer = (props) => {
-
     const glRef = useRef(null)
+    const timeCapsuleRef = useRef(null)
     const commandCentre = useRef(null)
-    const graphicsDiv = createRef()
     const navBarRef = useRef()
+    const consoleDivRef = useRef()
     const [selectedToolKey, setSelectedToolKey] = useState(null)
     const [showSideBar, setShowSideBar] = useState(false)
     const [activeMap, setActiveMap] = useState(null)
@@ -51,8 +52,6 @@ export const MoorhenContainer = (props) => {
     const [hoveredAtom, setHoveredAtom] = useState({ molecule: null, cid: null })
     const [consoleMessage, setConsoleMessage] = useState("")
     const [cursorStyle, setCursorStyle] = useState("default")
-    const headerRef = useRef()
-    const consoleDivRef = useRef()
     const [busy, setBusy] = useState(false)
     const [windowWidth, setWindowWidth] = useState(window.innerWidth)
     const [windowHeight, setWindowHeight] = useState(window.innerHeight)
@@ -89,6 +88,7 @@ export const MoorhenContainer = (props) => {
     useEffect(() => {
         if (cootInitialized && props.forwardControls) {
             props.forwardControls(collectedProps)
+            timeCapsuleRef.current = new MoorhenTimeCapsule()
         }
     }, [cootInitialized, props.forwardControls])
 
@@ -305,7 +305,7 @@ export const MoorhenContainer = (props) => {
         activeMap, setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor, sideBarWidth,
         navBarRef, currentDropdownId, setCurrentDropdownId, hoveredAtom, setHoveredAtom, toastContent, setToastContent, 
         showToast, setShowToast, windowWidth, windowHeight, showSideBar, innerWindowMarginWidth, toolAccordionBodyHeight,
-        urlPrefix: props.urlPrefix, showAdvancedDisplayOptions, setShowAdvancedDisplayOptions, ...preferences
+        urlPrefix: props.urlPrefix, showAdvancedDisplayOptions, setShowAdvancedDisplayOptions, timeCapsuleRef, ...preferences
     }
 
     const accordionToolsItemProps = {
@@ -313,7 +313,7 @@ export const MoorhenContainer = (props) => {
         windowWidth, maps, showSideBar, hoveredAtom, setHoveredAtom, selectedToolKey, setSelectedToolKey, ...preferences
     }
 
-    return <> <div className={`border ${theme}`} ref={headerRef}>
+    return <> <div className={`border ${theme}`}>
 
         <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={!cootInitialized}>
             <Spinner animation="border" style={{ marginRight: '0.5rem' }}/>
@@ -341,6 +341,7 @@ export const MoorhenContainer = (props) => {
             <Nav className="justify-content-right">
                 {hoveredAtom.cid && <Form.Control style={{ width: "20rem" }} type="text" readOnly={true} value={`${hoveredAtom.molecule.name}:${hoveredAtom.cid}`} />}
                 {busy && <Spinner animation="border" style={{ marginRight: '0.5rem' }} />}
+                {timeCapsuleRef.current?.busy && <div style={{display:'flex', alignItems:'center', alignContent:'center'}}><SaveOutlined/></div>}
                 <Button id='show-sidebar-button' className="baby-gru-sidebar-button" style={{ height: '100%', backgroundColor: preferences.darkMode ? '#222' : 'white', border: 0 }} onClick={() => { setShowSideBar(!showSideBar) }}>
                     {showSideBar ? <ArrowForwardIosOutlined style={{ color: preferences.darkMode ? 'white' : 'black' }} /> : <ArrowBackIosOutlined style={{ color: preferences.darkMode ? 'white' : 'black' }} />}
                 </Button>
@@ -351,7 +352,6 @@ export const MoorhenContainer = (props) => {
             <Row>
                 <Col style={{ paddingLeft: '0', paddingRight: '0' }}>
                     <div
-                        ref={graphicsDiv}
                         style={{
                             backgroundColor: `rgba(
                                 ${255 * backgroundColor[0]},

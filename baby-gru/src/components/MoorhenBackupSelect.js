@@ -1,6 +1,5 @@
 import { useEffect,useState,forwardRef } from "react";
 import { Form, FormSelect } from "react-bootstrap";
-import localforage from 'localforage';
 
 export const MoorhenBackupSelect = forwardRef((props, selectRef) => {
 
@@ -9,11 +8,7 @@ export const MoorhenBackupSelect = forwardRef((props, selectRef) => {
 
     useEffect(() => {
          async function getKeys() {
-            const ContactTable = localforage.createInstance({
-               name: "Moorhen-SessionStorage",
-               storeName: "Moorhen-SessionStorageTable"
-            });
-            let keysLF = await ContactTable.keys()
+            let keysLF = await props.timeCapsuleRef.current.storageInstance.keys()
             const keys = keysLF.filter(key => key.indexOf("backup-") == 0).sort((a,b)=>{return parseInt(a.substr(7))-parseInt(b.substr(7))}).reverse()
             let theKeys = []
                 keys.forEach(key => {
@@ -25,14 +20,13 @@ export const MoorhenBackupSelect = forwardRef((props, selectRef) => {
             setStorageKeys(theKeys)
         }
 
-        if (storageKeys.length===0||props.storageKeysDirty) {
+        if (storageKeys.length===0 || props.storageKeysDirty) {
             getKeys();
             props.setStorageKeysDirty(false)
         }
-    }, []);
+    }, [props.storageKeysDirty]);
 
     const getBackupOptions = () => {
-
         let backupOptions = []
         storageKeys.forEach(key => {
             backupOptions.push(<option key={key[0]} value={key[0]}>{key[1]}</option>)
