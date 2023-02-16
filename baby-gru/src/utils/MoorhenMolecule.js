@@ -1549,3 +1549,25 @@ MoorhenMolecule.prototype.setColourRules = async function(glRef, ruleList, redra
         await this.redraw(glRef)
     }
 }
+
+MoorhenMolecule.prototype.hideCid = async function(cid, glRef) {
+    await this.commandCentre.current.cootCommand({
+        message: 'coot_command',
+        command: "add_to_non_drawn_bonds", 
+        returnType: 'status',
+        commandArgs: [this.molNo, cid], 
+    })
+    const result = await this.redraw(glRef)
+    return Promise.resolve(result)
+}
+
+MoorhenMolecule.prototype.unhideAll = async function(glRef) {
+    await this.commandCentre.current.cootCommand({
+        message: 'coot_command',
+        command: "clear_non_drawn_bonds", 
+        returnType: 'status',
+        commandArgs: [this.molNo], 
+    })
+    const result = await this.redraw(glRef)
+    return Promise.resolve(result)
+}

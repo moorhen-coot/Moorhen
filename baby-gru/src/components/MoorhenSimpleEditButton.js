@@ -590,6 +590,7 @@ export const MoorhenRotateTranslateZoneButton = (props) => {
         await chosenMolecule.current.updateWithMovedAtoms(transformedAtoms, glRef)
         changeMolecules({ action: 'Remove', item: fragmentMolecule.current })
         const response = fragmentMolecule.current.delete(glRef)
+        chosenMolecule.current.unhideAll(glRef)
         setShowAccept(false)
         const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: {origin: glRef.current.origin,  modifiedMolecule: chosenMolecule.current.molNo} })
         document.dispatchEvent(mapUpdateEvent)
@@ -599,11 +600,13 @@ export const MoorhenRotateTranslateZoneButton = (props) => {
         glRef.current.setActiveMolecule(null)
         changeMolecules({ action: 'Remove', item: fragmentMolecule.current })
         const response = fragmentMolecule.current.delete(glRef)
+        chosenMolecule.current.unhideAll(glRef)
         setShowAccept(false)
     }, [fragmentMolecule.current, chosenMolecule.current, molecules, changeMolecules])
 
     const nonCootCommand = async (molecule, chosenAtom, p) => {
         chosenMolecule.current = molecule
+        chosenMolecule.current.hideCid(`/*/${chosenAtom.chain_id}/${chosenAtom.res_no}`, glRef)
         /* Copy the component to move into a new molecule */
         const newMolecule = await molecule.copyFragment(
             chosenAtom.chain_id, chosenAtom.res_no, chosenAtom.res_no, props.glRef, false

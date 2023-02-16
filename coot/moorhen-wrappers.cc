@@ -452,6 +452,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("mmrrcc",&molecules_container_t::mmrrcc)
     .function("auto_read_mtz",&molecules_container_t::auto_read_mtz)
     .function("SSM_superpose",&molecules_container_t::SSM_superpose)
+    .function("add_to_non_drawn_bonds",&molecules_container_t::add_to_non_drawn_bonds)
+    .function("clear_non_drawn_bonds",&molecules_container_t::clear_non_drawn_bonds)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<>()
