@@ -19,7 +19,7 @@
     "copy-webpack-plugin": "^11.0.0",
     "d3": "^5.15.0",
     "gl-matrix": "^3.4.3",
-    "html-react-parser": "^1.4.12",
+    "html-react-parser": "^1.4.14",
     "localforage": "^1.10.0",
     "nested-worker": "git+https://github.com/johanholmerin/nested-worker.git#semver:^1.0.0",
     "pako": "^2.0.4",
