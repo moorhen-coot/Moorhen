@@ -184,6 +184,27 @@ MoorhenMolecule.prototype.copyFragment = async function (chainId, res_no_start, 
     return newMolecule
 }
 
+MoorhenMolecule.prototype.copyFragmentUsingCid = async function (cid, backgroundColor, defaultBondSmoothness, glRef, doRecentre) {
+    if (typeof doRecentre === 'undefined') {
+        doRecentre = true
+    }
+    const $this = this
+    return $this.commandCentre.current.cootCommand({
+        returnType: "status",
+        command: "copy_fragment_using_cid",
+        commandArgs: [$this.molNo, cid],
+        changesMolecules: [$this.molNo]
+    }, true).then(async response => {
+        const newMolecule = new MoorhenMolecule($this.commandCentre, $this.urlPrefix)
+        newMolecule.name = `${$this.name} fragment`
+        newMolecule.molNo = response.data.result.result
+        newMolecule.setBackgroundColour(backgroundColor)
+        newMolecule.cootBondsOptions.smoothness = defaultBondSmoothness
+        await newMolecule.fetchIfDirtyAndDraw('CBs', glRef)
+        return Promise.resolve(newMolecule)
+    })
+}
+
 MoorhenMolecule.prototype.loadToCootFromURL = function (url, molName) {
     const $this = this
     return fetch(url)

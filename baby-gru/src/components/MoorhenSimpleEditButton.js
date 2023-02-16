@@ -1,7 +1,7 @@
 import { CheckOutlined, CloseOutlined } from "@mui/icons-material";
-import { MenuItem, MenuList, Tooltip } from "@mui/material";
+import { Input, MenuItem, MenuList, TextField, Tooltip } from "@mui/material";
 import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
-import { Button, Overlay, Container, Row, FormSelect, FormGroup, FormLabel, Card } from "react-bootstrap"
+import { Button, Overlay, Container, Row, FormSelect, FormGroup, FormLabel, Card, FormText } from "react-bootstrap"
 import { MoorhenMoleculeSelect } from "./MoorhenMoleculeSelect";
 import { cidToSpec, getTooltipShortcutLabel, residueCodesThreeToOne } from "../utils/MoorhenUtils";
 
@@ -69,10 +69,10 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
                         molecule.setAtomsDirty(true)
                         molecule.redraw(props.glRef)
 
-                        const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: {origin: props.glRef.current.origin,  modifiedMolecule: molecule.molNo} })
+                        const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: molecule.molNo } })
                         document.dispatchEvent(mapUpdateEvent);
 
-                        if(props.onExit) {
+                        if (props.onExit) {
                             props.onExit(molecule, chosenAtom, result)
                         }
                     } else if (props.nonCootCommand) {
@@ -144,9 +144,9 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
     </>
 })
 MoorhenSimpleEditButton.defaultProps = {
-    id: '', toolTip: "", setCursorStyle: () => { }, 
+    id: '', toolTip: "", setCursorStyle: () => { },
     returnType: 'status', needsAtomData: true, prompt: null,
-    setSelectedButtonIndex: () => { }, selectedButtonIndex: 0, 
+    setSelectedButtonIndex: () => { }, selectedButtonIndex: 0,
     changesMolecule: true, refineAfterMod: false, onCompleted: null,
     awaitAtomClick: true, onExit: null
 }
@@ -159,9 +159,9 @@ export const MoorhenAutofitRotamerButton = (props) => {
         if (props.shortCuts) {
             const shortCut = JSON.parse(props.shortCuts).auto_fit_rotamer
             setToolTip(`Auto-fit Rotamer ${getTooltipShortcutLabel(shortCut)}`)
-        }     
+        }
     }, [props.shortCuts])
-    
+
     return <MoorhenSimpleEditButton {...props}
         id='auto-fit-rotamer-edit-button'
         toolTip={toolTip}
@@ -178,7 +178,7 @@ export const MoorhenAutofitRotamerButton = (props) => {
                 chosenAtom.chain_id,
                 chosenAtom.res_no,
                 chosenAtom.ins_code
-                ]
+            ]
         }} />
 }
 
@@ -189,7 +189,7 @@ export const MoorhenFlipPeptideButton = (props) => {
         if (props.shortCuts) {
             const shortCut = JSON.parse(props.shortCuts).flip_peptide
             setToolTip(`Flip Peptide ${getTooltipShortcutLabel(shortCut)}`)
-        }     
+        }
     }, [props.shortCuts])
 
     return <MoorhenSimpleEditButton {...props}
@@ -234,7 +234,7 @@ export const MoorhenSideChain180Button = (props) => {
         needsMapData={false}
         cootCommand="side_chain_180"
         prompt="Click atom in residue to flip sidechain"
-        icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/side-chain-180.svg`} alt='Rotate Side-chain'/>}
+        icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/side-chain-180.svg`} alt='Rotate Side-chain' />}
         formatArgs={(molecule, chosenAtom) => {
             return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
         }} />
@@ -252,7 +252,7 @@ export const MoorhenRefineResiduesUsingAtomCidButton = (props) => {
         if (props.shortCuts) {
             const shortCut = JSON.parse(props.shortCuts).triple_refine
             setToolTip(`Refine Residues ${getTooltipShortcutLabel(shortCut)}`)
-        }     
+        }
     }, [props.shortCuts])
 
     const MoorhenRefinementPanel = (props) => {
@@ -288,7 +288,7 @@ export const MoorhenRefineResiduesUsingAtomCidButton = (props) => {
         prompt={<MoorhenRefinementPanel
             setPanelParameters={setPanelParameters}
             panelParameters={panelParameters} />}
-        icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/refine-1.svg`} alt='Refine Residues'/>}
+        icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/refine-1.svg`} alt='Refine Residues' />}
         formatArgs={(m, c, p) => refinementFormatArgs(m, c, p)}
         refineAfterMod={false} />
 }
@@ -338,7 +338,7 @@ export const MoorhenDeleteUsingCidButton = (props) => {
         if (props.shortCuts) {
             const shortCut = JSON.parse(props.shortCuts).delete_residue
             setToolTip(`Delete Item ${getTooltipShortcutLabel(shortCut)}`)
-        }     
+        }
     }, [props.shortCuts])
 
     const deleteMoleculeIfEmpty = (molecule, chosenAtom, cootResult) => {
@@ -375,9 +375,9 @@ export const MoorhenDeleteUsingCidButton = (props) => {
         //console.log({ molecule, chosenAtom, pp })
         let commandArgs
         if (pp.delete.mode === 'CHAIN') {
-            commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/*/*:*`, 'LITERAL'] 
+            commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/*/*:*`, 'LITERAL']
         } else if (pp.delete.mode === 'RESIDUE') {
-            commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/*${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`, 'LITERAL'] 
+            commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/*${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`, 'LITERAL']
         } else if (pp.delete.mode === 'ATOM') {
             commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`, 'LITERAL']
         } else if (pp.delete.mode === 'RESIDUE SIDE-CHAIN') {
@@ -458,14 +458,14 @@ export const MoorhenMutateButton = (props) => {
             </Row>
         </Container>
     }
-    
+
     const mutateFormatArgs = (molecule, chosenAtom, pp) => {
         return [
             molecule.molNo,
             `//${chosenAtom.chain_id}/${chosenAtom.res_no}`,
             pp.mutate.toType]
     }
-    
+
     return <MoorhenSimpleEditButton {...props}
         id='mutate-residue-edit-button'
         toolTip="Simple Mutate"
@@ -479,7 +479,7 @@ export const MoorhenMutateButton = (props) => {
         prompt={<MoorhenMutatePanel
             setPanelParameters={setPanelParameters}
             panelParameters={panelParameters} />}
-        icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/mutate.svg`} alt='Mutate'/>}
+        icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/mutate.svg`} alt='Mutate' />}
         formatArgs={(m, c, p) => mutateFormatArgs(m, c, p)} />
 }
 
@@ -490,9 +490,9 @@ export const MoorhenAddTerminalResidueDirectlyUsingCidButton = (props) => {
         if (props.shortCuts) {
             const shortCut = JSON.parse(props.shortCuts).add_terminal_residue
             setToolTip(`Add Residue ${getTooltipShortcutLabel(shortCut)}`)
-        }     
+        }
     }, [props.shortCuts])
-   
+
     return <MoorhenSimpleEditButton {...props}
         toolTip={toolTip}
         buttonIndex={props.buttonIndex}
@@ -501,7 +501,7 @@ export const MoorhenAddTerminalResidueDirectlyUsingCidButton = (props) => {
         needsMapData={true}
         cootCommand="add_terminal_residue_directly_using_cid"
         prompt="Click atom in residue to add a residue to that residue"
-        icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/add-peptide-1.svg`} alt='Add Residue'/>}
+        icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/add-peptide-1.svg`} alt='Add Residue' />}
         formatArgs={(molecule, chosenAtom) => {
             return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
         }} />
@@ -514,7 +514,7 @@ export const MoorhenEigenFlipLigandButton = (props) => {
         if (props.shortCuts) {
             const shortCut = JSON.parse(props.shortCuts).eigen_flip
             setToolTip(`Eigen Flip: flip the ligand around its eigenvectors ${getTooltipShortcutLabel(shortCut)}`)
-        }     
+        }
     }, [props.shortCuts])
 
     return <MoorhenSimpleEditButton {...props}
@@ -569,19 +569,53 @@ export const MoorhenRotateTranslateZoneButton = (props) => {
     const { changeMolecules, molecules, backgroundColor, glRef } = props
     const fragmentMolecule = useRef(null)
     const chosenMolecule = useRef(null)
+    const rotateTranslateMode = useRef('RESIDUE')
+    const fragmentCid = useRef(null)
+    const customCid = useRef('/*/*')
+
+    const MoorhenRotateTranslatePanel = () => {
+        const rotateTranslateModes = ['ATOM', 'RESIDUE', 'CHAIN', 'MOLECULE', 'CUSTOM']
+        const [localRotateTranslateMode, setLocalRotateTranslateMode] = useState(rotateTranslateMode.current)
+        return <Container>
+            <Row>Please click an atom to define object</Row>
+            <Row>
+                <FormGroup>
+                    <FormLabel>Rotate/translate mode</FormLabel>
+                    <FormSelect defaultValue={rotateTranslateMode.current}
+                        onChange={(e) => {
+                            rotateTranslateMode.current = e.target.value
+                            setLocalRotateTranslateMode(rotateTranslateMode.current)
+                        }}>
+                        {rotateTranslateModes.map(optionName => {
+                            return <option key={optionName} value={optionName}>{optionName}</option>
+                        })}
+                    </FormSelect>
+                </FormGroup>
+
+                {localRotateTranslateMode === 'CUSTOM' &&
+                    <TextField 
+                    style={{backgroundColor:"#EEEE"}}
+                    placeholder="Input custom cid e.g. //A,B"
+                        onChange={(e) => { customCid.current = e.target.value }}
+                    />
+                }
+
+            </Row>
+        </Container>
+    }
 
     useEffect(() => {
         if (props.shortCuts) {
             const shortCut = JSON.parse(props.shortCuts).residue_camera_wiggle
-            setTips( <>
-                        <em>{"Hold <Shift><Alt> to translate"}</em>
-                        <br></br>
-                        <em>{`Hold ${getTooltipShortcutLabel(shortCut)} to move view`}</em>
-                        <br></br>
-                        <br></br>
-                    </>
+            setTips(<>
+                <em>{"Hold <Shift><Alt> to translate"}</em>
+                <br></br>
+                <em>{`Hold ${getTooltipShortcutLabel(shortCut)} to move view`}</em>
+                <br></br>
+                <br></br>
+            </>
             )
-        }     
+        }
     }, [props.shortCuts])
 
     const acceptTransform = useCallback(async (e) => {
@@ -592,7 +626,7 @@ export const MoorhenRotateTranslateZoneButton = (props) => {
         const response = fragmentMolecule.current.delete(glRef)
         chosenMolecule.current.unhideAll(glRef)
         setShowAccept(false)
-        const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: {origin: glRef.current.origin,  modifiedMolecule: chosenMolecule.current.molNo} })
+        const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: { origin: glRef.current.origin, modifiedMolecule: chosenMolecule.current.molNo } })
         document.dispatchEvent(mapUpdateEvent)
     }, [fragmentMolecule.current, chosenMolecule.current, molecules, changeMolecules])
 
@@ -606,10 +640,31 @@ export const MoorhenRotateTranslateZoneButton = (props) => {
 
     const nonCootCommand = async (molecule, chosenAtom, p) => {
         chosenMolecule.current = molecule
-        chosenMolecule.current.hideCid(`/*/${chosenAtom.chain_id}/${chosenAtom.res_no}`, glRef)
+        switch (rotateTranslateMode.current) {
+            case 'ATOM':
+                fragmentCid.current =
+                    `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`
+                break;
+            case 'RESIDUE':
+                fragmentCid.current =
+                    `//${chosenAtom.chain_id}/${chosenAtom.res_no}/*${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`
+                break;
+            case 'CHAIN':
+                fragmentCid.current =
+                    `//${chosenAtom.chain_id}`
+                break;
+            case 'MOLECULE':
+                fragmentCid.current =
+                    `/*/*`
+                break;
+            case 'CUSTOM':
+                fragmentCid.current = customCid.current
+                break;
+        }
+        chosenMolecule.current.hideCid(fragmentCid.current, glRef)
         /* Copy the component to move into a new molecule */
-        const newMolecule = await molecule.copyFragment(
-            chosenAtom.chain_id, chosenAtom.res_no, chosenAtom.res_no, props.glRef, false
+        const newMolecule = await molecule.copyFragmentUsingCid(
+            fragmentCid.current, props.backgroundColor, props.defaultBondSmoothness, props.glRef, false
         )
         fragmentMolecule.current = newMolecule
         /* redraw */
@@ -625,7 +680,7 @@ export const MoorhenRotateTranslateZoneButton = (props) => {
         setSelectedButtonIndex={props.setSelectedButtonIndex}
         needsMapData={false}
         nonCootCommand={nonCootCommand}
-        prompt="Click atom in residue to totate/translate around"
+        prompt={<MoorhenRotateTranslatePanel />}
         icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/rtz.svg`} />}
         formatArgs={(molecule, chosenAtom) => {
             return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, true]
@@ -642,7 +697,7 @@ export const MoorhenRotateTranslateZoneButton = (props) => {
                 >
                     <Card className="mx-2">
                         <Card.Header >Accept rotate/translate ?</Card.Header>
-                        <Card.Body style={{alignItems: 'center', alignContent:'center', justifyContent:'center'}}>
+                        <Card.Body style={{ alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
                             {tips}
                             <Button onClick={acceptTransform}><CheckOutlined /></Button>
                             <Button className="mx-2" onClick={rejectTransform}><CloseOutlined /></Button>
@@ -704,6 +759,6 @@ export const MoorhenAddSimpleButton = (props) => {
             selectRef={selectRef}
             awaitAtomClick={false}
         />}
-        icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/atom-at-pointer.svg`} alt='add...'/>}
+        icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/atom-at-pointer.svg`} alt='add...' />}
     />
 }
