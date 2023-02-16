@@ -5,7 +5,6 @@ import { useState, useRef } from "react";
 import { MoorhenImportDictionaryMenuItem, MoorhenImportMapCoefficientsMenuItem, MoorhenAutoOpenMtzMenuItem, MoorhenDeleteEverythingMenuItem, MoorhenLoadTutorialDataMenuItem, MoorhenImportMapMenuItem, MoorhenImportFSigFMenuItem, MoorhenBackupsMenuItem } from "./MoorhenMenuItem";
 import { MenuItem } from "@mui/material";
 import { convertViewtoPx, doDownload, readTextFile, getMultiColourRuleArgs } from "../utils/MoorhenUtils";
-import localforage from 'localforage';
 
 export const MoorhenFileMenu = (props) => {
 
@@ -16,11 +15,11 @@ export const MoorhenFileMenu = (props) => {
     const [popoverIsShown, setPopoverIsShown] = useState(false)
     const [remoteSource, setRemoteSource] = useState("PDBe")
     const [isValidPdbId, setIsValidPdbId] = useState(true)
+    const [storageKeysDirty, setStorageKeysDirty] = useState(true)
     const pdbCodeFetchInputRef = useRef(null);
     const fetchMapDataCheckRef = useRef(null);
-    const [storageKeysDirty, setStorageKeysDirty] = useState(true)
 
-    const menuItemProps = { storageKeysDirty, setStorageKeysDirty, setPopoverIsShown, ...props }
+    const menuItemProps = { setPopoverIsShown, ...props }
 
     const loadPdbFiles = async (files) => {
         let readPromises = []
@@ -252,17 +251,10 @@ export const MoorhenFileMenu = (props) => {
     }
 
     const recoverSession = async (name) => {
-        console.log("Recover ....",name);
-        const ContactTable = localforage.createInstance({
-           name: "Moorhen-SessionStorage",
-           storeName: "Moorhen-SessionStorageTable"
-        });
+        console.log(`Recover .... ${name}`)
         try {
-            let backup = await ContactTable.getItem(name)
-            if(backup){
-                console.log("successully got session",name,"from localforage")
-                loadSessionJSON(backup)
-            }
+            let backup = await props.timeCapsuleRef.current.retrieveBackup(name)
+            loadSessionJSON(backup)
         } catch (err) {
             console.log(err)
         }
@@ -274,7 +266,7 @@ export const MoorhenFileMenu = (props) => {
         let mapPromises = props.maps.map(map => {return map.getMap()})
         let mapData = await Promise.all(mapPromises)
 
-        let session = {
+        const session = {
             moleculesNames: props.molecules.map(molecule => molecule.name),
             mapsNames: storeMaps ? props.maps.map(map => map.name) : [],
             moleculesPdbData: moleculeAtoms.map(item => item.data.result.pdbData),
@@ -303,26 +295,20 @@ export const MoorhenFileMenu = (props) => {
             clipEnd: glRef.current.gl_clipPlane1[3] - 500,
             quat4: glRef.current.myQuat
         }
+        
+        const sessionString = JSON.stringify(session)
 
         if(download) {
-            doDownload([JSON.stringify(session)], `session.json`)
+            doDownload([sessionString], `session.json`)
         } else {
-
-            //TODO - This needs to be clever and only save say 20 states - delete the oldest one if more than 19 before saving new.
-            const ContactTable = localforage.createInstance({
-               name: "Moorhen-SessionStorage",
-               storeName: "Moorhen-SessionStorageTable"
-            });
             try {
-                const d = Date.now()
-                await ContactTable.setItem("backup-"+d, JSON.stringify(session))
-                console.log("successully stored session in localforage")
+                props.timeCapsuleRef.current.busy = true
+                await props.timeCapsuleRef.current.createBackup(sessionString)
                 setStorageKeysDirty(true)
             } catch (err) {
                 console.log(err)
             }
         }
-
     }
 
     return <>
@@ -392,7 +378,7 @@ export const MoorhenFileMenu = (props) => {
                         Store molecule backup
                     </MenuItem>
                     
-                    <MoorhenBackupsMenuItem {...menuItemProps} onCompleted={(e) => { recoverSession(e) }} />
+                    <MoorhenBackupsMenuItem {...menuItemProps} timeCapsuleRef={props.timeCapsuleRef} storageKeysDirty={storageKeysDirty} setStorageKeysDirty={setStorageKeysDirty} onCompleted={(e) => { recoverSession(e)}} />
                     
                     <hr></hr>
 

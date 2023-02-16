@@ -1177,10 +1177,7 @@ export const MoorhenBackupsMenuItem = (props) => {
         menuItemText="Recover molecule backup..."
         onCompleted={onCompleted}
         setPopoverIsShown={props.setPopoverIsShown}
-        storageKeysDirty={props.storageKeysDirty}
-        setStorageKeysDirty={props.setStorageKeysDirty}
     />
-
 }
 
 export const MoorhenImportFSigFMenuItem = (props) => {
