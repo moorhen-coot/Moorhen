@@ -1524,8 +1524,7 @@ MoorhenMolecule.prototype.gemmiAtomsForCid = async function (cid) {
                                     b_iso: atomTempFactor,
                                     serial: atomSerial,
                                     name: atomName,
-                                    label: `/${modelName}/${chainName}/${resNum}(${residueName})/${atomName}${atomHasAltLoc ? ':' + String.fromCharCode(atomAltLoc) : ''}`,
-                                    name: atomName
+                                    label: `/${modelName}/${chainName}/${resNum}(${residueName})/${atomName}${atomHasAltLoc ? ':' + String.fromCharCode(atomAltLoc) : ''}`
                                 }
                                 result.push(atomInfo)
                                 atomPos.delete()
@@ -1534,6 +1533,7 @@ MoorhenMolecule.prototype.gemmiAtomsForCid = async function (cid) {
                             atom.delete()
                         }
                         atoms.delete()
+                        residueSeqId.delete()
                     }
                     residue.delete()
                 }
