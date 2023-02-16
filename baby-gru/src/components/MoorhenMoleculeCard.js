@@ -443,7 +443,7 @@ export const MoorhenMoleculeCard = (props) => {
                 <Accordion.Item eventKey="ligands" style={{ padding: '0', margin: '0' }} >
                     <Accordion.Header style={{ padding: '0', margin: '0' }}>Ligands</Accordion.Header>
                     <Accordion.Body style={{ padding: '0.5rem' }}>
-                        <MoorhenLigandList commandCentre={props.commandCentre} molecule={props.molecule} glRef={props.glRef} />
+                        <MoorhenLigandList commandCentre={props.commandCentre} molecule={props.molecule} glRef={props.glRef} darkMode={props.darkMode} />
                     </Accordion.Body>
                 </Accordion.Item>
             </Accordion>
