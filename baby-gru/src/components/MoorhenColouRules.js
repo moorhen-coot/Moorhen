@@ -5,6 +5,7 @@ import { SketchPicker } from "react-color";
 import { MoorhenMoleculeSelect } from "./MoorhenMoleculeSelect";
 import { MoorhenChainSelect } from "./MoorhenChainSelect";
 import { convertViewtoPx, getMultiColourRuleArgs } from "../utils/MoorhenUtils";
+import { MoorhenCidInputForm } from "./MoorhenCidInputForm";
 
 const itemReducer = (oldList, change) => {
     if (change.action === 'Add') {
@@ -236,10 +237,7 @@ export const MoorhenColourRules = (props) => {
                             <MoorhenMoleculeSelect width="100%" onChange={handleModelChange} molecules={props.molecules} ref={moleculeSelectRef}/>
                             {ruleType === 'chain'  && <MoorhenChainSelect width="100%" molecules={props.molecules} onChange={handleChainChange} selectedCoordMolNo={selectedModel} ref={chainSelectRef} allowedTypes={[1, 2]}/>}
                             {ruleType === 'cid' && 
-                                <Form.Group style={{ width: "100%", margin: '0.1rem' }}>
-                                    <Form.Label>Selection CID</Form.Label>
-                                    <Form.Control size="sm" type='text' defaultValue={''} style={{width: "100%"}} onChange={handleResidueCidChange} ref={cidFormRef}/>
-                                </Form.Group>
+                                <MoorhenCidInputForm width="100%" onChange={handleResidueCidChange} ref={cidFormRef}/>
                             }
                             {ruleType === 'property' && 
                                 <Form.Group style={{ margin: '0.1rem', width: '100%' }}>

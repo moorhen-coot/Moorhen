@@ -1,8 +1,9 @@
 import { CheckOutlined, CloseOutlined } from "@mui/icons-material";
-import { Input, MenuItem, MenuList, TextField, Tooltip } from "@mui/material";
+import { MenuItem, MenuList, Tooltip } from "@mui/material";
 import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
-import { Button, Overlay, Container, Row, FormSelect, FormGroup, FormLabel, Card, FormText } from "react-bootstrap"
+import { Button, Overlay, Container, Row, FormSelect, FormGroup, FormLabel, Card } from "react-bootstrap"
 import { MoorhenMoleculeSelect } from "./MoorhenMoleculeSelect";
+import { MoorhenCidInputForm } from "./MoorhenCidInputForm";
 import { cidToSpec, getTooltipShortcutLabel, residueCodesThreeToOne } from "../utils/MoorhenUtils";
 
 const refinementFormatArgs = (molecule, chosenAtom, pp) => {
@@ -556,7 +557,7 @@ export const MoorhenJedFlipTrueButton = (props) => {
         needsMapData={false}
         cootCommand="jed_flip"
         prompt="Click atom in residue to flip around that rotatable bond - wag the dog"
-        icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/jed-flip-reverse.svg`} />}
+        icon={<img alt="jed-flip" className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/jed-flip-reverse.svg`} />}
         formatArgs={(molecule, chosenAtom) => {
             return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`, true]
         }} />
@@ -566,12 +567,12 @@ export const MoorhenRotateTranslateZoneButton = (props) => {
     const [showAccept, setShowAccept] = useState(false)
     const [tips, setTips] = useState(null)
     const theButton = useRef(null)
-    const { changeMolecules, molecules, backgroundColor, glRef } = props
     const fragmentMolecule = useRef(null)
     const chosenMolecule = useRef(null)
     const rotateTranslateMode = useRef('RESIDUE')
     const fragmentCid = useRef(null)
-    const customCid = useRef('/*/*')
+    const customCid = useRef(null)
+    const { changeMolecules, backgroundColor, glRef, shortCuts, defaultBondSmoothness } = props
 
     const MoorhenRotateTranslatePanel = () => {
         const rotateTranslateModes = ['ATOM', 'RESIDUE', 'CHAIN', 'MOLECULE', 'CUSTOM']
@@ -591,22 +592,18 @@ export const MoorhenRotateTranslateZoneButton = (props) => {
                         })}
                     </FormSelect>
                 </FormGroup>
-
-                {localRotateTranslateMode === 'CUSTOM' &&
-                    <TextField
-                        style={{ backgroundColor: "#EEEE" }}
-                        placeholder="Input custom cid e.g. //A,B"
-                        onChange={(e) => { customCid.current = e.target.value }}
-                    />
+            </Row>
+            <Row>
+                {localRotateTranslateMode === 'CUSTOM' && 
+                    <MoorhenCidInputForm defaultValue={customCid.current} onChange={(e) => { customCid.current = e.target.value }} placeholder={customCid.current ? "" : "Input custom cid e.g. //A,B"}/>
                 }
-
             </Row>
         </Container>
     }
 
     useEffect(() => {
-        if (props.shortCuts) {
-            const shortCut = JSON.parse(props.shortCuts).residue_camera_wiggle
+        if (shortCuts) {
+            const shortCut = JSON.parse(shortCuts).residue_camera_wiggle
             setTips(<>
                 <em>{"Hold <Shift><Alt> to translate"}</em>
                 <br></br>
@@ -616,27 +613,27 @@ export const MoorhenRotateTranslateZoneButton = (props) => {
             </>
             )
         }
-    }, [props.shortCuts])
+    }, [shortCuts])
 
     const acceptTransform = useCallback(async (e) => {
         glRef.current.setActiveMolecule(null)
         const transformedAtoms = fragmentMolecule.current.transformedCachedAtomsAsMovedAtoms(glRef)
         await chosenMolecule.current.updateWithMovedAtoms(transformedAtoms, glRef)
         changeMolecules({ action: 'Remove', item: fragmentMolecule.current })
-        const response = fragmentMolecule.current.delete(glRef)
+        fragmentMolecule.current.delete(glRef)
         chosenMolecule.current.unhideAll(glRef)
         setShowAccept(false)
         const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: { origin: glRef.current.origin, modifiedMolecule: chosenMolecule.current.molNo } })
         document.dispatchEvent(mapUpdateEvent)
-    }, [fragmentMolecule.current, chosenMolecule.current, molecules, changeMolecules])
+    }, [changeMolecules, glRef])
 
     const rejectTransform = useCallback(async (e) => {
         glRef.current.setActiveMolecule(null)
         changeMolecules({ action: 'Remove', item: fragmentMolecule.current })
-        const response = fragmentMolecule.current.delete(glRef)
+        fragmentMolecule.current.delete(glRef)
         chosenMolecule.current.unhideAll(glRef)
         setShowAccept(false)
-    }, [fragmentMolecule.current, chosenMolecule.current, molecules, changeMolecules])
+    }, [changeMolecules, glRef])
 
     const nonCootCommand = async (molecule, chosenAtom, p) => {
         chosenMolecule.current = molecule
@@ -660,11 +657,17 @@ export const MoorhenRotateTranslateZoneButton = (props) => {
             case 'CUSTOM':
                 fragmentCid.current = customCid.current
                 break;
+            default:
+                console.log('Unrecognised rotate/translate selection...')
+                break;        
+        }
+        if (!fragmentCid.current) {
+            return
         }
         chosenMolecule.current.hideCid(fragmentCid.current, glRef)
         /* Copy the component to move into a new molecule */
         const newMolecule = await molecule.copyFragmentUsingCid(
-            fragmentCid.current, props.backgroundColor, props.defaultBondSmoothness, props.glRef, false
+            fragmentCid.current, backgroundColor, defaultBondSmoothness, glRef, false
         )
         await newMolecule.updateAtoms()
         Object.keys(molecule.displayObjects)
@@ -678,8 +681,8 @@ export const MoorhenRotateTranslateZoneButton = (props) => {
             })
         fragmentMolecule.current = newMolecule
         /* redraw */
-        props.changeMolecules({ action: "Add", item: newMolecule })
-        props.glRef.current.setActiveMolecule(newMolecule)
+        changeMolecules({ action: "Add", item: newMolecule })
+        glRef.current.setActiveMolecule(newMolecule)
         setShowAccept(true)
     }
 
@@ -691,7 +694,7 @@ export const MoorhenRotateTranslateZoneButton = (props) => {
         needsMapData={false}
         nonCootCommand={nonCootCommand}
         prompt={<MoorhenRotateTranslatePanel />}
-        icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/rtz.svg`} />}
+        icon={<img alt="rotate/translate" className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/rtz.svg`}/>}
         formatArgs={(molecule, chosenAtom) => {
             return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, true]
         }} />
