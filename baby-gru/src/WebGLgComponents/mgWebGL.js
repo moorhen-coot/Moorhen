@@ -9272,12 +9272,22 @@ class MGWebGL extends Component {
                 axesNormals[axesNormals.length - 1 - 1] *= size / d;
                 axesNormals[axesNormals.length - 1] *= size / d;
             }
+            let axesIdx_old = axesIdx_new;
+            axesIndexs_new.push(axesIdx_old);
+            axesIndexs_new.push(axesIdx_old+2);
+            axesIndexs_new.push(axesIdx_old+1);
+            axesIndexs_new.push(axesIdx_old+3);
+            axesIndexs_new.push(axesIdx_old+4);
+            axesIndexs_new.push(axesIdx_old+5);
+            axesIdx_new += 6;
+            /*
             axesIndexs_new.push(axesIdx_new++);
             axesIndexs_new.push(axesIdx_new++);
             axesIndexs_new.push(axesIdx_new++);
             axesIndexs_new.push(axesIdx_new++);
             axesIndexs_new.push(axesIdx_new++);
             axesIndexs_new.push(axesIdx_new++);
+            */
         }
 
         let ret = {};

@@ -203,7 +203,7 @@ const instancedMeshToMeshData = (instanceMesh, perm) => {
     }
 }
 
-const simpleMeshToMeshData = (simpleMesh) => {
+const simpleMeshToMeshData = (simpleMesh,perm) => {
     const vertices = simpleMesh.vertices;
     const triangles = simpleMesh.triangles;
     let totIdxs = [];
@@ -215,7 +215,10 @@ const simpleMeshToMeshData = (simpleMesh) => {
     for (let i = 0; i < trianglesSize; i++) {
         const triangle = triangles.get(i)
         const idxs = triangle.point_id;
-        totIdxs.push(...idxs);
+        if(perm)
+            totIdxs.push(...[idxs[0],idxs[2],idxs[1]]);
+        else
+            totIdxs.push(...idxs);
     }
     triangles.delete()
 
@@ -226,7 +229,10 @@ const simpleMeshToMeshData = (simpleMesh) => {
         const vertNormal = vert.normal
         const vertColor = vert.color
         totPos.push(...vertPos);
-        totNorm.push(...vertNormal);
+        if(perm)
+            totNorm.push(...[-vertNormal[0],-vertNormal[1],-vertNormal[2]]);
+        else
+            totNorm.push(...vertNormal);
         totCol.push(...vertColor);
         vert.delete()
     }
@@ -751,6 +757,9 @@ onmessage = function (e) {
                     break;
                 case 'instanced_mesh':
                     returnResult = instancedMeshToMeshData(cootResult)
+                    break;
+                case 'mesh_perm':
+                    returnResult = simpleMeshToMeshData(cootResult,true)
                     break;
                 case 'mesh':
                     returnResult = simpleMeshToMeshData(cootResult)

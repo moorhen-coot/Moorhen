@@ -49,64 +49,31 @@ var triangle_fragment_shader_source = `#version 300 es\n
       vec4 Ispec=vec4(0.0,0.0,0.0,0.0);
       vec3 norm = normalize(vNormal);
 
-      if(gl_FrontFacing!=true){
-        norm = -norm;
-      }
+      E = (mvInvMatrix * vec4(normalize(-v),1.0)).xyz;
+      L = normalize((mvInvMatrix *light_positions).xyz);
+      R = normalize(-reflect(L,norm));
+      Iamb += light_colours_ambient;
+      Idiff += light_colours_diffuse * max(dot(norm,L), 0.0);
+      float y = max(max(light_colours_specular.r,light_colours_specular.g),light_colours_specular.b);
+      Ispec += light_colours_specular * pow(max(dot(R,E),0.0),16.);
+      Ispec.a *= y;
 
-      if(gl_FrontFacing!=true){
-      E = (mvInvMatrix * vec4(normalize(-v),1.0)).xyz;
-      //for (i = 0; i<nLights&&i<8; i++) {
-       L = normalize((mvInvMatrix *light_positions).xyz);
-       R = normalize(-reflect(L,norm));
-       if(shinyBack==true){
-         Iamb += light_colours_ambient;
-         Idiff += light_colours_diffuse * max(dot(norm,L), 0.0);
-         float y = max(max(light_colours_specular.r,light_colours_specular.g),light_colours_specular.b);
-         Ispec += light_colours_specular * pow(max(dot(R,E),0.0),16.);
-         Ispec.a *= y;
-       } else {
-         Iamb += light_colours_diffuse;
-       }
-      //}
-       } else {
-      E = (mvInvMatrix * vec4(normalize(-v),1.0)).xyz;
-      //for (i = 0; i<nLights&&i<8; i++) {
-       L = normalize((mvInvMatrix *light_positions).xyz);
-       R = normalize(-reflect(L,norm));
-       //calculate Ambient Term:
-       Iamb += light_colours_ambient;
-       //calculate Diffuse Term:
-       Idiff += light_colours_diffuse * max(dot(norm,L), 0.0);
-       // calculate Specular Term:
-       float y = max(max(light_colours_specular.r,light_colours_specular.g),light_colours_specular.b);
-       Ispec += light_colours_specular * pow(max(dot(R,E),0.0),16.);
-       Ispec.a *= y;
-      //}
-       }
-      
       float FogFragCoord = abs(eyePos.z/eyePos.w);
       float fogFactor = (fog_end - FogFragCoord)/(fog_end - fog_start);
       fogFactor = 1.0 - clamp(fogFactor,0.0,1.0);
 
       vec4 theColor = vec4(vColor);
-      /*
-      //Do not do this for now. this causes trouble with 'lit lines'. SJM 25012023
-      if(gl_FrontFacing!=true){
-        if(defaultColour==false){
-          theColor = vec4(backColour);
-        }
-      }
-      */
+
       vec4 color = (1.5*theColor*Iamb + 1.2*theColor* Idiff);
       color.a = vColor.a;
       color += Ispec;
+
+      if(gl_FrontFacing!=true){
+          color = vec4(vColor);
+      }
+
       fragColor = mix(color, fogColour, fogFactor );
 
-      //fragColor = vec4(vNormal,1.0);
-      //fragColor = light_colours_specular;
-      //fragColor = light_colours_diffuse*vec4(vNormal,1.0);
-      //fragColor = Idiff;
- 
     }
 `;
 
