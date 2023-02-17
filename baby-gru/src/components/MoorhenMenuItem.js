@@ -456,6 +456,31 @@ export const MoorhenAddRemoveHydrogenAtomsMenuItem = (props) => {
 
 }
 
+export const MoorhenBackupPreferencesMenuItem = (props) => {
+
+    const {
+        maxBackupCount, setMaxBackupCount, modificationCountBackupThreshold, setModificationCountBackupThreshold
+    } = props
+
+    const panelContent =
+        <>
+            <Form.Group className="mb-3" style={{ width: '18rem', margin: '0' }} controlId="MoorhenMaxBackupCount">
+                <MoorhenSlider minVal={1} maxVal={30} allowFloats={false} logScale={false} sliderTitle="Max. number of stored backups" initialValue={maxBackupCount} externalValue={maxBackupCount} setExternalValue={setMaxBackupCount} />
+            </Form.Group>
+            <Form.Group className="mb-3" style={{ width: '18rem', margin: '0' }} controlId="MoorhenModifThresholdBackup">
+                <MoorhenSlider minVal={1} maxVal={30} allowFloats={false} logScale={false} sliderTitle="No. of modifications to trigger backup" initialValue={modificationCountBackupThreshold} externalValue={modificationCountBackupThreshold} setExternalValue={setModificationCountBackupThreshold} />
+            </Form.Group>
+        </>
+
+    return <MoorhenMenuItem
+        popoverPlacement='right'
+        popoverContent={panelContent}
+        menuItemText={"Automatic backup settings"}
+        setPopoverIsShown={props.setPopoverIsShown}
+        showOkButton={false}
+    />
+}
+
 export const MoorhenScoresToastPreferencesMenuItem = (props) => {
 
     const panelContent =

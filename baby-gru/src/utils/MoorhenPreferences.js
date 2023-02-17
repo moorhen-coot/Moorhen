@@ -24,7 +24,7 @@ const updateStoredPreferences = async (key, value) => {
 
 const getDefaultValues = () => {
     return {
-        version: '0.0.14',
+        version: '0.0.15',
         darkMode: false, 
         atomLabelDepthMode: true, 
         defaultExpandDisplayCards: true,
@@ -44,6 +44,8 @@ const getDefaultValues = () => {
         shortcutOnHoveredAtom: true,
         resetClippingFogging: true,
         defaultUpdatingScores: ['Rfree', 'Rfactor', 'Moorhen Points'],
+        maxBackupCount: 10,
+        modificationCountBackupThreshold: 5,
         shortCuts: {
             "sphere_refine": {
                 modifiers: ["shiftKey"],
@@ -181,6 +183,8 @@ const PreferencesContextProvider = ({ children }) => {
     const [showScoresToast, setShowScoresToast] = useState(null)
     const [shortcutOnHoveredAtom, setShortcutOnHoveredAtom] = useState(null)
     const [resetClippingFogging, setResetClippingFogging] = useState(null)
+    const [maxBackupCount, setMaxBackupCount] = useState(null)
+    const [modificationCountBackupThreshold, setModificationCountBackupThreshold] = useState(null)
     const [defaultUpdatingScores, setDefaultUpdatingScores] = useReducer(itemReducer, null)
 
     const preferencesMap = {
@@ -204,6 +208,8 @@ const PreferencesContextProvider = ({ children }) => {
         18: { label: "shortcutOnHoveredAtom", value: shortcutOnHoveredAtom, valueSetter: setShortcutOnHoveredAtom},
         19: { label: "resetClippingFogging", value: resetClippingFogging, valueSetter: setResetClippingFogging},
         20: { label: "defaultUpdatingScores", value: defaultUpdatingScores, valueSetter: (newValue) => {setDefaultUpdatingScores({action: 'Overwrite', items: newValue})}},
+        21: { label: "maxBackupCount", value: maxBackupCount, valueSetter: setMaxBackupCount},
+        22: { label: "modificationCountBackupThreshold", value: modificationCountBackupThreshold, valueSetter: setModificationCountBackupThreshold},
     }
 
     const restoreDefaults = (defaultValues)=> {
@@ -270,6 +276,24 @@ const PreferencesContextProvider = ({ children }) => {
        
         updateStoredPreferences('shortcutOnHoveredAtom', shortcutOnHoveredAtom);
     }, [shortcutOnHoveredAtom]);
+    
+    useMemo(() => {
+
+        if (maxBackupCount === null) {
+            return
+        }
+       
+        updateStoredPreferences('maxBackupCount', maxBackupCount);
+    }, [maxBackupCount]);
+    
+    useMemo(() => {
+
+        if (modificationCountBackupThreshold === null) {
+            return
+        }
+       
+        updateStoredPreferences('modificationCountBackupThreshold', modificationCountBackupThreshold);
+    }, [modificationCountBackupThreshold]);
 
     useMemo(() => {
 
@@ -451,7 +475,8 @@ const PreferencesContextProvider = ({ children }) => {
         setDefaultMapSurface, defaultBondSmoothness, setDefaultBondSmoothness, showScoresToast, 
         setShowScoresToast, defaultUpdatingScores, setDefaultUpdatingScores, drawFPS, setDrawFPS,
         wheelSensitivityFactor, setWheelSensitivityFactor, shortcutOnHoveredAtom, setShortcutOnHoveredAtom,
-        resetClippingFogging, setResetClippingFogging
+        resetClippingFogging, setResetClippingFogging, maxBackupCount, setMaxBackupCount,
+        modificationCountBackupThreshold, setModificationCountBackupThreshold
     }
 
     return (

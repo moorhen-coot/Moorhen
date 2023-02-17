@@ -23,25 +23,30 @@ export default function MoorhenSlider(props) {
     }, [externalValue])
 
     const handleChange = (event, newValue) => {
-        setValue(newValue);
+        setValue(props.allowFloats ? newValue : Math.round(newValue))
         if (props.logScale) {
             const log10MaxVal = Math.log10(props.maxVal)
             const log10MinVal = Math.log10(Math.max(props.minVal, 0.00000001))
             const log10NewVal = log10MinVal + (newValue/100) * (log10MaxVal-log10MinVal)
-            const newVal = Math.pow(10., log10NewVal)
+            let newVal = Math.pow(10., log10NewVal)
+            if (!props.allowFloats) {
+                newVal = Math.round(newVal)
+            }
             setExternalValue(newVal)
         }
-        else {
+        else if (props.allowFloats) {
             setExternalValue(props.minVal + (newValue/100.)*(props.maxVal-props.minVal))
+        } else {
+            setExternalValue(Math.round(props.minVal + (newValue/100.)*(props.maxVal-props.minVal)))
         }
     };
 
     return (
         <Box sx={{ width: '100%' }}>
-            <span>{props.sliderTitle}: {props.externalValue.toFixed(3)}</span>
+            <span>{props.sliderTitle}: {props.allowFloats ? props.externalValue.toFixed(3) : props.externalValue}</span>
             <Stack spacing={2} direction="row" sx={{ mb: 1 }} alignItems="center">
                 {props.minVal}
-                <Slider disabled={props.isDisabled} value={value} onChange={handleChange} />
+                    <Slider disabled={props.isDisabled} value={value} onChange={handleChange}/>
                 {props.maxVal}
             </Stack>
         </Box>
@@ -49,5 +54,5 @@ export default function MoorhenSlider(props) {
 }
 
 MoorhenSlider.defaultProps={
-    minVal:0, maxVal:100, setExternalValue:()=>{}, logScale:false, isDisabled:false
+    minVal: 0, maxVal: 100, setExternalValue: ()=>{}, logScale: false, isDisabled: false, allowFloats: true
 }
