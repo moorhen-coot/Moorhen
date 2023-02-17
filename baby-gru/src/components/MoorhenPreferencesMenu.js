@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NavDropdown, Form, InputGroup } from "react-bootstrap";
 import { MoorhenShortcutConfigModal } from "./MoorhenShortcutConfigModal"
 import { MenuItem } from "@mui/material";
 import { convertViewtoPx } from "../utils/MoorhenUtils";
-import { MoorhenDefaultBondSmoothnessPreferencesMenuItem, MoorhenScoresToastPreferencesMenuItem } from './MoorhenMenuItem'
+import { MoorhenDefaultBondSmoothnessPreferencesMenuItem, MoorhenScoresToastPreferencesMenuItem, MoorhenBackupPreferencesMenuItem } from './MoorhenMenuItem'
 import MoorhenSlider from './MoorhenSlider' 
 
 export const MoorhenPreferencesMenu = (props) => {
@@ -17,11 +17,19 @@ export const MoorhenPreferencesMenu = (props) => {
         defaultBondSmoothness, setDefaultBondSmoothness, showScoresToast, setShowScoresToast,
         defaultUpdatingScores, setDefaultUpdatingScores, drawFPS, setDrawFPS, wheelSensitivityFactor,
         setWheelSensitivityFactor, shortcutOnHoveredAtom, setShortcutOnHoveredAtom, resetClippingFogging, 
-        setResetClippingFogging
+        setResetClippingFogging, maxBackupCount, setMaxBackupCount, modificationCountBackupThreshold,
+        setModificationCountBackupThreshold, timeCapsuleRef
      } = props;
 
     const [showModal, setShowModal] = useState(null);
     const [popoverIsShown, setPopoverIsShown] = useState(false)
+
+    useEffect(() => {
+        if (timeCapsuleRef.current) {
+            timeCapsuleRef.current.maxBackupCount = maxBackupCount
+            timeCapsuleRef.current.modificationCountBackupThreshold = modificationCountBackupThreshold
+        }
+    }, [maxBackupCount, modificationCountBackupThreshold])
 
     return <NavDropdown
                     title="Preferences"
@@ -130,6 +138,13 @@ export const MoorhenPreferencesMenu = (props) => {
                             onChange={() => { setResetClippingFogging(!resetClippingFogging) }}
                             label="Reset clipping and fogging on zoom"/>
                     </InputGroup>
+                    <MoorhenBackupPreferencesMenuItem 
+                        maxBackupCount={maxBackupCount}
+                        setMaxBackupCount={setMaxBackupCount}
+                        modificationCountBackupThreshold={modificationCountBackupThreshold}
+                        setModificationCountBackupThreshold={setModificationCountBackupThreshold}
+                        setPopoverIsShown={setPopoverIsShown}
+                    />
                     <MoorhenScoresToastPreferencesMenuItem
                         showScoresToast={showScoresToast}
                         setShowScoresToast={setShowScoresToast}
