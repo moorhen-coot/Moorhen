@@ -43,6 +43,7 @@ export const MoorhenContainer = (props) => {
     const glRef = useRef(null)
     const timeCapsuleRef = useRef(null)
     const commandCentre = useRef(null)
+    const moleculesRef = useRef(null)
     const navBarRef = useRef()
     const consoleDivRef = useRef()
     const [selectedToolKey, setSelectedToolKey] = useState(null)
@@ -73,7 +74,8 @@ export const MoorhenContainer = (props) => {
     const preferences = useContext(PreferencesContext);
     const [toastContent, setToastContent] = useState("")
     const [showAdvancedDisplayOptions, setShowAdvancedDisplayOptions] = useState(false)
-
+    
+    moleculesRef.current = molecules
     const sideBarWidth = convertViewtoPx(30, windowWidth)
     const innerWindowMarginHeight = convertRemToPx(2.1)
     const innerWindowMarginWidth = convertRemToPx(1)
@@ -88,7 +90,7 @@ export const MoorhenContainer = (props) => {
     useEffect(() => {
         if (cootInitialized && props.forwardControls) {
             props.forwardControls(collectedProps)
-            timeCapsuleRef.current = new MoorhenTimeCapsule()
+            timeCapsuleRef.current = new MoorhenTimeCapsule(moleculesRef, glRef, preferences)
         }
     }, [cootInitialized, props.forwardControls])
 

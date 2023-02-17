@@ -79,6 +79,7 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
                     } else if (props.nonCootCommand) {
                         props.nonCootCommand(molecule, chosenAtom, localParameters)
                     }
+                    props.timeCapsuleRef.current.addModification()
                 }
                 else {
                     console.log('molecule for buffer not found')
