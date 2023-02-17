@@ -481,6 +481,32 @@ export const MoorhenBackupPreferencesMenuItem = (props) => {
     />
 }
 
+export const MoorhenStoreSessionMenuItem = (props) => {
+    const nameInputRef = useRef(null)
+
+    const onCompleted = async () => {
+        if (nameInputRef.current.value) {
+            const sessionString = await props.timeCapsuleRef.current.fetchSession()
+            console.log('HAH')
+            console.log(sessionString)
+            props.timeCapsuleRef.current.createBackup(sessionString, nameInputRef.current.value)
+        }
+    }
+
+    const panelContent = <Form.Group style={{ width: '15rem', margin: '0.1rem' }}>
+                            <Form.Label>Session name</Form.Label>
+                            <Form.Control ref={nameInputRef} size="sm" type='text' defaultValue={''} style={{width: "100%", marginBottom: '0.5rem'}}/>
+                        </Form.Group>
+
+    return <MoorhenMenuItem
+        popoverPlacement='right'
+        popoverContent={panelContent}
+        menuItemText={"Store current session"}
+        setPopoverIsShown={props.setPopoverIsShown}
+        onCompleted={onCompleted}
+    />
+}
+
 export const MoorhenScoresToastPreferencesMenuItem = (props) => {
 
     const panelContent =
@@ -1179,21 +1205,36 @@ export const MoorhenImportMapCoefficientsMenuItem = (props) => {
 }
 
 export const MoorhenBackupsMenuItem = (props) => {
-
     const backupSelectRef = useRef(null)
-
-    const onCompleted = async () => {
+    const backupTypeSelectRef = useRef(null)
+    const [backupType, setBackupType] = useState('automatic')
+    
+    const onCompleted = useCallback(async () => {
         props.setPopoverIsShown(false)
-        if (props.onCompleted)
-            props.onCompleted(backupSelectRef.current.value)
+        const name = backupSelectRef.current.value
+        const isAuto = backupTypeSelectRef.current.value === 'automatic'
+        console.log(`Recover .... ${name}`)
+        try {
+            let backup = await props.timeCapsuleRef.current.retrieveBackup(name, isAuto)
+            props.loadSessionJSON(backup)
+        } catch (err) {
+            console.log(err)
+        }
         return true
-    }
+    }, [backupType, props.loadSessionJSON, props.timeCapsuleRef])
 
     const panelContent = <>
         <Row>
-            <Col style={{ width: '30rem' }}>
-                <MoorhenBackupSelect {...props} ref={backupSelectRef} allowAny={false} width='100%' label='Select backup' />
-            </Col>
+            <Form.Group style={{ width: '30rem', marginTop: '0.5rem' }}>
+                <Form.Label>Backup type</Form.Label>
+                <FormSelect size="sm" ref={backupTypeSelectRef} value={backupType} onChange={(e) => {setBackupType(e.target.value)}}>
+                    <option key={'automatic'} value={'automatic'}>Automatic backup</option>
+                    <option key={'manual'} value={'manual'}>Manual backup</option>
+                </FormSelect>
+            </Form.Group>
+        </Row>
+        <Row style={{ width: '30rem', marginTop: '0.5rem',  marginBottom: '0.5rem' }}>
+            <MoorhenBackupSelect {...props} backupType={backupType} ref={backupSelectRef} width='100%' label='Select backup' />
         </Row>
     </>
 
