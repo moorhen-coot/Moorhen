@@ -1455,6 +1455,13 @@ export const MoorhenClipFogMenuItem = (props) => {
                 props.glRef.current.drawScene()
                 setZfogBack(newValue)
             }} />
+        <InputGroup style={{ paddingLeft:'0.1rem', paddingBottom: '0.5rem', width: '25rem'}}>
+            <Form.Check 
+                type="switch"
+                checked={props.resetClippingFogging}
+                onChange={() => { props.setResetClippingFogging(!props.resetClippingFogging) }}
+                label="Reset clipping and fogging on zoom"/>
+        </InputGroup>
     </div>
 
     const onCompleted = () => { props.setPopoverIsShown(false) }
