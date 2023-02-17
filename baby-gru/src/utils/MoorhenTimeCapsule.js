@@ -1,16 +1,21 @@
 import localforage from 'localforage';
 
-const createInstance = () => {
+const createInstance = (name, empty=false) => {
     console.log(`Creating local storage instance for time capsule...`)
-    return localforage.createInstance({
+    const instance = localforage.createInstance({
         driver: [localforage.INDEXEDDB, localforage.LOCALSTORAGE],
-        name: "Moorhen-TimeCapsule",
-        storeName: "Moorhen-TimeCapsule"
+        name: name,
+        storeName: name
      })
+     if (empty) {
+        instance.clear()
+     }
+     return instance
 }
 
 export function MoorhenTimeCapsule(moleculesRef, glRef, preferences) {
-    this.storageInstance = createInstance()
+    this.autoBackupsStorageInstance = createInstance('Moorhen-TimeCapsule-Auto', true)
+    this.manualBackupsStorageInstance = createInstance('Moorhen-TimeCapsule-Manual')
     this.moleculesRef = moleculesRef
     this.glRef = glRef
     this.preferences = preferences
@@ -68,22 +73,32 @@ MoorhenTimeCapsule.prototype.addModification = async function() {
 }
 
 MoorhenTimeCapsule.prototype.cleanupIfFull = async function() {
-    const keys = await this.storageInstance.keys()
+    const keys = await this.autoBackupsStorageInstance.keys()
     const sortedKeys = keys.filter(key => key.indexOf("backup-") == 0).sort((a,b)=>{return parseInt(a.substr(7))-parseInt(b.substr(7))}).reverse()
     if (sortedKeys.length >= this.maxBackupCount) {
         const toRemoveCount = sortedKeys.length - this.maxBackupCount
-        const promises = sortedKeys.slice(-toRemoveCount).map(key => this.removeBackup(key))
+        const promises = sortedKeys.slice(-toRemoveCount).map(key => this.removeBackup(key, true))
         await Promise.all(promises)
     }
 }
 
-MoorhenTimeCapsule.prototype.createBackup = async function(value) {
-    const key =`backup-${Date.now()}`
+MoorhenTimeCapsule.prototype.createBackup = async function(value, name=null) {
+    let storageInstance
+    let key
+    if(name) {
+        key =`${name} (${Date.now()})`
+        storageInstance = this.manualBackupsStorageInstance
+    } else {
+        key =`backup-${Date.now()}`
+        storageInstance = this.autoBackupsStorageInstance
+    }
     console.log(`Creating backup ${key} in local storage...`)
     try {
-         await this.storageInstance.setItem(key, value)
+        await storageInstance.setItem(key, value)
          console.log("Successully created backup in time capsule")
-         await this.cleanupIfFull()
+         if(name !== null) {
+            await this.cleanupIfFull()
+         }
          this.busy = false
          return key
      } catch (err) {
@@ -91,29 +106,47 @@ MoorhenTimeCapsule.prototype.createBackup = async function(value) {
      }
 }
 
-MoorhenTimeCapsule.prototype.retrieveBackup = async function(key) {
+MoorhenTimeCapsule.prototype.retrieveBackup = async function(key, isAuto=false) {
     console.log(`Fetching backup ${key} from local storage...`)
+    let storageInstance
+    if(isAuto) {
+        storageInstance = this.autoBackupsStorageInstance
+    } else {
+        storageInstance = this.manualBackupsStorageInstance
+    }
     try {
-         return await this.storageInstance.getItem(key)
+         return await storageInstance.getItem(key)
      } catch (err) {
          console.log(err)
      }
 }
 
-MoorhenTimeCapsule.prototype.removeBackup = async function(key) {
+MoorhenTimeCapsule.prototype.removeBackup = async function(key, isAuto=false) {
     console.log(`Removing backup ${key} from time capsule...`)
+    let storageInstance
+    if(isAuto) {
+        storageInstance = this.autoBackupsStorageInstance
+    } else {
+        storageInstance = this.manualBackupsStorageInstance
+    }
     try {
-         await this.storageInstance.removeItem(key)
+         await storageInstance.removeItem(key)
          console.log('Successully removed backup from time capsule')
      } catch (err) {
          console.log(err)
      }
 }
 
-MoorhenTimeCapsule.prototype.dropAllBackups = async function() {
+MoorhenTimeCapsule.prototype.dropAllBackups = async function(isAuto=false) {
     console.log(`Removing all backups from time capsule...`)
+    let storageInstance
+    if(isAuto) {
+        storageInstance = this.autoBackupsStorageInstance
+    } else {
+        storageInstance = this.manualBackupsStorageInstance
+    }
     try {
-         await this.storageInstance.clear()
+         await storageInstance.clear()
          console.log('Successully removed all backup from time capsule')
      } catch (err) {
          console.log(err)

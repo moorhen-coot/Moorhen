@@ -2,7 +2,7 @@ import { NavDropdown, Form, Button, InputGroup, Overlay, SplitButton, Dropdown }
 import { MoorhenMolecule } from "../utils/MoorhenMolecule";
 import { MoorhenMap } from "../utils/MoorhenMap";
 import { useState, useRef } from "react";
-import { MoorhenImportDictionaryMenuItem, MoorhenImportMapCoefficientsMenuItem, MoorhenAutoOpenMtzMenuItem, MoorhenDeleteEverythingMenuItem, MoorhenLoadTutorialDataMenuItem, MoorhenImportMapMenuItem, MoorhenImportFSigFMenuItem, MoorhenBackupsMenuItem } from "./MoorhenMenuItem";
+import { MoorhenStoreSessionMenuItem, MoorhenImportDictionaryMenuItem, MoorhenImportMapCoefficientsMenuItem, MoorhenAutoOpenMtzMenuItem, MoorhenDeleteEverythingMenuItem, MoorhenLoadTutorialDataMenuItem, MoorhenImportMapMenuItem, MoorhenImportFSigFMenuItem, MoorhenBackupsMenuItem } from "./MoorhenMenuItem";
 import { MenuItem } from "@mui/material";
 import { convertViewtoPx, doDownload, readTextFile, getMultiColourRuleArgs } from "../utils/MoorhenUtils";
 
@@ -245,22 +245,11 @@ export const MoorhenFileMenu = (props) => {
     }
 
     const loadSession = async (file) => {
-        // Load session data
         let sessionData = await readTextFile(file)
         loadSessionJSON(sessionData)
     }
 
-    const recoverSession = async (name) => {
-        console.log(`Recover .... ${name}`)
-        try {
-            let backup = await props.timeCapsuleRef.current.retrieveBackup(name)
-            loadSessionJSON(backup)
-        } catch (err) {
-            console.log(err)
-        }
-    }
-
-    const getSession = async (download=false, storeMaps=false) => {
+    const getSession = async () => {
         let moleculePromises = props.molecules.map(molecule => {return molecule.getAtoms()})
         let moleculeAtoms = await Promise.all(moleculePromises)
         let mapPromises = props.maps.map(map => {return map.getMap()})
@@ -268,18 +257,18 @@ export const MoorhenFileMenu = (props) => {
 
         const session = {
             moleculesNames: props.molecules.map(molecule => molecule.name),
-            mapsNames: storeMaps ? props.maps.map(map => map.name) : [],
+            mapsNames: props.maps.map(map => map.name),
             moleculesPdbData: moleculeAtoms.map(item => item.data.result.pdbData),
-            mapsMapData: storeMaps ? mapData.map(item => new Uint8Array(item.data.result.mapData)) : [],
+            mapsMapData: mapData.map(item => new Uint8Array(item.data.result.mapData)),
             activeMapMolNo: props.activeMap ? props.activeMap.molNo : null,
             moleculesDisplayObjectsKeys: props.molecules.map(molecule => Object.keys(molecule.displayObjects).filter(key => molecule.displayObjects[key].length > 0)),
             moleculesCootBondsOptions: props.molecules.map(molecule => molecule.cootBondsOptions),
-            mapsCootContours: storeMaps ? props.maps.map(map => map.cootContour) : [],
-            mapsContourLevels: storeMaps ? props.maps.map(map => map.contourLevel) : [],
-            mapsColours: storeMaps ? props.maps.map(map => map.mapColour) : [],
-            mapsLitLines: storeMaps ? props.maps.map(map => map.litLines) : [],
-            mapsRadius: storeMaps ? props.maps.map(map => map.mapRadius) : [],
-            mapsIsDifference: storeMaps ? props.maps.map(map => map.isDifference) : [],
+            mapsCootContours:  props.maps.map(map => map.cootContour),
+            mapsContourLevels: props.maps.map(map => map.contourLevel),
+            mapsColours: props.maps.map(map => map.mapColour),
+            mapsLitLines: props.maps.map(map => map.litLines),
+            mapsRadius: props.maps.map(map => map.mapRadius),
+            mapsIsDifference: props.maps.map(map => map.isDifference),
             origin: props.glRef.current.origin,
             backgroundColor: props.backgroundColor,
             atomLabelDepthMode: props.atomLabelDepthMode,
@@ -297,18 +286,7 @@ export const MoorhenFileMenu = (props) => {
         }
         
         const sessionString = JSON.stringify(session)
-
-        if(download) {
-            doDownload([sessionString], `session.json`)
-        } else {
-            try {
-                props.timeCapsuleRef.current.busy = true
-                await props.timeCapsuleRef.current.createBackup(sessionString)
-                setStorageKeysDirty(true)
-            } catch (err) {
-                console.log(err)
-            }
-        }
+        doDownload([sessionString], `session.json`)
     }
 
     return <>
@@ -370,15 +348,13 @@ export const MoorhenFileMenu = (props) => {
 
                     <MoorhenLoadTutorialDataMenuItem {...menuItemProps} />
 
-                    <MenuItem id='download-session-menu-item' variant="success" onClick={() => {getSession(true, true)}}>
+                    <MenuItem id='download-session-menu-item' variant="success" onClick={() => {getSession()}}>
                         Download session
                     </MenuItem>
 
-                    <MenuItem id='save-session-menu-item' variant="success" onClick={() => {getSession()}}>
-                        Store molecule backup
-                    </MenuItem>
+                    <MoorhenStoreSessionMenuItem {...menuItemProps}/>
                     
-                    <MoorhenBackupsMenuItem {...menuItemProps} timeCapsuleRef={props.timeCapsuleRef} storageKeysDirty={storageKeysDirty} setStorageKeysDirty={setStorageKeysDirty} onCompleted={(e) => { recoverSession(e)}} />
+                    <MoorhenBackupsMenuItem {...menuItemProps} loadSessionJSON={loadSessionJSON} storageKeysDirty={storageKeysDirty} setStorageKeysDirty={setStorageKeysDirty} />
                     
                     <hr></hr>
 
