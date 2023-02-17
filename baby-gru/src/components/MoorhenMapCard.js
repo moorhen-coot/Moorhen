@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useCallback, useMemo, Fragment } from "react";
 import { Card, Form, Button, Row, Col, DropdownButton } from "react-bootstrap";
-import { doDownload } from '../utils/MoorhenUtils';
+import { doDownload, getNameLabel } from '../utils/MoorhenUtils';
 import { VisibilityOffOutlined, VisibilityOutlined, ExpandMoreOutlined, ExpandLessOutlined, DownloadOutlined, Settings } from '@mui/icons-material';
 import MoorhenSlider from "./MoorhenSlider";
 import { MoorhenDeleteDisplayObjectMenuItem, MoorhenRenameDisplayObjectMenuItem } from "./MoorhenMenuItem";
@@ -71,7 +71,7 @@ export const MoorhenMapCard = (props) => {
     }
 
     const getButtonBar = (sideBarWidth) => {
-        const maximumAllowedWidth = sideBarWidth * 0.35
+        const maximumAllowedWidth = sideBarWidth * 0.55
         let currentlyUsedWidth = 0
         let expandedButtons = []
         let compressedButtons = []
@@ -212,7 +212,7 @@ export const MoorhenMapCard = (props) => {
         <Card.Header style={{padding: '0.5rem'}}>
             <Row className='align-items-center'>
             <Col className='align-items-center' style={{display:'flex', justifyContent:'left'}}>
-                    {`#${props.map.molNo} Map ${props.map.name}`}
+                    {getNameLabel(props.map)}
                     <img 
                         className="baby-gru-map-icon"
                         alt="..."

@@ -6,7 +6,6 @@ import { convertViewtoPx } from '../utils/MoorhenUtils.js';
 
 export const MoorhenWebMG = forwardRef((props, glRef) => {
     const scores = useRef({})
-    const windowResizedBinding = createRef(null)
     const [mapLineWidth, setMapLineWidth] = useState(1.0)
     const [connectedMolNo, setConnectedMolNo] = useState(null)
     const [scoresToastContents, setScoreToastContents] = useState(null)
@@ -228,19 +227,24 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
 
     }, [handleMiddleClickGoToAtom]);
 
+    const handleWindowResized = useCallback((e) => {
+        glRef.current.resize(props.width(), props.height())
+        glRef.current.drawScene()
+    }, [glRef, props.width, props.height])
+
     useEffect(() => {
         glRef.current.setAmbientLightNoUpdate(0.2, 0.2, 0.2);
         glRef.current.setSpecularLightNoUpdate(0.6, 0.6, 0.6);
         glRef.current.setDiffuseLight(1., 1., 1.);
         glRef.current.setLightPositionNoUpdate(10., 10., 60.);
         setClipFogByZoom()
-        windowResizedBinding.current = window.addEventListener('resize', windowResized)
-        windowResized()
+        window.addEventListener('resize', handleWindowResized)
+        handleWindowResized()
         glRef.current.drawScene()
         return () => {
-            window.removeEventListener('resize', windowResizedBinding.current)
+            window.removeEventListener('resize', handleWindowResized)
         }
-    }, [glRef])
+    }, [handleWindowResized])
 
     useEffect(() => {
         if (glRef.current) {
@@ -292,11 +296,6 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
             }
         })
     }, [props.maps, props.maps.length])
-
-    const windowResized = (e) => {
-        glRef.current.resize(props.width(), props.height())
-        glRef.current.drawScene()
-    }
 
     return  <>
                 <ToastContainer style={{ zIndex: '0', marginTop: "5rem", marginLeft: '0.5rem', textAlign:'left', alignItems: 'left', maxWidth: convertViewtoPx(40, props.windowWidth)}} position='top-start' >

@@ -16,9 +16,9 @@ export const MoorhenPreferencesMenu = (props) => {
         showShortcutToast, setShowShortcutToast, defaultMapSurface, setDefaultMapSurface,
         defaultBondSmoothness, setDefaultBondSmoothness, showScoresToast, setShowScoresToast,
         defaultUpdatingScores, setDefaultUpdatingScores, drawFPS, setDrawFPS, wheelSensitivityFactor,
-        setWheelSensitivityFactor, shortcutOnHoveredAtom, setShortcutOnHoveredAtom, resetClippingFogging, 
-        setResetClippingFogging, maxBackupCount, setMaxBackupCount, modificationCountBackupThreshold,
-        setModificationCountBackupThreshold, timeCapsuleRef
+        setWheelSensitivityFactor, shortcutOnHoveredAtom, setShortcutOnHoveredAtom, maxBackupCount, 
+        setMaxBackupCount, modificationCountBackupThreshold, setModificationCountBackupThreshold, 
+        timeCapsuleRef
      } = props;
 
     const [showModal, setShowModal] = useState(null);
@@ -130,13 +130,6 @@ export const MoorhenPreferencesMenu = (props) => {
                             checked={shortcutOnHoveredAtom}
                             onChange={() => { setShortcutOnHoveredAtom(!shortcutOnHoveredAtom) }}
                             label="Hover on residue to use shortcuts"/>
-                    </InputGroup>
-                    <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
-                        <Form.Check 
-                            type="switch"
-                            checked={resetClippingFogging}
-                            onChange={() => { setResetClippingFogging(!resetClippingFogging) }}
-                            label="Reset clipping and fogging on zoom"/>
                     </InputGroup>
                     <MoorhenBackupPreferencesMenuItem 
                         maxBackupCount={maxBackupCount}

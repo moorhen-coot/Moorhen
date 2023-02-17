@@ -1,5 +1,5 @@
-
-
+import { OverlayTrigger } from "react-bootstrap";
+import { Tooltip } from "@mui/material";
 import { v4 as uuidv4 } from 'uuid';
 
 export function guid(){
@@ -587,4 +587,32 @@ export const getMultiColourRuleArgs = (molecule, ruleType) => {
     }
 
     return multiRulesArgs
+}
+
+export const getNameLabel = (item) => {
+    if (item.name.length > 9) {
+        return <OverlayTrigger
+                key={item.molNo}
+                id="name-label-trigger"
+                placement="top"
+                overlay={
+                    <Tooltip id="name-label-tooltip" 
+                    style={{
+                        backgroundColor: 'rgba(0, 0, 0, 0.85)',
+                        padding: '2px 10px',
+                        color: 'white',
+                        borderRadius: 3,
+                    }}>
+                        <div>
+                            {item.name}
+                        </div>
+                    </Tooltip>
+                }
+                >
+                <div>
+                    {`#${item.molNo} Mol. ${item.name.slice(0,4)}...`}
+                </div>
+                </OverlayTrigger>
+    }
+    return `#${item.molNo} Mol. ${item.name}`
 }
