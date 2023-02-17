@@ -5,17 +5,21 @@ import * as quat4 from 'gl-matrix/quat';
 import { quatToMat4, quat4Inverse } from '../WebGLgComponents/quatToMat4.js';
 import { getDeviceScale, vec3Create } from '../WebGLgComponents/mgWebGL';
 
-const apresEdit = (molecule, glRef, setHoveredAtom) => {
+const apresEdit = (molecule, glRef, timeCapsuleRef, setHoveredAtom) => {
     molecule.setAtomsDirty(true)
     molecule.redraw(glRef)
     setHoveredAtom({ molecule: null, cid: null })
     const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: { origin: glRef.current.origin,  modifiedMolecule: molecule.molNo} })
     document.dispatchEvent(mapUpdateEvent)
+    timeCapsuleRef.current.addModification()
 }
 
 export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     
-    const { setShowToast, setToastContent, hoveredAtom, setHoveredAtom, commandCentre, activeMap, glRef, molecules } = collectedProps;
+    const { 
+        setShowToast, setToastContent, hoveredAtom, setHoveredAtom, 
+        commandCentre, activeMap, glRef, molecules, timeCapsuleRef 
+    } = collectedProps;
 
     const getCentreAtom = async () => {
         const visibleMolecules = molecules.filter(molecule => molecule.isVisible && molecule.hasVisibleBuffers())
@@ -57,7 +61,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
                 commandArgs: formatArgs(chosenMolecule, chosenAtom),
                 changesMolecules: [chosenMolecule.molNo]
             }, true).then(_ => {
-                apresEdit(chosenMolecule, glRef, setHoveredAtom)
+                apresEdit(chosenMolecule, glRef, timeCapsuleRef, setHoveredAtom)
             })
             .then(_ => false)
             .catch(err => {
