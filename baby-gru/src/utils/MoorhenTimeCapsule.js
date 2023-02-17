@@ -16,8 +16,8 @@ export function MoorhenTimeCapsule(moleculesRef, glRef, preferences) {
     this.preferences = preferences
     this.busy = false
     this.modificationCount = 0
-    this.modificationCountThreshold = 2
-    this.maxBackupCount = 3
+    this.modificationCountThreshold = 5
+    this.maxBackupCount = 10
 }
 
 MoorhenTimeCapsule.prototype.fetchSession = async function () {
