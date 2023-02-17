@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useReducer } from "react";
 import { Card, Row, Col, Accordion } from "react-bootstrap";
-import { doDownload, sequenceIsValid } from '../utils/MoorhenUtils';
+import { doDownload, sequenceIsValid, getNameLabel} from '../utils/MoorhenUtils';
 import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
 import { MoorhenSequenceViewer } from "./MoorhenSequenceViewer";
 import { MoorhenMoleculeCardButtonBar } from "./MoorhenMoleculeCardButtonBar"
@@ -359,7 +359,7 @@ export const MoorhenMoleculeCard = (props) => {
         <Card.Header style={{ padding: '0.5rem' }}>
             <Row className='align-items-center'>
                 <Col className='align-items-center' style={{ display: 'flex', justifyContent: 'left' }}>
-                    {`#${props.molecule.molNo} Mol. ${props.molecule.name}`}
+                    {getNameLabel(props.molecule)}
                 </Col>
                 <Col style={{ display: 'flex', justifyContent: 'right' }}>
                     <MoorhenMoleculeCardButtonBar

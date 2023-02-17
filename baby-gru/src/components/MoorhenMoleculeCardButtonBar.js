@@ -21,38 +21,38 @@ export const MoorhenMoleculeCardButtonBar = (props) => {
 
     const actionButtons = {
         1: {
-            label: "Undo last action",
-            compressed: () => { return (<MenuItem key={1} variant="success" onClick={props.handleUndo} disabled={!props.backupsEnabled}>Undo last action</MenuItem>) },
+            label: props.isVisible ? "Hide molecule" : "Show molecule",
+            compressed: () => { return (<MenuItem key={1} variant="success" onClick={props.handleVisibility}>{props.isVisible ? "Hide molecule" : "Show molecule"}</MenuItem>) },
             expanded: () => {
-                return (<Button key={1} size="sm" variant="outlined" style={{borderWidth: props.backupsEnabled ? '' : '0px'}} onClick={props.handleUndo} disabled={!props.backupsEnabled}>
-                    <UndoOutlined />
+                return (<Button key={1} size="sm" variant="outlined" onClick={props.handleVisibility}>
+                    {props.isVisible ? <VisibilityOffOutlined /> : <VisibilityOutlined />}
                 </Button>)
             }
         },
         2: {
-            label: "Redo previous action",
-            compressed: () => { return (<MenuItem key={2} variant="success" onClick={props.handleRedo} disabled={!props.backupsEnabled}>Redo previous action</MenuItem>) },
+            label: "Undo last action",
+            compressed: () => { return (<MenuItem key={2} variant="success" onClick={props.handleUndo} disabled={!props.backupsEnabled}>Undo last action</MenuItem>) },
             expanded: () => {
-                return (<Button key={2} size="sm" variant="outlined" style={{borderWidth: props.backupsEnabled ? '': '0px'}} onClick={props.handleRedo} disabled={!props.backupsEnabled}>
-                    <RedoOutlined />
+                return (<Button key={2} size="sm" variant="outlined" style={{borderWidth: props.backupsEnabled ? '' : '0px'}} onClick={props.handleUndo} disabled={!props.backupsEnabled}>
+                    <UndoOutlined />
                 </Button>)
             }
         },
         3: {
-            label: "Center on molecule",
-            compressed: () => { return (<MenuItem key={3} variant="success" onClick={props.handleCentering}>Center on molecule</MenuItem>) },
+            label: "Redo previous action",
+            compressed: () => { return (<MenuItem key={3} variant="success" onClick={props.handleRedo} disabled={!props.backupsEnabled}>Redo previous action</MenuItem>) },
             expanded: () => {
-                return (<Button key={3} size="sm" variant="outlined" onClick={props.handleCentering}>
-                    <CenterFocusWeakOutlined />
+                return (<Button key={3} size="sm" variant="outlined" style={{borderWidth: props.backupsEnabled ? '': '0px'}} onClick={props.handleRedo} disabled={!props.backupsEnabled}>
+                    <RedoOutlined />
                 </Button>)
             }
         },
         4: {
-            label: props.isVisible ? "Hide molecule" : "Show molecule",
-            compressed: () => { return (<MenuItem key={4} variant="success" onClick={props.handleVisibility}>{props.isVisible ? "Hide molecule" : "Show molecule"}</MenuItem>) },
+            label: "Center on molecule",
+            compressed: () => { return (<MenuItem key={4} variant="success" onClick={props.handleCentering}>Center on molecule</MenuItem>) },
             expanded: () => {
-                return (<Button key={4} size="sm" variant="outlined" onClick={props.handleVisibility}>
-                    {props.isVisible ? <VisibilityOffOutlined /> : <VisibilityOutlined />}
+                return (<Button key={4} size="sm" variant="outlined" onClick={props.handleCentering}>
+                    <CenterFocusWeakOutlined />
                 </Button>)
             }
         },
@@ -102,7 +102,7 @@ export const MoorhenMoleculeCardButtonBar = (props) => {
         },
     }
 
-    const maximumAllowedWidth = props.sideBarWidth * 0.35
+    const maximumAllowedWidth = props.sideBarWidth * 0.55
     let currentlyUsedWidth = 0
     let expandedButtons = []
     let compressedButtons = []
