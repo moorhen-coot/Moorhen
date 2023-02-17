@@ -3192,6 +3192,8 @@ class MGWebGL extends Component {
         }
         const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: {origin: this.origin,  modifiedMolecule: null} })
         document.dispatchEvent(mapUpdateEvent);
+        const originUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: this.origin} })
+        document.dispatchEvent(originUpdateEvent);
     }
 
     setViewAnimated(o,q,z) {
@@ -3246,12 +3248,16 @@ class MGWebGL extends Component {
         }
         const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: {origin: this.origin,  modifiedMolecule: null} })
         document.dispatchEvent(mapUpdateEvent);
+        const originUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: this.origin} })
+        document.dispatchEvent(originUpdateEvent);
     }
 
     setOrigin(o, doDrawScene) {
         this.origin = o;
         const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: {origin: this.origin,  modifiedMolecule: null} })
         document.dispatchEvent(mapUpdateEvent);
+        const originUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: this.origin} })
+        document.dispatchEvent(originUpdateEvent);
         //default is to drawScene, unless doDrawScene provided and value is false
         if (typeof doDrawScene === 'undefined' || doDrawScene === true) {
             this.drawScene();
@@ -7383,7 +7389,6 @@ class MGWebGL extends Component {
 
                 if (bufferTypes[j] === "TRIANGLES" || bufferTypes[j] === "CYLINDERS" || bufferTypes[j] === "CAPCYLINDERS" || this.displayBuffers[idx].bufferTypes[j] === "TORUSES") {
                     if (this.displayBuffers[idx].transformMatrix) {
-                            console.log("Interacive -2")
                         this.drawTransformMatrix(this.displayBuffers[idx].transformMatrix, this.displayBuffers[idx], theShader, this.gl.TRIANGLES, j);
                     } else if (this.displayBuffers[idx].transformMatrixInteractive) {
                         //And this is based on time...
@@ -7397,6 +7402,7 @@ class MGWebGL extends Component {
                         }
                         this.gl.uniform4fv(theShader.light_colours_ambient, [sfrac,sfrac,sfrac,1.0]);
                         this.drawTransformMatrixInteractive(this.displayBuffers[idx].transformMatrixInteractive, this.displayBuffers[idx].transformOriginInteractive, this.displayBuffers[idx], theShader, this.gl.TRIANGLES, j);
+                        this.gl.uniform4fv(theShader.light_colours_ambient, this.light_colours_ambient);
                     } else {
                         this.drawBuffer(this.displayBuffers[idx],theShader,j,this.gl.TRIANGLES);
                     }
