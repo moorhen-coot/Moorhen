@@ -1206,7 +1206,7 @@ export const MoorhenBackupsMenuItem = (props) => {
                 <Button variant='primary' onClick={retrieveSession}>
                     OK
                 </Button>
-                <Button variant='secondary' onClick={() => {
+                <Button variant='secondary' onClick={async () => {
                     document.body.click()
                     props.setShowBackupsModal(true)
                 }}>

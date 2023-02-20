@@ -1,7 +1,7 @@
-import { NavDropdown, Form, Button, InputGroup, Overlay, SplitButton, Dropdown, Modal } from "react-bootstrap";
+import { NavDropdown, Form, Button, InputGroup, Overlay, SplitButton, Dropdown, Modal, Card, Stack } from "react-bootstrap";
 import { MoorhenMolecule } from "../utils/MoorhenMolecule";
 import { MoorhenMap } from "../utils/MoorhenMap";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { MoorhenImportDictionaryMenuItem, MoorhenImportMapCoefficientsMenuItem, MoorhenAutoOpenMtzMenuItem, MoorhenDeleteEverythingMenuItem, MoorhenLoadTutorialDataMenuItem, MoorhenImportMapMenuItem, MoorhenImportFSigFMenuItem, MoorhenBackupsMenuItem } from "./MoorhenMenuItem";
 import { MenuItem } from "@mui/material";
 import { convertViewtoPx, doDownload, readTextFile, getMultiColourRuleArgs } from "../utils/MoorhenUtils";
@@ -16,6 +16,7 @@ export const MoorhenFileMenu = (props) => {
     const [remoteSource, setRemoteSource] = useState("PDBe")
     const [isValidPdbId, setIsValidPdbId] = useState(true)
     const [showBackupsModal, setShowBackupsModal] = useState(false)
+    const [backupKeys, setBackupKeys] = useState(null)
     const pdbCodeFetchInputRef = useRef(null);
     const fetchMapDataCheckRef = useRef(null);
 
@@ -297,9 +298,62 @@ export const MoorhenFileMenu = (props) => {
         return props.timeCapsuleRef.current.createBackup(keyString, sessionString)
     }
 
-    const getBackupsList = () => {
-        
+    const getBackupCards = (sortedKeys) => {
+        if (sortedKeys && sortedKeys.length > 0) {
+            return sortedKeys.map((item, index) => {
+                return  <Card key={`${item.label}-${index}`} style={{marginTop: '0.5rem'}}>
+                            <Card.Body style={{padding:'0.5rem'}}>
+                                <Stack direction="horizontal" gap={2} style={{alignItems: 'center'}}>
+                                    {item.label}
+                                    <Button variant='primary' onClick={async () => {
+                                        console.log(`Recover .... ${item.label}`)                                           
+                                        try {
+                                            let backup = await props.timeCapsuleRef.current.retrieveBackup(item.key)
+                                            loadSessionJSON(backup)
+                                        } catch (err) {
+                                            console.log(err)
+                                        }                                            
+                                        setShowBackupsModal(false)
+                                    }}>
+                                        Load
+                                    </Button>
+                                    <Button variant='danger' onClick={async () => {
+                                        console.log(`Delete .... ${item.label}`)                                           
+                                        try {
+                                            await props.timeCapsuleRef.current.removeBackup(item.key)
+                                            sortedKeys = await props.timeCapsuleRef.current.getSortedKeys()
+                                            setBackupKeys(sortedKeys)
+                                        } catch (err) {
+                                            console.log(err)
+                                        }                                         
+                                    }}>
+                                        Delete
+                                    </Button>
+                                </Stack>
+                            </Card.Body>
+                        </Card>
+            })    
+        } else {
+            return <span>No backups...</span>
+        }
     }
+
+    useEffect(() => {
+        async function fetchKeys() {
+            const sortedKeys = await props.timeCapsuleRef.current.getSortedKeys()
+            if (sortedKeys && sortedKeys.length > 0) {
+                setBackupKeys(sortedKeys)
+            } else {
+                setBackupKeys(null)
+            }
+        }
+
+        if(!showBackupsModal) {
+            return
+        } else {
+            fetchKeys()
+        }
+    }, [showBackupsModal])
 
     return <>
         <NavDropdown
@@ -403,7 +457,7 @@ export const MoorhenFileMenu = (props) => {
                 <Modal.Title>Stored molecule backups</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-                {getBackupsList()}
+                {getBackupCards(backupKeys)}
             </Modal.Body>
         </Modal>
 

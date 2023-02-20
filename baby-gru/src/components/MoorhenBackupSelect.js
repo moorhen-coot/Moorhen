@@ -6,16 +6,9 @@ export const MoorhenBackupSelect = forwardRef((props, selectRef) => {
 
     useEffect(() => {
         async function fetchKeys() {
-            const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }
             const sortedKeys = await props.timeCapsuleRef.current.getSortedKeys()
-            const newStorageOptions = sortedKeys.map(key => {
-                const keyString = JSON.stringify(key)
-                const intK = parseInt(key.dateTime)
-                const date = new Date(intK)
-                const dateString = `${date.toLocaleDateString(Intl.NumberFormat().resolvedOptions().locale, dateOptions)} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`
-                const moleculeNamesLabel = key.molNames.join(',').length > 10 ? key.molNames.join(',').slice(0, 8) + "..." : key.molNames.join(',')
-                const keyLabel = `${moleculeNamesLabel} -- ${dateString} -- ${key.type === 'automatic' ? 'AUTO' : 'MANUAL'}`
-                return <option key={keyString} value={keyString}>{keyLabel}</option>
+            const newStorageOptions = sortedKeys.map(item => {
+                return <option key={item.key} value={item.key}>{item.label}</option>
             })
             setBackupOptions(newStorageOptions)
         }
