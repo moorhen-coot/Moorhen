@@ -1,4 +1,4 @@
-import React, { createRef, useEffect, useCallback, forwardRef, useState, useRef } from 'react';
+import React, { useEffect, useCallback, forwardRef, useState, useRef } from 'react';
 import { Toast, ToastContainer } from 'react-bootstrap';
 import { MGWebGL } from '../WebGLgComponents/mgWebGL.js';
 import { MoorhenAdvancedDisplayOptions } from "./MoorhenAdvancedDisplayOptions"
@@ -188,6 +188,18 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
 
     }, [props.preferences.defaultUpdatingScores, props.preferences.showScoresToast]);
 
+    const handleWindowResized = useCallback((e) => {
+        glRef.current.setAmbientLightNoUpdate(0.2, 0.2, 0.2)
+        glRef.current.setSpecularLightNoUpdate(0.6, 0.6, 0.6)
+        glRef.current.setDiffuseLight(1., 1., 1.)
+        glRef.current.setLightPositionNoUpdate(10., 10., 60.)
+        if (props.preferences.resetClippingFogging) {
+            setClipFogByZoom()
+        }
+        glRef.current.resize(props.width(), props.height())
+        glRef.current.drawScene()
+    }, [glRef, props.width, props.height])
+
     useEffect(() => {
         document.addEventListener("connectMaps", handleConnectMaps);
         return () => {
@@ -227,20 +239,8 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
 
     }, [handleMiddleClickGoToAtom]);
 
-    const handleWindowResized = useCallback((e) => {
-        glRef.current.resize(props.width(), props.height())
-        glRef.current.drawScene()
-    }, [glRef, props.width, props.height])
-
     useEffect(() => {
-        glRef.current.setAmbientLightNoUpdate(0.2, 0.2, 0.2);
-        glRef.current.setSpecularLightNoUpdate(0.6, 0.6, 0.6);
-        glRef.current.setDiffuseLight(1., 1., 1.);
-        glRef.current.setLightPositionNoUpdate(10., 10., 60.);
-        setClipFogByZoom()
         window.addEventListener('resize', handleWindowResized)
-        handleWindowResized()
-        glRef.current.drawScene()
         return () => {
             window.removeEventListener('resize', handleWindowResized)
         }

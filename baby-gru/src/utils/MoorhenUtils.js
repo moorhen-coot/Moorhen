@@ -546,21 +546,21 @@ const getPlddtColourRules = (plddtList) => {
     const getColour = (plddt) => {
         let r, g, b
         if(plddt <= 50) {
-            r = 255
-            g = 125
-            b = 69
+            r = 230
+            g = 113
+            b = 62
         } else if (plddt <= 70) {
-            r = 255
-            g = 219
-            b = 19
+            r = 230
+            g = 197
+            b = 17
         } else if (plddt < 90) {
-            r = 101
-            g = 203
-            b = 243
+            r = 91
+            g = 183
+            b = 219
         } else {
             r = 0
-            g = 83
-            b = 214
+            g = 75
+            b = 193
         }
         return rgbToHex(r, g, b)
     }

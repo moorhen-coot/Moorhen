@@ -103,6 +103,7 @@ export const MoorhenDifferenceMapPeaks = (props) => {
         
         const peakIndex = args[0].dataIndex
         return [
+            `# ${peakIndex + 1}`,
             `Position (${plotData[peakIndex].coordX.toFixed(2)}, ${plotData[peakIndex].coordY.toFixed(2)}, ${plotData[peakIndex].coordZ.toFixed(2)})`,
             `Height ${(plotData[peakIndex].featureValue / mapRmsd).toFixed(2)}`
         ]
