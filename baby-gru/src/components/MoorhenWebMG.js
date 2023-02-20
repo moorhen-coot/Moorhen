@@ -1,7 +1,7 @@
 import React, { useEffect, useCallback, forwardRef, useState, useRef } from 'react';
 import { Toast, ToastContainer } from 'react-bootstrap';
 import { MGWebGL } from '../WebGLgComponents/mgWebGL.js';
-import { MoorhenAdvancedDisplayOptions } from "./MoorhenAdvancedDisplayOptions"
+import { MoorhenColourRules } from "./MoorhenColourRules.js"
 import { convertViewtoPx } from '../utils/MoorhenUtils.js';
 
 export const MoorhenWebMG = forwardRef((props, glRef) => {
@@ -314,7 +314,7 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
                             {scoresToastContents}
                         </Toast>
                     }
-                    <MoorhenAdvancedDisplayOptions glRef={glRef} {...props}/>
+                    <MoorhenColourRules glRef={glRef} {...props}/>
                 </ToastContainer>
 
                 

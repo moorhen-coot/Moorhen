@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState, useReducer } from "react";
-import { Row, Button, Stack, Form, FormSelect, Card, Col, OverlayTrigger, Tooltip } from "react-bootstrap";
+import { Row, Button, Stack, Form, FormSelect, Card, Col, OverlayTrigger, Tooltip, Toast } from "react-bootstrap";
 import { ArrowUpwardOutlined, ArrowDownwardOutlined, AddOutlined, DeleteOutlined, DoneOutlined, DeleteForeverOutlined } from '@mui/icons-material';
 import { SketchPicker } from "react-color";
 import { MoorhenMoleculeSelect } from "./MoorhenMoleculeSelect";
@@ -50,13 +50,15 @@ export const MoorhenColourRules = (props) => {
     const ruleSelectRef = useRef()
     const cidFormRef = useRef()
     const [ruleType, setRuleType] = useState('molecule')
-    const [colouProperty, setColouProperty] = useState('b-factor')
+    const [colourProperty, setColourProperty] = useState('b-factor')
     const [selectedColour, setSelectedColour] = useState({r: 128, g: 128, b: 128, a: 0.5})
     const [selectedModel, setSelectedModel] = useState(null)
     const [selectedChain, setSelectedChain] = useState(null)
     const [cid, setCid] = useState(null)
     const [ruleList, setRuleList] = useReducer(itemReducer, initialRuleState)
-    
+    const [opacity, setOpacity] = useState(0.5)
+    const [toastBodyWidth, setToastBodyWidth] = useState(convertViewtoPx(40, props.windowWidth))
+
     const handleModelChange = (evt) => {
         console.log(`Selected model ${evt.target.value}`)
         setSelectedModel(parseInt(evt.target.value))
@@ -126,11 +128,11 @@ export const MoorhenColourRules = (props) => {
                     message:'coot_command',
                     command: 'add_colour_rules_multi', 
                     returnType:'status',
-                    commandArgs: getMultiColourRuleArgs(selectedMolecule, colouProperty)
+                    commandArgs: getMultiColourRuleArgs(selectedMolecule, ruleSelectRef.current.value)
                 },
                 isMultiColourRule: true,
-                ruleType: `${colouProperty}`,
-                label: `//*`,
+                ruleType: `${ruleSelectRef.current.value}`,
+                label: `${ruleSelectRef.current.value}`,
             }
         }
 
@@ -138,6 +140,14 @@ export const MoorhenColourRules = (props) => {
             setRuleList({action: 'Add', item: newRule})    
         }
     }
+
+    useEffect(() => {
+        if (props.windowWidth > 1800) {
+            setToastBodyWidth(convertViewtoPx(30, props.windowWidth))
+        } else {
+            setToastBodyWidth(convertViewtoPx(40, props.windowWidth))
+        }
+    }, [props.windowWidth])
 
     useEffect(() => {
         if (selectedModel !== null) {
@@ -222,84 +232,99 @@ export const MoorhenColourRules = (props) => {
             </Card>
     }
 
-    return <>
-                <Stack gap={2} style={{alignItems: 'center'}}>
-                    <Form.Group style={{ margin: '0.1rem', width: '100%' }}>
-                        <Form.Label>Rule type</Form.Label>
-                        <FormSelect size="sm" ref={ruleSelectRef} defaultValue={'molecule'} onChange={(val) => setRuleType(val.target.value)}>
-                            <option value={'molecule'} key={'molecule'}>By molecule</option>
-                            <option value={'chain'} key={'chain'}>By chain</option>
-                            <option value={'cid'} key={'cid'}>By CID</option>
-                            <option value={'property'} key={'property'}>By property</option>
-                        </FormSelect>
-                    </Form.Group>
-                        <Stack gap={2} style={{alignItems: 'center'}}>
-                            <MoorhenMoleculeSelect width="100%" onChange={handleModelChange} molecules={props.molecules} ref={moleculeSelectRef}/>
-                            {ruleType === 'chain'  && <MoorhenChainSelect width="100%" molecules={props.molecules} onChange={handleChainChange} selectedCoordMolNo={selectedModel} ref={chainSelectRef} allowedTypes={[1, 2]}/>}
-                            {ruleType === 'cid' && 
-                                <MoorhenCidInputForm width="100%" onChange={handleResidueCidChange} ref={cidFormRef}/>
-                            }
-                            {ruleType === 'property' && 
-                                <Form.Group style={{ margin: '0.1rem', width: '100%' }}>
-                                    <Form.Label>Property</Form.Label>
-                                    <FormSelect size="sm" ref={ruleSelectRef} defaultValue={'b-factor'} onChange={(val) => setColouProperty(val.target.value)}>
-                                    <option value={'b-factor'} key={'b-factor'}>B-Factor</option>
-                                    <option value={'af2-plddt'} key={'af2-plddt'}>AF2 PLDDT</option>
-                                    </FormSelect>
-                                </Form.Group>
-                            }
-                            <Stack direction="horizontal" gap={2} style={{alignItems: 'center'}}>
-                                <div style={{display: ruleType === 'property' ? 'none' : ''}}>
-                                    <SketchPicker color={selectedColour} onChange={handleColorChange} />
-                                </div>
-                                <Card style={{width:'100%', margin:'0rem'}}>
-                                    <Card.Body style={{padding:'0.2rem', maxHeight: convertViewtoPx(25, props.windowHeight), overflowY: 'auto', textAlign:'center'}}>
-                                        {ruleList.length === 0 ? 
-                                            "No rules created yet"
-                                        :
-                                        ruleList.map((rule, index) => getRuleCard(rule, index))}
-                                    </Card.Body>
-                                </Card>
-                            <Stack gap={2} style={{alignItems: 'center', justifyContent: 'center'}}>
-                                <OverlayTrigger
-                                    placement="right"
-                                    delay={{ show: 400, hide: 400 }}
-                                    overlay={
-                                        <Tooltip id="button-tooltip" {...props}>
-                                            Add a rule
-                                        </Tooltip>
-                                    }>
-                                    <Button variant={props.darkMode ? "dark" : "light"} size='sm' onClick={createRule} style={{margin: '0.1rem'}}>
-                                        <AddOutlined/>
-                                    </Button>
-                                </OverlayTrigger>
-                                <OverlayTrigger
-                                    placement="right"
-                                    delay={{ show: 400, hide: 400 }}
-                                    overlay={
-                                        <Tooltip id="button-tooltip" {...props}>
-                                            Delete all rules
-                                        </Tooltip>
-                                    }>
-                                    <Button variant={props.darkMode ? "dark" : "light"} size='sm' onClick={() => {setRuleList({action:'Empty'})}} style={{margin: '0.1rem'}}>
-                                        <DeleteForeverOutlined/>
-                                    </Button>
-                                </OverlayTrigger>
-                                <OverlayTrigger
-                                    placement="right"
-                                    delay={{ show: 400, hide: 400 }}
-                                    overlay={
-                                        <Tooltip id="button-tooltip" {...props}>
-                                            Apply rules
-                                        </Tooltip>
-                                    }>
-                                    <Button variant={props.darkMode ? "dark" : "light"} size='sm' onClick={applyRules} style={{margin: '0.1rem'}}>
-                                        <DoneOutlined/>
-                                    </Button>
-                                </OverlayTrigger>
+    return  <Toast 
+                bg='light'
+                show={props.showColourRulesToast}
+                onClose={() => props.setShowColourRulesToast(false)}
+                autohide={false}
+                style={{opacity: opacity, width: toastBodyWidth}}
+                onMouseOver={() => setOpacity(1)}
+                onMouseOut={() => setOpacity(0.5)}
+                >
+            <Toast.Header style={{ justifyContent: 'space-between' }} closeButton>
+                Set molecule colour rules
+            </Toast.Header>
+            <Toast.Body style={{maxHeight: convertViewtoPx(60, props.height()), overflowY: 'scroll'}}>
+                <Row>
+                    <Stack gap={2} style={{alignItems: 'center'}}>
+                        <Form.Group style={{ margin: '0.1rem', width: '100%' }}>
+                            <Form.Label>Rule type</Form.Label>
+                            <FormSelect size="sm" ref={ruleSelectRef} defaultValue={'molecule'} onChange={(val) => setRuleType(val.target.value)}>
+                                <option value={'molecule'} key={'molecule'}>By molecule</option>
+                                <option value={'chain'} key={'chain'}>By chain</option>
+                                <option value={'cid'} key={'cid'}>By CID</option>
+                                <option value={'property'} key={'property'}>By property</option>
+                            </FormSelect>
+                        </Form.Group>
+                            <Stack gap={2} style={{alignItems: 'center'}}>
+                                <MoorhenMoleculeSelect width="100%" onChange={handleModelChange} molecules={props.molecules} ref={moleculeSelectRef}/>
+                                {ruleType === 'chain'  && <MoorhenChainSelect width="100%" molecules={props.molecules} onChange={handleChainChange} selectedCoordMolNo={selectedModel} ref={chainSelectRef} allowedTypes={[1, 2]}/>}
+                                {ruleType === 'cid' && 
+                                    <MoorhenCidInputForm width="100%" onChange={handleResidueCidChange} ref={cidFormRef}/>
+                                }
+                                {ruleType === 'property' && 
+                                    <Form.Group style={{ margin: '0.1rem', width: '100%' }}>
+                                        <Form.Label>Property</Form.Label>
+                                        <FormSelect size="sm" ref={ruleSelectRef} defaultValue={'b-factor'} onChange={(val) => setColourProperty(val.target.value)}>
+                                            <option value={'b-factor'} key={'b-factor'}>B-Factor</option>
+                                            <option value={'af2-plddt'} key={'af2-plddt'}>AF2 PLDDT</option>
+                                        </FormSelect>
+                                    </Form.Group>
+                                }
+                                <Stack direction="horizontal" gap={2} style={{alignItems: 'center'}}>
+                                    <div style={{display: ruleType === 'property' ? 'none' : ''}}>
+                                        <SketchPicker color={selectedColour} onChange={handleColorChange} />
+                                    </div>
+                                    <Card style={{width:'100%', margin:'0rem'}}>
+                                        <Card.Body style={{padding:'0.2rem', maxHeight: convertViewtoPx(25, props.windowHeight), overflowY: 'auto', textAlign:'center'}}>
+                                            {ruleList.length === 0 ? 
+                                                "No rules created yet"
+                                            :
+                                            ruleList.map((rule, index) => getRuleCard(rule, index))}
+                                        </Card.Body>
+                                    </Card>
+                                <Stack gap={2} style={{alignItems: 'center', justifyContent: 'center'}}>
+                                    <OverlayTrigger
+                                        placement="right"
+                                        delay={{ show: 400, hide: 400 }}
+                                        overlay={
+                                            <Tooltip id="button-tooltip" {...props}>
+                                                Add a rule
+                                            </Tooltip>
+                                        }>
+                                        <Button variant={props.darkMode ? "dark" : "light"} size='sm' onClick={createRule} style={{margin: '0.1rem'}}>
+                                            <AddOutlined/>
+                                        </Button>
+                                    </OverlayTrigger>
+                                    <OverlayTrigger
+                                        placement="right"
+                                        delay={{ show: 400, hide: 400 }}
+                                        overlay={
+                                            <Tooltip id="button-tooltip" {...props}>
+                                                Delete all rules
+                                            </Tooltip>
+                                        }>
+                                        <Button variant={props.darkMode ? "dark" : "light"} size='sm' onClick={() => {setRuleList({action:'Empty'})}} style={{margin: '0.1rem'}}>
+                                            <DeleteForeverOutlined/>
+                                        </Button>
+                                    </OverlayTrigger>
+                                    <OverlayTrigger
+                                        placement="right"
+                                        delay={{ show: 400, hide: 400 }}
+                                        overlay={
+                                            <Tooltip id="button-tooltip" {...props}>
+                                                Apply rules
+                                            </Tooltip>
+                                        }>
+                                        <Button variant={props.darkMode ? "dark" : "light"} size='sm' onClick={applyRules} style={{margin: '0.1rem'}}>
+                                            <DoneOutlined/>
+                                        </Button>
+                                    </OverlayTrigger>
+                                </Stack>
                             </Stack>
                         </Stack>
-                        </Stack>
-                </Stack>
-            </>
+                    </Stack>
+                </Row>
+            </Toast.Body>
+        </Toast>
 }

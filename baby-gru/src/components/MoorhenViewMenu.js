@@ -19,10 +19,10 @@ export const MoorhenViewMenu = (props) => {
                 <hr></hr>
                 <MoorhenClipFogMenuItem {...menuItemProps} />
                 <MenuItem onClick={() => {
-                    props.setShowAdvancedDisplayOptions(true)
+                    props.setShowColourRulesToast(true)
                     document.body.click()
                 }}>
-                    Advanced Display Options
+                    Set molecule colour rules
                 </MenuItem>
             </NavDropdown >
         </>

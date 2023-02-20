@@ -73,7 +73,7 @@ export const MoorhenContainer = (props) => {
     const [showToast, setShowToast] = useState(false)
     const preferences = useContext(PreferencesContext);
     const [toastContent, setToastContent] = useState("")
-    const [showAdvancedDisplayOptions, setShowAdvancedDisplayOptions] = useState(false)
+    const [showColourRulesToast, setShowColourRulesToast] = useState(false)
     
     moleculesRef.current = molecules
     const sideBarWidth = convertViewtoPx(30, windowWidth)
@@ -307,7 +307,7 @@ export const MoorhenContainer = (props) => {
         activeMap, setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor, sideBarWidth,
         navBarRef, currentDropdownId, setCurrentDropdownId, hoveredAtom, setHoveredAtom, toastContent, setToastContent, 
         showToast, setShowToast, windowWidth, windowHeight, showSideBar, innerWindowMarginWidth, toolAccordionBodyHeight,
-        urlPrefix: props.urlPrefix, showAdvancedDisplayOptions, setShowAdvancedDisplayOptions, timeCapsuleRef, ...preferences
+        urlPrefix: props.urlPrefix, showColourRulesToast, setShowColourRulesToast, timeCapsuleRef, ...preferences
     }
 
     const accordionToolsItemProps = {
@@ -375,8 +375,8 @@ export const MoorhenContainer = (props) => {
                             onKeyPress={onKeyPress}
                             hoveredAtom={hoveredAtom}
                             preferences={preferences}
-                            setShowAdvancedDisplayOptions={setShowAdvancedDisplayOptions}
-                            showAdvancedDisplayOptions={showAdvancedDisplayOptions}
+                            setShowColourRulesToast={setShowColourRulesToast}
+                            showColourRulesToast={showColourRulesToast}
                             windowHeight={windowHeight}
                             windowWidth={windowWidth}
                             urlPrefix={props.urlPrefix}
