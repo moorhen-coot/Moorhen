@@ -201,6 +201,16 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
     }, [glRef, props.width, props.height])
 
     useEffect(() => {
+        glRef.current.setAmbientLightNoUpdate(0.2, 0.2, 0.2)
+        glRef.current.setSpecularLightNoUpdate(0.6, 0.6, 0.6)
+        glRef.current.setDiffuseLight(1., 1., 1.)
+        glRef.current.setLightPositionNoUpdate(10., 10., 60.)
+        setClipFogByZoom()
+        glRef.current.resize(props.width(), props.height())
+        glRef.current.drawScene()
+    }, [])
+
+    useEffect(() => {
         document.addEventListener("connectMaps", handleConnectMaps);
         return () => {
             document.removeEventListener("connectMaps", handleConnectMaps);
