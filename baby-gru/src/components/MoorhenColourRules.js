@@ -6,6 +6,7 @@ import { MoorhenMoleculeSelect } from "./MoorhenMoleculeSelect";
 import { MoorhenChainSelect } from "./MoorhenChainSelect";
 import { convertViewtoPx, getMultiColourRuleArgs } from "../utils/MoorhenUtils";
 import { MoorhenCidInputForm } from "./MoorhenCidInputForm";
+import { MoorhenSequenceRangeSelect } from "./MoorhenSequenceRangeSelect";
 
 const itemReducer = (oldList, change) => {
     if (change.action === 'Add') {
@@ -48,6 +49,7 @@ export const MoorhenColourRules = (props) => {
     const moleculeSelectRef = useRef()
     const chainSelectRef = useRef()
     const ruleSelectRef = useRef()
+    const residueRangeSelectRef = useRef()
     const cidFormRef = useRef()
     const [ruleType, setRuleType] = useState('molecule')
     const [colourProperty, setColourProperty] = useState('b-factor')
@@ -55,6 +57,7 @@ export const MoorhenColourRules = (props) => {
     const [selectedModel, setSelectedModel] = useState(null)
     const [selectedChain, setSelectedChain] = useState(null)
     const [cid, setCid] = useState(null)
+    const [sequenceRangeSelect, setSequenceRangeSelect] = useState(null)
     const [ruleList, setRuleList] = useReducer(itemReducer, initialRuleState)
     const [opacity, setOpacity] = useState(0.5)
     const [toastBodyWidth, setToastBodyWidth] = useState(convertViewtoPx(40, props.windowWidth))
@@ -109,18 +112,38 @@ export const MoorhenColourRules = (props) => {
 
         let newRule
         if (ruleType !== 'property') {
-            const cidLabel = ruleType === 'molecule' ? "//*" : ruleType === 'chain' ? `//${chainSelectRef.current.value}` : cid
-            newRule = {
-                commandInput: {
-                    message:'coot_command',
-                    command: 'add_colour_rule', 
-                    returnType:'status',
-                    commandArgs: [selectedModel, cidLabel, selectedColour]
-                },
-                isMultiColourRule: false,
-                ruleType: `${ruleType}`,
-                color: selectedColour,
-                label: cidLabel,
+            let cidLabel
+            switch (ruleType) {
+                case 'molecule':
+                    cidLabel = "//*"
+                    break
+                case 'chain':
+                    cidLabel = `//${chainSelectRef.current.value}`
+                    break
+                case 'cid':
+                    cidLabel = cid
+                    break
+                case 'residue-range':
+                    const selectedResidues = residueRangeSelectRef.current.getSelectedResidues()
+                    cidLabel = (selectedResidues && selectedResidues.length === 2) ? `//${chainSelectRef.current.value}/${selectedResidues[0]}-${selectedResidues[1]}` : null
+                    break
+                default:
+                    console.log('Unrecognised colour rule type...')
+                    break
+            }
+            if (cidLabel) {
+                newRule = {
+                    commandInput: {
+                        message:'coot_command',
+                        command: 'add_colour_rule', 
+                        returnType:'status',
+                        commandArgs: [selectedModel, cidLabel, selectedColour]
+                    },
+                    isMultiColourRule: false,
+                    ruleType: `${ruleType}`,
+                    color: selectedColour,
+                    label: cidLabel,
+                }
             }
         } else {
             newRule = {
@@ -169,6 +192,21 @@ export const MoorhenColourRules = (props) => {
         }
         
     }, [props.molecules.length])
+
+    useEffect(() => {
+        if (selectedModel === null || !ruleSelectRef.current || !chainSelectRef.current || ruleSelectRef.current?.value !== 'residue-range') {
+            return
+        }
+        const selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedModel)
+        const selectedSequence = selectedMolecule.sequences.find(sequence => sequence.chain === chainSelectRef.current.value)
+        setSequenceRangeSelect(
+            <MoorhenSequenceRangeSelect
+                ref={residueRangeSelectRef}
+                molecule={selectedMolecule}
+                sequence={selectedSequence}
+            />
+        )        
+    }, [selectedModel, selectedChain, ruleType])
 
     const getRuleCard = (rule, index) => {
         return <Card key={index} style={{margin: '0.1rem', maxWidth: '100%', overflowX:'scroll'}}>
@@ -252,15 +290,21 @@ export const MoorhenColourRules = (props) => {
                             <FormSelect size="sm" ref={ruleSelectRef} defaultValue={'molecule'} onChange={(val) => setRuleType(val.target.value)}>
                                 <option value={'molecule'} key={'molecule'}>By molecule</option>
                                 <option value={'chain'} key={'chain'}>By chain</option>
+                                <option value={'residue-range'} key={'residue-range'}>By residue range</option>
                                 <option value={'cid'} key={'cid'}>By CID</option>
                                 <option value={'property'} key={'property'}>By property</option>
                             </FormSelect>
                         </Form.Group>
                             <Stack gap={2} style={{alignItems: 'center'}}>
                                 <MoorhenMoleculeSelect width="100%" onChange={handleModelChange} molecules={props.molecules} ref={moleculeSelectRef}/>
-                                {ruleType === 'chain'  && <MoorhenChainSelect width="100%" molecules={props.molecules} onChange={handleChainChange} selectedCoordMolNo={selectedModel} ref={chainSelectRef} allowedTypes={[1, 2]}/>}
+                                {(ruleType === 'chain' || ruleType === 'residue-range')  && <MoorhenChainSelect width="100%" molecules={props.molecules} onChange={handleChainChange} selectedCoordMolNo={selectedModel} ref={chainSelectRef} allowedTypes={[1, 2]}/>}
                                 {ruleType === 'cid' && 
                                     <MoorhenCidInputForm width="100%" onChange={handleResidueCidChange} ref={cidFormRef}/>
+                                }
+                                {ruleType === 'residue-range' && 
+                                    <div style={{width: '100%'}}>
+                                        {sequenceRangeSelect}
+                                    </div>
                                 }
                                 {ruleType === 'property' && 
                                     <Form.Group style={{ margin: '0.1rem', width: '100%' }}>
