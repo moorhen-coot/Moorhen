@@ -1,7 +1,7 @@
 import { MenuItem } from "@mui/material";
 import { CheckOutlined, CloseOutlined } from "@mui/icons-material";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { OverlayTrigger, Popover, PopoverBody, PopoverHeader, Form, InputGroup, Button, FormSelect, Row, Col, SplitButton, Dropdown } from "react-bootstrap";
+import { OverlayTrigger, Popover, PopoverBody, PopoverHeader, Form, InputGroup, Button, FormSelect, Row, Col, SplitButton, Dropdown, Stack, Modal } from "react-bootstrap";
 import { SketchPicker } from "react-color";
 import { MoorhenMtzWrapper, readTextFile, readDataFile } from "../utils/MoorhenUtils";
 import { MoorhenMap } from "../utils/MoorhenMap";
@@ -1180,30 +1180,46 @@ export const MoorhenImportMapCoefficientsMenuItem = (props) => {
 
 export const MoorhenBackupsMenuItem = (props) => {
     const backupSelectRef = useRef(null)
-    
-    const onCompleted = useCallback(async () => {
+   
+    const retrieveSession = useCallback(async () => {
         props.setPopoverIsShown(false)
         const key = backupSelectRef.current.value
         console.log(`Recover .... ${key}`)
+       
         try {
             let backup = await props.timeCapsuleRef.current.retrieveBackup(key)
             props.loadSessionJSON(backup)
         } catch (err) {
             console.log(err)
         }
-        return true
+        
+        document.body.click()
+
     }, [props.setPopoverIsShown, props.loadSessionJSON, props.timeCapsuleRef])
 
     const panelContent = <>
         <Row style={{ width: '30rem', marginTop: '0.5rem',  marginBottom: '0.5rem' }}>
             <MoorhenBackupSelect {...props} ref={backupSelectRef} width='100%' label='Select backup' />
         </Row>
+        <Row>
+            <Stack direction='horizontal' gap={2}>
+                <Button variant='primary' onClick={retrieveSession}>
+                    OK
+                </Button>
+                <Button variant='secondary' onClick={() => {
+                    document.body.click()
+                    props.setShowBackupsModal(true)
+                }}>
+                    More...
+                </Button>
+            </Stack>
+        </Row>
     </>
 
     return <MoorhenMenuItem
+        showOkButton={false}
         popoverContent={panelContent}
         menuItemText="Recover molecule backup..."
-        onCompleted={onCompleted}
         setPopoverIsShown={props.setPopoverIsShown}
     />
 }

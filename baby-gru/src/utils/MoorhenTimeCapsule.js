@@ -126,3 +126,9 @@ MoorhenTimeCapsule.prototype.dropAllBackups = async function() {
          console.log(err)
      }
 }
+
+MoorhenTimeCapsule.prototype.getSortedKeys = async function() {
+    const keyStrings = await this.storageInstance.keys()
+    const keys = keyStrings.map(keyString => JSON.parse(keyString))
+    return keys.sort((a, b)=>{return parseInt(a.dateTime) - parseInt(b.dateTime)}).reverse()
+}

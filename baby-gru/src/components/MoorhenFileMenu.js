@@ -1,8 +1,8 @@
-import { NavDropdown, Form, Button, InputGroup, Overlay, SplitButton, Dropdown } from "react-bootstrap";
+import { NavDropdown, Form, Button, InputGroup, Overlay, SplitButton, Dropdown, Modal } from "react-bootstrap";
 import { MoorhenMolecule } from "../utils/MoorhenMolecule";
 import { MoorhenMap } from "../utils/MoorhenMap";
 import { useState, useRef } from "react";
-import { MoorhenStoreSessionMenuItem, MoorhenImportDictionaryMenuItem, MoorhenImportMapCoefficientsMenuItem, MoorhenAutoOpenMtzMenuItem, MoorhenDeleteEverythingMenuItem, MoorhenLoadTutorialDataMenuItem, MoorhenImportMapMenuItem, MoorhenImportFSigFMenuItem, MoorhenBackupsMenuItem } from "./MoorhenMenuItem";
+import { MoorhenImportDictionaryMenuItem, MoorhenImportMapCoefficientsMenuItem, MoorhenAutoOpenMtzMenuItem, MoorhenDeleteEverythingMenuItem, MoorhenLoadTutorialDataMenuItem, MoorhenImportMapMenuItem, MoorhenImportFSigFMenuItem, MoorhenBackupsMenuItem } from "./MoorhenMenuItem";
 import { MenuItem } from "@mui/material";
 import { convertViewtoPx, doDownload, readTextFile, getMultiColourRuleArgs } from "../utils/MoorhenUtils";
 
@@ -15,6 +15,7 @@ export const MoorhenFileMenu = (props) => {
     const [popoverIsShown, setPopoverIsShown] = useState(false)
     const [remoteSource, setRemoteSource] = useState("PDBe")
     const [isValidPdbId, setIsValidPdbId] = useState(true)
+    const [showBackupsModal, setShowBackupsModal] = useState(false)
     const pdbCodeFetchInputRef = useRef(null);
     const fetchMapDataCheckRef = useRef(null);
 
@@ -296,6 +297,10 @@ export const MoorhenFileMenu = (props) => {
         return props.timeCapsuleRef.current.createBackup(keyString, sessionString)
     }
 
+    const getBackupsList = () => {
+        
+    }
+
     return <>
         <NavDropdown
             title="File"
@@ -363,7 +368,7 @@ export const MoorhenFileMenu = (props) => {
                         Save molecule backup
                     </MenuItem>
                     
-                    <MoorhenBackupsMenuItem {...menuItemProps} loadSessionJSON={loadSessionJSON} />
+                    <MoorhenBackupsMenuItem {...menuItemProps} setShowBackupsModal={setShowBackupsModal} loadSessionJSON={loadSessionJSON} />
                     
                     <hr></hr>
 
@@ -392,5 +397,15 @@ export const MoorhenFileMenu = (props) => {
                 </div>
             )}
         </Overlay>
+
+        <Modal show={showBackupsModal} onHide={() => setShowBackupsModal(false)}>
+            <Modal.Header closeButton>
+                <Modal.Title>Stored molecule backups</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                {getBackupsList()}
+            </Modal.Body>
+        </Modal>
+
     </>
 }
