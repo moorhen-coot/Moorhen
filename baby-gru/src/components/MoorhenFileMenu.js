@@ -15,7 +15,6 @@ export const MoorhenFileMenu = (props) => {
     const [popoverIsShown, setPopoverIsShown] = useState(false)
     const [remoteSource, setRemoteSource] = useState("PDBe")
     const [isValidPdbId, setIsValidPdbId] = useState(true)
-    const [storageKeysDirty, setStorageKeysDirty] = useState(true)
     const pdbCodeFetchInputRef = useRef(null);
     const fetchMapDataCheckRef = useRef(null);
 
@@ -289,6 +288,14 @@ export const MoorhenFileMenu = (props) => {
         doDownload([sessionString], `session.json`)
     }
 
+    const createBackup = async () => {
+        const session = await props.timeCapsuleRef.current.fetchSession()
+        const sessionString = JSON.stringify(session)
+        const key = {dateTime: `${Date.now()}`, type: 'manual', name: '', molNames: session.moleculesNames}
+        const keyString = JSON.stringify(key)
+        return props.timeCapsuleRef.current.createBackup(keyString, sessionString)
+    }
+
     return <>
         <NavDropdown
             title="File"
@@ -348,13 +355,15 @@ export const MoorhenFileMenu = (props) => {
 
                     <MoorhenLoadTutorialDataMenuItem {...menuItemProps} />
 
-                    <MenuItem id='download-session-menu-item' variant="success" onClick={() => {getSession()}}>
+                    <MenuItem id='download-session-menu-item' variant="success" onClick={getSession}>
                         Download session
                     </MenuItem>
 
-                    <MoorhenStoreSessionMenuItem {...menuItemProps}/>
+                    <MenuItem id='save-session-menu-item' variant="success" onClick={createBackup}>
+                        Save molecule backup
+                    </MenuItem>
                     
-                    <MoorhenBackupsMenuItem {...menuItemProps} loadSessionJSON={loadSessionJSON} storageKeysDirty={storageKeysDirty} setStorageKeysDirty={setStorageKeysDirty} />
+                    <MoorhenBackupsMenuItem {...menuItemProps} loadSessionJSON={loadSessionJSON} />
                     
                     <hr></hr>
 
