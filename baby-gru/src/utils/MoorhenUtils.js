@@ -610,7 +610,7 @@ export const getNameLabel = (item) => {
                 }
                 >
                 <div>
-                    {`#${item.molNo} Mol. ${item.name.slice(0,4)}...`}
+                    {`#${item.molNo} Mol. ${item.name.slice(0,5)}...`}
                 </div>
                 </OverlayTrigger>
     }
