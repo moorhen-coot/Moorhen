@@ -727,23 +727,30 @@ export const MoorhenRotateTranslateZoneButton = (props) => {
 
 export const MoorhenRigidBodyFitButton = (props) => {
     const modeSelectRef = useRef(null)
-    const selectedResidue = useRef(null)
+    const selectedResidueRef = useRef(null)
     const awaitMoreAtomClicksRef = useRef(false)
     const [panelParameters, setPanelParameters] = useState('TRIPLE')
     const [randomJiggleMode, setRandomJiggleMode] = useState(false)
     
     useEffect(() => {
-        if (props.selectedButtonIndex === props.buttonIndex && !awaitMoreAtomClicksRef.current && modeSelectRef.current?.value === 'RESIDUE RANGE' && !selectedResidue.current) {
+        if (props.selectedButtonIndex === props.buttonIndex && !awaitMoreAtomClicksRef.current && modeSelectRef.current?.value === 'RESIDUE RANGE' && !selectedResidueRef.current) {
             awaitMoreAtomClicksRef.current = true
+        } else if (props.selectedButtonIndex !== props.buttonIndex && (selectedResidueRef.current || awaitMoreAtomClicksRef.current)) {
+            awaitMoreAtomClicksRef.current = false
+            const selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedResidueRef.current.molecule.molNo)
+            selectedMolecule.clearBuffersOfStyle('selection', props.glRef)
+            selectedResidueRef.current = null
         }
     }, [props.selectedButtonIndex])
 
     const doRigidBodyFitting = async (molecule, chosenAtom, pp) => {
-        if (modeSelectRef.current.value === 'RESIDUE RANGE' && !selectedResidue.current) {
-            selectedResidue.current = chosenAtom
+        if (modeSelectRef.current.value === 'RESIDUE RANGE' && !selectedResidueRef.current) {
+            selectedResidueRef.current = { molecule, chosenAtom }
             awaitMoreAtomClicksRef.current = false
+            molecule.drawSelection(props.glRef, chosenAtom.cid)
             return
         } else if (modeSelectRef.current.value === 'RESIDUE RANGE') {
+            molecule.clearBuffersOfStyle('selection', props.glRef)
             const commandArgs = rigidBodyFitFormatArgs(molecule, chosenAtom)
             await props.commandCentre.current.cootCommand({
                 returnType: 'status',
@@ -760,7 +767,7 @@ export const MoorhenRigidBodyFitButton = (props) => {
                 changesMolecules: [molecule.molNo]
             }, true)
         }
-        selectedResidue.current = null
+        selectedResidueRef.current = null
     }
 
     const rigidBodyFitFormatArgs = (molecule, chosenAtom) => {
@@ -806,7 +813,7 @@ export const MoorhenRigidBodyFitButton = (props) => {
                 ]
                 break
             case 'RESIDUE RANGE':
-                const residueRange = [parseInt(selectedResidue.current.res_no), parseInt(chosenAtom.res_no)].sort((a, b) => {return a - b})
+                const residueRange = [parseInt(selectedResidueRef.current.chosenAtom.res_no), parseInt(chosenAtom.res_no)].sort((a, b) => {return a - b})
                 commandArgs = [
                     molecule.molNo,
                     `//${chosenAtom.chain_id}/${residueRange[0]}-${residueRange[1]}`,
