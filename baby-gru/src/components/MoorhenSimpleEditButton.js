@@ -31,7 +31,10 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
     }, [props.panelParameters])
 
     const atomClickedCallback = useCallback(event => {
-        const awaitMoreAtomClicks = JSON.parse(JSON.stringify(props.awaitMoreAtomClicksRef.current))
+        let awaitMoreAtomClicks
+        if (typeof(props.awaitMoreAtomClicksRef.current) !== 'undefined'){
+            awaitMoreAtomClicks = JSON.parse(JSON.stringify(props.awaitMoreAtomClicksRef.current))
+        }
 
         const onCompleted = async (molecule, chosenAtom, result) => {
             if (props.onCompleted) {
