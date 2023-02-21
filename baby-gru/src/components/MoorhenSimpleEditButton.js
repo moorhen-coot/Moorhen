@@ -31,11 +31,41 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
     }, [props.panelParameters])
 
     const atomClickedCallback = useCallback(event => {
+
+        const onCompleted = async (molecule, chosenAtom, result) => {
+            if (props.onCompleted) {
+                props.onCompleted(molecule, chosenAtom)
+            }
+            if (props.refineAfterMod && props.activeMap) {
+                console.log('Triggering post-modification triple refinement...')
+                try {
+                    await props.commandCentre.current.cootCommand({
+                        returnType: "status",
+                        command: 'refine_residues_using_atom_cid',
+                        commandArgs: refinementFormatArgs(molecule, chosenAtom, { refine: { mode: 'TRIPLE' } }),
+                        changesMolecules: [molecule.molNo]
+                    }, true)
+                }
+                catch (err) {
+                    console.log(`Exception raised in Refine [${err}]`)
+                }
+            }
+            molecule.setAtomsDirty(true)
+            molecule.redraw(props.glRef)
+            const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: molecule.molNo } })
+            document.dispatchEvent(mapUpdateEvent)
+            if (props.onExit) {
+                props.onExit(molecule, chosenAtom, result)
+            }
+        }
+
+
         if (!props.awaitMoreAtomClicksRef.current) {
             document.removeEventListener('atomClicked', atomClickedCallback, { once: true })
         }
+
         props.molecules.forEach(async (molecule) => {
-            console.log('Testing molecule ', molecule.molNo)
+            let result
             try {
                 if (molecule.buffersInclude(event.detail.buffer)) {
                     props.setCursorStyle("default")
@@ -45,52 +75,23 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
                         props.setSelectedButtonIndex(null)
                     }
                     if (props.cootCommand) {
-                        const result = await props.commandCentre.current.cootCommand({
+                        result = await props.commandCentre.current.cootCommand({
                             returnType: props.returnType,
                             command: props.cootCommand,
                             commandArgs: formattedArgs,
                             changesMolecules: props.changesMolecule ? [molecule.molNo] : []
                         }, true)
-                        if (props.onCompleted) {
-                            props.onCompleted(molecule, chosenAtom)
-                        }
-                        if (props.refineAfterMod && props.activeMap) {
-                            console.log('Triggering post-modification triple refinement...')
-                            try {
-                                const result = await props.commandCentre.current.cootCommand({
-                                    returnType: "status",
-                                    command: 'refine_residues_using_atom_cid',
-                                    commandArgs: refinementFormatArgs(molecule, chosenAtom, { refine: { mode: 'TRIPLE' } }),
-                                    changesMolecules: [molecule.molNo]
-                                }, true)
-                                console.log(`Refine result `, result)
-                            }
-                            catch (err) {
-                                console.log(`Exception raised in Refine [${err}]`)
-                            }
-                        }
-                        molecule.setAtomsDirty(true)
-                        molecule.redraw(props.glRef)
-
-                        const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: molecule.molNo } })
-                        document.dispatchEvent(mapUpdateEvent);
-
-                        if (props.onExit) {
-                            props.onExit(molecule, chosenAtom, result)
-                        }
                     } else if (props.nonCootCommand) {
-                        await props.nonCootCommand(molecule, chosenAtom, localParameters)
+                        result = await props.nonCootCommand(molecule, chosenAtom, localParameters)
                     }
+                    onCompleted(molecule, chosenAtom, result)
                     props.timeCapsuleRef.current.addModification()
                 }
-                else {
-                    console.log('molecule for buffer not found')
-                }
-            }
-            catch (err) {
+            } catch (err) {
                 console.log('Encountered', err)
             }
         })
+
     }, [props.molecules, props.activeMap, props.refineAfterMod, localParameters, props.formatArgs, props.awaitMoreAtomClicksRef])
 
     useEffect(() => {
@@ -753,25 +754,7 @@ export const MoorhenRigidBodyFitButton = (props) => {
                 changesMolecules: [molecule.molNo]
             }, true)
         }
-
         selectedResidue.current = null
-
-        if (props.refineAfterMod && selectedResidue.current !== chosenAtom) {
-            console.log('Triggering post-modification triple refinement...')
-            await props.commandCentre.current.cootCommand({
-                returnType: "status",
-                command: 'refine_residues_using_atom_cid',
-                commandArgs: refinementFormatArgs(molecule, chosenAtom, { refine: { mode: 'TRIPLE' } }),
-                changesMolecules: [molecule.molNo]
-            }, true)
-        }
-
-        molecule.setAtomsDirty(true)
-        molecule.redraw(props.glRef)
-
-        const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: molecule.molNo } })
-        document.dispatchEvent(mapUpdateEvent);
-
     }
 
     const rigidBodyFitFormatArgs = (molecule, chosenAtom) => {
