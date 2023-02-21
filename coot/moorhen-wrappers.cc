@@ -403,6 +403,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("get_rotamer_dodecs",&molecules_container_t::get_rotamer_dodecs)
     .function("get_rotamer_dodecs_instanced",&molecules_container_t::get_rotamer_dodecs_instanced)
     .function("auto_fit_rotamer",&molecules_container_t::auto_fit_rotamer)
+    .function("rigid_body_fit",&molecules_container_t::rigid_body_fit)
     .function("cis_trans_convert",&molecules_container_t::cis_trans_convert)
     .function("set_draw_missing_residue_loops",&molecules_container_t::set_draw_missing_residue_loops)
     .function("get_map_contours_mesh",&molecules_container_t::get_map_contours_mesh)

@@ -14,7 +14,6 @@ const createInstance = (name, empty=false) => {
 }
 
 export function MoorhenTimeCapsule(moleculesRef, glRef, preferences) {
-    this.storageInstance = createInstance('Moorhen-TimeCapsule', true)
     this.moleculesRef = moleculesRef
     this.glRef = glRef
     this.preferences = preferences
@@ -22,6 +21,19 @@ export function MoorhenTimeCapsule(moleculesRef, glRef, preferences) {
     this.modificationCount = 0
     this.modificationCountBackupThreshold = 5
     this.maxBackupCount = 10
+    this.version = '0.0.1'
+    this.storageInstance = createInstance('Moorhen-TimeCapsule')
+    this.checkVersion()
+}
+
+MoorhenTimeCapsule.prototype.checkVersion = async function () {
+    const keyString = JSON.stringify({type: 'version'})
+    const storedVersion = await this.storageInstance.getItem(keyString)
+    if (!storedVersion || this.version !== storedVersion) {
+        console.log('New backup storage version detected, cleanup all previous backups now...')
+        await this.storageInstance.clear()
+        await this.storageInstance.setItem(keyString, this.version)
+    }
 }
 
 MoorhenTimeCapsule.prototype.fetchSession = async function () {
@@ -75,11 +87,12 @@ MoorhenTimeCapsule.prototype.addModification = async function() {
 }
 
 MoorhenTimeCapsule.prototype.cleanupIfFull = async function() {
-    const keys = await this.storageInstance.keys()
-    const sortedKeys = keys.filter(key => key.indexOf("backup-") == 0).sort((a,b)=>{return parseInt(a.substr(7))-parseInt(b.substr(7))}).reverse()
-    if (sortedKeys.length >= this.maxBackupCount) {
+    const keyStrings = await this.storageInstance.keys()
+    const keys = keyStrings.map(keyString => JSON.parse(keyString)).filter(key => key.type === 'automatic')
+    const sortedKeys = keys.sort((a, b) => { return parseInt(a.dateTime) - parseInt(b.dateTime) }).reverse()
+    if (sortedKeys.length - 1 >= this.maxBackupCount) {
         const toRemoveCount = sortedKeys.length - this.maxBackupCount
-        const promises = sortedKeys.slice(-toRemoveCount).map(key => this.removeBackup(key))
+        const promises = sortedKeys.slice(-toRemoveCount).map(key => this.removeBackup(JSON.stringify(key)))
         await Promise.all(promises)
     }
 }
@@ -129,7 +142,7 @@ MoorhenTimeCapsule.prototype.dropAllBackups = async function() {
 MoorhenTimeCapsule.prototype.getSortedKeys = async function() {
     const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }
     const keyStrings = await this.storageInstance.keys()
-    const keys = keyStrings.map(keyString => JSON.parse(keyString))
+    const keys = keyStrings.map(keyString => JSON.parse(keyString)).filter(key => key.type !== 'version')
     const sortedKeys = keys.sort((a, b) => { return parseInt(a.dateTime) - parseInt(b.dateTime) }).reverse()
     return sortedKeys.map((key, index) => {
         const keyString = JSON.stringify(key)
