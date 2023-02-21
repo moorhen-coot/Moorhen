@@ -91,6 +91,8 @@ export const MoorhenContainer = (props) => {
         if (cootInitialized && props.forwardControls) {
             props.forwardControls(collectedProps)
             timeCapsuleRef.current = new MoorhenTimeCapsule(moleculesRef, glRef, preferences)
+            timeCapsuleRef.current.maxBackupCount = preferences.maxBackupCount
+            timeCapsuleRef.current.modificationCountBackupThreshold = preferences.modificationCountBackupThreshold
         }
     }, [cootInitialized, props.forwardControls])
 
