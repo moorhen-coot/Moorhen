@@ -31,6 +31,7 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
     }, [props.panelParameters])
 
     const atomClickedCallback = useCallback(event => {
+        const awaitMoreAtomClicks = JSON.parse(JSON.stringify(props.awaitMoreAtomClicksRef.current))
 
         const onCompleted = async (molecule, chosenAtom, result) => {
             if (props.onCompleted) {
@@ -59,8 +60,7 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
             }
         }
 
-
-        if (!props.awaitMoreAtomClicksRef.current) {
+        if (!awaitMoreAtomClicks) {
             document.removeEventListener('atomClicked', atomClickedCallback, { once: true })
         }
 
@@ -70,22 +70,23 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
                 if (molecule.buffersInclude(event.detail.buffer)) {
                     props.setCursorStyle("default")
                     const chosenAtom = cidToSpec(event.detail.atom.label)
-                    let formattedArgs = props.formatArgs(molecule, chosenAtom, localParameters)
-                    if (!props.awaitMoreAtomClicksRef.current) {
+                    if (!awaitMoreAtomClicks) {
                         props.setSelectedButtonIndex(null)
                     }
                     if (props.cootCommand) {
                         result = await props.commandCentre.current.cootCommand({
                             returnType: props.returnType,
                             command: props.cootCommand,
-                            commandArgs: formattedArgs,
+                            commandArgs: props.formatArgs(molecule, chosenAtom, localParameters),
                             changesMolecules: props.changesMolecule ? [molecule.molNo] : []
                         }, true)
                     } else if (props.nonCootCommand) {
                         result = await props.nonCootCommand(molecule, chosenAtom, localParameters)
                     }
-                    onCompleted(molecule, chosenAtom, result)
-                    props.timeCapsuleRef.current.addModification()
+                    if (!awaitMoreAtomClicks) {
+                        onCompleted(molecule, chosenAtom, result)
+                        props.timeCapsuleRef.current.addModification()
+                    }
                 }
             } catch (err) {
                 console.log('Encountered', err)
@@ -376,7 +377,6 @@ export const MoorhenDeleteUsingCidButton = (props) => {
     }
 
     const deleteFormatArgs = (molecule, chosenAtom, pp) => {
-        //console.log({ molecule, chosenAtom, pp })
         let commandArgs
         if (pp.delete.mode === 'CHAIN') {
             commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/*/*:*`, 'LITERAL']
@@ -731,6 +731,12 @@ export const MoorhenRigidBodyFitButton = (props) => {
     const awaitMoreAtomClicksRef = useRef(false)
     const [panelParameters, setPanelParameters] = useState('TRIPLE')
     const [randomJiggleMode, setRandomJiggleMode] = useState(false)
+    
+    useEffect(() => {
+        if (props.selectedButtonIndex === props.buttonIndex && !awaitMoreAtomClicksRef.current && modeSelectRef.current?.value === 'RESIDUE RANGE' && !selectedResidue.current) {
+            awaitMoreAtomClicksRef.current = true
+        }
+    }, [props.selectedButtonIndex])
 
     const doRigidBodyFitting = async (molecule, chosenAtom, pp) => {
         if (modeSelectRef.current.value === 'RESIDUE RANGE' && !selectedResidue.current) {
@@ -741,16 +747,16 @@ export const MoorhenRigidBodyFitButton = (props) => {
             const commandArgs = rigidBodyFitFormatArgs(molecule, chosenAtom)
             await props.commandCentre.current.cootCommand({
                 returnType: 'status',
-                command: 'rigid_body_fit',
-                commandArgs: commandArgs,
+                command: randomJiggleMode ? 'fit_to_map_by_random_jiggle_using_cid' : 'rigid_body_fit',
+                commandArgs: randomJiggleMode ?  [...commandArgs.slice(0, 2), 0, -1] : commandArgs,
                 changesMolecules: [molecule.molNo]
             }, true)
         } else {
             const commandArgs = rigidBodyFitFormatArgs(molecule, chosenAtom)
             await props.commandCentre.current.cootCommand({
                 returnType: 'status',
-                command: 'rigid_body_fit',
-                commandArgs: commandArgs,
+                command: randomJiggleMode ? 'fit_to_map_by_random_jiggle_using_cid' : 'rigid_body_fit',
+                commandArgs: randomJiggleMode ?  [...commandArgs.slice(0, 2), 0, -1] : commandArgs,
                 changesMolecules: [molecule.molNo]
             }, true)
         }
@@ -869,6 +875,7 @@ export const MoorhenRigidBodyFitButton = (props) => {
         nonCootCommand={doRigidBodyFitting}
         panelParameters={panelParameters}
         awaitMoreAtomClicksRef={awaitMoreAtomClicksRef}
+        refineAfterMod={false}
         prompt={<MoorhenRigidBodyFitPanel
             ref={modeSelectRef}
             setPanelParameters={setPanelParameters}
