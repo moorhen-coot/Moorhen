@@ -50,6 +50,7 @@ export function MoorhenMolecule(commandCentre, urlPrefix) {
         rotamer: [],
         CDs: [],
         hover: [],
+        selection: [],
         transformation: { origin: [0, 0, 0], quat: null, centre: [0, 0, 0] }
     }
     this.urlPrefix = (typeof urlPrefix === 'undefined' ? "." : urlPrefix)
@@ -1138,6 +1139,26 @@ MoorhenMolecule.prototype.drawHover = async function (glRef, selectionString) {
 
 }
 
+MoorhenMolecule.prototype.drawSelection = async function (glRef, selectionString) {
+    const $this = this
+    const style = "selection"
+
+    if (typeof selectionString === 'string') {
+        const resSpec = cidToSpec(selectionString)
+        const modifiedSelection = `/*/${resSpec.chain_id}/${resSpec.res_no}-${resSpec.res_no}/*${resSpec.alt_conf === "" ? "" : ":"}${resSpec.alt_conf}`
+        const selectedGemmiAtoms = await $this.gemmiAtomsForCid(modifiedSelection)
+        const atomColours = {}
+        selectedGemmiAtoms.forEach(atom => { atomColours[`${atom.serial}`] = [1.0, 0.0, 0.0, 0.35] })
+        let objects = [
+            gemmiAtomsToCirclesSpheresInfo(selectedGemmiAtoms, 0.3, "POINTS_SPHERES", atomColours)
+        ]
+        $this.clearBuffersOfStyle(style, glRef)
+        this.addBuffersOfStyle(glRef, objects, style)
+    }
+    return
+
+}
+
 MoorhenMolecule.prototype.drawRibbons = function (webMGAtoms, glRef) {
     const $this = this
     const style = "ribbons"
@@ -1205,7 +1226,7 @@ MoorhenMolecule.prototype.drawSticks = function (webMGAtoms, glRef) {
 MoorhenMolecule.prototype.redraw = function (glRef) {
     const $this = this
     const itemsToRedraw = []
-    Object.keys($this.displayObjects).filter(style => !["transformation", 'hover'].includes(style)).forEach(style => {
+    Object.keys($this.displayObjects).filter(style => !["transformation", 'hover', 'selection'].includes(style)).forEach(style => {
         const objectCategoryBuffers = $this.displayObjects[style]
         //Note with transforamtion, not all properties of displayObjects are lists of buffer
         if (Array.isArray(objectCategoryBuffers)) {
@@ -1550,7 +1571,7 @@ MoorhenMolecule.prototype.gemmiAtomsForCid = async function (cid) {
     return Promise.resolve(result)
 }
 
-MoorhenMolecule.prototype.hasVisibleBuffers = function (excludeBuffers = ['hover', 'transformation', 'contact_dots', 'chemical_features', 'VdWSurface']) {
+MoorhenMolecule.prototype.hasVisibleBuffers = function (excludeBuffers = ['hover', 'selection', 'transformation', 'contact_dots', 'chemical_features', 'VdWSurface']) {
     const styles = Object.keys(this.displayObjects).filter(key => !excludeBuffers.some(style => key.includes(style)))
     const displayBuffers = styles.map(style => this.displayObjects[style])
     const visibleDisplayBuffers = displayBuffers.filter(displayBuffer => displayBuffer.some(buffer => buffer.visible))
