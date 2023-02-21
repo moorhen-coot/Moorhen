@@ -14,8 +14,8 @@ const refinementFormatArgs = (molecule, chosenAtom, pp) => {
 }
 
 const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
-    const [prompt, setPrompt] = useState(null)
     const target = useRef(null)
+    const [prompt, setPrompt] = useState(null)
     const [localParameters, setLocalParameters] = useState({})
 
     useEffect(() => {
@@ -27,12 +27,10 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
     }, [])
 
     useEffect(() => {
-        //console.log('changing panelParameters', props.panelParameters)
         setLocalParameters(props.panelParameters)
     }, [props.panelParameters])
 
     const atomClickedCallback = useCallback(event => {
-        //console.log('in atomClickedcallback', event, props.molecules.length)
         document.removeEventListener('atomClicked', atomClickedCallback, { once: true })
         props.molecules.forEach(async (molecule) => {
             console.log('Testing molecule ', molecule.molNo)
@@ -89,7 +87,7 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
                 console.log('Encountered', err)
             }
         })
-    }, [props.molecules.length, props.activeMap, props.refineAfterMod, localParameters])
+    }, [props.molecules, props.activeMap, props.refineAfterMod, localParameters, props.formatArgs])
 
     useEffect(() => {
         props.setCursorStyle("crosshair")
@@ -152,7 +150,6 @@ MoorhenSimpleEditButton.defaultProps = {
     changesMolecule: true, refineAfterMod: false, onCompleted: null,
     awaitAtomClick: true, onExit: null
 }
-
 
 export const MoorhenAutofitRotamerButton = (props) => {
     const [toolTip, setToolTip] = useState("Auto-fit Rotamer")
@@ -723,7 +720,110 @@ export const MoorhenRotateTranslateZoneButton = (props) => {
     </>
 }
 
+export const MoorhenRigidBodyFitButton = (props) => {
+    const modeSelectRef = useRef(null)
+    const [panelParameters, setPanelParameters] = useState('TRIPLE')
 
+    const rigidBodyFitFormatArgs = (molecule, chosenAtom, pp) => {
+        let commandArgs
+        const selectedSequence = molecule.sequences.find(sequence => sequence.chain === chosenAtom.chain_id)
+        const selectedResidueIndex = selectedSequence.sequence.findIndex(residue => residue.resNum === chosenAtom.res_no)
+        let start
+        let stop
+        
+        switch (modeSelectRef.current.value) {
+            case 'SINGLE':
+                commandArgs = [
+                    molecule.molNo,
+                    `//${chosenAtom.chain_id}/${chosenAtom.res_no}`,
+                    props.activeMap.molNo
+                ]
+                break
+            case 'TRIPLE':
+                start = selectedResidueIndex !== 0 ? selectedSequence.sequence[selectedResidueIndex - 1].resNum : chosenAtom.res_no
+                stop = selectedResidueIndex < selectedSequence.sequence.length - 1 ? selectedSequence.sequence[selectedResidueIndex + 1].resNum : chosenAtom.res_no
+                commandArgs = [
+                    molecule.molNo,
+                    `//${chosenAtom.chain_id}/${start}-${stop}`,
+                    props.activeMap.molNo
+                ]
+                break
+            case 'QUINTUPLE':
+                start = selectedResidueIndex !== 0 ? selectedSequence.sequence[selectedResidueIndex - 2].resNum : chosenAtom.res_no
+                stop = selectedResidueIndex < selectedSequence.sequence.length - 2 ? selectedSequence.sequence[selectedResidueIndex + 2].resNum : selectedSequence.sequence[selectedResidueIndex - 1].resNum
+                commandArgs = [
+                    molecule.molNo,
+                    `//${chosenAtom.chain_id}/${start}-${stop}`,
+                    props.activeMap.molNo
+                ]
+                break
+            case 'HEPTUPLE':
+                start = selectedResidueIndex !== 0 ? selectedSequence.sequence[selectedResidueIndex - 3].resNum : chosenAtom.res_no
+                stop = selectedResidueIndex < selectedSequence.sequence.length - 3 ? selectedSequence.sequence[selectedResidueIndex + 3].resNum : selectedSequence.sequence[selectedResidueIndex - 1].resNum
+                commandArgs = [
+                    molecule.molNo,
+                    `//${chosenAtom.chain_id}/${start}-${stop}`,
+                    props.activeMap.molNo
+                ]
+                break    
+            case 'CHAIN':
+                commandArgs = [
+                    molecule.molNo,
+                    `//${chosenAtom.chain_id}/*`,
+                    props.activeMap.molNo
+                ]
+                break
+            case 'ALL':
+                commandArgs = [
+                    molecule.molNo,
+                    `//*/*`,
+                    props.activeMap.molNo
+                ]
+                break
+            default:
+                console.log('Unrecognised rigid body fit mode...')
+                break
+        }
+        return commandArgs
+    }
+
+    const MoorhenRigidBodyFitPanel = forwardRef((props, ref) => {
+        const rigidBodyModes = ['SINGLE', 'TRIPLE', 'QUINTUPLE', 'HEPTUPLE', 'CHAIN', 'ALL']
+        return <Container>
+            <Row>Please click an atom for rigid body fitting</Row>
+            <Row>
+                <FormGroup>
+                    <FormLabel>Fitting mode</FormLabel>
+                    <FormSelect ref={ref} defaultValue={props.panelParameters}
+                        onChange={(e) => {
+                            props.setPanelParameters(e.target.value)
+                        }}>
+                        {rigidBodyModes.map(optionName => {
+                            return <option key={optionName} value={optionName}>{optionName}</option>
+                        })}
+                    </FormSelect>
+                </FormGroup>
+            </Row>
+        </Container>
+    })
+
+    return <MoorhenSimpleEditButton {...props}
+        id='rigid-body-fit-button'
+        toolTip="Rigid body fit"
+        buttonIndex={props.buttonIndex}
+        selectedButtonIndex={props.selectedButtonIndex}
+        setSelectedButtonIndex={props.setSelectedButtonIndex}
+        needsMapData={true}
+        cootCommand="rigid_body_fit"
+        panelParameters={panelParameters}
+        prompt={<MoorhenRigidBodyFitPanel
+            ref={modeSelectRef}
+            setPanelParameters={setPanelParameters}
+            panelParameters={panelParameters} />}
+        icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/rigid-body.svg`} alt='Rigid body fit' />}
+        formatArgs={(m, c, p) => rigidBodyFitFormatArgs(m, c, p)}
+        />
+}
 
 export const MoorhenAddSimpleButton = (props) => {
     const selectRef = useRef()
