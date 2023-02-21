@@ -1119,44 +1119,32 @@ const gemmiAtomsToCirclesSpheresInfo = (atoms, size, primType, colourScheme) => 
     return spherePrimitiveInfo;
 }
 
-MoorhenMolecule.prototype.drawHover = async function (glRef, selectionString) {
+MoorhenMolecule.prototype.drawResidueHighlight = async function (glRef, style, selectionString, colour, clearBuffers=false) {
     const $this = this
-    const style = "hover"
 
     if (typeof selectionString === 'string') {
         const resSpec = cidToSpec(selectionString)
         const modifiedSelection = `/*/${resSpec.chain_id}/${resSpec.res_no}-${resSpec.res_no}/*${resSpec.alt_conf === "" ? "" : ":"}${resSpec.alt_conf}`
         const selectedGemmiAtoms = await $this.gemmiAtomsForCid(modifiedSelection)
         const atomColours = {}
-        selectedGemmiAtoms.forEach(atom => { atomColours[`${atom.serial}`] = [1.0, 0.5, 0.0, 0.35] })
+        selectedGemmiAtoms.forEach(atom => { atomColours[`${atom.serial}`] = colour })
         let objects = [
             gemmiAtomsToCirclesSpheresInfo(selectedGemmiAtoms, 0.3, "POINTS_SPHERES", atomColours)
         ]
-        $this.clearBuffersOfStyle(style, glRef)
-        this.addBuffersOfStyle(glRef, objects, style)
+        if (clearBuffers){
+            $this.clearBuffersOfStyle(style, glRef)
+        }
+        $this.addBuffersOfStyle(glRef, objects, style)
     }
     return
+}
 
+MoorhenMolecule.prototype.drawHover = async function (glRef, selectionString) {
+    return await this.drawResidueHighlight(glRef, 'hover', selectionString, [1.0, 0.5, 0.0, 0.35], true)
 }
 
 MoorhenMolecule.prototype.drawSelection = async function (glRef, selectionString) {
-    const $this = this
-    const style = "selection"
-
-    if (typeof selectionString === 'string') {
-        const resSpec = cidToSpec(selectionString)
-        const modifiedSelection = `/*/${resSpec.chain_id}/${resSpec.res_no}-${resSpec.res_no}/*${resSpec.alt_conf === "" ? "" : ":"}${resSpec.alt_conf}`
-        const selectedGemmiAtoms = await $this.gemmiAtomsForCid(modifiedSelection)
-        const atomColours = {}
-        selectedGemmiAtoms.forEach(atom => { atomColours[`${atom.serial}`] = [1.0, 0.0, 0.0, 0.35] })
-        let objects = [
-            gemmiAtomsToCirclesSpheresInfo(selectedGemmiAtoms, 0.3, "POINTS_SPHERES", atomColours)
-        ]
-        $this.clearBuffersOfStyle(style, glRef)
-        this.addBuffersOfStyle(glRef, objects, style)
-    }
-    return
-
+    return await this.drawResidueHighlight(glRef, 'selection', selectionString, [1.0, 0.0, 0.0, 0.35], false)
 }
 
 MoorhenMolecule.prototype.drawRibbons = function (webMGAtoms, glRef) {
