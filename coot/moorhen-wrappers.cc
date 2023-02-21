@@ -340,6 +340,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<molecules_container_t>("molecules_container_t")
     .constructor<>()
+    .function("fit_to_map_by_random_jiggle_using_cid",&molecules_container_t::fit_to_map_by_random_jiggle_using_cid)
     .function("get_active_atom",&molecules_container_t::get_active_atom)
     .function("is_a_difference_map",&molecules_container_t::is_a_difference_map)
     .function("add_hydrogen_atoms",&molecules_container_t::add_hydrogen_atoms)
