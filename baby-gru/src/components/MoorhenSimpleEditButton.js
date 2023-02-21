@@ -1,7 +1,7 @@
 import { CheckOutlined, CloseOutlined } from "@mui/icons-material";
 import { MenuItem, MenuList, Tooltip } from "@mui/material";
 import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
-import { Button, Overlay, Container, Row, FormSelect, FormGroup, FormLabel, Card } from "react-bootstrap"
+import { Button, Overlay, Container, Row, FormSelect, FormGroup, FormLabel, Card, Form } from "react-bootstrap"
 import { MoorhenMoleculeSelect } from "./MoorhenMoleculeSelect";
 import { MoorhenCidInputForm } from "./MoorhenCidInputForm";
 import { cidToSpec, getTooltipShortcutLabel, residueCodesThreeToOne } from "../utils/MoorhenUtils";
@@ -31,7 +31,9 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
     }, [props.panelParameters])
 
     const atomClickedCallback = useCallback(event => {
-        document.removeEventListener('atomClicked', atomClickedCallback, { once: true })
+        if (!props.awaitMoreAtomClicksRef.current) {
+            document.removeEventListener('atomClicked', atomClickedCallback, { once: true })
+        }
         props.molecules.forEach(async (molecule) => {
             console.log('Testing molecule ', molecule.molNo)
             try {
@@ -39,7 +41,9 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
                     props.setCursorStyle("default")
                     const chosenAtom = cidToSpec(event.detail.atom.label)
                     let formattedArgs = props.formatArgs(molecule, chosenAtom, localParameters)
-                    props.setSelectedButtonIndex(null)
+                    if (!props.awaitMoreAtomClicksRef.current) {
+                        props.setSelectedButtonIndex(null)
+                    }
                     if (props.cootCommand) {
                         const result = await props.commandCentre.current.cootCommand({
                             returnType: props.returnType,
@@ -75,7 +79,7 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
                             props.onExit(molecule, chosenAtom, result)
                         }
                     } else if (props.nonCootCommand) {
-                        props.nonCootCommand(molecule, chosenAtom, localParameters)
+                        await props.nonCootCommand(molecule, chosenAtom, localParameters)
                     }
                     props.timeCapsuleRef.current.addModification()
                 }
@@ -87,7 +91,7 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
                 console.log('Encountered', err)
             }
         })
-    }, [props.molecules, props.activeMap, props.refineAfterMod, localParameters, props.formatArgs])
+    }, [props.molecules, props.activeMap, props.refineAfterMod, localParameters, props.formatArgs, props.awaitMoreAtomClicksRef])
 
     useEffect(() => {
         props.setCursorStyle("crosshair")
@@ -100,7 +104,7 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
             props.setCursorStyle("default")
             document.removeEventListener('atomClicked', atomClickedCallback, { once: true })
         }
-    }, [props.selectedButtonIndex])
+    }, [props.selectedButtonIndex, atomClickedCallback])
 
     return <>
         <Tooltip title={(props.needsMapData && !props.activeMap) || (props.needsAtomData && props.molecules.length === 0) ? '' : props.toolTip}>
@@ -148,7 +152,7 @@ MoorhenSimpleEditButton.defaultProps = {
     returnType: 'status', needsAtomData: true, prompt: null,
     setSelectedButtonIndex: () => { }, selectedButtonIndex: 0,
     changesMolecule: true, refineAfterMod: false, onCompleted: null,
-    awaitAtomClick: true, onExit: null
+    awaitAtomClick: true, onExit: null, awaitMoreAtomClicksRef: false
 }
 
 export const MoorhenAutofitRotamerButton = (props) => {
@@ -722,9 +726,55 @@ export const MoorhenRotateTranslateZoneButton = (props) => {
 
 export const MoorhenRigidBodyFitButton = (props) => {
     const modeSelectRef = useRef(null)
+    const selectedResidue = useRef(null)
+    const awaitMoreAtomClicksRef = useRef(false)
     const [panelParameters, setPanelParameters] = useState('TRIPLE')
+    const [randomJiggleMode, setRandomJiggleMode] = useState(false)
 
-    const rigidBodyFitFormatArgs = (molecule, chosenAtom, pp) => {
+    const doRigidBodyFitting = async (molecule, chosenAtom, pp) => {
+        if (modeSelectRef.current.value === 'RESIDUE RANGE' && !selectedResidue.current) {
+            selectedResidue.current = chosenAtom
+            awaitMoreAtomClicksRef.current = false
+            return
+        } else if (modeSelectRef.current.value === 'RESIDUE RANGE') {
+            const commandArgs = rigidBodyFitFormatArgs(molecule, chosenAtom)
+            await props.commandCentre.current.cootCommand({
+                returnType: 'status',
+                command: 'rigid_body_fit',
+                commandArgs: commandArgs,
+                changesMolecules: [molecule.molNo]
+            }, true)
+        } else {
+            const commandArgs = rigidBodyFitFormatArgs(molecule, chosenAtom)
+            await props.commandCentre.current.cootCommand({
+                returnType: 'status',
+                command: 'rigid_body_fit',
+                commandArgs: commandArgs,
+                changesMolecules: [molecule.molNo]
+            }, true)
+        }
+
+        selectedResidue.current = null
+
+        if (props.refineAfterMod && selectedResidue.current !== chosenAtom) {
+            console.log('Triggering post-modification triple refinement...')
+            await props.commandCentre.current.cootCommand({
+                returnType: "status",
+                command: 'refine_residues_using_atom_cid',
+                commandArgs: refinementFormatArgs(molecule, chosenAtom, { refine: { mode: 'TRIPLE' } }),
+                changesMolecules: [molecule.molNo]
+            }, true)
+        }
+
+        molecule.setAtomsDirty(true)
+        molecule.redraw(props.glRef)
+
+        const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: molecule.molNo } })
+        document.dispatchEvent(mapUpdateEvent);
+
+    }
+
+    const rigidBodyFitFormatArgs = (molecule, chosenAtom) => {
         let commandArgs
         const selectedSequence = molecule.sequences.find(sequence => sequence.chain === chosenAtom.chain_id)
         const selectedResidueIndex = selectedSequence.sequence.findIndex(residue => residue.resNum === chosenAtom.res_no)
@@ -765,6 +815,14 @@ export const MoorhenRigidBodyFitButton = (props) => {
                     `//${chosenAtom.chain_id}/${start}-${stop}`,
                     props.activeMap.molNo
                 ]
+                break
+            case 'RESIDUE RANGE':
+                const residueRange = [parseInt(selectedResidue.current.res_no), parseInt(chosenAtom.res_no)].sort((a, b) => {return a - b})
+                commandArgs = [
+                    molecule.molNo,
+                    `//${chosenAtom.chain_id}/${residueRange[0]}-${residueRange[1]}`,
+                    props.activeMap.molNo
+                ]
                 break    
             case 'CHAIN':
                 commandArgs = [
@@ -788,7 +846,7 @@ export const MoorhenRigidBodyFitButton = (props) => {
     }
 
     const MoorhenRigidBodyFitPanel = forwardRef((props, ref) => {
-        const rigidBodyModes = ['SINGLE', 'TRIPLE', 'QUINTUPLE', 'HEPTUPLE', 'CHAIN', 'ALL']
+        const rigidBodyModes = ['SINGLE', 'TRIPLE', 'QUINTUPLE', 'HEPTUPLE', 'RESIDUE RANGE', 'CHAIN', 'ALL']
         return <Container>
             <Row>Please click an atom for rigid body fitting</Row>
             <Row>
@@ -796,12 +854,23 @@ export const MoorhenRigidBodyFitButton = (props) => {
                     <FormLabel>Fitting mode</FormLabel>
                     <FormSelect ref={ref} defaultValue={props.panelParameters}
                         onChange={(e) => {
+                            if(e.target.value === 'RESIDUE RANGE'){
+                                awaitMoreAtomClicksRef.current = true
+                            } else {
+                                awaitMoreAtomClicksRef.current = false                    
+                            }
                             props.setPanelParameters(e.target.value)
                         }}>
                         {rigidBodyModes.map(optionName => {
                             return <option key={optionName} value={optionName}>{optionName}</option>
                         })}
                     </FormSelect>
+                    <Form.Check
+                        style={{paddingTop: '0.1rem'}} 
+                        type="switch"
+                        checked={randomJiggleMode}
+                        onChange={() => { setRandomJiggleMode(!randomJiggleMode) }}
+                    label="Use random jiggle mode"/>
                 </FormGroup>
             </Row>
         </Container>
@@ -814,8 +883,9 @@ export const MoorhenRigidBodyFitButton = (props) => {
         selectedButtonIndex={props.selectedButtonIndex}
         setSelectedButtonIndex={props.setSelectedButtonIndex}
         needsMapData={true}
-        cootCommand="rigid_body_fit"
+        nonCootCommand={doRigidBodyFitting}
         panelParameters={panelParameters}
+        awaitMoreAtomClicksRef={awaitMoreAtomClicksRef}
         prompt={<MoorhenRigidBodyFitPanel
             ref={modeSelectRef}
             setPanelParameters={setPanelParameters}
