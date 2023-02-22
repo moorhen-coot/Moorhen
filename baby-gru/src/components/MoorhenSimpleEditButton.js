@@ -740,8 +740,8 @@ export const MoorhenRigidBodyFitButton = (props) => {
             awaitMoreAtomClicksRef.current = true
         } else if (props.selectedButtonIndex !== props.buttonIndex && (selectedResidueRef.current || awaitMoreAtomClicksRef.current)) {
             awaitMoreAtomClicksRef.current = false
-            const selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedResidueRef.current.molecule.molNo)
-            selectedMolecule.clearBuffersOfStyle('selection', props.glRef)
+            const { molecule, chosenAtom } = selectedResidueRef.current
+            molecule.clearBuffersOfStyle('selection', props.glRef)
             selectedResidueRef.current = null
         }
     }, [props.selectedButtonIndex])
@@ -856,7 +856,12 @@ export const MoorhenRigidBodyFitButton = (props) => {
                             if(e.target.value === 'RESIDUE RANGE'){
                                 awaitMoreAtomClicksRef.current = true
                             } else {
-                                awaitMoreAtomClicksRef.current = false                    
+                                awaitMoreAtomClicksRef.current = false
+                                if (selectedResidueRef.current) {
+                                    const { molecule, chosenAtom } = selectedResidueRef.current
+                                    molecule.clearBuffersOfStyle('selection', props.glRef)    
+                                    selectedResidueRef.current = null
+                                }
                             }
                             props.setPanelParameters(e.target.value)
                         }}>
@@ -869,7 +874,7 @@ export const MoorhenRigidBodyFitButton = (props) => {
                         type="switch"
                         checked={randomJiggleMode}
                         onChange={() => { setRandomJiggleMode(!randomJiggleMode) }}
-                    label="Use random jiggle mode"/>
+                    label="Use random jiggle fit"/>
                 </FormGroup>
             </Row>
         </Container>
@@ -888,6 +893,7 @@ export const MoorhenRigidBodyFitButton = (props) => {
         refineAfterMod={false}
         prompt={<MoorhenRigidBodyFitPanel
             ref={modeSelectRef}
+            glRef={props.glRef}
             setPanelParameters={setPanelParameters}
             panelParameters={panelParameters} />}
         icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/rigid-body.svg`} alt='Rigid body fit' />}
