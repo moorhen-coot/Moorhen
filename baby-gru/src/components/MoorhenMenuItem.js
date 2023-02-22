@@ -910,9 +910,14 @@ export const MoorhenImportDictionaryMenuItem = (props) => {
         fileOrLibraryRef.current = fileOrLibrary
     }, [fileOrLibrary])
 
-    const handleFileContent = async (fileContent) => {
-        let newMolecule = null
-        const selectedMoleculeIndex = parseInt(moleculeSelectRef.current.value)
+    const handleFileContent = useCallback(async (fileContent) => {
+        let newMolecule
+        let selectedMoleculeIndex
+        if (moleculeSelectRef.current) {
+            selectedMoleculeIndex = parseInt(moleculeSelectRef.current.value)
+        } else {
+            selectedMoleculeIndex = parseInt(-999999)
+        }
         return props.commandCentre.current.cootCommand({
             returnType: "status",
             command: 'shim_read_dictionary',
@@ -938,7 +943,6 @@ export const MoorhenImportDictionaryMenuItem = (props) => {
                 return Promise.resolve()
             })
             .then(result => {
-                //console.log({ createInstance })
                 if (createRef.current) {
                     const instanceName = tlcValueRef.current
                     console.log({ instanceName })
@@ -987,7 +991,7 @@ export const MoorhenImportDictionaryMenuItem = (props) => {
                 }
                 console.log('After create instance', { result })
             })
-    }//, [moleculeSelectRef.current, props.molecules, tlcRef, tlc, addToRef, createInstance])
+    }, [fileOrLibrary, moleculeSelectRef, moleculeSelectRef, props.molecules, tlcRef, tlc, addToRef, createInstance])
 
     const readMmcifFile = async (file) => {
         return readTextFile(file)
@@ -1033,7 +1037,7 @@ export const MoorhenImportDictionaryMenuItem = (props) => {
             console.log(`Unkown ligand source ${fileOrLibraryRef.current}`)
         }
 
-    }, [fileOrLibrary.current, moleculeSelectRef.current, moleculeSelectRef.current, props.molecules, tlcRef.current, tlc, addToRef.current, createInstance])
+    }, [handleFileContent])
 
     return <MoorhenMenuItem
         id='import-dict-menu-item'
