@@ -76,9 +76,6 @@ ${coot_src}/coot-utils/lidia-core-functions.cc
 ${coot_src}/coot-utils/atom-selection-container.cc
 ${coot_src}/coot-utils/dictionary-atom-types.cc
 ${coot_src}/coot-utils/cod-db-access.cc
-${coot_src}/lbg/lbg-search.cc
-${coot_src}/lbg/some-coot-utils.cc
-${coot_src}/lbg/lbg-drag-and-drop.cc
 ${coot_src}/src/coot-hydrogens.cc
 ${coot_src}/src/cfc.cc
 ${coot_src}/MoleculesToTriangles/CXXSurface/CXXBall.cpp
@@ -500,167 +497,12 @@ FILE(COPY ${coot_src}/data/metal/metal-O-distance.table DESTINATION data/coot/da
 FILE(COPY ${coot_src}/data/metal/metal-S-distance.table DESTINATION data/coot/data/metal )
 FILE(COPY ${CMAKE_INSTALL_PREFIX}/share/RDKit/Data/BaseFeatures.fdef DESTINATION data/RDKit/Data )
 
-add_executable(dynamic_read_lib ../example/dynamic_read_lib.cc)
-target_link_options(dynamic_read_lib PRIVATE  -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 --pre-js coot_env.js)
-target_link_directories(dynamic_read_lib PUBLIC ../mmdb2 ../ssm ../ccp4 ../lib ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4)
-target_link_libraries(dynamic_read_lib mmdb2 ssm clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 coot gsl nodefs.js)
-target_include_directories(dynamic_read_lib PRIVATE ${coot_src} ${coot_src}/src ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw)
-target_compile_options(dynamic_read_lib PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
-
-#[[
-add_executable(fix-nomenclature ${coot_src}/src/fix-nomenclature.cc)
-target_link_options(fix-nomenclature PRIVATE -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 --pre-js coot_env.js)
-target_link_directories(fix-nomenclature PUBLIC ../mmdb2 ../ssm ../ccp4 ../lib ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4)
-target_link_libraries(fix-nomenclature mmdb2 ssm clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 coot gsl nodefs.js)
-target_include_directories(fix-nomenclature PRIVATE ${coot_src} ${coot_src}/src ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw)
-target_compile_options(fix-nomenclature PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
-]]
-
-add_executable(rama-data ${coot_src}/auxil/rama/rama-data.cc)
-target_link_options(rama-data PRIVATE -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 --pre-js coot_env.js)
-target_link_directories(rama-data PUBLIC ../mmdb2 ../ssm ../ccp4 ../lib ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4)
-target_link_libraries(rama-data mmdb2 ssm clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 coot gsl nodefs.js)
-target_include_directories(rama-data PRIVATE ${coot_src} ${coot_src}/src ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw)
-target_compile_options(rama-data PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
-
-add_executable(rama-doughnut ${coot_src}/auxil/rama/rama-doughnut.cc)
-target_link_options(rama-doughnut PRIVATE -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 --pre-js coot_env.js)
-target_link_directories(rama-doughnut PUBLIC ../mmdb2 ../ssm ../ccp4 ../lib ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4)
-target_link_libraries(rama-doughnut mmdb2 ssm clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 coot gsl nodefs.js)
-target_include_directories(rama-doughnut PRIVATE ${coot_src} ${coot_src}/src ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw)
-target_compile_options(rama-doughnut PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
-
-add_executable(bfactan ${coot_src}/analysis/bfactan.cc)
-target_link_options(bfactan PRIVATE -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 --pre-js coot_env.js)
-target_link_directories(bfactan PUBLIC ../mmdb2 ../ssm ../ccp4 ../lib ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4)
-target_link_libraries(bfactan mmdb2 ssm clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 coot gsl nodefs.js)
-target_include_directories(bfactan PRIVATE ${coot_src} ${coot_src}/src ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw)
-target_compile_options(bfactan PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
-
-#[[
-add_executable(mini-rsr ${coot_src}/ideal/mini-rsr.cc)
-target_link_options(mini-rsr PRIVATE -fexceptions -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sUSE_PTHREADS=1 -sEXIT_RUNTIME=1 -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 -sASSERTIONS=1 --pre-js coot_env.js)
-target_link_directories(mini-rsr PUBLIC ../mmdb2 ../ssm ../ccp4 ../lib ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4)
-target_link_libraries(mini-rsr mmdb2 ssm clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 coot gsl gslcblas nodefs.js)
-target_include_directories(mini-rsr PRIVATE ${coot_src} ${coot_src}/src ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw ../include)
-target_compile_options(mini-rsr PUBLIC -fexceptions -pthread -D_MINI_RSR_MAIN_ -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -s USE_PTHREADS=1 -DNODERAWFS)
-]]
-
 add_executable(moorhen moorhen-wrappers.cc gemmi-wrappers.cc)
 target_link_options(moorhen PRIVATE -sDEMANGLE_SUPPORT=1 -sASSERTIONS=2 -fexceptions -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sUSE_PTHREADS=1 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createRSRModule -sEXPORTED_RUNTIME_METHODS=['FS','readFile'] --preload-file data  --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
 target_link_directories(moorhen PUBLIC ../ssm ../mmdb2 ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4 ../fftw ../rfftw ../ccp4 ../privateer ../rvapi ../gesamt ../ccp4mg ../lib ../install/lib)
 target_link_libraries(moorhen ssm rvapi gesamtlib mmdb2 clipper-minimol clipper-phs clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 privateer clipper-minimol ccp4mg coot gsl gslcblas RDKitMolDraw2D RDKitForceFieldHelpers RDKitDescriptors RDKitForceField RDKitSubstructMatch RDKitOptimizer RDKitDistGeomHelpers RDKitDistGeometry RDKitChemReactions RDKitAlignment RDKitEigenSolvers RDKitDepictor RDKitcoordgen RDKitMolChemicalFeatures RDKitPartialCharges RDKitFileParsers RDKitRDGeometryLib RDKitGraphMol RDKitShapeHelpers RDKitFingerprints RDKitMolAlign RDKitMolTransforms RDKitChemTransforms RDKitSmilesParse RDKitFilterCatalog RDKitCatalogs RDKitSubgraphs RDKitRDGeneral RDKitDataStructs RDKitGenericGroups boost_serialization freetype m z idbfs.js)
 target_include_directories(moorhen PRIVATE ${coot_src} ${coot_src}/src ../checkout/boost_1_80_0 ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw ../include ../checkout/gemmi/include )
 target_compile_options(moorhen PUBLIC -DGEMMI_WRITE_IMPLEMENTATION -fexceptions -sUSE_PTHREADS=1 -pthread -DFFTW_ENABLE_FLOAT -D_CCP4_WEB_EXAMPLE_)
-
-#[[
-add_executable(mmrrcc ${coot_src}/coot-utils/mmrrcc.cc)
-target_link_options(mmrrcc PRIVATE -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 --pre-js coot_env.js)
-target_link_directories(mmrrcc PUBLIC ../mmdb2 ../ssm ../ccp4 ../lib ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4)
-target_link_libraries(mmrrcc mmdb2 ssm clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 coot gsl nodefs.js)
-target_include_directories(mmrrcc PRIVATE ${coot_src} ${coot_src}/src ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw)
-target_compile_options(mmrrcc PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
-
-add_executable(test-chem-feat ${coot_src}/coot-utils/test-chem-feat.cc)
-target_link_options(test-chem-feat PRIVATE -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 --pre-js coot_env.js)
-target_link_directories(test-chem-feat PUBLIC ../mmdb2 ../ssm ../ccp4 ../lib ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4)
-target_link_libraries(test-chem-feat mmdb2 ssm clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 coot gsl nodefs.js)
-target_include_directories(test-chem-feat PRIVATE ${coot_src} ${coot_src}/src ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw)
-target_compile_options(test-chem-feat PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
-
-add_executable(make-shelx-restraints ${coot_src}/geometry/make-shelx-restraints.cc)
-target_link_options(make-shelx-restraints PRIVATE -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 --pre-js coot_env.js)
-target_link_directories(make-shelx-restraints PUBLIC ../mmdb2 ../ssm ../ccp4 ../lib ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4)
-target_link_libraries(make-shelx-restraints mmdb2 ssm clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 coot gsl nodefs.js)
-target_include_directories(make-shelx-restraints PRIVATE ${coot_src} ${coot_src}/src ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw ../include)
-target_compile_options(make-shelx-restraints PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
-
-add_executable(test-ccp4srs ${coot_src}/geometry/test-ccp4srs.cc)
-target_link_options(test-ccp4srs PRIVATE -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 --pre-js coot_env.js)
-target_link_directories(test-ccp4srs PUBLIC ../mmdb2 ../ssm ../ccp4 ../lib ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4)
-target_link_libraries(test-ccp4srs mmdb2 ssm clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 coot gsl gslcblas nodefs.js)
-target_include_directories(test-ccp4srs PRIVATE ${coot_src} ${coot_src}/src ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw)
-target_compile_options(test-ccp4srs PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
-
-add_executable(compare-dictionaries ${coot_src}/geometry/compare-dictionaries.cc)
-target_link_options(compare-dictionaries PRIVATE -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 --pre-js coot_env.js)
-target_link_directories(compare-dictionaries PUBLIC ../mmdb2 ../ssm ../ccp4 ../lib ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4)
-target_link_libraries(compare-dictionaries mmdb2 ssm clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 coot gsl gslcblas nodefs.js)
-target_include_directories(compare-dictionaries PRIVATE ${coot_src} ${coot_src}/src ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw)
-target_compile_options(compare-dictionaries PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
-
-add_executable(dictionary-bond-distributions ${coot_src}/geometry/dictionary-bond-distributions.cc)
-target_link_options(dictionary-bond-distributions PRIVATE -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 --pre-js coot_env.js)
-target_link_directories(dictionary-bond-distributions PUBLIC ../mmdb2 ../ssm ../ccp4 ../lib ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4)
-target_link_libraries(dictionary-bond-distributions mmdb2 ssm clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 coot gsl nodefs.js)
-target_include_directories(dictionary-bond-distributions PRIVATE ${coot_src} ${coot_src}/src ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw ../include)
-target_compile_options(dictionary-bond-distributions PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
-
-add_executable(cootilus-demo ${coot_src}/cootilus/cootilus-demo.cpp)
-target_link_options(cootilus-demo.cpp PRIVATE -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 --pre-js coot_env.js)
-target_link_directories(cootilus-demo.cpp PUBLIC ../mmdb2 ../ssm ../ccp4 ../lib ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4)
-target_link_libraries(cootilus-demo.cpp mmdb2 ssm clipper-minimol clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 coot gsl nodefs.js)
-target_include_directories(cootilus-demo.cpp PRIVATE ${coot_src} ${coot_src}/src ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw)
-target_compile_options(cootilus-demo.cpp PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
-
-add_executable(identify-protein ${coot_src}/ligand/identify-protein.cc)
-target_link_options(identify-protein PRIVATE -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 --pre-js coot_env.js)
-target_link_directories(identify-protein PUBLIC ../mmdb2 ../ssm ../ccp4 ../lib ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4)
-target_link_libraries(identify-protein mmdb2 ssm clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 coot gsl nodefs.js)
-target_include_directories(identify-protein PRIVATE ${coot_src} ${coot_src}/src ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw)
-target_compile_options(identify-protein PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
-
-add_executable(find-waters ${coot_src}/ligand/find-waters.cc)
-target_link_options(find-waters PRIVATE -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 --pre-js coot_env.js)
-target_link_directories(find-waters PUBLIC ../mmdb2 ../ssm ../ccp4 ../lib ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4)
-target_link_libraries(find-waters mmdb2 ssm clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 coot gsl gslcblas nodefs.js)
-target_include_directories(find-waters PRIVATE ${coot_src} ${coot_src}/src ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw)
-target_compile_options(find-waters PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
-]]
-#[[
-add_executable(density_fit_analysis-test density_fit_analysis-test.cc)
-target_link_options(density_fit_analysis-test PRIVATE -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1)
-target_link_directories(density_fit_analysis-test PUBLIC ../mmdb2 ../ssm ../ccp4 ../lib ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4)
-target_link_libraries(density_fit_analysis-test mmdb2 ssm clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 coot gsl gslcblas nodefs.js)
-target_include_directories(density_fit_analysis-test PRIVATE ${coot_src} ${coot_src}/src ../checkout/boost_1_80_0 ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw ../checkout/glm-0.9.9.8)
-target_compile_options(density_fit_analysis-test PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
-]]
-#[[
-add_executable(find-ligand ${coot_src}/ligand/find-ligand.cc)
-target_link_options(find-ligand PRIVATE -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 --pre-js coot_env.js)
-target_link_directories(find-ligand PUBLIC ../mmdb2 ../ssm ../ccp4 ../lib ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4)
-target_link_libraries(find-ligand mmdb2 ssm clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 coot gsl gslcblas nodefs.js)
-target_include_directories(find-ligand PRIVATE ${coot_src} ${coot_src}/src ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw)
-target_compile_options(find-ligand PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
-
-#add_executable(res-tracer ${coot_src}/ligand/res-tracer.cc)
-#target_link_options(res-tracer PRIVATE -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 --pre-js coot_env.js)
-#target_link_directories(res-tracer PUBLIC ../mmdb2 ../ssm ../ccp4 ../lib ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4)
-#target_link_libraries(res-tracer mmdb2 ssm clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 coot gsl nodefs.js)
-#target_include_directories(res-tracer PRIVATE ${coot_src} ${coot_src}/src ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw)
-#target_compile_options(res-tracer PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
-
-add_executable(test-side-chain-densities ${coot_src}/ligand/test-side-chain-densities.cc)
-target_link_options(test-side-chain-densities PRIVATE -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 --pre-js coot_env.js)
-target_link_directories(test-side-chain-densities PUBLIC ../mmdb2 ../ssm ../ccp4 ../lib ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4)
-target_link_libraries(test-side-chain-densities mmdb2 ssm clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 coot gsl nodefs.js)
-target_include_directories(test-side-chain-densities PRIVATE ${coot_src} ${coot_src}/src ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw)
-target_compile_options(test-side-chain-densities PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
-
-add_executable(cootaneer-demo.cpp ${coot_src}/cootaneer/cootaneer-demo.cpp)
-target_link_options(cootaneer-demo.cpp PRIVATE -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 --pre-js coot_env.js)
-target_link_directories(cootaneer-demo.cpp PUBLIC ../mmdb2 ../ssm ../ccp4 ../lib ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4)
-target_link_libraries(cootaneer-demo.cpp mmdb2 ssm clipper-minimol clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 coot gsl nodefs.js)
-target_include_directories(cootaneer-demo.cpp PRIVATE ${coot_src} ${coot_src}/src ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw)
-target_compile_options(cootaneer-demo.cpp PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
-
-add_executable(density-score-by-residue-src ${coot_src}/src/density-score-by-residue-src.cc)
-target_link_options(density-score-by-residue-src PRIVATE -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 --pre-js coot_env.js)
-target_link_directories(density-score-by-residue-src PUBLIC ../mmdb2 ../ssm ../ccp4 ../lib ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4)
-target_link_libraries(density-score-by-residue-src mmdb2 ssm clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 coot gsl gslcblas nodefs.js)
-target_include_directories(density-score-by-residue-src PRIVATE ${coot_src} ${coot_src}/src ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw)
-target_compile_options(density-score-by-residue-src PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
-]]
 
 add_executable(test-molecules-container ${coot_src}/api/test_molecules_container.cc)
 target_link_options(test-molecules-container PRIVATE -sEXIT_RUNTIME=1 -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sUSE_PTHREADS=1 -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 --pre-js coot_env.js)
