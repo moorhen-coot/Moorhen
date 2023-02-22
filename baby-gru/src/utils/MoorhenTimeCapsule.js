@@ -119,6 +119,20 @@ MoorhenTimeCapsule.prototype.retrieveBackup = async function(key) {
      }
 }
 
+MoorhenTimeCapsule.prototype.retrieveLastBackup = async function() {
+    console.log(`Fetching last backup from local storage...`)
+    try {
+        const sortedKeys = await this.getSortedKeys()
+        if (sortedKeys && sortedKeys.length > 0) {
+            const lastBackupKey = sortedKeys[sortedKeys.length - 1].key
+            const backup = await this.retrieveBackup(lastBackupKey)
+            return backup    
+        }
+    } catch (err) {
+         console.log(err)
+    }
+}
+
 MoorhenTimeCapsule.prototype.removeBackup = async function(key) {
     console.log(`Removing backup ${key} from time capsule...`)
     try {
