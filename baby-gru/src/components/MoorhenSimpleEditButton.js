@@ -869,7 +869,7 @@ export const MoorhenRigidBodyFitButton = (props) => {
                         type="switch"
                         checked={randomJiggleMode}
                         onChange={() => { setRandomJiggleMode(!randomJiggleMode) }}
-                    label="Use random jiggle mode"/>
+                    label="Use random jiggle fit"/>
                 </FormGroup>
             </Row>
         </Container>
