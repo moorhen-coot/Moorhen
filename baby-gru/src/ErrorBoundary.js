@@ -1,6 +1,7 @@
 import React from 'react';
 import { Modal, Button } from "react-bootstrap"
 import { doDownload } from "./utils/MoorhenUtils"
+import { MoorhenTimeCapsule } from "./utils/MoorhenTimeCapsule"
 
 export class ErrorBoundary extends React.Component {
     constructor(props) {
@@ -20,8 +21,25 @@ export class ErrorBoundary extends React.Component {
         console.log(error, errorInfo)
     }
 
-    handleDownload() {
+    doAsyncDownload (data, targetName) {
+        return new Promise((resolve, reject) => {
+            doDownload(data, targetName)
+            resolve(targetName)
+        })
+    }
+    
+    handleLogsDownload() {
         doDownload([JSON.stringify(console.everything)], `session_logs.json`)
+    }
+
+    async handleBackupDownload() {
+        const timeCapsule = new MoorhenTimeCapsule()
+        const backup = await timeCapsule.retrieveLastBackup()
+        const sessionData = JSON.parse(backup)
+        const promises = sessionData.moleculesPdbData.map((pdbData, index) => {
+            return this.doAsyncDownload([pdbData], `${sessionData.moleculesNames[index]}.pdb`)
+        })
+        await Promise.all(promises)
     }
 
     render() {
@@ -43,7 +61,10 @@ export class ErrorBoundary extends React.Component {
                             An error has occurred in Moorhen. You will need to refresh the page to re-start the app.
                         </Modal.Body>
                         <Modal.Footer>
-                            <Button variant="secondary" onClick={this.handleDownload.bind(this)}>
+                            <Button variant="primary" onClick={this.handleBackupDownload.bind(this)}>
+                                Download last molecule backup
+                            </Button>                            
+                            <Button variant="secondary" onClick={this.handleLogsDownload.bind(this)}>
                                 Download logs
                             </Button>
                         </Modal.Footer>                        
