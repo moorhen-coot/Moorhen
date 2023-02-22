@@ -1721,52 +1721,54 @@ export const MoorhenCentreOnLigandMenuItem = (props) => {
     const [molTreeData, setMolTreeData] = useState([])
 
     useEffect(() => {
-        async function updateMoleculeAtoms(molecule) {
-            await molecule.updateAtoms()
+
+        async function updateLigands(molecule) {
+            const newTreeData = []
+            for (const molecule of props.molecules) {
+                if (molecule.gemmiStructure === null || molecule.atomsDirty) {
+                    await molecule.updateAtoms()
+                }
+                if (molecule.gemmiStructure === null || molecule.gemmiStructure.isDeleted()) {
+                    console.log('Cannot proceed, something went wrong...')
+                    return
+                }
+
+                let newMoleculeNode = { title: molecule.name, key: molecule.molNo, type: "molecule" }
+                const model = molecule.gemmiStructure.first_model()
+                const ligandCids = []
+    
+                try {
+                    const chains = model.chains
+                    const chainsSize = chains.size()
+                    for (let i = 0; i < chainsSize; i++) {
+                        const chain = chains.get(i)
+                        const ligands = chain.get_ligands()
+                        for (let j = 0; j < ligands.length(); j++) {
+                            const ligand = ligands.at(j)
+                            const ligandSeqId = ligand.seqid
+                            const ligandCid = `/${model.name}/${chain.name}/${ligandSeqId.num?.value}(${ligand.name})`
+                            ligandCids.push({ molecule: molecule, title: ligandCid, key: ligandCid, type: "ligand" })
+                            ligand.delete()
+                            ligandSeqId.delete()
+                        }
+                        chain.delete()
+                        ligands.delete()
+                    }
+                    chains.delete()
+                } finally {
+                    model.delete()
+                }
+    
+                if (ligandCids.length > 0) {
+                    newMoleculeNode.children = ligandCids
+                }
+                newTreeData.push(newMoleculeNode)
+            }
+            setMolTreeData(newTreeData)    
         }
 
-        const newTreeData = []
-        props.molecules.forEach(molecule => {
+        updateLigands()
 
-            if (molecule.gemmiStructure === null || molecule.atomsDirty) {
-                updateMoleculeAtoms(molecule)
-            }
-            if (molecule.gemmiStructure === null) {
-                return
-            }
-
-            let newMoleculeNode = { title: molecule.name, key: molecule.molNo, type: "molecule" }
-            const model = molecule.gemmiStructure.first_model()
-            const ligandCids = []
-
-            try {
-                const chains = model.chains
-                const chainsSize = chains.size()
-                for (let i = 0; i < chainsSize; i++) {
-                    const chain = chains.get(i)
-                    const ligands = chain.get_ligands()
-                    for (let j = 0; j < ligands.length(); j++) {
-                        const ligand = ligands.at(j)
-                        const ligandSeqId = ligand.seqid
-                        const ligandCid = `/${model.name}/${chain.name}/${ligandSeqId.num?.value}(${ligand.name})`
-                        ligandCids.push({ molecule: molecule, title: ligandCid, key: ligandCid, type: "ligand" })
-                        ligand.delete()
-                        ligandSeqId.delete()
-                    }
-                    chain.delete()
-                    ligands.delete()
-                }
-                chains.delete()
-            } finally {
-                model.delete()
-            }
-
-            if (ligandCids.length > 0) {
-                newMoleculeNode.children = ligandCids
-            }
-            newTreeData.push(newMoleculeNode)
-        })
-        setMolTreeData(newTreeData)
     }, [props.molecules])
 
     return <>
