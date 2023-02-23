@@ -9,28 +9,28 @@ jobs:
        - uses: actions/checkout@v1
        - name: Rename folder
          run: |
-           cd /home/runner/work/CCP4-Web-Assembly/
-           mv CCP4-Web-Assembly ccp4_wasm
+           cd /home/runner/work/Moorhen/
+           mv Moorhen ccp4_wasm
        - name: Install dependencies 
-         working-directory: /home/runner/work/CCP4-Web-Assembly/       
+         working-directory: /home/runner/work/Moorhen/       
          run: |    
            sudo apt-get install -y bzr nodejs npm                  
-           cd /home/runner/work/CCP4-Web-Assembly/
+           cd /home/runner/work/Moorhen/
            git clone https://github.com/emscripten-core/emsdk.git
-           cd /home/runner/work/CCP4-Web-Assembly/emsdk/
+           cd /home/runner/work/Moorhen/emsdk/
            ./emsdk install latest
            ./emsdk activate latest
        - name: Download sources and create bindings
-         working-directory: /home/runner/work/CCP4-Web-Assembly/ccp4_wasm
+         working-directory: /home/runner/work/Moorhen/ccp4_wasm
          run: |
-           cd /home/runner/work/CCP4-Web-Assembly/ccp4_wasm         
-           source /home/runner/work/CCP4-Web-Assembly/emsdk/emsdk_env.sh
+           cd /home/runner/work/Moorhen/ccp4_wasm         
+           source /home/runner/work/Moorhen/emsdk/emsdk_env.sh
            ./get_sources
            ./initial_build.sh
        - name: Run tests
-         working-directory: /home/runner/work/CCP4-Web-Assembly/ccp4_wasm       
+         working-directory: /home/runner/work/Moorhen/ccp4_wasm       
          run: |             
-           cd /home/runner/work/CCP4-Web-Assembly/ccp4_wasm/tests
-           source /home/runner/work/CCP4-Web-Assembly/emsdk/emsdk_env.sh
+           cd /home/runner/work/Moorhen/ccp4_wasm/tests
+           source /home/runner/work/Moorhen/emsdk/emsdk_env.sh
            npm install
            ./run_tests.sh
