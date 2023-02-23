@@ -6,13 +6,6 @@ import { MoorhenMoleculeSelect } from "./MoorhenMoleculeSelect";
 import { MoorhenCidInputForm } from "./MoorhenCidInputForm";
 import { cidToSpec, getTooltipShortcutLabel, residueCodesThreeToOne } from "../utils/MoorhenUtils";
 
-const refinementFormatArgs = (molecule, chosenAtom, pp) => {
-    return [
-        molecule.molNo,
-        `//${chosenAtom.chain_id}/${chosenAtom.res_no}`,
-        pp.refine.mode]
-}
-
 const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
     const target = useRef(null)
     const [prompt, setPrompt] = useState(null)
@@ -46,7 +39,7 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
                     await props.commandCentre.current.cootCommand({
                         returnType: "status",
                         command: 'refine_residues_using_atom_cid',
-                        commandArgs: refinementFormatArgs(molecule, chosenAtom, { refine: { mode: 'TRIPLE' } }),
+                        commandArgs: [ molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`, 'TRIPLE'],
                         changesMolecules: [molecule.molNo]
                     }, true)
                 }
@@ -249,12 +242,11 @@ export const MoorhenSideChain180Button = (props) => {
 }
 
 export const MoorhenRefineResiduesUsingAtomCidButton = (props) => {
+    const modeSelectRef = useRef(null)
+    const selectedResidueRef = useRef(null)
+    const awaitMoreAtomClicksRef = useRef(false)
+    const [panelParameters, setPanelParameters] = useState('TRIPLE')
     const [toolTip, setToolTip] = useState("Refine Residues")
-    const [panelParameters, setPanelParameters] = useState({
-        refine: { mode: 'TRIPLE' },
-        delete: { mode: 'ATOM' },
-        mutate: { toType: "ALA" }
-    })
 
     useEffect(() => {
         if (props.shortCuts) {
@@ -263,18 +255,63 @@ export const MoorhenRefineResiduesUsingAtomCidButton = (props) => {
         }
     }, [props.shortCuts])
 
-    const MoorhenRefinementPanel = (props) => {
-        const refinementModes = ['SINGLE', 'TRIPLE', 'QUINTUPLE', 'HEPTUPLE', 'SPHERE', 'BIG_SPHERE', 'CHAIN', 'ALL']
+    useEffect(() => {
+        if (props.selectedButtonIndex === props.buttonIndex && !awaitMoreAtomClicksRef.current && modeSelectRef.current?.value === 'RESIDUE RANGE' && !selectedResidueRef.current) {
+            awaitMoreAtomClicksRef.current = true
+        } else if (props.selectedButtonIndex !== props.buttonIndex && (selectedResidueRef.current || awaitMoreAtomClicksRef.current)) {
+            awaitMoreAtomClicksRef.current = false
+            const { molecule, chosenAtom } = selectedResidueRef.current
+            molecule.clearBuffersOfStyle('selection', props.glRef)
+            selectedResidueRef.current = null
+        }
+    }, [props.selectedButtonIndex])
+
+    const doRefinement = async (molecule, chosenAtom, pp) => {
+        if (modeSelectRef.current.value === 'RESIDUE RANGE' && !selectedResidueRef.current) {
+            selectedResidueRef.current = { molecule, chosenAtom }
+            awaitMoreAtomClicksRef.current = false
+            molecule.drawSelection(props.glRef, chosenAtom.cid)
+            return
+        } else if (modeSelectRef.current.value === 'RESIDUE RANGE') {
+            const [start, stop] = [parseInt(selectedResidueRef.current.chosenAtom.res_no), parseInt(chosenAtom.res_no)].sort((a, b) => {return a - b})
+            molecule.clearBuffersOfStyle('selection', props.glRef)
+            await props.commandCentre.current.cootCommand({
+                returnType: 'status',
+                command: 'refine_residue_range',
+                commandArgs: [molecule.molNo, chosenAtom.chain_id, start, stop],
+                changesMolecules: [molecule.molNo]
+            }, true)
+        } else {
+            await props.commandCentre.current.cootCommand({
+                returnType: 'status',
+                command: 'refine_residues_using_atom_cid',
+                commandArgs: [molecule.molNo, chosenAtom.cid, pp],
+                changesMolecules: [molecule.molNo]
+            }, true)
+        }
+        selectedResidueRef.current = null
+    }
+
+    const MoorhenRefinementPanel = forwardRef((props, ref) => {
+        const refinementModes = ['SINGLE', 'TRIPLE', 'QUINTUPLE', 'HEPTUPLE', 'RESIDUE RANGE', 'SPHERE', 'BIG_SPHERE', 'CHAIN', 'ALL']
         return <Container>
             <Row>Please click an atom for centre of refinement</Row>
             <Row>
                 <FormGroup>
                     <FormLabel>Refinement mode</FormLabel>
-                    <FormSelect defaultValue={props.panelParameters.refine.mode}
+                    <FormSelect ref={ref} defaultValue={props.panelParameters}
                         onChange={(e) => {
-                            const newParameters = { ...props.panelParameters }
-                            newParameters.refine.mode = e.target.value
-                            props.setPanelParameters(newParameters)
+                            if(e.target.value === 'RESIDUE RANGE'){
+                                awaitMoreAtomClicksRef.current = true
+                            } else {
+                                awaitMoreAtomClicksRef.current = false
+                                if (selectedResidueRef.current) {
+                                    const { molecule, chosenAtom } = selectedResidueRef.current
+                                    molecule.clearBuffersOfStyle('selection', props.glRef)    
+                                    selectedResidueRef.current = null
+                                }
+                            }
+                            props.setPanelParameters(e.target.value)
                         }}>
                         {refinementModes.map(optionName => {
                             return <option key={optionName} value={optionName}>{optionName}</option>
@@ -283,7 +320,8 @@ export const MoorhenRefineResiduesUsingAtomCidButton = (props) => {
                 </FormGroup>
             </Row>
         </Container>
-    }
+    })
+
     return <MoorhenSimpleEditButton {...props}
         id='refine-residues-edit-button'
         toolTip={toolTip}
@@ -291,14 +329,18 @@ export const MoorhenRefineResiduesUsingAtomCidButton = (props) => {
         selectedButtonIndex={props.selectedButtonIndex}
         setSelectedButtonIndex={props.setSelectedButtonIndex}
         needsMapData={true}
-        cootCommand="refine_residues_using_atom_cid"
+        nonCootCommand={doRefinement}
         panelParameters={panelParameters}
+        awaitMoreAtomClicksRef={awaitMoreAtomClicksRef}
+        refineAfterMod={false}
+        formatArgs={() => {}}
         prompt={<MoorhenRefinementPanel
+            ref={modeSelectRef}
+            glRef={props.glRef}
             setPanelParameters={setPanelParameters}
             panelParameters={panelParameters} />}
         icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/refine-1.svg`} alt='Refine Residues' />}
-        formatArgs={(m, c, p) => refinementFormatArgs(m, c, p)}
-        refineAfterMod={false} />
+    />
 }
 
 export const MoorhenAddSideChainButton = (props) => {
@@ -336,11 +378,7 @@ export const MoorhenAddAltConfButton = (props) => {
 
 export const MoorhenDeleteUsingCidButton = (props) => {
     const [toolTip, setToolTip] = useState("Delete Item")
-    const [panelParameters, setPanelParameters] = useState({
-        refine: { mode: 'TRIPLE' },
-        delete: { mode: 'ATOM' },
-        mutate: { toType: "ALA" }
-    })
+    const [panelParameters, setPanelParameters] = useState('ATOM' )
 
     useEffect(() => {
         if (props.shortCuts) {
@@ -364,11 +402,9 @@ export const MoorhenDeleteUsingCidButton = (props) => {
             <Row>
                 <FormGroup>
                     <FormLabel>Delete mode</FormLabel>
-                    <FormSelect defaultValue={props.panelParameters.delete.mode}
+                    <FormSelect defaultValue={props.panelParameters}
                         onChange={(e) => {
-                            const newParameters = { ...props.panelParameters }
-                            newParameters.delete.mode = e.target.value
-                            props.setPanelParameters(newParameters)
+                            props.setPanelParameters(e.target.value)
                         }}>
                         {deleteModes.map(optionName => {
                             return <option key={optionName} value={optionName}>{optionName}</option>
@@ -381,17 +417,17 @@ export const MoorhenDeleteUsingCidButton = (props) => {
 
     const deleteFormatArgs = (molecule, chosenAtom, pp) => {
         let commandArgs
-        if (pp.delete.mode === 'CHAIN') {
+        if (pp === 'CHAIN') {
             commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/*/*:*`, 'LITERAL']
-        } else if (pp.delete.mode === 'RESIDUE') {
+        } else if (pp === 'RESIDUE') {
             commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/*${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`, 'LITERAL']
-        } else if (pp.delete.mode === 'ATOM') {
+        } else if (pp === 'ATOM') {
             commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`, 'LITERAL']
-        } else if (pp.delete.mode === 'RESIDUE SIDE-CHAIN') {
+        } else if (pp === 'RESIDUE SIDE-CHAIN') {
             commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/!N,CA,CB,C,O,HA,H`, 'LITERAL']
-        } else if (pp.delete.mode === 'RESIDUE HYDROGENS') {
+        } else if (pp === 'RESIDUE HYDROGENS') {
             commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/[H,D]`, 'LITERAL']
-        } else if (pp.delete.mode === 'MOLECULE HYDROGENS') {
+        } else if (pp === 'MOLECULE HYDROGENS') {
             commandArgs = [molecule.molNo, `/1/*/*/[H,D]`, 'LITERAL']
         } else {
             commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/*/[H,D]`, 'LITERAL']
@@ -412,7 +448,7 @@ export const MoorhenDeleteUsingCidButton = (props) => {
         prompt={<MoorhenDeletePanel
             setPanelParameters={setPanelParameters}
             panelParameters={panelParameters} />}
-        icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/delete.svg`} />}
+        icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/delete.svg`} alt="delete-item"/>}
         formatArgs={(m, c, p) => deleteFormatArgs(m, c, p)}
         refineAfterMod={false} />
 }
@@ -437,11 +473,7 @@ export const MoorhenMutateButton = (props) => {
         }, true)
     }, [props.activeMap, props.commandCentre])
 
-    const [panelParameters, setPanelParameters] = useState({
-        refine: { mode: 'TRIPLE' },
-        delete: { mode: 'ATOM' },
-        mutate: { toType: "ALA" }
-    })
+    const [panelParameters, setPanelParameters] = useState("ALA")
 
     const MoorhenMutatePanel = (props) => {
         const toTypes = ['ALA', 'CYS', 'ASP', 'GLU', 'PHE', 'GLY', 'HIS', 'ILE',
@@ -451,11 +483,9 @@ export const MoorhenMutateButton = (props) => {
             <Row>
                 <FormGroup>
                     <FormLabel>To residue of type</FormLabel>
-                    <FormSelect defaultValue={props.panelParameters.mutate.toType}
+                    <FormSelect defaultValue={props.panelParameters}
                         onChange={(e) => {
-                            const newParameters = { ...props.panelParameters }
-                            newParameters.mutate.toType = e.target.value
-                            props.setPanelParameters(newParameters)
+                            props.setPanelParameters(e.target.value)
                         }}>
                         {toTypes.map(optionName => {
                             return <option key={optionName} value={optionName}>{`${optionName} (${residueCodesThreeToOne[optionName]})`}</option>
@@ -467,10 +497,7 @@ export const MoorhenMutateButton = (props) => {
     }
 
     const mutateFormatArgs = (molecule, chosenAtom, pp) => {
-        return [
-            molecule.molNo,
-            `//${chosenAtom.chain_id}/${chosenAtom.res_no}`,
-            pp.mutate.toType]
+        return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`, pp]
     }
 
     return <MoorhenSimpleEditButton {...props}
@@ -904,12 +931,6 @@ export const MoorhenRigidBodyFitButton = (props) => {
 export const MoorhenAddSimpleButton = (props) => {
     const selectRef = useRef()
 
-    const [panelParameters, setPanelParameters] = useState({
-        refine: { mode: 'TRIPLE' },
-        delete: { mode: 'ATOM' },
-        mutate: { toType: "ALA" }
-    })
-
     const MoorhenAddSimplePanel = (props) => {
         const molTypes = ['HOH', 'SO4', 'PO4', 'GOL', 'CIT', 'EDO']
         return <Container>
@@ -940,14 +961,10 @@ export const MoorhenAddSimpleButton = (props) => {
         setSelectedButtonIndex={props.setSelectedButtonIndex}
         needsMapData={false}
         needsAtomData={true}
-        panelParameters={panelParameters}
         prompt={<MoorhenAddSimplePanel
             {...props}
-            setPanelParameters={setPanelParameters}
-            panelParameters={panelParameters}
             typeSelected={typeSelected}
             selectRef={selectRef}
-            awaitAtomClick={false}
         />}
         icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/atom-at-pointer.svg`} alt='add...' />}
     />
