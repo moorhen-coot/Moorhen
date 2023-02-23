@@ -242,8 +242,11 @@ export const MoorhenSideChain180Button = (props) => {
 }
 
 export const MoorhenRefineResiduesUsingAtomCidButton = (props) => {
-    const [toolTip, setToolTip] = useState("Refine Residues")
+    const modeSelectRef = useRef(null)
+    const selectedResidueRef = useRef(null)
+    const awaitMoreAtomClicksRef = useRef(false)
     const [panelParameters, setPanelParameters] = useState('TRIPLE')
+    const [toolTip, setToolTip] = useState("Refine Residues")
 
     useEffect(() => {
         if (props.shortCuts) {
@@ -252,15 +255,62 @@ export const MoorhenRefineResiduesUsingAtomCidButton = (props) => {
         }
     }, [props.shortCuts])
 
-    const MoorhenRefinementPanel = (props) => {
-        const refinementModes = ['SINGLE', 'TRIPLE', 'QUINTUPLE', 'HEPTUPLE', 'SPHERE', 'BIG_SPHERE', 'CHAIN', 'ALL']
+    useEffect(() => {
+        if (props.selectedButtonIndex === props.buttonIndex && !awaitMoreAtomClicksRef.current && modeSelectRef.current?.value === 'RESIDUE RANGE' && !selectedResidueRef.current) {
+            awaitMoreAtomClicksRef.current = true
+        } else if (props.selectedButtonIndex !== props.buttonIndex && (selectedResidueRef.current || awaitMoreAtomClicksRef.current)) {
+            awaitMoreAtomClicksRef.current = false
+            const { molecule, chosenAtom } = selectedResidueRef.current
+            molecule.clearBuffersOfStyle('selection', props.glRef)
+            selectedResidueRef.current = null
+        }
+    }, [props.selectedButtonIndex])
+
+    const doRefinement = async (molecule, chosenAtom, pp) => {
+        if (modeSelectRef.current.value === 'RESIDUE RANGE' && !selectedResidueRef.current) {
+            selectedResidueRef.current = { molecule, chosenAtom }
+            awaitMoreAtomClicksRef.current = false
+            molecule.drawSelection(props.glRef, chosenAtom.cid)
+            return
+        } else if (modeSelectRef.current.value === 'RESIDUE RANGE') {
+            const [start, stop] = [parseInt(selectedResidueRef.current.chosenAtom.res_no), parseInt(chosenAtom.res_no)].sort((a, b) => {return a - b})
+            molecule.clearBuffersOfStyle('selection', props.glRef)
+            await props.commandCentre.current.cootCommand({
+                returnType: 'status',
+                command: 'refine_residue_range',
+                commandArgs: [molecule.molNo, chosenAtom.chain_id, start, stop],
+                changesMolecules: [molecule.molNo]
+            }, true)
+        } else {
+            await props.commandCentre.current.cootCommand({
+                returnType: 'status',
+                command: 'refine_residues_using_atom_cid',
+                commandArgs: [molecule.molNo, chosenAtom.cid, pp],
+                changesMolecules: [molecule.molNo]
+            }, true)
+        }
+        selectedResidueRef.current = null
+    }
+
+    const MoorhenRefinementPanel = forwardRef((props, ref) => {
+        const refinementModes = ['SINGLE', 'TRIPLE', 'QUINTUPLE', 'HEPTUPLE', 'RESIDUE RANGE', 'SPHERE', 'BIG_SPHERE', 'CHAIN', 'ALL']
         return <Container>
             <Row>Please click an atom for centre of refinement</Row>
             <Row>
                 <FormGroup>
                     <FormLabel>Refinement mode</FormLabel>
-                    <FormSelect defaultValue={props.panelParameters}
+                    <FormSelect ref={ref} defaultValue={props.panelParameters}
                         onChange={(e) => {
+                            if(e.target.value === 'RESIDUE RANGE'){
+                                awaitMoreAtomClicksRef.current = true
+                            } else {
+                                awaitMoreAtomClicksRef.current = false
+                                if (selectedResidueRef.current) {
+                                    const { molecule, chosenAtom } = selectedResidueRef.current
+                                    molecule.clearBuffersOfStyle('selection', props.glRef)    
+                                    selectedResidueRef.current = null
+                                }
+                            }
                             props.setPanelParameters(e.target.value)
                         }}>
                         {refinementModes.map(optionName => {
@@ -270,7 +320,8 @@ export const MoorhenRefineResiduesUsingAtomCidButton = (props) => {
                 </FormGroup>
             </Row>
         </Container>
-    }
+    })
+
     return <MoorhenSimpleEditButton {...props}
         id='refine-residues-edit-button'
         toolTip={toolTip}
@@ -278,14 +329,18 @@ export const MoorhenRefineResiduesUsingAtomCidButton = (props) => {
         selectedButtonIndex={props.selectedButtonIndex}
         setSelectedButtonIndex={props.setSelectedButtonIndex}
         needsMapData={true}
-        cootCommand="refine_residues_using_atom_cid"
+        nonCootCommand={doRefinement}
         panelParameters={panelParameters}
+        awaitMoreAtomClicksRef={awaitMoreAtomClicksRef}
+        refineAfterMod={false}
+        formatArgs={() => {}}
         prompt={<MoorhenRefinementPanel
+            ref={modeSelectRef}
+            glRef={props.glRef}
             setPanelParameters={setPanelParameters}
             panelParameters={panelParameters} />}
         icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/refine-1.svg`} alt='Refine Residues' />}
-        formatArgs={(molecule, chosenAtom, pp) => [ molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`, pp]}
-        refineAfterMod={false} />
+    />
 }
 
 export const MoorhenAddSideChainButton = (props) => {
