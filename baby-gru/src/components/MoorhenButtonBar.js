@@ -4,9 +4,13 @@ import { MoorhenAutofitRotamerButton, MoorhenFlipPeptideButton, MoorhenSideChain
         MoorhenEigenFlipLigandButton, MoorhenJedFlipFalseButton, MoorhenJedFlipTrueButton, MoorhenConvertCisTransButton, MoorhenAddSimpleButton,
         MoorhenRefineResiduesUsingAtomCidButton, MoorhenDeleteUsingCidButton, MoorhenMutateButton, MoorhenRotateTranslateZoneButton,
         MoorhenAddAltConfButton, MoorhenRigidBodyFitButton } from "./MoorhenSimpleEditButton"
+import { IconButton, Drawer, Divider } from "@mui/material";
+import { ArrowDownwardOutlined, ArrowUpwardOutlined } from "@mui/icons-material";
 
 export const MoorhenButtonBar = (props) => {
     const [selectedButtonIndex, setSelectedButtonIndex] = useState(null);
+    const [showDrawer, setShowDrawer] = useState(false);
+    const [opacity, setOpacity] = useState(0.5);
 
     const editButtons = [
         (<MoorhenAutofitRotamerButton {...props} key='auto-fit-rotamer' selectedButtonIndex={selectedButtonIndex}
@@ -82,16 +86,45 @@ export const MoorhenButtonBar = (props) => {
 
     const carouselItems = getCarouselItems()
 
-    return <div
-        style={{
-            overflow: "auto",
-            backgroundColor: `rgba(
-                ${255 * props.backgroundColor[0]},
-                ${255 * props.backgroundColor[1]},
-                ${255 * props.backgroundColor[2]}, 
-                ${props.backgroundColor[3]})`,
-        }}>
-            <Carousel 
+    return  <> 
+
+    <Drawer anchor='bottom' open={true} variant='persistent'
+                onMouseOver={() => setOpacity(1)}
+                onMouseOut={() => setOpacity(0.5)}
+                sx={{
+                opacity: showDrawer ? '0.0' : opacity,
+                width: '100%',
+                flexShrink: 0,
+                '& .MuiDrawer-paper': {
+                    width: '100%',
+                    boxSizing: 'border-box',
+                },
+            }}>
+            <IconButton onClick={() => {setShowDrawer(true)}} sx={{opacity: showDrawer ? '0.0' : opacity}}>
+                <ArrowUpwardOutlined />
+            </IconButton>
+    </Drawer>
+    <Drawer
+        sx={{
+            opacity: opacity,
+            width: '100%',
+            flexShrink: 0,
+            '& .MuiDrawer-paper': {
+                width: '100%',
+                boxSizing: 'border-box',
+            },
+        }}
+        variant="persistent"
+        anchor="bottom"
+        open={showDrawer}
+        onMouseOver={() => setOpacity(1)}
+        onMouseOut={() => setOpacity(0.5)}
+    >
+        <IconButton onClick={() => {setShowDrawer(false)}}>
+            <ArrowDownwardOutlined />
+        </IconButton>
+        <Divider/>
+        <Carousel 
                 key={carouselItems.length}
                 variant={props.darkMode ? "light" : "dark"} 
                 interval={null} 
@@ -109,5 +142,7 @@ export const MoorhenButtonBar = (props) => {
                         )
                     })}
             </Carousel>   
-        </div>
+    </Drawer>   
+
+    </>
 }
