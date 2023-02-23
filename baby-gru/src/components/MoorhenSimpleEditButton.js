@@ -6,10 +6,6 @@ import { MoorhenMoleculeSelect } from "./MoorhenMoleculeSelect";
 import { MoorhenCidInputForm } from "./MoorhenCidInputForm";
 import { cidToSpec, getTooltipShortcutLabel, residueCodesThreeToOne } from "../utils/MoorhenUtils";
 
-const refinementFormatArgs = (molecule, chosenAtom, pp) => {
-    return [ molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`, pp]
-}
-
 const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
     const target = useRef(null)
     const [prompt, setPrompt] = useState(null)
@@ -43,7 +39,7 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
                     await props.commandCentre.current.cootCommand({
                         returnType: "status",
                         command: 'refine_residues_using_atom_cid',
-                        commandArgs: refinementFormatArgs(molecule, chosenAtom, 'TRIPLE'),
+                        commandArgs: [ molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`, 'TRIPLE'],
                         changesMolecules: [molecule.molNo]
                     }, true)
                 }
@@ -288,7 +284,7 @@ export const MoorhenRefineResiduesUsingAtomCidButton = (props) => {
             setPanelParameters={setPanelParameters}
             panelParameters={panelParameters} />}
         icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/refine-1.svg`} alt='Refine Residues' />}
-        formatArgs={(m, c, p) => refinementFormatArgs(m, c, p)}
+        formatArgs={(molecule, chosenAtom, pp) => [ molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`, pp]}
         refineAfterMod={false} />
 }
 
