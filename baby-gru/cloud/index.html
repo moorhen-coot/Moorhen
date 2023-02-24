@@ -46,10 +46,15 @@ main UI thread (as opposed to the CootWorker)-->
     }
   </script>
   <script src="./baby-gru/wasm/web_example.js"></script>
+  <script src="./moorhen.js" charset="utf-8"></script>
+  
+  <title>Moorhen</title>
+</head>
 
-<!--Define the div ID where the app has to be rendered and uri the input PDB-->
-  <script>
-      window.moorhenInput = {
+<body>
+  <!--Define the div ID where the app has to be rendered and uri the input PDB-->
+  <script type="text/javascript">
+    moorhenInput = {
         rootId: "root",
         urlPrefix: ".",
         exportToCloudCallback: (molName, molData) => {console.log({name: molName, data: molData})},
@@ -64,13 +69,13 @@ main UI thread (as opposed to the CootWorker)-->
             {F: "DELFWT", PHI: "PHDELWT", isDifference: true, useWeight: false, calcStructFact: false}
           ]}
         ]
-      }
+    }
+
+    let moorhenWrapper = new moorhen.MoorhenWrapper(moorhenInput.urlPrefix)
+    moorhenWrapper.renderMoorhen(moorhenInput.rootId, moorhenInput.exportToCloudCallback)
+    moorhenWrapper.waitForInitialisation().then(_ => moorhenWrapper.loadInputFiles(moorhenInput.inputFiles))
   </script>
 
-  <title>Moorhen</title>
-</head>
-
-<body>
   <noscript>You need to enable JavaScript to run this app.</noscript>
   <div id="root"></div>
   <!--

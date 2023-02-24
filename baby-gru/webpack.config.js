@@ -44,9 +44,12 @@ module.exports = {
   cache: false,
   output: {
     clean: true,
-    filename: '[name].js',
+    filename: 'moorhen.js',
     path: paths.dist,
-    publicPath: './'
+    publicPath: './',
+    library: 'moorhen',
+    libraryTarget: 'umd',
+    umdNamedDefine: true,
   },
     module:{
         rules:[
