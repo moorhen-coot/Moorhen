@@ -1,6 +1,5 @@
 import { useRef, useState, useEffect, useReducer, useCallback, useContext } from 'react';
-import { Container, Accordion, Col, Row, Spinner, Form, Toast, ToastContainer, Stack } from 'react-bootstrap';
-import { MoorhenDisplayObjects } from './MoorhenDisplayObjects';
+import { Container, Col, Row, Spinner, Form, Toast, ToastContainer, Stack } from 'react-bootstrap';
 import { MoorhenWebMG } from './MoorhenWebMG';
 import { MoorhenCommandCentre, convertRemToPx, convertViewtoPx } from '../utils/MoorhenUtils';
 import { MoorhenTimeCapsule } from '../utils/MoorhenTimeCapsule';
@@ -9,6 +8,7 @@ import { MoorhenFileMenu } from './MoorhenFileMenu';
 import { MoorhenCloudMenu } from './MoorhenCloudMenu';
 import { MoorhenPreferencesMenu } from './MoorhenPreferencesMenu';
 import { ChevronLeftOutlined, ChevronRightOutlined, SaveOutlined } from '@mui/icons-material';
+import { Backdrop, IconButton, Drawer, Divider, List} from "@mui/material";
 import { MoorhenHistoryMenu, historyReducer, initialHistoryState } from './MoorhenHistoryMenu';
 import { MoorhenViewMenu } from './MoorhenViewMenu';
 import { MoorhenLigandMenu } from './MoorhenLigandMenu';
@@ -17,18 +17,8 @@ import { babyGruKeyPress } from './MoorhenKeyboardAccelerators';
 import { MoorhenEditMenu } from './MoorhenEditMenu';
 import { MoorhenSideBar } from './MoorhenSideBar';
 import { MoorhenHelpMenu } from './MoorhenHelpMenu'
-import { Backdrop, IconButton, Drawer, Divider, List } from "@mui/material";
-import { styled } from '@mui/material/styles';
+import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
 import './MoorhenContainer.css'
-
-const DrawerHeader = styled('div')(({ theme }) => ({
-    display: 'flex',
-    alignItems: 'center',
-    padding: theme.spacing(0, 1),
-    // necessary for content to be below app bar
-    ...theme.mixins.toolbar,
-    justifyContent: 'flex-end',
-  }));
 
 const initialMoleculesState = []
 
@@ -54,9 +44,9 @@ export const MoorhenContainer = (props) => {
     const timeCapsuleRef = useRef(null)
     const commandCentre = useRef(null)
     const moleculesRef = useRef(null)
-    const navBarRef = useRef()
-    const consoleDivRef = useRef()
-    const [showSideBar, setShowSideBar] = useState(false)
+    const consoleDivRef = useRef(null)
+    const lastHoveredAtom = useRef(null)
+    const preferences = useContext(PreferencesContext);
     const [activeMap, setActiveMap] = useState(null)
     const [activeMolecule, setActiveMolecule] = useState(null)
     const [hoveredAtom, setHoveredAtom] = useState({ molecule: null, cid: null })
@@ -73,9 +63,7 @@ export const MoorhenContainer = (props) => {
     const [appTitle, setAppTitle] = useState('Moorhen')
     const [cootInitialized, setCootInitialized] = useState(false)
     const [theme, setTheme] = useState("flatly")
-    const lastHoveredAtom = useRef(null)
     const [showToast, setShowToast] = useState(false)
-    const preferences = useContext(PreferencesContext);
     const [toastContent, setToastContent] = useState("")
     const [showDrawer, setShowDrawer] = useState(false)
     const [drawerOpacity, setDrawerOpacity] = useState(0.7)
@@ -287,10 +275,10 @@ export const MoorhenContainer = (props) => {
 
     const collectedProps = {
         molecules, changeMolecules, appTitle, setAppTitle, maps, changeMaps, glRef, activeMolecule, setActiveMolecule,
-        activeMap, setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor,
-        navBarRef, currentDropdownId, setCurrentDropdownId, hoveredAtom, setHoveredAtom, toastContent, setToastContent, 
-        showToast, setShowToast, windowWidth, windowHeight, showSideBar, innerWindowMarginWidth,
-        urlPrefix: props.urlPrefix, showColourRulesToast, setShowColourRulesToast, timeCapsuleRef, ...preferences
+        activeMap, setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor, toastContent, 
+        setToastContent, currentDropdownId, setCurrentDropdownId, hoveredAtom, setHoveredAtom, showToast, setShowToast,
+        windowWidth, windowHeight, innerWindowMarginWidth,showDrawer, setShowDrawer, showColourRulesToast, timeCapsuleRef,
+        setShowColourRulesToast, urlPrefix: props.urlPrefix, ...preferences
     }
 
     return <> <div>
@@ -309,56 +297,65 @@ export const MoorhenContainer = (props) => {
                 flexShrink: 0,
                 '& .MuiDrawer-paper': {
                     borderWidth: '0',
-                    width: '25rem',
+                    width: '30rem',
                     boxSizing: 'border-box',
                 },
             }}>
-            <Stack gap={2} direction='horizontal'>
+            <Stack  gap={2} direction='horizontal' 
+                    style={{backgroundColor: `rgba(
+                        ${255 * backgroundColor[0]},
+                        ${255 * backgroundColor[1]},
+                        ${255 * backgroundColor[2]}, 
+                        ${backgroundColor[3]})`}}
+                >
                 <IconButton onClick={() => {setShowDrawer(true)}}>
                     <img src={`${props.urlPrefix}/baby-gru/pixmaps/MoorhenLogo.png`} alt={appTitle} style={{height: '2.5rem'}}/>
-                    <ChevronRightOutlined />
+                    <ChevronRightOutlined style={{color: isDarkBackground(...backgroundColor) ? 'white' : 'black'}}/>
                 </IconButton>
-                {<Form.Control style={{ maxWidth: "25rem" }} type="text" readOnly={true} value={`${hoveredAtom.molecule ? hoveredAtom.molecule.name + ':' + hoveredAtom.cid : ''}`} />}
+                {<Form.Control style={{maxWidth: "20rem" }} type="text" readOnly={true} value={`${hoveredAtom.molecule ? hoveredAtom.molecule.name + ':' + hoveredAtom.cid : ''}`} />}
+                {<div style={{width:'5rem'}}> { busy && <Spinner animation="border" style={{ marginRight: '0.5rem' }} />} </div>}
+                {<div style={{width:'5rem', display:'flex', alignItems:'center', alignContent:'center'}}> { timeCapsuleRef.current?.busy && <SaveOutlined/>} </div>}
             </Stack>
         </Drawer>
-        
-        <Drawer
-            onMouseOver={() => setDrawerOpacity(1)}
-            onMouseOut={() => setDrawerOpacity(0.7)}
-            sx={{
-                opacity: drawerOpacity,
-                width: '25rem',
-                flexShrink: 0,
-                '& .MuiDrawer-paper': {
+            <Drawer
+                onClose={(ev, reason) => {setShowDrawer(false)}}
+                onMouseOver={() => setDrawerOpacity(1)}
+                onMouseOut={() => setDrawerOpacity(0.7)}
+                sx={{
+                    opacity: drawerOpacity,
                     width: '25rem',
-                    boxSizing: 'border-box',
-                },
-            }}
-            variant="persistent"
-            anchor="left"
-            open={showDrawer}
-        >
-            <Stack gap={2} direction='horizontal'>
-                {<Form.Control style={{ maxWidth: "25rem" }} type="text" readOnly={true} value={`${hoveredAtom.molecule ? hoveredAtom.molecule.name + ':' + hoveredAtom.cid : ''}`} />}
-                <IconButton onClick={() => {setShowDrawer(false)}}>
-                    <img src={`${props.urlPrefix}/baby-gru/pixmaps/MoorhenLogo.png`} alt={appTitle} style={{height: '2.5rem'}}/>
-                    <ChevronLeftOutlined />
-                </IconButton>
-            </Stack>
-            <Divider/>
-            <List>
-                    <MoorhenFileMenu dropdownId="File" {...collectedProps} />
-                    <MoorhenEditMenu dropdownId="Edit" {...collectedProps} />
-                    <MoorhenLigandMenu dropdownId="Ligand" {...collectedProps} />
-                    <MoorhenViewMenu dropdownId="View" {...collectedProps} />
-                    <MoorhenHistoryMenu dropdownId="History" {...collectedProps} />
-                    <MoorhenPreferencesMenu dropdownId="Preferences" {...collectedProps} />
-                    <MoorhenHelpMenu dropdownId="Help" {...collectedProps}/>
-                    {props.exportToCloudCallback && <MoorhenCloudMenu dropdownId="CloudExport" exportToCloudCallback={props.exportToCloudCallback} {...collectedProps}/>}
-                    {props.extraMenus && props.extraMenus.map(menu=>menu)}
+                    flexShrink: 0,
+                    '& .MuiDrawer-paper': {
+                        width: '25rem',
+                        boxSizing: 'border-box',
+                        backgroundColor: isDarkBackground(...backgroundColor) ? 'grey' : 'white'
+                    },
+                }}
+                variant="persistent"
+                anchor="left"
+                open={showDrawer}
+            >
+            <Stack gap={2} direction='horizontal' style={{backgroundColor: isDarkBackground(...backgroundColor) ? 'grey' : 'white'}}>
+                    {<Form.Control style={{ maxWidth: "25rem" }} type="text" readOnly={true} value={`${hoveredAtom.molecule ? hoveredAtom.molecule.name + ':' + hoveredAtom.cid : ''}`} />}
+                    <IconButton onClick={() => {setShowDrawer(false)}}>
+                        <img src={`${props.urlPrefix}/baby-gru/pixmaps/MoorhenLogo.png`} alt={appTitle} style={{height: '2.5rem'}}/>
+                        <ChevronLeftOutlined style={{color: 'black'}}/>
+                    </IconButton>
+                </Stack>
+                <Divider/>
+                <List>
+                        <MoorhenFileMenu dropdownId="File" {...collectedProps} />
+                        <MoorhenEditMenu dropdownId="Edit" {...collectedProps} />
+                        <MoorhenLigandMenu dropdownId="Ligand" {...collectedProps} />
+                        <MoorhenViewMenu dropdownId="View" {...collectedProps} />
+                        <MoorhenHistoryMenu dropdownId="History" {...collectedProps} />
+                        <MoorhenPreferencesMenu dropdownId="Preferences" {...collectedProps} />
+                        <MoorhenHelpMenu dropdownId="Help" {...collectedProps}/>
+                        {props.exportToCloudCallback && <MoorhenCloudMenu dropdownId="CloudExport" exportToCloudCallback={props.exportToCloudCallback} {...collectedProps}/>}
+                        {props.extraMenus && props.extraMenus.map(menu=>menu)}
 
-            </List>
-        </Drawer>
+                </List>
+            </Drawer>
         
     </div>
         <Container fluid className={`baby-gru ${theme}`}>

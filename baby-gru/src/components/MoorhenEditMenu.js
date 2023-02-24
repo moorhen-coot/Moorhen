@@ -20,12 +20,14 @@ export const MoorhenEditMenu = (props) => {
             {props.dropdownId !== props.currentDropdownId ? <ExpandMore/> : <ExpandLess/>}
         </ListItemButton>
         <Collapse in={props.dropdownId === props.currentDropdownId} timeout="auto" unmountOnExit>
+            <hr></hr>
             <MoorhenAddRemoveHydrogenAtomsMenuItem key='add_remove_hydrogens' {...menuItemProps}/>
             <MoorhenMergeMoleculesMenuItem key="merge" {...menuItemProps} />
             <MoorhenDeleteUsingCidMenuItem key="delete" {...menuItemProps} />
             <MoorhenSuperposeMenuItem key="superpose_structures" {...menuItemProps} />
             <MoorhenCopyFragmentUsingCidMenuItem key="copy_fragment" {...menuItemProps} />
             <MoorhenGoToMenuItem key="go_to_cid" {...menuItemProps} />
+            <hr></hr>
         </Collapse>
     </>
 }

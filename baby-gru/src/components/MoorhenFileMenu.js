@@ -1,160 +1,18 @@
-import { Form, Button, InputGroup, Overlay, SplitButton, Dropdown, Modal, Card, Stack } from "react-bootstrap";
+import { Form, Button, Modal, Card, Stack } from "react-bootstrap";
 import { MoorhenMolecule } from "../utils/MoorhenMolecule";
 import { MoorhenMap } from "../utils/MoorhenMap";
-import { useState, useRef, useEffect } from "react";
-import { MoorhenImportMapCoefficientsMenuItem, MoorhenAutoOpenMtzMenuItem, MoorhenDeleteEverythingMenuItem, MoorhenLoadTutorialDataMenuItem, MoorhenImportMapMenuItem, MoorhenImportFSigFMenuItem, MoorhenBackupsMenuItem } from "./MoorhenMenuItem";
+import { useState, useEffect } from "react";
+import { MoorhenImportMapCoefficientsMenuItem, MoorhenAutoOpenMtzMenuItem, MoorhenDeleteEverythingMenuItem, 
+         MoorhenLoadTutorialDataMenuItem, MoorhenImportMapMenuItem, MoorhenImportFSigFMenuItem, MoorhenUploadSessionJsonMenuItem,
+         MoorhenBackupsMenuItem, MoorhenAutoOpenCoordsMenuItem, MoorhenLoadFromOnlineResourcesMenuItem } from "./MoorhenMenuItem";
 import { Collapse, ListItemButton, ListItemText, MenuItem } from "@mui/material";
-import { doDownload, readTextFile, getMultiColourRuleArgs } from "../utils/MoorhenUtils";
+import { doDownload } from "../utils/MoorhenUtils";
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
 
 export const MoorhenFileMenu = (props) => {
-
     const { changeMolecules, changeMaps, commandCentre, glRef } = props;
-    const [overlayVisible, setOverlayVisible] = useState(false)
-    const [overlayContent, setOverlayContent] = useState(<></>)
-    const [overlayTarget, setOverlayTarget] = useState(null)
-    const [popoverIsShown, setPopoverIsShown] = useState(false)
-    const [remoteSource, setRemoteSource] = useState("PDBe")
-    const [isValidPdbId, setIsValidPdbId] = useState(true)
     const [showBackupsModal, setShowBackupsModal] = useState(false)
     const [backupKeys, setBackupKeys] = useState(null)
-    const pdbCodeFetchInputRef = useRef(null);
-    const fetchMapDataCheckRef = useRef(null);
-
-    const menuItemProps = { setPopoverIsShown, ...props }
-
-    const loadPdbFiles = async (files) => {
-        let readPromises = []
-        for (const file of files) {
-            readPromises.push(readPdbFile(file))
-        }
-        let newMolecules = await Promise.all(readPromises)
-
-        let drawPromises = []
-        for (const newMolecule of newMolecules) {
-            drawPromises.push(newMolecule.fetchIfDirtyAndDraw('CBs', glRef))
-        }
-        await Promise.all(drawPromises)
-
-        changeMolecules({ action: "AddList", items: newMolecules })
-        newMolecules.at(-1).centreOn(glRef, null, false)
-    }
-
-    const readPdbFile = (file) => {
-        const newMolecule = new MoorhenMolecule(commandCentre, props.urlPrefix)
-        newMolecule.setBackgroundColour(props.backgroundColor)
-        newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
-        return newMolecule.loadToCootFromFile(file)
-    }
-
-    const fetchFiles = () => {
-        if (remoteSource === "PDBe") {
-            fetchFilesFromEBI()
-        } else if (remoteSource === "PDB-REDO") {
-            fetchFilesFromPDBRedo()
-        } else {
-            fetchFilesFromAFDB()
-        }
-    }
-
-    const fetchFilesFromEBI = () => {
-        const pdbCode = pdbCodeFetchInputRef.current.value.toLowerCase()
-        const coordUrl = `https://www.ebi.ac.uk/pdbe/entry-files/download/pdb${pdbCode.toLowerCase()}.ent`
-        const mapUrl = `https://www.ebi.ac.uk/pdbe/entry-files/${pdbCode.toLowerCase()}.ccp4`
-        const diffMapUrl = `https://www.ebi.ac.uk/pdbe/entry-files/${pdbCode.toLowerCase()}_diff.ccp4`
-        if (pdbCode && fetchMapDataCheckRef.current.checked) {
-            Promise.all([
-                fetchMoleculeFromURL(coordUrl, pdbCode),
-                fetchMapFromURL(mapUrl, `${pdbCode}-map`),
-                fetchMapFromURL(diffMapUrl, `${pdbCode}-map`, true)
-            ])
-        } else if (pdbCode) {
-            fetchMoleculeFromURL(coordUrl, pdbCode)
-        }
-    }
-
-    const fetchFilesFromAFDB = () => {
-        const uniprotID = pdbCodeFetchInputRef.current.value.toUpperCase()
-        const coordUrl = `https://alphafold.ebi.ac.uk/files/AF-${uniprotID}-F1-model_v4.pdb`
-        if (uniprotID ) {
-            fetchMoleculeFromURL(coordUrl, `${uniprotID}`)
-                .then(newMolecule => {
-                    const newRule = [{
-                        commandInput: {
-                            message:'coot_command',
-                            command: 'add_colour_rules_multi', 
-                            returnType:'status',
-                            commandArgs: getMultiColourRuleArgs(newMolecule, 'af2-plddt')
-                        },
-                        isMultiColourRule: true,
-                        ruleType: 'af2-plddt',
-                        label: `//*`
-                    }]
-                    newMolecule.setColourRules(glRef, newRule, false)
-                })
-                .catch(err => console.log(err))
-        }
-    }
-
-    const fetchFilesFromPDBRedo = () => {
-        const pdbCode = pdbCodeFetchInputRef.current.value.toLowerCase()
-        const coordUrl = `https://pdb-redo.eu/db/${pdbCode.toLowerCase()}/${pdbCode.toLowerCase()}_final.pdb`
-        const mtzUrl = `https://pdb-redo.eu/db/${pdbCode.toLowerCase()}/${pdbCode.toLowerCase()}_final.mtz/`
-        if (pdbCode && fetchMapDataCheckRef.current.checked) {
-            Promise.all([
-                fetchMoleculeFromURL(coordUrl, `${pdbCode}-redo`),
-                fetchMtzFromURL(mtzUrl, `${pdbCode}-map-redo`,  {F: "FWT", PHI: "PHWT", Fobs: 'FP', SigFobs: 'SIGFP', FreeR: 'FREE', isDifference: false, useWeight: false, calcStructFact: true}),  
-                fetchMtzFromURL(mtzUrl, `${pdbCode}-map-redo`,  {F: "DELFWT", PHI: "PHDELWT", isDifference: true, useWeight: false})    
-            ])
-        } else if (pdbCode) {
-            fetchMoleculeFromURL(coordUrl, `${pdbCode}-redo`)
-        }
-    }
-
-    const fetchMoleculeFromURL = (url, molName) => {
-        const newMolecule = new MoorhenMolecule(commandCentre, props.urlPrefix)
-        newMolecule.setBackgroundColour(props.backgroundColor)
-        newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
-        return new Promise(async (resolve, reject) => {
-            try {
-                await newMolecule.loadToCootFromURL(url, molName)
-                await newMolecule.fetchIfDirtyAndDraw('CBs', glRef)
-                changeMolecules({ action: "Add", item: newMolecule })
-                newMolecule.centreOn(glRef, null, false)
-                resolve(newMolecule)
-            } catch (err) {
-                console.log(`Cannot fetch molecule from ${url}`)
-                setIsValidPdbId(false)
-                reject(err)
-            }   
-        })
-    }
-
-    const fetchMapFromURL = (url, mapName, isDiffMap=false) => {
-        const newMap = new MoorhenMap(props.commandCentre)
-        return new Promise(async () => {
-            try {
-                await newMap.loadToCootFromMapURL(url, mapName, isDiffMap)
-                changeMaps({ action: 'Add', item: newMap })
-                props.setActiveMap(newMap)
-            } catch {
-                console.log(`Cannot fetch map from ${url}`)
-            }
-        })
-    }
-
-    const fetchMtzFromURL = async (url, mapName, selectedColumns) => {
-        const newMap = new MoorhenMap(props.commandCentre)
-        return new Promise(async () => {
-            try {
-                await newMap.loadToCootFromMtzURL(url, mapName, selectedColumns)
-                changeMaps({ action: 'Add', item: newMap })
-                props.setActiveMap(newMap)
-            } catch {
-                console.log(`Cannot fetch mtz from ${url}`)
-            }   
-        })
-    }
 
     const loadSessionJSON = async (sessionData) => {
         sessionData = JSON.parse(sessionData)
@@ -244,11 +102,6 @@ export const MoorhenFileMenu = (props) => {
                 document.dispatchEvent(contourOnSessionLoad);       
             })
         }, 2500);
-    }
-
-    const loadSession = async (file) => {
-        let sessionData = await readTextFile(file)
-        loadSessionJSON(sessionData)
     }
 
     const getSession = async () => {
@@ -359,7 +212,6 @@ export const MoorhenFileMenu = (props) => {
     return <>
         <ListItemButton
             id="file-nav-dropdown"
-            autoClose={popoverIsShown ? false : 'outside'}
             show={props.currentDropdownId === props.dropdownId}
             style={{display:'flex', alignItems:'center'}}
             onClick={() => { props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId(-1) }}>
@@ -367,53 +219,24 @@ export const MoorhenFileMenu = (props) => {
             {props.dropdownId !== props.currentDropdownId ? <ExpandMore/> : <ExpandLess/>}
         </ListItemButton>
         <Collapse in={props.dropdownId === props.currentDropdownId} timeout="auto" unmountOnExit>
-                <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="upload-coordinates-form" className="mb-3">
-                    <Form.Label>Coordinates</Form.Label>
-                    <Form.Control type="file" accept=".pdb, .mmcif, .cif, .ent" multiple={true} onChange={(e) => { loadPdbFiles(e.target.files) }}/>
-                </Form.Group>
-                <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="fetch-pdbe-form" className="mb-3">
-                    <Form.Label>Fetch coords from online services</Form.Label>
-                    <InputGroup>
-                        <SplitButton title={remoteSource} id="fetch-coords-online-source-select">
-                            <Dropdown.Item key="PDBe" href="#" onClick={() => {
-                                setRemoteSource("PDBe")
-                            }}>PDBe</Dropdown.Item>
-                            <Dropdown.Item key="PDB-REDO" href="#" onClick={() => {
-                                setRemoteSource("PDB-REDO")
-                            }}>PDB-REDO</Dropdown.Item>
-                            <Dropdown.Item key="AFDB" href="#" onClick={() => {
-                                setRemoteSource("AFDB")
-                            }}>AlphaFold DB</Dropdown.Item>
-                        </SplitButton>
-                        <Form.Control type="text" style={{borderColor: isValidPdbId ? '' : 'red'}}  ref={pdbCodeFetchInputRef} onKeyDown={(e) => {
-                            setIsValidPdbId(true)
-                            if (e.code === 'Enter') {
-                                fetchFiles()
-                            }
-                        }}/>
-                        <Button variant="light" onClick={fetchFiles}>
-                            Fetch
-                        </Button>
-                    </InputGroup>
-                    <Form.Label style={{display: isValidPdbId ? 'none' : 'block', alignContent: 'center' ,textAlign: 'center'}}>Problem fetching</Form.Label>
-                    <Form.Check style={{ marginTop: '0.5rem' }} ref={fetchMapDataCheckRef} label={'fetch map data'} name={`fetchMapData`} type="checkbox" variant="outline" />
-                </Form.Group>
-                <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="upload-session-form" className="mb-3">
-                    <Form.Label>Load from stored session</Form.Label>
-                    <Form.Control type="file" accept=".json" multiple={false} onChange={(e) => { loadSession(e.target.files[0]) }}/>
-                </Form.Group>
-
+                
                 <hr></hr>
 
-                <MoorhenAutoOpenMtzMenuItem {...menuItemProps} />
+                <MoorhenLoadFromOnlineResourcesMenuItem {...props}/>
+
+                <MoorhenAutoOpenCoordsMenuItem {...props} />
+                
+                <MoorhenUploadSessionJsonMenuItem loadSessionJSON={loadSessionJSON} {...props}/>
+
+                <MoorhenAutoOpenMtzMenuItem {...props} />
                     
-                <MoorhenImportMapCoefficientsMenuItem {...menuItemProps} />
+                <MoorhenImportMapCoefficientsMenuItem {...props} />
 
-                <MoorhenImportFSigFMenuItem {...menuItemProps} />
+                <MoorhenImportFSigFMenuItem {...props} />
 
-                <MoorhenImportMapMenuItem {...menuItemProps} />
+                <MoorhenImportMapMenuItem {...props} />
 
-                <MoorhenLoadTutorialDataMenuItem {...menuItemProps} />
+                <MoorhenLoadTutorialDataMenuItem {...props} />
 
                 <MenuItem id='download-session-menu-item' variant="success" onClick={getSession}>
                     Download session
@@ -423,32 +246,13 @@ export const MoorhenFileMenu = (props) => {
                     Save molecule backup
                 </MenuItem>
                     
-                <MoorhenBackupsMenuItem {...menuItemProps} setShowBackupsModal={setShowBackupsModal} loadSessionJSON={loadSessionJSON} />
+                <MoorhenBackupsMenuItem {...props} setShowBackupsModal={setShowBackupsModal} loadSessionJSON={loadSessionJSON} />
                     
+
+                <MoorhenDeleteEverythingMenuItem {...props} />
+
                 <hr></hr>
-
-                <MoorhenDeleteEverythingMenuItem {...menuItemProps} />
         </Collapse>
-
-        <Overlay
-            target={overlayTarget}
-            show={overlayVisible}
-            placement={"right"}
-        >
-            {({ placement, arrowProps, show: _show, popper, ...props }) => (
-                <div
-                    {...props}
-                    style={{
-                        position: 'absolute',
-                        marginBottom: '0.5rem',
-                        marginLeft: '1rem',
-                        borderRadius: 3,
-                        ...props.style,
-                    }}
-                >{overlayContent}
-                </div>
-            )}
-        </Overlay>
 
         <Modal show={showBackupsModal} onHide={() => setShowBackupsModal(false)}>
             <Modal.Header closeButton>

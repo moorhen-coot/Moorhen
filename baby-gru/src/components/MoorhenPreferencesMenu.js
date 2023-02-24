@@ -39,6 +39,7 @@ export const MoorhenPreferencesMenu = (props) => {
             {props.dropdownId !== props.currentDropdownId ? <ExpandMore/> : <ExpandLess/>}
         </ListItemButton>
         <Collapse in={props.dropdownId === props.currentDropdownId} timeout="auto" unmountOnExit>
+            <hr></hr>
             <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
                 <Form.Check 
                     type="switch"
@@ -150,7 +151,6 @@ export const MoorhenPreferencesMenu = (props) => {
                 setDefaultBondSmoothness={setDefaultBondSmoothness}
                 setPopoverIsShown={setPopoverIsShown}
             />
-            <hr></hr>
             <Form.Group controlId="mouseSensitivitySlider" style={{paddingTop:'0rem', paddingBottom:'0.5rem', paddingRight:'0.5rem', paddingLeft:'1rem', width: '25rem'}}>
                 <MoorhenSlider minVal={0.1} maxVal={10.0} logScale={false} sliderTitle="Mouse sensitivity" initialValue={2.5} externalValue={mouseSensitivity} setExternalValue={setMouseSensitivity}/>
             </Form.Group>
@@ -160,11 +160,11 @@ export const MoorhenPreferencesMenu = (props) => {
             <Form.Group controlId="mapLineWidthSlider" style={{paddingTop:'0.5rem', paddingBottom:'0rem', paddingRight:'0.5rem', paddingLeft:'1rem', width: '25rem'}}>
                 <MoorhenSlider minVal={0.1} maxVal={5.0} logScale={true} sliderTitle="Map lines thickness" initialValue={2.5} externalValue={mapLineWidth} setExternalValue={setMapLineWidth}/>
             </Form.Group>
-            <hr></hr>
             <MenuItem variant="success" onClick={() => setShowModal(true)} id='configure-shortcuts-menu-item' style={{marginTop:'0rem'}}>
                 Configure shortcuts
             </MenuItem>
             <MoorhenShortcutConfigModal showModal={showModal} setShowModal={setShowModal} setShortCuts={props.setShortCuts} shortCuts={JSON.parse(props.shortCuts)}/>
+            <hr></hr>
         </Collapse>
     </>
 }

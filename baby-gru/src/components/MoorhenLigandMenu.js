@@ -15,11 +15,13 @@ export const MoorhenLigandMenu = (props) => {
             {props.dropdownId !== props.currentDropdownId ? <ExpandMore/> : <ExpandLess/>}
         </ListItemButton>
         <Collapse in={props.dropdownId === props.currentDropdownId} timeout="auto" unmountOnExit>
+            <hr></hr>
             <MoorhenGetMonomerMenuItem {...menuItemProps} />
             <MoorhenImportDictionaryMenuItem {...menuItemProps} />
             <MoorhenCentreOnLigandMenuItem {...menuItemProps} />
             <MoorhenAddWatersMenuItem {...menuItemProps} />
             <MoorhenFitLigandRightHereMenuItem {...menuItemProps} />
+            <hr></hr>
         </Collapse>
     </>
 }
