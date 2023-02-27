@@ -129,7 +129,7 @@ export const MoorhenPepflipsDifferenceMap = (props) => {
 
     useEffect(() => {
 
-        if (selectedMap === null || selectedModel === null || selectedRmsd === null || !props.toolAccordionBodyHeight || !props.showSideBar) {
+        if (selectedMap === null || selectedModel === null || selectedRmsd === null || props.dropdownId !== props.accordionDropdownId || !props.showSideBar) {
             return;
         }
 
@@ -163,7 +163,7 @@ export const MoorhenPepflipsDifferenceMap = (props) => {
 
         setCardList(newCardList)
         
-    }, [pepflips, props.darkMode, props.toolAccordionBodyHeight, props.sideBarWidth, props.showSideBar])
+    }, [pepflips, props.darkMode, props.sideBarWidth, props.showSideBar])
 
     return <Fragment>
                 <Form style={{ padding:'0', margin: '0' }}>

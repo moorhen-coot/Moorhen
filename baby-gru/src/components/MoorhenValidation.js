@@ -4,7 +4,7 @@ import { Chart, registerables } from 'chart.js';
 import { MoorhenChainSelect } from './MoorhenChainSelect'
 import { MoorhenMapSelect } from './MoorhenMapSelect'
 import { MoorhenMoleculeSelect } from './MoorhenMoleculeSelect'
-import { residueCodesOneToThree, getResidueInfo } from '../utils/MoorhenUtils'
+import { residueCodesOneToThree, getResidueInfo, convertViewtoPx } from '../utils/MoorhenUtils'
 import annotationPlugin from 'chartjs-plugin-annotation'
 
 Chart.register(...registerables);
@@ -224,7 +224,7 @@ export const MoorhenValidation = (props) => {
             chartRef.current.destroy()
         }
 
-        if (chainSelectRef.current.value === null || selectedModel === null || !props.toolAccordionBodyHeight || !props.showSideBar || plotData === null) {
+        if (chainSelectRef.current.value === null || selectedModel === null || props.dropdownId !== props.accordionDropdownId || !props.showSideBar || plotData === null) {
             return;
         }
 
@@ -244,7 +244,7 @@ export const MoorhenValidation = (props) => {
        
         const barWidth = props.sideBarWidth / 40
         const tooltipFontSize = 12
-        const axisLabelsFontSize = props.toolAccordionBodyHeight / 60
+        const axisLabelsFontSize = convertViewtoPx(70, props.windowHeight) / 60
         
         const containerBody = document.getElementById('myContainerBody')
         containerBody.style.width = (labels.length*barWidth)+ "px";
@@ -363,7 +363,7 @@ export const MoorhenValidation = (props) => {
             }
         });
 
-    }, [plotData, props.darkMode, props.toolAccordionBodyHeight, props.sideBarWidth, props.showSideBar])
+    }, [plotData, props.darkMode, props.sideBarWidth, props.showSideBar])
 
     return <Fragment>
                 <Form style={{ padding:'0', margin: '0' }}>

@@ -1,4 +1,4 @@
-import { useRef, Fragment, useEffect } from "react";
+import { useRef, useEffect } from "react";
 import { Row } from "react-bootstrap";
 import { MoorhenRamachandran } from "./MoorhenRamachandran"
 import { MoorhenValidation } from "./MoorhenValidation"
@@ -6,7 +6,9 @@ import { MoorhenDifferenceMapPeaks } from "./MoorhenDifferenceMapPeaks"
 import { MoorhenPepflipsDifferenceMap } from "./MoorhenPepflipsDifferenceMap"
 import { MoorhenFillMissingAtoms } from "./MoorhenFillMissingAtoms"
 import { MoorhenMMRRCCPlot } from "./MoorhenMMRRCCPlot"
-import { Autocomplete, TextField } from "@mui/material";
+import { Autocomplete, TextField, ListItemButton, ListItemText, Collapse } from "@mui/material";
+import { ExpandLess, ExpandMore } from "@mui/icons-material";
+import { convertViewtoPx} from '../utils/MoorhenUtils';
 
 export const MoorhenToolsAccordion = (props) => {
     const toolsAccordionSelectRef = useRef()
@@ -32,10 +34,24 @@ export const MoorhenToolsAccordion = (props) => {
     useEffect(() => {
         toolsAccordionSelectRef.current.value = props.selectedToolKey
     }, [props.selectedToolKey])
-            
-    return <Fragment> 
-            <Row style={{padding: '0.5rem', width:'100%', display:'inline-flex'}}>
-                <Autocomplete 
+
+    
+    return <>
+            <ListItemButton
+                id="tools-dropdown"
+                show={props.accordionDropdownId === props.dropdownId}
+                style={{display:'flex', alignItems:'center'}}
+                onClick={() => { props.dropdownId !== props.accordionDropdownId ? props.setAccordionDropdownId(props.dropdownId) : props.setAccordionDropdownId(-1) }}>
+                <ListItemText primary="Tools" />
+                {props.dropdownId !== props.accordionDropdownId ? <ExpandMore/> : <ExpandLess/>}
+
+            </ListItemButton>
+
+            <Collapse in={props.dropdownId === props.accordionDropdownId} timeout="auto">
+                <hr></hr>
+                <div style={{width: props.sideBarWidth, height: convertViewtoPx(70, props.windowHeight)}} >
+                    <Row style={{padding: '0.5rem', width:'100%', display:'inline-flex'}}>
+                    <Autocomplete 
                         disablePortal
                         sx={{
                             '& .MuiInputBase-root': {
@@ -58,10 +74,13 @@ export const MoorhenToolsAccordion = (props) => {
                         options={toolOptions.map(tool => tool.label)}
                         renderInput={(params) => <TextField {...params} label="Tool" />}
                     />
-            </Row>
-            <Row className="tool-container-row" style={{width:'100%', margin:'0rem', padding:'0rem'}}>
-                {props.selectedToolKey !== null ? toolOptions[props.selectedToolKey].toolWidget : null}
-            </Row>
-        </Fragment> 
+                    </Row>
+                    <Row className="tool-container-row" style={{width:'100%', margin:'0rem', padding:'0rem'}}>
+                        {props.selectedToolKey !== null ? toolOptions[props.selectedToolKey].toolWidget : null}
+                    </Row>
+                </div>
+                <hr></hr>
+            </Collapse>
+    </> 
 }
 

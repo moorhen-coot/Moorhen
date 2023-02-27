@@ -36,7 +36,7 @@ export const MoorhenRamachandran = (props) => {
             }
         }, 50);
 
-    }, [props.toolAccordionBodyHeight, props.windowHeight, props.windowWidth])
+    }, [props.windowHeight, props.windowWidth])
 
     useEffect(() => {
         ramachandranRef.current?.setState({ ramaPlotDimensions: ramaPlotDimensions })

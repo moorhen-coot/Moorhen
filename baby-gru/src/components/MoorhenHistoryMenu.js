@@ -1,9 +1,11 @@
-import { NavDropdown, Form, Button, Modal } from "react-bootstrap";
+import { Form, Button, Modal } from "react-bootstrap";
 import { MoorhenMolecule } from "../utils/MoorhenMolecule";
 import { MoorhenMap } from "../utils/MoorhenMap";
 import { useEffect, useState } from "react";
 import { doDownloadText, readTextFile } from "../utils/MoorhenUtils";
-import { MenuItem } from "@mui/material";
+import { MoorhenExecuteHistoryMenuItem } from "./MoorhenMenuItem"
+import { Collapse, ListItemButton, ListItemText, MenuItem } from "@mui/material";
+import { ExpandLess, ExpandMore } from "@mui/icons-material";
 import "rc-tree/assets/index.css"
 import Tree from 'rc-tree';
 
@@ -106,12 +108,15 @@ export const MoorhenHistoryMenu = (props) => {
     }
 
     return <>
-        <NavDropdown
-            title="History"
+
+        <ListItemButton 
             id="history-nav-dropdown"
-            style={{display:'flex', alignItems:'center'}}
-            show={props.currentDropdownId === props.dropdownId}
-            onToggle={() => { props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId(-1) }}>
+            onClick={() => {props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId(-1)}}>
+            <ListItemText primary="History" />
+            {props.dropdownId !== props.currentDropdownId ? <ExpandMore/> : <ExpandLess/>}
+        </ListItemButton>
+        <Collapse in={props.dropdownId === props.currentDropdownId} timeout="auto" unmountOnExit>
+            <hr></hr>
             <MenuItem id='show-history-menu-item' variant="success" onClick={(e) => {
                 setShowHistory(true)
             }}>Show command history</MenuItem>
@@ -119,15 +124,10 @@ export const MoorhenHistoryMenu = (props) => {
                 const json = JSON.stringify(sessionHistory.rootNode, null, 2)
                 doDownloadText(json, "MoorhenSession.json")
             }}>Download history</MenuItem>
+            <MoorhenExecuteHistoryMenuItem {...props} executeJournalFiles={executeJournalFiles}/>
             <hr></hr>
-            <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="uploadJournal" className="mb-3">
-                <Form.Label>Execute history</Form.Label>
-                <Form.Control type="file" accept=".json" multiple={true} onChange={(e) => {
-                    executeJournalFiles(e.target.files)
-                }} />
-            </Form.Group>
+        </Collapse>
 
-        </NavDropdown>
         <Modal size="xl" show={showHistory} onHide={() => { setShowHistory(false) }}>
             <Modal.Header closeButton>
                 <Modal.Title>Command history</Modal.Title>
@@ -143,5 +143,6 @@ export const MoorhenHistoryMenu = (props) => {
                 executeSessionHistory(sessionHistory.commands)
             }}>Replay</Button></Modal.Footer>
         </Modal>
+
     </>
 }

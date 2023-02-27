@@ -1,6 +1,5 @@
 import { useRef, useState, useEffect, useReducer, useCallback, useContext } from 'react';
-import { Navbar, Container, Nav, Accordion, Button, Col, Row, Spinner, Form, Toast, ToastContainer } from 'react-bootstrap';
-import { MoorhenDisplayObjects } from './MoorhenDisplayObjects';
+import { Container, Col, Row, Spinner, Form, Toast, ToastContainer, Stack } from 'react-bootstrap';
 import { MoorhenWebMG } from './MoorhenWebMG';
 import { MoorhenCommandCentre, convertRemToPx, convertViewtoPx } from '../utils/MoorhenUtils';
 import { MoorhenTimeCapsule } from '../utils/MoorhenTimeCapsule';
@@ -8,16 +7,17 @@ import { MoorhenButtonBar } from './MoorhenButtonBar';
 import { MoorhenFileMenu } from './MoorhenFileMenu';
 import { MoorhenCloudMenu } from './MoorhenCloudMenu';
 import { MoorhenPreferencesMenu } from './MoorhenPreferencesMenu';
-import { ArrowBackIosOutlined, ArrowForwardIosOutlined, SaveOutlined } from '@mui/icons-material';
-import { Backdrop } from '@mui/material';
+import { ChevronLeftOutlined, ChevronRightOutlined, SaveOutlined } from '@mui/icons-material';
+import { Backdrop, IconButton, Drawer, Divider, List} from "@mui/material";
 import { MoorhenHistoryMenu, historyReducer, initialHistoryState } from './MoorhenHistoryMenu';
 import { MoorhenViewMenu } from './MoorhenViewMenu';
 import { MoorhenLigandMenu } from './MoorhenLigandMenu';
-import { MoorhenToolsAccordion } from './MoorhenToolsAccordion'
 import { PreferencesContext } from "../utils/MoorhenPreferences";
 import { babyGruKeyPress } from './MoorhenKeyboardAccelerators';
 import { MoorhenEditMenu } from './MoorhenEditMenu';
+import { MoorhenSideBar } from './MoorhenSideBar';
 import { MoorhenHelpMenu } from './MoorhenHelpMenu'
+import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
 import './MoorhenContainer.css'
 
 const initialMoleculesState = []
@@ -44,10 +44,9 @@ export const MoorhenContainer = (props) => {
     const timeCapsuleRef = useRef(null)
     const commandCentre = useRef(null)
     const moleculesRef = useRef(null)
-    const navBarRef = useRef()
-    const consoleDivRef = useRef()
-    const [selectedToolKey, setSelectedToolKey] = useState(null)
-    const [showSideBar, setShowSideBar] = useState(false)
+    const consoleDivRef = useRef(null)
+    const lastHoveredAtom = useRef(null)
+    const preferences = useContext(PreferencesContext);
     const [activeMap, setActiveMap] = useState(null)
     const [activeMolecule, setActiveMolecule] = useState(null)
     const [hoveredAtom, setHoveredAtom] = useState({ molecule: null, cid: null })
@@ -56,11 +55,6 @@ export const MoorhenContainer = (props) => {
     const [busy, setBusy] = useState(false)
     const [windowWidth, setWindowWidth] = useState(window.innerWidth)
     const [windowHeight, setWindowHeight] = useState(window.innerHeight)
-    const [displayObjectsAccordionBodyHeight, setDisplayObjectsAccordionBodyHeight] = useState(convertViewtoPx(0, windowHeight))
-    const [toolAccordionBodyHeight, setToolAccordionBodyHeight] = useState(convertViewtoPx(0, windowHeight))
-    const [sequenceViewerBodyHeight, setSequenceViewerBodyHeight] = useState(convertViewtoPx(0, windowHeight))
-    const [consoleBodyHeight, setConsoleBodyHeight] = useState(convertViewtoPx(0, windowHeight))
-    const [accordionHeight, setAccordionHeight] = useState(convertViewtoPx(90, windowHeight))
     const [commandHistory, dispatchHistoryReducer] = useReducer(historyReducer, initialHistoryState)
     const [molecules, changeMolecules] = useReducer(itemReducer, initialMoleculesState)
     const [maps, changeMaps] = useReducer(itemReducer, initialMapsState)
@@ -69,15 +63,14 @@ export const MoorhenContainer = (props) => {
     const [appTitle, setAppTitle] = useState('Moorhen')
     const [cootInitialized, setCootInitialized] = useState(false)
     const [theme, setTheme] = useState("flatly")
-    const lastHoveredAtom = useRef(null)
     const [showToast, setShowToast] = useState(false)
-    const preferences = useContext(PreferencesContext);
     const [toastContent, setToastContent] = useState("")
+    const [showDrawer, setShowDrawer] = useState(true)
+    const [drawerOpacity, setDrawerOpacity] = useState(0.7)
     const [showColourRulesToast, setShowColourRulesToast] = useState(false)
     
     moleculesRef.current = molecules
-    const sideBarWidth = convertViewtoPx(30, windowWidth)
-    const innerWindowMarginHeight = convertRemToPx(2.1)
+    const innerWindowMarginHeight = convertRemToPx(0)
     const innerWindowMarginWidth = convertRemToPx(1)
 
     const setWindowDimensions = () => {
@@ -99,17 +92,16 @@ export const MoorhenContainer = (props) => {
     useEffect(() => {
         let head = document.head;
         let style = document.createElement("link");
+        const isDark = isDarkBackground(...backgroundColor)
 
-        if (preferences.darkMode === null) {
-            return
-        } else if (preferences.darkMode) {
+        if (isDark) {
             style.href = `${props.urlPrefix}/baby-gru/darkly.css`
             setTheme("darkly")
-            setBackgroundColor([0., 0., 0., 1.])
+            preferences.setDarkMode(true)
         } else {
             style.href = `${props.urlPrefix}/baby-gru/flatly.css`
             setTheme("flatly")
-            setBackgroundColor([1., 1., 1., 1.])
+            preferences.setDarkMode(false)
         }
 
         style.rel = "stylesheet";
@@ -119,7 +111,8 @@ export const MoorhenContainer = (props) => {
         head.appendChild(style);
         return () => { head.removeChild(style); }
 
-    }, [preferences.darkMode])
+
+    }, [backgroundColor])
 
     useEffect(() => {
         async function setMakeBackupsAPI() {
@@ -228,13 +221,7 @@ export const MoorhenContainer = (props) => {
 
     useEffect(() => {
         glResize()
-        setAccordionHeight(getAccordionHeight())
-        displayObjectsAccordionBodyHeight !== 0 ? setDisplayObjectsAccordionBodyHeight(convertViewtoPx(60, windowHeight)) : setDisplayObjectsAccordionBodyHeight(convertViewtoPx(0, windowHeight))
-        toolAccordionBodyHeight !== 0 ? setToolAccordionBodyHeight(convertViewtoPx(70, windowHeight)) : setToolAccordionBodyHeight(convertViewtoPx(0, windowHeight))
-        sequenceViewerBodyHeight !== 0 ? setSequenceViewerBodyHeight(convertViewtoPx(30, windowHeight)) : setSequenceViewerBodyHeight(convertViewtoPx(0, windowHeight))
-        consoleBodyHeight !== 0 ? setConsoleBodyHeight(convertViewtoPx(30, windowHeight)) : setConsoleBodyHeight(convertViewtoPx(0, windowHeight))
-        consoleDivRef.current.scrollTop = consoleDivRef.current.scrollHeight;
-    }, [showSideBar, windowHeight, windowWidth])
+    }, [windowHeight, windowWidth])
     /*
         useEffect(() => {
             console.log('backgroundColor changed', backgroundColor)
@@ -278,79 +265,98 @@ export const MoorhenContainer = (props) => {
     }
 
     const webGLWidth = () => {
-        const result = windowWidth - (innerWindowMarginWidth + (showSideBar ? sideBarWidth : 0))
+        const result = windowWidth - innerWindowMarginWidth
         return result
     }
 
     const webGLHeight = () => {
-        let buttonBarHeight
-        let navBarHeight
-        const buttonBarDomElement = document.getElementById('button-bar-baby-gru')
-        const navBarDomElement = document.getElementById('navbar-baby-gru')
-
-        if (buttonBarDomElement && navBarDomElement) {
-            navBarHeight = parseFloat(window.getComputedStyle(navBarDomElement).height)
-            buttonBarHeight = parseFloat(window.getComputedStyle(buttonBarDomElement).height)
-        } else {
-            navBarHeight = convertRemToPx(3);
-            buttonBarHeight = convertRemToPx(4);
-        }
-
-        return windowHeight - (navBarHeight + buttonBarHeight + innerWindowMarginHeight)
-    }
-
-    const getAccordionHeight = () => {
-        let navBarHeight = parseFloat(window.getComputedStyle(document.getElementById('navbar-baby-gru')).height);
-        return windowHeight - (navBarHeight + innerWindowMarginHeight)
+        return windowHeight - innerWindowMarginHeight
     }
 
     const collectedProps = {
         molecules, changeMolecules, appTitle, setAppTitle, maps, changeMaps, glRef, activeMolecule, setActiveMolecule,
-        activeMap, setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor, sideBarWidth,
-        navBarRef, currentDropdownId, setCurrentDropdownId, hoveredAtom, setHoveredAtom, toastContent, setToastContent, 
-        showToast, setShowToast, windowWidth, windowHeight, showSideBar, innerWindowMarginWidth, toolAccordionBodyHeight,
-        urlPrefix: props.urlPrefix, showColourRulesToast, setShowColourRulesToast, timeCapsuleRef, ...preferences
+        activeMap, setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor, toastContent, 
+        setToastContent, currentDropdownId, setCurrentDropdownId, hoveredAtom, setHoveredAtom, showToast, setShowToast,
+        windowWidth, windowHeight, innerWindowMarginWidth,showDrawer, setShowDrawer, showColourRulesToast, timeCapsuleRef,
+        setShowColourRulesToast, urlPrefix: props.urlPrefix, ...preferences
     }
 
-    const accordionToolsItemProps = {
-        molecules, commandCentre, glRef, toolAccordionBodyHeight, setToolAccordionBodyHeight, sideBarWidth, windowHeight, 
-        windowWidth, maps, showSideBar, hoveredAtom, setHoveredAtom, selectedToolKey, setSelectedToolKey, ...preferences
-    }
-
-    return <> <div className={`border ${theme}`}>
+    return <> <div>
 
         <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={!cootInitialized}>
             <Spinner animation="border" style={{ marginRight: '0.5rem' }}/>
             <span>Starting moorhen...</span>
         </Backdrop>
+        
+        <Drawer anchor='top' open={true} variant='persistent'
+            onMouseOver={() => setDrawerOpacity(1)}
+            onMouseOut={() => setDrawerOpacity(0.7)}
+            sx={{
+                opacity: showDrawer ? '0.0' : drawerOpacity,
+                width: '25rem',
+                flexShrink: 0,
+                '& .MuiDrawer-paper': {
+                    borderWidth: '0',
+                    width: '30rem',
+                    boxSizing: 'border-box',
+                },
+            }}>
+            <Stack  gap={2} direction='horizontal' 
+                    style={{backgroundColor: `rgba(
+                        ${255 * backgroundColor[0]},
+                        ${255 * backgroundColor[1]},
+                        ${255 * backgroundColor[2]}, 
+                        ${backgroundColor[3]})`}}
+                >
+                <IconButton onClick={() => {setShowDrawer(true)}}>
+                    <img src={`${props.urlPrefix}/baby-gru/pixmaps/MoorhenLogo.png`} alt={appTitle} style={{height: '2.5rem'}}/>
+                    <ChevronRightOutlined style={{color: isDarkBackground(...backgroundColor) ? 'white' : 'black'}}/>
+                </IconButton>
+                {<Form.Control style={{maxWidth: "20rem" }} type="text" readOnly={true} value={`${hoveredAtom.molecule ? hoveredAtom.molecule.name + ':' + hoveredAtom.cid : ''}`} />}
+                {<div style={{width:'5rem'}}> { busy && <Spinner animation="border" style={{ marginRight: '0.5rem' }} />} </div>}
+                {<div style={{width:'5rem', display:'flex', alignItems:'center', alignContent:'center'}}> { timeCapsuleRef.current?.busy && <SaveOutlined/>} </div>}
+            </Stack>
+        </Drawer>
+            <Drawer
+                onClose={(ev, reason) => {setShowDrawer(false)}}
+                onMouseOver={() => setDrawerOpacity(1)}
+                onMouseOut={() => setDrawerOpacity(0.7)}
+                sx={{
+                    opacity: drawerOpacity,
+                    width: '25rem',
+                    flexShrink: 0,
+                    '& .MuiDrawer-paper': {
+                        width: '25rem',
+                        boxSizing: 'border-box',
+                        backgroundColor: isDarkBackground(...backgroundColor) ? 'grey' : 'white'
+                    },
+                }}
+                variant="persistent"
+                anchor="left"
+                open={showDrawer}
+            >
+            <Stack gap={2} direction='horizontal' style={{backgroundColor: isDarkBackground(...backgroundColor) ? 'grey' : 'white'}}>
+                    {<Form.Control style={{ maxWidth: "25rem" }} type="text" readOnly={true} value={`${hoveredAtom.molecule ? hoveredAtom.molecule.name + ':' + hoveredAtom.cid : ''}`} />}
+                    <IconButton onClick={() => {setShowDrawer(false)}}>
+                        <img src={`${props.urlPrefix}/baby-gru/pixmaps/MoorhenLogo.png`} alt={appTitle} style={{height: '2.5rem'}}/>
+                        <ChevronLeftOutlined style={{color: 'black'}}/>
+                    </IconButton>
+                </Stack>
+                <Divider/>
+                <List>
+                        <MoorhenFileMenu dropdownId="File" {...collectedProps} />
+                        <MoorhenEditMenu dropdownId="Edit" {...collectedProps} />
+                        <MoorhenLigandMenu dropdownId="Ligand" {...collectedProps} />
+                        <MoorhenViewMenu dropdownId="View" {...collectedProps} />
+                        <MoorhenHistoryMenu dropdownId="History" {...collectedProps} />
+                        <MoorhenPreferencesMenu dropdownId="Preferences" {...collectedProps} />
+                        <MoorhenHelpMenu dropdownId="Help" {...collectedProps}/>
+                        {props.exportToCloudCallback && <MoorhenCloudMenu dropdownId="CloudExport" exportToCloudCallback={props.exportToCloudCallback} {...collectedProps}/>}
+                        {props.extraMenus && props.extraMenus.map(menu=>menu)}
 
-        <Navbar ref={navBarRef} id='navbar-baby-gru' className={preferences.darkMode ? "navbar-dark" : "navbar-light"} style={{ height: '3rem', justifyContent: 'between', margin: '0.5rem', padding: '0.5rem' }}>
-            <Navbar.Brand href="#home">
-                <img src={`${props.urlPrefix}/baby-gru/pixmaps/MoorhenLogo.png`} alt={appTitle} style={{height: '2.5rem'}}/>
-            </Navbar.Brand>
-            <Navbar.Toggle aria-controls="basic-navbar-nav" />
-            <Navbar.Collapse id="basic-navbar-nav">
-                <Nav className="justify-content-left">
-                    <MoorhenFileMenu dropdownId="File" {...collectedProps} />
-                    <MoorhenEditMenu dropdownId="Edit" {...collectedProps} />
-                    <MoorhenLigandMenu dropdownId="Ligand" {...collectedProps} />
-                    <MoorhenViewMenu dropdownId="View" {...collectedProps} />
-                    <MoorhenHistoryMenu dropdownId="History" {...collectedProps} />
-                    <MoorhenPreferencesMenu dropdownId="Preferences" {...collectedProps} />
-                    <MoorhenHelpMenu dropdownId="Help" setSelectedToolKey={setSelectedToolKey} consoleBodyHeight={consoleBodyHeight} {...collectedProps}/>
-                    {props.exportToCloudCallback && <MoorhenCloudMenu dropdownId="CloudExport" exportToCloudCallback={props.exportToCloudCallback} {...collectedProps}/>}
-                    {props.extraMenus && props.extraMenus.map(menu=>menu)}
-                </Nav>
-            </Navbar.Collapse>
-            <Nav className="justify-content-right">
-                {hoveredAtom.cid && <Form.Control style={{ width: "20rem" }} type="text" readOnly={true} value={`${hoveredAtom.molecule.name}:${hoveredAtom.cid}`} />}
-                {busy && <Spinner animation="border" style={{ marginRight: '0.5rem' }} />}
-                {timeCapsuleRef.current?.busy && <div style={{display:'flex', alignItems:'center', alignContent:'center'}}><SaveOutlined/></div>}
-                <Button id='show-sidebar-button' className="baby-gru-sidebar-button" style={{ height: '100%', backgroundColor: preferences.darkMode ? '#222' : 'white', border: 0 }} onClick={() => { setShowSideBar(!showSideBar) }}>
-                    {showSideBar ? <ArrowForwardIosOutlined style={{ color: preferences.darkMode ? 'white' : 'black' }} /> : <ArrowBackIosOutlined style={{ color: preferences.darkMode ? 'white' : 'black' }} />}
-                </Button>
-            </Nav>
-        </Navbar>
+                </List>
+            </Drawer>
+        
     </div>
         <Container fluid className={`baby-gru ${theme}`}>
             <Row>
@@ -384,74 +390,9 @@ export const MoorhenContainer = (props) => {
                             urlPrefix={props.urlPrefix}
                         />
                     </div>
-                    <div id='button-bar-baby-gru'
-                        style={{
-                            height: '4rem',
-                            backgroundColor: `rgba(
-                                    ${255 * backgroundColor[0]},
-                                    ${255 * backgroundColor[1]},
-                                    ${255 * backgroundColor[2]}, 
-                                    ${backgroundColor[3]})`
-                        }}>
-                        <MoorhenButtonBar {...collectedProps} />
-                    </div>
+                    <MoorhenButtonBar {...collectedProps} />
                 </Col>
-                <Col className={`side-bar-column ${theme}`} style={{ padding: '0.5rem', margin: '0', display: showSideBar ? "block" : "none" }} >
-                    <Accordion className='side-bar-accordion scroller' style={{ height: accordionHeight, overflowY: 'scroll' }}
-                        alwaysOpen={true}
-                        defaultActiveKey={''}
-                        onSelect={(openPanels) => {
-                            setDisplayObjectsAccordionBodyHeight(convertViewtoPx(0, windowHeight))
-                            setToolAccordionBodyHeight(convertViewtoPx(0, windowHeight))
-                            setSequenceViewerBodyHeight(convertViewtoPx(0, windowHeight))
-                            setConsoleBodyHeight(convertViewtoPx(0, windowHeight))
-                            if (!openPanels) {
-                                return
-                            }
-                            if (openPanels.includes('showDisplayObjects')) {
-                                setDisplayObjectsAccordionBodyHeight(convertViewtoPx(60, windowHeight))
-                            }
-                            if (openPanels.includes('showTools')) {
-                                setToolAccordionBodyHeight(convertViewtoPx(70, windowHeight))
-                            }
-                            if (openPanels.includes('showSequenceViewer')) {
-                                setSequenceViewerBodyHeight(convertViewtoPx(30, windowHeight))
-                            }
-                            if (openPanels.includes('showConsole')) {
-                                setConsoleBodyHeight(convertViewtoPx(30, windowHeight))
-                            }
-                        }}>
-                        <Accordion.Item eventKey="showDisplayObjects" style={{ width: sideBarWidth, padding: '0', margin: '0' }} >
-                            <Accordion.Header style={{ padding: '0', margin: '0', height: '4rem' }}>Models and maps</Accordion.Header>
-                            <Accordion.Body className='side-bar-accordion-body scroller' style={{ overflowY: 'auto', height: displayObjectsAccordionBodyHeight, padding: '0.5rem' }}>
-                                {molecules.length === 0 && maps.length === 0 ? "No data files loaded" : <MoorhenDisplayObjects {...collectedProps} />}
-                            </Accordion.Body>
-                        </Accordion.Item>
-                        <Accordion.Item eventKey="showTools" style={{ width: sideBarWidth, padding: '0', margin: '0' }} >
-                                <Accordion.Button id='tools-accordion-button'>
-                                    Tools
-                                </Accordion.Button>
-                            <Accordion.Body style={{ height: toolAccordionBodyHeight, padding: '0', margin: '0', }}>
-                                <MoorhenToolsAccordion {...accordionToolsItemProps} />
-                            </Accordion.Body>
-                        </Accordion.Item>
-                        <Accordion.Item eventKey="showConsole" style={{ width: sideBarWidth, padding: '0', margin: '0' }} >
-                            <Accordion.Button id='console-accordion-button'>
-                                Console
-                            </Accordion.Button>
-                            <Accordion.Body style={{ height: consoleBodyHeight }}>
-                                <div ref={consoleDivRef} style={{
-                                    overflowY: "scroll",
-                                    height: '100%',
-                                    textAlign: "left"
-                                }}>
-                                    <pre>{consoleMessage}
-                                    </pre>
-                                </div>
-                            </Accordion.Body>
-                        </Accordion.Item>
-                    </Accordion>
-                </Col>
+                <MoorhenSideBar {...collectedProps} consoleMessage={consoleMessage} ref={consoleDivRef} />
             </Row>
             <ToastContainer style={{ marginTop: "5rem" }} position='top-center' >
                 <Toast bg='light' onClose={() => setShowToast(false)} autohide={true} delay={4000} show={showToast} style={{overflowY: 'scroll', maxHeight: convertViewtoPx(80, webGLHeight())}}>
