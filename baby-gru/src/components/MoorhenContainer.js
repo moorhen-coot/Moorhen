@@ -65,7 +65,7 @@ export const MoorhenContainer = (props) => {
     const [theme, setTheme] = useState("flatly")
     const [showToast, setShowToast] = useState(false)
     const [toastContent, setToastContent] = useState("")
-    const [showDrawer, setShowDrawer] = useState(false)
+    const [showDrawer, setShowDrawer] = useState(true)
     const [drawerOpacity, setDrawerOpacity] = useState(0.7)
     const [showColourRulesToast, setShowColourRulesToast] = useState(false)
     
