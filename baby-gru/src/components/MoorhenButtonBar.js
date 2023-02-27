@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ButtonGroup, Carousel } from "react-bootstrap"
 import { MoorhenAutofitRotamerButton, MoorhenFlipPeptideButton, MoorhenSideChain180Button, MoorhenAddTerminalResidueDirectlyUsingCidButton,
         MoorhenEigenFlipLigandButton, MoorhenJedFlipFalseButton, MoorhenJedFlipTrueButton, MoorhenConvertCisTransButton, MoorhenAddSimpleButton,
@@ -13,6 +13,7 @@ export const MoorhenButtonBar = (props) => {
     const [selectedButtonIndex, setSelectedButtonIndex] = useState(null);
     const [showDrawer, setShowDrawer] = useState(false);
     const [opacity, setOpacity] = useState(0.5);
+    const popoverIsShownRef = useRef(null)
 
     const editButtons = [
         (<MoorhenAutofitRotamerButton {...props} key='auto-fit-rotamer' selectedButtonIndex={selectedButtonIndex}
@@ -65,9 +66,19 @@ export const MoorhenButtonBar = (props) => {
     useEffect(() => {
         if (!showDrawer && selectedButtonIndex !== null) {
             setSelectedButtonIndex(null)
+            popoverIsShownRef.current = false
         }
 
     }, [showDrawer])
+
+    useEffect(() => {
+        if (showDrawer && selectedButtonIndex !== null) {
+            popoverIsShownRef.current = true
+        } else {
+            popoverIsShownRef.current = false
+        }
+
+    }, [selectedButtonIndex])
 
     const getCarouselItems = () => {
         const maximumAllowedWidth = props.windowWidth - (props.innerWindowMarginWidth + (props.showSideBar ? props.sideBarWidth : 0))
@@ -98,7 +109,7 @@ export const MoorhenButtonBar = (props) => {
     return  <> 
     <Drawer anchor='bottom' open={true} variant='persistent' elevation={2000}
                 onMouseOver={() => setOpacity(1)}
-                onMouseOut={() => setOpacity(0.5)}
+                onMouseOut={() => {if(!popoverIsShownRef.current) setOpacity(0.5) }}
                 sx={{
                     opacity: showDrawer ? '0.0' : opacity,
                     width: '100%',
@@ -134,8 +145,8 @@ export const MoorhenButtonBar = (props) => {
         anchor="bottom"
         open={showDrawer}
         onMouseOver={() => setOpacity(1)}
-        onMouseOut={() => setOpacity(0.5)}
-    >
+        onMouseOut={() => {if(!popoverIsShownRef.current) setOpacity(0.5) }}
+        >
         <IconButton onClick={() => {setShowDrawer(false)}} sx={{ width:'100%', borderColor:'black', borderTop: 1, borderLeft: 1, borderRight: 1, opacity: opacity, borderRadius: 0}}>
             <ArrowDownwardOutlined style={{color: isDark ? 'white' : 'black'}}/>
         </IconButton>
@@ -157,8 +168,8 @@ export const MoorhenButtonBar = (props) => {
             anchor="bottom"
             open={showDrawer}
             onMouseOver={() => setOpacity(1)}
-            onMouseOut={() => setOpacity(0.5)}
-    >
+            onMouseOut={() => {if(!popoverIsShownRef.current) setOpacity(0.5) }}
+            >
         <Carousel 
                 style={{marginBottom: '0.5rem'}}
                 key={carouselItems.length}

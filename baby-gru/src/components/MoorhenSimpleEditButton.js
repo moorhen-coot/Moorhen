@@ -136,6 +136,7 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
                             padding: '2px 10px',
                             color: 'black',
                             borderRadius: 3,
+                            zIndex: 9999,
                             ...props.style,
                         }}
                     >{prompt}
