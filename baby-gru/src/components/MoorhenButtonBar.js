@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ButtonGroup, Carousel } from "react-bootstrap"
 import { MoorhenAutofitRotamerButton, MoorhenFlipPeptideButton, MoorhenSideChain180Button, MoorhenAddTerminalResidueDirectlyUsingCidButton,
         MoorhenEigenFlipLigandButton, MoorhenJedFlipFalseButton, MoorhenJedFlipTrueButton, MoorhenConvertCisTransButton, MoorhenAddSimpleButton,
@@ -6,6 +6,7 @@ import { MoorhenAutofitRotamerButton, MoorhenFlipPeptideButton, MoorhenSideChain
         MoorhenAddAltConfButton, MoorhenRigidBodyFitButton } from "./MoorhenSimpleEditButton"
 import { IconButton, Drawer, Divider } from "@mui/material";
 import { ArrowDownwardOutlined, ArrowUpwardOutlined } from "@mui/icons-material";
+import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
 
 export const MoorhenButtonBar = (props) => {
     const [selectedButtonIndex, setSelectedButtonIndex] = useState(null);
@@ -60,6 +61,13 @@ export const MoorhenButtonBar = (props) => {
 
     ]
 
+    useEffect(() => {
+        if (!showDrawer && selectedButtonIndex !== null) {
+            setSelectedButtonIndex(null)
+        }
+
+    }, [showDrawer])
+
     const getCarouselItems = () => {
         const maximumAllowedWidth = props.windowWidth - (props.innerWindowMarginWidth + (props.showSideBar ? props.sideBarWidth : 0))
 
@@ -98,10 +106,11 @@ export const MoorhenButtonBar = (props) => {
                 '& .MuiDrawer-paper': {
                     width: '100%',
                     boxSizing: 'border-box',
+                    backgroundColor: isDarkBackground(...props.backgroundColor) ? 'grey' : 'white'
                 },
             }}>
             <IconButton onClick={() => {setShowDrawer(true)}} sx={{opacity: showDrawer ? '0.0' : opacity}}>
-                <ArrowUpwardOutlined />
+                <ArrowUpwardOutlined style={{color: isDarkBackground(...props.backgroundColor) ? 'white' : 'black'}}/>
             </IconButton>
     </Drawer>
     <Drawer
@@ -112,6 +121,7 @@ export const MoorhenButtonBar = (props) => {
             '& .MuiDrawer-paper': {
                 width: '100%',
                 boxSizing: 'border-box',
+                backgroundColor: isDarkBackground(...props.backgroundColor) ? 'grey' : 'white'
             },
         }}
         variant="persistent"
@@ -121,10 +131,11 @@ export const MoorhenButtonBar = (props) => {
         onMouseOut={() => setOpacity(0.5)}
     >
         <IconButton onClick={() => {setShowDrawer(false)}}>
-            <ArrowDownwardOutlined />
+            <ArrowDownwardOutlined style={{color: isDarkBackground(...props.backgroundColor) ? 'white' : 'black'}}/>
         </IconButton>
         <Divider/>
         <Carousel 
+                style={{marginBottom: '0.5rem'}}
                 key={carouselItems.length}
                 variant={props.darkMode ? "light" : "dark"} 
                 interval={null} 
