@@ -58,7 +58,7 @@ export const MoorhenContainer = (props) => {
     const [commandHistory, dispatchHistoryReducer] = useReducer(historyReducer, initialHistoryState)
     const [molecules, changeMolecules] = useReducer(itemReducer, initialMoleculesState)
     const [maps, changeMaps] = useReducer(itemReducer, initialMapsState)
-    const [backgroundColor, setBackgroundColor] = useState([0., 0., 0., 1.])
+    const [backgroundColor, setBackgroundColor] = useState([1, 1, 1, 1])
     const [currentDropdownId, setCurrentDropdownId] = useState(-1)
     const [appTitle, setAppTitle] = useState('Moorhen')
     const [cootInitialized, setCootInitialized] = useState(false)
@@ -88,8 +88,19 @@ export const MoorhenContainer = (props) => {
             timeCapsuleRef.current.modificationCountBackupThreshold = preferences.modificationCountBackupThreshold
         }
     }, [cootInitialized, props.forwardControls])
+    
+    useEffect(() => {
+        if (preferences.defaultBackgroundColor && preferences.defaultBackgroundColor !== backgroundColor) {
+            setBackgroundColor(preferences.defaultBackgroundColor)
+        }
+        
+    }, [preferences.defaultBackgroundColor])
 
     useEffect(() => {
+        if (!preferences.defaultBackgroundColor) {
+            return
+        }
+        
         let head = document.head;
         let style = document.createElement("link");
         const isDark = isDarkBackground(...backgroundColor)
@@ -97,11 +108,13 @@ export const MoorhenContainer = (props) => {
         if (isDark) {
             style.href = `${props.urlPrefix}/baby-gru/darkly.css`
             setTheme("darkly")
-            preferences.setDarkMode(true)
         } else {
             style.href = `${props.urlPrefix}/baby-gru/flatly.css`
             setTheme("flatly")
-            preferences.setDarkMode(false)
+        }
+        
+        if (preferences.defaultBackgroundColor !== backgroundColor) {
+            preferences.setDefaultBackgroundColor(backgroundColor)
         }
 
         style.rel = "stylesheet";
@@ -222,11 +235,7 @@ export const MoorhenContainer = (props) => {
     useEffect(() => {
         glResize()
     }, [windowHeight, windowWidth])
-    /*
-        useEffect(() => {
-            console.log('backgroundColor changed', backgroundColor)
-        }, [backgroundColor])
-    */
+
     useEffect(() => {
         if (activeMap && commandCentre.current) {
             commandCentre.current.cootCommand({
@@ -250,11 +259,9 @@ export const MoorhenContainer = (props) => {
             let movedResidues = [];
             prevActiveMoleculeRef.current.applyTransform(glRef)
                 .then(response => {
-                    //console.log("Setting/unsetting active molecule (promise)")
                     resetActiveGL()
                 })
         } else {
-            //console.log("Setting/unsetting active molecule")
             resetActiveGL()
         }
     }, [activeMolecule])
