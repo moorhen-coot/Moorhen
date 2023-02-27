@@ -92,17 +92,16 @@ export const MoorhenContainer = (props) => {
     useEffect(() => {
         let head = document.head;
         let style = document.createElement("link");
+        const isDark = isDarkBackground(...backgroundColor)
 
-        if (preferences.darkMode === null) {
-            return
-        } else if (preferences.darkMode) {
+        if (isDark) {
             style.href = `${props.urlPrefix}/baby-gru/darkly.css`
             setTheme("darkly")
-            setBackgroundColor([0., 0., 0., 1.])
+            preferences.setDarkMode(true)
         } else {
             style.href = `${props.urlPrefix}/baby-gru/flatly.css`
             setTheme("flatly")
-            setBackgroundColor([1., 1., 1., 1.])
+            preferences.setDarkMode(false)
         }
 
         style.rel = "stylesheet";
@@ -112,7 +111,8 @@ export const MoorhenContainer = (props) => {
         head.appendChild(style);
         return () => { head.removeChild(style); }
 
-    }, [preferences.darkMode])
+
+    }, [backgroundColor])
 
     useEffect(() => {
         async function setMakeBackupsAPI() {
