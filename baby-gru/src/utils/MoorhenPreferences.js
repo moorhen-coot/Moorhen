@@ -24,7 +24,7 @@ const updateStoredPreferences = async (key, value) => {
 
 const getDefaultValues = () => {
     return {
-        version: '0.0.16',
+        version: '0.0.17',
         defaultBackgroundColor: [1, 1, 1, 1], 
         atomLabelDepthMode: true, 
         defaultExpandDisplayCards: true,
@@ -156,6 +156,16 @@ const getDefaultValues = () => {
                 modifiers: ["shiftKey"],
                 keyPress: " ",
                 label: "Jump to the previous residue"
+            },
+            "increase_map_radius": {
+                modifiers: [],
+                keyPress: "]",
+                label: "Increase map radius"
+            },
+            "decrease_map_radius": {
+                modifiers: [],
+                keyPress: "[",
+                label: "Decrease map radius"
             },
         }
     }
