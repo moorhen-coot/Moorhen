@@ -55,23 +55,22 @@ export const MoorhenMenuItem = (props) => {
             }}
 
             overlay={
-                <Popover style={{ maxWidth: "40rem" }}>
+                    <Popover style={{ maxWidth: "40rem", zIndex: 99999 }}>
+                        <PopoverHeader as="h3">{props.menuItemTitle}</PopoverHeader>
+                        <PopoverBody>
+                            {props.popoverContent}
+                            {props.showOkButton &&
+                                <Button variant={props.buttonVariant} onClick={() => {
+                                    console.log('Popover clicked')
+                                    resolveOrRejectRef.current.resolve()
+                                }}>
+                                    {props.buttonText}
+                                </Button>
+                            }
 
-                    <PopoverHeader as="h3">{props.menuItemTitle}</PopoverHeader>
-                    <PopoverBody>
-                        {props.popoverContent}
-                        {props.showOkButton &&
-                            <Button variant={props.buttonVariant} onClick={() => {
-                                console.log('Popover clicked')
-                                resolveOrRejectRef.current.resolve()
-                            }}>
-                                {props.buttonText}
-                            </Button>
-                        }
-
-                    </PopoverBody>
-                </Popover>}
-        >
+                        </PopoverBody>
+                    </Popover>
+        }>
             <MenuItem className={props.textClassName} id={props.id} variant="success">{props.menuItemText}</MenuItem>
         </OverlayTrigger> :
             <MenuItem className={props.textClassName} variant="success">{props.menuItemText}</MenuItem>
@@ -324,6 +323,7 @@ export const MoorhenRenameDisplayObjectMenuItem = (props) => {
     }
 
     return <MoorhenMenuItem
+        testId={document.getElementById('test-display')}
         popoverPlacement='left'
         popoverContent={panelContent}
         menuItemText={props.item.type === 'molecule' ? "Rename molecule" : "Rename map"}
