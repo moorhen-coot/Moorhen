@@ -8,8 +8,7 @@ import MoorhenSlider from './MoorhenSlider'
 
 export const MoorhenPreferencesMenu = (props) => {
     const { 
-        atomLabelDepthMode, setAtomLabelDepthMode, darkMode, setDarkMode, 
-        defaultExpandDisplayCards, setDefaultExpandDisplayCards, defaultMapLitLines,
+        atomLabelDepthMode, setAtomLabelDepthMode, defaultExpandDisplayCards, 
         setDefaultMapLitLines, refineAfterMod, setRefineAfterMod, mouseSensitivity,
         setMouseSensitivity, drawCrosshairs, setDrawCrosshairs, drawMissingLoops,
         setDrawMissingLoops, mapLineWidth, setMapLineWidth, makeBackups, setMakeBackups,
@@ -18,7 +17,7 @@ export const MoorhenPreferencesMenu = (props) => {
         defaultUpdatingScores, setDefaultUpdatingScores, drawFPS, setDrawFPS, wheelSensitivityFactor,
         setWheelSensitivityFactor, shortcutOnHoveredAtom, setShortcutOnHoveredAtom, maxBackupCount, 
         setMaxBackupCount, modificationCountBackupThreshold, setModificationCountBackupThreshold, 
-        timeCapsuleRef
+        timeCapsuleRef, setDefaultExpandDisplayCards, defaultMapLitLines
      } = props;
 
     const [showModal, setShowModal] = useState(null);
@@ -47,13 +46,6 @@ export const MoorhenPreferencesMenu = (props) => {
                     checked={defaultExpandDisplayCards}
                     onChange={() => { setDefaultExpandDisplayCards(!defaultExpandDisplayCards) }}
                 />
-            </InputGroup>
-            <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
-                <Form.Check 
-                    type="switch"
-                    checked={darkMode}
-                    onChange={() => { setDarkMode(!darkMode) }}
-                    label={darkMode ? "Switch lights on": "Switch lights off"}/>
             </InputGroup>
             <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
                 <Form.Check 

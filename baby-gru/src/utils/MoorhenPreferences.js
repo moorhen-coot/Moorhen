@@ -24,8 +24,8 @@ const updateStoredPreferences = async (key, value) => {
 
 const getDefaultValues = () => {
     return {
-        version: '0.0.15',
-        darkMode: false, 
+        version: '0.0.17',
+        defaultBackgroundColor: [1, 1, 1, 1], 
         atomLabelDepthMode: true, 
         defaultExpandDisplayCards: true,
         defaultMapLitLines: false,
@@ -157,6 +157,16 @@ const getDefaultValues = () => {
                 keyPress: " ",
                 label: "Jump to the previous residue"
             },
+            "increase_map_radius": {
+                modifiers: [],
+                keyPress: "]",
+                label: "Increase map radius"
+            },
+            "decrease_map_radius": {
+                modifiers: [],
+                keyPress: "[",
+                label: "Decrease map radius"
+            },
         }
     }
 }
@@ -164,7 +174,7 @@ const getDefaultValues = () => {
 const PreferencesContext = createContext();
 
 const PreferencesContextProvider = ({ children }) => {
-    const [darkMode, setDarkMode] = useState(null)
+    const [defaultBackgroundColor, setDefaultBackgroundColor] = useState(null)
     const [atomLabelDepthMode, setAtomLabelDepthMode] = useState(null)
     const [defaultExpandDisplayCards, setDefaultExpandDisplayCards] = useState(null)
     const [shortCuts, setShortCuts] = useState(null)
@@ -188,7 +198,7 @@ const PreferencesContextProvider = ({ children }) => {
     const [defaultUpdatingScores, setDefaultUpdatingScores] = useReducer(itemReducer, null)
 
     const preferencesMap = {
-        1: { label: "darkMode", value: darkMode, valueSetter: setDarkMode},
+        1: { label: "defaultBackgroundColor", value: defaultBackgroundColor, valueSetter: setDefaultBackgroundColor},
         2: { label: "atomLabelDepthMode", value: atomLabelDepthMode, valueSetter: setAtomLabelDepthMode},
         3: { label: "defaultExpandDisplayCards", value: defaultExpandDisplayCards, valueSetter: setDefaultExpandDisplayCards},
         4: { label: "shortCuts", value: shortCuts, valueSetter: setShortCuts},
@@ -432,12 +442,12 @@ const PreferencesContextProvider = ({ children }) => {
  
     useMemo(() => {
 
-        if (darkMode === null) {
+        if (defaultBackgroundColor === null) {
             return
         }
        
-        updateStoredPreferences('darkMode', darkMode);
-    }, [darkMode]);
+        updateStoredPreferences('defaultBackgroundColor', defaultBackgroundColor);
+    }, [defaultBackgroundColor]);
     
     useMemo(() => {
 
@@ -467,7 +477,7 @@ const PreferencesContextProvider = ({ children }) => {
     }, [defaultMapLitLines]);
 
     const collectedContextValues = {
-        darkMode, setDarkMode, atomLabelDepthMode, setAtomLabelDepthMode, defaultExpandDisplayCards,
+        defaultBackgroundColor, setDefaultBackgroundColor, atomLabelDepthMode, setAtomLabelDepthMode, defaultExpandDisplayCards,
         setDefaultExpandDisplayCards, shortCuts, setShortCuts, defaultMapLitLines, setDefaultMapLitLines,
         refineAfterMod, setRefineAfterMod, mouseSensitivity, setMouseSensitivity, drawCrosshairs, 
         setDrawCrosshairs, drawMissingLoops, setDrawMissingLoops, mapLineWidth, setMapLineWidth,

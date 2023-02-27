@@ -7,8 +7,8 @@ import { MoorhenButtonBar } from './MoorhenButtonBar';
 import { MoorhenFileMenu } from './MoorhenFileMenu';
 import { MoorhenCloudMenu } from './MoorhenCloudMenu';
 import { MoorhenPreferencesMenu } from './MoorhenPreferencesMenu';
-import { ChevronLeftOutlined, ChevronRightOutlined, SaveOutlined } from '@mui/icons-material';
-import { Backdrop, IconButton, Drawer, Divider, List} from "@mui/material";
+import { SaveOutlined, MenuOutlined, CloseOutlined } from '@mui/icons-material';
+import { Backdrop, IconButton, Drawer, Divider, List } from "@mui/material";
 import { MoorhenHistoryMenu, historyReducer, initialHistoryState } from './MoorhenHistoryMenu';
 import { MoorhenViewMenu } from './MoorhenViewMenu';
 import { MoorhenLigandMenu } from './MoorhenLigandMenu';
@@ -58,7 +58,7 @@ export const MoorhenContainer = (props) => {
     const [commandHistory, dispatchHistoryReducer] = useReducer(historyReducer, initialHistoryState)
     const [molecules, changeMolecules] = useReducer(itemReducer, initialMoleculesState)
     const [maps, changeMaps] = useReducer(itemReducer, initialMapsState)
-    const [backgroundColor, setBackgroundColor] = useState([0., 0., 0., 1.])
+    const [backgroundColor, setBackgroundColor] = useState([1, 1, 1, 1])
     const [currentDropdownId, setCurrentDropdownId] = useState(-1)
     const [appTitle, setAppTitle] = useState('Moorhen')
     const [cootInitialized, setCootInitialized] = useState(false)
@@ -88,8 +88,19 @@ export const MoorhenContainer = (props) => {
             timeCapsuleRef.current.modificationCountBackupThreshold = preferences.modificationCountBackupThreshold
         }
     }, [cootInitialized, props.forwardControls])
+    
+    useEffect(() => {
+        if (preferences.defaultBackgroundColor && preferences.defaultBackgroundColor !== backgroundColor) {
+            setBackgroundColor(preferences.defaultBackgroundColor)
+        }
+        
+    }, [preferences.defaultBackgroundColor])
 
     useEffect(() => {
+        if (!preferences.defaultBackgroundColor) {
+            return
+        }
+        
         let head = document.head;
         let style = document.createElement("link");
         const isDark = isDarkBackground(...backgroundColor)
@@ -97,11 +108,13 @@ export const MoorhenContainer = (props) => {
         if (isDark) {
             style.href = `${props.urlPrefix}/baby-gru/darkly.css`
             setTheme("darkly")
-            preferences.setDarkMode(true)
         } else {
             style.href = `${props.urlPrefix}/baby-gru/flatly.css`
             setTheme("flatly")
-            preferences.setDarkMode(false)
+        }
+        
+        if (preferences.defaultBackgroundColor !== backgroundColor) {
+            preferences.setDefaultBackgroundColor(backgroundColor)
         }
 
         style.rel = "stylesheet";
@@ -222,11 +235,7 @@ export const MoorhenContainer = (props) => {
     useEffect(() => {
         glResize()
     }, [windowHeight, windowWidth])
-    /*
-        useEffect(() => {
-            console.log('backgroundColor changed', backgroundColor)
-        }, [backgroundColor])
-    */
+
     useEffect(() => {
         if (activeMap && commandCentre.current) {
             commandCentre.current.cootCommand({
@@ -250,11 +259,9 @@ export const MoorhenContainer = (props) => {
             let movedResidues = [];
             prevActiveMoleculeRef.current.applyTransform(glRef)
                 .then(response => {
-                    //console.log("Setting/unsetting active molecule (promise)")
                     resetActiveGL()
                 })
         } else {
-            //console.log("Setting/unsetting active molecule")
             resetActiveGL()
         }
     }, [activeMolecule])
@@ -280,6 +287,8 @@ export const MoorhenContainer = (props) => {
         windowWidth, windowHeight, innerWindowMarginWidth,showDrawer, setShowDrawer, showColourRulesToast, timeCapsuleRef,
         setShowColourRulesToast, urlPrefix: props.urlPrefix, ...preferences
     }
+
+    const isDark = isDarkBackground(...backgroundColor)
 
     return <> <div>
 
@@ -309,11 +318,10 @@ export const MoorhenContainer = (props) => {
                         ${backgroundColor[3]})`}}
                 >
                 <IconButton onClick={() => {setShowDrawer(true)}}>
-                    <img src={`${props.urlPrefix}/baby-gru/pixmaps/MoorhenLogo.png`} alt={appTitle} style={{height: '2.5rem'}}/>
-                    <ChevronRightOutlined style={{color: isDarkBackground(...backgroundColor) ? 'white' : 'black'}}/>
+                    <MenuOutlined style={{height: '2.5rem', color: isDark ? 'white' : 'black'}}/>
                 </IconButton>
                 {<Form.Control style={{maxWidth: "20rem" }} type="text" readOnly={true} value={`${hoveredAtom.molecule ? hoveredAtom.molecule.name + ':' + hoveredAtom.cid : ''}`} />}
-                {<div style={{width:'5rem'}}> { busy && <Spinner animation="border" style={{ marginRight: '0.5rem' }} />} </div>}
+                {<div style={{width:'5rem'}}> { busy && <Spinner animation="border" style={{ marginRight: '0.5rem', color: isDark ? 'white' : 'black' }} />} </div>}
                 {<div style={{width:'5rem', display:'flex', alignItems:'center', alignContent:'center'}}> { timeCapsuleRef.current?.busy && <SaveOutlined/>} </div>}
             </Stack>
         </Drawer>
@@ -328,18 +336,16 @@ export const MoorhenContainer = (props) => {
                     '& .MuiDrawer-paper': {
                         width: '25rem',
                         boxSizing: 'border-box',
-                        backgroundColor: isDarkBackground(...backgroundColor) ? 'grey' : 'white'
+                        backgroundColor: isDark ? 'grey' : 'white'
                     },
                 }}
                 variant="persistent"
                 anchor="left"
                 open={showDrawer}
             >
-            <Stack gap={2} direction='horizontal' style={{backgroundColor: isDarkBackground(...backgroundColor) ? 'grey' : 'white'}}>
-                    {<Form.Control style={{ maxWidth: "25rem" }} type="text" readOnly={true} value={`${hoveredAtom.molecule ? hoveredAtom.molecule.name + ':' + hoveredAtom.cid : ''}`} />}
+                <Stack gap={2} direction='horizontal' style={{backgroundColor: isDark ? 'grey' : 'white', justifyContent: 'right'}}>
                     <IconButton onClick={() => {setShowDrawer(false)}}>
-                        <img src={`${props.urlPrefix}/baby-gru/pixmaps/MoorhenLogo.png`} alt={appTitle} style={{height: '2.5rem'}}/>
-                        <ChevronLeftOutlined style={{color: 'black'}}/>
+                        <CloseOutlined style={{height: '2.5rem', color: isDark ? 'white' : 'black'}}/>
                     </IconButton>
                 </Stack>
                 <Divider/>

@@ -18,7 +18,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     
     const { 
         setShowToast, setToastContent, hoveredAtom, setHoveredAtom, 
-        commandCentre, activeMap, glRef, molecules, timeCapsuleRef 
+        commandCentre, activeMap, glRef, molecules, timeCapsuleRef
     } = collectedProps;
 
     const getCentreAtom = async () => {
@@ -326,6 +326,17 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         glRef.current.setZoom(1.0)
         glRef.current.clickedAtoms = []
         glRef.current.drawScene()
+    }
+
+    else if (action === 'increase_map_radius' || action === 'decrease_map_radius') {
+        if (activeMap) {
+            const mapRadiusChanged = new CustomEvent("mapRadiusChanged", {
+                "detail": {
+                    factor: action === 'increase_map_radius' ? 2 : -2,
+                }
+            })
+            document.dispatchEvent(mapRadiusChanged)
+        }
     }
 
     else if (action === 'take_screenshot') {

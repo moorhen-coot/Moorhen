@@ -169,7 +169,6 @@ export const MoorhenGetMonomerMenuItem = (props) => {
         const fromMolNo = parseInt(selectRef.current.value)
         const newTlc = tlcRef.current.value
         const newMolecule = new MoorhenMolecule(props.commandCentre, props.urlPrefix)
-        let monomerLoadedPromise;
 
         const getMonomer = () => {
             return props.commandCentre.current.cootCommand({
@@ -198,11 +197,12 @@ export const MoorhenGetMonomerMenuItem = (props) => {
                     newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
                     return newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef).then(_ => {
                         props.changeMolecules({ action: "Add", item: newMolecule })
-                        props.setPopoverIsShown(false)
+                        props.setShowDrawer(false)
                     })
                 } else {
                     console.log('Error getting monomer... Missing dictionary?')
                     props.commandCentre.current.extendConsoleMessage('Error getting monomer... Missing dictionary?')
+                    props.setShowDrawer(false)
                 }
             })
     }
@@ -212,7 +212,7 @@ export const MoorhenGetMonomerMenuItem = (props) => {
         popoverContent={panelContent}
         menuItemText="Get monomer..."
         onCompleted={onCompleted}
-        setPopoverIsShown={props.setPopoverIsShown}
+        setPopoverIsShown={() => {}}
     />
 }
 
@@ -256,7 +256,7 @@ export const MoorhenFitLigandRightHereMenuItem = (props) => {
                         })
                     })
                 }
-                props.setPopoverIsShown(false)
+                props.setShowDrawer(false)
             })
     }
 
@@ -265,7 +265,7 @@ export const MoorhenFitLigandRightHereMenuItem = (props) => {
         popoverContent={panelContent}
         menuItemText="Fit ligand here..."
         onCompleted={onCompleted}
-        setPopoverIsShown={props.setPopoverIsShown}
+        setPopoverIsShown={() => {}}
     />
 }
 
