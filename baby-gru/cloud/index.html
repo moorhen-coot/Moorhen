@@ -52,42 +52,31 @@ main UI thread (as opposed to the CootWorker)-->
 </head>
 
 <body>
-  <!--Define the div ID where the app has to be rendered and uri the input PDB-->
-  <script type="text/javascript">
-    moorhenInput = {
-        rootId: "root",
-        urlPrefix: ".",
-        exportToCloudCallback: (molName, molData) => {console.log({name: molName, data: molData})},
-        inputFiles: [
-          {type: 'pdb', args: ["./baby-gru/tutorials/moorhen-tutorial-structure-number-1.pdb", "molecule"]},
-          {type: 'mtz', args: [
-            "./baby-gru/tutorials/moorhen-tutorial-map-number-1.mtz", "map", 
-            {F: "FWT", PHI: "PHWT", Fobs: 'F', SigFobs: 'SIGF', FreeR: 'FREER', isDifference: false, useWeight: false, calcStructFact: true}
-          ]},
-          {type: 'mtz', args: [
-            "./baby-gru/tutorials/moorhen-tutorial-map-number-1.mtz", 'diff-map',
-            {F: "DELFWT", PHI: "PHDELWT", isDifference: true, useWeight: false, calcStructFact: false}
-          ]}
-        ]
-    }
-
-    let moorhenWrapper = new moorhen.MoorhenWrapper(moorhenInput.urlPrefix)
-    moorhenWrapper.renderMoorhen(moorhenInput.rootId, moorhenInput.exportToCloudCallback)
-    moorhenWrapper.waitForInitialisation().then(_ => moorhenWrapper.loadInputFiles(moorhenInput.inputFiles))
-  </script>
 
   <noscript>You need to enable JavaScript to run this app.</noscript>
+  
   <div id="root"></div>
-  <!--
-      This HTML file is a template.
-      If you open it directly in the browser, you will see an empty page.
 
-      You can add webfonts, meta tags, or analytics to this file.
-      The build step will place the bundled scripts into the <body> tag.
-
-      To begin the development, run `npm start` or `yarn start`.
-      To create a production bundle, use `npm run build` or `yarn build`.
-    -->
+  <script type="text/javascript" defer>
+    const rootId = "root"
+    const  urlPrefix = "."
+    const exportToCloudCallback = (molName, molData) => {console.log({name: molName, data: molData})}
+    const inputFiles = [
+      {type: 'pdb', args: ["./baby-gru/tutorials/moorhen-tutorial-structure-number-1.pdb", "molecule"]},
+      {type: 'mtz', args: [
+        "./baby-gru/tutorials/moorhen-tutorial-map-number-1.mtz", "map",
+        {F: "FWT", PHI: "PHWT", Fobs: 'F', SigFobs: 'SIGF', FreeR: 'FREER', isDifference: false, useWeight: false, calcStructFact: true}
+      ]},
+      {type: 'mtz', args: [
+        "./baby-gru/tutorials/moorhen-tutorial-map-number-1.mtz", 'diff-map',
+        {F: "DELFWT", PHI: "PHDELWT", isDifference: true, useWeight: false, calcStructFact: false}
+      ]}
+    ]
+    
+    let moorhenWrapper = new moorhen.MoorhenWrapper(urlPrefix)
+    moorhenWrapper.renderMoorhen(rootId, exportToCloudCallback)
+    moorhenWrapper.waitForInitialisation().then(_ => moorhenWrapper.loadInputFiles(inputFiles))
+  </script>
 </body>
 
 </html>
