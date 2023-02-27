@@ -1,6 +1,9 @@
-import { Fragment, useState } from "react";
+import { useState } from "react";
 import { MoorhenMoleculeCard } from "./MoorhenMoleculeCard"
 import { MoorhenMapCard } from "./MoorhenMapCard"
+import { ExpandLess, ExpandMore } from "@mui/icons-material";
+import { ListItemButton, ListItemText, Collapse } from "@mui/material"
+import { convertViewtoPx} from '../utils/MoorhenUtils';
 
 export const MoorhenDisplayObjects = (props) => {
     const [currentDropdownMolNo, setCurrentDropdownMolNo] = useState(-1)
@@ -35,8 +38,24 @@ export const MoorhenDisplayObjects = (props) => {
 
     displayData.sort((a, b) => (a.props.index > b.props.index) ? 1 : ((b.props.index > a.props.index) ? -1 : 0))
 
-    return <Fragment>
-        {displayData}
-    </Fragment>
+    return <>
+            <ListItemButton
+                id="models-maps-dropdown"
+                show={props.accordionDropdownId === props.dropdownId}
+                style={{display:'flex', alignItems:'center'}}
+                onClick={() => { props.dropdownId !== props.accordionDropdownId ? props.setAccordionDropdownId(props.dropdownId) : props.setAccordionDropdownId(-1) }}>
+                <ListItemText primary="Models and maps" />
+                {props.dropdownId !== props.accordionDropdownId ? <ExpandMore/> : <ExpandLess/>}
+
+            </ListItemButton>
+
+            <Collapse in={props.dropdownId === props.accordionDropdownId} timeout="auto" style={{width: props.sideBarWidth}}>
+                <div style={{maxHeight: convertViewtoPx(60, props.windowHeight), overflowY: 'scroll'}}>
+                    <hr></hr>
+                    {props.molecules.length === 0 && props.maps.length === 0 ? "No data files loaded" : displayData}
+                    <hr></hr>
+                </div>
+            </Collapse>
+    </> 
 }
 

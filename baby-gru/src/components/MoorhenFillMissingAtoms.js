@@ -88,7 +88,7 @@ export const MoorhenFillMissingAtoms = (props) => {
 
     useEffect(() => {
 
-        if (selectedModel === null || !props.toolAccordionBodyHeight || !props.showSideBar) {
+        if (selectedModel === null || props.dropdownId !== props.accordionDropdownId || !props.showSideBar) {
             return;
         }
 
@@ -122,7 +122,7 @@ export const MoorhenFillMissingAtoms = (props) => {
 
         setCardList(newCardList)
         
-    }, [residueList, props.darkMode, props.toolAccordionBodyHeight, props.sideBarWidth, props.showSideBar])
+    }, [residueList, props.darkMode, props.sideBarWidth, props.showSideBar])
 
     return <Fragment>
                 <Form style={{ padding:'0', margin: '0' }}>

@@ -5,6 +5,7 @@ import { MoorhenMapSelect } from './MoorhenMapSelect'
 import { MoorhenMoleculeSelect } from './MoorhenMoleculeSelect'
 import MoorhenSlider from './MoorhenSlider' 
 import annotationPlugin from 'chartjs-plugin-annotation'
+import { convertViewtoPx} from '../utils/MoorhenUtils';
 
 Chart.register(...registerables);
 Chart.register(annotationPlugin);
@@ -181,7 +182,7 @@ export const MoorhenDifferenceMapPeaks = (props) => {
             chartRef.current.destroy()
         }
 
-        if (selectedMap === null || selectedModel === null || selectedRmsd === null || plotData === null || mapRmsd === null || !props.toolAccordionBodyHeight || !props.showSideBar) {
+        if (selectedMap === null || selectedModel === null || selectedRmsd === null || plotData === null || mapRmsd === null || props.dropdownId !== props.accordionDropdownId || !props.showSideBar) {
             return;
         }
        
@@ -189,7 +190,7 @@ export const MoorhenDifferenceMapPeaks = (props) => {
        
         const barWidth = props.sideBarWidth / 40
         const tooltipFontSize = 12
-        const axisLabelsFontSize = props.toolAccordionBodyHeight / 60
+        const axisLabelsFontSize = convertViewtoPx(70, props.windowHeight) / 60
         
         const containerBody = document.getElementById('myContainerBody')
         containerBody.style.width = (labels.length*barWidth)+ "px";
@@ -294,7 +295,7 @@ export const MoorhenDifferenceMapPeaks = (props) => {
             }            
         });
 
-    }, [plotData, props.darkMode, props.toolAccordionBodyHeight, props.sideBarWidth, props.showSideBar])
+    }, [plotData, props.darkMode, props.sideBarWidth, props.showSideBar])
 
     return <Fragment>
                 <Form style={{ padding:'0', margin: '0' }}>
