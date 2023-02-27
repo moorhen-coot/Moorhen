@@ -20,7 +20,7 @@ export const MoorhenConsole = forwardRef((props, ref) => {
                 <hr></hr>
                 <div ref={ref} style={{
                     overflowY: "scroll",
-                    height: convertViewtoPx(50, props.windowHeight),
+                    height: convertViewtoPx(70, props.windowHeight),
                     textAlign: "left"
                 }}>
                     <pre>{props.consoleMessage}
