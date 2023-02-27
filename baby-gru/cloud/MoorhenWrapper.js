@@ -4,6 +4,7 @@ import { MoorhenContainer } from '../src/components/MoorhenContainer';
 import { PreferencesContextProvider } from "../src/utils/MoorhenPreferences";
 import { MoorhenMolecule } from "../src/utils/MoorhenMolecule"
 import { MoorhenMap } from "../src/utils/MoorhenMap"
+import reportWebVitals from '../src/reportWebVitals'
 import '../src/index.css';
 import '../src/App.css';
 
@@ -11,6 +12,7 @@ export default class MoorhenWrapper {
     constructor(urlPrefix) {
       this.urlPrefix = urlPrefix
       this.controls = null
+      reportWebVitals()
     }
   
     forwardControls(controls) {
