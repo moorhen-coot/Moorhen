@@ -7,8 +7,8 @@ import { MoorhenButtonBar } from './MoorhenButtonBar';
 import { MoorhenFileMenu } from './MoorhenFileMenu';
 import { MoorhenCloudMenu } from './MoorhenCloudMenu';
 import { MoorhenPreferencesMenu } from './MoorhenPreferencesMenu';
-import { ChevronLeftOutlined, ChevronRightOutlined, SaveOutlined } from '@mui/icons-material';
-import { Backdrop, IconButton, Drawer, Divider, List} from "@mui/material";
+import { SaveOutlined, MenuOutlined, CloseOutlined } from '@mui/icons-material';
+import { Backdrop, IconButton, Drawer, Divider, List } from "@mui/material";
 import { MoorhenHistoryMenu, historyReducer, initialHistoryState } from './MoorhenHistoryMenu';
 import { MoorhenViewMenu } from './MoorhenViewMenu';
 import { MoorhenLigandMenu } from './MoorhenLigandMenu';
@@ -288,6 +288,8 @@ export const MoorhenContainer = (props) => {
         setShowColourRulesToast, urlPrefix: props.urlPrefix, ...preferences
     }
 
+    const isDark = isDarkBackground(...backgroundColor)
+
     return <> <div>
 
         <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={!cootInitialized}>
@@ -316,11 +318,10 @@ export const MoorhenContainer = (props) => {
                         ${backgroundColor[3]})`}}
                 >
                 <IconButton onClick={() => {setShowDrawer(true)}}>
-                    <img src={`${props.urlPrefix}/baby-gru/pixmaps/MoorhenLogo.png`} alt={appTitle} style={{height: '2.5rem'}}/>
-                    <ChevronRightOutlined style={{color: isDarkBackground(...backgroundColor) ? 'white' : 'black'}}/>
+                    <MenuOutlined style={{height: '2.5rem', color: isDark ? 'white' : 'black'}}/>
                 </IconButton>
                 {<Form.Control style={{maxWidth: "20rem" }} type="text" readOnly={true} value={`${hoveredAtom.molecule ? hoveredAtom.molecule.name + ':' + hoveredAtom.cid : ''}`} />}
-                {<div style={{width:'5rem'}}> { busy && <Spinner animation="border" style={{ marginRight: '0.5rem' }} />} </div>}
+                {<div style={{width:'5rem'}}> { busy && <Spinner animation="border" style={{ marginRight: '0.5rem', color: isDark ? 'white' : 'black' }} />} </div>}
                 {<div style={{width:'5rem', display:'flex', alignItems:'center', alignContent:'center'}}> { timeCapsuleRef.current?.busy && <SaveOutlined/>} </div>}
             </Stack>
         </Drawer>
@@ -335,18 +336,16 @@ export const MoorhenContainer = (props) => {
                     '& .MuiDrawer-paper': {
                         width: '25rem',
                         boxSizing: 'border-box',
-                        backgroundColor: isDarkBackground(...backgroundColor) ? 'grey' : 'white'
+                        backgroundColor: isDark ? 'grey' : 'white'
                     },
                 }}
                 variant="persistent"
                 anchor="left"
                 open={showDrawer}
             >
-            <Stack gap={2} direction='horizontal' style={{backgroundColor: isDarkBackground(...backgroundColor) ? 'grey' : 'white'}}>
-                    {<Form.Control style={{ maxWidth: "25rem" }} type="text" readOnly={true} value={`${hoveredAtom.molecule ? hoveredAtom.molecule.name + ':' + hoveredAtom.cid : ''}`} />}
+                <Stack gap={2} direction='horizontal' style={{backgroundColor: isDark ? 'grey' : 'white', justifyContent: 'right'}}>
                     <IconButton onClick={() => {setShowDrawer(false)}}>
-                        <img src={`${props.urlPrefix}/baby-gru/pixmaps/MoorhenLogo.png`} alt={appTitle} style={{height: '2.5rem'}}/>
-                        <ChevronLeftOutlined style={{color: 'black'}}/>
+                        <CloseOutlined style={{height: '2.5rem', color: isDark ? 'white' : 'black'}}/>
                     </IconButton>
                 </Stack>
                 <Divider/>

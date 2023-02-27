@@ -7,6 +7,7 @@ import { MoorhenAutofitRotamerButton, MoorhenFlipPeptideButton, MoorhenSideChain
 import { IconButton, Drawer, Divider } from "@mui/material";
 import { ArrowDownwardOutlined, ArrowUpwardOutlined } from "@mui/icons-material";
 import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
+import { convertViewtoPx} from '../utils/MoorhenUtils';
 
 export const MoorhenButtonBar = (props) => {
     const [selectedButtonIndex, setSelectedButtonIndex] = useState(null);
@@ -93,24 +94,26 @@ export const MoorhenButtonBar = (props) => {
     }
 
     const carouselItems = getCarouselItems()
-
+    const isDark = isDarkBackground(...props.backgroundColor)
     return  <> 
-
-    <Drawer anchor='bottom' open={true} variant='persistent'
+    <Drawer anchor='bottom' open={true} variant='persistent' elevation={2000}
                 onMouseOver={() => setOpacity(1)}
                 onMouseOut={() => setOpacity(0.5)}
                 sx={{
-                opacity: showDrawer ? '0.0' : opacity,
-                width: '100%',
-                flexShrink: 0,
-                '& .MuiDrawer-paper': {
+                    opacity: showDrawer ? '0.0' : opacity,
                     width: '100%',
-                    boxSizing: 'border-box',
-                    backgroundColor: isDarkBackground(...props.backgroundColor) ? 'grey' : 'white'
-                },
+                    flexShrink: 0,
+                    '& .MuiDrawer-paper': {
+                        width: '10%',
+                        boxSizing: 'border-box',
+                        backgroundColor: isDark ? 'grey' : 'white',
+                        alignItems:'center', justifyContent:'center', alignContent:'center', verticalAlign:'center',
+                        borderTop: 0, 
+                        marginLeft: convertViewtoPx(5.6, props.windowWidth),
+                    },
             }}>
-            <IconButton onClick={() => {setShowDrawer(true)}} sx={{opacity: showDrawer ? '0.0' : opacity}}>
-                <ArrowUpwardOutlined style={{color: isDarkBackground(...props.backgroundColor) ? 'white' : 'black'}}/>
+            <IconButton onClick={() => {setShowDrawer(true)}} sx={{ width:'100%', borderColor:'black', borderTop: 1, borderLeft: 1, borderRight: 1,opacity: showDrawer ? '0.0' : opacity, borderRadius: 0 }}>
+                <ArrowUpwardOutlined style={{color: isDark ? 'white' : 'black'}}/>
             </IconButton>
     </Drawer>
     <Drawer
@@ -119,9 +122,12 @@ export const MoorhenButtonBar = (props) => {
             width: '100%',
             flexShrink: 0,
             '& .MuiDrawer-paper': {
-                width: '100%',
+                width: '10%',
                 boxSizing: 'border-box',
-                backgroundColor: isDarkBackground(...props.backgroundColor) ? 'grey' : 'white'
+                borderTop: 0, 
+                backgroundColor: isDark ? 'grey' : 'white',
+                alignItems:'center', justifyContent:'center', alignContent:'center', verticalAlign:'center',
+                marginLeft: convertViewtoPx(5.6, props.windowWidth),
             },
         }}
         variant="persistent"
@@ -130,10 +136,29 @@ export const MoorhenButtonBar = (props) => {
         onMouseOver={() => setOpacity(1)}
         onMouseOut={() => setOpacity(0.5)}
     >
-        <IconButton onClick={() => {setShowDrawer(false)}}>
-            <ArrowDownwardOutlined style={{color: isDarkBackground(...props.backgroundColor) ? 'white' : 'black'}}/>
+        <IconButton onClick={() => {setShowDrawer(false)}} sx={{ width:'100%', borderColor:'black', borderTop: 1, borderLeft: 1, borderRight: 1, opacity: opacity, borderRadius: 0}}>
+            <ArrowDownwardOutlined style={{color: isDark ? 'white' : 'black'}}/>
         </IconButton>
         <Divider/>
+        <div style={{height:'4rem'}}></div>
+    </Drawer>
+    <Drawer
+            sx={{
+                opacity: opacity,
+                width: '100%',
+                flexShrink: 0,
+                '& .MuiDrawer-paper': {
+                    width: '100%',
+                    boxSizing: 'border-box',
+                    backgroundColor: isDark ? 'grey' : 'white'
+                },
+            }}
+            variant="persistent"
+            anchor="bottom"
+            open={showDrawer}
+            onMouseOver={() => setOpacity(1)}
+            onMouseOut={() => setOpacity(0.5)}
+    >
         <Carousel 
                 style={{marginBottom: '0.5rem'}}
                 key={carouselItems.length}
