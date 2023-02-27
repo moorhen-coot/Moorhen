@@ -1,12 +1,11 @@
 import { useState, useEffect, forwardRef } from "react";
-import { IconButton, Drawer, Divider, List } from "@mui/material";
+import { IconButton, Drawer, List } from "@mui/material";
 import { MoorhenToolsAccordion } from './MoorhenToolsAccordion'
 import { MoorhenDisplayObjects } from './MoorhenDisplayObjects';
 import { MoorhenConsole } from"./MoorhenConsole";
 import { convertViewtoPx} from '../utils/MoorhenUtils';
 import { isDarkBackground } from '../WebGLgComponents/mgWebGL';
-import { ArrowBackOutlined, ArrowForward, ArrowForwardOutlined, CloseOutlined } from '@mui/icons-material';
-import { Stack } from 'react-bootstrap';
+import { ArrowBackOutlined, ArrowForwardOutlined } from '@mui/icons-material';
 
 export const MoorhenSideBar = forwardRef((props, ref) => {
     const [showSideBar, setShowSideBar] = useState(false);
