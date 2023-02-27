@@ -317,8 +317,8 @@ export const MoorhenContainer = (props) => {
                         ${255 * backgroundColor[2]}, 
                         ${backgroundColor[3]})`}}
                 >
-                <IconButton onClick={() => {setShowDrawer(true)}}>
-                    <MenuOutlined style={{height: '2.5rem', color: isDark ? 'white' : 'black'}}/>
+                <IconButton onClick={() => {setShowDrawer(true)}} size='large'>
+                    <MenuOutlined style={{color: isDark ? 'white' : 'black'}}/>
                 </IconButton>
                 {<Form.Control style={{maxWidth: "20rem" }} type="text" readOnly={true} value={`${hoveredAtom.molecule ? hoveredAtom.molecule.name + ':' + hoveredAtom.cid : ''}`} />}
                 {<div style={{width:'5rem'}}> { busy && <Spinner animation="border" style={{ marginRight: '0.5rem', color: isDark ? 'white' : 'black' }} />} </div>}

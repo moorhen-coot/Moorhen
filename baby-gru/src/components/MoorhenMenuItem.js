@@ -1757,7 +1757,7 @@ export const MoorhenMergeMoleculesMenuItem = (props) => {
         console.log({ toMolecule, otherMolecules })
         let banan = await toMolecule.mergeMolecules(otherMolecules, props.glRef, true)
         console.log({ banan })
-        props.setPopoverIsShown(false)
+        props.fromMolNo ? props.setPopoverIsShown(false) : props.setShowDrawer(false)
         const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: {origin: props.glRef.current.origin,  modifiedMolecule: toMolecule.molNo} })
         document.dispatchEvent(mapUpdateEvent)
     }, [toRef.current, fromRef.current, props.molecules, props.fromMolNo, props.glRef])
@@ -1768,7 +1768,7 @@ export const MoorhenMergeMoleculesMenuItem = (props) => {
         popoverContent={panelContent}
         menuItemText={props.menuItemText}
         onCompleted={onCompleted}
-        setPopoverIsShown={props.setPopoverIsShown}
+        setPopoverIsShown={props.fromMolNo ? props.setPopoverIsShown : () => {}}
     />
 }
 
