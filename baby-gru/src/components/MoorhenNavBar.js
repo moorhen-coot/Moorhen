@@ -13,7 +13,7 @@ export const MoorhenNavBar = forwardRef((props, ref) => {
 
     const collectedProps = {currentDropdownId, setCurrentDropdownId, ...props}
 
-    return  <Navbar ref={ref} id='navbar-baby-gru' className={props.isDark ? "navbar-dark" : "navbar-light"} style={{ height: '2rem', justifyContent: 'between', margin: '0.1rem', padding: '0.1rem' }}>
+    return  <Navbar ref={ref} id='navbar-baby-gru' className={props.isDark ? "navbar-dark" : "navbar-light"} style={{ borderBottom: '1px solid grey', height: '2rem', justifyContent: 'between', margin: '0.1rem', padding: '0.1rem' }}>
                 <Navbar.Toggle aria-controls="basic-navbar-nav" />
                 <Navbar.Collapse id="basic-navbar-nav">
                     <Nav className="justify-content-left">
