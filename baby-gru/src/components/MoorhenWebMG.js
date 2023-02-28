@@ -344,13 +344,15 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
 
                 {showContextMenu && 
                 <MoorhenContextMenu 
-                    backgroundColor={props.backgroundColor}
-                    molecules={props.molecules}
-                    maps={props.maps}
+                    urlPrefix={props.urlPrefix}
                     glRef={glRef}
                     commandCentre={props.commandCentre}
+                    backgroundColor={props.backgroundColor}
+                    timeCapsuleRef={props.timeCapsuleRef}
+                    molecules={props.molecules}
                     changeMolecules={props.changeMolecules}
-                    urlPrefix={props.urlPrefix}
+                    maps={props.maps}
+                    changeMaps={props.changeMaps}
                     showContextMenu={showContextMenu}
                     setShowContextMenu={setShowContextMenu}
                 />}

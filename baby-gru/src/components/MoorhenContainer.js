@@ -377,11 +377,13 @@ export const MoorhenContainer = (props) => {
                             cursor: cursorStyle
                         }}>
                         <MoorhenWebMG
+                            ref={glRef}
+                            timeCapsuleRef={timeCapsuleRef}
+                            commandCentre={commandCentre}
                             molecules={molecules}
                             changeMolecules={changeMolecules}
-                            ref={glRef}
                             maps={maps}
-                            commandCentre={commandCentre}
+                            changeMaps={changeMaps}
                             width={webGLWidth}
                             height={webGLHeight}
                             backgroundColor={backgroundColor}
