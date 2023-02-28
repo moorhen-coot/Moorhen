@@ -284,7 +284,7 @@ export const MoorhenContainer = (props) => {
         molecules, changeMolecules, appTitle, setAppTitle, maps, changeMaps, glRef, activeMolecule, setActiveMolecule,
         activeMap, setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor, toastContent, 
         setToastContent, currentDropdownId, setCurrentDropdownId, hoveredAtom, setHoveredAtom, showToast, setShowToast,
-        windowWidth, windowHeight, innerWindowMarginWidth,showDrawer, setShowDrawer, showColourRulesToast, timeCapsuleRef,
+        windowWidth, windowHeight, innerWindowMarginWidth, showDrawer, setShowDrawer, showColourRulesToast, timeCapsuleRef,
         setShowColourRulesToast, urlPrefix: props.urlPrefix, ...preferences
     }
 

@@ -4,7 +4,7 @@ import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import { Button, Overlay, Container, Row, FormSelect, FormGroup, FormLabel, Card, Form } from "react-bootstrap"
 import { MoorhenMoleculeSelect } from "./MoorhenMoleculeSelect";
 import { MoorhenCidInputForm } from "./MoorhenCidInputForm";
-import { cidToSpec, getTooltipShortcutLabel, residueCodesThreeToOne } from "../utils/MoorhenUtils";
+import { cidToSpec, getTooltipShortcutLabel, residueCodesThreeToOne, convertViewtoPx } from "../utils/MoorhenUtils";
 
 const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
     const target = useRef(null)
@@ -106,14 +106,14 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
 
     return <>
         <Tooltip title={(props.needsMapData && !props.activeMap) || (props.needsAtomData && props.molecules.length === 0) ? '' : props.toolTip}>
-            <div>
+            <div >
                 <Button value={props.buttonIndex}
                     id={props.id}
                     size="sm"
                     ref={buttonRef ? buttonRef : target}
                     active={props.buttonIndex === props.selectedButtonIndex}
                     variant='light'
-                    style={{ borderColor: props.buttonIndex === props.selectedButtonIndex ? 'red' : '' }}
+                    style={{ width: convertViewtoPx(5, props.windowHeight), height: convertViewtoPx(5, props.windowHeight), padding: '0rem', borderColor: props.buttonIndex === props.selectedButtonIndex ? 'red' : '' }}
                     disabled={props.needsMapData && !props.activeMap ||
                         (props.needsAtomData && props.molecules.length === 0)}
                     onClick={(evt) => {
@@ -131,7 +131,7 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
                         {...props}
                         style={{
                             position: 'absolute',
-                            marginBottom: '0.5rem',
+                            marginBottom: '0.1rem',
                             backgroundColor: 'rgba(150, 200, 150, 0.5)',
                             padding: '2px 10px',
                             color: 'black',
@@ -173,7 +173,7 @@ export const MoorhenAutofitRotamerButton = (props) => {
         needsMapData={true}
         cootCommand="fill_partial_residue"
         prompt="Click atom in residue to fit rotamer"
-        icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/auto-fit-rotamer.svg`} alt='Auto-Fit rotamer' />}
+        icon={<img style={{width:'100%', height: '100%'}} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/auto-fit-rotamer.svg`} alt='Auto-Fit rotamer' />}
         formatArgs={(molecule, chosenAtom) => {
             return [
                 molecule.molNo,
@@ -203,7 +203,7 @@ export const MoorhenFlipPeptideButton = (props) => {
         needsMapData={false}
         cootCommand="flipPeptide_cid"
         prompt="Click atom in residue to flip"
-        icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/flip-peptide.svg`} alt='Flip Peptide' />}
+        icon={<img style={{width:'100%', height: '100%'}} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/flip-peptide.svg`} alt='Flip Peptide' />}
         formatArgs={(molecule, chosenAtom) => {
             return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, '']
         }} />
@@ -219,7 +219,7 @@ export const MoorhenConvertCisTransButton = (props) => {
         needsMapData={false}
         cootCommand="cis_trans_convert"
         prompt="Click atom in residue to convert"
-        icon={<img className="baby-gru-button-icon" alt="Cis/Trans" src={`${props.urlPrefix}/baby-gru/pixmaps/cis-trans.svg`} />}
+        icon={<img style={{width:'100%', height: '100%'}} className="baby-gru-button-icon" alt="Cis/Trans" src={`${props.urlPrefix}/baby-gru/pixmaps/cis-trans.svg`} />}
         formatArgs={(molecule, chosenAtom) => {
             return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf
                 }`]
@@ -236,7 +236,7 @@ export const MoorhenSideChain180Button = (props) => {
         needsMapData={false}
         cootCommand="side_chain_180"
         prompt="Click atom in residue to flip sidechain"
-        icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/side-chain-180.svg`} alt='Rotate Side-chain' />}
+        icon={<img style={{width:'100%', height: '100%'}} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/side-chain-180.svg`} alt='Rotate Side-chain' />}
         formatArgs={(molecule, chosenAtom) => {
             return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
         }} />
@@ -340,7 +340,7 @@ export const MoorhenRefineResiduesUsingAtomCidButton = (props) => {
             glRef={props.glRef}
             setPanelParameters={setPanelParameters}
             panelParameters={panelParameters} />}
-        icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/refine-1.svg`} alt='Refine Residues' />}
+        icon={<img style={{width:'100%', height: '100%'}} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/refine-1.svg`} alt='Refine Residues' />}
     />
 }
 
@@ -354,7 +354,7 @@ export const MoorhenAddSideChainButton = (props) => {
         needsMapData={true}
         cootCommand="fill_partial_residue"
         prompt="Click atom in residue to add a side chain"
-        icon={<img className="baby-gru-button-icon" alt="Add side chain" src={`${props.urlPrefix}/baby-gru/pixmaps/add-side-chain.svg`} />}
+        icon={<img style={{width:'100%', height: '100%'}} className="baby-gru-button-icon" alt="Add side chain" src={`${props.urlPrefix}/baby-gru/pixmaps/add-side-chain.svg`} />}
         formatArgs={(molecule, chosenAtom) => {
             return [molecule.molNo, chosenAtom.chain_id, chosenAtom.res_no, chosenAtom.ins_code]
         }} />
@@ -371,7 +371,7 @@ export const MoorhenAddAltConfButton = (props) => {
         cootCommand="add_alternative_conformation"
         prompt="Click atom in residue to add alternative conformation"
         refineAfterMod={false}
-        icon={<img className="baby-gru-button-icon" alt="Add side chain" src={`${props.urlPrefix}/baby-gru/pixmaps/add-alt-conf.svg`} />}
+        icon={<img style={{width:'100%', height: '100%'}} className="baby-gru-button-icon" alt="Add side chain" src={`${props.urlPrefix}/baby-gru/pixmaps/add-alt-conf.svg`} />}
         formatArgs={(molecule, chosenAtom) => {
             return [molecule.molNo, `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/*${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`]
         }} />
@@ -449,7 +449,7 @@ export const MoorhenDeleteUsingCidButton = (props) => {
         prompt={<MoorhenDeletePanel
             setPanelParameters={setPanelParameters}
             panelParameters={panelParameters} />}
-        icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/delete.svg`} alt="delete-item"/>}
+        icon={<img style={{width:'100%', height: '100%'}} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/delete.svg`} alt="delete-item"/>}
         formatArgs={(m, c, p) => deleteFormatArgs(m, c, p)}
         refineAfterMod={false} />
 }
@@ -514,7 +514,7 @@ export const MoorhenMutateButton = (props) => {
         prompt={<MoorhenMutatePanel
             setPanelParameters={setPanelParameters}
             panelParameters={panelParameters} />}
-        icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/mutate.svg`} alt='Mutate' />}
+        icon={<img style={{width:'100%', height: '100%'}} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/mutate.svg`} alt='Mutate' />}
         formatArgs={(m, c, p) => mutateFormatArgs(m, c, p)} />
 }
 
@@ -536,7 +536,7 @@ export const MoorhenAddTerminalResidueDirectlyUsingCidButton = (props) => {
         needsMapData={true}
         cootCommand="add_terminal_residue_directly_using_cid"
         prompt="Click atom in residue to add a residue to that residue"
-        icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/add-peptide-1.svg`} alt='Add Residue' />}
+        icon={<img style={{width:'100%', height: '100%'}} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/add-peptide-1.svg`} alt='Add Residue' />}
         formatArgs={(molecule, chosenAtom) => {
             return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
         }} />
@@ -561,7 +561,7 @@ export const MoorhenEigenFlipLigandButton = (props) => {
         needsMapData={false}
         cootCommand="eigen_flip_ligand"
         prompt="Click atom in residue to eigen flip it"
-        icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/spin-view.svg`} />}
+        icon={<img style={{width:'100%', height: '100%'}} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/spin-view.svg`} />}
         formatArgs={(molecule, chosenAtom) => {
             return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
         }} />
@@ -576,7 +576,7 @@ export const MoorhenJedFlipFalseButton = (props) => {
         needsMapData={false}
         cootCommand="jed_flip"
         prompt="Click atom in residue to flip around that rotatable bond - wag the tail"
-        icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/edit-chi.svg`} />}
+        icon={<img style={{width:'100%', height: '100%'}} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/edit-chi.svg`} />}
         formatArgs={(molecule, chosenAtom) => {
             return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`, false]
         }} />
@@ -591,7 +591,7 @@ export const MoorhenJedFlipTrueButton = (props) => {
         needsMapData={false}
         cootCommand="jed_flip"
         prompt="Click atom in residue to flip around that rotatable bond - wag the dog"
-        icon={<img alt="jed-flip" className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/jed-flip-reverse.svg`} />}
+        icon={<img style={{width:'100%', height: '100%'}} alt="jed-flip" className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/jed-flip-reverse.svg`} />}
         formatArgs={(molecule, chosenAtom) => {
             return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`, true]
         }} />
@@ -728,7 +728,7 @@ export const MoorhenRotateTranslateZoneButton = (props) => {
         needsMapData={false}
         nonCootCommand={nonCootCommand}
         prompt={<MoorhenRotateTranslatePanel />}
-        icon={<img alt="rotate/translate" className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/rtz.svg`}/>}
+        icon={<img style={{width:'100%', height: '100%'}} alt="rotate/translate" className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/rtz.svg`}/>}
         formatArgs={(molecule, chosenAtom) => {
             return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, true]
         }} />
@@ -924,7 +924,7 @@ export const MoorhenRigidBodyFitButton = (props) => {
             glRef={props.glRef}
             setPanelParameters={setPanelParameters}
             panelParameters={panelParameters} />}
-        icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/rigid-body.svg`} alt='Rigid body fit' />}
+        icon={<img style={{width:'100%', height: '100%'}} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/rigid-body.svg`} alt='Rigid body fit' />}
         formatArgs={(m, c, p) => rigidBodyFitFormatArgs(m, c, p)}
         />
 }
@@ -967,6 +967,6 @@ export const MoorhenAddSimpleButton = (props) => {
             typeSelected={typeSelected}
             selectRef={selectRef}
         />}
-        icon={<img className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/atom-at-pointer.svg`} alt='add...' />}
+        icon={<img style={{width:'100%', height: '100%'}} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/atom-at-pointer.svg`} alt='add...' />}
     />
 }
