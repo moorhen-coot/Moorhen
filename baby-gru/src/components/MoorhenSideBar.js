@@ -1,11 +1,12 @@
 import { useState, useEffect, forwardRef } from "react";
-import { IconButton, Drawer, List } from "@mui/material";
+import { IconButton, Drawer, List, Divider } from "@mui/material";
 import { MoorhenToolsAccordion } from './MoorhenToolsAccordion'
 import { MoorhenDisplayObjects } from './MoorhenDisplayObjects';
 import { MoorhenConsole } from"./MoorhenConsole";
 import { convertViewtoPx} from '../utils/MoorhenUtils';
 import { isDarkBackground } from '../WebGLgComponents/mgWebGL';
 import { ArrowBackOutlined, ArrowForwardOutlined } from '@mui/icons-material';
+import { Spinner, Form } from 'react-bootstrap';
 
 export const MoorhenSideBar = forwardRef((props, ref) => {
     const [showSideBar, setShowSideBar] = useState(false);
@@ -110,6 +111,11 @@ export const MoorhenSideBar = forwardRef((props, ref) => {
             onMouseOver={() => setOpacity(1)}
             onMouseOut={() => setOpacity(0.5)}
         >
+            <div style={{padding: 0, maring: 0, height: '2rem', justifyContent: 'right', display:'flex', alignContent:'center', verticalAlign:'center'}}>
+                {opacity === 1 && props.hoveredAtom.cid && <Form.Control style={{ height: '2rem', width: "20rem" }} type="text" readOnly={true} value={`${props.hoveredAtom.molecule.name}:${props.hoveredAtom.cid}`} />}
+                {opacity === 1 && props.busy && <Spinner animation="border" style={{ height: '2rem', marginRight: '0.5rem', marginLeft: '0.5rem' }} />}
+            </div>
+            <Divider></Divider>
             <List>
                 <MoorhenDisplayObjects dropdownId={1} accordionDropdownId={accordionDropdownId} setAccordionDropdownId={setAccordionDropdownId} sideBarWidth={sideBarWidth} showSideBar={showSideBar} {...props} />
                 <MoorhenToolsAccordion dropdownId={2} accordionDropdownId={accordionDropdownId} setAccordionDropdownId={setAccordionDropdownId} sideBarWidth={sideBarWidth} showSideBar={showSideBar} selectedToolKey={selectedToolKey} setSelectedToolKey={setSelectedToolKey} {...props}/>

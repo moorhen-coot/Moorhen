@@ -1,28 +1,28 @@
+import { NavDropdown } from "react-bootstrap";
+import { useState } from "react";
+import { MenuItem } from "@mui/material";
 import { MoorhenBackgroundColorMenuItem, MoorhenClipFogMenuItem } from "./MoorhenMenuItem";
-import { Collapse, ListItemButton, ListItemText, MenuItem } from "@mui/material";
-import { ExpandLess, ExpandMore } from "@mui/icons-material";
 
 export const MoorhenViewMenu = (props) => {
+    const [popoverIsShown, setPopoverIsShown] = useState(false)
+    const menuItemProps = {setPopoverIsShown, ...props}
 
     return <>
-            <ListItemButton 
-                id="view-nav-dropdown" 
-                onClick={() => {props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId(-1)}}>
-                <ListItemText primary="View" />
-                {props.dropdownId !== props.currentDropdownId ? <ExpandMore/> : <ExpandLess/>}
-            </ListItemButton>
-            <Collapse in={props.dropdownId === props.currentDropdownId} timeout="auto" unmountOnExit>
-                <hr></hr>
-                <MoorhenBackgroundColorMenuItem {...props} />
-                <MoorhenClipFogMenuItem {...props} />
+            < NavDropdown 
+                    title="View" 
+                    id="view-nav-dropdown" 
+                    style={{display:'flex', alignItems:'center'}}
+                    autoClose={popoverIsShown ? false : 'outside'}
+                    show={props.currentDropdownId === props.dropdownId}
+                    onToggle={() => {props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId(-1)}}>
+                <MoorhenBackgroundColorMenuItem {...menuItemProps} />
+                <MoorhenClipFogMenuItem {...menuItemProps} />
                 <MenuItem onClick={() => {
                     props.setShowColourRulesToast(true)
-                    props.setShowDrawer(false)
+                    document.body.click()
                 }}>
                     Set molecule colour rules
                 </MenuItem>
-                <hr></hr>
-        </Collapse>
+            </NavDropdown >
         </>
     }
-

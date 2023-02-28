@@ -1,23 +1,16 @@
 import { useRef, useState, useEffect, useReducer, useCallback, useContext } from 'react';
-import { Container, Col, Row, Spinner, Form, Toast, ToastContainer, Stack } from 'react-bootstrap';
+import { Container, Col, Row, Spinner, Toast, ToastContainer } from 'react-bootstrap';
 import { MoorhenWebMG } from './MoorhenWebMG';
 import { MoorhenCommandCentre, convertRemToPx, convertViewtoPx } from '../utils/MoorhenUtils';
 import { MoorhenTimeCapsule } from '../utils/MoorhenTimeCapsule';
 import { MoorhenButtonBar } from './MoorhenButtonBar';
-import { MoorhenFileMenu } from './MoorhenFileMenu';
-import { MoorhenCloudMenu } from './MoorhenCloudMenu';
-import { MoorhenPreferencesMenu } from './MoorhenPreferencesMenu';
-import { SaveOutlined, MenuOutlined, CloseOutlined } from '@mui/icons-material';
-import { Backdrop, IconButton, Drawer, Divider, List } from "@mui/material";
-import { MoorhenHistoryMenu, historyReducer, initialHistoryState } from './MoorhenHistoryMenu';
-import { MoorhenViewMenu } from './MoorhenViewMenu';
-import { MoorhenLigandMenu } from './MoorhenLigandMenu';
+import { Backdrop } from "@mui/material";
+import { historyReducer, initialHistoryState } from './MoorhenHistoryMenu';
 import { PreferencesContext } from "../utils/MoorhenPreferences";
 import { babyGruKeyPress } from './MoorhenKeyboardAccelerators';
-import { MoorhenEditMenu } from './MoorhenEditMenu';
 import { MoorhenSideBar } from './MoorhenSideBar';
-import { MoorhenHelpMenu } from './MoorhenHelpMenu'
 import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
+import { MoorhenNavBar } from "./MoorhenNavBar"
 import './MoorhenContainer.css'
 
 const initialMoleculesState = []
@@ -65,12 +58,10 @@ export const MoorhenContainer = (props) => {
     const [theme, setTheme] = useState("flatly")
     const [showToast, setShowToast] = useState(false)
     const [toastContent, setToastContent] = useState("")
-    const [showDrawer, setShowDrawer] = useState(true)
-    const [drawerOpacity, setDrawerOpacity] = useState(0.7)
     const [showColourRulesToast, setShowColourRulesToast] = useState(false)
     
     moleculesRef.current = molecules
-    const innerWindowMarginHeight = convertRemToPx(0)
+    const innerWindowMarginHeight = convertRemToPx(0.5)
     const innerWindowMarginWidth = convertRemToPx(1)
 
     const setWindowDimensions = () => {
@@ -256,7 +247,6 @@ export const MoorhenContainer = (props) => {
                 glRef.current.setActiveMolecule(null)
         }
         if (prevActiveMoleculeRef.current) {
-            let movedResidues = [];
             prevActiveMoleculeRef.current.applyTransform(glRef)
                 .then(response => {
                     resetActiveGL()
@@ -277,14 +267,14 @@ export const MoorhenContainer = (props) => {
     }
 
     const webGLHeight = () => {
-        return windowHeight - innerWindowMarginHeight
+        return windowHeight - (innerWindowMarginHeight + convertRemToPx(2))
     }
 
     const collectedProps = {
         molecules, changeMolecules, appTitle, setAppTitle, maps, changeMaps, glRef, activeMolecule, setActiveMolecule,
         activeMap, setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor, toastContent, 
         setToastContent, currentDropdownId, setCurrentDropdownId, hoveredAtom, setHoveredAtom, showToast, setShowToast,
-        windowWidth, windowHeight, innerWindowMarginWidth, showDrawer, setShowDrawer, showColourRulesToast, timeCapsuleRef,
+        windowWidth, windowHeight, innerWindowMarginWidth, showColourRulesToast, timeCapsuleRef,
         setShowColourRulesToast, urlPrefix: props.urlPrefix, ...preferences
     }
 
@@ -297,71 +287,7 @@ export const MoorhenContainer = (props) => {
             <span>Starting moorhen...</span>
         </Backdrop>
         
-        <Drawer anchor='top' open={true} variant='persistent'
-            onMouseOver={() => setDrawerOpacity(1)}
-            onMouseOut={() => setDrawerOpacity(0.7)}
-            sx={{
-                opacity: showDrawer ? '0.0' : drawerOpacity,
-                width: '25rem',
-                flexShrink: 0,
-                '& .MuiDrawer-paper': {
-                    borderWidth: '0',
-                    width: '30rem',
-                    boxSizing: 'border-box',
-                },
-            }}>
-            <Stack  gap={2} direction='horizontal' 
-                    style={{backgroundColor: `rgba(
-                        ${255 * backgroundColor[0]},
-                        ${255 * backgroundColor[1]},
-                        ${255 * backgroundColor[2]}, 
-                        ${backgroundColor[3]})`}}
-                >
-                <IconButton onClick={() => {setShowDrawer(true)}} size='large'>
-                    <MenuOutlined style={{color: isDark ? 'white' : 'black'}}/>
-                </IconButton>
-                {<Form.Control style={{maxWidth: "20rem" }} type="text" readOnly={true} value={`${hoveredAtom.molecule ? hoveredAtom.molecule.name + ':' + hoveredAtom.cid : ''}`} />}
-                {<div style={{width:'5rem'}}> { busy && <Spinner animation="border" style={{ marginRight: '0.5rem', color: isDark ? 'white' : 'black' }} />} </div>}
-                {<div style={{width:'5rem', display:'flex', alignItems:'center', alignContent:'center'}}> { timeCapsuleRef.current?.busy && <SaveOutlined/>} </div>}
-            </Stack>
-        </Drawer>
-            <Drawer
-                onClose={(ev, reason) => {setShowDrawer(false)}}
-                onMouseOver={() => setDrawerOpacity(1)}
-                onMouseOut={() => setDrawerOpacity(0.7)}
-                sx={{
-                    opacity: drawerOpacity,
-                    width: '25rem',
-                    flexShrink: 0,
-                    '& .MuiDrawer-paper': {
-                        width: '25rem',
-                        boxSizing: 'border-box',
-                        backgroundColor: isDark ? 'grey' : 'white'
-                    },
-                }}
-                variant="persistent"
-                anchor="left"
-                open={showDrawer}
-            >
-                <Stack gap={2} direction='horizontal' style={{backgroundColor: isDark ? 'grey' : 'white', justifyContent: 'right'}}>
-                    <IconButton onClick={() => {setShowDrawer(false)}}>
-                        <CloseOutlined style={{height: '2.5rem', color: isDark ? 'white' : 'black'}}/>
-                    </IconButton>
-                </Stack>
-                <Divider/>
-                <List>
-                        <MoorhenFileMenu dropdownId="File" {...collectedProps} />
-                        <MoorhenEditMenu dropdownId="Edit" {...collectedProps} />
-                        <MoorhenLigandMenu dropdownId="Ligand" {...collectedProps} />
-                        <MoorhenViewMenu dropdownId="View" {...collectedProps} />
-                        <MoorhenHistoryMenu dropdownId="History" {...collectedProps} />
-                        <MoorhenPreferencesMenu dropdownId="Preferences" {...collectedProps} />
-                        <MoorhenHelpMenu dropdownId="Help" {...collectedProps}/>
-                        {props.exportToCloudCallback && <MoorhenCloudMenu dropdownId="CloudExport" exportToCloudCallback={props.exportToCloudCallback} {...collectedProps}/>}
-                        {props.extraMenus && props.extraMenus.map(menu=>menu)}
-
-                </List>
-            </Drawer>
+        <MoorhenNavBar {...collectedProps} isDark={isDark} busy={busy}/>
         
     </div>
         <Container fluid className={`baby-gru ${theme}`}>
@@ -401,7 +327,7 @@ export const MoorhenContainer = (props) => {
                     </div>
                     <MoorhenButtonBar {...collectedProps} />
                 </Col>
-                <MoorhenSideBar {...collectedProps} consoleMessage={consoleMessage} ref={consoleDivRef} />
+                <MoorhenSideBar {...collectedProps} busy={busy} consoleMessage={consoleMessage} ref={consoleDivRef} />
             </Row>
             <ToastContainer style={{ marginTop: "5rem" }} position='top-center' >
                 <Toast bg='light' onClose={() => setShowToast(false)} autohide={true} delay={4000} show={showToast} style={{overflowY: 'scroll', maxHeight: convertViewtoPx(80, webGLHeight())}}>

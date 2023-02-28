@@ -119,7 +119,6 @@ export const MoorhenLoadTutorialDataMenuItem = (props) => {
         newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
         const newMap = new MoorhenMap(props.commandCentre)
         const newDiffMap = new MoorhenMap(props.commandCentre)
-        props.setShowDrawer(false)
         newMolecule.loadToCootFromURL(`${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-structure-number-${tutorialNumber}.pdb`, `moorhen-tutorial-${tutorialNumber}`)
             .then(result => {
                 newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef)
@@ -147,7 +146,7 @@ export const MoorhenLoadTutorialDataMenuItem = (props) => {
         popoverContent={panelContent}
         menuItemText="Load tutorial data..."
         onCompleted={onCompleted}
-        setPopoverIsShown={() => {}}
+        setPopoverIsShown={props.setPopoverIsShown}
     />
 }
 
@@ -197,12 +196,10 @@ export const MoorhenGetMonomerMenuItem = (props) => {
                     newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
                     return newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef).then(_ => {
                         props.changeMolecules({ action: "Add", item: newMolecule })
-                        props.setShowDrawer(false)
                     })
                 } else {
                     console.log('Error getting monomer... Missing dictionary?')
                     props.commandCentre.current.extendConsoleMessage('Error getting monomer... Missing dictionary?')
-                    props.setShowDrawer(false)
                 }
             })
     }
@@ -212,7 +209,7 @@ export const MoorhenGetMonomerMenuItem = (props) => {
         popoverContent={panelContent}
         menuItemText="Get monomer..."
         onCompleted={onCompleted}
-        setPopoverIsShown={() => {}}
+        setPopoverIsShown={props.setPopoverIsShown}
     />
 }
 
@@ -256,7 +253,6 @@ export const MoorhenFitLigandRightHereMenuItem = (props) => {
                         })
                     })
                 }
-                props.setShowDrawer(false)
             })
     }
 
@@ -265,7 +261,7 @@ export const MoorhenFitLigandRightHereMenuItem = (props) => {
         popoverContent={panelContent}
         menuItemText="Fit ligand here..."
         onCompleted={onCompleted}
-        setPopoverIsShown={() => {}}
+        setPopoverIsShown={props.setPopoverIsShown}
     />
 }
 
@@ -642,7 +638,6 @@ export const MoorhenDeleteEverythingMenuItem = (props) => {
         })
         props.changeMaps({ action: 'Empty' })
         props.changeMolecules({ action: "Empty" })
-        props.setShowDrawer(false)
     }
 
     return <MoorhenMenuItem
@@ -653,7 +648,7 @@ export const MoorhenDeleteEverythingMenuItem = (props) => {
         popoverContent={panelContent}
         menuItemText="Delete everything"
         onCompleted={onCompleted}
-        setPopoverIsShown={() => {}}
+        setPopoverIsShown={props.setPopoverIsShown}
     />
 }
 
@@ -690,8 +685,8 @@ export const MoorhenBackgroundColorMenuItem = (props) => {
         id="change-background-colour-menu-item"
         popoverContent={panelContent}
         menuItemText="Set background colour..."
-        onCompleted={() => props.setShowDrawer(false) }
-        setPopoverIsShown={() => {}}
+        onCompleted={() => props.setPopoverIsShown(false) }
+        setPopoverIsShown={props.setPopoverIsShown}
         />
 }
 
@@ -1075,7 +1070,6 @@ export const MoorhenImportMapCoefficientsMenuItem = (props) => {
             Fobs: fobsSelectRef.current.value, SigFobs: sigFobsSelectRef.current.value,
             FreeR: freeRSelectRef.current.value, calcStructFact: calcStructFactRef.current.checked
         }
-        props.setShowDrawer(false)
         return await handleFile(filesRef.current.files[0], selectedColumns)
     }
 
@@ -1170,7 +1164,7 @@ export const MoorhenImportMapCoefficientsMenuItem = (props) => {
         popoverContent={panelContent}
         menuItemText="Map coefficients..."
         onCompleted={onCompleted}
-        setPopoverIsShown={() => {}}
+        setPopoverIsShown={props.setPopoverIsShown}
     />
 }
 
@@ -1178,7 +1172,6 @@ export const MoorhenBackupsMenuItem = (props) => {
     const backupSelectRef = useRef(null)
    
     const retrieveSession = useCallback(async () => {
-        props.setShowDrawer(false)
         const key = backupSelectRef.current.value
         console.log(`Recover .... ${key}`)
        
@@ -1216,7 +1209,7 @@ export const MoorhenBackupsMenuItem = (props) => {
         showOkButton={false}
         popoverContent={panelContent}
         menuItemText="Recover molecule backup..."
-        setPopoverIsShown={() => {}}
+        setPopoverIsShown={props.setPopoverIsShown}
     />
 }
 
@@ -1264,7 +1257,6 @@ export const MoorhenImportFSigFMenuItem = (props) => {
     }
 
     const onCompleted = async () => {
-        props.setShowDrawer(false)
         return await connectMap()
     }
 
@@ -1293,7 +1285,7 @@ export const MoorhenImportFSigFMenuItem = (props) => {
         popoverContent={panelContent}
         menuItemText="Connect molecule and map for updating..."
         onCompleted={onCompleted}
-        setPopoverIsShown={() => {}}
+        setPopoverIsShown={props.setPopoverIsShown}
     />
 }
 
@@ -1330,7 +1322,6 @@ export const MoorhenImportMapMenuItem = (props) => {
         await newMap.loadToCootFromMapFile(file, isDiffRef.current.checked)
         props.changeMaps({ action: 'Add', item: newMap })
         props.setActiveMap(newMap)
-        props.setShowDrawer(false)
     }, [props.maps, filesRef.current, isDiffRef.current])
 
     return <MoorhenMenuItem
@@ -1338,254 +1329,7 @@ export const MoorhenImportMapMenuItem = (props) => {
         popoverContent={panelContent}
         menuItemText="CCP4/MRC map..."
         onCompleted={onCompleted}
-        setPopoverIsShown={() => {}}
-    />
-}
-
-export const MoorhenExecuteHistoryMenuItem = (props) => {
-    const filesRef = useRef(null)
-
-    const panelContent = <>
-        <Row>
-            <Form.Group style={{ width: '30rem', margin: '0.5rem', padding: '0rem' }} controlId="uploadHistory" className="mb-3">
-                <Form.Label>Open history file</Form.Label>
-                <Form.Control ref={filesRef} type="file" accept=".json" multiple={false}/>
-            </Form.Group>
-        </Row>
-    </>
-
-    const onCompleted = useCallback(async (e) => {
-        props.setShowDrawer(false)
-        props.executeJournalFiles([filesRef.current.files])
-    }, [props])
-
-    return <MoorhenMenuItem
-        id='open-coords-menu-item'
-        popoverContent={panelContent}
-        menuItemText="Execute history..."
-        onCompleted={onCompleted}
-        setPopoverIsShown={() => {}}
-    />
-}
-
-export const MoorhenAutoOpenCoordsMenuItem = (props) => {
-    const filesRef = useRef(null)
-
-    const panelContent = <>
-        <Row>
-            <Form.Group style={{ width: '30rem', margin: '0.5rem', padding: '0rem' }} controlId="uploadCoordinates" className="mb-3">
-                <Form.Label>Open coordinates file</Form.Label>
-                <Form.Control ref={filesRef} type="file" accept=".pdb, .mmcif, .cif, .ent" multiple={false}/>
-            </Form.Group>
-        </Row>
-    </>
-
-    const onCompleted = useCallback(async (e) => {
-        props.setShowDrawer(false)
-        const file = filesRef.current.files[0]
-        console.log('file is', file)
-        
-        const newMolecule = new MoorhenMolecule(props.commandCentre, props.urlPrefix)
-        newMolecule.setBackgroundColour(props.backgroundColor)
-        newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
-        await newMolecule.loadToCootFromFile(file)
-        await newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef)
-        props.changeMolecules({ action: "AddList", items: newMolecule })
-        newMolecule.centreOn(props.glRef, null, false)
-
-    }, [filesRef.current, props.changeMolecules, props.commandCentre, props.glRef, props.urlPrefix, props.defaultBondSmoothness, props.backgroundColor])
-
-    return <MoorhenMenuItem
-        id='open-coords-menu-item'
-        popoverContent={panelContent}
-        menuItemText="Open coordinates..."
-        onCompleted={onCompleted}
-        setPopoverIsShown={() => {}}
-    />
-}
-
-export const MoorhenUploadSessionJsonMenuItem = (props) => {
-    const filesRef = useRef(null)
-
-    const panelContent = <>
-        <Row>
-            <Form.Group style={{ width: '30rem', margin: '0.5rem', padding: '0rem' }} controlId="uploadCoordinates" className="mb-3">
-                <Form.Label>Open session file</Form.Label>
-                <Form.Control ref={filesRef} type="file" accept=".json" multiple={false}/>
-            </Form.Group>
-        </Row>
-    </>
-
-    const onCompleted = useCallback(async (e) => {
-        props.setShowDrawer(false)
-        let sessionData = await readTextFile(filesRef.current.files[0])
-        props.loadSessionJSON(sessionData)
-    
-    }, [props])
-
-    return <MoorhenMenuItem
-        id='upload-session-menu-item'
-        popoverContent={panelContent}
-        menuItemText="Load from stored session..."
-        onCompleted={onCompleted}
-        setPopoverIsShown={() => {}}
-    />
-}
-
-export const MoorhenLoadFromOnlineResourcesMenuItem = (props) => {
-    const [remoteSource, setRemoteSource] = useState("PDBe")
-    const [isValidPdbId, setIsValidPdbId] = useState(true)
-    const pdbCodeFetchInputRef = useRef(null);
-    const fetchMapDataCheckRef = useRef(null);
-
-    const fetchFiles = () => {
-        if (remoteSource === "PDBe") {
-            fetchFilesFromEBI()
-        } else if (remoteSource === "PDB-REDO") {
-            fetchFilesFromPDBRedo()
-        } else {
-            fetchFilesFromAFDB()
-        }
-    }
-
-    const fetchFilesFromEBI = async () => {
-        const pdbCode = pdbCodeFetchInputRef.current.value.toLowerCase()
-        const coordUrl = `https://www.ebi.ac.uk/pdbe/entry-files/download/pdb${pdbCode.toLowerCase()}.ent`
-        const mapUrl = `https://www.ebi.ac.uk/pdbe/entry-files/${pdbCode.toLowerCase()}.ccp4`
-        const diffMapUrl = `https://www.ebi.ac.uk/pdbe/entry-files/${pdbCode.toLowerCase()}_diff.ccp4`
-        if (pdbCode && fetchMapDataCheckRef.current.checked) {
-            await Promise.all([
-                fetchMoleculeFromURL(coordUrl, pdbCode),
-                fetchMapFromURL(mapUrl, `${pdbCode}-map`),
-                fetchMapFromURL(diffMapUrl, `${pdbCode}-map`, true)
-            ])
-        } else if (pdbCode) {
-            fetchMoleculeFromURL(coordUrl, pdbCode)
-        }
-        props.setShowDrawer(false)
-    }
-
-    const fetchFilesFromAFDB = () => {
-        const uniprotID = pdbCodeFetchInputRef.current.value.toUpperCase()
-        const coordUrl = `https://alphafold.ebi.ac.uk/files/AF-${uniprotID}-F1-model_v4.pdb`
-        if (uniprotID ) {
-            fetchMoleculeFromURL(coordUrl, `${uniprotID}`)
-                .then(newMolecule => {
-                    const newRule = [{
-                        commandInput: {
-                            message:'coot_command',
-                            command: 'add_colour_rules_multi', 
-                            returnType:'status',
-                            commandArgs: getMultiColourRuleArgs(newMolecule, 'af2-plddt')
-                        },
-                        isMultiColourRule: true,
-                        ruleType: 'af2-plddt',
-                        label: `//*`
-                    }]
-                    newMolecule.setColourRules(props.glRef, newRule, false)
-                    props.setShowDrawer(false)
-                })
-                .catch(err => console.log(err))
-        }
-    }
-
-    const fetchFilesFromPDBRedo = async () => {
-        const pdbCode = pdbCodeFetchInputRef.current.value.toLowerCase()
-        const coordUrl = `https://pdb-redo.eu/db/${pdbCode.toLowerCase()}/${pdbCode.toLowerCase()}_final.pdb`
-        const mtzUrl = `https://pdb-redo.eu/db/${pdbCode.toLowerCase()}/${pdbCode.toLowerCase()}_final.mtz/`
-        if (pdbCode && fetchMapDataCheckRef.current.checked) {
-            await Promise.all([
-                fetchMoleculeFromURL(coordUrl, `${pdbCode}-redo`),
-                fetchMtzFromURL(mtzUrl, `${pdbCode}-map-redo`,  {F: "FWT", PHI: "PHWT", Fobs: 'FP', SigFobs: 'SIGFP', FreeR: 'FREE', isDifference: false, useWeight: false, calcStructFact: true}),  
-                fetchMtzFromURL(mtzUrl, `${pdbCode}-map-redo`,  {F: "DELFWT", PHI: "PHDELWT", isDifference: true, useWeight: false})    
-            ])
-        } else if (pdbCode) {
-            fetchMoleculeFromURL(coordUrl, `${pdbCode}-redo`)
-        }
-        props.setShowDrawer(false)
-    }
-
-    const fetchMoleculeFromURL = (url, molName) => {
-        const newMolecule = new MoorhenMolecule(props.commandCentre, props.urlPrefix)
-        newMolecule.setBackgroundColour(props.backgroundColor)
-        newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
-        return new Promise(async (resolve, reject) => {
-            try {
-                await newMolecule.loadToCootFromURL(url, molName)
-                await newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef)
-                props.changeMolecules({ action: "Add", item: newMolecule })
-                newMolecule.centreOn(props.glRef, null, false)
-                resolve(newMolecule)
-            } catch (err) {
-                console.log(`Cannot fetch molecule from ${url}`)
-                setIsValidPdbId(false)
-                reject(err)
-            }   
-        })
-    }
-
-    const fetchMapFromURL = (url, mapName, isDiffMap=false) => {
-        const newMap = new MoorhenMap(props.commandCentre)
-        return new Promise(async () => {
-            try {
-                await newMap.loadToCootFromMapURL(url, mapName, isDiffMap)
-                props.changeMaps({ action: 'Add', item: newMap })
-                props.setActiveMap(newMap)
-            } catch {
-                console.log(`Cannot fetch map from ${url}`)
-            }
-        })
-    }
-
-    const fetchMtzFromURL = async (url, mapName, selectedColumns) => {
-        const newMap = new MoorhenMap(props.commandCentre)
-        return new Promise(async () => {
-            try {
-                await newMap.loadToCootFromMtzURL(url, mapName, selectedColumns)
-                props.changeMaps({ action: 'Add', item: newMap })
-                props.setActiveMap(newMap)
-            } catch {
-                console.log(`Cannot fetch mtz from ${url}`)
-            }   
-        })
-    }
-
-    const panelContent =
-        <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="fetch-pdbe-form" className="mb-3">
-                    <Form.Label>Fetch coords from online services</Form.Label>
-                    <InputGroup>
-                        <SplitButton title={remoteSource} id="fetch-coords-online-source-select">
-                            <Dropdown.Item key="PDBe" href="#" onClick={() => {
-                                setRemoteSource("PDBe")
-                            }}>PDBe</Dropdown.Item>
-                            <Dropdown.Item key="PDB-REDO" href="#" onClick={() => {
-                                setRemoteSource("PDB-REDO")
-                            }}>PDB-REDO</Dropdown.Item>
-                            <Dropdown.Item key="AFDB" href="#" onClick={() => {
-                                setRemoteSource("AFDB")
-                            }}>AlphaFold DB</Dropdown.Item>
-                        </SplitButton>
-                        <Form.Control type="text" style={{borderColor: isValidPdbId ? '' : 'red'}}  ref={pdbCodeFetchInputRef} onKeyDown={(e) => {
-                            setIsValidPdbId(true)
-                            if (e.code === 'Enter') {
-                                fetchFiles()
-                            }
-                        }}/>
-                        <Button variant="light" onClick={fetchFiles}>
-                            Fetch
-                        </Button>
-                    </InputGroup>
-                    <Form.Label style={{display: isValidPdbId ? 'none' : 'block', alignContent: 'center' ,textAlign: 'center'}}>Problem fetching</Form.Label>
-                    <Form.Check style={{ marginTop: '0.5rem' }} ref={fetchMapDataCheckRef} label={'fetch map data'} name={`fetchMapData`} type="checkbox" variant="outline" />
-        </Form.Group>
-
-    return <MoorhenMenuItem
-        id='open-coords-menu-item'
-        popoverContent={panelContent}
-        menuItemText="Fetch from online services..."
-        onCompleted={() => {}}
-        setPopoverIsShown={() => {}}
-        showOkButton={false}
+        setPopoverIsShown={props.setPopoverIsShown}
     />
 }
 
@@ -1602,7 +1346,6 @@ export const MoorhenAutoOpenMtzMenuItem = (props) => {
     </>
 
     const onCompleted = useCallback(async (e) => {
-        props.setShowDrawer(false)
         const file = filesRef.current.files[0]
         console.log('file is', file)
 
@@ -1643,7 +1386,7 @@ export const MoorhenAutoOpenMtzMenuItem = (props) => {
         popoverContent={panelContent}
         menuItemText="Auto open MTZ..."
         onCompleted={onCompleted}
-        setPopoverIsShown={() => {}}
+        setPopoverIsShown={props.setPopoverIsShown}
     />
 }
 
@@ -1665,8 +1408,8 @@ export const MoorhenAboutMenuItem = (props) => {
         id='help-about-menu-item'
         popoverContent={panelContent}
         menuItemText="About..."
-        onCompleted={() => props.setShowDrawer(false)}
-        setPopoverIsShown={() => {}}
+        onCompleted={() => { }}
+        setPopoverIsShown={props.setPopoverIsShown}
     />
 }
 
@@ -1735,8 +1478,8 @@ export const MoorhenClipFogMenuItem = (props) => {
         id='clipping-fogging-menu-item'
         popoverContent={panelContent}
         menuItemText="Clipping and fogging..."
-        onCompleted={() => props.setShowDrawer(false)}
-        setPopoverIsShown={() => {}}
+        onCompleted={() => { }}
+        setPopoverIsShown={props.setPopoverIsShown}
     />
 }
 
@@ -1761,7 +1504,7 @@ export const MoorhenMergeMoleculesMenuItem = (props) => {
         console.log({ toMolecule, otherMolecules })
         let banan = await toMolecule.mergeMolecules(otherMolecules, props.glRef, true)
         console.log({ banan })
-        props.fromMolNo ? props.setPopoverIsShown(false) : props.setShowDrawer(false)
+        props.setPopoverIsShown(false)
         const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: {origin: props.glRef.current.origin,  modifiedMolecule: toMolecule.molNo} })
         document.dispatchEvent(mapUpdateEvent)
     }, [toRef.current, fromRef.current, props.molecules, props.fromMolNo, props.glRef])
@@ -1772,7 +1515,7 @@ export const MoorhenMergeMoleculesMenuItem = (props) => {
         popoverContent={panelContent}
         menuItemText={props.menuItemText}
         onCompleted={onCompleted}
-        setPopoverIsShown={props.fromMolNo ? props.setPopoverIsShown : () => {}}
+        setPopoverIsShown={props.setPopoverIsShown}
     />
 }
 
