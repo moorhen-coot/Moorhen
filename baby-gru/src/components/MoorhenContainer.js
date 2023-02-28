@@ -378,6 +378,7 @@ export const MoorhenContainer = (props) => {
                         }}>
                         <MoorhenWebMG
                             molecules={molecules}
+                            changeMolecules={changeMolecules}
                             ref={glRef}
                             maps={maps}
                             commandCentre={commandCentre}
