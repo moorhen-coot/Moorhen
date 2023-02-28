@@ -81,7 +81,8 @@ export const MoorhenButtonBar = (props) => {
     }, [selectedButtonIndex])
 
     const getCarouselItems = () => {
-        const maximumAllowedWidth = props.windowWidth - (props.innerWindowMarginWidth + (props.showSideBar ? props.sideBarWidth : 0))
+        const buttonWidth = convertViewtoPx(5, props.windowHeight)
+        const maximumAllowedWidth = props.windowWidth - buttonWidth * 4
 
         let currentlyUsedWidth = 0
         let carouselItems = []
@@ -89,7 +90,7 @@ export const MoorhenButtonBar = (props) => {
 
         editButtons.forEach(button => {
             currentItem.push(button)
-            currentlyUsedWidth += 90
+            currentlyUsedWidth += buttonWidth
             if (currentlyUsedWidth >= maximumAllowedWidth) {
                 carouselItems.push(currentItem)
                 currentItem = []
@@ -148,6 +149,7 @@ export const MoorhenButtonBar = (props) => {
         onMouseOut={() => {if(!popoverIsShownRef.current) setOpacity(0.5) }}
         >
         <IconButton onClick={() => {setShowDrawer(false)}} sx={{
+             height: convertViewtoPx(3, props.windowHeight),
              width:'100%', 
              borderColor:'black', 
              borderTop: 1, 
@@ -155,16 +157,17 @@ export const MoorhenButtonBar = (props) => {
              borderRight: 1, 
              opacity: opacity, 
              borderRadius: 0,
-             //padding: '0rem',
+             padding: '0rem',
+             margin: '0rem',
              backgroundColor: isDark ? 'grey' : 'white',
              ':hover': {
                 backgroundColor: isDark ? 'grey' : 'white',
             }
         }}>
-            <ArrowDownwardOutlined style={{color: isDark ? 'white' : 'black'}}/>
+            <ArrowDownwardOutlined style={{height: '100%', color: isDark ? 'white' : 'black'}}/>
         </IconButton>
         <Divider/>
-        <div style={{height:'4.1rem'}}></div>
+        <div style={{height: convertViewtoPx(5, props.windowHeight)}}></div>
     </Drawer>
     <Drawer
             sx={{
@@ -184,7 +187,7 @@ export const MoorhenButtonBar = (props) => {
             onMouseOut={() => {if(!popoverIsShownRef.current) setOpacity(0.5) }}
             >
         <Carousel 
-                style={{marginBottom: '0.5rem'}}
+                style={{marginBottom: '0.1rem'}}
                 key={carouselItems.length}
                 variant={props.darkMode ? "light" : "dark"} 
                 interval={null} 
