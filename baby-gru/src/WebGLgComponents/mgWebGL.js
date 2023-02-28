@@ -1823,10 +1823,25 @@ class MGWebGL extends Component {
                     evt.stopPropagation();
                 },
                 false);
-            self.canvas.addEventListener("auxclick",
+            self.canvas.addEventListener("contextmenu",
                 function (evt) {
-                    self.doMiddleClick(evt, self);
                     evt.stopPropagation();
+                    evt.preventDefault();
+                },
+                false);
+            self.canvas.addEventListener("mousedown",
+                function (evt) {
+                    if (evt.which === 1) {
+                        self.doClick(evt, self);
+                        evt.stopPropagation();
+                    } else if (evt.which === 2) {
+                        self.doMiddleClick(evt, self);
+                        evt.stopPropagation();    
+                    } else {
+                        self.doRightClick(evt, self);
+                        evt.stopPropagation();
+                        evt.preventDefault();    
+                    }
                 },
                 false);
             self.canvas.addEventListener("dblclick",
@@ -1838,12 +1853,6 @@ class MGWebGL extends Component {
             self.canvas.addEventListener("mousemove",
                 function (evt) {
                     self.doMouseMove(evt, self);
-                    evt.stopPropagation();
-                },
-                false);
-            self.canvas.addEventListener("click",
-                function (evt) {
-                    self.doClick(evt, self);
                     evt.stopPropagation();
                 },
                 false);
@@ -8838,6 +8847,111 @@ class MGWebGL extends Component {
         vec3.subtract(frontPos, frontPos, self.origin);
         vec3.subtract(backPos, backPos, self.origin);
         return [frontPos, backPos, x, y];
+    }
+
+    doRightClick(event, self) {
+        if (self.activeMolecule === null) {
+            let x;
+            let y;
+            let e = event;
+            if (e.pageX || e.pageY) {
+                x = e.pageX;
+                y = e.pageY;
+            }
+            else {
+                x = e.clientX;
+                y = e.clientY;
+            }
+
+            let c = this.canvasRef.current;
+            let offset = getOffsetRect(c);
+
+            x -= offset.left;
+            y -= offset.top;
+            x *= getDeviceScale();
+            y *= getDeviceScale();
+
+            let invQuat = quat4.create();
+            quat4Inverse(self.myQuat, invQuat);
+            let theMatrix = quatToMat4(invQuat);
+            let ratio = 1.0 * self.gl.viewportWidth / self.gl.viewportHeight;
+            let minX = (-24. * ratio * self.zoom);
+            let maxX = (24. * ratio * self.zoom);
+            let minY = (-24. * self.zoom);
+            let maxY = (24. * self.zoom);
+            let fracX = 1.0 * x / self.gl.viewportWidth;
+            let fracY = 1.0 * (y) / self.gl.viewportHeight;
+            let theX = minX + fracX * (maxX - minX);
+            let theY = maxY - fracY * (maxY - minY);
+            //let frontPos = vec3Create([theX,theY,0.000001]);
+            //let backPos  = vec3Create([theX,theY,1000.0]);
+            //MN Changed to improve picking
+            let frontPos = vec3Create([theX, theY, this.gl_clipPlane0[3]]);
+            let backPos = vec3Create([theX, theY, this.gl_clipPlane1[3]]);
+            vec3.transformMat4(frontPos, frontPos, theMatrix);
+            vec3.transformMat4(backPos, backPos, theMatrix);
+            vec3.subtract(frontPos, frontPos, self.origin);
+            vec3.subtract(backPos, backPos, self.origin);
+
+            let mindist = 100000.;
+            let minidx = -1;
+            let minj = -1;
+            let clickTol = 0.65 * this.zoom;
+
+            for (let idx = 0; idx < self.displayBuffers.length; idx++) {
+                if (!self.displayBuffers[idx].visible) {
+                    continue;
+                }
+                for (let j = 0; j < self.displayBuffers[idx].atoms.length; j++) {
+                    //if(Math.abs(self.displayBuffers[idx].atoms[j].x-frontPos[0])>clickTol) continue;
+                    //if(Math.abs(self.displayBuffers[idx].atoms[j].y-frontPos[1])>clickTol) continue;
+                    //let p = vec3Create([79.109,59.437,27.316]);
+                    let atx = self.displayBuffers[idx].atoms[j].x;
+                    let aty = self.displayBuffers[idx].atoms[j].y;
+                    let atz = self.displayBuffers[idx].atoms[j].z;
+                    //console.log(atx+" "+aty+" "+atz);
+                    let p = vec3Create([atx, aty, atz]);
+
+                    let dpl = DistanceBetweenPointAndLine(frontPos, backPos, p);
+
+                    //MN Changed logic here
+                    let atPos = vec3Create([atx, aty, atz])
+                    let displacement = vec3Create([0, 0, 0]);
+                    vec3.subtract(displacement, atPos, frontPos)
+                    //fB_plus_fZ is the displacement from the front clipping plane to the back clipping plane
+                    const fB_plus_fZ = (this.gl_clipPlane0[3] + this.gl_clipPlane1[3]) / this.zoom
+                    //fZ is the displacement from teh front clipping plane to the origin of rotation
+                    const fZ = (this.gl_clipPlane0[3] + 500) / this.zoom
+                    //aZ is the displacement from the frontClipping plane to the atom
+                    const aZ = (500 - vec3.length(displacement)) / this.zoom
+
+                    const targetFactor = 1. / (1 + (Math.abs(fZ - aZ) / fB_plus_fZ))
+                    if (
+                        dpl[0] < clickTol * targetFactor //clickTol modified to reflect proximity to rptation origin
+                        && dpl[0] < mindist //closest click seen
+                        && aZ > 0 //Beyond near clipping plane
+                        && aZ < fB_plus_fZ //In front of far clipping plane
+                    ) {
+
+                        minidx = idx;
+                        minj = j;
+                        mindist = dpl[0];
+                    }
+                }
+            }      
+
+        let rightClick = new CustomEvent("rightClick", {
+            "detail": {
+                atom: minidx > -1 ? self.displayBuffers[minidx].atoms[minj] : null,
+                buffer: minidx > -1 ? self.displayBuffers[minidx] : null,
+                coords: "",
+                pageX: event.pageX,
+                pageY: event.pageY
+            }
+        });
+        document.dispatchEvent(rightClick);
+        
+        }
     }
 
     doClick(event, self) {

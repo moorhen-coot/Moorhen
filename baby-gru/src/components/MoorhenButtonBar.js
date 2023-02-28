@@ -129,16 +129,16 @@ export const MoorhenButtonBar = (props) => {
     </Drawer>
     <Drawer
         sx={{
-            opacity: opacity,
+            backgroundColor: 'rgba(0, 0, 0, 0)',
             width: '100%',
             flexShrink: 0,
             '& .MuiDrawer-paper': {
                 width: '10%',
                 boxSizing: 'border-box',
                 borderTop: 0, 
-                backgroundColor: isDark ? 'grey' : 'white',
                 alignItems:'center', justifyContent:'center', alignContent:'center', verticalAlign:'center',
                 marginLeft: convertViewtoPx(5.6, props.windowWidth),
+                backgroundColor: 'rgba(0, 0, 0, 0)'
             },
         }}
         variant="persistent"
@@ -147,11 +147,24 @@ export const MoorhenButtonBar = (props) => {
         onMouseOver={() => setOpacity(1)}
         onMouseOut={() => {if(!popoverIsShownRef.current) setOpacity(0.5) }}
         >
-        <IconButton onClick={() => {setShowDrawer(false)}} sx={{ width:'100%', borderColor:'black', borderTop: 1, borderLeft: 1, borderRight: 1, opacity: opacity, borderRadius: 0}}>
+        <IconButton onClick={() => {setShowDrawer(false)}} sx={{
+             width:'100%', 
+             borderColor:'black', 
+             borderTop: 1, 
+             borderLeft: 1, 
+             borderRight: 1, 
+             opacity: opacity, 
+             borderRadius: 0,
+             //padding: '0rem',
+             backgroundColor: isDark ? 'grey' : 'white',
+             ':hover': {
+                backgroundColor: isDark ? 'grey' : 'white',
+            }
+        }}>
             <ArrowDownwardOutlined style={{color: isDark ? 'white' : 'black'}}/>
         </IconButton>
         <Divider/>
-        <div style={{height:'4rem'}}></div>
+        <div style={{height:'4.1rem'}}></div>
     </Drawer>
     <Drawer
             sx={{

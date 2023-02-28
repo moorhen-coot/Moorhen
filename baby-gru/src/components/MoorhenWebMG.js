@@ -2,6 +2,7 @@ import React, { useEffect, useCallback, forwardRef, useState, useRef } from 'rea
 import { Toast, ToastContainer } from 'react-bootstrap';
 import { MGWebGL } from '../WebGLgComponents/mgWebGL.js';
 import { MoorhenColourRules } from "./MoorhenColourRules.js"
+import { MoorhenContextMenu } from "./MoorhenContextMenu.js"
 import { convertViewtoPx } from '../utils/MoorhenUtils.js';
 
 export const MoorhenWebMG = forwardRef((props, glRef) => {
@@ -9,6 +10,7 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
     const [mapLineWidth, setMapLineWidth] = useState(1.0)
     const [connectedMolNo, setConnectedMolNo] = useState(null)
     const [scoresToastContents, setScoreToastContents] = useState(null)
+    const [showContextMenu, setShowContextMenu] = useState(false)
 
     const setClipFogByZoom = () => {
         const fieldDepthFront = 8;
@@ -200,6 +202,10 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
         glRef.current.drawScene()
     }, [glRef, props.width, props.height])
 
+    const handleRightClick = useCallback((e) => {
+        setShowContextMenu({ ...e.detail })
+    }, [])
+
     useEffect(() => {
         glRef.current.setAmbientLightNoUpdate(0.2, 0.2, 0.2)
         glRef.current.setSpecularLightNoUpdate(0.6, 0.6, 0.6)
@@ -257,9 +263,15 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
     }, [handleWindowResized])
 
     useEffect(() => {
+        document.addEventListener("rightClick", handleRightClick);
+        return () => {
+            document.removeEventListener("rightClick", handleRightClick);
+        };
+
+    }, [handleRightClick]);
+
+    useEffect(() => {
         if (glRef.current) {
-            console.log('Stuff', glRef.current.background_colour, props.backgroundColor)
-            console.log(props)
             glRef.current.background_colour = props.backgroundColor
             glRef.current.drawScene()
         }
@@ -270,7 +282,6 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
 
     useEffect(() => {
         if (glRef.current) {
-            //console.log('Stuff', glRef.current.atomLabelDepthMode, props.atomLabelDepthMode)
             glRef.current.atomLabelDepthMode = props.atomLabelDepthMode
             glRef.current.drawScene()
         }
@@ -316,8 +327,7 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
                     }
                     <MoorhenColourRules glRef={glRef} {...props}/>
                 </ToastContainer>
-
-                
+               
                 <MGWebGL
                     ref={glRef}
                     dataChanged={(d) => { console.log(d) }}
@@ -331,6 +341,19 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
                     showFPS={props.preferences.drawFPS}
                     mapLineWidth={mapLineWidth}
                     drawMissingLoops={props.drawMissingLoops} />
+
+                {showContextMenu && 
+                <MoorhenContextMenu 
+                    backgroundColor={props.backgroundColor}
+                    molecules={props.molecules}
+                    maps={props.maps}
+                    glRef={glRef}
+                    commandCentre={props.commandCentre}
+                    changeMolecules={props.changeMolecules}
+                    urlPrefix={props.urlPrefix}
+                    showContextMenu={showContextMenu}
+                    setShowContextMenu={setShowContextMenu}
+                />}
             </>
 });
 

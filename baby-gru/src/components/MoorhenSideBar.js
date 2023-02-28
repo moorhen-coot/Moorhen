@@ -54,15 +54,15 @@ export const MoorhenSideBar = forwardRef((props, ref) => {
         </Drawer>
         <Drawer
             sx={{
-                opacity: opacity,
                 height: '100%',
+                backgroundColor: 'rgba(0, 0, 0, 0)',
                 flexShrink: 0,
                 '& .MuiDrawer-paper': {
+                    backgroundColor: 'rgba(0, 0, 0, 0)',
                     width: sideBarWidth + sideBarWidth * 0.05,
                     height: '10%',
                     boxSizing: 'border-box',
                     alignItems:'left', justifyContent: 'left', alignContent:'center', verticalAlign:'center',
-                    backgroundColor: isDark ? 'grey' : 'white',
                     borderTop: 0,
                     borderBottom: 0,
                     borderLeft: 0,
@@ -77,12 +77,17 @@ export const MoorhenSideBar = forwardRef((props, ref) => {
         >
             <IconButton onClick={() => {setShowSideBar(false)}} sx={{
                 opacity: opacity,
-                width: '5%',
+                width: sideBarWidth * 0.05 - 1,
+                padding: '0rem',
                 height:'100%',
                 borderRadius: 0,
                 borderTop: 1,
                 borderBottom: 1,
                 borderLeft: 1,
+                backgroundColor: isDark ? 'grey' : 'white',
+                ':hover': {
+                    backgroundColor: isDark ? 'grey' : 'white',
+                }
                 }}>
                 <ArrowForwardOutlined style={{color: isDark ? 'white' : 'black'}}/>
             </IconButton>
