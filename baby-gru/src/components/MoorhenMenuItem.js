@@ -1228,13 +1228,13 @@ export const MoorhenImportFSigFMenuItem = (props) => {
 
     const connectMap = async () => {
         const connectMapsArgs = [
-            parseInt(moleculeSelectRef.current.value),
+            props.selectedMolNo !== null ? props.selectedMolNo : parseInt(moleculeSelectRef.current.value),
             parseInt(mapSelectRef.current.value),
             parseInt(twoFoFcSelectRef.current.value),
             parseInt(foFcSelectRef.current.value),
         ]
         const sFcalcArgs = [
-            parseInt(moleculeSelectRef.current.value),
+            props.selectedMolNo !== null ? props.selectedMolNo : parseInt(moleculeSelectRef.current.value),
             parseInt(twoFoFcSelectRef.current.value),
             parseInt(foFcSelectRef.current.value),
             parseInt(mapSelectRef.current.value)
@@ -1281,19 +1281,23 @@ export const MoorhenImportFSigFMenuItem = (props) => {
             <Col key="Col2">
                 <MoorhenMapSelect {...props} ref={foFcSelectRef} label="FoFc" filterFunction={(map) => map.isDifference} allowAny={false} width='100%' />
             </Col>
+            {props.selectedMolNo === null &&
             <Col key="Col3">
                 <MoorhenMoleculeSelect {...props} ref={moleculeSelectRef} label="Molecule" allowAny={false} width='100%' />
             </Col>
+            }
         </Row>
     </>
 
     return <MoorhenMenuItem
         popoverContent={panelContent}
-        menuItemText="Connect map and molecule for updating..."
+        menuItemText="Connect molecule and map for updating..."
         onCompleted={onCompleted}
         setPopoverIsShown={() => {}}
     />
 }
+
+MoorhenImportFSigFMenuItem.defaultProps = { selectedMolNo: null }
 
 export const MoorhenImportMapMenuItem = (props) => {
     const filesRef = useRef(null)

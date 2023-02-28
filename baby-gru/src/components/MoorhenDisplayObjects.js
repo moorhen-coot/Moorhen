@@ -52,7 +52,7 @@ export const MoorhenDisplayObjects = (props) => {
             <Collapse in={props.dropdownId === props.accordionDropdownId} timeout="auto" style={{width: props.sideBarWidth}}>
                 <div style={{maxHeight: convertViewtoPx(70, props.windowHeight), overflowY: 'scroll'}}>
                     <hr></hr>
-                    {props.molecules.length === 0 && props.maps.length === 0 ? "No data files loaded" : displayData}
+                    {props.molecules.length === 0 && props.maps.length === 0 ? "No models or maps loaded" : displayData}
                     <hr></hr>
                 </div>
             </Collapse>

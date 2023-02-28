@@ -1,11 +1,11 @@
 import styled, { css } from "styled-components";
 import { ClickAwayListener, List, MenuItem } from '@mui/material';
-import { MoorhenMergeMoleculesMenuItem, MoorhenGetMonomerMenuItem, MoorhenFitLigandRightHereMenuItem } from "./MoorhenMenuItem";
+import { MoorhenMergeMoleculesMenuItem, MoorhenGetMonomerMenuItem, MoorhenFitLigandRightHereMenuItem, MoorhenImportFSigFMenuItem } from "./MoorhenMenuItem";
 import { isDarkBackground } from '../WebGLgComponents/mgWebGL.js';
 
 const ContextMenu = styled.div`
   position: absolute;
-  width: 200px;
+  
   border-radius: 5px;
   box-sizing: border-box;
   border-color: #4a4a4a;
@@ -33,6 +33,15 @@ export const MoorhenContextMenu = (props) => {
     props.setShowContextMenu(false)
   }
 
+  const handleCreateBackup = async () => {
+    const session = await props.timeCapsuleRef.current.fetchSession()
+    const sessionString = JSON.stringify(session)
+    const key = {dateTime: `${Date.now()}`, type: 'manual', name: '', molNames: session.moleculesNames}
+    const keyString = JSON.stringify(key)
+    await props.timeCapsuleRef.current.createBackup(keyString, sessionString)
+    props.setShowContextMenu(false)
+}
+
   const top = props.showContextMenu.pageY
   const left = props.showContextMenu.pageX
   const backgroundColor = isDarkBackground(...props.backgroundColor) ? '#858585' : '#ffffff' 
@@ -41,13 +50,29 @@ export const MoorhenContextMenu = (props) => {
     selectedMolecule = props.molecules.find(molecule => molecule.buffersInclude(props.showContextMenu.buffer))
   }
 
+  // Connect to map
+  // Make backup
+  // show spiner even if drawer is open
+
+
   return <ContextMenu top={top} left={left} backgroundColor={backgroundColor}>
               <ClickAwayListener onClickAway={() => props.setShowContextMenu(false)}>
                   <List>
-                    {selectedMolecule && <MoorhenMergeMoleculesMenuItem key={'merge-molecules'} glRef={props.glRef} molecules={props.molecules} setPopoverIsShown={() => {}} menuItemText="Merge molecule into..." popoverPlacement='right' fromMolNo={selectedMolecule.molNo}/>}
-                    {!selectedMolecule && <MoorhenGetMonomerMenuItem setShowDrawer={() => {}} defaultBondSmoothness={0} glRef={props.glRef} molecules={props.molecules} commandCentre={props.commandCentre} changeMolecules={props.changeMolecules} backgroundColor={props.backgroundColor}/>}
-                    {selectedMolecule && <MenuItem onClick={() => handleRemoveHydrogens(selectedMolecule)}>Remove hydrogens</MenuItem>}
-                    {!selectedMolecule && <MoorhenFitLigandRightHereMenuItem setShowDrawer={() => {}} defaultBondSmoothness={0} glRef={props.glRef} maps={props.maps} molecules={props.molecules} commandCentre={props.commandCentre} changeMolecules={props.changeMolecules} backgroundColor={props.backgroundColor} />}
+                    {selectedMolecule ?
+                    <>
+                     <MoorhenMergeMoleculesMenuItem glRef={props.glRef} molecules={props.molecules} setPopoverIsShown={() => {}} menuItemText="Merge molecule into..." popoverPlacement='right' fromMolNo={selectedMolecule.molNo}/>
+                     <MenuItem onClick={() => handleRemoveHydrogens(selectedMolecule)}>Remove hydrogens</MenuItem>
+                     <MoorhenImportFSigFMenuItem glRef={props.glRef} molecules={props.molecules} setShowDrawer={() => {}} selectedMolNo={selectedMolecule.molNo} maps={props.maps} commandCentre={props.commandCentre} />
+                     <MenuItem onClick={() => handleCreateBackup()}>Create backup</MenuItem>
+                    </>
+                    :
+                    <>
+                      <MoorhenGetMonomerMenuItem setShowDrawer={() => {}} defaultBondSmoothness={0} glRef={props.glRef} molecules={props.molecules} commandCentre={props.commandCentre} changeMolecules={props.changeMolecules} backgroundColor={props.backgroundColor}/>
+                      <MoorhenFitLigandRightHereMenuItem setShowDrawer={() => {}} defaultBondSmoothness={0} glRef={props.glRef} maps={props.maps} molecules={props.molecules} commandCentre={props.commandCentre} changeMolecules={props.changeMolecules} backgroundColor={props.backgroundColor} />
+                      <MenuItem onClick={() => handleCreateBackup()}>Create backup</MenuItem>
+                    </>
+                     }
+                    
                   </List>
               </ClickAwayListener>
           </ContextMenu>
