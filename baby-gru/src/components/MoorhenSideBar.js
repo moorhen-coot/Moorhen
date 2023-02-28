@@ -78,18 +78,19 @@ export const MoorhenSideBar = forwardRef((props, ref) => {
             <IconButton onClick={() => {setShowSideBar(false)}} sx={{
                 opacity: opacity,
                 width: sideBarWidth * 0.05 - 1,
-                padding: '0rem',
+                padding: 0,
                 height:'100%',
                 borderRadius: 0,
                 borderTop: 1,
                 borderBottom: 1,
                 borderLeft: 1,
+                margin: 0,
                 backgroundColor: isDark ? 'grey' : 'white',
                 ':hover': {
                     backgroundColor: isDark ? 'grey' : 'white',
                 }
                 }}>
-                <ArrowForwardOutlined style={{color: isDark ? 'white' : 'black'}}/>
+                <ArrowForwardOutlined style={{color: isDark ? 'white' : 'black', width: '100%'}}/>
             </IconButton>
         </Drawer>
         <Drawer
