@@ -174,6 +174,7 @@ const getDefaultValues = () => {
 const PreferencesContext = createContext();
 
 const PreferencesContextProvider = ({ children }) => {
+    const [isMounted, setIsMounted] = useState(false)
     const [defaultBackgroundColor, setDefaultBackgroundColor] = useState(null)
     const [atomLabelDepthMode, setAtomLabelDepthMode] = useState(null)
     const [defaultExpandDisplayCards, setDefaultExpandDisplayCards] = useState(null)
@@ -266,7 +267,9 @@ const PreferencesContextProvider = ({ children }) => {
             } catch (err) {
                 console.log(err)
                 console.log('Unable to fetch preferences from local storage...')
-            }
+            } finally {
+                setIsMounted(true)
+            }            
         }
         
         localforage.config({
@@ -486,7 +489,7 @@ const PreferencesContextProvider = ({ children }) => {
         setShowScoresToast, defaultUpdatingScores, setDefaultUpdatingScores, drawFPS, setDrawFPS,
         wheelSensitivityFactor, setWheelSensitivityFactor, shortcutOnHoveredAtom, setShortcutOnHoveredAtom,
         resetClippingFogging, setResetClippingFogging, maxBackupCount, setMaxBackupCount,
-        modificationCountBackupThreshold, setModificationCountBackupThreshold
+        modificationCountBackupThreshold, setModificationCountBackupThreshold, isMounted
     }
 
     return (

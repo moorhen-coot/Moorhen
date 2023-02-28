@@ -90,14 +90,14 @@ export const MoorhenContainer = (props) => {
     }, [cootInitialized, props.forwardControls])
     
     useEffect(() => {
-        if (preferences.defaultBackgroundColor && preferences.defaultBackgroundColor !== backgroundColor) {
+        if (preferences.isMounted && preferences.defaultBackgroundColor !== backgroundColor) {
             setBackgroundColor(preferences.defaultBackgroundColor)
         }
         
-    }, [preferences.defaultBackgroundColor])
+    }, [preferences.isMounted])
 
     useEffect(() => {
-        if (!preferences.defaultBackgroundColor) {
+        if (!preferences.isMounted) {
             return
         }
         
