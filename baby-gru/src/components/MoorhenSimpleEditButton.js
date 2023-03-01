@@ -103,6 +103,8 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
             document.removeEventListener('atomClicked', atomClickedCallback, { once: true })
         }
     }, [props.selectedButtonIndex, atomClickedCallback])
+    
+    const buttonSize = Math.max(convertViewtoPx(5, props.windowHeight), 40)
 
     return <>
         <Tooltip title={(props.needsMapData && !props.activeMap) || (props.needsAtomData && props.molecules.length === 0) ? '' : props.toolTip}>
@@ -113,7 +115,7 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
                     ref={buttonRef ? buttonRef : target}
                     active={props.buttonIndex === props.selectedButtonIndex}
                     variant='light'
-                    style={{ width: convertViewtoPx(5, props.windowHeight), height: convertViewtoPx(5, props.windowHeight), padding: '0rem', borderColor: props.buttonIndex === props.selectedButtonIndex ? 'red' : '' }}
+                    style={{ width: buttonSize, height: buttonSize, padding: '0rem', borderColor: props.buttonIndex === props.selectedButtonIndex ? 'red' : '' }}
                     disabled={props.needsMapData && !props.activeMap ||
                         (props.needsAtomData && props.molecules.length === 0)}
                     onClick={(evt) => {

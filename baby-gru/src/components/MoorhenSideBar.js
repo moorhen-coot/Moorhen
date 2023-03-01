@@ -17,7 +17,7 @@ export const MoorhenSideBar = forwardRef((props, ref) => {
 
     const isDark = isDarkBackground(...props.backgroundColor)
     const sideBarWidth = convertViewtoPx(30, props.windowWidth)
-    const showDrawerButtonWidth = sideBarWidth * 0.07
+    const toggleDrowerButtonWidth = sideBarWidth * 0.07
 
     useEffect(() => {
         consoleBodyHeight !== 0 ? setConsoleBodyHeight(convertViewtoPx(30, props.windowHeight)) : setConsoleBodyHeight(convertViewtoPx(0, props.windowHeight))
@@ -49,7 +49,7 @@ export const MoorhenSideBar = forwardRef((props, ref) => {
                 opacity: showSideBar ? '0.0' : opacity,
                 backgroundColor: isDark ? 'grey' : 'white',
                 height:'10%',
-                width: showDrawerButtonWidth - 1,
+                width: toggleDrowerButtonWidth - 1,
                 borderRadius: 0,
                 borderTop: 1,
                 borderBottom: 1,
@@ -58,7 +58,7 @@ export const MoorhenSideBar = forwardRef((props, ref) => {
                 padding: 0,
                 ':hover': {
                     backgroundColor: isDark ? 'grey' : 'white',
-                }    
+                }
                 }}>
                 <ArrowBackOutlined style={{color: isDark ? 'white' : 'black', width: '100%'}}/>
             </IconButton>
@@ -81,7 +81,7 @@ export const MoorhenSideBar = forwardRef((props, ref) => {
                     padding: 0,
                     border: 0,
                     justifyContent:'center',
-                    width: sideBarWidth + showDrawerButtonWidth,
+                    width: sideBarWidth + toggleDrowerButtonWidth,
                 },
             }}
             variant="persistent"
@@ -92,7 +92,7 @@ export const MoorhenSideBar = forwardRef((props, ref) => {
         >
             <IconButton onClick={() => {setShowSideBar(false)}} sx={{
                 opacity: opacity,
-                width: showDrawerButtonWidth - 1,
+                width: toggleDrowerButtonWidth - 1,
                 padding: 0,
                 height:'10%',
                 borderRadius: 0,
