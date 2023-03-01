@@ -34,7 +34,6 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
                 props.onCompleted(molecule, chosenAtom)
             }
             if (props.refineAfterMod && props.activeMap) {
-                console.log('Triggering post-modification triple refinement...')
                 try {
                     await props.commandCentre.current.cootCommand({
                         returnType: "status",
@@ -103,6 +102,8 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
             document.removeEventListener('atomClicked', atomClickedCallback, { once: true })
         }
     }, [props.selectedButtonIndex, atomClickedCallback])
+    
+    const buttonSize = Math.max(convertViewtoPx(5, props.windowHeight), 40)
 
     return <>
         <Tooltip title={(props.needsMapData && !props.activeMap) || (props.needsAtomData && props.molecules.length === 0) ? '' : props.toolTip}>
@@ -113,7 +114,7 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
                     ref={buttonRef ? buttonRef : target}
                     active={props.buttonIndex === props.selectedButtonIndex}
                     variant='light'
-                    style={{ width: convertViewtoPx(5, props.windowHeight), height: convertViewtoPx(5, props.windowHeight), padding: '0rem', borderColor: props.buttonIndex === props.selectedButtonIndex ? 'red' : '' }}
+                    style={{ width: buttonSize, height: buttonSize, padding: '0rem', borderColor: props.buttonIndex === props.selectedButtonIndex ? 'red' : '' }}
                     disabled={props.needsMapData && !props.activeMap ||
                         (props.needsAtomData && props.molecules.length === 0)}
                     onClick={(evt) => {
@@ -457,7 +458,6 @@ export const MoorhenDeleteUsingCidButton = (props) => {
 export const MoorhenMutateButton = (props) => {
 
     const autoFitRotamer = useCallback(async (molecule, chosenAtom) => {
-        console.log('Post-mutation autofit rotamer...')
         const formattedArgs = [
             molecule.molNo,
             chosenAtom.chain_id,
@@ -707,7 +707,6 @@ export const MoorhenRotateTranslateZoneButton = (props) => {
         Object.keys(molecule.displayObjects)
             .filter(style => { return ['CRs', 'CBs', 'ligands', 'gaussian', 'MolecularSurface', 'VdWSurface', 'DishyBases'].includes(style) })
             .forEach(async style => {
-                console.log({ style }, molecule.displayObjects[style].length)
                 if (molecule.displayObjects[style].length > 0 &&
                     molecule.displayObjects[style][0].visible) {
                     await newMolecule.drawWithStyleFromAtoms(style, glRef)
@@ -947,7 +946,6 @@ export const MoorhenAddSimpleButton = (props) => {
     const typeSelected = useCallback(value => {
         const selectedMolecule = props.molecules.find(molecule => molecule.molNo === parseInt(selectRef.current.value))
         if (selectedMolecule) {
-            console.log({ selectedMolecule })
             selectedMolecule.addLigandOfType(value,
                 props.glRef.current.origin.map(coord => -coord),
                 props.glRef)

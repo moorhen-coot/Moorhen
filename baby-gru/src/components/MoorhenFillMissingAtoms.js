@@ -10,13 +10,11 @@ export const MoorhenFillMissingAtoms = (props) => {
     const [cardList, setCardList] = useState([])
     
     const handleModelChange = (evt) => {
-        console.log(`Selected model ${evt.target.value}`)
         setSelectedModel(parseInt(evt.target.value))
     }
 
     const handleAtomFill = (...args) => {
         const fillPartialResidue = async (selectedMolecule, chainId, resNum, insCode) => {
-            console.log(selectedMolecule, chainId, resNum, insCode)
             await props.commandCentre.current.cootCommand({
                 returnType: "status",
                 command: "fill_partial_residue",
@@ -25,7 +23,6 @@ export const MoorhenFillMissingAtoms = (props) => {
             }, true)
 
             if (props.refineAfterMod) {
-                console.log('Triggering post-modification triple refinement...')
                 await props.commandCentre.current.cootCommand({
                     returnType: "status",
                     command: 'refine_residues_using_atom_cid',

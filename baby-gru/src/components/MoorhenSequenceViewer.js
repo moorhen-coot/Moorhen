@@ -209,7 +209,6 @@ export const MoorhenSequenceViewer = (props) => {
         }
 
         const disableDoubleClick = (evt) => {
-            console.log("Double-click is disabled in the sequence viewer...")
             evt.preventDefault()
             evt.stopPropagation()
         }
@@ -249,7 +248,6 @@ export const MoorhenSequenceViewer = (props) => {
         const [newRulerStart, newSeqLenght, newDisplaySequence, newStart, newEnd] = parseSequenceData(props.sequence.sequence)
         
         if (newDisplaySequence !== displaySettings.displaySequence) {
-            console.log('Updating sequence viewer now...')
             sequenceRef.current.sequence = newDisplaySequence
             navigationRef.current._rulerStart = newRulerStart
             sequenceRef.current._createSequence()

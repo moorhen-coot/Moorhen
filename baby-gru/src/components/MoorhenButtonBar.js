@@ -4,10 +4,10 @@ import { MoorhenAutofitRotamerButton, MoorhenFlipPeptideButton, MoorhenSideChain
         MoorhenEigenFlipLigandButton, MoorhenJedFlipFalseButton, MoorhenJedFlipTrueButton, MoorhenConvertCisTransButton, MoorhenAddSimpleButton,
         MoorhenRefineResiduesUsingAtomCidButton, MoorhenDeleteUsingCidButton, MoorhenMutateButton, MoorhenRotateTranslateZoneButton,
         MoorhenAddAltConfButton, MoorhenRigidBodyFitButton } from "./MoorhenSimpleEditButton"
-import { IconButton, Drawer, Divider } from "@mui/material";
+import { IconButton, Drawer } from "@mui/material";
 import { ArrowDownwardOutlined, ArrowUpwardOutlined } from "@mui/icons-material";
 import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
-import { convertViewtoPx} from '../utils/MoorhenUtils';
+import { convertRemToPx, convertViewtoPx} from '../utils/MoorhenUtils';
 
 export const MoorhenButtonBar = (props) => {
     const [selectedButtonIndex, setSelectedButtonIndex] = useState(null);
@@ -81,7 +81,7 @@ export const MoorhenButtonBar = (props) => {
     }, [selectedButtonIndex])
 
     const getCarouselItems = () => {
-        const buttonWidth = convertViewtoPx(5, props.windowHeight)
+        const buttonWidth = Math.max(convertViewtoPx(5, props.windowHeight), 40)
         const maximumAllowedWidth = props.windowWidth - buttonWidth * 4
 
         let currentlyUsedWidth = 0
@@ -106,59 +106,78 @@ export const MoorhenButtonBar = (props) => {
     }
 
     const carouselItems = getCarouselItems()
+    const toggleDrowerButtonHeight = convertViewtoPx(3, props.windowHeight)
+    // Add 0.1 rem for the bottom margin of carousel
+    const simpleEditButtonHeight = Math.max(convertViewtoPx(5, props.windowHeight), 40) + convertRemToPx(0.1)
     const isDark = isDarkBackground(...props.backgroundColor)
+    
     return  <> 
-    <Drawer anchor='bottom' open={true} variant='persistent' elevation={2000}
-                onMouseOver={() => setOpacity(1)}
-                onMouseOut={() => {if(!popoverIsShownRef.current) setOpacity(0.5) }}
+    <Drawer anchor='bottom' open={true} variant='persistent'
                 sx={{
-                    opacity: showDrawer ? '0.0' : opacity,
                     width: '100%',
                     flexShrink: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0)',
                     '& .MuiDrawer-paper': {
-                        width: '10%',
+                        width: '100%',
                         boxSizing: 'border-box',
-                        backgroundColor: isDark ? 'grey' : 'white',
-                        alignItems:'center', justifyContent:'center', alignContent:'center', verticalAlign:'center',
+                        backgroundColor: 'rgba(0, 0, 0, 0)',
+                        alignItems:'center',
                         borderTop: 0, 
-                        marginLeft: convertViewtoPx(5.6, props.windowWidth),
+                        margin: 0,
+                        padding: 0
                     },
             }}>
-            <IconButton onClick={() => {setShowDrawer(true)}} sx={{ width:'100%', borderColor:'black', borderTop: 1, borderLeft: 1, borderRight: 1,opacity: showDrawer ? '0.0' : opacity, borderRadius: 0 }}>
-                <ArrowUpwardOutlined style={{color: isDark ? 'white' : 'black'}}/>
+            <IconButton onClick={() => {setShowDrawer(true)}} onMouseOver={() => setOpacity(1)} onMouseOut={() => {if(!popoverIsShownRef.current) setOpacity(0.5) }} sx={{
+                 width:'10%', 
+                 height: toggleDrowerButtonHeight,
+                 borderColor:'black', 
+                 borderTop: 1, 
+                 borderLeft: 1, 
+                 borderRight: 1,
+                 margin: 0,
+                 padding: 0,
+                 opacity: showDrawer ? '0.0' : opacity,
+                 borderRadius: 0,
+                 backgroundColor: isDark ? 'grey' : 'white',
+                 ':hover': {
+                    backgroundColor: isDark ? 'grey' : 'white',
+                }
+            }}>
+                <ArrowUpwardOutlined style={{color: isDark ? 'white' : 'black', height: '100%'}}/>
             </IconButton>
     </Drawer>
-    <Drawer
+    <Drawer variant="persistent" anchor="bottom" open={showDrawer}
+        onMouseOver={() => setOpacity(1)} 
+        onMouseOut={() => {if(!popoverIsShownRef.current) setOpacity(0.5)}}
         sx={{
-            backgroundColor: 'rgba(0, 0, 0, 0)',
             width: '100%',
             flexShrink: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0)',
             '& .MuiDrawer-paper': {
-                width: '10%',
+                width: '100%',
+                height: simpleEditButtonHeight + toggleDrowerButtonHeight,
                 boxSizing: 'border-box',
-                borderTop: 0, 
-                alignItems:'center', justifyContent:'center', alignContent:'center', verticalAlign:'center',
-                marginLeft: convertViewtoPx(5.6, props.windowWidth),
-                backgroundColor: 'rgba(0, 0, 0, 0)'
-            },
-        }}
-        variant="persistent"
-        anchor="bottom"
-        open={showDrawer}
-        onMouseOver={() => setOpacity(1)}
-        onMouseOut={() => {if(!popoverIsShownRef.current) setOpacity(0.5) }}
-        >
+                alignItems:'center',
+                backgroundColor: 'rgba(0, 0, 0, 0)',
+                borderTop: 0,
+                borderBottom: 0,
+                borderLeft: 0,
+                margin: 0,
+                padding: 0,
+                border: 0,
+        },
+        }}>
         <IconButton onClick={() => {setShowDrawer(false)}} sx={{
-             height: convertViewtoPx(3, props.windowHeight),
-             width:'100%', 
+             width:'10%', 
+             height: toggleDrowerButtonHeight,
              borderColor:'black', 
              borderTop: 1, 
              borderLeft: 1, 
              borderRight: 1, 
              opacity: opacity, 
              borderRadius: 0,
-             padding: '0rem',
-             margin: '0rem',
+             padding: 0,
+             margin: 0,
              backgroundColor: isDark ? 'grey' : 'white',
              ':hover': {
                 backgroundColor: isDark ? 'grey' : 'white',
@@ -166,23 +185,19 @@ export const MoorhenButtonBar = (props) => {
         }}>
             <ArrowDownwardOutlined style={{height: '100%', color: isDark ? 'white' : 'black'}}/>
         </IconButton>
-        <Divider/>
-        <div style={{height: convertViewtoPx(5, props.windowHeight)}}></div>
     </Drawer>
-    <Drawer
+    <Drawer variant="persistent" anchor="bottom" open={showDrawer}
             sx={{
                 opacity: opacity,
                 width: '100%',
                 flexShrink: 0,
                 '& .MuiDrawer-paper': {
                     width: '100%',
+                    height: simpleEditButtonHeight,
                     boxSizing: 'border-box',
                     backgroundColor: isDark ? 'grey' : 'white'
                 },
             }}
-            variant="persistent"
-            anchor="bottom"
-            open={showDrawer}
             onMouseOver={() => setOpacity(1)}
             onMouseOut={() => {if(!popoverIsShownRef.current) setOpacity(0.5) }}
             >

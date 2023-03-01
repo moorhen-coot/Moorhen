@@ -1,4 +1,4 @@
-import { NavDropdown } from "react-bootstrap";
+import { Form, InputGroup, NavDropdown } from "react-bootstrap";
 import { useState } from "react";
 import { MenuItem } from "@mui/material";
 import { MoorhenBackgroundColorMenuItem, MoorhenClipFogMenuItem } from "./MoorhenMenuItem";
@@ -15,14 +15,36 @@ export const MoorhenViewMenu = (props) => {
                     autoClose={popoverIsShown ? false : 'outside'}
                     show={props.currentDropdownId === props.dropdownId}
                     onToggle={() => {props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId(-1)}}>
-                <MoorhenBackgroundColorMenuItem {...menuItemProps} />
-                <MoorhenClipFogMenuItem {...menuItemProps} />
-                <MenuItem onClick={() => {
-                    props.setShowColourRulesToast(true)
-                    document.body.click()
-                }}>
-                    Set molecule colour rules
-                </MenuItem>
-            </NavDropdown >
+                <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                        <Form.Check 
+                            type="switch"
+                            checked={props.drawFPS}
+                            onChange={() => { props.setDrawFPS(!props.drawFPS) }}
+                            label="Show frames per second counter"/>
+                    </InputGroup>
+                    <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                        <Form.Check 
+                            type="switch"
+                            checked={props.drawCrosshairs}
+                            onChange={() => { props.setDrawCrosshairs(!props.drawCrosshairs) }}
+                            label="Show crosshairs"/>
+                    </InputGroup>
+                    <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                        <Form.Check 
+                            type="switch"
+                            checked={props.drawMissingLoops}
+                            onChange={() => { props.setDrawMissingLoops(!props.drawMissingLoops) }}
+                            label="Show missing loops"/>
+                    </InputGroup>
+                    <hr></hr>
+                    <MoorhenBackgroundColorMenuItem {...menuItemProps} />
+                    <MoorhenClipFogMenuItem {...menuItemProps} />
+                    <MenuItem onClick={() => {
+                        props.setShowColourRulesToast(true)
+                        document.body.click()
+                    }}>
+                        Set molecule colour rules
+                    </MenuItem>
+            </NavDropdown>
         </>
     }

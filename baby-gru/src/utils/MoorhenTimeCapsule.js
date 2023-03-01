@@ -1,7 +1,6 @@
 import localforage from 'localforage';
 
 const createInstance = (name, empty=false) => {
-    console.log(`Creating local storage instance for time capsule...`)
     const instance = localforage.createInstance({
         driver: [localforage.INDEXEDDB, localforage.LOCALSTORAGE],
         name: name,
@@ -30,7 +29,6 @@ MoorhenTimeCapsule.prototype.checkVersion = async function () {
     const keyString = JSON.stringify({type: 'version'})
     const storedVersion = await this.storageInstance.getItem(keyString)
     if (!storedVersion || this.version !== storedVersion) {
-        console.log('New backup storage version detected, cleanup all previous backups now...')
         await this.storageInstance.clear()
         await this.storageInstance.setItem(keyString, this.version)
     }
@@ -98,10 +96,8 @@ MoorhenTimeCapsule.prototype.cleanupIfFull = async function() {
 }
 
 MoorhenTimeCapsule.prototype.createBackup = async function(key, value) {
-    console.log(`Creating backup ${key} in local storage...`)
     try {
          await this.storageInstance.setItem(key, value)
-         console.log("Successully created backup in time capsule")
          await this.cleanupIfFull()
          this.busy = false
          return key
@@ -111,7 +107,6 @@ MoorhenTimeCapsule.prototype.createBackup = async function(key, value) {
 }
 
 MoorhenTimeCapsule.prototype.retrieveBackup = async function(key) {
-    console.log(`Fetching backup ${key} from local storage...`)
     try {
          return await this.storageInstance.getItem(key)
      } catch (err) {
@@ -120,7 +115,6 @@ MoorhenTimeCapsule.prototype.retrieveBackup = async function(key) {
 }
 
 MoorhenTimeCapsule.prototype.retrieveLastBackup = async function() {
-    console.log(`Fetching last backup from local storage...`)
     try {
         const sortedKeys = await this.getSortedKeys()
         if (sortedKeys && sortedKeys.length > 0) {
@@ -134,20 +128,16 @@ MoorhenTimeCapsule.prototype.retrieveLastBackup = async function() {
 }
 
 MoorhenTimeCapsule.prototype.removeBackup = async function(key) {
-    console.log(`Removing backup ${key} from time capsule...`)
     try {
          await this.storageInstance.removeItem(key)
-         console.log('Successully removed backup from time capsule')
      } catch (err) {
          console.log(err)
      }
 }
 
 MoorhenTimeCapsule.prototype.dropAllBackups = async function() {
-    console.log(`Removing all backups from time capsule...`)
     try {
          await this.storageInstance.clear()
-         console.log('Successully removed all backup from time capsule')
      } catch (err) {
          console.log(err)
      }

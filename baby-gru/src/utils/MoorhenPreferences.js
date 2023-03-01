@@ -14,7 +14,6 @@ const itemReducer = (oldList, change) => {
 }
 
 const updateStoredPreferences = async (key, value) => {
-    console.log(`Storing ${key}: ${value} preferences in local storage...`)
     try {
         await localforage.setItem(key, value)
     } catch (err) {
@@ -241,26 +240,20 @@ const PreferencesContextProvider = ({ children }) => {
      */
      useEffect(() => {       
         const fetchStoredPreferences = async () => {
-            console.log('Retrieving stored preferences...')
             try {
                 const storedVersion = await localforage.getItem('version')
                 const defaultValues = getDefaultValues()                
                 if (storedVersion !== defaultValues.version) {
-                    console.log('Different storage version detected, using defaults')
                     restoreDefaults(defaultValues)
                     return
                 }
                 
                 const fetchPromises = Object.keys(preferencesMap).map(key => localforage.getItem(preferencesMap[key].label))
                 let responses = await Promise.all(fetchPromises)
-                
-                console.log('Retrieved the following preferences from local storage: ', responses)
-                
+                               
                 if(!responses.every(item => item !== null) || responses.length < Object.keys(preferencesMap).length) {
-                    console.log('Cannot find stored preferences, using defaults')
                     restoreDefaults(defaultValues)
                 } else {
-                    console.log(`Stored preferences retrieved successfully: ${responses}`)
                     Object.keys(preferencesMap).forEach((key, index) => preferencesMap[key].valueSetter(responses[index]))
                 }                
                 

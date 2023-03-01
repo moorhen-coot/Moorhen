@@ -466,9 +466,7 @@ const read_pdb = (coordData, name) => {
     const theGuid = guid()
     cootModule.FS_createDataFile(".", `${theGuid}.pdb`, coordData, true, true);
     const tempFilename = `./${theGuid}.pdb`
-    console.log(`Off to read coords into coot ${tempFilename} ${name}`)
     const molNo = molecules_container.read_pdb(tempFilename)
-    console.log(`Read coordinates as molecule ${molNo}`)
     cootModule.FS_unlink(tempFilename)
     return molNo
 }
@@ -487,9 +485,7 @@ const read_dictionary = (coordData, associatedMolNo) => {
     const theGuid = guid()
     cootModule.FS_createDataFile(".", `${theGuid}.cif`, coordData, true, true);
     const tempFilename = `./${theGuid}.cif`
-    console.log(`Off to read dictionary into coot ${tempFilename} ${associatedMolNo}`)
     const returnVal = molecules_container.import_cif_dictionary(tempFilename, associatedMolNo)
-    console.log(`Read Dictionary with status ${returnVal}`)
     cootModule.FS_unlink(tempFilename)
     return returnVal
 }
@@ -505,7 +501,6 @@ function base64ToArrayBuffer(base64) {
 }
 
 const new_positions_for_residue_atoms = (molToUpDate, residues) => {
-    console.log("committal", molToUpDate, residues)
     let success = 0
     residues.forEach(atoms => {
         if (atoms.length > 0) {
@@ -519,7 +514,6 @@ const new_positions_for_residue_atoms = (molToUpDate, residues) => {
             success += thisSuccess
         }
     })
-    console.log("Success?", success)
     return success
 }
 
@@ -547,7 +541,6 @@ const associate_data_mtz_file_with_map = (iMol, mtzData, F, SIGF, FREE) => {
         */
     const args = [iMol, tempFilename, F, SIGF, FREE]
 
-    console.log('associate_data with args', { args })
     return molecules_container.associate_data_mtz_file_with_map(...args)
 }
 
@@ -557,16 +550,12 @@ const read_ccp4_map = (mapData, name, isDiffMap) => {
     cootModule.FS_createDataFile(".", `${theGuid}.map`, asUint8Array, true, true);
     const tempFilename = `./${theGuid}.map`
     const read_map_args = [tempFilename, isDiffMap]
-    console.log({ read_map_args, length: asUint8Array })
-    //postMessage({ message: `read_ccp4_map args ${read_map_args}` })
     const molNo = molecules_container.read_ccp4_map(...read_map_args)
-    console.log('Read map into number', molNo)
     cootModule.FS_unlink(tempFilename)
     return molNo
 }
 
 onmessage = function (e) {
-    //console.log(e.data.message)
     if (e.data.message === 'CootInitialize') {
         postMessage({ message: 'Initializing molecules_container' })
 
@@ -644,7 +633,6 @@ onmessage = function (e) {
     else if (e.data.message === 'read_mtz') {
         try {
             const theGuid = guid()
-            //console.log('e.data.data type', typeof e.data.data, e.data.data.length)
             cootModule.FS_createDataFile(".", `${theGuid}.mtz`, e.data.data, true, true, true);
             const tempFilename = `./${theGuid}.mtz`
             const molNo = molecules_container.read_mtz(tempFilename, 'FWT', 'PHWT', "", false, false)
