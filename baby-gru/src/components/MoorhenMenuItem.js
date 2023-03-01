@@ -61,7 +61,6 @@ export const MoorhenMenuItem = (props) => {
                             {props.popoverContent}
                             {props.showOkButton &&
                                 <Button variant={props.buttonVariant} onClick={() => {
-                                    console.log('Popover clicked')
                                     resolveOrRejectRef.current.resolve()
                                 }}>
                                     {props.buttonText}
@@ -111,9 +110,7 @@ export const MoorhenLoadTutorialDataMenuItem = (props) => {
     </>
 
     const onCompleted = (onCompletedArg) => {
-        console.log({ onCompletedArg })
         const tutorialNumber = tutorialNumberSelectorRef.current.value
-        console.log(`Loading data for tutorial number ${tutorialNumber}`)
         const newMolecule = new MoorhenMolecule(props.commandCentre, props.urlPrefix)
         newMolecule.setBackgroundColour(props.backgroundColor)
         newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
@@ -240,7 +237,6 @@ export const MoorhenFitLigandRightHereMenuItem = (props) => {
 
         }, true)
             .then(result => {
-                //console.log('result is', result)
                 if (result.data.result.status === "Completed") {
                     result.data.result.result.forEach(iMol => {
                         const newMolecule = new MoorhenMolecule(props.commandCentre, props.urlPrefix)
@@ -703,11 +699,9 @@ export const MoorhenSuperposeMenuItem = (props) => {
     const handleModelChange = (evt, isReferenceModel) => {
         const selectedMolecule = props.molecules.find(molecule => molecule.molNo === parseInt(evt.target.value))
         if (isReferenceModel) {
-            console.log(`Selected reference model ${evt.target.value}`)
             setSelectedRefModel(parseInt(evt.target.value))
             setSelectedRefChain(selectedMolecule.sequences[0].chain)
         } else {
-            console.log(`Selected moving model ${evt.target.value}`)
             setSelectedMovModel(parseInt(evt.target.value))
             setSelectedMovChain(selectedMolecule.sequences[0].chain)
         }
@@ -715,10 +709,8 @@ export const MoorhenSuperposeMenuItem = (props) => {
 
     const handleChainChange = (evt, isReferenceModel) => {
         if (isReferenceModel) {
-            console.log(`Selected reference chain ${evt.target.value}`)
             setSelectedRefChain(evt.target.value)    
         } else {
-            console.log(`Selected moving chain ${evt.target.value}`)
             setSelectedMovChain(evt.target.value)    
         }
     }
@@ -771,7 +763,7 @@ export const MoorhenSuperposeMenuItem = (props) => {
             return
         }
 
-        await props.commandCentre.current.cootCommand({
+        const result = await props.commandCentre.current.cootCommand({
             message: 'coot_command', 
             command: 'SSM_superpose', 
             returnType: 'status', 
@@ -782,7 +774,7 @@ export const MoorhenSuperposeMenuItem = (props) => {
                 movChainSelectRef.current.value
             ], 
         })
-        
+
         refMolecule.atomsDirty = true
         movMolecule.atomsDirty = true
         await Promise.all([
@@ -932,7 +924,6 @@ export const MoorhenImportDictionaryMenuItem = (props) => {
             .then(result => {
                 if (createRef.current) {
                     const instanceName = tlcValueRef.current
-                    console.log({ instanceName })
                     return props.commandCentre.current.cootCommand({
                         returnType: 'status',
                         command: 'get_monomer_and_position_at',
@@ -976,7 +967,6 @@ export const MoorhenImportDictionaryMenuItem = (props) => {
                     }
                     props.setPopoverIsShown(false)
                 }
-                console.log('After create instance', { result })
             })
     }, [fileOrLibrary, moleculeSelectRef, moleculeSelectRef, props.molecules, tlcRef, tlc, addToRef, createInstance])
 
@@ -988,7 +978,6 @@ export const MoorhenImportDictionaryMenuItem = (props) => {
     }
 
     const readMonomerFile = async (newTlc) => {
-        console.log({ newTlc })
         return fetch(`${props.urlPrefix}/baby-gru/monomers/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`)
             .then(response => response.text())
             .then(fileContent => {
@@ -1008,7 +997,6 @@ export const MoorhenImportDictionaryMenuItem = (props) => {
     }
 
     const onCompleted = useCallback(async () => {
-        console.log({ fileOrLibrary, ref: fileOrLibraryRef.current })
         if (fileOrLibraryRef.current === "File") {
             let readPromises = []
             for (const file of filesRef.current.files) {
@@ -1173,7 +1161,6 @@ export const MoorhenBackupsMenuItem = (props) => {
    
     const retrieveSession = useCallback(async () => {
         const key = backupSelectRef.current.value
-        console.log(`Recover .... ${key}`)
        
         try {
             let backup = await props.timeCapsuleRef.current.retrieveBackup(key)
@@ -1317,7 +1304,6 @@ export const MoorhenImportMapMenuItem = (props) => {
 
     const onCompleted = useCallback(async (e) => {
         const file = filesRef.current.files[0]
-        console.log('file is', file, isDiffRef.current.checked)
         const newMap = new MoorhenMap(props.commandCentre)
         await newMap.loadToCootFromMapFile(file, isDiffRef.current.checked)
         props.changeMaps({ action: 'Add', item: newMap })
@@ -1347,7 +1333,6 @@ export const MoorhenAutoOpenMtzMenuItem = (props) => {
 
     const onCompleted = useCallback(async (e) => {
         const file = filesRef.current.files[0]
-        console.log('file is', file)
 
         const reflectionData = await readDataFile(file)
         const mtzData = new Uint8Array(reflectionData)
@@ -1501,9 +1486,7 @@ export const MoorhenMergeMoleculesMenuItem = (props) => {
             console.log('No valid molecules selected, skipping merge...')
             return
         }
-        console.log({ toMolecule, otherMolecules })
-        let banan = await toMolecule.mergeMolecules(otherMolecules, props.glRef, true)
-        console.log({ banan })
+        await toMolecule.mergeMolecules(otherMolecules, props.glRef, true)
         props.setPopoverIsShown(false)
         const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: {origin: props.glRef.current.origin,  modifiedMolecule: toMolecule.molNo} })
         document.dispatchEvent(mapUpdateEvent)
@@ -1778,7 +1761,6 @@ export const MoorhenCentreOnLigandMenuItem = (props) => {
                                 },
                                 { sumXyz: [0., 0., 0.], count: 0 }
                             )
-                            console.log({ reducedValue })
                             if (reducedValue.count > 0) {
                                 props.glRef.current.setOriginAnimated(
                                     reducedValue.sumXyz.map(coord => -coord / reducedValue.count)

@@ -28,10 +28,6 @@ export class ErrorBoundary extends React.Component {
         })
     }
     
-    handleLogsDownload() {
-        doDownload([JSON.stringify(console.everything)], `session_logs.json`)
-    }
-
     async handleBackupDownload() {
         const timeCapsule = new MoorhenTimeCapsule()
         const backup = await timeCapsule.retrieveLastBackup()
@@ -64,9 +60,6 @@ export class ErrorBoundary extends React.Component {
                             <Button variant="primary" onClick={this.handleBackupDownload.bind(this)}>
                                 Download last molecule backup
                             </Button>                            
-                            <Button variant="secondary" onClick={this.handleLogsDownload.bind(this)}>
-                                Download logs
-                            </Button>
                         </Modal.Footer>                        
                     </Modal>
         }

@@ -133,8 +133,6 @@ MoorhenMolecule.prototype.parseSequences = function () {
         }
     }
 
-    console.log('Parsed the following sequences')
-    console.log(sequences)
     this.sequences = sequences
 }
 
@@ -296,7 +294,6 @@ MoorhenMolecule.prototype.loadMissingMonomers = async function () {
                 monomerPromises.push(newPromise)
             })
             await Promise.all(monomerPromises)
-            console.log('Fetched all')
         }
         return Promise.resolve($this)
     }).catch(err => {
@@ -393,10 +390,6 @@ MoorhenMolecule.prototype.centreAndAlignViewOn = function (glRef, selectionCid, 
             }
         })
 
-        console.log(CA)
-        console.log(C)
-        console.log(O)
-
         let newQuat = null
 
         if (C && CA && O) {
@@ -420,9 +413,6 @@ MoorhenMolecule.prototype.centreAndAlignViewOn = function (glRef, selectionCid, 
             let upNorm = vec3.create()
             vec3.normalize(upNorm, up);
 
-            console.log(rightNorm)
-            console.log(upNorm)
-            console.log(forwardNorm)
             newQuat = quat4.create()
             let mat = mat3.create()
             const [right_x, right_y, right_z] = [rightNorm[0], rightNorm[1], rightNorm[2]]
@@ -430,7 +420,6 @@ MoorhenMolecule.prototype.centreAndAlignViewOn = function (glRef, selectionCid, 
             const [formaward_x, formaward_y, formaward_z] = [forwardNorm[0], forwardNorm[1], forwardNorm[2]]
             mat3.set(mat, right_x, right_y, right_z, up_x, up_y, up_z, formaward_x, formaward_y, formaward_z)
             quat4.fromMat3(newQuat, mat)
-            console.log(newQuat)
         }
 
         let selectionCentre = centreOnGemmiAtoms(selectionAtomsCentre)
@@ -483,10 +472,6 @@ MoorhenMolecule.prototype.centreOn = function (glRef, selectionCid, animate = tr
             }
         })
 
-        console.log(CA)
-        console.log(C)
-        console.log(O)
-
         let newQuat = null
 
         if (C && CA && O) {
@@ -510,9 +495,6 @@ MoorhenMolecule.prototype.centreOn = function (glRef, selectionCid, animate = tr
             let upNorm = vec3.create()
             vec3.normalize(upNorm, up);
 
-            console.log(rightNorm)
-            console.log(upNorm)
-            console.log(forwardNorm)
             newQuat = quat4.create()
             let mat = mat3.create()
             const [right_x, right_y, right_z] = [rightNorm[0], rightNorm[1], rightNorm[2]]
@@ -520,7 +502,6 @@ MoorhenMolecule.prototype.centreOn = function (glRef, selectionCid, animate = tr
             const [formaward_x, formaward_y, formaward_z] = [forwardNorm[0], forwardNorm[1], forwardNorm[2]]
             mat3.set(mat, right_x, right_y, right_z, up_x, up_y, up_z, formaward_x, formaward_y, formaward_z)
             quat4.fromMat3(newQuat, mat)
-            console.log(newQuat)
         }
 
         let selectionCentre = centreOnGemmiAtoms(selectionAtomsCentre)
@@ -643,7 +624,6 @@ MoorhenMolecule.prototype.drawCootContactDotsCid = function (glRef, style) {
         commandArgs: [$this.molNo, cid, $this.cootBondsOptions.smoothness]
     }).then(response => {
         const objects = [response.data.result.result]
-        //console.log('rota', { objects })
         //Empty existing buffers of this type
         this.clearBuffersOfStyle(style, glRef)
         this.addBuffersOfStyle(glRef, objects, style)
@@ -660,7 +640,6 @@ MoorhenMolecule.prototype.drawCootChemicalFeaturesCid = function (glRef, style) 
         commandArgs: [$this.molNo, cid]
     }).then(response => {
         const objects = [response.data.result.result]
-        //console.log('rota', { objects })
         //Empty existing buffers of this type
         this.clearBuffersOfStyle(style, glRef)
         this.addBuffersOfStyle(glRef, objects, style)
@@ -678,7 +657,6 @@ MoorhenMolecule.prototype.drawCootContactDots = function (glRef) {
         commandArgs: [$this.molNo, $this.cootBondsOptions.smoothness]
     }).then(response => {
         const objects = [response.data.result.result]
-        //console.log('rota', { objects })
         //Empty existing buffers of this type
         this.clearBuffersOfStyle(style, glRef)
         this.addBuffersOfStyle(glRef, objects, style)
@@ -694,7 +672,6 @@ MoorhenMolecule.prototype.drawRotamerDodecahedra = function (glRef) {
         commandArgs: [$this.molNo]
     }).then(response => {
         const objects = [response.data.result.result]
-        //console.log('rota', { objects })
         //Empty existing buffers of this type
         this.clearBuffersOfStyle(style, glRef)
         this.addBuffersOfStyle(glRef, objects, style)
@@ -883,7 +860,6 @@ MoorhenMolecule.prototype.drawCootRepresentation = async function (glRef, style)
 }
 
 MoorhenMolecule.prototype.show = function (style, glRef) {
-    //console.log("show",{style})
     if (!this.displayObjects[style]) {
         this.displayObjects[style] = []
     }
@@ -940,14 +916,11 @@ MoorhenMolecule.prototype.clearBuffersOfStyle = function (style, glRef) {
 
 MoorhenMolecule.prototype.buffersInclude = function (bufferIn) {
     const $this = this
-    //console.log(bufferIn)
-    //console.log($this.displayObjects)
     const BreakException = {};
     try {
         Object.getOwnPropertyNames($this.displayObjects).forEach(style => {
             if (Array.isArray($this.displayObjects[style])) {
                 const objectBuffers = $this.displayObjects[style].filter(buffer => bufferIn.id === buffer.id)
-                //console.log('Object buffer length', objectBuffers.length, objectBuffers.length > 0)
                 if (objectBuffers.length > 0) {
                     throw BreakException;
                 }
@@ -956,7 +929,6 @@ MoorhenMolecule.prototype.buffersInclude = function (bufferIn) {
     }
     catch (e) {
         if (e !== BreakException) throw e;
-        //console.log('Catching Break Exception')
         return true
     }
     return false
@@ -978,7 +950,6 @@ MoorhenMolecule.prototype.drawBonds = function (webMGAtoms, glRef, colourSchemeI
     var contactsAndSingletons = model.getBondsContactsAndSingletons();
 
     var contacts = contactsAndSingletons["contacts"];
-    //console.log('contacts are', contacts)
     var singletons = contactsAndSingletons["singletons"];
     var linePrimitiveInfo = contactsToCylindersInfo(contacts, 0.1, atomColours);
     var singletonPrimitiveInfo = singletonsToLinesInfo(singletons, 4, atomColours);
@@ -997,7 +968,6 @@ MoorhenMolecule.prototype.drawBonds = function (webMGAtoms, glRef, colourSchemeI
             item.sizes[0].length > 0 &&
             item.sizes[0][0].length > 0
     })
-    //console.log('clearing', style, gl)
     $this.clearBuffersOfStyle(style, glRef)
     this.addBuffersOfStyle(glRef, objects, style)
 }
@@ -1044,7 +1014,6 @@ MoorhenMolecule.prototype.drawLigands = function (webMGAtoms, glRef, colourSchem
             item.sizes[0].length > 0 &&
             item.sizes[0][0].length > 0
     })
-    //console.log('clearing', style, gl)
     $this.clearBuffersOfStyle(style, glRef)
     this.addBuffersOfStyle(glRef, objects, style)
 
@@ -1243,7 +1212,6 @@ MoorhenMolecule.prototype.redraw = function (glRef) {
     return promise.then(_ => {
         return itemsToRedraw.reduce(
             (p, style) => {
-                console.log(`Redrawing ${style}`, $this.atomsDirty)
                 return p.then(() => $this.fetchIfDirtyAndDraw(style, glRef)
                 )
             },

@@ -142,9 +142,7 @@ export const MoorhenMapCard = (props) => {
         props.map.mapRadius = mapRadius
         isDirty.current = true
         if (props.map.cootContour) {
-            if (busyContouring.current) {
-                console.log('Skipping map update because already busy ')
-            } else {
+            if (!busyContouring.current) {
                 doContourIfDirty()
             }
         }
@@ -210,8 +208,6 @@ export const MoorhenMapCard = (props) => {
         isDirty.current = true
         if (props.map.cootContour && !busyContouring.current) {
             doContourIfDirty()
-        } else {
-            console.log('Skipping map re-contour because already busy ')
         }
 
     }, [mapRadius, mapContourLevel, mapLitLines, mapSolid])

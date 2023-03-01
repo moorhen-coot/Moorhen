@@ -1197,10 +1197,6 @@ function initGL(canvas) {
     }
     gl.viewportWidth = canvas.width;
     gl.viewportHeight = canvas.height;
-    console.log(canvas.width, canvas.height);
-    console.log(gl.viewportWidth, gl.viewportHeight);
-    console.log(gl.getContextAttributes());
-    console.log("Max varying vectors: " + gl.getParameter(gl.MAX_VARYING_VECTORS));
     return {gl:gl,WEBGL2:WEBGL2};
 }
 
@@ -1425,7 +1421,6 @@ class MGWebGL extends Component {
             this.drawScene()
         }
         if (oldProps.showFPS !== this.props.showFPS){
-            console.log("Update showFPS",this.props.showFPS);
             this.showFPS = this.props.showFPS
             this.drawScene()
         }
@@ -1436,9 +1431,7 @@ class MGWebGL extends Component {
         }
     }
     componentDidMount() {
-        console.log("MGWebGL.componentDidMount");
         this.canvas = this.canvasRef.current;
-        console.log(this.canvasReact);
         const self = this;
         this.activeMolecule = null;
         /*
@@ -1576,12 +1569,9 @@ class MGWebGL extends Component {
 
         //self.setState({width:window.innerWidth/3, height:window.innerHeight/3}, ()=> self.resize(window.innerWidth/3, window.innerHeight/3));
         const extensionArray = this.gl.getSupportedExtensions();
-        console.log(extensionArray);
 
         //this.stuartTexture = initTextures(this.gl);
 
-        //console.log("The GL context ... ");
-        //console.log(this.gl);
         if (this.WEBGL2) {
             this.ext = true;
             this.frag_depth_ext = true;
@@ -1800,11 +1790,8 @@ class MGWebGL extends Component {
         self.gl.enable(self.gl.DEPTH_TEST);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
-        console.log(self.background_colour);
-
         self.origin = [0.0, 0.0, 0.0];
         const shader_version = self.gl.getParameter(self.gl.SHADING_LANGUAGE_VERSION);
-        console.log(shader_version);
         //self.infoNode.innerHTML=shader_version;
 
         self.mouseDown = false;
@@ -1937,7 +1924,6 @@ class MGWebGL extends Component {
 
         self.gl.viewportWidth = self.canvas.width;
         self.gl.viewportHeight = self.canvas.height;
-        console.log(self.gl.viewportWidth, self.gl.viewportHeight);
         self.light_positions = new Float32Array([0.0, 0.0, 60.0, 1.0]);
         self.light_colours_ambient = new Float32Array([0.0, 0.0, 0.0, 1.0]);
         self.light_colours_specular = new Float32Array([1.0, 1.0, 1.0, 1.0]);
@@ -3245,7 +3231,6 @@ class MGWebGL extends Component {
         const dy = DY/this.nAnimationFrames
         const dz = DZ/this.nAnimationFrames
         requestAnimationFrame(this.drawOriginFrame.bind(this,[old_x,old_y,old_z],[dx,dy,dz],1))
-        console.log(o)
     }
 
     drawOriginFrame(oo,d,iframe){
@@ -6480,7 +6465,6 @@ class MGWebGL extends Component {
                     this.displayBuffers[idx].triangleColourBuffer[j].numItems = Colours_new.length / 4;
 
                 } else if (this.displayBuffers[idx].bufferTypes[j] === "LINES") {
-                    console.log("Treating lines specially");
                     let size = this.mapLineWidth;
                     const useIndices = this.displayBuffers[idx].supplementary["useIndices"];
                     let thickLines;
@@ -6546,7 +6530,6 @@ class MGWebGL extends Component {
                         this.displayBuffers[idx].triangleInstanceOriginBuffer[j].itemSize = 3;
                     }
                     if(this.displayBuffers[idx].triangleInstanceOrientationBuffer[j]){
-                        console.log("Buffering instance orientations");
                         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleInstanceOrientationBuffer[j]);
                         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[idx].triangleInstanceOrientations[j]), this.gl.STATIC_DRAW);
                         this.displayBuffers[idx].triangleInstanceOrientationBuffer[j].itemSize = 16;
@@ -11575,7 +11558,6 @@ class MGWebGL extends Component {
         this.circleCtx.arc(width / 2, height / 2, width / 2 - width / 20 - 1, 0, 2 * Math.PI);
         this.circleCtx.stroke();
         var tm = this.circleCtx.measureText(text);
-        console.log(tm);
         this.circleCtx.fillText(text, width / 2 - tm.width / 2, height / 2 + 30);
     }
 

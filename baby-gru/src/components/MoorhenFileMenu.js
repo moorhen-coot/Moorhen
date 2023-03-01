@@ -157,8 +157,6 @@ export const MoorhenFileMenu = (props) => {
 
     const loadSessionJSON = async (sessionData) => {
         sessionData = JSON.parse(sessionData)
-        console.log('Loaded the following session data...')
-        console.log(sessionData)
         
         // Delete current scene
         props.molecules.forEach(molecule => {
@@ -306,7 +304,6 @@ export const MoorhenFileMenu = (props) => {
                                 <Stack direction="horizontal" gap={2} style={{alignItems: 'center'}}>
                                     {item.label}
                                     <Button variant='primary' onClick={async () => {
-                                        console.log(`Recover .... ${item.label}`)                                           
                                         try {
                                             let backup = await props.timeCapsuleRef.current.retrieveBackup(item.key)
                                             loadSessionJSON(backup)
@@ -318,7 +315,6 @@ export const MoorhenFileMenu = (props) => {
                                         Load
                                     </Button>
                                     <Button variant='danger' onClick={async () => {
-                                        console.log(`Delete .... ${item.label}`)                                           
                                         try {
                                             await props.timeCapsuleRef.current.removeBackup(item.key)
                                             sortedKeys = await props.timeCapsuleRef.current.getSortedKeys()

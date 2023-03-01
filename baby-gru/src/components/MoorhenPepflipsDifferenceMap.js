@@ -30,12 +30,10 @@ export const MoorhenPepflipsDifferenceMap = (props) => {
     }
 
     const handleModelChange = (evt) => {
-        console.log(`Selected model ${evt.target.value}`)
         setSelectedModel(parseInt(evt.target.value))
     }
 
     const handleMapChange = (evt) => {
-        console.log(`Selected map ${evt.target.value}`)
         setSelectedMap(parseInt(evt.target.value))
     }
 
@@ -49,7 +47,6 @@ export const MoorhenPepflipsDifferenceMap = (props) => {
             }, true)
 
             if (props.refineAfterMod) {
-                console.log('Triggering post-modification triple refinement...')
                 await props.commandCentre.current.cootCommand({
                     returnType: "status",
                     command: 'refine_residues_using_atom_cid',

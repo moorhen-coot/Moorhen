@@ -63,17 +63,14 @@ export const MoorhenColourRules = (props) => {
     const [toastBodyWidth, setToastBodyWidth] = useState(convertViewtoPx(40, props.windowWidth))
 
     const handleModelChange = (evt) => {
-        console.log(`Selected model ${evt.target.value}`)
         setSelectedModel(parseInt(evt.target.value))
     }
 
     const handleChainChange = (evt) => {
-        console.log(`Selected chain ${evt.target.value}`)
         setSelectedChain(evt.target.value)
     }
 
     const handleResidueCidChange = (evt) => {
-        console.log(`Selected residue CID ${evt.target.value}`)
         setCid(evt.target.value)
     }
 
