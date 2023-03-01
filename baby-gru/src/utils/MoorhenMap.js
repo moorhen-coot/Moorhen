@@ -32,7 +32,6 @@ MoorhenMap.prototype.delete = async function (glRef) {
 
 MoorhenMap.prototype.loadToCootFromMtzURL = async function (url, name, selectedColumns) {
     const $this = this
-    console.log('Off to fetch url', url)
 
     try {
         const response = await fetch(url)
@@ -91,7 +90,6 @@ MoorhenMap.prototype.loadToCootFromMtzFile = async function (source, selectedCol
 
 MoorhenMap.prototype.loadToCootFromMapURL = function (url, name, isDiffMap=false) {
     const $this = this
-    console.log('Off to fetch url', url)
 
     return fetch(url)
         .then(response => {
@@ -223,7 +221,6 @@ MoorhenMap.prototype.contour = function (glRef) {
 
 MoorhenMap.prototype.clearBuffersOfStyle = function (glRef, style) {
     const $this = this
-    //console.log('In clear buffers', style, $this.displayObjects)
     //Empty existing buffers of this type
     $this.displayObjects[style].forEach((buffer) => {
         buffer.clearBuffers()

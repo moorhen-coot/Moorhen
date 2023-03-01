@@ -311,7 +311,6 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
             handleDisconnectMaps()
         }
         props.maps.forEach(map => {
-            console.log('in map changed useEffect')
             if (map.webMGContour) {
                 map.contour(glRef.current)
             }

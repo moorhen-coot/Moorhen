@@ -160,7 +160,6 @@ export const MoorhenContainer = (props) => {
                 dispatchHistoryReducer({ action: "add", command: newCommand })
             },
             onCootInitialized: () => {
-                //console.log('Being notified of coot initialized')
                 setCootInitialized(true)
             },
             urlPrefix: props.urlPrefix

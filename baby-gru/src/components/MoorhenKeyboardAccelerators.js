@@ -72,7 +72,6 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         return true
     }
     
-    console.log(event)
     let modifiers = []
     let eventModifiersCodes = []
 
@@ -99,8 +98,6 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     if (!action) {
         return true
     }
-
-    console.log(`Shortcut for action ${action} detected...`)
 
     if (action === 'sphere_refine' && activeMap) {
         const formatArgs = (chosenMolecule, chosenAtom) => {
