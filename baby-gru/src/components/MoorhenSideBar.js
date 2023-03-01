@@ -3,7 +3,7 @@ import { IconButton, Drawer, List, Divider } from "@mui/material";
 import { MoorhenToolsAccordion } from './MoorhenToolsAccordion'
 import { MoorhenDisplayObjects } from './MoorhenDisplayObjects';
 import { MoorhenConsole } from"./MoorhenConsole";
-import { convertViewtoPx} from '../utils/MoorhenUtils';
+import { convertRemToPx, convertViewtoPx} from '../utils/MoorhenUtils';
 import { isDarkBackground } from '../WebGLgComponents/mgWebGL';
 import { ArrowBackOutlined, ArrowForwardOutlined } from '@mui/icons-material';
 import { Spinner, Form } from 'react-bootstrap';
@@ -16,7 +16,7 @@ export const MoorhenSideBar = forwardRef((props, ref) => {
     const [accordionDropdownId, setAccordionDropdownId] = useState(-1)
 
     const isDark = isDarkBackground(...props.backgroundColor)
-    const sideBarWidth = convertViewtoPx(30, props.windowWidth)
+    const sideBarWidth = Math.max(convertViewtoPx(30, props.windowWidth), convertRemToPx(24))
     const toggleDrowerButtonWidth = sideBarWidth * 0.07
 
     useEffect(() => {
