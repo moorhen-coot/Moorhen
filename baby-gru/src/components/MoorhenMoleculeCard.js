@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useReducer } from "react";
-import { Card, Row, Col, Accordion } from "react-bootstrap";
+import { Card, Row, Col, Accordion, Stack } from "react-bootstrap";
 import { doDownload, sequenceIsValid, getNameLabel} from '../utils/MoorhenUtils';
 import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
 import { MoorhenSequenceViewer } from "./MoorhenSequenceViewer";
@@ -356,8 +356,8 @@ export const MoorhenMoleculeCard = (props) => {
     const handleProps = { handleCentering, handleCopyFragment, handleDownload, handleRedo, handleUndo, handleResidueRangeRefinement, handleVisibility }
 
     return <Card className="px-0" style={{ marginBottom: '0.5rem', padding: '0' }} key={props.molecule.molNo}>
-        <Card.Header style={{ padding: '0.5rem' }}>
-            <Row className='align-items-center'>
+        <Card.Header style={{ padding: '0.1rem' }}>
+            <Stack gap={2} direction='horizontal'>
                 <Col className='align-items-center' style={{ display: 'flex', justifyContent: 'left' }}>
                     {getNameLabel(props.molecule)}
                 </Col>
@@ -382,11 +382,11 @@ export const MoorhenMoleculeCard = (props) => {
                         {...handleProps}
                     />
                 </Col>
-            </Row>
+            </Stack>
         </Card.Header>
-        <Card.Body style={{ display: isCollapsed ? 'none' : '', padding: '0.25rem' }}>
-            <Row style={{ height: '100%' }}>
-                <Col>
+        <Card.Body style={{ display: isCollapsed ? 'none' : '', padding: '0.25rem', justifyContent:'center' }}>
+            <Stack gap={2} direction='vertical'>
+                <Col  style={{ width:'100%', height: '100%' }}>
                     <div style={{margin: '1px', paddingTop: '0.5rem', paddingBottom: '0.25rem',  border: '1px solid', borderRadius:'0.33rem', borderColor:
                 "#CCC"}}>
                         <FormGroup style={{ margin: "0px", padding: "0px" }} row>
@@ -396,7 +396,6 @@ export const MoorhenMoleculeCard = (props) => {
                         </FormGroup>
                     </div>
                 </Col>
-            </Row>
             <Accordion alwaysOpen={true} defaultActiveKey={['sequences']}>
                 <Accordion.Item eventKey="sequences" style={{ padding: '0', margin: '0' }} >
                     <Accordion.Header style={{ padding: '0', margin: '0' }}>Sequences</Accordion.Header>
@@ -447,6 +446,7 @@ export const MoorhenMoleculeCard = (props) => {
                     </Accordion.Body>
                 </Accordion.Item>
             </Accordion>
+            </Stack>
         </Card.Body>
     </Card >
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback, useMemo, Fragment } from "react";
-import { Card, Form, Button, Row, Col, DropdownButton } from "react-bootstrap";
+import { Card, Form, Button, Row, Col, DropdownButton, Stack } from "react-bootstrap";
 import { doDownload, getNameLabel } from '../utils/MoorhenUtils';
 import { VisibilityOffOutlined, VisibilityOutlined, ExpandMoreOutlined, ExpandLessOutlined, DownloadOutlined, Settings } from '@mui/icons-material';
 import MoorhenSlider from "./MoorhenSlider";
@@ -217,21 +217,21 @@ export const MoorhenMapCard = (props) => {
     }, [mapRadius, mapContourLevel, mapLitLines, mapSolid])
 
     return <Card className="px-0"  style={{marginBottom:'0.5rem', padding:'0'}} key={props.map.molNo}>
-        <Card.Header style={{padding: '0.5rem'}}>
-            <Row className='align-items-center'>
-            <Col className='align-items-center' style={{display:'flex', justifyContent:'left'}}>
-                    {getNameLabel(props.map)}
-                    <img 
-                        className="baby-gru-map-icon"
-                        alt="..."
-                        style={{width: '20px', height: '20px', margin:'0.5rem', padding:'0'}}
-                        src={props.map.isDifference ? `${props.urlPrefix}/baby-gru/pixmaps/diff-map.png` : `${props.urlPrefix}/baby-gru/pixmaps/map.svg`}
-                    />
-            </Col>
-            <Col style={{display:'flex', justifyContent:'right'}}>
-                {getButtonBar(props.sideBarWidth)}
-            </Col>
-            </Row>
+        <Card.Header style={{padding: '0.1rem'}}>
+            <Stack gap={2} direction='horizontal'>
+                <Col className='align-items-center' style={{display:'flex', justifyContent:'left'}}>
+                        {getNameLabel(props.map)}
+                        <img 
+                            className="baby-gru-map-icon"
+                            alt="..."
+                            style={{width: '20px', height: '20px', margin:'0.5rem', padding:'0'}}
+                            src={props.map.isDifference ? `${props.urlPrefix}/baby-gru/pixmaps/diff-map.png` : `${props.urlPrefix}/baby-gru/pixmaps/map.svg`}
+                        />
+                </Col>
+                <Col style={{display:'flex', justifyContent:'right'}}>
+                    {getButtonBar(props.sideBarWidth)}
+                </Col>
+            </Stack>
         </Card.Header>
         <Card.Body style={{display: isCollapsed ? 'none' : ''}}>
             <Row className="align-items-center" style={{ height: '100%', justifyContent:'between', display:'flex'}}>

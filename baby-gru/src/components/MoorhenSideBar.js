@@ -17,6 +17,7 @@ export const MoorhenSideBar = forwardRef((props, ref) => {
 
     const isDark = isDarkBackground(...props.backgroundColor)
     const sideBarWidth = convertViewtoPx(30, props.windowWidth)
+    const toggleDrowerButtonWidth = sideBarWidth * 0.07
 
     useEffect(() => {
         consoleBodyHeight !== 0 ? setConsoleBodyHeight(convertViewtoPx(30, props.windowHeight)) : setConsoleBodyHeight(convertViewtoPx(0, props.windowHeight))
@@ -25,32 +26,41 @@ export const MoorhenSideBar = forwardRef((props, ref) => {
 
     return <>
         <Drawer anchor='right' open={true} variant='persistent'
-                onMouseOver={() => setOpacity(1)}
-                onMouseOut={() => setOpacity(0.5)}
                 sx={{
-                    opacity: showSideBar ? '0.0' : opacity,
+                    backgroundColor: 'rgba(0, 0, 0, 0)',
                     height: '100%',
                     flexShrink: 0,
+                    margin: 0,
+                    padding: 0,
                     '& .MuiDrawer-paper': {
-                        height: '10%',
+                        height: '100%',
                         boxSizing: 'border-box',
-                        alignItems:'center', justifyContent:'center', alignContent:'center', verticalAlign:'center',
-                        backgroundColor: isDark ? 'grey' : 'white',
+                        backgroundColor: 'rgba(0, 0, 0, 0)',
                         borderTop: 0,
                         borderBottom: 0,
                         borderLeft: 0,
-                        marginTop: convertViewtoPx(5.6, props.windowHeight),
+                        margin: 0,
+                        padding: 0,
+                        border: 0,
+                        justifyContent:'center',
                     },
             }}>
-            <IconButton onClick={() => {setShowSideBar(true)}} sx={{
+            <IconButton onMouseOver={() => setOpacity(1)} onMouseOut={() => setOpacity(0.5)} onClick={() => {setShowSideBar(true)}} sx={{
                 opacity: showSideBar ? '0.0' : opacity,
-                height:'100%',
+                backgroundColor: isDark ? 'grey' : 'white',
+                height:'10%',
+                width: toggleDrowerButtonWidth - 1,
                 borderRadius: 0,
                 borderTop: 1,
                 borderBottom: 1,
                 borderLeft: 1,
+                margin: 0,
+                padding: 0,
+                ':hover': {
+                    backgroundColor: isDark ? 'grey' : 'white',
+                }
                 }}>
-                <ArrowBackOutlined style={{color: isDark ? 'white' : 'black'}}/>
+                <ArrowBackOutlined style={{color: isDark ? 'white' : 'black', width: '100%'}}/>
             </IconButton>
         </Drawer>
         <Drawer
@@ -58,16 +68,20 @@ export const MoorhenSideBar = forwardRef((props, ref) => {
                 height: '100%',
                 backgroundColor: 'rgba(0, 0, 0, 0)',
                 flexShrink: 0,
+                margin: 0,
+                padding: 0,
                 '& .MuiDrawer-paper': {
-                    backgroundColor: 'rgba(0, 0, 0, 0)',
-                    width: sideBarWidth + sideBarWidth * 0.05,
-                    height: '10%',
+                    height: '100%',
                     boxSizing: 'border-box',
-                    alignItems:'left', justifyContent: 'left', alignContent:'center', verticalAlign:'center',
+                    backgroundColor: 'rgba(0, 0, 0, 0)',
                     borderTop: 0,
                     borderBottom: 0,
                     borderLeft: 0,
-                    marginTop: convertViewtoPx(5.6, props.windowHeight),
+                    margin: 0,
+                    padding: 0,
+                    border: 0,
+                    justifyContent:'center',
+                    width: sideBarWidth + toggleDrowerButtonWidth,
                 },
             }}
             variant="persistent"
@@ -78,9 +92,9 @@ export const MoorhenSideBar = forwardRef((props, ref) => {
         >
             <IconButton onClick={() => {setShowSideBar(false)}} sx={{
                 opacity: opacity,
-                width: sideBarWidth * 0.05 - 1,
+                width: toggleDrowerButtonWidth - 1,
                 padding: 0,
-                height:'100%',
+                height:'10%',
                 borderRadius: 0,
                 borderTop: 1,
                 borderBottom: 1,

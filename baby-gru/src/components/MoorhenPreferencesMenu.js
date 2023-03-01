@@ -8,14 +8,13 @@ import MoorhenSlider from './MoorhenSlider'
 
 export const MoorhenPreferencesMenu = (props) => {
     const { 
-        atomLabelDepthMode, setAtomLabelDepthMode, darkMode, setDarkMode, 
+        atomLabelDepthMode, setAtomLabelDepthMode, setMouseSensitivity, 
         defaultExpandDisplayCards, setDefaultExpandDisplayCards, defaultMapLitLines,
         setDefaultMapLitLines, refineAfterMod, setRefineAfterMod, mouseSensitivity,
-        setMouseSensitivity, drawCrosshairs, setDrawCrosshairs, drawMissingLoops,
-        setDrawMissingLoops, mapLineWidth, setMapLineWidth, makeBackups, setMakeBackups,
+        mapLineWidth, setMapLineWidth, makeBackups, setMakeBackups,
         showShortcutToast, setShowShortcutToast, defaultMapSurface, setDefaultMapSurface,
         defaultBondSmoothness, setDefaultBondSmoothness, showScoresToast, setShowScoresToast,
-        defaultUpdatingScores, setDefaultUpdatingScores, drawFPS, setDrawFPS, wheelSensitivityFactor,
+        defaultUpdatingScores, setDefaultUpdatingScores, wheelSensitivityFactor,
         setWheelSensitivityFactor, shortcutOnHoveredAtom, setShortcutOnHoveredAtom, maxBackupCount, 
         setMaxBackupCount, modificationCountBackupThreshold, setModificationCountBackupThreshold, 
         timeCapsuleRef
@@ -78,37 +77,9 @@ export const MoorhenPreferencesMenu = (props) => {
                     <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
                         <Form.Check 
                             type="switch"
-                            checked={drawFPS}
-                            onChange={() => { setDrawFPS(!drawFPS) }}
-                            label="Show frames per second counter"/>
-                    </InputGroup>
-                    <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
-                        <Form.Check 
-                            type="switch"
-                            checked={drawCrosshairs}
-                            onChange={() => { setDrawCrosshairs(!drawCrosshairs) }}
-                            label="Show crosshairs"/>
-                    </InputGroup>
-                    <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
-                        <Form.Check 
-                            type="switch"
                             checked={showShortcutToast}
                             onChange={() => { setShowShortcutToast(!showShortcutToast) }}
                             label="Show shortcut popup"/>
-                    </InputGroup>
-                    <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
-                        <Form.Check 
-                            type="switch"
-                            checked={drawMissingLoops}
-                            onChange={() => { setDrawMissingLoops(!drawMissingLoops) }}
-                            label="Show missing loops"/>
-                    </InputGroup>
-                    <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
-                        <Form.Check 
-                            type="switch"
-                            checked={drawMissingLoops}
-                            onChange={() => { setDefaultBondSmoothness(!drawMissingLoops) }}
-                            label="Default quality of molecule bonds"/>
                     </InputGroup>
                     <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
                         <Form.Check 
