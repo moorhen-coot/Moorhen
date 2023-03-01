@@ -26,6 +26,7 @@ export function MoorhenMolecule(commandCentre, urlPrefix) {
     this.sequences = []
     this.colourRules = null
     this.ligands = null
+    this.excludedSegments = []
     this.gaussianSurfaceSettings = {
         sigma: 4.4,
         countourLevel: 4.0,
@@ -846,6 +847,9 @@ MoorhenMolecule.prototype.drawCootRepresentation = async function (glRef, style)
             m2tSelection = "//"
             break;
     }
+    if (this.excludedSegments.length > 0){
+        m2tSelection = `{${m2tSelection} & !{${this.excludedSegments.join(' | ')}}}`
+    }
     return this.commandCentre.current.cootCommand({
         returnType: "mesh",
         command: "get_molecular_representation_mesh",
@@ -1622,6 +1626,7 @@ MoorhenMolecule.prototype.hideCid = async function(cid, glRef) {
         returnType: 'status',
         commandArgs: [this.molNo, cid], 
     })
+    this.excludedSegments.push(cid)
     const result = await this.redraw(glRef)
     return Promise.resolve(result)
 }
@@ -1633,6 +1638,7 @@ MoorhenMolecule.prototype.unhideAll = async function(glRef) {
         returnType: 'status',
         commandArgs: [this.molNo], 
     })
+    this.excludedSegments = []
     const result = await this.redraw(glRef)
     return Promise.resolve(result)
 }
