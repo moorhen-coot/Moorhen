@@ -12,15 +12,17 @@ const createInstance = (name, empty=false) => {
      return instance
 }
 
-export function MoorhenTimeCapsule(moleculesRef, glRef, preferences) {
+export function MoorhenTimeCapsule(moleculesRef, mapsRef, activeMapRef, glRef, preferences) {
     this.moleculesRef = moleculesRef
+    this.mapsRef = mapsRef
     this.glRef = glRef
+    this.activeMapRef = activeMapRef
     this.preferences = preferences
     this.busy = false
     this.modificationCount = 0
     this.modificationCountBackupThreshold = 5
     this.maxBackupCount = 10
-    this.version = '0.0.1'
+    this.version = '0.0.5'
     this.storageInstance = createInstance('Moorhen-TimeCapsule')
     this.checkVersion()
 }
@@ -35,23 +37,32 @@ MoorhenTimeCapsule.prototype.checkVersion = async function () {
 }
 
 MoorhenTimeCapsule.prototype.fetchSession = async function () {
-    let moleculePromises = this.moleculesRef.current.map(molecule => {return molecule.getAtoms()})
-    let moleculeAtoms = await Promise.all(moleculePromises)
+    const promises = await Promise.all([
+        ...this.moleculesRef.current.map(molecule => {return molecule.getAtoms()}), 
+        ...this.mapsRef.current.map(map => {return map.getMap()}),
+        ...this.mapsRef.current.map(map => {return map.hasReflectionData ? map.fetchReflectionData() : Promise.resolve(null)})
+    ])
+
+    const moleculeAtoms = promises.filter(promise => promise?.data.message === 'get_atoms')
+    const mapData = promises.filter(promise => promise?.data.message === 'get_map')
+    const reflectionData = promises.filter(promise => promise === null || promise?.data.message === 'get_mtz_data')
 
     const session = {
         moleculesNames: this.moleculesRef.current.map(molecule => molecule.name),
-        mapsNames: [],
         moleculesPdbData: moleculeAtoms.map(item => item.data.result.pdbData),
-        mapsMapData: [],
-        activeMapMolNo: null,
         moleculesDisplayObjectsKeys: this.moleculesRef.current.map(molecule => Object.keys(molecule.displayObjects).filter(key => molecule.displayObjects[key].length > 0)),
         moleculesCootBondsOptions: this.moleculesRef.current.map(molecule => molecule.cootBondsOptions),
-        mapsCootContours: [],
-        mapsContourLevels: [],
-        mapsColours: [],
-        mapsLitLines: [],
-        mapsRadius: [],
-        mapsIsDifference: [],
+        mapsNames: this.mapsRef.current.map(molecule => molecule.name),
+        mapsMapData: mapData.map(item => new Uint8Array(item.data.result.mapData)),
+        mapsReflectionData: reflectionData.map(item => item ? item.data.result.mtzData : null),
+        mapsCootContours:  this.mapsRef.current.map(map => map.cootContour),
+        mapsContourLevels: this.mapsRef.current.map(map => map.contourLevel),
+        mapsColours: this.mapsRef.current.map(map => map.mapColour),
+        mapsLitLines: this.mapsRef.current.map(map => map.litLines),
+        mapsRadius: this.mapsRef.current.map(map => map.mapRadius),
+        mapsIsDifference: this.mapsRef.current.map(map => map.isDifference),
+        mapsSelectedColumns: this.mapsRef.current.map(map => map.selectedColumns),
+        activeMapIndex: this.mapsRef.current.findIndex(map => map.molNo === this.activeMapRef.current.molNo),
         origin: this.glRef.current.origin,
         backgroundColor: this.glRef.current.background_colour,
         atomLabelDepthMode: this.preferences.atomLabelDepthMode,

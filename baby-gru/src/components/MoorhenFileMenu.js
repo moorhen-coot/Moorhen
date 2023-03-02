@@ -210,6 +210,24 @@ export const MoorhenFileMenu = (props) => {
             changeMaps({ action: "Add", item: map })
         })
 
+        // Associate to reflection data
+        const associateReflectionsPromises = newMaps.map((map, index) => {
+            if(sessionData.mapsReflectionData[index] && sessionData.mapsSelectedColumns[index]) {
+                return map.associateToReflectionData(
+                    sessionData.mapsSelectedColumns[index], 
+                    Uint8Array.from(Object.values(sessionData.mapsReflectionData[index]))
+                )
+            } else {
+                return Promise.resolve()
+            }
+        })
+        await Promise.all(associateReflectionsPromises)
+
+        // Set active map
+        if (typeof sessionData.activeMapIndex !== -1){
+            props.setActiveMap(newMaps[sessionData.activeMapIndex])
+        }
+
         // Set camera details
         glRef.current.setAmbientLightNoUpdate(...Object.values(sessionData.ambientLight))
         glRef.current.setSpecularLightNoUpdate(...Object.values(sessionData.specularLight))
@@ -248,42 +266,8 @@ export const MoorhenFileMenu = (props) => {
         loadSessionJSON(sessionData)
     }
 
-    const getSession = async () => {
-        let moleculePromises = props.molecules.map(molecule => {return molecule.getAtoms()})
-        let moleculeAtoms = await Promise.all(moleculePromises)
-        let mapPromises = props.maps.map(map => {return map.getMap()})
-        let mapData = await Promise.all(mapPromises)
-
-        const session = {
-            moleculesNames: props.molecules.map(molecule => molecule.name),
-            mapsNames: props.maps.map(map => map.name),
-            moleculesPdbData: moleculeAtoms.map(item => item.data.result.pdbData),
-            mapsMapData: mapData.map(item => new Uint8Array(item.data.result.mapData)),
-            activeMapMolNo: props.activeMap ? props.activeMap.molNo : null,
-            moleculesDisplayObjectsKeys: props.molecules.map(molecule => Object.keys(molecule.displayObjects).filter(key => molecule.displayObjects[key].length > 0)),
-            moleculesCootBondsOptions: props.molecules.map(molecule => molecule.cootBondsOptions),
-            mapsCootContours:  props.maps.map(map => map.cootContour),
-            mapsContourLevels: props.maps.map(map => map.contourLevel),
-            mapsColours: props.maps.map(map => map.mapColour),
-            mapsLitLines: props.maps.map(map => map.litLines),
-            mapsRadius: props.maps.map(map => map.mapRadius),
-            mapsIsDifference: props.maps.map(map => map.isDifference),
-            origin: props.glRef.current.origin,
-            backgroundColor: props.backgroundColor,
-            atomLabelDepthMode: props.atomLabelDepthMode,
-            ambientLight: glRef.current.light_colours_ambient,
-            diffuseLight: glRef.current.light_colours_diffuse,
-            lightPosition: glRef.current.light_positions,
-            specularLight: glRef.current.light_colours_specular,
-            fogStart: glRef.current.gl_fog_start,
-            fogEnd: glRef.current.gl_fog_end,
-            zoom: glRef.current.zoom,
-            doDrawClickedAtomLines: glRef.current.doDrawClickedAtomLines,
-            clipStart: (glRef.current.gl_clipPlane0[3] + 500) * -1,
-            clipEnd: glRef.current.gl_clipPlane1[3] - 500,
-            quat4: glRef.current.myQuat
-        }
-        
+    const getSession = async () => {        
+        const session = await props.timeCapsuleRef.current.fetchSession()
         const sessionString = JSON.stringify(session)
         doDownload([sessionString], `session.json`)
     }
