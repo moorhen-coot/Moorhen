@@ -172,10 +172,10 @@ export const MoorhenFileMenu = (props) => {
         // Load molecules stored in session from pdb string
         let newMoleculePromises = [];
         let newMolecule;
-        sessionData.moleculesPdbData.forEach((pdbData, index) => {
+        sessionData.moleculeData.forEach(storedMoleculeData => {
             newMolecule = new MoorhenMolecule(commandCentre, props.urlPrefix)
             newMoleculePromises.push(
-                newMolecule.loadToCootFromString(pdbData, sessionData.moleculesNames[index])
+                newMolecule.loadToCootFromString(storedMoleculeData.pdbData, storedMoleculeData.name)
             )
         })
         let newMolecules = await Promise.all(newMoleculePromises)
@@ -183,8 +183,9 @@ export const MoorhenFileMenu = (props) => {
         // Draw the molecules with the styles stored in session
         let drawPromises = []
         newMolecules.forEach((molecule, moleculeIndex) => {
-            molecule.cootBondsOptions = sessionData.moleculesCootBondsOptions[moleculeIndex]
-            const styles = sessionData.moleculesDisplayObjectsKeys[moleculeIndex]
+            const storedMoleculeData = sessionData.moleculeData[moleculeIndex]
+            molecule.cootBondsOptions = storedMoleculeData.cootBondsOptions
+            const styles = storedMoleculeData.displayObjectsKeys
             styles.forEach(style => drawPromises.push(molecule.fetchIfDirtyAndDraw(style, glRef)))
         })
         await Promise.all(drawPromises)
@@ -196,11 +197,14 @@ export const MoorhenFileMenu = (props) => {
 
         // Load maps stored in session
         let newMapPromises = [];
-        sessionData.mapsMapData.forEach((decodedData, index) => {
-            let mapData = Uint8Array.from(Object.values(decodedData)).buffer
+        sessionData.mapData.forEach(storedMapData => {
             let newMap = new MoorhenMap(commandCentre)
             newMapPromises.push(
-                newMap.loadToCootFromMapData(mapData, sessionData.mapsNames[index], sessionData.mapsIsDifference[index])
+                newMap.loadToCootFromMapData(
+                    Uint8Array.from(Object.values(storedMapData.mapData)).buffer, 
+                    storedMapData.name, 
+                    storedMapData.isDifference
+                )
             )
         })
         let newMaps = await Promise.all(newMapPromises)
@@ -212,10 +216,11 @@ export const MoorhenFileMenu = (props) => {
 
         // Associate to reflection data
         const associateReflectionsPromises = newMaps.map((map, index) => {
-            if(sessionData.mapsReflectionData[index] && sessionData.mapsSelectedColumns[index]) {
+            const storedMapData = sessionData.mapData[index]
+            if(storedMapData.reflectionData && storedMapData.selectedColumns) {
                 return map.associateToReflectionData(
-                    sessionData.mapsSelectedColumns[index], 
-                    Uint8Array.from(Object.values(sessionData.mapsReflectionData[index]))
+                    storedMapData.selectedColumns, 
+                    Uint8Array.from(Object.values(storedMapData.reflectionData))
                 )
             } else {
                 return Promise.resolve()
@@ -245,15 +250,16 @@ export const MoorhenFileMenu = (props) => {
         // Set map visualisation details after map card is created using a timeout
         setTimeout(() => {
             newMaps.forEach((map, index) => {
-                map.mapColour = sessionData.mapColour
+                const storedMapData = sessionData.mapData[index]
+                map.mapColour = storedMapData.colour
                 let contourOnSessionLoad = new CustomEvent("contourOnSessionLoad", {
                     "detail": {
                         molNo: map.molNo,
-                        mapRadius: sessionData.mapsRadius[index],
-                        cootContour: sessionData.mapsCootContours[index],
-                        contourLevel: sessionData.mapsContourLevels[index],
-                        mapColour: sessionData.mapsColours[index],
-                        litLines: sessionData.mapsLitLines[index],
+                        mapRadius: storedMapData.radius,
+                        cootContour: storedMapData.cootContour,
+                        contourLevel: storedMapData.contourLevel,
+                        mapColour: storedMapData.colour,
+                        litLines: storedMapData.litLines,
                     }
                 });               
                 document.dispatchEvent(contourOnSessionLoad);       
@@ -275,7 +281,7 @@ export const MoorhenFileMenu = (props) => {
     const createBackup = async () => {
         const session = await props.timeCapsuleRef.current.fetchSession()
         const sessionString = JSON.stringify(session)
-        const key = {dateTime: `${Date.now()}`, type: 'manual', name: '', molNames: session.moleculesNames}
+        const key = {dateTime: `${Date.now()}`, type: 'manual', name: '', molNames: session.moleculeData.map(mol => mol.name)}
         const keyString = JSON.stringify(key)
         return props.timeCapsuleRef.current.createBackup(keyString, sessionString)
     }

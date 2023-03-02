@@ -43,25 +43,37 @@ MoorhenTimeCapsule.prototype.fetchSession = async function () {
         ...this.mapsRef.current.map(map => {return map.hasReflectionData ? map.fetchReflectionData() : Promise.resolve(null)})
     ])
 
-    const moleculeAtoms = promises.filter(promise => promise?.data.message === 'get_atoms')
-    const mapData = promises.filter(promise => promise?.data.message === 'get_map')
-    const reflectionData = promises.filter(promise => promise === null || promise?.data.message === 'get_mtz_data')
+    const moleculeDataPromises = promises.filter(promise => promise?.data.message === 'get_atoms')
+    const mapDataPromises = promises.filter(promise => promise?.data.message === 'get_map')
+    const reflectionDataPromises = promises.filter(promise => promise === null || promise?.data.message === 'get_mtz_data')
+
+    const moleculeData = this.moleculesRef.current.map((molecule, index) => {
+        return {
+            name: molecule.name,
+            pdbData: moleculeDataPromises[index].data.result.pdbData,
+            displayObjectsKeys: Object.keys(molecule.displayObjects).filter(key => molecule.displayObjects[key].length > 0),
+            cootBondsOptions: molecule.cootBondsOptions
+        }
+    })
+
+    const mapData = this.mapsRef.current.map((map, index) => {
+        return {
+            name: map.name,
+            mapData: new Uint8Array(mapDataPromises[index].data.result.mapData),
+            reflectionData: reflectionDataPromises[index] ? reflectionDataPromises[index].data.result.mtzData : null,
+            cootContour: map.cootContour,
+            contourLevel: map.contourLevel,
+            radius: map.mapRadius,
+            colour: map.mapColour,
+            litLines: map.litLines,
+            isDifference: map.isDifference,
+            selectedColumns: map.selectedColumns
+        }
+    })
 
     const session = {
-        moleculesNames: this.moleculesRef.current.map(molecule => molecule.name),
-        moleculesPdbData: moleculeAtoms.map(item => item.data.result.pdbData),
-        moleculesDisplayObjectsKeys: this.moleculesRef.current.map(molecule => Object.keys(molecule.displayObjects).filter(key => molecule.displayObjects[key].length > 0)),
-        moleculesCootBondsOptions: this.moleculesRef.current.map(molecule => molecule.cootBondsOptions),
-        mapsNames: this.mapsRef.current.map(molecule => molecule.name),
-        mapsMapData: mapData.map(item => new Uint8Array(item.data.result.mapData)),
-        mapsReflectionData: reflectionData.map(item => item ? item.data.result.mtzData : null),
-        mapsCootContours:  this.mapsRef.current.map(map => map.cootContour),
-        mapsContourLevels: this.mapsRef.current.map(map => map.contourLevel),
-        mapsColours: this.mapsRef.current.map(map => map.mapColour),
-        mapsLitLines: this.mapsRef.current.map(map => map.litLines),
-        mapsRadius: this.mapsRef.current.map(map => map.mapRadius),
-        mapsIsDifference: this.mapsRef.current.map(map => map.isDifference),
-        mapsSelectedColumns: this.mapsRef.current.map(map => map.selectedColumns),
+        moleculeData: moleculeData,
+        mapData: mapData,
         activeMapIndex: this.mapsRef.current.findIndex(map => map.molNo === this.activeMapRef.current.molNo),
         origin: this.glRef.current.origin,
         backgroundColor: this.glRef.current.background_colour,
@@ -89,7 +101,7 @@ MoorhenTimeCapsule.prototype.addModification = async function() {
         this.modificationCount = 0
         const session = await this.fetchSession()
         const sessionString = JSON.stringify(session)
-        const key = {dateTime: `${Date.now()}`, type: 'automatic', name: '', molNames: session.moleculesNames}
+        const key = {dateTime: `${Date.now()}`, type: 'automatic', name: '', molNames: session.moleculeData.map(mol => mol.name)}
         const keyString = JSON.stringify(key)
         return this.createBackup(keyString, sessionString)
     }
