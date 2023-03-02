@@ -156,6 +156,7 @@ export const MoorhenFileMenu = (props) => {
     }
 
     const loadSessionJSON = async (sessionData) => {
+        props.timeCapsuleRef.current.busy = true
         sessionData = JSON.parse(sessionData)
         
         // Delete current scene
@@ -204,17 +205,29 @@ export const MoorhenFileMenu = (props) => {
             styles.forEach(style => drawPromises.push(molecule.fetchIfDirtyAndDraw(style, glRef)))
         })
 
-        // Associate to reflection data
+        // Associate maps to reflection data
+        // FIXME: THE MTZ file that is created now should have the same file name as before, otherwise if the user creates a new backup based on this one, a new MTZ entry will be created in local storage.
         const associateReflectionsPromises = newMaps.map((map, index) => {
             const storedMapData = sessionData.mapData[index]
-            if(storedMapData.reflectionData && storedMapData.selectedColumns) {
+            if (sessionData.includesReflectionData && storedMapData.reflectionData) {
                 return map.associateToReflectionData(
                     storedMapData.selectedColumns, 
                     Uint8Array.from(Object.values(storedMapData.reflectionData))
                 )
-            } else {
-                return Promise.resolve()
+            } else if(storedMapData.associatedReflectionFileName && storedMapData.selectedColumns) {
+                return props.timeCapsuleRef.current.retrieveBackup(
+                    JSON.stringify({
+                        type: 'mtzData',
+                        name: storedMapData.associatedReflectionFileName
+                    })
+                    ).then(reflectionData => {
+                        return map.associateToReflectionData(
+                            storedMapData.selectedColumns, 
+                            Uint8Array.from(Object.values(reflectionData))
+                        )
+                    })
             }
+            return Promise.resolve()
         })
         
         const afterLoadPromises = await Promise.all([...drawPromises, ...associateReflectionsPromises])
@@ -267,6 +280,9 @@ export const MoorhenFileMenu = (props) => {
                 document.dispatchEvent(contourOnSessionLoad);       
             })
         }, 2500);
+
+        props.timeCapsuleRef.current.busy = false
+
     }
 
     const loadSession = async (file) => {
@@ -275,13 +291,14 @@ export const MoorhenFileMenu = (props) => {
     }
 
     const getSession = async () => {        
-        const session = await props.timeCapsuleRef.current.fetchSession()
+        const session = await props.timeCapsuleRef.current.fetchSession(true)
         const sessionString = JSON.stringify(session)
         doDownload([sessionString], `session.json`)
     }
 
     const createBackup = async () => {
-        const session = await props.timeCapsuleRef.current.fetchSession()
+        await props.timeCapsuleRef.current.updateMtzFiles()
+        const session = await props.timeCapsuleRef.current.fetchSession(false)
         const sessionString = JSON.stringify(session)
         const key = {dateTime: `${Date.now()}`, type: 'manual', name: '', molNames: session.moleculeData.map(mol => mol.name)}
         const keyString = JSON.stringify(key)
@@ -309,6 +326,7 @@ export const MoorhenFileMenu = (props) => {
                                     <Button variant='danger' onClick={async () => {
                                         try {
                                             await props.timeCapsuleRef.current.removeBackup(item.key)
+                                            await props.timeCapsuleRef.current.cleanupUnusedMtzFiles()
                                             sortedKeys = await props.timeCapsuleRef.current.getSortedKeys()
                                             setBackupKeys(sortedKeys)
                                         } catch (err) {
