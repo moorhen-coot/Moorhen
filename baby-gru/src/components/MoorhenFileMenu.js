@@ -231,7 +231,7 @@ export const MoorhenFileMenu = (props) => {
         })
 
         // Set active map
-        if (typeof sessionData.activeMapIndex !== -1){
+        if (sessionData.activeMapIndex !== -1){
             props.setActiveMap(newMaps[sessionData.activeMapIndex])
         }
 
