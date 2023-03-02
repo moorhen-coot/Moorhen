@@ -171,34 +171,17 @@ export const MoorhenFileMenu = (props) => {
 
         // Load molecules stored in session from pdb string
         let newMoleculePromises = [];
-        let newMolecule;
         sessionData.moleculeData.forEach(storedMoleculeData => {
-            newMolecule = new MoorhenMolecule(commandCentre, props.urlPrefix)
+            const newMolecule = new MoorhenMolecule(commandCentre, props.urlPrefix)
             newMoleculePromises.push(
                 newMolecule.loadToCootFromString(storedMoleculeData.pdbData, storedMoleculeData.name)
             )
         })
-        let newMolecules = await Promise.all(newMoleculePromises)
-
-        // Draw the molecules with the styles stored in session
-        let drawPromises = []
-        newMolecules.forEach((molecule, moleculeIndex) => {
-            const storedMoleculeData = sessionData.moleculeData[moleculeIndex]
-            molecule.cootBondsOptions = storedMoleculeData.cootBondsOptions
-            const styles = storedMoleculeData.displayObjectsKeys
-            styles.forEach(style => drawPromises.push(molecule.fetchIfDirtyAndDraw(style, glRef)))
-        })
-        await Promise.all(drawPromises)
         
-        // Change props.molecules
-        newMolecules.forEach(molecule => {
-            changeMolecules({ action: "Add", item: molecule })
-        })
-
         // Load maps stored in session
         let newMapPromises = [];
         sessionData.mapData.forEach(storedMapData => {
-            let newMap = new MoorhenMap(commandCentre)
+            const newMap = new MoorhenMap(commandCentre)
             newMapPromises.push(
                 newMap.loadToCootFromMapData(
                     Uint8Array.from(Object.values(storedMapData.mapData)).buffer, 
@@ -207,11 +190,18 @@ export const MoorhenFileMenu = (props) => {
                 )
             )
         })
-        let newMaps = await Promise.all(newMapPromises)
+        
+        const loadPromises = await Promise.all([...newMoleculePromises, ...newMapPromises])
+        const newMolecules = loadPromises.filter(item => item.type === 'molecule')
+        const newMaps = loadPromises.filter(item => item.type === 'map')
 
-        // Change props.maps
-        newMaps.forEach(map => {
-            changeMaps({ action: "Add", item: map })
+        // Draw the molecules with the styles stored in session
+        let drawPromises = []
+        newMolecules.forEach((molecule, moleculeIndex) => {
+            const storedMoleculeData = sessionData.moleculeData[moleculeIndex]
+            molecule.cootBondsOptions = storedMoleculeData.cootBondsOptions
+            const styles = storedMoleculeData.displayObjectsKeys
+            styles.forEach(style => drawPromises.push(molecule.fetchIfDirtyAndDraw(style, glRef)))
         })
 
         // Associate to reflection data
@@ -226,7 +216,19 @@ export const MoorhenFileMenu = (props) => {
                 return Promise.resolve()
             }
         })
-        await Promise.all(associateReflectionsPromises)
+        
+        const afterLoadPromises = await Promise.all([...drawPromises, ...associateReflectionsPromises])
+        await Promise.all(afterLoadPromises)
+
+        // Change props.molecules
+        newMolecules.forEach(molecule => {
+            changeMolecules({ action: "Add", item: molecule })
+        })
+
+        // Change props.maps
+        newMaps.forEach(map => {
+            changeMaps({ action: "Add", item: map })
+        })
 
         // Set active map
         if (typeof sessionData.activeMapIndex !== -1){
