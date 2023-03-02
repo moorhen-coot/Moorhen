@@ -16,6 +16,8 @@ export function MoorhenMap(commandCentre) {
     this.alpha = 1.0
     this.isDifference = false
     this.hasReflectionData = false
+    this.selectedColumns = null
+    this.associatedReflectionFileName = null
 }
 
 MoorhenMap.prototype.delete = async function (glRef) {
@@ -24,9 +26,18 @@ MoorhenMap.prototype.delete = async function (glRef) {
         if(this.displayObjects[displayObject].length > 0) {this.clearBuffersOfStyle(glRef, displayObject)}
     })
     glRef.current.drawScene()
-    const inputData = {message:"delete", molNo:$this.molNo}
-    const response = await $this.commandCentre.current.postMessage(inputData)
-    return response
+    const promises = [
+        $this.commandCentre.current.postMessage({
+            message:"delete", molNo:$this.molNo
+        }),
+        $this.hasReflectionData ? 
+            $this.commandCentre.current.postMessage({
+                message: 'delete_file_name', fileName: $this.associatedReflectionFileName
+            })
+            :
+            Promise.resolve(true)
+    ]
+    await Promise.all(promises)
 }
 
 
@@ -41,7 +52,6 @@ MoorhenMap.prototype.loadToCootFromMtzURL = async function (url, name, selectedC
         await $this.loadToCootFromMtzData(asUIntArray, name, selectedColumns)
         if (selectedColumns.calcStructFact) {
             await $this.associateToReflectionData(selectedColumns, asUIntArray)
-            $this.hasReflectionData = true
         }
         return $this
     } catch (err) {
@@ -83,7 +93,6 @@ MoorhenMap.prototype.loadToCootFromMtzFile = async function (source, selectedCol
     await $this.loadToCootFromMtzData(asUIntArray, source.name, selectedColumns)
     if (selectedColumns.calcStructFact) {
         await $this.associateToReflectionData(selectedColumns, asUIntArray)
-        $this.hasReflectionData = true
     } 
     return $this
 }
@@ -295,17 +304,35 @@ MoorhenMap.prototype.associateToReflectionData = async function (selectedColumns
     if (!selectedColumns.Fobs || !selectedColumns.SigFobs || !selectedColumns.FreeR) {
         return Promise.reject('Missing column data')
     }
-    let commandArgs = [
+    
+    const commandArgs = [
         this.molNo, { name: this.name, data: reflectionData },
         selectedColumns.Fobs, selectedColumns.SigFobs, selectedColumns.FreeR
     ]
 
-    let result = await this.commandCentre.current.cootCommand({
+    const response = await this.commandCentre.current.cootCommand({
         command: 'shim_associate_data_mtz_file_with_map',
         commandArgs: commandArgs,
         returnType: 'status'
     }, true)
-
-    return result
+    
+    if (response.data.result.status === "Completed") {
+        this.hasReflectionData = true
+        this.selectedColumns = selectedColumns
+        this.associatedReflectionFileName = response.data.result.result
+    } else {
+        console.log('Unable to associate reflection data with map')
+    }   
 }
 
+MoorhenMap.prototype.fetchReflectionData = async function () {
+    if (this.hasReflectionData) {
+        return await this.commandCentre.current.postMessage({
+            molNo: this.molNo,
+            message: 'get_mtz_data',
+            fileName: this.associatedReflectionFileName
+        })
+    } else {
+        console.log('Map has no reflection data associated...')
+    }
+}

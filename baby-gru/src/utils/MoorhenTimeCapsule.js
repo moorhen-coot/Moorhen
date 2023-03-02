@@ -12,15 +12,17 @@ const createInstance = (name, empty=false) => {
      return instance
 }
 
-export function MoorhenTimeCapsule(moleculesRef, glRef, preferences) {
+export function MoorhenTimeCapsule(moleculesRef, mapsRef, activeMapRef, glRef, preferences) {
     this.moleculesRef = moleculesRef
+    this.mapsRef = mapsRef
     this.glRef = glRef
+    this.activeMapRef = activeMapRef
     this.preferences = preferences
     this.busy = false
     this.modificationCount = 0
     this.modificationCountBackupThreshold = 5
     this.maxBackupCount = 10
-    this.version = '0.0.1'
+    this.version = '0.0.5'
     this.storageInstance = createInstance('Moorhen-TimeCapsule')
     this.checkVersion()
 }
@@ -35,23 +37,44 @@ MoorhenTimeCapsule.prototype.checkVersion = async function () {
 }
 
 MoorhenTimeCapsule.prototype.fetchSession = async function () {
-    let moleculePromises = this.moleculesRef.current.map(molecule => {return molecule.getAtoms()})
-    let moleculeAtoms = await Promise.all(moleculePromises)
+    const promises = await Promise.all([
+        ...this.moleculesRef.current.map(molecule => {return molecule.getAtoms()}), 
+        ...this.mapsRef.current.map(map => {return map.getMap()}),
+        ...this.mapsRef.current.map(map => {return map.hasReflectionData ? map.fetchReflectionData() : Promise.resolve(null)})
+    ])
+
+    const moleculeDataPromises = promises.filter(promise => promise?.data.message === 'get_atoms')
+    const mapDataPromises = promises.filter(promise => promise?.data.message === 'get_map')
+    const reflectionDataPromises = promises.filter(promise => promise === null || promise?.data.message === 'get_mtz_data')
+
+    const moleculeData = this.moleculesRef.current.map((molecule, index) => {
+        return {
+            name: molecule.name,
+            pdbData: moleculeDataPromises[index].data.result.pdbData,
+            displayObjectsKeys: Object.keys(molecule.displayObjects).filter(key => molecule.displayObjects[key].length > 0),
+            cootBondsOptions: molecule.cootBondsOptions
+        }
+    })
+
+    const mapData = this.mapsRef.current.map((map, index) => {
+        return {
+            name: map.name,
+            mapData: new Uint8Array(mapDataPromises[index].data.result.mapData),
+            reflectionData: reflectionDataPromises[index] ? reflectionDataPromises[index].data.result.mtzData : null,
+            cootContour: map.cootContour,
+            contourLevel: map.contourLevel,
+            radius: map.mapRadius,
+            colour: map.mapColour,
+            litLines: map.litLines,
+            isDifference: map.isDifference,
+            selectedColumns: map.selectedColumns
+        }
+    })
 
     const session = {
-        moleculesNames: this.moleculesRef.current.map(molecule => molecule.name),
-        mapsNames: [],
-        moleculesPdbData: moleculeAtoms.map(item => item.data.result.pdbData),
-        mapsMapData: [],
-        activeMapMolNo: null,
-        moleculesDisplayObjectsKeys: this.moleculesRef.current.map(molecule => Object.keys(molecule.displayObjects).filter(key => molecule.displayObjects[key].length > 0)),
-        moleculesCootBondsOptions: this.moleculesRef.current.map(molecule => molecule.cootBondsOptions),
-        mapsCootContours: [],
-        mapsContourLevels: [],
-        mapsColours: [],
-        mapsLitLines: [],
-        mapsRadius: [],
-        mapsIsDifference: [],
+        moleculeData: moleculeData,
+        mapData: mapData,
+        activeMapIndex: this.mapsRef.current.findIndex(map => map.molNo === this.activeMapRef.current.molNo),
         origin: this.glRef.current.origin,
         backgroundColor: this.glRef.current.background_colour,
         atomLabelDepthMode: this.preferences.atomLabelDepthMode,
@@ -78,7 +101,7 @@ MoorhenTimeCapsule.prototype.addModification = async function() {
         this.modificationCount = 0
         const session = await this.fetchSession()
         const sessionString = JSON.stringify(session)
-        const key = {dateTime: `${Date.now()}`, type: 'automatic', name: '', molNames: session.moleculesNames}
+        const key = {dateTime: `${Date.now()}`, type: 'automatic', name: '', molNames: session.moleculeData.map(mol => mol.name)}
         const keyString = JSON.stringify(key)
         return this.createBackup(keyString, sessionString)
     }

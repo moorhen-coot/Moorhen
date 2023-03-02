@@ -37,6 +37,8 @@ export const MoorhenContainer = (props) => {
     const timeCapsuleRef = useRef(null)
     const commandCentre = useRef(null)
     const moleculesRef = useRef(null)
+    const mapsRef = useRef(null)
+    const activeMapRef = useRef(null)
     const consoleDivRef = useRef(null)
     const lastHoveredAtom = useRef(null)
     const preferences = useContext(PreferencesContext);
@@ -61,6 +63,8 @@ export const MoorhenContainer = (props) => {
     const [showColourRulesToast, setShowColourRulesToast] = useState(false)
     
     moleculesRef.current = molecules
+    mapsRef.current = maps
+    activeMapRef.current = activeMap
     const innerWindowMarginHeight = convertRemToPx(0.5)
     const innerWindowMarginWidth = convertRemToPx(1)
 
@@ -74,7 +78,7 @@ export const MoorhenContainer = (props) => {
     useEffect(() => {
         if (cootInitialized && props.forwardControls) {
             props.forwardControls(collectedProps)
-            timeCapsuleRef.current = new MoorhenTimeCapsule(moleculesRef, glRef, preferences)
+            timeCapsuleRef.current = new MoorhenTimeCapsule(moleculesRef, mapsRef, activeMapRef, glRef, preferences)
             timeCapsuleRef.current.maxBackupCount = preferences.maxBackupCount
             timeCapsuleRef.current.modificationCountBackupThreshold = preferences.modificationCountBackupThreshold
         }

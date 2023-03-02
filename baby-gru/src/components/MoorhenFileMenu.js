@@ -171,44 +171,69 @@ export const MoorhenFileMenu = (props) => {
 
         // Load molecules stored in session from pdb string
         let newMoleculePromises = [];
-        let newMolecule;
-        sessionData.moleculesPdbData.forEach((pdbData, index) => {
-            newMolecule = new MoorhenMolecule(commandCentre, props.urlPrefix)
+        sessionData.moleculeData.forEach(storedMoleculeData => {
+            const newMolecule = new MoorhenMolecule(commandCentre, props.urlPrefix)
             newMoleculePromises.push(
-                newMolecule.loadToCootFromString(pdbData, sessionData.moleculesNames[index])
+                newMolecule.loadToCootFromString(storedMoleculeData.pdbData, storedMoleculeData.name)
             )
         })
-        let newMolecules = await Promise.all(newMoleculePromises)
+        
+        // Load maps stored in session
+        let newMapPromises = [];
+        sessionData.mapData.forEach(storedMapData => {
+            const newMap = new MoorhenMap(commandCentre)
+            newMapPromises.push(
+                newMap.loadToCootFromMapData(
+                    Uint8Array.from(Object.values(storedMapData.mapData)).buffer, 
+                    storedMapData.name, 
+                    storedMapData.isDifference
+                )
+            )
+        })
+        
+        const loadPromises = await Promise.all([...newMoleculePromises, ...newMapPromises])
+        const newMolecules = loadPromises.filter(item => item.type === 'molecule')
+        const newMaps = loadPromises.filter(item => item.type === 'map')
 
         // Draw the molecules with the styles stored in session
         let drawPromises = []
         newMolecules.forEach((molecule, moleculeIndex) => {
-            molecule.cootBondsOptions = sessionData.moleculesCootBondsOptions[moleculeIndex]
-            const styles = sessionData.moleculesDisplayObjectsKeys[moleculeIndex]
+            const storedMoleculeData = sessionData.moleculeData[moleculeIndex]
+            molecule.cootBondsOptions = storedMoleculeData.cootBondsOptions
+            const styles = storedMoleculeData.displayObjectsKeys
             styles.forEach(style => drawPromises.push(molecule.fetchIfDirtyAndDraw(style, glRef)))
         })
-        await Promise.all(drawPromises)
+
+        // Associate to reflection data
+        const associateReflectionsPromises = newMaps.map((map, index) => {
+            const storedMapData = sessionData.mapData[index]
+            if(storedMapData.reflectionData && storedMapData.selectedColumns) {
+                return map.associateToReflectionData(
+                    storedMapData.selectedColumns, 
+                    Uint8Array.from(Object.values(storedMapData.reflectionData))
+                )
+            } else {
+                return Promise.resolve()
+            }
+        })
         
+        const afterLoadPromises = await Promise.all([...drawPromises, ...associateReflectionsPromises])
+        await Promise.all(afterLoadPromises)
+
         // Change props.molecules
         newMolecules.forEach(molecule => {
             changeMolecules({ action: "Add", item: molecule })
         })
 
-        // Load maps stored in session
-        let newMapPromises = [];
-        sessionData.mapsMapData.forEach((decodedData, index) => {
-            let mapData = Uint8Array.from(Object.values(decodedData)).buffer
-            let newMap = new MoorhenMap(commandCentre)
-            newMapPromises.push(
-                newMap.loadToCootFromMapData(mapData, sessionData.mapsNames[index], sessionData.mapsIsDifference[index])
-            )
-        })
-        let newMaps = await Promise.all(newMapPromises)
-
         // Change props.maps
         newMaps.forEach(map => {
             changeMaps({ action: "Add", item: map })
         })
+
+        // Set active map
+        if (sessionData.activeMapIndex !== -1){
+            props.setActiveMap(newMaps[sessionData.activeMapIndex])
+        }
 
         // Set camera details
         glRef.current.setAmbientLightNoUpdate(...Object.values(sessionData.ambientLight))
@@ -227,15 +252,16 @@ export const MoorhenFileMenu = (props) => {
         // Set map visualisation details after map card is created using a timeout
         setTimeout(() => {
             newMaps.forEach((map, index) => {
-                map.mapColour = sessionData.mapColour
+                const storedMapData = sessionData.mapData[index]
+                map.mapColour = storedMapData.colour
                 let contourOnSessionLoad = new CustomEvent("contourOnSessionLoad", {
                     "detail": {
                         molNo: map.molNo,
-                        mapRadius: sessionData.mapsRadius[index],
-                        cootContour: sessionData.mapsCootContours[index],
-                        contourLevel: sessionData.mapsContourLevels[index],
-                        mapColour: sessionData.mapsColours[index],
-                        litLines: sessionData.mapsLitLines[index],
+                        mapRadius: storedMapData.radius,
+                        cootContour: storedMapData.cootContour,
+                        contourLevel: storedMapData.contourLevel,
+                        mapColour: storedMapData.colour,
+                        litLines: storedMapData.litLines,
                     }
                 });               
                 document.dispatchEvent(contourOnSessionLoad);       
@@ -248,42 +274,8 @@ export const MoorhenFileMenu = (props) => {
         loadSessionJSON(sessionData)
     }
 
-    const getSession = async () => {
-        let moleculePromises = props.molecules.map(molecule => {return molecule.getAtoms()})
-        let moleculeAtoms = await Promise.all(moleculePromises)
-        let mapPromises = props.maps.map(map => {return map.getMap()})
-        let mapData = await Promise.all(mapPromises)
-
-        const session = {
-            moleculesNames: props.molecules.map(molecule => molecule.name),
-            mapsNames: props.maps.map(map => map.name),
-            moleculesPdbData: moleculeAtoms.map(item => item.data.result.pdbData),
-            mapsMapData: mapData.map(item => new Uint8Array(item.data.result.mapData)),
-            activeMapMolNo: props.activeMap ? props.activeMap.molNo : null,
-            moleculesDisplayObjectsKeys: props.molecules.map(molecule => Object.keys(molecule.displayObjects).filter(key => molecule.displayObjects[key].length > 0)),
-            moleculesCootBondsOptions: props.molecules.map(molecule => molecule.cootBondsOptions),
-            mapsCootContours:  props.maps.map(map => map.cootContour),
-            mapsContourLevels: props.maps.map(map => map.contourLevel),
-            mapsColours: props.maps.map(map => map.mapColour),
-            mapsLitLines: props.maps.map(map => map.litLines),
-            mapsRadius: props.maps.map(map => map.mapRadius),
-            mapsIsDifference: props.maps.map(map => map.isDifference),
-            origin: props.glRef.current.origin,
-            backgroundColor: props.backgroundColor,
-            atomLabelDepthMode: props.atomLabelDepthMode,
-            ambientLight: glRef.current.light_colours_ambient,
-            diffuseLight: glRef.current.light_colours_diffuse,
-            lightPosition: glRef.current.light_positions,
-            specularLight: glRef.current.light_colours_specular,
-            fogStart: glRef.current.gl_fog_start,
-            fogEnd: glRef.current.gl_fog_end,
-            zoom: glRef.current.zoom,
-            doDrawClickedAtomLines: glRef.current.doDrawClickedAtomLines,
-            clipStart: (glRef.current.gl_clipPlane0[3] + 500) * -1,
-            clipEnd: glRef.current.gl_clipPlane1[3] - 500,
-            quat4: glRef.current.myQuat
-        }
-        
+    const getSession = async () => {        
+        const session = await props.timeCapsuleRef.current.fetchSession()
         const sessionString = JSON.stringify(session)
         doDownload([sessionString], `session.json`)
     }
@@ -291,7 +283,7 @@ export const MoorhenFileMenu = (props) => {
     const createBackup = async () => {
         const session = await props.timeCapsuleRef.current.fetchSession()
         const sessionString = JSON.stringify(session)
-        const key = {dateTime: `${Date.now()}`, type: 'manual', name: '', molNames: session.moleculesNames}
+        const key = {dateTime: `${Date.now()}`, type: 'manual', name: '', molNames: session.moleculeData.map(mol => mol.name)}
         const keyString = JSON.stringify(key)
         return props.timeCapsuleRef.current.createBackup(keyString, sessionString)
     }

@@ -534,14 +534,10 @@ const associate_data_mtz_file_with_map = (iMol, mtzData, F, SIGF, FREE) => {
     const theGuid = guid()
     const asUint8Array = new Uint8Array(mtzData.data)
     cootModule.FS_createDataFile(".", `${theGuid}.mtz`, asUint8Array, true, true);
-    const tempFilename = `./${theGuid}.mtz`
-    /*associate_data_mtz_file_with_map(int imol, const std::string &data_mtz_file_name,
-        const std::string &f_col, const std::string &sigf_col,
-        const std::string &free_r_col);
-        */
-    const args = [iMol, tempFilename, F, SIGF, FREE]
-
-    return molecules_container.associate_data_mtz_file_with_map(...args)
+    const mtzFilename = `./${theGuid}.mtz`
+    const args = [iMol, mtzFilename, F, SIGF, FREE]
+    molecules_container.associate_data_mtz_file_with_map(...args)
+    return mtzFilename
 }
 
 const read_ccp4_map = (mapData, name, isDiffMap) => {
@@ -611,6 +607,17 @@ onmessage = function (e) {
             consoleMessage: `Fetched coordinates of molecule ${e.data.molNo}`,
             message: e.data.message,
             result: { molNo: e.data.molNo, pdbData: pdbData }
+        })
+    }
+
+    else if (e.data.message === 'get_mtz_data') {
+        const mtzData = cootModule.FS.readFile(e.data.fileName, { encoding: 'binary' });
+        postMessage({
+            messageId: e.data.messageId,
+            myTimeStamp: e.data.myTimeStamp,
+            consoleMessage: `Fetched mtz data for map ${e.data.molNo}`,
+            message: e.data.message,
+            result: { molNo: e.data.molNo, mtzData: mtzData }
         })
     }
 
@@ -685,6 +692,17 @@ onmessage = function (e) {
 
     else if (e.data.message === 'delete') {
         const result = molecules_container.close_molecule(e.data.molNo)
+
+        postMessage({
+            messageId: e.data.messageId,
+            myTimeStamp: e.data.myTimeStamp,
+            messageTag: "result",
+            result: result,
+        })
+    }
+
+    else if (e.data.message === 'delete_file_name') {
+        const result = cootModule.FS_unlink(e.data.fileName)
 
         postMessage({
             messageId: e.data.messageId,
