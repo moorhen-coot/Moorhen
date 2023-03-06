@@ -1,8 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { MoorhenContainer } from '../src/components/MoorhenContainer';
-import { PreferencesContextProvider } from "../src/utils/MoorhenPreferences";
+import { PreferencesContextProvider, getDefaultValues } from "../src/utils/MoorhenPreferences";
 import reportWebVitals from '../src/reportWebVitals'
+import localforage from 'localforage';
 import '../src/index.css';
 import '../src/App.css';
 
@@ -10,7 +11,37 @@ export default class MoorhenWrapper {
   constructor(urlPrefix) {
     this.urlPrefix = urlPrefix
     this.controls = null
+    this.monomerLibrary = null
+    this.exportToCloudCallback = () => {}
     reportWebVitals()
+  }
+
+  async exportPreferences() {
+    const defaultPreferences = getDefaultValues()                
+    const fetchPromises = Object.keys(defaultPreferences).map(key => localforage.getItem(key))
+    const responses = await Promise.all(fetchPromises)
+    let storedPrefereneces = {}
+    Object.keys(defaultPreferences).forEach((key, index) => storedPrefereneces[key] = responses[index])
+    return storedPrefereneces
+  }
+
+  async importPreferences(preferences) {
+    const storedVersion = await localforage.getItem('version')
+    const defaultPreferences = getDefaultValues()                
+
+    if (storedVersion === defaultPreferences.version) {
+      await Promise.all(Object.keys(preferences).map(key => {
+        return localforage.getItem(key, preferences[key])
+      }))
+    }
+  }
+
+  addOnExportListener(callbackFunction){
+    this.exportToCloudCallback = callbackFunction
+  }
+
+  addMonomerLibrary(monomerLibrary){
+    this.monomerLibrary = monomerLibrary
   }
   
   forwardControls(controls) {
@@ -60,13 +91,20 @@ export default class MoorhenWrapper {
   }
   
   
-  renderMoorhen(rootId, exportToCloudCallback) {
-    const root = ReactDOM.createRoot(document.getElementById(rootId));
+  renderMoorhen(rootId) {
+    const rootDiv = document.getElementById(rootId)
+    const root = ReactDOM.createRoot(rootDiv)
     root.render(
       <React.StrictMode>
         <div className="App">
           <PreferencesContextProvider>
-            <MoorhenContainer forwardControls={this.forwardControls.bind(this)} exportToCloudCallback={exportToCloudCallback}/>
+            <MoorhenContainer 
+              forwardControls={this.forwardControls.bind(this)}
+              exportToCloudCallback={this.exportToCloudCallback.bind(this)}
+              monomerLibrary={this.monomerLibrary}
+              preferencesInstance={this.preferencesInstance}
+              backupsInstance={this.backupsInstance}
+              />
           </PreferencesContextProvider>
         </div>
       </React.StrictMode>

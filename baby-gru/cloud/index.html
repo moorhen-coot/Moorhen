@@ -74,6 +74,7 @@ main UI thread (as opposed to the CootWorker)-->
     ]
     
     let moorhenWrapper = new moorhen.MoorhenWrapper(urlPrefix)
+    moorhenWrapper.addOnExportListener(exportToCloudCallback)
     moorhenWrapper.renderMoorhen(rootId, exportToCloudCallback)
     moorhenWrapper.waitForInitialisation().then(_ => moorhenWrapper.loadInputFiles(inputFiles))
   </script>
