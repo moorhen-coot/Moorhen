@@ -566,7 +566,6 @@ onmessage = function (e) {
         }).then((returnedModule) => {
             cootModule = returnedModule;
             molecules_container = new cootModule.molecules_container_js()
-            molecules_container.geometry_init_standard()
             molecules_container.fill_rotamer_probability_tables()
             molecules_container.set_map_sampling_rate(1.7)
             cootModule.FS.mkdir("COOT_BACKUP");
