@@ -249,6 +249,16 @@ const simpleMeshToMeshData = (simpleMesh,perm) => {
     };
 }
 
+const SuperposeResultsToJSArray = (superposeResults) => {   
+    const alignmentInfo = superposeResults.alignment_info
+    return {
+        referenceSequence: superposeResults.alignment.first,
+        movingSequence: superposeResults.alignment.second,
+        supperposeInfo: superposeResults.suppose_info,
+        validationData: validationDataToJSArray(alignmentInfo)
+    }
+}
+
 const colourRulesToJSArray = (colourRulesArray) => {
     let returnResult = []
     const colourRulesSize = colourRulesArray.size()
@@ -795,6 +805,9 @@ onmessage = function (e) {
                     break;
                 case 'interesting_places_data':
                     returnResult = interestingPlaceDataToJSArray(cootResult)
+                    break;
+                case 'superpose_results':
+                    returnResult = SuperposeResultsToJSArray(cootResult)
                     break;
                 case 'status':
                 default:

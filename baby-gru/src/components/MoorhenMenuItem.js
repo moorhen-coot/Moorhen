@@ -763,10 +763,10 @@ export const MoorhenSuperposeMenuItem = (props) => {
             return
         }
 
-        const result = await props.commandCentre.current.cootCommand({
+        await props.commandCentre.current.cootCommand({
             message: 'coot_command', 
             command: 'SSM_superpose', 
-            returnType: 'status', 
+            returnType: 'superpose_results', 
             commandArgs: [
                 refMolecule.molNo, 
                 refChainSelectRef.current.value, 
