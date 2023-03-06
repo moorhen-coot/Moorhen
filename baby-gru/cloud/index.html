@@ -72,11 +72,165 @@ main UI thread (as opposed to the CootWorker)-->
         {F: "DELFWT", PHI: "PHDELWT", isDifference: true, useWeight: false, calcStructFact: false}
       ]}
     ]
+    const userPreferences = {
+        version: '0.0.17',
+        defaultBackgroundColor: [0, 0, 0, 1], 
+        atomLabelDepthMode: true, 
+        defaultExpandDisplayCards: true,
+        defaultMapLitLines: true,
+        refineAfterMod: true,
+        drawCrosshairs: true,
+        drawFPS: true,
+        drawMissingLoops: true,
+        mouseSensitivity: 2.0,
+        wheelSensitivityFactor: 1.0,
+        mapLineWidth: 1.0,
+        makeBackups: true,
+        showShortcutToast: true,
+        defaultMapSurface: false,
+        defaultBondSmoothness: 1,
+        showScoresToast: true,
+        shortcutOnHoveredAtom: true,
+        resetClippingFogging: true,
+        defaultUpdatingScores: ['Rfree', 'Rfactor', 'Moorhen Points'],
+        maxBackupCount: 10,
+        modificationCountBackupThreshold: 5,
+        shortCuts: {
+            "sphere_refine": {
+                modifiers: ["shiftKey"],
+                keyPress: "r",
+                label: "Refine sphere"
+            },
+            "flip_peptide": {
+                modifiers: ["shiftKey"],
+                keyPress: "q",
+                label: "Flip peptide"
+            },
+            "triple_refine": {
+                modifiers: ["shiftKey"],
+                keyPress: "h",
+                label: "Refine triplet"
+            },
+            "auto_fit_rotamer": {
+                modifiers: ["shiftKey"],
+                keyPress: "j",
+                label: "Autofit rotamer"
+            },
+            "add_terminal_residue": {
+                modifiers: ["shiftKey"],
+                keyPress: "y",
+                label: "Add terminal residue"
+            },
+            "delete_residue": {
+                modifiers: ["shiftKey"],
+                keyPress: "d",
+                label: "Delete residue"
+            },
+            "eigen_flip": {
+                modifiers: ["shiftKey"],
+                keyPress: "e",
+                label: "Eigen flip ligand"
+            },
+            "show_shortcuts": {
+                modifiers: [],
+                keyPress: "escape",
+                label: "Show shortcuts"
+            },
+            "restore_scene": {
+                modifiers: [],
+                keyPress: "r",
+                label: "Restore scene"
+            },
+            "clear_labels": {
+                modifiers: [],
+                keyPress: "c",
+                label: "Clear labels"
+            },
+            "move_up": {
+                modifiers: [],
+                keyPress: "arrowup",
+                label: "Move model up"
+            },
+            "move_down": {
+                modifiers: [],
+                keyPress: "arrowdown",
+                label: "Move model down"
+            },
+            "move_left": {
+                modifiers: [],
+                keyPress: "arrowleft",
+                label: "Move model left"
+            },
+            "move_right": {
+                modifiers: [],
+                keyPress: "arrowright",
+                label: "Move model right"
+            },
+            "go_to_blob": {
+                modifiers: [],
+                keyPress: "g",
+                label: "Go to blob"
+            },
+            "take_screenshot": {
+                modifiers: [],
+                keyPress: "s",
+                label: "Take a screenshot"
+            },
+            "residue_camera_wiggle": {
+                modifiers: [],
+                keyPress: "z",
+                label: "Wiggle camera while rotating a residue"
+            },
+            "label_atom": {
+                modifiers: [],
+                keyPress: "m",
+                label: "Label an atom on click"
+            },
+            "center_atom": {
+                modifiers: ["altKey"],
+                keyPress: "alt",
+                label: "Center on clicked atom"
+            },
+            "set_map_contour": {
+                modifiers: ["ctrlKey"],
+                keyPress: "control",
+                label: "Set map contour on scroll"
+            },
+            "jump_next_residue": {
+                modifiers: [],
+                keyPress: " ",
+                label: "Jump to the next residue"
+            },
+            "jump_previous_residue": {
+                modifiers: ["shiftKey"],
+                keyPress: " ",
+                label: "Jump to the previous residue"
+            },
+            "increase_map_radius": {
+                modifiers: [],
+                keyPress: "]",
+                label: "Increase map radius"
+            },
+            "decrease_map_radius": {
+                modifiers: [],
+                keyPress: "[",
+                label: "Decrease map radius"
+            },
+        }
+    }
+
+    async function startMoorhen() {
+      let moorhenWrapper = new moorhen.MoorhenWrapper(urlPrefix)
+      moorhenWrapper.addOnExportListener(exportToCloudCallback)
+      await moorhenWrapper.importPreferences(userPreferences)
+      moorhenWrapper.renderMoorhen(rootId, exportToCloudCallback)
+      await moorhenWrapper.waitForInitialisation()
+      await moorhenWrapper.loadInputFiles(inputFiles)
+      setTimeout(() => {moorhenWrapper.exportBackups()}, 6000);
+    }
+
+    startMoorhen()
     
-    let moorhenWrapper = new moorhen.MoorhenWrapper(urlPrefix)
-    moorhenWrapper.addOnExportListener(exportToCloudCallback)
-    moorhenWrapper.renderMoorhen(rootId, exportToCloudCallback)
-    moorhenWrapper.waitForInitialisation().then(_ => moorhenWrapper.loadInputFiles(inputFiles))
   </script>
 </body>
 

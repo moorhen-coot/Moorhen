@@ -574,6 +574,12 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("correlation",&coot::util::density_correlation_stats_info_t::correlation)
     ;
 
+    value_object<superpose_results_t>("superpose_results_t")
+        .field("suppose_info",&superpose_results_t::suppose_info)
+        .field("alignment",&superpose_results_t::alignment)
+        .field("alignment_info",&superpose_results_t::alignment_info)
+    ;
+
     register_map<coot::residue_spec_t, coot::util::density_correlation_stats_info_t>("Map_residue_spec_t_density_correlation_stats_info_t");
     register_vector<std::pair<std::string, std::string>>("Vectorstring_string_pair");
     register_vector<coot::instanced_geometry_t>("Vectorinstanced_geometry_t");
