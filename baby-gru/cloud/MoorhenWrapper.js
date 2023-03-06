@@ -2,8 +2,6 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { MoorhenContainer } from '../src/components/MoorhenContainer';
 import { PreferencesContextProvider } from "../src/utils/MoorhenPreferences";
-import { MoorhenMolecule } from "../src/utils/MoorhenMolecule"
-import { MoorhenMap } from "../src/utils/MoorhenMap"
 import reportWebVitals from '../src/reportWebVitals'
 import '../src/index.css';
 import '../src/App.css';
