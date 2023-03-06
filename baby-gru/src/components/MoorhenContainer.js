@@ -277,8 +277,8 @@ export const MoorhenContainer = (props) => {
         molecules, changeMolecules, appTitle, setAppTitle, maps, changeMaps, glRef, activeMolecule, setActiveMolecule,
         activeMap, setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor, toastContent, 
         setToastContent, currentDropdownId, setCurrentDropdownId, hoveredAtom, setHoveredAtom, showToast, setShowToast,
-        windowWidth, windowHeight, innerWindowMarginWidth, showColourRulesToast, timeCapsuleRef,
-        setShowColourRulesToast, urlPrefix: props.urlPrefix, extraMenus:props.extraMenus, ...preferences
+        windowWidth, windowHeight, innerWindowMarginWidth, showColourRulesToast, timeCapsuleRef, setShowColourRulesToast, 
+        isCloud: props.isCloud, urlPrefix: props.urlPrefix, extraMenus:props.extraMenus, ...preferences
     }
 
     const isDark = isDarkBackground(...backgroundColor)
@@ -346,5 +346,6 @@ export const MoorhenContainer = (props) => {
 MoorhenContainer.defaultProps = {
     urlPrefix: '.',
     exportToCloudCallback: null,
+    isCloud: false,
     extraMenus:[]
 }

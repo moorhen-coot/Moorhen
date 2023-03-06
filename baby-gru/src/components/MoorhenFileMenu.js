@@ -370,10 +370,12 @@ export const MoorhenFileMenu = (props) => {
             style={{display:'flex', alignItems:'center'}}
             onToggle={() => { props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId(-1) }}>
                 <div style={{maxHeight: convertViewtoPx(65, props.windowHeight), overflowY: 'auto'}}>
+                    {!props.isCloud && 
                     <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="upload-coordinates-form" className="mb-3">
                         <Form.Label>Coordinates</Form.Label>
                         <Form.Control type="file" accept=".pdb, .mmcif, .cif, .ent" multiple={true} onChange={(e) => { loadPdbFiles(e.target.files) }}/>
                     </Form.Group>
+                    }
                     <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="fetch-pdbe-form" className="mb-3">
                         <Form.Label>Fetch coords from online services</Form.Label>
                         <InputGroup>
@@ -401,20 +403,23 @@ export const MoorhenFileMenu = (props) => {
                         <Form.Label style={{display: isValidPdbId ? 'none' : 'block', alignContent: 'center' ,textAlign: 'center'}}>Problem fetching</Form.Label>
                         <Form.Check style={{ marginTop: '0.5rem' }} ref={fetchMapDataCheckRef} label={'fetch map data'} name={`fetchMapData`} type="checkbox" variant="outline" />
                     </Form.Group>
+                    {!props.isCloud && 
                     <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="upload-session-form" className="mb-3">
                         <Form.Label>Load from stored session</Form.Label>
                         <Form.Control type="file" accept=".json" multiple={false} onChange={(e) => { loadSession(e.target.files[0]) }}/>
                     </Form.Group>
-
+                    }
                     <hr></hr>
 
-                    <MoorhenAutoOpenMtzMenuItem {...menuItemProps} />
+                    {!props.isCloud && 
+                    <>
+                        <MoorhenAutoOpenMtzMenuItem {...menuItemProps} />
+                        <MoorhenImportMapCoefficientsMenuItem {...menuItemProps} />
+                        <MoorhenImportMapMenuItem {...menuItemProps} />
+                    </>
+                    }
                     
-                    <MoorhenImportMapCoefficientsMenuItem {...menuItemProps} />
-
                     <MoorhenImportFSigFMenuItem {...menuItemProps} />
-
-                    <MoorhenImportMapMenuItem {...menuItemProps} />
 
                     <MoorhenLoadTutorialDataMenuItem {...menuItemProps} />
 

@@ -160,6 +160,7 @@ export default class MoorhenWrapper {
           <PreferencesContextProvider>
             <MoorhenContainer 
               forwardControls={this.forwardControls.bind(this)}
+              isCloud={true}
               exportToCloudCallback={this.exportToCloudCallback.bind(this)}
               monomerLibrary={this.monomerLibrary}
               />
