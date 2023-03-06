@@ -1,6 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { MoorhenContainer } from '../src/components/MoorhenContainer';
+import { MoorhenMolecule } from "../src/utils/MoorhenMolecule"
+import { MoorhenMap } from "../src/utils/MoorhenMap"
 import { PreferencesContextProvider, getDefaultValues } from "../src/utils/MoorhenPreferences";
 import reportWebVitals from '../src/reportWebVitals'
 import localforage from 'localforage';
@@ -16,10 +18,34 @@ export default class MoorhenWrapper {
     reportWebVitals()
   }
 
+  async exportBackups() {
+    const keys = await this.controls.timeCapsuleRef.current.storageInstance.keys()
+    const responses = await Promise.all(
+      keys.map(key => this.controls.timeCapsuleRef.current.storageInstance.getItem(key))
+    )
+    let storedBackups = {}
+    keys.forEach((key, index) => storedBackups[key] = responses[index])
+    return storedBackups
+  }
+
+  async importBackups(backups) {
+    const storedVersion = await this.controls.timeCapsuleRef.current.storageInstance.getItem(JSON.stringify({type: 'version'}))
+    const newVersion = backups[JSON.stringify({type: 'version'})]
+    if (newVersion === storedVersion) {
+      await this.controls.timeCapsuleRef.current.storageInstance.clear()
+      await Promise.all(
+        Object.keys(backups).forEach(key => 
+          this.controls.timeCapsuleRef.current.storageInstance.setItem(JSON.stringify(key), backups[JSON.stringify(key)])
+        )
+      )
+    }
+  }
+
   async exportPreferences() {
     const defaultPreferences = getDefaultValues()                
-    const fetchPromises = Object.keys(defaultPreferences).map(key => localforage.getItem(key))
-    const responses = await Promise.all(fetchPromises)
+    const responses = await Promise.all(
+      Object.keys(defaultPreferences).map(key => localforage.getItem(key))
+    )
     let storedPrefereneces = {}
     Object.keys(defaultPreferences).forEach((key, index) => storedPrefereneces[key] = responses[index])
     return storedPrefereneces
@@ -31,7 +57,11 @@ export default class MoorhenWrapper {
 
     if (storedVersion === defaultPreferences.version) {
       await Promise.all(Object.keys(preferences).map(key => {
-        return localforage.getItem(key, preferences[key])
+        if (key === 'shortCuts') {
+          return localforage.setItem(key, JSON.stringify(preferences[key]))
+        } else {
+          return localforage.setItem(key, preferences[key])
+        }
       }))
     }
   }
@@ -57,7 +87,38 @@ export default class MoorhenWrapper {
         setTimeout(_ => checkCootIsInitialised(resolve), 500);
       }  
     }
-    return new Promise(checkCootIsInitialised);
+    return new Promise(checkCootIsInitialised)
+  }
+
+  async loadMtzData(inputFile, mapName, selectedColumns) {
+    const newMap = new MoorhenMap(this.controls.commandCentre)
+    return new Promise(async (resolve, reject) => {
+      try {
+        await newMap.loadToCootFromMtzURL(inputFile, mapName, selectedColumns)
+        this.controls.changeMaps({ action: 'Add', item: newMap })
+        this.controls.setActiveMap(newMap)
+        return resolve(newMap)
+      } catch (err) {
+        console.log(`Cannot fetch mtz from ${inputFile}`)
+        return reject(err)
+      }
+    })
+  }
+
+  async loadPdbData(inputFile, molName) {
+    const newMolecule = new MoorhenMolecule(this.controls.commandCentre, this.urlPrefix)
+    return new Promise(async (resolve, reject) => {
+        try {
+            await newMolecule.loadToCootFromURL(inputFile, molName)
+            await newMolecule.fetchIfDirtyAndDraw('CBs', this.controls.glRef)
+            this.controls.changeMolecules({ action: "Add", item: newMolecule })
+            newMolecule.centreOn(this.controls.glRef, null, false)
+            return resolve(newMolecule)
+        } catch (err) {
+            console.log(`Cannot fetch molecule from ${inputFile}`)
+            return reject(err)
+        }   
+    })
   }
 
   async loadInputFiles(inputFiles) {
@@ -87,9 +148,8 @@ export default class MoorhenWrapper {
         document.dispatchEvent(contourOnSessionLoad);
         }
       })
-    }, 2500);
+    }, 2500)
   }
-  
   
   renderMoorhen(rootId) {
     const rootDiv = document.getElementById(rootId)
@@ -102,8 +162,6 @@ export default class MoorhenWrapper {
               forwardControls={this.forwardControls.bind(this)}
               exportToCloudCallback={this.exportToCloudCallback.bind(this)}
               monomerLibrary={this.monomerLibrary}
-              preferencesInstance={this.preferencesInstance}
-              backupsInstance={this.backupsInstance}
               />
           </PreferencesContextProvider>
         </div>
