@@ -209,7 +209,7 @@ export const MoorhenMoleculeCard = (props) => {
         Object.keys(props.molecule.displayObjects).forEach(key => {
             const displayObjects = props.molecule.displayObjects[key]
             changeShowState({
-                key: key, state: displayObjects.length > 0 && displayObjects.visible
+                key: key, state: displayObjects.length > 0 && displayObjects[0].visible
             })
         })
     }, [
