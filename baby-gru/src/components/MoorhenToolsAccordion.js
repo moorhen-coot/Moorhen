@@ -16,7 +16,7 @@ export const MoorhenToolsAccordion = (props) => {
     const toolOptions = [
             {label: "Difference Map Peaks", toolWidget: <MoorhenDifferenceMapPeaks {...props}/>},
             {label: "Ramachandran Plot", toolWidget: <MoorhenRamachandran {...props}/>},
-            {label: "Validation", toolWidget: <MoorhenValidation {...props}/>},
+            {label: "Validation Plot", toolWidget: <MoorhenValidation {...props}/>},
             {label: "Peptide flips using difference map", toolWidget: <MoorhenPepflipsDifferenceMap {...props}/>},
             {label: "Fill partial residues", toolWidget: <MoorhenFillMissingAtoms {...props}/>},
             {label: "MMRRCC plot", toolWidget: <MoorhenMMRRCCPlot {...props}/>}
