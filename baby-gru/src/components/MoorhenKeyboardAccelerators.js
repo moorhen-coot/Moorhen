@@ -416,18 +416,21 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     }
 
     else if (action === 'show_shortcuts') {
-        setToastContent(<h4><List>
-            {Object.keys(shortCuts).map(key => {
+        if (!glRef.current.showShortCutHelp) {
+            glRef.current.showShortCutHelp = Object.keys(shortCuts).map(key => {
                 let modifiers = []
                 if (shortCuts[key].modifiers.includes('shiftKey')) modifiers.push("<Shift>")
                 if (shortCuts[key].modifiers.includes('ctrlKey')) modifiers.push("<Ctrl>")
                 if (shortCuts[key].modifiers.includes('metaKey')) modifiers.push("<Meta>")
                 if (shortCuts[key].modifiers.includes('altKey')) modifiers.push("<Alt>")
                 if (shortCuts[key].keyPress === " ") modifiers.push("<Space>")
-                return <ListItem>{`${modifiers.join("-")} ${shortCuts[key].keyPress} ${shortCuts[key].label}`}</ListItem>
-            })}
-        </List></h4>)
-        setShowToast(true)
+                return `${modifiers.join("-")} ${shortCuts[key].keyPress} ${shortCuts[key].label}`
+            })
+            glRef.current.drawScene()    
+        } else  {
+            glRef.current.showShortCutHelp = null
+            glRef.current.drawScene()
+        }
         return false
     }
 

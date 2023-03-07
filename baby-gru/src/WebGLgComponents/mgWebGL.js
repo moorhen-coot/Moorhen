@@ -1361,6 +1361,7 @@ class MGWebGL extends Component {
         this.nPrevFrames = 0;
         this.prevTime = performance.now();
         this.fpsText = "";
+        this.showShortCutHelp = null;
 
         const frameCounterTimer = setInterval(() => {
             if(!self.context) return;
@@ -10009,7 +10010,16 @@ class MGWebGL extends Component {
                 let ypos = label.y * 48.0 -24.;
                 drawString(label.text,xpos,ypos, label.font);
         });
-        if(this.showFPS) drawString(this.fpsText,-23.5*ratio,-23.5,"20px helvetica");
+        if(this.showFPS) drawString(this.fpsText, -23.5*ratio, -23.5, "20px helvetica");
+        if(this.showShortCutHelp) {
+            const fontSize = this.gl.viewportHeight * 0.02
+            const font = `${fontSize > 20 ? 20 : fontSize}px helvetica`
+            this.showShortCutHelp.forEach((shortcut, index) => {
+                const xpos = -23.5 * ratio
+                const ypos = 20 - index
+                drawString(shortcut, xpos, ypos, font)
+            });
+        }
 
         this.gl.disableVertexAttribArray(this.shaderProgramTextBackground.vertexTextureAttribute);
         this.gl.depthFunc(this.gl.LESS)

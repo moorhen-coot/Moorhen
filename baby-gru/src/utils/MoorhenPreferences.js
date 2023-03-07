@@ -83,7 +83,7 @@ const getDefaultValues = () => {
             },
             "show_shortcuts": {
                 modifiers: [],
-                keyPress: "escape",
+                keyPress: "h",
                 label: "Show shortcuts"
             },
             "restore_scene": {
