@@ -6,7 +6,7 @@ import { GetSplinesColoured } from '../WebGLgComponents/mgSecStr';
 import { atomsToSpheresInfo } from '../WebGLgComponents/mgWebGLAtomsToPrimitives';
 import { contactsToCylindersInfo, contactsToLinesInfo } from '../WebGLgComponents/mgWebGLAtomsToPrimitives';
 import { singletonsToLinesInfo } from '../WebGLgComponents/mgWebGLAtomsToPrimitives';
-import { readTextFile, readGemmiStructure, cidToSpec, residueCodesThreeToOne, centreOnGemmiAtoms, getBufferAtoms, nucleotideCodesThreeToOne } from './MoorhenUtils'
+import { readTextFile, readGemmiStructure, cidToSpec, residueCodesThreeToOne, centreOnGemmiAtoms, getBufferAtoms, nucleotideCodesThreeToOne, hexToHsl } from './MoorhenUtils'
 import { quatToMat4 } from '../WebGLgComponents/quatToMat4.js';
 import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
 import * as vec3 from 'gl-matrix/vec3';
@@ -1575,9 +1575,24 @@ MoorhenMolecule.prototype.setColourRules = async function(glRef, ruleList, redra
         commandArgs: [this.molNo], 
     })
 
-    const promises = this.colourRules.map(rule => 
-        this.commandCentre.current.cootCommand(rule.commandInput)
-    )
+    let promises = []
+    this.colourRules.forEach(rule => {
+        promises.push(
+            this.commandCentre.current.cootCommand(rule.commandInput)
+        )
+        //TODO: in the future we should be able to set CID selection and only exclude property rules
+        if (rule.ruleType === 'molecule') {
+            const [h, s, l] = hexToHsl(rule.color)
+            promises.push(
+                this.commandCentre.current.cootCommand({
+                    message:'coot_command',
+                    command: 'set_colour_wheel_rotation_base', 
+                    returnType:'status',
+                    commandArgs: [this.molNo, 360*h]
+                })
+            )
+        }
+    })
 
     await Promise.all(promises)
     
