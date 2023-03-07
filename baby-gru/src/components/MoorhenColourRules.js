@@ -233,7 +233,7 @@ export const MoorhenColourRules = (props) => {
                                         Move up
                                     </Tooltip>
                                 }>
-                                <Button size='sm' style={{margin: '0.1rem'}} variant={props.darkMode ? "dark" : "light"} onClick={() => {setRuleList({action:'MoveUp', item:rule})}}>
+                                <Button size='sm' style={{margin: '0.1rem'}} variant={props.isDark ? "dark" : "light"} onClick={() => {setRuleList({action:'MoveUp', item:rule})}}>
                                     <ArrowUpwardOutlined/>
                                 </Button>
                             </OverlayTrigger>
@@ -245,7 +245,7 @@ export const MoorhenColourRules = (props) => {
                                         Move down
                                     </Tooltip>
                                 }>
-                                <Button size='sm' style={{margin: '0.1rem'}} variant={props.darkMode ? "dark" : "light"} onClick={() => {setRuleList({action:'MoveDown', item:rule})}}>
+                                <Button size='sm' style={{margin: '0.1rem'}} variant={props.isDark ? "dark" : "light"} onClick={() => {setRuleList({action:'MoveDown', item:rule})}}>
                                     <ArrowDownwardOutlined/>
                                 </Button>
                             </OverlayTrigger>
@@ -257,7 +257,7 @@ export const MoorhenColourRules = (props) => {
                                         Delete
                                     </Tooltip>
                                 }>
-                                <Button size='sm' style={{margin: '0.1rem'}} variant={props.darkMode ? "dark" : "light"} onClick={() => {setRuleList({action:'Remove', item:rule})}}>
+                                <Button size='sm' style={{margin: '0.1rem'}} variant={props.isDark ? "dark" : "light"} onClick={() => {setRuleList({action:'Remove', item:rule})}}>
                                     <DeleteOutlined/>
                                 </Button>
                             </OverlayTrigger>
@@ -333,7 +333,7 @@ export const MoorhenColourRules = (props) => {
                                                 Add a rule
                                             </Tooltip>
                                         }>
-                                        <Button variant={props.darkMode ? "dark" : "light"} size='sm' onClick={createRule} style={{margin: '0.1rem'}}>
+                                        <Button variant={props.isDark ? "dark" : "light"} size='sm' onClick={createRule} style={{margin: '0.1rem'}}>
                                             <AddOutlined/>
                                         </Button>
                                     </OverlayTrigger>
@@ -345,7 +345,7 @@ export const MoorhenColourRules = (props) => {
                                                 Delete all rules
                                             </Tooltip>
                                         }>
-                                        <Button variant={props.darkMode ? "dark" : "light"} size='sm' onClick={() => {setRuleList({action:'Empty'})}} style={{margin: '0.1rem'}}>
+                                        <Button variant={props.isDark ? "dark" : "light"} size='sm' onClick={() => {setRuleList({action:'Empty'})}} style={{margin: '0.1rem'}}>
                                             <DeleteForeverOutlined/>
                                         </Button>
                                     </OverlayTrigger>
@@ -357,7 +357,7 @@ export const MoorhenColourRules = (props) => {
                                                 Apply rules
                                             </Tooltip>
                                         }>
-                                        <Button variant={props.darkMode ? "dark" : "light"} size='sm' onClick={applyRules} style={{margin: '0.1rem'}}>
+                                        <Button variant={props.isDark ? "dark" : "light"} size='sm' onClick={applyRules} style={{margin: '0.1rem'}}>
                                             <DoneOutlined/>
                                         </Button>
                                     </OverlayTrigger>

@@ -346,7 +346,7 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
                     urlPrefix={props.urlPrefix}
                     glRef={glRef}
                     commandCentre={props.commandCentre}
-                    backgroundColor={props.backgroundColor}
+                    isDark={props.isDark}
                     timeCapsuleRef={props.timeCapsuleRef}
                     molecules={props.molecules}
                     changeMolecules={props.changeMolecules}

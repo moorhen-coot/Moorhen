@@ -160,7 +160,7 @@ export const MoorhenPepflipsDifferenceMap = (props) => {
 
         setCardList(newCardList)
         
-    }, [pepflips, props.darkMode, props.sideBarWidth, props.showSideBar])
+    }, [pepflips, props.backgroundColor, props.sideBarWidth, props.showSideBar])
 
     return <Fragment>
                 <Form style={{ padding:'0', margin: '0' }}>

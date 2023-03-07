@@ -252,7 +252,7 @@ export const MoorhenValidation = (props) => {
                 stacked: true,
                 beginAtZero: true,
                 display:true,
-                ticks: {color: props.darkMode ? 'white' : 'black',
+                ticks: {color: props.isDark ? 'white' : 'black',
                         font:{size:barWidth, family:'Helvetica'},
                         maxRotation: 0, 
                         minRotation: 0,
@@ -307,7 +307,7 @@ export const MoorhenValidation = (props) => {
                     display: true,
                     font:{size:axisLabelsFontSize, family:'Helvetica', weight:800},
                     text: availableMetrics[methodIndex].displayName,
-                    color: props.darkMode ? 'white' : 'black'
+                    color: props.isDark ? 'white' : 'black'
                 },
                 grid: {
                     display:false,
@@ -360,7 +360,7 @@ export const MoorhenValidation = (props) => {
             }
         });
 
-    }, [plotData, props.darkMode, props.sideBarWidth, props.showSideBar])
+    }, [plotData, props.backgroundColor, props.sideBarWidth, props.showSideBar])
 
     return <Fragment>
                 <Form style={{ padding:'0', margin: '0' }}>

@@ -6,7 +6,6 @@ import { MoorhenAutofitRotamerButton, MoorhenFlipPeptideButton, MoorhenSideChain
         MoorhenAddAltConfButton, MoorhenRigidBodyFitButton } from "./MoorhenSimpleEditButton"
 import { IconButton, Drawer } from "@mui/material";
 import { ArrowDownwardOutlined, ArrowUpwardOutlined } from "@mui/icons-material";
-import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
 import { convertRemToPx, convertViewtoPx} from '../utils/MoorhenUtils';
 
 export const MoorhenButtonBar = (props) => {
@@ -109,7 +108,6 @@ export const MoorhenButtonBar = (props) => {
     const toggleDrowerButtonHeight = convertViewtoPx(3, props.windowHeight)
     // Add 0.1 rem for the bottom margin of carousel
     const simpleEditButtonHeight = Math.max(convertViewtoPx(5, props.windowHeight), 40) + convertRemToPx(0.1)
-    const isDark = isDarkBackground(...props.backgroundColor)
     
     return  <> 
     <Drawer anchor='bottom' open={true} variant='persistent'
@@ -138,12 +136,12 @@ export const MoorhenButtonBar = (props) => {
                  padding: 0,
                  opacity: showDrawer ? '0.0' : opacity,
                  borderRadius: 0,
-                 backgroundColor: isDark ? 'grey' : 'white',
+                 backgroundColor: props.isDark ? 'grey' : 'white',
                  ':hover': {
-                    backgroundColor: isDark ? 'grey' : 'white',
+                    backgroundColor: props.isDark ? 'grey' : 'white',
                 }
             }}>
-                <ArrowUpwardOutlined style={{color: isDark ? 'white' : 'black', height: '100%'}}/>
+                <ArrowUpwardOutlined style={{color: props.isDark ? 'white' : 'black', height: '100%'}}/>
             </IconButton>
     </Drawer>
     <Drawer variant="persistent" anchor="bottom" open={showDrawer}
@@ -178,12 +176,12 @@ export const MoorhenButtonBar = (props) => {
              borderRadius: 0,
              padding: 0,
              margin: 0,
-             backgroundColor: isDark ? 'grey' : 'white',
+             backgroundColor: props.isDark ? 'grey' : 'white',
              ':hover': {
-                backgroundColor: isDark ? 'grey' : 'white',
+                backgroundColor: props.isDark ? 'grey' : 'white',
             }
         }}>
-            <ArrowDownwardOutlined style={{height: '100%', color: isDark ? 'white' : 'black'}}/>
+            <ArrowDownwardOutlined style={{height: '100%', color: props.isDark ? 'white' : 'black'}}/>
         </IconButton>
     </Drawer>
     <Drawer variant="persistent" anchor="bottom" open={showDrawer}
@@ -195,7 +193,7 @@ export const MoorhenButtonBar = (props) => {
                     width: '100%',
                     height: simpleEditButtonHeight,
                     boxSizing: 'border-box',
-                    backgroundColor: isDark ? 'grey' : 'white'
+                    backgroundColor: props.isDark ? 'grey' : 'white'
                 },
             }}
             onMouseOver={() => setOpacity(1)}
@@ -204,7 +202,7 @@ export const MoorhenButtonBar = (props) => {
         <Carousel 
                 style={{marginBottom: '0.1rem'}}
                 key={carouselItems.length}
-                variant={props.darkMode ? "light" : "dark"} 
+                variant={props.isDark ? "light" : "dark"} 
                 interval={null} 
                 keyboard={false} 
                 indicators={false} 

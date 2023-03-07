@@ -4,7 +4,6 @@ import { MoorhenToolsAccordion } from './MoorhenToolsAccordion'
 import { MoorhenDisplayObjects } from './MoorhenDisplayObjects';
 import { MoorhenConsole } from"./MoorhenConsole";
 import { convertRemToPx, convertViewtoPx} from '../utils/MoorhenUtils';
-import { isDarkBackground } from '../WebGLgComponents/mgWebGL';
 import { ArrowBackOutlined, ArrowForwardOutlined } from '@mui/icons-material';
 import { Spinner, Form } from 'react-bootstrap';
 
@@ -15,7 +14,6 @@ export const MoorhenSideBar = forwardRef((props, ref) => {
     const [selectedToolKey, setSelectedToolKey] = useState(null)
     const [accordionDropdownId, setAccordionDropdownId] = useState(-1)
 
-    const isDark = isDarkBackground(...props.backgroundColor)
     const sideBarWidth = Math.max(convertViewtoPx(30, props.windowWidth), convertRemToPx(24))
     const toggleDrowerButtonWidth = sideBarWidth * 0.07
 
@@ -47,7 +45,7 @@ export const MoorhenSideBar = forwardRef((props, ref) => {
             }}>
             <IconButton onMouseOver={() => setOpacity(1)} onMouseOut={() => setOpacity(0.5)} onClick={() => {setShowSideBar(true)}} sx={{
                 opacity: showSideBar ? '0.0' : opacity,
-                backgroundColor: isDark ? 'grey' : 'white',
+                backgroundColor: props.isDark ? 'grey' : 'white',
                 height:'10%',
                 width: toggleDrowerButtonWidth - 1,
                 borderRadius: 0,
@@ -57,10 +55,10 @@ export const MoorhenSideBar = forwardRef((props, ref) => {
                 margin: 0,
                 padding: 0,
                 ':hover': {
-                    backgroundColor: isDark ? 'grey' : 'white',
+                    backgroundColor: props.isDark ? 'grey' : 'white',
                 }
                 }}>
-                <ArrowBackOutlined style={{color: isDark ? 'white' : 'black', width: '100%'}}/>
+                <ArrowBackOutlined style={{color: props.isDark ? 'white' : 'black', width: '100%'}}/>
             </IconButton>
         </Drawer>
         <Drawer
@@ -100,12 +98,12 @@ export const MoorhenSideBar = forwardRef((props, ref) => {
                 borderBottom: 1,
                 borderLeft: 1,
                 margin: 0,
-                backgroundColor: isDark ? 'grey' : 'white',
+                backgroundColor: props.isDark ? 'grey' : 'white',
                 ':hover': {
-                    backgroundColor: isDark ? 'grey' : 'white',
+                    backgroundColor: props.isDark ? 'grey' : 'white',
                 }
                 }}>
-                <ArrowForwardOutlined style={{color: isDark ? 'white' : 'black', width: '100%'}}/>
+                <ArrowForwardOutlined style={{color: props.isDark ? 'white' : 'black', width: '100%'}}/>
             </IconButton>
         </Drawer>
         <Drawer
@@ -116,7 +114,7 @@ export const MoorhenSideBar = forwardRef((props, ref) => {
                 '& .MuiDrawer-paper': {
                     height: '100%',
                     boxSizing: 'border-box',
-                    backgroundColor: isDark ? 'grey' : 'white'
+                    backgroundColor: props.isDark ? 'grey' : 'white'
                 },
             }}
             variant="persistent"

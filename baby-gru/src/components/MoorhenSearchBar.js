@@ -240,17 +240,17 @@ export const MoorhenSearchBar = (props) => {
                                 onClose={() => setOpenPopup(false)}
                                 sx={{
                                     '& .MuiInputBase-root': {
-                                        backgroundColor:  props.darkMode ? '#222' : 'white',
-                                        color: props.darkMode ? 'white' : '#222',
+                                        backgroundColor:  props.isDark ? '#222' : 'white',
+                                        color: props.isDark ? 'white' : '#222',
                                     },
                                     '& .MuiOutlinedInput-notchedOutline': {
-                                        borderColor: props.darkMode ? 'white' : 'grey',
+                                        borderColor: props.isDark ? 'white' : 'grey',
                                     },
                                     '& .MuiButtonBase-root': {
-                                        color: props.darkMode ? 'white' : 'grey',
+                                        color: props.isDark ? 'white' : 'grey',
                                     },
                                     '& .MuiFormLabel-root': {
-                                        color: props.darkMode ? 'white' : '#222',
+                                        color: props.isDark ? 'white' : '#222',
                                     },
                                 }}               
                                 onChange={handleChange}

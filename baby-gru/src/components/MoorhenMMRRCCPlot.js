@@ -164,7 +164,7 @@ export const MoorhenMMRRCCPlot = (props) => {
                 stacked: true,
                 beginAtZero: true,
                 display:true,
-                ticks: {color: props.darkMode ? 'white' : 'black',
+                ticks: {color: props.isDark ? 'white' : 'black',
                         font:{size:barWidth, family:'Helvetica'},
                         maxRotation: 0, 
                         minRotation: 0,
@@ -184,7 +184,7 @@ export const MoorhenMMRRCCPlot = (props) => {
                     display: true,
                     font: {size:axisLabelsFontSize, family:'Helvetica', weight:800},
                     text: 'Correlation',
-                    color: props.darkMode ? 'white' : 'black'
+                    color: props.isDark ? 'white' : 'black'
                 },
                 grid: {
                     display: true,
@@ -273,7 +273,7 @@ export const MoorhenMMRRCCPlot = (props) => {
         });
 
 
-    }, [plotData, props.darkMode, props.sideBarWidth, props.showSideBar])
+    }, [plotData, props.backgroundColor, props.sideBarWidth, props.showSideBar])
     
     return  <Fragment>
                 <Form style={{ padding:'0', margin: '0' }}>

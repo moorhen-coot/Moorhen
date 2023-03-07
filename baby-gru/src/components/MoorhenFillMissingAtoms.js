@@ -119,7 +119,7 @@ export const MoorhenFillMissingAtoms = (props) => {
 
         setCardList(newCardList)
         
-    }, [residueList, props.darkMode, props.sideBarWidth, props.showSideBar])
+    }, [residueList, props.backgroundColor, props.sideBarWidth, props.showSideBar])
 
     return <Fragment>
                 <Form style={{ padding:'0', margin: '0' }}>
