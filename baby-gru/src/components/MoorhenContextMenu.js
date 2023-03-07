@@ -1,7 +1,6 @@
 import styled, { css } from "styled-components";
 import { ClickAwayListener, List, MenuItem } from '@mui/material';
 import { MoorhenMergeMoleculesMenuItem, MoorhenGetMonomerMenuItem, MoorhenFitLigandRightHereMenuItem, MoorhenImportFSigFMenuItem } from "./MoorhenMenuItem";
-import { isDarkBackground } from '../WebGLgComponents/mgWebGL.js';
 
 const ContextMenu = styled.div`
   position: absolute;
@@ -44,7 +43,7 @@ export const MoorhenContextMenu = (props) => {
 
   const top = props.showContextMenu.pageY
   const left = props.showContextMenu.pageX
-  const backgroundColor = isDarkBackground(...props.backgroundColor) ? '#858585' : '#ffffff' 
+  const backgroundColor = props.isDark ? '#858585' : '#ffffff' 
   let selectedMolecule
   if (props.showContextMenu.buffer){
     selectedMolecule = props.molecules.find(molecule => molecule.buffersInclude(props.showContextMenu.buffer))

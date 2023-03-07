@@ -319,7 +319,7 @@ export const MoorhenMoleculeCard = (props) => {
             labelPlacement="top"
             sx={{
                 '& .MuiCheckbox-root': {
-                    color: props.darkMode ? 'white' : '',
+                    color: props.isDark ? 'white' : '',
                   },
             }}
             control={<RepresentationCheckbox
@@ -331,7 +331,7 @@ export const MoorhenMoleculeCard = (props) => {
                 isVisible={isVisible}
                 showState={showState}
             />}
-            label={<Typography style={{ transform: 'rotate(-45deg)' }}>
+            label={<Typography style={{ color: props.isDark ? 'white' : 'black', transform: 'rotate(-45deg)' }}>
                 {Object.keys(labelMapping).includes(key) ? labelMapping[key] : key}
             </Typography>
             } />
@@ -426,7 +426,7 @@ export const MoorhenMoleculeCard = (props) => {
                 <Accordion.Item eventKey="ligands" style={{ padding: '0', margin: '0' }} >
                     <Accordion.Header style={{ padding: '0', margin: '0' }}>Ligands</Accordion.Header>
                     <Accordion.Body style={{ padding: '0.5rem' }}>
-                        <MoorhenLigandList commandCentre={props.commandCentre} molecule={props.molecule} glRef={props.glRef} darkMode={props.darkMode} />
+                        <MoorhenLigandList commandCentre={props.commandCentre} molecule={props.molecule} glRef={props.glRef} isDark={props.isDark}/>
                     </Accordion.Body>
                 </Accordion.Item>
             </Accordion>

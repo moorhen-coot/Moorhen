@@ -46,6 +46,12 @@ export const MoorhenFileMenu = (props) => {
         return newMolecule.loadToCootFromFile(file)
     }
 
+    const exportToCloud = async () => {
+        let moleculePromises = props.molecules.map(molecule => {return molecule.getAtoms()})
+        let moleculeAtoms = await Promise.all(moleculePromises)
+        props.molecules.forEach((molecule, index) => props.exportToCloudCallback(molecule.name, moleculeAtoms[index].data.result.pdbData))
+    }
+
     const fetchFiles = () => {
         if (remoteSource === "PDBe") {
             fetchFilesFromEBI()
@@ -432,6 +438,12 @@ export const MoorhenFileMenu = (props) => {
                     </MenuItem>
                     
                     <MoorhenBackupsMenuItem {...menuItemProps} setShowBackupsModal={setShowBackupsModal} loadSessionJSON={loadSessionJSON} />
+
+                    {props.isCloud &&
+                        <MenuItem id='cloud-export-menu-item' variant="success" onClick={exportToCloud}>
+                            Export to CCP4 Cloud
+                        </MenuItem>
+                    }
                     
                     <hr></hr>
 

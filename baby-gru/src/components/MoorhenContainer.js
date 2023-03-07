@@ -273,15 +273,16 @@ export const MoorhenContainer = (props) => {
         return windowHeight - (innerWindowMarginHeight + convertRemToPx(2))
     }
 
+    const isDark = isDarkBackground(...backgroundColor)
+
     const collectedProps = {
         molecules, changeMolecules, appTitle, setAppTitle, maps, changeMaps, glRef, activeMolecule, setActiveMolecule,
         activeMap, setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor, toastContent, 
         setToastContent, currentDropdownId, setCurrentDropdownId, hoveredAtom, setHoveredAtom, showToast, setShowToast,
         windowWidth, windowHeight, innerWindowMarginWidth, showColourRulesToast, timeCapsuleRef, setShowColourRulesToast, 
-        isCloud: props.isCloud, urlPrefix: props.urlPrefix, extraMenus:props.extraMenus, ...preferences
+        isDark, exportToCloudCallback: props.exportToCloudCallback, isCloud: props.isCloud, urlPrefix: props.urlPrefix, 
+        extraMenus:props.extraMenus, ...preferences
     }
-
-    const isDark = isDarkBackground(...backgroundColor)
 
     return <> <div>
 
@@ -290,7 +291,7 @@ export const MoorhenContainer = (props) => {
             <span>Starting moorhen...</span>
         </Backdrop>
         
-        <MoorhenNavBar {...collectedProps} isDark={isDark} busy={busy}/>
+        <MoorhenNavBar {...collectedProps} busy={busy}/>
         
     </div>
         <Container fluid className={`baby-gru ${theme}`}>
@@ -316,6 +317,7 @@ export const MoorhenContainer = (props) => {
                             width={webGLWidth}
                             height={webGLHeight}
                             backgroundColor={backgroundColor}
+                            isDark={isDark}
                             atomLabelDepthMode={preferences.atomLabelDepthMode}
                             onAtomHovered={onAtomHovered}
                             onKeyPress={onKeyPress}

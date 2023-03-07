@@ -1,4 +1,3 @@
-import { Settings } from "@mui/icons-material";
 import React, { useEffect, useState } from "react";
 import { Card, Form, Row, Col, DropdownButton, Stack } from "react-bootstrap";
 import parse from 'html-react-parser'
@@ -12,7 +11,7 @@ export const MoorhenLigandList = (props) => {
         const result = await props.commandCentre.current.cootCommand({
             returnType: "string",
             command: 'get_svg_for_residue_type',
-            commandArgs: [imol, compId, props.darkMode],
+            commandArgs: [imol, compId, props.isDark],
         }, true)
         
         const parser = new DOMParser()

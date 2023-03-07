@@ -16,7 +16,7 @@ export const MoorhenToolsAccordion = (props) => {
     const toolOptions = [
             {label: "Difference Map Peaks", toolWidget: <MoorhenDifferenceMapPeaks {...props}/>},
             {label: "Ramachandran Plot", toolWidget: <MoorhenRamachandran {...props}/>},
-            {label: "Validation", toolWidget: <MoorhenValidation {...props}/>},
+            {label: "Validation Plot", toolWidget: <MoorhenValidation {...props}/>},
             {label: "Peptide flips using difference map", toolWidget: <MoorhenPepflipsDifferenceMap {...props}/>},
             {label: "Fill partial residues", toolWidget: <MoorhenFillMissingAtoms {...props}/>},
             {label: "MMRRCC plot", toolWidget: <MoorhenMMRRCCPlot {...props}/>}
@@ -55,17 +55,17 @@ export const MoorhenToolsAccordion = (props) => {
                         disablePortal
                         sx={{
                             '& .MuiInputBase-root': {
-                                backgroundColor:  props.darkMode ? '#222' : 'white',
-                                color: props.darkMode ? 'white' : '#222',
+                                backgroundColor:  props.isDark ? '#222' : 'white',
+                                color: props.isDark ? 'white' : '#222',
                               },
                               '& .MuiOutlinedInput-notchedOutline': {
-                                borderColor: props.darkMode ? 'white' : 'grey',
+                                borderColor: props.isDark ? 'white' : 'grey',
                               },
                               '& .MuiButtonBase-root': {
-                                color: props.darkMode ? 'white' : 'grey',
+                                color: props.isDark ? 'white' : 'grey',
                               },
                               '& .MuiFormLabel-root': {
-                                color: props.darkMode ? 'white' : '#222',
+                                color: props.isDark ? 'white' : '#222',
                               },
                             }}
                         ref={toolsAccordionSelectRef}
