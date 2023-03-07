@@ -426,11 +426,19 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
                 if (shortCuts[key].keyPress === " ") modifiers.push("<Space>")
                 return `${modifiers.join("-")} ${shortCuts[key].keyPress} ${shortCuts[key].label}`
             })
-            glRef.current.drawScene()    
+            glRef.current.drawScene()
         } else  {
             glRef.current.showShortCutHelp = null
             glRef.current.drawScene()
         }
+        setToastContent(
+            <h3>
+                <List>
+                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pushed`}</ListItem>
+                    <ListItem style={{justifyContent: 'center'}}>{glRef.current.showShortCutHelp ? 'Show help' : 'Hide help'}</ListItem>
+                </List>
+            </h3>
+        )
         return false
     }
 
