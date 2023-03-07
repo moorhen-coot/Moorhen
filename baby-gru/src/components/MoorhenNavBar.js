@@ -24,7 +24,8 @@ export const MoorhenNavBar = forwardRef((props, ref) => {
     return  <Navbar ref={ref} id='navbar-baby-gru' className={props.isDark ? "navbar-dark" : "navbar-light"} style={{ borderBottom: '1px solid grey', height: '2rem', justifyContent: 'between', margin: '0.1rem', padding: '0.1rem' }}>
                 <Navbar.Toggle aria-controls="basic-navbar-nav" />
                 <Navbar.Collapse id="basic-navbar-nav">
-                    <Nav className="justify-content-left">
+                    <Nav className="justify-content-left" style={{verticalAlign: 'center', alignItems:'center', alignContent:'center'}}>
+                        <img src={`${props.urlPrefix}/baby-gru/pixmaps/MoorhenLogo.png`} alt='Moorhen' style={{height: '1.6rem', marginRight: '0.3rem'}}/>
                         <MoorhenFileMenu dropdownId="File" {...collectedProps} />
                         <MoorhenEditMenu dropdownId="Edit" {...collectedProps} />
                         <MoorhenLigandMenu dropdownId="Ligand" {...collectedProps} />
