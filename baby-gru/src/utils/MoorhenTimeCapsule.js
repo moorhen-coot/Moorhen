@@ -40,13 +40,13 @@ MoorhenTimeCapsule.prototype.updateMtzFiles = async function () {
     const allKeyStrings = await this.storageInstance.keys()
     const currentMtzFiles = allKeyStrings.map(keyString => JSON.parse(keyString)).filter(key => key.type === 'mtzData')
     return Promise.all(
-        this.mapsRef.current.filter(map => map.hasReflectionData).map(async (map, index) => {
+        this.mapsRef.current.map(async (map) => {
             const fileName = map.associatedReflectionFileName
-            if (!currentMtzFiles.includes(fileName)) {
+            if (fileName && !currentMtzFiles.includes(fileName)) {
                 const key = JSON.stringify({type: 'mtzData', name: fileName})
-                const reflectionData = await this.mapsRef.current[index].fetchReflectionData()
+                const reflectionData = await map.fetchReflectionData()
                 return this.createBackup(key, reflectionData.data.result.mtzData)    
-            } 
+            }
             return Promise.resolve()
         })
     )
