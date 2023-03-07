@@ -25,7 +25,7 @@ export const MoorhenNavBar = forwardRef((props, ref) => {
                 <Navbar.Toggle aria-controls="basic-navbar-nav" />
                 <Navbar.Collapse id="basic-navbar-nav">
                     <Nav className="justify-content-left" style={{verticalAlign: 'center', alignItems:'center', alignContent:'center'}}>
-                        <img src={`${props.urlPrefix}/baby-gru/pixmaps/MoorhenLogo.png`} alt='Moorhen' style={{height: '1.6rem', marginRight: '0.3rem'}}/>
+                        {props.windowWidth >= 1000 ? <img src={`${props.urlPrefix}/baby-gru/pixmaps/MoorhenLogo.png`} alt='Moorhen' style={{height: '1.6rem', marginRight: '0.3rem'}}/> : null}
                         <MoorhenFileMenu dropdownId="File" {...collectedProps} />
                         <MoorhenEditMenu dropdownId="Edit" {...collectedProps} />
                         <MoorhenLigandMenu dropdownId="Ligand" {...collectedProps} />
