@@ -258,79 +258,79 @@ class RamaPlot extends Component {
         this.imageData = ctx.getImageData(0,0,this.canvasRef.current.width, this.canvasRef.current.height);
 
         const imgAll = new window.Image();
-        imgAll.src = "/pixmaps/rama2_all.png";
+        imgAll.src = `${this.urlPrefix}/baby-gru/pixmaps/rama2_all.png`;
         imgAll.crossOrigin="Anonymous";
         this.imageRefAll.current = imgAll;
         this.imageRefAll.current.addEventListener('load', this.handleLoad.bind(self));
 
         const imgGly = new window.Image();
-        imgGly.src = "/pixmaps/rama2_gly.png";
+        imgGly.src = `${this.urlPrefix}/baby-gru/pixmaps/rama2_gly.png`;
         imgGly.crossOrigin="Anonymous";
         this.imageRefGly.current = imgGly;
         this.imageRefGly.current.addEventListener('load', this.handleLoad.bind(self));
 
         const imgPrePro = new window.Image();
-        imgPrePro.src = "/pixmaps/rama2_pre_pro.png";
+        imgPrePro.src = `${this.urlPrefix}/baby-gru/pixmaps/rama2_pre_pro.png`;
         imgPrePro.crossOrigin="Anonymous";
         this.imageRefPrePro.current = imgPrePro;
         this.imageRefPrePro.current.addEventListener('load', this.handleLoad.bind(self));
 
         const imgPro = new window.Image();
-        imgPro.src = "/pixmaps/rama2_pro.png";
+        imgPro.src = `${this.urlPrefix}/baby-gru/pixmaps/rama2_pro.png`;
         imgPro.crossOrigin="Anonymous";
         this.imageRefPro.current = imgPro;
         this.imageRefPro.current.addEventListener('load', this.handleLoad.bind(self));
 
         const imgIleVal = new window.Image();
-        imgIleVal.src = "/pixmaps/rama2_ileval.png";
+        imgIleVal.src = `${this.urlPrefix}/baby-gru/pixmaps/rama2_ileval.png`;
         imgIleVal.crossOrigin="Anonymous";
         this.imageRefIleVal.current = imgIleVal;
         this.imageRefIleVal.current.addEventListener('load', this.handleLoad.bind(self));
 
         const imgNonGlyPro = new window.Image();
-        imgNonGlyPro.src = "/pixmaps/rama2_non_gly_pro.png";
+        imgNonGlyPro.src = `${this.urlPrefix}/baby-gru/pixmaps/rama2_non_gly_pro.png`;
         imgNonGlyPro.crossOrigin="Anonymous";
         this.imageRefNonGlyPro.current = imgNonGlyPro;
         this.imageRefNonGlyPro.current.addEventListener('load', this.handleLoad.bind(self));
 
         const imgNonGlyProIleVal = new window.Image();
-        imgNonGlyProIleVal.src = "/pixmaps/rama2_non_gly_pro_pre_pro_ileval.png";
+        imgNonGlyProIleVal.src = `${this.urlPrefix}/baby-gru/pixmaps/rama2_non_gly_pro_pre_pro_ileval.png`;
         imgNonGlyProIleVal.crossOrigin="Anonymous";
         this.imageRefNonGlyProIleVal.current = imgNonGlyProIleVal;
         this.imageRefNonGlyProIleVal.current.addEventListener('load', this.handleLoad.bind(self));
 
         const imgGlyNormal = new window.Image();
-        imgGlyNormal.src = "/pixmaps/rama-plot-gly-normal.png";
+        imgGlyNormal.src = `${this.urlPrefix}/baby-gru/pixmaps/rama-plot-gly-normal.png`;
         imgGlyNormal.crossOrigin="Anonymous";
         this.ramaPlotGlyNormalImageRef.current = imgGlyNormal;
         this.ramaPlotGlyNormalImageRef.current.addEventListener('load', this.handleLoad.bind(self));
 
         const imgGlyOutlier = new window.Image();
-        imgGlyOutlier.src = "/pixmaps/rama-plot-gly-outlier.png";
+        imgGlyOutlier.src = `${this.urlPrefix}/baby-gru/pixmaps/rama-plot-gly-outlier.png`;
         imgGlyOutlier.crossOrigin="Anonymous";
         this.ramaPlotGlyOutlierImageRef.current = imgGlyOutlier;
         this.ramaPlotGlyOutlierImageRef.current.addEventListener('load', this.handleLoad.bind(self));
 
         const imgProNormal = new window.Image();
-        imgProNormal.src = "/pixmaps/rama-plot-pro-normal.png";
+        imgProNormal.src = `${this.urlPrefix}/baby-gru/pixmaps/rama-plot-pro-normal.png`;
         imgProNormal.crossOrigin="Anonymous";
         this.ramaPlotProNormalImageRef.current = imgProNormal;
         this.ramaPlotProNormalImageRef.current.addEventListener('load', this.handleLoad.bind(self));
 
         const imgProOutlier = new window.Image();
-        imgProOutlier.src = "/pixmaps/rama-plot-pro-outlier.png";
+        imgProOutlier.src = `${this.urlPrefix}/baby-gru/pixmaps/rama-plot-pro-outlier.png`;
         imgProOutlier.crossOrigin="Anonymous";
         this.ramaPlotProOutlierImageRef.current = imgProOutlier;
         this.ramaPlotProOutlierImageRef.current.addEventListener('load', this.handleLoad.bind(self));
 
         const imgOtherNormal = new window.Image();
-        imgOtherNormal.src = "/pixmaps/rama-plot-other-normal.png";
+        imgOtherNormal.src = `${this.urlPrefix}/baby-gru/pixmaps/rama-plot-other-normal.png`;
         imgOtherNormal.crossOrigin="Anonymous";
         this.ramaPlotOtherNormalImageRef.current = imgOtherNormal;
         this.ramaPlotOtherNormalImageRef.current.addEventListener('load', this.handleLoad.bind(self));
 
         const imgOtherOutlier = new window.Image();
-        imgOtherOutlier.src = "/pixmaps/rama-plot-other-outlier.png";
+        imgOtherOutlier.src = `${this.urlPrefix}/baby-gru/pixmaps/rama-plot-other-outlier.png`;
         imgOtherOutlier.crossOrigin="Anonymous";
         this.ramaPlotOtherOutlierImageRef.current = imgOtherOutlier;
         this.ramaPlotOtherOutlierImageRef.current.addEventListener('load', this.handleLoad.bind(self));
@@ -360,6 +360,7 @@ class RamaPlot extends Component {
 
     constructor(props) {
         super(props);
+        this.urlPrefix = props.urlPrefix;
         this.reqRef = null;
         this.oldImage = null;
         this.nAnimationFrames = 15;

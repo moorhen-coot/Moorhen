@@ -177,7 +177,7 @@ export const MoorhenRamachandran = (props) => {
             </Form.Group>
         </Form>
         <div ref={ramaPlotDivRef} id="ramaPlotDiv" className="rama-plot-div" style={{height: '100%', padding:'0rem', margin:'0rem'}}>
-            <RamaPlot ref={ramachandranRef}
+            <RamaPlot ref={ramachandranRef} urlPrefix={props.urlPrefix}
                 onClick={(result) => setClickedResidue(result)}
                 setHoveredAtom={handleHoveredAtom} />
         </div>
