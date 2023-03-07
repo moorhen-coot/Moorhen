@@ -331,7 +331,7 @@ export const MoorhenMoleculeCard = (props) => {
                 isVisible={isVisible}
                 showState={showState}
             />}
-            label={<Typography style={{ transform: 'rotate(-45deg)' }}>
+            label={<Typography style={{ color: props.isDark ? 'white' : 'black', transform: 'rotate(-45deg)' }}>
                 {Object.keys(labelMapping).includes(key) ? labelMapping[key] : key}
             </Typography>
             } />
