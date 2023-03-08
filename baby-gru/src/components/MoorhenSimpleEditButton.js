@@ -222,8 +222,7 @@ export const MoorhenConvertCisTransButton = (props) => {
         prompt="Click atom in residue to convert"
         icon={<img style={{width:'100%', height: '100%'}} className="baby-gru-button-icon" alt="Cis/Trans" src={`${props.urlPrefix}/baby-gru/pixmaps/cis-trans.svg`} />}
         formatArgs={(molecule, chosenAtom) => {
-            return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf
-                }`]
+            return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`]
         }} />
 }
 
@@ -561,7 +560,7 @@ export const MoorhenEigenFlipLigandButton = (props) => {
         needsMapData={false}
         cootCommand="eigen_flip_ligand"
         prompt="Click atom in residue to eigen flip it"
-        icon={<img style={{width:'100%', height: '100%'}} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/spin-view.svg`} />}
+        icon={<img style={{width:'100%', height: '100%'}} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/spin-view.svg`} alt='Eigen flip' />}
         formatArgs={(molecule, chosenAtom) => {
             return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
         }} />
@@ -576,7 +575,7 @@ export const MoorhenJedFlipFalseButton = (props) => {
         needsMapData={false}
         cootCommand="jed_flip"
         prompt="Click atom in residue to flip around that rotatable bond - wag the tail"
-        icon={<img style={{width:'100%', height: '100%'}} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/edit-chi.svg`} />}
+        icon={<img style={{width:'100%', height: '100%'}} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/edit-chi.svg`} alt='jed-flip'/>}
         formatArgs={(molecule, chosenAtom) => {
             return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`, false]
         }} />
@@ -591,7 +590,7 @@ export const MoorhenJedFlipTrueButton = (props) => {
         needsMapData={false}
         cootCommand="jed_flip"
         prompt="Click atom in residue to flip around that rotatable bond - wag the dog"
-        icon={<img style={{width:'100%', height: '100%'}} alt="jed-flip" className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/jed-flip-reverse.svg`} />}
+        icon={<img style={{width:'100%', height: '100%'}} alt="jed-flip-reverse" className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/jed-flip-reverse.svg`} />}
         formatArgs={(molecule, chosenAtom) => {
             return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`, true]
         }} />
