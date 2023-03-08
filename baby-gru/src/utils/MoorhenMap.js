@@ -1,4 +1,4 @@
-import { readDataFile } from "./MoorhenUtils"
+import { readDataFile, guid } from "./MoorhenUtils"
 import { readMapFromArrayBuffer, mapToMapGrid } from '../WebGLgComponents/mgWebGLReadMap';
 
 export function MoorhenMap(commandCentre) {
@@ -18,6 +18,7 @@ export function MoorhenMap(commandCentre) {
     this.hasReflectionData = false
     this.selectedColumns = null
     this.associatedReflectionFileName = null
+    this.uniqueId = guid()
 }
 
 MoorhenMap.prototype.delete = async function (glRef) {
@@ -306,7 +307,7 @@ MoorhenMap.prototype.associateToReflectionData = async function (selectedColumns
     }
     
     const commandArgs = [
-        this.molNo, { name: this.name, data: reflectionData },
+        this.molNo, { fileName: this.uniqueId, data: reflectionData },
         selectedColumns.Fobs, selectedColumns.SigFobs, selectedColumns.FreeR
     ]
 

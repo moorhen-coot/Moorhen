@@ -541,10 +541,9 @@ const read_mtz = (mapData, name, selectedColumns) => {
 }
 
 const associate_data_mtz_file_with_map = (iMol, mtzData, F, SIGF, FREE) => {
-    const theGuid = guid()
     const asUint8Array = new Uint8Array(mtzData.data)
-    cootModule.FS_createDataFile(".", `${theGuid}.mtz`, asUint8Array, true, true);
-    const mtzFilename = `./${theGuid}.mtz`
+    cootModule.FS_createDataFile(".", `${mtzData.fileName}.mtz`, asUint8Array, true, true);
+    const mtzFilename = `./${mtzData.fileName}.mtz`
     const args = [iMol, mtzFilename, F, SIGF, FREE]
     molecules_container.associate_data_mtz_file_with_map(...args)
     return mtzFilename
@@ -603,7 +602,7 @@ onmessage = function (e) {
                 print(e);
             });
     }
-
+    
     else if (e.data.message === 'get_atoms') {
         const theGuid = guid()
         const tempFilename = `./${theGuid}.pdb`

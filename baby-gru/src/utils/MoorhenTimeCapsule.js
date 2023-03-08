@@ -22,7 +22,7 @@ export function MoorhenTimeCapsule(moleculesRef, mapsRef, activeMapRef, glRef, p
     this.modificationCount = 0
     this.modificationCountBackupThreshold = 5
     this.maxBackupCount = 10
-    this.version = '0.0.5'
+    this.version = '0.0.6'
     this.storageInstance = createInstance('Moorhen-TimeCapsule')
     this.checkVersion()
 }
@@ -36,40 +36,68 @@ MoorhenTimeCapsule.prototype.checkVersion = async function () {
     }
 }
 
-MoorhenTimeCapsule.prototype.updateMtzFiles = async function () {
+MoorhenTimeCapsule.prototype.updateDataFiles = async function () {
     const allKeyStrings = await this.storageInstance.keys()
-    const currentMtzFiles = allKeyStrings.map(keyString => JSON.parse(keyString)).filter(key => key.type === 'mtzData').map(key => key.name)
-    return Promise.all(
-        this.mapsRef.current.map(async (map) => {
-            const fileName = map.associatedReflectionFileName
-            if (fileName && !currentMtzFiles.includes(fileName)) {
-                const key = JSON.stringify({type: 'mtzData', name: fileName})
-                const reflectionData = await map.fetchReflectionData()
-                return this.createBackup(key, reflectionData.data.result.mtzData)    
-            }
-            return Promise.resolve()
-        })
-    )
+    const allKeys = allKeyStrings.map(keyString => JSON.parse(keyString))
+    const currentMtzFiles = allKeys.filter(key => key.type === 'mtzData').map(key => key.name)
+    const currentMapData = allKeys.filter(key => key.type === 'mapData').map(key => key.name)
+
+    let promises = []
+    this.mapsRef.current.map(async (map) => {
+        const fileName = map.associatedReflectionFileName
+        if (fileName && !currentMtzFiles.includes(fileName)) {
+            const key = JSON.stringify({type: 'mtzData', name: fileName})
+            promises.push(
+                map.fetchReflectionData().then(reflectionData => {
+                    this.createBackup(key, reflectionData.data.result.mtzData)
+                })    
+            )
+        }
+        if (map.uniqueId && !currentMapData.includes(map.uniqueId)) {
+            const key = JSON.stringify({type: 'mapData', name: map.uniqueId})
+            promises.push(
+                map.getMap().then(mapData => {
+                    this.createBackup(key, mapData.data.result.mapData)
+                })
+            )
+        }
+    })
+    
+    return Promise.all(promises)
 }
 
-MoorhenTimeCapsule.prototype.fetchSession = async function (includeReflectionData=true) {
+MoorhenTimeCapsule.prototype.fetchSession = async function (includeAdditionalMapData=true) {
     this.busy = true
     const keyStrings = await this.storageInstance.keys()
     const mtzFileNames = keyStrings.map(keyString => JSON.parse(keyString)).filter(key => key.type === 'mtzData').map(key => key.name)
-
+    const mapNames = keyStrings.map(keyString => JSON.parse(keyString)).filter(key => key.type === 'mapData').map(key => key.name)
+    
     const promises = await Promise.all([
         ...this.moleculesRef.current.map(molecule => {return molecule.getAtoms()}), 
-        ...this.mapsRef.current.map(map => {return map.getMap()}),
         ...this.mapsRef.current.map(map => {
-            if (!map.hasReflectionData || !includeReflectionData) { 
-                return Promise.resolve(null)
+            if (!includeAdditionalMapData) {
+                return Promise.resolve('map_data')
+            } else if (mapNames.includes(map.uniqueId)) {
+                return this.retrieveBackup(
+                    JSON.stringify({
+                        type: 'mapData',
+                        name: map.uniqueId
+                    })
+                ).then(result => {return {data: {message: 'get_map', result: {mapData: result}}}})
+            } else {
+                return map.getMap()
+            }
+        }),
+        ...this.mapsRef.current.map(map => {
+            if (!map.hasReflectionData || !includeAdditionalMapData) { 
+                return Promise.resolve('reflection_data')
             } else if (mtzFileNames.includes(map.associatedReflectionFileName)) {
                 return this.retrieveBackup(
                     JSON.stringify({
                         type: 'mtzData',
                         name: map.associatedReflectionFileName
                     })
-                )
+                ).then(result => {return {data: {message: 'get_mtz_data', result: {mtzData: result}}}})
             } else {
                 return map.fetchReflectionData()
             }
@@ -80,14 +108,16 @@ MoorhenTimeCapsule.prototype.fetchSession = async function (includeReflectionDat
     let mapDataPromises = []
     let reflectionDataPromises = []
     promises.forEach(promise => {
-        if (!promise || !promise.data) {
-            reflectionDataPromises.push(promise)
+        if (promise === 'reflection_data') {
+            reflectionDataPromises.push(null)
+        } else if (promise === 'map_data') {
+            mapDataPromises.push(null)
         } else if (promise.data.message === "get_mtz_data") {
             reflectionDataPromises.push(promise.data.result.mtzData)
         }else if (promise.data.message === 'get_atoms') {
             moleculeDataPromises.push(promise.data.result.pdbData)
         } else if (promise.data.message === 'get_map') {
-            mapDataPromises.push(promise.data.result.mapData)
+            mapDataPromises.push(new Uint8Array(promise.data.result.mapData))
         }
     })
 
@@ -103,7 +133,8 @@ MoorhenTimeCapsule.prototype.fetchSession = async function (includeReflectionDat
     const mapData = this.mapsRef.current.map((map, index) => {
         return {
             name: map.name,
-            mapData: new Uint8Array(mapDataPromises[index]),
+            uniqueId: map.uniqueId,
+            mapData: mapDataPromises[index],
             reflectionData: reflectionDataPromises[index],
             cootContour: map.cootContour,
             contourLevel: map.contourLevel,
@@ -118,7 +149,7 @@ MoorhenTimeCapsule.prototype.fetchSession = async function (includeReflectionDat
     })
 
     const session = {
-        includesReflectionData: includeReflectionData,
+        includesAdditionalMapData: includeAdditionalMapData,
         moleculeData: moleculeData,
         mapData: mapData,
         activeMapIndex: this.mapsRef.current.findIndex(map => map.molNo === this.activeMapRef.current.molNo),
@@ -147,7 +178,7 @@ MoorhenTimeCapsule.prototype.addModification = async function() {
         this.busy = true
         this.modificationCount = 0
         
-        await this.updateMtzFiles()
+        await this.updateDataFiles()
         const session = await this.fetchSession(false)
         const sessionString = JSON.stringify(session)
         
@@ -155,6 +186,7 @@ MoorhenTimeCapsule.prototype.addModification = async function() {
             dateTime: `${Date.now()}`, 
             type: 'automatic', 
             molNames: this.moleculesRef.current.map(mol => mol.name),
+            mapNames: this.mapsRef.current.map(map => map.uniqueId),
             mtzNames: this.mapsRef.current.filter(map => map.hasReflectionData).map(map => map.associatedReflectionFileName)
         }
         const keyString = JSON.stringify(key)
@@ -173,12 +205,14 @@ MoorhenTimeCapsule.prototype.cleanupIfFull = async function() {
     }
 }
 
-MoorhenTimeCapsule.prototype.cleanupUnusedMtzFiles = async function() {
+MoorhenTimeCapsule.prototype.cleanupUnusedDataFiles = async function() {
     const allKeyStrings = await this.storageInstance.keys()
     const allKeys = allKeyStrings.map(keyString => JSON.parse(keyString))
-    const usedMtzFileNames = [...allKeys.filter(key => ['automatic', 'manual'].includes(key.type)).map(key => key.mtzNames)]
-    await Promise.all(allKeys.filter(key => key.type === 'mtzData').map(key => {
-        if (!usedMtzFileNames.includes(key.name)) {
+    const backupKeys = allKeys.filter(key => ['automatic', 'manual'].includes(key.type))
+    const [ usedNames ] = [ ...backupKeys.map(key => [...key.mtzNames, ...key.mapNames]) ]
+
+    await Promise.all(allKeys.filter(key => ['mtzData', 'mapData'].includes(key.type)).map(key => {
+        if (typeof usedNames === 'undefined' || !usedNames.includes(key.name)) {
             return this.removeBackup(JSON.stringify(key))
         }
         return Promise.resolve()
