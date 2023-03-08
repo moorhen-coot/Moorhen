@@ -453,7 +453,7 @@ export const MoorhenFileMenu = (props) => {
                     
                     <MoorhenBackupsMenuItem {...menuItemProps} setShowBackupsModal={setShowBackupsModal} loadSessionJSON={loadSessionJSON} />
 
-                    {props.disableFileUploads &&
+                    {props.exportCallback &&
                         <MenuItem id='cloud-export-menu-item' variant="success" onClick={doExportCallback}>
                             Export to CCP4 Cloud
                         </MenuItem>
