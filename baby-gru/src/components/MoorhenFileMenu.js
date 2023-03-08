@@ -177,25 +177,35 @@ export const MoorhenFileMenu = (props) => {
         changeMaps({ action: "Empty" })
 
         // Load molecules stored in session from pdb string
-        let newMoleculePromises = [];
-        sessionData.moleculeData.forEach(storedMoleculeData => {
+        const newMoleculePromises = sessionData.moleculeData.map(storedMoleculeData => {
             const newMolecule = new MoorhenMolecule(commandCentre, props.urlPrefix)
-            newMoleculePromises.push(
-                newMolecule.loadToCootFromString(storedMoleculeData.pdbData, storedMoleculeData.name)
-            )
+            return newMolecule.loadToCootFromString(storedMoleculeData.pdbData, storedMoleculeData.name)
         })
         
         // Load maps stored in session
-        let newMapPromises = [];
-        sessionData.mapData.forEach(storedMapData => {
+        const newMapPromises = sessionData.mapData.map(storedMapData => {
             const newMap = new MoorhenMap(commandCentre)
-            newMapPromises.push(
-                newMap.loadToCootFromMapData(
+            if (sessionData.includesAdditionalMapData) {
+                return newMap.loadToCootFromMapData(
                     Uint8Array.from(Object.values(storedMapData.mapData)).buffer, 
                     storedMapData.name, 
                     storedMapData.isDifference
-                )
-            )
+                    )
+            } else {
+                newMap.uniqueId = storedMapData.uniqueId
+                return props.timeCapsuleRef.current.retrieveBackup(
+                    JSON.stringify({
+                        type: 'mapData',
+                        name: storedMapData.uniqueId
+                    })
+                    ).then(mapData => {
+                        return newMap.loadToCootFromMapData(
+                            mapData, 
+                            storedMapData.name, 
+                            storedMapData.isDifference
+                            )
+                        })    
+            }
         })
         
         const loadPromises = await Promise.all([...newMoleculePromises, ...newMapPromises])
@@ -212,10 +222,9 @@ export const MoorhenFileMenu = (props) => {
         })
 
         // Associate maps to reflection data
-        // FIXME: THE MTZ file that is created now should have the same file name as before, otherwise if the user creates a new backup based on this one, a new MTZ entry will be created in local storage.
         const associateReflectionsPromises = newMaps.map((map, index) => {
             const storedMapData = sessionData.mapData[index]
-            if (sessionData.includesReflectionData && storedMapData.reflectionData) {
+            if (sessionData.includesAdditionalMapData && storedMapData.reflectionData) {
                 return map.associateToReflectionData(
                     storedMapData.selectedColumns, 
                     Uint8Array.from(Object.values(storedMapData.reflectionData))
@@ -236,8 +245,7 @@ export const MoorhenFileMenu = (props) => {
             return Promise.resolve()
         })
         
-        const afterLoadPromises = await Promise.all([...drawPromises, ...associateReflectionsPromises])
-        await Promise.all(afterLoadPromises)
+        await Promise.all([...drawPromises, ...associateReflectionsPromises])
 
         // Change props.molecules
         newMolecules.forEach(molecule => {
@@ -303,10 +311,16 @@ export const MoorhenFileMenu = (props) => {
     }
 
     const createBackup = async () => {
-        await props.timeCapsuleRef.current.updateMtzFiles()
+        await props.timeCapsuleRef.current.updateDataFiles()
         const session = await props.timeCapsuleRef.current.fetchSession(false)
         const sessionString = JSON.stringify(session)
-        const key = {dateTime: `${Date.now()}`, type: 'manual', name: '', molNames: session.moleculeData.map(mol => mol.name)}
+        const key = {
+            dateTime: `${Date.now()}`,
+            type: 'manual',
+            molNames: session.moleculeData.map(mol => mol.name),
+            mapNames: session.mapData.map(map => map.uniqueId),
+            mtzNames: session.mapData.filter(map => map.hasReflectionData).map(map => map.associatedReflectionFileName)
+        }
         const keyString = JSON.stringify(key)
         return props.timeCapsuleRef.current.createBackup(keyString, sessionString)
     }
@@ -332,7 +346,7 @@ export const MoorhenFileMenu = (props) => {
                                     <Button variant='danger' onClick={async () => {
                                         try {
                                             await props.timeCapsuleRef.current.removeBackup(item.key)
-                                            await props.timeCapsuleRef.current.cleanupUnusedMtzFiles()
+                                            await props.timeCapsuleRef.current.cleanupUnusedDataFiles()
                                             sortedKeys = await props.timeCapsuleRef.current.getSortedKeys()
                                             setBackupKeys(sortedKeys)
                                         } catch (err) {
