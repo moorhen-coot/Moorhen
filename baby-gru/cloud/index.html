@@ -60,7 +60,7 @@ main UI thread (as opposed to the CootWorker)-->
   <script type="text/javascript" defer>
     const rootId = "root"
     const  urlPrefix = "."
-    const exportToCloudCallback = (molName, molData) => {console.log({name: molName, data: molData})}
+    const exportCallback = (molName, molData) => {console.log({name: molName, data: molData})}
     const inputFiles = [
       {type: 'pdb', args: ["./baby-gru/tutorials/moorhen-tutorial-structure-number-1.pdb", "molecule"]},
       {type: 'mtz', args: [
@@ -221,9 +221,9 @@ main UI thread (as opposed to the CootWorker)-->
 
     async function startMoorhen() {
       let moorhenWrapper = new moorhen.MoorhenWrapper(urlPrefix)
-      moorhenWrapper.addOnExportListener(exportToCloudCallback)
+      moorhenWrapper.addOnExportListener(exportCallback)
       await moorhenWrapper.importPreferences(userPreferences)
-      moorhenWrapper.renderMoorhen(rootId, exportToCloudCallback)
+      moorhenWrapper.renderMoorhen(rootId, exportCallback)
       await moorhenWrapper.waitForInitialisation()
       await moorhenWrapper.loadInputFiles(inputFiles)
       setTimeout(() => {moorhenWrapper.exportBackups()}, 6000);

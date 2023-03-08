@@ -280,7 +280,7 @@ export const MoorhenContainer = (props) => {
         activeMap, setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor, toastContent, 
         setToastContent, currentDropdownId, setCurrentDropdownId, hoveredAtom, setHoveredAtom, showToast, setShowToast,
         windowWidth, windowHeight, innerWindowMarginWidth, showColourRulesToast, timeCapsuleRef, setShowColourRulesToast, 
-        isDark, exportToCloudCallback: props.exportToCloudCallback, isCloud: props.isCloud, urlPrefix: props.urlPrefix, 
+        isDark, exportCallback: props.exportCallback, disableFileUploads: props.disableFileUploads, urlPrefix: props.urlPrefix, 
         extraMenus:props.extraMenus, ...preferences
     }
 
@@ -347,7 +347,7 @@ export const MoorhenContainer = (props) => {
 
 MoorhenContainer.defaultProps = {
     urlPrefix: '.',
-    exportToCloudCallback: null,
-    isCloud: false,
+    exportCallback: null,
+    disableFileUploads: false,
     extraMenus:[]
 }

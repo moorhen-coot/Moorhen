@@ -46,10 +46,10 @@ export const MoorhenFileMenu = (props) => {
         return newMolecule.loadToCootFromFile(file)
     }
 
-    const exportToCloud = async () => {
+    const doExportCallback = async () => {
         let moleculePromises = props.molecules.map(molecule => {return molecule.getAtoms()})
         let moleculeAtoms = await Promise.all(moleculePromises)
-        props.molecules.forEach((molecule, index) => props.exportToCloudCallback(molecule.name, moleculeAtoms[index].data.result.pdbData))
+        props.molecules.forEach((molecule, index) => props.exportCallback(molecule.name, moleculeAtoms[index].data.result.pdbData))
     }
 
     const fetchFiles = () => {
@@ -390,7 +390,7 @@ export const MoorhenFileMenu = (props) => {
             style={{display:'flex', alignItems:'center'}}
             onToggle={() => { props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId(-1) }}>
                 <div style={{maxHeight: convertViewtoPx(65, props.windowHeight), overflowY: 'auto'}}>
-                    {!props.isCloud && 
+                    {!props.disableFileUploads && 
                     <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="upload-coordinates-form" className="mb-3">
                         <Form.Label>Coordinates</Form.Label>
                         <Form.Control type="file" accept=".pdb, .mmcif, .cif, .ent" multiple={true} onChange={(e) => { loadPdbFiles(e.target.files) }}/>
@@ -423,7 +423,7 @@ export const MoorhenFileMenu = (props) => {
                         <Form.Label style={{display: isValidPdbId ? 'none' : 'block', alignContent: 'center' ,textAlign: 'center'}}>Problem fetching</Form.Label>
                         <Form.Check style={{ marginTop: '0.5rem' }} ref={fetchMapDataCheckRef} label={'fetch map data'} name={`fetchMapData`} type="checkbox" variant="outline" />
                     </Form.Group>
-                    {!props.isCloud && 
+                    {!props.disableFileUploads && 
                     <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="upload-session-form" className="mb-3">
                         <Form.Label>Load from stored session</Form.Label>
                         <Form.Control type="file" accept=".json" multiple={false} onChange={(e) => { loadSession(e.target.files[0]) }}/>
@@ -431,7 +431,7 @@ export const MoorhenFileMenu = (props) => {
                     }
                     <hr></hr>
 
-                    {!props.isCloud && 
+                    {!props.disableFileUploads && 
                     <>
                         <MoorhenAutoOpenMtzMenuItem {...menuItemProps} />
                         <MoorhenImportMapCoefficientsMenuItem {...menuItemProps} />
@@ -453,8 +453,8 @@ export const MoorhenFileMenu = (props) => {
                     
                     <MoorhenBackupsMenuItem {...menuItemProps} setShowBackupsModal={setShowBackupsModal} loadSessionJSON={loadSessionJSON} />
 
-                    {props.isCloud &&
-                        <MenuItem id='cloud-export-menu-item' variant="success" onClick={exportToCloud}>
+                    {props.exportCallback &&
+                        <MenuItem id='cloud-export-menu-item' variant="success" onClick={doExportCallback}>
                             Export to CCP4 Cloud
                         </MenuItem>
                     }

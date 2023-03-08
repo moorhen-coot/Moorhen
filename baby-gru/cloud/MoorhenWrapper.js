@@ -14,7 +14,7 @@ export default class MoorhenWrapper {
     this.urlPrefix = urlPrefix
     this.controls = null
     this.monomerLibrary = null
-    this.exportToCloudCallback = () => {}
+    this.exportCallback = () => {}
     reportWebVitals()
   }
 
@@ -67,7 +67,7 @@ export default class MoorhenWrapper {
   }
 
   addOnExportListener(callbackFunction){
-    this.exportToCloudCallback = callbackFunction
+    this.exportCallback = callbackFunction
   }
 
   addMonomerLibrary(monomerLibrary){
@@ -160,8 +160,8 @@ export default class MoorhenWrapper {
           <PreferencesContextProvider>
             <MoorhenContainer 
               forwardControls={this.forwardControls.bind(this)}
-              isCloud={true}
-              exportToCloudCallback={this.exportToCloudCallback.bind(this)}
+              disableFileUploads={true}
+              exportCallback={this.exportCallback.bind(this)}
               monomerLibrary={this.monomerLibrary}
               />
           </PreferencesContextProvider>
