@@ -38,7 +38,7 @@ MoorhenTimeCapsule.prototype.checkVersion = async function () {
 
 MoorhenTimeCapsule.prototype.updateMtzFiles = async function () {
     const allKeyStrings = await this.storageInstance.keys()
-    const currentMtzFiles = allKeyStrings.map(keyString => JSON.parse(keyString)).filter(key => key.type === 'mtzData')
+    const currentMtzFiles = allKeyStrings.map(keyString => JSON.parse(keyString)).filter(key => key.type === 'mtzData').map(key => key.name)
     return Promise.all(
         this.mapsRef.current.map(async (map) => {
             const fileName = map.associatedReflectionFileName
