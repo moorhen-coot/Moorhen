@@ -377,6 +377,26 @@ export const MoorhenAddAltConfButton = (props) => {
         }} />
 }
 
+export const deleteFormatArgs = (molecule, chosenAtom, pp) => {
+    let commandArgs
+    if (pp === 'CHAIN') {
+        commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/*/*:*`, 'LITERAL']
+    } else if (pp === 'RESIDUE') {
+        commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/*${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`, 'LITERAL']
+    } else if (pp === 'ATOM') {
+        commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`, 'LITERAL']
+    } else if (pp === 'RESIDUE SIDE-CHAIN') {
+        commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/!N,CA,CB,C,O,HA,H`, 'LITERAL']
+    } else if (pp === 'RESIDUE HYDROGENS') {
+        commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/[H,D]`, 'LITERAL']
+    } else if (pp === 'MOLECULE HYDROGENS') {
+        commandArgs = [molecule.molNo, `/1/*/*/[H,D]`, 'LITERAL']
+    } else {
+        commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/*/[H,D]`, 'LITERAL']
+    }
+    return commandArgs
+}
+
 export const MoorhenDeleteUsingCidButton = (props) => {
     const [toolTip, setToolTip] = useState("Delete Item")
     const [panelParameters, setPanelParameters] = useState('ATOM' )
@@ -414,26 +434,6 @@ export const MoorhenDeleteUsingCidButton = (props) => {
                 </FormGroup>
             </Row>
         </Container>
-    }
-
-    const deleteFormatArgs = (molecule, chosenAtom, pp) => {
-        let commandArgs
-        if (pp === 'CHAIN') {
-            commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/*/*:*`, 'LITERAL']
-        } else if (pp === 'RESIDUE') {
-            commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/*${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`, 'LITERAL']
-        } else if (pp === 'ATOM') {
-            commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`, 'LITERAL']
-        } else if (pp === 'RESIDUE SIDE-CHAIN') {
-            commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/!N,CA,CB,C,O,HA,H`, 'LITERAL']
-        } else if (pp === 'RESIDUE HYDROGENS') {
-            commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/[H,D]`, 'LITERAL']
-        } else if (pp === 'MOLECULE HYDROGENS') {
-            commandArgs = [molecule.molNo, `/1/*/*/[H,D]`, 'LITERAL']
-        } else {
-            commandArgs = [molecule.molNo, `/1/${chosenAtom.chain_id}/*/[H,D]`, 'LITERAL']
-        }
-        return commandArgs
     }
 
     return <MoorhenSimpleEditButton {...props}
@@ -754,6 +754,69 @@ export const MoorhenRotateTranslateZoneButton = (props) => {
     </>
 }
 
+export const rigidBodyFitFormatArgs = (molecule, chosenAtom, selectedMode, activeMapMolNo) => {
+    let commandArgs
+    const selectedSequence = molecule.sequences.find(sequence => sequence.chain === chosenAtom.chain_id)
+    const selectedResidueIndex = selectedSequence.sequence.findIndex(residue => residue.resNum === chosenAtom.res_no)
+    let start
+    let stop
+    
+    switch (selectedMode) {
+        case 'SINGLE':
+            commandArgs = [
+                molecule.molNo,
+                `//${chosenAtom.chain_id}/${chosenAtom.res_no}`,
+                activeMapMolNo
+            ]
+            break
+        case 'TRIPLE':
+            start = selectedResidueIndex !== 0 ? selectedSequence.sequence[selectedResidueIndex - 1].resNum : chosenAtom.res_no
+            stop = selectedResidueIndex < selectedSequence.sequence.length - 1 ? selectedSequence.sequence[selectedResidueIndex + 1].resNum : chosenAtom.res_no
+            commandArgs = [
+                molecule.molNo,
+                `//${chosenAtom.chain_id}/${start}-${stop}`,
+                activeMapMolNo
+            ]
+            break
+        case 'QUINTUPLE':
+            start = selectedResidueIndex !== 0 ? selectedSequence.sequence[selectedResidueIndex - 2].resNum : chosenAtom.res_no
+            stop = selectedResidueIndex < selectedSequence.sequence.length - 2 ? selectedSequence.sequence[selectedResidueIndex + 2].resNum : selectedSequence.sequence[selectedResidueIndex - 1].resNum
+            commandArgs = [
+                molecule.molNo,
+                `//${chosenAtom.chain_id}/${start}-${stop}`,
+                activeMapMolNo
+            ]
+            break
+        case 'HEPTUPLE':
+            start = selectedResidueIndex !== 0 ? selectedSequence.sequence[selectedResidueIndex - 3].resNum : chosenAtom.res_no
+            stop = selectedResidueIndex < selectedSequence.sequence.length - 3 ? selectedSequence.sequence[selectedResidueIndex + 3].resNum : selectedSequence.sequence[selectedResidueIndex - 1].resNum
+            commandArgs = [
+                molecule.molNo,
+                `//${chosenAtom.chain_id}/${start}-${stop}`,
+                activeMapMolNo
+            ]
+            break
+        case 'CHAIN':
+            commandArgs = [
+                molecule.molNo,
+                `//${chosenAtom.chain_id}/*`,
+                activeMapMolNo
+            ]
+            break
+        case 'ALL':
+            commandArgs = [
+                molecule.molNo,
+                `//*/*`,
+                activeMapMolNo
+            ]
+            break
+        default:
+            console.log('Unrecognised rigid body fit mode...')
+            break
+    }
+    return commandArgs
+}
+
 export const MoorhenRigidBodyFitButton = (props) => {
     const modeSelectRef = useRef(null)
     const selectedResidueRef = useRef(null)
@@ -780,7 +843,12 @@ export const MoorhenRigidBodyFitButton = (props) => {
             return
         } else if (modeSelectRef.current.value === 'RESIDUE RANGE') {
             molecule.clearBuffersOfStyle('selection', props.glRef)
-            const commandArgs = rigidBodyFitFormatArgs(molecule, chosenAtom)
+            const residueRange = [parseInt(selectedResidueRef.current.chosenAtom.res_no), parseInt(chosenAtom.res_no)].sort((a, b) => {return a - b})
+            const commandArgs = [
+                molecule.molNo,
+                `//${chosenAtom.chain_id}/${residueRange[0]}-${residueRange[1]}`,
+                props.activeMap.molNo
+            ]
             await props.commandCentre.current.cootCommand({
                 returnType: 'status',
                 command: randomJiggleMode ? 'fit_to_map_by_random_jiggle_using_cid' : 'rigid_body_fit',
@@ -788,7 +856,7 @@ export const MoorhenRigidBodyFitButton = (props) => {
                 changesMolecules: [molecule.molNo]
             }, true)
         } else {
-            const commandArgs = rigidBodyFitFormatArgs(molecule, chosenAtom)
+            const commandArgs = rigidBodyFitFormatArgs(molecule, chosenAtom, modeSelectRef.current.value, props.activeMap.molNo)
             await props.commandCentre.current.cootCommand({
                 returnType: 'status',
                 command: randomJiggleMode ? 'fit_to_map_by_random_jiggle_using_cid' : 'rigid_body_fit',
@@ -797,77 +865,6 @@ export const MoorhenRigidBodyFitButton = (props) => {
             }, true)
         }
         selectedResidueRef.current = null
-    }
-
-    const rigidBodyFitFormatArgs = (molecule, chosenAtom) => {
-        let commandArgs
-        const selectedSequence = molecule.sequences.find(sequence => sequence.chain === chosenAtom.chain_id)
-        const selectedResidueIndex = selectedSequence.sequence.findIndex(residue => residue.resNum === chosenAtom.res_no)
-        let start
-        let stop
-        
-        switch (modeSelectRef.current.value) {
-            case 'SINGLE':
-                commandArgs = [
-                    molecule.molNo,
-                    `//${chosenAtom.chain_id}/${chosenAtom.res_no}`,
-                    props.activeMap.molNo
-                ]
-                break
-            case 'TRIPLE':
-                start = selectedResidueIndex !== 0 ? selectedSequence.sequence[selectedResidueIndex - 1].resNum : chosenAtom.res_no
-                stop = selectedResidueIndex < selectedSequence.sequence.length - 1 ? selectedSequence.sequence[selectedResidueIndex + 1].resNum : chosenAtom.res_no
-                commandArgs = [
-                    molecule.molNo,
-                    `//${chosenAtom.chain_id}/${start}-${stop}`,
-                    props.activeMap.molNo
-                ]
-                break
-            case 'QUINTUPLE':
-                start = selectedResidueIndex !== 0 ? selectedSequence.sequence[selectedResidueIndex - 2].resNum : chosenAtom.res_no
-                stop = selectedResidueIndex < selectedSequence.sequence.length - 2 ? selectedSequence.sequence[selectedResidueIndex + 2].resNum : selectedSequence.sequence[selectedResidueIndex - 1].resNum
-                commandArgs = [
-                    molecule.molNo,
-                    `//${chosenAtom.chain_id}/${start}-${stop}`,
-                    props.activeMap.molNo
-                ]
-                break
-            case 'HEPTUPLE':
-                start = selectedResidueIndex !== 0 ? selectedSequence.sequence[selectedResidueIndex - 3].resNum : chosenAtom.res_no
-                stop = selectedResidueIndex < selectedSequence.sequence.length - 3 ? selectedSequence.sequence[selectedResidueIndex + 3].resNum : selectedSequence.sequence[selectedResidueIndex - 1].resNum
-                commandArgs = [
-                    molecule.molNo,
-                    `//${chosenAtom.chain_id}/${start}-${stop}`,
-                    props.activeMap.molNo
-                ]
-                break
-            case 'RESIDUE RANGE':
-                const residueRange = [parseInt(selectedResidueRef.current.chosenAtom.res_no), parseInt(chosenAtom.res_no)].sort((a, b) => {return a - b})
-                commandArgs = [
-                    molecule.molNo,
-                    `//${chosenAtom.chain_id}/${residueRange[0]}-${residueRange[1]}`,
-                    props.activeMap.molNo
-                ]
-                break    
-            case 'CHAIN':
-                commandArgs = [
-                    molecule.molNo,
-                    `//${chosenAtom.chain_id}/*`,
-                    props.activeMap.molNo
-                ]
-                break
-            case 'ALL':
-                commandArgs = [
-                    molecule.molNo,
-                    `//*/*`,
-                    props.activeMap.molNo
-                ]
-                break
-            default:
-                console.log('Unrecognised rigid body fit mode...')
-                break
-        }
-        return commandArgs
     }
 
     const MoorhenRigidBodyFitPanel = forwardRef((props, ref) => {
