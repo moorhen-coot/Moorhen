@@ -1,7 +1,9 @@
 import styled, { css } from "styled-components";
-import { ClickAwayListener, FormGroup, IconButton, List, MenuItem } from '@mui/material';
+import { ClickAwayListener, FormGroup, IconButton, List, MenuItem, Tooltip } from '@mui/material';
 import { MoorhenMergeMoleculesMenuItem, MoorhenGetMonomerMenuItem, MoorhenFitLigandRightHereMenuItem, MoorhenImportFSigFMenuItem } from "./MoorhenMenuItem";
-import { cidToSpec } from "../utils/MoorhenUtils";
+import { cidToSpec, convertViewtoPx, getTooltipShortcutLabel } from "../utils/MoorhenUtils";
+import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
+import { Button, Overlay } from "react-bootstrap"
 
 const ContextMenu = styled.div`
   position: absolute;
@@ -19,6 +21,21 @@ const ContextMenu = styled.div`
 `;
 
 const MoorhenContextQuickEditButton = (props) => {
+  const target = useRef(null)
+  const [prompt, setPrompt] = useState(null)
+  const [localParameters, setLocalParameters] = useState({})
+
+  useEffect(() => {
+      setPrompt(props.prompt)
+  }, [props.prompt])
+
+  useEffect(() => {
+      setLocalParameters(props.panelParameters)
+  }, [])
+
+  useEffect(() => {
+      setLocalParameters(props.panelParameters)
+  }, [props.panelParameters])
 
   const handleClick = async () => {
     const cootResult = await props.commandCentre.current.cootCommand(props.cootCommandInput)
@@ -52,13 +69,17 @@ const MoorhenContextQuickEditButton = (props) => {
     props.setShowContextMenu(false)
   }
 
-  return  <IconButton 
-            onClick={handleClick}
-            style={{width:'2rem', height: '2rem', margin: 0, paddingRight: 0, paddingTop: 0, paddingBottom: 0, paddingLeft: '0.1rem'}}
-            disabled={props.needsMapData && !props.activeMap || (props.needsAtomData && props.molecules.length === 0)}
-          >
-            {props.icon}
-          </IconButton>
+  return <>
+          <Tooltip title={(props.needsMapData && !props.activeMap) || (props.needsAtomData && props.molecules.length === 0) ? '' : props.toolTip}>
+              <IconButton 
+                onClick={handleClick}
+                style={{width:'2rem', height: '2rem', margin: 0, paddingRight: 0, paddingTop: 0, paddingBottom: 0, paddingLeft: '0.1rem'}}
+                disabled={props.needsMapData && !props.activeMap || (props.needsAtomData && props.molecules.length === 0)}
+              >
+                {props.icon}
+              </IconButton>
+          </Tooltip>
+        </>
 }
 
 MoorhenContextQuickEditButton.defaultProps = {
@@ -121,6 +142,7 @@ export const MoorhenContextMenu = (props) => {
                      <hr></hr>
                      <FormGroup style={{ margin: "0px", padding: "0px", width: '20rem' }} row>
                       <MoorhenContextQuickEditButton 
+                          toolTip={props.shortCuts ? `Auto-fit Rotamer ${getTooltipShortcutLabel(JSON.parse(props.shortCuts).auto_fit_rotamer)}` : "Auto-fit Rotamer"}
                           icon={<img style={{width:'100%', height: '100%'}} src={`${props.urlPrefix}/baby-gru/pixmaps/auto-fit-rotamer.svg`} alt='Auto-Fit rotamer'/>}
                           needsMapData={true}
                           selectedMolecule={selectedMolecule}
@@ -139,6 +161,7 @@ export const MoorhenContextMenu = (props) => {
                           needsMapData={true}
                           selectedMolecule={selectedMolecule}
                           chosenAtom={chosenAtom}
+                          toolTip={props.shortCuts ? `Flip Peptide ${getTooltipShortcutLabel(JSON.parse(props.shortCuts).flip_peptide)}` : "Flip Peptide"}
                           cootCommandInput={{
                               message: 'coot_command',
                               returnType: "status",
@@ -152,6 +175,7 @@ export const MoorhenContextMenu = (props) => {
                           icon={<img style={{width:'100%', height: '100%'}} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/side-chain-180.svg`} alt='Rotate Side-chain'/>}
                           selectedMolecule={selectedMolecule}
                           chosenAtom={chosenAtom}
+                          toolTip="Rotate side-chain 180 degrees"
                           cootCommandInput={{
                               message: 'coot_command',
                               returnType: "status",
@@ -167,6 +191,7 @@ export const MoorhenContextMenu = (props) => {
                           chosenAtom={chosenAtom}
                           needsMapData={true}
                           refineAfterMod={false}
+                          toolTip={props.shortCuts ? `Refine Residues ${getTooltipShortcutLabel(JSON.parse(props.shortCuts).triple_refine)}` : "Refine Residues"}
                           cootCommandInput={{
                               message: 'coot_command',
                               returnType: "status",
@@ -181,6 +206,7 @@ export const MoorhenContextMenu = (props) => {
                           selectedMolecule={selectedMolecule}
                           chosenAtom={chosenAtom}
                           refineAfterMod={false}
+                          toolTip={props.shortCuts ? `Delete Item ${getTooltipShortcutLabel(JSON.parse(props.shortCuts).delete_residue)}` : "Delete Item"}
                           onExit={deleteMoleculeIfEmpty}
                           cootCommandInput={{
                               message: 'coot_command',
@@ -196,6 +222,7 @@ export const MoorhenContextMenu = (props) => {
                           selectedMolecule={selectedMolecule}
                           chosenAtom={chosenAtom}
                           needsMapData={true}
+                          toolTip={props.shortCuts ? `Add Residue ${getTooltipShortcutLabel(JSON.parse(props.shortCuts).add_terminal_residue)}` : "Add Residue"}
                           cootCommandInput={{
                               message: 'coot_command',
                               returnType: "status",
@@ -209,6 +236,7 @@ export const MoorhenContextMenu = (props) => {
                           icon={<img style={{width:'100%', height: '100%'}} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/spin-view.svg`} alt='Eigen flip'/>}
                           selectedMolecule={selectedMolecule}
                           chosenAtom={chosenAtom}
+                          toolTip={props.shortCuts ? `Eigen Flip: flip the ligand around its eigenvectors ${getTooltipShortcutLabel(JSON.parse(props.shortCuts).eigen_flip)}` : "Eigen Flip: flip the ligand around its eigenvectors"}
                           cootCommandInput={{
                               message: 'coot_command',
                               returnType: "status",
@@ -222,6 +250,7 @@ export const MoorhenContextMenu = (props) => {
                           icon={<img style={{width:'100%', height: '100%'}} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/edit-chi.svg`} alt='jed-flip'/>}
                           selectedMolecule={selectedMolecule}
                           chosenAtom={chosenAtom}
+                          toolTip="JED Flip: wag the tail"
                           cootCommandInput={{
                               message: 'coot_command',
                               returnType: "status",
@@ -235,19 +264,7 @@ export const MoorhenContextMenu = (props) => {
                           icon={<img style={{width:'100%', height: '100%'}} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/jed-flip-reverse.svg`} alt='jed-flip-reverse'/>}
                           selectedMolecule={selectedMolecule}
                           chosenAtom={chosenAtom}
-                          cootCommandInput={{
-                              message: 'coot_command',
-                              returnType: "status",
-                              command: 'jed_flip',
-                              commandArgs: [selectedMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`, true],
-                              changesMolecules: [selectedMolecule.molNo]
-                          }}
-                          {...props}
-                      />
-                      <MoorhenContextQuickEditButton 
-                          icon={<img style={{width:'100%', height: '100%'}} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/jed-flip-reverse.svg`} alt='jed-flip-reverse'/>}
-                          selectedMolecule={selectedMolecule}
-                          chosenAtom={chosenAtom}
+                          toolTip="JED Flip: wag the dog"
                           cootCommandInput={{
                               message: 'coot_command',
                               returnType: "status",
@@ -262,6 +279,7 @@ export const MoorhenContextMenu = (props) => {
                           selectedMolecule={selectedMolecule}
                           chosenAtom={chosenAtom}
                           refineAfterMod={false}
+                          toolTip="Add alternative conformation"
                           cootCommandInput={{
                               message: 'coot_command',
                               returnType: "status",
@@ -275,6 +293,7 @@ export const MoorhenContextMenu = (props) => {
                           icon={<img style={{width:'100%', height: '100%'}} className="baby-gru-button-icon" alt="Cis/Trans" src={`${props.urlPrefix}/baby-gru/pixmaps/cis-trans.svg`}/>}
                           selectedMolecule={selectedMolecule}
                           chosenAtom={chosenAtom}
+                          toolTip="Cis/Trans isomerisation"
                           cootCommandInput={{
                               message: 'coot_command',
                               returnType: "status",

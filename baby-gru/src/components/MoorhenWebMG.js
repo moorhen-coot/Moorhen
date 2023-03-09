@@ -356,6 +356,7 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
                     setShowContextMenu={setShowContextMenu}
                     activeMap={props.activeMap}
                     refineAfterMod={props.preferences.refineAfterMod}
+                    shortCuts={props.preferences.shortCuts}
                 />}
             </>
 });
