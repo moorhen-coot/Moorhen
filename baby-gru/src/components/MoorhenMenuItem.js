@@ -93,7 +93,7 @@ export const MoorhenLoadTutorialDataMenuItem = (props) => {
     const tutorialNumberSelectorRef = useRef(null);
     const allTutorialNumbers = ['1', '2', '3']
     const tutorialMtzColumnNames = {
-        1: {F: "FWT", PHI: "PHWT", Fobs: 'F', SigFobs: 'SIGF', FreeR:'FREER'},
+        1: {F: "FWT", PHI: "PHWT", Fobs: 'FP', SigFobs: 'SIGFP', FreeR:'FREE'},
         2: {F: "FWT", PHI: "PHWT", Fobs: 'FP', SigFobs: 'SIGFP', FreeR:'FREE'},
         3: {F: "FWT", PHI: "PHWT", Fobs: 'F', SigFobs: 'SIGF', FreeR:'FREER'}
     }
