@@ -270,6 +270,10 @@ export const MoorhenContextMenu = (props) => {
 
   const top = props.showContextMenu.pageY
   const left = props.showContextMenu.pageX
+  let placement = "right"
+  if (props.windowWidth * 0.5 < left){
+    placement = 'left'
+  }
   const backgroundColor = props.isDark ? '#858585' : '#ffffff' 
   let selectedMolecule
   let chosenAtom
@@ -526,7 +530,7 @@ export const MoorhenContextMenu = (props) => {
         </ClickAwayListener>
         }
           </ContextMenu>
-          <Overlay placement="right" show={showOverlay} target={quickActionsFormGroupRef.current}>
+          <Overlay placement={placement} show={showOverlay} target={quickActionsFormGroupRef.current}>
               <Popover>
               <Popover.Body>
                 {overlayContents}
