@@ -2,7 +2,7 @@ import styled, { css } from "styled-components";
 import { ClickAwayListener, FormGroup, IconButton, List, MenuItem, Tooltip } from '@mui/material';
 import { CheckOutlined, CloseOutlined } from "@mui/icons-material";
 import { MoorhenMergeMoleculesMenuItem, MoorhenGetMonomerMenuItem, MoorhenFitLigandRightHereMenuItem, MoorhenImportFSigFMenuItem } from "./MoorhenMenuItem";
-import { cidToSpec, getTooltipShortcutLabel } from "../utils/MoorhenUtils";
+import { cidToSpec, convertRemToPx, getTooltipShortcutLabel } from "../utils/MoorhenUtils";
 import { useRef, useState, useCallback } from "react";
 import { Popover, Overlay, FormLabel, FormSelect, Button, Stack, Form, Card } from "react-bootstrap";
 import { deleteFormatArgs, rigidBodyFitFormatArgs } from "./MoorhenSimpleEditButton";
@@ -144,9 +144,16 @@ export const MoorhenContextMenu = (props) => {
   const [opacity, setOpacity] = useState(1.0)
   
   const handleCreateBackup = async () => {
-    const session = await props.timeCapsuleRef.current.fetchSession()
+    await props.timeCapsuleRef.current.updateDataFiles()
+    const session = await props.timeCapsuleRef.current.fetchSession(false)
     const sessionString = JSON.stringify(session)
-    const key = {dateTime: `${Date.now()}`, type: 'manual', name: '', molNames: session.moleculesNames}
+    const key = {
+        dateTime: `${Date.now()}`,
+        type: 'manual',
+        molNames: session.moleculeData.map(mol => mol.name),
+        mapNames: session.mapData.map(map => map.uniqueId),
+        mtzNames: session.mapData.filter(map => map.hasReflectionData).map(map => map.associatedReflectionFileName)
+    }
     const keyString = JSON.stringify(key)
     await props.timeCapsuleRef.current.createBackup(keyString, sessionString)
     props.setShowContextMenu(false)
@@ -235,7 +242,7 @@ export const MoorhenContextMenu = (props) => {
     )
 }
 
-  const deleteMoleculeIfEmpty = (molecule, cootResult) => {
+  const deleteMoleculeIfEmpty = (molecule, chosenAtom, cootResult) => {
     if (cootResult.data.result.result.second < 1) {
         console.log('Empty molecule detected, deleting it now...')
         molecule.delete(props.glRef)
@@ -261,8 +268,6 @@ export const MoorhenContextMenu = (props) => {
   }, [props.activeMap, props.commandCentre])
 
 
-  const top = props.showContextMenu.pageY
-  const left = props.showContextMenu.pageX
   const backgroundColor = props.isDark ? '#858585' : '#ffffff' 
   let selectedMolecule
   let chosenAtom
@@ -271,6 +276,23 @@ export const MoorhenContextMenu = (props) => {
   }
   if (props.showContextMenu.atom) {
     chosenAtom = cidToSpec(props.showContextMenu.atom.label)
+  }
+
+  let top = props.showContextMenu.pageY
+  let left = props.showContextMenu.pageX
+  const menuWidth = selectedMolecule && chosenAtom ? convertRemToPx(21) : convertRemToPx(7)
+  const menuHeight = selectedMolecule && chosenAtom ? convertRemToPx(17) : convertRemToPx(7)
+
+  if (props.windowWidth - left < menuWidth) {
+    left -= menuWidth
+  }
+  if (props.windowHeight - top < menuHeight) {
+    top -= menuHeight
+  }
+  
+  let placement = "right"
+  if (props.windowWidth * 0.5 < left){
+    placement = 'left'
   }
 
   const collectedProps = {selectedMolecule, chosenAtom, setOverlayContents, setShowOverlay, ...props}
@@ -519,7 +541,7 @@ export const MoorhenContextMenu = (props) => {
         </ClickAwayListener>
         }
           </ContextMenu>
-          <Overlay placement="right" show={showOverlay} target={quickActionsFormGroupRef.current}>
+          <Overlay placement={placement} show={showOverlay} target={quickActionsFormGroupRef.current}>
               <Popover>
               <Popover.Body>
                 {overlayContents}
