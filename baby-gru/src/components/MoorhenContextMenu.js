@@ -144,9 +144,16 @@ export const MoorhenContextMenu = (props) => {
   const [opacity, setOpacity] = useState(1.0)
   
   const handleCreateBackup = async () => {
-    const session = await props.timeCapsuleRef.current.fetchSession()
+    await props.timeCapsuleRef.current.updateDataFiles()
+    const session = await props.timeCapsuleRef.current.fetchSession(false)
     const sessionString = JSON.stringify(session)
-    const key = {dateTime: `${Date.now()}`, type: 'manual', name: '', molNames: session.moleculesNames}
+    const key = {
+        dateTime: `${Date.now()}`,
+        type: 'manual',
+        molNames: session.moleculeData.map(mol => mol.name),
+        mapNames: session.mapData.map(map => map.uniqueId),
+        mtzNames: session.mapData.filter(map => map.hasReflectionData).map(map => map.associatedReflectionFileName)
+    }
     const keyString = JSON.stringify(key)
     await props.timeCapsuleRef.current.createBackup(keyString, sessionString)
     props.setShowContextMenu(false)
