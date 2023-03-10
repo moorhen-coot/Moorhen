@@ -235,7 +235,7 @@ export const MoorhenContextMenu = (props) => {
     )
 }
 
-  const deleteMoleculeIfEmpty = (molecule, cootResult) => {
+  const deleteMoleculeIfEmpty = (molecule, chosenAtom, cootResult) => {
     if (cootResult.data.result.result.second < 1) {
         console.log('Empty molecule detected, deleting it now...')
         molecule.delete(props.glRef)
