@@ -13,9 +13,13 @@ export default class MoorhenWrapper {
   constructor(urlPrefix) {
     this.urlPrefix = urlPrefix
     this.controls = null
-    this.monomerLibrary = null
+    this.monomerLibrary = `${this.urlPrefix}/baby-gru/monomers/`
     this.exportCallback = () => {}
     reportWebVitals()
+  }
+
+  addMonomerLibrary(uri) {
+    this.monomerLibrary = uri
   }
 
   async exportBackups() {
@@ -70,10 +74,6 @@ export default class MoorhenWrapper {
     this.exportCallback = callbackFunction
   }
 
-  addMonomerLibrary(monomerLibrary){
-    this.monomerLibrary = monomerLibrary
-  }
-  
   forwardControls(controls) {
     console.log('Fetched controls', {controls})
     this.controls = controls
@@ -106,7 +106,7 @@ export default class MoorhenWrapper {
   }
 
   async loadPdbData(inputFile, molName) {
-    const newMolecule = new MoorhenMolecule(this.controls.commandCentre, this.urlPrefix)
+    const newMolecule = new MoorhenMolecule(this.controls.commandCentre, this.monomerLibrary)
     return new Promise(async (resolve, reject) => {
         try {
             await newMolecule.loadToCootFromURL(inputFile, molName)
@@ -159,10 +159,11 @@ export default class MoorhenWrapper {
         <div className="App">
           <PreferencesContextProvider>
             <MoorhenContainer 
+              urlPrefix={this.urlPrefix}
               forwardControls={this.forwardControls.bind(this)}
               disableFileUploads={true}
               exportCallback={this.exportCallback.bind(this)}
-              monomerLibrary={this.monomerLibrary}
+              monomerLibraryPath={this.monomerLibrary}
               />
           </PreferencesContextProvider>
         </div>

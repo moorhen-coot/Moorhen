@@ -111,7 +111,7 @@ export const MoorhenLoadTutorialDataMenuItem = (props) => {
 
     const onCompleted = (onCompletedArg) => {
         const tutorialNumber = tutorialNumberSelectorRef.current.value
-        const newMolecule = new MoorhenMolecule(props.commandCentre, props.urlPrefix)
+        const newMolecule = new MoorhenMolecule(props.commandCentre, props.monomerLibraryPath)
         newMolecule.setBackgroundColour(props.backgroundColor)
         newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
         const newMap = new MoorhenMap(props.commandCentre)
@@ -164,7 +164,7 @@ export const MoorhenGetMonomerMenuItem = (props) => {
     const onCompleted = () => {
         const fromMolNo = parseInt(selectRef.current.value)
         const newTlc = tlcRef.current.value
-        const newMolecule = new MoorhenMolecule(props.commandCentre, props.urlPrefix)
+        const newMolecule = new MoorhenMolecule(props.commandCentre, props.monomerLibraryPath)
 
         const getMonomer = () => {
             return props.commandCentre.current.cootCommand({
@@ -186,7 +186,7 @@ export const MoorhenGetMonomerMenuItem = (props) => {
             })
             .then(result => {
                 if (result.data.result.status === "Completed" && result.data.result.result !== -1) {
-                    const newMolecule = new MoorhenMolecule(props.commandCentre, props.urlPrefix)
+                    const newMolecule = new MoorhenMolecule(props.commandCentre, props.monomerLibraryPath)
                     newMolecule.molNo = result.data.result.result
                     newMolecule.name = newTlc
                     newMolecule.setBackgroundColour(props.backgroundColor)
@@ -239,7 +239,7 @@ export const MoorhenFitLigandRightHereMenuItem = (props) => {
             .then(result => {
                 if (result.data.result.status === "Completed") {
                     result.data.result.result.forEach(iMol => {
-                        const newMolecule = new MoorhenMolecule(props.commandCentre, props.urlPrefix)
+                        const newMolecule = new MoorhenMolecule(props.commandCentre, props.monomerLibraryPath)
                         newMolecule.molNo = iMol
                         newMolecule.name = `lig_${iMol}`
                         newMolecule.setBackgroundColour(props.backgroundColor)
@@ -933,7 +933,7 @@ export const MoorhenImportDictionaryMenuItem = (props) => {
                     }, true)
                         .then(result => {
                             if (result.data.result.status === "Completed") {
-                                newMolecule = new MoorhenMolecule(props.commandCentre, props.urlPrefix)
+                                newMolecule = new MoorhenMolecule(props.commandCentre, props.monomerLibraryPath)
                                 newMolecule.molNo = result.data.result.result
                                 newMolecule.name = instanceName
                                 newMolecule.setBackgroundColour(props.backgroundColor)
@@ -978,7 +978,7 @@ export const MoorhenImportDictionaryMenuItem = (props) => {
     }
 
     const readMonomerFile = async (newTlc) => {
-        return fetch(`${props.urlPrefix}/baby-gru/monomers/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`)
+        return fetch(`${props.monomerLibraryPath}/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`)
             .then(response => response.text())
             .then(fileContent => {
                 return handleFileContent(fileContent)
@@ -1666,7 +1666,7 @@ export const MoorhenCopyFragmentUsingCidMenuItem = (props) => {
             commandArgs: commandArgs,
             changesMolecules: [parseInt(fromRef.current.value)]
         }, true).then(async response => {
-            const newMolecule = new MoorhenMolecule(props.commandCentre, props.urlPrefix)
+            const newMolecule = new MoorhenMolecule(props.commandCentre, props.monomerLibraryPath)
             newMolecule.name = `${fromMolecules[0].name} fragment`
             newMolecule.molNo = response.data.result.result
             newMolecule.setBackgroundColour(props.backgroundColor)

@@ -75,7 +75,7 @@ export const MoorhenHistoryMenu = (props) => {
                     // If this was a command to read a molecule, then teh corresponding
                     //MoorhenMolecule has to be created
                     if (nextCommand.command === 'shim_read_pdb') {
-                        const newMolecule = new MoorhenMolecule(props.commandCentre, props.urlPrefix)
+                        const newMolecule = new MoorhenMolecule(props.commandCentre, props.monomerLibraryPath)
                         newMolecule.molNo = reply.data.result.result
                         newMolecule.name = nextCommand.commandArgs[1]
                         newMolecule.centreOn(props.glRef, null, false)
