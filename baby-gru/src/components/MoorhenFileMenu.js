@@ -40,7 +40,7 @@ export const MoorhenFileMenu = (props) => {
     }
 
     const readPdbFile = (file) => {
-        const newMolecule = new MoorhenMolecule(commandCentre, props.urlPrefix)
+        const newMolecule = new MoorhenMolecule(commandCentre, props.monomerLibraryPath)
         newMolecule.setBackgroundColour(props.backgroundColor)
         newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
         return newMolecule.loadToCootFromFile(file)
@@ -117,7 +117,7 @@ export const MoorhenFileMenu = (props) => {
     }
 
     const fetchMoleculeFromURL = (url, molName) => {
-        const newMolecule = new MoorhenMolecule(commandCentre, props.urlPrefix)
+        const newMolecule = new MoorhenMolecule(commandCentre, props.monomerLibraryPath)
         newMolecule.setBackgroundColour(props.backgroundColor)
         newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
         return new Promise(async (resolve, reject) => {
@@ -178,7 +178,7 @@ export const MoorhenFileMenu = (props) => {
 
         // Load molecules stored in session from pdb string
         const newMoleculePromises = sessionData.moleculeData.map(storedMoleculeData => {
-            const newMolecule = new MoorhenMolecule(commandCentre, props.urlPrefix)
+            const newMolecule = new MoorhenMolecule(commandCentre, props.monomerLibraryPath)
             return newMolecule.loadToCootFromString(storedMoleculeData.pdbData, storedMoleculeData.name)
         })
         
