@@ -13,16 +13,9 @@ export default class MoorhenWrapper {
   constructor(urlPrefix) {
     this.urlPrefix = urlPrefix
     this.controls = null
-    this.monomerLibrary = null
+    this.monomerLibrary = `${this.urlPrefix}/baby-gru/monomers/`
     this.exportCallback = () => {}
     reportWebVitals()
-  }
-
-  get monomerLibrary() {
-    if (this.monomerLibrary !== null) {
-      return this.monomerLibrary
-    } 
-    return `${this.urlPrefix}/baby-gru/monomers/`
   }
 
   addMonomerLibrary(uri) {
