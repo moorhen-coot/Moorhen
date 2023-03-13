@@ -164,7 +164,7 @@ export const MoorhenMapCard = (props) => {
         }
     }, [mapRadius, props.activeMap?.molNo, props.map.molNo, props.map.cootContour])
 
-    const handleContourOnSessionLoad = useCallback(e => {
+    const handleNewMapContour = useCallback(e => {
         if (props.map.molNo === e.detail.molNo) {
             setCootContour(e.detail.cootContour)
             setMapContourLevel(e.detail.contourLevel)
@@ -184,12 +184,12 @@ export const MoorhenMapCard = (props) => {
     useEffect(() => {
         document.addEventListener("mapUpdate", handleUpdateMapCallback);
         document.addEventListener("wheelContourLevelChanged", handleWheelContourLevelCallback);
-        document.addEventListener("contourOnSessionLoad", handleContourOnSessionLoad);
+        document.addEventListener("newMapContour", handleNewMapContour);
         document.addEventListener("mapRadiusChanged", handleRadiusChangeCallback);
         return () => {
             document.removeEventListener("mapUpdate", handleUpdateMapCallback);
             document.removeEventListener("wheelContourLevelChanged", handleWheelContourLevelCallback);
-            document.removeEventListener("contourOnSessionLoad", handleContourOnSessionLoad);
+            document.removeEventListener("newMapContour", handleNewMapContour);
             document.removeEventListener("mapRadiusChanged", handleRadiusChangeCallback);
         };
     }, [handleUpdateMapCallback, props.activeMap?.molNo]);

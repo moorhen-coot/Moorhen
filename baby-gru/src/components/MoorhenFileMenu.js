@@ -312,7 +312,7 @@ export const MoorhenFileMenu = (props) => {
             newMaps.forEach((map, index) => {
                 const storedMapData = sessionData.mapData[index]
                 map.mapColour = storedMapData.colour
-                let contourOnSessionLoad = new CustomEvent("contourOnSessionLoad", {
+                let newMapContour = new CustomEvent("newMapContour", {
                     "detail": {
                         molNo: map.molNo,
                         mapRadius: storedMapData.radius,
@@ -322,7 +322,7 @@ export const MoorhenFileMenu = (props) => {
                         litLines: storedMapData.litLines,
                     }
                 });               
-                document.dispatchEvent(contourOnSessionLoad);       
+                document.dispatchEvent(newMapContour);
             })
         }, 2500);
 

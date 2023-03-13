@@ -1213,11 +1213,20 @@ export const MoorhenImportFSigFMenuItem = (props) => {
             parseInt(twoFoFcSelectRef.current.value),
             parseInt(foFcSelectRef.current.value)
         ]
-
+        const uniqueMaps = [...new Set([reflectionMap, twoFoFcMap, foFcMap].slice(1))]
         const connectMapsArgs = [molecule, reflectionMap, twoFoFcMap, foFcMap]
         const sFcalcArgs = [molecule, twoFoFcMap, foFcMap, reflectionMap]
 
         if (connectMapsArgs.every(arg => !isNaN(arg))) {
+
+            //Calculate rmsd before connecting
+            const prevRmsd = await Promise.all(uniqueMaps.map(imol => props.commandCentre.current.cootCommand({
+                command: 'get_map_rmsd_approx',
+                commandArgs: [imol],
+                returnType: 'status'
+            }, true)))
+
+            // Connect maps
             await props.commandCentre.current.cootCommand({
                 command: 'connect_updating_maps',
                 commandArgs: connectMapsArgs,
@@ -1234,10 +1243,36 @@ export const MoorhenImportFSigFMenuItem = (props) => {
                 "detail": {
                     molecule: molecule,
                     maps: [reflectionMap, twoFoFcMap, foFcMap],
-                    uniqueMaps: [...new Set([reflectionMap, twoFoFcMap, foFcMap].slice(1))]
+                    uniqueMaps: uniqueMaps
                 }
             })
             document.dispatchEvent(connectedMapsEvent)
+
+            //Adjust contour to match previous rmsd
+            const postRmsd = await Promise.all(uniqueMaps.map(imol => props.commandCentre.current.cootCommand({
+                command: 'get_map_rmsd_approx',
+                commandArgs: [imol],
+                returnType: 'status'
+            }, true)))
+  
+            uniqueMaps.forEach((imol, index) => {
+                const map = props.maps.find(map => map.molNo === imol)
+                let newContourLevel = map.contourLevel * postRmsd[index].data.result.result / prevRmsd[index].data.result.result
+                if (map.isDifference) {
+                    newContourLevel -= newContourLevel * 0.3
+                } 
+                const newMapContourEvt = new CustomEvent("newMapContour", {
+                    "detail": {
+                        molNo: map.molNo,
+                        mapRadius: map.mapRadius,
+                        cootContour: map.cootContour,
+                        contourLevel: newContourLevel,
+                        mapColour: map.colour,
+                        litLines: map.litLines,
+                    }
+                })
+                document.dispatchEvent(newMapContourEvt)    
+            })
         }
     }
 

@@ -136,7 +136,7 @@ export default class MoorhenWrapper {
     setTimeout(() => {
       results.forEach((result, index) => {
         if (result?.type === 'map') {
-          let contourOnSessionLoad = new CustomEvent("contourOnSessionLoad", {
+          let newMapContour = new CustomEvent("newMapContour", {
             "detail": {
                 molNo: result.molNo,
                 mapRadius: 13,
@@ -145,7 +145,7 @@ export default class MoorhenWrapper {
                 litLines: false,
             }
         });               
-        document.dispatchEvent(contourOnSessionLoad);
+        document.dispatchEvent(newMapContour);
         }
       })
     }, 2500)
