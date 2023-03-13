@@ -1207,18 +1207,15 @@ export const MoorhenImportFSigFMenuItem = (props) => {
     const moleculeSelectRef = useRef(null)
 
     const connectMap = async () => {
-        const connectMapsArgs = [
+        const [molecule, reflectionMap, twoFoFcMap, foFcMap] = [
             props.selectedMolNo !== null ? props.selectedMolNo : parseInt(moleculeSelectRef.current.value),
             parseInt(mapSelectRef.current.value),
             parseInt(twoFoFcSelectRef.current.value),
-            parseInt(foFcSelectRef.current.value),
+            parseInt(foFcSelectRef.current.value)
         ]
-        const sFcalcArgs = [
-            props.selectedMolNo !== null ? props.selectedMolNo : parseInt(moleculeSelectRef.current.value),
-            parseInt(twoFoFcSelectRef.current.value),
-            parseInt(foFcSelectRef.current.value),
-            parseInt(mapSelectRef.current.value)
-        ]
+
+        const connectMapsArgs = [molecule, reflectionMap, twoFoFcMap, foFcMap]
+        const sFcalcArgs = [molecule, twoFoFcMap, foFcMap, reflectionMap]
 
         if (connectMapsArgs.every(arg => !isNaN(arg))) {
             await props.commandCentre.current.cootCommand({
@@ -1235,8 +1232,9 @@ export const MoorhenImportFSigFMenuItem = (props) => {
 
             const connectedMapsEvent = new CustomEvent("connectMaps", {
                 "detail": {
-                    molecule: connectMapsArgs[0],
-                    maps: [...new Set(connectMapsArgs.slice(1))]
+                    molecule: molecule,
+                    maps: [reflectionMap, twoFoFcMap, foFcMap],
+                    uniqueMaps: [...new Set([reflectionMap, twoFoFcMap, foFcMap].slice(1))]
                 }
             })
             document.dispatchEvent(connectedMapsEvent)
