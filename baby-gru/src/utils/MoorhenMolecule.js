@@ -26,6 +26,7 @@ export function MoorhenMolecule(commandCentre, urlPrefix) {
     this.sequences = []
     this.colourRules = null
     this.ligands = null
+    this.connectedToMaps = null
     this.excludedSegments = []
     this.gaussianSurfaceSettings = {
         sigma: 4.4,

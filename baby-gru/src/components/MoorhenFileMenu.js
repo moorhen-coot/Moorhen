@@ -276,6 +276,37 @@ export const MoorhenFileMenu = (props) => {
         glRef.current.setOrigin(sessionData.origin, false)
         glRef.current.setQuat(sessionData.quat4)
 
+        // Set connected maps and molecules if any
+        const connectedMoleculeIndex = sessionData.moleculeData.findIndex(molecule => molecule.connectedToMaps !== null)
+        if (connectedMoleculeIndex !== -1) {
+            const oldConnectedMolecule = sessionData.moleculeData[connectedMoleculeIndex]        
+            const molecule = newMolecules[connectedMoleculeIndex].molNo
+            const [reflectionMap, twoFoFcMap, foFcMap] = oldConnectedMolecule.connectedToMaps.map(item => newMaps[sessionData.mapData.findIndex(map => map.molNo === item)].molNo)
+            const connectMapsArgs = [molecule, reflectionMap, twoFoFcMap, foFcMap]
+            const sFcalcArgs = [molecule, twoFoFcMap, foFcMap, reflectionMap]
+            
+            await props.commandCentre.current.cootCommand({
+                command: 'connect_updating_maps',
+                commandArgs: connectMapsArgs,
+                returnType: 'status'
+            }, true)
+                
+            await props.commandCentre.current.cootCommand({
+                command: 'sfcalc_genmaps_using_bulk_solvent',
+                commandArgs: sFcalcArgs,
+                returnType: 'status'
+            }, true)
+                    
+            const connectedMapsEvent = new CustomEvent("connectMaps", {
+                "detail": {
+                    molecule: molecule,
+                    maps: [reflectionMap, twoFoFcMap, foFcMap],
+                    uniqueMaps: [...new Set([reflectionMap, twoFoFcMap, foFcMap].slice(1))]
+                }
+            })
+            document.dispatchEvent(connectedMapsEvent)
+        }
+        
         // Set map visualisation details after map card is created using a timeout
         setTimeout(() => {
             newMaps.forEach((map, index) => {
