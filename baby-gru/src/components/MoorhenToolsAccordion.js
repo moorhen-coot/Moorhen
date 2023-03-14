@@ -42,7 +42,7 @@ export const MoorhenToolsAccordion = (props) => {
                 show={props.accordionDropdownId === props.dropdownId}
                 style={{display:'flex', alignItems:'center'}}
                 onClick={() => { props.dropdownId !== props.accordionDropdownId ? props.setAccordionDropdownId(props.dropdownId) : props.setAccordionDropdownId(-1) }}>
-                <ListItemText primary="Tools" />
+                <ListItemText primary="Validation tools" />
                 {props.dropdownId !== props.accordionDropdownId ? <ExpandMore/> : <ExpandLess/>}
 
             </ListItemButton>

@@ -22,7 +22,7 @@ export function MoorhenTimeCapsule(moleculesRef, mapsRef, activeMapRef, glRef, p
     this.modificationCount = 0
     this.modificationCountBackupThreshold = 5
     this.maxBackupCount = 10
-    this.version = '0.0.6'
+    this.version = '0.0.7'
     this.storageInstance = createInstance('Moorhen-TimeCapsule')
     this.checkVersion()
 }
@@ -124,15 +124,18 @@ MoorhenTimeCapsule.prototype.fetchSession = async function (includeAdditionalMap
     const moleculeData = this.moleculesRef.current.map((molecule, index) => {
         return {
             name: molecule.name,
+            molNo: molecule.molNo,
             pdbData: moleculeDataPromises[index],
             displayObjectsKeys: Object.keys(molecule.displayObjects).filter(key => molecule.displayObjects[key].length > 0),
-            cootBondsOptions: molecule.cootBondsOptions
+            cootBondsOptions: molecule.cootBondsOptions,
+            connectedToMaps: molecule.connectedToMaps
         }
     })
 
     const mapData = this.mapsRef.current.map((map, index) => {
         return {
             name: map.name,
+            molNo: map.molNo,
             uniqueId: map.uniqueId,
             mapData: mapDataPromises[index],
             reflectionData: reflectionDataPromises[index],

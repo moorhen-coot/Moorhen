@@ -341,6 +341,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     class_<molecules_container_t>("molecules_container_t")
     .constructor<>()
     .function("set_colour_wheel_rotation_base",&molecules_container_t::set_colour_wheel_rotation_base)
+    .function("get_symmetry",&molecules_container_t::get_symmetry)
     .function("fit_to_map_by_random_jiggle_using_cid",&molecules_container_t::fit_to_map_by_random_jiggle_using_cid)
     .function("get_active_atom",&molecules_container_t::get_active_atom)
     .function("is_a_difference_map",&molecules_container_t::is_a_difference_map)
@@ -558,6 +559,17 @@ EMSCRIPTEN_BINDINGS(my_module) {
     value_object<g_triangle>("g_triangle")
     .field("point_id", &g_triangle::point_id)
     ;
+    value_object<Cell_Translation>("Cell_Translation")
+    .field("us", &Cell_Translation::us)
+    .field("ws", &Cell_Translation::ws)
+    .field("vs", &Cell_Translation::vs)
+    ;
+    class_<symm_trans_t>("symm_trans_t")
+    .property("symm_as_string",&symm_trans_t::symm_as_string)
+    .function("x",&symm_trans_t::x)
+    .function("y",&symm_trans_t::y)
+    .function("z",&symm_trans_t::z)
+    ;
     class_<coot::simple_mesh_t>("simple_mesh_t")
     .property("vertices",&coot::simple_mesh_t::vertices)
     .property("triangles",&coot::simple_mesh_t::triangles)
@@ -576,12 +588,13 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
 
     value_object<superpose_results_t>("superpose_results_t")
-        .field("suppose_info",&superpose_results_t::suppose_info)
-        .field("alignment",&superpose_results_t::alignment)
-        .field("alignment_info",&superpose_results_t::alignment_info)
+    .field("suppose_info",&superpose_results_t::suppose_info)
+    .field("alignment",&superpose_results_t::alignment)
+    .field("alignment_info",&superpose_results_t::alignment_info)
     ;
 
     register_map<coot::residue_spec_t, coot::util::density_correlation_stats_info_t>("Map_residue_spec_t_density_correlation_stats_info_t");
+    register_vector<std::pair<symm_trans_t, Cell_Translation>>("Vectorsym_trans_t_Cell_Translation_pair");
     register_vector<std::pair<std::string, std::string>>("Vectorstring_string_pair");
     register_vector<coot::instanced_geometry_t>("Vectorinstanced_geometry_t");
     register_vector<coot::molecule_t::moved_residue_t>("Vectormoved_residue_t");

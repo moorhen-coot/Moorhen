@@ -124,6 +124,10 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
 
     const handleDisconnectMaps = () => {
         scores.current = {}
+        const selectedMolecule = props.molecules.find(molecule => molecule.molNo === connectedMolNo.molecule)
+        if (selectedMolecule) {
+            selectedMolecule.connectedToMaps = null
+        }
         setConnectedMolNo(null)
         setScoreToastContents(null)
     }
@@ -162,8 +166,16 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
             rFree: currentScores.data.result.result.free_r_factor
         }
 
+        if (connectedMolNo && evt.detail.molecule !== connectedMolNo.molecule) {
+            const previousConnectedMolecule = props.molecules.find(molecule => molecule.molNo === connectedMolNo.molecule)
+            previousConnectedMolecule.connectedToMaps = null    
+        }
+
         setConnectedMolNo(evt.detail)
-    }, [props.commandCentre, props.preferences.defaultUpdatingScores])
+        const selectedMolecule = props.molecules.find(molecule => molecule.molNo === evt.detail.molecule)
+        selectedMolecule.connectedToMaps = evt.detail.maps
+        
+    }, [props.commandCentre, props.preferences.defaultUpdatingScores, props.molecules, connectedMolNo])
 
     useEffect(() => {
         if (scores.current !== null && props.preferences.defaultUpdatingScores !== null && props.preferences.showScoresToast && connectedMolNo) {
@@ -307,7 +319,7 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
     useEffect(() => {
         if (connectedMolNo && props.maps.lenght === 0){
             handleDisconnectMaps()
-        } else if (connectedMolNo && !connectedMolNo.maps.every(mapMolNo => props.maps.includes(mapMolNo))){
+        } else if (connectedMolNo && !connectedMolNo.uniqueMaps.every(mapMolNo => props.maps.includes(mapMolNo))){
             handleDisconnectMaps()
         }
         props.maps.forEach(map => {
@@ -357,6 +369,8 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
                     activeMap={props.activeMap}
                     refineAfterMod={props.preferences.refineAfterMod}
                     shortCuts={props.preferences.shortCuts}
+                    windowWidth={props.windowWidth}
+                    windowHeight={props.windowHeight}
                 />}
             </>
 });

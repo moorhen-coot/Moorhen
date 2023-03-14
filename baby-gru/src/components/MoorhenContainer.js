@@ -281,7 +281,7 @@ export const MoorhenContainer = (props) => {
         setToastContent, currentDropdownId, setCurrentDropdownId, hoveredAtom, setHoveredAtom, showToast, setShowToast,
         windowWidth, windowHeight, innerWindowMarginWidth, showColourRulesToast, timeCapsuleRef, setShowColourRulesToast, 
         isDark, exportCallback: props.exportCallback, disableFileUploads: props.disableFileUploads, urlPrefix: props.urlPrefix, 
-        extraMenus:props.extraMenus, ...preferences
+        extraMenus:props.extraMenus, monomerLibraryPath: props.monomerLibraryPath, ...preferences
     }
 
     return <> <div>
@@ -348,6 +348,7 @@ export const MoorhenContainer = (props) => {
 
 MoorhenContainer.defaultProps = {
     urlPrefix: '.',
+    monomerLibraryPath: './baby-gru/monomers',
     exportCallback: null,
     disableFileUploads: false,
     extraMenus:[]

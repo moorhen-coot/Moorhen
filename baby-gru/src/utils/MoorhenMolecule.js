@@ -13,7 +13,7 @@ import * as vec3 from 'gl-matrix/vec3';
 import * as mat3 from 'gl-matrix/mat3';
 import * as quat4 from 'gl-matrix/quat';
 
-export function MoorhenMolecule(commandCentre, urlPrefix) {
+export function MoorhenMolecule(commandCentre, monomerLibraryPath) {
     this.type = 'molecule'
     this.commandCentre = commandCentre
     this.enerLib = new EnerLib()
@@ -26,6 +26,7 @@ export function MoorhenMolecule(commandCentre, urlPrefix) {
     this.sequences = []
     this.colourRules = null
     this.ligands = null
+    this.connectedToMaps = null
     this.excludedSegments = []
     this.gaussianSurfaceSettings = {
         sigma: 4.4,
@@ -54,7 +55,7 @@ export function MoorhenMolecule(commandCentre, urlPrefix) {
         selection: [],
         transformation: { origin: [0, 0, 0], quat: null, centre: [0, 0, 0] }
     }
-    this.urlPrefix = (typeof urlPrefix === 'undefined' ? "." : urlPrefix)
+    this.monomerLibraryPath = (typeof monomerLibraryPath === 'undefined' ? "./baby-gru/monomers" : monomerLibraryPath)
 };
 
 MoorhenMolecule.prototype.setBackgroundColour = function (backgroundColour) {
@@ -153,7 +154,7 @@ MoorhenMolecule.prototype.delete = async function (glRef) {
 MoorhenMolecule.prototype.copyMolecule = async function (glRef) {
 
     let moleculeAtoms = await this.getAtoms()
-    let newMolecule = new MoorhenMolecule(this.commandCentre, this.urlPrefix)
+    let newMolecule = new MoorhenMolecule(this.commandCentre, this.monomerLibraryPath)
     newMolecule.name = `${this.name}-placeholder`
     newMolecule.cootBondsOptions = this.cootBondsOptions
 
@@ -176,7 +177,7 @@ MoorhenMolecule.prototype.copyFragment = async function (chainId, res_no_start, 
     const $this = this
     const inputData = { message: "copy_fragment", molNo: $this.molNo, chainId: chainId, res_no_start: res_no_start, res_no_end: res_no_end }
     const response = await $this.commandCentre.current.postMessage(inputData)
-    const newMolecule = new MoorhenMolecule($this.commandCentre, $this.urlPrefix)
+    const newMolecule = new MoorhenMolecule($this.commandCentre, $this.monomerLibraryPath)
     newMolecule.name = `${$this.name} fragment`
     newMolecule.molNo = response.data.result
     newMolecule.cootBondsOptions = $this.cootBondsOptions
@@ -197,7 +198,7 @@ MoorhenMolecule.prototype.copyFragmentUsingCid = async function (cid, background
         commandArgs: [$this.molNo, cid],
         changesMolecules: [$this.molNo]
     }, true).then(async response => {
-        const newMolecule = new MoorhenMolecule($this.commandCentre, $this.urlPrefix)
+        const newMolecule = new MoorhenMolecule($this.commandCentre, $this.monomerLibraryPath)
         newMolecule.name = `${$this.name} fragment`
         newMolecule.molNo = response.data.result.result
         newMolecule.setBackgroundColour(backgroundColor)
@@ -262,7 +263,7 @@ MoorhenMolecule.prototype.loadToCootFromString = async function (coordData, name
 
 MoorhenMolecule.prototype.loadMissingMonomer = async function (newTlc, attachToMolecule) {
     const $this = this
-    return fetch(`${$this.urlPrefix}/baby-gru/monomers/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`)
+    return fetch(`${$this.monomerLibraryPath}/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`)
         .then(response => { return response.text() })
         .then(fileContent => {
             if (!fileContent.includes('data_')) {
@@ -1350,7 +1351,7 @@ MoorhenMolecule.prototype.addLigandOfType = async function (resType, at, glRef) 
     }, true)
         .then(async result => {
             if (result.data.result.status === "Completed") {
-                newMolecule = new MoorhenMolecule($this.commandCentre, $this.urlPrefix)
+                newMolecule = new MoorhenMolecule($this.commandCentre, $this.monomerLibraryPath)
                 newMolecule.setAtomsDirty(true)
                 newMolecule.molNo = result.data.result.result
                 newMolecule.name = resType.toUpperCase()

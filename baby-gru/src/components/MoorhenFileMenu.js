@@ -40,7 +40,7 @@ export const MoorhenFileMenu = (props) => {
     }
 
     const readPdbFile = (file) => {
-        const newMolecule = new MoorhenMolecule(commandCentre, props.urlPrefix)
+        const newMolecule = new MoorhenMolecule(commandCentre, props.monomerLibraryPath)
         newMolecule.setBackgroundColour(props.backgroundColor)
         newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
         return newMolecule.loadToCootFromFile(file)
@@ -117,7 +117,7 @@ export const MoorhenFileMenu = (props) => {
     }
 
     const fetchMoleculeFromURL = (url, molName) => {
-        const newMolecule = new MoorhenMolecule(commandCentre, props.urlPrefix)
+        const newMolecule = new MoorhenMolecule(commandCentre, props.monomerLibraryPath)
         newMolecule.setBackgroundColour(props.backgroundColor)
         newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
         return new Promise(async (resolve, reject) => {
@@ -178,7 +178,7 @@ export const MoorhenFileMenu = (props) => {
 
         // Load molecules stored in session from pdb string
         const newMoleculePromises = sessionData.moleculeData.map(storedMoleculeData => {
-            const newMolecule = new MoorhenMolecule(commandCentre, props.urlPrefix)
+            const newMolecule = new MoorhenMolecule(commandCentre, props.monomerLibraryPath)
             return newMolecule.loadToCootFromString(storedMoleculeData.pdbData, storedMoleculeData.name)
         })
         
@@ -276,12 +276,43 @@ export const MoorhenFileMenu = (props) => {
         glRef.current.setOrigin(sessionData.origin, false)
         glRef.current.setQuat(sessionData.quat4)
 
+        // Set connected maps and molecules if any
+        const connectedMoleculeIndex = sessionData.moleculeData.findIndex(molecule => molecule.connectedToMaps !== null)
+        if (connectedMoleculeIndex !== -1) {
+            const oldConnectedMolecule = sessionData.moleculeData[connectedMoleculeIndex]        
+            const molecule = newMolecules[connectedMoleculeIndex].molNo
+            const [reflectionMap, twoFoFcMap, foFcMap] = oldConnectedMolecule.connectedToMaps.map(item => newMaps[sessionData.mapData.findIndex(map => map.molNo === item)].molNo)
+            const connectMapsArgs = [molecule, reflectionMap, twoFoFcMap, foFcMap]
+            const sFcalcArgs = [molecule, twoFoFcMap, foFcMap, reflectionMap]
+            
+            await props.commandCentre.current.cootCommand({
+                command: 'connect_updating_maps',
+                commandArgs: connectMapsArgs,
+                returnType: 'status'
+            }, true)
+                
+            await props.commandCentre.current.cootCommand({
+                command: 'sfcalc_genmaps_using_bulk_solvent',
+                commandArgs: sFcalcArgs,
+                returnType: 'status'
+            }, true)
+                    
+            const connectedMapsEvent = new CustomEvent("connectMaps", {
+                "detail": {
+                    molecule: molecule,
+                    maps: [reflectionMap, twoFoFcMap, foFcMap],
+                    uniqueMaps: [...new Set([reflectionMap, twoFoFcMap, foFcMap].slice(1))]
+                }
+            })
+            document.dispatchEvent(connectedMapsEvent)
+        }
+        
         // Set map visualisation details after map card is created using a timeout
         setTimeout(() => {
             newMaps.forEach((map, index) => {
                 const storedMapData = sessionData.mapData[index]
                 map.mapColour = storedMapData.colour
-                let contourOnSessionLoad = new CustomEvent("contourOnSessionLoad", {
+                let newMapContour = new CustomEvent("newMapContour", {
                     "detail": {
                         molNo: map.molNo,
                         mapRadius: storedMapData.radius,
@@ -291,7 +322,7 @@ export const MoorhenFileMenu = (props) => {
                         litLines: storedMapData.litLines,
                     }
                 });               
-                document.dispatchEvent(contourOnSessionLoad);       
+                document.dispatchEvent(newMapContour);
             })
         }, 2500);
 
