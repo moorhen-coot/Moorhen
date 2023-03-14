@@ -356,13 +356,15 @@ const residueSpecToJSArray = (residueSpecs) => {
     return returnResult
 }
 
-const validationDataToJSArray = (validationData, chainID) => {
+const validationDataToJSArray = (validationData, chainID=null) => {
     let returnResult = []
     const cviv = validationData.cviv
     const chainSize = cviv.size()
     for (let chainIndex = 0; chainIndex < chainSize; chainIndex++) {
         const chain = cviv.get(chainIndex)
-        if (chain.chain_id === chainID) {
+        if (chainID !== null && chain.chain_id !== chainID) {
+            // pass
+        } else {
             const resInfo = chain.rviv;
             const resInfoSize = resInfo.size()
             for (let ir = 0; ir < resInfoSize; ir++) {
