@@ -245,7 +245,8 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     }
 
     else if (action === 'clear_labels') {
-        glRef.current.clickedAtoms = []
+        glRef.current.labelledAtoms = []
+        glRef.current.measuredAtoms = []
         glRef.current.drawScene()
         setToastContent(
             <h3>
@@ -321,7 +322,8 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         glRef.current.myQuat = quat4.create()
         quat4.set(glRef.current.myQuat, 0, 0, 0, -1)
         glRef.current.setZoom(1.0)
-        glRef.current.clickedAtoms = []
+        glRef.current.labelledAtoms = []
+        glRef.current.measuredAtoms = []
         glRef.current.drawScene()
     }
 
