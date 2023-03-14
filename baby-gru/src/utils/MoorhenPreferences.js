@@ -23,7 +23,7 @@ const updateStoredPreferences = async (key, value) => {
 
 const getDefaultValues = () => {
     return {
-        version: '0.0.17',
+        version: '0.0.18',
         defaultBackgroundColor: [1, 1, 1, 1], 
         atomLabelDepthMode: true, 
         defaultExpandDisplayCards: true,
@@ -131,9 +131,14 @@ const getDefaultValues = () => {
                 keyPress: "z",
                 label: "Wiggle camera while rotating a residue"
             },
-            "label_atom": {
+            "measure_distances": {
                 modifiers: [],
                 keyPress: "m",
+                label: "Measure distances between atoms on click"
+            },
+            "label_atom": {
+                modifiers: [],
+                keyPress: "l",
                 label: "Label an atom on click"
             },
             "center_atom": {
