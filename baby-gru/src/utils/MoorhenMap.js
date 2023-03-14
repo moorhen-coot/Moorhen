@@ -209,10 +209,10 @@ MoorhenMap.prototype.contour = function (glRef) {
     $this.getMap()
         .then(reply => {
             let map = readMapFromArrayBuffer(reply.data.result.mapData);
-            var mapGrid = mapToMapGrid(map);
-            var mapTriangleData = { "mapGrids": [mapGrid], "col_tri": [[]], "norm_tri": [[]], "vert_tri": [[]], "idx_tri": [[]], "prim_types": [[]] };
+            let mapGrid = mapToMapGrid(map);
+            let mapTriangleData = { "mapGrids": [mapGrid], "col_tri": [[]], "norm_tri": [[]], "vert_tri": [[]], "idx_tri": [[]], "prim_types": [[]] };
             glRef.current.appendOtherData(mapTriangleData);
-            var newMap = glRef.current.liveUpdatingMaps[glRef.current.liveUpdatingMaps.length - 1]
+            let newMap = glRef.current.liveUpdatingMaps[glRef.current.liveUpdatingMaps.length - 1]
 
             newMap.contourLevel = $this.contourLevel
             newMap.mapColour = $this.mapColour
@@ -270,7 +270,7 @@ MoorhenMap.prototype.doCootContour = function (glRef, x, y, z, radius, contourLe
                                 }
                         })
                 })
-                var a = glRef.current.appendOtherData(object, true);
+                let a = glRef.current.appendOtherData(object, true);
                 $this.displayObjects['Coot'] = $this.displayObjects['Coot'].concat(a)
             })
             glRef.current.buildBuffers();
