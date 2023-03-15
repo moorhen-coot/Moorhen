@@ -41,6 +41,7 @@ export const MoorhenContainer = (props) => {
     const activeMapRef = useRef(null)
     const consoleDivRef = useRef(null)
     const lastHoveredAtom = useRef(null)
+    const prevActiveMoleculeRef = useRef(null)
     const preferences = useContext(PreferencesContext);
     const [activeMap, setActiveMap] = useState(null)
     const [activeMolecule, setActiveMolecule] = useState(null)
@@ -240,7 +241,6 @@ export const MoorhenContainer = (props) => {
         }
     }, [activeMap])
 
-    const prevActiveMoleculeRef = useRef();
     useEffect(() => {
         function resetActiveGL() {
             prevActiveMoleculeRef.current = activeMolecule;

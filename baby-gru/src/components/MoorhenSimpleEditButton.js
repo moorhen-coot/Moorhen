@@ -931,21 +931,21 @@ export const MoorhenAddSimpleButton = (props) => {
         const molTypes = ['HOH', 'SO4', 'PO4', 'GOL', 'CIT', 'EDO']
         return <Container>
             <MenuList>
-                {molTypes.map(molType => <MenuItem key={molType} onClick={() => {
-                    props.typeSelected(molType)
-                }}>{molType}</MenuItem>)}
+                {molTypes.map(molType => {
+                    return <MenuItem key={molType} onClick={() => {props.onTypeSelectedCallback(molType)}}>{molType}</MenuItem>
+                })}
             </MenuList>
             <MoorhenMoleculeSelect {...props} allowAny={false} ref={props.selectRef} />
         </Container>
     }
 
-    const typeSelected = useCallback(value => {
+    const onTypeSelectedCallback = useCallback(async (value) => {
         const selectedMolecule = props.molecules.find(molecule => molecule.molNo === parseInt(selectRef.current.value))
         if (selectedMolecule) {
-            selectedMolecule.addLigandOfType(value,
-                props.glRef.current.origin.map(coord => -coord),
-                props.glRef)
+            await selectedMolecule.addLigandOfType(value, props.glRef.current.origin.map(coord => -coord), props.glRef)
             props.setSelectedButtonIndex(null)
+            const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: selectedMolecule.molNo } })
+            document.dispatchEvent(mapUpdateEvent)    
         }
     }, [props.molecules, props.glRef])
 
@@ -958,7 +958,7 @@ export const MoorhenAddSimpleButton = (props) => {
         needsAtomData={true}
         prompt={<MoorhenAddSimplePanel
             {...props}
-            typeSelected={typeSelected}
+            onTypeSelectedCallback={onTypeSelectedCallback}
             selectRef={selectRef}
         />}
         icon={<img style={{width:'100%', height: '100%'}} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/atom-at-pointer.svg`} alt='add...' />}
