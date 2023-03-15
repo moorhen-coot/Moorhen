@@ -418,26 +418,29 @@ const validationDataToJSArray = (validationData, chainID=null) => {
 
 const vectorHBondToJSArray = (HBondData) => {
     let hbdata = []
-    for(let ib=0;ib<HBondData.size();ib++){
-        let o = {}
+    const hbondDataSize = HBondData.size()
+    for(let ib=0; ib<hbondDataSize; ib++){
         const hb = HBondData.get(ib)
-        o.hb_hydrogen = hb.hb_hydrogen
-        o.donor = hb.donor
-        o.acceptor = hb.acceptor
-        o.donor_neigh = hb.donor_neigh
-        o.acceptor_neigh = hb.acceptor_neigh
-        o.angle_1 = hb.angle_1
-        o.angle_2 = hb.angle_2
-        o.angle_3 = hb.angle_3
-        o.dist = hb.dist
-        o.ligand_atom_is_donor = hb.ligand_atom_is_donor
-        o.hydrogen_is_ligand_atom = hb.hydrogen_is_ligand_atom
-        o.bond_has_hydrogen_flag = hb.bond_has_hydrogen_flag
+        const o = {
+            hb_hydrogen: hb.hb_hydrogen,
+            donor: hb.donor,
+            acceptor: hb.acceptor,
+            donor_neigh: hb.donor_neigh,
+            acceptor_neigh: hb.acceptor_neigh,
+            angle_1: hb.angle_1,
+            angle_2: hb.angle_2,
+            angle_3: hb.angle_3,
+            dist: hb.dist,
+            ligand_atom_is_donor: hb.ligand_atom_is_donor,
+            hydrogen_is_ligand_atom: hb.hydrogen_is_ligand_atom,
+            bond_has_hydrogen_flag: hb.bond_has_hydrogen_flag,
+        }
+        // FIXME: Need to test whether this is necessary once the hb is available
+        // hb.delete()
         hbdata.push(o)
     }
     HBondData.delete()
     return hbdata
-    
 }
 
 const interestingPlaceDataToJSArray = (interestingPlaceData) => {
@@ -817,6 +820,9 @@ onmessage = function (e) {
                 case 'instanced_mesh_perm':
                     returnResult = instancedMeshToMeshData(cootResult, true)
                     break;
+                case 'symmetry':
+                    returnResult = symmetryToJSData(cootResult)
+                    break;
                 case 'mmrrcc_stats':
                     returnResult = mmrrccStatsToJSArray(cootResult)
                     break;
@@ -861,6 +867,7 @@ onmessage = function (e) {
                     break;
                 case 'superpose_results':
                     returnResult = SuperposeResultsToJSArray(cootResult)
+                    break
                 case 'vector_hbond':
                     returnResult = vectorHBondToJSArray(cootResult)
                     break;
