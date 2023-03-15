@@ -32,6 +32,7 @@ const getDefaultValues = () => {
         drawCrosshairs: true,
         drawFPS: false,
         drawMissingLoops: true,
+        drawInteractions: false,
         mouseSensitivity: 2.0,
         wheelSensitivityFactor: 1.0,
         mapLineWidth: 1.0,
@@ -190,6 +191,7 @@ const PreferencesContextProvider = ({ children }) => {
     const [drawCrosshairs, setDrawCrosshairs] = useState(null)
     const [drawFPS, setDrawFPS] = useState(null)
     const [drawMissingLoops, setDrawMissingLoops] = useState(null)
+    const [drawInteractions, setDrawInteractions] = useState(null)
     const [mapLineWidth, setMapLineWidth] = useState(null)
     const [makeBackups, setMakeBackups] = useState(null)
     const [showShortcutToast, setShowShortcutToast] = useState(null)
@@ -225,6 +227,7 @@ const PreferencesContextProvider = ({ children }) => {
         20: { label: "defaultUpdatingScores", value: defaultUpdatingScores, valueSetter: (newValue) => {setDefaultUpdatingScores({action: 'Overwrite', items: newValue})}},
         21: { label: "maxBackupCount", value: maxBackupCount, valueSetter: setMaxBackupCount},
         22: { label: "modificationCountBackupThreshold", value: modificationCountBackupThreshold, valueSetter: setModificationCountBackupThreshold},
+        23: { label: "drawInteractions", value: drawInteractions, valueSetter: setDrawInteractions},
     }
 
     const restoreDefaults = (defaultValues)=> {
@@ -425,6 +428,15 @@ const PreferencesContextProvider = ({ children }) => {
 
     useMemo(() => {
 
+        if (drawInteractions === null) {
+            return
+        }
+       
+        updateStoredPreferences('drawInteractions', drawInteractions);
+    }, [drawInteractions]);
+
+    useMemo(() => {
+
         if (mouseSensitivity === null) {
             return
         }
@@ -487,7 +499,8 @@ const PreferencesContextProvider = ({ children }) => {
         setShowScoresToast, defaultUpdatingScores, setDefaultUpdatingScores, drawFPS, setDrawFPS,
         wheelSensitivityFactor, setWheelSensitivityFactor, shortcutOnHoveredAtom, setShortcutOnHoveredAtom,
         resetClippingFogging, setResetClippingFogging, maxBackupCount, setMaxBackupCount,
-        modificationCountBackupThreshold, setModificationCountBackupThreshold, isMounted
+        modificationCountBackupThreshold, setModificationCountBackupThreshold, isMounted,
+        drawInteractions, setDrawInteractions
     }
 
     return (

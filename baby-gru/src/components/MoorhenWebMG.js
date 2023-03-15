@@ -11,6 +11,7 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
     const [connectedMolNo, setConnectedMolNo] = useState(null)
     const [scoresToastContents, setScoreToastContents] = useState(null)
     const [showContextMenu, setShowContextMenu] = useState(false)
+    const busyGettingAtom = useRef(false)
 
     const setClipFogByZoom = () => {
         const fieldDepthFront = 8;
@@ -52,6 +53,62 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
             props.hoveredAtom.molecule.centreOn(glRef, `/*/${chainId}/${resNum}-${resNum}/*`)
         }
     }, [props.hoveredAtom, glRef])
+
+
+    const drawHBonds = async () => {
+        const visibleMolecules = props.molecules.filter(molecule => molecule.isVisible && molecule.hasVisibleBuffers())
+        if (visibleMolecules.length === 0) {
+            console.log("returning...",props.molecules)
+            return
+        }
+        busyGettingAtom.current = true
+        const response = await props.commandCentre.current.cootCommand({
+            returnType: "int_string_pair",
+            command: "get_active_atom",
+            commandArgs: [...glRef.current.origin.map(coord => coord * -1), visibleMolecules.map(molecule => molecule.molNo).join(':')]
+        })
+        const moleculeMolNo = response.data.result.result.first
+        const residueCid = response.data.result.result.second
+        const mol = props.molecules.find(molecule => molecule.molNo === moleculeMolNo)
+
+        if(mol) {
+            const cidSplit0 = residueCid.split(" ")[0]
+            const cidSplit = cidSplit0.replace(/\/+$/, "").split("/")
+            const resnum = cidSplit[cidSplit.length-1]
+            const oneCid = cidSplit.join("/")+"-"+resnum
+            const sel = new window.CCP4Module.Selection(oneCid)
+            const hbonds = await props.commandCentre.current.cootCommand({
+                returnType: "vector_hbond",
+                command: "get_hbonds",
+                commandArgs: [mol.molNo,oneCid]
+            })
+            const hbs = hbonds.data.result.result
+            mol.drawHBonds(glRef,hbs)
+        }
+        busyGettingAtom.current = false
+    }
+
+    const clearHBonds = useCallback(async (e) => {
+        if(props.drawInteractions)
+            return
+        props.molecules.forEach(mol => {
+                mol.drawGemmiAtoms(glRef,[],"originNeighbours",[1.0, 0.0, 0.0, 1.0],true,true)
+        })
+    },[props.drawInteractions,props.molecules])
+
+    const handleOriginUpdate = useCallback(async (e) => {
+        if (!busyGettingAtom.current&&props.drawInteractions) {
+            drawHBonds()
+        }
+    }, [props.commandCentre,props.drawInteractions,props.molecules])
+
+    useEffect(() => {
+        if(props.drawInteractions){
+            handleOriginUpdate()
+        } else {
+            clearHBonds()
+        }
+    }, [props.drawInteractions,props.molecules])
 
     const handleScoreUpdates = useCallback(async (e) => {
         if (e.detail?.modifiedMolecule !== null && connectedMolNo && connectedMolNo.molecule === e.detail.modifiedMolecule) {
@@ -245,6 +302,14 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
     }, [handleScoreUpdates]);
 
     useEffect(() => {
+        document.addEventListener("originUpdate", handleOriginUpdate);
+        return () => {
+            document.removeEventListener("originUpdate", handleOriginUpdate);
+        };
+
+    }, [handleOriginUpdate]);
+
+    useEffect(() => {
         document.addEventListener("goToBlobDoubleClick", handleGoToBlobDoubleClick);
         return () => {
             document.removeEventListener("goToBlobDoubleClick", handleGoToBlobDoubleClick);
@@ -329,6 +394,22 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
         })
     }, [props.maps, props.maps.length])
 
+    /*
+    if(window.pyodide){
+        window.xxx = 42
+        window.yyy = [2,21,84]
+        window.zzz = {"foo":"bar","sna":"foo"}
+        window.zzz.fu = "kung"
+        window.pyodide.runPython(`
+        from js import window
+        zzz = window.zzz
+        zzz_py = zzz.to_py()
+        print("hello !!!!!!!!!!!!!!!!!!!!!!",window.xxx,window.yyy,len(window.yyy))
+        for k,v in zzz_py.items():
+            print(k,v)
+        `)
+    }
+    */
     return  <>
                 <ToastContainer style={{ zIndex: '0', marginTop: "5rem", marginLeft: '0.5rem', textAlign:'left', alignItems: 'left', maxWidth: convertViewtoPx(40, props.windowWidth)}} position='top-start' >
                     {scoresToastContents !== null && props.preferences.showScoresToast &&
@@ -351,7 +432,8 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
                     showCrosshairs={props.preferences.drawCrosshairs}
                     showFPS={props.preferences.drawFPS}
                     mapLineWidth={mapLineWidth}
-                    drawMissingLoops={props.drawMissingLoops} />
+                    drawMissingLoops={props.drawMissingLoops}
+                    drawInteractions={props.drawInteractions} />
 
                 {showContextMenu && 
                 <MoorhenContextMenu 

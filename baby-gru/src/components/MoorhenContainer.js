@@ -329,6 +329,7 @@ export const MoorhenContainer = (props) => {
                             windowWidth={windowWidth}
                             urlPrefix={props.urlPrefix}
                             activeMap={activeMap}
+                            drawInteractions={preferences.drawInteractions}
                         />
                     </div>
                     <MoorhenButtonBar {...collectedProps} />
