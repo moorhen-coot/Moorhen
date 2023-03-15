@@ -281,7 +281,7 @@ export const MoorhenContainer = (props) => {
         setToastContent, currentDropdownId, setCurrentDropdownId, hoveredAtom, setHoveredAtom, showToast, setShowToast,
         windowWidth, windowHeight, innerWindowMarginWidth, showColourRulesToast, timeCapsuleRef, setShowColourRulesToast, 
         isDark, exportCallback: props.exportCallback, disableFileUploads: props.disableFileUploads, urlPrefix: props.urlPrefix, 
-        extraMenus:props.extraMenus, monomerLibraryPath: props.monomerLibraryPath, ...preferences
+        extraMenus:props.extraMenus, monomerLibraryPath: props.monomerLibraryPath, moleculesRef, mapsRef, ...preferences
     }
 
     return <> <div>

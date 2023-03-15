@@ -7,13 +7,12 @@ file(COPY
     ../baby-gru/package-lock.json
     ../baby-gru/.babelrc 
     ../baby-gru/webpack.config.js
-    ../baby-gru/App.css
+    ../baby-gru/src/App.css
 DESTINATION ./)
 
 file(COPY 
     ../baby-gru/src/components
-    ../baby-gru/src/__test__
+    ../baby-gru/src/__tests__
     ../baby-gru/src/utils
     ../baby-gru/src/WebGLgComponents
-    ../baby-gru/App.css
 DESTINATION ./src)

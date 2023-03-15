@@ -12,18 +12,31 @@ import $ from 'jquery';
 export const CCP4i2MoorhenContainer = (props) => {
     const controls = useRef(null);
     const [cootInitialized, setCootInitialized] = useState(false)
-    const [cootJobId, setCootJobId] = useState(null)
     const urlRoot = 'http://127.0.0.1:43434/database'
 
-    const makeDbFilePromise = (newFile, arg) => {
-        const fileUrl = `${urlRoot}/getFileWithPredicate?${$.param({fileid:newFile.fileid})}`
-        const mimeType = newFile.filetypeid__filetypename
-        const annotation = newFile.annotation
-        const subType = newFile.filesubtype
+    const makeDbFilePromise = (fileOfType, mimeType, arg) => {
+        const fileDict = {
+            filetypeid__filetypename: mimeType,
+        }
+        const dbFileIdNodes = $(fileOfType).find("dbFileId")
+        if (dbFileIdNodes.length === 1 && $(dbFileIdNodes[0]).text().length > 0) {
+            fileDict['fileid'] = $(dbFileIdNodes[0]).text()
+        }
+        const subTypeNodes = $(fileOfType).find("subType")
+        if (subTypeNodes.length === 1 && $(subTypeNodes[0]).text().length > 0) {
+            fileDict['filesubtype'] = parseInt($(subTypeNodes[0]).text())
+        }
+        const anotationNodes = $(fileOfType).find("annotation")
+        if (anotationNodes.length === 1 && $(anotationNodes[0]).text().length > 0) {
+            fileDict['annotation'] = $(anotationNodes[0]).text()
+        }
+        const fileUrl = `${urlRoot}/getFileWithPredicate?${$.param({ fileid: fileDict.fileid })}`
+        const annotation = fileDict.annotation ? fileDict.annotation : "A file"
+        const subType = fileDict.filesubtype ? fileDict.filesubtype : 1
         return makeFilePromise(fileUrl, mimeType, annotation, subType, arg)
     }
 
-    const makeParamsFilePromise = (fileOfType, mimeType, arg) =>{
+    const makeParamsFilePromise = (fileOfType, mimeType, arg) => {
         const fileDict = {}
         const projectNodes = $(fileOfType).find("project")
         if (projectNodes.length === 1 && $(projectNodes[0]).text().length > 0) {
@@ -37,7 +50,7 @@ export const CCP4i2MoorhenContainer = (props) => {
         if (baseNameNodes.length === 1 && $(baseNameNodes[0]).text().length > 0) {
             fileDict['baseName'] = $(baseNameNodes[0]).text()
         }
-        let subType=1
+        let subType = 1
         const subTypeNodes = $(fileOfType).find("subType")
         if (subTypeNodes.length === 1 && $(subTypeNodes[0]).text().length > 0) {
             subType = $(subTypeNodes[0]).text()
@@ -48,11 +61,12 @@ export const CCP4i2MoorhenContainer = (props) => {
             annotation = $(annotationNodes[0]).text()
         }
         const fileUrl = `${urlRoot}/getProjectFileData?${$.param(fileDict)}`
-        console.log({fileUrl, mimeType, annotation, subType, arg})
+        console.log({ fileUrl, mimeType, annotation, subType, arg })
         return makeFilePromise(fileUrl, mimeType, annotation, subType, arg)
     }
 
     const makeFilePromise = (fileUrl, mimeType, annotation, subType, arg) => {
+        console.log('makeFilePromise', { fileUrl, mimeType, annotation, subType, arg })
         if (mimeType === 'application/refmac-dictionary') {
             return fetch(fileUrl)
                 .then(response => response.text())
@@ -124,11 +138,7 @@ export const CCP4i2MoorhenContainer = (props) => {
                     const dbFileIdNodes = $(fileOfType).find("dbFileId")
                     const projectNodes = $(fileOfType).find("project")
                     if (dbFileIdNodes.length === 1 && $(dbFileIdNodes[0]).text().length > 0) {
-                        const fileId = $(dbFileIdNodes[0]).text()
-                        readFilePromises.push(makeDbFilePromise({
-                            filetypeid__filetypename: "chemical/x-pdb",
-                            fileid: fileId
-                        }))
+                        readFilePromises.push(makeDbFilePromise(fileOfType, "chemical/x-pdb"))
                     }
                     else if (projectNodes.length === 1 && $(projectNodes[0]).text().length > 0) {
                         readFilePromises.push(makeParamsFilePromise(fileOfType, "chemical/x-pdb"))
@@ -137,34 +147,36 @@ export const CCP4i2MoorhenContainer = (props) => {
                 return Promise.all(readFilePromises)
                     .then(readMolNos => {
                         readMolNos.forEach(molNo => { arg.molNos.push(molNo) })
-                        return Promise.resolve(true)
+                        const filesOfType = inputData.find("DICT")
+                        let readFilePromises = []
+                        filesOfType.toArray().forEach(fileOfType => {
+                            const dbFileIdNodes = $(fileOfType).find("dbFileId")
+                            const projectNodes = $(fileOfType).find("project")
+                            if (dbFileIdNodes.length === 1 && $(dbFileIdNodes[0]).text().length > 0) {
+                                readFilePromises.push(makeDbFilePromise(fileOfType, "application/refmac-dictionary", arg))
+                            }
+                            else if (projectNodes.length === 1 && $(projectNodes[0]).text().length > 0) {
+                                readFilePromises.push(makeParamsFilePromise(fileOfType, "application/refmac-dictionary", arg))
+                            }
+                        })
+                        return Promise.all(readFilePromises)
                     })
                     .then(() => {
                         const filesOfType = inputData.find("CMapCoeffsDataFile")
                         let readFilePromises = []
-                        filesOfType.toArray().forEach((fileOfType, iItem) => {
+                        filesOfType.toArray().forEach(fileOfType => {
                             const dbFileIdNodes = $(fileOfType).find("dbFileId")
                             const projectNodes = $(fileOfType).find("project")
                             if (dbFileIdNodes.length === 1 && $(dbFileIdNodes[0]).text().length > 0) {
-                                const fileDict = {
-                                    filetypeid__filetypename: "application/CCP4-mtz-map",
-                                    fileid: $(dbFileIdNodes[0]).text()
-                                }
-                                const subTypeNodes = $(fileOfType).find("subType")
-                                if (subTypeNodes.length === 1 && $(subTypeNodes[0]).text().length > 0) {
-                                    fileDict['filesubtype'] = parseInt($(subTypeNodes[0]).text())
-                                }
-                                const anotationNodes = $(fileOfType).find("annotation")
-                                if (anotationNodes.length === 1 && $(anotationNodes[0]).text().length > 0) {
-                                    fileDict['annotation'] = $(anotationNodes[0]).text()
-                                }
-                                readFilePromises.push(makeDbFilePromise(fileDict))
+                                readFilePromises.push(makeDbFilePromise(fileOfType, "application/CCP4-mtz-map"))
+                            }
+                            else if (projectNodes.length === 1 && $(projectNodes[0]).text().length > 0) {
+                                readFilePromises.push(makeParamsFilePromise(fileOfType, "application/CCP4-mtz-map"))
                             }
                         })
                         return Promise.all(readFilePromises)
                     })
             })
-
     }
 
     useEffect(() => {
@@ -182,10 +194,12 @@ export const CCP4i2MoorhenContainer = (props) => {
             setCootInitialized(true)
         }}
         extraMenus={[<MoorhenCCP4i2Menu
+            key={"7"}
             dropdownId={7}
             {...controls.current}
             handleJob={(jobId) => { /*handleJob(jobId)*/ }}
             cootJobId={props.cootJob}
+            controls={controls}
             urlRoot={urlRoot}
         />]}
         controls={controls}
@@ -199,6 +213,7 @@ CCP4i2MoorhenContainer.defaultProps = { job: { jobid: null }, cootJob: null }
 const MoorhenCCP4i2Menu = (props) => {
     const [popoverIsShown, setPopoverIsShown] = useState(false)
     const [showMenu, setShowMenu] = useState(false)
+    const [iSave, setISave] = useState(0)
 
     useEffect(() => {
         console.log('menuProps', props)
@@ -207,6 +222,7 @@ const MoorhenCCP4i2Menu = (props) => {
     useEffect(() => {
         console.log('menuProps.currentDr', props.currentDropdownId)
     }, [props.currentDropdownId])
+
     return <NavDropdown
         title="CCP4i2"
         id="ccp4i2-nav-dropdown"
@@ -216,7 +232,6 @@ const MoorhenCCP4i2Menu = (props) => {
         onToggle={() => {
             console.log('onToggle')
             if (props.dropdownId !== props.currentDropdownId) {
-                console.log('setting currentDropdownId', props.dropdownId)
                 props.setCurrentDropdownId(props.dropdownId)
                 setShowMenu(true)
             }
@@ -225,12 +240,38 @@ const MoorhenCCP4i2Menu = (props) => {
                 setShowMenu(false)
             }
         }}>
-        <MenuItem onClick={() => {
+
+        <MenuItem key="Save to CCP4i2" onClick={async () => {
+            const formData = new FormData()
+            formData.append('jobId', props.cootJobId)
+            formData.append('fileRoot', `COOT_FILE_DROP/output_${iSave.toString().padStart(3, '0')}`)
+            formData.append('fileExtension', ".pdb")
+            const molZeros = props.controls.current.moleculesRef.current.filter(molecule => molecule.molNo == 0)
+            if (molZeros.length === 1) {
+                console.log('molecules', props.controls.current)
+                let response = await molZeros[0].getAtoms()
+                const atomsBlob = new Blob([response.data.result.pdbData])
+                formData.append('file', atomsBlob)
+                fetch(`${props.urlRoot}/uploadFileToJob`, {
+                    method: "POST",
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(result => {
+                        setISave(iSave + 1)
+                        props.controls.current.setToastContent("File saved")
+                    })
+            }
+            else {
+                props.controls.current.setToastContent("No molZeros")
+            }
+        }}>Save mol 0 to ccp4i2</MenuItem>
+        <MenuItem key="End session" onClick={() => {
             fetch(`${props.urlRoot}/makeTerminateFile?jobId=${props.cootJobId}`)
                 .then(response => response.json())
                 .then(result => {
                     if (result.status === "Success") {
-                        window.location.href="about:blank"
+                        window.location.href = "about:blank"
                     }
                 })
         }}>End job</MenuItem>
