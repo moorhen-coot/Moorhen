@@ -206,7 +206,7 @@ export const MoorhenColourRules = (props) => {
     }, [selectedModel, selectedChain, ruleType])
 
     const getRuleCard = (rule, index) => {
-        return <Card key={index} style={{margin: '0.1rem', maxWidth: '100%', overflowX:'scroll'}}>
+        return <Card key={index} className='hide-scrolling' style={{margin: '0.1rem', maxWidth: '100%', overflowX:'scroll'}}>
                 <Card.Body>
                     <Row className='align-items-center'>
                         <Col className='align-items-center' style={{ display: 'flex', justifyContent: 'left' }}>
@@ -317,7 +317,7 @@ export const MoorhenColourRules = (props) => {
                                         <SketchPicker color={selectedColour} onChange={handleColorChange} />
                                     </div>
                                     <Card style={{width:'100%', margin:'0rem'}}>
-                                        <Card.Body style={{padding:'0.2rem', maxHeight: convertViewtoPx(25, props.windowHeight), overflowY: 'auto', textAlign:'center'}}>
+                                        <Card.Body className="hide-scrolling" style={{padding:'0.2rem', maxHeight: convertViewtoPx(25, props.windowHeight), overflowY: 'auto', textAlign:'center'}}>
                                             {ruleList.length === 0 ? 
                                                 "No rules created yet"
                                             :

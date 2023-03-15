@@ -193,7 +193,10 @@ export const MoorhenButtonBar = (props) => {
                     width: '100%',
                     height: simpleEditButtonHeight,
                     boxSizing: 'border-box',
-                    backgroundColor: props.isDark ? 'grey' : 'white'
+                    backgroundColor: props.isDark ? 'grey' : 'white',
+                    '&::-webkit-scrollbar': {
+                        display: 'none'
+                    }
                 },
             }}
             onMouseOver={() => setOpacity(1)}
