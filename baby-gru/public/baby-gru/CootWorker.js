@@ -303,6 +303,33 @@ const stringArrayToJSArray = (stringArray) => {
     return returnResult;
 }
 
+const symmetryToJSData = (symmetryData) => {
+    let result = []
+    const symmetrySize = symmetryData.size()
+
+    for (let i = 0; i < symmetrySize; i++) {
+        const currentSymmetry = symmetryData.at(i)
+        const symTransT = currentSymmetry.first()
+        const cellTranslation = currentSymmetry.second()
+
+        result.push({
+            x: currentSymmetry.x(),
+            y: currentSymmetry.y(),
+            z: currentSymmetry.z(),
+            asString: currentSymmetry.symm_as_string(),
+            us: cellTranslation.us,
+            ws: cellTranslation.ws,
+            vs: cellTranslation.vs
+        })
+
+        symTransT.delete()
+        currentSymmetry.delete()
+    }
+
+    symmetryData.delete()
+    return result
+}
+
 const mmrrccStatsToJSArray = (mmrrccStats) => {
     const parseStats = (stats) => {
         let result = []
