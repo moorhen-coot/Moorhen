@@ -6,7 +6,12 @@
 #installed (by default) in install/web_packages/baby-gru. The "install"
 #part of this can also be changed below.
 
-SOURCE_DIR=`dirname -- "$( greadlink -f -- "$0"; )"`
+if command -v greadlink &> /dev/null; then
+    SOURCE_DIR=`dirname -- "$( greadlink -f -- "$0"; )"`
+else
+    SOURCE_DIR=`dirname -- "$( readlink -f -- "$0"; )"`
+fi
+
 BUILD_DIR=${PWD}/CCP4_WASM_BUILD
 INSTALL_DIR=${PWD}/install
 
