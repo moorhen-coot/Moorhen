@@ -265,12 +265,11 @@ export const MoorhenContainer = (props) => {
     }
 
     const webGLWidth = () => {
-        const result = windowWidth - innerWindowMarginWidth
-        return result
+        return windowWidth
     }
 
     const webGLHeight = () => {
-        return windowHeight - (innerWindowMarginHeight + convertRemToPx(2))
+        return windowHeight - (convertRemToPx(2.2))
     }
 
     const isDark = isDarkBackground(...backgroundColor)
@@ -304,7 +303,7 @@ export const MoorhenContainer = (props) => {
                                 ${255 * backgroundColor[1]},
                                 ${255 * backgroundColor[2]}, 
                                 ${backgroundColor[3]})`,
-                            cursor: cursorStyle
+                            cursor: cursorStyle, margin: 0, padding: 0, height: Math.floor(webGLHeight()),
                         }}>
                         <MoorhenWebMG
                             ref={glRef}

@@ -20,8 +20,10 @@
     -webkit-padding-end: 16px;  
 }
 
-.scroller {
+.stop-scrolling {
   scrollbar-width: none;
+  height: 100%;
+  overflow: hidden;
 } 
 
 .validation-plot-container::-webkit-scrollbar {
