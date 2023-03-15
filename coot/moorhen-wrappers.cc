@@ -77,8 +77,121 @@ std::map<std::string,std::vector<coot::simple_rotamer> > getRotamersMap(){
     return all_rots;
 }
 
+struct moorhen_hbond {
+      int hb_hydrogen; // McDonald and Thornton H-bond algorithm
+
+      double angle_1;  // degrees
+      double angle_2;
+      double angle_3;
+      double dist;  // H-bond length
+      bool ligand_atom_is_donor; // for use when hb_hydrogen is NULL -
+                                 // no hydrogens in H-bond analysis.
+      bool hydrogen_is_ligand_atom;
+      bool bond_has_hydrogen_flag;
+
+      struct moorhen_hbond_atom {
+          int serial;
+          double x, y, z;
+          double charge, occ, b_iso;
+          std::string element;
+          std::string name;
+          int model;
+          std::string chain;
+          int resNum;
+          std::string residueName;
+          std::string altLoc;
+      };
+
+      moorhen_hbond_atom donor;
+      moorhen_hbond_atom acceptor;
+      moorhen_hbond_atom donor_neigh;
+      moorhen_hbond_atom acceptor_neigh;
+
+};
+
 class molecules_container_js : public molecules_container_t {
     public:
+        /*
+        std::vector<moorhen_hbond> get_hbonds(int imol, const std::string &cid_str) { 
+            std::vector<moorhen_hbond> mhbs;
+            std::vector<coot::h_bond> hbonds = molecules_container_t::get_hbonds(imol, cid_str);
+
+            for(unsigned ib=0;ib<hbonds.size();ib++){
+                moorhen_hbond mhb;
+                mhb.hb_hydrogen = hbonds[ib].hb_hydrogen->serNum;
+                mhb.donor.serial = hbonds[ib].donor->serNum;
+                mhb.acceptor.serial = hbonds[ib].acceptor->serNum;
+                mhb.donor_neigh.serial = hbonds[ib].donor_neigh->serNum;
+                mhb.acceptor_neigh.serial = hbonds[ib].acceptor_neigh->serNum;
+                mhb.donor.x = hbonds[ib].donor->x;
+                mhb.donor.y = hbonds[ib].donor->y;
+                mhb.donor.z = hbonds[ib].donor->z;
+                mhb.acceptor.x = hbonds[ib].acceptor->x;
+                mhb.acceptor.y = hbonds[ib].acceptor->y;
+                mhb.acceptor.z = hbonds[ib].acceptor->z;
+                mhb.donor_neigh.x = hbonds[ib].donor_neigh->x;
+                mhb.donor_neigh.y = hbonds[ib].donor_neigh->y;
+                mhb.donor_neigh.z = hbonds[ib].donor_neigh->z;
+                mhb.acceptor_neigh.x = hbonds[ib].acceptor_neigh->x;
+                mhb.acceptor_neigh.y = hbonds[ib].acceptor_neigh->y;
+                mhb.acceptor_neigh.z = hbonds[ib].acceptor_neigh->z;
+
+                mhb.donor.charge = hbonds[ib].donor->charge;
+                mhb.donor.occ = hbonds[ib].donor->occupancy;
+                mhb.donor.b_iso = hbonds[ib].donor->tempFactor;
+                mhb.donor.element = std::string(hbonds[ib].donor->element);
+                mhb.donor.name = std::string(hbonds[ib].donor->name);
+                mhb.donor.model = hbonds[ib].donor->GetModelNum();
+                mhb.donor.chain = std::string(hbonds[ib].donor->GetChainID());
+                mhb.donor.resNum = hbonds[ib].donor->GetResidueNo();
+                mhb.donor.residueName = std::string(hbonds[ib].donor->GetResidue()->name);
+                mhb.donor.altLoc = std::string(hbonds[ib].donor->altLoc);
+
+                mhb.acceptor.charge = hbonds[ib].acceptor->charge;
+                mhb.acceptor.occ = hbonds[ib].acceptor->occupancy;
+                mhb.acceptor.b_iso = hbonds[ib].acceptor->tempFactor;
+                mhb.acceptor.element = std::string(hbonds[ib].acceptor->element);
+                mhb.acceptor.name = std::string(hbonds[ib].acceptor->name);
+                mhb.acceptor.model = hbonds[ib].acceptor->GetModelNum();
+                mhb.acceptor.chain = std::string(hbonds[ib].acceptor->GetChainID());
+                mhb.acceptor.resNum = hbonds[ib].acceptor->GetResidueNo();
+                mhb.acceptor.residueName = std::string(hbonds[ib].acceptor->GetResidue()->name);
+                mhb.acceptor.altLoc = std::string(hbonds[ib].acceptor->altLoc);
+
+                mhb.donor_neigh.charge = hbonds[ib].donor_neigh->charge;
+                mhb.donor_neigh.occ = hbonds[ib].donor_neigh->occupancy;
+                mhb.donor_neigh.b_iso = hbonds[ib].donor_neigh->tempFactor;
+                mhb.donor_neigh.element = std::string(hbonds[ib].donor_neigh->element);
+                mhb.donor_neigh.name = std::string(hbonds[ib].donor_neigh->name);
+                mhb.donor_neigh.model = hbonds[ib].donor_neigh->GetModelNum();
+                mhb.donor_neigh.chain = std::string(hbonds[ib].donor_neigh->GetChainID());
+                mhb.donor_neigh.resNum = hbonds[ib].donor_neigh->GetResidueNo();
+                mhb.donor_neigh.residueName = std::string(hbonds[ib].donor_neigh->GetResidue()->name);
+                mhb.donor_neigh.altLoc = std::string(hbonds[ib].donor_neigh->altLoc);
+
+                mhb.acceptor_neigh.charge = hbonds[ib].acceptor_neigh->charge;
+                mhb.acceptor_neigh.occ = hbonds[ib].acceptor_neigh->occupancy;
+                mhb.acceptor_neigh.b_iso = hbonds[ib].acceptor_neigh->tempFactor;
+                mhb.acceptor_neigh.element = std::string(hbonds[ib].acceptor_neigh->element);
+                mhb.acceptor_neigh.name = std::string(hbonds[ib].acceptor_neigh->name);
+                mhb.acceptor_neigh.model = hbonds[ib].acceptor_neigh->GetModelNum();
+                mhb.acceptor_neigh.chain = std::string(hbonds[ib].acceptor_neigh->GetChainID());
+                mhb.acceptor_neigh.resNum = hbonds[ib].acceptor_neigh->GetResidueNo();
+                mhb.acceptor_neigh.residueName = std::string(hbonds[ib].acceptor_neigh->GetResidue()->name);
+                mhb.acceptor_neigh.altLoc = std::string(hbonds[ib].acceptor_neigh->altLoc);
+
+                mhb.angle_1 = hbonds[ib].angle_1;
+                mhb.angle_2 = hbonds[ib].angle_2;
+                mhb.angle_3 = hbonds[ib].angle_3;
+                mhb.dist = hbonds[ib].dist;
+                mhb.ligand_atom_is_donor = hbonds[ib].ligand_atom_is_donor;
+                mhb.hydrogen_is_ligand_atom = hbonds[ib].hydrogen_is_ligand_atom;
+                mhb.bond_has_hydrogen_flag = hbonds[ib].bond_has_hydrogen_flag;
+                mhbs.push_back(mhb);
+            }
+            return mhbs;
+        }
+        */
         std::vector<float> getFloats(unsigned nFloats) { 
             std::vector<float> fs;
             for(unsigned i=0;i<nFloats;i++){
@@ -468,6 +581,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("go_to_blob_array",&molecules_container_js::go_to_blob_array)
     .function("add",&molecules_container_js::add)
     .function("getFloats",&molecules_container_js::getFloats)
+    //.function("get_hbonds",&molecules_container_js::get_hbonds);
     ;
     class_<RamachandranInfo>("RamachandranInfo")
     .constructor<>()
@@ -596,6 +710,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_map<coot::residue_spec_t, coot::util::density_correlation_stats_info_t>("Map_residue_spec_t_density_correlation_stats_info_t");
     register_vector<std::pair<symm_trans_t, Cell_Translation>>("Vectorsym_trans_t_Cell_Translation_pair");
     register_vector<std::pair<std::string, std::string>>("Vectorstring_string_pair");
+    register_vector<moorhen_hbond>("Vectormoorhen_hbond");
     register_vector<coot::instanced_geometry_t>("Vectorinstanced_geometry_t");
     register_vector<coot::molecule_t::moved_residue_t>("Vectormoved_residue_t");
     register_vector<coot::molecule_t::moved_atom_t>("Vectormoved_atom_t");
@@ -669,6 +784,42 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .field("first",&std::pair<int,int>::first)
         .field("second",&std::pair<int,int>::second)
     ;
+
+    value_object<moorhen_hbond>("moorhen_hbond")
+      .field("hb_hydrogen",&moorhen_hbond::hb_hydrogen)
+      .field("donor",&moorhen_hbond::donor)
+      .field("acceptor",&moorhen_hbond::acceptor)
+      .field("donor_neigh",&moorhen_hbond::donor_neigh)
+      .field("acceptor_neigh",&moorhen_hbond::acceptor_neigh)
+      .field("angle_1",&moorhen_hbond::angle_1)
+      .field("angle_2",&moorhen_hbond::angle_2)
+      .field("angle_3",&moorhen_hbond::angle_3)
+      .field("dist",&moorhen_hbond::dist)
+      .field("ligand_atom_is_donor",&moorhen_hbond::ligand_atom_is_donor)
+      .field("hydrogen_is_ligand_atom",&moorhen_hbond::hydrogen_is_ligand_atom)
+      .field("bond_has_hydrogen_flag",&moorhen_hbond::bond_has_hydrogen_flag)
+      .field("donor",&moorhen_hbond::donor)
+      .field("acceptor",&moorhen_hbond::acceptor)
+      .field("donor_neigh",&moorhen_hbond::donor_neigh)
+      .field("acceptor_neigh",&moorhen_hbond::acceptor_neigh)
+    ;
+    value_object<moorhen_hbond::moorhen_hbond_atom>("moorhen_hbond_atom")
+      .field("serial",&moorhen_hbond::moorhen_hbond_atom::serial)
+      .field("x",&moorhen_hbond::moorhen_hbond_atom::x)
+      .field("y",&moorhen_hbond::moorhen_hbond_atom::y)
+      .field("z",&moorhen_hbond::moorhen_hbond_atom::z)
+      .field("b_iso",&moorhen_hbond::moorhen_hbond_atom::b_iso)
+      .field("occ",&moorhen_hbond::moorhen_hbond_atom::occ)
+      .field("charge",&moorhen_hbond::moorhen_hbond_atom::charge)
+      .field("element",&moorhen_hbond::moorhen_hbond_atom::element)
+      .field("name",&moorhen_hbond::moorhen_hbond_atom::name)
+      .field("model",&moorhen_hbond::moorhen_hbond_atom::model)
+      .field("chain",&moorhen_hbond::moorhen_hbond_atom::chain)
+      .field("resNum",&moorhen_hbond::moorhen_hbond_atom::resNum)
+      .field("residueName",&moorhen_hbond::moorhen_hbond_atom::residueName)
+      .field("altLoc",&moorhen_hbond::moorhen_hbond_atom::altLoc)
+    ;
+
     value_array<glm::mat4>("array_mat4")
         .element(emscripten::index<0>())
         .element(emscripten::index<1>())

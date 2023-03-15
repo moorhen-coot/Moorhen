@@ -389,6 +389,30 @@ const validationDataToJSArray = (validationData, chainID=null) => {
     return returnResult
 }
 
+const vectorHBondToJSArray = (HBondData) => {
+    let hbdata = []
+    for(let ib=0;ib<HBondData.size();ib++){
+        let o = {}
+        const hb = HBondData.get(ib)
+        o.hb_hydrogen = hb.hb_hydrogen
+        o.donor = hb.donor
+        o.acceptor = hb.acceptor
+        o.donor_neigh = hb.donor_neigh
+        o.acceptor_neigh = hb.acceptor_neigh
+        o.angle_1 = hb.angle_1
+        o.angle_2 = hb.angle_2
+        o.angle_3 = hb.angle_3
+        o.dist = hb.dist
+        o.ligand_atom_is_donor = hb.ligand_atom_is_donor
+        o.hydrogen_is_ligand_atom = hb.hydrogen_is_ligand_atom
+        o.bond_has_hydrogen_flag = hb.bond_has_hydrogen_flag
+        hbdata.push(o)
+    }
+    HBondData.delete()
+    return hbdata
+    
+}
+
 const interestingPlaceDataToJSArray = (interestingPlaceData) => {
     let returnResult = [];
     const interestingPlaceDataSize = interestingPlaceData.size()
@@ -810,6 +834,8 @@ onmessage = function (e) {
                     break;
                 case 'superpose_results':
                     returnResult = SuperposeResultsToJSArray(cootResult)
+                case 'vector_hbond':
+                    returnResult = vectorHBondToJSArray(cootResult)
                     break;
                 case 'status':
                 default:

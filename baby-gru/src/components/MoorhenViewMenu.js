@@ -36,6 +36,15 @@ export const MoorhenViewMenu = (props) => {
                             onChange={() => { props.setDrawMissingLoops(!props.drawMissingLoops) }}
                             label="Show missing loops"/>
                     </InputGroup>
+                    {/*
+                    <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                        <Form.Check 
+                            type="switch"
+                            checked={props.drawInteractions}
+                            onChange={() => { props.setDrawInteractions(!props.drawInteractions) }}
+                            label="Show H-Bonds"/>
+                    </InputGroup>
+                    */}
                     <hr></hr>
                     <MoorhenBackgroundColorMenuItem {...menuItemProps} />
                     <MoorhenClipFogMenuItem {...menuItemProps} />

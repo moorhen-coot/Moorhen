@@ -1600,6 +1600,9 @@ class MGWebGL extends Component {
         }
 
         this.textLegends = [];
+        this.newTextLabels = [];
+        //this.newTextLabels.push({font:"20px helvetica",x:0,y:0,z:0,text:"Welcome to Moorhen"});
+
         //this.textLegends.push({font:"40px helvetica",x:0,y:0,text:"So Moorhen is a cool program_œ∑´®¥¨^øπ“‘«æ…¬˚∆˙©ƒ∂ßåΩ≈ç√∫~µ≤≥¡€#¢∞§¶•ªº–≠§±;:|abcdefghijklmnopqrs"});
         //this.textLegends.push({font:"40px times",x:0.25,y:0.25,text:"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@£$%^&*()"});
         //this.textLegends.push({font:"20px helvetica",x:0,y:0,text:"Welcome to Moorhen"});
@@ -2098,6 +2101,7 @@ class MGWebGL extends Component {
     appendOtherData(jsondata, skipRebuild, name) {
         //console.log("**************************************************");
         //console.log("appendOtherData");
+        //console.log(jsondata);
         //console.log("**************************************************");
         //This can be used to *add* arbitrary triangles to a scene. Not much luck with replacing scene by this, yet.
         //This currently deals with actual numbers rather than the uuencoded stuff we get from server, but it will
@@ -2106,12 +2110,28 @@ class MGWebGL extends Component {
         //Might also be nice to use this as a test-bed for creating more abstract primitives: circles, squares, stars, etc.
 
         const self = this;
-        //console.log("appendOtherData");
-        //console.log(jsondata);
 
         var theseBuffers = [];
 
         for (let idat = 0; idat < jsondata.norm_tri.length; idat++) {
+
+            if(jsondata.prim_types){
+                if(jsondata.prim_types[idat].length>0){
+                    if(jsondata.prim_types[idat][0]==="TEXTLABELS"){
+                        self.newTextLabels = []
+                        for(let ilabel=0;ilabel<jsondata.idx_tri[idat].length;ilabel++){
+                            const t = jsondata.label_tri[idat][ilabel];
+                            const x = jsondata.vert_tri[idat][ilabel*3];
+                            const y = jsondata.vert_tri[idat][ilabel*3+1];
+                            const z = jsondata.vert_tri[idat][ilabel*3+2];
+                            const label = {font:"20px helvetica",x:x,y:y,z:z,text:t};
+                            this.newTextLabels.push(label);
+                        }
+                        continue;
+                    }
+                }
+            }
+
             //self.currentBufferIdx = idat;
             self.currentBufferIdx = self.displayBuffers.length;
             self.displayBuffers.push(new DisplayBuffer());
@@ -10032,7 +10052,7 @@ class MGWebGL extends Component {
         }
 
 
-        const drawString = (s, xpos, ypos, font) => {
+        const drawString = (s, xpos, ypos, zpos, font, threeD) => {
             if(font) this.textCtx.font = font;
             let axesOffset = vec3.create();
             vec3.set(axesOffset, xpos,ypos, 0);
@@ -10043,9 +10063,15 @@ class MGWebGL extends Component {
             let base_y = xyzOff[1];
             let base_z = xyzOff[2];
 
+            if(threeD){
+                base_x = xpos;
+                base_y = ypos;
+                base_z = zpos;
+            }
+
             const textMetric = this.textCtx.measureText(s);
             if(textMetric.width >=512){
-                const drawMultiStringAt = (s, colour, up, right, xpos, ypos, font) => {
+                const drawMultiStringAt = (s, colour, up, right, xpos, ypos, zpos, font, threeD) => {
                     let axesOffset2 = vec3.create();
                     vec3.set(axesOffset2, xpos, ypos, 0);
                     vec3.transformMat4(axesOffset2, axesOffset2, invMat);
@@ -10053,10 +10079,15 @@ class MGWebGL extends Component {
                     let base_x = xyzOff2[0];
                     let base_y = xyzOff2[1];
                     let base_z = xyzOff2[2];
+                    if(threeD){
+                        base_x = xpos;
+                        base_y = ypos;
+                        base_z = zpos;
+                    }
                     const sLength = s.length;
                     const textMetric = this.textCtx.measureText(s);
                     if(textMetric.width <512){
-                        drawStringAt(s, colour, [base_x, base_y, base_z], up, right, font)
+                        drawStringAt(s, colour, [base_x, base_y, base_z], up, right, font, threeD)
                             return;
                     }
                     for(let ichomp=0;ichomp<s.length;ichomp++){
@@ -10068,32 +10099,36 @@ class MGWebGL extends Component {
                             //FIXME Why a 1.5 fudge factor ... ?
                             xpos += this.textHeightScaling/this.gl.viewportHeight * 512 / 24. *1.5 ;//textMetricSub.width /24. *1.5;
                             const snew = s.substr(ichomp);
-                            drawMultiStringAt(snew, colour, up, right, xpos, ypos, font);
+                            drawMultiStringAt(snew, colour, up, right, xpos, ypos, zpos, font, threeD);
                             break;
                         }
                     }
                 }
-                drawMultiStringAt(s, textColour, up, right, xpos, ypos, font);
+                drawMultiStringAt(s, textColour, up, right, xpos, ypos, zpos, font, threeD);
             } else {
-                drawStringAt(s, textColour, [base_x, base_y, base_z], up, right, font)
+                drawStringAt(s, textColour, [base_x, base_y, base_z], up, right, font, threeD)
             }
         }
 
         this.textLegends.forEach(label => {
                 let xpos = label.x * 48.0 -24.*ratio;
                 let ypos = label.y * 48.0 -24.;
-                drawString(label.text,xpos,ypos, label.font);
+                drawString(label.text,xpos,ypos, 0.0, label.font, false);
         });
-        if(this.showFPS) drawString(this.fpsText, -23.5*ratio, -23.5, "20px helvetica");
+        if(this.showFPS) drawString(this.fpsText, -23.5*ratio, -23.5, 0.0, "20px helvetica", false);
         if(this.showShortCutHelp) {
             const fontSize = this.gl.viewportHeight * 0.02
             const font = `${fontSize > 20 ? 20 : fontSize}px helvetica`
             this.showShortCutHelp.forEach((shortcut, index) => {
                 const xpos = -23.5 * ratio
                 const ypos = 20 - index
-                drawString(shortcut, xpos, ypos, font)
+                drawString(shortcut, xpos, ypos, 0.0, font, false)
             });
         }
+        //Draw Hbond, etc. text.
+        this.newTextLabels.forEach(label => {
+                drawString(label.text, label.x,label.y,label.z, "20px helvetica", true);
+        })
 
         this.gl.disableVertexAttribArray(this.shaderProgramTextBackground.vertexTextureAttribute);
         this.gl.depthFunc(this.gl.LESS)
