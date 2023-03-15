@@ -59,6 +59,17 @@ export function MoorhenMolecule(commandCentre, monomerLibraryPath) {
     this.monomerLibraryPath = (typeof monomerLibraryPath === 'undefined' ? "./baby-gru/monomers" : monomerLibraryPath)
 };
 
+MoorhenMolecule.prototype.getSymmetry = async function (radius=500) {
+    const selectionAtoms = await this.gemmiAtomsForCid('/*/*/*/*')
+    const selectionCentre = centreOnGemmiAtoms(selectionAtoms)
+    const response = await this.commandCentre.current.cootCommand({
+        returnType: "symmetry",
+        command: 'get_symmetry',
+        commandArgs: [this.molNo, radius, selectionCentre[0]*-1, selectionCentre[1]*-1, selectionCentre[2]*-1]
+    }, true)
+    return response
+}
+
 MoorhenMolecule.prototype.setBackgroundColour = function (backgroundColour) {
     this.cootBondsOptions.isDarkBackground = isDarkBackground(...backgroundColour)
 }
@@ -1018,45 +1029,10 @@ MoorhenMolecule.prototype.drawLigands = function (webMGAtoms, glRef, colourSchem
     })
     $this.clearBuffersOfStyle(style, glRef)
     this.addBuffersOfStyle(glRef, objects, style)
-
-    return
-    /*
-    const $this = this
-    if (typeof webMGAtoms["atoms"] === 'undefined') return;
-
-    let ligandAtoms = webMGAtoms.atoms[0].getAtoms("ligands");
-    const colourScheme = new ColourScheme(webMGAtoms);
-    var atomColours = colourScheme.colourByChain({
-        "nonCByAtomType": true,
-        'C': colourScheme.order_colours[colourSchemeIndex % colourScheme.order_colours.length]
-    });
-
-    const objects = []
-    var contactsAndSingletons = webMGAtoms.atoms[0].getBondsContactsAndSingletons();
-    var contacts = contactsAndSingletons["contacts"];
-    var linePrimitiveInfo = contactsToCylindersInfo(contacts, 0.15, atomColours);
-    objects.push(linePrimitiveInfo)
-
-    //console.log("Time to get ligands atoms: "+(new Date().getTime()-start));
-    ligandAtoms = webMGAtoms.atoms[0].getAtoms("ligands");
-    const multipleBonds = getMultipleBonds(ligandAtoms, $this.enerLib, 0.15, atomColours);
-    //console.log("Time to get ligands multiple bonds: "+(new Date().getTime()-start));
-    objects = objects.concat(multipleBonds)
-    console.log({ objects })
-    //console.log("Time to get ligands bonds objects: "+(new Date().getTime()-start));
-    const spheres = atomsToSpheresInfo(ligandAtoms, 0.4, atomColours);
-    //console.log("Time to get ligands spheres: "+(new Date().getTime()-start));
-    objects.push(spheres);
-    //console.log("Time to get ligands objects: "+(new Date().getTime()-start));
-    console.log({ objects })
-    $this.clearBuffersOfStyle("ligands", glRef)
-    $this.addBuffersOfStyle(glRef, objects, "ligands")
-*/
 }
 
-let cylinderCache = {}
-
 const getDashedCylinder = (nsteps,cylinder_accu) => {
+    let cylinderCache = {}
 
     if([nsteps,cylinder_accu] in cylinderCache){
         return cylinderCache[[nsteps,cylinder_accu]]
@@ -1355,9 +1331,6 @@ MoorhenMolecule.prototype.drawRibbons = function (webMGAtoms, glRef) {
 
     $this.clearBuffersOfStyle(style, glRef)
     this.addBuffersOfStyle(glRef, objects, style)
-
-    //Restore odlHierarchy
-    return
 }
 
 MoorhenMolecule.prototype.drawSticks = function (webMGAtoms, glRef) {
@@ -1519,7 +1492,6 @@ MoorhenMolecule.prototype.applyTransform = function (glRef) {
 }
 
 MoorhenMolecule.prototype.mergeMolecules = async function (otherMolecules, glRef, doHide) {
-    //console.log('In merge molecules')
     const $this = this
     if (typeof doHide === 'undefined') doHide = false
     return $this.commandCentre.current.cootCommand({
@@ -1528,18 +1500,15 @@ MoorhenMolecule.prototype.mergeMolecules = async function (otherMolecules, glRef
         returnType: "merge_molecules_return",
         changesMolecules: [$this.molNo]
     }, true).then(async result => {
-        //console.log("Merge molecule result", { result })
         $this.setAtomsDirty(true)
         if (doHide) otherMolecules.forEach(molecule => {
-            //console.log('Hiding', { molecule })
             Object.keys(molecule.displayObjects).forEach(style => {
                 if (Array.isArray(molecule.displayObjects[style])) {
                     molecule.hide(style, glRef)
                 }
             })
         })
-        let answer = await $this.redraw(glRef)
-        //console.log({ answer })
+        await $this.redraw(glRef)
         return Promise.resolve(true)
     })
 }
@@ -1570,7 +1539,6 @@ MoorhenMolecule.prototype.addLigandOfType = async function (resType, at, glRef) 
 
 MoorhenMolecule.prototype.addDictShim = function (comp_id, unindentedLines) {
     var $this = this
-    //console.log({ comp_id, unindentedLines })
     var reassembledCif = unindentedLines.join("\n")
     $this.enerLib.addCIFAtomTypes(comp_id, reassembledCif);
     $this.enerLib.addCIFBondTypes(comp_id, reassembledCif);
@@ -1578,7 +1546,6 @@ MoorhenMolecule.prototype.addDictShim = function (comp_id, unindentedLines) {
 
 MoorhenMolecule.prototype.addDict = function (theData) {
     var $this = this
-    //console.log('In addDict', theData)
     var possibleIndentedLines = theData.split("\n");
     var unindentedLines = []
     var comp_id = 'list'

@@ -114,7 +114,10 @@ export const MoorhenSideBar = forwardRef((props, ref) => {
                 '& .MuiDrawer-paper': {
                     height: '100%',
                     boxSizing: 'border-box',
-                    backgroundColor: props.isDark ? 'grey' : 'white'
+                    backgroundColor: props.isDark ? 'grey' : 'white',
+                    '&::-webkit-scrollbar': {
+                        display: 'none'
+                    }
                 },
             }}
             variant="persistent"
