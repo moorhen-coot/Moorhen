@@ -332,7 +332,7 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
     return  <>
                 <ToastContainer style={{ zIndex: '0', marginTop: "5rem", marginLeft: '0.5rem', textAlign:'left', alignItems: 'left', maxWidth: convertViewtoPx(40, props.windowWidth)}} position='top-start' >
                     {scoresToastContents !== null && props.preferences.showScoresToast &&
-                        <Toast bg='light' onClose={() => {}} autohide={false} show={true} style={{width: '100%'}}>
+                        <Toast bg='Light' onClose={() => {}} autohide={false} show={true} style={{width: '100%'}}>
                             {scoresToastContents}
                         </Toast>
                     }
