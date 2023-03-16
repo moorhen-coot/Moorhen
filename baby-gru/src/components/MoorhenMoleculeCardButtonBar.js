@@ -100,6 +100,11 @@ export const MoorhenMoleculeCardButtonBar = (props) => {
             compressed: () => { return (<MoorhenRotateTranslateMoleculeMenuItem key={12} setPopoverIsShown={setPopoverIsShown} molecule={props.molecule} changeMolecules={props.changeMolecules} glRef={props.glRef}/>) },
             expanded: null
         },
+        13: {
+            label: 'Get Symmetry',
+            compressed: () => { return (<MenuItem key={13} variant="success" onClick={() => props.molecule.getSymmetry()}>Get symmetry</MenuItem>) },
+            expanded: null
+        },
     }
 
     const maximumAllowedWidth = props.sideBarWidth * 0.55
