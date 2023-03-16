@@ -223,7 +223,7 @@ main UI thread (as opposed to the CootWorker)-->
       let moorhenWrapper = new moorhen.MoorhenWrapper(urlPrefix)
       moorhenWrapper.addOnExportListener(exportCallback)
       await moorhenWrapper.importPreferences(userPreferences)
-      moorhenWrapper.renderMoorhen(rootId, exportCallback)
+      moorhenWrapper.renderMoorhen(rootId)
       await moorhenWrapper.waitForInitialisation()
       await moorhenWrapper.loadInputFiles(inputFiles)
       setTimeout(() => {moorhenWrapper.exportBackups()}, 6000);
