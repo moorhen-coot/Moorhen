@@ -6,7 +6,7 @@
 #installed (by default) in install/web_packages/baby-gru. The "install"
 #part of this can also be changed below.
 
-if command -v greadlink &> /dev/null; then
+if command -v greadlink > /dev/null 2>&1; then
     SOURCE_DIR=`dirname -- "$( greadlink -f -- "$0"; )"`
 else
     SOURCE_DIR=`dirname -- "$( readlink -f -- "$0"; )"`
