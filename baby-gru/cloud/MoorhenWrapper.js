@@ -12,14 +12,59 @@ import '../src/App.css';
 export default class MoorhenWrapper {
   constructor(urlPrefix) {
     this.urlPrefix = urlPrefix
-    this.controls = null
     this.monomerLibrary = `${this.urlPrefix}/baby-gru/monomers/`
+    this.controls = null
+    this.updateInterval = null
+    this.workMode = null
+    this.inputFiles = null
+    this.rootId = null
+    this.preferences = null
+    this._interval = null
     this.exportCallback = () => {}
     reportWebVitals()
   }
 
-  addMonomerLibrary(uri) {
+  setWorkMode(mode='build') {
+    if (['build', 'view', 'view-update'].includes(mode)) {
+      this.workMode = mode
+    } else {
+      console.error(`Unrecognised working mode set in moorhen ${mode}`)
+    } 
+  }
+
+  setPreferences(preferences) {
+    this.preferences = JSON.parse(preferences)
+  }
+
+  setRootId(rootId) {
+    this.rootId = rootId
+  }
+
+  setInputFiles(inputFiles) {
+    this.inputFiles = inputFiles
+  }
+
+  setUpdateInterval(miliseconds) {
+    this.updateInterval = miliseconds
+  }
+
+  setMonomerLibrary(uri) {
     this.monomerLibrary = uri
+  }
+
+  addOnExportListener(callbackFunction){
+    this.exportCallback = callbackFunction
+  }
+
+  removeUpdateInterval() {
+    if(this._interval !== null) {
+      clearInterval(this._interval)
+    }
+  }
+
+  forwardControls(controls) {
+    console.log('Fetched controls', {controls})
+    this.controls = controls
   }
 
   async exportBackups() {
@@ -52,7 +97,7 @@ export default class MoorhenWrapper {
     )
     let storedPrefereneces = {}
     Object.keys(defaultPreferences).forEach((key, index) => storedPrefereneces[key] = responses[index])
-    return storedPrefereneces
+    return JSON.stringify(storedPrefereneces)
   }
 
   async importPreferences(preferences) {
@@ -68,26 +113,6 @@ export default class MoorhenWrapper {
         }
       }))
     }
-  }
-
-  addOnExportListener(callbackFunction){
-    this.exportCallback = callbackFunction
-  }
-
-  forwardControls(controls) {
-    console.log('Fetched controls', {controls})
-    this.controls = controls
-  }
-
-  waitForInitialisation() {
-    const checkCootIsInitialised = resolve => {
-      if (this.controls) {
-        resolve()
-      } else {
-        setTimeout(_ => checkCootIsInitialised(resolve), 500);
-      }  
-    }
-    return new Promise(checkCootIsInitialised)
   }
 
   async loadMtzData(inputFile, mapName, selectedColumns) {
@@ -121,17 +146,15 @@ export default class MoorhenWrapper {
     })
   }
 
-  async loadInputFiles(inputFiles) {
-    let promises = []
-    for (const file of inputFiles) {
-      if (file.type === 'pdb') {
-        promises.push(this.loadPdbData(...file.args))
-      } else if (file.type === 'mtz') {
-        promises.push(this.loadMtzData(...file.args))
-      }
-    }
-
-    let results = await Promise.all(promises)
+  async loadInputFiles() {
+    const results = await Promise.all(
+      this.inputFiles.map(file => {
+        if (file.type === 'pdb') {
+          return this.loadPdbData(...file.args)
+        } else if (file.type === 'mtz') {
+          return this.loadMtzData(...file.args)
+        }
+    }))
 
     setTimeout(() => {
       results.forEach((result, index) => {
@@ -150,9 +173,32 @@ export default class MoorhenWrapper {
       })
     }, 2500)
   }
-  
-  renderMoorhen(rootId) {
-    const rootDiv = document.getElementById(rootId)
+
+  async updateMolecules() {
+    await Promise.all(
+      this.controls.moleculesRef.current.map(molecule => {
+        return molecule.delete(this.controls.glRef)
+          .then(_ => this.controls.changeMolecules({ action: 'Remove', item: molecule }))
+      })  
+    )
+    await Promise.all(
+      this.inputFiles.filter(file => file.type === 'pdb').map(file => this.loadInputFiles(...file.args))
+    )
+  }
+
+  waitForInitialisation() {
+    const checkCootIsInitialised = resolve => {
+      if (this.controls) {
+        resolve()
+      } else {
+        setTimeout(_ => checkCootIsInitialised(resolve), 500);
+      }  
+    }
+    return new Promise(checkCootIsInitialised)
+  }
+
+  renderMoorhen() {
+    const rootDiv = document.getElementById(this.rootId)
     const root = ReactDOM.createRoot(rootDiv)
     root.render(
       <React.StrictMode>
@@ -164,11 +210,29 @@ export default class MoorhenWrapper {
               disableFileUploads={true}
               exportCallback={this.exportCallback.bind(this)}
               monomerLibraryPath={this.monomerLibrary}
+              viewOnly={this.workMode === 'view'}
               />
           </PreferencesContextProvider>
         </div>
       </React.StrictMode>
     );
+  }
+
+  async start() {
+    if (this.preferences) {
+      await this.importPreferences(this.preferences)
+    }
+
+    this.renderMoorhen()
+    await this.waitForInitialisation()
+    await this.loadInputFiles()
+    
+    if(this.updateInterval !== null) {
+      this._interval = setInterval(()=> {
+        this.updateMolecules()
+      }, this.updateInterval)
+    }
+
   }
 }
 
