@@ -1392,7 +1392,7 @@ export const MoorhenAutoOpenMtzMenuItem = (props) => {
             const newMap = new MoorhenMap(props.commandCentre)
             newMap.molNo = mapMolNo
             newMap.name = `${file.name.replace('mtz', '')}-map-${index}`
-            newMap.isDifference = isDiffMapResponses[index]
+            newMap.isDifference = isDiffMapResponses[index].data.result.result
             props.changeMaps({ action: 'Add', item: newMap })
             if (index === 0) props.setActiveMap(newMap)
         })
