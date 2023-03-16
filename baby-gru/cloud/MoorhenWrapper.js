@@ -210,6 +210,7 @@ export default class MoorhenWrapper {
               disableFileUploads={true}
               exportCallback={this.exportCallback.bind(this)}
               monomerLibraryPath={this.monomerLibrary}
+              viewOnly={this.workMode === 'view'}
               />
           </PreferencesContextProvider>
         </div>
