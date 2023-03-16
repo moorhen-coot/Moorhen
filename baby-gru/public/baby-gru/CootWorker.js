@@ -305,8 +305,9 @@ const stringArrayToJSArray = (stringArray) => {
 
 const symmetryToJSData = (symmetryData) => {
     let result = []
+    console.log('DEBUG: in cootWorker helper function')
     const symmetrySize = symmetryData.size()
-
+    console.log(`DEBUG: the vector received from molecules_container.get_symmetry has a size of ${symmetrySize}`)
     for (let i = 0; i < symmetrySize; i++) {
         const currentSymmetry = symmetryData.at(i)
         const symTransT = currentSymmetry.first()
