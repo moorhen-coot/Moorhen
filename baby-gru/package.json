@@ -4,9 +4,12 @@
   "private": true,
   "main": "public/electron.js",
   "homepage": "./",
+  "author": "Paul Emsley, Filomeno Sanchez Rodriguez, Martin Noble, Stuart McNicholas",
+  "description": "Moorhen molecular graphics",
   "config": {
     "forge": {
       "packagerConfig": {
+        "asar": true,
         "icon": "src/icons/icon",
         "name": "Moorhen"
       },
@@ -14,7 +17,7 @@
         {
           "name": "@electron-forge/maker-squirrel",
           "config": {
-            "name": "simple_to_do_app3"
+            "name": "Moorhen"
           }
         },
         {
@@ -22,14 +25,6 @@
           "platforms": [
             "darwin","linux"
           ]
-        },
-        {
-          "name": "@electron-forge/maker-deb",
-          "config": {}
-        },
-        {
-          "name": "@electron-forge/maker-rpm",
-          "config": {}
         }
       ]
     }
@@ -89,7 +84,8 @@
     "dev": "concurrently -k \"BROWSER=none npm start\" \"npm:electron\"",
     "electron": "wait-on tcp:3000 && electron-forge start",
     "package": "react-scripts build && electron-forge package",
-    "make": "react-scripts build && electron-forge make --platform darwin && electron-forge make --platform linux"
+    "make": "react-scripts build && electron-forge make --platform darwin && electron-forge make --platform linux",
+    "make-win32": "react-scripts build && electron-forge make --platform win32"
   },
   "eslintConfig": {
     "extends": [
