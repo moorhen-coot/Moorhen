@@ -3,7 +3,7 @@ import { CheckOutlined, CloseOutlined } from "@mui/icons-material";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { OverlayTrigger, Popover, PopoverBody, PopoverHeader, Form, InputGroup, Button, FormSelect, Row, Col, SplitButton, Dropdown, Stack } from "react-bootstrap";
 import { SketchPicker } from "react-color";
-import { MoorhenMtzWrapper, readTextFile, readDataFile, getMultiColourRuleArgs } from "../utils/MoorhenUtils";
+import { MoorhenMtzWrapper, readTextFile, readDataFile } from "../utils/MoorhenUtils";
 import { MoorhenMap } from "../utils/MoorhenMap";
 import { MoorhenMolecule } from "../utils/MoorhenMolecule";
 import { MoorhenMoleculeSelect } from "./MoorhenMoleculeSelect";
@@ -1357,7 +1357,7 @@ export const MoorhenAutoOpenMtzMenuItem = (props) => {
 
     const panelContent = <>
         <Row>
-            <Form.Group style={{ width: '30rem', margin: '0.5rem', padding: '0rem' }} controlId="uploadCCP4Map" className="mb-3">
+            <Form.Group style={{ width: '30rem', margin: '0.5rem', padding: '0rem' }} controlId="uploadMTZ" className="mb-3">
                 <Form.Label>Auto open MTZ file</Form.Label>
                 <Form.Control ref={filesRef} type="file" multiple={false} accept={[".mtz"]} />
             </Form.Group>
@@ -1376,23 +1376,19 @@ export const MoorhenAutoOpenMtzMenuItem = (props) => {
             commandArgs: [mtzData]
         })
 
-        let promises = []
-        response.data.result.result.forEach(mapMolNo => {
-            promises.push(
-                props.commandCentre.current.cootCommand({
+        const isDiffMapResponses = await Promise.all(response.data.result.result.map(mapMolNo => {
+            return props.commandCentre.current.cootCommand({
                     returnType: "status",
                     command: "is_a_difference_map",
                     commandArgs: [mapMolNo]
                 })
-            )
-        })
-        const isDiffMapResponses = await Promise.all(promises)
+        }))
 
         response.data.result.result.forEach((mapMolNo, index) => {
             const newMap = new MoorhenMap(props.commandCentre)
             newMap.molNo = mapMolNo
             newMap.name = `${file.name.replace('mtz', '')}-map-${index}`
-            newMap.isDifference = isDiffMapResponses[index]
+            newMap.isDifference = isDiffMapResponses[index].data.result.result
             props.changeMaps({ action: 'Add', item: newMap })
             if (index === 0) props.setActiveMap(newMap)
         })
@@ -1583,6 +1579,82 @@ export const MoorhenGoToMenuItem = (props) => {
         onCompleted={onCompleted}
         setPopoverIsShown={props.setPopoverIsShown}
     />
+}
+
+export const MoorhenAssociateReflectionsToMap = (props) => {
+    const mapSelectRef = useRef(null)
+    const filesRef = useRef(null)
+    const fobsSelectRef = useRef(null)
+    const sigFobsSelectRef = useRef(null)
+    const freeRSelectRef = useRef(null)
+    const reflectionDataRef = useRef(null)
+    const [columns, setColumns] = useState({})
+    const [reflectionData, setReflectionData] = useState({})
+
+    const handleFileRead = async (e) => {
+        const babyGruMtzWrapper = new MoorhenMtzWrapper()
+        let allColumnNames = await babyGruMtzWrapper.loadHeaderFromFile(e.target.files[0])
+        setColumns(allColumnNames)
+        reflectionDataRef.current = babyGruMtzWrapper.reflectionData
+    }
+
+    const onCompleted = async () => { 
+        const selectedMap = props.maps.find(map => map.molNo === parseInt(mapSelectRef.current.value))
+        const selectedColumns = {
+            Fobs: fobsSelectRef.current.value, SigFobs: sigFobsSelectRef.current.value,
+            FreeR: freeRSelectRef.current.value, calcStructFact: true
+        }
+        await selectedMap.associateToReflectionData(selectedColumns, reflectionDataRef.current)    
+    }
+
+    const panelContent = <>
+        <Stack direction='vertical' gap={2}>
+                <MoorhenMapSelect {...props} ref={mapSelectRef} filterFunction={(map) => !map.hasReflectionData} allowAny={false} width='100%' label='Select a map' />
+            <Form.Group style={{ width: '20rem', margin: '0.5rem', padding: '0rem' }} controlId="uploadMTZ" className="mb-3">
+                <Form.Label>Upload MTZ file with reflection data</Form.Label>
+                <Form.Control ref={filesRef} type="file" multiple={false} accept={[".mtz"]} onChange={(e) => {
+                    handleFileRead(e)
+                }} />
+            </Form.Group>
+            <Stack direcotion='horizontal'>
+                <Form.Group style={{ width: '20rem', margin: '0.5rem', padding: '0rem' }} controlId="fobs" className="mb-3">
+                    <Form.Label>Fobs</Form.Label>
+                    <FormSelect size="sm" ref={fobsSelectRef} defaultValue="FP" onChange={(val) => { }}>
+                        {Object.keys(columns)
+                            .filter(key => columns[key] === 'F')
+                            .map(key => <option value={key} key={key}>{key}</option>
+                            )}
+                    </FormSelect>
+                </Form.Group>
+                <Form.Group style={{ width: '20rem', margin: '0.5rem', padding: '0rem' }} controlId="sigfobs" className="mb-3">
+                    <Form.Label>SIGFobs</Form.Label>
+                    <FormSelect size="sm" ref={sigFobsSelectRef} defaultValue="SIGFP" onChange={(val) => { }}>
+                        {Object.keys(columns)
+                            .filter(key => columns[key] === 'Q')
+                            .map(key => <option value={key} key={key}>{key}</option>
+                            )}
+                    </FormSelect>
+                </Form.Group>
+                <Form.Group style={{ width: '20rem', margin: '0.5rem', padding: '0rem' }} controlId="freeR" className="mb-3">
+                    <Form.Label>Free R</Form.Label>
+                    <FormSelect size="sm" ref={freeRSelectRef} defaultValue="FREER" onChange={(val) => { }}>
+                        {Object.keys(columns)
+                            .filter(key => columns[key] === 'I')
+                            .map(key => <option value={key} key={key}>{key}</option>
+                            )}
+                    </FormSelect>
+                </Form.Group>
+            </Stack>
+        </Stack>
+    </>
+
+    return <MoorhenMenuItem
+            id='associate-reflections-menu-item'
+            popoverContent={panelContent}
+            menuItemText="Associate map to reflection data..."
+            onCompleted={onCompleted}
+            setPopoverIsShown={props.setPopoverIsShown}
+            />
 }
 
 export const MoorhenDeleteUsingCidMenuItem = (props) => {

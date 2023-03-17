@@ -59,13 +59,14 @@ export function MoorhenMolecule(commandCentre, monomerLibraryPath) {
     this.monomerLibraryPath = (typeof monomerLibraryPath === 'undefined' ? "./baby-gru/monomers" : monomerLibraryPath)
 };
 
-MoorhenMolecule.prototype.getSymmetry = async function (radius=500) {
+MoorhenMolecule.prototype.getSymmetry = async function (radius=50) {
     const selectionAtoms = await this.gemmiAtomsForCid('/*/*/*/*')
-    const selectionCentre = centreOnGemmiAtoms(selectionAtoms)
+    const selectionCentre = centreOnGemmiAtoms(selectionAtoms).map(coord => -coord)
+    console.log(`DEBUG: Attempting to get symmetry for imol ${this.molNo} using selection radius ${radius} and coords 0, 0, 0`)
     const response = await this.commandCentre.current.cootCommand({
         returnType: "symmetry",
         command: 'get_symmetry',
-        commandArgs: [this.molNo, radius, selectionCentre[0]*-1, selectionCentre[1]*-1, selectionCentre[2]*-1]
+        commandArgs: [this.molNo, radius, 0, 0, 0]
     }, true)
     return response
 }

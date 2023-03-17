@@ -66,7 +66,6 @@ export const MoorhenContainer = (props) => {
     moleculesRef.current = molecules
     mapsRef.current = maps
     activeMapRef.current = activeMap
-    const innerWindowMarginHeight = convertRemToPx(0.5)
     const innerWindowMarginWidth = convertRemToPx(1)
 
     const setWindowDimensions = () => {
@@ -177,7 +176,9 @@ export const MoorhenContainer = (props) => {
     }, [])
 
     useEffect(() => {
-        consoleDivRef.current.scrollTop = consoleDivRef.current.scrollHeight;
+        if(consoleDivRef.current !== null) {
+            consoleDivRef.current.scrollTop = consoleDivRef.current.scrollHeight;
+        }
     }, [consoleMessage])
 
     const onAtomHovered = useCallback(identifier => {
@@ -269,7 +270,7 @@ export const MoorhenContainer = (props) => {
     }
 
     const webGLHeight = () => {
-        return windowHeight - (convertRemToPx(2.2))
+        return windowHeight - (props.viewOnly ? 0: convertRemToPx(2.2))
     }
 
     const isDark = isDarkBackground(...backgroundColor)
@@ -290,7 +291,7 @@ export const MoorhenContainer = (props) => {
             <span>Starting moorhen...</span>
         </Backdrop>
         
-        <MoorhenNavBar {...collectedProps} busy={busy}/>
+        {!props.viewOnly && <MoorhenNavBar {...collectedProps} busy={busy}/>}
         
     </div>
         <Container fluid className={`baby-gru ${theme}`}>
@@ -331,9 +332,9 @@ export const MoorhenContainer = (props) => {
                             drawInteractions={preferences.drawInteractions}
                         />
                     </div>
-                    <MoorhenButtonBar {...collectedProps} />
+                    {!props.viewOnly && <MoorhenButtonBar {...collectedProps} />}
                 </Col>
-                <MoorhenSideBar {...collectedProps} busy={busy} consoleMessage={consoleMessage} ref={consoleDivRef} />
+                {!props.viewOnly && <MoorhenSideBar {...collectedProps} busy={busy} consoleMessage={consoleMessage} ref={consoleDivRef} />}
             </Row>
             <ToastContainer style={{ marginTop: "5rem" }} position='top-center' >
                 <Toast bg='light' onClose={() => setShowToast(false)} autohide={true} delay={4000} show={showToast} style={{overflowY: 'scroll', maxHeight: convertViewtoPx(80, webGLHeight())}}>
@@ -351,5 +352,6 @@ MoorhenContainer.defaultProps = {
     monomerLibraryPath: './baby-gru/monomers',
     exportCallback: null,
     disableFileUploads: false,
-    extraMenus:[]
+    extraMenus: [],
+    viewOnly: false
 }

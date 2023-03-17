@@ -294,8 +294,10 @@ export const MoorhenCommandCentre = class {
 
 export const MoorhenMtzWrapper = class {
     constructor() {
-
+        this.reflectionData = null
+        this.columns = {}
     }
+    
     loadHeaderFromFile(file) {
         return new Promise((resolve, reject) => {
             readDataFile(file)
@@ -309,6 +311,8 @@ export const MoorhenMtzWrapper = class {
                     for (let ih = 0; ih < header_info.size(); ih += 2) {
                         newColumns[header_info.get(ih + 1)] = header_info.get(ih)
                     }
+                    this.columns = newColumns
+                    this.reflectionData = byteArray
                     resolve(newColumns)
                 })
         })
