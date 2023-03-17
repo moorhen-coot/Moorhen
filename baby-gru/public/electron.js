@@ -28,10 +28,11 @@ function createWindow() {
     }
   });
 
+  let server;
+
   if(!isDev) {
 
-      const PORT = 12345;
-
+      const PORT = 0;
       const exp = express();
 
       exp.use(function(req, res, next) {
@@ -45,16 +46,17 @@ function createWindow() {
       exp.get('/', (req, res) => {
               res.send('Hello World! '+path.join(__dirname,"..","build"));
       });
-
       
       //exp.use(express.static(__dirname + '../build/'));
-      exp.listen(PORT, () => console.log(`Server listening on port: ${PORT}`));
+      server = exp.listen(0, () => {
+              console.log('Listening on port:', server.address().port);
+      });
   }
 
   win.loadURL(
     isDev
       ? "http://localhost:9999"
-      : "http://localhost:12345/index.html"
+      : "http://localhost:"+server.address().port+"/index.html"
   );
 
   // Open the DevTools.
