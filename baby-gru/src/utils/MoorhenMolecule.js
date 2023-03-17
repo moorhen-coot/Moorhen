@@ -64,7 +64,7 @@ MoorhenMolecule.prototype.replaceModelWithFile = async function (fileUrl, glRef)
     const fetchResponse = await fetch(fileUrl)
     
     if (fetchResponse.ok) {
-        coordData = fetchResponse.text()
+        coordData = await fetchResponse.text()
     } else {
         return Promise.reject(`Error fetching data from url ${fileUrl}`)
     }

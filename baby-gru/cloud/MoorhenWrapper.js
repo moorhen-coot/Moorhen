@@ -178,7 +178,7 @@ export default class MoorhenWrapper {
     const moleculeInputFiles = this.inputFiles.filter(file => file.type === 'pdb')
     await Promise.all(
       this.controls.moleculesRef.current.map((molecule, index) => {
-        return molecule.replaceModelWithFile(moleculeInputFiles[index], this.controls.glRef)
+        return molecule.replaceModelWithFile(moleculeInputFiles[index].args[0], this.controls.glRef)
       })  
     )
   }
@@ -223,6 +223,16 @@ export default class MoorhenWrapper {
     this.renderMoorhen()
     await this.waitForInitialisation()
     await this.loadInputFiles()
+    
+    if (this.workMode === 'view') {
+      await Promise.all(
+        this.controls.mapsRef.current.map(map => {
+          return map.doCootContour(
+            this.controls.glRef, ...this.controls.glRef.current.origin.map(coord => -coord), 13.0, 0.8
+          )
+        })  
+      )
+    }
     
     if(this.updateInterval !== null) {
       this._interval = setInterval(()=> {
