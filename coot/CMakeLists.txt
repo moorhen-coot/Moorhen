@@ -545,6 +545,8 @@ install(DIRECTORY
 ${coot_src}/pixmaps
 DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/baby-gru)
 
+#[[
+#I do not think this should be done - the targets seem to be in repo anyway.
 install(FILES 
 ${coot_src}/api/gideondoesntapprove.mtz
 DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/baby-gru/tutorials RENAME moorhen-tutorial-map-number-1.mtz)
@@ -552,3 +554,4 @@ DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/baby-gru/tutorials RE
 install(FILES 
 ${coot_src}/api/gideondoesntapprove.pdb
 DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/baby-gru/tutorials RENAME moorhen-tutorial-structure-number-1.pdb)
+]]
