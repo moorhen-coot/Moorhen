@@ -1762,28 +1762,27 @@ export const MoorhenCopyFragmentUsingCidMenuItem = (props) => {
 
 export const MoorhenAddWatersMenuItem = (props) => {
     const moleculeRef = useRef(null)
-    const molNo = useRef(null)
 
     const panelContent = <>
         <MoorhenMoleculeSelect {...props} ref={moleculeRef} allowAny={false} />
     </>
 
     const onCompleted = useCallback(() => {
-        molNo.current = parseInt(moleculeRef.current.value)
+        const molNo = parseInt(moleculeRef.current.value)
         return props.commandCentre.current.cootCommand({
             command: 'add_waters',
-            commandArgs: [parseInt(molNo.current), props.activeMap.molNo],
+            commandArgs: [molNo, props.activeMap.molNo],
             returnType: "status",
-            changesMolecules: [parseInt(molNo.current)]
+            changesMolecules: [molNo]
         }, true).then(result => {
             props.molecules
-                .filter(molecule => molecule.molNo === molNo.current)
+                .filter(molecule => molecule.molNo === molNo)
                 .forEach(molecule => {
                     molecule.setAtomsDirty(true)
                     molecule.redraw(props.glRef)
                 })
         })
-    }, [props.molecules])
+    }, [props.molecules, props.activeMap, props.glRef, props.commandCentre])
 
     return <MoorhenMenuItem
         id='add-waters-menu-item'
