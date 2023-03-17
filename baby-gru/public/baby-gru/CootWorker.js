@@ -318,6 +318,7 @@ const symmetryToJSData = (symmetryData) => {
             y: symTransT.y(),
             z: symTransT.z(),
             asString: symTransT.symm_as_string,
+            isym: symTransT.isym(),
             us: cellTranslation.us,
             ws: cellTranslation.ws,
             vs: cellTranslation.vs
