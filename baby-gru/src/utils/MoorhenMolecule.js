@@ -59,6 +59,30 @@ export function MoorhenMolecule(commandCentre, monomerLibraryPath) {
     this.monomerLibraryPath = (typeof monomerLibraryPath === 'undefined' ? "./baby-gru/monomers" : monomerLibraryPath)
 };
 
+MoorhenMolecule.prototype.replaceModelWithFile = async function (fileUrl, glRef) {
+    let coordData
+    const fetchResponse = await fetch(fileUrl)
+    
+    if (fetchResponse.ok) {
+        coordData = fetchResponse.text()
+    } else {
+        return Promise.reject(`Error fetching data from url ${fileUrl}`)
+    }
+
+    const cootResponse = await this.commandCentre.current.cootCommand({
+        returnType: "status",
+        command: 'shim_replace_molecule_by_model_from_file',
+        commandArgs: [this.molNo, coordData]
+    }, true)
+    
+    if (cootResponse.data.result.status === 'Completed') {
+        this.atomsDirty = true
+        return this.redraw(glRef)    
+    }
+    
+    return Promise.reject(cootResponse.data.result.status)
+}
+
 MoorhenMolecule.prototype.getSymmetry = async function (radius=50) {
     const selectionAtoms = await this.gemmiAtomsForCid('/*/*/*/*')
     const selectionCentre = centreOnGemmiAtoms(selectionAtoms).map(coord => -coord)
