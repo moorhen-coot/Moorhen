@@ -449,7 +449,7 @@ FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/d")
 FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/h")
 FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/n")
 FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/list")
-FILE(COPY ../checkout/libccp4/data/symop.lib DESTINATION data/ccp4_lib/data )
+FILE(COPY ../checkout/libccp4/data/syminfo.lib DESTINATION data/ccp4_lib/data )
 FILE(COPY ../checkout/monomers/a/ALA.cif DESTINATION data/ccp4_lib/data/monomers/a )
 FILE(COPY ../checkout/monomers/a/ASP.cif DESTINATION data/ccp4_lib/data/monomers/a )
 FILE(COPY ../checkout/monomers/a/ASN.cif DESTINATION data/ccp4_lib/data/monomers/a )
@@ -545,6 +545,8 @@ install(DIRECTORY
 ${coot_src}/pixmaps
 DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/baby-gru)
 
+#[[
+#I do not think this should be done - the targets seem to be in repo anyway.
 install(FILES 
 ${coot_src}/api/gideondoesntapprove.mtz
 DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/baby-gru/tutorials RENAME moorhen-tutorial-map-number-1.mtz)
@@ -552,3 +554,4 @@ DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/baby-gru/tutorials RE
 install(FILES 
 ${coot_src}/api/gideondoesntapprove.pdb
 DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/baby-gru/tutorials RENAME moorhen-tutorial-structure-number-1.pdb)
+]]
