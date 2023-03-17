@@ -567,6 +567,15 @@ function base64ToArrayBuffer(base64) {
     return bytes.buffer;
 }
 
+const replace_molecule_by_model_from_file = (imol, coordData) => {
+    const theGuid = guid()
+    const tempFilename = `./${theGuid}.pdb`
+    cootModule.FS_createDataFile(".", tempFilename, coordData, true, true)
+    const result = molecules_container.replace_molecule_by_model_from_file(imol, tempFilename)
+    cootModule.FS_unlink(tempFilename)
+    return result
+}
+
 const new_positions_for_residue_atoms = (molToUpDate, residues) => {
     let success = 0
     residues.forEach(atoms => {
@@ -810,6 +819,9 @@ onmessage = function (e) {
             }
             else if (command === 'shim_associate_data_mtz_file_with_map') {
                 cootResult = associate_data_mtz_file_with_map(...commandArgs)
+            }
+            else if (command === 'shim_replace_molecule_by_model_from_file') {
+                cootResult = replace_molecule_by_model_from_file(...commandArgs)
             }
             else {
                 cootResult = molecules_container[command](...commandArgs)
