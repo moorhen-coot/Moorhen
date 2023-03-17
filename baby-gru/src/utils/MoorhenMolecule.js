@@ -83,16 +83,18 @@ MoorhenMolecule.prototype.replaceModelWithFile = async function (fileUrl, glRef)
     return Promise.reject(cootResponse.data.result.status)
 }
 
-MoorhenMolecule.prototype.getSymmetry = async function (radius=50) {
+MoorhenMolecule.prototype.displaySymmetry = async function (radius=10) {
     const selectionAtoms = await this.gemmiAtomsForCid('/*/*/*/*')
-    const selectionCentre = centreOnGemmiAtoms(selectionAtoms).map(coord => -coord)
-    console.log(`DEBUG: Attempting to get symmetry for imol ${this.molNo} using selection radius ${radius} and coords 0, 0, 0`)
+    const selectionCentre = centreOnGemmiAtoms(selectionAtoms)
+    console.log(`DEBUG: Attempting to get symmetry for imol ${this.molNo} using selection radius ${radius} and coords ${selectionCentre}`)
     const response = await this.commandCentre.current.cootCommand({
         returnType: "symmetry",
         command: 'get_symmetry',
-        commandArgs: [this.molNo, radius, 0, 0, 0]
+        commandArgs: [this.molNo, radius, ...selectionCentre]
     }, true)
-    return response
+    console.log('DEBUG: Received the following symmetry data:')
+    console.log(response.data.result.result)
+    
 }
 
 MoorhenMolecule.prototype.setBackgroundColour = function (backgroundColour) {
