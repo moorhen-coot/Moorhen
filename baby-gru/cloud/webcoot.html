@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en" class="stop-scrolling">
+<head>
+  <title>Moorhen</title>
+  <base href="[[baseurl]]" />
+  <meta charset="utf-8"/>
+  <link rel="icon"             href="./favicon.ico"/>
+  <meta name="viewport"        content="width=device-width,initial-scale=1"/>
+  <meta name="theme-color"     content="#000000"/>
+  <meta name="description"     content="Web site created using create-react-app"/>
+  <link rel="apple-touch-icon" href="./public/logo192.png"/>
+  <link rel="manifest"         href="./manifest.json"/>
+  <script>// See https://github.com/facebook/react/issues/20829#issuecomment-802088260
+    if (!crossOriginIsolated) SharedArrayBuffer = ArrayBuffer;
+    window.onload = () => {
+      createCCP4Module({
+        print(t) { console.log(["output", t]) },
+        printErr(t) { console.log(["output", t]); }
+      })
+        .then(function (CCP4Mod) {
+          window.CCP4Module = CCP4Mod;
+        })
+        .catch((e) => {
+          console.log("CCP4 problem :(");
+          console.log(e);
+        });
+    }
+  </script>
+  <script src="./baby-gru/wasm/web_example.js"></script>
+  <script src="./moorhen.js" charset="utf-8"></script>
+  <link   rel="icon"         href="./favicon.ico">
+  <script defer="defer"      src="./moorhen.js"></script>
+  <link   href="./main670c226121564d4f92f3.css" rel="stylesheet"/>
+</head>
+<body>
+  <noscript>You need to enable JavaScript to run this app.</noscript>
+  <div id="root"></div>
+  <script defer="defer">
+    const rootId    = "root"
+    const urlPrefix = "."
+    const exportToCloudCallback = (molName, molData) => {
+      window.parent.postMessage ({
+          'command' : 'saveFile',
+          'fpath'   : molName + '.pdb',
+          'data'    : molData,
+          'meta'    : [[meta]]
+      }, window.location );
+    }
+
+    let moorhenWrapper = new moorhen.MoorhenWrapper(urlPrefix)
+    moorhenWrapper.addOnExportListener(exportToCloudCallback)
+    moorhenWrapper.setRootId(rootId)
+    moorhenWrapper.setInputFiles([[inputFiles]])
+    moorhenWrapper.start()
+
+  </script>
+</body>
+</html>
