@@ -435,7 +435,7 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
                     drawMissingLoops={props.drawMissingLoops}
                     drawInteractions={props.drawInteractions} />
 
-                {showContextMenu && 
+                {showContextMenu && !props.viewOnly &&
                 <MoorhenContextMenu 
                     urlPrefix={props.urlPrefix}
                     glRef={glRef}
