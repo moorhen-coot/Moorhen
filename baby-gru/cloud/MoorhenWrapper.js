@@ -15,7 +15,7 @@ export default class MoorhenWrapper {
     this.monomerLibrary = `${this.urlPrefix}/baby-gru/monomers/`
     this.controls = null
     this.updateInterval = null
-    this.workMode = null
+    this.workMode = 'build'
     this.inputFiles = null
     this.rootId = null
     this.preferences = null
