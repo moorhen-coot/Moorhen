@@ -175,14 +175,11 @@ export default class MoorhenWrapper {
   }
 
   async updateMolecules() {
+    const moleculeInputFiles = this.inputFiles.filter(file => file.type === 'pdb')
     await Promise.all(
-      this.controls.moleculesRef.current.map(molecule => {
-        return molecule.delete(this.controls.glRef)
-          .then(_ => this.controls.changeMolecules({ action: 'Remove', item: molecule }))
+      this.controls.moleculesRef.current.map((molecule, index) => {
+        return molecule.replaceModelWithFile(moleculeInputFiles[index], this.controls.glRef)
       })  
-    )
-    await Promise.all(
-      this.inputFiles.filter(file => file.type === 'pdb').map(file => this.loadInputFiles(...file.args))
     )
   }
 
