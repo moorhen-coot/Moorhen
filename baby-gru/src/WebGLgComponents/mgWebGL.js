@@ -3205,8 +3205,6 @@ class MGWebGL extends Component {
             requestAnimationFrame(this.setOriginOrientationAndZoomFrame.bind(this,oo,d,qOld,qNew,oldZoom,zoomDelta,iframe+1))
             return
         }
-        const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: {origin: this.origin,  modifiedMolecule: null} })
-        document.dispatchEvent(mapUpdateEvent);
         const originUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: this.origin} })
         document.dispatchEvent(originUpdateEvent);
     }
@@ -3260,16 +3258,12 @@ class MGWebGL extends Component {
             requestAnimationFrame(this.drawOriginFrame.bind(this,oo,d,iframe+1))
             return
         }
-        const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: {origin: this.origin,  modifiedMolecule: null} })
-        document.dispatchEvent(mapUpdateEvent);
         const originUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: this.origin} })
         document.dispatchEvent(originUpdateEvent);
     }
 
     setOrigin(o, doDrawScene) {
         this.origin = o;
-        const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: {origin: this.origin,  modifiedMolecule: null} })
-        document.dispatchEvent(mapUpdateEvent);
         const originUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: this.origin} })
         document.dispatchEvent(originUpdateEvent);
         //default is to drawScene, unless doDrawScene provided and value is false

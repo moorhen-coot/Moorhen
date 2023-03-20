@@ -90,8 +90,8 @@ const MoorhenContextQuickEditButton = (props) => {
       }
     }
 
-    const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: props.selectedMolecule.molNo } })
-    document.dispatchEvent(mapUpdateEvent)
+    const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: props.selectedMolecule.molNo } })
+    document.dispatchEvent(scoresUpdateEvent)
     props.selectedMolecule.setAtomsDirty(true)
     await Promise.all([
       props.selectedMolecule.redraw(props.glRef),
@@ -207,8 +207,8 @@ export const MoorhenContextMenu = (props) => {
       molecule.unhideAll(props.glRef)
       setOverrideMenuContents(false)
       setOpacity(1)
-      const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: molecule.molNo } })
-      document.dispatchEvent(mapUpdateEvent)
+      const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: molecule.molNo } })
+      document.dispatchEvent(scoresUpdateEvent)
     }
 
     const rejectTransform = async () => {

@@ -342,8 +342,8 @@ export const MoorhenRotateTranslateMoleculeMenuItem = (props) => {
         props.changeMolecules({ action: 'Remove', item: ghostMolecule.current })
         ghostMolecule.current.delete(props.glRef)
         document.body.click()
-        const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: {origin: props.glRef.current.origin,  modifiedMolecule: props.molecule.molNo} })
-        document.dispatchEvent(mapUpdateEvent)
+        const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: {origin: props.glRef.current.origin,  modifiedMolecule: props.molecule.molNo} })
+        document.dispatchEvent(scoresUpdateEvent)
     }
 
     const rejectTransform = () => {
@@ -958,8 +958,8 @@ export const MoorhenImportDictionaryMenuItem = (props) => {
                             const otherMolecules = [newMolecule]
                             return toMolecule.mergeMolecules(otherMolecules, props.glRef, true)
                                 .then(_ => {
-                                    const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: {origin: props.glRef.current.origin,  modifiedMolecule: toMolecule.molNo} })
-                                    document.dispatchEvent(mapUpdateEvent)
+                                    const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: {origin: props.glRef.current.origin,  modifiedMolecule: toMolecule.molNo} })
+                                    document.dispatchEvent(scoresUpdateEvent)
                                     return toMolecule.redraw(props.glRef)
                                 })
                         } else {
@@ -1518,8 +1518,8 @@ export const MoorhenMergeMoleculesMenuItem = (props) => {
         }
         await toMolecule.mergeMolecules(otherMolecules, props.glRef, true)
         props.setPopoverIsShown(false)
-        const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: {origin: props.glRef.current.origin,  modifiedMolecule: toMolecule.molNo} })
-        document.dispatchEvent(mapUpdateEvent)
+        const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: {origin: props.glRef.current.origin,  modifiedMolecule: toMolecule.molNo} })
+        document.dispatchEvent(scoresUpdateEvent)
     }, [toRef.current, fromRef.current, props.molecules, props.fromMolNo, props.glRef])
 
     return <MoorhenMenuItem
@@ -1791,8 +1791,8 @@ export const MoorhenAddWatersMenuItem = (props) => {
         const selectedMolecule = props.molecules.find(molecule => molecule.molNo === molNo)
         selectedMolecule.setAtomsDirty(true)
         await selectedMolecule.redraw(props.glRef)
-        const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: {origin: props.glRef.current.origin,  modifiedMolecule: molNo} })
-        document.dispatchEvent(mapUpdateEvent)       
+        const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: {origin: props.glRef.current.origin,  modifiedMolecule: molNo} })
+        document.dispatchEvent(scoresUpdateEvent)       
         
     }, [props.molecules, props.activeMap, props.glRef, props.commandCentre])
 

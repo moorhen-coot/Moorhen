@@ -264,15 +264,15 @@ export const MoorhenMoleculeCard = (props) => {
     const handleUndo = async () => {
         await props.molecule.undo(props.glRef)
         props.setCurrentDropdownMolNo(-1)
-        const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: props.molecule.molNo } })
-        document.dispatchEvent(mapUpdateEvent)
+        const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: props.molecule.molNo } })
+        document.dispatchEvent(scoresUpdateEvent)
     }
 
     const handleRedo = async () => {
         await props.molecule.redo(props.glRef)
         props.setCurrentDropdownMolNo(-1)
-        const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: props.molecule.molNo } })
-        document.dispatchEvent(mapUpdateEvent)
+        const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: props.molecule.molNo } })
+        document.dispatchEvent(scoresUpdateEvent)
     }
 
     const handleCentering = () => {

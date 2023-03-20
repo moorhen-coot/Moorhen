@@ -136,7 +136,7 @@ export const MoorhenMapCard = (props) => {
         }
     }
 
-    const handleUpdateMapCallback = useCallback(e => {
+    const handleOriginUpdate = useCallback(e => {
         nextOrigin.current = [...e.detail.origin.map(coord => -coord)]
         props.map.contourLevel = mapContourLevel
         props.map.mapRadius = mapRadius
@@ -182,17 +182,17 @@ export const MoorhenMapCard = (props) => {
     }, [currentName]);
 
     useEffect(() => {
-        document.addEventListener("mapUpdate", handleUpdateMapCallback);
+        document.addEventListener("originUpdate", handleOriginUpdate);
         document.addEventListener("wheelContourLevelChanged", handleWheelContourLevelCallback);
         document.addEventListener("newMapContour", handleNewMapContour);
         document.addEventListener("mapRadiusChanged", handleRadiusChangeCallback);
         return () => {
-            document.removeEventListener("mapUpdate", handleUpdateMapCallback);
+            document.removeEventListener("originUpdate", handleOriginUpdate);
             document.removeEventListener("wheelContourLevelChanged", handleWheelContourLevelCallback);
             document.removeEventListener("newMapContour", handleNewMapContour);
             document.removeEventListener("mapRadiusChanged", handleRadiusChangeCallback);
         };
-    }, [handleUpdateMapCallback, props.activeMap?.molNo]);
+    }, [handleOriginUpdate, props.activeMap?.molNo]);
 
     useEffect(() => {
         props.map.setAlpha(mapOpacity,props.glRef)

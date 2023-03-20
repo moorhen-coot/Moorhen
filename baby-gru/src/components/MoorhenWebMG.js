@@ -113,6 +113,15 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
     const handleScoreUpdates = useCallback(async (e) => {
         if (e.detail?.modifiedMolecule !== null && connectedMolNo && connectedMolNo.molecule === e.detail.modifiedMolecule) {
             
+            await Promise.all(
+                props.maps.filter(map => connectedMolNo.uniqueMaps.includes(map.molNo)).map(map => {
+                    return map.doCootContour(glRef,
+                        ...glRef.current.origin.map(coord => -coord),
+                        map.mapRadius,
+                        map.contourLevel)
+                })
+            )
+            
             const currentScores = await props.commandCentre.current.cootCommand({
                 returnType: "r_factor_stats",
                 command: "get_r_factor_stats",
@@ -177,7 +186,7 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
             }
         } 
 
-    }, [props.commandCentre, connectedMolNo, scores, props.preferences.defaultUpdatingScores])
+    }, [props.commandCentre, connectedMolNo, scores, props.preferences.defaultUpdatingScores, glRef, props.maps])
 
     const handleDisconnectMaps = () => {
         scores.current = {}
@@ -294,9 +303,9 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
     }, [handleConnectMaps]);
 
     useEffect(() => {
-        document.addEventListener("mapUpdate", handleScoreUpdates);
+        document.addEventListener("scoresUpdate", handleScoreUpdates);
         return () => {
-            document.removeEventListener("mapUpdate", handleScoreUpdates);
+            document.removeEventListener("scoresUpdate", handleScoreUpdates);
         };
 
     }, [handleScoreUpdates]);
