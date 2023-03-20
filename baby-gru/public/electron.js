@@ -1,5 +1,6 @@
 const path = require("path");
 const express = require('express');
+const process = require('process');
 
 const { app, BrowserWindow } = require("electron");
 const isDev = require("electron-is-dev");
@@ -31,6 +32,9 @@ function createWindow() {
 
   let server;
 
+  if(process.argv.length>1){
+  win.loadURL(process.argv[1]);
+  } else {
   if(!isDev) {
 
       const PORT = 0;
@@ -63,6 +67,7 @@ function createWindow() {
   // Open the DevTools.
   if (isDev) {
     win.webContents.openDevTools({ mode: "detach" });
+  }
   }
 }
 
