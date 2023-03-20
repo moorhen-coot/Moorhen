@@ -52,7 +52,7 @@
 
     let moorhenWrapper = new moorhen.MoorhenWrapper ( urlPrefix );
     switch (mode)  {  
-      case "view-update" : moorhenWrapper.setWorkMode         ( 'view-update' );
+      case "view-update" : moorhenWrapper.setWorkMode         ( 'view' );
                            moorhenWrapper.addOnExportListener ( exportToCloudCallback );
                            moorhenWrapper.setRootId           ( rootId );
                            moorhenWrapper.setInputFiles       ( inputFiles );
