@@ -48,8 +48,8 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
             }
             molecule.setAtomsDirty(true)
             molecule.redraw(props.glRef)
-            const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: molecule.molNo } })
-            document.dispatchEvent(mapUpdateEvent)
+            const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: molecule.molNo } })
+            document.dispatchEvent(scoresUpdateEvent)
             if (props.onExit) {
                 props.onExit(molecule, chosenAtom, result)
             }
@@ -656,8 +656,8 @@ export const MoorhenRotateTranslateZoneButton = (props) => {
         fragmentMolecule.current.delete(glRef)
         chosenMolecule.current.unhideAll(glRef)
         setShowAccept(false)
-        const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: { origin: glRef.current.origin, modifiedMolecule: chosenMolecule.current.molNo } })
-        document.dispatchEvent(mapUpdateEvent)
+        const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: glRef.current.origin, modifiedMolecule: chosenMolecule.current.molNo } })
+        document.dispatchEvent(scoresUpdateEvent)
     }, [changeMolecules, glRef])
 
     const rejectTransform = useCallback(async (e) => {
@@ -944,8 +944,8 @@ export const MoorhenAddSimpleButton = (props) => {
         if (selectedMolecule) {
             await selectedMolecule.addLigandOfType(value, props.glRef.current.origin.map(coord => -coord), props.glRef)
             props.setSelectedButtonIndex(null)
-            const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: selectedMolecule.molNo } })
-            document.dispatchEvent(mapUpdateEvent)    
+            const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: selectedMolecule.molNo } })
+            document.dispatchEvent(scoresUpdateEvent)    
         }
     }, [props.molecules, props.glRef])
 

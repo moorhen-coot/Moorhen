@@ -58,8 +58,8 @@ export const MoorhenPepflipsDifferenceMap = (props) => {
             const selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedModel)
             selectedMolecule.setAtomsDirty(true)
             selectedMolecule.redraw(props.glRef)
-            const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: {origin: props.glRef.current.origin,  modifiedMolecule: selectedMolecule.molNo} })
-            document.dispatchEvent(mapUpdateEvent)
+            const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: {origin: props.glRef.current.origin,  modifiedMolecule: selectedMolecule.molNo} })
+            document.dispatchEvent(scoresUpdateEvent)
         }
 
         if (args.every(arg => arg !== null)) {

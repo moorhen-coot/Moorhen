@@ -601,6 +601,7 @@ export const getNameLabel = (item) => {
                 overlay={
                     <Tooltip id="name-label-tooltip" 
                     style={{
+                        zIndex: 9999,
                         backgroundColor: 'rgba(0, 0, 0, 0.85)',
                         padding: '2px 10px',
                         color: 'white',

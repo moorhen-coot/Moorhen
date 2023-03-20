@@ -32,8 +32,8 @@ export const MoorhenFillMissingAtoms = (props) => {
             }
             selectedMolecule.setAtomsDirty(true)
             selectedMolecule.redraw(props.glRef)
-            const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: {origin: props.glRef.current.origin,  modifiedMolecule: selectedMolecule.molNo} })
-            document.dispatchEvent(mapUpdateEvent);    
+            const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: {origin: props.glRef.current.origin,  modifiedMolecule: selectedMolecule.molNo} })
+            document.dispatchEvent(scoresUpdateEvent);    
         }
         if (args.every(arg => arg !== null)) {
             fillPartialResidue(...args)

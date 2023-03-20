@@ -264,15 +264,15 @@ export const MoorhenMoleculeCard = (props) => {
     const handleUndo = async () => {
         await props.molecule.undo(props.glRef)
         props.setCurrentDropdownMolNo(-1)
-        const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: props.molecule.molNo } })
-        document.dispatchEvent(mapUpdateEvent)
+        const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: props.molecule.molNo } })
+        document.dispatchEvent(scoresUpdateEvent)
     }
 
     const handleRedo = async () => {
         await props.molecule.redo(props.glRef)
         props.setCurrentDropdownMolNo(-1)
-        const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: props.molecule.molNo } })
-        document.dispatchEvent(mapUpdateEvent)
+        const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: props.molecule.molNo } })
+        document.dispatchEvent(scoresUpdateEvent)
     }
 
     const handleCentering = () => {
@@ -342,7 +342,7 @@ export const MoorhenMoleculeCard = (props) => {
     return <Card className="px-0" style={{ marginBottom: '0.5rem', padding: '0' }} key={props.molecule.molNo}>
         <Card.Header style={{ padding: '0.1rem' }}>
             <Stack gap={2} direction='horizontal'>
-                <Col className='align-items-center' style={{ display: 'flex', justifyContent: 'left' }}>
+                <Col className='align-items-center' style={{ display: 'flex', justifyContent: 'left', color: props.isDark ? 'white' : 'black'}}>
                     {getNameLabel(props.molecule)}
                 </Col>
                 <Col style={{ display: 'flex', justifyContent: 'right' }}>
