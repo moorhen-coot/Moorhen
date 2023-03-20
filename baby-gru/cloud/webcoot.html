@@ -36,8 +36,11 @@
   <noscript>You need to enable JavaScript to run this app.</noscript>
   <div id="root"></div>
   <script defer="defer">
-    const rootId    = "root"
-    const urlPrefix = "."
+    const rootId     = 'root';
+    const mode       = '[[mode]]';
+    const inputFiles = [[inputFiles]];
+    const interval   = [[interval]];
+    const urlPrefix  = '.';
     const exportToCloudCallback = (molName, molData) => {
       window.parent.postMessage ({
           'command' : 'saveFile',
@@ -47,12 +50,26 @@
       }, window.location );
     }
 
-    let moorhenWrapper = new moorhen.MoorhenWrapper(urlPrefix)
-    moorhenWrapper.addOnExportListener(exportToCloudCallback)
-    moorhenWrapper.setRootId(rootId)
-    moorhenWrapper.setInputFiles([[inputFiles]])
-    moorhenWrapper.start()
-
+    let moorhenWrapper = new moorhen.MoorhenWrapper ( urlPrefix );
+    switch (mode)  {  
+      case "view-update" : moorhenWrapper.setWorkMode         ( 'view-update' );
+                           moorhenWrapper.addOnExportListener ( exportToCloudCallback );
+                           moorhenWrapper.setRootId           ( rootId );
+                           moorhenWrapper.setInputFiles       ( inputFiles );
+                           moorhenWrapper.setUpdateInterval   ( interval );
+                           moorhenWrapper.start()
+                       break;
+      case "view-update" : moorhenWrapper.setWorkMode         ( 'view' );
+                           moorhenWrapper.addOnExportListener ( exportToCloudCallback );
+                           moorhenWrapper.setRootId           ( rootId );
+                           moorhenWrapper.setInputFiles       ( inputFiles );
+                           moorhenWrapper.start()
+                       break;
+      default            :  moorhenWrapper.addOnExportListener  ( exportToCloudCallback );
+                            moorhenWrapper.setRootId            ( rootId );
+                            moorhenWrapper.setInputFiles        ( inputFiles );
+                            moorhenWrapper.start()
+    }
   </script>
 </body>
 </html>
