@@ -15,11 +15,10 @@ export default class MoorhenWrapper {
     this.monomerLibrary = `${this.urlPrefix}/baby-gru/monomers/`
     this.controls = null
     this.updateInterval = null
-    this.workMode = null
+    this.workMode = 'build'
     this.inputFiles = null
     this.rootId = null
     this.preferences = null
-    this._interval = null
     this.exportCallback = () => {}
     reportWebVitals()
   }
@@ -54,12 +53,6 @@ export default class MoorhenWrapper {
 
   addOnExportListener(callbackFunction){
     this.exportCallback = callbackFunction
-  }
-
-  removeUpdateInterval() {
-    if(this._interval !== null) {
-      clearInterval(this._interval)
-    }
   }
 
   forwardControls(controls) {
@@ -174,11 +167,17 @@ export default class MoorhenWrapper {
     }, 2500)
   }
 
+  startMoleculeUpdates() {
+    setTimeout(() => {
+      this.updateMolecules().then(this.startMoleculeUpdates())
+    }, this.updateInterval)
+  }
+
   async updateMolecules() {
     const moleculeInputFiles = this.inputFiles.filter(file => file.type === 'pdb')
     await Promise.all(
       this.controls.moleculesRef.current.map((molecule, index) => {
-        return molecule.replaceModelWithFile(moleculeInputFiles[index], this.controls.glRef)
+        return molecule.replaceModelWithFile(moleculeInputFiles[index].args[0], this.controls.glRef)
       })  
     )
   }
@@ -224,10 +223,18 @@ export default class MoorhenWrapper {
     await this.waitForInitialisation()
     await this.loadInputFiles()
     
+    if (this.workMode === 'view') {
+      await Promise.all(
+        this.controls.mapsRef.current.map(map => {
+          return map.doCootContour(
+            this.controls.glRef, ...this.controls.glRef.current.origin.map(coord => -coord), 13.0, 0.8
+          )
+        })  
+      )
+    }
+    
     if(this.updateInterval !== null) {
-      this._interval = setInterval(()=> {
-        this.updateMolecules()
-      }, this.updateInterval)
+      this.startMoleculeUpdates()
     }
 
   }

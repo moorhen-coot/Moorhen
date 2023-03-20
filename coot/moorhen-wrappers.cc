@@ -572,6 +572,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("add_to_non_drawn_bonds",&molecules_container_t::add_to_non_drawn_bonds)
     .function("clear_non_drawn_bonds",&molecules_container_t::clear_non_drawn_bonds)
     .function("file_name_to_string",&molecules_container_t::file_name_to_string)
+    .function("replace_molecule_by_model_from_file",&molecules_container_t::replace_molecule_by_model_from_file)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<>()
@@ -680,6 +681,9 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<symm_trans_t>("symm_trans_t")
     .property("symm_as_string",&symm_trans_t::symm_as_string)
+    .function("is_identity",&symm_trans_t::is_identity)
+    .function("add_shift",&symm_trans_t::add_shift)
+    .function("isym",&symm_trans_t::isym)
     .function("x",&symm_trans_t::x)
     .function("y",&symm_trans_t::y)
     .function("z",&symm_trans_t::z)
@@ -759,6 +763,10 @@ EMSCRIPTEN_BINDINGS(my_module) {
     value_object<std::pair<coot::residue_spec_t,std::string>>("residue_spec_t_string_pair")
         .field("first",&std::pair<coot::residue_spec_t,std::string>::first)
         .field("second",&std::pair<coot::residue_spec_t,std::string>::second)
+    ;
+    value_object<std::pair<symm_trans_t, Cell_Translation>>("sym_trans_t_cell_translation_pair")
+        .field("first",&std::pair<symm_trans_t, Cell_Translation>::first)
+        .field("second",&std::pair<symm_trans_t, Cell_Translation>::second)
     ;
     value_object<std::pair<std::map<coot::residue_spec_t, coot::util::density_correlation_stats_info_t>,std::map<coot::residue_spec_t, coot::util::density_correlation_stats_info_t>>>("map_residue_spec_t_:density_correlation_stats_info_t_pair")
         .field("first",&std::pair<std::map<coot::residue_spec_t, coot::util::density_correlation_stats_info_t>,std::map<coot::residue_spec_t, coot::util::density_correlation_stats_info_t>>::first)

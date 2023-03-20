@@ -309,22 +309,22 @@ const symmetryToJSData = (symmetryData) => {
     const symmetrySize = symmetryData.size()
     console.log(`DEBUG: the vector received from molecules_container.get_symmetry has a size of ${symmetrySize}`)
     for (let i = 0; i < symmetrySize; i++) {
-        const currentSymmetry = symmetryData.at(i)
-        const symTransT = currentSymmetry.first()
-        const cellTranslation = currentSymmetry.second()
+        const currentSymmetry = symmetryData.get(i)
+        const symTransT = currentSymmetry.first
+        const cellTranslation = currentSymmetry.second
 
         result.push({
-            x: currentSymmetry.x(),
-            y: currentSymmetry.y(),
-            z: currentSymmetry.z(),
-            asString: currentSymmetry.symm_as_string(),
+            x: symTransT.x(),
+            y: symTransT.y(),
+            z: symTransT.z(),
+            asString: symTransT.symm_as_string,
+            isym: symTransT.isym(),
             us: cellTranslation.us,
             ws: cellTranslation.ws,
             vs: cellTranslation.vs
         })
-
+        
         symTransT.delete()
-        currentSymmetry.delete()
     }
 
     symmetryData.delete()

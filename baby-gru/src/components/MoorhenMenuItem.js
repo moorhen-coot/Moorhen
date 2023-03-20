@@ -70,9 +70,9 @@ export const MoorhenMenuItem = (props) => {
                         </PopoverBody>
                     </Popover>
         }>
-            <MenuItem className={props.textClassName} id={props.id} variant="success">{props.menuItemText}</MenuItem>
+            <MenuItem disabled={props.disabled} className={props.textClassName} id={props.id} variant="success">{props.menuItemText}</MenuItem>
         </OverlayTrigger> :
-            <MenuItem className={props.textClassName} variant="success">{props.menuItemText}</MenuItem>
+            <MenuItem disabled={props.disabled} className={props.textClassName} variant="success">{props.menuItemText}</MenuItem>
         }
     </>
 }
@@ -86,7 +86,8 @@ MoorhenMenuItem.defaultProps = {
     popoverPlacement: "right",
     onEntering: () => { },
     onExiting: () => { },
-    onCompleted: () => { }
+    onCompleted: () => { },
+    disabled: false
 }
 
 export const MoorhenLoadTutorialDataMenuItem = (props) => {
@@ -1762,31 +1763,42 @@ export const MoorhenCopyFragmentUsingCidMenuItem = (props) => {
 
 export const MoorhenAddWatersMenuItem = (props) => {
     const moleculeRef = useRef(null)
-    const molNo = useRef(null)
+    const [disabled, setDisabled] = useState(true)
+
+    useEffect(() => {
+        if (!props.activeMap) {
+            setDisabled(true)
+        } else {
+            setDisabled(false)
+        }
+    }, [props.activeMap])
 
     const panelContent = <>
         <MoorhenMoleculeSelect {...props} ref={moleculeRef} allowAny={false} />
     </>
 
-    const onCompleted = useCallback(() => {
-        molNo.current = parseInt(moleculeRef.current.value)
-        return props.commandCentre.current.cootCommand({
+    const onCompleted = useCallback(async () => {
+        if (!props.activeMap || moleculeRef.current.value === null) {
+            return
+        }
+        const molNo = parseInt(moleculeRef.current.value)
+        await props.commandCentre.current.cootCommand({
             command: 'add_waters',
-            commandArgs: [parseInt(molNo.current), props.activeMap.molNo],
+            commandArgs: [molNo, props.activeMap.molNo],
             returnType: "status",
-            changesMolecules: [parseInt(molNo.current)]
-        }, true).then(result => {
-            props.molecules
-                .filter(molecule => molecule.molNo === molNo.current)
-                .forEach(molecule => {
-                    molecule.setAtomsDirty(true)
-                    molecule.redraw(props.glRef)
-                })
-        })
-    }, [props.molecules])
+            changesMolecules: [molNo]
+        }, true)
+        const selectedMolecule = props.molecules.find(molecule => molecule.molNo === molNo)
+        selectedMolecule.setAtomsDirty(true)
+        await selectedMolecule.redraw(props.glRef)
+        const mapUpdateEvent = new CustomEvent("mapUpdate", { detail: {origin: props.glRef.current.origin,  modifiedMolecule: molNo} })
+        document.dispatchEvent(mapUpdateEvent)       
+        
+    }, [props.molecules, props.activeMap, props.glRef, props.commandCentre])
 
     return <MoorhenMenuItem
         id='add-waters-menu-item'
+        disabled={disabled}
         popoverContent={panelContent}
         menuItemText="Add waters..."
         onCompleted={onCompleted}
