@@ -4,10 +4,10 @@ import ProtvistaSequence from "protvista-sequence";
 import ProtvistaNavigation from "protvista-navigation";
 import ProtvistaTrack from "protvista-track";
 
-window.customElements.define("protvista-navigation", ProtvistaNavigation);
-window.customElements.define("protvista-sequence", ProtvistaSequence);
-window.customElements.define("protvista-track", ProtvistaTrack);
-window.customElements.define("protvista-manager", ProtvistaManager);
+!window.customElements.get('protvista-navigation') && window.customElements.define("protvista-navigation", ProtvistaNavigation);
+!window.customElements.get('protvista-sequence') && window.customElements.define("protvista-sequence", ProtvistaSequence);
+!window.customElements.get('protvista-track') && window.customElements.define("protvista-track", ProtvistaTrack);
+!window.customElements.get('protvista-manager') && window.customElements.define("protvista-manager", ProtvistaManager);
     
 /**
 * For a given sequence length, calculate the range of 40 residues in the middle
