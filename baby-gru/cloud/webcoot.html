@@ -20,19 +20,6 @@
   <script src="./baby-gru/wasm/web_example.js"></script>
   <script src="./moorhen.js"      charset="utf-8"></script>
   <script type="text/javascript"  defer="defer">
-    
-    createCCP4Module({
-      print(t) { console.log(["output", t]) },
-      printErr(t) { console.log(["output", t]); }
-    })
-    .then(function (CCP4Mod) {
-      window.CCP4Module = CCP4Mod;
-    })
-    .catch((e) => {
-      console.log("CCP4 problem :(");
-      console.log(e);
-    });
-
     const rootId     = 'root';
     const mode       = '[[mode]]';
     const inputFiles = [[inputFiles]];
