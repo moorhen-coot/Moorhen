@@ -44,7 +44,7 @@ module.exports = {
     }),
     
     new MiniCssExtractPlugin({
-      filename: '[name][contenthash].css',
+      filename: 'moorhen.css',
       chunkFilename: '[id].css',
       ignoreOrder: false,
     }),
@@ -58,6 +58,11 @@ module.exports = {
           globOptions: {
             ignore: ['**/monomers/**', '**/pixmaps/**']
           }
+        },
+        {
+          from: path.resolve(paths.cloud, 'webcoot.html'),
+          to: paths.dist,
+          toType: 'dir',
         },
         ...paths.minimalMonomerLib.map(monomer => {
           return {

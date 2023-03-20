@@ -19,7 +19,6 @@ export default class MoorhenWrapper {
     this.inputFiles = null
     this.rootId = null
     this.preferences = null
-    this._interval = null
     this.exportCallback = () => {}
     reportWebVitals()
   }
@@ -54,12 +53,6 @@ export default class MoorhenWrapper {
 
   addOnExportListener(callbackFunction){
     this.exportCallback = callbackFunction
-  }
-
-  removeUpdateInterval() {
-    if(this._interval !== null) {
-      clearInterval(this._interval)
-    }
   }
 
   forwardControls(controls) {
@@ -174,6 +167,12 @@ export default class MoorhenWrapper {
     }, 2500)
   }
 
+  startMoleculeUpdates() {
+    setTimeout(() => {
+      this.updateMolecules().then(this.startMoleculeUpdates())
+    }, this.updateInterval)
+  }
+
   async updateMolecules() {
     const moleculeInputFiles = this.inputFiles.filter(file => file.type === 'pdb')
     await Promise.all(
@@ -235,9 +234,7 @@ export default class MoorhenWrapper {
     }
     
     if(this.updateInterval !== null) {
-      this._interval = setInterval(()=> {
-        this.updateMolecules()
-      }, this.updateInterval)
+      this.startMoleculeUpdates()
     }
 
   }
