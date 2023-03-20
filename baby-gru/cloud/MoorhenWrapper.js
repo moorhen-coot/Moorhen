@@ -21,6 +21,21 @@ export default class MoorhenWrapper {
     this.preferences = null
     this.exportCallback = () => {}
     reportWebVitals()
+    this.createModule()
+  }
+
+  createModule() {
+    createCCP4Module({
+      print(t) { console.log(["output", t]) },
+      printErr(t) { console.log(["output", t]); }
+    })
+    .then(function (CCP4Mod) {
+      window.CCP4Module = CCP4Mod;
+    })
+    .catch((e) => {
+      console.log("CCP4 problem :(");
+      console.log(e);
+    });
   }
 
   setWorkMode(mode='build') {
