@@ -108,6 +108,16 @@ export default class MoorhenWrapper {
     }
   }
 
+  addStyleSheet() {
+    const head = document.head;
+    const style = document.createElement("link");
+    style.href = `${this.urlPrefix}/moorhen.css`
+    style.rel = "stylesheet";
+    style.async = true
+    style.type = 'text/css'
+    head.appendChild(style);
+  }
+
   async loadMtzData(inputFile, mapName, selectedColumns) {
     const newMap = new MoorhenMap(this.controls.commandCentre)
     return new Promise(async (resolve, reject) => {
@@ -220,6 +230,7 @@ export default class MoorhenWrapper {
     }
 
     this.renderMoorhen()
+    this.addStyleSheet()
     await this.waitForInitialisation()
     await this.loadInputFiles()
     

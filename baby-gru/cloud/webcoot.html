@@ -10,32 +10,29 @@
   <meta name="description"     content="Web site created using create-react-app"/>
   <link rel="apple-touch-icon" href="./public/logo192.png"/>
   <link rel="manifest"         href="./manifest.json"/>
-  <script>// See https://github.com/facebook/react/issues/20829#issuecomment-802088260
-    if (!crossOriginIsolated) SharedArrayBuffer = ArrayBuffer;
-    window.onload = () => {
-      createCCP4Module({
-        print(t) { console.log(["output", t]) },
-        printErr(t) { console.log(["output", t]); }
-      })
-        .then(function (CCP4Mod) {
-          window.CCP4Module = CCP4Mod;
-        })
-        .catch((e) => {
-          console.log("CCP4 problem :(");
-          console.log(e);
-        });
-    }
-  </script>
-  <script src="./baby-gru/wasm/web_example.js"></script>
-  <script src="./moorhen.js" charset="utf-8"></script>
-  <link   rel="icon"         href="./favicon.ico">
-  <script defer="defer"      src="./moorhen.js"></script>
-  <link   href="./moorhen.css" rel="stylesheet"/>
 </head>
 <body>
   <noscript>You need to enable JavaScript to run this app.</noscript>
   <div id="root"></div>
-  <script defer="defer">
+  <script>// See https://github.com/facebook/react/issues/20829#issuecomment-802088260
+    if (!crossOriginIsolated) SharedArrayBuffer = ArrayBuffer;
+  </script>
+  <script src="./baby-gru/wasm/web_example.js"></script>
+  <script src="./moorhen.js"      charset="utf-8"></script>
+  <script type="text/javascript"  defer="defer">
+    
+    createCCP4Module({
+      print(t) { console.log(["output", t]) },
+      printErr(t) { console.log(["output", t]); }
+    })
+    .then(function (CCP4Mod) {
+      window.CCP4Module = CCP4Mod;
+    })
+    .catch((e) => {
+      console.log("CCP4 problem :(");
+      console.log(e);
+    });
+
     const rootId     = 'root';
     const mode       = '[[mode]]';
     const inputFiles = [[inputFiles]];
@@ -70,6 +67,6 @@
                             moorhenWrapper.setInputFiles        ( inputFiles );
                             moorhenWrapper.start()
     }
-  </script>
+</script>
 </body>
 </html>
