@@ -342,7 +342,7 @@ export const MoorhenMoleculeCard = (props) => {
     return <Card className="px-0" style={{ marginBottom: '0.5rem', padding: '0' }} key={props.molecule.molNo}>
         <Card.Header style={{ padding: '0.1rem' }}>
             <Stack gap={2} direction='horizontal'>
-                <Col className='align-items-center' style={{ display: 'flex', justifyContent: 'left' }}>
+                <Col className='align-items-center' style={{ display: 'flex', justifyContent: 'left', color: props.isDark ? 'white' : 'black'}}>
                     {getNameLabel(props.molecule)}
                 </Col>
                 <Col style={{ display: 'flex', justifyContent: 'right' }}>
