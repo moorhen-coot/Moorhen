@@ -47,7 +47,7 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
                 }
             }
             molecule.setAtomsDirty(true)
-            molecule.redraw(props.glRef)
+            await molecule.redraw(props.glRef)
             const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: molecule.molNo } })
             document.dispatchEvent(scoresUpdateEvent)
             if (props.onExit) {
@@ -75,6 +75,7 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
                             commandArgs: props.formatArgs(molecule, chosenAtom, localParameters),
                             changesMolecules: props.changesMolecule ? [molecule.molNo] : []
                         }, true)
+                        console.log(`Message from worker back to main thread took ${Date.now() - result.data.sendTime} ms (${props.cootCommand}) - (${result.data.messageId.slice(0, 5)})`)
                     } else if (props.nonCootCommand) {
                         result = await props.nonCootCommand(molecule, chosenAtom, localParameters)
                     }

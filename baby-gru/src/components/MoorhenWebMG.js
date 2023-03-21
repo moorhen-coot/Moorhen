@@ -127,6 +127,7 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
                 command: "get_r_factor_stats",
                 commandArgs: [],
             }, true)
+            console.log(`Message from worker back to main thread took ${Date.now() - currentScores.data.sendTime} ms (get_r_factor_stats) - (${currentScores.data.messageId.slice(0, 5)})`)
 
             const newToastContents =    <Toast.Body style={{width: '100%'}}>
                                             {props.preferences.defaultUpdatingScores.includes('Rfactor') && 
