@@ -34,89 +34,89 @@ const paths = {
   ]
 }
 
-module.exports = {
-  plugins:[
-   
-    new HTMLWebpackPlugin({
-      filename: 'index.html',
-      template: path.join(paths.cloud, 'index.html'),
-      favicon: path.join(paths.public, 'favicon.ico')
-    }),
-    
-    new MiniCssExtractPlugin({
-      filename: 'moorhen.css',
-      chunkFilename: '[id].css',
-      ignoreOrder: false,
-    }),
-
-    new CopyWebpackPlugin({
-      patterns: [
-        {
-          from: paths.publicBabyGru,
-          to: paths.dist + '/baby-gru/',
-          toType: 'dir',
-          globOptions: {
-            ignore: ['**/monomers/**', '**/pixmaps/**']
-          }
-        },
-        {
-          from: path.resolve(paths.cloud, 'webcoot.html'),
-          to: paths.dist,
-          toType: 'dir',
-        },
-        ...paths.minimalMonomerLib.map(monomer => {
-          return {
-            from: path.resolve(paths.monomerLibraryPath, monomer.charAt(0).toLowerCase(), `${monomer}.cif`),
-            to: path.resolve(paths.dist, 'baby-gru', 'monomers', monomer.charAt(0).toLowerCase()),
-            toType: 'dir',  
-          }
-        }),
-        ...paths.requiredPixmaps.map(pixmap => {
-          return {
-            from: path.resolve(paths.pixmapsPath, pixmap),
-            to: path.resolve(paths.dist, 'baby-gru', 'pixmaps'),
-            toType: 'dir',  
-          }
-        })
-
-      ],
-    }),
-  ],
-  entry: path.join(paths.cloud, 'index.js'),
-  target: 'web',
-  mode: 'production',
-  cache: false,
-  output: {
-    clean: true,
-    filename: 'moorhen.js',
-    path: paths.dist,
-    publicPath: './',
-    library: 'moorhen',
-    libraryTarget: 'umd',
-    umdNamedDefine: true,
-  },
-    module:{
-        rules:[
-            {
-                test: /\.js$/,
-                exclude: [/node_modules/, path.resolve(paths.src, 'index.js')],
-                loader: 'babel-loader',
-            },
-            {
-              test: /\.(?:ico|gif|png|jpg|jpeg|svg|xpm)$/,
-              loader: 'file-loader',
-              type: 'asset/resource',
-            },
-            {
-                test: /\.css$/,
-                sideEffects: true,
-                use: [ MiniCssExtractPlugin.loader, 'css-loader'],
+module.exports = (env, argv) => {
+  return {
+    plugins:[
+      new HTMLWebpackPlugin({
+        filename: 'index.html',
+        template: path.join(paths.cloud, 'index.html'),
+        favicon: path.join(paths.public, 'favicon.ico')
+      }),
+      new MiniCssExtractPlugin({
+        filename: 'moorhen.css',
+        chunkFilename: '[id].css',
+        ignoreOrder: false,
+      }),
+      new CopyWebpackPlugin({
+        patterns: [
+          {
+            from: paths.publicBabyGru,
+            to: paths.dist + '/baby-gru/',
+            toType: 'dir',
+            globOptions: {
+              ignore: ['**/monomers/**', '**/pixmaps/**']
             }
-        ]
+          },
+          {
+            from: path.resolve(paths.cloud, 'webcoot.html'),
+            to: paths.dist,
+            toType: 'dir',
+          },
+          ...paths.minimalMonomerLib.map(monomer => {
+            return {
+              from: path.resolve(paths.monomerLibraryPath, monomer.charAt(0).toLowerCase(), `${monomer}.cif`),
+              to: path.resolve(paths.dist, 'baby-gru', 'monomers', monomer.charAt(0).toLowerCase()),
+              toType: 'dir',  
+            }
+          }),
+          ...paths.requiredPixmaps.map(pixmap => {
+            return {
+              from: path.resolve(paths.pixmapsPath, pixmap),
+              to: path.resolve(paths.dist, 'baby-gru', 'pixmaps'),
+              toType: 'dir',  
+            }
+          })
+        ],
+      }),
+    ],
+    entry: path.join(paths.cloud, 'index.js'),
+    target: 'web',
+    optimization: {
+      minimize: argv.mode === 'development' ? false : true
+    },
+    cache: false,
+    output: {
+      clean: true,
+      filename: 'moorhen.js',
+      path: paths.dist,
+      publicPath: './',
+      library: 'moorhen',
+      libraryTarget: 'umd',
+      umdNamedDefine: true,
+    },
+    module: {
+      rules:[
+        {
+          test: /\.js$/,
+          exclude: [/node_modules/, path.resolve(paths.src, 'index.js')],
+          loader: 'babel-loader',
+        },
+        {
+          test: /\.(?:ico|gif|png|jpg|jpeg|svg|xpm)$/,
+          loader: 'file-loader',
+          type: 'asset/resource',
+        },
+        {
+          test: /\.css$/,
+          sideEffects: true,
+          use: [ MiniCssExtractPlugin.loader, 'css-loader'],
+        }
+      ]
     },
     resolve: {
-        fallback: {
-          fs: false
-        }
+      fallback: {
+        fs: false
       }
+    }  
+  }
 }

@@ -22,6 +22,7 @@
     "html-react-parser": "^1.4.14",
     "localforage": "^1.10.0",
     "nested-worker": "git+https://github.com/johanholmerin/nested-worker.git#semver:^1.0.0",
+    "nightingale-linegraph-track": "^3.8.10",
     "pako": "^2.0.4",
     "pca-js": "^1.0.2",
     "plotly.js": "^2.12.1",
@@ -48,6 +49,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "build-cloud-dev": "webpack  --mode development --devtool inline-source-map",
     "build-cloud": "webpack --mode production",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
