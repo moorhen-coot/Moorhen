@@ -258,6 +258,7 @@ MoorhenMap.prototype.doCootContour = function (glRef, x, y, z, radius, contourLe
             command: "get_map_contours_mesh",
             commandArgs: [$this.molNo, x, y, z, radius, contourLevel]
         }).then(response => {
+            console.log(`Message from worker back to main thread took ${Date.now() - response.data.sendTime} ms (get_map_contours_mesh) - (${response.data.messageId.slice(0, 5)})`)
             const objects = [response.data.result.result]
             $this.clearBuffersOfStyle(glRef, "Coot")
             //$this.displayObjects['Coot'] = [...$this.displayObjects['Coot'], ...objects.map(object=>gl.appendOtherData(object, true))]

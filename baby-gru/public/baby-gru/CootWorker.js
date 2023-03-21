@@ -790,6 +790,10 @@ onmessage = function (e) {
     if (e.data.message === 'coot_command') {
         const { returnType, command, commandArgs, message, messageId, myTimeStamp } = e.data
         try {
+            
+            console.log(`Message from main thread to worker took ${Date.now() - e.data.myTimeStamp } ms (${command}) - (${messageId.slice(0, 5)})`)
+            
+            const startTime = new Date()
 
             /* A debug message to show tht commands are reachng CootWorker
             postMessage({ consoleMessage: `Received ${command} with args ${commandArgs}` })
@@ -890,8 +894,12 @@ onmessage = function (e) {
                     break;
             }
 
+            const endTime = new Date()
+            const timeDiff = endTime - startTime
+            console.log(`libcootAPI command ${command} took ${timeDiff} ms  - (${messageId.slice(0, 5)})`)
+            
             postMessage({
-                returnType, command, message, messageId, myTimeStamp,
+                messageId, sendTime: Date.now(),
                 consoleMessage: `Completed ${command} in ${Date.now() - e.data.myTimeStamp} ms`,
                 result: { status: 'Completed', result: returnResult }
             })

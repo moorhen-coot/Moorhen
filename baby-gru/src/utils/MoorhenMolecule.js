@@ -771,6 +771,7 @@ MoorhenMolecule.prototype.drawCootSelectionBonds = async function (glRef, name, 
 
     return meshCommand
         .then(async response => {
+            console.log(`Message from worker back to main thread took ${Date.now() - response.data.sendTime} ms  (get_bonds_mesh)  - (${response.data.messageId.slice(0, 5)})`)
             const objects = [response.data.result.result]
             if (objects.length > 0 && !this.gemmiStructure.isDeleted()) {
                 //Empty existing buffers of this type
