@@ -1815,6 +1815,7 @@ class MGWebGL extends Component {
                 false);
             self.canvas.addEventListener("contextmenu",
                 function (evt) {
+                    self.doRightClick(evt, self);
                     evt.stopPropagation();
                     evt.preventDefault();
                 },
