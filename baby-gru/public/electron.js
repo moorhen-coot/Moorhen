@@ -39,7 +39,9 @@ function createWindow() {
 
       if(!isDev) {
 
-          const PORT = 0;
+          const MINPORT = 32778;
+          const MAXPORT = 32800;
+
           const exp = express();
 
           exp.use(function(req, res, next) {
@@ -54,17 +56,23 @@ function createWindow() {
               res.send('Hello World! '+path.join(__dirname,"..","build"));
           });
       
-          //exp.use(express.static(__dirname + '../build/'));
-          server = exp.listen(0, () => {
-              console.log('Listening on port:', server.address().port);
-          });
+          function serve(port) {
+              server = exp.listen(port, () => {
+                  console.log('Listening on port:', server.address().port);
+                  win.loadURL( "http://localhost:"+server.address().port+"/index.html");
+              }).on('error', function(err) { 
+                  if(port<MAXPORT){
+                      serve(port+1);
+                  } else {
+                      throw new Error("Run out of ports in Moorhen's range 32778-32800");
+                  }
+              });
+          }
+          serve(MINPORT);
+      } else {
+          win.loadURL("http://localhost:9999");
       }
 
-      win.loadURL(
-        isDev
-          ? "http://localhost:9999"
-          : "http://localhost:"+server.address().port+"/index.html"
-      );
 
       // Open the DevTools.
       if (isDev) {
