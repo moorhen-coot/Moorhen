@@ -11558,7 +11558,7 @@ class MGWebGL extends Component {
             }
             quat4.multiply(zQ, zQ, yQ);
             quat4.multiply(self.myQuat, self.myQuat, zQ);
-        } else {
+        } else if (event.buttons === 1) {
             //console.log("mouse move",self.dx,self.dy);
             let xQ = createXQuatFromDX(-self.dy);
             let yQ = createYQuatFromDY(-self.dx);
