@@ -30,44 +30,46 @@ function createWindow() {
     }
   });
 
-  let server;
 
   if(process.argv.length>1){
-  win.loadURL(process.argv[1]);
+      win.loadURL(process.argv[1]);
   } else {
-  if(!isDev) {
 
-      const PORT = 0;
-      const exp = express();
+      let server;
 
-      exp.use(function(req, res, next) {
+      if(!isDev) {
+
+          const PORT = 0;
+          const exp = express();
+
+          exp.use(function(req, res, next) {
               res.header("Cross-Origin-Embedder-Policy", "require-corp");
               res.header("Cross-Origin-Opener-Policy", "same-origin");
               next();
-      });
+          });
 
-      exp.use(express.static(path.join(__dirname,"..","build")));
+          exp.use(express.static(path.join(__dirname,"..","build")));
       
-      exp.get('/', (req, res) => {
+          exp.get('/', (req, res) => {
               res.send('Hello World! '+path.join(__dirname,"..","build"));
-      });
+          });
       
-      //exp.use(express.static(__dirname + '../build/'));
-      server = exp.listen(0, () => {
+          //exp.use(express.static(__dirname + '../build/'));
+          server = exp.listen(0, () => {
               console.log('Listening on port:', server.address().port);
-      });
-  }
+          });
+      }
 
-  win.loadURL(
-    isDev
-      ? "http://localhost:9999"
-      : "http://localhost:"+server.address().port+"/index.html"
-  );
+      win.loadURL(
+        isDev
+          ? "http://localhost:9999"
+          : "http://localhost:"+server.address().port+"/index.html"
+      );
 
-  // Open the DevTools.
-  if (isDev) {
-    win.webContents.openDevTools({ mode: "detach" });
-  }
+      // Open the DevTools.
+      if (isDev) {
+        win.webContents.openDevTools({ mode: "detach" });
+      }
   }
 }
 

@@ -9,7 +9,6 @@
   "config": {
     "forge": {
       "packagerConfig": {
-        "asar": true,
         "icon": "src/icons/icon",
         "name": "Moorhen"
       },
@@ -84,7 +83,8 @@
     "dev": "concurrently -k \"BROWSER=none npm start\" \"npm:electron\"",
     "electron": "wait-on tcp:3000 && electron-forge start",
     "package": "react-scripts build && electron-forge package",
-    "make": "react-scripts build && electron-forge make --platform darwin && electron-forge make --platform linux",
+    "make-mac":   "react-scripts build && electron-forge make --platform darwin",
+    "make-linux": "react-scripts build && electron-forge make --platform linux",
     "make-win32": "react-scripts build && electron-forge make --platform win32"
   },
   "eslintConfig": {
