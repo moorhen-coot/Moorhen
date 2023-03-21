@@ -47,6 +47,7 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
                 }
             }
             molecule.setAtomsDirty(true)
+            // FIXME: await here is only necessary to show timings
             await molecule.redraw(props.glRef)
             const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: molecule.molNo } })
             document.dispatchEvent(scoresUpdateEvent)
