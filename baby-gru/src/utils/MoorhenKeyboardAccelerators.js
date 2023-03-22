@@ -1,5 +1,5 @@
 import { List, ListItem } from "@mui/material"
-import { cidToSpec } from "../utils/MoorhenUtils"
+import { cidToSpec } from "./MoorhenUtils"
 import * as vec3 from 'gl-matrix/vec3';
 import * as quat4 from 'gl-matrix/quat';
 import { quatToMat4, quat4Inverse } from '../WebGLgComponents/quatToMat4.js';
@@ -268,7 +268,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         glRef.current.origin[0] += yshift[0] / 8. * glRef.current.zoom;
         glRef.current.origin[1] += yshift[1] / 8. * glRef.current.zoom;
         glRef.current.origin[2] += yshift[2] / 8. * glRef.current.zoom;
-        const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: {origin: glRef.current.origin,  modifiedMolecule: null} })
+        const scoresUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: glRef.current.origin,  modifiedMolecule: null} })
         document.dispatchEvent(scoresUpdateEvent);    
         glRef.current.drawSceneDirty();
         glRef.current.reContourMaps();
@@ -283,7 +283,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         glRef.current.origin[0] += yshift[0] / 8. * glRef.current.zoom;
         glRef.current.origin[1] += yshift[1] / 8. * glRef.current.zoom;
         glRef.current.origin[2] += yshift[2] / 8. * glRef.current.zoom;
-        const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: {origin: glRef.current.origin,  modifiedMolecule: null} })
+        const scoresUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: glRef.current.origin} })
         document.dispatchEvent(scoresUpdateEvent);    
         glRef.current.drawSceneDirty();
         glRef.current.reContourMaps();
@@ -298,7 +298,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         glRef.current.origin[0] += xshift[0] / 8. * glRef.current.zoom;
         glRef.current.origin[1] += xshift[1] / 8. * glRef.current.zoom;
         glRef.current.origin[2] += xshift[2] / 8. * glRef.current.zoom;
-        const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: {origin: glRef.current.origin,  modifiedMolecule: null} })
+        const scoresUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: glRef.current.origin} })
         document.dispatchEvent(scoresUpdateEvent);    
         glRef.current.drawSceneDirty();
         glRef.current.reContourMaps();
@@ -313,7 +313,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         glRef.current.origin[0] += xshift[0] / 8. * glRef.current.zoom;
         glRef.current.origin[1] += xshift[1] / 8. * glRef.current.zoom;
         glRef.current.origin[2] += xshift[2] / 8. * glRef.current.zoom;
-        const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: {origin: glRef.current.origin,  modifiedMolecule: null} })
+        const scoresUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: glRef.current.origin} })
         document.dispatchEvent(scoresUpdateEvent);    
         glRef.current.drawSceneDirty();
         glRef.current.reContourMaps();
