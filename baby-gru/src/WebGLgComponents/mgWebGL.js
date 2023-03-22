@@ -2303,7 +2303,8 @@ class MGWebGL extends Component {
 
             if (typeof (jsondata.sizes) !== "undefined") {
                 if (typeof (jsondata.sizes[idat]) !== "undefined") {
-                    rssentries = getEncodedData(jsondata.sizes[idat]);
+                    //rssentries = getEncodedData(jsondata.sizes[idat]);
+                    rssentries = jsondata.sizes[idat];
                     for (let i = 0; i < rssentries.length; i++) {
                         self.createSizeBuffer(rssentries[i]);
                     }
@@ -4880,6 +4881,9 @@ class MGWebGL extends Component {
         this.gl.bindAttribLocation(this.shaderProgramPerfectSpheres, 0, "aVertexPosition");
         this.gl.bindAttribLocation(this.shaderProgramPerfectSpheres, 1, "aVertexColour");
         this.gl.bindAttribLocation(this.shaderProgramPerfectSpheres, 2, "aVertexNormal");
+        this.gl.bindAttribLocation(this.shaderProgramPerfectSpheres, 3, "aVertexTexture");
+        this.gl.bindAttribLocation(this.shaderProgramPerfectSpheres, 4, "size");
+        this.gl.bindAttribLocation(this.shaderProgramPerfectSpheres, 5, "offset");
         this.gl.linkProgram(this.shaderProgramPerfectSpheres);
 
         if (!this.gl.getProgramParameter(this.shaderProgramPerfectSpheres, this.gl.LINK_STATUS)) {
@@ -4900,6 +4904,12 @@ class MGWebGL extends Component {
         this.shaderProgramPerfectSpheres.vertexTextureAttribute = this.gl.getAttribLocation(this.shaderProgramPerfectSpheres, "aVertexTexture");
         this.gl.enableVertexAttribArray(this.shaderProgramPerfectSpheres.vertexTextureAttribute);
 
+        this.shaderProgramPerfectSpheres.offsetAttribute = this.gl.getAttribLocation(this.shaderProgramPerfectSpheres, "offset");
+        this.gl.enableVertexAttribArray(this.shaderProgramPerfectSpheres.offsetAttribute);
+
+        this.shaderProgramPerfectSpheres.sizeAttribute= this.gl.getAttribLocation(this.shaderProgramPerfectSpheres, "size");
+        this.gl.enableVertexAttribArray(this.shaderProgramPerfectSpheres.sizeAttribute);
+
         this.shaderProgramPerfectSpheres.pMatrixUniform = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "uPMatrix");
         this.shaderProgramPerfectSpheres.mvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "uMVMatrix");
         this.shaderProgramPerfectSpheres.mvInvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "uMVINVMatrix");
@@ -4908,8 +4918,6 @@ class MGWebGL extends Component {
         this.shaderProgramPerfectSpheres.fog_end = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "fog_end");
         this.shaderProgramPerfectSpheres.fogColour = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "fogColour");
 
-        this.shaderProgramPerfectSpheres.offset = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "offset");
-        this.shaderProgramPerfectSpheres.size = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "size");
         this.shaderProgramPerfectSpheres.scaleMatrix = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "scaleMatrix");
 
         this.shaderProgramPerfectSpheres.light_positions = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "light_positions");
@@ -7882,7 +7890,6 @@ class MGWebGL extends Component {
 
                         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer.triangleVertexTextureBuffer[0]);
                         this.gl.vertexAttribPointer(program.vertexTextureAttribute, buffer.triangleVertexTextureBuffer[0].itemSize, this.gl.FLOAT, false, 0, 0);
-
                         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer.triangleVertexNormalBuffer[0]);
                         this.gl.vertexAttribPointer(program.vertexNormalAttribute, buffer.triangleVertexNormalBuffer[0].itemSize, this.gl.FLOAT, false, 0, 0);
                         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer.triangleVertexPositionBuffer[0]);
@@ -7890,24 +7897,51 @@ class MGWebGL extends Component {
                         this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, buffer.triangleVertexIndexBuffer[0]);
                         let isphere;
 
-                        //let scaleMatrix = mat3.clone([1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]);
-                        //this.gl.uniformMatrix3fv(this.shaderProgramPerfectSpheres.scaleMatrix, false, scaleMatrix);
-
-                        let theOffSet = new Float32Array(3);
-                        for (isphere = 0; isphere < triangleVertices[j].length / 3; isphere++) {
-                            theOffSet[0] = triangleVertices[j][isphere * 3];
-                            theOffSet[1] = triangleVertices[j][isphere * 3 + 1];
-                            theOffSet[2] = triangleVertices[j][isphere * 3 + 2];
-                            this.gl.vertexAttrib4f(program.vertexColourAttribute, triangleColours[j][isphere * 4], triangleColours[j][isphere * 4 + 1], triangleColours[j][isphere * 4 + 2], triangleColours[j][isphere * 4 + 3]);
-                            this.gl.uniform3fv(program.offset, theOffSet);
-                            this.gl.uniform1f(program.size, primitiveSizes[j][isphere] * Math.sqrt(2));
-                            if (this.ext) {
-                                this.gl.drawElements(this.gl.TRIANGLE_FAN, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_INT, 0);
-                            } else {
-                                this.gl.drawElements(this.gl.TRIANGLE_FAN, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_SHORT, 0);
-                            }
-                            nprims += triangleVertexIndexBuffer[j].numItems;
-
+                        //FIXME - DO not want to buffer every draw
+                        if(this.displayBuffers[idx].triangleInstanceOriginBuffer[j]){
+                            this.displayBuffers[idx].triangleInstanceOriginBuffer[j].itemSize = 3;
+                            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleInstanceOriginBuffer[j]);
+                            this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[idx].triangleInstanceOrigins[j]), this.gl.STATIC_DRAW);
+                        }
+                        if(this.displayBuffers[idx].triangleInstanceSizeBuffer[j]){
+                            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleInstanceSizeBuffer[j]);
+                            this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[idx].triangleInstanceSizes[j]), this.gl.STATIC_DRAW);
+                            this.displayBuffers[idx].triangleInstanceSizeBuffer[j].itemSize = 3;
+                        }
+                        if(this.displayBuffers[idx].triangleColourBuffer[j]){
+                            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleColourBuffer[j]);
+                            this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[idx].triangleColours[j]), this.gl.STATIC_DRAW);
+                            this.displayBuffers[idx].triangleColourBuffer[j].itemSize = 4;
+                        }
+                        //pos,normal, texture, index in "buffer"
+                        //Instanced colour
+                        //Instanced size
+                        //Instanced offset
+                        this.gl.enableVertexAttribArray(program.offsetAttribute);
+                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleInstanceOriginBuffer[j]);
+                        this.gl.vertexAttribPointer(program.offsetAttribute, this.displayBuffers[idx].triangleInstanceOriginBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
+                        this.gl.enableVertexAttribArray(program.sizeAttribute);
+                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleInstanceSizeBuffer[j]);
+                        this.gl.vertexAttribPointer(program.sizeAttribute, this.displayBuffers[idx].triangleInstanceSizeBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
+                        this.gl.enableVertexAttribArray(program.vertexColourAttribute);
+                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleColourBuffer[j]);
+                        this.gl.vertexAttribPointer(program.vertexColourAttribute, this.displayBuffers[idx].triangleColourBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
+                        if (this.WEBGL2) {
+                            this.gl.vertexAttribDivisor(program.vertexColourAttribute, 1);
+                            this.gl.vertexAttribDivisor(program.sizeAttribute, 1);
+                            this.gl.vertexAttribDivisor(program.offsetAttribute, 1);
+                            this.gl.drawElementsInstanced(this.gl.TRIANGLE_FAN, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_INT, 0, this.displayBuffers[idx].triangleInstanceOriginBuffer[j].numItems);
+                            this.gl.vertexAttribDivisor(program.vertexColourAttribute, 0);
+                            this.gl.vertexAttribDivisor(program.sizeAttribute, 0);
+                            this.gl.vertexAttribDivisor(program.offsetAttribute, 0);
+                        } else {
+                            this.instanced_ext.vertexAttribDivisorANGLE(program.vertexColourAttribute, 1);
+                            this.instanced_ext.vertexAttribDivisorANGLE(program.sizeAttribute, 1);
+                            this.instanced_ext.vertexAttribDivisorANGLE(program.offsetAttribute, 1);
+                            this.instanced_ext.drawElementsInstancedANGLE(this.gl.TRIANGLE_FAN, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_INT, 0, this.displayBuffers[idx].triangleInstanceOriginBuffer[j].numItems);
+                            this.instanced_ext.vertexAttribDivisorANGLE(program.vertexColourAttribute, 0);
+                            this.instanced_ext.vertexAttribDivisorANGLE(program.sizeAttribute, 0);
+                            this.instanced_ext.vertexAttribDivisorANGLE(program.offsetAttribute, 0);
                         }
 
                     }

@@ -1,10 +1,12 @@
 var twod_vertex_shader_source = `#version 300 es\n
     // This shader is basic
-    in vec3 aVertexOrigin;
     in vec3 aVertexPosition;
-    in vec4 aVertexColour;
     in vec3 aVertexNormal;
     in vec2 aVertexTexture;
+
+    in vec4 aVertexColour;
+    in vec3 size;
+    in vec3 offset;
 
     uniform mat4 uMVMatrix;
     uniform mat4 uMVINVMatrix;
@@ -20,12 +22,9 @@ var twod_vertex_shader_source = `#version 300 es\n
 
     out lowp vec4 eyePos;
 
-    uniform float size;
-    uniform vec3 offset;
-
     void main(void) {
 
-      vec4 theVert = vec4(size*aVertexPosition+offset,1.0);
+      vec4 theVert = vec4(size[0]*aVertexPosition+offset,1.0);
 
       gl_Position = uPMatrix * uMVMatrix * theVert;
       vColor = aVertexColour;
@@ -35,7 +34,7 @@ var twod_vertex_shader_source = `#version 300 es\n
       v = vec3(uMVMatrix * theVert);
 
       projMatrix = uPMatrix;
-      size_v = size;
+      size_v = size[0];
       vTexture = aVertexTexture;
     }
 `;
