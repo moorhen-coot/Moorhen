@@ -23,7 +23,7 @@ const updateStoredPreferences = async (key, value) => {
 
 const getDefaultValues = () => {
     return {
-        version: '0.0.18',
+        version: 'v19',
         defaultBackgroundColor: [1, 1, 1, 1], 
         atomLabelDepthMode: true, 
         defaultExpandDisplayCards: true,
@@ -50,127 +50,152 @@ const getDefaultValues = () => {
             "sphere_refine": {
                 modifiers: ["shiftKey"],
                 keyPress: "r",
-                label: "Refine sphere"
+                label: "Refine sphere",
+                viewOnly: false
             },
             "flip_peptide": {
                 modifiers: ["shiftKey"],
                 keyPress: "q",
-                label: "Flip peptide"
+                label: "Flip peptide",
+                viewOnly: false
             },
             "triple_refine": {
                 modifiers: ["shiftKey"],
                 keyPress: "h",
-                label: "Refine triplet"
+                label: "Refine triplet",
+                viewOnly: false
             },
             "auto_fit_rotamer": {
                 modifiers: ["shiftKey"],
                 keyPress: "j",
-                label: "Autofit rotamer"
+                label: "Autofit rotamer",
+                viewOnly: false
             },
             "add_terminal_residue": {
                 modifiers: ["shiftKey"],
                 keyPress: "y",
-                label: "Add terminal residue"
+                label: "Add terminal residue",
+                viewOnly: false
             },
             "delete_residue": {
                 modifiers: ["shiftKey"],
                 keyPress: "d",
-                label: "Delete residue"
+                label: "Delete residue",
+                viewOnly: false
             },
             "eigen_flip": {
                 modifiers: ["shiftKey"],
                 keyPress: "e",
-                label: "Eigen flip ligand"
+                label: "Eigen flip ligand",
+                viewOnly: false
             },
             "show_shortcuts": {
                 modifiers: [],
                 keyPress: "h",
-                label: "Show shortcuts"
+                label: "Show shortcuts",
+                viewOnly: true
             },
             "restore_scene": {
                 modifiers: [],
                 keyPress: "r",
-                label: "Restore scene"
+                label: "Restore scene",
+                viewOnly: true
             },
             "clear_labels": {
                 modifiers: [],
                 keyPress: "c",
-                label: "Clear labels"
+                label: "Clear labels",
+                viewOnly: true
             },
             "move_up": {
                 modifiers: [],
                 keyPress: "arrowup",
-                label: "Move model up"
+                label: "Move model up",
+                viewOnly: true
             },
             "move_down": {
                 modifiers: [],
                 keyPress: "arrowdown",
-                label: "Move model down"
+                label: "Move model down",
+                viewOnly: true
             },
             "move_left": {
                 modifiers: [],
                 keyPress: "arrowleft",
-                label: "Move model left"
+                label: "Move model left",
+                viewOnly: true
             },
             "move_right": {
                 modifiers: [],
                 keyPress: "arrowright",
-                label: "Move model right"
+                label: "Move model right",
+                viewOnly: true
             },
             "go_to_blob": {
                 modifiers: [],
                 keyPress: "g",
-                label: "Go to blob"
+                label: "Go to blob",
+                viewOnly: true
             },
             "take_screenshot": {
                 modifiers: [],
                 keyPress: "s",
-                label: "Take a screenshot"
+                label: "Take a screenshot",
+                viewOnly: true
             },
             "residue_camera_wiggle": {
                 modifiers: [],
                 keyPress: "z",
-                label: "Wiggle camera while rotating a residue"
+                label: "Wiggle camera while rotating a residue",
+                viewOnly: true
             },
             "measure_distances": {
                 modifiers: [],
                 keyPress: "m",
-                label: "Measure distances between atoms on click"
+                label: "Measure distances between atoms on click",
+                viewOnly: true
             },
             "label_atom": {
                 modifiers: [],
                 keyPress: "l",
-                label: "Label an atom on click"
+                label: "Label an atom on click",
+                viewOnly: true
             },
             "center_atom": {
                 modifiers: ["altKey"],
                 keyPress: "alt",
-                label: "Center on clicked atom"
+                label: "Center on clicked atom",
+                viewOnly: true
             },
             "set_map_contour": {
                 modifiers: ["ctrlKey"],
                 keyPress: "control",
-                label: "Set map contour on scroll"
+                label: "Set map contour on scroll",
+                viewOnly: true
             },
             "jump_next_residue": {
                 modifiers: [],
                 keyPress: " ",
-                label: "Jump to the next residue"
+                label: "Jump to the next residue",
+                viewOnly: true
             },
             "jump_previous_residue": {
                 modifiers: ["shiftKey"],
                 keyPress: " ",
-                label: "Jump to the previous residue"
+                label: "Jump to the previous residue",
+                viewOnly: true
             },
             "increase_map_radius": {
                 modifiers: [],
                 keyPress: "]",
-                label: "Increase map radius"
+                label: "Increase map radius",
+                viewOnly: true
             },
             "decrease_map_radius": {
                 modifiers: [],
                 keyPress: "[",
-                label: "Decrease map radius"
+                label: "Decrease map radius",
+                viewOnly: true
             },
         }
     }

@@ -1,5 +1,5 @@
 import { List, ListItem } from "@mui/material"
-import { cidToSpec } from "../utils/MoorhenUtils"
+import { cidToSpec } from "./MoorhenUtils"
 import * as vec3 from 'gl-matrix/vec3';
 import * as quat4 from 'gl-matrix/quat';
 import { quatToMat4, quat4Inverse } from '../WebGLgComponents/quatToMat4.js';
@@ -17,8 +17,9 @@ const apresEdit = (molecule, glRef, timeCapsuleRef, setHoveredAtom) => {
 export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     
     const { 
-        setShowToast, setToastContent, hoveredAtom, setHoveredAtom, 
-        commandCentre, activeMap, glRef, molecules, timeCapsuleRef
+        setShowToast, setToastContent, hoveredAtom, 
+        setHoveredAtom, commandCentre, activeMap, 
+        glRef, molecules, timeCapsuleRef, viewOnly
     } = collectedProps;
 
     const getCentreAtom = async () => {
@@ -99,7 +100,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         return true
     }
 
-    if (action === 'sphere_refine' && activeMap) {
+    if (action === 'sphere_refine' && activeMap && !viewOnly) {
         const formatArgs = (chosenMolecule, chosenAtom) => {
             return [chosenMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`, "SPHERE"]
         }
@@ -114,7 +115,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         return doShortCut('refine_residues_using_atom_cid', formatArgs)
     }
 
-    else if (action === 'flip_peptide' && activeMap) {
+    else if (action === 'flip_peptide' && activeMap && !viewOnly) {
         const formatArgs = (chosenMolecule, chosenAtom) => {
             return [chosenMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, '']
         }
@@ -129,7 +130,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         return doShortCut('flipPeptide_cid', formatArgs)
     }
 
-    else if (action === 'triple_refine' && activeMap) {
+    else if (action === 'triple_refine' && activeMap && !viewOnly) {
         const formatArgs = (chosenMolecule, chosenAtom) => {
             return [chosenMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`, "TRIPLE"]
         }
@@ -144,7 +145,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         return doShortCut('refine_residues_using_atom_cid', formatArgs)
     }
 
-    else if (action === 'auto_fit_rotamer' && activeMap) {
+    else if (action === 'auto_fit_rotamer' && activeMap && !viewOnly) {
         const formatArgs = (chosenMolecule, chosenAtom) => {
             return [
                 chosenMolecule.molNo,
@@ -166,7 +167,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         return doShortCut('auto_fit_rotamer', formatArgs)
     }
 
-    else if (action === 'add_terminal_residue' && activeMap) {
+    else if (action === 'add_terminal_residue' && activeMap && !viewOnly) {
         const formatArgs = (chosenMolecule, chosenAtom) => {
             return [chosenMolecule.molNo,  `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
         }
@@ -181,7 +182,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         return doShortCut('add_terminal_residue_directly_using_cid', formatArgs)
     }
 
-    else if (action === 'delete_residue') {
+    else if (action === 'delete_residue' && !viewOnly) {
         const formatArgs = (chosenMolecule, chosenAtom) => {
             return [
                 chosenMolecule.molNo, 
@@ -200,7 +201,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         return doShortCut('delete_using_cid', formatArgs)
     }
 
-    else if (action === 'eigen_flip') {
+    else if (action === 'eigen_flip' && !viewOnly) {
         const formatArgs = (chosenMolecule, chosenAtom) => {
             return [chosenMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
         }
@@ -215,7 +216,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         return doShortCut('eigen_flip_ligand', formatArgs)
     }
 
-    else if (action === 'go_to_blob' && activeMap) {
+    else if (action === 'go_to_blob' && activeMap && !viewOnly) {
         setToastContent(
             <h3>
                 <List>
@@ -267,7 +268,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         glRef.current.origin[0] += yshift[0] / 8. * glRef.current.zoom;
         glRef.current.origin[1] += yshift[1] / 8. * glRef.current.zoom;
         glRef.current.origin[2] += yshift[2] / 8. * glRef.current.zoom;
-        const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: {origin: glRef.current.origin,  modifiedMolecule: null} })
+        const scoresUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: glRef.current.origin,  modifiedMolecule: null} })
         document.dispatchEvent(scoresUpdateEvent);    
         glRef.current.drawSceneDirty();
         glRef.current.reContourMaps();
@@ -282,7 +283,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         glRef.current.origin[0] += yshift[0] / 8. * glRef.current.zoom;
         glRef.current.origin[1] += yshift[1] / 8. * glRef.current.zoom;
         glRef.current.origin[2] += yshift[2] / 8. * glRef.current.zoom;
-        const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: {origin: glRef.current.origin,  modifiedMolecule: null} })
+        const scoresUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: glRef.current.origin} })
         document.dispatchEvent(scoresUpdateEvent);    
         glRef.current.drawSceneDirty();
         glRef.current.reContourMaps();
@@ -297,7 +298,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         glRef.current.origin[0] += xshift[0] / 8. * glRef.current.zoom;
         glRef.current.origin[1] += xshift[1] / 8. * glRef.current.zoom;
         glRef.current.origin[2] += xshift[2] / 8. * glRef.current.zoom;
-        const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: {origin: glRef.current.origin,  modifiedMolecule: null} })
+        const scoresUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: glRef.current.origin} })
         document.dispatchEvent(scoresUpdateEvent);    
         glRef.current.drawSceneDirty();
         glRef.current.reContourMaps();
@@ -312,7 +313,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         glRef.current.origin[0] += xshift[0] / 8. * glRef.current.zoom;
         glRef.current.origin[1] += xshift[1] / 8. * glRef.current.zoom;
         glRef.current.origin[2] += xshift[2] / 8. * glRef.current.zoom;
-        const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: {origin: glRef.current.origin,  modifiedMolecule: null} })
+        const scoresUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: glRef.current.origin} })
         document.dispatchEvent(scoresUpdateEvent);    
         glRef.current.drawSceneDirty();
         glRef.current.reContourMaps();
@@ -419,7 +420,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
 
     else if (action === 'show_shortcuts') {
         if (!glRef.current.showShortCutHelp) {
-            glRef.current.showShortCutHelp = Object.keys(shortCuts).map(key => {
+            glRef.current.showShortCutHelp = Object.keys(shortCuts).filter(key => !viewOnly || shortCuts[key].viewOnly).map(key => {
                 let modifiers = []
                 if (shortCuts[key].modifiers.includes('shiftKey')) modifiers.push("<Shift>")
                 if (shortCuts[key].modifiers.includes('ctrlKey')) modifiers.push("<Ctrl>")

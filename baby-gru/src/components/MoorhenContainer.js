@@ -7,7 +7,7 @@ import { MoorhenButtonBar } from './MoorhenButtonBar';
 import { Backdrop } from "@mui/material";
 import { historyReducer, initialHistoryState } from './MoorhenHistoryMenu';
 import { PreferencesContext } from "../utils/MoorhenPreferences";
-import { babyGruKeyPress } from './MoorhenKeyboardAccelerators';
+import { babyGruKeyPress } from '../utils/MoorhenKeyboardAccelerators';
 import { MoorhenSideBar } from './MoorhenSideBar';
 import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
 import { MoorhenNavBar } from "./MoorhenNavBar"
@@ -205,7 +205,7 @@ export const MoorhenContainer = (props) => {
     //Make this so that the keyPress returns true or false, depending on whether mgWebGL is to continue processing event
     const onKeyPress = useCallback(event => {
         return babyGruKeyPress(event, collectedProps, JSON.parse(preferences.shortCuts))
-    }, [molecules, activeMolecule, activeMap, hoveredAtom, preferences])
+    }, [molecules, activeMolecule, activeMap, hoveredAtom, props.viewOnly, preferences])
 
     useEffect(() => {
         if (hoveredAtom && hoveredAtom.molecule && hoveredAtom.cid) {
@@ -281,7 +281,8 @@ export const MoorhenContainer = (props) => {
         setToastContent, currentDropdownId, setCurrentDropdownId, hoveredAtom, setHoveredAtom, showToast, setShowToast,
         windowWidth, windowHeight, innerWindowMarginWidth, showColourRulesToast, timeCapsuleRef, setShowColourRulesToast, 
         isDark, exportCallback: props.exportCallback, disableFileUploads: props.disableFileUploads, urlPrefix: props.urlPrefix, 
-        extraMenus:props.extraMenus, monomerLibraryPath: props.monomerLibraryPath, moleculesRef, mapsRef, ...preferences
+        viewOnly: props.viewOnly, extraMenus:props.extraMenus, monomerLibraryPath: props.monomerLibraryPath, moleculesRef, mapsRef,
+        ...preferences
     }
 
     return <> <div>
@@ -317,6 +318,7 @@ export const MoorhenContainer = (props) => {
                             width={webGLWidth}
                             height={webGLHeight}
                             backgroundColor={backgroundColor}
+                            setBackgroundColor={setBackgroundColor}
                             isDark={isDark}
                             atomLabelDepthMode={preferences.atomLabelDepthMode}
                             onAtomHovered={onAtomHovered}
@@ -354,5 +356,5 @@ MoorhenContainer.defaultProps = {
     exportCallback: null,
     disableFileUploads: false,
     extraMenus: [],
-    viewOnly: false
+    viewOnly: true
 }
