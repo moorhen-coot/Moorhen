@@ -61,7 +61,13 @@ export function MoorhenMolecule(commandCentre, monomerLibraryPath) {
 
 MoorhenMolecule.prototype.replaceModelWithFile = async function (fileUrl, glRef) {
     let coordData
-    const fetchResponse = await fetch(fileUrl)
+    let fetchResponse
+    
+    try {
+        fetchResponse = await fetch(fileUrl)
+    } catch (err) {
+        return Promise.reject(`Unable to fetch file ${fileUrl}`)
+    }
     
     if (fetchResponse.ok) {
         coordData = await fetchResponse.text()
@@ -246,9 +252,10 @@ MoorhenMolecule.prototype.copyFragmentUsingCid = async function (cid, background
     })
 }
 
-MoorhenMolecule.prototype.loadToCootFromURL = function (url, molName) {
+MoorhenMolecule.prototype.loadToCootFromURL = function (url, molName, timeout=999999) {
     const $this = this
-    return fetch(url)
+    const timeoutSignal = AbortSignal.timeout(timeout);
+    return fetch(url, {signal: timeoutSignal})
         .then(response => {
             if (response.ok) {
                 return response.text()
@@ -257,7 +264,9 @@ MoorhenMolecule.prototype.loadToCootFromURL = function (url, molName) {
             }
         })
         .then(coordData => $this.loadToCootFromString(coordData, molName))
-        .catch(err => Promise.reject(err))
+        .catch(err =>{
+            return Promise.reject(err)
+        })
 }
 
 MoorhenMolecule.prototype.loadToCootFromFile = function (source) {
@@ -775,7 +784,7 @@ MoorhenMolecule.prototype.drawCootSelectionBonds = async function (glRef, name, 
             console.log(response.data.timeMainThreadToWorker)
             console.log(response.data.timelibcootAPI)
             console.log(response.data.timeconvertingWASMJS)
-            console.log(`Message from worker back to main thread took ${Date.now() - response.data.messageSendTime} ms (get_map_contours_mesh) - (${response.data.messageId.slice(0, 5)})`)
+            console.log(`Message from worker back to main thread took ${Date.now() - response.data.messageSendTime} ms (get_bonds_mesh_instanced) - (${response.data.messageId.slice(0, 5)})`)
 
             const objects = [response.data.result.result]
             if (objects.length > 0 && !this.gemmiStructure.isDeleted()) {
