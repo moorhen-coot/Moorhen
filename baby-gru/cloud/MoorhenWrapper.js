@@ -244,6 +244,46 @@ export default class MoorhenWrapper {
     );
   }
 
+  async handleOriginUpdate(evt){
+    await Promise.all(
+      this.controls.mapsRef.current.map(map => {
+        return map.doCootContour(
+          this.controls.glRef, ...evt.detail.origin.map(coord => -coord), map.mapRadius, map.contourLevel
+        )     
+      })
+    )
+  }
+
+  async handleRadiusChangeCallback(evt){
+    await Promise.all(
+      this.controls.mapsRef.current.map(map => {
+        const newRadius = map.mapRadius + parseInt(evt.detail.factor)
+        map.mapRadius = newRadius
+        return map.doCootContour(
+          this.controls.glRef, ...this.controls.glRef.current.origin.map(coord => -coord), newRadius, map.contourLevel
+        )     
+      })
+    )
+  }
+
+  async handleWheelContourLevelCallback(evt){
+    await Promise.all(
+      this.controls.mapsRef.current.map(map => {
+        const newLevel = evt.detail.factor > 1 ? map.contourLevel + 0.1 : map.contourLevel - 0.1
+        map.contourLevel = newLevel
+        return map.doCootContour(
+          this.controls.glRef, ...this.controls.glRef.current.origin.map(coord => -coord), map.mapRadius, newLevel
+        )     
+      })
+    )
+  }
+
+  addMapUpdateEventListeners() {
+    document.addEventListener("originUpdate", this.handleOriginUpdate.bind(this))
+    document.addEventListener("wheelContourLevelChanged", this.handleWheelContourLevelCallback.bind(this))
+    document.addEventListener("mapRadiusChanged", this.handleRadiusChangeCallback.bind(this))
+}
+
   async start() {
     if (this.preferences) {
       await this.importPreferences(this.preferences)
@@ -262,6 +302,7 @@ export default class MoorhenWrapper {
           )
         })  
       )
+      this.addMapUpdateEventListeners()
     }
     
     if (this.updateInterval !== null) {

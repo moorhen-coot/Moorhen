@@ -83,7 +83,7 @@ MoorhenMolecule.prototype.replaceModelWithFile = async function (fileUrl, glRef)
     
     if (cootResponse.data.result.status === 'Completed') {
         this.atomsDirty = true
-        return this.redraw(glRef)    
+        return this.redraw(glRef).then(this.centreOn(glRef, null, true))
     }
     
     return Promise.reject(cootResponse.data.result.status)
