@@ -7,7 +7,7 @@ import { MoorhenButtonBar } from './MoorhenButtonBar';
 import { Backdrop } from "@mui/material";
 import { historyReducer, initialHistoryState } from './MoorhenHistoryMenu';
 import { PreferencesContext } from "../utils/MoorhenPreferences";
-import { babyGruKeyPress } from './MoorhenKeyboardAccelerators';
+import { babyGruKeyPress } from '../utils/MoorhenKeyboardAccelerators';
 import { MoorhenSideBar } from './MoorhenSideBar';
 import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
 import { MoorhenNavBar } from "./MoorhenNavBar"

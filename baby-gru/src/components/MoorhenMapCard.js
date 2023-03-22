@@ -2,10 +2,9 @@ import { useEffect, useState, useRef, useCallback, useMemo, Fragment } from "rea
 import { Card, Form, Button, Row, Col, DropdownButton, Stack } from "react-bootstrap";
 import { doDownload, getNameLabel } from '../utils/MoorhenUtils';
 import { VisibilityOffOutlined, VisibilityOutlined, ExpandMoreOutlined, ExpandLessOutlined, DownloadOutlined, Settings } from '@mui/icons-material';
+import { MoorhenMapSettingsMenuItem, MoorhenMapWeightMenuItem, MoorhenDeleteDisplayObjectMenuItem, MoorhenRenameDisplayObjectMenuItem } from "./MoorhenMenuItem";
 import MoorhenSlider from "./MoorhenSlider";
-import { MoorhenDeleteDisplayObjectMenuItem, MoorhenRenameDisplayObjectMenuItem } from "./MoorhenMenuItem";
 import { MenuItem } from "@mui/material";
-import { MoorhenMapSettingsMenuItem } from "./MoorhenMenuItem";
 
 export const MoorhenMapCard = (props) => {
     const [cootContour, setCootContour] = useState(true)
