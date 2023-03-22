@@ -153,6 +153,23 @@ MoorhenMap.prototype.getMap = function () {
     })
 }
 
+MoorhenMap.prototype.setMapWeight = function (weight) {
+    return this.commandCentre.current.cootCommand( {
+        returnType: 'status',
+        command: "set_map_weight",
+        commandArgs: [this.molNo, weight]
+    })
+}
+
+
+MoorhenMap.prototype.getMapWeight = function () {
+    return this.commandCentre.current.cootCommand( {
+        returnType: 'status',
+        command: "get_map_weight",
+        commandArgs: [this.molNo]
+    })
+}
+
 MoorhenMap.prototype.makeWebMGLive = function (glRef) {
     const $this = this
     $this.webMGContour = true
@@ -258,7 +275,12 @@ MoorhenMap.prototype.doCootContour = function (glRef, x, y, z, radius, contourLe
             command: "get_map_contours_mesh",
             commandArgs: [$this.molNo, x, y, z, radius, contourLevel]
         }).then(response => {
-            console.log(`Message from worker back to main thread took ${Date.now() - response.data.sendTime} ms (get_map_contours_mesh) - (${response.data.messageId.slice(0, 5)})`)
+            
+            console.log(response.data.timeMainThreadToWorker)
+            console.log(response.data.timelibcootAPI)
+            console.log(response.data.timeconvertingWASMJS)
+            console.log(`Message from worker back to main thread took ${Date.now() - response.data.messageSendTime} ms (get_map_contours_mesh) - (${response.data.messageId.slice(0, 5)})`)
+
             const objects = [response.data.result.result]
             $this.clearBuffersOfStyle(glRef, "Coot")
             //$this.displayObjects['Coot'] = [...$this.displayObjects['Coot'], ...objects.map(object=>gl.appendOtherData(object, true))]
