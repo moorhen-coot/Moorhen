@@ -70,13 +70,19 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
                         props.setSelectedButtonIndex(null)
                     }
                     if (props.cootCommand) {
+
                         result = await props.commandCentre.current.cootCommand({
                             returnType: props.returnType,
                             command: props.cootCommand,
                             commandArgs: props.formatArgs(molecule, chosenAtom, localParameters),
                             changesMolecules: props.changesMolecule ? [molecule.molNo] : []
                         }, true)
-                        console.log(`Message from worker back to main thread took ${Date.now() - result.data.sendTime} ms (${props.cootCommand}) - (${result.data.messageId.slice(0, 5)})`)
+
+                        console.log(result.data.timeMainThreadToWorker)
+                        console.log(result.data.timelibcootAPI)
+                        console.log(result.data.timeconvertingWASMJS)
+                        console.log(`Message from worker back to main thread took ${Date.now() - result.data.messageSendTime} ms (${props.cootCommand}) - (${result.data.messageId.slice(0, 5)})`)
+
                     } else if (props.nonCootCommand) {
                         result = await props.nonCootCommand(molecule, chosenAtom, localParameters)
                     }
