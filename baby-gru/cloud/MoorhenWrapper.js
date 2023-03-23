@@ -271,6 +271,7 @@ export default class MoorhenWrapper {
     this.renderMoorhen()
     this.addStyleSheet()
     await this.waitForInitialisation()
+    await this.controls.timeCapsuleRef.current.dropAllBackups()
     await this.loadInputFiles()
     
     if (this.updateInterval !== null) {
