@@ -77,6 +77,21 @@ std::map<std::string,std::vector<coot::simple_rotamer> > getRotamersMap(){
     return all_rots;
 }
 
+/*
+//Next 2 are test functions.
+void TakeStringIntPairVector(const std::vector<std::pair<std::string, unsigned int> > &theVec){
+    for(auto el : theVec){
+        std::cout << el.first << " " << el.second << std::endl;
+    }
+}
+
+void TakeColourMap(const std::map<unsigned int, std::array<float, 3>> &theMap){
+    for(auto el : theMap){
+        std::cout << el.first << " " << el.second[0] << " " << el.second[1] << " " << el.second[2] << std::endl;
+    }
+}
+*/
+
 struct moorhen_hbond {
       int hb_hydrogen; // McDonald and Thornton H-bond algorithm
 
@@ -453,6 +468,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<molecules_container_t>("molecules_container_t")
     .constructor<>()
+    .function("set_user_defined_atom_colour_by_residue",&molecules_container_t::set_user_defined_atom_colour_by_residue)
+    .function("set_user_defined_bond_colours",&molecules_container_t::set_user_defined_bond_colours)
     .function("set_colour_wheel_rotation_base",&molecules_container_t::set_colour_wheel_rotation_base)
     .function("get_symmetry",&molecules_container_t::get_symmetry)
     .function("fit_to_map_by_random_jiggle_using_cid",&molecules_container_t::fit_to_map_by_random_jiggle_using_cid)
@@ -711,7 +728,15 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .field("alignment_info",&superpose_results_t::alignment_info)
     ;
 
+    value_array<std::array<float, 3>>("array_native_float_3")
+        .element(emscripten::index<0>())
+        .element(emscripten::index<1>())
+        .element(emscripten::index<2>())
+     ;
+
+    register_map<unsigned int, std::array<float, 3>>("MapIntFloat3");
     register_map<coot::residue_spec_t, coot::util::density_correlation_stats_info_t>("Map_residue_spec_t_density_correlation_stats_info_t");
+    register_vector<std::pair<std::string, unsigned int> >("VectorStringUInt_pair");
     register_vector<std::pair<symm_trans_t, Cell_Translation>>("Vectorsym_trans_t_Cell_Translation_pair");
     register_vector<std::pair<std::string, std::string>>("Vectorstring_string_pair");
     register_vector<moorhen_hbond>("Vectormoorhen_hbond");
@@ -792,6 +817,10 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .field("first",&std::pair<int,int>::first)
         .field("second",&std::pair<int,int>::second)
     ;
+    value_object<std::pair<std::string, unsigned int>>("string_uint_pair")
+        .field("first",&std::pair<std::string, unsigned int>::first)
+        .field("second",&std::pair<std::string, unsigned int>::second)
+    ;
 
     value_object<moorhen_hbond>("moorhen_hbond")
       .field("hb_hydrogen",&moorhen_hbond::hb_hydrogen)
@@ -852,4 +881,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
 
     function("getRotamersMap",&getRotamersMap);
+    //For testing
+    //function("TakeColourMap",&TakeColourMap);
+    //function("TakeStringIntPairVector",&TakeStringIntPairVector);
 }
