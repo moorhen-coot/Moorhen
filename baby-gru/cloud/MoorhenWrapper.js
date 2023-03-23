@@ -220,7 +220,15 @@ export default class MoorhenWrapper {
     if (moleculeInputFiles.length === this.controls.moleculesRef.current.length) {
       await Promise.all(
         this.controls.moleculesRef.current.map((molecule, index) => {
+          const oldUnitCellParams = JSON.stringify(molecule.getUnitCellParams())
           return molecule.replaceModelWithFile(moleculeInputFiles[index].args[0], this.controls.glRef)
+            .then(_ => {
+              const newUnitCellParams = JSON.stringify(molecule.getUnitCellParams())
+              if (oldUnitCellParams !== newUnitCellParams) {
+                molecule.centreOn(this.controls.glRef, null, true)
+              } else {
+              }   
+            })
         })  
       )  
     } else {

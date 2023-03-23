@@ -83,7 +83,7 @@ MoorhenMolecule.prototype.replaceModelWithFile = async function (fileUrl, glRef)
     
     if (cootResponse.data.result.status === 'Completed') {
         this.atomsDirty = true
-        return this.redraw(glRef).then(this.centreOn(glRef, null, true))
+        return this.redraw(glRef)
     }
     
     return Promise.reject(cootResponse.data.result.status)
@@ -119,6 +119,28 @@ MoorhenMolecule.prototype.updateGemmiStructure = async function () {
     return Promise.resolve()
 }
 
+MoorhenMolecule.prototype.getUnitCellParams = function () {
+    if (this.gemmiStructure === null) {
+        return
+    }
+
+    const structure = this.gemmiStructure.clone()
+    const unitCell = this.gemmiStructure.cell
+
+    const unitCellParams = {
+        a: unitCell.a,
+        b: unitCell.b,
+        c: unitCell.c,
+        alpha: unitCell.alpha,
+        beta: unitCell.beta,
+        gamma: unitCell.gamma
+    }
+
+    structure.delete()
+    unitCell.delete()
+
+    return unitCellParams
+}
 MoorhenMolecule.prototype.parseSequences = function () {
     if (this.gemmiStructure === null) {
         return
