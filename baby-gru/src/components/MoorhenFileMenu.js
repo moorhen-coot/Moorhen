@@ -272,6 +272,7 @@ export const MoorhenFileMenu = (props) => {
         glRef.current.set_clip_range(sessionData.clipStart, sessionData.clipEnd, false)
         glRef.current.doDrawClickedAtomLines = sessionData.doDrawClickedAtomLines
         glRef.current.atomLabelDepthMode = sessionData.atomLabelDepthMode
+        glRef.current.clipCapPerfectSpheres = sessionData.clipCap
         glRef.current.background_colour = sessionData.backgroundColor
         glRef.current.setOrigin(sessionData.origin, false)
         glRef.current.setQuat(sessionData.quat4)

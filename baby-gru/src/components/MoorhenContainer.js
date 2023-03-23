@@ -281,6 +281,7 @@ export const MoorhenContainer = (props) => {
                         setBackgroundColor={setBackgroundColor}
                         isDark={isDark}
                         atomLabelDepthMode={preferences.atomLabelDepthMode}
+                        clipCap={preferences.clipCap}
                         onAtomHovered={onAtomHovered}
                         onKeyPress={onKeyPress}
                         hoveredAtom={hoveredAtom}

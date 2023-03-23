@@ -43,6 +43,7 @@ const getDefaultValues = () => {
         showScoresToast: true,
         shortcutOnHoveredAtom: true,
         resetClippingFogging: true,
+        clipCap: false,
         defaultUpdatingScores: ['Rfree', 'Rfactor', 'Moorhen Points'],
         maxBackupCount: 10,
         modificationCountBackupThreshold: 5,
@@ -225,6 +226,7 @@ const PreferencesContextProvider = ({ children }) => {
     const [showScoresToast, setShowScoresToast] = useState(null)
     const [shortcutOnHoveredAtom, setShortcutOnHoveredAtom] = useState(null)
     const [resetClippingFogging, setResetClippingFogging] = useState(null)
+    const [clipCap, setClipCap] = useState(null)
     const [maxBackupCount, setMaxBackupCount] = useState(null)
     const [modificationCountBackupThreshold, setModificationCountBackupThreshold] = useState(null)
     const [defaultUpdatingScores, setDefaultUpdatingScores] = useReducer(itemReducer, null)
@@ -253,6 +255,7 @@ const PreferencesContextProvider = ({ children }) => {
         21: { label: "maxBackupCount", value: maxBackupCount, valueSetter: setMaxBackupCount},
         22: { label: "modificationCountBackupThreshold", value: modificationCountBackupThreshold, valueSetter: setModificationCountBackupThreshold},
         23: { label: "drawInteractions", value: drawInteractions, valueSetter: setDrawInteractions},
+        24: { label: "clipCap", value: clipCap, valueSetter: setClipCap},
     }
 
     const restoreDefaults = (defaultValues)=> {
@@ -333,6 +336,15 @@ const PreferencesContextProvider = ({ children }) => {
        
         updateStoredPreferences('modificationCountBackupThreshold', modificationCountBackupThreshold);
     }, [modificationCountBackupThreshold]);
+
+    useMemo(() => {
+
+        if (clipCap === null) {
+            return
+        }
+
+        updateStoredPreferences('clipCap', clipCap);
+    }, [clipCap]);
 
     useMemo(() => {
 
@@ -525,7 +537,7 @@ const PreferencesContextProvider = ({ children }) => {
         wheelSensitivityFactor, setWheelSensitivityFactor, shortcutOnHoveredAtom, setShortcutOnHoveredAtom,
         resetClippingFogging, setResetClippingFogging, maxBackupCount, setMaxBackupCount,
         modificationCountBackupThreshold, setModificationCountBackupThreshold, isMounted,
-        drawInteractions, setDrawInteractions
+        drawInteractions, setDrawInteractions, clipCap, setClipCap
     }
 
     return (

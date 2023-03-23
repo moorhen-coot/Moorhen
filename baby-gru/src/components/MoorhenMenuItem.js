@@ -1487,6 +1487,13 @@ export const MoorhenClipFogMenuItem = (props) => {
                 onChange={() => { props.setResetClippingFogging(!props.resetClippingFogging) }}
                 label="Reset clipping and fogging on zoom"/>
         </InputGroup>
+        <InputGroup style={{ paddingLeft:'0.1rem', paddingBottom: '0.5rem', width: '25rem'}}>
+            <Form.Check
+                type="switch"
+                checked={props.clipCap}
+                onChange={() => { props.setClipCap(!props.clipCap) }}
+                label="'Clip-cap' perfect spheres"/>
+        </InputGroup>
     </div>
 
     return <MoorhenMenuItem

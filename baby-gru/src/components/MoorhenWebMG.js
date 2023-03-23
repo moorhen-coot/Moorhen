@@ -363,6 +363,16 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
 
     useEffect(() => {
         if (glRef.current) {
+            glRef.current.clipCapPerfectSpheres = props.clipCap
+            glRef.current.drawScene()
+        }
+    }, [
+        props.clipCap,
+        glRef.current
+    ])
+
+    useEffect(() => {
+        if (glRef.current) {
             glRef.current.background_colour = props.backgroundColor
             glRef.current.drawScene()
         }
