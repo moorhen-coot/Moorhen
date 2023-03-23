@@ -10,6 +10,16 @@
     height: calc(100% - 10rem);
 }
 
+.carousel-control-next {
+  width: max(80px, 10vh) !important;
+  height: max(40px, 5vh) !important;
+}
+
+.carousel-control-prev {
+  width: max(80px, 10vh) !important;
+  height: max(40px, 5vh) !important;
+}
+
 .validation-plot-div{
     height: calc(100%);
 }
