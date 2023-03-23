@@ -1,4 +1,4 @@
-import { useRef, useState, useReducer, useContext } from 'react'
+import { useRef, useState, useReducer, useContext, useEffect, useCallback } from 'react'
 import { historyReducer, initialHistoryState } from '../src/components/MoorhenHistoryMenu'
 import { PreferencesContext } from "../src/utils/MoorhenPreferences"
 import { MoorhenContainer } from "../src/components/MoorhenContainer"
@@ -67,11 +67,80 @@ export const MoorhenCloudApp = (props) => {
         backgroundColor, setBackgroundColor, currentDropdownId, setCurrentDropdownId,
         appTitle, setAppTitle, cootInitialized, setCootInitialized, theme, setTheme,
         showToast, setShowToast, toastContent, setToastContent, showColourRulesToast,
-        setShowColourRulesToast, exportCallback: props.exportCallback, viewOnly: props.viewOnly,
-        disableFileUploads: props.disableFileUploads, extraMenus:props.extraMenus, 
-        monomerLibraryPath: props.monomerLibraryPath, forwardControls: props.forwardControls,
-        urlPrefix: props.urlPrefix
+        setShowColourRulesToast, ...props
     }
+
+    const handleOriginUpdate = useCallback(async (evt) => {
+        if (props.viewOnly) {
+            await Promise.all(
+                maps.map(map => {
+                  return map.doCootContour(
+                    glRef, ...evt.detail.origin.map(coord => -coord), map.mapRadius, map.contourLevel
+                  )     
+                })
+            )
+        }
+    }, [props.viewOnly, maps, glRef])
+    
+    const handleRadiusChangeCallback = useCallback(async (evt) => {
+        if (props.viewOnly) {
+            await Promise.all(
+                maps.map(map => {
+                  const newRadius = map.mapRadius + parseInt(evt.detail.factor)
+                  map.mapRadius = newRadius
+                  return map.doCootContour(
+                    glRef, ...glRef.current.origin.map(coord => -coord), newRadius, map.contourLevel
+                  )     
+                })
+            )      
+        }
+    }, [props.viewOnly, maps, glRef])
+    
+    const handleWheelContourLevelCallback = useCallback(async (evt) => {
+        if(props.viewOnly) {
+            await Promise.all(
+                maps.map(map => {
+                  const newLevel = evt.detail.factor > 1 ? map.contourLevel + 0.1 : map.contourLevel - 0.1
+                  map.contourLevel = newLevel
+                  return map.doCootContour(
+                    glRef, ...glRef.current.origin.map(coord => -coord), map.mapRadius, newLevel
+                  )     
+                })
+            )
+        }
+    }, [props.viewOnly, maps, glRef])
+    
+    useEffect(() => {
+        document.addEventListener("originUpdate", handleOriginUpdate)
+        return () => {
+            document.removeEventListener("originUpdate", handleOriginUpdate)
+        }
+    }, [handleOriginUpdate])
+
+    useEffect(() => {
+        document.addEventListener("mapRadiusChanged", handleRadiusChangeCallback)
+        return () => {
+            document.removeEventListener("mapRadiusChanged", handleRadiusChangeCallback)
+        }
+    }, [handleOriginUpdate])
+
+    useEffect(() => {
+        document.addEventListener("wheelContourLevelChanged", handleWheelContourLevelCallback)
+        return () => {
+            document.removeEventListener("wheelContourLevelChanged", handleWheelContourLevelCallback)
+        }
+    }, [handleOriginUpdate])
+
+    useEffect(() => {
+        if (props.viewOnly && maps.length > 0) {
+            maps.map(map => {
+                map.doCootContour(
+                    glRef, ...glRef.current.origin.map(coord => -coord), 13.0, 0.8
+              )
+            })
+        }
+    }, [maps])
+
 
     return <MoorhenContainer {...collectedProps}/>
 }
