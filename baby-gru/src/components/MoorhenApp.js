@@ -67,20 +67,12 @@ export const MoorhenApp = (props) => {
         backgroundColor, setBackgroundColor, currentDropdownId, setCurrentDropdownId,
         appTitle, setAppTitle, cootInitialized, setCootInitialized, theme, setTheme,
         showToast, setShowToast, toastContent, setToastContent, showColourRulesToast,
-        setShowColourRulesToast, exportCallback: props.exportCallback, viewOnly: props.viewOnly,
-        disableFileUploads: props.disableFileUploads, extraMenus:props.extraMenus, 
-        monomerLibraryPath: props.monomerLibraryPath, forwardControls: props.forwardControls,
-        urlPrefix: props.urlPrefix
+        setShowColourRulesToast, forwardControls: props.forwardControls
     }
 
     return <MoorhenContainer {...collectedProps}/>
 }
 
 MoorhenApp.defaultProps = {
-    urlPrefix: '.',
-    monomerLibraryPath: './baby-gru/monomers',
-    exportCallback: null,
-    disableFileUploads: false,
-    extraMenus: [],
-    viewOnly: false
+    forwardControls: (controls) => { console.log('Fetched controls', {controls}) }
 }

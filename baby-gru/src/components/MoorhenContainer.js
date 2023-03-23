@@ -309,3 +309,12 @@ export const MoorhenContainer = (props) => {
     </Container>
     </>
 }
+
+MoorhenContainer.defaultProps = {
+    urlPrefix: '.',
+    monomerLibraryPath: './baby-gru/monomers',
+    exportCallback: null,
+    disableFileUploads: false,
+    extraMenus: [],
+    viewOnly: false
+}
