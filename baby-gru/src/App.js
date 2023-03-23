@@ -6,9 +6,7 @@ function App() {
   return (
     <div className="App">
       <PreferencesContextProvider>
-        <MoorhenApp forwardControls={(controls) => {
-          console.log('Fetched controls', {controls})
-        }}/>
+        <MoorhenApp/>
       </PreferencesContextProvider>
     </div>
   );
