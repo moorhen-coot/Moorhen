@@ -1547,6 +1547,7 @@ class MGWebGL extends Component {
         this.gl_clipPlane5 = new Float32Array(4);
         this.gl_clipPlane6 = new Float32Array(4);
         this.gl_clipPlane7 = new Float32Array(4);
+        this.clipCapPerfectSpheres = false;
         this.labelledAtoms = [];
         this.measuredAtoms = [];
         this.textLabels = [];
@@ -4934,6 +4935,7 @@ class MGWebGL extends Component {
         this.shaderProgramPerfectSpheres.clipPlane6 = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "clipPlane6");
         this.shaderProgramPerfectSpheres.clipPlane7 = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "clipPlane7");
         this.shaderProgramPerfectSpheres.nClipPlanes = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "nClipPlanes");
+        this.shaderProgramPerfectSpheres.clipCap = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "clipCap");
     }
 
     initImageShaders(vertexShader, fragmentShader) {
@@ -7880,6 +7882,7 @@ class MGWebGL extends Component {
                     this.gl.useProgram(program);
                     this.setMatrixUniforms(program);
                     this.setLightUniforms(program);
+                    this.gl.uniform1i(program.clipCap,this.clipCapPerfectSpheres);
                     this.gl.disableVertexAttribArray(program.vertexColourAttribute);
                     this.gl.enableVertexAttribArray(program.vertexTextureAttribute);
                 }

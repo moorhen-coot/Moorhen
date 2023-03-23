@@ -30,6 +30,8 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
     in mediump mat4 projMatrix;
     in float size_v;
 
+    uniform bool clipCap;
+
     out vec4 fragColor;
 
     void main(void) {
@@ -40,19 +42,32 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
 
       if(zz <= 0.06)
           discard;
-    
-      if(dot(eyePos, clipPlane0)<0.0){
-       discard;
-      }
-      if(dot(eyePos, clipPlane1)<0.0){
-       discard;
-      }
-      fragColor = vec4(zz*vColor.r, zz*vColor.g, zz*vColor.b, 1.0);
-
 
       vec4 pos = eyePos;
       pos.z += 0.7071*z*size_v;
       pos = projMatrix * pos;
+
+      if(dot(eyePos, clipPlane1)<0.0){
+           discard;
+      }
+
+      float clipd;
+      float clipd_back;
+      if(clipCap){
+          vec4 posclip = eyePos;
+          vec4 posclip_back = eyePos;
+          posclip.z += 0.7071*z*size_v;
+          vec4 clip_plane_back = clipPlane0;
+          clip_plane_back.w += 1.0*0.7071;
+          clipd_back=dot(posclip_back, clip_plane_back);
+          clipd = dot(posclip, clipPlane0);
+      }
+
+      if(!clipCap){
+          if(dot(eyePos, clipPlane0)<0.0){
+              discard;
+          }
+      }
 
       gl_FragDepth = (pos.z / pos.w + 1.0) / 2.0;
 
@@ -79,7 +94,7 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
        Ispec += light_colours_specular * pow(max(dot(E,L),0.0),16.);
        Ispec.a *= y;
       //}
-      
+
       float FogFragCoord = abs(eyePos.z/eyePos.w);
       float fogFactor = (fog_end - FogFragCoord)/(fog_end - fog_start);
       fogFactor = 1.0 - clamp(fogFactor,0.0,1.0);
@@ -91,8 +106,15 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
       color += Ispec;
       fragColor = mix(color, fogColour, fogFactor );
       //fragColor = color;
-      
-      
+
+      if(clipCap){
+        if(clipd<0.0){
+            fragColor = mix(vColor, fogColour, fogFactor );
+        }
+        if(clipd_back<0.0||((1.0-z)*0.7071*size_v>clipd_back&&clipd<0.0)){
+            discard;
+        }
+      }
     }
 `;
 
