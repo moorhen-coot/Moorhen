@@ -32,7 +32,9 @@ export const MoorhenCloudApp = (props) => {
     const consoleDivRef = useRef(null)
     const lastHoveredAtom = useRef(null)
     const prevActiveMoleculeRef = useRef(null)
-    const preferences = useContext(PreferencesContext);
+    const isDirty = useRef(false)
+    const busyContouring = useRef(false)
+    const preferences = useContext(PreferencesContext)
     const [activeMap, setActiveMap] = useState(null)
     const [activeMolecule, setActiveMolecule] = useState(null)
     const [hoveredAtom, setHoveredAtom] = useState({ molecule: null, cid: null })
@@ -70,43 +72,52 @@ export const MoorhenCloudApp = (props) => {
         setShowColourRulesToast, ...props
     }
 
-    const handleOriginUpdate = useCallback(async (evt) => {
-        if (props.viewOnly) {
+    const doContourIfDirty = async () => {
+        if (isDirty.current) {
+            busyContouring.current = true
+            isDirty.current = false
             await Promise.all(
                 maps.map(map => {
                   return map.doCootContour(
-                    glRef, ...evt.detail.origin.map(coord => -coord), map.mapRadius, map.contourLevel
+                    glRef, ...glRef.current.origin.map(coord => -coord), map.mapRadius, map.contourLevel
                   )     
                 })
             )
+            busyContouring.current = false
+            doContourIfDirty()
+        }
+    }
+
+    const triggerMapContour = () => {
+        isDirty.current = true
+        if (!busyContouring.current) {
+            doContourIfDirty()
+        }
+    }
+
+    const handleOriginUpdate = useCallback(async () => {
+        if (props.viewOnly) {
+            triggerMapContour()
         }
     }, [props.viewOnly, maps, glRef])
     
     const handleRadiusChangeCallback = useCallback(async (evt) => {
         if (props.viewOnly) {
-            await Promise.all(
-                maps.map(map => {
-                  const newRadius = map.mapRadius + parseInt(evt.detail.factor)
-                  map.mapRadius = newRadius
-                  return map.doCootContour(
-                    glRef, ...glRef.current.origin.map(coord => -coord), newRadius, map.contourLevel
-                  )     
-                })
-            )      
+            maps.forEach(map => {
+                const newRadius = map.mapRadius + parseInt(evt.detail.factor)
+                map.mapRadius = newRadius
+            })
+            triggerMapContour()
         }
     }, [props.viewOnly, maps, glRef])
     
     const handleWheelContourLevelCallback = useCallback(async (evt) => {
-        if(props.viewOnly) {
-            await Promise.all(
-                maps.map(map => {
-                  const newLevel = evt.detail.factor > 1 ? map.contourLevel + 0.1 : map.contourLevel - 0.1
-                  map.contourLevel = newLevel
-                  return map.doCootContour(
-                    glRef, ...glRef.current.origin.map(coord => -coord), map.mapRadius, newLevel
-                  )     
-                })
-            )
+        if (props.viewOnly) {
+            maps.forEach(map => {
+                const newLevel = evt.detail.factor > 1 ? map.contourLevel + 0.1 : map.contourLevel - 0.1
+                map.contourLevel = newLevel
+          })
+            triggerMapContour()
         }
     }, [props.viewOnly, maps, glRef])
     
