@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { MoorhenContainer } from '../src/components/MoorhenContainer';
+import { MoorhenCloudApp } from './MoorhenCloudApp';
 import { MoorhenMolecule } from "../src/utils/MoorhenMolecule"
 import { MoorhenMap } from "../src/utils/MoorhenMap"
 import { PreferencesContextProvider, getDefaultValues } from "../src/utils/MoorhenPreferences";
@@ -230,7 +230,7 @@ export default class MoorhenWrapper {
       <React.StrictMode>
         <div className="App">
           <PreferencesContextProvider>
-            <MoorhenContainer 
+            <MoorhenCloudApp 
               urlPrefix={this.urlPrefix}
               forwardControls={this.forwardControls.bind(this)}
               disableFileUploads={true}
