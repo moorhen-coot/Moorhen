@@ -1,6 +1,5 @@
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const HTMLWebpackPlugin = require('html-webpack-plugin');
 
 const path = require('path');
 
@@ -37,11 +36,6 @@ const paths = {
 module.exports = (env, argv) => {
   return {
     plugins:[
-      new HTMLWebpackPlugin({
-        filename: 'index.html',
-        template: path.join(paths.cloud, 'index.html'),
-        favicon: path.join(paths.public, 'favicon.ico')
-      }),
       new MiniCssExtractPlugin({
         filename: 'moorhen.css',
         chunkFilename: '[id].css',
