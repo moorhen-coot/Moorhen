@@ -22,7 +22,7 @@ export function MoorhenTimeCapsule(moleculesRef, mapsRef, activeMapRef, glRef, p
     this.modificationCount = 0
     this.modificationCountBackupThreshold = 5
     this.maxBackupCount = 10
-    this.version = '0.0.7'
+    this.version = 'v7'
     this.storageInstance = createInstance('Moorhen-TimeCapsule')
     this.checkVersion()
 }
@@ -265,6 +265,7 @@ MoorhenTimeCapsule.prototype.removeBackup = async function(key) {
 MoorhenTimeCapsule.prototype.dropAllBackups = async function() {
     try {
          await this.storageInstance.clear()
+         await this.storageInstance.setItem(JSON.stringify({type: 'version'}), this.version)
      } catch (err) {
          console.log(err)
      }

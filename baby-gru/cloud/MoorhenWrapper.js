@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { MoorhenContainer } from '../src/components/MoorhenContainer';
+import { MoorhenCloudApp } from './MoorhenCloudApp';
 import { MoorhenMolecule } from "../src/utils/MoorhenMolecule"
 import { MoorhenMap } from "../src/utils/MoorhenMap"
 import { PreferencesContextProvider, getDefaultValues } from "../src/utils/MoorhenPreferences";
@@ -8,6 +8,20 @@ import reportWebVitals from '../src/reportWebVitals'
 import localforage from 'localforage';
 import '../src/index.css';
 import '../src/App.css';
+
+function createModule() {
+  createCCP4Module({
+    print(t) { console.log(["output", t]) },
+    printErr(t) { console.log(["output", t]); }
+  })
+  .then(function (CCP4Mod) {
+    window.CCP4Module = CCP4Mod;
+  })
+  .catch((e) => {
+    console.log("CCP4 problem :(");
+    console.log(e);
+  });
+}
 
 export default class MoorhenWrapper {
   constructor(urlPrefix) {
@@ -21,21 +35,7 @@ export default class MoorhenWrapper {
     this.preferences = null
     this.exportCallback = () => {}
     reportWebVitals()
-    this.createModule()
-  }
-
-  createModule() {
-    createCCP4Module({
-      print(t) { console.log(["output", t]) },
-      printErr(t) { console.log(["output", t]); }
-    })
-    .then(function (CCP4Mod) {
-      window.CCP4Module = CCP4Mod;
-    })
-    .catch((e) => {
-      console.log("CCP4 problem :(");
-      console.log(e);
-    });
+    createModule()
   }
 
   setWorkMode(mode='build') {
@@ -133,39 +133,64 @@ export default class MoorhenWrapper {
     head.appendChild(style);
   }
 
-  async loadMtzData(inputFile, mapName, selectedColumns) {
-    const newMap = new MoorhenMap(this.controls.commandCentre)
-    return new Promise(async (resolve, reject) => {
-      try {
-        await newMap.loadToCootFromMtzURL(inputFile, mapName, selectedColumns)
-        this.controls.changeMaps({ action: 'Add', item: newMap })
-        this.controls.setActiveMap(newMap)
-        return resolve(newMap)
-      } catch (err) {
-        console.log(`Cannot fetch mtz from ${inputFile}`)
-        return resolve(null)
+  async canFetchFile(url, timeout=3000) {
+    const timeoutSignal = AbortSignal.timeout(timeout)
+    try {
+      const response = await fetch(url, {method: 'HEAD', signal: timeoutSignal})
+      if (response.ok) {
+        return true
+      } else {
+        return false
       }
-    })
+    } catch (err) {
+      console.log(err)
+      return false
+    }
+}
+
+  async loadMtzData(inputFile, mapName, selectedColumns) {
+    const fetchIsOK = await this.canFetchFile(inputFile)
+    if (!fetchIsOK) {
+      console.log(`Error fetching data from url ${inputFile}`)
+    } else {
+      const newMap = new MoorhenMap(this.controls.commandCentre)
+      return new Promise(async (resolve, reject) => {
+        try {
+          await newMap.loadToCootFromMtzURL(inputFile, mapName, selectedColumns)
+          this.controls.changeMaps({ action: 'Add', item: newMap })
+          this.controls.setActiveMap(newMap)
+          return resolve(newMap)
+        } catch (err) {
+          console.log(`Cannot fetch mtz from ${inputFile}`)
+          return reject(err)
+        }
+      })  
+    }
   }
 
-  async loadPdbData(inputFile, molName, timeout=6000) {
-    const newMolecule = new MoorhenMolecule(this.controls.commandCentre, this.monomerLibrary)
-    return new Promise(async (resolve, reject) => {
-        try {
-            await newMolecule.loadToCootFromURL(inputFile, molName, timeout)
-            await newMolecule.fetchIfDirtyAndDraw('CBs', this.controls.glRef)
-            this.controls.changeMolecules({ action: "Add", item: newMolecule })
-            newMolecule.centreOn(this.controls.glRef, null, false)
-            return resolve(newMolecule)
-        } catch (err) {
-            console.log(`Cannot fetch molecule from ${inputFile}`)
-            return resolve(null)
-        }   
-    })
+  async loadPdbData(inputFile, molName) {
+    const fetchIsOK = await this.canFetchFile(inputFile)
+    if (!fetchIsOK) {
+      console.log(`Error fetching data from url ${inputFile}`)
+    } else {
+      const newMolecule = new MoorhenMolecule(this.controls.commandCentre, this.monomerLibrary)
+      return new Promise(async (resolve, reject) => {
+          try {
+              await newMolecule.loadToCootFromURL(inputFile, molName)
+              await newMolecule.fetchIfDirtyAndDraw('CBs', this.controls.glRef)
+              this.controls.changeMolecules({ action: "Add", item: newMolecule })
+              newMolecule.centreOn(this.controls.glRef, null, false)
+              return resolve(newMolecule)
+          } catch (err) {
+              console.log(`Cannot fetch molecule from ${inputFile}`)
+              return reject(err)
+          }   
+      })  
+    }
   }
 
   async loadInputFiles() {
-    const results = await Promise.all(
+    await Promise.all(
       this.inputFiles.map(file => {
         if (file.type === 'pdb') {
           return this.loadPdbData(...file.args)
@@ -173,21 +198,14 @@ export default class MoorhenWrapper {
         return this.loadMtzData(...file.args)
     }))
 
-    setTimeout(() => {
-      results.forEach((result, index) => {
-        if (result?.type === 'map') {
-          let newMapContour = new CustomEvent("newMapContour", {
-            "detail": {
-                molNo: result.molNo,
-                mapRadius: 13,
-                cootContour: true,
-                contourLevel: 0.8,
-                litLines: false,
-            }
-        });               
-        document.dispatchEvent(newMapContour);
-        }
-      })
+    setTimeout(async () => {
+      await Promise.all(
+        this.controls.mapsRef.current.map(map => {
+          return map.doCootContour(
+            this.controls.glRef, ...this.controls.glRef.current.origin.map(coord => -coord), 13.0, 0.8
+          )
+        })  
+      )
     }, 2500)
   }
 
@@ -230,12 +248,13 @@ export default class MoorhenWrapper {
       <React.StrictMode>
         <div className="App">
           <PreferencesContextProvider>
-            <MoorhenContainer 
+            <MoorhenCloudApp 
               urlPrefix={this.urlPrefix}
               forwardControls={this.forwardControls.bind(this)}
               disableFileUploads={true}
               exportCallback={this.exportCallback.bind(this)}
               monomerLibraryPath={this.monomerLibrary}
+              extraMenus={[]}
               viewOnly={this.workMode === 'view'}
               />
           </PreferencesContextProvider>
@@ -243,46 +262,6 @@ export default class MoorhenWrapper {
       </React.StrictMode>
     );
   }
-
-  async handleOriginUpdate(evt){
-    await Promise.all(
-      this.controls.mapsRef.current.map(map => {
-        return map.doCootContour(
-          this.controls.glRef, ...evt.detail.origin.map(coord => -coord), map.mapRadius, map.contourLevel
-        )     
-      })
-    )
-  }
-
-  async handleRadiusChangeCallback(evt){
-    await Promise.all(
-      this.controls.mapsRef.current.map(map => {
-        const newRadius = map.mapRadius + parseInt(evt.detail.factor)
-        map.mapRadius = newRadius
-        return map.doCootContour(
-          this.controls.glRef, ...this.controls.glRef.current.origin.map(coord => -coord), newRadius, map.contourLevel
-        )     
-      })
-    )
-  }
-
-  async handleWheelContourLevelCallback(evt){
-    await Promise.all(
-      this.controls.mapsRef.current.map(map => {
-        const newLevel = evt.detail.factor > 1 ? map.contourLevel + 0.1 : map.contourLevel - 0.1
-        map.contourLevel = newLevel
-        return map.doCootContour(
-          this.controls.glRef, ...this.controls.glRef.current.origin.map(coord => -coord), map.mapRadius, newLevel
-        )     
-      })
-    )
-  }
-
-  addMapUpdateEventListeners() {
-    document.addEventListener("originUpdate", this.handleOriginUpdate.bind(this))
-    document.addEventListener("wheelContourLevelChanged", this.handleWheelContourLevelCallback.bind(this))
-    document.addEventListener("mapRadiusChanged", this.handleRadiusChangeCallback.bind(this))
-}
 
   async start() {
     if (this.preferences) {
@@ -292,18 +271,8 @@ export default class MoorhenWrapper {
     this.renderMoorhen()
     this.addStyleSheet()
     await this.waitForInitialisation()
+    await this.controls.timeCapsuleRef.current.dropAllBackups()
     await this.loadInputFiles()
-    
-    if (this.workMode === 'view') {
-      await Promise.all(
-        this.controls.mapsRef.current.map(map => {
-          return map.doCootContour(
-            this.controls.glRef, ...this.controls.glRef.current.origin.map(coord => -coord), 13.0, 0.8
-          )
-        })  
-      )
-      this.addMapUpdateEventListeners()
-    }
     
     if (this.updateInterval !== null) {
       this.startMoleculeUpdates()

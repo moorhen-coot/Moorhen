@@ -537,6 +537,7 @@ export const MoorhenContextMenu = (props) => {
                     <>
                       <MoorhenGetMonomerMenuItem setPopoverIsShown={() => {}} defaultBondSmoothness={0} glRef={props.glRef} molecules={props.molecules} commandCentre={props.commandCentre} changeMolecules={props.changeMolecules} backgroundColor={props.backgroundColor}/>
                       <MoorhenFitLigandRightHereMenuItem setPopoverIsShown={() => {}} defaultBondSmoothness={0} glRef={props.glRef} maps={props.maps} molecules={props.molecules} commandCentre={props.commandCentre} changeMolecules={props.changeMolecules} backgroundColor={props.backgroundColor} />
+                      <MoorhenBackgroundColorMenuItem setPopoverIsShown={() => { }} backgroundColor={props.backgroundColor} setBackgroundColor={props.setBackgroundColor}/>
                       <MenuItem onClick={() => handleCreateBackup()}>Create backup</MenuItem>
                     </>
                      }
