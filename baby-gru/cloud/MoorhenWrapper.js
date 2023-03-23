@@ -226,7 +226,6 @@ export default class MoorhenWrapper {
               const newUnitCellParams = JSON.stringify(molecule.getUnitCellParams())
               if (oldUnitCellParams !== newUnitCellParams) {
                 molecule.centreOn(this.controls.glRef, null, true)
-              } else {
               }   
             })
         })  
