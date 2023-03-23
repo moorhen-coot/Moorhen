@@ -88,13 +88,13 @@ export const MoorhenButtonBar = (props) => {
         let currentItem = []
 
         editButtons.forEach(button => {
-            currentItem.push(button)
             currentlyUsedWidth += buttonWidth
             if (currentlyUsedWidth >= maximumAllowedWidth) {
                 carouselItems.push(currentItem)
                 currentItem = []
                 currentlyUsedWidth = 0
             }
+            currentItem.push(button)
         })
         
         if (currentItem.length > 0) {
