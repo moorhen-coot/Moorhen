@@ -6,7 +6,7 @@ import { GetSplinesColoured } from '../WebGLgComponents/mgSecStr';
 import { atomsToSpheresInfo } from '../WebGLgComponents/mgWebGLAtomsToPrimitives';
 import { contactsToCylindersInfo, contactsToLinesInfo } from '../WebGLgComponents/mgWebGLAtomsToPrimitives';
 import { singletonsToLinesInfo } from '../WebGLgComponents/mgWebGLAtomsToPrimitives';
-import { readTextFile, readGemmiStructure, cidToSpec, residueCodesThreeToOne, centreOnGemmiAtoms, getBufferAtoms, nucleotideCodesThreeToOne, hexToHsl } from './MoorhenUtils'
+import { canFetchFile, readTextFile, readGemmiStructure, cidToSpec, residueCodesThreeToOne, centreOnGemmiAtoms, getBufferAtoms, nucleotideCodesThreeToOne, hexToHsl } from './MoorhenUtils'
 import { quatToMat4 } from '../WebGLgComponents/quatToMat4.js';
 import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
 import * as vec3 from 'gl-matrix/vec3';
@@ -252,10 +252,9 @@ MoorhenMolecule.prototype.copyFragmentUsingCid = async function (cid, background
     })
 }
 
-MoorhenMolecule.prototype.loadToCootFromURL = function (url, molName, timeout=999999) {
+MoorhenMolecule.prototype.loadToCootFromURL = function (url, molName) {
     const $this = this
-    const timeoutSignal = AbortSignal.timeout(timeout);
-    return fetch(url, {signal: timeoutSignal})
+    return fetch(url)
         .then(response => {
             if (response.ok) {
                 return response.text()
