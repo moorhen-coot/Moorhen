@@ -154,6 +154,7 @@ export default class MoorhenWrapper {
       console.log(`Error fetching data from url ${inputFile}`)
     } else {
       const newMap = new MoorhenMap(this.controls.commandCentre)
+      newMap.litLines = this.preferences.litLines
       return new Promise(async (resolve, reject) => {
         try {
           await newMap.loadToCootFromMtzURL(inputFile, mapName, selectedColumns)
@@ -174,6 +175,7 @@ export default class MoorhenWrapper {
       console.log(`Error fetching data from url ${inputFile}`)
     } else {
       const newMolecule = new MoorhenMolecule(this.controls.commandCentre, this.monomerLibrary)
+      newMolecule.setBackgroundColour(this.controls.glRef.current.background_colour)
       return new Promise(async (resolve, reject) => {
           try {
               await newMolecule.loadToCootFromURL(inputFile, molName)
@@ -271,9 +273,10 @@ export default class MoorhenWrapper {
   }
 
   async start() {
-    if (this.preferences) {
-      await this.importPreferences(this.preferences)
+    if (!this.preferences) {
+      this.preferences = JSON.stringify(getDefaultValues()   )
     }
+    await this.importPreferences(this.preferences)
 
     this.renderMoorhen()
     this.addStyleSheet()
