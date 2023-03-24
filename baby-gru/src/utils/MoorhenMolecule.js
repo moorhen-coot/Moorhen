@@ -24,6 +24,7 @@ export function MoorhenMolecule(commandCentre, monomerLibraryPath) {
     this.molNo = null
     this.gemmiStructure = null
     this.sequences = []
+    this.symmetryMatrices = []
     this.colourRules = null
     this.ligands = null
     this.connectedToMaps = null
@@ -100,7 +101,13 @@ MoorhenMolecule.prototype.displaySymmetry = async function (radius=10) {
     }, true)
     console.log('DEBUG: Received the following symmetry data:')
     console.log(response.data.result.result)
+
+    this.symmetryMatrices = []
+    response.data.result.result.forEach(symm => {
+        this.symmetryMatrices.push(symm.matrix)
+    })
     
+    console.log(this.symmetryMatrices)
 }
 
 MoorhenMolecule.prototype.setBackgroundColour = function (backgroundColour) {
