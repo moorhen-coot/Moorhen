@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { MoorhenCloudApp } from './MoorhenCloudApp';
 import { MoorhenMolecule } from "../src/utils/MoorhenMolecule"
 import { MoorhenMap } from "../src/utils/MoorhenMap"
+import { guid } from "../src/utils/MoorhenUtils"
 import { PreferencesContextProvider, getDefaultValues } from "../src/utils/MoorhenPreferences";
 import reportWebVitals from '../src/reportWebVitals'
 import localforage from 'localforage';
@@ -57,7 +58,9 @@ export default class MoorhenWrapper {
   }
 
   setInputFiles(inputFiles) {
-    this.inputFiles = inputFiles
+    this.inputFiles = inputFiles.map(inputFile => {
+      return {uniqueId: guid(), ...inputFile}
+    })
   }
 
   setUpdateInterval(miliseconds) {
@@ -167,13 +170,15 @@ export default class MoorhenWrapper {
     }
 }
 
-  async loadMtzData(inputFile, mapName, selectedColumns) {
-    const fetchIsOK = await this.canFetchFile(inputFile)
+  async loadMtzData(uniqueId, inputFile, mapName, selectedColumns) {
+    // FIXME: Remove this when we finally get 404 from cloud
+    const fetchIsOK = true
     if (!fetchIsOK) {
       console.log(`Error fetching data from url ${inputFile}`)
     } else {
       const newMap = new MoorhenMap(this.controls.commandCentre)
       newMap.litLines = this.preferences.litLines
+      newMap.uniqueId = uniqueId
       return new Promise(async (resolve, reject) => {
         try {
           await newMap.loadToCootFromMtzURL(inputFile, mapName, selectedColumns)
@@ -188,13 +193,15 @@ export default class MoorhenWrapper {
     }
   }
 
-  async loadPdbData(inputFile, molName) {
-    const fetchIsOK = await this.canFetchFile(inputFile)
+  async loadPdbData(uniqueId, inputFile, molName) {
+    // FIXME: Remove this when we finally get 404 from cloud
+    const fetchIsOK = true
     if (!fetchIsOK) {
       console.log(`Error fetching data from url ${inputFile}`)
     } else {
       const newMolecule = new MoorhenMolecule(this.controls.commandCentre, this.monomerLibrary)
       newMolecule.setBackgroundColour(this.controls.glRef.current.background_colour)
+      newMolecule.uniqueId = uniqueId
       return new Promise(async (resolve, reject) => {
           try {
               await newMolecule.loadToCootFromURL(inputFile, molName)
@@ -214,9 +221,9 @@ export default class MoorhenWrapper {
     await Promise.all(
       this.inputFiles.map(file => {
         if (file.type === 'pdb') {
-          return this.loadPdbData(...file.args)
+          return this.loadPdbData(file.uniqueId, ...file.args)
         } 
-        return this.loadMtzData(...file.args)
+        return this.loadMtzData(file.uniqueId, ...file.args)
     }))
 
     setTimeout(async () => {
@@ -230,32 +237,44 @@ export default class MoorhenWrapper {
     }, 2500)
   }
 
-  startMoleculeUpdates() {
+  startSceneUpdates() {
     setTimeout(() => {
-      this.updateMolecules().then(this.startMoleculeUpdates())
+      Promise.all([
+        this.updateMolecules(),
+        this.updateMaps()
+      ]).then(this.startSceneUpdates())
     }, this.updateInterval)
   }
 
-  async updateMolecules() {
+  updateMolecules() {
     const moleculeInputFiles = this.inputFiles.filter(file => file.type === 'pdb')
-    if (moleculeInputFiles.length === this.controls.moleculesRef.current.length) {
-      await Promise.all(
-        this.controls.moleculesRef.current.map((molecule, index) => {
-          const oldUnitCellParams = JSON.stringify(molecule.getUnitCellParams())
-          return molecule.replaceModelWithFile(moleculeInputFiles[index].args[0], this.controls.glRef)
-            .then(_ => {
-              const newUnitCellParams = JSON.stringify(molecule.getUnitCellParams())
-              if (oldUnitCellParams !== newUnitCellParams) {
-                molecule.centreOn(this.controls.glRef, null, true)
-              }   
-            })
-        })  
-      )  
-    } else {
-      await Promise.all(
-        moleculeInputFiles.map(file => this.loadPdbData(...file.args))
-      )
-    }
+    moleculeInputFiles.map(inputFile => {
+      const loadedMolecule = this.controls.moleculesRef.current.find(molecule => molecule.uniqueId === inputFile.uniqueId)
+      if (typeof loadedMolecule === 'undefined') {
+        return this.loadPdbData(inputFile.uniqueId, ...inputFile.args)
+      } else {
+        const oldUnitCellParams = JSON.stringify(loadedMolecule.getUnitCellParams())
+        return loadedMolecule.replaceModelWithFile(this.controls.glRef, ...inputFile.args)
+          .then(_ => {
+            const newUnitCellParams = JSON.stringify(loadedMolecule.getUnitCellParams())
+            if (oldUnitCellParams !== newUnitCellParams) {
+              loadedMolecule.centreOn(this.controls.glRef, null, true)
+            }   
+          })
+      }
+    })
+  }
+  
+  updateMaps() {
+    const mapInputFiles = this.inputFiles.filter(file => file.type === 'mtz')
+    return Promise.all(mapInputFiles.map(inputFile => {
+      const loadedMap = this.controls.mapsRef.current.find(map => map.uniqueId === inputFile.uniqueId)
+      if (typeof loadedMap === 'undefined') {
+        return this.loadMtzData(inputFile.uniqueId, ...inputFile.args)
+      } else {
+        return loadedMap.replaceMapWithMtzFile(this.controls.glRef, ...inputFile.args)
+      }
+    }))
   }
 
   waitForInitialisation() {
@@ -305,7 +324,7 @@ export default class MoorhenWrapper {
     await this.loadInputFiles()
     
     if (this.updateInterval !== null) {
-      this.startMoleculeUpdates()
+      this.startSceneUpdates()
     }
 
   }

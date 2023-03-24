@@ -6,7 +6,7 @@ import { GetSplinesColoured } from '../WebGLgComponents/mgSecStr';
 import { atomsToSpheresInfo } from '../WebGLgComponents/mgWebGLAtomsToPrimitives';
 import { contactsToCylindersInfo, contactsToLinesInfo } from '../WebGLgComponents/mgWebGLAtomsToPrimitives';
 import { singletonsToLinesInfo } from '../WebGLgComponents/mgWebGLAtomsToPrimitives';
-import { canFetchFile, readTextFile, readGemmiStructure, cidToSpec, residueCodesThreeToOne, centreOnGemmiAtoms, getBufferAtoms, nucleotideCodesThreeToOne, hexToHsl } from './MoorhenUtils'
+import { guid, readTextFile, readGemmiStructure, cidToSpec, residueCodesThreeToOne, centreOnGemmiAtoms, getBufferAtoms, nucleotideCodesThreeToOne, hexToHsl } from './MoorhenUtils'
 import { quatToMat4 } from '../WebGLgComponents/quatToMat4.js';
 import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
 import * as vec3 from 'gl-matrix/vec3';
@@ -57,10 +57,11 @@ export function MoorhenMolecule(commandCentre, monomerLibraryPath) {
         originNeighbours: [],
         transformation: { origin: [0, 0, 0], quat: null, centre: [0, 0, 0] }
     }
+    this.uniqueId = guid()
     this.monomerLibraryPath = (typeof monomerLibraryPath === 'undefined' ? "./baby-gru/monomers" : monomerLibraryPath)
 };
 
-MoorhenMolecule.prototype.replaceModelWithFile = async function (fileUrl, glRef) {
+MoorhenMolecule.prototype.replaceModelWithFile = async function (glRef, fileUrl, molName) {
     let coordData
     let fetchResponse
     

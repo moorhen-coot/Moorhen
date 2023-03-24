@@ -588,6 +588,17 @@ const replace_molecule_by_model_from_file = (imol, coordData) => {
     return result
 }
 
+const replace_map_by_mtz_from_file = (imol, mtzData, selectedColumns) => {
+    const theGuid = guid()
+    const tempFilename = `./${theGuid}.mtz`
+    const asUint8Array = new Uint8Array(mtzData)
+    cootModule.FS_createDataFile(".", tempFilename, asUint8Array, true, true);
+    const readMtzArgs = [imol, tempFilename, selectedColumns.F, selectedColumns.PHI, "", false]
+    const result = molecules_container.replace_molecule_by_mtz_from_file(...readMtzArgs)
+    cootModule.FS_unlink(tempFilename)
+    return result
+}
+
 const new_positions_for_residue_atoms = (molToUpDate, residues) => {
     let success = 0
     residues.forEach(atoms => {
@@ -612,7 +623,6 @@ const read_mtz = (mapData, name, selectedColumns) => {
     const tempFilename = `./${theGuid}.mtz`
     const read_mtz_args = [tempFilename, selectedColumns.F,
         selectedColumns.PHI, "", false, selectedColumns.isDifference]
-    //postMessage({ message: `read_mtz args ${read_mtz_args}` })
     const molNo = molecules_container.read_mtz(...read_mtz_args)
     cootModule.FS_unlink(tempFilename)
     return molNo
@@ -838,6 +848,9 @@ onmessage = function (e) {
             }
             else if (command === 'shim_replace_molecule_by_model_from_file') {
                 cootResult = replace_molecule_by_model_from_file(...commandArgs)
+            } 
+            else if (command === 'shim_replace_map_by_mtz_from_file') {
+                cootResult = replace_map_by_mtz_from_file(...commandArgs)
             }
             else {
                 cootResult = molecules_container[command](...commandArgs)
