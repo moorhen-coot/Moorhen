@@ -466,6 +466,10 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("ins_code", &coot::molecule_t::moved_residue_t::ins_code)
     .property("moved_atoms", &coot::molecule_t::moved_residue_t::moved_atoms)
     ;
+    class_<coot::symmetry_info_t>("symmetry_info_t")
+    .property("cell",&coot::symmetry_info_t::cell)
+    .property("symm_trans",&coot::symmetry_info_t::symm_trans)
+    ;
     class_<molecules_container_t>("molecules_container_t")
     .constructor<>()
     .function("set_user_defined_atom_colour_by_residue",&molecules_container_t::set_user_defined_atom_colour_by_residue)
