@@ -466,6 +466,14 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("ins_code", &coot::molecule_t::moved_residue_t::ins_code)
     .property("moved_atoms", &coot::molecule_t::moved_residue_t::moved_atoms)
     ;
+    class_<coot::Cell>("Coot_Cell")
+    .property("a", &coot::Cell::a)
+    .property("b", &coot::Cell::b)
+    .property("c", &coot::Cell::c)
+    .property("alpha", &coot::Cell::alpha)
+    .property("beta", &coot::Cell::beta)
+    .property("gamma", &coot::Cell::gamma)
+    ;
     class_<coot::symmetry_info_t>("symmetry_info_t")
     .property("cell",&coot::symmetry_info_t::cell)
     .property("symm_trans",&coot::symmetry_info_t::symm_trans)
