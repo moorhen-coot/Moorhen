@@ -165,13 +165,30 @@ export const MoorhenCloudApp = (props) => {
                     molecule.setAtomsDirty(true)
                     return molecule.redraw(glRef)
                 }
-                return new Promise.resolve()
+                return Promise.resolve()
             }))
         }
 
         redrawMolecules()
 
-    }, [glRef.current?.background_colour]);
+    }, [glRef.current?.background_colour])
+
+    useEffect(() => {
+        if (!Object.keys(preferences).some(key => preferences[key] === null)) {
+            props.onChangePreferencesListener(
+                Object.keys(preferences).reduce((obj, key) => {
+                    if (key === 'isMounted') {
+                        // pass
+                    } else if (key === 'shortCuts') {
+                        obj[key] = JSON.parse(preferences[key])
+                    } else {
+                        obj[key] = preferences[key]
+                    }
+                    return obj
+                }, {})
+            )
+        }
+    }, [preferences])
 
     return <MoorhenContainer {...collectedProps}/>
 }
