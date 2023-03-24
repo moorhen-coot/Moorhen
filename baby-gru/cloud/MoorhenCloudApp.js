@@ -3,6 +3,7 @@ import { historyReducer, initialHistoryState } from '../src/components/MoorhenHi
 import { PreferencesContext } from "../src/utils/MoorhenPreferences"
 import { MoorhenContainer } from "../src/components/MoorhenContainer"
 import { isDarkBackground } from '../src/WebGLgComponents/mgWebGL'
+import { MenuItem } from '@mui/material'
 
 const initialMoleculesState = []
 
@@ -72,6 +73,16 @@ export const MoorhenCloudApp = (props) => {
         showToast, setShowToast, toastContent, setToastContent, showColourRulesToast,
         setShowColourRulesToast, ...props
     }
+
+    const doExportCallback = useCallback(async () => {
+        let moleculePromises = molecules.map(molecule => {return molecule.getAtoms()})
+        let moleculeAtoms = await Promise.all(moleculePromises)
+        molecules.forEach((molecule, index) => props.exportCallback(molecule.name, moleculeAtoms[index].data.result.pdbData))
+    }, [props.exportCallback, molecules])
+
+    const exportMenuItem =  <MenuItem key={'export-cloud'} id='cloud-export-menu-item' variant="success" onClick={doExportCallback}>
+                                Export to CCP4 Cloud
+                            </MenuItem>
 
     const doContourIfDirty = async () => {
         if (isDirty.current) {
@@ -190,5 +201,5 @@ export const MoorhenCloudApp = (props) => {
         }
     }, [preferences])
 
-    return <MoorhenContainer {...collectedProps}/>
+    return <MoorhenContainer {...collectedProps} extraFileMenus={[exportMenuItem]}/>
 }
