@@ -398,7 +398,7 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
     }, [props.preferences])
 
     useEffect(() => {
-        if (connectedMolNo && props.molecules.lenght === 0){
+        if (connectedMolNo && props.molecules.length === 0){
             handleDisconnectMaps()
         } else if (connectedMolNo && !props.molecules.map(molecule => molecule.molNo).includes(connectedMolNo.molecule)){
             handleDisconnectMaps()
@@ -406,7 +406,7 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
     }, [props.molecules])
 
     useEffect(() => {
-        if (connectedMolNo && props.maps.lenght === 0){
+        if (connectedMolNo && props.maps.length === 0){
             handleDisconnectMaps()
         } else if (connectedMolNo && !connectedMolNo.uniqueMaps.every(mapMolNo => props.maps.includes(mapMolNo))){
             handleDisconnectMaps()
