@@ -2,6 +2,7 @@ import { useRef, useState, useReducer, useContext, useEffect, useCallback } from
 import { historyReducer, initialHistoryState } from '../src/components/MoorhenHistoryMenu'
 import { PreferencesContext } from "../src/utils/MoorhenPreferences"
 import { MoorhenContainer } from "../src/components/MoorhenContainer"
+import { isDarkBackground } from '../src/WebGLgComponents/mgWebGL'
 
 const initialMoleculesState = []
 
@@ -152,6 +153,25 @@ export const MoorhenCloudApp = (props) => {
         }
     }, [maps])
 
+    useEffect(() => {
+        const redrawMolecules = async () => {
+            if (!props.viewOnly || molecules.length === 0 || glRef.current.background_colour === null) {
+                return
+            }
+            const newBackgroundIsDark = isDarkBackground(...glRef.current.background_colour)
+            await Promise.all(molecules.map(molecule => {
+                if (molecule.cootBondsOptions.isDarkBackground !== newBackgroundIsDark) {
+                    molecule.cootBondsOptions.isDarkBackground = newBackgroundIsDark
+                    molecule.setAtomsDirty(true)
+                    return molecule.redraw(glRef)
+                }
+                return new Promise.resolve()
+            }))
+        }
+
+        redrawMolecules()
+
+    }, [glRef.current?.background_colour]);
 
     return <MoorhenContainer {...collectedProps}/>
 }
