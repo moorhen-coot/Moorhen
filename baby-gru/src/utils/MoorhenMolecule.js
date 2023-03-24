@@ -95,7 +95,7 @@ MoorhenMolecule.prototype.displaySymmetry = async function (radius=10) {
     console.log(`DEBUG: Attempting to get symmetry for imol ${this.molNo} using selection radius ${radius} and coords ${selectionCentre}`)
     const response = await this.commandCentre.current.cootCommand({
         returnType: "symmetry",
-        command: 'get_symmetry',
+        command: 'get_symmetry_with_matrices',
         commandArgs: [this.molNo, radius, ...selectionCentre]
     }, true)
     console.log('DEBUG: Received the following symmetry data:')

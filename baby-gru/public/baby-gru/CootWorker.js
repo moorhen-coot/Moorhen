@@ -303,8 +303,10 @@ const stringArrayToJSArray = (stringArray) => {
     return returnResult;
 }
 
-const symmetryToJSData = (symmetryData) => {
+const symmetryToJSData = (symmetryDataPair) => {
     let result = []
+    const symmetryData = symmetryDataPair.first
+    const symmetryMatrices = symmetryDataPair.second
     const cell = symmetryData.cell
     const symm_trans = symmetryData.symm_trans
     console.log('DEBUG: in cootWorker helper function')
@@ -312,10 +314,12 @@ const symmetryToJSData = (symmetryData) => {
     console.log(`DEBUG: the cell received from molecules_container: ${cell}`)
     const symmetrySize = symm_trans.size()
     console.log(`DEBUG: the vector received from molecules_container.get_symmetry has a size of ${symmetrySize}`)
+
     for (let i = 0; i < symmetrySize; i++) {
         const currentSymmetry = symm_trans.get(i)
         const symTransT = currentSymmetry.first
         const cellTranslation = currentSymmetry.second
+        const currentSymmMat = symmetryMatrices.get(i)
 
         result.push({
             x: symTransT.x(),
@@ -325,7 +329,8 @@ const symmetryToJSData = (symmetryData) => {
             isym: symTransT.isym(),
             us: cellTranslation.us,
             ws: cellTranslation.ws,
-            vs: cellTranslation.vs
+            vs: cellTranslation.vs,
+            matrix: currentSymmMat
         })
         
         symTransT.delete()
@@ -333,6 +338,7 @@ const symmetryToJSData = (symmetryData) => {
 
     cell.delete()
     symm_trans.delete()
+    symmetryMatrices.delete()
     symmetryData.delete()
     return result
 }

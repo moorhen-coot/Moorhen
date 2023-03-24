@@ -207,6 +207,32 @@ class molecules_container_js : public molecules_container_t {
             return mhbs;
         }
         */
+        std::pair<coot::symmetry_info_t,std::vector<std::array<float, 16>>> get_symmetry_with_matrices(int imol, float symmetry_search_radius, float x, float y, float z) { 
+            coot::symmetry_info_t si = get_symmetry(imol, symmetry_search_radius, x, y, z);
+            mmdb::Manager *mol = get_mol(imol);
+            mmdb::Cryst *cryst = mol->GetCrystData();
+            mmdb::mat44 my_matt;
+            std::vector<std::array<float, 16>> matrices;
+            for (unsigned i = 0; i < si.symm_trans.size(); i++) {
+                symm_trans_t symm_trans = si.symm_trans[i].first;
+                cryst->GetTMatrix(my_matt, symm_trans.isym(), symm_trans.x(), symm_trans.y(), symm_trans.z());
+                std::array<float, 16> matrix;
+                int idx = 0;
+                for(int j=0;j<4;j++){
+                    for(int k=0;k<4;k++){
+                        matrix[idx] = my_matt[k][j];
+                        idx++;
+                    }
+                }
+                matrices.push_back(matrix);
+            }
+
+            std::pair<coot::symmetry_info_t,std::vector<std::array<float, 16>>> thePair;
+            thePair.first = si;
+            thePair.second = matrices;
+            return thePair;
+        }
+
         std::vector<float> getFloats(unsigned nFloats) { 
             std::vector<float> fs;
             for(unsigned i=0;i<nFloats;i++){
@@ -611,6 +637,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("go_to_blob_array",&molecules_container_js::go_to_blob_array)
     .function("add",&molecules_container_js::add)
     .function("getFloats",&molecules_container_js::getFloats)
+    .function("get_symmetry_with_matrices",&molecules_container_js::get_symmetry_with_matrices)
     //.function("get_hbonds",&molecules_container_js::get_hbonds);
     ;
     class_<RamachandranInfo>("RamachandranInfo")
@@ -740,6 +767,25 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .field("alignment_info",&superpose_results_t::alignment_info)
     ;
 
+    value_array<std::array<float, 16>>("array_native_float_16")
+        .element(emscripten::index<0>())
+        .element(emscripten::index<1>())
+        .element(emscripten::index<2>())
+        .element(emscripten::index<3>())
+        .element(emscripten::index<4>())
+        .element(emscripten::index<5>())
+        .element(emscripten::index<6>())
+        .element(emscripten::index<7>())
+        .element(emscripten::index<8>())
+        .element(emscripten::index<9>())
+        .element(emscripten::index<10>())
+        .element(emscripten::index<11>())
+        .element(emscripten::index<12>())
+        .element(emscripten::index<13>())
+        .element(emscripten::index<14>())
+        .element(emscripten::index<15>())
+     ;
+
     value_array<std::array<float, 3>>("array_native_float_3")
         .element(emscripten::index<0>())
         .element(emscripten::index<1>())
@@ -748,6 +794,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
 
     register_map<unsigned int, std::array<float, 3>>("MapIntFloat3");
     register_map<coot::residue_spec_t, coot::util::density_correlation_stats_info_t>("Map_residue_spec_t_density_correlation_stats_info_t");
+    register_vector<std::array<float, 16>>("VectorArrayFloat16");
     register_vector<std::pair<std::string, unsigned int> >("VectorStringUInt_pair");
     register_vector<std::pair<symm_trans_t, Cell_Translation>>("Vectorsym_trans_t_Cell_Translation_pair");
     register_vector<std::pair<std::string, std::string>>("Vectorstring_string_pair");
@@ -832,6 +879,11 @@ EMSCRIPTEN_BINDINGS(my_module) {
     value_object<std::pair<std::string, unsigned int>>("string_uint_pair")
         .field("first",&std::pair<std::string, unsigned int>::first)
         .field("second",&std::pair<std::string, unsigned int>::second)
+    ;
+
+    value_object<std::pair<coot::symmetry_info_t,std::vector<std::array<float, 16>>>>("symmetry_info_t_matrixVector_pair")
+        .field("first",&std::pair<coot::symmetry_info_t,std::vector<std::array<float, 16>>>::first)
+        .field("second",&std::pair<coot::symmetry_info_t,std::vector<std::array<float, 16>>>::second)
     ;
 
     value_object<moorhen_hbond>("moorhen_hbond")
