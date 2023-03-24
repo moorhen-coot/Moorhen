@@ -41,6 +41,37 @@ MoorhenMap.prototype.delete = async function (glRef) {
     await Promise.all(promises)
 }
 
+MoorhenMap.prototype.replaceMapWithMtzFile = async function (glRef, fileUrl, name, selectedColumns) {
+    let mtzData
+    let fetchResponse
+    
+    try {
+        fetchResponse = await fetch(fileUrl)
+    } catch (err) {
+        return Promise.reject(`Unable to fetch file ${fileUrl}`)
+    }
+    
+    if (fetchResponse.ok) {
+        const reflectionData = await fetchResponse.blob()
+        const arrayBuffer = await reflectionData.arrayBuffer()
+        mtzData = new Uint8Array(arrayBuffer)
+    } else {
+        return Promise.reject(`Error fetching data from url ${fileUrl}`)
+    }
+
+    const cootResponse = await this.commandCentre.current.cootCommand({
+        returnType: "status",
+        command: 'shim_replace_map_by_mtz_from_file',
+        commandArgs: [this.molNo, mtzData, selectedColumns]
+    }, true)
+
+    if (cootResponse.data.result.status === 'Completed') {
+        return this.doCootContour(glRef, ...glRef.current.origin.map(coord => -coord), this.mapRadius, this.contourLevel)
+    }
+    
+    return Promise.reject(cootResponse.data.result.status)
+
+}
 
 MoorhenMap.prototype.loadToCootFromMtzURL = async function (url, name, selectedColumns) {
     const $this = this
