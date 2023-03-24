@@ -4,7 +4,7 @@ import { readMapFromArrayBuffer, mapToMapGrid } from '../WebGLgComponents/mgWebG
 export function MoorhenMap(commandCentre) {
     this.type = 'map'
     this.commandCentre = commandCentre
-    this.contourLevel = 0.5
+    this.contourLevel = 0.8
     this.mapRadius = 13
     this.mapColour = [0.3, 0.3, 1.0, 1.0]
     this.liveUpdatingMaps = {}
