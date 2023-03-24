@@ -171,7 +171,8 @@ export default class MoorhenWrapper {
 }
 
   async loadMtzData(uniqueId, inputFile, mapName, selectedColumns) {
-    const fetchIsOK = await this.canFetchFile(inputFile)
+    // FIXME: Remove this when we finally get 404 from cloud
+    const fetchIsOK = true
     if (!fetchIsOK) {
       console.log(`Error fetching data from url ${inputFile}`)
     } else {
@@ -193,7 +194,8 @@ export default class MoorhenWrapper {
   }
 
   async loadPdbData(uniqueId, inputFile, molName) {
-    const fetchIsOK = await this.canFetchFile(inputFile)
+    // FIXME: Remove this when we finally get 404 from cloud
+    const fetchIsOK = true
     if (!fetchIsOK) {
       console.log(`Error fetching data from url ${inputFile}`)
     } else {
