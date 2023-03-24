@@ -33,7 +33,7 @@ export const MoorhenNavBar = forwardRef((props, ref) => {
                         <MoorhenHistoryMenu dropdownId="History" {...collectedProps} />
                         <MoorhenPreferencesMenu dropdownId="Preferences" {...collectedProps} />
                         <MoorhenHelpMenu dropdownId="Help" {...collectedProps}/>
-                        {props.extraMenus && props.extraMenus.map(menu=>menu)}
+                        {props.extraNavBarMenus && props.extraNavBarMenus.map(menu => menu)}
                     </Nav>
                 </Navbar.Collapse>
                 <Nav className="justify-content-right">

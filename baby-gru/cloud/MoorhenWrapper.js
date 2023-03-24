@@ -33,7 +33,9 @@ export default class MoorhenWrapper {
     this.inputFiles = null
     this.rootId = null
     this.preferences = null
+    this.cachedPreferences = null
     this.exportCallback = () => {}
+    this.exportPreferencesCallback = () => {}
     reportWebVitals()
     createModule()
   }
@@ -70,6 +72,27 @@ export default class MoorhenWrapper {
     this.exportCallback = callbackFunction
   }
 
+  addOnChangePreferencesListener(callbackFunction) {
+    this.exportPreferencesCallback = callbackFunction
+  }
+
+  onChangePreferencesListener(preferences) {
+    const objectKeys = ['shortCuts', 'defaultBackgroundColor', 'defaultUpdatingScores']
+    for (const key of Object.keys(this.cachedPreferences)) {
+      if (key === 'version') {
+        continue
+      } else if (!objectKeys.includes(key) && this.cachedPreferences[key] !== preferences[key]) {
+        this.exportPreferencesCallback(JSON.stringify(preferences))
+        this.cachedPreferences = preferences  
+        break
+      } else if (objectKeys.includes(key) && JSON.stringify(this.cachedPreferences[key]) !== JSON.stringify(preferences[key])) {
+        this.exportPreferencesCallback(JSON.stringify(preferences))
+        this.cachedPreferences = preferences  
+        break
+      }
+    }
+  }
+
   forwardControls(controls) {
     console.log('Fetched controls', {controls})
     this.controls = controls
@@ -98,29 +121,25 @@ export default class MoorhenWrapper {
     }
   }
 
-  async exportPreferences() {
-    const defaultPreferences = getDefaultValues()                
-    const responses = await Promise.all(
-      Object.keys(defaultPreferences).map(key => localforage.getItem(key))
-    )
-    let storedPrefereneces = {}
-    Object.keys(defaultPreferences).forEach((key, index) => storedPrefereneces[key] = responses[index])
-    return JSON.stringify(storedPrefereneces)
-  }
+  async importPreferences(newPreferences) {
+    const defaultPreferences = getDefaultValues()
+    let preferences
+    
+    if (newPreferences.version === defaultPreferences.version) {
+      preferences = newPreferences
+    } else {
+      preferences = defaultPreferences
+    }
 
-  async importPreferences(preferences) {
-    const storedVersion = await localforage.getItem('version')
-    const defaultPreferences = getDefaultValues()                
-
-    if (storedVersion === defaultPreferences.version) {
-      await Promise.all(Object.keys(preferences).map(key => {
+    await Promise.all(Object.keys(preferences).map(key => {
         if (key === 'shortCuts') {
           return localforage.setItem(key, JSON.stringify(preferences[key]))
         } else {
           return localforage.setItem(key, preferences[key])
         }
-      }))
-    }
+    }))
+
+    this.cachedPreferences = preferences
   }
 
   addStyleSheet() {
@@ -154,6 +173,7 @@ export default class MoorhenWrapper {
       console.log(`Error fetching data from url ${inputFile}`)
     } else {
       const newMap = new MoorhenMap(this.controls.commandCentre)
+      newMap.litLines = this.preferences.litLines
       return new Promise(async (resolve, reject) => {
         try {
           await newMap.loadToCootFromMtzURL(inputFile, mapName, selectedColumns)
@@ -174,6 +194,7 @@ export default class MoorhenWrapper {
       console.log(`Error fetching data from url ${inputFile}`)
     } else {
       const newMolecule = new MoorhenMolecule(this.controls.commandCentre, this.monomerLibrary)
+      newMolecule.setBackgroundColour(this.controls.glRef.current.background_colour)
       return new Promise(async (resolve, reject) => {
           try {
               await newMolecule.loadToCootFromURL(inputFile, molName)
@@ -226,7 +247,6 @@ export default class MoorhenWrapper {
               const newUnitCellParams = JSON.stringify(molecule.getUnitCellParams())
               if (oldUnitCellParams !== newUnitCellParams) {
                 molecule.centreOn(this.controls.glRef, null, true)
-              } else {
               }   
             })
         })  
@@ -261,6 +281,7 @@ export default class MoorhenWrapper {
               forwardControls={this.forwardControls.bind(this)}
               disableFileUploads={true}
               exportCallback={this.exportCallback.bind(this)}
+              onChangePreferencesListener={this.onChangePreferencesListener.bind(this)}
               monomerLibraryPath={this.monomerLibrary}
               extraMenus={[]}
               viewOnly={this.workMode === 'view'}
@@ -272,9 +293,10 @@ export default class MoorhenWrapper {
   }
 
   async start() {
-    if (this.preferences) {
-      await this.importPreferences(this.preferences)
+    if (!this.preferences) {
+      this.preferences = getDefaultValues()
     }
+    await this.importPreferences(this.preferences)
 
     this.renderMoorhen()
     this.addStyleSheet()

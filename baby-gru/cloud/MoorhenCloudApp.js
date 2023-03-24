@@ -2,6 +2,8 @@ import { useRef, useState, useReducer, useContext, useEffect, useCallback } from
 import { historyReducer, initialHistoryState } from '../src/components/MoorhenHistoryMenu'
 import { PreferencesContext } from "../src/utils/MoorhenPreferences"
 import { MoorhenContainer } from "../src/components/MoorhenContainer"
+import { isDarkBackground } from '../src/WebGLgComponents/mgWebGL'
+import { MenuItem } from '@mui/material'
 
 const initialMoleculesState = []
 
@@ -71,6 +73,16 @@ export const MoorhenCloudApp = (props) => {
         showToast, setShowToast, toastContent, setToastContent, showColourRulesToast,
         setShowColourRulesToast, ...props
     }
+
+    const doExportCallback = useCallback(async () => {
+        let moleculePromises = molecules.map(molecule => {return molecule.getAtoms()})
+        let moleculeAtoms = await Promise.all(moleculePromises)
+        molecules.forEach((molecule, index) => props.exportCallback(molecule.name, moleculeAtoms[index].data.result.pdbData))
+    }, [props.exportCallback, molecules])
+
+    const exportMenuItem =  <MenuItem key={'export-cloud'} id='cloud-export-menu-item' variant="success" onClick={doExportCallback}>
+                                Export to CCP4 Cloud
+                            </MenuItem>
 
     const doContourIfDirty = async () => {
         if (isDirty.current) {
@@ -152,6 +164,42 @@ export const MoorhenCloudApp = (props) => {
         }
     }, [maps])
 
+    useEffect(() => {
+        const redrawMolecules = async () => {
+            if (!props.viewOnly || molecules.length === 0 || glRef.current.background_colour === null) {
+                return
+            }
+            const newBackgroundIsDark = isDarkBackground(...glRef.current.background_colour)
+            await Promise.all(molecules.map(molecule => {
+                if (molecule.cootBondsOptions.isDarkBackground !== newBackgroundIsDark) {
+                    molecule.cootBondsOptions.isDarkBackground = newBackgroundIsDark
+                    molecule.setAtomsDirty(true)
+                    return molecule.redraw(glRef)
+                }
+                return Promise.resolve()
+            }))
+        }
 
-    return <MoorhenContainer {...collectedProps}/>
+        redrawMolecules()
+
+    }, [glRef.current?.background_colour])
+
+    useEffect(() => {
+        if (!Object.keys(preferences).some(key => preferences[key] === null)) {
+            props.onChangePreferencesListener(
+                Object.keys(preferences).reduce((obj, key) => {
+                    if (key === 'isMounted') {
+                        // pass
+                    } else if (key === 'shortCuts') {
+                        obj[key] = JSON.parse(preferences[key])
+                    } else {
+                        obj[key] = preferences[key]
+                    }
+                    return obj
+                }, {})
+            )
+        }
+    }, [preferences])
+
+    return <MoorhenContainer {...collectedProps} extraFileMenus={[exportMenuItem]}/>
 }

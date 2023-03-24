@@ -11,7 +11,7 @@ export function MoorhenMap(commandCentre) {
     this.webMGContour = false
     this.cootContour = true
     this.displayObjects = { Coot: [] }
-    this.litLines = true
+    this.litLines = false
     this.solid = false
     this.alpha = 1.0
     this.isDifference = false

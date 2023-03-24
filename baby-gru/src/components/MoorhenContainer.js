@@ -22,8 +22,8 @@ export const MoorhenContainer = (props) => {
         backgroundColor, setBackgroundColor, currentDropdownId, setCurrentDropdownId,
         appTitle, setAppTitle, cootInitialized, setCootInitialized, theme, setTheme,
         showToast, setShowToast, toastContent, setToastContent, showColourRulesToast,
-        setShowColourRulesToast, disableFileUploads, urlPrefix, viewOnly, extraMenus,
-        monomerLibraryPath, forwardControls
+        setShowColourRulesToast, disableFileUploads, urlPrefix, viewOnly, extraNavBarMenus,
+        monomerLibraryPath, forwardControls, extraFileMenus
     } = props
     
     const innerWindowMarginWidth = convertRemToPx(1)
@@ -240,8 +240,8 @@ export const MoorhenContainer = (props) => {
         activeMap, setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor, toastContent, 
         setToastContent, currentDropdownId, setCurrentDropdownId, hoveredAtom, setHoveredAtom, showToast, setShowToast,
         windowWidth, windowHeight, innerWindowMarginWidth, showColourRulesToast, timeCapsuleRef, setShowColourRulesToast, 
-        isDark, exportCallback, disableFileUploads, urlPrefix, viewOnly, extraMenus, monomerLibraryPath, moleculesRef, mapsRef,
-        ...preferences
+        isDark, exportCallback, disableFileUploads, urlPrefix, viewOnly, extraNavBarMenus, monomerLibraryPath, moleculesRef, 
+        extraFileMenus, mapsRef, ...preferences
     }
 
     return <> 
@@ -316,6 +316,7 @@ MoorhenContainer.defaultProps = {
     monomerLibraryPath: './baby-gru/monomers',
     exportCallback: null,
     disableFileUploads: false,
-    extraMenus: [],
+    extraNavBarMenus: [],
+    extraFileMenus: [],
     viewOnly: false
 }
