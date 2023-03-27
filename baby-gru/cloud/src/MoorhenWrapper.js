@@ -1,11 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { MoorhenCloudApp } from './MoorhenCloudApp';
-import { MoorhenMolecule } from "../src/utils/MoorhenMolecule"
-import { MoorhenMap } from "../src/utils/MoorhenMap"
-import { guid } from "../src/utils/MoorhenUtils"
-import { PreferencesContextProvider, getDefaultValues } from "../src/utils/MoorhenPreferences";
-import reportWebVitals from '../src/reportWebVitals'
+import { MoorhenCloudApp } from './components/MoorhenCloudApp';
+import { MoorhenMolecule } from "../../src/utils/MoorhenMolecule"
+import { MoorhenMap } from "../../src/utils/MoorhenMap"
+import { guid } from "../../src/utils/MoorhenUtils"
+import { PreferencesContextProvider, getDefaultValues } from "../../src/utils/MoorhenPreferences";
+import reportWebVitals from '../../src/reportWebVitals'
 import localforage from 'localforage';
 import parse from 'html-react-parser';
 import '../src/index.css';
@@ -37,6 +37,7 @@ export default class MoorhenWrapper {
     this.preferences = null
     this.cachedPreferences = null
     this.cachedLegend = null
+    this.noDataLegendMessage = null
     this.exportCallback = () => {}
     this.exportPreferencesCallback = () => {}
     reportWebVitals()
@@ -49,6 +50,15 @@ export default class MoorhenWrapper {
     } else {
       console.error(`Unrecognised working mode set in moorhen ${mode}`)
     } 
+  }
+
+  setNoDataLegendMessage(htmlString) {
+    try {
+      this.noDataLegendMessage = parse(htmlString)
+    } catch (err) {
+      console.log('Unable to parse legend html string')
+      console.log(err)
+    }
   }
 
   setPreferences(preferences) {
@@ -376,6 +386,11 @@ export default class MoorhenWrapper {
     this.addStyleSheet()
     await this.waitForInitialisation()
     await this.controls.timeCapsuleRef.current.dropAllBackups()
+
+    if (this.noDataLegendMessage) {
+      this.controls.setLegendText(this.noDataLegendMessage)
+    }
+
     await this.loadInputFiles()
     
     if (this.updateInterval !== null) {
