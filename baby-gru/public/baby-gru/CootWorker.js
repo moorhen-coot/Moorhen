@@ -648,6 +648,35 @@ const read_ccp4_map = (mapData, name, isDiffMap) => {
     return molNo
 }
 
+const doColourTest = (imol) => {
+    console.log('DEBUG: Start test...')
+
+    const colours = {
+        0: {cid: '//A/1-10/', rgb: [255., 0., 0.]},
+        1: {cid: '//A/11-20/', rgb: [0., 255., 0.]},
+        2: {cid: '//A/21-30/', rgb: [0., 0., 255.]},
+    }
+    
+    let colourMap = new cootModule.MapIntFloat3()
+    for (const key in Object.keys(colours)) {
+        colourMap[key] = colours[key].rgb
+    }
+
+    let indexedResiduesVec = new cootModule.VectorStringUInt_pair()
+    for (const key in Object.keys(colours)) {
+        const i = {first: colours[key].cid, second: parseInt(key)}
+        indexedResiduesVec.push_back(i)
+    }
+    
+    console.log('DEBUG: Running molecules_container.set_user_defined_bond_colours')
+    molecules_container.set_user_defined_bond_colours(imol, colourMap)
+    console.log('DEBUG: Running molecules_container.set_user_defined_atom_colour_by_residue')
+    molecules_container.set_user_defined_atom_colour_by_residue(imol, indexedResiduesVec)
+
+    indexedResiduesVec.delete()
+    colourMap.delete()
+}
+
 onmessage = function (e) {
     if (e.data.message === 'CootInitialize') {
         postMessage({ message: 'Initializing molecules_container' })
@@ -851,6 +880,9 @@ onmessage = function (e) {
             } 
             else if (command === 'shim_replace_map_by_mtz_from_file') {
                 cootResult = replace_map_by_mtz_from_file(...commandArgs)
+            }
+            else if (command === 'shim_do_colour_test') {
+                cootResult = doColourTest(...commandArgs)
             }
             else {
                 cootResult = molecules_container[command](...commandArgs)
