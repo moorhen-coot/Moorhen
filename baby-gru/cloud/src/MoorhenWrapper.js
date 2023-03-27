@@ -190,6 +190,7 @@ export default class MoorhenWrapper {
     } else {
       const newMap = new MoorhenMap(this.controls.commandCentre)
       newMap.litLines = this.preferences.litLines
+      newMap.alpha = 0.4
       newMap.uniqueId = uniqueId
       return new Promise(async (resolve, reject) => {
         try {
