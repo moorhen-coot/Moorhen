@@ -23,7 +23,7 @@ const updateStoredPreferences = async (key, value) => {
 
 const getDefaultValues = () => {
     return {
-        version: 'v19',
+        version: 'v20',
         defaultBackgroundColor: [1, 1, 1, 1], 
         atomLabelDepthMode: true, 
         defaultExpandDisplayCards: true,
@@ -33,7 +33,7 @@ const getDefaultValues = () => {
         drawFPS: false,
         drawMissingLoops: true,
         drawInteractions: false,
-        mouseSensitivity: 2.0,
+        mouseSensitivity: 0.3,
         wheelSensitivityFactor: 1.0,
         mapLineWidth: 1.0,
         makeBackups: true,

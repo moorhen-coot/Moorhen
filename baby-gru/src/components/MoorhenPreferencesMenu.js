@@ -11,13 +11,12 @@ export const MoorhenPreferencesMenu = (props) => {
         atomLabelDepthMode, setAtomLabelDepthMode, setMouseSensitivity, 
         defaultExpandDisplayCards, setDefaultExpandDisplayCards, defaultMapLitLines,
         setDefaultMapLitLines, refineAfterMod, setRefineAfterMod, mouseSensitivity,
-        mapLineWidth, setMapLineWidth, makeBackups, setMakeBackups,
+        mapLineWidth, setMapLineWidth, makeBackups, setMakeBackups, timeCapsuleRef,
         showShortcutToast, setShowShortcutToast, defaultMapSurface, setDefaultMapSurface,
         defaultBondSmoothness, setDefaultBondSmoothness, showScoresToast, setShowScoresToast,
         defaultUpdatingScores, setDefaultUpdatingScores, wheelSensitivityFactor,
         setWheelSensitivityFactor, shortcutOnHoveredAtom, setShortcutOnHoveredAtom, maxBackupCount, 
         setMaxBackupCount, modificationCountBackupThreshold, setModificationCountBackupThreshold, 
-        timeCapsuleRef
      } = props;
 
     const [showModal, setShowModal] = useState(null);
@@ -116,7 +115,7 @@ export const MoorhenPreferencesMenu = (props) => {
                     />
                     <hr></hr>
                     <Form.Group controlId="mouseSensitivitySlider" style={{paddingTop:'0rem', paddingBottom:'0.5rem', paddingRight:'0.5rem', paddingLeft:'1rem', width: '25rem'}}>
-                        <MoorhenSlider minVal={0.1} maxVal={10.0} logScale={false} sliderTitle="Mouse sensitivity" initialValue={2.5} externalValue={mouseSensitivity} setExternalValue={setMouseSensitivity}/>
+                        <MoorhenSlider minVal={0.01} maxVal={1.0} logScale={false} sliderTitle="Mouse sensitivity" initialValue={0.3} externalValue={mouseSensitivity} setExternalValue={setMouseSensitivity}/>
                     </Form.Group>
                     <Form.Group controlId="wheelSensitivitySlider" style={{paddingTop:'0.5rem', paddingBottom:'0rem', paddingRight:'0.5rem', paddingLeft:'1rem', width: '25rem'}}>
                         <MoorhenSlider minVal={0.1} maxVal={9.9} logScale={false} sliderTitle="Mouse wheel zoom sensitivity" initialValue={1.0} externalValue={wheelSensitivityFactor} setExternalValue={setWheelSensitivityFactor}/>
