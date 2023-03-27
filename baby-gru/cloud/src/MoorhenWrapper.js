@@ -8,8 +8,8 @@ import { PreferencesContextProvider, getDefaultValues } from "../../src/utils/Mo
 import reportWebVitals from '../../src/reportWebVitals'
 import localforage from 'localforage';
 import parse from 'html-react-parser';
-import '../src/index.css';
-import '../src/App.css';
+import '../../src/index.css';
+import '../../src/App.css';
 
 const createModule = () => {
   createCCP4Module({
