@@ -1,9 +1,9 @@
 import { useRef, useState, useReducer, useContext, useEffect, useCallback } from 'react'
 import { MenuItem } from '@mui/material'
-import { historyReducer, initialHistoryState } from '../src/components/MoorhenHistoryMenu'
-import { PreferencesContext } from "../src/utils/MoorhenPreferences"
-import { MoorhenContainer } from "../src/components/MoorhenContainer"
-import { isDarkBackground } from '../src/WebGLgComponents/mgWebGL'
+import { historyReducer, initialHistoryState } from '../../../src/components/MoorhenHistoryMenu'
+import { PreferencesContext } from "../../../src/utils/MoorhenPreferences"
+import { MoorhenContainer } from "../../../src/components/MoorhenContainer"
+import { isDarkBackground } from '../../../src/WebGLgComponents/mgWebGL'
 import { MoorhenLegendToast } from './MoorhenLegendToast'
 
 const initialMoleculesState = []
@@ -57,7 +57,7 @@ export const MoorhenCloudApp = (props) => {
     const [showToast, setShowToast] = useState(false)
     const [toastContent, setToastContent] = useState("")
     const [showColourRulesToast, setShowColourRulesToast] = useState(false)
-    const [legendText, setLegendText] = useState('No stats to show yet...')
+    const [legendText, setLegendText] = useState('Loading, please wait...')
     const [busyFetching, setBusyFetching] = useState(false)
     const [notifyNewContent, setNotifyNewContent] = useState(false)
     

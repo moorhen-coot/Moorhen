@@ -1,7 +1,7 @@
 import { useEffect, useCallback } from 'react';
 import { Container, Col, Row, Spinner, Toast, ToastContainer } from 'react-bootstrap';
 import { MoorhenWebMG } from './MoorhenWebMG';
-import { MoorhenCommandCentre, convertRemToPx, convertViewtoPx } from '../utils/MoorhenUtils';
+import { MoorhenCommandCentre, convertRemToPx, convertViewtoPx, getTooltipShortcutLabel } from '../utils/MoorhenUtils';
 import { MoorhenTimeCapsule } from '../utils/MoorhenTimeCapsule';
 import { MoorhenButtonBar } from './MoorhenButtonBar';
 import { Backdrop } from "@mui/material";
@@ -44,6 +44,17 @@ export const MoorhenContainer = (props) => {
         }
     }, [cootInitialized, forwardControls])
     
+    useEffect(() => {
+        if (cootInitialized && preferences.isMounted) {
+            const shortCut = JSON.parse(preferences.shortCuts).show_shortcuts
+            setToastContent(
+                <h4>
+                    {`Press ${getTooltipShortcutLabel(shortCut)} to show help`}
+                </h4>
+            )
+        }
+    }, [cootInitialized, preferences.isMounted])
+
     useEffect(() => {
         if (preferences.isMounted && preferences.defaultBackgroundColor !== backgroundColor) {
             setBackgroundColor(preferences.defaultBackgroundColor)
@@ -302,7 +313,7 @@ export const MoorhenContainer = (props) => {
         </Row>
         <ToastContainer style={{ marginTop: "5rem" }} position='top-center' >
             <Toast bg='light' onClose={() => setShowToast(false)} autohide={true} delay={4000} show={showToast} style={{overflowY: 'scroll', maxHeight: convertViewtoPx(80, webGLHeight())}}>
-                <Toast.Header closeButton={false} style={{justifyContent:'center'}}>
+                <Toast.Header className="stop-scrolling" closeButton={false} style={{justifyContent:'center'}}>
                     {toastContent}
                 </Toast.Header>
             </Toast>

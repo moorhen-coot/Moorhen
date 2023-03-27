@@ -1,6 +1,6 @@
 import { Form, Toast, ToastContainer } from 'react-bootstrap';
 import { CloudSyncOutlined, NewReleasesOutlined } from '@mui/icons-material';
-import { isDarkBackground } from '../src/WebGLgComponents/mgWebGL'
+import { isDarkBackground } from '../../../src/WebGLgComponents/mgWebGL'
 
 export const MoorhenLegendToast = (props) => {
 

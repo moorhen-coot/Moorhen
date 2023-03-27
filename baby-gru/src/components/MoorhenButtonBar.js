@@ -203,6 +203,7 @@ export const MoorhenButtonBar = (props) => {
             onMouseOut={() => {if(!popoverIsShownRef.current) setOpacity(0.5) }}
             >
         <Carousel 
+                className="stop-scrolling"
                 style={{marginBottom: '0.1rem'}}
                 key={carouselItems.length}
                 variant={props.isDark ? "light" : "dark"} 
