@@ -224,11 +224,11 @@ export default class MoorhenWrapper {
       const response = await fetch(url)
       if (response.ok) {
         const fileContents = await response.text()
-        const domComponent = parse(fileContents)
-        this.controls.setLegendText(domComponent)
         if (fileContents !== this.cachedLegend) {
-          this.cachedLegend = fileContents
           this.controls.setNotifyNewContent(true)
+          const domComponent = parse(fileContents)
+          this.controls.setLegendText(domComponent)
+          this.cachedLegend = fileContents
           setTimeout(() => this.controls.setNotifyNewContent(false), 4000)
         }
       } else {
