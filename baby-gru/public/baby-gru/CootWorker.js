@@ -594,7 +594,7 @@ const replace_map_by_mtz_from_file = (imol, mtzData, selectedColumns) => {
     const asUint8Array = new Uint8Array(mtzData)
     cootModule.FS_createDataFile(".", tempFilename, asUint8Array, true, true);
     const readMtzArgs = [imol, tempFilename, selectedColumns.F, selectedColumns.PHI, "", false]
-    const result = molecules_container.replace_molecule_by_mtz_from_file(...readMtzArgs)
+    const result = molecules_container.replace_map_by_mtz_from_file(...readMtzArgs)
     cootModule.FS_unlink(tempFilename)
     return result
 }

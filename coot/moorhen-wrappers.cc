@@ -628,7 +628,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("clear_non_drawn_bonds",&molecules_container_t::clear_non_drawn_bonds)
     .function("file_name_to_string",&molecules_container_t::file_name_to_string)
     .function("replace_molecule_by_model_from_file",&molecules_container_t::replace_molecule_by_model_from_file)
-    .function("replace_molecule_by_mtz_from_file",&molecules_container_t::replace_molecule_by_mtz_from_file)
+    .function("replace_map_by_mtz_from_file",&molecules_container_t::replace_map_by_mtz_from_file)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<>()
