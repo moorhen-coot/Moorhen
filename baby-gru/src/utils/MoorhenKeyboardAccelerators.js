@@ -429,6 +429,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
                 if (shortCuts[key].keyPress === " ") modifiers.push("<Space>")
                 return `${modifiers.join("-")} ${shortCuts[key].keyPress} ${shortCuts[key].label}`
             })
+            glRef.current.showShortCutHelp.push(`Use right click to set background color`)
             glRef.current.drawScene()
         } else  {
             glRef.current.showShortCutHelp = null

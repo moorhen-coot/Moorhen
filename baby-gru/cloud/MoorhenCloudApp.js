@@ -1,9 +1,10 @@
 import { useRef, useState, useReducer, useContext, useEffect, useCallback } from 'react'
+import { MenuItem } from '@mui/material'
 import { historyReducer, initialHistoryState } from '../src/components/MoorhenHistoryMenu'
 import { PreferencesContext } from "../src/utils/MoorhenPreferences"
 import { MoorhenContainer } from "../src/components/MoorhenContainer"
 import { isDarkBackground } from '../src/WebGLgComponents/mgWebGL'
-import { MenuItem } from '@mui/material'
+import { MoorhenLegendToast } from './MoorhenLegendToast'
 
 const initialMoleculesState = []
 
@@ -56,22 +57,33 @@ export const MoorhenCloudApp = (props) => {
     const [showToast, setShowToast] = useState(false)
     const [toastContent, setToastContent] = useState("")
     const [showColourRulesToast, setShowColourRulesToast] = useState(false)
+    const [legendText, setLegendText] = useState('No stats to show yet...')
+    const [busyFetching, setBusyFetching] = useState(false)
+    const [notifyNewContent, setNotifyNewContent] = useState(false)
     
     moleculesRef.current = molecules
     mapsRef.current = maps
     activeMapRef.current = activeMap
 
+    const forwardCollectedControls = useCallback((controls) => {
+        let collectedControls = {
+            setLegendText, setBusyFetching, setNotifyNewContent, ...controls
+        }
+        props.forwardControls(collectedControls)
+    }, [props.forwardControls])
+
     const collectedProps = {
-        glRef, timeCapsuleRef, commandCentre, moleculesRef, mapsRef, activeMapRef,
-        consoleDivRef, lastHoveredAtom, prevActiveMoleculeRef, preferences, activeMap, 
-        setActiveMap, activeMolecule, setActiveMolecule, hoveredAtom, setHoveredAtom,
+        ...props, glRef, timeCapsuleRef, commandCentre, moleculesRef, mapsRef, 
+        activeMapRef, consoleDivRef, lastHoveredAtom, prevActiveMoleculeRef, 
+        preferences, activeMap, setActiveMap, activeMolecule, setActiveMolecule,
         consoleMessage, setConsoleMessage, cursorStyle, setCursorStyle, busy, setBusy,
         windowWidth, setWindowWidth, windowHeight, setWindowHeight, commandHistory, 
         dispatchHistoryReducer, molecules, changeMolecules, maps, changeMaps, 
         backgroundColor, setBackgroundColor, currentDropdownId, setCurrentDropdownId,
         appTitle, setAppTitle, cootInitialized, setCootInitialized, theme, setTheme,
         showToast, setShowToast, toastContent, setToastContent, showColourRulesToast,
-        setShowColourRulesToast, ...props
+        setShowColourRulesToast, hoveredAtom, setHoveredAtom,
+        
     }
 
     const doExportCallback = useCallback(async () => {
@@ -201,5 +213,11 @@ export const MoorhenCloudApp = (props) => {
         }
     }, [preferences])
 
-    return <MoorhenContainer {...collectedProps} extraFileMenus={[exportMenuItem]}/>
+    return <>
+            <MoorhenContainer {...collectedProps} extraFileMenus={[exportMenuItem]} forwardControls={forwardCollectedControls}/>
+            {props.viewOnly && 
+            <MoorhenLegendToast backgroundColor={backgroundColor} hoveredAtom={hoveredAtom} busyFetching={busyFetching} notifyNewContent={notifyNewContent} legendText={legendText}/>
+            }
+        </>
+
 }

@@ -7,6 +7,7 @@ import { guid } from "../src/utils/MoorhenUtils"
 import { PreferencesContextProvider, getDefaultValues } from "../src/utils/MoorhenPreferences";
 import reportWebVitals from '../src/reportWebVitals'
 import localforage from 'localforage';
+import parse from 'html-react-parser';
 import '../src/index.css';
 import '../src/App.css';
 
@@ -35,6 +36,7 @@ export default class MoorhenWrapper {
     this.rootId = null
     this.preferences = null
     this.cachedPreferences = null
+    this.cachedLegend = null
     this.exportCallback = () => {}
     this.exportPreferencesCallback = () => {}
     reportWebVitals()
@@ -217,14 +219,40 @@ export default class MoorhenWrapper {
     }
   }
 
+  async loadLegend(url) {
+    try {
+      const response = await fetch(url)
+      if (response.ok) {
+        const fileContents = await response.text()
+        const domComponent = parse(fileContents)
+        this.controls.setLegendText(domComponent)
+        if (fileContents !== this.cachedLegend) {
+          this.cachedLegend = fileContents
+          this.controls.setNotifyNewContent(true)
+          setTimeout(() => this.controls.setNotifyNewContent(false), 4000)
+        }
+      } else {
+        console.log(`Unable to fetch legend file ${url}`)
+      }
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
   async loadInputFiles() {
     try {
       await Promise.all(
         this.inputFiles.map(file => {
           if (file.type === 'pdb') {
             return this.loadPdbData(file.uniqueId, ...file.args)
-          } 
-          return this.loadMtzData(file.uniqueId, ...file.args)
+          } else if (file.type === 'mtz') {
+            return this.loadMtzData(file.uniqueId, ...file.args)
+          } else if (file.type === 'legend') {
+            return this.loadLegend(...file.args)
+          } else {
+            console.log(`Unrecognised file type ${file.type}`)
+            return Promise.resolve()
+          }
       }))
     } catch (err) {
       console.log('Error fetching files...')
@@ -245,18 +273,29 @@ export default class MoorhenWrapper {
   triggerSceneUpdates() {
     setTimeout(async () => {
       try {
+        this.controls.setBusyFetching(true)
         await Promise.all([
           this.updateMolecules(),
-          this.updateMaps()
+          this.updateMaps(),
+          this.updateLegend(),
         ])
       }
       catch (err) {
         console.log('Error fetching files...')
         console.log(err)  
       } finally {
+        setTimeout(() => this.controls.setBusyFetching(false), 2000)
         this.triggerSceneUpdates()
       } 
     }, this.updateInterval)
+  }
+
+  updateLegend(){
+    const legendInputFile = this.inputFiles.find(file => file.type === 'legend')
+    if (typeof legendInputFile !== 'undefined') {
+      return this.loadLegend(...legendInputFile.args).catch((err) => console.log(err))
+    }
+    return Promise.resolve()
   }
 
   updateMolecules() {
