@@ -10153,7 +10153,7 @@ class MGWebGL extends Component {
             const font = `${fontSize > 20 ? 20 : fontSize}px helvetica`
             this.showShortCutHelp.forEach((shortcut, index) => {
                 const xpos = -23.5 * ratio
-                const ypos = 20 - index
+                const ypos = -21.5 + index
                 drawString(shortcut, xpos, ypos, 0.0, font, false)
             });
         }
