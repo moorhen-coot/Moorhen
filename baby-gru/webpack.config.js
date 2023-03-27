@@ -73,7 +73,7 @@ module.exports = (env, argv) => {
         ],
       }),
     ],
-    entry: path.join(paths.cloud, 'index.js'),
+    entry: path.join(paths.cloud, 'webcoot.js'),
     target: 'web',
     optimization: {
       minimize: argv.mode === 'development' ? false : true
