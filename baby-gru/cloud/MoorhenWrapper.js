@@ -10,7 +10,7 @@ import localforage from 'localforage';
 import '../src/index.css';
 import '../src/App.css';
 
-function createModule() {
+const createModule = () => {
   createCCP4Module({
     print(t) { console.log(["output", t]) },
     printErr(t) { console.log(["output", t]); }
@@ -117,7 +117,7 @@ export default class MoorhenWrapper {
     if (newVersion === storedVersion) {
       await this.controls.timeCapsuleRef.current.storageInstance.clear()
       await Promise.all(
-        Object.keys(backups).forEach(key => 
+        Object.keys(backups).map(key => 
           this.controls.timeCapsuleRef.current.storageInstance.setItem(JSON.stringify(key), backups[JSON.stringify(key)])
         )
       )
@@ -218,31 +218,44 @@ export default class MoorhenWrapper {
   }
 
   async loadInputFiles() {
-    await Promise.all(
-      this.inputFiles.map(file => {
-        if (file.type === 'pdb') {
-          return this.loadPdbData(file.uniqueId, ...file.args)
-        } 
-        return this.loadMtzData(file.uniqueId, ...file.args)
-    }))
-
-    setTimeout(async () => {
+    try {
       await Promise.all(
-        this.controls.mapsRef.current.map(map => {
-          return map.doCootContour(
-            this.controls.glRef, ...this.controls.glRef.current.origin.map(coord => -coord), 13.0, 0.8
-          )
-        })  
-      )
-    }, 2500)
+        this.inputFiles.map(file => {
+          if (file.type === 'pdb') {
+            return this.loadPdbData(file.uniqueId, ...file.args)
+          } 
+          return this.loadMtzData(file.uniqueId, ...file.args)
+      }))
+    } catch (err) {
+      console.log('Error fetching files...')
+      console.log(err)
+    } finally {
+      setTimeout(async () => {
+        await Promise.all(
+          this.controls.mapsRef.current.map(map => {
+            return map.doCootContour(
+              this.controls.glRef, ...this.controls.glRef.current.origin.map(coord => -coord), 13.0, 0.8
+            )
+          })  
+        )
+      }, 2500)  
+    }
   }
 
-  startSceneUpdates() {
-    setTimeout(() => {
-      Promise.all([
-        this.updateMolecules(),
-        this.updateMaps()
-      ]).then(this.startSceneUpdates())
+  triggerSceneUpdates() {
+    setTimeout(async () => {
+      try {
+        await Promise.all([
+          this.updateMolecules(),
+          this.updateMaps()
+        ])
+      }
+      catch (err) {
+        console.log('Error fetching files...')
+        console.log(err)  
+      } finally {
+        this.triggerSceneUpdates()
+      } 
     }, this.updateInterval)
   }
 
@@ -251,7 +264,7 @@ export default class MoorhenWrapper {
     moleculeInputFiles.map(inputFile => {
       const loadedMolecule = this.controls.moleculesRef.current.find(molecule => molecule.uniqueId === inputFile.uniqueId)
       if (typeof loadedMolecule === 'undefined') {
-        return this.loadPdbData(inputFile.uniqueId, ...inputFile.args)
+        return this.loadPdbData(inputFile.uniqueId, ...inputFile.args).catch((err) => console.log(err))
       } else {
         const oldUnitCellParams = JSON.stringify(loadedMolecule.getUnitCellParams())
         return loadedMolecule.replaceModelWithFile(this.controls.glRef, ...inputFile.args)
@@ -260,6 +273,9 @@ export default class MoorhenWrapper {
             if (oldUnitCellParams !== newUnitCellParams) {
               loadedMolecule.centreOn(this.controls.glRef, null, true)
             }   
+          })
+          .catch((err) => {
+            console.log(err)
           })
       }
     })
@@ -270,9 +286,9 @@ export default class MoorhenWrapper {
     return Promise.all(mapInputFiles.map(inputFile => {
       const loadedMap = this.controls.mapsRef.current.find(map => map.uniqueId === inputFile.uniqueId)
       if (typeof loadedMap === 'undefined') {
-        return this.loadMtzData(inputFile.uniqueId, ...inputFile.args)
+        return this.loadMtzData(inputFile.uniqueId, ...inputFile.args).catch((err) => console.log(err))
       } else {
-        return loadedMap.replaceMapWithMtzFile(this.controls.glRef, ...inputFile.args)
+        return loadedMap.replaceMapWithMtzFile(this.controls.glRef, ...inputFile.args).catch((err) => console.log(err))
       }
     }))
   }
@@ -324,7 +340,7 @@ export default class MoorhenWrapper {
     await this.loadInputFiles()
     
     if (this.updateInterval !== null) {
-      this.startSceneUpdates()
+      this.triggerSceneUpdates()
     }
 
   }

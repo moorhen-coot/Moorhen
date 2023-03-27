@@ -78,6 +78,9 @@ MoorhenMap.prototype.loadToCootFromMtzURL = async function (url, name, selectedC
 
     try {
         const response = await fetch(url)
+        if (!response.ok) {
+            return Promise.reject(`Error fetching data from url ${url}`)
+        }
         const reflectionData = await response.blob()
         const arrayBuffer = await reflectionData.arrayBuffer()
         const asUIntArray = new Uint8Array(arrayBuffer)
