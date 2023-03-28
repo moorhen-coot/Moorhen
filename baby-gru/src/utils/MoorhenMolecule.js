@@ -92,6 +92,10 @@ MoorhenMolecule.prototype.replaceModelWithFile = async function (fileUrl, glRef)
 
 MoorhenMolecule.prototype.toggleSymmetry = async function (radius,glRef) {
     this.symmetryOn = ! this.symmetryOn;
+    this.drawSymmetry(radius,glRef)
+}
+
+MoorhenMolecule.prototype.drawSymmetry = async function (radius,glRef) {
 
     let symmetryMatrices = []
 

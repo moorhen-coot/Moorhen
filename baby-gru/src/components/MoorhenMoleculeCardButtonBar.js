@@ -102,7 +102,7 @@ export const MoorhenMoleculeCardButtonBar = (props) => {
         },
         13: {
             label: props.molecule.symmetryOn ? "Hide symmetry" : "Show symmetry",
-            compressed: () => { return (<MenuItem key={13} variant="success" onClick={() => props.molecule.toggleSymmetry(50,props.glRef)}>{props.molecule.symmetryOn ? "Hide symmetry" : "Show symmetry"}</MenuItem>) },
+            compressed: () => { return (<MenuItem key={13} variant="success" onClick={() => props.molecule.toggleSymmetry(25,props.glRef)}>{props.molecule.symmetryOn ? "Hide symmetry" : "Show symmetry"}</MenuItem>) },
             expanded: null
         },
     }
