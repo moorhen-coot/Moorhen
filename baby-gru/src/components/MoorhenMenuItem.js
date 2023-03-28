@@ -620,6 +620,23 @@ export const MoorhenMoleculeBondSettingsMenuItem = (props) => {
     />
 }
 
+export const MoorhenMoleculeSymmetrySettingsMenuItem = (props) => {
+
+    const panelContent =
+        <>
+            <Form.Group className="mb-3" style={{ width: '10rem', margin: '0' }} controlId="MoorhenSymmetryRadiusSigmaSlider">
+                <MoorhenSlider minVal={0.01} maxVal={100} logScale={false} sliderTitle="Radius" initialValue={25} externalValue={props.symmetryRadius} setExternalValue={props.setSymmetryRadius} />
+            </Form.Group>
+        </>
+
+    return <MoorhenMenuItem
+        popoverPlacement='left'
+        popoverContent={panelContent}
+        menuItemText={"Symmetry settings"}
+        setPopoverIsShown={props.setPopoverIsShown}
+    />
+}
+
 export const MoorhenMoleculeGaussianSurfaceSettingsMenuItem = (props) => {
 
     const panelContent =

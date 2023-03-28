@@ -29,6 +29,7 @@ export function MoorhenMolecule(commandCentre, monomerLibraryPath) {
     this.connectedToMaps = null
     this.excludedSegments = []
     this.symmetryOn = false
+    this.symmetryRadius = 25
     this.gaussianSurfaceSettings = {
         sigma: 4.4,
         countourLevel: 4.0,
@@ -90,23 +91,28 @@ MoorhenMolecule.prototype.replaceModelWithFile = async function (fileUrl, glRef)
     return Promise.reject(cootResponse.data.result.status)
 }
 
-MoorhenMolecule.prototype.toggleSymmetry = async function (radius,glRef) {
+MoorhenMolecule.prototype.toggleSymmetry = async function (glRef) {
     this.symmetryOn = ! this.symmetryOn;
-    this.drawSymmetry(radius,glRef)
+    this.drawSymmetry(glRef)
 }
 
-MoorhenMolecule.prototype.drawSymmetry = async function (radius,glRef) {
+MoorhenMolecule.prototype.setSymmetryRadius = async function (radius,glRef) {
+    this.symmetryRadius = radius
+    this.drawSymmetry(glRef)
+}
+
+MoorhenMolecule.prototype.drawSymmetry = async function (glRef) {
 
     let symmetryMatrices = []
 
     if(this.symmetryOn){
         const selectionAtoms = await this.gemmiAtomsForCid('/*/*/*/*')
         const selectionCentre = [-glRef.current.origin[0],-glRef.current.origin[1],-glRef.current.origin[2]]
-        console.log(`DEBUG: Attempting to get symmetry for imol ${this.molNo} using selection radius ${radius} and coords ${selectionCentre}`)
+        console.log(`DEBUG: Attempting to get symmetry for imol ${this.molNo} using selection radius ${this.symmetryRadius} and coords ${selectionCentre}`)
         const response = await this.commandCentre.current.cootCommand({
             returnType: "symmetry",
             command: 'get_symmetry_with_matrices',
-            commandArgs: [this.molNo, radius, ...selectionCentre]
+            commandArgs: [this.molNo, this.symmetryRadius, ...selectionCentre]
         }, true)
         console.log('DEBUG: Received the following symmetry data:')
         console.log(response.data.result.result)

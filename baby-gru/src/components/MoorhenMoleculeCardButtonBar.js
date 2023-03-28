@@ -3,7 +3,7 @@ import { Button, DropdownButton } from "react-bootstrap";
 import { convertViewtoPx } from '../utils/MoorhenUtils';
 import { MenuItem } from "@mui/material";
 import { UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined, ExpandLessOutlined, VisibilityOffOutlined, VisibilityOutlined, DownloadOutlined, Settings } from '@mui/icons-material';
-import { MoorhenDeleteDisplayObjectMenuItem, MoorhenRenameDisplayObjectMenuItem, MoorhenMoleculeBondSettingsMenuItem, MoorhenMergeMoleculesMenuItem, MoorhenRotateTranslateMoleculeMenuItem, MoorhenMoleculeGaussianSurfaceSettingsMenuItem} from "./MoorhenMenuItem";
+import { MoorhenDeleteDisplayObjectMenuItem, MoorhenRenameDisplayObjectMenuItem, MoorhenMoleculeBondSettingsMenuItem, MoorhenMergeMoleculesMenuItem, MoorhenRotateTranslateMoleculeMenuItem, MoorhenMoleculeGaussianSurfaceSettingsMenuItem,MoorhenMoleculeSymmetrySettingsMenuItem} from "./MoorhenMenuItem";
 
 export const MoorhenMoleculeCardButtonBar = (props) => {
     const dropdownCardButtonRef = useRef()
@@ -102,7 +102,12 @@ export const MoorhenMoleculeCardButtonBar = (props) => {
         },
         13: {
             label: props.molecule.symmetryOn ? "Hide symmetry" : "Show symmetry",
-            compressed: () => { return (<MenuItem key={13} variant="success" onClick={() => props.molecule.toggleSymmetry(25,props.glRef)}>{props.molecule.symmetryOn ? "Hide symmetry" : "Show symmetry"}</MenuItem>) },
+            compressed: () => { return (<MenuItem key={13} variant="success" onClick={() => props.molecule.toggleSymmetry(props.glRef)}>{props.molecule.symmetryOn ? "Hide symmetry" : "Show symmetry"}</MenuItem>) },
+            expanded: null
+        },
+        14: {
+            label: 'Symmetry settings',
+            compressed: () => { return (<MoorhenMoleculeSymmetrySettingsMenuItem key={14} setPopoverIsShown={setPopoverIsShown} molecule={props.molecule} {...props.symmetrySettingsProps}/>) },
             expanded: null
         },
     }

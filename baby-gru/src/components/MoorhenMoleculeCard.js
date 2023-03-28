@@ -29,10 +29,15 @@ export const MoorhenMoleculeCard = (props) => {
     const [surfaceLevel, setSurfaceLevel] = useState(4.0)
     const [surfaceRadius, setSurfaceRadius] = useState(5.0)
     const [surfaceGridScale, setSurfaceGridScale] = useState(0.7)
+    const [symmetryRadius, setSymmetryRadius] = useState(25.0)
 
     const bondSettingsProps = {
         bondWidth, setBondWidth, atomRadiusBondRatio,
         setAtomRadiusBondRatio, bondSmoothness, setBondSmoothness
+    }
+
+    const symmetrySettingsProps = {
+        symmetryRadius, setSymmetryRadius
     }
 
     const gaussianSettingsProps = {
@@ -130,6 +135,13 @@ export const MoorhenMoleculeCard = (props) => {
 
     }, [atomRadiusBondRatio]);
 
+
+    useEffect(() => {
+        if (symmetryRadius === null) {
+            return
+        }
+        props.molecule.setSymmetryRadius(symmetryRadius,props.glRef)
+    }, [symmetryRadius]);
 
     useEffect(() => {
         if (surfaceSigma === null) {
@@ -362,6 +374,7 @@ export const MoorhenMoleculeCard = (props) => {
                         setCurrentDropdownMolNo={props.setCurrentDropdownMolNo}
                         bondSettingsProps={bondSettingsProps}
                         gaussianSettingsProps={gaussianSettingsProps}
+                        symmetrySettingsProps={symmetrySettingsProps}
                         backupsEnabled={props.makeBackups}
                         {...handleProps}
                     />
