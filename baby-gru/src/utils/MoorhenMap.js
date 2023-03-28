@@ -19,6 +19,7 @@ export function MoorhenMap(commandCentre) {
     this.selectedColumns = null
     this.associatedReflectionFileName = null
     this.uniqueId = guid()
+    this.rgba = {r: 0.30000001192092896, g: 0.30000001192092896, b: 0.699999988079071, a: 0.4}
 }
 
 MoorhenMap.prototype.delete = async function (glRef) {
@@ -317,14 +318,23 @@ MoorhenMap.prototype.doCootContour = function (glRef, x, y, z, radius, contourLe
 
             const objects = [response.data.result.result]
             $this.clearBuffersOfStyle(glRef, "Coot")
-            //$this.displayObjects['Coot'] = [...$this.displayObjects['Coot'], ...objects.map(object=>gl.appendOtherData(object, true))]
             objects.forEach(object => {
-                //I could inject alpha here ... ?
                 object.col_tri.forEach(cols => {
                         cols.forEach(col => {
-                                for(let idx=3;idx<col.length;idx+=4){
-                                    col[idx] = $this.alpha
+                            if (!this.isDifference) {
+                                for(let idx=0; idx<col.length; idx+=4){
+                                    col[idx] = $this.rgba.r
                                 }
+                                for(let idx=1; idx<col.length; idx+=4){
+                                    col[idx] = $this.rgba.g
+                                }
+                                for(let idx=2; idx<col.length; idx+=4){
+                                    col[idx] = $this.rgba.b
+                                }    
+                            }
+                            for(let idx=3; idx<col.length; idx+=4){
+                                col[idx] = $this.rgba.a
+                            }
                         })
                 })
                 let a = glRef.current.appendOtherData(object, true);
@@ -335,11 +345,10 @@ MoorhenMap.prototype.doCootContour = function (glRef, x, y, z, radius, contourLe
             resolve(true)
         })
     })
-
 }
 
-MoorhenMap.prototype.setAlpha = async function (alpha,glRef) {
-    this.alpha = alpha
+MoorhenMap.prototype.setAlpha = async function (alpha, glRef) {
+    this.rgba.a = alpha
     this.displayObjects['Coot'].forEach(buffer => {
         buffer.triangleColours.forEach(colbuffer => {
             for(let idx=3;idx<colbuffer.length;idx+=4){
