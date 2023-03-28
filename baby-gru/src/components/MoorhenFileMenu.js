@@ -480,7 +480,7 @@ export const MoorhenFileMenu = (props) => {
                     
                     <MoorhenBackupsMenuItem {...menuItemProps} setShowBackupsModal={setShowBackupsModal} loadSessionJSON={loadSessionJSON} />
 
-                    {props.extraFileMenus && props.extraFileMenus.map( menu => menu)}
+                    {props.extraFileMenuItems && props.extraFileMenuItems.map( menu => menu)}
                     
                     <hr></hr>
 

@@ -214,7 +214,7 @@ export const MoorhenCloudApp = (props) => {
     }, [preferences])
 
     return <>
-            <MoorhenContainer {...collectedProps} extraFileMenus={[exportMenuItem]} forwardControls={forwardCollectedControls}/>
+            <MoorhenContainer {...collectedProps} extraFileMenuItems={[exportMenuItem]} forwardControls={forwardCollectedControls}/>
             {props.viewOnly && 
             <MoorhenLegendToast backgroundColor={backgroundColor} hoveredAtom={hoveredAtom} busyFetching={busyFetching} notifyNewContent={notifyNewContent} legendText={legendText}/>
             }

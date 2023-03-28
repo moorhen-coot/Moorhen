@@ -23,7 +23,7 @@ export const MoorhenContainer = (props) => {
         appTitle, setAppTitle, cootInitialized, setCootInitialized, theme, setTheme,
         showToast, setShowToast, toastContent, setToastContent, showColourRulesToast,
         setShowColourRulesToast, disableFileUploads, urlPrefix, viewOnly, extraNavBarMenus,
-        monomerLibraryPath, forwardControls, extraFileMenus
+        monomerLibraryPath, forwardControls, extraFileMenuItems
     } = props
     
     const innerWindowMarginWidth = convertRemToPx(1)
@@ -252,7 +252,7 @@ export const MoorhenContainer = (props) => {
         setToastContent, currentDropdownId, setCurrentDropdownId, hoveredAtom, setHoveredAtom, showToast, setShowToast,
         windowWidth, windowHeight, innerWindowMarginWidth, showColourRulesToast, timeCapsuleRef, setShowColourRulesToast, 
         isDark, exportCallback, disableFileUploads, urlPrefix, viewOnly, extraNavBarMenus, monomerLibraryPath, moleculesRef, 
-        extraFileMenus, mapsRef, ...preferences
+        extraFileMenuItems, mapsRef, ...preferences
     }
 
     return <> 
@@ -328,6 +328,6 @@ MoorhenContainer.defaultProps = {
     exportCallback: null,
     disableFileUploads: false,
     extraNavBarMenus: [],
-    extraFileMenus: [],
+    extraFileMenuItems: [],
     viewOnly: false
 }
