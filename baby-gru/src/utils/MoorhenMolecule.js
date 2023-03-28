@@ -28,6 +28,7 @@ export function MoorhenMolecule(commandCentre, monomerLibraryPath) {
     this.ligands = null
     this.connectedToMaps = null
     this.excludedSegments = []
+    this.symmetryOn = false
     this.gaussianSurfaceSettings = {
         sigma: 4.4,
         countourLevel: 4.0,
@@ -89,23 +90,28 @@ MoorhenMolecule.prototype.replaceModelWithFile = async function (fileUrl, glRef)
     return Promise.reject(cootResponse.data.result.status)
 }
 
-MoorhenMolecule.prototype.displaySymmetry = async function (radius,glRef) {
-    const selectionAtoms = await this.gemmiAtomsForCid('/*/*/*/*')
-    const selectionCentre = [-glRef.current.origin[0],-glRef.current.origin[1],-glRef.current.origin[2]]
-    console.log(`DEBUG: Attempting to get symmetry for imol ${this.molNo} using selection radius ${radius} and coords ${selectionCentre}`)
-    const response = await this.commandCentre.current.cootCommand({
-        returnType: "symmetry",
-        command: 'get_symmetry_with_matrices',
-        commandArgs: [this.molNo, radius, ...selectionCentre]
-    }, true)
-    console.log('DEBUG: Received the following symmetry data:')
-    console.log(response.data.result.result)
+MoorhenMolecule.prototype.toggleSymmetry = async function (radius,glRef) {
+    this.symmetryOn = ! this.symmetryOn;
 
     let symmetryMatrices = []
-    response.data.result.result.forEach(symm => {
-        symmetryMatrices.push(symm.matrix)
-    })
-    
+
+    if(this.symmetryOn){
+        const selectionAtoms = await this.gemmiAtomsForCid('/*/*/*/*')
+        const selectionCentre = [-glRef.current.origin[0],-glRef.current.origin[1],-glRef.current.origin[2]]
+        console.log(`DEBUG: Attempting to get symmetry for imol ${this.molNo} using selection radius ${radius} and coords ${selectionCentre}`)
+        const response = await this.commandCentre.current.cootCommand({
+            returnType: "symmetry",
+            command: 'get_symmetry_with_matrices',
+            commandArgs: [this.molNo, radius, ...selectionCentre]
+        }, true)
+        console.log('DEBUG: Received the following symmetry data:')
+        console.log(response.data.result.result)
+
+        response.data.result.result.forEach(symm => {
+            symmetryMatrices.push(symm.matrix)
+        })
+    }
+
      Object.keys(this.displayObjects).filter(key => !['hover', 'originNeighbours', 'selection', 'transformation', 'contact_dots', 'chemical_features', 'VdWSurface'].some(style => key.includes(style))).forEach(displayObjectType => {
         if(this.displayObjects[displayObjectType].length > 0) {
             this.displayObjects[displayObjectType].forEach(displayObject => {

@@ -101,8 +101,8 @@ export const MoorhenMoleculeCardButtonBar = (props) => {
             expanded: null
         },
         13: {
-            label: 'Get Symmetry',
-            compressed: () => { return (<MenuItem key={13} variant="success" onClick={() => props.molecule.displaySymmetry(50,props.glRef)}>Get symmetry</MenuItem>) },
+            label: props.molecule.symmetryOn ? "Hide symmetry" : "Show symmetry",
+            compressed: () => { return (<MenuItem key={13} variant="success" onClick={() => props.molecule.toggleSymmetry(50,props.glRef)}>{props.molecule.symmetryOn ? "Hide symmetry" : "Show symmetry"}</MenuItem>) },
             expanded: null
         },
     }
