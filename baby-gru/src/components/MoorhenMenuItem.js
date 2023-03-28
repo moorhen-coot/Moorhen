@@ -621,15 +621,33 @@ export const MoorhenMoleculeBondSettingsMenuItem = (props) => {
 }
 
 export const MoorhenMoleculeSymmetrySettingsMenuItem = (props) => {
+    const [symmetryRadius, setSymmetryRadius] = useState(25.0)
+    const [symmetryOn, setSymmetryOn] = useState(false)
+
+    useEffect(() => {
+        props.molecule.setSymmetryRadius(symmetryRadius, props.glRef)
+    }, [symmetryRadius])
+
+    useEffect(() => {
+        if (props.molecule.symmetryOn !== symmetryOn) {
+            props.molecule.toggleSymmetry(props.glRef)
+        }
+    }, [symmetryOn])
 
     const panelContent =
         <>
-            <Form.Group className="mb-3" style={{ width: '10rem', margin: '0' }} controlId="MoorhenSymmetryRadiusSigmaSlider">
-                <MoorhenSlider minVal={0.01} maxVal={100} logScale={false} sliderTitle="Radius" initialValue={25} externalValue={props.symmetryRadius} setExternalValue={props.setSymmetryRadius} />
+            <Form.Check
+                type="switch"
+                checked={symmetryOn}
+                onChange={() => { setSymmetryOn(!symmetryOn) }}
+                label="Show symmetry"/>
+            <Form.Group className="mt-3" style={{ width: '10rem', margin: '0' }} controlId="MoorhenSymmetryRadiusSigmaSlider">
+                <MoorhenSlider minVal={0.01} maxVal={100} logScale={false} sliderTitle="Radius" initialValue={25} externalValue={symmetryRadius} setExternalValue={setSymmetryRadius} />
             </Form.Group>
         </>
 
     return <MoorhenMenuItem
+        showOkButton={false}
         popoverPlacement='left'
         popoverContent={panelContent}
         menuItemText={"Symmetry settings"}

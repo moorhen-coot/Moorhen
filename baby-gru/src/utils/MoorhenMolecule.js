@@ -93,45 +93,38 @@ MoorhenMolecule.prototype.replaceModelWithFile = async function (glRef, fileUrl,
 }
 
 MoorhenMolecule.prototype.toggleSymmetry = async function (glRef) {
-    this.symmetryOn = ! this.symmetryOn;
+    this.symmetryOn = !this.symmetryOn;
     this.drawSymmetry(glRef)
 }
 
-MoorhenMolecule.prototype.setSymmetryRadius = async function (radius,glRef) {
+MoorhenMolecule.prototype.setSymmetryRadius = async function (radius, glRef) {
     this.symmetryRadius = radius
     this.drawSymmetry(glRef)
 }
 
 MoorhenMolecule.prototype.drawSymmetry = async function (glRef) {
-
     let symmetryMatrices = []
 
     if(this.symmetryOn){
-        const selectionAtoms = await this.gemmiAtomsForCid('/*/*/*/*')
-        const selectionCentre = [-glRef.current.origin[0],-glRef.current.origin[1],-glRef.current.origin[2]]
-        console.log(`DEBUG: Attempting to get symmetry for imol ${this.molNo} using selection radius ${this.symmetryRadius} and coords ${selectionCentre}`)
+        const selectionCentre = glRef.current.origin.map(coord => -coord)
         const response = await this.commandCentre.current.cootCommand({
             returnType: "symmetry",
             command: 'get_symmetry_with_matrices',
             commandArgs: [this.molNo, this.symmetryRadius, ...selectionCentre]
         }, true)
-        console.log('DEBUG: Received the following symmetry data:')
-        console.log(response.data.result.result)
-
-        response.data.result.result.forEach(symm => {
-            symmetryMatrices.push(symm.matrix)
-        })
+        symmetryMatrices = response.data.result.result.map(symm => symm.matrix)
     }
 
-     Object.keys(this.displayObjects).filter(key => !['hover', 'originNeighbours', 'selection', 'transformation', 'contact_dots', 'chemical_features', 'VdWSurface'].some(style => key.includes(style))).forEach(displayObjectType => {
-        if(this.displayObjects[displayObjectType].length > 0) {
-            this.displayObjects[displayObjectType].forEach(displayObject => {
-                displayObject.symmetryMatrices = symmetryMatrices
-            })
-        }
+     Object.keys(this.displayObjects)
+        .filter(key => !['hover', 'originNeighbours', 'selection', 'transformation', 'contact_dots', 'chemical_features', 'VdWSurface'].some(style => key.includes(style)))
+        .forEach(displayObjectType => {
+            if(this.displayObjects[displayObjectType].length > 0) {
+                this.displayObjects[displayObjectType].forEach(displayObject => {
+                    displayObject.symmetryMatrices = symmetryMatrices
+                })
+            }
     })
-    glRef.current.drawScene();
-
+    glRef.current.drawScene()
 }
 
 MoorhenMolecule.prototype.setBackgroundColour = function (backgroundColour) {
