@@ -20,11 +20,12 @@
   <script src="./baby-gru/wasm/web_example.js"></script>
   <script src="./moorhen.js"      charset="utf-8"></script>
   <script type="text/javascript"  defer="defer">
-    const rootId     = 'root';
-    const mode       = '[[mode]]';
-    const inputFiles = [[inputFiles]];
-    const interval   = [[interval]];
-    const urlPrefix  = '.';
+    const rootId      = 'root';
+    const mode        = '[[mode]]';
+    const inputFiles  = [[inputFiles]];
+    const interval    = [[interval]];
+    const no_data_msg = '[[no_data_msg]]';
+    const urlPrefix   = '.';
     const exportToCloudCallback = (molName, molData) => {
       window.parent.postMessage ({
           'command' : 'saveFile',
@@ -35,6 +36,8 @@
     }
 
     let moorhenWrapper = new moorhen.MoorhenWrapper ( urlPrefix );
+    if (no_data_msg)
+      moorhenWrapper.setNoDataLegendMessage ( no_data_msg )
     switch (mode)  {  
       case "view-update" : moorhenWrapper.setWorkMode         ( 'view' );
                            moorhenWrapper.addOnExportListener ( exportToCloudCallback );
