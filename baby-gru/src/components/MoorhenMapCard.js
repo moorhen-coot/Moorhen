@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useCallback, useMemo, Fragment } from "rea
 import { Card, Form, Button, Row, Col, DropdownButton, Stack } from "react-bootstrap";
 import { doDownload, getNameLabel } from '../utils/MoorhenUtils';
 import { VisibilityOffOutlined, VisibilityOutlined, ExpandMoreOutlined, ExpandLessOutlined, DownloadOutlined, Settings } from '@mui/icons-material';
-import { MoorhenMapSettingsMenuItem, MoorhenMapWeightMenuItem, MoorhenDeleteDisplayObjectMenuItem, MoorhenRenameDisplayObjectMenuItem } from "./MoorhenMenuItem";
+import { MoorhenMapSettingsMenuItem, MoorhenSetMapColourMenuItem, MoorhenDeleteDisplayObjectMenuItem, MoorhenRenameDisplayObjectMenuItem } from "./MoorhenMenuItem";
 import MoorhenSlider from "./MoorhenSlider";
 import { MenuItem } from "@mui/material";
 
@@ -21,7 +21,7 @@ export const MoorhenMapCard = (props) => {
     const isDirty = useRef(false)
 
     const mapSettingsProps = {
-        mapOpacity, setMapOpacity, mapSolid, setMapSolid, mapLitLines, setMapLitLines
+        mapOpacity, setMapOpacity, mapSolid, setMapSolid, mapLitLines, setMapLitLines,  setPopoverIsShown, glRef: props.glRef, map: props.map
     }
 
     const handleDownload = async () => {
@@ -64,7 +64,7 @@ export const MoorhenMapCard = (props) => {
         },
         4: {
             label: "Map draw settings",
-            compressed: () => {return (<MoorhenMapSettingsMenuItem key='map-draw-settings' disabled={!cootContour} setPopoverIsShown={setPopoverIsShown} map={props.map} {...mapSettingsProps} />)},
+            compressed: () => {return (<MoorhenMapSettingsMenuItem key='map-draw-settings' disabled={!cootContour} {...mapSettingsProps} />)},
             expanded: null
         }
     }
