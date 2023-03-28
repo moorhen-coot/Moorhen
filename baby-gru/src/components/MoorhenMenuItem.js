@@ -623,9 +623,27 @@ export const MoorhenMoleculeBondSettingsMenuItem = (props) => {
 export const MoorhenMoleculeSymmetrySettingsMenuItem = (props) => {
     const [symmetryRadius, setSymmetryRadius] = useState(25.0)
     const [symmetryOn, setSymmetryOn] = useState(false)
+    const isDirty = useRef(false)
+    const busyDrawing = useRef(false)
+
+    const drawSymmetryIfDirty = () => {
+        if (isDirty.current) {
+            busyDrawing.current = true
+            isDirty.current = false
+            props.molecule.drawSymmetry(props.glRef)
+            .then(_ => {
+                busyDrawing.current = false
+                drawSymmetryIfDirty()
+            })
+        }
+    }
 
     useEffect(() => {
-        props.molecule.setSymmetryRadius(symmetryRadius, props.glRef)
+        isDirty.current = true
+        props.molecule.symmetryRadius = symmetryRadius
+        if (!busyDrawing.current) {
+            drawSymmetryIfDirty()
+        }
     }, [symmetryRadius])
 
     useEffect(() => {

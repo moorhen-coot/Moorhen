@@ -92,14 +92,14 @@ MoorhenMolecule.prototype.replaceModelWithFile = async function (glRef, fileUrl,
     return Promise.reject(cootResponse.data.result.status)
 }
 
-MoorhenMolecule.prototype.toggleSymmetry = async function (glRef) {
+MoorhenMolecule.prototype.toggleSymmetry = function (glRef) {
     this.symmetryOn = !this.symmetryOn;
-    this.drawSymmetry(glRef)
+    return this.drawSymmetry(glRef)
 }
 
-MoorhenMolecule.prototype.setSymmetryRadius = async function (radius, glRef) {
+MoorhenMolecule.prototype.setSymmetryRadius = function (radius, glRef) {
     this.symmetryRadius = radius
-    this.drawSymmetry(glRef)
+    return this.drawSymmetry(glRef)
 }
 
 MoorhenMolecule.prototype.drawSymmetry = async function (glRef) {
