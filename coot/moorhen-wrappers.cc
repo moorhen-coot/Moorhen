@@ -39,6 +39,7 @@
 
 #include "cartesian.h"
 #include "geomutil.h"
+#include "matrix.h"
 
 using namespace emscripten;
 
@@ -211,20 +212,49 @@ class molecules_container_js : public molecules_container_t {
             coot::symmetry_info_t si = get_symmetry(imol, symmetry_search_radius, x, y, z);
             mmdb::Manager *mol = get_mol(imol);
             mmdb::Cryst *cryst = mol->GetCrystData();
-            mmdb::mat44 my_matt;
             std::vector<std::array<float, 16>> matrices;
+            mmdb::mat44 my_matt;
+            mmdb::mat44 mol_to_origin_matt;
+
             for (unsigned i = 0; i < si.symm_trans.size(); i++) {
+
                 symm_trans_t symm_trans = si.symm_trans[i].first;
-                cryst->GetTMatrix(my_matt, symm_trans.isym(), symm_trans.x(), symm_trans.y(), symm_trans.z());
-                std::array<float, 16> matrix;
+                Cell_Translation cell_trans = si.symm_trans[i].second;
+
+                cryst->GetTMatrix(mol_to_origin_matt, 0,
+                              -cell_trans.us,
+                              -cell_trans.vs,
+                              -cell_trans.ws);
+
+                cryst->GetTMatrix(my_matt,
+                                         symm_trans.isym(),
+                                         symm_trans.x(),
+                                         symm_trans.y(),
+                                         symm_trans.z());
+
+                //m = mol_to_origin_matt * my_matt
+                std::array<float, 16> theMat;
                 int idx = 0;
+
+                matrix mat1 = matrix(4,4);
+                matrix mat2 = matrix(4,4);
+
                 for(int j=0;j<4;j++){
                     for(int k=0;k<4;k++){
-                        matrix[idx] = my_matt[k][j];
+                        mat1(j,k) = my_matt[j][k];
+                        mat2(j,k) = mol_to_origin_matt[j][k];
+                    }
+                }
+                matrix mat3 = mat1 * mat2;
+
+                for(int j=0;j<4;j++){
+                    for(int k=0;k<4;k++){
+                        theMat[idx] = mat3(k,j);
                         idx++;
                     }
                 }
-                matrices.push_back(matrix);
+
+                matrices.push_back(theMat);
             }
 
             std::pair<coot::symmetry_info_t,std::vector<std::array<float, 16>>> thePair;

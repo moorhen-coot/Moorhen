@@ -6,7 +6,7 @@ import { GetSplinesColoured } from '../WebGLgComponents/mgSecStr';
 import { atomsToSpheresInfo } from '../WebGLgComponents/mgWebGLAtomsToPrimitives';
 import { contactsToCylindersInfo, contactsToLinesInfo } from '../WebGLgComponents/mgWebGLAtomsToPrimitives';
 import { singletonsToLinesInfo } from '../WebGLgComponents/mgWebGLAtomsToPrimitives';
-import { guid, readTextFile, readGemmiStructure, cidToSpec, residueCodesThreeToOne, centreOnGemmiAtoms, getBufferAtoms, nucleotideCodesThreeToOne, hexToHsl } from './MoorhenUtils'
+import { canFetchFile, readTextFile, readGemmiStructure, cidToSpec, residueCodesThreeToOne, centreOnGemmiAtoms, getBufferAtoms, nucleotideCodesThreeToOne, hexToHsl } from './MoorhenUtils'
 import { quatToMat4 } from '../WebGLgComponents/quatToMat4.js';
 import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
 import * as vec3 from 'gl-matrix/vec3';
@@ -24,7 +24,6 @@ export function MoorhenMolecule(commandCentre, monomerLibraryPath) {
     this.molNo = null
     this.gemmiStructure = null
     this.sequences = []
-    this.symmetryMatrices = []
     this.colourRules = null
     this.ligands = null
     this.connectedToMaps = null
@@ -57,11 +56,10 @@ export function MoorhenMolecule(commandCentre, monomerLibraryPath) {
         originNeighbours: [],
         transformation: { origin: [0, 0, 0], quat: null, centre: [0, 0, 0] }
     }
-    this.uniqueId = guid()
     this.monomerLibraryPath = (typeof monomerLibraryPath === 'undefined' ? "./baby-gru/monomers" : monomerLibraryPath)
 };
 
-MoorhenMolecule.prototype.replaceModelWithFile = async function (glRef, fileUrl, molName) {
+MoorhenMolecule.prototype.replaceModelWithFile = async function (fileUrl, glRef) {
     let coordData
     let fetchResponse
     
@@ -91,9 +89,9 @@ MoorhenMolecule.prototype.replaceModelWithFile = async function (glRef, fileUrl,
     return Promise.reject(cootResponse.data.result.status)
 }
 
-MoorhenMolecule.prototype.displaySymmetry = async function (radius=10) {
+MoorhenMolecule.prototype.displaySymmetry = async function (radius,glRef) {
     const selectionAtoms = await this.gemmiAtomsForCid('/*/*/*/*')
-    const selectionCentre = centreOnGemmiAtoms(selectionAtoms)
+    const selectionCentre = [-glRef.current.origin[0],-glRef.current.origin[1],-glRef.current.origin[2]]
     console.log(`DEBUG: Attempting to get symmetry for imol ${this.molNo} using selection radius ${radius} and coords ${selectionCentre}`)
     const response = await this.commandCentre.current.cootCommand({
         returnType: "symmetry",
@@ -103,12 +101,20 @@ MoorhenMolecule.prototype.displaySymmetry = async function (radius=10) {
     console.log('DEBUG: Received the following symmetry data:')
     console.log(response.data.result.result)
 
-    this.symmetryMatrices = []
+    let symmetryMatrices = []
     response.data.result.result.forEach(symm => {
-        this.symmetryMatrices.push(symm.matrix)
+        symmetryMatrices.push(symm.matrix)
     })
     
-    console.log(this.symmetryMatrices)
+     Object.keys(this.displayObjects).filter(key => !['hover', 'originNeighbours', 'selection', 'transformation', 'contact_dots', 'chemical_features', 'VdWSurface'].some(style => key.includes(style))).forEach(displayObjectType => {
+        if(this.displayObjects[displayObjectType].length > 0) {
+            this.displayObjects[displayObjectType].forEach(displayObject => {
+                displayObject.symmetryMatrices = symmetryMatrices
+            })
+        }
+    })
+    glRef.current.drawScene();
+
 }
 
 MoorhenMolecule.prototype.setBackgroundColour = function (backgroundColour) {
