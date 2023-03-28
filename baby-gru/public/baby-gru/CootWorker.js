@@ -309,11 +309,7 @@ const symmetryToJSData = (symmetryDataPair) => {
     const symmetryMatrices = symmetryDataPair.second
     const cell = symmetryData.cell
     const symm_trans = symmetryData.symm_trans
-    console.log('DEBUG: in cootWorker helper function')
-    console.log(`DEBUG: the vector received from molecules_container?: ${symm_trans}`)
-    console.log(`DEBUG: the cell received from molecules_container: ${cell}`)
     const symmetrySize = symm_trans.size()
-    console.log(`DEBUG: the vector received from molecules_container.get_symmetry has a size of ${symmetrySize}`)
 
     for (let i = 0; i < symmetrySize; i++) {
         const currentSymmetry = symm_trans.get(i)
@@ -332,7 +328,6 @@ const symmetryToJSData = (symmetryDataPair) => {
             vs: cellTranslation.vs,
             matrix: currentSymmMat
         })
-        
         symTransT.delete()
     }
 
