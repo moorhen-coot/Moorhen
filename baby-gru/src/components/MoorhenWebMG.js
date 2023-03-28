@@ -97,11 +97,7 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
     },[props.drawInteractions,props.molecules])
 
     const handleOriginUpdate = useCallback(async (e) => {
-        props.molecules.forEach(mol => {
-            mol.drawSymmetry(glRef)
-        })
-        console.log("Origin changed")
-        if (!busyGettingAtom.current&&props.drawInteractions) {
+        if (!busyGettingAtom.current && props.drawInteractions) {
             drawHBonds()
         }
     }, [props.commandCentre,props.drawInteractions,props.molecules])
