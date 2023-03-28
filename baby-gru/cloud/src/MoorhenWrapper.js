@@ -37,7 +37,7 @@ export default class MoorhenWrapper {
     this.preferences = null
     this.cachedPreferences = null
     this.cachedLegend = null
-    this.noDataLegendMessage = null
+    this.noDataLegendMessage = parse('<div></div>')
     this.exportCallback = () => {}
     this.exportPreferencesCallback = () => {}
     reportWebVitals()
