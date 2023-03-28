@@ -1,5 +1,4 @@
 var triangle_instanced_vertex_shader_source = `
-    // This shader is not yet fully working!!!
     attribute vec3 aVertexPosition;
     attribute vec4 aVertexColour;
     attribute vec3 aVertexNormal;

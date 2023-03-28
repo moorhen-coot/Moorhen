@@ -1,5 +1,4 @@
 var triangle_instanced_vertex_shader_source = `#version 300 es\n
-    // This shader is not yet fully working!!!
     in vec3 aVertexPosition;
     in vec4 aVertexColour;
     in vec3 aVertexNormal;

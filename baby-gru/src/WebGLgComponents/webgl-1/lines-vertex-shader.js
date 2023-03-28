@@ -1,6 +1,5 @@
 var lines_vertex_shader_source = `
 #extension GL_OES_element_index : enable
-    // This shader is basic
     attribute vec3 aVertexPosition;
     attribute vec4 aVertexColour;
 

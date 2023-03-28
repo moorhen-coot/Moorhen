@@ -1,5 +1,4 @@
 var twod_vertex_shadow_shader_source = `#version 300 es\n
-    // This shader is basic
     in vec3 aVertexOrigin;
     in vec3 aVertexPosition;
     in vec4 aVertexColour;

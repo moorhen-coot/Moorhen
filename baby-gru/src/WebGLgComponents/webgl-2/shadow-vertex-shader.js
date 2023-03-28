@@ -1,5 +1,4 @@
 var shadow_vertex_shader_source = `#version 300 es\n
-    // This shader is basic
     in vec3 aVertexPosition;
     in vec4 aVertexColour;
 
