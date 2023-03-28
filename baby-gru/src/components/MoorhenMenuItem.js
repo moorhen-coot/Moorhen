@@ -642,7 +642,7 @@ export const MoorhenMoleculeSymmetrySettingsMenuItem = (props) => {
                 onChange={() => { setSymmetryOn(!symmetryOn) }}
                 label="Show symmetry"/>
             <Form.Group className="mt-3" style={{ width: '10rem', margin: '0' }} controlId="MoorhenSymmetryRadiusSigmaSlider">
-                <MoorhenSlider minVal={0.01} maxVal={100} logScale={false} sliderTitle="Radius" initialValue={25} externalValue={symmetryRadius} setExternalValue={setSymmetryRadius} />
+                <MoorhenSlider minVal={0.01} maxVal={100} logScale={false} sliderTitle="Radius" initialValue={symmetryRadius} externalValue={symmetryRadius} setExternalValue={setSymmetryRadius} />
             </Form.Group>
         </>
 
