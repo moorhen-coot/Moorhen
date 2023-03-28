@@ -534,6 +534,27 @@ export const MoorhenScoresToastPreferencesMenuItem = (props) => {
 }
 
 export const MoorhenMapSettingsMenuItem = (props) => {
+    const [mapColour, setMapColour] = useState(null)
+
+    useEffect(() => {
+        setMapColour({
+            r: 255 * props.map.rgba.r,
+            g: 255 * props.map.rgba.g,
+            b: 255 * props.map.rgba.b,
+            a: props.map.rgba.a
+        })
+    }, [props.map.rgba])
+
+    const handleColorChange = (color) => {
+        try {
+            props.map.setColour(color.rgb.r / 255., color.rgb.g / 255., color.rgb.b / 255., props.glRef)
+            setMapColour(color)
+        }
+        catch (err) {
+            console.log('err', err)
+        }
+    }
+
     const panelContent =
         <>
             <Form.Check
@@ -548,9 +569,17 @@ export const MoorhenMapSettingsMenuItem = (props) => {
                     onChange={() => { props.setMapLitLines(!props.mapLitLines) }}
                     label="Activate lit lines" />
             }
-            <Form.Group className="mb-3" style={{ width: '10rem', margin: '0' }} controlId="MoorhenMapOpacitySlider">
+            <Form.Group style={{ width: '100%', margin: '0.1rem' }} controlId="MoorhenMapOpacitySlider">
                 <MoorhenSlider minVal={0.0} maxVal={1.0} logScale={false} sliderTitle="Opacity" initialValue={props.mapOpacity} externalValue={props.mapOpacity} setExternalValue={props.setMapOpacity} />
             </Form.Group>
+            {!props.map.isDifference && 
+            <Form.Group>
+                <Form.Label>
+                    Map Colour
+                </Form.Label>
+                <SketchPicker color={mapColour} onChange={handleColorChange} disableAlpha={true}/>
+            </Form.Group>        
+            }
         </>
     return <MoorhenMenuItem
         popoverPlacement='left'

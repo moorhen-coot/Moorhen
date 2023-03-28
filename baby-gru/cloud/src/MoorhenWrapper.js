@@ -190,7 +190,6 @@ export default class MoorhenWrapper {
     } else {
       const newMap = new MoorhenMap(this.controls.commandCentre)
       newMap.litLines = this.preferences.litLines
-      newMap.alpha = 0.4
       newMap.uniqueId = uniqueId
       return new Promise(async (resolve, reject) => {
         try {
@@ -268,16 +267,6 @@ export default class MoorhenWrapper {
     } catch (err) {
       console.log('Error fetching files...')
       console.log(err)
-    } finally {
-      setTimeout(async () => {
-        await Promise.all(
-          this.controls.mapsRef.current.map(map => {
-            return map.doCootContour(
-              this.controls.glRef, ...this.controls.glRef.current.origin.map(coord => -coord), 13.0, 0.8
-            )
-          })  
-        )
-      }, 2500)  
     }
   }
 
