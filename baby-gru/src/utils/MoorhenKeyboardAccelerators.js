@@ -45,7 +45,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         
         if (!collectedProps.shortcutOnHoveredAtom) {
             [chosenMolecule, residueCid] = await getCentreAtom()
-            if (chosenMolecule === 'undefined' || !residueCid) {
+            if (typeof chosenMolecule === 'undefined' || !residueCid) {
                 console.log('Cannot find atom in the centre of the view...')
                 return true
             }
@@ -447,15 +447,19 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     }
 
     else if (action === 'jump_next_residue' || action === 'jump_previous_residue') {
-        getCentreAtom().then(result => {
+        getCentreAtom()
+        .then(result => {
+            if (!result) {
+                return
+            }
             const [selectedMolecule, residueCid] = result
-            if (selectedMolecule === 'undefined' || !residueCid) {
+            if (typeof selectedMolecule === 'undefined' || !residueCid) {
                 return
             }
 
             const chosenAtom = cidToSpec(residueCid)
             const selectedSequence = selectedMolecule.sequences.find(sequence => sequence.chain === chosenAtom.chain_id)
-            if (selectedSequence === 'undefined') {
+            if (typeof selectedSequence === 'undefined') {
                 return
             }
             
@@ -470,9 +474,9 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
             } else {
                 return
             }
-            //selectedMolecule.centreOn(glRef, `/*/${chosenAtom.chain_id}/${nextResNum}-${nextResNum}/*`)
             selectedMolecule.centreAndAlignViewOn(glRef, `/*/${chosenAtom.chain_id}/${nextResNum}-${nextResNum}/`)
         })
+        .catch(err => console.log(err))
 
     }
 
