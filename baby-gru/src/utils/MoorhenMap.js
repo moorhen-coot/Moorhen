@@ -342,7 +342,7 @@ MoorhenMap.prototype.doCootContour = function (glRef, x, y, z, radius, contourLe
             glRef.current.buildBuffers();
             glRef.current.drawScene();
             resolve(true)
-        })
+        }).catch(err => console.log(err))
     })
 }
 
