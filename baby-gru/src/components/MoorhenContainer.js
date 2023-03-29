@@ -330,5 +330,5 @@ MoorhenContainer.defaultProps = {
     extraNavBarMenus: [],
     extraFileMenuItems: [],
     viewOnly: false,
-    devMode: true
+    devMode: false
 }
