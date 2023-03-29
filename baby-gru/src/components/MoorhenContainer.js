@@ -88,13 +88,10 @@ export const MoorhenContainer = (props) => {
         setShowColourRulesToast: setInnerShowColourRulesToast 
     }
 
-    const getStates = () => {
-        const result = {}
-        Object.keys(innerStatesMap).forEach(key => {
-            result[key] = props[key] ? props[key] : innerStatesMap[key]
-        })
-        return result
-    }
+    const states = {}
+    Object.keys(innerStatesMap).forEach(key => {
+        states[key] = props[key] ? props[key] : innerStatesMap[key]
+    })
 
     const { glRef, timeCapsuleRef, commandCentre, moleculesRef, mapsRef, activeMapRef,
         consoleDivRef, lastHoveredAtom, prevActiveMoleculeRef, preferences, activeMap, 
@@ -106,15 +103,13 @@ export const MoorhenContainer = (props) => {
         appTitle, setAppTitle, cootInitialized, setCootInitialized, theme, setTheme,
         showToast, setShowToast, toastContent, setToastContent, showColourRulesToast,
         setShowColourRulesToast
-    } = getStates(innerStatesMap, props)
+    } = states
 
     const {
         disableFileUploads, urlPrefix, extraNavBarMenus, exportCallback, viewOnly, devMode, 
         monomerLibraryPath, forwardControls, extraFileMenuItems
     } = props
     
-    const innerWindowMarginWidth = convertRemToPx(1)
-
     const setWindowDimensions = () => {
         setWindowWidth(window.innerWidth)
         setWindowHeight(window.innerHeight)
@@ -337,9 +332,9 @@ export const MoorhenContainer = (props) => {
         molecules, changeMolecules, appTitle, setAppTitle, maps, changeMaps, glRef, activeMolecule, setActiveMolecule,
         activeMap, setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor, toastContent, 
         setToastContent, currentDropdownId, setCurrentDropdownId, hoveredAtom, setHoveredAtom, showToast, setShowToast,
-        windowWidth, windowHeight, innerWindowMarginWidth, showColourRulesToast, timeCapsuleRef, setShowColourRulesToast, 
-        isDark, exportCallback, disableFileUploads, urlPrefix, viewOnly, extraNavBarMenus, monomerLibraryPath, moleculesRef, 
-        extraFileMenuItems, mapsRef, devMode, ...preferences
+        windowWidth, windowHeight, showColourRulesToast, timeCapsuleRef, setShowColourRulesToast, isDark, exportCallback,
+        disableFileUploads, urlPrefix, viewOnly, extraNavBarMenus, monomerLibraryPath, moleculesRef, extraFileMenuItems, 
+        mapsRef, devMode, ...preferences
     }
 
     return <> 
