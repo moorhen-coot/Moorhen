@@ -45,14 +45,14 @@ export const MoorhenMoleculeCard = (props) => {
         surfaceRadius, setSurfaceRadius, surfaceGridScale, setSurfaceGridScale
     }
 
-    const redrawBondsIfDirty = async () => {
+    const redrawMolIfDirty = async () => {
         if (isDirty.current) {
             busyRedrawing.current = true
             isDirty.current = false
             props.molecule.setAtomsDirty(true)
             await props.molecule.redraw(props.glRef)
             busyRedrawing.current = false
-            redrawBondsIfDirty()
+            redrawMolIfDirty()
         }
     }
     
@@ -113,7 +113,7 @@ export const MoorhenMoleculeCard = (props) => {
             props.molecule.cootBondsOptions.smoothness = bondSmoothness
             isDirty.current = true
             if (!busyRedrawing.current) {
-                redrawBondsIfDirty()
+                redrawMolIfDirty()
             }
         } else {
             props.molecule.cootBondsOptions.smoothness = bondSmoothness
@@ -130,7 +130,7 @@ export const MoorhenMoleculeCard = (props) => {
             props.molecule.cootBondsOptions.width = bondWidth
             isDirty.current = true
             if (!busyRedrawing.current) {
-                redrawBondsIfDirty()
+                redrawMolIfDirty()
             }
         } else {
             props.molecule.cootBondsOptions.width = bondWidth
@@ -147,7 +147,7 @@ export const MoorhenMoleculeCard = (props) => {
             props.molecule.cootBondsOptions.atomRadiusBondRatio = atomRadiusBondRatio
             isDirty.current = true
             if (!busyRedrawing.current) {
-                redrawBondsIfDirty()
+                redrawMolIfDirty()
             }
         } else {
             props.molecule.cootBondsOptions.atomRadiusBondRatio = atomRadiusBondRatio
@@ -172,7 +172,7 @@ export const MoorhenMoleculeCard = (props) => {
             props.molecule.gaussianSurfaceSettings.sigma = surfaceSigma
             isDirty.current = true
             if (!busyRedrawing.current) {
-                redrawBondsIfDirty()
+                redrawMolIfDirty()
             }
         } else {
             props.molecule.gaussianSurfaceSettings.sigma = surfaceSigma
@@ -189,7 +189,7 @@ export const MoorhenMoleculeCard = (props) => {
             props.molecule.gaussianSurfaceSettings.countourLevel = surfaceLevel
             isDirty.current = true
             if (!busyRedrawing.current) {
-                redrawBondsIfDirty()
+                redrawMolIfDirty()
             }
         } else {
             props.molecule.gaussianSurfaceSettings.countourLevel = surfaceLevel
@@ -206,7 +206,7 @@ export const MoorhenMoleculeCard = (props) => {
             props.molecule.gaussianSurfaceSettings.boxRadius = surfaceRadius
             isDirty.current = true
             if (!busyRedrawing.current) {
-                redrawBondsIfDirty()
+                redrawMolIfDirty()
             }
         } else {
             props.molecule.gaussianSurfaceSettings.boxRadius = surfaceRadius
@@ -223,7 +223,7 @@ export const MoorhenMoleculeCard = (props) => {
             props.molecule.gaussianSurfaceSettings.gridScale = surfaceGridScale
             isDirty.current = true
             if (!busyRedrawing.current) {
-                redrawBondsIfDirty()
+                redrawMolIfDirty()
             }
         } else {
             props.molecule.gaussianSurfaceSettings.gridScale = surfaceGridScale
