@@ -208,6 +208,11 @@ class molecules_container_js : public molecules_container_t {
             return mhbs;
         }
         */
+       
+        explicit molecules_container_js(bool verbose=true) : molecules_container_t(verbose) {
+
+        }
+
         std::pair<coot::symmetry_info_t,std::vector<std::array<float, 16>>> get_symmetry_with_matrices(int imol, float symmetry_search_radius, float x, float y, float z) { 
             coot::symmetry_info_t si = get_symmetry(imol, symmetry_search_radius, x, y, z);
             mmdb::Manager *mol = get_mol(imol);
@@ -535,7 +540,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("symm_trans",&coot::symmetry_info_t::symm_trans)
     ;
     class_<molecules_container_t>("molecules_container_t")
-    .constructor<>()
+    .constructor<bool>()
     .function("set_user_defined_atom_colour_by_residue",&molecules_container_t::set_user_defined_atom_colour_by_residue)
     .function("set_user_defined_bond_colours",&molecules_container_t::set_user_defined_bond_colours)
     .function("set_colour_wheel_rotation_base",&molecules_container_t::set_colour_wheel_rotation_base)
@@ -661,7 +666,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("replace_map_by_mtz_from_file",&molecules_container_t::replace_map_by_mtz_from_file)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
-    .constructor<>()
+    .constructor<bool>()
     .function("writePDBASCII",&molecules_container_js::writePDBASCII)
     .function("writeCCP4Map",&molecules_container_js::writeCCP4Map)
     .function("count_simple_mesh_vertices",&molecules_container_js::count_simple_mesh_vertices)
