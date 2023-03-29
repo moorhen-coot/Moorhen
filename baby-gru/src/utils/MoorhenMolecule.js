@@ -685,8 +685,8 @@ MoorhenMolecule.prototype.drawWithStyleFromAtoms = async function (style, glRef)
 
 MoorhenMolecule.prototype.addBuffersOfStyle = function (glRef, objects, style) {
     const $this = this
-    objects.forEach(object => {
-        var a = glRef.current.appendOtherData(object, true);
+    objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
+        const a = glRef.current.appendOtherData(object, true);
         $this.displayObjects[style] = $this.displayObjects[style].concat(a)
     })
     glRef.current.buildBuffers();
@@ -721,7 +721,7 @@ MoorhenMolecule.prototype.drawCootContactDotsCid = function (glRef, style) {
         //Empty existing buffers of this type
         this.clearBuffersOfStyle(style, glRef)
         this.addBuffersOfStyle(glRef, objects, style)
-    })
+    }).catch(err => console.log(err))
 }
 
 MoorhenMolecule.prototype.drawCootChemicalFeaturesCid = function (glRef, style) {
@@ -737,7 +737,7 @@ MoorhenMolecule.prototype.drawCootChemicalFeaturesCid = function (glRef, style) 
         //Empty existing buffers of this type
         this.clearBuffersOfStyle(style, glRef)
         this.addBuffersOfStyle(glRef, objects, style)
-    })
+    }).catch(err => console.log(err))
 }
 
 MoorhenMolecule.prototype.drawCootContactDots = function (glRef) {
@@ -754,7 +754,7 @@ MoorhenMolecule.prototype.drawCootContactDots = function (glRef) {
         //Empty existing buffers of this type
         this.clearBuffersOfStyle(style, glRef)
         this.addBuffersOfStyle(glRef, objects, style)
-    })
+    }).catch(err => console.log(err))
 }
 
 MoorhenMolecule.prototype.drawRotamerDodecahedra = function (glRef) {
@@ -769,7 +769,7 @@ MoorhenMolecule.prototype.drawRotamerDodecahedra = function (glRef) {
         //Empty existing buffers of this type
         this.clearBuffersOfStyle(style, glRef)
         this.addBuffersOfStyle(glRef, objects, style)
-    })
+    }).catch(err => console.log(err))
 }
 
 MoorhenMolecule.prototype.drawCootLigands = async function (glRef) {
@@ -887,7 +887,7 @@ MoorhenMolecule.prototype.drawCootGaussianSurface = async function (glRef) {
             this.clearBuffersOfStyle(style, glRef)
         }
         return Promise.resolve(true)
-    })
+    }).catch(err => console.log(err))
 }
 
 MoorhenMolecule.prototype.drawCootRepresentation = async function (glRef, style) {
@@ -949,14 +949,14 @@ MoorhenMolecule.prototype.drawCootRepresentation = async function (glRef, style)
             this.clearBuffersOfStyle(style, glRef)
             this.addBuffersOfStyle(glRef, objects, style)
             let bufferAtoms = getBufferAtoms(this.gemmiStructure.clone())
-            if (bufferAtoms.length > 0) {
+            if (bufferAtoms.length > 0 && this.displayObjects[style].length > 0) {
                 this.displayObjects[style][0].atoms = bufferAtoms
             }
         } else {
             this.clearBuffersOfStyle(style, glRef)
         }
         return Promise.resolve(true)
-    })
+    }).catch(err => console.log(err))
 }
 
 MoorhenMolecule.prototype.show = function (style, glRef) {
@@ -966,6 +966,7 @@ MoorhenMolecule.prototype.show = function (style, glRef) {
     if (this.displayObjects[style].length === 0) {
         return this.fetchIfDirtyAndDraw(style, glRef)
             .then(_ => { glRef.current.drawScene() })
+            .catch(err => console.log(err))
     }
     else {
         this.displayObjects[style].forEach(displayBuffer => {
