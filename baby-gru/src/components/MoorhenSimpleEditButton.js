@@ -23,7 +23,7 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
         setLocalParameters(props.panelParameters)
     }, [props.panelParameters])
 
-    const atomClickedCallback = useCallback(event => {
+    const atomClickedCallback = useCallback(async (event) => {
         let awaitMoreAtomClicks
         if (typeof(props.awaitMoreAtomClicksRef.current) !== 'undefined'){
             awaitMoreAtomClicks = JSON.parse(JSON.stringify(props.awaitMoreAtomClicksRef.current))
@@ -47,7 +47,6 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
                 }
             }
             molecule.setAtomsDirty(true)
-            // FIXME: await here is only necessary to show timings
             await molecule.redraw(props.glRef)
             const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: molecule.molNo } })
             document.dispatchEvent(scoresUpdateEvent)
@@ -60,10 +59,11 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
             document.removeEventListener('atomClicked', atomClickedCallback, { once: true })
         }
 
-        props.molecules.forEach(async (molecule) => {
+        const chosenMolecule = props.molecules.find(molecule => molecule.buffersInclude(event.detail.buffer))
+        if (typeof chosenMolecule !== 'undefined') {
             let result
             try {
-                if (molecule.buffersInclude(event.detail.buffer)) {
+                if (chosenMolecule.buffersInclude(event.detail.buffer)) {
                     props.setCursorStyle("default")
                     const chosenAtom = cidToSpec(event.detail.atom.label)
                     if (!awaitMoreAtomClicks) {
@@ -74,27 +74,22 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
                         result = await props.commandCentre.current.cootCommand({
                             returnType: props.returnType,
                             command: props.cootCommand,
-                            commandArgs: props.formatArgs(molecule, chosenAtom, localParameters),
-                            changesMolecules: props.changesMolecule ? [molecule.molNo] : []
+                            commandArgs: props.formatArgs(chosenMolecule, chosenAtom, localParameters),
+                            changesMolecules: props.changesMolecule ? [chosenMolecule.molNo] : []
                         }, true)
 
-                        console.log(result.data.timeMainThreadToWorker)
-                        console.log(result.data.timelibcootAPI)
-                        console.log(result.data.timeconvertingWASMJS)
-                        console.log(`Message from worker back to main thread took ${Date.now() - result.data.messageSendTime} ms (${props.cootCommand}) - (${result.data.messageId.slice(0, 5)})`)
-
                     } else if (props.nonCootCommand) {
-                        result = await props.nonCootCommand(molecule, chosenAtom, localParameters)
+                        result = await props.nonCootCommand(chosenMolecule, chosenAtom, localParameters)
                     }
                     if (!awaitMoreAtomClicks) {
-                        onCompleted(molecule, chosenAtom, result)
+                        onCompleted(chosenMolecule, chosenAtom, result)
                         props.timeCapsuleRef.current.addModification()
                     }
                 }
             } catch (err) {
                 console.log('Encountered', err)
             }
-        })
+        }
 
     }, [props.molecules, props.activeMap, props.refineAfterMod, localParameters, props.formatArgs, props.awaitMoreAtomClicksRef])
 
