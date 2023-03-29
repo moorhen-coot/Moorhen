@@ -82,7 +82,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     if (event.altKey) modifiers.push("<Alt>") && eventModifiersCodes.push('altKey')
     if (event.key === " ") modifiers.push("<Space>")
 
-    if (collectedProps.showShortcutToast) {
+    if (collectedProps.showShortcutToast && !viewOnly) {
         setToastContent(<h3>{`${modifiers.join("-")} ${event.key} pushed`}</h3>)
         setShowToast(true)    
     }
