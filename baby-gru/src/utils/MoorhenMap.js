@@ -317,7 +317,7 @@ MoorhenMap.prototype.doCootContour = function (glRef, x, y, z, radius, contourLe
 
             const objects = [response.data.result.result]
             $this.clearBuffersOfStyle(glRef, "Coot")
-            objects.forEach(object => {
+            objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
                 object.col_tri.forEach(cols => {
                         cols.forEach(col => {
                             if (!this.isDifference) {
