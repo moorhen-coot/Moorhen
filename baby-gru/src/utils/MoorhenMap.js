@@ -308,13 +308,7 @@ MoorhenMap.prototype.doCootContour = function (glRef, x, y, z, radius, contourLe
             returnType: returnType,
             command: "get_map_contours_mesh",
             commandArgs: [$this.molNo, x, y, z, radius, contourLevel]
-        }).then(response => {
-            
-            console.log(response.data.timeMainThreadToWorker)
-            console.log(response.data.timelibcootAPI)
-            console.log(response.data.timeconvertingWASMJS)
-            console.log(`Message from worker back to main thread took ${Date.now() - response.data.messageSendTime} ms (get_map_contours_mesh) - (${response.data.messageId.slice(0, 5)})`)
-
+        }).then(response => {            
             const objects = [response.data.result.result]
             $this.clearBuffersOfStyle(glRef, "Coot")
             objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
