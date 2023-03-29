@@ -1,7 +1,9 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useReducer, useRef, useState, useContext } from 'react';
 import { Container, Col, Row, Spinner, Toast, ToastContainer } from 'react-bootstrap';
 import { MoorhenWebMG } from './MoorhenWebMG';
 import { MoorhenCommandCentre, convertRemToPx, convertViewtoPx, getTooltipShortcutLabel } from '../utils/MoorhenUtils';
+import { historyReducer, initialHistoryState } from './MoorhenHistoryMenu';
+import { PreferencesContext } from "../utils/MoorhenPreferences";
 import { MoorhenTimeCapsule } from '../utils/MoorhenTimeCapsule';
 import { MoorhenButtonBar } from './MoorhenButtonBar';
 import { Backdrop } from "@mui/material";
@@ -11,19 +13,104 @@ import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
 import { MoorhenNavBar } from "./MoorhenNavBar"
 import './MoorhenContainer.css'
 
+const initialMoleculesState = []
+
+const initialMapsState = []
+
+const itemReducer = (oldList, change) => {
+    if (change.action === 'Add') {
+        return [...oldList, change.item]
+    }
+    else if (change.action === 'Remove') {
+        return oldList.filter(item => item.molNo !== change.item.molNo)
+    }
+    else if (change.action === 'AddList') {
+        return oldList.concat(change.items)
+    }
+    else if (change.action === 'Empty') {
+        return []
+    }
+}
+
 export const MoorhenContainer = (props) => {
-    const {
-        glRef, timeCapsuleRef, commandCentre, moleculesRef, mapsRef, activeMapRef,
+    const innerGlRef = useRef(null)
+    const innerTimeCapsuleRef = useRef(null)
+    const innnerCommandCentre = useRef(null)
+    const innerMoleculesRef = useRef(null)
+    const innerMapsRef = useRef(null)
+    const innerActiveMapRef = useRef(null)
+    const innerConsoleDivRef = useRef(null)
+    const innerLastHoveredAtom = useRef(null)
+    const innerPrevActiveMoleculeRef = useRef(null)
+    const innerPreferences = useContext(PreferencesContext);
+    const [innerActiveMap, setInnerActiveMap] = useState(null)
+    const [innerActiveMolecule, setInnerActiveMolecule] = useState(null)
+    const [innerHoveredAtom, setInnerHoveredAtom] = useState({ molecule: null, cid: null })
+    const [innerConsoleMessage, setInnerConsoleMessage] = useState("")
+    const [innerCursorStyle, setInnerCursorStyle] = useState("default")
+    const [innerBusy, setInnerBusy] = useState(false)
+    const [innerWindowWidth, setInnerWindowWidth] = useState(window.innerWidth)
+    const [innerWindowHeight, setInnerWindowHeight] = useState(window.innerHeight)
+    const [innerCommandHistory, innerDispatchHistoryReducer] = useReducer(historyReducer, initialHistoryState)
+    const [innerMolecules, innerChangeMolecules] = useReducer(itemReducer, initialMoleculesState)
+    const [innerMaps, innerChangeMaps] = useReducer(itemReducer, initialMapsState)
+    const [innerBackgroundColor, setInnerBackgroundColor] = useState([1, 1, 1, 1])
+    const [innerCurrentDropdownId, setInnerCurrentDropdownId] = useState(-1)
+    const [innerAppTitle, setInnerAppTitle] = useState('Moorhen')
+    const [innerCootInitialized, setInnerCootInitialized] = useState(false)
+    const [innerTheme, setInnerTheme] = useState("flatly")
+    const [innerShowToast, setInnerShowToast] = useState(false)
+    const [innerToastContent, setInnerToastContent] = useState("")
+    const [innerShowColourRulesToast, setInnerShowColourRulesToast] = useState(false)
+    
+    innerMoleculesRef.current = innerMolecules
+    innerMapsRef.current = innerMaps
+    innerActiveMapRef.current = innerActiveMap
+
+    const innerStatesMap = {
+        glRef: innerGlRef, timeCapsuleRef: innerTimeCapsuleRef, commandCentre: innnerCommandCentre,
+        moleculesRef: innerMoleculesRef, mapsRef: innerMapsRef, activeMapRef: innerActiveMapRef,
+        consoleDivRef: innerConsoleDivRef, lastHoveredAtom: innerLastHoveredAtom, 
+        prevActiveMoleculeRef: innerPrevActiveMoleculeRef, preferences: innerPreferences,
+        activeMap: innerActiveMap, setActiveMap: setInnerActiveMap, activeMolecule: innerActiveMolecule,
+        setActiveMolecule: setInnerActiveMolecule, hoveredAtom: innerHoveredAtom, setHoveredAtom: setInnerHoveredAtom,
+        consoleMessage: innerConsoleMessage, setConsoleMessage: setInnerConsoleMessage, cursorStyle: innerCursorStyle,
+        setCursorStyle: setInnerCursorStyle, busy: innerBusy, setBusy: setInnerBusy, windowHeight: innerWindowHeight, 
+        windowWidth: innerWindowWidth, setWindowWidth: setInnerWindowWidth, maps: innerMaps, changeMaps: innerChangeMaps, 
+        setWindowHeight: setInnerWindowHeight, commandHistory: innerCommandHistory, 
+        dispatchHistoryReducer: innerDispatchHistoryReducer, molecules: innerMolecules, changeMolecules: innerChangeMolecules, 
+        backgroundColor: innerBackgroundColor, setBackgroundColor: setInnerBackgroundColor,
+        currentDropdownId: innerCurrentDropdownId, setCurrentDropdownId: setInnerCurrentDropdownId,
+        appTitle: innerAppTitle, setAppTitle: setInnerAppTitle, cootInitialized: innerCootInitialized, 
+        setCootInitialized: setInnerCootInitialized, theme: innerTheme, setTheme: setInnerTheme,
+        showToast: innerShowToast, setShowToast: setInnerShowToast, toastContent: innerToastContent, 
+        setToastContent: setInnerToastContent, showColourRulesToast: innerShowColourRulesToast, 
+        setShowColourRulesToast: setInnerShowColourRulesToast 
+    }
+
+    const getStates = () => {
+        const result = {}
+        Object.keys(innerStatesMap).forEach(key => {
+            result[key] = props[key] ? props[key] : innerStatesMap[key]
+        })
+        return result
+    }
+
+    const { glRef, timeCapsuleRef, commandCentre, moleculesRef, mapsRef, activeMapRef,
         consoleDivRef, lastHoveredAtom, prevActiveMoleculeRef, preferences, activeMap, 
         setActiveMap, activeMolecule, setActiveMolecule, hoveredAtom, setHoveredAtom,
         consoleMessage, setConsoleMessage, cursorStyle, setCursorStyle, busy, setBusy,
         windowWidth, setWindowWidth, windowHeight, setWindowHeight, commandHistory, 
-        dispatchHistoryReducer, molecules, changeMolecules, maps, changeMaps, exportCallback,
+        dispatchHistoryReducer, molecules, changeMolecules, maps, changeMaps,
         backgroundColor, setBackgroundColor, currentDropdownId, setCurrentDropdownId,
         appTitle, setAppTitle, cootInitialized, setCootInitialized, theme, setTheme,
         showToast, setShowToast, toastContent, setToastContent, showColourRulesToast,
-        setShowColourRulesToast, disableFileUploads, urlPrefix, viewOnly, extraNavBarMenus,
-        monomerLibraryPath, forwardControls, extraFileMenuItems, devMode
+        setShowColourRulesToast
+    } = getStates(innerStatesMap, props)
+
+    const {
+        disableFileUploads, urlPrefix, extraNavBarMenus, exportCallback, viewOnly, devMode, 
+        monomerLibraryPath, forwardControls, extraFileMenuItems
     } = props
     
     const innerWindowMarginWidth = convertRemToPx(1)
@@ -325,6 +412,7 @@ export const MoorhenContainer = (props) => {
 MoorhenContainer.defaultProps = {
     urlPrefix: '.',
     monomerLibraryPath: './baby-gru/monomers',
+    forwardControls: () => {},
     exportCallback: null,
     disableFileUploads: false,
     extraNavBarMenus: [],
