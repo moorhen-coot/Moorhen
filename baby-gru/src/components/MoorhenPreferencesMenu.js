@@ -8,13 +8,13 @@ import MoorhenSlider from './MoorhenSlider'
 
 export const MoorhenPreferencesMenu = (props) => {
     const { 
-        atomLabelDepthMode, setAtomLabelDepthMode, setMouseSensitivity, 
+        atomLabelDepthMode, setAtomLabelDepthMode, setMouseSensitivity, enableTimeCapsule,
         defaultExpandDisplayCards, setDefaultExpandDisplayCards, defaultMapLitLines,
         setDefaultMapLitLines, refineAfterMod, setRefineAfterMod, mouseSensitivity,
         mapLineWidth, setMapLineWidth, makeBackups, setMakeBackups, timeCapsuleRef,
         showShortcutToast, setShowShortcutToast, defaultMapSurface, setDefaultMapSurface,
         defaultBondSmoothness, setDefaultBondSmoothness, showScoresToast, setShowScoresToast,
-        defaultUpdatingScores, setDefaultUpdatingScores, wheelSensitivityFactor,
+        defaultUpdatingScores, setDefaultUpdatingScores, wheelSensitivityFactor, setEnableTimeCapsule,
         setWheelSensitivityFactor, shortcutOnHoveredAtom, setShortcutOnHoveredAtom, maxBackupCount, 
         setMaxBackupCount, modificationCountBackupThreshold, setModificationCountBackupThreshold, 
      } = props;
@@ -24,10 +24,11 @@ export const MoorhenPreferencesMenu = (props) => {
 
     useEffect(() => {
         if (timeCapsuleRef.current) {
+            timeCapsuleRef.current.disableBackups = !enableTimeCapsule
             timeCapsuleRef.current.maxBackupCount = maxBackupCount
             timeCapsuleRef.current.modificationCountBackupThreshold = modificationCountBackupThreshold
         }
-    }, [maxBackupCount, modificationCountBackupThreshold])
+    }, [maxBackupCount, modificationCountBackupThreshold, enableTimeCapsule])
 
     return <NavDropdown
                     title="Preferences"
@@ -85,7 +86,7 @@ export const MoorhenPreferencesMenu = (props) => {
                             type="switch"
                             checked={makeBackups}
                             onChange={() => { setMakeBackups(!makeBackups) }}
-                            label="Make molecule backups"/>
+                            label="Enable molecule undo/redo backups"/>
                     </InputGroup>
                     <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
                         <Form.Check 
@@ -95,6 +96,8 @@ export const MoorhenPreferencesMenu = (props) => {
                             label="Hover on residue to use shortcuts"/>
                     </InputGroup>
                     <MoorhenBackupPreferencesMenuItem 
+                        enableTimeCapsule={enableTimeCapsule}
+                        setEnableTimeCapsule={setEnableTimeCapsule}
                         maxBackupCount={maxBackupCount}
                         setMaxBackupCount={setMaxBackupCount}
                         modificationCountBackupThreshold={modificationCountBackupThreshold}
