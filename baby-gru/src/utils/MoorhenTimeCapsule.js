@@ -23,6 +23,7 @@ export function MoorhenTimeCapsule(moleculesRef, mapsRef, activeMapRef, glRef, p
     this.modificationCountBackupThreshold = 5
     this.maxBackupCount = 10
     this.version = 'v7'
+    this.disableBackups = false
     this.storageInstance = createInstance('Moorhen-TimeCapsule')
     this.checkVersion()
 }
@@ -177,7 +178,7 @@ MoorhenTimeCapsule.prototype.fetchSession = async function (includeAdditionalMap
 
 MoorhenTimeCapsule.prototype.addModification = async function() {
     this.modificationCount += 1
-    if (this.modificationCount >= this.modificationCountBackupThreshold) {
+    if (this.modificationCount >= this.modificationCountBackupThreshold && !this.disableBackups) {
         this.busy = true
         this.modificationCount = 0
         
@@ -223,14 +224,16 @@ MoorhenTimeCapsule.prototype.cleanupUnusedDataFiles = async function() {
 }
 
 MoorhenTimeCapsule.prototype.createBackup = async function(key, value) {
-    try {
-         await this.storageInstance.setItem(key, value)
-         await this.cleanupIfFull()
-         this.busy = false
-         return key
-     } catch (err) {
-         console.log(err)
-     }
+    if (!this.disableBackups) {
+        try {
+            await this.storageInstance.setItem(key, value)
+            await this.cleanupIfFull()
+            this.busy = false
+            return key
+        } catch (err) {
+            console.log(err)
+        }   
+    }
 }
 
 MoorhenTimeCapsule.prototype.retrieveBackup = async function(key) {

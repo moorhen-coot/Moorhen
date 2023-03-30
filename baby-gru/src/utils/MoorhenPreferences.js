@@ -23,9 +23,10 @@ const updateStoredPreferences = async (key, value) => {
 
 const getDefaultValues = () => {
     return {
-        version: 'v21',
+        version: 'v22',
         defaultBackgroundColor: [1, 1, 1, 1], 
         atomLabelDepthMode: true, 
+        enableTimeCapsule: true, 
         defaultExpandDisplayCards: true,
         defaultMapLitLines: false,
         refineAfterMod: true,
@@ -207,6 +208,7 @@ const PreferencesContext = createContext();
 const PreferencesContextProvider = ({ children }) => {
     const [isMounted, setIsMounted] = useState(false)
     const [defaultBackgroundColor, setDefaultBackgroundColor] = useState(null)
+    const [enableTimeCapsule, setEnableTimeCapsule] = useState(null)
     const [atomLabelDepthMode, setAtomLabelDepthMode] = useState(null)
     const [defaultExpandDisplayCards, setDefaultExpandDisplayCards] = useState(null)
     const [shortCuts, setShortCuts] = useState(null)
@@ -256,6 +258,7 @@ const PreferencesContextProvider = ({ children }) => {
         22: { label: "modificationCountBackupThreshold", value: modificationCountBackupThreshold, valueSetter: setModificationCountBackupThreshold},
         23: { label: "drawInteractions", value: drawInteractions, valueSetter: setDrawInteractions},
         24: { label: "clipCap", value: clipCap, valueSetter: setClipCap},
+        25: { label: "enableTimeCapsule", value: enableTimeCapsule, valueSetter: setEnableTimeCapsule},
     }
 
     const restoreDefaults = (defaultValues)=> {
@@ -318,6 +321,15 @@ const PreferencesContextProvider = ({ children }) => {
        
         updateStoredPreferences('shortcutOnHoveredAtom', shortcutOnHoveredAtom);
     }, [shortcutOnHoveredAtom]);
+    
+    useMemo(() => {
+
+        if (enableTimeCapsule === null) {
+            return
+        }
+       
+        updateStoredPreferences('enableTimeCapsule', enableTimeCapsule);
+    }, [enableTimeCapsule]);
     
     useMemo(() => {
 
@@ -537,7 +549,7 @@ const PreferencesContextProvider = ({ children }) => {
         wheelSensitivityFactor, setWheelSensitivityFactor, shortcutOnHoveredAtom, setShortcutOnHoveredAtom,
         resetClippingFogging, setResetClippingFogging, maxBackupCount, setMaxBackupCount,
         modificationCountBackupThreshold, setModificationCountBackupThreshold, isMounted,
-        drawInteractions, setDrawInteractions, clipCap, setClipCap
+        drawInteractions, setDrawInteractions, clipCap, setClipCap, enableTimeCapsule, setEnableTimeCapsule
     }
 
     return (

@@ -478,6 +478,7 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
                     activeMap={props.activeMap}
                     refineAfterMod={props.preferences.refineAfterMod}
                     shortCuts={props.preferences.shortCuts}
+                    enableTimeCapsule={props.preferences.enableTimeCapsule}
                     windowWidth={props.windowWidth}
                     windowHeight={props.windowHeight}
                 />}
