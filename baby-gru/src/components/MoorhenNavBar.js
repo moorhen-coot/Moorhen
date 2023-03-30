@@ -6,7 +6,6 @@ import { MoorhenHistoryMenu } from './MoorhenHistoryMenu';
 import { MoorhenViewMenu } from './MoorhenViewMenu';
 import { MoorhenLigandMenu } from './MoorhenLigandMenu';
 import { MoorhenEditMenu } from './MoorhenEditMenu';
-import { MoorhenHelpMenu } from './MoorhenHelpMenu';
 import { MoorhenDevMenu } from './MoorhenDevMenu';
 import { SaveOutlined } from '@mui/icons-material';
 
@@ -33,7 +32,7 @@ export const MoorhenNavBar = forwardRef((props, ref) => {
                         <MoorhenViewMenu dropdownId="View" {...collectedProps} />
                         <MoorhenHistoryMenu dropdownId="History" {...collectedProps} />
                         <MoorhenPreferencesMenu dropdownId="Preferences" {...collectedProps} />
-                        <MoorhenHelpMenu dropdownId="Help" {...collectedProps}/>
+                        {/**<MoorhenHelpMenu dropdownId="Help" {...collectedProps}/>*/}
                         {props.devMode && <MoorhenDevMenu dropdownId="Dev" {...collectedProps}/>}
                         {props.extraNavBarMenus && props.extraNavBarMenus.map(menu => menu)}
                     </Nav>
