@@ -24,8 +24,12 @@ export function MoorhenTimeCapsule(moleculesRef, mapsRef, activeMapRef, glRef, p
     this.maxBackupCount = 10
     this.version = 'v7'
     this.disableBackups = false
+    this.storageInstance = null
+}
+
+MoorhenTimeCapsule.prototype.init = function () {
     this.storageInstance = createInstance('Moorhen-TimeCapsule')
-    this.checkVersion()
+    return this.checkVersion()
 }
 
 MoorhenTimeCapsule.prototype.checkVersion = async function () {
