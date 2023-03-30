@@ -1,6 +1,5 @@
 var thick_lines_vertex_shader_source = `
 #extension GL_OES_element_index : enable
-    // This shader is basic
     attribute vec4 aVertexPosition;
     attribute vec4 aVertexColour;
     attribute vec3 aVertexNormal;

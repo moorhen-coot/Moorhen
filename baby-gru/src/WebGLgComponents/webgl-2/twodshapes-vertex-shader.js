@@ -1,5 +1,4 @@
 var twod_vertex_shader_source = `#version 300 es\n
-    // This shader is basic
     in vec3 aVertexPosition;
     in vec3 aVertexNormal;
     in vec2 aVertexTexture;

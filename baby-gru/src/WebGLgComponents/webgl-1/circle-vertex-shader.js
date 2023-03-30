@@ -1,5 +1,4 @@
 var circles_vertex_shader_source = `
-    // This shader is basic
     attribute vec3 aVertexPosition;
     attribute vec3 aVertexColour;
     attribute vec3 aVertexNormal;
