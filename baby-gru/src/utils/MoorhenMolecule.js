@@ -1471,8 +1471,10 @@ MoorhenMolecule.prototype.redraw = function (glRef) {
     return promise.then(_ => {
         return itemsToRedraw.reduce(
             (p, style) => {
-                return p.then(() => $this.fetchIfDirtyAndDraw(style, glRef)
-                )
+                return p.then(() => {
+                   $this.fetchIfDirtyAndDraw(style, glRef)
+                   $this.drawSymmetry(glRef)
+                })
             },
             Promise.resolve()
         )
