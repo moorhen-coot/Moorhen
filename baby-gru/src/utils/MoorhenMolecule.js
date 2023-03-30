@@ -30,6 +30,7 @@ export function MoorhenMolecule(commandCentre, monomerLibraryPath) {
     this.excludedSegments = []
     this.symmetryOn = false
     this.symmetryRadius = 25
+    this.symmetryMatrices = []
     this.gaussianSurfaceSettings = {
         sigma: 4.4,
         countourLevel: 4.0,
@@ -102,25 +103,30 @@ MoorhenMolecule.prototype.setSymmetryRadius = function (radius, glRef) {
     return this.drawSymmetry(glRef)
 }
 
-MoorhenMolecule.prototype.drawSymmetry = async function (glRef) {
-    let symmetryMatrices = []
-
-    if(this.symmetryOn){
+MoorhenMolecule.prototype.fetchSymmetryMatrix = async function (glRef) {
+    if(!this.symmetryOn) {
+        this.symmetryMatrices = []
+    } else {
         const selectionCentre = glRef.current.origin.map(coord => -coord)
         const response = await this.commandCentre.current.cootCommand({
             returnType: "symmetry",
             command: 'get_symmetry_with_matrices',
             commandArgs: [this.molNo, this.symmetryRadius, ...selectionCentre]
         }, true)
-        symmetryMatrices = response.data.result.result.map(symm => symm.matrix)
+        this.symmetryMatrices = response.data.result.result.map(symm => symm.matrix)    
     }
+}
 
-     Object.keys(this.displayObjects)
+MoorhenMolecule.prototype.drawSymmetry = async function (glRef, fetchSymMatrix=true) {
+    if (fetchSymMatrix) {
+        await this.fetchSymmetryMatrix(glRef)
+    }
+    Object.keys(this.displayObjects)
         .filter(key => !['hover', 'originNeighbours', 'selection', 'transformation', 'contact_dots', 'chemical_features', 'VdWSurface'].some(style => key.includes(style)))
         .forEach(displayObjectType => {
             if(this.displayObjects[displayObjectType].length > 0) {
                 this.displayObjects[displayObjectType].forEach(displayObject => {
-                    displayObject.symmetryMatrices = symmetryMatrices
+                    displayObject.symmetryMatrices = this.symmetryMatrices
                 })
             }
     })
@@ -432,17 +438,10 @@ MoorhenMolecule.prototype.updateAtoms = async function () {
 }
 
 MoorhenMolecule.prototype.fetchIfDirtyAndDraw = async function (style, glRef) {
-    const $this = this
-    let promise
-    if ($this.atomsDirty) {
-        promise = this.updateAtoms()
+    if (this.atomsDirty) {
+        await this.updateAtoms()
     }
-    else {
-        promise = Promise.resolve()
-    }
-    return promise.then(_ => {
-        return $this.drawWithStyleFromAtoms(style, glRef)
-    })
+    return this.drawWithStyleFromAtoms(style, glRef)
 }
 
 MoorhenMolecule.prototype.centreAndAlignViewOn = function (glRef, selectionCid, animate = true) {
@@ -1443,7 +1442,7 @@ MoorhenMolecule.prototype.drawSticks = function (webMGAtoms, glRef) {
 
 }
 
-MoorhenMolecule.prototype.redraw = function (glRef) {
+MoorhenMolecule.prototype.redraw = async function (glRef) {
     const $this = this
     const itemsToRedraw = []
     Object.keys($this.displayObjects).filter(style => !["transformation", 'hover', 'selection'].includes(style)).forEach(style => {
@@ -1461,27 +1460,21 @@ MoorhenMolecule.prototype.redraw = function (glRef) {
             }
         }
     })
-    let promise
+
     if ($this.atomsDirty) {
-        promise = $this.updateAtoms()
+        try {
+            await $this.updateAtoms()
+        } catch (err) {
+            console.log(err)
+            return
+        }
     }
-    else {
-        promise = Promise.resolve()
-    }
-    return promise.then(_ => {
-        return itemsToRedraw.reduce(
-            (p, style) => {
-                return p.then(() => {
-                   $this.fetchIfDirtyAndDraw(style, glRef)
-                   $this.drawSymmetry(glRef)
-                })
-            },
-            Promise.resolve()
-        )
-    }).catch(err => {
-        console.log(err)
-        console.log('Error updating atoms when redrawing')
-    })
+
+    await Promise.all([
+        ...itemsToRedraw.map(style => $this.fetchIfDirtyAndDraw(style, glRef)), 
+    ])
+    
+    await $this.drawSymmetry(glRef, false)
 }
 
 MoorhenMolecule.prototype.transformedCachedAtomsAsMovedAtoms = function (glRef) {
