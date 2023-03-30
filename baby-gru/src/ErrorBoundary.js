@@ -30,6 +30,7 @@ export class ErrorBoundary extends React.Component {
     
     async handleBackupDownload() {
         const timeCapsule = new MoorhenTimeCapsule()
+        await timeCapsule.init()
         const backup = await timeCapsule.retrieveLastBackup()
         const sessionData = JSON.parse(backup)
         const promises = sessionData.moleculesPdbData.map((pdbData, index) => {
