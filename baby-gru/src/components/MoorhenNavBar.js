@@ -2,7 +2,7 @@ import { forwardRef, useEffect, useState } from 'react';
 import { Navbar, Nav,  Spinner, Form } from 'react-bootstrap';
 import { MoorhenFileMenu } from './MoorhenFileMenu';
 import { MoorhenPreferencesMenu } from './MoorhenPreferencesMenu';
-import { MoorhenHistoryMenu } from './MoorhenHistoryMenu';
+import { MoorhenHelpMenu } from './MoorhenHelpMenu';
 import { MoorhenViewMenu } from './MoorhenViewMenu';
 import { MoorhenLigandMenu } from './MoorhenLigandMenu';
 import { MoorhenEditMenu } from './MoorhenEditMenu';
@@ -30,9 +30,9 @@ export const MoorhenNavBar = forwardRef((props, ref) => {
                         <MoorhenEditMenu dropdownId="Edit" {...collectedProps} />
                         <MoorhenLigandMenu dropdownId="Ligand" {...collectedProps} />
                         <MoorhenViewMenu dropdownId="View" {...collectedProps} />
-                        <MoorhenHistoryMenu dropdownId="History" {...collectedProps} />
+                        {/**<MoorhenHistoryMenu dropdownId="History" {...collectedProps} />*/}
                         <MoorhenPreferencesMenu dropdownId="Preferences" {...collectedProps} />
-                        {/**<MoorhenHelpMenu dropdownId="Help" {...collectedProps}/>*/}
+                        <MoorhenHelpMenu dropdownId="Help" {...collectedProps}/>
                         {props.devMode && <MoorhenDevMenu dropdownId="Dev" {...collectedProps}/>}
                         {props.extraNavBarMenus && props.extraNavBarMenus.map(menu => menu)}
                     </Nav>
