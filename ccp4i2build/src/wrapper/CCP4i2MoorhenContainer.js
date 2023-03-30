@@ -1,19 +1,88 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState, useContext, useReducer } from 'react';
 import { useEffect } from 'react';
 import { MoorhenContainer } from '../components/MoorhenContainer';
 import { MoorhenMolecule } from '../utils/MoorhenMolecule';
 import { MoorhenMap } from '../utils/MoorhenMap';
-import { PreferencesContextProvider } from '../utils/MoorhenPreferences';
+import { PreferencesContext } from '../utils/MoorhenPreferences';
 import { Modal, NavDropdown, Table } from 'react-bootstrap';
 import { Button, MenuItem, TableBody, TableCell, TableHead, TableRow } from '@mui/material';
 import { MoorhenMoleculeSelect } from '../components/MoorhenMoleculeSelect';
 import $ from 'jquery';
 import { ArrowBack } from '@mui/icons-material';
+import { historyReducer, initialHistoryState } from '../components/MoorhenHistoryMenu';
+
+
+const initialMoleculesState = []
+
+const initialMapsState = []
+
+const itemReducer = (oldList, change) => {
+    if (change.action === 'Add') {
+        return [...oldList, change.item]
+    }
+    else if (change.action === 'Remove') {
+        return oldList.filter(item => item.molNo !== change.item.molNo)
+    }
+    else if (change.action === 'AddList') {
+        return oldList.concat(change.items)
+    }
+    else if (change.action === 'Empty') {
+        return []
+    }
+}
 
 export const CCP4i2MoorhenContainer = (props) => {
-    const controls = useRef(null);
+
+    const glRef = useRef(null)
+    const timeCapsuleRef = useRef(null)
+    const commandCentre = useRef(null)
+    const moleculesRef = useRef(null)
+    const mapsRef = useRef(null)
+    const activeMapRef = useRef(null)
+    const consoleDivRef = useRef(null)
+    const lastHoveredAtom = useRef(null)
+    const prevActiveMoleculeRef = useRef(null)
+    const preferences = useContext(PreferencesContext);
+    const [activeMap, setActiveMap] = useState(null)
+    const [activeMolecule, setActiveMolecule] = useState(null)
+    const [hoveredAtom, setHoveredAtom] = useState({ molecule: null, cid: null })
+    const [consoleMessage, setConsoleMessage] = useState("")
+    const [cursorStyle, setCursorStyle] = useState("default")
+    const [busy, setBusy] = useState(false)
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth)
+    const [windowHeight, setWindowHeight] = useState(window.innerHeight)
+    const [commandHistory, dispatchHistoryReducer] = useReducer(historyReducer, initialHistoryState)
+    const [molecules, changeMolecules] = useReducer(itemReducer, initialMoleculesState)
+    const [maps, changeMaps] = useReducer(itemReducer, initialMapsState)
+    const [backgroundColor, setBackgroundColor] = useState([1, 1, 1, 1])
+    const [currentDropdownId, setCurrentDropdownId] = useState(-1)
+    const [appTitle, setAppTitle] = useState('Moorhen')
+    const [theme, setTheme] = useState("flatly")
+    const [showToast, setShowToast] = useState(false)
+    const [toastContent, setToastContent] = useState("")
+    const [showColourRulesToast, setShowColourRulesToast] = useState(false)
     const [cootInitialized, setCootInitialized] = useState(false)
-    const urlRoot = 'http://127.0.0.1:43434/database'
+
+    moleculesRef.current = molecules
+    mapsRef.current = maps
+    activeMapRef.current = activeMap
+
+    const collectedProps = {
+        glRef, timeCapsuleRef, commandCentre, moleculesRef, mapsRef, activeMapRef,
+        consoleDivRef, lastHoveredAtom, prevActiveMoleculeRef, preferences, activeMap,
+        setActiveMap, activeMolecule, setActiveMolecule, hoveredAtom, setHoveredAtom,
+        consoleMessage, setConsoleMessage, cursorStyle, setCursorStyle, busy, setBusy,
+        windowWidth, setWindowWidth, windowHeight, setWindowHeight, commandHistory,
+        dispatchHistoryReducer, molecules, changeMolecules, maps, changeMaps,
+        backgroundColor, setBackgroundColor, currentDropdownId, setCurrentDropdownId,
+        appTitle, setAppTitle, cootInitialized, setCootInitialized, theme, setTheme,
+        showToast, setShowToast, toastContent, setToastContent, showColourRulesToast,
+        setShowColourRulesToast, forwardControls: props.forwardControls
+    }
+
+    const controls = useRef(null);
+    //FIXME: hardwired
+    const urlRoot = 'http://127.0.0.1:43434/moorhen'
 
     const makeDbFilePromise = (fileOfType, mimeType, arg) => {
         const fileDict = {
@@ -31,7 +100,7 @@ export const CCP4i2MoorhenContainer = (props) => {
         if (anotationNodes.length === 1 && $(anotationNodes[0]).text().length > 0) {
             fileDict['annotation'] = $(anotationNodes[0]).text()
         }
-        const fileUrl = `${urlRoot}/getFileWithPredicate?${$.param({ fileid: fileDict.fileid })}`
+        const fileUrl = `/database/getFileWithPredicate?${$.param({ fileid: fileDict.fileid })}`
         const annotation = fileDict.annotation ? fileDict.annotation : "A file"
         const subType = fileDict.filesubtype ? fileDict.filesubtype : 1
         return makeFilePromise(fileUrl, mimeType, annotation, subType, arg)
@@ -61,7 +130,7 @@ export const CCP4i2MoorhenContainer = (props) => {
         if (annotationNodes.length === 1 && $(annotationNodes[0]).text().length > 0) {
             annotation = $(annotationNodes[0]).text()
         }
-        const fileUrl = `${urlRoot}/getProjectFileData?${$.param(fileDict)}`
+        const fileUrl = `/database/getProjectFileData?${$.param(fileDict)}`
         console.log({ fileUrl, mimeType, annotation, subType, arg })
         return makeFilePromise(fileUrl, mimeType, annotation, subType, arg)
     }
@@ -128,7 +197,7 @@ export const CCP4i2MoorhenContainer = (props) => {
 
     const handleCootJob = () => {
         const arg = { molNos: [] }
-        fetch(`${urlRoot}/getJobFile?jobId=${props.cootJob}&fileName=input_params.xml`)
+        fetch(`/database/getJobFile?jobId=${props.cootJob}&fileName=input_params.xml`)
             .then(response => response.text())
             .then(text => { console.log(text); return Promise.resolve($.parseXML(text)) })
             .then(xmlStruct => {
@@ -189,24 +258,24 @@ export const CCP4i2MoorhenContainer = (props) => {
     }, [cootInitialized])
 
     return <MoorhenContainer
+        {...collectedProps}
         forwardControls={(returnedControls) => {
             controls.current = returnedControls
-            console.log(controls.current)
             setCootInitialized(true)
         }}
-        extraMenus={[<MoorhenCCP4i2Menu
-            key={"7"}
+        extraNavBarMenus={[<MoorhenCCP4i2Menu
+            key={"CCP4i2"}
             dropdownId={7}
-            {...controls.current}
+            {...collectedProps}
+            controls={controls}
             handleJob={(jobId) => { /*handleJob(jobId)*/ }}
             cootJobId={props.cootJob}
-            controls={controls}
             urlRoot={urlRoot}
             makeFilePromise={makeFilePromise}
         />]}
         controls={controls}
         lookup={props.lookup}
-        urlPrefix=""
+        urlPrefix="/moorhen"
     />
 }
 
@@ -233,24 +302,23 @@ const MoorhenCCP4i2Menu = (props) => {
         formData.append('jobId', props.cootJobId)
         formData.append('fileRoot', `COOT_FILE_DROP/output_${iSave.toString().padStart(3, '0')}`)
         formData.append('fileExtension', ".pdb")
-        const molZeros = props.controls.current.moleculesRef.current.filter(molecule => molecule.molNo === molNo)
+        const molZeros = props.molecules.current.filter(molecule => molecule.molNo === molNo)
         if (molZeros.length === 1) {
-            console.log('molecules', props.controls.current)
             let response = await molZeros[0].getAtoms()
             const atomsBlob = new Blob([response.data.result.pdbData])
             formData.append('file', atomsBlob)
-            fetch(`${props.urlRoot}/uploadFileToJob`, {
+            fetch(`/database/uploadFileToJob`, {
                 method: "POST",
                 body: formData
             })
                 .then(response => response.json())
                 .then(result => {
                     setISave(iSave + 1)
-                    props.controls.current.setToastContent("File saved")
+                    props.setToastContent("File saved")
                 })
         }
         else {
-            props.controls.current.setToastContent(`No mols with index ${molNo}`)
+            props.setToastContent(`No mols with index ${molNo}`)
         }
     }
 
@@ -288,7 +356,7 @@ const MoorhenCCP4i2Menu = (props) => {
         </MenuItem>
 
         <MenuItem key="End session" onClick={() => {
-            fetch(`${props.urlRoot}/makeTerminateFile?jobId=${props.cootJobId}`)
+            fetch(`/database/makeTerminateFile?jobId=${props.cootJobId}`)
                 .then(response => response.json())
                 .then(result => {
                     if (result.status === "Success") {
@@ -310,7 +378,7 @@ const MoorhenCCP4i2Menu = (props) => {
             setShowMoleculeSelectorModal(false)
         }}><Modal.Body>
                 {props.controls.current &&
-                    <MoorhenMoleculeSelect ref={selectorRef} molecules={props.controls.current.moleculesRef.current} allowAny={false} />
+                    <MoorhenMoleculeSelect ref={selectorRef} molecules={props.molecules} allowAny={false} />
                 }
                 <Button onClick={() => {
                     saveMolNo(parseInt(selectorRef.current.value))
@@ -337,11 +405,11 @@ const CCP4i2ProjectsPanel = (props) => {
     const [projects, setProjects] = useState([])
     useEffect(() => {
         if (props.updated) {
-            fetch(`${props.urlRoot}/ModelValues?${$.param({
+            fetch(`/database/ModelValues?${$.param({
                 __type__: "Projects"
             })}`)
                 .then(response => response.json())
-                .then(result => { setProjects(result.results) })
+                .then(result => { console.log(result);setProjects(result.results) })
         }
     }, [props.updated])
 
@@ -372,7 +440,7 @@ const CCP4i2JobsPanel = (props) => {
     const [jobs, setJobs] = useState([])
     useEffect(() => {
         if (props.project.projectid) {
-            fetch(`${props.urlRoot}/ModelValues?${$.param({
+            fetch(`/database/ModelValues?${$.param({
                 __type__: "Jobs",
                 projectid__projectid: props.project.projectid,
                 status__statustext: "Finished",
@@ -402,7 +470,7 @@ const CCP4i2JobsPanel = (props) => {
                 }}><img
                         style={{ width: "2.0rem", height: "2.0rem", marginRight: "1rem" }}
                         title={job.taskname}
-                        src={`${props.urlRoot}/svgicons/${job.taskname}`} alt={`${job.taskname} `} />
+                        src={`/database/svgicons/${job.taskname}`} alt={`${job.taskname} `} />
                     {job.jobnumber}: {job.jobtitle}
                 </TableCell>
             </TableRow>)}
@@ -433,7 +501,7 @@ const CCP4i2FilesPanel = (props) => {
                 filetypeid__filetypename__in: ["application/CCP4-mtz-map", "application/refmac-dictionary", "chemical/x-pdb"]
             }
             console.log({ predicate })
-            fetch(`${props.urlRoot}/ModelValues?${$.param(predicate)}`)
+            fetch(`/database/ModelValues?${$.param(predicate)}`)
                 .then(response => response.json())
                 .then(result => {
                     setFiles(result.results)
@@ -448,7 +516,7 @@ const CCP4i2FilesPanel = (props) => {
         <TableBody>
             {files.map(file => <TableRow key={file.fileid}>
                 <TableCell onClick={() => {
-                    const fileUrl = `${props.urlRoot}/getFileWithPredicate?fileid=${file.fileid}`
+                    const fileUrl = `/database/getFileWithPredicate?fileid=${file.fileid}`
                     const mimeType = file.filetypeid__filetypename
                     const annotation = `${file.jobid__jobnumber} : ${file.annotation}`
                     const subType = file.filesubtype
@@ -456,7 +524,7 @@ const CCP4i2FilesPanel = (props) => {
                 }}><img
                         style={{ width: "2.0rem", height: "2.0rem", marginRight: "1rem" }}
                         title={file.filetypeid__filetypename}
-                        src={`${props.urlRoot}/qticons/${fileTypeMapping[file.filetypeid__filetypename]}`} alt={`${fileTypeMapping[file.filetypeid__filetypename]} `} />
+                        src={`/database/qticons/${fileTypeMapping[file.filetypeid__filetypename]}`} alt={`${fileTypeMapping[file.filetypeid__filetypename]} `} />
                     {file.jobid__jobnumber}: {file.annotation}
                 </TableCell>
             </TableRow>)}

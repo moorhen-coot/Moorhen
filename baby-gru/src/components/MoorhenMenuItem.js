@@ -55,21 +55,21 @@ export const MoorhenMenuItem = (props) => {
             }}
 
             overlay={
-                    <Popover style={{ maxWidth: "40rem", zIndex: 99999 }}>
-                        <PopoverHeader as="h3">{props.menuItemTitle}</PopoverHeader>
-                        <PopoverBody>
-                            {props.popoverContent}
-                            {props.showOkButton &&
-                                <Button variant={props.buttonVariant} onClick={() => {
-                                    resolveOrRejectRef.current.resolve()
-                                }}>
-                                    {props.buttonText}
-                                </Button>
-                            }
+                <Popover style={{ maxWidth: "40rem", zIndex: 99999 }}>
+                    <PopoverHeader as="h3">{props.menuItemTitle}</PopoverHeader>
+                    <PopoverBody>
+                        {props.popoverContent}
+                        {props.showOkButton &&
+                            <Button variant={props.buttonVariant} onClick={() => {
+                                resolveOrRejectRef.current.resolve()
+                            }}>
+                                {props.buttonText}
+                            </Button>
+                        }
 
-                        </PopoverBody>
-                    </Popover>
-        }>
+                    </PopoverBody>
+                </Popover>
+            }>
             <MenuItem disabled={props.disabled} className={props.textClassName} id={props.id} variant="success">{props.menuItemText}</MenuItem>
         </OverlayTrigger> :
             <MenuItem disabled={props.disabled} className={props.textClassName} variant="success">{props.menuItemText}</MenuItem>
@@ -94,9 +94,9 @@ export const MoorhenLoadTutorialDataMenuItem = (props) => {
     const tutorialNumberSelectorRef = useRef(null);
     const allTutorialNumbers = ['1', '2', '3']
     const tutorialMtzColumnNames = {
-        1: {F: "FWT", PHI: "PHWT", Fobs: 'FP', SigFobs: 'SIGFP', FreeR:'FREE'},
-        2: {F: "FWT", PHI: "PHWT", Fobs: 'FP', SigFobs: 'SIGFP', FreeR:'FREE'},
-        3: {F: "FWT", PHI: "PHWT", Fobs: 'F', SigFobs: 'SIGF', FreeR:'FREER'}
+        1: { F: "FWT", PHI: "PHWT", Fobs: 'FP', SigFobs: 'SIGFP', FreeR: 'FREE' },
+        2: { F: "FWT", PHI: "PHWT", Fobs: 'FP', SigFobs: 'SIGFP', FreeR: 'FREE' },
+        3: { F: "FWT", PHI: "PHWT", Fobs: 'F', SigFobs: 'SIGF', FreeR: 'FREER' }
     }
 
     const panelContent = <>
@@ -206,6 +206,55 @@ export const MoorhenGetMonomerMenuItem = (props) => {
         id='get-monomer-menu-item'
         popoverContent={panelContent}
         menuItemText="Get monomer..."
+        onCompleted={onCompleted}
+        setPopoverIsShown={props.setPopoverIsShown}
+    />
+}
+
+export const MoorhenSharpenBlurMapMenuItem = (props) => {
+    const factorRef = useRef()
+    const selectRef = useRef(null)
+
+    const panelContent = <>
+        <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="MoorhenBlurMapMenuItem" className="mb-3">
+            <Form.Label>B-factor to apply</Form.Label>
+            <Form.Control ref={factorRef} type="number" defaultValue={50.} />
+        </Form.Group>
+        <MoorhenMapSelect {...props} allowAny={false} ref={selectRef} />
+    </>
+
+
+    const onCompleted = () => {
+        const mapNo = parseInt(selectRef.current.value)
+        const bFactor = parseFloat(factorRef.current.value)
+        const newMap = new MoorhenMap(props.commandCentre, props.monomerLibraryPath)
+
+        const blurMap = () => {
+            return props.commandCentre.current.cootCommand({
+                returnType: 'status',
+                command: 'sharpen_blur_map',
+                commandArgs: [mapNo, bFactor, false
+                ]
+            }, true)
+        }
+
+        blurMap()
+            .then(result => {
+                if (result.data.result.result !== -1) {
+                    newMap.molNo = result.data.result.result
+                    newMap.name = `Map ${mapNo} blurred by ${bFactor}`
+                    const oldMaps = props.maps.filter(map => map.molNo === mapNo)
+                    newMap.isDifference = oldMaps[0].isDifference
+                    props.changeMaps({ action: 'Add', item: newMap })
+                }
+                return Promise.resolve(result)
+            })
+    }
+
+    return <MoorhenMenuItem
+        id='sharpen-blur-map'
+        popoverContent={panelContent}
+        menuItemText="Sharpen/Blur map..."
         onCompleted={onCompleted}
         setPopoverIsShown={props.setPopoverIsShown}
     />
@@ -342,7 +391,7 @@ export const MoorhenRotateTranslateMoleculeMenuItem = (props) => {
         props.changeMolecules({ action: 'Remove', item: ghostMolecule.current })
         ghostMolecule.current.delete(props.glRef)
         document.body.click()
-        const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: {origin: props.glRef.current.origin,  modifiedMolecule: props.molecule.molNo} })
+        const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: props.molecule.molNo } })
         document.dispatchEvent(scoresUpdateEvent)
     }
 
@@ -572,13 +621,13 @@ export const MoorhenMapSettingsMenuItem = (props) => {
             <Form.Group style={{ width: '100%', margin: '0.1rem' }} controlId="MoorhenMapOpacitySlider">
                 <MoorhenSlider minVal={0.0} maxVal={1.0} logScale={false} sliderTitle="Opacity" initialValue={props.mapOpacity} externalValue={props.mapOpacity} setExternalValue={props.setMapOpacity} />
             </Form.Group>
-            {!props.map.isDifference && 
-            <Form.Group>
-                <Form.Label>
-                    Map Colour
-                </Form.Label>
-                <SketchPicker color={mapColour} onChange={handleColorChange} disableAlpha={true}/>
-            </Form.Group>        
+            {!props.map.isDifference &&
+                <Form.Group>
+                    <Form.Label>
+                        Map Colour
+                    </Form.Label>
+                    <SketchPicker color={mapColour} onChange={handleColorChange} disableAlpha={true} />
+                </Form.Group>
             }
         </>
     return <MoorhenMenuItem
@@ -631,10 +680,10 @@ export const MoorhenMoleculeSymmetrySettingsMenuItem = (props) => {
             busyDrawing.current = true
             isDirty.current = false
             props.molecule.drawSymmetry(props.glRef)
-            .then(_ => {
-                busyDrawing.current = false
-                drawSymmetryIfDirty()
-            })
+                .then(_ => {
+                    busyDrawing.current = false
+                    drawSymmetryIfDirty()
+                })
         }
     }
 
@@ -658,7 +707,7 @@ export const MoorhenMoleculeSymmetrySettingsMenuItem = (props) => {
                 type="switch"
                 checked={symmetryOn}
                 onChange={() => { setSymmetryOn(!symmetryOn) }}
-                label="Show symmetry"/>
+                label="Show symmetry" />
             <Form.Group className="mt-3" style={{ width: '10rem', margin: '0' }} controlId="MoorhenSymmetryRadiusSigmaSlider">
                 <MoorhenSlider minVal={0.01} maxVal={100} logScale={false} sliderTitle="Radius" initialValue={symmetryRadius} externalValue={symmetryRadius} setExternalValue={setSymmetryRadius} />
             </Form.Group>
@@ -764,9 +813,9 @@ export const MoorhenBackgroundColorMenuItem = (props) => {
         id="change-background-colour-menu-item"
         popoverContent={panelContent}
         menuItemText="Set background colour..."
-        onCompleted={() => props.setPopoverIsShown(false) }
+        onCompleted={() => props.setPopoverIsShown(false)}
         setPopoverIsShown={props.setPopoverIsShown}
-        />
+    />
 }
 
 export const MoorhenSuperposeMenuItem = (props) => {
@@ -792,9 +841,9 @@ export const MoorhenSuperposeMenuItem = (props) => {
 
     const handleChainChange = (evt, isReferenceModel) => {
         if (isReferenceModel) {
-            setSelectedRefChain(evt.target.value)    
+            setSelectedRefChain(evt.target.value)
         } else {
-            setSelectedMovChain(evt.target.value)    
+            setSelectedMovChain(evt.target.value)
         }
     }
 
@@ -807,8 +856,8 @@ export const MoorhenSuperposeMenuItem = (props) => {
 
         if (selectedRefModel === null || !props.molecules.map(molecule => molecule.molNo).includes(selectedRefModel)) {
             setSelectedRefModel(props.molecules[0].molNo)
-        } 
-        
+        }
+
         if (selectedMovModel === null || !props.molecules.map(molecule => molecule.molNo).includes(selectedMovModel)) {
             setSelectedMovModel(props.molecules[0].molNo)
         }
@@ -820,18 +869,18 @@ export const MoorhenSuperposeMenuItem = (props) => {
             <Form.Label>
                 Reference structure
             </Form.Label>
-            <MoorhenMoleculeSelect width="" molecules={props.molecules} ref={refMoleculeSelectRef} onChange={(evt) => handleModelChange(evt, true)}/>
-            <MoorhenChainSelect width="" molecules={props.molecules} onChange={(evt) => handleChainChange(evt, true)} selectedCoordMolNo={selectedRefModel} allowedTypes={[1, 2]} ref={refChainSelectRef}/>
+            <MoorhenMoleculeSelect width="" molecules={props.molecules} ref={refMoleculeSelectRef} onChange={(evt) => handleModelChange(evt, true)} />
+            <MoorhenChainSelect width="" molecules={props.molecules} onChange={(evt) => handleChainChange(evt, true)} selectedCoordMolNo={selectedRefModel} allowedTypes={[1, 2]} ref={refChainSelectRef} />
         </Form.Group>
         <Form.Group key="moving-model-select" style={{ width: '20rem', margin: '0.5rem' }} controlId="movModelSelect" className="mb-3">
             <Form.Label>
                 Moving structure
             </Form.Label>
-            <MoorhenMoleculeSelect width="" molecules={props.molecules} ref={movMoleculeSelectRef} onChange={(evt) => handleModelChange(evt, false)}/>
-            <MoorhenChainSelect width="" molecules={props.molecules} onChange={(evt) => handleChainChange(evt, false)} selectedCoordMolNo={selectedMovModel} allowedTypes={[1, 2]} ref={movChainSelectRef}/>
+            <MoorhenMoleculeSelect width="" molecules={props.molecules} ref={movMoleculeSelectRef} onChange={(evt) => handleModelChange(evt, false)} />
+            <MoorhenChainSelect width="" molecules={props.molecules} onChange={(evt) => handleChainChange(evt, false)} selectedCoordMolNo={selectedMovModel} allowedTypes={[1, 2]} ref={movChainSelectRef} />
         </Form.Group>
     </>
-    
+
     const onCompleted = useCallback(async () => {
         if (!refMoleculeSelectRef || !movMoleculeSelectRef) {
             return
@@ -847,15 +896,15 @@ export const MoorhenSuperposeMenuItem = (props) => {
         }
 
         await props.commandCentre.current.cootCommand({
-            message: 'coot_command', 
-            command: 'SSM_superpose', 
-            returnType: 'superpose_results', 
+            message: 'coot_command',
+            command: 'SSM_superpose',
+            returnType: 'superpose_results',
             commandArgs: [
-                refMolecule.molNo, 
-                refChainSelectRef.current.value, 
+                refMolecule.molNo,
+                refChainSelectRef.current.value,
                 movMolecule.molNo,
                 movChainSelectRef.current.value
-            ], 
+            ],
         })
 
         refMolecule.atomsDirty = true
@@ -1040,7 +1089,7 @@ export const MoorhenImportDictionaryMenuItem = (props) => {
                             const otherMolecules = [newMolecule]
                             return toMolecule.mergeMolecules(otherMolecules, props.glRef, true)
                                 .then(_ => {
-                                    const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: {origin: props.glRef.current.origin,  modifiedMolecule: toMolecule.molNo} })
+                                    const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: toMolecule.molNo } })
                                     document.dispatchEvent(scoresUpdateEvent)
                                     return toMolecule.redraw(props.glRef)
                                 })
@@ -1241,23 +1290,23 @@ export const MoorhenImportMapCoefficientsMenuItem = (props) => {
 
 export const MoorhenBackupsMenuItem = (props) => {
     const backupSelectRef = useRef(null)
-   
+
     const retrieveSession = useCallback(async () => {
         const key = backupSelectRef.current.value
-       
+
         try {
             let backup = await props.timeCapsuleRef.current.retrieveBackup(key)
             props.loadSessionJSON(backup)
         } catch (err) {
             console.log(err)
         }
-        
+
         document.body.click()
 
     }, [props.setPopoverIsShown, props.loadSessionJSON, props.timeCapsuleRef])
 
     const panelContent = <>
-        <Row style={{ width: '30rem', marginTop: '0.5rem',  marginBottom: '0.5rem' }}>
+        <Row style={{ width: '30rem', marginTop: '0.5rem', marginBottom: '0.5rem' }}>
             <MoorhenBackupSelect {...props} ref={backupSelectRef} width='100%' label='Select backup' />
         </Row>
         <Row>
@@ -1337,13 +1386,13 @@ export const MoorhenImportFSigFMenuItem = (props) => {
                 commandArgs: [imol],
                 returnType: 'status'
             }, true)))
-  
+
             uniqueMaps.forEach((imol, index) => {
                 const map = props.maps.find(map => map.molNo === imol)
                 let newContourLevel = map.contourLevel * postRmsd[index].data.result.result / prevRmsd[index].data.result.result
                 if (map.isDifference) {
                     newContourLevel -= newContourLevel * 0.3
-                } 
+                }
                 const newMapContourEvt = new CustomEvent("newMapContour", {
                     "detail": {
                         molNo: map.molNo,
@@ -1354,7 +1403,7 @@ export const MoorhenImportFSigFMenuItem = (props) => {
                         litLines: map.litLines,
                     }
                 })
-                document.dispatchEvent(newMapContourEvt)    
+                document.dispatchEvent(newMapContourEvt)
             })
         }
     }
@@ -1377,9 +1426,9 @@ export const MoorhenImportFSigFMenuItem = (props) => {
                 <MoorhenMapSelect {...props} ref={foFcSelectRef} label="FoFc" filterFunction={(map) => map.isDifference} allowAny={false} width='100%' />
             </Col>
             {props.selectedMolNo === null &&
-            <Col key="Col3">
-                <MoorhenMoleculeSelect {...props} ref={moleculeSelectRef} label="Molecule" allowAny={false} width='100%' />
-            </Col>
+                <Col key="Col3">
+                    <MoorhenMoleculeSelect {...props} ref={moleculeSelectRef} label="Molecule" allowAny={false} width='100%' />
+                </Col>
             }
         </Row>
     </>
@@ -1461,10 +1510,10 @@ export const MoorhenAutoOpenMtzMenuItem = (props) => {
 
         const isDiffMapResponses = await Promise.all(response.data.result.result.map(mapMolNo => {
             return props.commandCentre.current.cootCommand({
-                    returnType: "status",
-                    command: "is_a_difference_map",
-                    commandArgs: [mapMolNo]
-                })
+                returnType: "status",
+                command: "is_a_difference_map",
+                commandArgs: [mapMolNo]
+            })
         }))
 
         response.data.result.result.forEach((mapMolNo, index) => {
@@ -1562,19 +1611,19 @@ export const MoorhenClipFogMenuItem = (props) => {
                 props.glRef.current.drawScene()
                 setZfogBack(newValue)
             }} />
-        <InputGroup style={{ paddingLeft:'0.1rem', paddingBottom: '0.5rem', width: '25rem'}}>
-            <Form.Check 
+        <InputGroup style={{ paddingLeft: '0.1rem', paddingBottom: '0.5rem', width: '25rem' }}>
+            <Form.Check
                 type="switch"
                 checked={props.resetClippingFogging}
                 onChange={() => { props.setResetClippingFogging(!props.resetClippingFogging) }}
-                label="Reset clipping and fogging on zoom"/>
+                label="Reset clipping and fogging on zoom" />
         </InputGroup>
-        <InputGroup style={{ paddingLeft:'0.1rem', paddingBottom: '0.5rem', width: '25rem'}}>
+        <InputGroup style={{ paddingLeft: '0.1rem', paddingBottom: '0.5rem', width: '25rem' }}>
             <Form.Check
                 type="switch"
                 checked={props.clipCap}
                 onChange={() => { props.setClipCap(!props.clipCap) }}
-                label="'Clip-cap' perfect spheres"/>
+                label="'Clip-cap' perfect spheres" />
         </InputGroup>
     </div>
 
@@ -1607,7 +1656,7 @@ export const MoorhenMergeMoleculesMenuItem = (props) => {
         }
         await toMolecule.mergeMolecules(otherMolecules, props.glRef, true)
         props.setPopoverIsShown(false)
-        const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: {origin: props.glRef.current.origin,  modifiedMolecule: toMolecule.molNo} })
+        const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: toMolecule.molNo } })
         document.dispatchEvent(scoresUpdateEvent)
     }, [toRef.current, fromRef.current, props.molecules, props.fromMolNo, props.glRef])
 
@@ -1688,18 +1737,18 @@ export const MoorhenAssociateReflectionsToMap = (props) => {
         reflectionDataRef.current = babyGruMtzWrapper.reflectionData
     }
 
-    const onCompleted = async () => { 
+    const onCompleted = async () => {
         const selectedMap = props.maps.find(map => map.molNo === parseInt(mapSelectRef.current.value))
         const selectedColumns = {
             Fobs: fobsSelectRef.current.value, SigFobs: sigFobsSelectRef.current.value,
             FreeR: freeRSelectRef.current.value, calcStructFact: true
         }
-        await selectedMap.associateToReflectionData(selectedColumns, reflectionDataRef.current)    
+        await selectedMap.associateToReflectionData(selectedColumns, reflectionDataRef.current)
     }
 
     const panelContent = <>
         <Stack direction='vertical' gap={2}>
-                <MoorhenMapSelect {...props} ref={mapSelectRef} filterFunction={(map) => !map.hasReflectionData} allowAny={false} width='100%' label='Select a map' />
+            <MoorhenMapSelect {...props} ref={mapSelectRef} filterFunction={(map) => !map.hasReflectionData} allowAny={false} width='100%' label='Select a map' />
             <Form.Group style={{ width: '20rem', margin: '0.5rem', padding: '0rem' }} controlId="uploadMTZ" className="mb-3">
                 <Form.Label>Upload MTZ file with reflection data</Form.Label>
                 <Form.Control ref={filesRef} type="file" multiple={false} accept={[".mtz"]} onChange={(e) => {
@@ -1739,12 +1788,12 @@ export const MoorhenAssociateReflectionsToMap = (props) => {
     </>
 
     return <MoorhenMenuItem
-            id='associate-reflections-menu-item'
-            popoverContent={panelContent}
-            menuItemText="Associate map to reflection data..."
-            onCompleted={onCompleted}
-            setPopoverIsShown={props.setPopoverIsShown}
-            />
+        id='associate-reflections-menu-item'
+        popoverContent={panelContent}
+        menuItemText="Associate map to reflection data..."
+        onCompleted={onCompleted}
+        setPopoverIsShown={props.setPopoverIsShown}
+    />
 }
 
 export const MoorhenDeleteUsingCidMenuItem = (props) => {
@@ -1880,9 +1929,9 @@ export const MoorhenAddWatersMenuItem = (props) => {
         const selectedMolecule = props.molecules.find(molecule => molecule.molNo === molNo)
         selectedMolecule.setAtomsDirty(true)
         await selectedMolecule.redraw(props.glRef)
-        const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: {origin: props.glRef.current.origin,  modifiedMolecule: molNo} })
-        document.dispatchEvent(scoresUpdateEvent)       
-        
+        const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: molNo } })
+        document.dispatchEvent(scoresUpdateEvent)
+
     }, [props.molecules, props.activeMap, props.glRef, props.commandCentre])
 
     return <MoorhenMenuItem
@@ -1914,7 +1963,7 @@ export const MoorhenCentreOnLigandMenuItem = (props) => {
                 let newMoleculeNode = { title: molecule.name, key: molecule.molNo, type: "molecule" }
                 const model = molecule.gemmiStructure.first_model()
                 const ligandCids = []
-    
+
                 try {
                     const chains = model.chains
                     const chainsSize = chains.size()
@@ -1936,13 +1985,13 @@ export const MoorhenCentreOnLigandMenuItem = (props) => {
                 } finally {
                     model.delete()
                 }
-    
+
                 if (ligandCids.length > 0) {
                     newMoleculeNode.children = ligandCids
                 }
                 newTreeData.push(newMoleculeNode)
             }
-            setMolTreeData(newTreeData)    
+            setMolTreeData(newTreeData)
         }
 
         updateLigands()

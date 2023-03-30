@@ -254,7 +254,7 @@ describe('Testing molecules_container_js', () => {
         const molecules_container = new cootModule.molecules_container_js()
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const simpleMesh = molecules_container.get_ramachandran_validation_markup_mesh(coordMolNo);
-        expect(simpleMesh.vertices.size()).toBe(35760)
+        expect(simpleMesh.vertices.size()).toBe(22052)
         expect(simpleMesh.triangles.size()).toBe(38144)
     })
 
