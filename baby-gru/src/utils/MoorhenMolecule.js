@@ -1672,6 +1672,7 @@ MoorhenMolecule.prototype.redo = async function (glRef) {
 MoorhenMolecule.prototype.updateLigands = async function () {
     let ligandList = []
     const model = this.gemmiStructure.first_model()
+    const modelName = model.name
     
     try{
         const chains = model.chains
@@ -1686,7 +1687,7 @@ MoorhenMolecule.prototype.updateLigands = async function () {
                 const resName = ligand.name
                 const ligandSeqId = ligand.seqid
                 const resNum = ligandSeqId.str()
-                ligandList.push({resName: resName, chainName: chainName, resNum: resNum})
+                ligandList.push({resName: resName, chainName: chainName, resNum: resNum, modelName: modelName})
                 ligand.delete()
                 ligandSeqId.delete()
             }
