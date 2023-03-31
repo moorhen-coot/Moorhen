@@ -3361,8 +3361,8 @@ class MGWebGL extends Component {
         this.rttFramebuffer = this.gl.createFramebuffer();
         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.rttFramebuffer);
 
-        this.rttFramebuffer.width = 4096;
-        this.rttFramebuffer.height = 4096;
+        this.rttFramebuffer.width = Math.min(this.gl.getParameter(this.gl.MAX_TEXTURE_SIZE),this.gl.getParameter(this.gl.MAX_RENDERBUFFER_SIZE),4096);
+        this.rttFramebuffer.height = this.rttFramebuffer.width;
 
         this.rttTexture = this.gl.createTexture();
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.rttTexture);
