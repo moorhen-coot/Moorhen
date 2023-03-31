@@ -952,23 +952,25 @@ MoorhenMolecule.prototype.drawCootRepresentation = async function (glRef, style)
     }).catch(err => console.log(err))
 }
 
-MoorhenMolecule.prototype.show = function (style, glRef) {
+MoorhenMolecule.prototype.show = async function (style, glRef) {
     if (!this.displayObjects[style]) {
         this.displayObjects[style] = []
     }
-    if (this.displayObjects[style].length === 0) {
-        return this.fetchIfDirtyAndDraw(style, glRef)
-            .then(_ => { glRef.current.drawScene() })
-            .catch(err => console.log(err))
+    try {
+        if (this.displayObjects[style].length === 0) {
+            await this.fetchIfDirtyAndDraw(style, glRef)
+            glRef.current.drawScene()    
+        }
+        else {
+            this.displayObjects[style].forEach(displayBuffer => {
+                displayBuffer.visible = true
+            })
+            glRef.current.drawScene()
+        }
+        this.drawSymmetry(glRef, false)    
+    } catch (err) {
+        console.log(err)
     }
-    else {
-        this.displayObjects[style].forEach(displayBuffer => {
-            displayBuffer.visible = true
-        })
-        glRef.current.drawScene()
-        return Promise.resolve(true)
-    }
-
 }
 
 MoorhenMolecule.prototype.hide = function (style, gl) {
