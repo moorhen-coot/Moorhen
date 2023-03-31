@@ -166,7 +166,7 @@ export const MoorhenGetMonomerMenuItem = (props) => {
 
     const onCompleted = () => {
         const fromMolNo = parseInt(selectRef.current.value)
-        const newTlc = tlcRef.current.value
+        const newTlc = tlcRef.current.value.toUpperCase()
         const newMolecule = new MoorhenMolecule(props.commandCentre, props.monomerLibraryPath)
 
         const getMonomer = () => {
