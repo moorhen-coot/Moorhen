@@ -1197,6 +1197,19 @@ function initGL(canvas) {
     }
     gl.viewportWidth = canvas.width;
     gl.viewportHeight = canvas.height;
+    /*
+    console.log("Max texture size:",gl.getParameter(gl.MAX_TEXTURE_SIZE))
+    console.log("Max cube map texture size:",gl.getParameter(gl.MAX_CUBE_MAP_TEXTURE_SIZE))
+    console.log("Max renderbuffer size:",gl.getParameter(gl.MAX_RENDERBUFFER_SIZE))
+    console.log("Max viewport size:",gl.getParameter(gl.MAX_VIEWPORT_DIMS))
+    console.log("Max vertex attribs:",gl.getParameter(gl.MAX_VERTEX_ATTRIBS))
+    console.log("Max varying vectors:",gl.getParameter(gl.MAX_VARYING_VECTORS))
+    console.log("Max vertex uniform vectors:",gl.getParameter(gl.MAX_VERTEX_UNIFORM_VECTORS))
+    console.log("Max fragment uniform vectors:",gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS))
+    console.log("Max texture image units:",gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS))
+    console.log("Max vertex texture image units:",gl.getParameter(gl.MAX_VERTEX_TEXTURE_IMAGE_UNITS))
+    console.log("Max combined texture image units:",gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS))
+    */
     return {gl:gl,WEBGL2:WEBGL2};
 }
 
@@ -1517,6 +1530,7 @@ class MGWebGL extends Component {
         this.xmlDoc = null;
 
         this.save_pixel_data = false;
+        this.renderToTexture = false;
 
         this.showAxes = true;
 
@@ -3347,22 +3361,30 @@ class MGWebGL extends Component {
         this.rttFramebuffer = this.gl.createFramebuffer();
         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.rttFramebuffer);
 
-        this.rttFramebuffer.width = 1024;
-        this.rttFramebuffer.height = 1024;
+        this.rttFramebuffer.width = 4096;
+        this.rttFramebuffer.height = 4096;
 
         this.rttTexture = this.gl.createTexture();
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.rttTexture);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR_MIPMAP_NEAREST);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
 
         this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.rttFramebuffer.width, this.rttFramebuffer.height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
-        this.gl.generateMipmap(this.gl.TEXTURE_2D);
+        //this.gl.generateMipmap(this.gl.TEXTURE_2D);
+
+        this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.rttTexture, 0);
 
         var renderbuffer = this.gl.createRenderbuffer();
         this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, renderbuffer);
-        this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT16, this.rttFramebuffer.width, this.rttFramebuffer.height);
-        this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.rttTexture, 0);
+        if (this.WEBGL2) {
+            this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT24, this.rttFramebuffer.width, this.rttFramebuffer.height);
+        } else {
+            //Sigh. Maybe DEPTH_STENCIL? Is anyone actually stuck on WebGL1?
+            this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT16, this.rttFramebuffer.width, this.rttFramebuffer.height);
+        }
         this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.RENDERBUFFER, renderbuffer);
+
         this.gl.bindTexture(this.gl.TEXTURE_2D, null);
         this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, null);
         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
@@ -6577,6 +6599,28 @@ class MGWebGL extends Component {
         this.gl.uniformMatrix4fv(shader.mvInvMatrixUniform, false, this.mvInvMatrix);// All else
     }
 
+    applySymmetryMatrix(theShader,symmetryMatrix,tempMVMatrix,tempMVInvMatrix){
+        let symt = mat4.create();
+        mat4.set(symt,
+                symmetryMatrix[0], symmetryMatrix[1], symmetryMatrix[2], symmetryMatrix[3],
+                symmetryMatrix[4], symmetryMatrix[5], symmetryMatrix[6], symmetryMatrix[7],
+                symmetryMatrix[8], symmetryMatrix[9], symmetryMatrix[10], symmetryMatrix[11],
+                symmetryMatrix[12], symmetryMatrix[13], symmetryMatrix[14], symmetryMatrix[15]);
+        mat4.multiply(tempMVMatrix, this.mvMatrix, symt);
+        this.gl.uniformMatrix4fv(theShader.mvMatrixUniform, false, tempMVMatrix);
+        tempMVMatrix[12] = 0.0;
+        tempMVMatrix[13] = 0.0;
+        tempMVMatrix[14] = 0.0;
+        mat4.invert(tempMVInvMatrix, tempMVMatrix);// All else
+        this.gl.uniformMatrix4fv(theShader.mvInvMatrixUniform, false, tempMVInvMatrix);// All else
+        let screenZ = vec3.create();
+        screenZ[0] = 0.0;
+        screenZ[1] = 0.0;
+        screenZ[2] = 1.0;
+        vec3.transformMat4(screenZ, screenZ, tempMVInvMatrix);
+        this.gl.uniform3fv(theShader.screenZ, screenZ);
+    }
+
     drawBuffer(theBuffer,theShader,j,vertexType,specialDrawBuffer){
 
         var drawBuffer;
@@ -6643,43 +6687,19 @@ class MGWebGL extends Component {
                     this.instanced_ext.drawElementsInstancedANGLE(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_INT, 0, theBuffer.triangleInstanceOriginBuffer[j].numItems);
                 }
                 if(theBuffer.symmetryMatrices.length>0){
+                    /*this.gl.uniform4fv(theShader.light_colours_diffuse, 
+                            new Float32Array([Math.max(this.light_colours_diffuse[0]-.4,0.2),
+                                Math.max(this.light_colours_diffuse[1]-.4,0.2),
+                                Math.max(this.light_colours_diffuse[2]-.4,0.2), 1.0]));
+                    this.gl.uniform4fv(theShader.light_colours_specular, new Float32Array([0.0,0.0,0.0,1.0]));
+                    //this.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
+                    //this.gl.vertexAttrib4f(theShader.vertexColourAttribute, 1.0, 0.0, 0.0, 1.0);
+                    */
                     var tempMVMatrix = mat4.create();
                     var tempMVInvMatrix = mat4.create();
-                    for (var isym = 0; isym < theBuffer.symmetryMatrices.length; isym++) {
+                    for (let isym = 0; isym < theBuffer.symmetryMatrices.length; isym++) {
 
-                        var symt = mat4.create();
-                        mat4.set(symt,
-                        theBuffer.symmetryMatrices[isym][0],
-                        theBuffer.symmetryMatrices[isym][1],
-                        theBuffer.symmetryMatrices[isym][2],
-                        theBuffer.symmetryMatrices[isym][3],
-                        theBuffer.symmetryMatrices[isym][4],
-                        theBuffer.symmetryMatrices[isym][5],
-                        theBuffer.symmetryMatrices[isym][6],
-                        theBuffer.symmetryMatrices[isym][7],
-                        theBuffer.symmetryMatrices[isym][8],
-                        theBuffer.symmetryMatrices[isym][9],
-                        theBuffer.symmetryMatrices[isym][10],
-                        theBuffer.symmetryMatrices[isym][11],
-                        theBuffer.symmetryMatrices[isym][12],
-                        theBuffer.symmetryMatrices[isym][13],
-                        theBuffer.symmetryMatrices[isym][14],
-                        theBuffer.symmetryMatrices[isym][15])
-                        //console.log(isym)
-                        //console.log(theBuffer.symmetryMatrices[isym])
-                        mat4.multiply(tempMVMatrix, this.mvMatrix, symt);
-                        this.gl.uniformMatrix4fv(theShader.mvMatrixUniform, false, tempMVMatrix);
-                        tempMVMatrix[12] = 0.0;
-                        tempMVMatrix[13] = 0.0;
-                        tempMVMatrix[14] = 0.0;
-                        mat4.invert(tempMVInvMatrix, tempMVMatrix);// All else
-                        this.gl.uniformMatrix4fv(theShader.mvInvMatrixUniform, false, tempMVInvMatrix);// All else
-                        let screenZ = vec3.create();
-                        screenZ[0] = 0.0;
-                        screenZ[1] = 0.0;
-                        screenZ[2] = 1.0;
-                        vec3.transformMat4(screenZ, screenZ, tempMVInvMatrix);
-                        this.gl.uniform3fv(theShader.screenZ, screenZ);
+                        this.applySymmetryMatrix(theShader,theBuffer.symmetryMatrices[isym],tempMVMatrix,tempMVInvMatrix)
                         if (this.WEBGL2) {
                             this.gl.drawElementsInstanced(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_INT, 0, theBuffer.triangleInstanceOriginBuffer[j].numItems);
                         } else {
@@ -6691,6 +6711,8 @@ class MGWebGL extends Component {
                     this.gl.uniformMatrix4fv(theShader.mvInvMatrixUniform, false, this.mvInvMatrix);// All else
                     this.gl.enableVertexAttribArray(theShader.vertexColourAttribute);
                 }
+                this.gl.uniform4fv(theShader.light_colours_diffuse, this.light_colours_diffuse);
+                this.gl.uniform4fv(theShader.light_colours_specular, this.light_colours_specular);
                 this.gl.disableVertexAttribArray(theShader.vertexInstanceOriginAttribute);
                 this.gl.disableVertexAttribArray(theShader.vertexInstanceSizeAttribute);
                 this.gl.disableVertexAttribArray(theShader.vertexInstanceOrientationAttribute);
@@ -6703,6 +6725,23 @@ class MGWebGL extends Component {
                     this.instanced_ext.vertexAttribDivisorANGLE(theShader.vertexColourAttribute, 0);
                 }
             } else {
+                if(theBuffer.symmetryMatrices.length>0){
+                    var tempMVMatrix = mat4.create();
+                    var tempMVInvMatrix = mat4.create();
+                    for (let isym = 0; isym < theBuffer.symmetryMatrices.length; isym++) {
+
+                        this.applySymmetryMatrix(theShader,theBuffer.symmetryMatrices[isym],tempMVMatrix,tempMVInvMatrix)
+                        if (this.WEBGL2) {
+                            this.gl.drawElements(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_INT, 0);
+                        } else {
+                            this.gl.drawElements(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_SHORT, 0);
+                        }
+
+                    }
+                    this.gl.uniformMatrix4fv(theShader.mvMatrixUniform, false, this.mvMatrix);// All else
+                    this.gl.uniformMatrix4fv(theShader.mvInvMatrixUniform, false, this.mvInvMatrix);// All else
+                    this.gl.enableVertexAttribArray(theShader.vertexColourAttribute);
+                }
                 this.gl.drawElements(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_INT, 0);
             }
         } else {
@@ -7072,6 +7111,16 @@ class MGWebGL extends Component {
         if (calculatingShadowMap) {
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.rttFramebufferDepth);
             this.gl.viewport(0, 0, this.gl.viewportWidth / width_ratio, this.gl.viewportHeight / height_ratio);
+        } else if(this.renderToTexture) {
+            console.log("Binding")
+            this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.rttFramebuffer);
+            this.gl.enable(this.gl.DEPTH_TEST);
+            this.gl.depthFunc(this.gl.LESS);
+            console.log("ratios: ",width_ratio,height_ratio);
+            console.log("viewport: ",this.gl.viewportWidth / width_ratio, this.gl.viewportHeight / height_ratio);
+            this.gl.viewport(0, 0, this.gl.viewportWidth / width_ratio, this.gl.viewportHeight / height_ratio);
+            let canRead = (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
+            console.log("canRead at bind",canRead);
         } else {
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
             this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
@@ -7258,8 +7307,17 @@ class MGWebGL extends Component {
 
         if (this.save_pixel_data) {
             console.log("Saving pixel data");
-            var pixels = new Uint8Array(this.canvas.width * this.canvas.height * 4);
+            let pixels = new Uint8Array(this.canvas.width * this.canvas.height * 4);
             this.gl.readPixels(0, 0, this.canvas.width, this.canvas.height, this.gl.RGBA, this.gl.UNSIGNED_BYTE, pixels);
+            this.pixel_data = pixels;
+        }
+        if(this.renderToTexture) {
+            let canRead = (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
+            const width_ratio = this.gl.viewportWidth / this.rttFramebuffer.width;
+            const height_ratio = this.gl.viewportHeight / this.rttFramebuffer.height;
+            let pixels = new Uint8Array(this.gl.viewportWidth / width_ratio * this.gl.viewportHeight / height_ratio * 4);
+            console.log("Now I can save texture ... ?")
+            this.gl.readPixels(0, 0, this.gl.viewportWidth / width_ratio, this.gl.viewportHeight / height_ratio, this.gl.RGBA, this.gl.UNSIGNED_BYTE, pixels);
             this.pixel_data = pixels;
         }
 
