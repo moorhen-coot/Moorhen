@@ -18,20 +18,20 @@ export function MoorhenMap(commandCentre) {
     this.selectedColumns = null
     this.associatedReflectionFileName = null
     this.uniqueId = guid()
-    this.rgba = {r: 0.30000001192092896, g: 0.30000001192092896, b: 0.699999988079071, a: 1.0}
+    this.rgba = { r: 0.30000001192092896, g: 0.30000001192092896, b: 0.699999988079071, a: 1.0 }
 }
 
 MoorhenMap.prototype.delete = async function (glRef) {
     const $this = this
     Object.getOwnPropertyNames(this.displayObjects).forEach(displayObject => {
-        if(this.displayObjects[displayObject].length > 0) {this.clearBuffersOfStyle(glRef, displayObject)}
+        if (this.displayObjects[displayObject].length > 0) { this.clearBuffersOfStyle(glRef, displayObject) }
     })
     glRef.current.drawScene()
     const promises = [
         $this.commandCentre.current.postMessage({
-            message:"delete", molNo:$this.molNo
+            message: "delete", molNo: $this.molNo
         }),
-        $this.hasReflectionData ? 
+        $this.hasReflectionData ?
             $this.commandCentre.current.postMessage({
                 message: 'delete_file_name', fileName: $this.associatedReflectionFileName
             })
@@ -44,13 +44,13 @@ MoorhenMap.prototype.delete = async function (glRef) {
 MoorhenMap.prototype.replaceMapWithMtzFile = async function (glRef, fileUrl, name, selectedColumns) {
     let mtzData
     let fetchResponse
-    
+
     try {
         fetchResponse = await fetch(fileUrl)
     } catch (err) {
         return Promise.reject(`Unable to fetch file ${fileUrl}`)
     }
-    
+
     if (fetchResponse.ok) {
         const reflectionData = await fetchResponse.blob()
         const arrayBuffer = await reflectionData.arrayBuffer()
@@ -68,7 +68,7 @@ MoorhenMap.prototype.replaceMapWithMtzFile = async function (glRef, fileUrl, nam
     if (cootResponse.data.result.status === 'Completed') {
         return this.doCootContour(glRef, ...glRef.current.origin.map(coord => -coord), this.mapRadius, this.contourLevel)
     }
-    
+
     return Promise.reject(cootResponse.data.result.status)
 
 }
@@ -109,15 +109,15 @@ MoorhenMap.prototype.loadToCootFromMtzData = function (data, name, selectedColum
                     reject(reply.data.result.consoleMessage)
                 }
                 $this.molNo = reply.data.result.result
-                if (Object.keys(selectedColumns).includes('isDifference')){
+                if (Object.keys(selectedColumns).includes('isDifference')) {
                     $this.isDifference = selectedColumns.isDifference
                 }
                 resolve($this)
-            })        
+            })
             .catch((err) => {
                 return Promise.reject(err)
             })
-    
+
     })
 }
 
@@ -128,11 +128,11 @@ MoorhenMap.prototype.loadToCootFromMtzFile = async function (source, selectedCol
     await $this.loadToCootFromMtzData(asUIntArray, source.name, selectedColumns)
     if (selectedColumns.calcStructFact) {
         await $this.associateToReflectionData(selectedColumns, asUIntArray)
-    } 
+    }
     return $this
 }
 
-MoorhenMap.prototype.loadToCootFromMapURL = function (url, name, isDiffMap=false) {
+MoorhenMap.prototype.loadToCootFromMapURL = function (url, name, isDiffMap = false) {
     const $this = this
 
     return fetch(url)
@@ -142,32 +142,30 @@ MoorhenMap.prototype.loadToCootFromMapURL = function (url, name, isDiffMap=false
         .then(arrayBuffer => {
             return $this.loadToCootFromMapData(new Uint8Array(arrayBuffer), name, isDiffMap)
         })
-        .catch((err) => { 
+        .catch((err) => {
             return Promise.reject(err)
-         })
+        })
 }
 
 MoorhenMap.prototype.loadToCootFromMapData = function (data, name, isDiffMap) {
     const $this = this
     $this.name = name
-    return new Promise((resolve, reject) => {
-        return this.commandCentre.current.cootCommand({
-            returnType: "status",
-            command: "shim_read_ccp4_map",
-            commandArgs: [data, name, isDiffMap]
-        })
-            .then(reply => {
-                if (reply.data.result?.status === 'Exception') {
-                    reject(reply.data.result.consoleMessage)
-                }
-                $this.molNo = reply.data.result.result
-                $this.isDifference = isDiffMap
-                resolve($this)
-            })
-            .catch((err) => { 
-                return Promise.reject(err)
-             })    
+    return this.commandCentre.current.cootCommand({
+        returnType: "status",
+        command: "shim_read_ccp4_map",
+        commandArgs: [data, name, isDiffMap]
     })
+        .then(reply => {
+            if (reply.data.result?.status === 'Exception') {
+                return Promise.reject(reply.data.result.consoleMessage)
+            }
+            $this.molNo = reply.data.result.result
+            $this.isDifference = isDiffMap
+            return Promise.resolve($this)
+        })
+        .catch((err) => {
+            return Promise.reject(err)
+        })
 }
 
 MoorhenMap.prototype.loadToCootFromMapFile = async function (source, isDiffMap) {
@@ -188,7 +186,7 @@ MoorhenMap.prototype.getMap = function () {
 }
 
 MoorhenMap.prototype.setMapWeight = function (weight) {
-    return this.commandCentre.current.cootCommand( {
+    return this.commandCentre.current.cootCommand({
         returnType: 'status',
         command: "set_map_weight",
         commandArgs: [this.molNo, weight]
@@ -197,7 +195,7 @@ MoorhenMap.prototype.setMapWeight = function (weight) {
 
 
 MoorhenMap.prototype.getMapWeight = function () {
-    return this.commandCentre.current.cootCommand( {
+    return this.commandCentre.current.cootCommand({
         returnType: 'status',
         command: "get_map_weight",
         commandArgs: [this.molNo]
@@ -208,13 +206,13 @@ MoorhenMap.prototype.makeWebMGLive = function (glRef) {
     const $this = this
     $this.webMGContour = true
     let promise
-    if (!Object.keys($this.liveUpdatingMaps).includes("WebMG")){
+    if (!Object.keys($this.liveUpdatingMaps).includes("WebMG")) {
         promise = $this.contour(glRef)
     }
     else {
         promise = Promise.resolve(true)
     }
-    promise.then(()=>{
+    promise.then(() => {
         if (!glRef.current.liveUpdatingMaps.includes($this.liveUpdatingMaps['WebMG'])) {
             glRef.current.liveUpdatingMaps.push($this.liveUpdatingMaps['WebMG'])
         }
@@ -295,7 +293,7 @@ MoorhenMap.prototype.doCootContour = function (glRef, x, y, z, radius, contourLe
     const $this = this
 
     let returnType
-    if(this.solid) {
+    if (this.solid) {
         returnType = "mesh_perm"
     } else if (this.litLines) {
         returnType = "lit_lines_mesh"
@@ -304,31 +302,31 @@ MoorhenMap.prototype.doCootContour = function (glRef, x, y, z, radius, contourLe
     }
 
     return new Promise((resolve, reject) => {
-        this.commandCentre.current.cootCommand( {
+        this.commandCentre.current.cootCommand({
             returnType: returnType,
             command: "get_map_contours_mesh",
             commandArgs: [$this.molNo, x, y, z, radius, contourLevel]
-        }).then(response => {            
+        }).then(response => {
             const objects = [response.data.result.result]
             $this.clearBuffersOfStyle(glRef, "Coot")
             objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
                 object.col_tri.forEach(cols => {
-                        cols.forEach(col => {
-                            if (!this.isDifference) {
-                                for(let idx=0; idx<col.length; idx+=4){
-                                    col[idx] = $this.rgba.r
-                                }
-                                for(let idx=1; idx<col.length; idx+=4){
-                                    col[idx] = $this.rgba.g
-                                }
-                                for(let idx=2; idx<col.length; idx+=4){
-                                    col[idx] = $this.rgba.b
-                                }    
+                    cols.forEach(col => {
+                        if (!this.isDifference) {
+                            for (let idx = 0; idx < col.length; idx += 4) {
+                                col[idx] = $this.rgba.r
                             }
-                            for(let idx=3; idx<col.length; idx+=4){
-                                col[idx] = $this.rgba.a
+                            for (let idx = 1; idx < col.length; idx += 4) {
+                                col[idx] = $this.rgba.g
                             }
-                        })
+                            for (let idx = 2; idx < col.length; idx += 4) {
+                                col[idx] = $this.rgba.b
+                            }
+                        }
+                        for (let idx = 3; idx < col.length; idx += 4) {
+                            col[idx] = $this.rgba.a
+                        }
+                    })
                 })
                 let a = glRef.current.appendOtherData(object, true);
                 $this.displayObjects['Coot'] = $this.displayObjects['Coot'].concat(a)
@@ -340,7 +338,7 @@ MoorhenMap.prototype.doCootContour = function (glRef, x, y, z, radius, contourLe
     })
 }
 
-MoorhenMap.prototype.setColour = async function (r, g, b, glRef, redraw=true) {
+MoorhenMap.prototype.setColour = async function (r, g, b, glRef, redraw = true) {
     if (this.isDifference) {
         console.log('Cannot set colour of difference map yet...')
         return
@@ -348,35 +346,35 @@ MoorhenMap.prototype.setColour = async function (r, g, b, glRef, redraw=true) {
     this.rgba = { ...this.rgba, r, g, b }
     this.displayObjects['Coot'].forEach(buffer => {
         buffer.triangleColours.forEach(colbuffer => {
-            for(let idx=0; idx<colbuffer.length; idx+=4){
+            for (let idx = 0; idx < colbuffer.length; idx += 4) {
                 colbuffer[idx] = this.rgba.r
             }
-            for(let idx=1; idx<colbuffer.length; idx+=4){
+            for (let idx = 1; idx < colbuffer.length; idx += 4) {
                 colbuffer[idx] = this.rgba.g
             }
-            for(let idx=2; idx<colbuffer.length; idx+=4){
-                colbuffer[idx] =this.rgba.b
-            }    
+            for (let idx = 2; idx < colbuffer.length; idx += 4) {
+                colbuffer[idx] = this.rgba.b
+            }
         })
         buffer.isDirty = true
     })
     glRef.current.buildBuffers();
     if (redraw) {
-        glRef.current.drawScene();    
+        glRef.current.drawScene();
     }
 }
 
-MoorhenMap.prototype.setAlpha = async function (alpha, glRef, redraw=true) {
+MoorhenMap.prototype.setAlpha = async function (alpha, glRef, redraw = true) {
     this.rgba.a = alpha
     this.displayObjects['Coot'].forEach(buffer => {
         buffer.triangleColours.forEach(colbuffer => {
-            for(let idx=3;idx<colbuffer.length;idx+=4){
+            for (let idx = 3; idx < colbuffer.length; idx += 4) {
                 colbuffer[idx] = alpha
             }
         })
         buffer.isDirty = true
         buffer.alphaChanged = true
-        if(alpha<0.99) {
+        if (alpha < 0.99) {
             buffer.transparent = true
         } else {
             buffer.transparent = false
@@ -392,7 +390,7 @@ MoorhenMap.prototype.associateToReflectionData = async function (selectedColumns
     if (!selectedColumns.Fobs || !selectedColumns.SigFobs || !selectedColumns.FreeR) {
         return Promise.reject('Missing column data')
     }
-    
+
     const commandArgs = [
         this.molNo, { fileName: this.uniqueId, data: reflectionData },
         selectedColumns.Fobs, selectedColumns.SigFobs, selectedColumns.FreeR
@@ -403,14 +401,14 @@ MoorhenMap.prototype.associateToReflectionData = async function (selectedColumns
         commandArgs: commandArgs,
         returnType: 'status'
     }, true)
-    
+
     if (response.data.result.status === "Completed") {
         this.hasReflectionData = true
         this.selectedColumns = selectedColumns
         this.associatedReflectionFileName = response.data.result.result
     } else {
         console.log('Unable to associate reflection data with map')
-    }   
+    }
 }
 
 MoorhenMap.prototype.fetchReflectionData = async function () {
@@ -423,4 +421,10 @@ MoorhenMap.prototype.fetchReflectionData = async function () {
     } else {
         console.log('Map has no reflection data associated...')
     }
+}
+
+MoorhenMap.prototype.duplicate = async function () {
+    const reply = await this.getMap()
+    const newMap = new MoorhenMap(this.commandCentre)
+    return newMap.loadToCootFromMapData(reply.data.result.mapData, `Copy of ${this.name}`, this.isDifference)
 }

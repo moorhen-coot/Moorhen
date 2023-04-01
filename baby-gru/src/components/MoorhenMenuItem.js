@@ -506,12 +506,12 @@ export const MoorhenBackupPreferencesMenuItem = (props) => {
 
     const panelContent =
         <>
-            <Form.Group style={{ width: '25rem'}}>
-                <Form.Check 
+            <Form.Group style={{ width: '25rem' }}>
+                <Form.Check
                     type="switch"
                     checked={enableTimeCapsule}
                     onChange={() => { setEnableTimeCapsule(!enableTimeCapsule) }}
-                    label="Make automatic backups"/>
+                    label="Make automatic backups" />
             </Form.Group>
             <hr></hr>
             <Form.Group className="mb-3" style={{ width: '18rem', margin: '0' }} controlId="MoorhenMaxBackupCount">
@@ -2039,5 +2039,33 @@ export const MoorhenCentreOnLigandMenuItem = (props) => {
             setPopoverIsShown={props.setPopoverIsShown}
         />
     </>
+
+}
+
+export const MoorhenExecuteScriptMenuItem = (props) => {
+    const filesRef = useRef(null);
+
+    const panelContent = <Row>
+        <Form.Group style={{ width: '30rem', margin: '0.5rem', padding: '0rem' }} controlId="uploadScript" className="mb-3">
+            <Form.Label>Load and execute script</Form.Label>
+            <Form.Control ref={filesRef} type="file" multiple={false} accept={[".js"]} />
+        </Form.Group>
+    </Row>
+
+    const onCompleted=async (onCompletedArg)=>{
+        for (const file of filesRef.current.files) {
+            const text = await readTextFile(file)
+            eval(text)
+        }        
+    }
+
+    return <MoorhenMenuItem
+        key='execute-script-menu-item'
+        id='execute-on-ligand-menu-item'
+        popoverContent={panelContent}
+        menuItemText="Load and execute..."
+        onCompleted={onCompleted}
+        setPopoverIsShown={props.setPopoverIsShown}
+    />
 
 }

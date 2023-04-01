@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback, useMemo, Fragment } from "react";
 import { Card, Form, Button, Row, Col, DropdownButton, Stack } from "react-bootstrap";
 import { doDownload, getNameLabel } from '../utils/MoorhenUtils';
-import { VisibilityOffOutlined, VisibilityOutlined, ExpandMoreOutlined, ExpandLessOutlined, DownloadOutlined, Settings } from '@mui/icons-material';
+import { VisibilityOffOutlined, VisibilityOutlined, ExpandMoreOutlined, ExpandLessOutlined, DownloadOutlined, Settings, FileCopyOutlined } from '@mui/icons-material';
 import { MoorhenMapSettingsMenuItem, MoorhenSetMapColourMenuItem, MoorhenDeleteDisplayObjectMenuItem, MoorhenRenameDisplayObjectMenuItem } from "./MoorhenMenuItem";
 import MoorhenSlider from "./MoorhenSlider";
 import { MenuItem } from "@mui/material";
@@ -21,7 +21,7 @@ export const MoorhenMapCard = (props) => {
     const isDirty = useRef(false)
 
     const mapSettingsProps = {
-        mapOpacity, setMapOpacity, mapSolid, setMapSolid, mapLitLines, setMapLitLines,  setPopoverIsShown, glRef: props.glRef, map: props.map
+        mapOpacity, setMapOpacity, mapSolid, setMapSolid, mapLitLines, setMapLitLines, setPopoverIsShown, glRef: props.glRef, map: props.map
     }
 
     const handleDownload = async () => {
@@ -42,31 +42,49 @@ export const MoorhenMapCard = (props) => {
         props.setCurrentDropdownMolNo(-1)
     }
 
+    const handleDuplicate = async () => {
+        const newMap = await props.map.duplicate()
+        return props.changeMaps({ action: "Add", item: newMap })
+    }
+
     const actionButtons = {
         1: {
-            label: cootContour ? "Hide map" : "Show map", 
-            compressed: () => {return (<MenuItem key='hide-show-map' variant="success" onClick={handleVisibility}>{cootContour ? "Hide map" : "Show map"}</MenuItem>)},
-            expanded: () => {return (<Button key='hide-show-map' size="sm" variant="outlined" onClick={handleVisibility}>
-                                        {cootContour ? <VisibilityOffOutlined /> : <VisibilityOutlined />}
-                                    </Button>)},
+            label: cootContour ? "Hide map" : "Show map",
+            compressed: () => { return (<MenuItem key='hide-show-map' variant="success" onClick={handleVisibility}>{cootContour ? "Hide map" : "Show map"}</MenuItem>) },
+            expanded: () => {
+                return (<Button key='hide-show-map' size="sm" variant="outlined" onClick={handleVisibility}>
+                    {cootContour ? <VisibilityOffOutlined /> : <VisibilityOutlined />}
+                </Button>)
+            },
         },
         2: {
-            label: "Download Map", 
-            compressed: () => {return (<MenuItem key='donwload-map' variant="success" onClick={handleDownload}>Download map</MenuItem>)},
-            expanded:  () => {return (<Button key='donwload-map' size="sm" variant="outlined" onClick={handleDownload}>
-                                        <DownloadOutlined />
-                                      </Button> )},
+            label: "Download Map",
+            compressed: () => { return (<MenuItem key='donwload-map' variant="success" onClick={handleDownload}>Download map</MenuItem>) },
+            expanded: () => {
+                return (<Button key='donwload-map' size="sm" variant="outlined" onClick={handleDownload}>
+                    <DownloadOutlined />
+                </Button>)
+            },
         },
         3: {
             label: 'Rename map',
-            compressed: () => {return (<MoorhenRenameDisplayObjectMenuItem key='rename-map' setPopoverIsShown={setPopoverIsShown} setCurrentName={setCurrentName} item={props.map} />)},
+            compressed: () => { return (<MoorhenRenameDisplayObjectMenuItem key='rename-map' setPopoverIsShown={setPopoverIsShown} setCurrentName={setCurrentName} item={props.map} />) },
             expanded: null
         },
         4: {
             label: "Map draw settings",
-            compressed: () => {return (<MoorhenMapSettingsMenuItem key='map-draw-settings' disabled={!cootContour} {...mapSettingsProps} />)},
+            compressed: () => { return (<MoorhenMapSettingsMenuItem key='map-draw-settings' disabled={!cootContour} {...mapSettingsProps} />) },
             expanded: null
-        }
+        },
+        5: {
+            label: "Duplicate map",
+            compressed: () => { return (<MenuItem key='duplicate-map' variant="success" onClick={handleDuplicate}>Duplicate map</MenuItem>) },
+            expanded: () => {
+                return (<Button key='duplicate-map' size="sm" variant="outlined" onClick={handleDuplicate}>
+                    <FileCopyOutlined />
+                </Button>)
+            },
+        },
     }
 
     const getButtonBar = (sideBarWidth) => {
@@ -89,35 +107,35 @@ export const MoorhenMapCard = (props) => {
         })
 
         compressedButtons.push((
-            <MoorhenDeleteDisplayObjectMenuItem 
+            <MoorhenDeleteDisplayObjectMenuItem
                 key='delete-map'
-                setPopoverIsShown={setPopoverIsShown} 
-                glRef={props.glRef} 
+                setPopoverIsShown={setPopoverIsShown}
+                glRef={props.glRef}
                 changeItemList={props.changeMaps}
-                itemList={props.maps} 
+                itemList={props.maps}
                 item={props.map}
                 setActiveMap={props.setActiveMap}
-                activeMap={props.activeMap}/>
+                activeMap={props.activeMap} />
         ))
-        
-        return  <Fragment>
-                    {expandedButtons}
-                    <DropdownButton 
-                            title={<Settings/>}
-                            size="sm" 
-                            variant="outlined" 
-                            autoClose={popoverIsShown ? false : 'outside'} 
-                            show={props.currentDropdownMolNo === props.map.molNo} 
-                            onToggle={() => {props.map.molNo !== props.currentDropdownMolNo ? props.setCurrentDropdownMolNo(props.map.molNo) : props.setCurrentDropdownMolNo(-1)}}>
-                        {compressedButtons}
-                    </DropdownButton>
-                    <Button size="sm" variant="outlined"
-                        onClick={() => {
-                            setIsCollapsed(!isCollapsed)
-                        }}>
-                        {isCollapsed ? < ExpandMoreOutlined/> : <ExpandLessOutlined />}
-                    </Button>
-                </Fragment>
+
+        return <Fragment>
+            {expandedButtons}
+            <DropdownButton
+                title={<Settings />}
+                size="sm"
+                variant="outlined"
+                autoClose={popoverIsShown ? false : 'outside'}
+                show={props.currentDropdownMolNo === props.map.molNo}
+                onToggle={() => { props.map.molNo !== props.currentDropdownMolNo ? props.setCurrentDropdownMolNo(props.map.molNo) : props.setCurrentDropdownMolNo(-1) }}>
+                {compressedButtons}
+            </DropdownButton>
+            <Button size="sm" variant="outlined"
+                onClick={() => {
+                    setIsCollapsed(!isCollapsed)
+                }}>
+                {isCollapsed ? < ExpandMoreOutlined /> : <ExpandLessOutlined />}
+            </Button>
+        </Fragment>
     }
 
     const doContourIfDirty = () => {
@@ -149,7 +167,7 @@ export const MoorhenMapCard = (props) => {
 
     const handleWheelContourLevelCallback = useCallback(e => {
         if (props.map.cootContour && props.map.molNo === props.activeMap.molNo) {
-            if (e.detail.factor > 1){
+            if (e.detail.factor > 1) {
                 setMapContourLevel(mapContourLevel + 0.1)
             } else {
                 setMapContourLevel(mapContourLevel - 0.1)
@@ -194,7 +212,7 @@ export const MoorhenMapCard = (props) => {
     }, [handleOriginUpdate, props.activeMap?.molNo]);
 
     useEffect(() => {
-        props.map.setAlpha(mapOpacity,props.glRef)
+        props.map.setAlpha(mapOpacity, props.glRef)
     }, [mapOpacity])
 
     useEffect(() => {
@@ -211,54 +229,54 @@ export const MoorhenMapCard = (props) => {
 
     }, [mapRadius, mapContourLevel, mapLitLines, mapSolid])
 
-    return <Card className="px-0"  style={{marginBottom:'0.5rem', padding:'0'}} key={props.map.molNo}>
-        <Card.Header style={{padding: '0.1rem'}}>
+    return <Card className="px-0" style={{ marginBottom: '0.5rem', padding: '0' }} key={props.map.molNo}>
+        <Card.Header style={{ padding: '0.1rem' }}>
             <Stack gap={2} direction='horizontal'>
-                <Col className='align-items-center' style={{display:'flex', justifyContent:'left', color: props.isDark ? 'white' : 'black'}}>
-                        {getNameLabel(props.map)}
-                        <img 
-                            className="baby-gru-map-icon"
-                            alt="..."
-                            style={{width: '20px', height: '20px', margin:'0.5rem', padding:'0'}}
-                            src={props.map.isDifference ? `${props.urlPrefix}/baby-gru/pixmaps/diff-map.png` : `${props.urlPrefix}/baby-gru/pixmaps/map.svg`}
-                        />
+                <Col className='align-items-center' style={{ display: 'flex', justifyContent: 'left', color: props.isDark ? 'white' : 'black' }}>
+                    {getNameLabel(props.map)}
+                    <img
+                        className="baby-gru-map-icon"
+                        alt="..."
+                        style={{ width: '20px', height: '20px', margin: '0.5rem', padding: '0' }}
+                        src={props.map.isDifference ? `${props.urlPrefix}/baby-gru/pixmaps/diff-map.png` : `${props.urlPrefix}/baby-gru/pixmaps/map.svg`}
+                    />
                 </Col>
-                <Col style={{display:'flex', justifyContent:'right'}}>
+                <Col style={{ display: 'flex', justifyContent: 'right' }}>
                     {getButtonBar(props.sideBarWidth)}
                 </Col>
             </Stack>
         </Card.Header>
-        <Card.Body style={{display: isCollapsed ? 'none' : ''}}>
-            <Row className="align-items-center" style={{ height: '100%', justifyContent:'between', display:'flex', color: props.isDark ? 'white' : 'black'}}>
-                <Col className="border-left" style={{justifyContent:'left', display:'flex'}}> 
-                <Row>
+        <Card.Body style={{ display: isCollapsed ? 'none' : '' }}>
+            <Row className="align-items-center" style={{ height: '100%', justifyContent: 'between', display: 'flex', color: props.isDark ? 'white' : 'black' }}>
+                <Col className="border-left" style={{ justifyContent: 'left', display: 'flex' }}>
+                    <Row>
                         <Form.Check checked={props.map === props.activeMap}
-                                    style={{margin:'0'}}
-                                    inline
-                                    label={'Active'}
-                                    name={`setActiveMap ${props.map.molNo}`}
-                                    type="checkbox"
-                                    variant="outline"
-                                    onChange={(e) => {
-                                        if (e.target.checked) {
-                                            props.setActiveMap(props.map)
-                                        }
-                                    }}
+                            style={{ margin: '0' }}
+                            inline
+                            label={'Active'}
+                            name={`setActiveMap ${props.map.molNo}`}
+                            type="checkbox"
+                            variant="outline"
+                            onChange={(e) => {
+                                if (e.target.checked) {
+                                    props.setActiveMap(props.map)
+                                }
+                            }}
                         />
-                </Row>
+                    </Row>
                 </Col>
                 <Col>
                     <Form.Group controlId="contouringLevel" className="mb-3">
-                        <MoorhenSlider minVal={0.01} maxVal={5} logScale={true} sliderTitle="Level" isDisabled={!cootContour} initialValue={props.initialContour} externalValue={mapContourLevel} setExternalValue={setMapContourLevel}/>
+                        <MoorhenSlider minVal={0.01} maxVal={5} logScale={true} sliderTitle="Level" isDisabled={!cootContour} initialValue={props.initialContour} externalValue={mapContourLevel} setExternalValue={setMapContourLevel} />
                     </Form.Group>
                 </Col>
                 <Col>
                     <Form.Group controlId="contouringRadius" className="mb-3">
-                        <MoorhenSlider minVal={0.01} maxVal={100} logScale={false} sliderTitle="Radius" isDisabled={!cootContour} initialValue={props.initialRadius} externalValue={mapRadius} setExternalValue={setMapRadius}/>
+                        <MoorhenSlider minVal={0.01} maxVal={100} logScale={false} sliderTitle="Radius" isDisabled={!cootContour} initialValue={props.initialRadius} externalValue={mapRadius} setExternalValue={setMapRadius} />
                     </Form.Group>
                 </Col>
             </Row>
         </Card.Body>
     </Card >
-    }
+}
 
