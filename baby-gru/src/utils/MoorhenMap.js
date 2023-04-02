@@ -244,10 +244,15 @@ MoorhenMap.prototype.makeCootLive = function (glRef) {
     glRef.current.drawScene()
 }
 
-MoorhenMap.prototype.contour = function (glRef) {
-    //Synonym for makeCootLive
+MoorhenMap.prototype.recontour = function (glRef) {
     const $this = this
-    $this.makeCootLive(glRef)
+    $this.cootContour = true
+    $this.doCootContour(glRef,
+        -glRef.current.origin[0],
+        -glRef.current.origin[1],
+        -glRef.current.origin[2],
+        $this.mapRadius, $this.contourLevel)
+    glRef.current.drawScene()
 }
 
 MoorhenMap.prototype.makeCootUnlive = function (glRef) {

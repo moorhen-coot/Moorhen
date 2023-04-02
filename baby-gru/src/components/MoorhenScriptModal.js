@@ -5,6 +5,7 @@ import { highlight, languages } from 'prismjs/components/prism-core';
 import 'prismjs/components/prism-clike';
 import 'prismjs/components/prism-javascript';
 import { PlayArrowOutlined } from "@mui/icons-material";
+import 'prismjs/themes/prism.css'; //Example style, you can use another
 
 export const MoorhenScriptModal = (props) => {
     const [code, setCode] = useState("//No code provided")
