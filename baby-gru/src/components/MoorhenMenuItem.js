@@ -1,7 +1,7 @@
 import { MenuItem } from "@mui/material";
 import { CheckOutlined, CloseOutlined } from "@mui/icons-material";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { OverlayTrigger, Popover, PopoverBody, PopoverHeader, Form, InputGroup, Button, FormSelect, Row, Col, SplitButton, Dropdown, Stack } from "react-bootstrap";
+import { Modal, OverlayTrigger, Popover, PopoverBody, PopoverHeader, Form, InputGroup, Button, FormSelect, Row, Col, SplitButton, Dropdown, Stack } from "react-bootstrap";
 import { SketchPicker } from "react-color";
 import { MoorhenMtzWrapper, readTextFile, readDataFile } from "../utils/MoorhenUtils";
 import { MoorhenMap } from "../utils/MoorhenMap";
@@ -13,6 +13,7 @@ import { MoorhenChainSelect } from "./MoorhenChainSelect";
 import MoorhenSlider from "./MoorhenSlider";
 import "rc-tree/assets/index.css"
 import Tree from 'rc-tree';
+import { MoorhenScriptModal } from "./MoorhenScriptModal";
 
 export const MoorhenMenuItem = (props) => {
 
@@ -2042,8 +2043,10 @@ export const MoorhenCentreOnLigandMenuItem = (props) => {
 
 }
 
-export const MoorhenExecuteScriptMenuItem = (props) => {
+export const MoorhenLoadScriptMenuItem = (props) => {
     const filesRef = useRef(null);
+    const [showCodeEditor, setShowCodeEditor] = useState(false)
+    const [code, setCode] = useState('No code loaded')
 
     const panelContent = <Row>
         <Form.Group style={{ width: '30rem', margin: '0.5rem', padding: '0rem' }} controlId="uploadScript" className="mb-3">
@@ -2052,14 +2055,16 @@ export const MoorhenExecuteScriptMenuItem = (props) => {
         </Form.Group>
     </Row>
 
-    const onCompleted=async (onCompletedArg)=>{
+    const onCompleted = async (onCompletedArg) => {
         for (const file of filesRef.current.files) {
             const text = await readTextFile(file)
-            eval(text)
-        }        
+            setShowCodeEditor(true)
+            setCode(text)
+            //eval(text)
+        }
     }
 
-    return <MoorhenMenuItem
+    return <><MoorhenMenuItem
         key='execute-script-menu-item'
         id='execute-on-ligand-menu-item'
         popoverContent={panelContent}
@@ -2067,5 +2072,7 @@ export const MoorhenExecuteScriptMenuItem = (props) => {
         onCompleted={onCompleted}
         setPopoverIsShown={props.setPopoverIsShown}
     />
+        <MoorhenScriptModal code={code} show={showCodeEditor} setShow={setShowCodeEditor}/>
+    </>
 
 }

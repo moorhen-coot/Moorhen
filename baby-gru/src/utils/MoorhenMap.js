@@ -244,6 +244,12 @@ MoorhenMap.prototype.makeCootLive = function (glRef) {
     glRef.current.drawScene()
 }
 
+MoorhenMap.prototype.contour = function (glRef) {
+    //Synonym for makeCootLive
+    const $this = this
+    $this.makeCootLive(glRef)
+}
+
 MoorhenMap.prototype.makeCootUnlive = function (glRef) {
     const $this = this
     $this.cootContour = false
@@ -427,4 +433,12 @@ MoorhenMap.prototype.duplicate = async function () {
     const reply = await this.getMap()
     const newMap = new MoorhenMap(this.commandCentre)
     return newMap.loadToCootFromMapData(reply.data.result.mapData, `Copy of ${this.name}`, this.isDifference)
+}
+
+MoorhenMap.prototype.blur = async function (bFactor) {
+    return this.commandCentre.current.cootCommand({
+        command: 'sharpen_blur_map',
+        commandArgs: [this.molNo, bFactor, true],
+        returnType: "status"
+    })
 }
