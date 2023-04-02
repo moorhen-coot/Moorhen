@@ -1,7 +1,7 @@
 import { MenuItem } from "@mui/material";
 import { CheckOutlined, CloseOutlined } from "@mui/icons-material";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Modal, OverlayTrigger, Popover, PopoverBody, PopoverHeader, Form, InputGroup, Button, FormSelect, Row, Col, SplitButton, Dropdown, Stack } from "react-bootstrap";
+import { Modal, OverlayTrigger, Popover, PopoverBody, PopoverHeader, Form, InputGroup, Button, FormSelect, Row, Col, SplitButton, Dropdown, Stack, Placeholder } from "react-bootstrap";
 import { SketchPicker } from "react-color";
 import { MoorhenMtzWrapper, readTextFile, readDataFile } from "../utils/MoorhenUtils";
 import { MoorhenMap } from "../utils/MoorhenMap";
@@ -10,6 +10,8 @@ import { MoorhenMoleculeSelect } from "./MoorhenMoleculeSelect";
 import { MoorhenMapSelect } from "./MoorhenMapSelect";
 import { MoorhenBackupSelect } from "./MoorhenBackupSelect";
 import { MoorhenChainSelect } from "./MoorhenChainSelect";
+import { MoorhenLigandSelect } from "./MoorhenLigandSelect"
+import { MoorhenCidInputForm } from "./MoorhenCidInputForm"
 import MoorhenSlider from "./MoorhenSlider";
 import "rc-tree/assets/index.css"
 import Tree from 'rc-tree';
@@ -165,7 +167,7 @@ export const MoorhenGetMonomerMenuItem = (props) => {
 
     const onCompleted = () => {
         const fromMolNo = parseInt(selectRef.current.value)
-        const newTlc = tlcRef.current.value
+        const newTlc = tlcRef.current.value.toUpperCase()
         const newMolecule = new MoorhenMolecule(props.commandCentre, props.monomerLibraryPath)
 
         const getMonomer = () => {
@@ -228,7 +230,7 @@ export const MoorhenSharpenBlurMapMenuItem = (props) => {
     const onCompleted = () => {
         const mapNo = parseInt(selectRef.current.value)
         const bFactor = parseFloat(factorRef.current.value)
-        const newMap = new MoorhenMap(props.commandCentre, props.monomerLibraryPath)
+        const newMap = new MoorhenMap(props.commandCentre)
 
         const blurMap = () => {
             return props.commandCentre.current.cootCommand({
@@ -2040,39 +2042,6 @@ export const MoorhenCentreOnLigandMenuItem = (props) => {
             setPopoverIsShown={props.setPopoverIsShown}
         />
     </>
-
 }
-
-export const MoorhenLoadScriptMenuItem = (props) => {
-    const filesRef = useRef(null);
-    const [showCodeEditor, setShowCodeEditor] = useState(false)
-    const [code, setCode] = useState('No code loaded')
-
-    const panelContent = <Row>
-        <Form.Group style={{ width: '30rem', margin: '0.5rem', padding: '0rem' }} controlId="uploadScript" className="mb-3">
-            <Form.Label>Load and execute script</Form.Label>
-            <Form.Control ref={filesRef} type="file" multiple={false} accept={[".js"]} />
-        </Form.Group>
-    </Row>
-
-    const onCompleted = async (onCompletedArg) => {
-        for (const file of filesRef.current.files) {
-            const text = await readTextFile(file)
-            setShowCodeEditor(true)
-            setCode(text)
-            //eval(text)
-        }
-    }
-
-    return <><MoorhenMenuItem
-        key='execute-script-menu-item'
-        id='execute-on-ligand-menu-item'
-        popoverContent={panelContent}
-        menuItemText="Load and execute..."
-        onCompleted={onCompleted}
-        setPopoverIsShown={props.setPopoverIsShown}
-    />
-        <MoorhenScriptModal code={code} show={showCodeEditor} setShow={setShowCodeEditor}/>
-    </>
 
 }

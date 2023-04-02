@@ -3361,8 +3361,8 @@ class MGWebGL extends Component {
         this.rttFramebuffer = this.gl.createFramebuffer();
         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.rttFramebuffer);
 
-        this.rttFramebuffer.width = 4096;
-        this.rttFramebuffer.height = 4096;
+        this.rttFramebuffer.width = Math.min(this.gl.getParameter(this.gl.MAX_TEXTURE_SIZE),this.gl.getParameter(this.gl.MAX_RENDERBUFFER_SIZE),4096);
+        this.rttFramebuffer.height = this.rttFramebuffer.width;
 
         this.rttTexture = this.gl.createTexture();
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.rttTexture);
@@ -7106,21 +7106,17 @@ class MGWebGL extends Component {
         var height_ratio = this.gl.viewportHeight / this.rttFramebuffer.height;
 
         this.mouseDown = false;
-        var ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
+        let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
 
         if (calculatingShadowMap) {
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.rttFramebufferDepth);
             this.gl.viewport(0, 0, this.gl.viewportWidth / width_ratio, this.gl.viewportHeight / height_ratio);
         } else if(this.renderToTexture) {
-            console.log("Binding")
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.rttFramebuffer);
             this.gl.enable(this.gl.DEPTH_TEST);
             this.gl.depthFunc(this.gl.LESS);
-            console.log("ratios: ",width_ratio,height_ratio);
-            console.log("viewport: ",this.gl.viewportWidth / width_ratio, this.gl.viewportHeight / height_ratio);
-            this.gl.viewport(0, 0, this.gl.viewportWidth / width_ratio, this.gl.viewportHeight / height_ratio);
+            this.gl.viewport(0, 0, this.rttFramebuffer.width, this.rttFramebuffer.height);
             let canRead = (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
-            console.log("canRead at bind",canRead);
         } else {
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
             this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
@@ -7165,7 +7161,15 @@ class MGWebGL extends Component {
             this.gl.disable(this.gl.CULL_FACE);
             this.gl.cullFace(this.gl.BACK);
             //mat4.perspective(45, this.gl.viewportWidth / this.gl.viewportHeight, 0.1, 10000.0, this.pMatrix);
-            mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24, 24, 0.000001, 10000.0);
+            if(this.renderToTexture){
+                if(this.gl.viewportWidth > this.gl.viewportHeight){
+                    mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24 * ratio, 24 * ratio, 0.000001, 10000.0);
+                } else {
+                    mat4.ortho(this.pMatrix, -24, 24 , -24, 24, 0.000001, 10000.0);
+                }
+            } else {
+                mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24, 24, 0.000001, 10000.0);
+            }
             //FIXME - OH hum, this is a problem for fog and clip which assume -500 translation.
             // Hack it for the moment
             if (this.doShadow) {
@@ -7316,7 +7320,6 @@ class MGWebGL extends Component {
             const width_ratio = this.gl.viewportWidth / this.rttFramebuffer.width;
             const height_ratio = this.gl.viewportHeight / this.rttFramebuffer.height;
             let pixels = new Uint8Array(this.gl.viewportWidth / width_ratio * this.gl.viewportHeight / height_ratio * 4);
-            console.log("Now I can save texture ... ?")
             this.gl.readPixels(0, 0, this.gl.viewportWidth / width_ratio, this.gl.viewportHeight / height_ratio, this.gl.RGBA, this.gl.UNSIGNED_BYTE, pixels);
             this.pixel_data = pixels;
         }
@@ -9883,7 +9886,8 @@ class MGWebGL extends Component {
         this.gl.uniform1f(this.shaderProgramTextBackground.fog_start, 1000.0);
         this.gl.uniform1f(this.shaderProgramTextBackground.fog_end, 1000.0);
         let axesOffset = vec3.create();
-        const ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
+        let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
+        if(this.renderToTexture) ratio = 1.0;
         vec3.set(axesOffset, 20*ratio, 18, 0);
         vec3.transformMat4(axesOffset, axesOffset, invMat);
         let right = vec3.create();
@@ -10113,7 +10117,8 @@ class MGWebGL extends Component {
 
     drawTextOverlays(invMat) {
         this.gl.depthFunc(this.gl.ALWAYS);
-        const ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
+        let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
+        if(this.renderToTexture) ratio = 1.0;
         let right = vec3.create();
         vec3.set(right, 1.0, 0.0, 0.0);
         let up = vec3.create();

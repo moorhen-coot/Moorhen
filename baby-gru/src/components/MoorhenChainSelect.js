@@ -26,4 +26,4 @@ export const MoorhenChainSelect = forwardRef((props, selectRef) => {
 })
 
 // props.allowedTypes refers to gemmi::PolymerType member values -> https://project-gemmi.github.io/python-api/gemmi.html#PolymerType
-MoorhenChainSelect.defaultProps = { allowedTypes:[1, 2, 3, 4, 5], height: '4rem', width: '20rem', molecule:null, label: "Chain" }
+MoorhenChainSelect.defaultProps = { allowedTypes:[1, 2, 3, 4, 5], height: '4rem', width: '20rem', molecule: null, label: "Chain" }

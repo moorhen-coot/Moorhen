@@ -356,56 +356,112 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         vec3.transformMat4(up, up, invMat);
         vec3.transformMat4(right, right, invMat);
 
-        const mag = 1;
 
-        const ncells_x = mag;
-        const ncells_y = mag;
+        let target_w;
+        let target_h;
+        let target_xoff;
+        let target_yoff;
 
         const saveCanvas = document.createElement("canvas");
-        saveCanvas.width = glRef.current.canvas.width * ncells_x;
-        saveCanvas.height = glRef.current.canvas.height * ncells_y;
-        const ctx = saveCanvas.getContext("2d");
 
-        let newZoom = glRef.current.zoom / ncells_x
-        glRef.current.setZoom(newZoom)
+        const w = glRef.current.rttFramebuffer.width;
+        const h = glRef.current.rttFramebuffer.height;
+        let imgData;
+        let pixels;
+        let ctx;
 
-        const ratio = 1.0 * glRef.current.gl.viewportWidth / glRef.current.gl.viewportHeight;
-        let jj = 0;
-        for (let j = Math.floor(-ncells_y / 2); j < Math.floor(ncells_y / 2); j++) {
-            let ii = 0;
-            for (let i = Math.floor(-ncells_x / 2); i < Math.floor(ncells_x / 2); i++) {
-                const x_off = ratio * (2.0 * i + 1 + ncells_x % 2);
-                const y_off = (2.0 * j + 1 + ncells_y % 2);
+        if(!glRef.current.WEBGL2){
+            const mag = 1; //FIXME This doesn't work for mag>1
 
-                glRef.current.origin = [oldOrigin[0], oldOrigin[1], oldOrigin[2]];
-                glRef.current.origin[0] += glRef.current.zoom * right[0] * 24.0 * x_off + glRef.current.zoom * up[0] * 24.0 * y_off;
-                glRef.current.origin[1] += glRef.current.zoom * right[1] * 24.0 * x_off + glRef.current.zoom * up[1] * 24.0 * y_off;
-                glRef.current.origin[2] += glRef.current.zoom * right[2] * 24.0 * x_off + glRef.current.zoom * up[2] * 24.0 * y_off;
+            const ncells_x = mag;
+            const ncells_y = mag;
+            saveCanvas.width = glRef.current.canvas.width * ncells_x;
+            saveCanvas.height = glRef.current.canvas.height * ncells_y;
+            ctx = saveCanvas.getContext("2d");
 
-                glRef.current.save_pixel_data = true;
-                glRef.current.drawScene();
-                const pixels = glRef.current.pixel_data;
+            let newZoom = glRef.current.zoom / ncells_x;
+            glRef.current.setZoom(newZoom);
 
-                const imgData = ctx.createImageData(glRef.current.canvas.width, glRef.current.canvas.height);
-                const data = imgData.data;
+            const ratio = 1.0 * glRef.current.gl.viewportWidth / glRef.current.gl.viewportHeight;
+            let jj = 0;
+            for (let j = Math.floor(-ncells_y / 2); j < Math.floor(ncells_y / 2); j++) {
+                let ii = 0;
+                for (let i = Math.floor(-ncells_x / 2); i < Math.floor(ncells_x / 2); i++) {
+                    const x_off = ratio * (2.0 * i + 1 + ncells_x % 2);
+                    const y_off = (2.0 * j + 1 + ncells_y % 2);
 
-                for (let pixi = 0; pixi < glRef.current.canvas.height; pixi++) {
-                    for (let pixj = 0; pixj < glRef.current.canvas.width * 4; pixj++) {
-                        data[(glRef.current.canvas.height - pixi - 1) * glRef.current.canvas.width * 4 + pixj] = pixels[pixi * glRef.current.canvas.width * 4 + pixj];
+                    glRef.current.origin = [oldOrigin[0], oldOrigin[1], oldOrigin[2]];
+                    glRef.current.origin[0] += glRef.current.zoom * right[0] * 24.0 * x_off + glRef.current.zoom * up[0] * 24.0 * y_off;
+                    glRef.current.origin[1] += glRef.current.zoom * right[1] * 24.0 * x_off + glRef.current.zoom * up[1] * 24.0 * y_off;
+                    glRef.current.origin[2] += glRef.current.zoom * right[2] * 24.0 * x_off + glRef.current.zoom * up[2] * 24.0 * y_off;
+
+                    glRef.current.save_pixel_data = true;
+                    glRef.current.drawScene();
+                    pixels = glRef.current.pixel_data;
+
+                    imgData = ctx.createImageData(glRef.current.canvas.width, glRef.current.canvas.height);
+                    const data = imgData.data;
+
+                    for (let pixi = 0; pixi < glRef.current.canvas.height; pixi++) {
+                        for (let pixj = 0; pixj < glRef.current.canvas.width * 4; pixj++) {
+                            data[(glRef.current.canvas.height - pixi - 1) * glRef.current.canvas.width * 4 + pixj] = pixels[pixi * glRef.current.canvas.width * 4 + pixj];
+                        }
                     }
+                    ctx.putImageData(imgData, (ncells_x - ii - 1) * glRef.current.canvas.width, jj * glRef.current.canvas.height);
+                    ii++;
                 }
-                ctx.putImageData(imgData, (ncells_x - ii - 1) * glRef.current.canvas.width, jj * glRef.current.canvas.height);
-                ii++;
+                jj++;
             }
-            jj++;
+
+            newZoom = glRef.current.zoom * ncells_x;
+            glRef.current.setZoom(newZoom);
+
+            glRef.current.origin = [oldOrigin[0], oldOrigin[1], oldOrigin[2]];
+            glRef.current.save_pixel_data = false;
+            glRef.current.drawScene();
+            target_w = w;
+            target_h = h;
+            target_xoff = 0;
+            target_yoff = 0;
+        } else {
+
+            glRef.current.renderToTexture = true;
+            glRef.current.drawScene();
+            const ratio = 1.0 * glRef.current.gl.viewportWidth / glRef.current.gl.viewportHeight;
+
+            if(glRef.current.gl.viewportWidth>glRef.current.gl.viewportHeight){
+                target_w = w;
+                target_h = parseInt(h / ratio);
+                target_xoff = 0;
+                target_yoff = parseInt(0.5*glRef.current.rttFramebuffer.height - 0.5 / ratio * glRef.current.rttFramebuffer.height);
+            } else {
+                target_w = parseInt(w * ratio);
+                target_h = h;
+                target_xoff = parseInt(0.5*glRef.current.rttFramebuffer.width - 0.5 * ratio * glRef.current.rttFramebuffer.width);
+                target_yoff = 0;
+            }
+            saveCanvas.width = target_w;
+            saveCanvas.height = target_h;
+
+            ctx = saveCanvas.getContext("2d");
+            pixels = glRef.current.pixel_data;
+
+            if(glRef.current.gl.viewportWidth>glRef.current.gl.viewportHeight){
+                imgData = ctx.createImageData(saveCanvas.width,saveCanvas.height);
+            } else {
+                imgData = ctx.createImageData(saveCanvas.width,saveCanvas.height);
+            }
         }
 
-        newZoom = glRef.current.zoom * ncells_x
-        glRef.current.setZoom(newZoom)
+        const data = imgData.data;
+        for (let pixi = 0; pixi < saveCanvas.height; pixi++) {
+            for (let pixj = 0; pixj < saveCanvas.width * 4; pixj++) {
+                data[(saveCanvas.height - pixi - 1) * saveCanvas.width * 4 + pixj] = pixels[(pixi+target_yoff) * w * 4 + pixj+target_xoff*4];
+            }
+        }
+        ctx.putImageData(imgData, 0,0);
 
-        glRef.current.origin = [oldOrigin[0], oldOrigin[1], oldOrigin[2]];
-        glRef.current.save_pixel_data = false;
-        glRef.current.drawScene();
+        glRef.current.renderToTexture = false;
 
         let link = document.getElementById('download_image_link');
         if (!link) {
