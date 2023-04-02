@@ -2044,4 +2044,36 @@ export const MoorhenCentreOnLigandMenuItem = (props) => {
     </>
 }
 
+export const MoorhenLoadScriptMenuItem = (props) => {
+    const filesRef = useRef(null);
+    const [showCodeEditor, setShowCodeEditor] = useState(false)
+    const [code, setCode] = useState('No code loaded')
+
+    const panelContent = <Row>
+        <Form.Group style={{ width: '30rem', margin: '0.5rem', padding: '0rem' }} controlId="uploadScript" className="mb-3">
+            <Form.Label>Load and execute script</Form.Label>
+            <Form.Control ref={filesRef} type="file" multiple={false} accept={[".js"]} />
+        </Form.Group>
+    </Row>
+
+    const onCompleted = async (onCompletedArg) => {
+        for (const file of filesRef.current.files) {
+            const text = await readTextFile(file)
+            setShowCodeEditor(true)
+            setCode(text)
+            //eval(text)
+        }
+    }
+
+    return <><MoorhenMenuItem
+        key='execute-script-menu-item'
+        id='execute-on-ligand-menu-item'
+        popoverContent={panelContent}
+        menuItemText="Load and execute..."
+        onCompleted={onCompleted}
+        setPopoverIsShown={props.setPopoverIsShown}
+    />
+        <MoorhenScriptModal code={code} show={showCodeEditor} setShow={setShowCodeEditor}/>
+    </>
+
 }
