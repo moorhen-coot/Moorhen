@@ -40,14 +40,13 @@
     const savePreferencesCallback = (preferences) => {
       window.parent.postMessage ({
           'command' : 'saveWebCootPreferences',
-          'data'    : JSON.parse(preferences)
+          'data'    : preferences
       }, window.location );
     }
 
     let moorhenWrapper = new moorhen.MoorhenWrapper ( urlPrefix );
     if (preferences)  {
-      // alert ( JSON.stringify(preferences) );
-      moorhenWrapper.setPreferences ( JSON.stringify(preferences) );
+      moorhenWrapper.setPreferences ( preferences );
     }
     if (no_data_msg)
       moorhenWrapper.setNoDataLegendMessage ( no_data_msg );
