@@ -20,13 +20,16 @@
   <script src="./baby-gru/wasm/web_example.js"></script>
   <script src="./moorhen.js"      charset="utf-8"></script>
   <script type="text/javascript"  defer="defer">
+
     const rootId      = 'root';
     const mode        = '[[mode]]';
     const inputFiles  = [[inputFiles]];
     const interval    = [[interval]];
     const no_data_msg = '[[no_data_msg]]';
+    const preferences = [[preferences]];
     const urlPrefix   = '.';
-    const exportToCloudCallback = (molName, molData) => {
+
+    const exportToCloudCallback = (molName,molData) => {
       window.parent.postMessage ({
           'command' : 'saveFile',
           'fpath'   : molName + '.pdb',
@@ -34,10 +37,22 @@
           'meta'    : [[meta]]
       }, window.location );
     }
+    const savePreferencesCallback = (preferences) => {
+      window.parent.postMessage ({
+          'command' : 'saveWebCootPreferences',
+          'data'    : JSON.parse(preferences)
+      }, window.location );
+    }
 
     let moorhenWrapper = new moorhen.MoorhenWrapper ( urlPrefix );
+    if (preferences)  {
+      // alert ( JSON.stringify(preferences) );
+      moorhenWrapper.setPreferences ( JSON.stringify(preferences) );
+    }
     if (no_data_msg)
-      moorhenWrapper.setNoDataLegendMessage ( no_data_msg )
+      moorhenWrapper.setNoDataLegendMessage ( no_data_msg );
+    moorhenWrapper.addOnChangePreferencesListener ( savePreferencesCallback );
+
     switch (mode)  {  
       case "view-update" : moorhenWrapper.setWorkMode         ( 'view' );
                            moorhenWrapper.addOnExportListener ( exportToCloudCallback );
@@ -57,6 +72,7 @@
                             moorhenWrapper.setInputFiles        ( inputFiles );
                             moorhenWrapper.start()
     }
+
 </script>
 </body>
 </html>
