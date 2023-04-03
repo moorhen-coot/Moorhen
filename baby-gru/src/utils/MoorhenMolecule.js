@@ -1496,7 +1496,6 @@ MoorhenMolecule.prototype.transformedCachedAtomsAsMovedAtoms = function (glRef) 
             for (let residueIndex = 0; residueIndex < residuesSize; residueIndex++) {
                 const residue = residues.get(residueIndex)
                 const residueSeqId = residue.seqid
-                const cid = `${chain.name}/${residueSeqId.str()}`
                 let movedAtoms = []
                 const atoms = residue.atoms
                 const atomsSize = atoms.size()
@@ -1505,6 +1504,8 @@ MoorhenMolecule.prototype.transformedCachedAtomsAsMovedAtoms = function (glRef) 
                     const atomName = atom.name
                     const atomElement = atom.element
                     const gemmiAtomPos = atom.pos
+                    const atomAltLoc = atom.altloc
+                    const atomHasAltLoc = atom.has_altloc()
                     const atomSymbol = window.CCP4Module.getElementNameAsString(atomElement)
                     const diff = $this.displayObjects.transformation.centre
                     let x = gemmiAtomPos.x + glRef.current.origin[0] - diff[0]
@@ -1512,6 +1513,7 @@ MoorhenMolecule.prototype.transformedCachedAtomsAsMovedAtoms = function (glRef) 
                     let z = gemmiAtomPos.z + glRef.current.origin[2] - diff[2]
                     const origin = $this.displayObjects.transformation.origin
                     const quat = $this.displayObjects.transformation.quat
+                    const cid = `/${model.name}/${chain.name}/${residueSeqId.str()}/${atomName}${atomHasAltLoc ? ':' + String.fromCharCode(atomAltLoc) : ''}`
                     if (quat) {
                         const theMatrix = quatToMat4(quat)
                         theMatrix[12] = origin[0]
@@ -1523,9 +1525,23 @@ MoorhenMolecule.prototype.transformedCachedAtomsAsMovedAtoms = function (glRef) 
                         vec3.set(atomPos, x, y, z)
                         vec3.transformMat4(transPos, atomPos, theMatrix);
                         if (atomSymbol.length === 2) {
-                            movedAtoms.push({ name: (atomName).padEnd(4, " "), x: transPos[0] - glRef.current.origin[0] + diff[0], y: transPos[1] - glRef.current.origin[1] + diff[1], z: transPos[2] - glRef.current.origin[2] + diff[2], resCid: cid })
+                            movedAtoms.push({
+                                name: (atomName).padEnd(4, " "), 
+                                x: transPos[0] - glRef.current.origin[0] + diff[0], 
+                                y: transPos[1] - glRef.current.origin[1] + diff[1], 
+                                z: transPos[2] - glRef.current.origin[2] + diff[2], 
+                                altLoc : atomHasAltLoc ? String.fromCharCode(atomAltLoc) : '',
+                                resCid: cid 
+                            })
                         } else {
-                            movedAtoms.push({ name: (" " + atomName).padEnd(4, " "), x: transPos[0] - glRef.current.origin[0] + diff[0], y: transPos[1] - glRef.current.origin[1] + diff[1], z: transPos[2] - glRef.current.origin[2] + diff[2], resCid: cid })
+                            movedAtoms.push({
+                                name: (" " + atomName).padEnd(4, " "),
+                                x: transPos[0] - glRef.current.origin[0] + diff[0],
+                                y: transPos[1] - glRef.current.origin[1] + diff[1], 
+                                z: transPos[2] - glRef.current.origin[2] + diff[2], 
+                                altLoc : atomHasAltLoc ? String.fromCharCode(atomAltLoc) : '',
+                                resCid: cid
+                            })
                         }
                     }
                     atom.delete()

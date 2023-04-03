@@ -63,3 +63,7 @@
 .nav-link::before {
   display:none !important;
 }
+
+.map-colour-dropdown::after  {
+    display:none !important;
+}

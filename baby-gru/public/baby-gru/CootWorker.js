@@ -599,13 +599,15 @@ const new_positions_for_residue_atoms = (molToUpDate, residues) => {
     residues.forEach(atoms => {
         if (atoms.length > 0) {
             const cid = atoms[0].resCid
-            let movedVector = new cootModule.Vectormoved_atom_t()
+            const movedVector = new cootModule.Vectormoved_atom_t()
             atoms.forEach(atom => {
                 const movedAtom = new cootModule.moved_atom_t(atom.name, "", atom.x, atom.y, atom.z, -1)
                 movedVector.push_back(movedAtom)
+                movedAtom.delete()
             })
             const thisSuccess = molecules_container.new_positions_for_residue_atoms(molToUpDate, cid, movedVector)
             success += thisSuccess
+            movedVector.delete()
         }
     })
     return success

@@ -1,10 +1,11 @@
 import { useEffect, useState, useRef, useCallback, useMemo, Fragment } from "react";
-import { Card, Form, Button, Row, Col, DropdownButton, Stack } from "react-bootstrap";
+import { Card, Form, Button, Row, Col, DropdownButton, Stack, Dropdown, OverlayTrigger } from "react-bootstrap";
 import { doDownload, getNameLabel } from '../utils/MoorhenUtils';
 import { VisibilityOffOutlined, VisibilityOutlined, ExpandMoreOutlined, ExpandLessOutlined, DownloadOutlined, Settings, FileCopyOutlined } from '@mui/icons-material';
-import { MoorhenMapSettingsMenuItem, MoorhenSetMapColourMenuItem, MoorhenDeleteDisplayObjectMenuItem, MoorhenRenameDisplayObjectMenuItem } from "./MoorhenMenuItem";
+import { MoorhenMapSettingsMenuItem, MoorhenDeleteDisplayObjectMenuItem, MoorhenRenameDisplayObjectMenuItem } from "./MoorhenMenuItem";
 import MoorhenSlider from "./MoorhenSlider";
-import { MenuItem } from "@mui/material";
+import { MenuItem, Tooltip } from "@mui/material";
+import { SketchPicker } from "react-color";
 
 export const MoorhenMapCard = (props) => {
     const [cootContour, setCootContour] = useState(true)
@@ -16,9 +17,29 @@ export const MoorhenMapCard = (props) => {
     const [isCollapsed, setIsCollapsed] = useState(!props.defaultExpandDisplayCards);
     const [currentName, setCurrentName] = useState(props.map.name);
     const [popoverIsShown, setPopoverIsShown] = useState(false)
+    const [mapColour, setMapColour] = useState(null)
     const nextOrigin = useRef([])
     const busyContouring = useRef(false)
     const isDirty = useRef(false)
+
+    useEffect(() => {
+        setMapColour({
+            r: 255 * props.map.rgba.r,
+            g: 255 * props.map.rgba.g,
+            b: 255 * props.map.rgba.b,
+            a: props.map.rgba.a
+        })
+    }, [props.map.rgba])
+
+    const handleColorChange = (color) => {
+        try {
+            props.map.setColour(color.rgb.r / 255., color.rgb.g / 255., color.rgb.b / 255., props.glRef)
+            setMapColour(color)
+        }
+        catch (err) {
+            console.log('err', err)
+        }
+    }
 
     const mapSettingsProps = {
         mapOpacity, setMapOpacity, mapSolid, setMapSolid, mapLitLines, setMapLitLines, setPopoverIsShown, glRef: props.glRef, map: props.map
@@ -240,17 +261,53 @@ export const MoorhenMapCard = (props) => {
 
     }, [mapRadius, mapContourLevel, mapLitLines, mapSolid])
 
+    const getMapColourSelector = () => {
+        if (mapColour === null) {
+            return null
+        }
+
+        const dropdown =  
+        <Dropdown>
+            <Dropdown.Toggle variant="outlined" className="map-colour-dropdown">
+                <div style={{
+                    width: '20px', 
+                    height: '20px', 
+                    background: props.map.isDifference ? 'linear-gradient( -45deg, green, green 49%, white 49%, white 51%, red 51% )' : `rgb(${mapColour.r},${mapColour.g},${mapColour.b})`, 
+                    borderRadius: '50%'
+                }}/>
+            </Dropdown.Toggle>
+            <Dropdown.Menu style={{display: props.map.isDifference ? 'none' : '', padding: 0, margin: 0, zIndex: 9999}}>
+                <SketchPicker color={mapColour} onChange={handleColorChange} disableAlpha={true} />
+            </Dropdown.Menu>
+        </Dropdown>
+
+        return <OverlayTrigger
+                id="map-colour-selector-trigger"
+                placement="bottom"
+                overlay={
+                    <Tooltip id="map-colour-label-tooltip" 
+                        style={{
+                            zIndex: 9999,
+                            backgroundColor: 'rgba(0, 0, 0, 0.85)',
+                            padding: '2px 10px',
+                            color: 'white',
+                            borderRadius: 3,
+                        }}>
+                            <div>
+                                Change map colour
+                            </div>
+                    </Tooltip>
+                }>
+                   {dropdown}
+                </OverlayTrigger>
+    }
+
     return <Card className="px-0" style={{ marginBottom: '0.5rem', padding: '0' }} key={props.map.molNo}>
         <Card.Header style={{ padding: '0.1rem' }}>
             <Stack gap={2} direction='horizontal'>
                 <Col className='align-items-center' style={{ display: 'flex', justifyContent: 'left', color: props.isDark ? 'white' : 'black' }}>
                     {getNameLabel(props.map)}
-                    <img
-                        className="baby-gru-map-icon"
-                        alt="..."
-                        style={{ width: '20px', height: '20px', margin: '0.5rem', padding: '0' }}
-                        src={props.map.isDifference ? `${props.urlPrefix}/baby-gru/pixmaps/diff-map.png` : `${props.urlPrefix}/baby-gru/pixmaps/map.svg`}
-                    />
+                    {getMapColourSelector()}
                 </Col>
                 <Col style={{ display: 'flex', justifyContent: 'right' }}>
                     {getButtonBar(props.sideBarWidth)}

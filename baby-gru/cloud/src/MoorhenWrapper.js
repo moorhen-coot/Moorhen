@@ -62,7 +62,7 @@ export default class MoorhenWrapper {
   }
 
   setPreferences(preferences) {
-    this.preferences = JSON.parse(preferences)
+    this.preferences = preferences
   }
 
   setRootId(rootId) {
@@ -93,15 +93,14 @@ export default class MoorhenWrapper {
 
   onChangePreferencesListener(preferences) {
     const objectKeys = ['shortCuts', 'defaultBackgroundColor', 'defaultUpdatingScores']
+    preferences['version'] = this.cachedPreferences.version
     for (const key of Object.keys(this.cachedPreferences)) {
-      if (key === 'version') {
-        continue
-      } else if (!objectKeys.includes(key) && this.cachedPreferences[key] !== preferences[key]) {
-        this.exportPreferencesCallback(JSON.stringify(preferences))
+      if (!objectKeys.includes(key) && this.cachedPreferences[key] !== preferences[key]) {
+        this.exportPreferencesCallback(preferences)
         this.cachedPreferences = preferences  
         break
       } else if (objectKeys.includes(key) && JSON.stringify(this.cachedPreferences[key]) !== JSON.stringify(preferences[key])) {
-        this.exportPreferencesCallback(JSON.stringify(preferences))
+        this.exportPreferencesCallback(preferences)
         this.cachedPreferences = preferences  
         break
       }
