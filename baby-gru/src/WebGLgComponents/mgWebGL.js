@@ -7163,12 +7163,12 @@ class MGWebGL extends Component {
             //mat4.perspective(45, this.gl.viewportWidth / this.gl.viewportHeight, 0.1, 10000.0, this.pMatrix);
             if(this.renderToTexture){
                 if(this.gl.viewportWidth > this.gl.viewportHeight){
-                    mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24 * ratio, 24 * ratio, 0.000001, 10000.0);
+                    mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24 * ratio, 24 * ratio, 0.000001, 1000.0);
                 } else {
-                    mat4.ortho(this.pMatrix, -24, 24 , -24, 24, 0.000001, 10000.0);
+                    mat4.ortho(this.pMatrix, -24, 24 , -24, 24, 0.000001, 1000.0);
                 }
             } else {
-                mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24, 24, 0.000001, 10000.0);
+                mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24, 24, 0.000001, 1000.0);
             }
             //FIXME - OH hum, this is a problem for fog and clip which assume -500 translation.
             // Hack it for the moment
@@ -9887,7 +9887,7 @@ class MGWebGL extends Component {
         this.gl.uniform1f(this.shaderProgramTextBackground.fog_end, 1000.0);
         let axesOffset = vec3.create();
         let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
-        if(this.renderToTexture) ratio = 1.0;
+        //if(this.renderToTexture) ratio = 1.0;
         vec3.set(axesOffset, 20*ratio, 18, 0);
         vec3.transformMat4(axesOffset, axesOffset, invMat);
         let right = vec3.create();
