@@ -85,15 +85,17 @@ export const MoorhenMapCard = (props) => {
                 </Button>)
             },
         },
+        /*
         6: {
             label: "Blur/sharpen map",
             compressed: () => { return (<MenuItem key='sharpen-blur-map' variant="success" onClick={handleDuplicate}>Duplicate map</MenuItem>) },
             expanded: () => {
-                return (<Button key='duplicate-map' size="sm" variant="outlined" onClick={handleDuplicate}>
+                return (<Button key='blur-map' size="sm" variant="outlined" onClick={handleDuplicate}>
                     <FileCopyOutlined />
                 </Button>)
             },
         },
+        */
     }
 
     const getButtonBar = (sideBarWidth) => {
