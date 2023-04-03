@@ -35,7 +35,7 @@ export const MoorhenNavBar = forwardRef((props, ref) => {
                         {/**<MoorhenHistoryMenu dropdownId="History" {...collectedProps} />*/}
                         <MoorhenPreferencesMenu dropdownId="Preferences" {...collectedProps} />
                         <MoorhenCryoMenu dropdownId="Cryo" {...collectedProps} />
-                        <MoorhenScriptingMenu dropdownId="Scripting" {...collectedProps} />
+                        {props.allowScripting && <MoorhenScriptingMenu dropdownId="Scripting" {...collectedProps} />}
                         <MoorhenHelpMenu dropdownId="Help" {...collectedProps}/>
                         {props.devMode && <MoorhenDevMenu dropdownId="Dev" {...collectedProps}/>}
                         {props.extraNavBarMenus && props.extraNavBarMenus.map(menu => menu)}
