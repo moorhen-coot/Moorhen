@@ -16,7 +16,7 @@ export const MoorhenScriptModal = (props) => {
         if (props.code) setCode(props.code)
     }, [])
 
-    return <Modal show={props.show} onHide={() => props.setShow(false)}>
+    return <Modal show={props.show} size="xl" onHide={() => props.setShow(false)}>
         <Modal.Header closeButton>
             <Modal.Title>Script preview</Modal.Title>
         </Modal.Header>
