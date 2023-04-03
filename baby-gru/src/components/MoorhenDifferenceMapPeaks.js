@@ -293,7 +293,7 @@ export const MoorhenDifferenceMapPeaks = (props) => {
             }            
         });
 
-    }, [plotData, props.backgroundColor, props.sideBarWidth, props.showSideBar])
+    }, [plotData, props.backgroundColor, props.sideBarWidth, props.showSideBar, props.accordionDropdownId])
 
     return <Fragment>
                 <Form style={{ padding:'0', margin: '0' }}>
