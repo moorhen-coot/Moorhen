@@ -882,7 +882,7 @@ export const MoorhenRigidBodyFitButton = (props) => {
             <Row>Please click an atom for rigid body fitting</Row>
             <Row>
                 <FormGroup>
-                    <FormLabel>Fitting mode</FormLabel>
+                    <FormLabel>Residue selection</FormLabel>
                     <FormSelect ref={ref} defaultValue={props.panelParameters}
                         onChange={(e) => {
                             if(e.target.value === 'RESIDUE RANGE'){
