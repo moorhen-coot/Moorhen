@@ -758,11 +758,17 @@ export const MoorhenRotateTranslateZoneButton = (props) => {
 }
 
 export const rigidBodyFitFormatArgs = (molecule, chosenAtom, selectedMode, activeMapMolNo) => {
-    let commandArgs
     const selectedSequence = molecule.sequences.find(sequence => sequence.chain === chosenAtom.chain_id)
-    const selectedResidueIndex = selectedSequence.sequence.findIndex(residue => residue.resNum === chosenAtom.res_no)
+    let selectedResidueIndex
+    let commandArgs
     let start
     let stop
+
+    if (typeof selectedSequence === 'undefined') {
+        selectedMode = 'SINGLE'
+    } else {
+        selectedResidueIndex = selectedSequence.sequence.findIndex(residue => residue.resNum === chosenAtom.res_no)
+    }
     
     switch (selectedMode) {
         case 'SINGLE':
@@ -876,7 +882,7 @@ export const MoorhenRigidBodyFitButton = (props) => {
             <Row>Please click an atom for rigid body fitting</Row>
             <Row>
                 <FormGroup>
-                    <FormLabel>Fitting mode</FormLabel>
+                    <FormLabel>Residue selection</FormLabel>
                     <FormSelect ref={ref} defaultValue={props.panelParameters}
                         onChange={(e) => {
                             if(e.target.value === 'RESIDUE RANGE'){
