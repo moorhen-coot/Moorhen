@@ -601,7 +601,7 @@ const new_positions_for_residue_atoms = (molToUpDate, residues) => {
             const cid = atoms[0].resCid
             const movedVector = new cootModule.Vectormoved_atom_t()
             atoms.forEach(atom => {
-                const movedAtom = new cootModule.moved_atom_t(atom.name, "", atom.x, atom.y, atom.z, -1)
+                const movedAtom = new cootModule.moved_atom_t(atom.name, atom.altLoc, atom.x, atom.y, atom.z, -1)
                 movedVector.push_back(movedAtom)
                 movedAtom.delete()
             })
