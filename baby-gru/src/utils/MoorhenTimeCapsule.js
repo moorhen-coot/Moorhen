@@ -172,8 +172,8 @@ MoorhenTimeCapsule.prototype.fetchSession = async function (includeAdditionalMap
         fogEnd: this.glRef.current.gl_fog_end,
         zoom: this.glRef.current.zoom,
         doDrawClickedAtomLines: this.glRef.current.doDrawClickedAtomLines,
-        clipStart: (this.glRef.current.gl_clipPlane0[3] + 500) * -1,
-        clipEnd: this.glRef.current.gl_clipPlane1[3] - 500,
+        clipStart: (this.glRef.current.gl_clipPlane0[3] + this.glRef.current.fogClipOffset) * -1,
+        clipEnd: this.glRef.current.gl_clipPlane1[3] - this.glRef.current.fogClipOffset,
         quat4: this.glRef.current.myQuat
     }
 

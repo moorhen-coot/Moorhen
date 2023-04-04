@@ -1544,54 +1544,54 @@ export const MoorhenAboutMenuItem = (props) => {
 }
 
 export const MoorhenClipFogMenuItem = (props) => {
-    const [zclipFront, setZclipFront] = useState(500 + props.glRef.current.gl_clipPlane0[3])
-    const [zclipBack, setZclipBack] = useState(props.glRef.current.gl_clipPlane1[3] - 500)
-    const [zfogFront, setZfogFront] = useState(500 - props.glRef.current.gl_fog_start)
-    const [zfogBack, setZfogBack] = useState(props.glRef.current.gl_fog_end - 500)
+    const [zclipFront, setZclipFront] = useState(props.glRef.current.fogClipOffset + props.glRef.current.gl_clipPlane0[3])
+    const [zclipBack, setZclipBack] = useState(props.glRef.current.gl_clipPlane1[3] - props.glRef.current.fogClipOffset)
+    const [zfogFront, setZfogFront] = useState(props.glRef.current.fogClipOffset - props.glRef.current.gl_fog_start)
+    const [zfogBack, setZfogBack] = useState(props.glRef.current.gl_fog_end - props.glRef.current.fogClipOffset)
 
     useEffect(() => {
         if (props.glRef.current && props.glRef.current.gl_clipPlane0) {
-            setZclipFront(500 + props.glRef.current.gl_clipPlane0[3])
-            setZclipBack(props.glRef.current.gl_clipPlane1[3] - 500)
-            setZfogFront(500 - props.glRef.current.gl_fog_start)
-            setZfogBack(props.glRef.current.gl_fog_end - 500)
+            setZclipFront(props.glRef.current.fogClipOffset + props.glRef.current.gl_clipPlane0[3])
+            setZclipBack(props.glRef.current.gl_clipPlane1[3] - props.glRef.current.fogClipOffset)
+            setZfogFront(props.glRef.current.fogClipOffset - props.glRef.current.gl_fog_start)
+            setZfogBack(props.glRef.current.gl_fog_end - props.glRef.current.fogClipOffset)
         }
     }, [props.glRef.current.gl_clipPlane, props.glRef.current.gl_clipPlane1, props.glRef.current.gl_fog_start, props.glRef.current.gl_fog_end])
 
     const panelContent = <div style={{ minWidth: "20rem" }}>
         <MoorhenSlider minVal={0.1} maxVal={1000} logScale={true}
             sliderTitle="Front clip"
-            initialValue={500 + props.glRef.current.gl_clipPlane0[3]}
+            initialValue={props.glRef.current.fogClipOffset + props.glRef.current.gl_clipPlane0[3]}
             externalValue={zclipFront}
             setExternalValue={(newValue) => {
-                props.glRef.current.gl_clipPlane0[3] = newValue - 500
+                props.glRef.current.gl_clipPlane0[3] = newValue - props.glRef.current.fogClipOffset
                 props.glRef.current.drawScene()
                 setZclipFront(newValue)
             }} />
         <MoorhenSlider minVal={0.1} maxVal={1000} logScale={true}
             sliderTitle="Back clip"
-            initialValue={props.glRef.current.gl_clipPlane1[3] - 500}
+            initialValue={props.glRef.current.gl_clipPlane1[3] - props.glRef.current.fogClipOffset}
             externalValue={zclipBack}
             setExternalValue={(newValue) => {
-                props.glRef.current.gl_clipPlane1[3] = 500 + newValue
+                props.glRef.current.gl_clipPlane1[3] = props.glRef.current.fogClipOffset + newValue
                 props.glRef.current.drawScene()
                 setZclipBack(newValue)
             }} />
         <MoorhenSlider minVal={0.1} maxVal={1000} logScale={true}
             sliderTitle="Front zFog"
-            initialValue={500 - props.glRef.current.gl_fog_start}
+            initialValue={props.glRef.current.fogClipOffset - props.glRef.current.gl_fog_start}
             externalValue={zfogFront}
             setExternalValue={(newValue) => {
-                props.glRef.current.gl_fog_start = 500 - newValue
+                props.glRef.current.gl_fog_start = props.glRef.current.fogClipOffset - newValue
                 props.glRef.current.drawScene()
                 setZfogFront(newValue)
             }} />
         <MoorhenSlider minVal={0.1} maxVal={1000} logScale={true}
             sliderTitle="Back zFog"
             externalValue={zfogBack}
-            initialValue={props.glRef.current.gl_fog_end - 500}
+            initialValue={props.glRef.current.gl_fog_end - props.glRef.current.fogClipOffset}
             setExternalValue={(newValue) => {
-                props.glRef.current.gl_fog_end = newValue + 500
+                props.glRef.current.gl_fog_end = newValue + props.glRef.current.fogClipOffset
                 props.glRef.current.drawScene()
                 setZfogBack(newValue)
             }} />

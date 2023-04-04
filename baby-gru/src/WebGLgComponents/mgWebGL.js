@@ -6,12 +6,14 @@ import React, { createRef, Component } from 'react';
 
 import pako from 'pako';
 import * as vec3 from 'gl-matrix/vec3';
+import * as vec4 from 'gl-matrix/vec4';
 import * as quat4 from 'gl-matrix/quat';
 import * as mat4 from 'gl-matrix/mat4';
 import * as mat3 from 'gl-matrix/mat3';
 //import {vec3,mat4,mat3} from 'gl-matrix/esm';
 //import {quat as quat4} from 'gl-matrix/esm';
 import { base64decode } from './mgBase64.js';
+import  { unProject } from './GLU.js';
 
 //WebGL2 shaders
 import { lines_fragment_shader_source as lines_fragment_shader_source_webgl2 } from './webgl-2/lines-fragment-shader.js';
@@ -1456,6 +1458,8 @@ class MGWebGL extends Component {
                 },
                 false);
                 */
+        this.fogClipOffset = 50;
+        this.doPerspectiveProjection = false;
         const ice_blue = [0.0039 * 156, 0.0039 * 176, 0.0039 * 254, 1.0];
         const gold = [0.0039 * 179, 0.0039 * 177, 0.0039 * 61, 1.0];
         const coral = [0.0039 * 255, 0.0039 * 127, 0.0039 * 80, 1.0];
@@ -1640,8 +1644,8 @@ class MGWebGL extends Component {
         this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.circleCtx.canvas);
 
         this.gl_nClipPlanes = 0;
-        this.gl_fog_start = 500.0;
-        this.gl_fog_end = 1500.0;
+        this.gl_fog_start = this.fogClipOffset;
+        this.gl_fog_end = 1000.+this.fogClipOffset;
         //this.gl.lineWidth(2.0);
         this.gl.blendFuncSeparate(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA, this.gl.ONE, this.gl.ONE_MINUS_SRC_ALPHA);
         this.gl.enable(this.gl.BLEND);
@@ -2656,22 +2660,16 @@ class MGWebGL extends Component {
 
     setFog(fog) {
         var self = this;
-        self.gl_fog_start = 500 + fog[0];
-        self.gl_fog_end = 500 + fog[1];
+        self.gl_fog_start = this.fogClipOffset + fog[0];
+        self.gl_fog_end = this.fogClipOffset + fog[1];
         self.drawScene();
     }
 
     setSlab(slab) {
         var self = this;
-        self.gl_clipPlane0[3] = -500.0 + slab[0] * 0.5 + slab[1];
-        self.gl_clipPlane1[3] = 500.0 + slab[0] * 0.5 - slab[1];
+        self.gl_clipPlane0[3] = -this.fogClipOffset + slab[0] * 0.5 + slab[1];
+        self.gl_clipPlane1[3] = this.fogClipOffset + slab[0] * 0.5 - slab[1];
         self.drawScene();
-        /*
-        self.clipChangedEvent = document.createEvent("CustomEvent");
-        self.clipChangedEvent.initCustomEvent('clipChanged',false,false,{"slab":slab});
-        console.log("Despatching:");
-        console.log(self.clipChangedEvent);
-        */
     }
 
     loadJSON(jsondata) {
@@ -2887,8 +2885,8 @@ class MGWebGL extends Component {
         var fog = jsondata.fog;
         if (fog && fog.length === 2) {
             console.log(fog);
-            self.gl_fog_start = 500 + fog[0];
-            self.gl_fog_end = 500 + fog[1];
+            self.gl_fog_start = this.fogClipOffset + fog[0];
+            self.gl_fog_end = this.fogClipOffset + fog[1];
             self.drawScene();
         }
 
@@ -4307,8 +4305,8 @@ class MGWebGL extends Component {
         if (typeof (this.gl) === 'undefined') {
             return;
         }
-        this.gl_clipPlane0[3] = -500.0 - clipStart;
-        this.gl_clipPlane1[3] = 500.0 + clipEnd;
+        this.gl_clipPlane0[3] = -this.fogClipOffset - clipStart;
+        this.gl_clipPlane1[3] = this.fogClipOffset + clipEnd;
         if (update)
             this.drawScene();
     }
@@ -7162,20 +7160,32 @@ class MGWebGL extends Component {
             this.gl.cullFace(this.gl.BACK);
             //mat4.perspective(45, this.gl.viewportWidth / this.gl.viewportHeight, 0.1, 10000.0, this.pMatrix);
             if(this.renderToTexture){
-                if(this.gl.viewportWidth > this.gl.viewportHeight){
-                    mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24 * ratio, 24 * ratio, 0.000001, 1000.0);
+                if(this.doPerspectiveProjection){
+                    if(this.gl.viewportWidth > this.gl.viewportHeight){
+                        mat4.perspective(this.pMatrix, 1.0*ratio, 1.0, 0.1, 100.0);
+                    } else {
+                        mat4.perspective(this.pMatrix, 1.0, 1.0, 0.1, 100.0);
+                    }
                 } else {
-                    mat4.ortho(this.pMatrix, -24, 24 , -24, 24, 0.000001, 1000.0);
+                    if(this.gl.viewportWidth > this.gl.viewportHeight){
+                        mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24 * ratio, 24 * ratio, 0.1, 1000.0);
+                    } else {
+                        mat4.ortho(this.pMatrix, -24, 24 , -24, 24, 0.1, 1000.0);
+                    }
                 }
             } else {
-                mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24, 24, 0.000001, 1000.0);
+                if(this.doPerspectiveProjection){
+                    mat4.perspective(this.pMatrix, 1.0, this.gl.viewportWidth / this.gl.viewportHeight, 0.1, 100.0);
+                } else {
+                    mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24, 24, 0.1, 1000.0);
+                }
             }
             //FIXME - OH hum, this is a problem for fog and clip which assume -500 translation.
             // Hack it for the moment
             if (this.doShadow) {
                 mat4.translate(this.mvMatrix, this.mvMatrix, [0, 0, -shadowExtent * .75]);
             } else {
-                mat4.translate(this.mvMatrix, this.mvMatrix, [0, 0, -500]);
+                mat4.translate(this.mvMatrix, this.mvMatrix, [0, 0, -this.fogClipOffset]);
             }
 
         }
@@ -7223,7 +7233,7 @@ class MGWebGL extends Component {
         }
         this.gl.uniform1i(this.shaderProgramInstanced.shinyBack, this.shinyBack);
 
-        mat4.scale(this.pMatrix, this.pMatrix, [1. / this.zoom, 1. / this.zoom, 1]);
+        mat4.scale(this.pMatrix, this.pMatrix, [1. / this.zoom, 1. / this.zoom, 1.0]);
         mat4.translate(this.mvMatrix, this.mvMatrix, this.origin);
 
         this.pmvMatrix = mat4.create();
@@ -7761,7 +7771,7 @@ class MGWebGL extends Component {
                     let scaleImage = true;
                     if (typeof (this.gl, this.displayBuffers[idx].supplementary["vert_tri_2d"]) !== "undefined") {
                         let tempMVMatrix = mat4.create();
-                        mat4.set(tempMVMatrix, this.mvMatrix[0], this.mvMatrix[1], this.mvMatrix[2], this.mvMatrix[3], this.mvMatrix[4], this.mvMatrix[5], this.mvMatrix[6], this.mvMatrix[7], this.mvMatrix[8], this.mvMatrix[9], this.mvMatrix[10], this.mvMatrix[11], (-24.0 + this.displayBuffers[idx].supplementary["vert_tri_2d"][0][0] * 48.0) * this.zoom, (-24.0 + this.displayBuffers[idx].supplementary["vert_tri_2d"][0][1] * 48.0) * this.zoom, -500.0, 1.0);
+                        mat4.set(tempMVMatrix, this.mvMatrix[0], this.mvMatrix[1], this.mvMatrix[2], this.mvMatrix[3], this.mvMatrix[4], this.mvMatrix[5], this.mvMatrix[6], this.mvMatrix[7], this.mvMatrix[8], this.mvMatrix[9], this.mvMatrix[10], this.mvMatrix[11], (-24.0 + this.displayBuffers[idx].supplementary["vert_tri_2d"][0][0] * 48.0) * this.zoom, (-24.0 + this.displayBuffers[idx].supplementary["vert_tri_2d"][0][1] * 48.0) * this.zoom, -this.fogClipOffset, 1.0);
                         this.gl.uniformMatrix4fv(this.shaderProgramTwoDShapes.mvMatrixUniform, false, tempMVMatrix);
                         scaleImage = false;
                     }
@@ -7817,7 +7827,7 @@ class MGWebGL extends Component {
                     let scaleImage = true;
                     if (typeof (this.gl, this.displayBuffers[idx].supplementary["vert_tri_2d"]) !== "undefined") {
                         let tempMVMatrix = mat4.create();
-                        mat4.set(tempMVMatrix, this.mvMatrix[0], this.mvMatrix[1], this.mvMatrix[2], this.mvMatrix[3], this.mvMatrix[4], this.mvMatrix[5], this.mvMatrix[6], this.mvMatrix[7], this.mvMatrix[8], this.mvMatrix[9], this.mvMatrix[10], this.mvMatrix[11], (-24.0 + this.displayBuffers[idx].supplementary["vert_tri_2d"][0][0] * 48.0) * this.zoom, (-24.0 + this.displayBuffers[idx].supplementary["vert_tri_2d"][0][1] * 48.0) * this.zoom, -500.0, 1.0);
+                        mat4.set(tempMVMatrix, this.mvMatrix[0], this.mvMatrix[1], this.mvMatrix[2], this.mvMatrix[3], this.mvMatrix[4], this.mvMatrix[5], this.mvMatrix[6], this.mvMatrix[7], this.mvMatrix[8], this.mvMatrix[9], this.mvMatrix[10], this.mvMatrix[11], (-24.0 + this.displayBuffers[idx].supplementary["vert_tri_2d"][0][0] * 48.0) * this.zoom, (-24.0 + this.displayBuffers[idx].supplementary["vert_tri_2d"][0][1] * 48.0) * this.zoom, -this.fogClipOffset, 1.0);
                         this.gl.uniformMatrix4fv(this.shaderProgramTwoDShapes.mvMatrixUniform, false, tempMVMatrix);
                         scaleImage = false;
                     }
@@ -8215,7 +8225,7 @@ class MGWebGL extends Component {
                     let scaleImage = true;
                     if (typeof (this.gl, this.displayBuffers[idx].supplementary["vert_tri_2d"]) !== "undefined") {
                         let tempMVMatrix = mat4.create();
-                        mat4.set(tempMVMatrix, this.mvMatrix[0], this.mvMatrix[1], this.mvMatrix[2], this.mvMatrix[3], this.mvMatrix[4], this.mvMatrix[5], this.mvMatrix[6], this.mvMatrix[7], this.mvMatrix[8], this.mvMatrix[9], this.mvMatrix[10], this.mvMatrix[11], (-24.0 + this.displayBuffers[idx].supplementary["vert_tri_2d"][0][0] * 48.0) * this.zoom, (-24.0 + this.displayBuffers[idx].supplementary["vert_tri_2d"][0][1] * 48.0) * this.zoom, -500.0, 1.0);
+                        mat4.set(tempMVMatrix, this.mvMatrix[0], this.mvMatrix[1], this.mvMatrix[2], this.mvMatrix[3], this.mvMatrix[4], this.mvMatrix[5], this.mvMatrix[6], this.mvMatrix[7], this.mvMatrix[8], this.mvMatrix[9], this.mvMatrix[10], this.mvMatrix[11], (-24.0 + this.displayBuffers[idx].supplementary["vert_tri_2d"][0][0] * 48.0) * this.zoom, (-24.0 + this.displayBuffers[idx].supplementary["vert_tri_2d"][0][1] * 48.0) * this.zoom, -this.fogClipOffset, 1.0);
                         this.gl.uniformMatrix4fv(this.shaderProgramImages.mvMatrixUniform, false, tempMVMatrix);
                         scaleImage = false;
                     }
@@ -8285,7 +8295,7 @@ class MGWebGL extends Component {
                     let scaleImage = false;
                     if (typeof (this.gl, this.displayBuffers[idx].supplementary["vert_tri_2d"]) !== "undefined") {
                         let tempMVMatrix = mat4.create();
-                        mat4.set(tempMVMatrix, this.mvMatrix[0], this.mvMatrix[1], this.mvMatrix[2], this.mvMatrix[3], this.mvMatrix[4], this.mvMatrix[5], this.mvMatrix[6], this.mvMatrix[7], this.mvMatrix[8], this.mvMatrix[9], this.mvMatrix[10], this.mvMatrix[11], (-24.0 + this.displayBuffers[idx].supplementary["vert_tri_2d"][0][0] * 48.0) * this.zoom, (-24.0 + this.displayBuffers[idx].supplementary["vert_tri_2d"][0][1] * 48.0) * this.zoom, -500.0, 1.0);
+                        mat4.set(tempMVMatrix, this.mvMatrix[0], this.mvMatrix[1], this.mvMatrix[2], this.mvMatrix[3], this.mvMatrix[4], this.mvMatrix[5], this.mvMatrix[6], this.mvMatrix[7], this.mvMatrix[8], this.mvMatrix[9], this.mvMatrix[10], this.mvMatrix[11], (-24.0 + this.displayBuffers[idx].supplementary["vert_tri_2d"][0][0] * 48.0) * this.zoom, (-24.0 + this.displayBuffers[idx].supplementary["vert_tri_2d"][0][1] * 48.0) * this.zoom, -this.fogClipOffset, 1.0);
                         this.gl.uniformMatrix4fv(this.shaderProgramImages.mvMatrixUniform, false, tempMVMatrix);
                         scaleImage = false;
                     }
@@ -9055,8 +9065,8 @@ class MGWebGL extends Component {
         //let frontPos = vec3Create([theX,theY,-1000.0]);
         //let backPos  = vec3Create([theX,theY,1000.0]);
         //MN Changed to improve picking
-        let frontPos = vec3Create([theX, theY, -this.gl_clipPlane0[3] - 500.]);
-        let backPos = vec3Create([theX, theY, this.gl_clipPlane1[3] - 500.]);
+        let frontPos = vec3Create([theX, theY, -this.gl_clipPlane0[3] - this.fogClipOffset]);
+        let backPos = vec3Create([theX, theY, this.gl_clipPlane1[3] - this.fogClipOffset]);
         vec3.transformMat4(frontPos, frontPos, theMatrix);
         vec3.transformMat4(backPos, backPos, theMatrix);
         vec3.subtract(frontPos, frontPos, self.origin);
@@ -9066,96 +9076,9 @@ class MGWebGL extends Component {
 
     doRightClick(event, self) {
         if (self.activeMolecule === null) {
-            let x;
-            let y;
-            let e = event;
-            if (e.pageX || e.pageY) {
-                x = e.pageX;
-                y = e.pageY;
-            }
-            else {
-                x = e.clientX;
-                y = e.clientY;
-            }
 
-            let c = this.canvasRef.current;
-            let offset = getOffsetRect(c);
-
-            x -= offset.left;
-            y -= offset.top;
-            x *= getDeviceScale();
-            y *= getDeviceScale();
-
-            let invQuat = quat4.create();
-            quat4Inverse(self.myQuat, invQuat);
-            let theMatrix = quatToMat4(invQuat);
-            let ratio = 1.0 * self.gl.viewportWidth / self.gl.viewportHeight;
-            let minX = (-24. * ratio * self.zoom);
-            let maxX = (24. * ratio * self.zoom);
-            let minY = (-24. * self.zoom);
-            let maxY = (24. * self.zoom);
-            let fracX = 1.0 * x / self.gl.viewportWidth;
-            let fracY = 1.0 * (y) / self.gl.viewportHeight;
-            let theX = minX + fracX * (maxX - minX);
-            let theY = maxY - fracY * (maxY - minY);
-            //let frontPos = vec3Create([theX,theY,0.000001]);
-            //let backPos  = vec3Create([theX,theY,1000.0]);
-            //MN Changed to improve picking
-            let frontPos = vec3Create([theX, theY, this.gl_clipPlane0[3]]);
-            let backPos = vec3Create([theX, theY, this.gl_clipPlane1[3]]);
-            vec3.transformMat4(frontPos, frontPos, theMatrix);
-            vec3.transformMat4(backPos, backPos, theMatrix);
-            vec3.subtract(frontPos, frontPos, self.origin);
-            vec3.subtract(backPos, backPos, self.origin);
-
-            let mindist = 100000.;
-            let minidx = -1;
-            let minj = -1;
-            let clickTol = 0.65 * this.zoom;
-
-            for (let idx = 0; idx < self.displayBuffers.length; idx++) {
-                if (!self.displayBuffers[idx].visible) {
-                    continue;
-                }
-                for (let j = 0; j < self.displayBuffers[idx].atoms.length; j++) {
-                    //if(Math.abs(self.displayBuffers[idx].atoms[j].x-frontPos[0])>clickTol) continue;
-                    //if(Math.abs(self.displayBuffers[idx].atoms[j].y-frontPos[1])>clickTol) continue;
-                    //let p = vec3Create([79.109,59.437,27.316]);
-                    let atx = self.displayBuffers[idx].atoms[j].x;
-                    let aty = self.displayBuffers[idx].atoms[j].y;
-                    let atz = self.displayBuffers[idx].atoms[j].z;
-                    //console.log(atx+" "+aty+" "+atz);
-                    let p = vec3Create([atx, aty, atz]);
-
-                    let dpl = DistanceBetweenPointAndLine(frontPos, backPos, p);
-
-                    //MN Changed logic here
-                    let atPos = vec3Create([atx, aty, atz])
-                    let displacement = vec3Create([0, 0, 0]);
-                    vec3.subtract(displacement, atPos, frontPos)
-                    //fB_plus_fZ is the displacement from the front clipping plane to the back clipping plane
-                    const fB_plus_fZ = (this.gl_clipPlane0[3] + this.gl_clipPlane1[3]) / this.zoom
-                    //fZ is the displacement from teh front clipping plane to the origin of rotation
-                    const fZ = (this.gl_clipPlane0[3] + 500) / this.zoom
-                    //aZ is the displacement from the frontClipping plane to the atom
-                    const aZ = (500 - vec3.length(displacement)) / this.zoom
-
-                    const targetFactor = 1. / (1 + (Math.abs(fZ - aZ) / fB_plus_fZ))
-                    if (
-                        dpl[0] < clickTol * targetFactor //clickTol modified to reflect proximity to rptation origin
-                        && dpl[0] < mindist //closest click seen
-                        && aZ > 0 //Beyond near clipping plane
-                        && aZ < fB_plus_fZ //In front of far clipping plane
-                    ) {
-
-                        minidx = idx;
-                        minj = j;
-                        mindist = dpl[0];
-                    }
-                }
-            }      
-
-        let rightClick = new CustomEvent("rightClick", {
+            const [minidx,minj,mindist] = self.getAtomFomMouseXY(event,self);
+            let rightClick = new CustomEvent("rightClick", {
             "detail": {
                 atom: minidx > -1 ? self.displayBuffers[minidx].atoms[minj] : null,
                 buffer: minidx > -1 ? self.displayBuffers[minidx] : null,
@@ -9163,9 +9086,8 @@ class MGWebGL extends Component {
                 pageX: event.pageX,
                 pageY: event.pageY
             }
-        });
-        document.dispatchEvent(rightClick);
-        
+            });
+            document.dispatchEvent(rightClick);
         }
     }
 
@@ -9175,96 +9097,8 @@ class MGWebGL extends Component {
         }
         
         if (!self.mouseMoved) {
-            let x;
-            let y;
-            let e = event;
-            if (e.pageX || e.pageY) {
-                x = e.pageX;
-                y = e.pageY;
-            }
-            else {
-                x = e.clientX;
-                y = e.clientY;
-            }
-
-            let c = this.canvasRef.current;
-            let offset = getOffsetRect(c);
-
-            x -= offset.left;
-            y -= offset.top;
-            x *= getDeviceScale();
-            y *= getDeviceScale();
-
-            //document.getElementById("info").innerHTML="Click: "+event.x+" "+event.y;
-            let invQuat = quat4.create();
-            quat4Inverse(self.myQuat, invQuat);
-            let theMatrix = quatToMat4(invQuat);
-            let ratio = 1.0 * self.gl.viewportWidth / self.gl.viewportHeight;
-            let minX = (-24. * ratio * self.zoom);
-            let maxX = (24. * ratio * self.zoom);
-            let minY = (-24. * self.zoom);
-            let maxY = (24. * self.zoom);
-            let fracX = 1.0 * x / self.gl.viewportWidth;
-            let fracY = 1.0 * (y) / self.gl.viewportHeight;
-            let theX = minX + fracX * (maxX - minX);
-            let theY = maxY - fracY * (maxY - minY);
-            //let frontPos = vec3Create([theX,theY,0.000001]);
-            //let backPos  = vec3Create([theX,theY,1000.0]);
-            //MN Changed to improve picking
-            let frontPos = vec3Create([theX, theY, this.gl_clipPlane0[3]]);
-            let backPos = vec3Create([theX, theY, this.gl_clipPlane1[3]]);
-            vec3.transformMat4(frontPos, frontPos, theMatrix);
-            vec3.transformMat4(backPos, backPos, theMatrix);
-            vec3.subtract(frontPos, frontPos, self.origin);
-            vec3.subtract(backPos, backPos, self.origin);
-
-            let mindist = 100000.;
-            let minidx = -1;
-            let minj = -1;
-            let clickTol = 0.65 * this.zoom;
-
-            for (let idx = 0; idx < self.displayBuffers.length; idx++) {
-                if (!self.displayBuffers[idx].visible) {
-                    continue;
-                }
-                for (let j = 0; j < self.displayBuffers[idx].atoms.length; j++) {
-                    //if(Math.abs(self.displayBuffers[idx].atoms[j].x-frontPos[0])>clickTol) continue;
-                    //if(Math.abs(self.displayBuffers[idx].atoms[j].y-frontPos[1])>clickTol) continue;
-                    //let p = vec3Create([79.109,59.437,27.316]);
-                    let atx = self.displayBuffers[idx].atoms[j].x;
-                    let aty = self.displayBuffers[idx].atoms[j].y;
-                    let atz = self.displayBuffers[idx].atoms[j].z;
-                    //console.log(atx+" "+aty+" "+atz);
-                    let p = vec3Create([atx, aty, atz]);
-
-                    let dpl = DistanceBetweenPointAndLine(frontPos, backPos, p);
-
-                    //MN Changed logic here
-                    let atPos = vec3Create([atx, aty, atz])
-                    let displacement = vec3Create([0, 0, 0]);
-                    vec3.subtract(displacement, atPos, frontPos)
-                    //fB_plus_fZ is the displacement from the front clipping plane to the back clipping plane
-                    const fB_plus_fZ = (this.gl_clipPlane0[3] + this.gl_clipPlane1[3]) / this.zoom
-                    //fZ is the displacement from teh front clipping plane to the origin of rotation
-                    const fZ = (this.gl_clipPlane0[3] + 500) / this.zoom
-                    //aZ is the displacement from the frontClipping plane to the atom
-                    const aZ = (500 - vec3.length(displacement)) / this.zoom
-
-                    const targetFactor = 1. / (1 + (Math.abs(fZ - aZ) / fB_plus_fZ))
-                    if (
-                        dpl[0] < clickTol * targetFactor //clickTol modified to reflect proximity to rptation origin
-                        && dpl[0] < mindist //closest click seen
-                        && aZ > 0 //Beyond near clipping plane
-                        && aZ < fB_plus_fZ //In front of far clipping plane
-                    ) {
-
-                        minidx = idx;
-                        minj = j;
-                        mindist = dpl[0];
-                    }
-                }
-            }
             //console.log(npass+" "+npass0+" "+npass1+" "+ntest);
+            const [minidx,minj,mindist] = self.getAtomFomMouseXY(event,self);
             if (minidx > -1) {
                 let theAtom = {};
                 //console.log(self.displayBuffers[minidx].atoms[minj]);
@@ -9317,129 +9151,117 @@ class MGWebGL extends Component {
         self.drawScene();
     }
 
-    doHover(event, self) {
-        if (true) {
-            let x;
-            let y;
-            let e = event;
-            if (e.pageX || e.pageY) {
-                x = e.pageX;
-                y = e.pageY;
+    getAtomFomMouseXY(event, self) {
+        let x;
+        let y;
+        let e = event;
+        if (e.pageX || e.pageY) {
+            x = e.pageX;
+            y = e.pageY;
+        }
+        else {
+            x = e.clientX;
+            y = e.clientY;
+        }
+
+        let c = this.canvasRef.current;
+        let offset = getOffsetRect(c);
+
+        x -= offset.left;
+        y -= offset.top;
+        x *= getDeviceScale();
+        y *= getDeviceScale();
+
+        const viewportArray = [
+            0, 0, this.gl.viewportWidth, this.gl.viewportHeight
+        ];
+
+        // The results of the operation will be stored in this array.
+        let modelPointArrayResultsFront = [];
+        let modelPointArrayResultsBack = [];
+
+        //FIXME - This is hackery
+        let factor = 999.9;
+        if(this.doPerspectiveProjection){
+            factor = 99.9;
+        }
+        let success = unProject(
+                x, this.gl.viewportHeight-y, -(this.gl_clipPlane0[3]-this.fogClipOffset)/factor,
+                this.mvMatrix, this.pMatrix,
+                viewportArray, modelPointArrayResultsFront);
+
+        success = unProject(
+                x, this.gl.viewportHeight-y, -(this.gl_clipPlane1[3]-this.fogClipOffset)/factor,
+                this.mvMatrix, this.pMatrix,
+                viewportArray, modelPointArrayResultsBack);
+
+        let mindist = 100000.;
+        let minidx = -1;
+        let minj = -1;
+        let clickTol = 0.65 * this.zoom;
+
+        for (let idx = 0; idx < self.displayBuffers.length; idx++) {
+            if (!self.displayBuffers[idx].visible) {
+                continue;
             }
-            else {
-                x = e.clientX;
-                y = e.clientY;
-            }
+            for (let j = 0; j < self.displayBuffers[idx].atoms.length; j++) {
 
-            let c = this.canvasRef.current;
-            let offset = getOffsetRect(c);
+                let atx = self.displayBuffers[idx].atoms[j].x;
+                let aty = self.displayBuffers[idx].atoms[j].y;
+                let atz = self.displayBuffers[idx].atoms[j].z;
+                let p = vec3Create([atx, aty, atz]);
 
-            x -= offset.left;
-            y -= offset.top;
-            x *= getDeviceScale();
-            y *= getDeviceScale();
+                let dpl = DistanceBetweenPointAndLine(modelPointArrayResultsFront, modelPointArrayResultsBack, p);
 
-            let invQuat = quat4.create();
-            quat4Inverse(self.myQuat, invQuat);
-            let theMatrix = quatToMat4(invQuat);
-            let ratio = 1.0 * self.gl.viewportWidth / self.gl.viewportHeight;
-            let minX = (-24. * ratio * self.zoom);
-            let maxX = (24. * ratio * self.zoom);
-            let minY = (-24. * self.zoom);
-            let maxY = (24. * self.zoom);
-            let fracX = 1.0 * x / self.gl.viewportWidth;
-            let fracY = 1.0 * (y) / self.gl.viewportHeight;
-            let theX = minX + fracX * (maxX - minX);
-            let theY = maxY - fracY * (maxY - minY);
-            //let frontPos = vec3Create([theX,theY,0.000001]);
-            //let backPos  = vec3Create([theX,theY,1000.0]);
-            //MN Changed to improve picking
-            let frontPos = vec3Create([theX, theY, this.gl_clipPlane0[3]]);
-            let backPos = vec3Create([theX, theY, this.gl_clipPlane1[3]]);
-            vec3.transformMat4(frontPos, frontPos, theMatrix);
-            vec3.transformMat4(backPos, backPos, theMatrix);
-            vec3.subtract(frontPos, frontPos, self.origin);
-            vec3.subtract(backPos, backPos, self.origin);
+                let atPosTrans = vec3Create([0, 0, 0]);
+                vec3.transformMat4(atPosTrans, p, this.mvMatrix);
+                let azDot = this.gl_clipPlane0[3]-atPosTrans[2];
+                let bzDot = this.gl_clipPlane1[3]+atPosTrans[2];
 
-            let mindist = 100000.;
-            let minidx = -1;
-            let minj = -1;
-            let clickTol = 0.65 * this.zoom;
-
-            for (let idx = 0; idx < self.displayBuffers.length; idx++) {
-                if (!self.displayBuffers[idx].visible) {
-                    continue;
-                }
-                for (let j = 0; j < self.displayBuffers[idx].atoms.length; j++) {
-                    //if(Math.abs(self.displayBuffers[idx].atoms[j].x-frontPos[0])>clickTol) continue;
-                    //if(Math.abs(self.displayBuffers[idx].atoms[j].y-frontPos[1])>clickTol) continue;
-                    //let p = vec3Create([79.109,59.437,27.316]);
-                    let atx = self.displayBuffers[idx].atoms[j].x;
-                    let aty = self.displayBuffers[idx].atoms[j].y;
-                    let atz = self.displayBuffers[idx].atoms[j].z;
-                    //console.log(atx+" "+aty+" "+atz);
-                    let p = vec3Create([atx, aty, atz]);
-
-                    let dpl = DistanceBetweenPointAndLine(frontPos, backPos, p);
-
-                    //MN Changed logic here
-                    let atPos = vec3Create([atx, aty, atz])
-                    let displacement = vec3Create([0, 0, 0]);
-                    vec3.subtract(displacement, atPos, frontPos)
-                    //fB_plus_fZ is the displacement from the front clipping plane to the back clipping plane
-                    const fB_plus_fZ = (this.gl_clipPlane0[3] + this.gl_clipPlane1[3]) / this.zoom
-                    //fZ is the displacement from teh front clipping plane to the origin of rotation
-                    const fZ = (this.gl_clipPlane0[3] + 500) / this.zoom
-                    //aZ is the displacement from the frontClipping plane to the atom
-                    const aZ = (500 - vec3.length(displacement)) / this.zoom
-
-                    const targetFactor = 1. / (1 + (Math.abs(fZ - aZ) / fB_plus_fZ))
-                    if (
-                        dpl[0] < clickTol * targetFactor //clickTol modified to reflect proximity to rptation origin
+                if (
+                        dpl[0] < clickTol //* targetFactor //clickTol modified to reflect proximity to rptation origin
                         && dpl[0] < mindist //closest click seen
-                        && aZ > 0 //Beyond near clipping plane
-                        && aZ < fB_plus_fZ //In front of far clipping plane
-                    ) {
-
-                        minidx = idx;
-                        minj = j;
-                        mindist = dpl[0];
-                    }
+                        && azDot > 0 //Beyond near clipping plane
+                        && bzDot > 0 //In front of far clipping plan
+                   ) {
+                    minidx = idx;
+                    minj = j;
+                    mindist = dpl[0];
                 }
             }
-            //console.log({ minidx })
-            //console.log(npass+" "+npass0+" "+npass1+" "+ntest);
-            if (minidx > -1) {
-                let theAtom = {};
-                //console.log(self.displayBuffers[minidx].atoms[minj]);
-                theAtom.x = self.displayBuffers[minidx].atoms[minj].x;
-                theAtom.y = self.displayBuffers[minidx].atoms[minj].y;
-                theAtom.z = self.displayBuffers[minidx].atoms[minj].z;
-                theAtom.charge = self.displayBuffers[minidx].atoms[minj].charge;
-                theAtom.label = self.displayBuffers[minidx].atoms[minj].label;
-                theAtom.symbol = self.displayBuffers[minidx].atoms[minj].symbol;
-                let atx = theAtom.x;
-                let aty = theAtom.y;
-                let atz = theAtom.z;
-                let label = theAtom.label;
-                let tempFactorLabel = "";
-                if (self.displayBuffers[minidx].atoms[minj].tempFactor) {
-                    tempFactorLabel = ", B: " + self.displayBuffers[minidx].atoms[minj].tempFactor;
-                }
-                this.props.messageChanged({ message: label + ", xyz:(" + atx + " " + aty + " " + atz + ")" + tempFactorLabel });
+        }
 
-                if (this.props.onAtomHovered) {
-                    this.props.onAtomHovered({
-                        atom: self.displayBuffers[minidx].atoms[minj],
-                        buffer: self.displayBuffers[minidx]
-                    })
-                }
+        return [minidx,minj,mindist];
 
+    }
+
+    doHover(event, self) {
+        const [minidx,minj,mindist] = self.getAtomFomMouseXY(event,self);
+        if (minidx > -1) {
+            let theAtom = {};
+            theAtom.x = self.displayBuffers[minidx].atoms[minj].x;
+            theAtom.y = self.displayBuffers[minidx].atoms[minj].y;
+            theAtom.z = self.displayBuffers[minidx].atoms[minj].z;
+            theAtom.charge = self.displayBuffers[minidx].atoms[minj].charge;
+            theAtom.label = self.displayBuffers[minidx].atoms[minj].label;
+            theAtom.symbol = self.displayBuffers[minidx].atoms[minj].symbol;
+            let atx = theAtom.x;
+            let aty = theAtom.y;
+            let atz = theAtom.z;
+            let label = theAtom.label;
+            let tempFactorLabel = "";
+            if (self.displayBuffers[minidx].atoms[minj].tempFactor) {
+                tempFactorLabel = ", B: " + self.displayBuffers[minidx].atoms[minj].tempFactor;
             }
-            else {
-                if (this.props.onAtomHovered) {
-                    this.props.onAtomHovered(null)
-                }
+            this.props.messageChanged({ message: label + ", xyz:(" + atx + " " + aty + " " + atz + ")" + tempFactorLabel });
+
+            if (this.props.onAtomHovered) { 
+                this.props.onAtomHovered({ atom: self.displayBuffers[minidx].atoms[minj], buffer: self.displayBuffers[minidx] });
+            }
+        }
+        else {
+            if (this.props.onAtomHovered) {
+                this.props.onAtomHovered(null)
             }
         }
         self.drawScene();
@@ -9900,7 +9722,23 @@ class MGWebGL extends Component {
         //console.log("offset",xoff,yoff,zoff);
         this.gl.useProgram(this.shaderProgramThickLines);
         this.setMatrixUniforms(this.shaderProgramThickLines);
-        this.gl.uniformMatrix4fv(this.shaderProgramThickLines.pMatrixUniform, false, this.pmvMatrix);
+
+        let pmvMatrix = mat4.create();
+        let pMatrix = mat4.create();
+        if(this.renderToTexture){
+            if(this.gl.viewportWidth > this.gl.viewportHeight){
+                mat4.ortho(pMatrix, -24 * ratio, 24 * ratio, -24 * ratio, 24 * ratio, 0.1, 1000.0);
+            } else {
+                mat4.ortho(pMatrix, -24, 24, -24, 24, 0.1, 1000.0);
+            }
+        } else {
+            mat4.ortho(pMatrix, -24 * ratio, 24 * ratio, -24, 24, 0.1, 1000.0);
+        }
+        mat4.scale(pMatrix, pMatrix, [1. / this.zoom, 1. / this.zoom, 1.0]);
+        mat4.multiply(pmvMatrix, pMatrix, this.mvMatrix);
+
+        this.gl.uniformMatrix4fv(this.shaderProgramThickLines.pMatrixUniform, false, pmvMatrix);
+
         this.gl.uniform3fv(this.shaderProgramThickLines.screenZ, this.screenZ);
         this.gl.uniform1f(this.shaderProgramThickLines.pixelZoom, 0.04 * this.zoom);
 
@@ -10053,8 +9891,10 @@ class MGWebGL extends Component {
         }
 
         this.gl.useProgram(this.shaderProgramTextBackground);
+
         this.gl.enableVertexAttribArray(this.shaderProgramTextBackground.vertexTextureAttribute);
         this.setMatrixUniforms(this.shaderProgramTextBackground);
+        this.gl.uniformMatrix4fv(this.shaderProgramTextBackground.pMatrixUniform, false, pMatrix);
 
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesTextNormalBuffer);
         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1]), this.gl.STATIC_DRAW);

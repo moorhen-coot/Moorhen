@@ -396,6 +396,7 @@ export const MoorhenContainer = (props) => {
                         activeMap={activeMap}
                         viewOnly={viewOnly}
                         drawInteractions={preferences.drawInteractions}
+                        doPerspectiveProjection={preferences.doPerspectiveProjection}
                     />
                 </div>
                 {!viewOnly && <MoorhenButtonBar {...collectedProps} />}

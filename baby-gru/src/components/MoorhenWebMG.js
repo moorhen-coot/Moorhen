@@ -16,7 +16,7 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
     const setClipFogByZoom = () => {
         const fieldDepthFront = 8;
         const fieldDepthBack = 21;
-        glRef.current.set_fog_range(500 - (glRef.current.zoom * fieldDepthFront), 500 + (glRef.current.zoom * fieldDepthBack))
+        glRef.current.set_fog_range(glRef.current.fogClipOffset - (glRef.current.zoom * fieldDepthFront), glRef.current.fogClipOffset + (glRef.current.zoom * fieldDepthBack))
         glRef.current.set_clip_range(0 - (glRef.current.zoom * fieldDepthFront), 0 + (glRef.current.zoom * fieldDepthBack))
         glRef.current.doDrawClickedAtomLines = false
     }
@@ -109,6 +109,11 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
             clearHBonds()
         }
     }, [props.drawInteractions,props.molecules])
+
+    useEffect(() => {
+        glRef.current.doPerspectiveProjection = props.doPerspectiveProjection
+        glRef.current.drawScene()
+    }, [props.doPerspectiveProjection])
 
     const handleScoreUpdates = useCallback(async (e) => {
         if (e.detail?.modifiedMolecule !== null && connectedMolNo && connectedMolNo.molecule === e.detail.modifiedMolecule) {

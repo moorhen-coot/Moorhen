@@ -34,6 +34,7 @@ const getDefaultValues = () => {
         drawFPS: false,
         drawMissingLoops: true,
         drawInteractions: false,
+        doPerspectiveProjection: false,
         mouseSensitivity: 0.3,
         wheelSensitivityFactor: 1.0,
         mapLineWidth: 0.46,
@@ -220,6 +221,7 @@ const PreferencesContextProvider = ({ children }) => {
     const [drawFPS, setDrawFPS] = useState(null)
     const [drawMissingLoops, setDrawMissingLoops] = useState(null)
     const [drawInteractions, setDrawInteractions] = useState(null)
+    const [doPerspectiveProjection, setDoPerspectiveProjection] = useState(null)
     const [mapLineWidth, setMapLineWidth] = useState(null)
     const [makeBackups, setMakeBackups] = useState(null)
     const [showShortcutToast, setShowShortcutToast] = useState(null)
@@ -259,6 +261,7 @@ const PreferencesContextProvider = ({ children }) => {
         23: { label: "drawInteractions", value: drawInteractions, valueSetter: setDrawInteractions},
         24: { label: "clipCap", value: clipCap, valueSetter: setClipCap},
         25: { label: "enableTimeCapsule", value: enableTimeCapsule, valueSetter: setEnableTimeCapsule},
+        26: { label: "doPerspectiveProjection", value: doPerspectiveProjection, valueSetter: setDoPerspectiveProjection},
     }
 
     const restoreDefaults = (defaultValues)=> {
@@ -477,6 +480,15 @@ const PreferencesContextProvider = ({ children }) => {
 
     useMemo(() => {
 
+        if (doPerspectiveProjection === null) {
+            return
+        }
+
+        updateStoredPreferences('doPerspectiveProjection', doPerspectiveProjection);
+    }, [doPerspectiveProjection]);
+
+    useMemo(() => {
+
         if (drawInteractions === null) {
             return
         }
@@ -549,7 +561,7 @@ const PreferencesContextProvider = ({ children }) => {
         wheelSensitivityFactor, setWheelSensitivityFactor, shortcutOnHoveredAtom, setShortcutOnHoveredAtom,
         resetClippingFogging, setResetClippingFogging, maxBackupCount, setMaxBackupCount,
         modificationCountBackupThreshold, setModificationCountBackupThreshold, isMounted,
-        drawInteractions, setDrawInteractions, clipCap, setClipCap, enableTimeCapsule, setEnableTimeCapsule
+        drawInteractions, setDrawInteractions, clipCap, setClipCap, enableTimeCapsule, setEnableTimeCapsule, doPerspectiveProjection, setDoPerspectiveProjection
     }
 
     return (

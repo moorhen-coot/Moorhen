@@ -45,6 +45,13 @@ export const MoorhenViewMenu = (props) => {
                             label="Show H-Bonds"/>
                     </InputGroup>
                     */}
+                    <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                        <Form.Check 
+                            type="switch"
+                            checked={props.doPerspectiveProjection}
+                            onChange={() => { props.setDoPerspectiveProjection(!props.doPerspectiveProjection) }}
+                            label="Perspective projection"/>
+                    </InputGroup>
                     <hr></hr>
                     <MoorhenBackgroundColorMenuItem {...menuItemProps} />
                     <MoorhenClipFogMenuItem {...menuItemProps} />
