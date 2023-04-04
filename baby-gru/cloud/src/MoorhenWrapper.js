@@ -392,6 +392,7 @@ export default class MoorhenWrapper {
     await this.loadInputFiles()
     
     if (this.updateInterval !== null) {
+      this.checkIfLoadedData()
       this.triggerSceneUpdates()
     }
 
