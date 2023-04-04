@@ -758,11 +758,17 @@ export const MoorhenRotateTranslateZoneButton = (props) => {
 }
 
 export const rigidBodyFitFormatArgs = (molecule, chosenAtom, selectedMode, activeMapMolNo) => {
-    let commandArgs
     const selectedSequence = molecule.sequences.find(sequence => sequence.chain === chosenAtom.chain_id)
-    const selectedResidueIndex = selectedSequence.sequence.findIndex(residue => residue.resNum === chosenAtom.res_no)
+    let selectedResidueIndex
+    let commandArgs
     let start
     let stop
+
+    if (typeof selectedSequence === 'undefined') {
+        selectedMode = 'SINGLE'
+    } else {
+        selectedResidueIndex = selectedSequence.sequence.findIndex(residue => residue.resNum === chosenAtom.res_no)
+    }
     
     switch (selectedMode) {
         case 'SINGLE':
