@@ -32,54 +32,49 @@ const itemReducer = (oldList, change) => {
 }
 
 export const CCP4i2MoorhenContainer = (props) => {
-
-    const glRef = useRef(null)
-    const timeCapsuleRef = useRef(null)
-    const commandCentre = useRef(null)
-    const moleculesRef = useRef(null)
-    const mapsRef = useRef(null)
-    const activeMapRef = useRef(null)
-    const consoleDivRef = useRef(null)
-    const lastHoveredAtom = useRef(null)
-    const prevActiveMoleculeRef = useRef(null)
-    const preferences = useContext(PreferencesContext);
-    const [activeMap, setActiveMap] = useState(null)
-    const [activeMolecule, setActiveMolecule] = useState(null)
-    const [hoveredAtom, setHoveredAtom] = useState({ molecule: null, cid: null })
-    const [consoleMessage, setConsoleMessage] = useState("")
-    const [cursorStyle, setCursorStyle] = useState("default")
-    const [busy, setBusy] = useState(false)
-    const [windowWidth, setWindowWidth] = useState(window.innerWidth)
-    const [windowHeight, setWindowHeight] = useState(window.innerHeight)
-    const [commandHistory, dispatchHistoryReducer] = useReducer(historyReducer, initialHistoryState)
+    /*
+        const glRef = useRef(null)
+        const timeCapsuleRef = useRef(null)
+        const commandCentre = useRef(null)
+        const consoleDivRef = useRef(null)
+        const lastHoveredAtom = useRef(null)
+        const prevActiveMoleculeRef = useRef(null)
+        const preferences = useContext(PreferencesContext);
+        const [activeMap, setActiveMap] = useState(null)
+        const [activeMolecule, setActiveMolecule] = useState(null)
+        const [hoveredAtom, setHoveredAtom] = useState({ molecule: null, cid: null })
+        const [consoleMessage, setConsoleMessage] = useState("")
+        const [cursorStyle, setCursorStyle] = useState("default")
+        const [busy, setBusy] = useState(false)
+        const [windowWidth, setWindowWidth] = useState(window.innerWidth)
+        const [windowHeight, setWindowHeight] = useState(window.innerHeight)
+        const [commandHistory, dispatchHistoryReducer] = useReducer(historyReducer, initialHistoryState)
+        const [backgroundColor, setBackgroundColor] = useState([1, 1, 1, 1])
+        const [appTitle, setAppTitle] = useState('Moorhen')
+        const [theme, setTheme] = useState("flatly")
+        const [showToast, setShowToast] = useState(false)
+        const [toastContent, setToastContent] = useState("")
+        const [showColourRulesToast, setShowColourRulesToast] = useState(false)
+    */
     const [molecules, changeMolecules] = useReducer(itemReducer, initialMoleculesState)
     const [maps, changeMaps] = useReducer(itemReducer, initialMapsState)
-    const [backgroundColor, setBackgroundColor] = useState([1, 1, 1, 1])
     const [currentDropdownId, setCurrentDropdownId] = useState(-1)
-    const [appTitle, setAppTitle] = useState('Moorhen')
-    const [theme, setTheme] = useState("flatly")
-    const [showToast, setShowToast] = useState(false)
-    const [toastContent, setToastContent] = useState("")
-    const [showColourRulesToast, setShowColourRulesToast] = useState(false)
     const [cootInitialized, setCootInitialized] = useState(false)
-
-    moleculesRef.current = molecules
-    mapsRef.current = maps
-    activeMapRef.current = activeMap
-
-    const collectedProps = {
-        glRef, timeCapsuleRef, commandCentre, moleculesRef, mapsRef, activeMapRef,
-        consoleDivRef, lastHoveredAtom, prevActiveMoleculeRef, preferences, activeMap,
-        setActiveMap, activeMolecule, setActiveMolecule, hoveredAtom, setHoveredAtom,
-        consoleMessage, setConsoleMessage, cursorStyle, setCursorStyle, busy, setBusy,
-        windowWidth, setWindowWidth, windowHeight, setWindowHeight, commandHistory,
-        dispatchHistoryReducer, molecules, changeMolecules, maps, changeMaps,
-        backgroundColor, setBackgroundColor, currentDropdownId, setCurrentDropdownId,
-        appTitle, setAppTitle, cootInitialized, setCootInitialized, theme, setTheme,
-        showToast, setShowToast, toastContent, setToastContent, showColourRulesToast,
-        setShowColourRulesToast, forwardControls: props.forwardControls
-    }
-
+    const collectedProps = {molecules, changeMolecules, maps, changeMaps, currentDropdownId, setCurrentDropdownId}
+    /*
+        const collectedProps = {
+            glRef, timeCapsuleRef, commandCentre, moleculesRef, mapsRef, activeMapRef,
+            consoleDivRef, lastHoveredAtom, prevActiveMoleculeRef, preferences, activeMap,
+            setActiveMap, activeMolecule, setActiveMolecule, hoveredAtom, setHoveredAtom,
+            consoleMessage, setConsoleMessage, cursorStyle, setCursorStyle, busy, setBusy,
+            windowWidth, setWindowWidth, windowHeight, setWindowHeight, commandHistory,
+            dispatchHistoryReducer, molecules, changeMolecules, maps, changeMaps,
+            backgroundColor, setBackgroundColor, currentDropdownId, setCurrentDropdownId,
+            appTitle, setAppTitle, cootInitialized, setCootInitialized, theme, setTheme,
+            showToast, setShowToast, toastContent, setToastContent, showColourRulesToast,
+            setShowColourRulesToast, forwardControls: props.forwardControls
+        }
+    */
     const controls = useRef(null);
     //FIXME: hardwired
     const urlRoot = 'http://127.0.0.1:43434/moorhen'
@@ -409,7 +404,7 @@ const CCP4i2ProjectsPanel = (props) => {
                 __type__: "Projects"
             })}`)
                 .then(response => response.json())
-                .then(result => { console.log(result);setProjects(result.results) })
+                .then(result => { console.log(result); setProjects(result.results) })
         }
     }, [props.updated])
 
