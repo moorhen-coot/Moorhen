@@ -5,9 +5,9 @@ export const MoorhenCidInputForm = forwardRef((props, cidFormRef) => {
 
     const handleChange = (evt) => {
         if (props.onChange) {
-            props.onChange(evt.target.value)
+            props.onChange(evt)
         }
-        cidFormRef.current.value = evt.target.value
+        if(cidFormRef) cidFormRef.current.value = evt.target.value
     }
 
     return  <Form.Group style={{ width: props.width, margin: props.margin, height:props.height }}>

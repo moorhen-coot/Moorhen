@@ -4,7 +4,7 @@ import { Form, FormSelect } from "react-bootstrap";
 export const MoorhenLigandSelect = forwardRef((props, selectRef) => {
     const handleChange = (evt) => {
         if (props.onChange) {
-            props.onChange(evt.target.value)
+            props.onChange(evt)
         }
         selectRef.current.value = evt.target.value
     }

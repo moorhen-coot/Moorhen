@@ -269,6 +269,14 @@ export default class MoorhenWrapper {
     }
   }
 
+  checkIfLoadedData() {
+    const legendInputFile = this.inputFiles.find(file => file.type === 'legend')
+    if (typeof legendInputFile === 'undefined' && this.controls.moleculesRef.current.length !== 0 && this.controls.mapsRef.current.length !== 0) {
+      const domComponent = parse('<div></div>')
+      this.controls.setLegendText(domComponent)
+    }
+  }
+
   triggerSceneUpdates() {
     setTimeout(async () => {
       try {
@@ -284,6 +292,7 @@ export default class MoorhenWrapper {
         console.log(err)  
       } finally {
         setTimeout(() => this.controls.setBusyFetching(false), 2000)
+        this.checkIfLoadedData()
         this.triggerSceneUpdates()
       } 
     }, this.updateInterval)
@@ -383,6 +392,7 @@ export default class MoorhenWrapper {
     await this.loadInputFiles()
     
     if (this.updateInterval !== null) {
+      this.checkIfLoadedData()
       this.triggerSceneUpdates()
     }
 
