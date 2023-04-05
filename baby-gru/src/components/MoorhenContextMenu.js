@@ -93,6 +93,7 @@ const MoorhenContextQuickEditButton = (props) => {
     const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: props.selectedMolecule.molNo } })
     document.dispatchEvent(scoresUpdateEvent)
     props.selectedMolecule.setAtomsDirty(true)
+    props.selectedMolecule.clearBuffersOfStyle('hover', props.glRef)
     await Promise.all([
       props.selectedMolecule.redraw(props.glRef),
       props.timeCapsuleRef.current.addModification() 
