@@ -3357,6 +3357,8 @@ class MGWebGL extends Component {
     initTextureFramebuffer() {
 
         this.rttFramebuffer = this.gl.createFramebuffer();
+        this.rttFramebufferColor = this.gl.createFramebuffer();
+
         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.rttFramebuffer);
 
         this.rttFramebuffer.width = Math.min(this.gl.getParameter(this.gl.MAX_TEXTURE_SIZE),this.gl.getParameter(this.gl.MAX_RENDERBUFFER_SIZE),4096);
@@ -3371,17 +3373,34 @@ class MGWebGL extends Component {
         this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.rttFramebuffer.width, this.rttFramebuffer.height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
         //this.gl.generateMipmap(this.gl.TEXTURE_2D);
 
-        this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.rttTexture, 0);
 
-        var renderbuffer = this.gl.createRenderbuffer();
-        this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, renderbuffer);
         if (this.WEBGL2) {
-            this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT24, this.rttFramebuffer.width, this.rttFramebuffer.height);
+            let renderbufferDepth = this.gl.createRenderbuffer();
+            this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, renderbufferDepth);
+            this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.RENDERBUFFER, renderbufferDepth);
+            this.gl.renderbufferStorageMultisample(this.gl.RENDERBUFFER,
+                                    this.gl.getParameter(this.gl.MAX_SAMPLES),
+                                    this.gl.DEPTH_COMPONENT24, 
+                                    this.rttFramebuffer.width,
+                                    this.rttFramebuffer.height);
+            let renderbuffer = this.gl.createRenderbuffer();
+            this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, renderbuffer);
+            this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.RENDERBUFFER, renderbuffer);
+            this.gl.renderbufferStorageMultisample(this.gl.RENDERBUFFER,
+                                    this.gl.getParameter(this.gl.MAX_SAMPLES),
+                                    this.gl.RGBA8, 
+                                    this.rttFramebuffer.width,
+                                    this.rttFramebuffer.height);
+            this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.rttFramebufferColor);
+            this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.rttTexture, 0);
         } else {
+            this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.rttTexture, 0);
+            let renderbuffer = this.gl.createRenderbuffer();
+            this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, renderbuffer);
+            this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.RENDERBUFFER, renderbuffer);
             //Sigh. Maybe DEPTH_STENCIL? Is anyone actually stuck on WebGL1?
             this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT16, this.rttFramebuffer.width, this.rttFramebuffer.height);
         }
-        this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.RENDERBUFFER, renderbuffer);
 
         this.gl.bindTexture(this.gl.TEXTURE_2D, null);
         this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, null);
@@ -7329,6 +7348,16 @@ class MGWebGL extends Component {
             let canRead = (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
             const width_ratio = this.gl.viewportWidth / this.rttFramebuffer.width;
             const height_ratio = this.gl.viewportHeight / this.rttFramebuffer.height;
+            if (this.WEBGL2) {
+                this.gl.bindFramebuffer(this.gl.READ_FRAMEBUFFER, this.rttFramebuffer);
+                this.gl.bindFramebuffer(this.gl.DRAW_FRAMEBUFFER, this.rttFramebufferColor);
+                this.gl.clearBufferfv(this.gl.COLOR, 0, [1.0, 1.0, 1.0, 1.0]);
+                this.gl.blitFramebuffer(0, 0, this.rttFramebuffer.width, this.rttFramebuffer.height,
+                        0, 0, this.rttFramebuffer.width, this.rttFramebuffer.height,
+                        this.gl.COLOR_BUFFER_BIT, this.gl.LINEAR);
+
+                this.gl.bindFramebuffer(this.gl.READ_FRAMEBUFFER, this.rttFramebufferColor);
+            }
             let pixels = new Uint8Array(this.gl.viewportWidth / width_ratio * this.gl.viewportHeight / height_ratio * 4);
             this.gl.readPixels(0, 0, this.gl.viewportWidth / width_ratio, this.gl.viewportHeight / height_ratio, this.gl.RGBA, this.gl.UNSIGNED_BYTE, pixels);
             this.pixel_data = pixels;

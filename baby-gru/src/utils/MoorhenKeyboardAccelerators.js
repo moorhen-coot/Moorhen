@@ -451,17 +451,17 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
             } else {
                 imgData = ctx.createImageData(saveCanvas.width,saveCanvas.height);
             }
-        }
 
-        const data = imgData.data;
-        for (let pixi = 0; pixi < saveCanvas.height; pixi++) {
-            for (let pixj = 0; pixj < saveCanvas.width * 4; pixj++) {
-                data[(saveCanvas.height - pixi - 1) * saveCanvas.width * 4 + pixj] = pixels[(pixi+target_yoff) * w * 4 + pixj+target_xoff*4];
+            const data = imgData.data;
+            for (let pixi = 0; pixi < saveCanvas.height; pixi++) {
+                for (let pixj = 0; pixj < saveCanvas.width * 4; pixj++) {
+                    data[(saveCanvas.height - pixi - 1) * saveCanvas.width * 4 + pixj] = pixels[(pixi+target_yoff) * w * 4 + pixj+target_xoff*4];
+                }
             }
+            ctx.putImageData(imgData, 0,0);
+            glRef.current.renderToTexture = false;
         }
-        ctx.putImageData(imgData, 0,0);
 
-        glRef.current.renderToTexture = false;
 
         let link = document.getElementById('download_image_link');
         if (!link) {
