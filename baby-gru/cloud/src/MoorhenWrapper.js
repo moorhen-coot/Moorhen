@@ -271,7 +271,7 @@ export default class MoorhenWrapper {
 
   checkIfLoadedData() {
     const legendInputFile = this.inputFiles.find(file => file.type === 'legend')
-    if (typeof legendInputFile === 'undefined' && this.controls.moleculesRef.current.length !== 0 && this.controls.mapsRef.current.length !== 0) {
+    if (typeof legendInputFile === 'undefined' && (this.controls.moleculesRef.current.length !== 0 || this.controls.mapsRef.current.length !== 0)) {
       const domComponent = parse('<div></div>')
       this.controls.setLegendText(domComponent)
     }

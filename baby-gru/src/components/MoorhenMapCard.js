@@ -281,6 +281,10 @@ export const MoorhenMapCard = (props) => {
             </Dropdown.Menu>
         </Dropdown>
 
+        if (props.map.isDifference) {
+            return <>{dropdown}</>
+        } 
+
         return <OverlayTrigger
                 id="map-colour-selector-trigger"
                 placement="bottom"
