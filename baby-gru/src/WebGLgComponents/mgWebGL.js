@@ -1816,7 +1816,7 @@ class MGWebGL extends Component {
         self.initRenderFrameBufferShaders(blurVertexShader, renderFrameBufferFragmentShader);
         self.initLineShaders(lineVertexShader, lineFragmentShader);
         self.initBlurXShader(blurVertexShader, blurXFragmentShader);
-        self.initBlurXShader(blurVertexShader, blurYFragmentShader);
+        self.initBlurYShader(blurVertexShader, blurYFragmentShader);
         self.initThickLineShaders(thickLineVertexShader, lineFragmentShader);
         self.initThickLineNormalShaders(thickLineNormalVertexShader, fragmentShader);
         self.initPointSpheresShaders(pointSpheresVertexShader, pointSpheresFragmentShader);
@@ -3385,18 +3385,31 @@ class MGWebGL extends Component {
         if(!this.offScreenFramebuffer){
             this.offScreenFramebuffer = this.gl.createFramebuffer();
             this.offScreenFramebufferColor = this.gl.createFramebuffer();
+            this.offScreenFramebufferBlurX = this.gl.createFramebuffer();
+            this.offScreenFramebufferBlurY = this.gl.createFramebuffer();
+
+            this.blurXTexture = this.gl.createTexture();
+            this.gl.bindTexture(this.gl.TEXTURE_2D, this.blurXTexture);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+
+            this.blurYTexture = this.gl.createTexture();
+            this.gl.bindTexture(this.gl.TEXTURE_2D, this.blurYTexture);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+
             this.offScreenTexture = this.gl.createTexture();
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.offScreenTexture);
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+
             this.offScreenRenderbufferDepth = this.gl.createRenderbuffer();
             this.offScreenRenderbufferColor = this.gl.createRenderbuffer();
         }
 
-        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.offScreenFramebufferColor);
-        this.offScreenFramebufferColor.width = this.canvas.width;
-        this.offScreenFramebufferColor.height = this.canvas.height;
         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.offScreenFramebuffer);
         this.offScreenFramebuffer.width = this.canvas.width;
         this.offScreenFramebuffer.height = this.canvas.height;
@@ -3412,9 +3425,26 @@ class MGWebGL extends Component {
                 this.gl.RGBA8, this.canvas.width, this.canvas.height);
 
         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.offScreenFramebufferColor);
+        this.offScreenFramebufferColor.width = this.canvas.width;
+        this.offScreenFramebufferColor.height = this.canvas.height;
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.offScreenTexture);
         this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.canvas.width, this.canvas.height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
         this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.offScreenTexture, 0);
+
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.offScreenFramebufferBlurX);
+        this.offScreenFramebufferBlurX.width = this.canvas.width;
+        this.offScreenFramebufferBlurX.height = this.canvas.height;
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.blurXTexture);
+        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.canvas.width, this.canvas.height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
+        this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.blurXTexture, 0);
+
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.offScreenFramebufferBlurY);
+        this.offScreenFramebufferBlurY.width = this.canvas.width;
+        this.offScreenFramebufferBlurY.height = this.canvas.height;
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.blurYTexture);
+        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.canvas.width, this.canvas.height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
+        this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.blurYTexture, 0);
+
         console.log("Recreated off-screen framebuffers and textures");
 
         this.offScreenReady = true;
@@ -4537,7 +4567,7 @@ class MGWebGL extends Component {
         this.shaderProgramBlurX.blurSize = this.gl.getUniformLocation(this.shaderProgramBlurX, "blurSize");
     }
 
-    initBlurXShader(vertexShaderBlurY, fragmentShaderBlurY) {
+    initBlurYShader(vertexShaderBlurY, fragmentShaderBlurY) {
         this.shaderProgramBlurY = this.gl.createProgram();
 
         this.gl.attachShader(this.shaderProgramBlurY, vertexShaderBlurY);
@@ -7495,32 +7525,82 @@ class MGWebGL extends Component {
 
         //this.gl.bindTexture(this.gl.TEXTURE_2D, this.rttTextureDepth);
 
-        if (this.useOffScreenBuffers){
-            this.gl.bindFramebuffer(this.gl.READ_FRAMEBUFFER, this.offScreenFramebuffer);
-            this.gl.bindFramebuffer(this.gl.DRAW_FRAMEBUFFER, this.offScreenFramebufferColor);
-            //let canRead = (this.gl.checkFramebufferStatus(this.gl.READ_FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
-            //let canWrite = (this.gl.checkFramebufferStatus(this.gl.DRAW_FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
-            this.gl.clearBufferfv(this.gl.COLOR, 0, [1.0, 1.0, 1.0, 1.0]);
-            this.gl.blitFramebuffer(0, 0, this.offScreenFramebuffer.width, this.offScreenFramebuffer.height,
-                    0, 0, this.offScreenFramebufferColor.width, this.offScreenFramebufferColor.height,
-                    this.gl.COLOR_BUFFER_BIT, this.gl.LINEAR);
-            this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
-            this.gl.bindTexture(this.gl.TEXTURE_2D, this.offScreenTexture)
+        if (!this.useOffScreenBuffers){
+            return;
         }
 
-        //Now we can try something...
+        this.gl.bindFramebuffer(this.gl.READ_FRAMEBUFFER, this.offScreenFramebuffer);
+        this.gl.bindFramebuffer(this.gl.DRAW_FRAMEBUFFER, this.offScreenFramebufferColor);
+        //let canRead = (this.gl.checkFramebufferStatus(this.gl.READ_FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
+        //let canWrite = (this.gl.checkFramebufferStatus(this.gl.DRAW_FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
+        this.gl.clearBufferfv(this.gl.COLOR, 0, [1.0, 1.0, 1.0, 1.0]);
+        this.gl.blitFramebuffer(0, 0, this.offScreenFramebuffer.width, this.offScreenFramebuffer.height,
+                0, 0, this.offScreenFramebufferColor.width, this.offScreenFramebufferColor.height,
+                this.gl.COLOR_BUFFER_BIT, this.gl.LINEAR);
 
-        this.gl.useProgram(this.shaderProgramRenderFrameBuffer);
-        this.setMatrixUniforms(this.shaderProgramRenderFrameBuffer);
-        this.gl.enableVertexAttribArray(this.shaderProgramRenderFrameBuffer.vertexTextureAttribute);
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.offScreenTexture);
 
         let paintMvMatrix = mat4.create();
         let paintPMatrix = mat4.create();
-
         mat4.identity(paintMvMatrix);
-        this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
-
         mat4.ortho(paintPMatrix, -1 , 1 , -1, 1, 0.1, 1000.0);
+
+        //This is an example of chaining framebuffer shader effects.
+        const doBlur = false;
+        if(doBlur){
+            const blurSize = 2.0;
+            const blurSizeX = blurSize/this.gl.viewportWidth;
+            const blurSizeY = blurSize/this.gl.viewportHeight;
+
+            this.gl.useProgram(this.shaderProgramBlurX);
+            this.gl.enableVertexAttribArray(this.shaderProgramBlurX.vertexTextureAttribute);
+            this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.offScreenFramebufferBlurX);
+            this.gl.bindTexture(this.gl.TEXTURE_2D, this.offScreenTexture);
+            this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
+
+            this.gl.uniformMatrix4fv(this.shaderProgramBlurX.pMatrixUniform, false, paintPMatrix);
+            this.gl.uniformMatrix4fv(this.shaderProgramBlurX.mvMatrixUniform, false, paintMvMatrix);
+
+            this.gl.uniform1f(this.shaderProgramBlurX.blurSize,blurSizeX);
+
+            this.gl.clearBufferfv(this.gl.COLOR, 0, [1.0, 0.0, 1.0, 1.0]);
+            this.bindFramebufferDrawBuffers();
+
+            if (this.ext) {
+                this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_INT, 0);
+            } else {
+                this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_SHORT, 0);
+            }
+
+            this.gl.useProgram(this.shaderProgramBlurY);
+            this.gl.enableVertexAttribArray(this.shaderProgramBlurY.vertexTextureAttribute);
+            this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.offScreenFramebufferBlurY);
+            this.gl.bindTexture(this.gl.TEXTURE_2D, this.blurXTexture);
+            this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
+
+            this.gl.uniformMatrix4fv(this.shaderProgramBlurY.pMatrixUniform, false, paintPMatrix);
+            this.gl.uniformMatrix4fv(this.shaderProgramBlurY.mvMatrixUniform, false, paintMvMatrix);
+
+            this.gl.uniform1f(this.shaderProgramBlurY.blurSize,blurSizeY);
+
+            this.gl.clearBufferfv(this.gl.COLOR, 0, [1.0, 0.0, 1.0, 1.0]);
+            this.bindFramebufferDrawBuffers();
+
+            if (this.ext) {
+                this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_INT, 0);
+            } else {
+                this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_SHORT, 0);
+            }
+
+            this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+            this.gl.bindTexture(this.gl.TEXTURE_2D, this.blurYTexture)
+        }
+
+        this.gl.useProgram(this.shaderProgramRenderFrameBuffer);
+        this.gl.enableVertexAttribArray(this.shaderProgramRenderFrameBuffer.vertexTextureAttribute);
+
+        this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
 
         this.gl.uniformMatrix4fv(this.shaderProgramRenderFrameBuffer.pMatrixUniform, false, paintPMatrix);
         this.gl.uniformMatrix4fv(this.shaderProgramRenderFrameBuffer.mvMatrixUniform, false, paintMvMatrix);
