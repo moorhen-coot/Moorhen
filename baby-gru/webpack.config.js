@@ -29,7 +29,8 @@ const paths = {
     'auto-fit-rotamer.svg', 'flip-peptide.svg', 'cis-trans.svg', 'side-chain-180.svg',
     'refine-1.svg', 'add-alt-conf.svg', 'delete.svg', 'mutate.svg', 'temperature.svg',
     'add-peptide-1.svg', 'spin-view.svg', 'edit-chi.svg', 'jed-flip-reverse.svg',
-    'rigid-body.svg', 'atom-at-pointer.svg', 'diff-map.png', 'map.svg', 'rtz.svg'
+    'rigid-body.svg', 'atom-at-pointer.svg', 'diff-map.png', 'map.svg', 'rtz.svg', 
+    'rotamers.svg'
   ]
 }
 

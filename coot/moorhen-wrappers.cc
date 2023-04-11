@@ -541,6 +541,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<molecules_container_t>("molecules_container_t")
     .constructor<bool>()
+    .function("change_to_next_rotamer",&molecules_container_t::change_to_next_rotamer)
     .function("set_user_defined_atom_colour_by_residue",&molecules_container_t::set_user_defined_atom_colour_by_residue)
     .function("set_user_defined_bond_colours",&molecules_container_t::set_user_defined_bond_colours)
     .function("set_colour_wheel_rotation_base",&molecules_container_t::set_colour_wheel_rotation_base)
@@ -664,6 +665,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("file_name_to_string",&molecules_container_t::file_name_to_string)
     .function("replace_molecule_by_model_from_file",&molecules_container_t::replace_molecule_by_model_from_file)
     .function("replace_map_by_mtz_from_file",&molecules_container_t::replace_map_by_mtz_from_file)
+    .function("replace_fragment",&molecules_container_t::replace_fragment)
     .function("sharpen_blur_map",&molecules_container_t::sharpen_blur_map)
     .function("mask_map_by_atom_selection",&molecules_container_t::mask_map_by_atom_selection)
     ;
