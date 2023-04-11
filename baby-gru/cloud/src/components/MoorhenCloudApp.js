@@ -3,6 +3,7 @@ import { MenuItem } from '@mui/material'
 import { PreferencesContext } from "../../../src/utils/MoorhenPreferences"
 import { MoorhenContainer } from "../../../src/components/MoorhenContainer"
 import { isDarkBackground } from '../../../src/WebGLgComponents/mgWebGL'
+import { CloudStorageInstance } from "../utils/MoorhenCloudTimeCapsule"
 import { MoorhenLegendToast } from './MoorhenLegendToast'
 
 const initialMoleculesState = []
@@ -197,7 +198,13 @@ export const MoorhenCloudApp = (props) => {
     }, [preferences])
 
     return <>
-            <MoorhenContainer {...collectedProps} allowScripting={false} extraFileMenuItems={[exportMenuItem]} forwardControls={forwardCollectedControls}/>
+            <MoorhenContainer
+                {...collectedProps} 
+                createBackupStorageInstance={() => { return new CloudStorageInstance() }}
+                allowScripting={false}
+                extraFileMenuItems={[exportMenuItem]}
+                forwardControls={forwardCollectedControls}
+                />
             {props.viewOnly && 
             <MoorhenLegendToast backgroundColor={backgroundColor} hoveredAtom={hoveredAtom} busyFetching={busyFetching} notifyNewContent={notifyNewContent} legendText={legendText}/>
             }
