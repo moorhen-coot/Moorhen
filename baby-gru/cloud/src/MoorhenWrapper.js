@@ -112,29 +112,6 @@ export default class MoorhenWrapper {
     this.controls = controls
   }
 
-  async exportBackups() {
-    const keys = await this.controls.timeCapsuleRef.current.storageInstance.keys()
-    const responses = await Promise.all(
-      keys.map(key => this.controls.timeCapsuleRef.current.storageInstance.getItem(key))
-    )
-    let storedBackups = {}
-    keys.forEach((key, index) => storedBackups[key] = responses[index])
-    return storedBackups
-  }
-
-  async importBackups(backups) {
-    const storedVersion = await this.controls.timeCapsuleRef.current.storageInstance.getItem(JSON.stringify({type: 'version'}))
-    const newVersion = backups[JSON.stringify({type: 'version'})]
-    if (newVersion === storedVersion) {
-      await this.controls.timeCapsuleRef.current.storageInstance.clear()
-      await Promise.all(
-        Object.keys(backups).map(key => 
-          this.controls.timeCapsuleRef.current.storageInstance.setItem(JSON.stringify(key), backups[JSON.stringify(key)])
-        )
-      )
-    }
-  }
-
   async importPreferences(newPreferences) {
     const defaultPreferences = getDefaultValues()
     let preferences

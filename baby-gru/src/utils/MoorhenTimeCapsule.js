@@ -1,16 +1,3 @@
-import localforage from 'localforage';
-
-const createInstance = (name, empty=false) => {
-    const instance = localforage.createInstance({
-        driver: [localforage.INDEXEDDB, localforage.LOCALSTORAGE],
-        name: name,
-        storeName: name
-     })
-     if (empty) {
-        instance.clear()
-     }
-     return instance
-}
 
 export function MoorhenTimeCapsule(moleculesRef, mapsRef, activeMapRef, glRef, preferences) {
     this.moleculesRef = moleculesRef
@@ -28,8 +15,11 @@ export function MoorhenTimeCapsule(moleculesRef, mapsRef, activeMapRef, glRef, p
 }
 
 MoorhenTimeCapsule.prototype.init = function () {
-    this.storageInstance = createInstance('Moorhen-TimeCapsule')
-    return this.checkVersion()
+    if (this.storageInstance) {
+        return this.checkVersion()
+    } else {
+        console.err('Time capsule storage instance has not been defined!')
+    }
 }
 
 MoorhenTimeCapsule.prototype.checkVersion = async function () {

@@ -2,6 +2,7 @@ import { OverlayTrigger } from "react-bootstrap";
 import { Tooltip } from "@mui/material";
 import { v4 as uuidv4 } from 'uuid';
 import { hexToRgb } from "@mui/material";
+import localforage from 'localforage';
 
 export function guid(){
     var d = Date.now();
@@ -648,4 +649,16 @@ export const hexToHsl = (hex) => {
     }
   
     return [ h, s, l ];
-  }
+}
+
+export const createLocalStorageInstance = (name, empty=false) => {
+    const instance = localforage.createInstance({
+        driver: [localforage.INDEXEDDB, localforage.LOCALSTORAGE],
+        name: name,
+        storeName: name
+     })
+     if (empty) {
+        instance.clear()
+     }
+     return instance
+}

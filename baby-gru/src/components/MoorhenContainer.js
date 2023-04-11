@@ -1,7 +1,7 @@
 import { useEffect, useCallback, useReducer, useRef, useState, useContext } from 'react';
 import { Container, Col, Row, Spinner, Toast, ToastContainer } from 'react-bootstrap';
 import { MoorhenWebMG } from './MoorhenWebMG';
-import { MoorhenCommandCentre, convertRemToPx, convertViewtoPx, getTooltipShortcutLabel } from '../utils/MoorhenUtils';
+import { MoorhenCommandCentre, convertRemToPx, convertViewtoPx, getTooltipShortcutLabel, createLocalStorageInstance } from '../utils/MoorhenUtils';
 import { historyReducer, initialHistoryState } from './MoorhenHistoryMenu';
 import { PreferencesContext } from "../utils/MoorhenPreferences";
 import { MoorhenTimeCapsule } from '../utils/MoorhenTimeCapsule';
@@ -107,7 +107,7 @@ export const MoorhenContainer = (props) => {
 
     const {
         disableFileUploads, urlPrefix, extraNavBarMenus, exportCallback, viewOnly, devMode, 
-        monomerLibraryPath, forwardControls, extraFileMenuItems, allowScripting
+        monomerLibraryPath, forwardControls, extraFileMenuItems, allowScripting, backupStorageInstance,
     } = props
     
     const setWindowDimensions = () => {
@@ -127,6 +127,7 @@ export const MoorhenContainer = (props) => {
         const initTimeCapsule = async () => {
             if (cootInitialized) {
                 timeCapsuleRef.current = new MoorhenTimeCapsule(moleculesRef, mapsRef, activeMapRef, glRef, preferences)
+                timeCapsuleRef.current.storageInstance = backupStorageInstance
                 timeCapsuleRef.current.maxBackupCount = preferences.maxBackupCount
                 timeCapsuleRef.current.modificationCountBackupThreshold = preferences.modificationCountBackupThreshold
                 await timeCapsuleRef.current.init()
@@ -425,5 +426,6 @@ MoorhenContainer.defaultProps = {
     extraFileMenuItems: [],
     viewOnly: false,
     devMode: false,
-    allowScripting: true
+    allowScripting: true,
+    backupStorageInstance: createLocalStorageInstance('Moorhen-TimeCapsule') 
 }
