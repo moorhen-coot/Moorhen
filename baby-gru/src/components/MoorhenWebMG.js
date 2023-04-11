@@ -112,8 +112,14 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
 
     useEffect(() => {
         glRef.current.doPerspectiveProjection = props.doPerspectiveProjection
+        glRef.current.clearTextPositionBuffers()
         glRef.current.drawScene()
     }, [props.doPerspectiveProjection])
+
+    useEffect(() => {
+        glRef.current.useOffScreenBuffers = props.useOffScreenBuffers
+        glRef.current.drawScene()
+    }, [props.useOffScreenBuffers])
 
     const handleScoreUpdates = useCallback(async (e) => {
         if (e.detail?.modifiedMolecule !== null && connectedMolNo && connectedMolNo.molecule === e.detail.modifiedMolecule) {

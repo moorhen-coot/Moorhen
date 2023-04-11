@@ -16,6 +16,9 @@ import { base64decode } from './mgBase64.js';
 import  { unProject } from './GLU.js';
 
 //WebGL2 shaders
+import { blur_vertex_shader_source as blur_vertex_shader_source_webgl2 } from './webgl-2/blur-vertex-shader.js';
+import { blur_x_fragment_shader_source as blur_x_fragment_shader_source_webgl2 } from './webgl-2/blur_x-fragment-shader.js';
+import { blur_y_fragment_shader_source as blur_y_fragment_shader_source_webgl2 } from './webgl-2/blur_y-fragment-shader.js';
 import { lines_fragment_shader_source as lines_fragment_shader_source_webgl2 } from './webgl-2/lines-fragment-shader.js';
 import { lines_vertex_shader_source as lines_vertex_shader_source_webgl2 } from './webgl-2/lines-vertex-shader.js';
 import { perfect_sphere_fragment_shader_source as perfect_sphere_fragment_shader_source_webgl2 } from './webgl-2/perfect-sphere-fragment-shader.js';
@@ -42,6 +45,9 @@ import { twod_vertex_shader_source as twod_vertex_shader_source_webgl2 } from '.
 import { triangle_instanced_vertex_shader_source as triangle_instanced_vertex_shader_source_webgl2 } from './webgl-2/triangle-instanced-vertex-shader.js';
 
 //WebGL1 shaders
+import { blur_vertex_shader_source as blur_vertex_shader_source_webgl1 } from './webgl-1/blur-vertex-shader.js';
+import { blur_x_fragment_shader_source as blur_x_fragment_shader_source_webgl1 } from './webgl-1/blur_x-fragment-shader.js';
+import { blur_y_fragment_shader_source as blur_y_fragment_shader_source_webgl1 } from './webgl-1/blur_y-fragment-shader.js';
 import { lines_fragment_shader_source as lines_fragment_shader_source_webgl1 } from './webgl-1/lines-fragment-shader.js';
 import { lines_vertex_shader_source as lines_vertex_shader_source_webgl1 } from './webgl-1/lines-vertex-shader.js';
 import { perfect_sphere_fragment_shader_source as perfect_sphere_fragment_shader_source_webgl1 } from './webgl-1/perfect-sphere-fragment-shader.js';
@@ -1364,6 +1370,7 @@ class MGWebGL extends Component {
 
         this.gl.viewportWidth = this.canvas.width;
         this.gl.viewportHeight = this.canvas.height;
+        this.recreateOffScreeenBuffers();
 
     }
 
@@ -1541,6 +1548,11 @@ class MGWebGL extends Component {
         this.doShadow = false;
         this.doShadowDepthDebug = false;
 
+        this.offScreenFramebuffer = null;
+        this.useOffScreenBuffers = false;
+        this.offScreenReady = false;
+        this.framebufferDrawBuffersReady = false;
+
         this.textCtx = document.createElement("canvas").getContext("2d", {willReadFrequently: true});
         this.circleCtx = document.createElement("canvas").getContext("2d");
 
@@ -1665,6 +1677,9 @@ class MGWebGL extends Component {
 
         let vertexShader;
         let fragmentShader;
+        let blurVertexShader;
+        let blurXFragmentShader;
+        let blurYFragmentShader;
         let lineVertexShader;
         let thickLineVertexShader;
         let thickLineNormalVertexShader;
@@ -1705,6 +1720,9 @@ class MGWebGL extends Component {
         this.doRedraw = false;
         let myVar = setInterval(function () { self.drawSceneIfDirty() }, 16);
 
+        let blur_vertex_shader_source = blur_vertex_shader_source_webgl1;
+        let blur_x_fragment_shader_source = blur_x_fragment_shader_source_webgl1;
+        let blur_y_fragment_shader_source = blur_y_fragment_shader_source_webgl1;
         let lines_fragment_shader_source = lines_fragment_shader_source_webgl1;
         let lines_vertex_shader_source = lines_vertex_shader_source_webgl1;
         let perfect_sphere_fragment_shader_source = perfect_sphere_fragment_shader_source_webgl1;
@@ -1731,6 +1749,9 @@ class MGWebGL extends Component {
         let triangle_instanced_vertex_shader_source = triangle_instanced_vertex_shader_source_webgl1;
 
         if(this.WEBGL2){
+            blur_vertex_shader_source = blur_vertex_shader_source_webgl2;
+            blur_x_fragment_shader_source = blur_x_fragment_shader_source_webgl2;
+            blur_y_fragment_shader_source = blur_y_fragment_shader_source_webgl2;
             lines_fragment_shader_source = lines_fragment_shader_source_webgl2;
             lines_vertex_shader_source = lines_vertex_shader_source_webgl2;
             perfect_sphere_fragment_shader_source = perfect_sphere_fragment_shader_source_webgl2;
@@ -1763,6 +1784,9 @@ class MGWebGL extends Component {
         lineVertexShader = getShader(self.gl, lines_vertex_shader_source, "vertex");
         thickLineVertexShader = getShader(self.gl, thick_lines_vertex_shader_source, "vertex");
         thickLineNormalVertexShader = getShader(self.gl, thick_lines_normal_vertex_shader_source, "vertex");
+        blurVertexShader = getShader(self.gl, blur_vertex_shader_source, "vertex");
+        blurXFragmentShader = getShader(self.gl, blur_x_fragment_shader_source, "fragment");
+        blurYFragmentShader = getShader(self.gl, blur_y_fragment_shader_source, "fragment");
         lineFragmentShader = getShader(self.gl, lines_fragment_shader_source, "fragment");
         textVertexShader = getShader(self.gl, triangle_vertex_shader_source, "vertex");
         circlesVertexShader = getShader(self.gl, circles_vertex_shader_source, "vertex");
@@ -1789,8 +1813,10 @@ class MGWebGL extends Component {
             self.initPointSpheresShadowShaders(pointSpheresShadowVertexShader, pointSpheresShadowFragmentShader);
         }
 
-        self.initRenderFrameBufferShaders(renderFrameBufferVertexShader, renderFrameBufferFragmentShader);
+        self.initRenderFrameBufferShaders(blurVertexShader, renderFrameBufferFragmentShader);
         self.initLineShaders(lineVertexShader, lineFragmentShader);
+        self.initBlurXShader(blurVertexShader, blurXFragmentShader);
+        self.initBlurXShader(blurVertexShader, blurYFragmentShader);
         self.initThickLineShaders(thickLineVertexShader, lineFragmentShader);
         self.initThickLineNormalShaders(thickLineNormalVertexShader, fragmentShader);
         self.initPointSpheresShaders(pointSpheresVertexShader, pointSpheresFragmentShader);
@@ -3354,6 +3380,50 @@ class MGWebGL extends Component {
         this.drawScene();
     }
 
+    recreateOffScreeenBuffers(){
+        // This defines an off-screeen multisampled framebuffer and an off-screen framebuffer and texture to blit to.
+        if(!this.offScreenFramebuffer){
+            this.offScreenFramebuffer = this.gl.createFramebuffer();
+            this.offScreenFramebufferColor = this.gl.createFramebuffer();
+            this.offScreenTexture = this.gl.createTexture();
+            this.gl.bindTexture(this.gl.TEXTURE_2D, this.offScreenTexture);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+            this.offScreenRenderbufferDepth = this.gl.createRenderbuffer();
+            this.offScreenRenderbufferColor = this.gl.createRenderbuffer();
+        }
+
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.offScreenFramebufferColor);
+        this.offScreenFramebufferColor.width = this.canvas.width;
+        this.offScreenFramebufferColor.height = this.canvas.height;
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.offScreenFramebuffer);
+        this.offScreenFramebuffer.width = this.canvas.width;
+        this.offScreenFramebuffer.height = this.canvas.height;
+
+        this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, this.offScreenRenderbufferDepth);
+        this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.RENDERBUFFER, this.offScreenRenderbufferDepth);
+        this.gl.renderbufferStorageMultisample(this.gl.RENDERBUFFER, this.gl.getParameter(this.gl.MAX_SAMPLES),
+                this.gl.DEPTH_COMPONENT24, this.canvas.width, this.canvas.height);
+
+        this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, this.offScreenRenderbufferColor);
+        this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.RENDERBUFFER, this.offScreenRenderbufferColor);
+        this.gl.renderbufferStorageMultisample(this.gl.RENDERBUFFER, this.gl.getParameter(this.gl.MAX_SAMPLES),
+                this.gl.RGBA8, this.canvas.width, this.canvas.height);
+
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.offScreenFramebufferColor);
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.offScreenTexture);
+        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.canvas.width, this.canvas.height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
+        this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.offScreenTexture, 0);
+        console.log("Recreated off-screen framebuffers and textures");
+
+        this.offScreenReady = true;
+
+        this.gl.bindTexture(this.gl.TEXTURE_2D, null);
+        this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, null);
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+    }
+
     initTextureFramebuffer() {
 
         this.rttFramebuffer = this.gl.createFramebuffer();
@@ -4440,52 +4510,83 @@ class MGWebGL extends Component {
 
     }
 
+    initBlurXShader(vertexShaderBlurX, fragmentShaderBlurX) {
+        this.shaderProgramBlurX = this.gl.createProgram();
+
+        this.gl.attachShader(this.shaderProgramBlurX, vertexShaderBlurX);
+        this.gl.attachShader(this.shaderProgramBlurX, fragmentShaderBlurX);
+        this.gl.bindAttribLocation(this.shaderProgramBlurX, 0, "aVertexPosition");
+        this.gl.bindAttribLocation(this.shaderProgramBlurX, 3, "aVertexTexture");
+        this.gl.linkProgram(this.shaderProgramBlurX);
+
+        if (!this.gl.getProgramParameter(this.shaderProgramBlurX, this.gl.LINK_STATUS)) {
+            alert("Could not initialise shaders (initRenderBlurXShader)");
+        }
+
+        this.gl.useProgram(this.shaderProgramBlurX);
+
+        this.shaderProgramBlurX.vertexPositionAttribute = this.gl.getAttribLocation(this.shaderProgramBlurX, "aVertexPosition");
+        this.gl.enableVertexAttribArray(this.shaderProgramBlurX.vertexPositionAttribute);
+
+        this.shaderProgramBlurX.vertexTextureAttribute = this.gl.getAttribLocation(this.shaderProgramBlurX, "aVertexTexture");
+        this.gl.enableVertexAttribArray(this.shaderProgramBlurX.vertexTextureAttribute);
+
+        this.shaderProgramBlurX.pMatrixUniform = this.gl.getUniformLocation(this.shaderProgramBlurX, "uPMatrix");
+        this.shaderProgramBlurX.mvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramBlurX, "uMVMatrix");
+
+        this.shaderProgramBlurX.blurSize = this.gl.getUniformLocation(this.shaderProgramBlurX, "blurSize");
+    }
+
+    initBlurXShader(vertexShaderBlurY, fragmentShaderBlurY) {
+        this.shaderProgramBlurY = this.gl.createProgram();
+
+        this.gl.attachShader(this.shaderProgramBlurY, vertexShaderBlurY);
+        this.gl.attachShader(this.shaderProgramBlurY, fragmentShaderBlurY);
+        this.gl.bindAttribLocation(this.shaderProgramBlurY, 0, "aVertexPosition");
+        this.gl.bindAttribLocation(this.shaderProgramBlurY, 3, "aVertexTexture");
+        this.gl.linkProgram(this.shaderProgramBlurY);
+
+        if (!this.gl.getProgramParameter(this.shaderProgramBlurY, this.gl.LINK_STATUS)) {
+            alert("Could not initialise shaders (initRenderBlurYShader)");
+        }
+
+        this.gl.useProgram(this.shaderProgramBlurY);
+
+        this.shaderProgramBlurY.vertexPositionAttribute = this.gl.getAttribLocation(this.shaderProgramBlurY, "aVertexPosition");
+        this.gl.enableVertexAttribArray(this.shaderProgramBlurY.vertexPositionAttribute);
+
+        this.shaderProgramBlurY.vertexTextureAttribute = this.gl.getAttribLocation(this.shaderProgramBlurY, "aVertexTexture");
+        this.gl.enableVertexAttribArray(this.shaderProgramBlurY.vertexTextureAttribute);
+
+        this.shaderProgramBlurY.pMatrixUniform = this.gl.getUniformLocation(this.shaderProgramBlurY, "uPMatrix");
+        this.shaderProgramBlurY.mvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramBlurY, "uMVMatrix");
+
+        this.shaderProgramBlurY.blurSize = this.gl.getUniformLocation(this.shaderProgramBlurY, "blurSize");
+    }
+
     initRenderFrameBufferShaders(vertexShaderRenderFrameBuffer, fragmentShaderRenderFrameBuffer) {
         this.shaderProgramRenderFrameBuffer = this.gl.createProgram();
 
         this.gl.attachShader(this.shaderProgramRenderFrameBuffer, vertexShaderRenderFrameBuffer);
         this.gl.attachShader(this.shaderProgramRenderFrameBuffer, fragmentShaderRenderFrameBuffer);
         this.gl.bindAttribLocation(this.shaderProgramRenderFrameBuffer, 0, "aVertexPosition");
-        this.gl.bindAttribLocation(this.shaderProgramRenderFrameBuffer, 1, "aVertexColour");
-        this.gl.bindAttribLocation(this.shaderProgramRenderFrameBuffer, 2, "aVertexNormal");
         this.gl.bindAttribLocation(this.shaderProgramRenderFrameBuffer, 3, "aVertexTexture");
         this.gl.linkProgram(this.shaderProgramRenderFrameBuffer);
 
         if (!this.gl.getProgramParameter(this.shaderProgramRenderFrameBuffer, this.gl.LINK_STATUS)) {
-            alert("Could not initialise shaders (initRenderFrameBufferShaders)");
+            alert("Could not initialise shaders (initRenderFrameBufferShaders)"+this.gl.getShaderInfoLog(this.shaderProgramRenderFrameBuffer));
         }
 
         this.gl.useProgram(this.shaderProgramRenderFrameBuffer);
 
-        this.shaderProgramRenderFrameBuffer.vertexNormalAttribute = this.gl.getAttribLocation(this.shaderProgramRenderFrameBuffer, "aVertexNormal");
-        this.gl.enableVertexAttribArray(this.shaderProgramRenderFrameBuffer.vertexNormalAttribute);
-
         this.shaderProgramRenderFrameBuffer.vertexPositionAttribute = this.gl.getAttribLocation(this.shaderProgramRenderFrameBuffer, "aVertexPosition");
         this.gl.enableVertexAttribArray(this.shaderProgramRenderFrameBuffer.vertexPositionAttribute);
-
-        this.shaderProgramRenderFrameBuffer.vertexColourAttribute = this.gl.getAttribLocation(this.shaderProgramRenderFrameBuffer, "aVertexColour");
-        this.gl.enableVertexAttribArray(this.shaderProgramRenderFrameBuffer.vertexColourAttribute);
 
         this.shaderProgramRenderFrameBuffer.vertexTextureAttribute = this.gl.getAttribLocation(this.shaderProgramRenderFrameBuffer, "aVertexTexture");
         this.gl.enableVertexAttribArray(this.shaderProgramRenderFrameBuffer.vertexTextureAttribute);
 
         this.shaderProgramRenderFrameBuffer.pMatrixUniform = this.gl.getUniformLocation(this.shaderProgramRenderFrameBuffer, "uPMatrix");
         this.shaderProgramRenderFrameBuffer.mvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramRenderFrameBuffer, "uMVMatrix");
-        this.shaderProgramRenderFrameBuffer.mvInvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramRenderFrameBuffer, "uMVINVMatrix");
-
-        this.shaderProgramRenderFrameBuffer.fog_start = this.gl.getUniformLocation(this.shaderProgramRenderFrameBuffer, "fog_start");
-        this.shaderProgramRenderFrameBuffer.fog_end = this.gl.getUniformLocation(this.shaderProgramRenderFrameBuffer, "fog_end");
-        this.shaderProgramRenderFrameBuffer.fogColour = this.gl.getUniformLocation(this.shaderProgramRenderFrameBuffer, "fogColour");
-
-        this.shaderProgramRenderFrameBuffer.clipPlane0 = this.gl.getUniformLocation(this.shaderProgramRenderFrameBuffer, "clipPlane0");
-        this.shaderProgramRenderFrameBuffer.clipPlane1 = this.gl.getUniformLocation(this.shaderProgramRenderFrameBuffer, "clipPlane1");
-        this.shaderProgramRenderFrameBuffer.clipPlane2 = this.gl.getUniformLocation(this.shaderProgramRenderFrameBuffer, "clipPlane2");
-        this.shaderProgramRenderFrameBuffer.clipPlane3 = this.gl.getUniformLocation(this.shaderProgramRenderFrameBuffer, "clipPlane3");
-        this.shaderProgramRenderFrameBuffer.clipPlane4 = this.gl.getUniformLocation(this.shaderProgramRenderFrameBuffer, "clipPlane4");
-        this.shaderProgramRenderFrameBuffer.clipPlane5 = this.gl.getUniformLocation(this.shaderProgramRenderFrameBuffer, "clipPlane5");
-        this.shaderProgramRenderFrameBuffer.clipPlane6 = this.gl.getUniformLocation(this.shaderProgramRenderFrameBuffer, "clipPlane6");
-        this.shaderProgramRenderFrameBuffer.clipPlane7 = this.gl.getUniformLocation(this.shaderProgramRenderFrameBuffer, "clipPlane7");
-        this.shaderProgramRenderFrameBuffer.nClipPlanes = this.gl.getUniformLocation(this.shaderProgramRenderFrameBuffer, "nClipPlanes");
 
     }
 
@@ -7125,6 +7226,7 @@ class MGWebGL extends Component {
         this.mouseDown = false;
         let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
 
+
         if (calculatingShadowMap) {
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.rttFramebufferDepth);
             this.gl.viewport(0, 0, this.gl.viewportWidth / width_ratio, this.gl.viewportHeight / height_ratio);
@@ -7136,8 +7238,13 @@ class MGWebGL extends Component {
             let canRead = (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
         } else {
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+            if(this.useOffScreenBuffers&&this.offScreenReady){
+                this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.offScreenFramebuffer);
+                let canRead = (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
+            }
             this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
         }
+
         this.gl.clearColor(this.background_colour[0], this.background_colour[1], this.background_colour[2], this.background_colour[3]);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
@@ -7345,7 +7452,7 @@ class MGWebGL extends Component {
             this.pixel_data = pixels;
         }
         if(this.renderToTexture) {
-            let canRead = (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
+            console.log("SCREENSHOT")
             const width_ratio = this.gl.viewportWidth / this.rttFramebuffer.width;
             const height_ratio = this.gl.viewportHeight / this.rttFramebuffer.height;
             if (this.WEBGL2) {
@@ -7363,10 +7470,14 @@ class MGWebGL extends Component {
             this.pixel_data = pixels;
         }
 
-        if (!this.doShadowDepthDebug || !this.doShadow) {
-            this.nFrames += 1;
+        this.nFrames += 1;
+
+        if (!this.doShadowDepthDebug && !this.doShadow && !this.useOffScreenBuffers) {
             return;
         }
+        if(!this.offScreenReady) return;
+
+        const currentBinding = this.gl.getParameter(this.gl.FRAMEBUFFER_BINDING);
 
         // This is testing depth buffer.
 
@@ -7377,83 +7488,94 @@ class MGWebGL extends Component {
 
         this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
         this.gl.clearColor(this.background_colour[0], this.background_colour[1], this.background_colour[2], this.background_colour[3]);
+        this.gl.clearColor(1.0,1.0,0.0,1.0);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
         //this.gl.bindTexture(this.gl.TEXTURE_2D, this.rttTexture);
-        this.gl.bindTexture(this.gl.TEXTURE_2D, this.rttTextureDepth);
+
+        //this.gl.bindTexture(this.gl.TEXTURE_2D, this.rttTextureDepth);
+
+        if (this.useOffScreenBuffers){
+            this.gl.bindFramebuffer(this.gl.READ_FRAMEBUFFER, this.offScreenFramebuffer);
+            this.gl.bindFramebuffer(this.gl.DRAW_FRAMEBUFFER, this.offScreenFramebufferColor);
+            //let canRead = (this.gl.checkFramebufferStatus(this.gl.READ_FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
+            //let canWrite = (this.gl.checkFramebufferStatus(this.gl.DRAW_FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
+            this.gl.clearBufferfv(this.gl.COLOR, 0, [1.0, 1.0, 1.0, 1.0]);
+            this.gl.blitFramebuffer(0, 0, this.offScreenFramebuffer.width, this.offScreenFramebuffer.height,
+                    0, 0, this.offScreenFramebufferColor.width, this.offScreenFramebufferColor.height,
+                    this.gl.COLOR_BUFFER_BIT, this.gl.LINEAR);
+            this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+            this.gl.bindTexture(this.gl.TEXTURE_2D, this.offScreenTexture)
+        }
+
+        //Now we can try something...
 
         this.gl.useProgram(this.shaderProgramRenderFrameBuffer);
         this.setMatrixUniforms(this.shaderProgramRenderFrameBuffer);
         this.gl.enableVertexAttribArray(this.shaderProgramRenderFrameBuffer.vertexTextureAttribute);
-        mat4.identity(this.mvMatrix);
-        mat4.identity(this.mvInvMatrix);
-        var right = vec3Create([1.0, 0.0, 0.0]);
-        var up = vec3Create([0.0, 1.0, 0.0]);
 
-        vec3.transformMat4(up, up, invMat);
-        vec3.transformMat4(right, right, invMat);
-        mat4.scale(this.pMatrix, this.pMatrix, [this.zoom, this.zoom, 1]);
+        let paintMvMatrix = mat4.create();
+        let paintPMatrix = mat4.create();
 
-        //console.log(up);
-        //console.log(right);
+        mat4.identity(paintMvMatrix);
+        this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
 
-        this.gl.uniformMatrix4fv(this.shaderProgramRenderFrameBuffer.pMatrixUniform, false, this.pMatrix);
-        this.gl.uniformMatrix4fv(this.shaderProgramRenderFrameBuffer.mvMatrixUniform, false, this.mvMatrix);
-        this.gl.uniformMatrix4fv(this.shaderProgramRenderFrameBuffer.mvInvMatrixUniform, false, this.mvInvMatrix);
-        this.gl.uniform1f(this.shaderProgramRenderFrameBuffer.fog_start, 0.0);
-        this.gl.uniform1f(this.shaderProgramRenderFrameBuffer.fog_end, 1000.0);
+        mat4.ortho(paintPMatrix, -1 , 1 , -1, 1, 0.1, 1000.0);
 
-        var textNormals = [0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0];
-        var textColours = [1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0];
-        var textTexCoords = [0.0, 0.0, 1.0, 0.0, 1.0, 1.0,
-            0.0, 0.0, 1.0, 1.0, 0.0, 1.0];
-        var textVertices = [
-            -24.0 * right[0] - 24.0 * up[0], -24.0 * right[1] - 24.0 * up[1], -24.0 * right[2] - 24.0 * up[2],
-            24.0 * right[0] - 24.0 * up[0], 24.0 * right[1] - 24.0 * up[1], 24.0 * right[2] - 24.0 * up[2],
-            24.0 * right[0] + 24.0 * up[0], 24.0 * right[1] + 24.0 * up[1], 24.0 * right[2] + 24.0 * up[2],
+        this.gl.uniformMatrix4fv(this.shaderProgramRenderFrameBuffer.pMatrixUniform, false, paintPMatrix);
+        this.gl.uniformMatrix4fv(this.shaderProgramRenderFrameBuffer.mvMatrixUniform, false, paintMvMatrix);
 
-            -24.0 * right[0] - 24.0 * up[0], -24.0 * right[1] - 24.0 * up[1], -24.0 * right[2] - 24.0 * up[2],
-            24.0 * up[0] + 24.0 * right[0], 24.0 * up[1] + 24.0 * right[1], 24.0 * up[2] + 24.0 * right[2],
-            -24.0 * right[0] + 24.0 * up[0], -24.0 * right[1] + 24.0 * up[1], -24.0 * right[2] + 24.0 * up[2]];
-        var textIndexs = [0, 1, 2, 3, 4, 5];
-
-        var textNormalBuffer = this.gl.createBuffer();
-        var textPositionBuffer = this.gl.createBuffer();
-        var textColourBuffer = this.gl.createBuffer();
-        var textTexCoordBuffer = this.gl.createBuffer();
-        var textIndexesBuffer = this.gl.createBuffer();
-
-        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, textIndexesBuffer);
-        if (this.ext) {
-            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(textIndexs), this.gl.STATIC_DRAW);
-        } else {
-            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(textIndexs), this.gl.STATIC_DRAW);
-        }
-
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, textTexCoordBuffer);
-        this.gl.vertexAttribPointer(this.shaderProgramRenderFrameBuffer.vertexTextureAttribute, 2, this.gl.FLOAT, false, 0, 0);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(textTexCoords), this.gl.STATIC_DRAW);
-
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, textNormalBuffer);
-        this.gl.vertexAttribPointer(this.shaderProgramRenderFrameBuffer.vertexNormalAttribute, 3, this.gl.FLOAT, false, 0, 0);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(textNormals), this.gl.STATIC_DRAW);
-
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, textColourBuffer);
-        this.gl.vertexAttribPointer(this.shaderProgramRenderFrameBuffer.vertexColourAttribute, 4, this.gl.FLOAT, false, 0, 0);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(textColours), this.gl.STATIC_DRAW);
-
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, textPositionBuffer);
-        this.gl.vertexAttribPointer(this.shaderProgramRenderFrameBuffer.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(textVertices), this.gl.DYNAMIC_DRAW);
+        this.bindFramebufferDrawBuffers();
 
         if (this.ext) {
-            this.gl.drawElements(this.gl.TRIANGLES, textIndexs.length, this.gl.UNSIGNED_INT, 0);
+            this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_INT, 0);
         } else {
-            this.gl.drawElements(this.gl.TRIANGLES, textIndexs.length, this.gl.UNSIGNED_SHORT, 0);
+            this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_SHORT, 0);
         }
 
         this.gl.disableVertexAttribArray(this.shaderProgramRenderFrameBuffer.vertexTextureAttribute);
-        console.log("Finished drawScene");
+        this.gl.bindTexture(this.gl.TEXTURE_2D, null)
+    }
+
+    bindFramebufferDrawBuffers() {
+        if(!this.framebufferDrawBuffersReady) {
+            const textTexCoords = [0.0, 0.0, 1.0, 0.0, 1.0, 1.0,
+                  0.0, 0.0, 1.0, 1.0, 0.0, 1.0];
+            const textVertices = [
+                -1.0, - 1.0, -200,
+                1.0, - 1.0, -200,
+                1.0,  1.0, -200,
+                -1.0,  - 1.0, -200,
+                1.0, 1.0, -200,
+                -1.0,  1.0, -200];
+            const textIndexs = [0, 2, 1, 3, 4, 5];
+
+            this.framebufferDrawPositionBuffer = this.gl.createBuffer();
+            this.framebufferDrawTexCoordBuffer = this.gl.createBuffer();
+            this.framebufferDrawIndexesBuffer = this.gl.createBuffer();
+
+            this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.framebufferDrawIndexesBuffer);
+            if (this.ext) {
+                this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(textIndexs), this.gl.STATIC_DRAW);
+            } else {
+                this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(textIndexs), this.gl.STATIC_DRAW);
+            }
+
+            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.framebufferDrawTexCoordBuffer);
+            this.gl.vertexAttribPointer(this.shaderProgramRenderFrameBuffer.vertexTextureAttribute, 2, this.gl.FLOAT, false, 0, 0);
+            this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(textTexCoords), this.gl.STATIC_DRAW);
+
+            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.framebufferDrawPositionBuffer);
+            this.gl.vertexAttribPointer(this.shaderProgramRenderFrameBuffer.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
+            this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(textVertices), this.gl.DYNAMIC_DRAW);
+            this.framebufferDrawBuffersReady = true;
+        }
+
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.framebufferDrawTexCoordBuffer);
+        this.gl.vertexAttribPointer(this.shaderProgramRenderFrameBuffer.vertexTextureAttribute, 2, this.gl.FLOAT, false, 0, 0);
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.framebufferDrawPositionBuffer);
+        this.gl.vertexAttribPointer(this.shaderProgramRenderFrameBuffer.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
+        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.framebufferDrawIndexesBuffer);
     }
 
     drawTriangles(calculatingShadowMap, invMat) {
@@ -8371,6 +8493,11 @@ class MGWebGL extends Component {
         }
     }
 
+    clearTextPositionBuffers() {
+        if(this.displayBuffers && this.displayBuffers[0])
+            delete this.displayBuffers[0].textPositionBuffer;
+    }
+
     drawTextLabels(up, right) {
         // make sure we can render it even if it's not a power of 2
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.textTex);
@@ -8844,6 +8971,7 @@ class MGWebGL extends Component {
     }
 
     drawAtomLabels(up, right, labelledAtoms, textColour, textTextureDirty) {
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.textTex);
         for (let iat = 0; iat < labelledAtoms.length; iat++) {
             for (let jat = 0; jat < labelledAtoms[iat].length; jat++) {
 

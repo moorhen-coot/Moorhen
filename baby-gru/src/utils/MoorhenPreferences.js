@@ -35,6 +35,7 @@ const getDefaultValues = () => {
         drawMissingLoops: true,
         drawInteractions: false,
         doPerspectiveProjection: false,
+        useOffScreenBuffers: false,
         mouseSensitivity: 0.3,
         wheelSensitivityFactor: 1.0,
         mapLineWidth: 0.46,
@@ -222,6 +223,7 @@ const PreferencesContextProvider = ({ children }) => {
     const [drawMissingLoops, setDrawMissingLoops] = useState(null)
     const [drawInteractions, setDrawInteractions] = useState(null)
     const [doPerspectiveProjection, setDoPerspectiveProjection] = useState(null)
+    const [useOffScreenBuffers, setUseOffScreenBuffers] = useState(null)
     const [mapLineWidth, setMapLineWidth] = useState(null)
     const [makeBackups, setMakeBackups] = useState(null)
     const [showShortcutToast, setShowShortcutToast] = useState(null)
@@ -262,6 +264,7 @@ const PreferencesContextProvider = ({ children }) => {
         24: { label: "clipCap", value: clipCap, valueSetter: setClipCap},
         25: { label: "enableTimeCapsule", value: enableTimeCapsule, valueSetter: setEnableTimeCapsule},
         26: { label: "doPerspectiveProjection", value: doPerspectiveProjection, valueSetter: setDoPerspectiveProjection},
+        27: { label: "useOffScreenBuffers", value: useOffScreenBuffers, valueSetter: setUseOffScreenBuffers},
     }
 
     const restoreDefaults = (defaultValues)=> {
@@ -489,6 +492,15 @@ const PreferencesContextProvider = ({ children }) => {
 
     useMemo(() => {
 
+        if (useOffScreenBuffers === null) {
+            return
+        }
+
+        updateStoredPreferences('useOffScreenBuffers', useOffScreenBuffers);
+    }, [useOffScreenBuffers]);
+
+    useMemo(() => {
+
         if (drawInteractions === null) {
             return
         }
@@ -561,7 +573,8 @@ const PreferencesContextProvider = ({ children }) => {
         wheelSensitivityFactor, setWheelSensitivityFactor, shortcutOnHoveredAtom, setShortcutOnHoveredAtom,
         resetClippingFogging, setResetClippingFogging, maxBackupCount, setMaxBackupCount,
         modificationCountBackupThreshold, setModificationCountBackupThreshold, isMounted,
-        drawInteractions, setDrawInteractions, clipCap, setClipCap, enableTimeCapsule, setEnableTimeCapsule, doPerspectiveProjection, setDoPerspectiveProjection
+        drawInteractions, setDrawInteractions, clipCap, setClipCap, enableTimeCapsule, setEnableTimeCapsule, 
+        doPerspectiveProjection, setDoPerspectiveProjection, useOffScreenBuffers, setUseOffScreenBuffers
     }
 
     return (

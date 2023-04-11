@@ -52,6 +52,13 @@ export const MoorhenViewMenu = (props) => {
                             onChange={() => { props.setDoPerspectiveProjection(!props.doPerspectiveProjection) }}
                             label="Perspective projection"/>
                     </InputGroup>
+                    <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                        <Form.Check 
+                            type="switch"
+                            checked={props.useOffScreenBuffers}
+                            onChange={() => { props.setUseOffScreenBuffers(!props.useOffScreenBuffers) }}
+                            label="Use off-screen buffers"/>
+                    </InputGroup>
                     <hr></hr>
                     <MoorhenBackgroundColorMenuItem {...menuItemProps} />
                     <MoorhenClipFogMenuItem {...menuItemProps} />
