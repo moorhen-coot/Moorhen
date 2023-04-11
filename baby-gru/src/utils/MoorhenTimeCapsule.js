@@ -12,15 +12,13 @@ export function MoorhenTimeCapsule(moleculesRef, mapsRef, activeMapRef, glRef, p
     this.version = 'v7'
     this.disableBackups = false
     this.storageInstance = null
-    this.createStorageInstance = null
 }
 
 MoorhenTimeCapsule.prototype.init = function () {
-    if (!this.createStorageInstance) {
-        console.err('Time capsule storage instance has not been defined!')
-    } else {
-        this.storageInstance = this.createStorageInstance()
+    if (this.storageInstance) {
         return this.checkVersion()
+    } else {
+        console.err('Time capsule storage instance has not been defined!')
     }
 }
 

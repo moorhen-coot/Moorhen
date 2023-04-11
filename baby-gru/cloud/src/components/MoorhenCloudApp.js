@@ -2,7 +2,7 @@ import { useRef, useState, useReducer, useContext, useEffect, useCallback } from
 import { MenuItem } from '@mui/material'
 import { PreferencesContext } from "../../../src/utils/MoorhenPreferences"
 import { MoorhenContainer } from "../../../src/components/MoorhenContainer"
-import { isDarkBackground } from '../../../src/WebGLgComponents/mgWebGL'
+import { isDarkBackground } from "../../../src/WebGLgComponents/mgWebGL"
 import { CloudStorageInstance } from "../utils/MoorhenCloudTimeCapsule"
 import { MoorhenLegendToast } from './MoorhenLegendToast'
 
@@ -200,10 +200,10 @@ export const MoorhenCloudApp = (props) => {
     return <>
             <MoorhenContainer
                 {...collectedProps} 
-                createBackupStorageInstance={() => { return new CloudStorageInstance() }}
                 allowScripting={false}
                 extraFileMenuItems={[exportMenuItem]}
                 forwardControls={forwardCollectedControls}
+                backupStorageInstance={new CloudStorageInstance()}
                 />
             {props.viewOnly && 
             <MoorhenLegendToast backgroundColor={backgroundColor} hoveredAtom={hoveredAtom} busyFetching={busyFetching} notifyNewContent={notifyNewContent} legendText={legendText}/>

@@ -107,7 +107,7 @@ export const MoorhenContainer = (props) => {
 
     const {
         disableFileUploads, urlPrefix, extraNavBarMenus, exportCallback, viewOnly, devMode, 
-        monomerLibraryPath, forwardControls, extraFileMenuItems, allowScripting, createBackupStorageInstance
+        monomerLibraryPath, forwardControls, extraFileMenuItems, allowScripting, backupStorageInstance,
     } = props
     
     const setWindowDimensions = () => {
@@ -127,7 +127,7 @@ export const MoorhenContainer = (props) => {
         const initTimeCapsule = async () => {
             if (cootInitialized) {
                 timeCapsuleRef.current = new MoorhenTimeCapsule(moleculesRef, mapsRef, activeMapRef, glRef, preferences)
-                timeCapsuleRef.current.createStorageInstance = createBackupStorageInstance
+                timeCapsuleRef.current.storageInstance = backupStorageInstance
                 timeCapsuleRef.current.maxBackupCount = preferences.maxBackupCount
                 timeCapsuleRef.current.modificationCountBackupThreshold = preferences.modificationCountBackupThreshold
                 await timeCapsuleRef.current.init()
@@ -426,5 +426,5 @@ MoorhenContainer.defaultProps = {
     viewOnly: false,
     devMode: false,
     allowScripting: true,
-    createBackupStorageInstance: () => { return createLocalStorageInstance('Moorhen-TimeCapsule') }
+    backupStorageInstance: createLocalStorageInstance('Moorhen-TimeCapsule') 
 }
