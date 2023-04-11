@@ -1,7 +1,7 @@
 import { CheckOutlined, CloseOutlined } from "@mui/icons-material";
 import { MenuItem, MenuList, Tooltip } from "@mui/material";
 import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
-import { Button, Overlay, Container, Row, FormSelect, FormGroup, FormLabel, Card, Form } from "react-bootstrap"
+import { Button, Overlay, Container, Row, FormSelect, FormGroup, FormLabel, Card, Form, Stack } from "react-bootstrap"
 import { MoorhenMoleculeSelect } from "./MoorhenMoleculeSelect";
 import { MoorhenCidInputForm } from "./MoorhenCidInputForm";
 import { cidToSpec, getTooltipShortcutLabel, residueCodesThreeToOne, convertViewtoPx } from "../utils/MoorhenUtils";
@@ -600,6 +600,118 @@ export const MoorhenJedFlipTrueButton = (props) => {
         }} />
 }
 
+export const MoorhenNextRotamerButton = (props) => {
+    const [showAccept, setShowAccept] = useState(false)
+    const theButton = useRef(null)
+    const fragmentMolecule = useRef(null)
+    const chosenMolecule = useRef(null)
+    const fragmentCid = useRef(null)
+    const { changeMolecules, backgroundColor, glRef, defaultBondSmoothness } = props
+
+    const nextRotamer = useCallback(async () => {
+        await props.commandCentre.current.cootCommand({
+            returnType: 'status',
+            command: 'change_to_next_rotamer',
+            commandArgs: [fragmentMolecule.current.molNo, fragmentCid.current],
+        }, true)
+        fragmentMolecule.current.atomsDirty = true
+        fragmentMolecule.current.clearBuffersOfStyle('selection', glRef)
+        fragmentMolecule.current.drawSelection(glRef, fragmentCid.current)  
+        await fragmentMolecule.current.redraw(glRef)
+    }, [props.commandCentre, glRef])
+
+    const acceptTransform = useCallback(async () => {
+        await props.commandCentre.current.cootCommand({
+            returnType: 'status',
+            command: 'replace_fragment',
+            commandArgs: [chosenMolecule.current.molNo, fragmentMolecule.current.molNo, fragmentCid.current],
+        }, true)
+        chosenMolecule.current.atomsDirty = true
+        await chosenMolecule.current.redraw(glRef)
+        changeMolecules({ action: 'Remove', item: fragmentMolecule.current })
+        fragmentMolecule.current.delete(glRef)
+        chosenMolecule.current.unhideAll(glRef)
+        setShowAccept(false)
+        const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: glRef.current.origin, modifiedMolecule: chosenMolecule.current.molNo } })
+        document.dispatchEvent(scoresUpdateEvent)
+    }, [changeMolecules, glRef, props.commandCentre])
+
+    const rejectTransform = useCallback(async () => {
+        changeMolecules({ action: 'Remove', item: fragmentMolecule.current })
+        fragmentMolecule.current.delete(glRef)
+        chosenMolecule.current.unhideAll(glRef)
+        setShowAccept(false)
+    }, [changeMolecules, glRef])
+
+    const nonCootCommand = async (molecule, chosenAtom, p) => {
+        chosenMolecule.current = molecule
+        fragmentCid.current = `//${chosenAtom.chain_id}/${chosenAtom.res_no}/*${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`
+        if (!fragmentCid.current) {
+            return
+        }
+        chosenMolecule.current.hideCid(fragmentCid.current, glRef)
+        /* Copy the component to move into a new molecule */
+        const newMolecule = await molecule.copyFragmentUsingCid(fragmentCid.current, backgroundColor, defaultBondSmoothness, glRef, false)
+        /* Next rotaner */
+        await props.commandCentre.current.cootCommand({
+            returnType: 'status',
+            command: 'change_to_next_rotamer',
+            commandArgs: [newMolecule.molNo, fragmentCid.current],
+        }, true)        
+        /* redraw */
+        newMolecule.drawSelection(glRef, fragmentCid.current)
+        await newMolecule.updateAtoms()
+        Object.keys(molecule.displayObjects)
+            .filter(style => { return ['CRs', 'CBs', 'ligands', 'gaussian', 'MolecularSurface', 'VdWSurface', 'DishyBases'].includes(style) })
+            .forEach(async style => {
+                if (molecule.displayObjects[style].length > 0 &&
+                    molecule.displayObjects[style][0].visible) {
+                    await newMolecule.drawWithStyleFromAtoms(style, glRef)
+                }
+            })
+        fragmentMolecule.current = newMolecule
+        changeMolecules({ action: "Add", item: newMolecule })
+        setShowAccept(true)
+    }
+
+    return <><MoorhenSimpleEditButton ref={theButton} {...props}
+        toolTip="Next rotamer"
+        buttonIndex={props.buttonIndex}
+        selectedButtonIndex={props.selectedButtonIndex}
+        setSelectedButtonIndex={props.setSelectedButtonIndex}
+        needsMapData={false}
+        nonCootCommand={nonCootCommand}
+        prompt="Click atom in residue to change rotamers"
+        icon={<img style={{width:'100%', height: '100%'}} alt="change rotamer" className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/rotamers.svg`}/>}
+        formatArgs={() => {}} />
+        <Overlay target={theButton.current} show={showAccept} placement="top">
+            {({ placement, arrowProps, show: _show, popper, ...props }) => (
+                <div
+                    {...props}
+                    style={{
+                        position: 'absolute', padding: '2px 10px', borderRadius: 3,
+                        backgroundColor: backgroundColor, zIndex: 99999,
+                        ...props.style,
+                    }}
+                >
+                    <Card className="mx-2">
+                        <Card.Header >Accept rotamer ?</Card.Header>
+                        <Card.Body style={{ alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
+                            <Row>
+                                <Button onClick={nextRotamer}>Next rotamer</Button>
+                            </Row>
+                            <Stack gap={2} direction='horizontal' style={{paddingTop: '0.5rem'}}>
+                                <Button onClick={acceptTransform}><CheckOutlined /></Button>
+                                <Button className="mx-2" onClick={rejectTransform}><CloseOutlined /></Button>
+                            </Stack>
+                        </Card.Body>
+                    </Card>
+                </div>
+            )}
+        </Overlay>
+    </>
+}
+
 export const MoorhenRotateTranslateZoneButton = (props) => {
     const [showAccept, setShowAccept] = useState(false)
     const [tips, setTips] = useState(null)
@@ -740,7 +852,7 @@ export const MoorhenRotateTranslateZoneButton = (props) => {
                     {...props}
                     style={{
                         position: 'absolute', padding: '2px 10px', borderRadius: 3,
-                        backgroundColor: backgroundColor,
+                        backgroundColor: backgroundColor, zIndex: 99999,
                         ...props.style,
                     }}
                 >

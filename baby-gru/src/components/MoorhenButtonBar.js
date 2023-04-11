@@ -3,7 +3,7 @@ import { ButtonGroup, Carousel } from "react-bootstrap"
 import { MoorhenAutofitRotamerButton, MoorhenFlipPeptideButton, MoorhenSideChain180Button, MoorhenAddTerminalResidueDirectlyUsingCidButton,
         MoorhenEigenFlipLigandButton, MoorhenJedFlipFalseButton, MoorhenJedFlipTrueButton, MoorhenConvertCisTransButton, MoorhenAddSimpleButton,
         MoorhenRefineResiduesUsingAtomCidButton, MoorhenDeleteUsingCidButton, MoorhenMutateButton, MoorhenRotateTranslateZoneButton,
-        MoorhenAddAltConfButton, MoorhenRigidBodyFitButton } from "./MoorhenSimpleEditButton"
+        MoorhenAddAltConfButton, MoorhenRigidBodyFitButton, MoorhenNextRotamerButton } from "./MoorhenSimpleEditButton"
 import { IconButton, Drawer } from "@mui/material";
 import { ArrowDownwardOutlined, ArrowUpwardOutlined } from "@mui/icons-material";
 import { convertRemToPx, convertViewtoPx} from '../utils/MoorhenUtils';
@@ -42,23 +42,26 @@ export const MoorhenButtonBar = (props) => {
         (<MoorhenRigidBodyFitButton {...props} key='rigid-body-fit' selectedButtonIndex={selectedButtonIndex}
             setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="8" />),
 
-        (<MoorhenEigenFlipLigandButton {...props} key='eigen-flip' selectedButtonIndex={selectedButtonIndex}
+        (<MoorhenNextRotamerButton  {...props} key='next-rotamer' selectedButtonIndex={selectedButtonIndex}
             setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="9" />),
 
-        (<MoorhenJedFlipFalseButton {...props} key='jed-flip-false' selectedButtonIndex={selectedButtonIndex}
+        (<MoorhenEigenFlipLigandButton {...props} key='eigen-flip' selectedButtonIndex={selectedButtonIndex}
             setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="10" />),
 
-        (<MoorhenJedFlipTrueButton {...props} key='jed-flip-true' selectedButtonIndex={selectedButtonIndex}
+        (<MoorhenJedFlipFalseButton {...props} key='jed-flip-false' selectedButtonIndex={selectedButtonIndex}
             setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="11" />),
 
-        (<MoorhenRotateTranslateZoneButton {...props} key='rotate-translate-zone' selectedButtonIndex={selectedButtonIndex}
+        (<MoorhenJedFlipTrueButton {...props} key='jed-flip-true' selectedButtonIndex={selectedButtonIndex}
             setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="12" />),
+
+        (<MoorhenRotateTranslateZoneButton {...props} key='rotate-translate-zone' selectedButtonIndex={selectedButtonIndex}
+            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="13" />),
         
         (<MoorhenAddAltConfButton {...props} key='add-alt-conf' selectedButtonIndex={selectedButtonIndex}
-            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="13" />),
+            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="14" />),
     
         (<MoorhenConvertCisTransButton {...props} key='cis-trans' selectedButtonIndex={selectedButtonIndex}
-                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="14" />),
+                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="15" />),
 
     ]
 
