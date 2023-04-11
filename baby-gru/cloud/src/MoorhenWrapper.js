@@ -5,6 +5,7 @@ import { MoorhenMolecule } from "../../src/utils/MoorhenMolecule"
 import { MoorhenMap } from "../../src/utils/MoorhenMap"
 import { guid } from "../../src/utils/MoorhenUtils"
 import { PreferencesContextProvider, getDefaultValues } from "../../src/utils/MoorhenPreferences";
+import { CloudStorageInstance } from "../utils/MoorhenCloudTimeCapsule"
 import reportWebVitals from '../../src/reportWebVitals'
 import localforage from 'localforage';
 import parse from 'html-react-parser';
@@ -331,12 +332,15 @@ export default class MoorhenWrapper {
   renderMoorhen() {
     const rootDiv = document.getElementById(this.rootId)
     const root = ReactDOM.createRoot(rootDiv)
+    const backupStorageInstance = new CloudStorageInstance()
+    // TODO: Now we can set the functions to talk to cloud here...
     root.render(
       <React.StrictMode>
         <div className="App">
           <PreferencesContextProvider>
             <MoorhenCloudApp 
               urlPrefix={this.urlPrefix}
+              backupStorageInstance={backupStorageInstance}
               forwardControls={this.forwardControls.bind(this)}
               disableFileUploads={true}
               exportCallback={this.exportCallback.bind(this)}
