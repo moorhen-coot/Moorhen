@@ -1419,7 +1419,7 @@ export const MoorhenImportFSigFMenuItem = (props) => {
 
     return <MoorhenMenuItem
         popoverContent={panelContent}
-        menuItemText="Connect molecule and map for updating..."
+        menuItemText="Connect mol. and map for updating..."
         onCompleted={onCompleted}
         setPopoverIsShown={props.setPopoverIsShown}
     />
