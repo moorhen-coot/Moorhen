@@ -41,8 +41,25 @@ export default class MoorhenWrapper {
     this.noDataLegendMessage = parse('<div></div>')
     this.exportCallback = () => {}
     this.exportPreferencesCallback = () => {}
+    this.backupStorageInstance = new CloudStorageInstance()
     reportWebVitals()
     createModule()
+  }
+
+  setBackupSaveListener(functionCallback) {
+    this.backupStorageInstance.exportBackupCallback = functionCallback
+  }
+
+  setBackupLoadListener(functionCallback) {
+    this.backupStorageInstance.importBackupCallback = functionCallback
+  }
+
+  setRemoveBackupListener(functionCallback) {
+    this.backupStorageInstance.removeBackupCallback = functionCallback
+  }
+
+  setBackupListLoadListener(functionCallback) {
+    this.backupStorageInstance.loadBackupList = functionCallback
   }
 
   setWorkMode(mode='build') {
@@ -332,15 +349,13 @@ export default class MoorhenWrapper {
   renderMoorhen() {
     const rootDiv = document.getElementById(this.rootId)
     const root = ReactDOM.createRoot(rootDiv)
-    const backupStorageInstance = new CloudStorageInstance()
-    // TODO: Now we can set the functions to talk to cloud here...
     root.render(
       <React.StrictMode>
         <div className="App">
           <PreferencesContextProvider>
             <MoorhenCloudApp 
               urlPrefix={this.urlPrefix}
-              backupStorageInstance={backupStorageInstance}
+              backupStorageInstance={this.backupStorageInstance}
               forwardControls={this.forwardControls.bind(this)}
               disableFileUploads={true}
               exportCallback={this.exportCallback.bind(this)}

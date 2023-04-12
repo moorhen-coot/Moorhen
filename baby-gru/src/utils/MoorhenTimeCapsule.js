@@ -18,7 +18,8 @@ MoorhenTimeCapsule.prototype.init = function () {
     if (this.storageInstance) {
         return this.checkVersion()
     } else {
-        console.err('Time capsule storage instance has not been defined!')
+        console.log('Time capsule storage instance has not been defined! Backups will be disabled...')
+        this.disableBackups = true
     }
 }
 
