@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { MoorhenCloudApp } from './components/MoorhenCloudApp';
+import { CloudStorageInstance } from "./utils/MoorhenCloudTimeCapsule"
 import { MoorhenMolecule } from "../../src/utils/MoorhenMolecule"
 import { MoorhenMap } from "../../src/utils/MoorhenMap"
 import { guid } from "../../src/utils/MoorhenUtils"
@@ -40,8 +41,25 @@ export default class MoorhenWrapper {
     this.noDataLegendMessage = parse('<div></div>')
     this.exportCallback = () => {}
     this.exportPreferencesCallback = () => {}
+    this.backupStorageInstance = new CloudStorageInstance()
     reportWebVitals()
     createModule()
+  }
+
+  setBackupSaveListener(functionCallback) {
+    this.backupStorageInstance.exportBackupCallback = functionCallback
+  }
+
+  setBackupLoadListener(functionCallback) {
+    this.backupStorageInstance.importBackupCallback = functionCallback
+  }
+
+  setRemoveBackupListener(functionCallback) {
+    this.backupStorageInstance.removeBackupCallback = functionCallback
+  }
+
+  setBackupListLoadListener(functionCallback) {
+    this.backupStorageInstance.loadBackupList = functionCallback
   }
 
   setWorkMode(mode='build') {
@@ -337,6 +355,7 @@ export default class MoorhenWrapper {
           <PreferencesContextProvider>
             <MoorhenCloudApp 
               urlPrefix={this.urlPrefix}
+              backupStorageInstance={this.backupStorageInstance}
               forwardControls={this.forwardControls.bind(this)}
               disableFileUploads={true}
               exportCallback={this.exportCallback.bind(this)}

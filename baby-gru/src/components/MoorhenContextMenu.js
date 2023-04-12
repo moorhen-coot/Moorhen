@@ -3,6 +3,7 @@ import { ClickAwayListener, FormGroup, IconButton, List, MenuItem, Tooltip } fro
 import { CheckOutlined, CloseOutlined } from "@mui/icons-material";
 import { MoorhenMergeMoleculesMenuItem, MoorhenGetMonomerMenuItem, MoorhenFitLigandRightHereMenuItem, MoorhenImportFSigFMenuItem, MoorhenBackgroundColorMenuItem } from "./MoorhenMenuItem";
 import { cidToSpec, convertRemToPx, getTooltipShortcutLabel } from "../utils/MoorhenUtils";
+import { getBackupLabel } from "../utils/MoorhenTimeCapsule"
 import { useRef, useState, useCallback } from "react";
 import { Popover, Overlay, FormLabel, FormSelect, Button, Stack, Form, Card, Row } from "react-bootstrap";
 import { deleteFormatArgs, rigidBodyFitFormatArgs } from "./MoorhenSimpleEditButton";
@@ -157,7 +158,10 @@ export const MoorhenContextMenu = (props) => {
         mapNames: session.mapData.map(map => map.uniqueId),
         mtzNames: session.mapData.filter(map => map.hasReflectionData).map(map => map.associatedReflectionFileName)
     }
-    const keyString = JSON.stringify(key)
+    const keyString = JSON.stringify({
+      ...key,
+      label: getBackupLabel(key)
+    })
     await props.timeCapsuleRef.current.createBackup(keyString, sessionString)
     props.setShowContextMenu(false)
   }

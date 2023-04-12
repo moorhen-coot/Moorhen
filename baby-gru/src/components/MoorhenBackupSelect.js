@@ -7,8 +7,8 @@ export const MoorhenBackupSelect = forwardRef((props, selectRef) => {
     useEffect(() => {
         async function fetchKeys() {
             const sortedKeys = await props.timeCapsuleRef.current.getSortedKeys()
-            const newStorageOptions = sortedKeys.map(item => {
-                return <option key={item.key} value={item.key}>{item.label}</option>
+            const newStorageOptions = sortedKeys.map((key, index) => {
+                return <option key={`${key.label}-${index}`} value={JSON.stringify(key)}>{key.label}</option>
             })
             setBackupOptions(newStorageOptions)
         }

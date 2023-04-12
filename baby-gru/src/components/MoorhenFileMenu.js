@@ -5,6 +5,7 @@ import { useState, useRef, useEffect } from "react";
 import { MoorhenAssociateReflectionsToMap, MoorhenImportMapCoefficientsMenuItem, MoorhenAutoOpenMtzMenuItem, MoorhenDeleteEverythingMenuItem, MoorhenLoadTutorialDataMenuItem, MoorhenImportMapMenuItem, MoorhenImportFSigFMenuItem, MoorhenBackupsMenuItem } from "./MoorhenMenuItem";
 import { MenuItem } from "@mui/material";
 import { convertViewtoPx, doDownload, readTextFile, getMultiColourRuleArgs } from "../utils/MoorhenUtils";
+import { getBackupLabel } from "../utils/MoorhenTimeCapsule"
 
 export const MoorhenFileMenu = (props) => {
 
@@ -347,20 +348,23 @@ export const MoorhenFileMenu = (props) => {
             mapNames: session.mapData.map(map => map.uniqueId),
             mtzNames: session.mapData.filter(map => map.hasReflectionData).map(map => map.associatedReflectionFileName)
         }
-        const keyString = JSON.stringify(key)
+        const keyString = JSON.stringify({
+            ...key,
+            label: getBackupLabel(key)
+        })
         return props.timeCapsuleRef.current.createBackup(keyString, sessionString)
     }
 
     const getBackupCards = (sortedKeys) => {
         if (sortedKeys && sortedKeys.length > 0) {
-            return sortedKeys.map((item, index) => {
-                return  <Card key={`${item.label}-${index}`} style={{marginTop: '0.5rem'}}>
+            return sortedKeys.map((key, index) => {
+                return  <Card key={`${key.label}-${index}`} style={{marginTop: '0.5rem'}}>
                             <Card.Body style={{padding:'0.5rem'}}>
                                 <Stack direction="horizontal" gap={2} style={{alignItems: 'center'}}>
-                                    {item.label}
+                                    {key.label}
                                     <Button variant='primary' onClick={async () => {
                                         try {
-                                            let backup = await props.timeCapsuleRef.current.retrieveBackup(item.key)
+                                            let backup = await props.timeCapsuleRef.current.retrieveBackup(JSON.stringify(key))
                                             loadSessionJSON(backup)
                                         } catch (err) {
                                             console.log(err)
@@ -371,7 +375,7 @@ export const MoorhenFileMenu = (props) => {
                                     </Button>
                                     <Button variant='danger' onClick={async () => {
                                         try {
-                                            await props.timeCapsuleRef.current.removeBackup(item.key)
+                                            await props.timeCapsuleRef.current.removeBackup(JSON.stringify(key))
                                             await props.timeCapsuleRef.current.cleanupUnusedDataFiles()
                                             sortedKeys = await props.timeCapsuleRef.current.getSortedKeys()
                                             setBackupKeys(sortedKeys)

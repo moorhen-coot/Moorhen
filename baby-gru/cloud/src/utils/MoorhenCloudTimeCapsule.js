@@ -31,14 +31,6 @@ export function CloudStorageInstance() {
         })
     }
 
-    this.removeAllBackupsCallback = () => {
-        return new Promise((resolve, reject) => {
-            console.log('CLEAR ALL')
-            this.BACKUPS = []
-            resolve()
-        })
-    }
-
     this.loadBackupList = () => {
         return new Promise((resolve, reject) => {
             console.log('GET ALL KEYS')
@@ -51,8 +43,7 @@ export function CloudStorageInstance() {
     this.exportBackupCallback = () => { }
     this.importBackupCallback = () => { }
     this.removeBackupCallback = () => { }
-    this.removeAllBackupsCallback = () => { }
-    this.loadBackupList = () => { }
+    this.loadBackupList = () => { return [] }
 }
 
 CloudStorageInstance.prototype.setItem = function (keyString, valueString) {
@@ -83,7 +74,10 @@ CloudStorageInstance.prototype.keys = async function () {
 }
 
 CloudStorageInstance.prototype.clear = async function () {
-    return this.removeAllBackupsCallback()
+    const allKeys = await this.loadBackupList()
+    await Promise.all(
+        allKeys.map(key => this.removeBackupCallback(key.serNo))
+    )
 }
 
 CloudStorageInstance.prototype.removeItem = function (keyString) {

@@ -1,3 +1,11 @@
+export const getBackupLabel = (key) => {
+    const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }
+    const intK = parseInt(key.dateTime)
+    const date = new Date(intK)
+    const dateString = `${date.toLocaleDateString(Intl.NumberFormat().resolvedOptions().locale, dateOptions)} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`
+    const moleculeNamesLabel = key.molNames.join(',').length > 10 ? key.molNames.join(',').slice(0, 8) + "..." : key.molNames.join(',')
+    return `${moleculeNamesLabel} -- ${dateString} -- ${key.type === 'automatic' ? 'AUTO' : 'MANUAL'}`
+}
 
 export function MoorhenTimeCapsule(moleculesRef, mapsRef, activeMapRef, glRef, preferences) {
     this.moleculesRef = moleculesRef
@@ -9,7 +17,7 @@ export function MoorhenTimeCapsule(moleculesRef, mapsRef, activeMapRef, glRef, p
     this.modificationCount = 0
     this.modificationCountBackupThreshold = 5
     this.maxBackupCount = 10
-    this.version = 'v7'
+    this.version = 'v8'
     this.disableBackups = false
     this.storageInstance = null
 }
@@ -18,7 +26,8 @@ MoorhenTimeCapsule.prototype.init = function () {
     if (this.storageInstance) {
         return this.checkVersion()
     } else {
-        console.err('Time capsule storage instance has not been defined!')
+        console.log('Time capsule storage instance has not been defined! Backups will be disabled...')
+        this.disableBackups = true
     }
 }
 
@@ -187,7 +196,12 @@ MoorhenTimeCapsule.prototype.addModification = async function() {
             mapNames: this.mapsRef.current.map(map => map.uniqueId),
             mtzNames: this.mapsRef.current.filter(map => map.hasReflectionData).map(map => map.associatedReflectionFileName)
         }
-        const keyString = JSON.stringify(key)
+        
+        const keyString = JSON.stringify({
+            ...key,
+            label: getBackupLabel(key)
+        })
+
         return this.createBackup(keyString, sessionString)
     }
 }
@@ -242,7 +256,7 @@ MoorhenTimeCapsule.prototype.retrieveLastBackup = async function() {
     try {
         const sortedKeys = await this.getSortedKeys()
         if (sortedKeys && sortedKeys.length > 0) {
-            const lastBackupKey = sortedKeys[sortedKeys.length - 1].key
+            const lastBackupKey = sortedKeys[sortedKeys.length - 1]
             const backup = await this.retrieveBackup(lastBackupKey)
             return backup    
         }
@@ -269,19 +283,9 @@ MoorhenTimeCapsule.prototype.dropAllBackups = async function() {
 }
 
 MoorhenTimeCapsule.prototype.getSortedKeys = async function() {
-    const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }
     const keyStrings = await this.storageInstance.keys()
     const keys = keyStrings.map(keyString => JSON.parse(keyString)).filter(key => ['automatic', 'manual'].includes(key.type))
     const sortedKeys = keys.sort((a, b) => { return parseInt(a.dateTime) - parseInt(b.dateTime) }).reverse()
-    return sortedKeys.map((key, index) => {
-        const keyString = JSON.stringify(key)
-        const intK = parseInt(key.dateTime)
-        const date = new Date(intK)
-        const dateString = `${date.toLocaleDateString(Intl.NumberFormat().resolvedOptions().locale, dateOptions)} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`
-        // TODO: refactor this label into another field of the key data structure
-        const moleculeNamesLabel = key.molNames.join(',').length > 10 ? key.molNames.join(',').slice(0, 8) + "..." : key.molNames.join(',')
-        const keyLabel = `${moleculeNamesLabel} -- ${dateString} -- ${key.type === 'automatic' ? 'AUTO' : 'MANUAL'}`
-        return {label: keyLabel, key: keyString}
-    })
+    return sortedKeys
 }
 
