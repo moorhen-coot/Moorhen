@@ -43,7 +43,7 @@ export function CloudStorageInstance() {
     this.exportBackupCallback = () => { }
     this.importBackupCallback = () => { }
     this.removeBackupCallback = () => { }
-    this.loadBackupList = () => { }
+    this.loadBackupList = () => { return [] }
 }
 
 CloudStorageInstance.prototype.setItem = function (keyString, valueString) {
