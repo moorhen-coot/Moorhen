@@ -125,7 +125,7 @@ export const MoorhenContainer = (props) => {
 
     useEffect(() => {
         const initTimeCapsule = async () => {
-            if (cootInitialized) {
+            if (preferences.isMounted) {
                 timeCapsuleRef.current = new MoorhenTimeCapsule(moleculesRef, mapsRef, activeMapRef, glRef, preferences)
                 timeCapsuleRef.current.storageInstance = backupStorageInstance
                 timeCapsuleRef.current.maxBackupCount = preferences.maxBackupCount
@@ -134,7 +134,7 @@ export const MoorhenContainer = (props) => {
             }
         }
         initTimeCapsule()
-    }, [cootInitialized])
+    }, [preferences.isMounted])
     
     useEffect(() => {
         if (cootInitialized && preferences.isMounted) {
