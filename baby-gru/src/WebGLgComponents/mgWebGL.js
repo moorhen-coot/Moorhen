@@ -3445,8 +3445,6 @@ class MGWebGL extends Component {
         this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.canvas.width, this.canvas.height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
         this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.blurYTexture, 0);
 
-        console.log("Recreated off-screen framebuffers and textures");
-
         this.offScreenReady = true;
 
         this.gl.bindTexture(this.gl.TEXTURE_2D, null);
