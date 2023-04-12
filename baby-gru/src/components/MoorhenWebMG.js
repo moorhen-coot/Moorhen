@@ -7,7 +7,7 @@ import { convertViewtoPx } from '../utils/MoorhenUtils.js';
 
 export const MoorhenWebMG = forwardRef((props, glRef) => {
     const scores = useRef({})
-    const [mapLineWidth, setMapLineWidth] = useState(1.0)
+    const [mapLineWidth, setMapLineWidth] = useState(0.7)
     const [connectedMolNo, setConnectedMolNo] = useState(null)
     const [scoresToastContents, setScoreToastContents] = useState(null)
     const [showContextMenu, setShowContextMenu] = useState(false)

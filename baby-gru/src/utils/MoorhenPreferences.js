@@ -23,7 +23,7 @@ const updateStoredPreferences = async (key, value) => {
 
 const getDefaultValues = () => {
     return {
-        version: 'v22',
+        version: 'v23',
         defaultBackgroundColor: [1, 1, 1, 1], 
         atomLabelDepthMode: true, 
         enableTimeCapsule: true, 
@@ -38,7 +38,7 @@ const getDefaultValues = () => {
         useOffScreenBuffers: false,
         mouseSensitivity: 0.3,
         wheelSensitivityFactor: 1.0,
-        mapLineWidth: 0.46,
+        mapLineWidth: 0.7,
         makeBackups: true,
         showShortcutToast: true,
         defaultMapSurface: false,

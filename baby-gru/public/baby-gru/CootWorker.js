@@ -676,46 +676,42 @@ const doColourTest = (imol) => {
 
 onmessage = function (e) {
     if (e.data.message === 'CootInitialize') {
-        postMessage({ message: 'Initializing molecules_container' })
 
         createRSRModule({
             locateFile: (file) => `./wasm/${file}`,
-            onRuntimeInitialized: () => {
-                postMessage({ message: 'onRuntimeInitialized' });
-            },
+            onRuntimeInitialized: () => { },
             mainScriptUrlOrBlob: "moorhen.js",
             print: print,
             printErr: print,
-        }).then((returnedModule) => {
+        })
+        .then((returnedModule) => {
+            postMessage({ consoleMessage: 'Initialized molecules_container', message: e.data.message, messageId: e.data.messageId })
             cootModule = returnedModule;
             molecules_container = new cootModule.molecules_container_js(false)
             molecules_container.set_show_timings(false)
             molecules_container.fill_rotamer_probability_tables()
             molecules_container.set_map_sampling_rate(1.7)
             cootModule.FS.mkdir("COOT_BACKUP");
-            postMessage({ consoleMessage: 'Initialized molecules_container', message: e.data.message, messageId: e.data.messageId })
         })
-            .catch((e) => {
-                console.log(e)
-                print(e);
-            });
+        .catch((e) => {
+            console.log(e)
+            print(e);
+        });
 
         createCCP4Module({
             locateFile: (file) => `./wasm/${file}`,
-            onRuntimeInitialized: () => {
-                postMessage({ message: 'onRuntimeInitialized' });
-            },
+            onRuntimeInitialized: () => { },
             mainScriptUrlOrBlob: "web_example.js",
             print: print,
             printErr: print,
-        }).then((returnedModule) => {
-            ccp4Module = returnedModule;
-            postMessage({ consoleMessage: 'Initialized ccp4Module', message: e.data.message })
         })
-            .catch((e) => {
-                console.log(e)
-                print(e);
-            });
+        .then((returnedModule) => {
+            ccp4Module = returnedModule;
+        })
+        .catch((e) => {
+            console.log(e)
+            print(e);
+        });
     }
     
     else if (e.data.message === 'get_atoms') {
