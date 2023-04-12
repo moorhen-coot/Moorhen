@@ -66,7 +66,7 @@ export const MoorhenViewMenu = (props) => {
                         props.setShowColourRulesToast(true)
                         document.body.click()
                     }}>
-                        Set molecule colour rules
+                        Set molecule colour rules...
                     </MenuItem>
             </NavDropdown>
         </>

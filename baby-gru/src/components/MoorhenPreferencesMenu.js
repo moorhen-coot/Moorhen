@@ -95,6 +95,17 @@ export const MoorhenPreferencesMenu = (props) => {
                             onChange={() => { setShortcutOnHoveredAtom(!shortcutOnHoveredAtom) }}
                             label="Hover on residue to use shortcuts"/>
                     </InputGroup>
+                    <hr></hr>
+                    <Form.Group controlId="mouseSensitivitySlider" style={{paddingTop:'0rem', paddingBottom:'0.5rem', paddingRight:'0.5rem', paddingLeft:'1rem', width: '25rem'}}>
+                        <MoorhenSlider minVal={0.01} maxVal={1.0} logScale={false} sliderTitle="Mouse sensitivity" initialValue={0.3} externalValue={mouseSensitivity} setExternalValue={setMouseSensitivity}/>
+                    </Form.Group>
+                    <Form.Group controlId="wheelSensitivitySlider" style={{paddingTop:'0.5rem', paddingBottom:'0rem', paddingRight:'0.5rem', paddingLeft:'1rem', width: '25rem'}}>
+                        <MoorhenSlider minVal={0.1} maxVal={9.9} logScale={false} sliderTitle="Mouse wheel zoom sensitivity" initialValue={1.0} externalValue={wheelSensitivityFactor} setExternalValue={setWheelSensitivityFactor}/>
+                    </Form.Group>
+                    <Form.Group controlId="mapLineWidthSlider" style={{paddingTop:'0.5rem', paddingBottom:'0rem', paddingRight:'0.5rem', paddingLeft:'1rem', width: '25rem'}}>
+                        <MoorhenSlider minVal={0.1} maxVal={1.5} logScale={true} sliderTitle="Map lines thickness" initialValue={0.46} externalValue={mapLineWidth} setExternalValue={setMapLineWidth}/>
+                    </Form.Group>
+                    <hr></hr>
                     <MoorhenBackupPreferencesMenuItem 
                         enableTimeCapsule={enableTimeCapsule}
                         setEnableTimeCapsule={setEnableTimeCapsule}
@@ -116,19 +127,8 @@ export const MoorhenPreferencesMenu = (props) => {
                         setDefaultBondSmoothness={setDefaultBondSmoothness}
                         setPopoverIsShown={setPopoverIsShown}
                     />
-                    <hr></hr>
-                    <Form.Group controlId="mouseSensitivitySlider" style={{paddingTop:'0rem', paddingBottom:'0.5rem', paddingRight:'0.5rem', paddingLeft:'1rem', width: '25rem'}}>
-                        <MoorhenSlider minVal={0.01} maxVal={1.0} logScale={false} sliderTitle="Mouse sensitivity" initialValue={0.3} externalValue={mouseSensitivity} setExternalValue={setMouseSensitivity}/>
-                    </Form.Group>
-                    <Form.Group controlId="wheelSensitivitySlider" style={{paddingTop:'0.5rem', paddingBottom:'0rem', paddingRight:'0.5rem', paddingLeft:'1rem', width: '25rem'}}>
-                        <MoorhenSlider minVal={0.1} maxVal={9.9} logScale={false} sliderTitle="Mouse wheel zoom sensitivity" initialValue={1.0} externalValue={wheelSensitivityFactor} setExternalValue={setWheelSensitivityFactor}/>
-                    </Form.Group>
-                    <Form.Group controlId="mapLineWidthSlider" style={{paddingTop:'0.5rem', paddingBottom:'0rem', paddingRight:'0.5rem', paddingLeft:'1rem', width: '25rem'}}>
-                        <MoorhenSlider minVal={0.1} maxVal={1.5} logScale={true} sliderTitle="Map lines thickness" initialValue={0.46} externalValue={mapLineWidth} setExternalValue={setMapLineWidth}/>
-                    </Form.Group>
-                    <hr></hr>
                     <MenuItem variant="success" onClick={() => setShowModal(true)} id='configure-shortcuts-menu-item' style={{marginTop:'0rem'}}>
-                        Configure shortcuts
+                        Configure shortcuts...
                     </MenuItem>
                     <MoorhenShortcutConfigModal showModal={showModal} setShowModal={setShowModal} setShortCuts={props.setShortCuts} shortCuts={JSON.parse(props.shortCuts)}/>
             </div>

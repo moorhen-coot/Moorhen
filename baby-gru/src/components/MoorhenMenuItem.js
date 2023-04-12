@@ -151,6 +151,39 @@ export const MoorhenLoadTutorialDataMenuItem = (props) => {
     />
 }
 
+export const MoorhenAddSimpleMenuItem = (props) => {
+    const molTypeSelectRef = useRef(null)
+    const moleculeSelectRef = useRef(null)
+    const molTypes = ['HOH', 'SO4', 'PO4', 'GOL', 'CIT', 'EDO']
+
+    const panelContent = <>
+        <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="MoorhenAddSimpleMenuItem" className="mb-3">
+            <Form.Label>Add...</Form.Label>
+            <FormSelect size="sm" ref={molTypeSelectRef} defaultValue={'HOH'}>
+                {molTypes.map(type => {return <option value={type} key={type}>{type}</option>})}
+            </FormSelect>
+        </Form.Group>
+        <MoorhenMoleculeSelect {...props} allowAny={false} ref={moleculeSelectRef} />
+    </>
+
+
+    const onCompleted = useCallback(async () => {
+        const selectedMolecule = props.molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
+        if (selectedMolecule) {
+            await selectedMolecule.addLigandOfType(molTypeSelectRef.current.value, props.glRef.current.origin.map(coord => -coord), props.glRef)
+            const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: selectedMolecule.molNo } })
+            document.dispatchEvent(scoresUpdateEvent)    
+        }
+    }, [props.glRef, props.molecules])
+
+    return <MoorhenMenuItem
+        id='add-simple-menu-item'
+        popoverContent={panelContent}
+        menuItemText="Add simple..."
+        onCompleted={onCompleted}
+        setPopoverIsShown={props.setPopoverIsShown}
+    />
+}
 
 export const MoorhenGetMonomerMenuItem = (props) => {
     const tlcRef = useRef()
@@ -452,7 +485,7 @@ export const MoorhenDefaultBondSmoothnessPreferencesMenuItem = (props) => {
     return <MoorhenMenuItem
         popoverPlacement='right'
         popoverContent={panelContent}
-        menuItemText={"Default smoothness of molecule bonds"}
+        menuItemText={"Default smoothness of molecule bonds..."}
         setPopoverIsShown={props.setPopoverIsShown}
         onCompleted={onCompleted}
     />
@@ -528,7 +561,7 @@ export const MoorhenBackupPreferencesMenuItem = (props) => {
     return <MoorhenMenuItem
         popoverPlacement='right'
         popoverContent={panelContent}
-        menuItemText={"Automatic backup settings"}
+        menuItemText={"Automatic backup settings..."}
         setPopoverIsShown={props.setPopoverIsShown}
         showOkButton={false}
     />
@@ -586,7 +619,7 @@ export const MoorhenScoresToastPreferencesMenuItem = (props) => {
     return <MoorhenMenuItem
         popoverPlacement='right'
         popoverContent={panelContent}
-        menuItemText={"Options for scores when updating maps"}
+        menuItemText={"Options for scores when updating maps..."}
         setPopoverIsShown={props.setPopoverIsShown}
         showOkButton={false}
     />
