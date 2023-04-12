@@ -23,6 +23,24 @@
 #include <emscripten.h>
 #include <emscripten/bind.h>
 
+#include "rdkit/GraphMol/SmilesParse/SmilesParse.h"
+#include "rdkit/GraphMol/FileParsers/MolSupplier.h"
+#include "rdkit/GraphMol/FileParsers/MolWriters.h"
+#include "rdkit/GraphMol/FileParsers/FileParsers.h"
+#include "rdkit/GraphMol/DistGeomHelpers/Embedder.h"
+#include "rdkit/GraphMol/ROMol.h"
+#include "rdkit/GraphMol/RWMol.h"
+#include "rdkit/GraphMol/MolOps.h"
+#include "rdkit/ForceField/ForceField.h"
+#include "rdkit/GraphMol/ForceFieldHelpers/UFF/AtomTyper.h"
+#include "rdkit/GraphMol/ForceFieldHelpers/UFF/Builder.h"
+#include "rdkit/GraphMol/AtomIterators.h"
+#include "rdkit/GraphMol/BondIterators.h"
+#include "rdkit/GraphMol/Conformer.h"
+#include "rdkit/GraphMol/MonomerInfo.h"
+#include "rdkit/GraphMol/SanitException.h"
+#include "rdkit/GraphMol/PeriodicTable.h"
+
 #include "geometry/residue-and-atom-specs.hh"
 #include "ligand/chi-angles.hh"
 #include "ligand/primitive-chi-angles.hh"
@@ -92,6 +110,291 @@ void TakeColourMap(const std::map<unsigned int, std::array<float, 3>> &theMap){
     }
 }
 */
+
+std::string writeCIF(RDKit::RWMol *mol, int confId=0){
+  RDKit::AtomMonomerInfo *info = mol->getAtomWithIdx(0)->getMonomerInfo();
+  std::map<std::string,int> elemMap;
+  std::map<int,std::string> atomMap;
+
+    std::ostringstream output;
+    output << "global_\n";
+    output << "_lib_name         ?\n";
+    output << "_lib_version      ?\n";
+    output << "_lib_update       ?\n";
+    output << "# ------------------------------------------------\n";
+    output << "#\n";
+    output << "# ---   LIST OF MONOMERS ---\n";
+    output << "#\n";
+    output << "data_comp_list\n";
+    output << "loop_\n";
+    output << "_chem_comp.id\n";
+    output << "_chem_comp.three_letter_code\n";
+    output << "_chem_comp.name\n";
+    output << "_chem_comp.group\n";
+    output << "_chem_comp.number_atoms_all\n";
+    output << "_chem_comp.number_atoms_nh\n";
+    output << "_chem_comp.desc_level\n";
+    int nAtAll = 0;
+    int nAtNoH = 0;
+    RDKit::ROMol::AtomIterator atomIter = mol->beginAtoms();
+    while(atomIter!=mol->endAtoms()){
+      std::string symbol = (*atomIter)->getSymbol();
+      nAtAll++;
+      if(symbol!="H"){
+        nAtNoH++;
+      }
+      atomIter++;
+    }
+    output << "UNL      UNL 'UNKNOWN LIGAND                      ' non-polymer        " << nAtAll << " " <<  nAtNoH << " .\n";
+    output << "# ------------------------------------------------------\n";
+    output << "# ------------------------------------------------------\n";
+    output << "#\n";
+    output << "# --- DESCRIPTION OF MONOMERS ---\n";
+    output << "#\n";
+    output << "data_comp_UNL\n";
+    output << "#\n";
+    output << "loop_\n";
+    output << "_chem_comp_atom.comp_id\n";
+    output << "_chem_comp_atom.atom_id\n";
+    output << "_chem_comp_atom.type_symbol\n";
+    output << "_chem_comp_atom.type_energy\n";
+    output << "_chem_comp_atom.partial_charge\n";
+    output << "_chem_comp_atom.x\n";
+    output << "_chem_comp_atom.y\n";
+    output << "_chem_comp_atom.z\n";
+    // FIXME Loop over atoms.
+    // FAD           O2P    O    OP       -0.500      0.000    0.000    0.000
+    atomIter = mol->beginAtoms();
+    const RDKit::Conformer *conf=&(mol->getConformer(confId));
+    while(atomIter!=mol->endAtoms()){
+      double x, y, z;
+      const RDGeom::Point3D pos = conf->getAtomPos((*atomIter)->getIdx());
+      x = pos.x; y = pos.y; z = pos.z;
+  
+      std::string symbol = (*atomIter)->getSymbol();
+      int charge = (*atomIter)->getFormalCharge();
+  
+      if(info){
+        std::string name = info->getName();
+        output << "UNL           " << name << " " << symbol  << " " << name << " " << charge << " " << x << " " << y << " " << z << "\n";
+      } else {
+        if(elemMap.count(symbol)){
+           elemMap[symbol]++;
+        } else {
+           elemMap[symbol] = 1;
+        }
+        std::stringstream s;
+        s << elemMap[symbol];
+        std::string iStr = s.str();
+        std::string name = symbol+iStr;
+        atomMap[(*atomIter)->getIdx()] = name;
+        output << "UNL           " << name << " " << symbol  << " " << name << " " << charge << " " << x << " " << y << " " << z << "\n";
+      }
+  
+      atomIter++;
+    }
+    output << "loop_\n";
+    output << "_chem_comp_bond.comp_id\n";
+    output << "_chem_comp_bond.atom_id_1\n";
+    output << "_chem_comp_bond.atom_id_2\n";
+    output << "_chem_comp_bond.type\n";
+    output << "_chem_comp_bond.value_dist\n";
+    output << "_chem_comp_bond.value_dist_esd\n";
+    RDKit::ROMol::BondIterator bondIter = mol->beginBonds();
+    while(bondIter!=mol->endBonds()){
+      std::string beginAtom =  atomMap[(*bondIter)->getBeginAtomIdx()];
+      std::string endAtom =  atomMap[(*bondIter)->getEndAtomIdx()];
+      const RDGeom::Point3D pos1 = conf->getAtomPos((*bondIter)->getBeginAtomIdx());
+      const RDGeom::Point3D pos2 = conf->getAtomPos((*bondIter)->getEndAtomIdx());
+      double bondLength = sqrt((pos1.x-pos2.x)*(pos1.x-pos2.x) + (pos1.y-pos2.y)*(pos1.y-pos2.y) + (pos1.z-pos2.z)*(pos1.z-pos2.z));
+      std::string bondType;
+      if((*bondIter)->getBondType()==RDKit::Bond::DOUBLE){
+         bondType = "double";
+      } else if((*bondIter)->getBondType()==RDKit::Bond::TRIPLE){
+         bondType = "triple";
+      } else if((*bondIter)->getBondType()==RDKit::Bond::AROMATIC){
+         bondType = "aromatic";
+      } else {
+         bondType = "single";
+      }
+      output << "UNL  " << "    " << beginAtom <<   " "  << endAtom  << " " << bondType  << " " << bondLength << "  0.020\n";
+      bondIter++;
+    }
+    output << "# ------------------------------------------------------\n";
+
+    return output.str();
+
+}
+
+int MolMinimize(RDKit::RWMol *mol, int nconf, int maxIters){
+  //RDKit::MolOps::Kekulize(*mol); // This futzes with bond lengths, which I do not want!
+
+#ifdef _DO_GLYCO_TESTING_
+  bool force4C1chair = false;
+#endif
+
+  double vdwThresh=10.0;
+  int confId=-1;
+  bool ignoreInterfragInteractions=true;
+
+  double minE = 1e+32;
+  int minCid = -1;
+  RDKit::INT_VECT cids=RDKit::DGeomHelpers::EmbedMultipleConfs(*mol, nconf);
+  for(unsigned icid=0;icid<cids.size();icid++){
+   
+#ifdef _DO_GLYCO_TESTING_
+    if(force4C1chair) {
+      clipper::MiniMol minimol;
+      clipper::MPolymer mp;
+      clipper::MMonomer mm;
+      mm.set_type("BGC");
+      mm.set_seqnum(1);
+      mm.set_id(1);
+      minimol.init(clipper::Spacegroup::p1(),clipper::Cell(clipper::Cell_descr(300,300,300,90,90,90)));
+      const RDKit::Conformer *conf=&(mol->getConformer(icid));
+      RDKit::ROMol::AtomIterator atomIter = mol->beginAtoms();
+      std::map<std::string,int> elemMap;
+      std::map<int,std::string> atomMap;
+      while(atomIter!=mol->endAtoms()){
+        double x, y, z;
+        const RDGeom::Point3D pos = conf->getAtomPos((*atomIter)->getIdx());
+        x = pos.x; y = pos.y; z = pos.z;
+        std::string symbol = (*atomIter)->getSymbol();
+        clipper::MAtom mat;
+        mat.set_coord_orth(clipper::Coord_orth(x,y,z));
+        mat.set_element(symbol);
+        if(elemMap.count(symbol)){
+           elemMap[symbol]++;
+        } else {
+           elemMap[symbol] = 1;
+        }
+          std::stringstream s;
+          s << elemMap[symbol];
+          std::string iStr = s.str();
+          std::string name = symbol+iStr;
+        mat.set_id(name);
+        mat.set_occupancy(1.0);
+        mat.set_u_iso(20.0);
+        mm.insert(mat);
+        atomIter++;
+      }
+      //std::cout << "Monomer size " << mm.size() << std::endl;
+      mp.insert(mm);
+      //std::cout << "Polymer size " << mp.size() << std::endl;
+      minimol.insert(mp);
+      //std::cout << "Polymer atom list " << mp.atom_list().size() << std::endl;
+      clipper::MMonomer theCopy;
+      theCopy.copy(mm,clipper::MM::COPY_MPC);
+      //std::cout << "Copy size " << theCopy.size() << std::endl;
+      const clipper::MAtomNonBond nb = clipper::MAtomNonBond(minimol, 5.0);
+      clipper::MSugar sugar(minimol,mm,nb);
+      std::vector<clipper::ftype> cpParams = sugar.cremer_pople_params();
+      if(cpParams.size()>2){
+        //std::cout << "Q = " << cpParams[0] << std::endl;
+        //std::cout << "PHI = " << cpParams[1] << std::endl;
+        //std::cout << "THETA = " << cpParams[2] << std::endl;
+        clipper::ftype theta = cpParams[2];
+        if(theta<0||theta>20) continue;
+      } else {
+        // Not a sugar!
+        continue;
+      }
+      std::cout << sugar.type_of_sugar() << std::endl;
+    }
+#endif
+
+    ForceFields::ForceField *ff;
+    try {
+      ff=RDKit::UFF::constructForceField(*mol,vdwThresh, cids[icid],ignoreInterfragInteractions);
+    } catch (...) {
+      std::cout << "Error constructing forcefield.\n";
+      return -1;
+    }
+    try {
+      ff->initialize();
+    } catch (...) {
+      std::cout << "Error initializing forcefield.\n";
+      return -1;
+    }
+    int res;
+    try {
+      res=ff->minimize(maxIters);
+    } catch (...) {
+      std::cout << "Error minimizing forcefield.\n";
+      return -1;
+    }
+
+    double E;
+    try {
+      E = ff->calcEnergy();
+    } catch (...) {
+      std::cout << "Error calculating energy.\n";
+      return -1;
+    }
+    if(E<minE){
+      minE = E;
+      minCid = icid;
+    }
+    delete ff;
+  }
+  std::cout << minE << "\n";
+
+  return minCid;
+}
+
+std::pair<std::string, std::string> SmilesToPDB(const std::string &smile_cpp, int nconf, int maxIters){
+    std::pair<std::string, std::string> retval;
+
+    const char* smile = smile_cpp.c_str();
+
+    if(!smile||strlen(smile)<1){
+        std::cout << "Zero length SMILES string." << std::endl;
+        return retval;
+    }
+
+    RDKit::RWMol *mol = 0;
+    try {
+        mol =  RDKit::SmilesToMol(smile);
+    } catch (RDKit::MolSanitizeException &e) {
+        std::cout << e.what() << std::endl;
+        return retval;
+    } catch (...) {
+        std::cout << "SMILES parse error?" << std::endl;
+        return retval;
+    }
+    if(!mol){
+        std::cout << "SMILES parse error?" << std::endl;
+        return retval;
+    }
+    try {
+        RDKit::MolOps::addHs(*mol);
+    } catch (...) {
+        std::cout << "Error adding hydrogens." << std::endl;
+        return retval;
+    }
+
+    try {
+        RDKit::DGeomHelpers::EmbedMolecule(*mol);
+    } catch (...) {
+        std::cout << "Error embedding molecule." << std::endl;
+        return retval;
+    }
+
+    int minCid = MolMinimize(mol, nconf, maxIters);
+    if(minCid==-1){
+        std::cout << "Minimize from SMILES error" << std::endl;
+        return retval;
+    }
+
+    std::string pdb = RDKit::MolToPDBBlock( *mol );
+    std::string cif = writeCIF(mol,minCid);
+
+    retval.first = pdb;
+    retval.second = cif;
+
+    return retval;
+
+}
 
 struct moorhen_hbond {
       int hb_hydrogen; // McDonald and Thornton H-bond algorithm
@@ -985,6 +1288,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
 
     function("getRotamersMap",&getRotamersMap);
+    function("SmilesToPDB",&SmilesToPDB);
+
     //For testing
     //function("TakeColourMap",&TakeColourMap);
     //function("TakeStringIntPairVector",&TakeStringIntPairVector);
