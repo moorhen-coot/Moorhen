@@ -38,7 +38,7 @@ const getDefaultValues = () => {
         useOffScreenBuffers: false,
         mouseSensitivity: 0.3,
         wheelSensitivityFactor: 1.0,
-        mapLineWidth: 0.7,
+        mapLineWidth: 0.75,
         makeBackups: true,
         showShortcutToast: true,
         defaultMapSurface: false,
