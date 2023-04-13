@@ -174,7 +174,7 @@ std::string writeCIF(RDKit::RWMol *mol, const std::string &resname="UNL",  int c
       std::string symbol = (*atomIter)->getSymbol();
       int charge = (*atomIter)->getFormalCharge();
   
-      if(info){
+      if(false&&info){
         std::string name = info->getName();
         output << resname << "           " << name << " " << symbol  << " " << name << " " << charge << " " << x << " " << y << " " << z << "\n";
       } else {
@@ -386,19 +386,35 @@ std::pair<std::string, std::string> SmilesToPDB(const std::string &smile_cpp, co
         return retval;
     }
 
-    RDKit::AtomPDBResidueInfo *mi = new RDKit::AtomPDBResidueInfo();
-    mi->setResidueName(TLC);
-    mi->setResidueNumber(1);
-    mi->setOccupancy(1.0);
-    mi->setTempFactor(0.0);
+    std::string cif = writeCIF(mol,TLC, minCid);
 
-    mol->setProp("_Name",TLC);
+    std::map<std::string,int> elemMap;
     for(auto atom: mol->atoms()) {
+        RDKit::AtomPDBResidueInfo *mi = new RDKit::AtomPDBResidueInfo();
+        auto mi_old = atom->getMonomerInfo();
+        mi->setResidueName(TLC);
+        mi->setResidueNumber(1);
+        mi->setOccupancy(1.0);
+        mi->setTempFactor(0.0);
+        mi->setIsHeteroAtom(true);
+
+        std::string symbol = atom->getSymbol();
+        if(elemMap.count(symbol)){
+           elemMap[symbol]++;
+        } else {
+           elemMap[symbol] = 1;
+        }
+        std::stringstream s;
+        s << elemMap[symbol];
+        std::string iStr = s.str();
+        std::string name = symbol+iStr;
+        if(symbol.length()==1) name = " " + name;
+        if(name.length()==3) name = name + " ";
+        mi->setName(name);
         atom->setMonomerInfo(mi);
     }
 
     std::string pdb = RDKit::MolToPDBBlock( *mol );
-    std::string cif = writeCIF(mol,TLC, minCid);
 
     retval.first = pdb;
     retval.second = cif;
