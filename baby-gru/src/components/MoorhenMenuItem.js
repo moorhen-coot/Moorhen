@@ -1168,8 +1168,6 @@ export const MoorhenImportDictionaryMenuItem = (props) => {
     }
 
     const smilesToPDB = async (smile) => {
-        console.log('HI THERE')
-        console.log(smile, tlcValueRef.current)
         const response = await props.commandCentre.current.cootCommand({
             command: 'shim_smiles_to_pdb',
             commandArgs: [smile, tlcValueRef.current, 1, 200],
