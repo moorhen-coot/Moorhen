@@ -1174,7 +1174,12 @@ export const MoorhenImportDictionaryMenuItem = (props) => {
             returnType: 'str_str_pair'
         }, true)
         const result = response.data.result.result.second
-        return handleFileContent(result)
+        if (result) {
+            return handleFileContent(result)
+        } else {
+            console.log('Error creating molecule... Wrong SMILES?')
+            props.commandCentre.current.extendConsoleMessage('Error creating molecule... Wrong SMILES?')
+        }
     }
 
     const onCompleted = useCallback(async () => {
