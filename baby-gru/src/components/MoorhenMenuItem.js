@@ -120,7 +120,7 @@ export const MoorhenLoadTutorialDataMenuItem = (props) => {
         newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
         const newMap = new MoorhenMap(props.commandCentre)
         const newDiffMap = new MoorhenMap(props.commandCentre)
-        newMolecule.loadToCootFromURL(`${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-structure-number-${tutorialNumber}.pdb`, `moorhen-tutorial-${tutorialNumber}`)
+        newMolecule.loadToCootFromURL(`${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-structure-number-${tutorialNumber}.pdb`, `mol-${tutorialNumber}`)
             .then(result => {
                 newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef)
             }).then(result => {
@@ -129,12 +129,12 @@ export const MoorhenLoadTutorialDataMenuItem = (props) => {
             }).then(_ => {
                 newMolecule.centreOn(props.glRef, null, false)
             }).then(_ => {
-                return newMap.loadToCootFromMtzURL(`${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`, `moorhen-tutorial-${tutorialNumber}`,
+                return newMap.loadToCootFromMtzURL(`${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`, `map-${tutorialNumber}`,
                     {
                         isDifference: false, useWeight: false, calcStructFact: true, ...tutorialMtzColumnNames[tutorialNumber]
                     })
             }).then(_ => {
-                return newDiffMap.loadToCootFromMtzURL(`${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`, `moorhen-tutorial-${tutorialNumber}`,
+                return newDiffMap.loadToCootFromMtzURL(`${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`, `diff-map-${tutorialNumber}`,
                     { F: "DELFWT", PHI: "PHDELWT", isDifference: true, useWeight: false })
             }).then(_ => {
                 props.changeMaps({ action: 'AddList', items: [newMap, newDiffMap] })
