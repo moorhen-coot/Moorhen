@@ -877,6 +877,9 @@ onmessage = function (e) {
             else if (command === 'shim_do_colour_test') {
                 cootResult = doColourTest(...commandArgs)
             }
+            else if (command === 'shim_smiles_to_pdb') {
+                cootResult = cootModule.SmilesToPDB(...commandArgs)
+            }
             else {
                 cootResult = molecules_container[command](...commandArgs)
             }
