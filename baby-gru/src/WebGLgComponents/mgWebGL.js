@@ -1370,7 +1370,6 @@ class MGWebGL extends Component {
 
         this.gl.viewportWidth = this.canvas.width;
         this.gl.viewportHeight = this.canvas.height;
-        this.recreateOffScreeenBuffers();
 
     }
 
@@ -1552,6 +1551,7 @@ class MGWebGL extends Component {
         this.useOffScreenBuffers = false;
         this.offScreenReady = false;
         this.framebufferDrawBuffersReady = false;
+        this.screenshotBuffersReady = false;
 
         this.textCtx = document.createElement("canvas").getContext("2d", {willReadFrequently: true});
         this.circleCtx = document.createElement("canvas").getContext("2d");
@@ -1640,7 +1640,7 @@ class MGWebGL extends Component {
         //this.textLegends.push({font:"20px helvetica",x:0,y:0,text:"Welcome to Moorhen"});
 
         this.textHeightScaling = 800.;
-        this.initTextureFramebuffer();
+        //this.initTextureFramebuffer();
 
         if (!this.frag_depth_ext) {
             console.log("No EXT_frag_depth support");
@@ -3406,6 +3406,13 @@ class MGWebGL extends Component {
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
             this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
 
+            this.offScreenDepthTexture = this.gl.createTexture();
+            this.gl.bindTexture(this.gl.TEXTURE_2D, this.offScreenDepthTexture);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+
             this.offScreenRenderbufferDepth = this.gl.createRenderbuffer();
             this.offScreenRenderbufferColor = this.gl.createRenderbuffer();
         }
@@ -3424,12 +3431,16 @@ class MGWebGL extends Component {
         this.gl.renderbufferStorageMultisample(this.gl.RENDERBUFFER, this.gl.getParameter(this.gl.MAX_SAMPLES),
                 this.gl.RGBA8, this.canvas.width, this.canvas.height);
 
+
         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.offScreenFramebufferColor);
         this.offScreenFramebufferColor.width = this.canvas.width;
         this.offScreenFramebufferColor.height = this.canvas.height;
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.offScreenTexture);
         this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.canvas.width, this.canvas.height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
         this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.offScreenTexture, 0);
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.offScreenDepthTexture);
+        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.DEPTH_COMPONENT24, this.canvas.width, this.canvas.height, 0, this.gl.DEPTH_COMPONENT, this.gl.UNSIGNED_INT, null);
+        this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.TEXTURE_2D, this.offScreenDepthTexture, 0);
 
         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.offScreenFramebufferBlurX);
         this.offScreenFramebufferBlurX.width = this.canvas.width;
@@ -3530,6 +3541,7 @@ class MGWebGL extends Component {
             this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, null);
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
         }
+        this.screenshotBuffersReady = true;
 
     }
 
@@ -4563,6 +4575,9 @@ class MGWebGL extends Component {
         this.shaderProgramBlurX.mvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramBlurX, "uMVMatrix");
 
         this.shaderProgramBlurX.blurSize = this.gl.getUniformLocation(this.shaderProgramBlurX, "blurSize");
+
+        this.shaderProgramBlurX.depthTexture = this.gl.getUniformLocation(this.shaderProgramBlurX, "depth");
+        this.shaderProgramBlurX.inputTexture = this.gl.getUniformLocation(this.shaderProgramBlurX, "shader0");
     }
 
     initBlurYShader(vertexShaderBlurY, fragmentShaderBlurY) {
@@ -4590,6 +4605,9 @@ class MGWebGL extends Component {
         this.shaderProgramBlurY.mvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramBlurY, "uMVMatrix");
 
         this.shaderProgramBlurY.blurSize = this.gl.getUniformLocation(this.shaderProgramBlurY, "blurSize");
+
+        this.shaderProgramBlurY.depthTexture = this.gl.getUniformLocation(this.shaderProgramBlurY, "depth");
+        this.shaderProgramBlurY.inputTexture = this.gl.getUniformLocation(this.shaderProgramBlurY, "shader0");
     }
 
     initRenderFrameBufferShaders(vertexShaderRenderFrameBuffer, fragmentShaderRenderFrameBuffer) {
@@ -4615,6 +4633,10 @@ class MGWebGL extends Component {
 
         this.shaderProgramRenderFrameBuffer.pMatrixUniform = this.gl.getUniformLocation(this.shaderProgramRenderFrameBuffer, "uPMatrix");
         this.shaderProgramRenderFrameBuffer.mvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramRenderFrameBuffer, "uMVMatrix");
+
+        this.shaderProgramRenderFrameBuffer.focussedTexture = this.gl.getUniformLocation(this.shaderProgramRenderFrameBuffer, "inFocus");
+        this.shaderProgramRenderFrameBuffer.blurredTexture = this.gl.getUniformLocation(this.shaderProgramRenderFrameBuffer, "blurred");
+        this.shaderProgramRenderFrameBuffer.depthTexture = this.gl.getUniformLocation(this.shaderProgramRenderFrameBuffer, "depth");
 
     }
 
@@ -7248,17 +7270,19 @@ class MGWebGL extends Component {
 
     GLrender(calculatingShadowMap) {
         //console.log("GLrender");
-        var width_ratio = this.gl.viewportWidth / this.rttFramebuffer.width;
-        var height_ratio = this.gl.viewportHeight / this.rttFramebuffer.height;
 
         this.mouseDown = false;
         let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
 
 
         if (calculatingShadowMap) {
+            const width_ratio = this.gl.viewportWidth / this.rttFramebuffer.width;
+            const height_ratio = this.gl.viewportHeight / this.rttFramebuffer.height;
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.rttFramebufferDepth);
             this.gl.viewport(0, 0, this.gl.viewportWidth / width_ratio, this.gl.viewportHeight / height_ratio);
         } else if(this.renderToTexture) {
+            if(!this.screenshotBuffersReady)
+                this.initTextureFramebuffer();
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.rttFramebuffer);
             this.gl.enable(this.gl.DEPTH_TEST);
             this.gl.depthFunc(this.gl.LESS);
@@ -7266,7 +7290,9 @@ class MGWebGL extends Component {
             let canRead = (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
         } else {
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
-            if(this.useOffScreenBuffers&&this.offScreenReady){
+            if(this.useOffScreenBuffers){
+                if(!this.offScreenReady)
+                    this.recreateOffScreeenBuffers();
                 this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.offScreenFramebuffer);
                 let canRead = (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
             }
@@ -7430,6 +7456,7 @@ class MGWebGL extends Component {
     }
 
     drawScene() {
+
         //console.log("drawScene");
 
         var oldMouseDown = this.mouseDown;
@@ -7503,6 +7530,7 @@ class MGWebGL extends Component {
         if (!this.doShadowDepthDebug && !this.doShadow && !this.useOffScreenBuffers) {
             return;
         }
+
         if(!this.offScreenReady) return;
 
         const currentBinding = this.gl.getParameter(this.gl.FRAMEBUFFER_BINDING);
@@ -7535,6 +7563,9 @@ class MGWebGL extends Component {
         this.gl.blitFramebuffer(0, 0, this.offScreenFramebuffer.width, this.offScreenFramebuffer.height,
                 0, 0, this.offScreenFramebufferColor.width, this.offScreenFramebufferColor.height,
                 this.gl.COLOR_BUFFER_BIT, this.gl.LINEAR);
+        this.gl.blitFramebuffer(0, 0, this.offScreenFramebuffer.width, this.offScreenFramebuffer.height,
+                0, 0, this.offScreenFramebufferColor.width, this.offScreenFramebufferColor.height,
+                this.gl.DEPTH_BUFFER_BIT, this.gl.NEAREST);
 
         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.offScreenTexture);
@@ -7544,17 +7575,30 @@ class MGWebGL extends Component {
         mat4.identity(paintMvMatrix);
         mat4.ortho(paintPMatrix, -1 , 1 , -1, 1, 0.1, 1000.0);
 
+        /*
+          * In focus     - this.offScreenFramebufferBlurX
+          * Out of focus - this.blurYTexture
+          * Depth        - this.offScreenDepthTexture
+        */
+
         //This is an example of chaining framebuffer shader effects.
-        const doBlur = false;
+        const doBlur = true;
         if(doBlur){
-            const blurSize = 2.0;
+            const blurSize = 3.0;
             const blurSizeX = blurSize/this.gl.viewportWidth;
             const blurSizeY = blurSize/this.gl.viewportHeight;
 
             this.gl.useProgram(this.shaderProgramBlurX);
+
+            this.gl.uniform1i(this.shaderProgramBlurX.inputTexture,0);
+            this.gl.uniform1i(this.shaderProgramBlurX.depthTexture,1);
+
             this.gl.enableVertexAttribArray(this.shaderProgramBlurX.vertexTextureAttribute);
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.offScreenFramebufferBlurX);
+            this.gl.activeTexture(this.gl.TEXTURE0);
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.offScreenTexture);
+            this.gl.activeTexture(this.gl.TEXTURE1);
+            this.gl.bindTexture(this.gl.TEXTURE_2D, this.offScreenDepthTexture);
             this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
 
             this.gl.uniformMatrix4fv(this.shaderProgramBlurX.pMatrixUniform, false, paintPMatrix);
@@ -7572,9 +7616,16 @@ class MGWebGL extends Component {
             }
 
             this.gl.useProgram(this.shaderProgramBlurY);
+
+            this.gl.uniform1i(this.shaderProgramBlurY.inputTexture,0);
+            this.gl.uniform1i(this.shaderProgramBlurY.depthTexture,1);
+
             this.gl.enableVertexAttribArray(this.shaderProgramBlurY.vertexTextureAttribute);
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.offScreenFramebufferBlurY);
+            this.gl.activeTexture(this.gl.TEXTURE0);
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.blurXTexture);
+            this.gl.activeTexture(this.gl.TEXTURE1);
+            this.gl.bindTexture(this.gl.TEXTURE_2D, this.offScreenDepthTexture);
             this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
 
             this.gl.uniformMatrix4fv(this.shaderProgramBlurY.pMatrixUniform, false, paintPMatrix);
@@ -7596,6 +7647,18 @@ class MGWebGL extends Component {
         }
 
         this.gl.useProgram(this.shaderProgramRenderFrameBuffer);
+
+        this.gl.uniform1i(this.shaderProgramRenderFrameBuffer.focussedTexture,0)
+        this.gl.uniform1i(this.shaderProgramRenderFrameBuffer.blurredTexture,1)
+        this.gl.uniform1i(this.shaderProgramRenderFrameBuffer.depthTexture,2)
+
+        this.gl.activeTexture(this.gl.TEXTURE0);
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.offScreenTexture);
+        this.gl.activeTexture(this.gl.TEXTURE1);
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.blurYTexture)
+        this.gl.activeTexture(this.gl.TEXTURE2);
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.offScreenDepthTexture)
+
         this.gl.enableVertexAttribArray(this.shaderProgramRenderFrameBuffer.vertexTextureAttribute);
 
         this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
@@ -7612,6 +7675,12 @@ class MGWebGL extends Component {
         }
 
         this.gl.disableVertexAttribArray(this.shaderProgramRenderFrameBuffer.vertexTextureAttribute);
+
+        this.gl.activeTexture(this.gl.TEXTURE2);
+        this.gl.bindTexture(this.gl.TEXTURE_2D, null)
+        this.gl.activeTexture(this.gl.TEXTURE1);
+        this.gl.bindTexture(this.gl.TEXTURE_2D, null)
+        this.gl.activeTexture(this.gl.TEXTURE0);
         this.gl.bindTexture(this.gl.TEXTURE_2D, null)
     }
 
