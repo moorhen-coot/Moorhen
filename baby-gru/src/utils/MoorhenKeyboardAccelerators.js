@@ -364,6 +364,8 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
 
         const saveCanvas = document.createElement("canvas");
 
+        if(!glRef.current.screenshotBuffersReady)
+            glRef.current.initTextureFramebuffer();
         const w = glRef.current.rttFramebuffer.width;
         const h = glRef.current.rttFramebuffer.height;
         let imgData;
