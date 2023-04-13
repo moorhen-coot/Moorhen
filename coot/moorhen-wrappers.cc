@@ -111,7 +111,7 @@ void TakeColourMap(const std::map<unsigned int, std::array<float, 3>> &theMap){
 }
 */
 
-std::string writeCIF(RDKit::RWMol *mol, int confId=0){
+std::string writeCIF(RDKit::RWMol *mol, const std::string &resname="UNL",  int confId=0){
   RDKit::AtomMonomerInfo *info = mol->getAtomWithIdx(0)->getMonomerInfo();
   std::map<std::string,int> elemMap;
   std::map<int,std::string> atomMap;
@@ -145,13 +145,13 @@ std::string writeCIF(RDKit::RWMol *mol, int confId=0){
       }
       atomIter++;
     }
-    output << "UNL      UNL 'UNKNOWN LIGAND                      ' non-polymer        " << nAtAll << " " <<  nAtNoH << " .\n";
+    output << resname << "      " << resname << " 'UNKNOWN LIGAND                      ' non-polymer        " << nAtAll << " " <<  nAtNoH << " .\n";
     output << "# ------------------------------------------------------\n";
     output << "# ------------------------------------------------------\n";
     output << "#\n";
     output << "# --- DESCRIPTION OF MONOMERS ---\n";
     output << "#\n";
-    output << "data_comp_UNL\n";
+    output << "data_comp_" << resname << "\n";
     output << "#\n";
     output << "loop_\n";
     output << "_chem_comp_atom.comp_id\n";
@@ -176,7 +176,7 @@ std::string writeCIF(RDKit::RWMol *mol, int confId=0){
   
       if(info){
         std::string name = info->getName();
-        output << "UNL           " << name << " " << symbol  << " " << name << " " << charge << " " << x << " " << y << " " << z << "\n";
+        output << resname << "           " << name << " " << symbol  << " " << name << " " << charge << " " << x << " " << y << " " << z << "\n";
       } else {
         if(elemMap.count(symbol)){
            elemMap[symbol]++;
@@ -188,7 +188,7 @@ std::string writeCIF(RDKit::RWMol *mol, int confId=0){
         std::string iStr = s.str();
         std::string name = symbol+iStr;
         atomMap[(*atomIter)->getIdx()] = name;
-        output << "UNL           " << name << " " << symbol  << " " << name << " " << charge << " " << x << " " << y << " " << z << "\n";
+        output << resname << "           " << name << " " << symbol  << " " << name << " " << charge << " " << x << " " << y << " " << z << "\n";
       }
   
       atomIter++;
@@ -217,7 +217,7 @@ std::string writeCIF(RDKit::RWMol *mol, int confId=0){
       } else {
          bondType = "single";
       }
-      output << "UNL  " << "    " << beginAtom <<   " "  << endAtom  << " " << bondType  << " " << bondLength << "  0.020\n";
+      output << resname << "  " << "    " << beginAtom <<   " "  << endAtom  << " " << bondType  << " " << bondLength << "  0.020\n";
       bondIter++;
     }
     output << "# ------------------------------------------------------\n";
@@ -342,7 +342,7 @@ int MolMinimize(RDKit::RWMol *mol, int nconf, int maxIters){
   return minCid;
 }
 
-std::pair<std::string, std::string> SmilesToPDB(const std::string &smile_cpp, int nconf, int maxIters){
+std::pair<std::string, std::string> SmilesToPDB(const std::string &smile_cpp, const std::string &TLC, int nconf, int maxIters){
     std::pair<std::string, std::string> retval;
 
     const char* smile = smile_cpp.c_str();
@@ -386,8 +386,19 @@ std::pair<std::string, std::string> SmilesToPDB(const std::string &smile_cpp, in
         return retval;
     }
 
+    RDKit::AtomPDBResidueInfo *mi = new RDKit::AtomPDBResidueInfo();
+    mi->setResidueName(TLC);
+    mi->setResidueNumber(1);
+    mi->setOccupancy(1.0);
+    mi->setTempFactor(0.0);
+
+    mol->setProp("_Name",TLC);
+    for(auto atom: mol->atoms()) {
+        atom->setMonomerInfo(mi);
+    }
+
     std::string pdb = RDKit::MolToPDBBlock( *mol );
-    std::string cif = writeCIF(mol,minCid);
+    std::string cif = writeCIF(mol,TLC, minCid);
 
     retval.first = pdb;
     retval.second = cif;
