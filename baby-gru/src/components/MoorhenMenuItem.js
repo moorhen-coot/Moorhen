@@ -120,7 +120,7 @@ export const MoorhenLoadTutorialDataMenuItem = (props) => {
         newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
         const newMap = new MoorhenMap(props.commandCentre)
         const newDiffMap = new MoorhenMap(props.commandCentre)
-        newMolecule.loadToCootFromURL(`${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-structure-number-${tutorialNumber}.pdb`, `moorhen-tutorial-${tutorialNumber}`)
+        newMolecule.loadToCootFromURL(`${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-structure-number-${tutorialNumber}.pdb`, `mol-${tutorialNumber}`)
             .then(result => {
                 newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef)
             }).then(result => {
@@ -129,12 +129,12 @@ export const MoorhenLoadTutorialDataMenuItem = (props) => {
             }).then(_ => {
                 newMolecule.centreOn(props.glRef, null, false)
             }).then(_ => {
-                return newMap.loadToCootFromMtzURL(`${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`, `moorhen-tutorial-${tutorialNumber}`,
+                return newMap.loadToCootFromMtzURL(`${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`, `map-${tutorialNumber}`,
                     {
                         isDifference: false, useWeight: false, calcStructFact: true, ...tutorialMtzColumnNames[tutorialNumber]
                     })
             }).then(_ => {
-                return newDiffMap.loadToCootFromMtzURL(`${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`, `moorhen-tutorial-${tutorialNumber}`,
+                return newDiffMap.loadToCootFromMtzURL(`${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`, `diff-map-${tutorialNumber}`,
                     { F: "DELFWT", PHI: "PHDELWT", isDifference: true, useWeight: false })
             }).then(_ => {
                 props.changeMaps({ action: 'AddList', items: [newMap, newDiffMap] })
@@ -944,8 +944,8 @@ export const MoorhenSuperposeMenuItem = (props) => {
 export const MoorhenImportDictionaryMenuItem = (props) => {
     const filesRef = useRef(null)
     const moleculeSelectRef = useRef(null)
-    const tlcRef = useRef(null)
     const [tlc, setTlc] = useState('')
+    const [smile, setSmile] = useState('')
     const addToRef = useRef(null)
     const [addToMolecule, setAddToMolecule] = useState('')
     const addToMoleculeValue = useRef(null)
@@ -955,7 +955,7 @@ export const MoorhenImportDictionaryMenuItem = (props) => {
     const [tlcsOfFile, setTlcsOfFile] = useState([])
     const tlcSelectRef = useRef(null)
     const tlcValueRef = useRef(null)
-    const createInstanceRef = useRef(null)
+    const smileRef = useRef(null)
     const createRef = useRef(true)
 
     const panelContent = <>
@@ -965,6 +965,7 @@ export const MoorhenImportDictionaryMenuItem = (props) => {
                 <option key="File" value="File">From local file</option>
                 <option key="Library" value="Library">From monomer library</option>
                 <option key="MRC" value="MRC">Fetch from MRC-LMB</option>
+                <option key="smile" value="smile">From SMILES</option>
             </Form.Select>
         </Form.Group>
         {fileOrLibrary === 'File' ? <>
@@ -987,21 +988,43 @@ export const MoorhenImportDictionaryMenuItem = (props) => {
                 <Form.Control ref={filesRef} type="file" accept={[".cif", ".dict", ".mmcif"]} multiple={false} />
             </Form.Group>
             {createInstance &&
-                <Form.Select ref={tlcSelectRef} value={tlc} onChange={(newVal) => { setTlc(newVal) }}>
+                <Form.Select ref={tlcSelectRef} value={tlc} onChange={(newVal) => { setTlc(newVal) }} style={{ width: '20rem', margin: '0.5rem' }} >
                     {tlcsOfFile.map(tlcOfFile => <option key={tlcOfFile} value={tlcOfFile}>{tlcOfFile}</option>)}
                 </Form.Select>
             }
         </>
-            :
+        : fileOrLibrary !== 'smile' &&
             <Form.Group key="tlc" style={{ width: '20rem', margin: '0.5rem' }} controlId="tlc" className="mb-3">
                 <Form.Label>Three letter code</Form.Label>
-                <Form.Control ref={tlcRef} value={tlc}
+                <Form.Control value={tlc}
                     onChange={(e) => {
                         setTlc(e.target.value)
                         tlcValueRef.current = e.target.value
                     }}
                     type="text" />
             </Form.Group>
+        }
+        {fileOrLibrary === 'smile' &&
+        <>
+            <Form.Group key="smile" style={{ width: '20rem', margin: '0.5rem' }} controlId="tlc" className="mb-3">
+                <Form.Label>Type a smile</Form.Label>
+                <Form.Control value={smile}
+                    onChange={(e) => {
+                        setSmile(e.target.value)
+                        smileRef.current = e.target.value
+                    }}
+                type="text" />
+            </Form.Group>            
+            <Form.Group key="tlc" style={{ width: '20rem', margin: '0.5rem' }} controlId="tlc" className="mb-3">
+                <Form.Label>Assign a name</Form.Label>
+                <Form.Control value={tlc}
+                    onChange={(e) => {
+                        setTlc(e.target.value)
+                        tlcValueRef.current = e.target.value
+                    }}
+                type="text" />
+            </Form.Group>
+        </>
         }
         <MoorhenMoleculeSelect {...props} allowAny={true} ref={moleculeSelectRef} label="Make monomer available to" />
         <Form.Group key="createInstance" style={{ width: '20rem', margin: '0.5rem' }} controlId="createInstance" className="mb-3">
@@ -1116,7 +1139,7 @@ export const MoorhenImportDictionaryMenuItem = (props) => {
                     props.setPopoverIsShown(false)
                 }
             })
-    }, [fileOrLibrary, moleculeSelectRef, moleculeSelectRef, props.molecules, tlcRef, tlc, addToRef, createInstance])
+    }, [fileOrLibrary, moleculeSelectRef, moleculeSelectRef, props.molecules, tlcValueRef, tlc, addToRef, createInstance])
 
     const readMmcifFile = async (file) => {
         return readTextFile(file)
@@ -1144,6 +1167,16 @@ export const MoorhenImportDictionaryMenuItem = (props) => {
         }
     }
 
+    const smilesToPDB = async (smile) => {
+        const response = await props.commandCentre.current.cootCommand({
+            command: 'shim_smiles_to_pdb',
+            commandArgs: [smile, tlcValueRef.current, 1, 200],
+            returnType: 'str_str_pair'
+        }, true)
+        const result = response.data.result.result.second
+        return handleFileContent(result)
+    }
+
     const onCompleted = useCallback(async () => {
         if (fileOrLibraryRef.current === "File") {
             let readPromises = []
@@ -1153,9 +1186,11 @@ export const MoorhenImportDictionaryMenuItem = (props) => {
             let mmcifReads = await Promise.all(readPromises)
         }
         else if (fileOrLibraryRef.current === "Library") {
-            readMonomerFile(tlcRef.current.value)
+            readMonomerFile(tlcValueRef.current)
         } else if (fileOrLibraryRef.current === "MRC") {
-            fetchFromMrcLmb(tlcRef.current.value)
+            fetchFromMrcLmb(tlcValueRef.current)
+        } else if (fileOrLibraryRef.current === "smile") {
+            smilesToPDB(smileRef.current)
         } else {
             console.log(`Unkown ligand source ${fileOrLibraryRef.current}`)
         }

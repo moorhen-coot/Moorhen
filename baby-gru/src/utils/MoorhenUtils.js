@@ -615,11 +615,11 @@ export const getNameLabel = (item) => {
                 }
                 >
                 <div>
-                    {`#${item.molNo} Mol. ${item.name.slice(0,5)}...`}
+                    {`#${item.molNo} ${item.type === 'molecule' ? 'Mol.' : 'Map'} ${item.name.slice(0,5)}...`}
                 </div>
                 </OverlayTrigger>
     }
-    return `#${item.molNo} Mol. ${item.name}`
+    return `#${item.molNo} ${item.type === 'molecule' ? 'Mol.' : 'Map'} ${item.name}`
 }
 
 export const hexToHsl = (hex) => {

@@ -177,49 +177,61 @@ export default class MoorhenWrapper {
 }
 
   async loadMtzData(uniqueId, inputFile, mapName, selectedColumns) {
-    // FIXME: Remove this when we finally get 404 from cloud
-    const fetchIsOK = true
-    if (!fetchIsOK) {
-      console.log(`Error fetching data from url ${inputFile}`)
-    } else {
-      const newMap = new MoorhenMap(this.controls.commandCentre)
-      newMap.litLines = this.preferences.litLines
-      newMap.uniqueId = uniqueId
-      return new Promise(async (resolve, reject) => {
-        try {
-          await newMap.loadToCootFromMtzURL(inputFile, mapName, selectedColumns)
-          this.controls.changeMaps({ action: 'Add', item: newMap })
-          this.controls.setActiveMap(newMap)
-          return resolve(newMap)
-        } catch (err) {
-          console.log(`Cannot fetch mtz from ${inputFile}`)
-          return reject(err)
-        }
-      })  
-    }
+    const newMap = new MoorhenMap(this.controls.commandCentre)
+    newMap.litLines = this.preferences.litLines
+    newMap.uniqueId = uniqueId
+    return new Promise(async (resolve, reject) => {
+      try {
+        await newMap.loadToCootFromMtzURL(inputFile, mapName, selectedColumns)
+        this.controls.changeMaps({ action: 'Add', item: newMap })
+        this.controls.setActiveMap(newMap)
+        return resolve(newMap)
+      } catch (err) {
+        console.log(`Cannot fetch mtz from ${inputFile}`)
+        return reject(err)
+      }
+    })  
   }
 
   async loadPdbData(uniqueId, inputFile, molName) {
-    // FIXME: Remove this when we finally get 404 from cloud
-    const fetchIsOK = true
-    if (!fetchIsOK) {
-      console.log(`Error fetching data from url ${inputFile}`)
-    } else {
-      const newMolecule = new MoorhenMolecule(this.controls.commandCentre, this.monomerLibrary)
-      newMolecule.setBackgroundColour(this.controls.glRef.current.background_colour)
-      newMolecule.uniqueId = uniqueId
-      return new Promise(async (resolve, reject) => {
-          try {
-              await newMolecule.loadToCootFromURL(inputFile, molName)
-              await newMolecule.fetchIfDirtyAndDraw('CBs', this.controls.glRef)
-              this.controls.changeMolecules({ action: "Add", item: newMolecule })
-              newMolecule.centreOn(this.controls.glRef, null, false)
-              return resolve(newMolecule)
-          } catch (err) {
-              console.log(`Cannot fetch molecule from ${inputFile}`)
-              return reject(err)
-          }   
-      })  
+    const newMolecule = new MoorhenMolecule(this.controls.commandCentre, this.monomerLibrary)
+    newMolecule.setBackgroundColour(this.controls.glRef.current.background_colour)
+    newMolecule.uniqueId = uniqueId
+    return new Promise(async (resolve, reject) => {
+        try {
+            await newMolecule.loadToCootFromURL(inputFile, molName)
+            await newMolecule.fetchIfDirtyAndDraw('CBs', this.controls.glRef)
+            this.controls.changeMolecules({ action: "Add", item: newMolecule })
+            newMolecule.centreOn(this.controls.glRef, null, false)
+            return resolve(newMolecule)
+        } catch (err) {
+            console.log(`Cannot fetch molecule from ${inputFile}`)
+            return reject(err)
+        }
+    })
+  }
+
+  async loadLigandData(url) {
+    try {
+      const response = await fetch(url)
+      if (response.ok) {
+        const fileContents = await response.text()
+        await this.controls.commandCentre.current.cootCommand({
+          returnType: "status",
+          command: 'shim_read_dictionary',
+          commandArgs: [fileContents, -999999],
+          changesMolecules: []
+        }, true)
+    
+        this.controls.moleculesRef.current.forEach(molecule => {
+          molecule.addDict(fileContents)
+        })
+      
+      } else {
+        console.log(`Unable to fetch legend file ${url}`)
+      }
+    } catch (err) {
+      console.log(err)
     }
   }
 
@@ -253,11 +265,20 @@ export default class MoorhenWrapper {
             return this.loadMtzData(file.uniqueId, ...file.args)
           } else if (file.type === 'legend') {
             return this.loadLegend(...file.args)
+          } else if(file.type === 'ligand') {
+            // pass
           } else {
             console.log(`Unrecognised file type ${file.type}`)
             return Promise.resolve()
           }
       }))
+      
+      await Promise.all(
+        this.inputFiles.filter(file => file.type === 'ligand').map(file => {
+          return this.loadLigandData(...file.args)
+        })
+      )
+  
     } catch (err) {
       console.log('Error fetching files...')
       console.log(err)
