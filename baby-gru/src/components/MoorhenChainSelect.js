@@ -3,10 +3,11 @@ import { Form, FormSelect } from "react-bootstrap";
 
 export const MoorhenChainSelect = forwardRef((props, selectRef) => {
     
-    const handleChange = (newChain) => {
+    const handleChange = (evt) => {
         if (props.onChange) {
-            props.onChange(newChain)
+            props.onChange(evt)
         }
+        if(selectRef) selectRef.current.value = evt.target.value
     }
 
     const getChainOptions = (selectedCoordMolNo) => {

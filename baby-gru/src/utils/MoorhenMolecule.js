@@ -26,6 +26,7 @@ export function MoorhenMolecule(commandCentre, monomerLibraryPath) {
     this.sequences = []
     this.colourRules = null
     this.ligands = null
+    this.ligandDicts = {}
     this.connectedToMaps = null
     this.excludedSegments = []
     this.symmetryOn = false
@@ -263,7 +264,9 @@ MoorhenMolecule.prototype.copyMolecule = async function (glRef) {
 
     newMolecule.molNo = response.data.result.result
 
+    await Promise.all(Object.keys(this.ligandDicts).map(key => newMolecule.addDict(this.ligandDicts[key])))
     await newMolecule.fetchIfDirtyAndDraw('CBs', glRef)
+    
     return newMolecule
 }
 
@@ -278,6 +281,7 @@ MoorhenMolecule.prototype.copyFragment = async function (chainId, res_no_start, 
     newMolecule.name = `${$this.name} fragment`
     newMolecule.molNo = response.data.result
     newMolecule.cootBondsOptions = $this.cootBondsOptions
+    await Promise.all(Object.keys(this.ligandDicts).map(key => newMolecule.addDict(this.ligandDicts[key])))
     await newMolecule.fetchIfDirtyAndDraw('CBs', glRef)
     if (doRecentre) await newMolecule.centreOn(glRef)
 
@@ -300,6 +304,7 @@ MoorhenMolecule.prototype.copyFragmentUsingCid = async function (cid, background
         newMolecule.molNo = response.data.result.result
         newMolecule.setBackgroundColour(backgroundColor)
         newMolecule.cootBondsOptions.smoothness = defaultBondSmoothness
+        await Promise.all(Object.keys(this.ligandDicts).map(key => newMolecule.addDict(this.ligandDicts[key])))
         return Promise.resolve(newMolecule)
     })
 }
@@ -1632,34 +1637,48 @@ MoorhenMolecule.prototype.addLigandOfType = async function (resType, at, glRef) 
         })
 }
 
-MoorhenMolecule.prototype.addDictShim = function (comp_id, unindentedLines) {
-    var $this = this
-    var reassembledCif = unindentedLines.join("\n")
-    $this.enerLib.addCIFAtomTypes(comp_id, reassembledCif);
-    $this.enerLib.addCIFBondTypes(comp_id, reassembledCif);
+MoorhenMolecule.prototype.getDict = function (comp_id) {
+    if (Object.hasOwn(this.ligandDicts, comp_id)) {
+        return this.ligandDicts[comp_id]
+    }
+    console.log(`Cannot find ligand dict with comp_id ${comp_id}`)
 }
 
-MoorhenMolecule.prototype.addDict = function (theData) {
-    var $this = this
-    var possibleIndentedLines = theData.split("\n");
-    var unindentedLines = []
-    var comp_id = 'list'
-    var rx = /data_comp_(.*)/;
-    for (var line of possibleIndentedLines) {
-        var trimmedLine = line.trim()
-        var arr = rx.exec(trimmedLine);
+MoorhenMolecule.prototype.addDictShim = function (comp_id, reassembledCif) {
+    this.enerLib.addCIFAtomTypes(comp_id, reassembledCif)
+    this.enerLib.addCIFBondTypes(comp_id, reassembledCif)
+    this.ligandDicts[comp_id] = reassembledCif
+}
+
+MoorhenMolecule.prototype.addDict = async function (fileContent) {
+    await this.commandCentre.current.cootCommand({
+        returnType: "status",
+        command: 'shim_read_dictionary',
+        commandArgs: [fileContent, this.molNo],
+        changesMolecules: []
+    }, true)
+
+    let possibleIndentedLines = fileContent.split("\n")
+    let unindentedLines = []
+    let comp_id = 'list'
+    let rx = /data_comp_(.*)/;
+    
+    for (let line of possibleIndentedLines) {
+        let trimmedLine = line.trim()
+        let arr = rx.exec(trimmedLine)
         if (arr !== null) {
             //Had we encountered a previous compound ?  If so, add it into the energy lib
             if (comp_id !== 'list') {
-                $this.addDictShim(comp_id, unindentedLines)
+                this.addDictShim(comp_id, unindentedLines.join("\n"))
                 unindentedLines = []
             }
             comp_id = arr[1]
         }
         unindentedLines.push(line.trim())
     }
+    
     if (comp_id !== 'list') {
-        $this.addDictShim(comp_id, unindentedLines)
+        this.addDictShim(comp_id, unindentedLines.join("\n"))
     }
 }
 
