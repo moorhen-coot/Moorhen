@@ -198,7 +198,7 @@ export const MoorhenGetMonomerMenuItem = (props) => {
     </>
 
 
-    const onCompleted = () => {
+    const onCompleted = async () => {
         const fromMolNo = parseInt(selectRef.current.value)
         const newTlc = tlcRef.current.value.toUpperCase()
         const newMolecule = new MoorhenMolecule(props.commandCentre, props.monomerLibraryPath)
@@ -213,29 +213,28 @@ export const MoorhenGetMonomerMenuItem = (props) => {
             }, true)
         }
 
-        getMonomer()
-            .then(result => {
-                if (result.data.result.result === -1) {
-                    return newMolecule.loadMissingMonomer(newTlc, fromMolNo)
-                        .then(() => { return getMonomer() })
-                }
-                return Promise.resolve(result)
-            })
-            .then(result => {
-                if (result.data.result.status === "Completed" && result.data.result.result !== -1) {
-                    const newMolecule = new MoorhenMolecule(props.commandCentre, props.monomerLibraryPath)
-                    newMolecule.molNo = result.data.result.result
-                    newMolecule.name = newTlc
-                    newMolecule.setBackgroundColour(props.glRef.current.background_colour)
-                    newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
-                    return newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef).then(_ => {
-                        props.changeMolecules({ action: "Add", item: newMolecule })
-                    })
-                } else {
-                    console.log('Error getting monomer... Missing dictionary?')
-                    props.commandCentre.current.extendConsoleMessage('Error getting monomer... Missing dictionary?')
-                }
-            })
+        let result = await getMonomer()
+        
+        if (result.data.result.result === -1) {
+            await newMolecule.loadMissingMonomer(newTlc, fromMolNo)
+            result = await getMonomer()
+        } 
+        
+        if (result.data.result.status === "Completed" && result.data.result.result !== -1) {
+            newMolecule.molNo = result.data.result.result
+            newMolecule.name = newTlc
+            newMolecule.setBackgroundColour(props.glRef.current.background_colour)
+            newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
+
+            const fromMolecule = props.molecules.find(molecule => molecule.molNo === fromMolNo)
+            const ligandDict = fromMolecule.getDict(newTlc)
+            await newMolecule.addDict(ligandDict)
+            await newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef)
+            props.changeMolecules({ action: "Add", item: newMolecule })
+        } else {
+            console.log('Error getting monomer... Missing dictionary?')
+            props.commandCentre.current.extendConsoleMessage('Error getting monomer... Missing dictionary?')
+        }
     }
 
     return <MoorhenMenuItem
@@ -978,6 +977,7 @@ export const MoorhenSuperposeMenuItem = (props) => {
 export const MoorhenImportDictionaryMenuItem = (props) => {
     const filesRef = useRef(null)
     const moleculeSelectRef = useRef(null)
+    const moleculeSelectValueRef = useRef(null)
     const [tlc, setTlc] = useState('')
     const [smile, setSmile] = useState('')
     const addToRef = useRef(null)
@@ -1060,7 +1060,9 @@ export const MoorhenImportDictionaryMenuItem = (props) => {
             </Form.Group>
         </>
         }
-        <MoorhenMoleculeSelect {...props} allowAny={true} ref={moleculeSelectRef} label="Make monomer available to" />
+        <MoorhenMoleculeSelect {...props} allowAny={true} ref={moleculeSelectRef} label="Make monomer available to" onChange={(evt) => {
+            moleculeSelectValueRef.current = evt.target.value
+        }}/>
         <Form.Group key="createInstance" style={{ width: '20rem', margin: '0.5rem' }} controlId="createInstance" className="mb-3">
             <Form.Label>Create instance on read</Form.Label>
             <InputGroup>
@@ -1097,100 +1099,75 @@ export const MoorhenImportDictionaryMenuItem = (props) => {
     const handleFileContent = useCallback(async (fileContent) => {
         let newMolecule
         let selectedMoleculeIndex
-        if (moleculeSelectRef.current) {
-            selectedMoleculeIndex = parseInt(moleculeSelectRef.current.value)
+        
+        if (moleculeSelectValueRef.current) {
+            selectedMoleculeIndex = parseInt(moleculeSelectValueRef.current)
         } else {
             selectedMoleculeIndex = parseInt(-999999)
         }
-        return props.commandCentre.current.cootCommand({
-            returnType: "status",
-            command: 'shim_read_dictionary',
-            commandArgs: [fileContent, selectedMoleculeIndex],
-            changesMolecules: []
-        }, true)
-            .then(_ => {
-                props.molecules.forEach(molecule => {
-                    if (molecule.molNo === parseInt(selectedMoleculeIndex) ||
-                        -999999 === parseInt(selectedMoleculeIndex)) {
-                        molecule.addDict(fileContent)
-                    }
-                })
-                return Promise.resolve(true)
-            })
-            .then(async (result) => {
-                props.molecules.forEach(async molecule => {
-                    if (molecule.molNo === parseInt(selectedMoleculeIndex) ||
-                        -999999 === parseInt(selectedMoleculeIndex)) {
-                        let a = await molecule.redraw(props.glRef)
-                    }
-                })
+                
+        await Promise.all(
+            props.molecules.map(molecule => {
+                if (molecule.molNo === selectedMoleculeIndex || -999999 === selectedMoleculeIndex) {
+                    return molecule.addDict(fileContent).then(_ => molecule.redraw(props.glRef))         
+                }
                 return Promise.resolve()
             })
-            .then(result => {
-                if (createRef.current) {
-                    const instanceName = tlcValueRef.current
-                    return props.commandCentre.current.cootCommand({
-                        returnType: 'status',
-                        command: 'get_monomer_and_position_at',
-                        commandArgs: [instanceName,
-                            selectedMoleculeIndex,
-                            ...props.glRef.current.origin.map(coord => -coord)]
-                    }, true)
-                        .then(result => {
-                            if (result.data.result.status === "Completed") {
-                                newMolecule = new MoorhenMolecule(props.commandCentre, props.monomerLibraryPath)
-                                newMolecule.molNo = result.data.result.result
-                                newMolecule.name = instanceName
-                                newMolecule.setBackgroundColour(props.backgroundColor)
-                                newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
-                                newMolecule.addDict(fileContent)
-                                props.changeMolecules({ action: "Add", item: newMolecule })
-                                return newMolecule.fetchIfDirtyAndDraw("CBs", props.glRef)
-                            }
-                        })
-                }
-                else {
-                    return Promise.resolve(false)
-                }
-            })
-            .then(result => {
-                if (newMolecule) {
-                    //Here if instance created
-                    if (addToMoleculeValue.current !== -1) {
-                        const toMolecule = props.molecules.filter(molecule => molecule.molNo === addToMoleculeValue.current)[0]
-                        if (toMolecule) {
-                            const otherMolecules = [newMolecule]
-                            return toMolecule.mergeMolecules(otherMolecules, props.glRef, true)
-                                .then(_ => {
-                                    const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: toMolecule.molNo } })
-                                    document.dispatchEvent(scoresUpdateEvent)
-                                    return toMolecule.redraw(props.glRef)
-                                })
-                        } else {
-                            newMolecule.redraw(props.glRef)
-                        }
+        )
+        
+        if (createRef.current) {
+            const instanceName = tlcValueRef.current
+            const result = await props.commandCentre.current.cootCommand({
+                returnType: 'status',
+                command: 'get_monomer_and_position_at',
+                commandArgs: [instanceName,
+                    selectedMoleculeIndex,
+                    ...props.glRef.current.origin.map(coord => -coord)]
+            }, true)
+            if (result.data.result.status === "Completed") {
+                newMolecule = new MoorhenMolecule(props.commandCentre, props.monomerLibraryPath)
+                newMolecule.molNo = result.data.result.result
+                newMolecule.name = instanceName
+                newMolecule.setBackgroundColour(props.backgroundColor)
+                newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
+                await newMolecule.addDict(fileContent)
+                props.changeMolecules({ action: "Add", item: newMolecule })
+                await newMolecule.fetchIfDirtyAndDraw("CBs", props.glRef)
+                if (addToMoleculeValue.current !== -1) {
+                    const toMolecule = props.molecules.find(molecule => molecule.molNo === addToMoleculeValue.current)
+                    if (typeof toMolecule !== 'undefined') {
+                        const otherMolecules = [newMolecule]
+                        await toMolecule.mergeMolecules(otherMolecules, props.glRef, true)
+                        const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: toMolecule.molNo } })
+                        document.dispatchEvent(scoresUpdateEvent)
+                        await toMolecule.redraw(props.glRef)
+                    } else {
+                        await newMolecule.redraw(props.glRef)
                     }
-                    props.setPopoverIsShown(false)
                 }
-            })
-    }, [fileOrLibrary, moleculeSelectRef, moleculeSelectRef, props.molecules, tlcValueRef, tlc, addToRef, createInstance])
+            }
+        }
 
-    const readMmcifFile = async (file) => {
+        props.setPopoverIsShown(false)
+
+    }, [fileOrLibrary, moleculeSelectRef, props.molecules, props.glRef, props.commandCentre, tlcValueRef, tlc, addToRef, createInstance])
+
+    const readMmcifFile = useCallback(async (file) => {
         return readTextFile(file)
             .then(fileContent => {
                 return handleFileContent(fileContent)
             })
-    }
+    }, [handleFileContent])
 
-    const readMonomerFile = async (newTlc) => {
+    const readMonomerFile = useCallback(async (newTlc) => {
         return fetch(`${props.monomerLibraryPath}/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`)
             .then(response => response.text())
             .then(fileContent => {
                 return handleFileContent(fileContent)
             })
-    }
+    }, [handleFileContent, props.monomerLibraryPath])
 
-    const fetchFromMrcLmb = async (newTlc) => {
+    const fetchFromMrcLmb = useCallback(async (newTlc) => {
         const url = `https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`
         const response = await fetch(url)
         if (!response.ok) {
@@ -1199,9 +1176,13 @@ export const MoorhenImportDictionaryMenuItem = (props) => {
             const fileContent = await response.text()
             return handleFileContent(fileContent)
         }
-    }
+    }, [handleFileContent])
 
-    const smilesToPDB = async (smile) => {
+    const smilesToPDB = useCallback(async (smile) => {
+        if (!smile) {
+            console.log('Empty smile, do nothing...')
+            return
+        }
         const response = await props.commandCentre.current.cootCommand({
             command: 'shim_smiles_to_pdb',
             commandArgs: [smile, tlcValueRef.current, 1, 200],
@@ -1214,7 +1195,7 @@ export const MoorhenImportDictionaryMenuItem = (props) => {
             console.log('Error creating molecule... Wrong SMILES?')
             props.commandCentre.current.extendConsoleMessage('Error creating molecule... Wrong SMILES?')
         }
-    }
+    }, [handleFileContent, props.commandCentre])
 
     const onCompleted = useCallback(async () => {
         if (fileOrLibraryRef.current === "File") {
@@ -1222,7 +1203,7 @@ export const MoorhenImportDictionaryMenuItem = (props) => {
             for (const file of filesRef.current.files) {
                 readPromises.push(readMmcifFile(file))
             }
-            let mmcifReads = await Promise.all(readPromises)
+            await Promise.all(readPromises)
         }
         else if (fileOrLibraryRef.current === "Library") {
             readMonomerFile(tlcValueRef.current)
@@ -1234,7 +1215,7 @@ export const MoorhenImportDictionaryMenuItem = (props) => {
             console.log(`Unkown ligand source ${fileOrLibraryRef.current}`)
         }
 
-    }, [handleFileContent])
+    }, [readMonomerFile, fetchFromMrcLmb, smilesToPDB, readMmcifFile])
 
     return <MoorhenMenuItem
         id='import-dict-menu-item'
