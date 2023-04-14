@@ -1050,7 +1050,7 @@ export const MoorhenAddSimpleButton = (props) => {
     const selectRef = useRef()
 
     const MoorhenAddSimplePanel = (props) => {
-        const molTypes = ['HOH', 'SO4', 'PO4', 'GOL', 'CIT', 'EDO']
+        const molTypes = ['HOH', 'SO4', 'PO4', 'GOL', 'CIT', 'EDO', 'IOD', 'NA', 'CA']
         return <Container>
             <MenuList>
                 {molTypes.map(molType => {
@@ -1064,7 +1064,7 @@ export const MoorhenAddSimpleButton = (props) => {
     const onTypeSelectedCallback = useCallback(async (value) => {
         const selectedMolecule = props.molecules.find(molecule => molecule.molNo === parseInt(selectRef.current.value))
         if (selectedMolecule) {
-            await selectedMolecule.addLigandOfType(value, props.glRef.current.origin.map(coord => -coord), props.glRef)
+            await selectedMolecule.addLigandOfType(value, props.glRef)
             props.setSelectedButtonIndex(null)
             const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: selectedMolecule.molNo } })
             document.dispatchEvent(scoresUpdateEvent)    

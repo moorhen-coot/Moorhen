@@ -154,7 +154,7 @@ export const MoorhenLoadTutorialDataMenuItem = (props) => {
 export const MoorhenAddSimpleMenuItem = (props) => {
     const molTypeSelectRef = useRef(null)
     const moleculeSelectRef = useRef(null)
-    const molTypes = ['HOH', 'SO4', 'PO4', 'GOL', 'CIT', 'EDO']
+    const molTypes = ['HOH', 'SO4', 'PO4', 'GOL', 'CIT', 'EDO', 'IOD', 'NA', 'CA']
 
     const panelContent = <>
         <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="MoorhenAddSimpleMenuItem" className="mb-3">
@@ -170,7 +170,7 @@ export const MoorhenAddSimpleMenuItem = (props) => {
     const onCompleted = useCallback(async () => {
         const selectedMolecule = props.molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
         if (selectedMolecule) {
-            await selectedMolecule.addLigandOfType(molTypeSelectRef.current.value, props.glRef.current.origin.map(coord => -coord), props.glRef)
+            await selectedMolecule.addLigandOfType(molTypeSelectRef.current.value, props.glRef)
             const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: selectedMolecule.molNo } })
             document.dispatchEvent(scoresUpdateEvent)    
         }

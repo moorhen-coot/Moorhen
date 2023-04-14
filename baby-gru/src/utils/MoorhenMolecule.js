@@ -1613,28 +1613,35 @@ MoorhenMolecule.prototype.mergeMolecules = async function (otherMolecules, glRef
     })
 }
 
-MoorhenMolecule.prototype.addLigandOfType = async function (resType, at, glRef) {
-    const $this = this
-    let newMolecule = null
-    return $this.commandCentre.current.cootCommand({
-        returnType: 'status',
-        command: 'get_monomer_and_position_at',
-        commandArgs: [resType.toUpperCase(), -999999, ...at]
-    }, true)
-        .then(async result => {
-            if (result.data.result.status === "Completed") {
-                newMolecule = new MoorhenMolecule($this.commandCentre, $this.monomerLibraryPath)
-                newMolecule.setAtomsDirty(true)
-                newMolecule.molNo = result.data.result.result
-                newMolecule.name = resType.toUpperCase()
-                newMolecule.cootBondsOptions = $this.cootBondsOptions
-                const _ = await $this.mergeMolecules([newMolecule], glRef, true);
-                return newMolecule.delete(glRef);
-            }
-            else {
-                return Promise.resolve(false)
-            }
-        })
+MoorhenMolecule.prototype.addLigandOfType = async function (resType, glRef, fromMolNo=-999999) {
+    const getMonomer = () => {
+        return this.commandCentre.current.cootCommand({
+            returnType: 'status',
+            command: 'get_monomer_and_position_at',
+            commandArgs: [resType.toUpperCase(), fromMolNo,
+                ...glRef.current.origin.map(coord => -coord)
+            ]
+        }, true)
+    }
+
+    let result = await getMonomer()
+    
+    if (result.data.result.result === -1) {
+        await this.loadMissingMonomer(resType.toUpperCase(), fromMolNo)
+        result = await getMonomer()
+    } 
+    if (result.data.result.status === "Completed" && result.data.result.result !== -1) {
+        const newMolecule = new MoorhenMolecule(this.commandCentre, this.monomerLibraryPath)
+        newMolecule.setAtomsDirty(true)
+        newMolecule.molNo = result.data.result.result
+        newMolecule.name = resType.toUpperCase()
+        newMolecule.cootBondsOptions = this.cootBondsOptions
+        await this.mergeMolecules([newMolecule], glRef, true)
+        return newMolecule.delete(glRef)
+    } else {
+        console.log('Error getting monomer... Missing dictionary?')
+        this.commandCentre.current.extendConsoleMessage('Error getting monomer... Missing dictionary?')
+    }
 }
 
 MoorhenMolecule.prototype.getDict = function (comp_id) {
