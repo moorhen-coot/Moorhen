@@ -2094,10 +2094,10 @@ export const MoorhenCentreOnLigandMenuItem = (props) => {
             key='centre-on-ligand-menu-item'
             id='centre-on-ligand-menu-item'
             popoverContent={
+                molTreeData.length > 0 ?
                 <Tree treeData={molTreeData}
                     onSelect={async (selectedKeys, e) => {
                         if (e.node.type === "ligand") {
-
                             const selAtoms = await e.node.molecule.gemmiAtomsForCid(e.node.title)
                             const reducedValue = selAtoms.reduce(
                                 (accumulator, currentValue) => {
@@ -2116,9 +2116,12 @@ export const MoorhenCentreOnLigandMenuItem = (props) => {
                     }}
                 >
                 </Tree>
+                :
+                <span>No ligands...</span>
             }
             menuItemText="Centre on ligand..."
             setPopoverIsShown={props.setPopoverIsShown}
+            showOkButton={false}
         />
     </>
 }
