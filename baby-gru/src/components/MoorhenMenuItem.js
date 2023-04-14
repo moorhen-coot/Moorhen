@@ -301,7 +301,7 @@ export const MoorhenFitLigandRightHereMenuItem = (props) => {
     const ligandMoleculeRef = useRef(null)
     const mapSelectRef = useRef(null)
     const useConformersRef = useRef(false)
-    const conformerCountRef = useRef(10)
+    const conformerCountRef = useRef(0)
     const [useConformers, setUseConformers] = useState(false)
     const [conformerCount, setConformerCount] = useState(10)
 
@@ -309,7 +309,8 @@ export const MoorhenFitLigandRightHereMenuItem = (props) => {
         <MoorhenMapSelect {...props} label="Map" allowAny={false} ref={mapSelectRef} />
         <MoorhenMoleculeSelect {...props} label="Protein molecule" allowAny={false} ref={intoMoleculeRef} />
         <MoorhenMoleculeSelect {...props} label="Ligand molecule" allowAny={false} ref={ligandMoleculeRef} />
-        <Form.Check
+        {/** FIXME: This remains unavailable until the thread pool exhausted issue is fixed
+         <Form.Check
             style={{margin: '0.5rem'}} 
             type="switch"
             checked={useConformers}
@@ -317,7 +318,7 @@ export const MoorhenFitLigandRightHereMenuItem = (props) => {
                 useConformersRef.current = !useConformers
                 setUseConformers(!useConformers)
             }}
-            label="Use conformers"/>
+            label="Use conformers"/>*/}
         {useConformers &&
         <Form.Group>
         <TextField
