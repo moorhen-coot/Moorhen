@@ -76,7 +76,7 @@ export const MoorhenCloudApp = (props) => {
     }, [props.exportCallback, molecules])
 
     const exportMenuItem =  <MenuItem key={'export-cloud'} id='cloud-export-menu-item' variant="success" onClick={doExportCallback}>
-                                Export to CCP4 Cloud
+                                Save current model
                             </MenuItem>
 
     const doContourIfDirty = async () => {
