@@ -210,7 +210,11 @@ export const MoorhenFlipPeptideButton = (props) => {
         prompt="Click atom in residue to flip"
         icon={<img style={{width:'100%', height: '100%'}} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/flip-peptide.svg`} alt='Flip Peptide' />}
         formatArgs={(molecule, chosenAtom) => {
-            return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, '']
+            return [
+                molecule.molNo, 
+                `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`,
+                chosenAtom.alt_conf === "" ? "" : chosenAtom.alt_conf
+            ]
         }} />
 }
 
