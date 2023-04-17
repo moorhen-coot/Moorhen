@@ -336,12 +336,14 @@ MoorhenMolecule.prototype.loadToCootFromString = async function (coordData, name
     const $this = this
     const pdbRegex = /.pdb$/;
     const entRegex = /.ent$/;
+    const cifRegex = /.cif$/;
+    const mmcifRegex = /.mmcif$/;
 
     if ($this.gemmiStructure && !$this.gemmiStructure.isDeleted()) {
         $this.gemmiStructure.delete()
     }
 
-    $this.name = name.replace(pdbRegex, "").replace(entRegex, "");
+    $this.name = name.replace(pdbRegex, "").replace(entRegex, "").replace(cifRegex, "").replace(mmcifRegex, "");
     $this.gemmiStructure = readGemmiStructure(coordData, $this.name)
     window.CCP4Module.gemmi_setup_entities($this.gemmiStructure)
     $this.parseSequences()
@@ -1716,7 +1718,7 @@ MoorhenMolecule.prototype.updateLigands = async function () {
     const model = this.gemmiStructure.first_model()
     const modelName = model.name
     
-    try{
+    try {
         const chains = model.chains
         const chainsSize = chains.size()
         for (let i = 0; i < chainsSize; i++) {
