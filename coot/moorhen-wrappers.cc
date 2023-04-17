@@ -198,9 +198,16 @@ std::string writeCIF(RDKit::RWMol *mol, const std::string &resname="UNL",  int c
     output << "_chem_comp_bond.atom_id_1\n";
     output << "_chem_comp_bond.atom_id_2\n";
     output << "_chem_comp_bond.type\n";
+    output << "_chem_comp_bond.aromatic\n";
     output << "_chem_comp_bond.value_dist\n";
     output << "_chem_comp_bond.value_dist_esd\n";
+
+    RDKit::RWMol *kekmol = new RDKit::RWMol(*mol);
+    RDKit::MolOps::Kekulize(*kekmol);
+
     RDKit::ROMol::BondIterator bondIter = mol->beginBonds();
+    RDKit::ROMol::BondIterator kekBondIter = kekmol->beginBonds();
+
     while(bondIter!=mol->endBonds()){
       std::string beginAtom =  atomMap[(*bondIter)->getBeginAtomIdx()];
       std::string endAtom =  atomMap[(*bondIter)->getEndAtomIdx()];
@@ -208,17 +215,22 @@ std::string writeCIF(RDKit::RWMol *mol, const std::string &resname="UNL",  int c
       const RDGeom::Point3D pos2 = conf->getAtomPos((*bondIter)->getEndAtomIdx());
       double bondLength = sqrt((pos1.x-pos2.x)*(pos1.x-pos2.x) + (pos1.y-pos2.y)*(pos1.y-pos2.y) + (pos1.z-pos2.z)*(pos1.z-pos2.z));
       std::string bondType;
-      if((*bondIter)->getBondType()==RDKit::Bond::DOUBLE){
-         bondType = "double";
-      } else if((*bondIter)->getBondType()==RDKit::Bond::TRIPLE){
-         bondType = "triple";
-      } else if((*bondIter)->getBondType()==RDKit::Bond::AROMATIC){
-         bondType = "aromatic";
+      std::string aromaticFlag;
+      bool isAromatic = mol->getAtomWithIdx((*bondIter)->getBeginAtomIdx())->getIsAromatic() && mol->getAtomWithIdx((*bondIter)->getEndAtomIdx())->getIsAromatic();
+      if((*kekBondIter)->getBondType()==RDKit::Bond::DOUBLE){
+         bondType = "DOUBLE";
+      } else if((*kekBondIter)->getBondType()==RDKit::Bond::TRIPLE){
+         bondType = "TRIPLE";
       } else {
-         bondType = "single";
+         bondType = "SINGLE";
       }
-      output << resname << "  " << "    " << beginAtom <<   " "  << endAtom  << " " << bondType  << " " << bondLength << "  0.020\n";
-      bondIter++;
+      if(isAromatic){
+          aromaticFlag = "y";
+      } else {
+          aromaticFlag = "n";
+      }
+      output << resname << "  " << "    " << beginAtom <<   " "  << endAtom  << " " << bondType  << " " << aromaticFlag << " " << bondLength << "  0.020\n";
+      bondIter++; kekBondIter++;
     }
     output << "# ------------------------------------------------------\n";
 
