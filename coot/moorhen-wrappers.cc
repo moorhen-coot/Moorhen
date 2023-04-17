@@ -1102,6 +1102,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     value_object<coot::molecule_t::rotamer_change_info_t>("rotamer_change_info_t")
     .field("rank", &coot::molecule_t::rotamer_change_info_t::rank)
     .field("name", &coot::molecule_t::rotamer_change_info_t::name)
+    .field("richardson_probability", &coot::molecule_t::rotamer_change_info_t::richardson_probability)
     .field("status", &coot::molecule_t::rotamer_change_info_t::status)
     ;
     value_object<g_triangle>("g_triangle")

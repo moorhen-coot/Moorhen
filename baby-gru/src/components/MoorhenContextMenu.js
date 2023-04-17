@@ -339,6 +339,7 @@ export const MoorhenContextMenu = (props) => {
     const getPopoverContents = (rotamerInfo) => {
       const rotamerName = rotamerInfo.data.result.result.name
       const rotamerRank = rotamerInfo.data.result.result.rank
+      const rotamerProbability = rotamerInfo.data.result.result.richardson_probability
       let offsetX = 0
       let offsetY = 0
 
@@ -360,7 +361,9 @@ export const MoorhenContextMenu = (props) => {
               >
               <Card.Header>Accept new rotamer ?</Card.Header>
               <Card.Body style={{ alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
-                <span>Current rotamer: {rotamerName} ({rotamerRank+1}<sup>{rotamerRank === 0 ? 'st' : rotamerRank === 1 ? 'nd' : rotamerRank === 2 ? 'rd' : 'th'}</sup>)</span>
+              <span>Current rotamer: {rotamerName} ({rotamerRank+1}<sup>{rotamerRank === 0 ? 'st' : rotamerRank === 1 ? 'nd' : rotamerRank === 2 ? 'rd' : 'th'}</sup>)</span>
+              <br></br>
+              <span>Probability: {rotamerProbability}%</span>
                 <Stack gap={2} direction='horizontal' style={{paddingTop: '0.5rem', alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
                 <Button onClick={() => changeRotamer('change_to_first_rotamer')}><FirstPageOutlined/></Button>
                   <Button onClick={() => changeRotamer('change_to_previous_rotamer')}><ArrowBackIosOutlined/></Button>
