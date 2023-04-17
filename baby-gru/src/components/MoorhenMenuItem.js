@@ -181,9 +181,12 @@ export const MoorhenAddSimpleMenuItem = (props) => {
         popoverContent={panelContent}
         menuItemText="Add simple..."
         onCompleted={onCompleted}
+        popoverPlacement={props.popoverPlacement}
         setPopoverIsShown={props.setPopoverIsShown}
     />
 }
+
+MoorhenAddSimpleMenuItem.defaultProps = { popoverPlacement: "right" }
 
 export const MoorhenGetMonomerMenuItem = (props) => {
     const tlcRef = useRef()
@@ -244,8 +247,11 @@ export const MoorhenGetMonomerMenuItem = (props) => {
         menuItemText="Get monomer..."
         onCompleted={onCompleted}
         setPopoverIsShown={props.setPopoverIsShown}
+        popoverPlacement={props.popoverPlacement}
     />
 }
+
+MoorhenGetMonomerMenuItem.defaultProps = { popoverPlacement: "right" }
 
 export const MoorhenSharpenBlurMapMenuItem = (props) => {
     const factorRef = useRef()
@@ -379,8 +385,11 @@ export const MoorhenFitLigandRightHereMenuItem = (props) => {
         menuItemText="Fit ligand here..."
         onCompleted={onCompleted}
         setPopoverIsShown={props.setPopoverIsShown}
+        popoverPlacement={props.popoverPlacement}
     />
 }
+
+MoorhenFitLigandRightHereMenuItem.defaultProps = { popoverPlacement: "right" }
 
 export const MoorhenDeleteDisplayObjectMenuItem = (props) => {
 
@@ -866,8 +875,11 @@ export const MoorhenBackgroundColorMenuItem = (props) => {
         menuItemText="Set background colour..."
         onCompleted={() => props.setPopoverIsShown(false)}
         setPopoverIsShown={props.setPopoverIsShown}
+        popoverPlacement={props.popoverPlacement}
     />
 }
+
+MoorhenBackgroundColorMenuItem.defaultProps = { popoverPlacement: "right" }
 
 export const MoorhenSuperposeMenuItem = (props) => {
     const refChainSelectRef = useRef(null);
