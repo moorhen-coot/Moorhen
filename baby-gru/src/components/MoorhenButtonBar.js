@@ -3,7 +3,7 @@ import { ButtonGroup, Carousel } from "react-bootstrap"
 import { MoorhenAutofitRotamerButton, MoorhenFlipPeptideButton, MoorhenSideChain180Button, MoorhenAddTerminalResidueDirectlyUsingCidButton,
         MoorhenEigenFlipLigandButton, MoorhenJedFlipFalseButton, MoorhenJedFlipTrueButton, MoorhenConvertCisTransButton, MoorhenAddSimpleButton,
         MoorhenRefineResiduesUsingAtomCidButton, MoorhenDeleteUsingCidButton, MoorhenMutateButton, MoorhenRotateTranslateZoneButton,
-        MoorhenAddAltConfButton, MoorhenRigidBodyFitButton, MoorhenNextRotamerButton } from "./MoorhenSimpleEditButton"
+        MoorhenAddAltConfButton, MoorhenRigidBodyFitButton, MoorhenRotamerChangeButton } from "./MoorhenSimpleEditButton"
 import { IconButton, Drawer } from "@mui/material";
 import { ArrowDownwardOutlined, ArrowUpwardOutlined } from "@mui/icons-material";
 import { convertRemToPx, convertViewtoPx} from '../utils/MoorhenUtils';
@@ -42,7 +42,7 @@ export const MoorhenButtonBar = (props) => {
         (<MoorhenRigidBodyFitButton {...props} key='rigid-body-fit' selectedButtonIndex={selectedButtonIndex}
             setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="8" />),
 
-        (<MoorhenNextRotamerButton  {...props} key='next-rotamer' selectedButtonIndex={selectedButtonIndex}
+        (<MoorhenRotamerChangeButton  {...props} key='next-rotamer' selectedButtonIndex={selectedButtonIndex}
             setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="9" />),
 
         (<MoorhenEigenFlipLigandButton {...props} key='eigen-flip' selectedButtonIndex={selectedButtonIndex}
