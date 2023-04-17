@@ -20,7 +20,7 @@ let print = (stuff) => {
     postMessage({ consoleMessage: JSON.stringify(stuff) })
 }
 
-const instancedMeshToMeshData = (instanceMesh, perm) => {
+const instancedMeshToMeshData = (instanceMesh, perm, toSpheres=false) => {
 
     let totIdxs = []
     let totPos = []
@@ -79,6 +79,10 @@ const instancedMeshToMeshData = (instanceMesh, perm) => {
 
         const As = inst.instancing_data_A;
         const Asize = As.size();
+
+        let mult = 1.0
+        if(toSpheres) mult = 1.25
+
         if (Asize > 0) {
             for (let j = 0; j < Asize; j++) {
                 const inst_data = As.get(j)
@@ -95,9 +99,9 @@ const instancedMeshToMeshData = (instanceMesh, perm) => {
                 thisInstance_colours.push(instDataColour[3])
 
                 const instDataSize = inst_data.size
-                thisInstance_sizes.push(instDataSize[0])
-                thisInstance_sizes.push(instDataSize[1])
-                thisInstance_sizes.push(instDataSize[2])
+                thisInstance_sizes.push(instDataSize[0]*mult)
+                thisInstance_sizes.push(instDataSize[1]*mult)
+                thisInstance_sizes.push(instDataSize[2]*mult)
 
                 thisInstance_orientations.push(...[
                     1.0, 0.0, 0.0, 0.0,
@@ -168,7 +172,10 @@ const instancedMeshToMeshData = (instanceMesh, perm) => {
         totInstance_orientations.push(thisInstance_orientations)
         totInstance_colours.push(thisInstance_colours)
         totInstanceUseColours.push(true)
-        totInstancePrimTypes.push("TRIANGLES")
+        if(toSpheres)
+            totInstancePrimTypes.push("PERFECT_SPHERES")
+        else
+            totInstancePrimTypes.push("TRIANGLES")
 
     }
 
@@ -177,16 +184,30 @@ const instancedMeshToMeshData = (instanceMesh, perm) => {
     instanceMesh.delete()
 
     if(simpleMeshData.idx_tri.length>0&&simpleMeshData.idx_tri[0].length>0&&simpleMeshData.idx_tri[0][0].length>0){
-        return {
-            prim_types: [totInstancePrimTypes,simpleMeshData.prim_types[0]],
-            idx_tri: [totIdxs,simpleMeshData.idx_tri[0]],
-            vert_tri: [totPos,simpleMeshData.vert_tri[0]],
-            norm_tri: [totNorm,simpleMeshData.norm_tri[0]],
-            col_tri: [totInstance_colours,simpleMeshData.col_tri[0]],
-            instance_use_colors: [totInstanceUseColours,null],
-            instance_sizes: [totInstance_sizes,null],
-            instance_origins: [totInstance_origins,null],
-            instance_orientations: [totInstance_orientations,null]
+        if(toSpheres){
+            return {
+                prim_types: [totInstancePrimTypes,simpleMeshData.prim_types[0]],
+                idx_tri: [totIdxs,simpleMeshData.idx_tri[0]],
+                vert_tri: [totInstance_origins,simpleMeshData.vert_tri[0]],
+                norm_tri: [totNorm,simpleMeshData.norm_tri[0]],
+                col_tri: [totInstance_colours,simpleMeshData.col_tri[0]],
+                instance_use_colors: [totInstanceUseColours,null],
+                instance_sizes: [totInstance_sizes,null],
+                instance_origins: [totInstance_origins,null],
+                instance_orientations: [totInstance_orientations,null]
+            }
+        } else {
+            return {
+                prim_types: [totInstancePrimTypes,simpleMeshData.prim_types[0]],
+                idx_tri: [totIdxs,simpleMeshData.idx_tri[0]],
+                vert_tri: [totPos,simpleMeshData.vert_tri[0]],
+                norm_tri: [totNorm,simpleMeshData.norm_tri[0]],
+                col_tri: [totInstance_colours,simpleMeshData.col_tri[0]],
+                instance_use_colors: [totInstanceUseColours,null],
+                instance_sizes: [totInstance_sizes,null],
+                instance_origins: [totInstance_origins,null],
+                instance_orientations: [totInstance_orientations,null]
+            }
         }
     } else{
         return {
@@ -903,8 +924,11 @@ onmessage = function (e) {
                 case 'colour_rules':
                     returnResult = colourRulesToJSArray(cootResult)
                     break;
+                case 'instanced_mesh_perfect_spheres':
+                    returnResult = instancedMeshToMeshData(cootResult,false,true)
+                    break;
                 case 'instanced_mesh':
-                    returnResult = instancedMeshToMeshData(cootResult)
+                    returnResult = instancedMeshToMeshData(cootResult,false)
                     break;
                 case 'mesh_perm':
                     returnResult = simpleMeshToMeshData(cootResult,true)

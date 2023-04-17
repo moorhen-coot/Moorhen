@@ -52,6 +52,7 @@ export function MoorhenMolecule(commandCentre, monomerLibraryPath) {
         MolecularSurface: [],
         VdWSurface: [],
         DishyBases: [],
+        VdwSpheres: [],
         rama: [],
         rotamer: [],
         CDs: [],
@@ -658,8 +659,9 @@ MoorhenMolecule.prototype.drawWithStyleFromAtoms = async function (style, glRef)
         case 'rotamer':
             this.drawRotamerDodecahedra(glRef)
             break;
+        case 'VdwSpheres':
         case 'CBs':
-            await this.drawCootBonds(glRef)
+            await this.drawCootBonds(glRef,style)
             break;
         case 'CDs':
             await this.drawCootContactDots(glRef)
@@ -670,6 +672,7 @@ MoorhenMolecule.prototype.drawWithStyleFromAtoms = async function (style, glRef)
         case 'CRs':
         case 'MolecularSurface':
         case 'DishyBases':
+        case 'VdwSpheres':
         case 'VdWSurface':
         case 'Calpha':
             await this.drawCootRepresentation(glRef, style)
@@ -785,9 +788,9 @@ MoorhenMolecule.prototype.drawCootLigands = async function (glRef) {
     return $this.drawCootSelectionBonds(glRef, name, ligandsCID)
 }
 
-MoorhenMolecule.prototype.drawCootBonds = async function (glRef) {
+MoorhenMolecule.prototype.drawCootBonds = async function (glRef,style) {
     const $this = this
-    const name = "CBs"
+    const name = style
     return $this.drawCootSelectionBonds(glRef, name, false)
 }
 
@@ -795,14 +798,21 @@ MoorhenMolecule.prototype.drawCootSelectionBonds = async function (glRef, name, 
     const $this = this
     let meshCommand
 
+    let style = "COLOUR-BY-CHAIN-AND-DICTIONARY"
+    let returnType = "instanced_mesh"
+    if(name === "VdwSpheres"){
+        style = "VDW-BALLS"
+        returnType = "instanced_mesh_perfect_spheres"
+    }
+
     if (cid) {
         meshCommand = $this.commandCentre.current.cootCommand({
-            returnType: "instanced_mesh",
+            returnType: returnType,
             command: "get_bonds_mesh_for_selection_instanced",
             commandArgs: [
                 $this.molNo,
                 cid,
-                "COLOUR-BY-CHAIN-AND-DICTIONARY",
+                style,
                 $this.cootBondsOptions.isDarkBackground,
                 $this.cootBondsOptions.width * 1.5,
                 $this.cootBondsOptions.atomRadiusBondRatio * 1.5,
@@ -814,13 +824,13 @@ MoorhenMolecule.prototype.drawCootSelectionBonds = async function (glRef, name, 
     else {
         cid = "/*/*/*/*"
         meshCommand = $this.commandCentre.current.cootCommand({
-            returnType: "instanced_mesh",
+            returnType: returnType,
             //command: "get_bonds_mesh_for_selection_instanced",
             command: "get_bonds_mesh_instanced",
             commandArgs: [
                 $this.molNo,
                 //cid,
-                "COLOUR-BY-CHAIN-AND-DICTIONARY",
+                style,
                 $this.cootBondsOptions.isDarkBackground,
                 $this.cootBondsOptions.width,
                 $this.cootBondsOptions.atomRadiusBondRatio,
@@ -891,6 +901,9 @@ MoorhenMolecule.prototype.drawCootGaussianSurface = async function (glRef) {
 }
 
 MoorhenMolecule.prototype.drawCootRepresentation = async function (glRef, style) {
+    console.log("##################################################")
+    console.log(style)
+    console.log("##################################################")
     const $this = this
     let m2tStyle
     let m2tSelection

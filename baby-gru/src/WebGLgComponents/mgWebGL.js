@@ -1371,6 +1371,10 @@ class MGWebGL extends Component {
         this.gl.viewportWidth = this.canvas.width;
         this.gl.viewportHeight = this.canvas.height;
 
+        if(this.useOffScreenBuffers){
+            this.recreateOffScreeenBuffers();
+        }
+
     }
 
     constructor(props) {
