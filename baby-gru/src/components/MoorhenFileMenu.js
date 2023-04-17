@@ -52,16 +52,32 @@ export const MoorhenFileMenu = (props) => {
             fetchFilesFromEBI()
         } else if (remoteSource === "PDB-REDO") {
             fetchFilesFromPDBRedo()
-        } else {
+        } else if (remoteSource === 'AFDB') {
             fetchFilesFromAFDB()
+        } else if (remoteSource === 'COD') {
+            fetchFilesFromCOD()
+        } else {
+            console.log(`Unrecognised remote source! ${remoteSource}`)
+        }
+    }
+
+    const fetchFilesFromCOD = () => {
+        const entryCod = pdbCodeFetchInputRef.current.value.toLowerCase()
+        const codUrl = `http://www.crystallography.net/cod/${entryCod}.cif`
+        if (entryCod) {
+            Promise.all([
+                fetchMoleculeFromURL(codUrl, `cod-${entryCod}`),
+            ])
+        } else {
+            console.log('Error: no COD entry')
         }
     }
 
     const fetchFilesFromEBI = () => {
         const pdbCode = pdbCodeFetchInputRef.current.value.toLowerCase()
-        const coordUrl = `https://www.ebi.ac.uk/pdbe/entry-files/download/pdb${pdbCode.toLowerCase()}.ent`
-        const mapUrl = `https://www.ebi.ac.uk/pdbe/entry-files/${pdbCode.toLowerCase()}.ccp4`
-        const diffMapUrl = `https://www.ebi.ac.uk/pdbe/entry-files/${pdbCode.toLowerCase()}_diff.ccp4`
+        const coordUrl = `https://www.ebi.ac.uk/pdbe/entry-files/download/pdb${pdbCode}.ent`
+        const mapUrl = `https://www.ebi.ac.uk/pdbe/entry-files/${pdbCode}.ccp4`
+        const diffMapUrl = `https://www.ebi.ac.uk/pdbe/entry-files/${pdbCode}_diff.ccp4`
         if (pdbCode && fetchMapDataCheckRef.current.checked) {
             Promise.all([
                 fetchMoleculeFromURL(coordUrl, pdbCode),
@@ -97,9 +113,9 @@ export const MoorhenFileMenu = (props) => {
     }
 
     const fetchFilesFromPDBRedo = () => {
-        const pdbCode = pdbCodeFetchInputRef.current.value.toLowerCase()
-        const coordUrl = `https://pdb-redo.eu/db/${pdbCode.toLowerCase()}/${pdbCode.toLowerCase()}_final.pdb`
-        const mtzUrl = `https://pdb-redo.eu/db/${pdbCode.toLowerCase()}/${pdbCode.toLowerCase()}_final.mtz/`
+        const pdbCode = pdbCodeFetchInputRef.current.value
+        const coordUrl = `https://pdb-redo.eu/db/${pdbCode}/${pdbCode}_final.pdb`
+        const mtzUrl = `https://pdb-redo.eu/db/${pdbCode}/${pdbCode}_final.mtz/`
         if (pdbCode && fetchMapDataCheckRef.current.checked) {
             Promise.all([
                 fetchMoleculeFromURL(coordUrl, `${pdbCode}-redo`),
@@ -439,6 +455,9 @@ export const MoorhenFileMenu = (props) => {
                                 <Dropdown.Item key="AFDB" href="#" onClick={() => {
                                     setRemoteSource("AFDB")
                                 }}>AlphaFold DB</Dropdown.Item>
+                                <Dropdown.Item key="COD" href="#" onClick={() => {
+                                    setRemoteSource("COD")
+                                }}>COD</Dropdown.Item>
                             </SplitButton>
                             <Form.Control type="text" style={{borderColor: isValidPdbId ? '' : 'red'}}  ref={pdbCodeFetchInputRef} onKeyDown={(e) => {
                                 setIsValidPdbId(true)
