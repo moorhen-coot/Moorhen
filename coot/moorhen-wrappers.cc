@@ -872,6 +872,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     class_<molecules_container_t>("molecules_container_t")
     .constructor<bool>()
     .function("change_to_next_rotamer",&molecules_container_t::change_to_next_rotamer)
+    .function("change_to_previous_rotamer",&molecules_container_t::change_to_previous_rotamer)
+    .function("change_to_first_rotamer",&molecules_container_t::change_to_first_rotamer)
     .function("set_user_defined_atom_colour_by_residue",&molecules_container_t::set_user_defined_atom_colour_by_residue)
     .function("set_user_defined_bond_colours",&molecules_container_t::set_user_defined_bond_colours)
     .function("set_colour_wheel_rotation_base",&molecules_container_t::set_colour_wheel_rotation_base)
@@ -1096,6 +1098,11 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .constructor<const glm::vec3 &, const glm::vec3 &>()
     .property("pos",&coot::api::vn_vertex::pos)
     .property("normal",&coot::api::vn_vertex::normal)
+    ;
+    value_object<coot::molecule_t::rotamer_change_info_t>("rotamer_change_info_t")
+    .field("rank", &coot::molecule_t::rotamer_change_info_t::rank)
+    .field("name", &coot::molecule_t::rotamer_change_info_t::name)
+    .field("status", &coot::molecule_t::rotamer_change_info_t::status)
     ;
     value_object<g_triangle>("g_triangle")
     .field("point_id", &g_triangle::point_id)

@@ -1,4 +1,4 @@
-import { CheckOutlined, CloseOutlined } from "@mui/icons-material";
+import { ArrowBackIosOutlined, ArrowForwardIosOutlined, CheckOutlined, CloseOutlined } from "@mui/icons-material";
 import { MenuItem, MenuList, Tooltip } from "@mui/material";
 import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import { Button, Overlay, Container, Row, FormSelect, FormGroup, FormLabel, Card, Form, Stack } from "react-bootstrap"
@@ -210,7 +210,11 @@ export const MoorhenFlipPeptideButton = (props) => {
         prompt="Click atom in residue to flip"
         icon={<img style={{width:'100%', height: '100%'}} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/flip-peptide.svg`} alt='Flip Peptide' />}
         formatArgs={(molecule, chosenAtom) => {
-            return [molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, '']
+            return [
+                molecule.molNo, 
+                `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`,
+                chosenAtom.alt_conf === "" ? "" : chosenAtom.alt_conf
+            ]
         }} />
 }
 
@@ -600,23 +604,27 @@ export const MoorhenJedFlipTrueButton = (props) => {
         }} />
 }
 
-export const MoorhenNextRotamerButton = (props) => {
+export const MoorhenRotamerChangeButton = (props) => {
     const [showAccept, setShowAccept] = useState(false)
     const theButton = useRef(null)
     const fragmentMolecule = useRef(null)
     const chosenMolecule = useRef(null)
-    const fragmentCid = useRef(null)
+    const [rotamerName, setRotamerName] = useState('')
+    const [rotamerRank, setRotamerRank] = useState('')
+    const selectedFragmentRef = useRef({cid: '', alt_conf: ''})
     const { changeMolecules, backgroundColor, glRef, defaultBondSmoothness } = props
 
-    const nextRotamer = useCallback(async () => {
-        await props.commandCentre.current.cootCommand({
-            returnType: 'status',
-            command: 'change_to_next_rotamer',
-            commandArgs: [fragmentMolecule.current.molNo, fragmentCid.current],
+    const changeRotamer = useCallback(async (command) => {
+        const rotamerInfo = await props.commandCentre.current.cootCommand({
+            returnType: 'rotamer_info_t',
+            command: command,
+            commandArgs: [fragmentMolecule.current.molNo, selectedFragmentRef.current.cid, selectedFragmentRef.current.alt_conf],
         }, true)
+        setRotamerName(rotamerInfo.data.result.result.name)
+        setRotamerRank(rotamerInfo.data.result.result.rank)
         fragmentMolecule.current.atomsDirty = true
         fragmentMolecule.current.clearBuffersOfStyle('selection', glRef)
-        fragmentMolecule.current.drawSelection(glRef, fragmentCid.current)  
+        fragmentMolecule.current.drawSelection(glRef, selectedFragmentRef.current.cid)  
         await fragmentMolecule.current.redraw(glRef)
     }, [props.commandCentre, glRef])
 
@@ -624,7 +632,7 @@ export const MoorhenNextRotamerButton = (props) => {
         await props.commandCentre.current.cootCommand({
             returnType: 'status',
             command: 'replace_fragment',
-            commandArgs: [chosenMolecule.current.molNo, fragmentMolecule.current.molNo, fragmentCid.current],
+            commandArgs: [chosenMolecule.current.molNo, fragmentMolecule.current.molNo, selectedFragmentRef.current.cid],
         }, true)
         chosenMolecule.current.atomsDirty = true
         await chosenMolecule.current.redraw(glRef)
@@ -645,21 +653,24 @@ export const MoorhenNextRotamerButton = (props) => {
 
     const nonCootCommand = async (molecule, chosenAtom, p) => {
         chosenMolecule.current = molecule
-        fragmentCid.current = `//${chosenAtom.chain_id}/${chosenAtom.res_no}/*${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`
-        if (!fragmentCid.current) {
+        selectedFragmentRef.current.cid = `//${chosenAtom.chain_id}/${chosenAtom.res_no}/*${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`
+        selectedFragmentRef.current.alt_conf = chosenAtom.alt_conf === "" ? "" : chosenAtom.alt_conf
+        if (!selectedFragmentRef.current.cid) {
             return
         }
-        chosenMolecule.current.hideCid(fragmentCid.current, glRef)
+        chosenMolecule.current.hideCid(selectedFragmentRef.current.cid, glRef)
         /* Copy the component to move into a new molecule */
-        const newMolecule = await molecule.copyFragmentUsingCid(fragmentCid.current, backgroundColor, defaultBondSmoothness, glRef, false)
+        const newMolecule = await molecule.copyFragmentUsingCid(selectedFragmentRef.current.cid, backgroundColor, defaultBondSmoothness, glRef, false)
         /* Next rotaner */
-        await props.commandCentre.current.cootCommand({
-            returnType: 'status',
+        const rotamerInfo = await props.commandCentre.current.cootCommand({
+            returnType: 'rotamer_info_t',
             command: 'change_to_next_rotamer',
-            commandArgs: [newMolecule.molNo, fragmentCid.current],
-        }, true)        
+            commandArgs: [newMolecule.molNo, selectedFragmentRef.current.cid, selectedFragmentRef.current.alt_conf],
+        }, true)
+        setRotamerName(rotamerInfo.data.result.result.name)
+        setRotamerRank(rotamerInfo.data.result.result.rank)
         /* redraw */
-        newMolecule.drawSelection(glRef, fragmentCid.current)
+        newMolecule.drawSelection(glRef, selectedFragmentRef.current.cid)
         await newMolecule.updateAtoms()
         Object.keys(molecule.displayObjects)
             .filter(style => { return ['CRs', 'CBs', 'ligands', 'gaussian', 'MolecularSurface', 'VdWSurface', 'DishyBases'].includes(style) })
@@ -697,10 +708,13 @@ export const MoorhenNextRotamerButton = (props) => {
                     <Card className="mx-2">
                         <Card.Header >Accept rotamer ?</Card.Header>
                         <Card.Body style={{ alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
-                            <Row>
-                                <Button onClick={nextRotamer}>Next rotamer</Button>
-                            </Row>
-                            <Stack gap={2} direction='horizontal' style={{paddingTop: '0.5rem'}}>
+                            <span>Current rotamer: {rotamerName} ({rotamerRank+1}<sup>{rotamerRank === 0 ? 'st' : rotamerRank === 1 ? 'nd' : rotamerRank === 2 ? 'rd' : 'th'}</sup>)</span>
+                            <Stack gap={2} direction='horizontal' style={{paddingTop: '0.5rem', alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
+                                <Button onClick={() => changeRotamer('change_to_previous_rotamer')}><ArrowBackIosOutlined/></Button>
+                                <Button onClick={() => changeRotamer('change_to_first_rotamer')}>1<sup>st</sup> rotamer</Button>
+                                <Button onClick={() => changeRotamer('change_to_next_rotamer')}><ArrowForwardIosOutlined/></Button>
+                            </Stack>
+                            <Stack gap={2} direction='horizontal' style={{paddingTop: '0.5rem', alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
                                 <Button onClick={acceptTransform}><CheckOutlined /></Button>
                                 <Button className="mx-2" onClick={rejectTransform}><CloseOutlined /></Button>
                             </Stack>

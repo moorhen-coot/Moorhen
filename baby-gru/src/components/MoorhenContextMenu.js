@@ -1,6 +1,6 @@
 import styled, { css } from "styled-components";
 import { ClickAwayListener, FormGroup, IconButton, List, MenuItem, Tooltip } from '@mui/material';
-import { CheckOutlined, CloseOutlined } from "@mui/icons-material";
+import { ArrowBackIosOutlined, ArrowForwardIosOutlined, CheckOutlined, CloseOutlined } from "@mui/icons-material";
 import { MoorhenMergeMoleculesMenuItem, MoorhenGetMonomerMenuItem, MoorhenFitLigandRightHereMenuItem, MoorhenImportFSigFMenuItem, MoorhenBackgroundColorMenuItem, MoorhenAddSimpleMenuItem } from "./MoorhenMenuItem";
 import { cidToSpec, convertRemToPx, getTooltipShortcutLabel } from "../utils/MoorhenUtils";
 import { getBackupLabel } from "../utils/MoorhenTimeCapsule"
@@ -251,9 +251,10 @@ export const MoorhenContextMenu = (props) => {
     )
   }
 
-  const doNextRotamer = async (molecule, chosenAtom) => {
+  const doRotamerChange = async (molecule, chosenAtom) => {
     /* define fragment CID */
     const fragmentCid = `//${chosenAtom.chain_id}/${chosenAtom.res_no}/*${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`
+    const alt_conf = chosenAtom.alt_conf === "" ? "" : chosenAtom.alt_conf
     if (!fragmentCid) {
         return
     }
@@ -263,12 +264,12 @@ export const MoorhenContextMenu = (props) => {
     const newMolecule = await molecule.copyFragmentUsingCid(fragmentCid, props.glRef.current.background_colour, molecule.cootBondsOptions.smoothness, props.glRef, false)
     
     /* Next rotaner */
-    await props.commandCentre.current.cootCommand({
-        returnType: 'status',
+    const rotamerInfo = await props.commandCentre.current.cootCommand({
+        returnType: 'rotamer_info_t',
         command: 'change_to_next_rotamer',
-        commandArgs: [newMolecule.molNo, fragmentCid],
+        commandArgs: [newMolecule.molNo, fragmentCid, alt_conf],
     }, true)        
-    
+
     /* redraw */
     newMolecule.drawSelection(props.glRef, fragmentCid)
     await newMolecule.updateAtoms()
@@ -282,17 +283,38 @@ export const MoorhenContextMenu = (props) => {
         })
     props.changeMolecules({ action: "Add", item: newMolecule })
 
-    /* Set popover contents */
-    const nextRotamer = async () => {
-      await props.commandCentre.current.cootCommand({
-          returnType: 'status',
-          command: 'change_to_next_rotamer',
-          commandArgs: [newMolecule.molNo, fragmentCid],
+    /* General functions */
+    const getPopoverContents = (rotamerInfo) => {
+      const rotamerName = rotamerInfo.data.result.result.name
+      const rotamerRank = rotamerInfo.data.result.result.rank  
+      return <Card onMouseOver={() => setOpacity(1)} onMouseOut={() => setOpacity(0.5)} >
+              <Card.Header>Accept new rotamer ?</Card.Header>
+              <Card.Body style={{ alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
+                <span>Current rotamer: {rotamerName} ({rotamerRank+1}<sup>{rotamerRank === 0 ? 'st' : rotamerRank === 1 ? 'nd' : rotamerRank === 2 ? 'rd' : 'th'}</sup>)</span>
+                <Stack gap={2} direction='horizontal' style={{paddingTop: '0.5rem', alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
+                  <Button onClick={() => changeRotamer('change_to_previous_rotamer')}><ArrowBackIosOutlined/></Button>
+                  <Button onClick={() => changeRotamer('change_to_first_rotamer')}>1<sup>st</sup> rotamer</Button>
+                  <Button onClick={() => changeRotamer('change_to_next_rotamer')}><ArrowForwardIosOutlined/></Button>
+                </Stack>
+                <Stack gap={2} direction='horizontal' style={{paddingTop: '0.5rem', alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
+                  <Button onClick={acceptTransform}><CheckOutlined /></Button>
+                  <Button className="mx-2" onClick={rejectTransform}><CloseOutlined /></Button>
+                </Stack>
+              </Card.Body>
+            </Card>
+    }
+
+    const changeRotamer = async (command) => {
+      const rotamerInfo = await props.commandCentre.current.cootCommand({
+          returnType: 'rotamer_info_t',
+          command: command,
+          commandArgs: [newMolecule.molNo, fragmentCid, alt_conf],
       }, true)
       newMolecule.atomsDirty = true
       newMolecule.clearBuffersOfStyle('selection', props.glRef)
       newMolecule.drawSelection(props.glRef, fragmentCid)
       await newMolecule.redraw(props.glRef)
+      setOverrideMenuContents(getPopoverContents(rotamerInfo))  
     }
 
     const acceptTransform = async () => {
@@ -321,22 +343,10 @@ export const MoorhenContextMenu = (props) => {
       setOpacity(1)
       props.setShowContextMenu(false)
     }
-
+    
+    /* Set popover contents */
     setOpacity(0.5)
-    setOverrideMenuContents(
-      <Card onMouseOver={() => setOpacity(1)} onMouseOut={() => setOpacity(0.5)} >
-        <Card.Header>Accept new rotamer ?</Card.Header>
-        <Card.Body style={{ alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
-          <Row>
-            <Button onClick={nextRotamer}>Next rotamer</Button>
-          </Row>
-          <Stack gap={2} direction='horizontal' style={{paddingTop: '0.5rem'}}>
-            <Button onClick={acceptTransform}><CheckOutlined /></Button>
-            <Button className="mx-2" onClick={rejectTransform}><CloseOutlined /></Button>
-          </Stack>
-        </Card.Body>
-      </Card>
-    )
+    setOverrideMenuContents(getPopoverContents(rotamerInfo))
   }
 
   const deleteMoleculeIfEmpty = (molecule, chosenAtom, cootResult) => {
@@ -434,7 +444,11 @@ export const MoorhenContextMenu = (props) => {
                               message: 'coot_command',
                               returnType: "status",
                               command: 'flipPeptide_cid',
-                              commandArgs: [selectedMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, ''],
+                              commandArgs: [
+                                selectedMolecule.molNo,
+                                `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`,
+                                chosenAtom.alt_conf === "" ? "" : chosenAtom.alt_conf
+                              ],
                               changesMolecules: [selectedMolecule.molNo]
                           }}
                           {...collectedProps}
@@ -531,7 +545,7 @@ export const MoorhenContextMenu = (props) => {
                       <MoorhenContextQuickEditButton 
                           icon={<img style={{padding:'0.1rem', width:'100%', height: '100%'}} alt="change rotamer" className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/rotamers.svg`}/>}
                           toolTip="Change rotamers"
-                          nonCootCommand={doNextRotamer}
+                          nonCootCommand={doRotamerChange}
                           {...collectedProps}
                       />
                       <MoorhenContextQuickEditButton 
