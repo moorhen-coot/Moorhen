@@ -200,9 +200,9 @@ export const MoorhenMapCard = (props) => {
     const handleWheelContourLevelCallback = useCallback(e => {
         if (props.map.cootContour && props.map.molNo === props.activeMap.molNo) {
             if (e.detail.factor > 1) {
-                setMapContourLevel(mapContourLevel + 0.1)
+                setMapContourLevel(mapContourLevel + parseFloat(props.contourWheelSensitivityFactor))
             } else {
-                setMapContourLevel(mapContourLevel - 0.1)
+                setMapContourLevel(mapContourLevel - parseFloat(props.contourWheelSensitivityFactor))
             }
         }
     }, [mapContourLevel, mapRadius, props.activeMap?.molNo, props.map.molNo, props.map.cootContour])
