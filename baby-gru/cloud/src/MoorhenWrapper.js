@@ -198,16 +198,16 @@ export default class MoorhenWrapper {
     newMolecule.setBackgroundColour(this.controls.glRef.current.background_colour)
     newMolecule.uniqueId = uniqueId
     return new Promise(async (resolve, reject) => {
-        try {
-            await newMolecule.loadToCootFromURL(inputFile, molName)
-            await newMolecule.fetchIfDirtyAndDraw('CBs', this.controls.glRef)
-            this.controls.changeMolecules({ action: "Add", item: newMolecule })
-            newMolecule.centreOn(this.controls.glRef, null, false)
-            return resolve(newMolecule)
-        } catch (err) {
-            console.log(`Cannot fetch molecule from ${inputFile}`)
-            return reject(err)
-        }
+      try {
+        await newMolecule.loadToCootFromURL(inputFile, molName)
+        this.controls.changeMolecules({ action: "Add", item: newMolecule })
+        await newMolecule.fetchIfDirtyAndDraw('CBs', this.controls.glRef)
+        await newMolecule.centreOn(this.controls.glRef, null, false)
+        return resolve(newMolecule)
+      } catch (err) {
+        console.log(`Cannot fetch molecule from ${inputFile}`)
+        return reject(err)
+      }
     })
   }
 
@@ -286,8 +286,8 @@ export default class MoorhenWrapper {
   }
 
   checkIfLoadedData() {
-    const legendInputFile = this.inputFiles.find(file => file.type === 'legend')
-    if (typeof legendInputFile === 'undefined' && (this.controls.moleculesRef.current.length !== 0 || this.controls.mapsRef.current.length !== 0)) {
+    // No legend is loaded but there is some data loaded so the current message must be the no data message and must be removed
+    if (this.cachedLegend === null && (this.controls.moleculesRef.current.length !== 0 || this.controls.mapsRef.current.length !== 0)) {
       const domComponent = parse('<div></div>')
       this.controls.setLegendText(domComponent)
     }
@@ -324,7 +324,7 @@ export default class MoorhenWrapper {
 
   updateMolecules() {
     const moleculeInputFiles = this.inputFiles.filter(file => file.type === 'pdb')
-    moleculeInputFiles.map(inputFile => {
+    return Promise.all(moleculeInputFiles.map(inputFile => {
       const loadedMolecule = this.controls.moleculesRef.current.find(molecule => molecule.uniqueId === inputFile.uniqueId)
       if (typeof loadedMolecule === 'undefined') {
         return this.loadPdbData(inputFile.uniqueId, ...inputFile.args).catch((err) => console.log(err))
@@ -341,7 +341,7 @@ export default class MoorhenWrapper {
             console.log(err)
           })
       }
-    })
+    }))
   }
   
   updateMaps() {
