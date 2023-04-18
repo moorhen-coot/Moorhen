@@ -1660,6 +1660,28 @@ export const MoorhenLightingMenuItem = (props) => {
     const [ambient, setAmbient] = useState(props.glRef.current.light_colours_ambient)
     const [position, setPosition] = useState([props.glRef.current.light_positions[0],props.glRef.current.light_positions[1],props.glRef.current.light_positions[2]])
 
+    const busyLighting = useRef(false)
+    const isSetLightPosIsDirty = useRef(false)
+
+    const setLightPosition = function (glRef,newValue) {
+        return new Promise((resolve, reject) => {
+            glRef.current.setLightPosition(newValue[0],-newValue[1],newValue[2]);
+            glRef.current.drawScene();
+        })
+    }
+
+    const setLightingPositionIfDirty = (newValue) => {
+        if (isSetLightPosIsDirty.current) {
+            busyLighting.current = true;
+            isSetLightPosIsDirty.current = false;
+            setLightPosition(props.glRef,newValue).then(result => {
+                    setPosition([newValue[0],-newValue[1],newValue[2],1.0])
+                    busyLighting.current = false;
+                    setLightingPositionIfDirty(newValue);
+            })
+        }
+    }
+
     useEffect(() => {
         if (props.glRef.current && props.glRef.current.light_colours_diffuse) {
             setDiffuse(props.glRef.current.light_colours_diffuse[0])
@@ -1701,9 +1723,8 @@ export const MoorhenLightingMenuItem = (props) => {
             initialValue={props.glRef.current.light_positions}
             externalValue={props.glRef.current.light_positions}
             setExternalValue={(newValue) => {
-                props.glRef.current.setLightPosition(newValue[0],-newValue[1],newValue[2])
-                props.glRef.current.drawScene()
-                setPosition([newValue[0],-newValue[1],newValue[2],1.0])
+                isSetLightPosIsDirty.current = true
+                setLightingPositionIfDirty(newValue);
             }}
         />
     </div>
