@@ -9579,9 +9579,9 @@ class MGWebGL extends Component {
         const self = this
         let factor;
         if (event.deltaY > 0) {
-            factor = 1. + 1 / (50.0 - self.props.wheelSensitivityFactor * 5);
+            factor = 1. + 1 / (50.0 - self.props.zoomWheelSensitivityFactor * 5);
         } else {
-            factor = 1. - 1 / (50.0 - self.props.wheelSensitivityFactor * 5);
+            factor = 1. - 1 / (50.0 - self.props.zoomWheelSensitivityFactor * 5);
         }
 
         if (self.keysDown['set_map_contour']) {

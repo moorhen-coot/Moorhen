@@ -10,12 +10,12 @@ export const MoorhenPreferencesMenu = (props) => {
     const { 
         atomLabelDepthMode, setAtomLabelDepthMode, setMouseSensitivity, enableTimeCapsule,
         defaultExpandDisplayCards, setDefaultExpandDisplayCards, defaultMapLitLines,
-        setDefaultMapLitLines, refineAfterMod, setRefineAfterMod, mouseSensitivity,
-        mapLineWidth, setMapLineWidth, makeBackups, setMakeBackups, timeCapsuleRef,
+        setDefaultMapLitLines, refineAfterMod, setRefineAfterMod, mouseSensitivity, contourWheelSensitivityFactor,
+        mapLineWidth, setMapLineWidth, makeBackups, setMakeBackups, timeCapsuleRef, setContourWheelSensitivityFactor,
         showShortcutToast, setShowShortcutToast, defaultMapSurface, setDefaultMapSurface,
         defaultBondSmoothness, setDefaultBondSmoothness, showScoresToast, setShowScoresToast,
-        defaultUpdatingScores, setDefaultUpdatingScores, wheelSensitivityFactor, setEnableTimeCapsule,
-        setWheelSensitivityFactor, shortcutOnHoveredAtom, setShortcutOnHoveredAtom, maxBackupCount, 
+        defaultUpdatingScores, setDefaultUpdatingScores, zoomWheelSensitivityFactor, setEnableTimeCapsule,
+        setZoomWheelSensitivityFactor, shortcutOnHoveredAtom, setShortcutOnHoveredAtom, maxBackupCount, 
         setMaxBackupCount, modificationCountBackupThreshold, setModificationCountBackupThreshold, 
      } = props;
 
@@ -97,13 +97,16 @@ export const MoorhenPreferencesMenu = (props) => {
                     </InputGroup>
                     <hr></hr>
                     <Form.Group controlId="mouseSensitivitySlider" style={{paddingTop:'0rem', paddingBottom:'0.5rem', paddingRight:'0.5rem', paddingLeft:'1rem', width: '25rem'}}>
-                        <MoorhenSlider minVal={0.01} maxVal={1.0} logScale={false} sliderTitle="Mouse sensitivity" initialValue={0.3} externalValue={mouseSensitivity} setExternalValue={setMouseSensitivity}/>
+                        <MoorhenSlider minVal={0.01} maxVal={1.0} logScale={false} sliderTitle="Mouse sensitivity" initialValue={mouseSensitivity} externalValue={mouseSensitivity} setExternalValue={setMouseSensitivity}/>
                     </Form.Group>
-                    <Form.Group controlId="wheelSensitivitySlider" style={{paddingTop:'0.5rem', paddingBottom:'0rem', paddingRight:'0.5rem', paddingLeft:'1rem', width: '25rem'}}>
-                        <MoorhenSlider minVal={0.1} maxVal={9.9} logScale={false} sliderTitle="Mouse wheel zoom sensitivity" initialValue={1.0} externalValue={wheelSensitivityFactor} setExternalValue={setWheelSensitivityFactor}/>
+                    <Form.Group controlId="zoomWheelSensitivitySlider" style={{paddingTop:'0.5rem', paddingBottom:'0rem', paddingRight:'0.5rem', paddingLeft:'1rem', width: '25rem'}}>
+                        <MoorhenSlider minVal={0.1} maxVal={9.9} logScale={false} sliderTitle="Mouse wheel zoom sensitivity" initialValue={zoomWheelSensitivityFactor} externalValue={zoomWheelSensitivityFactor} setExternalValue={setZoomWheelSensitivityFactor}/>
+                    </Form.Group>
+                    <Form.Group controlId="mapWheelSensitivitySlider" style={{paddingTop:'0.5rem', paddingBottom:'0rem', paddingRight:'0.5rem', paddingLeft:'1rem', width: '25rem'}}>
+                        <MoorhenSlider minVal={0.01} maxVal={0.1} logScale={false} sliderTitle="Mouse wheel map contour sensitivity" initialValue={contourWheelSensitivityFactor} externalValue={contourWheelSensitivityFactor} setExternalValue={setContourWheelSensitivityFactor}/>
                     </Form.Group>
                     <Form.Group controlId="mapLineWidthSlider" style={{paddingTop:'0.5rem', paddingBottom:'0rem', paddingRight:'0.5rem', paddingLeft:'1rem', width: '25rem'}}>
-                        <MoorhenSlider minVal={0.1} maxVal={1.5} logScale={true} sliderTitle="Map lines thickness" initialValue={0.75} externalValue={mapLineWidth} setExternalValue={setMapLineWidth}/>
+                        <MoorhenSlider minVal={0.1} maxVal={1.5} logScale={true} sliderTitle="Map lines thickness" initialValue={mapLineWidth} externalValue={mapLineWidth} setExternalValue={setMapLineWidth}/>
                     </Form.Group>
                     <hr></hr>
                     <MoorhenBackupPreferencesMenuItem 
