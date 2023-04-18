@@ -83,7 +83,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     if (event.key === " ") modifiers.push("<Space>")
 
     if (collectedProps.showShortcutToast && !viewOnly) {
-        setToastContent(<h3>{`${modifiers.join("-")} ${event.key} pushed`}</h3>)
+        setToastContent(<h3>{`${modifiers.join("-")} ${event.key} pressed`}</h3>)
         setShowToast(true)    
     }
     
@@ -107,7 +107,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         setToastContent(
             <h3>
                 <List>
-                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pushed`}</ListItem>
+                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
                     <ListItem style={{justifyContent: 'center'}}>Sphere refine</ListItem>
                 </List>
             </h3>
@@ -122,7 +122,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         setToastContent(
             <h3>
                 <List>
-                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pushed`}</ListItem>
+                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
                     <ListItem style={{justifyContent: 'center'}}>Flip peptide</ListItem>
                 </List>
             </h3>
@@ -137,7 +137,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         setToastContent(
             <h3>
                 <List>
-                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pushed`}</ListItem>
+                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
                     <ListItem style={{justifyContent: 'center'}}>Triple refine</ListItem>
                 </List>
             </h3>
@@ -159,7 +159,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         setToastContent(
             <h3>
                 <List>
-                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pushed`}</ListItem>
+                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
                     <ListItem style={{justifyContent: 'center'}}>Auto fit rotamer</ListItem>
                 </List>
             </h3>
@@ -174,7 +174,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         setToastContent(
             <h3>
                 <List>
-                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pushed`}</ListItem>
+                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
                     <ListItem style={{justifyContent: 'center'}}>Add residue</ListItem>
                 </List>
             </h3>
@@ -193,7 +193,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         setToastContent(
             <h3>
                 <List>
-                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pushed`}</ListItem>
+                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
                     <ListItem style={{justifyContent: 'center'}}>Delete residue</ListItem>
                 </List>
             </h3>
@@ -208,7 +208,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         setToastContent(
             <h3>
                 <List>
-                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pushed`}</ListItem>
+                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
                     <ListItem style={{justifyContent: 'center'}}>Eigen flip</ListItem>
                 </List>
             </h3>
@@ -220,7 +220,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         setToastContent(
             <h3>
                 <List>
-                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pushed`}</ListItem>
+                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
                     <ListItem style={{justifyContent: 'center'}}>Go to blob</ListItem>
                 </List>
             </h3>
@@ -252,7 +252,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         setToastContent(
             <h3>
                 <List>
-                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pushed`}</ListItem>
+                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
                     <ListItem style={{justifyContent: 'center'}}>Clear labels</ListItem>
                 </List>
             </h3>
@@ -496,7 +496,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         setToastContent(
             <h3>
                 <List>
-                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pushed`}</ListItem>
+                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
                     <ListItem style={{justifyContent: 'center'}}>{glRef.current.showShortCutHelp ? 'Show help' : 'Hide help'}</ListItem>
                 </List>
             </h3>
