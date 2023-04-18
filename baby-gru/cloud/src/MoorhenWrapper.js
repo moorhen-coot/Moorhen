@@ -224,7 +224,7 @@ export default class MoorhenWrapper {
         }, true)
     
         this.controls.moleculesRef.current.forEach(molecule => {
-          molecule.addDict(fileContents)
+          molecule.addDictShim(fileContents)
         })
       
       } else {

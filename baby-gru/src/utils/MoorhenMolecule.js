@@ -1666,20 +1666,7 @@ MoorhenMolecule.prototype.getDict = function (comp_id) {
     console.log(`Cannot find ligand dict with comp_id ${comp_id}`)
 }
 
-MoorhenMolecule.prototype.addDictShim = function (comp_id, reassembledCif) {
-    this.enerLib.addCIFAtomTypes(comp_id, reassembledCif)
-    this.enerLib.addCIFBondTypes(comp_id, reassembledCif)
-    this.ligandDicts[comp_id] = reassembledCif
-}
-
-MoorhenMolecule.prototype.addDict = async function (fileContent) {
-    await this.commandCentre.current.cootCommand({
-        returnType: "status",
-        command: 'shim_read_dictionary',
-        commandArgs: [fileContent, this.molNo],
-        changesMolecules: []
-    }, true)
-
+MoorhenMolecule.prototype.addDictShim = function (fileContent) {
     let possibleIndentedLines = fileContent.split("\n")
     let unindentedLines = []
     let comp_id = 'list'
@@ -1691,7 +1678,10 @@ MoorhenMolecule.prototype.addDict = async function (fileContent) {
         if (arr !== null) {
             //Had we encountered a previous compound ?  If so, add it into the energy lib
             if (comp_id !== 'list') {
-                this.addDictShim(comp_id, unindentedLines.join("\n"))
+                const reassembledCif = unindentedLines.join("\n")
+                this.enerLib.addCIFAtomTypes(comp_id, reassembledCif)
+                this.enerLib.addCIFBondTypes(comp_id, reassembledCif)
+                this.ligandDicts[comp_id] = reassembledCif
                 unindentedLines = []
             }
             comp_id = arr[1]
@@ -1700,8 +1690,22 @@ MoorhenMolecule.prototype.addDict = async function (fileContent) {
     }
     
     if (comp_id !== 'list') {
-        this.addDictShim(comp_id, unindentedLines.join("\n"))
+        const reassembledCif = unindentedLines.join("\n")
+        this.enerLib.addCIFAtomTypes(comp_id, reassembledCif)
+        this.enerLib.addCIFBondTypes(comp_id, reassembledCif)
+        this.ligandDicts[comp_id] = reassembledCif
     }
+}
+
+MoorhenMolecule.prototype.addDict = async function (fileContent) {
+    await this.commandCentre.current.cootCommand({
+        returnType: "status",
+        command: 'shim_read_dictionary',
+        commandArgs: [fileContent, this.molNo],
+        changesMolecules: []
+    }, true)
+
+    this.addDictShim(fileContent)
 }
 
 MoorhenMolecule.prototype.undo = async function (glRef) {
