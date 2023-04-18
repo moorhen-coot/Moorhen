@@ -1633,6 +1633,42 @@ export const MoorhenAboutMenuItem = (props) => {
     />
 }
 
+export const MoorhenLightingMenuItem = (props) => {
+    const panelContent = <div style={{ minWidth: "20rem" }}>
+        <MoorhenSlider minVal={0.0} maxVal={1.0} logScale={false}
+            sliderTitle="Diffuse"
+            initialValue={props.glRef.current.light_colours_diffuse[0]}
+            externalValue={props.glRef.current.light_colours_diffuse[0]}
+            setExternalValue={(newValue) => {
+                props.glRef.current.light_colours_diffuse = [newValue,newValue,newValue,1.0]
+                props.glRef.current.drawScene()
+            }} />
+        <MoorhenSlider minVal={0.0} maxVal={1.0} logScale={false}
+            sliderTitle="Specular"
+            initialValue={props.glRef.current.light_colours_specular[0]}
+            externalValue={props.glRef.current.light_colours_specular[0]}
+            setExternalValue={(newValue) => {
+                props.glRef.current.light_colours_specular = [newValue,newValue,newValue,1.0]
+                props.glRef.current.drawScene()
+            }} />
+        <MoorhenSlider minVal={0.0} maxVal={1.0} logScale={false}
+            sliderTitle="Ambient"
+            initialValue={props.glRef.current.light_colours_ambient[0]}
+            externalValue={props.glRef.current.light_colours_ambient[0]}
+            setExternalValue={(newValue) => {
+                props.glRef.current.light_colours_ambient = [newValue,newValue,newValue,1.0]
+                props.glRef.current.drawScene()
+            }} />
+    </div>
+    return <MoorhenMenuItem
+        id='lighting-menu-item'
+        popoverContent={panelContent}
+        menuItemText="Lighting..."
+        onCompleted={() => { }}
+        setPopoverIsShown={props.setPopoverIsShown}
+    />
+}
+
 export const MoorhenClipFogMenuItem = (props) => {
     const [zclipFront, setZclipFront] = useState(props.glRef.current.fogClipOffset + props.glRef.current.gl_clipPlane0[3])
     const [zclipBack, setZclipBack] = useState(props.glRef.current.gl_clipPlane1[3] - props.glRef.current.fogClipOffset)

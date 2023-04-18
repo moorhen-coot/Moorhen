@@ -1,7 +1,7 @@
 import { Form, InputGroup, NavDropdown } from "react-bootstrap";
 import { useState } from "react";
 import { MenuItem } from "@mui/material";
-import { MoorhenBackgroundColorMenuItem, MoorhenClipFogMenuItem } from "./MoorhenMenuItem";
+import { MoorhenBackgroundColorMenuItem, MoorhenClipFogMenuItem, MoorhenLightingMenuItem } from "./MoorhenMenuItem";
 
 export const MoorhenViewMenu = (props) => {
     const [popoverIsShown, setPopoverIsShown] = useState(false)
@@ -62,6 +62,7 @@ export const MoorhenViewMenu = (props) => {
                     <hr></hr>
                     <MoorhenBackgroundColorMenuItem {...menuItemProps} />
                     <MoorhenClipFogMenuItem {...menuItemProps} />
+                    <MoorhenLightingMenuItem {...menuItemProps} />
                     <MenuItem onClick={() => {
                         props.setShowColourRulesToast(true)
                         document.body.click()
