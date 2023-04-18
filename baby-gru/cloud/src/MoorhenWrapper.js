@@ -400,7 +400,6 @@ export default class MoorhenWrapper {
     this.renderMoorhen()
     this.addStyleSheet()
     await this.waitForInitialisation()
-    await this.controls.timeCapsuleRef.current.dropAllBackups()
 
     if (this.noDataLegendMessage) {
       this.controls.setLegendText(this.noDataLegendMessage)
