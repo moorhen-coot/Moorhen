@@ -1119,15 +1119,24 @@ export const MoorhenImportDictionaryMenuItem = (props) => {
         } else {
             selectedMoleculeIndex = parseInt(-999999)
         }
-                
-        await Promise.all(
-            props.molecules.map(molecule => {
-                if (molecule.molNo === selectedMoleculeIndex || -999999 === selectedMoleculeIndex) {
-                    return molecule.addDict(fileContent).then(_ => molecule.redraw(props.glRef))         
-                }
-                return Promise.resolve()
-            })
-        )
+        
+        if (props.molecules.length > 0) {
+            await Promise.all(
+                props.molecules.map(molecule => {
+                    if (molecule.molNo === selectedMoleculeIndex || -999999 === selectedMoleculeIndex) {
+                        return molecule.addDict(fileContent).then(_ => molecule.redraw(props.glRef))         
+                    }
+                    return Promise.resolve()
+                })
+            )
+        } else {
+            await props.commandCentre.current.cootCommand({
+                returnType: "status",
+                command: 'shim_read_dictionary',
+                commandArgs: [fileContent, -999999],
+                changesMolecules: []
+            }, true)        
+        }
         
         if (createRef.current) {
             const instanceName = tlcValueRef.current
