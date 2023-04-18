@@ -16,6 +16,7 @@ import MoorhenSlider from "./MoorhenSlider";
 import "rc-tree/assets/index.css"
 import Tree from 'rc-tree';
 import { MoorhenScriptModal } from "./MoorhenScriptModal";
+import { MoorhenLightPosition } from "./MoorhenLightPosition";
 
 export const MoorhenMenuItem = (props) => {
 
@@ -1646,6 +1647,20 @@ export const MoorhenAboutMenuItem = (props) => {
 }
 
 export const MoorhenLightingMenuItem = (props) => {
+    const [diffuse, setDiffuse] = useState(props.glRef.current.light_colours_diffuse)
+    const [specular, setSpecular] = useState(props.glRef.current.light_colours_specular)
+    const [ambient, setAmbient] = useState(props.glRef.current.light_colours_ambient)
+    const [position, setPosition] = useState([props.glRef.current.light_positions[0],props.glRef.current.light_positions[1],props.glRef.current.light_positions[2]])
+
+    useEffect(() => {
+        if (props.glRef.current && props.glRef.current.light_colours_diffuse) {
+            setDiffuse(props.glRef.current.light_colours_diffuse[0])
+            setSpecular(props.glRef.current.light_colours_specular[0])
+            setAmbient(props.glRef.current.light_colours_ambient[0])
+            setPosition([props.glRef.current.light_positions[0],props.glRef.current.light_positions[1],props.glRef.current.light_positions[2]])
+        }
+    }, [props.glRef.current.light_positions,props.glRef.current.light_colours_diffuse,props.glRef.current.light_colours_specular,props.glRef.current.light_colours_ambient])
+
     const panelContent = <div style={{ minWidth: "20rem" }}>
         <MoorhenSlider minVal={0.0} maxVal={1.0} logScale={false}
             sliderTitle="Diffuse"
@@ -1654,6 +1669,7 @@ export const MoorhenLightingMenuItem = (props) => {
             setExternalValue={(newValue) => {
                 props.glRef.current.light_colours_diffuse = [newValue,newValue,newValue,1.0]
                 props.glRef.current.drawScene()
+                setDiffuse([newValue,newValue,newValue,1.0])
             }} />
         <MoorhenSlider minVal={0.0} maxVal={1.0} logScale={false}
             sliderTitle="Specular"
@@ -1662,6 +1678,7 @@ export const MoorhenLightingMenuItem = (props) => {
             setExternalValue={(newValue) => {
                 props.glRef.current.light_colours_specular = [newValue,newValue,newValue,1.0]
                 props.glRef.current.drawScene()
+                setSpecular([newValue,newValue,newValue,1.0])
             }} />
         <MoorhenSlider minVal={0.0} maxVal={1.0} logScale={false}
             sliderTitle="Ambient"
@@ -1670,7 +1687,17 @@ export const MoorhenLightingMenuItem = (props) => {
             setExternalValue={(newValue) => {
                 props.glRef.current.light_colours_ambient = [newValue,newValue,newValue,1.0]
                 props.glRef.current.drawScene()
+                setAmbient([newValue,newValue,newValue,1.0])
             }} />
+        <MoorhenLightPosition
+            initialValue={props.glRef.current.light_positions}
+            externalValue={props.glRef.current.light_positions}
+            setExternalValue={(newValue) => {
+                props.glRef.current.setLightPosition(newValue[0],-newValue[1],newValue[2])
+                props.glRef.current.drawScene()
+                setPosition([newValue[0],-newValue[1],newValue[2],1.0])
+            }}
+        />
     </div>
     return <MoorhenMenuItem
         id='lighting-menu-item'
