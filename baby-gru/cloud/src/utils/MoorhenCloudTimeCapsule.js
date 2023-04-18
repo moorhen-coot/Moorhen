@@ -49,7 +49,7 @@ export function CloudStorageInstance() {
 CloudStorageInstance.prototype.setItem = function (keyString, valueString) {
     const key = JSON.parse(keyString)
     return this.exportBackupCallback({
-        serNo: key.type === 'version' ? 0 : ['mtzData', 'mapData'].includes(key.type) ? key.name : guid(),
+        serNo: key.type === 'version' ? 0 : ['mtzData', 'mapData'].includes(key.type) ? key.name.replace('./', '').replace('.mtz', '-mtz') : guid(),
         data: ['mtzData', 'mapData', 'version'].includes(key.type) ? valueString : JSON.parse(valueString),
         ...key
     })
@@ -60,7 +60,7 @@ CloudStorageInstance.prototype.getItem = async function (keyString) {
     if (key.type === 'version') {
         return this.importBackupCallback(0)
     } else if (['mtzData', 'mapData'].includes(key.type)) {
-        const backup = await this.importBackupCallback(key.name)
+        const backup = await this.importBackupCallback(key.name.replace('./', '').replace('.mtz', '-mtz'))
         return backup.data
     } else {
         const backup = await this.importBackupCallback(key.serNo)
