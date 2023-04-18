@@ -697,10 +697,10 @@ export const MoorhenContextMenu = (props) => {
                     </>
                     :
                     <>
-                      <MoorhenAddSimpleMenuItem setPopoverIsShown={() => {}} defaultBondSmoothness={0} glRef={props.glRef} molecules={props.molecules} commandCentre={props.commandCentre} changeMolecules={props.changeMolecules} backgroundColor={props.backgroundColor}/>
-                      <MoorhenGetMonomerMenuItem setPopoverIsShown={() => {}} defaultBondSmoothness={0} glRef={props.glRef} molecules={props.molecules} commandCentre={props.commandCentre} changeMolecules={props.changeMolecules} backgroundColor={props.backgroundColor}/>
-                      <MoorhenFitLigandRightHereMenuItem setPopoverIsShown={() => {}} defaultBondSmoothness={0} glRef={props.glRef} maps={props.maps} molecules={props.molecules} commandCentre={props.commandCentre} changeMolecules={props.changeMolecules} backgroundColor={props.backgroundColor} />
-                      <MoorhenBackgroundColorMenuItem setPopoverIsShown={() => { }} backgroundColor={props.backgroundColor} setBackgroundColor={props.setBackgroundColor}/>
+                      <MoorhenAddSimpleMenuItem setPopoverIsShown={() => {}} popoverPlacement={menuPosition.placement} defaultBondSmoothness={0} glRef={props.glRef} molecules={props.molecules} commandCentre={props.commandCentre} changeMolecules={props.changeMolecules} backgroundColor={props.backgroundColor}/>
+                      <MoorhenGetMonomerMenuItem setPopoverIsShown={() => {}} popoverPlacement={menuPosition.placement} defaultBondSmoothness={0} glRef={props.glRef} molecules={props.molecules} commandCentre={props.commandCentre} changeMolecules={props.changeMolecules} backgroundColor={props.backgroundColor}/>
+                      <MoorhenFitLigandRightHereMenuItem setPopoverIsShown={() => {}} popoverPlacement={menuPosition.placement} defaultBondSmoothness={0} glRef={props.glRef} maps={props.maps} molecules={props.molecules} commandCentre={props.commandCentre} changeMolecules={props.changeMolecules} backgroundColor={props.backgroundColor} />
+                      <MoorhenBackgroundColorMenuItem setPopoverIsShown={() => { }} popoverPlacement={menuPosition.placement} backgroundColor={props.backgroundColor} setBackgroundColor={props.setBackgroundColor}/>
                       <MenuItem disabled={!props.enableTimeCapsule} onClick={() => handleCreateBackup()}>Create backup</MenuItem>
                     </>
                      }

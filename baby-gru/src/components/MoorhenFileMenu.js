@@ -75,7 +75,7 @@ export const MoorhenFileMenu = (props) => {
 
     const fetchFilesFromEBI = () => {
         const pdbCode = pdbCodeFetchInputRef.current.value.toLowerCase()
-        const coordUrl = `https://www.ebi.ac.uk/pdbe/entry-files/download/pdb${pdbCode}.ent`
+        const coordUrl = `https://www.ebi.ac.uk/pdbe/entry-files/download/${pdbCode}.cif`
         const mapUrl = `https://www.ebi.ac.uk/pdbe/entry-files/${pdbCode}.ccp4`
         const diffMapUrl = `https://www.ebi.ac.uk/pdbe/entry-files/${pdbCode}_diff.ccp4`
         if (pdbCode && fetchMapDataCheckRef.current.checked) {
