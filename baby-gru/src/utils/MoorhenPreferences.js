@@ -23,7 +23,7 @@ const updateStoredPreferences = async (key, value) => {
 
 const getDefaultValues = () => {
     return {
-        version: 'v23',
+        version: 'v24',
         defaultBackgroundColor: [1, 1, 1, 1], 
         atomLabelDepthMode: true, 
         enableTimeCapsule: true, 
@@ -37,7 +37,8 @@ const getDefaultValues = () => {
         doPerspectiveProjection: false,
         useOffScreenBuffers: false,
         mouseSensitivity: 0.3,
-        wheelSensitivityFactor: 1.0,
+        zoomWheelSensitivityFactor: 1.0,
+        contourWheelSensitivityFactor: 0.05,
         mapLineWidth: 0.75,
         makeBackups: true,
         showShortcutToast: true,
@@ -217,7 +218,8 @@ const PreferencesContextProvider = ({ children }) => {
     const [defaultMapLitLines, setDefaultMapLitLines] = useState(null)
     const [refineAfterMod, setRefineAfterMod] = useState(null)
     const [mouseSensitivity, setMouseSensitivity] = useState(null)
-    const [wheelSensitivityFactor, setWheelSensitivityFactor] = useState(null)
+    const [zoomWheelSensitivityFactor, setZoomWheelSensitivityFactor] = useState(null)
+    const [contourWheelSensitivityFactor, setContourWheelSensitivityFactor] = useState(null)
     const [drawCrosshairs, setDrawCrosshairs] = useState(null)
     const [drawFPS, setDrawFPS] = useState(null)
     const [drawMissingLoops, setDrawMissingLoops] = useState(null)
@@ -245,7 +247,7 @@ const PreferencesContextProvider = ({ children }) => {
         5: { label: "defaultMapLitLines", value: defaultMapLitLines, valueSetter: setDefaultMapLitLines},
         6: { label: "refineAfterMod", value: refineAfterMod, valueSetter: setRefineAfterMod},
         7: { label: "mouseSensitivity", value: mouseSensitivity, valueSetter: setMouseSensitivity},
-        8: { label: "wheelSensitivityFactor", value: wheelSensitivityFactor, valueSetter: setWheelSensitivityFactor},
+        8: { label: "zoomWheelSensitivityFactor", value: zoomWheelSensitivityFactor, valueSetter: setZoomWheelSensitivityFactor},
         9: { label: "drawCrosshairs", value: drawCrosshairs, valueSetter: setDrawCrosshairs},
         10: { label: "drawFPS", value: drawFPS, valueSetter: setDrawFPS},
         11: { label: "drawMissingLoops", value: drawMissingLoops, valueSetter: setDrawMissingLoops},
@@ -265,6 +267,7 @@ const PreferencesContextProvider = ({ children }) => {
         25: { label: "enableTimeCapsule", value: enableTimeCapsule, valueSetter: setEnableTimeCapsule},
         26: { label: "doPerspectiveProjection", value: doPerspectiveProjection, valueSetter: setDoPerspectiveProjection},
         27: { label: "useOffScreenBuffers", value: useOffScreenBuffers, valueSetter: setUseOffScreenBuffers},
+        28: { label: "contourWheelSensitivityFactor", value: contourWheelSensitivityFactor, valueSetter: setContourWheelSensitivityFactor},
     }
 
     const restoreDefaults = (defaultValues)=> {
@@ -330,6 +333,15 @@ const PreferencesContextProvider = ({ children }) => {
     
     useMemo(() => {
 
+        if (contourWheelSensitivityFactor === null) {
+            return
+        }
+       
+        updateStoredPreferences('contourWheelSensitivityFactor', contourWheelSensitivityFactor);
+    }, [contourWheelSensitivityFactor]);
+    
+    useMemo(() => {
+
         if (enableTimeCapsule === null) {
             return
         }
@@ -375,12 +387,12 @@ const PreferencesContextProvider = ({ children }) => {
 
     useMemo(() => {
 
-        if (wheelSensitivityFactor === null) {
+        if (zoomWheelSensitivityFactor === null) {
             return
         }
        
-        updateStoredPreferences('wheelSensitivityFactor', wheelSensitivityFactor);
-    }, [wheelSensitivityFactor]);
+        updateStoredPreferences('zoomWheelSensitivityFactor', zoomWheelSensitivityFactor);
+    }, [zoomWheelSensitivityFactor]);
 
     useMemo(() => {
 
@@ -570,9 +582,9 @@ const PreferencesContextProvider = ({ children }) => {
         makeBackups, setMakeBackups, showShortcutToast, setShowShortcutToast, defaultMapSurface,
         setDefaultMapSurface, defaultBondSmoothness, setDefaultBondSmoothness, showScoresToast, 
         setShowScoresToast, defaultUpdatingScores, setDefaultUpdatingScores, drawFPS, setDrawFPS,
-        wheelSensitivityFactor, setWheelSensitivityFactor, shortcutOnHoveredAtom, setShortcutOnHoveredAtom,
-        resetClippingFogging, setResetClippingFogging, maxBackupCount, setMaxBackupCount,
-        modificationCountBackupThreshold, setModificationCountBackupThreshold, isMounted,
+        zoomWheelSensitivityFactor, setZoomWheelSensitivityFactor, shortcutOnHoveredAtom, setShortcutOnHoveredAtom,
+        resetClippingFogging, setResetClippingFogging, maxBackupCount, setMaxBackupCount, setContourWheelSensitivityFactor,
+        modificationCountBackupThreshold, setModificationCountBackupThreshold, isMounted, contourWheelSensitivityFactor,
         drawInteractions, setDrawInteractions, clipCap, setClipCap, enableTimeCapsule, setEnableTimeCapsule, 
         doPerspectiveProjection, setDoPerspectiveProjection, useOffScreenBuffers, setUseOffScreenBuffers
     }
