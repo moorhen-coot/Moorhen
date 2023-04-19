@@ -23,6 +23,10 @@ export const MoorhenMapCard = (props) => {
     const isDirty = useRef(false)
 
     useEffect(() => {
+        props.map.fetchMapRmsd()
+    }, [])
+
+    useEffect(() => {
         setMapColour({
             r: 255 * props.map.rgba.r,
             g: 255 * props.map.rgba.g,
@@ -339,12 +343,13 @@ export const MoorhenMapCard = (props) => {
                 </Col>
                 <Col>
                     <Form.Group controlId="contouringLevel" className="mb-3">
-                        <MoorhenSlider minVal={0.01} maxVal={5} logScale={true} sliderTitle="Level" isDisabled={!cootContour} initialValue={props.initialContour} externalValue={mapContourLevel} setExternalValue={setMapContourLevel} />
+                        <span>{`Level: ${mapContourLevel.toFixed(2)} ${props.map.mapRmsd ? '(' + (mapContourLevel / props.map.mapRmsd).toFixed(2) + ' rmsd)' : ''}`}</span>
+                        <MoorhenSlider minVal={0.01} maxVal={5} logScale={true} showSliderTitle={false} isDisabled={!cootContour} initialValue={props.initialContour} externalValue={mapContourLevel} setExternalValue={setMapContourLevel} />
                     </Form.Group>
                 </Col>
                 <Col>
                     <Form.Group controlId="contouringRadius" className="mb-3">
-                        <MoorhenSlider minVal={0.01} maxVal={100} logScale={false} sliderTitle="Radius" isDisabled={!cootContour} initialValue={props.initialRadius} externalValue={mapRadius} setExternalValue={setMapRadius} />
+                        <MoorhenSlider minVal={0.01} maxVal={100} logScale={false} sliderTitle="Radius" decimalPlaces={2} isDisabled={!cootContour} initialValue={props.initialRadius} externalValue={mapRadius} setExternalValue={setMapRadius} />
                     </Form.Group>
                 </Col>
             </Row>
