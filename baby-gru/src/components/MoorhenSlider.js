@@ -43,7 +43,9 @@ export default function MoorhenSlider(props) {
 
     return (
         <Box sx={{ width: '100%' }}>
-            <span>{props.sliderTitle}: {props.allowFloats ? props.externalValue.toFixed(3) : props.externalValue}</span>
+            {props.showSliderTitle && 
+            <span>{props.sliderTitle}: {props.allowFloats ? props.externalValue.toFixed(props.decimalPlaces) : props.externalValue}</span>        
+            }
             <Stack spacing={2} direction="row" sx={{ mb: 1 }} alignItems="center">
                 {props.minVal}
                     <Slider disabled={props.isDisabled} value={value} onChange={handleChange}/>
@@ -54,5 +56,6 @@ export default function MoorhenSlider(props) {
 }
 
 MoorhenSlider.defaultProps={
-    minVal: 0, maxVal: 100, setExternalValue: ()=>{}, logScale: false, isDisabled: false, allowFloats: true
+    minVal: 0, maxVal: 100, setExternalValue: ()=>{}, logScale: false, 
+    isDisabled: false, allowFloats: true, showSliderTitle: true, decimalPlaces: 3
 }

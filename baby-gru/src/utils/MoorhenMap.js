@@ -18,7 +18,18 @@ export function MoorhenMap(commandCentre) {
     this.selectedColumns = null
     this.associatedReflectionFileName = null
     this.uniqueId = guid()
+    this.mapRmsd = null
     this.rgba = { r: 0.30000001192092896, g: 0.30000001192092896, b: 0.699999988079071, a: 1.0 }
+}
+
+MoorhenMap.prototype.fetchMapRmsd = async function () {
+    const result = await this.commandCentre.current.cootCommand({
+        command: 'get_map_rmsd_approx',
+        commandArgs: [this.molNo],
+        returnType: 'float'
+    }, true)
+    this.mapRmsd = result.data.result.result
+    return result.data.result.result
 }
 
 MoorhenMap.prototype.delete = async function (glRef) {
