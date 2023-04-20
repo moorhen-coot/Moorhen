@@ -51,3 +51,7 @@ img.baby-gru-button-icon {
   color: white !important;
 }
 
+div.darkly text {fill:#888 !important;}
+div.darkly text.base {fill:#000!important;}
+div.darkly text.start-label {fill:#FFF !important;}
+div.darkly text.end-label {fill:#FFF !important;}

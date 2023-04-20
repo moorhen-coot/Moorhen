@@ -297,7 +297,7 @@ const MoorhenCCP4i2Menu = (props) => {
         formData.append('jobId', props.cootJobId)
         formData.append('fileRoot', `COOT_FILE_DROP/output_${iSave.toString().padStart(3, '0')}`)
         formData.append('fileExtension', ".pdb")
-        const molZeros = props.molecules.current.filter(molecule => molecule.molNo === molNo)
+        const molZeros = props.molecules.filter(molecule => molecule.molNo === molNo)
         if (molZeros.length === 1) {
             let response = await molZeros[0].getAtoms()
             const atomsBlob = new Blob([response.data.result.pdbData])
