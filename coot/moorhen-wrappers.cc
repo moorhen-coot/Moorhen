@@ -40,6 +40,9 @@
 #include "rdkit/GraphMol/MonomerInfo.h"
 #include "rdkit/GraphMol/SanitException.h"
 #include "rdkit/GraphMol/PeriodicTable.h"
+#include "rdkit/GraphMol/Substruct/SubstructMatch.h"
+#include "rdkit/GraphMol/Substruct/SubstructUtils.h"
+
 
 #include "geometry/residue-and-atom-specs.hh"
 #include "ligand/chi-angles.hh"
@@ -111,10 +114,139 @@ void TakeColourMap(const std::map<unsigned int, std::array<float, 3>> &theMap){
 }
 */
 
+/*
+#ATOMTYPE CSP  = with triple bond or two double bonds
+#ATOMTYPE CSP1 = with triple bond and 1 hydrogen
+#ATOMTYPE C    = without hydrogen ( carbonyl C )
+#ATOMTYPE C1   = connected to 1 hydrogen  
+#ATOMTYPE C2   = connected to 2 hydrogens 
+#ATOMTYPE CR1  = between two pyrrole units 
+#ATOMTYPE CR1H = CR1 connected to 1 hydrogen ( CHA of HEME )
+#ATOMTYPE CR15 = connected to 1 hydrogen in 5 atoms ring ( CE1 of HIS)
+#ATOMTYPE CR16 = connected to 1 hydrogen in 6 atoms ring ( CE1 of PHE)
+#ATOMTYPE CR6  = without hydrogen in 6 atoms ring 
+#ATOMTYPE CR5  = without hydrogen in 5 atoms ring 
+#ATOMTYPE CR56 = between two atoms in 5-6 rings ( CD2 CE2 of TRP )
+#ATOMTYPE CR55 = between two atoms in 5-5 rings 
+#ATOMTYPE CR66 = between two atoms in 6-6 rings 
+#ATOMTYPE CH1  = connected to 1 hydrogen  ( CA of most amono acids )
+#ATOMTYPE CH2  = connected to 2 hydrogens ( CB of most amono acids)
+#ATOMTYPE CH3  = connected to 3 hydrogens ( CD1 CD2 of LEUCINE)
+#ATOMTYPE CT   = without hydrogen
+#ATOMTYPE SI   = tetragonal silicon
+#ATOMTYPE SI1  = other silicons
+#ATOMTYPE HCH  = hydrogen of aliphatic group
+#ATOMTYPE HCR  = hydrogen of aromatic group
+#ATOMTYPE HNC1 = hydrogen connected to NC1
+#ATOMTYPE HNC2 = hydrogen connected to NC2
+#ATOMTYPE HNC3 = hydrogen connected to NC3
+#ATOMTYPE HNH1 = hydrogen connected to NH1
+#ATOMTYPE HNH2 = hydrogen connected to NH2
+#ATOMTYPE HNR5 = hydrogen connected to NR15
+#ATOMTYPE HNR6 = hydrogen connected to NR16
+#ATOMTYPE HOH1 = hydrogen connected to OH1
+#ATOMTYPE HOH2 = hydrogen of water
+#ATOMTYPE HSH1 = hydrogen of sulphur
+#ATOMTYPE NS   = without hydrogen ( triple bond ) = NSP
+#ATOMTYPE NS1  = connected to 1 hydrogen = NSP1
+#ATOMTYPE NC1  = connected to 1 hyd. in a charged group ( NE of ARG )
+#ATOMTYPE NC2  = connected to 2 hyd. in a charged group ( NH2 of ARG )
+#ATOMTYPE NH1  = connected to 1 hydrogen ( N of main chain )
+#ATOMTYPE NH2  = connected to 2 hydrogen ( NE2 of GLU )
+#ATOMTYPE NPA  = without hydrogen ( NA and NC of HEME )
+#ATOMTYPE NPB  = without hydrogen ( NB and ND of HEME )
+#ATOMTYPE NRD5 = without hydrogen but with electronic doublet in 5 atoms ring
+#ATOMTYPE NRD6 = without hydrogen but with electronic doublet in 6 atoms ring 
+#ATOMTYPE NR15 = connected to 1 hyd. in 5 atoms ring ( ND1 of HIS )
+#ATOMTYPE NR16 = connected to 1 hyd. in 6  atoms ring 
+#ATOMTYPE NR5  = connected to 3 non-hydrogen atoms in 5 atoms ring
+#ATOMTYPE NR6  = connected to 3 non-hydrogen atoms in 6 atoms ring
+#ATOMTYPE N    = without hydrogen ( N  of PRO )
+#ATOMTYPE NT   = without hydrogen
+#ATOMTYPE NT1  = connected to 1 hydrogen
+#ATOMTYPE NT2  = connected to 2 hydrogens
+#ATOMTYPE NT3  = connected to 3 hydrogens
+#ATOMTYPE P    = tetragonal P with four bonds
+#ATOMTYPE P1   = with three bonds.
+#ATOMTYPE O    = without  NET charge ( O of main chain )
+#ATOMTYPE OC   = with a NET charge   ( OE1 OE2 of GLU )
+#ATOMTYPE OP   = with a NET charge connected to P (O1P of phosphate group )
+#ATOMTYPE OS   = with a NET charge connected to S ( O1 of sulphate group )
+#ATOMTYPE OB   = with a NET charge connected to B
+#ATOMTYPE O2   = connected to 2 atoms ( O4' of ribose )
+#ATOMTYPE OC2  = connected to 2 ATOMS ( O3' of ribose )
+#ATOMTYPE OH1  = oxygen of alcohol groups ( OG1 of THR )
+#ATOMTYPE OH2  = oxygen of water
+#ATOMTYPE OHA  = oxygen of water in MO6
+#ATOMTYPE OHB  = oxygen of water in MO6
+#ATOMTYPE OHC  = oxygen of water in MO6
+#ATOMTYPE S    = sulphur without hydrogen 
+#ATOMTYPE SH1  = sulphur with a hydrogen ( SG of CYS )
+#ATOMTYPE S3   = sulphur with 3 bonds (sulphoxide) 
+#ATOMTYPE S2   = sulphur with 2 bonds (methionine) 
+#ATOMTYPE S1   = sulphur with 1 double bond 
+#ATOMTYPE FE   = iron
+#ATOMTYPE P    = phosphorus
+#ATOMTYPE ZN   = zinc
+*/
+
 std::string writeCIF(RDKit::RWMol *mol, const std::string &resname="UNL",  int confId=0){
-  RDKit::AtomMonomerInfo *info = mol->getAtomWithIdx(0)->getMonomerInfo();
-  std::map<std::string,int> elemMap;
-  std::map<int,std::string> atomMap;
+    RDKit::AtomMonomerInfo *info = mol->getAtomWithIdx(0)->getMonomerInfo();
+    std::map<std::string,int> elemMap;
+    std::map<int,std::string> atomMap;
+
+    /*
+    // This will come soon ...
+    std::vector<RDKit::MatchVectType> matchVectCH3;
+    std::vector<RDKit::MatchVectType> matchVectCH2;
+    std::vector<RDKit::MatchVectType> matchVectCH1;
+    std::vector<RDKit::MatchVectType> matchVectCTripNoH;
+    std::vector<RDKit::MatchVectType> matchVectCTripH;
+    RDKit::RWMol *pattCH3 = RDKit::SmartsToMol( "[CH3]" );
+    RDKit::RWMol *pattCH2 = RDKit::SmartsToMol( "[CH2&^3]" );
+    RDKit::RWMol *pattCH1 = RDKit::SmartsToMol( "[CH1&^3]" );
+    RDKit::RWMol *pattCTripNoH = RDKit::SmartsToMol( "[CH0&^1]" );
+    RDKit::RWMol *pattCTripH = RDKit::SmartsToMol( "[CH&^1]" );
+    unsigned dummyCH3 = RDKit::SubstructMatch( *mol , *pattCH3 , matchVectCH3);
+    unsigned dummyCH2 = RDKit::SubstructMatch( *mol , *pattCH2 , matchVectCH2);
+    unsigned dummyCH1 = RDKit::SubstructMatch( *mol , *pattCH1 , matchVectCH1);
+    unsigned dummyCTripNoH = RDKit::SubstructMatch( *mol , *pattCTripNoH , matchVectCTripNoH);
+    unsigned dummyCTripH = RDKit::SubstructMatch( *mol , *pattCTripH , matchVectCTripH);
+
+    std::cout << "##################################################" << std::endl;
+    std::cout << "   Matches CH3  " << std::endl;
+    for( size_t i = 0 ; i < matchVectCH3.size() ; ++i ) {
+        for( size_t j = 0 ; j < matchVectCH3[i].size() ; ++j ) {
+            std::cout << "(" << matchVectCH3[i][j].first << "," << matchVectCH3[i][j].second << ") " << std::endl;
+        }
+    }
+    std::cout << "   Matches CH2  " << std::endl;
+    for( size_t i = 0 ; i < matchVectCH2.size() ; ++i ) {
+        for( size_t j = 0 ; j < matchVectCH2[i].size() ; ++j ) {
+            std::cout << "(" << matchVectCH2[i][j].first << "," << matchVectCH2[i][j].second << ") " << std::endl;
+        }
+    }
+    std::cout << "   Matches CH1  " << std::endl;
+    for( size_t i = 0 ; i < matchVectCH1.size() ; ++i ) {
+        for( size_t j = 0 ; j < matchVectCH1[i].size() ; ++j ) {
+            std::cout << "(" << matchVectCH1[i][j].first << "," << matchVectCH1[i][j].second << ") " << std::endl;
+        }
+    }
+    std::cout << "   Matches C Triple without H  " << std::endl;
+    for( size_t i = 0 ; i < matchVectCTripNoH.size() ; ++i ) {
+        for( size_t j = 0 ; j < matchVectCTripNoH[i].size() ; ++j ) {
+            std::cout << "(" << matchVectCTripNoH[i][j].first << "," << matchVectCTripNoH[i][j].second << ") " << std::endl;
+        }
+    }
+    std::cout << "   Matches C Triple with H  " << std::endl;
+    for( size_t i = 0 ; i < matchVectCTripH.size() ; ++i ) {
+        for( size_t j = 0 ; j < matchVectCTripH[i].size() ; ++j ) {
+            std::cout << "(" << matchVectCTripH[i][j].first << "," << matchVectCTripH[i][j].second << ") " << std::endl;
+        }
+    }
+    std::cout << "##################################################" << std::endl;
+    */
+    
 
     std::ostringstream output;
     output << "global_\n";
@@ -187,8 +319,14 @@ std::string writeCIF(RDKit::RWMol *mol, const std::string &resname="UNL",  int c
         s << elemMap[symbol];
         std::string iStr = s.str();
         std::string name = symbol+iStr;
+        std::string energy_type;
+        if(symbol=="H")
+            energy_type = symbol;
+        else
+            energy_type = name;
+
         atomMap[(*atomIter)->getIdx()] = name;
-        output << resname << "           " << name << " " << symbol  << " " << name << " " << charge << " " << x << " " << y << " " << z << "\n";
+        output << resname << "           " << name << " " << symbol  << " " << energy_type << " " << charge << " " << x << " " << y << " " << z << "\n";
       }
   
       atomIter++;
