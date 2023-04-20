@@ -32,6 +32,13 @@ export const MoorhenViewMenu = (props) => {
                     <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
                         <Form.Check 
                             type="switch"
+                            checked={props.drawAxes}
+                            onChange={() => { props.setDrawAxes(!props.drawAxes) }}
+                            label="Show axes"/>
+                    </InputGroup>
+                    <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                        <Form.Check 
+                            type="switch"
                             checked={props.drawMissingLoops}
                             onChange={() => { props.setDrawMissingLoops(!props.drawMissingLoops) }}
                             label="Show missing loops"/>

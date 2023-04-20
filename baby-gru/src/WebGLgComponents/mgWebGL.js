@@ -1408,6 +1408,11 @@ class MGWebGL extends Component {
         this.previousTextColour = "";
         this.atomLabelDepthMode = true;
         this.showCrosshairs = false
+        this.showAxes = false;
+
+        if (this.props.showAxes !== null) {
+            this.showAxes = this.props.showAxes
+        }
         if (this.props.showCrosshairs !== null) {
             this.showCrosshairs = this.props.showCrosshairs
         }
@@ -1445,6 +1450,10 @@ class MGWebGL extends Component {
         }
         if (oldProps.showCrosshairs !== this.props.showCrosshairs){
             this.showCrosshairs = this.props.showCrosshairs
+            this.drawScene()
+        }
+        if (oldProps.showAxes !== this.props.showAxes){
+            this.showAxes = this.props.showAxes
             this.drawScene()
         }
         if (oldProps.showFPS !== this.props.showFPS){
@@ -1545,8 +1554,6 @@ class MGWebGL extends Component {
 
         this.save_pixel_data = false;
         this.renderToTexture = false;
-
-        this.showAxes = true;
 
         this.doShadow = false;
         this.doShadowDepthDebug = false;
