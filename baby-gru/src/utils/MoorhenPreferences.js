@@ -31,6 +31,7 @@ const getDefaultValues = () => {
         defaultMapLitLines: false,
         refineAfterMod: true,
         drawCrosshairs: true,
+        drawAxes: false,
         drawFPS: false,
         drawMissingLoops: true,
         drawInteractions: false,
@@ -221,6 +222,7 @@ const PreferencesContextProvider = ({ children }) => {
     const [zoomWheelSensitivityFactor, setZoomWheelSensitivityFactor] = useState(null)
     const [contourWheelSensitivityFactor, setContourWheelSensitivityFactor] = useState(null)
     const [drawCrosshairs, setDrawCrosshairs] = useState(null)
+    const [drawAxes, setDrawAxes] = useState(null)
     const [drawFPS, setDrawFPS] = useState(null)
     const [drawMissingLoops, setDrawMissingLoops] = useState(null)
     const [drawInteractions, setDrawInteractions] = useState(null)
@@ -268,6 +270,7 @@ const PreferencesContextProvider = ({ children }) => {
         26: { label: "doPerspectiveProjection", value: doPerspectiveProjection, valueSetter: setDoPerspectiveProjection},
         27: { label: "useOffScreenBuffers", value: useOffScreenBuffers, valueSetter: setUseOffScreenBuffers},
         28: { label: "contourWheelSensitivityFactor", value: contourWheelSensitivityFactor, valueSetter: setContourWheelSensitivityFactor},
+        29: { label: "drawAxes", value: drawAxes, valueSetter: setDrawAxes},
     }
 
     const restoreDefaults = (defaultValues)=> {
@@ -468,6 +471,15 @@ const PreferencesContextProvider = ({ children }) => {
 
     useMemo(() => {
 
+        if (drawAxes === null) {
+            return
+        }
+
+        updateStoredPreferences('drawAxes', drawAxes);
+    }, [drawAxes]);
+
+    useMemo(() => {
+
         if (drawCrosshairs === null) {
             return
         }
@@ -586,7 +598,8 @@ const PreferencesContextProvider = ({ children }) => {
         resetClippingFogging, setResetClippingFogging, maxBackupCount, setMaxBackupCount, setContourWheelSensitivityFactor,
         modificationCountBackupThreshold, setModificationCountBackupThreshold, isMounted, contourWheelSensitivityFactor,
         drawInteractions, setDrawInteractions, clipCap, setClipCap, enableTimeCapsule, setEnableTimeCapsule, 
-        doPerspectiveProjection, setDoPerspectiveProjection, useOffScreenBuffers, setUseOffScreenBuffers
+        doPerspectiveProjection, setDoPerspectiveProjection, useOffScreenBuffers, setUseOffScreenBuffers, drawAxes,
+        setDrawAxes
     }
 
     return (
