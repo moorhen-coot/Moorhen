@@ -164,6 +164,7 @@ ${coot_src}/api/coot_molecule_moltris.cc
 ${coot_src}/api/phi-psi-prob.cc
 ${coot_src}/api/molecules_container_ligand_fitting.cc
 ${coot_src}/api/coot_molecule_merge_molecules.cc
+${coot_src}/api/coot_molecule_refine.cc
 ${coot_src}/api/coot_molecule_replace_fragment.cc
 ${coot_src}/api/add-terminal-residue.cc
 ${coot_src}/api/molecules_container.cc
