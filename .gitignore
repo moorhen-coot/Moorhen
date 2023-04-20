@@ -569,3 +569,4 @@ baby-gru/out/make/zip/darwin/x64/Moorhen-darwin-x64-0.1.0.zip
 baby-gru/out/make/zip/linux/x64/Moorhen-linux-x64-0.1.0.zip
 tests/moorhen.js
 tests/moorhen.worker.js
+tests/test.log
