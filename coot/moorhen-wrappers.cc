@@ -195,58 +195,165 @@ std::string writeCIF(RDKit::RWMol *mol, const std::string &resname="UNL",  int c
     std::map<std::string,int> elemMap;
     std::map<int,std::string> atomMap;
 
-    /*
     // This will come soon ...
+    /*
+    //TODO 
+    [CX3]=[OX1] Generic carbonyl (We don't need ketone, I think, generic carbonyl will do).
+    [CX3](=O)[O-] carboxylate OC (2 of 'em)
+    [OD2] ether/ester  O2/OC2
+    [SH1] SH1
+    [SX3] S3
+    [SX2] S2
+    [SX1] S1
+    [P4] P
+    [P3] P1
+    ... fill in the int vectors.
+    everything except NCOSP can just be symbol?
+    */
+    /*
+    std::vector<RDKit::MatchVectType> matchVectNT3;
+    std::vector<RDKit::MatchVectType> matchVectNT2;
+    std::vector<RDKit::MatchVectType> matchVectNT1;
+    std::vector<RDKit::MatchVectType> matchVectNT;
     std::vector<RDKit::MatchVectType> matchVectCH3;
     std::vector<RDKit::MatchVectType> matchVectCH2;
     std::vector<RDKit::MatchVectType> matchVectCH1;
-    std::vector<RDKit::MatchVectType> matchVectCTripNoH;
-    std::vector<RDKit::MatchVectType> matchVectCTripH;
+    std::vector<RDKit::MatchVectType> matchVectCT;
+    std::vector<RDKit::MatchVectType> matchVectCSP;
+    std::vector<RDKit::MatchVectType> matchVectCSP1;
+    std::vector<RDKit::MatchVectType> matchVectKetone;
+    std::vector<RDKit::MatchVectType> matchVectAldehydeH1;
+    std::vector<RDKit::MatchVectType> matchVectAldehydeH2;
+    std::vector<RDKit::MatchVectType> matchVectNSP;
+    std::vector<RDKit::MatchVectType> matchVectNSP1;
     RDKit::RWMol *pattCH3 = RDKit::SmartsToMol( "[CH3]" );
     RDKit::RWMol *pattCH2 = RDKit::SmartsToMol( "[CH2&^3]" );
     RDKit::RWMol *pattCH1 = RDKit::SmartsToMol( "[CH1&^3]" );
-    RDKit::RWMol *pattCTripNoH = RDKit::SmartsToMol( "[CH0&^1]" );
-    RDKit::RWMol *pattCTripH = RDKit::SmartsToMol( "[CH&^1]" );
+    RDKit::RWMol *pattCT = RDKit::SmartsToMol( "[CH0&^3]" );
+    RDKit::RWMol *pattNT = RDKit::SmartsToMol( "[NH0]" );
+    RDKit::RWMol *pattNT3 = RDKit::SmartsToMol( "[NH3]" );
+    RDKit::RWMol *pattNT2 = RDKit::SmartsToMol( "[NH2&^3]" );
+    RDKit::RWMol *pattNT1 = RDKit::SmartsToMol( "[NH1&^3]" );
+    RDKit::RWMol *pattCSP = RDKit::SmartsToMol( "[CH0&^1]" );
+    RDKit::RWMol *pattCSP1 = RDKit::SmartsToMol( "[CH&^1]" );
+    RDKit::RWMol *pattNSP = RDKit::SmartsToMol( "[NH0&^1]" );
+    RDKit::RWMol *pattNSP1 = RDKit::SmartsToMol( "[NH&^1]" );
+    RDKit::RWMol *pattKetone = RDKit::SmartsToMol( "[#6][CX3](=O)[#6]" );
+    RDKit::RWMol *pattAldehydeH1 = RDKit::SmartsToMol( "[#6][CX3](=O)[#1]" );
+    RDKit::RWMol *pattAldehydeH2 = RDKit::SmartsToMol( "[#1][CX3](=O)[#1]" );
     unsigned dummyCH3 = RDKit::SubstructMatch( *mol , *pattCH3 , matchVectCH3);
     unsigned dummyCH2 = RDKit::SubstructMatch( *mol , *pattCH2 , matchVectCH2);
     unsigned dummyCH1 = RDKit::SubstructMatch( *mol , *pattCH1 , matchVectCH1);
-    unsigned dummyCTripNoH = RDKit::SubstructMatch( *mol , *pattCTripNoH , matchVectCTripNoH);
-    unsigned dummyCTripH = RDKit::SubstructMatch( *mol , *pattCTripH , matchVectCTripH);
+    unsigned dummyCH0 = RDKit::SubstructMatch( *mol , *pattCT , matchVectCT);
+    unsigned dummyNH3 = RDKit::SubstructMatch( *mol , *pattNT3 , matchVectNT3);
+    unsigned dummyNH2 = RDKit::SubstructMatch( *mol , *pattNT2 , matchVectNT2);
+    unsigned dummyNH1 = RDKit::SubstructMatch( *mol , *pattNT1 , matchVectNT1);
+    unsigned dummyNH0 = RDKit::SubstructMatch( *mol , *pattNT , matchVectNT);
+    unsigned dummyCSP = RDKit::SubstructMatch( *mol , *pattCSP , matchVectCSP);
+    unsigned dummyCSP1 = RDKit::SubstructMatch( *mol , *pattCSP1 , matchVectCSP1);
+    unsigned dummyNSP = RDKit::SubstructMatch( *mol , *pattNSP , matchVectNSP);
+    unsigned dummyNSP1 = RDKit::SubstructMatch( *mol , *pattNSP1 , matchVectNSP1);
+    unsigned dummyKetone = RDKit::SubstructMatch( *mol , *pattKetone , matchVectKetone);
+    unsigned dummyAldehydeH1 = RDKit::SubstructMatch( *mol , *pattAldehydeH1 , matchVectAldehydeH1);
+    unsigned dummyAldehydeH2 = RDKit::SubstructMatch( *mol , *pattAldehydeH2 , matchVectAldehydeH2);
+
+    std::vector<int> NT3;
+    std::vector<int> NT2;
+    std::vector<int> NT1;
+    std::vector<int> NT;
+    std::vector<int> CH3;
+    std::vector<int> CH2;
+    std::vector<int> CH1;
+    std::vector<int> CT;
+    std::vector<int> CSP;
+    std::vector<int> CSP1;
+    std::vector<int> NSP;
+    std::vector<int> NSP1;
+    std::vector<int> Ketone;
+    std::vector<int> AldehydeH1;
+    std::vector<int> AldehydeH2;
 
     std::cout << "##################################################" << std::endl;
-    std::cout << "   Matches CH3  " << std::endl;
+    std::cout << "   Matches NT3" << std::endl;
+    for( size_t i = 0 ; i < matchVectNT3.size() ; ++i ) {
+        for( size_t j = 0 ; j < matchVectNT3[i].size() ; ++j ) {
+            std::cout << "(" << matchVectNT3[i][j].first << "," << matchVectNT3[i][j].second << ") " << std::endl;
+        }
+    }
+    std::cout << "   Matches NT2" << std::endl;
+    for( size_t i = 0 ; i < matchVectNT2.size() ; ++i ) {
+        for( size_t j = 0 ; j < matchVectNT2[i].size() ; ++j ) {
+            std::cout << "(" << matchVectNT2[i][j].first << "," << matchVectNT2[i][j].second << ") " << std::endl;
+        }
+    }
+    std::cout << "   Matches NT1" << std::endl;
+    for( size_t i = 0 ; i < matchVectNT1.size() ; ++i ) {
+        for( size_t j = 0 ;j < matchVectNT1[i].size() ; ++j ) {
+            std::cout << "(" << matchVectNT1[i][j].first << "," << matchVectNT1[i][j].second << ") " << std::endl;
+        }
+    }
+    std::cout << "   Matches NT" << std::endl;
+    for( size_t i = 0 ; i < matchVectNT.size() ; ++i ) {
+        for( size_t j = 0 ;j < matchVectNT[i].size() ; ++j ) {
+            std::cout << "(" << matchVectNT[i][j].first << "," << matchVectNT[i][j].second << ") " << std::endl;
+        }
+    }
+    std::cout << "   Matches CH3" << std::endl;
     for( size_t i = 0 ; i < matchVectCH3.size() ; ++i ) {
         for( size_t j = 0 ; j < matchVectCH3[i].size() ; ++j ) {
             std::cout << "(" << matchVectCH3[i][j].first << "," << matchVectCH3[i][j].second << ") " << std::endl;
         }
     }
-    std::cout << "   Matches CH2  " << std::endl;
+    std::cout << "   Matches CH2" << std::endl;
     for( size_t i = 0 ; i < matchVectCH2.size() ; ++i ) {
         for( size_t j = 0 ; j < matchVectCH2[i].size() ; ++j ) {
             std::cout << "(" << matchVectCH2[i][j].first << "," << matchVectCH2[i][j].second << ") " << std::endl;
         }
     }
-    std::cout << "   Matches CH1  " << std::endl;
+    std::cout << "   Matches CH1" << std::endl;
     for( size_t i = 0 ; i < matchVectCH1.size() ; ++i ) {
-        for( size_t j = 0 ; j < matchVectCH1[i].size() ; ++j ) {
+        for( size_t j = 0 ;j < matchVectCH1[i].size() ; ++j ) {
             std::cout << "(" << matchVectCH1[i][j].first << "," << matchVectCH1[i][j].second << ") " << std::endl;
         }
     }
-    std::cout << "   Matches C Triple without H  " << std::endl;
-    for( size_t i = 0 ; i < matchVectCTripNoH.size() ; ++i ) {
-        for( size_t j = 0 ; j < matchVectCTripNoH[i].size() ; ++j ) {
-            std::cout << "(" << matchVectCTripNoH[i][j].first << "," << matchVectCTripNoH[i][j].second << ") " << std::endl;
+    std::cout << "   Matches CT" << std::endl;
+    for( size_t i = 0 ; i < matchVectCT.size() ; ++i ) {
+        for( size_t j = 0 ;j < matchVectCT[i].size() ; ++j ) {
+            std::cout << "(" << matchVectCT[i][j].first << "," << matchVectCT[i][j].second << ") " << std::endl;
         }
     }
-    std::cout << "   Matches C Triple with H  " << std::endl;
-    for( size_t i = 0 ; i < matchVectCTripH.size() ; ++i ) {
-        for( size_t j = 0 ; j < matchVectCTripH[i].size() ; ++j ) {
-            std::cout << "(" << matchVectCTripH[i][j].first << "," << matchVectCTripH[i][j].second << ") " << std::endl;
+    std::cout << "   Matches C Triple without H" << std::endl;
+    for( size_t i = 0 ; i < matchVectCSP.size() ; ++i ) {
+        for( size_t j = 0 ; j < matchVectCSP[i].size() ; ++j ) {
+            std::cout << "(" << matchVectCSP[i][j].first << "," << matchVectCSP[i][j].second << ") " << std::endl;
+        }
+    }
+    std::cout << "   Matches C Triple with H" << std::endl;
+    for( size_t i = 0 ; i < matchVectCSP1.size() ; ++i ) {
+        for( size_t j = 0 ; j < matchVectCSP1[i].size() ; ++j ) {
+            std::cout << "(" << matchVectCSP1[i][j].first << "," << matchVectCSP1[i][j].second << ") " << std::endl;
+        }
+    }
+    std::cout << "   Matches Ketone" << std::endl;
+    for( size_t i = 0 ; i < matchVectKetone.size() ; ++i ) {
+        for( size_t j = 0 ; j < matchVectKetone[i].size() ; ++j ) {
+            std::cout << "(" << matchVectKetone[i][j].first << "," << matchVectKetone[i][j].second << ") " << std::endl;
+        }
+    }
+    std::cout << "   Matches Aldehyde 1H" << std::endl;
+    for( size_t i = 0 ; i < matchVectAldehydeH1.size() ; ++i ) {
+        for( size_t j = 0 ; j < matchVectAldehydeH1[i].size() ; ++j ) {
+            std::cout << "(" << matchVectAldehydeH1[i][j].first << "," << matchVectAldehydeH1[i][j].second << ") " << std::endl;
+        }
+    }
+    std::cout << "   Matches Aldehyde 2H" << std::endl;
+    for( size_t i = 0 ; i < matchVectAldehydeH2.size() ; ++i ) {
+        for( size_t j = 0 ; j < matchVectAldehydeH2[i].size() ; ++j ) {
+            std::cout << "(" << matchVectAldehydeH2[i][j].first << "," << matchVectAldehydeH2[i][j].second << ") " << std::endl;
         }
     }
     std::cout << "##################################################" << std::endl;
     */
-    
 
     std::ostringstream output;
     output << "global_\n";
@@ -320,10 +427,8 @@ std::string writeCIF(RDKit::RWMol *mol, const std::string &resname="UNL",  int c
         std::string iStr = s.str();
         std::string name = symbol+iStr;
         std::string energy_type;
-        if(symbol=="H")
-            energy_type = symbol;
-        else
-            energy_type = name;
+        //This will get cleverer (arguably)
+        energy_type = symbol;
 
         atomMap[(*atomIter)->getIdx()] = name;
         output << resname << "           " << name << " " << symbol  << " " << energy_type << " " << charge << " " << x << " " << y << " " << z << "\n";

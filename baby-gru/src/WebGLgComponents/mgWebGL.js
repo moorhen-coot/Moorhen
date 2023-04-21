@@ -9911,6 +9911,7 @@ class MGWebGL extends Component {
     drawCrosshairs(invMat) {
 
         this.gl.depthFunc(this.gl.ALWAYS);
+        this.gl.useProgram(this.shaderProgramTextBackground);
         this.gl.uniform1f(this.shaderProgramTextBackground.fog_start, 1000.0);
         this.gl.uniform1f(this.shaderProgramTextBackground.fog_end, 1000.0);
         let axesOffset = vec3.create();
@@ -9990,7 +9991,12 @@ class MGWebGL extends Component {
         //console.log("thickLines",thickLines);
         this.gl.depthFunc(this.gl.ALWAYS);
 
+        for(let i = 0; i<7; i++)
+            this.gl.disableVertexAttribArray(i);
+
         this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexNormalAttribute);
+        this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexPositionAttribute);
+        this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexColourAttribute);
 
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesNormalBuffer);
         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(axesNormals), this.gl.DYNAMIC_DRAW);
@@ -11932,7 +11938,7 @@ class MGWebGL extends Component {
 
     handleKeyUp(event, self) {
         for (const key of Object.keys(self.props.keyboardAccelerators)) {
-            if (self.props.keyboardAccelerators[key].keyPress === event.key.toLowerCase() && self.props.keyboardAccelerators[key]) {
+            if (event.key && self.props.keyboardAccelerators[key].keyPress === event.key.toLowerCase() && self.props.keyboardAccelerators[key]) {
                 self.keysDown[key] = false;
             }
         }
@@ -11940,7 +11946,7 @@ class MGWebGL extends Component {
 
     handleKeyDown(event, self) {
         for (const key of Object.keys(self.props.keyboardAccelerators)) {
-            if (self.props.keyboardAccelerators[key].keyPress === event.key.toLowerCase() && self.props.keyboardAccelerators[key].modifiers.every(modifier => event[modifier])) {
+            if (event.key && self.props.keyboardAccelerators[key].keyPress === event.key.toLowerCase() && self.props.keyboardAccelerators[key].modifiers.every(modifier => event[modifier])) {
                 self.keysDown[key] = true;
             }
         }

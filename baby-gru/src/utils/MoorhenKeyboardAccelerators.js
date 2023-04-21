@@ -90,7 +90,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     let action = null;
 
     for (const key of Object.keys(shortCuts)) {
-        if (shortCuts[key].keyPress === event.key.toLowerCase() && shortCuts[key].modifiers.every(modifier => event[modifier]) && eventModifiersCodes.every(modifier => shortCuts[key].modifiers.includes(modifier))) {
+        if (event.key && shortCuts[key].keyPress === event.key.toLowerCase() && shortCuts[key].modifiers.every(modifier => event[modifier]) && eventModifiersCodes.every(modifier => shortCuts[key].modifiers.includes(modifier))) {
             action = key
             break
         }
