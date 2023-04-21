@@ -1998,38 +1998,34 @@ MoorhenMolecule.prototype.generateSelfRestraints = async function(maxRadius) {
     if (typeof maxRadius === 'undefined'){
         maxRadius = 4.2
     }
-    const result = await this.commandCentre.current.cootCommand({
+    return this.commandCentre.current.cootCommand({
         command: "generate_self_restraints", 
         returnType: 'status',
         commandArgs: [this.molNo, maxRadius], 
     })
-    return Promise.resolve(result)
 }
 
 MoorhenMolecule.prototype.clearExtraRestraints = async function() {
-    const result = await this.commandCentre.current.cootCommand({
+    return this.commandCentre.current.cootCommand({
         command: "clear_extra_restraints", 
         returnType: 'status',
         commandArgs: [this.molNo], 
     })
-    return Promise.resolve(result)
 }
 
 MoorhenMolecule.prototype.rigidBodyFit = async function(cidsString, mapNo) {
-    const result = await this.commandCentre.current.cootCommand({
+    return this.commandCentre.current.cootCommand({
         command: "rigid_body_fit", 
         returnType: 'status',
         commandArgs: [this.molNo, cidsString, mapNo], 
     })
-    return Promise.resolve(result)
 }
 
 
 MoorhenMolecule.prototype.refineResiduesUsingAtomCid = async function(cid, mode) {
-    const result = await this.commandCentre.current.cootCommand({
+    return this.commandCentre.current.cootCommand({
         command: "refine_residues_using_atom_cid", 
         returnType: 'status',
         commandArgs: [this.molNo, cid, mode], 
     })
-    return Promise.resolve(result)
 }
