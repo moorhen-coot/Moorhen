@@ -880,7 +880,7 @@ std::pair<std::string, std::string> SmilesToPDB(const std::string &smile_cpp, co
         atom->setMonomerInfo(mi);
     }
 
-    std::string pdb = RDKit::MolToPDBBlock( *mol );
+    std::string pdb = RDKit::MolToPDBBlock( *mol, minCid );
 
     retval.first = pdb;
     retval.second = cif;
