@@ -1209,7 +1209,7 @@ export const MoorhenImportDictionaryMenuItem = (props) => {
         }
         const response = await props.commandCentre.current.cootCommand({
             command: 'shim_smiles_to_pdb',
-            commandArgs: [smile, tlcValueRef.current, 1, 200],
+            commandArgs: [smile, tlcValueRef.current, 50, 500],
             returnType: 'str_str_pair'
         }, true)
         const result = response.data.result.result.second
@@ -1656,6 +1656,9 @@ export const MoorhenLightingMenuItem = (props) => {
     const [diffuse, setDiffuse] = useState(props.glRef.current.light_colours_diffuse)
     const [specular, setSpecular] = useState(props.glRef.current.light_colours_specular)
     const [ambient, setAmbient] = useState(props.glRef.current.light_colours_ambient)
+    const [specularPower, setSpecularPower] = useState(props.glRef.current.specularPower)
+    const [position, setPosition] = useState([props.glRef.current.light_positions[0],props.glRef.current.light_positions[1],props.glRef.current.light_positions[2]])
+
     const busyLighting = useRef(false)
     const isSetLightPosIsDirty = useRef(false)
 
@@ -1669,6 +1672,16 @@ export const MoorhenLightingMenuItem = (props) => {
             setLightingPositionIfDirty(newValue)
         }
     }
+
+    useEffect(() => {
+        if (props.glRef.current && props.glRef.current.light_colours_diffuse) {
+            setDiffuse(props.glRef.current.light_colours_diffuse[0])
+            setSpecular(props.glRef.current.light_colours_specular[0])
+            setAmbient(props.glRef.current.light_colours_ambient[0])
+            setSpecularPower(props.glRef.current.specularPower)
+            setPosition([props.glRef.current.light_positions[0],props.glRef.current.light_positions[1],props.glRef.current.light_positions[2]])
+        }
+    }, [props.glRef.current.specularPower,props.glRef.current.light_positions,props.glRef.current.light_colours_diffuse,props.glRef.current.light_colours_specular,props.glRef.current.light_colours_ambient])
 
     const panelContent = <div style={{ minWidth: "20rem" }}>
         <MoorhenSlider minVal={0.0} maxVal={1.0} logScale={false}
@@ -1697,6 +1710,15 @@ export const MoorhenLightingMenuItem = (props) => {
                 props.glRef.current.light_colours_ambient = [newValue,newValue,newValue,1.0]
                 props.glRef.current.drawScene()
                 setAmbient([newValue, newValue, newValue,1.0])
+            }} />
+        <MoorhenSlider minVal={1.0} maxVal={128.0} logScale={false}
+            sliderTitle="Specular Power"
+            initialValue={props.glRef.current.specularPower}
+            externalValue={props.glRef.current.specularPower}
+            setExternalValue={(newValue) => {
+                props.glRef.current.specularPower = newValue
+                props.glRef.current.drawScene()
+                setAmbient(newValue)
             }} />
         <MoorhenLightPosition
             initialValue={props.glRef.current.light_positions}
