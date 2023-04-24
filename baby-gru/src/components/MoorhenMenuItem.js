@@ -1725,13 +1725,13 @@ export const MoorhenClipFogMenuItem = (props) => {
     const [zfogBack, setZfogBack] = useState(props.glRef.current.gl_fog_end - props.glRef.current.fogClipOffset)
 
     useEffect(() => {
-        if (props.glRef.current && props.glRef.current.gl_clipPlane0) {
+        if (props.glRef.current && props.glRef.current.gl_clipPlane0 && props.glRef.current.gl_clipPlane1) {
             setZclipFront(props.glRef.current.fogClipOffset + props.glRef.current.gl_clipPlane0[3])
             setZclipBack(props.glRef.current.gl_clipPlane1[3] - props.glRef.current.fogClipOffset)
             setZfogFront(props.glRef.current.fogClipOffset - props.glRef.current.gl_fog_start)
             setZfogBack(props.glRef.current.gl_fog_end - props.glRef.current.fogClipOffset)
         }
-    }, [props.glRef.current.gl_clipPlane, props.glRef.current.gl_clipPlane1, props.glRef.current.gl_fog_start, props.glRef.current.gl_fog_end])
+    }, [props.glRef.current.gl_clipPlane, props.glRef.current.gl_clipPlane1[3], props.glRef.current.gl_clipPlane0[3], props.glRef.current.gl_fog_start, props.glRef.current.gl_fog_end])
 
     const panelContent = <div style={{ minWidth: "20rem" }}>
         <MoorhenSlider minVal={0.1} maxVal={1000} logScale={true}

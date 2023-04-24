@@ -541,6 +541,30 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
 
     }
 
+    else if (action === 'decrease_front_clip') {
+        glRef.current.gl_clipPlane0[3] = glRef.current.gl_clipPlane0[3] - 0.5
+        glRef.current.drawScene()
+        return false
+    }
+
+    else if (action === 'increase_front_clip') {
+        glRef.current.gl_clipPlane0[3] = glRef.current.gl_clipPlane0[3] + 0.5
+        glRef.current.drawScene()
+        return false
+    }
+
+    else if (action === 'decrease_back_clip') {
+        glRef.current.gl_clipPlane1[3] = glRef.current.gl_clipPlane1[3] - 0.5
+        glRef.current.drawScene()
+        return false
+    }
+
+    else if (action === 'increase_back_clip') {
+        glRef.current.gl_clipPlane1[3] = glRef.current.gl_clipPlane1[3] + 0.5
+        glRef.current.drawScene()
+        return false
+    }
+
     return true
 
 }
