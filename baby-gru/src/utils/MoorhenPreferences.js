@@ -23,7 +23,7 @@ const updateStoredPreferences = async (key, value) => {
 
 const getDefaultValues = () => {
     return {
-        version: 'v24',
+        version: 'v25',
         defaultBackgroundColor: [1, 1, 1, 1], 
         atomLabelDepthMode: true, 
         enableTimeCapsule: true, 
@@ -53,6 +53,30 @@ const getDefaultValues = () => {
         maxBackupCount: 10,
         modificationCountBackupThreshold: 5,
         shortCuts: {
+            "decrease_front_clip": {
+                modifiers: [],
+                keyPress: "1",
+                label: "Decrease front clip",
+                viewOnly: true
+            },
+            "increase_front_clip": {
+                modifiers: [],
+                keyPress: "2",
+                label: "Increase front clip",
+                viewOnly: true
+            },
+            "decrease_back_clip": {
+                modifiers: [],
+                keyPress: "3",
+                label: "Decrease back clip",
+                viewOnly: true
+            },
+            "increase_back_clip": {
+                modifiers: [],
+                keyPress: "4",
+                label: "Increase back clip",
+                viewOnly: true
+            },
             "sphere_refine": {
                 modifiers: ["shiftKey"],
                 keyPress: "r",

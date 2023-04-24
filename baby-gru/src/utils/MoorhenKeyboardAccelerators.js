@@ -487,6 +487,9 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
                 if (shortCuts[key].keyPress === " ") modifiers.push("<Space>")
                 return `${modifiers.join("-")} ${shortCuts[key].keyPress} ${shortCuts[key].label}`
             })
+            glRef.current.showShortCutHelp.push(`<Shift><Alt> Translate View`)
+            glRef.current.showShortCutHelp.push(`<Shift> Rotate View`)
+            glRef.current.showShortCutHelp.push(`Double click go to blob`)
             glRef.current.showShortCutHelp.push(`Use right click to set background color`)
             glRef.current.drawScene()
         } else  {
@@ -494,12 +497,12 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
             glRef.current.drawScene()
         }
         setToastContent(
-            <h4>
+            <h5>
                 <List>
                     <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
                     <ListItem style={{justifyContent: 'center'}}>{glRef.current.showShortCutHelp ? 'Show help' : 'Hide help'}</ListItem>
                 </List>
-            </h4>
+            </h5>
         )
         return false
     }
@@ -536,6 +539,62 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         })
         .catch(err => console.log(err))
 
+    }
+
+    else if (action === 'decrease_front_clip') {
+        glRef.current.gl_clipPlane0[3] = glRef.current.gl_clipPlane0[3] - 0.5
+        glRef.current.drawScene()
+        setToastContent(
+            <h5>
+                <List>
+                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
+                    <ListItem style={{justifyContent: 'center'}}>Front Clip -</ListItem>
+                </List>
+            </h5>
+        )
+        return false
+    }
+
+    else if (action === 'increase_front_clip') {
+        glRef.current.gl_clipPlane0[3] = glRef.current.gl_clipPlane0[3] + 0.5
+        glRef.current.drawScene()
+        setToastContent(
+            <h5>
+                <List>
+                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
+                    <ListItem style={{justifyContent: 'center'}}>Front Clip +</ListItem>
+                </List>
+            </h5>
+        )
+        return false
+    }
+
+    else if (action === 'decrease_back_clip') {
+        glRef.current.gl_clipPlane1[3] = glRef.current.gl_clipPlane1[3] - 0.5
+        glRef.current.drawScene()
+        setToastContent(
+            <h5>
+                <List>
+                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
+                    <ListItem style={{justifyContent: 'center'}}>Back Clip -</ListItem>
+                </List>
+            </h5>
+        )
+        return false
+    }
+
+    else if (action === 'increase_back_clip') {
+        glRef.current.gl_clipPlane1[3] = glRef.current.gl_clipPlane1[3] + 0.5
+        glRef.current.drawScene()
+        setToastContent(
+            <h5>
+                <List>
+                    <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
+                    <ListItem style={{justifyContent: 'center'}}>Back Clip +</ListItem>
+                </List>
+            </h5>
+        )
+        return false
     }
 
     return true
