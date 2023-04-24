@@ -487,6 +487,9 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
                 if (shortCuts[key].keyPress === " ") modifiers.push("<Space>")
                 return `${modifiers.join("-")} ${shortCuts[key].keyPress} ${shortCuts[key].label}`
             })
+            glRef.current.showShortCutHelp.push(`<Shift><Alt> Translate View`)
+            glRef.current.showShortCutHelp.push(`<Shift> Rotate View`)
+            glRef.current.showShortCutHelp.push(`Double click go to blob`)
             glRef.current.showShortCutHelp.push(`Use right click to set background color`)
             glRef.current.drawScene()
         } else  {
