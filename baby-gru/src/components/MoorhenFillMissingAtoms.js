@@ -86,7 +86,8 @@ export const MoorhenFillMissingAtoms = (props) => {
     useEffect(() => {
 
         if (selectedModel === null || props.dropdownId !== props.accordionDropdownId || !props.showSideBar) {
-            return;
+            setCardList([])
+            return
         }
 
         let newCardList = []
@@ -119,7 +120,7 @@ export const MoorhenFillMissingAtoms = (props) => {
 
         setCardList(newCardList)
         
-    }, [residueList, props.backgroundColor, props.sideBarWidth, props.showSideBar])
+    }, [residueList, props.backgroundColor, props.sideBarWidth, props.showSideBar, props.accordionDropdownId])
 
     return <Fragment>
                 <Form style={{ padding:'0', margin: '0' }}>

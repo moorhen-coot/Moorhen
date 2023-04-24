@@ -2,7 +2,6 @@ import { Fragment, useEffect, useRef, useState } from "react"
 import { Col, Row, Form, Card, Button } from 'react-bootstrap';
 import { MoorhenMapSelect } from './MoorhenMapSelect'
 import { MoorhenMoleculeSelect } from './MoorhenMoleculeSelect'
-import MoorhenSlider from './MoorhenSlider' 
 
 export const MoorhenUnmodelledBlobs = (props) => {
     const mapSelectRef = useRef();
@@ -78,7 +77,8 @@ export const MoorhenUnmodelledBlobs = (props) => {
     useEffect(() => {
 
         if (selectedMap === null || selectedModel === null || props.dropdownId !== props.accordionDropdownId || !props.showSideBar) {
-            return;
+            setCardList([])
+            return
         }
 
         let newCardList = []
@@ -106,7 +106,7 @@ export const MoorhenUnmodelledBlobs = (props) => {
 
         setCardList(newCardList)
         
-    }, [blobs, props.backgroundColor, props.sideBarWidth, props.showSideBar])
+    }, [blobs, props.backgroundColor, props.sideBarWidth, props.showSideBar, props.accordionDropdownId])
 
     return <Fragment>
                 <Form style={{ padding:'0', margin: '0' }}>
