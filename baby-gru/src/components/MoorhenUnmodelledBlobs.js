@@ -1,11 +1,14 @@
 import { Fragment, useEffect, useRef, useState } from "react"
 import { Col, Row, Form, Card, Button } from 'react-bootstrap';
+import { MoorhenMapSelect } from './MoorhenMapSelect'
 import { MoorhenMoleculeSelect } from './MoorhenMoleculeSelect'
 
-export const MoorhenFillMissingAtoms = (props) => {
+export const MoorhenUnmodelledBlobs = (props) => {
+    const mapSelectRef = useRef();
     const moleculeSelectRef = useRef();
-    const [residueList, setResidueList] = useState(null)
+    const [blobs, setBlobs] = useState(null)
     const [selectedModel, setSelectedModel] = useState(null)
+    const [selectedMap, setSelectedMap] = useState(null)
     const [cachedGemmiStructure, setCachedGemmiStructure] = useState(null)
     const [cardList, setCardList] = useState([])
     
@@ -13,31 +16,8 @@ export const MoorhenFillMissingAtoms = (props) => {
         setSelectedModel(parseInt(evt.target.value))
     }
 
-    const handleAtomFill = (...args) => {
-        const fillPartialResidue = async (selectedMolecule, chainId, resNum, insCode) => {
-            await props.commandCentre.current.cootCommand({
-                returnType: "status",
-                command: "fill_partial_residue",
-                commandArgs: [selectedMolecule.molNo, chainId, resNum, insCode],
-                changesMolecules: [selectedMolecule.molNo]
-            }, true)
-
-            if (props.refineAfterMod) {
-                await props.commandCentre.current.cootCommand({
-                    returnType: "status",
-                    command: 'refine_residues_using_atom_cid',
-                    commandArgs: [selectedMolecule.molNo, `/${insCode}/${chainId}/${resNum}`, 'TRIPLE'],
-                    changesMolecules: [selectedMolecule.molNo]
-                }, true)    
-            }
-            selectedMolecule.setAtomsDirty(true)
-            selectedMolecule.redraw(props.glRef)
-            const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: {origin: props.glRef.current.origin,  modifiedMolecule: selectedMolecule.molNo} })
-            document.dispatchEvent(scoresUpdateEvent);    
-        }
-        if (args.every(arg => arg !== null)) {
-            fillPartialResidue(...args)
-        }
+    const handleMapChange = (evt) => {
+        setSelectedMap(parseInt(evt.target.value))
     }
 
     useEffect(() => {
@@ -50,6 +30,17 @@ export const MoorhenFillMissingAtoms = (props) => {
         }
 
     }, [props.molecules.length])
+
+    useEffect(() => {
+        if (props.maps.length === 0 || props.maps.length === 0) {
+            setSelectedMap(null)
+        } else if (selectedMap === null) {
+            setSelectedMap(props.maps[0].molNo)
+        } else if (!props.maps.map(map => map.molNo).includes(selectedMap)) {
+            setSelectedMap(props.maps[0].molNo)
+        }
+
+    }, [props.maps.length])
    
     useEffect(() => {
         if (selectedModel !== null) {
@@ -63,53 +54,48 @@ export const MoorhenFillMissingAtoms = (props) => {
     useEffect(() => {
         async function fetchData(inputData) {
             let response = await props.commandCentre.current.cootCommand(inputData)
-            let newResidueList = response.data.result.result
-            setResidueList(newResidueList)
+            let newPepflips = response.data.result.result
+            setBlobs(newPepflips)
         }
 
-        if (selectedModel === null) {
-            setResidueList(null)
+        if (selectedModel === null || selectedMap === null || cachedGemmiStructure === null) {
+            setBlobs(null)
             return
         }
         
         const inputData = {
             message:'coot_command',
-            command: "residues_with_missing_atoms", 
-            returnType:'residue_specs',
-            commandArgs:[selectedModel]
+            command: "unmodelled_blobs", 
+            returnType:'interesting_places_data',
+            commandArgs:[selectedModel, selectedMap]
         }
     
         fetchData(inputData)   
 
-    }, [selectedModel, cachedGemmiStructure])
+    }, [selectedMap, selectedModel, cachedGemmiStructure])
 
     useEffect(() => {
 
-        if (selectedModel === null || props.dropdownId !== props.accordionDropdownId || !props.showSideBar) {
+        if (selectedMap === null || selectedModel === null || props.dropdownId !== props.accordionDropdownId || !props.showSideBar) {
             setCardList([])
             return
         }
 
         let newCardList = []
-        const selectedMolecule =  props.molecules.find(molecule => molecule.molNo === selectedModel)
 
-        residueList.forEach(residue => {
-            const label = `/${residue.modelNumber}/${residue.chainId}/${residue.resNum}${residue.insCode ? '.' + residue.insCode : ''}/`
+        blobs.forEach((blob, index) => {
             newCardList.push(
-                <Card style={{marginTop: '0.5rem'}} key={label}>
+                <Card key={index} style={{marginTop: '0.5rem'}}>
                     <Card.Body style={{padding:'0.5rem'}}>
                         <Row style={{display:'flex', justifyContent:'between'}}>
                             <Col style={{alignItems:'center', justifyContent:'left', display:'flex'}}>
-                                {label}
+                                {`${blob.buttonLabel} ( ${parseFloat(blob.featureValue).toFixed(2)}`} A <sup>3</sup> {' )'}
                             </Col>
                             <Col className='col-3' style={{margin: '0', padding:'0', justifyContent: 'right', display:'flex'}}>
-                                <Button style={{marginRight:'0.5rem'}} onClick={() => selectedMolecule.centreOn(props.glRef, `/*/${residue.chainId}/${residue.resNum}-${residue.resNum}/*`)}>
-                                    View
-                                </Button>
                                 <Button style={{marginRight:'0.5rem'}} onClick={() => {
-                                            handleAtomFill(selectedMolecule, residue.chainId, residue.resNum, residue.insCode)
+                                            props.glRef.current.setOriginAnimated([-blob.coordX, -blob.coordY, -blob.coordZ])
                                 }}>
-                                    Fill
+                                    View
                                 </Button>
                             </Col>
                         </Row>
@@ -120,7 +106,7 @@ export const MoorhenFillMissingAtoms = (props) => {
 
         setCardList(newCardList)
         
-    }, [residueList, props.backgroundColor, props.sideBarWidth, props.showSideBar, props.accordionDropdownId])
+    }, [blobs, props.backgroundColor, props.sideBarWidth, props.showSideBar, props.accordionDropdownId])
 
     return <Fragment>
                 <Form style={{ padding:'0', margin: '0' }}>
@@ -128,6 +114,9 @@ export const MoorhenFillMissingAtoms = (props) => {
                         <Row style={{ padding:'0', margin: '0' }}>
                             <Col>
                                 <MoorhenMoleculeSelect width="" onChange={handleModelChange} molecules={props.molecules} ref={moleculeSelectRef}/>
+                            </Col>
+                            <Col>
+                                <MoorhenMapSelect width="" onChange={handleMapChange} maps={props.maps} ref={mapSelectRef}/>
                             </Col>
                         </Row>
                     </Form.Group>

@@ -6,6 +6,7 @@ import { MoorhenDifferenceMapPeaks } from "./MoorhenDifferenceMapPeaks"
 import { MoorhenPepflipsDifferenceMap } from "./MoorhenPepflipsDifferenceMap"
 import { MoorhenFillMissingAtoms } from "./MoorhenFillMissingAtoms"
 import { MoorhenMMRRCCPlot } from "./MoorhenMMRRCCPlot"
+import { MoorhenUnmodelledBlobs } from "./MoorhenUnmodelledBlobs"
 import { Autocomplete, TextField, ListItemButton, ListItemText, Collapse } from "@mui/material";
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
 import { convertViewtoPx} from '../utils/MoorhenUtils';
@@ -19,6 +20,7 @@ export const MoorhenToolsAccordion = (props) => {
             {label: "Validation Plot", toolWidget: <MoorhenValidation {...props}/>},
             {label: "Peptide flips using difference map", toolWidget: <MoorhenPepflipsDifferenceMap {...props}/>},
             {label: "Fill partial residues", toolWidget: <MoorhenFillMissingAtoms {...props}/>},
+            {label: "Unmodelled blobs", toolWidget: <MoorhenUnmodelledBlobs {...props}/>},
             {label: "MMRRCC plot", toolWidget: <MoorhenMMRRCCPlot {...props}/>}
     ]
 

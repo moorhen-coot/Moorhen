@@ -678,6 +678,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("mask_map_by_atom_selection",&molecules_container_t::mask_map_by_atom_selection)
     .function("generate_self_restraints",&molecules_container_t::generate_self_restraints)
     .function("clear_extra_restraints",&molecules_container_t::clear_extra_restraints)
+    .function("unmodelled_blobs",&molecules_container_t::unmodelled_blobs)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<bool>()

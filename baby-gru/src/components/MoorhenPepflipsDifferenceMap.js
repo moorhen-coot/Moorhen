@@ -127,7 +127,8 @@ export const MoorhenPepflipsDifferenceMap = (props) => {
     useEffect(() => {
 
         if (selectedMap === null || selectedModel === null || selectedRmsd === null || props.dropdownId !== props.accordionDropdownId || !props.showSideBar) {
-            return;
+            setCardList([])
+            return
         }
 
         let newCardList = []
@@ -160,7 +161,7 @@ export const MoorhenPepflipsDifferenceMap = (props) => {
 
         setCardList(newCardList)
         
-    }, [pepflips, props.backgroundColor, props.sideBarWidth, props.showSideBar])
+    }, [pepflips, props.backgroundColor, props.sideBarWidth, props.showSideBar, props.accordionDropdownId])
 
     return <Fragment>
                 <Form style={{ padding:'0', margin: '0' }}>
