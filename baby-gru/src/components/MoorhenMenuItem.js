@@ -1209,7 +1209,7 @@ export const MoorhenImportDictionaryMenuItem = (props) => {
         }
         const response = await props.commandCentre.current.cootCommand({
             command: 'shim_smiles_to_pdb',
-            commandArgs: [smile, tlcValueRef.current, 50, 500],
+            commandArgs: [smile, tlcValueRef.current, 10, 200],
             returnType: 'str_str_pair'
         }, true)
         const result = response.data.result.result.second
