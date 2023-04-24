@@ -4,10 +4,10 @@ import { ArrowBackIosOutlined, ArrowForwardIosOutlined, CheckOutlined, CloseOutl
 import { MoorhenMergeMoleculesMenuItem, MoorhenGetMonomerMenuItem, MoorhenFitLigandRightHereMenuItem, MoorhenImportFSigFMenuItem, MoorhenBackgroundColorMenuItem, MoorhenAddSimpleMenuItem } from "./MoorhenMenuItem";
 import { cidToSpec, convertRemToPx, getTooltipShortcutLabel } from "../utils/MoorhenUtils";
 import { getBackupLabel } from "../utils/MoorhenTimeCapsule"
-import { useRef, useState, useCallback } from "react";
-import { Popover, Overlay, FormLabel, FormSelect, Button, Stack, Form, Card, Row } from "react-bootstrap";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { Popover, Overlay, FormLabel, FormSelect, Button, Stack, Form, Card } from "react-bootstrap";
 import { deleteFormatArgs, rigidBodyFitFormatArgs } from "./MoorhenSimpleEditButton";
-import { useEffect } from "react";
+import Draggable from "react-draggable";
 
 const ContextMenu = styled.div`
   position: absolute;
@@ -145,7 +145,7 @@ export const MoorhenContextMenu = (props) => {
   const [showOverlay, setShowOverlay] = useState(false)
   const [overlayContents, setOverlayContents] = useState(null)
   const [overrideMenuContents, setOverrideMenuContents] = useState(false)
-  const [opacity, setOpacity] = useState(0)
+  const [opacity, setOpacity] = useState(1.0)
   const [menuPosition, setMenuPosition] = useState({top: 0, left: 0, placement: 'left'})
   const backgroundColor = props.isDark ? '#858585' : '#ffffff' 
   
@@ -177,7 +177,6 @@ export const MoorhenContextMenu = (props) => {
     }
     
     setMenuPosition({top, left, placement})
-    setOpacity(1.0)
   }, [])
 
   const collectedProps = {selectedMolecule, chosenAtom, setOverlayContents, setShowOverlay, ...props}
@@ -268,38 +267,23 @@ export const MoorhenContextMenu = (props) => {
     props.glRef.current.setActiveMolecule(newMolecule)
     setShowOverlay(false)
     setOpacity(0.5)
-    let offsetX = 0
-    let offsetY = 0
     setOverrideMenuContents(
-      <Card style={{position: 'absolute', width: '15rem'}} onMouseOver={() => setOpacity(1)} onMouseOut={() => setOpacity(0.5)} draggable={true}
-            onDragStart={(evt) => {
-              const rect = evt.target.getBoundingClientRect();
-              offsetX = rect.width + (evt.clientX - rect.x - rect.width)
-              offsetY = rect.height + (evt.clientY - rect.y - rect.height)
-              setTimeout(() => {
-                evt.target.style.visibility = "hidden"
-              }, 1)
-            }}
-            onDragEnd={(evt) => {
-              setMenuPosition({top: evt.clientY - offsetY, left: evt.clientX - offsetX})
-              setTimeout(() => {
-                evt.target.style.visibility = ""
-              }, 1)
-            }}
-        >
-        <Card.Header>Accept rotate/translate ?</Card.Header>
-        <Card.Body style={{ alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
-          <em>{"Hold <Shift><Alt> to translate"}</em>
-          <br></br>
-          <em>{props.shortCuts ? `Hold ${getTooltipShortcutLabel(JSON.parse(props.shortCuts).residue_camera_wiggle)} to move view` : null}</em>
-          <br></br>
-          <br></br>
-          <Stack direction='horizontal' gap={2}>
-            <Button onClick={acceptTransform}><CheckOutlined /></Button>
-            <Button onClick={rejectTransform}><CloseOutlined /></Button>
-          </Stack>
-        </Card.Body>
-      </Card>
+      <Draggable>
+        <Card style={{position: 'absolute', width: '15rem'}} onMouseOver={() => setOpacity(1)} onMouseOut={() => setOpacity(0.5)}>
+          <Card.Header>Accept rotate/translate ?</Card.Header>
+          <Card.Body style={{ alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
+            <em>{"Hold <Shift><Alt> to translate"}</em>
+            <br></br>
+            <em>{props.shortCuts ? `Hold ${getTooltipShortcutLabel(JSON.parse(props.shortCuts).residue_camera_wiggle)} to move view` : null}</em>
+            <br></br>
+            <br></br>
+            <Stack direction='horizontal' gap={2}>
+              <Button onClick={acceptTransform}><CheckOutlined /></Button>
+              <Button onClick={rejectTransform}><CloseOutlined /></Button>
+            </Stack>
+          </Card.Body>
+        </Card>
+      </Draggable>
     )
   }
 
@@ -340,41 +324,26 @@ export const MoorhenContextMenu = (props) => {
       const rotamerName = rotamerInfo.data.result.result.name
       const rotamerRank = rotamerInfo.data.result.result.rank
       const rotamerProbability = rotamerInfo.data.result.result.richardson_probability
-      let offsetX = 0
-      let offsetY = 0
 
-      return <Card style={{position: 'absolute', width: '15rem'}} onMouseOver={() => setOpacity(1)} onMouseOut={() => setOpacity(0.5)} draggable={true}
-                  onDragStart={(evt) => {
-                    const rect = evt.target.getBoundingClientRect();
-                    offsetX = rect.width + (evt.clientX - rect.x - rect.width)
-                    offsetY = rect.height + (evt.clientY - rect.y - rect.height)
-                    setTimeout(() => {
-                      evt.target.style.visibility = "hidden"
-                    }, 1)
-                  }}
-                  onDragEnd={(evt) => {
-                    setMenuPosition({top: evt.clientY - offsetY, left: evt.clientX - offsetX})
-                    setTimeout(() => {
-                      evt.target.style.visibility = ""
-                    }, 1)
-                  }}
-              >
-              <Card.Header>Accept new rotamer ?</Card.Header>
-              <Card.Body style={{ alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
-              <span>Current rotamer: {rotamerName} ({rotamerRank+1}<sup>{rotamerRank === 0 ? 'st' : rotamerRank === 1 ? 'nd' : rotamerRank === 2 ? 'rd' : 'th'}</sup>)</span>
-              <br></br>
-              <span>Probability: {rotamerProbability}%</span>
-                <Stack gap={2} direction='horizontal' style={{paddingTop: '0.5rem', alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
-                <Button onClick={() => changeRotamer('change_to_first_rotamer')}><FirstPageOutlined/></Button>
-                  <Button onClick={() => changeRotamer('change_to_previous_rotamer')}><ArrowBackIosOutlined/></Button>
-                  <Button onClick={() => changeRotamer('change_to_next_rotamer')}><ArrowForwardIosOutlined/></Button>
-                </Stack>
-                <Stack gap={2} direction='horizontal' style={{paddingTop: '0.5rem', alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
-                  <Button onClick={acceptTransform}><CheckOutlined /></Button>
-                  <Button className="mx-2" onClick={rejectTransform}><CloseOutlined /></Button>
-                </Stack>
-              </Card.Body>
-            </Card>
+      return <Draggable>
+              <Card style={{position: 'absolute', width: '15rem'}} onMouseOver={() => setOpacity(1)} onMouseOut={() => setOpacity(0.5)}>
+                <Card.Header>Accept new rotamer ?</Card.Header>
+                <Card.Body style={{ alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
+                <span>Current rotamer: {rotamerName} ({rotamerRank+1}<sup>{rotamerRank === 0 ? 'st' : rotamerRank === 1 ? 'nd' : rotamerRank === 2 ? 'rd' : 'th'}</sup>)</span>
+                <br></br>
+                <span>Probability: {rotamerProbability}%</span>
+                  <Stack gap={2} direction='horizontal' style={{paddingTop: '0.5rem', alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
+                  <Button onClick={() => changeRotamer('change_to_first_rotamer')}><FirstPageOutlined/></Button>
+                    <Button onClick={() => changeRotamer('change_to_previous_rotamer')}><ArrowBackIosOutlined/></Button>
+                    <Button onClick={() => changeRotamer('change_to_next_rotamer')}><ArrowForwardIosOutlined/></Button>
+                  </Stack>
+                  <Stack gap={2} direction='horizontal' style={{paddingTop: '0.5rem', alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
+                    <Button onClick={acceptTransform}><CheckOutlined /></Button>
+                    <Button className="mx-2" onClick={rejectTransform}><CloseOutlined /></Button>
+                  </Stack>
+                </Card.Body>
+              </Card>
+            </Draggable>
     }
 
     const changeRotamer = async (command) => {

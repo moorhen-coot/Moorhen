@@ -83,7 +83,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     if (event.key === " ") modifiers.push("<Space>")
 
     if (collectedProps.showShortcutToast && !viewOnly) {
-        setToastContent(<h3>{`${modifiers.join("-")} ${event.key} pressed`}</h3>)
+        setToastContent(<h5>{`${modifiers.join("-")} ${event.key} pressed`}</h5>)
         setShowToast(true)    
     }
     
@@ -105,12 +105,12 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
             return [chosenMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`, "SPHERE"]
         }
         setToastContent(
-            <h3>
+            <h5>
                 <List>
                     <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
                     <ListItem style={{justifyContent: 'center'}}>Sphere refine</ListItem>
                 </List>
-            </h3>
+            </h5>
         )
         return doShortCut('refine_residues_using_atom_cid', formatArgs)
     }
@@ -120,12 +120,12 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
             return [chosenMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, '']
         }
         setToastContent(
-            <h3>
+            <h5>
                 <List>
                     <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
                     <ListItem style={{justifyContent: 'center'}}>Flip peptide</ListItem>
                 </List>
-            </h3>
+            </h5>
         )
         return doShortCut('flipPeptide_cid', formatArgs)
     }
@@ -135,12 +135,12 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
             return [chosenMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`, "TRIPLE"]
         }
         setToastContent(
-            <h3>
+            <h5>
                 <List>
                     <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
                     <ListItem style={{justifyContent: 'center'}}>Triple refine</ListItem>
                 </List>
-            </h3>
+            </h5>
         )
         return doShortCut('refine_residues_using_atom_cid', formatArgs)
     }
@@ -157,12 +157,12 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
             ]
         }
         setToastContent(
-            <h3>
+            <h5>
                 <List>
                     <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
                     <ListItem style={{justifyContent: 'center'}}>Auto fit rotamer</ListItem>
                 </List>
-            </h3>
+            </h5>
         )
         return doShortCut('auto_fit_rotamer', formatArgs)
     }
@@ -172,12 +172,12 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
             return [chosenMolecule.molNo,  `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
         }
         setToastContent(
-            <h3>
+            <h5>
                 <List>
                     <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
                     <ListItem style={{justifyContent: 'center'}}>Add residue</ListItem>
                 </List>
-            </h3>
+            </h5>
         )
         return doShortCut('add_terminal_residue_directly_using_cid', formatArgs)
     }
@@ -191,12 +191,12 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
             ]
         }
         setToastContent(
-            <h3>
+            <h5>
                 <List>
                     <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
                     <ListItem style={{justifyContent: 'center'}}>Delete residue</ListItem>
                 </List>
-            </h3>
+            </h5>
         )
         return doShortCut('delete_using_cid', formatArgs)
     }
@@ -206,24 +206,24 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
             return [chosenMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
         }
         setToastContent(
-            <h3>
+            <h5>
                 <List>
                     <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
                     <ListItem style={{justifyContent: 'center'}}>Eigen flip</ListItem>
                 </List>
-            </h3>
+            </h5>
         )
         return doShortCut('eigen_flip_ligand', formatArgs)
     }
 
     else if (action === 'go_to_blob' && activeMap && !viewOnly) {
         setToastContent(
-            <h3>
+            <h5>
                 <List>
                     <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
                     <ListItem style={{justifyContent: 'center'}}>Go to blob</ListItem>
                 </List>
-            </h3>
+            </h5>
         )
         const frontAndBack = glRef.current.getFrontAndBackPos(event);
         const goToBlobEvent = {
@@ -250,12 +250,12 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         glRef.current.measuredAtoms = []
         glRef.current.drawScene()
         setToastContent(
-            <h3>
+            <h5>
                 <List>
                     <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
                     <ListItem style={{justifyContent: 'center'}}>Clear labels</ListItem>
                 </List>
-            </h3>
+            </h5>
         )
     }
 
@@ -494,12 +494,12 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
             glRef.current.drawScene()
         }
         setToastContent(
-            <h3>
+            <h4>
                 <List>
                     <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
                     <ListItem style={{justifyContent: 'center'}}>{glRef.current.showShortCutHelp ? 'Show help' : 'Hide help'}</ListItem>
                 </List>
-            </h3>
+            </h4>
         )
         return false
     }
