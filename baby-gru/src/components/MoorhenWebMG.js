@@ -453,9 +453,8 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
                             {scoresToastContents}
                         </Toast>
                     }
-                    <MoorhenColourRules glRef={glRef} {...props}/>
                 </ToastContainer>
-               
+
                 <MGWebGL
                     ref={glRef}
                     dataChanged={(d) => { console.log(d) }}
@@ -495,6 +494,9 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
                     windowWidth={props.windowWidth}
                     windowHeight={props.windowHeight}
                 />}
+                
+                <MoorhenColourRules glRef={glRef} {...props}/>
+
             </>
 });
 

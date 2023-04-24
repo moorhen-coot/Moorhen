@@ -1,12 +1,14 @@
 import React, { useCallback, useEffect, useRef, useState, useReducer } from "react";
-import { Row, Button, Stack, Form, FormSelect, Card, Col, OverlayTrigger, Tooltip, Toast } from "react-bootstrap";
-import { ArrowUpwardOutlined, ArrowDownwardOutlined, AddOutlined, DeleteOutlined, DoneOutlined, DeleteForeverOutlined } from '@mui/icons-material';
+import { Row, Button, Stack, Form, FormSelect, Card, Col, OverlayTrigger, Tooltip } from "react-bootstrap";
+import { ArrowUpwardOutlined, ArrowDownwardOutlined, AddOutlined, DeleteOutlined, DoneOutlined, DeleteForeverOutlined, CloseOutlined } from '@mui/icons-material';
 import { SketchPicker } from "react-color";
 import { MoorhenMoleculeSelect } from "./MoorhenMoleculeSelect";
 import { MoorhenChainSelect } from "./MoorhenChainSelect";
 import { convertViewtoPx, getMultiColourRuleArgs } from "../utils/MoorhenUtils";
 import { MoorhenCidInputForm } from "./MoorhenCidInputForm";
 import { MoorhenSequenceRangeSelect } from "./MoorhenSequenceRangeSelect";
+import Draggable from "react-draggable";
+import { IconButton } from "@mui/material";
 
 const itemReducer = (oldList, change) => {
     if (change.action === 'Add') {
@@ -267,19 +269,20 @@ export const MoorhenColourRules = (props) => {
             </Card>
     }
 
-    return  <Toast 
+    return <Draggable>
+        <Card 
                 bg='light'
-                show={props.showColourRulesToast}
-                onClose={() => props.setShowColourRulesToast(false)}
-                autohide={false}
-                style={{opacity: opacity, width: toastBodyWidth}}
+                style={{position: 'absolute', top: '5rem', left: '5rem', opacity: opacity, width: toastBodyWidth, display: props.showColourRulesToast ? '' : 'none'}}
                 onMouseOver={() => setOpacity(1)}
                 onMouseOut={() => setOpacity(0.5)}
                 >
-            <Toast.Header style={{ justifyContent: 'space-between' }} closeButton>
+            <Card.Header style={{ justifyContent: 'space-between', display: 'flex', alignItems:'center'}}>
                 Set molecule colour rules
-            </Toast.Header>
-            <Toast.Body style={{maxHeight: convertViewtoPx(60, props.height()), overflowY: 'scroll'}}>
+                <IconButton style={{margin: '0.1rem', padding: '0.1rem'}} onClick={() => props.setShowColourRulesToast(false)}>
+                    <CloseOutlined/>
+                </IconButton>
+            </Card.Header>
+            <Card.Body style={{maxHeight: convertViewtoPx(60, props.height()), overflowY: 'scroll'}}>
                 <Row>
                     <Stack gap={2} style={{alignItems: 'center'}}>
                         <Form.Group style={{ margin: '0.1rem', width: '100%' }}>
@@ -366,6 +369,7 @@ export const MoorhenColourRules = (props) => {
                         </Stack>
                     </Stack>
                 </Row>
-            </Toast.Body>
-        </Toast>
+            </Card.Body>
+        </Card>
+    </Draggable> 
 }
