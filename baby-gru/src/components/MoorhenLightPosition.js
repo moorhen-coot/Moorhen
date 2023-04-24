@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, forwardRef, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import * as vec3 from 'gl-matrix/vec3';
 
 export const MoorhenLightPosition = (props) => {
@@ -15,14 +15,12 @@ export const MoorhenLightPosition = (props) => {
     const x_in = parseInt((theVecNorm[0] + 0.5) * SIZE);
     const y_in = parseInt((-theVecNorm[1] + 0.5) * SIZE);
     
-    const [value, setValue] = React.useState(props.initialValue);
-
-    const canvasRef = React.useRef(null);
-    const [x,setX] = useState(x_in);
-    const [y,setY] = useState(y_in);
+    const canvasRef = useRef(null);
+    const [x, setX] = useState(x_in);
+    const [y, setY] = useState(y_in);
     const [mouseDown,setMouseDown] = useState(false);
 
-    const draw = (ctx,force) => {
+    const draw = useCallback((ctx, force) => {
         if(x>SIZE||y>SIZE||x<0||y<0) return;
         const c_x = SIZE/2;
         const c_y = SIZE/2;
@@ -54,38 +52,38 @@ export const MoorhenLightPosition = (props) => {
             props.setExternalValue([120*x_2d,120*y_2d,120*z]);
         }
         
-    }
+    }, [mouseDown, x, y, props])
 
     useEffect(() => {
-            const ctx = canvasRef.current.getContext('2d');
-            draw(ctx);
-    })
+        const ctx = canvasRef.current.getContext('2d');
+        draw(ctx);
+    }, [draw])
 
     return (
             <canvas
-            ref={canvasRef}
-            width={200}
-            height={200}
-            onMouseDown = {(e) => {
-                setMouseDown(true);
-                const rect = canvasRef.current.getBoundingClientRect()
-                setX(e.clientX - rect.left);
-                setY(e.clientY - rect.top);
-                const ctx = canvasRef.current.getContext('2d');
-                draw(ctx,true);
-            }}
-            onMouseUp = {(e) => {
-                setMouseDown(false);
-            }}
-            onMouseMove = {(e) => {
-                if(mouseDown){
-                    const rect = canvasRef.current.getBoundingClientRect();
+                ref={canvasRef}
+                width={200}
+                height={200}
+                onMouseDown = {(e) => {
+                    setMouseDown(true);
+                    const rect = canvasRef.current.getBoundingClientRect()
                     setX(e.clientX - rect.left);
                     setY(e.clientY - rect.top);
                     const ctx = canvasRef.current.getContext('2d');
-                    draw(ctx);
-                }
-            }}
+                    draw(ctx,true);
+                }}
+                onMouseUp = {(e) => {
+                    setMouseDown(false);
+                }}
+                onMouseMove = {(e) => {
+                    if(mouseDown){
+                        const rect = canvasRef.current.getBoundingClientRect();
+                        setX(e.clientX - rect.left);
+                        setY(e.clientY - rect.top);
+                        const ctx = canvasRef.current.getContext('2d');
+                        draw(ctx);
+                    }
+                }}
             />
     );
 }

@@ -1655,38 +1655,19 @@ export const MoorhenLightingMenuItem = (props) => {
     const [diffuse, setDiffuse] = useState(props.glRef.current.light_colours_diffuse)
     const [specular, setSpecular] = useState(props.glRef.current.light_colours_specular)
     const [ambient, setAmbient] = useState(props.glRef.current.light_colours_ambient)
-    const [position, setPosition] = useState([props.glRef.current.light_positions[0],props.glRef.current.light_positions[1],props.glRef.current.light_positions[2]])
-
     const busyLighting = useRef(false)
     const isSetLightPosIsDirty = useRef(false)
 
-    const setLightPosition = function (glRef,newValue) {
-        return new Promise((resolve, reject) => {
-            glRef.current.setLightPosition(newValue[0],-newValue[1],newValue[2]);
-            glRef.current.drawScene();
-        })
-    }
-
     const setLightingPositionIfDirty = (newValue) => {
         if (isSetLightPosIsDirty.current) {
-            busyLighting.current = true;
-            isSetLightPosIsDirty.current = false;
-            setLightPosition(props.glRef,newValue).then(result => {
-                    setPosition([newValue[0],-newValue[1],newValue[2],1.0])
-                    busyLighting.current = false;
-                    setLightingPositionIfDirty(newValue);
-            })
+            busyLighting.current = true
+            isSetLightPosIsDirty.current = false
+            props.glRef.current.setLightPosition(newValue[0],-newValue[1],newValue[2])
+            props.glRef.current.drawScene()
+            busyLighting.current = false;
+            setLightingPositionIfDirty(newValue)
         }
     }
-
-    useEffect(() => {
-        if (props.glRef.current && props.glRef.current.light_colours_diffuse) {
-            setDiffuse(props.glRef.current.light_colours_diffuse[0])
-            setSpecular(props.glRef.current.light_colours_specular[0])
-            setAmbient(props.glRef.current.light_colours_ambient[0])
-            setPosition([props.glRef.current.light_positions[0],props.glRef.current.light_positions[1],props.glRef.current.light_positions[2]])
-        }
-    }, [props.glRef.current.light_positions,props.glRef.current.light_colours_diffuse,props.glRef.current.light_colours_specular,props.glRef.current.light_colours_ambient])
 
     const panelContent = <div style={{ minWidth: "20rem" }}>
         <MoorhenSlider minVal={0.0} maxVal={1.0} logScale={false}
@@ -1696,7 +1677,7 @@ export const MoorhenLightingMenuItem = (props) => {
             setExternalValue={(newValue) => {
                 props.glRef.current.light_colours_diffuse = [newValue,newValue,newValue,1.0]
                 props.glRef.current.drawScene()
-                setDiffuse([newValue,newValue,newValue,1.0])
+                setDiffuse([newValue, newValue, newValue,1.0])
             }} />
         <MoorhenSlider minVal={0.0} maxVal={1.0} logScale={false}
             sliderTitle="Specular"
@@ -1705,7 +1686,7 @@ export const MoorhenLightingMenuItem = (props) => {
             setExternalValue={(newValue) => {
                 props.glRef.current.light_colours_specular = [newValue,newValue,newValue,1.0]
                 props.glRef.current.drawScene()
-                setSpecular([newValue,newValue,newValue,1.0])
+                setSpecular([newValue, newValue, newValue,1.0])
             }} />
         <MoorhenSlider minVal={0.0} maxVal={1.0} logScale={false}
             sliderTitle="Ambient"
@@ -1714,19 +1695,21 @@ export const MoorhenLightingMenuItem = (props) => {
             setExternalValue={(newValue) => {
                 props.glRef.current.light_colours_ambient = [newValue,newValue,newValue,1.0]
                 props.glRef.current.drawScene()
-                setAmbient([newValue,newValue,newValue,1.0])
+                setAmbient([newValue, newValue, newValue,1.0])
             }} />
         <MoorhenLightPosition
             initialValue={props.glRef.current.light_positions}
             externalValue={props.glRef.current.light_positions}
             setExternalValue={(newValue) => {
                 isSetLightPosIsDirty.current = true
-                setLightingPositionIfDirty(newValue);
+                setLightingPositionIfDirty(newValue)
             }}
         />
     </div>
+
     return <MoorhenMenuItem
         id='lighting-menu-item'
+        showOkButton={false}
         popoverContent={panelContent}
         menuItemText="Lighting..."
         onCompleted={() => { }}
