@@ -873,6 +873,7 @@ export const MoorhenBackgroundColorMenuItem = (props) => {
     return <MoorhenMenuItem
         id="change-background-colour-menu-item"
         popoverContent={panelContent}
+        showOkButton={false}
         menuItemText="Set background colour..."
         onCompleted={() => props.setPopoverIsShown(false)}
         setPopoverIsShown={props.setPopoverIsShown}
