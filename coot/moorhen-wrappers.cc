@@ -631,6 +631,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("refine_residues_using_atom_cid",&molecules_container_t::refine_residues_using_atom_cid)
     .function("refine_residue_range",&molecules_container_t::refine_residue_range)
     .function("contact_dots_for_ligand",&molecules_container_t::contact_dots_for_ligand)
+    .function("make_exportable_environment_bond_box",&molecules_container_t::make_exportable_environment_bond_box)
     .function("all_molecule_contact_dots",&molecules_container_t::all_molecule_contact_dots)
     .function("get_chemical_features_mesh",&molecules_container_t::get_chemical_features_mesh)
     .function("set_imol_refinement_map",&molecules_container_t::set_imol_refinement_map)
@@ -688,6 +689,14 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("getFloats",&molecules_container_js::getFloats)
     .function("get_symmetry_with_matrices",&molecules_container_js::get_symmetry_with_matrices)
     //.function("get_hbonds",&molecules_container_js::get_hbonds);
+    ;
+    class_<generic_3d_lines_bonds_box_t>("generic_3d_lines_bonds_box_t")
+    .property("line_segments", &generic_3d_lines_bonds_box_t::line_segments)
+    ;
+    class_<coot::CartesianPair>("CartesianPair")
+    .function("getStart", &coot::CartesianPair::getStart)
+    .function("getFinish", &coot::CartesianPair::getFinish)
+    .function("amplitude", &coot::CartesianPair::amplitude)
     ;
     class_<RamachandranInfo>("RamachandranInfo")
     .constructor<>()
@@ -802,6 +811,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     class_<coot::simple_mesh_t>("simple_mesh_t")
     .property("vertices",&coot::simple_mesh_t::vertices)
     .property("triangles",&coot::simple_mesh_t::triangles)
+    .property("status",&coot::simple_mesh_t::status)
+    .property("name",&coot::simple_mesh_t::name)
     ;
 
     class_<coot::util::density_correlation_stats_info_t>("density_correlation_stats_info_t")
@@ -847,6 +858,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .element(emscripten::index<2>())
      ;
 
+    register_vector<coot::Cartesian>("VectorCootCartesian");
+    register_vector<std::vector<coot::Cartesian>>("VectorVectorCootCartesian");
     register_map<unsigned int, std::array<float, 3>>("MapIntFloat3");
     register_map<coot::residue_spec_t, coot::util::density_correlation_stats_info_t>("Map_residue_spec_t_density_correlation_stats_info_t");
     register_vector<std::array<float, 16>>("VectorArrayFloat16");
