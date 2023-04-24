@@ -31,6 +31,7 @@ var triangle_fragment_shader_source = `
     uniform vec4 light_colours_ambient;
     uniform vec4 light_colours_specular;
     uniform vec4 light_colours_diffuse;
+    uniform float specularPower;
 
     void main(void) {
       if(dot(eyePos, clipPlane0)<0.0){
@@ -62,7 +63,7 @@ var triangle_fragment_shader_source = `
          Iamb += light_colours_ambient;
          Idiff += light_colours_diffuse * max(dot(norm,L), 0.0);
          float y = max(max(light_colours_specular.r,light_colours_specular.g),light_colours_specular.b);
-         Ispec += light_colours_specular * pow(max(dot(R,E),0.0),16.);
+         Ispec += light_colours_specular * pow(max(dot(R,E),0.0),specularPower);
          Ispec.a *= y;
        } else {
          Iamb += light_colours_diffuse;

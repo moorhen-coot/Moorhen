@@ -1989,6 +1989,7 @@ class MGWebGL extends Component {
         self.light_colours_ambient = new Float32Array([0.0, 0.0, 0.0, 1.0]);
         self.light_colours_specular = new Float32Array([1.0, 1.0, 1.0, 1.0]);
         self.light_colours_diffuse = new Float32Array([1.0, 1.0, 1.0, 1.0]);
+        self.specularPower = 64.0;
         self.drawScene();
         self.ready = true;
         return;
@@ -3333,6 +3334,10 @@ class MGWebGL extends Component {
         this.light_colours_specular = new Float32Array([r, g, b, 1.0]);
     }
 
+    setSpecularPowerNoUpdate(p) {
+        this.specularPower = p;
+    }
+
     setDiffuseLightNoUpdate(r, g, b) {
         this.light_colours_diffuse = new Float32Array([r, g, b, 1.0]);
     }
@@ -3348,6 +3353,11 @@ class MGWebGL extends Component {
 
     setSpecularLight(r, g, b) {
         this.light_colours_specular = new Float32Array([r, g, b, 1.0]);
+        this.drawScene();
+    }
+
+    setSpecularPower(p) {
+        this.specularPower = p;
         this.drawScene();
     }
 
@@ -4807,6 +4817,8 @@ class MGWebGL extends Component {
         this.shaderProgram.light_colours_ambient = this.gl.getUniformLocation(this.shaderProgram, "light_colours_ambient");
         this.shaderProgram.light_colours_specular = this.gl.getUniformLocation(this.shaderProgram, "light_colours_specular");
         this.shaderProgram.light_colours_diffuse = this.gl.getUniformLocation(this.shaderProgram, "light_colours_diffuse");
+
+        this.shaderProgram.specularPower = this.gl.getUniformLocation(this.shaderProgram, "specularPower");
     }
 
     initShadersInstanced(vertexShader, fragmentShader) {
@@ -4873,6 +4885,8 @@ class MGWebGL extends Component {
         this.shaderProgramInstanced.light_colours_ambient = this.gl.getUniformLocation(this.shaderProgramInstanced, "light_colours_ambient");
         this.shaderProgramInstanced.light_colours_specular = this.gl.getUniformLocation(this.shaderProgramInstanced, "light_colours_specular");
         this.shaderProgramInstanced.light_colours_diffuse = this.gl.getUniformLocation(this.shaderProgramInstanced, "light_colours_diffuse");
+
+        this.shaderProgramInstanced.specularPower = this.gl.getUniformLocation(this.shaderProgramInstanced, "specularPower");
     }
 
     initThickLineNormalShaders(vertexShader, fragmentShader) {
@@ -4928,6 +4942,8 @@ class MGWebGL extends Component {
         this.shaderProgramThickLinesNormal.light_colours_ambient = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "light_colours_ambient");
         this.shaderProgramThickLinesNormal.light_colours_specular = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "light_colours_specular");
         this.shaderProgramThickLinesNormal.light_colours_diffuse = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "light_colours_diffuse");
+
+        this.shaderProgramThickLinesNormal.specularPower = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "specularPower");
 
     }
 
@@ -5128,6 +5144,8 @@ class MGWebGL extends Component {
         this.shaderProgramPerfectSpheres.light_colours_specular = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "light_colours_specular");
         this.shaderProgramPerfectSpheres.light_colours_diffuse = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "light_colours_diffuse");
 
+        this.shaderProgramPerfectSpheres.specularPower = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "specularPower");
+
         this.shaderProgramPerfectSpheres.clipPlane0 = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "clipPlane0");
         this.shaderProgramPerfectSpheres.clipPlane1 = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "clipPlane1");
         this.shaderProgramPerfectSpheres.clipPlane2 = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "clipPlane2");
@@ -5326,6 +5344,7 @@ class MGWebGL extends Component {
         this.gl.uniform4fv(program.light_colours_ambient, this.light_colours_ambient);
         this.gl.uniform4fv(program.light_colours_specular, this.light_colours_specular);
         this.gl.uniform4fv(program.light_colours_diffuse, this.light_colours_diffuse);
+        if(program.specularPower) this.gl.uniform1f(program.specularPower, this.specularPower);
     }
 
     setMatrixUniforms(program) {
@@ -6892,6 +6911,7 @@ class MGWebGL extends Component {
                 }
                 this.gl.uniform4fv(theShader.light_colours_diffuse, this.light_colours_diffuse);
                 this.gl.uniform4fv(theShader.light_colours_specular, this.light_colours_specular);
+                if(theShader.specularPower) this.gl.uniform1f(theShader.specularPower, this.specularPower);
                 this.gl.disableVertexAttribArray(theShader.vertexInstanceOriginAttribute);
                 this.gl.disableVertexAttribArray(theShader.vertexInstanceSizeAttribute);
                 this.gl.disableVertexAttribArray(theShader.vertexInstanceOrientationAttribute);

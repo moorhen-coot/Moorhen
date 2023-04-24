@@ -26,6 +26,7 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
     uniform vec4 light_colours_ambient;
     uniform vec4 light_colours_specular;
     uniform vec4 light_colours_diffuse;
+    uniform float specularPower;
 
     in mediump mat4 projMatrix;
     in float size_v;
@@ -91,7 +92,7 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
        Idiff += light_colours_diffuse * max(dot(E,L), 0.0);
        // calculate Specular Term:
        y = max(max(light_colours_specular.r,light_colours_specular.g),light_colours_specular.b);
-       Ispec += light_colours_specular * pow(max(dot(E,L),0.0),16.);
+       Ispec += light_colours_specular * pow(max(dot(E,L),0.0),specularPower);
        Ispec.a *= y;
       //}
 
