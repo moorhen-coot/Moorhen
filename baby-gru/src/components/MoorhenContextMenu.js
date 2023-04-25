@@ -146,7 +146,6 @@ export const MoorhenContextMenu = (props) => {
   const [overlayContents, setOverlayContents] = useState(null)
   const [overrideMenuContents, setOverrideMenuContents] = useState(false)
   const [opacity, setOpacity] = useState(1.0)
-  const [menuPosition, setMenuPosition] = useState({top: 0, left: 0, placement: 'left'})
   const backgroundColor = props.isDark ? '#858585' : '#ffffff' 
   
   let selectedMolecule
@@ -158,26 +157,24 @@ export const MoorhenContextMenu = (props) => {
     chosenAtom = cidToSpec(props.showContextMenu.atom.label)
   }
 
-  useEffect(() => {
-    let top = props.showContextMenu.pageY
-    let left = props.showContextMenu.pageX
-    const menuWidth = selectedMolecule && chosenAtom ? convertRemToPx(19) : convertRemToPx(7)
-    const menuHeight = selectedMolecule && chosenAtom ? convertRemToPx(20) : convertRemToPx(7)
+  let top = props.showContextMenu.pageY
+  let left = props.showContextMenu.pageX
+  const menuWidth = selectedMolecule && chosenAtom ? convertRemToPx(19) : convertRemToPx(7)
+  const menuHeight = selectedMolecule && chosenAtom ? convertRemToPx(20) : convertRemToPx(7)
   
-    if (props.windowWidth - left < menuWidth) {
-      left -= menuWidth
-    }
-    if (props.windowHeight - top < menuHeight) {
-      top -= menuHeight
-    }
+  if (props.windowWidth - left < menuWidth) {
+    left -= menuWidth
+  }
+  if (props.windowHeight - top < menuHeight) {
+    top -= menuHeight
+  }
     
-    let placement = "right"
-    if (props.windowWidth * 0.5 < left){
-      placement = 'left'
-    }
-    
-    setMenuPosition({top, left, placement})
-  }, [])
+  let placement = "right"
+  if (props.windowWidth * 0.5 < left){
+    placement = 'left'
+  }
+  
+  const menuPosition = {top, left, placement}
 
   const collectedProps = {selectedMolecule, chosenAtom, setOverlayContents, setShowOverlay, ...props}
 
