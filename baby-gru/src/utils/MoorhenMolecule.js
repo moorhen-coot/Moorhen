@@ -1625,7 +1625,9 @@ MoorhenMolecule.prototype.mergeMolecules = async function (otherMolecules, glRef
                 })     
             }
             Object.keys(molecule.ligandDicts).forEach(key => {
-                promises.push(this.addDict(molecule.ligandDicts[key]))
+                if (!Object.hasOwn(this.ligandDicts, key)) {
+                    promises.push(this.addDict(molecule.ligandDicts[key]))
+                }
             })
         })
         await Promise.all(promises)
