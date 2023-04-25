@@ -418,12 +418,14 @@ export const getBufferAtoms = (gemmiStructure, exclude_ligands_and_waters=false)
 export const cidToSpec = (cid) => {
     //molNo, chain_id, res_no, ins_code, alt_conf
     const cidTokens = cid.split('/')
+    const mol_name = cidTokens[0]
+    const mol_no = cidTokens[1]
     const chain_id = cidTokens[2]
     const res_no = parseInt(cidTokens[3])
-    const atom_name = cidTokens[4].split(":")[0]
     const ins_code = cidTokens[3].split(".").length > 1 ? cidTokens[3].split(".")[1] : ""
-    const alt_conf = cidTokens[4].split(":").length > 1 ? cidTokens[4].split(":")[1] : ""
-    return { chain_id, res_no, atom_name, ins_code, alt_conf, cid }
+    const atom_name = cidTokens.length > 4 ? cidTokens[4].split(":")[0] : ""
+    const alt_conf = atom_name && cidTokens[4].split(":").length > 1 ? cidTokens[4].split(":")[1] : ""
+    return { mol_name, mol_no, chain_id, res_no, atom_name, ins_code, alt_conf, cid }
 }
 
 export const getResidueInfo = (molecules, selectedMolNo, selectedChain, selectedResidueIndex) => {

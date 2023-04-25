@@ -546,6 +546,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<molecules_container_t>("molecules_container_t")
     .constructor<bool>()
+    .function("get_h_bonds",&molecules_container_t::get_h_bonds)
     .function("change_to_next_rotamer",&molecules_container_t::change_to_next_rotamer)
     .function("change_to_previous_rotamer",&molecules_container_t::change_to_previous_rotamer)
     .function("change_to_first_rotamer",&molecules_container_t::change_to_first_rotamer)
@@ -851,13 +852,45 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .element(emscripten::index<13>())
         .element(emscripten::index<14>())
         .element(emscripten::index<15>())
-     ;
+    ;
 
     value_array<std::array<float, 3>>("array_native_float_3")
         .element(emscripten::index<0>())
         .element(emscripten::index<1>())
         .element(emscripten::index<2>())
-     ;
+    ;
+    
+    value_object<moorhen::h_bond>("h_bond")
+        .field("hb_hydrogen",&moorhen::h_bond::hb_hydrogen)
+        .field("donor",&moorhen::h_bond::donor)
+        .field("acceptor",&moorhen::h_bond::acceptor)
+        .field("donor_neigh",&moorhen::h_bond::donor_neigh)
+        .field("acceptor_neigh",&moorhen::h_bond::acceptor_neigh)
+        .field("angle_1",&moorhen::h_bond::angle_1)
+        .field("angle_2",&moorhen::h_bond::angle_2)
+        .field("angle_3",&moorhen::h_bond::angle_3)
+        .field("dist",&moorhen::h_bond::dist)
+        .field("ligand_atom_is_donor",&moorhen::h_bond::ligand_atom_is_donor)
+        .field("hydrogen_is_ligand_atom",&moorhen::h_bond::hydrogen_is_ligand_atom)
+        .field("bond_has_hydrogen_flag",&moorhen::h_bond::bond_has_hydrogen_flag)
+    ;
+
+    value_object<moorhen::h_bond_atom>(" h_bond_atom")
+        .field("serial",&moorhen::h_bond_atom::serial)
+        .field("x",&moorhen::h_bond_atom::x)
+        .field("y",&moorhen::h_bond_atom::y)
+        .field("z",&moorhen::h_bond_atom::z)
+        .field("charge",&moorhen::h_bond_atom::charge)
+        .field("occ",&moorhen::h_bond_atom::occ)
+        .field("b_iso",&moorhen::h_bond_atom::b_iso)
+        .field("element",&moorhen::h_bond_atom::element)
+        .field("name",&moorhen::h_bond_atom::name)
+        .field("model",&moorhen::h_bond_atom::model)
+        .field("chain",&moorhen::h_bond_atom::chain)
+        .field("res_no",&moorhen::h_bond_atom::res_no)
+        .field("residue_name",&moorhen::h_bond_atom::residue_name)
+        .field("altLoc",&moorhen::h_bond_atom::altLoc)
+    ;
 
     register_vector<coot::Cartesian>("VectorCootCartesian");
     register_vector<std::vector<coot::Cartesian>>("VectorVectorCootCartesian");
@@ -892,6 +925,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<std::pair<coot::residue_spec_t,std::string>>("Vectorresidue_spec_t_string_pair");
     register_vector<merge_molecule_results_info_t>("Vectormerge_molecule_results_info_t");
     register_vector<coot::phi_psi_prob_t>("Vectophi_psi_prob_t");
+    register_vector<moorhen::h_bond>("Vectorh_bond");
 
     value_object<coot::util::sfcalc_genmap_stats_t>("sfcalc_genmap_stats_t")
         .field("r_factor",&coot::util::sfcalc_genmap_stats_t::r_factor)
