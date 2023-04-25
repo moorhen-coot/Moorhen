@@ -990,23 +990,212 @@ export const MoorhenSuperposeMenuItem = (props) => {
     />
 }
 
+const MoorhenImportLigandDictionary = (props) => {
+
+    const {
+        createInstance, setCreateInstance, addToMolecule, fetchLigandDict, panelContent,
+        setAddToMolecule, tlcValueRef, createRef, moleculeSelectRef, addToRef,moleculeSelectValueRef,
+        addToMoleculeValueRef, setPopoverIsShown, molecules, glRef, commandCentre, menuItemText,
+        changeMolecules, backgroundColor, monomerLibraryPath, defaultBondSmoothness
+    } = props
+
+    const handleFileContent = useCallback(async (fileContent) => {
+        let newMolecule
+        let selectedMoleculeIndex
+        
+        if (moleculeSelectValueRef.current) {
+            selectedMoleculeIndex = parseInt(moleculeSelectValueRef.current)
+            const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedMoleculeIndex)
+            if (typeof selectedMolecule !== 'undefined') {
+                selectedMolecule.addDict(fileContent)
+            }
+        } else {
+            selectedMoleculeIndex = parseInt(-999999)
+            await Promise.all([
+                commandCentre.current.cootCommand({
+                    returnType: "status",
+                    command: 'shim_read_dictionary',
+                    commandArgs: [fileContent, selectedMoleculeIndex],
+                    changesMolecules: []
+                }, true),
+                ...molecules.map(molecule => {
+                    molecule.addDictShim(fileContent)
+                    return molecule.redraw(glRef)
+                })
+            ])
+            
+        }
+                
+        if (createRef.current) {
+            const instanceName = tlcValueRef.current
+            const result = await commandCentre.current.cootCommand({
+                returnType: 'status',
+                command: 'get_monomer_and_position_at',
+                commandArgs: [instanceName,
+                    selectedMoleculeIndex,
+                    ...glRef.current.origin.map(coord => -coord)]
+            }, true)
+            if (result.data.result.status === "Completed") {
+                newMolecule = new MoorhenMolecule(commandCentre, monomerLibraryPath)
+                newMolecule.molNo = result.data.result.result
+                newMolecule.name = instanceName
+                newMolecule.setBackgroundColour(backgroundColor)
+                newMolecule.cootBondsOptions.smoothness = defaultBondSmoothness
+                await newMolecule.addDict(fileContent)
+                changeMolecules({ action: "Add", item: newMolecule })
+                await newMolecule.fetchIfDirtyAndDraw("CBs", glRef)
+                if (addToMoleculeValueRef.current !== -1) {
+                    const toMolecule = molecules.find(molecule => molecule.molNo === addToMoleculeValueRef.current)
+                    if (typeof toMolecule !== 'undefined') {
+                        const otherMolecules = [newMolecule]
+                        await toMolecule.mergeMolecules(otherMolecules, glRef, true)
+                        const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: glRef.current.origin, modifiedMolecule: toMolecule.molNo } })
+                        document.dispatchEvent(scoresUpdateEvent)
+                        await toMolecule.redraw(glRef)
+                    } else {
+                        await newMolecule.redraw(glRef)
+                    }
+                }
+            }
+        }
+
+        setPopoverIsShown(false)
+
+    }, [moleculeSelectValueRef, createRef, setPopoverIsShown, molecules, commandCentre, glRef, tlcValueRef, monomerLibraryPath, backgroundColor, defaultBondSmoothness, changeMolecules, addToMoleculeValueRef])
+
+    const popoverContent = <>
+            {panelContent}
+            <MoorhenMoleculeSelect {...props} allowAny={true} ref={moleculeSelectRef} label="Make monomer available to" onChange={(evt) => {
+            moleculeSelectValueRef.current = evt.target.value
+        }}/>
+            <Form.Group key="createInstance" style={{ width: '20rem', margin: '0.5rem' }} controlId="createInstance" className="mb-3">
+                <Form.Label>Create instance on read</Form.Label>
+                <InputGroup>
+                    <SplitButton title={createInstance ? "Yes" : "No"} id="segmented-button-dropdown-1">
+                        <Dropdown.Item key="Yes" href="#" onClick={() => {
+                            createRef.current = true
+                            setCreateInstance(true)
+                        }}>Yes</Dropdown.Item>
+                        <Dropdown.Item key="No" href="#" onClick={() => {
+                            createRef.current = false
+                            setCreateInstance(false)
+                        }}>No</Dropdown.Item>
+                    </SplitButton>
+                    <Form.Select disabled={!createInstance} ref={addToRef} value={addToMolecule} onChange={(e) => {
+                        setAddToMolecule(parseInt(e.target.value))
+                        addToMoleculeValueRef.current = parseInt(e.target.value)
+                    }}>
+                        <option key={-1} value={"-1"}>{createInstance ? "...create new molecule" : ""}</option>
+                        {props.molecules.map(molecule => <option key={molecule.molNo} value={molecule.molNo}>
+                            ...add to {molecule.name}
+                        </option>)}
+                    </Form.Select>
+                </InputGroup>
+            </Form.Group>
+    </>
+
+    const onCompleted = useCallback(async () => {
+        const ligandDict = await fetchLigandDict()
+        if (ligandDict) {
+            handleFileContent(ligandDict)
+        } else {
+            console.log('Unable to get ligand dict...')
+        }
+    }, [handleFileContent, fetchLigandDict])
+    
+    return <MoorhenMenuItem
+        id='smiles-to-ligand-menu-item'
+        popoverContent={popoverContent}
+        menuItemText={menuItemText}
+        onCompleted={onCompleted}
+        setPopoverIsShown={setPopoverIsShown}
+    />
+
+}
+
+export const MoorhenSMILESToLigandMenuItem = (props) => {
+    const [smile, setSmile] = useState('')
+    const [tlc, setTlc] = useState('')
+    const [createInstance, setCreateInstance] = useState(true)
+    const [addToMolecule, setAddToMolecule] = useState('')
+    const smileRef = useRef(null)
+    const tlcValueRef = useRef(null)
+    const createRef = useRef(true)
+    const moleculeSelectRef = useRef(null)
+    const moleculeSelectValueRef = useRef(null)
+    const addToRef = useRef(null)
+    const addToMoleculeValueRef = useRef(null)
+
+    const collectedProps = {
+        smile, setSmile, tlc, setTlc, createInstance, setCreateInstance, addToMolecule,
+        setAddToMolecule, smileRef, tlcValueRef, createRef, moleculeSelectRef, addToRef,
+        addToMoleculeValueRef, moleculeSelectValueRef, ...props
+    }
+
+    const smilesToPDB = async () => {
+        if (!smileRef.current) {
+            console.log('Empty smile, do nothing...')
+            return
+        }
+        
+        const response = await props.commandCentre.current.cootCommand({
+            command: 'shim_smiles_to_pdb',
+            commandArgs: [smileRef.current, tlcValueRef.current, 10, 200],
+            returnType: 'str_str_pair'
+        }, true)
+        const result = response.data.result.result.second
+
+        if (result) {
+            return result
+        } else {
+            console.log('Error creating molecule... Wrong SMILES?')
+            props.commandCentre.current.extendConsoleMessage('Error creating molecule... Wrong SMILES?')
+        }
+    }
+
+    const panelContent = <>
+        <Form.Group key="smile" style={{ width: '20rem', margin: '0.5rem' }} controlId="tlc" className="mb-3">
+            <Form.Label>Type a smile</Form.Label>
+            <Form.Control value={smile} type="text" 
+                onChange={(e) => {
+                    setSmile(e.target.value)
+                    smileRef.current = e.target.value
+                }}/>
+        </Form.Group>            
+        <Form.Group key="tlc" style={{ width: '20rem', margin: '0.5rem' }} controlId="tlc" className="mb-3">
+            <Form.Label>Assign a name</Form.Label>
+            <Form.Control value={tlc} type="text" 
+                onChange={(e) => {
+                    setTlc(e.target.value)
+                    tlcValueRef.current = e.target.value
+                }}/>
+        </Form.Group>
+    </>
+
+    return <MoorhenImportLigandDictionary id='smiles-to-ligand-menu-item' menuItemText="From SMILES..." panelContent={panelContent} fetchLigandDict={smilesToPDB} {...collectedProps} />
+}
+
 export const MoorhenImportDictionaryMenuItem = (props) => {
     const filesRef = useRef(null)
     const moleculeSelectRef = useRef(null)
     const moleculeSelectValueRef = useRef(null)
     const [tlc, setTlc] = useState('')
-    const [smile, setSmile] = useState('')
     const addToRef = useRef(null)
     const [addToMolecule, setAddToMolecule] = useState('')
-    const addToMoleculeValue = useRef(null)
+    const addToMoleculeValueRef = useRef(null)
     const [fileOrLibrary, setFileOrLibrary] = useState("Library")
     const fileOrLibraryRef = useRef("Library")
     const [createInstance, setCreateInstance] = useState(true)
     const [tlcsOfFile, setTlcsOfFile] = useState([])
     const tlcSelectRef = useRef(null)
     const tlcValueRef = useRef(null)
-    const smileRef = useRef(null)
     const createRef = useRef(true)
+
+    const collectedProps = {
+        tlc, setTlc, createInstance, setCreateInstance, addToMolecule,
+        setAddToMolecule, tlcValueRef, createRef, moleculeSelectRef, addToRef,
+        addToMoleculeValueRef, moleculeSelectValueRef, ...props
+    }
 
     const panelContent = <>
         <Form.Group key="fileOrLibrary" style={{ width: '20rem', margin: '0.5rem' }} controlId="fileOrLibrary" className="mb-3">
@@ -1015,7 +1204,6 @@ export const MoorhenImportDictionaryMenuItem = (props) => {
                 <option key="File" value="File">From local file</option>
                 <option key="Library" value="Library">From monomer library</option>
                 <option key="MRC" value="MRC">Fetch from MRC-LMB</option>
-                <option key="smile" value="smile">From SMILES</option>
             </Form.Select>
         </Form.Group>
         {fileOrLibrary === 'File' ? <>
@@ -1043,7 +1231,7 @@ export const MoorhenImportDictionaryMenuItem = (props) => {
                 </Form.Select>
             }
         </>
-        : fileOrLibrary !== 'smile' &&
+        :
             <Form.Group key="tlc" style={{ width: '20rem', margin: '0.5rem' }} controlId="tlc" className="mb-3">
                 <Form.Label>Three letter code</Form.Label>
                 <Form.Control value={tlc}
@@ -1054,200 +1242,46 @@ export const MoorhenImportDictionaryMenuItem = (props) => {
                     type="text" />
             </Form.Group>
         }
-        {fileOrLibrary === 'smile' &&
-        <>
-            <Form.Group key="smile" style={{ width: '20rem', margin: '0.5rem' }} controlId="tlc" className="mb-3">
-                <Form.Label>Type a smile</Form.Label>
-                <Form.Control value={smile}
-                    onChange={(e) => {
-                        setSmile(e.target.value)
-                        smileRef.current = e.target.value
-                    }}
-                type="text" />
-            </Form.Group>            
-            <Form.Group key="tlc" style={{ width: '20rem', margin: '0.5rem' }} controlId="tlc" className="mb-3">
-                <Form.Label>Assign a name</Form.Label>
-                <Form.Control value={tlc}
-                    onChange={(e) => {
-                        setTlc(e.target.value)
-                        tlcValueRef.current = e.target.value
-                    }}
-                type="text" />
-            </Form.Group>
-        </>
-        }
-        <MoorhenMoleculeSelect {...props} allowAny={true} ref={moleculeSelectRef} label="Make monomer available to" onChange={(evt) => {
-            moleculeSelectValueRef.current = evt.target.value
-        }}/>
-        <Form.Group key="createInstance" style={{ width: '20rem', margin: '0.5rem' }} controlId="createInstance" className="mb-3">
-            <Form.Label>Create instance on read</Form.Label>
-            <InputGroup>
-                <SplitButton
-                    title={createInstance ? "Yes" : "No"}
-                    id="segmented-button-dropdown-1"
-                >
-                    <Dropdown.Item key="Yes" href="#" onClick={() => {
-                        createRef.current = true
-                        setCreateInstance(true)
-                    }}>Yes</Dropdown.Item>
-                    <Dropdown.Item key="No" href="#" onClick={() => {
-                        createRef.current = false
-                        setCreateInstance(false)
-                    }}>No</Dropdown.Item>
-                </SplitButton>
-                <Form.Select disabled={!createInstance} ref={addToRef} value={addToMolecule} onChange={(e) => {
-                    setAddToMolecule(parseInt(e.target.value))
-                    addToMoleculeValue.current = parseInt(e.target.value)
-                }}>
-                    <option key={-1} value={"-1"}>{createInstance ? "...create new molecule" : ""}</option>
-                    {props.molecules.map(molecule => <option key={molecule.molNo} value={molecule.molNo}>
-                        ...add to {molecule.name}
-                    </option>)}
-                </Form.Select>
-            </InputGroup>
-        </Form.Group>
     </>
 
     useEffect(() => {
         fileOrLibraryRef.current = fileOrLibrary
     }, [fileOrLibrary])
 
-    const handleFileContent = useCallback(async (fileContent) => {
-        let newMolecule
-        let selectedMoleculeIndex
-        
-        if (moleculeSelectValueRef.current) {
-            selectedMoleculeIndex = parseInt(moleculeSelectValueRef.current)
-            const selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedMoleculeIndex)
-            if (typeof selectedMolecule !== 'undefined') {
-                selectedMolecule.addDict(fileContent)
-            }
-        } else {
-            selectedMoleculeIndex = parseInt(-999999)
-            await Promise.all([
-                props.commandCentre.current.cootCommand({
-                    returnType: "status",
-                    command: 'shim_read_dictionary',
-                    commandArgs: [fileContent, selectedMoleculeIndex],
-                    changesMolecules: []
-                }, true),
-                ...props.molecules.map(molecule => {
-                    molecule.addDictShim(fileContent)
-                    return molecule.redraw(props.glRef)
-                })
-            ])
-            
-        }
-                
-        if (createRef.current) {
-            const instanceName = tlcValueRef.current
-            const result = await props.commandCentre.current.cootCommand({
-                returnType: 'status',
-                command: 'get_monomer_and_position_at',
-                commandArgs: [instanceName,
-                    selectedMoleculeIndex,
-                    ...props.glRef.current.origin.map(coord => -coord)]
-            }, true)
-            if (result.data.result.status === "Completed") {
-                newMolecule = new MoorhenMolecule(props.commandCentre, props.monomerLibraryPath)
-                newMolecule.molNo = result.data.result.result
-                newMolecule.name = instanceName
-                newMolecule.setBackgroundColour(props.backgroundColor)
-                newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
-                await newMolecule.addDict(fileContent)
-                props.changeMolecules({ action: "Add", item: newMolecule })
-                await newMolecule.fetchIfDirtyAndDraw("CBs", props.glRef)
-                if (addToMoleculeValue.current !== -1) {
-                    const toMolecule = props.molecules.find(molecule => molecule.molNo === addToMoleculeValue.current)
-                    if (typeof toMolecule !== 'undefined') {
-                        const otherMolecules = [newMolecule]
-                        await toMolecule.mergeMolecules(otherMolecules, props.glRef, true)
-                        const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: toMolecule.molNo } })
-                        document.dispatchEvent(scoresUpdateEvent)
-                        await toMolecule.redraw(props.glRef)
-                    } else {
-                        await newMolecule.redraw(props.glRef)
-                    }
-                }
-            }
-        }
-
-        props.setPopoverIsShown(false)
-
-    }, [fileOrLibrary, moleculeSelectRef, props.molecules, props.glRef, props.commandCentre, tlcValueRef, tlc, addToRef, createInstance])
-
-    const readMmcifFile = useCallback(async (file) => {
-        return readTextFile(file)
-            .then(fileContent => {
-                return handleFileContent(fileContent)
-            })
-    }, [handleFileContent])
-
-    const readMonomerFile = useCallback(async (newTlc) => {
+    const readMonomerFile = async (newTlc) => {
         return fetch(`${props.monomerLibraryPath}/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`)
             .then(response => response.text())
             .then(fileContent => {
-                return handleFileContent(fileContent)
+                return fileContent
             })
-    }, [handleFileContent, props.monomerLibraryPath])
+        }
 
-    const fetchFromMrcLmb = useCallback(async (newTlc) => {
+    const fetchFromMrcLmb = async (newTlc) => {
         const url = `https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`
         const response = await fetch(url)
         if (!response.ok) {
             console.log(`Cannot fetch data from https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`)
         } else {
             const fileContent = await response.text()
-            return handleFileContent(fileContent)
+            return fileContent
         }
-    }, [handleFileContent])
+    }
 
-    const smilesToPDB = useCallback(async (smile) => {
-        if (!smile) {
-            console.log('Empty smile, do nothing...')
-            return
-        }
-        const response = await props.commandCentre.current.cootCommand({
-            command: 'shim_smiles_to_pdb',
-            commandArgs: [smile, tlcValueRef.current, 10, 200],
-            returnType: 'str_str_pair'
-        }, true)
-        const result = response.data.result.result.second
-        if (result) {
-            return handleFileContent(result)
-        } else {
-            console.log('Error creating molecule... Wrong SMILES?')
-            props.commandCentre.current.extendConsoleMessage('Error creating molecule... Wrong SMILES?')
-        }
-    }, [handleFileContent, props.commandCentre])
-
-    const onCompleted = useCallback(async () => {
+    const fetchLigandDict = async () => {
         if (fileOrLibraryRef.current === "File") {
-            let readPromises = []
-            for (const file of filesRef.current.files) {
-                readPromises.push(readMmcifFile(file))
-            }
-            await Promise.all(readPromises)
+            return readTextFile(filesRef.current.files[0])
         }
         else if (fileOrLibraryRef.current === "Library") {
-            readMonomerFile(tlcValueRef.current)
+            return readMonomerFile(tlcValueRef.current)
         } else if (fileOrLibraryRef.current === "MRC") {
-            fetchFromMrcLmb(tlcValueRef.current)
-        } else if (fileOrLibraryRef.current === "smile") {
-            smilesToPDB(smileRef.current)
+            return fetchFromMrcLmb(tlcValueRef.current)
         } else {
             console.log(`Unkown ligand source ${fileOrLibraryRef.current}`)
         }
 
-    }, [readMonomerFile, fetchFromMrcLmb, smilesToPDB, readMmcifFile])
+    }
 
-    return <MoorhenMenuItem
-        id='import-dict-menu-item'
-        popoverContent={panelContent}
-        menuItemText="Import dictionary..."
-        onCompleted={onCompleted}
-        setPopoverIsShown={props.setPopoverIsShown}
-    />
+    return <MoorhenImportLigandDictionary id='import-dict-menu-item' menuItemText="Import dictionary..." panelContent={panelContent} fetchLigandDict={fetchLigandDict} {...collectedProps} />
 }
 
 export const MoorhenImportMapCoefficientsMenuItem = (props) => {
