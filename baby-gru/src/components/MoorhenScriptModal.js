@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import Draggable, {DraggableCore} from "react-draggable";
+import Draggable, { DraggableCore } from "react-draggable";
 import { Dialog, Button, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import Paper, { PaperProps } from '@mui/material/Paper';
 import Editor from 'react-simple-code-editor';
@@ -12,7 +12,7 @@ import 'prismjs/themes/prism.css'; //Example style, you can use another
 const makeDraggablePaper = (paperProps) => {
     //return <Paper {...paperProps} />
     //Draggable not working for some reason !!!
-    return <Draggable>
+    return <Draggable handle=".handle">
         <Paper {...paperProps} />
     </Draggable>
 }
@@ -32,7 +32,7 @@ export const MoorhenScriptModal = (props) => {
         disableEnforceFocus // Allows other things to take focus
         hideBackdrop  // Hides the shaded backdrop
         open={props.show}
-        sx={{ opacity: opacity}}
+        sx={{ opacity: opacity }}
         fullWidth={true}
         maxWidth="md"
         style={{
@@ -47,13 +47,13 @@ export const MoorhenScriptModal = (props) => {
                 props.setShow(false)
             }
         }}
+        onMouseOver={() => { setOpacity(1.) }}
+        onMouseOut={() => { setOpacity(0.5) }}
     >
-        <DialogTitle style={{ cursor: 'move', minWidth:"120rem" }} id="draggable-dialog-title">
+        <DialogTitle className="handle" style={{ cursor: 'move', minWidth: "120rem" }} id="draggable-dialog-title">
             Script
         </DialogTitle>
-        <DialogContent style={{ overflowY: "auto", maxHeight: "50vh"}}
-            onMouseOver={() => { setOpacity(1.) }}
-            onMouseOut={() => { setOpacity(0.5) }}>
+        <DialogContent style={{ overflowY: "auto", maxHeight: "50vh" }}>
             <Editor
                 value={code}
                 onValueChange={code => setCode(code)}
