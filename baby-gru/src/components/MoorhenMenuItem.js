@@ -329,7 +329,7 @@ export const MoorhenFitLigandRightHereMenuItem = (props) => {
             label="Use conformers"/>*/}
         {useConformers &&
         <Form.Group>
-        <TextField
+            <TextField
                 style={{margin: '0.5rem'}} 
                 id='conformer-count'
                 label='No. of conformers'
@@ -996,7 +996,7 @@ const MoorhenImportLigandDictionary = (props) => {
         createInstance, setCreateInstance, addToMolecule, fetchLigandDict, panelContent,
         setAddToMolecule, tlcValueRef, createRef, moleculeSelectRef, addToRef,moleculeSelectValueRef,
         addToMoleculeValueRef, setPopoverIsShown, molecules, glRef, commandCentre, menuItemText,
-        changeMolecules, backgroundColor, monomerLibraryPath, defaultBondSmoothness
+        changeMolecules, backgroundColor, monomerLibraryPath, defaultBondSmoothness, id
     } = props
 
     const handleFileContent = useCallback(async (fileContent) => {
@@ -1104,7 +1104,7 @@ const MoorhenImportLigandDictionary = (props) => {
     }, [handleFileContent, fetchLigandDict])
     
     return <MoorhenMenuItem
-        id='smiles-to-ligand-menu-item'
+        id={id}
         popoverContent={popoverContent}
         menuItemText={menuItemText}
         onCompleted={onCompleted}
@@ -1118,6 +1118,8 @@ export const MoorhenSMILESToLigandMenuItem = (props) => {
     const [tlc, setTlc] = useState('')
     const [createInstance, setCreateInstance] = useState(true)
     const [addToMolecule, setAddToMolecule] = useState('')
+    const [conformerCount, setConformerCount] = useState(10)
+    const [iterationCount, setIterationCount] = useState(100)
     const smileRef = useRef(null)
     const tlcValueRef = useRef(null)
     const createRef = useRef(true)
@@ -1125,6 +1127,8 @@ export const MoorhenSMILESToLigandMenuItem = (props) => {
     const moleculeSelectValueRef = useRef(null)
     const addToRef = useRef(null)
     const addToMoleculeValueRef = useRef(null)
+    const conformerCountRef = useRef(10)
+    const iterationCountRef = useRef(100)
 
     const collectedProps = {
         smile, setSmile, tlc, setTlc, createInstance, setCreateInstance, addToMolecule,
@@ -1137,10 +1141,26 @@ export const MoorhenSMILESToLigandMenuItem = (props) => {
             console.log('Empty smile, do nothing...')
             return
         }
-        
+
+        let n_conformer
+        let n_iteration
+        try {
+            n_conformer = parseInt(conformerCountRef.current)
+            n_iteration = parseInt(iterationCountRef.current)
+        } catch (err) {
+            console.log(err)
+            return
+        }
+
+        if ( (isNaN(n_conformer) || n_conformer < 0 || n_conformer === Infinity) || 
+            (isNaN(n_iteration) || n_iteration < 0 || n_iteration === Infinity) ) {
+            console.log('Unable to parse n_conformer / n_iteration count into a valid int...')
+            return
+        }
+
         const response = await props.commandCentre.current.cootCommand({
             command: 'shim_smiles_to_pdb',
-            commandArgs: [smileRef.current, tlcValueRef.current, 10, 200],
+            commandArgs: [smileRef.current, tlcValueRef.current, n_conformer, n_iteration],
             returnType: 'str_str_pair'
         }, true)
         const result = response.data.result.result.second
@@ -1169,6 +1189,34 @@ export const MoorhenSMILESToLigandMenuItem = (props) => {
                     setTlc(e.target.value)
                     tlcValueRef.current = e.target.value
                 }}/>
+        </Form.Group>
+        <Form.Group>
+            <TextField
+                style={{margin: '0.5rem', width: '9rem'}} 
+                id='conformer-count'
+                label='No. of conformers'
+                type='number'
+                variant="standard"
+                error={isNaN(parseInt(conformerCount)) || parseInt(conformerCount) < 0 || parseInt(conformerCount) === Infinity}
+                value={conformerCount}
+                onChange={(evt) => {
+                    conformerCountRef.current = evt.target.value
+                    setConformerCount(evt.target.value)
+                }}
+            />
+            <TextField
+                style={{margin: '0.5rem', width: '9rem'}} 
+                id='iteration-count'
+                label='No. of iterations'
+                type='number'
+                variant="standard"
+                error={isNaN(parseInt(iterationCount)) || parseInt(iterationCount) < 0 || parseInt(iterationCount) === Infinity}
+                value={iterationCount}
+                onChange={(evt) => {
+                    iterationCountRef.current = evt.target.value
+                    setIterationCount(evt.target.value)
+                }}
+            />
         </Form.Group>
     </>
 
