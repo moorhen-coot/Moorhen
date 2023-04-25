@@ -193,6 +193,7 @@ export const MoorhenButtonBar = (props) => {
                 width: '100%',
                 flexShrink: 0,
                 '& .MuiDrawer-paper': {
+                    zIndex: 9999,
                     width: '100%',
                     height: simpleEditButtonHeight,
                     boxSizing: 'border-box',
