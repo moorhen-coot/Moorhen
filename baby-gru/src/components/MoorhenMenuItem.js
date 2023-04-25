@@ -3,7 +3,7 @@ import { CheckOutlined, CloseOutlined } from "@mui/icons-material";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { OverlayTrigger, Popover, PopoverBody, PopoverHeader, Form, InputGroup, Button, FormSelect, Row, Col, SplitButton, Dropdown, Stack, Placeholder } from "react-bootstrap";
 import { SketchPicker } from "react-color";
-import { MoorhenMtzWrapper, readTextFile, readDataFile } from "../utils/MoorhenUtils";
+import { MoorhenMtzWrapper, readTextFile, readDataFile, cidToSpec } from "../utils/MoorhenUtils";
 import { MoorhenMap } from "../utils/MoorhenMap";
 import { MoorhenMolecule } from "../utils/MoorhenMolecule";
 import { MoorhenMoleculeSelect } from "./MoorhenMoleculeSelect";
@@ -1850,23 +1850,26 @@ export const MoorhenGoToMenuItem = (props) => {
 
     const onCompleted = () => {
         const selectedCid = cidRef.current.value
-        if (!selectedCid) {
+        if (!selectedCid || props.molecules.length === 0) {
+            return
+        }
+        
+        let residueSpec
+        try {
+            residueSpec = cidToSpec(selectedCid)
+        } catch (err) {
+            console.log(err)
+            console.log('Unable to parse CID')
             return
         }
 
-        const [molName, insCode, chainId, resInfo, atomName] = selectedCid.split('/')
-        if (!molName || !chainId || !resInfo) {
+        const molecule = residueSpec.mol_name ? props.molecules.find(molecule => molecule.name === residueSpec.mol_name) : props.molecules[0]
+        
+        if (!residueSpec.chain_id || !residueSpec.res_no || !molecule) {
             return
         }
 
-        const molecule = props.molecules.find(molecule => molecule.name === molName)
-        if (!molecule) {
-            return
-        }
-
-        const resNum = resInfo.split("(")[0]
-
-        molecule.centreOn(props.glRef, `/*/${chainId}/${resNum}-${resNum}/*`)
+        molecule.centreOn(props.glRef, `/${residueSpec.mol_no ? residueSpec.mol_no : '*'}/${residueSpec.chain_id}/${residueSpec.res_no}-${residueSpec.res_no}/*`)
     }
 
     return <MoorhenMenuItem
