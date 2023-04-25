@@ -132,88 +132,6 @@ struct moorhen_hbond {
 
 class molecules_container_js : public molecules_container_t {
     public:
-        /*
-        std::vector<moorhen_hbond> get_hbonds(int imol, const std::string &cid_str) { 
-            std::vector<moorhen_hbond> mhbs;
-            std::vector<coot::h_bond> hbonds = molecules_container_t::get_hbonds(imol, cid_str);
-
-            for(unsigned ib=0;ib<hbonds.size();ib++){
-                moorhen_hbond mhb;
-                mhb.hb_hydrogen = hbonds[ib].hb_hydrogen->serNum;
-                mhb.donor.serial = hbonds[ib].donor->serNum;
-                mhb.acceptor.serial = hbonds[ib].acceptor->serNum;
-                mhb.donor_neigh.serial = hbonds[ib].donor_neigh->serNum;
-                mhb.acceptor_neigh.serial = hbonds[ib].acceptor_neigh->serNum;
-                mhb.donor.x = hbonds[ib].donor->x;
-                mhb.donor.y = hbonds[ib].donor->y;
-                mhb.donor.z = hbonds[ib].donor->z;
-                mhb.acceptor.x = hbonds[ib].acceptor->x;
-                mhb.acceptor.y = hbonds[ib].acceptor->y;
-                mhb.acceptor.z = hbonds[ib].acceptor->z;
-                mhb.donor_neigh.x = hbonds[ib].donor_neigh->x;
-                mhb.donor_neigh.y = hbonds[ib].donor_neigh->y;
-                mhb.donor_neigh.z = hbonds[ib].donor_neigh->z;
-                mhb.acceptor_neigh.x = hbonds[ib].acceptor_neigh->x;
-                mhb.acceptor_neigh.y = hbonds[ib].acceptor_neigh->y;
-                mhb.acceptor_neigh.z = hbonds[ib].acceptor_neigh->z;
-
-                mhb.donor.charge = hbonds[ib].donor->charge;
-                mhb.donor.occ = hbonds[ib].donor->occupancy;
-                mhb.donor.b_iso = hbonds[ib].donor->tempFactor;
-                mhb.donor.element = std::string(hbonds[ib].donor->element);
-                mhb.donor.name = std::string(hbonds[ib].donor->name);
-                mhb.donor.model = hbonds[ib].donor->GetModelNum();
-                mhb.donor.chain = std::string(hbonds[ib].donor->GetChainID());
-                mhb.donor.resNum = hbonds[ib].donor->GetResidueNo();
-                mhb.donor.residueName = std::string(hbonds[ib].donor->GetResidue()->name);
-                mhb.donor.altLoc = std::string(hbonds[ib].donor->altLoc);
-
-                mhb.acceptor.charge = hbonds[ib].acceptor->charge;
-                mhb.acceptor.occ = hbonds[ib].acceptor->occupancy;
-                mhb.acceptor.b_iso = hbonds[ib].acceptor->tempFactor;
-                mhb.acceptor.element = std::string(hbonds[ib].acceptor->element);
-                mhb.acceptor.name = std::string(hbonds[ib].acceptor->name);
-                mhb.acceptor.model = hbonds[ib].acceptor->GetModelNum();
-                mhb.acceptor.chain = std::string(hbonds[ib].acceptor->GetChainID());
-                mhb.acceptor.resNum = hbonds[ib].acceptor->GetResidueNo();
-                mhb.acceptor.residueName = std::string(hbonds[ib].acceptor->GetResidue()->name);
-                mhb.acceptor.altLoc = std::string(hbonds[ib].acceptor->altLoc);
-
-                mhb.donor_neigh.charge = hbonds[ib].donor_neigh->charge;
-                mhb.donor_neigh.occ = hbonds[ib].donor_neigh->occupancy;
-                mhb.donor_neigh.b_iso = hbonds[ib].donor_neigh->tempFactor;
-                mhb.donor_neigh.element = std::string(hbonds[ib].donor_neigh->element);
-                mhb.donor_neigh.name = std::string(hbonds[ib].donor_neigh->name);
-                mhb.donor_neigh.model = hbonds[ib].donor_neigh->GetModelNum();
-                mhb.donor_neigh.chain = std::string(hbonds[ib].donor_neigh->GetChainID());
-                mhb.donor_neigh.resNum = hbonds[ib].donor_neigh->GetResidueNo();
-                mhb.donor_neigh.residueName = std::string(hbonds[ib].donor_neigh->GetResidue()->name);
-                mhb.donor_neigh.altLoc = std::string(hbonds[ib].donor_neigh->altLoc);
-
-                mhb.acceptor_neigh.charge = hbonds[ib].acceptor_neigh->charge;
-                mhb.acceptor_neigh.occ = hbonds[ib].acceptor_neigh->occupancy;
-                mhb.acceptor_neigh.b_iso = hbonds[ib].acceptor_neigh->tempFactor;
-                mhb.acceptor_neigh.element = std::string(hbonds[ib].acceptor_neigh->element);
-                mhb.acceptor_neigh.name = std::string(hbonds[ib].acceptor_neigh->name);
-                mhb.acceptor_neigh.model = hbonds[ib].acceptor_neigh->GetModelNum();
-                mhb.acceptor_neigh.chain = std::string(hbonds[ib].acceptor_neigh->GetChainID());
-                mhb.acceptor_neigh.resNum = hbonds[ib].acceptor_neigh->GetResidueNo();
-                mhb.acceptor_neigh.residueName = std::string(hbonds[ib].acceptor_neigh->GetResidue()->name);
-                mhb.acceptor_neigh.altLoc = std::string(hbonds[ib].acceptor_neigh->altLoc);
-
-                mhb.angle_1 = hbonds[ib].angle_1;
-                mhb.angle_2 = hbonds[ib].angle_2;
-                mhb.angle_3 = hbonds[ib].angle_3;
-                mhb.dist = hbonds[ib].dist;
-                mhb.ligand_atom_is_donor = hbonds[ib].ligand_atom_is_donor;
-                mhb.hydrogen_is_ligand_atom = hbonds[ib].hydrogen_is_ligand_atom;
-                mhb.bond_has_hydrogen_flag = hbonds[ib].bond_has_hydrogen_flag;
-                mhbs.push_back(mhb);
-            }
-            return mhbs;
-        }
-        */
-       
         explicit molecules_container_js(bool verbose=true) : molecules_container_t(verbose) {
 
         }
@@ -690,7 +608,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("add",&molecules_container_js::add)
     .function("getFloats",&molecules_container_js::getFloats)
     .function("get_symmetry_with_matrices",&molecules_container_js::get_symmetry_with_matrices)
-    //.function("get_hbonds",&molecules_container_js::get_hbonds);
     ;
     class_<generic_3d_lines_bonds_box_t>("generic_3d_lines_bonds_box_t")
     .property("line_segments", &generic_3d_lines_bonds_box_t::line_segments)
