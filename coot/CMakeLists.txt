@@ -423,7 +423,7 @@ ${coot_src}/ideal/write-png.cc
 
 target_include_directories(coot PRIVATE ${coot_src} ${coot_src}/coords ${coot_src}/utils ${coot_src}/src ../include ../example ../checkout/ssm ../checkout/mmdb2 ../checkout/clipper ../checkout/fftw-2.1.5/fftw ../checkout/fftw-2.1.5/rfftw ../checkout/libccp4/ccp4 ../boost)
 
-set_target_properties(coot PROPERTIES COMPILE_FLAGS "-pthread -DHAVE_CXX11=1 -DHAVE_SSMLIB -DHAVE_BOOST -DNODERAWFS -DFFTW_ENABLE_FLOAT -s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_PTHREADS=1" LINK_FLAGS "-fexceptions -pthread -s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_PTHREADS=1 -sDEMANGLE_SUPPORT=1 -sASSERTIONS=2")
+set_target_properties(coot PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations -Wno-deprecated-builtins -pthread -DHAVE_CXX11=1 -DHAVE_SSMLIB -DHAVE_BOOST -DNODERAWFS -DFFTW_ENABLE_FLOAT -s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_PTHREADS=1" LINK_FLAGS "-fexceptions -pthread -s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_PTHREADS=1 -sDEMANGLE_SUPPORT=1 -sASSERTIONS=2")
 
 set_source_files_properties(${coot_exception_srcs} PROPERTIES COMPILE_FLAGS "-fexceptions -pthread -DHAVE_SSMLIB -DHAVE_BOOST -DNODERAWFS -DFFTW_ENABLE_FLOAT -s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_PTHREADS=1" )
 
@@ -499,19 +499,20 @@ FILE(COPY ${coot_src}/data/metal/metal-O-distance.table DESTINATION data/coot/da
 FILE(COPY ${coot_src}/data/metal/metal-S-distance.table DESTINATION data/coot/data/metal )
 FILE(COPY ${CMAKE_INSTALL_PREFIX}/share/RDKit/Data/BaseFeatures.fdef DESTINATION data/RDKit/Data )
 
+#-sALLOW_MEMORY_GROWTH=1 -sINITIAL_MEMORY=512MB -sMAXIMUM_MEMORY=4092MB -sTOTAL_MEMORY=4092MB
 add_executable(moorhen moorhen-wrappers.cc gemmi-wrappers.cc smilestopdb.cc)
 target_link_options(moorhen PRIVATE -sDEMANGLE_SUPPORT=1 -sASSERTIONS=2 -fexceptions -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sUSE_PTHREADS=1 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createRSRModule -sEXPORTED_RUNTIME_METHODS=['FS','readFile'] --preload-file data  --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
 target_link_directories(moorhen PUBLIC ../ssm ../mmdb2 ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4 ../fftw ../rfftw ../ccp4 ../privateer ../rvapi ../gesamt ../ccp4mg ../lib ../install/lib)
 target_link_libraries(moorhen ssm rvapi gesamtlib mmdb2 clipper-minimol clipper-phs clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 privateer clipper-minimol ccp4mg coot gsl gslcblas RDKitMolDraw2D RDKitForceFieldHelpers RDKitDescriptors RDKitForceField RDKitSubstructMatch RDKitOptimizer RDKitDistGeomHelpers RDKitDistGeometry RDKitChemReactions RDKitAlignment RDKitEigenSolvers RDKitDepictor RDKitcoordgen RDKitMolChemicalFeatures RDKitPartialCharges RDKitFileParsers RDKitRDGeometryLib RDKitGraphMol RDKitShapeHelpers RDKitFingerprints RDKitMolAlign RDKitMolTransforms RDKitChemTransforms RDKitSmilesParse RDKitFilterCatalog RDKitCatalogs RDKitSubgraphs RDKitRDGeneral RDKitDataStructs RDKitGenericGroups boost_serialization freetype m z idbfs.js)
 target_include_directories(moorhen PRIVATE ${coot_src} ${coot_src}/src ../checkout/boost_1_80_0 ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw ../include ../checkout/gemmi/include )
-target_compile_options(moorhen PUBLIC -DGEMMI_WRITE_IMPLEMENTATION -fexceptions -sUSE_PTHREADS=1 -pthread -DFFTW_ENABLE_FLOAT -D_CCP4_WEB_EXAMPLE_)
+target_compile_options(moorhen PUBLIC -DGEMMI_WRITE_IMPLEMENTATION -Wno-deprecated-builtins -Wno-deprecated-declarations -fexceptions -sUSE_PTHREADS=1 -pthread -DFFTW_ENABLE_FLOAT -D_CCP4_WEB_EXAMPLE_)
 
 add_executable(test-molecules-container ${coot_src}/api/test_molecules_container.cc)
 target_link_options(test-molecules-container PRIVATE -sEXIT_RUNTIME=1 -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sUSE_PTHREADS=1 -sALLOW_MEMORY_GROWTH=1 -sNODERAWFS=1 --pre-js coot_env.js)
 target_link_directories(test-molecules-container PUBLIC ../mmdb2 ../ssm ../ccp4 ../lib ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4)
 target_link_libraries(test-molecules-container mmdb2 ssm clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 fftw rfftw ccp4 coot gsl gslcblas RDKitMolDraw2D RDKitForceFieldHelpers RDKitDescriptors RDKitForceField RDKitSubstructMatch RDKitOptimizer RDKitDistGeomHelpers RDKitDistGeometry RDKitChemReactions RDKitAlignment RDKitEigenSolvers RDKitDepictor RDKitcoordgen RDKitMolChemicalFeatures RDKitPartialCharges RDKitFileParsers RDKitRDGeometryLib RDKitGraphMol RDKitShapeHelpers RDKitFingerprints RDKitMolAlign RDKitMolTransforms RDKitChemTransforms RDKitSmilesParse RDKitFilterCatalog RDKitCatalogs RDKitSubgraphs RDKitRDGeneral RDKitDataStructs RDKitGenericGroups boost_serialization m z nodefs.js)
 target_include_directories(test-molecules-container PRIVATE ${coot_src} ${coot_src}/src ../include ../checkout/boost_1_80_0 ../checkout/clipper/ ../checkout/mmdb2 ../checkout/mmdb2/mmdb2 ../checkout/ssm ../checkout/libccp4/ccp4 ../fftw ../rfftw ${dependency_install_dir}/include ../checkout/glm-0.9.9.8)
-target_compile_options(test-molecules-container PUBLIC -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
+target_compile_options(test-molecules-container PUBLIC -Wno-deprecated-declarations -Wno-deprecated-builtins -DFFTW_ENABLE_FLOAT -D_CCP4_NODE_EXAMPLE_ -DNODERAWFS)
 
 install(FILES ${coot_src}/pixmaps/rama2_all.png
 ${coot_src}/pixmaps/rama2_gly.png
