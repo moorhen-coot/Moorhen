@@ -2039,11 +2039,11 @@ MoorhenMolecule.prototype.refineResiduesUsingAtomCid = function(cid, mode) {
     })
 }
 
-MoorhenMolecule.prototype.SSMSuperpose = function(movCid, refMolNo, refCid) {
+MoorhenMolecule.prototype.SSMSuperpose = function(movChainId, refMolNo, refChainId) {
     return this.commandCentre.current.cootCommand({
         command: "SSM_superpose", 
         returnType: 'superpose_results',
-        commandArgs: [this.molNo, movCid, refMolNo, refCid], 
+        commandArgs: [refMolNo, refChainId, this.molNo, movChainId], 
     })
 }
 
