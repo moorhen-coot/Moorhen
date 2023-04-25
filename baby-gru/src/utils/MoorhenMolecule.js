@@ -2004,7 +2004,7 @@ MoorhenMolecule.prototype.drawHBonds = async function(glRef,hbs) {
     }
 }
 
-MoorhenMolecule.prototype.generateSelfRestraints = async function(maxRadius=4.2) {
+MoorhenMolecule.prototype.generateSelfRestraints = function(maxRadius=4.2) {
     return this.commandCentre.current.cootCommand({
         command: "generate_self_restraints", 
         returnType: 'status',
@@ -2012,7 +2012,7 @@ MoorhenMolecule.prototype.generateSelfRestraints = async function(maxRadius=4.2)
     })
 }
 
-MoorhenMolecule.prototype.clearExtraRestraints = async function() {
+MoorhenMolecule.prototype.clearExtraRestraints = function() {
     return this.commandCentre.current.cootCommand({
         command: "clear_extra_restraints", 
         returnType: 'status',
@@ -2020,7 +2020,7 @@ MoorhenMolecule.prototype.clearExtraRestraints = async function() {
     })
 }
 
-MoorhenMolecule.prototype.rigidBodyFit = async function(cidsString, mapNo) {
+MoorhenMolecule.prototype.rigidBodyFit = function(cidsString, mapNo) {
     return this.commandCentre.current.cootCommand({
         command: "rigid_body_fit", 
         returnType: 'status',
@@ -2029,7 +2029,7 @@ MoorhenMolecule.prototype.rigidBodyFit = async function(cidsString, mapNo) {
 }
 
 
-MoorhenMolecule.prototype.refineResiduesUsingAtomCid = async function(cid, mode) {
+MoorhenMolecule.prototype.refineResiduesUsingAtomCid = function(cid, mode) {
     return this.commandCentre.current.cootCommand({
         command: "refine_residues_using_atom_cid", 
         returnType: 'status',
@@ -2037,7 +2037,7 @@ MoorhenMolecule.prototype.refineResiduesUsingAtomCid = async function(cid, mode)
     })
 }
 
-MoorhenMolecule.prototype.SSMSuperpose = async function(movCid, refMolNo, refCid) {
+MoorhenMolecule.prototype.SSMSuperpose = function(movCid, refMolNo, refCid) {
     return this.commandCentre.current.cootCommand({
         command: "SSM_superpose", 
         returnType: 'superpose_results',
