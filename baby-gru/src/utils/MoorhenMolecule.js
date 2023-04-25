@@ -1606,26 +1606,36 @@ MoorhenMolecule.prototype.applyTransform = function (glRef) {
     return $this.updateWithMovedAtoms(movedResidues, glRef)
 }
 
-MoorhenMolecule.prototype.mergeMolecules = async function (otherMolecules, glRef, doHide) {
-    const $this = this
-    if (typeof doHide === 'undefined') doHide = false
-    return $this.commandCentre.current.cootCommand({
-        command: 'merge_molecules',
-        commandArgs: [$this.molNo, `${otherMolecules.map(molecule => molecule.molNo).join(':')}`],
-        returnType: "merge_molecules_return",
-        changesMolecules: [$this.molNo]
-    }, true).then(async result => {
-        $this.setAtomsDirty(true)
-        if (doHide) otherMolecules.forEach(molecule => {
-            Object.keys(molecule.displayObjects).forEach(style => {
-                if (Array.isArray(molecule.displayObjects[style])) {
-                    molecule.hide(style, glRef)
-                }
+MoorhenMolecule.prototype.mergeMolecules = async function (otherMolecules, glRef, doHide=false) {
+    try {
+        await this.commandCentre.current.cootCommand({
+            command: 'merge_molecules',
+            commandArgs: [this.molNo, `${otherMolecules.map(molecule => molecule.molNo).join(':')}`],
+            returnType: "merge_molecules_return",
+            changesMolecules: [this.molNo]
+        }, true)
+
+        let promises = []
+        otherMolecules.forEach(molecule => {
+            if (doHide) {
+                Object.keys(molecule.displayObjects).forEach(style => {
+                    if (Array.isArray(molecule.displayObjects[style])) {
+                        molecule.hide(style, glRef)
+                    }
+                })     
+            }
+            Object.keys(molecule.ligandDicts).forEach(key => {
+                promises.push(this.addDict(molecule.ligandDicts[key]))
             })
         })
-        await $this.redraw(glRef)
-        return Promise.resolve(true)
-    })
+        await Promise.all(promises)
+
+        this.setAtomsDirty(true)
+        await this.redraw(glRef)
+
+    } catch (err) {
+        console.log(err)
+    }
 }
 
 MoorhenMolecule.prototype.addLigandOfType = async function (resType, glRef, fromMolNo=-999999) {
