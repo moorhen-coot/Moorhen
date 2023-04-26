@@ -7,6 +7,7 @@ import { highlight, languages } from 'prismjs/components/prism-core';
 import 'prismjs/components/prism-clike';
 import 'prismjs/components/prism-javascript';
 import { PlayArrowOutlined } from "@mui/icons-material";
+import { convertViewtoPx } from '../utils/MoorhenUtils';
 import 'prismjs/themes/prism.css'; //Example style, you can use another
 
 const makeDraggablePaper = (paperProps) => {
@@ -34,7 +35,7 @@ export const MoorhenScriptModal = (props) => {
         open={props.show}
         sx={{ opacity: opacity }}
         fullWidth={true}
-        maxWidth="md"
+        maxWidth={convertViewtoPx(60, props.windowWidth)}
         style={{
             top: '30%', // Position however you like
             height: 'fit-content',  // Ensures that the dialog is 
@@ -50,7 +51,7 @@ export const MoorhenScriptModal = (props) => {
         onMouseOver={() => { setOpacity(1.) }}
         onMouseOut={() => { setOpacity(0.5) }}
     >
-        <DialogTitle className="handle" style={{ cursor: 'move', minWidth: "120rem" }} id="draggable-dialog-title">
+        <DialogTitle className="handle" style={{ cursor: 'move', width: convertViewtoPx(60, props.windowWidth) }} id="draggable-dialog-title">
             Script
         </DialogTitle>
         <DialogContent style={{ overflowY: "auto", maxHeight: "50vh" }}>
