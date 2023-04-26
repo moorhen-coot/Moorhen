@@ -11,6 +11,7 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
     const [connectedMolNo, setConnectedMolNo] = useState(null)
     const [scoresToastContents, setScoreToastContents] = useState(null)
     const [showContextMenu, setShowContextMenu] = useState(false)
+    const currentCentralCid = useRef(null)
     const busyGettingAtom = useRef(false)
 
     const setClipFogByZoom = () => {
@@ -69,21 +70,25 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
         })
         const moleculeMolNo = response.data.result.result.first
         const residueCid = response.data.result.result.second
-        const mol = props.molecules.find(molecule => molecule.molNo === moleculeMolNo)
 
-        if(mol) {
-            const cidSplit0 = residueCid.split(" ")[0]
-            const cidSplit = cidSplit0.replace(/\/+$/, "").split("/")
-            const resnum = cidSplit[cidSplit.length-1]
-            const oneCid = cidSplit.join("/")+"-"+resnum
-            const sel = new window.CCP4Module.Selection(oneCid)
-            const hbonds = await props.commandCentre.current.cootCommand({
-                returnType: "vector_hbond",
-                command: "get_hbonds",
-                commandArgs: [mol.molNo,oneCid]
-            })
-            const hbs = hbonds.data.result.result
-            mol.drawHBonds(glRef,hbs)
+        if(currentCentralCid.current !== residueCid){
+            currentCentralCid.current = residueCid
+            const mol = props.molecules.find(molecule => molecule.molNo === moleculeMolNo)
+
+            if(mol) {
+                const cidSplit0 = residueCid.split(" ")[0]
+                const cidSplit = cidSplit0.replace(/\/+$/, "").split("/")
+                const resnum = cidSplit[cidSplit.length-1]
+                const oneCid = cidSplit.join("/")+"-"+resnum
+                const sel = new window.CCP4Module.Selection(oneCid)
+                const hbonds = await props.commandCentre.current.cootCommand({
+                    returnType: "vector_hbond",
+                    command: "get_h_bonds",
+                    commandArgs: [mol.molNo,oneCid,false]
+                })
+                const hbs = hbonds.data.result.result
+                mol.drawHBonds(glRef,hbs)
+            }
         }
         busyGettingAtom.current = false
     }
