@@ -330,7 +330,8 @@ export const MoorhenMoleculeCard = (props) => {
         gaussian: "Gauss.",
         ligands: "Lig.",
         DishyBases: "Bases",
-        VdwSpheres: "Spheres"
+        VdwSpheres: "Spheres",
+        allHBonds: "H-Bs"
     }
 
     const handleResidueRangeRefinement = () => {

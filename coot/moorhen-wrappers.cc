@@ -136,6 +136,47 @@ class molecules_container_js : public molecules_container_t {
 
         }
 
+        std::string get_neighbours_cid(int imol, const std::string &central_Cid_str, double max_dist){
+            //Returns a "|" separated string of cids.
+            std::string neighb_cid = "";
+            std::map<std::string, std::string> chainsResidues;
+            mmdb::Manager *mol = get_mol(imol);
+            const char * central_Cid = central_Cid_str.c_str();
+            int central_SelHnd = mol->NewSelection();
+            int neighb_SelHnd = mol->NewSelection();
+            mol->Select(central_SelHnd, mmdb::STYPE_ATOM, central_Cid, mmdb::SKEY_NEW);
+            int n_central_SelAtoms;
+            mmdb::PPAtom central_SelAtom;
+            mol->GetSelIndex(central_SelHnd, central_SelAtom, n_central_SelAtoms);
+            mol->SelectNeighbours(neighb_SelHnd, mmdb::STYPE_RESIDUE, central_SelAtom, n_central_SelAtoms, 0.4, max_dist, mmdb::SKEY_NEW);
+            int n_neighb_residues;
+            mmdb::PPResidue neighb_residues;
+            mol->GetSelIndex(neighb_SelHnd, neighb_residues, n_neighb_residues);
+            for(int i=0; i<n_neighb_residues; i++){
+                std::string chainId = std::string(neighb_residues[i]->GetChainID());
+                if(chainsResidues.count(chainId)==0){
+                    chainsResidues[chainId] = std::string();
+                } else {
+                    chainsResidues[chainId] += std::string(",");
+                }
+                std::string resNum = std::to_string(neighb_residues[i]->GetSeqNum());
+                if(strlen(neighb_residues[i]->GetInsCode())>0){
+                    resNum += std::string(".") + std::string(neighb_residues[i]->GetInsCode());
+                }
+                chainsResidues[chainId] += resNum;
+
+                //std::cout << resNum << std::endl;
+
+            }
+            for (auto const& [key, val] : chainsResidues){
+                neighb_cid += key + std::string("/") + val + std::string("|");
+            }
+            neighb_cid = neighb_cid.substr(0,neighb_cid.length()-1);
+            std::cout << neighb_cid << std::endl;
+            return neighb_cid;
+        }
+
+
         std::pair<coot::symmetry_info_t,std::vector<std::array<float, 16>>> get_symmetry_with_matrices(int imol, float symmetry_search_radius, float x, float y, float z) { 
             coot::symmetry_info_t si = get_symmetry(imol, symmetry_search_radius, x, y, z);
             mmdb::Manager *mol = get_mol(imol);
@@ -608,6 +649,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("add",&molecules_container_js::add)
     .function("getFloats",&molecules_container_js::getFloats)
     .function("get_symmetry_with_matrices",&molecules_container_js::get_symmetry_with_matrices)
+    .function("get_neighbours_cid",&molecules_container_js::get_neighbours_cid)
     ;
     class_<generic_3d_lines_bonds_box_t>("generic_3d_lines_bonds_box_t")
     .property("line_segments", &generic_3d_lines_bonds_box_t::line_segments)

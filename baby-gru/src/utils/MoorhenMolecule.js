@@ -56,6 +56,7 @@ export function MoorhenMolecule(commandCentre, monomerLibraryPath) {
         rama: [],
         rotamer: [],
         CDs: [],
+        allHBonds: [],
         hover: [],
         selection: [],
         originNeighbours: [],
@@ -653,6 +654,9 @@ MoorhenMolecule.prototype.centreOn = function (glRef, selectionCid, animate = tr
 MoorhenMolecule.prototype.drawWithStyleFromAtoms = async function (style, glRef) {
 
     switch (style) {
+        case 'allHBonds':
+            this.drawAllHBonds(glRef)
+            break;
         case 'rama':
             this.drawRamachandranBalls(glRef)
             break;
@@ -672,7 +676,6 @@ MoorhenMolecule.prototype.drawWithStyleFromAtoms = async function (style, glRef)
         case 'CRs':
         case 'MolecularSurface':
         case 'DishyBases':
-        case 'VdwSpheres':
         case 'VdWSurface':
         case 'Calpha':
             await this.drawCootRepresentation(glRef, style)
@@ -700,6 +703,23 @@ MoorhenMolecule.prototype.addBuffersOfStyle = function (glRef, objects, style) {
     })
     glRef.current.buildBuffers();
     glRef.current.drawScene();
+}
+
+MoorhenMolecule.prototype.drawAllHBonds = function (glRef) {
+
+    const $this = this
+    const style = "allHBonds"
+    return this.commandCentre.current.cootCommand({
+        returnType: "vector_hbond",
+        command: "get_h_bonds",
+        commandArgs: [$this.molNo,"/*/*/*",false]
+    }).then(response => {
+        const hbs = response.data.result.result
+        //Empty existing buffers of this type
+        this.clearBuffersOfStyle(style, glRef)
+        $this.drawHBonds(glRef,hbs,style,false)
+    })
+ 
 }
 
 MoorhenMolecule.prototype.drawRamachandranBalls = function (glRef) {
@@ -1963,7 +1983,7 @@ MoorhenMolecule.prototype.unhideAll = async function(glRef) {
     return Promise.resolve(result)
 }
 
-MoorhenMolecule.prototype.drawHBonds = async function(glRef,hbs,labelled=false) {
+MoorhenMolecule.prototype.drawHBonds = async function(glRef,hbs,style,labelled=false) {
     let selectedGemmiAtomsPairs = [];
     for(let ihb=0;ihb<hbs.length;ihb++){
         const donor = hbs[ihb].donor
@@ -2015,7 +2035,7 @@ MoorhenMolecule.prototype.drawHBonds = async function(glRef,hbs,labelled=false) 
     }
 
     if(selectedGemmiAtomsPairs.length>0){
-        this.drawGemmiAtoms(glRef,selectedGemmiAtomsPairs,"originNeighbours",[1.0, 0.0, 0.0, 1.0],labelled,true)
+        this.drawGemmiAtoms(glRef,selectedGemmiAtomsPairs,style,[1.0, 0.0, 0.0, 1.0],labelled,true)
     }
 }
 
