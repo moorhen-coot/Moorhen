@@ -11,8 +11,8 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
     const [connectedMolNo, setConnectedMolNo] = useState(null)
     const [scoresToastContents, setScoreToastContents] = useState(null)
     const [showContextMenu, setShowContextMenu] = useState(false)
-    const currentCentralCid = useRef(null)
-    const busyGettingAtom = useRef(false)
+    const hBondsDirty = useRef(false)
+    const busyDrawingHBonds = useRef(false)
 
     const setClipFogByZoom = () => {
         const fieldDepthFront = 8;
@@ -56,64 +56,65 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
     }, [props.hoveredAtom, glRef])
 
 
-    const drawHBonds = async () => {
-        const visibleMolecules = props.molecules.filter(molecule => molecule.isVisible && molecule.hasVisibleBuffers())
-        if (visibleMolecules.length === 0) {
-            console.log("returning...",props.molecules)
-            return
-        }
-        busyGettingAtom.current = true
-        const response = await props.commandCentre.current.cootCommand({
-            returnType: "int_string_pair",
-            command: "get_active_atom",
-            commandArgs: [...glRef.current.origin.map(coord => coord * -1), visibleMolecules.map(molecule => molecule.molNo).join(':')]
-        })
-        const moleculeMolNo = response.data.result.result.first
-        const residueCid = response.data.result.result.second
+    const drawHBonds = useCallback(async () => {
+        if (hBondsDirty.current) {
+            busyDrawingHBonds.current = true
+            hBondsDirty.current = false
 
-        if(currentCentralCid.current !== residueCid){
-            currentCentralCid.current = residueCid
+            const visibleMolecules = props.molecules.filter(molecule => molecule.isVisible && molecule.hasVisibleBuffers())
+            if (visibleMolecules.length === 0) {
+                busyDrawingHBonds.current = false
+                return
+            }
+
+            const response = await props.commandCentre.current.cootCommand({
+                returnType: "int_string_pair",
+                command: "get_active_atom",
+                commandArgs: [...glRef.current.origin.map(coord => -coord), visibleMolecules.map(molecule => molecule.molNo).join(':')]
+            })
+            const moleculeMolNo = response.data.result.result.first
+            const residueCid = response.data.result.result.second
+    
             const mol = props.molecules.find(molecule => molecule.molNo === moleculeMolNo)
-
-            if(mol) {
+            if(typeof mol !== 'undefined') {
                 const cidSplit0 = residueCid.split(" ")[0]
                 const cidSplit = cidSplit0.replace(/\/+$/, "").split("/")
                 const resnum = cidSplit[cidSplit.length-1]
                 const oneCid = cidSplit.join("/")+"-"+resnum
-                const sel = new window.CCP4Module.Selection(oneCid)
-                const hbonds = await props.commandCentre.current.cootCommand({
-                    returnType: "vector_hbond",
-                    command: "get_h_bonds",
-                    commandArgs: [mol.molNo,oneCid,false]
-                })
-                const hbs = hbonds.data.result.result
-                mol.drawHBonds(glRef,hbs,"originNeighbours",true)
+                mol.drawHBonds(glRef, oneCid, 'originNeighbours', true)
             }
-        }
-        busyGettingAtom.current = false
-    }
-
-    const clearHBonds = useCallback(async (e) => {
-        if(props.drawInteractions)
-            return
-        props.molecules.forEach(mol => {
-                mol.drawGemmiAtoms(glRef,[],"originNeighbours",[1.0, 0.0, 0.0, 1.0],true,true)
-        })
-    },[props.drawInteractions,props.molecules])
-
-    const handleOriginUpdate = useCallback(async (e) => {
-        if (!busyGettingAtom.current && props.drawInteractions) {
+            
+            busyDrawingHBonds.current = false
             drawHBonds()
         }
-    }, [props.commandCentre,props.drawInteractions,props.molecules])
+
+    }, [props.commandCentre, props.molecules])
+
+    const clearHBonds = useCallback(async (e) => {
+        if(!props.drawInteractions) {
+            props.molecules.forEach(mol => {
+                mol.drawGemmiAtomPairs(glRef, [], "originNeighbours", [1.0, 0.0, 0.0, 1.0], true, true)
+            })
+        }
+    }, [props.drawInteractions, props.molecules])
+
+    const handleOriginUpdate = useCallback(async (e) => {
+        hBondsDirty.current = true
+        if (!busyDrawingHBonds.current && props.drawInteractions) {
+            drawHBonds()
+        }
+    }, [drawHBonds, props.drawInteractions])
 
     useEffect(() => {
         if(props.drawInteractions){
-            handleOriginUpdate()
+            hBondsDirty.current = true
+            if (!busyDrawingHBonds.current) {
+                drawHBonds()
+            }
         } else {
             clearHBonds()
         }
-    }, [props.drawInteractions,props.molecules])
+    }, [props.drawInteractions, props.molecules])
 
     useEffect(() => {
         glRef.current.doPerspectiveProjection = props.doPerspectiveProjection
