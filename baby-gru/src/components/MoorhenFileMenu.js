@@ -10,9 +10,6 @@ import { getBackupLabel } from "../utils/MoorhenTimeCapsule"
 export const MoorhenFileMenu = (props) => {
 
     const { changeMolecules, changeMaps, commandCentre, glRef } = props;
-    const [overlayVisible, setOverlayVisible] = useState(false)
-    const [overlayContent, setOverlayContent] = useState(<></>)
-    const [overlayTarget, setOverlayTarget] = useState(null)
     const [popoverIsShown, setPopoverIsShown] = useState(false)
     const [remoteSource, setRemoteSource] = useState("PDBe")
     const [isValidPdbId, setIsValidPdbId] = useState(true)
@@ -510,28 +507,6 @@ export const MoorhenFileMenu = (props) => {
                     <MoorhenDeleteEverythingMenuItem {...menuItemProps} />
                 </div>
         </NavDropdown>
-
-
-
-        <Overlay
-            target={overlayTarget}
-            show={overlayVisible}
-            placement={"right"}
-        >
-            {({ placement, arrowProps, show: _show, popper, ...props }) => (
-                <div
-                    {...props}
-                    style={{
-                        position: 'absolute',
-                        marginBottom: '0.5rem',
-                        marginLeft: '1rem',
-                        borderRadius: 3,
-                        ...props.style,
-                    }}
-                >{overlayContent}
-                </div>
-            )}
-        </Overlay>
 
         <Modal show={showBackupsModal} onHide={() => setShowBackupsModal(false)}>
             <Modal.Header closeButton>
