@@ -266,7 +266,7 @@ export const MoorhenContextMenu = (props) => {
     setOpacity(0.5)
     setOverrideMenuContents(
       <Draggable>
-        <Card style={{position: 'absolute', width: '15rem'}} onMouseOver={() => setOpacity(1)} onMouseOut={() => setOpacity(0.5)}>
+        <Card style={{position: 'absolute', width: '15rem', cursor: 'move'}} onMouseOver={() => setOpacity(1)} onMouseOut={() => setOpacity(0.5)}>
           <Card.Header>Accept rotate/translate ?</Card.Header>
           <Card.Body style={{ alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
             <em>{"Hold <Shift><Alt> to translate"}</em>
@@ -323,7 +323,7 @@ export const MoorhenContextMenu = (props) => {
       const rotamerProbability = rotamerInfo.data.result.result.richardson_probability
 
       return <Draggable>
-              <Card style={{position: 'absolute', width: '15rem'}} onMouseOver={() => setOpacity(1)} onMouseOut={() => setOpacity(0.5)}>
+              <Card style={{position: 'absolute', width: '15rem', cursor: 'move'}} onMouseOver={() => setOpacity(1)} onMouseOut={() => setOpacity(0.5)}>
                 <Card.Header>Accept new rotamer ?</Card.Header>
                 <Card.Body style={{ alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
                 <span>Current rotamer: {rotamerName} ({rotamerRank+1}<sup>{rotamerRank === 0 ? 'st' : rotamerRank === 1 ? 'nd' : rotamerRank === 2 ? 'rd' : 'th'}</sup>)</span>
