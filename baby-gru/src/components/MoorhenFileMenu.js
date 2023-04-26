@@ -495,7 +495,7 @@ export const MoorhenFileMenu = (props) => {
                     </MenuItem>
 
                     <MenuItem id='save-session-menu-item' variant="success" onClick={createBackup} disabled={!props.enableTimeCapsule}>
-                        Save molecule backup
+                        Save backup
                     </MenuItem>
                     
                     <MoorhenBackupsMenuItem {...menuItemProps} disabled={!props.enableTimeCapsule} setShowBackupsModal={setShowBackupsModal} loadSessionJSON={loadSessionJSON} />
