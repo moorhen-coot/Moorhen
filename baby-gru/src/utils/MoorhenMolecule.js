@@ -1302,10 +1302,11 @@ const gemmiAtomPairsToCylindersInfo = (atoms, size, colourScheme, labelled=false
     totInstance_colours.push(thisInstance_colours)
     totInstanceUseColours.push(true)
     totInstancePrimTypes.push("TRIANGLES")
-    totTextPrimTypes.push("TEXTLABELS")
+    if(labelled)
+        totTextPrimTypes.push("TEXTLABELS")
     
-
-    return {
+    if(labelled)
+        return {
             prim_types: [totInstancePrimTypes,totTextPrimTypes],
             idx_tri: [totIdxs,totTextIdxs],
             vert_tri: [totPos,totTextPrimPos],
@@ -1316,7 +1317,19 @@ const gemmiAtomPairsToCylindersInfo = (atoms, size, colourScheme, labelled=false
             instance_sizes: [totInstance_sizes,[]],
             instance_origins: [totInstance_origins,[]],
             instance_orientations: [totInstance_orientations,[]]
-   }
+        }
+    else
+        return {
+            prim_types: [totInstancePrimTypes],
+            idx_tri: [totIdxs],
+            vert_tri: [totPos],
+            norm_tri: [totNorm],
+            col_tri: [totInstance_colours],
+            instance_use_colors: [totInstanceUseColours],
+            instance_sizes: [totInstance_sizes],
+            instance_origins: [totInstance_origins],
+            instance_orientations: [totInstance_orientations]
+        }
     
 }
 
@@ -1950,7 +1963,7 @@ MoorhenMolecule.prototype.unhideAll = async function(glRef) {
     return Promise.resolve(result)
 }
 
-MoorhenMolecule.prototype.drawHBonds = async function(glRef,hbs) {
+MoorhenMolecule.prototype.drawHBonds = async function(glRef,hbs,labelled=false) {
     let selectedGemmiAtomsPairs = [];
     for(let ihb=0;ihb<hbs.length;ihb++){
         const donor = hbs[ihb].donor
@@ -2002,7 +2015,7 @@ MoorhenMolecule.prototype.drawHBonds = async function(glRef,hbs) {
     }
 
     if(selectedGemmiAtomsPairs.length>0){
-        this.drawGemmiAtoms(glRef,selectedGemmiAtomsPairs,"originNeighbours",[1.0, 0.0, 0.0, 1.0],true,true)
+        this.drawGemmiAtoms(glRef,selectedGemmiAtomsPairs,"originNeighbours",[1.0, 0.0, 0.0, 1.0],labelled,true)
     }
 }
 

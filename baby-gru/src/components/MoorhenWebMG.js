@@ -87,7 +87,7 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
                     commandArgs: [mol.molNo,oneCid,false]
                 })
                 const hbs = hbonds.data.result.result
-                mol.drawHBonds(glRef,hbs)
+                mol.drawHBonds(glRef,hbs,true)
             }
         }
         busyGettingAtom.current = false
