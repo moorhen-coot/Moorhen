@@ -450,7 +450,7 @@ const vectorHBondToJSArray = (HBondData) => {
     const hbondDataSize = HBondData.size()
     for(let ib=0; ib<hbondDataSize; ib++){
         const hb = HBondData.get(ib)
-        const o = {
+        hbdata.push({
             hb_hydrogen: hb.hb_hydrogen,
             donor: hb.donor,
             acceptor: hb.acceptor,
@@ -463,10 +463,7 @@ const vectorHBondToJSArray = (HBondData) => {
             ligand_atom_is_donor: hb.ligand_atom_is_donor,
             hydrogen_is_ligand_atom: hb.hydrogen_is_ligand_atom,
             bond_has_hydrogen_flag: hb.bond_has_hydrogen_flag,
-        }
-        // FIXME: Need to test whether this is necessary once the hb is available
-        // hb.delete()
-        hbdata.push(o)
+        })
     }
     HBondData.delete()
     return hbdata

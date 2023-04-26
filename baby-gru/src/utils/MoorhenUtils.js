@@ -3,6 +3,8 @@ import { Tooltip } from "@mui/material";
 import { v4 as uuidv4 } from 'uuid';
 import { hexToRgb } from "@mui/material";
 import localforage from 'localforage';
+import * as vec3 from 'gl-matrix/vec3';
+import * as mat3 from 'gl-matrix/mat3';
 
 export function guid(){
     var d = Date.now();
@@ -663,4 +665,244 @@ export const createLocalStorageInstance = (name, empty=false) => {
         instance.clear()
      }
      return instance
+}
+
+
+export const getDashedCylinder = (nsteps, cylinder_accu) => {
+    let cylinderCache = {}
+
+    if([nsteps,cylinder_accu] in cylinderCache){
+        return cylinderCache[[nsteps,cylinder_accu]]
+    }
+    let thisPos = []
+    let thisNorm = []
+    let thisIdxs = []
+
+    let ipos=0
+    let maxIdx = 0
+
+    const dash_step = 1.0 / nsteps / 2.0
+
+    for(let i=0; i<nsteps; i++,ipos+=2){
+        const z = ipos*dash_step;
+        const zp1 = (ipos+1)*dash_step;
+        for(let j=0;j<360;j+=360/cylinder_accu){
+            const theta1 = j * Math.PI / 180.0;
+            const theta2 = (j+360/cylinder_accu) * Math.PI / 180.0;
+            const x1 = Math.sin(theta1);
+            const y1 = Math.cos(theta1);
+            const x2 = Math.sin(theta2);
+            const y2 = Math.cos(theta2);
+            thisNorm.push(...[ x1, y1, 0.0])
+            thisNorm.push(...[ x1, y1, 0.0])
+            thisNorm.push(...[ x2, y2, 0.0])
+            thisNorm.push(...[ x2, y2, 0.0])
+            thisPos.push(...[ x1, y1, z])
+            thisPos.push(...[ x1, y1, zp1])
+            thisPos.push(...[ x2, y2, z])
+            thisPos.push(...[ x2, y2, zp1])
+            thisIdxs.push(...[ 0+maxIdx, 1+maxIdx, 2+maxIdx])
+            thisIdxs.push(...[ 1+maxIdx, 3+maxIdx, 2+maxIdx])
+            maxIdx += 4
+            thisPos.push(...[  x1,  y1, z])
+            thisPos.push(...[  x2,  y2, z])
+            thisPos.push(...[ 0.0, 0.0, z])
+            thisNorm.push(...[ 0.0, 0.0, 1.0])
+            thisNorm.push(...[ 0.0, 0.0, 1.0])
+            thisNorm.push(...[ 0.0, 0.0, 1.0])
+            thisIdxs.push(...[ 0+maxIdx, 2+maxIdx, 1+maxIdx])
+            maxIdx += 3
+            thisPos.push(...[  x1,  y1, zp1])
+            thisPos.push(...[  x2,  y2, zp1])
+            thisPos.push(...[ 0.0, 0.0, zp1])
+            thisNorm.push(...[ 0.0, 0.0, -1.0])
+            thisNorm.push(...[ 0.0, 0.0, -1.0])
+            thisNorm.push(...[ 0.0, 0.0, -1.0])
+            thisIdxs.push(...[ 0+maxIdx, 1+maxIdx, 2+maxIdx])
+            maxIdx += 3
+        }
+    }
+
+    cylinderCache[[nsteps,cylinder_accu]] = [thisPos, thisNorm, thisIdxs]
+    return cylinderCache[[nsteps,cylinder_accu]]
+}
+
+export const gemmiAtomPairsToCylindersInfo = (atoms, size, colourScheme, labelled=false) => {
+
+    let atomPairs = atoms;
+
+    let totIdxs = []
+    let totPos = []
+    let totNorm = []
+    let totInstance_sizes = []
+    let totInstance_colours = []
+    let totInstance_origins = []
+    let totInstance_orientations = []
+    let totInstanceUseColours = []
+    let totInstancePrimTypes = []
+    
+    const [thisPos, thisNorm, thisIdxs] = getDashedCylinder(10,8);
+
+    let thisInstance_sizes = []
+    let thisInstance_colours = []
+    let thisInstance_origins = []
+    let thisInstance_orientations = []
+
+    let totTextPrimTypes = []
+    let totTextIdxs = []
+    let totTextPrimPos = []
+    let totTextPrimNorm = []
+    let totTextPrimCol = []
+    let totTextLabels = []
+    
+
+    for (let iat = 0; iat < atomPairs.length; iat++) {
+        const at0 = atomPairs[iat][0];
+        const at1 = atomPairs[iat][1];
+        let ab = vec3.create()
+        let midpoint = vec3.create()
+
+        vec3.set(ab,at0.pos[0]-at1.pos[0],at0.pos[1]-at1.pos[1],at0.pos[2]-at1.pos[2])
+        vec3.set(midpoint,0.5*(at0.pos[0]+at1.pos[0]),0.5*(at0.pos[1]+at1.pos[1]),0.5*(at0.pos[2]+at1.pos[2]))
+        const l = vec3.length(ab)
+
+        totTextLabels.push(l.toFixed(2))
+        totTextIdxs.push(iat) // Meaningless, I think
+        totTextPrimNorm.push(...[0,0,1]) // Also meaningless, I think
+        totTextPrimPos.push(...[midpoint[0],midpoint[1],midpoint[2]])
+
+        if(l>4.0||l<1.8) continue;
+
+        for (let ip = 0; ip < colourScheme[`${at0.serial}`].length; ip++) {
+            thisInstance_colours.push(colourScheme[`${at0.serial}`][ip])
+            totTextPrimCol.push(colourScheme[`${at0.serial}`][ip])
+        }
+        thisInstance_origins.push(...at0.pos)
+        thisInstance_sizes.push(...[size,size,l])
+        let v = vec3.create()
+        let au = vec3.create()
+        let a = vec3.create()
+        let b = vec3.create()
+        let aup = at0.pos.map((v, i) => v - at1.pos[i])
+        vec3.set(au,...aup)
+        vec3.normalize(a,au)
+        vec3.set(b,0.0,0.0,-1.0)
+        vec3.cross(v,a,b)
+        const c = vec3.dot(a,b)
+        if(Math.abs(c+1.0)<1e-4){
+            thisInstance_orientations.push(...[
+                    -1.0,  0.0,  0.0, 0.0,
+                     0.0,  1.0,  0.0, 0.0,
+                     0.0,  0.0, -1.0, 0.0,
+                     0.0,  0.0,  0.0, 1.0,
+            ])
+        } else {
+            const s = vec3.length(v)
+            let k = mat3.create()
+            k.set([
+              0.0, -v[2],  v[1],
+             v[2],   0.0, -v[0],
+            -v[1],  v[0],   0.0,
+            ])
+            let kk = mat3.create()
+            mat3.multiply(kk,k,k)
+            let sk = mat3.create()
+            mat3.multiplyScalar(sk,k,1.0)
+            let omckk = mat3.create()
+            mat3.multiplyScalar(omckk,kk,1.0/(1.0+c))
+            let r = mat3.create()
+            r.set([
+               1.0, 0.0, 0.0,
+               0.0, 1.0, 0.0,
+               0.0, 0.0, 1.0,
+            ])
+            mat3.add(r,r,sk)
+            mat3.add(r,r,omckk)
+            thisInstance_orientations.push(...[
+                    r[0], r[1], r[2], 1.0,
+                    r[3], r[4], r[5], 1.0,
+                    r[6], r[7], r[8], 1.0,
+                     0.0,  0.0,  0.0, 1.0,
+            ])
+        }
+    }
+
+    totNorm.push(thisNorm)
+    totPos.push(thisPos)
+    totIdxs.push(thisIdxs)
+    totInstance_sizes.push(thisInstance_sizes)
+    totInstance_origins.push(thisInstance_origins)
+    totInstance_orientations.push(thisInstance_orientations)
+    totInstance_colours.push(thisInstance_colours)
+    totInstanceUseColours.push(true)
+    totInstancePrimTypes.push("TRIANGLES")
+    if(labelled)
+        totTextPrimTypes.push("TEXTLABELS")
+    
+    if(labelled)
+        return {
+            prim_types: [totInstancePrimTypes,totTextPrimTypes],
+            idx_tri: [totIdxs,totTextIdxs],
+            vert_tri: [totPos,totTextPrimPos],
+            norm_tri: [totNorm,totTextPrimNorm],
+            col_tri: [totInstance_colours,totTextPrimCol],
+            label_tri: [[],totTextLabels],
+            instance_use_colors: [totInstanceUseColours,[false]],
+            instance_sizes: [totInstance_sizes,[]],
+            instance_origins: [totInstance_origins,[]],
+            instance_orientations: [totInstance_orientations,[]]
+        }
+    else
+        return {
+            prim_types: [totInstancePrimTypes],
+            idx_tri: [totIdxs],
+            vert_tri: [totPos],
+            norm_tri: [totNorm],
+            col_tri: [totInstance_colours],
+            instance_use_colors: [totInstanceUseColours],
+            instance_sizes: [totInstance_sizes],
+            instance_origins: [totInstance_origins],
+            instance_orientations: [totInstance_orientations]
+        }
+    
+}
+
+export const gemmiAtomsToCirclesSpheresInfo = (atoms, size, primType, colourScheme) => {
+
+    let sphere_sizes = [];
+    let sphere_col_tri = [];
+    let sphere_vert_tri = [];
+    let sphere_idx_tri = [];
+    let sphere_atoms = [];
+
+    for (let iat = 0; iat < atoms.length; iat++) {
+        sphere_idx_tri.push(iat);
+        sphere_vert_tri.push(atoms[iat].pos[0]);
+        sphere_vert_tri.push(atoms[iat].pos[1]);
+        sphere_vert_tri.push(atoms[iat].pos[2]);
+        for (let ip = 0; ip < colourScheme[`${atoms[iat].serial}`].length; ip++) {
+            sphere_col_tri.push(colourScheme[`${atoms[iat].serial}`][ip])
+        }
+        sphere_sizes.push(size);
+        let atom = {};
+        atom["x"] = atoms[iat].pos[0];
+        atom["y"] = atoms[iat].pos[1];
+        atom["z"] = atoms[iat].pos[2];
+        atom["tempFactor"] = atoms[iat].b_iso;
+        atom["charge"] = atoms[iat].charge;
+        atom["symbol"] = atoms[iat].element;
+        atom["label"] = ""
+        sphere_atoms.push(atom);
+    }
+
+    const spherePrimitiveInfo = {
+        atoms: [[sphere_atoms]],
+        sizes: [[sphere_sizes]],
+        col_tri: [[sphere_col_tri]],
+        norm_tri: [[[]]],
+        vert_tri: [[sphere_vert_tri]],
+        idx_tri: [[sphere_idx_tri]],
+        prim_types: [[primType]]
+    }
+    return spherePrimitiveInfo;
 }

@@ -276,7 +276,7 @@ export const MoorhenColourRules = (props) => {
                 onMouseOver={() => setOpacity(1)}
                 onMouseOut={() => setOpacity(0.5)}
                 >
-            <Card.Header style={{ justifyContent: 'space-between', display: 'flex', alignItems:'center'}}>
+            <Card.Header style={{ justifyContent: 'space-between', display: 'flex', cursor: 'move', alignItems:'center'}}>
                 Set molecule colour rules
                 <IconButton style={{margin: '0.1rem', padding: '0.1rem'}} onClick={() => props.setShowColourRulesToast(false)}>
                     <CloseOutlined/>
