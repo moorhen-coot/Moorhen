@@ -1885,7 +1885,6 @@ class MGWebGL extends Component {
                         self.doClick(evt, self);
                         evt.stopPropagation();
                     } else if (evt.which === 2) {
-                        self.doMiddleClick(evt, self);
                         evt.stopPropagation();    
                     } else {
                         self.doRightClick(evt, self);
@@ -10839,7 +10838,7 @@ class MGWebGL extends Component {
         const event_x = event.pageX;
         const event_y = event.pageY;
         self.init_y = event.pageY;
-        if (self.keysDown['center_atom']) {
+        if (self.keysDown['center_atom']||event.which===2) {
             if(Math.abs(event_x-self.mouseDown_x)<5 && Math.abs(event_y-self.mouseDown_y)<5){
                 if(self.displayBuffers.length>0){
                     const [minidx,minj,mindist] = self.getAtomFomMouseXY(event,self);
@@ -11841,7 +11840,7 @@ class MGWebGL extends Component {
         self.init_x = event.pageX;
         self.init_y = event.pageY;
 
-        if ((event.altKey && event.shiftKey) || (self.mouseDownButton === 2 && event.shiftKey)) {
+        if ((event.altKey && event.shiftKey) || (self.mouseDownButton === 1)) {
             let invQuat = quat4.create();
             quat4Inverse(self.myQuat, invQuat);
             let theMatrix = quatToMat4(invQuat);
