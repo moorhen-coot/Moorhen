@@ -1510,6 +1510,7 @@ class MGWebGL extends Component {
         this.textTex = null;
         this.origin = [0.0, 0.0, 0.0];
         this.radius = 60.0;
+        this.moveFactor = 0.9;
         this.init_x = null;
         this.init_y = null;
         this.mouseDown_x = null;
@@ -11840,14 +11841,16 @@ class MGWebGL extends Component {
         self.init_x = event.pageX;
         self.init_y = event.pageY;
 
+        const moveFactor = self.moveFactor / self.props.mouseSensitivityFactor;
+
         if ((event.altKey && event.shiftKey) || (self.mouseDownButton === 1)) {
             let invQuat = quat4.create();
             quat4Inverse(self.myQuat, invQuat);
             let theMatrix = quatToMat4(invQuat);
             let xshift = vec3.create();
-            vec3.set(xshift, self.dx / getDeviceScale(), 0, 0);
+            vec3.set(xshift, moveFactor * self.dx / getDeviceScale(), 0, 0);
             let yshift = vec3.create();
-            vec3.set(yshift, 0, self.dy / getDeviceScale(), 0);
+            vec3.set(yshift, 0, moveFactor * self.dy / getDeviceScale(), 0);
             vec3.transformMat4(xshift, xshift, theMatrix);
             vec3.transformMat4(yshift, yshift, theMatrix);
 
