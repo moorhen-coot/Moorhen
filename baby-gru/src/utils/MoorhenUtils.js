@@ -681,9 +681,9 @@ export const getDashedCylinder = (nsteps, cylinder_accu) => {
     let ipos=0
     let maxIdx = 0
 
-    const dash_step = 1.0 / nsteps / 2.0
+    const dash_step = 1.0 / nsteps
 
-    for(let i=0; i<nsteps; i++,ipos+=2){
+    for(let i=0; i<nsteps/2; i++,ipos+=2){
         const z = ipos*dash_step;
         const zp1 = (ipos+1)*dash_step;
         for(let j=0;j<360;j+=360/cylinder_accu){
@@ -741,7 +741,7 @@ export const gemmiAtomPairsToCylindersInfo = (atoms, size, colourScheme, labelle
     let totInstanceUseColours = []
     let totInstancePrimTypes = []
     
-    const [thisPos, thisNorm, thisIdxs] = getDashedCylinder(10,8);
+    const [thisPos, thisNorm, thisIdxs] = getDashedCylinder(15,8);
 
     let thisInstance_sizes = []
     let thisInstance_colours = []
