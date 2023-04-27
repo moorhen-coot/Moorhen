@@ -1512,6 +1512,8 @@ class MGWebGL extends Component {
         this.radius = 60.0;
         this.init_x = null;
         this.init_y = null;
+        this.mouseDown_x = null;
+        this.mouseDown_y = null;
         this.dx = null;
         this.dy = null;
         this.myQuat = null;
@@ -9462,11 +9464,7 @@ class MGWebGL extends Component {
                 });
                 document.dispatchEvent(atomClicked);
 
-                if (self.keysDown['center_atom']) {
-                    self.setOriginAnimated([-atx, -aty, -atz], true);
-                    self.reContourMaps();
-                    return;
-                } else if (self.keysDown['label_atom']) {
+                if (self.keysDown['label_atom']) {
                     if (self.labelledAtoms.length === 0 || (self.labelledAtoms[self.labelledAtoms.length - 1].length > 1)) {
                         self.labelledAtoms.push([]);
                         self.labelledAtoms[self.labelledAtoms.length - 1].push(theAtom);
@@ -10835,6 +10833,26 @@ class MGWebGL extends Component {
     }
 
     doMouseUp(event, self) {
+        if (this.activeMolecule == null) {
+            document.body.click()
+        }
+        const event_x = event.pageX;
+        const event_y = event.pageY;
+        self.init_y = event.pageY;
+        if (self.keysDown['center_atom']) {
+            if(Math.abs(event_x-self.mouseDown_x)<5 && Math.abs(event_y-self.mouseDown_y)<5){
+                if(self.displayBuffers.length>0){
+                    const [minidx,minj,mindist] = self.getAtomFomMouseXY(event,self);
+                    if(self.displayBuffers[minidx] && self.displayBuffers[minidx].atoms) {
+                        let atx = self.displayBuffers[minidx].atoms[minj].x;
+                        let aty = self.displayBuffers[minidx].atoms[minj].y;
+                        let atz = self.displayBuffers[minidx].atoms[minj].z;
+                        self.setOriginAnimated([-atx, -aty, -atz], true);
+                        self.reContourMaps();
+                    }
+                }
+            }
+        }
         self.mouseDown = false;
     }
 
@@ -11951,6 +11969,8 @@ class MGWebGL extends Component {
     doMouseDown(event, self) {
         self.init_x = event.pageX;
         self.init_y = event.pageY;
+        self.mouseDown_x = event.pageX;
+        self.mouseDown_y = event.pageY;
         self.mouseDown = true;
         self.mouseDownButton = event.button;
         self.mouseMoved = false;
