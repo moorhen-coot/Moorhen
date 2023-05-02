@@ -276,16 +276,16 @@ export const MoorhenMapCard = (props) => {
 
     }, [mapRadius, mapContourLevel, mapLitLines, mapSolid])
 
-    const increaseLevelButton = <IconButton onClick={() => handleWheelContourLevelCallback({detail: {factor: 1.1}})} style={{padding: 0}}>
+    const increaseLevelButton = <IconButton onClick={() => setMapContourLevel(mapContourLevel + parseFloat(props.contourWheelSensitivityFactor))} style={{padding: 0}}>
                                     <AddOutlined/>
                                 </IconButton>
-    const decreaseLevelButton = <IconButton onClick={() => handleWheelContourLevelCallback({detail: {factor: 0.9}})} style={{padding: 0}}>
+    const decreaseLevelButton = <IconButton onClick={() => setMapContourLevel(mapContourLevel - parseFloat(props.contourWheelSensitivityFactor))} style={{padding: 0}}>
                                     <RemoveOutlined/>
                                 </IconButton>
-    const increaseRadiusButton = <IconButton onClick={() => handleRadiusChangeCallback({detail: {factor: 2}})} style={{padding: 0}}>
+    const increaseRadiusButton = <IconButton onClick={() => setMapRadius(mapRadius + 2)} style={{padding: 0}}>
                                     <AddOutlined/>
                                 </IconButton>
-    const decreaseRadiusButton = <IconButton onClick={() => handleRadiusChangeCallback({detail: {factor: -2}})} style={{padding: 0}}>
+    const decreaseRadiusButton = <IconButton onClick={() => setMapRadius(mapRadius - 2)} style={{padding: 0}}>
                                     <RemoveOutlined/>
                                 </IconButton>
 
