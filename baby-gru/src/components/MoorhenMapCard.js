@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback, useMemo, Fragment } from "react";
-import { Card, Form, Button, Row, Col, DropdownButton, Stack, Dropdown, OverlayTrigger } from "react-bootstrap";
+import { Card, Form, Button, Row, Col, DropdownButton, Stack, Dropdown, OverlayTrigger, ToggleButton } from "react-bootstrap";
 import { doDownload, getNameLabel } from '../utils/MoorhenUtils';
-import { VisibilityOffOutlined, VisibilityOutlined, ExpandMoreOutlined, ExpandLessOutlined, DownloadOutlined, Settings, FileCopyOutlined } from '@mui/icons-material';
+import { VisibilityOffOutlined, VisibilityOutlined, ExpandMoreOutlined, ExpandLessOutlined, DownloadOutlined, Settings, FileCopyOutlined, RadioButtonCheckedOutlined, RadioButtonUncheckedOutlined } from '@mui/icons-material';
 import { MoorhenMapSettingsMenuItem, MoorhenDeleteDisplayObjectMenuItem, MoorhenRenameDisplayObjectMenuItem } from "./MoorhenMenuItem";
 import MoorhenSlider from "./MoorhenSlider";
 import { MenuItem, Tooltip } from "@mui/material";
@@ -337,19 +337,16 @@ export const MoorhenMapCard = (props) => {
             <Row className="align-items-center" style={{ height: '100%', justifyContent: 'between', display: 'flex', color: props.isDark ? 'white' : 'black' }}>
                 <Col className="border-left" style={{ justifyContent: 'left', display: 'flex' }}>
                     <Row>
-                        <Form.Check checked={props.map === props.activeMap}
-                            style={{ margin: '0' }}
-                            inline
-                            label={'Active'}
-                            name={`setActiveMap ${props.map.molNo}`}
+                        <ToggleButton
                             type="checkbox"
-                            variant="outline"
-                            onChange={(e) => {
-                                if (e.target.checked) {
-                                    props.setActiveMap(props.map)
-                                }
-                            }}
-                        />
+                            variant={props.isDark ? "outline-light" : "outline-primary"}
+                            checked={props.map === props.activeMap}
+                            style={{ margin: 0, justifyContent: 'space-betweeen', display: 'flex'}}
+                            onClick={evt => props.setActiveMap(props.map) }
+                        >
+                            {props.map === props.activeMap ? <RadioButtonCheckedOutlined/> : <RadioButtonUncheckedOutlined/>}
+                            <span style={{marginLeft: '0.5rem'}}>Active</span>
+                        </ToggleButton>
                     </Row>
                 </Col>
                 <Col>
