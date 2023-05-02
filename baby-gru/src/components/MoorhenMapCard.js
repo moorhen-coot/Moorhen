@@ -202,12 +202,23 @@ export const MoorhenMapCard = (props) => {
     }, [mapContourLevel, mapRadius])
 
     const handleWheelContourLevelCallback = useCallback(e => {
+        let newMapContourLevel
         if (props.map.cootContour && props.map.molNo === props.activeMap.molNo) {
             if (e.detail.factor > 1) {
-                setMapContourLevel(mapContourLevel + parseFloat(props.contourWheelSensitivityFactor))
+                newMapContourLevel = mapContourLevel + parseFloat(props.contourWheelSensitivityFactor)
             } else {
-                setMapContourLevel(mapContourLevel - parseFloat(props.contourWheelSensitivityFactor))
+                newMapContourLevel = mapContourLevel - parseFloat(props.contourWheelSensitivityFactor)
             }
+            
+            setMapContourLevel(newMapContourLevel)
+            props.setToastContent(
+                <h5 style={{margin: 0}}>
+                    <span>
+                        {`Level: ${newMapContourLevel.toFixed(2)} ${props.map.mapRmsd ? '(' + (newMapContourLevel / props.map.mapRmsd).toFixed(2) + ' rmsd)' : ''}`}
+                    </span>
+                </h5>
+            )
+    
         }
     }, [mapContourLevel, mapRadius, props.activeMap?.molNo, props.map.molNo, props.map.cootContour])
 
