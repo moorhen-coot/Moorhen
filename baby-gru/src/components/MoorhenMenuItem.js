@@ -1765,7 +1765,7 @@ export const MoorhenLightingMenuItem = (props) => {
         }
     }, [props.glRef.current.specularPower,props.glRef.current.light_positions,props.glRef.current.light_colours_diffuse,props.glRef.current.light_colours_specular,props.glRef.current.light_colours_ambient])
 
-    const panelContent = <div style={{ minWidth: "20rem" }}>
+    const panelContent = <div>
         <MoorhenSlider minVal={0.0} maxVal={1.0} logScale={false}
             sliderTitle="Diffuse"
             initialValue={props.glRef.current.light_colours_diffuse[0]}
@@ -1837,7 +1837,7 @@ export const MoorhenClipFogMenuItem = (props) => {
         }
     }, [props.glRef.current.gl_clipPlane, props.glRef.current.gl_clipPlane1[3], props.glRef.current.gl_clipPlane0[3], props.glRef.current.gl_fog_start, props.glRef.current.gl_fog_end])
 
-    const panelContent = <div style={{ minWidth: "20rem" }}>
+    const panelContent = <div>
         <MoorhenSlider minVal={0.1} maxVal={1000} logScale={true}
             sliderTitle="Front clip"
             initialValue={props.glRef.current.fogClipOffset + props.glRef.current.gl_clipPlane0[3]}
@@ -1874,14 +1874,14 @@ export const MoorhenClipFogMenuItem = (props) => {
                 props.glRef.current.drawScene()
                 setZfogBack(newValue)
             }} />
-        <InputGroup style={{ paddingLeft: '0.1rem', paddingBottom: '0.5rem', width: '25rem' }}>
+        <InputGroup style={{ paddingLeft: '0.1rem', paddingBottom: '0.5rem' }}>
             <Form.Check
                 type="switch"
                 checked={props.resetClippingFogging}
                 onChange={() => { props.setResetClippingFogging(!props.resetClippingFogging) }}
                 label="Reset clipping and fogging on zoom" />
         </InputGroup>
-        <InputGroup style={{ paddingLeft: '0.1rem', paddingBottom: '0.5rem', width: '25rem' }}>
+        <InputGroup style={{ paddingLeft: '0.1rem', paddingBottom: '0.5rem' }}>
             <Form.Check
                 type="switch"
                 checked={props.clipCap}
