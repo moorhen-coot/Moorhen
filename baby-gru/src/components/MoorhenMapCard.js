@@ -1,10 +1,10 @@
 import { useEffect, useState, useRef, useCallback, useMemo, Fragment } from "react";
 import { Card, Form, Button, Row, Col, DropdownButton, Stack, Dropdown, OverlayTrigger, ToggleButton } from "react-bootstrap";
 import { doDownload, getNameLabel } from '../utils/MoorhenUtils';
-import { VisibilityOffOutlined, VisibilityOutlined, ExpandMoreOutlined, ExpandLessOutlined, DownloadOutlined, Settings, FileCopyOutlined, RadioButtonCheckedOutlined, RadioButtonUncheckedOutlined } from '@mui/icons-material';
+import { VisibilityOffOutlined, VisibilityOutlined, ExpandMoreOutlined, ExpandLessOutlined, DownloadOutlined, Settings, FileCopyOutlined, RadioButtonCheckedOutlined, RadioButtonUncheckedOutlined, AddOutlined, RemoveOutlined } from '@mui/icons-material';
 import { MoorhenMapSettingsMenuItem, MoorhenDeleteDisplayObjectMenuItem, MoorhenRenameDisplayObjectMenuItem } from "./MoorhenMenuItem";
 import MoorhenSlider from "./MoorhenSlider";
-import { MenuItem, Tooltip } from "@mui/material";
+import { IconButton, MenuItem, Tooltip } from "@mui/material";
 import { SketchPicker } from "react-color";
 
 export const MoorhenMapCard = (props) => {
@@ -276,6 +276,19 @@ export const MoorhenMapCard = (props) => {
 
     }, [mapRadius, mapContourLevel, mapLitLines, mapSolid])
 
+    const increaseLevelButton = <IconButton onClick={() => handleWheelContourLevelCallback({detail: {factor: 1.1}})} style={{padding: 0}}>
+                                    <AddOutlined/>
+                                </IconButton>
+    const decreaseLevelButton = <IconButton onClick={() => handleWheelContourLevelCallback({detail: {factor: 0.9}})} style={{padding: 0}}>
+                                    <RemoveOutlined/>
+                                </IconButton>
+    const increaseRadiusButton = <IconButton onClick={() => handleRadiusChangeCallback({detail: {factor: 2}})} style={{padding: 0}}>
+                                    <AddOutlined/>
+                                </IconButton>
+    const decreaseRadiusButton = <IconButton onClick={() => handleRadiusChangeCallback({detail: {factor: -2}})} style={{padding: 0}}>
+                                    <RemoveOutlined/>
+                                </IconButton>
+
     const getMapColourSelector = () => {
         if (mapColour === null) {
             return null
@@ -352,12 +365,12 @@ export const MoorhenMapCard = (props) => {
                 <Col>
                     <Form.Group controlId="contouringLevel" className="mb-3">
                         <span>{`Level: ${mapContourLevel.toFixed(2)} ${props.map.mapRmsd ? '(' + (mapContourLevel / props.map.mapRmsd).toFixed(2) + ' rmsd)' : ''}`}</span>
-                        <MoorhenSlider minVal={0.01} maxVal={5} logScale={true} showSliderTitle={false} isDisabled={!cootContour} initialValue={props.initialContour} externalValue={mapContourLevel} setExternalValue={setMapContourLevel} />
+                        <MoorhenSlider minVal={0.01} maxVal={5} showMinMaxVal={false} decrementButton={decreaseLevelButton} incrementButton={increaseLevelButton} logScale={true} showSliderTitle={false} isDisabled={!cootContour} initialValue={props.initialContour} externalValue={mapContourLevel} setExternalValue={setMapContourLevel} />
                     </Form.Group>
                 </Col>
                 <Col>
                     <Form.Group controlId="contouringRadius" className="mb-3">
-                        <MoorhenSlider minVal={0.01} maxVal={100} logScale={false} sliderTitle="Radius" decimalPlaces={2} isDisabled={!cootContour} initialValue={props.initialRadius} externalValue={mapRadius} setExternalValue={setMapRadius} />
+                        <MoorhenSlider minVal={0.01} maxVal={100} showMinMaxVal={false} decrementButton={decreaseRadiusButton} incrementButton={increaseRadiusButton} logScale={false} sliderTitle="Radius" decimalPlaces={2} isDisabled={!cootContour} initialValue={props.initialRadius} externalValue={mapRadius} setExternalValue={setMapRadius} />
                     </Form.Group>
                 </Col>
             </Row>

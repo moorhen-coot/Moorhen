@@ -2,6 +2,7 @@ import * as React from 'react';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Slider from '@mui/material/Slider';
+import { AddOutlined, RemoveOutlined } from '@mui/icons-material';
 
 export default function MoorhenSlider(props) {
     
@@ -47,15 +48,17 @@ export default function MoorhenSlider(props) {
             <span>{props.sliderTitle}: {props.allowFloats ? props.externalValue.toFixed(props.decimalPlaces) : props.externalValue}</span>        
             }
             <Stack spacing={2} direction="row" sx={{ mb: 1 }} alignItems="center">
-                {props.minVal}
-                    <Slider disabled={props.isDisabled} value={value} onChange={handleChange}/>
-                {props.maxVal}
+                {props.showMinMaxVal && props.minVal}
+                {props.decrementButton}
+                <Slider disabled={props.isDisabled} value={value} onChange={handleChange}/>
+                {props.incrementButton}
+                {props.showMinMaxVal && props.maxVal}
             </Stack>
         </Box>
     );
 }
 
 MoorhenSlider.defaultProps={
-    minVal: 0, maxVal: 100, setExternalValue: ()=>{}, logScale: false, 
-    isDisabled: false, allowFloats: true, showSliderTitle: true, decimalPlaces: 3
+    minVal: 0, maxVal: 100, setExternalValue: ()=>{}, logScale: false, showMinMaxVal: true, incrementButton: null,
+    isDisabled: false, allowFloats: true, showSliderTitle: true, decimalPlaces: 3,  decrementButton: null
 }
