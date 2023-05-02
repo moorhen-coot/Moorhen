@@ -346,25 +346,21 @@ export const MoorhenMapCard = (props) => {
                 </Col>
             </Stack>
         </Card.Header>
-        <Card.Body style={{ display: isCollapsed ? 'none' : '' }}>
-            <Row className="align-items-center" style={{ height: '100%', justifyContent: 'between', display: 'flex', color: props.isDark ? 'white' : 'black' }}>
-                <Col className="border-left" style={{ justifyContent: 'left', display: 'flex' }}>
-                    <Row>
-                        <ToggleButton
-                            type="checkbox"
-                            variant={props.isDark ? "outline-light" : "outline-primary"}
-                            checked={props.map === props.activeMap}
-                            style={{ margin: 0, justifyContent: 'space-betweeen', display: 'flex'}}
-                            onClick={evt => props.setActiveMap(props.map) }
-                        >
-                            {props.map === props.activeMap ? <RadioButtonCheckedOutlined/> : <RadioButtonUncheckedOutlined/>}
-                            <span style={{marginLeft: '0.5rem'}}>Active</span>
-                        </ToggleButton>
-                    </Row>
-                </Col>
+        <Card.Body style={{ display: isCollapsed ? 'none' : '', padding: '0.5rem' }}>
+            <Stack direction='horizontal' gap={4}>
+                <ToggleButton
+                    type="checkbox"
+                    variant={props.isDark ? "outline-light" : "outline-primary"}
+                    checked={props.map === props.activeMap}
+                    style={{ marginLeft: '0.1rem', marginRight: '0.5rem', justifyContent: 'space-betweeen', display: 'flex'}}
+                    onClick={evt => props.setActiveMap(props.map) }
+                >
+                    {props.map === props.activeMap ? <RadioButtonCheckedOutlined/> : <RadioButtonUncheckedOutlined/>}
+                    <span style={{marginLeft: '0.5rem'}}>Active</span>
+                </ToggleButton>
                 <Col>
                     <Form.Group controlId="contouringLevel" className="mb-3">
-                        <span>{`Level: ${mapContourLevel.toFixed(2)} ${props.map.mapRmsd ? '(' + (mapContourLevel / props.map.mapRmsd).toFixed(2) + ' rmsd)' : ''}`}</span>
+                        <span>{`Lvl: ${mapContourLevel.toFixed(2)} ${props.map.mapRmsd ? '(' + (mapContourLevel / props.map.mapRmsd).toFixed(2) + ' rmsd)' : ''}`}</span>
                         <MoorhenSlider minVal={0.01} maxVal={5} showMinMaxVal={false} decrementButton={decreaseLevelButton} incrementButton={increaseLevelButton} logScale={true} showSliderTitle={false} isDisabled={!cootContour} initialValue={props.initialContour} externalValue={mapContourLevel} setExternalValue={setMapContourLevel} />
                     </Form.Group>
                 </Col>
@@ -373,7 +369,7 @@ export const MoorhenMapCard = (props) => {
                         <MoorhenSlider minVal={0.01} maxVal={100} showMinMaxVal={false} decrementButton={decreaseRadiusButton} incrementButton={increaseRadiusButton} logScale={false} sliderTitle="Radius" decimalPlaces={2} isDisabled={!cootContour} initialValue={props.initialRadius} externalValue={mapRadius} setExternalValue={setMapRadius} />
                     </Form.Group>
                 </Col>
-            </Row>
+            </Stack>
         </Card.Body>
     </Card >
 }
