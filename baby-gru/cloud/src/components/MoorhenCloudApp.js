@@ -140,18 +140,18 @@ export const MoorhenCloudApp = (props) => {
         return () => {
             document.removeEventListener("mapRadiusChanged", handleRadiusChangeCallback)
         }
-    }, [handleOriginUpdate])
+    }, [handleRadiusChangeCallback])
 
     useEffect(() => {
         document.addEventListener("wheelContourLevelChanged", handleWheelContourLevelCallback)
         return () => {
             document.removeEventListener("wheelContourLevelChanged", handleWheelContourLevelCallback)
         }
-    }, [handleOriginUpdate])
+    }, [handleWheelContourLevelCallback])
 
     useEffect(() => {
         if (props.viewOnly && maps.length > 0) {
-            maps.map(map => {
+            maps.forEach(map => {
                 map.doCootContour(
                     glRef, ...glRef.current.origin.map(coord => -coord), 13.0, 0.8
               )
