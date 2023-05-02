@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal, Button } from "react-bootstrap"
-import { doDownload } from "./utils/MoorhenUtils"
+import { doDownload, createLocalStorageInstance } from "./utils/MoorhenUtils"
 import { MoorhenTimeCapsule } from "./utils/MoorhenTimeCapsule"
 
 export class ErrorBoundary extends React.Component {
@@ -30,6 +30,7 @@ export class ErrorBoundary extends React.Component {
     
     async handleBackupDownload() {
         const timeCapsule = new MoorhenTimeCapsule()
+        timeCapsule.storageInstance = createLocalStorageInstance('Moorhen-TimeCapsule') 
         await timeCapsule.init()
         const backup = await timeCapsule.retrieveLastBackup()
         const sessionData = JSON.parse(backup)

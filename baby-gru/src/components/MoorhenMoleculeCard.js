@@ -22,9 +22,9 @@ export const MoorhenMoleculeCard = (props) => {
     const [clickedResidue, setClickedResidue] = useState(null);
     const [isCollapsed, setIsCollapsed] = useState(!props.defaultExpandDisplayCards);
     const [isVisible, setIsVisible] = useState(true)
-    const [bondWidth, setBondWidth] = useState(0.1)
-    const [atomRadiusBondRatio, setAtomRadiusBondRatio] = useState(1)
-    const [bondSmoothness, setBondSmoothness] = useState(props.defaultBondSmoothness)
+    const [bondWidth, setBondWidth] = useState(props.molecule.cootBondsOptions.width)
+    const [atomRadiusBondRatio, setAtomRadiusBondRatio] = useState(props.molecule.cootBondsOptions.atomRadiusBondRatio)
+    const [bondSmoothness, setBondSmoothness] = useState(props.molecule.cootBondsOptions.smoothness)
     const [surfaceSigma, setSurfaceSigma] = useState(4.4)
     const [surfaceLevel, setSurfaceLevel] = useState(4.0)
     const [surfaceRadius, setSurfaceRadius] = useState(5.0)
