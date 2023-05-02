@@ -10831,9 +10831,6 @@ class MGWebGL extends Component {
     }
 
     doMouseUp(event, self) {
-        if (this.activeMolecule == null) {
-            document.body.click()
-        }
         const event_x = event.pageX;
         const event_y = event.pageY;
         self.init_y = event.pageY;
