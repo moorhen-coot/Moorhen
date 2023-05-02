@@ -20,7 +20,8 @@ let print = (stuff) => {
     postMessage({ consoleMessage: JSON.stringify(stuff) })
 }
 
-const instancedMeshToMeshData = (instanceMesh, perm, toSpheres=false) => {
+const instancedMeshToMeshData = (instanceMesh, perm, toSpheres=false, maxZSize=10000.) => {
+    //maxZSize is arguably a hack to deal with overlong bonds. It is set to 5 incall to this function.
 
     let totIdxs = []
     let totPos = []
@@ -81,7 +82,7 @@ const instancedMeshToMeshData = (instanceMesh, perm, toSpheres=false) => {
         const Asize = As.size();
 
         let mult = 1.0
-        if(toSpheres) mult = 1.25
+        if(toSpheres) mult = 1.414
 
         if (Asize > 0) {
             for (let j = 0; j < Asize; j++) {
@@ -120,6 +121,13 @@ const instancedMeshToMeshData = (instanceMesh, perm, toSpheres=false) => {
         if (Bsize > 0) {
             for (let j = 0; j < Bsize; j++) {
                 const inst_data = Bs.get(j)
+
+                const instDataSize = inst_data.size
+                if(instDataSize[2]>maxZSize) continue;
+                thisInstance_sizes.push(instDataSize[0])
+                thisInstance_sizes.push(instDataSize[1])
+                thisInstance_sizes.push(instDataSize[2])
+
                 const instDataPosition = inst_data.position
                 thisInstance_origins.push(instDataPosition[0])
                 thisInstance_origins.push(instDataPosition[1])
@@ -130,11 +138,6 @@ const instancedMeshToMeshData = (instanceMesh, perm, toSpheres=false) => {
                 thisInstance_colours.push(instDataColour[1])
                 thisInstance_colours.push(instDataColour[2])
                 thisInstance_colours.push(instDataColour[3])
-
-                const instDataSize = inst_data.size
-                thisInstance_sizes.push(instDataSize[0])
-                thisInstance_sizes.push(instDataSize[1])
-                thisInstance_sizes.push(instDataSize[2])
 
                 const instDataOrientation = inst_data.orientation
 
@@ -925,7 +928,7 @@ onmessage = function (e) {
                     returnResult = instancedMeshToMeshData(cootResult,false,true)
                     break;
                 case 'instanced_mesh':
-                    returnResult = instancedMeshToMeshData(cootResult,false)
+                    returnResult = instancedMeshToMeshData(cootResult,false,false,5)
                     break;
                 case 'mesh_perm':
                     returnResult = simpleMeshToMeshData(cootResult,true)
