@@ -458,3 +458,11 @@ MoorhenMap.prototype.blur = async function (bFactor) {
         returnType: "status"
     })
 }
+
+MoorhenMap.prototype.mapMoleculeCentre = function () {
+    return this.commandCentre.current.cootCommand({
+        command: 'get_map_molecule_centre',
+        commandArgs: [this.molNo],
+        returnType: "map_molecule_centre_info_t"
+    })
+}

@@ -32,6 +32,7 @@
 #include "api/validation-information.hh"
 #include "coot-utils/g_triangle.hh"
 #include "coot-utils/vertex.hh"
+#include "coot-utils/coot-map-utils.hh"
 
 #include "mmdb_manager.h"
 #include "clipper/core/ramachandran.h"
@@ -313,6 +314,11 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("x", &clipper::Coord_orth::x)
     .function("y", &clipper::Coord_orth::y)
     .function("z", &clipper::Coord_orth::z)
+    ;
+    class_<coot::util::map_molecule_centre_info_t>("map_molecule_centre_info_t")
+    .property("success", &coot::util::map_molecule_centre_info_t::success)
+    .property("updated_centre", &coot::util::map_molecule_centre_info_t::updated_centre)
+    .property("suggested_contour_level", &coot::util::map_molecule_centre_info_t::suggested_contour_level)
     ;
     class_<clipper::Cell_descr>("Cell_descr")
     .constructor<const clipper::ftype&, const clipper::ftype&, const clipper::ftype&, const clipper::ftype&, const clipper::ftype&, const clipper::ftype&>()
@@ -639,6 +645,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("generate_self_restraints",&molecules_container_t::generate_self_restraints)
     .function("clear_extra_restraints",&molecules_container_t::clear_extra_restraints)
     .function("unmodelled_blobs",&molecules_container_t::unmodelled_blobs)
+    .function("get_map_molecule_centre",&molecules_container_t::get_map_molecule_centre)
+    .function("get_cell",&molecules_container_t::get_cell)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<bool>()
