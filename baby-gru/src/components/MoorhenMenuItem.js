@@ -1722,7 +1722,7 @@ export const MoorhenAboutMenuItem = (props) => {
             <li>Martin Noble</li>
             <li>Stuart McNicholas</li>
         </ul>
-        <p>Current version: 25th Jan 2023 10:31</p>
+        <p>Current version: 4th May 2023</p>
     </div>
 
     return <MoorhenMenuItem
