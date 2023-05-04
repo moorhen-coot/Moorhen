@@ -4,7 +4,7 @@ title: About
 permalink: /about/
 ---
 
-Coot development updates, screenshots and movies
+Moorhen development updates, screenshots and movies
 
 [//]: # # You can find the source code for Minima at GitHub:
 [//]: # # [jekyll][jekyll-organization] /
