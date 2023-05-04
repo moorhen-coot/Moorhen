@@ -140,7 +140,7 @@ More progress. Good stuff.
 
   - Look at the Ramachandran Plot in the draw. Notice that the red spots for the problematic residues have disappeared.
 
-**Navigation tip**: Use the middle mouse button click over an atom to put the centre of the residue at the centre of the screen. Use Alt left mouse to put the clicked atom at the centre of the screen.
+**Navigation tip**: Use the middle mouse button click over an atom to put the clicked atom at the centre of the screen. If you are using a trackpad, you can also hold Alt while clicking on an atom to achieve the same result.
 
 ## Real Space Refinement
 
@@ -238,7 +238,7 @@ What do we see? What should it be instead?
 
 OK, so let's mutate it:
 
-  - Use "Simple Mutate", change the type to "TYR (Y") and click on an atom in the residues A168.
+  - Use "Simple Mutate", change the type to "TYR (Y)" and click on an atom in the residues A168.
 
 (More Moorhen Points - yay).
 
