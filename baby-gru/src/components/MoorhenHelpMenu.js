@@ -1,6 +1,7 @@
 import { NavDropdown } from "react-bootstrap";
 import { useState } from "react";
 import { MoorhenAboutMenuItem } from "./MoorhenMenuItem";
+import { MenuItem } from "@mui/material";
 
 export const MoorhenHelpMenu = (props) => {
     const [popoverIsShown, setPopoverIsShown] = useState(false)
@@ -17,6 +18,7 @@ export const MoorhenHelpMenu = (props) => {
                     {/**<MoorhenSearchBar {...props}/>
                      *<hr></hr>
                     */}
+                     <MenuItem onClick={() => window.open('https://filomenosanchez.github.io/Moorhen/')}>Go to Moorhen blog...</MenuItem>
                     <MoorhenAboutMenuItem {...menuItemProps} />
             </NavDropdown >
         </>
