@@ -308,14 +308,16 @@ const floatArrayToJSArray = (floatArray) => {
 const mapMoleculeCentreInfoToJSObject = (mapMoleculeCentreInfo) => {
     //Takes a coot::util::map_molecule_centre_info and returns a javascript object that resembles it
     //Disposes of the coordOrth
+    const updatedCentre = mapMoleculeCentreInfo.updated_centre
     let returnResult = {
         updated_centre: [
-            mapMoleculeCentreInfo.updated_centre.x(),
-            mapMoleculeCentreInfo.updated_centre.y(),
-            mapMoleculeCentreInfo.updated_centre.z()],
+            updatedCentre.x(),
+            updatedCentre.y(),
+            updatedCentre.z()],
         success: mapMoleculeCentreInfo.success,
         suggested_contour_level: mapMoleculeCentreInfo.suggested_contour_level
     }
+    updatedCentre.delete()
     mapMoleculeCentreInfo.delete()
     return returnResult;
 }
