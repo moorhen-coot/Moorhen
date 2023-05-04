@@ -70,7 +70,7 @@ export const MoorhenApp = (props) => {
         setShowColourRulesToast, forwardControls: props.forwardControls
     }
 
-    return <MoorhenContainer {...collectedProps} devMode={true}/>
+    return <MoorhenContainer {...collectedProps}/>
 }
 
 MoorhenApp.defaultProps = {
