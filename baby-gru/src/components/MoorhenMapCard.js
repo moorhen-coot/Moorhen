@@ -72,6 +72,13 @@ export const MoorhenMapCard = (props) => {
         return props.changeMaps({ action: "Add", item: newMap })
     }
 
+    const handleCenterOnMap = async () => {
+        const response = await props.map.mapMoleculeCentre()
+        if (response.data.result.result.success) {
+            props.glRef.current.setOriginAnimated(response.data.result.result.updated_centre.map(coord => -coord))
+        }
+    }
+
     const actionButtons = {
         1: {
             label: cootContour ? "Hide map" : "Show map",
@@ -110,17 +117,11 @@ export const MoorhenMapCard = (props) => {
                 </Button>)
             },
         },
-        /*
         6: {
-            label: "Blur/sharpen map",
-            compressed: () => { return (<MenuItem key='sharpen-blur-map' variant="success" onClick={handleDuplicate}>Duplicate map</MenuItem>) },
-            expanded: () => {
-                return (<Button key='blur-map' size="sm" variant="outlined" onClick={handleDuplicate}>
-                    <FileCopyOutlined />
-                </Button>)
-            },
+            label: "Centre on map",
+            compressed: () => { return (<MenuItem key='centre-on-map'variant="success" onClick={handleCenterOnMap}>Centre on map</MenuItem>) },
+            expanded: null
         },
-        */
     }
 
     const getButtonBar = (sideBarWidth) => {
