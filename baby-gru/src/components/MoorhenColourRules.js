@@ -269,14 +269,14 @@ export const MoorhenColourRules = (props) => {
             </Card>
     }
 
-    return <Draggable>
+    return <Draggable handle=".handle">
         <Card 
                 bg='light'
                 style={{position: 'absolute', top: '5rem', left: '5rem', opacity: opacity, width: toastBodyWidth, display: props.showColourRulesToast ? '' : 'none'}}
                 onMouseOver={() => setOpacity(1)}
                 onMouseOut={() => setOpacity(0.5)}
                 >
-            <Card.Header style={{ justifyContent: 'space-between', display: 'flex', cursor: 'move', alignItems:'center'}}>
+            <Card.Header className="handle" style={{ justifyContent: 'space-between', display: 'flex', cursor: 'move', alignItems:'center'}}>
                 Set molecule colour rules
                 <IconButton style={{margin: '0.1rem', padding: '0.1rem'}} onClick={() => props.setShowColourRulesToast(false)}>
                     <CloseOutlined/>
