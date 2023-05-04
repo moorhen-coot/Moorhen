@@ -100,7 +100,7 @@ Take a look at the region... (You can slide the drawer closed for a better look)
 Hmmm... the carbonyl oxygen atoms are a bit close... Are there any other Ramachandran outliers in the area?
 
    - To measure the distance between atoms, hold M and click on an atom, then (with "M" still pressed) click
-     on another atom.
+     on another atom. Press C to  clear all atom labels and measurements.
 
    - In the drawer, click on **Models and maps**,
    - then click on the **Rama** box for this protein model.
@@ -189,14 +189,6 @@ _As we do so, Moorhen makes several updates. It moves the model, it updates the 
 
 Flipping a peptide to the correct orientation generally gives you 15-20 Moorhen points.
 
-Have a look around... At the end of the helix, residues A198 has an orange Ramachandran ball and a green difference map peak along the peptide. Let's flip that too while we are here.
-
-  - Click the "Flip Peptide" button and pick the "C" atom of A197.
-    You can use the key-bding "Shift Q" to flip the peptide when you hover of an atom of the residue and see golden balls.
-    
-
-_As before, the Rama balls update, the maps update (the green blob disappears), the R-factor updates and we get more Moorhen points._
-
 You will notice that that the Difference Map Peaks graph has been updated too - the leftmost peak has gone. Have a look at the next 12 or so peaks. What do you notice?
 
 ## Adding Waters
@@ -246,7 +238,7 @@ What do we see? What should it be instead?
 
 OK, so let's mutate it:
 
-  - Use "Simple Mutate", change the type to "TYR (Y") and click on an atom in the residues A169.
+  - Use "Simple Mutate", change the type to "TYR (Y") and click on an atom in the residues A168.
 
 (More Moorhen Points - yay).
 
