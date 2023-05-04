@@ -451,7 +451,7 @@ MoorhenMap.prototype.duplicate = async function () {
     return newMap.loadToCootFromMapData(reply.data.result.mapData, `Copy of ${this.name}`, this.isDifference)
 }
 
-MoorhenMap.prototype.blur = async function (bFactor) {
+MoorhenMap.prototype.blur = function (bFactor) {
     return this.commandCentre.current.cootCommand({
         command: 'sharpen_blur_map',
         commandArgs: [this.molNo, bFactor, true],
