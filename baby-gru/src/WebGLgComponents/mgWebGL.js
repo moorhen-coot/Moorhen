@@ -1566,8 +1566,10 @@ class MGWebGL extends Component {
         this.save_pixel_data = false;
         this.renderToTexture = false;
 
-        this.doShadow = false;
         this.doShadowDepthDebug = false;
+        this.doShadow = false;
+        if(this.doShadowDepthDebug)
+            this.doShadow = true;
 
         this.offScreenFramebuffer = null;
         this.useOffScreenBuffers = false;
@@ -7710,7 +7712,6 @@ class MGWebGL extends Component {
         //this.div.dispatchEvent(this.viewChangedEvent);
 
         if(this.doShadowDepthDebug&&this.doShadow){
-            console.log("Hello!!!!!!");
             this.gl.clearColor(1.0,1.0,0.0,1.0);
             this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
@@ -8159,9 +8160,104 @@ class MGWebGL extends Component {
                 nprims += triangleVertexIndexBuffer[j].numItems;
             }
 
+            //shaderProgramPerfectSpheres
+            for(let i = 0; i<16; i++)
+                this.gl.disableVertexAttribArray(i);
+
+            if (this.frag_depth_ext) {
+                let program = this.shaderProgramPerfectSpheres;
+                if (calculatingShadowMap) {
+                    program = this.shaderDepthShadowProgramPerfectSpheres;
+                }
+                if (false&&this.doShadow && !calculatingShadowMap) {
+                    program = this.shaderProgramPerfectSpheresShadow;
+                    this.gl.useProgram(program);
+                    this.setMatrixUniforms(program);
+                    this.setLightUniforms(program);
+                    this.gl.disableVertexAttribArray(program.vertexColourAttribute);
+                    this.gl.enableVertexAttribArray(program.vertexTextureAttribute);
+                    let ShadowMapLoc = this.gl.getUniformLocation(program, "ShadowMap");
+                    this.gl.uniform1i(ShadowMapLoc, 0);
+                    this.gl.activeTexture(this.gl.TEXTURE0);
+                    this.gl.bindTexture(this.gl.TEXTURE_2D, this.rttTextureDepth);
+                    //console.log("Shadowing perfect spheres "+ShadowMapLoc);
+                    this.gl.uniformMatrix4fv(program.textureMatrixUniform, false, this.textureMatrix);
+                } else {
+                    this.gl.useProgram(program);
+                    this.setMatrixUniforms(program);
+                    this.gl.disableVertexAttribArray(program.vertexColourAttribute);
+                    this.gl.enableVertexAttribArray(program.vertexPositionAttribute);
+                    if (!calculatingShadowMap) {
+                        this.setLightUniforms(program);
+                        this.gl.uniform1i(program.clipCap,this.clipCapPerfectSpheres);
+                        this.gl.enableVertexAttribArray(program.vertexNormalAttribute);
+                    }
+                    this.gl.enableVertexAttribArray(program.vertexTextureAttribute);
+                    this.gl.enableVertexAttribArray(program.vertexColourAttribute);
+                    this.gl.enableVertexAttribArray(program.offsetAttribute);
+                    this.gl.enableVertexAttribArray(program.sizeAttribute);
+                }
+
+                for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
+                    if (bufferTypes[j] === "PERFECT_SPHERES") {
+                        let buffer = this.imageBuffer;
+
+                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer.triangleVertexTextureBuffer[0]);
+                        this.gl.vertexAttribPointer(program.vertexTextureAttribute, buffer.triangleVertexTextureBuffer[0].itemSize, this.gl.FLOAT, false, 0, 0);
+
+                        if(typeof(program.vertexNormalAttribute!=="undefined") && program.vertexNormalAttribute!==null&&program.vertexNormalAttribute>-1){
+                            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer.triangleVertexNormalBuffer[0]);
+                            this.gl.vertexAttribPointer(program.vertexNormalAttribute, buffer.triangleVertexNormalBuffer[0].itemSize, this.gl.FLOAT, false, 0, 0);
+                        }
+
+                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer.triangleVertexPositionBuffer[0]);
+                        this.gl.vertexAttribPointer(program.vertexPositionAttribute, buffer.triangleVertexPositionBuffer[0].itemSize, this.gl.FLOAT, false, 0, 0);
+                        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, buffer.triangleVertexIndexBuffer[0]);
+                        let isphere;
+
+                        //pos,normal, texture, index in "buffer"
+                        //Instanced colour
+                        //Instanced size
+                        //Instanced offset
+                        this.gl.enableVertexAttribArray(program.offsetAttribute);
+                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleInstanceOriginBuffer[j]);
+                        this.gl.vertexAttribPointer(program.offsetAttribute, this.displayBuffers[idx].triangleInstanceOriginBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
+                        this.gl.enableVertexAttribArray(program.sizeAttribute);
+                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleInstanceSizeBuffer[j]);
+                        this.gl.vertexAttribPointer(program.sizeAttribute, this.displayBuffers[idx].triangleInstanceSizeBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
+                        this.gl.enableVertexAttribArray(program.vertexColourAttribute);
+                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleColourBuffer[j]);
+                        this.gl.vertexAttribPointer(program.vertexColourAttribute, this.displayBuffers[idx].triangleColourBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
+                        if (this.WEBGL2) {
+                            this.gl.vertexAttribDivisor(program.vertexColourAttribute, 1);
+                            this.gl.vertexAttribDivisor(program.sizeAttribute, 1);
+                            this.gl.vertexAttribDivisor(program.offsetAttribute, 1);
+                            this.gl.drawElementsInstanced(this.gl.TRIANGLE_FAN, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_INT, 0, this.displayBuffers[idx].triangleInstanceOriginBuffer[j].numItems);
+                            this.gl.vertexAttribDivisor(program.vertexColourAttribute, 0);
+                            this.gl.vertexAttribDivisor(program.sizeAttribute, 0);
+                            this.gl.vertexAttribDivisor(program.offsetAttribute, 0);
+                        } else {
+                            this.instanced_ext.vertexAttribDivisorANGLE(program.vertexColourAttribute, 1);
+                            this.instanced_ext.vertexAttribDivisorANGLE(program.sizeAttribute, 1);
+                            this.instanced_ext.vertexAttribDivisorANGLE(program.offsetAttribute, 1);
+                            this.instanced_ext.drawElementsInstancedANGLE(this.gl.TRIANGLE_FAN, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_INT, 0, this.displayBuffers[idx].triangleInstanceOriginBuffer[j].numItems);
+                            this.instanced_ext.vertexAttribDivisorANGLE(program.vertexColourAttribute, 0);
+                            this.instanced_ext.vertexAttribDivisorANGLE(program.sizeAttribute, 0);
+                            this.instanced_ext.vertexAttribDivisorANGLE(program.offsetAttribute, 0);
+                        }
+
+                    }
+                }
+
+                this.gl.enableVertexAttribArray(program.vertexColourAttribute);
+                this.gl.disableVertexAttribArray(program.vertexTextureAttribute);
+            }
+
             if (calculatingShadowMap)
                 continue; //Nothing else implemented
             //Cylinders here
+
+            //vertex attribute settings are likely wrong from here on...
 
             let sphereProgram = this.shaderProgramPointSpheres;
 
@@ -8579,101 +8675,6 @@ class MGWebGL extends Component {
                 if (symmetry) this.drawSymmetryPMV(symmetry, this.displayBuffers[idx], this.shaderProgramThickLines, this.gl.TRIANGLES, j);
 
                 nprims += triangleVertexIndexBuffer[j].numItems;
-            }
-
-            //shaderProgramPerfectSpheres
-            for(let i = 0; i<16; i++)
-                this.gl.disableVertexAttribArray(i);
-
-            if (this.frag_depth_ext) {
-                let program = this.shaderProgramPerfectSpheres;
-                if (false&&this.doShadow && !calculatingShadowMap) {
-                    program = this.shaderProgramPerfectSpheresShadow;
-                    this.gl.useProgram(program);
-                    this.setMatrixUniforms(program);
-                    this.setLightUniforms(program);
-                    this.gl.disableVertexAttribArray(program.vertexColourAttribute);
-                    this.gl.enableVertexAttribArray(program.vertexTextureAttribute);
-                    let ShadowMapLoc = this.gl.getUniformLocation(program, "ShadowMap");
-                    this.gl.uniform1i(ShadowMapLoc, 0);
-                    this.gl.activeTexture(this.gl.TEXTURE0);
-                    this.gl.bindTexture(this.gl.TEXTURE_2D, this.rttTextureDepth);
-                    //console.log("Shadowing perfect spheres "+ShadowMapLoc);
-                    this.gl.uniformMatrix4fv(program.textureMatrixUniform, false, this.textureMatrix);
-                } else {
-                    this.gl.useProgram(program);
-                    this.setMatrixUniforms(program);
-                    this.setLightUniforms(program);
-                    this.gl.uniform1i(program.clipCap,this.clipCapPerfectSpheres);
-                    this.gl.disableVertexAttribArray(program.vertexColourAttribute);
-                    this.gl.enableVertexAttribArray(program.vertexPositionAttribute);
-                    this.gl.enableVertexAttribArray(program.vertexNormalAttribute);
-                    this.gl.enableVertexAttribArray(program.vertexTextureAttribute);
-                    this.gl.enableVertexAttribArray(program.vertexColourAttribute);
-                    this.gl.enableVertexAttribArray(program.offsetAttribute);
-                    this.gl.enableVertexAttribArray(program.sizeAttribute);
-                }
-
-                for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
-                    if (calculatingShadowMap) continue;
-                    if (bufferTypes[j] === "PERFECT_SPHERES") {
-                        let buffer = this.imageBuffer;
-
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer.triangleVertexTextureBuffer[0]);
-                        this.gl.vertexAttribPointer(program.vertexTextureAttribute, buffer.triangleVertexTextureBuffer[0].itemSize, this.gl.FLOAT, false, 0, 0);
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer.triangleVertexNormalBuffer[0]);
-                        this.gl.vertexAttribPointer(program.vertexNormalAttribute, buffer.triangleVertexNormalBuffer[0].itemSize, this.gl.FLOAT, false, 0, 0);
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer.triangleVertexPositionBuffer[0]);
-                        this.gl.vertexAttribPointer(program.vertexPositionAttribute, buffer.triangleVertexPositionBuffer[0].itemSize, this.gl.FLOAT, false, 0, 0);
-                        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, buffer.triangleVertexIndexBuffer[0]);
-                        let isphere;
-
-                        //FIXME - DO not want to buffer every draw
-                        if(this.displayBuffers[idx].triangleInstanceOriginBuffer[j]){
-                            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleInstanceOriginBuffer[j]);
-                        }
-                        if(this.displayBuffers[idx].triangleInstanceSizeBuffer[j]){
-                            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleInstanceSizeBuffer[j]);
-                        }
-                        if(this.displayBuffers[idx].triangleColourBuffer[j]){
-                            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleColourBuffer[j]);
-                        }
-                        //pos,normal, texture, index in "buffer"
-                        //Instanced colour
-                        //Instanced size
-                        //Instanced offset
-                        this.gl.enableVertexAttribArray(program.offsetAttribute);
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleInstanceOriginBuffer[j]);
-                        this.gl.vertexAttribPointer(program.offsetAttribute, this.displayBuffers[idx].triangleInstanceOriginBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
-                        this.gl.enableVertexAttribArray(program.sizeAttribute);
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleInstanceSizeBuffer[j]);
-                        this.gl.vertexAttribPointer(program.sizeAttribute, this.displayBuffers[idx].triangleInstanceSizeBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
-                        this.gl.enableVertexAttribArray(program.vertexColourAttribute);
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleColourBuffer[j]);
-                        this.gl.vertexAttribPointer(program.vertexColourAttribute, this.displayBuffers[idx].triangleColourBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
-                        if (this.WEBGL2) {
-                            this.gl.vertexAttribDivisor(program.vertexColourAttribute, 1);
-                            this.gl.vertexAttribDivisor(program.sizeAttribute, 1);
-                            this.gl.vertexAttribDivisor(program.offsetAttribute, 1);
-                            this.gl.drawElementsInstanced(this.gl.TRIANGLE_FAN, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_INT, 0, this.displayBuffers[idx].triangleInstanceOriginBuffer[j].numItems);
-                            this.gl.vertexAttribDivisor(program.vertexColourAttribute, 0);
-                            this.gl.vertexAttribDivisor(program.sizeAttribute, 0);
-                            this.gl.vertexAttribDivisor(program.offsetAttribute, 0);
-                        } else {
-                            this.instanced_ext.vertexAttribDivisorANGLE(program.vertexColourAttribute, 1);
-                            this.instanced_ext.vertexAttribDivisorANGLE(program.sizeAttribute, 1);
-                            this.instanced_ext.vertexAttribDivisorANGLE(program.offsetAttribute, 1);
-                            this.instanced_ext.drawElementsInstancedANGLE(this.gl.TRIANGLE_FAN, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_INT, 0, this.displayBuffers[idx].triangleInstanceOriginBuffer[j].numItems);
-                            this.instanced_ext.vertexAttribDivisorANGLE(program.vertexColourAttribute, 0);
-                            this.instanced_ext.vertexAttribDivisorANGLE(program.sizeAttribute, 0);
-                            this.instanced_ext.vertexAttribDivisorANGLE(program.offsetAttribute, 0);
-                        }
-
-                    }
-                }
-
-                this.gl.enableVertexAttribArray(program.vertexColourAttribute);
-                this.gl.disableVertexAttribArray(program.vertexTextureAttribute);
             }
         }
     }
