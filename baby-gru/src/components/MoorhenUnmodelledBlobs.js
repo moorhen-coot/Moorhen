@@ -89,7 +89,7 @@ export const MoorhenUnmodelledBlobs = (props) => {
                     <Card.Body style={{padding:'0.5rem'}}>
                         <Row style={{display:'flex', justifyContent:'between'}}>
                             <Col style={{alignItems:'center', justifyContent:'left', display:'flex'}}>
-                                {`${blob.buttonLabel} ( ${parseFloat(blob.featureValue).toFixed(2)}`} A <sup>3</sup> {' )'}
+                                {`${blob.buttonLabel} ( size: ${parseFloat(blob.featureValue).toFixed(2)} )`}
                             </Col>
                             <Col className='col-3' style={{margin: '0', padding:'0', justifyContent: 'right', display:'flex'}}>
                                 <Button style={{marginRight:'0.5rem'}} onClick={() => {
