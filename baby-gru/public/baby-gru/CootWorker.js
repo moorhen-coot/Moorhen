@@ -83,9 +83,6 @@ const instancedMeshToMeshData = (instanceMesh, perm, toSpheres = false, maxZSize
         const As = inst.instancing_data_A;
         const Asize = As.size();
 
-        let mult = 1.0
-        if (thisToSpheres) mult = 1.4142135623730951;
-
         if (Asize > 0) {
             for (let j = 0; j < Asize; j++) {
                 const inst_data = As.get(j)
@@ -102,9 +99,9 @@ const instancedMeshToMeshData = (instanceMesh, perm, toSpheres = false, maxZSize
                 thisInstance_colours.push(instDataColour[3])
 
                 const instDataSize = inst_data.size
-                thisInstance_sizes.push(instDataSize[0] * mult)
-                thisInstance_sizes.push(instDataSize[1] * mult)
-                thisInstance_sizes.push(instDataSize[2] * mult)
+                thisInstance_sizes.push(instDataSize[0])
+                thisInstance_sizes.push(instDataSize[1])
+                thisInstance_sizes.push(instDataSize[2])
 
                 thisInstance_orientations.push(...[
                     1.0, 0.0, 0.0, 0.0,
