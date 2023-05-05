@@ -48,7 +48,7 @@ const getDefaultValues = () => {
         showScoresToast: true,
         shortcutOnHoveredAtom: true,
         resetClippingFogging: true,
-        clipCap: false,
+        clipCap: true,
         defaultUpdatingScores: ['Rfree', 'Rfactor', 'Moorhen Points'],
         maxBackupCount: 10,
         modificationCountBackupThreshold: 5,
