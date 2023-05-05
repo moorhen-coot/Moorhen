@@ -28,9 +28,13 @@ import { pointspheres_shadow_fragment_shader_source as pointspheres_shadow_fragm
 import { pointspheres_shadow_vertex_shader_source as pointspheres_shadow_vertex_shader_source_webgl2 } from './webgl-2/pointspheres-shadow-vertex-shader.js';
 import { pointspheres_vertex_shader_source as pointspheres_vertex_shader_source_webgl2 } from './webgl-2/pointspheres-vertex-shader.js';
 import { render_framebuffer_fragment_shader_source as render_framebuffer_fragment_shader_source_webgl2 } from './webgl-2/render-framebuffer-fragment-shader.js';
+
+import { shadow_depth_twod_vertex_shader_source as shadow_depth_twod_vertex_shader_source_webgl2 } from './webgl-2/shadow-depth-twodshapes-vertex-shader.js';
+import { shadow_depth_perfect_sphere_fragment_shader_source as shadow_depth_perfect_sphere_fragment_shader_source_webgl2 } from './webgl-2/shadow-depth-perfect-sphere-fragment-shader.js';
 import { shadow_fragment_shader_source as shadow_fragment_shader_source_webgl2 } from './webgl-2/shadow-depth-fragment-shader.js';
 import { shadow_vertex_shader_source as shadow_vertex_shader_source_webgl2 } from './webgl-2/shadow-depth-vertex-shader.js';
 import { shadow_instanced_vertex_shader_source as shadow_instanced_vertex_shader_source_webgl2 } from './webgl-2/shadow-depth-instanced-vertex-shader.js';
+
 import { text_fragment_shader_source as text_fragment_shader_source_webgl2 } from './webgl-2/text-fragment-shader.js';
 import { circles_fragment_shader_source as circles_fragment_shader_source_webgl2 } from './webgl-2/circle-fragment-shader.js';
 import { circles_vertex_shader_source as circles_vertex_shader_source_webgl2 } from './webgl-2/circle-vertex-shader.js';
@@ -58,9 +62,13 @@ import { pointspheres_shadow_fragment_shader_source as pointspheres_shadow_fragm
 import { pointspheres_shadow_vertex_shader_source as pointspheres_shadow_vertex_shader_source_webgl1 } from './webgl-1/pointspheres-shadow-vertex-shader.js';
 import { pointspheres_vertex_shader_source as pointspheres_vertex_shader_source_webgl1 } from './webgl-1/pointspheres-vertex-shader.js';
 import { render_framebuffer_fragment_shader_source as render_framebuffer_fragment_shader_source_webgl1 } from './webgl-1/render-framebuffer-fragment-shader.js';
+
+import { shadow_depth_twod_vertex_shader_source as shadow_depth_twod_vertex_shader_source_webgl1 } from './webgl-1/shadow-depth-twodshapes-vertex-shader.js';
+import { shadow_depth_perfect_sphere_fragment_shader_source as shadow_depth_perfect_sphere_fragment_shader_source_webgl1 } from './webgl-1/shadow-depth-perfect-sphere-fragment-shader.js';
 import { shadow_fragment_shader_source as shadow_fragment_shader_source_webgl1 } from './webgl-1/shadow-depth-fragment-shader.js';
 import { shadow_vertex_shader_source as shadow_vertex_shader_source_webgl1 } from './webgl-1/shadow-depth-vertex-shader.js';
 import { shadow_instanced_vertex_shader_source as shadow_instanced_vertex_shader_source_webgl1 } from './webgl-1/shadow-depth-instanced-vertex-shader.js';
+
 import { text_fragment_shader_source as text_fragment_shader_source_webgl1 } from './webgl-1/text-fragment-shader.js';
 import { circles_fragment_shader_source as circles_fragment_shader_source_webgl1 } from './webgl-1/circle-fragment-shader.js';
 import { circles_vertex_shader_source as circles_vertex_shader_source_webgl1 } from './webgl-1/circle-vertex-shader.js';
@@ -1719,6 +1727,9 @@ class MGWebGL extends Component {
         let pointSpheresShadowVertexShader;
         let pointSpheresShadowFragmentShader;
 
+        let shadowDepthPerfectSphereFragmentShader;
+        let shadowDeptTwoDShapesVertexShader;
+
         this.mygetrequest = new ajaxRequest();
 
         self.mygetrequest.onreadystatechange = function () {
@@ -1748,6 +1759,8 @@ class MGWebGL extends Component {
         let pointspheres_vertex_shader_source = pointspheres_vertex_shader_source_webgl1;
         let render_framebuffer_fragment_shader_source = render_framebuffer_fragment_shader_source_webgl1;
         let shadow_fragment_shader_source = shadow_fragment_shader_source_webgl1;
+        let shadow_depth_perfect_sphere_fragment_shader_source = shadow_depth_perfect_sphere_fragment_shader_source_webgl1;
+        let shadow_depth_twod_vertex_shader_source = shadow_depth_twod_vertex_shader_source_webgl1;
         let shadow_vertex_shader_source = shadow_vertex_shader_source_webgl1;
         let shadow_instanced_vertex_shader_source = shadow_instanced_vertex_shader_source_webgl1;
         let text_fragment_shader_source = text_fragment_shader_source_webgl1;
@@ -1778,6 +1791,8 @@ class MGWebGL extends Component {
             pointspheres_vertex_shader_source = pointspheres_vertex_shader_source_webgl2;
             render_framebuffer_fragment_shader_source = render_framebuffer_fragment_shader_source_webgl2;
             shadow_fragment_shader_source = shadow_fragment_shader_source_webgl2;
+            shadow_depth_perfect_sphere_fragment_shader_source = shadow_depth_perfect_sphere_fragment_shader_source_webgl2;
+            shadow_depth_twod_vertex_shader_source = shadow_depth_twod_vertex_shader_source_webgl2;
             shadow_vertex_shader_source = shadow_vertex_shader_source_webgl2;
             shadow_instanced_vertex_shader_source = shadow_instanced_vertex_shader_source_webgl2;
             text_fragment_shader_source = text_fragment_shader_source_webgl2;
@@ -1830,6 +1845,7 @@ class MGWebGL extends Component {
             twoDShapesShadowVertexShader = getShader(self.gl, twod_vertex_shadow_shader_source, "vertex");
             perfectSphereShadowFragmentShader = getShader(self.gl, perfect_sphere_shadow_fragment_shader_source, "fragment");
             self.initPointSpheresShadowShaders(pointSpheresShadowVertexShader, pointSpheresShadowFragmentShader);
+
         }
 
         self.initRenderFrameBufferShaders(blurVertexShader, renderFrameBufferFragmentShader);
@@ -1844,6 +1860,10 @@ class MGWebGL extends Component {
         if (self.frag_depth_ext) {
             self.initPerfectSphereShaders(twoDShapesVertexShader, perfectSphereFragmentShader);
             self.initPerfectSphereShadowShaders(twoDShapesShadowVertexShader, perfectSphereShadowFragmentShader);
+            //Below is the depth pass, the above is an old final draw.
+            shadowDepthPerfectSphereFragmentShader = getShader(self.gl, shadow_depth_perfect_sphere_fragment_shader_source, "fragment");
+            shadowDeptTwoDShapesVertexShader = getShader(self.gl, shadow_depth_twod_vertex_shader_source, "vertex");
+            self.initDepthShadowPerfectSphereShaders(shadowDepthPerfectSphereFragmentShader, shadowDeptTwoDShapesVertexShader);
         }
         self.initTextBackgroundShaders(textVertexShader, textFragmentShader);
         self.gl.disableVertexAttribArray(self.shaderProgramTextBackground.vertexTextureAttribute);
@@ -4493,6 +4513,7 @@ class MGWebGL extends Component {
 
         if (!this.gl.getProgramParameter(this.shaderProgramTriangleShadow, this.gl.LINK_STATUS)) {
             alert("Could not initialise shaders (initTriangleShadowShaders)");
+            console.log(this.gl.getProgramInfoLog(this.shaderProgramTriangleShadow));
         }
 
         this.gl.useProgram(this.shaderProgramTriangleShadow);
@@ -4552,6 +4573,7 @@ class MGWebGL extends Component {
 
         if (!this.gl.getProgramParameter(this.shaderProgramInstancedShadow, this.gl.LINK_STATUS)) {
             alert("Could not initialise shaders (shaderProgramInstancedShadow)");
+            console.log(this.gl.getProgramInfoLog(this.shaderProgramInstancedShadow));
         }
 
         this.gl.useProgram(this.shaderProgramInstancedShadow);
@@ -4596,7 +4618,7 @@ class MGWebGL extends Component {
         this.gl.linkProgram(this.shaderProgramShadow);
 
         if (!this.gl.getProgramParameter(this.shaderProgramShadow, this.gl.LINK_STATUS)) {
-            console.log(this.shaderProgramShadow);
+            alert("Could not initialise shaders (initShadowShaders)");
             console.log(this.gl.getProgramInfoLog(this.shaderProgramShadow));
         }
 
@@ -4639,6 +4661,7 @@ class MGWebGL extends Component {
 
         if (!this.gl.getProgramParameter(this.shaderProgramBlurX, this.gl.LINK_STATUS)) {
             alert("Could not initialise shaders (initRenderBlurXShader)");
+            console.log(this.gl.getProgramInfoLog(this.shaderProgramBlurX));
         }
 
         this.gl.useProgram(this.shaderProgramBlurX);
@@ -4669,6 +4692,7 @@ class MGWebGL extends Component {
 
         if (!this.gl.getProgramParameter(this.shaderProgramBlurY, this.gl.LINK_STATUS)) {
             alert("Could not initialise shaders (initRenderBlurYShader)");
+            console.log(this.gl.getProgramInfoLog(this.shaderProgramBlurY));
         }
 
         this.gl.useProgram(this.shaderProgramBlurY);
@@ -4698,7 +4722,8 @@ class MGWebGL extends Component {
         this.gl.linkProgram(this.shaderProgramRenderFrameBuffer);
 
         if (!this.gl.getProgramParameter(this.shaderProgramRenderFrameBuffer, this.gl.LINK_STATUS)) {
-            alert("Could not initialise shaders (initRenderFrameBufferShaders)"+this.gl.getShaderInfoLog(this.shaderProgramRenderFrameBuffer));
+            alert("Could not initialise shaders (initRenderFrameBufferShaders)");
+            console.log(this.gl.getProgramInfoLog(this.shaderProgramRenderFrameBuffer));
         }
 
         this.gl.useProgram(this.shaderProgramRenderFrameBuffer);
@@ -4731,6 +4756,7 @@ class MGWebGL extends Component {
 
         if (!this.gl.getProgramParameter(this.shaderProgramCircles, this.gl.LINK_STATUS)) {
             alert("Could not initialise shaders (initCirclesShaders)");
+            console.log(this.gl.getProgramInfoLog(this.shaderProgramCircles));
         }
 
         this.gl.useProgram(this.shaderProgramCircles);
@@ -4780,6 +4806,7 @@ class MGWebGL extends Component {
 
         if (!this.gl.getProgramParameter(this.shaderProgramTextBackground, this.gl.LINK_STATUS)) {
             alert("Could not initialise shaders (initTextBackgroundShaders)");
+            console.log(this.gl.getProgramInfoLog(this.shaderProgramTextBackground));
         }
 
         this.gl.useProgram(this.shaderProgramTextBackground);
@@ -4833,6 +4860,7 @@ class MGWebGL extends Component {
 
         if (!this.gl.getProgramParameter(this.shaderProgram, this.gl.LINK_STATUS)) {
             alert("Could not initialise shaders (initShaders)");
+            console.log(this.gl.getProgramInfoLog(this.shaderProgram));
         }
 
         this.gl.useProgram(this.shaderProgram);
@@ -4895,6 +4923,7 @@ class MGWebGL extends Component {
 
         if (!this.gl.getProgramParameter(this.shaderProgramInstanced, this.gl.LINK_STATUS)) {
             alert("Could not initialise shaders (initShadersInstanced)");
+            console.log(this.gl.getProgramInfoLog(this.shaderProgramInstanced));
         }
 
         this.gl.useProgram(this.shaderProgramInstanced);
@@ -4959,6 +4988,7 @@ class MGWebGL extends Component {
 
         if (!this.gl.getProgramParameter(this.shaderProgramThickLinesNormal, this.gl.LINK_STATUS)) {
             alert("Could not initialise shaders (initThickLineNormalShaders)");
+            console.log(this.gl.getProgramInfoLog(this.shaderProgramThickLinesNormal));
         }
 
         this.gl.useProgram(this.shaderProgramThickLinesNormal);
@@ -5016,6 +5046,7 @@ class MGWebGL extends Component {
 
         if (!this.gl.getProgramParameter(this.shaderProgramThickLines, this.gl.LINK_STATUS)) {
             alert("Could not initialise shaders (initThickLineShaders)");
+            console.log(this.gl.getProgramInfoLog(this.shaderProgramThickLines));
         }
 
         this.gl.useProgram(this.shaderProgramThickLines);
@@ -5062,6 +5093,7 @@ class MGWebGL extends Component {
 
         if (!this.gl.getProgramParameter(this.shaderProgramLines, this.gl.LINK_STATUS)) {
             alert("Could not initialise shaders (initLineShaders)");
+            console.log(this.gl.getProgramInfoLog(this.shaderProgramLines));
         }
 
         this.gl.useProgram(this.shaderProgramLines);
@@ -5105,6 +5137,7 @@ class MGWebGL extends Component {
 
         if (!this.gl.getProgramParameter(this.shaderProgramPerfectSpheresShadow, this.gl.LINK_STATUS)) {
             alert("Could not initialise shaders (initPerfectSphereShadowShaders)");
+            console.log(this.gl.getProgramInfoLog(this.shaderProgramPerfectSpheresShadow));
         }
 
         this.gl.useProgram(this.shaderProgramPerfectSpheresShadow);
@@ -5150,6 +5183,58 @@ class MGWebGL extends Component {
         this.shaderProgramPerfectSpheresShadow.nClipPlanes = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresShadow, "nClipPlanes");
     }
 
+    initDepthShadowPerfectSphereShaders(vertexShader, fragmentShader) {
+        this.shaderDepthShadowProgramPerfectSpheres = this.gl.createProgram();
+        this.gl.attachShader(this.shaderDepthShadowProgramPerfectSpheres, vertexShader);
+        this.gl.attachShader(this.shaderDepthShadowProgramPerfectSpheres, fragmentShader);
+        this.gl.bindAttribLocation(this.shaderDepthShadowProgramPerfectSpheres, 0, "aVertexPosition");
+        this.gl.bindAttribLocation(this.shaderDepthShadowProgramPerfectSpheres, 1, "aVertexColour");
+        this.gl.bindAttribLocation(this.shaderDepthShadowProgramPerfectSpheres, 3, "aVertexTexture");
+        this.gl.bindAttribLocation(this.shaderDepthShadowProgramPerfectSpheres, 8, "size");
+        this.gl.bindAttribLocation(this.shaderDepthShadowProgramPerfectSpheres, 9, "offset");
+        this.gl.linkProgram(this.shaderDepthShadowProgramPerfectSpheres);
+
+        if (!this.gl.getProgramParameter(this.shaderDepthShadowProgramPerfectSpheres, this.gl.LINK_STATUS)) {
+            alert("Could not initialise shaders (initDepthShadowPerfectSphereShaders)");
+            console.log(this.gl.getProgramInfoLog(this.shaderDepthShadowProgramPerfectSpheres));
+        }
+
+        this.gl.useProgram(this.shaderDepthShadowProgramPerfectSpheres);
+
+        this.shaderDepthShadowProgramPerfectSpheres.vertexPositionAttribute = this.gl.getAttribLocation(this.shaderDepthShadowProgramPerfectSpheres, "aVertexPosition");
+        this.gl.enableVertexAttribArray(this.shaderDepthShadowProgramPerfectSpheres.vertexPositionAttribute);
+
+        this.shaderDepthShadowProgramPerfectSpheres.vertexColourAttribute = this.gl.getAttribLocation(this.shaderDepthShadowProgramPerfectSpheres, "aVertexColour");
+        this.gl.enableVertexAttribArray(this.shaderDepthShadowProgramPerfectSpheres.vertexColourAttribute);
+
+        this.shaderDepthShadowProgramPerfectSpheres.vertexTextureAttribute = this.gl.getAttribLocation(this.shaderDepthShadowProgramPerfectSpheres, "aVertexTexture");
+        this.gl.enableVertexAttribArray(this.shaderDepthShadowProgramPerfectSpheres.vertexTextureAttribute);
+
+        this.shaderDepthShadowProgramPerfectSpheres.offsetAttribute = this.gl.getAttribLocation(this.shaderDepthShadowProgramPerfectSpheres, "offset");
+        this.gl.enableVertexAttribArray(this.shaderDepthShadowProgramPerfectSpheres.offsetAttribute);
+
+        this.shaderDepthShadowProgramPerfectSpheres.sizeAttribute= this.gl.getAttribLocation(this.shaderDepthShadowProgramPerfectSpheres, "size");
+        this.gl.enableVertexAttribArray(this.shaderDepthShadowProgramPerfectSpheres.sizeAttribute);
+
+        this.shaderDepthShadowProgramPerfectSpheres.pMatrixUniform = this.gl.getUniformLocation(this.shaderDepthShadowProgramPerfectSpheres, "uPMatrix");
+        this.shaderDepthShadowProgramPerfectSpheres.mvMatrixUniform = this.gl.getUniformLocation(this.shaderDepthShadowProgramPerfectSpheres, "uMVMatrix");
+        this.shaderDepthShadowProgramPerfectSpheres.mvInvMatrixUniform = this.gl.getUniformLocation(this.shaderDepthShadowProgramPerfectSpheres, "uMVINVMatrix");
+
+        this.shaderDepthShadowProgramPerfectSpheres.fog_start = this.gl.getUniformLocation(this.shaderDepthShadowProgramPerfectSpheres, "fog_start");
+        this.shaderDepthShadowProgramPerfectSpheres.fog_end = this.gl.getUniformLocation(this.shaderDepthShadowProgramPerfectSpheres, "fog_end");
+        this.shaderDepthShadowProgramPerfectSpheres.fogColour = this.gl.getUniformLocation(this.shaderDepthShadowProgramPerfectSpheres, "fogColour");
+
+        this.shaderDepthShadowProgramPerfectSpheres.clipPlane0 = this.gl.getUniformLocation(this.shaderDepthShadowProgramPerfectSpheres, "clipPlane0");
+        this.shaderDepthShadowProgramPerfectSpheres.clipPlane1 = this.gl.getUniformLocation(this.shaderDepthShadowProgramPerfectSpheres, "clipPlane1");
+        this.shaderDepthShadowProgramPerfectSpheres.clipPlane2 = this.gl.getUniformLocation(this.shaderDepthShadowProgramPerfectSpheres, "clipPlane2");
+        this.shaderDepthShadowProgramPerfectSpheres.clipPlane3 = this.gl.getUniformLocation(this.shaderDepthShadowProgramPerfectSpheres, "clipPlane3");
+        this.shaderDepthShadowProgramPerfectSpheres.clipPlane4 = this.gl.getUniformLocation(this.shaderDepthShadowProgramPerfectSpheres, "clipPlane4");
+        this.shaderDepthShadowProgramPerfectSpheres.clipPlane5 = this.gl.getUniformLocation(this.shaderDepthShadowProgramPerfectSpheres, "clipPlane5");
+        this.shaderDepthShadowProgramPerfectSpheres.clipPlane6 = this.gl.getUniformLocation(this.shaderDepthShadowProgramPerfectSpheres, "clipPlane6");
+        this.shaderDepthShadowProgramPerfectSpheres.clipPlane7 = this.gl.getUniformLocation(this.shaderDepthShadowProgramPerfectSpheres, "clipPlane7");
+        this.shaderDepthShadowProgramPerfectSpheres.nClipPlanes = this.gl.getUniformLocation(this.shaderDepthShadowProgramPerfectSpheres, "nClipPlanes");
+    }
+
     initPerfectSphereShaders(vertexShader, fragmentShader) {
         this.shaderProgramPerfectSpheres = this.gl.createProgram();
         this.gl.attachShader(this.shaderProgramPerfectSpheres, vertexShader);
@@ -5164,6 +5249,7 @@ class MGWebGL extends Component {
 
         if (!this.gl.getProgramParameter(this.shaderProgramPerfectSpheres, this.gl.LINK_STATUS)) {
             alert("Could not initialise shaders (initPerfectSphereShaders)");
+            console.log(this.gl.getProgramInfoLog(this.shaderProgramPerfectSpheres));
         }
 
         this.gl.useProgram(this.shaderProgramPerfectSpheres);
@@ -5227,6 +5313,7 @@ class MGWebGL extends Component {
 
         if (!this.gl.getProgramParameter(this.shaderProgramImages, this.gl.LINK_STATUS)) {
             alert("Could not initialise shaders (initImageShaders)");
+            console.log(this.gl.getProgramInfoLog(this.shaderProgramImages));
         }
 
         this.gl.useProgram(this.shaderProgramImages);
@@ -5268,6 +5355,7 @@ class MGWebGL extends Component {
 
         if (!this.gl.getProgramParameter(this.shaderProgramTwoDShapes, this.gl.LINK_STATUS)) {
             alert("Could not initialise shaders (initTwoDShapesShaders)");
+            console.log(this.gl.getProgramInfoLog(this.shaderProgramTwoDShapes));
         }
 
         this.gl.useProgram(this.shaderProgramTwoDShapes);
@@ -5309,6 +5397,7 @@ class MGWebGL extends Component {
 
         if (!this.gl.getProgramParameter(this.shaderProgramPointSpheresShadow, this.gl.LINK_STATUS)) {
             alert("Could not initialise shaders (initPointSpheresShadowShaders)");
+            console.log(this.gl.getProgramInfoLog(this.shaderProgramPointSpheresShadow));
         }
 
         this.gl.useProgram(this.shaderProgramPointSpheresShadow);
@@ -5355,6 +5444,7 @@ class MGWebGL extends Component {
 
         if (!this.gl.getProgramParameter(this.shaderProgramPointSpheres, this.gl.LINK_STATUS)) {
             alert("Could not initialise shaders (initPointSpheresShaders)");
+            console.log(this.gl.getProgramInfoLog(this.shaderProgramPointSpheres));
         }
 
         this.gl.useProgram(this.shaderProgramPointSpheres);
@@ -7403,10 +7493,13 @@ class MGWebGL extends Component {
         var oldQuat = quat4.clone(this.myQuat);
         var newQuat = quat4.clone(this.myQuat);
 
-        if (false&&calculatingShadowMap) {
+        if (calculatingShadowMap) {
             mat4.ortho(this.pMatrix, -24 * ratio / this.zoom, 24 * ratio / this.zoom, -24 / this.zoom, 24 / this.zoom, 0.1, shadowExtent);
-            mat4.translate(this.mvMatrix, this.mvMatrix, [0, 0, -shadowExtent * .75]);
+            //mat4.translate(this.mvMatrix, this.mvMatrix, [0, 0, -shadowExtent * .75]);
+            mat4.translate(this.mvMatrix, this.mvMatrix, [0, 0, -this.fogClipOffset]);
 
+            //Hmm, this all seems wrong!
+            /*
             var rotX = quat4.create();
             quat4.set(rotX, 0, 0, 0, -1);
             var zprime = vec3Create([this.light_positions[0], this.light_positions[1], this.light_positions[2]]);
@@ -7426,6 +7519,7 @@ class MGWebGL extends Component {
                 quat4.set(rotX, dval0, dval1, dval2, dval3);
                 quat4.multiply(newQuat, newQuat, rotX);
             }
+            */
             this.gl.enable(this.gl.CULL_FACE);
             this.gl.cullFace(this.gl.FRONT);
         } else {
@@ -7599,64 +7693,10 @@ class MGWebGL extends Component {
 
         //this.div.dispatchEvent(this.viewChangedEvent);
 
-
-        if (this.save_pixel_data) {
-            console.log("Saving pixel data");
-            let pixels = new Uint8Array(this.canvas.width * this.canvas.height * 4);
-            this.gl.readPixels(0, 0, this.canvas.width, this.canvas.height, this.gl.RGBA, this.gl.UNSIGNED_BYTE, pixels);
-            this.pixel_data = pixels;
-        }
-        if(this.renderToTexture) {
-            console.log("SCREENSHOT")
-            const width_ratio = this.gl.viewportWidth / this.rttFramebuffer.width;
-            const height_ratio = this.gl.viewportHeight / this.rttFramebuffer.height;
-            if (this.WEBGL2) {
-                this.gl.bindFramebuffer(this.gl.READ_FRAMEBUFFER, this.rttFramebuffer);
-                this.gl.bindFramebuffer(this.gl.DRAW_FRAMEBUFFER, this.rttFramebufferColor);
-                this.gl.clearBufferfv(this.gl.COLOR, 0, [1.0, 1.0, 1.0, 1.0]);
-                this.gl.blitFramebuffer(0, 0, this.rttFramebuffer.width, this.rttFramebuffer.height,
-                        0, 0, this.rttFramebuffer.width, this.rttFramebuffer.height,
-                        this.gl.COLOR_BUFFER_BIT, this.gl.LINEAR);
-
-                this.gl.bindFramebuffer(this.gl.READ_FRAMEBUFFER, this.rttFramebufferColor);
-            }
-            let pixels = new Uint8Array(this.gl.viewportWidth / width_ratio * this.gl.viewportHeight / height_ratio * 4);
-            this.gl.readPixels(0, 0, this.gl.viewportWidth / width_ratio, this.gl.viewportHeight / height_ratio, this.gl.RGBA, this.gl.UNSIGNED_BYTE, pixels);
-            this.pixel_data = pixels;
-        }
-
-        this.nFrames += 1;
-
-        if (!this.doShadowDepthDebug && !this.doShadow && !this.useOffScreenBuffers) {
-            return;
-        }
-
-        if(!this.offScreenReady&&!this.doShadow) return;
-
-        const currentBinding = this.gl.getParameter(this.gl.FRAMEBUFFER_BINDING);
-
-        // This is testing depth buffer.
-
-        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
-
-        // This is small example of how we can do more rendering passes
-        //this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.rttFramebuffer2);
-
-        this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
-        this.gl.clearColor(this.background_colour[0], this.background_colour[1], this.background_colour[2], this.background_colour[3]);
-        this.gl.clearColor(1.0,1.0,0.0,1.0);
-        this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
-
-        //this.gl.bindTexture(this.gl.TEXTURE_2D, this.rttTexture);
-
-        //this.gl.bindTexture(this.gl.TEXTURE_2D, this.rttTextureDepth);
-
-        if (!this.useOffScreenBuffers&& !this.doShadow){
-            return;
-        }
-
-        if(this.doShadow){
+        if(this.doShadowDepthDebug&&this.doShadow){
             console.log("Hello!!!!!!");
+            this.gl.clearColor(1.0,1.0,0.0,1.0);
+            this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
             let paintMvMatrix = mat4.create();
             let paintPMatrix = mat4.create();
@@ -7700,6 +7740,61 @@ class MGWebGL extends Component {
             this.gl.bindTexture(this.gl.TEXTURE_2D, null);
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
 
+            return;
+        }
+
+        if (this.save_pixel_data) {
+            console.log("Saving pixel data");
+            let pixels = new Uint8Array(this.canvas.width * this.canvas.height * 4);
+            this.gl.readPixels(0, 0, this.canvas.width, this.canvas.height, this.gl.RGBA, this.gl.UNSIGNED_BYTE, pixels);
+            this.pixel_data = pixels;
+        }
+        if(this.renderToTexture) {
+            console.log("SCREENSHOT")
+            const width_ratio = this.gl.viewportWidth / this.rttFramebuffer.width;
+            const height_ratio = this.gl.viewportHeight / this.rttFramebuffer.height;
+            if (this.WEBGL2) {
+                this.gl.bindFramebuffer(this.gl.READ_FRAMEBUFFER, this.rttFramebuffer);
+                this.gl.bindFramebuffer(this.gl.DRAW_FRAMEBUFFER, this.rttFramebufferColor);
+                this.gl.clearBufferfv(this.gl.COLOR, 0, [1.0, 1.0, 1.0, 1.0]);
+                this.gl.blitFramebuffer(0, 0, this.rttFramebuffer.width, this.rttFramebuffer.height,
+                        0, 0, this.rttFramebuffer.width, this.rttFramebuffer.height,
+                        this.gl.COLOR_BUFFER_BIT, this.gl.LINEAR);
+
+                this.gl.bindFramebuffer(this.gl.READ_FRAMEBUFFER, this.rttFramebufferColor);
+            }
+            let pixels = new Uint8Array(this.gl.viewportWidth / width_ratio * this.gl.viewportHeight / height_ratio * 4);
+            this.gl.readPixels(0, 0, this.gl.viewportWidth / width_ratio, this.gl.viewportHeight / height_ratio, this.gl.RGBA, this.gl.UNSIGNED_BYTE, pixels);
+            this.pixel_data = pixels;
+        }
+
+        this.nFrames += 1;
+
+        if (!this.useOffScreenBuffers) {
+            return;
+        }
+
+        if(!this.offScreenReady) return;
+
+        const currentBinding = this.gl.getParameter(this.gl.FRAMEBUFFER_BINDING);
+
+        // This is testing depth buffer.
+
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+
+        // This is small example of how we can do more rendering passes
+        //this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.rttFramebuffer2);
+
+        this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
+        this.gl.clearColor(this.background_colour[0], this.background_colour[1], this.background_colour[2], this.background_colour[3]);
+        this.gl.clearColor(1.0,1.0,0.0,1.0);
+        this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+
+        //this.gl.bindTexture(this.gl.TEXTURE_2D, this.rttTexture);
+
+        //this.gl.bindTexture(this.gl.TEXTURE_2D, this.rttTextureDepth);
+
+        if (!this.useOffScreenBuffers){
             return;
         }
 
@@ -8032,8 +8127,6 @@ class MGWebGL extends Component {
                     }
                     if (symmetry) this.drawSymmetry(symmetry, this.displayBuffers[idx], theShader, this.gl.TRIANGLES, j);
                 } else if (bufferTypes[j] === "TRIANGLE_STRIP" || bufferTypes[j] === "SPLINE" || bufferTypes[j] === "WORM") {
-                    if (calculatingShadowMap)
-                        continue; //Not implemented
                     if (this.displayBuffers[idx].transformMatrix) {
                         this.drawTransformMatrix(this.displayBuffers[idx].transformMatrix, this.displayBuffers[idx], this.shaderProgram, this.gl.TRIANGLE_STRIP, j);
                     } else if (this.displayBuffers[idx].transformMatrixInteractive) {
@@ -8051,7 +8144,7 @@ class MGWebGL extends Component {
             }
 
             if (calculatingShadowMap)
-                return; //Nothing else implemented
+                continue; //Nothing else implemented
             //Cylinders here
 
             let sphereProgram = this.shaderProgramPointSpheres;
@@ -8493,17 +8586,16 @@ class MGWebGL extends Component {
                     this.gl.uniformMatrix4fv(program.textureMatrixUniform, false, this.textureMatrix);
                 } else {
                     this.gl.useProgram(program);
-                    this.gl.enableVertexAttribArray(program);
-                    this.gl.enableVertexAttribArray(program);
-                    this.gl.enableVertexAttribArray(program);
-                    this.gl.enableVertexAttribArray(program);
-                    this.gl.enableVertexAttribArray(program);
-                    this.gl.enableVertexAttribArray(program);
                     this.setMatrixUniforms(program);
                     this.setLightUniforms(program);
                     this.gl.uniform1i(program.clipCap,this.clipCapPerfectSpheres);
                     this.gl.disableVertexAttribArray(program.vertexColourAttribute);
+                    this.gl.enableVertexAttribArray(program.vertexPositionAttribute);
+                    this.gl.enableVertexAttribArray(program.vertexNormalAttribute);
                     this.gl.enableVertexAttribArray(program.vertexTextureAttribute);
+                    this.gl.enableVertexAttribArray(program.vertexColourAttribute);
+                    this.gl.enableVertexAttribArray(program.offsetAttribute);
+                    this.gl.enableVertexAttribArray(program.sizeAttribute);
                 }
 
                 for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
