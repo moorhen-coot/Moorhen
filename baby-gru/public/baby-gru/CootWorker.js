@@ -37,6 +37,7 @@ const instancedMeshToMeshData = (instanceMesh, perm, toSpheres = false, maxZSize
     const markup = instanceMesh.markup
     const geomSize = geom.size()
     for (let i = 0; i < geomSize; i++) {
+        let thisToSpheres = toSpheres;
         let thisIdxs = []
         let thisPos = []
         let thisNorm = []
@@ -45,6 +46,7 @@ const instancedMeshToMeshData = (instanceMesh, perm, toSpheres = false, maxZSize
         let thisInstance_origins = []
         let thisInstance_orientations = []
         const inst = geom.get(i);
+        if(inst.name==="spherical-atoms") thisToSpheres = true;
         const vertices = inst.vertices;
         const triangles = inst.triangles;
         const trianglesSize = triangles.size()
@@ -82,7 +84,7 @@ const instancedMeshToMeshData = (instanceMesh, perm, toSpheres = false, maxZSize
         const Asize = As.size();
 
         let mult = 1.0
-        if (toSpheres) mult = 1.414
+        if (thisToSpheres) mult = 1.4142135623730951;
 
         if (Asize > 0) {
             for (let j = 0; j < Asize; j++) {
@@ -175,7 +177,7 @@ const instancedMeshToMeshData = (instanceMesh, perm, toSpheres = false, maxZSize
         totInstance_orientations.push(thisInstance_orientations)
         totInstance_colours.push(thisInstance_colours)
         totInstanceUseColours.push(true)
-        if (toSpheres)
+        if (thisToSpheres)
             totInstancePrimTypes.push("PERFECT_SPHERES")
         else
             totInstancePrimTypes.push("TRIANGLES")

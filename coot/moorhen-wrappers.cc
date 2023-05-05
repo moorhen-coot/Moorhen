@@ -702,6 +702,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("triangles",&coot::instanced_geometry_t::triangles)
     .property("instancing_data_A",&coot::instanced_geometry_t::instancing_data_A)
     .property("instancing_data_B",&coot::instanced_geometry_t::instancing_data_B)
+    .property("name",&coot::instanced_geometry_t::name)
     ;
     class_<coot::instanced_mesh_t>("instanced_mesh_t")
     .property("geom",&coot::instanced_mesh_t::geom)

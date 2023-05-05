@@ -36,6 +36,7 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
     out vec4 fragColor;
 
     void main(void) {
+      float silly_scale = 0.7071067811865475;
       float x = 2.0*(vTexture.x-.5);
       float y = 2.0*(vTexture.y-.5);
       float zz =  1.0 - x*x - y*y;
@@ -45,7 +46,7 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
           discard;
 
       vec4 pos = eyePos;
-      pos.z += 0.7071*z*size_v;
+      pos.z += silly_scale*z*size_v;
       pos = projMatrix * pos;
 
       if(dot(eyePos, clipPlane1)<0.0){
@@ -57,9 +58,9 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
       if(clipCap){
           vec4 posclip = eyePos;
           vec4 posclip_back = eyePos;
-          posclip.z += 0.7071*z*size_v;
+          posclip.z += silly_scale*z*size_v;
           vec4 clip_plane_back = clipPlane0;
-          clip_plane_back.w += 1.0*0.7071;
+          clip_plane_back.w += silly_scale*z*size_v;
           clipd_back=dot(posclip_back, clip_plane_back);
           clipd = dot(posclip, clipPlane0);
       }
@@ -112,7 +113,7 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
         if(clipd<0.0){
             fragColor = mix(vColor, fogColour, fogFactor );
         }
-        if(clipd_back<0.0||((1.0-z)*0.7071*size_v>clipd_back&&clipd<0.0)){
+        if(clipd_back<0.0||((1.0-z)*silly_scale*size_v>clipd_back&&clipd<0.0)){
             discard;
         }
       }
