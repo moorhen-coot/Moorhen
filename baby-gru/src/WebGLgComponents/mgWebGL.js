@@ -8262,6 +8262,7 @@ class MGWebGL extends Component {
             let sphereProgram = this.shaderProgramPointSpheres;
 
             if (this.frag_depth_ext) {
+                /*
                 if (this.doShadow && !calculatingShadowMap) {
                     let sphereProgram = this.shaderProgramPointSpheresShadow;
                     this.gl.useProgram(sphereProgram);
@@ -8275,9 +8276,16 @@ class MGWebGL extends Component {
                     this.gl.bindTexture(this.gl.TEXTURE_2D, this.rttTextureDepth);
                     this.gl.uniformMatrix4fv(sphereProgram.textureMatrixUniform, false, this.textureMatrix);
                 }
+                */
             }
 
             this.gl.useProgram(sphereProgram);
+
+            for(let i = 0; i<16; i++)
+                this.gl.disableVertexAttribArray(i);
+
+            this.gl.enableVertexAttribArray(sphereProgram.vertexPositionAttribute);
+            this.gl.enableVertexAttribArray(sphereProgram.vertexNormalAttribute);
 
             let scaleMatrices = this.displayBuffers[idx].supplementary["scale_matrices"];
             this.gl.disableVertexAttribArray(sphereProgram.vertexColourAttribute);
