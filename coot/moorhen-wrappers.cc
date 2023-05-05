@@ -315,10 +315,10 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("y", &clipper::Coord_orth::y)
     .function("z", &clipper::Coord_orth::z)
     ;
-    class_<coot::util::map_molecule_centre_info_t>("map_molecule_centre_info_t")
-    .property("success", &coot::util::map_molecule_centre_info_t::success)
-    .property("updated_centre", &coot::util::map_molecule_centre_info_t::updated_centre)
-    .property("suggested_contour_level", &coot::util::map_molecule_centre_info_t::suggested_contour_level)
+    value_object<coot::util::map_molecule_centre_info_t>("map_molecule_centre_info_t")
+    .field("success", &coot::util::map_molecule_centre_info_t::success)
+    .field("updated_centre", &coot::util::map_molecule_centre_info_t::updated_centre)
+    .field("suggested_contour_level", &coot::util::map_molecule_centre_info_t::suggested_contour_level)
     ;
     class_<clipper::Cell_descr>("Cell_descr")
     .constructor<const clipper::ftype&, const clipper::ftype&, const clipper::ftype&, const clipper::ftype&, const clipper::ftype&, const clipper::ftype&>()
@@ -702,6 +702,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("triangles",&coot::instanced_geometry_t::triangles)
     .property("instancing_data_A",&coot::instanced_geometry_t::instancing_data_A)
     .property("instancing_data_B",&coot::instanced_geometry_t::instancing_data_B)
+    .property("name",&coot::instanced_geometry_t::name)
     ;
     class_<coot::instanced_mesh_t>("instanced_mesh_t")
     .property("geom",&coot::instanced_mesh_t::geom)

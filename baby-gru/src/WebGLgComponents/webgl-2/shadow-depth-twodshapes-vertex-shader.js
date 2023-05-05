@@ -1,9 +1,8 @@
-var twod_vertex_shader_source = `#version 300 es\n
+var shadow_depth_twod_vertex_shader_source = `#version 300 es\n
     in vec3 aVertexPosition;
-    in vec3 aVertexNormal;
     in vec2 aVertexTexture;
-
     in vec4 aVertexColour;
+
     in vec3 size;
     in vec3 offset;
 
@@ -12,13 +11,7 @@ var twod_vertex_shader_source = `#version 300 es\n
     uniform mat4 uPMatrix;
 
     out lowp vec4 vColor;
-    out lowp vec3 vNormal;
     out lowp vec2 vTexture;
-    out mediump mat4 mvMatrix;
-    out mediump mat4 projMatrix;
-    out lowp vec3 v;
-    out float size_v;
-
     out lowp vec4 eyePos;
 
     void main(void) {
@@ -28,15 +21,10 @@ var twod_vertex_shader_source = `#version 300 es\n
 
       gl_Position = uPMatrix * uMVMatrix * theVert;
       vColor = aVertexColour;
-      vNormal = aVertexNormal;
       eyePos = uMVMatrix * theVert;
-      mvMatrix = uMVMatrix;
-      v = vec3(uMVMatrix * theVert);
 
-      projMatrix = uPMatrix;
-      size_v = silly_scale*size[0];
       vTexture = aVertexTexture;
     }
 `;
 
-export {twod_vertex_shader_source};
+export {shadow_depth_twod_vertex_shader_source};

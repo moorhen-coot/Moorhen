@@ -37,6 +37,7 @@ const instancedMeshToMeshData = (instanceMesh, perm, toSpheres = false, maxZSize
     const markup = instanceMesh.markup
     const geomSize = geom.size()
     for (let i = 0; i < geomSize; i++) {
+        let thisToSpheres = toSpheres;
         let thisIdxs = []
         let thisPos = []
         let thisNorm = []
@@ -45,6 +46,7 @@ const instancedMeshToMeshData = (instanceMesh, perm, toSpheres = false, maxZSize
         let thisInstance_origins = []
         let thisInstance_orientations = []
         const inst = geom.get(i);
+        if(inst.name==="spherical-atoms") thisToSpheres = true;
         const vertices = inst.vertices;
         const triangles = inst.triangles;
         const trianglesSize = triangles.size()
@@ -81,9 +83,6 @@ const instancedMeshToMeshData = (instanceMesh, perm, toSpheres = false, maxZSize
         const As = inst.instancing_data_A;
         const Asize = As.size();
 
-        let mult = 1.0
-        if (toSpheres) mult = 1.414
-
         if (Asize > 0) {
             for (let j = 0; j < Asize; j++) {
                 const inst_data = As.get(j)
@@ -100,9 +99,9 @@ const instancedMeshToMeshData = (instanceMesh, perm, toSpheres = false, maxZSize
                 thisInstance_colours.push(instDataColour[3])
 
                 const instDataSize = inst_data.size
-                thisInstance_sizes.push(instDataSize[0] * mult)
-                thisInstance_sizes.push(instDataSize[1] * mult)
-                thisInstance_sizes.push(instDataSize[2] * mult)
+                thisInstance_sizes.push(instDataSize[0])
+                thisInstance_sizes.push(instDataSize[1])
+                thisInstance_sizes.push(instDataSize[2])
 
                 thisInstance_orientations.push(...[
                     1.0, 0.0, 0.0, 0.0,
@@ -175,7 +174,7 @@ const instancedMeshToMeshData = (instanceMesh, perm, toSpheres = false, maxZSize
         totInstance_orientations.push(thisInstance_orientations)
         totInstance_colours.push(thisInstance_colours)
         totInstanceUseColours.push(true)
-        if (toSpheres)
+        if (thisToSpheres)
             totInstancePrimTypes.push("PERFECT_SPHERES")
         else
             totInstancePrimTypes.push("TRIANGLES")
@@ -318,7 +317,6 @@ const mapMoleculeCentreInfoToJSObject = (mapMoleculeCentreInfo) => {
         suggested_contour_level: mapMoleculeCentreInfo.suggested_contour_level
     }
     updatedCentre.delete()
-    mapMoleculeCentreInfo.delete()
     return returnResult;
 }
 
