@@ -317,7 +317,6 @@ const mapMoleculeCentreInfoToJSObject = (mapMoleculeCentreInfo) => {
         suggested_contour_level: mapMoleculeCentreInfo.suggested_contour_level
     }
     updatedCentre.delete()
-    mapMoleculeCentreInfo.delete()
     return returnResult;
 }
 
