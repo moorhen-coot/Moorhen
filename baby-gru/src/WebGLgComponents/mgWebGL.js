@@ -6277,6 +6277,22 @@ class MGWebGL extends Component {
                         this.imageBuffer.triangleVertexTextureBuffer[0].numItems = imageTextures.length / 2;
                         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(imageTextures), this.gl.STATIC_DRAW);
                     }
+                    if(this.displayBuffers[idx].triangleInstanceOriginBuffer[j]){
+                        this.displayBuffers[idx].triangleInstanceOriginBuffer[j].itemSize = 3;
+                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleInstanceOriginBuffer[j]);
+                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[idx].triangleInstanceOrigins[j]), this.gl.STATIC_DRAW);
+                    }
+                    if(this.displayBuffers[idx].triangleInstanceSizeBuffer[j]){
+                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleInstanceSizeBuffer[j]);
+                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[idx].triangleInstanceSizes[j]), this.gl.STATIC_DRAW);
+                        this.displayBuffers[idx].triangleInstanceSizeBuffer[j].itemSize = 3;
+                    }
+                    if(this.displayBuffers[idx].triangleColourBuffer[j]){
+                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleColourBuffer[j]);
+                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[idx].triangleColours[j]), this.gl.STATIC_DRAW);
+                        this.displayBuffers[idx].triangleColourBuffer[j].itemSize = 4;
+                    }
+
                 } else if (this.displayBuffers[idx].bufferTypes[j] === "SQUARES") {
                     if (typeof (this.squareBuffer) === "undefined") {
                         let diskIndices = [];
@@ -8614,19 +8630,13 @@ class MGWebGL extends Component {
 
                         //FIXME - DO not want to buffer every draw
                         if(this.displayBuffers[idx].triangleInstanceOriginBuffer[j]){
-                            this.displayBuffers[idx].triangleInstanceOriginBuffer[j].itemSize = 3;
                             this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleInstanceOriginBuffer[j]);
-                            this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[idx].triangleInstanceOrigins[j]), this.gl.STATIC_DRAW);
                         }
                         if(this.displayBuffers[idx].triangleInstanceSizeBuffer[j]){
                             this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleInstanceSizeBuffer[j]);
-                            this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[idx].triangleInstanceSizes[j]), this.gl.STATIC_DRAW);
-                            this.displayBuffers[idx].triangleInstanceSizeBuffer[j].itemSize = 3;
                         }
                         if(this.displayBuffers[idx].triangleColourBuffer[j]){
                             this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleColourBuffer[j]);
-                            this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[idx].triangleColours[j]), this.gl.STATIC_DRAW);
-                            this.displayBuffers[idx].triangleColourBuffer[j].itemSize = 4;
                         }
                         //pos,normal, texture, index in "buffer"
                         //Instanced colour
