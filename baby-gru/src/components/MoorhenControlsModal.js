@@ -16,6 +16,33 @@ export const MoorhenControlsModal = (props) => {
         shortCuts['translate_view'] = {modifiers: ['shiftKey', 'altKey'], keyPress: '', label: 'Translate view'}
         shortCuts['rotate_view'] = {modifiers: ['shiftKey'], keyPress: '', label: 'Rotate view'} 
     }
+
+    const handleMouseHover = (key, modifiers, isMouseEnter=true) => {
+        const cardElement = document.getElementById(`show-controls-card-${key}`)
+        cardElement.style.borderWidth = isMouseEnter ? '0.2rem' : '0.1rem'
+        cardElement.style.borderColor = isMouseEnter ? 'black' : 'grey'
+        const svg = document.querySelector(".moorhen-keyboard").getSVGDocument()
+        if (!svg) {
+            return
+        }
+        
+        let elementsToHighlight = [...modifiers, shortCuts[key].keyPress]
+        elementsToHighlight.forEach(elementId => {
+            const svgElement = svg.getElementById(elementId)
+            if(svgElement) {
+                 svgElement.style.fill = isMouseEnter ? '#f55142' : 'ffffffff'
+            }
+        })
+
+        if (Object.hasOwn(shortCutMouseActions, key)) {
+            shortCutMouseActions[key].forEach(svgId => {
+                const svgElement = svg.getElementById(svgId)
+                if(svgElement)  {
+                    svgElement.style.display = isMouseEnter ? 'block' : 'none'
+                }
+            })
+        }
+    }
     
     return <Modal show={props.showControlsModal} backdrop="static" size='lg' onHide={() => props.setShowControlsModal(false)}>
                 <Modal.Header closeButton>
@@ -32,44 +59,8 @@ export const MoorhenControlsModal = (props) => {
                             if (shortCuts[key].modifiers.includes('altKey')) modifiers.push("Alt")
                             if (shortCuts[key].keyPress === " ") modifiers.push("Space")
                             return <Card id={`show-controls-card-${key}`} key={key} style={{margin:'0.5rem', borderColor: 'grey'}}
-                                         onMouseEnter={() => {
-                                            const cardElement = document.getElementById(`show-controls-card-${key}`)
-                                            cardElement.style.borderWidth = '0.2rem'
-                                            cardElement.style.borderColor = 'black'
-                                            const svg = document.querySelector(".moorhen-keyboard").getSVGDocument()
-                                            if (!svg) return
-                                            modifiers.forEach(modifier => {
-                                                const svgElement = svg.getElementById(modifier)
-                                                if(svgElement) svgElement.style.fill = '#f55142'
-                                            })
-                                            const svgElement = svg.getElementById(shortCuts[key].keyPress)
-                                            if(svgElement) svgElement.style.fill = '#f55142'
-                                            if (Object.hasOwn(shortCutMouseActions, key)) {
-                                                shortCutMouseActions[key].forEach(svgId => {
-                                                    const svgElement = svg.getElementById(svgId)
-                                                    if(svgElement) svgElement.style.display = 'block'
-                                                })
-                                            }
-                                         }}
-                                         onMouseLeave={() => {
-                                            const cardElement = document.getElementById(`show-controls-card-${key}`)
-                                            cardElement.style.borderWidth = '0.1rem'
-                                            cardElement.style.borderColor = 'grey'
-                                            const svg = document.querySelector(".moorhen-keyboard").getSVGDocument()
-                                            if (!svg) return
-                                            modifiers.forEach(modifier => {
-                                                const svgElement = svg.getElementById(modifier)
-                                                if (svgElement) svgElement.style.fill = '#ffffffff'
-                                            })
-                                            const svgElement = svg.getElementById(shortCuts[key].keyPress)
-                                            if(svgElement) svgElement.style.fill = '#ffffffff'
-                                            if (Object.hasOwn(shortCutMouseActions, key)) {
-                                                shortCutMouseActions[key].forEach(svgId => {
-                                                    const svgElement = svg.getElementById(svgId)
-                                                    if(svgElement) svgElement.style.display = 'none'
-                                                })
-                                            }
-                                         }}>
+                                         onMouseEnter={() => handleMouseHover(key, modifiers)}
+                                         onMouseLeave={() => handleMouseHover(key, modifiers, false)}>
                                         <Card.Body style={{padding:'0.5rem'}}>
                                             <span style={{fontWeight:'bold'}}>
                                                 {`${shortCuts[key].label}`} 
