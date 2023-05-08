@@ -10,14 +10,17 @@ Welcome to Moorhen ("Coot on the Web").
 
 ![layout](https://www2.mrc-lmb.cam.ac.uk/personal/pemsley/coot/web/tutorial/images/moorhen-gui-items.png)
 
+Open a web browser window and point it at [cloud.ccp4.ac.uk](https://cloud.ccp4.ac.uk/) and login using your username and password. Once you are in the project folder, click on the "Tutorials" button on the top rigth. This will open a dialog with a file browser. To reach the hop-on project for this tutorial, follow this path:
 
-  - Open a web browser window and point it at [moorhen.org](https://moorhen.org).
+  - **upper directory** &rarr; **Workshops** &rarr; **MCCS2023** &rarr; **WebCoot** &rarr; **MCCS_WebCoot**
 
-Let's load some data:
+Now open the imported project.
 
-  - **File** &rarr; **Load Tutorial Data ...** &rarr; **Tutorial 1** &rarr; **OK**
+Click on "Add Job" (green arrow) and add a create a new "Model Building with WebCoot/Moorhen" task.
 
-_Moorhen displays a protein model, a blue 2Fo-Fc-style map and an Fo-Fc-style map in green (positive) and red (negative)._
+_A new window with Moorhen opens. After the initial load, Moorhen displays a protein model, a blue 2Fo-Fc-style map and an Fo-Fc-style map in green (positive) and red (negative)._
+
+ - If the new window is too small, you can resize it pulling its borders or clicking the "maximize" button ont he top right.
 
  - Use Left-Mouse click and drag to rotate the view.
    (just click and drag, when using at trackpad)
