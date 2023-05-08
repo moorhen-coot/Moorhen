@@ -26,11 +26,11 @@ export const MoorhenControlsModal = (props) => {
             return
         }
         
-        let elementsToHighlight = [...modifiers, shortCuts[key].keyPress]
+        const elementsToHighlight = [...modifiers, shortCuts[key].keyPress]
         elementsToHighlight.forEach(elementId => {
             const svgElement = svg.getElementById(elementId)
             if(svgElement) {
-                 svgElement.style.fill = isMouseEnter ? '#f55142' : 'ffffffff'
+                 svgElement.style.fill = isMouseEnter ? '#f55142' : '#ffffffff'
             }
         })
 
