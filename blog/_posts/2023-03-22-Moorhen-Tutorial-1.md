@@ -10,17 +10,17 @@ Welcome to Moorhen ("Coot on the Web").
 
 ![layout](https://www2.mrc-lmb.cam.ac.uk/personal/pemsley/coot/web/tutorial/images/moorhen-gui-items.png)
 
-Open a web browser window and point it at [cloud.ccp4.ac.uk](https://cloud.ccp4.ac.uk/) and login using your username and password. Once you are in the project folder, click on the "Tutorials" button on the top rigth. This will open a dialog with a file browser. To reach the hop-on project for this tutorial, follow this path:
+Open a web browser window and point it at [cloud.ccp4.ac.uk](https://cloud.ccp4.ac.uk/), then login using your username and password. Once you are in the project folder, click on the "Tutorials" button on the top right. This will open a dialog with a file browser. To reach the hop-on project for this tutorial, follow this path:
 
   - **upper directory** &rarr; **Workshops** &rarr; **MCCS2023** &rarr; **WebCoot** &rarr; **MCCS_WebCoot**
 
 Now open the imported project.
 
-Click on "Add Job" (green arrow) and add a create a new "Model Building with WebCoot/Moorhen" task.
+Click on "Add Job" (green arrow) and create a new "Model Building with WebCoot/Moorhen" task.
 
 _A new window with Moorhen opens. After the initial load, Moorhen displays a protein model, a blue 2Fo-Fc-style map and an Fo-Fc-style map in green (positive) and red (negative)._
 
- - If the new window is too small, you can resize it pulling its borders or clicking the "maximize" button ont he top right.
+ - If the new window is too small, you can resize it by pulling its borders or by clicking the "maximize" button ont he top right.
 
  - Use Left-Mouse click and drag to rotate the view.
    (just click and drag, when using at trackpad)
@@ -29,10 +29,10 @@ _A new window with Moorhen opens. After the initial load, Moorhen displays a pro
    (use 2-finger drag on a trackpad)
 
  - Use middle-mouse click to centre on an atom
-    (use Option-click on a trackpad on a Mac)
+    (use Option-click on a trackpad on a Mac, or Alt-click on a trackpad on a Windows)
 
  - To pan the view, use middle-mouse click and drag
-   (use Shift Option click and drag on a trackpad on a Mac)
+   (use Shift Option click and drag on a trackpad on a Mac, or Shift Alt click and drag on a trackpad on a Windows)
 
 You can change the speed that moving the mouse spins the view:
 
