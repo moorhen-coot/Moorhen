@@ -6,14 +6,14 @@ const shortCutMouseActions = {
     label_atom: ['circle-left-mouse-click', 'one-finger-tap'],
     center_atom: ['middle-right-mouse-click', 'one-finger-tap'],
     set_map_contour: ['middle-right-mouse-click', 'mouse-scroll-arrows', 'two-finger-scroll'],
-    translate_view: ['circle-left-mouse-click', 'mouse-move', 'one-finger-move'],
+    pan_view: ['circle-left-mouse-click', 'mouse-move', 'one-finger-move'],
     rotate_view: ['circle-left-mouse-click', 'mouse-move', 'one-finger-move']
 }
 
 export const MoorhenControlsModal = (props) => {
     const shortCuts = props.shortCuts ? JSON.parse(props.shortCuts) : null
     if (shortCuts) {
-        shortCuts['translate_view'] = {modifiers: ['shiftKey', 'altKey'], keyPress: '', label: 'Translate view'}
+        shortCuts['pan_view'] = {modifiers: ['shiftKey', 'altKey'], keyPress: '', label: 'Pan view'}
         shortCuts['rotate_view'] = {modifiers: ['shiftKey'], keyPress: '', label: 'Rotate view'} 
     }
 
@@ -70,7 +70,7 @@ export const MoorhenControlsModal = (props) => {
                             })}
                     </Col>
                     <Col className="col-8">
-                        <object style={{width:'100%', height: '100%'}} className="moorhen-keyboard" data={`${props.urlPrefix}/baby-gru/pixmaps/keyboard-blank.svg`} type="image/svg+xml"/>
+                        <object style={{width:'100%', height: '100%'}} className="moorhen-keyboard" data={`${props.urlPrefix}/keyboard-blank.svg`} type="image/svg+xml"/>
                     </Col>
                     </Row>
                 </Modal.Body>
