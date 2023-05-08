@@ -1,12 +1,14 @@
 import { NavDropdown } from "react-bootstrap";
 import { useState } from "react";
 import { MoorhenAboutMenuItem } from "./MoorhenMenuItem";
+import { MoorhenControlsModal } from "./MoorhenControlsModal"
 import { MenuItem } from "@mui/material";
 
 export const MoorhenHelpMenu = (props) => {
     const [popoverIsShown, setPopoverIsShown] = useState(false)
+        const [showControlsModal, setShowControlsModal] = useState(false)
     const menuItemProps = {setPopoverIsShown, ...props}
-
+    
     return <>
             < NavDropdown 
                 title="Help" 
@@ -19,7 +21,9 @@ export const MoorhenHelpMenu = (props) => {
                      *<hr></hr>
                     */}
                      <MenuItem onClick={() => window.open('https://filomenosanchez.github.io/Moorhen/')}>Go to Moorhen blog...</MenuItem>
-                    <MoorhenAboutMenuItem {...menuItemProps} />
+                     <MoorhenAboutMenuItem {...menuItemProps} />
+                     <MenuItem onClick={() => setShowControlsModal(true)}>Show controls...</MenuItem>
             </NavDropdown >
+            <MoorhenControlsModal {...props} showControlsModal={showControlsModal} setShowControlsModal={setShowControlsModal} />
         </>
-    }
+}

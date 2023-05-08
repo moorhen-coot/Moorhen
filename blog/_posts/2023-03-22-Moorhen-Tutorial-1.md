@@ -10,14 +10,17 @@ Welcome to Moorhen ("Coot on the Web").
 
 ![layout](https://www2.mrc-lmb.cam.ac.uk/personal/pemsley/coot/web/tutorial/images/moorhen-gui-items.png)
 
+Open a web browser window and point it at [cloud.ccp4.ac.uk](https://cloud.ccp4.ac.uk/), then login using your username and password. Once you are in the project folder, click on the "Tutorials" button on the top right. This will open a dialog with a file browser. To reach the hop-on project for this tutorial, follow this path:
 
-  - Open a web browser window and point it at [moorhen.org](https://moorhen.org).
+  - **upper directory** &rarr; **Workshops** &rarr; **MCCS2023** &rarr; **WebCoot** &rarr; **MCCS_WebCoot**
 
-Let's load some data:
+Now open the imported project.
 
-  - **File** &rarr; **Load Tutorial Data ...** &rarr; **Tutorial 1** &rarr; **OK**
+Click on "Add Job" (green arrow) and create a new "Model Building with WebCoot/Moorhen" task.
 
-_Moorhen displays a protein model, a blue 2Fo-Fc-style map and an Fo-Fc-style map in green (positive) and red (negative)._
+_A new window with Moorhen opens. After the initial load, Moorhen displays a protein model, a blue 2Fo-Fc-style map and an Fo-Fc-style map in green (positive) and red (negative)._
+
+ - If the new window is too small, you can resize it by pulling its borders or by clicking the "maximize" button ont he top right.
 
  - Use Left-Mouse click and drag to rotate the view.
    (just click and drag, when using at trackpad)
@@ -26,10 +29,10 @@ _Moorhen displays a protein model, a blue 2Fo-Fc-style map and an Fo-Fc-style ma
    (use 2-finger drag on a trackpad)
 
  - Use middle-mouse click to centre on an atom
-    (use Option-click on a trackpad on a Mac)
+    (use Option-click on a trackpad on a Mac, or Alt-click on a trackpad on a Windows)
 
  - To pan the view, use middle-mouse click and drag
-   (use Shift Option click and drag on a trackpad on a Mac)
+   (use Shift Option click and drag on a trackpad on a Mac, or Shift Alt click and drag on a trackpad on a Windows)
 
 You can change the speed that moving the mouse spins the view:
 
@@ -91,7 +94,7 @@ _Moorhen shows the Ramachandran Plot for the "A" chain of this protein_
 
 You will see that there are several interesting red spots.
 
-  - Let's click on the spot at the middle top
+  - Let's click on the red spot at the middle top
 
 _Moorhen will put residue A180 at the centre of the screen_
 
@@ -99,7 +102,7 @@ Take a look at the region... (You can slide the drawer closed for a better look)
 
 Hmmm... the carbonyl oxygen atoms are a bit close... Are there any other Ramachandran outliers in the area?
 
-   - To measure the distance between atoms, hold M and click on an atom, then (with "M" still pressed) click
+   - To measure the distance between atoms, hold M and click on an atom, then hold M again and click
      on another atom. Press C to  clear all atom labels and measurements.
 
    - In the drawer, click on **Models and maps**,
@@ -115,7 +118,7 @@ Notice that there is a green blob close to the N of A180. Maybe it would be bett
 
  - Along the bottom there is a tool drawer than can be expanded - do so.
 
-_Moorhen displays a toolbar with icons for modelling (with which you may already be familiar if you have used Coot)_
+_Moorhen displays a horizontal toolbar with icons for modelling (with which you may already be familiar if you have used Coot)_
 
 As you move the mouse over the icons in the toolbar, you will see a tooltip for that icon.
 
@@ -140,7 +143,7 @@ More progress. Good stuff.
 
   - Look at the Ramachandran Plot in the draw. Notice that the red spots for the problematic residues have disappeared.
 
-**Navigation tip**: Use the middle mouse button click over an atom to put the centre of the residue at the centre of the screen. Use Alt left mouse to put the clicked atom at the centre of the screen.
+**Navigation tip**: Use the middle mouse button click over an atom to put the clicked atom at the centre of the screen. If you are using a trackpad, you can also hold Alt while clicking on an atom to achieve the same result.
 
 ## Real Space Refinement
 
@@ -238,7 +241,7 @@ What do we see? What should it be instead?
 
 OK, so let's mutate it:
 
-  - Use "Simple Mutate", change the type to "TYR (Y") and click on an atom in the residues A168.
+  - Use "Simple Mutate", change the type to "TYR (Y)" and click on an atom in the residues A168.
 
 (More Moorhen Points - yay).
 
@@ -252,7 +255,7 @@ Can you find a negative difference map peak that is close to resiude A187? Have 
 
 In the drawer, in the card for the protein molecule, click the box for "Rota"
 
-_Moorhen displays rotamer dodecamers coloured by rotamer probability_
+_Moorhen displays rotamer dodecahedrons coloured by rotamer probability_
 
  - So let's change the rotamer using the "Auto-fit Rotamer" button.
 Then click on atom in A187.
@@ -308,7 +311,7 @@ _Moorhen updates the maps so that there are no difference maps peaks left on the
 
 ## Add a Water
 
-  - Navigate to a water peak using middle-mouse click and drag (or Shift-Alt Left-Mouse on a PC) to drag
+  - Navigate to a water peak using middle-mouse click and drag (Shift-Option click and drag on a trackpad on a Mac, or Shift-Alt click and drag on a trackpad on a Windows) to pan the view.
     the view to the water blob.
   - You can also use the arrow-keys to pan the view
 
