@@ -94,7 +94,7 @@ _Moorhen shows the Ramachandran Plot for the "A" chain of this protein_
 
 You will see that there are several interesting red spots.
 
-  - Let's click on the spot at the middle top
+  - Let's click on the red spot at the middle top
 
 _Moorhen will put residue A180 at the centre of the screen_
 
@@ -102,7 +102,7 @@ Take a look at the region... (You can slide the drawer closed for a better look)
 
 Hmmm... the carbonyl oxygen atoms are a bit close... Are there any other Ramachandran outliers in the area?
 
-   - To measure the distance between atoms, hold M and click on an atom, then (with "M" still pressed) click
+   - To measure the distance between atoms, hold M and click on an atom, then hold M again and click
      on another atom. Press C to  clear all atom labels and measurements.
 
    - In the drawer, click on **Models and maps**,
@@ -118,7 +118,7 @@ Notice that there is a green blob close to the N of A180. Maybe it would be bett
 
  - Along the bottom there is a tool drawer than can be expanded - do so.
 
-_Moorhen displays a toolbar with icons for modelling (with which you may already be familiar if you have used Coot)_
+_Moorhen displays a horizontal toolbar with icons for modelling (with which you may already be familiar if you have used Coot)_
 
 As you move the mouse over the icons in the toolbar, you will see a tooltip for that icon.
 
@@ -255,7 +255,7 @@ Can you find a negative difference map peak that is close to resiude A187? Have 
 
 In the drawer, in the card for the protein molecule, click the box for "Rota"
 
-_Moorhen displays rotamer dodecamers coloured by rotamer probability_
+_Moorhen displays rotamer dodecahedrons coloured by rotamer probability_
 
  - So let's change the rotamer using the "Auto-fit Rotamer" button.
 Then click on atom in A187.
@@ -311,7 +311,7 @@ _Moorhen updates the maps so that there are no difference maps peaks left on the
 
 ## Add a Water
 
-  - Navigate to a water peak using middle-mouse click and drag (or Shift-Alt Left-Mouse on a PC) to drag
+  - Navigate to a water peak using middle-mouse click and drag (Shift-Option click and drag on a trackpad on a Mac, or Shift-Alt click and drag on a trackpad on a Windows) to pan the view.
     the view to the water blob.
   - You can also use the arrow-keys to pan the view
 
