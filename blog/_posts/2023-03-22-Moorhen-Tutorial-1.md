@@ -16,7 +16,7 @@ Open a web browser window and point it at [cloud.ccp4.ac.uk](https://cloud.ccp4.
 
 Now open the imported project.
 
-Click on "Add Job" (green arrow) and create a new "Model Building with WebCoot/Moorhen" task.
+Click on "Add Job" (green arrow) and create a new "Model Building with WebCoot/Moorhen" task. Click on "Run".
 
 _A new window with Moorhen opens. After the initial load, Moorhen displays a protein model, a blue 2Fo-Fc-style map and an Fo-Fc-style map in green (positive) and red (negative)._
 
