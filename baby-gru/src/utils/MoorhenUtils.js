@@ -741,7 +741,7 @@ export const gemmiAtomPairsToCylindersInfo = (atoms, size, colourScheme, labelle
     let totInstanceUseColours = []
     let totInstancePrimTypes = []
     
-    const [thisPos, thisNorm, thisIdxs] = getDashedCylinder(15,8);
+    const [thisPos, thisNorm, thisIdxs] = getDashedCylinder(15,16);
 
     let thisInstance_sizes = []
     let thisInstance_colours = []
