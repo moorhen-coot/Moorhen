@@ -1657,7 +1657,7 @@ class MGWebGL extends Component {
 
         this.textLegends = [];
         this.newTextLabels = [];
-        //this.newTextLabels.push({font:"20px helvetica",x:0,y:0,z:0,text:"Welcome to Moorhen"});
+        //this.newTextLabels.push([{font:"20px helvetica",x:0,y:0,z:0,text:"Welcome to Moorhen"}]);
 
         //this.textLegends.push({font:"40px helvetica",x:0,y:0,text:"So Moorhen is a cool program_œ∑´®¥¨^øπ“‘«æ…¬˚∆˙©ƒ∂ßåΩ≈ç√∫~µ≤≥¡€#¢∞§¶•ªº–≠§±;:|abcdefghijklmnopqrs"});
         //this.textLegends.push({font:"40px times",x:0.25,y:0.25,text:"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@£$%^&*()"});
@@ -2202,20 +2202,21 @@ class MGWebGL extends Component {
         var theseBuffers = [];
 
         for (let idat = 0; idat < jsondata.norm_tri.length; idat++) {
-
             if(jsondata.prim_types){
                 if(jsondata.prim_types[idat].length>0){
                     if(jsondata.prim_types[idat][0]==="TEXTLABELS"){
-                        self.newTextLabels = []
+                        let labels = []
                         for(let ilabel=0;ilabel<jsondata.idx_tri[idat].length;ilabel++){
                             const t = jsondata.label_tri[idat][ilabel];
                             const x = jsondata.vert_tri[idat][ilabel*3];
                             const y = jsondata.vert_tri[idat][ilabel*3+1];
                             const z = jsondata.vert_tri[idat][ilabel*3+2];
                             const label = {font:"20px helvetica",x:x,y:y,z:z,text:t};
-                            this.newTextLabels.push(label);
+                            labels.push(label);
                         }
-                        continue;
+                        this.newTextLabels.push(labels);
+                        theseBuffers.push({labels:labels});
+                        continue
                     }
                 }
             }
@@ -10729,8 +10730,10 @@ class MGWebGL extends Component {
             });
         }
         //Draw Hbond, etc. text.
-        this.newTextLabels.forEach(label => {
-                drawString(label.text, label.x,label.y,label.z, "20px helvetica", true);
+        this.newTextLabels.forEach(tlabel => {
+            tlabel.forEach(label => {
+                drawString(label.text, label.x,label.y,label.z, "30px helvetica", true);
+            })
         })
 
         this.gl.disableVertexAttribArray(this.shaderProgramTextBackground.vertexTextureAttribute);

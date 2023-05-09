@@ -468,6 +468,7 @@ const linesBoxToJSArray = (BoxData) => {
     const segments = BoxData.line_segments;
     const nSeg = segments.size()
     for(let i=0; i<nSeg; i++){
+        let thisEnvdata = []
         const segsI = segments.get(i)
         const nSegI = segsI.size()
         for(let j=0; j<nSegI; j++){
@@ -477,7 +478,7 @@ const linesBoxToJSArray = (BoxData) => {
             const ampl = seg.amplitude()
             const startJS = {x:start.x(), y: start.y(), z: start.z()}
             const endJS   = {x:end.x(),   y: end.y(),   z: end.z()}
-            envdata.push({
+            thisEnvdata.push({
                 start: startJS,
                 end: endJS,
                 dist: ampl,
@@ -487,9 +488,11 @@ const linesBoxToJSArray = (BoxData) => {
             seg.delete()
         }
         segsI.delete()
+        envdata.push(thisEnvdata)
     }
     segments.delete()
     BoxData.delete()
+
     return envdata
 }
 

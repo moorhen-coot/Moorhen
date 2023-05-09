@@ -48,7 +48,7 @@ export const MoorhenViewMenu = (props) => {
                             type="switch"
                             checked={props.drawInteractions}
                             onChange={() => { props.setDrawInteractions(!props.drawInteractions) }}
-                            label="Show Environment H-Bonds"/>
+                            label="Show Environment Distances"/>
                     </InputGroup>
                     <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
                         <Form.Check 

@@ -61,6 +61,8 @@ export function MoorhenMolecule(commandCentre, monomerLibraryPath) {
         hover: [],
         selection: [],
         originNeighbours: [],
+        originNeighboursHBond: [],
+        originNeighboursBump: [],
         transformation: { origin: [0, 0, 0], quat: null, centre: [0, 0, 0] }
     }
     this.uniqueId = guid()
@@ -953,9 +955,13 @@ MoorhenMolecule.prototype.clearBuffersOfStyle = function (style, glRef) {
     const $this = this
     //Empty existing buffers of this type
     $this.displayObjects[style].forEach((buffer) => {
-        buffer.clearBuffers()
-        if (glRef.current.displayBuffers) {
-            glRef.current.displayBuffers = glRef.current.displayBuffers.filter(glBuffer => glBuffer !== buffer)
+        if("clearBuffers" in buffer){
+            buffer.clearBuffers()
+            if (glRef.current.displayBuffers) {
+                glRef.current.displayBuffers = glRef.current.displayBuffers.filter(glBuffer => glBuffer !== buffer)
+            }
+        } else if("labels" in buffer){
+            glRef.current.newTextLabels = glRef.current.newTextLabels.filter(tlBuffer => tlBuffer !== buffer.labels)
         }
     })
     glRef.current.buildBuffers()
@@ -1655,7 +1661,7 @@ MoorhenMolecule.prototype.unhideAll = async function(glRef) {
     return Promise.resolve(result)
 }
 
-MoorhenMolecule.prototype.drawEnvironment = async function(glRef, chainID, resNo,  altLoc, style, labelled=false) {
+MoorhenMolecule.prototype.drawEnvironment = async function(glRef, chainID, resNo,  altLoc, labelled=false) {
     
     const response = await this.commandCentre.current.cootCommand({
         returnType: "generic_3d_lines_bonds_box",
@@ -1664,9 +1670,12 @@ MoorhenMolecule.prototype.drawEnvironment = async function(glRef, chainID, resNo
     })
     const envDistances = response.data.result.result
 
-    const atomsPairs = envDistances.map(envdist => {
-        const start = envdist.start
-        const end = envdist.end
+    const bumps = envDistances[0];
+    const hbonds = envDistances[1];
+
+    const bumpAtomsPairs = bumps.map(bump => {
+        const start = bump.start
+        const end = bump.end
         
         const startAtomInfo = {
             pos: [start.x, start.y, start.z],
@@ -1681,11 +1690,34 @@ MoorhenMolecule.prototype.drawEnvironment = async function(glRef, chainID, resNo
             y: end.y,
             z: end.z,
         }
-        
+
         const pair = [startAtomInfo, endAtomInfo]
         return pair
     })
-    this.drawGemmiAtomPairs(glRef, atomsPairs, style, [0.7, 0.2, 0.7, 1.0], labelled, true)
+    this.drawGemmiAtomPairs(glRef, bumpAtomsPairs, "originNeighboursBump", [0.3, 0.8, 0.7, 1.0], labelled, true)
+
+    const hbondAtomsPairs = hbonds.map(hbond => {
+        const start = hbond.start
+        const end = hbond.end
+        
+        const startAtomInfo = {
+            pos: [start.x, start.y, start.z],
+            x: start.x,
+            y: start.y,
+            z: start.z,
+        }
+
+        const endAtomInfo = {
+            pos: [end.x, end.y, end.z],
+            x: end.x,
+            y: end.y,
+            z: end.z,
+        }
+
+        const pair = [startAtomInfo, endAtomInfo]
+        return pair
+    })
+    this.drawGemmiAtomPairs(glRef, hbondAtomsPairs, "originNeighboursHBond", [0.7, 0.2, 0.7, 1.0], labelled, true)
 }
 
 MoorhenMolecule.prototype.drawHBonds = async function(glRef, oneCid, style, labelled=false) {

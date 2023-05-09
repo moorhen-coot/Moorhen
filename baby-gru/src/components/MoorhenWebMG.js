@@ -82,8 +82,8 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
                 const resnum = cidSplit[cidSplit.length-1]
                 const chainID = cidSplit[cidSplit.length-2]
                 const oneCid = cidSplit.join("/")+"-"+resnum
-                mol.drawHBonds(glRef, oneCid, 'originNeighbours', true)
-                //mol.drawEnvironment(glRef, chainID, parseInt(resnum), "", 'originNeighbours', true)
+                //mol.drawHBonds(glRef, oneCid, 'originNeighbours', true)
+                mol.drawEnvironment(glRef, chainID, parseInt(resnum), "", true)
             }
             
             busyDrawingHBonds.current = false
