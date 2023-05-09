@@ -95,7 +95,8 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
     const clearHBonds = useCallback(async (e) => {
         if(!props.drawInteractions) {
             props.molecules.forEach(mol => {
-                mol.drawGemmiAtomPairs(glRef, [], "originNeighbours", [1.0, 0.0, 0.0, 1.0], true, true)
+                mol.drawGemmiAtomPairs(glRef, [], "originNeighboursBump", [1.0, 0.0, 0.0, 1.0], true, true)
+                mol.drawGemmiAtomPairs(glRef, [], "originNeighboursHBond", [1.0, 0.0, 0.0, 1.0], true, true)
             })
         }
     }, [props.drawInteractions, props.molecules])

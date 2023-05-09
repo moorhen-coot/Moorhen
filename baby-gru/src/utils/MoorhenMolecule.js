@@ -1694,7 +1694,7 @@ MoorhenMolecule.prototype.drawEnvironment = async function(glRef, chainID, resNo
         const pair = [startAtomInfo, endAtomInfo]
         return pair
     })
-    this.drawGemmiAtomPairs(glRef, bumpAtomsPairs, "originNeighboursBump", [0.3, 0.8, 0.7, 1.0], labelled, true)
+    this.drawGemmiAtomPairs(glRef, bumpAtomsPairs, "originNeighboursBump", [0.7, 0.4, 0.25, 1.0], labelled, true)
 
     const hbondAtomsPairs = hbonds.map(hbond => {
         const start = hbond.start
