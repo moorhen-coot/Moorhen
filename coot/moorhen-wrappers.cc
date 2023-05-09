@@ -860,6 +860,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .field("altLoc",&moorhen::h_bond_atom::altLoc)
     ;
 
+    register_vector<coot::CartesianPair>("VectorCootCartesianPair");
+    register_vector<std::vector<coot::CartesianPair>>("VectorVectorCootCartesianPair");
     register_vector<coot::Cartesian>("VectorCootCartesian");
     register_vector<std::vector<coot::Cartesian>>("VectorVectorCootCartesian");
     register_map<unsigned int, std::array<float, 3>>("MapIntFloat3");
