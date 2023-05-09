@@ -1,4 +1,4 @@
-import { NavDropdown } from "react-bootstrap";
+import { Form, InputGroup, NavDropdown } from "react-bootstrap";
 import { useState } from "react";
 import { MenuItem } from "@mui/material";
 import { cidToSpec } from "../utils/MoorhenUtils";
@@ -81,6 +81,13 @@ export const MoorhenDevMenu = (props) => {
                     <MenuItem onClick={() => doColourTest(menuItemProps)}>
                         Do colouring test
                     </MenuItem>
+                    <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                        <Form.Check 
+                            type="switch"
+                            checked={props.doShadowDepthDebug}
+                            onChange={() => { props.setDoShadowDepthDebug(!props.doShadowDepthDebug) }}
+                            label="Shadow depth"/>
+                    </InputGroup>
             </NavDropdown >
         </>
     }

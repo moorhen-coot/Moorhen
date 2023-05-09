@@ -399,6 +399,7 @@ export const MoorhenContainer = (props) => {
                         drawInteractions={preferences.drawInteractions}
                         doPerspectiveProjection={preferences.doPerspectiveProjection}
                         useOffScreenBuffers={preferences.useOffScreenBuffers}
+                        doShadowDepthDebug={preferences.doShadowDepthDebug}
                     />
                 </div>
                 {!viewOnly && <MoorhenButtonBar {...collectedProps} />}

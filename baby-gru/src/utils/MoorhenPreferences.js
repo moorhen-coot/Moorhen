@@ -37,6 +37,7 @@ const getDefaultValues = () => {
         drawInteractions: false,
         doPerspectiveProjection: false,
         useOffScreenBuffers: false,
+        doShadowDepthDebug: false,
         mouseSensitivity: 0.3,
         zoomWheelSensitivityFactor: 1.0,
         contourWheelSensitivityFactor: 0.05,
@@ -253,6 +254,7 @@ const PreferencesContextProvider = ({ children }) => {
     const [drawInteractions, setDrawInteractions] = useState(null)
     const [doPerspectiveProjection, setDoPerspectiveProjection] = useState(null)
     const [useOffScreenBuffers, setUseOffScreenBuffers] = useState(null)
+    const [doShadowDepthDebug, setDoShadowDepthDebug] = useState(null)
     const [mapLineWidth, setMapLineWidth] = useState(null)
     const [makeBackups, setMakeBackups] = useState(null)
     const [showShortcutToast, setShowShortcutToast] = useState(null)
@@ -298,6 +300,7 @@ const PreferencesContextProvider = ({ children }) => {
         28: { label: "contourWheelSensitivityFactor", value: contourWheelSensitivityFactor, valueSetter: setContourWheelSensitivityFactor},
         29: { label: "drawAxes", value: drawAxes, valueSetter: setDrawAxes},
         30: { label: "devMode", value: devMode, valueSetter: setDevMode},
+        31: { label: "doShadowDepthDebug", value: doShadowDepthDebug, valueSetter: setDoShadowDepthDebug},
     }
 
     const restoreDefaults = (defaultValues)=> {
@@ -561,6 +564,15 @@ const PreferencesContextProvider = ({ children }) => {
 
     useMemo(() => {
 
+        if (doShadowDepthDebug === null) {
+            return
+        }
+
+        updateStoredPreferences('doShadowDepthDebug', doShadowDepthDebug);
+    }, [doShadowDepthDebug]);
+
+    useMemo(() => {
+
         if (drawInteractions === null) {
             return
         }
@@ -635,7 +647,7 @@ const PreferencesContextProvider = ({ children }) => {
         modificationCountBackupThreshold, setModificationCountBackupThreshold, isMounted, contourWheelSensitivityFactor,
         drawInteractions, setDrawInteractions, clipCap, setClipCap, enableTimeCapsule, setEnableTimeCapsule, 
         doPerspectiveProjection, setDoPerspectiveProjection, useOffScreenBuffers, setUseOffScreenBuffers, drawAxes,
-        setDrawAxes, devMode, setDevMode
+        setDrawAxes, devMode, setDevMode, doShadowDepthDebug, setDoShadowDepthDebug
     }
 
     return (

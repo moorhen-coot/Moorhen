@@ -1452,6 +1452,13 @@ class MGWebGL extends Component {
         //this.drawGradient(c.width/2, c.height/2);
     }
 
+    setShadowDepthDebug(doShadowDebug) {
+        this.doShadowDepthDebug = doShadowDebug;
+        if(this.doShadowDepthDebug)
+            this.doShadow = true;
+        if(this.doShadow&&!this.screenshotBuffersReady) this.initTextureFramebuffer();
+    }
+    
     componentDidUpdate(oldProps) {
         if (oldProps.width !== this.props.width || oldProps.height !== this.props.height) {
             this.resize(this.props.width, this.props.height)
