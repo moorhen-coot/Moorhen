@@ -12,7 +12,7 @@ export const MoorhenPreferencesMenu = (props) => {
         defaultExpandDisplayCards, setDefaultExpandDisplayCards, defaultMapLitLines,
         setDefaultMapLitLines, refineAfterMod, setRefineAfterMod, mouseSensitivity, contourWheelSensitivityFactor,
         mapLineWidth, setMapLineWidth, makeBackups, setMakeBackups, timeCapsuleRef, setContourWheelSensitivityFactor,
-        showShortcutToast, setShowShortcutToast, defaultMapSurface, setDefaultMapSurface,
+        showShortcutToast, setShowShortcutToast, defaultMapSurface, setDefaultMapSurface, devMode, setDevMode,
         defaultBondSmoothness, setDefaultBondSmoothness, showScoresToast, setShowScoresToast,
         defaultUpdatingScores, setDefaultUpdatingScores, zoomWheelSensitivityFactor, setEnableTimeCapsule,
         setZoomWheelSensitivityFactor, shortcutOnHoveredAtom, setShortcutOnHoveredAtom, maxBackupCount, 
@@ -94,6 +94,13 @@ export const MoorhenPreferencesMenu = (props) => {
                             checked={shortcutOnHoveredAtom}
                             onChange={() => { setShortcutOnHoveredAtom(!shortcutOnHoveredAtom) }}
                             label="Hover on residue to use shortcuts"/>
+                    </InputGroup>
+                    <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                        <Form.Check 
+                            type="switch"
+                            checked={devMode}
+                            onChange={() => { setDevMode(!devMode) }}
+                            label="Developer mode"/>
                     </InputGroup>
                     <hr></hr>
                     <Form.Group controlId="mouseSensitivitySlider" style={{paddingTop:'0rem', paddingBottom:'0.5rem', paddingRight:'0.5rem', paddingLeft:'1rem', width: '25rem'}}>
