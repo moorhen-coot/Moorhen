@@ -137,6 +137,11 @@ class molecules_container_js : public molecules_container_t {
 
         }
 
+        generic_3d_lines_bonds_box_t make_exportable_environment_bond_box(int imol, const std::string &chainID, int resNo,  const std::string &altLoc){
+            coot::residue_spec_t resSpec(chainID,resNo,altLoc);
+            return molecules_container_t::make_exportable_environment_bond_box(imol,resSpec);
+        }
+
         std::string get_neighbours_cid(int imol, const std::string &central_Cid_str, double max_dist){
             //Returns a "|" separated string of cids.
             std::string neighb_cid = "";
@@ -597,7 +602,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("refine_residues_using_atom_cid",&molecules_container_t::refine_residues_using_atom_cid)
     .function("refine_residue_range",&molecules_container_t::refine_residue_range)
     .function("contact_dots_for_ligand",&molecules_container_t::contact_dots_for_ligand)
-    .function("make_exportable_environment_bond_box",&molecules_container_t::make_exportable_environment_bond_box)
     .function("all_molecule_contact_dots",&molecules_container_t::all_molecule_contact_dots)
     .function("get_chemical_features_mesh",&molecules_container_t::get_chemical_features_mesh)
     .function("set_imol_refinement_map",&molecules_container_t::set_imol_refinement_map)
@@ -658,6 +662,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("getFloats",&molecules_container_js::getFloats)
     .function("get_symmetry_with_matrices",&molecules_container_js::get_symmetry_with_matrices)
     .function("get_neighbours_cid",&molecules_container_js::get_neighbours_cid)
+    .function("make_exportable_environment_bond_box",&molecules_container_js::make_exportable_environment_bond_box)
     ;
     class_<generic_3d_lines_bonds_box_t>("generic_3d_lines_bonds_box_t")
     .property("line_segments", &generic_3d_lines_bonds_box_t::line_segments)
