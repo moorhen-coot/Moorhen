@@ -463,6 +463,36 @@ const validationDataToJSArray = (validationData, chainID = null) => {
     return returnResult
 }
 
+const linesBoxToJSArray = (BoxData) => {
+    let envdata = []
+    const segments = BoxData.line_segments;
+    const nSeg = segments.size()
+    for(let i=0; i<nSeg; i++){
+        const segsI = segments.get(i)
+        const nSegI = segsI.size()
+        for(let j=0; j<nSegI; j++){
+            const seg = segsI.get(j)
+            const start = seg.getStart()
+            const end = seg.getFinish()
+            const ampl = seg.amplitude()
+            const startJS = {x:start.x(), y: start.y(), z: start.z()}
+            const endJS   = {x:end.x(),   y: end.y(),   z: end.z()}
+            envdata.push({
+                start: startJS,
+                end: endJS,
+                dist: ampl,
+            })
+            start.delete()
+            end.delete()
+            seg.delete()
+        }
+        segsI.delete()
+    }
+    segments.delete()
+    BoxData.delete()
+    return envdata
+}
+
 const vectorHBondToJSArray = (HBondData) => {
     let hbdata = []
     const hbondDataSize = HBondData.size()
@@ -984,6 +1014,9 @@ onmessage = function (e) {
                 case 'superpose_results':
                     returnResult = SuperposeResultsToJSArray(cootResult)
                     break
+                case 'generic_3d_lines_bonds_box':
+                    returnResult = linesBoxToJSArray(cootResult)
+                    break;
                 case 'vector_hbond':
                     returnResult = vectorHBondToJSArray(cootResult)
                     break;

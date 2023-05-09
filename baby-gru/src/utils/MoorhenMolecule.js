@@ -1655,6 +1655,39 @@ MoorhenMolecule.prototype.unhideAll = async function(glRef) {
     return Promise.resolve(result)
 }
 
+MoorhenMolecule.prototype.drawEnvironment = async function(glRef, chainID, resNo,  altLoc, style, labelled=false) {
+    
+    const response = await this.commandCentre.current.cootCommand({
+        returnType: "generic_3d_lines_bonds_box",
+        command: "make_exportable_environment_bond_box",
+        commandArgs: [this.molNo, chainID, resNo,  altLoc]
+    })
+    const envDistances = response.data.result.result
+
+    const atomsPairs = envDistances.map(envdist => {
+        const start = envdist.start
+        const end = envdist.end
+        
+        const startAtomInfo = {
+            pos: [start.x, start.y, start.z],
+            x: start.x,
+            y: start.y,
+            z: start.z,
+        }
+
+        const endAtomInfo = {
+            pos: [end.x, end.y, end.z],
+            x: end.x,
+            y: end.y,
+            z: end.z,
+        }
+        
+        const pair = [startAtomInfo, endAtomInfo]
+        return pair
+    })
+    this.drawGemmiAtomPairs(glRef, atomsPairs, style, [0.7, 0.2, 0.7, 1.0], labelled, true)
+}
+
 MoorhenMolecule.prototype.drawHBonds = async function(glRef, oneCid, style, labelled=false) {
     const response = await this.commandCentre.current.cootCommand({
         returnType: "vector_hbond",
