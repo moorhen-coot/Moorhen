@@ -1071,7 +1071,7 @@ MoorhenMolecule.prototype.drawGemmiAtomPairs = async function (glRef, gemmiAtomP
     const atomColours = {}
     gemmiAtomPairs.forEach(atom => { atomColours[`${atom[0].serial}`] = colour; atomColours[`${atom[1].serial}`] = colour })
     let objects = [
-        gemmiAtomPairsToCylindersInfo(gemmiAtomPairs, 0.1, atomColours, labelled) 
+        gemmiAtomPairsToCylindersInfo(gemmiAtomPairs, 0.07, atomColours, labelled) 
     ]
     if (clearBuffers){
         $this.clearBuffersOfStyle(style, glRef)
@@ -1699,7 +1699,7 @@ MoorhenMolecule.prototype.drawHBonds = async function(glRef, oneCid, style, labe
         return pair
     })
 
-    this.drawGemmiAtomPairs(glRef, selectedGemmiAtomsPairs, style, [1.0, 0.0, 0.0, 1.0], labelled, true)
+    this.drawGemmiAtomPairs(glRef, selectedGemmiAtomsPairs, style, [0.7, 0.2, 0.7, 1.0], labelled, true)
 }
 
 MoorhenMolecule.prototype.generateSelfRestraints = function(maxRadius=4.2) {
