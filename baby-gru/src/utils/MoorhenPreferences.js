@@ -52,6 +52,7 @@ const getDefaultValues = () => {
         defaultUpdatingScores: ['Rfree', 'Rfactor', 'Moorhen Points'],
         maxBackupCount: 10,
         modificationCountBackupThreshold: 5,
+        devMode: false,
         shortCuts: {
             "decrease_front_clip": {
                 modifiers: [],
@@ -264,6 +265,7 @@ const PreferencesContextProvider = ({ children }) => {
     const [maxBackupCount, setMaxBackupCount] = useState(null)
     const [modificationCountBackupThreshold, setModificationCountBackupThreshold] = useState(null)
     const [defaultUpdatingScores, setDefaultUpdatingScores] = useReducer(itemReducer, null)
+    const [devMode, setDevMode] = useState(null)
 
     const preferencesMap = {
         1: { label: "defaultBackgroundColor", value: defaultBackgroundColor, valueSetter: setDefaultBackgroundColor},
@@ -295,6 +297,7 @@ const PreferencesContextProvider = ({ children }) => {
         27: { label: "useOffScreenBuffers", value: useOffScreenBuffers, valueSetter: setUseOffScreenBuffers},
         28: { label: "contourWheelSensitivityFactor", value: contourWheelSensitivityFactor, valueSetter: setContourWheelSensitivityFactor},
         29: { label: "drawAxes", value: drawAxes, valueSetter: setDrawAxes},
+        30: { label: "devMode", value: devMode, valueSetter: setDevMode},
     }
 
     const restoreDefaults = (defaultValues)=> {
@@ -357,6 +360,15 @@ const PreferencesContextProvider = ({ children }) => {
        
         updateStoredPreferences('shortcutOnHoveredAtom', shortcutOnHoveredAtom);
     }, [shortcutOnHoveredAtom]);
+
+    useMemo(() => {
+
+        if (devMode === null) {
+            return
+        }
+       
+        updateStoredPreferences('devMode', devMode);
+    }, [devMode]);
     
     useMemo(() => {
 
@@ -623,7 +635,7 @@ const PreferencesContextProvider = ({ children }) => {
         modificationCountBackupThreshold, setModificationCountBackupThreshold, isMounted, contourWheelSensitivityFactor,
         drawInteractions, setDrawInteractions, clipCap, setClipCap, enableTimeCapsule, setEnableTimeCapsule, 
         doPerspectiveProjection, setDoPerspectiveProjection, useOffScreenBuffers, setUseOffScreenBuffers, drawAxes,
-        setDrawAxes
+        setDrawAxes, devMode, setDevMode
     }
 
     return (
