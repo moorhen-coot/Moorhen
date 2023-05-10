@@ -17,7 +17,10 @@ const paths = {
     'SO4', 'GOL', 'CIT', 'EDO', 'A', 'C', 'G', 'U', 'DA', 'DC', 'DG', 'DT', 'HOH',
     'NA'
   ],
-  requiredPixmaps: [
+  requiredMoorhenPixmaps: [
+    'keyboard-blank.svg'
+  ],
+  requiredCootPixmaps: [
     'diff-map.png', 'MoorhenLogo.png', 'rama2_all.png', 'rama2_gly.png',
     'rama2_pre_pro.png', 'rama2_pro.png', 'rama2_ileval.png', 'rama2_non_gly_pro.png',
     'rama2_non_gly_pro_pre_pro_ileval.png', 'rama-plot-gly-normal.png', 'mutate.svg', 
@@ -52,6 +55,13 @@ module.exports = (env, argv) => {
               ignore: ['**/monomers/**', '**/pixmaps/**']
             }
           },
+          ...paths.requiredMoorhenPixmaps.map(pixmap => {
+            return {
+              from: path.resolve(paths.publicBabyGru, pixmap),
+              to: path.resolve(paths.dist, 'baby-gru'),
+              toType: 'dir',  
+            }
+          }),
           {
             from: path.resolve(paths.cloud, 'webcoot.html'),
             to: paths.dist,
@@ -64,7 +74,7 @@ module.exports = (env, argv) => {
               toType: 'dir',  
             }
           }),
-          ...paths.requiredPixmaps.map(pixmap => {
+          ...paths.requiredCootPixmaps.map(pixmap => {
             return {
               from: path.resolve(paths.pixmapsPath, pixmap),
               to: path.resolve(paths.dist, 'baby-gru', 'pixmaps'),

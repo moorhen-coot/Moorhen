@@ -70,7 +70,7 @@ export const MoorhenControlsModal = (props) => {
                             })}
                     </Col>
                     <Col className="col-8">
-                        <object style={{width:'100%', height: '100%'}} className="moorhen-keyboard" data={`${props.urlPrefix}/keyboard-blank.svg`} type="image/svg+xml"/>
+                        <object style={{width:'100%', height: '100%'}} className="moorhen-keyboard" data={`${props.urlPrefix}/baby-gru/keyboard-blank.svg`} type="image/svg+xml"/>
                     </Col>
                     </Row>
                 </Modal.Body>
