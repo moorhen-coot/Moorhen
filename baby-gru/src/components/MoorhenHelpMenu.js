@@ -21,8 +21,8 @@ export const MoorhenHelpMenu = (props) => {
                      *<hr></hr>
                     */}
                      <MenuItem onClick={() => window.open('https://filomenosanchez.github.io/Moorhen/')}>Go to Moorhen blog...</MenuItem>
-                     <MoorhenAboutMenuItem {...menuItemProps} />
                      <MenuItem onClick={() => setShowControlsModal(true)}>Show controls...</MenuItem>
+                     <MoorhenAboutMenuItem {...menuItemProps} />
             </NavDropdown >
             <MoorhenControlsModal {...props} showControlsModal={showControlsModal} setShowControlsModal={setShowControlsModal} />
         </>

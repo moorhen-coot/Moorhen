@@ -14,9 +14,9 @@ Open a web browser window and point it at [cloud.ccp4.ac.uk](https://cloud.ccp4.
 
   - **upper directory** &rarr; **Workshops** &rarr; **MCCS2023** &rarr; **WebCoot** &rarr; **MCCS_WebCoot**
 
-Now open the imported project.
+Now open the imported project. This imported project consists of a model for a Kinase Inhibitor together with its experimental data. 
 
-Click on "Add Job" (green arrow) and create a new "Model Building with WebCoot/Moorhen" task.
+Click on "Add Job" (green arrow) and create a new "Model Building with WebCoot/Moorhen" task right at the bottom of the task tree. Click on "Run".
 
 _A new window with Moorhen opens. After the initial load, Moorhen displays a protein model, a blue 2Fo-Fc-style map and an Fo-Fc-style map in green (positive) and red (negative)._
 
@@ -363,10 +363,12 @@ Use keyboard "S" to activate the "in application" screen capture.
 
 ## Export Your Molecule
 
-  - In the drawer, in the card for the model molecule, click the gear icon
-  - and choose "Download molecule" 
+  - In the drawer, in the card for the model molecule, click the gear icon and choose "Download molecule". This will download the model into your computer.
+  - We can also save the current molecule back into Cloud, which is more useful as it will allow us to keep working within CCP4 Cloud with the our edited model. To do this click on:
+    - **File** &rarr; **Save current model**
+ 
+  - A window will open with a message letting you know that the model was saved in cloud. If we close the moorhen window now, this model will be available in the output tab and can be used as input for another task in CCP4 Cloud. Let's see if we managed to improve the Rfree using Refmac. After you finish editing the model, save your model to cloud and close the Moorhen window. Then, add a "Refinement using Refmac" task to the tree right under the Moorhen task. Make sure to set the "Number of refinement cycles" to zero and wait for the results. Now do the same, but create the Refmac task at the same level as the Moorhen task, i.e. using the original unmodified model as input. According to Refmac, did the Rfactor and Rfree improve tinkering with the model using Moorhen?
 
-Then it's time to think about Reciprocal Space Refinement.
 
 ## Notes:
 
