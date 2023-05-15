@@ -22,6 +22,7 @@ export const MoorhenEditMenu = (props) => {
             <MoorhenSuperposeMenuItem key="superpose_structures" {...menuItemProps} />
             <MoorhenCopyFragmentUsingCidMenuItem key="copy_fragment" {...menuItemProps} />
             <MoorhenGoToMenuItem key="go_to_cid" {...menuItemProps} />
+            {props.extraEditMenuItems && props.extraEditMenuItems.map( menu => menu)}
         </NavDropdown>
     </>
 }

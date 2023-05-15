@@ -516,6 +516,8 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
                 
                 <MoorhenColourRules glRef={glRef} {...props}/>
 
+                {props.extraDraggableModals && props.extraDraggableModals.map(modal => modal)}
+
             </>
 });
 
