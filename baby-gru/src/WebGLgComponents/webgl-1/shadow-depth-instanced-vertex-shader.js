@@ -1,5 +1,5 @@
 var shadow_instanced_vertex_shader_source = `
-GL_OES_element_index : enable
+#extension GL_OES_element_index : enable
     attribute vec3 aVertexPosition;
     attribute vec4 aVertexColour;
     attribute vec3 instancePosition;

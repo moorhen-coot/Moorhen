@@ -131,6 +131,11 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
     }, [props.doShadowDepthDebug])
 
     useEffect(() => {
+        glRef.current.setShadowsOn(props.doShadow)
+        glRef.current.drawScene()
+    }, [props.doShadow])
+
+    useEffect(() => {
         glRef.current.useOffScreenBuffers = props.useOffScreenBuffers
         glRef.current.drawScene()
     }, [props.useOffScreenBuffers])

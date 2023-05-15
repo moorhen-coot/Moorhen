@@ -22,10 +22,7 @@ import { blur_y_fragment_shader_source as blur_y_fragment_shader_source_webgl2 }
 import { lines_fragment_shader_source as lines_fragment_shader_source_webgl2 } from './webgl-2/lines-fragment-shader.js';
 import { lines_vertex_shader_source as lines_vertex_shader_source_webgl2 } from './webgl-2/lines-vertex-shader.js';
 import { perfect_sphere_fragment_shader_source as perfect_sphere_fragment_shader_source_webgl2 } from './webgl-2/perfect-sphere-fragment-shader.js';
-import { perfect_sphere_shadow_fragment_shader_source as perfect_sphere_shadow_fragment_shader_source_webgl2 } from './webgl-2/perfect-sphere-shadow-fragment-shader.js';
 import { pointspheres_fragment_shader_source as pointspheres_fragment_shader_source_webgl2 } from './webgl-2/pointspheres-fragment-shader.js';
-import { pointspheres_shadow_fragment_shader_source as pointspheres_shadow_fragment_shader_source_webgl2 } from './webgl-2/pointspheres-shadow-fragment-shader.js';
-import { pointspheres_shadow_vertex_shader_source as pointspheres_shadow_vertex_shader_source_webgl2 } from './webgl-2/pointspheres-shadow-vertex-shader.js';
 import { pointspheres_vertex_shader_source as pointspheres_vertex_shader_source_webgl2 } from './webgl-2/pointspheres-vertex-shader.js';
 import { render_framebuffer_fragment_shader_source as render_framebuffer_fragment_shader_source_webgl2 } from './webgl-2/render-framebuffer-fragment-shader.js';
 
@@ -41,11 +38,8 @@ import { circles_vertex_shader_source as circles_vertex_shader_source_webgl2 } f
 import { thick_lines_vertex_shader_source as thick_lines_vertex_shader_source_webgl2 } from './webgl-2/thick-lines-vertex-shader.js';
 import { thick_lines_normal_vertex_shader_source as thick_lines_normal_vertex_shader_source_webgl2 } from './webgl-2/thick-lines-normal-vertex-shader.js';
 import { triangle_fragment_shader_source as triangle_fragment_shader_source_webgl2 } from './webgl-2/triangle-fragment-shader.js';
-import { triangle_shadow_fragment_shader_source as triangle_shadow_fragment_shader_source_webgl2 } from './webgl-2/triangle-shadow-fragment-shader.js';
-import { triangle_shadow_vertex_shader_source as triangle_shadow_vertex_shader_source_webgl2 } from './webgl-2/triangle-shadow-vertex-shader.js';
 import { triangle_vertex_shader_source as triangle_vertex_shader_source_webgl2 } from './webgl-2/triangle-vertex-shader.js';
 import { twod_fragment_shader_source as twod_fragment_shader_source_webgl2 } from './webgl-2/twodshapes-fragment-shader.js';
-import { twod_vertex_shadow_shader_source as twod_vertex_shadow_shader_source_webgl2 } from './webgl-2/twodshapes-shadow-vertex-shader.js';
 import { twod_vertex_shader_source as twod_vertex_shader_source_webgl2 } from './webgl-2/twodshapes-vertex-shader.js';
 import { triangle_instanced_vertex_shader_source as triangle_instanced_vertex_shader_source_webgl2 } from './webgl-2/triangle-instanced-vertex-shader.js';
 
@@ -56,10 +50,7 @@ import { blur_y_fragment_shader_source as blur_y_fragment_shader_source_webgl1 }
 import { lines_fragment_shader_source as lines_fragment_shader_source_webgl1 } from './webgl-1/lines-fragment-shader.js';
 import { lines_vertex_shader_source as lines_vertex_shader_source_webgl1 } from './webgl-1/lines-vertex-shader.js';
 import { perfect_sphere_fragment_shader_source as perfect_sphere_fragment_shader_source_webgl1 } from './webgl-1/perfect-sphere-fragment-shader.js';
-import { perfect_sphere_shadow_fragment_shader_source as perfect_sphere_shadow_fragment_shader_source_webgl1 } from './webgl-1/perfect-sphere-shadow-fragment-shader.js';
 import { pointspheres_fragment_shader_source as pointspheres_fragment_shader_source_webgl1 } from './webgl-1/pointspheres-fragment-shader.js';
-import { pointspheres_shadow_fragment_shader_source as pointspheres_shadow_fragment_shader_source_webgl1 } from './webgl-1/pointspheres-shadow-fragment-shader.js';
-import { pointspheres_shadow_vertex_shader_source as pointspheres_shadow_vertex_shader_source_webgl1 } from './webgl-1/pointspheres-shadow-vertex-shader.js';
 import { pointspheres_vertex_shader_source as pointspheres_vertex_shader_source_webgl1 } from './webgl-1/pointspheres-vertex-shader.js';
 import { render_framebuffer_fragment_shader_source as render_framebuffer_fragment_shader_source_webgl1 } from './webgl-1/render-framebuffer-fragment-shader.js';
 
@@ -75,11 +66,8 @@ import { circles_vertex_shader_source as circles_vertex_shader_source_webgl1 } f
 import { thick_lines_vertex_shader_source as thick_lines_vertex_shader_source_webgl1 } from './webgl-1/thick-lines-vertex-shader.js';
 import { thick_lines_normal_vertex_shader_source as thick_lines_normal_vertex_shader_source_webgl1 } from './webgl-1/thick-lines-normal-vertex-shader.js';
 import { triangle_fragment_shader_source as triangle_fragment_shader_source_webgl1 } from './webgl-1/triangle-fragment-shader.js';
-import { triangle_shadow_fragment_shader_source as triangle_shadow_fragment_shader_source_webgl1 } from './webgl-1/triangle-shadow-fragment-shader.js';
-import { triangle_shadow_vertex_shader_source as triangle_shadow_vertex_shader_source_webgl1 } from './webgl-1/triangle-shadow-vertex-shader.js';
 import { triangle_vertex_shader_source as triangle_vertex_shader_source_webgl1 } from './webgl-1/triangle-vertex-shader.js';
 import { twod_fragment_shader_source as twod_fragment_shader_source_webgl1 } from './webgl-1/twodshapes-fragment-shader.js';
-import { twod_vertex_shadow_shader_source as twod_vertex_shadow_shader_source_webgl1 } from './webgl-1/twodshapes-shadow-vertex-shader.js';
 import { twod_vertex_shader_source as twod_vertex_shader_source_webgl1 } from './webgl-1/twodshapes-vertex-shader.js';
 import { triangle_instanced_vertex_shader_source as triangle_instanced_vertex_shader_source_webgl1 } from './webgl-1/triangle-instanced-vertex-shader.js';
 
@@ -1452,12 +1440,18 @@ class MGWebGL extends Component {
         //this.drawGradient(c.width/2, c.height/2);
     }
 
+    setShadowsOn(doShadow) {
+        this.doShadow = doShadow;
+    }
+
     setShadowDepthDebug(doShadowDebug) {
+        /*
         this.doShadowDepthDebug = doShadowDebug;
         this.doShadow = false;
         if(this.doShadowDepthDebug)
             this.doShadow = true;
         if(this.doShadow&&!this.screenshotBuffersReady) this.initTextureFramebuffer();
+        */
     }
     
     componentDidUpdate(oldProps) {
@@ -1574,8 +1568,10 @@ class MGWebGL extends Component {
         this.save_pixel_data = false;
         this.renderToTexture = false;
 
+        this.doShadow = true;
+
+        //Debugging only
         this.doShadowDepthDebug = false;
-        this.doShadow = false;
         if(this.doShadowDepthDebug)
             this.doShadow = true;
 
@@ -1646,6 +1642,9 @@ class MGWebGL extends Component {
             if (!this.ext) {
                 alert("No OES_element_index_uint support");
             }
+            console.log("##################################################");
+            console.log("Got extension");
+            console.log(this.ext);
             this.frag_depth_ext = this.gl.getExtension("EXT_frag_depth");
             this.depth_texture = this.gl.getExtension("WEBGL_depth_texture");
             this.instanced_ext = this.gl.getExtension("ANGLE_instanced_arrays");
@@ -1727,18 +1726,12 @@ class MGWebGL extends Component {
         let renderFrameBufferVertexShader;
         let renderFrameBufferFragmentShader;
         let perfectSphereFragmentShader;
-        let shadowVertexShader;
-        let shadowVertexShaderInstanced;
-        let shadowFragmentShader;
-        let triangleShadowVertexShader;
-        let triangleShadowFragmentShader;
-        let twoDShapesShadowVertexShader;
-        let perfectSphereShadowFragmentShader;
-        let pointSpheresShadowVertexShader;
-        let pointSpheresShadowFragmentShader;
 
-        let shadowDepthPerfectSphereFragmentShader;
-        let shadowDeptTwoDShapesVertexShader;
+        let shadowVertexShader; //Depth pass
+        let shadowVertexShaderInstanced; //Depth pass
+        let shadowFragmentShader; //Depth pass
+        let shadowDepthPerfectSphereFragmentShader; //Depth pass
+        let shadowDeptTwoDShapesVertexShader; //Depth pass
 
         this.mygetrequest = new ajaxRequest();
 
@@ -1762,10 +1755,7 @@ class MGWebGL extends Component {
         let lines_fragment_shader_source = lines_fragment_shader_source_webgl1;
         let lines_vertex_shader_source = lines_vertex_shader_source_webgl1;
         let perfect_sphere_fragment_shader_source = perfect_sphere_fragment_shader_source_webgl1;
-        let perfect_sphere_shadow_fragment_shader_source = perfect_sphere_shadow_fragment_shader_source_webgl1;
         let pointspheres_fragment_shader_source = pointspheres_fragment_shader_source_webgl1;
-        let pointspheres_shadow_fragment_shader_source = pointspheres_shadow_fragment_shader_source_webgl1;
-        let pointspheres_shadow_vertex_shader_source = pointspheres_shadow_vertex_shader_source_webgl1;
         let pointspheres_vertex_shader_source = pointspheres_vertex_shader_source_webgl1;
         let render_framebuffer_fragment_shader_source = render_framebuffer_fragment_shader_source_webgl1;
         let shadow_fragment_shader_source = shadow_fragment_shader_source_webgl1;
@@ -1779,11 +1769,8 @@ class MGWebGL extends Component {
         let thick_lines_vertex_shader_source = thick_lines_vertex_shader_source_webgl1;
         let thick_lines_normal_vertex_shader_source = thick_lines_normal_vertex_shader_source_webgl1;
         let triangle_fragment_shader_source = triangle_fragment_shader_source_webgl1;
-        let triangle_shadow_fragment_shader_source = triangle_shadow_fragment_shader_source_webgl1;
-        let triangle_shadow_vertex_shader_source = triangle_shadow_vertex_shader_source_webgl1;
         let triangle_vertex_shader_source = triangle_vertex_shader_source_webgl1;
         let twod_fragment_shader_source = twod_fragment_shader_source_webgl1;
-        let twod_vertex_shadow_shader_source = twod_vertex_shadow_shader_source_webgl1;
         let twod_vertex_shader_source = twod_vertex_shader_source_webgl1;
         let triangle_instanced_vertex_shader_source = triangle_instanced_vertex_shader_source_webgl1;
 
@@ -1794,10 +1781,7 @@ class MGWebGL extends Component {
             lines_fragment_shader_source = lines_fragment_shader_source_webgl2;
             lines_vertex_shader_source = lines_vertex_shader_source_webgl2;
             perfect_sphere_fragment_shader_source = perfect_sphere_fragment_shader_source_webgl2;
-            perfect_sphere_shadow_fragment_shader_source = perfect_sphere_shadow_fragment_shader_source_webgl2;
             pointspheres_fragment_shader_source = pointspheres_fragment_shader_source_webgl2;
-            pointspheres_shadow_fragment_shader_source = pointspheres_shadow_fragment_shader_source_webgl2;
-            pointspheres_shadow_vertex_shader_source = pointspheres_shadow_vertex_shader_source_webgl2;
             pointspheres_vertex_shader_source = pointspheres_vertex_shader_source_webgl2;
             render_framebuffer_fragment_shader_source = render_framebuffer_fragment_shader_source_webgl2;
             shadow_fragment_shader_source = shadow_fragment_shader_source_webgl2;
@@ -1811,11 +1795,8 @@ class MGWebGL extends Component {
             thick_lines_vertex_shader_source = thick_lines_vertex_shader_source_webgl2;
             thick_lines_normal_vertex_shader_source = thick_lines_normal_vertex_shader_source_webgl2;
             triangle_fragment_shader_source = triangle_fragment_shader_source_webgl2;
-            triangle_shadow_fragment_shader_source = triangle_shadow_fragment_shader_source_webgl2;
-            triangle_shadow_vertex_shader_source = triangle_shadow_vertex_shader_source_webgl2;
             triangle_vertex_shader_source = triangle_vertex_shader_source_webgl2;
             twod_fragment_shader_source = twod_fragment_shader_source_webgl2;
-            twod_vertex_shadow_shader_source = twod_vertex_shadow_shader_source_webgl2;
             twod_vertex_shader_source = twod_vertex_shader_source_webgl2;
             triangle_instanced_vertex_shader_source = triangle_instanced_vertex_shader_source_webgl2;
         }
@@ -1845,17 +1826,8 @@ class MGWebGL extends Component {
             shadowVertexShader = getShader(self.gl, shadow_vertex_shader_source, "vertex");
             shadowVertexShaderInstanced = getShader(self.gl, shadow_instanced_vertex_shader_source, "vertex");
             shadowFragmentShader = getShader(self.gl, shadow_fragment_shader_source, "fragment");
-            triangleShadowVertexShader = getShader(self.gl, triangle_shadow_vertex_shader_source, "vertex");
-            triangleShadowFragmentShader = getShader(self.gl, triangle_shadow_fragment_shader_source, "fragment");
-            pointSpheresShadowVertexShader = getShader(self.gl, pointspheres_shadow_vertex_shader_source, "vertex");
-            pointSpheresShadowFragmentShader = getShader(self.gl, pointspheres_shadow_fragment_shader_source, "fragment");
             self.initShadowShaders(shadowVertexShader, shadowFragmentShader);
             self.initInstancedShadowShaders(shadowVertexShaderInstanced, shadowFragmentShader);
-            self.initTriangleShadowShaders(triangleShadowVertexShader, triangleShadowFragmentShader);
-            twoDShapesShadowVertexShader = getShader(self.gl, twod_vertex_shadow_shader_source, "vertex");
-            perfectSphereShadowFragmentShader = getShader(self.gl, perfect_sphere_shadow_fragment_shader_source, "fragment");
-            self.initPointSpheresShadowShaders(pointSpheresShadowVertexShader, pointSpheresShadowFragmentShader);
-
         }
 
         self.initRenderFrameBufferShaders(blurVertexShader, renderFrameBufferFragmentShader);
@@ -1869,8 +1841,6 @@ class MGWebGL extends Component {
         self.initImageShaders(twoDShapesVertexShader, textFragmentShader);
         if (self.frag_depth_ext) {
             self.initPerfectSphereShaders(twoDShapesVertexShader, perfectSphereFragmentShader);
-            self.initPerfectSphereShadowShaders(twoDShapesShadowVertexShader, perfectSphereShadowFragmentShader);
-            //Below is the depth pass, the above is an old final draw.
             shadowDepthPerfectSphereFragmentShader = getShader(self.gl, shadow_depth_perfect_sphere_fragment_shader_source, "fragment");
             shadowDeptTwoDShapesVertexShader = getShader(self.gl, shadow_depth_twod_vertex_shader_source, "vertex");
             self.initDepthShadowPerfectSphereShaders(shadowDepthPerfectSphereFragmentShader, shadowDeptTwoDShapesVertexShader);
@@ -3480,15 +3450,21 @@ class MGWebGL extends Component {
         this.offScreenFramebuffer.width = this.canvas.width;
         this.offScreenFramebuffer.height = this.canvas.height;
 
-        this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, this.offScreenRenderbufferDepth);
-        this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.RENDERBUFFER, this.offScreenRenderbufferDepth);
-        this.gl.renderbufferStorageMultisample(this.gl.RENDERBUFFER, this.gl.getParameter(this.gl.MAX_SAMPLES),
-                this.gl.DEPTH_COMPONENT24, this.canvas.width, this.canvas.height);
+        if (this.WEBGL2) {
+            this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, this.offScreenRenderbufferDepth);
+            this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.RENDERBUFFER, this.offScreenRenderbufferDepth);
+            this.gl.renderbufferStorageMultisample(this.gl.RENDERBUFFER, this.gl.getParameter(this.gl.MAX_SAMPLES),
+                    this.gl.DEPTH_COMPONENT24, this.canvas.width, this.canvas.height);
 
-        this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, this.offScreenRenderbufferColor);
-        this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.RENDERBUFFER, this.offScreenRenderbufferColor);
-        this.gl.renderbufferStorageMultisample(this.gl.RENDERBUFFER, this.gl.getParameter(this.gl.MAX_SAMPLES),
-                this.gl.RGBA8, this.canvas.width, this.canvas.height);
+            this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, this.offScreenRenderbufferColor);
+            this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.RENDERBUFFER, this.offScreenRenderbufferColor);
+            this.gl.renderbufferStorageMultisample(this.gl.RENDERBUFFER, this.gl.getParameter(this.gl.MAX_SAMPLES),
+                    this.gl.RGBA8, this.canvas.width, this.canvas.height);
+        } else {
+            this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, this.offScreenRenderbufferColor);
+            this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.RENDERBUFFER, this.offScreenRenderbufferColor);
+            this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT16, this.canvas.width, this.canvas.height);
+        }
 
 
         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.offScreenFramebufferColor);
@@ -4511,65 +4487,6 @@ class MGWebGL extends Component {
             this.drawScene();
     }
 
-    initTriangleShadowShaders(vertexShaderTriangleShadow, fragmentShaderTriangleShadow) {
-        this.shaderProgramTriangleShadow = this.gl.createProgram();
-
-        this.gl.attachShader(this.shaderProgramTriangleShadow, vertexShaderTriangleShadow);
-        this.gl.attachShader(this.shaderProgramTriangleShadow, fragmentShaderTriangleShadow);
-        this.gl.bindAttribLocation(this.shaderProgramTriangleShadow, 0, "aVertexPosition");
-        this.gl.bindAttribLocation(this.shaderProgramTriangleShadow, 1, "aVertexColour");
-        this.gl.bindAttribLocation(this.shaderProgramTriangleShadow, 2, "aVertexNormal");
-        this.gl.bindAttribLocation(this.shaderProgramTriangleShadow, 3, "aVertexTexture");
-        this.gl.linkProgram(this.shaderProgramTriangleShadow);
-
-        if (!this.gl.getProgramParameter(this.shaderProgramTriangleShadow, this.gl.LINK_STATUS)) {
-            alert("Could not initialise shaders (initTriangleShadowShaders)");
-            console.log(this.gl.getProgramInfoLog(this.shaderProgramTriangleShadow));
-        }
-
-        this.gl.useProgram(this.shaderProgramTriangleShadow);
-
-        this.shaderProgramTriangleShadow.vertexNormalAttribute = this.gl.getAttribLocation(this.shaderProgramTriangleShadow, "aVertexNormal");
-        this.gl.enableVertexAttribArray(this.shaderProgramTriangleShadow.vertexNormalAttribute);
-
-        this.shaderProgramTriangleShadow.vertexPositionAttribute = this.gl.getAttribLocation(this.shaderProgramTriangleShadow, "aVertexPosition");
-        this.gl.enableVertexAttribArray(this.shaderProgramTriangleShadow.vertexPositionAttribute);
-
-        this.shaderProgramTriangleShadow.vertexColourAttribute = this.gl.getAttribLocation(this.shaderProgramTriangleShadow, "aVertexColour");
-        this.gl.enableVertexAttribArray(this.shaderProgramTriangleShadow.vertexColourAttribute);
-
-        this.shaderProgramTriangleShadow.pMatrixUniform = this.gl.getUniformLocation(this.shaderProgramTriangleShadow, "uPMatrix");
-        this.shaderProgramTriangleShadow.mvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramTriangleShadow, "uMVMatrix");
-        this.shaderProgramTriangleShadow.mvInvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramTriangleShadow, "uMVINVMatrix");
-        this.shaderProgramTriangleShadow.textureMatrixUniform = this.gl.getUniformLocation(this.shaderProgramTriangleShadow, "TextureMatrix");
-
-        this.shaderProgramTriangleShadow.fog_start = this.gl.getUniformLocation(this.shaderProgramTriangleShadow, "fog_start");
-        this.shaderProgramTriangleShadow.fog_end = this.gl.getUniformLocation(this.shaderProgramTriangleShadow, "fog_end");
-        this.shaderProgramTriangleShadow.fogColour = this.gl.getUniformLocation(this.shaderProgramTriangleShadow, "fogColour");
-
-        this.shaderProgramTriangleShadow.clipPlane0 = this.gl.getUniformLocation(this.shaderProgramTriangleShadow, "clipPlane0");
-        this.shaderProgramTriangleShadow.clipPlane1 = this.gl.getUniformLocation(this.shaderProgramTriangleShadow, "clipPlane1");
-        this.shaderProgramTriangleShadow.clipPlane2 = this.gl.getUniformLocation(this.shaderProgramTriangleShadow, "clipPlane2");
-        this.shaderProgramTriangleShadow.clipPlane3 = this.gl.getUniformLocation(this.shaderProgramTriangleShadow, "clipPlane3");
-        this.shaderProgramTriangleShadow.clipPlane4 = this.gl.getUniformLocation(this.shaderProgramTriangleShadow, "clipPlane4");
-        this.shaderProgramTriangleShadow.clipPlane5 = this.gl.getUniformLocation(this.shaderProgramTriangleShadow, "clipPlane5");
-        this.shaderProgramTriangleShadow.clipPlane6 = this.gl.getUniformLocation(this.shaderProgramTriangleShadow, "clipPlane6");
-        this.shaderProgramTriangleShadow.clipPlane7 = this.gl.getUniformLocation(this.shaderProgramTriangleShadow, "clipPlane7");
-        this.shaderProgramTriangleShadow.nClipPlanes = this.gl.getUniformLocation(this.shaderProgramTriangleShadow, "nClipPlanes");
-
-        this.shaderProgramTriangleShadow.cursorPos = this.gl.getUniformLocation(this.shaderProgramTriangleShadow, "cursorPos");
-
-        this.shaderProgramTriangleShadow.shinyBack = this.gl.getUniformLocation(this.shaderProgramTriangleShadow, "shinyBack");
-        this.shaderProgramTriangleShadow.defaultColour = this.gl.getUniformLocation(this.shaderProgramTriangleShadow, "defaultColour");
-        this.shaderProgramTriangleShadow.backColour = this.gl.getUniformLocation(this.shaderProgramTriangleShadow, "backColour");
-
-        this.shaderProgramTriangleShadow.light_positions = this.gl.getUniformLocation(this.shaderProgramTriangleShadow, "light_positions");
-        this.shaderProgramTriangleShadow.light_colours_ambient = this.gl.getUniformLocation(this.shaderProgramTriangleShadow, "light_colours_ambient");
-        this.shaderProgramTriangleShadow.light_colours_specular = this.gl.getUniformLocation(this.shaderProgramTriangleShadow, "light_colours_specular");
-        this.shaderProgramTriangleShadow.light_colours_diffuse = this.gl.getUniformLocation(this.shaderProgramTriangleShadow, "light_colours_diffuse");
-
-    }
-
     initInstancedShadowShaders(vertexShaderShadow, fragmentShaderShadow) {
         this.shaderProgramInstancedShadow = this.gl.createProgram();
 
@@ -4733,7 +4650,7 @@ class MGWebGL extends Component {
         this.gl.linkProgram(this.shaderProgramRenderFrameBuffer);
 
         if (!this.gl.getProgramParameter(this.shaderProgramRenderFrameBuffer, this.gl.LINK_STATUS)) {
-            alert("Could not initialise shaders (initRenderFrameBufferShaders)");
+            //alert("Could not initialise shaders (initRenderFrameBufferShaders)");
             console.log(this.gl.getProgramInfoLog(this.shaderProgramRenderFrameBuffer));
         }
 
@@ -4888,10 +4805,16 @@ class MGWebGL extends Component {
         this.shaderProgram.pMatrixUniform = this.gl.getUniformLocation(this.shaderProgram, "uPMatrix");
         this.shaderProgram.mvMatrixUniform = this.gl.getUniformLocation(this.shaderProgram, "uMVMatrix");
         this.shaderProgram.mvInvMatrixUniform = this.gl.getUniformLocation(this.shaderProgram, "uMVINVMatrix");
+        this.shaderProgram.textureMatrixUniform = this.gl.getUniformLocation(this.shaderProgram, "TextureMatrix");
 
         this.shaderProgram.fog_start = this.gl.getUniformLocation(this.shaderProgram, "fog_start");
         this.shaderProgram.fog_end = this.gl.getUniformLocation(this.shaderProgram, "fog_end");
         this.shaderProgram.fogColour = this.gl.getUniformLocation(this.shaderProgram, "fogColour");
+        this.shaderProgram.ShadowMap = this.gl.getUniformLocation(this.shaderProgram, "ShadowMap");
+        this.shaderProgram.xPixelOffset = this.gl.getUniformLocation(this.shaderProgram, "xPixelOffset");
+        this.shaderProgram.yPixelOffset = this.gl.getUniformLocation(this.shaderProgram, "yPixelOffset");
+        this.shaderProgram.doShadows = this.gl.getUniformLocation(this.shaderProgram, "doShadows");
+        this.shaderProgram.shadowQuality = this.gl.getUniformLocation(this.shaderProgram, "shadowQuality");
 
         this.shaderProgram.clipPlane0 = this.gl.getUniformLocation(this.shaderProgram, "clipPlane0");
         this.shaderProgram.clipPlane1 = this.gl.getUniformLocation(this.shaderProgram, "clipPlane1");
@@ -4957,10 +4880,16 @@ class MGWebGL extends Component {
         this.shaderProgramInstanced.pMatrixUniform = this.gl.getUniformLocation(this.shaderProgramInstanced, "uPMatrix");
         this.shaderProgramInstanced.mvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramInstanced, "uMVMatrix");
         this.shaderProgramInstanced.mvInvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramInstanced, "uMVINVMatrix");
+        this.shaderProgramInstanced.textureMatrixUniform = this.gl.getUniformLocation(this.shaderProgramInstanced, "TextureMatrix");
 
         this.shaderProgramInstanced.fog_start = this.gl.getUniformLocation(this.shaderProgramInstanced, "fog_start");
         this.shaderProgramInstanced.fog_end = this.gl.getUniformLocation(this.shaderProgramInstanced, "fog_end");
         this.shaderProgramInstanced.fogColour = this.gl.getUniformLocation(this.shaderProgramInstanced, "fogColour");
+        this.shaderProgramInstanced.ShadowMap = this.gl.getUniformLocation(this.shaderProgramInstanced, "ShadowMap");
+        this.shaderProgramInstanced.xPixelOffset = this.gl.getUniformLocation(this.shaderProgramInstanced, "xPixelOffset");
+        this.shaderProgramInstanced.yPixelOffset = this.gl.getUniformLocation(this.shaderProgramInstanced, "yPixelOffset");
+        this.shaderProgramInstanced.doShadows = this.gl.getUniformLocation(this.shaderProgramInstanced, "doShadows");
+        this.shaderProgramInstanced.shadowQuality = this.gl.getUniformLocation(this.shaderProgramInstanced, "shadowQuality");
 
         this.shaderProgramInstanced.clipPlane0 = this.gl.getUniformLocation(this.shaderProgramInstanced, "clipPlane0");
         this.shaderProgramInstanced.clipPlane1 = this.gl.getUniformLocation(this.shaderProgramInstanced, "clipPlane1");
@@ -5020,10 +4949,16 @@ class MGWebGL extends Component {
         this.shaderProgramThickLinesNormal.mvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "uMVMatrix");
         this.shaderProgramThickLinesNormal.mvInvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "uMVINVMatrix");
         this.shaderProgramThickLinesNormal.screenZ = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "screenZ");
+        this.shaderProgramThickLinesNormal.textureMatrixUniform = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "TextureMatrix");
 
         this.shaderProgramThickLinesNormal.fog_start = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "fog_start");
         this.shaderProgramThickLinesNormal.fog_end = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "fog_end");
         this.shaderProgramThickLinesNormal.fogColour = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "fogColour");
+        this.shaderProgramThickLinesNormal.ShadowMap = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "ShadowMap");
+        this.shaderProgramThickLinesNormal.xPixelOffset = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "xPixelOffset");
+        this.shaderProgramThickLinesNormal.yPixelOffset = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "yPixelOffset");
+        this.shaderProgramThickLinesNormal.doShadows = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "doShadows");
+        this.shaderProgramThickLinesNormal.shadowQuality = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "shadowQuality");
         this.shaderProgramThickLinesNormal.clipPlane0 = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "clipPlane0");
         this.shaderProgramThickLinesNormal.clipPlane1 = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "clipPlane1");
         this.shaderProgramThickLinesNormal.clipPlane2 = this.gl.getUniformLocation(this.shaderProgramThickLinesNormal, "clipPlane2");
@@ -5137,63 +5072,6 @@ class MGWebGL extends Component {
 
     }
 
-    initPerfectSphereShadowShaders(vertexShader, fragmentShader) {
-        this.shaderProgramPerfectSpheresShadow = this.gl.createProgram();
-        this.gl.attachShader(this.shaderProgramPerfectSpheresShadow, vertexShader);
-        this.gl.attachShader(this.shaderProgramPerfectSpheresShadow, fragmentShader);
-        this.gl.bindAttribLocation(this.shaderProgramPerfectSpheresShadow, 0, "aVertexPosition");
-        this.gl.bindAttribLocation(this.shaderProgramPerfectSpheresShadow, 1, "aVertexColour");
-        this.gl.bindAttribLocation(this.shaderProgramPerfectSpheresShadow, 2, "aVertexNormal");
-        this.gl.linkProgram(this.shaderProgramPerfectSpheresShadow);
-
-        if (!this.gl.getProgramParameter(this.shaderProgramPerfectSpheresShadow, this.gl.LINK_STATUS)) {
-            alert("Could not initialise shaders (initPerfectSphereShadowShaders)");
-            console.log(this.gl.getProgramInfoLog(this.shaderProgramPerfectSpheresShadow));
-        }
-
-        this.gl.useProgram(this.shaderProgramPerfectSpheresShadow);
-
-        this.shaderProgramPerfectSpheresShadow.vertexPositionAttribute = this.gl.getAttribLocation(this.shaderProgramPerfectSpheresShadow, "aVertexPosition");
-        this.gl.enableVertexAttribArray(this.shaderProgramPerfectSpheresShadow.vertexPositionAttribute);
-
-        this.shaderProgramPerfectSpheresShadow.vertexNormalAttribute = this.gl.getAttribLocation(this.shaderProgramPerfectSpheresShadow, "aVertexNormal");
-        this.gl.enableVertexAttribArray(this.shaderProgramPerfectSpheresShadow.vertexNormalAttribute);
-
-        this.shaderProgramPerfectSpheresShadow.vertexColourAttribute = this.gl.getAttribLocation(this.shaderProgramPerfectSpheresShadow, "aVertexColour");
-        this.gl.enableVertexAttribArray(this.shaderProgramPerfectSpheresShadow.vertexColourAttribute);
-
-        this.shaderProgramPerfectSpheresShadow.vertexTextureAttribute = this.gl.getAttribLocation(this.shaderProgramPerfectSpheresShadow, "aVertexTexture");
-        this.gl.enableVertexAttribArray(this.shaderProgramPerfectSpheresShadow.vertexTextureAttribute);
-
-        this.shaderProgramPerfectSpheresShadow.pMatrixUniform = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresShadow, "uPMatrix");
-        this.shaderProgramPerfectSpheresShadow.mvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresShadow, "uMVMatrix");
-        this.shaderProgramPerfectSpheresShadow.mvInvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresShadow, "uMVINVMatrix");
-        this.shaderProgramPerfectSpheresShadow.textureMatrixUniform = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresShadow, "TextureMatrix");
-
-        this.shaderProgramPerfectSpheresShadow.fog_start = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresShadow, "fog_start");
-        this.shaderProgramPerfectSpheresShadow.fog_end = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresShadow, "fog_end");
-        this.shaderProgramPerfectSpheresShadow.fogColour = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresShadow, "fogColour");
-
-        this.shaderProgramPerfectSpheresShadow.offset = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresShadow, "offset");
-        this.shaderProgramPerfectSpheresShadow.size = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresShadow, "size");
-        this.shaderProgramPerfectSpheresShadow.scaleMatrix = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresShadow, "scaleMatrix");
-
-        this.shaderProgramPerfectSpheresShadow.light_positions = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresShadow, "light_positions");
-        this.shaderProgramPerfectSpheresShadow.light_colours_ambient = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresShadow, "light_colours_ambient");
-        this.shaderProgramPerfectSpheresShadow.light_colours_specular = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresShadow, "light_colours_specular");
-        this.shaderProgramPerfectSpheresShadow.light_colours_diffuse = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresShadow, "light_colours_diffuse");
-
-        this.shaderProgramPerfectSpheresShadow.clipPlane0 = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresShadow, "clipPlane0");
-        this.shaderProgramPerfectSpheresShadow.clipPlane1 = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresShadow, "clipPlane1");
-        this.shaderProgramPerfectSpheresShadow.clipPlane2 = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresShadow, "clipPlane2");
-        this.shaderProgramPerfectSpheresShadow.clipPlane3 = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresShadow, "clipPlane3");
-        this.shaderProgramPerfectSpheresShadow.clipPlane4 = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresShadow, "clipPlane4");
-        this.shaderProgramPerfectSpheresShadow.clipPlane5 = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresShadow, "clipPlane5");
-        this.shaderProgramPerfectSpheresShadow.clipPlane6 = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresShadow, "clipPlane6");
-        this.shaderProgramPerfectSpheresShadow.clipPlane7 = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresShadow, "clipPlane7");
-        this.shaderProgramPerfectSpheresShadow.nClipPlanes = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresShadow, "nClipPlanes");
-    }
-
     initDepthShadowPerfectSphereShaders(vertexShader, fragmentShader) {
         this.shaderDepthShadowProgramPerfectSpheres = this.gl.createProgram();
         this.gl.attachShader(this.shaderDepthShadowProgramPerfectSpheres, vertexShader);
@@ -5286,10 +5164,16 @@ class MGWebGL extends Component {
         this.shaderProgramPerfectSpheres.pMatrixUniform = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "uPMatrix");
         this.shaderProgramPerfectSpheres.mvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "uMVMatrix");
         this.shaderProgramPerfectSpheres.mvInvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "uMVINVMatrix");
+        this.shaderProgramPerfectSpheres.textureMatrixUniform = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "TextureMatrix");
 
         this.shaderProgramPerfectSpheres.fog_start = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "fog_start");
         this.shaderProgramPerfectSpheres.fog_end = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "fog_end");
         this.shaderProgramPerfectSpheres.fogColour = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "fogColour");
+        this.shaderProgramPerfectSpheres.ShadowMap = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "ShadowMap");
+        this.shaderProgramPerfectSpheres.xPixelOffset = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "xPixelOffset");
+        this.shaderProgramPerfectSpheres.yPixelOffset = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "yPixelOffset");
+        this.shaderProgramPerfectSpheres.doShadows = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "doShadows");
+        this.shaderProgramPerfectSpheres.shadowQuality = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "shadowQuality");
 
         this.shaderProgramPerfectSpheres.scaleMatrix = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "scaleMatrix");
 
@@ -5512,7 +5396,12 @@ class MGWebGL extends Component {
         this.gl.uniform1f(program.fog_start, this.gl_fog_start);
         this.gl.uniform1f(program.fog_end, this.gl_fog_end);
         this.gl.uniform1i(program.nClipPlanes, this.gl_nClipPlanes);
-        this.gl.uniform4fv(program.clipPlane0, this.gl_clipPlane0);
+        if(this.calculatingShadowMap&&typeof(this.atom_span)!=="undefined"){
+            const offy = -this.atom_span+(this.fogClipOffset+this.gl_clipPlane0[3])
+            this.gl.uniform4fv(program.clipPlane0, [0, 0, -1, offy]);
+        }else{
+            this.gl.uniform4fv(program.clipPlane0, this.gl_clipPlane0);
+        }
         this.gl.uniform4fv(program.clipPlane1, this.gl_clipPlane1);
         this.gl.uniform4fv(program.clipPlane2, this.gl_clipPlane2);
         this.gl.uniform4fv(program.clipPlane3, this.gl_clipPlane3);
@@ -7479,7 +7368,7 @@ class MGWebGL extends Component {
     GLrender(calculatingShadowMap) {
         //console.log("GLrender",calculatingShadowMap);
 
-        this.mouseDown = false;
+        //this.mouseDown = false; ???
         let ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
 
 
@@ -7512,8 +7401,6 @@ class MGWebGL extends Component {
         this.gl.clearColor(this.background_colour[0], this.background_colour[1], this.background_colour[2], this.background_colour[3]);
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
-        //FIXME - This needs to depend on molecule.
-        var shadowExtent = 170.0;
 
         mat4.identity(this.mvMatrix);
 
@@ -7521,9 +7408,31 @@ class MGWebGL extends Component {
         var newQuat = quat4.clone(this.myQuat);
 
         if (calculatingShadowMap) {
-            mat4.ortho(this.pMatrix, -24 * ratio / this.zoom, 24 * ratio / this.zoom, -24 / this.zoom, 24 / this.zoom, 0.1, shadowExtent);
-            //mat4.translate(this.mvMatrix, this.mvMatrix, [0, 0, -shadowExtent * .75]);
-            mat4.translate(this.mvMatrix, this.mvMatrix, [0, 0, -this.fogClipOffset]);
+            //FIXME - This needs to depend on molecule.
+            var shadowExtent = 170.0; // ??
+            let min_x =  1e5;
+            let max_x = -1e5;
+            let min_y =  1e5;
+            let max_y = -1e5;
+            let min_z =  1e5;
+            let max_z = -1e5;
+
+            this.displayBuffers.forEach(buffer => {
+                buffer.atoms.forEach(atom => {
+                    if(atom.x>max_x) max_x = atom.x;
+                    if(atom.x<min_x) min_x = atom.x;
+                    if(atom.y>max_y) max_y = atom.y;
+                    if(atom.y<min_y) min_y = atom.y;
+                    if(atom.z>max_z) max_z = atom.z;
+                    if(atom.z<min_z) min_z = atom.z;
+                })
+            })
+            let atom_span = Math.sqrt((max_x - min_x) * (max_x - min_x) + (max_y - min_y) * (max_y - min_y) +(max_z - min_z) * (max_z - min_z));
+            atom_span = Math.min(1000.0,atom_span);
+            this.atom_span = atom_span;
+
+            mat4.ortho(this.pMatrix, -24 * ratio / this.zoom, 24 * ratio / this.zoom, -24 / this.zoom, 24 / this.zoom, 0.1, shadowExtent);//??
+            mat4.translate(this.mvMatrix, this.mvMatrix, [0, 0, -atom_span]);
 
             var rotX = quat4.create();
             quat4.set(rotX, 0, 0, 0, -1);
@@ -7544,7 +7453,7 @@ class MGWebGL extends Component {
                 quat4.set(rotX, dval0, dval1, dval2, dval3);
                 quat4.multiply(newQuat, newQuat, rotX);
             }
-            this.gl.enable(this.gl.CULL_FACE);
+            this.gl.disable(this.gl.CULL_FACE);
             this.gl.cullFace(this.gl.FRONT);
         } else {
             this.gl.disable(this.gl.CULL_FACE);
@@ -7571,13 +7480,8 @@ class MGWebGL extends Component {
                     mat4.ortho(this.pMatrix, -24 * ratio, 24 * ratio, -24, 24, 0.1, 1000.0);
                 }
             }
-            //FIXME - OH hum, this is a problem for fog and clip which assume -500 translation.
-            // Hack it for the moment
-            if (false&&this.doShadow) {
-                mat4.translate(this.mvMatrix, this.mvMatrix, [0, 0, -shadowExtent * .75]);
-            } else {
-                mat4.translate(this.mvMatrix, this.mvMatrix, [0, 0, -this.fogClipOffset]);
-            }
+
+            mat4.translate(this.mvMatrix, this.mvMatrix, [0, 0, -this.fogClipOffset]);
 
         }
 
@@ -7683,7 +7587,9 @@ class MGWebGL extends Component {
         var oldMouseDown = this.mouseDown;
 
         if (this.doShadow) {
+            this.calculatingShadowMap = true;
             this.GLrender(true);
+            this.calculatingShadowMap = false;
 
             //FIXME - This is all following mgfbo.cc
             this.textureMatrix = mat4.create();
@@ -8062,51 +7968,29 @@ class MGWebGL extends Component {
                 }
 
                 let theShader;
-                if (false&&this.doShadow) {
-                    //FIXME this is now wrong. The depth pass is done lower down. 
-                    // The only difference will be that we will cast the shadows, possibly in a new shader.
-                    // ==================== BEGIN JUNK
-                    if (calculatingShadowMap) {
-                        // We use a simple shader here.
-                        if(this.displayBuffers[idx].triangleInstanceOriginBuffer[j]){
-                            console.log("Instanced")//This shader is *far* from complete!
-                            theShader = this.shaderProgramInstancedShadow;
-                        } else {
-                            console.log("Not instanced")
-                            theShader = this.shaderProgramShadow;
-                        }
-                        this.gl.useProgram(theShader);
-                        this.setMatrixUniforms(theShader);
-                        this.setLightUniforms(theShader);
-                    } else {
-                        continue; // I don't know what to do yet!!!!
-                        // FIXME We are developing a more complex shader here, one that does shadow texture lookup.
-                        // Currently everything is black ....
-                        this.gl.useProgram(this.shaderProgramTriangleShadow);
-                        theShader = this.shaderProgramTriangleShadow;
-                        this.setMatrixUniforms(this.shaderProgramTriangleShadow);
-                        this.setLightUniforms(this.shaderProgramTriangleShadow);
-                        //console.log(this.shaderProgramTriangleShadow.textureMatrixUniform);
-                        //console.log(this.textureMatrix);
-                        let ShadowMapLoc = this.gl.getUniformLocation(this.shaderProgramTriangleShadow, "ShadowMap");
-                        this.gl.uniform1i(ShadowMapLoc, 0);
-                        this.gl.activeTexture(this.gl.TEXTURE0);
-                        this.gl.bindTexture(this.gl.TEXTURE_2D, this.rttTextureDepth);
-                        //console.log("Set the active texture!!");
-                        this.gl.uniformMatrix4fv(this.shaderProgramTriangleShadow.textureMatrixUniform, false, this.textureMatrix);
-                    }
-                    // ==================== END JUNK
+                if(this.displayBuffers[idx].triangleInstanceOriginBuffer[j]){
+                    theShader = this.shaderProgramInstanced;
+                    if (calculatingShadowMap)
+                        theShader = this.shaderProgramInstancedShadow;
                 } else {
-                    if(this.displayBuffers[idx].triangleInstanceOriginBuffer[j]){
-                        theShader = this.shaderProgramInstanced;
-                        if (calculatingShadowMap)
-                            theShader = this.shaderProgramInstancedShadow;
-                    } else {
-                        theShader = this.shaderProgram;
-                        if (calculatingShadowMap)
-                            theShader = this.shaderProgramShadow;
-                    }
-                    this.gl.useProgram(theShader);
+                    theShader = this.shaderProgram;
+                    if (calculatingShadowMap)
+                        theShader = this.shaderProgramShadow;
+                }
+                this.gl.useProgram(theShader);
+                this.gl.uniform1i(theShader.doShadows, false);
+                if(this.doShadow&&!calculatingShadowMap){
+                    this.gl.uniform1i(theShader.ShadowMap, 0);
+                    this.gl.activeTexture(this.gl.TEXTURE0);
+                    this.gl.bindTexture(this.gl.TEXTURE_2D, this.rttTextureDepth);
+                    this.gl.uniform1f(theShader.xPixelOffset, 1.0/this.rttFramebufferDepth.width);
+                    this.gl.uniform1f(theShader.yPixelOffset, 1.0/this.rttFramebufferDepth.height);
+                    this.gl.uniformMatrix4fv(theShader.textureMatrixUniform, false, this.textureMatrix);
+                    this.gl.uniform1i(theShader.doShadows, true);
+                    if(this.mouseDown)
+                        this.gl.uniform1i(theShader.shadowQuality, 0);
+                    else
+                        this.gl.uniform1i(theShader.shadowQuality, 1);
                 }
 
                 for(let i = 0; i<16; i++)
@@ -8174,33 +8058,33 @@ class MGWebGL extends Component {
                 if (calculatingShadowMap) {
                     program = this.shaderDepthShadowProgramPerfectSpheres;
                 }
-                if (false&&this.doShadow && !calculatingShadowMap) {
-                    program = this.shaderProgramPerfectSpheresShadow;
-                    this.gl.useProgram(program);
-                    this.setMatrixUniforms(program);
+
+                this.gl.useProgram(program);
+                this.setMatrixUniforms(program);
+                this.gl.disableVertexAttribArray(program.vertexColourAttribute);
+                this.gl.enableVertexAttribArray(program.vertexPositionAttribute);
+                if (!calculatingShadowMap) {
                     this.setLightUniforms(program);
-                    this.gl.disableVertexAttribArray(program.vertexColourAttribute);
-                    this.gl.enableVertexAttribArray(program.vertexTextureAttribute);
-                    let ShadowMapLoc = this.gl.getUniformLocation(program, "ShadowMap");
-                    this.gl.uniform1i(ShadowMapLoc, 0);
+                    this.gl.uniform1i(program.clipCap,this.clipCapPerfectSpheres);
+                    this.gl.enableVertexAttribArray(program.vertexNormalAttribute);
+                }
+                this.gl.enableVertexAttribArray(program.vertexTextureAttribute);
+                this.gl.enableVertexAttribArray(program.vertexColourAttribute);
+                this.gl.enableVertexAttribArray(program.offsetAttribute);
+                this.gl.enableVertexAttribArray(program.sizeAttribute);
+                this.gl.uniform1i(program.doShadows, false);
+                if(this.doShadow&&!calculatingShadowMap){
+                    this.gl.uniform1i(program.ShadowMap, 0);
                     this.gl.activeTexture(this.gl.TEXTURE0);
                     this.gl.bindTexture(this.gl.TEXTURE_2D, this.rttTextureDepth);
-                    //console.log("Shadowing perfect spheres "+ShadowMapLoc);
+                    this.gl.uniform1f(program.xPixelOffset, 1.0/this.rttFramebufferDepth.width);
+                    this.gl.uniform1f(program.yPixelOffset, 1.0/this.rttFramebufferDepth.height);
                     this.gl.uniformMatrix4fv(program.textureMatrixUniform, false, this.textureMatrix);
-                } else {
-                    this.gl.useProgram(program);
-                    this.setMatrixUniforms(program);
-                    this.gl.disableVertexAttribArray(program.vertexColourAttribute);
-                    this.gl.enableVertexAttribArray(program.vertexPositionAttribute);
-                    if (!calculatingShadowMap) {
-                        this.setLightUniforms(program);
-                        this.gl.uniform1i(program.clipCap,this.clipCapPerfectSpheres);
-                        this.gl.enableVertexAttribArray(program.vertexNormalAttribute);
-                    }
-                    this.gl.enableVertexAttribArray(program.vertexTextureAttribute);
-                    this.gl.enableVertexAttribArray(program.vertexColourAttribute);
-                    this.gl.enableVertexAttribArray(program.offsetAttribute);
-                    this.gl.enableVertexAttribArray(program.sizeAttribute);
+                    this.gl.uniform1i(program.doShadows, true);
+                    if(this.mouseDown)
+                        this.gl.uniform1i(program.shadowQuality, 0);
+                    else
+                        this.gl.uniform1i(program.shadowQuality, 1);
                 }
 
                 for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
@@ -8265,24 +8149,6 @@ class MGWebGL extends Component {
             //vertex attribute settings are likely wrong from here on...
 
             let sphereProgram = this.shaderProgramPointSpheres;
-
-            if (this.frag_depth_ext) {
-                /*
-                if (this.doShadow && !calculatingShadowMap) {
-                    let sphereProgram = this.shaderProgramPointSpheresShadow;
-                    this.gl.useProgram(sphereProgram);
-                    this.setMatrixUniforms(sphereProgram);
-                    this.setLightUniforms(sphereProgram);
-                    this.gl.disableVertexAttribArray(sphereProgram.vertexColourAttribute);
-                    this.gl.enableVertexAttribArray(sphereProgram.vertexTextureAttribute);
-                    let ShadowMapLoc = this.gl.getUniformLocation(sphereProgram, "ShadowMap");
-                    this.gl.uniform1i(ShadowMapLoc, 0);
-                    this.gl.activeTexture(this.gl.TEXTURE0);
-                    this.gl.bindTexture(this.gl.TEXTURE_2D, this.rttTextureDepth);
-                    this.gl.uniformMatrix4fv(sphereProgram.textureMatrixUniform, false, this.textureMatrix);
-                }
-                */
-            }
 
             this.gl.useProgram(sphereProgram);
 
@@ -11137,6 +11003,7 @@ class MGWebGL extends Component {
             }
         }
         self.mouseDown = false;
+        self.doHover(event,self);
     }
 
     drawSceneDirty() {

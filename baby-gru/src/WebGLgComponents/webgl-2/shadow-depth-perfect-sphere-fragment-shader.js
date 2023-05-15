@@ -29,10 +29,6 @@ var shadow_depth_perfect_sphere_fragment_shader_source = `#version 300 es\n
       if(zz <= 0.06)
           discard;
 
-      if(dot(eyePos, clipPlane1)<0.0){
-           discard;
-      }
-
       if(dot(eyePos, clipPlane0)<0.0){
           discard;
       }

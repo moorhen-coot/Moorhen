@@ -84,9 +84,9 @@ export const MoorhenDevMenu = (props) => {
                     <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
                         <Form.Check 
                             type="switch"
-                            checked={props.doShadowDepthDebug}
-                            onChange={() => { props.setDoShadowDepthDebug(!props.doShadowDepthDebug) }}
-                            label="Shadow depth"/>
+                            checked={props.doShadow}
+                            onChange={() => { props.setDoShadow(!props.doShadow) }}
+                            label="Shadows"/>
                     </InputGroup>
             </NavDropdown >
         </>

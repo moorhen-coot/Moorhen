@@ -24,9 +24,6 @@ var shadow_fragment_shader_source = `#version 300 es\n
       if(dot(eyePos, clipPlane0)<0.0){
        discard;
       }
-      if(dot(eyePos, clipPlane1)<0.0){
-       discard;
-      }
       fragColor = vColor;
     }
 `;
