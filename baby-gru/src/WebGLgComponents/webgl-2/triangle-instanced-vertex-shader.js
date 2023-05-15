@@ -10,12 +10,14 @@ var triangle_instanced_vertex_shader_source = `#version 300 es\n
     uniform mat4 uMVMatrix;
     uniform mat4 uMVINVMatrix;
     uniform mat4 uPMatrix;
+    uniform mat4 TextureMatrix;
 
     out lowp vec4 vColor;
     out lowp vec3 vNormal;
     out lowp vec2 vTexture;
     out mediump mat4 mvInvMatrix;
     out lowp vec3 v;
+    out lowp vec4 ShadowCoord;
 
     out lowp vec4 eyePos;
 
@@ -23,6 +25,8 @@ var triangle_instanced_vertex_shader_source = `#version 300 es\n
 
       vec4 theVert = vec4(instancePosition,1.0)+instanceOrientation*vec4(instanceSize*aVertexPosition,1.0);
       theVert.a = 1.0;
+
+      ShadowCoord = TextureMatrix * theVert;
 
       gl_Position = uPMatrix * uMVMatrix * theVert;
       vColor = aVertexColour;

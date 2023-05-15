@@ -402,6 +402,7 @@ export const MoorhenContainer = (props) => {
                         useOffScreenBuffers={preferences.useOffScreenBuffers}
                         doShadowDepthDebug={preferences.doShadowDepthDebug}
                         extraDraggableModals={extraDraggableModals}
+                        doShadow={preferences.doShadow}
                     />
                 </div>
                 {!viewOnly && <MoorhenButtonBar {...collectedProps} />}

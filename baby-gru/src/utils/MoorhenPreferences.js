@@ -38,6 +38,7 @@ const getDefaultValues = () => {
         doPerspectiveProjection: false,
         useOffScreenBuffers: false,
         doShadowDepthDebug: false,
+        doShadow: false,
         mouseSensitivity: 0.3,
         zoomWheelSensitivityFactor: 1.0,
         contourWheelSensitivityFactor: 0.05,
@@ -255,6 +256,7 @@ const PreferencesContextProvider = ({ children }) => {
     const [doPerspectiveProjection, setDoPerspectiveProjection] = useState(null)
     const [useOffScreenBuffers, setUseOffScreenBuffers] = useState(null)
     const [doShadowDepthDebug, setDoShadowDepthDebug] = useState(null)
+    const [doShadow, setDoShadow] = useState(null)
     const [mapLineWidth, setMapLineWidth] = useState(null)
     const [makeBackups, setMakeBackups] = useState(null)
     const [showShortcutToast, setShowShortcutToast] = useState(null)
@@ -301,6 +303,7 @@ const PreferencesContextProvider = ({ children }) => {
         29: { label: "drawAxes", value: drawAxes, valueSetter: setDrawAxes},
         30: { label: "devMode", value: devMode, valueSetter: setDevMode},
         31: { label: "doShadowDepthDebug", value: doShadowDepthDebug, valueSetter: setDoShadowDepthDebug},
+        32: { label: "doShadow", value: doShadow, valueSetter: setDoShadow},
     }
 
     const restoreDefaults = (defaultValues)=> {
@@ -573,6 +576,15 @@ const PreferencesContextProvider = ({ children }) => {
 
     useMemo(() => {
 
+        if (doShadow === null) {
+            return
+        }
+
+        updateStoredPreferences('doShadow', doShadow);
+    }, [doShadow]);
+
+    useMemo(() => {
+
         if (drawInteractions === null) {
             return
         }
@@ -647,7 +659,7 @@ const PreferencesContextProvider = ({ children }) => {
         modificationCountBackupThreshold, setModificationCountBackupThreshold, isMounted, contourWheelSensitivityFactor,
         drawInteractions, setDrawInteractions, clipCap, setClipCap, enableTimeCapsule, setEnableTimeCapsule, 
         doPerspectiveProjection, setDoPerspectiveProjection, useOffScreenBuffers, setUseOffScreenBuffers, drawAxes,
-        setDrawAxes, devMode, setDevMode, doShadowDepthDebug, setDoShadowDepthDebug
+        setDrawAxes, devMode, setDevMode, doShadowDepthDebug, setDoShadowDepthDebug, doShadow, setDoShadow
     }
 
     return (
