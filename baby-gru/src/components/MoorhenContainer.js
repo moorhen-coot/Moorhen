@@ -1,16 +1,16 @@
 import { useEffect, useCallback, useReducer, useRef, useState, useContext } from 'react';
 import { Container, Col, Row, Spinner, Toast, ToastContainer } from 'react-bootstrap';
-import { MoorhenWebMG } from './MoorhenWebMG';
+import { MoorhenWebMG } from './webMG/MoorhenWebMG';
 import { MoorhenCommandCentre, convertRemToPx, convertViewtoPx, getTooltipShortcutLabel, createLocalStorageInstance } from '../utils/MoorhenUtils';
-import { historyReducer, initialHistoryState } from './MoorhenHistoryMenu';
+import { historyReducer, initialHistoryState } from './navbar-menus/MoorhenHistoryMenu';
 import { PreferencesContext } from "../utils/MoorhenPreferences";
 import { MoorhenTimeCapsule } from '../utils/MoorhenTimeCapsule';
-import { MoorhenButtonBar } from './MoorhenButtonBar';
+import { MoorhenButtonBar } from './button/MoorhenButtonBar';
 import { Backdrop } from "@mui/material";
 import { babyGruKeyPress } from '../utils/MoorhenKeyboardAccelerators';
-import { MoorhenSideBar } from './MoorhenSideBar';
+import { MoorhenSideBar } from './list/MoorhenSideBar';
 import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
-import { MoorhenNavBar } from "./MoorhenNavBar"
+import { MoorhenNavBar } from "./navbar-menus/MoorhenNavBar"
 import './MoorhenContainer.css'
 
 const initialMoleculesState = []
