@@ -126,6 +126,11 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
     }, [props.doPerspectiveProjection])
 
     useEffect(() => {
+        glRef.current.setShadowDepthDebug(props.doShadowDepthDebug)
+        glRef.current.drawScene()
+    }, [props.doShadowDepthDebug])
+
+    useEffect(() => {
         glRef.current.useOffScreenBuffers = props.useOffScreenBuffers
         glRef.current.drawScene()
     }, [props.useOffScreenBuffers])

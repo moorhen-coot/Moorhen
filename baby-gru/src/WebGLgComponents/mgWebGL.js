@@ -1452,6 +1452,14 @@ class MGWebGL extends Component {
         //this.drawGradient(c.width/2, c.height/2);
     }
 
+    setShadowDepthDebug(doShadowDebug) {
+        this.doShadowDepthDebug = doShadowDebug;
+        this.doShadow = false;
+        if(this.doShadowDepthDebug)
+            this.doShadow = true;
+        if(this.doShadow&&!this.screenshotBuffersReady) this.initTextureFramebuffer();
+    }
+    
     componentDidUpdate(oldProps) {
         if (oldProps.width !== this.props.width || oldProps.height !== this.props.height) {
             this.resize(this.props.width, this.props.height)
@@ -7517,8 +7525,6 @@ class MGWebGL extends Component {
             //mat4.translate(this.mvMatrix, this.mvMatrix, [0, 0, -shadowExtent * .75]);
             mat4.translate(this.mvMatrix, this.mvMatrix, [0, 0, -this.fogClipOffset]);
 
-            //Hmm, this all seems wrong!
-            /*
             var rotX = quat4.create();
             quat4.set(rotX, 0, 0, 0, -1);
             var zprime = vec3Create([this.light_positions[0], this.light_positions[1], this.light_positions[2]]);
@@ -7538,7 +7544,6 @@ class MGWebGL extends Component {
                 quat4.set(rotX, dval0, dval1, dval2, dval3);
                 quat4.multiply(newQuat, newQuat, rotX);
             }
-            */
             this.gl.enable(this.gl.CULL_FACE);
             this.gl.cullFace(this.gl.FRONT);
         } else {
@@ -7655,16 +7660,15 @@ class MGWebGL extends Component {
         this.gl.enableVertexAttribArray(this.shaderProgramInstanced.vertexNormalAttribute);
 
         this.drawTriangles(calculatingShadowMap, invMat);
-        if (calculatingShadowMap)
-            return invMat
 
-        this.drawImagesAndText(invMat);
-        this.drawTransparent(theMatrix);
-        this.drawLabelledAtoms(up, right);
-        this.drawDistances(up, right);
-        this.drawTextLabels(up, right);
-
-        this.drawCircles(up, right);
+        if(!calculatingShadowMap){
+            this.drawImagesAndText(invMat);
+            this.drawTransparent(theMatrix);
+            this.drawLabelledAtoms(up, right);
+            this.drawDistances(up, right);
+            this.drawTextLabels(up, right);
+            this.drawCircles(up, right);
+        }
 
         this.myQuat = quat4.clone(oldQuat);
 

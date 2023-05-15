@@ -79,7 +79,7 @@ class MGmatrix : public matrix {
 };
 
 int superpose_main(const std::vector<std::string> &files, const std::vector<std::string> &selections);
-int gesamt_main(const std::vector<std::string> &_argv);
+//int gesamt_main(const std::vector<std::string> &_argv);
 
 /*
 std::string privateer::scripting::get_annotated_glycans ( std::string pdb_filename, bool original_colour_scheme, std::string expression_system );
@@ -588,7 +588,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     function("exportXMapToMapFile",&exportXMapToMapFile);
     function("clipperStringToString",&clipperStringToString);
     function("superpose",&superpose_main);
-    function("gesamt",&gesamt_main);
+    //function("gesamt",&gesamt_main);
     //function("get_annotated_glycans",&get_annotated_glycans);
     //function("get_annotated_glycans_hierarchical",&get_annotated_glycans_hierarchical);
     function("get_CA_bvalues_from_file",&get_CA_bvalues_from_file);
