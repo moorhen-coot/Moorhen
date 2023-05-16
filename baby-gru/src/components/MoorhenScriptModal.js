@@ -20,7 +20,7 @@ const makeDraggablePaper = (paperProps) => {
 
 
 export const MoorhenScriptModal = (props) => {
-    const [code, setCode] = useState("//No code provided")
+    const [code, setCode] = useState("")
     const [opacity, setOpacity] = useState(0.5)
 
     const { maps, changeMaps, molecules, changeMolecules, commandCentre, glRef, setToastContent } = props;
@@ -35,7 +35,7 @@ export const MoorhenScriptModal = (props) => {
         open={props.show}
         sx={{ opacity: opacity }}
         fullWidth={true}
-        maxWidth={convertViewtoPx(60, props.windowWidth)}
+        maxWidth={`${convertViewtoPx(60, props.windowWidth)}`}
         style={{
             top: '30%', // Position however you like
             height: 'fit-content',  // Ensures that the dialog is 
@@ -64,7 +64,7 @@ export const MoorhenScriptModal = (props) => {
                     fontFamily: '"Fira code", "Fira Mono", monospace',
                     fontSize: 16
                 }}
-            />
+            /> 
         </DialogContent>
         <DialogActions>
             <Button onClick={async () => {
