@@ -20,6 +20,8 @@
     "d3": "^5.15.0",
     "gl-matrix": "^3.4.3",
     "html-react-parser": "^1.4.14",
+    "ketcher-react": "^2.9.0",
+    "ketcher-standalone": "^2.9.0",
     "localforage": "^1.10.0",
     "nested-worker": "git+https://github.com/johanholmerin/nested-worker.git#semver:^1.0.0",
     "nightingale-linegraph-track": "^3.8.10",
