@@ -74,6 +74,12 @@ export const KetcherModal = (props) => {
     }
   }
 
+  /** This hook will set the ketcher editor for the first time when the modal is set to be shown.
+   *  This is required because ketcher will not remove event listeners when the component unmounts
+   * and opening the component multiple times will result in many unnecessary event listeners. The 
+   * component is loaded like this to prevent it from being loaded during start-up, resulting in 
+   * extended loading times.
+  */
   useEffect(() => { 
     if (!props.show || ketcherIsInitiatedRef.current) {
       return
