@@ -1,38 +1,28 @@
 var render_framebuffer_fragment_shader_source = `
     precision mediump float;
-    varying lowp vec4 vColor;
-    varying lowp vec2 vTexture;
+    varying lowp vec2 out_TexCoord0;
 
-    uniform float fog_end;
-    uniform float fog_start;
-
-    uniform sampler2D uSampler;
-
-    uniform vec4 clipPlane0;
-    uniform vec4 clipPlane1;
-    uniform vec4 clipPlane2;
-    uniform vec4 clipPlane3;
-    uniform vec4 clipPlane4;
-    uniform vec4 clipPlane5;
-    uniform vec4 clipPlane6;
-    uniform vec4 clipPlane7;
-    uniform int nClipPlanes;
+    uniform sampler2D inFocus;
+    uniform sampler2D blurred;
+    uniform sampler2D depth;
 
     void main(void) {
-      gl_FragColor = texture2D(uSampler, vec2(vTexture.s, vTexture.t));
+        float minDistance = 0.0;
+        float maxDistance = 1.0;
 
-      //e.g. a 1D gaussian blur.
-      //float blurSize = 1.0/1024.0;
-      //vec4 color = vec4(0.0);
-      //color += texture2D( uSampler, vec2(vTexture.s -3.0*blurSize,vTexture.t)) * 0.015625;
-      //color += texture2D( uSampler, vec2(vTexture.s -2.0*blurSize,vTexture.t)) * 0.09375;
-      //color += texture2D( uSampler, vec2(vTexture.s -1.0*blurSize,vTexture.t)) * 0.234375;
-      //color += texture2D( uSampler, vec2(vTexture.s,vTexture.t) )*0.3125;
-      //color += texture2D( uSampler, vec2(vTexture.s +1.0*blurSize,vTexture.t)) * 0.234375;
-      //color += texture2D( uSampler, vec2(vTexture.s +2.0*blurSize,vTexture.t)) * 0.09375;
-      //color += texture2D( uSampler, vec2(vTexture.s +3.0*blurSize,vTexture.t)) * 0.015625;
-      //gl_FragColor = color;
-      
+        vec4 position = texture2D(depth, out_TexCoord0);
+        vec4 focusColor = texture2D(inFocus, out_TexCoord0);
+        vec4 blurColor = texture2D(blurred, out_TexCoord0);
+
+        float blur = smoothstep ( minDistance , maxDistance , min(position.x*5.,1.0));
+
+        if(blur>0.2)
+            //gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+            gl_FragColor = blurColor;
+        else
+            gl_FragColor = focusColor;
+        
+        //gl_FragColor = texture(inFocus, out_TexCoord0);
     }
 `;
 

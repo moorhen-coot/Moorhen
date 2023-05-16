@@ -1,16 +1,16 @@
 import { useEffect, useCallback, useReducer, useRef, useState, useContext } from 'react';
 import { Container, Col, Row, Spinner, Toast, ToastContainer } from 'react-bootstrap';
-import { MoorhenWebMG } from './MoorhenWebMG';
+import { MoorhenWebMG } from './webMG/MoorhenWebMG';
 import { MoorhenCommandCentre, convertRemToPx, convertViewtoPx, getTooltipShortcutLabel, createLocalStorageInstance } from '../utils/MoorhenUtils';
-import { historyReducer, initialHistoryState } from './MoorhenHistoryMenu';
+import { historyReducer, initialHistoryState } from './navbar-menus/MoorhenHistoryMenu';
 import { PreferencesContext } from "../utils/MoorhenPreferences";
 import { MoorhenTimeCapsule } from '../utils/MoorhenTimeCapsule';
-import { MoorhenButtonBar } from './MoorhenButtonBar';
+import { MoorhenButtonBar } from './button/MoorhenButtonBar';
 import { Backdrop } from "@mui/material";
 import { babyGruKeyPress } from '../utils/MoorhenKeyboardAccelerators';
-import { MoorhenSideBar } from './MoorhenSideBar';
+import { MoorhenSideBar } from './list/MoorhenSideBar';
 import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
-import { MoorhenNavBar } from "./MoorhenNavBar"
+import { MoorhenNavBar } from "./navbar-menus/MoorhenNavBar"
 import './MoorhenContainer.css'
 
 const initialMoleculesState = []
@@ -106,8 +106,9 @@ export const MoorhenContainer = (props) => {
     } = states
 
     const {
-        disableFileUploads, urlPrefix, extraNavBarMenus, exportCallback, viewOnly, 
+        disableFileUploads, urlPrefix, extraNavBarMenus, exportCallback, viewOnly, extraDraggableModals, 
         monomerLibraryPath, forwardControls, extraFileMenuItems, allowScripting, backupStorageInstance,
+        extraEditMenuItems,
     } = props
     
     const setWindowDimensions = () => {
@@ -344,7 +345,7 @@ export const MoorhenContainer = (props) => {
         setToastContent, currentDropdownId, setCurrentDropdownId, hoveredAtom, setHoveredAtom, showToast, setShowToast,
         windowWidth, windowHeight, showColourRulesToast, timeCapsuleRef, setShowColourRulesToast, isDark, exportCallback,
         disableFileUploads, urlPrefix, viewOnly, extraNavBarMenus, monomerLibraryPath, moleculesRef, extraFileMenuItems, 
-        mapsRef, allowScripting, ...preferences
+        mapsRef, allowScripting, extraEditMenuItems, extraDraggableModals, ...preferences
     }
 
     return <> 
@@ -400,6 +401,8 @@ export const MoorhenContainer = (props) => {
                         doPerspectiveProjection={preferences.doPerspectiveProjection}
                         useOffScreenBuffers={preferences.useOffScreenBuffers}
                         doShadowDepthDebug={preferences.doShadowDepthDebug}
+                        extraDraggableModals={extraDraggableModals}
+                        doShadow={preferences.doShadow}
                     />
                 </div>
                 {!viewOnly && <MoorhenButtonBar {...collectedProps} />}
@@ -425,6 +428,8 @@ MoorhenContainer.defaultProps = {
     disableFileUploads: false,
     extraNavBarMenus: [],
     extraFileMenuItems: [],
+    extraEditMenuItems: [],
+    extraDraggableModals: [],
     viewOnly: false,
     allowScripting: true,
     backupStorageInstance: createLocalStorageInstance('Moorhen-TimeCapsule') 

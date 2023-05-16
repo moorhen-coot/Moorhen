@@ -9,16 +9,21 @@ var thick_lines_normal_vertex_shader_source = `
     uniform vec3 screenZ;
     uniform mat4 uPMatrix;
     uniform float pixelZoom;
+    uniform mat4 TextureMatrix;
 
     varying lowp vec4 vColor;
     varying lowp vec3 vNormal;
     varying mediump mat4 mvInvMatrix;
     varying lowp vec3 v;
     varying lowp vec4 eyePos;
+    varying lowp vec4 ShadowCoord;
 
     void main(void) {
 
         vec4 theVert = aVertexPosition;
+
+        ShadowCoord = TextureMatrix * theVert;
+
         float lineSize = pixelZoom*dot(aVertexNormal,aVertexNormal);
         vec3 lineY = lineSize * normalize(cross(aVertexNormal,screenZ));
 

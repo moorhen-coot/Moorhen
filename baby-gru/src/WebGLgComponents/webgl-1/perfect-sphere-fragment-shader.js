@@ -33,7 +33,28 @@ var perfect_sphere_fragment_shader_source = `
     varying mediump mat4 projMatrix;
     varying float size_v;
 
+    varying lowp vec4 ShadowCoord;
+    uniform sampler2D ShadowMap;
+    uniform float xPixelOffset;
+    uniform float yPixelOffset;
+    uniform bool doShadows;
+    uniform int shadowQuality;
+
     uniform bool clipCap;
+
+    float lookup(vec2 offSet){
+      vec4 coord = ShadowCoord + vec4(offSet.x * xPixelOffset * ShadowCoord.w, offSet.y * yPixelOffset * ShadowCoord.w, 0.07, 0.0);
+      if(coord.s>1.0||coord.s<0.0||coord.t>1.0||coord.t<0.0)
+          return 1.0;
+      float shad = texture2D(ShadowMap, coord.xy ).x;
+      shad = shad/(coord.p/coord.q);
+      if(shad<0.8){
+          shad = 0.0;
+      } else {
+          shad = 1.0;
+      }
+      return shad;
+    }
 
     void main(void) {
       float silly_scale = 0.7071067811865475;
@@ -71,6 +92,24 @@ var perfect_sphere_fragment_shader_source = `
           }
       }
 
+      float shad = 1.0;
+      if(doShadows){
+          if(shadowQuality==0){
+              shad = lookup(vec2(0.0,0.0));
+          } else {
+              shad = lookup(vec2(0.0,0.0));
+              /*
+              //FIXME - this is invalid in WebGL 1 for some reason.
+              shad = 0.0;
+              float x,y;
+              for (y = -3.5 ; y <=3.5 ; y+=1.0)
+                  for (x = -3.5 ; x <=3.5 ; x+=1.0)
+                      shad += lookup(vec2(x,y));
+              shad /= 64.0 ;
+              */
+          }
+      }
+
       gl_FragDepthEXT = (pos.z / pos.w + 1.0) / 2.0;
 
       vec3 L;
@@ -104,10 +143,16 @@ var perfect_sphere_fragment_shader_source = `
       vec4 theColor = vec4(vColor);
 
       vec4 color = (1.5*theColor*Iamb + 1.2*theColor* Idiff);
+      if(shad<0.5) {
+          shad += .5;
+          shad = min(shad,1.0);
+          color *= shad;
+      } else {
+          color += Ispec;
+      }
       color.a = vColor.a;
-      color += Ispec;
+
       gl_FragColor = mix(color, fogColour, fogFactor );
-      //gl_FragColor = color;
 
       if(clipCap){
         if(clipd<0.0){

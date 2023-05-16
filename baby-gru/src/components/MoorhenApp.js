@@ -1,5 +1,5 @@
 import { useRef, useState, useReducer, useContext } from 'react';
-import { historyReducer, initialHistoryState } from './MoorhenHistoryMenu';
+import { historyReducer, initialHistoryState } from './navbar-menus/MoorhenHistoryMenu';
 import { PreferencesContext } from "../utils/MoorhenPreferences";
 import { MoorhenContainer } from "./MoorhenContainer"
 
