@@ -8,8 +8,8 @@ import { MoorhenLigandMenu } from './MoorhenLigandMenu';
 import { MoorhenEditMenu } from './MoorhenEditMenu';
 import { MoorhenDevMenu } from './MoorhenDevMenu';
 import { MoorhenCryoMenu } from './MoorhenCryoMenu';
+import { MoorhenCalculateMenu } from './MoorhenCalculateMenu';
 import { SaveOutlined } from '@mui/icons-material';
-import { MoorhenScriptingMenu } from './MoorhenScriptingMenu';
 
 export const MoorhenNavBar = forwardRef((props, ref) => {
     const [currentDropdownId, setCurrentDropdownId] = useState(-1)
@@ -30,12 +30,12 @@ export const MoorhenNavBar = forwardRef((props, ref) => {
                         {props.windowWidth >= 1000 ? <img src={`${props.urlPrefix}/baby-gru/pixmaps/MoorhenLogo.png`} alt='Moorhen' style={{height: '1.6rem', marginRight: '0.3rem'}}/> : null}
                         <MoorhenFileMenu dropdownId="File" {...collectedProps} />
                         <MoorhenEditMenu dropdownId="Edit" {...collectedProps} />
+                        <MoorhenCalculateMenu dropdownId="Calculate" {...collectedProps} />
                         <MoorhenLigandMenu dropdownId="Ligand" {...collectedProps} />
                         <MoorhenViewMenu dropdownId="View" {...collectedProps} />
                         {/**<MoorhenHistoryMenu dropdownId="History" {...collectedProps} />*/}
                         <MoorhenPreferencesMenu dropdownId="Preferences" {...collectedProps} />
                         <MoorhenCryoMenu dropdownId="Cryo" {...collectedProps} />
-                        {props.allowScripting && <MoorhenScriptingMenu dropdownId="Scripting" {...collectedProps} />}
                         <MoorhenHelpMenu dropdownId="Help" {...collectedProps}/>
                         {props.devMode && <MoorhenDevMenu dropdownId="Dev" {...collectedProps}/>}
                         {props.extraNavBarMenus && props.extraNavBarMenus.map(menu => menu)}
