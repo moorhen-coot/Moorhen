@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useImperativeHandle, forwardRef } from "react";
-import { cidToSpec } from "../../src/utils/MoorhenUtils";
+import { cidToSpec } from "../../../src/utils/MoorhenUtils";
 import Draggable from "react-draggable";
 import { Button, Card, Dropdown, Form, InputGroup, Row, Spinner, SplitButton, Stack } from "react-bootstrap";
 import { Backdrop, IconButton, TextField } from "@mui/material";
@@ -28,13 +28,13 @@ const AceDRGtomPicker = forwardRef((props, ref) => {
         getFormData: () => {return {
             selectedAtom: selectedAtomValueRef.current,
             deleteAtom: deleteAtomValueRef.current,
-            deleteSelectedAtom: deleteSelectedAtomValueRef.current,
+            deleteSelectedAtom: deleteSelectedAtomValueRef.current?.value,
             changeAtomCharge: changeAtomChargeValueRef.current,
-            changeSelectedAtomCharge: changeSelectedAtomChargeValueRef.current,
+            changeSelectedAtomCharge: changeSelectedAtomChargeValueRef.current?.value,
             newAtomCharge: newAtomChargeValueRef.current,
             changeBondOrder: changeBondOrderValueRef.current,
-            changeSelectedBondOrder: changeSelectedBondOrderValueRef.current,
-            newBondOrder: newBondOrderValueRef.current
+            changeSelectedBondOrder: changeSelectedBondOrderValueRef.current?.value,
+            newBondOrder: newBondOrderValueRef.current?.value
         }}
     }), 
     [selectedAtomValueRef, deleteAtomValueRef, deleteSelectedAtomValueRef, changeSelectedAtomChargeValueRef, changeSelectedBondOrderValueRef, changeAtomChargeValueRef, newAtomChargeValueRef, newBondOrderValueRef, changeBondOrderValueRef])
@@ -136,7 +136,7 @@ const AceDRGtomPicker = forwardRef((props, ref) => {
                         setDeleteAtom(false)
                     }}>No</Dropdown.Item>
                 </SplitButton>
-                <Form.Select disabled={!deleteAtom} onChange={(evt) => deleteSelectedAtomValueRef.current = evt.target.value}>
+                <Form.Select disabled={!deleteAtom} ref={deleteSelectedAtomValueRef}>
                     {monomerAtoms.map(atom => <option key={atom.label} value={atom.label}>{atom.has_altloc ? `${atom.name}:${atom.alt_loc}` : atom.name}</option>) }
                 </Form.Select>
             </InputGroup>
@@ -154,12 +154,12 @@ const AceDRGtomPicker = forwardRef((props, ref) => {
                         setChangeOrderBond(false)
                     }}>No</Dropdown.Item>
                     </SplitButton>
-                <Form.Select disabled={!changeOrderBond} onChange={(evt) => changeSelectedBondOrderValueRef.current = evt.target.value}>
+                <Form.Select ref={changeSelectedBondOrderValueRef} disabled={!changeOrderBond}>
                     {monomerBonds.map(bond => <option key={bond.label} value={bond.label}>{bond.label}</option>) }
                 </Form.Select>            
             </InputGroup>
             <Row style={{justifyContent: 'center', display: changeOrderBond ? 'flex' : 'none'}}>
-                <Form.Select style={{width: '50%'}} onChange={(evt) => newBondOrderValueRef.current = evt.target.value}>
+                <Form.Select style={{width: '50%'}} ref={newBondOrderValueRef}>
                     <option key={'SINGLE'} value={'SINGLE'}>SINGLE</option>
                     <option key={'DOUBLE'} value={'DOUBLE'}>DOUBLE</option>
                     <option key={'TRIPLE'} value={'TRIPLE'}>TRIPLE</option>
@@ -179,7 +179,7 @@ const AceDRGtomPicker = forwardRef((props, ref) => {
                         setChangeAtomCharge(false)
                     }}>No</Dropdown.Item>
                 </SplitButton>
-                <Form.Select disabled={!changeAtomCharge} onChange={(evt) => changeSelectedAtomChargeValueRef.current = evt.target.value}>
+                <Form.Select disabled={!changeAtomCharge} ref={changeSelectedAtomChargeValueRef}>
                     {monomerAtoms.map(atom => <option key={atom.label} value={atom.label}>{atom.has_altloc ? `${atom.name}:${atom.alt_loc}` : atom.name}</option>) }
                 </Form.Select>
             </InputGroup>

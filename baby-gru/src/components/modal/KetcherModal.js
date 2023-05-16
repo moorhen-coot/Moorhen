@@ -2,7 +2,6 @@ import Draggable from "react-draggable";
 import { Button, Card, Form, Spinner } from "react-bootstrap";
 import { StandaloneStructServiceProvider } from 'ketcher-standalone'
 import { Editor } from 'ketcher-react'
-import 'ketcher-react/dist/index.css'
 import { Backdrop, IconButton } from "@mui/material";
 import { CloseOutlined } from "@mui/icons-material";
 import { useEffect, useRef, useState } from "react";
@@ -13,7 +12,9 @@ const structServiceProvider = new StandaloneStructServiceProvider()
 
 export const KetcherModal = (props) => {
   const ketcherEditorRef = useRef(null)
+  const ketcherIsInitiatedRef = useRef(false)
   const [showBusy, setShowBusy] = useState(false)
+  const [ketcherEditor, setKetcherEditor] = useState(null)
   const [errorMessage, setErrorMessage] = useState('')
 
   const smilesToPDB = async (smiles, instanceName='LIG', nConformer=10, nIteration=100) => {
@@ -73,6 +74,46 @@ export const KetcherModal = (props) => {
     }
   }
 
+  /** This hook will set the ketcher editor for the first time when the modal is set to be shown.
+   *  This is required because ketcher will not remove event listeners when the component unmounts
+   * and opening the component multiple times will result in many unnecessary event listeners. The 
+   * component is loaded like this to prevent it from being loaded during start-up, resulting in 
+   * extended loading times.
+  */
+  useEffect(() => { 
+    if (!props.show || ketcherIsInitiatedRef.current) {
+      return
+    }
+
+    const handleOnInit = (ketcher) => {
+      ketcherEditorRef.current = ketcher
+      window.ketcher = ketcher
+      setShowBusy(false)
+    }
+
+    setShowBusy(true)
+    require('ketcher-react/dist/index.css')
+    ketcherIsInitiatedRef.current = true
+
+    setKetcherEditor(
+      <Editor
+        errorHandler={(message) => {
+          console.log(message.toString())
+        }}
+        staticResourcesUrl={""}
+        structServiceProvider={structServiceProvider}
+        onInit={handleOnInit}
+      />
+    )
+
+  }, [props.show])
+
+  useEffect(() => {
+    if (props.show && ketcherEditorRef.current) {
+      ketcherEditorRef.current.setMolecule(props.initialData)
+    }
+  }, [ketcherEditor])
+
   useEffect(() => {
     setTimeout(() => {
       const cliparea = document.querySelector('.cliparea')
@@ -80,12 +121,6 @@ export const KetcherModal = (props) => {
         cliparea.style.display = 'none'
       }
     }, 1000)
-  }, [props.show])
-
-  useEffect(() => {
-    if (!props.show && ketcherEditorRef.current) {
-      ketcherEditorRef.current.setMolecule('')
-    }
   }, [props.show])
 
   const createLigand = async () => {
@@ -106,14 +141,6 @@ export const KetcherModal = (props) => {
     props.setShow(false)
     setErrorMessage('')
   }
-
-  const handleOnInit = (ketcher) => {
-    ketcherEditorRef.current = ketcher
-    window.ketcher = ketcher
-    if (props.initialData) {
-      ketcher.setMolecule(props.initialData)
-    }
-  }
   
   return <Draggable handle='.handle'>
       <Card style={{visibility: props.show ? 'visible' : 'hidden', position: 'absolute', top: '25rem', left: '25rem', height: convertViewtoPx(60, props.windowHeight), width: convertViewtoPx(70, props.windowWidth)}}>
@@ -129,14 +156,7 @@ export const KetcherModal = (props) => {
             </Card.Header>
         <Card.Body style={{padding: 0}}>
           <div style={{position: 'absolute', height: convertViewtoPx(52, props.windowHeight) - 2, width: convertViewtoPx(70, props.windowWidth) - 2}}>
-            <Editor
-              errorHandler={(message) => {
-                console.log(message.toString())
-              }}
-              staticResourcesUrl={""}
-              structServiceProvider={structServiceProvider}
-              onInit={handleOnInit}
-            />
+            {ketcherEditor}
           </div>
         </Card.Body>
         <Card.Footer style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: convertViewtoPx(4, props.windowHeight)}}>
@@ -151,3 +171,5 @@ export const KetcherModal = (props) => {
       </Card>
     </Draggable>
 }
+
+KetcherModal.defaultProps = {initialData: ''}
