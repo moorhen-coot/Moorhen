@@ -3,7 +3,7 @@ import { useState } from "react";
 import { MoorhenSuperposeMenuItem, MoorhenLoadScriptMenuItem } from "../menu-item/MoorhenMenuItem";
 import { MoorhenScriptModal } from "../modal/MoorhenScriptModal";
 import { MenuItem } from "@mui/material";
-
+import { KetcherModal } from "../modal/KetcherModal"
 
 export const MoorhenCalculateMenu = (props) => {
     const [popoverIsShown, setPopoverIsShown] = useState(false)
@@ -21,17 +21,18 @@ export const MoorhenCalculateMenu = (props) => {
             onToggle={() => { props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId(-1) }}>
             <MoorhenSuperposeMenuItem key="superpose_structures" {...menuItemProps} />
             <MenuItem onClick={() => setShowLigandBuilder(true)}>
-                Ligand builder
+                Ligand builder...
             </MenuItem>
             {props.allowScripting && 
             <>
                 <MoorhenLoadScriptMenuItem {...menuItemProps} />
                 <MenuItem onClick={() => { setShowCodeEditor(true) }}>Interactive scripting...</MenuItem>
-                <MoorhenScriptModal show={showCodeEditor} setShow={setShowCodeEditor} {...menuItemProps} />            
             </>
             }
             {props.extraCalculateMenuItems && props.extraCalculateMenuItems.map( menu => menu)}
         </NavDropdown>
+        <KetcherModal show={showLigandBuilder} setShow={setShowLigandBuilder} {...menuItemProps} />            
+        <MoorhenScriptModal show={showCodeEditor} setShow={setShowCodeEditor} {...menuItemProps} />            
     </>
 }
 
