@@ -116,7 +116,7 @@ export const KetcherModal = (props) => {
   }
   
   return <Draggable handle='.handle'>
-      <Card style={{display: props.show ? '' : 'none', position: 'absolute', top: '25rem', left: '25rem', height: convertViewtoPx(60, props.windowHeight), width: convertViewtoPx(70, props.windowWidth)}}>
+      <Card style={{visibility: props.show ? 'visible' : 'hidden', position: 'absolute', top: '25rem', left: '25rem', height: convertViewtoPx(60, props.windowHeight), width: convertViewtoPx(70, props.windowWidth)}}>
         <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={showBusy}>
           <Spinner animation="border" style={{ marginRight: '0.5rem' }}/>
           <span>Please wait...</span>
