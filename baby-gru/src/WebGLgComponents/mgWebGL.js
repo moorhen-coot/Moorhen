@@ -1568,7 +1568,7 @@ class MGWebGL extends Component {
         this.save_pixel_data = false;
         this.renderToTexture = false;
 
-        this.doShadow = true;
+        this.doShadow = false;
 
         //Debugging only
         this.doShadowDepthDebug = false;
@@ -7375,6 +7375,8 @@ class MGWebGL extends Component {
         if (calculatingShadowMap) {
             if(!this.offScreenReady)
                 this.recreateOffScreeenBuffers();
+            if(!this.screenshotBuffersReady)
+                this.initTextureFramebuffer();
             const width_ratio = this.gl.viewportWidth / this.rttFramebuffer.width;
             const height_ratio = this.gl.viewportHeight / this.rttFramebuffer.height;
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.rttFramebufferDepth);

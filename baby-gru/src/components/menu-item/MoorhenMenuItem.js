@@ -2326,7 +2326,7 @@ export const MoorhenLoadScriptMenuItem = (props) => {
         key='execute-script-menu-item'
         id='execute-on-ligand-menu-item'
         popoverContent={panelContent}
-        menuItemText="Load and execute..."
+        menuItemText="Load and execute script..."
         onCompleted={onCompleted}
         setPopoverIsShown={props.setPopoverIsShown}
     />
