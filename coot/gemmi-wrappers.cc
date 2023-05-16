@@ -153,6 +153,11 @@ std::map<std::string,std::string> nucleotideCodesThreeToOne = {
     {"MISSING", "-"}
 };
 
+void cif_parse_string(gemmi::cif::Document& doc, const std::string& data) {
+  tao::pegtl::memory_input<> in(data, "string");
+  gemmi::cif::parse_input(doc, in);
+}
+
 struct SequenceEntry {
     int resNum;
     std::string resCode;
@@ -1433,9 +1438,11 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .function("find_mmcif_category",&gemmi::cif::Block::find_mmcif_category)
     .function("has_mmcif_category",&gemmi::cif::Block::has_mmcif_category)
     .function("init_mmcif_loop",&gemmi::cif::Block::init_mmcif_loop)
+    .function("find_loop",&gemmi::cif::Block::find_loop)
     ;
 
     class_<gemmi::cif::Document>("cifDocument")
+    .constructor<>()
     .property("source",&gemmi::cif::Document::source)
     .property("blocks",&gemmi::cif::Document::blocks)
     .function("add_new_block",&gemmi::cif::Document::add_new_block)
@@ -2246,5 +2253,5 @@ GlobWalk
     function("getSpaceGroupHallAsString",&get_spacegroup_hall);
     function("getSpaceGroupQualifierAsString",&get_spacegroup_qualifier);
     function("getElementNameAsString",&get_element_name_as_string);
-
+    function("cif_parse_string",&cif_parse_string);
 }
