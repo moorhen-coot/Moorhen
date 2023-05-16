@@ -1568,7 +1568,7 @@ class MGWebGL extends Component {
         this.save_pixel_data = false;
         this.renderToTexture = false;
 
-        this.doShadow = true;
+        this.doShadow = false;
 
         //Debugging only
         this.doShadowDepthDebug = false;
