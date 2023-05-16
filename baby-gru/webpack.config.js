@@ -1,3 +1,4 @@
+const webpack = require('webpack');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
@@ -40,6 +41,9 @@ const paths = {
 module.exports = (env, argv) => {
   return {
     plugins:[
+      new webpack.DefinePlugin({
+        process: {env: {}}
+      }),  
       new MiniCssExtractPlugin({
         filename: 'moorhen.css',
         chunkFilename: '[id].css',
