@@ -1,5 +1,5 @@
 import Draggable from "react-draggable";
-import { Button, Card, Spinner } from "react-bootstrap";
+import { Button, Card, Form, Spinner } from "react-bootstrap";
 import { StandaloneStructServiceProvider } from 'ketcher-standalone'
 import { Editor } from 'ketcher-react'
 import 'ketcher-react/dist/index.css'
@@ -14,6 +14,7 @@ const structServiceProvider = new StandaloneStructServiceProvider()
 export const KetcherModal = (props) => {
   const ketcherEditorRef = useRef(null)
   const [showBusy, setShowBusy] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
 
   const smilesToPDB = async (smiles, instanceName='LIG', nConformer=10, nIteration=100) => {
     if (!smiles) {
@@ -67,6 +68,8 @@ export const KetcherModal = (props) => {
       await newMolecule.addDict(fileContent)
       props.changeMolecules({ action: "Add", item: newMolecule })
       await newMolecule.fetchIfDirtyAndDraw("CBs", props.glRef)
+    } else {
+      setErrorMessage('ERROR: Cannot create specified ligand...')
     }
   }
 
@@ -79,17 +82,29 @@ export const KetcherModal = (props) => {
     }, 1000)
   }, [props.show])
 
+  useEffect(() => {
+    if (!props.show && ketcherEditorRef.current) {
+      ketcherEditorRef.current.setMolecule('')
+    }
+  }, [props.show])
+
   const createLigand = async () => {
     setShowBusy(true)
     const smiles = await ketcherEditorRef.current.getSmiles()
     const dictFileContent = await smilesToPDB(smiles)
-    handleDictFileContent(dictFileContent)
-    setShowBusy(false)
-    props.setShow(false)
+    if (dictFileContent) {
+      handleDictFileContent(dictFileContent)
+      setShowBusy(false)
+      props.setShow(false)
+    } else {
+      setErrorMessage('ERROR: Cannot create specified ligand...')   
+      setShowBusy(false)
+    }
   }
     
   const handleClose = () => {
     props.setShow(false)
+    setErrorMessage('')
   }
 
   const handleOnInit = (ketcher) => {
@@ -100,9 +115,8 @@ export const KetcherModal = (props) => {
     }
   }
   
-  return ( props.show &&
-    <Draggable handle='.handle'>
-      <Card style={{position: 'absolute', top: '25rem', left: '25rem', height: convertViewtoPx(60, props.windowHeight), width: convertViewtoPx(70, props.windowWidth)}}>
+  return <Draggable handle='.handle'>
+      <Card style={{display: props.show ? '' : 'none', position: 'absolute', top: '25rem', left: '25rem', height: convertViewtoPx(60, props.windowHeight), width: convertViewtoPx(70, props.windowWidth)}}>
         <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={showBusy}>
           <Spinner animation="border" style={{ marginRight: '0.5rem' }}/>
           <span>Please wait...</span>
@@ -125,11 +139,15 @@ export const KetcherModal = (props) => {
             />
           </div>
         </Card.Body>
-        <Card.Footer style={{display: 'flex', alignItems: 'center', justifyContent: 'right', height: convertViewtoPx(4, props.windowHeight)}}>
-          <Button variant='primary' onClick={createLigand}>Create ligand</Button>
-          <Button variant='danger' onClick={handleClose} style={{marginLeft: '0.1rem'}}>Close</Button>
+        <Card.Footer style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: convertViewtoPx(4, props.windowHeight)}}>
+          <div style={{display: 'flex', alignItems: 'center', justifyContent: 'left', width: '80%'}}>
+            <Form.Control type="text" readOnly={true} value={errorMessage}/>
+          </div>
+          <div style={{display: 'flex', alignItems: 'center', justifyContent: 'right'}}>
+            <Button variant='primary' onClick={createLigand} style={{marginLeft: '0.5rem'}} >Create ligand</Button>
+            <Button variant='danger' onClick={handleClose} style={{marginLeft: '0.1rem'}}>Close</Button>
+          </div>
         </Card.Footer>
       </Card>
     </Draggable>
-  )
 }
