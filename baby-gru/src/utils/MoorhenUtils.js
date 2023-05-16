@@ -425,7 +425,7 @@ export const cidToSpec = (cid) => {
     const mol_no = cidTokens[1]
     const chain_id = cidTokens[2]
     const res_no = parseInt(cidTokens[3])
-    const res_name = ResNameRegExp.exec(cidTokens[3]).length > 0  ? ResNameRegExp.exec(cidTokens[3])[0].replace('(', '').replace(')', '') : null
+    const res_name = ResNameRegExp.exec(cidTokens[3])?.length > 0  ? ResNameRegExp.exec(cidTokens[3])[0].replace('(', '').replace(')', '') : null
     const ins_code = cidTokens[3].split(".").length > 1 ? cidTokens[3].split(".")[1] : ""
     const atom_name = cidTokens.length > 4 ? cidTokens[4].split(":")[0] : ""
     const alt_conf = atom_name && cidTokens[4].split(":").length > 1 ? cidTokens[4].split(":")[1] : ""
