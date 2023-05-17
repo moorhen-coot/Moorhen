@@ -205,6 +205,7 @@ const AceDRGtomPicker = forwardRef((props, ref) => {
 export const MoorhenCreateAcedrgLinkModal = (props) => {
     const [opacity, setOpacity] = useState(1.0)
     const [awaitAtomClick, setAwaitAtomClick] = useState(false)
+    const [errorMessage, setErrorMessage] = useState('')
     const atomPickerOneRef = useRef(null)
     const atomPickerTwoRef = useRef(null)
 
@@ -212,11 +213,20 @@ export const MoorhenCreateAcedrgLinkModal = (props) => {
         props.setShowCreateAcedrgLinkModal(false)
     }
 
-    const handleSubmitToAcedrg = () => {
+    const handleSubmitToAcedrg = async () => {
+        setErrorMessage('')
         const atomOneFormData = atomPickerOneRef.current.getFormData()
-        console.log(atomOneFormData)
         const atomTwoFormData = atomPickerTwoRef.current.getFormData()
-        console.log(atomTwoFormData)
+        if (props.aceDRGInstance) {
+            try {
+                await props.aceDRGInstance.createCovalentLink(atomOneFormData, atomTwoFormData)
+                props.setShowCreateAcedrgLinkModal(false)
+            } catch (err) {
+                console.log('Something went wrong while trying to run aceDRG...')
+                console.log(err)
+                setErrorMessage(`ERROR: ${err}`)
+            }
+        }
     }
 
     return  props.showCreateAcedrgLinkModal ?
@@ -238,9 +248,14 @@ export const MoorhenCreateAcedrgLinkModal = (props) => {
                     <AceDRGtomPicker id={2} ref={atomPickerTwoRef} awaitAtomClick={awaitAtomClick} setAwaitAtomClick={setAwaitAtomClick} {...props}/>
                 </Stack>
             </Card.Body>
-            <Card.Footer style={{display: 'flex', alignItems: 'center', justifyContent: 'right'}}>
-                <Button variant='primary' onClick={handleSubmitToAcedrg}>Send to AceDRG</Button>
-                <Button variant='danger' onClick={handleCancel} style={{marginLeft: '0.1rem'}}>Cancel</Button>
+            <Card.Footer style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
+                <div style={{display: 'flex', alignItems: 'center', justifyContent: 'left', width: '60%'}}>
+                    <Form.Control type="text" readOnly={true} value={errorMessage}/>
+                </div>
+                <div style={{display: 'flex', alignItems: 'center', justifyContent: 'right'}}>
+                    <Button variant='primary' onClick={handleSubmitToAcedrg}>Run AceDRG</Button>
+                    <Button variant='danger' onClick={handleCancel} style={{marginLeft: '0.1rem'}}>Cancel</Button>
+                </div>
             </Card.Footer>
             </Card>
         </Draggable>
