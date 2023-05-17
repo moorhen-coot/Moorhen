@@ -233,8 +233,11 @@ export const MoorhenCreateAcedrgLinkModal = (props) => {
         <Draggable handle=".handle">
             <Card style={{position: 'absolute', width: '45rem', opacity: opacity, top: '25rem', left: '25rem'}} onMouseOver={() => setOpacity(1)} onMouseOut={() => setOpacity(0.5)}>
             <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={awaitAtomClick}>
+            <Stack gap={2} direction='vertical'style={{justifyContent: 'center', alignItems: 'center'}}>
                 <Spinner animation="border" style={{ marginRight: '0.5rem' }}/>
                 <span>Click on an atom...</span>
+                <Button variant='danger' onClick={() => setAwaitAtomClick(false)}>Cancel</Button>
+            </Stack>
             </Backdrop>
             <Card.Header className='handle' style={{display: 'flex', alignItems: 'center', cursor: 'move', justifyContent: 'space-between'}}>
                 Create covalent link
