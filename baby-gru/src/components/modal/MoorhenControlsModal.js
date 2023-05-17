@@ -3,6 +3,7 @@ import { Card, Col, Modal, Row } from "react-bootstrap";
 const shortCutMouseActions = {
     residue_camera_wiggle: ['mouse-move', 'circle-left-mouse-click', 'one-finger-move'],
     measure_distances: ['circle-left-mouse-click', 'one-finger-tap'],
+    measure_angles: ['circle-left-mouse-click', 'one-finger-tap'],
     label_atom: ['circle-left-mouse-click', 'one-finger-tap'],
     center_atom: ['middle-right-mouse-click', 'one-finger-tap'],
     set_map_contour: ['middle-right-mouse-click', 'mouse-scroll-arrows', 'two-finger-scroll'],
