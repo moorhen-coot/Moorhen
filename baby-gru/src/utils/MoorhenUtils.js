@@ -729,7 +729,7 @@ export const getDashedCylinder = (nsteps, cylinder_accu) => {
     return cylinderCache[[nsteps,cylinder_accu]]
 }
 
-export const gemmiAtomPairsToCylindersInfo = (atoms, size, colourScheme, labelled=false) => {
+export const gemmiAtomPairsToCylindersInfo = (atoms, size, colourScheme, labelled=false, minDist=1.9, maxDist=4.0) => {
 
     let atomPairs = atoms;
 
@@ -773,7 +773,7 @@ export const gemmiAtomPairsToCylindersInfo = (atoms, size, colourScheme, labelle
         totTextPrimNorm.push(...[0,0,1]) // Also meaningless, I think
         totTextPrimPos.push(...[midpoint[0],midpoint[1],midpoint[2]])
 
-        if(l>4.0||l<1.8) continue;
+        if(l>maxDist||l<minDist) continue;
 
         for (let ip = 0; ip < colourScheme[`${at0.serial}`].length; ip++) {
             thisInstance_colours.push(colourScheme[`${at0.serial}`][ip])
