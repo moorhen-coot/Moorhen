@@ -4,7 +4,6 @@ import { PreferencesContext } from "../../../src/utils/MoorhenPreferences"
 import { MoorhenContainer } from "../../../src/components/MoorhenContainer"
 import { isDarkBackground } from "../../../src/WebGLgComponents/mgWebGL"
 import { MoorhenLegendToast } from './MoorhenLegendToast'
-import { MoorhenCreateAcedrgLinkModal } from "./MoorhenCreateAcedrgLinkModal"
 
 const initialMoleculesState = []
 
@@ -49,7 +48,6 @@ export const MoorhenCloudApp = (props) => {
     const [legendText, setLegendText] = useState('Loading, please wait...')
     const [busyFetching, setBusyFetching] = useState(false)
     const [notifyNewContent, setNotifyNewContent] = useState(false)
-    const [showCreateAcedrgLinkModal, setShowCreateAcedrgLinkModal] = useState(false)
 
     moleculesRef.current = molecules
     mapsRef.current = maps
@@ -80,10 +78,6 @@ export const MoorhenCloudApp = (props) => {
     const exportMenuItem =  <MenuItem key={'export-cloud'} id='cloud-export-menu-item' variant="success" onClick={doExportCallback}>
                                 Save current model
                             </MenuItem>
-
-    const createAcedrgLinkMenuItem =  <MenuItem key={'acedrg-create-link'} onClick={() => setShowCreateAcedrgLinkModal(true)}>
-                                        Create covalent link between two atoms...
-                                      </MenuItem>
 
     const doContourIfDirty = async () => {
         if (isDirty.current) {
@@ -207,15 +201,6 @@ export const MoorhenCloudApp = (props) => {
                 {...collectedProps} 
                 allowScripting={false}
                 extraFileMenuItems={[exportMenuItem]}
-                extraEditMenuItems={preferences.devMode ? [createAcedrgLinkMenuItem] : null}
-                extraDraggableModals={preferences.devMode ? [
-                    <MoorhenCreateAcedrgLinkModal
-                        key={'acedrg-create-link-modal'}
-                        showCreateAcedrgLinkModal={showCreateAcedrgLinkModal}
-                        setShowCreateAcedrgLinkModal={setShowCreateAcedrgLinkModal}
-                        molecules={molecules}
-                        monomerLibraryPath={props.monomerLibraryPath}/>
-                ] : null}
                 forwardControls={forwardCollectedControls}
                 />
             {props.viewOnly && 
