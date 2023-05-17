@@ -108,7 +108,7 @@ export const MoorhenContainer = (props) => {
     const {
         disableFileUploads, urlPrefix, extraNavBarMenus, exportCallback, viewOnly, extraDraggableModals, 
         monomerLibraryPath, forwardControls, extraFileMenuItems, allowScripting, backupStorageInstance,
-        extraEditMenuItems,
+        extraEditMenuItems, aceDRGInstance
     } = props
     
     const setWindowDimensions = () => {
@@ -345,7 +345,7 @@ export const MoorhenContainer = (props) => {
         setToastContent, currentDropdownId, setCurrentDropdownId, hoveredAtom, setHoveredAtom, showToast, setShowToast,
         windowWidth, windowHeight, showColourRulesToast, timeCapsuleRef, setShowColourRulesToast, isDark, exportCallback,
         disableFileUploads, urlPrefix, viewOnly, extraNavBarMenus, monomerLibraryPath, moleculesRef, extraFileMenuItems, 
-        mapsRef, allowScripting, extraEditMenuItems, extraDraggableModals, ...preferences
+        mapsRef, allowScripting, extraEditMenuItems, extraDraggableModals, aceDRGInstance, ...preferences
     }
 
     return <> 
@@ -432,5 +432,6 @@ MoorhenContainer.defaultProps = {
     extraDraggableModals: [],
     viewOnly: false,
     allowScripting: true,
-    backupStorageInstance: createLocalStorageInstance('Moorhen-TimeCapsule') 
+    backupStorageInstance: createLocalStorageInstance('Moorhen-TimeCapsule'),
+    aceDRGInstance: null
 }
