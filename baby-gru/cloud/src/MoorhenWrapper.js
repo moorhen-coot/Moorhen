@@ -213,7 +213,7 @@ export default class MoorhenWrapper {
     })
   }
 
-  async loadLigandData(url) {    
+  async loadLigandData(url) {
     try {
       const response = await fetch(url)
       if (response.ok) {
