@@ -419,11 +419,12 @@ MoorhenMolecule.prototype.setAtomsDirty = function (state) {
     this.atomsDirty = state
 }
 
-MoorhenMolecule.prototype.getAtoms = function () {
+MoorhenMolecule.prototype.getAtoms = function (format='pdb') {
     const $this = this;
     return $this.commandCentre.current.postMessage({
         message: "get_atoms",
-        molNo: $this.molNo
+        molNo: $this.molNo,
+        format: format
     })
 }
 

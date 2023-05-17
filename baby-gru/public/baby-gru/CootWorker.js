@@ -786,7 +786,14 @@ onmessage = function (e) {
     else if (e.data.message === 'get_atoms') {
         const theGuid = guid()
         const tempFilename = `./${theGuid}.pdb`
-        molecules_container.writePDBASCII(e.data.molNo, tempFilename)
+        if (e.data.format === 'pdb') {
+            molecules_container.writePDBASCII(e.data.molNo, tempFilename)
+        } else if (e.data.format === 'mmcif') {
+            molecules_container.writeCIFASCII(e.data.molNo, tempFilename)
+        } else {
+            console.log(`Unrecognised format... ${e.data.format}`)
+        }
+        
         const pdbData = cootModule.FS.readFile(tempFilename, { encoding: 'utf8' });
         cootModule.FS_unlink(tempFilename)
         postMessage({
