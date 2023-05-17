@@ -252,7 +252,10 @@ class molecules_container_js : public molecules_container_t {
             const char *fname_cp = file_name.c_str();
             return get_mol(imol)->WritePDBASCII(fname_cp);
         }
-
+        int writeCIFASCII(int imol, const std::string &file_name) { 
+            const char *fname_cp = file_name.c_str();
+            return get_mol(imol)->WriteCIFASCII(fname_cp);
+        }
         int writeCCP4Map(int imol, const std::string &file_name) {
             auto xMap = (*this)[imol].xmap;
             auto clipperMap = clipper::CCP4MAPfile();
@@ -655,6 +658,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<bool>()
     .function("writePDBASCII",&molecules_container_js::writePDBASCII)
+    .function("writeCIFASCII",&molecules_container_js::writeCIFASCII)
     .function("writeCCP4Map",&molecules_container_js::writeCCP4Map)
     .function("count_simple_mesh_vertices",&molecules_container_js::count_simple_mesh_vertices)
     .function("go_to_blob_array",&molecules_container_js::go_to_blob_array)
