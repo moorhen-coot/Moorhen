@@ -83,6 +83,8 @@ import { parseMMCIF } from './mgMiniMol.js';
 
 import { quatToMat4, quat4Inverse } from './quatToMat4.js';
 
+import { gemmiAtomPairsToCylindersInfo } from '../utils/MoorhenUtils'
+
 function NormalizeVec3(v) {
     let vin = vec3Create(v);
     vec3.normalize(v, vin);
@@ -8963,71 +8965,6 @@ class MGWebGL extends Component {
         this.previousTextColour = textColour;
 
         this.drawAtomLabels(up, right, this.measuredAtoms, textColour, textTextureDirty)
-        
-        this.gl.useProgram(this.shaderProgramLines)
-        let lineVertices = [];
-        let lineColours = [];
-        let lineIndexs = [];
-        let idx = 0;
-
-        let okBuffer = null;
-        for (let iat = 0; iat < this.measuredAtoms.length; iat++) {
-            for (let jat = 1; jat < this.measuredAtoms[iat].length; jat++) {
-
-                const theAtom = this.measuredAtoms[iat][jat];
-                const theBuffer = theAtom.displayBuffer;
-                if (theBuffer.textNormals.length === 0 || theBuffer.atoms.length === 0) {
-                    continue;
-                }
-
-                const theAtom2 = this.measuredAtoms[iat][jat - 1];
-                const theBuffer2 = theAtom2.displayBuffer;
-                if (theBuffer2.textNormals.length === 0 || theBuffer2.atoms.length === 0) {
-                    continue;
-                }
-
-                okBuffer = theBuffer;
-
-                let x1 = this.measuredAtoms[iat][jat - 1].x;
-                let y1 = this.measuredAtoms[iat][jat - 1].y;
-                let z1 = this.measuredAtoms[iat][jat - 1].z;
-                let x2 = this.measuredAtoms[iat][jat].x;
-                let y2 = this.measuredAtoms[iat][jat].y;
-                let z2 = this.measuredAtoms[iat][jat].z;
-                lineVertices.push(x1);
-                lineVertices.push(y1);
-                lineVertices.push(z1);
-                lineVertices.push(x2);
-                lineVertices.push(y2);
-                lineVertices.push(z2);
-                lineColours.push(1.0);
-                lineColours.push(0.0);
-                lineColours.push(0.0);
-                lineColours.push(1.0);
-                lineColours.push(1.0);
-                lineColours.push(0.0);
-                lineColours.push(0.0);
-                lineColours.push(1.0);
-                lineIndexs.push(idx++);
-                lineIndexs.push(idx++);
-            }
-        }
-        if (lineIndexs.length > 0 && okBuffer) {
-            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, okBuffer.clickLinePositionBuffer);
-            this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(lineVertices), this.gl.DYNAMIC_DRAW);
-            this.gl.vertexAttribPointer(this.shaderProgramLines.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
-            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, okBuffer.clickLineColourBuffer);
-            this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(lineColours), this.gl.DYNAMIC_DRAW);
-            this.gl.vertexAttribPointer(this.shaderProgramLines.vertexColourAttribute, 4, this.gl.FLOAT, false, 0, 0);
-            this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, okBuffer.clickLineIndexesBuffer);
-            if (this.ext) {
-                this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(lineIndexs), this.gl.DYNAMIC_DRAW);
-                this.gl.drawElements(this.gl.LINES, lineIndexs.length, this.gl.UNSIGNED_INT, 0);
-            } else {
-                this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(lineIndexs), this.gl.DYNAMIC_DRAW);
-                this.gl.drawElements(this.gl.LINES, lineIndexs.length, this.gl.UNSIGNED_SHORT, 0);
-            }
-        }
 
         this.gl.useProgram(this.shaderProgramTextBackground);
         this.gl.enableVertexAttribArray(this.shaderProgramTextBackground.vertexTextureAttribute);
@@ -9586,6 +9523,7 @@ class MGWebGL extends Component {
         }
         
         if (!self.mouseMoved) {
+            let updateMeasures = false
             //console.log(npass+" "+npass0+" "+npass1+" "+ntest);
             const [minidx,minj,mindist] = self.getAtomFomMouseXY(event,self);
             if (minidx > -1) {
@@ -9624,7 +9562,8 @@ class MGWebGL extends Component {
                         self.labelledAtoms[self.labelledAtoms.length - 1].push(theAtom);
                     }
                 } else if (self.keysDown['measure_distances']) {
-                    if (self.measuredAtoms.length === 0 || (self.measuredAtoms[self.measuredAtoms.length - 1].length > 1)) {
+                    updateMeasures = true
+                    if (self.measuredAtoms.length === 0 || (self.measuredAtoms[self.measuredAtoms.length - 1].length > 1 && !self.keysDown['measure_angles'])) {
                         self.measuredAtoms.push([]);
                         self.measuredAtoms[self.measuredAtoms.length - 1].push(theAtom);
                     } else {
@@ -9632,8 +9571,61 @@ class MGWebGL extends Component {
                     }
                 }
             }
+            if(updateMeasures){
+                let atomPairs = []
+                self.measuredAtoms.forEach(bump => {
+                    if(bump.length>1){
+                        for(let ib=1;ib<bump.length;ib++){
+                            const start = bump[ib];
+                            const end = bump[ib-1];
+                            const startAtomInfo = {
+                                pos: [start.x, start.y, start.z],
+                                x: start.x,
+                                y: start.y,
+                                z: start.z,
+                            }
+
+                            const endAtomInfo = {
+                                pos: [end.x, end.y, end.z],
+                                x: end.x,
+                                y: end.y,
+                                z: end.z,
+                            }
+
+                            const pair = [startAtomInfo, endAtomInfo]
+                            atomPairs.push(pair)
+                        }
+                    }
+                })
+                const atomColours = {}
+                const colour = [1.0,0.0,0.0,1.0]
+                atomPairs.forEach(atom => { atomColours[`${atom[0].serial}`] = colour; atomColours[`${atom[1].serial}`] = colour })
+                let objects = [
+                    gemmiAtomPairsToCylindersInfo(atomPairs, 0.07, atomColours, false, 0.01, 1000.) 
+                ]
+                self.clearMeasureCylinderBuffers()
+                objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
+                    const a = self.appendOtherData(object, true);
+                    self.measureCylinderBuffers = self.measureCylinderBuffers.concat(a)
+                })
+
+                self.buildBuffers();
+            }
         }        
+
         self.drawScene();
+    }
+
+    clearMeasureCylinderBuffers() {
+        if(this.measureCylinderBuffers){
+            this.measureCylinderBuffers.forEach((buffer) => {
+                if("clearBuffers" in buffer){
+                    buffer.clearBuffers()
+                    this.displayBuffers.filter(glBuffer => glBuffer !== buffer)
+                }
+            })
+        }
+        this.measureCylinderBuffers = []
     }
 
     getAtomFomMouseXY(event, self) {

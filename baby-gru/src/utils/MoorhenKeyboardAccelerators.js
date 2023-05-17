@@ -248,6 +248,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     else if (action === 'clear_labels') {
         glRef.current.labelledAtoms = []
         glRef.current.measuredAtoms = []
+        glRef.current.clearMeasureCylinderBuffers()
         glRef.current.drawScene()
         setToastContent(
             <h5 style={{margin: 0}}>
@@ -325,6 +326,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         glRef.current.setZoom(1.0)
         glRef.current.labelledAtoms = []
         glRef.current.measuredAtoms = []
+        glRef.current.clearMeasureCylinderBuffers()
         glRef.current.drawScene()
     }
 

@@ -188,6 +188,12 @@ const getDefaultValues = () => {
                 label: "Measure distances between atoms on click",
                 viewOnly: true
             },
+            "measure_angles": {
+                modifiers: ["shiftKey"],
+                keyPress: "m",
+                label: "Measure angles between atoms on click",
+                viewOnly: true
+            },
             "label_atom": {
                 modifiers: [],
                 keyPress: "l",
