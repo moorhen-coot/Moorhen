@@ -193,12 +193,14 @@ export default class MoorhenWrapper {
     })  
   }
 
-  async loadPdbData(uniqueId, inputFile, molName) {
+  async loadPdbData(uniqueId, ligandDictionaries, inputFile, molName) {
     const newMolecule = new MoorhenMolecule(this.controls.commandCentre, this.monomerLibrary)
-    newMolecule.setBackgroundColour(this.controls.glRef.current.background_colour)
-    newMolecule.uniqueId = uniqueId
+
     return new Promise(async (resolve, reject) => {
       try {
+        newMolecule.uniqueId = uniqueId
+        ligandDictionaries.forEach(ligandDict => newMolecule.addDictShim(ligandDict))
+        newMolecule.setBackgroundColour(this.controls.glRef.current.background_colour)
         await newMolecule.loadToCootFromURL(inputFile, molName)
         this.controls.changeMolecules({ action: "Add", item: newMolecule })
         await newMolecule.fetchIfDirtyAndDraw('CBs', this.controls.glRef)
@@ -222,11 +224,7 @@ export default class MoorhenWrapper {
           commandArgs: [fileContents, -999999],
           changesMolecules: []
         }, true)
-    
-        this.controls.moleculesRef.current.forEach(molecule => {
-          molecule.addDictShim(fileContents)
-        })
-      
+        return fileContents
       } else {
         console.log(`Unable to fetch legend file ${url}`)
       }
@@ -256,11 +254,16 @@ export default class MoorhenWrapper {
   }
 
   async loadInputFiles() {
+
+    const ligandDictionaries = await Promise.all(
+      this.inputFiles.filter(file => file.type === 'ligand').map(file => this.loadLigandData(...file.args))
+    )
+
     try {
       await Promise.all(
         this.inputFiles.map(file => {
           if (file.type === 'pdb') {
-            return this.loadPdbData(file.uniqueId, ...file.args)
+            return this.loadPdbData(file.uniqueId, ligandDictionaries, ...file.args)
           } else if (file.type === 'mtz') {
             return this.loadMtzData(file.uniqueId, ...file.args)
           } else if (file.type === 'legend') {
@@ -271,14 +274,7 @@ export default class MoorhenWrapper {
             console.log(`Unrecognised file type ${file.type}`)
             return Promise.resolve()
           }
-      }))
-      
-      await Promise.all(
-        this.inputFiles.filter(file => file.type === 'ligand').map(file => {
-          return this.loadLigandData(...file.args)
-        })
-      )
-  
+      }))  
     } catch (err) {
       console.log('Error fetching files...')
       console.log(err)
