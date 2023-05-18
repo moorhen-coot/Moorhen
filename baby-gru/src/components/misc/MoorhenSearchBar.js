@@ -149,8 +149,8 @@ export const MoorhenSearchBar = (props) => {
             {type: 'click', elementId: 'go-to-menu-item', condition: true}
         ]},
         {label: "Import dictionary", actions: [
-            {type: 'click', elementId: 'file-nav-dropdown', condition: props.currentDropdownId !== "File"},
-            {type: 'setValue', newValue:'File', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "File"},
+            {type: 'click', elementId: 'ligand-nav-dropdown', condition: props.currentDropdownId !== "Ligand"},
+            {type: 'setValue', newValue: 'Ligand', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "Ligand"},
             {type: 'click', elementId: 'import-dict-menu-item', condition: true}
         ]},
         {label: "Load Coordinates", actions: [
