@@ -1,7 +1,8 @@
 import { NavDropdown } from "react-bootstrap";
 import { useState } from "react";
 import { MoorhenAboutMenuItem } from "../menu-item/MoorhenMenuItem";
-import { MoorhenControlsModal } from "../modal/MoorhenControlsModal"
+import { MoorhenControlsModal } from "../modal/MoorhenControlsModal";
+import { MoorhenSearchBar } from "../misc/MoorhenSearchBar"
 import { MenuItem } from "@mui/material";
 
 export const MoorhenHelpMenu = (props) => {
@@ -17,9 +18,8 @@ export const MoorhenHelpMenu = (props) => {
                 autoClose={popoverIsShown ? false : 'outside'}
                 show={props.currentDropdownId === props.dropdownId}
                 onToggle={() => {props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId(-1)}}>
-                    {/**<MoorhenSearchBar {...props}/>
-                     *<hr></hr>
-                    */}
+                     <MoorhenSearchBar {...props}/>
+                     <hr></hr>
                      <MenuItem onClick={() => window.open('https://filomenosanchez.github.io/Moorhen/')}>Go to Moorhen blog...</MenuItem>
                      <MenuItem onClick={() => setShowControlsModal(true)}>Show controls...</MenuItem>
                      <MoorhenAboutMenuItem {...menuItemProps} />

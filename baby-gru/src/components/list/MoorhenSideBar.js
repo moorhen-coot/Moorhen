@@ -11,7 +11,6 @@ export const MoorhenSideBar = forwardRef((props, ref) => {
     const [showSideBar, setShowSideBar] = useState(false);
     const [opacity, setOpacity] = useState(0.5);
     const [consoleBodyHeight, setConsoleBodyHeight] = useState(convertViewtoPx(0, props.windowHeight))
-    const [selectedToolKey, setSelectedToolKey] = useState(null)
     const [accordionDropdownId, setAccordionDropdownId] = useState(-1)
 
     const sideBarWidth = Math.max(convertViewtoPx(30, props.windowWidth), convertRemToPx(24))
@@ -133,8 +132,8 @@ export const MoorhenSideBar = forwardRef((props, ref) => {
             <Divider></Divider>
             <List>
                 <MoorhenDisplayObjects dropdownId={1} accordionDropdownId={accordionDropdownId} setAccordionDropdownId={setAccordionDropdownId} sideBarWidth={sideBarWidth} showSideBar={showSideBar} {...props} />
-                <MoorhenToolsAccordion dropdownId={2} accordionDropdownId={accordionDropdownId} setAccordionDropdownId={setAccordionDropdownId} sideBarWidth={sideBarWidth} showSideBar={showSideBar} selectedToolKey={selectedToolKey} setSelectedToolKey={setSelectedToolKey} {...props}/>
-                <MoorhenConsole ref={ref} dropdownId={3} accordionDropdownId={accordionDropdownId} setAccordionDropdownId={setAccordionDropdownId} sideBarWidth={sideBarWidth} showSideBar={showSideBar} selectedToolKey={selectedToolKey} setSelectedToolKey={setSelectedToolKey} {...props}/>
+                <MoorhenToolsAccordion dropdownId={2} accordionDropdownId={accordionDropdownId} setAccordionDropdownId={setAccordionDropdownId} sideBarWidth={sideBarWidth} showSideBar={showSideBar} {...props}/>
+                <MoorhenConsole ref={ref} dropdownId={3} accordionDropdownId={accordionDropdownId} setAccordionDropdownId={setAccordionDropdownId} sideBarWidth={sideBarWidth} showSideBar={showSideBar} {...props}/>
             </List>
         </Drawer>
     </>
