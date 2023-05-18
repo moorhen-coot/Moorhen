@@ -16,7 +16,7 @@ export const MoorhenConsole = forwardRef((props, ref) => {
 
             </ListItemButton>
 
-            <Collapse in={props.dropdownId === props.accordionDropdownId} timeout="auto" style={{width: props.sideBarWidth}}>
+            <Collapse id='console-collapse'  in={props.dropdownId === props.accordionDropdownId} timeout="auto" style={{width: props.sideBarWidth}}>
                 <hr></hr>
                 <div ref={ref} style={{
                     overflowY: "scroll",

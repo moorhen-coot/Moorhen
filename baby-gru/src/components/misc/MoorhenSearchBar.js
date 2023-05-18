@@ -9,6 +9,14 @@ export const MoorhenSearchBar = (props) => {
     const [selectedItemKey, setSelectedItemKey] = useState(null)
     const [openPopup, setOpenPopup] = useState(null)
 
+    const dropdownIsClosed = (elementId) => {
+        if (elementId && !document.getElementById(elementId)){
+            return
+        }
+        const element = document.getElementById(elementId)
+        return element.className.includes('hidden')
+    }
+
     const doClick = (element) => {
         console.log(`Search bar is clicking on ${element.id}`)
         let clickEvent = new MouseEvent("click", {
@@ -47,6 +55,10 @@ export const MoorhenSearchBar = (props) => {
                     console.log(`Search bar is setting focus on component ${action.elementId}`)
                     let element = document.getElementById(action.elementId)
                     element.focus()
+                } else if (action.type === 'setValidationTool') {
+                    let element =  document.getElementById('validation-tool-select')
+                    element.value = action.newValue
+                    element.dispatchEvent(new Event('change', {'view': window,'bubbles': true}));
                 } else if (action.type === 'carousel') {
                     let elements = document.getElementsByClassName('carousel-control-next')
                     let targetElement = document.getElementById(action.elementId)
@@ -62,8 +74,10 @@ export const MoorhenSearchBar = (props) => {
                         }
                     } 
                     doClick(targetElement)
+                } else {
+                    console.log(`Unrecognised action type... ${action.type}`)
                 }
-            }, parseInt(50 * actionIndex));
+            }, parseInt(150 * actionIndex));
         })
     }
 
@@ -89,8 +103,8 @@ export const MoorhenSearchBar = (props) => {
         ]},
         {label: "Difference Map Peaks", actions: [
             {type: 'click', condition: true, elementId: 'open-sidebar-button'}, 
-            {type: 'click', condition: props.toolAccordionBodyHeight === 0, elementId: 'tools-accordion-button'},
-            {type: 'setValue', newValue: 0, condition: true, valueSetter: props.setSelectedToolKey}
+            {type: 'click', condition: dropdownIsClosed('validation-tools-collapse'), elementId: 'validation-tools-dropdown'},
+            {type: 'setValidationTool', newValue: "Difference Map Peaks", condition: true}
         ]},
         {label: "Change Background Colour", actions: [
             {type: 'click', elementId: 'view-nav-dropdown', condition: props.currentDropdownId !== "View"}, 
@@ -101,6 +115,11 @@ export const MoorhenSearchBar = (props) => {
             {type: 'click', elementId: 'view-nav-dropdown', condition: props.currentDropdownId !== "View"}, 
             {type: 'setValue', newValue:'View', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "View"},
             {type: 'click', elementId: 'clipping-fogging-menu-item', condition: true}
+        ]},
+        {label: "Lighting settings", actions: [
+            {type: 'click', elementId: 'view-nav-dropdown', condition: props.currentDropdownId !== "View"}, 
+            {type: 'setValue', newValue:'View', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "View"},
+            {type: 'click', elementId: 'lighting-menu-item', condition: true}
         ]},
         {label: "Cis/Trans isomerisation", actions: [
             {type: 'click', elementId: 'open-carousel-drawer', condition: true}, 
@@ -130,8 +149,8 @@ export const MoorhenSearchBar = (props) => {
             {type: 'click', elementId: 'go-to-menu-item', condition: true}
         ]},
         {label: "Import dictionary", actions: [
-            {type: 'click', elementId: 'file-nav-dropdown', condition: props.currentDropdownId !== "File"},
-            {type: 'setValue', newValue:'File', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "File"},
+            {type: 'click', elementId: 'ligand-nav-dropdown', condition: props.currentDropdownId !== "Ligand"},
+            {type: 'setValue', newValue: 'Ligand', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "Ligand"},
             {type: 'click', elementId: 'import-dict-menu-item', condition: true}
         ]},
         {label: "Load Coordinates", actions: [
@@ -150,23 +169,27 @@ export const MoorhenSearchBar = (props) => {
             {type: 'click', elementId: 'merge-molecules-menu-item', condition: true}
         ]},
         {label: "Model Validation", actions: [
-            {type: 'click', condition: !props.showSideBar , elementId: 'show-sidebar-button'}, 
-            {type: 'click', condition: props.toolAccordionBodyHeight === 0, elementId: 'tools-accordion-button'},
-            {type: 'setValue', newValue: 2, condition: true, valueSetter: props.setSelectedToolKey}
+            {type: 'click', condition: true, elementId: 'open-sidebar-button'}, 
+            {type: 'click', condition: dropdownIsClosed('validation-tools-collapse'), elementId: 'validation-tools-dropdown'},
+            {type: 'setValidationTool', newValue: "Validation Plot", condition: true}
+        ]},
+        {label: "Validation tools", actions: [
+            {type: 'click', condition: true, elementId: 'open-sidebar-button'}, 
+            {type: 'click', condition: dropdownIsClosed('validation-tools-collapse'), elementId: 'validation-tools-dropdown'},
         ]},
         {label: "Mutate Residue", actions: [
             {type: 'click', elementId: 'open-carousel-drawer', condition: true}, 
             {type: 'carousel', elementId: 'mutate-residue-edit-button', condition: true}
         ]},
         {label: "Peptide Flips List", actions: [
-            {type: 'click', condition: !props.showSideBar , elementId: 'show-sidebar-button'}, 
-            {type: 'click', condition: props.toolAccordionBodyHeight === 0, elementId: 'tools-accordion-button'},
-            {type: 'setValue', newValue: 3, condition: true, valueSetter: props.setSelectedToolKey}
+            {type: 'click', condition: true, elementId: 'open-sidebar-button'}, 
+            {type: 'click', condition: dropdownIsClosed('validation-tools-collapse'), elementId: 'validation-tools-dropdown'},
+            {type: 'setValidationTool', newValue: "Peptide flips using difference map", condition: true}
         ]},
         {label: "Ramachandran Plot", actions: [
-            {type: 'click', condition: !props.showSideBar , elementId: 'show-sidebar-button'}, 
-            {type: 'click', condition: props.toolAccordionBodyHeight === 0, elementId: 'tools-accordion-button'},
-            {type: 'setValue', newValue: 1, condition: true, valueSetter: props.setSelectedToolKey}
+            {type: 'click', condition: true, elementId: 'open-sidebar-button'}, 
+            {type: 'click', condition: dropdownIsClosed('validation-tools-collapse'), elementId: 'validation-tools-dropdown'},
+            {type: 'setValidationTool', newValue: "Ramachandran Plot", condition: true}
         ]},
         {label: "Read mtz", actions: [
             {type: 'click', elementId: 'file-nav-dropdown', condition: props.currentDropdownId !== "File"},
@@ -190,15 +213,13 @@ export const MoorhenSearchBar = (props) => {
             {type: 'click', condition: !props.showSideBar , elementId: 'show-sidebar-button'}, 
             {type: 'click', condition: props.consoleBodyHeight === 0, elementId: 'console-accordion-button'},
         ]},
-        {label: "Show history", actions: [
-            {type: 'click', elementId: 'history-nav-dropdown', condition: props.currentDropdownId !== "History"}, 
-            {type: 'setValue', newValue:'History', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "History"},
-            {type: 'click', elementId: 'show-history-menu-item', condition: true}
+        {label: "Show controls", actions: [
+            {type: 'click', condition: true, elementId: 'open-sidebar-button'}, 
+            {type: 'click', condition: dropdownIsClosed('console-collapse'), elementId: 'console-dropdown'},
         ]},
-        {label: "Show Shortcuts", actions: [
-            {type: 'click', elementId: 'preferences-nav-dropdown', condition: props.currentDropdownId !== "Preferences"}, 
-            {type: 'setValue', newValue:'Preferences', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "Preferences"},
-            {type: 'click', elementId: 'configure-shortcuts-menu-item', condition: true}
+        {label: "Show models and maps", actions: [
+            {type: 'click', condition: true, elementId: 'open-sidebar-button'}, 
+            {type: 'click', condition: dropdownIsClosed('models-and-maps-collapse'), elementId: 'models-maps-dropdown'},
         ]},
     ]
 
