@@ -1407,6 +1407,8 @@ class MGWebGL extends Component {
         this.atomLabelDepthMode = true;
         this.showCrosshairs = false
         this.showAxes = false;
+        this.reContourMapOnlyOnMouseUp = true;
+        this.mapLineWidth = 1.0
 
         if (this.props.showAxes !== null) {
             this.showAxes = this.props.showAxes
@@ -1417,11 +1419,9 @@ class MGWebGL extends Component {
         if (this.props.showFPS !== null) {
             this.showFPS = this.props.showFPS
         }
-        this.mapLineWidth = 1.0
         if (this.props.mapLineWidth !== null) {
             this.mapLineWidth = this.props.mapLineWidth
         }
-
     }
 
     render() {
@@ -3326,13 +3326,15 @@ class MGWebGL extends Component {
         document.dispatchEvent(originUpdateEvent);
     }
 
-    setOrigin(o, doDrawScene) {
+    setOrigin(o, doDrawScene, dispatchEvent=true) {
         this.origin = o;
-        const originUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: this.origin} })
-        document.dispatchEvent(originUpdateEvent);
         //default is to drawScene, unless doDrawScene provided and value is false
         if (typeof doDrawScene === 'undefined' || doDrawScene === true) {
             this.drawScene();
+        } 
+        if (dispatchEvent) {
+            const originUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: this.origin} })
+            document.dispatchEvent(originUpdateEvent);    
         }
     }
 
@@ -10982,7 +10984,7 @@ class MGWebGL extends Component {
         const event_x = event.pageX;
         const event_y = event.pageY;
         self.init_y = event.pageY;
-        if (self.keysDown['center_atom']||event.which===2) {
+        if (self.keysDown['center_atom'] || event.which===2) {
             if(Math.abs(event_x-self.mouseDown_x)<5 && Math.abs(event_y-self.mouseDown_y)<5){
                 if(self.displayBuffers.length>0){
                     const [minidx,minj,mindist] = self.getAtomFomMouseXY(event,self);
@@ -10991,10 +10993,15 @@ class MGWebGL extends Component {
                         let aty = self.displayBuffers[minidx].atoms[minj].y;
                         let atz = self.displayBuffers[minidx].atoms[minj].z;
                         self.setOriginAnimated([-atx, -aty, -atz], true);
-                        self.reContourMaps();
                     }
                 }
+            } else if (this.reContourMapOnlyOnMouseUp) {
+                const originUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: this.origin} })
+                document.dispatchEvent(originUpdateEvent);
             }
+        } else if (event.altKey && event.shiftKey && this.reContourMapOnlyOnMouseUp) {
+            const originUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: this.origin} })
+            document.dispatchEvent(originUpdateEvent);
         }
         self.mouseDown = false;
         self.doHover(event,self);
@@ -12002,7 +12009,7 @@ class MGWebGL extends Component {
                 const newOrigin = self.origin.map((coord, coordIndex) => {
                     return coord + (self.zoom * xshift[coordIndex] / 8.) - (self.zoom * yshift[coordIndex] / 8.)
                 })
-                self.setOrigin(newOrigin, false)
+                self.setOrigin(newOrigin, false, !this.reContourMapOnlyOnMouseUp)
             } else {
                 const newOrigin = this.activeMolecule.displayObjects.transformation.origin.map((coord, coordIndex) => {
                     return coord + (self.zoom * xshift[coordIndex] / 8.) - (self.zoom * yshift[coordIndex] / 8.)
@@ -12023,7 +12030,6 @@ class MGWebGL extends Component {
                 }
             }
             self.drawSceneDirty();
-            self.reContourMaps();
             return;
         }
 
