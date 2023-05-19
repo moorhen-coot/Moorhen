@@ -266,13 +266,10 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         const theMatrix = quatToMat4(invQuat);
         const yshift = vec3Create([0, 4. / getDeviceScale(), 0]);
         vec3.transformMat4(yshift, yshift, theMatrix);
-        glRef.current.origin[0] += yshift[0] / 8. * glRef.current.zoom;
-        glRef.current.origin[1] += yshift[1] / 8. * glRef.current.zoom;
-        glRef.current.origin[2] += yshift[2] / 8. * glRef.current.zoom;
-        const scoresUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: glRef.current.origin,  modifiedMolecule: null} })
-        document.dispatchEvent(scoresUpdateEvent);    
-        glRef.current.drawSceneDirty();
-        glRef.current.reContourMaps();
+        const x = glRef.current.origin[0] + (yshift[0] / 8. * glRef.current.zoom)
+        const y = glRef.current.origin[1] + (yshift[1] / 8. * glRef.current.zoom)
+        const z = glRef.current.origin[2] + (yshift[2] / 8. * glRef.current.zoom)
+        glRef.current.setOrigin([x, y, z], true, true)
     }
 
     else if (action === 'move_down') {
@@ -281,13 +278,10 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         const theMatrix = quatToMat4(invQuat);
         const yshift = vec3Create([0, -4. / getDeviceScale(), 0]);
         vec3.transformMat4(yshift, yshift, theMatrix);
-        glRef.current.origin[0] += yshift[0] / 8. * glRef.current.zoom;
-        glRef.current.origin[1] += yshift[1] / 8. * glRef.current.zoom;
-        glRef.current.origin[2] += yshift[2] / 8. * glRef.current.zoom;
-        const scoresUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: glRef.current.origin} })
-        document.dispatchEvent(scoresUpdateEvent);    
-        glRef.current.drawSceneDirty();
-        glRef.current.reContourMaps();
+        const x = glRef.current.origin[0] + (yshift[0] / 8. * glRef.current.zoom);
+        const y = glRef.current.origin[1] + (yshift[1] / 8. * glRef.current.zoom);
+        const z = glRef.current.origin[2] + (yshift[2] / 8. * glRef.current.zoom);
+        glRef.current.setOrigin([x, y, z], true, true)
     }
 
     else if (action === 'move_left') {
@@ -296,13 +290,10 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         const theMatrix = quatToMat4(invQuat);
         const xshift = vec3Create([-4. / getDeviceScale(), 0, 0]);
         vec3.transformMat4(xshift, xshift, theMatrix);
-        glRef.current.origin[0] += xshift[0] / 8. * glRef.current.zoom;
-        glRef.current.origin[1] += xshift[1] / 8. * glRef.current.zoom;
-        glRef.current.origin[2] += xshift[2] / 8. * glRef.current.zoom;
-        const scoresUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: glRef.current.origin} })
-        document.dispatchEvent(scoresUpdateEvent);    
-        glRef.current.drawSceneDirty();
-        glRef.current.reContourMaps();
+        const x = glRef.current.origin[0] + (xshift[0] / 8. * glRef.current.zoom)
+        const y = glRef.current.origin[1] + (xshift[1] / 8. * glRef.current.zoom)
+        const z = glRef.current.origin[2] + (xshift[2] / 8. * glRef.current.zoom)
+        glRef.current.setOrigin([x, y, z], true, true)
     }
 
     else if (action === 'move_right') {
@@ -311,13 +302,10 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         const theMatrix = quatToMat4(invQuat);
         const xshift = vec3Create([4. / getDeviceScale(), 0, 0]);
         vec3.transformMat4(xshift, xshift, theMatrix);
-        glRef.current.origin[0] += xshift[0] / 8. * glRef.current.zoom;
-        glRef.current.origin[1] += xshift[1] / 8. * glRef.current.zoom;
-        glRef.current.origin[2] += xshift[2] / 8. * glRef.current.zoom;
-        const scoresUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: glRef.current.origin} })
-        document.dispatchEvent(scoresUpdateEvent);    
-        glRef.current.drawSceneDirty();
-        glRef.current.reContourMaps();
+        const x = glRef.current.origin[0] + (xshift[0] / 8. * glRef.current.zoom)
+        const y = glRef.current.origin[1] + (xshift[1] / 8. * glRef.current.zoom)
+        const z = glRef.current.origin[2] + (xshift[2] / 8. * glRef.current.zoom)
+        glRef.current.setOrigin([x, y, z], true, true)
     }
 
     else if (action === 'restore_scene') {

@@ -384,8 +384,6 @@ export const MoorhenContainer = (props) => {
                         backgroundColor={backgroundColor}
                         setBackgroundColor={setBackgroundColor}
                         isDark={isDark}
-                        atomLabelDepthMode={preferences.atomLabelDepthMode}
-                        clipCap={preferences.clipCap}
                         onAtomHovered={onAtomHovered}
                         onKeyPress={onKeyPress}
                         hoveredAtom={hoveredAtom}
@@ -397,12 +395,7 @@ export const MoorhenContainer = (props) => {
                         urlPrefix={urlPrefix}
                         activeMap={activeMap}
                         viewOnly={viewOnly}
-                        drawInteractions={preferences.drawInteractions}
-                        doPerspectiveProjection={preferences.doPerspectiveProjection}
-                        useOffScreenBuffers={preferences.useOffScreenBuffers}
-                        doShadowDepthDebug={preferences.doShadowDepthDebug}
                         extraDraggableModals={extraDraggableModals}
-                        doShadow={preferences.doShadow}
                     />
                 </div>
                 {!viewOnly && <MoorhenButtonBar {...collectedProps} />}

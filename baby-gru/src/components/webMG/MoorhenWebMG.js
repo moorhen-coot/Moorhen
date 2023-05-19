@@ -93,23 +93,23 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
     }, [props.commandCentre, props.molecules])
 
     const clearHBonds = useCallback(async (e) => {
-        if(!props.drawInteractions) {
+        if(!props.preferences.drawInteractions) {
             props.molecules.forEach(mol => {
                 mol.drawGemmiAtomPairs(glRef, [], "originNeighboursBump", [1.0, 0.0, 0.0, 1.0], true, true)
                 mol.drawGemmiAtomPairs(glRef, [], "originNeighboursHBond", [1.0, 0.0, 0.0, 1.0], true, true)
             })
         }
-    }, [props.drawInteractions, props.molecules])
+    }, [props.preferences.drawInteractions, props.molecules])
 
     const handleOriginUpdate = useCallback(async (e) => {
         hBondsDirty.current = true
-        if (!busyDrawingHBonds.current && props.drawInteractions) {
+        if (!busyDrawingHBonds.current && props.preferences.drawInteractions) {
             drawHBonds()
         }
-    }, [drawHBonds, props.drawInteractions])
+    }, [drawHBonds, props.preferences.drawInteractions])
 
     useEffect(() => {
-        if(props.drawInteractions){
+        if(props.preferences.drawInteractions){
             hBondsDirty.current = true
             if (!busyDrawingHBonds.current) {
                 drawHBonds()
@@ -117,28 +117,28 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
         } else {
             clearHBonds()
         }
-    }, [props.drawInteractions, props.molecules])
+    }, [props.preferences.drawInteractions, props.molecules])
 
     useEffect(() => {
-        glRef.current.doPerspectiveProjection = props.doPerspectiveProjection
+        glRef.current.doPerspectiveProjection = props.preferences.doPerspectiveProjection
         glRef.current.clearTextPositionBuffers()
         glRef.current.drawScene()
-    }, [props.doPerspectiveProjection])
+    }, [props.preferences.doPerspectiveProjection])
 
     useEffect(() => {
-        glRef.current.setShadowDepthDebug(props.doShadowDepthDebug)
+        glRef.current.setShadowDepthDebug(props.preferences.doShadowDepthDebug)
         glRef.current.drawScene()
-    }, [props.doShadowDepthDebug])
+    }, [props.preferences.doShadowDepthDebug])
 
     useEffect(() => {
-        glRef.current.setShadowsOn(props.doShadow)
+        glRef.current.setShadowsOn(props.preferences.doShadow)
         glRef.current.drawScene()
-    }, [props.doShadow])
+    }, [props.preferences.doShadow])
 
     useEffect(() => {
-        glRef.current.useOffScreenBuffers = props.useOffScreenBuffers
+        glRef.current.useOffScreenBuffers = props.preferences.useOffScreenBuffers
         glRef.current.drawScene()
-    }, [props.useOffScreenBuffers])
+    }, [props.preferences.useOffScreenBuffers])
 
     const handleScoreUpdates = useCallback(async (e) => {
         if (e.detail?.modifiedMolecule !== null && connectedMolNo && connectedMolNo.molecule === e.detail.modifiedMolecule) {
@@ -393,11 +393,11 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
 
     useEffect(() => {
         if (glRef.current) {
-            glRef.current.clipCapPerfectSpheres = props.clipCap
+            glRef.current.clipCapPerfectSpheres = props.preferences.clipCap
             glRef.current.drawScene()
         }
     }, [
-        props.clipCap,
+        props.preferences.clipCap,
         glRef.current
     ])
 
@@ -413,11 +413,11 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
 
     useEffect(() => {
         if (glRef.current) {
-            glRef.current.atomLabelDepthMode = props.atomLabelDepthMode
+            glRef.current.atomLabelDepthMode = props.preferences.atomLabelDepthMode
             glRef.current.drawScene()
         }
     }, [
-        props.atomLabelDepthMode,
+        props.preferences.atomLabelDepthMode,
         glRef.current
     ])
 
@@ -487,8 +487,8 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
                     showAxes={props.preferences.drawAxes}
                     showFPS={props.preferences.drawFPS}
                     mapLineWidth={mapLineWidth}
-                    drawMissingLoops={props.drawMissingLoops}
-                    drawInteractions={props.drawInteractions} />
+                    drawMissingLoops={props.preferences.drawMissingLoops}
+                    drawInteractions={props.preferences.drawInteractions} />
 
                 {showContextMenu &&
                 <MoorhenContextMenu 

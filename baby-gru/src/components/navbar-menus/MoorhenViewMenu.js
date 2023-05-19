@@ -68,7 +68,7 @@ export const MoorhenViewMenu = (props) => {
                     <MoorhenBackgroundColorMenuItem {...menuItemProps} />
                     <MoorhenClipFogMenuItem {...menuItemProps} />
                     <MoorhenLightingMenuItem {...menuItemProps} />
-                    <MenuItem onClick={() => {
+                    <MenuItem id="change-molecule-colours-menu-item" onClick={() => {
                         props.setShowColourRulesToast(true)
                         document.body.click()
                     }}>

@@ -96,13 +96,8 @@ export const MoorhenMoleculeCardButtonBar = (props) => {
             expanded: null
         },
         12: {
-            label: 'Rotate/Translate molecule',
-            compressed: () => { return (<MoorhenRotateTranslateMoleculeMenuItem key={12} setPopoverIsShown={setPopoverIsShown} molecule={props.molecule} changeMolecules={props.changeMolecules} glRef={props.glRef}/>) },
-            expanded: null
-        },
-        13: {
             label: 'Symmetry settings',
-            compressed: () => { return (<MoorhenMoleculeSymmetrySettingsMenuItem key={13} setPopoverIsShown={setPopoverIsShown} molecule={props.molecule} glRef={props.glRef}/>) },
+            compressed: () => { return (<MoorhenMoleculeSymmetrySettingsMenuItem key={12} setPopoverIsShown={setPopoverIsShown} molecule={props.molecule} glRef={props.glRef}/>) },
             expanded: null
         },
     }

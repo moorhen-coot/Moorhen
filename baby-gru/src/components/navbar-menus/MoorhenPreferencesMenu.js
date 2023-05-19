@@ -137,7 +137,7 @@ export const MoorhenPreferencesMenu = (props) => {
                         setDefaultBondSmoothness={setDefaultBondSmoothness}
                         setPopoverIsShown={setPopoverIsShown}
                     />
-                    <MenuItem variant="success" onClick={() => setShowModal(true)} id='configure-shortcuts-menu-item' style={{marginTop:'0rem'}}>
+                    <MenuItem id="configure-shortcuts-menu-item" variant="success" onClick={() => setShowModal(true)} style={{marginTop:'0rem'}}>
                         Configure shortcuts...
                     </MenuItem>
                     <MoorhenShortcutConfigModal showModal={showModal} setShowModal={setShowModal} setShortCuts={props.setShortCuts} shortCuts={JSON.parse(props.shortCuts)}/>
