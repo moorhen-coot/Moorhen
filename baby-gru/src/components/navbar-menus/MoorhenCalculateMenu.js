@@ -20,13 +20,13 @@ export const MoorhenCalculateMenu = (props) => {
             show={props.currentDropdownId === props.dropdownId}
             onToggle={() => { props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId(-1) }}>
             <MoorhenSuperposeMenuItem key="superpose_structures" {...menuItemProps} />
-            <MenuItem onClick={() => setShowLigandBuilder(true)}>
+            <MenuItem id="ligand-builder-menu-item" onClick={() => setShowLigandBuilder(true)}>
                 Ligand builder...
             </MenuItem>
             {props.allowScripting && 
             <>
                 <MoorhenLoadScriptMenuItem {...menuItemProps} />
-                <MenuItem onClick={() => { setShowCodeEditor(true) }}>Interactive scripting...</MenuItem>
+                <MenuItem id="interactive-scripting-menu-item" onClick={() => { setShowCodeEditor(true) }}>Interactive scripting...</MenuItem>
             </>
             }
             {props.extraCalculateMenuItems && props.extraCalculateMenuItems.map( menu => menu)}

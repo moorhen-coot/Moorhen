@@ -101,6 +101,21 @@ export const MoorhenSearchBar = (props) => {
             {type: 'setValue', newValue:'File', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "File"},
             {type: 'click', elementId: 'delete-everything-menu-item', condition: true}
         ]},
+        {label: "Superpose structures", actions: [
+            {type: 'click', elementId: 'calculate-nav-dropdown', condition: props.currentDropdownId !== "Calculate"}, 
+            {type: 'setValue', newValue:'Calculate', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "Calculate"},
+            {type: 'click', elementId: 'superpose-models-menu-item', condition: true}
+        ]},
+        {label: "Ligand builder", actions: [
+            {type: 'click', elementId: 'calculate-nav-dropdown', condition: props.currentDropdownId !== "Calculate"}, 
+            {type: 'setValue', newValue:'Calculate', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "Calculate"},
+            {type: 'click', elementId: 'ligand-builder-menu-item', condition: true}
+        ]},
+        {label: "Scripting", actions: [
+            {type: 'click', elementId: 'calculate-nav-dropdown', condition: props.currentDropdownId !== "Calculate"}, 
+            {type: 'setValue', newValue:'Calculate', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "Calculate"},
+            {type: 'click', elementId: 'interactive-scripting-menu-item', condition: true}
+        ]},
         {label: "Difference Map Peaks", actions: [
             {type: 'click', condition: true, elementId: 'open-sidebar-button'}, 
             {type: 'click', condition: dropdownIsClosed('validation-tools-collapse'), elementId: 'validation-tools-dropdown'},
@@ -143,6 +158,26 @@ export const MoorhenSearchBar = (props) => {
             {type: 'setValue', newValue:'Ligand', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "Ligand"},
             {type: 'click', elementId: 'get-monomer-menu-item', condition: true}
         ]},
+        {label: "Ligand from SMILES", actions: [
+            {type: 'click', elementId: 'ligand-nav-dropdown', condition: props.currentDropdownId !== "Ligand"}, 
+            {type: 'setValue', newValue:'Ligand', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "Ligand"},
+            {type: 'click', elementId: 'smiles-to-ligand-menu-item', condition: true}
+        ]},
+        {label: "Fit ligand here", actions: [
+            {type: 'click', elementId: 'ligand-nav-dropdown', condition: props.currentDropdownId !== "Ligand"}, 
+            {type: 'setValue', newValue:'Ligand', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "Ligand"},
+            {type: 'click', elementId: 'fit-ligand-right-here-menu-item', condition: true}
+        ]},
+        {label: "Centre on ligand", actions: [
+            {type: 'click', elementId: 'ligand-nav-dropdown', condition: props.currentDropdownId !== "Ligand"}, 
+            {type: 'setValue', newValue:'Ligand', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "Ligand"},
+            {type: 'click', elementId: 'centre-on-ligand-menu-item', condition: true}
+        ]},
+        {label: "Change molecule colours", actions: [
+            {type: 'click', elementId: 'view-nav-dropdown', condition: props.currentDropdownId !== "View"}, 
+            {type: 'setValue', newValue:'View', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "View"},
+            {type: 'click', elementId: 'change-molecule-colours-menu-item', condition: true}
+        ]},
         {label: "Go to cid", actions: [
             {type: 'click', elementId: 'edit-nav-dropdown', condition: props.currentDropdownId !== "Edit"}, 
             {type: 'setValue', newValue:'Edit', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "Edit"},
@@ -158,6 +193,21 @@ export const MoorhenSearchBar = (props) => {
             {type: 'setValue', newValue:'File', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "File"},
             {type: 'click', elementId: 'upload-coordinates-form', condition: true}
         ]},
+        {label: "Updating maps", actions: [
+            {type: 'click', elementId: 'file-nav-dropdown', condition: props.currentDropdownId !== "File"},
+            {type: 'setValue', newValue:'File', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "File"},
+            {type: 'click', elementId: 'connect-molecule-and-map-menu-item', condition: true}
+        ]},
+        {label: "Recover backup", actions: [
+            {type: 'click', elementId: 'file-nav-dropdown', condition: props.currentDropdownId !== "File"},
+            {type: 'setValue', newValue:'File', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "File"},
+            {type: 'click', elementId: 'recover-backup-menu-item', condition: true}
+        ]},
+        {label: "Auto open mtz", actions: [
+            {type: 'click', elementId: 'file-nav-dropdown', condition: props.currentDropdownId !== "File"},
+            {type: 'setValue', newValue:'File', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "File"},
+            {type: 'click', elementId: 'auto-open-mtz-menu-item', condition: true}
+        ]},
         {label: "Load Tutorial Data", actions: [
             {type: 'click', elementId: 'file-nav-dropdown', condition: props.currentDropdownId !== "File"},
             {type: 'setValue', newValue:'File', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "File"},
@@ -167,6 +217,31 @@ export const MoorhenSearchBar = (props) => {
             {type: 'click', elementId: 'edit-nav-dropdown', condition: props.currentDropdownId !== "Edit"},
             {type: 'setValue', newValue:'Edit', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "Edit"},
             {type: 'click', elementId: 'merge-molecules-menu-item', condition: true}
+        ]},
+        {label: "Map blurring", actions: [
+            {type: 'click', elementId: 'cryo-nav-dropdown', condition: props.currentDropdownId !== "Cryo"},
+            {type: 'setValue', newValue:'Cryo', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "Cryo"},
+            {type: 'click', elementId: 'sharpen-blur-map-menu-item', condition: true}
+        ]},
+        {label: "Map masking", actions: [
+            {type: 'click', elementId: 'cryo-nav-dropdown', condition: props.currentDropdownId !== "Cryo"},
+            {type: 'setValue', newValue:'Cryo', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "Cryo"},
+            {type: 'click', elementId: 'mask-map-menu-item', condition: true}
+        ]},
+        {label: "Backup settings", actions: [
+            {type: 'click', elementId: 'preferences-nav-dropdown', condition: props.currentDropdownId !== "Preferences"},
+            {type: 'setValue', newValue:'Preferences', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "Preferences"},
+            {type: 'click', elementId: 'auto-backup-settings-menu-item', condition: true}
+        ]},
+        {label: "Updating maps score options", actions: [
+            {type: 'click', elementId: 'preferences-nav-dropdown', condition: props.currentDropdownId !== "Preferences"},
+            {type: 'setValue', newValue:'Preferences', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "Preferences"},
+            {type: 'click', elementId: 'updating-maps-scores-options-menu-item', condition: true}
+        ]},
+        {label: "Configure shortcuts", actions: [
+            {type: 'click', elementId: 'preferences-nav-dropdown', condition: props.currentDropdownId !== "Preferences"},
+            {type: 'setValue', newValue:'Preferences', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "Preferences"},
+            {type: 'click', elementId: 'configure-shortcuts-menu-item', condition: true}
         ]},
         {label: "Model Validation", actions: [
             {type: 'click', condition: true, elementId: 'open-sidebar-button'}, 
@@ -212,10 +287,6 @@ export const MoorhenSearchBar = (props) => {
         {label: "Show Console", actions: [
             {type: 'click', condition: !props.showSideBar , elementId: 'show-sidebar-button'}, 
             {type: 'click', condition: props.consoleBodyHeight === 0, elementId: 'console-accordion-button'},
-        ]},
-        {label: "Show controls", actions: [
-            {type: 'click', condition: true, elementId: 'open-sidebar-button'}, 
-            {type: 'click', condition: dropdownIsClosed('console-collapse'), elementId: 'console-dropdown'},
         ]},
         {label: "Show models and maps", actions: [
             {type: 'click', condition: true, elementId: 'open-sidebar-button'}, 

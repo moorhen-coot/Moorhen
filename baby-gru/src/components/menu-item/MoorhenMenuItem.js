@@ -295,7 +295,7 @@ export const MoorhenSharpenBlurMapMenuItem = (props) => {
     }
 
     return <MoorhenMenuItem
-        id='sharpen-blur-map'
+        id='sharpen-blur-map-menu-item'
         popoverContent={panelContent}
         menuItemText="Sharpen/Blur map..."
         onCompleted={onCompleted}
@@ -604,6 +604,7 @@ export const MoorhenBackupPreferencesMenuItem = (props) => {
         </>
 
     return <MoorhenMenuItem
+        id="auto-backup-settings-menu-item"
         popoverPlacement='right'
         popoverContent={panelContent}
         menuItemText={"Automatic backup settings..."}
@@ -662,6 +663,7 @@ export const MoorhenScoresToastPreferencesMenuItem = (props) => {
         </>
 
     return <MoorhenMenuItem
+        id="updating-maps-scores-options-menu-item"
         popoverPlacement='right'
         popoverContent={panelContent}
         menuItemText={"Options for scores when updating maps..."}
@@ -1502,6 +1504,7 @@ export const MoorhenBackupsMenuItem = (props) => {
     </>
 
     return <MoorhenMenuItem
+        id="recover-backup-menu-item"
         disabled={props.disabled}
         showOkButton={false}
         popoverContent={panelContent}
@@ -1609,6 +1612,7 @@ export const MoorhenImportFSigFMenuItem = (props) => {
     </>
 
     return <MoorhenMenuItem
+        id="connect-molecule-and-map-menu-item"
         popoverContent={panelContent}
         menuItemText="Connect mol. and map for updating..."
         onCompleted={onCompleted}
@@ -2424,7 +2428,7 @@ export const MoorhenMapMaskingMenuItem = (props) => {
     }, [commandCentre, maps, changeMaps])
 
     return <MoorhenMenuItem
-        id='mask-map'
+        id='mask-map-menu-item'
         popoverContent={panelContent}
         menuItemText="Map masking..."
         onCompleted={onCompleted}
