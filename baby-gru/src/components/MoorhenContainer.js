@@ -403,7 +403,7 @@ export const MoorhenContainer = (props) => {
             {!viewOnly && <MoorhenSideBar {...collectedProps} busy={busy} consoleMessage={consoleMessage} ref={consoleDivRef} />}
         </Row>
         <ToastContainer style={{ marginTop: "5rem", maxWidth: '20rem' }} position='top-center' >
-            <Toast className='shadow-none' onClose={() => setShowToast(false)} autohide={true} delay={4000} show={showToast} style={{overflowY: 'scroll', maxHeight: convertViewtoPx(80, webGLHeight())}}>
+            <Toast className='shadow-none hide-scrolling' onClose={() => setShowToast(false)} autohide={true} delay={4000} show={showToast} style={{overflowY: 'scroll', maxHeight: convertViewtoPx(80, webGLHeight())}}>
                 <Toast.Header className="stop-scrolling" closeButton={false} style={{justifyContent:'center'}}>
                     {toastContent}
                 </Toast.Header>
