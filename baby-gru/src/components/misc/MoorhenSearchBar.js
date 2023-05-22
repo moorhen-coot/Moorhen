@@ -106,11 +106,6 @@ export const MoorhenSearchBar = (props) => {
             {type: 'setValue', newValue:'Calculate', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "Calculate"},
             {type: 'click', elementId: 'superpose-models-menu-item', condition: true}
         ]},
-        {label: "Ligand builder", actions: [
-            {type: 'click', elementId: 'calculate-nav-dropdown', condition: props.currentDropdownId !== "Calculate"}, 
-            {type: 'setValue', newValue:'Calculate', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "Calculate"},
-            {type: 'click', elementId: 'ligand-builder-menu-item', condition: true}
-        ]},
         {label: "Scripting", actions: [
             {type: 'click', elementId: 'calculate-nav-dropdown', condition: props.currentDropdownId !== "Calculate"}, 
             {type: 'setValue', newValue:'Calculate', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "Calculate"},
