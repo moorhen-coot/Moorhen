@@ -44,7 +44,7 @@ const getDefaultValues = () => {
         contourWheelSensitivityFactor: 0.05,
         mapLineWidth: 0.75,
         makeBackups: true,
-        showShortcutToast: true,
+        showShortcutToast: false,
         defaultMapSurface: false,
         defaultBondSmoothness: 1,
         showScoresToast: true,
