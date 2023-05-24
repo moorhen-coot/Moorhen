@@ -963,7 +963,7 @@ MoorhenMolecule.prototype.clearBuffersOfStyle = function (style, glRef) {
                 glRef.current.displayBuffers = glRef.current.displayBuffers.filter(glBuffer => glBuffer !== buffer)
             }
         } else if("labels" in buffer){
-            glRef.current.newTextLabels = glRef.current.newTextLabels.filter(tlBuffer => tlBuffer !== buffer.labels)
+            glRef.current.labelsTextCanvasTexture.removeBigTextureTextImages(buffer.labels);
         }
     })
     glRef.current.buildBuffers()

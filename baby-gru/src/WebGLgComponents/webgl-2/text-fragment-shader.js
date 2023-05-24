@@ -1,6 +1,5 @@
 var text_fragment_shader_source = `#version 300 es\n
     precision mediump float;
-    in lowp vec4 vColor;
     in lowp vec4 eyePos;
     in lowp vec2 vTexture;
 

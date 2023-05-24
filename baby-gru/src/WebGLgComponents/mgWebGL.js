@@ -20,6 +20,7 @@ import { blur_vertex_shader_source as blur_vertex_shader_source_webgl2 } from '.
 import { blur_x_fragment_shader_source as blur_x_fragment_shader_source_webgl2 } from './webgl-2/blur_x-fragment-shader.js';
 import { blur_y_fragment_shader_source as blur_y_fragment_shader_source_webgl2 } from './webgl-2/blur_y-fragment-shader.js';
 import { lines_fragment_shader_source as lines_fragment_shader_source_webgl2 } from './webgl-2/lines-fragment-shader.js';
+import { text_instanced_vertex_shader_source as text_instanced_vertex_shader_source_webgl2 } from './webgl-2/text-vertex-shader.js';
 import { lines_vertex_shader_source as lines_vertex_shader_source_webgl2 } from './webgl-2/lines-vertex-shader.js';
 import { perfect_sphere_fragment_shader_source as perfect_sphere_fragment_shader_source_webgl2 } from './webgl-2/perfect-sphere-fragment-shader.js';
 import { pointspheres_fragment_shader_source as pointspheres_fragment_shader_source_webgl2 } from './webgl-2/pointspheres-fragment-shader.js';
@@ -48,6 +49,7 @@ import { blur_vertex_shader_source as blur_vertex_shader_source_webgl1 } from '.
 import { blur_x_fragment_shader_source as blur_x_fragment_shader_source_webgl1 } from './webgl-1/blur_x-fragment-shader.js';
 import { blur_y_fragment_shader_source as blur_y_fragment_shader_source_webgl1 } from './webgl-1/blur_y-fragment-shader.js';
 import { lines_fragment_shader_source as lines_fragment_shader_source_webgl1 } from './webgl-1/lines-fragment-shader.js';
+import { text_instanced_vertex_shader_source as text_instanced_vertex_shader_source_webgl1 } from './webgl-1/text-vertex-shader.js';
 import { lines_vertex_shader_source as lines_vertex_shader_source_webgl1 } from './webgl-1/lines-vertex-shader.js';
 import { perfect_sphere_fragment_shader_source as perfect_sphere_fragment_shader_source_webgl1 } from './webgl-1/perfect-sphere-fragment-shader.js';
 import { pointspheres_fragment_shader_source as pointspheres_fragment_shader_source_webgl1 } from './webgl-1/pointspheres-fragment-shader.js';
@@ -785,7 +787,7 @@ const stellatedDodecaVertices = [
     -dodecaZ, 0, 1. / dodecaZ,
     dodecaZ, 0, 1. / -dodecaZ,
     -dodecaZ, 0, 1. / -dodecaZ,
-    // icosahedron vertices 
+    // icosahedron vertices
     -icosaX, 0.0, icosaZ,  //20 DONE
     icosaX, 0.0, icosaZ,   //21 DONE
     -icosaX, 0.0, -icosaZ, //22 DONE
@@ -1258,6 +1260,169 @@ function SortThing(proj, id1, id2, id3) {
     this.id3 = id3;
 }
 
+class TextCanvasTexture {
+
+    constructor(glRef,width=1024,height=4096) {
+        this.gl = glRef.gl
+        this.ext = glRef.ext
+        this.glRef = glRef
+        this.nBigTextures = 0;
+        this.nBigTexturesInt = 0;
+        this.refI = {};
+        this.bigTextureTexOrigins = []
+        this.bigTextureTexOffsets = []
+        this.bigTextureScalings   = []
+        this.contextBig = document.createElement("canvas").getContext("2d");
+        this.contextBig.canvas.width = width;
+        this.contextBig.canvas.height = Math.min(height,this.gl.getParameter(this.gl.MAX_TEXTURE_SIZE));
+        this.bigTextureCurrentBaseLine = 0;
+        this.bigTextureCurrentWidth = 0;
+        this.maxCurrentColumnWidth = 0;
+        this.contextBig.fillStyle = "#00000000";
+        this.contextBig.fillRect(0, 0, this.contextBig.canvas.width, this.contextBig.canvas.height);
+        this.bigTextTex = this.gl.createTexture();
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.bigTextTex);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+        this.bigTextureTexOffsetsBuffer = this.gl.createBuffer();
+        this.bigTextureTextInstanceOriginBuffer = this.gl.createBuffer();
+        this.bigTextureTextInstanceSizeBuffer = this.gl.createBuffer();
+        this.bigTextureTextTexCoordBuffer = this.gl.createBuffer();
+        this.bigTextureTextPositionBuffer = this.gl.createBuffer();
+        this.bigTextureTextIndexesBuffer = this.gl.createBuffer();
+        this.textureCache = {};
+    }
+
+    recreateBigTextureBuffers() {
+        const bigTextureTexCoords  = [0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0]
+        const bigTexturePositions  = [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0 ]
+        const bigTextureIdxs = [0,1,2,0,2,3]
+
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.bigTextureTexOffsetsBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.bigTextureTexOffsets.flat()), this.gl.STATIC_DRAW);
+
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.bigTextureTextInstanceOriginBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.bigTextureTexOrigins.flat()), this.gl.STATIC_DRAW);
+
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.bigTextureTextInstanceSizeBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.bigTextureScalings.flat()), this.gl.STATIC_DRAW);
+
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.bigTextureTextTexCoordBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(bigTextureTexCoords), this.gl.STATIC_DRAW);
+
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.bigTextureTextPositionBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(bigTexturePositions), this.gl.STATIC_DRAW);
+
+        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.bigTextureTextIndexesBuffer);
+        if (this.ext) {
+            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(bigTextureIdxs), this.gl.STATIC_DRAW);
+        } else {
+            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(bigTextureIdxs), this.gl.STATIC_DRAW);
+        }
+
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.bigTextTex);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.contextBig.canvas);
+
+    }
+
+    addImageToBigTexture(t, textColour, font) {
+        this.contextBig.textBaseline = "alphabetic";
+        this.contextBig.font = font;
+        let textMetric = this.contextBig.measureText(t);
+        let actualHeight = textMetric.actualBoundingBoxAscent + textMetric.actualBoundingBoxDescent + 2;
+        this.contextBig.fillStyle = textColour;
+        if(!(textColour in this.textureCache)){
+            this.textureCache[textColour] = {};
+        }
+        if(!(font.toLowerCase() in this.textureCache[textColour])){
+            this.textureCache[textColour][font.toLowerCase()] = {};
+        }
+        if(t in this.textureCache[textColour][font.toLowerCase()]){
+            return this.textureCache[textColour][font.toLowerCase()][t];
+        }
+        if(this.bigTextureCurrentBaseLine+actualHeight>this.contextBig.canvas.height){
+            this.bigTextureCurrentBaseLine = 0;
+            this.bigTextureCurrentWidth += this.maxCurrentColumnWidth;
+            this.maxCurrentColumnWidth = 0;
+        }
+        const x1 = this.bigTextureCurrentWidth / this.contextBig.canvas.width;
+        const y1 = (this.bigTextureCurrentBaseLine + 1)/ this.contextBig.canvas.height;
+        this.bigTextureCurrentBaseLine += actualHeight;
+        const x2 = x1 + textMetric.actualBoundingBoxRight / this.contextBig.canvas.width;
+        const y2 = this.bigTextureCurrentBaseLine / this.contextBig.canvas.height;
+        this.contextBig.fillText(t, this.bigTextureCurrentWidth, this.bigTextureCurrentBaseLine-textMetric.actualBoundingBoxDescent, textMetric.width);
+        if(textMetric.width>this.maxCurrentColumnWidth){
+            this.maxCurrentColumnWidth = textMetric.width;
+        }
+        this.textureCache[textColour][font.toLowerCase()][t] = [x1,y1,x2,y2];
+        console.log(t,this.maxCurrentColumnWidth)
+        return [x1,y1,x2,y2]
+    }
+
+    clearBigTexture() {
+        this.contextBig.fillStyle = "#00000000";
+        this.contextBig.clearRect(0, 0, this.contextBig.canvas.width, this.contextBig.canvas.height);
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.bigTextTex);
+        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.contextBig.canvas);
+        this.nBigTextures = 0
+        this.nBigTexturesInt = 0;
+        this.refI = {};
+        this.textureCache = {};
+        this.bigTextureCurrentBaseLine = 0;
+        this.bigTextureCurrentWidth = 0;
+        this.maxCurrentColumnWidth = 0;
+        this.bigTextureTexOrigins = []
+        this.bigTextureTexOffsets = []
+        this.bigTextureScalings   = []
+    }
+
+    removeBigTextureTextImages(textObjects) {
+        textObjects.forEach(label => {
+            this.removeBigTextureTextImage(label)
+        })
+        this.recreateBigTextureBuffers();
+    }
+
+    removeBigTextureTextImage(textObject) {
+        const key = textObject.text+"_"+textObject.x+"_"+textObject.y+"_"+textObject.z+"_"+textObject.font
+        this.bigTextureTexOrigins[this.refI[key]] = [];
+        this.bigTextureTexOffsets[this.refI[key]] = [];
+        this.bigTextureScalings[this.refI[key]] = [];
+        delete this.refI[key];
+        this.nBigTextures -= 1;
+    }
+
+    addBigTextureTextImage(textObject) {
+        const key = textObject.text+"_"+textObject.x+"_"+textObject.y+"_"+textObject.z+"_"+textObject.font
+        const fontSize = parseInt(textObject.font);
+        const x = textObject.x;
+        const y = textObject.y;
+        const z = textObject.z;
+        const o = [x,y,z];
+
+        let colour;
+        const bright_y = this.glRef.background_colour[0] * 0.299 + this.glRef.background_colour[1] * 0.587 + this.glRef.background_colour[2] * 0.114;
+        if( bright_y<0.5)
+            colour = "white";
+        else
+            colour = "black";
+
+        const t = this.addImageToBigTexture(textObject.text,colour,textObject.font);
+        const s = [fontSize*this.contextBig.canvas.width / this.contextBig.canvas.height * (t[2]-t[0])/0.25, fontSize*(t[3]-t[1]) /0.25, 1.0];
+        this.bigTextureTexOrigins.push(o);
+        this.bigTextureTexOffsets.push([t[0], t[2]-t[0], t[1], t[3]-t[1]]);
+        this.bigTextureScalings.push(s)
+        this.refI[key] = this.nBigTexturesInt;
+        this.nBigTextures += 1;
+        this.nBigTexturesInt += 1;
+    }
+
+}
+
 class DisplayBuffer {
     constructor() {
         this.visible = true;
@@ -1455,7 +1620,7 @@ class MGWebGL extends Component {
         if(this.doShadow&&!this.screenshotBuffersReady) this.initTextureFramebuffer();
         */
     }
-    
+
     componentDidUpdate(oldProps) {
         if (oldProps.width !== this.props.width || oldProps.height !== this.props.height) {
             this.resize(this.props.width, this.props.height)
@@ -1478,6 +1643,7 @@ class MGWebGL extends Component {
             this.drawScene()
         }
     }
+
     componentDidMount() {
         this.canvas = this.canvasRef.current;
         const self = this;
@@ -1718,6 +1884,7 @@ class MGWebGL extends Component {
         let thickLineNormalVertexShader;
         let lineFragmentShader;
         let textVertexShader;
+        let textVertexShaderInstanced;
         let circlesVertexShader;
         let textFragmentShader;
         let circlesFragmentShader;
@@ -1755,6 +1922,7 @@ class MGWebGL extends Component {
         let blur_x_fragment_shader_source = blur_x_fragment_shader_source_webgl1;
         let blur_y_fragment_shader_source = blur_y_fragment_shader_source_webgl1;
         let lines_fragment_shader_source = lines_fragment_shader_source_webgl1;
+        let text_instanced_vertex_shader_source = text_instanced_vertex_shader_source_webgl1;
         let lines_vertex_shader_source = lines_vertex_shader_source_webgl1;
         let perfect_sphere_fragment_shader_source = perfect_sphere_fragment_shader_source_webgl1;
         let pointspheres_fragment_shader_source = pointspheres_fragment_shader_source_webgl1;
@@ -1781,6 +1949,7 @@ class MGWebGL extends Component {
             blur_x_fragment_shader_source = blur_x_fragment_shader_source_webgl2;
             blur_y_fragment_shader_source = blur_y_fragment_shader_source_webgl2;
             lines_fragment_shader_source = lines_fragment_shader_source_webgl2;
+            text_instanced_vertex_shader_source = text_instanced_vertex_shader_source_webgl2;
             lines_vertex_shader_source = lines_vertex_shader_source_webgl2;
             perfect_sphere_fragment_shader_source = perfect_sphere_fragment_shader_source_webgl2;
             pointspheres_fragment_shader_source = pointspheres_fragment_shader_source_webgl2;
@@ -1814,6 +1983,7 @@ class MGWebGL extends Component {
         blurYFragmentShader = getShader(self.gl, blur_y_fragment_shader_source, "fragment");
         lineFragmentShader = getShader(self.gl, lines_fragment_shader_source, "fragment");
         textVertexShader = getShader(self.gl, triangle_vertex_shader_source, "vertex");
+        textVertexShaderInstanced = getShader(self.gl, text_instanced_vertex_shader_source, "vertex");
         circlesVertexShader = getShader(self.gl, circles_vertex_shader_source, "vertex");
         textFragmentShader = getShader(self.gl, text_fragment_shader_source, "fragment");
         circlesFragmentShader = getShader(self.gl, circles_fragment_shader_source, "fragment");
@@ -1848,6 +2018,7 @@ class MGWebGL extends Component {
             self.initDepthShadowPerfectSphereShaders(shadowDepthPerfectSphereFragmentShader, shadowDeptTwoDShapesVertexShader);
         }
         self.initTextBackgroundShaders(textVertexShader, textFragmentShader);
+        self.initTextInstancedShaders(textVertexShaderInstanced, textFragmentShader);
         self.gl.disableVertexAttribArray(self.shaderProgramTextBackground.vertexTextureAttribute);
         self.initCirclesShaders(circlesVertexShader, circlesFragmentShader);
         self.gl.disableVertexAttribArray(self.shaderProgramCircles.vertexTextureAttribute);
@@ -1855,6 +2026,9 @@ class MGWebGL extends Component {
         self.initShadersInstanced(vertexShaderInstanced, fragmentShader);
 
         self.buildBuffers();
+
+        this.measureTextCanvasTexture = new TextCanvasTexture(this,1024,2048);
+        this.labelsTextCanvasTexture = new TextCanvasTexture(this,64,2048);
 
         self.gl.clearColor(self.background_colour[0], self.background_colour[1], self.background_colour[2], self.background_colour[3]);
         self.gl.enable(self.gl.DEPTH_TEST);
@@ -1893,11 +2067,11 @@ class MGWebGL extends Component {
                         self.doClick(evt, self);
                         evt.stopPropagation();
                     } else if (evt.which === 2) {
-                        evt.stopPropagation();    
+                        evt.stopPropagation();
                     } else {
                         self.doRightClick(evt, self);
                         evt.stopPropagation();
-                        evt.preventDefault();    
+                        evt.preventDefault();
                     }
                 },
                 false);
@@ -2191,11 +2365,15 @@ class MGWebGL extends Component {
                             const x = jsondata.vert_tri[idat][ilabel*3];
                             const y = jsondata.vert_tri[idat][ilabel*3+1];
                             const z = jsondata.vert_tri[idat][ilabel*3+2];
-                            const label = {font:"20px helvetica",x:x,y:y,z:z,text:t};
+                            const label = {font:"18px Helvetica",x:x,y:y,z:z,text:t};
                             labels.push(label);
                         }
-                        this.newTextLabels.push(labels);
+                        labels.forEach(label => {
+                            this.labelsTextCanvasTexture.addBigTextureTextImage({font:label.font,text:label.text,x:label.x,y:label.y,z:label.z})
+                        })
                         theseBuffers.push({labels:labels});
+                        this.labelsTextCanvasTexture.recreateBigTextureBuffers();
+                        this.buildBuffers();
                         continue
                     }
                 }
@@ -3218,6 +3396,10 @@ class MGWebGL extends Component {
 
     setBackground(col) {
         this.background_colour = col;
+        this.updateLabels()
+        //This forces redrawing of environemnt distances
+        const originUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: this.origin} })
+        document.dispatchEvent(originUpdateEvent);
         this.drawScene();
     }
 
@@ -3331,10 +3513,10 @@ class MGWebGL extends Component {
         //default is to drawScene, unless doDrawScene provided and value is false
         if (typeof doDrawScene === 'undefined' || doDrawScene === true) {
             this.drawScene();
-        } 
+        }
         if (dispatchEvent) {
             const originUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: this.origin} })
-            document.dispatchEvent(originUpdateEvent);    
+            document.dispatchEvent(originUpdateEvent);
         }
     }
 
@@ -3528,7 +3710,7 @@ class MGWebGL extends Component {
             this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.RENDERBUFFER, renderbufferDepth);
             this.gl.renderbufferStorageMultisample(this.gl.RENDERBUFFER,
                                     this.gl.getParameter(this.gl.MAX_SAMPLES),
-                                    this.gl.DEPTH_COMPONENT24, 
+                                    this.gl.DEPTH_COMPONENT24,
                                     this.rttFramebuffer.width,
                                     this.rttFramebuffer.height);
             let renderbuffer = this.gl.createRenderbuffer();
@@ -3536,7 +3718,7 @@ class MGWebGL extends Component {
             this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.RENDERBUFFER, renderbuffer);
             this.gl.renderbufferStorageMultisample(this.gl.RENDERBUFFER,
                                     this.gl.getParameter(this.gl.MAX_SAMPLES),
-                                    this.gl.RGBA8, 
+                                    this.gl.RGBA8,
                                     this.rttFramebuffer.width,
                                     this.rttFramebuffer.height);
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.rttFramebufferColor);
@@ -4724,6 +4906,64 @@ class MGWebGL extends Component {
         this.shaderProgramCircles.nClipPlanes = this.gl.getUniformLocation(this.shaderProgramCircles, "nClipPlanes");
     }
 
+    initTextInstancedShaders(vertexShader, fragmentShader) {
+
+        this.shaderProgramTextInstanced = this.gl.createProgram();
+        this.gl.attachShader(this.shaderProgramTextInstanced, vertexShader);
+        this.gl.attachShader(this.shaderProgramTextInstanced, fragmentShader);
+        this.gl.bindAttribLocation(this.shaderProgramTextInstanced, 0, "aVertexPosition");
+        this.gl.bindAttribLocation(this.shaderProgramTextInstanced, 1, "aVertexColour");
+        this.gl.bindAttribLocation(this.shaderProgramTextInstanced, 2, "aVertexNormal");
+        this.gl.bindAttribLocation(this.shaderProgramTextInstanced, 3, "aVertexTexture");
+        this.gl.bindAttribLocation(this.shaderProgramTextInstanced, 8, "size");
+        this.gl.bindAttribLocation(this.shaderProgramTextInstanced, 9, "offset");
+        this.gl.bindAttribLocation(this.shaderProgramTextInstanced, 10, "textureOffsets");
+        this.gl.linkProgram(this.shaderProgramTextInstanced);
+
+        if (!this.gl.getProgramParameter(this.shaderProgramTextInstanced, this.gl.LINK_STATUS)) {
+            alert("Could not initialise shaders (initTextInstancedShaders)");
+            console.log(this.gl.getProgramInfoLog(this.shaderProgramTextInstanced));
+        }
+
+        this.gl.useProgram(this.shaderProgramTextInstanced);
+
+        this.shaderProgramTextInstanced.vertexPositionAttribute = this.gl.getAttribLocation(this.shaderProgramTextInstanced, "aVertexPosition");
+        this.gl.enableVertexAttribArray(this.shaderProgramTextInstanced.vertexPositionAttribute);
+
+        this.shaderProgramTextInstanced.vertexTextureAttribute = this.gl.getAttribLocation(this.shaderProgramTextInstanced, "aVertexTexture");
+        this.gl.enableVertexAttribArray(this.shaderProgramTextInstanced.vertexTextureAttribute);
+
+        this.shaderProgramTextInstanced.offsetAttribute = this.gl.getAttribLocation(this.shaderProgramTextInstanced, "offset");
+        this.gl.enableVertexAttribArray(this.shaderProgramTextInstanced.offsetAttribute);
+
+        this.shaderProgramTextInstanced.sizeAttribute = this.gl.getAttribLocation(this.shaderProgramTextInstanced, "size");
+        this.gl.enableVertexAttribArray(this.shaderProgramTextInstanced.sizeAttribute);
+
+        this.shaderProgramTextInstanced.textureOffsetAttribute = this.gl.getAttribLocation(this.shaderProgramTextInstanced, "textureOffsets");
+        this.gl.enableVertexAttribArray(this.shaderProgramTextInstanced.textureOffsetAttribute);
+
+        this.shaderProgramTextInstanced.pMatrixUniform = this.gl.getUniformLocation(this.shaderProgramTextInstanced, "uPMatrix");
+        this.shaderProgramTextInstanced.mvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramTextInstanced, "uMVMatrix");
+        this.shaderProgramTextInstanced.mvInvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramTextInstanced, "uMVINVMatrix");
+        this.shaderProgramTextInstanced.textureMatrixUniform = this.gl.getUniformLocation(this.shaderProgramTextInstanced, "TextureMatrix");
+
+        this.shaderProgramTextInstanced.fog_start = this.gl.getUniformLocation(this.shaderProgramTextInstanced, "fog_start");
+        this.shaderProgramTextInstanced.fog_end = this.gl.getUniformLocation(this.shaderProgramTextInstanced, "fog_end");
+
+        this.shaderProgramTextInstanced.clipPlane0 = this.gl.getUniformLocation(this.shaderProgramTextInstanced, "clipPlane0");
+        this.shaderProgramTextInstanced.clipPlane1 = this.gl.getUniformLocation(this.shaderProgramTextInstanced, "clipPlane1");
+        this.shaderProgramTextInstanced.clipPlane2 = this.gl.getUniformLocation(this.shaderProgramTextInstanced, "clipPlane2");
+        this.shaderProgramTextInstanced.clipPlane3 = this.gl.getUniformLocation(this.shaderProgramTextInstanced, "clipPlane3");
+        this.shaderProgramTextInstanced.clipPlane4 = this.gl.getUniformLocation(this.shaderProgramTextInstanced, "clipPlane4");
+        this.shaderProgramTextInstanced.clipPlane5 = this.gl.getUniformLocation(this.shaderProgramTextInstanced, "clipPlane5");
+        this.shaderProgramTextInstanced.clipPlane6 = this.gl.getUniformLocation(this.shaderProgramTextInstanced, "clipPlane6");
+        this.shaderProgramTextInstanced.clipPlane7 = this.gl.getUniformLocation(this.shaderProgramTextInstanced, "clipPlane7");
+        this.shaderProgramTextInstanced.nClipPlanes = this.gl.getUniformLocation(this.shaderProgramTextInstanced, "nClipPlanes");
+
+        this.shaderProgramTextInstanced.pixelZoom = this.gl.getUniformLocation(this.shaderProgramTextInstanced, "pixelZoom");
+
+    }
+
     initTextBackgroundShaders(vertexShaderTextBackground, fragmentShaderTextBackground) {
 
         this.shaderProgramTextBackground = this.gl.createProgram();
@@ -5449,7 +5689,7 @@ class MGWebGL extends Component {
                 if (this.displayBuffers[idx].bufferTypes[j] === "CYLINDERS" || this.displayBuffers[idx].bufferTypes[j] === "CAPCYLINDERS") {
                     accuStep = 20;
 
-                    // Construct cylinder from original start and end. 
+                    // Construct cylinder from original start and end.
                     // FIXME - The original indices are ignored at the moment. We will deal with that in due course.
                     //console.log(this.displayBuffers[idx].triangleIndexs[j].length);
                     //console.log(this.displayBuffers[idx].triangleVertices[j].length);
@@ -6955,7 +7195,7 @@ class MGWebGL extends Component {
                     this.instanced_ext.drawElementsInstancedANGLE(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_INT, 0, theBuffer.triangleInstanceOriginBuffer[j].numItems);
                 }
                 if(theBuffer.symmetryMatrices.length>0){
-                    /*this.gl.uniform4fv(theShader.light_colours_diffuse, 
+                    /*this.gl.uniform4fv(theShader.light_colours_diffuse,
                             new Float32Array([Math.max(this.light_colours_diffuse[0]-.4,0.2),
                                 Math.max(this.light_colours_diffuse[1]-.4,0.2),
                                 Math.max(this.light_colours_diffuse[2]-.4,0.2), 1.0]));
@@ -7370,6 +7610,7 @@ class MGWebGL extends Component {
     }
 
     GLrender(calculatingShadowMap) {
+
         //console.log("GLrender",calculatingShadowMap);
 
         //this.mouseDown = false; ???
@@ -7574,8 +7815,7 @@ class MGWebGL extends Component {
         if(!calculatingShadowMap){
             this.drawImagesAndText(invMat);
             this.drawTransparent(theMatrix);
-            this.drawLabelledAtoms(up, right);
-            this.drawDistances(up, right);
+            this.drawDistancesAndLabels(up, right);
             this.drawTextLabels(up, right);
             this.drawCircles(up, right);
         }
@@ -7954,7 +8194,7 @@ class MGWebGL extends Component {
 
             let primitiveSizes = this.displayBuffers[idx].primitiveSizes;
 
-            // FIXME - This is still way too slow, since there can be *lots* of displayBuffers per molecule. 
+            // FIXME - This is still way too slow, since there can be *lots* of displayBuffers per molecule.
             //       - recalculating same symmetry for all of them is insane.
             //       - And should only be done when origin changes!
             let symmetry = null;
@@ -8835,6 +9075,8 @@ class MGWebGL extends Component {
     }
 
     drawTextLabels(up, right) {
+        // Labels, angles, etc. should be instanced by texture coords, positions using contextBig
+
         // make sure we can render it even if it's not a power of 2
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.textTex);
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
@@ -8935,310 +9177,78 @@ class MGWebGL extends Component {
         }
     }
 
-    drawLabelledAtoms(up, right) {
-        this.gl.useProgram(this.shaderProgramTextBackground);
-        this.gl.uniform1f(this.shaderProgramTextBackground.maxTextureS, 1.0);
-        let textTextureDirty = false;
-        let textColour = "black";
-        if (isDarkBackground(...this.background_colour)) {
-            textColour = "white";
-        } 
-        
-        if (textColour !== this.previousTextColour) textTextureDirty = true;
-        this.previousTextColour = textColour;
+    drawDistancesAndLabels(up, right) {
 
-        this.drawAtomLabels(up, right, this.labelledAtoms, textColour, textTextureDirty)
-        
-        this.gl.uniform1f(this.shaderProgramTextBackground.maxTextureS, 1.0);
-        this.gl.disableVertexAttribArray(this.shaderProgramTextBackground.vertexTextureAttribute);
-        this.gl.depthFunc(this.gl.LESS);
-    }
+        // Labels, angles, etc. instanced by texture coords, positions using contextBig
 
-    drawDistances(up, right) {
-        this.gl.useProgram(this.shaderProgramTextBackground);
-        this.gl.uniform1f(this.shaderProgramTextBackground.maxTextureS, 1.0);
-        let textTextureDirty = false;
-        let textColour = "black";
-        if (isDarkBackground(...this.background_colour)) {
-            textColour = "white";
-        } 
-        
-        if (textColour !== this.previousTextColour) textTextureDirty = true;
-        this.previousTextColour = textColour;
+        this.gl.useProgram(this.shaderProgramTextInstanced);
+        this.setMatrixUniforms(this.shaderProgramTextInstanced);
 
-        this.drawAtomLabels(up, right, this.measuredAtoms, textColour, textTextureDirty)
-
-        this.gl.useProgram(this.shaderProgramTextBackground);
-        this.gl.enableVertexAttribArray(this.shaderProgramTextBackground.vertexTextureAttribute);
-        this.setMatrixUniforms(this.shaderProgramTextBackground);
-
-        for (let iat = 0; iat < this.measuredAtoms.length; iat++) {
-            for (let jat = 0; jat < this.measuredAtoms[iat].length; jat++) {
-
-                const theAtom = this.measuredAtoms[iat][jat];
-                const theBuffer = theAtom.displayBuffer;
-                if (theBuffer.textNormals.length === 0 || theBuffer.atoms.length === 0)
-                    continue;
-
-                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, theBuffer.textTexCoordBuffer);
-                this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexTextureAttribute, 2, this.gl.FLOAT, false, 0, 0);
-
-                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, theBuffer.textNormalBuffer);
-                this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexNormalAttribute, 3, this.gl.FLOAT, false, 0, 0);
-
-                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, theBuffer.textColourBuffer);
-                this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexColourAttribute, 4, this.gl.FLOAT, false, 0, 0);
-
-                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, theBuffer.textPositionBuffer);
-                this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
-
-                this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, theBuffer.textIndexesBuffer);
-
-                theBuffer.textVertices = [];
-
-                if (textTextureDirty || typeof (this.measuredAtoms[iat][jat].imgData) === "undefined") {
-                    const ret = this.makeTextCanvas(this.measuredAtoms[iat][jat].label, 512, 32, textColour);
-                    const maxTextureS = ret[0];
-                    this.measuredAtoms[iat][jat].imgData = this.textCtx.getImageData(0, 0, 512, 32);
-                    this.measuredAtoms[iat][jat].maxImgTextureS = maxTextureS;
-                }
-                this.gl.uniform1f(this.shaderProgramTextBackground.maxTextureS, this.measuredAtoms[iat][jat].maxImgTextureS);
-                this.gl.texSubImage2D(this.gl.TEXTURE_2D, 0, 0, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.measuredAtoms[iat][jat].imgData);
-
-                let x = this.measuredAtoms[iat][jat].x;
-                let y = this.measuredAtoms[iat][jat].y;
-                let z = this.measuredAtoms[iat][jat].z;
-                let tSizeX = 2.0 * this.textCtx.canvas.width / this.textCtx.canvas.height * this.zoom;
-                let tSizeY = 2.0 * this.zoom;
-                theBuffer.textVertices = theBuffer.textVertices.concat([x, y, z, x + tSizeX * right[0], y + tSizeX * right[1], z + tSizeX * right[2], x + tSizeY * up[0] + tSizeX * right[0], y + tSizeY * up[1] + tSizeX * right[1], z + tSizeY * up[2] + tSizeX * right[2]]);
-                theBuffer.textVertices = theBuffer.textVertices.concat([x, y, z, x + tSizeY * up[0] + tSizeX * right[0], y + tSizeY * up[1] + tSizeX * right[1], z + tSizeY * up[2] + tSizeX * right[2], x + tSizeY * up[0], y + tSizeY * up[1], z + tSizeY * up[2]]);
-
-                this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(theBuffer.textVertices), this.gl.DYNAMIC_DRAW);
-
-                if (this.ext) {
-                    this.gl.drawElements(this.gl.TRIANGLES, theBuffer.textIndexs.length, this.gl.UNSIGNED_INT, 0);
-                } else {
-                    this.gl.drawElements(this.gl.TRIANGLES, theBuffer.textIndexs.length, this.gl.UNSIGNED_SHORT, 0);
-                }
-            }
+        if (this.atomLabelDepthMode) {
+            //If we want to fog them
+            this.gl.depthFunc(this.gl.LESS);
+        } else {
+            //If we want them to be on top
+            this.gl.depthFunc(this.gl.ALWAYS);
+            this.gl.uniform1f(this.shaderProgramTextInstanced.fog_start, 1000.0);
+            this.gl.uniform1f(this.shaderProgramTextInstanced.fog_end, 1000.0);
         }
 
-        let tSizeX;
-        let tSizeY;
-        for (let iat = 0; iat < this.measuredAtoms.length; iat++) {
-            // FIXME - This needs a tweak for at1-at2-at3-at4 dihedrals.
-            for (let jat = 1; jat < this.measuredAtoms[iat].length; jat++) {
+        for(let i = 0; i<16; i++)
+            this.gl.disableVertexAttribArray(i);
 
-                let x1 = this.measuredAtoms[iat][jat - 1].x;
-                let y1 = this.measuredAtoms[iat][jat - 1].y;
-                let z1 = this.measuredAtoms[iat][jat - 1].z;
+        [this.measureTextCanvasTexture,this.labelsTextCanvasTexture].forEach((canvasTexture) => {
+            this.gl.activeTexture(this.gl.TEXTURE0);
+            this.gl.bindTexture(this.gl.TEXTURE_2D, canvasTexture.bigTextTex);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
 
-                let x2 = this.measuredAtoms[iat][jat].x;
-                let y2 = this.measuredAtoms[iat][jat].y;
-                let z2 = this.measuredAtoms[iat][jat].z;
+            this.gl.enableVertexAttribArray(this.shaderProgramTextInstanced.vertexTextureAttribute);
+            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, canvasTexture.bigTextureTextTexCoordBuffer);
+            this.gl.vertexAttribPointer(this.shaderProgramTextInstanced.vertexTextureAttribute, 2, this.gl.FLOAT, false, 0, 0);
 
-                const theAtom = this.measuredAtoms[iat][jat];
-                const theBuffer = theAtom.displayBuffer;
-                if (theBuffer.textNormals.length === 0 || theBuffer.atoms.length === 0) {
-                    continue;
-                }
+            this.gl.enableVertexAttribArray(this.shaderProgramTextInstanced.vertexPositionAttribute);
+            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, canvasTexture.bigTextureTextPositionBuffer);
+            this.gl.vertexAttribPointer(this.shaderProgramTextInstanced.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
 
-                const theAtom2 = this.measuredAtoms[iat][jat - 1];
-                const theBuffer2 = theAtom2.displayBuffer;
-                if (theBuffer2.textNormals.length === 0 || theBuffer2.atoms.length === 0) {
-                    continue;
-                }
+            this.gl.enableVertexAttribArray(this.shaderProgramTextInstanced.offsetAttribute);
+            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, canvasTexture.bigTextureTextInstanceOriginBuffer);
+            this.gl.vertexAttribPointer(this.shaderProgramTextInstanced.offsetAttribute, 3, this.gl.FLOAT, false, 0, 0);
 
-                theBuffer.textVertices = [];
+            this.gl.enableVertexAttribArray(this.shaderProgramTextInstanced.sizeAttribute);
+            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, canvasTexture.bigTextureTextInstanceSizeBuffer);
+            this.gl.vertexAttribPointer(this.shaderProgramTextInstanced.sizeAttribute, 3, this.gl.FLOAT, false, 0, 0);
 
-                let v1 = vec3Create([x1, y1, z1]);
-                let v2 = vec3Create([x2, y2, z2]);
+            this.gl.enableVertexAttribArray(this.shaderProgramTextInstanced.textureOffsetAttribute);
+            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, canvasTexture.bigTextureTexOffsetsBuffer);
+            this.gl.vertexAttribPointer(this.shaderProgramTextInstanced.textureOffsetAttribute, 4, this.gl.FLOAT, false, 0, 0);
 
-                let v1diffv2 = vec3.create();
-                vec3Subtract(v1, v2, v1diffv2);
-                let linesize = vec3.length(v1diffv2);
+            this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, canvasTexture.bigTextureTextIndexesBuffer);
 
-                let v1plusv2 = vec3.create();
-                vec3Add(v1, v2, v1plusv2);
-                let x = v1plusv2[0] * 0.5;
-                let y = v1plusv2[1] * 0.5;
-                let z = v1plusv2[2] * 0.5;
+            this.gl.uniform1f(this.shaderProgramTextInstanced.pixelZoom,this.zoom*canvasTexture.contextBig.canvas.height/this.canvas.height)
 
-                if (textTextureDirty || typeof (this.measuredAtoms[iat][jat].lengthImgData) === "undefined") {
-                    const ret = this.makeTextCanvas(linesize.toFixed(3), 512, 32, textColour);
-                    const maxTextureS = ret[0];
-                    this.measuredAtoms[iat][jat].lengthImgData = this.textCtx.getImageData(0, 0, 512, 32);
-                    this.measuredAtoms[iat][jat].maxLengthImgTextureS = maxTextureS;
-                }
-                this.gl.uniform1f(this.shaderProgramTextBackground.maxTextureS, this.measuredAtoms[iat][jat].maxLengthImgTextureS);
-                this.gl.texSubImage2D(this.gl.TEXTURE_2D, 0, 0, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.measuredAtoms[iat][jat].lengthImgData);
-
-                tSizeX = 2.0 * this.textCtx.canvas.width / this.textCtx.canvas.height * this.zoom;
-                tSizeY = 2.0 * this.zoom;
-                theBuffer.textVertices = theBuffer.textVertices.concat([x, y, z, x + tSizeX * right[0], y + tSizeX * right[1], z + tSizeX * right[2], x + tSizeY * up[0] + tSizeX * right[0], y + tSizeY * up[1] + tSizeX * right[1], z + tSizeY * up[2] + tSizeX * right[2]]);
-                theBuffer.textVertices = theBuffer.textVertices.concat([x, y, z, x + tSizeY * up[0] + tSizeX * right[0], y + tSizeY * up[1] + tSizeX * right[1], z + tSizeY * up[2] + tSizeX * right[2], x + tSizeY * up[0], y + tSizeY * up[1], z + tSizeY * up[2]]);
-
-                this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(theBuffer.textVertices), this.gl.DYNAMIC_DRAW);
-
-                if (this.ext) {
-                    this.gl.drawElements(this.gl.TRIANGLES, theBuffer.textIndexs.length, this.gl.UNSIGNED_INT, 0);
-                } else {
-                    this.gl.drawElements(this.gl.TRIANGLES, theBuffer.textIndexs.length, this.gl.UNSIGNED_SHORT, 0);
-                }
+            if (this.WEBGL2) {
+                this.gl.vertexAttribDivisor(this.shaderProgramTextInstanced.sizeAttribute, 1);
+                this.gl.vertexAttribDivisor(this.shaderProgramTextInstanced.offsetAttribute, 1);
+                this.gl.vertexAttribDivisor(this.shaderProgramTextInstanced.textureOffsetAttribute, 1);
+                this.gl.drawElementsInstanced(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_INT, 0, canvasTexture.nBigTextures);
+                this.gl.vertexAttribDivisor(this.shaderProgramTextInstanced.sizeAttribute, 0);
+                this.gl.vertexAttribDivisor(this.shaderProgramTextInstanced.offsetAttribute, 0);
+                this.gl.vertexAttribDivisor(this.shaderProgramTextInstanced.textureOffsetAttribute, 0);
+            } else {
+                this.instanced_ext.vertexAttribDivisorANGLE(this.shaderProgramTextInstanced.sizeAttribute, 1);
+                this.instanced_ext.vertexAttribDivisorANGLE(this.shaderProgramTextInstanced.offsetAttribute, 1);
+                this.instanced_ext.vertexAttribDivisorANGLE(this.shaderProgramTextInstanced.textureOffsetAttribute, 1);
+                this.instanced_ext.drawElementsInstancedANGLE(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_INT, 0, canvasTexture.nBigTextures);
+                this.instanced_ext.vertexAttribDivisorANGLE(this.shaderProgramTextInstanced.sizeAttribute, 0);
+                this.instanced_ext.vertexAttribDivisorANGLE(this.shaderProgramTextInstanced.offsetAttribute, 0);
+                this.instanced_ext.vertexAttribDivisorANGLE(this.shaderProgramTextInstanced.textureOffsetAttribute, 0);
             }
+        })
 
-            for (let jat = 2; jat < this.measuredAtoms[iat].length; jat++) {
-
-                let x1 = this.measuredAtoms[iat][jat - 2].x;
-                let y1 = this.measuredAtoms[iat][jat - 2].y;
-                let z1 = this.measuredAtoms[iat][jat - 2].z;
-
-                let x2 = this.measuredAtoms[iat][jat - 1].x;
-                let y2 = this.measuredAtoms[iat][jat - 1].y;
-                let z2 = this.measuredAtoms[iat][jat - 1].z;
-
-                let x3 = this.measuredAtoms[iat][jat].x;
-                let y3 = this.measuredAtoms[iat][jat].y;
-                let z3 = this.measuredAtoms[iat][jat].z;
-
-                const theAtom = this.measuredAtoms[iat][jat];
-                const theBuffer = theAtom.displayBuffer;
-                if (theBuffer.textNormals.length === 0 || theBuffer.atoms.length === 0) {
-                    continue;
-                }
-
-                const theAtom2 = this.measuredAtoms[iat][jat - 1];
-                const theBuffer2 = theAtom2.displayBuffer;
-                if (theBuffer2.textNormals.length === 0 || theBuffer2.atoms.length === 0) {
-                    continue;
-                }
-
-                const theAtom3 = this.measuredAtoms[iat][jat - 2];
-                const theBuffer3 = theAtom3.displayBuffer;
-                if (theBuffer3.textNormals.length === 0 || theBuffer3.atoms.length === 0) {
-                    continue;
-                }
-
-                theBuffer.textVertices = [];
-
-                let v1 = vec3Create([x1, y1, z1]);
-                let v2 = vec3Create([x2, y2, z2]);
-                let v3 = vec3Create([x3, y3, z3]);
-
-                let v2diffv1 = vec3.create();
-                vec3Subtract(v2, v1, v2diffv1);
-                NormalizeVec3(v2diffv1);
-
-                let v2diffv3 = vec3.create();
-                vec3Subtract(v2, v3, v2diffv3);
-                NormalizeVec3(v2diffv3);
-
-                let angle = Math.acos(vec3.dot(v2diffv1, v2diffv3)) * 180.0 / Math.PI;
-
-                let x = x2 - tSizeY * .5 * up[0];
-                let y = y2 - tSizeY * .5 * up[1];
-                let z = z2 - tSizeY * .5 * up[2];
-
-                if (textTextureDirty || typeof (this.measuredAtoms[iat][jat].angleImgData) === "undefined") {
-                    const ret = this.makeTextCanvas(angle.toFixed(1), 512, 32, textColour);
-                    const maxTextureS = ret[0];
-                    this.measuredAtoms[iat][jat].angleImgData = this.textCtx.getImageData(0, 0, 512, 32);
-                    this.measuredAtoms[iat][jat].maxAngleImgTextureS = maxTextureS;
-                }
-                this.gl.uniform1f(this.shaderProgramTextBackground.maxTextureS, this.measuredAtoms[iat][jat].maxAngleImgTextureS);
-                this.gl.texSubImage2D(this.gl.TEXTURE_2D, 0, 0, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.measuredAtoms[iat][jat].angleImgData);
-
-                tSizeX = 2.0 * this.textCtx.canvas.width / this.textCtx.canvas.height * this.zoom;
-                tSizeY = 2.0 * this.zoom;
-                theBuffer.textVertices = theBuffer.textVertices.concat([x, y, z, x + tSizeX * right[0], y + tSizeX * right[1], z + tSizeX * right[2], x + tSizeY * up[0] + tSizeX * right[0], y + tSizeY * up[1] + tSizeX * right[1], z + tSizeY * up[2] + tSizeX * right[2]]);
-                theBuffer.textVertices = theBuffer.textVertices.concat([x, y, z, x + tSizeY * up[0] + tSizeX * right[0], y + tSizeY * up[1] + tSizeX * right[1], z + tSizeY * up[2] + tSizeX * right[2], x + tSizeY * up[0], y + tSizeY * up[1], z + tSizeY * up[2]]);
-
-                this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(theBuffer.textVertices), this.gl.DYNAMIC_DRAW);
-
-                if (this.ext) {
-                    this.gl.drawElements(this.gl.TRIANGLES, theBuffer.textIndexs.length, this.gl.UNSIGNED_INT, 0);
-                } else {
-                    this.gl.drawElements(this.gl.TRIANGLES, theBuffer.textIndexs.length, this.gl.UNSIGNED_SHORT, 0);
-                }
-            }
-
-            for (let jat = 3; jat < this.measuredAtoms[iat].length; jat++) {
-
-                let x1 = this.measuredAtoms[iat][jat - 3].x;
-                let y1 = this.measuredAtoms[iat][jat - 3].y;
-                let z1 = this.measuredAtoms[iat][jat - 3].z;
-
-                let x2 = this.measuredAtoms[iat][jat - 2].x;
-                let y2 = this.measuredAtoms[iat][jat - 2].y;
-                let z2 = this.measuredAtoms[iat][jat - 2].z;
-
-                let x3 = this.measuredAtoms[iat][jat - 1].x;
-                let y3 = this.measuredAtoms[iat][jat - 1].y;
-                let z3 = this.measuredAtoms[iat][jat - 1].z;
-
-                let x4 = this.measuredAtoms[iat][jat].x;
-                let y4 = this.measuredAtoms[iat][jat].y;
-                let z4 = this.measuredAtoms[iat][jat].z;
-
-                const theAtom = this.measuredAtoms[iat][jat];
-                const theBuffer = theAtom.displayBuffer;
-                if (theBuffer.textNormals.length === 0 || theBuffer.atoms.length === 0) {
-                    continue;
-                }
-
-                const theAtom2 = this.measuredAtoms[iat][jat - 1];
-                const theBuffer2 = theAtom2.displayBuffer;
-                if (theBuffer2.textNormals.length === 0 || theBuffer2.atoms.length === 0) {
-                    continue;
-                }
-
-                const theAtom3 = this.measuredAtoms[iat][jat - 2];
-                const theBuffer3 = theAtom3.displayBuffer;
-                if (theBuffer3.textNormals.length === 0 || theBuffer3.atoms.length === 0) {
-                    continue;
-                }
-
-                theBuffer.textVertices = [];
-
-                let v1 = vec3Create([x1, y1, z1]);
-                let v2 = vec3Create([x2, y2, z2]);
-                let v3 = vec3Create([x3, y3, z3]);
-                let v4 = vec3Create([x4, y4, z4]);
-
-                let v3plusv2 = vec3.create();
-                vec3Add(v3, v2, v3plusv2);
-                let x = v3plusv2[0] * 0.5 - tSizeY * .5 * up[0];
-                let y = v3plusv2[1] * 0.5 - tSizeY * .5 * up[0];
-                let z = v3plusv2[2] * 0.5 - tSizeY * .5 * up[0];
-
-                let angle = DihedralAngle(v1, v2, v3, v4) * 180.0 / Math.PI;
-
-                if (textTextureDirty || typeof (this.measuredAtoms[iat][jat].dihedralImgData) === "undefined") {
-                    const ret = this.makeTextCanvas(angle.toFixed(1), 512, 32, textColour);
-                    const maxTextureS = ret[0];
-                    this.measuredAtoms[iat][jat].dihedralImgData = this.textCtx.getImageData(0, 0, 512, 32);
-                    this.measuredAtoms[iat][jat].maxDihedralImgTextureS = maxTextureS;
-                }
-                this.gl.uniform1f(this.shaderProgramTextBackground.maxTextureS, this.measuredAtoms[iat][jat].maxDihedralImgTextureS);
-                this.gl.texSubImage2D(this.gl.TEXTURE_2D, 0, 0, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.measuredAtoms[iat][jat].dihedralImgData);
-
-                tSizeX = 2.0 * this.textCtx.canvas.width / this.textCtx.canvas.height * this.zoom;
-                tSizeY = 2.0 * this.zoom;
-                theBuffer.textVertices = theBuffer.textVertices.concat([x, y, z, x + tSizeX * right[0], y + tSizeX * right[1], z + tSizeX * right[2], x + tSizeY * up[0] + tSizeX * right[0], y + tSizeY * up[1] + tSizeX * right[1], z + tSizeY * up[2] + tSizeX * right[2]]);
-                theBuffer.textVertices = theBuffer.textVertices.concat([x, y, z, x + tSizeY * up[0] + tSizeX * right[0], y + tSizeY * up[1] + tSizeX * right[1], z + tSizeY * up[2] + tSizeX * right[2], x + tSizeY * up[0], y + tSizeY * up[1], z + tSizeY * up[2]]);
-
-                this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(theBuffer.textVertices), this.gl.DYNAMIC_DRAW);
-
-                if (this.ext) {
-                    this.gl.drawElements(this.gl.TRIANGLES, theBuffer.textIndexs.length, this.gl.UNSIGNED_INT, 0);
-                } else {
-                    this.gl.drawElements(this.gl.TRIANGLES, theBuffer.textIndexs.length, this.gl.UNSIGNED_SHORT, 0);
-                }
-            }
-        }
-        this.gl.uniform1f(this.shaderProgramTextBackground.maxTextureS, 1.0);
-        this.gl.disableVertexAttribArray(this.shaderProgramTextBackground.vertexTextureAttribute);
         this.gl.depthFunc(this.gl.LESS);
+
     }
 
     drawAtomLabels(up, right, labelledAtoms, textColour, textTextureDirty) {
@@ -9363,7 +9373,7 @@ class MGWebGL extends Component {
         this.gl.uniform3fv(this.shaderProgramCircles.up, up);
         this.gl.uniform3fv(this.shaderProgramCircles.right, right);
 
-        //TODO 
+        //TODO
         // Use the right coords and colours and not do this for clicked atoms!
         // Big texture
         // I think this below is for debugging, but I have forgotten ...
@@ -9523,9 +9533,9 @@ class MGWebGL extends Component {
         if (this.activeMolecule == null) {
             document.body.click()
         }
-        
+
         if (!self.mouseMoved) {
-            let updateMeasures = false
+            let updateLabels = false
             //console.log(npass+" "+npass0+" "+npass1+" "+ntest);
             const [minidx,minj,mindist] = self.getAtomFomMouseXY(event,self);
             if (minidx > -1) {
@@ -9557,6 +9567,7 @@ class MGWebGL extends Component {
                 document.dispatchEvent(atomClicked);
 
                 if (self.keysDown['label_atom']) {
+                    updateLabels = true
                     if (self.labelledAtoms.length === 0 || (self.labelledAtoms[self.labelledAtoms.length - 1].length > 1)) {
                         self.labelledAtoms.push([]);
                         self.labelledAtoms[self.labelledAtoms.length - 1].push(theAtom);
@@ -9564,7 +9575,7 @@ class MGWebGL extends Component {
                         self.labelledAtoms[self.labelledAtoms.length - 1].push(theAtom);
                     }
                 } else if (self.keysDown['measure_distances']) {
-                    updateMeasures = true
+                    updateLabels = true
                     if (self.measuredAtoms.length === 0 || (self.measuredAtoms[self.measuredAtoms.length - 1].length > 1 && !self.keysDown['measure_angles'])) {
                         self.measuredAtoms.push([]);
                         self.measuredAtoms[self.measuredAtoms.length - 1].push(theAtom);
@@ -9573,49 +9584,119 @@ class MGWebGL extends Component {
                     }
                 }
             }
-            if(updateMeasures){
-                let atomPairs = []
-                self.measuredAtoms.forEach(bump => {
-                    if(bump.length>1){
-                        for(let ib=1;ib<bump.length;ib++){
-                            const start = bump[ib];
-                            const end = bump[ib-1];
-                            const startAtomInfo = {
-                                pos: [start.x, start.y, start.z],
-                                x: start.x,
-                                y: start.y,
-                                z: start.z,
-                            }
-
-                            const endAtomInfo = {
-                                pos: [end.x, end.y, end.z],
-                                x: end.x,
-                                y: end.y,
-                                z: end.z,
-                            }
-
-                            const pair = [startAtomInfo, endAtomInfo]
-                            atomPairs.push(pair)
-                        }
-                    }
-                })
-                const atomColours = {}
-                const colour = [1.0,0.0,0.0,1.0]
-                atomPairs.forEach(atom => { atomColours[`${atom[0].serial}`] = colour; atomColours[`${atom[1].serial}`] = colour })
-                let objects = [
-                    gemmiAtomPairsToCylindersInfo(atomPairs, 0.07, atomColours, false, 0.01, 1000.) 
-                ]
-                self.clearMeasureCylinderBuffers()
-                objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
-                    const a = self.appendOtherData(object, true);
-                    self.measureCylinderBuffers = self.measureCylinderBuffers.concat(a)
-                })
-
-                self.buildBuffers();
-            }
-        }        
+            if(updateLabels) self.updateLabels()
+        }
 
         self.drawScene();
+    }
+
+    updateLabels(){
+        console.log("updateLabels")
+        const self = this;
+        self.clearMeasureCylinderBuffers()
+        let atomPairs = []
+        self.measuredAtoms.forEach(bump => {
+            if(bump.length>1){
+                for(let ib=1;ib<bump.length;ib++){
+                    const first = bump[ib];
+                    const second = bump[ib-1];
+                    const firstAtomInfo = {
+                        pos: [first.x, first.y, first.z],
+                        x: first.x,
+                        y: first.y,
+                        z: first.z,
+                    }
+
+                    const secondAtomInfo = {
+                        pos: [second.x, second.y, second.z],
+                        x: second.x,
+                        y: second.y,
+                        z: second.z,
+                    }
+
+                    const pair = [firstAtomInfo, secondAtomInfo]
+                    atomPairs.push(pair)
+
+                    let v1 = vec3Create([first.x, first.y, first.z]);
+                    let v2 = vec3Create([second.x, second.y, second.z]);
+
+                    let v1diffv2 = vec3.create();
+                    vec3Subtract(v1, v2, v1diffv2);
+                    let linesize = vec3.length(v1diffv2).toFixed(3);
+                    let mid = vec3.create();
+                    vec3Add(v1, v2, mid);
+                    mid[0] *= 0.5;
+                    mid[1] *= 0.5;
+                    mid[2] *= 0.5;
+                    self.measureTextCanvasTexture.addBigTextureTextImage({font:"18px Helvetica",text:linesize,x:mid[0],y:mid[1],z:mid[2]})
+                    if(bump.length>2&&ib>1){
+                        const third = bump[ib-2];
+                        let v3 = vec3Create([third.x, third.y, third.z]);
+                        let v2diffv3 = vec3.create();
+                        vec3Subtract(v2, v3, v2diffv3);
+                        NormalizeVec3(v2diffv3);
+                        let v2diffv1 = vec3.create();
+                        vec3Subtract(v2, v1, v2diffv1);
+                        NormalizeVec3(v2diffv1);
+
+                        let v12plusv23 = vec3.create();
+                        vec3Add(v2diffv3, v2diffv1, v12plusv23);
+                        NormalizeVec3(v12plusv23);
+                        v12plusv23[0] *= -.5
+                        v12plusv23[1] *= -.5
+                        v12plusv23[2] *= -.5
+
+                        let angle = (Math.acos(vec3.dot(v2diffv1, v2diffv3)) * 180.0 / Math.PI).toFixed(1)+"˚";
+                        self.measureTextCanvasTexture.addBigTextureTextImage({font:"18px Helvetica",text:angle,x:second.x+v12plusv23[0],y:second.y+v12plusv23[1],z:second.z+v12plusv23[2]})
+
+                        if(bump.length>3&&ib>2){
+                            const fourth = bump[ib-3];
+                            let v4 = vec3Create([fourth.x, fourth.y, fourth.z]);
+                            let dihedral = (DihedralAngle(v1, v2, v3, v4) * 180.0 / Math.PI).toFixed(1)+"˚"
+                            let cross = vec3.create();
+                            vec3Cross(v2diffv1, v2diffv3,cross)
+                            NormalizeVec3(cross);
+                            let dihedralOffset = vec3.create();
+                            vec3Cross(v2diffv3, cross, dihedralOffset)
+                            dihedralOffset[0] *= .25
+                            dihedralOffset[1] *= .25
+                            dihedralOffset[2] *= .25
+                            let mid23 = vec3.create();
+                            vec3Add(v2, v3, mid23);
+                            mid23[0] *= 0.5;
+                            mid23[1] *= 0.5;
+                            mid23[2] *= 0.5;
+                            self.measureTextCanvasTexture.addBigTextureTextImage({font:"18px Helvetica",text:dihedral,x:mid23[0]+dihedralOffset[0],y:mid23[1]+dihedralOffset[1],z:mid23[2]+dihedralOffset[2]})
+                        }
+                    }
+
+                }
+            }
+        })
+        const atomColours = {}
+        const colour = [1.0,0.0,0.0,1.0]
+        atomPairs.forEach(atom => { atomColours[`${atom[0].serial}`] = colour; atomColours[`${atom[1].serial}`] = colour })
+        let objects = [
+            gemmiAtomPairsToCylindersInfo(atomPairs, 0.07, atomColours, false, 0.01, 1000.)
+        ]
+        objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
+            const a = self.appendOtherData(object, true);
+            self.measureCylinderBuffers = self.measureCylinderBuffers.concat(a)
+        })
+        self.measuredAtoms.forEach(atoms => {
+            atoms.forEach(atom => {
+                self.measureTextCanvasTexture.addBigTextureTextImage({font:"18px Helvetica",text:atom.label,x:atom.x,y:atom.y,z:atom.z})
+            })
+        })
+
+        self.labelledAtoms.forEach(atoms => {
+            atoms.forEach(atom => {
+                self.measureTextCanvasTexture.addBigTextureTextImage({font:"18px Helvetica",text:atom.label,x:atom.x,y:atom.y,z:atom.z})
+            })
+        })
+
+        self.measureTextCanvasTexture.recreateBigTextureBuffers();
+        self.buildBuffers();
     }
 
     clearMeasureCylinderBuffers() {
@@ -9628,6 +9709,7 @@ class MGWebGL extends Component {
             })
         }
         this.measureCylinderBuffers = []
+        this.measureTextCanvasTexture.clearBigTexture()
     }
 
     getAtomFomMouseXY(event, self) {
@@ -9734,7 +9816,7 @@ class MGWebGL extends Component {
             }
             this.props.messageChanged({ message: label + ", xyz:(" + atx + " " + aty + " " + atz + ")" + tempFactorLabel });
 
-            if (this.props.onAtomHovered) { 
+            if (this.props.onAtomHovered) {
                 this.props.onAtomHovered({ atom: self.displayBuffers[minidx].atoms[minj], buffer: self.displayBuffers[minidx] });
             }
         }
@@ -12145,7 +12227,7 @@ class MGWebGL extends Component {
 
         /**
          * No longer necessary but leaving it here in case we want to handle something
-         * not taken care of upstairs 
+         * not taken care of upstairs
         */
 
         let doContinue = true
@@ -12191,7 +12273,7 @@ class MGWebGL extends Component {
             theCtx.canvas.height = height;
             theCtx.textBaseline = "alphabetic";
             theCtx.font = font;
-            let textMetric = theCtx.measureText("Mgq!^()\{\}|'\"~`√∫");
+            let textMetric = theCtx.measureText("Mgq!^(){}|'\"~`√∫");
             let actualHeight = textMetric.actualBoundingBoxAscent + textMetric.actualBoundingBoxDescent;
             let loop = 0;
             while(actualHeight>theCtx.canvas.height&&loop<3){

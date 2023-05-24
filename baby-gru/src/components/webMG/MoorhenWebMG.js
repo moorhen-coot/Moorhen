@@ -403,8 +403,7 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
 
     useEffect(() => {
         if (glRef.current) {
-            glRef.current.background_colour = props.backgroundColor
-            glRef.current.drawScene()
+            glRef.current.setBackground(props.backgroundColor)
         }
     }, [
         props.backgroundColor,
