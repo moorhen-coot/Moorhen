@@ -204,7 +204,7 @@ export default class MoorhenWrapper {
         await newMolecule.loadToCootFromURL(inputFile, molName)
         this.controls.changeMolecules({ action: "Add", item: newMolecule })
         await newMolecule.fetchIfDirtyAndDraw('CBs', this.controls.glRef)
-        await newMolecule.centreOn(this.controls.glRef, null, false)
+        await newMolecule.centreOn(this.controls.glRef, '/*/*/*/*', false)
         return resolve(newMolecule)
       } catch (err) {
         console.log(`Cannot fetch molecule from ${inputFile}`)
@@ -255,6 +255,7 @@ export default class MoorhenWrapper {
 
   async loadInputFiles() {
 
+    // TODO: Fix what happens when there is no ligand data provided....
     const ligandDictionaries = await Promise.all(
       this.inputFiles.filter(file => file.type === 'ligand').map(file => this.loadLigandData(...file.args))
     )

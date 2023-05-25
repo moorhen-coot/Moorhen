@@ -128,7 +128,7 @@ export const MoorhenLoadTutorialDataMenuItem = (props) => {
                 props.changeMolecules({ action: "Add", item: newMolecule })
                 Promise.resolve(newMolecule)
             }).then(_ => {
-                newMolecule.centreOn(props.glRef, null, false)
+                newMolecule.centreOn(props.glRef, '/*/*/*/*', false)
             }).then(_ => {
                 return newMap.loadToCootFromMtzURL(`${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`, `map-${tutorialNumber}`,
                     {
@@ -317,7 +317,7 @@ export const MoorhenFitLigandRightHereMenuItem = (props) => {
         <MoorhenMapSelect {...props} label="Map" allowAny={false} ref={mapSelectRef} />
         <MoorhenMoleculeSelect {...props} label="Protein molecule" allowAny={false} ref={intoMoleculeRef} />
         <MoorhenMoleculeSelect {...props} label="Ligand molecule" allowAny={false} ref={ligandMoleculeRef} />
-        {/** FIXME: This remains unavailable until the thread pool exhausted issue is fixed
+        {props.devMode && 
          <Form.Check
             style={{margin: '0.5rem'}} 
             type="switch"
@@ -326,7 +326,7 @@ export const MoorhenFitLigandRightHereMenuItem = (props) => {
                 useConformersRef.current = !useConformers
                 setUseConformers(!useConformers)
             }}
-            label="Use conformers"/>*/}
+            label="Use conformers"/>}
         {useConformers &&
         <Form.Group>
             <TextField
@@ -342,8 +342,7 @@ export const MoorhenFitLigandRightHereMenuItem = (props) => {
                     setConformerCount(evt.target.value)
                 }}
             />
-        </Form.Group>
-        }
+        </Form.Group>}
     </>
 
 

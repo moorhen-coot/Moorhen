@@ -106,6 +106,16 @@ module.exports = (env, argv) => {
     module: {
       rules:[
         {
+          test: /\.tsx$/,
+          use: 'ts-loader',
+          exclude: /node_modules/,
+        },
+        {
+          test: /\.ts$/,
+          use: 'ts-loader',
+          exclude: /node_modules/,
+        },
+        {
           test: /\.js$/,
           exclude: [/node_modules/, path.resolve(paths.src, 'index.js')],
           loader: 'babel-loader',
@@ -125,7 +135,8 @@ module.exports = (env, argv) => {
     resolve: {
       fallback: {
         fs: false
-      }
+      },
+      extensions: ['.ts', '.tsx', '.js'],
     }  
   }
 }

@@ -134,7 +134,7 @@ export const MoorhenFileMenu = (props) => {
                 await newMolecule.loadToCootFromURL(url, molName)
                 await newMolecule.fetchIfDirtyAndDraw('CBs', glRef)
                 changeMolecules({ action: "Add", item: newMolecule })
-                newMolecule.centreOn(glRef, null, false)
+                newMolecule.centreOn(glRef, '/*/*/*/*', false)
                 resolve(newMolecule)
             } catch (err) {
                 console.log(`Cannot fetch molecule from ${url}`)
