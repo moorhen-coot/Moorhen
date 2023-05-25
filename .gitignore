@@ -71,6 +71,8 @@ coot/test-chem-feat.js
 coot/test-geometry.js
 coot/test-ligand.js
 coot/test-srs-standalone.js
+baby-gru/tsDist/
+baby-gru/tsDist/*
 baby-gru/out/Moorhen-darwin-x64/LICENSE
 baby-gru/out/Moorhen-darwin-x64/LICENSES.chromium.html
 baby-gru/out/Moorhen-darwin-x64/version

@@ -78,7 +78,7 @@ export const MoorhenHistoryMenu = (props) => {
                         const newMolecule = new MoorhenMolecule(props.commandCentre, props.monomerLibraryPath)
                         newMolecule.molNo = reply.data.result.result
                         newMolecule.name = nextCommand.commandArgs[1]
-                        newMolecule.centreOn(props.glRef, null, false)
+                        newMolecule.centreOn(props.glRef, '/*/*/*/*', false)
                         props.changeMolecules({ action: "Add", item: newMolecule })
                         return newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef)
                     }

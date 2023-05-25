@@ -128,7 +128,7 @@ export const MoorhenLoadTutorialDataMenuItem = (props) => {
                 props.changeMolecules({ action: "Add", item: newMolecule })
                 Promise.resolve(newMolecule)
             }).then(_ => {
-                newMolecule.centreOn(props.glRef, null, false)
+                newMolecule.centreOn(props.glRef, '/*/*/*/*', false)
             }).then(_ => {
                 return newMap.loadToCootFromMtzURL(`${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`, `map-${tutorialNumber}`,
                     {

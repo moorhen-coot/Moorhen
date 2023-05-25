@@ -3480,7 +3480,7 @@ class MGWebGL extends Component {
         requestAnimationFrame(this.setOriginOrientationAndZoomFrame.bind(this,[old_x,old_y,old_z],[dx,dy,dz],oldQuat,q,oldZoom,zoomDelta,1))
     }
 
-    setOriginAnimated(o, doDrawScene) {
+    setOriginAnimated(o, doDrawScene=true) {
         this.nAnimationFrames = 15;
         const old_x = this.origin[0]
         const old_y = this.origin[1]
@@ -3508,10 +3508,10 @@ class MGWebGL extends Component {
         document.dispatchEvent(originUpdateEvent);
     }
 
-    setOrigin(o, doDrawScene, dispatchEvent=true) {
+    setOrigin(o, doDrawScene=true, dispatchEvent=true) {
         this.origin = o;
         //default is to drawScene, unless doDrawScene provided and value is false
-        if (typeof doDrawScene === 'undefined' || doDrawScene === true) {
+        if (doDrawScene) {
             this.drawScene();
         }
         if (dispatchEvent) {

@@ -1,13 +1,17 @@
-import { useRef, useState, useReducer, useContext } from 'react';
+import { useRef, useState, useReducer, useContext, useEffect } from 'react';
 import { historyReducer, initialHistoryState } from './navbar-menus/MoorhenHistoryMenu';
 import { PreferencesContext } from "../utils/MoorhenPreferences";
 import { MoorhenContainer } from "./MoorhenContainer"
+import { MoorhenMapInterface } from "../utils/MoorhenMap"
+import { MoorhenMoleculeInterface } from "../utils/MoorhenMolecule"
 
-const initialMoleculesState = []
+type Change = {
+    action: 'Add' | 'Remove' | 'AddList' | 'Empty';
+    item?: MoorhenMapInterface | MoorhenMoleculeInterface;
+    items?: MoorhenMapInterface[] | MoorhenMoleculeInterface[];
+}
 
-const initialMapsState = []
-
-const itemReducer = (oldList, change) => {
+const itemReducer = (oldList: any[] | any[], change: Change): any[] => {
     if (change.action === 'Add') {
         return [...oldList, change.item]
     }
@@ -22,36 +26,40 @@ const itemReducer = (oldList, change) => {
     }
 }
 
-export const MoorhenApp = (props) => {
+const initialMoleculesState: MoorhenMoleculeInterface[] = []
+
+const initialMapsState: MoorhenMapInterface[] = []
+
+export const MoorhenApp = (props: { forwardControls: (controls: any) => any }) => {
     const glRef = useRef(null)
     const timeCapsuleRef = useRef(null)
     const commandCentre = useRef(null)
-    const moleculesRef = useRef(null)
-    const mapsRef = useRef(null)
-    const activeMapRef = useRef(null)
+    const moleculesRef = useRef<null | MoorhenMoleculeInterface[]>(null)
+    const mapsRef = useRef<null | MoorhenMapInterface[]>(null)
+    const activeMapRef = useRef<null | MoorhenMapInterface>(null)
     const consoleDivRef = useRef(null)
-    const lastHoveredAtom = useRef(null)
-    const prevActiveMoleculeRef = useRef(null)
+    const lastHoveredAtom = useRef<null | HoverHoveredAtomType>(null)
+    const prevActiveMoleculeRef = useRef<null | MoorhenMoleculeInterface>(null)
     const preferences = useContext(PreferencesContext);
     const [activeMap, setActiveMap] = useState(null)
     const [activeMolecule, setActiveMolecule] = useState(null)
-    const [hoveredAtom, setHoveredAtom] = useState({ molecule: null, cid: null })
-    const [consoleMessage, setConsoleMessage] = useState("")
-    const [cursorStyle, setCursorStyle] = useState("default")
-    const [busy, setBusy] = useState(false)
-    const [windowWidth, setWindowWidth] = useState(window.innerWidth)
-    const [windowHeight, setWindowHeight] = useState(window.innerHeight)
+    const [hoveredAtom, setHoveredAtom] = useState<HoverHoveredAtomType>({ molecule: null, cid: null })
+    const [consoleMessage, setConsoleMessage] = useState<string>("")
+    const [cursorStyle, setCursorStyle] = useState<string>("default")
+    const [busy, setBusy] = useState<boolean>(false)
+    const [windowWidth, setWindowWidth] = useState<number>(window.innerWidth)
+    const [windowHeight, setWindowHeight] = useState<number>(window.innerHeight)
     const [commandHistory, dispatchHistoryReducer] = useReducer(historyReducer, initialHistoryState)
     const [molecules, changeMolecules] = useReducer(itemReducer, initialMoleculesState)
     const [maps, changeMaps] = useReducer(itemReducer, initialMapsState)
-    const [backgroundColor, setBackgroundColor] = useState([1, 1, 1, 1])
-    const [currentDropdownId, setCurrentDropdownId] = useState(-1)
-    const [appTitle, setAppTitle] = useState('Moorhen')
-    const [cootInitialized, setCootInitialized] = useState(false)
-    const [theme, setTheme] = useState("flatly")
-    const [showToast, setShowToast] = useState(false)
-    const [toastContent, setToastContent] = useState("")
-    const [showColourRulesToast, setShowColourRulesToast] = useState(false)
+    const [backgroundColor, setBackgroundColor] = useState<[number, number, number, number]>([1, 1, 1, 1])
+    const [currentDropdownId, setCurrentDropdownId] = useState<number | string>(-1)
+    const [appTitle, setAppTitle] = useState<string>('Moorhen')
+    const [cootInitialized, setCootInitialized] = useState<boolean>(false)
+    const [theme, setTheme] = useState<string>("flatly")
+    const [showToast, setShowToast] = useState<boolean>(false)
+    const [toastContent, setToastContent] = useState<string>("")
+    const [showColourRulesToast, setShowColourRulesToast] = useState<boolean>(false)
     
     moleculesRef.current = molecules
     mapsRef.current = maps
@@ -74,5 +82,5 @@ export const MoorhenApp = (props) => {
 }
 
 MoorhenApp.defaultProps = {
-    forwardControls: (controls) => { console.log('Fetched controls', {controls}) }
+    forwardControls: (controls: any) => { console.log('Fetched controls', {controls}) }
 }
