@@ -90,7 +90,7 @@ ln -s ${BUILD_DIR}/moorhen_build/coot/moorhen.js
 ln -s ${BUILD_DIR}/moorhen_build/coot/moorhen.wasm
 cd ${BUILD_DIR}
 
-#I do not do this because it is bad for the electron forge packages.
+#*This link must be removed before building electron app!*
 #Links cause confusion in Linux/Mac, and are followed on Windows making huge packages that take forever to build.
-#cd ${SOURCE_DIR}/baby-gru/public/baby-gru
-#ln -s ${SOURCE_DIR}/checkout/monomers
+cd ${SOURCE_DIR}/baby-gru/public/baby-gru
+ln -s ${SOURCE_DIR}/checkout/monomers
