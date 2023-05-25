@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useImperativeHandle, forwardRef } from "react";
-import { cidToSpec } from "../../../src/utils/MoorhenUtils";
+import { cidToSpec } from "../../utils/MoorhenUtils";
 import Draggable from "react-draggable";
 import { Button, Card, Dropdown, Form, InputGroup, Row, Spinner, SplitButton, Stack } from "react-bootstrap";
 import { Backdrop, IconButton, TextField } from "@mui/material";
