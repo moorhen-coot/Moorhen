@@ -18,7 +18,6 @@ jobs:
       working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
       run: yarn install
     - name: tsc compile
-      working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
       uses: iCrawl/action-tsc@v1
       with:
         project: /home/runner/work/Moorhen/Moorhen/baby-gru/tsconfig.json
