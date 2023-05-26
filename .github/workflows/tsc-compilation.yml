@@ -15,11 +15,17 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: 16
-    - name: npm install
+    - name: Install dependencies 
+      working-directory: /home/runner/work/Moorhen/       
+      run: |    
+        sudo apt-get install -y npm         
+    - name: yarn install
       working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
-      run: npm install
+      run: yarn install
     - name: tsc compile
       working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
       run: |             
         cd /home/runner/work/Moorhen/Moorhen/baby-gru/
+        sudo apt-get install -y npm
+        sudo npm i -g npx
         npx tsc
