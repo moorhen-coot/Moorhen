@@ -15,13 +15,15 @@ jobs:
       run: |
         cd /home/runner/work/Moorhen/
         mv Moorhen ccp4_wasm
-    - name: Install dependencies 
-      working-directory: /home/runner/work/Moorhen/       
-      run: |    
-        sudo apt-get install -y nodejs npm                  
+    - name: Install node.js v16
+      uses: actions/setup-node@v3
+      with:
+        node-version: 16
+    - name: npm install
+      working-directory: /home/runner/work/Moorhen/ccp4_wasm/baby-gru
+      run: npm install
     - name: tsc compile
       working-directory: /home/runner/work/Moorhen/ccp4_wasm/baby-gru
       run: |             
         cd /home/runner/work/Moorhen/ccp4_wasm/baby-gru/
-        npm install --legacy-peer-deps
         npx tsc
