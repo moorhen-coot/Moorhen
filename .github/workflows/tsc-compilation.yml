@@ -9,15 +9,19 @@ jobs:
     name: tsc
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
-    - name: Install node.js v16
-      uses: actions/setup-node@v3
-      with:
-        node-version: 16
-    - name: npm install
-      working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
-      run: npm install
+    - name: Checkout repository
+      uses: actions/checkout@v1
+    - name: Rename folder
+      run: |
+        cd /home/runner/work/Moorhen/
+        mv Moorhen ccp4_wasm
+    - name: Install dependencies 
+      working-directory: /home/runner/work/Moorhen/       
+      run: |    
+        sudo apt-get install -y nodejs npm                  
     - name: tsc compile
-      uses: iCrawl/action-tsc@v1
-      with:
-        project: /home/runner/work/Moorhen/Moorhen/baby-gru/
+      working-directory: /home/runner/work/Moorhen/ccp4_wasm/baby-gru
+      run: |             
+        cd /home/runner/work/Moorhen/ccp4_wasm/baby-gru/
+        npm install
+        npx tsc
