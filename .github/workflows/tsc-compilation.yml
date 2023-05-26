@@ -10,13 +10,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
-    - name: install node v12
-      uses: actions/setup-node@v1
+    - name: Install node.js v16
+      uses: actions/setup-node@v3
       with:
         node-version: 16
-    - name: yarn install
+    - name: npm install
       working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
-      run: yarn install
+      run: npm install
     - name: tsc compile
       uses: iCrawl/action-tsc@v1
       with:
