@@ -23,5 +23,5 @@ jobs:
       working-directory: /home/runner/work/Moorhen/ccp4_wasm/baby-gru
       run: |             
         cd /home/runner/work/Moorhen/ccp4_wasm/baby-gru/
-        npm install
+        npm install --legacy-peer-deps
         npx tsc
