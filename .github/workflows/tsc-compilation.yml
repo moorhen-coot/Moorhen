@@ -11,19 +11,15 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v1
-    - name: Rename folder
-      run: |
-        cd /home/runner/work/Moorhen/
-        mv Moorhen ccp4_wasm
     - name: Install node.js v16
       uses: actions/setup-node@v3
       with:
         node-version: 16
     - name: npm install
-      working-directory: /home/runner/work/Moorhen/ccp4_wasm/baby-gru
+      working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
       run: npm install
     - name: tsc compile
-      working-directory: /home/runner/work/Moorhen/ccp4_wasm/baby-gru
+      working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
       run: |             
-        cd /home/runner/work/Moorhen/ccp4_wasm/baby-gru/
+        cd /home/runner/work/Moorhen/Moorhen/baby-gru/
         npx tsc
