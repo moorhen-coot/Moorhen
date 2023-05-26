@@ -20,4 +20,4 @@ jobs:
     - name: tsc compile
       uses: iCrawl/action-tsc@v1
       with:
-        project: /home/runner/work/Moorhen/Moorhen/baby-gru/tsconfig.json
+        project: /home/runner/work/Moorhen/Moorhen/baby-gru/
