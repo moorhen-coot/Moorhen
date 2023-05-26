@@ -1,3 +1,5 @@
+name: Test tsc compilation
+
 on:
   push:
   pull_request:
@@ -13,6 +15,7 @@ jobs:
       with:
         node-version: 12
     - name: yarn install
+      working-directory: /home/runner/work/Moorhen/ccp4_wasm/baby-gru
       run: yarn install
     - name: tsc compile
       uses: icrawl/action-tsc@v1
