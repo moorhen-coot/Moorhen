@@ -26,4 +26,4 @@ jobs:
       working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
       run: |             
         cd /home/runner/work/Moorhen/Moorhen/baby-gru/
-        npx tsc /home/runner/work/Moorhen/Moorhen/baby-gru/tsconfig.json
+        npx tsc
