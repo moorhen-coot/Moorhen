@@ -13,7 +13,7 @@ jobs:
     - name: install node v12
       uses: actions/setup-node@v1
       with:
-        node-version: 12
+        node-version: 16
     - name: yarn install
       working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
       run: yarn install
