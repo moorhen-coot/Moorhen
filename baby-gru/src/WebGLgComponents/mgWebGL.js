@@ -1547,7 +1547,7 @@ class MGWebGL extends Component {
 
         const self = this;
         this.glTextFont = "18px Helvetica";
-        this.showFPS = true;
+        this.showFPS = false;
         this.nFrames = 0;
         this.nPrevFrames = 0;
         this.prevTime = performance.now();
