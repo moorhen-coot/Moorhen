@@ -51,6 +51,8 @@ export interface MoorhenMoleculeInterface {
     hide: (style: string, glRef: glRefType) => void;
 }
 
+export type MoorhenMoleculeRef = { current: MoorhenMoleculeInterface }
+
 export class MoorhenMolecule implements MoorhenMoleculeInterface {
     
     type: string;

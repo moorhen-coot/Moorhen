@@ -1,5 +1,5 @@
-import { MoorhenMoleculeInterface } from "./MoorhenMolecule"
-import { MoorhenMapInterface } from "./MoorhenMap"
+import { MoorhenMoleculeRef } from "./MoorhenMolecule"
+import { MoorhenMapRef } from "./MoorhenMap"
 
 type backupKeyType = {
     dateTime: any;
@@ -10,10 +10,10 @@ type backupKeyType = {
 }
 
 interface MoorhenTimeCapsuleInterface {
-    moleculesRef: {current: MoorhenMoleculeInterface};
-    mapsRef: {current: MoorhenMapInterface};
+    moleculesRef: MoorhenMoleculeRef;
+    mapsRef: MoorhenMapRef;
     glRef: glRefType;
-    activeMapRef: {current: MoorhenMapInterface};
+    activeMapRef: MoorhenMapRef;
     preferences: any;
     busy: boolean;
     modificationCount: number;
@@ -35,10 +35,10 @@ export const getBackupLabel = (key: backupKeyType): string => {
 
 export class MoorhenTimeCapsule implements MoorhenTimeCapsuleInterface {
 
-    moleculesRef: {current: MoorhenMoleculeInterface};
-    mapsRef: {current: MoorhenMapInterface};
+    moleculesRef: MoorhenMoleculeRef;
+    mapsRef: MoorhenMapRef;
     glRef: glRefType;
-    activeMapRef: {current: MoorhenMapInterface};
+    activeMapRef: MoorhenMapRef;
     preferences: any;
     busy: boolean;
     modificationCount: number;
@@ -48,7 +48,7 @@ export class MoorhenTimeCapsule implements MoorhenTimeCapsuleInterface {
     disableBackups: boolean;
     storageInstance: any
     
-    constructor(moleculesRef: {current: MoorhenMoleculeInterface}, mapsRef: {current: MoorhenMapInterface}, activeMapRef: {current: MoorhenMapInterface}, glRef: glRefType, preferences: any) {
+    constructor(moleculesRef: MoorhenMoleculeRef, mapsRef: MoorhenMapRef, activeMapRef: MoorhenMapRef, glRef: glRefType, preferences: any) {
         this.moleculesRef = moleculesRef
         this.mapsRef = mapsRef
         this.glRef = glRef

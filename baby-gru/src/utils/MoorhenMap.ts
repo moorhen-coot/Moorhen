@@ -35,6 +35,8 @@ export interface MoorhenMapInterface {
     rgba: {r: number, g: number, b: number, a: number};
 }
 
+export type MoorhenMapRef = { current: MoorhenMapInterface }
+
 export class MoorhenMap implements MoorhenMapInterface {
     
     type: string
