@@ -1553,12 +1553,15 @@ class MGWebGL extends Component {
         this.prevTime = performance.now();
         this.fpsText = "";
         this.showShortCutHelp = null;
+        this.fpsArray = [];
 
         const frameCounterTimer = setInterval(() => {
             if(!self.context) return;
             const thisTime = performance.now();
             const t = (thisTime-self.prevTime)/1000.;
             self.fpsText = ((self.nFrames-self.nPrevFrames)/t).toFixed(0) + " fps";
+            self.fpsArray.push((self.nFrames-self.nPrevFrames)/t);
+            if(self.fpsArray.length>100) self.fpsArray.shift()
             self.prevTime = thisTime;
             self.nPrevFrames = self.nFrames;
             }, 1000);
@@ -7869,6 +7872,10 @@ class MGWebGL extends Component {
         //console.log(this.screenZ);
         //console.log(invMat);
 
+        if (this.showFPS) {
+            this.drawFPSMeter();
+        }
+
         if (this.showAxes) {
             this.drawAxes(invMat);
         }
@@ -10280,6 +10287,117 @@ class MGWebGL extends Component {
 
         this.gl.depthFunc(this.gl.LESS)
 
+    }
+
+    drawFPSMeter() {
+        const ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
+        this.gl.depthFunc(this.gl.ALWAYS);
+
+        this.gl.useProgram(this.shaderProgramThickLines);
+        this.setMatrixUniforms(this.shaderProgramThickLines);
+        this.gl.uniform1f(this.shaderProgramThickLines.fog_start, 1000.0);
+        this.gl.uniform1f(this.shaderProgramThickLines.fog_end, 1000.0);
+        this.gl.uniform4fv(this.shaderProgramThickLines.clipPlane0, [0, 0, -1, 1000]);
+        this.gl.uniform4fv(this.shaderProgramThickLines.clipPlane1, [0, 0, 1, 1000]);
+        const pmvMatrix = mat4.create();
+        const tempMVMatrix = mat4.create();
+        mat4.set(tempMVMatrix,
+            1.0, 0.0, 0.0, 0.0,
+            0.0, 1.0, 0.0, 0.0,
+            0.0, 0.0, 1.0, 0.0,
+            0.0, 0.0, -50.0, 1.0,
+        )
+        let pMatrix = mat4.create();
+        mat4.ortho(pMatrix, -24, 24, -24, 24, 0.1, 1000.0);
+        mat4.multiply(pmvMatrix, pMatrix, tempMVMatrix); // Lines
+        this.gl.uniformMatrix4fv(this.shaderProgramThickLines.pMatrixUniform, false, pmvMatrix);
+        this.gl.uniform1f(this.shaderProgramThickLines.pixelZoom, 0.08);
+
+        if (typeof (this.hitchometerPositionBuffer) === "undefined") {
+            this.hitchometerPositionBuffer = this.gl.createBuffer();
+            this.hitchometerColourBuffer = this.gl.createBuffer();
+            this.hitchometerIndexBuffer = this.gl.createBuffer();
+            this.hitchometerNormalBuffer = this.gl.createBuffer();
+        }
+
+        let size = 1.0;
+
+        const screenZ = vec3.create()
+        vec3.set(screenZ,0,0,1)
+
+        this.gl.uniform3fv(this.shaderProgramThickLines.screenZ, screenZ);
+
+        const hitchometerColours = [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1];
+        const hitchometerVertices = [
+            -22.0, -12.0, 0.0,
+            -12.0, -12.0, 0.0,
+            -22.0, -22.0, 0.0,
+            -12.0, -22.0, 0.0,
+        ];
+
+        for(let i=0; i<this.fpsArray.length;i++){
+            //let fps = Math.random() * 150.0;
+            let fps = this.fpsArray[i];
+            if(fps>120.0) fps = 120.0;
+
+            const l = fps / 120.0 * 10.0;
+            const x = -22 + i/10.;
+            const y1 = -22;
+            const y2 = -22 + l;
+            const z = 0.0;
+            hitchometerVertices.push(x,y1,z,x,y2,z);
+            if(l>4){
+                hitchometerColours.push(0.2, 0.8, 0.2, 1.0);
+                hitchometerColours.push(0.2, 0.8, 0.2, 1.0);
+            } else if(l>3) {
+                hitchometerColours.push(0.7, 0.7, 0.3, 1.0);
+                hitchometerColours.push(0.7, 0.7, 0.3, 1.0);
+            } else if(l>2) {
+                hitchometerColours.push(0.8, 0.4, 0.3, 1.0);
+                hitchometerColours.push(0.8, 0.4, 0.3, 1.0);
+            } else {
+                hitchometerColours.push(0.8, 0.2, 0.2, 1.0);
+                hitchometerColours.push(0.8, 0.2, 0.2, 1.0);
+            }
+        }
+
+        const thickLines = this.linesToThickLines(hitchometerVertices, hitchometerColours, size);
+        let hitchometerNormals = thickLines["normals"];
+        let hitchometerVertices_new = thickLines["vertices"];
+        let hitchometerColours_new = thickLines["colours"];
+        let hitchometerIndexs_new = thickLines["indices"];
+
+        this.gl.depthFunc(this.gl.ALWAYS);
+
+        for(let i = 0; i<16; i++)
+            this.gl.disableVertexAttribArray(i);
+
+        this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexNormalAttribute);
+        this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexPositionAttribute);
+        this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexColourAttribute);
+
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.hitchometerNormalBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(hitchometerNormals), this.gl.DYNAMIC_DRAW);
+        this.gl.vertexAttribPointer(this.shaderProgramThickLines.vertexNormalAttribute, 3, this.gl.FLOAT, false, 0, 0);
+
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.hitchometerPositionBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(hitchometerVertices_new), this.gl.DYNAMIC_DRAW);
+        this.gl.vertexAttribPointer(this.shaderProgramThickLines.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
+
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.hitchometerColourBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(hitchometerColours_new), this.gl.DYNAMIC_DRAW);
+        this.gl.vertexAttribPointer(this.shaderProgramThickLines.vertexColourAttribute, 4, this.gl.FLOAT, false, 0, 0);
+
+        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.hitchometerIndexBuffer);
+        if (this.ext) {
+            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(hitchometerIndexs_new), this.gl.DYNAMIC_DRAW);
+            this.gl.drawElements(this.gl.TRIANGLES, hitchometerIndexs_new.length, this.gl.UNSIGNED_INT, 0);
+        } else {
+            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(hitchometerIndexs_new), this.gl.DYNAMIC_DRAW);
+            this.gl.drawElements(this.gl.TRIANGLES, hitchometerIndexs_new.length, this.gl.UNSIGNED_SHORT, 0);
+        }
+
+        this.gl.depthFunc(this.gl.LESS)
     }
 
     drawAxes(invMat) {
