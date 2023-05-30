@@ -1553,17 +1553,14 @@ class MGWebGL extends Component {
         this.prevTime = performance.now();
         this.fpsText = "";
         this.showShortCutHelp = null;
-        this.fpsArray = [];
+        this.mspfArray = [];
 
         const frameCounterTimer = setInterval(() => {
             if(!self.context) return;
-            const thisTime = performance.now();
-            const t = (thisTime-self.prevTime)/1000.;
-            self.fpsText = ((self.nFrames-self.nPrevFrames)/t).toFixed(0) + " fps";
-            self.fpsArray.push((self.nFrames-self.nPrevFrames)/t);
-            if(self.fpsArray.length>100) self.fpsArray.shift()
-            self.prevTime = thisTime;
-            self.nPrevFrames = self.nFrames;
+            const sum = this.mspfArray.reduce((a, b) => a + b, 0);
+            const avg = (sum / this.mspfArray.length) || 0;
+            const fps = 1.0/avg * 1000;
+            self.fpsText = (fps).toFixed(0) + " fps";
             }, 1000);
 
         //Set to false to use WebGL 1
@@ -7963,7 +7960,14 @@ class MGWebGL extends Component {
             this.pixel_data = pixels;
         }
 
-        this.nFrames += 1;
+        if(this.showFPS){
+            this.nFrames += 1;
+            const thisTime = performance.now();
+            const mspf = thisTime - this.prevTime;
+            this.mspfArray.push(mspf);
+            if(this.mspfArray.length>100) this.mspfArray.shift();
+            this.prevTime = thisTime;
+        }
 
         if (!this.useOffScreenBuffers) {
             return;
@@ -10327,32 +10331,36 @@ class MGWebGL extends Component {
 
         this.gl.uniform3fv(this.shaderProgramThickLines.screenZ, screenZ);
 
-        const hitchometerColours = [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1];
+        const hitchometerColours = [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1];
         const hitchometerVertices = [
-            -22.0, -12.0, 0.0,
-            -12.0, -12.0, 0.0,
-            -22.0, -22.0, 0.0,
-            -12.0, -22.0, 0.0,
+            -22.1, -11.9, 0.0,
+            -11.9, -11.9, 0.0,
+            -22.1, -22.1, 0.0,
+            -11.9, -22.1, 0.0,
+            -22.1, -11.9, 0.0,
+            -22.1, -22.1, 0.0,
+            -11.9, -11.9, 0.0,
+            -11.9, -22.1, 0.0,
+
         ];
 
-        for(let i=0; i<this.fpsArray.length;i++){
-            //let fps = Math.random() * 150.0;
-            let fps = this.fpsArray[i];
-            if(fps>120.0) fps = 120.0;
+        for(let i=0; i<this.mspfArray.length;i++){
+            let mspf = this.mspfArray[i];
+            if(mspf>200.0) mspf = 200.0;
 
-            const l = fps / 120.0 * 10.0;
+            const l = mspf / 200.0 * 10.0;
             const x = -22 + i/10.;
             const y1 = -22;
             const y2 = -22 + l;
             const z = 0.0;
             hitchometerVertices.push(x,y1,z,x,y2,z);
-            if(l>4){
+            if(mspf<17){
                 hitchometerColours.push(0.2, 0.8, 0.2, 1.0);
                 hitchometerColours.push(0.2, 0.8, 0.2, 1.0);
-            } else if(l>3) {
+            } else if(mspf<24) {
                 hitchometerColours.push(0.7, 0.7, 0.3, 1.0);
                 hitchometerColours.push(0.7, 0.7, 0.3, 1.0);
-            } else if(l>2) {
+            } else if(mspf<50) {
                 hitchometerColours.push(0.8, 0.4, 0.3, 1.0);
                 hitchometerColours.push(0.8, 0.4, 0.3, 1.0);
             } else {
