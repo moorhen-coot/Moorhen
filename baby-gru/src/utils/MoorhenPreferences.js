@@ -39,6 +39,8 @@ const getDefaultValues = () => {
         useOffScreenBuffers: false,
         doShadowDepthDebug: false,
         doShadow: false,
+        GLLabelsFontFamily: "Arial",
+        GLLabelsFontSize: 18,
         mouseSensitivity: 0.3,
         zoomWheelSensitivityFactor: 1.0,
         contourWheelSensitivityFactor: 0.05,
@@ -263,6 +265,8 @@ const PreferencesContextProvider = ({ children }) => {
     const [useOffScreenBuffers, setUseOffScreenBuffers] = useState(null)
     const [doShadowDepthDebug, setDoShadowDepthDebug] = useState(null)
     const [doShadow, setDoShadow] = useState(null)
+    const [GLLabelsFontFamily, setGLLabelsFontFamily] = useState(null)
+    const [GLLabelsFontSize, setGLLabelsFontSize] = useState(null)
     const [mapLineWidth, setMapLineWidth] = useState(null)
     const [makeBackups, setMakeBackups] = useState(null)
     const [showShortcutToast, setShowShortcutToast] = useState(null)
@@ -310,6 +314,8 @@ const PreferencesContextProvider = ({ children }) => {
         30: { label: "devMode", value: devMode, valueSetter: setDevMode},
         31: { label: "doShadowDepthDebug", value: doShadowDepthDebug, valueSetter: setDoShadowDepthDebug},
         32: { label: "doShadow", value: doShadow, valueSetter: setDoShadow},
+        33: { label: "GLLabelsFontFamily", value: GLLabelsFontFamily, valueSetter: setGLLabelsFontFamily},
+        34: { label: "GLLabelsFontSize", value: GLLabelsFontSize, valueSetter: setGLLabelsFontSize},
     }
 
     const restoreDefaults = (defaultValues)=> {
@@ -591,6 +597,24 @@ const PreferencesContextProvider = ({ children }) => {
 
     useMemo(() => {
 
+        if (GLLabelsFontFamily === null) {
+            return
+        }
+
+        updateStoredPreferences('GLLabelsFontFamily', GLLabelsFontFamily);
+    }, [GLLabelsFontFamily]);
+
+    useMemo(() => {
+
+        if (GLLabelsFontSize === null) {
+            return
+        }
+
+        updateStoredPreferences('GLLabelsFontSize', GLLabelsFontSize);
+    }, [GLLabelsFontSize]);
+
+    useMemo(() => {
+
         if (drawInteractions === null) {
             return
         }
@@ -665,7 +689,8 @@ const PreferencesContextProvider = ({ children }) => {
         modificationCountBackupThreshold, setModificationCountBackupThreshold, isMounted, contourWheelSensitivityFactor,
         drawInteractions, setDrawInteractions, clipCap, setClipCap, enableTimeCapsule, setEnableTimeCapsule, 
         doPerspectiveProjection, setDoPerspectiveProjection, useOffScreenBuffers, setUseOffScreenBuffers, drawAxes,
-        setDrawAxes, devMode, setDevMode, doShadowDepthDebug, setDoShadowDepthDebug, doShadow, setDoShadow
+        setDrawAxes, devMode, setDevMode, doShadowDepthDebug, setDoShadowDepthDebug, doShadow, setDoShadow,
+        GLLabelsFontFamily, setGLLabelsFontFamily, GLLabelsFontSize, setGLLabelsFontSize
     }
 
     return (

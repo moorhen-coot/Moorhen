@@ -63,10 +63,44 @@ export const MoorhenContainer = (props) => {
     const [innerShowToast, setInnerShowToast] = useState(false)
     const [innerToastContent, setInnerToastContent] = useState("")
     const [innerShowColourRulesToast, setInnerShowColourRulesToast] = useState(false)
+    const [innerAvailableFonts, setInnerAvailableFonts] = useState([])
     
     innerMoleculesRef.current = innerMolecules
     innerMapsRef.current = innerMaps
     innerActiveMapRef.current = innerActiveMap
+
+    const windowsFonts = ['Arial', 'Arial Black', 'Bahnschrift', 'Calibri', 'Cambria', 'Cambria Math', 'Candara', 'Comic Sans MS', 'Consolas', 'Constantia', 'Corbel', 'Courier New', 'Ebrima', 'Franklin Gothic Medium', 'Gabriola', 'Gadugi', 'Georgia', 'HoloLens MDL2 Assets', 'Impact', 'Ink Free', 'Javanese Text', 'Leelawadee UI', 'Lucida Console', 'Lucida Sans Unicode', 'Malgun Gothic', 'Marlett', 'Microsoft Himalaya', 'Microsoft JhengHei', 'Microsoft New Tai Lue', 'Microsoft PhagsPa', 'Microsoft Sans Serif', 'Microsoft Tai Le', 'Microsoft YaHei', 'Microsoft Yi Baiti', 'MingLiU-ExtB', 'Mongolian Baiti', 'MS Gothic', 'MV Boli', 'Myanmar Text', 'Nirmala UI', 'Palatino Linotype', 'Segoe MDL2 Assets', 'Segoe Print', 'Segoe Script', 'Segoe UI', 'Segoe UI Historic', 'Segoe UI Emoji', 'Segoe UI Symbol', 'SimSun', 'Sitka', 'Sylfaen', 'Symbol', 'Tahoma', 'Times New Roman', 'Trebuchet MS', 'Verdana', 'Webdings', 'Wingdings', 'Yu Gothic']
+
+    const macFonts = [ 'American Typewriter', 'Andale Mono', 'Arial', 'Arial Black', 'Arial Narrow', 'Arial Rounded MT Bold', 'Arial Unicode MS', 'Avenir', 'Avenir Next', 'Avenir Next Condensed', 'Baskerville', 'Big Caslon', 'Bodoni 72', 'Bodoni 72 Oldstyle', 'Bodoni 72 Smallcaps', 'Bradley Hand', 'Brush Script MT', 'Chalkboard', 'Chalkboard SE', 'Chalkduster', 'Charter', 'Cochin', 'Comic Sans MS', 'Copperplate', 'Courier', 'Courier New', 'Didot', 'DIN Alternate', 'DIN Condensed', 'Futura', 'Geneva', 'Georgia', 'Gill Sans', 'Helvetica', 'Helvetica Neue', 'Herculanum', 'Hoefler Text', 'Impact', 'Lucida Grande', 'Luminari', 'Marker Felt', 'Menlo', 'Microsoft Sans Serif', 'Monaco', 'Noteworthy', 'Optima', 'Palatino', 'Papyrus', 'Phosphate', 'Rockwell', 'Savoye LET', 'SignPainter', 'Skia', 'Snell Roundhand', 'Tahoma', 'Times', 'Times New Roman', 'Trattatello', 'Trebuchet MS', 'Verdana', 'Zapfino' ]
+
+    const linuxFonts = ["Liberation Sans", "Nimbus Sans L", "FreeSans",
+"DejaVu Sans", "Bitstream Vera Sans", "Geneva",
+"Liberation Serif", "Nimbus Roman No 9 L",  "FreeSerif", "Hoefler Text", "Times", "Times New Roman",
+"Bitstream Charter", "URW Palladio L", "Palatino", "Palatino Linotype", "Book Antiqua",
+"DejaVu Serif", "Bitstream Vera Serif", "Century Schoolbook L", "Lucida Bright", "Georgia",
+"Liberation Mono", "Nimbus Mono L", "FreeMono", "DejaVu Mono", "Bitstream Vera Mono", "Lucida Console" ]
+
+    const webSafeFonts = ["Comic Sans","Courier New","Georgia","Times New Roman","Verdana","Trebuchet MS","Palatino","Tahoma","Arial","Impact"]
+
+    const fontsToCheck = new Set([webSafeFonts,windowsFonts,macFonts,linuxFonts].flat().sort());
+
+    useEffect(() => {
+
+        (async() => {
+          await document.fonts.ready;
+
+          const fontAvailable = new Set();
+
+          for (const font of fontsToCheck.values()) {
+            if (document.fonts.check(`12px "${font}"`)) {
+              fontAvailable.add(font);
+            }
+          }
+
+          setInnerAvailableFonts(Array.from(fontAvailable))
+
+        })();
+    }, [])
 
     const innerStatesMap = {
         glRef: innerGlRef, timeCapsuleRef: innerTimeCapsuleRef, commandCentre: innnerCommandCentre,
@@ -86,7 +120,9 @@ export const MoorhenContainer = (props) => {
         setCootInitialized: setInnerCootInitialized, theme: innerTheme, setTheme: setInnerTheme,
         showToast: innerShowToast, setShowToast: setInnerShowToast, toastContent: innerToastContent, 
         setToastContent: setInnerToastContent, showColourRulesToast: innerShowColourRulesToast, 
-        setShowColourRulesToast: setInnerShowColourRulesToast 
+        setShowColourRulesToast: setInnerShowColourRulesToast,
+        availableFonts: innerAvailableFonts,
+        setAvailableFonts: setInnerAvailableFonts,
     }
 
     const states = {}
@@ -103,7 +139,7 @@ export const MoorhenContainer = (props) => {
         backgroundColor, setBackgroundColor, currentDropdownId, setCurrentDropdownId,
         appTitle, setAppTitle, cootInitialized, setCootInitialized, theme, setTheme,
         showToast, setShowToast, toastContent, setToastContent, showColourRulesToast,
-        setShowColourRulesToast
+        setShowColourRulesToast, availableFonts, setAvailableFonts,
     } = states
 
     const {
@@ -346,7 +382,7 @@ export const MoorhenContainer = (props) => {
         setToastContent, currentDropdownId, setCurrentDropdownId, hoveredAtom, setHoveredAtom, showToast, setShowToast,
         windowWidth, windowHeight, showColourRulesToast, timeCapsuleRef, setShowColourRulesToast, isDark, exportCallback,
         disableFileUploads, urlPrefix, viewOnly, extraNavBarMenus, monomerLibraryPath, moleculesRef, extraFileMenuItems, 
-        mapsRef, allowScripting, extraEditMenuItems, extraDraggableModals, aceDRGInstance, ...preferences
+        mapsRef, allowScripting, extraEditMenuItems, extraDraggableModals, aceDRGInstance, availableFonts, ...preferences
     }
 
     return <> 

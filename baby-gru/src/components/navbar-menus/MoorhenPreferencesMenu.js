@@ -3,7 +3,7 @@ import { NavDropdown, Form, InputGroup } from "react-bootstrap";
 import { MoorhenShortcutConfigModal } from "../modal/MoorhenShortcutConfigModal"
 import { MenuItem } from "@mui/material";
 import { convertViewtoPx } from "../../utils/MoorhenUtils";
-import { MoorhenDefaultBondSmoothnessPreferencesMenuItem, MoorhenScoresToastPreferencesMenuItem, MoorhenBackupPreferencesMenuItem } from '../menu-item/MoorhenMenuItem'
+import { MoorhenDefaultBondSmoothnessPreferencesMenuItem, MoorhenScoresToastPreferencesMenuItem, MoorhenBackupPreferencesMenuItem, MoorhenGLFontMenuItem } from '../menu-item/MoorhenMenuItem'
 import MoorhenSlider from '../misc/MoorhenSlider' 
 
 export const MoorhenPreferencesMenu = (props) => {
@@ -141,6 +141,10 @@ export const MoorhenPreferencesMenu = (props) => {
                         Configure shortcuts...
                     </MenuItem>
                     <MoorhenShortcutConfigModal showModal={showModal} setShowModal={setShowModal} setShortCuts={props.setShortCuts} shortCuts={JSON.parse(props.shortCuts)}/>
+                    <MoorhenGLFontMenuItem
+                    {...props}
+                    setPopoverIsShown={setPopoverIsShown}
+                    />
             </div>
             </NavDropdown>
 

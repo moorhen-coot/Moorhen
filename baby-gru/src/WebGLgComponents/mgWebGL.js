@@ -1359,7 +1359,6 @@ class TextCanvasTexture {
             this.maxCurrentColumnWidth = textMetric.width;
         }
         this.textureCache[textColour][font.toLowerCase()][t] = [x1,y1,x2,y2];
-        console.log(t,this.maxCurrentColumnWidth)
         return [x1,y1,x2,y2]
     }
 
@@ -1389,11 +1388,13 @@ class TextCanvasTexture {
 
     removeBigTextureTextImage(textObject) {
         const key = textObject.text+"_"+textObject.x+"_"+textObject.y+"_"+textObject.z+"_"+textObject.font
-        this.bigTextureTexOrigins[this.refI[key]] = [];
-        this.bigTextureTexOffsets[this.refI[key]] = [];
-        this.bigTextureScalings[this.refI[key]] = [];
-        delete this.refI[key];
-        this.nBigTextures -= 1;
+        if(key in this.refI) {
+            this.bigTextureTexOrigins[this.refI[key]] = [];
+            this.bigTextureTexOffsets[this.refI[key]] = [];
+            this.bigTextureScalings[this.refI[key]] = [];
+            delete this.refI[key];
+            this.nBigTextures -= 1;
+        }
     }
 
     addBigTextureTextImage(textObject) {
@@ -1545,18 +1546,22 @@ class MGWebGL extends Component {
         super(props);
 
         const self = this;
+        this.glTextFont = "18px Helvetica";
         this.showFPS = true;
         this.nFrames = 0;
         this.nPrevFrames = 0;
         this.prevTime = performance.now();
         this.fpsText = "";
         this.showShortCutHelp = null;
+        this.fpsArray = [];
 
         const frameCounterTimer = setInterval(() => {
             if(!self.context) return;
             const thisTime = performance.now();
             const t = (thisTime-self.prevTime)/1000.;
             self.fpsText = ((self.nFrames-self.nPrevFrames)/t).toFixed(0) + " fps";
+            self.fpsArray.push((self.nFrames-self.nPrevFrames)/t);
+            if(self.fpsArray.length>100) self.fpsArray.shift()
             self.prevTime = thisTime;
             self.nPrevFrames = self.nFrames;
             }, 1000);
@@ -2365,7 +2370,7 @@ class MGWebGL extends Component {
                             const x = jsondata.vert_tri[idat][ilabel*3];
                             const y = jsondata.vert_tri[idat][ilabel*3+1];
                             const z = jsondata.vert_tri[idat][ilabel*3+2];
-                            const label = {font:"18px Helvetica",x:x,y:y,z:z,text:t};
+                            const label = {font:self.glTextFont,x:x,y:y,z:z,text:t};
                             labels.push(label);
                         }
                         labels.forEach(label => {
@@ -3392,6 +3397,18 @@ class MGWebGL extends Component {
     setQuat(q) {
         this.myQuat = q;
         this.drawScene();
+    }
+
+    setTextFont(family,size) {
+        if(family && size){
+            this.glTextFont = ""+size+"px "+family;
+            this.updateLabels();
+            this.labelsTextCanvasTexture.clearBigTexture();
+            //This forces redrawing of environemnt distances
+            const originUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: this.origin} });
+            document.dispatchEvent(originUpdateEvent);
+            this.drawScene();
+        }
     }
 
     setBackground(col) {
@@ -7855,6 +7872,10 @@ class MGWebGL extends Component {
         //console.log(this.screenZ);
         //console.log(invMat);
 
+        if (this.showFPS) {
+            this.drawFPSMeter();
+        }
+
         if (this.showAxes) {
             this.drawAxes(invMat);
         }
@@ -9591,7 +9612,6 @@ class MGWebGL extends Component {
     }
 
     updateLabels(){
-        console.log("updateLabels")
         const self = this;
         self.clearMeasureCylinderBuffers()
         let atomPairs = []
@@ -9628,7 +9648,7 @@ class MGWebGL extends Component {
                     mid[0] *= 0.5;
                     mid[1] *= 0.5;
                     mid[2] *= 0.5;
-                    self.measureTextCanvasTexture.addBigTextureTextImage({font:"18px Helvetica",text:linesize,x:mid[0],y:mid[1],z:mid[2]})
+                    self.measureTextCanvasTexture.addBigTextureTextImage({font:self.glTextFont,text:linesize,x:mid[0],y:mid[1],z:mid[2]})
                     if(bump.length>2&&ib>1){
                         const third = bump[ib-2];
                         let v3 = vec3Create([third.x, third.y, third.z]);
@@ -9647,7 +9667,7 @@ class MGWebGL extends Component {
                         v12plusv23[2] *= -.5
 
                         let angle = (Math.acos(vec3.dot(v2diffv1, v2diffv3)) * 180.0 / Math.PI).toFixed(1)+"˚";
-                        self.measureTextCanvasTexture.addBigTextureTextImage({font:"18px Helvetica",text:angle,x:second.x+v12plusv23[0],y:second.y+v12plusv23[1],z:second.z+v12plusv23[2]})
+                        self.measureTextCanvasTexture.addBigTextureTextImage({font:self.glTextFont,text:angle,x:second.x+v12plusv23[0],y:second.y+v12plusv23[1],z:second.z+v12plusv23[2]})
 
                         if(bump.length>3&&ib>2){
                             const fourth = bump[ib-3];
@@ -9666,7 +9686,7 @@ class MGWebGL extends Component {
                             mid23[0] *= 0.5;
                             mid23[1] *= 0.5;
                             mid23[2] *= 0.5;
-                            self.measureTextCanvasTexture.addBigTextureTextImage({font:"18px Helvetica",text:dihedral,x:mid23[0]+dihedralOffset[0],y:mid23[1]+dihedralOffset[1],z:mid23[2]+dihedralOffset[2]})
+                            self.measureTextCanvasTexture.addBigTextureTextImage({font:self.glTextFont,text:dihedral,x:mid23[0]+dihedralOffset[0],y:mid23[1]+dihedralOffset[1],z:mid23[2]+dihedralOffset[2]})
                         }
                     }
 
@@ -9685,13 +9705,13 @@ class MGWebGL extends Component {
         })
         self.measuredAtoms.forEach(atoms => {
             atoms.forEach(atom => {
-                self.measureTextCanvasTexture.addBigTextureTextImage({font:"18px Helvetica",text:atom.label,x:atom.x,y:atom.y,z:atom.z})
+                self.measureTextCanvasTexture.addBigTextureTextImage({font:self.glTextFont,text:atom.label,x:atom.x,y:atom.y,z:atom.z})
             })
         })
 
         self.labelledAtoms.forEach(atoms => {
             atoms.forEach(atom => {
-                self.measureTextCanvasTexture.addBigTextureTextImage({font:"18px Helvetica",text:atom.label,x:atom.x,y:atom.y,z:atom.z})
+                self.measureTextCanvasTexture.addBigTextureTextImage({font:self.glTextFont,text:atom.label,x:atom.x,y:atom.y,z:atom.z})
             })
         })
 
@@ -10267,6 +10287,117 @@ class MGWebGL extends Component {
 
         this.gl.depthFunc(this.gl.LESS)
 
+    }
+
+    drawFPSMeter() {
+        const ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
+        this.gl.depthFunc(this.gl.ALWAYS);
+
+        this.gl.useProgram(this.shaderProgramThickLines);
+        this.setMatrixUniforms(this.shaderProgramThickLines);
+        this.gl.uniform1f(this.shaderProgramThickLines.fog_start, 1000.0);
+        this.gl.uniform1f(this.shaderProgramThickLines.fog_end, 1000.0);
+        this.gl.uniform4fv(this.shaderProgramThickLines.clipPlane0, [0, 0, -1, 1000]);
+        this.gl.uniform4fv(this.shaderProgramThickLines.clipPlane1, [0, 0, 1, 1000]);
+        const pmvMatrix = mat4.create();
+        const tempMVMatrix = mat4.create();
+        mat4.set(tempMVMatrix,
+            1.0, 0.0, 0.0, 0.0,
+            0.0, 1.0, 0.0, 0.0,
+            0.0, 0.0, 1.0, 0.0,
+            0.0, 0.0, -50.0, 1.0,
+        )
+        let pMatrix = mat4.create();
+        mat4.ortho(pMatrix, -24, 24, -24, 24, 0.1, 1000.0);
+        mat4.multiply(pmvMatrix, pMatrix, tempMVMatrix); // Lines
+        this.gl.uniformMatrix4fv(this.shaderProgramThickLines.pMatrixUniform, false, pmvMatrix);
+        this.gl.uniform1f(this.shaderProgramThickLines.pixelZoom, 0.08);
+
+        if (typeof (this.hitchometerPositionBuffer) === "undefined") {
+            this.hitchometerPositionBuffer = this.gl.createBuffer();
+            this.hitchometerColourBuffer = this.gl.createBuffer();
+            this.hitchometerIndexBuffer = this.gl.createBuffer();
+            this.hitchometerNormalBuffer = this.gl.createBuffer();
+        }
+
+        let size = 1.0;
+
+        const screenZ = vec3.create()
+        vec3.set(screenZ,0,0,1)
+
+        this.gl.uniform3fv(this.shaderProgramThickLines.screenZ, screenZ);
+
+        const hitchometerColours = [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1];
+        const hitchometerVertices = [
+            -22.0, -12.0, 0.0,
+            -12.0, -12.0, 0.0,
+            -22.0, -22.0, 0.0,
+            -12.0, -22.0, 0.0,
+        ];
+
+        for(let i=0; i<this.fpsArray.length;i++){
+            //let fps = Math.random() * 150.0;
+            let fps = this.fpsArray[i];
+            if(fps>120.0) fps = 120.0;
+
+            const l = fps / 120.0 * 10.0;
+            const x = -22 + i/10.;
+            const y1 = -22;
+            const y2 = -22 + l;
+            const z = 0.0;
+            hitchometerVertices.push(x,y1,z,x,y2,z);
+            if(l>4){
+                hitchometerColours.push(0.2, 0.8, 0.2, 1.0);
+                hitchometerColours.push(0.2, 0.8, 0.2, 1.0);
+            } else if(l>3) {
+                hitchometerColours.push(0.7, 0.7, 0.3, 1.0);
+                hitchometerColours.push(0.7, 0.7, 0.3, 1.0);
+            } else if(l>2) {
+                hitchometerColours.push(0.8, 0.4, 0.3, 1.0);
+                hitchometerColours.push(0.8, 0.4, 0.3, 1.0);
+            } else {
+                hitchometerColours.push(0.8, 0.2, 0.2, 1.0);
+                hitchometerColours.push(0.8, 0.2, 0.2, 1.0);
+            }
+        }
+
+        const thickLines = this.linesToThickLines(hitchometerVertices, hitchometerColours, size);
+        let hitchometerNormals = thickLines["normals"];
+        let hitchometerVertices_new = thickLines["vertices"];
+        let hitchometerColours_new = thickLines["colours"];
+        let hitchometerIndexs_new = thickLines["indices"];
+
+        this.gl.depthFunc(this.gl.ALWAYS);
+
+        for(let i = 0; i<16; i++)
+            this.gl.disableVertexAttribArray(i);
+
+        this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexNormalAttribute);
+        this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexPositionAttribute);
+        this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexColourAttribute);
+
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.hitchometerNormalBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(hitchometerNormals), this.gl.DYNAMIC_DRAW);
+        this.gl.vertexAttribPointer(this.shaderProgramThickLines.vertexNormalAttribute, 3, this.gl.FLOAT, false, 0, 0);
+
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.hitchometerPositionBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(hitchometerVertices_new), this.gl.DYNAMIC_DRAW);
+        this.gl.vertexAttribPointer(this.shaderProgramThickLines.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
+
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.hitchometerColourBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(hitchometerColours_new), this.gl.DYNAMIC_DRAW);
+        this.gl.vertexAttribPointer(this.shaderProgramThickLines.vertexColourAttribute, 4, this.gl.FLOAT, false, 0, 0);
+
+        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.hitchometerIndexBuffer);
+        if (this.ext) {
+            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(hitchometerIndexs_new), this.gl.DYNAMIC_DRAW);
+            this.gl.drawElements(this.gl.TRIANGLES, hitchometerIndexs_new.length, this.gl.UNSIGNED_INT, 0);
+        } else {
+            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(hitchometerIndexs_new), this.gl.DYNAMIC_DRAW);
+            this.gl.drawElements(this.gl.TRIANGLES, hitchometerIndexs_new.length, this.gl.UNSIGNED_SHORT, 0);
+        }
+
+        this.gl.depthFunc(this.gl.LESS)
     }
 
     drawAxes(invMat) {
