@@ -1,7 +1,7 @@
 import { Form, InputGroup, NavDropdown } from "react-bootstrap";
 import { useState } from "react";
 import { MenuItem } from "@mui/material";
-import { MoorhenBackgroundColorMenuItem, MoorhenClipFogMenuItem, MoorhenLightingMenuItem, MoorhenGLFontMenuItem } from "../menu-item/MoorhenMenuItem";
+import { MoorhenBackgroundColorMenuItem, MoorhenClipFogMenuItem, MoorhenLightingMenuItem } from "../menu-item/MoorhenMenuItem";
 
 export const MoorhenViewMenu = (props) => {
     const [popoverIsShown, setPopoverIsShown] = useState(false)

@@ -8,14 +8,79 @@ import { contactsToCylindersInfo, contactsToLinesInfo } from '../WebGLgComponent
 import { singletonsToLinesInfo } from '../WebGLgComponents/mgWebGLAtomsToPrimitives';
 import { guid, readTextFile, readGemmiStructure, cidToSpec, residueCodesThreeToOne, centreOnGemmiAtoms, getBufferAtoms, 
     nucleotideCodesThreeToOne, hexToHsl, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo} from './MoorhenUtils'
+import { MoorhenCommandCentreRef, cootCommandKwargsType } from "./MoorhenCommandCentre"
+import { WorkerResponseType } from "./MoorhenCommandCentre"
 import { quatToMat4 } from '../WebGLgComponents/quatToMat4.js';
 import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
 import * as vec3 from 'gl-matrix/vec3';
 import * as mat3 from 'gl-matrix/mat3';
 import * as quat4 from 'gl-matrix/quat';
 
+interface GemmiAtomInterface extends emscriptemInstanceInterface<GemmiAtomInterface> {
+    name: string;
+    element: emscriptemInstanceInterface<string>;
+    pos: { x: number, y: number, z: number, delete: () => void };
+    altloc: number;
+    charge: number;
+    b_iso: number;
+    serial: string;
+    has_altloc: () => boolean;
+}
 
-type MovedGemmiAtomsType = {
+interface GemmiResidueSeqIdInterface extends emscriptemInstanceInterface<GemmiResidueSeqIdInterface> {
+    str: () => string;
+}
+
+interface GemmiResidueInterface extends emscriptemInstanceInterface<GemmiResidueInterface> {
+    name: string;
+    seqid: GemmiResidueSeqIdInterface;
+    atoms: emscriptemVectorInterface<GemmiAtomInterface>;
+}
+
+interface GemmiChainInterface extends emscriptemInstanceInterface<GemmiChainInterface> {
+    residues: emscriptemVectorInterface<GemmiResidueInterface>;
+    name: string;
+    get_polymer_const: () => emscriptemInstanceInterface<number>;
+    get_ligands_const: () => emscriptemVectorInterface<GemmiResidueInterface>
+}
+
+interface GemmiModelInterface extends emscriptemInstanceInterface<GemmiModelInterface> {
+    name: string;
+    chains: emscriptemVectorInterface<GemmiChainInterface>;
+}
+
+interface GemmiUnitCellInterface extends emscriptemInstanceInterface<GemmiUnitCellInterface> {
+    a: number;
+    b: number;
+    c: number;
+    alpha: number;
+    beta: number;
+    gamma: number;
+}
+
+export interface GemmiStructureInterface extends emscriptemInstanceInterface<GemmiStructureInterface> {
+    models: emscriptemVectorInterface<GemmiModelInterface>;
+    cell: GemmiUnitCellInterface;
+    first_model: () => GemmiModelInterface;
+}
+
+export type MoorhenResidueType = {
+    resName: string;
+    chainName: string;
+    resNum: number;
+    modelName: string;
+    resCode?: string;
+    cid?: string;
+}
+
+export type MoorhenSequenceType = {
+    name: string;
+    chain: string;
+    type: number;
+    sequence: MoorhenResidueType[];
+}
+
+export type MovedGemmiAtomsType = {
     name: string;
     x: number;
     y: number; 
@@ -24,60 +89,175 @@ type MovedGemmiAtomsType = {
     resCid: string;
 }
 
+export type BufferATomsType = {
+    pos: [number, number, number];
+    x: number;
+    y: number;
+    z: number;
+    tempFactor: number,
+    charge: number,
+    symbol: string,
+    label: string;
+}
+
+export type MoorhenResidueSpecType = {
+    mol_name: string;
+    mol_no: string;
+    chain_id: string;
+    res_no: number;
+    res_name: string;
+    atom_name: string;
+    ins_code: string;
+    alt_conf: string;
+    cid: string
+}
+
+export type MoorhenAtomInfoType = {
+    pos: [number, number, number];
+    x: number;
+    y: number;
+    z: number;
+    charge: number;
+    element: emscriptemInstanceInterface<string>;
+    symbol: string;
+    b_iso: number;
+    serial: string;
+    name: string;
+    has_altloc: boolean;
+    alt_loc: string;
+    label: string;
+}
+
+type MoleculeColourRuleType = {
+    commandInput: cootCommandKwargsType;
+    isMultiColourRule: boolean;
+    ruleType: string;
+    color: string;
+    label: string;
+}
+
+type DisplayObjectType = {
+    symmetryMatrices: any;
+    [attr: string]: any;
+}
+
 export interface MoorhenMoleculeInterface {
     type: string;
-    commandCentre: any;
+    commandCentre: MoorhenCommandCentreRef;
     enerLib: any;
     HBondsAssigned: boolean;
     atomsDirty: boolean;
     isVisible: boolean;
     name: string;
-    molNo: number | null
-    gemmiStructure: any;
-    sequences: any;
-    colourRules: any;
-    ligands: any;
-    ligandDicts: any;
-    connectedToMaps: any;
-    excludedSegments: any;
+    molNo: number;
+    gemmiStructure: GemmiStructureInterface;
+    sequences: MoorhenSequenceType[];
+    colourRules: MoleculeColourRuleType[];
+    ligands: MoorhenResidueType[];
+    ligandDicts: {[comp_id: string]: string};
+    connectedToMaps: number[];
+    excludedSegments: string[];
     symmetryOn: boolean;
     symmetryRadius : number;
     symmetryMatrices: any;
-    gaussianSurfaceSettings: any;
-    cootBondsOptions: any;
-    displayObjects: any;
+    gaussianSurfaceSettings: {
+        sigma: number;
+        countourLevel: number;
+        boxRadius: number;
+        gridScale: number;
+    };
+    cootBondsOptions: {
+        isDarkBackground: boolean;
+        smoothness: number;
+        width: number;
+        atomRadiusBondRatio: number;
+    };
+    displayObjects: {
+        CBs: DisplayObjectType[];
+        CRs: DisplayObjectType[];
+        ligands: DisplayObjectType[];
+        gaussian: DisplayObjectType[];
+        MolecularSurface: DisplayObjectType[];
+        VdWSurface: DisplayObjectType[];
+        DishyBases: DisplayObjectType[];
+        VdwSpheres: DisplayObjectType[];
+        rama: DisplayObjectType[];
+        rotamer: DisplayObjectType[];
+        CDs: DisplayObjectType[];
+        allHBonds: DisplayObjectType[];
+        hover: DisplayObjectType[];
+        selection: DisplayObjectType[];
+        originNeighbours: DisplayObjectType[];
+        originNeighboursHBond: DisplayObjectType[];
+        originNeighboursBump: DisplayObjectType[];
+        transformation: { origin: [number, number, number], quat: any, centre: [number, number, number] }
+    };
     uniqueId: string;
-    monomerLibraryPath: any;
+    monomerLibraryPath: string;
+    getAtoms(format?: string): Promise<WorkerResponseType>;
     hide: (style: string, glRef: glRefType) => void;
 }
+
+export type MoorhenMoleculeRef = { current: MoorhenMoleculeInterface }
+
+export type MoorhenMoleculesRef = { current: MoorhenMoleculeInterface[] }
 
 export class MoorhenMolecule implements MoorhenMoleculeInterface {
     
     type: string;
-    commandCentre: any;
+    commandCentre: MoorhenCommandCentreRef;
     enerLib: any;
     HBondsAssigned: boolean;
     atomsDirty: boolean;
     isVisible: boolean;
     name: string;
     molNo: number | null
-    gemmiStructure: any;
-    sequences: any;
-    colourRules: any;
-    ligands: any;
-    ligandDicts: any;
-    connectedToMaps: any;
-    excludedSegments: any;
+    gemmiStructure: GemmiStructureInterface;
+    sequences: MoorhenSequenceType[];
+    colourRules: MoleculeColourRuleType[];
+    ligands: MoorhenResidueType[];
+    ligandDicts: {[comp_id: string]: string};
+    connectedToMaps: number[];
+    excludedSegments: string[];
     symmetryOn: boolean;
     symmetryRadius : number;
     symmetryMatrices: any;
-    gaussianSurfaceSettings: any;
-    cootBondsOptions: any;
-    displayObjects: any;
+    gaussianSurfaceSettings: {
+        sigma: number;
+        countourLevel: number;
+        boxRadius: number;
+        gridScale: number;
+    };
+    cootBondsOptions: {
+        isDarkBackground: boolean;
+        smoothness: number;
+        width: number;
+        atomRadiusBondRatio: number;
+    };
+    displayObjects: {
+        CBs: DisplayObjectType[];
+        CRs: DisplayObjectType[];
+        ligands: DisplayObjectType[];
+        gaussian: DisplayObjectType[];
+        MolecularSurface: DisplayObjectType[];
+        VdWSurface: DisplayObjectType[];
+        DishyBases: DisplayObjectType[];
+        VdwSpheres: DisplayObjectType[];
+        rama: DisplayObjectType[];
+        rotamer: DisplayObjectType[];
+        CDs: DisplayObjectType[];
+        allHBonds: DisplayObjectType[];
+        hover: DisplayObjectType[];
+        selection: DisplayObjectType[];
+        originNeighbours: DisplayObjectType[];
+        originNeighboursHBond: DisplayObjectType[];
+        originNeighboursBump: DisplayObjectType[];
+        transformation: { origin: [number, number, number], quat: any, centre: [number, number, number] }
+    };
     uniqueId: string;
-    monomerLibraryPath: any
+    monomerLibraryPath: string
     
-    constructor(commandCentre, monomerLibraryPath="./baby-gru/monomers") {
+    constructor(commandCentre: MoorhenCommandCentreRef, monomerLibraryPath="./baby-gru/monomers") {
         this.type = 'molecule'
         this.commandCentre = commandCentre
         this.enerLib = new EnerLib()
@@ -135,7 +315,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
 
     async replaceModelWithFile(glRef: any, fileUrl: string, molName: string) {
         let coordData: string
-        let fetchResponse
+        let fetchResponse: Response
         
         try {
             fetchResponse = await fetch(fileUrl)
@@ -195,7 +375,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
             .filter(key => !['hover', 'originNeighbours', 'selection', 'transformation', 'contact_dots', 'chemical_features', 'VdWSurface'].some(style => key.includes(style)))
             .forEach(displayObjectType => {
                 if(this.displayObjects[displayObjectType].length > 0) {
-                    this.displayObjects[displayObjectType].forEach(displayObject => {
+                    this.displayObjects[displayObjectType].forEach((displayObject: DisplayObjectType) => {
                         displayObject.symmetryMatrices = this.symmetryMatrices
                     })
                 }
@@ -340,16 +520,13 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         return newMolecule
     }
 
-    async copyFragment(chainId: string, res_no_start: number, res_no_end: number, glRef: glRefType, doRecentre: boolean) {
-        if (typeof doRecentre === 'undefined') {
-            doRecentre = true
-        }
+    async copyFragment(chainId: string, res_no_start: number, res_no_end: number, glRef: glRefType, doRecentre: boolean = true) {
         const $this = this
         const inputData = { message: "copy_fragment", molNo: $this.molNo, chainId: chainId, res_no_start: res_no_start, res_no_end: res_no_end }
         const response = await $this.commandCentre.current.postMessage(inputData)
         const newMolecule = new MoorhenMolecule($this.commandCentre, $this.monomerLibraryPath)
         newMolecule.name = `${$this.name} fragment`
-        newMolecule.molNo = response.data.result
+        newMolecule.molNo = response.data.result.result
         newMolecule.cootBondsOptions = $this.cootBondsOptions
         await Promise.all(Object.keys(this.ligandDicts).map(key => newMolecule.addDict(this.ligandDicts[key])))
         await newMolecule.fetchIfDirtyAndDraw('CBs', glRef)
@@ -392,14 +569,14 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
             })
     }
 
-    loadToCootFromFile(source: { name: string; }) {
+    loadToCootFromFile(source: Blob) {
         const $this = this
         return readTextFile(source)
             .then(coordData => $this.loadToCootFromString(coordData, source.name))
             .catch(err => Promise.reject(err))
     }
 
-    async loadToCootFromString(coordData: string, name: string) {
+    async loadToCootFromString(coordData: ArrayBuffer | string, name: string) {
         const $this = this
         const pdbRegex = /.pdb$/;
         const entRegex = /.ent$/;
@@ -955,7 +1132,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         }).catch(err => console.log(err))
     }
 
-    async show(style: string, glRef: glRefType) {
+    async show(style: string, glRef: glRefType): Promise<void> {
         if (!this.displayObjects[style]) {
             this.displayObjects[style] = []
         }
@@ -1017,7 +1194,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         $this.displayObjects[style] = []
     }
 
-    buffersInclude(bufferIn: { id: string; }) {
+    buffersInclude(bufferIn: { id: string; }): boolean {
         const $this = this
         const BreakException = {};
         try {
@@ -1037,7 +1214,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         return false
     }
 
-    drawBonds(webMGAtoms: any, glRef: glRefType, colourSchemeIndex: number) {
+    drawBonds(webMGAtoms: any, glRef: glRefType, colourSchemeIndex: number): void {
         const $this = this
         const style = "bonds"
 
@@ -1132,14 +1309,13 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
             $this.clearBuffersOfStyle(style, glRef)
         }
         $this.addBuffersOfStyle(glRef, objects, style)
-        return
     }
 
     async drawResidueHighlight(glRef: glRefType, style:string, selectionString: string, colour: number[], clearBuffers: boolean = false) {
         const $this = this
 
         if (typeof selectionString === 'string') {
-            const resSpec = cidToSpec(selectionString)
+            const resSpec: MoorhenResidueSpecType = cidToSpec(selectionString)
             const modifiedSelection = `/*/${resSpec.chain_id}/${resSpec.res_no}-${resSpec.res_no}/*${resSpec.alt_conf === "" ? "" : ":"}${resSpec.alt_conf}`
             const selectedGemmiAtoms = await $this.gemmiAtomsForCid(modifiedSelection)
             const atomColours = {}
@@ -1152,14 +1328,13 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
             }
             $this.addBuffersOfStyle(glRef, objects, style)
         }
-        return
     }
 
-    async drawHover(glRef: glRefType, selectionString: string) {
+    async drawHover(glRef: glRefType, selectionString: string): Promise<void> {
         return await this.drawResidueHighlight(glRef, 'hover', selectionString, [1.0, 0.5, 0.0, 0.35], true)
     }
 
-    async drawSelection(glRef: glRefType, selectionString: string) {
+    async drawSelection(glRef: glRefType, selectionString: string): Promise<void> {
         return await this.drawResidueHighlight(glRef, 'selection', selectionString, [1.0, 0.0, 0.0, 0.35], false)
     }
 
@@ -1224,7 +1399,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
 
     }
 
-    async redraw(glRef: glRefType) {
+    async redraw(glRef: glRefType): Promise<void> {
         const $this = this
         const itemsToRedraw = []
         Object.keys($this.displayObjects).filter(style => !["transformation", 'hover', 'selection'].includes(style)).forEach(style => {
@@ -1535,7 +1710,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         this.ligands = ligandList
     }
 
-    async gemmiAtomsForCid(cid: string) {
+    async gemmiAtomsForCid(cid: string): Promise<MoorhenAtomInfoType[]> {
         const $this = this
 
         if ($this.atomsDirty) {
@@ -1578,7 +1753,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
                                     const atomName = atom.name
                                     const atomAltLoc = atom.altloc
                                     const atomHasAltLoc = atom.has_altloc()
-                                    const atomInfo = {
+                                    const atomInfo: MoorhenAtomInfoType = {
                                         pos: [atomPosX, atomPosY, atomPosZ],
                                         x: atomPosX,
                                         y: atomPosY,
@@ -1617,7 +1792,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         return Promise.resolve(result)
     }
 
-    hasVisibleBuffers(excludeBuffers: string[] = ['hover', 'originNeighbours', 'selection', 'transformation', 'contact_dots', 'chemical_features', 'VdWSurface']) {
+    hasVisibleBuffers(excludeBuffers: string[] = ['hover', 'originNeighbours', 'selection', 'transformation', 'contact_dots', 'chemical_features', 'VdWSurface']): boolean {
         const styles = Object.keys(this.displayObjects).filter(key => !excludeBuffers.some(style => key.includes(style)))
         const displayBuffers = styles.map(style => this.displayObjects[style])
         const visibleDisplayBuffers = displayBuffers.filter(displayBuffer => displayBuffer.some(buffer => buffer.visible))
@@ -1818,7 +1993,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         this.drawGemmiAtomPairs(glRef, selectedGemmiAtomsPairs, style, [0.7, 0.2, 0.7, 1.0], labelled, true)
     }
 
-    generateSelfRestraints(maxRadius: number = 4.2) {
+    generateSelfRestraints(maxRadius: number = 4.2): Promise<WorkerResponseType> {
         return this.commandCentre.current.cootCommand({
             command: "generate_self_restraints", 
             returnType: 'status',
@@ -1826,7 +2001,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         })
     }
 
-    clearExtraRestraints() {
+    clearExtraRestraints(): Promise<WorkerResponseType> {
         return this.commandCentre.current.cootCommand({
             command: "clear_extra_restraints", 
             returnType: 'status',
@@ -1834,7 +2009,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         })
     }
 
-    rigidBodyFit(cidsString: string, mapNo: number) {
+    rigidBodyFit(cidsString: string, mapNo: number): Promise<WorkerResponseType> {
         return this.commandCentre.current.cootCommand({
             command: "rigid_body_fit", 
             returnType: 'status',
@@ -1843,7 +2018,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
     }
 
 
-    refineResiduesUsingAtomCid(cid: string, mode: string) {
+    refineResiduesUsingAtomCid(cid: string, mode: string): Promise<WorkerResponseType> {
         return this.commandCentre.current.cootCommand({
             command: "refine_residues_using_atom_cid", 
             returnType: 'status',
@@ -1851,7 +2026,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         })
     }
 
-    SSMSuperpose(movChainId: string, refMolNo: number, refChainId: string) {
+    SSMSuperpose(movChainId: string, refMolNo: number, refChainId: string): Promise<WorkerResponseType> {
         return this.commandCentre.current.cootCommand({
             command: "SSM_superpose", 
             returnType: 'superpose_results',

@@ -1,12 +1,11 @@
-import { OverlayTrigger } from "react-bootstrap";
-import { Tooltip } from "@mui/material";
-import { v4 as uuidv4 } from 'uuid';
+import { GemmiStructureInterface, MoorhenResidueType, MoorhenAtomInfoType, BufferATomsType, MoorhenResidueSpecType, MoorhenMolecule, MoorhenMoleculeInterface } from "./MoorhenMolecule";
 import { hexToRgb } from "@mui/material";
 import localforage from 'localforage';
 import * as vec3 from 'gl-matrix/vec3';
 import * as mat3 from 'gl-matrix/mat3';
+import { LocalStorageInstanceInterface } from "./MoorhenTimeCapsule";
 
-export function guid(){
+export function guid(): string {
     var d = Date.now();
     var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
         var r = (d + Math.random()*16)%16 | 0;
@@ -16,7 +15,7 @@ export function guid(){
     return uuid;
 }
 
-export function sequenceIsValid(sequence) {
+export function sequenceIsValid(sequence: MoorhenResidueType[]): boolean {
     // If no sequence is present
     if (!sequence || sequence.length === 0) {
         return false
@@ -32,11 +31,11 @@ export function sequenceIsValid(sequence) {
     return true
 }
 
-export function convertRemToPx(rem) {
+export function convertRemToPx(rem: number): number {
     return rem * parseFloat(getComputedStyle(document.documentElement).fontSize);
 }
 
-export function convertViewtoPx(input, height) {
+export function convertViewtoPx(input: number, height: number): number {
     return height * (input / 100)
 }
 
@@ -127,53 +126,70 @@ export const nucleotideCodesThreeToOne = {
     'MISSING': '-'
 }
 
-export const postCootMessage = (cootWorker, kwargs) => {
-    const messageId = uuidv4()
-    return new Promise((resolve, reject) => {
-        const messageListener = cootWorker.current.addEventListener('message', (reply) => {
-            if (reply.data.messageId === messageId) {
-                //I'm now 90% certain that this does not in fact remove the eventListener...
-                cootWorker.current.removeEventListener('message', messageListener)
-                resolve(reply)
-            }
-        })
-        const messageEvent = new CustomEvent('coot_message_dispatch', { detail: { messageId: messageId } })
-        document.dispatchEvent(messageEvent)
-        cootWorker.current.postMessage({
-            messageId, myTimeStamp: Date.now(), ...kwargs
-        })
-    })
-}
+export const windowsFonts = [
+    'Arial', 'Arial Black', 'Bahnschrift', 'Calibri', 'Cambria', 'Cambria Math', 'Candara', 'Comic Sans MS', 'Consolas', 'Constantia', 
+    'Corbel', 'Courier New', 'Ebrima', 'Franklin Gothic Medium', 'Gabriola', 'Gadugi', 'Georgia', 'HoloLens MDL2 Assets', 'Impact', 
+    'Ink Free', 'Javanese Text', 'Leelawadee UI', 'Lucida Console', 'Lucida Sans Unicode', 'Malgun Gothic', 'Marlett', 'Microsoft Himalaya', 
+    'Microsoft JhengHei', 'Microsoft New Tai Lue', 'Microsoft PhagsPa', 'Microsoft Sans Serif', 'Microsoft Tai Le', 'Microsoft YaHei', 
+    'Microsoft Yi Baiti', 'MingLiU-ExtB', 'Mongolian Baiti', 'MS Gothic', 'MV Boli', 'Myanmar Text', 'Nirmala UI', 'Palatino Linotype', 
+    'Segoe MDL2 Assets', 'Segoe Print', 'Segoe Script', 'Segoe UI', 'Segoe UI Historic', 'Segoe UI Emoji', 'Segoe UI Symbol', 'SimSun', 
+    'Sitka', 'Sylfaen', 'Symbol', 'Tahoma', 'Times New Roman', 'Trebuchet MS', 'Verdana', 'Webdings', 'Wingdings', 'Yu Gothic'
+]
 
-export const cootCommand = (cootWorker, commandSpec) => {
-    const message = "coot_command"
-    const returnType = commandSpec.returnType
-    return postCootMessage(cootWorker, { message, returnType, ...commandSpec })
-}
+export const macFonts = [ 
+    'American Typewriter', 'Andale Mono', 'Arial', 'Arial Black', 'Arial Narrow', 'Arial Rounded MT Bold', 'Arial Unicode MS', 'Avenir', 
+    'Avenir Next', 'Avenir Next Condensed', 'Baskerville', 'Big Caslon', 'Bodoni 72', 'Bodoni 72 Oldstyle', 'Bodoni 72 Smallcaps', 'Bradley Hand', 
+    'Brush Script MT', 'Chalkboard', 'Chalkboard SE', 'Chalkduster', 'Charter', 'Cochin', 'Comic Sans MS', 'Copperplate', 'Courier', 'Courier New', 
+    'Didot', 'DIN Alternate', 'DIN Condensed', 'Futura', 'Geneva', 'Georgia', 'Gill Sans', 'Helvetica', 'Helvetica Neue', 'Herculanum', 'Hoefler Text', 
+    'Impact', 'Lucida Grande', 'Luminari', 'Marker Felt', 'Menlo', 'Microsoft Sans Serif', 'Monaco', 'Noteworthy', 'Optima', 'Palatino', 'Papyrus', 
+    'Phosphate', 'Rockwell', 'Savoye LET', 'SignPainter', 'Skia', 'Snell Roundhand', 'Tahoma', 'Times', 'Times New Roman', 'Trattatello', 'Trebuchet MS', 
+    'Verdana', 'Zapfino'
+ ]
 
-export const readTextFile = (source) => {
+export const linuxFonts = [
+    "Liberation Sans", "Nimbus Sans L", "FreeSans", "DejaVu Sans", "Bitstream Vera Sans", "Geneva", "Liberation Serif", "Nimbus Roman No 9 L",  
+    "FreeSerif", "Hoefler Text", "Times", "Times New Roman", "Bitstream Charter", "URW Palladio L", "Palatino", "Palatino Linotype", "Book Antiqua",
+    "DejaVu Serif", "Bitstream Vera Serif", "Century Schoolbook L", "Lucida Bright", "Georgia", "Liberation Mono", "Nimbus Mono L", "FreeMono", 
+    "Bitstream Vera Mono", "Lucida Console", "DejaVu Mono"
+]
+
+export const webSafeFonts = [
+    "Comic Sans", "Courier New", "Georgia", "Times New Roman", "Verdana", "Trebuchet MS", "Palatino", "Tahoma", "Arial", "Impact"
+]
+
+export const allFontsSet = new Set([webSafeFonts, windowsFonts, macFonts, linuxFonts].flat().sort());
+
+export const readTextFile = (source: Blob): Promise<ArrayBuffer | string> => {
+    const resolveReader = (reader: FileReader, resolveCallback) => {
+        reader.removeEventListener("load", resolveCallback)
+        resolveCallback(reader.result)
+    }
+
     return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        const loadListener = reader.addEventListener("load", () => {
-            reader.removeEventListener("load", loadListener)
-            resolve(reader.result)
-        })
+        const reader: FileReader = new FileReader();
+        reader.addEventListener("load", () => resolveReader(reader, resolve))
         reader.readAsText(source);
     })
 }
 
-export const readDataFile = (source) => {
+export const readDataFile = (source: Blob): Promise<ArrayBuffer> => {
+    const resolveReader = (reader: FileReader, resolveCallback) => {
+        reader.removeEventListener("load", resolveCallback)
+        if (typeof reader.result === 'string') {
+            resolveCallback(JSON.parse(reader.result));
+        } else {
+            resolveCallback(reader.result)
+        }
+    }
+    
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        const loadListener = reader.addEventListener("load", () => {
-            reader.removeEventListener("load", loadListener)
-            resolve(reader.result)
-        })
+        reader.addEventListener("load", () =>  resolveReader(reader, resolve))
         reader.readAsArrayBuffer(source)
     })
 }
 
-export const doDownload = (data, targetName) => {
+export const doDownload = (data: BlobPart[], targetName: string) => {
     const url = window.URL.createObjectURL(
         new Blob(data),
     );
@@ -194,7 +210,7 @@ export const doDownload = (data, targetName) => {
     link.parentNode.removeChild(link);
 }
 
-export const doDownloadText = (text, filename) => {
+export const doDownloadText = (text: string, filename: string) => {
     var element = document.createElement('a');
     element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
     element.setAttribute('download', filename);
@@ -207,125 +223,12 @@ export const doDownloadText = (text, filename) => {
     document.body.removeChild(element);
 }
 
-export const readGemmiStructure = (pdbData, molName) => {
+export const readGemmiStructure = (pdbData: ArrayBuffer | string, molName: string): GemmiStructureInterface => {
     const structure = window.CCP4Module.read_structure_from_string(pdbData, molName)
     return structure
 }
 
-export const MoorhenCommandCentre = class {
-    banana = 12
-    consoleMessage = ""
-    activeMessages = []
-
-    onConsoleChanged = null
-    onNewCommand = null
-    onActiveMessagesChanged = null
-
-    constructor(props) {
-        Object.keys(props).forEach(key => this[key] = props[key])
-        this.cootWorker = new Worker(`${this.urlPrefix}/baby-gru/CootWorker.js`)
-        this.cootWorker.onmessage = this.handleMessage.bind(this)
-        this.postMessage({ message: 'CootInitialize', data: {} })
-            .then(reply => {
-                if (this.onCootInitialized) this.onCootInitialized()
-            })
-    }
-    handleMessage(reply) {
-        if (this.onConsoleChanged && reply.data.consoleMessage) {
-            let newMessage
-            if (reply.data.consoleMessage.length > 160) {
-                newMessage = `TRUNCATED TO [${reply.data.consoleMessage.substring(0, 160)}]`
-            }
-            else {
-                newMessage = reply.data.consoleMessage
-            }
-            this.extendConsoleMessage(newMessage)
-        }
-        this.activeMessages.filter(
-            message => message.messageId && (message.messageId === reply.data.messageId)
-        ).forEach(message => {
-            message.handler(reply)
-        })
-        this.activeMessages = this.activeMessages.filter(
-            message => message.messageId !== reply.data.messageId
-        )
-        if (this.onActiveMessagesChanged) {
-            this.onActiveMessagesChanged(this.activeMessages)
-        }
-    }
-    extendConsoleMessage(newMessage) {
-        this.consoleMessage = this.consoleMessage.concat(">" + newMessage + "\n")
-        this.onConsoleChanged(this.consoleMessage)
-    }
-    makeHandler(resolve) {
-        return (reply) => {
-            resolve(reply)
-        }
-    }
-    unhook() {
-        this.cootWorker.removeEventListener("message", this.handleMessage)
-        this.cootWorker.terminate()
-    }
-    async cootCommand(kwargs, doJournal) {
-        //doJournal defaults to true
-        if (typeof doJournal === 'undefined') {
-            doJournal = false
-        }
-        const message = "coot_command"
-        const returnType = kwargs.returnType
-        if (this.onNewCommand && doJournal) {
-            console.log('In cootCommand', kwargs.command)
-            this.onNewCommand(kwargs)
-        }
-        return this.postMessage({ message, returnType, ...kwargs })
-    }
-    postMessage(kwargs) {
-        const $this = this
-        const messageId = uuidv4()
-        return new Promise((resolve, reject) => {
-            const handler = $this.makeHandler(resolve)
-            this.activeMessages.push({ messageId, handler, kwargs })
-            if (this.onActiveMessagesChanged) {
-                this.onActiveMessagesChanged(this.activeMessages)
-            }
-            this.cootWorker.postMessage({
-                messageId, myTimeStamp: Date.now(), ...kwargs
-            })
-        })
-    }
-}
-
-export const MoorhenMtzWrapper = class {
-    constructor() {
-        this.reflectionData = null
-        this.columns = {}
-    }
-    
-    loadHeaderFromFile(file) {
-        return new Promise((resolve, reject) => {
-            readDataFile(file)
-                .then(arrayBuffer => {
-                    const fileName = `File_${uuidv4()}`
-                    const byteArray = new Uint8Array(arrayBuffer)
-                    window.CCP4Module.FS_createDataFile(".", fileName, byteArray, true, true);
-                    const header_info = window.CCP4Module.get_mtz_columns(fileName);
-                    window.CCP4Module.FS_unlink(`./${fileName}`)
-                    let newColumns = {}
-                    for (let ih = 0; ih < header_info.size(); ih += 2) {
-                        newColumns[header_info.get(ih + 1)] = header_info.get(ih)
-                    }
-                    this.columns = newColumns
-                    this.reflectionData = byteArray
-                    resolve(newColumns)
-                })
-        })
-    }
-    loadFromData(data) {
-
-    }
-}
-
-export const centreOnGemmiAtoms = (atoms) => {
+export const centreOnGemmiAtoms = (atoms: MoorhenAtomInfoType[]): [number, number, number] => {
     const atomCount = atoms.length
     if (atomCount === 0) {
         return [0, 0, 0]
@@ -344,12 +247,12 @@ export const centreOnGemmiAtoms = (atoms) => {
     return [-xtot/atomCount, -ytot/atomCount, -ztot/atomCount]
 }
 
-export const getBufferAtoms = (gemmiStructure, exclude_ligands_and_waters=false) => {
+export const getBufferAtoms = (gemmiStructure: GemmiStructureInterface, exclude_ligands_and_waters: boolean = false): BufferATomsType[] => {
         if (exclude_ligands_and_waters) {
             window.CCP4Module.remove_ligands_and_waters_structure(gemmiStructure)
         }
    
-        let atomList = []
+        let atomList: BufferATomsType[] = []
 
         try {
             const models = gemmiStructure.models
@@ -417,7 +320,7 @@ export const getBufferAtoms = (gemmiStructure, exclude_ligands_and_waters=false)
         return atomList
 }
 
-export const cidToSpec = (cid) => {
+export const cidToSpec = (cid: string): MoorhenResidueSpecType => {
     //molNo, chain_id, res_no, ins_code, alt_conf
     const ResNameRegExp = /\(([^)]+)\)/;
     const cidTokens = cid.split('/')
@@ -432,7 +335,15 @@ export const cidToSpec = (cid) => {
     return { mol_name, mol_no, chain_id, res_no, res_name, atom_name, ins_code, alt_conf, cid }
 }
 
-export const getResidueInfo = (molecules, selectedMolNo, selectedChain, selectedResidueIndex) => {
+type ResidueInfoType = {
+    modelIndex: number;
+    molName: string;
+    chain: string;
+    seqNum: number;
+    resCode: string;
+}
+
+export const getResidueInfo = (molecules: MoorhenMolecule[], selectedMolNo: number, selectedChain: string, selectedResidueIndex: number): ResidueInfoType => {
     const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedMolNo)
     if (selectedMolecule) {
         const sequence = selectedMolecule.sequences.find(sequence => sequence.chain === selectedChain)
@@ -452,7 +363,14 @@ export const getResidueInfo = (molecules, selectedMolNo, selectedChain, selected
     }
 }
 
-export const getTooltipShortcutLabel = (shortCut) => {
+type MoorhenShortcutType = {
+    modifiers: string[];
+    keyPress: string;
+    label: string;
+    viewOnly: boolean;
+}
+
+export const getTooltipShortcutLabel = (shortCut: MoorhenShortcutType): string => {
     let modifiers = []
     if (shortCut.modifiers.includes('shiftKey')) modifiers.push("Shift")
     if (shortCut.modifiers.includes('ctrlKey')) modifiers.push("<Ctrl>")
@@ -462,8 +380,8 @@ export const getTooltipShortcutLabel = (shortCut) => {
     return modifiers.length > 0 ? `<${modifiers.join(" ")} ${shortCut.keyPress.toUpperCase()}>` : `<${shortCut.keyPress.toUpperCase()}>`
 }
 
-const getMoleculeBfactors = (gemmiStructure) => {
-    let bFactors = []
+const getMoleculeBfactors = (gemmiStructure: GemmiStructureInterface): { cid: string, bFactor: number }[]=> {
+    let bFactors: { cid: string, bFactor: number }[] = []
     try {
         const models = gemmiStructure.models
         for (let modelIndex = 0; modelIndex < models.size(); modelIndex++) {
@@ -512,22 +430,22 @@ const getMoleculeBfactors = (gemmiStructure) => {
     return bFactors
 }
 
-export function componentToHex(c) {
+export function componentToHex(c: number): string {
     const hex = c.toString(16)
     return hex.length === 1 ? "0" + hex : hex
   }
   
-export  function rgbToHex(r, g, b) {
+export  function rgbToHex(r: number, g: number, b: number): string {
     return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b)
 }
 
-const getBfactorColourRules = (bFactors) => {
+const getBfactorColourRules = (bFactors: { cid: string; bFactor: number; }[]): string => {
     const bFactorList = bFactors.map(item => item.bFactor)
     const min = Math.min(...bFactorList)
     const max = Math.max(...bFactorList)
 
-    const getColour = (bFactor) => {
-        let r, g, b
+    const getColour = (bFactor: number): string => {
+        let r: number, g: number, b: number
         const normalisedFactor = Math.round(100 * ( (bFactor - min) / (max - min) ))
         if(normalisedFactor <= 25) {
             r = 0
@@ -552,9 +470,9 @@ const getBfactorColourRules = (bFactors) => {
     return bFactors.map(item => `${item.cid}^${getColour(item.bFactor)}`).join('|')
 }
 
-const getPlddtColourRules = (plddtList) => {
-    const getColour = (plddt) => {
-        let r, g, b
+const getPlddtColourRules = (plddtList: { cid: string; bFactor: number; }[]): string => {
+    const getColour = (plddt: number) => {
+        let r: number, g: number, b: number
         if(plddt <= 50) {
             r = 230
             g = 113
@@ -578,9 +496,9 @@ const getPlddtColourRules = (plddtList) => {
     return plddtList.map(item => `${item.cid}^${getColour(item.bFactor)}`).join('|')
 }
 
-export const getMultiColourRuleArgs = (molecule, ruleType) => {
+export const getMultiColourRuleArgs = (molecule: MoorhenMoleculeInterface, ruleType: string): [number, string] => {
 
-    let multiRulesArgs
+    let multiRulesArgs: [number, string]
 
     switch (ruleType) {
         case 'b-factor':
@@ -599,44 +517,15 @@ export const getMultiColourRuleArgs = (molecule, ruleType) => {
     return multiRulesArgs
 }
 
-export const getNameLabel = (item) => {
-    if (item.name.length > 9) {
-        return <OverlayTrigger
-                key={item.molNo}
-                id="name-label-trigger"
-                placement="top"
-                overlay={
-                    <Tooltip id="name-label-tooltip" 
-                    style={{
-                        zIndex: 9999,
-                        backgroundColor: 'rgba(0, 0, 0, 0.85)',
-                        padding: '2px 10px',
-                        color: 'white',
-                        borderRadius: 3,
-                    }}>
-                        <div>
-                            {item.name}
-                        </div>
-                    </Tooltip>
-                }
-                >
-                <div>
-                    {`#${item.molNo} ${item.type === 'molecule' ? 'Mol.' : 'Map'} ${item.name.slice(0,5)}...`}
-                </div>
-                </OverlayTrigger>
-    }
-    return `#${item.molNo} ${item.type === 'molecule' ? 'Mol.' : 'Map'} ${item.name}`
-}
-
-export const hexToHsl = (hex) => {
-    let [r, g, b] = hexToRgb(hex).replace('rgb(', '').replace(')', '').split(', ')
+export const hexToHsl = (hex: string): [number, number, number] => {
+    let [r, g, b]: number[] = hexToRgb(hex).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
     r /= 255;
     g /= 255;
     b /= 255;
 
     const max = Math.max(r, g, b);
     const min = Math.min(r, g, b);
-    let h, s, l = (max + min) / 2;
+    let h: number, s: number, l: number = (max + min) / 2;
   
     if (max === min) {
       h = s = 0;
@@ -657,7 +546,7 @@ export const hexToHsl = (hex) => {
     return [ h, s, l ];
 }
 
-export const createLocalStorageInstance = (name, empty=false) => {
+export const createLocalStorageInstance = (name: string, empty: boolean = false): LocalStorageInstanceInterface => {
     const instance = localforage.createInstance({
         driver: [localforage.INDEXEDDB, localforage.LOCALSTORAGE],
         name: name,
@@ -669,13 +558,7 @@ export const createLocalStorageInstance = (name, empty=false) => {
      return instance
 }
 
-
-export const getDashedCylinder = (nsteps, cylinder_accu) => {
-    let cylinderCache = {}
-
-    if([nsteps,cylinder_accu] in cylinderCache){
-        return cylinderCache[[nsteps,cylinder_accu]]
-    }
+export const getDashedCylinder = (nsteps: number, cylinder_accu: number): [number[], number[], number[]] => {
     let thisPos = []
     let thisNorm = []
     let thisIdxs = []
@@ -725,11 +608,10 @@ export const getDashedCylinder = (nsteps, cylinder_accu) => {
         }
     }
 
-    cylinderCache[[nsteps,cylinder_accu]] = [thisPos, thisNorm, thisIdxs]
-    return cylinderCache[[nsteps,cylinder_accu]]
+    return  [thisPos, thisNorm, thisIdxs]
 }
 
-export const gemmiAtomPairsToCylindersInfo = (atoms, size, colourScheme, labelled=false, minDist=1.9, maxDist=4.0) => {
+export const gemmiAtomPairsToCylindersInfo = (atoms: [MoorhenAtomInfoType, MoorhenAtomInfoType][], size: number, colourScheme: { [x: string]: any[]; }, labelled: boolean = false, minDist: number = 1.9, maxDist: number = 4.0) => {
 
     let atomPairs = atoms;
 
@@ -743,7 +625,7 @@ export const gemmiAtomPairsToCylindersInfo = (atoms, size, colourScheme, labelle
     let totInstanceUseColours = []
     let totInstancePrimTypes = []
     
-    const [thisPos, thisNorm, thisIdxs] = getDashedCylinder(15,16);
+    const [thisPos, thisNorm, thisIdxs] = getDashedCylinder(15, 16);
 
     let thisInstance_sizes = []
     let thisInstance_colours = []
@@ -869,7 +751,7 @@ export const gemmiAtomPairsToCylindersInfo = (atoms, size, colourScheme, labelle
     
 }
 
-export const gemmiAtomsToCirclesSpheresInfo = (atoms, size, primType, colourScheme) => {
+export const gemmiAtomsToCirclesSpheresInfo = (atoms: MoorhenAtomInfoType[], size: number, primType: string, colourScheme: { [x: string]: any[]; }) => {
 
     let sphere_sizes = [];
     let sphere_col_tri = [];

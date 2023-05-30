@@ -1,5 +1,6 @@
 import { readDataFile, guid } from "./MoorhenUtils"
 import { readMapFromArrayBuffer, mapToMapGrid } from '../WebGLgComponents/mgWebGLReadMap';
+import { WorkerResponseType } from "./MoorhenCommandCentre"
 
 type selectedColumnsType = {
     F?: string;
@@ -13,6 +14,8 @@ type selectedColumnsType = {
 }
 
 export interface MoorhenMapInterface {
+    fetchReflectionData(): Promise<WorkerResponseType>;
+    getMap(): Promise<WorkerResponseType>;
     type: string;
     name: string;
     molNo: null | number;
@@ -34,6 +37,10 @@ export interface MoorhenMapInterface {
     mapRmsd: number | null;
     rgba: {r: number, g: number, b: number, a: number};
 }
+
+export type MoorhenMapRef = { current: MoorhenMapInterface }
+
+export type MoorhenMapsRef = { current: MoorhenMapInterface[] }
 
 export class MoorhenMap implements MoorhenMapInterface {
     
@@ -191,7 +198,7 @@ export class MoorhenMap implements MoorhenMapInterface {
         })
     }
 
-    loadToCootFromMtzFile = async function (source: { name: string; }, selectedColumns: selectedColumnsType) {
+    loadToCootFromMtzFile = async function (source: Blob, selectedColumns: selectedColumnsType) {
         const $this = this
         let reflectionData = await readDataFile(source)
         const asUIntArray = new Uint8Array(reflectionData)
@@ -238,7 +245,7 @@ export class MoorhenMap implements MoorhenMapInterface {
             })
     }
 
-    loadToCootFromMapFile = async function (source: { name: any; }, isDiffMap: boolean) {
+    loadToCootFromMapFile = async function (source: Blob, isDiffMap: boolean) {
         const $this = this
         return readDataFile(source)
             .then(mapData => {
