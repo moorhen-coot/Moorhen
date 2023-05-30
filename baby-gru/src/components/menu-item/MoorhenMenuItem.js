@@ -1825,6 +1825,36 @@ export const MoorhenLightingMenuItem = (props) => {
     />
 }
 
+export const MoorhenGLFontMenuItem = (props) => {
+    const fontSizes = [8,9,10,11,12,13,14,18,24,30,36,48,60,72,96]
+    const panelContent = <div>
+        <Form.Group key="WebGLFontFamily" style={{ width: '20rem', margin: '0.5rem' }} controlId="WebGLFontFamily" className="mb-3">
+            <Form.Label>Graphics labels font</Form.Label>
+            <Form.Select value={props.GLLabelsFontFamily} onChange={(e) => {props.setGLLabelsFontFamily(e.target.value) }}>
+            { props.availableFonts.map((item) => {
+                return <option key={item} value={item}>{item}</option>
+            })
+            }
+            </Form.Select>
+            <Form.Label>Graphics labels size</Form.Label>
+            <Form.Select value={props.GLLabelsFontSize} onChange={(e) => { props.setGLLabelsFontSize(e.target.value) }}>
+            { fontSizes.map((item) => {
+                return <option key={item} value={item}>{item}</option>
+            })
+            }
+            </Form.Select>
+        </Form.Group>
+    </div>
+
+    return <MoorhenMenuItem
+        id='webgl-font-menu-item'
+        popoverContent={panelContent}
+        menuItemText="Fonts..."
+        onCompleted={() => { }}
+        setPopoverIsShown={props.setPopoverIsShown}
+    />
+}
+
 export const MoorhenClipFogMenuItem = (props) => {
     const [zclipFront, setZclipFront] = useState(props.glRef.current.fogClipOffset + props.glRef.current.gl_clipPlane0[3])
     const [zclipBack, setZclipBack] = useState(props.glRef.current.gl_clipPlane1[3] - props.glRef.current.fogClipOffset)

@@ -1359,7 +1359,6 @@ class TextCanvasTexture {
             this.maxCurrentColumnWidth = textMetric.width;
         }
         this.textureCache[textColour][font.toLowerCase()][t] = [x1,y1,x2,y2];
-        console.log(t,this.maxCurrentColumnWidth)
         return [x1,y1,x2,y2]
     }
 
@@ -1389,11 +1388,13 @@ class TextCanvasTexture {
 
     removeBigTextureTextImage(textObject) {
         const key = textObject.text+"_"+textObject.x+"_"+textObject.y+"_"+textObject.z+"_"+textObject.font
-        this.bigTextureTexOrigins[this.refI[key]] = [];
-        this.bigTextureTexOffsets[this.refI[key]] = [];
-        this.bigTextureScalings[this.refI[key]] = [];
-        delete this.refI[key];
-        this.nBigTextures -= 1;
+        if(key in this.refI) {
+            this.bigTextureTexOrigins[this.refI[key]] = [];
+            this.bigTextureTexOffsets[this.refI[key]] = [];
+            this.bigTextureScalings[this.refI[key]] = [];
+            delete this.refI[key];
+            this.nBigTextures -= 1;
+        }
     }
 
     addBigTextureTextImage(textObject) {
@@ -1545,6 +1546,7 @@ class MGWebGL extends Component {
         super(props);
 
         const self = this;
+        this.glTextFont = "18px Helvetica";
         this.showFPS = true;
         this.nFrames = 0;
         this.nPrevFrames = 0;
@@ -2365,7 +2367,7 @@ class MGWebGL extends Component {
                             const x = jsondata.vert_tri[idat][ilabel*3];
                             const y = jsondata.vert_tri[idat][ilabel*3+1];
                             const z = jsondata.vert_tri[idat][ilabel*3+2];
-                            const label = {font:"18px Helvetica",x:x,y:y,z:z,text:t};
+                            const label = {font:self.glTextFont,x:x,y:y,z:z,text:t};
                             labels.push(label);
                         }
                         labels.forEach(label => {
@@ -3392,6 +3394,18 @@ class MGWebGL extends Component {
     setQuat(q) {
         this.myQuat = q;
         this.drawScene();
+    }
+
+    setTextFont(family,size) {
+        if(family && size){
+            this.glTextFont = ""+size+"px "+family;
+            this.updateLabels();
+            this.labelsTextCanvasTexture.clearBigTexture();
+            //This forces redrawing of environemnt distances
+            const originUpdateEvent = new CustomEvent("originUpdate", { detail: {origin: this.origin} });
+            document.dispatchEvent(originUpdateEvent);
+            this.drawScene();
+        }
     }
 
     setBackground(col) {
@@ -9591,7 +9605,6 @@ class MGWebGL extends Component {
     }
 
     updateLabels(){
-        console.log("updateLabels")
         const self = this;
         self.clearMeasureCylinderBuffers()
         let atomPairs = []
@@ -9628,7 +9641,7 @@ class MGWebGL extends Component {
                     mid[0] *= 0.5;
                     mid[1] *= 0.5;
                     mid[2] *= 0.5;
-                    self.measureTextCanvasTexture.addBigTextureTextImage({font:"18px Helvetica",text:linesize,x:mid[0],y:mid[1],z:mid[2]})
+                    self.measureTextCanvasTexture.addBigTextureTextImage({font:self.glTextFont,text:linesize,x:mid[0],y:mid[1],z:mid[2]})
                     if(bump.length>2&&ib>1){
                         const third = bump[ib-2];
                         let v3 = vec3Create([third.x, third.y, third.z]);
@@ -9647,7 +9660,7 @@ class MGWebGL extends Component {
                         v12plusv23[2] *= -.5
 
                         let angle = (Math.acos(vec3.dot(v2diffv1, v2diffv3)) * 180.0 / Math.PI).toFixed(1)+"˚";
-                        self.measureTextCanvasTexture.addBigTextureTextImage({font:"18px Helvetica",text:angle,x:second.x+v12plusv23[0],y:second.y+v12plusv23[1],z:second.z+v12plusv23[2]})
+                        self.measureTextCanvasTexture.addBigTextureTextImage({font:self.glTextFont,text:angle,x:second.x+v12plusv23[0],y:second.y+v12plusv23[1],z:second.z+v12plusv23[2]})
 
                         if(bump.length>3&&ib>2){
                             const fourth = bump[ib-3];
@@ -9666,7 +9679,7 @@ class MGWebGL extends Component {
                             mid23[0] *= 0.5;
                             mid23[1] *= 0.5;
                             mid23[2] *= 0.5;
-                            self.measureTextCanvasTexture.addBigTextureTextImage({font:"18px Helvetica",text:dihedral,x:mid23[0]+dihedralOffset[0],y:mid23[1]+dihedralOffset[1],z:mid23[2]+dihedralOffset[2]})
+                            self.measureTextCanvasTexture.addBigTextureTextImage({font:self.glTextFont,text:dihedral,x:mid23[0]+dihedralOffset[0],y:mid23[1]+dihedralOffset[1],z:mid23[2]+dihedralOffset[2]})
                         }
                     }
 
@@ -9685,13 +9698,13 @@ class MGWebGL extends Component {
         })
         self.measuredAtoms.forEach(atoms => {
             atoms.forEach(atom => {
-                self.measureTextCanvasTexture.addBigTextureTextImage({font:"18px Helvetica",text:atom.label,x:atom.x,y:atom.y,z:atom.z})
+                self.measureTextCanvasTexture.addBigTextureTextImage({font:self.glTextFont,text:atom.label,x:atom.x,y:atom.y,z:atom.z})
             })
         })
 
         self.labelledAtoms.forEach(atoms => {
             atoms.forEach(atom => {
-                self.measureTextCanvasTexture.addBigTextureTextImage({font:"18px Helvetica",text:atom.label,x:atom.x,y:atom.y,z:atom.z})
+                self.measureTextCanvasTexture.addBigTextureTextImage({font:self.glTextFont,text:atom.label,x:atom.x,y:atom.y,z:atom.z})
             })
         })
 

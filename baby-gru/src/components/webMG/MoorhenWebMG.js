@@ -403,6 +403,15 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
 
     useEffect(() => {
         if (glRef.current) {
+            glRef.current.setTextFont(props.preferences.GLLabelsFontFamily,props.preferences.GLLabelsFontSize)
+        }
+    }, [
+        props.preferences.GLLabelsFontSize, props.preferences.GLLabelsFontFamily,
+        glRef.current
+    ])
+
+    useEffect(() => {
+        if (glRef.current) {
             glRef.current.setBackground(props.backgroundColor)
         }
     }, [
