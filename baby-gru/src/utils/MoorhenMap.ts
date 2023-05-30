@@ -1,5 +1,6 @@
 import { readDataFile, guid } from "./MoorhenUtils"
 import { readMapFromArrayBuffer, mapToMapGrid } from '../WebGLgComponents/mgWebGLReadMap';
+import { WorkerResponseType } from "./MoorhenCommandCentre"
 
 type selectedColumnsType = {
     F?: string;
@@ -13,6 +14,8 @@ type selectedColumnsType = {
 }
 
 export interface MoorhenMapInterface {
+    fetchReflectionData(): Promise<WorkerResponseType>;
+    getMap(): Promise<WorkerResponseType>;
     type: string;
     name: string;
     molNo: null | number;
@@ -36,6 +39,8 @@ export interface MoorhenMapInterface {
 }
 
 export type MoorhenMapRef = { current: MoorhenMapInterface }
+
+export type MoorhenMapsRef = { current: MoorhenMapInterface[] }
 
 export class MoorhenMap implements MoorhenMapInterface {
     

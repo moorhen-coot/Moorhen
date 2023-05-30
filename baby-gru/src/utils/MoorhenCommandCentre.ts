@@ -1,43 +1,55 @@
 import { v4 as uuidv4 } from 'uuid';
 
-type cootCommandKwargsType = { 
+export type cootCommandKwargsType = { 
     message: string;
     data?: {};
     returnType?: any;
     command?: any;
  }
 
-type WorkerMessageInterface = { 
+export type WorkerMessageType = { 
     consoleMessage?: string;
     messageId: string;
-    handler: (reply: WorkerResponseInterface) => void;
+    handler: (reply: WorkerResponseType) => void;
     kwargs: cootCommandKwargsType;
 }
 
-type WorkerResponseInterface = { 
-    data: WorkerMessageInterface;
+export type WorkerResultType = {
+    result: {
+        status: string;
+        result: any;
+        [key: string]: any;
+    }
+    messageId: string;
+    myTimeStamp: string;
+    message: string;
+    consoleMessage: string;
+}
+
+export type WorkerResponseType = { 
+    data: WorkerResultType;
 }
 
 export interface MoorhenCommandCentreInterface {
     urlPrefix: string;
     cootWorker: any;
     consoleMessage: string;
-    activeMessages: WorkerMessageInterface[];
+    activeMessages: WorkerMessageType[];
     onCootInitialized: null | ( () => void );
     onConsoleChanged: null | ( (msg: string) => void );
     onNewCommand : null | ( (kwargs: any) => void );
-    onActiveMessagesChanged: null | ( (activeMessages: WorkerMessageInterface[]) => void );
+    onActiveMessagesChanged: null | ( (activeMessages: WorkerMessageType[]) => void );
 }
 
 export class MoorhenCommandCentre implements MoorhenCommandCentreInterface {
     urlPrefix: string;
     cootWorker: any;
     consoleMessage: string;
-    activeMessages: WorkerMessageInterface[];
+    activeMessages: WorkerMessageType[];
     onCootInitialized: null | ( () => void );
     onConsoleChanged: null | ( (msg: string) => void );
     onNewCommand : null | ( (kwargs: any) => void );
-    onActiveMessagesChanged: null | ( (activeMessages: WorkerMessageInterface[]) => void );
+    onActiveMessagesChanged: null | ( (activeMessages: WorkerMessageType[]) => void );
 
     constructor(props: { [x: string]: any; }) {
         this.consoleMessage = ""
@@ -54,7 +66,7 @@ export class MoorhenCommandCentre implements MoorhenCommandCentreInterface {
             .then(() => this.onCootInitialized && this.onCootInitialized() )
     }
     
-    handleMessage(reply: WorkerResponseInterface) {
+    handleMessage(reply: WorkerResponseType) {
         if (this.onConsoleChanged && reply.data.consoleMessage) {
             let newMessage: string
             if (reply.data.consoleMessage.length > 160) {

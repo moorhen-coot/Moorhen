@@ -1,17 +1,19 @@
-import { MoorhenMoleculeRef } from "./MoorhenMolecule"
-import { MoorhenMapRef } from "./MoorhenMap"
+import { MoorhenMoleculesRef } from "./MoorhenMolecule"
+import { MoorhenMapInterface, MoorhenMapRef, MoorhenMapsRef } from "./MoorhenMap"
+import { WorkerResponseType } from "./MoorhenCommandCentre";
 
 type backupKeyType = {
-    dateTime: any;
-    type: any;
-    molNames: any;
-    mapNames?: any;
-    mtzNames?: any
+    name?: string;
+    dateTime: string;
+    type: string;
+    molNames: string[];
+    mapNames?: string[];
+    mtzNames?: string[];
 }
 
 interface MoorhenTimeCapsuleInterface {
-    moleculesRef: MoorhenMoleculeRef;
-    mapsRef: MoorhenMapRef;
+    moleculesRef: MoorhenMoleculesRef;
+    mapsRef: MoorhenMapsRef;
     glRef: glRefType;
     activeMapRef: MoorhenMapRef;
     preferences: any;
@@ -25,7 +27,7 @@ interface MoorhenTimeCapsuleInterface {
 }
 
 export const getBackupLabel = (key: backupKeyType): string => {
-    const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }
+    const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' } as const
     const intK: number = parseInt(key.dateTime)
     const date: Date = new Date(intK)
     const dateString = `${date.toLocaleDateString(Intl.NumberFormat().resolvedOptions().locale, dateOptions)} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`
@@ -35,8 +37,8 @@ export const getBackupLabel = (key: backupKeyType): string => {
 
 export class MoorhenTimeCapsule implements MoorhenTimeCapsuleInterface {
 
-    moleculesRef: MoorhenMoleculeRef;
-    mapsRef: MoorhenMapRef;
+    moleculesRef: MoorhenMoleculesRef;
+    mapsRef: MoorhenMapsRef;
     glRef: glRefType;
     activeMapRef: MoorhenMapRef;
     preferences: any;
@@ -48,7 +50,7 @@ export class MoorhenTimeCapsule implements MoorhenTimeCapsuleInterface {
     disableBackups: boolean;
     storageInstance: any
     
-    constructor(moleculesRef: MoorhenMoleculeRef, mapsRef: MoorhenMapRef, activeMapRef: MoorhenMapRef, glRef: glRefType, preferences: any) {
+    constructor(moleculesRef: MoorhenMoleculesRef, mapsRef: MoorhenMapsRef, activeMapRef: MoorhenMapRef, glRef: glRefType, preferences: any) {
         this.moleculesRef = moleculesRef
         this.mapsRef = mapsRef
         this.glRef = glRef
@@ -83,12 +85,12 @@ export class MoorhenTimeCapsule implements MoorhenTimeCapsuleInterface {
 
     async updateDataFiles() {
         const allKeyStrings = await this.storageInstance.keys()
-        const allKeys = allKeyStrings.map(keyString => JSON.parse(keyString))
-        const currentMtzFiles = allKeys.filter(key => key.type === 'mtzData').map(key => key.name)
-        const currentMapData = allKeys.filter(key => key.type === 'mapData').map(key => key.name)
+        const allKeys = allKeyStrings.map((keyString: string) => JSON.parse(keyString))
+        const currentMtzFiles = allKeys.filter((key: backupKeyType) => key.type === 'mtzData').map((key: backupKeyType) => key.name)
+        const currentMapData = allKeys.filter((key: backupKeyType) => key.type === 'mapData').map((key: backupKeyType) => key.name)
 
         let promises = []
-        this.mapsRef.current.map(async (map) => {
+        this.mapsRef.current.map(async (map: MoorhenMapInterface) => {
             const fileName = map.associatedReflectionFileName
             if (fileName && !currentMtzFiles.includes(fileName)) {
                 const key = JSON.stringify({type: 'mtzData', name: fileName})
@@ -114,8 +116,8 @@ export class MoorhenTimeCapsule implements MoorhenTimeCapsuleInterface {
     async fetchSession (includeAdditionalMapData: boolean = true) {
         this.busy = true
         const keyStrings = await this.storageInstance.keys()
-        const mtzFileNames = keyStrings.map(keyString => JSON.parse(keyString)).filter(key => key.type === 'mtzData').map(key => key.name)
-        const mapNames = keyStrings.map(keyString => JSON.parse(keyString)).filter(key => key.type === 'mapData').map(key => key.name)
+        const mtzFileNames = keyStrings.map((keyString: string) => JSON.parse(keyString)).filter((key: backupKeyType) => key.type === 'mtzData').map((key: backupKeyType) => key.name)
+        const mapNames = keyStrings.map((keyString: string) => JSON.parse(keyString)).filter((key: backupKeyType) => key.type === 'mapData').map((key: backupKeyType) => key.name)
         
         const promises = await Promise.all([
             ...this.moleculesRef.current.map(molecule => {return molecule.getAtoms()}), 
@@ -152,17 +154,19 @@ export class MoorhenTimeCapsule implements MoorhenTimeCapsuleInterface {
         let moleculeDataPromises = []
         let mapDataPromises = []
         let reflectionDataPromises = []
-        promises.forEach(promise => {
-            if (promise === 'reflection_data') {
+        promises.forEach((promise: string | WorkerResponseType) => {
+            if (typeof promise === "string" && promise === 'reflection_data') {
                 reflectionDataPromises.push(null)
             } else if (promise === 'map_data') {
                 mapDataPromises.push(null)
-            } else if (promise.data.message === "get_mtz_data") {
+            } else if (typeof promise === "object" && promise.data.message === "get_mtz_data") {
                 reflectionDataPromises.push(promise.data.result.mtzData)
-            }else if (promise.data.message === 'get_atoms') {
+            }else if (typeof promise === "object" && promise.data.message === 'get_atoms') {
                 moleculeDataPromises.push(promise.data.result.pdbData)
-            } else if (promise.data.message === 'get_map') {
+            } else if (typeof promise === "object" && promise.data.message === 'get_map') {
                 mapDataPromises.push(new Uint8Array(promise.data.result.mapData))
+            } else {
+                console.log(`Unrecognised promise type when fetching session... ${promise}`)
             }
         })
 
@@ -249,7 +253,7 @@ export class MoorhenTimeCapsule implements MoorhenTimeCapsuleInterface {
 
     async cleanupIfFull() {
         const keyStrings = await this.storageInstance.keys()
-        const keys = keyStrings.map(keyString => JSON.parse(keyString)).filter(key => key.type === 'automatic')
+        const keys = keyStrings.map((keyString: string) => JSON.parse(keyString)).filter(key => key.type === 'automatic')
         const sortedKeys = keys.sort((a, b) => { return parseInt(a.dateTime) - parseInt(b.dateTime) }).reverse()
         if (sortedKeys.length - 1 >= this.maxBackupCount) {
             const toRemoveCount = sortedKeys.length - this.maxBackupCount
@@ -260,11 +264,11 @@ export class MoorhenTimeCapsule implements MoorhenTimeCapsuleInterface {
 
     async cleanupUnusedDataFiles() {
         const allKeyStrings = await this.storageInstance.keys()
-        const allKeys = allKeyStrings.map(keyString => JSON.parse(keyString))
-        const backupKeys = allKeys.filter(key => ['automatic', 'manual'].includes(key.type))
-        const [ usedNames ] = [ ...backupKeys.map(key => [...key.mtzNames, ...key.mapNames]) ]
+        const allKeys = allKeyStrings.map((keyString: string) => JSON.parse(keyString))
+        const backupKeys = allKeys.filter((key: backupKeyType) => ['automatic', 'manual'].includes(key.type))
+        const [ usedNames ] = [ ...backupKeys.map((key: backupKeyType) => [...key.mtzNames, ...key.mapNames]) ]
 
-        await Promise.all(allKeys.filter(key => ['mtzData', 'mapData'].includes(key.type)).map(key => {
+        await Promise.all(allKeys.filter((key: backupKeyType) => ['mtzData', 'mapData'].includes(key.type)).map((key: backupKeyType) => {
             if (typeof usedNames === 'undefined' || !usedNames.includes(key.name)) {
                 return this.removeBackup(JSON.stringify(key))
             }
@@ -325,7 +329,7 @@ export class MoorhenTimeCapsule implements MoorhenTimeCapsuleInterface {
 
     async getSortedKeys() {
         const keyStrings = await this.storageInstance.keys()
-        const keys = keyStrings.map(keyString => JSON.parse(keyString)).filter(key => ['automatic', 'manual'].includes(key.type))
+        const keys = keyStrings.map((keyString: string) => JSON.parse(keyString)).filter(key => ['automatic', 'manual'].includes(key.type))
         const sortedKeys = keys.sort((a, b) => { return parseInt(a.dateTime) - parseInt(b.dateTime) }).reverse()
         return sortedKeys
     }

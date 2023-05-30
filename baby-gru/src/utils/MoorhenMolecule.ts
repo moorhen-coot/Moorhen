@@ -8,6 +8,7 @@ import { contactsToCylindersInfo, contactsToLinesInfo } from '../WebGLgComponent
 import { singletonsToLinesInfo } from '../WebGLgComponents/mgWebGLAtomsToPrimitives';
 import { guid, readTextFile, readGemmiStructure, cidToSpec, residueCodesThreeToOne, centreOnGemmiAtoms, getBufferAtoms, 
     nucleotideCodesThreeToOne, hexToHsl, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo} from './MoorhenUtils'
+import { WorkerResponseType } from "./MoorhenCommandCentre"
 import { quatToMat4 } from '../WebGLgComponents/quatToMat4.js';
 import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
 import * as vec3 from 'gl-matrix/vec3';
@@ -25,6 +26,8 @@ type MovedGemmiAtomsType = {
 }
 
 export interface MoorhenMoleculeInterface {
+    getAtoms(format?: string): Promise<WorkerResponseType>;
+    hide: (style: string, glRef: glRefType) => void;
     type: string;
     commandCentre: any;
     enerLib: any;
@@ -48,10 +51,11 @@ export interface MoorhenMoleculeInterface {
     displayObjects: any;
     uniqueId: string;
     monomerLibraryPath: any;
-    hide: (style: string, glRef: glRefType) => void;
 }
 
 export type MoorhenMoleculeRef = { current: MoorhenMoleculeInterface }
+
+export type MoorhenMoleculesRef = { current: MoorhenMoleculeInterface[] }
 
 export class MoorhenMolecule implements MoorhenMoleculeInterface {
     
