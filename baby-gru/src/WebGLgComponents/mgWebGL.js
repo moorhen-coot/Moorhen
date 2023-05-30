@@ -80,7 +80,7 @@ import { determineFontHeight } from './fontHeight.js';
 import { wizards } from './mgWizard.js';
 import { objectsFromAtomColourStyle } from './mgWebGLAtomsToPrimitives.js';
 
-import { guid } from '../utils/MoorhenUtils.js';
+import { guid } from '../utils/MoorhenUtils';
 import { parseMMCIF } from './mgMiniMol.js';
 
 import { quatToMat4, quat4Inverse } from './quatToMat4.js';

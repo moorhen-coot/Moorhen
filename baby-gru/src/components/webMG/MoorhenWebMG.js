@@ -3,7 +3,7 @@ import { Toast, ToastContainer } from 'react-bootstrap';
 import { MGWebGL } from '../../WebGLgComponents/mgWebGL.js';
 import { MoorhenColourRules } from "../modal/MoorhenColourRules.js"
 import { MoorhenContextMenu } from "../context-menu/MoorhenContextMenu.js"
-import { convertViewtoPx } from '../../utils/MoorhenUtils.js';
+import { convertViewtoPx } from '../../utils/MoorhenUtils';
 
 export const MoorhenWebMG = forwardRef((props, glRef) => {
     const scores = useRef({})

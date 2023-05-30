@@ -1,4 +1,4 @@
-import { guid } from '../utils/MoorhenUtils.js';
+import { guid } from '../utils/MoorhenUtils';
 import * as vec3 from 'gl-matrix/vec3';
 import * as vec4 from 'gl-matrix/vec4';
 import * as quat4 from 'gl-matrix/quat';
