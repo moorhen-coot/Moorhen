@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, useCallback, useMemo, Fragment } from "react";
 import { Card, Form, Button, Col, DropdownButton, Stack, Dropdown, OverlayTrigger, ToggleButton } from "react-bootstrap";
-import { doDownload, getNameLabel } from '../../utils/MoorhenUtils';
+import { doDownload } from '../../utils/MoorhenUtils';
+import { getNameLabel } from "./cardUtils"
 import { VisibilityOffOutlined, VisibilityOutlined, ExpandMoreOutlined, ExpandLessOutlined, DownloadOutlined, Settings, FileCopyOutlined, RadioButtonCheckedOutlined, RadioButtonUncheckedOutlined, AddOutlined, RemoveOutlined } from '@mui/icons-material';
 import { MoorhenMapSettingsMenuItem, MoorhenDeleteDisplayObjectMenuItem, MoorhenRenameDisplayObjectMenuItem } from "../menu-item/MoorhenMenuItem";
 import MoorhenSlider from "../misc/MoorhenSlider";

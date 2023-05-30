@@ -23,7 +23,16 @@ interface MoorhenTimeCapsuleInterface {
     maxBackupCount: number;
     version: string;
     disableBackups: boolean;
-    storageInstance: any
+    storageInstance: LocalStorageInstanceInterface;
+}
+
+
+export interface LocalStorageInstanceInterface {
+    clear: () => Promise<void>;
+    keys: () => Promise<string[]>;
+    setItem: (key: string, value: string) => Promise<string>;
+    removeItem: (key: string) => Promise<void>;
+    getItem: (key: string) => Promise<string>;
 }
 
 export const getBackupLabel = (key: backupKeyType): string => {
@@ -48,7 +57,7 @@ export class MoorhenTimeCapsule implements MoorhenTimeCapsuleInterface {
     maxBackupCount: number;
     version: string;
     disableBackups: boolean;
-    storageInstance: any
+    storageInstance: LocalStorageInstanceInterface;
     
     constructor(moleculesRef: MoorhenMoleculesRef, mapsRef: MoorhenMapsRef, activeMapRef: MoorhenMapRef, glRef: glRefType, preferences: any) {
         this.moleculesRef = moleculesRef

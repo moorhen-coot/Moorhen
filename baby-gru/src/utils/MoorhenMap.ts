@@ -198,7 +198,7 @@ export class MoorhenMap implements MoorhenMapInterface {
         })
     }
 
-    loadToCootFromMtzFile = async function (source: { name: string; }, selectedColumns: selectedColumnsType) {
+    loadToCootFromMtzFile = async function (source: Blob, selectedColumns: selectedColumnsType) {
         const $this = this
         let reflectionData = await readDataFile(source)
         const asUIntArray = new Uint8Array(reflectionData)
@@ -245,7 +245,7 @@ export class MoorhenMap implements MoorhenMapInterface {
             })
     }
 
-    loadToCootFromMapFile = async function (source: { name: any; }, isDiffMap: boolean) {
+    loadToCootFromMapFile = async function (source: Blob, isDiffMap: boolean) {
         const $this = this
         return readDataFile(source)
             .then(mapData => {

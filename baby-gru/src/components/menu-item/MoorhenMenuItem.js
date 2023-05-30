@@ -3,7 +3,8 @@ import { CheckOutlined, CloseOutlined } from "@mui/icons-material";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { OverlayTrigger, Popover, PopoverBody, PopoverHeader, Form, InputGroup, Button, FormSelect, Row, Col, SplitButton, Dropdown, Stack, Placeholder } from "react-bootstrap";
 import { SketchPicker } from "react-color";
-import { MoorhenMtzWrapper, readTextFile, readDataFile, cidToSpec } from "../../utils/MoorhenUtils";
+import { readTextFile, readDataFile, cidToSpec } from "../../utils/MoorhenUtils";
+import { MoorhenMtzWrapper } from "../utils/MoorhenMtzWrapper"
 import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";

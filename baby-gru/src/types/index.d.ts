@@ -41,5 +41,15 @@ declare global {
     type glRefType = {
         current: mgWebGLType;
     }
+    type emscriptemInstanceInterface<T> = {
+        clone: () => T;
+        delete: () => void;
+        isDeleted: () => boolean;
+    }
+    interface emscriptemVectorInterface<T> extends emscriptemInstanceInterface<T> {
+        size: () => number;
+        get: (idx: number) => T;
+        at: (idx: number) => T;
+    }
 }
 

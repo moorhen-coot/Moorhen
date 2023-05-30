@@ -1,11 +1,14 @@
 import { v4 as uuidv4 } from 'uuid';
 
 export type cootCommandKwargsType = { 
-    message: string;
+    message?: string;
     data?: {};
-    returnType?: any;
-    command?: any;
- }
+    returnType?: string;
+    command?: string;
+    commandArgs?: any[];
+    changesMolecules?: number[];
+    [key: string]: any;
+}
 
 export type WorkerMessageType = { 
     consoleMessage?: string;
@@ -39,7 +42,12 @@ export interface MoorhenCommandCentreInterface {
     onConsoleChanged: null | ( (msg: string) => void );
     onNewCommand : null | ( (kwargs: any) => void );
     onActiveMessagesChanged: null | ( (activeMessages: WorkerMessageType[]) => void );
+    cootCommand: (kwargs: cootCommandKwargsType, doJournal?: boolean) => Promise<WorkerResponseType>;
+    postMessage: (kwargs: cootCommandKwargsType) => Promise<WorkerResponseType>;
+    extendConsoleMessage: (msg: string) => void;
 }
+
+export type MoorhenCommandCentreRef = { current: MoorhenCommandCentreInterface }
 
 export class MoorhenCommandCentre implements MoorhenCommandCentreInterface {
     urlPrefix: string;
@@ -106,7 +114,7 @@ export class MoorhenCommandCentre implements MoorhenCommandCentreInterface {
         this.cootWorker.terminate()
     }
     
-    async cootCommand(kwargs: { returnType: any; command: any; }, doJournal: boolean = false) {
+    async cootCommand(kwargs:cootCommandKwargsType, doJournal: boolean = false): Promise<WorkerResponseType> {
         const message = "coot_command"
         if (this.onNewCommand && doJournal) {
             console.log('In cootCommand', kwargs.command)
@@ -115,7 +123,7 @@ export class MoorhenCommandCentre implements MoorhenCommandCentreInterface {
         return this.postMessage({ message, ...kwargs })
     }
     
-    postMessage(kwargs: cootCommandKwargsType) {
+    postMessage(kwargs: cootCommandKwargsType): Promise<WorkerResponseType> {
         const $this = this
         const messageId = uuidv4()
         return new Promise((resolve, reject) => {
