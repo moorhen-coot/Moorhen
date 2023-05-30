@@ -196,6 +196,10 @@ export interface MoorhenMoleculeInterface {
     monomerLibraryPath: string;
     getAtoms(format?: string): Promise<WorkerResponseType>;
     hide: (style: string, glRef: React.RefObject<mgWebGLType>) => void;
+    redraw: (glRef: React.RefObject<mgWebGLType>) => Promise<void>;
+    setAtomsDirty: (newVal: boolean) => void;
+    hasVisibleBuffers: (excludeBuffers?: string[]) => boolean;
+    centreAndAlignViewOn(glRef: React.RefObject<mgWebGLType>, selectionCid: string, animate?: boolean): Promise<boolean>;
 }
 
 export class MoorhenMolecule implements MoorhenMoleculeInterface {
@@ -692,7 +696,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         return this.drawWithStyleFromAtoms(style, glRef)
     }
 
-    centreAndAlignViewOn(glRef: React.RefObject<mgWebGLType>, selectionCid: string, animate: boolean = true) {
+    centreAndAlignViewOn(glRef: React.RefObject<mgWebGLType>, selectionCid: string, animate: boolean = true): Promise<boolean> {
 
         let promise
         if (this.atomsDirty) {

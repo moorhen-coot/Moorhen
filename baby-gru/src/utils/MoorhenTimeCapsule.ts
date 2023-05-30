@@ -11,7 +11,7 @@ type backupKeyType = {
     mtzNames?: string[];
 }
 
-interface MoorhenTimeCapsuleInterface {
+export interface MoorhenTimeCapsuleInterface {
     moleculesRef: React.RefObject<MoorhenMoleculeInterface[]>;
     mapsRef: React.RefObject<MoorhenMapInterface[]>;
     glRef: React.RefObject<mgWebGLType>;
@@ -24,6 +24,7 @@ interface MoorhenTimeCapsuleInterface {
     version: string;
     disableBackups: boolean;
     storageInstance: LocalStorageInstanceInterface;
+    addModification: () =>  Promise<string>;
 }
 
 
@@ -233,7 +234,7 @@ export class MoorhenTimeCapsule implements MoorhenTimeCapsuleInterface {
         return session
     }
 
-    async addModification() {
+    async addModification(): Promise<string> {
         this.modificationCount += 1
         if (this.modificationCount >= this.modificationCountBackupThreshold && !this.disableBackups) {
             this.busy = true
