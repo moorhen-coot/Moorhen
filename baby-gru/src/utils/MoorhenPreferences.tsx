@@ -69,7 +69,7 @@ const updateStoredPreferences = async (key: string, value: any): Promise<void> =
 
 const getDefaultValues = (): MoorhenPreferencesInterface => {
     return {
-        version: 'v26',
+        version: 'v27',
         defaultBackgroundColor: [1, 1, 1, 1], 
         atomLabelDepthMode: true, 
         enableTimeCapsule: true, 
