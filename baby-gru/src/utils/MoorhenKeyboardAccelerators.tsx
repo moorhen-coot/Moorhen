@@ -4,8 +4,13 @@ import * as vec3 from 'gl-matrix/vec3';
 import * as quat4 from 'gl-matrix/quat';
 import { quatToMat4, quat4Inverse } from '../WebGLgComponents/quatToMat4.js';
 import { getDeviceScale, vec3Create } from '../WebGLgComponents/mgWebGL';
+import { MoorhenMoleculeInterface, MoorhenResidueSpecType } from "./MoorhenMolecule";
+import { MoorhenTimeCapsuleInterface } from "./MoorhenTimeCapsule";
+import { MoorhenShortcutType } from "./MoorhenPreferences";
+import { MoorhenCommandCentreInterface } from "./MoorhenCommandCentre";
+import { MoorhenMapInterface } from "./MoorhenMap";
 
-const apresEdit = (molecule, glRef, timeCapsuleRef, setHoveredAtom) => {
+const apresEdit = (molecule: MoorhenMoleculeInterface, glRef: React.RefObject<mgWebGLType>, timeCapsuleRef: React.RefObject<MoorhenTimeCapsuleInterface>, setHoveredAtom: (arg0: HoverHoveredAtomType) => void) => {
     molecule.setAtomsDirty(true)
     molecule.redraw(glRef)
     setHoveredAtom({ molecule: null, cid: null })
@@ -14,7 +19,22 @@ const apresEdit = (molecule, glRef, timeCapsuleRef, setHoveredAtom) => {
     timeCapsuleRef.current.addModification()
 }
 
-export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
+type keyBoardAcceleratorsPropsType = {
+    shortcutOnHoveredAtom: boolean;
+    showShortcutToast: boolean; 
+    setShowToast: React.Dispatch<React.SetStateAction<boolean>>; 
+    setToastContent: React.Dispatch<React.SetStateAction<JSX.Element>>; 
+    hoveredAtom: HoverHoveredAtomType; 
+    setHoveredAtom: React.Dispatch<React.SetStateAction<HoverHoveredAtomType>>;
+    commandCentre: React.RefObject<MoorhenCommandCentreInterface>; 
+    activeMap: MoorhenMapInterface; 
+    glRef: React.RefObject<mgWebGLType>; 
+    molecules: MoorhenMoleculeInterface[]; 
+    timeCapsuleRef: React.RefObject<MoorhenTimeCapsuleInterface>;
+    viewOnly: boolean; 
+}
+
+export const babyGruKeyPress = (event: KeyboardEvent, collectedProps: keyBoardAcceleratorsPropsType, shortCuts: {[key: string]: MoorhenShortcutType}) => {
     
     const { 
         setShowToast, setToastContent, hoveredAtom, 
@@ -22,8 +42,8 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         glRef, molecules, timeCapsuleRef, viewOnly
     } = collectedProps;
 
-    const getCentreAtom = async () => {
-        const visibleMolecules = molecules.filter(molecule => molecule.isVisible && molecule.hasVisibleBuffers())
+    const getCentreAtom = async (): Promise<[MoorhenMoleculeInterface, string]> => {
+        const visibleMolecules: MoorhenMoleculeInterface[] = molecules.filter((molecule: MoorhenMoleculeInterface) => molecule.isVisible && molecule.hasVisibleBuffers())
         if (visibleMolecules.length === 0) {
             return
         }
@@ -32,16 +52,16 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
             command: "get_active_atom",
             commandArgs: [...glRef.current.origin.map(coord => coord * -1), visibleMolecules.map(molecule => molecule.molNo).join(':')]
         })
-        const moleculeMolNo = response.data.result.result.first
-        const residueCid = response.data.result.result.second
-        const selectedMolecule = visibleMolecules.find(molecule => molecule.molNo === moleculeMolNo)
+        const moleculeMolNo: number = response.data.result.result.first
+        const residueCid: string = response.data.result.result.second
+        const selectedMolecule = visibleMolecules.find((molecule: MoorhenMoleculeInterface) => molecule.molNo === moleculeMolNo)
         return [selectedMolecule, residueCid]
     }
     
-    const doShortCut = async (cootCommand, formatArgs) => {
-        let chosenMolecule
-        let chosenAtom
-        let residueCid
+    const doShortCut = async (cootCommand: string, formatArgs: (arg0: MoorhenMoleculeInterface, arg1: MoorhenResidueSpecType) => any[]): Promise<boolean> => {
+        let chosenMolecule: MoorhenMoleculeInterface
+        let chosenAtom: MoorhenResidueSpecType
+        let residueCid: string
         
         if (!collectedProps.shortcutOnHoveredAtom) {
             [chosenMolecule, residueCid] = await getCentreAtom()
@@ -73,8 +93,8 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         return true
     }
     
-    let modifiers = []
-    let eventModifiersCodes = []
+    let modifiers: string[] = []
+    let eventModifiersCodes: string[] = []
 
     if (event.shiftKey) modifiers.push("<Shift>") && eventModifiersCodes.push('shiftKey')
     if (event.ctrlKey) modifiers.push("<Ctrl>") && eventModifiersCodes.push('ctrlKey')
@@ -87,7 +107,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         setShowToast(true)    
     }
     
-    let action = null;
+    let action: null | string = null;
 
     for (const key of Object.keys(shortCuts)) {
         if (event.key && shortCuts[key].keyPress === event.key.toLowerCase() && shortCuts[key].modifiers.every(modifier => event[modifier]) && eventModifiersCodes.every(modifier => shortCuts[key].modifiers.includes(modifier))) {
@@ -101,10 +121,10 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     }
 
     if (action === 'sphere_refine' && activeMap && !viewOnly) {
-        const formatArgs = (chosenMolecule, chosenAtom) => {
+        const formatArgs = (chosenMolecule: MoorhenMoleculeInterface, chosenAtom: MoorhenResidueSpecType) => {
             return [chosenMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`, "SPHERE"]
         }
-        setToastContent(
+        collectedProps.showShortcutToast && setToastContent(
             <h5 style={{margin: 0}}>
                 <List>
                     <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
@@ -116,10 +136,10 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     }
 
     else if (action === 'flip_peptide' && activeMap && !viewOnly) {
-        const formatArgs = (chosenMolecule, chosenAtom) => {
+        const formatArgs = (chosenMolecule: MoorhenMoleculeInterface, chosenAtom: MoorhenResidueSpecType) => {
             return [chosenMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, '']
         }
-        setToastContent(
+        collectedProps.showShortcutToast && setToastContent(
             <h5 style={{margin: 0}}>
                 <List>
                     <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
@@ -131,10 +151,10 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     }
 
     else if (action === 'triple_refine' && activeMap && !viewOnly) {
-        const formatArgs = (chosenMolecule, chosenAtom) => {
+        const formatArgs = (chosenMolecule: MoorhenMoleculeInterface, chosenAtom: MoorhenResidueSpecType) => {
             return [chosenMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`, "TRIPLE"]
         }
-        setToastContent(
+        collectedProps.showShortcutToast && setToastContent(
             <h5 style={{margin: 0}}>
                 <List>
                     <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
@@ -146,7 +166,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     }
 
     else if (action === 'auto_fit_rotamer' && activeMap && !viewOnly) {
-        const formatArgs = (chosenMolecule, chosenAtom) => {
+        const formatArgs = (chosenMolecule: MoorhenMoleculeInterface, chosenAtom: MoorhenResidueSpecType) => {
             return [
                 chosenMolecule.molNo,
                 chosenAtom.chain_id,
@@ -156,7 +176,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
                 activeMap.molNo
             ]
         }
-        setToastContent(
+        collectedProps.showShortcutToast && setToastContent(
             <h5 style={{margin: 0}}>
                 <List>
                     <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
@@ -168,10 +188,10 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     }
 
     else if (action === 'add_terminal_residue' && activeMap && !viewOnly) {
-        const formatArgs = (chosenMolecule, chosenAtom) => {
+        const formatArgs = (chosenMolecule: MoorhenMoleculeInterface, chosenAtom: MoorhenResidueSpecType) => {
             return [chosenMolecule.molNo,  `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
         }
-        setToastContent(
+        collectedProps.showShortcutToast && setToastContent(
             <h5 style={{margin: 0}}>
                 <List>
                     <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
@@ -183,14 +203,14 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     }
 
     else if (action === 'delete_residue' && !viewOnly) {
-        const formatArgs = (chosenMolecule, chosenAtom) => {
+        const formatArgs = (chosenMolecule: MoorhenMoleculeInterface, chosenAtom: MoorhenResidueSpecType) => {
             return [
                 chosenMolecule.molNo, 
                 `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/*${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`, 
                 'LITERAL'
             ]
         }
-        setToastContent(
+        collectedProps.showShortcutToast && setToastContent(
             <h5 style={{margin: 0}}>
                 <List>
                     <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
@@ -202,10 +222,10 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     }
 
     else if (action === 'eigen_flip' && !viewOnly) {
-        const formatArgs = (chosenMolecule, chosenAtom) => {
+        const formatArgs = (chosenMolecule: MoorhenMoleculeInterface, chosenAtom: MoorhenResidueSpecType) => {
             return [chosenMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`]
         }
-        setToastContent(
+        collectedProps.showShortcutToast && setToastContent(
             <h5 style={{margin: 0}}>
                 <List>
                     <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
@@ -217,7 +237,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     }
 
     else if (action === 'go_to_blob' && activeMap && !viewOnly) {
-        setToastContent(
+        collectedProps.showShortcutToast && setToastContent(
             <h5 style={{margin: 0}}>
                 <List>
                     <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
@@ -225,7 +245,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
                 </List>
             </h5>
         )
-        const frontAndBack = glRef.current.getFrontAndBackPos(event);
+        const frontAndBack: [number[], number[], number, number] = glRef.current.getFrontAndBackPos(event);
         const goToBlobEvent = {
             back: [frontAndBack[0][0], frontAndBack[0][1], frontAndBack[0][2]],
             front: [frontAndBack[1][0], frontAndBack[1][1], frontAndBack[1][2]],
@@ -250,7 +270,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         glRef.current.measuredAtoms = []
         glRef.current.clearMeasureCylinderBuffers()
         glRef.current.drawScene()
-        setToastContent(
+        collectedProps.showShortcutToast && setToastContent(
             <h5 style={{margin: 0}}>
                 <List>
                     <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
@@ -423,13 +443,13 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
 
             if(glRef.current.gl.viewportWidth>glRef.current.gl.viewportHeight){
                 target_w = w;
-                target_h = parseInt(h / ratio);
+                target_h = Math.floor(h / ratio);
                 target_xoff = 0;
-                target_yoff = parseInt(0.5*glRef.current.rttFramebuffer.height - 0.5 / ratio * glRef.current.rttFramebuffer.height);
+                target_yoff = Math.floor(0.5*glRef.current.rttFramebuffer.height - 0.5 / ratio * glRef.current.rttFramebuffer.height);
             } else {
-                target_w = parseInt(w * ratio);
+                target_w = Math.floor(w * ratio);
                 target_h = h;
-                target_xoff = parseInt(0.5*glRef.current.rttFramebuffer.width - 0.5 * ratio * glRef.current.rttFramebuffer.width);
+                target_xoff = Math.floor(0.5*glRef.current.rttFramebuffer.width - 0.5 * ratio * glRef.current.rttFramebuffer.width);
                 target_yoff = 0;
             }
             saveCanvas.width = target_w;
@@ -455,7 +475,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
         }
 
 
-        let link = document.getElementById('download_image_link');
+        let link: any = document.getElementById('download_image_link');
         if (!link) {
             link = document.createElement('a');
             link.id = 'download_image_link';
@@ -486,7 +506,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
             glRef.current.showShortCutHelp = null
             glRef.current.drawScene()
         }
-        setToastContent(
+        collectedProps.showShortcutToast && setToastContent(
             <h5 style={{margin: 0}}>
                 <List>
                     <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
@@ -514,8 +534,8 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
                 return
             }
             
-            let nextResNum
-            const selectedResidueIndex = selectedSequence.sequence.findIndex(res => res.resNum === parseInt(chosenAtom.res_no))
+            let nextResNum: number
+            const selectedResidueIndex = selectedSequence.sequence.findIndex(res => res.resNum === chosenAtom.res_no)
             if (selectedResidueIndex === -1) {
                 return
             } else if (action === 'jump_next_residue' && selectedResidueIndex !== selectedSequence.sequence.length - 1) {
@@ -534,7 +554,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     else if (action === 'decrease_front_clip') {
         glRef.current.gl_clipPlane0[3] = glRef.current.gl_clipPlane0[3] - 0.5
         glRef.current.drawScene()
-        setToastContent(
+        collectedProps.showShortcutToast && setToastContent(
             <h5 style={{margin: 0}}>
                 <List>
                     <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
@@ -548,7 +568,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     else if (action === 'increase_front_clip') {
         glRef.current.gl_clipPlane0[3] = glRef.current.gl_clipPlane0[3] + 0.5
         glRef.current.drawScene()
-        setToastContent(
+        collectedProps.showShortcutToast && setToastContent(
             <h5 style={{margin: 0}}>
                 <List>
                     <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
@@ -562,7 +582,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     else if (action === 'decrease_back_clip') {
         glRef.current.gl_clipPlane1[3] = glRef.current.gl_clipPlane1[3] - 0.5
         glRef.current.drawScene()
-        setToastContent(
+        collectedProps.showShortcutToast && setToastContent(
             <h5 style={{margin: 0}}>
                 <List>
                     <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>
@@ -576,7 +596,7 @@ export const babyGruKeyPress = (event, collectedProps, shortCuts) => {
     else if (action === 'increase_back_clip') {
         glRef.current.gl_clipPlane1[3] = glRef.current.gl_clipPlane1[3] + 0.5
         glRef.current.drawScene()
-        setToastContent(
+        collectedProps.showShortcutToast && setToastContent(
             <h5 style={{margin: 0}}>
                 <List>
                     <ListItem style={{justifyContent: 'center'}}>{`${modifiers.join("-")} ${event.key} pressed`}</ListItem>

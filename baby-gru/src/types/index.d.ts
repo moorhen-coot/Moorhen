@@ -24,9 +24,32 @@ declare global {
         light_colours_ambient: [number, number, number, number];
         background_colour: [number, number, number, number];
         origin: [number, number, number];
-        drawScene: () => void;
         liveUpdatingMaps: any[];
         displayBuffers: any[];
+        labelledAtoms: any[];
+        measuredAtoms: any[];
+        pixel_data: any[];
+        screenshotBuffersReady: boolean;
+        save_pixel_data: boolean;
+        renderToTexture: boolean;
+        showShortCutHelp: string[];
+        WEBGL2: boolean;
+        gl: {
+            viewportWidth: number;
+            viewportHeight: number;
+        };
+        canvas: {
+            width: number;
+            height: number;
+        };
+        rttFramebuffer: {
+            width: number;
+            height: number;
+        };
+        drawScene: () => void;
+        initTextureFramebuffer: () => void;
+        setZoom: (arg0: number) => void;
+        clearMeasureCylinderBuffers: () => void;
         reContourMaps: () => void;
         drawScene: () => void;
         buildBuffers: () => void;
@@ -34,12 +57,10 @@ declare global {
         appendOtherData: (jsondata: any, skipRebuild?: boolean, name?: string) => void;
         setOriginAnimated: (origin: number[], doDrawScene?: boolean) => void
         setOrigin: (origin: number[], doDrawScene?: boolean, dispatchEvent?: boolean) => void;
+        getFrontAndBackPos: (evt: KeyboardEvent) => [number[], number[], number, number];
         labelsTextCanvasTexture: {
             removeBigTextureTextImages: (labels: string[]) => void;
         }
-    }
-    type glRefType = {
-        current: mgWebGLType;
     }
     type emscriptemInstanceInterface<T> = {
         clone: () => T;

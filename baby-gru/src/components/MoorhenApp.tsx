@@ -1,9 +1,11 @@
-import { useRef, useState, useReducer, useContext, useEffect } from 'react';
+import { useRef, useState, useReducer, useContext } from 'react';
 import { historyReducer, initialHistoryState } from './navbar-menus/MoorhenHistoryMenu';
-import { PreferencesContext } from "../utils/MoorhenPreferences";
+import { MoorhenPreferencesInterface, PreferencesContext } from "../utils/MoorhenPreferences";
 import { MoorhenContainer } from "./MoorhenContainer"
 import { MoorhenMapInterface } from "../utils/MoorhenMap"
 import { MoorhenMoleculeInterface } from "../utils/MoorhenMolecule"
+import { MoorhenTimeCapsuleInterface } from '../utils/MoorhenTimeCapsule';
+import { MoorhenCommandCentreInterface } from '../utils/MoorhenCommandCentre';
 
 type Change = {
     action: 'Add' | 'Remove' | 'AddList' | 'Empty';
@@ -32,17 +34,17 @@ const initialMapsState: MoorhenMapInterface[] = []
 
 export const MoorhenApp = (props: { forwardControls: (controls: any) => any }) => {
     const glRef = useRef(null)
-    const timeCapsuleRef = useRef(null)
-    const commandCentre = useRef(null)
+    const timeCapsuleRef = useRef<null | MoorhenTimeCapsuleInterface>(null)
+    const commandCentre = useRef<null | MoorhenCommandCentreInterface>(null)
     const moleculesRef = useRef<null | MoorhenMoleculeInterface[]>(null)
     const mapsRef = useRef<null | MoorhenMapInterface[]>(null)
     const activeMapRef = useRef<null | MoorhenMapInterface>(null)
-    const consoleDivRef = useRef(null)
+    const consoleDivRef = useRef<null | HTMLDivElement>(null)
     const lastHoveredAtom = useRef<null | HoverHoveredAtomType>(null)
     const prevActiveMoleculeRef = useRef<null | MoorhenMoleculeInterface>(null)
-    const preferences = useContext(PreferencesContext);
-    const [activeMap, setActiveMap] = useState(null)
-    const [activeMolecule, setActiveMolecule] = useState(null)
+    const preferences = useContext<undefined | MoorhenPreferencesInterface>(PreferencesContext);
+    const [activeMap, setActiveMap] = useState<null | MoorhenMapInterface>(null)
+    const [activeMolecule, setActiveMolecule] = useState<null | MoorhenMoleculeInterface>(null)
     const [hoveredAtom, setHoveredAtom] = useState<HoverHoveredAtomType>({ molecule: null, cid: null })
     const [consoleMessage, setConsoleMessage] = useState<string>("")
     const [cursorStyle, setCursorStyle] = useState<string>("default")

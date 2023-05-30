@@ -1,5 +1,5 @@
-import { MoorhenMoleculesRef } from "./MoorhenMolecule"
-import { MoorhenMapInterface, MoorhenMapRef, MoorhenMapsRef } from "./MoorhenMap"
+import { MoorhenMoleculeInterface } from "./MoorhenMolecule"
+import { MoorhenMapInterface } from "./MoorhenMap"
 import { WorkerResponseType } from "./MoorhenCommandCentre";
 
 type backupKeyType = {
@@ -11,11 +11,11 @@ type backupKeyType = {
     mtzNames?: string[];
 }
 
-interface MoorhenTimeCapsuleInterface {
-    moleculesRef: MoorhenMoleculesRef;
-    mapsRef: MoorhenMapsRef;
-    glRef: glRefType;
-    activeMapRef: MoorhenMapRef;
+export interface MoorhenTimeCapsuleInterface {
+    moleculesRef: React.RefObject<MoorhenMoleculeInterface[]>;
+    mapsRef: React.RefObject<MoorhenMapInterface[]>;
+    glRef: React.RefObject<mgWebGLType>;
+    activeMapRef: React.RefObject<MoorhenMapInterface>;
     preferences: any;
     busy: boolean;
     modificationCount: number;
@@ -24,6 +24,7 @@ interface MoorhenTimeCapsuleInterface {
     version: string;
     disableBackups: boolean;
     storageInstance: LocalStorageInstanceInterface;
+    addModification: () =>  Promise<string>;
 }
 
 
@@ -46,10 +47,10 @@ export const getBackupLabel = (key: backupKeyType): string => {
 
 export class MoorhenTimeCapsule implements MoorhenTimeCapsuleInterface {
 
-    moleculesRef: MoorhenMoleculesRef;
-    mapsRef: MoorhenMapsRef;
-    glRef: glRefType;
-    activeMapRef: MoorhenMapRef;
+    moleculesRef: React.RefObject<MoorhenMoleculeInterface[]>;
+    mapsRef: React.RefObject<MoorhenMapInterface[]>;
+    glRef: React.RefObject<mgWebGLType>;
+    activeMapRef: React.RefObject<MoorhenMapInterface>;
     preferences: any;
     busy: boolean;
     modificationCount: number;
@@ -59,7 +60,7 @@ export class MoorhenTimeCapsule implements MoorhenTimeCapsuleInterface {
     disableBackups: boolean;
     storageInstance: LocalStorageInstanceInterface;
     
-    constructor(moleculesRef: MoorhenMoleculesRef, mapsRef: MoorhenMapsRef, activeMapRef: MoorhenMapRef, glRef: glRefType, preferences: any) {
+    constructor(moleculesRef: React.RefObject<MoorhenMoleculeInterface[]>, mapsRef: React.RefObject<MoorhenMapInterface[]>, activeMapRef: React.RefObject<MoorhenMapInterface>, glRef: React.RefObject<mgWebGLType>, preferences: any) {
         this.moleculesRef = moleculesRef
         this.mapsRef = mapsRef
         this.glRef = glRef
@@ -233,7 +234,7 @@ export class MoorhenTimeCapsule implements MoorhenTimeCapsuleInterface {
         return session
     }
 
-    async addModification() {
+    async addModification(): Promise<string> {
         this.modificationCount += 1
         if (this.modificationCount >= this.modificationCountBackupThreshold && !this.disableBackups) {
             this.busy = true
