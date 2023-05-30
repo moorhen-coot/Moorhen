@@ -38,9 +38,6 @@ declare global {
             removeBigTextureTextImages: (labels: string[]) => void;
         }
     }
-    type glRefType = {
-        current: mgWebGLType;
-    }
     type emscriptemInstanceInterface<T> = {
         clone: () => T;
         delete: () => void;
