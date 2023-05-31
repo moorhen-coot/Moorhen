@@ -12,6 +12,7 @@ var twod_vertex_shader_source = `
     uniform mat4 uMVINVMatrix;
     uniform mat4 uPMatrix;
     uniform mat4 TextureMatrix;
+    uniform mat4 uINVSymmMatrix;
 
     varying lowp vec4 vColor;
     varying lowp vec3 vNormal;
@@ -27,7 +28,7 @@ var twod_vertex_shader_source = `
     void main(void) {
 
       float silly_scale = 1.4142135623730951;
-      vec4 theVert = vec4(silly_scale*size[0]*aVertexPosition+offset,1.0);
+      vec4 theVert = vec4(silly_scale*size[0]* (uINVSymmMatrix *vec4(aVertexPosition,1.0)).xyz+offset,1.0);
 
       ShadowCoord = TextureMatrix * theVert;
 
