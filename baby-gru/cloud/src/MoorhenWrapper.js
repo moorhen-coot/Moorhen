@@ -331,7 +331,7 @@ export default class MoorhenWrapper {
           .then(_ => {
             const newUnitCellParams = JSON.stringify(loadedMolecule.getUnitCellParams())
             if (oldUnitCellParams !== newUnitCellParams) {
-              loadedMolecule.centreOn(this.controls.glRef, null, true)
+              loadedMolecule.centreOn(this.controls.glRef, '/*/*/*/*', true)
             }   
           })
           .catch((err) => {
