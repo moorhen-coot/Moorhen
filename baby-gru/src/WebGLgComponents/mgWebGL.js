@@ -1560,7 +1560,7 @@ class MGWebGL extends Component {
             const sum = this.mspfArray.reduce((a, b) => a + b, 0);
             const avg = (sum / this.mspfArray.length) || 0;
             const fps = 1.0/avg * 1000;
-            self.fpsText = (fps).toFixed(0) + " fps ("+avg.toFixed(2)+" ms/frame)";
+            self.fpsText = avg.toFixed(2)+" ms/frame (" + (fps).toFixed(0)+" fps)";
             }, 1000);
 
         //Set to false to use WebGL 1
