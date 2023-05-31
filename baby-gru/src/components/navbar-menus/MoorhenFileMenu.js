@@ -35,7 +35,7 @@ export const MoorhenFileMenu = (props) => {
         await Promise.all(drawPromises)
 
         changeMolecules({ action: "AddList", items: newMolecules })
-        newMolecules.at(-1).centreOn(glRef, null, false)
+        newMolecules.at(-1).centreOn(glRef, '/*/*/*/*', false)
     }
 
     const readPdbFile = (file) => {
