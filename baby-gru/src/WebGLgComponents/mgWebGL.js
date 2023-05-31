@@ -1609,6 +1609,34 @@ class MGWebGL extends Component {
         //this.drawGradient(c.width/2, c.height/2);
     }
 
+    startSpinTest() {
+        this.doSpin = true;
+        requestAnimationFrame(this.doSpinTestFrame.bind(this));
+    }
+
+    stopSpinTest() {
+        this.doSpin = false;
+    }
+
+    doSpinTestFrame() {
+        let xQ = createXQuatFromDX(0);
+        let yQ = createYQuatFromDY(1);
+        quat4.multiply(xQ, xQ, yQ);
+        quat4.multiply(this.myQuat, this.myQuat, xQ);
+        this.drawScene()
+        if(this.doSpin)
+            requestAnimationFrame(this.doSpinTestFrame.bind(this));
+    }
+
+    setSpinTestState(doSpin) {
+        this.doSpin = doSpin;
+        if(this.doSpin){
+            this.startSpinTest();
+        } else {
+            this.stopSpinTest();
+        }
+    }
+
     setShadowsOn(doShadow) {
         this.doShadow = doShadow;
     }
@@ -1739,6 +1767,8 @@ class MGWebGL extends Component {
         this.renderToTexture = false;
 
         this.doShadow = false;
+
+        this.doSpin = false;
 
         //Debugging only
         this.doShadowDepthDebug = false;

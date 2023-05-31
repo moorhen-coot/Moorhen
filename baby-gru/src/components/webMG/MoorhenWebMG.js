@@ -136,6 +136,11 @@ export const MoorhenWebMG = forwardRef((props, glRef) => {
     }, [props.preferences.doShadow])
 
     useEffect(() => {
+        glRef.current.setSpinTestState(props.preferences.doSpinTest)
+        glRef.current.drawScene()
+    }, [props.preferences.doSpinTest])
+
+    useEffect(() => {
         glRef.current.useOffScreenBuffers = props.preferences.useOffScreenBuffers
         glRef.current.drawScene()
     }, [props.preferences.useOffScreenBuffers])

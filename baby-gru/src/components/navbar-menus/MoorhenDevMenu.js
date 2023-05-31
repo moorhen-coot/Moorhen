@@ -88,6 +88,13 @@ export const MoorhenDevMenu = (props) => {
                             onChange={() => { props.setDoShadow(!props.doShadow) }}
                             label="Shadows"/>
                     </InputGroup>
+                    <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                        <Form.Check 
+                            type="switch"
+                            checked={props.doSpinTest}
+                            onChange={() => { props.setDoSpinTest(!props.doSpinTest) }}
+                            label="Spin test"/>
+                    </InputGroup>
             </NavDropdown >
         </>
     }

@@ -26,6 +26,7 @@ export interface MoorhenPreferencesInterface {
     doShadow: boolean; 
     GLLabelsFontFamily: string;
     GLLabelsFontSize: number;
+    doSpinTest: boolean;
     mouseSensitivity: number;
     zoomWheelSensitivityFactor: number;
     contourWheelSensitivityFactor: number;
@@ -87,6 +88,7 @@ const getDefaultValues = (): MoorhenPreferencesInterface => {
         doShadow: false,
         GLLabelsFontFamily: "Arial",
         GLLabelsFontSize: 18,
+        doSpinTest: false,
         mouseSensitivity: 0.3,
         zoomWheelSensitivityFactor: 1.0,
         contourWheelSensitivityFactor: 0.05,
@@ -313,6 +315,7 @@ const PreferencesContextProvider = ({ children }) => {
     const [doShadow, setDoShadow] = useState<null | boolean>(null)
     const [GLLabelsFontFamily, setGLLabelsFontFamily] = useState<null | string>(null)
     const [GLLabelsFontSize, setGLLabelsFontSize] = useState<null | number>(null)
+    const [doSpinTest, setDoSpinTest] = useState<null | number>(null)
     const [mapLineWidth, setMapLineWidth] = useState<null | number>(null)
     const [makeBackups, setMakeBackups] = useState<null | boolean>(null)
     const [showShortcutToast, setShowShortcutToast] = useState<null | boolean>(null)
@@ -362,6 +365,7 @@ const PreferencesContextProvider = ({ children }) => {
         32: { label: "doShadow", value: doShadow, valueSetter: setDoShadow},
         33: { label: "GLLabelsFontFamily", value: GLLabelsFontFamily, valueSetter: setGLLabelsFontFamily},
         34: { label: "GLLabelsFontSize", value: GLLabelsFontSize, valueSetter: setGLLabelsFontSize},
+        35: { label: "doSpinTest", value: doSpinTest, valueSetter: setDoSpinTest},
     }
 
     const restoreDefaults = (defaultValues)=> {
@@ -661,6 +665,15 @@ const PreferencesContextProvider = ({ children }) => {
 
     useMemo(() => {
 
+        if (doSpinTest === null) {
+            return
+        }
+
+        updateStoredPreferences('doSpinTest', doSpinTest);
+    }, [doSpinTest]);
+
+    useMemo(() => {
+
         if (drawInteractions === null) {
             return
         }
@@ -736,7 +749,8 @@ const PreferencesContextProvider = ({ children }) => {
         drawInteractions, setDrawInteractions, clipCap, setClipCap, enableTimeCapsule, setEnableTimeCapsule, 
         doPerspectiveProjection, setDoPerspectiveProjection, useOffScreenBuffers, setUseOffScreenBuffers, drawAxes,
         setDrawAxes, devMode, setDevMode, doShadowDepthDebug, setDoShadowDepthDebug, doShadow, setDoShadow,
-        GLLabelsFontFamily, setGLLabelsFontFamily, GLLabelsFontSize, setGLLabelsFontSize
+        GLLabelsFontFamily, setGLLabelsFontFamily, GLLabelsFontSize, setGLLabelsFontSize, doSpinTest,
+        setDoSpinTest
     }
 
     return (
