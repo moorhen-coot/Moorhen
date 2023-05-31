@@ -1560,7 +1560,7 @@ class MGWebGL extends Component {
             const sum = this.mspfArray.reduce((a, b) => a + b, 0);
             const avg = (sum / this.mspfArray.length) || 0;
             const fps = 1.0/avg * 1000;
-            self.fpsText = (fps).toFixed(0) + " fps";
+            self.fpsText = (fps).toFixed(0) + " fps ("+avg.toFixed(2)+" ms/frame)";
             }, 1000);
 
         //Set to false to use WebGL 1
@@ -7995,7 +7995,7 @@ class MGWebGL extends Component {
             const thisTime = performance.now();
             const mspf = thisTime - this.prevTime;
             this.mspfArray.push(mspf);
-            if(this.mspfArray.length>100) this.mspfArray.shift();
+            if(this.mspfArray.length>200) this.mspfArray.shift();
             this.prevTime = thisTime;
         }
 
@@ -10345,7 +10345,7 @@ class MGWebGL extends Component {
         mat4.ortho(pMatrix, -24, 24, -24, 24, 0.1, 1000.0);
         mat4.multiply(pmvMatrix, pMatrix, tempMVMatrix); // Lines
         this.gl.uniformMatrix4fv(this.shaderProgramThickLines.pMatrixUniform, false, pmvMatrix);
-        this.gl.uniform1f(this.shaderProgramThickLines.pixelZoom, 0.08);
+        this.gl.uniform1f(this.shaderProgramThickLines.pixelZoom, 0.04);
 
         if (typeof (this.hitchometerPositionBuffer) === "undefined") {
             this.hitchometerPositionBuffer = this.gl.createBuffer();
@@ -10363,14 +10363,14 @@ class MGWebGL extends Component {
 
         const hitchometerColours = [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1];
         const hitchometerVertices = [
-            -22.1, -11.9, 0.0,
-            -11.9, -11.9, 0.0,
-            -22.1, -22.1, 0.0,
-            -11.9, -22.1, 0.0,
-            -22.1, -11.9, 0.0,
-            -22.1, -22.1, 0.0,
-            -11.9, -11.9, 0.0,
-            -11.9, -22.1, 0.0,
+            -22.9, -11.4, 0.0,
+            -12.7, -11.4, 0.0,
+            -22.9, -21.6, 0.0,
+            -12.7, -21.6, 0.0,
+            -22.9, -11.4, 0.0,
+            -22.9, -21.6, 0.0,
+            -12.7, -11.4, 0.0,
+            -12.7, -21.6, 0.0,
 
         ];
 
@@ -10379,9 +10379,9 @@ class MGWebGL extends Component {
             if(mspf>200.0) mspf = 200.0;
 
             const l = mspf / 200.0 * 10.0;
-            const x = -22 + i/10.;
-            const y1 = -22;
-            const y2 = -22 + l;
+            const x = -22.8 + i/20.;
+            const y1 = -21.5;
+            const y2 = -21.5 + l;
             const z = 0.0;
             hitchometerVertices.push(x,y1,z,x,y2,z);
             if(mspf<17){
