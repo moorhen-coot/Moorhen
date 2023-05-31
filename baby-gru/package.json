@@ -9,6 +9,23 @@
   "config": {
     "forge": {
       "packagerConfig": {
+        "ignore": [
+            "^/public/baby-gru$",
+            "^/public/favicon.ico$",
+            "^/public/index.html",
+            "^/public/logo192.png",
+            "^/public/manifest.json",
+            "^/Dockerfile",
+            "^/README.md",
+            "^/SimpleCrossOriginServer.py",
+            "^/cloud",
+            "^/docker-compose.yml",
+            "^/forge.config.js",
+            "^/nginx",
+            "^/nodemon.json",
+            "^/out",
+            "^/src$"
+        ],
         "icon": "src/icons/icon",
         "name": "Moorhen"
       },
