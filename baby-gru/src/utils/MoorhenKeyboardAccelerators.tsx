@@ -7,10 +7,9 @@ import { getDeviceScale, vec3Create } from '../WebGLgComponents/mgWebGL';
 import { MoorhenMoleculeInterface, MoorhenResidueSpecType } from "./MoorhenMolecule";
 import { MoorhenTimeCapsuleInterface } from "./MoorhenTimeCapsule";
 import { MoorhenShortcutType } from "./MoorhenPreferences";
-import { MoorhenCommandCentreInterface } from "./MoorhenCommandCentre";
-import { MoorhenMapInterface } from "./MoorhenMap";
+import { MoorhenControlsInterface } from "../components/MoorhenContainer";
 
-const apresEdit = (molecule: MoorhenMoleculeInterface, glRef: React.RefObject<mgWebGLType>, timeCapsuleRef: React.RefObject<MoorhenTimeCapsuleInterface>, setHoveredAtom: (arg0: HoverHoveredAtomType) => void) => {
+const apresEdit = (molecule: MoorhenMoleculeInterface, glRef: React.RefObject<mgWebGLType>, timeCapsuleRef: React.RefObject<MoorhenTimeCapsuleInterface>, setHoveredAtom: (arg0: HoveredAtomType) => void) => {
     molecule.setAtomsDirty(true)
     molecule.redraw(glRef)
     setHoveredAtom({ molecule: null, cid: null })
@@ -19,22 +18,7 @@ const apresEdit = (molecule: MoorhenMoleculeInterface, glRef: React.RefObject<mg
     timeCapsuleRef.current.addModification()
 }
 
-type keyBoardAcceleratorsPropsType = {
-    shortcutOnHoveredAtom: boolean;
-    showShortcutToast: boolean; 
-    setShowToast: React.Dispatch<React.SetStateAction<boolean>>; 
-    setToastContent: React.Dispatch<React.SetStateAction<JSX.Element>>; 
-    hoveredAtom: HoverHoveredAtomType; 
-    setHoveredAtom: React.Dispatch<React.SetStateAction<HoverHoveredAtomType>>;
-    commandCentre: React.RefObject<MoorhenCommandCentreInterface>; 
-    activeMap: MoorhenMapInterface; 
-    glRef: React.RefObject<mgWebGLType>; 
-    molecules: MoorhenMoleculeInterface[]; 
-    timeCapsuleRef: React.RefObject<MoorhenTimeCapsuleInterface>;
-    viewOnly: boolean; 
-}
-
-export const babyGruKeyPress = (event: KeyboardEvent, collectedProps: keyBoardAcceleratorsPropsType, shortCuts: {[key: string]: MoorhenShortcutType}) => {
+export const babyGruKeyPress = (event: KeyboardEvent, collectedProps: MoorhenControlsInterface, shortCuts: {[key: string]: MoorhenShortcutType}): boolean | Promise<boolean> => {
     
     const { 
         setShowToast, setToastContent, hoveredAtom, 

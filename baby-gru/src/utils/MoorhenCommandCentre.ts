@@ -38,6 +38,7 @@ export interface MoorhenCommandCentreInterface {
     cootWorker: any;
     consoleMessage: string;
     activeMessages: WorkerMessageType[];
+    unhook: () => void;
     onCootInitialized: null | ( () => void );
     onConsoleChanged: null | ( (msg: string) => void );
     onNewCommand : null | ( (kwargs: any) => void );

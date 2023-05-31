@@ -8,7 +8,9 @@ export type MoorhenShortcutType = {
     viewOnly: boolean;
 }
 export interface MoorhenPreferencesInterface {
+    setDefaultBackgroundColor?: (backgroundColor: [number, number, number, number]) => void;
     version?: string;
+    isMounted?: boolean;
     defaultBackgroundColor: [number, number, number, number];
     atomLabelDepthMode: boolean; 
     enableTimeCapsule: boolean;
@@ -43,7 +45,7 @@ export interface MoorhenPreferencesInterface {
     maxBackupCount: number;
     modificationCountBackupThreshold: number;
     devMode: boolean; 
-    shortCuts: {
+    shortCuts: string | {
         [label: string]: MoorhenShortcutType;
     };
 }

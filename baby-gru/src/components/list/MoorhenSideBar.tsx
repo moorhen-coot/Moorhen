@@ -6,19 +6,27 @@ import { MoorhenConsole } from"../misc/MoorhenConsole";
 import { convertRemToPx, convertViewtoPx} from '../../utils/MoorhenUtils';
 import { ArrowBackOutlined, ArrowForwardOutlined } from '@mui/icons-material';
 import { Spinner, Form } from 'react-bootstrap';
+import { MoorhenControlsInterface } from "../MoorhenContainer"
 
-export const MoorhenSideBar = forwardRef((props, ref) => {
-    const [showSideBar, setShowSideBar] = useState(false);
-    const [opacity, setOpacity] = useState(0.5);
-    const [consoleBodyHeight, setConsoleBodyHeight] = useState(convertViewtoPx(0, props.windowHeight))
-    const [accordionDropdownId, setAccordionDropdownId] = useState(-1)
+interface MoorhenSideBarPropsInterface extends MoorhenControlsInterface {
+    busy: boolean;
+    consoleMessage: string;
+}
 
-    const sideBarWidth = Math.max(convertViewtoPx(30, props.windowWidth), convertRemToPx(24))
-    const toggleDrowerButtonWidth = sideBarWidth * 0.07
+export const MoorhenSideBar = forwardRef<HTMLDivElement, MoorhenSideBarPropsInterface>((props, ref) => {
+    const [showSideBar, setShowSideBar] = useState<boolean>(false);
+    const [opacity, setOpacity] = useState<number>(0.5);
+    const [consoleBodyHeight, setConsoleBodyHeight] = useState<number>(convertViewtoPx(0, props.windowHeight))
+    const [accordionDropdownId, setAccordionDropdownId] = useState<number>(-1)
+
+    const sideBarWidth: number = Math.max(convertViewtoPx(30, props.windowWidth), convertRemToPx(24))
+    const toggleDrowerButtonWidth: number = sideBarWidth * 0.07
 
     useEffect(() => {
-        consoleBodyHeight !== 0 ? setConsoleBodyHeight(convertViewtoPx(30, props.windowHeight)) : setConsoleBodyHeight(convertViewtoPx(0, props.windowHeight))
-        ref.current.scrollTop = ref.current.scrollHeight;
+        if (ref != null && typeof ref !== 'function') { 
+            consoleBodyHeight !== 0 ? setConsoleBodyHeight(convertViewtoPx(30, props.windowHeight)) : setConsoleBodyHeight(convertViewtoPx(0, props.windowHeight))
+            ref.current.scrollTop = ref.current.scrollHeight;    
+        }
     }, [showSideBar, props.windowHeight, props.windowWidth])
 
     return <>
@@ -125,7 +133,7 @@ export const MoorhenSideBar = forwardRef((props, ref) => {
             onMouseOver={() => setOpacity(1)}
             onMouseOut={() => setOpacity(0.5)}
         >
-            <div style={{padding: 0, maring: 0, height: '2rem', justifyContent: 'right', display:'flex', alignContent:'center', verticalAlign:'center'}}>
+            <div style={{padding: 0, margin: 0, height: '2rem', justifyContent: 'right', display:'flex', alignContent:'center', verticalAlign:'center'}}>
                 {opacity === 1 && props.hoveredAtom.cid && <Form.Control style={{ height: '2rem', width: "20rem" }} type="text" readOnly={true} value={`${props.hoveredAtom.molecule.name}:${props.hoveredAtom.cid}`} />}
                 {opacity === 1 && props.busy && <Spinner animation="border" style={{ height: '2rem', marginRight: '0.5rem', marginLeft: '0.5rem' }} />}
             </div>
