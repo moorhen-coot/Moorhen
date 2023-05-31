@@ -5396,6 +5396,7 @@ class MGWebGL extends Component {
         this.shaderDepthShadowProgramPerfectSpheres.pMatrixUniform = this.gl.getUniformLocation(this.shaderDepthShadowProgramPerfectSpheres, "uPMatrix");
         this.shaderDepthShadowProgramPerfectSpheres.mvMatrixUniform = this.gl.getUniformLocation(this.shaderDepthShadowProgramPerfectSpheres, "uMVMatrix");
         this.shaderDepthShadowProgramPerfectSpheres.mvInvMatrixUniform = this.gl.getUniformLocation(this.shaderDepthShadowProgramPerfectSpheres, "uMVINVMatrix");
+        this.shaderDepthShadowProgramPerfectSpheres.invSymMatrixUniform = this.gl.getUniformLocation(this.shaderDepthShadowProgramPerfectSpheres, "uINVSymmMatrix");
 
         this.shaderDepthShadowProgramPerfectSpheres.fog_start = this.gl.getUniformLocation(this.shaderDepthShadowProgramPerfectSpheres, "fog_start");
         this.shaderDepthShadowProgramPerfectSpheres.fog_end = this.gl.getUniformLocation(this.shaderDepthShadowProgramPerfectSpheres, "fog_end");
@@ -5453,6 +5454,7 @@ class MGWebGL extends Component {
         this.shaderProgramPerfectSpheres.mvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "uMVMatrix");
         this.shaderProgramPerfectSpheres.mvInvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "uMVINVMatrix");
         this.shaderProgramPerfectSpheres.textureMatrixUniform = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "TextureMatrix");
+        this.shaderProgramPerfectSpheres.invSymMatrixUniform = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "uINVSymmMatrix");
 
         this.shaderProgramPerfectSpheres.fog_start = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "fog_start");
         this.shaderProgramPerfectSpheres.fog_end = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "fog_end");
@@ -7150,13 +7152,19 @@ class MGWebGL extends Component {
 
     applySymmetryMatrix(theShader,symmetryMatrix,tempMVMatrix,tempMVInvMatrix){
         let symt = mat4.create();
+        let invsymt = mat4.create();
         mat4.set(symt,
                 symmetryMatrix[0], symmetryMatrix[1], symmetryMatrix[2], symmetryMatrix[3],
                 symmetryMatrix[4], symmetryMatrix[5], symmetryMatrix[6], symmetryMatrix[7],
                 symmetryMatrix[8], symmetryMatrix[9], symmetryMatrix[10], symmetryMatrix[11],
                 symmetryMatrix[12], symmetryMatrix[13], symmetryMatrix[14], symmetryMatrix[15]);
         mat4.multiply(tempMVMatrix, this.mvMatrix, symt);
+        mat4.invert(invsymt, symt);
+        invsymt[12] = 0.0;
+        invsymt[13] = 0.0;
+        invsymt[14] = 0.0;
         this.gl.uniformMatrix4fv(theShader.mvMatrixUniform, false, tempMVMatrix);
+        this.gl.uniformMatrix4fv(theShader.invSymMatrixUniform, false, invsymt);
         tempMVMatrix[12] = 0.0;
         tempMVMatrix[13] = 0.0;
         tempMVMatrix[14] = 0.0;
@@ -8355,12 +8363,20 @@ class MGWebGL extends Component {
                 this.gl.disableVertexAttribArray(i);
 
             if (this.frag_depth_ext) {
+                let invsymt = mat4.create();
                 let program = this.shaderProgramPerfectSpheres;
                 if (calculatingShadowMap) {
                     program = this.shaderDepthShadowProgramPerfectSpheres;
                 }
 
+                mat4.set(invsymt,
+                1.0, 0.0, 0.0, 0.0,
+                0.0, 1.0, 0.0, 0.0,
+                0.0, 0.0, 1.0, 0.0,
+                0.0, 0.0, 0.0, 1.0,
+                );
                 this.gl.useProgram(program);
+                this.gl.uniformMatrix4fv(program.invSymMatrixUniform, false, invsymt);
                 this.setMatrixUniforms(program);
                 this.gl.disableVertexAttribArray(program.vertexColourAttribute);
                 this.gl.enableVertexAttribArray(program.vertexPositionAttribute);
@@ -8421,6 +8437,12 @@ class MGWebGL extends Component {
                             this.gl.uniform4fv(program.light_colours_ambient, [sfrac,sfrac,sfrac,1.0]);
                             //FIXME - Looks like several unused arguments in this function.
                             this.setupModelViewTransformMatrixInteractive(this.displayBuffers[idx].transformMatrixInteractive, this.displayBuffers[idx].transformOriginInteractive, null, program, null, null, null);
+                            let invsymt2 = mat4.create();
+                            mat4.invert(invsymt2, this.displayBuffers[idx].transformMatrixInteractive);
+                            invsymt2[12] = 0.0;
+                            invsymt2[13] = 0.0;
+                            invsymt2[14] = 0.0;
+                            this.gl.uniformMatrix4fv(program.invSymMatrixUniform, false, invsymt2);
                         }
                         this.gl.enableVertexAttribArray(program.offsetAttribute);
                         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleInstanceOriginBuffer[j]);
@@ -8452,6 +8474,42 @@ class MGWebGL extends Component {
                             this.gl.uniform4fv(program.light_colours_ambient, this.light_colours_ambient);
                             this.gl.uniformMatrix4fv(program.mvMatrixUniform, false, this.mvMatrix);
                             this.gl.uniformMatrix4fv(program.mvInvMatrixUniform, false, this.mvInvMatrix);// All else
+                            this.gl.uniformMatrix4fv(program.invSymMatrixUniform, false, invsymt);
+                        }
+                        if(this.displayBuffers[idx].symmetryMatrices.length>0){
+                            let tempMVMatrix = mat4.create();
+                            let tempMVInvMatrix = mat4.create();
+                            if (this.WEBGL2) {
+                                this.gl.vertexAttribDivisor(program.vertexColourAttribute, 1);
+                                this.gl.vertexAttribDivisor(program.sizeAttribute, 1);
+                                this.gl.vertexAttribDivisor(program.offsetAttribute, 1);
+                            } else {
+                                this.instanced_ext.vertexAttribDivisorANGLE(program.vertexColourAttribute, 1);
+                                this.instanced_ext.vertexAttribDivisorANGLE(program.sizeAttribute, 1);
+                                this.instanced_ext.vertexAttribDivisorANGLE(program.offsetAttribute, 1);
+                            }
+                            for (let isym = 0; isym < this.displayBuffers[idx].symmetryMatrices.length; isym++) {
+
+                                this.applySymmetryMatrix(program,this.displayBuffers[idx].symmetryMatrices[isym],tempMVMatrix,tempMVInvMatrix)
+                                    if (this.WEBGL2) {
+                                        this.gl.drawElementsInstanced(this.gl.TRIANGLE_FAN, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_INT, 0, this.displayBuffers[idx].triangleInstanceOriginBuffer[j].numItems);
+                                    } else {
+                                        this.instanced_ext.drawElementsInstancedANGLE(this.gl.TRIANGLE_FAN, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_INT, 0, this.displayBuffers[idx].triangleInstanceOriginBuffer[j].numItems);
+                                    }
+
+                            }
+                            if (this.WEBGL2) {
+                                this.gl.vertexAttribDivisor(program.vertexColourAttribute, 0);
+                                this.gl.vertexAttribDivisor(program.sizeAttribute, 0);
+                                this.gl.vertexAttribDivisor(program.offsetAttribute, 0);
+                            } else {
+                                this.instanced_ext.vertexAttribDivisorANGLE(program.vertexColourAttribute, 0);
+                                this.instanced_ext.vertexAttribDivisorANGLE(program.sizeAttribute, 0);
+                                this.instanced_ext.vertexAttribDivisorANGLE(program.offsetAttribute, 0);
+                            }
+                            this.gl.uniformMatrix4fv(program.mvMatrixUniform, false, this.mvMatrix);// All else
+                            this.gl.uniformMatrix4fv(program.mvInvMatrixUniform, false, this.mvInvMatrix);// All else
+
                         }
                     }
                 }
