@@ -8409,6 +8409,19 @@ class MGWebGL extends Component {
                         //Instanced colour
                         //Instanced size
                         //Instanced offset
+                        if (this.displayBuffers[idx].transformMatrixInteractive) {
+                            const t = Date.now();
+                            const tdiff = (Math.round(t/1000) - t/1000);
+                            let sfrac;
+                            if(tdiff<0){
+                                sfrac = Math.sin(Math.PI+tdiff*Math.PI);
+                            } else {
+                                sfrac = Math.sin(tdiff*Math.PI);
+                            }
+                            this.gl.uniform4fv(program.light_colours_ambient, [sfrac,sfrac,sfrac,1.0]);
+                            //FIXME - Looks like several unused arguments in this function.
+                            this.setupModelViewTransformMatrixInteractive(this.displayBuffers[idx].transformMatrixInteractive, this.displayBuffers[idx].transformOriginInteractive, null, program, null, null, null);
+                        }
                         this.gl.enableVertexAttribArray(program.offsetAttribute);
                         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleInstanceOriginBuffer[j]);
                         this.gl.vertexAttribPointer(program.offsetAttribute, this.displayBuffers[idx].triangleInstanceOriginBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
@@ -8435,7 +8448,11 @@ class MGWebGL extends Component {
                             this.instanced_ext.vertexAttribDivisorANGLE(program.sizeAttribute, 0);
                             this.instanced_ext.vertexAttribDivisorANGLE(program.offsetAttribute, 0);
                         }
-
+                        if (this.displayBuffers[idx].transformMatrixInteractive) {
+                            this.gl.uniform4fv(program.light_colours_ambient, this.light_colours_ambient);
+                            this.gl.uniformMatrix4fv(program.mvMatrixUniform, false, this.mvMatrix);
+                            this.gl.uniformMatrix4fv(program.mvInvMatrixUniform, false, this.mvInvMatrix);// All else
+                        }
                     }
                 }
 
