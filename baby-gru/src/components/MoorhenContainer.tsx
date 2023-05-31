@@ -1,79 +1,142 @@
-import { useEffect, useCallback, useReducer, useRef, useState, useContext } from 'react';
+import React, { useEffect, useCallback, useReducer, useRef, useState, useContext } from 'react';
 import { Container, Col, Row, Spinner, Toast, ToastContainer } from 'react-bootstrap';
 import { MoorhenWebMG } from './webMG/MoorhenWebMG';
 import { convertRemToPx, convertViewtoPx, getTooltipShortcutLabel, createLocalStorageInstance, allFontsSet } from '../utils/MoorhenUtils';
 import { historyReducer, initialHistoryState } from './navbar-menus/MoorhenHistoryMenu';
-import { MoorhenCommandCentre } from "../utils/MoorhenCommandCentre"
-import { PreferencesContext } from "../utils/MoorhenPreferences";
-import { MoorhenTimeCapsule } from '../utils/MoorhenTimeCapsule';
+import { MoorhenCommandCentre, MoorhenCommandCentreInterface } from "../utils/MoorhenCommandCentre"
+import { MoorhenPreferencesInterface, PreferencesContext } from "../utils/MoorhenPreferences";
+import { MoorhenTimeCapsule, MoorhenTimeCapsuleInterface } from '../utils/MoorhenTimeCapsule';
 import { MoorhenButtonBar } from './button/MoorhenButtonBar';
 import { Backdrop } from "@mui/material";
 import { babyGruKeyPress } from '../utils/MoorhenKeyboardAccelerators';
 import { MoorhenSideBar } from './list/MoorhenSideBar';
 import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
 import { MoorhenNavBar } from "./navbar-menus/MoorhenNavBar"
+import { MoorhenMoleculeInterface } from '../utils/MoorhenMolecule';
+import { MoorhenMapInterface } from '../utils/MoorhenMap';
+import { itemReducer, MolChange } from "./MoorhenApp"
 import './MoorhenContainer.css'
 
-const initialMoleculesState = []
+const initialMoleculesState: MoorhenMoleculeInterface[] = []
 
-const initialMapsState = []
+const initialMapsState: MoorhenMapInterface[] = []
 
-const itemReducer = (oldList, change) => {
-    if (change.action === 'Add') {
-        return [...oldList, change.item]
-    }
-    else if (change.action === 'Remove') {
-        return oldList.filter(item => item.molNo !== change.item.molNo)
-    }
-    else if (change.action === 'AddList') {
-        return oldList.concat(change.items)
-    }
-    else if (change.action === 'Empty') {
-        return []
-    }
+interface statesMapInterface {
+    glRef: React.MutableRefObject<null | mgWebGLType>;
+    timeCapsuleRef: React.MutableRefObject<null | MoorhenTimeCapsuleInterface>;
+    commandCentre: React.MutableRefObject<MoorhenCommandCentreInterface>;
+    moleculesRef: React.MutableRefObject<null | MoorhenMoleculeInterface[]>;
+    mapsRef: React.MutableRefObject<null | MoorhenMapInterface[]>;
+    activeMapRef: React.MutableRefObject<MoorhenMapInterface>;
+    consoleDivRef: React.MutableRefObject<null | HTMLDivElement>;
+    lastHoveredAtom: React.MutableRefObject<null | HoveredAtomType>;
+    prevActiveMoleculeRef: React.MutableRefObject<null | MoorhenMoleculeInterface>;
+    preferences: MoorhenPreferencesInterface;
+    activeMap: MoorhenMapInterface;
+    setActiveMap: React.Dispatch<React.SetStateAction<MoorhenMapInterface>>;
+    activeMolecule: MoorhenMoleculeInterface;
+    setActiveMolecule: React.Dispatch<React.SetStateAction<MoorhenMoleculeInterface>>;
+    hoveredAtom: null | HoveredAtomType;
+    setHoveredAtom: React.Dispatch<React.SetStateAction<HoveredAtomType>>;
+    consoleMessage: string;
+    setConsoleMessage: React.Dispatch<React.SetStateAction<string>>;
+    cursorStyle: string;
+    setCursorStyle: React.Dispatch<React.SetStateAction<string>>;
+    busy: boolean;
+    setBusy: React.Dispatch<React.SetStateAction<boolean>>;
+    windowWidth: number;
+    setWindowWidth: React.Dispatch<React.SetStateAction<number>>;
+    windowHeight: number;
+    setWindowHeight: React.Dispatch<React.SetStateAction<number>>;
+    commandHistory: any;
+    dispatchHistoryReducer: (arg0: any) => void;
+    molecules: MoorhenMoleculeInterface[]
+    changeMolecules: (arg0: MolChange<MoorhenMoleculeInterface>) => void;
+    maps: MoorhenMapInterface[];
+    changeMaps: (arg0: MolChange<MoorhenMapInterface>) => void;
+    backgroundColor: [number, number, number, number];
+    setBackgroundColor: React.Dispatch<React.SetStateAction<[number, number, number, number]>>;
+    currentDropdownId: number | string;
+    setCurrentDropdownId: React.Dispatch<React.SetStateAction<number | string>>;
+    appTitle: string;
+    setAppTitle: React.Dispatch<React.SetStateAction<string>>;
+    cootInitialized: boolean;
+    setCootInitialized: React.Dispatch<React.SetStateAction<boolean>>;
+    theme: string,
+    setTheme: React.Dispatch<React.SetStateAction<string>>;
+    showToast: boolean;
+    setShowToast: React.Dispatch<React.SetStateAction<boolean>>;
+    toastContent: null | JSX.Element;
+    setToastContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
+    showColourRulesToast: boolean;
+    setShowColourRulesToast: React.Dispatch<React.SetStateAction<boolean>>;
+    availableFonts: string[];
+    setAvailableFonts: React.Dispatch<React.SetStateAction<string[]>>
 }
 
-export const MoorhenContainer = (props) => {
-    const innerGlRef = useRef(null)
-    const innerTimeCapsuleRef = useRef(null)
-    const innnerCommandCentre = useRef(null)
-    const innerMoleculesRef = useRef(null)
-    const innerMapsRef = useRef(null)
-    const innerActiveMapRef = useRef(null)
-    const innerConsoleDivRef = useRef(null)
-    const innerLastHoveredAtom = useRef(null)
-    const innerPrevActiveMoleculeRef = useRef(null)
-    const innerPreferences = useContext(PreferencesContext);
-    const [innerActiveMap, setInnerActiveMap] = useState(null)
-    const [innerActiveMolecule, setInnerActiveMolecule] = useState(null)
-    const [innerHoveredAtom, setInnerHoveredAtom] = useState({ molecule: null, cid: null })
-    const [innerConsoleMessage, setInnerConsoleMessage] = useState("")
-    const [innerCursorStyle, setInnerCursorStyle] = useState("default")
-    const [innerBusy, setInnerBusy] = useState(false)
-    const [innerWindowWidth, setInnerWindowWidth] = useState(window.innerWidth)
-    const [innerWindowHeight, setInnerWindowHeight] = useState(window.innerHeight)
+interface MoorhenContainerOptionalPropsInterface {
+    disableFileUploads: boolean;
+    urlPrefix: string;
+    extraNavBarMenus: JSX.Element[];
+    exportCallback: any;
+    viewOnly: boolean;
+    extraDraggableModals: JSX.Element[];
+    monomerLibraryPath: string;
+    forwardControls: (arg0: MoorhenControlsInterface) => any;
+    extraFileMenuItems: JSX.Element[];
+    allowScripting: boolean;
+    backupStorageInstance: any;
+    extraEditMenuItems: JSX.Element[];
+    aceDRGInstance: any; 
+}
+
+interface MoorhenContainerPropsInterface extends Partial<statesMapInterface>, Partial<MoorhenContainerOptionalPropsInterface> { }
+
+export interface MoorhenControlsInterface extends Partial<statesMapInterface>, Partial<MoorhenContainerOptionalPropsInterface>, MoorhenPreferencesInterface {
+    isDark: boolean;
+}
+
+export const MoorhenContainer = (props: MoorhenContainerPropsInterface) => {
+    const innerGlRef = useRef<null | mgWebGLType>(null)
+    const innerTimeCapsuleRef = useRef<null | MoorhenTimeCapsuleInterface>(null);
+    const innnerCommandCentre = useRef<null | MoorhenCommandCentreInterface>(null)
+    const innerMoleculesRef = useRef<null | MoorhenMoleculeInterface[]>(null)
+    const innerMapsRef = useRef<null | MoorhenMapInterface[]>(null)
+    const innerActiveMapRef = useRef<null | MoorhenMapInterface>(null)
+    const innerConsoleDivRef = useRef<null | HTMLDivElement>(null)
+    const innerLastHoveredAtom = useRef<null | HoveredAtomType>(null)
+    const innerPrevActiveMoleculeRef = useRef<null |  MoorhenMoleculeInterface>(null)
+    const innerPreferences = useContext<undefined | MoorhenPreferencesInterface>(PreferencesContext);
+    const [innerActiveMap, setInnerActiveMap] = useState<null | MoorhenMapInterface>(null)
+    const [innerActiveMolecule, setInnerActiveMolecule] = useState<null|  MoorhenMoleculeInterface>(null)
+    const [innerHoveredAtom, setInnerHoveredAtom] = useState<null | HoveredAtomType>({ molecule: null, cid: null })
+    const [innerConsoleMessage, setInnerConsoleMessage] = useState<string>("")
+    const [innerCursorStyle, setInnerCursorStyle] = useState<string>("default")
+    const [innerBusy, setInnerBusy] = useState<boolean>(false)
+    const [innerWindowWidth, setInnerWindowWidth] = useState<number>(window.innerWidth)
+    const [innerWindowHeight, setInnerWindowHeight] = useState<number>(window.innerHeight)
     const [innerCommandHistory, innerDispatchHistoryReducer] = useReducer(historyReducer, initialHistoryState)
     const [innerMolecules, innerChangeMolecules] = useReducer(itemReducer, initialMoleculesState)
     const [innerMaps, innerChangeMaps] = useReducer(itemReducer, initialMapsState)
-    const [innerBackgroundColor, setInnerBackgroundColor] = useState([1, 1, 1, 1])
-    const [innerCurrentDropdownId, setInnerCurrentDropdownId] = useState(-1)
-    const [innerAppTitle, setInnerAppTitle] = useState('Moorhen')
-    const [innerCootInitialized, setInnerCootInitialized] = useState(false)
-    const [innerTheme, setInnerTheme] = useState("flatly")
-    const [innerShowToast, setInnerShowToast] = useState(false)
-    const [innerToastContent, setInnerToastContent] = useState("")
-    const [innerShowColourRulesToast, setInnerShowColourRulesToast] = useState(false)
-    const [innerAvailableFonts, setInnerAvailableFonts] = useState([])
+    const [innerBackgroundColor, setInnerBackgroundColor] = useState<[number, number, number, number]>([1, 1, 1, 1])
+    const [innerCurrentDropdownId, setInnerCurrentDropdownId] = useState<number | string>(-1)
+    const [innerAppTitle, setInnerAppTitle] = useState<string>('Moorhen')
+    const [innerCootInitialized, setInnerCootInitialized] = useState<boolean>(false)
+    const [innerTheme, setInnerTheme] = useState<string>("flatly")
+    const [innerShowToast, setInnerShowToast] = useState<boolean>(false)
+    const [innerToastContent, setInnerToastContent] = useState<null | JSX.Element>(null)
+    const [innerShowColourRulesToast, setInnerShowColourRulesToast] = useState<boolean>(false)
+    const [innerAvailableFonts, setInnerAvailableFonts] = useState<string[]>([])
     
-    innerMoleculesRef.current = innerMolecules
-    innerMapsRef.current = innerMaps
+    innerMoleculesRef.current = innerMolecules as MoorhenMoleculeInterface[]
+    innerMapsRef.current = innerMaps as MoorhenMapInterface[]
     innerActiveMapRef.current = innerActiveMap
 
     useEffect(() => {
         const fetchAvailableFonts = async () => {
             await document.fonts.ready;
-            const fontAvailable = []
-            allFontsSet.forEach(font => {
+            const fontAvailable: string[] = []
+            allFontsSet.forEach((font: string) => {
                 if (document.fonts.check(`12px "${font}"`)) {
                     fontAvailable.push(font);
                 }    
@@ -85,7 +148,7 @@ export const MoorhenContainer = (props) => {
 
     }, [])
 
-    const innerStatesMap = {
+    const innerStatesMap: statesMapInterface = {
         glRef: innerGlRef, timeCapsuleRef: innerTimeCapsuleRef, commandCentre: innnerCommandCentre,
         moleculesRef: innerMoleculesRef, mapsRef: innerMapsRef, activeMapRef: innerActiveMapRef,
         consoleDivRef: innerConsoleDivRef, lastHoveredAtom: innerLastHoveredAtom, 
@@ -94,21 +157,20 @@ export const MoorhenContainer = (props) => {
         setActiveMolecule: setInnerActiveMolecule, hoveredAtom: innerHoveredAtom, setHoveredAtom: setInnerHoveredAtom,
         consoleMessage: innerConsoleMessage, setConsoleMessage: setInnerConsoleMessage, cursorStyle: innerCursorStyle,
         setCursorStyle: setInnerCursorStyle, busy: innerBusy, setBusy: setInnerBusy, windowHeight: innerWindowHeight, 
-        windowWidth: innerWindowWidth, setWindowWidth: setInnerWindowWidth, maps: innerMaps, changeMaps: innerChangeMaps, 
-        setWindowHeight: setInnerWindowHeight, commandHistory: innerCommandHistory, 
-        dispatchHistoryReducer: innerDispatchHistoryReducer, molecules: innerMolecules, changeMolecules: innerChangeMolecules, 
-        backgroundColor: innerBackgroundColor, setBackgroundColor: setInnerBackgroundColor,
+        windowWidth: innerWindowWidth, setWindowWidth: setInnerWindowWidth, maps: innerMaps as MoorhenMapInterface[],
+        changeMaps: innerChangeMaps, setWindowHeight: setInnerWindowHeight, commandHistory: innerCommandHistory, 
+        dispatchHistoryReducer: innerDispatchHistoryReducer, molecules: innerMolecules as MoorhenMoleculeInterface[],
+        changeMolecules: innerChangeMolecules, backgroundColor: innerBackgroundColor, setBackgroundColor: setInnerBackgroundColor,
         currentDropdownId: innerCurrentDropdownId, setCurrentDropdownId: setInnerCurrentDropdownId,
         appTitle: innerAppTitle, setAppTitle: setInnerAppTitle, cootInitialized: innerCootInitialized, 
         setCootInitialized: setInnerCootInitialized, theme: innerTheme, setTheme: setInnerTheme,
         showToast: innerShowToast, setShowToast: setInnerShowToast, toastContent: innerToastContent, 
         setToastContent: setInnerToastContent, showColourRulesToast: innerShowColourRulesToast, 
-        setShowColourRulesToast: setInnerShowColourRulesToast,
-        availableFonts: innerAvailableFonts,
+        setShowColourRulesToast: setInnerShowColourRulesToast, availableFonts: innerAvailableFonts,
         setAvailableFonts: setInnerAvailableFonts,
     }
 
-    const states = {}
+    let states = {} as statesMapInterface
     Object.keys(innerStatesMap).forEach(key => {
         states[key] = props[key] ? props[key] : innerStatesMap[key]
     })
@@ -159,7 +221,7 @@ export const MoorhenContainer = (props) => {
     
     useEffect(() => {
         if (cootInitialized && preferences.isMounted) {
-            const shortCut = JSON.parse(preferences.shortCuts).show_shortcuts
+            const shortCut = typeof preferences.shortCuts === 'string' ? JSON.parse(preferences.shortCuts).show_shortcuts : preferences.shortCuts.show_shortcuts
             setToastContent(
                 <h4 style={{margin: 0}}>
                     {`Press ${getTooltipShortcutLabel(shortCut)} to show help`}
@@ -181,7 +243,7 @@ export const MoorhenContainer = (props) => {
         }
         
         let head = document.head;
-        let style = document.createElement("link");
+        let style: any = document.createElement("link");
         const isDark = isDarkBackground(...backgroundColor)
 
         if (isDark) {
@@ -245,7 +307,7 @@ export const MoorhenContainer = (props) => {
                 setBusy(newActiveMessages.length !== 0)
             },
             onNewCommand: (newCommand) => {
-                dispatchHistoryReducer({ action: "add", command: newCommand })
+                dispatchHistoryReducer({ action: "Add", item: newCommand })
             },
             onCootInitialized: () => {
                 setCootInitialized(true)
@@ -265,7 +327,7 @@ export const MoorhenContainer = (props) => {
         }
     }, [consoleMessage])
 
-    const onAtomHovered = useCallback(identifier => {
+    const onAtomHovered = useCallback((identifier: { buffer: { id: string; }; atom: { label: string; }; }) => {
         if (identifier == null) {
             if (lastHoveredAtom.current !== null && lastHoveredAtom.current.molecule !== null) {
                 setHoveredAtom({ molecule: null, cid: null })
@@ -287,8 +349,8 @@ export const MoorhenContainer = (props) => {
     }, [toastContent])
 
     //Make this so that the keyPress returns true or false, depending on whether mgWebGL is to continue processing event
-    const onKeyPress = useCallback(event => {
-        return babyGruKeyPress(event, collectedProps, JSON.parse(preferences.shortCuts))
+    const onKeyPress = useCallback((event: KeyboardEvent) => {
+        return babyGruKeyPress(event, collectedProps, typeof preferences.shortCuts === 'string' ? JSON.parse(preferences.shortCuts) : preferences.shortCuts)
     }, [molecules, activeMolecule, activeMap, hoveredAtom, viewOnly, preferences])
 
     useEffect(() => {
@@ -335,10 +397,7 @@ export const MoorhenContainer = (props) => {
                 glRef.current.setActiveMolecule(null)
         }
         if (prevActiveMoleculeRef.current) {
-            prevActiveMoleculeRef.current.applyTransform(glRef)
-                .then(response => {
-                    resetActiveGL()
-                })
+            prevActiveMoleculeRef.current.applyTransform(glRef).then(() => resetActiveGL())
         } else {
             resetActiveGL()
         }
@@ -359,7 +418,7 @@ export const MoorhenContainer = (props) => {
 
     const isDark = isDarkBackground(...backgroundColor)
 
-    const collectedProps = {
+    const collectedProps: MoorhenControlsInterface = {
         molecules, changeMolecules, appTitle, setAppTitle, maps, changeMaps, glRef, activeMolecule, setActiveMolecule,
         activeMap, setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor, toastContent, 
         setToastContent, currentDropdownId, setCurrentDropdownId, hoveredAtom, setHoveredAtom, showToast, setShowToast,

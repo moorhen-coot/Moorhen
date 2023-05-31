@@ -1,14 +1,32 @@
+import { MoorhenMoleculeInterface } from "../utils/MoorhenMolecule";
+
 export {};
 
 declare global {
     interface Window {
         CCP4Module: any;
     }
-    type HoverHoveredAtomType = {
+    type HoveredAtomType = {
         molecule: MoorhenMoleculeInterface | null,
         cid: string | null
     }
     type mgWebGLType = {
+        atomLabelDepthMode: boolean;
+        setTextFont(GLLabelsFontFamily: string, GLLabelsFontSize: number): void;
+        setBackground(backgroundColor: [number, number, number, number]): void;
+        clipCapPerfectSpheres: boolean;
+        setLightPositionNoUpdate(arg0: number, arg1: number, arg2: number): void;
+        setDiffuseLight(arg0: number, arg1: number, arg2: number): void;
+        setSpecularLightNoUpdate(arg0: number, arg1: number, arg2: number): void;
+        setAmbientLightNoUpdate(arg0: number, arg1: number, arg2: number): void;
+        useOffScreenBuffers: boolean;
+        setSpinTestState(doSpinTest: boolean): void;
+        setShadowsOn(doShadow: boolean): void;
+        setShadowDepthDebug(doShadowDepthDebug: boolean): void;
+        doPerspectiveProjection: boolean;
+        clearTextPositionBuffers(): void;
+        set_clip_range(arg0: number, arg1: number): void;
+        set_fog_range(arg0: number, arg1: number): void;
         myQuat: any;
         gl_fog_start: null | number;
         doDrawClickedAtomLines: any;
@@ -46,6 +64,8 @@ declare global {
             width: number;
             height: number;
         };
+        resize(arg0: number, arg1: number): void;
+        setActiveMolecule: (activeMolecule: MoorhenMoleculeInterface) => void;
         drawScene: () => void;
         initTextureFramebuffer: () => void;
         setZoom: (arg0: number) => void;

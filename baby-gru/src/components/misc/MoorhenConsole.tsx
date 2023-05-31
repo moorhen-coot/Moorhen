@@ -2,13 +2,23 @@ import { forwardRef } from "react";
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
 import { ListItemButton, ListItemText, Collapse } from "@mui/material"
 import {convertViewtoPx} from "../../utils/MoorhenUtils"
+import { MoorhenControlsInterface } from "../MoorhenContainer"
 
-export const MoorhenConsole = forwardRef((props, ref) => {
+interface MoorhenConsolePropsInterface extends MoorhenControlsInterface {
+    busy: boolean;
+    consoleMessage: string;
+    dropdownId: number;
+    accordionDropdownId: number;
+    setAccordionDropdownId: React.Dispatch<React.SetStateAction<number>>;
+    sideBarWidth: number;
+    showSideBar: boolean;
+}
+
+export const MoorhenConsole = forwardRef<HTMLDivElement, MoorhenConsolePropsInterface>((props, ref) => {
 
     return <>
             <ListItemButton
                 id="console-dropdown"
-                show={props.accordionDropdownId === props.dropdownId}
                 style={{display:'flex', alignItems:'center'}}
                 onClick={() => { props.dropdownId !== props.accordionDropdownId ? props.setAccordionDropdownId(props.dropdownId) : props.setAccordionDropdownId(-1) }}>
                 <ListItemText primary="Console" />

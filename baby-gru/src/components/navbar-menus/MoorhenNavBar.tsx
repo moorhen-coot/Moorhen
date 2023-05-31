@@ -10,10 +10,15 @@ import { MoorhenDevMenu } from './MoorhenDevMenu';
 import { MoorhenCryoMenu } from './MoorhenCryoMenu';
 import { MoorhenCalculateMenu } from './MoorhenCalculateMenu';
 import { SaveOutlined } from '@mui/icons-material';
+import { MoorhenControlsInterface } from "../MoorhenContainer"
 
-export const MoorhenNavBar = forwardRef((props, ref) => {
-    const [currentDropdownId, setCurrentDropdownId] = useState(-1)
-    const [showSaveIcon, setShowSaveIcon] = useState(false)
+interface MoorhenNavBarPropsInterface extends MoorhenControlsInterface {
+    busy: boolean;
+}
+
+export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface>((props, ref) => {
+    const [currentDropdownId, setCurrentDropdownId] = useState<number>(-1)
+    const [showSaveIcon, setShowSaveIcon] = useState<boolean>(false)
 
     useEffect(() => {
         if (props.timeCapsuleRef.current) {
