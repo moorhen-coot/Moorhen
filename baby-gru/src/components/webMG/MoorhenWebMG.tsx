@@ -530,7 +530,7 @@ export const MoorhenWebMG = forwardRef<mgWebGLType, MoorhenWebMGPropsInterface>(
                 </ToastContainer>
 
                 <MGWebGL
-                    ref={/**FIXME: Settings this to any is very dirty...*/ glRef as any}
+                    ref={/**FIXME: Setting this to any is very dirty...*/ glRef as any}
                     dataChanged={(d) => { console.log(d) }}
                     onAtomHovered={props.onAtomHovered}
                     onKeyPress={props.onKeyPress}
