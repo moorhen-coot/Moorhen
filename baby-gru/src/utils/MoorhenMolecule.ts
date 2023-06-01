@@ -212,7 +212,7 @@ export interface MoorhenMoleculeInterface {
     redraw: (glRef: React.RefObject<mgWebGLType>) => Promise<void>;
     setAtomsDirty: (newVal: boolean) => void;
     hasVisibleBuffers: (excludeBuffers?: string[]) => boolean;
-    centreAndAlignViewOn(glRef: React.RefObject<mgWebGLType>, selectionCid: string, animate?: boolean): Promise<boolean>;
+    centreAndAlignViewOn(glRef: React.RefObject<mgWebGLType>, selectionCid: string, animate?: boolean): Promise<void>;
     buffersInclude: (bufferIn: { id: string; }) => boolean;
 }
 
@@ -722,117 +722,97 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         return this.drawWithStyleFromAtoms(style, glRef)
     }
 
-    centreAndAlignViewOn(glRef: React.RefObject<mgWebGLType>, selectionCid: string, animate: boolean = true): Promise<boolean> {
+    async centreAndAlignViewOn(glRef: React.RefObject<mgWebGLType>, selectionCid: string, animate: boolean = true): Promise<void> {
 
-        let promise
         if (this.atomsDirty) {
-            promise = this.updateAtoms()
+            await this.updateAtoms()
         }
-        else {
-            promise = Promise.resolve()
+        
+        let selectionAtomsAlign: MoorhenAtomInfoType[] = []
+        let selectionAtomsCentre: MoorhenAtomInfoType[] = []
+        if (selectionCid) {
+            selectionAtomsAlign = await this.gemmiAtomsForCid(selectionCid + "*")
+            selectionAtomsCentre = await this.gemmiAtomsForCid(selectionCid + "CA")
+
+        } else {
+            selectionAtomsAlign = await this.gemmiAtomsForCid('/*/*/*/*')
+            selectionAtomsCentre = await this.gemmiAtomsForCid('/*/*/*/*')
         }
+    
+        let CA: number[]
+        let C: number[]
+        let O: number[]
 
-        return promise.then(async () => {
-
-            let selectionAtomsAlign = []
-            let selectionAtomsCentre = []
-            if (selectionCid) {
-                selectionAtomsAlign = await this.gemmiAtomsForCid(selectionCid + "*")
-                selectionAtomsCentre = await this.gemmiAtomsForCid(selectionCid + "CA")
-
-            } else {
-                selectionAtomsAlign = await this.gemmiAtomsForCid('/*/*/*/*')
-                selectionAtomsCentre = await this.gemmiAtomsForCid('/*/*/*/*')
+        selectionAtomsAlign.forEach(atom => {
+            if (atom.name === "CA") {
+                CA = [atom.x, atom.y, atom.z]
             }
-
-            let CA = null
-            let C = null
-            let O = null
-
-            selectionAtomsAlign.forEach(atom => {
-                if (atom.name === "CA") {
-                    CA = [atom.x, atom.y, atom.z]
-                }
-                if (atom.name === "C") {
-                    C = [atom.x, atom.y, atom.z]
-                }
-                if (atom.name === "O") {
-                    O = [atom.x, atom.y, atom.z]
-                }
-            })
-
-            let newQuat = null
-
-            if (C && CA && O) {
-                let right = vec3.create()
-                vec3.set(right, C[0] - CA[0], C[1] - CA[1], C[2] - CA[2])
-                let rightNorm = vec3.create()
-                vec3.normalize(rightNorm, right);
-
-                let upInit = vec3.create()
-                vec3.set(upInit, O[0] - C[0], O[1] - C[1], O[2] - C[2])
-                let upInitNorm = vec3.create()
-                vec3.normalize(upInitNorm, upInit);
-
-                let forward = vec3.create()
-                vec3.cross(forward, right, upInitNorm)
-                let forwardNorm = vec3.create()
-                vec3.normalize(forwardNorm, forward);
-
-                let up = vec3.create()
-                vec3.cross(up, forwardNorm, rightNorm)
-                let upNorm = vec3.create()
-                vec3.normalize(upNorm, up);
-
-                newQuat = quat4.create()
-                let mat = mat3.create()
-                const [right_x, right_y, right_z] = [rightNorm[0], rightNorm[1], rightNorm[2]]
-                const [up_x, up_y, up_z] = [upNorm[0], upNorm[1], upNorm[2]]
-                const [formaward_x, formaward_y, formaward_z] = [forwardNorm[0], forwardNorm[1], forwardNorm[2]]
-                mat3.set(mat, right_x, right_y, right_z, up_x, up_y, up_z, formaward_x, formaward_y, formaward_z)
-                quat4.fromMat3(newQuat, mat)
+            if (atom.name === "C") {
+                C = [atom.x, atom.y, atom.z]
             }
-
-            let selectionCentre = centreOnGemmiAtoms(selectionAtomsCentre)
-            return new Promise((resolve, reject) => {
-                if (newQuat) {
-                    glRef.current.setOriginOrientationAndZoomAnimated(selectionCentre, newQuat, 0.20);
-                }
-                resolve(true);
-            })
+            if (atom.name === "O") {
+                O = [atom.x, atom.y, atom.z]
+            }
         })
 
+        let newQuat = null
+
+        if (C && CA && O) {
+            let right = vec3.create()
+            vec3.set(right, C[0] - CA[0], C[1] - CA[1], C[2] - CA[2])
+            let rightNorm = vec3.create()
+            vec3.normalize(rightNorm, right);
+
+            let upInit = vec3.create()
+            vec3.set(upInit, O[0] - C[0], O[1] - C[1], O[2] - C[2])
+            let upInitNorm = vec3.create()
+            vec3.normalize(upInitNorm, upInit);
+
+            let forward = vec3.create()
+            vec3.cross(forward, right, upInitNorm)
+            let forwardNorm = vec3.create()
+            vec3.normalize(forwardNorm, forward);
+
+            let up = vec3.create()
+            vec3.cross(up, forwardNorm, rightNorm)
+            let upNorm = vec3.create()
+            vec3.normalize(upNorm, up);
+
+            newQuat = quat4.create()
+            let mat = mat3.create()
+            const [right_x, right_y, right_z] = [rightNorm[0], rightNorm[1], rightNorm[2]]
+            const [up_x, up_y, up_z] = [upNorm[0], upNorm[1], upNorm[2]]
+            const [formaward_x, formaward_y, formaward_z] = [forwardNorm[0], forwardNorm[1], forwardNorm[2]]
+            mat3.set(mat, right_x, right_y, right_z, up_x, up_y, up_z, formaward_x, formaward_y, formaward_z)
+            quat4.fromMat3(newQuat, mat)
+        }
+
+        let selectionCentre = centreOnGemmiAtoms(selectionAtomsCentre)
+        if (newQuat) {
+            glRef.current.setOriginOrientationAndZoomAnimated(selectionCentre, newQuat, 0.20);
+        }
     }
 
-    centreOn(glRef: React.RefObject<mgWebGLType>, selectionCid: string = '/*/*/*/*', animate: boolean = true): Promise<void> {
-        //Note add selection to permit centringh on subset
-        let promise
+    async centreOn(glRef: React.RefObject<mgWebGLType>, selectionCid: string = '/*/*/*/*', animate: boolean = true): Promise<void> {
         if (this.atomsDirty) {
-            promise = this.updateAtoms()
-        }
-        else {
-            promise = Promise.resolve()
+            await this.updateAtoms()
         }
 
-        return promise.then(async (resolve, reject) => {
-             const selectionAtoms = await this.gemmiAtomsForCid(selectionCid)
+        const selectionAtoms = await this.gemmiAtomsForCid(selectionCid)
 
-            if (selectionAtoms.length === 0) {
-                console.log('Unable to selet any atoms, skip centering...')
-                resolve()
-            }
+        if (selectionAtoms.length === 0) {
+            console.log('Unable to selet any atoms, skip centering...')
+            return
+        }
 
-            let selectionCentre = centreOnGemmiAtoms(selectionAtoms)
+        let selectionCentre = centreOnGemmiAtoms(selectionAtoms)
 
-            return new Promise<void>((resolve, reject) => {
-                if (animate) {
-                    glRef.current.setOriginAnimated(selectionCentre);
-                } else {
-                    glRef.current.setOrigin(selectionCentre);
-                }
-                resolve();
-            })
-        })
+        if (animate) {
+            glRef.current.setOriginAnimated(selectionCentre);
+        } else {
+            glRef.current.setOrigin(selectionCentre);
+        }
+
     }
 
     async drawWithStyleFromAtoms(style: string, glRef: React.RefObject<mgWebGLType>) {
@@ -999,7 +979,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
 
     async drawCootSelectionBonds(glRef: React.RefObject<mgWebGLType>, name: string, cid: null | string): Promise<boolean> {
         const $this = this
-        let meshCommand
+        let meshCommand: Promise<WorkerResponseType>
 
         let style = "COLOUR-BY-CHAIN-AND-DICTIONARY"
         let returnType = "instanced_mesh"
@@ -1393,10 +1373,10 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
 
         //Sort out H-bonding
         this.enerLib.AssignHBTypes(webMGAtoms, true);
-        var model = webMGAtoms.atoms[0];
+        let model = webMGAtoms.atoms[0];
         model.calculateHBonds();
 
-        var flagBulge = true;
+        let flagBulge = true;
         CalcSecStructure(webMGAtoms.atoms, flagBulge);
 
         const colourScheme = new ColourScheme(webMGAtoms);
