@@ -974,8 +974,8 @@ export const MoorhenSuperposeMenuItem = (props) => {
             ],
         })
 
-        refMolecule.atomsDirty = true
-        movMolecule.atomsDirty = true
+        refMolecule.setAtomsDirty(true)
+        movMolecule.setAtomsDirty(true)
         await Promise.all([
             refMolecule.redraw(props.glRef),
             movMolecule.redraw(props.glRef)
