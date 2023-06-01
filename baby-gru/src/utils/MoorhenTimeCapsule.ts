@@ -25,7 +25,7 @@ type mapDataSessionType = {
     molNo: number;
     uniqueId: string;
     mapData: Uint8Array;
-    reflectionData: ArrayBuffer;
+    reflectionData: Uint8Array;
     cootContour: boolean;
     contourLevel: number;
     radius: number;
@@ -211,7 +211,7 @@ export class MoorhenTimeCapsule implements MoorhenTimeCapsuleInterface {
 
         let moleculeDataPromises: string[] = []
         let mapDataPromises: Uint8Array[] = []
-        let reflectionDataPromises: ArrayBuffer[] = []
+        let reflectionDataPromises: Uint8Array[] = []
         promises.forEach((promise: string | WorkerResponseType) => {
             if (typeof promise === "string" && promise === 'reflection_data') {
                 reflectionDataPromises.push(null)

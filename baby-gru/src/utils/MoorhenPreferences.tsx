@@ -370,7 +370,7 @@ const PreferencesContextProvider = ({ children }) => {
         35: { label: "doSpinTest", value: doSpinTest, valueSetter: setDoSpinTest},
     }
 
-    const restoreDefaults = (defaultValues)=> {
+    const restoreDefaults = (defaultValues: MoorhenPreferencesInterface)=> {
         updateStoredPreferences('version', defaultValues.version)
         Object.keys(preferencesMap).forEach(key => {
             if (preferencesMap[key].label === 'shortCuts') {

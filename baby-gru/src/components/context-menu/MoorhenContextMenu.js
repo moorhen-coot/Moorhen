@@ -349,7 +349,7 @@ export const MoorhenContextMenu = (props) => {
           command: command,
           commandArgs: [newMolecule.molNo, fragmentCid, alt_conf],
       }, true)
-      newMolecule.atomsDirty = true
+      newMolecule.setAtomsDirty(true)
       newMolecule.clearBuffersOfStyle('selection', props.glRef)
       newMolecule.drawSelection(props.glRef, fragmentCid)
       await newMolecule.redraw(props.glRef)
@@ -362,7 +362,7 @@ export const MoorhenContextMenu = (props) => {
           command: 'replace_fragment',
           commandArgs: [molecule.molNo, newMolecule.molNo, fragmentCid],
       }, true)
-      molecule.atomsDirty = true
+      molecule.setAtomsDirty(true)
       await molecule.redraw(props.glRef)
       props.changeMolecules({ action: 'Remove', item: newMolecule })
       newMolecule.delete(props.glRef)

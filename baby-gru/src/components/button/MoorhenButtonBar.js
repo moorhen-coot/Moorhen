@@ -3,7 +3,7 @@ import { ButtonGroup, Carousel } from "react-bootstrap"
 import { MoorhenAutofitRotamerButton, MoorhenFlipPeptideButton, MoorhenSideChain180Button, MoorhenAddTerminalResidueDirectlyUsingCidButton,
         MoorhenEigenFlipLigandButton, MoorhenJedFlipFalseButton, MoorhenJedFlipTrueButton, MoorhenConvertCisTransButton, MoorhenAddSimpleButton,
         MoorhenRefineResiduesUsingAtomCidButton, MoorhenDeleteUsingCidButton, MoorhenMutateButton, MoorhenRotateTranslateZoneButton,
-        MoorhenAddAltConfButton, MoorhenRigidBodyFitButton, MoorhenRotamerChangeButton } from "./MoorhenSimpleEditButton"
+        MoorhenAddAltConfButton, MoorhenRigidBodyFitButton, MoorhenRotamerChangeButton, MoorhenDragZoneButton } from "./MoorhenSimpleEditButton"
 import { IconButton, Drawer } from "@mui/material";
 import { ArrowDownwardOutlined, ArrowUpwardOutlined } from "@mui/icons-material";
 import { convertRemToPx, convertViewtoPx} from '../../utils/MoorhenUtils';
@@ -62,6 +62,9 @@ export const MoorhenButtonBar = (props) => {
     
         (<MoorhenConvertCisTransButton {...props} key='cis-trans' selectedButtonIndex={selectedButtonIndex}
                 setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="15" />),
+
+        (props.devMode && <MoorhenDragZoneButton {...props} key='drag-atoms' selectedButtonIndex={selectedButtonIndex}
+                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="16" />)
 
     ]
 
