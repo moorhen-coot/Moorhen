@@ -896,6 +896,7 @@ export const MoorhenDragZoneButton = (props) => {
     const chosenMolecule = useRef(null)
     const dragMode = useRef('SINGLE')
     const fragmentCid = useRef(null)
+    const moltenCid = useRef(null)
     const transformedCachedAtoms = useRef('')
     const { changeMolecules, backgroundColor, glRef, defaultBondSmoothness } = props
 
@@ -939,7 +940,7 @@ export const MoorhenDragZoneButton = (props) => {
         setShowAccept(false)
     }, [changeMolecules, glRef])
 
-    const refineNewPosition = async (chosenMolecule, chosenAtom, doRefine=true, nextTimeout=200) => {
+    const refineNewPosition = async (chosenMolecule, chosenAtom, doRefine=true, nextTimeout=10) => {
         // Check if the position of the fragment has changed
         let transformedAtoms = fragmentMolecule.current.transformedCachedAtomsAsMovedAtoms(glRef)
         let transformedAtomsString = JSON.stringify(transformedAtoms)
@@ -949,24 +950,29 @@ export const MoorhenDragZoneButton = (props) => {
             await props.commandCentre.current.cootCommand({
                 returnType: "status",
                 command: "shim_new_positions_for_residue_atoms",
-                commandArgs: [fragmentMolecule.current.molNo, transformedAtoms],
+                commandArgs: [chosenMolecule.current.molNo, transformedAtoms],
             })
         
             // Refine the fragment
+            /*
             await props.commandCentre.current.cootCommand({
                     returnType: 'status',
                     command: 'refine_residues_using_atom_cid',
-                    commandArgs: [fragmentMolecule.current.molNo, chosenAtom.cid, 'MOLECULE'],
+                    commandArgs: [chosenMolecule.current.molNo, moltenCid.current, dragMode.current],
             }, true)
+            */
+            
             
             // Redraw the fragment after refinement based on the new coordinates held in coot
-            fragmentMolecule.current.setAtomsDirty(true)
-            await fragmentMolecule.current.redraw(glRef)
+            chosenMolecule.current.setAtomsDirty(true)
+            await chosenMolecule.current.redraw(glRef)
            
             // Reset things for the next cycle
             transformedCachedAtoms.current = JSON.stringify(transformedAtoms)
+            /*
             fragmentMolecule.current.displayObjects.transformation.origin = [0, 0, 0]
             fragmentMolecule.current.displayObjects.transformation.quat = null
+            */
         }
         setTimeout(() => {
             refineNewPosition(chosenMolecule, chosenAtom, doRefine, nextTimeout)
@@ -1009,10 +1015,11 @@ export const MoorhenDragZoneButton = (props) => {
         if (!start || !stop) {
             return
         }
-        
-        fragmentCid.current = `//${chosenAtom.chain_id}/${start}-${stop}/*`
+        fragmentCid.current = `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`
+        moltenCid.current = `//${chosenAtom.chain_id}/${start}-${stop}/*`
+
         chosenMolecule.current = molecule
-        chosenMolecule.current.hideCid(fragmentCid.current, glRef)
+        //chosenMolecule.current.hideCid(fragmentCid.current, glRef)
         /* Copy the component to move into a new molecule */
         const newMolecule = await molecule.copyFragmentUsingCid(
             fragmentCid.current, backgroundColor, defaultBondSmoothness, glRef, false

@@ -364,7 +364,7 @@ export const MoorhenMapCard = (props) => {
                     <Form.Group controlId="contouringLevel" className="mb-3">
                         <span>{`Lvl: ${mapContourLevel.toFixed(2)} ${props.map.mapRmsd ? '(' + (mapContourLevel / props.map.mapRmsd).toFixed(2) + ' rmsd)' : ''}`}</span>
                         <MoorhenSlider
-                            minVal={0.01}
+                            minVal={0.001}
                             maxVal={5}
                             showMinMaxVal={false}
                             decrementButton={decreaseLevelButton}
