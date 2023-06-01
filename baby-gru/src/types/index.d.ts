@@ -4,7 +4,18 @@ export {};
 
 declare global {
     interface Window {
-        CCP4Module: any;
+        CCP4Module: {
+            check_polymer_type(polymerConst: emscriptemInstanceInterface<number>): {value: number};
+            remove_ligands_and_waters_chain(chain: GemmiChainInterface): void;
+            gemmi_setup_entities(gemmiStructure: GemmiStructureInterface): void;
+            remove_ligands_and_waters_structure(gemmiStructure: GemmiStructureInterface): void;
+            read_structure_from_string(pdbData: string | ArrayBuffer, molName: string): GemmiStructureInterface;
+            get_mtz_columns(fileName: string): emscriptemVectorInterface<string>;
+            FS_createDataFile(arg0: string, fileName: string, byteArray: Uint8Array, arg3: boolean, arg4: boolean): void;
+            getElementNameAsString: (arg0: emscriptemInstanceInterface<string>) => string;
+            FS_unlink: (arg0: string) => void;
+            Selection: { new(cid: string): GemmiSelectionInterface };
+        }
     }
     type HoveredAtomType = {
         molecule: MoorhenMoleculeInterface | null,
@@ -91,6 +102,59 @@ declare global {
         size: () => number;
         get: (idx: number) => T;
         at: (idx: number) => T;
+    }
+    interface GemmiSelectionInterface extends emscriptemInstanceInterface<GemmiSelectionInterface> {
+        matches_model: (model: GemmiModelInterface) => boolean;
+        matches_chain: (chain: GemmiChainInterface) => boolean;
+        matches_residue: (residue: GemmiResidueInterface) => boolean;
+        matches_atom: (atom: GemmiAtomInterface) => boolean;
+    }
+    interface GemmiAtomInterface extends emscriptemInstanceInterface<GemmiAtomInterface> {
+        name: string;
+        element: emscriptemInstanceInterface<string>;
+        pos: { x: number, y: number, z: number, delete: () => void };
+        altloc: number;
+        charge: number;
+        b_iso: number;
+        serial: string;
+        has_altloc: () => boolean;
+    }
+
+    interface GemmiResidueSeqIdInterface extends emscriptemInstanceInterface<GemmiResidueSeqIdInterface> {
+        str: () => string;
+    }
+
+    interface GemmiResidueInterface extends emscriptemInstanceInterface<GemmiResidueInterface> {
+        name: string;
+        seqid: GemmiResidueSeqIdInterface;
+        atoms: emscriptemVectorInterface<GemmiAtomInterface>;
+    }
+
+    interface GemmiChainInterface extends emscriptemInstanceInterface<GemmiChainInterface> {
+        residues: emscriptemVectorInterface<GemmiResidueInterface>;
+        name: string;
+        get_polymer_const: () => emscriptemInstanceInterface<number>;
+        get_ligands_const: () => emscriptemVectorInterface<GemmiResidueInterface>
+    }
+
+    interface GemmiModelInterface extends emscriptemInstanceInterface<GemmiModelInterface> {
+        name: string;
+        chains: emscriptemVectorInterface<GemmiChainInterface>;
+    }
+
+    interface GemmiUnitCellInterface extends emscriptemInstanceInterface<GemmiUnitCellInterface> {
+        a: number;
+        b: number;
+        c: number;
+        alpha: number;
+        beta: number;
+        gamma: number;
+    }
+
+    interface GemmiStructureInterface extends emscriptemInstanceInterface<GemmiStructureInterface> {
+        models: emscriptemVectorInterface<GemmiModelInterface>;
+        cell: GemmiUnitCellInterface;
+        first_model: () => GemmiModelInterface;
     }
 }
 

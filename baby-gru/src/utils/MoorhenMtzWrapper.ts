@@ -6,12 +6,6 @@ interface MoorhenMtzWrapperInterface {
     columns: { [colType: string]: string };
 }
 
-declare global {
-    interface Window {
-        CCP4Module: any;
-    }
-}
-
 export class MoorhenMtzWrapper implements MoorhenMtzWrapperInterface {
 
     reflectionData: null | Uint8Array;
