@@ -15,55 +15,6 @@ import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
 import * as vec3 from 'gl-matrix/vec3';
 import * as mat3 from 'gl-matrix/mat3';
 import * as quat4 from 'gl-matrix/quat';
-import { RefObject } from 'react';
-
-interface GemmiAtomInterface extends emscriptemInstanceInterface<GemmiAtomInterface> {
-    name: string;
-    element: emscriptemInstanceInterface<string>;
-    pos: { x: number, y: number, z: number, delete: () => void };
-    altloc: number;
-    charge: number;
-    b_iso: number;
-    serial: string;
-    has_altloc: () => boolean;
-}
-
-interface GemmiResidueSeqIdInterface extends emscriptemInstanceInterface<GemmiResidueSeqIdInterface> {
-    str: () => string;
-}
-
-interface GemmiResidueInterface extends emscriptemInstanceInterface<GemmiResidueInterface> {
-    name: string;
-    seqid: GemmiResidueSeqIdInterface;
-    atoms: emscriptemVectorInterface<GemmiAtomInterface>;
-}
-
-interface GemmiChainInterface extends emscriptemInstanceInterface<GemmiChainInterface> {
-    residues: emscriptemVectorInterface<GemmiResidueInterface>;
-    name: string;
-    get_polymer_const: () => emscriptemInstanceInterface<number>;
-    get_ligands_const: () => emscriptemVectorInterface<GemmiResidueInterface>
-}
-
-interface GemmiModelInterface extends emscriptemInstanceInterface<GemmiModelInterface> {
-    name: string;
-    chains: emscriptemVectorInterface<GemmiChainInterface>;
-}
-
-interface GemmiUnitCellInterface extends emscriptemInstanceInterface<GemmiUnitCellInterface> {
-    a: number;
-    b: number;
-    c: number;
-    alpha: number;
-    beta: number;
-    gamma: number;
-}
-
-export interface GemmiStructureInterface extends emscriptemInstanceInterface<GemmiStructureInterface> {
-    models: emscriptemVectorInterface<GemmiModelInterface>;
-    cell: GemmiUnitCellInterface;
-    first_model: () => GemmiModelInterface;
-}
 
 export type MoorhenResidueInfoType = {
     resCode: string;
@@ -1334,7 +1285,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         $this.addBuffersOfStyle(glRef, objects, style)
     }
 
-    async drawResidueHighlight(glRef: React.RefObject<mgWebGLType>, style:string, selectionString: string, colour: number[], clearBuffers: boolean = false): Promise<void> {
+    async drawResidueHighlight(glRef: React.RefObject<mgWebGLType>, style: string, selectionString: string, colour: number[], clearBuffers: boolean = false): Promise<void> {
         const $this = this
 
         if (typeof selectionString === 'string') {
@@ -1456,28 +1407,45 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         await $this.drawSymmetry(glRef, false)
     }
 
-    transformedCachedAtomsAsMovedAtoms(glRef: React.RefObject<mgWebGLType>): MovedGemmiAtomsType[][] {
+    transformedCachedAtomsAsMovedAtoms(glRef: React.RefObject<mgWebGLType>, selectionCid: string = '/*/*/*/*'): MovedGemmiAtomsType[][] {
         const $this = this
         let movedResidues: MovedGemmiAtomsType[][] = [];
 
+        const selection = new window.CCP4Module.Selection(selectionCid)
         const models = this.gemmiStructure.models
         const modelsSize = this.gemmiStructure.models.size()
         for (let modelIndex = 0; modelIndex < modelsSize; modelIndex++) {
             const model = models.get(modelIndex)
+            if (!selection.matches_model(model)) {
+                model.delete()
+                continue
+            }
             const chains = model.chains
             const chainsSize = chains.size()
             for (let chainIndex = 0; chainIndex < chainsSize; chainIndex++) {
                 const chain = chains.get(chainIndex)
+                if (!selection.matches_chain(chain)) {
+                    chain.delete()
+                    continue
+                }
                 const residues = chain.residues
                 const residuesSize = residues.size()
                 for (let residueIndex = 0; residueIndex < residuesSize; residueIndex++) {
                     const residue = residues.get(residueIndex)
+                    if (!selection.matches_residue(residue)) {
+                        residue.delete()
+                        continue
+                    }
                     const residueSeqId = residue.seqid
                     let movedAtoms: MovedGemmiAtomsType[] = []
                     const atoms = residue.atoms
                     const atomsSize = atoms.size()
                     for (let atomIndex = 0; atomIndex < atomsSize; atomIndex++) {
                         const atom = atoms.get(atomIndex)
+                        if (!selection.matches_atom(atom)) {
+                            atom.delete()
+                            continue
+                        }    
                         const atomName = atom.name
                         const atomElement = atom.element
                         const gemmiAtomPos = atom.pos
@@ -1537,6 +1505,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
             chains.delete()
         }
         models.delete()
+        selection.delete()
 
         return movedResidues
     }

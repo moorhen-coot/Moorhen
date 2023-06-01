@@ -1,4 +1,4 @@
-import { GemmiStructureInterface, MoorhenResidueInfoType, MoorhenAtomInfoType, BufferATomsType, MoorhenResidueSpecType, MoorhenMolecule, MoorhenMoleculeInterface } from "./MoorhenMolecule";
+import { MoorhenResidueInfoType, MoorhenAtomInfoType, BufferATomsType, MoorhenResidueSpecType, MoorhenMolecule, MoorhenMoleculeInterface } from "./MoorhenMolecule";
 import { hexToRgb } from "@mui/material";
 import localforage from 'localforage';
 import * as vec3 from 'gl-matrix/vec3';
