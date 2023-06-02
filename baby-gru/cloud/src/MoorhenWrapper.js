@@ -38,6 +38,7 @@ export default class MoorhenWrapper {
     this.preferences = null
     this.cachedPreferences = null
     this.cachedLegend = null
+    this.cachedLigandDictionaries = []
     this.noDataLegendMessage = parse('<div></div>')
     this.exportCallback = () => {}
     this.exportPreferencesCallback = () => {}
@@ -193,13 +194,13 @@ export default class MoorhenWrapper {
     })  
   }
 
-  async loadPdbData(uniqueId, ligandDictionaries, inputFile, molName) {
+  async loadPdbData(uniqueId, inputFile, molName) {
     const newMolecule = new MoorhenMolecule(this.controls.commandCentre, this.monomerLibrary)
 
     return new Promise(async (resolve, reject) => {
       try {
         newMolecule.uniqueId = uniqueId
-        ligandDictionaries.forEach(ligandDict => newMolecule.addDictShim(ligandDict))
+        this.cachedLigandDictionaries.forEach(ligandDict => ligandDict && newMolecule.addDictShim(ligandDict))
         newMolecule.setBackgroundColour(this.controls.glRef.current.background_colour)
         await newMolecule.loadToCootFromURL(inputFile, molName)
         this.controls.changeMolecules({ action: "Add", item: newMolecule })
@@ -255,8 +256,7 @@ export default class MoorhenWrapper {
 
   async loadInputFiles() {
 
-    // TODO: Fix what happens when there is no ligand data provided....
-    const ligandDictionaries = await Promise.all(
+    this.cachedLigandDictionaries = await Promise.all(
       this.inputFiles.filter(file => file.type === 'ligand').map(file => this.loadLigandData(...file.args))
     )
 
@@ -264,7 +264,7 @@ export default class MoorhenWrapper {
       await Promise.all(
         this.inputFiles.map(file => {
           if (file.type === 'pdb') {
-            return this.loadPdbData(file.uniqueId, ligandDictionaries, ...file.args)
+            return this.loadPdbData(file.uniqueId, ...file.args)
           } else if (file.type === 'mtz') {
             return this.loadMtzData(file.uniqueId, ...file.args)
           } else if (file.type === 'legend') {
