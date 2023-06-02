@@ -117,6 +117,8 @@ type MoorhenColourRuleType = {
 }
 
 export interface MoorhenMoleculeInterface {
+    getUnitCellParams():  { a: number; b: number; c: number; alpha: number; beta: number; gamma: number; };
+    replaceModelWithFile(glRef: React.RefObject<mgWebGLType>, fileUrl: string, molName: string): Promise<void>
     delete(glRef: React.RefObject<mgWebGLType>): Promise<WorkerResponseType> 
     setColourRules(glRef: React.RefObject<mgWebGLType>, ruleList: MoorhenColourRuleType[], redraw?: boolean): void;
     fetchIfDirtyAndDraw(arg0: string, glRef: React.MutableRefObject<mgWebGLType>): Promise<boolean>;
@@ -778,7 +780,28 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         } else {
             glRef.current.setOrigin(selectionCentre);
         }
+    }
 
+    async drawWithStyleFromMesh(style: string, glRef: React.RefObject<mgWebGLType>, meshObjects: any[], cid: string = "/*/*/*/*"): Promise<void>{
+        this.clearBuffersOfStyle(style, glRef)
+        if (meshObjects.length > 0 && !this.gemmiStructure.isDeleted()) {
+            switch (style) {
+                case 'CBs':
+                    // Add labels to atoms
+                    this.addBuffersOfStyle(glRef, meshObjects, style)
+                    let bufferAtoms = await this.gemmiAtomsForCid(cid)
+                    if (bufferAtoms.length > 0) {
+                        this.displayObjects[style][0].atoms = bufferAtoms.map(atom => {
+                            const { pos, x, y, z, charge, label, symbol } = atom
+                            const tempFactor = atom.b_iso
+                            return { pos, x, y, z, charge, tempFactor, symbol, label }
+                        })
+                    }
+                    break;
+                default:
+                    this.addBuffersOfStyle(glRef, meshObjects, style)
+            }    
+        }
     }
 
     async drawWithStyleFromAtoms(style: string, glRef: React.RefObject<mgWebGLType>) {
@@ -1525,6 +1548,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         return movedResidues
     }
 
+    // FIXME: This can be refactored with the above function in the future (probably?)...
     cachedAtomsAsMovedAtoms(glRef: React.RefObject<mgWebGLType>, selectionCid: string = '/*/*/*/*'): MovedGemmiAtomsType[][] {
         const $this = this
         let movedResidues: MovedGemmiAtomsType[][] = [];
