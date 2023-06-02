@@ -22,6 +22,7 @@ declare global {
         cid: string | null
     }
     type mgWebGLType = {
+        setDiffuseLightNoUpdate(arg0: number, arg1: number, arg2: number): void;
         atomLabelDepthMode: boolean;
         setTextFont(GLLabelsFontFamily: string, GLLabelsFontSize: number): void;
         setBackground(backgroundColor: [number, number, number, number]): void;
@@ -36,8 +37,9 @@ declare global {
         setShadowDepthDebug(doShadowDepthDebug: boolean): void;
         doPerspectiveProjection: boolean;
         clearTextPositionBuffers(): void;
-        set_clip_range(arg0: number, arg1: number): void;
-        set_fog_range(arg0: number, arg1: number): void;
+        set_clip_range(arg0: number, arg1: number, arg2?: boolean): void;
+        set_fog_range(arg0: number, arg1: number, arg2?: boolean): void;
+        setQuat(arg0: any): void;
         myQuat: any;
         gl_fog_start: null | number;
         doDrawClickedAtomLines: any;
@@ -79,7 +81,7 @@ declare global {
         setActiveMolecule: (activeMolecule: MoorhenMoleculeInterface) => void;
         drawScene: () => void;
         initTextureFramebuffer: () => void;
-        setZoom: (arg0: number) => void;
+        setZoom: (arg0: number, arg1?: boolean) => void;
         clearMeasureCylinderBuffers: () => void;
         reContourMaps: () => void;
         drawScene: () => void;
@@ -93,6 +95,20 @@ declare global {
             removeBigTextureTextImages: (labels: string[]) => void;
         }
     }
+    type MoorhenConnectMapsEventType = CustomEvent<MoorhenConnectMapsInfoType>
+    type MoorhenConnectMapsInfoType = {
+        molecule: number;
+        maps: [number, number, number];
+        uniqueMaps: number[];
+    }
+    type MoorhenNewMapContourEventType = CustomEven<{
+        molNo: map.molNo,
+        mapRadius: storedMapData.radius,
+        cootContour: storedMapData.cootContour,
+        contourLevel: storedMapData.contourLevel,
+        mapColour: storedMapData.colour,
+        litLines: storedMapData.litLines,
+    }>
     type emscriptemInstanceInterface<T> = {
         clone: () => T;
         delete: () => void;

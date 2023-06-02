@@ -1,13 +1,15 @@
 import { OverlayTrigger, Tooltip } from "react-bootstrap"
+import { MoorhenMoleculeInterface } from "../../utils/MoorhenMolecule"
+import { MoorhenMapInterface } from "../../utils/MoorhenMap"
 
-export const getNameLabel = (item) => {
+export const getNameLabel = (item: MoorhenMoleculeInterface | MoorhenMapInterface) => {
     if (item.name.length > 9) {
         return <OverlayTrigger
                 key={item.molNo}
-                id="name-label-trigger"
                 placement="top"
                 overlay={
-                    <Tooltip id="name-label-tooltip" 
+                    <Tooltip
+                    id="name-label-tooltip" 
                     style={{
                         zIndex: 9999,
                         backgroundColor: 'rgba(0, 0, 0, 0.85)',

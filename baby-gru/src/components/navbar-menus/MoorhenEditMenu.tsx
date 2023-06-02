@@ -1,11 +1,12 @@
 import { NavDropdown } from "react-bootstrap";
 import { useState } from "react";
 import { MoorhenCopyFragmentUsingCidMenuItem, MoorhenDeleteUsingCidMenuItem, MoorhenMergeMoleculesMenuItem, 
-    MoorhenGoToMenuItem, MoorhenAddRemoveHydrogenAtomsMenuItem, MoorhenSuperposeMenuItem} from "../menu-item/MoorhenMenuItem";
+    MoorhenGoToMenuItem, MoorhenAddRemoveHydrogenAtomsMenuItem } from "../menu-item/MoorhenMenuItem";
 import { MoorhenCreateAcedrgLinkModal } from "../modal/MoorhenCreateAcedrgLinkModal"
 import { MenuItem } from "@mui/material";
+import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 
-export const MoorhenEditMenu = (props) => {
+export const MoorhenEditMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     const [popoverIsShown, setPopoverIsShown] = useState(false)
     const [showCreateAcedrgLinkModal, setShowCreateAcedrgLinkModal] = useState(false)
     const menuItemProps = { setPopoverIsShown, ...props }
@@ -17,7 +18,7 @@ export const MoorhenEditMenu = (props) => {
             style={{display:'flex', alignItems:'center'}}
             autoClose={popoverIsShown ? false : 'outside'}
             show={props.currentDropdownId === props.dropdownId}
-            onToggle={() => { props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId(-1) }}>
+            onToggle={() => { props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId('-1') }}>
             <MoorhenAddRemoveHydrogenAtomsMenuItem key='add_remove_hydrogens' {...menuItemProps}/>
             <MoorhenMergeMoleculesMenuItem key="merge" {...menuItemProps} />
             <MoorhenDeleteUsingCidMenuItem key="delete" {...menuItemProps} />

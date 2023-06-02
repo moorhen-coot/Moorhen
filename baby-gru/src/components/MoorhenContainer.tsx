@@ -4,7 +4,7 @@ import { MoorhenWebMG } from './webMG/MoorhenWebMG';
 import { convertRemToPx, convertViewtoPx, getTooltipShortcutLabel, createLocalStorageInstance, allFontsSet } from '../utils/MoorhenUtils';
 import { historyReducer, initialHistoryState } from './navbar-menus/MoorhenHistoryMenu';
 import { MoorhenCommandCentre, MoorhenCommandCentreInterface } from "../utils/MoorhenCommandCentre"
-import { MoorhenPreferencesInterface, PreferencesContext } from "../utils/MoorhenPreferences";
+import { MoorhenPreferencesInterface, MoorhenShortcutType, PreferencesContext } from "../utils/MoorhenPreferences";
 import { MoorhenTimeCapsule, MoorhenTimeCapsuleInterface } from '../utils/MoorhenTimeCapsule';
 import { MoorhenButtonBar } from './button/MoorhenButtonBar';
 import { Backdrop } from "@mui/material";
@@ -56,8 +56,6 @@ interface statesMapInterface {
     changeMaps: (arg0: MolChange<MoorhenMapInterface>) => void;
     backgroundColor: [number, number, number, number];
     setBackgroundColor: React.Dispatch<React.SetStateAction<[number, number, number, number]>>;
-    currentDropdownId: number | string;
-    setCurrentDropdownId: React.Dispatch<React.SetStateAction<number | string>>;
     appTitle: string;
     setAppTitle: React.Dispatch<React.SetStateAction<string>>;
     cootInitialized: boolean;
@@ -87,6 +85,7 @@ interface MoorhenContainerOptionalPropsInterface {
     allowScripting: boolean;
     backupStorageInstance: any;
     extraEditMenuItems: JSX.Element[];
+    extraCalculateMenuItems: JSX.Element[];
     aceDRGInstance: any; 
 }
 
@@ -119,7 +118,6 @@ export const MoorhenContainer = (props: MoorhenContainerPropsInterface) => {
     const [innerMolecules, innerChangeMolecules] = useReducer(itemReducer, initialMoleculesState)
     const [innerMaps, innerChangeMaps] = useReducer(itemReducer, initialMapsState)
     const [innerBackgroundColor, setInnerBackgroundColor] = useState<[number, number, number, number]>([1, 1, 1, 1])
-    const [innerCurrentDropdownId, setInnerCurrentDropdownId] = useState<number | string>(-1)
     const [innerAppTitle, setInnerAppTitle] = useState<string>('Moorhen')
     const [innerCootInitialized, setInnerCootInitialized] = useState<boolean>(false)
     const [innerTheme, setInnerTheme] = useState<string>("flatly")
@@ -161,7 +159,6 @@ export const MoorhenContainer = (props: MoorhenContainerPropsInterface) => {
         changeMaps: innerChangeMaps, setWindowHeight: setInnerWindowHeight, commandHistory: innerCommandHistory, 
         dispatchHistoryReducer: innerDispatchHistoryReducer, molecules: innerMolecules as MoorhenMoleculeInterface[],
         changeMolecules: innerChangeMolecules, backgroundColor: innerBackgroundColor, setBackgroundColor: setInnerBackgroundColor,
-        currentDropdownId: innerCurrentDropdownId, setCurrentDropdownId: setInnerCurrentDropdownId,
         appTitle: innerAppTitle, setAppTitle: setInnerAppTitle, cootInitialized: innerCootInitialized, 
         setCootInitialized: setInnerCootInitialized, theme: innerTheme, setTheme: setInnerTheme,
         showToast: innerShowToast, setShowToast: setInnerShowToast, toastContent: innerToastContent, 
@@ -181,16 +178,16 @@ export const MoorhenContainer = (props: MoorhenContainerPropsInterface) => {
         consoleMessage, setConsoleMessage, cursorStyle, setCursorStyle, busy, setBusy,
         windowWidth, setWindowWidth, windowHeight, setWindowHeight, commandHistory, 
         dispatchHistoryReducer, molecules, changeMolecules, maps, changeMaps,
-        backgroundColor, setBackgroundColor, currentDropdownId, setCurrentDropdownId,
+        backgroundColor, setBackgroundColor, availableFonts, setAvailableFonts,
         appTitle, setAppTitle, cootInitialized, setCootInitialized, theme, setTheme,
         showToast, setShowToast, toastContent, setToastContent, showColourRulesToast,
-        setShowColourRulesToast, availableFonts, setAvailableFonts,
+        setShowColourRulesToast
     } = states
 
     const {
         disableFileUploads, urlPrefix, extraNavBarMenus, exportCallback, viewOnly, extraDraggableModals, 
         monomerLibraryPath, forwardControls, extraFileMenuItems, allowScripting, backupStorageInstance,
-        extraEditMenuItems, aceDRGInstance
+        extraEditMenuItems, aceDRGInstance, extraCalculateMenuItems
     } = props
     
     const setWindowDimensions = () => {
@@ -221,7 +218,7 @@ export const MoorhenContainer = (props: MoorhenContainerPropsInterface) => {
     
     useEffect(() => {
         if (cootInitialized && preferences.isMounted) {
-            const shortCut = typeof preferences.shortCuts === 'string' ? JSON.parse(preferences.shortCuts).show_shortcuts : preferences.shortCuts.show_shortcuts
+            const shortCut = JSON.parse(preferences.shortCuts as string).show_shortcuts
             setToastContent(
                 <h4 style={{margin: 0}}>
                     {`Press ${getTooltipShortcutLabel(shortCut)} to show help`}
@@ -350,7 +347,7 @@ export const MoorhenContainer = (props: MoorhenContainerPropsInterface) => {
 
     //Make this so that the keyPress returns true or false, depending on whether mgWebGL is to continue processing event
     const onKeyPress = useCallback((event: KeyboardEvent) => {
-        return babyGruKeyPress(event, collectedProps, typeof preferences.shortCuts === 'string' ? JSON.parse(preferences.shortCuts) : preferences.shortCuts)
+        return babyGruKeyPress(event, collectedProps, JSON.parse(preferences.shortCuts as string))
     }, [molecules, activeMolecule, activeMap, hoveredAtom, viewOnly, preferences])
 
     useEffect(() => {
@@ -421,10 +418,10 @@ export const MoorhenContainer = (props: MoorhenContainerPropsInterface) => {
     const collectedProps: MoorhenControlsInterface = {
         molecules, changeMolecules, appTitle, setAppTitle, maps, changeMaps, glRef, activeMolecule, setActiveMolecule,
         activeMap, setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor, toastContent, 
-        setToastContent, currentDropdownId, setCurrentDropdownId, hoveredAtom, setHoveredAtom, showToast, setShowToast,
-        windowWidth, windowHeight, showColourRulesToast, timeCapsuleRef, setShowColourRulesToast, isDark, exportCallback,
-        disableFileUploads, urlPrefix, viewOnly, extraNavBarMenus, monomerLibraryPath, moleculesRef, extraFileMenuItems, 
-        mapsRef, allowScripting, extraEditMenuItems, extraDraggableModals, aceDRGInstance, availableFonts, ...preferences
+        setToastContent, hoveredAtom, setHoveredAtom, showToast, setShowToast, windowWidth, windowHeight, showColourRulesToast,
+        timeCapsuleRef, setShowColourRulesToast, isDark, exportCallback, disableFileUploads, urlPrefix, viewOnly,
+        extraNavBarMenus, monomerLibraryPath, moleculesRef, extraFileMenuItems, mapsRef, allowScripting, extraCalculateMenuItems,
+        extraEditMenuItems, extraDraggableModals, aceDRGInstance, availableFonts, ...preferences
     }
 
     return <> 
@@ -501,6 +498,7 @@ MoorhenContainer.defaultProps = {
     extraNavBarMenus: [],
     extraFileMenuItems: [],
     extraEditMenuItems: [],
+    extraCalculateMenuItems: [],
     extraDraggableModals: [],
     viewOnly: false,
     allowScripting: true,

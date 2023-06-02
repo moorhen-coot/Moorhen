@@ -16,8 +16,14 @@ interface MoorhenNavBarPropsInterface extends MoorhenControlsInterface {
     busy: boolean;
 }
 
+export interface MoorhenNavBarExtendedControlsInterface extends MoorhenNavBarPropsInterface {
+    dropdownId: string;
+    currentDropdownId: string;
+    setCurrentDropdownId: React.Dispatch<React.SetStateAction<string>>;
+}
+
 export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface>((props, ref) => {
-    const [currentDropdownId, setCurrentDropdownId] = useState<number>(-1)
+    const [currentDropdownId, setCurrentDropdownId] = useState<string>('-1')
     const [showSaveIcon, setShowSaveIcon] = useState<boolean>(false)
 
     useEffect(() => {

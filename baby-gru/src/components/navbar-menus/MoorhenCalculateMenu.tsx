@@ -3,8 +3,9 @@ import { useState } from "react";
 import { MoorhenSuperposeMenuItem, MoorhenLoadScriptMenuItem } from "../menu-item/MoorhenMenuItem";
 import { MoorhenScriptModal } from "../modal/MoorhenScriptModal";
 import { MenuItem } from "@mui/material";
+import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 
-export const MoorhenCalculateMenu = (props) => {
+export const MoorhenCalculateMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     const [popoverIsShown, setPopoverIsShown] = useState(false)
     const menuItemProps = { setPopoverIsShown, ...props }
     const [showCodeEditor, setShowCodeEditor] = useState(false)
@@ -16,7 +17,7 @@ export const MoorhenCalculateMenu = (props) => {
             style={{display:'flex', alignItems:'center'}}
             autoClose={popoverIsShown ? false : 'outside'}
             show={props.currentDropdownId === props.dropdownId}
-            onToggle={() => { props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId(-1) }}>
+            onToggle={() => { props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId('-1') }}>
             <MoorhenSuperposeMenuItem key="superpose_structures" {...menuItemProps} />
             {props.allowScripting && 
             <>
