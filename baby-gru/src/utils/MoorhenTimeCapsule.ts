@@ -2,8 +2,9 @@ import { MoorhenMoleculeInterface, cootBondOptionsType } from "./MoorhenMolecule
 import { MoorhenMapInterface, selectedColumnsType } from "./MoorhenMap"
 import { WorkerResponseType } from "./MoorhenCommandCentre";
 
-type backupKeyType = {
+export type backupKeyType = {
     name?: string;
+    label?: string;
     dateTime: string;
     type: string;
     molNames: string[];
@@ -37,7 +38,7 @@ type mapDataSessionType = {
     associatedReflectionFileName: string;
 }
 
-type backupSessionType = {
+export type backupSessionType = {
     includesAdditionalMapData: boolean;
     moleculeData: moleculeSessionDataType[];
     mapData: mapDataSessionType[];
@@ -59,6 +60,12 @@ type backupSessionType = {
 }
 
 export interface MoorhenTimeCapsuleInterface {
+    getSortedKeys(): Promise<backupKeyType[]>;
+    cleanupUnusedDataFiles(): Promise<void>;
+    removeBackup(key: string): Promise<void>;
+    updateDataFiles(): Promise<(string | void)[]>;
+    createBackup(keyString: string, sessionString: string): Promise<string>;
+    fetchSession(arg0: boolean): Promise<backupSessionType>;
     moleculesRef: React.RefObject<MoorhenMoleculeInterface[]>;
     mapsRef: React.RefObject<MoorhenMapInterface[]>;
     glRef: React.RefObject<mgWebGLType>;
@@ -73,6 +80,7 @@ export interface MoorhenTimeCapsuleInterface {
     storageInstance: LocalStorageInstanceInterface;
     addModification: () =>  Promise<string>;
     init: () => Promise<void>;
+    retrieveBackup: (arg0: string) => Promise<string | ArrayBuffer>;
 }
 
 
@@ -347,7 +355,7 @@ export class MoorhenTimeCapsule implements MoorhenTimeCapsuleInterface {
         }
     }
 
-    async retrieveBackup(key: string): Promise<string> {
+    async retrieveBackup(key: string): Promise<string | ArrayBuffer> {
         try {
             return await this.storageInstance.getItem(key)
         } catch (err) {
@@ -355,7 +363,7 @@ export class MoorhenTimeCapsule implements MoorhenTimeCapsuleInterface {
         }
     }
 
-    async retrieveLastBackup(): Promise<string> {
+    async retrieveLastBackup(): Promise<string | ArrayBuffer> {
         try {
             const sortedKeys = await this.getSortedKeys()
             if (sortedKeys && sortedKeys.length > 0) {

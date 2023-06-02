@@ -5,8 +5,9 @@ import { MenuItem } from "@mui/material";
 import { convertViewtoPx } from "../../utils/MoorhenUtils";
 import { MoorhenDefaultBondSmoothnessPreferencesMenuItem, MoorhenScoresToastPreferencesMenuItem, MoorhenBackupPreferencesMenuItem, MoorhenGLFontMenuItem } from '../menu-item/MoorhenMenuItem'
 import MoorhenSlider from '../misc/MoorhenSlider' 
+import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 
-export const MoorhenPreferencesMenu = (props) => {
+export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     const { 
         atomLabelDepthMode, setAtomLabelDepthMode, setMouseSensitivity, enableTimeCapsule,
         defaultExpandDisplayCards, setDefaultExpandDisplayCards, defaultMapLitLines,
@@ -36,7 +37,7 @@ export const MoorhenPreferencesMenu = (props) => {
                     style={{display:'flex', alignItems:'center'}}
                     autoClose={popoverIsShown ? false : 'outside'}
                     show={props.currentDropdownId === props.dropdownId}
-                    onToggle={() => { props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId(-1) }}>
+                    onToggle={() => { props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId('-1') }}>
                 <div style={{maxHeight: convertViewtoPx(65, props.windowHeight), overflowY: 'auto'}}>
                     <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
                         <Form.Check 
@@ -137,10 +138,10 @@ export const MoorhenPreferencesMenu = (props) => {
                         setDefaultBondSmoothness={setDefaultBondSmoothness}
                         setPopoverIsShown={setPopoverIsShown}
                     />
-                    <MenuItem id="configure-shortcuts-menu-item" variant="success" onClick={() => setShowModal(true)} style={{marginTop:'0rem'}}>
+                    <MenuItem id="configure-shortcuts-menu-item" onClick={() => setShowModal(true)} style={{marginTop:'0rem'}}>
                         Configure shortcuts...
                     </MenuItem>
-                    <MoorhenShortcutConfigModal showModal={showModal} setShowModal={setShowModal} setShortCuts={props.setShortCuts} shortCuts={JSON.parse(props.shortCuts)}/>
+                    <MoorhenShortcutConfigModal showModal={showModal} setShowModal={setShowModal} setShortCuts={props.setShortCuts} shortCuts={JSON.parse(props.shortCuts as string)}/>
                     <MoorhenGLFontMenuItem
                     {...props}
                     setPopoverIsShown={setPopoverIsShown}

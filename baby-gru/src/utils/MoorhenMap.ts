@@ -15,6 +15,8 @@ export type selectedColumnsType = {
 }
 
 export interface MoorhenMapInterface {
+    associateToReflectionData (selectedColumns: selectedColumnsType, reflectionData: Uint8Array | ArrayBuffer): Promise<WorkerResponseType>;
+    delete(glRef: React.RefObject<mgWebGLType>): Promise<void> 
     contour(glRef: React.ForwardedRef<mgWebGLType>): void;
     doCootContour(glRef: React.MutableRefObject<mgWebGLType>, x: number, y: number, z: number, radius: number, contourLevel: number): Promise<void>;
     fetchReflectionData(): Promise<WorkerResponseType>;

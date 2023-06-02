@@ -43,12 +43,6 @@ type MoorhenScoresType = {
     moorhenPoints: number;
 }
 
-type MoorhenConnectMapsInfoType = {
-    molecule: number;
-    maps: [number, number, number];
-    uniqueMaps: number[];
-}
-
 export const MoorhenWebMG = forwardRef<mgWebGLType, MoorhenWebMGPropsInterface>((props, glRef) => {
     const scores = useRef<MoorhenScoresType | null>(null)
     const [mapLineWidth, setMapLineWidth] = useState<number>(0.75)
@@ -288,7 +282,7 @@ export const MoorhenWebMG = forwardRef<mgWebGLType, MoorhenWebMGPropsInterface>(
         setScoreToastContents(null)
     }
     
-    const handleConnectMaps = useCallback(async (evt) => {
+    const handleConnectMaps = useCallback(async (evt: MoorhenConnectMapsEventType) => {
         
         const currentScores = await props.commandCentre.current.cootCommand({
             returnType: "r_factor_stats",
@@ -537,7 +531,7 @@ export const MoorhenWebMG = forwardRef<mgWebGLType, MoorhenWebMGPropsInterface>(
                     messageChanged={() => { }}
                     mouseSensitivityFactor={props.preferences.mouseSensitivity}
                     zoomWheelSensitivityFactor={props.preferences.zoomWheelSensitivityFactor}
-                    keyboardAccelerators={typeof props.preferences.shortCuts === 'string' ? JSON.parse(props.preferences.shortCuts) : props.preferences.shortCuts}
+                    keyboardAccelerators={JSON.parse(props.preferences.shortCuts as string)}
                     showCrosshairs={props.preferences.drawCrosshairs}
                     showAxes={props.preferences.drawAxes}
                     showFPS={props.preferences.drawFPS}
