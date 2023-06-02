@@ -519,6 +519,9 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<molecules_container_t>("molecules_container_t")
     .constructor<bool>()
+    .function("clear_target_position_restraints",&molecules_container_t::clear_target_position_restraints)
+    .function("wrapped_add_target_position_restraint",&molecules_container_t::wrapped_add_target_position_restraint)
+    .function("add_target_position_restraint",&molecules_container_t::add_target_position_restraint)
     .function("get_h_bonds",&molecules_container_t::get_h_bonds)
     .function("change_to_next_rotamer",&molecules_container_t::change_to_next_rotamer)
     .function("change_to_previous_rotamer",&molecules_container_t::change_to_previous_rotamer)
