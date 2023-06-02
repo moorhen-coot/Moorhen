@@ -2,8 +2,9 @@ import { Form, InputGroup, NavDropdown } from "react-bootstrap";
 import { useState } from "react";
 import { MenuItem } from "@mui/material";
 import { MoorhenBackgroundColorMenuItem, MoorhenClipFogMenuItem, MoorhenLightingMenuItem } from "../menu-item/MoorhenMenuItem";
+import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 
-export const MoorhenViewMenu = (props) => {
+export const MoorhenViewMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     const [popoverIsShown, setPopoverIsShown] = useState(false)
     const menuItemProps = {setPopoverIsShown, ...props}
 
@@ -14,7 +15,7 @@ export const MoorhenViewMenu = (props) => {
                     style={{display:'flex', alignItems:'center'}}
                     autoClose={popoverIsShown ? false : 'outside'}
                     show={props.currentDropdownId === props.dropdownId}
-                    onToggle={() => {props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId(-1)}}>
+                    onToggle={() => {props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId('-1')}}>
                 <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
                         <Form.Check 
                             type="switch"

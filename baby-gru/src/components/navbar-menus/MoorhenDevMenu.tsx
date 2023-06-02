@@ -2,10 +2,11 @@ import { Form, InputGroup, NavDropdown } from "react-bootstrap";
 import { useState } from "react";
 import { MenuItem } from "@mui/material";
 import { cidToSpec } from "../../utils/MoorhenUtils";
+import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 
 var TRIAL_COUNT = 0
 
-const doTest = async (props) => {
+const doTest = async (props: any) => {
     TRIAL_COUNT += 1
     console.log(`########################################## ${TRIAL_COUNT}`)
     const molecule = props.molecules.find(molecule => molecule.molNo === 0)
@@ -50,7 +51,7 @@ const doTest = async (props) => {
     }
 }
 
-const doColourTest = async (props) => {
+const doColourTest = async (props: any) => {
     const molecule = props.molecules.find(molecule => molecule.molNo === 0)
     if (typeof molecule !== 'undefined') {
         await props.commandCentre.current.cootCommand({
@@ -63,7 +64,7 @@ const doColourTest = async (props) => {
     }
 }
 
-export const MoorhenDevMenu = (props) => {
+export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     const [popoverIsShown, setPopoverIsShown] = useState(false)
     const menuItemProps = {setPopoverIsShown, ...props}
 
@@ -74,7 +75,7 @@ export const MoorhenDevMenu = (props) => {
                 style={{display:'flex', alignItems:'center'}}
                 autoClose={popoverIsShown ? false : 'outside'}
                 show={props.currentDropdownId === props.dropdownId}
-                onToggle={() => {props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId(-1)}}>
+                onToggle={() => {props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId('-1')}}>
                     <MenuItem onClick={() => doTest(menuItemProps)}>
                         Do a timing test...
                     </MenuItem>

@@ -104,10 +104,25 @@ export type cootBondOptionsType = {
     atomRadiusBondRatio: number;
 }
 
+type MoorhenColourRuleType = {
+    commandInput: {
+        message: string;
+        command: string;
+        returnType: string;
+        commandArgs: [number, string];
+    };
+    isMultiColourRule: boolean;
+    ruleType: string;
+    label: string;
+}
+
 export interface MoorhenMoleculeInterface {
+    delete(glRef: React.RefObject<mgWebGLType>): Promise<WorkerResponseType> 
+    setColourRules(glRef: React.RefObject<mgWebGLType>, ruleList: MoorhenColourRuleType[], redraw?: boolean): void;
+    fetchIfDirtyAndDraw(arg0: string, glRef: React.MutableRefObject<mgWebGLType>): Promise<boolean>;
     drawGemmiAtomPairs: (glRef: React.ForwardedRef<mgWebGLType>, gemmiAtomPairs: any[], style: string,  colour: number[], labelled?: boolean, clearBuffers?: boolean) => void;
     drawEnvironment: (glRef: React.RefObject<mgWebGLType>, chainID: string, resNo: number,  altLoc: string, labelled?: boolean) => Promise<void>;
-    centreOn: (glRef: React.ForwardedRef<mgWebGLType>, arg1: string) => Promise<void>;
+    centreOn: (glRef: React.ForwardedRef<mgWebGLType>, selectionCid: string, animate?: boolean) => Promise<void>;
     drawHover: (glRef: React.MutableRefObject<mgWebGLType>, cid: string) => Promise<void>;
     clearBuffersOfStyle: (style: string, glRef: React.RefObject<mgWebGLType>) => void;
     type: string;
@@ -343,7 +358,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         glRef.current.drawScene()
     }
 
-    setBackgroundColour(backgroundColour: [number, number, number]) {
+    setBackgroundColour(backgroundColour: [number, number, number, number]) {
         this.cootBondsOptions.isDarkBackground = isDarkBackground(...backgroundColour)
     }
 
@@ -495,7 +510,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         return newMolecule
     }
 
-    async copyFragmentUsingCid(cid: string, backgroundColor: [number, number, number], defaultBondSmoothness: number, glRef: React.RefObject<mgWebGLType>, doRecentre: boolean = true): Promise<MoorhenMoleculeInterface> {
+    async copyFragmentUsingCid(cid: string, backgroundColor: [number, number, number, number], defaultBondSmoothness: number, glRef: React.RefObject<mgWebGLType>, doRecentre: boolean = true): Promise<MoorhenMoleculeInterface> {
         const $this = this
         const response = await $this.commandCentre.current.cootCommand({
             returnType: "status",
@@ -666,7 +681,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         })
     }
 
-    async fetchIfDirtyAndDraw(style: string, glRef: React.RefObject<mgWebGLType>) {
+    async fetchIfDirtyAndDraw(style: string, glRef: React.RefObject<mgWebGLType>): Promise<boolean> {
         if (this.atomsDirty) {
             await this.updateAtoms()
         }

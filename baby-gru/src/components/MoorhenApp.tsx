@@ -57,7 +57,6 @@ export const MoorhenApp = (props: { forwardControls: (controls: any) => any }) =
     const [molecules, changeMolecules] = useReducer(itemReducer, initialMoleculesState)
     const [maps, changeMaps] = useReducer(itemReducer, initialMapsState)
     const [backgroundColor, setBackgroundColor] = useState<[number, number, number, number]>([1, 1, 1, 1])
-    const [currentDropdownId, setCurrentDropdownId] = useState<number | string>(-1)
     const [appTitle, setAppTitle] = useState<string>('Moorhen')
     const [cootInitialized, setCootInitialized] = useState<boolean>(false)
     const [theme, setTheme] = useState<string>("flatly")
@@ -77,10 +76,10 @@ export const MoorhenApp = (props: { forwardControls: (controls: any) => any }) =
         windowWidth, setWindowWidth, windowHeight, setWindowHeight, commandHistory, 
         dispatchHistoryReducer, molecules: molecules as MoorhenMoleculeInterface[], 
         changeMolecules, maps: maps as MoorhenMapInterface[], changeMaps, 
-        backgroundColor, setBackgroundColor, currentDropdownId, setCurrentDropdownId,
-        appTitle, setAppTitle, cootInitialized, setCootInitialized, theme, setTheme,
-        showToast, setShowToast, toastContent, setToastContent, showColourRulesToast,
-        setShowColourRulesToast, forwardControls: props.forwardControls
+        backgroundColor, setBackgroundColor, appTitle, setAppTitle, cootInitialized,
+        setCootInitialized, theme, setTheme, showToast, setShowToast, toastContent,
+        setToastContent, showColourRulesToast, setShowColourRulesToast,
+        forwardControls: props.forwardControls
     }
 
     return <MoorhenContainer {...collectedProps}/>
