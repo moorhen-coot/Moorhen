@@ -1510,6 +1510,81 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         return movedResidues
     }
 
+    cachedAtomsAsMovedAtoms(glRef: React.RefObject<mgWebGLType>, selectionCid: string = '/*/*/*/*'): MovedGemmiAtomsType[][] {
+        const $this = this
+        let movedResidues: MovedGemmiAtomsType[][] = [];
+
+        const selection = new window.CCP4Module.Selection(selectionCid)
+        const models = this.gemmiStructure.models
+        const modelsSize = this.gemmiStructure.models.size()
+        for (let modelIndex = 0; modelIndex < modelsSize; modelIndex++) {
+            const model = models.get(modelIndex)
+            if (!selection.matches_model(model)) {
+                model.delete()
+                continue
+            }
+            const chains = model.chains
+            const chainsSize = chains.size()
+            for (let chainIndex = 0; chainIndex < chainsSize; chainIndex++) {
+                const chain = chains.get(chainIndex)
+                if (!selection.matches_chain(chain)) {
+                    chain.delete()
+                    continue
+                }
+                const residues = chain.residues
+                const residuesSize = residues.size()
+                for (let residueIndex = 0; residueIndex < residuesSize; residueIndex++) {
+                    const residue = residues.get(residueIndex)
+                    if (!selection.matches_residue(residue)) {
+                        residue.delete()
+                        continue
+                    }
+                    const residueSeqId = residue.seqid
+                    let movedAtoms: MovedGemmiAtomsType[] = []
+                    const atoms = residue.atoms
+                    const atomsSize = atoms.size()
+                    for (let atomIndex = 0; atomIndex < atomsSize; atomIndex++) {
+                        const atom = atoms.get(atomIndex)
+                        if (!selection.matches_atom(atom)) {
+                            atom.delete()
+                            continue
+                        }    
+                        const atomName = atom.name
+                        const atomElement = atom.element
+                        const gemmiAtomPos = atom.pos
+                        const atomAltLoc = atom.altloc
+                        const atomHasAltLoc = atom.has_altloc()
+                        const atomSymbol: string = window.CCP4Module.getElementNameAsString(atomElement)
+                        const cid = `/${model.name}/${chain.name}/${residueSeqId.str()}/${atomName}${atomHasAltLoc ? ':' + String.fromCharCode(atomAltLoc) : ''}`
+
+                        movedAtoms.push({
+                            name: atomSymbol.length === 2 ? (atomName).padEnd(4, " ") : (" " + atomName).padEnd(4, " "),
+                            x:gemmiAtomPos.x, y:gemmiAtomPos.y, z:gemmiAtomPos.z, 
+                            altLoc : atomHasAltLoc ? String.fromCharCode(atomAltLoc) : '',
+                            resCid: cid
+                        })
+
+                        atom.delete()
+                        atomElement.delete()
+                        gemmiAtomPos.delete()
+                    }
+                    movedResidues.push(movedAtoms)
+                    residue.delete()
+                    residueSeqId.delete()
+                    atoms.delete()
+                }
+                chain.delete()
+                residues.delete()
+            }
+            model.delete()
+            chains.delete()
+        }
+        models.delete()
+        selection.delete()
+
+        return movedResidues
+    }
+    
     async updateWithMovedAtoms(movedResidues: MovedGemmiAtomsType[][], glRef: React.RefObject<mgWebGLType>): Promise<void> {
         const $this = this
         await $this.commandCentre.current.cootCommand({
