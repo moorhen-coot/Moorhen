@@ -98,12 +98,12 @@ const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
         props.setCursorStyle("crosshair")
         if (props.awaitAtomClick && props.selectedButtonIndex === props.buttonIndex) {
             props.setCursorStyle("crosshair")
-            document.addEventListener('atomClicked', atomClickedCallback, { once: true })
+            document.addEventListener('atomClicked', atomClickedCallback, { once: false })
         }
 
         return () => {
             props.setCursorStyle("default")
-            document.removeEventListener('atomClicked', atomClickedCallback, { once: true })
+            document.removeEventListener('atomClicked', atomClickedCallback, { once: false })
         }
     }, [props.selectedButtonIndex, atomClickedCallback])
 
@@ -1092,7 +1092,9 @@ export const MoorhenDragZoneButtonOption2 = (props) => {
     const movingAtomCid = useRef(null)
     const moltenCid = useRef(null)
     const transformedCachedAtoms = useRef('')
-    const { changeMolecules, backgroundColor, glRef, defaultBondSmoothness } = props
+    const findMolecule = useRef(null)
+    const { changeMolecules, backgroundColor, glRef, defaultBondSmoothness, molecules } = props
+    const movementTimeout = useRef(null)
 
     const MoorhenDragPanel = () => {
         const dragModes = ['SINGLE', 'TRIPLE', 'QUINTUPLE', 'HEPTUPLE']
@@ -1114,6 +1116,12 @@ export const MoorhenDragZoneButtonOption2 = (props) => {
         </Container>
     }
 
+    useEffect(() => {
+        findMolecule.current = (buffer) => {
+            return props.molecules.find(molecule => molecule.buffersInclude(buffer))
+        }
+    }, [props.molecules])
+
     const acceptTransform = useCallback(async (e) => {
         glRef.current.setActiveMolecule(null)
         const transformedAtoms = moltenMolecule.current.cachedAtomsAsMovedAtoms(glRef)
@@ -1121,13 +1129,13 @@ export const MoorhenDragZoneButtonOption2 = (props) => {
 
         changeMolecules({ action: 'Remove', item: moltenMolecule.current })
         moltenMolecule.current.delete(glRef)
-
         changeMolecules({ action: 'Remove', item: movingAtomMolecule.current })
         movingAtomMolecule.current.delete(glRef)
 
         chosenMolecule.current.unhideAll(glRef)
 
         setShowAccept(false)
+        document.removeEventListener('atomClicked', moltenMoleculeMaybeClicked, { once: true })
         const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: glRef.current.origin, modifiedMolecule: chosenMolecule.current.molNo } })
         document.dispatchEvent(scoresUpdateEvent)
     }, [changeMolecules, glRef])
@@ -1136,32 +1144,59 @@ export const MoorhenDragZoneButtonOption2 = (props) => {
         glRef.current.setActiveMolecule(null)
         changeMolecules({ action: 'Remove', item: moltenMolecule.current })
         moltenMolecule.current.delete(glRef)
+        changeMolecules({ action: 'Remove', item: movingAtomMolecule.current })
+        movingAtomMolecule.current.delete(glRef)
         chosenMolecule.current.unhideAll(glRef)
         setShowAccept(false)
+        document.removeEventListener('atomClicked', moltenMoleculeMaybeClicked, { once: true })
+
     }, [changeMolecules, glRef])
 
-    const refineNewPosition = async (chosenMolecule, chosenAtom, doRefine = true, nextTimeout = 10) => {
+    const refineNewPosition = async (chosenMolecule, chosenAtom, doRefine = true, nextTimeout = 1) => {
         // Check if the position of the fragment has changed
         let transformedAtoms = movingAtomMolecule.current.transformedCachedAtomsAsMovedAtoms(glRef)
         let transformedAtomsString = JSON.stringify(transformedAtoms)
         if (transformedCachedAtoms.current !== transformedAtomsString) {
 
-            // Tell coot where the new fragment is located at so that it can be refined
-            await props.commandCentre.current.cootCommand({
-                returnType: "status",
-                command: "shim_new_positions_for_residue_atoms",
-                commandArgs: [moltenMolecule.current.molNo, transformedAtoms],
-            })
+            try {
+                //Add restraint to fix the pointer atom in place
+                await props.commandCentre.current.cootCommand({
+                    returnType: 'instanced_mesh_t',
+                    command: 'wrapped_add_target_position_restraint',
+                    commandArgs: [
+                        moltenMolecule.current.molNo,
+                        movingAtomCid.current,
+                        transformedAtoms[0][0].x,
+                        transformedAtoms[0][0].y,
+                        transformedAtoms[0][0].z,
+                        20]
+                }, true)
 
-            // Refine the fragment
-            /*
-            await props.commandCentre.current.cootCommand({
+                //Refine the molten molecule
+                const refineResult = await props.commandCentre.current.cootCommand({
                     returnType: 'status',
                     command: 'refine_residues_using_atom_cid',
-                    commandArgs: [chosenMolecule.current.molNo, moltenCid.current, dragMode.current],
-            }, true)
-            */
+                    commandArgs: [moltenMolecule.current.molNo, movingAtomCid.current, 'ALL'],
+                }, true)
+                /*
+                const refineResult = await props.commandCentre.current.cootCommand({
+                    returnType: 'status_instanced_mesh_pair',
+                    command: 'refine',
+                    commandArgs: [moltenMolecule.current.molNo, 20],
+                }, true)
+                */
 
+                //Clear restraints
+                await props.commandCentre.current.cootCommand({
+                    returnType: 'status',
+                    command: 'clear_target_position_restraints',
+                    commandArgs: [moltenMolecule.current.molNo],
+                }, true)
+            }
+
+            catch (err) {
+                console.log({ ta: transformedAtoms[0][0], err })
+            }
 
             // Redraw the fragment after refinement based on the new coordinates held in coot
             moltenMolecule.current.setAtomsDirty(true)
@@ -1170,12 +1205,44 @@ export const MoorhenDragZoneButtonOption2 = (props) => {
             // Reset things for the next cycle
             transformedCachedAtoms.current = JSON.stringify(transformedAtoms)
         }
-        setTimeout(() => {
+        movementTimeout.current = setTimeout(() => {
             refineNewPosition(movingAtomMolecule, chosenAtom, doRefine, nextTimeout)
         }, nextTimeout)
     }
 
+    const moltenMoleculeMaybeClicked = async (ev1) => {
+        console.log(ev1)
+        let newMolecule = findMolecule.current(ev1.detail.buffer)
+        if (newMolecule === moltenMolecule.current ||
+            newMolecule === chosenMolecule.current) {
+            changeMolecules({ action: 'Remove', item: movingAtomMolecule.current })
+            movingAtomMolecule.current.delete(glRef)
+            const chosenAtom = cidToSpec(ev1.detail.atom.label)
+            setDraggedAtom(chosenAtom)
+        }
+    }
+
+    const setDraggedAtom = async (chosenAtom) => {
+
+        clearTimeout(movementTimeout.current)
+        /* Excise the draggy atom */
+        movingAtomCid.current = `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`
+        movingAtomMolecule.current = await moltenMolecule.current.copyFragmentUsingCid(
+            movingAtomCid.current, backgroundColor, defaultBondSmoothness, glRef, false
+        )
+        await movingAtomMolecule.current.updateAtoms()
+        await movingAtomMolecule.current.drawWithStyleFromAtoms('CBs', glRef)
+        /* redraw */
+        changeMolecules({ action: "Add", item: movingAtomMolecule.current })
+        glRef.current.setActiveMolecule(movingAtomMolecule.current)
+        movementTimeout.current = setTimeout(() => {
+            refineNewPosition(movingAtomMolecule, chosenAtom, true, 200)
+        }, 500)
+
+    }
+
     const nonCootCommand = async (molecule, chosenAtom, p) => {
+        console.log(chosenAtom)
         const selectedSequence = molecule.sequences.find(sequence => sequence.chain === chosenAtom.chain_id)
         let selectedResidueIndex
         let start
@@ -1211,7 +1278,6 @@ export const MoorhenDragZoneButtonOption2 = (props) => {
         if (!start || !stop) {
             return
         }
-        movingAtomCid.current = `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`
         moltenCid.current = `//${chosenAtom.chain_id}/${start}-${stop}/*`
 
         chosenMolecule.current = molecule
@@ -1233,21 +1299,11 @@ export const MoorhenDragZoneButtonOption2 = (props) => {
         /* redraw */
         await chosenMolecule.current.hideCid(moltenCid.current, glRef)
         chosenMolecule.current.redraw(glRef)
-
-        /* And then excise the draggy atom */
-        movingAtomMolecule.current = await molecule.copyFragmentUsingCid(
-            movingAtomCid.current, backgroundColor, defaultBondSmoothness, glRef, false
-        )
-        await movingAtomMolecule.current.updateAtoms()
-        await movingAtomMolecule.current.drawWithStyleFromAtoms('CBs', glRef)
-        /* redraw */
-        changeMolecules({ action: "Add", item: movingAtomMolecule.current })
-        glRef.current.setActiveMolecule(movingAtomMolecule.current)
+        setDraggedAtom(chosenAtom)
 
         setShowAccept(true)
-        setTimeout(() => {
-            refineNewPosition(movingAtomMolecule, chosenAtom, true, 200)
-        }, 500)
+
+        document.addEventListener('atomClicked', moltenMoleculeMaybeClicked, { once: false })
     }
 
     return <><MoorhenSimpleEditButton ref={theButton} {...props}
@@ -1285,7 +1341,6 @@ export const MoorhenDragZoneButtonOption2 = (props) => {
         </Overlay>
     </>
 }
-
 
 export const rigidBodyFitFormatArgs = (molecule, chosenAtom, selectedMode, activeMapMolNo) => {
     const selectedSequence = molecule.sequences.find(sequence => sequence.chain === chosenAtom.chain_id)
