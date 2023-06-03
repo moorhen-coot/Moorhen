@@ -1031,7 +1031,7 @@ onmessage = function (e) {
                     returnResult = vectorHBondToJSArray(cootResult)
                     break;
                 case 'status_instanced_mesh_pair':
-                    returnResult = { status: cootResult.first, mesh: cootResult.second }
+                    returnResult = { status: cootResult.first, mesh: instancedMeshToMeshData(cootResult.second, false, false, 5) }
                     break;
                 case 'status':
                 default:
