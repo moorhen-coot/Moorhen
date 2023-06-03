@@ -521,6 +521,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .constructor<bool>()
     .function("clear_target_position_restraints",&molecules_container_t::clear_target_position_restraints)
     .function("wrapped_add_target_position_restraint",&molecules_container_t::wrapped_add_target_position_restraint)
+    .function("refine",&molecules_container_t::refine)
     .function("add_target_position_restraint",&molecules_container_t::add_target_position_restraint)
     .function("get_h_bonds",&molecules_container_t::get_h_bonds)
     .function("change_to_next_rotamer",&molecules_container_t::change_to_next_rotamer)
@@ -1004,6 +1005,11 @@ EMSCRIPTEN_BINDINGS(my_module) {
       .field("resNum",&moorhen_hbond::moorhen_hbond_atom::resNum)
       .field("residueName",&moorhen_hbond::moorhen_hbond_atom::residueName)
       .field("altLoc",&moorhen_hbond::moorhen_hbond_atom::altLoc)
+    ;
+
+    value_object<std::pair<int,coot::instanced_mesh_t>>("int_instanced_mesh_pair")
+        .field("first",&std::pair<int,coot::instanced_mesh_t>::first)
+        .field("second",&std::pair<int,coot::instanced_mesh_t>::second)
     ;
 
     value_array<glm::mat4>("array_mat4")
