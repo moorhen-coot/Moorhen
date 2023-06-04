@@ -5,6 +5,7 @@ import { Button, Overlay, Container, Row, FormSelect, FormGroup, FormLabel, Card
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
 import { cidToSpec, getTooltipShortcutLabel, residueCodesThreeToOne, convertViewtoPx } from "../../utils/MoorhenUtils";
+import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 
 const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
     const target = useRef(null)
@@ -1152,48 +1153,29 @@ export const MoorhenDragZoneButtonOption2 = (props) => {
 
     }, [changeMolecules, glRef])
 
-    const refineNewPosition = async (chosenMolecule, chosenAtom, doRefine = true, nextTimeout = 1) => {
+    const refineNewPosition = async (chosenMolecule, chosenAtom, doRefine = true, nextTimeout = 10) => {
+
         // Check if the position of the fragment has changed
         let transformedAtoms = movingAtomMolecule.current.transformedCachedAtomsAsMovedAtoms(glRef)
         let transformedAtomsString = JSON.stringify(transformedAtoms)
         if (transformedCachedAtoms.current !== transformedAtomsString) {
 
             try {
+                const commandArgs = [
+                    moltenMolecule.current.molNo,
+                    movingAtomCid.current,
+                    transformedAtoms[0][0].x,
+                    transformedAtoms[0][0].y,
+                    transformedAtoms[0][0].z,
+                    50]
+                console.log(commandArgs)
                 //Add restraint to fix the pointer atom in place
-                await props.commandCentre.current.cootCommand({
+                const newMeshResult = await props.commandCentre.current.cootCommand({
                     returnType: 'instanced_mesh_t',
                     command: 'wrapped_add_target_position_restraint',
-                    commandArgs: [
-                        moltenMolecule.current.molNo,
-                        movingAtomCid.current,
-                        transformedAtoms[0][0].x,
-                        transformedAtoms[0][0].y,
-                        transformedAtoms[0][0].z,
-                        20]
-                }, true)
-
-                //Refine the molten molecule
-                const refineResult = await props.commandCentre.current.cootCommand({
-                    returnType: 'status',
-                    command: 'refine_residues_using_atom_cid',
-                    commandArgs: [moltenMolecule.current.molNo, movingAtomCid.current, 'ALL'],
-                }, true)
-                /*
-                const refineResult = await props.commandCentre.current.cootCommand({
-                    returnType: 'status_instanced_mesh_pair',
-                    command: 'refine',
-                    commandArgs: [moltenMolecule.current.molNo, 20],
-                }, true)
-                */
-
-                //Clear restraints
-                await props.commandCentre.current.cootCommand({
-                    returnType: 'status',
-                    command: 'clear_target_position_restraints',
-                    commandArgs: [moltenMolecule.current.molNo],
+                    commandArgs
                 }, true)
             }
-
             catch (err) {
                 console.log({ ta: transformedAtoms[0][0], err })
             }
@@ -1236,7 +1218,7 @@ export const MoorhenDragZoneButtonOption2 = (props) => {
         changeMolecules({ action: "Add", item: movingAtomMolecule.current })
         glRef.current.setActiveMolecule(movingAtomMolecule.current)
         movementTimeout.current = setTimeout(() => {
-            refineNewPosition(movingAtomMolecule, chosenAtom, true, 200)
+            refineNewPosition(movingAtomMolecule, chosenAtom, true, 10)
         }, 500)
 
     }
@@ -1282,9 +1264,38 @@ export const MoorhenDragZoneButtonOption2 = (props) => {
 
         chosenMolecule.current = molecule
         /* Excise the molten part of the molecule */
+        
+        const copyResult = await props.commandCentre.current.cootCommand({
+            returnType: 'int',
+            command: 'copy_fragment_for_refinement_using_cid',
+            commandArgs: [chosenMolecule.current.molNo, moltenCid.current]
+        }, true)
+        console.log({copyResult})
+        moltenMolecule.current = new MoorhenMolecule(props.commandCentre, props.monomerLibraryPath)
+        moltenMolecule.current.molNo = copyResult.data.result.result
+
+        changeMolecules({ action: "Add", item: moltenMolecule.current })
+
         moltenMolecule.current = await molecule.copyFragmentUsingCid(
             moltenCid.current, backgroundColor, defaultBondSmoothness, glRef, false
         )
+
+        console.log(`Using map ${props.activeMap.molNo}`)
+        const initResult = await props.commandCentre.current.cootCommand({
+            returnType: 'status',
+            command: 'init_refinement_of_molecule_as_fragment_based_on_reference',
+            commandArgs: [moltenMolecule.current.molNo, chosenMolecule.current.molNo, props.activeMap.molNo]
+        }, true)
+
+        const refineResult = await props.commandCentre.current.cootCommand({
+            returnType: 'status_instanced_mesh_pair',
+            command: 'refine',
+            commandArgs: [moltenMolecule.current.molNo, 100]
+        }, true)
+        console.log('REfine result status',refineResult.data.result.result.status)
+        moltenMolecule.current.setAtomsDirty(true)
+        await moltenMolecule.current.redraw(glRef)
+
         await moltenMolecule.current.updateAtoms()
         Object.keys(molecule.displayObjects)
             .filter(style => { return ['CRs', 'CBs', 'ligands', 'gaussian', 'MolecularSurface', 'VdWSurface', 'DishyBases', 'VdwSpheres', 'allHBonds'].includes(style) })
@@ -1294,7 +1305,6 @@ export const MoorhenDragZoneButtonOption2 = (props) => {
                     await moltenMolecule.current.drawWithStyleFromAtoms(style, glRef)
                 }
             })
-        changeMolecules({ action: "Add", item: moltenMolecule.current })
 
         /* redraw */
         await chosenMolecule.current.hideCid(moltenCid.current, glRef)

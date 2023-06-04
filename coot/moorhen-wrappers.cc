@@ -522,6 +522,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("clear_target_position_restraints",&molecules_container_t::clear_target_position_restraints)
     .function("wrapped_add_target_position_restraint",&molecules_container_t::wrapped_add_target_position_restraint)
     .function("refine",&molecules_container_t::refine)
+    .function("init_refinement_of_molecule_as_fragment_based_on_reference",&molecules_container_t::init_refinement_of_molecule_as_fragment_based_on_reference)
+    .function("copy_fragment_for_refinement_using_cid",&molecules_container_t::copy_fragment_for_refinement_using_cid)
     .function("add_target_position_restraint",&molecules_container_t::add_target_position_restraint)
     .function("get_h_bonds",&molecules_container_t::get_h_bonds)
     .function("change_to_next_rotamer",&molecules_container_t::change_to_next_rotamer)
