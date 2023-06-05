@@ -521,7 +521,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     class_<molecules_container_t>("molecules_container_t")
     .constructor<bool>()
     .function("clear_target_position_restraints",&molecules_container_t::clear_target_position_restraints)
-    .function("wrapped_add_target_position_restraint",&molecules_container_t::wrapped_add_target_position_restraint)
+    .function("add_target_position_restraint_and_refine",&molecules_container_t::add_target_position_restraint_and_refine)
     .function("refine",&molecules_container_t::refine)
     .function("init_refinement_of_molecule_as_fragment_based_on_reference",&molecules_container_t::init_refinement_of_molecule_as_fragment_based_on_reference)
     .function("copy_fragment_for_refinement_using_cid",&molecules_container_t::copy_fragment_for_refinement_using_cid)
