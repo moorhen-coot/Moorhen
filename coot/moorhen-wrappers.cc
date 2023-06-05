@@ -504,6 +504,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("res_no", &coot::molecule_t::moved_residue_t::res_no)
     .property("ins_code", &coot::molecule_t::moved_residue_t::ins_code)
     .property("moved_atoms", &coot::molecule_t::moved_residue_t::moved_atoms)
+    .function("add_atom",&coot::molecule_t::moved_residue_t::add_atom)
     ;
     class_<coot::Cell>("Coot_Cell")
     .property("a", &coot::Cell::a)

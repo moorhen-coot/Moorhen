@@ -665,20 +665,25 @@ const replace_map_by_mtz_from_file = (imol, mtzData, selectedColumns) => {
 
 const new_positions_for_residue_atoms = (molToUpDate, residues) => {
     let success = 0
+    const movedResidueVector  = new cootModule.Vectormoved_residue_t()
     residues.forEach(atoms => {
         if (atoms.length > 0) {
-            const cid = atoms[0].resCid
-            const movedVector = new cootModule.Vectormoved_atom_t()
+            const cidFields = atoms[0].resCid.split('/')
+            let [resNoStr, insCode] = cidFields[3].split(".")
+            insCode = insCode ? insCode : ""
+            const movedResidue = new cootModule.moved_residue_t(cidFields[2], parseInt(resNoStr), insCode)
             atoms.forEach(atom => {
                 const movedAtom = new cootModule.moved_atom_t(atom.name, atom.altLoc, atom.x, atom.y, atom.z, -1)
-                movedVector.push_back(movedAtom)
+                movedResidue.add_atom(movedAtom)
                 movedAtom.delete()
             })
-            const thisSuccess = molecules_container.new_positions_for_residue_atoms(molToUpDate, cid, movedVector)
-            success += thisSuccess
-            movedVector.delete()
+            movedResidueVector.push_back(movedResidue)
+            movedResidue.delete()
         }
     })
+    const thisSuccess = molecules_container.new_positions_for_atoms_in_residues(molToUpDate, movedResidueVector)
+    success += thisSuccess
+    movedResidueVector.delete()
     return success
 }
 
