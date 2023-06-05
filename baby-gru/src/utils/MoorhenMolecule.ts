@@ -36,26 +36,6 @@ export type MoorhenSequenceType = {
     sequence: MoorhenResidueInfoType[];
 }
 
-export type MovedGemmiAtomsType = {
-    name: string;
-    x: number;
-    y: number; 
-    z: number; 
-    altLoc : string;
-    resCid: string;
-}
-
-export type BufferATomsType = {
-    pos: [number, number, number];
-    x: number;
-    y: number;
-    z: number;
-    tempFactor: number,
-    charge: number,
-    symbol: string,
-    label: string;
-}
-
 export type MoorhenResidueSpecType = {
     mol_name: string;
     mol_no: string;
@@ -76,11 +56,15 @@ export type MoorhenAtomInfoType = {
     charge: number;
     element: emscriptemInstanceInterface<string>;
     symbol: string;
-    b_iso: number;
+    tempFactor: number;
     serial: string;
     name: string;
     has_altloc: boolean;
     alt_loc: string;
+    mol_name: string;
+    chain_id: string;
+    res_no: string;
+    res_name: string;
     label: string;
 }
 
@@ -201,6 +185,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
     ligandDicts: {[comp_id: string]: string};
     connectedToMaps: number[];
     excludedSegments: string[];
+    excludedCids: string[];
     symmetryOn: boolean;
     symmetryRadius : number;
     symmetryMatrices: any;
@@ -250,6 +235,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         this.ligandDicts = {}
         this.connectedToMaps = null
         this.excludedSegments = []
+        this.excludedCids = []
         this.symmetryOn = false
         this.symmetryRadius = 25
         this.symmetryMatrices = []
@@ -782,25 +768,21 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         }
     }
 
-    async drawWithStyleFromMesh(style: string, glRef: React.RefObject<mgWebGLType>, meshObjects: any[], cid: string = "/*/*/*/*"): Promise<void>{
+    async drawWithStyleFromMesh(style: string, glRef: React.RefObject<mgWebGLType>, meshObjects: any[], newBufferAtoms: MoorhenAtomInfoType[] = []): Promise<void>{
         this.clearBuffersOfStyle(style, glRef)
         if (meshObjects.length > 0 && !this.gemmiStructure.isDeleted()) {
-            switch (style) {
-                case 'CBs':
-                    // Add labels to atoms
-                    this.addBuffersOfStyle(glRef, meshObjects, style)
-                    let bufferAtoms = await this.gemmiAtomsForCid(cid)
-                    if (bufferAtoms.length > 0) {
-                        this.displayObjects[style][0].atoms = bufferAtoms.map(atom => {
-                            const { pos, x, y, z, charge, label, symbol } = atom
-                            const tempFactor = atom.b_iso
-                            return { pos, x, y, z, charge, tempFactor, symbol, label }
-                        })
-                    }
-                    break;
-                default:
-                    this.addBuffersOfStyle(glRef, meshObjects, style)
-            }    
+            this.addBuffersOfStyle(glRef, meshObjects, style)
+            let bufferAtoms: MoorhenAtomInfoType[]
+            if (newBufferAtoms.length > 0) {
+                bufferAtoms = newBufferAtoms
+            } else {
+                bufferAtoms = await this.gemmiAtomsForCid('/*/*/*/*')
+            }
+            this.displayObjects[style][0].atoms = bufferAtoms.filter(atom => !this.excludedCids.includes(`//${atom.chain_id}/${atom.res_no}-${atom.res_no}/*`)).map(atom => {                   
+                const { pos, x, y, z, charge, label, symbol } = atom
+                const tempFactor = atom.tempFactor
+                return { pos, x, y, z, charge, tempFactor, symbol, label }
+            })
         }
     }
 
@@ -1015,9 +997,9 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
             this.addBuffersOfStyle(glRef, objects, name)
             let bufferAtoms = await this.gemmiAtomsForCid(cid)
             if (bufferAtoms.length > 0) {
-                this.displayObjects[name][0].atoms = bufferAtoms.map(atom => {
+                this.displayObjects[name][0].atoms = bufferAtoms.filter(atom => !this.excludedCids.includes(`//${atom.chain_id}/${atom.res_no}/*`)).map(atom => {
                     const { pos, x, y, z, charge, label, symbol } = atom
-                    const tempFactor = atom.b_iso
+                    const tempFactor = atom.tempFactor
                     return { pos, x, y, z, charge, tempFactor, symbol, label }
                 })
             }
@@ -1445,9 +1427,9 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         await $this.drawSymmetry(glRef, false)
     }
 
-    transformedCachedAtomsAsMovedAtoms(glRef: React.RefObject<mgWebGLType>, selectionCid: string = '/*/*/*/*'): MovedGemmiAtomsType[][] {
+    transformedCachedAtomsAsMovedAtoms(glRef: React.RefObject<mgWebGLType>, selectionCid: string = '/*/*/*/*'): MoorhenAtomInfoType[][] {
         const $this = this
-        let movedResidues: MovedGemmiAtomsType[][] = [];
+        let movedResidues: MoorhenAtomInfoType[][] = [];
 
         const selection = new window.CCP4Module.Selection(selectionCid)
         const models = this.gemmiStructure.models
@@ -1475,7 +1457,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
                         continue
                     }
                     const residueSeqId = residue.seqid
-                    let movedAtoms: MovedGemmiAtomsType[] = []
+                    let movedAtoms: MoorhenAtomInfoType[] = []
                     const atoms = residue.atoms
                     const atomsSize = atoms.size()
                     for (let atomIndex = 0; atomIndex < atomsSize; atomIndex++) {
@@ -1484,19 +1466,20 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
                             atom.delete()
                             continue
                         }    
-                        const atomName = atom.name
                         const atomElement = atom.element
                         const gemmiAtomPos = atom.pos
                         const atomAltLoc = atom.altloc
+                        const atomSerial = atom.serial
                         const atomHasAltLoc = atom.has_altloc()
                         const atomSymbol: string = window.CCP4Module.getElementNameAsString(atomElement)
+                        const atomName = atomSymbol.length === 2 ? (atom.name).padEnd(4, " ") : (" " + atom.name).padEnd(4, " ")
                         const diff = $this.displayObjects.transformation.centre
                         let x = gemmiAtomPos.x + glRef.current.origin[0] - diff[0]
                         let y = gemmiAtomPos.y + glRef.current.origin[1] - diff[1]
                         let z = gemmiAtomPos.z + glRef.current.origin[2] - diff[2]
                         const origin = $this.displayObjects.transformation.origin
                         const quat = $this.displayObjects.transformation.quat
-                        const cid = `/${model.name}/${chain.name}/${residueSeqId.str()}/${atomName}${atomHasAltLoc ? ':' + String.fromCharCode(atomAltLoc) : ''}`
+                        const cid = `/${model.name}/${chain.name}/${residueSeqId.str()}/${atom.name}${atomHasAltLoc ? ':' + String.fromCharCode(atomAltLoc) : ''}`
                         if (quat) {
                             const theMatrix = quatToMat4(quat)
                             theMatrix[12] = origin[0]
@@ -1507,25 +1490,29 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
                             const transPos = vec3.create()
                             vec3.set(atomPos, x, y, z)
                             vec3.transformMat4(transPos, atomPos, theMatrix);
-                            if (atomSymbol.length === 2) {
-                                movedAtoms.push({
-                                    name: (atomName).padEnd(4, " "), 
-                                    x: transPos[0] - glRef.current.origin[0] + diff[0], 
-                                    y: transPos[1] - glRef.current.origin[1] + diff[1], 
-                                    z: transPos[2] - glRef.current.origin[2] + diff[2], 
-                                    altLoc : atomHasAltLoc ? String.fromCharCode(atomAltLoc) : '',
-                                    resCid: cid 
-                                })
-                            } else {
-                                movedAtoms.push({
-                                    name: (" " + atomName).padEnd(4, " "),
-                                    x: transPos[0] - glRef.current.origin[0] + diff[0],
-                                    y: transPos[1] - glRef.current.origin[1] + diff[1], 
-                                    z: transPos[2] - glRef.current.origin[2] + diff[2], 
-                                    altLoc : atomHasAltLoc ? String.fromCharCode(atomAltLoc) : '',
-                                    resCid: cid
-                                })
-                            }
+                            movedAtoms.push({
+                                mol_name: model.name,
+                                chain_id: chain.name,
+                                res_no: residueSeqId.str(),
+                                res_name: residue.name,
+                                name: atomName, 
+                                element: atomElement,
+                                pos: [
+                                    transPos[0] - glRef.current.origin[0] + diff[0], 
+                                    transPos[1] - glRef.current.origin[1] + diff[1],
+                                    transPos[2] - glRef.current.origin[2] + diff[2]
+                                ],
+                                tempFactor: atom.b_iso,
+                                charge: atom.charge,
+                                symbol: atomSymbol,
+                                x: transPos[0] - glRef.current.origin[0] + diff[0],
+                                y: transPos[1] - glRef.current.origin[1] + diff[1],
+                                z: transPos[2] - glRef.current.origin[2] + diff[2],
+                                serial: atomSerial,
+                                has_altloc: atomHasAltLoc,
+                                alt_loc : atomHasAltLoc ? String.fromCharCode(atomAltLoc) : '',
+                                label: cid
+                            })
                         }
                         atom.delete()
                         atomElement.delete()
@@ -1548,83 +1535,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         return movedResidues
     }
 
-    // FIXME: This can be refactored with the above function in the future (probably?)...
-    cachedAtomsAsMovedAtoms(glRef: React.RefObject<mgWebGLType>, selectionCid: string = '/*/*/*/*'): MovedGemmiAtomsType[][] {
-        const $this = this
-        let movedResidues: MovedGemmiAtomsType[][] = [];
-
-        const selection = new window.CCP4Module.Selection(selectionCid)
-        const models = this.gemmiStructure.models
-        const modelsSize = this.gemmiStructure.models.size()
-        for (let modelIndex = 0; modelIndex < modelsSize; modelIndex++) {
-            const model = models.get(modelIndex)
-            if (!selection.matches_model(model)) {
-                model.delete()
-                continue
-            }
-            const chains = model.chains
-            const chainsSize = chains.size()
-            for (let chainIndex = 0; chainIndex < chainsSize; chainIndex++) {
-                const chain = chains.get(chainIndex)
-                if (!selection.matches_chain(chain)) {
-                    chain.delete()
-                    continue
-                }
-                const residues = chain.residues
-                const residuesSize = residues.size()
-                for (let residueIndex = 0; residueIndex < residuesSize; residueIndex++) {
-                    const residue = residues.get(residueIndex)
-                    if (!selection.matches_residue(residue)) {
-                        residue.delete()
-                        continue
-                    }
-                    const residueSeqId = residue.seqid
-                    let movedAtoms: MovedGemmiAtomsType[] = []
-                    const atoms = residue.atoms
-                    const atomsSize = atoms.size()
-                    for (let atomIndex = 0; atomIndex < atomsSize; atomIndex++) {
-                        const atom = atoms.get(atomIndex)
-                        if (!selection.matches_atom(atom)) {
-                            atom.delete()
-                            continue
-                        }    
-                        const atomName = atom.name
-                        const atomElement = atom.element
-                        const gemmiAtomPos = atom.pos
-                        const atomAltLoc = atom.altloc
-                        const atomHasAltLoc = atom.has_altloc()
-                        const atomSymbol: string = window.CCP4Module.getElementNameAsString(atomElement)
-                        const cid = `/${model.name}/${chain.name}/${residueSeqId.str()}/${atomName}${atomHasAltLoc ? ':' + String.fromCharCode(atomAltLoc) : ''}`
-
-                        movedAtoms.push({
-                            name: atomSymbol.length === 2 ? (atomName).padEnd(4, " ") : (" " + atomName).padEnd(4, " "),
-                            x:gemmiAtomPos.x, y:gemmiAtomPos.y, z:gemmiAtomPos.z, 
-                            altLoc : atomHasAltLoc ? String.fromCharCode(atomAltLoc) : '',
-                            resCid: cid
-                        })
-
-                        atom.delete()
-                        atomElement.delete()
-                        gemmiAtomPos.delete()
-                    }
-                    movedResidues.push(movedAtoms)
-                    residue.delete()
-                    residueSeqId.delete()
-                    atoms.delete()
-                }
-                chain.delete()
-                residues.delete()
-            }
-            model.delete()
-            chains.delete()
-        }
-        models.delete()
-        selection.delete()
-
-        return movedResidues
-    }
-    
-    async updateWithMovedAtoms(movedResidues: MovedGemmiAtomsType[][], glRef: React.RefObject<mgWebGLType>): Promise<void> {
+    async updateWithMovedAtoms(movedResidues: MoorhenAtomInfoType[][], glRef: React.RefObject<mgWebGLType>): Promise<void> {
         const $this = this
         await $this.commandCentre.current.cootCommand({
             returnType: "status",
@@ -1857,6 +1768,10 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
                                     const atomAltLoc = atom.altloc
                                     const atomHasAltLoc = atom.has_altloc()
                                     const atomInfo: MoorhenAtomInfoType = {
+                                        res_name: residueName,
+                                        res_no: resNum,
+                                        mol_name: modelName,
+                                        chain_id: chainName,
                                         pos: [atomPosX, atomPosY, atomPosZ],
                                         x: atomPosX,
                                         y: atomPosY,
@@ -1864,7 +1779,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
                                         charge: atomCharge,
                                         element: atomElement,
                                         symbol: window.CCP4Module.getElementNameAsString(atomElement),
-                                        b_iso: atomTempFactor,
+                                        tempFactor: atomTempFactor,
                                         serial: atomSerial,
                                         name: atomName,
                                         has_altloc: atomHasAltLoc,
@@ -1973,7 +1888,24 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
             returnType: 'status',
             commandArgs: [this.molNo, cid], 
         })
+        
+        // A list with the segment CIDs
         this.excludedSegments.push(cid)
+        
+        // We also want a list with individual atom CIDs
+        const selection = new window.CCP4Module.Selection(cid)
+        const toSeqId = selection.to_seqid
+        const fromSeqId = selection.from_seqid
+        const chainIds = selection.chain_ids
+        for (let resNum = fromSeqId.seqnum; resNum <= toSeqId.seqnum; resNum++) {
+            this.excludedCids.push(`//${chainIds.str()}/${resNum}/*`)
+        }
+        chainIds.delete()
+        toSeqId.delete()
+        fromSeqId.delete()
+        selection.delete()
+        
+        // Redraw to apply changes
         const result = await this.redraw(glRef)
         return Promise.resolve(result)
     }
@@ -1986,6 +1918,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
             commandArgs: [this.molNo], 
         })
         this.excludedSegments = []
+        this.excludedCids = []
         const result = await this.redraw(glRef)
         return Promise.resolve(result)
     }
@@ -2121,11 +2054,11 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
     }
 
 
-    refineResiduesUsingAtomCid(cid: string, mode: string): Promise<WorkerResponseType> {
+    refineResiduesUsingAtomCid(cid: string, mode: string, ncyc: number): Promise<WorkerResponseType> {
         return this.commandCentre.current.cootCommand({
             command: "refine_residues_using_atom_cid", 
             returnType: 'status',
-            commandArgs: [this.molNo, cid, mode], 
+            commandArgs: [this.molNo, cid, mode, ncyc], 
         })
     }
 

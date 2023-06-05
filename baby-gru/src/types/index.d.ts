@@ -124,6 +124,17 @@ declare global {
         matches_chain: (chain: GemmiChainInterface) => boolean;
         matches_residue: (residue: GemmiResidueInterface) => boolean;
         matches_atom: (atom: GemmiAtomInterface) => boolean;
+        chain_ids: GemmiSelectionChainListInterface;
+        to_seqid: GemmiSelectionSeqIdInterface;
+        from_seqid: GemmiSelectionSeqIdInterface;
+    }
+    interface GemmiSelectionChainListInterface extends emscriptemInstanceInterface<GemmiSelectionChainListInterface> {
+        str: () => string;
+    }
+    interface GemmiSelectionSeqIdInterface extends emscriptemInstanceInterface<GemmiSelectionSeqIdInterface> {
+        str: () => string;
+        empty: () => boolean;
+        seqnum: number;
     }
     interface GemmiAtomInterface extends emscriptemInstanceInterface<GemmiAtomInterface> {
         name: string;

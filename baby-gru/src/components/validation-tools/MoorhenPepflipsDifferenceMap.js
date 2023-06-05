@@ -50,7 +50,7 @@ export const MoorhenPepflipsDifferenceMap = (props) => {
                 await props.commandCentre.current.cootCommand({
                     returnType: "status",
                     command: 'refine_residues_using_atom_cid',
-                    commandArgs: [selectedMolNo, `/${insCode}/${chainId}/${seqNum}`, 'TRIPLE'],
+                    commandArgs: [selectedMolNo, `/${insCode}/${chainId}/${seqNum}`, 'TRIPLE', 4000],
                     changesMolecules: [selectedMolNo]
                 }, true)    
             }

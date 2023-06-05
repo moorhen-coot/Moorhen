@@ -26,7 +26,7 @@ export const MoorhenFillMissingAtoms = (props) => {
                 await props.commandCentre.current.cootCommand({
                     returnType: "status",
                     command: 'refine_residues_using_atom_cid',
-                    commandArgs: [selectedMolecule.molNo, `/${insCode}/${chainId}/${resNum}`, 'TRIPLE'],
+                    commandArgs: [selectedMolecule.molNo, `/${insCode}/${chainId}/${resNum}`, 'TRIPLE', 4000],
                     changesMolecules: [selectedMolecule.molNo]
                 }, true)    
             }

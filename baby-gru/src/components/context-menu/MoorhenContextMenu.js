@@ -82,7 +82,7 @@ const MoorhenContextQuickEditButton = (props) => {
           await props.commandCentre.current.cootCommand({
               returnType: "status",
               command: 'refine_residues_using_atom_cid',
-              commandArgs: [ props.selectedMolecule.molNo, `//${props.chosenAtom.chain_id}/${props.chosenAtom.res_no}`, 'TRIPLE'],
+              commandArgs: [ props.selectedMolecule.molNo, `//${props.chosenAtom.chain_id}/${props.chosenAtom.res_no}`, 'TRIPLE', 4000],
               changesMolecules: [props.selectedMolecule.molNo]
           }, true)
       }
@@ -488,7 +488,7 @@ export const MoorhenContextMenu = (props) => {
                                 message: 'coot_command',
                                 returnType: "status",
                                 command: 'refine_residues_using_atom_cid',
-                                commandArgs: [ selectedMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`, selectedOption],
+                                commandArgs: [ selectedMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`, selectedOption, 4000],
                                 changesMolecules: [selectedMolecule.molNo]
                               }
                             }

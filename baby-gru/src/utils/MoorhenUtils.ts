@@ -1,4 +1,4 @@
-import { MoorhenResidueInfoType, MoorhenAtomInfoType, BufferATomsType, MoorhenResidueSpecType, MoorhenMolecule, MoorhenMoleculeInterface } from "./MoorhenMolecule";
+import { MoorhenResidueInfoType, MoorhenAtomInfoType, MoorhenResidueSpecType, MoorhenMolecule, MoorhenMoleculeInterface } from "./MoorhenMolecule";
 import { hexToRgb } from "@mui/material";
 import localforage from 'localforage';
 import * as vec3 from 'gl-matrix/vec3';
@@ -249,12 +249,12 @@ export const centreOnGemmiAtoms = (atoms: MoorhenAtomInfoType[]): [number, numbe
 }
 
 // FIXME: We have multiple functions looping through all residues multiple times when paring a molecule. Let's do it only once...
-export const getBufferAtoms = (gemmiStructure: GemmiStructureInterface, exclude_ligands_and_waters: boolean = false): BufferATomsType[] => {
+export const getBufferAtoms = (gemmiStructure: GemmiStructureInterface, exclude_ligands_and_waters: boolean = false): MoorhenAtomInfoType[] => {
         if (exclude_ligands_and_waters) {
             window.CCP4Module.remove_ligands_and_waters_structure(gemmiStructure)
         }
    
-        let atomList: BufferATomsType[] = []
+        let atomList: MoorhenAtomInfoType[] = []
 
         try {
             const models = gemmiStructure.models
@@ -289,10 +289,19 @@ export const getBufferAtoms = (gemmiStructure: GemmiStructureInterface, exclude_
                             const atomAltLoc = atom.altloc
                             const atomHasAltLoc = atom.has_altloc()
                             atomList.push({
+                                mol_name: modelName,
+                                chain_id: chainName,
+                                res_name: residueName,
+                                res_no: resNum,
+                                name: atomName,
                                 pos: [atomPosX, atomPosY, atomPosZ],
                                 x: atomPosX,
                                 y: atomPosY,
                                 z: atomPosZ,
+                                element: atomElement,
+                                serial: atom.serial,
+                                has_altloc: atomHasAltLoc,
+                                alt_loc : atomHasAltLoc ? String.fromCharCode(atomAltLoc) : '',
                                 tempFactor: atomTemp,
                                 charge: atomCharge,
                                 symbol: atomElementString,
@@ -768,7 +777,7 @@ export const gemmiAtomsToCirclesSpheresInfo = (atoms: MoorhenAtomInfoType[], siz
         atom["x"] = atoms[iat].pos[0];
         atom["y"] = atoms[iat].pos[1];
         atom["z"] = atoms[iat].pos[2];
-        atom["tempFactor"] = atoms[iat].b_iso;
+        atom["tempFactor"] = atoms[iat].tempFactor;
         atom["charge"] = atoms[iat].charge;
         atom["symbol"] = atoms[iat].element;
         atom["label"] = ""
