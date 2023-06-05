@@ -2087,7 +2087,6 @@ class MGWebGL extends Component {
                 self.canvas.addEventListener("mouseup",
                 function (evt) {
                     self.doMouseUp(evt, self);
-                    evt.stopPropagation();
                 },
                 false);
             self.canvas.addEventListener("contextmenu",

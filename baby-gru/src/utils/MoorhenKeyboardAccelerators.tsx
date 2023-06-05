@@ -106,7 +106,7 @@ export const babyGruKeyPress = (event: KeyboardEvent, collectedProps: MoorhenCon
 
     if (action === 'sphere_refine' && activeMap && !viewOnly) {
         const formatArgs = (chosenMolecule: MoorhenMoleculeInterface, chosenAtom: MoorhenResidueSpecType) => {
-            return [chosenMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`, "SPHERE"]
+            return [chosenMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`, "SPHERE", 4000]
         }
         collectedProps.showShortcutToast && setToastContent(
             <h5 style={{margin: 0}}>
@@ -136,7 +136,7 @@ export const babyGruKeyPress = (event: KeyboardEvent, collectedProps: MoorhenCon
 
     else if (action === 'triple_refine' && activeMap && !viewOnly) {
         const formatArgs = (chosenMolecule: MoorhenMoleculeInterface, chosenAtom: MoorhenResidueSpecType) => {
-            return [chosenMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`, "TRIPLE"]
+            return [chosenMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`, "TRIPLE", 4000]
         }
         collectedProps.showShortcutToast && setToastContent(
             <h5 style={{margin: 0}}>

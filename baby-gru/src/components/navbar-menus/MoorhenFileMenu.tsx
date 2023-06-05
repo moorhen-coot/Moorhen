@@ -6,7 +6,7 @@ import { MoorhenAssociateReflectionsToMap, MoorhenImportMapCoefficientsMenuItem,
     MoorhenLoadTutorialDataMenuItem, MoorhenImportMapMenuItem, MoorhenImportFSigFMenuItem, MoorhenBackupsMenuItem } from "../menu-item/MoorhenMenuItem";
 import { MenuItem } from "@mui/material";
 import { convertViewtoPx, doDownload, readTextFile, getMultiColourRuleArgs } from "../../utils/MoorhenUtils";
-import { backupKeyType, backupSessionType, getBackupLabel } from "../../utils/MoorhenTimeCapsule"
+import { backupKeyInterface, backupSessionType, getBackupLabel } from "../../utils/MoorhenTimeCapsule"
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 
 export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
@@ -16,7 +16,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     const [remoteSource, setRemoteSource] = useState<string>("PDBe")
     const [isValidPdbId, setIsValidPdbId] = useState<boolean>(true)
     const [showBackupsModal, setShowBackupsModal] = useState<boolean>(false)
-    const [backupKeys, setBackupKeys] = useState<null | backupKeyType[]>(null)
+    const [backupKeys, setBackupKeys] = useState<null | backupKeyInterface[]>(null)
     const pdbCodeFetchInputRef = useRef<HTMLInputElement | null>(null);
     const fetchMapDataCheckRef = useRef<HTMLInputElement | null>(null);
 
@@ -355,7 +355,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         await props.timeCapsuleRef.current.updateDataFiles()
         const session = await props.timeCapsuleRef.current.fetchSession(false)
         const sessionString = JSON.stringify(session)
-        const key: backupKeyType = {
+        const key: backupKeyInterface = {
             dateTime: `${Date.now()}`,
             type: 'manual',
             molNames: session.moleculeData.map(mol => mol.name),
@@ -369,7 +369,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         return props.timeCapsuleRef.current.createBackup(keyString, sessionString)
     }
 
-    const getBackupCards = (sortedKeys: backupKeyType[]) => {
+    const getBackupCards = (sortedKeys: backupKeyInterface[]) => {
         if (sortedKeys && sortedKeys.length > 0) {
             return sortedKeys.map((key, index) => {
                 return  <Card key={`${key.label}-${index}`} style={{marginTop: '0.5rem'}}>

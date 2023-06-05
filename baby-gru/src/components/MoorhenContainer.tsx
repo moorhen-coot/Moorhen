@@ -4,7 +4,7 @@ import { MoorhenWebMG } from './webMG/MoorhenWebMG';
 import { convertRemToPx, convertViewtoPx, getTooltipShortcutLabel, createLocalStorageInstance, allFontsSet } from '../utils/MoorhenUtils';
 import { historyReducer, initialHistoryState } from './navbar-menus/MoorhenHistoryMenu';
 import { MoorhenCommandCentre, MoorhenCommandCentreInterface } from "../utils/MoorhenCommandCentre"
-import { MoorhenPreferencesInterface, MoorhenShortcutType, PreferencesContext } from "../utils/MoorhenPreferences";
+import { MoorhenPreferencesInterface, PreferencesContext } from "../utils/MoorhenPreferences";
 import { MoorhenTimeCapsule, MoorhenTimeCapsuleInterface } from '../utils/MoorhenTimeCapsule';
 import { MoorhenButtonBar } from './button/MoorhenButtonBar';
 import { Backdrop } from "@mui/material";

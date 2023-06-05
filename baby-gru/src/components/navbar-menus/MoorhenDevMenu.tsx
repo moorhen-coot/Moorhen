@@ -28,7 +28,7 @@ const doTest = async (props: any) => {
         const test = await props.commandCentre.current.cootCommand({
             returnType: "status",
             command: 'refine_residues_using_atom_cid',
-            commandArgs: [ molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`, 'TRIPLE'],
+            commandArgs: [ molecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`, 'TRIPLE', 4000],
             changesMolecules: [molecule.molNo]
         }, true)
                     
