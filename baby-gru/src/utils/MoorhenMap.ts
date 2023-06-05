@@ -1,7 +1,6 @@
 import { readDataFile, guid } from "./MoorhenUtils"
 import { readMapFromArrayBuffer, mapToMapGrid } from '../WebGLgComponents/mgWebGLReadMap';
 import { MoorhenCommandCentreInterface, WorkerResponseType } from "./MoorhenCommandCentre"
-import { RefObject } from "react";
 
 export type selectedColumnsType = {
     F?: string;
@@ -15,6 +14,7 @@ export type selectedColumnsType = {
 }
 
 export interface MoorhenMapInterface {
+    replaceMapWithMtzFile(glRef: React.RefObject<mgWebGLType>, fileUrl: RequestInfo | URL, name: string, selectedColumns: selectedColumnsType): Promise<void>;
     associateToReflectionData (selectedColumns: selectedColumnsType, reflectionData: Uint8Array | ArrayBuffer): Promise<WorkerResponseType>;
     delete(glRef: React.RefObject<mgWebGLType>): Promise<void> 
     contour(glRef: React.ForwardedRef<mgWebGLType>): void;
@@ -66,7 +66,7 @@ export class MoorhenMap implements MoorhenMapInterface {
     mapRmsd: number
     rgba: {r: number, g: number, b: number, a: number}
 
-    constructor(commandCentre: RefObject<MoorhenCommandCentreInterface>) {
+    constructor(commandCentre: React.RefObject<MoorhenCommandCentreInterface>) {
         this.type = 'map'
         this.name = "unnamed"
         this.molNo = null
