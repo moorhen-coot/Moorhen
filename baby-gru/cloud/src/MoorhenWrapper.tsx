@@ -1,16 +1,18 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { MoorhenCloudApp } from './components/MoorhenCloudApp';
-import { CloudStorageInstance } from "./utils/MoorhenCloudTimeCapsule"
-import { MoorhenMolecule } from "../../src/utils/MoorhenMolecule"
-import { MoorhenMap } from "../../src/utils/MoorhenMap"
+import { MoorhenCloudApp, MoorhenCloudControlsInterface } from './components/MoorhenCloudApp';
+import { CloudBackupInterface, CloudStorageInstance, CloudStorageInstanceInterface } from "./utils/MoorhenCloudTimeCapsule"
+import { MoorhenMolecule, MoorhenMoleculeInterface } from "../../src/utils/MoorhenMolecule"
+import { MoorhenMap, MoorhenMapInterface, selectedColumnsType } from "../../src/utils/MoorhenMap"
 import { guid } from "../../src/utils/MoorhenUtils"
-import { PreferencesContextProvider, getDefaultValues } from "../../src/utils/MoorhenPreferences";
+import { MoorhenPreferencesInterface, PreferencesContextProvider, getDefaultValues } from "../../src/utils/MoorhenPreferences";
 import reportWebVitals from '../../src/reportWebVitals'
 import localforage from 'localforage';
 import parse from 'html-react-parser';
 import '../../src/index.css';
 import '../../src/App.css';
+
+declare var createCCP4Module: (arg0: any) => Promise<CCP4ModuleType>;
 
 const createModule = () => {
   createCCP4Module({
@@ -26,8 +28,48 @@ const createModule = () => {
   });
 }
 
+type PdbInputFileType = {
+  type: 'pdb';
+  uniqueId?: string;
+  args: [string, string];
+}
+
+type MapInputFileType = {
+  type: 'mtz';
+  uniqueId?: string;
+  args: [string, string, selectedColumnsType];
+}
+
+type LegendInputFileType = {
+  type: 'legend';
+  uniqueId?: string;
+  args: [string];
+}
+
+type LigandInputFileType = {
+  type: 'ligand';
+  uniqueId?: string;
+  args: [string];
+}
+
 export default class MoorhenWrapper {
-  constructor(urlPrefix) {
+  urlPrefix: string;
+  monomerLibrary: string;
+  controls: MoorhenCloudControlsInterface;
+  updateInterval: number;
+  workMode: "build" | "view" | "view-update";
+  inputFiles: (PdbInputFileType | MapInputFileType | LegendInputFileType | LigandInputFileType)[]
+  rootId: string;
+  preferences: MoorhenPreferencesInterface;
+  cachedPreferences: MoorhenPreferencesInterface;
+  cachedLegend: string;
+  cachedLigandDictionaries: string[];
+  noDataLegendMessage: JSX.Element;
+  exportCallback: (arg0: string, arg1: string) => Promise<void>;
+  exportPreferencesCallback: (arg0: MoorhenPreferencesInterface) => void;
+  backupStorageInstance: CloudStorageInstanceInterface;
+
+  constructor(urlPrefix: string) {
     this.urlPrefix = urlPrefix
     this.monomerLibrary = `${this.urlPrefix}/baby-gru/monomers/`
     this.controls = null
@@ -39,31 +81,31 @@ export default class MoorhenWrapper {
     this.cachedPreferences = null
     this.cachedLegend = null
     this.cachedLigandDictionaries = []
-    this.noDataLegendMessage = parse('<div></div>')
-    this.exportCallback = () => {}
+    this.noDataLegendMessage = parse('<div></div>') as JSX.Element
+    this.exportCallback = async () => {}
     this.exportPreferencesCallback = () => {}
     this.backupStorageInstance = new CloudStorageInstance()
     reportWebVitals()
     createModule()
   }
 
-  setBackupSaveListener(functionCallback) {
+  setBackupSaveListener(functionCallback: (arg0: CloudBackupInterface) => Promise<string | void>) {
     this.backupStorageInstance.exportBackupCallback = functionCallback
   }
 
-  setBackupLoadListener(functionCallback) {
+  setBackupLoadListener(functionCallback: (arg0: string | number) => Promise<CloudBackupInterface | void>) {
     this.backupStorageInstance.importBackupCallback = functionCallback
   }
 
-  setRemoveBackupListener(functionCallback) {
+  setRemoveBackupListener(functionCallback: (arg: string | number) => Promise<void>) {
     this.backupStorageInstance.removeBackupCallback = functionCallback
   }
 
-  setBackupListLoadListener(functionCallback) {
+  setBackupListLoadListener(functionCallback: () => Promise<CloudBackupInterface[]>) {
     this.backupStorageInstance.loadBackupList = functionCallback
   }
 
-  setWorkMode(mode='build') {
+  setWorkMode(mode: "build" | "view" | "view-update" = 'build') {
     if (['build', 'view', 'view-update'].includes(mode)) {
       this.workMode = mode
     } else {
@@ -71,46 +113,46 @@ export default class MoorhenWrapper {
     } 
   }
 
-  setNoDataLegendMessage(htmlString) {
+  setNoDataLegendMessage(htmlString: string) {
     try {
-      this.noDataLegendMessage = parse(htmlString)
+      this.noDataLegendMessage = parse(htmlString) as JSX.Element
     } catch (err) {
       console.log('Unable to parse legend html string')
       console.log(err)
     }
   }
 
-  setPreferences(preferences) {
+  setPreferences(preferences: MoorhenPreferencesInterface) {
     this.preferences = preferences
   }
 
-  setRootId(rootId) {
+  setRootId(rootId: string) {
     this.rootId = rootId
   }
 
-  setInputFiles(inputFiles) {
+  setInputFiles(inputFiles: (PdbInputFileType | MapInputFileType | LegendInputFileType | LigandInputFileType)[]) {
     this.inputFiles = inputFiles.map(inputFile => {
       return {uniqueId: guid(), ...inputFile}
     })
   }
 
-  setUpdateInterval(miliseconds) {
+  setUpdateInterval(miliseconds: number) {
     this.updateInterval = miliseconds
   }
 
-  setMonomerLibrary(uri) {
+  setMonomerLibrary(uri: string) {
     this.monomerLibrary = uri
   }
 
-  addOnExportListener(callbackFunction){
+  addOnExportListener(callbackFunction: (arg0: string, arg1: string) => Promise<void>){
     this.exportCallback = callbackFunction
   }
 
-  addOnChangePreferencesListener(callbackFunction) {
+  addOnChangePreferencesListener(callbackFunction: (arg0: MoorhenPreferencesInterface) => void) {
     this.exportPreferencesCallback = callbackFunction
   }
 
-  onChangePreferencesListener(preferences) {
+  onChangePreferencesListener(preferences: MoorhenPreferencesInterface): void {
     const objectKeys = ['shortCuts', 'defaultBackgroundColor', 'defaultUpdatingScores']
     preferences['version'] = this.cachedPreferences.version
     for (const key of Object.keys(this.cachedPreferences)) {
@@ -126,14 +168,14 @@ export default class MoorhenWrapper {
     }
   }
 
-  forwardControls(controls) {
+  forwardControls(controls: MoorhenCloudControlsInterface) {
     console.log('Fetched controls', {controls})
     this.controls = controls
   }
 
-  async importPreferences(newPreferences) {
+  async importPreferences(newPreferences: MoorhenPreferencesInterface) {
     const defaultPreferences = getDefaultValues()
-    let preferences
+    let preferences: MoorhenPreferencesInterface
     
     if (newPreferences.version === defaultPreferences.version) {
       preferences = newPreferences
@@ -154,7 +196,7 @@ export default class MoorhenWrapper {
 
   addStyleSheet() {
     const head = document.head;
-    const style = document.createElement("link");
+    const style: any = document.createElement("link");
     style.href = `${this.urlPrefix}/moorhen.css`
     style.rel = "stylesheet";
     style.async = true
@@ -162,7 +204,7 @@ export default class MoorhenWrapper {
     head.appendChild(style);
   }
 
-  async canFetchFile(url, timeout=3000) {
+  async canFetchFile(url: string, timeout: number = 3000) {
     const timeoutSignal = AbortSignal.timeout(timeout)
     try {
       const response = await fetch(url, {method: 'HEAD', signal: timeoutSignal})
@@ -177,9 +219,9 @@ export default class MoorhenWrapper {
     }
 }
 
-  async loadMtzData(uniqueId, inputFile, mapName, selectedColumns) {
+  async loadMtzData(uniqueId: string, inputFile: string, mapName: string, selectedColumns: selectedColumnsType): Promise<MoorhenMapInterface> {
     const newMap = new MoorhenMap(this.controls.commandCentre)
-    newMap.litLines = this.preferences.litLines
+    newMap.litLines = this.preferences.defaultMapLitLines
     newMap.uniqueId = uniqueId
     return new Promise(async (resolve, reject) => {
       try {
@@ -194,7 +236,7 @@ export default class MoorhenWrapper {
     })  
   }
 
-  async loadPdbData(uniqueId, inputFile, molName) {
+  async loadPdbData(uniqueId: string, inputFile: string, molName: string): Promise<MoorhenMoleculeInterface> {
     const newMolecule = new MoorhenMolecule(this.controls.commandCentre, this.monomerLibrary)
 
     return new Promise(async (resolve, reject) => {
@@ -214,7 +256,7 @@ export default class MoorhenWrapper {
     })
   }
 
-  async loadLigandData(url) {
+  async loadLigandData(url: string): Promise<string> {
     try {
       const response = await fetch(url)
       if (response.ok) {
@@ -234,14 +276,14 @@ export default class MoorhenWrapper {
     }
   }
 
-  async loadLegend(url) {
+  async loadLegend(url: string): Promise<void> {
     try {
       const response = await fetch(url)
       if (response.ok) {
         const fileContents = await response.text()
         if (fileContents !== this.cachedLegend) {
           this.controls.setNotifyNewContent(true)
-          const domComponent = parse(fileContents)
+          const domComponent = parse(fileContents) as JSX.Element
           this.controls.setLegendText(domComponent)
           this.cachedLegend = fileContents
           setTimeout(() => this.controls.setNotifyNewContent(false), 4000)
@@ -254,10 +296,10 @@ export default class MoorhenWrapper {
     }
   }
 
-  async loadInputFiles() {
+  async loadInputFiles(): Promise<void>{
 
     this.cachedLigandDictionaries = await Promise.all(
-      this.inputFiles.filter(file => file.type === 'ligand').map(file => this.loadLigandData(...file.args))
+      this.inputFiles.filter(file => file.type === 'ligand').map(file => this.loadLigandData(...file.args as [string]))
     )
 
     try {
@@ -270,9 +312,10 @@ export default class MoorhenWrapper {
           } else if (file.type === 'legend') {
             return this.loadLegend(...file.args)
           } else if(file.type === 'ligand') {
-            // pass
+            return Promise.resolve()
           } else {
-            console.log(`Unrecognised file type ${file.type}`)
+            console.log('Unrecognised file type')
+            console.log(file)
             return Promise.resolve()
           }
       }))  
@@ -285,7 +328,7 @@ export default class MoorhenWrapper {
   checkIfLoadedData() {
     // No legend is loaded but there is some data loaded so the current message must be the no data message and must be removed
     if (this.cachedLegend === null && (this.controls.moleculesRef.current.length !== 0 || this.controls.mapsRef.current.length !== 0)) {
-      const domComponent = parse('<div></div>')
+      const domComponent = parse('<div></div>') as JSX.Element
       this.controls.setLegendText(domComponent)
     }
   }
@@ -312,7 +355,7 @@ export default class MoorhenWrapper {
   }
 
   updateLegend(){
-    const legendInputFile = this.inputFiles.find(file => file.type === 'legend')
+    const legendInputFile = this.inputFiles.find(file => file.type === 'legend') as LegendInputFileType
     if (typeof legendInputFile !== 'undefined') {
       return this.loadLegend(...legendInputFile.args).catch((err) => console.log(err))
     }
@@ -320,7 +363,7 @@ export default class MoorhenWrapper {
   }
 
   updateMolecules() {
-    const moleculeInputFiles = this.inputFiles.filter(file => file.type === 'pdb')
+    const moleculeInputFiles = this.inputFiles.filter(file => file.type === 'pdb') as PdbInputFileType[]
     return Promise.all(moleculeInputFiles.map(inputFile => {
       const loadedMolecule = this.controls.moleculesRef.current.find(molecule => molecule.uniqueId === inputFile.uniqueId)
       if (typeof loadedMolecule === 'undefined') {
@@ -342,7 +385,7 @@ export default class MoorhenWrapper {
   }
   
   updateMaps() {
-    const mapInputFiles = this.inputFiles.filter(file => file.type === 'mtz')
+    const mapInputFiles = this.inputFiles.filter(file => file.type === 'mtz') as MapInputFileType[]
     return Promise.all(mapInputFiles.map(inputFile => {
       const loadedMap = this.controls.mapsRef.current.find(map => map.uniqueId === inputFile.uniqueId)
       if (typeof loadedMap === 'undefined') {
@@ -379,7 +422,6 @@ export default class MoorhenWrapper {
               exportCallback={this.exportCallback.bind(this)}
               onChangePreferencesListener={this.onChangePreferencesListener.bind(this)}
               monomerLibraryPath={this.monomerLibrary}
-              extraMenus={[]}
               viewOnly={this.workMode === 'view'}
               />
           </PreferencesContextProvider>

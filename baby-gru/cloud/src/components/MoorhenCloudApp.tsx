@@ -1,60 +1,62 @@
 import { useRef, useState, useReducer, useContext, useEffect, useCallback } from 'react'
 import { MenuItem } from '@mui/material'
-import { PreferencesContext } from "../../../src/utils/MoorhenPreferences"
-import { MoorhenContainer } from "../../../src/components/MoorhenContainer"
+import { MoorhenPreferencesInterface, PreferencesContext } from "../../../src/utils/MoorhenPreferences"
+import { MoorhenContainer, MoorhenContainerPropsInterface, MoorhenControlsInterface } from "../../../src/components/MoorhenContainer"
+import { itemReducer } from "../../../src/components/MoorhenApp"
 import { isDarkBackground } from "../../../src/WebGLgComponents/mgWebGL"
 import { MoorhenLegendToast } from './MoorhenLegendToast'
+import { MoorhenMoleculeInterface } from '../../../src/utils/MoorhenMolecule'
+import { MoorhenMapInterface } from '../../../src/utils/MoorhenMap'
+import { MoorhenCommandCentreInterface } from '../../../src/utils/MoorhenCommandCentre'
+import { MoorhenTimeCapsuleInterface } from '../../../src/utils/MoorhenTimeCapsule'
 
-const initialMoleculesState = []
-
-const initialMapsState = []
-
-const itemReducer = (oldList, change) => {
-    if (change.action === 'Add') {
-        return [...oldList, change.item]
-    }
-    else if (change.action === 'Remove') {
-        return oldList.filter(item => item.molNo !== change.item.molNo)
-    }
-    else if (change.action === 'AddList') {
-        return oldList.concat(change.items)
-    }
-    else if (change.action === 'Empty') {
-        return []
-    }
+export interface MoorhenCloudControlsInterface extends MoorhenControlsInterface {
+    setNotifyNewContent: React.Dispatch<React.SetStateAction<boolean>>;
+    setLegendText: React.Dispatch<React.SetStateAction<JSX.Element>>;
+    setBusyFetching: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export const MoorhenCloudApp = (props) => {
-    const glRef = useRef(null)
-    const timeCapsuleRef = useRef(null)
-    const commandCentre = useRef(null)
-    const moleculesRef = useRef(null)
-    const mapsRef = useRef(null)
-    const activeMapRef = useRef(null)
-    const lastHoveredAtom = useRef(null)
-    const isDirty = useRef(false)
-    const busyContouring = useRef(false)
-    const preferences = useContext(PreferencesContext)
-    const [activeMap, setActiveMap] = useState(null)
-    const [hoveredAtom, setHoveredAtom] = useState({ molecule: null, cid: null })
-    const [busy, setBusy] = useState(false)
+const initialMoleculesState: MoorhenMoleculeInterface[] = []
+
+const initialMapsState: MoorhenMapInterface[] = []
+
+interface MoorhenCloudAppPropsInterface extends MoorhenContainerPropsInterface {
+    exportCallback: (arg0: string, arg1: string) => Promise<void>;
+    onChangePreferencesListener: (preferences: MoorhenPreferencesInterface) => void;
+}
+
+
+export const MoorhenCloudApp = (props: MoorhenCloudAppPropsInterface) => {
+    const glRef = useRef<mgWebGLType | null>(null)
+    const timeCapsuleRef = useRef<MoorhenTimeCapsuleInterface | null>(null)
+    const commandCentre = useRef<MoorhenCommandCentreInterface | null>(null)
+    const moleculesRef = useRef<MoorhenMoleculeInterface[] | null>(null)
+    const mapsRef = useRef<MoorhenMapInterface[] | null>(null)
+    const activeMapRef = useRef<MoorhenMapInterface | null>(null)
+    const lastHoveredAtom = useRef<HoveredAtomType | null>(null)
+    const isDirty = useRef<boolean>(false)
+    const busyContouring = useRef<boolean>(false)
+    const preferences = useContext<undefined | MoorhenPreferencesInterface>(PreferencesContext)
+    const [activeMap, setActiveMap] = useState<MoorhenMapInterface | null>(null)
+    const [hoveredAtom, setHoveredAtom] = useState<HoveredAtomType>({ molecule: null, cid: null })
+    const [busy, setBusy] = useState<boolean>(false)
     const [molecules, changeMolecules] = useReducer(itemReducer, initialMoleculesState)
     const [maps, changeMaps] = useReducer(itemReducer, initialMapsState)
-    const [backgroundColor, setBackgroundColor] = useState([1, 1, 1, 1])
-    const [cootInitialized, setCootInitialized] = useState(false)
-    const [showToast, setShowToast] = useState(false)
-    const [toastContent, setToastContent] = useState("")
-    const [showColourRulesToast, setShowColourRulesToast] = useState(false)
-    const [legendText, setLegendText] = useState('Loading, please wait...')
-    const [busyFetching, setBusyFetching] = useState(false)
-    const [notifyNewContent, setNotifyNewContent] = useState(false)
+    const [backgroundColor, setBackgroundColor] = useState<[number, number, number, number]>([1, 1, 1, 1])
+    const [cootInitialized, setCootInitialized] = useState<boolean>(false)
+    const [showToast, setShowToast] = useState<boolean>(false)
+    const [toastContent, setToastContent] = useState<JSX.Element | null>(null)
+    const [showColourRulesToast, setShowColourRulesToast] = useState<boolean>(false)
+    const [legendText, setLegendText] = useState<string | JSX.Element>('Loading, please wait...')
+    const [busyFetching, setBusyFetching] = useState<boolean>(false)
+    const [notifyNewContent, setNotifyNewContent] = useState<boolean>(false)
 
-    moleculesRef.current = molecules
-    mapsRef.current = maps
+    moleculesRef.current = molecules as MoorhenMoleculeInterface[]
+    mapsRef.current = maps as MoorhenMapInterface[]
     activeMapRef.current = activeMap
 
-    const forwardCollectedControls = useCallback((controls) => {
-        let collectedControls = {
+    const forwardCollectedControls = useCallback((controls: MoorhenControlsInterface) => {
+        let collectedControls: MoorhenCloudControlsInterface = {
             setLegendText, setBusyFetching, setNotifyNewContent, ...controls
         }
         props.forwardControls(collectedControls)
@@ -63,19 +65,19 @@ export const MoorhenCloudApp = (props) => {
     const collectedProps = {
         ...props, glRef, timeCapsuleRef, commandCentre, moleculesRef, mapsRef, 
         activeMapRef, lastHoveredAtom, preferences, activeMap, setActiveMap,
-        busy, setBusy, molecules, changeMolecules, maps, changeMaps, 
-        backgroundColor, setBackgroundColor, cootInitialized, setCootInitialized,
+        busy, setBusy, molecules: molecules as MoorhenMoleculeInterface[], changeMolecules,
+        maps: maps as MoorhenMapInterface[], changeMaps, backgroundColor, setBackgroundColor,
+        cootInitialized, setCootInitialized, setShowColourRulesToast, hoveredAtom, setHoveredAtom,
         showToast, setShowToast, toastContent, setToastContent, showColourRulesToast,
-        setShowColourRulesToast, hoveredAtom, setHoveredAtom,
     }
 
     const doExportCallback = useCallback(async () => {
-        let moleculePromises = molecules.map(molecule => {return molecule.getAtoms()})
+        let moleculePromises = molecules.map((molecule: MoorhenMoleculeInterface) => {return molecule.getAtoms()})
         let moleculeAtoms = await Promise.all(moleculePromises)
         molecules.forEach((molecule, index) => props.exportCallback(molecule.name, moleculeAtoms[index].data.result.pdbData))
     }, [props.exportCallback, molecules])
 
-    const exportMenuItem =  <MenuItem key={'export-cloud'} id='cloud-export-menu-item' variant="success" onClick={doExportCallback}>
+    const exportMenuItem =  <MenuItem key={'export-cloud'} id='cloud-export-menu-item' onClick={doExportCallback}>
                                 Save current model
                             </MenuItem>
 
@@ -84,9 +86,9 @@ export const MoorhenCloudApp = (props) => {
             busyContouring.current = true
             isDirty.current = false
             await Promise.all(
-                maps.map(map => {
+                maps.map((map: MoorhenMapInterface) => {
                   return map.doCootContour(
-                    glRef, ...glRef.current.origin.map(coord => -coord), map.mapRadius, map.contourLevel
+                    glRef, ...glRef.current.origin.map(coord => -coord) as [number, number, number], map.mapRadius, map.contourLevel
                   )     
                 })
             )
@@ -110,7 +112,7 @@ export const MoorhenCloudApp = (props) => {
     
     const handleRadiusChangeCallback = useCallback(async (evt) => {
         if (props.viewOnly) {
-            maps.forEach(map => {
+            maps.forEach((map: MoorhenMapInterface) => {
                 const newRadius = map.mapRadius + parseInt(evt.detail.factor)
                 map.mapRadius = newRadius
             })
@@ -120,7 +122,7 @@ export const MoorhenCloudApp = (props) => {
     
     const handleWheelContourLevelCallback = useCallback(async (evt) => {
         if (props.viewOnly) {
-            maps.forEach(map => {
+            maps.forEach((map: MoorhenMapInterface) => {
                 const newLevel = evt.detail.factor > 1 ? map.contourLevel + 0.1 : map.contourLevel - 0.1
                 map.contourLevel = newLevel
           })
@@ -151,9 +153,9 @@ export const MoorhenCloudApp = (props) => {
 
     useEffect(() => {
         if (props.viewOnly && maps.length > 0) {
-            maps.forEach(map => {
+            maps.forEach((map: MoorhenMapInterface) => {
                 map.doCootContour(
-                    glRef, ...glRef.current.origin.map(coord => -coord), 13.0, 0.8
+                    glRef, ...glRef.current.origin.map(coord => -coord) as [number, number, number], 13.0, 0.8
               )
             })
         }
@@ -165,7 +167,7 @@ export const MoorhenCloudApp = (props) => {
                 return
             }
             const newBackgroundIsDark = isDarkBackground(...glRef.current.background_colour)
-            await Promise.all(molecules.map(molecule => {
+            await Promise.all(molecules.map((molecule: MoorhenMoleculeInterface) => {
                 if (molecule.cootBondsOptions.isDarkBackground !== newBackgroundIsDark) {
                     molecule.cootBondsOptions.isDarkBackground = newBackgroundIsDark
                     molecule.setAtomsDirty(true)
@@ -186,12 +188,12 @@ export const MoorhenCloudApp = (props) => {
                     if (key === 'isMounted') {
                         // pass
                     } else if (key === 'shortCuts') {
-                        obj[key] = JSON.parse(preferences[key])
+                        obj[key] = JSON.parse(preferences[key as string])
                     } else {
                         obj[key] = preferences[key]
                     }
                     return obj
-                }, {})
+                }, {}) as any
             )
         }
     }, [preferences])

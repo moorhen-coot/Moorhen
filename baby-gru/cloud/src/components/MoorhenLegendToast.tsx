@@ -2,7 +2,15 @@ import { Form, Toast, ToastContainer } from 'react-bootstrap';
 import { CloudSyncOutlined, NewReleasesOutlined } from '@mui/icons-material';
 import { isDarkBackground } from '../../../src/WebGLgComponents/mgWebGL'
 
-export const MoorhenLegendToast = (props) => {
+type MoorhenLegendToastPropsType = { 
+    backgroundColor: [number, number, number, number];
+    busyFetching: boolean;
+    notifyNewContent: boolean;
+    hoveredAtom: HoveredAtomType;
+    legendText: string | JSX.Element;
+ }
+
+export const MoorhenLegendToast = (props: MoorhenLegendToastPropsType) => {
 
     const isDark = isDarkBackground(...props.backgroundColor) 
 

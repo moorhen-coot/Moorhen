@@ -76,7 +76,6 @@ interface MoorhenContainerOptionalPropsInterface {
     disableFileUploads: boolean;
     urlPrefix: string;
     extraNavBarMenus: JSX.Element[];
-    exportCallback: any;
     viewOnly: boolean;
     extraDraggableModals: JSX.Element[];
     monomerLibraryPath: string;
@@ -89,7 +88,7 @@ interface MoorhenContainerOptionalPropsInterface {
     aceDRGInstance: any; 
 }
 
-interface MoorhenContainerPropsInterface extends Partial<statesMapInterface>, Partial<MoorhenContainerOptionalPropsInterface> { }
+export interface MoorhenContainerPropsInterface extends Partial<statesMapInterface>, Partial<MoorhenContainerOptionalPropsInterface> { }
 
 export interface MoorhenControlsInterface extends Partial<statesMapInterface>, Partial<MoorhenContainerOptionalPropsInterface>, MoorhenPreferencesInterface {
     isDark: boolean;
@@ -185,7 +184,7 @@ export const MoorhenContainer = (props: MoorhenContainerPropsInterface) => {
     } = states
 
     const {
-        disableFileUploads, urlPrefix, extraNavBarMenus, exportCallback, viewOnly, extraDraggableModals, 
+        disableFileUploads, urlPrefix, extraNavBarMenus, viewOnly, extraDraggableModals, 
         monomerLibraryPath, forwardControls, extraFileMenuItems, allowScripting, backupStorageInstance,
         extraEditMenuItems, aceDRGInstance, extraCalculateMenuItems
     } = props
@@ -419,7 +418,7 @@ export const MoorhenContainer = (props: MoorhenContainerPropsInterface) => {
         molecules, changeMolecules, appTitle, setAppTitle, maps, changeMaps, glRef, activeMolecule, setActiveMolecule,
         activeMap, setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor, toastContent, 
         setToastContent, hoveredAtom, setHoveredAtom, showToast, setShowToast, windowWidth, windowHeight, showColourRulesToast,
-        timeCapsuleRef, setShowColourRulesToast, isDark, exportCallback, disableFileUploads, urlPrefix, viewOnly,
+        timeCapsuleRef, setShowColourRulesToast, isDark, disableFileUploads, urlPrefix, viewOnly,
         extraNavBarMenus, monomerLibraryPath, moleculesRef, extraFileMenuItems, mapsRef, allowScripting, extraCalculateMenuItems,
         extraEditMenuItems, extraDraggableModals, aceDRGInstance, availableFonts, ...preferences
     }
@@ -493,7 +492,6 @@ MoorhenContainer.defaultProps = {
     urlPrefix: '.',
     monomerLibraryPath: './baby-gru/monomers',
     forwardControls: () => {},
-    exportCallback: null,
     disableFileUploads: false,
     extraNavBarMenus: [],
     extraFileMenuItems: [],

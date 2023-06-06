@@ -4,18 +4,19 @@ export {};
 
 declare global {
     interface Window {
-        CCP4Module: {
-            check_polymer_type(polymerConst: emscriptemInstanceInterface<number>): {value: number};
-            remove_ligands_and_waters_chain(chain: GemmiChainInterface): void;
-            gemmi_setup_entities(gemmiStructure: GemmiStructureInterface): void;
-            remove_ligands_and_waters_structure(gemmiStructure: GemmiStructureInterface): void;
-            read_structure_from_string(pdbData: string | ArrayBuffer, molName: string): GemmiStructureInterface;
-            get_mtz_columns(fileName: string): emscriptemVectorInterface<string>;
-            FS_createDataFile(arg0: string, fileName: string, byteArray: Uint8Array, arg3: boolean, arg4: boolean): void;
-            getElementNameAsString: (arg0: emscriptemInstanceInterface<string>) => string;
-            FS_unlink: (arg0: string) => void;
-            Selection: { new(cid: string): GemmiSelectionInterface };
-        }
+        CCP4Module: CCP4ModuleType
+    }
+    type CCP4ModuleType = {
+        check_polymer_type(polymerConst: emscriptemInstanceInterface<number>): {value: number};
+        remove_ligands_and_waters_chain(chain: GemmiChainInterface): void;
+        gemmi_setup_entities(gemmiStructure: GemmiStructureInterface): void;
+        remove_ligands_and_waters_structure(gemmiStructure: GemmiStructureInterface): void;
+        read_structure_from_string(pdbData: string | ArrayBuffer, molName: string): GemmiStructureInterface;
+        get_mtz_columns(fileName: string): emscriptemVectorInterface<string>;
+        FS_createDataFile(arg0: string, fileName: string, byteArray: Uint8Array, arg3: boolean, arg4: boolean): void;
+        getElementNameAsString: (arg0: emscriptemInstanceInterface<string>) => string;
+        FS_unlink: (arg0: string) => void;
+        Selection: { new(cid: string): GemmiSelectionInterface };
     }
     type HoveredAtomType = {
         molecule: MoorhenMoleculeInterface | null,
