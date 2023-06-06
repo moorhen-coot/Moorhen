@@ -7,7 +7,7 @@ import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
 import { cidToSpec, getTooltipShortcutLabel, residueCodesThreeToOne, convertViewtoPx } from "../../utils/MoorhenUtils";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 
-const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
+export const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
     const target = useRef(null)
     const [prompt, setPrompt] = useState(null)
     const [localParameters, setLocalParameters] = useState({})
@@ -942,8 +942,12 @@ export const MoorhenDragAtomsButton = (props) => {
 
     const finishDragging = async (acceptTransform) => {
         document.removeEventListener('atomDragged', atomDraggedCallback)
+        document.removeEventListener('mouseup', mouseUpCallback)
         glRef.current.setDraggableMolecule(null)
-
+        if (busy.current) {
+            setTimeout(() => finishDragging(acceptTransform), 100)
+            return
+        }    
         if(acceptTransform){
             await props.commandCentre.current.cootCommand({
                 returnType: 'status',
