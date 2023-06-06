@@ -6,7 +6,7 @@ import { MoorhenTimeCapsule, backupSessionType } from "./utils/MoorhenTimeCapsul
 
 type ErrorBoundaryPropsType = {
     urlPrefix: string;
-    children: JSX.Element[];
+    children: JSX.Element;
 }
 type ErrorBoundaryStateType = {
     hasError: boolean;
