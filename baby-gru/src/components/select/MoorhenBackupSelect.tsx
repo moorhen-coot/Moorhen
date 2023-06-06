@@ -1,11 +1,19 @@
 import { useEffect,useState,forwardRef } from "react";
 import { Form, FormSelect } from "react-bootstrap";
+import { MoorhenTimeCapsuleInterface } from "../../utils/MoorhenTimeCapsule";
 
-export const MoorhenBackupSelect = forwardRef((props, selectRef) => {
-    const [backupOptions, setBackupOptions] = useState(null)
+type MoorhenBackupSelectPropsType = {
+    timeCapsuleRef: React.RefObject<MoorhenTimeCapsuleInterface>;
+    height: string;
+    width: string;
+    label: string;
+}
+
+export const MoorhenBackupSelect = forwardRef<HTMLSelectElement, MoorhenBackupSelectPropsType>((props, selectRef) => {
+    const [backupOptions, setBackupOptions] = useState<null | JSX.Element[]>(null)
 
     useEffect(() => {
-        async function fetchKeys() {
+        async function fetchKeys(): Promise<void> {
             const sortedKeys = await props.timeCapsuleRef.current.getSortedKeys()
             const newStorageOptions = sortedKeys.map((key, index) => {
                 return <option key={`${key.label}-${index}`} value={JSON.stringify(key)}>{key.label}</option>
@@ -16,7 +24,7 @@ export const MoorhenBackupSelect = forwardRef((props, selectRef) => {
         if (props.timeCapsuleRef.current) {
             fetchKeys();
         }
-    }, [props.backupType, props.timeCapsuleRef]);
+    }, [props.timeCapsuleRef]);
 
     return <Form.Group style={{ width: props.width, height:props.height }}>
                 <Form.Label>{props.label}</Form.Label>
@@ -26,4 +34,4 @@ export const MoorhenBackupSelect = forwardRef((props, selectRef) => {
             </Form.Group>
 })
 
-MoorhenBackupSelect.defaultProps = { height: '4rem', width: '20rem', maps: null, label: "Backup", filterFunction: () => true }
+MoorhenBackupSelect.defaultProps = { height: '4rem', width: '20rem', label: "Backup" }
