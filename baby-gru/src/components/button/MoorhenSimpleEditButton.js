@@ -922,6 +922,24 @@ export const MoorhenDragAtomsButton = (props) => {
         </Container>
     }
 
+    const animateRefine = async (molecule, n_cyc, n_iteration, final_n_cyc=100) => {
+        for (let i = 0; i <= n_iteration; i++) {
+            const result = await props.commandCentre.current.cootCommand({
+                returnType: 'status_instanced_mesh_pair',
+                command: 'refine',
+                commandArgs: [molecule.molNo, i !== n_iteration ? n_cyc : final_n_cyc]
+            }, true)
+            if (result.data.result.result.status !== -2){
+                return
+            }
+            if (i !== n_iteration) {
+                await molecule.drawWithStyleFromMesh('CBs', glRef, [result.data.result.result.mesh])
+            }
+        }
+        molecule.setAtomsDirty(true)
+        await molecule.fetchIfDirtyAndDraw('CBs', glRef)
+    }
+
     const finishDragging = async (acceptTransform) => {
         document.removeEventListener('atomDragged', atomDraggedCallback)
         glRef.current.setDraggableMolecule(null)
@@ -929,13 +947,13 @@ export const MoorhenDragAtomsButton = (props) => {
         if(acceptTransform){
             await props.commandCentre.current.cootCommand({
                 returnType: 'status',
-                command: 'replace_fragment',
-                commandArgs: [chosenMolecule.current.molNo, moltenFragmentRef.current.molNo, fragmentCid.current],
+                command: 'clear_refinement',
+                commandArgs: [chosenMolecule.current.molNo],
             }, true)
             await props.commandCentre.current.cootCommand({
                 returnType: 'status',
-                command: 'clear_refinement',
-                commandArgs: [chosenMolecule.current.molNo],
+                command: 'replace_fragment',
+                commandArgs: [chosenMolecule.current.molNo, moltenFragmentRef.current.molNo, fragmentCid.current],
             }, true)
             chosenMolecule.current.atomsDirty = true
             await chosenMolecule.current.redraw(glRef)
@@ -1010,18 +1028,7 @@ export const MoorhenDragAtomsButton = (props) => {
         chosenMolecule.current.hideCid(fragmentCid.current, glRef)
         moltenFragmentRef.current.setAtomsDirty(true)
         await moltenFragmentRef.current.fetchIfDirtyAndDraw('CBs', glRef)
-        for (let i = 0; i < 5; i++) {
-            const result = await props.commandCentre.current.cootCommand({
-                returnType: 'status_instanced_mesh_pair',
-                command: 'refine',
-                commandArgs: [moltenFragmentRef.current.molNo, 10]
-            }, true)
-            if (i !== 5) {
-                await moltenFragmentRef.current.drawWithStyleFromMesh('CBs', glRef, [result.data.result.result.mesh])
-            }
-        }
-        moltenFragmentRef.current.setAtomsDirty(true)
-        await moltenFragmentRef.current.fetchIfDirtyAndDraw('CBs', glRef)
+        await animateRefine(moltenFragmentRef.current, 10, 5, 10)
         changeMolecules({ action: "Add", item: newMolecule })
         glRef.current.setDraggableMolecule(newMolecule)
         setShowAccept(true)
@@ -1072,17 +1079,11 @@ export const MoorhenDragAtomsButton = (props) => {
             busy.current = true
             refinementDirty.current = false
             await props.commandCentre.current.cootCommand({
-                returnType: 'status_instanced_mesh_pair',
-                command: 'refine',
-                commandArgs: [moltenFragmentRef.current.molNo, 20]
-            }, true)
-            await props.commandCentre.current.cootCommand({
                 returnType: 'status',
                 command: 'clear_target_position_restraints',
                 commandArgs: [moltenFragmentRef.current.molNo]
             }, true)
-            moltenFragmentRef.current.setAtomsDirty(true)
-            await moltenFragmentRef.current.fetchIfDirtyAndDraw('CBs', glRef)
+            await animateRefine(moltenFragmentRef.current, 10, 5)
             busy.current = false    
         } else {
             setTimeout(() => refineNewPosition(), 100)
