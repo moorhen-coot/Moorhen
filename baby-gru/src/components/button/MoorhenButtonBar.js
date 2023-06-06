@@ -63,7 +63,7 @@ export const MoorhenButtonBar = (props) => {
         (<MoorhenConvertCisTransButton {...props} key='cis-trans' selectedButtonIndex={selectedButtonIndex}
                 setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="15" />),
 
-        (props.devMode && <MoorhenDragAtomsButton {...props} key='drag-atoms-A' selectedButtonIndex={selectedButtonIndex}
+        (<MoorhenDragAtomsButton {...props} key='drag-atoms' selectedButtonIndex={selectedButtonIndex}
                 setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="16" />)        
     ]
 

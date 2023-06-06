@@ -1,4 +1,4 @@
-import MoorhenWrapper from './src/MoorhenWrapper.js';
+import MoorhenWrapper from './src/MoorhenWrapper';
 
 export { MoorhenWrapper }
 
