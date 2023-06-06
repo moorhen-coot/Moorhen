@@ -11,7 +11,7 @@ type MoorhenCidInputFormPropsType = {
     onChange?: (arg0: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-export const MoorhenCidInputForm = forwardRef<HTMLFormElement, MoorhenCidInputFormPropsType>((props, cidFormRef) => {
+export const MoorhenCidInputForm = forwardRef<HTMLInputElement, MoorhenCidInputFormPropsType>((props, cidFormRef) => {
 
     const handleChange = (evt: React.ChangeEvent<HTMLInputElement>) => {
         if (props.onChange) {
