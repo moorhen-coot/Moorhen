@@ -130,6 +130,7 @@ declare global {
     }
     interface GemmiSelectionChainListInterface extends emscriptemInstanceInterface<GemmiSelectionChainListInterface> {
         str: () => string;
+        all: boolean;
     }
     interface GemmiSelectionSeqIdInterface extends emscriptemInstanceInterface<GemmiSelectionSeqIdInterface> {
         str: () => string;

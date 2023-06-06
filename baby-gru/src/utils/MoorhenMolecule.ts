@@ -1897,14 +1897,29 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         const toSeqId = selection.to_seqid
         const fromSeqId = selection.from_seqid
         const chainIds = selection.chain_ids
-        for (let resNum = fromSeqId.seqnum; resNum <= toSeqId.seqnum; resNum++) {
-            this.excludedCids.push(`//${chainIds.str()}/${resNum}/*`)
+        
+        let chainIdList: string[] = [chainIds.str()]
+        if(chainIds.all) {
+            chainIdList = this.sequences.map(sequence => sequence.chain)
         }
+
+        if(!fromSeqId.empty()) {
+            chainIdList.forEach(chainName => {
+                if(toSeqId.empty()){
+                    this.excludedCids.push(`//${chainName}/${fromSeqId.seqnum}/*`)
+                } else {
+                    for (let resNum = fromSeqId.seqnum; resNum <= toSeqId.seqnum; resNum++) {
+                        this.excludedCids.push(`//${chainName}/${resNum}/*`)
+                    }
+                }
+            })
+        } 
+
         chainIds.delete()
         toSeqId.delete()
         fromSeqId.delete()
         selection.delete()
-        
+
         // Redraw to apply changes
         const result = await this.redraw(glRef)
         return Promise.resolve(result)
