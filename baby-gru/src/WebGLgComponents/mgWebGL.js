@@ -12534,20 +12534,15 @@ class MGWebGL extends Component {
         }
 
         if (event.shiftKey) {
-            let zQ = createYQuatFromDY(0);
-            if (event.pageX < self.gl.viewportWidth / 2) {
-                zQ = createZQuatFromDX(-self.dy / 5.);
-            } else {
-                zQ = createZQuatFromDX(self.dy / 5.);
-            }
-            let yQ = createYQuatFromDY(0)
-            if (event.pageY < self.gl.viewportHeight / 2) {
-                yQ = createZQuatFromDX(self.dx / 5.);
-            } else {
-                yQ = createZQuatFromDX(-self.dx / 5.);
-            }
-            quat4.multiply(zQ, zQ, yQ);
+
+            const ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
+            const c = this.canvasRef.current;
+            const offset = getOffsetRect(c);
+            const frac_x = 2.0*(getDeviceScale()*(event.pageX-offset.left)/this.gl.viewportWidth-0.5);
+            const frac_y = -2.0*(getDeviceScale()*(event.pageY-offset.top)/this.gl.viewportHeight-0.5);
+            const zQ = createZQuatFromDX(frac_x*self.dy+frac_y*self.dx);
             quat4.multiply(self.myQuat, self.myQuat, zQ);
+
         } else if (event.buttons === 1) {
             //console.log("mouse move",self.dx,self.dy);
             let xQ = createXQuatFromDX(-self.dy);

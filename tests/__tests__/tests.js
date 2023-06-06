@@ -9,8 +9,8 @@ let cootModule;
 
 beforeAll(() => {
     return createCootModule({
-        print(t) { console.log(["output", t]) },
-        printErr(t) { console.log(["output", t]); }
+        print(t) { async () => await console.log(["output", t]) },
+        printErr(t) { async () => await console.log(["output", t]); }
     }).then(moduleCreated => {
         cootModule = moduleCreated
         return Promise.resolve()
@@ -21,6 +21,12 @@ describe('Testing molecules_container_js', () => {
 
     beforeAll(() => {
         setupFunctions.copyExampleDataToFauxFS()
+    })
+
+    test('Test copy fragment', async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const coordMolNo = await molecules_container.read_pdb('./5a3h.pdb')
+        const coordMolNo2 = await molecules_container.copy_fragment_using_cid(coordMolNo, "//A/32-33/*");
     })
 
     test('Test gemmi', () => {
@@ -93,13 +99,13 @@ describe('Testing molecules_container_js', () => {
     })
 
     test('Test add', () => {
-        const molecules_container = new cootModule.molecules_container_js()
+        const molecules_container = new cootModule.molecules_container_js(false)
         const ret = molecules_container.add(0)
         expect(ret).toBe(1)
     })
 
     test('Test delete methods', () => {
-        const molecules_container = new cootModule.molecules_container_js()
+        const molecules_container = new cootModule.molecules_container_js(false)
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const ret = molecules_container.delete_using_cid(coordMolNo, "A/4-104", "LITERAL");
         const ret_side = molecules_container.delete_side_chain(coordMolNo, "A", 154, "" );
@@ -108,7 +114,7 @@ describe('Testing molecules_container_js', () => {
     })
 
     test('Test merge molecules', () => {
-        const molecules_container = new cootModule.molecules_container_js()
+        const molecules_container = new cootModule.molecules_container_js(false)
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const coordMolNo2 = molecules_container.read_pdb('./tm-A.pdb')
         const mergeMols = coordMolNo2.toString()
@@ -119,7 +125,7 @@ describe('Testing molecules_container_js', () => {
     })
 
     test('Get new rama info', () => {
-        const molecules_container = new cootModule.molecules_container_js()
+        const molecules_container = new cootModule.molecules_container_js(false)
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const rama_info = molecules_container.ramachandran_validation(coordMolNo)
         for (let i = 0; i < rama_info.size(); i++) {
@@ -132,13 +138,13 @@ describe('Testing molecules_container_js', () => {
     })
 
     test('Test read_pdb from faux file system', () => {
-        const molecules_container = new cootModule.molecules_container_js()
+        const molecules_container = new cootModule.molecules_container_js(false)
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         expect(coordMolNo).toBe(0)
     })
 
     test('Test read_mtz from faux file system', () => {
-        const molecules_container = new cootModule.molecules_container_js()
+        const molecules_container = new cootModule.molecules_container_js(false)
         const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz',
             'FWT', 'PHWT', "", false, false)
         expect(mapMolNo).toBe(0)
@@ -150,7 +156,7 @@ describe('Testing molecules_container_js', () => {
 
     test('Test get_residue', () => {
         const resSpec = new cootModule.residue_spec_t("A", 217, "");
-        const molecules_container = new cootModule.molecules_container_js()
+        const molecules_container = new cootModule.molecules_container_js(false)
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const res = molecules_container.get_residue(coordMolNo, resSpec)
         expect(res.nAtoms).toBe(5)
@@ -218,12 +224,12 @@ describe('Testing molecules_container_js', () => {
     })
 
     test('Test Fill Rotamer tables', () => {
-        const molecules_container = new cootModule.molecules_container_js()
+        const molecules_container = new cootModule.molecules_container_js(false)
         molecules_container.fill_rotamer_probability_tables()
     })
 
     test('Test get_single_letter_codes_for_chain', () => {
-        const molecules_container = new cootModule.molecules_container_js()
+        const molecules_container = new cootModule.molecules_container_js(false)
         molecules_container.geometry_init_standard()
         const imol = molecules_container.read_pdb('./tm-A.pdb')
         const codes = molecules_container.get_single_letter_codes_for_chain(imol, "A")
@@ -234,7 +240,7 @@ describe('Testing molecules_container_js', () => {
     })
 
     test('Test Auto-fit rotamer', () => {
-        const molecules_container = new cootModule.molecules_container_js()
+        const molecules_container = new cootModule.molecules_container_js(false)
         molecules_container.geometry_init_standard()
         const imol = molecules_container.read_pdb('./tm-A.pdb')
         const imol_map = molecules_container.read_mtz("./rnasa-1.8-all_refmac1.mtz", "FWT", "PHWT", "W", false, false)
@@ -251,7 +257,7 @@ describe('Testing molecules_container_js', () => {
     })
 
     test('Test Rama mesh', () => {
-        const molecules_container = new cootModule.molecules_container_js()
+        const molecules_container = new cootModule.molecules_container_js(false)
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const simpleMesh = molecules_container.get_ramachandran_validation_markup_mesh(coordMolNo);
         expect(simpleMesh.vertices.size()).toBe(22052)
@@ -259,7 +265,7 @@ describe('Testing molecules_container_js', () => {
     })
 
     test('Test Dodo mesh', () => {
-        const molecules_container = new cootModule.molecules_container_js()
+        const molecules_container = new cootModule.molecules_container_js(false)
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const simpleMesh = molecules_container.get_rotamer_dodecs(coordMolNo);
         expect(simpleMesh.vertices.size()).toBe(39000)
@@ -267,7 +273,7 @@ describe('Testing molecules_container_js', () => {
     })
 
     test('Test Dodo instanced mesh', () => {
-        const molecules_container = new cootModule.molecules_container_js()
+        const molecules_container = new cootModule.molecules_container_js(false)
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const instanceMesh = molecules_container.get_rotamer_dodecs_instanced(coordMolNo);
         const geom = instanceMesh.geom
@@ -293,7 +299,7 @@ describe('Testing molecules_container_js', () => {
     })
 
     test('Test backups', () => {
-        const molecules_container = new cootModule.molecules_container_js()
+        const molecules_container = new cootModule.molecules_container_js(false)
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', "", false, false)
         const resSpec = new cootModule.residue_spec_t("A", 32, "");
@@ -317,7 +323,7 @@ describe('Testing molecules_container_js', () => {
     })
 
     test('Test flip_peptide by residue spec', () => {
-        const molecules_container = new cootModule.molecules_container_js()
+        const molecules_container = new cootModule.molecules_container_js(false)
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         expect(coordMolNo).toBe(0)
 
@@ -340,7 +346,7 @@ describe('Testing molecules_container_js', () => {
     })
 
     test('Create Density Map Mesh', () => {
-        const molecules_container = new cootModule.molecules_container_js()
+        const molecules_container = new cootModule.molecules_container_js(false)
         const imol_map = molecules_container.read_mtz("rnasa-1.8-all_refmac1.mtz", "FWT", "PHWT", "W", false, false);
         const p = new cootModule.Coord_orth(55, 10, 10);
         expect(p.x()).toBe(55)
@@ -358,7 +364,7 @@ describe('Testing molecules_container_js', () => {
     })
 
     test('Create test origin', () => {
-        const molecules_container = new cootModule.molecules_container_js()
+        const molecules_container = new cootModule.molecules_container_js(false)
         const simpleMesh = molecules_container.test_origin_cube();
         const nVertices = molecules_container.count_simple_mesh_vertices(simpleMesh)
         expect(nVertices).toBe(24)
@@ -399,7 +405,7 @@ describe('Testing molecules_container_js', () => {
     })
 
     test('Test Surface mesh', () => {
-        const molecules_container = new cootModule.molecules_container_js()
+        const molecules_container = new cootModule.molecules_container_js(false)
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const simpleMesh = molecules_container.get_molecular_representation_mesh(
             0, "//", "colorRampChainsScheme", "MolecularSurface"
