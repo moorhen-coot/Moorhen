@@ -23,7 +23,7 @@ export const MoorhenSideBar = forwardRef<HTMLDivElement, MoorhenSideBarPropsInte
     const toggleDrowerButtonWidth: number = sideBarWidth * 0.07
 
     useEffect(() => {
-        if (ref != null && typeof ref !== 'function') { 
+        if (ref !== null && typeof ref !== 'function') { 
             consoleBodyHeight !== 0 ? setConsoleBodyHeight(convertViewtoPx(30, props.windowHeight)) : setConsoleBodyHeight(convertViewtoPx(0, props.windowHeight))
             ref.current.scrollTop = ref.current.scrollHeight;    
         }

@@ -1,16 +1,26 @@
-import { forwardRef } from "react";
+import { ChangeEvent, forwardRef } from "react";
 import { Form, FormSelect } from "react-bootstrap";
+import { MoorhenMapInterface } from "../../utils/MoorhenMap";
 
-export const MoorhenMapSelect = forwardRef((props, selectRef) => {
+type MoorhenMapSelectPropsType = {
+    height: string;
+    width: string;
+    label: string;
+    maps: MoorhenMapInterface[];
+    filterFunction: (arg0: MoorhenMapInterface) => boolean;
+    onChange?: (arg0: React.ChangeEvent<HTMLSelectElement>) => void;
+}
 
-    const handleChange = (newChain) => {
+export const MoorhenMapSelect = forwardRef<HTMLSelectElement, MoorhenMapSelectPropsType>((props, selectRef) => {
+
+    const handleChange = (evt: ChangeEvent<HTMLSelectElement>) => {
         if (props.onChange) {
-            props.onChange(newChain)
+            props.onChange(evt)
         }
     }
 
     const getMapOptions = () => {
-        let mapOptions = []
+        let mapOptions: JSX.Element[] = []
         
         if (props.maps) {
             props.maps.forEach(map => {

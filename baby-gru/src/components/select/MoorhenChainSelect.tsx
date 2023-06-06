@@ -1,16 +1,27 @@
 import { forwardRef } from "react";
 import { Form, FormSelect } from "react-bootstrap";
+import { MoorhenMoleculeInterface } from "../../utils/MoorhenMolecule";
 
-export const MoorhenChainSelect = forwardRef((props, selectRef) => {
+type MoorhenChainSelectPropsType = {
+    allowedTypes: number[];
+    height: string;
+    width: string;
+    label: string;
+    molecules: MoorhenMoleculeInterface[];
+    selectedCoordMolNo: number;
+    onChange?: (arg0: React.ChangeEvent<HTMLSelectElement>) => void;
+}
+
+export const MoorhenChainSelect = forwardRef<HTMLSelectElement, MoorhenChainSelectPropsType>((props, selectRef) => {
     
-    const handleChange = (evt) => {
+    const handleChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
         if (props.onChange) {
             props.onChange(evt)
         }
-        if(selectRef) selectRef.current.value = evt.target.value
+        if(selectRef !== null && typeof selectRef !== 'function') selectRef.current.value = evt.target.value
     }
 
-    const getChainOptions = (selectedCoordMolNo) => {
+    const getChainOptions = (selectedCoordMolNo: number): JSX.Element[] => {
         let selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedCoordMolNo)
         if (selectedMolecule) {
             return selectedMolecule.sequences.map(sequence => props.allowedTypes.includes(sequence.type) ? <option value={sequence.chain} key={`${selectedMolecule.molNo}_${sequence.chain}`}>{sequence.chain}</option> : null)
@@ -27,4 +38,4 @@ export const MoorhenChainSelect = forwardRef((props, selectRef) => {
 })
 
 // props.allowedTypes refers to gemmi::PolymerType member values -> https://project-gemmi.github.io/python-api/gemmi.html#PolymerType
-MoorhenChainSelect.defaultProps = { allowedTypes:[1, 2, 3, 4, 5], height: '4rem', width: '20rem', molecule: null, label: "Chain" }
+MoorhenChainSelect.defaultProps = { allowedTypes: [1, 2, 3, 4, 5], height: '4rem', width: '20rem', label: "Chain" }
