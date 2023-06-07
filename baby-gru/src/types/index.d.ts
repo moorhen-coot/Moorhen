@@ -96,6 +96,32 @@ declare global {
             removeBigTextureTextImages: (labels: string[]) => void;
         }
     }
+    type MoorhenOriginUpdateEventType = CustomEvent<MoorhenOriginUpdateInfoType>
+    type MoorhenOriginUpdateInfoType = {
+        origin: [number, number, number];
+    }
+    type MoorhenWheelContourLevelEventType = CustomEvent<MoorhenWheelContourLevelInfoType>
+    type MoorhenWheelContourLevelInfoType = {
+        factor: number;
+    }
+    type MoorhenNewMapContourEventType = CustomEvent<MoorhenNewMapContourInfoType>
+    type MoorhenNewMapContourInfoType = {
+        molNo: number;
+        mapRadius: number;
+        cootContour: boolean;
+        contourLevel: number;
+        mapColour: [number, number, number, number],
+        litLines: boolean;
+    }
+    type MoorhenMapRadiusChangeEventType = CustomEvent<MoorhenMapRadiusChangeInfoType>
+    type MoorhenMapRadiusChangeInfoType = {
+        factor: number;
+    }
+    type MoorhenScoresUpdateEventType = CustomEvent<MoorhenScoresUpdateInfoType>
+    type MoorhenScoresUpdateInfoType = {
+        origin: [number, number, number];
+        modifiedMolecule: number;
+    }
     type MoorhenConnectMapsEventType = CustomEvent<MoorhenConnectMapsInfoType>
     type MoorhenConnectMapsInfoType = {
         molecule: number;

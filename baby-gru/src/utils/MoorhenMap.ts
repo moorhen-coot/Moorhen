@@ -14,6 +14,13 @@ export type selectedColumnsType = {
 }
 
 export interface MoorhenMapInterface {
+    setAlpha(alpha: number, glRef: React.RefObject<mgWebGLType>, redraw?: boolean): Promise<void>;
+    centreOnMap(glRef: React.RefObject<mgWebGLType>): Promise<void>;
+    duplicate(): Promise<MoorhenMapInterface>;
+    makeCootUnlive(glRef: React.RefObject<mgWebGLType>): void;
+    makeCootLive(glRef: React.RefObject<mgWebGLType>): void;
+    setColour(r: number, g: number, b: number, glRef: React.RefObject<mgWebGLType>, redraw?: boolean): Promise<void>;
+    fetchMapRmsd(): Promise<number>;
     replaceMapWithMtzFile(glRef: React.RefObject<mgWebGLType>, fileUrl: RequestInfo | URL, name: string, selectedColumns: selectedColumnsType): Promise<void>;
     associateToReflectionData (selectedColumns: selectedColumnsType, reflectionData: Uint8Array | ArrayBuffer): Promise<WorkerResponseType>;
     delete(glRef: React.RefObject<mgWebGLType>): Promise<void> 
@@ -526,11 +533,16 @@ export class MoorhenMap implements MoorhenMapInterface {
         })
     }
 
-    mapMoleculeCentre(): Promise<WorkerResponseType> {
-        return this.commandCentre.current.cootCommand({
+    async centreOnMap(glRef: React.RefObject<mgWebGLType>): Promise<void> {
+        const response = await this.commandCentre.current.cootCommand({
             command: 'get_map_molecule_centre',
             commandArgs: [this.molNo],
             returnType: "map_molecule_centre_info_t"
         })
+        if (response.data.result.result.success) {
+            glRef.current.setOriginAnimated(response.data.result.result.updated_centre.map((coord: number) => -coord))
+        } else {
+            console.log('Problem finding map centre')
+        }
     }
 }

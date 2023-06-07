@@ -13,6 +13,14 @@ interface MoorhenSideBarPropsInterface extends MoorhenControlsInterface {
     consoleMessage: string;
 }
 
+export interface MoorhenSideBarAccordionPropsInterface extends MoorhenSideBarPropsInterface {
+    dropdownId: number;
+    accordionDropdownId: number;
+    setAccordionDropdownId: React.Dispatch<React.SetStateAction<number>>;
+    sideBarWidth: number;
+    showSideBar: boolean;
+}
+
 export const MoorhenSideBar = forwardRef<HTMLDivElement, MoorhenSideBarPropsInterface>((props, ref) => {
     const [showSideBar, setShowSideBar] = useState<boolean>(false);
     const [opacity, setOpacity] = useState<number>(0.5);
