@@ -31,7 +31,9 @@ function createWindow() {
   });
 
 
-  if(process.argv.length>1){
+  if(process.argv.length>2){
+      win.loadURL(process.argv[2]);
+  } else if(process.argv.length>1&&process.argv[1]!=="--no-sandbox"){
       win.loadURL(process.argv[1]);
   } else {
 
