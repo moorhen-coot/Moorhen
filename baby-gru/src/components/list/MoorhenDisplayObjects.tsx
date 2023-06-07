@@ -4,11 +4,12 @@ import { MoorhenMapCard } from "../card/MoorhenMapCard"
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
 import { ListItemButton, ListItemText, Collapse } from "@mui/material"
 import { convertViewtoPx} from '../../utils/MoorhenUtils';
+import { MoorhenSideBarAccordionPropsInterface } from './MoorhenSideBar';
 
-export const MoorhenDisplayObjects = (props) => {
-    const [currentDropdownMolNo, setCurrentDropdownMolNo] = useState(-1)
+export const MoorhenDisplayObjects = (props: MoorhenSideBarAccordionPropsInterface) => {
+    const [currentDropdownMolNo, setCurrentDropdownMolNo] = useState<number>(-1)
 
-    let displayData = [];
+    let displayData: JSX.Element[] = [];
     if (props.molecules.length !== 0) {
         props.molecules.forEach(molecule => displayData.push(
             <MoorhenMoleculeCard
@@ -41,7 +42,6 @@ export const MoorhenDisplayObjects = (props) => {
     return <>
             <ListItemButton
                 id="models-maps-dropdown"
-                show={props.accordionDropdownId === props.dropdownId}
                 style={{display:'flex', alignItems:'center'}}
                 onClick={() => { props.dropdownId !== props.accordionDropdownId ? props.setAccordionDropdownId(props.dropdownId) : props.setAccordionDropdownId(-1) }}>
                 <ListItemText primary="Models and maps" />

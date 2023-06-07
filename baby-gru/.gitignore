@@ -33,3 +33,4 @@ yarn-error.log*
 /public/baby-gru/tutorials/moorhen-tutorial-structure-number-1.pdb
 /src/WebGL
 /monomers
+/package-lock.json

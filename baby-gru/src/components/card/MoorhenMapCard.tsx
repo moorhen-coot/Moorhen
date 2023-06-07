@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback, useMemo, Fragment } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo, Fragment, SetStateAction } from "react";
 import { Card, Form, Button, Col, DropdownButton, Stack, Dropdown, OverlayTrigger, ToggleButton } from "react-bootstrap";
 import { doDownload } from '../../utils/MoorhenUtils';
 import { getNameLabel } from "./cardUtils"
@@ -7,39 +7,53 @@ import { MoorhenMapSettingsMenuItem, MoorhenDeleteDisplayObjectMenuItem, Moorhen
 import MoorhenSlider from "../misc/MoorhenSlider";
 import { IconButton, MenuItem, Tooltip } from "@mui/material";
 import { SketchPicker } from "react-color";
+import { MoorhenSideBarAccordionPropsInterface } from '../list/MoorhenSideBar';
+import { MoorhenMapInterface } from '../../utils/MoorhenMap';
 
-export const MoorhenMapCard = (props) => {
-    const [cootContour, setCootContour] = useState(true)
-    const [mapRadius, setMapRadius] = useState(props.initialRadius)
-    const [mapContourLevel, setMapContourLevel] = useState(props.initialContour)
-    const [mapLitLines, setMapLitLines] = useState(props.defaultMapLitLines)
-    const [mapSolid, setMapSolid] = useState(props.defaultMapSurface)
-    const [mapOpacity, setMapOpacity] = useState(1.0)
-    const [isCollapsed, setIsCollapsed] = useState(!props.defaultExpandDisplayCards);
-    const [currentName, setCurrentName] = useState(props.map.name);
-    const [popoverIsShown, setPopoverIsShown] = useState(false)
-    const [mapColour, setMapColour] = useState(null)
-    const nextOrigin = useRef([])
-    const busyContouring = useRef(false)
-    const isDirty = useRef(false)
+type ActionButtonType = {
+    label: string;
+    compressed: () => JSX.Element;
+    expanded: null | ( () => JSX.Element );
+}
+
+interface MoorhenMapCardPropsInterface extends MoorhenSideBarAccordionPropsInterface {
+    key: number;
+    index: number;
+    map: MoorhenMapInterface;
+    initialContour: number;
+    initialRadius: number;
+    currentDropdownMolNo: number;
+    setCurrentDropdownMolNo: React.Dispatch<React.SetStateAction<number>>;
+}
+
+export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
+    const [cootContour, setCootContour] = useState<boolean>(true)
+    const [mapRadius, setMapRadius] = useState<number>(props.initialRadius)
+    const [mapContourLevel, setMapContourLevel] = useState<number>(props.initialContour)
+    const [mapLitLines, setMapLitLines] = useState<boolean>(props.defaultMapLitLines)
+    const [mapSolid, setMapSolid] = useState<boolean>(props.defaultMapSurface)
+    const [mapOpacity, setMapOpacity] = useState<number>(1.0)
+    const [isCollapsed, setIsCollapsed] = useState<boolean>(!props.defaultExpandDisplayCards);
+    const [currentName, setCurrentName] = useState<string>(props.map.name);
+    const [popoverIsShown, setPopoverIsShown] = useState<boolean>(false)
+    const [mapColour, setMapColour] = useState<{ r: number; g: number; b: number; } | null>(null)
+    const nextOrigin = useRef<number[]>([])
+    const busyContouring = useRef<boolean>(false)
+    const isDirty = useRef<boolean>(false)
 
     useEffect(() => {
         props.map.fetchMapRmsd()
-    }, [])
-
-    useEffect(() => {
         setMapColour({
             r: 255 * props.map.rgba.r,
             g: 255 * props.map.rgba.g,
             b: 255 * props.map.rgba.b,
-            a: props.map.rgba.a
         })
-    }, [props.map.rgba])
+    }, [])
 
-    const handleColorChange = (color) => {
+    const handleColorChange = (color: { rgb: {r: number; g: number; b: number;} }) => {
         try {
             props.map.setColour(color.rgb.r / 255., color.rgb.g / 255., color.rgb.b / 255., props.glRef)
-            setMapColour(color)
+            setMapColour({r: color.rgb.r, g: color.rgb.g, b: color.rgb.b})
         }
         catch (err) {
             console.log('err', err)
@@ -73,17 +87,10 @@ export const MoorhenMapCard = (props) => {
         return props.changeMaps({ action: "Add", item: newMap })
     }
 
-    const handleCenterOnMap = async () => {
-        const response = await props.map.mapMoleculeCentre()
-        if (response.data.result.result.success) {
-            props.glRef.current.setOriginAnimated(response.data.result.result.updated_centre.map(coord => -coord))
-        }
-    }
-
-    const actionButtons = {
+    const actionButtons: { [key: number] : ActionButtonType } = {
         1: {
             label: cootContour ? "Hide map" : "Show map",
-            compressed: () => { return (<MenuItem key='hide-show-map' variant="success" onClick={handleVisibility}>{cootContour ? "Hide map" : "Show map"}</MenuItem>) },
+            compressed: () => { return (<MenuItem key='hide-show-map' onClick={handleVisibility}>{cootContour ? "Hide map" : "Show map"}</MenuItem>) },
             expanded: () => {
                 return (<Button key='hide-show-map' size="sm" variant="outlined" onClick={handleVisibility}>
                     {cootContour ? <VisibilityOffOutlined /> : <VisibilityOutlined />}
@@ -92,7 +99,7 @@ export const MoorhenMapCard = (props) => {
         },
         2: {
             label: "Download Map",
-            compressed: () => { return (<MenuItem key='donwload-map' variant="success" onClick={handleDownload}>Download map</MenuItem>) },
+            compressed: () => { return (<MenuItem key='donwload-map' onClick={handleDownload}>Download map</MenuItem>) },
             expanded: () => {
                 return (<Button key='donwload-map' size="sm" variant="outlined" onClick={handleDownload}>
                     <DownloadOutlined />
@@ -111,7 +118,7 @@ export const MoorhenMapCard = (props) => {
         },
         5: {
             label: "Duplicate map",
-            compressed: () => { return (<MenuItem key='duplicate-map' variant="success" onClick={handleDuplicate}>Duplicate map</MenuItem>) },
+            compressed: () => { return (<MenuItem key='duplicate-map' onClick={handleDuplicate}>Duplicate map</MenuItem>) },
             expanded: () => {
                 return (<Button key='duplicate-map' size="sm" variant="outlined" onClick={handleDuplicate}>
                     <FileCopyOutlined />
@@ -120,16 +127,16 @@ export const MoorhenMapCard = (props) => {
         },
         6: {
             label: "Centre on map",
-            compressed: () => { return (<MenuItem key='centre-on-map'variant="success" onClick={handleCenterOnMap}>Centre on map</MenuItem>) },
+            compressed: () => { return (<MenuItem key='centre-on-map'onClick={() => props.map.centreOnMap(props.glRef)}>Centre on map</MenuItem>) },
             expanded: null
         },
     }
 
-    const getButtonBar = (sideBarWidth) => {
+    const getButtonBar = (sideBarWidth: number) => {
         const maximumAllowedWidth = sideBarWidth * 0.55
         let currentlyUsedWidth = 0
-        let expandedButtons = []
-        let compressedButtons = []
+        let expandedButtons: JSX.Element[] = []
+        let compressedButtons: JSX.Element[] = []
 
         Object.keys(actionButtons).forEach(key => {
             if (actionButtons[key].expanded === null) {
@@ -181,18 +188,18 @@ export const MoorhenMapCard = (props) => {
             busyContouring.current = true
             isDirty.current = false
             props.map.doCootContour(props.glRef,
-                ...nextOrigin.current,
+                ...nextOrigin.current as [number, number, number],
                 props.map.mapRadius,
                 props.map.contourLevel)
-                .then(result => {
+                .then(() => {
                     busyContouring.current = false
                     doContourIfDirty()
                 })
         }
     }
 
-    const handleOriginUpdate = useCallback(e => {
-        nextOrigin.current = [...e.detail.origin.map(coord => -coord)]
+    const handleOriginUpdate = useCallback((evt: MoorhenOriginUpdateEventType) => {
+        nextOrigin.current = [...evt.detail.origin.map((coord: number) => -coord)]
         props.map.contourLevel = mapContourLevel
         props.map.mapRadius = mapRadius
         isDirty.current = true
@@ -203,13 +210,13 @@ export const MoorhenMapCard = (props) => {
         }
     }, [mapContourLevel, mapRadius])
 
-    const handleWheelContourLevelCallback = useCallback(e => {
-        let newMapContourLevel
+    const handleWheelContourLevelCallback = useCallback((evt: MoorhenWheelContourLevelEventType) => {
+        let newMapContourLevel: number
         if (props.map.cootContour && props.map.molNo === props.activeMap.molNo) {
-            if (e.detail.factor > 1) {
-                newMapContourLevel = mapContourLevel + parseFloat(props.contourWheelSensitivityFactor)
+            if (evt.detail.factor > 1) {
+                newMapContourLevel = mapContourLevel + props.contourWheelSensitivityFactor
             } else {
-                newMapContourLevel = mapContourLevel - parseFloat(props.contourWheelSensitivityFactor)
+                newMapContourLevel = mapContourLevel - props.contourWheelSensitivityFactor
             }
             
             setMapContourLevel(newMapContourLevel)
@@ -224,18 +231,18 @@ export const MoorhenMapCard = (props) => {
         }
     }, [mapContourLevel, mapRadius, props.activeMap?.molNo, props.map.molNo, props.map.cootContour])
 
-    const handleRadiusChangeCallback = useCallback(e => {
+    const handleRadiusChangeCallback = useCallback((evt: MoorhenMapRadiusChangeEventType) => {
         if (props.map.cootContour && props.map.molNo === props.activeMap.molNo) {
-            setMapRadius(mapRadius + parseInt(e.detail.factor))
+            setMapRadius(mapRadius + evt.detail.factor)
         }
     }, [mapRadius, props.activeMap?.molNo, props.map.molNo, props.map.cootContour])
 
-    const handleNewMapContour = useCallback(e => {
-        if (props.map.molNo === e.detail.molNo) {
-            setCootContour(e.detail.cootContour)
-            setMapContourLevel(e.detail.contourLevel)
-            setMapLitLines(e.detail.litLines)
-            setMapRadius(e.detail.mapRadius)
+    const handleNewMapContour = useCallback((evt: MoorhenNewMapContourEventType) => {
+        if (props.map.molNo === evt.detail.molNo) {
+            setCootContour(evt.detail.cootContour)
+            setMapContourLevel(evt.detail.contourLevel)
+            setMapLitLines(evt.detail.litLines)
+            setMapRadius(evt.detail.mapRadius)
         }
     }, [props.map.molNo])
 
@@ -278,10 +285,10 @@ export const MoorhenMapCard = (props) => {
 
     }, [mapRadius, mapContourLevel, mapLitLines, mapSolid])
 
-    const increaseLevelButton = <IconButton onClick={() => setMapContourLevel(mapContourLevel + parseFloat(props.contourWheelSensitivityFactor))} style={{padding: 0}}>
+    const increaseLevelButton = <IconButton onClick={() => setMapContourLevel(mapContourLevel + props.contourWheelSensitivityFactor)} style={{padding: 0}}>
                                     <AddOutlined/>
                                 </IconButton>
-    const decreaseLevelButton = <IconButton onClick={() => setMapContourLevel(mapContourLevel - parseFloat(props.contourWheelSensitivityFactor))} style={{padding: 0}}>
+    const decreaseLevelButton = <IconButton onClick={() => setMapContourLevel(mapContourLevel - props.contourWheelSensitivityFactor)} style={{padding: 0}}>
                                     <RemoveOutlined/>
                                 </IconButton>
     const increaseRadiusButton = <IconButton onClick={() => setMapRadius(mapRadius + 2)} style={{padding: 0}}>
@@ -316,10 +323,11 @@ export const MoorhenMapCard = (props) => {
         } 
 
         return <OverlayTrigger
-                id="map-colour-selector-trigger"
                 placement="bottom"
                 overlay={
-                    <Tooltip id="map-colour-label-tooltip" 
+                    <Tooltip 
+                        id="map-colour-label-tooltip" 
+                        title=""
                         style={{
                             zIndex: 9999,
                             backgroundColor: 'rgba(0, 0, 0, 0.85)',
@@ -354,9 +362,9 @@ export const MoorhenMapCard = (props) => {
                     type="checkbox"
                     variant={props.isDark ? "outline-light" : "outline-primary"}
                     checked={props.map === props.activeMap}
-                    style={{ marginLeft: '0.1rem', marginRight: '0.5rem', justifyContent: 'space-betweeen', display: 'flex'}}
-                    onClick={evt => props.setActiveMap(props.map) }
-                >
+                    style={{ marginLeft: '0.1rem', marginRight: '0.5rem', justifyContent: 'space-betweeen', display: 'flex' }}
+                    onClick={() => props.setActiveMap(props.map)}
+                    value={""}                >
                     {props.map === props.activeMap ? <RadioButtonCheckedOutlined/> : <RadioButtonUncheckedOutlined/>}
                     <span style={{marginLeft: '0.5rem'}}>Active</span>
                 </ToggleButton>

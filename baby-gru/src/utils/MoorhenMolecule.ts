@@ -101,6 +101,12 @@ type MoorhenColourRuleType = {
 }
 
 export interface MoorhenMoleculeInterface {
+    redo(glRef: React.RefObject<mgWebGLType>): Promise<void>;
+    undo(glRef: React.RefObject<mgWebGLType>): Promise<void>;
+    copyFragment(chainId: string, res_no_start: number, res_no_end: number, glRef: React.RefObject<mgWebGLType>, doRecentre?: boolean): Promise<MoorhenMoleculeInterface>;
+    show(style: string, glRef: React.RefObject<mgWebGLType>): Promise<void>;
+    setSymmetryRadius(radius: number, glRef: React.RefObject<mgWebGLType>): Promise<void>;
+    drawSymmetry: (glRef: React.RefObject<mgWebGLType>, fetchSymMatrix?: boolean) => Promise<void>;
     getUnitCellParams():  { a: number; b: number; c: number; alpha: number; beta: number; gamma: number; };
     replaceModelWithFile(glRef: React.RefObject<mgWebGLType>, fileUrl: string, molName: string): Promise<void>
     delete(glRef: React.RefObject<mgWebGLType>): Promise<WorkerResponseType> 
@@ -108,7 +114,7 @@ export interface MoorhenMoleculeInterface {
     fetchIfDirtyAndDraw(arg0: string, glRef: React.MutableRefObject<mgWebGLType>): Promise<boolean>;
     drawGemmiAtomPairs: (glRef: React.ForwardedRef<mgWebGLType>, gemmiAtomPairs: any[], style: string,  colour: number[], labelled?: boolean, clearBuffers?: boolean) => void;
     drawEnvironment: (glRef: React.RefObject<mgWebGLType>, chainID: string, resNo: number,  altLoc: string, labelled?: boolean) => Promise<void>;
-    centreOn: (glRef: React.ForwardedRef<mgWebGLType>, selectionCid: string, animate?: boolean) => Promise<void>;
+    centreOn: (glRef: React.ForwardedRef<mgWebGLType>, selectionCid?: string, animate?: boolean) => Promise<void>;
     drawHover: (glRef: React.MutableRefObject<mgWebGLType>, cid: string) => Promise<void>;
     clearBuffersOfStyle: (style: string, glRef: React.RefObject<mgWebGLType>) => void;
     type: string;

@@ -17,6 +17,7 @@
 #include <emscripten/bind.h>
 
 #include <gemmi/span.hpp>
+#include <gemmi/neighbor.hpp>
 #include <gemmi/mmread.hpp>
 #include <gemmi/gz.hpp>
 #include <gemmi/model.hpp>
@@ -957,6 +958,28 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     ;
 
     class_<gemmi::Position, base<gemmi::Vec3>>("Position")
+    ;
+    class_<gemmi::NeighborSearch>("NeighborSearch")
+    .constructor<>()
+    .property("radius_specified",&gemmi::NeighborSearch::radius_specified)
+    .property("include_h",&gemmi::NeighborSearch::include_h)
+    .function("add_chain",&gemmi::NeighborSearch::add_chain)
+    .function("dist",&gemmi::NeighborSearch::dist)
+    .function("find_atoms",&gemmi::NeighborSearch::find_atoms)
+    .function("find_neighbors",&gemmi::NeighborSearch::find_neighbors)
+    ;
+
+    class_<gemmi::NeighborSearch::Mark>("Mark")
+    .property("x",&gemmi::NeighborSearch::Mark::x)
+    .property("y",&gemmi::NeighborSearch::Mark::y)
+    .property("z",&gemmi::NeighborSearch::Mark::z)
+    .property("altloc",&gemmi::NeighborSearch::Mark::altloc)
+    .property("element",&gemmi::NeighborSearch::Mark::element)
+    .property("image_idx",&gemmi::NeighborSearch::Mark::image_idx)
+    .property("chain_idx",&gemmi::NeighborSearch::Mark::chain_idx)
+    .property("residue_idx",&gemmi::NeighborSearch::Mark::residue_idx)
+    .property("atom_idx",&gemmi::NeighborSearch::Mark::atom_idx)
+    .function("pos",&gemmi::NeighborSearch::Mark::pos)
     ;
 
     class_<gemmi::Entity::DbRef>("EntityDbRef")
