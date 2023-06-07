@@ -25,7 +25,7 @@ const showStateReducer = (oldMap: {[key: string]: boolean}, change: { key: strin
     return newMap
 }
 
-type clickedResidueType = {
+export type clickedResidueType = {
     modelIndex: number;
     molName: string;
     chain: string;

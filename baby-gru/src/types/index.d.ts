@@ -3,8 +3,16 @@ import { MoorhenMoleculeInterface } from "../utils/MoorhenMolecule";
 export {};
 
 declare global {
+    namespace JSX {
+        interface IntrinsicElements {
+          "protvista-manager": ProtvistaManager;
+          "protvista-sequence": ProtvistaSequence;
+          "protvista-navigation": ProtvistaNavigation;
+          "protvista-track": ProtvistaTrack;
+        }
+    }    
     interface Window {
-        CCP4Module: CCP4ModuleType
+        CCP4Module: CCP4ModuleType;
     }
     type CCP4ModuleType = {
         check_polymer_type(polymerConst: emscriptemInstanceInterface<number>): {value: number};

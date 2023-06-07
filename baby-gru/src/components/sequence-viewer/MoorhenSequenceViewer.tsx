@@ -3,24 +3,26 @@ import ProtvistaManager from "protvista-manager";
 import ProtvistaSequence from "protvista-sequence";
 import ProtvistaNavigation from "protvista-navigation";
 import ProtvistaTrack from "protvista-track";
+import { MoorhenSequenceType, MoorhenResidueInfoType, MoorhenMoleculeInterface } from '../../utils/MoorhenMolecule';
+import { clickedResidueType } from '../card/MoorhenMoleculeCard';
 
 !window.customElements.get('protvista-navigation') && window.customElements.define("protvista-navigation", ProtvistaNavigation);
 !window.customElements.get('protvista-sequence') && window.customElements.define("protvista-sequence", ProtvistaSequence);
 !window.customElements.get('protvista-track') && window.customElements.define("protvista-track", ProtvistaTrack);
 !window.customElements.get('protvista-manager') && window.customElements.define("protvista-manager", ProtvistaManager);
-    
+
 /**
 * For a given sequence length, calculate the range of 40 residues in the middle
 * @param {Number} rulerStart integer that determines where to start the ruler numbering
 * @param {Number} sequenceLength sequence lenght
 * @returns {Array} An array containing the display start and display end consisting of a range of 40 residues
 */
- const calculateDisplayStartAndEnd = (rulerStart, sequenceLength) => {
+ const calculateDisplayStartAndEnd = (rulerStart: number, sequenceLength: number): [number, number] => {
     if (sequenceLength <= 40) {
-        return [parseFloat(rulerStart), parseFloat(sequenceLength + rulerStart)]
+        return [rulerStart, sequenceLength + rulerStart]
     }
     let middleIndex = Math.round((sequenceLength) / 2)
-    return [parseFloat(middleIndex - 20 + rulerStart), parseFloat(middleIndex + 20 + rulerStart)]        
+    return [middleIndex - 20 + rulerStart, middleIndex + 20 + rulerStart]        
 }
 
 /**
@@ -28,9 +30,9 @@ import ProtvistaTrack from "protvista-track";
 * @param {MoorhenMolecule.sequence.sequence} sequence
 * @returns {Array} An array containing the ruler start, actual sequence length with gaps and the final sequence to be displayed
 */
-const parseSequenceData = (sequence) => {
+const parseSequenceData = (sequence: MoorhenResidueInfoType[]): [number, number, string, number, number]=> {
     let rulerStart = sequence[0].resNum
-    let finalSequence = Array(sequence[sequence.length-1].resNum).fill('-')
+    let finalSequence: string[] = Array(sequence[sequence.length-1].resNum).fill('-')
     let seqLenght = sequence[sequence.length-1].resNum - rulerStart + 1
 
     sequence.forEach(residue => {
@@ -40,15 +42,36 @@ const parseSequenceData = (sequence) => {
     return [rulerStart, seqLenght, finalSequence.join(''), ...calculateDisplayStartAndEnd(rulerStart, seqLenght)]
 }
 
+type DisplaySettingsType = {
+    rulerStart: number;
+    start: number;
+    end: number;
+    seqLenght: number;
+    displaySequence: string;
+}
 
-export const MoorhenSequenceViewer = (props) => {
-    const managerRef = useRef(null);
-    const sequenceRef = useRef(null);
-    const navigationRef = useRef(null);
-    const selectedResiduesTrackRef = useRef(null)
+type MoorhenSequenceViewerPropsType = {
+    key: string;
+    sequence: MoorhenSequenceType;
+    molecule: MoorhenMoleculeInterface;
+    glRef: React.RefObject<mgWebGLType>
+    clickedResidue: clickedResidueType;
+    setClickedResidue: React.Dispatch<React.SetStateAction<clickedResidueType>>;
+    selectedResidues: [number, number];
+    setSelectedResidues: React.Dispatch<React.SetStateAction<[number, number]>>;
+    hoveredAtom: HoveredAtomType;
+    setHoveredAtom: React.Dispatch<React.SetStateAction<HoveredAtomType>>;
+
+}
+
+export const MoorhenSequenceViewer = (props: MoorhenSequenceViewerPropsType) => {
+    const managerRef = useRef<any>(null);
+    const sequenceRef = useRef<any>(null);
+    const navigationRef = useRef<any>(null);
+    const selectedResiduesTrackRef = useRef<any>(null)
     const [initialRulerStart, initialSeqLenght, initialDisplaySequence, intialStart, initialEnd] = parseSequenceData(props.sequence.sequence)
-    const [message, setMessage] = useState("");
-    const [displaySettings, setDisplaySettings] = useState({
+    const [message, setMessage] = useState<string>("");
+    const [displaySettings, setDisplaySettings] = useState<DisplaySettingsType>({
         rulerStart: initialRulerStart,
         start: intialStart,
         end: initialEnd,
@@ -91,8 +114,8 @@ export const MoorhenSequenceViewer = (props) => {
      * Sets a range of highlighted residues in the sequence viewer 
      * @param {Number} start The first residues of the range
      * @param {Number} end The last residue of the range
-     */
-    const setSelection = (start, end) => {
+    */
+    const setSelection = (start: number, end: number | null) => {
 
         let fragments = [{
             "start": start,
@@ -127,10 +150,8 @@ export const MoorhenSequenceViewer = (props) => {
 
     /**
      * Sets a highlighted residue in the sequence viewer 
-     * @param {Number} start The first residues of the range
-     * @param {Number} end The last residue of the range
      */
-    const setHighlight = (resNum) => {
+    const setHighlight = (resNum: string) => {
         sequenceRef.current.trackHighlighter.changedCallBack('highlightstart', resNum)
         sequenceRef.current.trackHighlighter.changedCallBack('highlightend', resNum)
     } 
@@ -208,7 +229,7 @@ export const MoorhenSequenceViewer = (props) => {
             return;
         }
 
-        const disableDoubleClick = (evt) => {
+        const disableDoubleClick = (evt: MouseEvent) => {
             evt.preventDefault()
             evt.stopPropagation()
         }
