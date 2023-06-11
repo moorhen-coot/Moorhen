@@ -12,7 +12,12 @@ src/setupTests.js
 src/ErrorBoundary.js
 src/.gitignore
 node_modules
-public
+public/baby-gru
+public/pixmaps
+public/favicon.ico
+public/index.html
+public/logo192.png
+public/logo512.png
 build
 out
 #package.json

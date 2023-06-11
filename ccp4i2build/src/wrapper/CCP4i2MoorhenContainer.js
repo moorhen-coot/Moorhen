@@ -95,7 +95,7 @@ export const CCP4i2MoorhenContainer = (props) => {
         if (anotationNodes.length === 1 && $(anotationNodes[0]).text().length > 0) {
             fileDict['annotation'] = $(anotationNodes[0]).text()
         }
-        const fileUrl = `/database/getFileWithPredicate?${$.param({ fileid: fileDict.fileid })}`
+        const fileUrl = `/api/CCP4i2/getFileWithPredicate?${$.param({ fileid: fileDict.fileid })}`
         const annotation = fileDict.annotation ? fileDict.annotation : "A file"
         const subType = fileDict.filesubtype ? fileDict.filesubtype : 1
         return makeFilePromise(fileUrl, mimeType, annotation, subType, arg)
@@ -125,7 +125,7 @@ export const CCP4i2MoorhenContainer = (props) => {
         if (annotationNodes.length === 1 && $(annotationNodes[0]).text().length > 0) {
             annotation = $(annotationNodes[0]).text()
         }
-        const fileUrl = `/database/getProjectFileData?${$.param(fileDict)}`
+        const fileUrl = `/api/CCP4i2/getProjectFileData?${$.param(fileDict)}`
         console.log({ fileUrl, mimeType, annotation, subType, arg })
         return makeFilePromise(fileUrl, mimeType, annotation, subType, arg)
     }
@@ -193,7 +193,7 @@ export const CCP4i2MoorhenContainer = (props) => {
     const handleCootJob = () => {
         const arg = { molNos: [] }
         alert("hello")
-        fetch(`/database/getJobFile?jobId=${props.cootJob}&fileName=input_params.xml`)
+        fetch(`/api/CCP4i2/getJobFile?jobId=${props.cootJob}&fileName=input_params.xml`)
             .then(response => response.text())
             .then(text => { console.log(text); return Promise.resolve($.parseXML(text)) })
             .then(xmlStruct => {
@@ -304,7 +304,7 @@ const MoorhenCCP4i2Menu = (props) => {
             let response = await molZeros[0].getAtoms()
             const atomsBlob = new Blob([response.data.result.pdbData])
             formData.append('file', atomsBlob)
-            fetch(`/database/uploadFileToJob`, {
+            fetch(`/api/CCP4i2/uploadFileToJob`, {
                 method: "POST",
                 body: formData
             })
@@ -353,7 +353,7 @@ const MoorhenCCP4i2Menu = (props) => {
         </MenuItem>
 
         <MenuItem key="End session" onClick={() => {
-            fetch(`/database/makeTerminateFile?jobId=${props.cootJobId}`)
+            fetch(`/api/CCP4i2/makeTerminateFile?jobId=${props.cootJobId}`)
                 .then(response => response.json())
                 .then(result => {
                     if (result.status === "Success") {
@@ -402,11 +402,12 @@ const CCP4i2ProjectsPanel = (props) => {
     const [projects, setProjects] = useState([])
     useEffect(() => {
         if (props.updated) {
-            fetch(`/database/ModelValues?${$.param({
+            fetch(`/api/CCP4i2/ModelValues?${$.param({
                 __type__: "Projects"
             })}`)
                 .then(response => response.json())
-                .then(result => { console.log(result); setProjects(result.results) })
+                .then(result => { console.log(result); 
+                    setProjects(result.results) })
         }
     }, [props.updated])
 
@@ -437,7 +438,7 @@ const CCP4i2JobsPanel = (props) => {
     const [jobs, setJobs] = useState([])
     useEffect(() => {
         if (props.project.projectid) {
-            fetch(`/database/ModelValues?${$.param({
+            fetch(`/api/CCP4i2/ModelValues?${$.param({
                 __type__: "Jobs",
                 projectid__projectid: props.project.projectid,
                 status__statustext: "Finished",
@@ -467,7 +468,7 @@ const CCP4i2JobsPanel = (props) => {
                 }}><img
                         style={{ width: "2.0rem", height: "2.0rem", marginRight: "1rem" }}
                         title={job.taskname}
-                        src={`/database/svgicons/${job.taskname}`} alt={`${job.taskname} `} />
+                        src={`/api/CCP4i2/svgicons/${job.taskname}`} alt={`${job.taskname} `} />
                     {job.jobnumber}: {job.jobtitle}
                 </TableCell>
             </TableRow>)}
@@ -498,7 +499,7 @@ const CCP4i2FilesPanel = (props) => {
                 filetypeid__filetypename__in: ["application/CCP4-mtz-map", "application/refmac-dictionary", "chemical/x-pdb"]
             }
             console.log({ predicate })
-            fetch(`/database/ModelValues?${$.param(predicate)}`)
+            fetch(`/api/CCP4i2/ModelValues?${$.param(predicate)}`)
                 .then(response => response.json())
                 .then(result => {
                     setFiles(result.results)
@@ -513,7 +514,7 @@ const CCP4i2FilesPanel = (props) => {
         <TableBody>
             {files.map(file => <TableRow key={file.fileid}>
                 <TableCell onClick={() => {
-                    const fileUrl = `/database/getFileWithPredicate?fileid=${file.fileid}`
+                    const fileUrl = `/api/CCP4i2/getFileWithPredicate?fileid=${file.fileid}`
                     const mimeType = file.filetypeid__filetypename
                     const annotation = `${file.jobid__jobnumber} : ${file.annotation}`
                     const subType = file.filesubtype
@@ -521,7 +522,7 @@ const CCP4i2FilesPanel = (props) => {
                 }}><img
                         style={{ width: "2.0rem", height: "2.0rem", marginRight: "1rem" }}
                         title={file.filetypeid__filetypename}
-                        src={`/database/qticons/${fileTypeMapping[file.filetypeid__filetypename]}`} alt={`${fileTypeMapping[file.filetypeid__filetypename]} `} />
+                        src={`/api/CCP4i2/qticons/${fileTypeMapping[file.filetypeid__filetypename]}`} alt={`${fileTypeMapping[file.filetypeid__filetypename]} `} />
                     {file.jobid__jobnumber}: {file.annotation}
                 </TableCell>
             </TableRow>)}

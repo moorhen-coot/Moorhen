@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App';
+import CCP4i2MoorhenApp from './CCP4i2MoorhenApp';
 import reportWebVitals from './reportWebVitals';
 import { ErrorBoundary } from './ErrorBoundary';
 import './index.css';
@@ -9,7 +9,7 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
     <ErrorBoundary >
-      <App />
+      <CCP4i2MoorhenApp />
     </ErrorBoundary>
   </React.StrictMode>
 );

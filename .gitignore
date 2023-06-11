@@ -573,3 +573,7 @@ baby-gru/out/make/zip/linux/x64/Moorhen-linux-x64-0.1.0.zip
 tests/moorhen.js
 tests/moorhen.worker.js
 tests/test.log
+ccp4i2build/public/index.html
+ccp4i2build/public/favicon.ico
+.gitignore
+ccp4i2build/public/manifest.json
