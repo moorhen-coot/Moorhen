@@ -14,7 +14,8 @@ src/.gitignore
 node_modules
 public
 build
-package.json
+out
+#package.json
 package-lock.json
 .babelrc 
 webpack.config.js

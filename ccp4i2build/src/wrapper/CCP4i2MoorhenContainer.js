@@ -77,7 +77,7 @@ export const CCP4i2MoorhenContainer = (props) => {
     */
     const controls = useRef(null);
     //FIXME: hardwired
-    const urlRoot = 'http://127.0.0.1:43434/moorhen'
+    const urlRoot = ''
 
     const makeDbFilePromise = (fileOfType, mimeType, arg) => {
         const fileDict = {
@@ -192,6 +192,7 @@ export const CCP4i2MoorhenContainer = (props) => {
 
     const handleCootJob = () => {
         const arg = { molNos: [] }
+        alert("hello")
         fetch(`/database/getJobFile?jobId=${props.cootJob}&fileName=input_params.xml`)
             .then(response => response.text())
             .then(text => { console.log(text); return Promise.resolve($.parseXML(text)) })
@@ -245,6 +246,7 @@ export const CCP4i2MoorhenContainer = (props) => {
     }
 
     useEffect(() => {
+        console.log("Coot initialised")
         if (cootInitialized) {
             if (props.cootJob) {
                 handleCootJob()
@@ -270,7 +272,7 @@ export const CCP4i2MoorhenContainer = (props) => {
         />]}
         controls={controls}
         lookup={props.lookup}
-        urlPrefix="/moorhen"
+        urlPrefix={urlRoot}
     />
 }
 

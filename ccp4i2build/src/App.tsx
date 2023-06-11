@@ -1,13 +1,9 @@
 import './App.css';
 import { CCP4i2MoorhenContainer } from './wrapper/CCP4i2MoorhenContainer';
-import { PreferencesContextProvider } from "./utils/MoorhenPreferences";
+import { PreferencesContextProvider } from './utils/MoorhenPreferences';
+
 import {
-  createBrowserRouter,
-  RouterProvider,
-  useParams,
-  useLocation,
-  Route,
-  Link,
+  createBrowserRouter, RouterProvider, useParams,
 } from "react-router-dom";
 
 function App() {
@@ -17,7 +13,13 @@ function App() {
 
 const router = createBrowserRouter([
   {
-    path: "/moorhen/",
+    path: "/CCP4i2Moorhen/",
+    element: (
+      <CCP4i2Moorhen />
+    ),
+  },
+  {
+    path: "/",
     element: (
       <CCP4i2Moorhen />
     ),
