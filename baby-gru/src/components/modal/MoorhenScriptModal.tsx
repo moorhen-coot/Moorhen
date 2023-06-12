@@ -58,7 +58,7 @@ export const MoorhenScriptModal = (props: MoorhenScriptModalPropsInterface) => {
             <Card.Footer style={{display: 'flex', alignItems: 'center', justifyContent: 'right'}}>
                 <Button variant='primary' onClick={async () => {
                     try {
-                        const scriptApi = new MoorhenScriptApi(props.molecules, props.glRef)
+                        const scriptApi = new MoorhenScriptApi(props.molecules, props.maps, props.glRef)
                         scriptApi.exe(code)
                     }
                     catch (err) {
