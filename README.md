@@ -29,6 +29,9 @@ The following libraries/programs are compiled to Web Assembly:
 * Coot 1.0 ('gtk3' git branch)
 * fftw 2.1.5
 * gsl 2.7.1
+* Boost 1.80.0
+* glm 0.9.9.8
+* RDKit 2022_09_2
 
 ## **Compilation instructions**
 
@@ -124,6 +127,9 @@ different in the 2 cases. If you require more classes or methods from the librar
 * FFTW
     *   Frigo, Matteo and Johnson, Steven G. (2005), *The Design and Implementation of FFTW3*, Proceedings of the IEEE **93(2)**, p216-231.
 * RDKit
-    *  RDKit for JavaScript (Official) [https://github.com/rdkit/rdkit/tree/master/Code/MinimalLib](https://github.com/rdkit/rdkit/tree/master/Code/MinimalLib)
     *  RDKit: Open-source cheminformatics [https://www.rdkit.org](https://www.rdkit.org)
+* Boost
+    * Boost C++ libraries [https://www.boost.org/users/license.html](https://www.boost.org/users/license.html)
+* GLM
+    * Open GL Mathematics [https://github.com/g-truc/glm](https://github.com/g-truc/glm)
 
