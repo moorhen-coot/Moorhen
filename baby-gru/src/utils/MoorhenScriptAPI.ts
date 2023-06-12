@@ -26,7 +26,8 @@ export class MoorhenScriptApi {
     }
     
     exe(src: string) {
-        let mask = {
+        // This env defines the variables accesible within the user-defined code
+        let env = {
             molecules: this.molecules.reduce((obj, molecule) => {
                 obj[molecule.molNo] = molecule
                 return obj
@@ -38,6 +39,6 @@ export class MoorhenScriptApi {
             rigid_body_fit: this.doRigidBodyFit
         };
         
-        (new Function( "with(this) { " + src + "}")).call(mask)
+        (new Function( "with(this) { " + src + "}")).call(env)
     }
 }
