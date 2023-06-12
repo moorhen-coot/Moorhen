@@ -21,16 +21,14 @@ The following libraries/programs are compiled to Web Assembly:
 * ssm (bzr)
 * mmdb2 (bzr)
 * ccp4srs (bzr)
+* gemmi 0.5.8
 * rvapi (bzr)
 * gesamt (bzr)
-* ccp4mg (partial - normal modes and dependencies) (bzr)
+* ccp4mg (partial) (bzr)
 * privateer MKIV
 * Coot 1.0 ('webassembly' git branch)
 * fftw 2.1.5
 * gsl 2.7.1
-
-Additionally [gemmi](https://github.com/project-gemmi/gemmi) is downloaded as it is a compile-time dependency of privateer. gemmi is
-not itself compiled by this project.
 
 ## **Compilation instructions**
 
