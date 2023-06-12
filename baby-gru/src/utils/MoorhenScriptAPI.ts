@@ -1,21 +1,12 @@
-import { MoorhenMapInterface } from "./MoorhenMap";
 import { MoorhenMoleculeInterface } from "./MoorhenMolecule"
 
-interface MoorhenScriptApiInterface {
-    molecules: MoorhenMoleculeInterface[];
-    maps: MoorhenMapInterface[];
-    glRef: React.RefObject<mgWebGLType>;
-}
-
-export class MoorhenScriptApi implements MoorhenScriptApiInterface {
+export class MoorhenScriptApi {
     
     molecules: MoorhenMoleculeInterface[];
-    maps: MoorhenMapInterface[];
     glRef: React.RefObject<mgWebGLType>;
 
-    constructor(molecules: MoorhenMoleculeInterface[], maps: MoorhenMapInterface[], glRef: React.RefObject<mgWebGLType>) {
+    constructor(molecules: MoorhenMoleculeInterface[], glRef: React.RefObject<mgWebGLType>) {
         this.molecules = molecules
-        this.maps = maps
         this.glRef = glRef
     }
 
@@ -33,14 +24,6 @@ export class MoorhenScriptApi implements MoorhenScriptApiInterface {
     exe(src: string) {
         // This env defines the variables accesible within the user-defined code
         let env = {
-            molecules: this.molecules.reduce((obj, molecule) => {
-                obj[molecule.molNo] = molecule
-                return obj
-            }, {}),
-            maps: this.maps.reduce((obj, map) => {
-                obj[map.molNo] = map
-                return obj
-            }, {}),
             rigid_body_fit: this.doRigidBodyFit
         };
         
