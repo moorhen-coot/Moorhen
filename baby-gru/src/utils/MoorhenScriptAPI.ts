@@ -1,8 +1,13 @@
 import { MoorhenMapInterface } from "./MoorhenMap";
 import { MoorhenMoleculeInterface } from "./MoorhenMolecule"
 
+interface MoorhenScriptApiInterface {
+    molecules: MoorhenMoleculeInterface[];
+    maps: MoorhenMapInterface[];
+    glRef: React.RefObject<mgWebGLType>;
+}
 
-export class MoorhenScriptApi {
+export class MoorhenScriptApi implements MoorhenScriptApiInterface {
     
     molecules: MoorhenMoleculeInterface[];
     maps: MoorhenMapInterface[];
