@@ -26,7 +26,7 @@ The following libraries/programs are compiled to Web Assembly:
 * gesamt (bzr)
 * ccp4mg (partial) (bzr)
 * privateer MKIV
-* Coot 1.0 ('webassembly' git branch)
+* Coot 1.0 ('gtk3' git branch)
 * fftw 2.1.5
 * gsl 2.7.1
 
