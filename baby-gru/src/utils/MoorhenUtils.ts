@@ -764,6 +764,9 @@ export const gemmiAtomsToCirclesSpheresInfo = (atoms: MoorhenAtomInfoType[], siz
     let sphere_idx_tri = [];
     let sphere_atoms = [];
 
+    let totInstanceUseColours = []
+    let totInstance_orientations = []
+
     for (let iat = 0; iat < atoms.length; iat++) {
         sphere_idx_tri.push(iat);
         sphere_vert_tri.push(atoms[iat].pos[0]);
@@ -782,16 +785,41 @@ export const gemmiAtomsToCirclesSpheresInfo = (atoms: MoorhenAtomInfoType[], siz
         atom["symbol"] = atoms[iat].element;
         atom["label"] = ""
         sphere_atoms.push(atom);
+        if(primType==="PERFECT_SPHERES"){
+            totInstanceUseColours.push(true);
+            totInstance_orientations.push(...[
+                     1.0,  0.0,  0.0, 0.0,
+                     0.0,  1.0,  0.0, 0.0,
+                     0.0,  0.0,  1.0, 0.0,
+                     0.0,  0.0,  0.0, 1.0,
+            ])
+            sphere_sizes.push(size);
+            sphere_sizes.push(size);
+        }
     }
 
-    const spherePrimitiveInfo = {
-        atoms: [[sphere_atoms]],
-        sizes: [[sphere_sizes]],
-        col_tri: [[sphere_col_tri]],
-        norm_tri: [[[]]],
-        vert_tri: [[sphere_vert_tri]],
-        idx_tri: [[sphere_idx_tri]],
-        prim_types: [[primType]]
+    if(primType==="PERFECT_SPHERES"){
+        return {
+            atoms: [[sphere_atoms]],
+            instance_sizes: [[sphere_sizes]],
+            instance_origins: [[sphere_vert_tri]],
+            instance_use_colors: [[totInstanceUseColours]],
+            instance_orientations: [[totInstance_orientations]],
+            col_tri: [[sphere_col_tri]],
+            norm_tri: [[[sphere_vert_tri]]],
+            vert_tri: [[sphere_vert_tri]],
+            idx_tri: [[sphere_idx_tri]],
+            prim_types: [[primType]]
+        }
+    } else {
+        return {
+            atoms: [[sphere_atoms]],
+            sizes: [[sphere_sizes]],
+            col_tri: [[sphere_col_tri]],
+            norm_tri: [[[]]],
+            vert_tri: [[sphere_vert_tri]],
+            idx_tri: [[sphere_idx_tri]],
+            prim_types: [[primType]]
+        }
     }
-    return spherePrimitiveInfo;
 }

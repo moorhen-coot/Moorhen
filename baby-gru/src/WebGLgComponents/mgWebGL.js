@@ -2729,6 +2729,10 @@ class MGWebGL extends Component {
                 self.displayBuffers[self.currentBufferIdx].atoms = [];
             }
 
+            if(jsondata.clickTol){
+                self.displayBuffers[self.currentBufferIdx].clickTol = jsondata.clickTol;
+            }
+
         }
 
         if (typeof (skipRebuild) !== "undefined" && skipRebuild) {
@@ -9898,11 +9902,15 @@ class MGWebGL extends Component {
         let mindist = 100000.;
         let minidx = -1;
         let minj = -1;
-        let clickTol = 0.65 * this.zoom;
+        //FIXME - This needs to depend on whether spheres, surface are drawn
 
         for (let idx = 0; idx < self.displayBuffers.length; idx++) {
+            let clickTol = 3.65 * this.zoom;
             if (!self.displayBuffers[idx].visible) {
                 continue;
+            }
+            if(self.displayBuffers[idx].clickTol){
+                clickTol = self.displayBuffers[idx].clickTol;
             }
             for (let j = 0; j < self.displayBuffers[idx].atoms.length; j++) {
 

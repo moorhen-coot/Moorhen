@@ -1314,15 +1314,35 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
     async drawResidueHighlight(glRef: React.RefObject<mgWebGLType>, style: string, selectionString: string, colour: number[], clearBuffers: boolean = false): Promise<void> {
         const $this = this
 
+
         if (typeof selectionString === 'string') {
             const resSpec: MoorhenResidueSpecType = cidToSpec(selectionString)
-            const modifiedSelection = `/*/${resSpec.chain_id}/${resSpec.res_no}-${resSpec.res_no}/*${resSpec.alt_conf === "" ? "" : ":"}${resSpec.alt_conf}`
+            let modifiedSelection = `/*/${resSpec.chain_id}/${resSpec.res_no}-${resSpec.res_no}/*${resSpec.alt_conf === "" ? "" : ":"}${resSpec.alt_conf}`
+            if(this.sequences.length==0)
+                modifiedSelection = `/*/${resSpec.chain_id}/${resSpec.res_no}-${resSpec.res_no}/${resSpec.atom_name}${resSpec.alt_conf === "" ? "" : ":"}${resSpec.alt_conf}`
             const selectedGemmiAtoms = await $this.gemmiAtomsForCid(modifiedSelection)
             const atomColours = {}
             selectedGemmiAtoms.forEach(atom => { atomColours[`${atom.serial}`] = colour })
+            let sphere_size = 0.3
+            let click_tol = 0.65
+            if(this.displayObjects.VdwSpheres.length>0||this.displayObjects.VdWSurface.length>0){
+                let spheres_visible = false;
+                this.displayObjects.VdwSpheres.forEach(spheres => {
+                    if(spheres.visible){
+                        spheres_visible = true
+                    }
+                })
+                if(spheres_visible){
+                    sphere_size = 1.8;
+                    click_tol = 3.7;
+                }
+            }
             let objects = [
-                gemmiAtomsToCirclesSpheresInfo(selectedGemmiAtoms, 0.3, "POINTS_SPHERES", atomColours)
+                gemmiAtomsToCirclesSpheresInfo(selectedGemmiAtoms, sphere_size, "PERFECT_SPHERES", atomColours)
             ]
+            objects.forEach(object => {
+                object["clickTol"] = click_tol
+            })
             if (clearBuffers){
                 $this.clearBuffersOfStyle(style, glRef)
             }
