@@ -101,6 +101,7 @@ type MoorhenColourRuleType = {
 }
 
 export interface MoorhenMoleculeInterface {
+    rigidBodyFit(cidsString: string, mapNo: number): Promise<WorkerResponseType>;
     redo(glRef: React.RefObject<mgWebGLType>): Promise<void>;
     undo(glRef: React.RefObject<mgWebGLType>): Promise<void>;
     copyFragment(chainId: string, res_no_start: number, res_no_end: number, glRef: React.RefObject<mgWebGLType>, doRecentre?: boolean): Promise<MoorhenMoleculeInterface>;
@@ -1318,14 +1319,15 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         if (typeof selectionString === 'string') {
             const resSpec: MoorhenResidueSpecType = cidToSpec(selectionString)
             let modifiedSelection = `/*/${resSpec.chain_id}/${resSpec.res_no}-${resSpec.res_no}/*${resSpec.alt_conf === "" ? "" : ":"}${resSpec.alt_conf}`
-            if(this.sequences.length==0)
+            if(this.sequences.length === 0) {
                 modifiedSelection = `/*/${resSpec.chain_id}/${resSpec.res_no}-${resSpec.res_no}/${resSpec.atom_name}${resSpec.alt_conf === "" ? "" : ":"}${resSpec.alt_conf}`
+            }
             const selectedGemmiAtoms = await $this.gemmiAtomsForCid(modifiedSelection)
             const atomColours = {}
             selectedGemmiAtoms.forEach(atom => { atomColours[`${atom.serial}`] = colour })
             let sphere_size = 0.3
             let click_tol = 0.65
-            if(this.displayObjects.VdwSpheres.length>0||this.displayObjects.VdWSurface.length>0){
+            if(this.displayObjects.VdwSpheres.length > 0 || this.displayObjects.VdWSurface.length > 0){
                 let spheres_visible = false;
                 this.displayObjects.VdwSpheres.forEach(spheres => {
                     if(spheres.visible){

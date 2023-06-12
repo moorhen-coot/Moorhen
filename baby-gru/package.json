@@ -6,6 +6,20 @@
   "homepage": "./",
   "author": "Paul Emsley, Filomeno Sanchez Rodriguez, Martin Noble, Stuart McNicholas",
   "description": "Moorhen molecular graphics",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stuartjamesmcnicholas/Moorhen.git"
+  },
+  "bugs": {
+    "url": "https://github.com/stuartjamesmcnicholas/Moorhen/issues"
+  },
+  "keywords": [
+    "molecular graphics",
+    "moorhen",
+    "webcoot",
+    "ccp4",
+    "interactive model building"
+  ],
   "config": {
     "forge": {
       "packagerConfig": {
