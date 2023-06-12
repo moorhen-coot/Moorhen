@@ -1,4 +1,6 @@
 import { Card, Col, Modal, Row } from "react-bootstrap";
+import { MoorhenNavBarExtendedControlsInterface } from "../navbar-menus/MoorhenNavBar";
+import { MoorhenShortcutType } from "../../utils/MoorhenPreferences";
 
 const shortCutMouseActions = {
     residue_camera_wiggle: ['mouse-move', 'circle-left-mouse-click', 'one-finger-move'],
@@ -11,33 +13,40 @@ const shortCutMouseActions = {
     rotate_view: ['circle-left-mouse-click', 'mouse-move', 'one-finger-move']
 }
 
-export const MoorhenControlsModal = (props) => {
-    const shortCuts = props.shortCuts ? JSON.parse(props.shortCuts) : null
+interface MoorhenControlsModalPropsInterface extends MoorhenNavBarExtendedControlsInterface {
+    showControlsModal: boolean;
+    setShowControlsModal: React.Dispatch<React.SetStateAction<boolean>>;
+
+}
+
+export const MoorhenControlsModal = (props: MoorhenControlsModalPropsInterface) => {
+    const shortCuts: MoorhenShortcutType[] = props.shortCuts ? JSON.parse(props.shortCuts as string) : null
     if (shortCuts) {
         shortCuts['pan_view'] = {modifiers: ['shiftKey', 'altKey'], keyPress: '', label: 'Pan view'}
         shortCuts['rotate_view'] = {modifiers: ['shiftKey'], keyPress: '', label: 'Rotate view'} 
     }
 
-    const handleMouseHover = (key, modifiers, isMouseEnter=true) => {
+    const handleMouseHover = (key: string, modifiers: string[], isMouseEnter: boolean = true) => {
         const cardElement = document.getElementById(`show-controls-card-${key}`)
         cardElement.style.borderWidth = isMouseEnter ? '0.2rem' : '0.1rem'
         cardElement.style.borderColor = isMouseEnter ? 'black' : 'grey'
-        const svg = document.querySelector(".moorhen-keyboard").getSVGDocument()
+        const query: any = document.querySelector(".moorhen-keyboard")
+        const svg = query.getSVGDocument()
         if (!svg) {
             return
         }
         
-        const elementsToHighlight = [...modifiers, shortCuts[key].keyPress]
+        const elementsToHighlight: string[] = [...modifiers, shortCuts[key].keyPress]
         elementsToHighlight.forEach(elementId => {
-            const svgElement = svg.getElementById(elementId)
+            const svgElement: SVGElement = svg.getElementById(elementId)
             if(svgElement) {
                  svgElement.style.fill = isMouseEnter ? '#f55142' : '#ffffffff'
             }
         })
 
         if (Object.hasOwn(shortCutMouseActions, key)) {
-            shortCutMouseActions[key].forEach(svgId => {
-                const svgElement = svg.getElementById(svgId)
+            shortCutMouseActions[key].forEach((svgId: string) => {
+                const svgElement: SVGElement = svg.getElementById(svgId)
                 if(svgElement)  {
                     svgElement.style.display = isMouseEnter ? 'block' : 'none'
                 }
@@ -71,7 +80,7 @@ export const MoorhenControlsModal = (props) => {
                             })}
                     </Col>
                     <Col className="col-8">
-                        <object style={{width:'100%', height: '100%'}} className="moorhen-keyboard" data={`${props.urlPrefix}/baby-gru/keyboard-blank.svg`} type="image/svg+xml"/>
+                        <object style={{width:'100%', height: '100%'}} className="moorhen-keyboard" data={`${props.urlPrefix}/baby-gru/keyboard-blank.svg`} type="image/svg+xml" aria-label="keyboard"/>
                     </Col>
                     </Row>
                 </Modal.Body>
