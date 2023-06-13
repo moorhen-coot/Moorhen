@@ -28,6 +28,7 @@ export default function MoorhenSlider(props: {
     isDisabled?: boolean;
     incrementButton?: JSX.Element; 
 }) {
+    
     const initValue = convertValueToScale(props.logScale, props.minVal, props.maxVal, props.initialValue)
     const [value, setValue] = useState<number>(initValue);
     const [externalValue, setExternalValue] = useState<number>(props.externalValue)
