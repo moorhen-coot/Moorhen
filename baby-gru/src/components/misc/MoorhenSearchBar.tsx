@@ -340,8 +340,6 @@ export const MoorhenSearchBar = (props: MoorhenNavBarExtendedControlsInterface) 
             return
         }
         
-        //(selectRef.current as HTMLInputElement).value = selectedItemKey
-
         if (selectedItemKey !== null && searchOptions[selectedItemKey]) {
             doActions(...searchOptions[selectedItemKey].actions)
         }
