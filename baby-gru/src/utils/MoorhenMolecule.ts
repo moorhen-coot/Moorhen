@@ -8,7 +8,7 @@ import { contactsToCylindersInfo, contactsToLinesInfo } from '../WebGLgComponent
 import { singletonsToLinesInfo } from '../WebGLgComponents/mgWebGLAtomsToPrimitives';
 import { guid, readTextFile, readGemmiStructure, cidToSpec, residueCodesThreeToOne, centreOnGemmiAtoms, getBufferAtoms, 
     nucleotideCodesThreeToOne, hexToHsl, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo} from './MoorhenUtils'
-import { MoorhenCommandCentreRef, cootCommandKwargsType } from "./MoorhenCommandCentre"
+import { MoorhenCommandCentreInterface, cootCommandKwargsType } from "./MoorhenCommandCentre"
 import { WorkerResponseType } from "./MoorhenCommandCentre"
 import { quatToMat4 } from '../WebGLgComponents/quatToMat4.js';
 import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
@@ -101,6 +101,8 @@ type MoorhenColourRuleType = {
 }
 
 export interface MoorhenMoleculeInterface {
+    getDict(newTlc: string): string;
+    addLigandOfType(resType: string, glRef: React.RefObject<mgWebGLType>, fromMolNo?: number): Promise<WorkerResponseType>;
     updateAtoms(): Promise<void>;
     rigidBodyFit(cidsString: string, mapNo: number): Promise<WorkerResponseType>;
     redo(glRef: React.RefObject<mgWebGLType>): Promise<void>;
@@ -120,7 +122,7 @@ export interface MoorhenMoleculeInterface {
     drawHover: (glRef: React.MutableRefObject<mgWebGLType>, cid: string) => Promise<void>;
     clearBuffersOfStyle: (style: string, glRef: React.RefObject<mgWebGLType>) => void;
     type: string;
-    commandCentre: MoorhenCommandCentreRef;
+    commandCentre: React.RefObject<MoorhenCommandCentreInterface>;
     enerLib: any;
     HBondsAssigned: boolean;
     atomsDirty: boolean;
@@ -179,7 +181,7 @@ export interface MoorhenMoleculeInterface {
 export class MoorhenMolecule implements MoorhenMoleculeInterface {
     
     type: string;
-    commandCentre: MoorhenCommandCentreRef;
+    commandCentre: React.RefObject<MoorhenCommandCentreInterface>;
     enerLib: any;
     HBondsAssigned: boolean;
     atomsDirty: boolean;
@@ -227,7 +229,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
     uniqueId: string;
     monomerLibraryPath: string
     
-    constructor(commandCentre: MoorhenCommandCentreRef, monomerLibraryPath="./baby-gru/monomers") {
+    constructor(commandCentre: React.RefObject<MoorhenCommandCentreInterface>, monomerLibraryPath="./baby-gru/monomers") {
         this.type = 'molecule'
         this.commandCentre = commandCentre
         this.enerLib = new EnerLib()
