@@ -20,8 +20,8 @@ export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInter
         setMaxBackupCount, modificationCountBackupThreshold, setModificationCountBackupThreshold, 
      } = props;
 
-    const [showModal, setShowModal] = useState(null);
-    const [popoverIsShown, setPopoverIsShown] = useState(false)
+    const [showModal, setShowModal] = useState<boolean | null>(null);
+    const [popoverIsShown, setPopoverIsShown] = useState<boolean>(false)
 
     useEffect(() => {
         if (timeCapsuleRef.current) {
