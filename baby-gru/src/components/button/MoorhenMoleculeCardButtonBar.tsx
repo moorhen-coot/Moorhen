@@ -8,7 +8,7 @@ import {
     MoorhenDeleteDisplayObjectMenuItem, MoorhenRenameDisplayObjectMenuItem, MoorhenMoleculeBondSettingsMenuItem, MoorhenMergeMoleculesMenuItem, 
     MoorhenMoleculeGaussianSurfaceSettingsMenuItem,MoorhenMoleculeSymmetrySettingsMenuItem
 } from "../menu-item/MoorhenMenuItem";
-import { MoorhenMoleculeInterface } from "../../moorhen";
+import { MoorhenMoleculeInterface } from "../../utils/MoorhenMolecule";
 import { clickedResidueType } from "../card/MoorhenMoleculeCard";
 
 type MoorhenMoleculeCardButtonBarPropsType = {
