@@ -7,14 +7,15 @@ import { MoorhenAutofitRotamerButton, MoorhenFlipPeptideButton, MoorhenSideChain
 import { IconButton, Drawer } from "@mui/material";
 import { ArrowDownwardOutlined, ArrowUpwardOutlined } from "@mui/icons-material";
 import { convertRemToPx, convertViewtoPx} from '../../utils/MoorhenUtils';
+import { MoorhenControlsInterface } from "../MoorhenContainer";
 
-export const MoorhenButtonBar = (props) => {
-    const [selectedButtonIndex, setSelectedButtonIndex] = useState(null);
-    const [showDrawer, setShowDrawer] = useState(false);
-    const [opacity, setOpacity] = useState(0.5);
-    const popoverIsShownRef = useRef(null)
+export const MoorhenButtonBar = (props: MoorhenControlsInterface) => {
+    const [selectedButtonIndex, setSelectedButtonIndex] = useState<null | string>(null);
+    const [showDrawer, setShowDrawer] = useState<boolean>(false);
+    const [opacity, setOpacity] = useState<number>(0.5);
+    const popoverIsShownRef = useRef<boolean | null>(null)
 
-    const editButtons = [
+    const editButtons: JSX.Element[] = [
         (<MoorhenAutofitRotamerButton {...props} key='auto-fit-rotamer' selectedButtonIndex={selectedButtonIndex}
             setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="0" />),
 
@@ -89,8 +90,8 @@ export const MoorhenButtonBar = (props) => {
         const maximumAllowedWidth = props.windowWidth - buttonWidth * 4
 
         let currentlyUsedWidth = 0
-        let carouselItems = []
-        let currentItem = []
+        let carouselItems: JSX.Element[][] = []
+        let currentItem: JSX.Element[] = []
 
         editButtons.forEach(button => {
             currentlyUsedWidth += buttonWidth
@@ -216,7 +217,7 @@ export const MoorhenButtonBar = (props) => {
                 interval={null} 
                 keyboard={false} 
                 indicators={false} 
-                onSlide={() => setSelectedButtonIndex(-1)}
+                onSlide={() => setSelectedButtonIndex('-1')}
                 controls={carouselItems.length > 1}>
                     {carouselItems.map((item, index) => {
                         return (

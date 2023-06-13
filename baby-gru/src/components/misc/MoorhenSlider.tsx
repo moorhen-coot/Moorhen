@@ -3,7 +3,7 @@ import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Slider from '@mui/material/Slider';
 
-const convertValueToScale = (logScale, minVal, maxVal, value) => {
+const convertValueToScale = (logScale: boolean, minVal: number, maxVal: number, value: number) => {
     if (logScale) {
         return 100 * ((Math.log10(value) - Math.log10(minVal)) / ((Math.log10(maxVal) - Math.log10(minVal))));
     } else {
@@ -11,14 +11,31 @@ const convertValueToScale = (logScale, minVal, maxVal, value) => {
     }
 }
 
-export default function MoorhenSlider(props) {
+export default function MoorhenSlider(props: {
+    logScale?: boolean;
+    minVal?: number;
+    maxVal?: number;
+    initialValue: number;
+    externalValue: number;
+    setExternalValue?: React.Dispatch<React.SetStateAction<number>>;
+    allowExternalFeedback?: boolean;
+    allowFloats?: boolean;
+    showSliderTitle?: boolean;
+    sliderTitle?: string;
+    decimalPlaces?: number;
+    showMinMaxVal?: boolean;
+    decrementButton?: JSX.Element;
+    isDisabled?: boolean;
+    incrementButton?: JSX.Element; 
+}) {
+    
     const initValue = convertValueToScale(props.logScale, props.minVal, props.maxVal, props.initialValue)
-    const [value, setValue] = useState(initValue);
-    const [externalValue, setExternalValue] = useState(props.externalValue)
+    const [value, setValue] = useState<number>(initValue);
+    const [externalValue, setExternalValue] = useState<number>(props.externalValue)
 
     useEffect(() => {
-        if (props.externalValue !== parseFloat(externalValue)) {
-            props.setExternalValue(parseFloat(externalValue))
+        if (props.externalValue !== externalValue) {
+            props.setExternalValue(externalValue)
         }
     }, [externalValue])
 
@@ -33,7 +50,7 @@ export default function MoorhenSlider(props) {
 
     }, [props.externalValue])
 
-    const handleChange = useCallback((evt, newValue) => {
+    const handleChange = useCallback((evt: any, newValue: number) => {
         setValue(props.allowFloats ? newValue : Math.round(newValue))
         if (props.logScale) {
             const log10MaxVal = Math.log10(props.maxVal)

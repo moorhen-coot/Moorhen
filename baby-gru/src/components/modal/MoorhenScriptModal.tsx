@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Draggable from "react-draggable";
 import { IconButton } from '@mui/material';
 import { CloseOutlined, PlayArrowOutlined } from "@mui/icons-material";
@@ -22,6 +22,15 @@ export const MoorhenScriptModal = (props: MoorhenScriptModalPropsInterface) => {
     const [code, setCode] = useState("")
     const [opacity, setOpacity] = useState(0.5)
     
+    const handleScriptExe = useCallback(async () => {
+        try {
+            const scriptApi = new MoorhenScriptApi(props.molecules, props.maps, props.glRef)
+            scriptApi.exe(code)
+        }
+        catch (err) {
+            console.error(err)
+        }
+    }, [code, props.glRef, props.maps, props.molecules])
     
     useEffect(() => {
         if (props.code) {
@@ -31,7 +40,7 @@ export const MoorhenScriptModal = (props: MoorhenScriptModalPropsInterface) => {
 
     return <Draggable handle=".handle">
         <Card
-            style={{position: 'absolute', top: '5rem', left: '5rem', opacity: opacity, width: convertViewtoPx(50, props.windowWidth), display: props.show ? '' : 'none'}}
+            style={{position: 'absolute', top: '5rem', left: '5rem', opacity: opacity, width: props.windowWidth ? convertViewtoPx(50, props.windowWidth) : '50wh', display: props.show ? '' : 'none'}}
             onMouseOver={() => setOpacity(1)}
             onMouseOut={() => setOpacity(0.5)}
         >
@@ -41,7 +50,7 @@ export const MoorhenScriptModal = (props: MoorhenScriptModalPropsInterface) => {
                     <CloseOutlined/>
                 </IconButton>
             </Card.Header>
-            <Card.Body style={{maxHeight: convertViewtoPx(60, props.windowHeight), overflowY: 'scroll'}}>
+            <Card.Body style={{maxHeight: props.windowHeight ? convertViewtoPx(60, props.windowHeight) : '60vh', overflowY: 'scroll'}}>
                 <div style={{backgroundColor: props.isDark ? 'white' : '#e6e6e6', borderColor:'black'}}>
                     <Editor
                         value={code}
@@ -56,15 +65,7 @@ export const MoorhenScriptModal = (props: MoorhenScriptModalPropsInterface) => {
                 </div>
             </Card.Body>
             <Card.Footer style={{display: 'flex', alignItems: 'center', justifyContent: 'right'}}>
-                <Button variant='primary' onClick={async () => {
-                    try {
-                        const scriptApi = new MoorhenScriptApi(props.molecules, props.maps, props.glRef)
-                        scriptApi.exe(code)
-                    }
-                    catch (err) {
-                        console.error(err)
-                    }
-                }}>
+                <Button variant='primary' onClick={handleScriptExe}>
                     <PlayArrowOutlined/>
                 </Button>
             </Card.Footer>

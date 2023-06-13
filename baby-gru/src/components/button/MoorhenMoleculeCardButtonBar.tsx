@@ -2,13 +2,65 @@ import React, { useState, useMemo, Fragment, useRef } from "react";
 import { Button, DropdownButton } from "react-bootstrap";
 import { convertViewtoPx } from '../../utils/MoorhenUtils';
 import { MenuItem } from "@mui/material";
+import { MolChange } from "../MoorhenApp"
 import { UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined, ExpandLessOutlined, VisibilityOffOutlined, VisibilityOutlined, DownloadOutlined, Settings } from '@mui/icons-material';
-import { MoorhenDeleteDisplayObjectMenuItem, MoorhenRenameDisplayObjectMenuItem, MoorhenMoleculeBondSettingsMenuItem, MoorhenMergeMoleculesMenuItem, MoorhenRotateTranslateMoleculeMenuItem, MoorhenMoleculeGaussianSurfaceSettingsMenuItem,MoorhenMoleculeSymmetrySettingsMenuItem} from "../menu-item/MoorhenMenuItem";
+import { 
+    MoorhenDeleteDisplayObjectMenuItem, MoorhenRenameDisplayObjectMenuItem, MoorhenMoleculeBondSettingsMenuItem, MoorhenMergeMoleculesMenuItem, 
+    MoorhenMoleculeGaussianSurfaceSettingsMenuItem,MoorhenMoleculeSymmetrySettingsMenuItem
+} from "../menu-item/MoorhenMenuItem";
+import { MoorhenMoleculeInterface } from "../../moorhen";
+import { clickedResidueType } from "../card/MoorhenMoleculeCard";
 
-export const MoorhenMoleculeCardButtonBar = (props) => {
-    const dropdownCardButtonRef = useRef()
-    const [popoverIsShown, setPopoverIsShown] = useState(false)
-    const [currentName, setCurrentName] = useState(props.molecule.name);
+type MoorhenMoleculeCardButtonBarPropsType = {
+    handleCentering: () => void;
+    handleCopyFragment: () => void;
+    handleDownload: () => Promise<void>;
+    handleRedo: () => Promise<void>;
+    handleUndo: () => Promise<void>;
+    handleResidueRangeRefinement: () => void;
+    handleVisibility: () => void;
+    molecule: MoorhenMoleculeInterface;
+    molecules: MoorhenMoleculeInterface[];
+    changeMolecules: (arg0: MolChange<MoorhenMoleculeInterface>) => void;
+    glRef: React.RefObject<mgWebGLType>;
+    sideBarWidth: number;
+    windowHeight: number;
+    isVisible: boolean;
+    isCollapsed: boolean;
+    setIsCollapsed: React.Dispatch<React.SetStateAction<boolean>>;
+    clickedResidue: clickedResidueType;
+    selectedResidues: [number, number];
+    currentDropdownMolNo: number
+    setCurrentDropdownMolNo: React.Dispatch<React.SetStateAction<number>>
+    bondSettingsProps: {
+        bondWidth: number;
+        setBondWidth: React.Dispatch<React.SetStateAction<number>>;
+        atomRadiusBondRatio: number;
+        setAtomRadiusBondRatio: React.Dispatch<React.SetStateAction<number>>;
+        bondSmoothness: number;
+        setBondSmoothness: React.Dispatch<React.SetStateAction<number>>;
+    };
+    gaussianSettingsProps: {
+        surfaceSigma: number;
+        setSurfaceSigma: React.Dispatch<React.SetStateAction<number>>;
+        surfaceLevel: number;
+        setSurfaceLevel: React.Dispatch<React.SetStateAction<number>>;
+        surfaceRadius: number;
+        setSurfaceRadius: React.Dispatch<React.SetStateAction<number>>;
+        surfaceGridScale: number;
+        setSurfaceGridScale: React.Dispatch<React.SetStateAction<number>>;
+    };
+    symmetrySettingsProps: {
+        symmetryRadius: number;
+        setSymmetryRadius: React.Dispatch<React.SetStateAction<number>>;
+    };
+    backupsEnabled: boolean;
+}
+
+export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBarPropsType) => {
+    const dropdownCardButtonRef = useRef<HTMLDivElement>()
+    const [popoverIsShown, setPopoverIsShown] = useState<boolean>(false)
+    const [currentName, setCurrentName] = useState<string>(props.molecule.name);
 
     useMemo(() => {
         if (currentName === "") {
@@ -19,10 +71,10 @@ export const MoorhenMoleculeCardButtonBar = (props) => {
     }, [currentName]);
 
 
-    const actionButtons = {
+    const actionButtons: { [key: number]: { label: string; compressed: () => JSX.Element; expanded: null | (() => JSX.Element); } } = {
         1: {
             label: props.isVisible ? "Hide molecule" : "Show molecule",
-            compressed: () => { return (<MenuItem key={1} variant="success" onClick={props.handleVisibility}>{props.isVisible ? "Hide molecule" : "Show molecule"}</MenuItem>) },
+            compressed: () => { return (<MenuItem key={1} onClick={props.handleVisibility}>{props.isVisible ? "Hide molecule" : "Show molecule"}</MenuItem>) },
             expanded: () => {
                 return (<Button key={1} size="sm" variant="outlined" onClick={props.handleVisibility}>
                     {props.isVisible ? <VisibilityOffOutlined /> : <VisibilityOutlined />}
@@ -31,7 +83,7 @@ export const MoorhenMoleculeCardButtonBar = (props) => {
         },
         2: {
             label: "Undo last action",
-            compressed: () => { return (<MenuItem key={2} variant="success" onClick={props.handleUndo} disabled={!props.backupsEnabled}>Undo last action</MenuItem>) },
+            compressed: () => { return (<MenuItem key={2} onClick={props.handleUndo} disabled={!props.backupsEnabled}>Undo last action</MenuItem>) },
             expanded: () => {
                 return (<Button key={2} size="sm" variant="outlined" style={{borderWidth: props.backupsEnabled ? '' : '0px'}} onClick={props.handleUndo} disabled={!props.backupsEnabled}>
                     <UndoOutlined />
@@ -40,7 +92,7 @@ export const MoorhenMoleculeCardButtonBar = (props) => {
         },
         3: {
             label: "Redo previous action",
-            compressed: () => { return (<MenuItem key={3} variant="success" onClick={props.handleRedo} disabled={!props.backupsEnabled}>Redo previous action</MenuItem>) },
+            compressed: () => { return (<MenuItem key={3} onClick={props.handleRedo} disabled={!props.backupsEnabled}>Redo previous action</MenuItem>) },
             expanded: () => {
                 return (<Button key={3} size="sm" variant="outlined" style={{borderWidth: props.backupsEnabled ? '': '0px'}} onClick={props.handleRedo} disabled={!props.backupsEnabled}>
                     <RedoOutlined />
@@ -49,7 +101,7 @@ export const MoorhenMoleculeCardButtonBar = (props) => {
         },
         4: {
             label: "Center on molecule",
-            compressed: () => { return (<MenuItem key={4} variant="success" onClick={props.handleCentering}>Center on molecule</MenuItem>) },
+            compressed: () => { return (<MenuItem key={4} onClick={props.handleCentering}>Center on molecule</MenuItem>) },
             expanded: () => {
                 return (<Button key={4} size="sm" variant="outlined" onClick={props.handleCentering}>
                     <CenterFocusWeakOutlined />
@@ -58,7 +110,7 @@ export const MoorhenMoleculeCardButtonBar = (props) => {
         },
         5: {
             label: "Download Molecule",
-            compressed: () => { return (<MenuItem key={5} variant="success" onClick={props.handleDownload}>Download molecule</MenuItem>) },
+            compressed: () => { return (<MenuItem key={5} onClick={props.handleDownload}>Download molecule</MenuItem>) },
             expanded: () => {
                 return (<Button key={5} size="sm" variant="outlined" onClick={props.handleDownload}>
                     <DownloadOutlined />
@@ -67,7 +119,7 @@ export const MoorhenMoleculeCardButtonBar = (props) => {
         },
         6: {
             label: 'Refine selected residues',
-            compressed: () => { return (<MenuItem key={6} variant="success" disabled={(!props.clickedResidue || !props.selectedResidues)} onClick={props.handleResidueRangeRefinement}>Refine selected residues</MenuItem>) },
+            compressed: () => { return (<MenuItem key={6} disabled={(!props.clickedResidue || !props.selectedResidues)} onClick={props.handleResidueRangeRefinement}>Refine selected residues</MenuItem>) },
             expanded: null
         },
         7: {
@@ -77,7 +129,7 @@ export const MoorhenMoleculeCardButtonBar = (props) => {
         },
         8: {
             label: 'Copy selected residues into fragment',
-            compressed: () => { return (<MenuItem key={8} variant="success" disabled={(!props.clickedResidue || !props.selectedResidues)} onClick={props.handleCopyFragment}>Copy selected residues into fragment</MenuItem>) },
+            compressed: () => { return (<MenuItem key={8} disabled={(!props.clickedResidue || !props.selectedResidues)} onClick={props.handleCopyFragment}>Copy selected residues into fragment</MenuItem>) },
             expanded: null
         },
         9: {
@@ -104,8 +156,8 @@ export const MoorhenMoleculeCardButtonBar = (props) => {
 
     const maximumAllowedWidth = props.sideBarWidth * 0.55
     let currentlyUsedWidth = 0
-    let expandedButtons = []
-    let compressedButtons = []
+    let expandedButtons: JSX.Element[] = []
+    let compressedButtons: JSX.Element[] = []
 
     Object.keys(actionButtons).forEach(key => {
         if (actionButtons[key].expanded === null) {

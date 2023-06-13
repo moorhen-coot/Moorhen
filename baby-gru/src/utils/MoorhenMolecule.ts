@@ -101,6 +101,7 @@ type MoorhenColourRuleType = {
 }
 
 export interface MoorhenMoleculeInterface {
+    updateAtoms(): Promise<void>;
     rigidBodyFit(cidsString: string, mapNo: number): Promise<WorkerResponseType>;
     redo(glRef: React.RefObject<mgWebGLType>): Promise<void>;
     undo(glRef: React.RefObject<mgWebGLType>): Promise<void>;

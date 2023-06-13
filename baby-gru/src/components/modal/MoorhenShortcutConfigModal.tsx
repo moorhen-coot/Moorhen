@@ -1,12 +1,17 @@
 import { useState, useRef, useEffect } from "react";
 import { Modal, Button, Card, Row, Col } from "react-bootstrap";
-import { getDefaultValues } from "../../utils/MoorhenPreferences";
+import { MoorhenShortcutType, getDefaultValues } from "../../utils/MoorhenPreferences";
 
-export const MoorhenShortcutConfigModal = (props) => {
-    const newShortCutModalRef = useRef();
-    const [waitingNewShortCut, setWaitingNewShortCut] = useState(false);
+export const MoorhenShortcutConfigModal = (props: {
+    shortCuts: {[label: string]: MoorhenShortcutType};
+    setShowModal: React.Dispatch<React.SetStateAction<boolean>>; 
+    setShortCuts: React.Dispatch<React.SetStateAction<string>>;
+    showModal: boolean; 
+}) => {
+    const newShortCutModalRef = useRef<JSX.Element>();
+    const [waitingNewShortCut, setWaitingNewShortCut] = useState<boolean | string>(false);
     const [stagedShortCuts, setStagedShortCuts] = useState(props.shortCuts);
-    const [shortCutMessage, setShortCutMessage] = useState("... Press something ...");
+    const [shortCutMessage, setShortCutMessage] = useState<string>("... Press something ...");
 
     const cancelChanges = () => {
         props.setShowModal(false)
@@ -16,7 +21,7 @@ export const MoorhenShortcutConfigModal = (props) => {
     const restoreDefaults = () => {
         const defaultValues = getDefaultValues()
         props.setShowModal(false)
-        setStagedShortCuts(defaultValues.shortCuts)
+        setStagedShortCuts(defaultValues.shortCuts as {[label: string]: MoorhenShortcutType})
         props.setShortCuts(JSON.stringify(defaultValues.shortCuts))
     }
 
@@ -25,16 +30,16 @@ export const MoorhenShortcutConfigModal = (props) => {
         props.setShortCuts(JSON.stringify(stagedShortCuts))
     }
     
-    const handleKeyUp = (evt) => {
-        let modifiers = []
+    const handleKeyUp = (evt: KeyboardEvent): void => {
+        let modifiers: string[] = []
         if (evt.shiftKey) modifiers.push("shiftKey")
         if (evt.ctrlKey) modifiers.push("ctrlKey")
         if (evt.metaKey) modifiers.push("metaKey")
         if (evt.altKey) modifiers.push("altKey")
 
         setStagedShortCuts((prev) => {
-            prev[waitingNewShortCut].keyPress = evt.key.toLowerCase()
-            prev[waitingNewShortCut].modifiers = modifiers
+            prev[waitingNewShortCut as string].keyPress = evt.key.toLowerCase()
+            prev[waitingNewShortCut as string].modifiers = modifiers
             return prev
         })
 
@@ -42,8 +47,8 @@ export const MoorhenShortcutConfigModal = (props) => {
         setShortCutMessage("... Press something ...")
     }
     
-    const handleKeyDown = (evt) => {
-        let modifiers = []
+    const handleKeyDown = (evt: KeyboardEvent): void => {
+        let modifiers: string[] = []
         if (evt.shiftKey) modifiers.push("<Shift>")
         if (evt.ctrlKey) modifiers.push("<Ctrl>")
         if (evt.metaKey) modifiers.push("<Meta>")
@@ -91,7 +96,7 @@ export const MoorhenShortcutConfigModal = (props) => {
                                                     </i>
                                                 </Col>
                                                 <Col style={{justifyContent: 'right', display:'flex'}}>
-                                                    <Button size='sm' value={key} onClick={(evt) => setWaitingNewShortCut(evt.target.value)}>
+                                                    <Button size='sm' value={key} onClick={evt => setWaitingNewShortCut((evt.target as HTMLInputElement).value)}>
                                                         Change
                                                     </Button>
                                                 </Col>
@@ -112,7 +117,7 @@ export const MoorhenShortcutConfigModal = (props) => {
                         </Button>
                     </Modal.Footer>                    
                 </Modal>
-                <Modal ref={newShortCutModalRef} centered backdrop="static" size='sm' keyboard={false} show={waitingNewShortCut}>
+                <Modal ref={newShortCutModalRef} centered backdrop="static" size='sm' keyboard={false} show={waitingNewShortCut as boolean}>
                     <Modal.Header>
                         Define a new shortcut
                     </Modal.Header>

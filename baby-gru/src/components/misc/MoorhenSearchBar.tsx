@@ -1,15 +1,51 @@
 import { Fragment, useState, useRef, useEffect } from "react";
 import { Row } from "react-bootstrap";
 import { Autocomplete, TextField } from "@mui/material";
+import { MoorhenNavBarExtendedControlsInterface } from "../navbar-menus/MoorhenNavBar";
 
-export const MoorhenSearchBar = (props) => {
+type clickActionType = {
+    type: 'click';
+    elementId: string;
+    condition: boolean;
+}
 
-    const selectRef = useRef()
-    const searchBarRef = useRef()
-    const [selectedItemKey, setSelectedItemKey] = useState(null)
-    const [openPopup, setOpenPopup] = useState(null)
+type valueSetterActionType = {
+    type: 'setValue';
+    newValue: string | number | boolean ;
+    valueSetter: React.Dispatch<React.SetStateAction<string | number | boolean>>;
+    condition: boolean;
+}
 
-    const dropdownIsClosed = (elementId) => {
+type validationToolSetterActionType = {
+    type: 'setValidationTool';
+    newValue: string;
+    condition: boolean;
+}
+
+type carouselActionType = {
+    type: 'carousel';
+    elementId: string;
+    condition: boolean;
+}
+
+type focusActionType = {
+    type: 'setFocus';
+    elementId: string;
+    condition: boolean;
+}
+
+type searchOptionType = {
+    label: string;
+    actions: (valueSetterActionType | clickActionType | validationToolSetterActionType | focusActionType | carouselActionType)[];
+}
+
+export const MoorhenSearchBar = (props: MoorhenNavBarExtendedControlsInterface) => {
+
+    const selectRef = useRef<JSX.Element>()
+    const [selectedItemKey, setSelectedItemKey] = useState<null | number>(null)
+    const [openPopup, setOpenPopup] = useState<boolean>(false)
+
+    const dropdownIsClosed = (elementId: string) => {
         if (elementId && !document.getElementById(elementId)){
             return
         }
@@ -17,7 +53,7 @@ export const MoorhenSearchBar = (props) => {
         return element.className.includes('hidden')
     }
 
-    const doClick = (element) => {
+    const doClick = (element: Element) => {
         console.log(`Search bar is clicking on ${element.id}`)
         let clickEvent = new MouseEvent("click", {
             "view": window,
@@ -27,7 +63,7 @@ export const MoorhenSearchBar = (props) => {
         element.dispatchEvent(clickEvent)    
     }
 
-    const getComputedStyle = (element, timeOut=800) => {
+    const getComputedStyle = (element: Element, timeOut: number = 800): Promise<CSSStyleDeclaration> => {
         return new Promise((resolve, reject) => {
             setTimeout(() => {
                 resolve(window.getComputedStyle(element))
@@ -35,14 +71,14 @@ export const MoorhenSearchBar = (props) => {
         })
     }
 
-    const doActions = (...actions) => {
+    const doActions = (...actions: (valueSetterActionType | clickActionType | validationToolSetterActionType | focusActionType | carouselActionType)[]) => {
         actions.forEach((action, actionIndex) => {
             if (!action.condition) {
                 return
             }
 
             setTimeout(async () => {
-                if (action.elementId && !document.getElementById(action.elementId)){
+                if ('elementId' in action && !document.getElementById(action.elementId)){
                     return
                 }
                 if (action.type === 'click'){
@@ -56,9 +92,9 @@ export const MoorhenSearchBar = (props) => {
                     let element = document.getElementById(action.elementId)
                     element.focus()
                 } else if (action.type === 'setValidationTool') {
-                    let element =  document.getElementById('validation-tool-select')
+                    let element: any =  document.getElementById('validation-tool-select')
                     element.value = action.newValue
-                    element.dispatchEvent(new Event('change', {'view': window,'bubbles': true}));
+                    element.dispatchEvent(new Event('change', {'bubbles': true}));
                 } else if (action.type === 'carousel') {
                     let elements = document.getElementsByClassName('carousel-control-next')
                     let targetElement = document.getElementById(action.elementId)
@@ -75,13 +111,14 @@ export const MoorhenSearchBar = (props) => {
                     } 
                     doClick(targetElement)
                 } else {
-                    console.log(`Unrecognised action type... ${action.type}`)
+                    console.log('Unrecognised action type...')
+                    console.log(action)
                 }
-            }, parseInt(150 * actionIndex));
+            }, (150 * actionIndex));
         })
     }
 
-    const searchOptions = [
+    const searchOptions: searchOptionType[] = [
         {label: "Add waters", actions: [
             {type: 'click', elementId: 'ligand-nav-dropdown', condition: props.currentDropdownId !== "Ligand"}, 
             {type: 'setValue', newValue:'Ligand', valueSetter: props.setCurrentDropdownId, condition: props.currentDropdownId !== "Ligand"},
@@ -280,8 +317,8 @@ export const MoorhenSearchBar = (props) => {
             {type: 'carousel', elementId: 'rotate-sidechain-edit-button', condition: true}
         ]},
         {label: "Show Console", actions: [
-            {type: 'click', condition: !props.showSideBar , elementId: 'show-sidebar-button'}, 
-            {type: 'click', condition: props.consoleBodyHeight === 0, elementId: 'console-accordion-button'},
+            {type: 'click', condition: true, elementId: 'open-sidebar-button'}, 
+            {type: 'click', condition: dropdownIsClosed('console-collapse'), elementId: 'console-collapse'},
         ]},
         {label: "Show models and maps", actions: [
             {type: 'click', condition: true, elementId: 'open-sidebar-button'}, 
@@ -289,7 +326,7 @@ export const MoorhenSearchBar = (props) => {
         ]},
     ]
 
-    const handleChange = (evt, newSelection) => {
+    const handleChange = (evt: React.SyntheticEvent<Element, Event>, newSelection: string) => {
         if (newSelection) {
             const newItemIndex = searchOptions.findIndex(item => item.label === newSelection)
             setSelectedItemKey(newItemIndex)
@@ -302,10 +339,7 @@ export const MoorhenSearchBar = (props) => {
         if (selectedItemKey === null) { 
             return
         }
-        selectRef.current.value = selectedItemKey
-        if(searchBarRef.current) {
-            searchBarRef.current.value = "" 
-        } 
+        
         if (selectedItemKey !== null && searchOptions[selectedItemKey]) {
             doActions(...searchOptions[selectedItemKey].actions)
         }
@@ -313,46 +347,46 @@ export const MoorhenSearchBar = (props) => {
 
 
     return <Fragment> 
-                    <Row style={{padding: '0.5rem', width: '20rem'}}>
-                        <Autocomplete 
-                                ref={selectRef}
-                                disablePortal
-                                selectOnFocus
-                                clearOnBlur
-                                handleHomeEndKeys
-                                freeSolo
-                                includeInputInList
-                                filterSelectedOptions
-                                open={openPopup}
-                                onInputChange={(_, value) => {
-                                    if (value.length === 0) {
-                                        if (openPopup) setOpenPopup(false);
-                                    } else {
-                                        if (!openPopup) setOpenPopup(true);
-                                    }
-                                }}
-                                onClose={() => setOpenPopup(false)}
-                                sx={{
-                                    '& .MuiInputBase-root': {
-                                        backgroundColor:  props.isDark ? '#222' : 'white',
-                                        color: props.isDark ? 'white' : '#222',
-                                    },
-                                    '& .MuiOutlinedInput-notchedOutline': {
-                                        borderColor: props.isDark ? 'white' : 'grey',
-                                    },
-                                    '& .MuiButtonBase-root': {
-                                        color: props.isDark ? 'white' : 'grey',
-                                    },
-                                    '& .MuiFormLabel-root': {
-                                        color: props.isDark ? 'white' : '#222',
-                                    },
-                                }}               
-                                onChange={handleChange}
-                                size='small'
-                                options={searchOptions.map(item => item.label)}
-                                renderInput={(params) => <TextField {...params} label="Search" />}
-                        />
-                    </Row>
+            <Row style={{padding: '0.5rem', width: '20rem'}}>
+                <Autocomplete 
+                    ref={selectRef}
+                    disablePortal
+                    selectOnFocus
+                    clearOnBlur
+                    handleHomeEndKeys
+                    freeSolo
+                    includeInputInList
+                    filterSelectedOptions
+                    open={openPopup}
+                    onInputChange={(_, value) => {
+                        if (value.length === 0) {
+                            if (openPopup) setOpenPopup(false);
+                        } else {
+                            if (!openPopup) setOpenPopup(true);
+                        }
+                    }}
+                    onClose={() => setOpenPopup(false)}
+                    sx={{
+                        '& .MuiInputBase-root': {
+                            backgroundColor:  props.isDark ? '#222' : 'white',
+                            color: props.isDark ? 'white' : '#222',
+                        },
+                        '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: props.isDark ? 'white' : 'grey',
+                        },
+                        '& .MuiButtonBase-root': {
+                            color: props.isDark ? 'white' : 'grey',
+                        },
+                        '& .MuiFormLabel-root': {
+                            color: props.isDark ? 'white' : '#222',
+                        },
+                    }}               
+                    onChange={handleChange}
+                    size='small'
+                    options={searchOptions.map(item => item.label)}
+                    renderInput={(params) => <TextField {...params} label="Search" />}
+                />
+            </Row>
     </Fragment> 
 
 }
