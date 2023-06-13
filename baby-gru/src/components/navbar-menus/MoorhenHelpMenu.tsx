@@ -7,8 +7,8 @@ import { MenuItem } from "@mui/material";
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 
 export const MoorhenHelpMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
-    const [popoverIsShown, setPopoverIsShown] = useState(false)
-        const [showControlsModal, setShowControlsModal] = useState(false)
+    const [popoverIsShown, setPopoverIsShown] = useState<boolean>(false)
+    const [showControlsModal, setShowControlsModal] = useState<boolean>(false)
     const menuItemProps = {setPopoverIsShown, ...props}
     
     return <>
