@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import { Card, Form, Row, Col, DropdownButton, Stack } from "react-bootstrap";
 import parse from 'html-react-parser'
 import { MenuItem } from "@mui/material";
-import { MoorhenCommandCentreInterface, MoorhenMoleculeInterface } from "../../moorhen";
+import { MoorhenCommandCentreInterface } from "../../utils/MoorhenCommandCentre"
+import { MoorhenMoleculeInterface } from "../../utils/MoorhenMolecule";
 
 export const MoorhenLigandList = (props: { 
     commandCentre: React.RefObject<MoorhenCommandCentreInterface>;
