@@ -4,10 +4,12 @@ import { convertViewtoPx } from '../../utils/MoorhenUtils';
 import { MenuItem } from "@mui/material";
 import { MolChange } from "../MoorhenApp"
 import { UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined, ExpandLessOutlined, VisibilityOffOutlined, VisibilityOutlined, DownloadOutlined, Settings } from '@mui/icons-material';
+import { MoorhenDeleteDisplayObjectMenuItem } from "../menu-item/MoorhenDeleteDisplayObjectMenuItem"
 import { 
-    MoorhenDeleteDisplayObjectMenuItem, MoorhenRenameDisplayObjectMenuItem, MoorhenMoleculeBondSettingsMenuItem, MoorhenMergeMoleculesMenuItem, 
+    MoorhenMoleculeBondSettingsMenuItem, MoorhenMergeMoleculesMenuItem, 
     MoorhenMoleculeGaussianSurfaceSettingsMenuItem,MoorhenMoleculeSymmetrySettingsMenuItem
 } from "../menu-item/MoorhenMenuItem";
+import { MoorhenRenameDisplayObjectMenuItem } from "../menu-item/MoorhenRenameDisplayObjectMenuItem"
 import { MoorhenMoleculeInterface } from "../../utils/MoorhenMolecule";
 import { clickedResidueType } from "../card/MoorhenMoleculeCard";
 
@@ -174,12 +176,11 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
 
     compressedButtons.push(
         <MoorhenDeleteDisplayObjectMenuItem 
-        key="deleteDisplayObjectMenuItem"
-        setPopoverIsShown={setPopoverIsShown} 
-        glRef={props.glRef} 
-        changeItemList={props.changeMolecules} 
-        itemList={props.molecules} 
-        item={props.molecule} />
+            key="deleteDisplayObjectMenuItem"
+            setPopoverIsShown={setPopoverIsShown} 
+            glRef={props.glRef} 
+            changeItemList={props.changeMolecules} 
+            item={props.molecule} />
     )
 
     return <Fragment>
