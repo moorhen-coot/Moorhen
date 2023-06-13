@@ -2,12 +2,24 @@ import React, { useEffect, useState } from "react";
 import { Card, Form, Row, Col, DropdownButton, Stack } from "react-bootstrap";
 import parse from 'html-react-parser'
 import { MenuItem } from "@mui/material";
+import { MoorhenCommandCentreInterface, MoorhenMoleculeInterface } from "../../moorhen";
 
-export const MoorhenLigandList = (props) => {
-    const [ligandList, setLigandList] = useState([])
-    const [showState, setShowState] = useState({})
+export const MoorhenLigandList = (props: { 
+    commandCentre: React.RefObject<MoorhenCommandCentreInterface>;
+    isDark: boolean; molecule: MoorhenMoleculeInterface;
+    glRef: React.RefObject<mgWebGLType>; 
+}) => {
 
-    const getLigandSVG = async (imol, compId) => {
+    const [showState, setShowState] = useState<{ [key: string]: boolean }>({})
+    const [ligandList, setLigandList] = useState<{
+        svg: string;
+        resName: string;
+        chainName: string;
+        resNum: string;
+        modelName: string;
+    }[]>([])
+
+    const getLigandSVG = async (imol: number, compId: string): Promise<string> => {
         const result = await props.commandCentre.current.cootCommand({
             returnType: "string",
             command: 'get_svg_for_residue_type',
@@ -15,7 +27,7 @@ export const MoorhenLigandList = (props) => {
         }, true)
         
         const parser = new DOMParser()
-        let theText = result.data.result.result
+        let theText: string = result.data.result.result
         let doc = parser.parseFromString(theText, "image/svg+xml")
         let xmin = 999
         let ymin = 999
@@ -87,7 +99,14 @@ export const MoorhenLigandList = (props) => {
                 return
             }
 
-            let ligandList = []
+            let ligandList: {
+                svg: string;
+                resName: string;
+                chainName: string;
+                resNum: string;
+                modelName: string;
+            }[] = []
+
             for (const ligand of props.molecule.ligands) {
                 const ligandSVG = await getLigandSVG(props.molecule.molNo, ligand.resName)
                 ligandList.push({svg: ligandSVG, ...ligand})
@@ -126,7 +145,6 @@ export const MoorhenLigandList = (props) => {
                                                                     key={keycd}
                                                                     label={"Contact dots"}
                                                                     type="checkbox"
-                                                                    variant="outline"
                                                                     style={{'margin': '0.5rem'}}
                                                                     checked={showState[keycd]}
                                                                     onChange={(e) => {
@@ -147,7 +165,6 @@ export const MoorhenLigandList = (props) => {
                                                                     key={keycf}
                                                                     label={"Chemical features"}
                                                                     type="checkbox"
-                                                                    variant="outline"
                                                                     checked={showState[keycf]}
                                                                     style={{'margin': '0.5rem'}}
                                                                     onChange={(e) => {
