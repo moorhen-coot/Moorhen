@@ -7,43 +7,50 @@ export type MoorhenShortcutType = {
     label: string;
     viewOnly: boolean;
 }
-export interface MoorhenPreferencesInterface {
-    setDefaultBackgroundColor?: (backgroundColor: [number, number, number, number]) => void;
-    setDoShadow?: (arg0: boolean) => void;
-    setDoSpinTest?: (arg0: boolean) => void;
-    setUseOffScreenBuffers?: (arg0: boolean) => void;
-    setDoPerspectiveProjection?: (arg0: boolean) => void;
-    setDrawInteractions?: (arg0: boolean) => void;
-    setDrawMissingLoops?: (arg0: boolean) => void;
-    setDrawAxes?: (arg0: boolean) => void;
-    setDrawCrosshairs?: (arg0: boolean) => void;
-    setDrawFPS?: (arg0: boolean) => void;
-    setDefaultExpandDisplayCards?: (arg0: boolean) => void;
-    setRefineAfterMod?: (arg0: boolean) => void;
-    setDefaultMapLitLines?: (arg0: boolean) => void;
-    setMapLineWidth?: (arg0: number) => void;
-    setAtomLabelDepthMode?: (arg0: boolean) => void;
-    setMouseSensitivity?: (arg0: number) => void;
-    setShowShortcutToast?: (arg0: boolean) => void;
-    setMakeBackups?: (arg0: boolean) => void;
-    setContourWheelSensitivityFactor?: (arg0: number) => void;
-    setDevMode?: (arg0: boolean) => void;
-    setEnableTimeCapsule?: (arg0: boolean) => void;
-    setShowScoresToast?: (arg0: boolean) => void;
-    setDefaultMapSurface?: (arg0: boolean) => void;
-    setDefaultBondSmoothness?: (arg0: number) => void;
-    setGLLabelsFontFamily?: React.Dispatch<React.SetStateAction<string>>;
-    setGLLabelsFontSize?: React.Dispatch<React.SetStateAction<number>>;
-    setDefaultUpdatingScores?: React.Dispatch<{
+
+export interface MoorhenPreferencesSetterInterface {
+    setDoShadowDepthDebug: React.Dispatch<React.SetStateAction<boolean>>;
+    setDefaultBackgroundColor: React.Dispatch<React.SetStateAction<[number, number, number, number]>>;
+    setDoShadow: React.Dispatch<React.SetStateAction<boolean>>;
+    setDoSpinTest: React.Dispatch<React.SetStateAction<boolean>>;
+    setClipCap: React.Dispatch<React.SetStateAction<boolean>>;
+    setResetClippingFogging: React.Dispatch<React.SetStateAction<boolean>>;
+    setUseOffScreenBuffers: React.Dispatch<React.SetStateAction<boolean>>;
+    setDoPerspectiveProjection: React.Dispatch<React.SetStateAction<boolean>>;
+    setDrawInteractions: React.Dispatch<React.SetStateAction<boolean>>;
+    setDrawMissingLoops: React.Dispatch<React.SetStateAction<boolean>>;
+    setDrawAxes: React.Dispatch<React.SetStateAction<boolean>>;
+    setDrawCrosshairs: React.Dispatch<React.SetStateAction<boolean>>;
+    setDrawFPS: React.Dispatch<React.SetStateAction<boolean>>;
+    setDefaultExpandDisplayCards: React.Dispatch<React.SetStateAction<boolean>>;
+    setRefineAfterMod: React.Dispatch<React.SetStateAction<boolean>>;
+    setDefaultMapLitLines: React.Dispatch<React.SetStateAction<boolean>>;
+    setMapLineWidth: React.Dispatch<React.SetStateAction<number>>;
+    setAtomLabelDepthMode: React.Dispatch<React.SetStateAction<boolean>>;
+    setMouseSensitivity: React.Dispatch<React.SetStateAction<number>>;
+    setShowShortcutToast: React.Dispatch<React.SetStateAction<boolean>>;
+    setMakeBackups: React.Dispatch<React.SetStateAction<boolean>>;
+    setContourWheelSensitivityFactor: React.Dispatch<React.SetStateAction<number>>;
+    setDevMode: React.Dispatch<React.SetStateAction<boolean>>;
+    setEnableTimeCapsule: React.Dispatch<React.SetStateAction<boolean>>;
+    setShowScoresToast: React.Dispatch<React.SetStateAction<boolean>>;
+    setDefaultMapSurface: React.Dispatch<React.SetStateAction<boolean>>;
+    setDefaultBondSmoothness: React.Dispatch<React.SetStateAction<number>>;
+    setGLLabelsFontFamily: React.Dispatch<React.SetStateAction<string>>;
+    setGLLabelsFontSize: React.Dispatch<React.SetStateAction<number>>;
+    setMaxBackupCount: React.Dispatch<React.SetStateAction<number>>;
+    setModificationCountBackupThreshold: React.Dispatch<React.SetStateAction<number>>;
+    setShortcutOnHoveredAtom: React.Dispatch<React.SetStateAction<boolean>>;
+    setZoomWheelSensitivityFactor: React.Dispatch<React.SetStateAction<number>>;
+    setShortCuts: React.Dispatch<React.SetStateAction<string>>;
+    setDefaultUpdatingScores: React.Dispatch<{
         action: 'Add' | 'Remove' | 'Overwrite';
         item?: string;
         items?: string[];
     }>;
-    setMaxBackupCount?: (arg0: number) => void;
-    setModificationCountBackupThreshold?: (arg0: number) => void;
-    setShortcutOnHoveredAtom?: (arg0: boolean) => void;
-    setZoomWheelSensitivityFactor?: (arg0: number) => void;
-    setShortCuts?: (arg0: string) =>void;
+}
+
+export interface MoorhenPreferencesValuesInterface {
     version?: string;
     isMounted?: boolean;
     defaultBackgroundColor: [number, number, number, number];
@@ -85,6 +92,8 @@ export interface MoorhenPreferencesInterface {
     };
 }
 
+export interface MoorhenPreferencesInterface extends MoorhenPreferencesSetterInterface, MoorhenPreferencesValuesInterface { }
+
 const itemReducer = (oldList: string[], change: {action: 'Add' | 'Remove' | 'Overwrite'; item?: string; items?: string[] }) => {
     if (change.action === 'Add') {
         return [...oldList, change.item]
@@ -105,7 +114,7 @@ const updateStoredPreferences = async (key: string, value: any): Promise<void> =
     }
 }
 
-const getDefaultValues = (): MoorhenPreferencesInterface => {
+const getDefaultValues = (): MoorhenPreferencesValuesInterface => {
     return {
         version: 'v27',
         defaultBackgroundColor: [1, 1, 1, 1], 
@@ -352,7 +361,7 @@ const PreferencesContextProvider = ({ children }) => {
     const [doShadow, setDoShadow] = useState<null | boolean>(null)
     const [GLLabelsFontFamily, setGLLabelsFontFamily] = useState<null | string>(null)
     const [GLLabelsFontSize, setGLLabelsFontSize] = useState<null | number>(null)
-    const [doSpinTest, setDoSpinTest] = useState<null | number>(null)
+    const [doSpinTest, setDoSpinTest] = useState<null | boolean>(null)
     const [mapLineWidth, setMapLineWidth] = useState<null | number>(null)
     const [makeBackups, setMakeBackups] = useState<null | boolean>(null)
     const [showShortcutToast, setShowShortcutToast] = useState<null | boolean>(null)
@@ -387,7 +396,7 @@ const PreferencesContextProvider = ({ children }) => {
         17: { label: "showScoresToast", value: showScoresToast, valueSetter: setShowScoresToast},
         18: { label: "shortcutOnHoveredAtom", value: shortcutOnHoveredAtom, valueSetter: setShortcutOnHoveredAtom},
         19: { label: "resetClippingFogging", value: resetClippingFogging, valueSetter: setResetClippingFogging},
-        20: { label: "defaultUpdatingScores", value: defaultUpdatingScores, valueSetter: (newValue) => {setDefaultUpdatingScores({action: 'Overwrite', items: newValue})}},
+        20: { label: "defaultUpdatingScores", value: defaultUpdatingScores, valueSetter: (newValue: string[]) => {setDefaultUpdatingScores({action: 'Overwrite', items: newValue})}},
         21: { label: "maxBackupCount", value: maxBackupCount, valueSetter: setMaxBackupCount},
         22: { label: "modificationCountBackupThreshold", value: modificationCountBackupThreshold, valueSetter: setModificationCountBackupThreshold},
         23: { label: "drawInteractions", value: drawInteractions, valueSetter: setDrawInteractions},
@@ -405,7 +414,7 @@ const PreferencesContextProvider = ({ children }) => {
         35: { label: "doSpinTest", value: doSpinTest, valueSetter: setDoSpinTest},
     }
 
-    const restoreDefaults = (defaultValues: MoorhenPreferencesInterface)=> {
+    const restoreDefaults = (defaultValues: MoorhenPreferencesValuesInterface)=> {
         updateStoredPreferences('version', defaultValues.version)
         Object.keys(preferencesMap).forEach(key => {
             if (preferencesMap[key].label === 'shortCuts') {
@@ -772,7 +781,7 @@ const PreferencesContextProvider = ({ children }) => {
         updateStoredPreferences('defaultMapLitLines', defaultMapLitLines);
     }, [defaultMapLitLines]);
 
-    const collectedContextValues = {
+    const collectedContextValues: MoorhenPreferencesInterface = {
         defaultBackgroundColor, setDefaultBackgroundColor, atomLabelDepthMode, setAtomLabelDepthMode, defaultExpandDisplayCards,
         setDefaultExpandDisplayCards, shortCuts, setShortCuts, defaultMapLitLines, setDefaultMapLitLines,
         refineAfterMod, setRefineAfterMod, mouseSensitivity, setMouseSensitivity, drawCrosshairs, 

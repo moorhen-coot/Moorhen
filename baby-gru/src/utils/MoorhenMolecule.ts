@@ -101,6 +101,7 @@ type MoorhenColourRuleType = {
 }
 
 export interface MoorhenMoleculeInterface {
+    gemmiAtomsForCid: (cid: string) => Promise<MoorhenAtomInfoType[]>;
     mergeMolecules(otherMolecules: MoorhenMoleculeInterface[], glRef: React.RefObject<mgWebGLType>, doHide?: boolean): Promise<void>;
     setBackgroundColour(backgroundColour: [number, number, number, number]): void;
     addDict(fileContent: string): Promise<void>;

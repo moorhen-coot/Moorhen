@@ -1,6 +1,6 @@
 import { NavDropdown } from "react-bootstrap";
 import { useState } from "react";
-import { MoorhenMapMaskingMenuItem } from "../menu-item/MoorhenMenuItem";
+import { MoorhenMapMaskingMenuItem } from "../menu-item/MoorhenMapMaskingMenuItem";
 import { MoorhenSharpenBlurMapMenuItem } from "../menu-item/MoorhenSharpenBlurMapMenuItem"
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 

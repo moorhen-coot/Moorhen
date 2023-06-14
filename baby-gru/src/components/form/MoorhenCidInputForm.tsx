@@ -2,12 +2,12 @@ import { forwardRef } from "react";
 import { Form } from "react-bootstrap";
 
 type MoorhenCidInputFormPropsType = {
-    height: string;
-    width: string;
-    margin: string;
-    label: string;
-    placeholder: string; 
-    defaultValue: string;
+    height?: string;
+    width?: string;
+    margin?: string;
+    label?: string;
+    placeholder?: string; 
+    defaultValue?: string;
     onChange?: (arg0: React.ChangeEvent<HTMLInputElement>) => void;
 }
 

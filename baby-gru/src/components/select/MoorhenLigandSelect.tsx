@@ -3,10 +3,10 @@ import { Form, FormSelect } from "react-bootstrap";
 import { MoorhenMoleculeInterface } from "../../utils/MoorhenMolecule";
 
 type MoorhenLigandSelectPropsType = {
-    height: string;
-    width: string;
-    margin: string;
-    label: string;
+    height?: string;
+    width?: string;
+    margin?: string;
+    label?: string;
     selectedCoordMolNo: number;
     molecules: MoorhenMoleculeInterface[];
     onChange?: (arg0: React.ChangeEvent<HTMLSelectElement>) => void;
