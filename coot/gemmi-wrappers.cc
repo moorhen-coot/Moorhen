@@ -239,6 +239,7 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
 
 //Gemmi from here
     register_vector<gemmi::GridOp>("VectorGemmiGridOp");
+    register_vector<gemmi::NeighborSearch::Mark*>("VectorGemmiNeighborSearchMark");
     register_vector<gemmi::Mtz::Dataset>("VectorGemmiMtzDataset");
     register_vector<gemmi::Mtz::Column>("VectorGemmiMtzColumn");
     register_vector<gemmi::Mtz::Batch>("VectorGemmiMtzBatch");
@@ -958,13 +959,15 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     ;
 
     class_<gemmi::Position, base<gemmi::Vec3>>("Position")
+    .constructor<float, float, float>()
     ;
     class_<gemmi::NeighborSearch>("NeighborSearch")
-    .constructor<>()
+    .constructor<gemmi::Model&, gemmi::UnitCell&, double>()
     .property("radius_specified",&gemmi::NeighborSearch::radius_specified)
     .property("include_h",&gemmi::NeighborSearch::include_h)
     .function("add_chain",&gemmi::NeighborSearch::add_chain)
     .function("dist",&gemmi::NeighborSearch::dist)
+    .function("populate",&gemmi::NeighborSearch::populate)
     .function("find_atoms",&gemmi::NeighborSearch::find_atoms)
     .function("find_neighbors",&gemmi::NeighborSearch::find_neighbors)
     ;
