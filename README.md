@@ -32,6 +32,12 @@ The following libraries/programs are compiled to Web Assembly:
 * glm 0.9.9.8
 * RDKit 2022_09_2
 
+## **Binaries**
+
+Binaries are available on the releases page. Please read the instructions there before using.
+
+Moorhen is available to use at [https://moorhen.org](https://moorhen.org) .
+
 ## **Compilation instructions**
 
 **Requirements** 
