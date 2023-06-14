@@ -5,10 +5,10 @@ import { MenuItem } from "@mui/material";
 import { MolChange } from "../MoorhenApp"
 import { UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined, ExpandLessOutlined, VisibilityOffOutlined, VisibilityOutlined, DownloadOutlined, Settings } from '@mui/icons-material';
 import { MoorhenDeleteDisplayObjectMenuItem } from "../menu-item/MoorhenDeleteDisplayObjectMenuItem"
-import { 
-    MoorhenMoleculeBondSettingsMenuItem, MoorhenMergeMoleculesMenuItem, 
-    MoorhenMoleculeGaussianSurfaceSettingsMenuItem,MoorhenMoleculeSymmetrySettingsMenuItem
-} from "../menu-item/MoorhenMenuItem";
+import { MoorhenMergeMoleculesMenuItem } from "../menu-item/MoorhenMergeMoleculesMenuItem";
+import { MoorhenMoleculeGaussianSurfaceSettingsMenuItem } from "../menu-item/MoorhenMoleculeGaussianSurfaceSettingsMenuItem"
+import { MoorhenMoleculeSymmetrySettingsMenuItem } from "../menu-item/MoorhenMoleculeSymmetrySettingsMenuItem"
+import { MoorhenMoleculeBondSettingsMenuItem } from "../menu-item/MoorhenMoleculeBondSettingsMenuItem"
 import { MoorhenRenameDisplayObjectMenuItem } from "../menu-item/MoorhenRenameDisplayObjectMenuItem"
 import { MoorhenMoleculeInterface } from "../../utils/MoorhenMolecule";
 import { clickedResidueType } from "../card/MoorhenMoleculeCard";
@@ -141,12 +141,12 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
         },
         10: {
             label: 'Bond display settings',
-            compressed: () => { return (<MoorhenMoleculeBondSettingsMenuItem key={10} setPopoverIsShown={setPopoverIsShown} molecule={props.molecule} {...props.bondSettingsProps}/>) },
+            compressed: () => { return (<MoorhenMoleculeBondSettingsMenuItem key={10} setPopoverIsShown={setPopoverIsShown} {...props.bondSettingsProps}/>) },
             expanded: null
         },
         11: {
             label: 'Gaussian surface display settings',
-            compressed: () => { return (<MoorhenMoleculeGaussianSurfaceSettingsMenuItem key={11} setPopoverIsShown={setPopoverIsShown} molecule={props.molecule} {...props.gaussianSettingsProps}/>) },
+            compressed: () => { return (<MoorhenMoleculeGaussianSurfaceSettingsMenuItem key={11} setPopoverIsShown={setPopoverIsShown} {...props.gaussianSettingsProps}/>) },
             expanded: null
         },
         12: {

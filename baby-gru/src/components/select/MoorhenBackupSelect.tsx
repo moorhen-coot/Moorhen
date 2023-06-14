@@ -4,9 +4,9 @@ import { MoorhenTimeCapsuleInterface } from "../../utils/MoorhenTimeCapsule";
 
 type MoorhenBackupSelectPropsType = {
     timeCapsuleRef: React.RefObject<MoorhenTimeCapsuleInterface>;
-    height: string;
-    width: string;
-    label: string;
+    height?: string;
+    width?: string;
+    label?: string;
 }
 
 export const MoorhenBackupSelect = forwardRef<HTMLSelectElement, MoorhenBackupSelectPropsType>((props, selectRef) => {

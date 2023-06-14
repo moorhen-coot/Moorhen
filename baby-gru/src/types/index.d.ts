@@ -31,6 +31,8 @@ declare global {
         cid: string | null
     }
     type mgWebGLType = {
+        setLightPosition(arg0: number, arg1: number, arg2: number): void;
+        specularPower: number;
         setDiffuseLightNoUpdate(arg0: number, arg1: number, arg2: number): void;
         atomLabelDepthMode: boolean;
         setTextFont(GLLabelsFontFamily: string, GLLabelsFontSize: number): void;

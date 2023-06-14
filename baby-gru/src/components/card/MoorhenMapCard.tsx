@@ -3,7 +3,7 @@ import { Card, Form, Button, Col, DropdownButton, Stack, Dropdown, OverlayTrigge
 import { doDownload } from '../../utils/MoorhenUtils';
 import { getNameLabel } from "./cardUtils"
 import { VisibilityOffOutlined, VisibilityOutlined, ExpandMoreOutlined, ExpandLessOutlined, DownloadOutlined, Settings, FileCopyOutlined, RadioButtonCheckedOutlined, RadioButtonUncheckedOutlined, AddOutlined, RemoveOutlined } from '@mui/icons-material';
-import { MoorhenMapSettingsMenuItem } from "../menu-item/MoorhenMenuItem";
+import { MoorhenMapSettingsMenuItem } from "../menu-item/MoorhenMapSettingsMenuItem";
 import { MoorhenRenameDisplayObjectMenuItem } from "../menu-item/MoorhenRenameDisplayObjectMenuItem"
 import { MoorhenDeleteDisplayObjectMenuItem } from "../menu-item/MoorhenDeleteDisplayObjectMenuItem"
 import MoorhenSlider from "../misc/MoorhenSlider";

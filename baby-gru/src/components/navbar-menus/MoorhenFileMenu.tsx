@@ -3,16 +3,17 @@ import { MoorhenMolecule, MoorhenMoleculeInterface } from "../../utils/MoorhenMo
 import { MoorhenMap, MoorhenMapInterface, selectedColumnsType } from "../../utils/MoorhenMap";
 import { useState, useRef, useEffect } from "react";
 import { MoorhenLoadTutorialDataMenuItem } from "../menu-item/MoorhenLoadTutorialDataMenuItem"
-import { MoorhenAssociateReflectionsToMap, MoorhenImportMapCoefficientsMenuItem, MoorhenAutoOpenMtzMenuItem, MoorhenDeleteEverythingMenuItem, 
-    MoorhenImportMapMenuItem, MoorhenImportFSigFMenuItem, MoorhenBackupsMenuItem } from "../menu-item/MoorhenMenuItem";
+import { MoorhenAssociateReflectionsToMap } from "../menu-item/MoorhenAssociateReflectionsToMap";
+import { MoorhenAutoOpenMtzMenuItem } from "../menu-item/MoorhenAutoOpenMtzMenuItem"
+import { MoorhenImportMapMenuItem } from "../menu-item/MoorhenImportMapMenuItem"
+import { MoorhenImportFSigFMenuItem } from "../menu-item/MoorhenImportFSigFMenuItem"
+import { MoorhenBackupsMenuItem } from "../menu-item/MoorhenBackupsMenuItem"
+import { MoorhenImportMapCoefficientsMenuItem } from "../menu-item/MoorhenImportMapCoefficientsMenuItem"
+import { MoorhenDeleteEverythingMenuItem } from "../menu-item/MoorhenDeleteEverythingMenuItem"
 import { MenuItem } from "@mui/material";
 import { convertViewtoPx, doDownload, readTextFile, getMultiColourRuleArgs } from "../../utils/MoorhenUtils";
 import { backupKeyInterface, backupSessionType, getBackupLabel } from "../../utils/MoorhenTimeCapsule"
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
-
-export interface MoorhenFileMenuItemExtendedControlsInterface extends MoorhenNavBarExtendedControlsInterface {
-    setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-}
 
 export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
 
@@ -25,7 +26,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     const pdbCodeFetchInputRef = useRef<HTMLInputElement | null>(null);
     const fetchMapDataCheckRef = useRef<HTMLInputElement | null>(null);
 
-    const menuItemProps: MoorhenFileMenuItemExtendedControlsInterface = { setPopoverIsShown, ...props }
+    const menuItemProps = { setPopoverIsShown, ...props }
 
     const loadPdbFiles = async (files: FileList) => {
         let readPromises: Promise<MoorhenMoleculeInterface>[] = []

@@ -1,7 +1,8 @@
 import { NavDropdown } from "react-bootstrap";
 import { useState } from "react";
-import { MoorhenCopyFragmentUsingCidMenuItem, MoorhenDeleteUsingCidMenuItem, MoorhenMergeMoleculesMenuItem, 
-    MoorhenGoToMenuItem, MoorhenAddRemoveHydrogenAtomsMenuItem } from "../menu-item/MoorhenMenuItem";
+import { MoorhenCopyFragmentUsingCidMenuItem, MoorhenDeleteUsingCidMenuItem, MoorhenGoToMenuItem } from "../menu-item/MoorhenMenuItem";
+import { MoorhenMergeMoleculesMenuItem } from "../menu-item/MoorhenMergeMoleculesMenuItem"
+import { MoorhenAddRemoveHydrogenAtomsMenuItem } from "../menu-item/MoorhenAddRemoveHydrogenAtomsMenuItem"
 import { MoorhenCreateAcedrgLinkModal } from "../modal/MoorhenCreateAcedrgLinkModal"
 import { MenuItem } from "@mui/material";
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";

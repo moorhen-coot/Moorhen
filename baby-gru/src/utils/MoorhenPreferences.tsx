@@ -32,7 +32,13 @@ export interface MoorhenPreferencesInterface {
     setShowScoresToast?: (arg0: boolean) => void;
     setDefaultMapSurface?: (arg0: boolean) => void;
     setDefaultBondSmoothness?: (arg0: number) => void;
-    setDefaultUpdatingScores?: (arg0: string[]) => void;
+    setGLLabelsFontFamily?: React.Dispatch<React.SetStateAction<string>>;
+    setGLLabelsFontSize?: React.Dispatch<React.SetStateAction<number>>;
+    setDefaultUpdatingScores?: React.Dispatch<{
+        action: 'Add' | 'Remove' | 'Overwrite';
+        item?: string;
+        items?: string[];
+    }>;
     setMaxBackupCount?: (arg0: number) => void;
     setModificationCountBackupThreshold?: (arg0: number) => void;
     setShortcutOnHoveredAtom?: (arg0: boolean) => void;
@@ -79,7 +85,7 @@ export interface MoorhenPreferencesInterface {
     };
 }
 
-const itemReducer = (oldList, change) => {
+const itemReducer = (oldList: string[], change: {action: 'Add' | 'Remove' | 'Overwrite'; item?: string; items?: string[] }) => {
     if (change.action === 'Add') {
         return [...oldList, change.item]
     }

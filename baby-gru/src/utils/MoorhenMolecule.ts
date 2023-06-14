@@ -101,6 +101,11 @@ type MoorhenColourRuleType = {
 }
 
 export interface MoorhenMoleculeInterface {
+    mergeMolecules(otherMolecules: MoorhenMoleculeInterface[], glRef: React.RefObject<mgWebGLType>, doHide?: boolean): Promise<void>;
+    setBackgroundColour(backgroundColour: [number, number, number, number]): void;
+    addDict(fileContent: string): Promise<void>;
+    addDictShim(fileContent: string): void;
+    toggleSymmetry(glRef: React.RefObject<mgWebGLType>): Promise<void>;
     getDict(newTlc: string): string;
     addLigandOfType(resType: string, glRef: React.RefObject<mgWebGLType>, fromMolNo?: number): Promise<WorkerResponseType>;
     updateAtoms(): Promise<void>;

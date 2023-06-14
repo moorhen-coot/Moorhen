@@ -1,11 +1,23 @@
 import { useRef } from "react";
 import { Form } from "react-bootstrap";
-import { MoorhenMap } from "../../utils/MoorhenMap";
-import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
+import { MoorhenMap, MoorhenMapInterface } from "../../utils/MoorhenMap";
+import { MoorhenMolecule, MoorhenMoleculeInterface } from "../../utils/MoorhenMolecule";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
-import { MoorhenFileMenuItemExtendedControlsInterface } from "../navbar-menus/MoorhenFileMenu";
+import { MoorhenCommandCentreInterface } from "../../utils/MoorhenCommandCentre";
+import { MolChange } from "../MoorhenApp";
 
-export const MoorhenLoadTutorialDataMenuItem = (props: MoorhenFileMenuItemExtendedControlsInterface) => {
+export const MoorhenLoadTutorialDataMenuItem = (props: {
+    commandCentre: React.RefObject<MoorhenCommandCentreInterface>;
+    monomerLibraryPath: string;
+    backgroundColor: [number, number, number, number];
+    defaultBondSmoothness: number;
+    urlPrefix: string;
+    glRef: React.RefObject<mgWebGLType>;
+    changeMaps: (arg0: MolChange<MoorhenMapInterface>) => void;
+    changeMolecules: (arg0: MolChange<MoorhenMoleculeInterface>) => void;
+    setActiveMap: React.Dispatch<React.SetStateAction<MoorhenMapInterface>>;
+    setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
+}) => {
 
     const tutorialNumberSelectorRef = useRef<HTMLSelectElement | null>(null);
     const allTutorialNumbers = ['1', '2', '3']

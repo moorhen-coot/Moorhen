@@ -6,7 +6,7 @@ import { MoorhenMoleculeInterface } from "../../utils/MoorhenMolecule";
 
 export const MoorhenAddSimpleMenuItem = (props: {
     glRef: React.RefObject<mgWebGLType>
-    popoverPlacement: 'left' | 'right'
+    popoverPlacement?: 'left' | 'right'
     height: string;
     width: string;
     allowAny: boolean;

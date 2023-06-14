@@ -4,7 +4,9 @@ import { ArrowBackIosOutlined, ArrowForwardIosOutlined, CheckOutlined, CloseOutl
 import { MoorhenAddSimpleMenuItem } from "../menu-item/MoorhenAddSimpleMenuItem"
 import { MoorhenGetMonomerMenuItem } from "../menu-item/MoorhenGetMonomerMenuItem"
 import { MoorhenFitLigandRightHereMenuItem } from "../menu-item/MoorhenFitLigandRightHereMenuItem"
-import { MoorhenMergeMoleculesMenuItem, MoorhenImportFSigFMenuItem, MoorhenBackgroundColorMenuItem } from "../menu-item/MoorhenMenuItem";
+import { MoorhenImportFSigFMenuItem } from "../menu-item/MoorhenImportFSigFMenuItem";
+import { MoorhenMergeMoleculesMenuItem } from "../menu-item/MoorhenMergeMoleculesMenuItem"
+import { MoorhenBackgroundColorMenuItem } from "../menu-item/MoorhenBackgroundColorMenuItem"
 import { cidToSpec, convertRemToPx, getTooltipShortcutLabel } from "../../utils/MoorhenUtils";
 import { getBackupLabel } from "../../utils/MoorhenTimeCapsule"
 import { useEffect, useRef, useState, useCallback } from "react";
