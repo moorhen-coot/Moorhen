@@ -401,6 +401,56 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         return unitCellParams
     }
 
+    async getNeighborResidues(selectionCid: string, radius: number, minDist: number, maxDist: number): Promise<string[]> {
+        let neighborResidueCids: string[] = []
+        
+        const structure = this.gemmiStructure.clone()
+        const model = structure.first_model()
+        const unitCell = structure.cell
+        // Making the unit cell twice the original size to avoid getting hits coming from symmetry mates...
+        unitCell.set(unitCell.a * 2, unitCell.b * 2, unitCell.c * 2, unitCell.alpha, unitCell.beta, unitCell.gamma)
+        
+        const neighborSearch = new window.CCP4Module.NeighborSearch(model, unitCell, radius)
+        neighborSearch.populate(false)
+        
+        const selectedGemmiAtoms = await this.gemmiAtomsForCid(selectionCid)
+        if (selectedGemmiAtoms.length === 0) {
+            return neighborResidueCids
+        }
+        
+        const selectedAtom = selectedGemmiAtoms[0]
+        const selectedAtomPosition = new window.CCP4Module.Position(selectedAtom.x, selectedAtom.y, selectedAtom.z)
+        
+        const marks = neighborSearch.find_atoms(selectedAtomPosition, minDist, maxDist)
+        const chains = model.chains
+        const marksSize = marks.size()
+        for (let markIndex = 0; markIndex < marksSize; markIndex++) {
+            const mark = marks.get(markIndex)
+            const chain = chains.get(mark.chain_idx)
+            const residues = chain.residues
+            const residue = residues.get(mark.residue_idx)
+            const residueSeqId = residue.seqid
+            const resNum = residueSeqId.str()
+            const cid = `//${chain.name}/${resNum}(${residue.name})/`
+            neighborResidueCids.push(cid)
+            residue.delete()
+            residueSeqId.delete()
+            residues.delete()
+            chain.delete()
+            // mark.delete() For some reason this throws abort error. Maybe because the type is gemmi::Mark* ??
+        }
+
+        model.delete()
+        chains.delete()
+        unitCell.delete()
+        neighborSearch.delete()
+        structure.delete()
+        selectedAtomPosition.delete()
+        marks.delete()
+
+        return Array.from(new Set(neighborResidueCids))
+    }
+
     parseSequences(): void {
         if (this.gemmiStructure === null) {
             return
