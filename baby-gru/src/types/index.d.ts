@@ -25,6 +25,8 @@ declare global {
         getElementNameAsString: (arg0: emscriptemInstanceInterface<string>) => string;
         FS_unlink: (arg0: string) => void;
         Selection: { new(cid: string): GemmiSelectionInterface };
+        NeighborSearch: { new(model: GemmiModelInterface, unitCell: GemmiUnitCellInterface, radius: number): GemmiNeighborSearchInterface };
+        Position: { new(x: number, y: number, z: number): GemmiPositionInterface };
     }
     type HoveredAtomType = {
         molecule: MoorhenMoleculeInterface | null,
@@ -157,6 +159,24 @@ declare global {
         at: (idx: number) => T;
         length: () => number;
     }
+    interface GemmiNeighborSearchInterface extends emscriptemInstanceInterface<GemmiNeighborSearchInterface> {
+        populate: (arg0: boolean) => void;
+        find_atoms: (arg0: GemmiPositionInterface, arg1: number, arg2: number) => emscriptemVectorInterface<GemmiMarkInterface>
+    }
+    interface GemmiMarkInterface extends emscriptemInstanceInterface<GemmiMarkInterface> {
+        x: number;
+        y: number;
+        z: number;
+        altloc: number;
+        element: emscriptemInstanceInterface<string>;
+        chain_idx: number;
+        residue_idx: number;
+        atom_idx: number;
+        pos: () => GemmiPositionInterface;
+    }
+    interface GemmiPositionInterface extends emscriptemInstanceInterface<GemmiPositionInterface> {
+
+    }
     interface GemmiSelectionInterface extends emscriptemInstanceInterface<GemmiSelectionInterface> {
         matches_model: (model: GemmiModelInterface) => boolean;
         matches_chain: (chain: GemmiChainInterface) => boolean;
@@ -217,6 +237,7 @@ declare global {
         alpha: number;
         beta: number;
         gamma: number;
+        set: (a: number, b: number, c: number, alpha: number, beta: number, gamma: number) => void
     }
 
     interface GemmiStructureInterface extends emscriptemInstanceInterface<GemmiStructureInterface> {
