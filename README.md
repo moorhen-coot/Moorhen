@@ -6,7 +6,6 @@ It is developed by porting some [CCP4](https://www.ccp4.ac.uk/) libraries and pr
 Also contained are examples of using the generated JS/Web Assembly:
 
 * A command line example which offers some of the functionality of the CCP4 program `superpose`.
-* A command line example which offers some of the functionality of the CCP4 program `gesamt`.
 * A command line example which does a structure factor calculation with `clipper`.
 
 The emscripten suite of tools is required to do the
