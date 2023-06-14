@@ -63,7 +63,7 @@ The following libraries/programs are compiled to Web Assembly:
 `cd ccp4_wasm`  
 `./get_sources`
 
-4. Build gsl, Coot, the CCP4 libraries and examples:  
+4. Build gsl, Boost, RDKIt, Coot, the CCP4 libraries and examples:  
 <br>In this branch, it is intended that you do the build in the source directory. 
 <br/>After first checkout you should run the following script to build:  
 `./initial_build.sh`  
