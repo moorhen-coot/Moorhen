@@ -450,6 +450,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                         <Form.Label>Fetch coords from online services</Form.Label>
                         <InputGroup>
                             <SplitButton title={remoteSource} id="fetch-coords-online-source-select">
+                                {/* @ts-ignore */}
                                 <Dropdown.Item key="PDBe" href="#" onClick={() => {
                                     setRemoteSource("PDBe")
                                 }}>PDBe</Dropdown.Item>
