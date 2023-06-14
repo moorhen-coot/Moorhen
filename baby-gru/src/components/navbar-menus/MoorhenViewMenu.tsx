@@ -1,7 +1,9 @@
 import { Form, InputGroup, NavDropdown } from "react-bootstrap";
 import { useState } from "react";
 import { MenuItem } from "@mui/material";
-import { MoorhenBackgroundColorMenuItem, MoorhenClipFogMenuItem, MoorhenLightingMenuItem } from "../menu-item/MoorhenMenuItem";
+import { MoorhenClipFogMenuItem } from "../menu-item/MoorhenMenuItem";
+import { MoorhenLightingMenuItem } from "../menu-item/MoorhenLightingMenuItem"
+import { MoorhenBackgroundColorMenuItem } from "../menu-item/MoorhenBackgroundColorMenuItem"
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 
 export const MoorhenViewMenu = (props: MoorhenNavBarExtendedControlsInterface) => {

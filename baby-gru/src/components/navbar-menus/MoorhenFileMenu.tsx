@@ -2,8 +2,14 @@ import { NavDropdown, Form, Button, InputGroup, SplitButton, Dropdown, Modal, Ca
 import { MoorhenMolecule, MoorhenMoleculeInterface } from "../../utils/MoorhenMolecule";
 import { MoorhenMap, MoorhenMapInterface, selectedColumnsType } from "../../utils/MoorhenMap";
 import { useState, useRef, useEffect } from "react";
-import { MoorhenAssociateReflectionsToMap, MoorhenImportMapCoefficientsMenuItem, MoorhenAutoOpenMtzMenuItem, MoorhenDeleteEverythingMenuItem, 
-    MoorhenLoadTutorialDataMenuItem, MoorhenImportMapMenuItem, MoorhenImportFSigFMenuItem, MoorhenBackupsMenuItem } from "../menu-item/MoorhenMenuItem";
+import { MoorhenLoadTutorialDataMenuItem } from "../menu-item/MoorhenLoadTutorialDataMenuItem"
+import { MoorhenAssociateReflectionsToMap } from "../menu-item/MoorhenAssociateReflectionsToMap";
+import { MoorhenAutoOpenMtzMenuItem } from "../menu-item/MoorhenAutoOpenMtzMenuItem"
+import { MoorhenImportMapMenuItem } from "../menu-item/MoorhenImportMapMenuItem"
+import { MoorhenImportFSigFMenuItem } from "../menu-item/MoorhenImportFSigFMenuItem"
+import { MoorhenBackupsMenuItem } from "../menu-item/MoorhenBackupsMenuItem"
+import { MoorhenImportMapCoefficientsMenuItem } from "../menu-item/MoorhenImportMapCoefficientsMenuItem"
+import { MoorhenDeleteEverythingMenuItem } from "../menu-item/MoorhenDeleteEverythingMenuItem"
 import { MenuItem } from "@mui/material";
 import { convertViewtoPx, doDownload, readTextFile, getMultiColourRuleArgs } from "../../utils/MoorhenUtils";
 import { backupKeyInterface, backupSessionType, getBackupLabel } from "../../utils/MoorhenTimeCapsule"

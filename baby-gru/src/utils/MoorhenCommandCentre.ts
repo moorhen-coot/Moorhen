@@ -48,8 +48,6 @@ export interface MoorhenCommandCentreInterface {
     extendConsoleMessage: (msg: string) => void;
 }
 
-export type MoorhenCommandCentreRef = { current: MoorhenCommandCentreInterface }
-
 export class MoorhenCommandCentre implements MoorhenCommandCentreInterface {
     urlPrefix: string;
     cootWorker: any;

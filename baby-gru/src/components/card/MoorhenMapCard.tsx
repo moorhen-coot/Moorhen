@@ -1,9 +1,11 @@
-import { useEffect, useState, useRef, useCallback, useMemo, Fragment, SetStateAction } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo, Fragment } from "react";
 import { Card, Form, Button, Col, DropdownButton, Stack, Dropdown, OverlayTrigger, ToggleButton } from "react-bootstrap";
 import { doDownload } from '../../utils/MoorhenUtils';
 import { getNameLabel } from "./cardUtils"
 import { VisibilityOffOutlined, VisibilityOutlined, ExpandMoreOutlined, ExpandLessOutlined, DownloadOutlined, Settings, FileCopyOutlined, RadioButtonCheckedOutlined, RadioButtonUncheckedOutlined, AddOutlined, RemoveOutlined } from '@mui/icons-material';
-import { MoorhenMapSettingsMenuItem, MoorhenDeleteDisplayObjectMenuItem, MoorhenRenameDisplayObjectMenuItem } from "../menu-item/MoorhenMenuItem";
+import { MoorhenMapSettingsMenuItem } from "../menu-item/MoorhenMapSettingsMenuItem";
+import { MoorhenRenameDisplayObjectMenuItem } from "../menu-item/MoorhenRenameDisplayObjectMenuItem"
+import { MoorhenDeleteDisplayObjectMenuItem } from "../menu-item/MoorhenDeleteDisplayObjectMenuItem"
 import MoorhenSlider from "../misc/MoorhenSlider";
 import { IconButton, MenuItem, Tooltip } from "@mui/material";
 import { SketchPicker } from "react-color";
@@ -157,7 +159,6 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
                 setPopoverIsShown={setPopoverIsShown}
                 glRef={props.glRef}
                 changeItemList={props.changeMaps}
-                itemList={props.maps}
                 item={props.map}
                 setActiveMap={props.setActiveMap}
                 activeMap={props.activeMap} />

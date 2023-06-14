@@ -21,6 +21,55 @@ const initialMoleculesState: MoorhenMoleculeInterface[] = []
 
 const initialMapsState: MoorhenMapInterface[] = []
 
+interface MoorhenContainerOptionalPropsInterface {
+    disableFileUploads: boolean;
+    urlPrefix: string;
+    extraNavBarMenus: JSX.Element[];
+    viewOnly: boolean;
+    extraDraggableModals: JSX.Element[];
+    monomerLibraryPath: string;
+    forwardControls?: (arg0: MoorhenControlsInterface) => any;
+    extraFileMenuItems: JSX.Element[];
+    allowScripting: boolean;
+    backupStorageInstance?: any;
+    extraEditMenuItems: JSX.Element[];
+    extraCalculateMenuItems: JSX.Element[];
+    aceDRGInstance: any; 
+}
+
+export interface MoorhenControlsInterface extends MoorhenPreferencesInterface, MoorhenContainerOptionalPropsInterface {
+    isDark: boolean;
+    molecules: MoorhenMoleculeInterface[];
+    changeMolecules: (arg0: MolChange<MoorhenMoleculeInterface>) => void;
+    maps: MoorhenMapInterface[];
+    changeMaps: (arg0: MolChange<MoorhenMapInterface>) => void;
+    appTitle: string;
+    setAppTitle: React.Dispatch<React.SetStateAction<string>>;
+    glRef: React.MutableRefObject<null | mgWebGLType>;
+    timeCapsuleRef: React.MutableRefObject<null | MoorhenTimeCapsuleInterface>;
+    commandCentre: React.MutableRefObject<MoorhenCommandCentreInterface>;
+    moleculesRef: React.MutableRefObject<null | MoorhenMoleculeInterface[]>;
+    mapsRef: React.MutableRefObject<null | MoorhenMapInterface[]>;
+    activeMap: MoorhenMapInterface;
+    setActiveMap: React.Dispatch<React.SetStateAction<MoorhenMapInterface>>;
+    activeMolecule: MoorhenMoleculeInterface;
+    setActiveMolecule: React.Dispatch<React.SetStateAction<MoorhenMoleculeInterface>>;
+    hoveredAtom: null | HoveredAtomType;
+    setHoveredAtom: React.Dispatch<React.SetStateAction<HoveredAtomType>>;
+    commandHistory: any;
+    backgroundColor: [number, number, number, number];
+    setBackgroundColor: React.Dispatch<React.SetStateAction<[number, number, number, number]>>;
+    toastContent: null | JSX.Element;
+    setToastContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
+    showToast: boolean;
+    setShowToast: React.Dispatch<React.SetStateAction<boolean>>;
+    windowWidth: number;
+    windowHeight: number;
+    showColourRulesToast: boolean;
+    setShowColourRulesToast: React.Dispatch<React.SetStateAction<boolean>>;
+    availableFonts: string[];
+}
+
 interface statesMapInterface {
     glRef: React.MutableRefObject<null | mgWebGLType>;
     timeCapsuleRef: React.MutableRefObject<null | MoorhenTimeCapsuleInterface>;
@@ -50,7 +99,7 @@ interface statesMapInterface {
     setWindowHeight: React.Dispatch<React.SetStateAction<number>>;
     commandHistory: any;
     dispatchHistoryReducer: (arg0: any) => void;
-    molecules: MoorhenMoleculeInterface[]
+    molecules: MoorhenMoleculeInterface[];
     changeMolecules: (arg0: MolChange<MoorhenMoleculeInterface>) => void;
     maps: MoorhenMapInterface[];
     changeMaps: (arg0: MolChange<MoorhenMapInterface>) => void;
@@ -72,27 +121,7 @@ interface statesMapInterface {
     setAvailableFonts: React.Dispatch<React.SetStateAction<string[]>>
 }
 
-interface MoorhenContainerOptionalPropsInterface {
-    disableFileUploads: boolean;
-    urlPrefix: string;
-    extraNavBarMenus: JSX.Element[];
-    viewOnly: boolean;
-    extraDraggableModals: JSX.Element[];
-    monomerLibraryPath: string;
-    forwardControls: (arg0: MoorhenControlsInterface) => any;
-    extraFileMenuItems: JSX.Element[];
-    allowScripting: boolean;
-    backupStorageInstance: any;
-    extraEditMenuItems: JSX.Element[];
-    extraCalculateMenuItems: JSX.Element[];
-    aceDRGInstance: any; 
-}
-
 export interface MoorhenContainerPropsInterface extends Partial<statesMapInterface>, Partial<MoorhenContainerOptionalPropsInterface> { }
-
-export interface MoorhenControlsInterface extends Partial<statesMapInterface>, Partial<MoorhenContainerOptionalPropsInterface>, MoorhenPreferencesInterface {
-    isDark: boolean;
-}
 
 export const MoorhenContainer = (props: MoorhenContainerPropsInterface) => {
     const innerGlRef = useRef<null | mgWebGLType>(null)

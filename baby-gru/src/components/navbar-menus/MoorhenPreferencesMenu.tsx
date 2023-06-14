@@ -3,7 +3,10 @@ import { NavDropdown, Form, InputGroup } from "react-bootstrap";
 import { MoorhenShortcutConfigModal } from "../modal/MoorhenShortcutConfigModal"
 import { MenuItem } from "@mui/material";
 import { convertViewtoPx } from "../../utils/MoorhenUtils";
-import { MoorhenDefaultBondSmoothnessPreferencesMenuItem, MoorhenScoresToastPreferencesMenuItem, MoorhenBackupPreferencesMenuItem, MoorhenGLFontMenuItem } from '../menu-item/MoorhenMenuItem'
+import { MoorhenGLFontMenuItem } from '../menu-item/MoorhenGLFontMenuItem'
+import { MoorhenScoresToastPreferencesMenuItem } from "../menu-item/MoorhenScoresToastPreferencesMenuItem"
+import { MoorhenBackupPreferencesMenuItem } from "../menu-item/MoorhenBackupPreferencesMenuItem"
+import { MoorhenDefaultBondSmoothnessPreferencesMenuItem } from "../menu-item/MoorhenDefaultBondSmoothnessPreferencesMenuItem"
 import MoorhenSlider from '../misc/MoorhenSlider' 
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 
@@ -143,8 +146,12 @@ export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInter
                     </MenuItem>
                     <MoorhenShortcutConfigModal showModal={showModal} setShowModal={setShowModal} setShortCuts={props.setShortCuts} shortCuts={JSON.parse(props.shortCuts as string)}/>
                     <MoorhenGLFontMenuItem
-                    {...props}
-                    setPopoverIsShown={setPopoverIsShown}
+                        GLLabelsFontFamily={props.GLLabelsFontFamily}
+                        setGLLabelsFontFamily={props.setGLLabelsFontFamily}
+                        availableFonts={props.availableFonts}
+                        GLLabelsFontSize={props.GLLabelsFontSize}
+                        setGLLabelsFontSize={props.setGLLabelsFontSize}
+                        setPopoverIsShown={setPopoverIsShown}
                     />
             </div>
             </NavDropdown>
