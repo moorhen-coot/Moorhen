@@ -5,7 +5,7 @@ import { CloudBackupInterface, CloudStorageInstance, CloudStorageInstanceInterfa
 import { MoorhenMolecule, MoorhenMoleculeInterface } from "../../src/utils/MoorhenMolecule"
 import { MoorhenMap, MoorhenMapInterface, selectedColumnsType } from "../../src/utils/MoorhenMap"
 import { guid } from "../../src/utils/MoorhenUtils"
-import { MoorhenPreferencesInterface, PreferencesContextProvider, getDefaultValues } from "../../src/utils/MoorhenPreferences";
+import { MoorhenPreferencesValuesInterface, PreferencesContextProvider, getDefaultValues } from "../../src/utils/MoorhenPreferences";
 import reportWebVitals from '../../src/reportWebVitals'
 import localforage from 'localforage';
 import parse from 'html-react-parser';
@@ -60,13 +60,13 @@ export default class MoorhenWrapper {
   workMode: "build" | "view" | "view-update";
   inputFiles: (PdbInputFileType | MapInputFileType | LegendInputFileType | LigandInputFileType)[]
   rootId: string;
-  preferences: MoorhenPreferencesInterface;
-  cachedPreferences: MoorhenPreferencesInterface;
+  preferences: MoorhenPreferencesValuesInterface;
+  cachedPreferences: MoorhenPreferencesValuesInterface;
   cachedLegend: string;
   cachedLigandDictionaries: string[];
   noDataLegendMessage: JSX.Element;
   exportCallback: (arg0: string, arg1: string) => Promise<void>;
-  exportPreferencesCallback: (arg0: MoorhenPreferencesInterface) => void;
+  exportPreferencesCallback: (arg0: MoorhenPreferencesValuesInterface) => void;
   backupStorageInstance: CloudStorageInstanceInterface;
 
   constructor(urlPrefix: string) {
@@ -122,7 +122,7 @@ export default class MoorhenWrapper {
     }
   }
 
-  setPreferences(preferences: MoorhenPreferencesInterface) {
+  setPreferences(preferences: MoorhenPreferencesValuesInterface) {
     this.preferences = preferences
   }
 
@@ -148,11 +148,11 @@ export default class MoorhenWrapper {
     this.exportCallback = callbackFunction
   }
 
-  addOnChangePreferencesListener(callbackFunction: (arg0: MoorhenPreferencesInterface) => void) {
+  addOnChangePreferencesListener(callbackFunction: (arg0: MoorhenPreferencesValuesInterface) => void) {
     this.exportPreferencesCallback = callbackFunction
   }
 
-  onChangePreferencesListener(preferences: MoorhenPreferencesInterface): void {
+  onChangePreferencesListener(preferences: MoorhenPreferencesValuesInterface): void {
     const objectKeys = ['shortCuts', 'defaultBackgroundColor', 'defaultUpdatingScores']
     preferences['version'] = this.cachedPreferences.version
     for (const key of Object.keys(this.cachedPreferences)) {
@@ -173,9 +173,9 @@ export default class MoorhenWrapper {
     this.controls = controls
   }
 
-  async importPreferences(newPreferences: MoorhenPreferencesInterface) {
+  async importPreferences(newPreferences: MoorhenPreferencesValuesInterface) {
     const defaultPreferences = getDefaultValues()
-    let preferences: MoorhenPreferencesInterface
+    let preferences: MoorhenPreferencesValuesInterface
     
     if (newPreferences.version === defaultPreferences.version) {
       preferences = newPreferences
