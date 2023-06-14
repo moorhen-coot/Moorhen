@@ -1,6 +1,7 @@
 import { NavDropdown } from "react-bootstrap";
 import { useState } from "react";
-import { MoorhenAddWatersMenuItem, MoorhenCentreOnLigandMenuItem } from "../menu-item/MoorhenMenuItem"
+import { MoorhenCentreOnLigandMenuItem } from "../menu-item/MoorhenCentreOnLigandMenuItem"
+import { MoorhenAddWatersMenuItem } from "../menu-item/MoorhenAddWatersMenuItem"
 import { MoorhenSMILESToLigandMenuItem, MoorhenImportDictionaryMenuItem } from "../menu-item/MoorhenImportLigandDictionary";
 import { MoorhenFitLigandRightHereMenuItem } from "../menu-item/MoorhenFitLigandRightHereMenuItem"
 import { MoorhenGetMonomerMenuItem } from "../menu-item/MoorhenGetMonomerMenuItem"

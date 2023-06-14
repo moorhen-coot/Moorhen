@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Draggable from "react-draggable";
 import { IconButton } from '@mui/material';
 import { CloseOutlined, PlayArrowOutlined } from "@mui/icons-material";
@@ -7,18 +7,24 @@ import { Card, Button } from "react-bootstrap";
 import { highlight, languages } from 'prismjs/components/prism-core';
 import Editor from 'react-simple-code-editor';
 import { MoorhenScriptApi } from "../../utils/MoorhenScriptAPI"
-import { MoorhenNavBarExtendedControlsInterface } from "../navbar-menus/MoorhenNavBar";
+import { MoorhenMapInterface } from "../../utils/MoorhenMap";
+import { MoorhenMoleculeInterface } from "../../utils/MoorhenMolecule";
 import 'prismjs/themes/prism.css';
 import 'prismjs/components/prism-clike';
 import 'prismjs/components/prism-javascript';
 
-interface MoorhenScriptModalPropsInterface extends MoorhenNavBarExtendedControlsInterface {
+export const MoorhenScriptModal = (props: {
+    molecules: MoorhenMoleculeInterface[];
+    maps: MoorhenMapInterface[];
+    glRef: React.RefObject<mgWebGLType>;
+    isDark: boolean;
+    windowHeight: number;
+    windowWidth: number;
     show: boolean;
     setShow: React.Dispatch<React.SetStateAction<boolean>>;
     code?: string;
-}
+}) => {
 
-export const MoorhenScriptModal = (props: MoorhenScriptModalPropsInterface) => {
     const [code, setCode] = useState("")
     const [opacity, setOpacity] = useState(0.5)
     

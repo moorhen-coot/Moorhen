@@ -155,6 +155,7 @@ declare global {
         size: () => number;
         get: (idx: number) => T;
         at: (idx: number) => T;
+        length: () => number;
     }
     interface GemmiSelectionInterface extends emscriptemInstanceInterface<GemmiSelectionInterface> {
         matches_model: (model: GemmiModelInterface) => boolean;
@@ -187,6 +188,7 @@ declare global {
 
     interface GemmiResidueSeqIdInterface extends emscriptemInstanceInterface<GemmiResidueSeqIdInterface> {
         str: () => string;
+        num: { value: number };
     }
 
     interface GemmiResidueInterface extends emscriptemInstanceInterface<GemmiResidueInterface> {
@@ -198,8 +200,9 @@ declare global {
     interface GemmiChainInterface extends emscriptemInstanceInterface<GemmiChainInterface> {
         residues: emscriptemVectorInterface<GemmiResidueInterface>;
         name: string;
+        get_ligands: () => emscriptemVectorInterface<GemmiResidueInterface>;
         get_polymer_const: () => emscriptemInstanceInterface<number>;
-        get_ligands_const: () => emscriptemVectorInterface<GemmiResidueInterface>
+        get_ligands_const: () => emscriptemVectorInterface<GemmiResidueInterface>;
     }
 
     interface GemmiModelInterface extends emscriptemInstanceInterface<GemmiModelInterface> {

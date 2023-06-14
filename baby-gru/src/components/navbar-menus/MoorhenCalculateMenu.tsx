@@ -1,6 +1,6 @@
 import { NavDropdown } from "react-bootstrap";
 import { useState } from "react";
-import { MoorhenLoadScriptMenuItem } from "../menu-item/MoorhenMenuItem";
+import { MoorhenLoadScriptMenuItem } from "../menu-item/MoorhenLoadScriptMenuItem";
 import { MoorhenSuperposeMenuItem } from "../menu-item/MoorhenSuperposeMenuItem";
 import { MoorhenScriptModal } from "../modal/MoorhenScriptModal";
 import { MenuItem } from "@mui/material";
