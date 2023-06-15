@@ -172,6 +172,7 @@ declare global {
         chain_idx: number;
         residue_idx: number;
         atom_idx: number;
+        image_idx: number;
         pos: () => GemmiPositionInterface;
     }
     interface GemmiPositionInterface extends emscriptemInstanceInterface<GemmiPositionInterface> {

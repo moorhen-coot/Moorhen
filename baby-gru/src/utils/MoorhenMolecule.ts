@@ -404,11 +404,8 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
     async getNeighborResidues(selectionCid: string, radius: number, minDist: number, maxDist: number): Promise<string[]> {
         let neighborResidueCids: string[] = []
         
-        const structure = this.gemmiStructure.clone()
-        const model = structure.first_model()
-        const unitCell = structure.cell
-        // Making the unit cell twice the original size to avoid getting hits coming from symmetry mates...
-        unitCell.set(unitCell.a * 2, unitCell.b * 2, unitCell.c * 2, unitCell.alpha, unitCell.beta, unitCell.gamma)
+        const model = this.gemmiStructure.first_model()
+        const unitCell = this.gemmiStructure.cell
         
         const neighborSearch = new window.CCP4Module.NeighborSearch(model, unitCell, radius)
         neighborSearch.populate(false)
@@ -424,15 +421,20 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         const marks = neighborSearch.find_atoms(selectedAtomPosition, minDist, maxDist)
         const chains = model.chains
         const marksSize = marks.size()
+        
         for (let markIndex = 0; markIndex < marksSize; markIndex++) {
             const mark = marks.get(markIndex)
+            const imageIdx = mark.image_idx
+            if (imageIdx === 0) {
+                continue
+            }
             const chain = chains.get(mark.chain_idx)
             const residues = chain.residues
             const residue = residues.get(mark.residue_idx)
             const residueSeqId = residue.seqid
             const resNum = residueSeqId.str()
             const cid = `//${chain.name}/${resNum}(${residue.name})/`
-            neighborResidueCids.push(cid)
+            neighborResidueCids.push(cid)    
             residue.delete()
             residueSeqId.delete()
             residues.delete()
@@ -444,7 +446,6 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         chains.delete()
         unitCell.delete()
         neighborSearch.delete()
-        structure.delete()
         selectedAtomPosition.delete()
         marks.delete()
 
