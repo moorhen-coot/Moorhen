@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "proxy": "http://127.0.0.1:43434",
-  "homepage":"./CCP4i2Moorhen",
   "main": "public/electron.js",
   "author": "Paul Emsley, Filomeno Sanchez Rodriguez, Martin Noble, Stuart McNicholas",
   "description": "Moorhen molecular graphics",
