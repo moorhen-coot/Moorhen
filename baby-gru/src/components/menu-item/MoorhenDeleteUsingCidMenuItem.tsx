@@ -54,7 +54,7 @@ export const MoorhenDeleteUsingCidMenuItem = (props: {
     return <MoorhenBaseMenuItem
         popoverPlacement='right'
         popoverContent={panelContent}
-        menuItemText="Delete Cid..."
+        menuItemText="Delete CID..."
         onCompleted={onCompleted}
         setPopoverIsShown={props.setPopoverIsShown}
     />
