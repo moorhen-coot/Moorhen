@@ -7,7 +7,7 @@ import { atomsToSpheresInfo } from '../WebGLgComponents/mgWebGLAtomsToPrimitives
 import { contactsToCylindersInfo, contactsToLinesInfo } from '../WebGLgComponents/mgWebGLAtomsToPrimitives';
 import { singletonsToLinesInfo } from '../WebGLgComponents/mgWebGLAtomsToPrimitives';
 import { guid, readTextFile, readGemmiStructure, cidToSpec, residueCodesThreeToOne, centreOnGemmiAtoms, getBufferAtoms, 
-    nucleotideCodesThreeToOne, hexToHsl, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo} from './MoorhenUtils'
+    nucleotideCodesThreeToOne, hexToHsl, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, findConsecutiveRanges, getCubeLines} from './MoorhenUtils'
 import { MoorhenCommandCentreInterface, cootCommandKwargsType } from "./MoorhenCommandCentre"
 import { WorkerResponseType } from "./MoorhenCommandCentre"
 import { quatToMat4 } from '../WebGLgComponents/quatToMat4.js';
@@ -101,6 +101,7 @@ type MoorhenColourRuleType = {
 }
 
 export interface MoorhenMoleculeInterface {
+    drawUnitCell(glRef: React.RefObject<mgWebGLType>): void;
     gemmiAtomsForCid: (cid: string) => Promise<MoorhenAtomInfoType[]>;
     mergeMolecules(otherMolecules: MoorhenMoleculeInterface[], glRef: React.RefObject<mgWebGLType>, doHide?: boolean): Promise<void>;
     setBackgroundColour(backgroundColour: [number, number, number, number]): void;
@@ -399,6 +400,65 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         unitCell.delete()
 
         return unitCellParams
+    }
+
+    async getNeighborResiduesCids(selectionCid: string, radius: number, minDist: number, maxDist: number): Promise<string[]> {
+        let multiCidRanges: string[] = []
+        let neighborResidues: { [chainId: string]: number[] } = {}
+
+        const model = this.gemmiStructure.first_model()
+        const unitCell = this.gemmiStructure.cell
+        
+        const neighborSearch = new window.CCP4Module.NeighborSearch(model, unitCell, radius)
+        neighborSearch.populate(false)
+        
+        const selectedGemmiAtoms = await this.gemmiAtomsForCid(selectionCid)
+        if (selectedGemmiAtoms.length === 0) {
+            return multiCidRanges
+        }
+        
+        const selectedAtom = selectedGemmiAtoms[0]
+        const selectedAtomPosition = new window.CCP4Module.Position(selectedAtom.x, selectedAtom.y, selectedAtom.z)
+        
+        const marks = neighborSearch.find_atoms(selectedAtomPosition, minDist, maxDist)
+        const chains = model.chains
+        const marksSize = marks.size()
+        
+        for (let markIndex = 0; markIndex < marksSize; markIndex++) {
+            const mark = marks.get(markIndex)
+            const imageIdx = mark.image_idx
+            if (imageIdx !== 0) {
+                continue
+            }
+            const chain = chains.get(mark.chain_idx)
+            const residues = chain.residues
+            const residue = residues.get(mark.residue_idx)
+            const residueSeqId = residue.seqid
+            const resNum = residueSeqId.str()
+            if (Object.hasOwn(neighborResidues, chain.name)) {
+                neighborResidues[chain.name].push(parseInt(resNum))
+            } else {
+                neighborResidues[chain.name] = [parseInt(resNum)]
+            }
+            residue.delete()
+            residueSeqId.delete()
+            residues.delete()
+            chain.delete()
+            // mark.delete() For some reason this throws abort error. Maybe because the type is gemmi::Mark* ??
+        }
+
+        Object.keys(neighborResidues).forEach(chainId => {
+            const residueRanges = findConsecutiveRanges(Array.from(new Set(neighborResidues[chainId])))
+            residueRanges.forEach(range => multiCidRanges.push(`//${chainId}/${range[0]}-${range[1]}/*`))
+        })
+
+        model.delete()
+        chains.delete()
+        unitCell.delete()
+        neighborSearch.delete()
+        selectedAtomPosition.delete()
+        marks.delete()
+        return multiCidRanges
     }
 
     parseSequences(): void {
@@ -1308,7 +1368,21 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         this.addBuffersOfStyle(glRef, objects, style)
     }
 
-    drawGemmiAtomPairs(glRef: React.RefObject<mgWebGLType>, gemmiAtomPairs: any[], style: string,  colour: number[], labelled: boolean = false, clearBuffers: boolean = false) {
+    drawUnitCell(glRef: React.RefObject<mgWebGLType>) {
+        const unitCell = this.gemmiStructure.cell
+
+        const lines = getCubeLines(unitCell.a, unitCell.b, unitCell.c, unitCell.alpha, unitCell.beta, unitCell.gamma)
+
+        unitCell.delete()
+
+        let objects = [
+            gemmiAtomPairsToCylindersInfo(lines, 0.1, {unit_cell: [0.7, 0.4, 0.25, 1.0]}, false, 0, 10000, false) 
+        ]
+        this.addBuffersOfStyle(glRef, objects, 'unit_cell')
+        glRef.current.drawScene()
+    }
+
+    drawGemmiAtomPairs(glRef: React.RefObject<mgWebGLType>, gemmiAtomPairs: [MoorhenAtomInfoType, MoorhenAtomInfoType][], style: string,  colour: number[], labelled: boolean = false, clearBuffers: boolean = false) {
         const $this = this
         const atomColours = {}
         gemmiAtomPairs.forEach(atom => { atomColours[`${atom[0].serial}`] = colour; atomColours[`${atom[1].serial}`] = colour })

@@ -115,6 +115,7 @@ const MoorhenImportLigandDictionary = (props: {
                 <Form.Label>Create instance on read</Form.Label>
                 <InputGroup>
                     <SplitButton title={createInstance ? "Yes" : "No"} id="segmented-button-dropdown-1">
+                        {/* @ts-ignore */}
                         <Dropdown.Item key="Yes" href="#" onClick={() => {
                             createRef.current = true
                             setCreateInstance(true)

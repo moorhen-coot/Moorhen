@@ -64,6 +64,13 @@ const doColourTest = async (props: any) => {
     }
 }
 
+const doUnitCellTest = (props: any) => {
+    const molecule = props.molecules.find(molecule => molecule.molNo === 0)
+    if (typeof molecule !== 'undefined') {
+        props.molecules[0].drawUnitCell(props.glRef)
+    }
+}
+
 export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     const [popoverIsShown, setPopoverIsShown] = useState(false)
     const menuItemProps = {setPopoverIsShown, ...props}
@@ -81,6 +88,9 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
                     </MenuItem>
                     <MenuItem onClick={() => doColourTest(menuItemProps)}>
                         Do colouring test
+                    </MenuItem>
+                    <MenuItem onClick={() => doUnitCellTest(menuItemProps)}>
+                        Draw unit cell...
                     </MenuItem>
                     <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
                         <Form.Check 
