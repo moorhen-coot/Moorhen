@@ -10,10 +10,12 @@ import { MoorhenUnmodelledBlobs } from "./MoorhenUnmodelledBlobs"
 import { ListItemButton, ListItemText, Collapse } from "@mui/material";
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
 import { convertViewtoPx} from '../../utils/MoorhenUtils';
+import { MoorhenSideBarAccordionPropsInterface } from "../list/MoorhenSideBar";
 
-export const MoorhenToolsAccordion = (props) => {
-    const [selectedTool, setSelectedTool] = useState(null)
-    const toolsAccordionSelectRef = useRef()
+
+export const MoorhenToolsAccordion = (props: MoorhenSideBarAccordionPropsInterface) => {
+    const [selectedTool, setSelectedTool] = useState<null | number>(null)
+    const toolsAccordionSelectRef = useRef<undefined | HTMLSelectElement>()
 
     const toolOptions = [
             {label: "Difference Map Peaks", toolWidget: <MoorhenDifferenceMapPeaks {...props}/>},
@@ -25,7 +27,7 @@ export const MoorhenToolsAccordion = (props) => {
             {label: "MMRRCC plot", toolWidget: <MoorhenMMRRCCPlot {...props}/>}
     ]
 
-    const handleChange = (evt) => {
+    const handleChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
         if (evt.target.value) {
             const newTool = toolOptions.findIndex(tool => tool.label === evt.target.value)
             setSelectedTool(newTool)
@@ -37,7 +39,6 @@ export const MoorhenToolsAccordion = (props) => {
     return <>
             <ListItemButton
                 id="validation-tools-dropdown"
-                show={props.accordionDropdownId === props.dropdownId}
                 style={{display:'flex', alignItems:'center'}}
                 onClick={() => { props.dropdownId !== props.accordionDropdownId ? props.setAccordionDropdownId(props.dropdownId) : props.setAccordionDropdownId(-1) }}>
                 <ListItemText primary="Validation tools" />
