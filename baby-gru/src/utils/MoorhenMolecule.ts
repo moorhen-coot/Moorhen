@@ -7,7 +7,7 @@ import { atomsToSpheresInfo } from '../WebGLgComponents/mgWebGLAtomsToPrimitives
 import { contactsToCylindersInfo, contactsToLinesInfo } from '../WebGLgComponents/mgWebGLAtomsToPrimitives';
 import { singletonsToLinesInfo } from '../WebGLgComponents/mgWebGLAtomsToPrimitives';
 import { guid, readTextFile, readGemmiStructure, cidToSpec, residueCodesThreeToOne, centreOnGemmiAtoms, getBufferAtoms, 
-    nucleotideCodesThreeToOne, hexToHsl, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo} from './MoorhenUtils'
+    nucleotideCodesThreeToOne, hexToHsl, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, findConsecutiveRanges} from './MoorhenUtils'
 import { MoorhenCommandCentreInterface, cootCommandKwargsType } from "./MoorhenCommandCentre"
 import { WorkerResponseType } from "./MoorhenCommandCentre"
 import { quatToMat4 } from '../WebGLgComponents/quatToMat4.js';
@@ -401,9 +401,10 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         return unitCellParams
     }
 
-    async getNeighborResidues(selectionCid: string, radius: number, minDist: number, maxDist: number): Promise<string[]> {
-        let neighborResidueCids: string[] = []
-        
+    async getNeighborResiduesCids(selectionCid: string, radius: number, minDist: number, maxDist: number): Promise<string[]> {
+        let multiCidRanges: string[] = []
+        let neighborResidues: { [chainId: string]: number[] } = {}
+
         const model = this.gemmiStructure.first_model()
         const unitCell = this.gemmiStructure.cell
         
@@ -412,7 +413,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         
         const selectedGemmiAtoms = await this.gemmiAtomsForCid(selectionCid)
         if (selectedGemmiAtoms.length === 0) {
-            return neighborResidueCids
+            return multiCidRanges
         }
         
         const selectedAtom = selectedGemmiAtoms[0]
@@ -425,7 +426,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         for (let markIndex = 0; markIndex < marksSize; markIndex++) {
             const mark = marks.get(markIndex)
             const imageIdx = mark.image_idx
-            if (imageIdx === 0) {
+            if (imageIdx !== 0) {
                 continue
             }
             const chain = chains.get(mark.chain_idx)
@@ -433,8 +434,11 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
             const residue = residues.get(mark.residue_idx)
             const residueSeqId = residue.seqid
             const resNum = residueSeqId.str()
-            const cid = `//${chain.name}/${resNum}(${residue.name})/`
-            neighborResidueCids.push(cid)    
+            if (Object.hasOwn(neighborResidues, chain.name)) {
+                neighborResidues[chain.name].push(parseInt(resNum))
+            } else {
+                neighborResidues[chain.name] = [parseInt(resNum)]
+            }
             residue.delete()
             residueSeqId.delete()
             residues.delete()
@@ -442,14 +446,18 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
             // mark.delete() For some reason this throws abort error. Maybe because the type is gemmi::Mark* ??
         }
 
+        Object.keys(neighborResidues).forEach(chainId => {
+            const residueRanges = findConsecutiveRanges(Array.from(new Set(neighborResidues[chainId])))
+            residueRanges.forEach(range => multiCidRanges.push(`//${chainId}/${range[0]}-${range[1]}/*`))
+        })
+
         model.delete()
         chains.delete()
         unitCell.delete()
         neighborSearch.delete()
         selectedAtomPosition.delete()
         marks.delete()
-
-        return Array.from(new Set(neighborResidueCids))
+        return multiCidRanges
     }
 
     parseSequences(): void {

@@ -823,3 +823,24 @@ export const gemmiAtomsToCirclesSpheresInfo = (atoms: MoorhenAtomInfoType[], siz
         }
     }
 }
+
+export const findConsecutiveRanges = (numbers: number[]): [number, number][] => {
+    numbers.sort((a, b) => a - b); 
+    const ranges: [number, number][] = [];
+    
+    let start = numbers[0];
+    let end = numbers[0];
+    
+    for (let i = 1; i < numbers.length; i++) {
+      if (numbers[i] === end + 1) {
+        end = numbers[i];
+      } else {
+        ranges.push([start, end]);
+        start = numbers[i];
+        end = numbers[i];
+      }
+    }
+    
+    ranges.push([start, end]); 
+    return ranges;
+  }
