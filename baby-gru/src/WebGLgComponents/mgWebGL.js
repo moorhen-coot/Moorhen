@@ -1681,7 +1681,7 @@ class MGWebGL extends Component {
         const self = this;
         this.activeMolecule = null;
         this.draggableMolecule = null;
-        this.currentlyClickedAtom = null;
+        this.currentlyDraggedAtom = null;
         /*
         window.addEventListener('resize',
                 function(evt){
@@ -9709,7 +9709,9 @@ class MGWebGL extends Component {
                     }
                 });
                 document.dispatchEvent(atomClicked);
-                this.currentlyClickedAtom = { atom: self.displayBuffers[minidx].atoms[minj], buffer: self.displayBuffers[minidx] }
+                if (this.draggableMolecule != null && Object.keys(this.draggableMolecule.displayObjects).length > 0 && this.draggableMolecule.buffersInclude(self.displayBuffers[minidx])) {
+                    this.currentlyDraggedAtom = { atom: self.displayBuffers[minidx].atoms[minj], buffer: self.displayBuffers[minidx] }
+                }
                 if (self.keysDown['label_atom']) {
                     updateLabels = true
                     if (self.labelledAtoms.length === 0 || (self.labelledAtoms[self.labelledAtoms.length - 1].length > 1)) {
@@ -11451,7 +11453,7 @@ class MGWebGL extends Component {
         const event_x = event.pageX;
         const event_y = event.pageY;
         self.init_y = event.pageY;
-        this.currentlyClickedAtom = null
+        this.currentlyDraggedAtom = null
         if (self.keysDown['center_atom'] || event.which===2) {
             if(Math.abs(event_x-self.mouseDown_x)<5 && Math.abs(event_y-self.mouseDown_y)<5){
                 if(self.displayBuffers.length>0){
@@ -12428,8 +12430,7 @@ class MGWebGL extends Component {
         return theVector;
     }
 
-    doMouseMove(event, self) {
-        const draggableMoleculeMotion = (this.draggableMolecule != null) && (Object.keys(this.draggableMolecule.displayObjects).length > 0) && this.currentlyClickedAtom;
+    doMouseMove(event, self) {;
         const activeMoleculeMotion = (this.activeMolecule != null) && (Object.keys(this.activeMolecule.displayObjects).length > 0) && !self.keysDown['residue_camera_wiggle'];
 
         const centreOfMass = function (atoms) {
@@ -12558,7 +12559,7 @@ class MGWebGL extends Component {
             //console.log(xQ);
             //console.log(yQ);
             quat4.multiply(xQ, xQ, yQ);
-            if (draggableMoleculeMotion) {
+            if (this.currentlyDraggedAtom) {
                 
                 // ###############
                 // FILO: COPY PASTED FROM ABOVE
@@ -12587,7 +12588,7 @@ class MGWebGL extends Component {
 
                 // ###############
 
-                const draggedAtomEvent = new CustomEvent("atomDragged", { detail: {atom: this.currentlyClickedAtom} });
+                const draggedAtomEvent = new CustomEvent("atomDragged", { detail: {atom: this.currentlyDraggedAtom} });
                 document.dispatchEvent(draggedAtomEvent);
                 return
 
