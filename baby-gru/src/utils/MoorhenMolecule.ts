@@ -7,7 +7,7 @@ import { atomsToSpheresInfo } from '../WebGLgComponents/mgWebGLAtomsToPrimitives
 import { contactsToCylindersInfo, contactsToLinesInfo } from '../WebGLgComponents/mgWebGLAtomsToPrimitives';
 import { singletonsToLinesInfo } from '../WebGLgComponents/mgWebGLAtomsToPrimitives';
 import { guid, readTextFile, readGemmiStructure, cidToSpec, residueCodesThreeToOne, centreOnGemmiAtoms, getBufferAtoms, 
-    nucleotideCodesThreeToOne, hexToHsl, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, findConsecutiveRanges} from './MoorhenUtils'
+    nucleotideCodesThreeToOne, hexToHsl, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, findConsecutiveRanges, getCubeLines} from './MoorhenUtils'
 import { MoorhenCommandCentreInterface, cootCommandKwargsType } from "./MoorhenCommandCentre"
 import { WorkerResponseType } from "./MoorhenCommandCentre"
 import { quatToMat4 } from '../WebGLgComponents/quatToMat4.js';
@@ -101,6 +101,7 @@ type MoorhenColourRuleType = {
 }
 
 export interface MoorhenMoleculeInterface {
+    drawUnitCell(glRef: React.RefObject<mgWebGLType>): void;
     gemmiAtomsForCid: (cid: string) => Promise<MoorhenAtomInfoType[]>;
     mergeMolecules(otherMolecules: MoorhenMoleculeInterface[], glRef: React.RefObject<mgWebGLType>, doHide?: boolean): Promise<void>;
     setBackgroundColour(backgroundColour: [number, number, number, number]): void;
@@ -1367,7 +1368,21 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         this.addBuffersOfStyle(glRef, objects, style)
     }
 
-    drawGemmiAtomPairs(glRef: React.RefObject<mgWebGLType>, gemmiAtomPairs: any[], style: string,  colour: number[], labelled: boolean = false, clearBuffers: boolean = false) {
+    drawUnitCell(glRef: React.RefObject<mgWebGLType>) {
+        const unitCell = this.gemmiStructure.cell
+
+        const lines = getCubeLines(unitCell.a, unitCell.b, unitCell.c, unitCell.alpha, unitCell.beta, unitCell.gamma)
+
+        unitCell.delete()
+
+        let objects = [
+            gemmiAtomPairsToCylindersInfo(lines, 0.1, {unit_cell: [0.7, 0.4, 0.25, 1.0]}, false, 0, 10000, false) 
+        ]
+        this.addBuffersOfStyle(glRef, objects, 'unit_cell')
+        glRef.current.drawScene()
+    }
+
+    drawGemmiAtomPairs(glRef: React.RefObject<mgWebGLType>, gemmiAtomPairs: [MoorhenAtomInfoType, MoorhenAtomInfoType][], style: string,  colour: number[], labelled: boolean = false, clearBuffers: boolean = false) {
         const $this = this
         const atomColours = {}
         gemmiAtomPairs.forEach(atom => { atomColours[`${atom[0].serial}`] = colour; atomColours[`${atom[1].serial}`] = colour })

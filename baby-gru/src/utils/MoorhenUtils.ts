@@ -616,7 +616,15 @@ export const getDashedCylinder = (nsteps: number, cylinder_accu: number): [numbe
     return  [thisPos, thisNorm, thisIdxs]
 }
 
-export const gemmiAtomPairsToCylindersInfo = (atoms: [MoorhenAtomInfoType, MoorhenAtomInfoType][], size: number, colourScheme: { [x: string]: any[]; }, labelled: boolean = false, minDist: number = 1.9, maxDist: number = 4.0) => {
+export const gemmiAtomPairsToCylindersInfo = (
+    atoms: [{pos: [number, number, number], serial: string}, {pos: [number, number, number], serial: string}][],
+    size: number,
+    colourScheme: { [x: string]: number[]; },
+    labelled: boolean = false,
+    minDist: number = 1.9,
+    maxDist: number = 4.0,
+    dashed: boolean = true
+) => {
 
     let atomPairs = atoms;
 
@@ -629,8 +637,8 @@ export const gemmiAtomPairsToCylindersInfo = (atoms: [MoorhenAtomInfoType, Moorh
     let totInstance_orientations = []
     let totInstanceUseColours = []
     let totInstancePrimTypes = []
-    
-    const [thisPos, thisNorm, thisIdxs] = getDashedCylinder(15, 16);
+
+    const [thisPos, thisNorm, thisIdxs] = getDashedCylinder(dashed ? 15 : 1, 16);
 
     let thisInstance_sizes = []
     let thisInstance_colours = []
@@ -843,4 +851,70 @@ export const findConsecutiveRanges = (numbers: number[]): [number, number][] => 
     
     ranges.push([start, end]); 
     return ranges;
+}
+
+// FIXME: This only works if alpha = beta = gamma = 90 and I am not sure why...
+export function getCubeLines(xLength: number, yLength: number, zLength: number, alpha: number, beta: number, gamma: number): [{pos: [number, number, number], serial: string}, {pos: [number, number, number], serial: string}][] {
+    const coordinates: [number, number, number][] = [];
+    
+    const alphaRad = (alpha * Math.PI) / 180;
+    const betaRad = (beta * Math.PI) / 180;
+    const gammaRad = (gamma * Math.PI) / 180;
+
+    const vertices: [number, number, number][] = [
+      [0, 0, 0],
+      [xLength, 0, 0],
+      [xLength, yLength, 0],
+      [0, yLength, 0],
+      [0, 0, zLength],
+      [xLength, 0, zLength],
+      [xLength, yLength, zLength],
+      [0, yLength, zLength]
+    ];
+    
+    vertices.forEach(vertex => {
+        const [x, y, z] = vertex;
+  
+        const rotatedY = y * Math.cos(alphaRad) - z * Math.sin(alphaRad);
+        const rotatedZ = y * Math.sin(alphaRad) + z * Math.cos(alphaRad);
+        const rotatedX = x * Math.cos(betaRad) + rotatedZ * Math.sin(betaRad);
+
+        const rotatedY2 = rotatedX * Math.sin(gammaRad) + rotatedY * Math.cos(gammaRad);
+        const rotatedZ2 = -x * Math.sin(betaRad) + rotatedZ * Math.cos(betaRad);
+        const rotatedX2 = rotatedX * Math.cos(gammaRad) - rotatedY * Math.sin(gammaRad);
+        
+        coordinates.push([rotatedX2, rotatedY2, rotatedZ2]);
+    })
+  
+    const edges: [number, number][] = [
+      [0, 1],
+      [1, 2],
+      [2, 3],
+      [3, 0],
+      [4, 5],
+      [5, 6],
+      [6, 7],
+      [7, 4],
+      [0, 4],
+      [1, 5],
+      [2, 6],
+      [3, 7]
+    ];
+
+    const lines: [{pos: [number, number, number], serial: string}, {pos: [number, number, number], serial: string}][] = [];
+    edges.forEach(edge => {
+      const [v1Index, v2Index] = edge;
+      const v1 = {
+        pos: coordinates[v1Index],
+        serial: 'unit_cell'
+      };
+      const v2 = {
+        pos: coordinates[v2Index],
+        serial: 'unit_cell'
+      };
+      lines.push([v1, v2]);
+    })
+  
+    return lines;
   }
+  
