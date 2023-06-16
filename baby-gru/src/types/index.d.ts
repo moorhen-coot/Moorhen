@@ -32,6 +32,21 @@ declare global {
         molecule: MoorhenMoleculeInterface | null,
         cid: string | null
     }
+    interface CootResidueSpecType {
+        resNum: number;
+        insCode: string;
+        modelNumber: number;
+        chainId: string;
+    }
+    interface CootInterestingPlaceDataType extends CootResidueSpecType {
+        featureType: string;
+        featureValue: number;
+        buttonLabel: string;
+        badness: number;
+        coordX: number;
+        coordY: number;
+        coordZ: number;
+    }
     type mgWebGLType = {
         setLightPosition(arg0: number, arg1: number, arg2: number): void;
         specularPower: number;
