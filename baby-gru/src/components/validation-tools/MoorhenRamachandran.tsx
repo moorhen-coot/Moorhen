@@ -1,21 +1,22 @@
-import { Fragment, useEffect, useRef, useState } from "react"
+import { Fragment, SetStateAction, useEffect, useRef, useState } from "react"
 import { Col, Row, Form } from 'react-bootstrap';
 import { RamaPlot } from "../../WebGLgComponents/Ramachandran"
 import { convertRemToPx } from '../../utils/MoorhenUtils';
 import { MoorhenChainSelect } from '../select/MoorhenChainSelect'
 import { MoorhenMoleculeSelect } from '../select/MoorhenMoleculeSelect'
+import { MoorhenSideBarAccordionPropsInterface } from "../list/MoorhenSideBar";
 
-export const MoorhenRamachandran = (props) => {
-    const ramachandranRef = useRef();
-    const ramaPlotDivRef = useRef();
-    const moleculeSelectRef = useRef();
-    const chainSelectRef = useRef();
-    const [clickedResidue, setClickedResidue] = useState(null)
-    const [ramaPlotDimensions, setRamaPlotDimensions] = useState(230)
-    const [ramaPlotData, setRamaPlotData] = useState(null)
-    const [selectedModel, setSelectedModel] = useState(null)
-    const [selectedChain, setSelectedChain] = useState(null)
-    const [cachedGemmiStructure, setCachedGemmiStructure] = useState(null)
+export const MoorhenRamachandran = (props: MoorhenSideBarAccordionPropsInterface) => {
+    const ramachandranRef = useRef<RamaPlot>();
+    const ramaPlotDivRef = useRef<HTMLDivElement>();
+    const moleculeSelectRef = useRef<HTMLSelectElement>();
+    const chainSelectRef = useRef<HTMLSelectElement>();
+    const [clickedResidue, setClickedResidue] = useState<null | {modelIndex: number; coordMolNo: number; molName: string; chain: string; seqNum: number; insCode: string;}>(null)
+    const [ramaPlotDimensions, setRamaPlotDimensions] = useState<number>(230)
+    const [ramaPlotData, setRamaPlotData] = useState<null | CootRamachandranDataType[]>(null)
+    const [selectedModel, setSelectedModel] = useState<null | number>(null)
+    const [selectedChain, setSelectedChain] = useState<string | null>(null)
+    const [cachedGemmiStructure, setCachedGemmiStructure] = useState<GemmiStructureInterface | null>(null)
 
     const getMolName = () => {
         if (selectedModel === null || props.molecules.length === 0) {
@@ -50,7 +51,7 @@ export const MoorhenRamachandran = (props) => {
             }
             const inputData = {message:'coot_command', command:'ramachandran_validation', returnType:'ramachandran_data', commandArgs:[parseInt(moleculeSelectRef.current.value)], chainID: chainSelectRef.current.value}
             let response = await props.commandCentre.current.cootCommand(inputData)
-            setRamaPlotData(response.data.result.result)
+            setRamaPlotData(response.data.result.result as CootRamachandranDataType[])
         }
 
         fetchRamaData()
@@ -59,7 +60,7 @@ export const MoorhenRamachandran = (props) => {
 
     useEffect(() => {
 
-        ramachandranRef.current?.updatePlotData({ info: ramaPlotData, molName: getMolName(selectedModel), chainId: chainSelectRef.current.value, molNo: selectedModel });
+        ramachandranRef.current?.updatePlotData({ info: ramaPlotData, molName: getMolName(), chainId: chainSelectRef.current.value, molNo: selectedModel });
 
     }, [ramaPlotData])
 
@@ -119,16 +120,16 @@ export const MoorhenRamachandran = (props) => {
 
     }, [clickedResidue])
 
-    const handleModelChange = (evt) => {
+    const handleModelChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
         setSelectedModel(parseInt(evt.target.value))
         setSelectedChain(chainSelectRef.current.value)
     }
 
-    const handleChainChange = (evt) => {
+    const handleChainChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
         setSelectedChain(evt.target.value)
     }
 
-    const handleHoveredAtom = (cid) => {
+    const handleHoveredAtom = (cid: string) => {
         if (selectedModel !== null) {
             let selectedMoleculeIndex = props.molecules.findIndex(molecule => molecule.molNo === selectedModel);
             if (selectedMoleculeIndex !== -1 && props.molecules[selectedMoleculeIndex]){
@@ -150,7 +151,7 @@ export const MoorhenRamachandran = (props) => {
         
         const resNum = resInfo.split('(')[0]
         const oldHit = ramachandranRef.current.hit        
-        const newHit = ramaPlotData.findIndex(residue => parseInt(residue.seqNum) === parseInt(resNum))
+        const newHit = ramaPlotData.findIndex(residue => residue.seqNum === parseInt(resNum))
 
         if (newHit === -1 || newHit === oldHit) {
             return
@@ -160,8 +161,6 @@ export const MoorhenRamachandran = (props) => {
         ramachandranRef.current.doAnimation(oldHit, ramachandranRef.current)
 
     }, [props.hoveredAtom])
-
-
 
     return <Fragment>
         <Form style={{ padding:'0', margin: '0' }}>
@@ -178,7 +177,7 @@ export const MoorhenRamachandran = (props) => {
         </Form>
         <div ref={ramaPlotDivRef} id="ramaPlotDiv" className="rama-plot-div" style={{height: '100%', padding:'0rem', margin:'0rem'}}>
             <RamaPlot ref={ramachandranRef} urlPrefix={props.urlPrefix}
-                onClick={(result) => setClickedResidue(result)}
+                onClick={(result: { modelIndex: number; coordMolNo: number; molName: string; chain: string; seqNum: number; insCode: string; }) => setClickedResidue(result)}
                 setHoveredAtom={handleHoveredAtom} />
         </div>
     </Fragment>
