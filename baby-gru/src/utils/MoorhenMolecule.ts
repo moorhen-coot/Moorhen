@@ -1378,7 +1378,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         let objects = [
             gemmiAtomPairsToCylindersInfo(lines, 0.1, {unit_cell: [0.7, 0.4, 0.25, 1.0]}, false, 0, 10000, false) 
         ]
-        this.addBuffersOfStyle(glRef, objects, 'unit_cell')
+        this.addBuffersOfStyle(glRef, objects, 'originNeighboursBump')
         glRef.current.drawScene()
     }
 

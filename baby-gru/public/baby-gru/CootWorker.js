@@ -527,9 +527,10 @@ const interestingPlaceDataToJSArray = (interestingPlaceData) => {
         const residue = interestingPlaceData.get(ir)
         const residueSpec = residue.residue_spec
         returnResult.push({
+            modelNumber: residueSpec.model_number,
             chainId: residueSpec.chain_id,
             insCode: residueSpec.ins_code,
-            seqNum: residueSpec.res_no,
+            resNum: residueSpec.res_no,
             featureType: residue.feature_type,
             featureValue: residue.feature_value,
             buttonLabel: residue.button_label,
