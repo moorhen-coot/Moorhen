@@ -185,6 +185,12 @@ declare global {
         at: (idx: number) => T;
         length: () => number;
     }
+    interface emscriptemMapInterface<T1, T2> extends emscriptemInstanceInterface<T1> {
+        size: () => number;
+        get: (idx: T2) => T1;
+        length: () => number;
+        keys: () => emscriptemVectorInterface<T2>;
+    }
     interface GemmiNeighborSearchInterface extends emscriptemInstanceInterface<GemmiNeighborSearchInterface> {
         populate: (arg0: boolean) => void;
         find_atoms: (arg0: GemmiPositionInterface, arg1: number, arg2: number) => emscriptemVectorInterface<GemmiMarkInterface>
