@@ -1,5 +1,4 @@
-/* module.ts */
-/// <reference path="./index.d.ts" />
+/// <reference types="./index.d.ts" />
 
 interface CootPhiPsi extends emscriptemInstanceInterface<CootPhiPsi> {
     ins_code: string;
