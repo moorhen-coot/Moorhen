@@ -1,4 +1,4 @@
-import { Fragment, SetStateAction, useEffect, useRef, useState } from "react"
+import { Fragment, useEffect, useRef, useState } from "react"
 import { Col, Row, Form } from 'react-bootstrap';
 import { RamaPlot } from "../../WebGLgComponents/Ramachandran"
 import { convertRemToPx } from '../../utils/MoorhenUtils';
