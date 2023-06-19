@@ -11,6 +11,8 @@ var text_instanced_vertex_shader_source = `
     uniform mat4 uMVINVMatrix;
     uniform mat4 uPMatrix;
 
+    uniform float pixelZoom;
+
     varying lowp vec2 vTexture;
     varying lowp vec4 eyePos;
 

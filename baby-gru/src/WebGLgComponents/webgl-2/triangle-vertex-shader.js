@@ -9,6 +9,8 @@ var triangle_vertex_shader_source = `#version 300 es\n
     uniform mat4 uPMatrix;
     uniform mat4 TextureMatrix;
 
+    uniform vec3 outlineSize;
+
     out lowp vec4 vColor;
     out lowp vec3 vNormal;
     out lowp vec2 vTexture;
@@ -20,7 +22,7 @@ var triangle_vertex_shader_source = `#version 300 es\n
 
     void main(void) {
 
-      vec4 theVert = vec4(aVertexPosition,1.0);
+      vec4 theVert = vec4(aVertexPosition+outlineSize*aVertexNormal,1.0);
 
       ShadowCoord = TextureMatrix * theVert;
 

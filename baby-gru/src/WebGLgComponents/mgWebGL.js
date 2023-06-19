@@ -23,6 +23,7 @@ import { lines_fragment_shader_source as lines_fragment_shader_source_webgl2 } f
 import { text_instanced_vertex_shader_source as text_instanced_vertex_shader_source_webgl2 } from './webgl-2/text-vertex-shader.js';
 import { lines_vertex_shader_source as lines_vertex_shader_source_webgl2 } from './webgl-2/lines-vertex-shader.js';
 import { perfect_sphere_fragment_shader_source as perfect_sphere_fragment_shader_source_webgl2 } from './webgl-2/perfect-sphere-fragment-shader.js';
+import { perfect_sphere_outline_fragment_shader_source as perfect_sphere_outline_fragment_shader_source_webgl2 } from './webgl-2/perfect-sphere-outline-fragment-shader.js';
 import { pointspheres_fragment_shader_source as pointspheres_fragment_shader_source_webgl2 } from './webgl-2/pointspheres-fragment-shader.js';
 import { pointspheres_vertex_shader_source as pointspheres_vertex_shader_source_webgl2 } from './webgl-2/pointspheres-vertex-shader.js';
 import { render_framebuffer_fragment_shader_source as render_framebuffer_fragment_shader_source_webgl2 } from './webgl-2/render-framebuffer-fragment-shader.js';
@@ -30,6 +31,7 @@ import { render_framebuffer_fragment_shader_source as render_framebuffer_fragmen
 import { shadow_depth_twod_vertex_shader_source as shadow_depth_twod_vertex_shader_source_webgl2 } from './webgl-2/shadow-depth-twodshapes-vertex-shader.js';
 import { shadow_depth_perfect_sphere_fragment_shader_source as shadow_depth_perfect_sphere_fragment_shader_source_webgl2 } from './webgl-2/shadow-depth-perfect-sphere-fragment-shader.js';
 import { shadow_fragment_shader_source as shadow_fragment_shader_source_webgl2 } from './webgl-2/shadow-depth-fragment-shader.js';
+import { flat_colour_fragment_shader_source as flat_colour_fragment_shader_source_webgl2 } from './webgl-2/flat-colour-fragment-shader.js';
 import { shadow_vertex_shader_source as shadow_vertex_shader_source_webgl2 } from './webgl-2/shadow-depth-vertex-shader.js';
 import { shadow_instanced_vertex_shader_source as shadow_instanced_vertex_shader_source_webgl2 } from './webgl-2/shadow-depth-instanced-vertex-shader.js';
 
@@ -52,6 +54,7 @@ import { lines_fragment_shader_source as lines_fragment_shader_source_webgl1 } f
 import { text_instanced_vertex_shader_source as text_instanced_vertex_shader_source_webgl1 } from './webgl-1/text-vertex-shader.js';
 import { lines_vertex_shader_source as lines_vertex_shader_source_webgl1 } from './webgl-1/lines-vertex-shader.js';
 import { perfect_sphere_fragment_shader_source as perfect_sphere_fragment_shader_source_webgl1 } from './webgl-1/perfect-sphere-fragment-shader.js';
+import { perfect_sphere_outline_fragment_shader_source as perfect_sphere_outline_fragment_shader_source_webgl1 } from './webgl-1/perfect-sphere-outline-fragment-shader.js';
 import { pointspheres_fragment_shader_source as pointspheres_fragment_shader_source_webgl1 } from './webgl-1/pointspheres-fragment-shader.js';
 import { pointspheres_vertex_shader_source as pointspheres_vertex_shader_source_webgl1 } from './webgl-1/pointspheres-vertex-shader.js';
 import { render_framebuffer_fragment_shader_source as render_framebuffer_fragment_shader_source_webgl1 } from './webgl-1/render-framebuffer-fragment-shader.js';
@@ -59,6 +62,7 @@ import { render_framebuffer_fragment_shader_source as render_framebuffer_fragmen
 import { shadow_depth_twod_vertex_shader_source as shadow_depth_twod_vertex_shader_source_webgl1 } from './webgl-1/shadow-depth-twodshapes-vertex-shader.js';
 import { shadow_depth_perfect_sphere_fragment_shader_source as shadow_depth_perfect_sphere_fragment_shader_source_webgl1 } from './webgl-1/shadow-depth-perfect-sphere-fragment-shader.js';
 import { shadow_fragment_shader_source as shadow_fragment_shader_source_webgl1 } from './webgl-1/shadow-depth-fragment-shader.js';
+import { flat_colour_fragment_shader_source as flat_colour_fragment_shader_source_webgl1 } from './webgl-1/flat-colour-fragment-shader.js';
 import { shadow_vertex_shader_source as shadow_vertex_shader_source_webgl1 } from './webgl-1/shadow-depth-vertex-shader.js';
 import { shadow_instanced_vertex_shader_source as shadow_instanced_vertex_shader_source_webgl1 } from './webgl-1/shadow-depth-instanced-vertex-shader.js';
 
@@ -1196,10 +1200,10 @@ function getEncodedData(rssentries, createFun) {
 
 function initGL(canvas) {
     let gl;
-    gl = canvas.getContext("webgl2");
+    gl = canvas.getContext("webgl2", {stencil: true});
     let WEBGL2 = true;
     if (!gl) {
-        gl = canvas.getContext("webgl");
+        gl = canvas.getContext("webgl", {stencil: true});
         WEBGL2 = false;
     }
     if (!gl) {
@@ -1407,7 +1411,7 @@ class TextCanvasTexture {
 
         let colour;
         const bright_y = this.glRef.background_colour[0] * 0.299 + this.glRef.background_colour[1] * 0.587 + this.glRef.background_colour[2] * 0.114;
-        if( bright_y<0.5)
+        if(bright_y<0.5)
             colour = "white";
         else
             colour = "black";
@@ -1639,6 +1643,10 @@ class MGWebGL extends Component {
         }
     }
 
+    setOutlinesOn(doOutline) {
+        this.doStenciling = doOutline;
+    }
+
     setShadowsOn(doShadow) {
         this.doShadow = doShadow;
     }
@@ -1769,6 +1777,8 @@ class MGWebGL extends Component {
 
         this.save_pixel_data = false;
         this.renderToTexture = false;
+
+        this.doStenciling = false;
 
         this.doShadow = false;
 
@@ -1931,6 +1941,7 @@ class MGWebGL extends Component {
         let renderFrameBufferVertexShader;
         let renderFrameBufferFragmentShader;
         let perfectSphereFragmentShader;
+        let perfectSphereOutlineFragmentShader;
 
         let shadowVertexShader; //Depth pass
         let shadowVertexShaderInstanced; //Depth pass
@@ -1961,10 +1972,12 @@ class MGWebGL extends Component {
         let text_instanced_vertex_shader_source = text_instanced_vertex_shader_source_webgl1;
         let lines_vertex_shader_source = lines_vertex_shader_source_webgl1;
         let perfect_sphere_fragment_shader_source = perfect_sphere_fragment_shader_source_webgl1;
+        let perfect_sphere_outline_fragment_shader_source = perfect_sphere_outline_fragment_shader_source_webgl1;
         let pointspheres_fragment_shader_source = pointspheres_fragment_shader_source_webgl1;
         let pointspheres_vertex_shader_source = pointspheres_vertex_shader_source_webgl1;
         let render_framebuffer_fragment_shader_source = render_framebuffer_fragment_shader_source_webgl1;
         let shadow_fragment_shader_source = shadow_fragment_shader_source_webgl1;
+        let flat_colour_fragment_shader_source = flat_colour_fragment_shader_source_webgl1;
         let shadow_depth_perfect_sphere_fragment_shader_source = shadow_depth_perfect_sphere_fragment_shader_source_webgl1;
         let shadow_depth_twod_vertex_shader_source = shadow_depth_twod_vertex_shader_source_webgl1;
         let shadow_vertex_shader_source = shadow_vertex_shader_source_webgl1;
@@ -1988,10 +2001,12 @@ class MGWebGL extends Component {
             text_instanced_vertex_shader_source = text_instanced_vertex_shader_source_webgl2;
             lines_vertex_shader_source = lines_vertex_shader_source_webgl2;
             perfect_sphere_fragment_shader_source = perfect_sphere_fragment_shader_source_webgl2;
+            perfect_sphere_outline_fragment_shader_source = perfect_sphere_outline_fragment_shader_source_webgl2;
             pointspheres_fragment_shader_source = pointspheres_fragment_shader_source_webgl2;
             pointspheres_vertex_shader_source = pointspheres_vertex_shader_source_webgl2;
             render_framebuffer_fragment_shader_source = render_framebuffer_fragment_shader_source_webgl2;
             shadow_fragment_shader_source = shadow_fragment_shader_source_webgl2;
+            flat_colour_fragment_shader_source = flat_colour_fragment_shader_source_webgl2;
             shadow_depth_perfect_sphere_fragment_shader_source = shadow_depth_perfect_sphere_fragment_shader_source_webgl2;
             shadow_depth_twod_vertex_shader_source = shadow_depth_twod_vertex_shader_source_webgl2;
             shadow_vertex_shader_source = shadow_vertex_shader_source_webgl2;
@@ -2029,13 +2044,16 @@ class MGWebGL extends Component {
         twoDShapesFragmentShader = getShader(self.gl, twod_fragment_shader_source, "fragment");
         renderFrameBufferVertexShader = getShader(self.gl, triangle_vertex_shader_source, "vertex");
         renderFrameBufferFragmentShader = getShader(self.gl, render_framebuffer_fragment_shader_source, "fragment");
+        const flatColourFragmentShader = getShader(self.gl, flat_colour_fragment_shader_source, "fragment");
         if (self.frag_depth_ext) {
             perfectSphereFragmentShader = getShader(self.gl, perfect_sphere_fragment_shader_source, "fragment");
+            perfectSphereOutlineFragmentShader = getShader(self.gl, perfect_sphere_outline_fragment_shader_source, "fragment");
             shadowVertexShader = getShader(self.gl, shadow_vertex_shader_source, "vertex");
             shadowVertexShaderInstanced = getShader(self.gl, shadow_instanced_vertex_shader_source, "vertex");
             shadowFragmentShader = getShader(self.gl, shadow_fragment_shader_source, "fragment");
             self.initShadowShaders(shadowVertexShader, shadowFragmentShader);
             self.initInstancedShadowShaders(shadowVertexShaderInstanced, shadowFragmentShader);
+            self.initInstancedOutlineShaders(vertexShaderInstanced, flatColourFragmentShader);
         }
 
         self.initRenderFrameBufferShaders(blurVertexShader, renderFrameBufferFragmentShader);
@@ -2049,6 +2067,7 @@ class MGWebGL extends Component {
         self.initImageShaders(twoDShapesVertexShader, textFragmentShader);
         if (self.frag_depth_ext) {
             self.initPerfectSphereShaders(twoDShapesVertexShader, perfectSphereFragmentShader);
+            self.initPerfectSphereOutlineShaders(twoDShapesVertexShader, perfectSphereOutlineFragmentShader);
             shadowDepthPerfectSphereFragmentShader = getShader(self.gl, shadow_depth_perfect_sphere_fragment_shader_source, "fragment");
             shadowDeptTwoDShapesVertexShader = getShader(self.gl, shadow_depth_twod_vertex_shader_source, "vertex");
             self.initDepthShadowPerfectSphereShaders(shadowDepthPerfectSphereFragmentShader, shadowDeptTwoDShapesVertexShader);
@@ -2059,6 +2078,7 @@ class MGWebGL extends Component {
         self.initCirclesShaders(circlesVertexShader, circlesFragmentShader);
         self.gl.disableVertexAttribArray(self.shaderProgramCircles.vertexTextureAttribute);
         self.initShaders(vertexShader, fragmentShader);
+        self.initOutlineShaders(vertexShader, flatColourFragmentShader);
         self.initShadersInstanced(vertexShaderInstanced, fragmentShader);
 
         self.buildBuffers();
@@ -3758,10 +3778,10 @@ class MGWebGL extends Component {
         if (this.WEBGL2) {
             let renderbufferDepth = this.gl.createRenderbuffer();
             this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, renderbufferDepth);
-            this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.RENDERBUFFER, renderbufferDepth);
+            this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.DEPTH_STENCIL_ATTACHMENT, this.gl.RENDERBUFFER, renderbufferDepth);
             this.gl.renderbufferStorageMultisample(this.gl.RENDERBUFFER,
                                     this.gl.getParameter(this.gl.MAX_SAMPLES),
-                                    this.gl.DEPTH_COMPONENT24,
+                                    this.gl.DEPTH24_STENCIL8,
                                     this.rttFramebuffer.width,
                                     this.rttFramebuffer.height);
             let renderbuffer = this.gl.createRenderbuffer();
@@ -4724,6 +4744,62 @@ class MGWebGL extends Component {
             this.drawScene();
     }
 
+    initInstancedOutlineShaders(vertexShaderOutline, fragmentShaderOutline) {
+        this.shaderProgramInstancedOutline = this.gl.createProgram();
+
+        this.gl.attachShader(this.shaderProgramInstancedOutline, vertexShaderOutline);
+        this.gl.attachShader(this.shaderProgramInstancedOutline, fragmentShaderOutline);
+        this.gl.bindAttribLocation(this.shaderProgramInstancedOutline, 0, "aVertexPosition");
+        this.gl.bindAttribLocation(this.shaderProgramInstancedOutline, 1, "aVertexColour");
+        this.gl.bindAttribLocation(this.shaderProgramInstancedOutline, 2, "aVertexNormal");
+        this.gl.bindAttribLocation(this.shaderProgramInstancedOutline, 3, "aVertexTexture");
+        this.gl.bindAttribLocation(this.shaderProgramInstancedOutline, 4, "instancePosition");
+        this.gl.bindAttribLocation(this.shaderProgramInstancedOutline, 5, "instanceSize");
+        this.gl.bindAttribLocation(this.shaderProgramInstancedOutline, 6, "instanceOrientation");
+        this.gl.linkProgram(this.shaderProgramInstancedOutline);
+
+        if (!this.gl.getProgramParameter(this.shaderProgramInstancedOutline, this.gl.LINK_STATUS)) {
+            alert("Could not initialise shaders (shaderProgramInstancedOutline)");
+            console.log(this.gl.getProgramInfoLog(this.shaderProgramInstancedOutline));
+        }
+
+        this.gl.useProgram(this.shaderProgramInstancedOutline);
+
+        this.shaderProgramInstancedOutline.vertexInstanceOriginAttribute = this.gl.getAttribLocation(this.shaderProgramInstancedOutline, "instancePosition");
+        this.shaderProgramInstancedOutline.vertexInstanceSizeAttribute = this.gl.getAttribLocation(this.shaderProgramInstancedOutline, "instanceSize");
+        this.shaderProgramInstancedOutline.vertexInstanceOrientationAttribute = this.gl.getAttribLocation(this.shaderProgramInstancedOutline, "instanceOrientation");
+
+        this.shaderProgramInstancedOutline.vertexNormalAttribute = this.gl.getAttribLocation(this.shaderProgramInstancedOutline, "aVertexNormal");
+        this.gl.enableVertexAttribArray(this.shaderProgramInstancedOutline.vertexNormalAttribute);
+
+        this.shaderProgramInstancedOutline.vertexPositionAttribute = this.gl.getAttribLocation(this.shaderProgramInstancedOutline, "aVertexPosition");
+        this.gl.enableVertexAttribArray(this.shaderProgramInstancedOutline.vertexPositionAttribute);
+
+        this.shaderProgramInstancedOutline.vertexColourAttribute = this.gl.getAttribLocation(this.shaderProgramInstancedOutline, "aVertexColour");
+        this.gl.enableVertexAttribArray(this.shaderProgramInstancedOutline.vertexColourAttribute);
+
+        this.shaderProgramInstancedOutline.pMatrixUniform = this.gl.getUniformLocation(this.shaderProgramInstancedOutline, "uPMatrix");
+        this.shaderProgramInstancedOutline.mvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramInstancedOutline, "uMVMatrix");
+        this.shaderProgramInstancedOutline.mvInvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramInstancedOutline, "uMVINVMatrix");
+        this.shaderProgramInstancedOutline.textureMatrixUniform = this.gl.getUniformLocation(this.shaderProgramInstancedOutline, "TextureMatrix");
+        this.shaderProgramInstancedOutline.outlineSize = this.gl.getUniformLocation(this.shaderProgramInstancedOutline, "outlineSize");
+
+        this.shaderProgramInstancedOutline.fog_start = this.gl.getUniformLocation(this.shaderProgramInstancedOutline, "fog_start");
+        this.shaderProgramInstancedOutline.fog_end = this.gl.getUniformLocation(this.shaderProgramInstancedOutline, "fog_end");
+        this.shaderProgramInstancedOutline.fogColour = this.gl.getUniformLocation(this.shaderProgramInstancedOutline, "fogColour");
+
+        this.shaderProgramInstancedOutline.clipPlane0 = this.gl.getUniformLocation(this.shaderProgramInstancedOutline, "clipPlane0");
+        this.shaderProgramInstancedOutline.clipPlane1 = this.gl.getUniformLocation(this.shaderProgramInstancedOutline, "clipPlane1");
+        this.shaderProgramInstancedOutline.clipPlane2 = this.gl.getUniformLocation(this.shaderProgramInstancedOutline, "clipPlane2");
+        this.shaderProgramInstancedOutline.clipPlane3 = this.gl.getUniformLocation(this.shaderProgramInstancedOutline, "clipPlane3");
+        this.shaderProgramInstancedOutline.clipPlane4 = this.gl.getUniformLocation(this.shaderProgramInstancedOutline, "clipPlane4");
+        this.shaderProgramInstancedOutline.clipPlane5 = this.gl.getUniformLocation(this.shaderProgramInstancedOutline, "clipPlane5");
+        this.shaderProgramInstancedOutline.clipPlane6 = this.gl.getUniformLocation(this.shaderProgramInstancedOutline, "clipPlane6");
+        this.shaderProgramInstancedOutline.clipPlane7 = this.gl.getUniformLocation(this.shaderProgramInstancedOutline, "clipPlane7");
+        this.shaderProgramInstancedOutline.nClipPlanes = this.gl.getUniformLocation(this.shaderProgramInstancedOutline, "nClipPlanes");
+
+    }
+
     initInstancedShadowShaders(vertexShaderShadow, fragmentShaderShadow) {
         this.shaderProgramInstancedShadow = this.gl.createProgram();
 
@@ -5069,6 +5145,57 @@ class MGWebGL extends Component {
         this.shaderProgramTextBackground.nClipPlanes = this.gl.getUniformLocation(this.shaderProgramTextBackground, "nClipPlanes");
     }
 
+    initOutlineShaders(vertexShader, fragmentShader) {
+        this.shaderProgramOutline = this.gl.createProgram();
+
+        this.gl.attachShader(this.shaderProgramOutline, vertexShader);
+        this.gl.attachShader(this.shaderProgramOutline, fragmentShader);
+        this.gl.bindAttribLocation(this.shaderProgramOutline, 0, "aVertexPosition");
+        this.gl.bindAttribLocation(this.shaderProgramOutline, 1, "aVertexColour");
+        this.gl.bindAttribLocation(this.shaderProgramOutline, 2, "aVertexNormal");
+        this.gl.bindAttribLocation(this.shaderProgramOutline, 3, "aVertexTexture");
+        this.gl.linkProgram(this.shaderProgramOutline);
+
+        if (!this.gl.getProgramParameter(this.shaderProgramOutline, this.gl.LINK_STATUS)) {
+            alert("Could not initialise shaders (initShaders)");
+            console.log(this.gl.getProgramInfoLog(this.shaderProgramOutline));
+        }
+
+        this.gl.useProgram(this.shaderProgramOutline);
+
+        this.shaderProgramOutline.vertexNormalAttribute = this.gl.getAttribLocation(this.shaderProgramOutline, "aVertexNormal");
+        this.gl.enableVertexAttribArray(this.shaderProgramOutline.vertexNormalAttribute);
+
+        this.shaderProgramOutline.vertexPositionAttribute = this.gl.getAttribLocation(this.shaderProgramOutline, "aVertexPosition");
+        this.gl.enableVertexAttribArray(this.shaderProgramOutline.vertexPositionAttribute);
+
+        this.shaderProgramOutline.vertexColourAttribute = this.gl.getAttribLocation(this.shaderProgramOutline, "aVertexColour");
+        this.gl.enableVertexAttribArray(this.shaderProgramOutline.vertexColourAttribute);
+
+        this.shaderProgramOutline.pMatrixUniform = this.gl.getUniformLocation(this.shaderProgramOutline, "uPMatrix");
+        this.shaderProgramOutline.mvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramOutline, "uMVMatrix");
+        this.shaderProgramOutline.mvInvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramOutline, "uMVINVMatrix");
+        this.shaderProgramOutline.textureMatrixUniform = this.gl.getUniformLocation(this.shaderProgramOutline, "TextureMatrix");
+        this.shaderProgramOutline.outlineSize = this.gl.getUniformLocation(this.shaderProgramOutline, "outlineSize");
+
+        this.shaderProgramOutline.fog_start = this.gl.getUniformLocation(this.shaderProgramOutline, "fog_start");
+        this.shaderProgramOutline.fog_end = this.gl.getUniformLocation(this.shaderProgramOutline, "fog_end");
+        this.shaderProgramOutline.fogColour = this.gl.getUniformLocation(this.shaderProgramOutline, "fogColour");
+
+        this.shaderProgramOutline.clipPlane0 = this.gl.getUniformLocation(this.shaderProgramOutline, "clipPlane0");
+        this.shaderProgramOutline.clipPlane1 = this.gl.getUniformLocation(this.shaderProgramOutline, "clipPlane1");
+        this.shaderProgramOutline.clipPlane2 = this.gl.getUniformLocation(this.shaderProgramOutline, "clipPlane2");
+        this.shaderProgramOutline.clipPlane3 = this.gl.getUniformLocation(this.shaderProgramOutline, "clipPlane3");
+        this.shaderProgramOutline.clipPlane4 = this.gl.getUniformLocation(this.shaderProgramOutline, "clipPlane4");
+        this.shaderProgramOutline.clipPlane5 = this.gl.getUniformLocation(this.shaderProgramOutline, "clipPlane5");
+        this.shaderProgramOutline.clipPlane6 = this.gl.getUniformLocation(this.shaderProgramOutline, "clipPlane6");
+        this.shaderProgramOutline.clipPlane7 = this.gl.getUniformLocation(this.shaderProgramOutline, "clipPlane7");
+        this.shaderProgramOutline.nClipPlanes = this.gl.getUniformLocation(this.shaderProgramOutline, "nClipPlanes");
+
+        this.shaderProgramOutline.cursorPos = this.gl.getUniformLocation(this.shaderProgramOutline, "cursorPos");
+
+    }
+
     initShaders(vertexShader, fragmentShader) {
 
         this.shaderProgram = this.gl.createProgram();
@@ -5176,6 +5303,7 @@ class MGWebGL extends Component {
         this.shaderProgramInstanced.mvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramInstanced, "uMVMatrix");
         this.shaderProgramInstanced.mvInvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramInstanced, "uMVINVMatrix");
         this.shaderProgramInstanced.textureMatrixUniform = this.gl.getUniformLocation(this.shaderProgramInstanced, "TextureMatrix");
+        this.shaderProgramInstanced.outlineSize = this.gl.getUniformLocation(this.shaderProgramInstanced, "outlineSize");
 
         this.shaderProgramInstanced.fog_start = this.gl.getUniformLocation(this.shaderProgramInstanced, "fog_start");
         this.shaderProgramInstanced.fog_end = this.gl.getUniformLocation(this.shaderProgramInstanced, "fog_end");
@@ -5420,6 +5548,67 @@ class MGWebGL extends Component {
         this.shaderDepthShadowProgramPerfectSpheres.nClipPlanes = this.gl.getUniformLocation(this.shaderDepthShadowProgramPerfectSpheres, "nClipPlanes");
     }
 
+    initPerfectSphereOutlineShaders(vertexShader, fragmentShader) {
+        this.shaderProgramPerfectSpheresOutline = this.gl.createProgram();
+        this.gl.attachShader(this.shaderProgramPerfectSpheresOutline, vertexShader);
+        this.gl.attachShader(this.shaderProgramPerfectSpheresOutline, fragmentShader);
+        this.gl.bindAttribLocation(this.shaderProgramPerfectSpheresOutline, 0, "aVertexPosition");
+        this.gl.bindAttribLocation(this.shaderProgramPerfectSpheresOutline, 1, "aVertexColour");
+        this.gl.bindAttribLocation(this.shaderProgramPerfectSpheresOutline, 2, "aVertexNormal");
+        this.gl.bindAttribLocation(this.shaderProgramPerfectSpheresOutline, 3, "aVertexTexture");
+        this.gl.bindAttribLocation(this.shaderProgramPerfectSpheresOutline, 8, "size");
+        this.gl.bindAttribLocation(this.shaderProgramPerfectSpheresOutline, 9, "offset");
+        this.gl.linkProgram(this.shaderProgramPerfectSpheresOutline);
+
+        if (!this.gl.getProgramParameter(this.shaderProgramPerfectSpheresOutline, this.gl.LINK_STATUS)) {
+            alert("Could not initialise shaders (initPerfectSphereShaders)");
+            console.log(this.gl.getProgramInfoLog(this.shaderProgramPerfectSpheresOutline));
+        }
+
+        this.gl.useProgram(this.shaderProgramPerfectSpheresOutline);
+
+        this.shaderProgramPerfectSpheresOutline.vertexPositionAttribute = this.gl.getAttribLocation(this.shaderProgramPerfectSpheresOutline, "aVertexPosition");
+        this.gl.enableVertexAttribArray(this.shaderProgramPerfectSpheresOutline.vertexPositionAttribute);
+
+        this.shaderProgramPerfectSpheresOutline.vertexNormalAttribute = this.gl.getAttribLocation(this.shaderProgramPerfectSpheresOutline, "aVertexNormal");
+        this.gl.enableVertexAttribArray(this.shaderProgramPerfectSpheresOutline.vertexNormalAttribute);
+
+        this.shaderProgramPerfectSpheresOutline.vertexColourAttribute = this.gl.getAttribLocation(this.shaderProgramPerfectSpheresOutline, "aVertexColour");
+        this.gl.enableVertexAttribArray(this.shaderProgramPerfectSpheresOutline.vertexColourAttribute);
+
+        this.shaderProgramPerfectSpheresOutline.vertexTextureAttribute = this.gl.getAttribLocation(this.shaderProgramPerfectSpheresOutline, "aVertexTexture");
+        this.gl.enableVertexAttribArray(this.shaderProgramPerfectSpheresOutline.vertexTextureAttribute);
+
+        this.shaderProgramPerfectSpheresOutline.offsetAttribute = this.gl.getAttribLocation(this.shaderProgramPerfectSpheresOutline, "offset");
+        this.gl.enableVertexAttribArray(this.shaderProgramPerfectSpheresOutline.offsetAttribute);
+
+        this.shaderProgramPerfectSpheresOutline.sizeAttribute= this.gl.getAttribLocation(this.shaderProgramPerfectSpheresOutline, "size");
+        this.gl.enableVertexAttribArray(this.shaderProgramPerfectSpheresOutline.sizeAttribute);
+
+        this.shaderProgramPerfectSpheresOutline.pMatrixUniform = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresOutline, "uPMatrix");
+        this.shaderProgramPerfectSpheresOutline.mvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresOutline, "uMVMatrix");
+        this.shaderProgramPerfectSpheresOutline.mvInvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresOutline, "uMVINVMatrix");
+        this.shaderProgramPerfectSpheresOutline.textureMatrixUniform = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresOutline, "TextureMatrix");
+        this.shaderProgramPerfectSpheresOutline.invSymMatrixUniform = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresOutline, "uINVSymmMatrix");
+        this.shaderProgramPerfectSpheresOutline.outlineSize = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresOutline, "outlineSize");
+
+        this.shaderProgramPerfectSpheresOutline.fog_start = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresOutline, "fog_start");
+        this.shaderProgramPerfectSpheresOutline.fog_end = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresOutline, "fog_end");
+        this.shaderProgramPerfectSpheresOutline.fogColour = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresOutline, "fogColour");
+
+        this.shaderProgramPerfectSpheresOutline.scaleMatrix = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresOutline, "scaleMatrix");
+
+        this.shaderProgramPerfectSpheresOutline.clipPlane0 = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresOutline, "clipPlane0");
+        this.shaderProgramPerfectSpheresOutline.clipPlane1 = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresOutline, "clipPlane1");
+        this.shaderProgramPerfectSpheresOutline.clipPlane2 = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresOutline, "clipPlane2");
+        this.shaderProgramPerfectSpheresOutline.clipPlane3 = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresOutline, "clipPlane3");
+        this.shaderProgramPerfectSpheresOutline.clipPlane4 = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresOutline, "clipPlane4");
+        this.shaderProgramPerfectSpheresOutline.clipPlane5 = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresOutline, "clipPlane5");
+        this.shaderProgramPerfectSpheresOutline.clipPlane6 = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresOutline, "clipPlane6");
+        this.shaderProgramPerfectSpheresOutline.clipPlane7 = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresOutline, "clipPlane7");
+        this.shaderProgramPerfectSpheresOutline.nClipPlanes = this.gl.getUniformLocation(this.shaderProgramPerfectSpheresOutline, "nClipPlanes");
+    }
+
     initPerfectSphereShaders(vertexShader, fragmentShader) {
         this.shaderProgramPerfectSpheres = this.gl.createProgram();
         this.gl.attachShader(this.shaderProgramPerfectSpheres, vertexShader);
@@ -5462,6 +5651,7 @@ class MGWebGL extends Component {
         this.shaderProgramPerfectSpheres.mvInvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "uMVINVMatrix");
         this.shaderProgramPerfectSpheres.textureMatrixUniform = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "TextureMatrix");
         this.shaderProgramPerfectSpheres.invSymMatrixUniform = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "uINVSymmMatrix");
+        this.shaderProgramPerfectSpheres.outlineSize = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "outlineSize");
 
         this.shaderProgramPerfectSpheres.fog_start = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "fog_start");
         this.shaderProgramPerfectSpheres.fog_end = this.gl.getUniformLocation(this.shaderProgramPerfectSpheres, "fog_end");
@@ -7187,6 +7377,8 @@ class MGWebGL extends Component {
 
     drawBuffer(theBuffer,theShader,j,vertexType,specialDrawBuffer){
 
+        const bright_y = this.background_colour[0] * 0.299 + this.background_colour[1] * 0.587 + this.background_colour[2] * 0.114;
+
         let drawBuffer;
         if (specialDrawBuffer) {
             drawBuffer = specialDrawBuffer;
@@ -7246,6 +7438,13 @@ class MGWebGL extends Component {
                         } else {
                             this.instanced_ext.vertexAttribDivisorANGLE(theShader.vertexColourAttribute, 1);
                         }
+                    }
+                    if(this.stencilPass){
+                        this.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
+                        if(bright_y<0.5)
+                            this.gl.vertexAttrib4f(theShader.vertexColourAttribute, 1.0, 1.0, 1.0, 1.0);
+                        else
+                            this.gl.vertexAttrib4f(theShader.vertexColourAttribute, 0.0, 0.0, 0.0, 1.0);
                     }
                 }
                 if (this.WEBGL2) {
@@ -7708,8 +7907,8 @@ class MGWebGL extends Component {
         }
 
         this.gl.clearColor(this.background_colour[0], this.background_colour[1], this.background_colour[2], this.background_colour[3]);
-        this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
-
+        if(!this.stencilPass)
+            this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
         mat4.identity(this.mvMatrix);
 
@@ -7847,9 +8046,17 @@ class MGWebGL extends Component {
         this.setMatrixUniforms(this.shaderProgram);
         this.setLightUniforms(this.shaderProgram);
 
+        this.gl.useProgram(this.shaderProgramOutline);
+        this.setMatrixUniforms(this.shaderProgramOutline);
+        this.setLightUniforms(this.shaderProgramOutline);
+
         this.gl.useProgram(this.shaderProgramInstanced);
         this.setMatrixUniforms(this.shaderProgramInstanced);
         this.setLightUniforms(this.shaderProgramInstanced);
+
+        this.gl.useProgram(this.shaderProgramInstancedOutline);
+        this.setMatrixUniforms(this.shaderProgramInstancedOutline);
+        this.setLightUniforms(this.shaderProgramInstancedOutline);
 
         this.gl.useProgram(this.shaderProgramInstancedShadow);
         this.setMatrixUniforms(this.shaderProgramInstancedShadow);
@@ -7868,6 +8075,12 @@ class MGWebGL extends Component {
 
         this.gl.useProgram(this.shaderProgram);
         this.gl.enableVertexAttribArray(this.shaderProgram.vertexNormalAttribute);
+
+        this.gl.useProgram(this.shaderProgramOutline);
+        this.gl.enableVertexAttribArray(this.shaderProgramOutline.vertexNormalAttribute);
+
+        this.gl.useProgram(this.shaderProgramInstancedOutline);
+        this.gl.enableVertexAttribArray(this.shaderProgramInstancedOutline.vertexNormalAttribute);
 
         this.gl.useProgram(this.shaderProgramInstanced);
         this.gl.enableVertexAttribArray(this.shaderProgramInstanced.vertexNormalAttribute);
@@ -7909,7 +8122,29 @@ class MGWebGL extends Component {
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
         }
 
+        this.stencilPass = false;
+
+        if(this.doStenciling){
+            this.gl.clearStencil(0);
+            this.gl.clear(this.gl.STENCIL_BUFFER_BIT);
+            this.gl.enable(this.gl.STENCIL_TEST);
+            this.gl.stencilFunc(this.gl.ALWAYS, 1, 0xFF);
+            this.gl.stencilMask(0xFF);
+            this.gl.stencilOp(this.gl.KEEP, this.gl.KEEP, this.gl.REPLACE);
+            this.gl.enable(this.gl.DEPTH_TEST);
+        } else {
+            this.gl.disable(this.gl.STENCIL_TEST);
+            this.gl.enable(this.gl.DEPTH_TEST);
+        }
+
         var invMat = this.GLrender(false);
+
+        if(this.doStenciling){
+            this.gl.stencilFunc(this.gl.NOTEQUAL, 1, 0xFF);
+            this.gl.stencilOp(this.gl.KEEP, this.gl.KEEP, this.gl.REPLACE);
+            this.stencilPass = true;
+            invMat = this.GLrender(false);
+        }
 
         //console.log(this.mvMatrix);
         //console.log(this.mvInvMatrix);
@@ -8234,6 +8469,7 @@ class MGWebGL extends Component {
 
         let symmetries = [];
         let symms = [];
+        const bright_y = this.background_colour[0] * 0.299 + this.background_colour[1] * 0.587 + this.background_colour[2] * 0.114;
 
         for (let idx = 0; idx < this.displayBuffers.length; idx++) {
             if (this.displayBuffers[idx].symmetry) {
@@ -8291,14 +8527,21 @@ class MGWebGL extends Component {
                 }
 
                 let theShader;
+                let scaleZ = false;
                 if(this.displayBuffers[idx].triangleInstanceOriginBuffer[j]){
                     theShader = this.shaderProgramInstanced;
                     if (calculatingShadowMap)
                         theShader = this.shaderProgramInstancedShadow;
+                    if(this.stencilPass)
+                        theShader = this.shaderProgramInstancedOutline;
                 } else {
                     theShader = this.shaderProgram;
                     if (calculatingShadowMap)
                         theShader = this.shaderProgramShadow;
+                    if(this.stencilPass){
+                        theShader = this.shaderProgramOutline;
+                        scaleZ = true;
+                    }
                 }
                 this.gl.useProgram(theShader);
                 this.gl.uniform1i(theShader.doShadows, false);
@@ -8316,6 +8559,7 @@ class MGWebGL extends Component {
                         this.gl.uniform1i(theShader.shadowQuality, 1);
                 }
 
+
                 for(let i = 0; i<16; i++)
                     this.gl.disableVertexAttribArray(i);
 
@@ -8330,10 +8574,28 @@ class MGWebGL extends Component {
                 this.gl.enableVertexAttribArray(theShader.vertexPositionAttribute);
                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, triangleVertexPositionBuffer[j]);
                 this.gl.vertexAttribPointer(theShader.vertexPositionAttribute, triangleVertexPositionBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
-                this.gl.enableVertexAttribArray(theShader.vertexColourAttribute);
-                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, triangleColourBuffer[j]);
-                this.gl.vertexAttribPointer(theShader.vertexColourAttribute, triangleColourBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
                 this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, triangleVertexIndexBuffer[j]);
+
+                if(this.stencilPass){
+                    this.gl.disable(this.gl.DEPTH_TEST);
+                    this.gl.disableVertexAttribArray(theShader.vertexColourAttribute);
+                    if(bright_y<0.5)
+                        this.gl.vertexAttrib4f(theShader.vertexColourAttribute, 1.0, 1.0, 1.0, 1.0);
+                    else
+                        this.gl.vertexAttrib4f(theShader.vertexColourAttribute, 0.0, 0.0, 0.0, 1.0);
+                    let outlineSize = vec3.create();
+                    vec3.set(outlineSize, 0.1, 0.1, 0.0);
+                    if(scaleZ)
+                        vec3.set(outlineSize, 0.1, 0.1, 0.1);
+                    this.gl.uniform3fv(theShader.outlineSize, outlineSize);
+                } else {
+                    let outlineSize = vec3.create();
+                    vec3.set(outlineSize, 0.0, 0.0, 0.0);
+                    this.gl.uniform3fv(theShader.outlineSize, outlineSize);
+                    this.gl.enableVertexAttribArray(theShader.vertexColourAttribute);
+                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, triangleColourBuffer[j]);
+                    this.gl.vertexAttribPointer(theShader.vertexColourAttribute, triangleColourBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
+                }
 
                 if (bufferTypes[j] === "TRIANGLES" || bufferTypes[j] === "CYLINDERS" || bufferTypes[j] === "CAPCYLINDERS" || this.displayBuffers[idx].bufferTypes[j] === "TORUSES") {
                     if (this.displayBuffers[idx].transformMatrix) {
@@ -8352,7 +8614,16 @@ class MGWebGL extends Component {
                         this.drawTransformMatrixInteractive(this.displayBuffers[idx].transformMatrixInteractive, this.displayBuffers[idx].transformOriginInteractive, this.displayBuffers[idx], theShader, this.gl.TRIANGLES, j);
                         this.gl.uniform4fv(theShader.light_colours_ambient, this.light_colours_ambient);
                     } else {
-                        this.drawBuffer(this.displayBuffers[idx],theShader,j,this.gl.TRIANGLES);
+                        if(this.stencilPass && scaleZ){
+                            let outlineSize = vec3.create();
+                            for(let i=0;i<10;i++){
+                                vec3.set(outlineSize, 0.01*i, 0.01*i, 0.01*i);
+                                this.gl.uniform3fv(theShader.outlineSize, outlineSize);
+                                this.drawBuffer(this.displayBuffers[idx],theShader,j,this.gl.TRIANGLES);
+                            }
+                        } else {
+                            this.drawBuffer(this.displayBuffers[idx],theShader,j,this.gl.TRIANGLES);
+                        }
                     }
                     if (symmetry) this.drawSymmetry(symmetry, this.displayBuffers[idx], theShader, this.gl.TRIANGLES, j);
                 } else if (bufferTypes[j] === "TRIANGLE_STRIP" || bufferTypes[j] === "SPLINE" || bufferTypes[j] === "WORM") {
@@ -8372,6 +8643,7 @@ class MGWebGL extends Component {
                 nprims += triangleVertexIndexBuffer[j].numItems;
             }
 
+
             //shaderProgramPerfectSpheres
             for(let i = 0; i<16; i++)
                 this.gl.disableVertexAttribArray(i);
@@ -8381,6 +8653,9 @@ class MGWebGL extends Component {
                 let program = this.shaderProgramPerfectSpheres;
                 if (calculatingShadowMap) {
                     program = this.shaderDepthShadowProgramPerfectSpheres;
+                }
+                if(this.stencilPass){
+                    program = this.shaderProgramPerfectSpheresOutline;
                 }
 
                 mat4.set(invsymt,
@@ -8416,6 +8691,17 @@ class MGWebGL extends Component {
                         this.gl.uniform1i(program.shadowQuality, 0);
                     else
                         this.gl.uniform1i(program.shadowQuality, 1);
+                }
+
+                if(this.stencilPass){
+                    this.gl.disable(this.gl.DEPTH_TEST);
+                    let outlineSize = vec3.create();
+                    vec3.set(outlineSize, 0.1, 0.1, 0.0);
+                    this.gl.uniform3fv(program.outlineSize, outlineSize);
+                } else {
+                    let outlineSize = vec3.create();
+                    vec3.set(outlineSize, 0.0, 0.0, 0.0);
+                    this.gl.uniform3fv(program.outlineSize, outlineSize);
                 }
 
                 for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
@@ -8467,6 +8753,13 @@ class MGWebGL extends Component {
                         this.gl.enableVertexAttribArray(program.vertexColourAttribute);
                         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleColourBuffer[j]);
                         this.gl.vertexAttribPointer(program.vertexColourAttribute, this.displayBuffers[idx].triangleColourBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
+                        if(this.stencilPass){
+                            this.gl.disableVertexAttribArray(program.vertexColourAttribute);
+                            if(bright_y<0.5)
+                                this.gl.vertexAttrib4f(program.vertexColourAttribute, 1.0, 1.0, 1.0, 1.0);
+                            else
+                                this.gl.vertexAttrib4f(program.vertexColourAttribute, 0.0, 0.0, 0.0, 1.0);
+                        }
                         if (this.WEBGL2) {
                             this.gl.vertexAttribDivisor(program.vertexColourAttribute, 1);
                             this.gl.vertexAttribDivisor(program.sizeAttribute, 1);
@@ -8530,6 +8823,10 @@ class MGWebGL extends Component {
 
                 this.gl.enableVertexAttribArray(program.vertexColourAttribute);
                 this.gl.disableVertexAttribArray(program.vertexTextureAttribute);
+            }
+
+            if(this.stencilPass){
+                continue;
             }
 
             if (calculatingShadowMap)

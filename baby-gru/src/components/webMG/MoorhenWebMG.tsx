@@ -175,6 +175,13 @@ export const MoorhenWebMG = forwardRef<mgWebGLType, MoorhenWebMGPropsInterface>(
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setOutlinesOn(props.preferences.doOutline)
+            glRef.current.drawScene()
+        }
+    }, [props.preferences.doOutline])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
             glRef.current.setShadowsOn(props.preferences.doShadow)
             glRef.current.drawScene()
         }

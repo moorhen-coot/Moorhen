@@ -12,6 +12,7 @@ export interface MoorhenPreferencesSetterInterface {
     setDoShadowDepthDebug: React.Dispatch<React.SetStateAction<boolean>>;
     setDefaultBackgroundColor: React.Dispatch<React.SetStateAction<[number, number, number, number]>>;
     setDoShadow: React.Dispatch<React.SetStateAction<boolean>>;
+    setDoOutline: React.Dispatch<React.SetStateAction<boolean>>;
     setDoSpinTest: React.Dispatch<React.SetStateAction<boolean>>;
     setClipCap: React.Dispatch<React.SetStateAction<boolean>>;
     setResetClippingFogging: React.Dispatch<React.SetStateAction<boolean>>;
@@ -68,6 +69,7 @@ export interface MoorhenPreferencesValuesInterface {
     useOffScreenBuffers: boolean; 
     doShadowDepthDebug: boolean; 
     doShadow: boolean; 
+    doOutline: boolean; 
     GLLabelsFontFamily: string;
     GLLabelsFontSize: number;
     doSpinTest: boolean;
@@ -132,6 +134,7 @@ const getDefaultValues = (): MoorhenPreferencesValuesInterface => {
         useOffScreenBuffers: false,
         doShadowDepthDebug: false,
         doShadow: false,
+        doOutline: false,
         GLLabelsFontFamily: "Arial",
         GLLabelsFontSize: 18,
         doSpinTest: false,
@@ -359,6 +362,7 @@ const PreferencesContextProvider = ({ children }) => {
     const [useOffScreenBuffers, setUseOffScreenBuffers] = useState<null | boolean>(null)
     const [doShadowDepthDebug, setDoShadowDepthDebug] = useState<null | boolean>(null)
     const [doShadow, setDoShadow] = useState<null | boolean>(null)
+    const [doOutline, setDoOutline] = useState<null | boolean>(null)
     const [GLLabelsFontFamily, setGLLabelsFontFamily] = useState<null | string>(null)
     const [GLLabelsFontSize, setGLLabelsFontSize] = useState<null | number>(null)
     const [doSpinTest, setDoSpinTest] = useState<null | boolean>(null)
@@ -412,6 +416,7 @@ const PreferencesContextProvider = ({ children }) => {
         33: { label: "GLLabelsFontFamily", value: GLLabelsFontFamily, valueSetter: setGLLabelsFontFamily},
         34: { label: "GLLabelsFontSize", value: GLLabelsFontSize, valueSetter: setGLLabelsFontSize},
         35: { label: "doSpinTest", value: doSpinTest, valueSetter: setDoSpinTest},
+        36: { label: "doOutline", value: doOutline, valueSetter: setDoOutline},
     }
 
     const restoreDefaults = (defaultValues: MoorhenPreferencesValuesInterface)=> {
@@ -684,6 +689,15 @@ const PreferencesContextProvider = ({ children }) => {
 
     useMemo(() => {
 
+        if (doOutline === null) {
+            return
+        }
+
+        updateStoredPreferences('doOutline', doOutline);
+    }, [doOutline]);
+
+    useMemo(() => {
+
         if (doShadow === null) {
             return
         }
@@ -796,7 +810,7 @@ const PreferencesContextProvider = ({ children }) => {
         doPerspectiveProjection, setDoPerspectiveProjection, useOffScreenBuffers, setUseOffScreenBuffers, drawAxes,
         setDrawAxes, devMode, setDevMode, doShadowDepthDebug, setDoShadowDepthDebug, doShadow, setDoShadow,
         GLLabelsFontFamily, setGLLabelsFontFamily, GLLabelsFontSize, setGLLabelsFontSize, doSpinTest,
-        setDoSpinTest
+        setDoSpinTest, doOutline, setDoOutline
     }
 
     return (

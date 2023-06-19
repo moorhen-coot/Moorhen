@@ -38,6 +38,16 @@ declare global {
         modelNumber: number;
         chainId: string;
     }
+    type CootRamachandranDataType = {
+        chainId: string;
+        insCode: string;
+        seqNum: number;
+        restype: string;
+        isOutlier: boolean;
+        phi: number;
+        psi: number;
+        is_pre_pro: boolean;
+    }
     interface CootInterestingPlaceDataType extends CootResidueSpecType {
         featureType: string;
         featureValue: number;
@@ -62,6 +72,7 @@ declare global {
         useOffScreenBuffers: boolean;
         setSpinTestState(doSpinTest: boolean): void;
         setShadowsOn(doShadow: boolean): void;
+        setOutlinesOn(doOutline: boolean): void;
         setShadowDepthDebug(doShadowDepthDebug: boolean): void;
         doPerspectiveProjection: boolean;
         clearTextPositionBuffers(): void;

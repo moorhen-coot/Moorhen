@@ -533,6 +533,15 @@ install(DIRECTORY
 ${coot_src}/pixmaps
 DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/baby-gru)
 
+install(FILES 
+${coot_src}/textures/rama-plot-gly-normal.png
+${coot_src}/textures/rama-plot-gly-outlier.png
+${coot_src}/textures/rama-plot-pro-normal.png
+${coot_src}/textures/rama-plot-pro-outlier.png
+${coot_src}/textures/rama-plot-other-normal.png
+${coot_src}/textures/rama-plot-other-outlier.png
+DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/../baby-gru/public/baby-gru/pixmaps)
+
 #[[
 #I do not think this should be done - the targets seem to be in repo anyway.
 install(FILES 

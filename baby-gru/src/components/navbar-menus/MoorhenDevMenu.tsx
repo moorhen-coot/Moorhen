@@ -102,6 +102,13 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
                     <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
                         <Form.Check 
                             type="switch"
+                            checked={props.doOutline}
+                            onChange={() => { props.setDoOutline(!props.doOutline) }}
+                            label="Outlines"/>
+                    </InputGroup>
+                    <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                        <Form.Check 
+                            type="switch"
                             checked={props.doSpinTest}
                             onChange={() => { props.setDoSpinTest(!props.doSpinTest) }}
                             label="Spin test"/>
