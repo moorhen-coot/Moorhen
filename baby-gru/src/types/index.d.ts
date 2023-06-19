@@ -38,6 +38,16 @@ declare global {
         modelNumber: number;
         chainId: string;
     }
+    type CootRamachandranDataType = {
+        chainId: string;
+        insCode: string;
+        seqNum: number;
+        restype: string;
+        isOutlier: boolean;
+        phi: number;
+        psi: number;
+        is_pre_pro: boolean;
+    }
     interface CootInterestingPlaceDataType extends CootResidueSpecType {
         featureType: string;
         featureValue: number;
