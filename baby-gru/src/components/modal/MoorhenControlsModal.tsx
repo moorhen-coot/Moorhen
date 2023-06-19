@@ -80,7 +80,7 @@ export const MoorhenControlsModal = (props: MoorhenControlsModalPropsInterface) 
                             })}
                     </Col>
                     <Col className="col-8">
-                        <object style={{width:'100%', height: '100%'}} className="moorhen-keyboard" data={`${props.urlPrefix}/baby-gru/keyboard-blank.svg`} type="image/svg+xml" aria-label="keyboard"/>
+                        <object style={{width:'100%', height: '100%'}} className="moorhen-keyboard" data={`${props.urlPrefix}/baby-gru/pixmaps/keyboard-blank.svg`} type="image/svg+xml" aria-label="keyboard"/>
                     </Col>
                     </Row>
                 </Modal.Body>
