@@ -72,6 +72,7 @@ declare global {
         useOffScreenBuffers: boolean;
         setSpinTestState(doSpinTest: boolean): void;
         setShadowsOn(doShadow: boolean): void;
+        setOutlinesOn(doOutline: boolean): void;
         setShadowDepthDebug(doShadowDepthDebug: boolean): void;
         doPerspectiveProjection: boolean;
         clearTextPositionBuffers(): void;
