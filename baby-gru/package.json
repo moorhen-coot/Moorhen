@@ -112,7 +112,7 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "transpile-ts-worker": "npx tsc --module es2015 --lib webworker --skipLibCheck public/baby-gru/CootWorker.ts && sed -i '/export {}/d' public/baby-gru/CootWorker.js",
+    "transpile-ts-worker": "npx tsc --module es2015 --lib webworker --skipLibCheck public/baby-gru/CootWorker.ts && sed -i.bu '/export {}/d' public/baby-gru/CootWorker.js",
     "prestart": "npm run transpile-ts-worker",
     "start": "react-scripts start",
     "build": "npm run transpile-ts-worker && react-scripts build",
