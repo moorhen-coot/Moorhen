@@ -87,9 +87,8 @@ export const MoorhenMapMaskingMenuItem = (props: {
             return commandCentre.current.cootCommand({
                 returnType: 'status',
                 command: 'mask_map_by_atom_selection',
-                commandArgs: [molNo, mapNo, cidLabel, invertFlagRef.current.checked
-                ]
-            }, true)
+                commandArgs: [molNo, mapNo, cidLabel, invertFlagRef.current.checked]
+            }, true) as Promise<moorhen.WorkerResponse<number>>
         }
 
         maskMap()

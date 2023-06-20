@@ -81,11 +81,11 @@ export const MoorhenFitLigandRightHereMenuItem = (props: {
                 1., useConformersRef.current, parseInt(conformerCountRef.current)
             ]
 
-        }, true)
+        }, true) as moorhen.WorkerResponse<number[]>
         
         if (result.data.result.status === "Completed") {
             await Promise.all(
-                result.data.result.result.map(async (iMol: number) => {
+                result.data.result.result.map(async (iMol) => {
                     const newMolecule = new MoorhenMolecule(props.commandCentre, props.monomerLibraryPath)
                     newMolecule.molNo = iMol
                     newMolecule.name = `lig_${iMol}`

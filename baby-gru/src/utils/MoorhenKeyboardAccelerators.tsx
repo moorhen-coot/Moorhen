@@ -8,6 +8,7 @@ import { MoorhenShortcutType } from "./MoorhenPreferences";
 import { MoorhenControlsInterface } from "../components/MoorhenContainer";
 import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
+import { libcootApi } from "../types/libcoot";
 
 const apresEdit = (molecule: moorhen.Molecule, glRef: React.RefObject<webGL.MGWebGL>, timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>, setHoveredAtom: (arg0: HoveredAtomType) => void) => {
     molecule.setAtomsDirty(true)
@@ -35,7 +36,7 @@ export const babyGruKeyPress = (event: KeyboardEvent, collectedProps: MoorhenCon
             returnType: "int_string_pair",
             command: "get_active_atom",
             commandArgs: [...glRef.current.origin.map(coord => coord * -1), visibleMolecules.map(molecule => molecule.molNo).join(':')]
-        })
+        }) as moorhen.WorkerResponse<libcootApi.PairType<number, string>>
         const moleculeMolNo: number = response.data.result.result.first
         const residueCid: string = response.data.result.result.second
         const selectedMolecule = visibleMolecules.find((molecule: moorhen.Molecule) => molecule.molNo === moleculeMolNo)

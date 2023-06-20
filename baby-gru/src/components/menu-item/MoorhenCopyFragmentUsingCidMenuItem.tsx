@@ -47,7 +47,7 @@ export const MoorhenCopyFragmentUsingCidMenuItem = (props: {
             command: "copy_fragment_using_cid",
             commandArgs: commandArgs,
             changesMolecules: [parseInt(fromRef.current.value)]
-        }, true)
+        }, true) as moorhen.WorkerResponse<number> 
         
         const newMolecule = new MoorhenMolecule(props.commandCentre, props.monomerLibraryPath)
         newMolecule.name = `${fromMolecules[0].name} fragment`

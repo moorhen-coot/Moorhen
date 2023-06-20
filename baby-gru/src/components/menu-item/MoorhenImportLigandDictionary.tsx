@@ -8,6 +8,7 @@ import { readTextFile } from "../../utils/MoorhenUtils"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { MolChange } from "../MoorhenApp"
+import { libcootApi } from "../../types/libcoot"
 
 const MoorhenImportLigandDictionary = (props: { 
     id: string;
@@ -76,7 +77,7 @@ const MoorhenImportLigandDictionary = (props: {
                 commandArgs: [instanceName,
                     selectedMoleculeIndex,
                     ...glRef.current.origin.map(coord => -coord)]
-            }, true)
+            }, true) as moorhen.WorkerResponse<number> 
             if (result.data.result.status === "Completed") {
                 newMolecule = new MoorhenMolecule(commandCentre, monomerLibraryPath)
                 newMolecule.molNo = result.data.result.result
@@ -215,8 +216,8 @@ export const MoorhenSMILESToLigandMenuItem = (props: {
             command: 'shim_smiles_to_pdb',
             commandArgs: [smileRef.current, tlcValueRef.current, n_conformer, n_iteration],
             returnType: 'str_str_pair'
-        }, true)
-        const result = response.data.result.result.second as string
+        }, true) as moorhen.WorkerResponse<libcootApi.PairType<string, string>>
+        const result = response.data.result.result.second
 
         if (result) {
             return result

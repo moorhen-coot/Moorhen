@@ -36,7 +36,7 @@ export const MoorhenSharpenBlurMapMenuItem = (props: {
                 command: 'sharpen_blur_map',
                 commandArgs: [mapNo, bFactor, false
                 ]
-            }, true)
+            }, true) as Promise<moorhen.WorkerResponse<number>>
         }
 
         blurMap()

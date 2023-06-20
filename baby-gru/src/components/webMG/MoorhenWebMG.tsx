@@ -8,6 +8,7 @@ import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { MolChange } from "../MoorhenApp"
 import { MoorhenPreferencesInterface } from '../../utils/MoorhenPreferences';
+import { libcootApi } from '../../types/libcoot.js';
 
 interface MoorhenWebMGPropsInterface {
     timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
@@ -66,17 +67,18 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         }
     }, [glRef, props.preferences.resetClippingFogging])
 
-    const handleGoToBlobDoubleClick = useCallback((evt) => {
-        props.commandCentre.current.cootCommand({
+    const handleGoToBlobDoubleClick = useCallback(async (evt) => {
+        const response = await props.commandCentre.current.cootCommand({
             returnType: "float_array",
             command: "go_to_blob_array",
             commandArgs: [evt.detail.front[0], evt.detail.front[1], evt.detail.front[2], evt.detail.back[0], evt.detail.back[1], evt.detail.back[2], 0.5]
-        }).then(response => {
-            let newOrigin: [number, number, number] = response.data.result.result;
-            if (newOrigin.length === 3 && glRef !== null && typeof glRef !== 'function') {
-                glRef.current.setOriginAnimated([-newOrigin[0], -newOrigin[1], -newOrigin[2]])
-            }
-        })
+        }) as moorhen.WorkerResponse<[number, number, number]>;
+
+        let newOrigin = response.data.result.result;
+        if (newOrigin.length === 3 && glRef !== null && typeof glRef !== 'function') {
+            glRef.current.setOriginAnimated([-newOrigin[0], -newOrigin[1], -newOrigin[2]])
+        }
+
     }, [props.commandCentre, glRef])
 
     const handleMiddleClickGoToAtom = useCallback(evt => {
@@ -108,7 +110,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                 returnType: "int_string_pair",
                 command: "get_active_atom",
                 commandArgs: [...glRef.current.origin.map(coord => -coord), visibleMolecules.map(molecule => molecule.molNo).join(':')]
-            })
+            }) as moorhen.WorkerResponse<libcootApi.PairType<number, string>>
             const moleculeMolNo: number = response.data.result.result.first
             const residueCid: string = response.data.result.result.second
     
@@ -215,17 +217,17 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                 returnType: "r_factor_stats",
                 command: "get_r_factor_stats",
                 commandArgs: [],
-            }, true)
+            }, true) as moorhen.WorkerResponse<{r_factor: number; free_r_factor: number; rail_points_total: number; }>
 
             const newToastContents =    <Toast.Body style={{width: '100%'}}>
                                             {props.preferences.defaultUpdatingScores.includes('Rfactor') && 
                                                 <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
-                                                    Clipper R-Factor {parseFloat(currentScores.data.result.result.r_factor).toFixed(3)}
+                                                    Clipper R-Factor {currentScores.data.result.result.r_factor.toFixed(3)}
                                                 </p>
                                             }
                                             {props.preferences.defaultUpdatingScores.includes('Rfree') && 
                                                 <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
-                                                    Clipper R-Free {parseFloat(currentScores.data.result.result.free_r_factor).toFixed(3)}
+                                                    Clipper R-Free {currentScores.data.result.result.free_r_factor.toFixed(3)}
                                                 </p>
                                             }
                                             {props.preferences.defaultUpdatingScores.includes('Moorhen Points') && 
@@ -293,18 +295,18 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             returnType: "r_factor_stats",
             command: "get_r_factor_stats",
             commandArgs: [],
-        }, true)
+        }, true) as moorhen.WorkerResponse<{r_factor: number; free_r_factor: number; rail_points_total: number; }>
 
         setScoreToastContents(
                 <Toast.Body style={{width: '100%'}}>
                     {props.preferences.defaultUpdatingScores.includes('Rfactor') && 
                         <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
-                            Clipper R-Factor {parseFloat(currentScores.data.result.result.r_factor).toFixed(3)}
+                            Clipper R-Factor {currentScores.data.result.result.r_factor.toFixed(3)}
                         </p>
                     }
                     {props.preferences.defaultUpdatingScores.includes('Rfree') && 
                         <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
-                            Clipper R-Free {parseFloat(currentScores.data.result.result.free_r_factor).toFixed(3)}
+                            Clipper R-Free {currentScores.data.result.result.free_r_factor.toFixed(3)}
                         </p>
                     }
                     {props.preferences.defaultUpdatingScores.includes('Moorhen Points') && 
