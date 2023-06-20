@@ -576,3 +576,4 @@ tests/test.log
 .gitignore
 baby-gru/moorhen-0.1.0.tgz
 baby-gru/copyForDist.sh
+baby-gru/public/baby-gru/CootWorker.js

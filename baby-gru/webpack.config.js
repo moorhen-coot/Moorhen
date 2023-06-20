@@ -19,7 +19,7 @@ const paths = {
     'NA'
   ],
   requiredCootPixmaps: [
-    'diff-map.png', 'MoorhenLogo.png', 'rama2_all.png', 'rama2_gly.png',
+    'MoorhenLogo.png', 'rama2_all.png', 'rama2_gly.png',
     'rama2_pre_pro.png', 'rama2_pro.png', 'rama2_ileval.png', 'rama2_non_gly_pro.png',
     'rama2_non_gly_pro_pre_pro_ileval.png', 'rama-plot-gly-normal.png', 'mutate.svg', 
     'rama-plot-pro-normal.png', 'rama-plot-pro-outlier.png', 'rama-plot-other-normal.png',
@@ -30,8 +30,8 @@ const paths = {
     'auto-fit-rotamer.svg', 'flip-peptide.svg', 'cis-trans.svg', 'side-chain-180.svg',
     'refine-1.svg', 'add-alt-conf.svg', 'delete.svg', 'mutate.svg', 'temperature.svg',
     'add-peptide-1.svg', 'spin-view.svg', 'edit-chi.svg', 'jed-flip-reverse.svg',
-    'rigid-body.svg', 'atom-at-pointer.svg', 'diff-map.png', 'map.svg', 'rtz.svg', 
-    'rotamers.svg', 'drag.svg', 'keyboard-blank.svg'
+    'rigid-body.svg', 'atom-at-pointer.svg', 'rtz.svg', 'rotamers.svg', 'drag.svg',
+    'keyboard-blank.svg'
   ]
 }
 

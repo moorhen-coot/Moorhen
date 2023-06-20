@@ -29,6 +29,7 @@ yarn-error.log*
 /public/baby-gru/wasm
 /public/baby-gru/tutorials/moorhen-tutorial-map-number-1.mtz
 /public/baby-gru/tutorials/moorhen-tutorial-structure-number-1.pdb
+baby-gru/public/baby-gru/CootWorker.js
 /src/WebGL
 /monomers
 /package-lock.json
