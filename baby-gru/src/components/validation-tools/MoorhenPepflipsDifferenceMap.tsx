@@ -1,7 +1,6 @@
 import { useState } from "react"
 import { Col, Row, Form, Card, Button } from 'react-bootstrap';
 import { MoorhenSideBarAccordionPropsInterface } from "../list/MoorhenSideBar";
-import { MoorhenMapInterface } from "../../utils/MoorhenMap";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase"
 import MoorhenSlider from '../misc/MoorhenSlider' 
@@ -9,7 +8,7 @@ import MoorhenSlider from '../misc/MoorhenSlider'
 export const MoorhenPepflipsDifferenceMap = (props: MoorhenSideBarAccordionPropsInterface) => {
     const [selectedRmsd, setSelectedRmsd] = useState<number>(4.5)
     
-    const filterMapFunction = (map: MoorhenMapInterface) => map.isDifference
+    const filterMapFunction = (map: moorhen.Map) => map.isDifference
 
     const flipPeptide = async (selectedMolNo: number, chainId: string, insCode: string,  seqNum: number) => {
         await props.commandCentre.current.cootCommand({

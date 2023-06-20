@@ -4,13 +4,12 @@ import * as vec3 from 'gl-matrix/vec3';
 import * as quat4 from 'gl-matrix/quat';
 import { quatToMat4, quat4Inverse } from '../WebGLgComponents/quatToMat4.js';
 import { getDeviceScale, vec3Create } from '../WebGLgComponents/mgWebGL';
-import { MoorhenTimeCapsuleInterface } from "./MoorhenTimeCapsule";
 import { MoorhenShortcutType } from "./MoorhenPreferences";
 import { MoorhenControlsInterface } from "../components/MoorhenContainer";
 import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
 
-const apresEdit = (molecule: moorhen.Molecule, glRef: React.RefObject<webGL.MGWebGL>, timeCapsuleRef: React.RefObject<MoorhenTimeCapsuleInterface>, setHoveredAtom: (arg0: HoveredAtomType) => void) => {
+const apresEdit = (molecule: moorhen.Molecule, glRef: React.RefObject<webGL.MGWebGL>, timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>, setHoveredAtom: (arg0: HoveredAtomType) => void) => {
     molecule.setAtomsDirty(true)
     molecule.redraw(glRef)
     setHoveredAtom({ molecule: null, cid: null })

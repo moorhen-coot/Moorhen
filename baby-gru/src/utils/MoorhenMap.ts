@@ -3,55 +3,7 @@ import { readMapFromArrayBuffer, mapToMapGrid } from '../WebGLgComponents/mgWebG
 import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
 
-export type selectedColumnsType = {
-    F?: string;
-    PHI?: string;
-    Fobs?: string;
-    SigFobs?: string;
-    FreeR?: string;
-    isDifference?: boolean;
-    useWeight?: boolean;
-    calcStructFact?: any; 
-}
-
-export interface MoorhenMapInterface {
-    setAlpha(alpha: number, glRef: React.RefObject<webGL.MGWebGL>, redraw?: boolean): Promise<void>;
-    centreOnMap(glRef: React.RefObject<webGL.MGWebGL>): Promise<void>;
-    duplicate(): Promise<MoorhenMapInterface>;
-    makeCootUnlive(glRef: React.RefObject<webGL.MGWebGL>): void;
-    makeCootLive(glRef: React.RefObject<webGL.MGWebGL>): void;
-    setColour(r: number, g: number, b: number, glRef: React.RefObject<webGL.MGWebGL>, redraw?: boolean): Promise<void>;
-    fetchMapRmsd(): Promise<number>;
-    replaceMapWithMtzFile(glRef: React.RefObject<webGL.MGWebGL>, fileUrl: RequestInfo | URL, name: string, selectedColumns: selectedColumnsType): Promise<void>;
-    associateToReflectionData (selectedColumns: selectedColumnsType, reflectionData: Uint8Array | ArrayBuffer): Promise<moorhen.WorkerResponse>;
-    delete(glRef: React.RefObject<webGL.MGWebGL>): Promise<void> 
-    contour(glRef: React.ForwardedRef<webGL.MGWebGL>): void;
-    doCootContour(glRef: React.MutableRefObject<webGL.MGWebGL>, x: number, y: number, z: number, radius: number, contourLevel: number): Promise<void>;
-    fetchReflectionData(): Promise<moorhen.WorkerResponse>;
-    getMap(): Promise<moorhen.WorkerResponse>;
-    type: string;
-    name: string;
-    molNo: number;
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
-    contourLevel: number;
-    mapRadius: number;
-    mapColour: [number, number, number, number];
-    liveUpdatingMaps: any;
-    webMGContour: boolean;
-    cootContour: boolean;
-    displayObjects: any;
-    litLines: boolean;
-    solid: boolean;
-    isDifference: boolean;
-    hasReflectionData: boolean;
-    selectedColumns: selectedColumnsType;
-    associatedReflectionFileName: string;
-    uniqueId: string;
-    mapRmsd: number;
-    rgba: {r: number, g: number, b: number, a: number};
-}
-
-export class MoorhenMap implements MoorhenMapInterface {
+export class MoorhenMap implements moorhen.Map {
     
     type: string
     name: string
@@ -68,7 +20,7 @@ export class MoorhenMap implements MoorhenMapInterface {
     solid: boolean
     isDifference: boolean
     hasReflectionData: boolean
-    selectedColumns: selectedColumnsType
+    selectedColumns: moorhen.selectedMtzColumns
     associatedReflectionFileName: string
     uniqueId: string
     mapRmsd: number
@@ -127,7 +79,7 @@ export class MoorhenMap implements MoorhenMapInterface {
         await Promise.all(promises)
     }
 
-    async replaceMapWithMtzFile(glRef: React.RefObject<webGL.MGWebGL>, fileUrl: RequestInfo | URL, name: string, selectedColumns: selectedColumnsType): Promise<void> {
+    async replaceMapWithMtzFile(glRef: React.RefObject<webGL.MGWebGL>, fileUrl: RequestInfo | URL, name: string, selectedColumns: moorhen.selectedMtzColumns): Promise<void> {
         let mtzData: Uint8Array
         let fetchResponse: Response
 
@@ -159,7 +111,7 @@ export class MoorhenMap implements MoorhenMapInterface {
 
     }
 
-    loadToCootFromMtzURL = async function (url: RequestInfo | URL, name: string, selectedColumns: selectedColumnsType) {
+    loadToCootFromMtzURL = async function (url: RequestInfo | URL, name: string, selectedColumns: moorhen.selectedMtzColumns) {
         const $this = this
 
         try {
@@ -181,7 +133,7 @@ export class MoorhenMap implements MoorhenMapInterface {
         }
     }
 
-    loadToCootFromMtzData(data: Uint8Array, name: string, selectedColumns: selectedColumnsType) {
+    loadToCootFromMtzData(data: Uint8Array, name: string, selectedColumns: moorhen.selectedMtzColumns) {
         const $this = this
         $this.name = name
         return new Promise((resolve, reject) => {
@@ -207,7 +159,7 @@ export class MoorhenMap implements MoorhenMapInterface {
         })
     }
 
-    loadToCootFromMtzFile = async function (source: Blob, selectedColumns: selectedColumnsType): Promise<MoorhenMapInterface> {
+    loadToCootFromMtzFile = async function (source: Blob, selectedColumns: moorhen.selectedMtzColumns): Promise<moorhen.Map> {
         const $this = this
         let reflectionData = await readDataFile(source)
         const asUIntArray = new Uint8Array(reflectionData)
@@ -218,7 +170,7 @@ export class MoorhenMap implements MoorhenMapInterface {
         return $this
     }
 
-    loadToCootFromMapURL(url: RequestInfo | URL, name: string, isDiffMap: boolean= false): Promise<MoorhenMapInterface>  {
+    loadToCootFromMapURL(url: RequestInfo | URL, name: string, isDiffMap: boolean= false): Promise<moorhen.Map>  {
         const $this = this
 
         return fetch(url)
@@ -233,7 +185,7 @@ export class MoorhenMap implements MoorhenMapInterface {
             })
     }
 
-    loadToCootFromMapData(data: ArrayBuffer | Uint8Array, name: string, isDiffMap: boolean): Promise<MoorhenMapInterface> {
+    loadToCootFromMapData(data: ArrayBuffer | Uint8Array, name: string, isDiffMap: boolean): Promise<moorhen.Map> {
         const $this = this
         $this.name = name
         return this.commandCentre.current.cootCommand({
@@ -254,7 +206,7 @@ export class MoorhenMap implements MoorhenMapInterface {
             })
     }
 
-    loadToCootFromMapFile = async function (source: Blob, isDiffMap: boolean): Promise<MoorhenMapInterface> {
+    loadToCootFromMapFile = async function (source: Blob, isDiffMap: boolean): Promise<moorhen.Map> {
         const $this = this
         return readDataFile(source)
             .then(mapData => {
@@ -483,7 +435,7 @@ export class MoorhenMap implements MoorhenMapInterface {
         }
     }
 
-    async associateToReflectionData (selectedColumns: selectedColumnsType, reflectionData: Uint8Array | ArrayBuffer): Promise<moorhen.WorkerResponse> {
+    async associateToReflectionData (selectedColumns: moorhen.selectedMtzColumns, reflectionData: Uint8Array | ArrayBuffer): Promise<moorhen.WorkerResponse> {
         if (!selectedColumns.Fobs || !selectedColumns.SigFobs || !selectedColumns.FreeR) {
             return Promise.reject('Missing column data')
         }
@@ -520,7 +472,7 @@ export class MoorhenMap implements MoorhenMapInterface {
         }
     }
 
-    async duplicate(): Promise<MoorhenMapInterface> {
+    async duplicate(): Promise<moorhen.Map> {
         const reply = await this.getMap()
         const newMap = new MoorhenMap(this.commandCentre)
         return newMap.loadToCootFromMapData(reply.data.result.mapData, `Copy of ${this.name}`, this.isDifference)

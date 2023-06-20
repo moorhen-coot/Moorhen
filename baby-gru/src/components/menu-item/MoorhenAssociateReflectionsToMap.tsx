@@ -1,6 +1,5 @@
 import React, { useRef, useState } from "react"
 import { Form, FormSelect, Stack } from "react-bootstrap"
-import { MoorhenMapInterface } from "../../utils/MoorhenMap"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { MolChange } from "../MoorhenApp"
@@ -8,10 +7,10 @@ import { MoorhenMapSelect } from "../select/MoorhenMapSelect"
 import { MoorhenMtzWrapper } from "../../utils/MoorhenMtzWrapper"
 
 export const MoorhenAssociateReflectionsToMap = (props: {
-    maps: MoorhenMapInterface[];
+    maps: moorhen.Map[];
     commandCentre: React.RefObject<moorhen.CommandCentre>;
-    changeMaps: (arg0: MolChange<MoorhenMapInterface>) => void;
-    setActiveMap: React.Dispatch<React.SetStateAction<MoorhenMapInterface>>;
+    changeMaps: (arg0: MolChange<moorhen.Map>) => void;
+    setActiveMap: React.Dispatch<React.SetStateAction<moorhen.Map>>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
 

@@ -184,8 +184,8 @@ export namespace moorhen {
         onConsoleChanged: null | ( (msg: string) => void );
         onNewCommand : null | ( (kwargs: any) => void );
         onActiveMessagesChanged: null | ( (activeMessages: WorkerMessage[]) => void );
-        cootCommand: (kwargs: cootCommandKwargs, doJournal?: boolean) => Promise<moorhen.WorkerResponse>;
-        postMessage: (kwargs: cootCommandKwargs) => Promise<moorhen.WorkerResponse>;
+        cootCommand: (kwargs: cootCommandKwargs, doJournal?: boolean) => Promise<WorkerResponse>;
+        postMessage: (kwargs: cootCommandKwargs) => Promise<WorkerResponse>;
         extendConsoleMessage: (msg: string) => void;
     }
     
@@ -202,7 +202,7 @@ export namespace moorhen {
     type WorkerMessage = { 
         consoleMessage?: string;
         messageId: string;
-        handler: (reply: moorhen.WorkerResponse) => void;
+        handler: (reply: WorkerResponse) => void;
         kwargs: cootCommandKwargs;
     }
     
@@ -222,5 +222,141 @@ export namespace moorhen {
         data: WorkerResult;
     }
     
+    type selectedMtzColumns = {
+        F?: string;
+        PHI?: string;
+        Fobs?: string;
+        SigFobs?: string;
+        FreeR?: string;
+        isDifference?: boolean;
+        useWeight?: boolean;
+        calcStructFact?: any; 
+    }
     
+    interface Map {
+        setAlpha(alpha: number, glRef: React.RefObject<webGL.MGWebGL>, redraw?: boolean): Promise<void>;
+        centreOnMap(glRef: React.RefObject<webGL.MGWebGL>): Promise<void>;
+        duplicate(): Promise<Map>;
+        makeCootUnlive(glRef: React.RefObject<webGL.MGWebGL>): void;
+        makeCootLive(glRef: React.RefObject<webGL.MGWebGL>): void;
+        setColour(r: number, g: number, b: number, glRef: React.RefObject<webGL.MGWebGL>, redraw?: boolean): Promise<void>;
+        fetchMapRmsd(): Promise<number>;
+        replaceMapWithMtzFile(glRef: React.RefObject<webGL.MGWebGL>, fileUrl: RequestInfo | URL, name: string, selectedColumns: selectedMtzColumns): Promise<void>;
+        associateToReflectionData (selectedColumns: selectedMtzColumns, reflectionData: Uint8Array | ArrayBuffer): Promise<WorkerResponse>;
+        delete(glRef: React.RefObject<webGL.MGWebGL>): Promise<void> 
+        contour(glRef: React.ForwardedRef<webGL.MGWebGL>): void;
+        doCootContour(glRef: React.MutableRefObject<webGL.MGWebGL>, x: number, y: number, z: number, radius: number, contourLevel: number): Promise<void>;
+        fetchReflectionData(): Promise<WorkerResponse>;
+        getMap(): Promise<WorkerResponse>;
+        type: string;
+        name: string;
+        molNo: number;
+        commandCentre: React.RefObject<CommandCentre>;
+        contourLevel: number;
+        mapRadius: number;
+        mapColour: [number, number, number, number];
+        liveUpdatingMaps: any;
+        webMGContour: boolean;
+        cootContour: boolean;
+        displayObjects: any;
+        litLines: boolean;
+        solid: boolean;
+        isDifference: boolean;
+        hasReflectionData: boolean;
+        selectedColumns: selectedMtzColumns;
+        associatedReflectionFileName: string;
+        uniqueId: string;
+        mapRmsd: number;
+        rgba: {r: number, g: number, b: number, a: number};
+    }
+    
+    interface backupKey {
+        name?: string;
+        label?: string;
+        dateTime: string;
+        type: string;
+        molNames: string[];
+        mapNames?: string[];
+        mtzNames?: string[];
+    }
+    
+    type moleculeSessionData = {
+        name: string;
+        molNo: number;
+        pdbData: string;
+        displayObjectsKeys: string[];
+        cootBondsOptions: cootBondOptions;
+        connectedToMaps: number[];
+    }
+    
+    type mapDataSession = {
+        name: string;
+        molNo: number;
+        uniqueId: string;
+        mapData: Uint8Array;
+        reflectionData: Uint8Array;
+        cootContour: boolean;
+        contourLevel: number;
+        radius: number;
+        colour: [number, number, number, number];
+        litLines: boolean;
+        isDifference: boolean;
+        selectedColumns: selectedMtzColumns;
+        hasReflectionData: boolean;
+        associatedReflectionFileName: string;
+    }
+    
+    type backupSession = {
+        includesAdditionalMapData: boolean;
+        moleculeData: moleculeSessionData[];
+        mapData: mapDataSession[];
+        activeMapIndex: number;
+        origin: [number, number, number];
+        backgroundColor: [number, number, number, number];
+        atomLabelDepthMode: boolean;
+        ambientLight: [number, number, number, number];
+        diffuseLight: [number, number, number, number];
+        lightPosition: [number, number, number, number];
+        specularLight: [number, number, number, number];
+        fogStart: number;
+        fogEnd: number;
+        zoom: number;
+        doDrawClickedAtomLines: boolean;
+        clipStart: number;
+        clipEnd: number;
+        quat4: any[];
+    }
+    
+    interface TimeCapsule {
+        getSortedKeys(): Promise<backupKey[]>;
+        cleanupUnusedDataFiles(): Promise<void>;
+        removeBackup(key: string): Promise<void>;
+        updateDataFiles(): Promise<(string | void)[]>;
+        createBackup(keyString: string, sessionString: string): Promise<string>;
+        fetchSession(arg0: boolean): Promise<backupSession>;
+        moleculesRef: React.RefObject<Molecule[]>;
+        mapsRef: React.RefObject<Map[]>;
+        glRef: React.RefObject<webGL.MGWebGL>;
+        activeMapRef: React.RefObject<Map>;
+        preferences: any;
+        busy: boolean;
+        modificationCount: number;
+        modificationCountBackupThreshold: number;
+        maxBackupCount: number;
+        version: string;
+        disableBackups: boolean;
+        storageInstance: LocalStorageInstance;
+        addModification: () =>  Promise<string>;
+        init: () => Promise<void>;
+        retrieveBackup: (arg0: string) => Promise<string | ArrayBuffer>;
+    }
+    
+    
+    interface LocalStorageInstance {
+        clear: () => Promise<void>;
+        keys: () => Promise<string[]>;
+        setItem: (key: string, value: string) => Promise<string>;
+        removeItem: (key: string) => Promise<void>;
+        getItem: (key: string) => Promise<string>;
+    }
 }

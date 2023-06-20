@@ -1,12 +1,12 @@
-import { LocalStorageInstanceInterface, backupKeyInterface } from "../../../src/utils/MoorhenTimeCapsule"
+import { moorhen } from "../../../src/types/moorhen"
 import { guid } from "../../../src/utils/MoorhenUtils"
 
-export interface CloudBackupInterface extends backupKeyInterface {
+export interface CloudBackupInterface extends moorhen.backupKey {
     serNo: number | string;
     data: string;
 }
 
-export interface CloudStorageInstanceInterface extends Omit<LocalStorageInstanceInterface, "getItem"> {
+export interface CloudStorageInstanceInterface extends Omit<moorhen.LocalStorageInstance, "getItem"> {
     getItem: (arg0: string) => Promise<string | Uint8Array | ArrayBuffer>;
     setItem: (arg0: string, arg1: string | ArrayBuffer) => Promise<string>;
     exportBackupCallback: (arg0: CloudBackupInterface) => Promise<string | void>;
@@ -67,7 +67,7 @@ export class CloudStorageInstance implements CloudStorageInstanceInterface {
     }
     
     setItem(keyString: string, value: string | ArrayBuffer): Promise<string> {
-        const key: backupKeyInterface = JSON.parse(keyString)
+        const key: moorhen.backupKey = JSON.parse(keyString)
 
         let backup: CloudBackupInterface
         if (key.type === 'version') {

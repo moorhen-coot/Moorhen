@@ -1,8 +1,8 @@
 import React, { ErrorInfo } from 'react';
 import { Modal, Button } from "react-bootstrap"
 import { doDownload, createLocalStorageInstance } from "./utils/MoorhenUtils"
-import { MoorhenTimeCapsule, backupSessionType } from "./utils/MoorhenTimeCapsule"
-
+import { MoorhenTimeCapsule } from "./utils/MoorhenTimeCapsule"
+import { moorhen } from './types/moorhen';
 
 type ErrorBoundaryPropsType = {
     urlPrefix: string;
@@ -44,7 +44,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryPropsType, Error
         timeCapsule.storageInstance = createLocalStorageInstance('Moorhen-TimeCapsule') 
         await timeCapsule.init()
         const backup = await timeCapsule.retrieveLastBackup() as string
-        const sessionData: backupSessionType = JSON.parse(backup)
+        const sessionData: moorhen.backupSession = JSON.parse(backup)
         const promises = sessionData.moleculeData.map(molData => {
             return this.doAsyncDownload([molData.pdbData], `${molData.name}.pdb`)
         })

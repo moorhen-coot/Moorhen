@@ -1,11 +1,10 @@
 import { useRef } from "react";
 import { Form } from "react-bootstrap";
 import { moorhen } from "../../types/moorhen";
-import { MoorhenMapInterface } from "../../utils/MoorhenMap";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 
 export const MoorhenRenameDisplayObjectMenuItem = (props: {
-    item: moorhen.Molecule | MoorhenMapInterface;
+    item: moorhen.Molecule | moorhen.Map;
     setCurrentName: React.Dispatch<React.SetStateAction<string>>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {

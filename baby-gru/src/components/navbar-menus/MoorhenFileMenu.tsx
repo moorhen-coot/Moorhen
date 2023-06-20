@@ -1,6 +1,6 @@
 import { NavDropdown, Form, Button, InputGroup, SplitButton, Dropdown, Modal, Card, Stack } from "react-bootstrap";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
-import { MoorhenMap, MoorhenMapInterface, selectedColumnsType } from "../../utils/MoorhenMap";
+import { MoorhenMap } from "../../utils/MoorhenMap";
 import { useState, useRef, useEffect } from "react";
 import { MoorhenLoadTutorialDataMenuItem } from "../menu-item/MoorhenLoadTutorialDataMenuItem"
 import { MoorhenAssociateReflectionsToMap } from "../menu-item/MoorhenAssociateReflectionsToMap";
@@ -12,7 +12,7 @@ import { MoorhenImportMapCoefficientsMenuItem } from "../menu-item/MoorhenImport
 import { MoorhenDeleteEverythingMenuItem } from "../menu-item/MoorhenDeleteEverythingMenuItem"
 import { MenuItem } from "@mui/material";
 import { convertViewtoPx, doDownload, readTextFile, getMultiColourRuleArgs } from "../../utils/MoorhenUtils";
-import { backupKeyInterface, backupSessionType, getBackupLabel } from "../../utils/MoorhenTimeCapsule"
+import { getBackupLabel } from "../../utils/MoorhenTimeCapsule"
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { moorhen } from "../../types/moorhen";
 
@@ -23,7 +23,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     const [remoteSource, setRemoteSource] = useState<string>("PDBe")
     const [isValidPdbId, setIsValidPdbId] = useState<boolean>(true)
     const [showBackupsModal, setShowBackupsModal] = useState<boolean>(false)
-    const [backupKeys, setBackupKeys] = useState<null | backupKeyInterface[]>(null)
+    const [backupKeys, setBackupKeys] = useState<null | moorhen.backupKey[]>(null)
     const pdbCodeFetchInputRef = useRef<HTMLInputElement | null>(null);
     const fetchMapDataCheckRef = useRef<HTMLInputElement | null>(null);
 
@@ -165,7 +165,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         })
     }
 
-    const fetchMtzFromURL = async (url: RequestInfo | URL, mapName: string, selectedColumns: selectedColumnsType): Promise<void> => {
+    const fetchMtzFromURL = async (url: RequestInfo | URL, mapName: string, selectedColumns: moorhen.selectedMtzColumns): Promise<void> => {
         const newMap = new MoorhenMap(props.commandCentre)
         return new Promise(async () => {
             try {
@@ -180,7 +180,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
 
     const loadSessionJSON = async (sessionDataString: string): Promise<void> => {
         props.timeCapsuleRef.current.busy = true
-        const sessionData: backupSessionType = JSON.parse(sessionDataString)
+        const sessionData: moorhen.backupSession = JSON.parse(sessionDataString)
         
         // Delete current scene
         props.molecules.forEach(molecule => {
@@ -227,7 +227,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         
         const loadPromises = await Promise.all([...newMoleculePromises, ...newMapPromises])
         const newMolecules = loadPromises.filter(item => item.type === 'molecule') as moorhen.Molecule[] 
-        const newMaps = loadPromises.filter(item => item.type === 'map') as MoorhenMapInterface[] 
+        const newMaps = loadPromises.filter(item => item.type === 'map') as moorhen.Map[] 
 
         // Draw the molecules with the styles stored in session
         let drawPromises: Promise<boolean>[] = []
@@ -362,7 +362,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         await props.timeCapsuleRef.current.updateDataFiles()
         const session = await props.timeCapsuleRef.current.fetchSession(false)
         const sessionString = JSON.stringify(session)
-        const key: backupKeyInterface = {
+        const key: moorhen.backupKey = {
             dateTime: `${Date.now()}`,
             type: 'manual',
             molNames: session.moleculeData.map(mol => mol.name),
@@ -376,7 +376,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         return props.timeCapsuleRef.current.createBackup(keyString, sessionString)
     }
 
-    const getBackupCards = (sortedKeys: backupKeyInterface[]) => {
+    const getBackupCards = (sortedKeys: moorhen.backupKey[]) => {
         if (sortedKeys && sortedKeys.length > 0) {
             return sortedKeys.map((key, index) => {
                 return  <Card key={`${key.label}-${index}`} style={{marginTop: '0.5rem'}}>

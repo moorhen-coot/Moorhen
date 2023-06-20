@@ -7,8 +7,6 @@ import { isDarkBackground } from "../../../src/WebGLgComponents/mgWebGL"
 import { MoorhenLegendToast } from './MoorhenLegendToast'
 import { moorhen } from "../../../src/types/moorhen";
 import { webGL } from "../../../src/types/mgWebGL";
-import { MoorhenMapInterface } from '../../../src/utils/MoorhenMap'
-import { MoorhenTimeCapsuleInterface } from '../../../src/utils/MoorhenTimeCapsule'
 
 export interface MoorhenCloudControlsInterface extends MoorhenControlsInterface {
     setNotifyNewContent: React.Dispatch<React.SetStateAction<boolean>>;
@@ -18,7 +16,7 @@ export interface MoorhenCloudControlsInterface extends MoorhenControlsInterface 
 
 const initialMoleculesState: moorhen.Molecule[] = []
 
-const initialMapsState: MoorhenMapInterface[] = []
+const initialMapsState: moorhen.Map[] = []
 
 interface MoorhenCloudAppPropsInterface extends MoorhenContainerPropsInterface {
     exportCallback: (arg0: string, arg1: string) => Promise<void>;
@@ -28,16 +26,16 @@ interface MoorhenCloudAppPropsInterface extends MoorhenContainerPropsInterface {
 
 export const MoorhenCloudApp = (props: MoorhenCloudAppPropsInterface) => {
     const glRef = useRef<webGL.MGWebGL | null>(null)
-    const timeCapsuleRef = useRef<MoorhenTimeCapsuleInterface | null>(null)
+    const timeCapsuleRef = useRef<moorhen.TimeCapsule | null>(null)
     const commandCentre = useRef<moorhen.CommandCentre | null>(null)
     const moleculesRef = useRef<moorhen.Molecule[] | null>(null)
-    const mapsRef = useRef<MoorhenMapInterface[] | null>(null)
-    const activeMapRef = useRef<MoorhenMapInterface | null>(null)
+    const mapsRef = useRef<moorhen.Map[] | null>(null)
+    const activeMapRef = useRef<moorhen.Map | null>(null)
     const lastHoveredAtom = useRef<HoveredAtomType | null>(null)
     const isDirty = useRef<boolean>(false)
     const busyContouring = useRef<boolean>(false)
     const preferences = useContext<undefined | MoorhenPreferencesInterface>(PreferencesContext)
-    const [activeMap, setActiveMap] = useState<MoorhenMapInterface | null>(null)
+    const [activeMap, setActiveMap] = useState<moorhen.Map | null>(null)
     const [hoveredAtom, setHoveredAtom] = useState<HoveredAtomType>({ molecule: null, cid: null })
     const [busy, setBusy] = useState<boolean>(false)
     const [molecules, changeMolecules] = useReducer(itemReducer, initialMoleculesState)
@@ -52,7 +50,7 @@ export const MoorhenCloudApp = (props: MoorhenCloudAppPropsInterface) => {
     const [notifyNewContent, setNotifyNewContent] = useState<boolean>(false)
 
     moleculesRef.current = molecules as moorhen.Molecule[]
-    mapsRef.current = maps as MoorhenMapInterface[]
+    mapsRef.current = maps as moorhen.Map[]
     activeMapRef.current = activeMap
 
     const forwardCollectedControls = useCallback((controls: MoorhenControlsInterface) => {
@@ -66,7 +64,7 @@ export const MoorhenCloudApp = (props: MoorhenCloudAppPropsInterface) => {
         ...props, glRef, timeCapsuleRef, commandCentre, moleculesRef, mapsRef, 
         activeMapRef, lastHoveredAtom, preferences, activeMap, setActiveMap,
         busy, setBusy, molecules: molecules as moorhen.Molecule[], changeMolecules,
-        maps: maps as MoorhenMapInterface[], changeMaps, backgroundColor, setBackgroundColor,
+        maps: maps as moorhen.Map[], changeMaps, backgroundColor, setBackgroundColor,
         cootInitialized, setCootInitialized, setShowColourRulesToast, hoveredAtom, setHoveredAtom,
         showToast, setShowToast, toastContent, setToastContent, showColourRulesToast,
     }
@@ -86,7 +84,7 @@ export const MoorhenCloudApp = (props: MoorhenCloudAppPropsInterface) => {
             busyContouring.current = true
             isDirty.current = false
             await Promise.all(
-                maps.map((map: MoorhenMapInterface) => {
+                maps.map((map: moorhen.Map) => {
                   return map.doCootContour(
                     glRef, ...glRef.current.origin.map(coord => -coord) as [number, number, number], map.mapRadius, map.contourLevel
                   )     
@@ -112,7 +110,7 @@ export const MoorhenCloudApp = (props: MoorhenCloudAppPropsInterface) => {
     
     const handleRadiusChangeCallback = useCallback(async (evt) => {
         if (props.viewOnly) {
-            maps.forEach((map: MoorhenMapInterface) => {
+            maps.forEach((map: moorhen.Map) => {
                 const newRadius = map.mapRadius + parseInt(evt.detail.factor)
                 map.mapRadius = newRadius
             })
@@ -122,7 +120,7 @@ export const MoorhenCloudApp = (props: MoorhenCloudAppPropsInterface) => {
     
     const handleWheelContourLevelCallback = useCallback(async (evt) => {
         if (props.viewOnly) {
-            maps.forEach((map: MoorhenMapInterface) => {
+            maps.forEach((map: moorhen.Map) => {
                 const newLevel = evt.detail.factor > 1 ? map.contourLevel + 0.1 : map.contourLevel - 0.1
                 map.contourLevel = newLevel
           })
@@ -153,7 +151,7 @@ export const MoorhenCloudApp = (props: MoorhenCloudAppPropsInterface) => {
 
     useEffect(() => {
         if (props.viewOnly && maps.length > 0) {
-            maps.forEach((map: MoorhenMapInterface) => {
+            maps.forEach((map: moorhen.Map) => {
                 map.doCootContour(
                     glRef, ...glRef.current.origin.map(coord => -coord) as [number, number, number], 13.0, 0.8
               )

@@ -1,17 +1,16 @@
 import { Form } from "react-bootstrap";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
-import { MoorhenMapInterface } from "../../utils/MoorhenMap";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { MolChange } from "../MoorhenApp";
 
 export const MoorhenDeleteDisplayObjectMenuItem = (props: {
-    changeItemList: (arg0: MolChange<(moorhen.Molecule | MoorhenMapInterface)>) => void;
-    item: MoorhenMapInterface | moorhen.Molecule;
+    changeItemList: (arg0: MolChange<(moorhen.Molecule | moorhen.Map)>) => void;
+    item: moorhen.Map | moorhen.Molecule;
     glRef: React.RefObject<webGL.MGWebGL>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-    activeMap?: MoorhenMapInterface;
-    setActiveMap?: React.Dispatch<React.SetStateAction<MoorhenMapInterface>>; 
+    activeMap?: moorhen.Map;
+    setActiveMap?: React.Dispatch<React.SetStateAction<moorhen.Map>>; 
 }) => {
 
     const panelContent = <>

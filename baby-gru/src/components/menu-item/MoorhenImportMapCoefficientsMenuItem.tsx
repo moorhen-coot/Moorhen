@@ -1,6 +1,6 @@
 import { Dispatch, RefObject, SetStateAction, useRef, useState } from "react"
 import { MoorhenMtzWrapper } from "../../utils/MoorhenMtzWrapper"
-import { MoorhenMap, MoorhenMapInterface, selectedColumnsType } from "../../utils/MoorhenMap"
+import { MoorhenMap } from "../../utils/MoorhenMap"
 import { Col, Form, FormSelect, Row } from "react-bootstrap"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
@@ -8,8 +8,8 @@ import { MolChange } from "../MoorhenApp"
 
 export const MoorhenImportMapCoefficientsMenuItem = (props: {
     commandCentre: RefObject<moorhen.CommandCentre>;
-    changeMaps: (arg0: MolChange<MoorhenMapInterface>) => void;
-    setActiveMap: Dispatch<SetStateAction<MoorhenMapInterface>>
+    changeMaps: (arg0: MolChange<moorhen.Map>) => void;
+    setActiveMap: Dispatch<SetStateAction<moorhen.Map>>
     setPopoverIsShown: Dispatch<SetStateAction<boolean>>     
 }) => {
 
@@ -32,7 +32,7 @@ export const MoorhenImportMapCoefficientsMenuItem = (props: {
         setColumns(allColumnNames)
     }
 
-    const handleFile = async (file: Blob, selectedColumns: selectedColumnsType) => {
+    const handleFile = async (file: Blob, selectedColumns: moorhen.selectedMtzColumns) => {
         const newMap = new MoorhenMap(props.commandCentre)
         await newMap.loadToCootFromMtzFile(file, selectedColumns)
         props.changeMaps({ action: 'Add', item: newMap })
