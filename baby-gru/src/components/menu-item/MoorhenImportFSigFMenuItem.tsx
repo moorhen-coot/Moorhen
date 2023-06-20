@@ -3,11 +3,10 @@ import { Col, Row } from "react-bootstrap"
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect"
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
-import { MoorhenMapInterface } from "../../utils/MoorhenMap"
 import { moorhen } from "../../types/moorhen";
 
 export const MoorhenImportFSigFMenuItem = (props:{
-    maps: MoorhenMapInterface[];
+    maps: moorhen.Map[];
     molecules: moorhen.Molecule[];
     selectedMolNo?: number;
     commandCentre: React.RefObject<moorhen.CommandCentre>;

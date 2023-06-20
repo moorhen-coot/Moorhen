@@ -7,7 +7,6 @@ import { Card, Button } from "react-bootstrap";
 import { highlight, languages } from 'prismjs/components/prism-core';
 import Editor from 'react-simple-code-editor';
 import { MoorhenScriptApi } from "../../utils/MoorhenScriptAPI"
-import { MoorhenMapInterface } from "../../utils/MoorhenMap";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import 'prismjs/themes/prism.css';
@@ -16,7 +15,7 @@ import 'prismjs/components/prism-javascript';
 
 export const MoorhenScriptModal = (props: {
     molecules: moorhen.Molecule[];
-    maps: MoorhenMapInterface[];
+    maps: moorhen.Map[];
     glRef: React.RefObject<webGL.MGWebGL>;
     isDark: boolean;
     windowHeight: number;

@@ -3,13 +3,12 @@ import { Col, Row, Form } from 'react-bootstrap';
 import { MoorhenMapSelect } from '../select/MoorhenMapSelect'
 import { MoorhenMoleculeSelect } from '../select/MoorhenMoleculeSelect'
 import { moorhen } from "../../types/moorhen";
-import { MoorhenMapInterface } from "../../utils/MoorhenMap";
 import { gemmi } from "../../types/gemmi";
 
 export const MoorhenValidationListWidgetBase = (props: {
     molecules: moorhen.Molecule[];
-    maps: MoorhenMapInterface[];
-    filterMapFunction?: (arg0: MoorhenMapInterface) => boolean;
+    maps: moorhen.Map[];
+    filterMapFunction?: (arg0: moorhen.Map) => boolean;
     fetchData: (arg0: number, arg1: number) => Promise<any>;
     dropdownId: number;
     accordionDropdownId: number;
@@ -116,4 +115,4 @@ export const MoorhenValidationListWidgetBase = (props: {
             </Fragment>
 }
 
-MoorhenValidationListWidgetBase.defaultProps = {filterMapFunction: (maps: MoorhenMapInterface) => {return true}, extraControlForm: [], extraControlFormValue: null, enableMapSelect: true}
+MoorhenValidationListWidgetBase.defaultProps = {filterMapFunction: (maps: moorhen.Map) => {return true}, extraControlForm: [], extraControlFormValue: null, enableMapSelect: true}

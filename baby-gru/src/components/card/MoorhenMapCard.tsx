@@ -10,7 +10,7 @@ import MoorhenSlider from "../misc/MoorhenSlider";
 import { IconButton, MenuItem, Tooltip } from "@mui/material";
 import { SketchPicker } from "react-color";
 import { MoorhenSideBarAccordionPropsInterface } from '../list/MoorhenSideBar';
-import { MoorhenMapInterface } from '../../utils/MoorhenMap';
+import { moorhen } from "../../types/moorhen"
 
 type ActionButtonType = {
     label: string;
@@ -21,7 +21,7 @@ type ActionButtonType = {
 interface MoorhenMapCardPropsInterface extends MoorhenSideBarAccordionPropsInterface {
     key: number;
     index: number;
-    map: MoorhenMapInterface;
+    map: moorhen.Map;
     initialContour: number;
     initialRadius: number;
     currentDropdownMolNo: number;

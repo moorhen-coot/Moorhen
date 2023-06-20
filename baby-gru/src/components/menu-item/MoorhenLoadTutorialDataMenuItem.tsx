@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import { Form } from "react-bootstrap";
-import { MoorhenMap, MoorhenMapInterface } from "../../utils/MoorhenMap";
+import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
@@ -14,9 +14,9 @@ export const MoorhenLoadTutorialDataMenuItem = (props: {
     defaultBondSmoothness: number;
     urlPrefix: string;
     glRef: React.RefObject<webGL.MGWebGL>;
-    changeMaps: (arg0: MolChange<MoorhenMapInterface>) => void;
+    changeMaps: (arg0: MolChange<moorhen.Map>) => void;
     changeMolecules: (arg0: MolChange<moorhen.Molecule>) => void;
-    setActiveMap: React.Dispatch<React.SetStateAction<MoorhenMapInterface>>;
+    setActiveMap: React.Dispatch<React.SetStateAction<moorhen.Map>>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
 

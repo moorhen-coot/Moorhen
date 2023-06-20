@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from "react";
 import { Form, FormSelect } from "react-bootstrap";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
-import { MoorhenMap, MoorhenMapInterface } from "../../utils/MoorhenMap";
+import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MolChange } from "../MoorhenApp";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
@@ -12,8 +12,8 @@ import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 
 export const MoorhenMapMaskingMenuItem = (props: {
     molecules: moorhen.Molecule[];
-    maps: MoorhenMapInterface[];
-    changeMaps: (arg0: MolChange<MoorhenMapInterface>) => void;
+    maps: moorhen.Map[];
+    changeMaps: (arg0: MolChange<moorhen.Map>) => void;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>
     commandCentre: React.RefObject<moorhen.CommandCentre>;
 }) => {

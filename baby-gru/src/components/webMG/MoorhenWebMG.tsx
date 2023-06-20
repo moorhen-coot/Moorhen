@@ -4,23 +4,21 @@ import { MGWebGL } from '../../WebGLgComponents/mgWebGL.js';
 import { MoorhenColourRules } from "../modal/MoorhenColourRules.js"
 import { MoorhenContextMenu } from "../context-menu/MoorhenContextMenu.js"
 import { cidToSpec, convertViewtoPx } from '../../utils/MoorhenUtils';
-import { MoorhenTimeCapsuleInterface } from '../../utils/MoorhenTimeCapsule';
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { MoorhenMapInterface } from '../../utils/MoorhenMap';
 import { MolChange } from "../MoorhenApp"
 import { MoorhenPreferencesInterface } from '../../utils/MoorhenPreferences';
 
 interface MoorhenWebMGPropsInterface {
-    timeCapsuleRef: React.RefObject<MoorhenTimeCapsuleInterface>;
+    timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     molecules: moorhen.Molecule[];
     changeMolecules: (arg0: MolChange<moorhen.Molecule>) => void;
-    maps: MoorhenMapInterface[];
-    changeMaps: (arg0: MolChange<MoorhenMapInterface>) => void;
+    maps: moorhen.Map[];
+    changeMaps: (arg0: MolChange<moorhen.Map>) => void;
     width: () => number;
     height: () => number;
-    activeMap: MoorhenMapInterface;
+    activeMap: moorhen.Map;
     backgroundColor: [number, number, number, number];
     setBackgroundColor: React.Dispatch<React.SetStateAction<[number, number, number, number]>>;
     isDark: boolean;

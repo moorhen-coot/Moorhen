@@ -3,7 +3,6 @@ import { hexToRgb } from "@mui/material";
 import localforage from 'localforage';
 import * as vec3 from 'gl-matrix/vec3';
 import * as mat3 from 'gl-matrix/mat3';
-import { LocalStorageInstanceInterface } from "./MoorhenTimeCapsule";
 import { MoorhenShortcutType } from "./MoorhenPreferences";
 import { moorhen } from "../types/moorhen";
 import { gemmi } from "../types/gemmi";
@@ -553,7 +552,7 @@ export const hexToHsl = (hex: string): [number, number, number] => {
     return [ h, s, l ];
 }
 
-export const createLocalStorageInstance = (name: string, empty: boolean = false): LocalStorageInstanceInterface => {
+export const createLocalStorageInstance = (name: string, empty: boolean = false): moorhen.LocalStorageInstance => {
     const instance = localforage.createInstance({
         driver: [localforage.INDEXEDDB, localforage.LOCALSTORAGE],
         name: name,

@@ -1,20 +1,19 @@
-import { MoorhenMapInterface } from "./MoorhenMap";
 import { moorhen } from "../types/moorhen"
 import { webGL } from "../types/mgWebGL";
 
 interface MoorhenScriptApiInterface {
     molecules: moorhen.Molecule[];
-    maps: MoorhenMapInterface[];
+    maps: moorhen.Map[];
     glRef: React.RefObject<webGL.MGWebGL>;
 }
 
 export class MoorhenScriptApi implements MoorhenScriptApiInterface {
     
     molecules: moorhen.Molecule[];
-    maps: MoorhenMapInterface[];
+    maps: moorhen.Map[];
     glRef: React.RefObject<webGL.MGWebGL>;
 
-    constructor(molecules: moorhen.Molecule[], maps: MoorhenMapInterface[], glRef: React.RefObject<webGL.MGWebGL>) {
+    constructor(molecules: moorhen.Molecule[], maps: moorhen.Map[], glRef: React.RefObject<webGL.MGWebGL>) {
         this.molecules = molecules
         this.maps = maps
         this.glRef = glRef

@@ -2,10 +2,10 @@ import { useCallback, useRef } from "react"
 import { Button, Row, Stack } from "react-bootstrap"
 import { MoorhenBackupSelect } from "../select/MoorhenBackupSelect"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
-import { MoorhenTimeCapsuleInterface } from "../../utils/MoorhenTimeCapsule"
+import { moorhen } from "../../types/moorhen"
 
 export const MoorhenBackupsMenuItem = (props: {
-    timeCapsuleRef: React.RefObject<MoorhenTimeCapsuleInterface>;
+    timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
     disabled: boolean;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
     setShowBackupsModal: React.Dispatch<React.SetStateAction<boolean>>;

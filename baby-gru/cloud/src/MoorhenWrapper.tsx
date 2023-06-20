@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { MoorhenCloudApp, MoorhenCloudControlsInterface } from './components/MoorhenCloudApp';
 import { CloudBackupInterface, CloudStorageInstance, CloudStorageInstanceInterface } from "./utils/MoorhenCloudTimeCapsule"
 import { MoorhenMolecule } from "../../src/utils/MoorhenMolecule"
-import { MoorhenMap, MoorhenMapInterface, selectedColumnsType } from "../../src/utils/MoorhenMap"
+import { MoorhenMap } from "../../src/utils/MoorhenMap"
 import { guid } from "../../src/utils/MoorhenUtils"
 import { MoorhenPreferencesValuesInterface, PreferencesContextProvider, getDefaultValues } from "../../src/utils/MoorhenPreferences";
 import reportWebVitals from '../../src/reportWebVitals'
@@ -39,7 +39,7 @@ type PdbInputFileType = {
 type MapInputFileType = {
   type: 'mtz';
   uniqueId?: string;
-  args: [string, string, selectedColumnsType];
+  args: [string, string, moorhen.selectedMtzColumns];
 }
 
 type LegendInputFileType = {
@@ -221,7 +221,7 @@ export default class MoorhenWrapper {
     }
 }
 
-  async loadMtzData(uniqueId: string, inputFile: string, mapName: string, selectedColumns: selectedColumnsType): Promise<MoorhenMapInterface> {
+  async loadMtzData(uniqueId: string, inputFile: string, mapName: string, selectedColumns: moorhen.selectedMtzColumns): Promise<moorhen.Map> {
     const newMap = new MoorhenMap(this.controls.commandCentre)
     newMap.litLines = this.preferences.defaultMapLitLines
     newMap.uniqueId = uniqueId

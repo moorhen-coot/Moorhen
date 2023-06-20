@@ -1,13 +1,13 @@
 import { ChangeEvent, forwardRef } from "react";
 import { Form, FormSelect } from "react-bootstrap";
-import { MoorhenMapInterface } from "../../utils/MoorhenMap";
+import { moorhen } from "../../types/moorhen";
 
 type MoorhenMapSelectPropsType = {
     height?: string;
     width?: string;
     label?: string;
-    maps: MoorhenMapInterface[];
-    filterFunction?: (arg0: MoorhenMapInterface) => boolean;
+    maps: moorhen.Map[];
+    filterFunction?: (arg0: moorhen.Map) => boolean;
     onChange?: (arg0: React.ChangeEvent<HTMLSelectElement>) => void;
 }
 

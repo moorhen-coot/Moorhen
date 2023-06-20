@@ -3,13 +3,12 @@ import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { MoorhenMapInterface } from "../../utils/MoorhenMap";
 
 export const MoorhenAddWatersMenuItem = (props: {
     molecules: moorhen.Molecule[];
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
-    activeMap: MoorhenMapInterface;
+    activeMap: moorhen.Map;
     glRef: React.RefObject<webGL.MGWebGL>;
 }) => {
 
