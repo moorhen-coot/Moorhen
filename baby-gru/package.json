@@ -112,19 +112,21 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
+    "transpile-ts-worker": "npx tsc --module es2015 --lib webworker --skipLibCheck public/baby-gru/CootWorker.ts && sed -i '/export {}/d' public/baby-gru/CootWorker.js",
+    "prestart": "npm run transpile-ts-worker",
     "start": "react-scripts start",
-    "start-tsc": "npx nodemon --trace-warnings",
-    "build": "react-scripts build",
-    "build-cloud-dev": "webpack  --mode development --devtool inline-source-map",
-    "build-cloud": "webpack --mode production",
+    "build": "npm run transpile-ts-worker && react-scripts build",
+    "build-npm-registry": "npm run transpile-ts-worker && webpack --mode development --devtool inline-source-map --env destination='npmRegistry'",
+    "build-cloud-dev": "npm run transpile-ts-worker && webpack  --mode development --devtool inline-source-map --env destination='ccp4Cloud'",
+    "build-cloud": "npm run transpile-ts-worker && webpack --mode production --env destination='ccp4Cloud'",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "dev": "concurrently -k \"BROWSER=none npm start\" \"npm:electron\"",
     "electron": "wait-on tcp:3000 && electron-forge start",
-    "package": "react-scripts build && electron-forge package",
-    "make-mac": "react-scripts build && electron-forge make --platform darwin",
-    "make-linux": "react-scripts build && electron-forge make --platform linux",
-    "make-win32": "react-scripts build && electron-forge make --platform win32"
+    "package": "npm run build && electron-forge package",
+    "make-mac": "npm run build && electron-forge make --platform darwin",
+    "make-linux": "npm run build && electron-forge make --platform linux",
+    "make-win32": "npm run build && electron-forge make --platform win32"
   },
   "eslintConfig": {
     "extends": [
