@@ -2,17 +2,19 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { MoorhenCloudApp, MoorhenCloudControlsInterface } from './components/MoorhenCloudApp';
 import { CloudBackupInterface, CloudStorageInstance, CloudStorageInstanceInterface } from "./utils/MoorhenCloudTimeCapsule"
-import { MoorhenMolecule, MoorhenMoleculeInterface } from "../../src/utils/MoorhenMolecule"
+import { MoorhenMolecule } from "../../src/utils/MoorhenMolecule"
 import { MoorhenMap, MoorhenMapInterface, selectedColumnsType } from "../../src/utils/MoorhenMap"
 import { guid } from "../../src/utils/MoorhenUtils"
 import { MoorhenPreferencesValuesInterface, PreferencesContextProvider, getDefaultValues } from "../../src/utils/MoorhenPreferences";
 import reportWebVitals from '../../src/reportWebVitals'
 import localforage from 'localforage';
 import parse from 'html-react-parser';
+import { moorhen } from "../../src/types/moorhen";
+import { libcootApi } from "../../src/types/libcoot";
 import '../../src/index.css';
 import '../../src/App.css';
 
-declare var createCCP4Module: (arg0: any) => Promise<CCP4ModuleType>;
+declare var createCCP4Module: (arg0: any) => Promise<libcootApi.CCP4ModuleType>;
 
 const createModule = () => {
   createCCP4Module({
@@ -236,7 +238,7 @@ export default class MoorhenWrapper {
     })  
   }
 
-  async loadPdbData(uniqueId: string, inputFile: string, molName: string): Promise<MoorhenMoleculeInterface> {
+  async loadPdbData(uniqueId: string, inputFile: string, molName: string): Promise<moorhen.Molecule> {
     const newMolecule = new MoorhenMolecule(this.controls.commandCentre, this.monomerLibrary)
 
     return new Promise(async (resolve, reject) => {

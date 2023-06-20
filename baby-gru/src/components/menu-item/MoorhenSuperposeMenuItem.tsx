@@ -3,13 +3,13 @@ import { Form } from "react-bootstrap";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
-import { MoorhenMoleculeInterface } from "../../utils/MoorhenMolecule";
-import { MoorhenCommandCentreInterface } from "../../utils/MoorhenCommandCentre";
+import { moorhen } from "../../types/moorhen";
+import { webGL } from "../../types/mgWebGL";
 
 export const MoorhenSuperposeMenuItem = (props: {
-    molecules: MoorhenMoleculeInterface[];
-    commandCentre: React.RefObject<MoorhenCommandCentreInterface>;
-    glRef: React.RefObject<mgWebGLType>;
+    molecules: moorhen.Molecule[];
+    commandCentre: React.RefObject<moorhen.CommandCentre>;
+    glRef: React.RefObject<webGL.MGWebGL>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>; 
 }) => {
     

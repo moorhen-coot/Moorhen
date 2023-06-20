@@ -2,13 +2,13 @@ import React, { useEffect, useState } from "react";
 import { Card, Form, Row, Col, DropdownButton, Stack } from "react-bootstrap";
 import parse from 'html-react-parser'
 import { MenuItem } from "@mui/material";
-import { MoorhenCommandCentreInterface } from "../../utils/MoorhenCommandCentre"
-import { MoorhenMoleculeInterface } from "../../utils/MoorhenMolecule";
+import { moorhen } from "../../types/moorhen";
+import { webGL } from "../../types/mgWebGL";
 
 export const MoorhenLigandList = (props: { 
-    commandCentre: React.RefObject<MoorhenCommandCentreInterface>;
-    isDark: boolean; molecule: MoorhenMoleculeInterface;
-    glRef: React.RefObject<mgWebGLType>; 
+    commandCentre: React.RefObject<moorhen.CommandCentre>;
+    isDark: boolean; molecule: moorhen.Molecule;
+    glRef: React.RefObject<webGL.MGWebGL>; 
 }) => {
 
     const [showState, setShowState] = useState<{ [key: string]: boolean }>({})

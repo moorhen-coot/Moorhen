@@ -8,197 +8,29 @@ import { contactsToCylindersInfo, contactsToLinesInfo } from '../WebGLgComponent
 import { singletonsToLinesInfo } from '../WebGLgComponents/mgWebGLAtomsToPrimitives';
 import { guid, readTextFile, readGemmiStructure, cidToSpec, residueCodesThreeToOne, centreOnGemmiAtoms, getBufferAtoms, 
     nucleotideCodesThreeToOne, hexToHsl, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, findConsecutiveRanges, getCubeLines} from './MoorhenUtils'
-import { MoorhenCommandCentreInterface, cootCommandKwargsType } from "./MoorhenCommandCentre"
-import { WorkerResponseType } from "./MoorhenCommandCentre"
 import { quatToMat4 } from '../WebGLgComponents/quatToMat4.js';
 import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
 import * as vec3 from 'gl-matrix/vec3';
 import * as mat3 from 'gl-matrix/mat3';
 import * as quat4 from 'gl-matrix/quat';
+import { moorhen } from "../types/moorhen"
+import { webGL } from "../types/mgWebGL"
+import { gemmi } from "../types/gemmi"
 
-export type MoorhenResidueInfoType = {
-    resCode: string;
-    resNum: number;
-    cid: string;
-}
-
-export type MoorhenLigandInfoType = {
-    resName: string;
-    chainName: string;
-    resNum: string;
-    modelName: string;
-}
-
-export type MoorhenSequenceType = {
-    name: string;
-    chain: string;
-    type: number;
-    sequence: MoorhenResidueInfoType[];
-}
-
-export type MoorhenResidueSpecType = {
-    mol_name: string;
-    mol_no: string;
-    chain_id: string;
-    res_no: number;
-    res_name: string;
-    atom_name: string;
-    ins_code: string;
-    alt_conf: string;
-    cid: string
-}
-
-export type MoorhenAtomInfoType = {
-    pos: [number, number, number];
-    x: number;
-    y: number;
-    z: number;
-    charge: number;
-    element: emscriptemInstanceInterface<string>;
-    symbol: string;
-    tempFactor: number;
-    serial: string;
-    name: string;
-    has_altloc: boolean;
-    alt_loc: string;
-    mol_name: string;
-    chain_id: string;
-    res_no: string;
-    res_name: string;
-    label: string;
-}
-
-type MoleculeColourRuleType = {
-    commandInput: cootCommandKwargsType;
-    isMultiColourRule: boolean;
-    ruleType: string;
-    color: string;
-    label: string;
-}
-
-type DisplayObjectType = {
-    symmetryMatrices: any;
-    [attr: string]: any;
-}
-
-export type cootBondOptionsType = {
-    isDarkBackground: boolean;
-    smoothness: number;
-    width: number;
-    atomRadiusBondRatio: number;
-}
-
-type MoorhenColourRuleType = {
-    commandInput: {
-        message: string;
-        command: string;
-        returnType: string;
-        commandArgs: [number, string];
-    };
-    isMultiColourRule: boolean;
-    ruleType: string;
-    label: string;
-}
-
-export interface MoorhenMoleculeInterface {
-    drawUnitCell(glRef: React.RefObject<mgWebGLType>): void;
-    gemmiAtomsForCid: (cid: string) => Promise<MoorhenAtomInfoType[]>;
-    mergeMolecules(otherMolecules: MoorhenMoleculeInterface[], glRef: React.RefObject<mgWebGLType>, doHide?: boolean): Promise<void>;
-    setBackgroundColour(backgroundColour: [number, number, number, number]): void;
-    addDict(fileContent: string): Promise<void>;
-    addDictShim(fileContent: string): void;
-    toggleSymmetry(glRef: React.RefObject<mgWebGLType>): Promise<void>;
-    getDict(newTlc: string): string;
-    addLigandOfType(resType: string, glRef: React.RefObject<mgWebGLType>, fromMolNo?: number): Promise<WorkerResponseType>;
-    updateAtoms(): Promise<void>;
-    rigidBodyFit(cidsString: string, mapNo: number): Promise<WorkerResponseType>;
-    redo(glRef: React.RefObject<mgWebGLType>): Promise<void>;
-    undo(glRef: React.RefObject<mgWebGLType>): Promise<void>;
-    copyFragment(chainId: string, res_no_start: number, res_no_end: number, glRef: React.RefObject<mgWebGLType>, doRecentre?: boolean): Promise<MoorhenMoleculeInterface>;
-    show(style: string, glRef: React.RefObject<mgWebGLType>): Promise<void>;
-    setSymmetryRadius(radius: number, glRef: React.RefObject<mgWebGLType>): Promise<void>;
-    drawSymmetry: (glRef: React.RefObject<mgWebGLType>, fetchSymMatrix?: boolean) => Promise<void>;
-    getUnitCellParams():  { a: number; b: number; c: number; alpha: number; beta: number; gamma: number; };
-    replaceModelWithFile(glRef: React.RefObject<mgWebGLType>, fileUrl: string, molName: string): Promise<void>
-    delete(glRef: React.RefObject<mgWebGLType>): Promise<WorkerResponseType> 
-    setColourRules(glRef: React.RefObject<mgWebGLType>, ruleList: MoorhenColourRuleType[], redraw?: boolean): void;
-    fetchIfDirtyAndDraw(arg0: string, glRef: React.MutableRefObject<mgWebGLType>): Promise<boolean>;
-    drawGemmiAtomPairs: (glRef: React.ForwardedRef<mgWebGLType>, gemmiAtomPairs: any[], style: string,  colour: number[], labelled?: boolean, clearBuffers?: boolean) => void;
-    drawEnvironment: (glRef: React.RefObject<mgWebGLType>, chainID: string, resNo: number,  altLoc: string, labelled?: boolean) => Promise<void>;
-    centreOn: (glRef: React.ForwardedRef<mgWebGLType>, selectionCid?: string, animate?: boolean) => Promise<void>;
-    drawHover: (glRef: React.MutableRefObject<mgWebGLType>, cid: string) => Promise<void>;
-    clearBuffersOfStyle: (style: string, glRef: React.RefObject<mgWebGLType>) => void;
-    type: string;
-    commandCentre: React.RefObject<MoorhenCommandCentreInterface>;
-    enerLib: any;
-    HBondsAssigned: boolean;
-    atomsDirty: boolean;
-    isVisible: boolean;
-    name: string;
-    molNo: number;
-    gemmiStructure: GemmiStructureInterface;
-    sequences: MoorhenSequenceType[];
-    colourRules: MoleculeColourRuleType[];
-    ligands: MoorhenLigandInfoType[];
-    ligandDicts: {[comp_id: string]: string};
-    connectedToMaps: number[];
-    excludedSegments: string[];
-    symmetryOn: boolean;
-    symmetryRadius : number;
-    symmetryMatrices: any;
-    gaussianSurfaceSettings: {
-        sigma: number;
-        countourLevel: number;
-        boxRadius: number;
-        gridScale: number;
-    };
-    cootBondsOptions: cootBondOptionsType;
-    displayObjects: {
-        CBs: DisplayObjectType[];
-        CRs: DisplayObjectType[];
-        ligands: DisplayObjectType[];
-        gaussian: DisplayObjectType[];
-        MolecularSurface: DisplayObjectType[];
-        VdWSurface: DisplayObjectType[];
-        DishyBases: DisplayObjectType[];
-        VdwSpheres: DisplayObjectType[];
-        rama: DisplayObjectType[];
-        rotamer: DisplayObjectType[];
-        CDs: DisplayObjectType[];
-        allHBonds: DisplayObjectType[];
-        hover: DisplayObjectType[];
-        selection: DisplayObjectType[];
-        originNeighbours: DisplayObjectType[];
-        originNeighboursHBond: DisplayObjectType[];
-        originNeighboursBump: DisplayObjectType[];
-        transformation: { origin: [number, number, number], quat: any, centre: [number, number, number] }
-    };
-    uniqueId: string;
-    monomerLibraryPath: string;
-    applyTransform: (glRef: React.RefObject<mgWebGLType>) => Promise<void>;
-    getAtoms(format?: string): Promise<WorkerResponseType>;
-    hide: (style: string, glRef: React.RefObject<mgWebGLType>) => void;
-    redraw: (glRef: React.RefObject<mgWebGLType>) => Promise<void>;
-    setAtomsDirty: (newVal: boolean) => void;
-    hasVisibleBuffers: (excludeBuffers?: string[]) => boolean;
-    centreAndAlignViewOn(glRef: React.RefObject<mgWebGLType>, selectionCid: string, animate?: boolean): Promise<void>;
-    buffersInclude: (bufferIn: { id: string; }) => boolean;
-}
-
-export class MoorhenMolecule implements MoorhenMoleculeInterface {
+export class MoorhenMolecule implements moorhen.Molecule {
     
     type: string;
-    commandCentre: React.RefObject<MoorhenCommandCentreInterface>;
+    commandCentre: React.RefObject<moorhen.CommandCentre>;
     enerLib: any;
     HBondsAssigned: boolean;
     atomsDirty: boolean;
     isVisible: boolean;
     name: string;
     molNo: number | null
-    gemmiStructure: GemmiStructureInterface;
-    sequences: MoorhenSequenceType[];
-    colourRules: MoleculeColourRuleType[];
-    ligands: MoorhenLigandInfoType[];
+    gemmiStructure: gemmi.Structure;
+    sequences: moorhen.Sequence[];
+    colourRules: moorhen.MoleculeColourRule[];
+    ligands: moorhen.LigandInfo[];
     ligandDicts: {[comp_id: string]: string};
     connectedToMaps: number[];
     excludedSegments: string[];
@@ -212,31 +44,31 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         boxRadius: number;
         gridScale: number;
     };
-    cootBondsOptions: cootBondOptionsType;
+    cootBondsOptions: moorhen.cootBondOptions;
     displayObjects: {
-        CBs: DisplayObjectType[];
-        CRs: DisplayObjectType[];
-        ligands: DisplayObjectType[];
-        gaussian: DisplayObjectType[];
-        MolecularSurface: DisplayObjectType[];
-        VdWSurface: DisplayObjectType[];
-        DishyBases: DisplayObjectType[];
-        VdwSpheres: DisplayObjectType[];
-        rama: DisplayObjectType[];
-        rotamer: DisplayObjectType[];
-        CDs: DisplayObjectType[];
-        allHBonds: DisplayObjectType[];
-        hover: DisplayObjectType[];
-        selection: DisplayObjectType[];
-        originNeighbours: DisplayObjectType[];
-        originNeighboursHBond: DisplayObjectType[];
-        originNeighboursBump: DisplayObjectType[];
+        CBs: moorhen.DisplayObject[];
+        CRs: moorhen.DisplayObject[];
+        ligands: moorhen.DisplayObject[];
+        gaussian: moorhen.DisplayObject[];
+        MolecularSurface: moorhen.DisplayObject[];
+        VdWSurface: moorhen.DisplayObject[];
+        DishyBases: moorhen.DisplayObject[];
+        VdwSpheres: moorhen.DisplayObject[];
+        rama: moorhen.DisplayObject[];
+        rotamer: moorhen.DisplayObject[];
+        CDs: moorhen.DisplayObject[];
+        allHBonds: moorhen.DisplayObject[];
+        hover: moorhen.DisplayObject[];
+        selection: moorhen.DisplayObject[];
+        originNeighbours: moorhen.DisplayObject[];
+        originNeighboursHBond: moorhen.DisplayObject[];
+        originNeighboursBump: moorhen.DisplayObject[];
         transformation: { origin: [number, number, number], quat: any, centre: [number, number, number] }
     };
     uniqueId: string;
     monomerLibraryPath: string
     
-    constructor(commandCentre: React.RefObject<MoorhenCommandCentreInterface>, monomerLibraryPath="./baby-gru/monomers") {
+    constructor(commandCentre: React.RefObject<moorhen.CommandCentre>, monomerLibraryPath="./baby-gru/monomers") {
         this.type = 'molecule'
         this.commandCentre = commandCentre
         this.enerLib = new EnerLib()
@@ -293,7 +125,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
     }
 
 
-    async replaceModelWithFile(glRef: React.RefObject<mgWebGLType>, fileUrl: string, molName: string): Promise<void> {
+    async replaceModelWithFile(glRef: React.RefObject<webGL.MGWebGL>, fileUrl: string, molName: string): Promise<void> {
         let coordData: string
         let fetchResponse: Response
         
@@ -323,17 +155,17 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         return Promise.reject(cootResponse.data.result.status)
     }
 
-    toggleSymmetry(glRef: React.RefObject<mgWebGLType>): Promise<void> {
+    toggleSymmetry(glRef: React.RefObject<webGL.MGWebGL>): Promise<void> {
         this.symmetryOn = !this.symmetryOn;
         return this.drawSymmetry(glRef)
     }
 
-    setSymmetryRadius(radius: number, glRef: React.RefObject<mgWebGLType>): Promise<void> {
+    setSymmetryRadius(radius: number, glRef: React.RefObject<webGL.MGWebGL>): Promise<void> {
         this.symmetryRadius = radius
         return this.drawSymmetry(glRef)
     }
 
-    async fetchSymmetryMatrix(glRef: React.RefObject<mgWebGLType>): Promise<void> {
+    async fetchSymmetryMatrix(glRef: React.RefObject<webGL.MGWebGL>): Promise<void> {
         if(!this.symmetryOn) {
             this.symmetryMatrices = []
         } else {
@@ -347,7 +179,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         }
     }
 
-    async drawSymmetry(glRef: React.RefObject<mgWebGLType>, fetchSymMatrix: boolean = true): Promise<void> {
+    async drawSymmetry(glRef: React.RefObject<webGL.MGWebGL>, fetchSymMatrix: boolean = true): Promise<void> {
         if (fetchSymMatrix) {
             await this.fetchSymmetryMatrix(glRef)
         }
@@ -355,7 +187,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
             .filter(key => !['hover', 'originNeighbours', 'selection', 'transformation', 'contact_dots', 'chemical_features', 'VdWSurface'].some(style => key.includes(style)))
             .forEach(displayObjectType => {
                 if(this.displayObjects[displayObjectType].length > 0) {
-                    this.displayObjects[displayObjectType].forEach((displayObject: DisplayObjectType) => {
+                    this.displayObjects[displayObjectType].forEach((displayObject: moorhen.DisplayObject) => {
                         displayObject.symmetryMatrices = this.symmetryMatrices
                     })
                 }
@@ -466,7 +298,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
             return
         }
 
-        let sequences: MoorhenSequenceType[] = []
+        let sequences: moorhen.Sequence[] = []
         const structure = this.gemmiStructure.clone()
         try {
             const models = structure.models
@@ -476,7 +308,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
                 const chains = model.chains
                 const chainsSize = chains.size()
                 for (let chainIndex = 0; chainIndex < chainsSize; chainIndex++) {
-                    let currentSequence: MoorhenResidueInfoType[] = []
+                    let currentSequence: moorhen.ResidueInfo[] = []
                     const chain = chains.get(chainIndex)
                     window.CCP4Module.remove_ligands_and_waters_chain(chain)
                     const residues = chain.residues
@@ -524,7 +356,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         this.sequences = sequences
     }
 
-    async delete(glRef: React.RefObject<mgWebGLType>): Promise<WorkerResponseType> {
+    async delete(glRef: React.RefObject<webGL.MGWebGL>): Promise<moorhen.WorkerResponseType> {
         const $this = this
         Object.getOwnPropertyNames(this.displayObjects).forEach(displayObject => {
             if (this.displayObjects[displayObject].length > 0) { this.clearBuffersOfStyle(displayObject, glRef) }
@@ -538,7 +370,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         return response
     }
 
-    async copyMolecule(glRef: React.RefObject<mgWebGLType>): Promise<MoorhenMoleculeInterface> {
+    async copyMolecule(glRef: React.RefObject<webGL.MGWebGL>): Promise<moorhen.Molecule> {
 
         let moleculeAtoms = await this.getAtoms()
         let newMolecule = new MoorhenMolecule(this.commandCentre, this.monomerLibraryPath)
@@ -559,7 +391,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         return newMolecule
     }
 
-    async copyFragment(chainId: string, res_no_start: number, res_no_end: number, glRef: React.RefObject<mgWebGLType>, doRecentre: boolean = true): Promise<MoorhenMoleculeInterface>{
+    async copyFragment(chainId: string, res_no_start: number, res_no_end: number, glRef: React.RefObject<webGL.MGWebGL>, doRecentre: boolean = true): Promise<moorhen.Molecule>{
         const $this = this
         const inputData = { message: "copy_fragment", molNo: $this.molNo, chainId: chainId, res_no_start: res_no_start, res_no_end: res_no_end }
         const response = await $this.commandCentre.current.postMessage(inputData)
@@ -574,7 +406,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         return newMolecule
     }
 
-    async copyFragmentUsingCid(cid: string, backgroundColor: [number, number, number, number], defaultBondSmoothness: number, glRef: React.RefObject<mgWebGLType>, doRecentre: boolean = true): Promise<MoorhenMoleculeInterface> {
+    async copyFragmentUsingCid(cid: string, backgroundColor: [number, number, number, number], defaultBondSmoothness: number, glRef: React.RefObject<webGL.MGWebGL>, doRecentre: boolean = true): Promise<moorhen.Molecule> {
         const $this = this
         const response = await $this.commandCentre.current.cootCommand({
             returnType: "status",
@@ -591,7 +423,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         return await Promise.resolve(newMolecule);
     }
 
-    async loadToCootFromURL (url: RequestInfo | URL, molName: string): Promise<MoorhenMoleculeInterface> {
+    async loadToCootFromURL (url: RequestInfo | URL, molName: string): Promise<moorhen.Molecule> {
         const $this = this
         const response = await fetch(url)
         try {
@@ -607,7 +439,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         }
     }
 
-    async loadToCootFromFile(source: Blob): Promise<MoorhenMoleculeInterface> {
+    async loadToCootFromFile(source: Blob): Promise<moorhen.Molecule> {
         const $this = this
         try {
             const coordData = await readTextFile(source);
@@ -617,7 +449,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         }
     }
 
-    async loadToCootFromString(coordData: ArrayBuffer | string, name: string): Promise<MoorhenMoleculeInterface> {
+    async loadToCootFromString(coordData: ArrayBuffer | string, name: string): Promise<moorhen.Molecule> {
         const $this = this
         const pdbRegex = /.pdb$/;
         const entRegex = /.ent$/;
@@ -652,7 +484,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
             })
     }
 
-    async loadMissingMonomer(newTlc: string, attachToMolecule: number): Promise<WorkerResponseType> {
+    async loadMissingMonomer(newTlc: string, attachToMolecule: number): Promise<moorhen.WorkerResponseType> {
         const $this = this
         let response: Response = await fetch(`${$this.monomerLibraryPath}/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`)
         const fileContent = await response.text()
@@ -683,7 +515,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         }, true)
     }
 
-    async loadMissingMonomers(): Promise<MoorhenMoleculeInterface> {
+    async loadMissingMonomers(): Promise<moorhen.Molecule> {
         const $this = this
         const response = await $this.commandCentre.current.cootCommand({
             returnType: "string_array",
@@ -713,7 +545,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         this.atomsDirty = state
     }
 
-    getAtoms(format: string = 'pdb'): Promise<WorkerResponseType> {
+    getAtoms(format: string = 'pdb'): Promise<moorhen.WorkerResponseType> {
         const $this = this;
         return $this.commandCentre.current.postMessage({
             message: "get_atoms",
@@ -745,14 +577,14 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         })
     }
 
-    async fetchIfDirtyAndDraw(style: string, glRef: React.RefObject<mgWebGLType>): Promise<boolean> {
+    async fetchIfDirtyAndDraw(style: string, glRef: React.RefObject<webGL.MGWebGL>): Promise<boolean> {
         if (this.atomsDirty) {
             await this.updateAtoms()
         }
         return this.drawWithStyleFromAtoms(style, glRef)
     }
 
-    async centreAndAlignViewOn(glRef: React.RefObject<mgWebGLType>, selectionCid: string, animate: boolean = true): Promise<void> {
+    async centreAndAlignViewOn(glRef: React.RefObject<webGL.MGWebGL>, selectionCid: string, animate: boolean = true): Promise<void> {
 
         if (this.atomsDirty) {
             await this.updateAtoms()
@@ -823,7 +655,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         }
     }
 
-    async centreOn(glRef: React.RefObject<mgWebGLType>, selectionCid: string = '/*/*/*/*', animate: boolean = true): Promise<void> {
+    async centreOn(glRef: React.RefObject<webGL.MGWebGL>, selectionCid: string = '/*/*/*/*', animate: boolean = true): Promise<void> {
         if (this.atomsDirty) {
             await this.updateAtoms()
         }
@@ -844,7 +676,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         }
     }
 
-    async drawWithStyleFromMesh(style: string, glRef: React.RefObject<mgWebGLType>, meshObjects: any[], newBufferAtoms: MoorhenAtomInfoType[] = []): Promise<void>{
+    async drawWithStyleFromMesh(style: string, glRef: React.RefObject<webGL.MGWebGL>, meshObjects: any[], newBufferAtoms: MoorhenAtomInfoType[] = []): Promise<void>{
         this.clearBuffersOfStyle(style, glRef)
         if (meshObjects.length > 0 && !this.gemmiStructure.isDeleted()) {
             this.addBuffersOfStyle(glRef, meshObjects, style)
@@ -862,7 +694,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         }
     }
 
-    async drawWithStyleFromAtoms(style: string, glRef: React.RefObject<mgWebGLType>) {
+    async drawWithStyleFromAtoms(style: string, glRef: React.RefObject<webGL.MGWebGL>) {
         switch (style) {
             case 'allHBonds':
                 this.drawAllHBonds(glRef)
@@ -905,7 +737,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         return Promise.resolve(true)
     }
 
-    addBuffersOfStyle(glRef: React.RefObject<mgWebGLType>, objects: any[], style: string) {
+    addBuffersOfStyle(glRef: React.RefObject<webGL.MGWebGL>, objects: any[], style: string) {
         const $this = this
         objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
             const a = glRef.current.appendOtherData(object, true);
@@ -915,14 +747,14 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         glRef.current.drawScene();
     }
 
-    async drawAllHBonds(glRef: React.RefObject<mgWebGLType>) {
+    async drawAllHBonds(glRef: React.RefObject<webGL.MGWebGL>) {
         const style = "allHBonds"
         //Empty existing buffers of this type
         this.clearBuffersOfStyle(style, glRef)
         this.drawHBonds(glRef, "/*/*/*", style, false) 
     }
 
-    async drawRamachandranBalls(glRef: React.RefObject<mgWebGLType>) {
+    async drawRamachandranBalls(glRef: React.RefObject<webGL.MGWebGL>) {
         const $this = this
         const style = "rama"
         const response = await this.commandCentre.current.cootCommand({
@@ -936,7 +768,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         this.addBuffersOfStyle(glRef, objects, style);
     }
 
-    async drawCootContactDotsCid(glRef: React.RefObject<mgWebGLType>, style: string) {
+    async drawCootContactDotsCid(glRef: React.RefObject<webGL.MGWebGL>, style: string) {
         const $this = this
         const cid = style.substr("contact_dots-".length)
 
@@ -955,7 +787,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         }
     }
 
-    async drawCootChemicalFeaturesCid(glRef: React.RefObject<mgWebGLType>, style: string) {
+    async drawCootChemicalFeaturesCid(glRef: React.RefObject<webGL.MGWebGL>, style: string) {
         const $this = this
         const cid = style.substr("chemical_features-".length)
 
@@ -974,7 +806,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         }
     }
 
-    async drawCootContactDots(glRef: React.RefObject<mgWebGLType>) {
+    async drawCootContactDots(glRef: React.RefObject<webGL.MGWebGL>) {
 
         const $this = this
         const style = "CDs"
@@ -994,7 +826,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         }
     }
 
-    async drawRotamerDodecahedra(glRef: React.RefObject<mgWebGLType>): Promise<void> {
+    async drawRotamerDodecahedra(glRef: React.RefObject<webGL.MGWebGL>): Promise<void> {
         const $this = this
         const style = "rotamer"
         const response = await this.commandCentre.current.cootCommand({
@@ -1011,22 +843,22 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         }
     }
 
-    drawCootLigands(glRef: React.RefObject<mgWebGLType>) {
+    drawCootLigands(glRef: React.RefObject<webGL.MGWebGL>) {
         const $this = this
         const name = "ligands"
         const ligandsCID = "/*/*/(!ALA,CYS,ASP,GLU,PHE,GLY,HIS,ILE,LYS,LEU,MET,ASN,PRO,GLN,ARG,SER,THR,VAL,TRP,TYR,WAT,HOH,THP,SEP,TPO,TYP,PTR,OH2,H2O)"
         return $this.drawCootSelectionBonds(glRef, name, ligandsCID)
     }
 
-    drawCootBonds(glRef: React.RefObject<mgWebGLType>, style: string) {
+    drawCootBonds(glRef: React.RefObject<webGL.MGWebGL>, style: string) {
         const $this = this
         const name = style
         return $this.drawCootSelectionBonds(glRef, name, null)
     }
 
-    async drawCootSelectionBonds(glRef: React.RefObject<mgWebGLType>, name: string, cid: null | string): Promise<boolean> {
+    async drawCootSelectionBonds(glRef: React.RefObject<webGL.MGWebGL>, name: string, cid: null | string): Promise<boolean> {
         const $this = this
-        let meshCommand: Promise<WorkerResponseType>
+        let meshCommand: Promise<moorhen.WorkerResponseType>
 
         let style = "COLOUR-BY-CHAIN-AND-DICTIONARY"
         let returnType = "instanced_mesh"
@@ -1085,7 +917,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         return Promise.resolve(true)
     }
 
-    async drawCootGaussianSurface(glRef: React.RefObject<mgWebGLType>): Promise<boolean> {
+    async drawCootGaussianSurface(glRef: React.RefObject<webGL.MGWebGL>): Promise<boolean> {
         const $this = this
         const style = "gaussian"
         const response = await this.commandCentre.current.cootCommand({
@@ -1126,7 +958,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         }
     }
 
-    async drawCootRepresentation(glRef: React.RefObject<mgWebGLType>, style: string): Promise<boolean> {
+    async drawCootRepresentation(glRef: React.RefObject<webGL.MGWebGL>, style: string): Promise<boolean> {
         const $this = this
         let m2tStyle: string
         let m2tSelection: string
@@ -1202,7 +1034,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         }
     }
 
-    async show(style: string, glRef: React.RefObject<mgWebGLType>): Promise<void> {
+    async show(style: string, glRef: React.RefObject<webGL.MGWebGL>): Promise<void> {
         if (!this.displayObjects[style]) {
             this.displayObjects[style] = []
         }
@@ -1223,7 +1055,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         }
     }
 
-    hide(style: string, glRef: React.RefObject<mgWebGLType>) {
+    hide(style: string, glRef: React.RefObject<webGL.MGWebGL>) {
         this.displayObjects[style].forEach(displayBuffer => {
             displayBuffer.visible = false
         })
@@ -1247,7 +1079,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         return result
     }
 
-    clearBuffersOfStyle(style: string, glRef: React.RefObject<mgWebGLType>) {
+    clearBuffersOfStyle(style: string, glRef: React.RefObject<webGL.MGWebGL>) {
         const $this = this
         //Empty existing buffers of this type
         $this.displayObjects[style].forEach((buffer) => {
@@ -1284,7 +1116,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         return false
     }
 
-    drawBonds(webMGAtoms: any, glRef: React.RefObject<mgWebGLType>, colourSchemeIndex: number): void {
+    drawBonds(webMGAtoms: any, glRef: React.RefObject<webGL.MGWebGL>, colourSchemeIndex: number): void {
         const $this = this
         const style = "bonds"
 
@@ -1322,7 +1154,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         this.addBuffersOfStyle(glRef, objects, style)
     }
 
-    drawLigands(webMGAtoms: any, glRef: React.RefObject<mgWebGLType>) {
+    drawLigands(webMGAtoms: any, glRef: React.RefObject<webGL.MGWebGL>) {
         const $this = this
         const style = "ligands"
         if (typeof webMGAtoms["atoms"] === 'undefined') return;
@@ -1368,7 +1200,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         this.addBuffersOfStyle(glRef, objects, style)
     }
 
-    drawUnitCell(glRef: React.RefObject<mgWebGLType>) {
+    drawUnitCell(glRef: React.RefObject<webGL.MGWebGL>) {
         const unitCell = this.gemmiStructure.cell
 
         const lines = getCubeLines(unitCell.a, unitCell.b, unitCell.c, unitCell.alpha, unitCell.beta, unitCell.gamma)
@@ -1382,7 +1214,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         glRef.current.drawScene()
     }
 
-    drawGemmiAtomPairs(glRef: React.RefObject<mgWebGLType>, gemmiAtomPairs: [MoorhenAtomInfoType, MoorhenAtomInfoType][], style: string,  colour: number[], labelled: boolean = false, clearBuffers: boolean = false) {
+    drawGemmiAtomPairs(glRef: React.RefObject<webGL.MGWebGL>, gemmiAtomPairs: [MoorhenAtomInfoType, MoorhenAtomInfoType][], style: string,  colour: number[], labelled: boolean = false, clearBuffers: boolean = false) {
         const $this = this
         const atomColours = {}
         gemmiAtomPairs.forEach(atom => { atomColours[`${atom[0].serial}`] = colour; atomColours[`${atom[1].serial}`] = colour })
@@ -1395,12 +1227,12 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         $this.addBuffersOfStyle(glRef, objects, style)
     }
 
-    async drawResidueHighlight(glRef: React.RefObject<mgWebGLType>, style: string, selectionString: string, colour: number[], clearBuffers: boolean = false): Promise<void> {
+    async drawResidueHighlight(glRef: React.RefObject<webGL.MGWebGL>, style: string, selectionString: string, colour: number[], clearBuffers: boolean = false): Promise<void> {
         const $this = this
 
 
         if (typeof selectionString === 'string') {
-            const resSpec: MoorhenResidueSpecType = cidToSpec(selectionString)
+            const resSpec: moorhen.ResidueSpec = cidToSpec(selectionString)
             let modifiedSelection = `/*/${resSpec.chain_id}/${resSpec.res_no}-${resSpec.res_no}/*${resSpec.alt_conf === "" ? "" : ":"}${resSpec.alt_conf}`
             if(this.sequences.length === 0) {
                 modifiedSelection = `/*/${resSpec.chain_id}/${resSpec.res_no}-${resSpec.res_no}/${resSpec.atom_name}${resSpec.alt_conf === "" ? "" : ":"}${resSpec.alt_conf}`
@@ -1435,15 +1267,15 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         }
     }
 
-    async drawHover(glRef: React.RefObject<mgWebGLType>, selectionString: string): Promise<void> {
+    async drawHover(glRef: React.RefObject<webGL.MGWebGL>, selectionString: string): Promise<void> {
         await this.drawResidueHighlight(glRef, 'hover', selectionString, [1.0, 0.5, 0.0, 0.35], true)
     }
 
-    async drawSelection(glRef: React.RefObject<mgWebGLType>, selectionString: string): Promise<void> {
+    async drawSelection(glRef: React.RefObject<webGL.MGWebGL>, selectionString: string): Promise<void> {
         await this.drawResidueHighlight(glRef, 'selection', selectionString, [1.0, 0.0, 0.0, 0.35], false)
     }
 
-    drawRibbons(webMGAtoms: any, glRef: React.RefObject<mgWebGLType>) {
+    drawRibbons(webMGAtoms: any, glRef: React.RefObject<webGL.MGWebGL>) {
         const $this = this
         const style = "ribbons"
 
@@ -1476,7 +1308,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         this.addBuffersOfStyle(glRef, objects, style)
     }
 
-    drawSticks(webMGAtoms: any, glRef: React.RefObject<mgWebGLType>) {
+    drawSticks(webMGAtoms: any, glRef: React.RefObject<webGL.MGWebGL>) {
         const $this = this
         const style = "sticks"
         let hier = webMGAtoms["atoms"];
@@ -1503,7 +1335,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         this.addBuffersOfStyle(glRef, objects, style)
     }
 
-    async redraw(glRef: React.RefObject<mgWebGLType>): Promise<void> {
+    async redraw(glRef: React.RefObject<webGL.MGWebGL>): Promise<void> {
         const $this = this
         const itemsToRedraw = []
         Object.keys($this.displayObjects).filter(style => !["transformation", 'hover', 'selection'].includes(style)).forEach(style => {
@@ -1538,7 +1370,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         await $this.drawSymmetry(glRef, false)
     }
 
-    transformedCachedAtomsAsMovedAtoms(glRef: React.RefObject<mgWebGLType>, selectionCid: string = '/*/*/*/*'): MoorhenAtomInfoType[][] {
+    transformedCachedAtomsAsMovedAtoms(glRef: React.RefObject<webGL.MGWebGL>, selectionCid: string = '/*/*/*/*'): MoorhenAtomInfoType[][] {
         const $this = this
         let movedResidues: MoorhenAtomInfoType[][] = [];
 
@@ -1646,7 +1478,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         return movedResidues
     }
 
-    async updateWithMovedAtoms(movedResidues: MoorhenAtomInfoType[][], glRef: React.RefObject<mgWebGLType>): Promise<void> {
+    async updateWithMovedAtoms(movedResidues: MoorhenAtomInfoType[][], glRef: React.RefObject<webGL.MGWebGL>): Promise<void> {
         const $this = this
         await $this.commandCentre.current.cootCommand({
             returnType: "status",
@@ -1660,13 +1492,13 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         return $this.redraw(glRef)
     }
 
-    applyTransform(glRef: React.RefObject<mgWebGLType>) {
+    applyTransform(glRef: React.RefObject<webGL.MGWebGL>) {
         const $this = this
         const movedResidues = $this.transformedCachedAtomsAsMovedAtoms(glRef)
         return $this.updateWithMovedAtoms(movedResidues, glRef)
     }
 
-    async mergeMolecules(otherMolecules: MoorhenMoleculeInterface[], glRef: React.RefObject<mgWebGLType>, doHide: boolean = false): Promise<void> {
+    async mergeMolecules(otherMolecules: moorhen.Molecule[], glRef: React.RefObject<webGL.MGWebGL>, doHide: boolean = false): Promise<void> {
         try {
             await this.commandCentre.current.cootCommand({
                 command: 'merge_molecules',
@@ -1700,7 +1532,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         }
     }
 
-    async addLigandOfType(resType: string, glRef: React.RefObject<mgWebGLType>, fromMolNo: number = -999999): Promise<WorkerResponseType> {
+    async addLigandOfType(resType: string, glRef: React.RefObject<webGL.MGWebGL>, fromMolNo: number = -999999): Promise<moorhen.WorkerResponseType> {
         const getMonomer = () => {
             return this.commandCentre.current.cootCommand({
                 returnType: 'status',
@@ -1780,7 +1612,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         this.addDictShim(fileContent)
     }
 
-    async undo(glRef: React.RefObject<mgWebGLType>): Promise<void> {
+    async undo(glRef: React.RefObject<webGL.MGWebGL>): Promise<void> {
         const $this = this
         await $this.commandCentre.current.cootCommand({
             returnType: "status",
@@ -1791,7 +1623,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         return $this.redraw(glRef)
     }
 
-    async redo(glRef: React.RefObject<mgWebGLType>): Promise<void> {
+    async redo(glRef: React.RefObject<webGL.MGWebGL>): Promise<void> {
         const $this = this
         await $this.commandCentre.current.cootCommand({
             returnType: "status",
@@ -1803,7 +1635,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
     }
 
     async updateLigands(): Promise<void> {
-        let ligandList: MoorhenLigandInfoType[] = []
+        let ligandList: moorhen.LigandInfo[] = []
         const model = this.gemmiStructure.first_model()
         const modelName = model.name
         
@@ -1955,7 +1787,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         this.colourRules = rules
     }
 
-    async setColourRules(glRef: React.RefObject<mgWebGLType>, ruleList: any[], redraw: boolean = false) {
+    async setColourRules(glRef: React.RefObject<webGL.MGWebGL>, ruleList: any[], redraw: boolean = false) {
         this.colourRules = [...ruleList]
 
         await this.commandCentre.current.cootCommand({
@@ -1992,7 +1824,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         }
     }
 
-    async hideCid(cid: string, glRef: React.RefObject<mgWebGLType>) {
+    async hideCid(cid: string, glRef: React.RefObject<webGL.MGWebGL>) {
         await this.commandCentre.current.cootCommand({
             message: 'coot_command',
             command: "add_to_non_drawn_bonds", 
@@ -2036,7 +1868,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         return Promise.resolve(result)
     }
 
-    async unhideAll(glRef: React.RefObject<mgWebGLType>) {
+    async unhideAll(glRef: React.RefObject<webGL.MGWebGL>) {
         await this.commandCentre.current.cootCommand({
             message: 'coot_command',
             command: "clear_non_drawn_bonds", 
@@ -2049,7 +1881,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         return Promise.resolve(result)
     }
 
-    async drawEnvironment(glRef: React.RefObject<mgWebGLType>, chainID: string, resNo: number,  altLoc: string, labelled: boolean = false): Promise<void> {
+    async drawEnvironment(glRef: React.RefObject<webGL.MGWebGL>, chainID: string, resNo: number,  altLoc: string, labelled: boolean = false): Promise<void> {
         
         const response = await this.commandCentre.current.cootCommand({
             returnType: "generic_3d_lines_bonds_box",
@@ -2108,7 +1940,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         this.drawGemmiAtomPairs(glRef, hbondAtomsPairs, "originNeighboursHBond", [0.7, 0.2, 0.7, 1.0], labelled, true)
     }
 
-    async drawHBonds(glRef: React.RefObject<mgWebGLType>, oneCid: string, style: string, labelled: boolean = false) {
+    async drawHBonds(glRef: React.RefObject<webGL.MGWebGL>, oneCid: string, style: string, labelled: boolean = false) {
         const response = await this.commandCentre.current.cootCommand({
             returnType: "vector_hbond",
             command: "get_h_bonds",
@@ -2155,7 +1987,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         this.drawGemmiAtomPairs(glRef, selectedGemmiAtomsPairs, style, [0.7, 0.2, 0.7, 1.0], labelled, true)
     }
 
-    generateSelfRestraints(maxRadius: number = 4.2): Promise<WorkerResponseType> {
+    generateSelfRestraints(maxRadius: number = 4.2): Promise<moorhen.WorkerResponseType> {
         return this.commandCentre.current.cootCommand({
             command: "generate_self_restraints", 
             returnType: 'status',
@@ -2163,7 +1995,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         })
     }
 
-    clearExtraRestraints(): Promise<WorkerResponseType> {
+    clearExtraRestraints(): Promise<moorhen.WorkerResponseType> {
         return this.commandCentre.current.cootCommand({
             command: "clear_extra_restraints", 
             returnType: 'status',
@@ -2171,7 +2003,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         })
     }
 
-    rigidBodyFit(cidsString: string, mapNo: number): Promise<WorkerResponseType> {
+    rigidBodyFit(cidsString: string, mapNo: number): Promise<moorhen.WorkerResponseType> {
         return this.commandCentre.current.cootCommand({
             command: "rigid_body_fit", 
             returnType: 'status',
@@ -2180,7 +2012,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
     }
 
 
-    refineResiduesUsingAtomCid(cid: string, mode: string, ncyc: number): Promise<WorkerResponseType> {
+    refineResiduesUsingAtomCid(cid: string, mode: string, ncyc: number): Promise<moorhen.WorkerResponseType> {
         return this.commandCentre.current.cootCommand({
             command: "refine_residues_using_atom_cid", 
             returnType: 'status',
@@ -2188,7 +2020,7 @@ export class MoorhenMolecule implements MoorhenMoleculeInterface {
         })
     }
 
-    SSMSuperpose(movChainId: string, refMolNo: number, refChainId: string): Promise<WorkerResponseType> {
+    SSMSuperpose(movChainId: string, refMolNo: number, refChainId: string): Promise<moorhen.WorkerResponseType> {
         return this.commandCentre.current.cootCommand({
             command: "SSM_superpose", 
             returnType: 'superpose_results',

@@ -2,7 +2,7 @@ import { useRef } from "react";
 import { Form } from "react-bootstrap";
 import { MoorhenMap, MoorhenMapInterface } from "../../utils/MoorhenMap";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
-import { MoorhenCommandCentreInterface } from "../../utils/MoorhenCommandCentre";
+import { moorhen } from "../../types/moorhen";
 import { MolChange } from "../MoorhenApp";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 
@@ -10,7 +10,7 @@ export const MoorhenSharpenBlurMapMenuItem = (props: {
     maps: MoorhenMapInterface[];
     changeMaps: (arg0: MolChange<MoorhenMapInterface>) => void;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>
-    commandCentre: React.RefObject<MoorhenCommandCentreInterface>;
+    commandCentre: React.RefObject<moorhen.CommandCentre>;
 }) => {
 
     const factorRef = useRef<HTMLInputElement>()

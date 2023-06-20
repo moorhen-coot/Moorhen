@@ -4,19 +4,18 @@ import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenMap, MoorhenMapInterface } from "../../utils/MoorhenMap";
 import { MolChange } from "../MoorhenApp";
-import { MoorhenCommandCentreInterface } from "../../utils/MoorhenCommandCentre";
-import { MoorhenMoleculeInterface } from "../../utils/MoorhenMolecule";
+import { moorhen } from "../../types/moorhen";
 import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenLigandSelect } from "../select/MoorhenLigandSelect"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 
 export const MoorhenMapMaskingMenuItem = (props: {
-    molecules: MoorhenMoleculeInterface[];
+    molecules: moorhen.Molecule[];
     maps: MoorhenMapInterface[];
     changeMaps: (arg0: MolChange<MoorhenMapInterface>) => void;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>
-    commandCentre: React.RefObject<MoorhenCommandCentreInterface>;
+    commandCentre: React.RefObject<moorhen.CommandCentre>;
 }) => {
 
     const [invertFlag, setInvertFlag] = useState<boolean>(false)

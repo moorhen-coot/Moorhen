@@ -8,12 +8,13 @@ import { MoorhenLigandList } from "../list/MoorhenLigandList"
 import { Checkbox, FormControlLabel, FormGroup, Typography } from "@mui/material";
 import { getNameLabel } from "./cardUtils"
 import { MoorhenSideBarAccordionPropsInterface } from '../list/MoorhenSideBar';
-import { MoorhenMoleculeInterface } from '../../utils/MoorhenMolecule';
+import { moorhen } from "../../types/moorhen";
+import { webGL } from "../../types/mgWebGL";
 
 interface MoorhenMoleculeCardPropsInterface extends MoorhenSideBarAccordionPropsInterface {
     key: number;
     index: number;
-    molecule: MoorhenMoleculeInterface;
+    molecule: moorhen.Molecule;
     currentDropdownMolNo: number;
     setCurrentDropdownMolNo: React.Dispatch<React.SetStateAction<number>>;
 }
@@ -505,8 +506,8 @@ type RepresetationCheckboxPropsType = {
     repKey: string;
     isVisible: boolean;
     changeShowState: (arg0: { key: string; state: boolean; }) => void;
-    molecule: MoorhenMoleculeInterface;
-    glRef: React.RefObject<mgWebGLType>; 
+    molecule: moorhen.Molecule;
+    glRef: React.RefObject<webGL.MGWebGL>; 
 }
 
 const RepresentationCheckbox = (props: RepresetationCheckboxPropsType) => {

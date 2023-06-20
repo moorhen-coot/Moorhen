@@ -3,7 +3,8 @@ import ProtvistaManager from "protvista-manager";
 import ProtvistaSequence from "protvista-sequence";
 import ProtvistaNavigation from "protvista-navigation";
 import ProtvistaTrack from "protvista-track";
-import { MoorhenSequenceType, MoorhenResidueInfoType, MoorhenMoleculeInterface } from '../../utils/MoorhenMolecule';
+import { moorhen } from "../../types/moorhen";
+import { webGL } from "../../types/mgWebGL";
 import { clickedResidueType } from '../card/MoorhenMoleculeCard';
 
 !window.customElements.get('protvista-navigation') && window.customElements.define("protvista-navigation", ProtvistaNavigation);
@@ -30,7 +31,7 @@ import { clickedResidueType } from '../card/MoorhenMoleculeCard';
 * @param {MoorhenMolecule.sequence.sequence} sequence
 * @returns {Array} An array containing the ruler start, actual sequence length with gaps and the final sequence to be displayed
 */
-const parseSequenceData = (sequence: MoorhenResidueInfoType[]): [number, number, string, number, number]=> {
+const parseSequenceData = (sequence: moorhen.ResidueInfo[]): [number, number, string, number, number]=> {
     let rulerStart = sequence[0].resNum
     let finalSequence: string[] = Array(sequence[sequence.length-1].resNum).fill('-')
     let seqLenght = sequence[sequence.length-1].resNum - rulerStart + 1
@@ -52,9 +53,9 @@ type DisplaySettingsType = {
 
 type MoorhenSequenceViewerPropsType = {
     key: string;
-    sequence: MoorhenSequenceType;
-    molecule: MoorhenMoleculeInterface;
-    glRef: React.RefObject<mgWebGLType>
+    sequence: moorhen.Sequence;
+    molecule: moorhen.Molecule;
+    glRef: React.RefObject<webGL.MGWebGL>
     clickedResidue: clickedResidueType;
     setClickedResidue: React.Dispatch<React.SetStateAction<clickedResidueType>>;
     selectedResidues: [number, number];

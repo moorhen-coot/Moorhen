@@ -4,14 +4,13 @@ import { MoorhenMapSelect } from "../select/MoorhenMapSelect"
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { MoorhenMapInterface } from "../../utils/MoorhenMap"
-import { MoorhenCommandCentreInterface } from "../../utils/MoorhenCommandCentre"
-import { MoorhenMoleculeInterface } from "../../utils/MoorhenMolecule"
+import { moorhen } from "../../types/moorhen";
 
 export const MoorhenImportFSigFMenuItem = (props:{
     maps: MoorhenMapInterface[];
-    molecules: MoorhenMoleculeInterface[];
+    molecules: moorhen.Molecule[];
     selectedMolNo?: number;
-    commandCentre: React.RefObject<MoorhenCommandCentreInterface>;
+    commandCentre: React.RefObject<moorhen.CommandCentre>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>
 }) => {
     

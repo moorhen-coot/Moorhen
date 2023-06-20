@@ -3,7 +3,7 @@ import { Container, Col, Row, Spinner, Toast, ToastContainer } from 'react-boots
 import { MoorhenWebMG } from './webMG/MoorhenWebMG';
 import { convertRemToPx, convertViewtoPx, getTooltipShortcutLabel, createLocalStorageInstance, allFontsSet } from '../utils/MoorhenUtils';
 import { historyReducer, initialHistoryState } from './navbar-menus/MoorhenHistoryMenu';
-import { MoorhenCommandCentre, MoorhenCommandCentreInterface } from "../utils/MoorhenCommandCentre"
+import { MoorhenCommandCentre } from "../utils/MoorhenCommandCentre"
 import { MoorhenPreferencesInterface, PreferencesContext } from "../utils/MoorhenPreferences";
 import { MoorhenTimeCapsule, MoorhenTimeCapsuleInterface } from '../utils/MoorhenTimeCapsule';
 import { MoorhenButtonBar } from './button/MoorhenButtonBar';
@@ -12,12 +12,13 @@ import { babyGruKeyPress } from '../utils/MoorhenKeyboardAccelerators';
 import { MoorhenSideBar } from './list/MoorhenSideBar';
 import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
 import { MoorhenNavBar } from "./navbar-menus/MoorhenNavBar"
-import { MoorhenMoleculeInterface } from '../utils/MoorhenMolecule';
+import { moorhen } from '../types/moorhen';
+import { webGL } from '../types/mgWebGL';
 import { MoorhenMapInterface } from '../utils/MoorhenMap';
 import { itemReducer, MolChange } from "./MoorhenApp"
 import './MoorhenContainer.css'
 
-const initialMoleculesState: MoorhenMoleculeInterface[] = []
+const initialMoleculesState: moorhen.Molecule[] = []
 
 const initialMapsState: MoorhenMapInterface[] = []
 
@@ -39,21 +40,21 @@ interface MoorhenContainerOptionalPropsInterface {
 
 export interface MoorhenControlsInterface extends MoorhenPreferencesInterface, MoorhenContainerOptionalPropsInterface {
     isDark: boolean;
-    molecules: MoorhenMoleculeInterface[];
-    changeMolecules: (arg0: MolChange<MoorhenMoleculeInterface>) => void;
+    molecules: moorhen.Molecule[];
+    changeMolecules: (arg0: MolChange<moorhen.Molecule>) => void;
     maps: MoorhenMapInterface[];
     changeMaps: (arg0: MolChange<MoorhenMapInterface>) => void;
     appTitle: string;
     setAppTitle: React.Dispatch<React.SetStateAction<string>>;
-    glRef: React.MutableRefObject<null | mgWebGLType>;
+    glRef: React.MutableRefObject<null | webGL.MGWebGL>;
     timeCapsuleRef: React.MutableRefObject<null | MoorhenTimeCapsuleInterface>;
-    commandCentre: React.MutableRefObject<MoorhenCommandCentreInterface>;
-    moleculesRef: React.MutableRefObject<null | MoorhenMoleculeInterface[]>;
+    commandCentre: React.MutableRefObject<moorhen.CommandCentre>;
+    moleculesRef: React.MutableRefObject<null | moorhen.Molecule[]>;
     mapsRef: React.MutableRefObject<null | MoorhenMapInterface[]>;
     activeMap: MoorhenMapInterface;
     setActiveMap: React.Dispatch<React.SetStateAction<MoorhenMapInterface>>;
-    activeMolecule: MoorhenMoleculeInterface;
-    setActiveMolecule: React.Dispatch<React.SetStateAction<MoorhenMoleculeInterface>>;
+    activeMolecule: moorhen.Molecule;
+    setActiveMolecule: React.Dispatch<React.SetStateAction<moorhen.Molecule>>;
     hoveredAtom: null | HoveredAtomType;
     setHoveredAtom: React.Dispatch<React.SetStateAction<HoveredAtomType>>;
     commandHistory: any;
@@ -71,20 +72,20 @@ export interface MoorhenControlsInterface extends MoorhenPreferencesInterface, M
 }
 
 interface statesMapInterface {
-    glRef: React.MutableRefObject<null | mgWebGLType>;
+    glRef: React.MutableRefObject<null | webGL.MGWebGL>;
     timeCapsuleRef: React.MutableRefObject<null | MoorhenTimeCapsuleInterface>;
-    commandCentre: React.MutableRefObject<MoorhenCommandCentreInterface>;
-    moleculesRef: React.MutableRefObject<null | MoorhenMoleculeInterface[]>;
+    commandCentre: React.MutableRefObject<moorhen.CommandCentre>;
+    moleculesRef: React.MutableRefObject<null | moorhen.Molecule[]>;
     mapsRef: React.MutableRefObject<null | MoorhenMapInterface[]>;
     activeMapRef: React.MutableRefObject<MoorhenMapInterface>;
     consoleDivRef: React.MutableRefObject<null | HTMLDivElement>;
     lastHoveredAtom: React.MutableRefObject<null | HoveredAtomType>;
-    prevActiveMoleculeRef: React.MutableRefObject<null | MoorhenMoleculeInterface>;
+    prevActiveMoleculeRef: React.MutableRefObject<null | moorhen.Molecule>;
     preferences: MoorhenPreferencesInterface;
     activeMap: MoorhenMapInterface;
     setActiveMap: React.Dispatch<React.SetStateAction<MoorhenMapInterface>>;
-    activeMolecule: MoorhenMoleculeInterface;
-    setActiveMolecule: React.Dispatch<React.SetStateAction<MoorhenMoleculeInterface>>;
+    activeMolecule: moorhen.Molecule;
+    setActiveMolecule: React.Dispatch<React.SetStateAction<moorhen.Molecule>>;
     hoveredAtom: null | HoveredAtomType;
     setHoveredAtom: React.Dispatch<React.SetStateAction<HoveredAtomType>>;
     consoleMessage: string;
@@ -99,8 +100,8 @@ interface statesMapInterface {
     setWindowHeight: React.Dispatch<React.SetStateAction<number>>;
     commandHistory: any;
     dispatchHistoryReducer: (arg0: any) => void;
-    molecules: MoorhenMoleculeInterface[];
-    changeMolecules: (arg0: MolChange<MoorhenMoleculeInterface>) => void;
+    molecules: moorhen.Molecule[];
+    changeMolecules: (arg0: MolChange<moorhen.Molecule>) => void;
     maps: MoorhenMapInterface[];
     changeMaps: (arg0: MolChange<MoorhenMapInterface>) => void;
     backgroundColor: [number, number, number, number];
@@ -124,18 +125,18 @@ interface statesMapInterface {
 export interface MoorhenContainerPropsInterface extends Partial<statesMapInterface>, Partial<MoorhenContainerOptionalPropsInterface> { }
 
 export const MoorhenContainer = (props: MoorhenContainerPropsInterface) => {
-    const innerGlRef = useRef<null | mgWebGLType>(null)
+    const innerGlRef = useRef<null | webGL.MGWebGL>(null)
     const innerTimeCapsuleRef = useRef<null | MoorhenTimeCapsuleInterface>(null);
-    const innnerCommandCentre = useRef<null | MoorhenCommandCentreInterface>(null)
-    const innerMoleculesRef = useRef<null | MoorhenMoleculeInterface[]>(null)
+    const innnerCommandCentre = useRef<null | moorhen.CommandCentre>(null)
+    const innerMoleculesRef = useRef<null | moorhen.Molecule[]>(null)
     const innerMapsRef = useRef<null | MoorhenMapInterface[]>(null)
     const innerActiveMapRef = useRef<null | MoorhenMapInterface>(null)
     const innerConsoleDivRef = useRef<null | HTMLDivElement>(null)
     const innerLastHoveredAtom = useRef<null | HoveredAtomType>(null)
-    const innerPrevActiveMoleculeRef = useRef<null |  MoorhenMoleculeInterface>(null)
+    const innerPrevActiveMoleculeRef = useRef<null |  moorhen.Molecule>(null)
     const innerPreferences = useContext<undefined | MoorhenPreferencesInterface>(PreferencesContext);
     const [innerActiveMap, setInnerActiveMap] = useState<null | MoorhenMapInterface>(null)
-    const [innerActiveMolecule, setInnerActiveMolecule] = useState<null|  MoorhenMoleculeInterface>(null)
+    const [innerActiveMolecule, setInnerActiveMolecule] = useState<null|  moorhen.Molecule>(null)
     const [innerHoveredAtom, setInnerHoveredAtom] = useState<null | HoveredAtomType>({ molecule: null, cid: null })
     const [innerConsoleMessage, setInnerConsoleMessage] = useState<string>("")
     const [innerCursorStyle, setInnerCursorStyle] = useState<string>("default")
@@ -154,7 +155,7 @@ export const MoorhenContainer = (props: MoorhenContainerPropsInterface) => {
     const [innerShowColourRulesToast, setInnerShowColourRulesToast] = useState<boolean>(false)
     const [innerAvailableFonts, setInnerAvailableFonts] = useState<string[]>([])
     
-    innerMoleculesRef.current = innerMolecules as MoorhenMoleculeInterface[]
+    innerMoleculesRef.current = innerMolecules as moorhen.Molecule[]
     innerMapsRef.current = innerMaps as MoorhenMapInterface[]
     innerActiveMapRef.current = innerActiveMap
 
@@ -185,7 +186,7 @@ export const MoorhenContainer = (props: MoorhenContainerPropsInterface) => {
         setCursorStyle: setInnerCursorStyle, busy: innerBusy, setBusy: setInnerBusy, windowHeight: innerWindowHeight, 
         windowWidth: innerWindowWidth, setWindowWidth: setInnerWindowWidth, maps: innerMaps as MoorhenMapInterface[],
         changeMaps: innerChangeMaps, setWindowHeight: setInnerWindowHeight, commandHistory: innerCommandHistory, 
-        dispatchHistoryReducer: innerDispatchHistoryReducer, molecules: innerMolecules as MoorhenMoleculeInterface[],
+        dispatchHistoryReducer: innerDispatchHistoryReducer, molecules: innerMolecules as moorhen.Molecule[],
         changeMolecules: innerChangeMolecules, backgroundColor: innerBackgroundColor, setBackgroundColor: setInnerBackgroundColor,
         appTitle: innerAppTitle, setAppTitle: setInnerAppTitle, cootInitialized: innerCootInitialized, 
         setCootInitialized: setInnerCootInitialized, theme: innerTheme, setTheme: setInnerTheme,

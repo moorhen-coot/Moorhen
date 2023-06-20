@@ -2,12 +2,12 @@ import { Fragment, useEffect, useRef, useState } from "react"
 import { Col, Row, Form } from 'react-bootstrap';
 import { MoorhenMapSelect } from '../select/MoorhenMapSelect'
 import { MoorhenMoleculeSelect } from '../select/MoorhenMoleculeSelect'
-import { MoorhenMoleculeInterface } from "../../utils/MoorhenMolecule";
+import { moorhen } from "../../types/moorhen";
 import { MoorhenMapInterface } from "../../utils/MoorhenMap";
-
+import { gemmi } from "../../types/gemmi";
 
 export const MoorhenValidationListWidgetBase = (props: {
-    molecules: MoorhenMoleculeInterface[];
+    molecules: moorhen.Molecule[];
     maps: MoorhenMapInterface[];
     filterMapFunction?: (arg0: MoorhenMapInterface) => boolean;
     fetchData: (arg0: number, arg1: number) => Promise<any>;
@@ -26,7 +26,7 @@ export const MoorhenValidationListWidgetBase = (props: {
     const moleculeSelectRef = useRef<undefined | HTMLSelectElement>();
     const [selectedModel, setSelectedModel] = useState<null | number>(null)
     const [selectedMap, setSelectedMap] = useState<null | number>(null)
-    const [cachedGemmiStructure, setCachedGemmiStructure] = useState<null | GemmiStructureInterface>(null)
+    const [cachedGemmiStructure, setCachedGemmiStructure] = useState<null | gemmi.Structure>(null)
     const [cardData, setCardData] = useState<any[]>([])
     const [cardList, setCardList] = useState<JSX.Element[]>([])
     

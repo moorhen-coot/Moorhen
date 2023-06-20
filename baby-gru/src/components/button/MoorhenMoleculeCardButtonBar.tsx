@@ -10,8 +10,9 @@ import { MoorhenMoleculeGaussianSurfaceSettingsMenuItem } from "../menu-item/Moo
 import { MoorhenMoleculeSymmetrySettingsMenuItem } from "../menu-item/MoorhenMoleculeSymmetrySettingsMenuItem"
 import { MoorhenMoleculeBondSettingsMenuItem } from "../menu-item/MoorhenMoleculeBondSettingsMenuItem"
 import { MoorhenRenameDisplayObjectMenuItem } from "../menu-item/MoorhenRenameDisplayObjectMenuItem"
-import { MoorhenMoleculeInterface } from "../../utils/MoorhenMolecule";
 import { clickedResidueType } from "../card/MoorhenMoleculeCard";
+import { moorhen } from "../../types/moorhen";
+import { webGL } from "../../types/mgWebGL";
 
 type MoorhenMoleculeCardButtonBarPropsType = {
     handleCentering: () => void;
@@ -21,10 +22,10 @@ type MoorhenMoleculeCardButtonBarPropsType = {
     handleUndo: () => Promise<void>;
     handleResidueRangeRefinement: () => void;
     handleVisibility: () => void;
-    molecule: MoorhenMoleculeInterface;
-    molecules: MoorhenMoleculeInterface[];
-    changeMolecules: (arg0: MolChange<MoorhenMoleculeInterface>) => void;
-    glRef: React.RefObject<mgWebGLType>;
+    molecule: moorhen.Molecule;
+    molecules: moorhen.Molecule[];
+    changeMolecules: (arg0: MolChange<moorhen.Molecule>) => void;
+    glRef: React.RefObject<webGL.MGWebGL>;
     sideBarWidth: number;
     windowHeight: number;
     isVisible: boolean;

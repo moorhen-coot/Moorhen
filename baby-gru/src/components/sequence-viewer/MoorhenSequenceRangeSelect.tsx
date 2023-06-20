@@ -1,13 +1,14 @@
 import { useState, forwardRef, useImperativeHandle } from "react"
 import { MoorhenSequenceViewer } from "./MoorhenSequenceViewer"
-import { MoorhenMoleculeInterface, MoorhenSequenceType } from '../../utils/MoorhenMolecule';
+import { moorhen } from "../../types/moorhen";
+import { webGL } from "../../types/mgWebGL";
 import { clickedResidueType } from "../card/MoorhenMoleculeCard";
 
 type MoorhenSequenceRangeSelectPropsType = {
     ref: React.RefObject<void>;
-    molecule: MoorhenMoleculeInterface;
-    sequence: MoorhenSequenceType;
-    glRef: React.RefObject<mgWebGLType>;
+    molecule: moorhen.Molecule;
+    sequence: moorhen.Sequence;
+    glRef: React.RefObject<webGL.MGWebGL>;
 }
 
 type MoorhenSequenceRangeSelectType = {

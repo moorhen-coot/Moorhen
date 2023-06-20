@@ -2,7 +2,7 @@ import { useState } from "react"
 import { Col, Row, Form, Card, Button } from 'react-bootstrap';
 import { MoorhenSideBarAccordionPropsInterface } from "../list/MoorhenSideBar";
 import { MoorhenMapInterface } from "../../utils/MoorhenMap";
-import { cootCommandKwargsType } from "../../utils/MoorhenCommandCentre";
+import { moorhen } from "../../types/moorhen";
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase"
 import MoorhenSlider from '../misc/MoorhenSlider' 
 
@@ -47,7 +47,7 @@ export const MoorhenPepflipsDifferenceMap = (props: MoorhenSideBarAccordionProps
             return null
         }
         
-        const inputData: cootCommandKwargsType = {
+        const inputData: moorhen.cootCommandKwargsType = {
             message:'coot_command',
             command: "pepflips_using_difference_map", 
             returnType:'interesting_places_data',

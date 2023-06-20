@@ -1,18 +1,19 @@
 import { useEffect, useState } from "react";
 import "rc-tree/assets/index.css"
 import Tree from 'rc-tree';
-import { MoorhenMoleculeInterface } from "../../utils/MoorhenMolecule";
+import { moorhen } from "../../types/moorhen";
+import { webGL } from "../../types/mgWebGL";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { DataNode } from "rc-tree/lib/interface";
 
 interface ExtendedDataNode extends DataNode {
     type: "molecule" | "ligand";
-    molecule?: MoorhenMoleculeInterface;
+    molecule?: moorhen.Molecule;
 }
 
 export const MoorhenCentreOnLigandMenuItem = (props: { 
-    molecules: MoorhenMoleculeInterface[];
-    glRef: React.RefObject<mgWebGLType>;
+    molecules: moorhen.Molecule[];
+    glRef: React.RefObject<webGL.MGWebGL>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
  }) => {
 

@@ -2,11 +2,12 @@ import { useRef, useState } from "react"
 import { Form } from "react-bootstrap"
 import { cidToSpec } from "../../utils/MoorhenUtils"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
-import { MoorhenMoleculeInterface, MoorhenResidueSpecType } from "../../utils/MoorhenMolecule"
+import { moorhen } from "../../types/moorhen";
+import { webGL } from "../../types/mgWebGL";
 
 export const MoorhenGoToMenuItem = (props: {
-    molecules: MoorhenMoleculeInterface[];
-    glRef: React.RefObject<mgWebGLType>;
+    molecules: moorhen.Molecule[];
+    glRef: React.RefObject<webGL.MGWebGL>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
 
@@ -28,7 +29,7 @@ export const MoorhenGoToMenuItem = (props: {
             return
         }
         
-        let residueSpec: MoorhenResidueSpecType
+        let residueSpec: moorhen.ResidueSpec
         try {
             residueSpec = cidToSpec(selectedCid)
         } catch (err) {

@@ -2,17 +2,18 @@ import { useRef } from "react";
 import { Form } from "react-bootstrap";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
-import { MoorhenMolecule, MoorhenMoleculeInterface } from "../../utils/MoorhenMolecule";
-import { MoorhenCommandCentreInterface } from "../../utils/MoorhenCommandCentre"
+import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
+import { moorhen } from "../../types/moorhen";
+import { webGL } from "../../types/mgWebGL";
 import { MolChange } from "../MoorhenApp";
 
 export const MoorhenGetMonomerMenuItem = (props: {
-    glRef: React.RefObject<mgWebGLType>
+    glRef: React.RefObject<webGL.MGWebGL>
     popoverPlacement?: 'left' | 'right'
-    molecules: MoorhenMoleculeInterface[];
+    molecules: moorhen.Molecule[];
     defaultBondSmoothness: number;
-    changeMolecules: (arg0: MolChange<MoorhenMoleculeInterface>) => void;
-    commandCentre: React.RefObject<MoorhenCommandCentreInterface>;
+    changeMolecules: (arg0: MolChange<moorhen.Molecule>) => void;
+    commandCentre: React.RefObject<moorhen.CommandCentre>;
     monomerLibraryPath: string;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {

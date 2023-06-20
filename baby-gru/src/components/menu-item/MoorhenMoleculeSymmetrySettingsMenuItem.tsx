@@ -2,11 +2,12 @@ import { useEffect, useRef, useState } from "react"
 import { Form } from "react-bootstrap"
 import MoorhenSlider from "../misc/MoorhenSlider"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
-import { MoorhenMoleculeInterface } from "../../utils/MoorhenMolecule"
+import { moorhen } from "../../types/moorhen";
+import { webGL } from "../../types/mgWebGL";
 
 export const MoorhenMoleculeSymmetrySettingsMenuItem = (props: {
-    molecule: MoorhenMoleculeInterface;
-    glRef: React.RefObject<mgWebGLType>;
+    molecule: moorhen.Molecule;
+    glRef: React.RefObject<webGL.MGWebGL>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>> 
 }) => {
 

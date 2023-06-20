@@ -2,19 +2,20 @@ import { useRef, useState } from "react"
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
 import { Form } from "react-bootstrap"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
-import { MoorhenMolecule, MoorhenMoleculeInterface } from "../../utils/MoorhenMolecule"
-import { MoorhenCommandCentreInterface } from "../../utils/MoorhenCommandCentre"
+import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
+import { moorhen } from "../../types/moorhen";
+import { webGL } from "../../types/mgWebGL";
 import { MolChange } from "../MoorhenApp"
 
 export const MoorhenCopyFragmentUsingCidMenuItem = (props: {
-    molecules: MoorhenMoleculeInterface[];
+    molecules: moorhen.Molecule[];
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-    commandCentre: React.RefObject<MoorhenCommandCentreInterface>;
-    glRef: React.RefObject<mgWebGLType>;
+    commandCentre: React.RefObject<moorhen.CommandCentre>;
+    glRef: React.RefObject<webGL.MGWebGL>;
     monomerLibraryPath: string;
     defaultBondSmoothness: number;
     backgroundColor: [number, number, number, number];
-    changeMolecules: (arg0: MolChange<MoorhenMoleculeInterface>) => void;
+    changeMolecules: (arg0: MolChange<moorhen.Molecule>) => void;
 }) => {
 
     const fromRef = useRef<null | HTMLSelectElement>(null)

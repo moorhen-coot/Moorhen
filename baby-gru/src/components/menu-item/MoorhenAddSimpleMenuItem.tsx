@@ -2,16 +2,17 @@ import { useRef, useCallback } from "react";
 import { Form, FormSelect } from "react-bootstrap";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
-import { MoorhenMoleculeInterface } from "../../utils/MoorhenMolecule";
+import { moorhen } from "../../types/moorhen";
+import { webGL } from "../../types/mgWebGL";
 
 export const MoorhenAddSimpleMenuItem = (props: {
-    glRef: React.RefObject<mgWebGLType>
+    glRef: React.RefObject<webGL.MGWebGL>
     popoverPlacement?: 'left' | 'right'
     height: string;
     width: string;
     allowAny: boolean;
     label: string;
-    molecules: MoorhenMoleculeInterface[];
+    molecules: moorhen.Molecule[];
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
 
