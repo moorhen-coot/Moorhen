@@ -1,5 +1,5 @@
 import { NavDropdown, Form, Button, InputGroup, SplitButton, Dropdown, Modal, Card, Stack } from "react-bootstrap";
-import { MoorhenMolecule, MoorhenMoleculeInterface } from "../../utils/MoorhenMolecule";
+import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { MoorhenMap, MoorhenMapInterface, selectedColumnsType } from "../../utils/MoorhenMap";
 import { useState, useRef, useEffect } from "react";
 import { MoorhenLoadTutorialDataMenuItem } from "../menu-item/MoorhenLoadTutorialDataMenuItem"
@@ -14,6 +14,7 @@ import { MenuItem } from "@mui/material";
 import { convertViewtoPx, doDownload, readTextFile, getMultiColourRuleArgs } from "../../utils/MoorhenUtils";
 import { backupKeyInterface, backupSessionType, getBackupLabel } from "../../utils/MoorhenTimeCapsule"
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
+import { moorhen } from "../../types/moorhen";
 
 export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
 
@@ -29,11 +30,11 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     const menuItemProps = { setPopoverIsShown, ...props }
 
     const loadPdbFiles = async (files: FileList) => {
-        let readPromises: Promise<MoorhenMoleculeInterface>[] = []
+        let readPromises: Promise<moorhen.Molecule>[] = []
         Array.from(files).forEach(file => {
             readPromises.push(readPdbFile(file))
         })
-        let newMolecules: MoorhenMoleculeInterface[] = await Promise.all(readPromises)
+        let newMolecules: moorhen.Molecule[] = await Promise.all(readPromises)
 
         let drawPromises: Promise<boolean>[] = []
         for (const newMolecule of newMolecules) {
@@ -45,7 +46,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         newMolecules.at(-1).centreOn(glRef, '/*/*/*/*', false)
     }
 
-    const readPdbFile = (file: File): Promise<MoorhenMoleculeInterface> => {
+    const readPdbFile = (file: File): Promise<moorhen.Molecule> => {
         const newMolecule = new MoorhenMolecule(commandCentre, props.monomerLibraryPath)
         newMolecule.setBackgroundColour(props.backgroundColor)
         newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
@@ -132,7 +133,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         }
     }
 
-    const fetchMoleculeFromURL = (url: RequestInfo | URL, molName: string): Promise<MoorhenMoleculeInterface> => {
+    const fetchMoleculeFromURL = (url: RequestInfo | URL, molName: string): Promise<moorhen.Molecule> => {
         const newMolecule = new MoorhenMolecule(commandCentre, props.monomerLibraryPath)
         newMolecule.setBackgroundColour(props.backgroundColor)
         newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
@@ -225,7 +226,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         })
         
         const loadPromises = await Promise.all([...newMoleculePromises, ...newMapPromises])
-        const newMolecules = loadPromises.filter(item => item.type === 'molecule') as MoorhenMoleculeInterface[] 
+        const newMolecules = loadPromises.filter(item => item.type === 'molecule') as moorhen.Molecule[] 
         const newMaps = loadPromises.filter(item => item.type === 'map') as MoorhenMapInterface[] 
 
         // Draw the molecules with the styles stored in session

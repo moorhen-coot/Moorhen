@@ -3,14 +3,15 @@ import { Form, Row } from "react-bootstrap";
 import { readTextFile } from "../../utils/MoorhenUtils";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { MoorhenScriptModal } from "../modal/MoorhenScriptModal";
-import { MoorhenMoleculeInterface } from "../../utils/MoorhenMolecule";
+import { moorhen } from "../../types/moorhen";
+import { webGL } from "../../types/mgWebGL";
 import { MoorhenMapInterface } from "../../utils/MoorhenMap";
 
 export const MoorhenLoadScriptMenuItem = (props: {
      setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-     molecules: MoorhenMoleculeInterface[];
+     molecules: moorhen.Molecule[];
      maps: MoorhenMapInterface[];
-     glRef: React.RefObject<mgWebGLType>;
+     glRef: React.RefObject<webGL.MGWebGL>;
      isDark: boolean;
      windowHeight: number;
      windowWidth: number; 

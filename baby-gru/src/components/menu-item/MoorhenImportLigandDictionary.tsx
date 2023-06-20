@@ -5,9 +5,8 @@ import { Dropdown, Form, InputGroup, SplitButton } from "react-bootstrap"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { TextField } from "@mui/material"
 import { readTextFile } from "../../utils/MoorhenUtils"
-import { MoorhenMoleculeInterface } from "../../utils/MoorhenMolecule"
-import { MoorhenCommandCentreInterface } from "../../utils/MoorhenCommandCentre"
-import { JSX } from "react/jsx-runtime"
+import { moorhen } from "../../types/moorhen";
+import { webGL } from "../../types/mgWebGL";
 import { MolChange } from "../MoorhenApp"
 
 const MoorhenImportLigandDictionary = (props: { 
@@ -15,14 +14,14 @@ const MoorhenImportLigandDictionary = (props: {
     menuItemText: string;
     createInstance: boolean;
     setCreateInstance: React.Dispatch<React.SetStateAction<boolean>>;
-    molecules: MoorhenMoleculeInterface[];
-    glRef: React.RefObject<mgWebGLType>;
-    commandCentre: React.RefObject<MoorhenCommandCentreInterface>;
+    molecules: moorhen.Molecule[];
+    glRef: React.RefObject<webGL.MGWebGL>;
+    commandCentre: React.RefObject<moorhen.CommandCentre>;
     defaultBondSmoothness: number;
     monomerLibraryPath: string;
     backgroundColor: [number, number, number, number];
     panelContent: JSX.Element;
-    changeMolecules: (arg0: MolChange<MoorhenMoleculeInterface>) => void;
+    changeMolecules: (arg0: MolChange<moorhen.Molecule>) => void;
     fetchLigandDict: () => Promise<string>;
     addToMoleculeValueRef: React.MutableRefObject<number>;
     addToMolecule: string;
@@ -43,7 +42,7 @@ const MoorhenImportLigandDictionary = (props: {
     } = props
 
     const handleFileContent = useCallback(async (fileContent: string) => {
-        let newMolecule: MoorhenMoleculeInterface
+        let newMolecule: moorhen.Molecule
         let selectedMoleculeIndex: number
         
         if (moleculeSelectValueRef.current) {
@@ -158,11 +157,11 @@ const MoorhenImportLigandDictionary = (props: {
 }
 
 export const MoorhenSMILESToLigandMenuItem = (props: {
-    changeMolecules: (arg0: MolChange<MoorhenMoleculeInterface>) => void;
+    changeMolecules: (arg0: MolChange<moorhen.Molecule>) => void;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-    molecules: MoorhenMoleculeInterface[];
-    glRef: React.RefObject<mgWebGLType>;
-    commandCentre: React.RefObject<MoorhenCommandCentreInterface>;
+    molecules: moorhen.Molecule[];
+    glRef: React.RefObject<webGL.MGWebGL>;
+    commandCentre: React.RefObject<moorhen.CommandCentre>;
     defaultBondSmoothness: number;
     monomerLibraryPath: string;
     backgroundColor: [number, number, number, number];
@@ -278,11 +277,11 @@ export const MoorhenSMILESToLigandMenuItem = (props: {
 }
 
 export const MoorhenImportDictionaryMenuItem = (props: { 
-    changeMolecules: (arg0: MolChange<MoorhenMoleculeInterface>) => void;
+    changeMolecules: (arg0: MolChange<moorhen.Molecule>) => void;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-    molecules: MoorhenMoleculeInterface[];
-    glRef: React.RefObject<mgWebGLType>;
-    commandCentre: React.RefObject<MoorhenCommandCentreInterface>;
+    molecules: moorhen.Molecule[];
+    glRef: React.RefObject<webGL.MGWebGL>;
+    commandCentre: React.RefObject<moorhen.CommandCentre>;
     defaultBondSmoothness: number;
     monomerLibraryPath: string;
     backgroundColor: [number, number, number, number];

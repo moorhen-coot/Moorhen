@@ -5,17 +5,17 @@ import { MoorhenColourRules } from "../modal/MoorhenColourRules.js"
 import { MoorhenContextMenu } from "../context-menu/MoorhenContextMenu.js"
 import { cidToSpec, convertViewtoPx } from '../../utils/MoorhenUtils';
 import { MoorhenTimeCapsuleInterface } from '../../utils/MoorhenTimeCapsule';
-import { MoorhenCommandCentreInterface } from '../../utils/MoorhenCommandCentre';
-import { MoorhenMoleculeInterface, MoorhenResidueSpecType } from '../../utils/MoorhenMolecule';
+import { moorhen } from "../../types/moorhen";
+import { webGL } from "../../types/mgWebGL";
 import { MoorhenMapInterface } from '../../utils/MoorhenMap';
 import { MolChange } from "../MoorhenApp"
 import { MoorhenPreferencesInterface } from '../../utils/MoorhenPreferences';
 
 interface MoorhenWebMGPropsInterface {
     timeCapsuleRef: React.RefObject<MoorhenTimeCapsuleInterface>;
-    commandCentre: React.RefObject<MoorhenCommandCentreInterface>;
-    molecules: MoorhenMoleculeInterface[];
-    changeMolecules: (arg0: MolChange<MoorhenMoleculeInterface>) => void;
+    commandCentre: React.RefObject<moorhen.CommandCentre>;
+    molecules: moorhen.Molecule[];
+    changeMolecules: (arg0: MolChange<moorhen.Molecule>) => void;
     maps: MoorhenMapInterface[];
     changeMaps: (arg0: MolChange<MoorhenMapInterface>) => void;
     width: () => number;
@@ -43,7 +43,7 @@ type MoorhenScoresType = {
     moorhenPoints: number;
 }
 
-export const MoorhenWebMG = forwardRef<mgWebGLType, MoorhenWebMGPropsInterface>((props, glRef) => {
+export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface>((props, glRef) => {
     const scores = useRef<MoorhenScoresType | null>(null)
     const [mapLineWidth, setMapLineWidth] = useState<number>(0.75)
     const [connectedMolNo, setConnectedMolNo] = useState<null | MoorhenConnectMapsInfoType>(null)
@@ -84,7 +84,7 @@ export const MoorhenWebMG = forwardRef<mgWebGLType, MoorhenWebMGPropsInterface>(
     const handleMiddleClickGoToAtom = useCallback(evt => {
         if (props.hoveredAtom?.molecule && props.hoveredAtom?.cid){
 
-            const residueSpec: MoorhenResidueSpecType = cidToSpec(props.hoveredAtom.cid)
+            const residueSpec: moorhen.ResidueSpec = cidToSpec(props.hoveredAtom.cid)
 
             if (!residueSpec.chain_id || !residueSpec.res_no) {
                 return
@@ -100,7 +100,7 @@ export const MoorhenWebMG = forwardRef<mgWebGLType, MoorhenWebMGPropsInterface>(
             busyDrawingHBonds.current = true
             hBondsDirty.current = false
 
-            const visibleMolecules: MoorhenMoleculeInterface[] = props.molecules.filter(molecule => molecule.isVisible && molecule.hasVisibleBuffers())
+            const visibleMolecules: moorhen.Molecule[] = props.molecules.filter(molecule => molecule.isVisible && molecule.hasVisibleBuffers())
             if (visibleMolecules.length === 0) {
                 busyDrawingHBonds.current = false
                 return
@@ -114,7 +114,7 @@ export const MoorhenWebMG = forwardRef<mgWebGLType, MoorhenWebMGPropsInterface>(
             const moleculeMolNo: number = response.data.result.result.first
             const residueCid: string = response.data.result.result.second
     
-            const mol: MoorhenMoleculeInterface = props.molecules.find(molecule => molecule.molNo === moleculeMolNo)
+            const mol: moorhen.Molecule = props.molecules.find(molecule => molecule.molNo === moleculeMolNo)
             if(typeof mol !== 'undefined') {
                 const cidSplit0 = residueCid.split(" ")[0]
                 const cidSplit = cidSplit0.replace(/\/+$/, "").split("/")

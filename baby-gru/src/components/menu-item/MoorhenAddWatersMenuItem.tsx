@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
-import { MoorhenMoleculeInterface } from "../../utils/MoorhenMolecule";
-import { MoorhenCommandCentreInterface } from "../../utils/MoorhenCommandCentre";
+import { moorhen } from "../../types/moorhen";
+import { webGL } from "../../types/mgWebGL";
 import { MoorhenMapInterface } from "../../utils/MoorhenMap";
 
 export const MoorhenAddWatersMenuItem = (props: {
-    molecules: MoorhenMoleculeInterface[];
+    molecules: moorhen.Molecule[];
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-    commandCentre: React.RefObject<MoorhenCommandCentreInterface>;
+    commandCentre: React.RefObject<moorhen.CommandCentre>;
     activeMap: MoorhenMapInterface;
-    glRef: React.RefObject<mgWebGLType>;
+    glRef: React.RefObject<webGL.MGWebGL>;
 }) => {
 
     const moleculeRef = useRef<null | HTMLSelectElement>(null)

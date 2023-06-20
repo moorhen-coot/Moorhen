@@ -1,23 +1,24 @@
 import { TextField } from "@mui/material";
 import { useRef, useState } from "react";
 import { Form } from "react-bootstrap";
-import { MoorhenMolecule, MoorhenMoleculeInterface } from "../../utils/MoorhenMolecule";
+import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { MoorhenMapInterface } from "../../utils/MoorhenMap";
 import { MolChange } from "../MoorhenApp";
-import { MoorhenCommandCentreInterface } from "../../utils/MoorhenCommandCentre";
+import { moorhen } from "../../types/moorhen";
+import { webGL } from "../../types/mgWebGL";
 
 export const MoorhenFitLigandRightHereMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
     popoverPlacement?: 'left' | 'right';
     defaultBondSmoothness: number;
-    glRef: React.RefObject<mgWebGLType>;  
+    glRef: React.RefObject<webGL.MGWebGL>;  
     maps: MoorhenMapInterface[];
-    molecules: MoorhenMoleculeInterface[];
-    commandCentre: React.RefObject<MoorhenCommandCentreInterface>;
-    changeMolecules: (arg0: MolChange<MoorhenMoleculeInterface>) => void;
+    molecules: moorhen.Molecule[];
+    commandCentre: React.RefObject<moorhen.CommandCentre>;
+    changeMolecules: (arg0: MolChange<moorhen.Molecule>) => void;
     backgroundColor: [number, number, number, number];
     monomerLibraryPath: string;
     devMode?: boolean;

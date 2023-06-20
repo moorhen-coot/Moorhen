@@ -3,18 +3,18 @@ import { historyReducer, initialHistoryState } from './navbar-menus/MoorhenHisto
 import { MoorhenPreferencesInterface, PreferencesContext } from "../utils/MoorhenPreferences";
 import { MoorhenContainer } from "./MoorhenContainer"
 import { MoorhenMapInterface } from "../utils/MoorhenMap"
-import { MoorhenMoleculeInterface } from "../utils/MoorhenMolecule"
 import { MoorhenTimeCapsuleInterface } from '../utils/MoorhenTimeCapsule';
-import { MoorhenCommandCentreInterface } from '../utils/MoorhenCommandCentre';
+import { moorhen } from '../types/moorhen';
+import { webGL } from '../types/mgWebGL';
 import { MoorhenControlsInterface } from "./MoorhenContainer"
 
-export type MolChange<T extends MoorhenMoleculeInterface | MoorhenMapInterface> = {
+export type MolChange<T extends moorhen.Molecule | MoorhenMapInterface> = {
     action: 'Add' | 'Remove' | 'AddList' | 'Empty';
     item?: T;
     items?: T[];
 }
 
-export function itemReducer<T extends MoorhenMoleculeInterface | MoorhenMapInterface> (oldList: T[], change: MolChange<T>): T[] {
+export function itemReducer<T extends moorhen.Molecule | MoorhenMapInterface> (oldList: T[], change: MolChange<T>): T[] {
     if (change.action === 'Add') {
         return [...oldList, change.item]
     }
@@ -30,23 +30,23 @@ export function itemReducer<T extends MoorhenMoleculeInterface | MoorhenMapInter
     return oldList
 }
 
-const initialMoleculesState: MoorhenMoleculeInterface[] = []
+const initialMoleculesState: moorhen.Molecule[] = []
 
 const initialMapsState: MoorhenMapInterface[] = []
 
 export const MoorhenApp = (props: { forwardControls: (controls: any) => any }) => {
-    const glRef = useRef<null | mgWebGLType>(null)
+    const glRef = useRef<null | webGL.MGWebGL>(null)
     const timeCapsuleRef = useRef<null | MoorhenTimeCapsuleInterface>(null)
-    const commandCentre = useRef<null | MoorhenCommandCentreInterface>(null)
-    const moleculesRef = useRef<null | MoorhenMoleculeInterface[]>(null)
+    const commandCentre = useRef<null | moorhen.CommandCentre>(null)
+    const moleculesRef = useRef<null | moorhen.Molecule[]>(null)
     const mapsRef = useRef<null | MoorhenMapInterface[]>(null)
     const activeMapRef = useRef<null | MoorhenMapInterface>(null)
     const consoleDivRef = useRef<null | HTMLDivElement>(null)
     const lastHoveredAtom = useRef<null | HoveredAtomType>(null)
-    const prevActiveMoleculeRef = useRef<null | MoorhenMoleculeInterface>(null)
+    const prevActiveMoleculeRef = useRef<null | moorhen.Molecule>(null)
     const preferences = useContext<undefined | MoorhenPreferencesInterface>(PreferencesContext);
     const [activeMap, setActiveMap] = useState<null | MoorhenMapInterface>(null)
-    const [activeMolecule, setActiveMolecule] = useState<null | MoorhenMoleculeInterface>(null)
+    const [activeMolecule, setActiveMolecule] = useState<null | moorhen.Molecule>(null)
     const [hoveredAtom, setHoveredAtom] = useState<HoveredAtomType>({ molecule: null, cid: null })
     const [consoleMessage, setConsoleMessage] = useState<string>("")
     const [cursorStyle, setCursorStyle] = useState<string>("default")
@@ -64,7 +64,7 @@ export const MoorhenApp = (props: { forwardControls: (controls: any) => any }) =
     const [toastContent, setToastContent] = useState<null | JSX.Element>()
     const [showColourRulesToast, setShowColourRulesToast] = useState<boolean>(false)
     
-    moleculesRef.current = molecules as MoorhenMoleculeInterface[]
+    moleculesRef.current = molecules as moorhen.Molecule[]
     mapsRef.current = maps as MoorhenMapInterface[]
     activeMapRef.current = activeMap
 
@@ -74,7 +74,7 @@ export const MoorhenApp = (props: { forwardControls: (controls: any) => any }) =
         setActiveMap, activeMolecule, setActiveMolecule, hoveredAtom, setHoveredAtom,
         consoleMessage, setConsoleMessage, cursorStyle, setCursorStyle, busy, setBusy,
         windowWidth, setWindowWidth, windowHeight, setWindowHeight, commandHistory, 
-        dispatchHistoryReducer, molecules: molecules as MoorhenMoleculeInterface[], 
+        dispatchHistoryReducer, molecules: molecules as moorhen.Molecule[], 
         changeMolecules, maps: maps as MoorhenMapInterface[], changeMaps, 
         backgroundColor, setBackgroundColor, appTitle, setAppTitle, cootInitialized,
         setCootInitialized, theme, setTheme, showToast, setShowToast, toastContent,

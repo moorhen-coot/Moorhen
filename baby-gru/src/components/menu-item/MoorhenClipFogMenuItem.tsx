@@ -2,9 +2,10 @@ import { useEffect, useState } from "react"
 import MoorhenSlider from "../misc/MoorhenSlider"
 import { Form, InputGroup } from "react-bootstrap"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
+import { webGL } from "../../types/mgWebGL";
 
 export const MoorhenClipFogMenuItem = (props: {
-    glRef: React.RefObject<mgWebGLType>;
+    glRef: React.RefObject<webGL.MGWebGL>;
     resetClippingFogging: boolean;
     setResetClippingFogging: React.Dispatch<React.SetStateAction<boolean>>;
     clipCap: boolean;

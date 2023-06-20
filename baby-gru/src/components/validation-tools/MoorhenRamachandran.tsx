@@ -5,6 +5,7 @@ import { convertRemToPx } from '../../utils/MoorhenUtils';
 import { MoorhenChainSelect } from '../select/MoorhenChainSelect'
 import { MoorhenMoleculeSelect } from '../select/MoorhenMoleculeSelect'
 import { MoorhenSideBarAccordionPropsInterface } from "../list/MoorhenSideBar";
+import { gemmi } from "../../types/gemmi";
 
 export const MoorhenRamachandran = (props: MoorhenSideBarAccordionPropsInterface) => {
     const ramachandranRef = useRef<RamaPlot>();
@@ -16,7 +17,7 @@ export const MoorhenRamachandran = (props: MoorhenSideBarAccordionPropsInterface
     const [ramaPlotData, setRamaPlotData] = useState<null | CootRamachandranDataType[]>(null)
     const [selectedModel, setSelectedModel] = useState<null | number>(null)
     const [selectedChain, setSelectedChain] = useState<string | null>(null)
-    const [cachedGemmiStructure, setCachedGemmiStructure] = useState<GemmiStructureInterface | null>(null)
+    const [cachedGemmiStructure, setCachedGemmiStructure] = useState<gemmi.Structure | null>(null)
 
     const getMolName = () => {
         if (selectedModel === null || props.molecules.length === 0) {

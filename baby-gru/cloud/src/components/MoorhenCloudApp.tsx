@@ -5,9 +5,9 @@ import { MoorhenContainer, MoorhenContainerPropsInterface, MoorhenControlsInterf
 import { itemReducer } from "../../../src/components/MoorhenApp"
 import { isDarkBackground } from "../../../src/WebGLgComponents/mgWebGL"
 import { MoorhenLegendToast } from './MoorhenLegendToast'
-import { MoorhenMoleculeInterface } from '../../../src/utils/MoorhenMolecule'
+import { moorhen } from "../../../src/types/moorhen";
+import { webGL } from "../../../src/types/mgWebGL";
 import { MoorhenMapInterface } from '../../../src/utils/MoorhenMap'
-import { MoorhenCommandCentreInterface } from '../../../src/utils/MoorhenCommandCentre'
 import { MoorhenTimeCapsuleInterface } from '../../../src/utils/MoorhenTimeCapsule'
 
 export interface MoorhenCloudControlsInterface extends MoorhenControlsInterface {
@@ -16,7 +16,7 @@ export interface MoorhenCloudControlsInterface extends MoorhenControlsInterface 
     setBusyFetching: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const initialMoleculesState: MoorhenMoleculeInterface[] = []
+const initialMoleculesState: moorhen.Molecule[] = []
 
 const initialMapsState: MoorhenMapInterface[] = []
 
@@ -27,10 +27,10 @@ interface MoorhenCloudAppPropsInterface extends MoorhenContainerPropsInterface {
 
 
 export const MoorhenCloudApp = (props: MoorhenCloudAppPropsInterface) => {
-    const glRef = useRef<mgWebGLType | null>(null)
+    const glRef = useRef<webGL.MGWebGL | null>(null)
     const timeCapsuleRef = useRef<MoorhenTimeCapsuleInterface | null>(null)
-    const commandCentre = useRef<MoorhenCommandCentreInterface | null>(null)
-    const moleculesRef = useRef<MoorhenMoleculeInterface[] | null>(null)
+    const commandCentre = useRef<moorhen.CommandCentre | null>(null)
+    const moleculesRef = useRef<moorhen.Molecule[] | null>(null)
     const mapsRef = useRef<MoorhenMapInterface[] | null>(null)
     const activeMapRef = useRef<MoorhenMapInterface | null>(null)
     const lastHoveredAtom = useRef<HoveredAtomType | null>(null)
@@ -51,7 +51,7 @@ export const MoorhenCloudApp = (props: MoorhenCloudAppPropsInterface) => {
     const [busyFetching, setBusyFetching] = useState<boolean>(false)
     const [notifyNewContent, setNotifyNewContent] = useState<boolean>(false)
 
-    moleculesRef.current = molecules as MoorhenMoleculeInterface[]
+    moleculesRef.current = molecules as moorhen.Molecule[]
     mapsRef.current = maps as MoorhenMapInterface[]
     activeMapRef.current = activeMap
 
@@ -65,14 +65,14 @@ export const MoorhenCloudApp = (props: MoorhenCloudAppPropsInterface) => {
     const collectedProps = {
         ...props, glRef, timeCapsuleRef, commandCentre, moleculesRef, mapsRef, 
         activeMapRef, lastHoveredAtom, preferences, activeMap, setActiveMap,
-        busy, setBusy, molecules: molecules as MoorhenMoleculeInterface[], changeMolecules,
+        busy, setBusy, molecules: molecules as moorhen.Molecule[], changeMolecules,
         maps: maps as MoorhenMapInterface[], changeMaps, backgroundColor, setBackgroundColor,
         cootInitialized, setCootInitialized, setShowColourRulesToast, hoveredAtom, setHoveredAtom,
         showToast, setShowToast, toastContent, setToastContent, showColourRulesToast,
     }
 
     const doExportCallback = useCallback(async () => {
-        let moleculePromises = molecules.map((molecule: MoorhenMoleculeInterface) => {return molecule.getAtoms()})
+        let moleculePromises = molecules.map((molecule: moorhen.Molecule) => {return molecule.getAtoms()})
         let moleculeAtoms = await Promise.all(moleculePromises)
         molecules.forEach((molecule, index) => props.exportCallback(molecule.name, moleculeAtoms[index].data.result.pdbData))
     }, [props.exportCallback, molecules])
@@ -167,7 +167,7 @@ export const MoorhenCloudApp = (props: MoorhenCloudAppPropsInterface) => {
                 return
             }
             const newBackgroundIsDark = isDarkBackground(...glRef.current.background_colour)
-            await Promise.all(molecules.map((molecule: MoorhenMoleculeInterface) => {
+            await Promise.all(molecules.map((molecule: moorhen.Molecule) => {
                 if (molecule.cootBondsOptions.isDarkBackground !== newBackgroundIsDark) {
                     molecule.cootBondsOptions.isDarkBackground = newBackgroundIsDark
                     molecule.setAtomsDirty(true)

@@ -1,15 +1,16 @@
 import { useCallback, useRef } from "react"
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
-import { MoorhenMoleculeInterface } from "../../utils/MoorhenMolecule"
+import { moorhen } from "../../types/moorhen";
+import { webGL } from "../../types/mgWebGL";
 
 export const MoorhenMergeMoleculesMenuItem = (props: {
-    molecules: MoorhenMoleculeInterface[];
+    molecules: moorhen.Molecule[];
     fromMolNo?: null | number; 
     popoverPlacement?: 'left' | 'right'
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
     menuItemText?: string;
-    glRef: React.RefObject<mgWebGLType>;
+    glRef: React.RefObject<webGL.MGWebGL>;
 }) => {
 
     const toRef = useRef<null | HTMLSelectElement>(null)

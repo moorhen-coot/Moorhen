@@ -1,10 +1,12 @@
-import { MoorhenResidueInfoType, MoorhenAtomInfoType, MoorhenResidueSpecType, MoorhenMolecule, MoorhenMoleculeInterface } from "./MoorhenMolecule";
+import { MoorhenMolecule } from "./MoorhenMolecule";
 import { hexToRgb } from "@mui/material";
 import localforage from 'localforage';
 import * as vec3 from 'gl-matrix/vec3';
 import * as mat3 from 'gl-matrix/mat3';
 import { LocalStorageInstanceInterface } from "./MoorhenTimeCapsule";
 import { MoorhenShortcutType } from "./MoorhenPreferences";
+import { moorhen } from "../types/moorhen";
+import { gemmi } from "../types/gemmi";
 
 export function guid(): string {
     var d = Date.now();
@@ -16,7 +18,7 @@ export function guid(): string {
     return uuid;
 }
 
-export function sequenceIsValid(sequence: MoorhenResidueInfoType[]): boolean {
+export function sequenceIsValid(sequence: moorhen.ResidueInfo[]): boolean {
     // If no sequence is present
     if (!sequence || sequence.length === 0) {
         return false
@@ -224,8 +226,8 @@ export const doDownloadText = (text: string, filename: string) => {
     document.body.removeChild(element);
 }
 
-export const readGemmiStructure = (pdbData: ArrayBuffer | string, molName: string): GemmiStructureInterface => {
-    const structure: GemmiStructureInterface = window.CCP4Module.read_structure_from_string(pdbData, molName)
+export const readGemmiStructure = (pdbData: ArrayBuffer | string, molName: string): gemmi.Structure => {
+    const structure: gemmi.Structure = window.CCP4Module.read_structure_from_string(pdbData, molName)
     return structure
 }
 
@@ -249,7 +251,7 @@ export const centreOnGemmiAtoms = (atoms: MoorhenAtomInfoType[]): [number, numbe
 }
 
 // FIXME: We have multiple functions looping through all residues multiple times when paring a molecule. Let's do it only once...
-export const getBufferAtoms = (gemmiStructure: GemmiStructureInterface, exclude_ligands_and_waters: boolean = false): MoorhenAtomInfoType[] => {
+export const getBufferAtoms = (gemmiStructure: gemmi.Structure, exclude_ligands_and_waters: boolean = false): MoorhenAtomInfoType[] => {
         if (exclude_ligands_and_waters) {
             window.CCP4Module.remove_ligands_and_waters_structure(gemmiStructure)
         }
@@ -331,7 +333,7 @@ export const getBufferAtoms = (gemmiStructure: GemmiStructureInterface, exclude_
         return atomList
 }
 
-export const cidToSpec = (cid: string): MoorhenResidueSpecType => {
+export const cidToSpec = (cid: string): moorhen.ResidueSpec => {
     //molNo, chain_id, res_no, ins_code, alt_conf
     const ResNameRegExp = /\(([^)]+)\)/;
     const cidTokens = cid.split('/')
@@ -385,7 +387,7 @@ export const getTooltipShortcutLabel = (shortCut: MoorhenShortcutType): string =
 }
 
 // FIXME: Again looping thourhg atoms every where...
-const getMoleculeBfactors = (gemmiStructure: GemmiStructureInterface): { cid: string, bFactor: number }[]=> {
+const getMoleculeBfactors = (gemmiStructure: gemmi.Structure): { cid: string, bFactor: number }[]=> {
     let bFactors: { cid: string, bFactor: number }[] = []
     try {
         const models = gemmiStructure.models
@@ -501,7 +503,7 @@ const getPlddtColourRules = (plddtList: { cid: string; bFactor: number; }[]): st
     return plddtList.map(item => `${item.cid}^${getColour(item.bFactor)}`).join('|')
 }
 
-export const getMultiColourRuleArgs = (molecule: MoorhenMoleculeInterface, ruleType: string): [number, string] => {
+export const getMultiColourRuleArgs = (molecule: moorhen.Molecule, ruleType: string): [number, string] => {
 
     let multiRulesArgs: [number, string]
 

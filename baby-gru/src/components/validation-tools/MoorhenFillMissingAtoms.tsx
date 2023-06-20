@@ -1,11 +1,11 @@
 import { Col, Row, Card, Button } from 'react-bootstrap';
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
 import { MoorhenSideBarAccordionPropsInterface } from '../list/MoorhenSideBar';
-import { MoorhenMoleculeInterface } from '../../utils/MoorhenMolecule';
+import { moorhen } from "../../types/moorhen";
 
 export const MoorhenFillMissingAtoms = (props: MoorhenSideBarAccordionPropsInterface) => {
 
-    const fillPartialResidue = async (selectedMolecule: MoorhenMoleculeInterface, chainId: string, resNum: number, insCode: string) => {
+    const fillPartialResidue = async (selectedMolecule: moorhen.Molecule, chainId: string, resNum: number, insCode: string) => {
         await props.commandCentre.current.cootCommand({
             returnType: "status",
             command: "fill_partial_residue",
@@ -27,7 +27,7 @@ export const MoorhenFillMissingAtoms = (props: MoorhenSideBarAccordionPropsInter
         document.dispatchEvent(scoresUpdateEvent);    
     }
 
-    const handleAtomFill = (...args: [MoorhenMoleculeInterface, string, number, string]) => {
+    const handleAtomFill = (...args: [moorhen.Molecule, string, number, string]) => {
         if (args.every(arg => arg !== null)) {
             fillPartialResidue(...args)
         }

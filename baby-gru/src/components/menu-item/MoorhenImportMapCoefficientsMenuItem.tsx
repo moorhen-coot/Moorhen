@@ -3,11 +3,11 @@ import { MoorhenMtzWrapper } from "../../utils/MoorhenMtzWrapper"
 import { MoorhenMap, MoorhenMapInterface, selectedColumnsType } from "../../utils/MoorhenMap"
 import { Col, Form, FormSelect, Row } from "react-bootstrap"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
-import { MoorhenCommandCentreInterface } from "../../utils/MoorhenCommandCentre"
+import { moorhen } from "../../types/moorhen";
 import { MolChange } from "../MoorhenApp"
 
 export const MoorhenImportMapCoefficientsMenuItem = (props: {
-    commandCentre: RefObject<MoorhenCommandCentreInterface>;
+    commandCentre: RefObject<moorhen.CommandCentre>;
     changeMaps: (arg0: MolChange<MoorhenMapInterface>) => void;
     setActiveMap: Dispatch<SetStateAction<MoorhenMapInterface>>
     setPopoverIsShown: Dispatch<SetStateAction<boolean>>     

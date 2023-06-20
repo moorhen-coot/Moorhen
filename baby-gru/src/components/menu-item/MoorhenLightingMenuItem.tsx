@@ -2,9 +2,10 @@ import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react"
 import MoorhenSlider from "../misc/MoorhenSlider"
 import { MoorhenLightPosition } from "../webMG/MoorhenLightPosition"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
+import { webGL } from "../../types/mgWebGL";
 
 export const MoorhenLightingMenuItem = (props: {
-    glRef: React.RefObject<mgWebGLType>;
+    glRef: React.RefObject<webGL.MGWebGL>;
     setPopoverIsShown: Dispatch<SetStateAction<boolean>> ;
 }) => {
 

@@ -2,13 +2,13 @@ import { useCallback, useRef } from "react";
 import { Form, Button } from "react-bootstrap";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
-import { MoorhenMoleculeInterface } from "../../utils/MoorhenMolecule";
-import { MoorhenCommandCentreInterface } from "../../utils/MoorhenCommandCentre";
+import { moorhen } from "../../types/moorhen";
+import { webGL } from "../../types/mgWebGL";
 
 export const MoorhenAddRemoveHydrogenAtomsMenuItem = (props: {
-    molecules: MoorhenMoleculeInterface[];
-    commandCentre: React.RefObject<MoorhenCommandCentreInterface>;
-    glRef: React.RefObject<mgWebGLType>;
+    molecules: moorhen.Molecule[];
+    commandCentre: React.RefObject<moorhen.CommandCentre>;
+    glRef: React.RefObject<webGL.MGWebGL>;
     popoverPlacement?: 'left' | 'right'
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {

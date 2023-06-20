@@ -2,14 +2,14 @@ import { useRef, useState } from "react"
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
 import { Form } from "react-bootstrap"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
-import { MoorhenMoleculeInterface } from "../../utils/MoorhenMolecule"
-import { MoorhenCommandCentreInterface } from "../../utils/MoorhenCommandCentre"
+import { moorhen } from "../../types/moorhen";
+import { webGL } from "../../types/mgWebGL";
 
 export const MoorhenDeleteUsingCidMenuItem = (props: {
-    molecules: MoorhenMoleculeInterface[];
+    molecules: moorhen.Molecule[];
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-    commandCentre: React.RefObject<MoorhenCommandCentreInterface>;
-    glRef: React.RefObject<mgWebGLType>;
+    commandCentre: React.RefObject<moorhen.CommandCentre>;
+    glRef: React.RefObject<webGL.MGWebGL>;
 }) => {
 
     const fromRef = useRef<null | HTMLSelectElement>(null)
