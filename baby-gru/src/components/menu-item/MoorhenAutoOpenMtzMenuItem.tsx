@@ -34,14 +34,14 @@ export const MoorhenAutoOpenMtzMenuItem = (props: {
             returnType: "int_array",
             command: "shim_auto_open_mtz",
             commandArgs: [mtzData]
-        })
+        }) as moorhen.WorkerResponse<number[]>
 
         const isDiffMapResponses = await Promise.all(response.data.result.result.map(mapMolNo => {
             return props.commandCentre.current.cootCommand({
                 returnType: "status",
                 command: "is_a_difference_map",
                 commandArgs: [mapMolNo]
-            })
+            }) as Promise<moorhen.WorkerResponse<boolean>>
         }))
 
         response.data.result.result.forEach((mapMolNo, index) => {

@@ -37,7 +37,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
     excludedCids: string[];
     symmetryOn: boolean;
     symmetryRadius : number;
-    symmetryMatrices: any;
+    symmetryMatrices: number[][][];
     gaussianSurfaceSettings: {
         sigma: number;
         countourLevel: number;
@@ -174,7 +174,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
                 returnType: "symmetry",
                 command: 'get_symmetry_with_matrices',
                 commandArgs: [this.molNo, this.symmetryRadius, ...selectionCentre]
-            }, true)
+            }, true) as moorhen.WorkerResponse<{matrix: number[][]}[]>
             this.symmetryMatrices = response.data.result.result.map(symm => symm.matrix)    
         }
     }

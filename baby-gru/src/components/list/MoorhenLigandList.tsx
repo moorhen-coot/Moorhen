@@ -25,10 +25,10 @@ export const MoorhenLigandList = (props: {
             returnType: "string",
             command: 'get_svg_for_residue_type',
             commandArgs: [imol, compId, props.isDark],
-        }, true)
+        }, true) as moorhen.WorkerResponse<string>
         
         const parser = new DOMParser()
-        let theText: string = result.data.result.result
+        let theText = result.data.result.result
         let doc = parser.parseFromString(theText, "image/svg+xml")
         let xmin = 999
         let ymin = 999

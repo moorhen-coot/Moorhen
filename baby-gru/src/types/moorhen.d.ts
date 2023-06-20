@@ -134,7 +134,7 @@ export namespace moorhen {
         excludedSegments: string[];
         symmetryOn: boolean;
         symmetryRadius : number;
-        symmetryMatrices: any;
+        symmetryMatrices: number[][][];
         gaussianSurfaceSettings: {
             sigma: number;
             countourLevel: number;
@@ -206,10 +206,10 @@ export namespace moorhen {
         kwargs: cootCommandKwargs;
     }
     
-    type WorkerResult = {
+    type WorkerResult<T = any> = {
         result: {
             status: string;
-            result: any;
+            result: T;
             [key: string]: any;
         }
         messageId: string;
@@ -218,8 +218,8 @@ export namespace moorhen {
         consoleMessage: string;
     }
     
-    type WorkerResponse = { 
-        data: WorkerResult;
+    type WorkerResponse<T = any> = { 
+        data: WorkerResult<T>;
     }
     
     type selectedMtzColumns = {

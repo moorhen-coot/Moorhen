@@ -54,7 +54,7 @@ export class MoorhenMap implements moorhen.Map {
             command: 'get_map_rmsd_approx',
             commandArgs: [this.molNo],
             returnType: 'float'
-        }, true)
+        }, true) as moorhen.WorkerResponse<number>
         this.mapRmsd = result.data.result.result
         return result.data.result.result
     }
