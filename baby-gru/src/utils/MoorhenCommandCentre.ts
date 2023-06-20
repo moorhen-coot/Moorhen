@@ -5,11 +5,11 @@ export class MoorhenCommandCentre implements moorhen.CommandCentre {
     urlPrefix: string;
     cootWorker: Worker;
     consoleMessage: string;
-    activeMessages: moorhen.WorkerMessageType[];
+    activeMessages: moorhen.WorkerMessage[];
     onCootInitialized: null | ( () => void );
     onConsoleChanged: null | ( (msg: string) => void );
     onNewCommand : null | ( (kwargs: any) => void );
-    onActiveMessagesChanged: null | ( (activeMessages: moorhen.WorkerMessageType[]) => void );
+    onActiveMessagesChanged: null | ( (activeMessages: moorhen.WorkerMessage[]) => void );
 
     constructor(props: { [x: string]: any; }) {
         this.consoleMessage = ""
@@ -26,7 +26,7 @@ export class MoorhenCommandCentre implements moorhen.CommandCentre {
             .then(() => this.onCootInitialized && this.onCootInitialized() )
     }
     
-    handleMessage(reply: moorhen.WorkerResponseType) {
+    handleMessage(reply: moorhen.WorkerResponse) {
         if (this.onConsoleChanged && reply.data.consoleMessage) {
             let newMessage: string
             if (reply.data.consoleMessage.length > 160) {
@@ -66,7 +66,7 @@ export class MoorhenCommandCentre implements moorhen.CommandCentre {
         this.cootWorker.terminate()
     }
     
-    async cootCommand(kwargs: moorhen.cootCommandKwargsType, doJournal: boolean = false): Promise<moorhen.WorkerResponseType> {
+    async cootCommand(kwargs: moorhen.cootCommandKwargs, doJournal: boolean = false): Promise<moorhen.WorkerResponse> {
         const message = "coot_command"
         if (this.onNewCommand && doJournal) {
             console.log('In cootCommand', kwargs.command)
@@ -75,7 +75,7 @@ export class MoorhenCommandCentre implements moorhen.CommandCentre {
         return this.postMessage({ message, ...kwargs })
     }
     
-    postMessage(kwargs: moorhen.cootCommandKwargsType): Promise<moorhen.WorkerResponseType> {
+    postMessage(kwargs: moorhen.cootCommandKwargs): Promise<moorhen.WorkerResponse> {
         const $this = this
         const messageId = uuidv4()
         return new Promise((resolve, reject) => {

@@ -178,18 +178,18 @@ export namespace moorhen {
         urlPrefix: string;
         cootWorker: Worker;
         consoleMessage: string;
-        activeMessages: WorkerMessageType[];
+        activeMessages: WorkerMessage[];
         unhook: () => void;
         onCootInitialized: null | ( () => void );
         onConsoleChanged: null | ( (msg: string) => void );
         onNewCommand : null | ( (kwargs: any) => void );
-        onActiveMessagesChanged: null | ( (activeMessages: WorkerMessageType[]) => void );
-        cootCommand: (kwargs: cootCommandKwargsType, doJournal?: boolean) => Promise<moorhen.WorkerResponseType>;
-        postMessage: (kwargs: cootCommandKwargsType) => Promise<moorhen.WorkerResponseType>;
+        onActiveMessagesChanged: null | ( (activeMessages: WorkerMessage[]) => void );
+        cootCommand: (kwargs: cootCommandKwargs, doJournal?: boolean) => Promise<moorhen.WorkerResponse>;
+        postMessage: (kwargs: cootCommandKwargs) => Promise<moorhen.WorkerResponse>;
         extendConsoleMessage: (msg: string) => void;
     }
     
-    type cootCommandKwargsType = { 
+    type cootCommandKwargs = { 
         message?: string;
         data?: {};
         returnType?: string;
@@ -199,14 +199,14 @@ export namespace moorhen {
         [key: string]: any;
     }
     
-    type WorkerMessageType = { 
+    type WorkerMessage = { 
         consoleMessage?: string;
         messageId: string;
-        handler: (reply: moorhen.WorkerResponseType) => void;
-        kwargs: cootCommandKwargsType;
+        handler: (reply: moorhen.WorkerResponse) => void;
+        kwargs: cootCommandKwargs;
     }
     
-    type WorkerResultType = {
+    type WorkerResult = {
         result: {
             status: string;
             result: any;
@@ -218,8 +218,8 @@ export namespace moorhen {
         consoleMessage: string;
     }
     
-    type WorkerResponseType = { 
-        data: WorkerResultType;
+    type WorkerResponse = { 
+        data: WorkerResult;
     }
     
     

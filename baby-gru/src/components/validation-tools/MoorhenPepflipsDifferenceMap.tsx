@@ -47,7 +47,7 @@ export const MoorhenPepflipsDifferenceMap = (props: MoorhenSideBarAccordionProps
             return null
         }
         
-        const inputData: moorhen.cootCommandKwargsType = {
+        const inputData: moorhen.cootCommandKwargs = {
             message:'coot_command',
             command: "pepflips_using_difference_map", 
             returnType:'interesting_places_data',

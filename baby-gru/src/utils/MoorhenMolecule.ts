@@ -356,7 +356,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.sequences = sequences
     }
 
-    async delete(glRef: React.RefObject<webGL.MGWebGL>): Promise<moorhen.WorkerResponseType> {
+    async delete(glRef: React.RefObject<webGL.MGWebGL>): Promise<moorhen.WorkerResponse> {
         const $this = this
         Object.getOwnPropertyNames(this.displayObjects).forEach(displayObject => {
             if (this.displayObjects[displayObject].length > 0) { this.clearBuffersOfStyle(displayObject, glRef) }
@@ -484,7 +484,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             })
     }
 
-    async loadMissingMonomer(newTlc: string, attachToMolecule: number): Promise<moorhen.WorkerResponseType> {
+    async loadMissingMonomer(newTlc: string, attachToMolecule: number): Promise<moorhen.WorkerResponse> {
         const $this = this
         let response: Response = await fetch(`${$this.monomerLibraryPath}/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`)
         const fileContent = await response.text()
@@ -545,7 +545,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.atomsDirty = state
     }
 
-    getAtoms(format: string = 'pdb'): Promise<moorhen.WorkerResponseType> {
+    getAtoms(format: string = 'pdb'): Promise<moorhen.WorkerResponse> {
         const $this = this;
         return $this.commandCentre.current.postMessage({
             message: "get_atoms",
@@ -858,7 +858,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
     async drawCootSelectionBonds(glRef: React.RefObject<webGL.MGWebGL>, name: string, cid: null | string): Promise<boolean> {
         const $this = this
-        let meshCommand: Promise<moorhen.WorkerResponseType>
+        let meshCommand: Promise<moorhen.WorkerResponse>
 
         let style = "COLOUR-BY-CHAIN-AND-DICTIONARY"
         let returnType = "instanced_mesh"
@@ -1532,7 +1532,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }
     }
 
-    async addLigandOfType(resType: string, glRef: React.RefObject<webGL.MGWebGL>, fromMolNo: number = -999999): Promise<moorhen.WorkerResponseType> {
+    async addLigandOfType(resType: string, glRef: React.RefObject<webGL.MGWebGL>, fromMolNo: number = -999999): Promise<moorhen.WorkerResponse> {
         const getMonomer = () => {
             return this.commandCentre.current.cootCommand({
                 returnType: 'status',
@@ -1987,7 +1987,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.drawGemmiAtomPairs(glRef, selectedGemmiAtomsPairs, style, [0.7, 0.2, 0.7, 1.0], labelled, true)
     }
 
-    generateSelfRestraints(maxRadius: number = 4.2): Promise<moorhen.WorkerResponseType> {
+    generateSelfRestraints(maxRadius: number = 4.2): Promise<moorhen.WorkerResponse> {
         return this.commandCentre.current.cootCommand({
             command: "generate_self_restraints", 
             returnType: 'status',
@@ -1995,7 +1995,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         })
     }
 
-    clearExtraRestraints(): Promise<moorhen.WorkerResponseType> {
+    clearExtraRestraints(): Promise<moorhen.WorkerResponse> {
         return this.commandCentre.current.cootCommand({
             command: "clear_extra_restraints", 
             returnType: 'status',
@@ -2003,7 +2003,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         })
     }
 
-    rigidBodyFit(cidsString: string, mapNo: number): Promise<moorhen.WorkerResponseType> {
+    rigidBodyFit(cidsString: string, mapNo: number): Promise<moorhen.WorkerResponse> {
         return this.commandCentre.current.cootCommand({
             command: "rigid_body_fit", 
             returnType: 'status',
@@ -2012,7 +2012,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
     }
 
 
-    refineResiduesUsingAtomCid(cid: string, mode: string, ncyc: number): Promise<moorhen.WorkerResponseType> {
+    refineResiduesUsingAtomCid(cid: string, mode: string, ncyc: number): Promise<moorhen.WorkerResponse> {
         return this.commandCentre.current.cootCommand({
             command: "refine_residues_using_atom_cid", 
             returnType: 'status',
@@ -2020,7 +2020,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         })
     }
 
-    SSMSuperpose(movChainId: string, refMolNo: number, refChainId: string): Promise<moorhen.WorkerResponseType> {
+    SSMSuperpose(movChainId: string, refMolNo: number, refChainId: string): Promise<moorhen.WorkerResponse> {
         return this.commandCentre.current.cootCommand({
             command: "SSM_superpose", 
             returnType: 'superpose_results',

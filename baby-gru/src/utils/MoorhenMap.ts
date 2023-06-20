@@ -23,12 +23,12 @@ export interface MoorhenMapInterface {
     setColour(r: number, g: number, b: number, glRef: React.RefObject<webGL.MGWebGL>, redraw?: boolean): Promise<void>;
     fetchMapRmsd(): Promise<number>;
     replaceMapWithMtzFile(glRef: React.RefObject<webGL.MGWebGL>, fileUrl: RequestInfo | URL, name: string, selectedColumns: selectedColumnsType): Promise<void>;
-    associateToReflectionData (selectedColumns: selectedColumnsType, reflectionData: Uint8Array | ArrayBuffer): Promise<moorhen.WorkerResponseType>;
+    associateToReflectionData (selectedColumns: selectedColumnsType, reflectionData: Uint8Array | ArrayBuffer): Promise<moorhen.WorkerResponse>;
     delete(glRef: React.RefObject<webGL.MGWebGL>): Promise<void> 
     contour(glRef: React.ForwardedRef<webGL.MGWebGL>): void;
     doCootContour(glRef: React.MutableRefObject<webGL.MGWebGL>, x: number, y: number, z: number, radius: number, contourLevel: number): Promise<void>;
-    fetchReflectionData(): Promise<moorhen.WorkerResponseType>;
-    getMap(): Promise<moorhen.WorkerResponseType>;
+    fetchReflectionData(): Promise<moorhen.WorkerResponse>;
+    getMap(): Promise<moorhen.WorkerResponse>;
     type: string;
     name: string;
     molNo: number;
@@ -263,7 +263,7 @@ export class MoorhenMap implements MoorhenMapInterface {
             })
     }
 
-    getMap(): Promise<moorhen.WorkerResponseType> {
+    getMap(): Promise<moorhen.WorkerResponse> {
         const $this = this
         return this.commandCentre.current.postMessage({
             message: 'get_map',
@@ -271,7 +271,7 @@ export class MoorhenMap implements MoorhenMapInterface {
         })
     }
 
-    setMapWeight(weight: number): Promise<moorhen.WorkerResponseType> {
+    setMapWeight(weight: number): Promise<moorhen.WorkerResponse> {
         return this.commandCentre.current.cootCommand({
             returnType: 'status',
             command: "set_map_weight",
@@ -280,7 +280,7 @@ export class MoorhenMap implements MoorhenMapInterface {
     }
 
 
-    getMapWeight(): Promise<moorhen.WorkerResponseType> {
+    getMapWeight(): Promise<moorhen.WorkerResponse> {
         return this.commandCentre.current.cootCommand({
             returnType: 'status',
             command: "get_map_weight",
@@ -483,7 +483,7 @@ export class MoorhenMap implements MoorhenMapInterface {
         }
     }
 
-    async associateToReflectionData (selectedColumns: selectedColumnsType, reflectionData: Uint8Array | ArrayBuffer): Promise<moorhen.WorkerResponseType> {
+    async associateToReflectionData (selectedColumns: selectedColumnsType, reflectionData: Uint8Array | ArrayBuffer): Promise<moorhen.WorkerResponse> {
         if (!selectedColumns.Fobs || !selectedColumns.SigFobs || !selectedColumns.FreeR) {
             return Promise.reject('Missing column data')
         }
@@ -508,7 +508,7 @@ export class MoorhenMap implements MoorhenMapInterface {
         }
     }
 
-    async fetchReflectionData(): Promise<moorhen.WorkerResponseType> {
+    async fetchReflectionData(): Promise<moorhen.WorkerResponse> {
         if (this.hasReflectionData) {
             return await this.commandCentre.current.postMessage({
                 molNo: this.molNo,
@@ -526,7 +526,7 @@ export class MoorhenMap implements MoorhenMapInterface {
         return newMap.loadToCootFromMapData(reply.data.result.mapData, `Copy of ${this.name}`, this.isDifference)
     }
 
-    blur(bFactor: number): Promise<moorhen.WorkerResponseType> {
+    blur(bFactor: number): Promise<moorhen.WorkerResponse> {
         return this.commandCentre.current.cootCommand({
             command: 'sharpen_blur_map',
             commandArgs: [this.molNo, bFactor, true],

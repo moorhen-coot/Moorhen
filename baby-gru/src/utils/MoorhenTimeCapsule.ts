@@ -220,7 +220,7 @@ export class MoorhenTimeCapsule implements MoorhenTimeCapsuleInterface {
         let moleculeDataPromises: string[] = []
         let mapDataPromises: Uint8Array[] = []
         let reflectionDataPromises: Uint8Array[] = []
-        promises.forEach((promise: string | moorhen.WorkerResponseType) => {
+        promises.forEach((promise: string | moorhen.WorkerResponse) => {
             if (typeof promise === "string" && promise === 'reflection_data') {
                 reflectionDataPromises.push(null)
             } else if (promise === 'map_data') {
