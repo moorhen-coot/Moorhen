@@ -419,7 +419,7 @@ const mmrrccStatsToJSArray = (mmrrccStats: libcootApi.PairType<emscriptem.map<li
     return returnResult
 }
 
-const residueSpecToJSArray = (residueSpecs: emscriptem.vector<libcootApi.ResidueSpecT>) => {
+const residueSpecToJSArray = (residueSpecs: emscriptem.vector<libcootApi.ResidueSpecT>): libcootApi.ResidueSpecJS[] => {
     let returnResult: { resNum: number; insCode: string; modelNumber: number; chainId: string; }[] = []
     const residuesSize = residueSpecs.size()
     for (let ic = 0; ic < residuesSize; ic++) {
@@ -540,7 +540,7 @@ const vectorHBondToJSArray = (HBondData: emscriptem.vector<libcootApi.MoorhenHBo
     return hbdata
 }
 
-const interestingPlaceDataToJSArray = (interestingPlaceData: emscriptem.vector<libcootApi.InterestingPlaceT>) => {
+const interestingPlaceDataToJSArray = (interestingPlaceData: emscriptem.vector<libcootApi.InterestingPlaceT>): libcootApi.InterestingPlaceDataJS[] => {
     let returnResult: { 
         modelNumber: number;
         chainId: string;
@@ -579,7 +579,7 @@ const interestingPlaceDataToJSArray = (interestingPlaceData: emscriptem.vector<l
     return returnResult
 }
 
-const ramachandranDataToJSArray = (ramachandraData: emscriptem.vector<libcootApi.CootPhiPsiProbT>, chainID: string) => {
+const ramachandranDataToJSArray = (ramachandraData: emscriptem.vector<libcootApi.CootPhiPsiProbT>, chainID: string): libcootApi.RamaDataJS[] => {
     let returnResult: { chainId: string; insCode: string; seqNum: number; restype: string; isOutlier: boolean; phi: number; psi: number; is_pre_pro: boolean; }[] = [];
     const ramachandraDataSize = ramachandraData.size()
     for (let ir = 0; ir < ramachandraDataSize; ir++) {

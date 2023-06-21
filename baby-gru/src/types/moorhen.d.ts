@@ -174,6 +174,11 @@ export namespace moorhen {
         buffersInclude: (bufferIn: { id: string; }) => boolean;
     }
     
+    type HoveredAtom = {
+        molecule: Molecule | null,
+        cid: string | null
+    }
+
     interface CommandCentre {
         urlPrefix: string;
         cootWorker: Worker;
@@ -351,6 +356,33 @@ export namespace moorhen {
         retrieveBackup: (arg0: string) => Promise<string | ArrayBuffer>;
     }
     
+    type OriginUpdateEvent = CustomEvent<{ origin: [number, number, number]; }>
+
+    type WheelContourLevelEvent = CustomEvent<{ factor: number; }>
+
+    type MapRadiusChangeEvent = CustomEvent<{ factor: number; }>
+
+    type ScoresUpdateEvent = CustomEvent<{
+        origin: [number, number, number];
+        modifiedMolecule: number;
+    }>
+    
+    type ConnectMapsInfo = {
+        molecule: number;
+        maps: [number, number, number];
+        uniqueMaps: number[];
+    }
+
+    type ConnectMapsEvent = CustomEvent<ConnectMapsInfo>
+
+    type NewMapContourEvent = CustomEvent<{
+        molNo: number;
+        mapRadius: number;
+        cootContour: boolean;
+        contourLevel: number;
+        mapColour: [number, number, number, number],
+        litLines: boolean;
+    }>
     
     interface LocalStorageInstance {
         clear: () => Promise<void>;

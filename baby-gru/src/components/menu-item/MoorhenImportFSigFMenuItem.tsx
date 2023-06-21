@@ -68,7 +68,7 @@ export const MoorhenImportFSigFMenuItem = (props:{
                     if (currentMap.isDifference) {
                         newContourLevel -= newContourLevel * 0.3
                     }
-                    const newMapContourEvt: MoorhenNewMapContourEventType = new CustomEvent("newMapContour", {
+                    const newMapContourEvt: moorhen.NewMapContourEvent = new CustomEvent("newMapContour", {
                         "detail": {
                             molNo: currentMap.molNo,
                             mapRadius: currentMap.mapRadius,

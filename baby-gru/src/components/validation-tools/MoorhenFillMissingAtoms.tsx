@@ -2,6 +2,7 @@ import { Col, Row, Card, Button } from 'react-bootstrap';
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
 import { MoorhenSideBarAccordionPropsInterface } from '../list/MoorhenSideBar';
 import { moorhen } from "../../types/moorhen";
+import { libcootApi } from '../../types/libcoot';
 
 export const MoorhenFillMissingAtoms = (props: MoorhenSideBarAccordionPropsInterface) => {
 
@@ -23,7 +24,7 @@ export const MoorhenFillMissingAtoms = (props: MoorhenSideBarAccordionPropsInter
         }
         selectedMolecule.setAtomsDirty(true)
         selectedMolecule.redraw(props.glRef)
-        const scoresUpdateEvent: MoorhenScoresUpdateEventType = new CustomEvent("scoresUpdate", { detail: {origin: props.glRef.current.origin,  modifiedMolecule: selectedMolecule.molNo} })
+        const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: {origin: props.glRef.current.origin,  modifiedMolecule: selectedMolecule.molNo} })
         document.dispatchEvent(scoresUpdateEvent);    
     }
 
@@ -33,7 +34,7 @@ export const MoorhenFillMissingAtoms = (props: MoorhenSideBarAccordionPropsInter
         }
     }
 
-    async function fetchCardData(selectedModel: number, selectedMap: number): Promise<CootInterestingPlaceDataType[]> {
+    async function fetchCardData(selectedModel: number, selectedMap: number): Promise<libcootApi.ResidueSpecJS[]> {
         const inputData = {
             message: 'coot_command',
             command: 'residues_with_missing_atoms',
@@ -41,12 +42,12 @@ export const MoorhenFillMissingAtoms = (props: MoorhenSideBarAccordionPropsInter
             commandArgs: [selectedModel]
         }
 
-        let response = await props.commandCentre.current.cootCommand(inputData)
-        let newResidueList: CootInterestingPlaceDataType[] = response.data.result.result
+        let response = await props.commandCentre.current.cootCommand(inputData) as moorhen.WorkerResponse<libcootApi.ResidueSpecJS[]>
+        let newResidueList = response.data.result.result
         return newResidueList
     }
 
-    const getCards = (selectedModel: number, selectedMap: number, residueList: CootInterestingPlaceDataType[]) => {
+    const getCards = (selectedModel: number, selectedMap: number, residueList: libcootApi.ResidueSpecJS[]) => {
         const selectedMolecule =  props.molecules.find(molecule => molecule.molNo === selectedModel)
         
         return residueList.map(residue => {

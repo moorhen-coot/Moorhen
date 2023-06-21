@@ -4,6 +4,7 @@ import { MoorhenSideBarAccordionPropsInterface } from "../list/MoorhenSideBar";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase"
 import MoorhenSlider from '../misc/MoorhenSlider' 
+import { libcootApi } from "../../types/libcoot";
 
 export const MoorhenPepflipsDifferenceMap = (props: MoorhenSideBarAccordionPropsInterface) => {
     const [selectedRmsd, setSelectedRmsd] = useState<number>(4.5)
@@ -30,7 +31,7 @@ export const MoorhenPepflipsDifferenceMap = (props: MoorhenSideBarAccordionProps
         const selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedMolNo)
         selectedMolecule.setAtomsDirty(true)
         selectedMolecule.redraw(props.glRef)
-        const scoresUpdateEvent: MoorhenScoresUpdateEventType = new CustomEvent("scoresUpdate", { detail: {origin: props.glRef.current.origin,  modifiedMolecule: selectedMolecule.molNo} })
+        const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: {origin: props.glRef.current.origin,  modifiedMolecule: selectedMolecule.molNo} })
         document.dispatchEvent(scoresUpdateEvent)
     }
 
@@ -40,7 +41,7 @@ export const MoorhenPepflipsDifferenceMap = (props: MoorhenSideBarAccordionProps
         }
     }
 
-    const fetchCardData = async (selectedModel: number, selectedMap: number): Promise<CootInterestingPlaceDataType[]> => {
+    const fetchCardData = async (selectedModel: number, selectedMap: number): Promise<libcootApi.InterestingPlaceDataJS[]> => {
 
         if (selectedRmsd === null) {
             return null
@@ -53,13 +54,13 @@ export const MoorhenPepflipsDifferenceMap = (props: MoorhenSideBarAccordionProps
             commandArgs:[selectedModel, selectedMap, selectedRmsd]
         }
         
-        let response = await props.commandCentre.current.cootCommand(inputData)
-        let newPepflips: CootInterestingPlaceDataType[] = response.data.result.result
+        let response = await props.commandCentre.current.cootCommand(inputData) as moorhen.WorkerResponse<libcootApi.InterestingPlaceDataJS[]>
+        let newPepflips = response.data.result.result
 
         return newPepflips
     }
     
-    const getCards = (selectedModel: number, selectedMap: number, newPepflips: CootInterestingPlaceDataType[]): JSX.Element[] => {
+    const getCards = (selectedModel: number, selectedMap: number, newPepflips: libcootApi.InterestingPlaceDataJS[]): JSX.Element[] => {
 
         return newPepflips.map((flip, index) => {
             return <Card key={index} style={{marginTop: '0.5rem'}}>

@@ -18,7 +18,7 @@ type MoorhenSequenceRangeSelectType = {
 export const MoorhenSequenceRangeSelect = forwardRef<MoorhenSequenceRangeSelectType, MoorhenSequenceRangeSelectPropsType>((props, ref) => {
     const [selectedResidues, setSelectedResidues] = useState<[number, number] | null>(null);
     const [clickedResidue, setClickedResidue] = useState<clickedResidueType | null>(null);
-    const [hoveredAtom, setHoveredAtom] = useState<HoveredAtomType>({ molecule: null, cid: null })
+    const [hoveredAtom, setHoveredAtom] = useState<moorhen.HoveredAtom>({ molecule: null, cid: null })
 
     useImperativeHandle(ref, () => ({
         getSelectedResidues: () => {return selectedResidues}

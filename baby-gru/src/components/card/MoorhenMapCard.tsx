@@ -199,7 +199,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
         }
     }
 
-    const handleOriginUpdate = useCallback((evt: MoorhenOriginUpdateEventType) => {
+    const handleOriginUpdate = useCallback((evt: moorhen.OriginUpdateEvent) => {
         nextOrigin.current = [...evt.detail.origin.map((coord: number) => -coord)]
         props.map.contourLevel = mapContourLevel
         props.map.mapRadius = mapRadius
@@ -211,7 +211,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
         }
     }, [mapContourLevel, mapRadius])
 
-    const handleWheelContourLevelCallback = useCallback((evt: MoorhenWheelContourLevelEventType) => {
+    const handleWheelContourLevelCallback = useCallback((evt: moorhen.WheelContourLevelEvent) => {
         let newMapContourLevel: number
         if (props.map.cootContour && props.map.molNo === props.activeMap.molNo) {
             if (evt.detail.factor > 1) {
@@ -232,13 +232,13 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
         }
     }, [mapContourLevel, mapRadius, props.activeMap?.molNo, props.map.molNo, props.map.cootContour])
 
-    const handleRadiusChangeCallback = useCallback((evt: MoorhenMapRadiusChangeEventType) => {
+    const handleRadiusChangeCallback = useCallback((evt: moorhen.MapRadiusChangeEvent) => {
         if (props.map.cootContour && props.map.molNo === props.activeMap.molNo) {
             setMapRadius(mapRadius + evt.detail.factor)
         }
     }, [mapRadius, props.activeMap?.molNo, props.map.molNo, props.map.cootContour])
 
-    const handleNewMapContour = useCallback((evt: MoorhenNewMapContourEventType) => {
+    const handleNewMapContour = useCallback((evt: moorhen.NewMapContourEvent) => {
         if (props.map.molNo === evt.detail.molNo) {
             setCootContour(evt.detail.cootContour)
             setMapContourLevel(evt.detail.contourLevel)

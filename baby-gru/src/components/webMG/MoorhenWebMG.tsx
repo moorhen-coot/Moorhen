@@ -23,7 +23,7 @@ interface MoorhenWebMGPropsInterface {
     backgroundColor: [number, number, number, number];
     setBackgroundColor: React.Dispatch<React.SetStateAction<[number, number, number, number]>>;
     isDark: boolean;
-    hoveredAtom: HoveredAtomType;
+    hoveredAtom: moorhen.HoveredAtom;
     viewOnly: boolean;
     preferences: MoorhenPreferencesInterface;
     setShowColourRulesToast: React.Dispatch<React.SetStateAction<boolean>>;
@@ -45,7 +45,7 @@ type MoorhenScoresType = {
 export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface>((props, glRef) => {
     const scores = useRef<MoorhenScoresType | null>(null)
     const [mapLineWidth, setMapLineWidth] = useState<number>(0.75)
-    const [connectedMolNo, setConnectedMolNo] = useState<null | MoorhenConnectMapsInfoType>(null)
+    const [connectedMolNo, setConnectedMolNo] = useState<null | moorhen.ConnectMapsInfo>(null)
     const [scoresToastContents, setScoreToastContents] = useState<null | JSX.Element>(null)
     const [showContextMenu, setShowContextMenu] = useState<boolean>(false)
     const hBondsDirty = useRef<boolean>(false)
@@ -289,7 +289,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         setScoreToastContents(null)
     }
     
-    const handleConnectMaps = useCallback(async (evt: MoorhenConnectMapsEventType) => {
+    const handleConnectMaps = useCallback(async (evt: moorhen.ConnectMapsEvent) => {
         
         const currentScores = await props.commandCentre.current.cootCommand({
             returnType: "r_factor_stats",

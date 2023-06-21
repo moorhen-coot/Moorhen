@@ -54,8 +54,8 @@ export interface MoorhenControlsInterface extends MoorhenPreferencesInterface, M
     setActiveMap: React.Dispatch<React.SetStateAction<moorhen.Map>>;
     activeMolecule: moorhen.Molecule;
     setActiveMolecule: React.Dispatch<React.SetStateAction<moorhen.Molecule>>;
-    hoveredAtom: null | HoveredAtomType;
-    setHoveredAtom: React.Dispatch<React.SetStateAction<HoveredAtomType>>;
+    hoveredAtom: null | moorhen.HoveredAtom;
+    setHoveredAtom: React.Dispatch<React.SetStateAction<moorhen.HoveredAtom>>;
     commandHistory: any;
     backgroundColor: [number, number, number, number];
     setBackgroundColor: React.Dispatch<React.SetStateAction<[number, number, number, number]>>;
@@ -78,15 +78,15 @@ interface statesMapInterface {
     mapsRef: React.MutableRefObject<null | moorhen.Map[]>;
     activeMapRef: React.MutableRefObject<moorhen.Map>;
     consoleDivRef: React.MutableRefObject<null | HTMLDivElement>;
-    lastHoveredAtom: React.MutableRefObject<null | HoveredAtomType>;
+    lastHoveredAtom: React.MutableRefObject<null | moorhen.HoveredAtom>;
     prevActiveMoleculeRef: React.MutableRefObject<null | moorhen.Molecule>;
     preferences: MoorhenPreferencesInterface;
     activeMap: moorhen.Map;
     setActiveMap: React.Dispatch<React.SetStateAction<moorhen.Map>>;
     activeMolecule: moorhen.Molecule;
     setActiveMolecule: React.Dispatch<React.SetStateAction<moorhen.Molecule>>;
-    hoveredAtom: null | HoveredAtomType;
-    setHoveredAtom: React.Dispatch<React.SetStateAction<HoveredAtomType>>;
+    hoveredAtom: null | moorhen.HoveredAtom;
+    setHoveredAtom: React.Dispatch<React.SetStateAction<moorhen.HoveredAtom>>;
     consoleMessage: string;
     setConsoleMessage: React.Dispatch<React.SetStateAction<string>>;
     cursorStyle: string;
@@ -131,12 +131,12 @@ export const MoorhenContainer = (props: MoorhenContainerPropsInterface) => {
     const innerMapsRef = useRef<null | moorhen.Map[]>(null)
     const innerActiveMapRef = useRef<null | moorhen.Map>(null)
     const innerConsoleDivRef = useRef<null | HTMLDivElement>(null)
-    const innerLastHoveredAtom = useRef<null | HoveredAtomType>(null)
+    const innerLastHoveredAtom = useRef<null | moorhen.HoveredAtom>(null)
     const innerPrevActiveMoleculeRef = useRef<null |  moorhen.Molecule>(null)
     const innerPreferences = useContext<undefined | MoorhenPreferencesInterface>(PreferencesContext);
     const [innerActiveMap, setInnerActiveMap] = useState<null | moorhen.Map>(null)
     const [innerActiveMolecule, setInnerActiveMolecule] = useState<null|  moorhen.Molecule>(null)
-    const [innerHoveredAtom, setInnerHoveredAtom] = useState<null | HoveredAtomType>({ molecule: null, cid: null })
+    const [innerHoveredAtom, setInnerHoveredAtom] = useState<null | moorhen.HoveredAtom>({ molecule: null, cid: null })
     const [innerConsoleMessage, setInnerConsoleMessage] = useState<string>("")
     const [innerCursorStyle, setInnerCursorStyle] = useState<string>("default")
     const [innerBusy, setInnerBusy] = useState<boolean>(false)
