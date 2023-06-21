@@ -87,7 +87,7 @@ export namespace libcootApi {
         chain: string;
         res_no: number;
         residue_name: string;
-        altLoc: string;
+        altLoc: number | string;
     }
     interface MoorhenHBond extends emscriptem.instance<MoorhenHBond> {
         hb_hydrogen: HBondAtom;
@@ -102,6 +102,20 @@ export namespace libcootApi {
         ligand_atom_is_donor: boolean;
         hydrogen_is_ligand_atom: boolean;
         bond_has_hydrogen_flag: boolean;
+    }
+    type HBondJS = {
+        hb_hydrogen: libcootApi.HBondAtom;
+        donor: libcootApi.HBondAtom;
+        acceptor: libcootApi.HBondAtom;
+        donor_neigh: libcootApi.HBondAtom;
+        acceptor_neigh: libcootApi.HBondAtom;
+        angle_1: number;
+        angle_2: number;
+        angle_3: number;
+        dist: number;
+        ligand_atom_is_donor: boolean;
+        hydrogen_is_ligand_atom: boolean;
+        bond_has_hydrogen_flag: boolean;     
     }
     interface DensityCorrelationStatsInfoT extends emscriptem.instance<DensityCorrelationStatsInfoT> {
         n: number;
@@ -126,9 +140,23 @@ export namespace libcootApi {
     interface Generic3dLinesBondsBoxT extends emscriptem.instance<Generic3dLinesBondsBoxT> {
         line_segments: emscriptem.vector<emscriptem.vector<CootCartesianPair>>;
     }
+    type Generic3dLinesBondsBoxJS = {
+        start: { x: number; y: number; z: number };
+        end: { x: number; y: number; z: number };
+        dist: number;
+    }
     interface SimpleMeshT extends emscriptem.instance<SimpleMeshT> {
         vertices: emscriptem.vector<VncVertex>;
         triangles: emscriptem.vector<gTriangle>;
+    }
+    interface SimpleMeshJS {
+        prim_types: [[string]];
+        useIndices?: [[boolean]];
+        idx_tri: [[number[]]];
+        vert_tri: [[number[]]];
+        additional_norm_tri?: [[number[]]];
+        norm_tri: [[number[]]];
+        col_tri: [[number[]]];
     }
     interface SymmetryData extends emscriptem.instance<SymmetryData> {
         cell: CellTranslation;
@@ -162,6 +190,11 @@ export namespace libcootApi {
         updated_centre: ClipperCoordOrth;
         suggested_contour_level: number;
         sum_of_densities: number;
+    }
+    type MapMoleculeCentreInfoJS = {
+        success: boolean;
+        updated_centre: [number, number, number];
+        suggested_contour_level: number;
     }
     interface ResidueSpecT extends emscriptem.instance<ResidueSpecT> {
         model_number: number;
@@ -219,6 +252,17 @@ export namespace libcootApi {
     interface InstancedMeshT extends emscriptem.instance<InstancedMeshT> {
         geom: emscriptem.vector<InstancedGeomT>;
         markup: SimpleMeshT;
+    }
+    type InstancedMeshJS = {
+        prim_types: any;
+        idx_tri: any;
+        vert_tri: any;
+        norm_tri: any
+        col_tri: any;
+        instance_use_colors: any;
+        instance_sizes: any;
+        instance_origins: any;
+        instance_orientations: any;
     }
     interface MovedAtomT extends emscriptem.instance<MovedAtomT> {
         atom_name: string;
@@ -288,7 +332,7 @@ export namespace libcootApi {
         replace_molecule_by_model_from_file(imol: number, tempFilename: string): void;
         import_cif_dictionary(tempFilename: string, associatedMolNo: number): number;
         auto_read_mtz(tempFilename: string): emscriptem.vector<number>;
-        read_pdb(tempFilename: string): void;
+        read_pdb(tempFilename: string): number;
         set_show_timings: (arg0: boolean) => void;
         new_positions_for_atoms_in_residues: (arg0: number, arg1: emscriptem.vector<MovedResidueT>) => number;
     }       

@@ -26,7 +26,7 @@ let print = (stuff) => {
     postMessage({ consoleMessage: JSON.stringify(stuff) })
 }
 
-const instancedMeshToMeshData = (instanceMesh: libcootApi.InstancedMeshT, perm: boolean, toSpheres: boolean = false, maxZSize: number = 10000.) => {
+const instancedMeshToMeshData = (instanceMesh: libcootApi.InstancedMeshT, perm: boolean, toSpheres: boolean = false, maxZSize: number = 10000.): libcootApi.InstancedMeshJS => {
     //maxZSize is arguably a hack to deal with overlong bonds. It is set to 5 incall to this function.
 
     let totIdxs: number[][] = []
@@ -232,7 +232,7 @@ const instancedMeshToMeshData = (instanceMesh: libcootApi.InstancedMeshT, perm: 
     }
 }
 
-const simpleMeshToMeshData = (simpleMesh: libcootApi.SimpleMeshT, perm: boolean = false) => {
+const simpleMeshToMeshData = (simpleMesh: libcootApi.SimpleMeshT, perm: boolean = false): libcootApi.SimpleMeshJS => {
     const vertices = simpleMesh.vertices;
     const triangles = simpleMesh.triangles;
     let totIdxs: number[] = [];
@@ -310,7 +310,7 @@ const floatArrayToJSArray = (floatArray: emscriptem.vector<number>) => {
     return returnResult;
 }
 
-const mapMoleculeCentreInfoToJSObject = (mapMoleculeCentreInfo: libcootApi.MapMoleculeCentreInfo) => {
+const mapMoleculeCentreInfoToJSObject = (mapMoleculeCentreInfo: libcootApi.MapMoleculeCentreInfo): libcootApi.MapMoleculeCentreInfoJS => {
     //Takes a coot::util::map_molecule_centre_info and returns a javascript object that resembles it
     //Disposes of the coordOrth
     const updatedCentre = mapMoleculeCentreInfo.updated_centre
@@ -318,7 +318,8 @@ const mapMoleculeCentreInfoToJSObject = (mapMoleculeCentreInfo: libcootApi.MapMo
         updated_centre: [
             updatedCentre.x(),
             updatedCentre.y(),
-            updatedCentre.z()],
+            updatedCentre.z()
+        ] as [number, number, number],
         success: mapMoleculeCentreInfo.success,
         suggested_contour_level: mapMoleculeCentreInfo.suggested_contour_level
     }
@@ -469,7 +470,7 @@ const validationDataToJSArray = (validationData: libcootApi.ValidationInformatio
     return returnResult
 }
 
-const linesBoxToJSArray = (BoxData: libcootApi.Generic3dLinesBondsBoxT) => {
+const linesBoxToJSArray = (BoxData: libcootApi.Generic3dLinesBondsBoxT): libcootApi.Generic3dLinesBondsBoxJS[][] => {
     let envdata: {start: {x: number; y: number; z: number; }; end: {x: number; y: number; z: number; }; dist: number; }[][]= []
     const segments = BoxData.line_segments;
     const nSeg = segments.size()
@@ -502,22 +503,8 @@ const linesBoxToJSArray = (BoxData: libcootApi.Generic3dLinesBondsBoxT) => {
     return envdata
 }
 
-const vectorHBondToJSArray = (HBondData: emscriptem.vector<libcootApi.MoorhenHBond>) => {
-    let hbdata: {
-        hb_hydrogen: libcootApi.HBondAtom;
-        donor: libcootApi.HBondAtom;
-        acceptor: libcootApi.HBondAtom;
-        donor_neigh: libcootApi.HBondAtom;
-        acceptor_neigh: libcootApi.HBondAtom;
-        angle_1: number;
-        angle_2: number;
-        angle_3: number;
-        dist: number;
-        ligand_atom_is_donor: boolean;
-        hydrogen_is_ligand_atom: boolean;
-        bond_has_hydrogen_flag: boolean;     
-    }[] = []
-
+const vectorHBondToJSArray = (HBondData: emscriptem.vector<libcootApi.MoorhenHBond>): libcootApi.HBondJS[] => {
+    let hbdata: libcootApi.HBondJS[] = []
     const hbondDataSize = HBondData.size()
     for (let ib = 0; ib < hbondDataSize; ib++) {
         const hb = HBondData.get(ib)
@@ -604,7 +591,7 @@ const ramachandranDataToJSArray = (ramachandraData: emscriptem.vector<libcootApi
     return returnResult
 }
 
-const simpleMeshToLineMeshData = (simpleMesh: libcootApi.SimpleMeshT, normalLighting: boolean) => {
+const simpleMeshToLineMeshData = (simpleMesh: libcootApi.SimpleMeshT, normalLighting: boolean): libcootApi.SimpleMeshJS => {
     const vertices = simpleMesh.vertices;
     const triangles = simpleMesh.triangles;
     let totIdxs: number[] = [];

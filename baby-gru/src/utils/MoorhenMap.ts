@@ -2,6 +2,7 @@ import { readDataFile, guid } from "./MoorhenUtils"
 import { readMapFromArrayBuffer, mapToMapGrid } from '../WebGLgComponents/mgWebGLReadMap';
 import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
+import { libcootApi } from "../types/libcoot";
 
 export class MoorhenMap implements moorhen.Map {
     
@@ -101,7 +102,7 @@ export class MoorhenMap implements moorhen.Map {
             returnType: "status",
             command: 'shim_replace_map_by_mtz_from_file',
             commandArgs: [this.molNo, mtzData, selectedColumns]
-        }, true)
+        }, true) as moorhen.WorkerResponse<number>
 
         if (cootResponse.data.result.status === 'Completed') {
             return this.doCootContour(glRef, ...(glRef.current.origin.map(coord => -coord) as [number, number, number]), this.mapRadius, this.contourLevel);
@@ -232,12 +233,12 @@ export class MoorhenMap implements moorhen.Map {
     }
 
 
-    getMapWeight(): Promise<moorhen.WorkerResponse> {
+    getMapWeight() {
         return this.commandCentre.current.cootCommand({
             returnType: 'status',
             command: "get_map_weight",
             commandArgs: [this.molNo]
-        })
+        }) as Promise<moorhen.WorkerResponse<number>>
     }
 
     makeWebMGLive(glRef: React.RefObject<webGL.MGWebGL>): void {
@@ -449,7 +450,7 @@ export class MoorhenMap implements moorhen.Map {
             command: 'shim_associate_data_mtz_file_with_map',
             commandArgs: commandArgs,
             returnType: 'status'
-        }, true)
+        }, true) as moorhen.WorkerResponse<string>
 
         if (response.data.result.status === "Completed") {
             this.hasReflectionData = true
@@ -483,7 +484,7 @@ export class MoorhenMap implements moorhen.Map {
             command: 'sharpen_blur_map',
             commandArgs: [this.molNo, bFactor, true],
             returnType: "status"
-        })
+        }) as Promise<moorhen.WorkerResponse<number>>
     }
 
     async centreOnMap(glRef: React.RefObject<webGL.MGWebGL>): Promise<void> {
@@ -491,9 +492,9 @@ export class MoorhenMap implements moorhen.Map {
             command: 'get_map_molecule_centre',
             commandArgs: [this.molNo],
             returnType: "map_molecule_centre_info_t"
-        })
+        }) as moorhen.WorkerResponse<libcootApi.MapMoleculeCentreInfoJS>
         if (response.data.result.result.success) {
-            glRef.current.setOriginAnimated(response.data.result.result.updated_centre.map((coord: number) => -coord))
+            glRef.current.setOriginAnimated(response.data.result.result.updated_centre.map(coord => -coord))
         } else {
             console.log('Problem finding map centre')
         }

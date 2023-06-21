@@ -42,7 +42,7 @@ export const MoorhenGetMonomerMenuItem = (props: {
                 commandArgs: [newTlc, fromMolNo,
                     ...props.glRef.current.origin.map(coord => -coord)
                 ]
-            }, true)
+            }, true) as Promise<moorhen.WorkerResponse<number>>
         }
 
         let result = await getMonomer()
