@@ -16,7 +16,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
     mapsRef: React.RefObject<moorhen.Map[]>;
     glRef: React.RefObject<webGL.MGWebGL>;
     activeMapRef: React.RefObject<moorhen.Map>;
-    context: any;
+    context: moorhen.Context;
     busy: boolean;
     modificationCount: number;
     modificationCountBackupThreshold: number;
@@ -25,7 +25,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
     disableBackups: boolean;
     storageInstance: moorhen.LocalStorageInstance;
     
-    constructor(moleculesRef: React.RefObject<moorhen.Molecule[]>, mapsRef: React.RefObject<moorhen.Map[]>, activeMapRef: React.RefObject<moorhen.Map>, glRef: React.RefObject<webGL.MGWebGL>, context: any) {
+    constructor(moleculesRef: React.RefObject<moorhen.Molecule[]>, mapsRef: React.RefObject<moorhen.Map[]>, activeMapRef: React.RefObject<moorhen.Map>, glRef: React.RefObject<webGL.MGWebGL>, context: moorhen.Context) {
         this.moleculesRef = moleculesRef
         this.mapsRef = mapsRef
         this.glRef = glRef
