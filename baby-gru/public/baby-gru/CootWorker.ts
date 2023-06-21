@@ -437,7 +437,7 @@ const residueSpecToJSArray = (residueSpecs: emscriptem.vector<libcootApi.Residue
     return returnResult
 }
 
-const validationDataToJSArray = (validationData: libcootApi.ValidationInformationT, chainID: string | null = null) => {
+const validationDataToJSArray = (validationData: libcootApi.ValidationInformationT, chainID: string | null = null): libcootApi.ValidationInformationJS[] => {
     let returnResult: { chainId: string; insCode: string; seqNum: number; restype: string; value: number; }[] = []
     const cviv = validationData.cviv
     const chainSize = cviv.size()

@@ -4,6 +4,8 @@ import { residueCodesOneToThree, getResidueInfo, convertViewtoPx } from '../../u
 import { MoorhenValidationChartWidgetBase } from "./MoorhenValidationChartWidgetBase"
 import annotationPlugin from 'chartjs-plugin-annotation'
 import { MoorhenSideBarAccordionPropsInterface } from "../list/MoorhenSideBar";
+import { libcootApi } from "../../types/libcoot";
+import { moorhen } from "../../types/moorhen";
 
 Chart.register(...registerables);
 Chart.register(annotationPlugin);
@@ -95,14 +97,14 @@ export const MoorhenValidation = (props: MoorhenSideBarAccordionPropsInterface) 
         }
         let availableMetrics = getAvailableMetrics(selectedModel, selectedMap, selectedChain)
 
-        let promises = []
+        let promises: Promise<moorhen.WorkerResponse<libcootApi.ValidationInformationJS[]>>[] = []
         availableMetrics.forEach(metric => {
             const inputData = { message:'coot_command', ...metric }
             promises.push(props.commandCentre.current.cootCommand(inputData))
         })
         let responses = await Promise.all(promises) 
         
-        let newPlotData = []
+        let newPlotData: libcootApi.ValidationInformationJS[][] = []
         responses.forEach(response => {
             newPlotData.push(response.data.result.result)
         })
@@ -111,7 +113,7 @@ export const MoorhenValidation = (props: MoorhenSideBarAccordionPropsInterface) 
 
     }
 
-    const getChart = (selectedModel: number, selectedMap: number, selectedChain: string, plotData: any) => {
+    const getChart = (selectedModel: number, selectedMap: number, selectedChain: string, plotData: libcootApi.ValidationInformationJS[][]) => {
 
         const handleClick = (evt: ChartEvent) => {
             if (chartRef.current === null){

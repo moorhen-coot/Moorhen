@@ -223,6 +223,13 @@ export namespace libcootApi {
         name: string;
         cviv: emscriptem.vector<ChainValidationInformationT>;
     }
+    type ValidationInformationJS = {
+        chainId: string;
+        insCode: string;
+        seqNum: number;
+        restype: string;
+        value: number;
+    }
     interface SuperposeResultsT extends emscriptem.instance<SuperposeResultsT> {
         suppose_info: string;
         alignment: PairType<string, string>;

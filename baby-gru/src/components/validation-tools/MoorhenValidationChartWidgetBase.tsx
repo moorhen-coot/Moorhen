@@ -24,6 +24,7 @@ type ValidationChartProps = {
     sideBarWidth: number;
     extraControlForm?: JSX.Element;
     extraControlFormValue?: any;
+    enableChainSelect?: boolean;
 }
 
 export const MoorhenValidationChartWidgetBase = forwardRef<Chart, ValidationChartProps>((props, chartRef) => {
@@ -90,7 +91,7 @@ export const MoorhenValidationChartWidgetBase = forwardRef<Chart, ValidationChar
         }
         fetchData()
 
-    }, [selectedChain, selectedMap, selectedModel, cachedGemmiStructure])
+    }, [selectedChain, selectedMap, selectedModel, cachedGemmiStructure, props.extraControlFormValue])
 
     useEffect(() => {
         if (chartRef !== null && typeof chartRef !== 'function' && chartRef.current) {
@@ -122,12 +123,15 @@ export const MoorhenValidationChartWidgetBase = forwardRef<Chart, ValidationChar
                             <Col>
                                 <MoorhenMoleculeSelect width="" onChange={handleModelChange} molecules={props.molecules} ref={moleculeSelectRef}/>
                             </Col>
+                            {props.enableChainSelect &&
                             <Col>
                                 <MoorhenChainSelect width="" onChange={handleChainChange} molecules={props.molecules} selectedCoordMolNo={selectedModel} allowedTypes={[1, 2]} ref={chainSelectRef}/>
                             </Col>
+                            }
                             <Col>
                                 <MoorhenMapSelect width="" onChange={handleMapChange} maps={props.maps} ref={mapSelectRef}/>
                             </Col>
+                            {props.extraControlForm}
                         </Row>
                     </Form.Group>
                 </Form>
@@ -145,4 +149,4 @@ export const MoorhenValidationChartWidgetBase = forwardRef<Chart, ValidationChar
 
 })
 
-MoorhenValidationChartWidgetBase.defaultProps = {filterMapFunction: (maps: moorhen.Map) => {return true}, extraControlForm: null, extraControlFormValue: null}
+MoorhenValidationChartWidgetBase.defaultProps = {filterMapFunction: (maps: moorhen.Map) => {return true}, extraControlForm: null, extraControlFormValue: null, enableChainSelect: true}
