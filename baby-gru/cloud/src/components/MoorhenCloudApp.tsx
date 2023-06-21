@@ -1,6 +1,6 @@
 import { useRef, useState, useReducer, useContext, useEffect, useCallback } from 'react'
 import { MenuItem } from '@mui/material'
-import { MoorhenPreferencesInterface, PreferencesContext } from "../../../src/utils/MoorhenPreferences"
+import { MoorhenContext } from "../../../src/utils/MoorhenContext"
 import { MoorhenContainer, MoorhenContainerPropsInterface, MoorhenControlsInterface } from "../../../src/components/MoorhenContainer"
 import { itemReducer } from "../../../src/components/MoorhenApp"
 import { isDarkBackground } from "../../../src/WebGLgComponents/mgWebGL"
@@ -20,7 +20,7 @@ const initialMapsState: moorhen.Map[] = []
 
 interface MoorhenCloudAppPropsInterface extends MoorhenContainerPropsInterface {
     exportCallback: (arg0: string, arg1: string) => Promise<void>;
-    onChangePreferencesListener: (preferences: MoorhenPreferencesInterface) => void;
+    onChangePreferencesListener: (context: moorhen.Context) => void;
 }
 
 
@@ -34,7 +34,7 @@ export const MoorhenCloudApp = (props: MoorhenCloudAppPropsInterface) => {
     const lastHoveredAtom = useRef<moorhen.HoveredAtom | null>(null)
     const isDirty = useRef<boolean>(false)
     const busyContouring = useRef<boolean>(false)
-    const preferences = useContext<undefined | MoorhenPreferencesInterface>(PreferencesContext)
+    const context = useContext<undefined | moorhen.Context>(MoorhenContext)
     const [activeMap, setActiveMap] = useState<moorhen.Map | null>(null)
     const [hoveredAtom, setHoveredAtom] = useState<moorhen.HoveredAtom>({ molecule: null, cid: null })
     const [busy, setBusy] = useState<boolean>(false)
@@ -62,7 +62,7 @@ export const MoorhenCloudApp = (props: MoorhenCloudAppPropsInterface) => {
 
     const collectedProps = {
         ...props, glRef, timeCapsuleRef, commandCentre, moleculesRef, mapsRef, 
-        activeMapRef, lastHoveredAtom, preferences, activeMap, setActiveMap,
+        activeMapRef, lastHoveredAtom, context, activeMap, setActiveMap,
         busy, setBusy, molecules: molecules as moorhen.Molecule[], changeMolecules,
         maps: maps as moorhen.Map[], changeMaps, backgroundColor, setBackgroundColor,
         cootInitialized, setCootInitialized, setShowColourRulesToast, hoveredAtom, setHoveredAtom,
@@ -180,21 +180,21 @@ export const MoorhenCloudApp = (props: MoorhenCloudAppPropsInterface) => {
     }, [glRef.current?.background_colour])
 
     useEffect(() => {
-        if (!Object.keys(preferences).some(key => preferences[key] === null)) {
+        if (!Object.keys(context).some(key => context[key] === null)) {
             props.onChangePreferencesListener(
-                Object.keys(preferences).reduce((obj, key) => {
+                Object.keys(context).reduce((obj, key) => {
                     if (key === 'isMounted') {
                         // pass
                     } else if (key === 'shortCuts') {
-                        obj[key] = JSON.parse(preferences[key as string])
+                        obj[key] = JSON.parse(context[key as string])
                     } else {
-                        obj[key] = preferences[key]
+                        obj[key] = context[key]
                     }
                     return obj
                 }, {}) as any
             )
         }
-    }, [preferences])
+    }, [context])
 
     return <>
             <MoorhenContainer

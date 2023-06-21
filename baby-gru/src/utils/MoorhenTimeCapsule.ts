@@ -16,7 +16,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
     mapsRef: React.RefObject<moorhen.Map[]>;
     glRef: React.RefObject<webGL.MGWebGL>;
     activeMapRef: React.RefObject<moorhen.Map>;
-    preferences: any;
+    context: moorhen.Context;
     busy: boolean;
     modificationCount: number;
     modificationCountBackupThreshold: number;
@@ -25,12 +25,12 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
     disableBackups: boolean;
     storageInstance: moorhen.LocalStorageInstance;
     
-    constructor(moleculesRef: React.RefObject<moorhen.Molecule[]>, mapsRef: React.RefObject<moorhen.Map[]>, activeMapRef: React.RefObject<moorhen.Map>, glRef: React.RefObject<webGL.MGWebGL>, preferences: any) {
+    constructor(moleculesRef: React.RefObject<moorhen.Molecule[]>, mapsRef: React.RefObject<moorhen.Map[]>, activeMapRef: React.RefObject<moorhen.Map>, glRef: React.RefObject<webGL.MGWebGL>, context: moorhen.Context) {
         this.moleculesRef = moleculesRef
         this.mapsRef = mapsRef
         this.glRef = glRef
         this.activeMapRef = activeMapRef
-        this.preferences = preferences
+        this.context = context
         this.busy = false
         this.modificationCount = 0
         this.modificationCountBackupThreshold = 5
@@ -182,7 +182,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
             activeMapIndex: this.mapsRef.current.findIndex(map => map.molNo === this.activeMapRef.current.molNo),
             origin: this.glRef.current.origin,
             backgroundColor: this.glRef.current.background_colour,
-            atomLabelDepthMode: this.preferences.atomLabelDepthMode,
+            atomLabelDepthMode: this.context.atomLabelDepthMode,
             ambientLight: this.glRef.current.light_colours_ambient,
             diffuseLight: this.glRef.current.light_colours_diffuse,
             lightPosition: this.glRef.current.light_positions,

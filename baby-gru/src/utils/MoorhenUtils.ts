@@ -1,9 +1,7 @@
-import { MoorhenMolecule } from "./MoorhenMolecule";
 import { hexToRgb } from "@mui/material";
 import localforage from 'localforage';
 import * as vec3 from 'gl-matrix/vec3';
 import * as mat3 from 'gl-matrix/mat3';
-import { MoorhenShortcutType } from "./MoorhenPreferences";
 import { moorhen } from "../types/moorhen";
 import { gemmi } from "../types/gemmi";
 
@@ -375,7 +373,7 @@ export const getResidueInfo = (molecules: moorhen.Molecule[], selectedMolNo: num
     }
 }
 
-export const getTooltipShortcutLabel = (shortCut: MoorhenShortcutType): string => {
+export const getTooltipShortcutLabel = (shortCut: moorhen.Shortcut): string => {
     let modifiers = []
     if (shortCut.modifiers.includes('shiftKey')) modifiers.push("Shift")
     if (shortCut.modifiers.includes('ctrlKey')) modifiers.push("<Ctrl>")

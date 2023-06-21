@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { Modal, Button, Card, Row, Col } from "react-bootstrap";
-import { MoorhenShortcutType, getDefaultValues } from "../../utils/MoorhenPreferences";
+import { getDefaultValues } from "../../utils/MoorhenContext";
+import { moorhen } from "../../types/moorhen"
 
 export const MoorhenShortcutConfigModal = (props: {
-    shortCuts: {[label: string]: MoorhenShortcutType};
+    shortCuts: {[label: string]: moorhen.Shortcut};
     setShowModal: React.Dispatch<React.SetStateAction<boolean>>; 
     setShortCuts: React.Dispatch<React.SetStateAction<string>>;
     showModal: boolean; 
@@ -21,7 +22,7 @@ export const MoorhenShortcutConfigModal = (props: {
     const restoreDefaults = () => {
         const defaultValues = getDefaultValues()
         props.setShowModal(false)
-        setStagedShortCuts(defaultValues.shortCuts as {[label: string]: MoorhenShortcutType})
+        setStagedShortCuts(defaultValues.shortCuts as {[label: string]: moorhen.Shortcut})
         props.setShortCuts(JSON.stringify(defaultValues.shortCuts))
     }
 

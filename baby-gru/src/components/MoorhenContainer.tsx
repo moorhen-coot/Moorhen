@@ -4,7 +4,7 @@ import { MoorhenWebMG } from './webMG/MoorhenWebMG';
 import { convertRemToPx, convertViewtoPx, getTooltipShortcutLabel, createLocalStorageInstance, allFontsSet } from '../utils/MoorhenUtils';
 import { historyReducer, initialHistoryState } from './navbar-menus/MoorhenHistoryMenu';
 import { MoorhenCommandCentre } from "../utils/MoorhenCommandCentre"
-import { MoorhenPreferencesInterface, PreferencesContext } from "../utils/MoorhenPreferences";
+import { MoorhenContext } from "../utils/MoorhenContext";
 import { MoorhenTimeCapsule } from '../utils/MoorhenTimeCapsule';
 import { MoorhenButtonBar } from './button/MoorhenButtonBar';
 import { Backdrop } from "@mui/material";
@@ -37,7 +37,7 @@ interface MoorhenContainerOptionalPropsInterface {
     aceDRGInstance: any; 
 }
 
-export interface MoorhenControlsInterface extends MoorhenPreferencesInterface, MoorhenContainerOptionalPropsInterface {
+export interface MoorhenControlsInterface extends moorhen.Context, MoorhenContainerOptionalPropsInterface {
     isDark: boolean;
     molecules: moorhen.Molecule[];
     changeMolecules: (arg0: MolChange<moorhen.Molecule>) => void;
@@ -80,7 +80,7 @@ interface statesMapInterface {
     consoleDivRef: React.MutableRefObject<null | HTMLDivElement>;
     lastHoveredAtom: React.MutableRefObject<null | moorhen.HoveredAtom>;
     prevActiveMoleculeRef: React.MutableRefObject<null | moorhen.Molecule>;
-    preferences: MoorhenPreferencesInterface;
+    context: moorhen.Context;
     activeMap: moorhen.Map;
     setActiveMap: React.Dispatch<React.SetStateAction<moorhen.Map>>;
     activeMolecule: moorhen.Molecule;
@@ -133,7 +133,7 @@ export const MoorhenContainer = (props: MoorhenContainerPropsInterface) => {
     const innerConsoleDivRef = useRef<null | HTMLDivElement>(null)
     const innerLastHoveredAtom = useRef<null | moorhen.HoveredAtom>(null)
     const innerPrevActiveMoleculeRef = useRef<null |  moorhen.Molecule>(null)
-    const innerPreferences = useContext<undefined | MoorhenPreferencesInterface>(PreferencesContext);
+    const innerContext = useContext<undefined | moorhen.Context>(MoorhenContext);
     const [innerActiveMap, setInnerActiveMap] = useState<null | moorhen.Map>(null)
     const [innerActiveMolecule, setInnerActiveMolecule] = useState<null|  moorhen.Molecule>(null)
     const [innerHoveredAtom, setInnerHoveredAtom] = useState<null | moorhen.HoveredAtom>({ molecule: null, cid: null })
@@ -178,7 +178,7 @@ export const MoorhenContainer = (props: MoorhenContainerPropsInterface) => {
         glRef: innerGlRef, timeCapsuleRef: innerTimeCapsuleRef, commandCentre: innnerCommandCentre,
         moleculesRef: innerMoleculesRef, mapsRef: innerMapsRef, activeMapRef: innerActiveMapRef,
         consoleDivRef: innerConsoleDivRef, lastHoveredAtom: innerLastHoveredAtom, 
-        prevActiveMoleculeRef: innerPrevActiveMoleculeRef, preferences: innerPreferences,
+        prevActiveMoleculeRef: innerPrevActiveMoleculeRef, context: innerContext,
         activeMap: innerActiveMap, setActiveMap: setInnerActiveMap, activeMolecule: innerActiveMolecule,
         setActiveMolecule: setInnerActiveMolecule, hoveredAtom: innerHoveredAtom, setHoveredAtom: setInnerHoveredAtom,
         consoleMessage: innerConsoleMessage, setConsoleMessage: setInnerConsoleMessage, cursorStyle: innerCursorStyle,
@@ -201,7 +201,7 @@ export const MoorhenContainer = (props: MoorhenContainerPropsInterface) => {
     })
 
     const { glRef, timeCapsuleRef, commandCentre, moleculesRef, mapsRef, activeMapRef,
-        consoleDivRef, lastHoveredAtom, prevActiveMoleculeRef, preferences, activeMap, 
+        consoleDivRef, lastHoveredAtom, prevActiveMoleculeRef, context, activeMap, 
         setActiveMap, activeMolecule, setActiveMolecule, hoveredAtom, setHoveredAtom,
         consoleMessage, setConsoleMessage, cursorStyle, setCursorStyle, busy, setBusy,
         windowWidth, setWindowWidth, windowHeight, setWindowHeight, commandHistory, 
@@ -233,37 +233,37 @@ export const MoorhenContainer = (props: MoorhenContainerPropsInterface) => {
 
     useEffect(() => {
         const initTimeCapsule = async () => {
-            if (preferences.isMounted) {
-                timeCapsuleRef.current = new MoorhenTimeCapsule(moleculesRef, mapsRef, activeMapRef, glRef, preferences)
+            if (context.isMounted) {
+                timeCapsuleRef.current = new MoorhenTimeCapsule(moleculesRef, mapsRef, activeMapRef, glRef, context)
                 timeCapsuleRef.current.storageInstance = backupStorageInstance
-                timeCapsuleRef.current.maxBackupCount = preferences.maxBackupCount
-                timeCapsuleRef.current.modificationCountBackupThreshold = preferences.modificationCountBackupThreshold
+                timeCapsuleRef.current.maxBackupCount = context.maxBackupCount
+                timeCapsuleRef.current.modificationCountBackupThreshold = context.modificationCountBackupThreshold
                 await timeCapsuleRef.current.init()
             }
         }
         initTimeCapsule()
-    }, [preferences.isMounted])
+    }, [context.isMounted])
     
     useEffect(() => {
-        if (cootInitialized && preferences.isMounted) {
-            const shortCut = JSON.parse(preferences.shortCuts as string).show_shortcuts
+        if (cootInitialized && context.isMounted) {
+            const shortCut = JSON.parse(context.shortCuts as string).show_shortcuts
             setToastContent(
                 <h4 style={{margin: 0}}>
                     {`Press ${getTooltipShortcutLabel(shortCut)} to show help`}
                 </h4>
             )
         }
-    }, [cootInitialized, preferences.isMounted])
+    }, [cootInitialized, context.isMounted])
 
     useEffect(() => {
-        if (preferences.isMounted && preferences.defaultBackgroundColor !== backgroundColor) {
-            setBackgroundColor(preferences.defaultBackgroundColor)
+        if (context.isMounted && context.defaultBackgroundColor !== backgroundColor) {
+            setBackgroundColor(context.defaultBackgroundColor)
         }
         
-    }, [preferences.isMounted])
+    }, [context.isMounted])
 
     useEffect(() => {
-        if (!preferences.isMounted) {
+        if (!context.isMounted) {
             return
         }
         
@@ -279,8 +279,8 @@ export const MoorhenContainer = (props: MoorhenContainerPropsInterface) => {
             setTheme("flatly")
         }
         
-        if (preferences.defaultBackgroundColor !== backgroundColor) {
-            preferences.setDefaultBackgroundColor(backgroundColor)
+        if (context.defaultBackgroundColor !== backgroundColor) {
+            context.setDefaultBackgroundColor(backgroundColor)
         }
 
         style.rel = "stylesheet";
@@ -297,31 +297,31 @@ export const MoorhenContainer = (props: MoorhenContainerPropsInterface) => {
         async function setMakeBackupsAPI() {
             await commandCentre.current.cootCommand({
                 command: 'set_make_backups',
-                commandArgs: [preferences.makeBackups],
+                commandArgs: [context.makeBackups],
                 returnType: "status"
             })
         }
 
-        if (commandCentre.current && preferences.makeBackups !== null && cootInitialized) {
+        if (commandCentre.current && context.makeBackups !== null && cootInitialized) {
             setMakeBackupsAPI()
         }
 
-    }, [preferences.makeBackups, cootInitialized])
+    }, [context.makeBackups, cootInitialized])
 
     useEffect(() => {
         async function setDrawMissingLoopAPI() {
             await commandCentre.current.cootCommand({
                 command: 'set_draw_missing_residue_loops',
-                commandArgs: [preferences.drawMissingLoops],
+                commandArgs: [context.drawMissingLoops],
                 returnType: "status"
             })
         }
 
-        if (commandCentre.current && preferences.drawMissingLoops !== null && cootInitialized) {
+        if (commandCentre.current && context.drawMissingLoops !== null && cootInitialized) {
             setDrawMissingLoopAPI()
         }
 
-    }, [preferences.drawMissingLoops, cootInitialized])
+    }, [context.drawMissingLoops, cootInitialized])
 
     useEffect(() => {
         commandCentre.current = new MoorhenCommandCentre({
@@ -375,8 +375,8 @@ export const MoorhenContainer = (props: MoorhenContainerPropsInterface) => {
 
     //Make this so that the keyPress returns true or false, depending on whether mgWebGL is to continue processing event
     const onKeyPress = useCallback((event: KeyboardEvent) => {
-        return babyGruKeyPress(event, collectedProps, JSON.parse(preferences.shortCuts as string))
-    }, [molecules, activeMolecule, activeMap, hoveredAtom, viewOnly, preferences])
+        return babyGruKeyPress(event, collectedProps, JSON.parse(context.shortCuts as string))
+    }, [molecules, activeMolecule, activeMap, hoveredAtom, viewOnly, context])
 
     useEffect(() => {
         if (hoveredAtom && hoveredAtom.molecule && hoveredAtom.cid) {
@@ -449,7 +449,7 @@ export const MoorhenContainer = (props: MoorhenContainerPropsInterface) => {
         setToastContent, hoveredAtom, setHoveredAtom, showToast, setShowToast, windowWidth, windowHeight, showColourRulesToast,
         timeCapsuleRef, setShowColourRulesToast, isDark, disableFileUploads, urlPrefix, viewOnly,
         extraNavBarMenus, monomerLibraryPath, moleculesRef, extraFileMenuItems, mapsRef, allowScripting, extraCalculateMenuItems,
-        extraEditMenuItems, extraDraggableModals, aceDRGInstance, availableFonts, ...preferences
+        extraEditMenuItems, extraDraggableModals, aceDRGInstance, availableFonts, ...context
     }
 
     return <> 
@@ -491,7 +491,7 @@ export const MoorhenContainer = (props: MoorhenContainerPropsInterface) => {
                         onAtomHovered={onAtomHovered}
                         onKeyPress={onKeyPress}
                         hoveredAtom={hoveredAtom}
-                        preferences={preferences}
+                        context={context}
                         setShowColourRulesToast={setShowColourRulesToast}
                         showColourRulesToast={showColourRulesToast}
                         windowHeight={windowHeight}

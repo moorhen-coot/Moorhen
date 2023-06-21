@@ -1,100 +1,6 @@
 import { createContext, useState, useEffect, useMemo, useReducer } from "react";
 import localforage from 'localforage';
-
-export type MoorhenShortcutType = {
-    modifiers: string[];
-    keyPress: string;
-    label: string;
-    viewOnly: boolean;
-}
-
-export interface MoorhenPreferencesSetterInterface {
-    setDoShadowDepthDebug: React.Dispatch<React.SetStateAction<boolean>>;
-    setDefaultBackgroundColor: React.Dispatch<React.SetStateAction<[number, number, number, number]>>;
-    setDoShadow: React.Dispatch<React.SetStateAction<boolean>>;
-    setDoOutline: React.Dispatch<React.SetStateAction<boolean>>;
-    setDoSpinTest: React.Dispatch<React.SetStateAction<boolean>>;
-    setClipCap: React.Dispatch<React.SetStateAction<boolean>>;
-    setResetClippingFogging: React.Dispatch<React.SetStateAction<boolean>>;
-    setUseOffScreenBuffers: React.Dispatch<React.SetStateAction<boolean>>;
-    setDoPerspectiveProjection: React.Dispatch<React.SetStateAction<boolean>>;
-    setDrawInteractions: React.Dispatch<React.SetStateAction<boolean>>;
-    setDrawMissingLoops: React.Dispatch<React.SetStateAction<boolean>>;
-    setDrawAxes: React.Dispatch<React.SetStateAction<boolean>>;
-    setDrawCrosshairs: React.Dispatch<React.SetStateAction<boolean>>;
-    setDrawFPS: React.Dispatch<React.SetStateAction<boolean>>;
-    setDefaultExpandDisplayCards: React.Dispatch<React.SetStateAction<boolean>>;
-    setRefineAfterMod: React.Dispatch<React.SetStateAction<boolean>>;
-    setDefaultMapLitLines: React.Dispatch<React.SetStateAction<boolean>>;
-    setMapLineWidth: React.Dispatch<React.SetStateAction<number>>;
-    setAtomLabelDepthMode: React.Dispatch<React.SetStateAction<boolean>>;
-    setMouseSensitivity: React.Dispatch<React.SetStateAction<number>>;
-    setShowShortcutToast: React.Dispatch<React.SetStateAction<boolean>>;
-    setMakeBackups: React.Dispatch<React.SetStateAction<boolean>>;
-    setContourWheelSensitivityFactor: React.Dispatch<React.SetStateAction<number>>;
-    setDevMode: React.Dispatch<React.SetStateAction<boolean>>;
-    setEnableTimeCapsule: React.Dispatch<React.SetStateAction<boolean>>;
-    setShowScoresToast: React.Dispatch<React.SetStateAction<boolean>>;
-    setDefaultMapSurface: React.Dispatch<React.SetStateAction<boolean>>;
-    setDefaultBondSmoothness: React.Dispatch<React.SetStateAction<number>>;
-    setGLLabelsFontFamily: React.Dispatch<React.SetStateAction<string>>;
-    setGLLabelsFontSize: React.Dispatch<React.SetStateAction<number>>;
-    setMaxBackupCount: React.Dispatch<React.SetStateAction<number>>;
-    setModificationCountBackupThreshold: React.Dispatch<React.SetStateAction<number>>;
-    setShortcutOnHoveredAtom: React.Dispatch<React.SetStateAction<boolean>>;
-    setZoomWheelSensitivityFactor: React.Dispatch<React.SetStateAction<number>>;
-    setShortCuts: React.Dispatch<React.SetStateAction<string>>;
-    setDefaultUpdatingScores: React.Dispatch<{
-        action: 'Add' | 'Remove' | 'Overwrite';
-        item?: string;
-        items?: string[];
-    }>;
-}
-
-export interface MoorhenPreferencesValuesInterface {
-    version?: string;
-    isMounted?: boolean;
-    defaultBackgroundColor: [number, number, number, number];
-    atomLabelDepthMode: boolean; 
-    enableTimeCapsule: boolean;
-    defaultExpandDisplayCards: boolean;
-    defaultMapLitLines: boolean;
-    refineAfterMod: boolean; 
-    drawCrosshairs: boolean; 
-    drawAxes: boolean; 
-    drawFPS: boolean; 
-    drawMissingLoops: boolean; 
-    drawInteractions: boolean; 
-    doPerspectiveProjection: boolean; 
-    useOffScreenBuffers: boolean; 
-    doShadowDepthDebug: boolean; 
-    doShadow: boolean; 
-    doOutline: boolean; 
-    GLLabelsFontFamily: string;
-    GLLabelsFontSize: number;
-    doSpinTest: boolean;
-    mouseSensitivity: number;
-    zoomWheelSensitivityFactor: number;
-    contourWheelSensitivityFactor: number;
-    mapLineWidth: number;
-    makeBackups: boolean; 
-    showShortcutToast: boolean; 
-    defaultMapSurface: boolean; 
-    defaultBondSmoothness: number,
-    showScoresToast: boolean; 
-    shortcutOnHoveredAtom: boolean; 
-    resetClippingFogging: boolean; 
-    clipCap: boolean; 
-    defaultUpdatingScores: string[],
-    maxBackupCount: number;
-    modificationCountBackupThreshold: number;
-    devMode: boolean; 
-    shortCuts: string | {
-        [label: string]: MoorhenShortcutType;
-    };
-}
-
-export interface MoorhenPreferencesInterface extends MoorhenPreferencesSetterInterface, MoorhenPreferencesValuesInterface { }
+import { moorhen } from "../types/moorhen"
 
 const itemReducer = (oldList: string[], change: {action: 'Add' | 'Remove' | 'Overwrite'; item?: string; items?: string[] }) => {
     if (change.action === 'Add') {
@@ -108,7 +14,7 @@ const itemReducer = (oldList: string[], change: {action: 'Add' | 'Remove' | 'Ove
     }
 }
 
-const updateStoredPreferences = async (key: string, value: any): Promise<void> => {
+const updateStoredContext = async (key: string, value: any): Promise<void> => {
     try {
         await localforage.setItem(key, value)
     } catch (err) {
@@ -116,7 +22,7 @@ const updateStoredPreferences = async (key: string, value: any): Promise<void> =
     }
 }
 
-const getDefaultValues = (): MoorhenPreferencesValuesInterface => {
+const getDefaultValues = (): moorhen.ContextValues => {
     return {
         version: 'v27',
         defaultBackgroundColor: [1, 1, 1, 1], 
@@ -339,9 +245,9 @@ const getDefaultValues = (): MoorhenPreferencesValuesInterface => {
     }
 }
 
-const PreferencesContext = createContext(undefined);
+const MoorhenContext = createContext(undefined);
 
-const PreferencesContextProvider = ({ children }) => {
+const MoorhenContextProvider = ({ children }) => {
     const [isMounted, setIsMounted] = useState<boolean>(false)
     const [defaultBackgroundColor, setDefaultBackgroundColor] = useState<null | [number, number, number, number]>(null)
     const [enableTimeCapsule, setEnableTimeCapsule] = useState<null | boolean>(null)
@@ -419,8 +325,8 @@ const PreferencesContextProvider = ({ children }) => {
         36: { label: "doOutline", value: doOutline, valueSetter: setDoOutline},
     }
 
-    const restoreDefaults = (defaultValues: MoorhenPreferencesValuesInterface)=> {
-        updateStoredPreferences('version', defaultValues.version)
+    const restoreDefaults = (defaultValues: moorhen.ContextValues)=> {
+        updateStoredContext('version', defaultValues.version)
         Object.keys(preferencesMap).forEach(key => {
             if (preferencesMap[key].label === 'shortCuts') {
                 preferencesMap[key].valueSetter(JSON.stringify(defaultValues[preferencesMap[key].label]))
@@ -431,12 +337,12 @@ const PreferencesContextProvider = ({ children }) => {
     }
 
     /**
-     * Hook used after component mounts to retrieve user preferences from 
+     * Hook used after component mounts to retrieve user context from 
      * local storage. If no previously stored data is found, default values 
      * are used.
      */
      useEffect(() => {       
-        const fetchStoredPreferences = async () => {
+        const fetchStoredContext = async () => {
             try {
                 const storedVersion = await localforage.getItem('version')
                 const defaultValues = getDefaultValues()                
@@ -456,7 +362,7 @@ const PreferencesContextProvider = ({ children }) => {
                 
             } catch (err) {
                 console.log(err)
-                console.log('Unable to fetch preferences from local storage...')
+                console.log('Unable to fetch context from local storage...')
             } finally {
                 setIsMounted(true)
             }            
@@ -467,7 +373,7 @@ const PreferencesContextProvider = ({ children }) => {
             name: 'babyGru-localStorage'
         });   
 
-        fetchStoredPreferences();
+        fetchStoredContext();
         
     }, []);
 
@@ -477,7 +383,7 @@ const PreferencesContextProvider = ({ children }) => {
             return
         }
        
-        updateStoredPreferences('shortcutOnHoveredAtom', shortcutOnHoveredAtom);
+        updateStoredContext('shortcutOnHoveredAtom', shortcutOnHoveredAtom);
     }, [shortcutOnHoveredAtom]);
 
     useMemo(() => {
@@ -486,7 +392,7 @@ const PreferencesContextProvider = ({ children }) => {
             return
         }
        
-        updateStoredPreferences('devMode', devMode);
+        updateStoredContext('devMode', devMode);
     }, [devMode]);
     
     useMemo(() => {
@@ -495,7 +401,7 @@ const PreferencesContextProvider = ({ children }) => {
             return
         }
        
-        updateStoredPreferences('contourWheelSensitivityFactor', contourWheelSensitivityFactor);
+        updateStoredContext('contourWheelSensitivityFactor', contourWheelSensitivityFactor);
     }, [contourWheelSensitivityFactor]);
     
     useMemo(() => {
@@ -504,7 +410,7 @@ const PreferencesContextProvider = ({ children }) => {
             return
         }
        
-        updateStoredPreferences('enableTimeCapsule', enableTimeCapsule);
+        updateStoredContext('enableTimeCapsule', enableTimeCapsule);
     }, [enableTimeCapsule]);
     
     useMemo(() => {
@@ -513,7 +419,7 @@ const PreferencesContextProvider = ({ children }) => {
             return
         }
        
-        updateStoredPreferences('maxBackupCount', maxBackupCount);
+        updateStoredContext('maxBackupCount', maxBackupCount);
     }, [maxBackupCount]);
     
     useMemo(() => {
@@ -522,7 +428,7 @@ const PreferencesContextProvider = ({ children }) => {
             return
         }
        
-        updateStoredPreferences('modificationCountBackupThreshold', modificationCountBackupThreshold);
+        updateStoredContext('modificationCountBackupThreshold', modificationCountBackupThreshold);
     }, [modificationCountBackupThreshold]);
 
     useMemo(() => {
@@ -531,7 +437,7 @@ const PreferencesContextProvider = ({ children }) => {
             return
         }
 
-        updateStoredPreferences('clipCap', clipCap);
+        updateStoredContext('clipCap', clipCap);
     }, [clipCap]);
 
     useMemo(() => {
@@ -540,7 +446,7 @@ const PreferencesContextProvider = ({ children }) => {
             return
         }
        
-        updateStoredPreferences('resetClippingFogging', resetClippingFogging);
+        updateStoredContext('resetClippingFogging', resetClippingFogging);
     }, [resetClippingFogging]);
 
     useMemo(() => {
@@ -549,7 +455,7 @@ const PreferencesContextProvider = ({ children }) => {
             return
         }
        
-        updateStoredPreferences('zoomWheelSensitivityFactor', zoomWheelSensitivityFactor);
+        updateStoredContext('zoomWheelSensitivityFactor', zoomWheelSensitivityFactor);
     }, [zoomWheelSensitivityFactor]);
 
     useMemo(() => {
@@ -558,7 +464,7 @@ const PreferencesContextProvider = ({ children }) => {
             return
         }
        
-        updateStoredPreferences('showShortcutToast', showShortcutToast);
+        updateStoredContext('showShortcutToast', showShortcutToast);
     }, [showShortcutToast]);
     
     useMemo(() => {
@@ -567,7 +473,7 @@ const PreferencesContextProvider = ({ children }) => {
             return
         }
        
-        updateStoredPreferences('showScoresToast', showScoresToast);
+        updateStoredContext('showScoresToast', showScoresToast);
     }, [showScoresToast]);
     
     useMemo(() => {
@@ -576,7 +482,7 @@ const PreferencesContextProvider = ({ children }) => {
             return
         }
        
-        updateStoredPreferences('defaultUpdatingScores', defaultUpdatingScores);
+        updateStoredContext('defaultUpdatingScores', defaultUpdatingScores);
     }, [defaultUpdatingScores]);
     
     useMemo(() => {
@@ -585,7 +491,7 @@ const PreferencesContextProvider = ({ children }) => {
             return
         }
        
-        updateStoredPreferences('defaultBondSmoothness', defaultBondSmoothness);
+        updateStoredContext('defaultBondSmoothness', defaultBondSmoothness);
     }, [defaultBondSmoothness]);
 
     useMemo(() => {
@@ -594,7 +500,7 @@ const PreferencesContextProvider = ({ children }) => {
             return
         }
        
-        updateStoredPreferences('defaultMapSurface', defaultMapSurface);
+        updateStoredContext('defaultMapSurface', defaultMapSurface);
     }, [defaultMapSurface]);
 
     useMemo(() => {
@@ -603,7 +509,7 @@ const PreferencesContextProvider = ({ children }) => {
             return
         }
        
-        updateStoredPreferences('makeBackups', makeBackups);
+        updateStoredContext('makeBackups', makeBackups);
     }, [makeBackups]);
 
     useMemo(() => {
@@ -612,7 +518,7 @@ const PreferencesContextProvider = ({ children }) => {
             return
         }
        
-        updateStoredPreferences('refineAfterMod', refineAfterMod);
+        updateStoredContext('refineAfterMod', refineAfterMod);
     }, [refineAfterMod]);
 
     useMemo(() => {
@@ -621,7 +527,7 @@ const PreferencesContextProvider = ({ children }) => {
             return
         }
        
-        updateStoredPreferences('mapLineWidth', mapLineWidth);
+        updateStoredContext('mapLineWidth', mapLineWidth);
     }, [mapLineWidth]);
 
     useMemo(() => {
@@ -630,7 +536,7 @@ const PreferencesContextProvider = ({ children }) => {
             return
         }
 
-        updateStoredPreferences('drawAxes', drawAxes);
+        updateStoredContext('drawAxes', drawAxes);
     }, [drawAxes]);
 
     useMemo(() => {
@@ -639,7 +545,7 @@ const PreferencesContextProvider = ({ children }) => {
             return
         }
        
-        updateStoredPreferences('drawCrosshairs', drawCrosshairs);
+        updateStoredContext('drawCrosshairs', drawCrosshairs);
     }, [drawCrosshairs]);
 
     useMemo(() => {
@@ -648,7 +554,7 @@ const PreferencesContextProvider = ({ children }) => {
             return
         }
        
-        updateStoredPreferences('drawFPS', drawFPS);
+        updateStoredContext('drawFPS', drawFPS);
     }, [drawFPS]);
 
     useMemo(() => {
@@ -657,7 +563,7 @@ const PreferencesContextProvider = ({ children }) => {
             return
         }
        
-        updateStoredPreferences('drawMissingLoops', drawMissingLoops);
+        updateStoredContext('drawMissingLoops', drawMissingLoops);
     }, [drawMissingLoops]);
 
     useMemo(() => {
@@ -666,7 +572,7 @@ const PreferencesContextProvider = ({ children }) => {
             return
         }
 
-        updateStoredPreferences('doPerspectiveProjection', doPerspectiveProjection);
+        updateStoredContext('doPerspectiveProjection', doPerspectiveProjection);
     }, [doPerspectiveProjection]);
 
     useMemo(() => {
@@ -675,7 +581,7 @@ const PreferencesContextProvider = ({ children }) => {
             return
         }
 
-        updateStoredPreferences('useOffScreenBuffers', useOffScreenBuffers);
+        updateStoredContext('useOffScreenBuffers', useOffScreenBuffers);
     }, [useOffScreenBuffers]);
 
     useMemo(() => {
@@ -684,7 +590,7 @@ const PreferencesContextProvider = ({ children }) => {
             return
         }
 
-        updateStoredPreferences('doShadowDepthDebug', doShadowDepthDebug);
+        updateStoredContext('doShadowDepthDebug', doShadowDepthDebug);
     }, [doShadowDepthDebug]);
 
     useMemo(() => {
@@ -693,7 +599,7 @@ const PreferencesContextProvider = ({ children }) => {
             return
         }
 
-        updateStoredPreferences('doOutline', doOutline);
+        updateStoredContext('doOutline', doOutline);
     }, [doOutline]);
 
     useMemo(() => {
@@ -702,7 +608,7 @@ const PreferencesContextProvider = ({ children }) => {
             return
         }
 
-        updateStoredPreferences('doShadow', doShadow);
+        updateStoredContext('doShadow', doShadow);
     }, [doShadow]);
 
     useMemo(() => {
@@ -711,7 +617,7 @@ const PreferencesContextProvider = ({ children }) => {
             return
         }
 
-        updateStoredPreferences('GLLabelsFontFamily', GLLabelsFontFamily);
+        updateStoredContext('GLLabelsFontFamily', GLLabelsFontFamily);
     }, [GLLabelsFontFamily]);
 
     useMemo(() => {
@@ -720,7 +626,7 @@ const PreferencesContextProvider = ({ children }) => {
             return
         }
 
-        updateStoredPreferences('GLLabelsFontSize', GLLabelsFontSize);
+        updateStoredContext('GLLabelsFontSize', GLLabelsFontSize);
     }, [GLLabelsFontSize]);
 
     useMemo(() => {
@@ -729,7 +635,7 @@ const PreferencesContextProvider = ({ children }) => {
             return
         }
 
-        updateStoredPreferences('doSpinTest', doSpinTest);
+        updateStoredContext('doSpinTest', doSpinTest);
     }, [doSpinTest]);
 
     useMemo(() => {
@@ -738,7 +644,7 @@ const PreferencesContextProvider = ({ children }) => {
             return
         }
        
-        updateStoredPreferences('drawInteractions', drawInteractions);
+        updateStoredContext('drawInteractions', drawInteractions);
     }, [drawInteractions]);
 
     useMemo(() => {
@@ -747,7 +653,7 @@ const PreferencesContextProvider = ({ children }) => {
             return
         }
        
-        updateStoredPreferences('mouseSensitivity', mouseSensitivity);
+        updateStoredContext('mouseSensitivity', mouseSensitivity);
     }, [mouseSensitivity]);
 
     useMemo(() => {
@@ -756,7 +662,7 @@ const PreferencesContextProvider = ({ children }) => {
             return
         }
        
-        updateStoredPreferences('atomLabelDepthMode', atomLabelDepthMode);
+        updateStoredContext('atomLabelDepthMode', atomLabelDepthMode);
     }, [atomLabelDepthMode]);
  
     useMemo(() => {
@@ -765,7 +671,7 @@ const PreferencesContextProvider = ({ children }) => {
             return
         }
        
-        updateStoredPreferences('defaultBackgroundColor', defaultBackgroundColor);
+        updateStoredContext('defaultBackgroundColor', defaultBackgroundColor);
     }, [defaultBackgroundColor]);
     
     useMemo(() => {
@@ -774,7 +680,7 @@ const PreferencesContextProvider = ({ children }) => {
             return
         }
        
-        updateStoredPreferences('defaultExpandDisplayCards', defaultExpandDisplayCards);
+        updateStoredContext('defaultExpandDisplayCards', defaultExpandDisplayCards);
     }, [defaultExpandDisplayCards]);
 
     useMemo(() => {
@@ -783,7 +689,7 @@ const PreferencesContextProvider = ({ children }) => {
             return
         }
        
-        updateStoredPreferences('shortCuts', shortCuts);
+        updateStoredContext('shortCuts', shortCuts);
     }, [shortCuts]);
 
     useMemo(() => {
@@ -792,10 +698,10 @@ const PreferencesContextProvider = ({ children }) => {
             return
         }
        
-        updateStoredPreferences('defaultMapLitLines', defaultMapLitLines);
+        updateStoredContext('defaultMapLitLines', defaultMapLitLines);
     }, [defaultMapLitLines]);
 
-    const collectedContextValues: MoorhenPreferencesInterface = {
+    const collectedContextValues: moorhen.Context = {
         defaultBackgroundColor, setDefaultBackgroundColor, atomLabelDepthMode, setAtomLabelDepthMode, defaultExpandDisplayCards,
         setDefaultExpandDisplayCards, shortCuts, setShortCuts, defaultMapLitLines, setDefaultMapLitLines,
         refineAfterMod, setRefineAfterMod, mouseSensitivity, setMouseSensitivity, drawCrosshairs, 
@@ -814,11 +720,11 @@ const PreferencesContextProvider = ({ children }) => {
     }
 
     return (
-      <PreferencesContext.Provider value={collectedContextValues}>
+      <MoorhenContext.Provider value={collectedContextValues}>
         {children}
-      </PreferencesContext.Provider>
+      </MoorhenContext.Provider>
     );
 };
   
 
-export { PreferencesContext, PreferencesContextProvider, getDefaultValues };
+export { MoorhenContext, MoorhenContextProvider, getDefaultValues };
