@@ -343,7 +343,7 @@ export namespace moorhen {
         mapsRef: React.RefObject<Map[]>;
         glRef: React.RefObject<webGL.MGWebGL>;
         activeMapRef: React.RefObject<Map>;
-        context: any;
+        context: moorhen.Context;
         busy: boolean;
         modificationCount: number;
         modificationCountBackupThreshold: number;
