@@ -60,8 +60,8 @@ type MoorhenSequenceViewerPropsType = {
     setClickedResidue: React.Dispatch<React.SetStateAction<clickedResidueType>>;
     selectedResidues: [number, number];
     setSelectedResidues: React.Dispatch<React.SetStateAction<[number, number]>>;
-    hoveredAtom: HoveredAtomType;
-    setHoveredAtom: React.Dispatch<React.SetStateAction<HoveredAtomType>>;
+    hoveredAtom: moorhen.HoveredAtom;
+    setHoveredAtom: React.Dispatch<React.SetStateAction<moorhen.HoveredAtom>>;
 
 }
 

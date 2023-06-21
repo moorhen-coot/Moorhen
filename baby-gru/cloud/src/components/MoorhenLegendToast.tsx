@@ -1,12 +1,13 @@
 import { Form, Toast, ToastContainer } from 'react-bootstrap';
 import { CloudSyncOutlined, NewReleasesOutlined } from '@mui/icons-material';
 import { isDarkBackground } from '../../../src/WebGLgComponents/mgWebGL'
+import { moorhen } from "../../../src/types/moorhen"
 
 type MoorhenLegendToastPropsType = { 
     backgroundColor: [number, number, number, number];
     busyFetching: boolean;
     notifyNewContent: boolean;
-    hoveredAtom: HoveredAtomType;
+    hoveredAtom: moorhen.HoveredAtom;
     legendText: string | JSX.Element;
  }
 

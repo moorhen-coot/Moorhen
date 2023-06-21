@@ -314,7 +314,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                 returnType: 'status'
             }, true)
                     
-            const connectedMapsEvent: MoorhenConnectMapsEventType = new CustomEvent("connectMaps", {
+            const connectedMapsEvent: moorhen.ConnectMapsEvent = new CustomEvent("connectMaps", {
                 "detail": {
                     molecule: molecule,
                     maps: [reflectionMap, twoFoFcMap, foFcMap],
@@ -329,7 +329,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             newMaps.forEach((map, index) => {
                 const storedMapData = sessionData.mapData[index]
                 map.mapColour = storedMapData.colour
-                let newMapContour: MoorhenNewMapContourEventType = new CustomEvent("newMapContour", {
+                let newMapContour: moorhen.NewMapContourEvent = new CustomEvent("newMapContour", {
                     "detail": {
                         molNo: map.molNo,
                         mapRadius: storedMapData.radius,

@@ -6,6 +6,7 @@ import { MoorhenChainSelect } from '../select/MoorhenChainSelect'
 import { MoorhenMoleculeSelect } from '../select/MoorhenMoleculeSelect'
 import { MoorhenSideBarAccordionPropsInterface } from "../list/MoorhenSideBar";
 import { gemmi } from "../../types/gemmi";
+import { libcootApi } from "../../types/libcoot";
 
 export const MoorhenRamachandran = (props: MoorhenSideBarAccordionPropsInterface) => {
     const ramachandranRef = useRef<RamaPlot>();
@@ -14,7 +15,7 @@ export const MoorhenRamachandran = (props: MoorhenSideBarAccordionPropsInterface
     const chainSelectRef = useRef<HTMLSelectElement>();
     const [clickedResidue, setClickedResidue] = useState<null | {modelIndex: number; coordMolNo: number; molName: string; chain: string; seqNum: number; insCode: string;}>(null)
     const [ramaPlotDimensions, setRamaPlotDimensions] = useState<number>(230)
-    const [ramaPlotData, setRamaPlotData] = useState<null | CootRamachandranDataType[]>(null)
+    const [ramaPlotData, setRamaPlotData] = useState<null | libcootApi.RamaDataJS[]>(null)
     const [selectedModel, setSelectedModel] = useState<null | number>(null)
     const [selectedChain, setSelectedChain] = useState<string | null>(null)
     const [cachedGemmiStructure, setCachedGemmiStructure] = useState<gemmi.Structure | null>(null)
@@ -52,7 +53,7 @@ export const MoorhenRamachandran = (props: MoorhenSideBarAccordionPropsInterface
             }
             const inputData = {message:'coot_command', command:'ramachandran_validation', returnType:'ramachandran_data', commandArgs:[parseInt(moleculeSelectRef.current.value)], chainID: chainSelectRef.current.value}
             let response = await props.commandCentre.current.cootCommand(inputData)
-            setRamaPlotData(response.data.result.result as CootRamachandranDataType[])
+            setRamaPlotData(response.data.result.result as libcootApi.RamaDataJS[])
         }
 
         fetchRamaData()

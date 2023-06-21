@@ -1,22 +1,24 @@
 import { Col, Row, Card, Button } from 'react-bootstrap';
 import { MoorhenSideBarAccordionPropsInterface } from "../list/MoorhenSideBar";
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
+import { libcootApi } from '../../types/libcoot';
+import { moorhen } from '../../types/moorhen';
 
 export const MoorhenUnmodelledBlobs = (props: MoorhenSideBarAccordionPropsInterface) => {
 
-    async function fetchCardData(selectedModel: number, selectedMap: number) {
+    async function fetchCardData(selectedModel: number, selectedMap: number): Promise<libcootApi.InterestingPlaceDataJS[]> {
         const inputData = {
             message:'coot_command',
             command: "unmodelled_blobs", 
             returnType:'interesting_places_data',
             commandArgs:[selectedModel, selectedMap]
         }
-        let response = await props.commandCentre.current.cootCommand(inputData)
+        let response = await props.commandCentre.current.cootCommand(inputData) as moorhen.WorkerResponse<libcootApi.InterestingPlaceDataJS[]>
         let blobs = response.data.result.result
         return blobs
     }
 
-    const getCards = (selectedModel: number, selectedMap: number, blobs: CootInterestingPlaceDataType[]) => {
+    const getCards = (selectedModel: number, selectedMap: number, blobs: libcootApi.InterestingPlaceDataJS[]) => {
 
         return blobs.map((blob, index) => {
             return <Card key={index} style={{marginTop: '0.5rem'}}>

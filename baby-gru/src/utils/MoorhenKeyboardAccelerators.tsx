@@ -10,7 +10,7 @@ import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
 import { libcootApi } from "../types/libcoot";
 
-const apresEdit = (molecule: moorhen.Molecule, glRef: React.RefObject<webGL.MGWebGL>, timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>, setHoveredAtom: (arg0: HoveredAtomType) => void) => {
+const apresEdit = (molecule: moorhen.Molecule, glRef: React.RefObject<webGL.MGWebGL>, timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>, setHoveredAtom: (arg0: moorhen.HoveredAtom) => void) => {
     molecule.setAtomsDirty(true)
     molecule.redraw(glRef)
     setHoveredAtom({ molecule: null, cid: null })

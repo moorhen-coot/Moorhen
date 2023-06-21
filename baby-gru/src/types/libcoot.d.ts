@@ -42,7 +42,6 @@ export namespace libcootApi {
         res_name: string;
         label: string;
     }
-
     interface CootPhiPsi extends emscriptem.instance<CootPhiPsi> {
         ins_code: string;
         residue_number: number;
@@ -64,6 +63,15 @@ export namespace libcootApi {
         button_label: string;
         feature_value: number;
         badness: number;
+    }
+    interface InterestingPlaceDataJS extends ResidueSpecJS {
+        featureType: string;
+        featureValue: number;
+        buttonLabel: string;
+        badness: number;
+        coordX: number;
+        coordY: number;
+        coordZ: number;
     }
     interface HBondAtom extends emscriptem.instance<HBondAtom> {
         serial: number;
@@ -160,7 +168,13 @@ export namespace libcootApi {
         chain_id: string;
         res_no: number;
         ins_code: string;    
-    }    
+    }
+    interface ResidueSpecJS {
+        resNum: number;
+        insCode: string;
+        modelNumber: number;
+        chainId: string;
+    } 
     interface ResidueValidationInformationT extends emscriptem.instance<ResidueValidationInformationT> {
         label: string;
         residue_spec: ResidueSpecT;
@@ -229,6 +243,16 @@ export namespace libcootApi {
         phi: number;
         psi: number;
         isOutlier: boolean;
+        is_pre_pro: boolean;
+    }
+    type RamaDataJS = {
+        chainId: string;
+        insCode: string;
+        seqNum: number;
+        restype: string;
+        isOutlier: boolean;
+        phi: number;
+        psi: number;
         is_pre_pro: boolean;
     }
     type CootModule = {

@@ -230,7 +230,7 @@ export const readGemmiStructure = (pdbData: ArrayBuffer | string, molName: strin
     return structure
 }
 
-export const centreOnGemmiAtoms = (atoms: MoorhenAtomInfoType[]): [number, number, number] => {
+export const centreOnGemmiAtoms = (atoms: moorhen.AtomInfo[]): [number, number, number] => {
     const atomCount = atoms.length
     if (atomCount === 0) {
         return [0, 0, 0]
@@ -250,12 +250,12 @@ export const centreOnGemmiAtoms = (atoms: MoorhenAtomInfoType[]): [number, numbe
 }
 
 // FIXME: We have multiple functions looping through all residues multiple times when paring a molecule. Let's do it only once...
-export const getBufferAtoms = (gemmiStructure: gemmi.Structure, exclude_ligands_and_waters: boolean = false): MoorhenAtomInfoType[] => {
+export const getBufferAtoms = (gemmiStructure: gemmi.Structure, exclude_ligands_and_waters: boolean = false): moorhen.AtomInfo[] => {
         if (exclude_ligands_and_waters) {
             window.CCP4Module.remove_ligands_and_waters_structure(gemmiStructure)
         }
    
-        let atomList: MoorhenAtomInfoType[] = []
+        let atomList: moorhen.AtomInfo[] = []
 
         try {
             const models = gemmiStructure.models
@@ -765,7 +765,7 @@ export const gemmiAtomPairsToCylindersInfo = (
     
 }
 
-export const gemmiAtomsToCirclesSpheresInfo = (atoms: MoorhenAtomInfoType[], size: number, primType: string, colourScheme: { [x: string]: any[]; }) => {
+export const gemmiAtomsToCirclesSpheresInfo = (atoms: moorhen.AtomInfo[], size: number, primType: string, colourScheme: { [x: string]: any[]; }) => {
 
     let sphere_sizes = [];
     let sphere_col_tri = [];

@@ -590,8 +590,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
             await this.updateAtoms()
         }
         
-        let selectionAtomsAlign: MoorhenAtomInfoType[] = []
-        let selectionAtomsCentre: MoorhenAtomInfoType[] = []
+        let selectionAtomsAlign: moorhen.AtomInfo[] = []
+        let selectionAtomsCentre: moorhen.AtomInfo[] = []
         if (selectionCid) {
             selectionAtomsAlign = await this.gemmiAtomsForCid(selectionCid + "*")
             selectionAtomsCentre = await this.gemmiAtomsForCid(selectionCid + "CA")
@@ -676,11 +676,11 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }
     }
 
-    async drawWithStyleFromMesh(style: string, glRef: React.RefObject<webGL.MGWebGL>, meshObjects: any[], newBufferAtoms: MoorhenAtomInfoType[] = []): Promise<void>{
+    async drawWithStyleFromMesh(style: string, glRef: React.RefObject<webGL.MGWebGL>, meshObjects: any[], newBufferAtoms: moorhen.AtomInfo[] = []): Promise<void>{
         this.clearBuffersOfStyle(style, glRef)
         if (meshObjects.length > 0 && !this.gemmiStructure.isDeleted()) {
             this.addBuffersOfStyle(glRef, meshObjects, style)
-            let bufferAtoms: MoorhenAtomInfoType[]
+            let bufferAtoms: moorhen.AtomInfo[]
             if (newBufferAtoms.length > 0) {
                 bufferAtoms = newBufferAtoms
             } else {
@@ -1214,7 +1214,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         glRef.current.drawScene()
     }
 
-    drawGemmiAtomPairs(glRef: React.RefObject<webGL.MGWebGL>, gemmiAtomPairs: [MoorhenAtomInfoType, MoorhenAtomInfoType][], style: string,  colour: number[], labelled: boolean = false, clearBuffers: boolean = false) {
+    drawGemmiAtomPairs(glRef: React.RefObject<webGL.MGWebGL>, gemmiAtomPairs: [moorhen.AtomInfo, moorhen.AtomInfo][], style: string,  colour: number[], labelled: boolean = false, clearBuffers: boolean = false) {
         const $this = this
         const atomColours = {}
         gemmiAtomPairs.forEach(atom => { atomColours[`${atom[0].serial}`] = colour; atomColours[`${atom[1].serial}`] = colour })
@@ -1370,9 +1370,9 @@ export class MoorhenMolecule implements moorhen.Molecule {
         await $this.drawSymmetry(glRef, false)
     }
 
-    transformedCachedAtomsAsMovedAtoms(glRef: React.RefObject<webGL.MGWebGL>, selectionCid: string = '/*/*/*/*'): MoorhenAtomInfoType[][] {
+    transformedCachedAtomsAsMovedAtoms(glRef: React.RefObject<webGL.MGWebGL>, selectionCid: string = '/*/*/*/*'): moorhen.AtomInfo[][] {
         const $this = this
-        let movedResidues: MoorhenAtomInfoType[][] = [];
+        let movedResidues: moorhen.AtomInfo[][] = [];
 
         const selection = new window.CCP4Module.Selection(selectionCid)
         const models = this.gemmiStructure.models
@@ -1400,7 +1400,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
                         continue
                     }
                     const residueSeqId = residue.seqid
-                    let movedAtoms: MoorhenAtomInfoType[] = []
+                    let movedAtoms: moorhen.AtomInfo[] = []
                     const atoms = residue.atoms
                     const atomsSize = atoms.size()
                     for (let atomIndex = 0; atomIndex < atomsSize; atomIndex++) {
@@ -1478,7 +1478,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         return movedResidues
     }
 
-    async updateWithMovedAtoms(movedResidues: MoorhenAtomInfoType[][], glRef: React.RefObject<webGL.MGWebGL>): Promise<void> {
+    async updateWithMovedAtoms(movedResidues: moorhen.AtomInfo[][], glRef: React.RefObject<webGL.MGWebGL>): Promise<void> {
         const $this = this
         await $this.commandCentre.current.cootCommand({
             returnType: "status",
@@ -1667,14 +1667,14 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.ligands = ligandList
     }
 
-    async gemmiAtomsForCid(cid: string): Promise<MoorhenAtomInfoType[]> {
+    async gemmiAtomsForCid(cid: string): Promise<moorhen.AtomInfo[]> {
         const $this = this
 
         if ($this.atomsDirty) {
             await $this.updateAtoms()
         }
 
-        let result: MoorhenAtomInfoType[] = []
+        let result: moorhen.AtomInfo[] = []
         const selection = new window.CCP4Module.Selection(cid)
         const model = $this.gemmiStructure.first_model()
 
@@ -1710,7 +1710,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
                                     const atomName = atom.name
                                     const atomAltLoc = atom.altloc
                                     const atomHasAltLoc = atom.has_altloc()
-                                    const atomInfo: MoorhenAtomInfoType = {
+                                    const atomInfo: moorhen.AtomInfo = {
                                         res_name: residueName,
                                         res_no: resNum,
                                         mol_name: modelName,
