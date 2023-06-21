@@ -343,7 +343,7 @@ export namespace moorhen {
         mapsRef: React.RefObject<Map[]>;
         glRef: React.RefObject<webGL.MGWebGL>;
         activeMapRef: React.RefObject<Map>;
-        preferences: any;
+        context: any;
         busy: boolean;
         modificationCount: number;
         modificationCountBackupThreshold: number;
@@ -391,4 +391,100 @@ export namespace moorhen {
         removeItem: (key: string) => Promise<void>;
         getItem: (key: string) => Promise<string>;
     }
+
+    type Shortcut = {
+        modifiers: string[];
+        keyPress: string;
+        label: string;
+        viewOnly: boolean;
+    }
+
+    interface ContextSetters {
+        setDoShadowDepthDebug: React.Dispatch<React.SetStateAction<boolean>>;
+        setDefaultBackgroundColor: React.Dispatch<React.SetStateAction<[number, number, number, number]>>;
+        setDoShadow: React.Dispatch<React.SetStateAction<boolean>>;
+        setDoOutline: React.Dispatch<React.SetStateAction<boolean>>;
+        setDoSpinTest: React.Dispatch<React.SetStateAction<boolean>>;
+        setClipCap: React.Dispatch<React.SetStateAction<boolean>>;
+        setResetClippingFogging: React.Dispatch<React.SetStateAction<boolean>>;
+        setUseOffScreenBuffers: React.Dispatch<React.SetStateAction<boolean>>;
+        setDoPerspectiveProjection: React.Dispatch<React.SetStateAction<boolean>>;
+        setDrawInteractions: React.Dispatch<React.SetStateAction<boolean>>;
+        setDrawMissingLoops: React.Dispatch<React.SetStateAction<boolean>>;
+        setDrawAxes: React.Dispatch<React.SetStateAction<boolean>>;
+        setDrawCrosshairs: React.Dispatch<React.SetStateAction<boolean>>;
+        setDrawFPS: React.Dispatch<React.SetStateAction<boolean>>;
+        setDefaultExpandDisplayCards: React.Dispatch<React.SetStateAction<boolean>>;
+        setRefineAfterMod: React.Dispatch<React.SetStateAction<boolean>>;
+        setDefaultMapLitLines: React.Dispatch<React.SetStateAction<boolean>>;
+        setMapLineWidth: React.Dispatch<React.SetStateAction<number>>;
+        setAtomLabelDepthMode: React.Dispatch<React.SetStateAction<boolean>>;
+        setMouseSensitivity: React.Dispatch<React.SetStateAction<number>>;
+        setShowShortcutToast: React.Dispatch<React.SetStateAction<boolean>>;
+        setMakeBackups: React.Dispatch<React.SetStateAction<boolean>>;
+        setContourWheelSensitivityFactor: React.Dispatch<React.SetStateAction<number>>;
+        setDevMode: React.Dispatch<React.SetStateAction<boolean>>;
+        setEnableTimeCapsule: React.Dispatch<React.SetStateAction<boolean>>;
+        setShowScoresToast: React.Dispatch<React.SetStateAction<boolean>>;
+        setDefaultMapSurface: React.Dispatch<React.SetStateAction<boolean>>;
+        setDefaultBondSmoothness: React.Dispatch<React.SetStateAction<number>>;
+        setGLLabelsFontFamily: React.Dispatch<React.SetStateAction<string>>;
+        setGLLabelsFontSize: React.Dispatch<React.SetStateAction<number>>;
+        setMaxBackupCount: React.Dispatch<React.SetStateAction<number>>;
+        setModificationCountBackupThreshold: React.Dispatch<React.SetStateAction<number>>;
+        setShortcutOnHoveredAtom: React.Dispatch<React.SetStateAction<boolean>>;
+        setZoomWheelSensitivityFactor: React.Dispatch<React.SetStateAction<number>>;
+        setShortCuts: React.Dispatch<React.SetStateAction<string>>;
+        setDefaultUpdatingScores: React.Dispatch<{
+            action: 'Add' | 'Remove' | 'Overwrite';
+            item?: string;
+            items?: string[];
+        }>;
+    }
+    
+    interface ContextValues {
+        version?: string;
+        isMounted?: boolean;
+        defaultBackgroundColor: [number, number, number, number];
+        atomLabelDepthMode: boolean; 
+        enableTimeCapsule: boolean;
+        defaultExpandDisplayCards: boolean;
+        defaultMapLitLines: boolean;
+        refineAfterMod: boolean; 
+        drawCrosshairs: boolean; 
+        drawAxes: boolean; 
+        drawFPS: boolean; 
+        drawMissingLoops: boolean; 
+        drawInteractions: boolean; 
+        doPerspectiveProjection: boolean; 
+        useOffScreenBuffers: boolean; 
+        doShadowDepthDebug: boolean; 
+        doShadow: boolean; 
+        doOutline: boolean; 
+        GLLabelsFontFamily: string;
+        GLLabelsFontSize: number;
+        doSpinTest: boolean;
+        mouseSensitivity: number;
+        zoomWheelSensitivityFactor: number;
+        contourWheelSensitivityFactor: number;
+        mapLineWidth: number;
+        makeBackups: boolean; 
+        showShortcutToast: boolean; 
+        defaultMapSurface: boolean; 
+        defaultBondSmoothness: number,
+        showScoresToast: boolean; 
+        shortcutOnHoveredAtom: boolean; 
+        resetClippingFogging: boolean; 
+        clipCap: boolean; 
+        defaultUpdatingScores: string[],
+        maxBackupCount: number;
+        modificationCountBackupThreshold: number;
+        devMode: boolean; 
+        shortCuts: string | {
+            [label: string]: Shortcut;
+        };
+    }
+    
+    interface Context extends ContextSetters, ContextValues { }
+    
 }

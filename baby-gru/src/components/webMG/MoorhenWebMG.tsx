@@ -7,7 +7,6 @@ import { cidToSpec, convertViewtoPx } from '../../utils/MoorhenUtils';
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { MolChange } from "../MoorhenApp"
-import { MoorhenPreferencesInterface } from '../../utils/MoorhenPreferences';
 import { libcootApi } from '../../types/libcoot.js';
 
 interface MoorhenWebMGPropsInterface {
@@ -25,7 +24,7 @@ interface MoorhenWebMGPropsInterface {
     isDark: boolean;
     hoveredAtom: moorhen.HoveredAtom;
     viewOnly: boolean;
-    preferences: MoorhenPreferencesInterface;
+    context: moorhen.Context;
     setShowColourRulesToast: React.Dispatch<React.SetStateAction<boolean>>;
     showColourRulesToast: boolean;
     windowHeight: number;
@@ -62,10 +61,10 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     }
 
     const handleZoomChanged = useCallback(evt => {
-        if (props.preferences.resetClippingFogging) {
+        if (props.context.resetClippingFogging) {
             setClipFogByZoom()
         }
-    }, [glRef, props.preferences.resetClippingFogging])
+    }, [glRef, props.context.resetClippingFogging])
 
     const handleGoToBlobDoubleClick = useCallback(async (evt) => {
         const response = await props.commandCentre.current.cootCommand({
@@ -132,23 +131,23 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     }, [props.commandCentre, props.molecules])
 
     const clearHBonds = useCallback(async () => {
-        if(!props.preferences.drawInteractions) {
+        if(!props.context.drawInteractions) {
             props.molecules.forEach(mol => {
                 mol.drawGemmiAtomPairs(glRef, [], "originNeighboursBump", [1.0, 0.0, 0.0, 1.0], true, true)
                 mol.drawGemmiAtomPairs(glRef, [], "originNeighboursHBond", [1.0, 0.0, 0.0, 1.0], true, true)
             })
         }
-    }, [props.preferences.drawInteractions, props.molecules])
+    }, [props.context.drawInteractions, props.molecules])
 
     const handleOriginUpdate = useCallback(async (e) => {
         hBondsDirty.current = true
-        if (!busyDrawingHBonds.current && props.preferences.drawInteractions) {
+        if (!busyDrawingHBonds.current && props.context.drawInteractions) {
             drawHBonds()
         }
-    }, [drawHBonds, props.preferences.drawInteractions])
+    }, [drawHBonds, props.context.drawInteractions])
 
     useEffect(() => {
-        if(props.preferences.drawInteractions){
+        if(props.context.drawInteractions){
             hBondsDirty.current = true
             if (!busyDrawingHBonds.current) {
                 drawHBonds()
@@ -156,50 +155,50 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         } else {
             clearHBonds()
         }
-    }, [props.preferences.drawInteractions, props.molecules])
+    }, [props.context.drawInteractions, props.molecules])
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
-            glRef.current.doPerspectiveProjection = props.preferences.doPerspectiveProjection
+            glRef.current.doPerspectiveProjection = props.context.doPerspectiveProjection
             glRef.current.clearTextPositionBuffers()
             glRef.current.drawScene()    
         }
-    }, [props.preferences.doPerspectiveProjection])
+    }, [props.context.doPerspectiveProjection])
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
-            glRef.current.setShadowDepthDebug(props.preferences.doShadowDepthDebug)
+            glRef.current.setShadowDepthDebug(props.context.doShadowDepthDebug)
             glRef.current.drawScene()
         }
-    }, [props.preferences.doShadowDepthDebug])
+    }, [props.context.doShadowDepthDebug])
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
-            glRef.current.setOutlinesOn(props.preferences.doOutline)
+            glRef.current.setOutlinesOn(props.context.doOutline)
             glRef.current.drawScene()
         }
-    }, [props.preferences.doOutline])
+    }, [props.context.doOutline])
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
-            glRef.current.setShadowsOn(props.preferences.doShadow)
+            glRef.current.setShadowsOn(props.context.doShadow)
             glRef.current.drawScene()
         }
-    }, [props.preferences.doShadow])
+    }, [props.context.doShadow])
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
-            glRef.current.setSpinTestState(props.preferences.doSpinTest)
+            glRef.current.setSpinTestState(props.context.doSpinTest)
             glRef.current.drawScene()
         }
-    }, [props.preferences.doSpinTest])
+    }, [props.context.doSpinTest])
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
-            glRef.current.useOffScreenBuffers = props.preferences.useOffScreenBuffers
+            glRef.current.useOffScreenBuffers = props.context.useOffScreenBuffers
             glRef.current.drawScene()
         }
-    }, [props.preferences.useOffScreenBuffers])
+    }, [props.context.useOffScreenBuffers])
 
     const handleScoreUpdates = useCallback(async (e) => {
         if (e.detail?.modifiedMolecule !== null && connectedMolNo && connectedMolNo.molecule === e.detail.modifiedMolecule && glRef !== null && typeof glRef !== 'function') {
@@ -220,17 +219,17 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             }, true) as moorhen.WorkerResponse<{r_factor: number; free_r_factor: number; rail_points_total: number; }>
 
             const newToastContents =    <Toast.Body style={{width: '100%'}}>
-                                            {props.preferences.defaultUpdatingScores.includes('Rfactor') && 
+                                            {props.context.defaultUpdatingScores.includes('Rfactor') && 
                                                 <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
                                                     Clipper R-Factor {currentScores.data.result.result.r_factor.toFixed(3)}
                                                 </p>
                                             }
-                                            {props.preferences.defaultUpdatingScores.includes('Rfree') && 
+                                            {props.context.defaultUpdatingScores.includes('Rfree') && 
                                                 <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
                                                     Clipper R-Free {currentScores.data.result.result.free_r_factor.toFixed(3)}
                                                 </p>
                                             }
-                                            {props.preferences.defaultUpdatingScores.includes('Moorhen Points') && 
+                                            {props.context.defaultUpdatingScores.includes('Moorhen Points') && 
                                                 <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
                                                     Moorhen Points {currentScores.data.result.result.rail_points_total}
                                                 </p>
@@ -244,17 +243,17 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
                 setScoreToastContents(
                         <Toast.Body style={{width: '100%'}}>
-                            {props.preferences.defaultUpdatingScores.includes('Rfactor') && 
+                            {props.context.defaultUpdatingScores.includes('Rfactor') && 
                                 <p style={{paddingLeft: '0.5rem', marginBottom:'0rem', color: rFactorDiff < 0 ? 'green' : 'red'}}>
                                     Clipper R-Factor {scores.current.rFactor.toFixed(3)} {`${rFactorDiff < 0 ? '' : '+'}${rFactorDiff.toFixed(3)}`}
                                 </p>
                             }
-                            {props.preferences.defaultUpdatingScores.includes('Rfree') && 
+                            {props.context.defaultUpdatingScores.includes('Rfree') && 
                                 <p style={{paddingLeft: '0.5rem', marginBottom:'0rem', color: rFreeDiff < 0 ? 'green' : 'red'}}>
                                     Clipper R-Free {scores.current.rFree.toFixed(3)} {`${rFreeDiff < 0 ? '' : '+'}${rFreeDiff.toFixed(3)}`}
                                 </p>
                             }
-                            {props.preferences.defaultUpdatingScores.includes('Moorhen Points') && 
+                            {props.context.defaultUpdatingScores.includes('Moorhen Points') && 
                                 <p style={{paddingLeft: '0.5rem', marginBottom:'0rem', color: moorhenPointsDiff < 0 ? 'red' : 'green'}}>
                                     Moorhen Points {scores.current.moorhenPoints} {`${moorhenPointsDiff < 0 ? '' : '+'}${moorhenPointsDiff}`}
                                 </p>
@@ -277,7 +276,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             }
         } 
 
-    }, [props.commandCentre, connectedMolNo, scores, props.preferences.defaultUpdatingScores, glRef, props.maps])
+    }, [props.commandCentre, connectedMolNo, scores, props.context.defaultUpdatingScores, glRef, props.maps])
 
     const handleDisconnectMaps = () => {
         scores.current = null
@@ -299,17 +298,17 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
         setScoreToastContents(
                 <Toast.Body style={{width: '100%'}}>
-                    {props.preferences.defaultUpdatingScores.includes('Rfactor') && 
+                    {props.context.defaultUpdatingScores.includes('Rfactor') && 
                         <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
                             Clipper R-Factor {currentScores.data.result.result.r_factor.toFixed(3)}
                         </p>
                     }
-                    {props.preferences.defaultUpdatingScores.includes('Rfree') && 
+                    {props.context.defaultUpdatingScores.includes('Rfree') && 
                         <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
                             Clipper R-Free {currentScores.data.result.result.free_r_factor.toFixed(3)}
                         </p>
                     }
-                    {props.preferences.defaultUpdatingScores.includes('Moorhen Points') && 
+                    {props.context.defaultUpdatingScores.includes('Moorhen Points') && 
                         <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
                             Moorhen Points {currentScores.data.result.result.rail_points_total}
                         </p>
@@ -332,23 +331,23 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         const selectedMolecule = props.molecules.find(molecule => molecule.molNo === evt.detail.molecule)
         selectedMolecule.connectedToMaps = evt.detail.maps
         
-    }, [props.commandCentre, props.preferences.defaultUpdatingScores, props.molecules, connectedMolNo])
+    }, [props.commandCentre, props.context.defaultUpdatingScores, props.molecules, connectedMolNo])
 
     useEffect(() => {
-        if (scores.current !== null && props.preferences.defaultUpdatingScores !== null && props.preferences.showScoresToast && connectedMolNo) {
+        if (scores.current !== null && props.context.defaultUpdatingScores !== null && props.context.showScoresToast && connectedMolNo) {
             setScoreToastContents(
                 <Toast.Body style={{width: '100%'}}>
-                    {props.preferences.defaultUpdatingScores.includes('Rfactor') && 
+                    {props.context.defaultUpdatingScores.includes('Rfactor') && 
                         <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
                             Clipper R-Factor {scores.current.rFactor.toFixed(3)}
                         </p>
                     }
-                    {props.preferences.defaultUpdatingScores.includes('Rfree') && 
+                    {props.context.defaultUpdatingScores.includes('Rfree') && 
                         <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
                             Clipper R-Free {scores.current.rFree.toFixed(3)}
                         </p>
                     }
-                    {props.preferences.defaultUpdatingScores.includes('Moorhen Points') && 
+                    {props.context.defaultUpdatingScores.includes('Moorhen Points') && 
                         <p style={{paddingLeft: '0.5rem', marginBottom:'0rem'}}>
                             Moorhen Points {scores.current.moorhenPoints}
                         </p>
@@ -357,7 +356,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             )
         }
 
-    }, [props.preferences.defaultUpdatingScores, props.preferences.showScoresToast]);
+    }, [props.context.defaultUpdatingScores, props.context.showScoresToast]);
 
     const handleWindowResized = useCallback(() => {
         if (glRef !== null && typeof glRef !== 'function') {
@@ -365,7 +364,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             glRef.current.setSpecularLightNoUpdate(0.6, 0.6, 0.6)
             glRef.current.setDiffuseLight(1., 1., 1.)
             glRef.current.setLightPositionNoUpdate(10., 10., 60.)
-            if (props.preferences.resetClippingFogging) {
+            if (props.context.resetClippingFogging) {
                 setClipFogByZoom()
             }
             glRef.current.resize(props.width(), props.height())
@@ -453,16 +452,16 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
-            glRef.current.clipCapPerfectSpheres = props.preferences.clipCap
+            glRef.current.clipCapPerfectSpheres = props.context.clipCap
             glRef.current.drawScene()
         }
-    }, [props.preferences.clipCap, glRef])
+    }, [props.context.clipCap, glRef])
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
-            glRef.current.setTextFont(props.preferences.GLLabelsFontFamily,props.preferences.GLLabelsFontSize)
+            glRef.current.setTextFont(props.context.GLLabelsFontFamily,props.context.GLLabelsFontSize)
         }
-    }, [props.preferences.GLLabelsFontSize, props.preferences.GLLabelsFontFamily, glRef])
+    }, [props.context.GLLabelsFontSize, props.context.GLLabelsFontFamily, glRef])
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
@@ -472,16 +471,16 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     useEffect(() => {
         if (glRef !== null && typeof glRef !== 'function' && glRef.current) {
-            glRef.current.atomLabelDepthMode = props.preferences.atomLabelDepthMode
+            glRef.current.atomLabelDepthMode = props.context.atomLabelDepthMode
             glRef.current.drawScene()
         }
-    }, [props.preferences.atomLabelDepthMode, glRef])
+    }, [props.context.atomLabelDepthMode, glRef])
 
     useEffect(() => {
-        if (props.preferences.mapLineWidth !== mapLineWidth){
-            setMapLineWidth(props.preferences.mapLineWidth)
+        if (props.context.mapLineWidth !== mapLineWidth){
+            setMapLineWidth(props.context.mapLineWidth)
         }
-    }, [props.preferences])
+    }, [props.context])
 
     useEffect(() => {
         if (connectedMolNo && props.molecules.length === 0){
@@ -523,7 +522,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     */
     return  <>
                 <ToastContainer style={{ zIndex: '0', marginTop: "5rem", marginLeft: '0.5rem', textAlign:'left', alignItems: 'left', maxWidth: convertViewtoPx(40, props.windowWidth)}} position='top-start' >
-                    {scoresToastContents !== null && props.preferences.showScoresToast &&
+                    {scoresToastContents !== null && props.context.showScoresToast &&
                         <Toast onClose={() => {}} autohide={false} show={true} style={{width: '100%'}}>
                             {scoresToastContents}
                         </Toast>
@@ -536,15 +535,15 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     onAtomHovered={props.onAtomHovered}
                     onKeyPress={props.onKeyPress}
                     messageChanged={() => { }}
-                    mouseSensitivityFactor={props.preferences.mouseSensitivity}
-                    zoomWheelSensitivityFactor={props.preferences.zoomWheelSensitivityFactor}
-                    keyboardAccelerators={JSON.parse(props.preferences.shortCuts as string)}
-                    showCrosshairs={props.preferences.drawCrosshairs}
-                    showAxes={props.preferences.drawAxes}
-                    showFPS={props.preferences.drawFPS}
+                    mouseSensitivityFactor={props.context.mouseSensitivity}
+                    zoomWheelSensitivityFactor={props.context.zoomWheelSensitivityFactor}
+                    keyboardAccelerators={JSON.parse(props.context.shortCuts as string)}
+                    showCrosshairs={props.context.drawCrosshairs}
+                    showAxes={props.context.drawAxes}
+                    showFPS={props.context.drawFPS}
                     mapLineWidth={mapLineWidth}
-                    drawMissingLoops={props.preferences.drawMissingLoops}
-                    drawInteractions={props.preferences.drawInteractions} />
+                    drawMissingLoops={props.context.drawMissingLoops}
+                    drawInteractions={props.context.drawInteractions} />
 
                 {showContextMenu &&
                 <MoorhenContextMenu 
@@ -563,9 +562,9 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     showContextMenu={showContextMenu}
                     setShowContextMenu={setShowContextMenu}
                     activeMap={props.activeMap}
-                    refineAfterMod={props.preferences.refineAfterMod}
-                    shortCuts={props.preferences.shortCuts}
-                    enableTimeCapsule={props.preferences.enableTimeCapsule}
+                    refineAfterMod={props.context.refineAfterMod}
+                    shortCuts={props.context.shortCuts}
+                    enableTimeCapsule={props.context.enableTimeCapsule}
                     windowWidth={props.windowWidth}
                     windowHeight={props.windowHeight}
                 />}

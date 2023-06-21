@@ -1,6 +1,6 @@
 import { useRef, useState, useReducer, useContext } from 'react';
 import { historyReducer, initialHistoryState } from './navbar-menus/MoorhenHistoryMenu';
-import { MoorhenPreferencesInterface, PreferencesContext } from "../utils/MoorhenPreferences";
+import { MoorhenContext } from "../utils/MoorhenContext";
 import { MoorhenContainer } from "./MoorhenContainer"
 import { moorhen } from '../types/moorhen';
 import { webGL } from '../types/mgWebGL';
@@ -42,7 +42,7 @@ export const MoorhenApp = (props: { forwardControls: (controls: any) => any }) =
     const consoleDivRef = useRef<null | HTMLDivElement>(null)
     const lastHoveredAtom = useRef<null | moorhen.HoveredAtom>(null)
     const prevActiveMoleculeRef = useRef<null | moorhen.Molecule>(null)
-    const preferences = useContext<undefined | MoorhenPreferencesInterface>(PreferencesContext);
+    const context = useContext<undefined | moorhen.Context>(MoorhenContext);
     const [activeMap, setActiveMap] = useState<null | moorhen.Map>(null)
     const [activeMolecule, setActiveMolecule] = useState<null | moorhen.Molecule>(null)
     const [hoveredAtom, setHoveredAtom] = useState<moorhen.HoveredAtom>({ molecule: null, cid: null })
@@ -68,7 +68,7 @@ export const MoorhenApp = (props: { forwardControls: (controls: any) => any }) =
 
     const collectedProps = {
         glRef, timeCapsuleRef, commandCentre, moleculesRef, mapsRef, activeMapRef,
-        consoleDivRef, lastHoveredAtom, prevActiveMoleculeRef, preferences, activeMap, 
+        consoleDivRef, lastHoveredAtom, prevActiveMoleculeRef, context, activeMap, 
         setActiveMap, activeMolecule, setActiveMolecule, hoveredAtom, setHoveredAtom,
         consoleMessage, setConsoleMessage, cursorStyle, setCursorStyle, busy, setBusy,
         windowWidth, setWindowWidth, windowHeight, setWindowHeight, commandHistory, 

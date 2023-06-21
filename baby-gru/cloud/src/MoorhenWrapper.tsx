@@ -5,7 +5,7 @@ import { CloudBackupInterface, CloudStorageInstance, CloudStorageInstanceInterfa
 import { MoorhenMolecule } from "../../src/utils/MoorhenMolecule"
 import { MoorhenMap } from "../../src/utils/MoorhenMap"
 import { guid } from "../../src/utils/MoorhenUtils"
-import { MoorhenPreferencesValuesInterface, PreferencesContextProvider, getDefaultValues } from "../../src/utils/MoorhenPreferences";
+import { MoorhenContextProvider, getDefaultValues } from "../../src/utils/MoorhenContext";
 import reportWebVitals from '../../src/reportWebVitals'
 import localforage from 'localforage';
 import parse from 'html-react-parser';
@@ -62,13 +62,13 @@ export default class MoorhenWrapper {
   workMode: "build" | "view" | "view-update";
   inputFiles: (PdbInputFileType | MapInputFileType | LegendInputFileType | LigandInputFileType)[]
   rootId: string;
-  preferences: MoorhenPreferencesValuesInterface;
-  cachedPreferences: MoorhenPreferencesValuesInterface;
+  context: moorhen.ContextValues;
+  cachedContext: moorhen.ContextValues;
   cachedLegend: string;
   cachedLigandDictionaries: string[];
   noDataLegendMessage: JSX.Element;
   exportCallback: (arg0: string, arg1: string) => Promise<void>;
-  exportPreferencesCallback: (arg0: MoorhenPreferencesValuesInterface) => void;
+  exportPreferencesCallback: (arg0: moorhen.ContextValues) => void;
   backupStorageInstance: CloudStorageInstanceInterface;
 
   constructor(urlPrefix: string) {
@@ -79,8 +79,8 @@ export default class MoorhenWrapper {
     this.workMode = 'build'
     this.inputFiles = null
     this.rootId = null
-    this.preferences = null
-    this.cachedPreferences = null
+    this.context = null
+    this.cachedContext = null
     this.cachedLegend = null
     this.cachedLigandDictionaries = []
     this.noDataLegendMessage = parse('<div></div>') as JSX.Element
@@ -124,8 +124,8 @@ export default class MoorhenWrapper {
     }
   }
 
-  setPreferences(preferences: MoorhenPreferencesValuesInterface) {
-    this.preferences = preferences
+  setPreferences(context: moorhen.ContextValues) {
+    this.context = context
   }
 
   setRootId(rootId: string) {
@@ -150,21 +150,21 @@ export default class MoorhenWrapper {
     this.exportCallback = callbackFunction
   }
 
-  addOnChangePreferencesListener(callbackFunction: (arg0: MoorhenPreferencesValuesInterface) => void) {
+  addOnChangePreferencesListener(callbackFunction: (arg0: moorhen.ContextValues) => void) {
     this.exportPreferencesCallback = callbackFunction
   }
 
-  onChangePreferencesListener(preferences: MoorhenPreferencesValuesInterface): void {
+  onChangePreferencesListener(context: moorhen.ContextValues): void {
     const objectKeys = ['shortCuts', 'defaultBackgroundColor', 'defaultUpdatingScores']
-    preferences['version'] = this.cachedPreferences.version
-    for (const key of Object.keys(this.cachedPreferences)) {
-      if (!objectKeys.includes(key) && this.cachedPreferences[key] !== preferences[key]) {
-        this.exportPreferencesCallback(preferences)
-        this.cachedPreferences = preferences  
+    context['version'] = this.cachedContext.version
+    for (const key of Object.keys(this.cachedContext)) {
+      if (!objectKeys.includes(key) && this.cachedContext[key] !== context[key]) {
+        this.exportPreferencesCallback(context)
+        this.cachedContext = context  
         break
-      } else if (objectKeys.includes(key) && JSON.stringify(this.cachedPreferences[key]) !== JSON.stringify(preferences[key])) {
-        this.exportPreferencesCallback(preferences)
-        this.cachedPreferences = preferences  
+      } else if (objectKeys.includes(key) && JSON.stringify(this.cachedContext[key]) !== JSON.stringify(context[key])) {
+        this.exportPreferencesCallback(context)
+        this.cachedContext = context  
         break
       }
     }
@@ -175,25 +175,25 @@ export default class MoorhenWrapper {
     this.controls = controls
   }
 
-  async importPreferences(newPreferences: MoorhenPreferencesValuesInterface) {
-    const defaultPreferences = getDefaultValues()
-    let preferences: MoorhenPreferencesValuesInterface
+  async importPreferences(newContext: moorhen.ContextValues) {
+    const defaultContext = getDefaultValues()
+    let context: moorhen.ContextValues
     
-    if (newPreferences.version === defaultPreferences.version) {
-      preferences = newPreferences
+    if (newContext.version === defaultContext.version) {
+      context = newContext
     } else {
-      preferences = defaultPreferences
+      context = defaultContext
     }
 
-    await Promise.all(Object.keys(preferences).map(key => {
+    await Promise.all(Object.keys(context).map(key => {
         if (key === 'shortCuts') {
-          return localforage.setItem(key, JSON.stringify(preferences[key]))
+          return localforage.setItem(key, JSON.stringify(context[key]))
         } else {
-          return localforage.setItem(key, preferences[key])
+          return localforage.setItem(key, context[key])
         }
     }))
 
-    this.cachedPreferences = preferences
+    this.cachedContext = context
   }
 
   addStyleSheet() {
@@ -223,7 +223,7 @@ export default class MoorhenWrapper {
 
   async loadMtzData(uniqueId: string, inputFile: string, mapName: string, selectedColumns: moorhen.selectedMtzColumns): Promise<moorhen.Map> {
     const newMap = new MoorhenMap(this.controls.commandCentre)
-    newMap.litLines = this.preferences.defaultMapLitLines
+    newMap.litLines = this.context.defaultMapLitLines
     newMap.uniqueId = uniqueId
     return new Promise(async (resolve, reject) => {
       try {
@@ -415,7 +415,7 @@ export default class MoorhenWrapper {
     root.render(
       <React.StrictMode>
         <div className="App">
-          <PreferencesContextProvider>
+          <MoorhenContextProvider>
             <MoorhenCloudApp 
               urlPrefix={this.urlPrefix}
               backupStorageInstance={this.backupStorageInstance}
@@ -426,17 +426,17 @@ export default class MoorhenWrapper {
               monomerLibraryPath={this.monomerLibrary}
               viewOnly={this.workMode === 'view'}
               />
-          </PreferencesContextProvider>
+          </MoorhenContextProvider>
         </div>
       </React.StrictMode>
     );
   }
 
   async start() {
-    if (!this.preferences) {
-      this.preferences = getDefaultValues()
+    if (!this.context) {
+      this.context = getDefaultValues()
     }
-    await this.importPreferences(this.preferences)
+    await this.importPreferences(this.context)
 
     this.renderMoorhen()
     this.addStyleSheet()
