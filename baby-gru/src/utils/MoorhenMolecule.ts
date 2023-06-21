@@ -16,6 +16,7 @@ import * as quat4 from 'gl-matrix/quat';
 import { moorhen } from "../types/moorhen"
 import { webGL } from "../types/mgWebGL"
 import { gemmi } from "../types/gemmi"
+import { libcootApi } from '../types/libcoot';
 
 export class MoorhenMolecule implements moorhen.Molecule {
     
@@ -381,7 +382,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             returnType: "status",
             command: 'shim_read_pdb',
             commandArgs: [moleculeAtoms.data.result.pdbData, newMolecule.name]
-        }, true)
+        }, true) as moorhen.WorkerResponse<number>
 
         newMolecule.molNo = response.data.result.result
 
@@ -413,7 +414,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             command: "copy_fragment_using_cid",
             commandArgs: [$this.molNo, cid],
             changesMolecules: [$this.molNo]
-        }, true);
+        }, true) as moorhen.WorkerResponse<number>;
         const newMolecule = new MoorhenMolecule($this.commandCentre, $this.monomerLibraryPath);
         newMolecule.name = `${$this.name} fragment`;
         newMolecule.molNo = response.data.result.result;
@@ -521,7 +522,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             returnType: "string_array",
             command: 'get_residue_names_with_no_dictionary',
             commandArgs: [$this.molNo],
-        }, false)
+        }, false) as moorhen.WorkerResponse<string[]>
         
         if (response.data.result.status === 'Completed') {
             let monomerPromises = []
@@ -761,7 +762,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             returnType: "mesh",
             command: "get_ramachandran_validation_markup_mesh",
             commandArgs: [$this.molNo]
-        });
+        })  as moorhen.WorkerResponse<libcootApi.SimpleMeshJS>;
         const objects = [response.data.result.result];
         //Empty existing buffers of this type
         this.clearBuffersOfStyle(style, glRef);
@@ -777,7 +778,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
                 returnType: "instanced_mesh",
                 command: "contact_dots_for_ligand",
                 commandArgs: [$this.molNo, cid, $this.cootBondsOptions.smoothness]
-            });
+            }) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>;
             const objects = [response.data.result.result];
             //Empty existing buffers of this type
             this.clearBuffersOfStyle(style, glRef);
@@ -795,7 +796,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             returnType: "mesh",
             command: "get_chemical_features_mesh",
             commandArgs: [$this.molNo, cid]
-        }) 
+        }) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>
         try {
             const objects = [response.data.result.result]
             //Empty existing buffers of this type
@@ -815,7 +816,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             returnType: "instanced_mesh",
             command: "all_molecule_contact_dots",
             commandArgs: [$this.molNo, $this.cootBondsOptions.smoothness]
-        })
+        }) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>
         try {
             const objects = [response.data.result.result]
             //Empty existing buffers of this type
@@ -833,7 +834,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             returnType: "instanced_mesh_perm",
             command: "get_rotamer_dodecs_instanced",
             commandArgs: [$this.molNo]
-        })
+        }) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>
         try {
             const objects = [response.data.result.result]
             this.clearBuffersOfStyle(style, glRef)
@@ -858,7 +859,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
     async drawCootSelectionBonds(glRef: React.RefObject<webGL.MGWebGL>, name: string, cid: null | string): Promise<boolean> {
         const $this = this
-        let meshCommand: Promise<moorhen.WorkerResponse>
+        let meshCommand: Promise<moorhen.WorkerResponse<libcootApi.InstancedMeshJS>>
 
         let style = "COLOUR-BY-CHAIN-AND-DICTIONARY"
         let returnType = "instanced_mesh"
@@ -929,7 +930,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
                 $this.gaussianSurfaceSettings.boxRadius,
                 $this.gaussianSurfaceSettings.gridScale
             ]
-        })
+        }) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>
         try {
             const objects = [response.data.result.result]
             if (objects.length > 0 && !this.gemmiStructure.isDeleted()) {
@@ -1004,7 +1005,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             commandArgs: [
                 $this.molNo, m2tSelection, "colorRampChainsScheme", m2tStyle
             ]
-        })
+        }) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>
         
         let objects = [response.data.result.result]
         try {
@@ -1540,7 +1541,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
                 commandArgs: [resType.toUpperCase(), fromMolNo,
                     ...glRef.current.origin.map(coord => -coord)
                 ]
-            }, true)
+            }, true) as Promise<moorhen.WorkerResponse<number>>
         }
 
         let result = await getMonomer()
@@ -1767,7 +1768,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             command: "get_colour_rules", 
             returnType: 'colour_rules',
             commandArgs: [this.molNo], 
-        })
+        }) as moorhen.WorkerResponse<libcootApi.PairType<string, string>[]>
 
         response.data.result.result.forEach(rule => {
             rules.push({

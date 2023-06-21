@@ -7,6 +7,7 @@ import { MoorhenMoleculeSelect } from '../select/MoorhenMoleculeSelect'
 import { MoorhenSideBarAccordionPropsInterface } from "../list/MoorhenSideBar";
 import { gemmi } from "../../types/gemmi";
 import { libcootApi } from "../../types/libcoot";
+import { moorhen } from "../../types/moorhen";
 
 export const MoorhenRamachandran = (props: MoorhenSideBarAccordionPropsInterface) => {
     const ramachandranRef = useRef<RamaPlot>();
@@ -52,8 +53,8 @@ export const MoorhenRamachandran = (props: MoorhenSideBarAccordionPropsInterface
                 return
             }
             const inputData = {message:'coot_command', command:'ramachandran_validation', returnType:'ramachandran_data', commandArgs:[parseInt(moleculeSelectRef.current.value)], chainID: chainSelectRef.current.value}
-            let response = await props.commandCentre.current.cootCommand(inputData)
-            setRamaPlotData(response.data.result.result as libcootApi.RamaDataJS[])
+            let response = await props.commandCentre.current.cootCommand(inputData) as moorhen.WorkerResponse<libcootApi.RamaDataJS[]>
+            setRamaPlotData(response.data.result.result)
         }
 
         fetchRamaData()
@@ -99,7 +100,7 @@ export const MoorhenRamachandran = (props: MoorhenSideBarAccordionPropsInterface
                 return
             }
             const inputData = {message:'coot_command', command:'ramachandran_validation', returnType:'ramachandran_data', commandArgs:[parseInt(moleculeSelectRef.current.value)], chainID: chainSelectRef.current.value}
-            let response = await props.commandCentre.current.cootCommand(inputData)
+            let response = await props.commandCentre.current.cootCommand(inputData) as moorhen.WorkerResponse<libcootApi.RamaDataJS[]>
             setRamaPlotData(response.data.result.result)
         }
         

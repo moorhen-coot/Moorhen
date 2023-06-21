@@ -115,4 +115,4 @@ export const MoorhenValidationListWidgetBase = (props: {
             </Fragment>
 }
 
-MoorhenValidationListWidgetBase.defaultProps = {filterMapFunction: (maps: moorhen.Map) => {return true}, extraControlForm: [], extraControlFormValue: null, enableMapSelect: true}
+MoorhenValidationListWidgetBase.defaultProps = {filterMapFunction: (maps: moorhen.Map) => {return true}, extraControlForm: null, extraControlFormValue: null, enableMapSelect: true}
