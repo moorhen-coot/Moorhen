@@ -355,7 +355,7 @@ type ResidueInfoType = {
     resCode: string;
 }
 
-export const getResidueInfo = (molecules: MoorhenMolecule[], selectedMolNo: number, selectedChain: string, selectedResidueIndex: number): ResidueInfoType => {
+export const getResidueInfo = (molecules: moorhen.Molecule[], selectedMolNo: number, selectedChain: string, selectedResidueIndex: number): ResidueInfoType => {
     const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedMolNo)
     if (selectedMolecule) {
         const sequence = selectedMolecule.sequences.find(sequence => sequence.chain === selectedChain)
