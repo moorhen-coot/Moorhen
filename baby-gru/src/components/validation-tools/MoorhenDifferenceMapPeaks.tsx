@@ -51,7 +51,7 @@ export const MoorhenDifferenceMapPeaks = (props: MoorhenSideBarAccordionPropsInt
     }
 
     const fetchData = async(selectedModel: number, selectedMap: number, selectedChain: string) => {
-        if (selectedRmsd === null) {
+        if (selectedModel === null || selectedMap === null || selectedRmsd === null) {
             setMapRmsd(null)
             return null
         }
@@ -222,6 +222,7 @@ export const MoorhenDifferenceMapPeaks = (props: MoorhenSideBarAccordionPropsInt
                 fetchData={fetchData}
                 getChart={getChart} 
                 filterMapFunction={filterMapFunction}
+                enableChainSelect={false}
                 molecules={props.molecules}
                 maps={props.maps}
                 backgroundColor={props.backgroundColor}
