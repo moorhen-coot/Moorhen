@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { ButtonGroup, Carousel } from "react-bootstrap"
-import { MoorhenAddSimpleButton,
-        MoorhenRotateTranslateZoneButton,
+import { MoorhenRotateTranslateZoneButton,
         MoorhenRigidBodyFitButton, MoorhenRotamerChangeButton, MoorhenDragAtomsButton } from "../button/MoorhenSimpleEditButton"
+import { MoorhenAddSimpleButton } from "../button/MoorhenAddSimpleButton"
 import { MoorhenMutateButton } from "../button/MoorhenMutateButton"
 import { MoorhenJedFlipTrueButton } from "../button/MoorhenJedFlipTrueButton"
 import { MoorhenJedFlipFalseButton } from "../button/MoorhenJedFlipFalseButton"
