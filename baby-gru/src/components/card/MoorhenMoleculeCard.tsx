@@ -3,7 +3,7 @@ import { Card, Row, Col, Accordion, Stack } from "react-bootstrap";
 import { doDownload, sequenceIsValid } from '../../utils/MoorhenUtils';
 import { isDarkBackground } from '../../WebGLgComponents/mgWebGL'
 import { MoorhenSequenceViewer } from "../sequence-viewer/MoorhenSequenceViewer";
-import { MoorhenMoleculeCardButtonBar } from "../button/MoorhenMoleculeCardButtonBar"
+import { MoorhenMoleculeCardButtonBar } from "../button-bar/MoorhenMoleculeCardButtonBar"
 import { MoorhenLigandList } from "../list/MoorhenLigandList"
 import { Checkbox, FormControlLabel, FormGroup, Typography } from "@mui/material";
 import { getNameLabel } from "./cardUtils"

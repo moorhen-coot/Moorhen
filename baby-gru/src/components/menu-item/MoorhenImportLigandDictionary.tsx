@@ -7,7 +7,6 @@ import { TextField } from "@mui/material"
 import { readTextFile } from "../../utils/MoorhenUtils"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { MolChange } from "../MoorhenApp"
 import { libcootApi } from "../../types/libcoot"
 
 const MoorhenImportLigandDictionary = (props: { 
@@ -22,7 +21,7 @@ const MoorhenImportLigandDictionary = (props: {
     monomerLibraryPath: string;
     backgroundColor: [number, number, number, number];
     panelContent: JSX.Element;
-    changeMolecules: (arg0: MolChange<moorhen.Molecule>) => void;
+    changeMolecules: (arg0: moorhen.MolChange<moorhen.Molecule>) => void;
     fetchLigandDict: () => Promise<string>;
     addToMoleculeValueRef: React.MutableRefObject<number>;
     addToMolecule: string;
@@ -158,7 +157,7 @@ const MoorhenImportLigandDictionary = (props: {
 }
 
 export const MoorhenSMILESToLigandMenuItem = (props: {
-    changeMolecules: (arg0: MolChange<moorhen.Molecule>) => void;
+    changeMolecules: (arg0: moorhen.MolChange<moorhen.Molecule>) => void;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
     molecules: moorhen.Molecule[];
     glRef: React.RefObject<webGL.MGWebGL>;
@@ -278,7 +277,7 @@ export const MoorhenSMILESToLigandMenuItem = (props: {
 }
 
 export const MoorhenImportDictionaryMenuItem = (props: { 
-    changeMolecules: (arg0: MolChange<moorhen.Molecule>) => void;
+    changeMolecules: (arg0: moorhen.MolChange<moorhen.Molecule>) => void;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
     molecules: moorhen.Molecule[];
     glRef: React.RefObject<webGL.MGWebGL>;

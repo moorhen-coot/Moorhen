@@ -90,6 +90,7 @@ export namespace moorhen {
     }
     
     interface Molecule {
+        drawSelection(glRef: React.RefObject<webGL.MGWebGL>, cid: string): Promise<void>;
         drawUnitCell(glRef: React.RefObject<webGL.MGWebGL>): void;
         gemmiAtomsForCid: (cid: string) => Promise<AtomInfo[]>;
         mergeMolecules(otherMolecules: Molecule[], glRef: React.RefObject<webGL.MGWebGL>, doHide?: boolean): Promise<void>;
@@ -343,7 +344,7 @@ export namespace moorhen {
         mapsRef: React.RefObject<Map[]>;
         glRef: React.RefObject<webGL.MGWebGL>;
         activeMapRef: React.RefObject<Map>;
-        context: moorhen.Context;
+        context: Context;
         busy: boolean;
         modificationCount: number;
         modificationCountBackupThreshold: number;
@@ -372,6 +373,11 @@ export namespace moorhen {
         maps: [number, number, number];
         uniqueMaps: number[];
     }
+
+    type AtomClickedEvent = CustomEvent<{
+        buffer: { id: string };
+        atom: { label: string };
+    }>
 
     type ConnectMapsEvent = CustomEvent<ConnectMapsInfo>
 
@@ -486,5 +492,61 @@ export namespace moorhen {
     }
     
     interface Context extends ContextSetters, ContextValues { }
+    
+    type ContextButtonProps = {
+        mode: 'context';
+        shortCuts: string | { [label: string]: Shortcut; };
+        urlPrefix: string;
+        commandCentre: React.RefObject<CommandCentre>
+        selectedMolecule: Molecule;
+        chosenAtom: ResidueSpec;
+        activeMap: Map;
+        refineAfterMod: boolean;
+        needsMapData: boolean;
+        needsAtomData: boolean;
+        molecules: Molecule[];
+        nonCootCommand: (arg0: Molecule, arg1: ResidueSpec) => Promise<void>;
+        glRef: React.RefObject<webGL.MGWebGL>;
+        cootCommandInput: cootCommandKwargs;
+        setOverlayContents: React.Dispatch<React.SetStateAction<JSX.Element>>;
+        setShowOverlay: React.Dispatch<React.SetStateAction<boolean>>;
+        timeCapsuleRef: React.RefObject<TimeCapsule>;
+        setShowContextMenu: React.Dispatch<React.SetStateAction<boolean>>;
+        onExit: (arg0: Molecule, arg1: ResidueSpec, arg2: any) => void;
+        onCompleted: (arg0: Molecule, arg1: ResidueSpec) => void;
+        icon: JSX.Element;
+        setToolTip: React.Dispatch<React.SetStateAction<string>>;
+        toolTipLabel: string;
+        showContextMenu: boolean;
+        popoverSettings: {
+            label: string;
+            options: string[];
+            formatArgs: (arg0: string, arg1: React.MutableRefObject<any>) => cootCommandKwargs;
+        };
+        changeMolecules: (arg0: MolChange<Molecule>) => void
+    }
+    
+    type MolChange<T extends Molecule | Map> = {
+        action: 'Add' | 'Remove' | 'AddList' | 'Empty';
+        item?: T;
+        items?: T[];
+    }    
+
+    type EditButtonProps = {
+        mode?: 'edit';
+        urlPrefix: string;
+        shortCuts: string | { [label: string]: Shortcut; };
+        selectedButtonIndex: string;
+        setSelectedButtonIndex: React.Dispatch<React.SetStateAction<string>>;
+        buttonIndex: string;
+        refineAfterMod?: boolean;
+        glRef: React.RefObject<webGL.MGWebGL>;
+        commandCentre: React.RefObject<CommandCentre>;
+        activeMap: Map;
+        molecules: Molecule[];
+        timeCapsuleRef: React.RefObject<TimeCapsule>;
+        windowHeight: number;
+        changeMolecules: (arg0: MolChange<Molecule>) => void
+    }
     
 }

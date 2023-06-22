@@ -5,7 +5,6 @@ import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { MolChange } from "../MoorhenApp";
 
 export const MoorhenLoadTutorialDataMenuItem = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
@@ -14,8 +13,8 @@ export const MoorhenLoadTutorialDataMenuItem = (props: {
     defaultBondSmoothness: number;
     urlPrefix: string;
     glRef: React.RefObject<webGL.MGWebGL>;
-    changeMaps: (arg0: MolChange<moorhen.Map>) => void;
-    changeMolecules: (arg0: MolChange<moorhen.Molecule>) => void;
+    changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
+    changeMolecules: (arg0: moorhen.MolChange<moorhen.Molecule>) => void;
     setActiveMap: React.Dispatch<React.SetStateAction<moorhen.Map>>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {

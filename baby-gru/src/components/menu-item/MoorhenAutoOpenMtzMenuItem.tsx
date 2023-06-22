@@ -4,11 +4,10 @@ import { readDataFile } from "../../utils/MoorhenUtils"
 import { MoorhenMap } from "../../utils/MoorhenMap"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
-import { MolChange } from "../MoorhenApp"
 
 export const MoorhenAutoOpenMtzMenuItem = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
-    changeMaps: (arg0: MolChange<moorhen.Map>) => void;
+    changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
     setActiveMap: React.Dispatch<React.SetStateAction<moorhen.Map>>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {

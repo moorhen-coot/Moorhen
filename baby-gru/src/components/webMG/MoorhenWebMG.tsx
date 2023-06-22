@@ -6,16 +6,15 @@ import { MoorhenContextMenu } from "../context-menu/MoorhenContextMenu.js"
 import { cidToSpec, convertViewtoPx } from '../../utils/MoorhenUtils';
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { MolChange } from "../MoorhenApp"
 import { libcootApi } from '../../types/libcoot.js';
 
 interface MoorhenWebMGPropsInterface {
     timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     molecules: moorhen.Molecule[];
-    changeMolecules: (arg0: MolChange<moorhen.Molecule>) => void;
+    changeMolecules: (arg0: moorhen.MolChange<moorhen.Molecule>) => void;
     maps: moorhen.Map[];
-    changeMaps: (arg0: MolChange<moorhen.Map>) => void;
+    changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
     width: () => number;
     height: () => number;
     activeMap: moorhen.Map;

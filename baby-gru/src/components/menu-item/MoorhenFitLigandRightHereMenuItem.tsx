@@ -5,7 +5,6 @@ import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
-import { MolChange } from "../MoorhenApp";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 
@@ -17,7 +16,7 @@ export const MoorhenFitLigandRightHereMenuItem = (props: {
     maps: moorhen.Map[];
     molecules: moorhen.Molecule[];
     commandCentre: React.RefObject<moorhen.CommandCentre>;
-    changeMolecules: (arg0: MolChange<moorhen.Molecule>) => void;
+    changeMolecules: (arg0: moorhen.MolChange<moorhen.Molecule>) => void;
     backgroundColor: [number, number, number, number];
     monomerLibraryPath: string;
     devMode?: boolean;
