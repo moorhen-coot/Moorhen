@@ -1,10 +1,9 @@
 import { FirstPageOutlined, ArrowBackIosOutlined, ArrowForwardIosOutlined, CheckOutlined, CloseOutlined } from "@mui/icons-material";
-import { MenuItem, MenuList, Tooltip } from "@mui/material";
+import { Tooltip } from "@mui/material";
 import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import { Button, Overlay, Container, Row, FormSelect, FormGroup, FormLabel, Card, Form, Stack } from "react-bootstrap"
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
-import { cidToSpec, getTooltipShortcutLabel, residueCodesThreeToOne, convertViewtoPx } from "../../utils/MoorhenUtils";
+import { cidToSpec, getTooltipShortcutLabel, convertViewtoPx } from "../../utils/MoorhenUtils";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 
 export const MoorhenSimpleEditButton = forwardRef((props, buttonRef) => {
