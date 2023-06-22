@@ -22,6 +22,10 @@ import { MoorhenConvertCisTransButton } from "../button/MoorhenConvertCisTransBu
 import { MoorhenSideChain180Button } from "../button/MoorhenSideChain180Button"
 import { MoorhenRefineResiduesButton } from "../button/MoorhenRefineResiduesButton"
 import { MoorhenDeleteButton } from "../button/MoorhenDeleteButton"
+import { MoorhenMutateButton } from "../button/MoorhenMutateButton";
+import { MoorhenEigenFlipLigandButton } from "../button/MoorhenEigenFlipLigandButton";
+import { MoorhenJedFlipFalseButton } from "../button/MoorhenJedFlipFalseButton";
+import { MoorhenJedFlipTrueButton } from "../button/MoorhenJedFlipTrueButton";
 
 const ContextMenu = styled.div`
   position: absolute;
@@ -640,30 +644,7 @@ export const MoorhenContextMenu = (props) => {
                       <MoorhenSideChain180Button mode='context' {...collectedProps}/> 
                       <MoorhenRefineResiduesButton mode='context' {...collectedProps}/> 
                       <MoorhenDeleteButton mode='context' {...collectedProps} />
-                      <MoorhenContextQuickEditButton 
-                          icon={<img style={{padding:'0.1rem', width:'100%', height: '100%'}} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/mutate.svg`} alt='Mutate'/>}
-                          refineAfterMod={false}
-                          needsMapData={true}
-                          onCompleted={autoFitRotamer}
-                          toolTipLabel="Mutate residue"
-                          popoverSettings={{
-                            label: 'Mutate to...',
-                            options: [
-                              'ALA', 'CYS', 'ASP', 'GLU', 'PHE', 'GLY', 'HIS', 'ILE', 'LYS', 'LEU',
-                               'MET', 'ASN', 'PRO', 'GLN', 'ARG', 'SER', 'THR', 'VAL', 'TRP', 'TYR'
-                            ],
-                            formatArgs: (selectedOption) => {
-                              return {
-                                message: 'coot_command',
-                                returnType: "status",
-                                command: 'mutate',
-                                commandArgs: [selectedMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`, selectedOption],
-                                changesMolecules: [selectedMolecule.molNo]
-                              }
-                            }
-                            }}
-                          {...collectedProps}
-                      />
+                      <MoorhenMutateButton mode='context' {...collectedProps} />
                       <MoorhenAddTerminalResidueButton mode='context' {...collectedProps} />
                       <MoorhenContextQuickEditButton 
                           icon={<img style={{padding:'0.1rem', width:'100%', height: '100%'}} alt="change rotamer" className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/rotamers.svg`}/>}
@@ -701,42 +682,9 @@ export const MoorhenContextMenu = (props) => {
                             }}
                           {...collectedProps}
                       />
-                      <MoorhenContextQuickEditButton 
-                          icon={<img style={{padding:'0.1rem', width:'100%', height: '100%'}} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/spin-view.svg`} alt='Eigen flip'/>}
-                          toolTipLabel={props.shortCuts ? `Eigen Flip: flip the ligand around its eigenvectors ${getTooltipShortcutLabel(JSON.parse(props.shortCuts).eigen_flip)}` : "Eigen Flip: flip the ligand around its eigenvectors"}
-                          cootCommandInput={{
-                              message: 'coot_command',
-                              returnType: "status",
-                              command: 'eigen_flip_ligand',
-                              commandArgs: [selectedMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`],
-                              changesMolecules: [selectedMolecule.molNo]
-                          }}
-                          {...collectedProps}
-                      />
-                      <MoorhenContextQuickEditButton 
-                          icon={<img style={{padding:'0.1rem', width:'100%', height: '100%'}} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/edit-chi.svg`} alt='jed-flip'/>}
-                          toolTipLabel="JED Flip: wag the tail"
-                          cootCommandInput={{
-                              message: 'coot_command',
-                              returnType: "status",
-                              command: 'jed_flip',
-                              commandArgs: [selectedMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`, false],
-                              changesMolecules: [selectedMolecule.molNo]
-                          }}
-                          {...collectedProps}
-                      />
-                      <MoorhenContextQuickEditButton 
-                          icon={<img style={{padding:'0.1rem', width:'100%', height: '100%'}} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/jed-flip-reverse.svg`} alt='jed-flip-reverse'/>}
-                          toolTipLabel="JED Flip: wag the dog"
-                          cootCommandInput={{
-                              message: 'coot_command',
-                              returnType: "status",
-                              command: 'jed_flip',
-                              commandArgs: [selectedMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`, true],
-                              changesMolecules: [selectedMolecule.molNo]
-                          }}
-                          {...collectedProps}
-                      />
+                      <MoorhenEigenFlipLigandButton mode='context' {...collectedProps}/>
+                      <MoorhenJedFlipFalseButton mode='context' {...collectedProps}/>
+                      <MoorhenJedFlipTrueButton mode='context' {...collectedProps}/>
                       <MoorhenContextQuickEditButton 
                           icon={<img style={{padding:'0.1rem', width:'100%', height: '100%'}} alt="rotate/translate" className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/rtz.svg`}/>}
                           toolTipLabel="Rotate/Translate zone"
