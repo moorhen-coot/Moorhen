@@ -1,9 +1,16 @@
 import { useState, useEffect, useRef } from "react";
 import { ButtonGroup, Carousel } from "react-bootstrap"
-import { MoorhenAutofitRotamerButton, MoorhenFlipPeptideButton, MoorhenSideChain180Button, MoorhenAddTerminalResidueDirectlyUsingCidButton,
-        MoorhenEigenFlipLigandButton, MoorhenJedFlipFalseButton, MoorhenJedFlipTrueButton, MoorhenConvertCisTransButton, MoorhenAddSimpleButton,
-        MoorhenRefineResiduesUsingAtomCidButton, MoorhenDeleteUsingCidButton, MoorhenMutateButton, MoorhenRotateTranslateZoneButton,
-        MoorhenAddAltConfButton, MoorhenRigidBodyFitButton, MoorhenRotamerChangeButton, MoorhenDragAtomsButton } from "./MoorhenSimpleEditButton"
+import { MoorhenEigenFlipLigandButton, MoorhenJedFlipFalseButton, MoorhenJedFlipTrueButton, MoorhenAddSimpleButton,
+        MoorhenMutateButton, MoorhenRotateTranslateZoneButton,
+        MoorhenRigidBodyFitButton, MoorhenRotamerChangeButton, MoorhenDragAtomsButton } from "../button/MoorhenSimpleEditButton"
+import { MoorhenDeleteButton } from "../button/MoorhenDeleteButton"
+import { MoorhenAddAltConfButton } from "../button/MoorhenAddAltConfButton"
+import { MoorhenRefineResiduesButton } from "../button/MoorhenRefineResiduesButton"
+import { MoorhenSideChain180Button } from "../button/MoorhenSideChain180Button"
+import { MoorhenAddTerminalResidueButton } from "../button/MoorhenAddTerminalResidueButton"
+import { MoorhenFlipPeptideButton } from "../button/MoorhenFlipPeptideButton"
+import { MoorhenAutofitRotamerButton } from "../button/MoorhenAutofitRotamerButton"
+import { MoorhenConvertCisTransButton } from "../button/MoorhenConvertCisTransButton"
 import { IconButton, Drawer } from "@mui/material";
 import { ArrowDownwardOutlined, ArrowUpwardOutlined } from "@mui/icons-material";
 import { convertRemToPx, convertViewtoPx} from '../../utils/MoorhenUtils';
@@ -25,16 +32,16 @@ export const MoorhenButtonBar = (props: MoorhenControlsInterface) => {
         (<MoorhenSideChain180Button {...props} key='side-chain-180' selectedButtonIndex={selectedButtonIndex}
             setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="2" />),
 
-        (<MoorhenRefineResiduesUsingAtomCidButton {...props} key='refine-cid' selectedButtonIndex={selectedButtonIndex}
+        (<MoorhenRefineResiduesButton {...props} key='refine-cid' selectedButtonIndex={selectedButtonIndex}
             setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="3" />),
 
-        (<MoorhenDeleteUsingCidButton {...props} key='delete-cid' selectedButtonIndex={selectedButtonIndex}
+        (<MoorhenDeleteButton {...props} key='delete-cid' selectedButtonIndex={selectedButtonIndex}
             setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="4" />),
 
         (<MoorhenMutateButton {...props} key='mutate' selectedButtonIndex={selectedButtonIndex}
             setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="5" />),
 
-        (<MoorhenAddTerminalResidueDirectlyUsingCidButton {...props} key='add-terminal-residue' selectedButtonIndex={selectedButtonIndex}
+        (<MoorhenAddTerminalResidueButton {...props} key='add-terminal-residue' selectedButtonIndex={selectedButtonIndex}
             setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="6" />),
         
         (<MoorhenAddSimpleButton {...props} key='add-simple' selectedButtonIndex={selectedButtonIndex}

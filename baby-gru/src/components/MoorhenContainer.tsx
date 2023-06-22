@@ -6,7 +6,7 @@ import { historyReducer, initialHistoryState } from './navbar-menus/MoorhenHisto
 import { MoorhenCommandCentre } from "../utils/MoorhenCommandCentre"
 import { MoorhenContext } from "../utils/MoorhenContext";
 import { MoorhenTimeCapsule } from '../utils/MoorhenTimeCapsule';
-import { MoorhenButtonBar } from './button/MoorhenButtonBar';
+import { MoorhenButtonBar } from './button-bar/MoorhenButtonBar';
 import { Backdrop } from "@mui/material";
 import { babyGruKeyPress } from '../utils/MoorhenKeyboardAccelerators';
 import { MoorhenSideBar } from './list/MoorhenSideBar';
@@ -14,7 +14,7 @@ import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
 import { MoorhenNavBar } from "./navbar-menus/MoorhenNavBar"
 import { moorhen } from '../types/moorhen';
 import { webGL } from '../types/mgWebGL';
-import { itemReducer, MolChange } from "./MoorhenApp"
+import { itemReducer } from "./MoorhenApp"
 import './MoorhenContainer.css'
 
 const initialMoleculesState: moorhen.Molecule[] = []
@@ -40,9 +40,9 @@ interface MoorhenContainerOptionalPropsInterface {
 export interface MoorhenControlsInterface extends moorhen.Context, MoorhenContainerOptionalPropsInterface {
     isDark: boolean;
     molecules: moorhen.Molecule[];
-    changeMolecules: (arg0: MolChange<moorhen.Molecule>) => void;
+    changeMolecules: (arg0: moorhen.MolChange<moorhen.Molecule>) => void;
     maps: moorhen.Map[];
-    changeMaps: (arg0: MolChange<moorhen.Map>) => void;
+    changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
     appTitle: string;
     setAppTitle: React.Dispatch<React.SetStateAction<string>>;
     glRef: React.MutableRefObject<null | webGL.MGWebGL>;
@@ -100,9 +100,9 @@ interface statesMapInterface {
     commandHistory: any;
     dispatchHistoryReducer: (arg0: any) => void;
     molecules: moorhen.Molecule[];
-    changeMolecules: (arg0: MolChange<moorhen.Molecule>) => void;
+    changeMolecules: (arg0: moorhen.MolChange<moorhen.Molecule>) => void;
     maps: moorhen.Map[];
-    changeMaps: (arg0: MolChange<moorhen.Map>) => void;
+    changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
     backgroundColor: [number, number, number, number];
     setBackgroundColor: React.Dispatch<React.SetStateAction<[number, number, number, number]>>;
     appTitle: string;

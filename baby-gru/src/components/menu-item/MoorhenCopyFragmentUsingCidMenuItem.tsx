@@ -5,7 +5,6 @@ import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { MolChange } from "../MoorhenApp"
 
 export const MoorhenCopyFragmentUsingCidMenuItem = (props: {
     molecules: moorhen.Molecule[];
@@ -15,7 +14,7 @@ export const MoorhenCopyFragmentUsingCidMenuItem = (props: {
     monomerLibraryPath: string;
     defaultBondSmoothness: number;
     backgroundColor: [number, number, number, number];
-    changeMolecules: (arg0: MolChange<moorhen.Molecule>) => void;
+    changeMolecules: (arg0: moorhen.MolChange<moorhen.Molecule>) => void;
 }) => {
 
     const fromRef = useRef<null | HTMLSelectElement>(null)

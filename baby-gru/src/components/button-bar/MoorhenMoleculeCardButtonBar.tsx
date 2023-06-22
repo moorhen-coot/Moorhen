@@ -2,7 +2,6 @@ import React, { useState, useMemo, Fragment, useRef } from "react";
 import { Button, DropdownButton } from "react-bootstrap";
 import { convertViewtoPx } from '../../utils/MoorhenUtils';
 import { MenuItem } from "@mui/material";
-import { MolChange } from "../MoorhenApp"
 import { UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined, ExpandLessOutlined, VisibilityOffOutlined, VisibilityOutlined, DownloadOutlined, Settings } from '@mui/icons-material';
 import { MoorhenDeleteDisplayObjectMenuItem } from "../menu-item/MoorhenDeleteDisplayObjectMenuItem"
 import { MoorhenMergeMoleculesMenuItem } from "../menu-item/MoorhenMergeMoleculesMenuItem";
@@ -24,7 +23,7 @@ type MoorhenMoleculeCardButtonBarPropsType = {
     handleVisibility: () => void;
     molecule: moorhen.Molecule;
     molecules: moorhen.Molecule[];
-    changeMolecules: (arg0: MolChange<moorhen.Molecule>) => void;
+    changeMolecules: (arg0: moorhen.MolChange<moorhen.Molecule>) => void;
     glRef: React.RefObject<webGL.MGWebGL>;
     sideBarWidth: number;
     windowHeight: number;

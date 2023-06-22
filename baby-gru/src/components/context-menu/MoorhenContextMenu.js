@@ -11,9 +11,17 @@ import { cidToSpec, convertRemToPx, getTooltipShortcutLabel } from "../../utils/
 import { getBackupLabel } from "../../utils/MoorhenTimeCapsule"
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Popover, Overlay, FormLabel, FormSelect, Button, Stack, Form, Card } from "react-bootstrap";
-import { deleteFormatArgs, rigidBodyFitFormatArgs } from "../button/MoorhenSimpleEditButton";
+import { rigidBodyFitFormatArgs } from "../button/MoorhenSimpleEditButton";
 import Draggable from "react-draggable";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
+import { MoorhenAddAltConfButton } from "../button/MoorhenAddAltConfButton"
+import { MoorhenAddTerminalResidueButton } from "../button/MoorhenAddTerminalResidueButton"
+import { MoorhenAutofitRotamerButton } from "../button/MoorhenAutofitRotamerButton"
+import { MoorhenFlipPeptideButton } from "../button/MoorhenFlipPeptideButton"
+import { MoorhenConvertCisTransButton } from "../button/MoorhenConvertCisTransButton"
+import { MoorhenSideChain180Button } from "../button/MoorhenSideChain180Button"
+import { MoorhenRefineResiduesButton } from "../button/MoorhenRefineResiduesButton"
+import { MoorhenDeleteButton } from "../button/MoorhenDeleteButton"
 
 const ContextMenu = styled.div`
   position: absolute;
@@ -590,14 +598,6 @@ export const MoorhenContextMenu = (props) => {
     setOverrideMenuContents(getPopoverContents(rotamerInfo))
   }
 
-  const deleteMoleculeIfEmpty = (molecule, chosenAtom, cootResult) => {
-    if (cootResult.data.result.result.second < 1) {
-        console.log('Empty molecule detected, deleting it now...')
-        molecule.delete(props.glRef)
-        props.changeMolecules({ action: 'Remove', item: molecule })
-    }
-  }
-
   const autoFitRotamer = useCallback(async (molecule, chosenAtom) => {
     const formattedArgs = [
         molecule.molNo,
@@ -635,88 +635,11 @@ export const MoorhenContextMenu = (props) => {
                      <div style={{ display:'flex', justifyContent: 'center' }}>
                      <Tooltip title={toolTip}>
                      <FormGroup ref={quickActionsFormGroupRef} style={{ justifyContent: 'center', margin: "0px", padding: "0px", width: '26rem' }} row>
-                      <MoorhenContextQuickEditButton 
-                          toolTipLabel={props.shortCuts ? `Auto-fit Rotamer ${getTooltipShortcutLabel(JSON.parse(props.shortCuts).auto_fit_rotamer)}` : "Auto-fit Rotamer"}
-                          icon={<img style={{padding:'0.1rem', width:'100%', height: '100%'}} src={`${props.urlPrefix}/baby-gru/pixmaps/auto-fit-rotamer.svg`} alt='Auto-Fit rotamer'/>}
-                          needsMapData={true}
-                          cootCommandInput={{
-                              message: 'coot_command',
-                              returnType: "status",
-                              command: 'fill_partial_residue',
-                              commandArgs: [selectedMolecule.molNo, chosenAtom.chain_id, chosenAtom.res_no, chosenAtom.ins_code],
-                              changesMolecules: [selectedMolecule.molNo]
-                          }}
-                          {...collectedProps}
-                      />
-                      <MoorhenContextQuickEditButton 
-                          icon={<img style={{padding:'0.1rem', width:'100%', height: '100%'}} src={`${props.urlPrefix}/baby-gru/pixmaps/flip-peptide.svg`} alt='Flip peptide'/>}
-                          needsMapData={true}
-                          toolTipLabel={props.shortCuts ? `Flip Peptide ${getTooltipShortcutLabel(JSON.parse(props.shortCuts).flip_peptide)}` : "Flip Peptide"}
-                          cootCommandInput={{
-                              message: 'coot_command',
-                              returnType: "status",
-                              command: 'flipPeptide_cid',
-                              commandArgs: [
-                                selectedMolecule.molNo,
-                                `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`,
-                                chosenAtom.alt_conf === "" ? "" : chosenAtom.alt_conf
-                              ],
-                              changesMolecules: [selectedMolecule.molNo]
-                          }}
-                          {...collectedProps}
-                      />
-                      <MoorhenContextQuickEditButton 
-                          icon={<img style={{padding:'0.1rem', width:'100%', height: '100%'}} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/side-chain-180.svg`} alt='Rotate Side-chain'/>}
-                          toolTipLabel="Rotate side-chain 180 degrees"
-                          cootCommandInput={{
-                              message: 'coot_command',
-                              returnType: "status",
-                              command: 'side_chain_180',
-                              commandArgs: [selectedMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`],
-                              changesMolecules: [selectedMolecule.molNo]
-                          }}
-                          {...collectedProps}
-                      />
-                      <MoorhenContextQuickEditButton 
-                          icon={<img style={{padding:'0.1rem', width:'100%', height: '100%'}} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/refine-1.svg`} alt='Refine Residues'/>}
-                          needsMapData={true}
-                          refineAfterMod={false}
-                          toolTipLabel={props.shortCuts ? `Refine Residues ${getTooltipShortcutLabel(JSON.parse(props.shortCuts).triple_refine)}` : "Refine Residues"}
-                          popoverSettings={{
-                            label: 'Refinement mode',
-                            options: ['SINGLE', 'TRIPLE', 'QUINTUPLE', 'HEPTUPLE', 'SPHERE', 'BIG_SPHERE', 'CHAIN', 'ALL'],
-                            formatArgs: (selectedOption) => {
-                              return {
-                                message: 'coot_command',
-                                returnType: "status",
-                                command: 'refine_residues_using_atom_cid',
-                                commandArgs: [ selectedMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`, selectedOption, 4000],
-                                changesMolecules: [selectedMolecule.molNo]
-                              }
-                            }
-                            }}
-                          {...collectedProps}
-                      />
-                      <MoorhenContextQuickEditButton 
-                          icon={<img style={{padding:'0.1rem', width:'100%', height: '100%'}} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/delete.svg`} alt="delete-item"/>}
-                          refineAfterMod={false}
-                          toolTipLabel={props.shortCuts ? `Delete Item ${getTooltipShortcutLabel(JSON.parse(props.shortCuts).delete_residue)}` : "Delete Item"}
-                          onExit={deleteMoleculeIfEmpty}
-                          popoverSettings={{
-                            label: 'Delete mode',
-                            options: ['ATOM', 'RESIDUE', 'RESIDUE HYDROGENS', 'RESIDUE SIDE-CHAIN', 'CHAIN', 'CHAIN HYDROGENS', 'MOLECULE HYDROGENS'],
-                            formatArgs: (selectedOption) => {
-                              return {
-                                message: 'coot_command',
-                                returnType: "status",
-                                command: 'delete_using_cid',
-                                commandArgs: deleteFormatArgs(selectedMolecule, chosenAtom, selectedOption),
-                                changesMolecules: [selectedMolecule.molNo]
-                              }
-                            }
-                            }}
-                          {...collectedProps}
-                      />
+                      <MoorhenAutofitRotamerButton mode='context' {...collectedProps} />
+                      <MoorhenFlipPeptideButton mode='context' {...collectedProps}/>
+                      <MoorhenSideChain180Button mode='context' {...collectedProps}/> 
+                      <MoorhenRefineResiduesButton mode='context' {...collectedProps}/> 
+                      <MoorhenDeleteButton mode='context' {...collectedProps} />
                       <MoorhenContextQuickEditButton 
                           icon={<img style={{padding:'0.1rem', width:'100%', height: '100%'}} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/mutate.svg`} alt='Mutate'/>}
                           refineAfterMod={false}
@@ -741,19 +664,7 @@ export const MoorhenContextMenu = (props) => {
                             }}
                           {...collectedProps}
                       />
-                      <MoorhenContextQuickEditButton 
-                          icon={<img style={{padding:'0.1rem', width:'100%', height: '100%'}} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/add-peptide-1.svg`} alt='Add Residue'/>}
-                          needsMapData={true}
-                          toolTipLabel={props.shortCuts ? `Add Residue ${getTooltipShortcutLabel(JSON.parse(props.shortCuts).add_terminal_residue)}` : "Add Residue"}
-                          cootCommandInput={{
-                              message: 'coot_command',
-                              returnType: "status",
-                              command: 'add_terminal_residue_directly_using_cid',
-                              commandArgs: [selectedMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}`],
-                              changesMolecules: [selectedMolecule.molNo]
-                          }}
-                          {...collectedProps}
-                      />
+                      <MoorhenAddTerminalResidueButton mode='context' {...collectedProps} />
                       <MoorhenContextQuickEditButton 
                           icon={<img style={{padding:'0.1rem', width:'100%', height: '100%'}} alt="change rotamer" className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/rotamers.svg`}/>}
                           toolTipLabel="Change rotamers"
@@ -846,31 +757,8 @@ export const MoorhenContextMenu = (props) => {
                             }}
                           {...collectedProps}
                       />
-                      <MoorhenContextQuickEditButton 
-                          icon={<img style={{padding:'0.1rem', width:'100%', height: '100%'}} className="baby-gru-button-icon" alt="Add side chain" src={`${props.urlPrefix}/baby-gru/pixmaps/add-alt-conf.svg`}/>}
-                          refineAfterMod={false}
-                          toolTipLabel="Add alternative conformation"
-                          cootCommandInput={{
-                              message: 'coot_command',
-                              returnType: "status",
-                              command: 'add_alternative_conformation',
-                              commandArgs:  [selectedMolecule.molNo, `/1/${chosenAtom.chain_id}/${chosenAtom.res_no}/*${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`],
-                              changesMolecules: [selectedMolecule.molNo]
-                          }}
-                          {...collectedProps}
-                      />
-                      <MoorhenContextQuickEditButton 
-                          icon={<img style={{padding:'0.1rem', width:'100%', height: '100%'}} className="baby-gru-button-icon" alt="Cis/Trans" src={`${props.urlPrefix}/baby-gru/pixmaps/cis-trans.svg`}/>}
-                          toolTipLabel="Cis/Trans isomerisation"
-                          cootCommandInput={{
-                              message: 'coot_command',
-                              returnType: "status",
-                              command: 'cis_trans_convert',
-                              commandArgs:  [selectedMolecule.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`],
-                              changesMolecules: [selectedMolecule.molNo]
-                          }}
-                          {...collectedProps}
-                      />
+                      <MoorhenAddAltConfButton mode ='context' {...collectedProps} />
+                      <MoorhenConvertCisTransButton mode='context' {...collectedProps} />
                      </FormGroup>
                      </Tooltip>
                      </div>

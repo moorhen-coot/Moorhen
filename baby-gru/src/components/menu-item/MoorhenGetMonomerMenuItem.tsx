@@ -5,14 +5,13 @@ import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { MolChange } from "../MoorhenApp";
 
 export const MoorhenGetMonomerMenuItem = (props: {
     glRef: React.RefObject<webGL.MGWebGL>
     popoverPlacement?: 'left' | 'right'
     molecules: moorhen.Molecule[];
     defaultBondSmoothness: number;
-    changeMolecules: (arg0: MolChange<moorhen.Molecule>) => void;
+    changeMolecules: (arg0: moorhen.MolChange<moorhen.Molecule>) => void;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     monomerLibraryPath: string;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;

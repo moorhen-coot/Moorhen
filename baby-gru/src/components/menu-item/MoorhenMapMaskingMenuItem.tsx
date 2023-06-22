@@ -3,7 +3,6 @@ import { Form, FormSelect } from "react-bootstrap";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenMap } from "../../utils/MoorhenMap";
-import { MolChange } from "../MoorhenApp";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
@@ -13,7 +12,7 @@ import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 export const MoorhenMapMaskingMenuItem = (props: {
     molecules: moorhen.Molecule[];
     maps: moorhen.Map[];
-    changeMaps: (arg0: MolChange<moorhen.Map>) => void;
+    changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>
     commandCentre: React.RefObject<moorhen.CommandCentre>;
 }) => {

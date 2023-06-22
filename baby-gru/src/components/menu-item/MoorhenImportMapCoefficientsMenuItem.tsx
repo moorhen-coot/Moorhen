@@ -4,11 +4,10 @@ import { MoorhenMap } from "../../utils/MoorhenMap"
 import { Col, Form, FormSelect, Row } from "react-bootstrap"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
-import { MolChange } from "../MoorhenApp"
 
 export const MoorhenImportMapCoefficientsMenuItem = (props: {
     commandCentre: RefObject<moorhen.CommandCentre>;
-    changeMaps: (arg0: MolChange<moorhen.Map>) => void;
+    changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
     setActiveMap: Dispatch<SetStateAction<moorhen.Map>>
     setPopoverIsShown: Dispatch<SetStateAction<boolean>>     
 }) => {

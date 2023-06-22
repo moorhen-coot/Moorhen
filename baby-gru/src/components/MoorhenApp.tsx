@@ -6,13 +6,7 @@ import { moorhen } from '../types/moorhen';
 import { webGL } from '../types/mgWebGL';
 import { MoorhenControlsInterface } from "./MoorhenContainer"
 
-export type MolChange<T extends moorhen.Molecule | moorhen.Map> = {
-    action: 'Add' | 'Remove' | 'AddList' | 'Empty';
-    item?: T;
-    items?: T[];
-}
-
-export function itemReducer<T extends moorhen.Molecule | moorhen.Map> (oldList: T[], change: MolChange<T>): T[] {
+export function itemReducer<T extends moorhen.Molecule | moorhen.Map> (oldList: T[], change: moorhen.MolChange<T>): T[] {
     if (change.action === 'Add') {
         return [...oldList, change.item]
     }

@@ -2,14 +2,13 @@ import { Form } from "react-bootstrap"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { MolChange } from "../MoorhenApp";
 
 export const MoorhenDeleteEverythingMenuItem = (props: {
     maps: moorhen.Map[];
     glRef: React.RefObject<webGL.MGWebGL>;
     molecules: moorhen.Molecule[];
-    changeMaps: (arg0: MolChange<moorhen.Map>) => void;
-    changeMolecules: (arg0: MolChange<moorhen.Molecule>) => void;
+    changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
+    changeMolecules: (arg0: moorhen.MolChange<moorhen.Molecule>) => void;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>> 
 }) => {
 
