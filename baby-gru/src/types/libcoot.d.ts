@@ -237,9 +237,10 @@ export namespace libcootApi {
         value: number;
     }
     interface SuperposeResultsT extends emscriptem.instance<SuperposeResultsT> {
-        suppose_info: string;
+        superpose_info: string;
         alignment: PairType<string, string>;
-        alignment_info: ValidationInformationT;
+        alignment_info_vec: emscriptem.vector<ValidationInformationT>;
+        aligned_pairs: emscriptem.vector<PairType<ResidueValidationInformationT, ResidueValidationInformationT>>;
     }
     interface InstancedDataType extends emscriptem.instance<InstancedDataType> {
         position: [number, number, number];

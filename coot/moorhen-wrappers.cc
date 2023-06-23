@@ -815,10 +815,11 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
 
     value_object<superpose_results_t>("superpose_results_t")
-    .field("suppose_info",&superpose_results_t::suppose_info)
-    .field("alignment",&superpose_results_t::alignment)
-    .field("alignment_info",&superpose_results_t::alignment_info)
-    ;
+       .field("superpose_info",     &superpose_results_t::superpose_info) // a json file (string)
+       .field("alignment",          &superpose_results_t::alignment)
+       .field("alignment_info_vec", &superpose_results_t::alignment_info_vec)
+       .field("aligned_pairs",      &superpose_results_t::aligned_pairs)
+       ;
 
     value_array<std::array<float, 16>>("array_native_float_16")
         .element(emscripten::index<0>())
@@ -897,6 +898,8 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<double>("VectorDouble");
     register_vector<int>("VectorInt");
     register_vector<char>("VectorChar");
+    register_vector<coot::validation_information_t>("VectorValidationInformation");
+    register_vector<std::pair<coot::residue_validation_information_t, coot::residue_validation_information_t> >("VectorResidueValidationInformationPair");
     register_vector<RamachandranInfo>("VectorResidueIdentifier");
     register_vector<ResiduePropertyInfo>("VectorResiduePropertyInfo");
     register_vector<coot::chain_validation_information_t>("Vectorchain_validation_information_t");
@@ -972,20 +975,25 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
 
     value_object<std::pair<coot::symmetry_info_t,std::vector<std::array<float, 16>>>>("symmetry_info_t_matrixVector_pair")
-        .field("first",&std::pair<coot::symmetry_info_t,std::vector<std::array<float, 16>>>::first)
+        .field("first", &std::pair<coot::symmetry_info_t,std::vector<std::array<float, 16>>>::first)
         .field("second",&std::pair<coot::symmetry_info_t,std::vector<std::array<float, 16>>>::second)
+    ;
+
+    value_object<std::pair<coot::residue_validation_information_t, coot::residue_validation_information_t>>("residue_validation_information_pair")
+        .field("first",  &std::pair<coot::residue_validation_information_t, coot::residue_validation_information_t>::first)
+        .field("second", &std::pair<coot::residue_validation_information_t, coot::residue_validation_information_t>::second)
     ;
 
     value_object<moorhen_hbond>("moorhen_hbond")
       .field("hb_hydrogen",&moorhen_hbond::hb_hydrogen)
-      .field("donor",&moorhen_hbond::donor)
-      .field("acceptor",&moorhen_hbond::acceptor)
+      .field("donor",      &moorhen_hbond::donor)
+      .field("acceptor",   &moorhen_hbond::acceptor)
       .field("donor_neigh",&moorhen_hbond::donor_neigh)
       .field("acceptor_neigh",&moorhen_hbond::acceptor_neigh)
-      .field("angle_1",&moorhen_hbond::angle_1)
-      .field("angle_2",&moorhen_hbond::angle_2)
-      .field("angle_3",&moorhen_hbond::angle_3)
-      .field("dist",&moorhen_hbond::dist)
+      .field("angle_1",    &moorhen_hbond::angle_1)
+      .field("angle_2",    &moorhen_hbond::angle_2)
+      .field("angle_3",    &moorhen_hbond::angle_3)
+      .field("dist",       &moorhen_hbond::dist)
       .field("ligand_atom_is_donor",&moorhen_hbond::ligand_atom_is_donor)
       .field("hydrogen_is_ligand_atom",&moorhen_hbond::hydrogen_is_ligand_atom)
       .field("bond_has_hydrogen_flag",&moorhen_hbond::bond_has_hydrogen_flag)
