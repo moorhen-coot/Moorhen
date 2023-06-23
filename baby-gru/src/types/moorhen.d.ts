@@ -90,6 +90,8 @@ export namespace moorhen {
     }
     
     interface Molecule {
+        updateWithMovedAtoms(movedResidues: moorhen.AtomInfo[][], glRef: React.RefObject<webGL.MGWebGL>): Promise<void>;
+        transformedCachedAtomsAsMovedAtoms(glRef: React.RefObject<webGL.MGWebGL>, selectionCid?: string): moorhen.AtomInfo[][];
         drawWithStyleFromAtoms(style: string, glRef: React.RefObject<webGL.MGWebGL>): Promise<boolean>;
         copyFragmentUsingCid(cid: string, backgroundColor: [number, number, number, number], defaultBondSmoothness: number, glRef: React.RefObject<webGL.MGWebGL>, doRecentre?: boolean): Promise<Molecule>;
         hideCid(cid: string, glRef: React.RefObject<webGL.MGWebGL>): Promise<void>;

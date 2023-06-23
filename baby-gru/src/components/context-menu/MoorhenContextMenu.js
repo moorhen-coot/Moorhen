@@ -7,7 +7,7 @@ import { MoorhenFitLigandRightHereMenuItem } from "../menu-item/MoorhenFitLigand
 import { MoorhenImportFSigFMenuItem } from "../menu-item/MoorhenImportFSigFMenuItem";
 import { MoorhenMergeMoleculesMenuItem } from "../menu-item/MoorhenMergeMoleculesMenuItem"
 import { MoorhenBackgroundColorMenuItem } from "../menu-item/MoorhenBackgroundColorMenuItem"
-import { cidToSpec, convertRemToPx, getTooltipShortcutLabel } from "../../utils/MoorhenUtils";
+import { cidToSpec, convertRemToPx } from "../../utils/MoorhenUtils";
 import { getBackupLabel } from "../../utils/MoorhenTimeCapsule"
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Popover, Overlay, FormLabel, FormSelect, Button, Stack, Form, Card } from "react-bootstrap";
@@ -27,6 +27,7 @@ import { MoorhenEigenFlipLigandButton } from "../button/MoorhenEigenFlipLigandBu
 import { MoorhenJedFlipFalseButton } from "../button/MoorhenJedFlipFalseButton";
 import { MoorhenJedFlipTrueButton } from "../button/MoorhenJedFlipTrueButton";
 import { MoorhenRotamerChangeButton } from "../button/MoorhenRotamerChangeButton";
+import { MoorhenRotateTranslateZoneButton } from "../button/MoorhenRotateTranslateZoneButton";
 
 const ContextMenu = styled.div`
   position: absolute;
@@ -410,95 +411,6 @@ export const MoorhenContextMenu = (props) => {
     props.glRef.current.setDraggableMolecule(moltenFragment)
   }
 
-  const doRotateTranslate = async (molecule, chosenAtom, selectedMode) => {
-    let fragmentCid
-    switch (selectedMode) {
-        case 'ATOM':
-            fragmentCid = `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`
-            break;
-        case 'RESIDUE':
-            fragmentCid = `//${chosenAtom.chain_id}/${chosenAtom.res_no}/*${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`
-            break;
-        case 'CHAIN':
-            fragmentCid = `//${chosenAtom.chain_id}`
-            break;
-        case 'MOLECULE':
-            fragmentCid = `/*/*`
-            break;
-        default:
-            console.log('Unrecognised rotate/translate selection...')
-            break;        
-    }
-    
-    if (!fragmentCid) {
-        return
-    }
-    
-    const newMolecule = await molecule.copyFragmentUsingCid(
-      fragmentCid, props.glRef.current.background_colour, molecule.cootBondsOptions.smoothness, props.glRef, false
-    )
-
-    const acceptTransform = async () => {
-      props.glRef.current.setActiveMolecule(null)
-      const transformedAtoms = newMolecule.transformedCachedAtomsAsMovedAtoms(props.glRef)
-      await molecule.updateWithMovedAtoms(transformedAtoms, props.glRef)
-      props.changeMolecules({ action: 'Remove', item: newMolecule })
-      newMolecule.delete(props.glRef)
-      molecule.unhideAll(props.glRef)
-      setOverrideMenuContents(false)
-      setOpacity(1)
-      const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: molecule.molNo } })
-      document.dispatchEvent(scoresUpdateEvent)
-      props.setShowContextMenu(false)
-    }
-
-    const rejectTransform = async () => {
-      props.glRef.current.setActiveMolecule(null)
-      props.changeMolecules({ action: 'Remove', item: newMolecule })
-      newMolecule.delete(props.glRef)
-      molecule.unhideAll(props.glRef)
-      setOverrideMenuContents(false)
-      setOpacity(1)
-      props.setShowContextMenu(false)
-    }
-    
-    setShowOverlay(false)
-    setOpacity(0.5)
-    setOverrideMenuContents(
-      <Draggable>
-        <Card style={{position: 'absolute', width: '15rem', cursor: 'move'}} onMouseOver={() => setOpacity(1)} onMouseOut={() => setOpacity(0.5)}>
-          <Card.Header>Accept rotate/translate ?</Card.Header>
-          <Card.Body style={{ alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
-            <em>{"Hold <Shift><Alt> to translate"}</em>
-            <br></br>
-            <em>{props.shortCuts ? `Hold ${getTooltipShortcutLabel(JSON.parse(props.shortCuts).residue_camera_wiggle)} to move view` : null}</em>
-            <br></br>
-            <br></br>
-            <Stack direction='horizontal' gap={2}>
-              <Button onClick={acceptTransform}><CheckOutlined /></Button>
-              <Button onClick={rejectTransform}><CloseOutlined /></Button>
-            </Stack>
-          </Card.Body>
-        </Card>
-      </Draggable>
-    )
-
-    molecule.hideCid(fragmentCid, props.glRef)
-    await newMolecule.updateAtoms()
-    
-    Object.keys(molecule.displayObjects)
-      .filter(style => { return ['CRs', 'CBs', 'ligands', 'gaussian', 'MolecularSurface', 'VdWSurface', 'DishyBases','VdwSpheres','allHBonds'].includes(style) })
-      .forEach(async style => {
-          if (molecule.displayObjects[style].length > 0 &&
-              molecule.displayObjects[style][0].visible) {
-              await newMolecule.drawWithStyleFromAtoms(style, props.glRef)
-          }
-    })
-    
-    props.changeMolecules({ action: "Add", item: newMolecule })
-    props.glRef.current.setActiveMolecule(newMolecule)
-  }
-
   const autoFitRotamer = useCallback(async (molecule, chosenAtom) => {
     const formattedArgs = [
         molecule.molNo,
@@ -577,16 +489,7 @@ export const MoorhenContextMenu = (props) => {
                       <MoorhenEigenFlipLigandButton mode='context' {...collectedProps}/>
                       <MoorhenJedFlipFalseButton mode='context' {...collectedProps}/>
                       <MoorhenJedFlipTrueButton mode='context' {...collectedProps}/>
-                      <MoorhenContextQuickEditButton 
-                          icon={<img style={{padding:'0.1rem', width:'100%', height: '100%'}} alt="rotate/translate" className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/rtz.svg`}/>}
-                          toolTipLabel="Rotate/Translate zone"
-                          popoverSettings={{
-                            label: 'Rotate/translate mode...',
-                            options: ['ATOM', 'RESIDUE', 'CHAIN', 'MOLECULE'],
-                            nonCootCommand: doRotateTranslate,
-                            }}
-                          {...collectedProps}
-                      />
+                      <MoorhenRotateTranslateZoneButton mode='context' {...collectedProps} />
                       <MoorhenContextQuickEditButton 
                           icon={<img style={{padding:'0.1rem', width:'100%', height: '100%'}} alt="drag atoms" className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/drag.svg`}/>}
                           toolTipLabel="Drag atoms"
