@@ -145,6 +145,12 @@ export namespace libcootApi {
         end: { x: number; y: number; z: number };
         dist: number;
     }
+    type RotamerInfoJS = {
+        name: string;
+        rank: number;
+        status: string;
+        richardson_probability: number;
+    }
     interface SimpleMeshT extends emscriptem.instance<SimpleMeshT> {
         vertices: emscriptem.vector<VncVertex>;
         triangles: emscriptem.vector<gTriangle>;

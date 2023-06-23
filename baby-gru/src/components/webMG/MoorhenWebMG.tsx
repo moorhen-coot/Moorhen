@@ -564,6 +564,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     refineAfterMod={props.context.refineAfterMod}
                     shortCuts={props.context.shortCuts}
                     enableTimeCapsule={props.context.enableTimeCapsule}
+                    defaultBondSmoothness={props.context.defaultBondSmoothness}
                     windowWidth={props.windowWidth}
                     windowHeight={props.windowHeight}
                 />}

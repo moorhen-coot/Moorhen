@@ -7,8 +7,8 @@ import { Container, FormGroup, FormLabel, FormSelect, Row } from "react-bootstra
 import { libcootApi } from "../../types/libcoot";
 
 export const MoorhenDeleteButton = (props: moorhen.EditButtonProps | moorhen.ContextButtonProps) => {
-    const [panelParameters, setPanelParameters] = useState<string>('TRIPLE')
-    const [toolTip, setToolTip] = useState<string>("Refine Residues")
+    const [panelParameters, setPanelParameters] = useState<string>('RESIDUE')
+    const [toolTip, setToolTip] = useState<string>("Delete Item")
 
     const deleteModes = ['ATOM', 'RESIDUE', 'RESIDUE HYDROGENS', 'RESIDUE SIDE-CHAIN', 'CHAIN', 'CHAIN HYDROGENS', 'MOLECULE HYDROGENS']
 
