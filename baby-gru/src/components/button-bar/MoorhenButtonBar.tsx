@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { ButtonGroup, Carousel } from "react-bootstrap"
-import { MoorhenRigidBodyFitButton, MoorhenDragAtomsButton } from "../button/MoorhenSimpleEditButton"
+import { MoorhenRigidBodyFitButton } from "../button/MoorhenSimpleEditButton"
+import { MoorhenDragAtomsButton } from "../button/MoorhenDragAtomsButton"
 import { MoorhenRotateTranslateZoneButton } from "../button/MoorhenRotateTranslateZoneButton"
 import { MoorhenRotamerChangeButton } from "../button/MoorhenRotamerChangeButton"
 import { MoorhenAddSimpleButton } from "../button/MoorhenAddSimpleButton"
@@ -27,57 +28,46 @@ export const MoorhenButtonBar = (props: MoorhenControlsInterface) => {
     const [opacity, setOpacity] = useState<number>(0.5);
     const popoverIsShownRef = useRef<boolean | null>(null)
 
+    const collectedProps = {
+        monomerLibraryPath: props.monomerLibraryPath, backgroundColor: props.backgroundColor, defaultBondSmoothness: props.defaultBondSmoothness, urlPrefix: props.urlPrefix,
+        shortCuts: props.shortCuts, glRef: props.glRef, commandCentre: props.commandCentre, activeMap: props.activeMap, molecules: props.molecules, timeCapsuleRef: props.timeCapsuleRef, 
+        windowHeight: props.windowHeight, changeMolecules: props.changeMolecules, enableRefineAfterMod: props.enableRefineAfterMod, selectedButtonIndex, setSelectedButtonIndex
+    }
+
     const editButtons: JSX.Element[] = [
-        (<MoorhenAutofitRotamerButton {...props} key='auto-fit-rotamer' selectedButtonIndex={selectedButtonIndex}
-            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="0" />),
+        (<MoorhenAutofitRotamerButton {...collectedProps} key='auto-fit-rotamer' buttonIndex="0" />),
 
-        (<MoorhenFlipPeptideButton {...props} key='flip-peptide' selectedButtonIndex={selectedButtonIndex}
-            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="1" />),
+        (<MoorhenFlipPeptideButton {...collectedProps} key='flip-peptide' buttonIndex="1" />),
 
-        (<MoorhenSideChain180Button {...props} key='side-chain-180' selectedButtonIndex={selectedButtonIndex}
-            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="2" />),
+        (<MoorhenSideChain180Button {...collectedProps} key='side-chain-180' buttonIndex="2" />),
 
-        (<MoorhenRefineResiduesButton {...props} key='refine-cid' selectedButtonIndex={selectedButtonIndex}
-            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="3" />),
+        (<MoorhenRefineResiduesButton {...collectedProps} key='refine-cid' buttonIndex="3" />),
 
-        (<MoorhenDeleteButton {...props} key='delete-cid' selectedButtonIndex={selectedButtonIndex}
-            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="4" />),
+        (<MoorhenDeleteButton {...collectedProps} key='delete-cid' buttonIndex="4" />),
 
-        (<MoorhenMutateButton {...props} key='mutate' selectedButtonIndex={selectedButtonIndex}
-            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="5" />),
+        (<MoorhenMutateButton {...collectedProps} key='mutate' buttonIndex="5" />),
 
-        (<MoorhenAddTerminalResidueButton {...props} key='add-terminal-residue' selectedButtonIndex={selectedButtonIndex}
-            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="6" />),
+        (<MoorhenAddTerminalResidueButton {...collectedProps} key='add-terminal-residue' buttonIndex="6" />),
         
-        (<MoorhenAddSimpleButton {...props} key='add-simple' selectedButtonIndex={selectedButtonIndex}
-            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="7" />),
+        (<MoorhenAddSimpleButton {...collectedProps} key='add-simple' buttonIndex="7" />),
 
-        (<MoorhenRigidBodyFitButton {...props} key='rigid-body-fit' selectedButtonIndex={selectedButtonIndex}
-            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="8" />),
+        (<MoorhenRigidBodyFitButton {...collectedProps} key='rigid-body-fit' buttonIndex="8" />),
 
-        (<MoorhenRotamerChangeButton  {...props} key='next-rotamer' selectedButtonIndex={selectedButtonIndex}
-            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="9" />),
+        (<MoorhenRotamerChangeButton  {...collectedProps} key='next-rotamer' buttonIndex="9" />),
 
-        (<MoorhenEigenFlipLigandButton {...props} key='eigen-flip' selectedButtonIndex={selectedButtonIndex}
-            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="10" />),
+        (<MoorhenEigenFlipLigandButton {...collectedProps} key='eigen-flip' buttonIndex="10" />),
 
-        (<MoorhenJedFlipFalseButton {...props} key='jed-flip-false' selectedButtonIndex={selectedButtonIndex}
-            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="11" />),
+        (<MoorhenJedFlipFalseButton {...collectedProps} key='jed-flip-false' buttonIndex="11" />),
 
-        (<MoorhenJedFlipTrueButton {...props} key='jed-flip-true' selectedButtonIndex={selectedButtonIndex}
-            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="12" />),
+        (<MoorhenJedFlipTrueButton {...collectedProps} key='jed-flip-true' buttonIndex="12" />),
 
-        (<MoorhenRotateTranslateZoneButton {...props} key='rotate-translate-zone' selectedButtonIndex={selectedButtonIndex}
-            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="13" />),
+        (<MoorhenRotateTranslateZoneButton {...collectedProps} key='rotate-translate-zone' buttonIndex="13" />),
         
-        (<MoorhenAddAltConfButton {...props} key='add-alt-conf' selectedButtonIndex={selectedButtonIndex}
-            setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="14" />),
+        (<MoorhenAddAltConfButton {...collectedProps} key='add-alt-conf' buttonIndex="14" />),
     
-        (<MoorhenConvertCisTransButton {...props} key='cis-trans' selectedButtonIndex={selectedButtonIndex}
-                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="15" />),
+        (<MoorhenConvertCisTransButton {...collectedProps} key='cis-trans' buttonIndex="15" />),
 
-        (<MoorhenDragAtomsButton {...props} key='drag-atoms' selectedButtonIndex={selectedButtonIndex}
-                setSelectedButtonIndex={setSelectedButtonIndex} buttonIndex="16" />)        
+        (<MoorhenDragAtomsButton {...collectedProps} key='drag-atoms' buttonIndex="16" />)        
     ]
 
     useEffect(() => {

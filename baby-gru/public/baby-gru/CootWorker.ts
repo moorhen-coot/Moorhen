@@ -280,18 +280,21 @@ const simpleMeshToMeshData = (simpleMesh: libcootApi.SimpleMeshT, perm: boolean 
 
 const SuperposeResultsToJSArray = (superposeResults: libcootApi.SuperposeResultsT) => {
     const alignmentInfoVec = superposeResults.alignment_info_vec
-    const vs = alignmentInfoVec.size()
-    let validationData = []
-    for (let i = 0; i < vs; i++) {
+    const alignmentInfoVecSize = alignmentInfoVec.size()
+    let validationData: libcootApi.ValidationInformationJS[][] = []
+
+    for (let i = 0; i < alignmentInfoVecSize; i++) {
         const alignmentInfo = alignmentInfoVec.get(i)
-        validationData.push(validationDataToJSArray(alignmentInfo))
+        const currentValidationData = validationDataToJSArray(alignmentInfo)
+        validationData.push(currentValidationData)
     }
     alignmentInfoVec.delete()
+    
     return {
         referenceSequence: superposeResults.alignment.first,
-        movingSequence:    superposeResults.alignment.second,
-        supperposeInfo:    superposeResults.superpose_info,
-        validationData:    validationData
+        movingSequence: superposeResults.alignment.second,
+        supperposeInfo: superposeResults.superpose_info,
+        validationData: validationData
     }
 }
 

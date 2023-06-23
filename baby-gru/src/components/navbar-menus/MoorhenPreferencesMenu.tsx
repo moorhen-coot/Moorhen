@@ -14,7 +14,7 @@ export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInter
     const { 
         atomLabelDepthMode, setAtomLabelDepthMode, setMouseSensitivity, enableTimeCapsule,
         defaultExpandDisplayCards, setDefaultExpandDisplayCards, defaultMapLitLines,
-        setDefaultMapLitLines, refineAfterMod, setRefineAfterMod, mouseSensitivity, contourWheelSensitivityFactor,
+        setDefaultMapLitLines, enableRefineAfterMod, setEnableRefineAfterMod, mouseSensitivity, contourWheelSensitivityFactor,
         mapLineWidth, setMapLineWidth, makeBackups, setMakeBackups, timeCapsuleRef, setContourWheelSensitivityFactor,
         showShortcutToast, setShowShortcutToast, defaultMapSurface, setDefaultMapSurface, devMode, setDevMode,
         defaultBondSmoothness, setDefaultBondSmoothness, showScoresToast, setShowScoresToast,
@@ -74,8 +74,8 @@ export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInter
                     <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
                         <Form.Check 
                             type="switch"
-                            checked={refineAfterMod}
-                            onChange={() => { setRefineAfterMod(!refineAfterMod) }}
+                            checked={enableRefineAfterMod}
+                            onChange={() => { setEnableRefineAfterMod(!enableRefineAfterMod) }}
                             label="Automatic triple refine post-modification"/>
                     </InputGroup>
                     <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>

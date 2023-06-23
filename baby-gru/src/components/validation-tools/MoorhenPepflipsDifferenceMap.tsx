@@ -19,7 +19,7 @@ export const MoorhenPepflipsDifferenceMap = (props: MoorhenSideBarAccordionProps
             changesMolecules: [selectedMolNo]
         }, true)
 
-        if (props.refineAfterMod) {
+        if (props.enableRefineAfterMod) {
             await props.commandCentre.current.cootCommand({
                 returnType: "status",
                 command: 'refine_residues_using_atom_cid',

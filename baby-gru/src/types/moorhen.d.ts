@@ -90,6 +90,8 @@ export namespace moorhen {
     }
     
     interface Molecule {
+        getNeighborResiduesCids(selectionCid: string, radius: number, minDist: number, maxDist: number): Promise<string[]>;
+        drawWithStyleFromMesh(style: string, glRef: React.RefObject<webGL.MGWebGL>, meshObjects: any[], newBufferAtoms?: moorhen.AtomInfo[]): Promise<void>;
         updateWithMovedAtoms(movedResidues: moorhen.AtomInfo[][], glRef: React.RefObject<webGL.MGWebGL>): Promise<void>;
         transformedCachedAtomsAsMovedAtoms(glRef: React.RefObject<webGL.MGWebGL>, selectionCid?: string): moorhen.AtomInfo[][];
         drawWithStyleFromAtoms(style: string, glRef: React.RefObject<webGL.MGWebGL>): Promise<boolean>;
@@ -363,6 +365,13 @@ export namespace moorhen {
         retrieveBackup: (arg0: string) => Promise<string | ArrayBuffer>;
     }
     
+    type AtomDraggedEvent = CustomEvent<{ atom: {
+        atom: {
+            label: string;
+        };
+        buffer: any;
+    } }>
+
     type OriginUpdateEvent = CustomEvent<{ origin: [number, number, number]; }>
 
     type WheelContourLevelEvent = CustomEvent<{ factor: number; }>
@@ -427,7 +436,7 @@ export namespace moorhen {
         setDrawCrosshairs: React.Dispatch<React.SetStateAction<boolean>>;
         setDrawFPS: React.Dispatch<React.SetStateAction<boolean>>;
         setDefaultExpandDisplayCards: React.Dispatch<React.SetStateAction<boolean>>;
-        setRefineAfterMod: React.Dispatch<React.SetStateAction<boolean>>;
+        setEnableRefineAfterMod: React.Dispatch<React.SetStateAction<boolean>>;
         setDefaultMapLitLines: React.Dispatch<React.SetStateAction<boolean>>;
         setMapLineWidth: React.Dispatch<React.SetStateAction<number>>;
         setAtomLabelDepthMode: React.Dispatch<React.SetStateAction<boolean>>;
@@ -462,7 +471,7 @@ export namespace moorhen {
         enableTimeCapsule: boolean;
         defaultExpandDisplayCards: boolean;
         defaultMapLitLines: boolean;
-        refineAfterMod: boolean; 
+        enableRefineAfterMod: boolean; 
         drawCrosshairs: boolean; 
         drawAxes: boolean; 
         drawFPS: boolean; 
@@ -501,12 +510,14 @@ export namespace moorhen {
     
     type ContextButtonProps = {
         mode: 'context';
+        monomerLibraryPath: string;
         shortCuts: string | { [label: string]: Shortcut; };
         urlPrefix: string;
         commandCentre: React.RefObject<CommandCentre>
         selectedMolecule: Molecule;
         chosenAtom: ResidueSpec;
         activeMap: Map;
+        enableRefineAfterMod: boolean;
         refineAfterMod: boolean;
         needsMapData: boolean;
         needsAtomData: boolean;
@@ -545,6 +556,7 @@ export namespace moorhen {
 
     type EditButtonProps = {
         mode?: 'edit';
+        monomerLibraryPath: string;
         backgroundColor: [number, number, number, number];
         defaultBondSmoothness: number;
         urlPrefix: string;
@@ -552,6 +564,7 @@ export namespace moorhen {
         selectedButtonIndex: string;
         setSelectedButtonIndex: React.Dispatch<React.SetStateAction<string>>;
         buttonIndex: string;
+        enableRefineAfterMod: boolean;
         refineAfterMod?: boolean;
         glRef: React.RefObject<webGL.MGWebGL>;
         commandCentre: React.RefObject<CommandCentre>;

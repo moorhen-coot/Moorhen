@@ -14,7 +14,7 @@ export const MoorhenFillMissingAtoms = (props: MoorhenSideBarAccordionPropsInter
             changesMolecules: [selectedMolecule.molNo]
         }, true)
 
-        if (props.refineAfterMod) {
+        if (props.enableRefineAfterMod) {
             await props.commandCentre.current.cootCommand({
                 returnType: "status",
                 command: 'refine_residues_using_atom_cid',
