@@ -90,6 +90,10 @@ export namespace moorhen {
     }
     
     interface Molecule {
+        drawWithStyleFromAtoms(style: string, glRef: React.RefObject<webGL.MGWebGL>): Promise<boolean>;
+        copyFragmentUsingCid(cid: string, backgroundColor: [number, number, number, number], defaultBondSmoothness: number, glRef: React.RefObject<webGL.MGWebGL>, doRecentre?: boolean): Promise<Molecule>;
+        hideCid(cid: string, glRef: React.RefObject<webGL.MGWebGL>): Promise<void>;
+        unhideAll(glRef: React.RefObject<webGL.MGWebGL>): Promise<void>;
         drawSelection(glRef: React.RefObject<webGL.MGWebGL>, cid: string): Promise<void>;
         drawUnitCell(glRef: React.RefObject<webGL.MGWebGL>): void;
         gemmiAtomsForCid: (cid: string) => Promise<AtomInfo[]>;
@@ -516,8 +520,13 @@ export namespace moorhen {
         onCompleted: (arg0: Molecule, arg1: ResidueSpec) => void;
         icon: JSX.Element;
         setToolTip: React.Dispatch<React.SetStateAction<string>>;
+        setShowContextMenu: React.Dispatch<React.SetStateAction<boolean>>;
+        setOpacity: React.Dispatch<React.SetStateAction<number>>;
+        setOverrideMenuContents: React.Dispatch<React.SetStateAction<JSX.Element | boolean>>;
         toolTipLabel: string;
         showContextMenu: boolean;
+        backgroundColor: [number, number, number, number];
+        defaultBondSmoothness: number;
         popoverSettings: {
             label: string;
             options: string[];
@@ -534,6 +543,8 @@ export namespace moorhen {
 
     type EditButtonProps = {
         mode?: 'edit';
+        backgroundColor: [number, number, number, number];
+        defaultBondSmoothness: number;
         urlPrefix: string;
         shortCuts: string | { [label: string]: Shortcut; };
         selectedButtonIndex: string;

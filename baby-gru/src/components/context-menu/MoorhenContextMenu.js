@@ -1,6 +1,6 @@
 import styled, { css } from "styled-components";
 import { ClickAwayListener, FormGroup, IconButton, List, MenuItem, Tooltip } from '@mui/material';
-import { ArrowBackIosOutlined, ArrowForwardIosOutlined, CheckOutlined, CloseOutlined, FirstPageOutlined } from "@mui/icons-material";
+import { CheckOutlined, CloseOutlined } from "@mui/icons-material";
 import { MoorhenAddSimpleMenuItem } from "../menu-item/MoorhenAddSimpleMenuItem"
 import { MoorhenGetMonomerMenuItem } from "../menu-item/MoorhenGetMonomerMenuItem"
 import { MoorhenFitLigandRightHereMenuItem } from "../menu-item/MoorhenFitLigandRightHereMenuItem"
@@ -26,6 +26,7 @@ import { MoorhenMutateButton } from "../button/MoorhenMutateButton";
 import { MoorhenEigenFlipLigandButton } from "../button/MoorhenEigenFlipLigandButton";
 import { MoorhenJedFlipFalseButton } from "../button/MoorhenJedFlipFalseButton";
 import { MoorhenJedFlipTrueButton } from "../button/MoorhenJedFlipTrueButton";
+import { MoorhenRotamerChangeButton } from "../button/MoorhenRotamerChangeButton";
 
 const ContextMenu = styled.div`
   position: absolute;
@@ -194,7 +195,7 @@ export const MoorhenContextMenu = (props) => {
   
   const menuPosition = {top, left, placement}
 
-  const collectedProps = {selectedMolecule, chosenAtom, setOverlayContents, setShowOverlay, toolTip, setToolTip, ...props}
+  const collectedProps = {selectedMolecule, chosenAtom, setOverlayContents, setShowOverlay, toolTip, setToolTip, setOpacity, setOverrideMenuContents, ...props}
 
   const handleCreateBackup = async () => {
     await props.timeCapsuleRef.current.updateDataFiles()
@@ -498,110 +499,6 @@ export const MoorhenContextMenu = (props) => {
     props.glRef.current.setActiveMolecule(newMolecule)
   }
 
-  const doRotamerChange = async (molecule, chosenAtom) => {
-    /* define fragment CID */
-    const fragmentCid = `//${chosenAtom.chain_id}/${chosenAtom.res_no}/*${chosenAtom.alt_conf === "" ? "" : ":" + chosenAtom.alt_conf}`
-    const alt_conf = chosenAtom.alt_conf === "" ? "" : chosenAtom.alt_conf
-    if (!fragmentCid) {
-        return
-    }
-    molecule.hideCid(fragmentCid, props.glRef)
-    
-    /* Copy the component to move into a new molecule */
-    const newMolecule = await molecule.copyFragmentUsingCid(fragmentCid, props.glRef.current.background_colour, molecule.cootBondsOptions.smoothness, props.glRef, false)
-    
-    /* Next rotaner */
-    const rotamerInfo = await props.commandCentre.current.cootCommand({
-        returnType: 'rotamer_info_t',
-        command: 'change_to_next_rotamer',
-        commandArgs: [newMolecule.molNo, fragmentCid, alt_conf],
-    }, true)        
-
-    /* redraw */
-    newMolecule.drawSelection(props.glRef, fragmentCid)
-    await newMolecule.updateAtoms()
-    Object.keys(molecule.displayObjects)
-        .filter(style => { return ['CRs', 'CBs', 'ligands', 'gaussian', 'MolecularSurface', 'VdWSurface', 'DishyBases','VdwSpheres','allHBonds'].includes(style) })
-        .forEach(async style => {
-            if (molecule.displayObjects[style].length > 0 &&
-                molecule.displayObjects[style][0].visible) {
-                await newMolecule.drawWithStyleFromAtoms(style, props.glRef)
-            }
-        })
-    props.changeMolecules({ action: "Add", item: newMolecule })
-
-    /* General functions */
-    const getPopoverContents = (rotamerInfo) => {
-      const rotamerName = rotamerInfo.data.result.result.name
-      const rotamerRank = rotamerInfo.data.result.result.rank
-      const rotamerProbability = rotamerInfo.data.result.result.richardson_probability
-
-      return <Draggable>
-              <Card style={{position: 'absolute', width: '15rem', cursor: 'move'}} onMouseOver={() => setOpacity(1)} onMouseOut={() => setOpacity(0.5)}>
-                <Card.Header>Accept new rotamer ?</Card.Header>
-                <Card.Body style={{ alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
-                <span>Current rotamer: {rotamerName} ({rotamerRank+1}<sup>{rotamerRank === 0 ? 'st' : rotamerRank === 1 ? 'nd' : rotamerRank === 2 ? 'rd' : 'th'}</sup>)</span>
-                <br></br>
-                <span>Probability: {rotamerProbability}%</span>
-                  <Stack gap={2} direction='horizontal' style={{paddingTop: '0.5rem', alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
-                  <Button onClick={() => changeRotamer('change_to_first_rotamer')}><FirstPageOutlined/></Button>
-                    <Button onClick={() => changeRotamer('change_to_previous_rotamer')}><ArrowBackIosOutlined/></Button>
-                    <Button onClick={() => changeRotamer('change_to_next_rotamer')}><ArrowForwardIosOutlined/></Button>
-                  </Stack>
-                  <Stack gap={2} direction='horizontal' style={{paddingTop: '0.5rem', alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
-                    <Button onClick={acceptTransform}><CheckOutlined /></Button>
-                    <Button className="mx-2" onClick={rejectTransform}><CloseOutlined /></Button>
-                  </Stack>
-                </Card.Body>
-              </Card>
-            </Draggable>
-    }
-
-    const changeRotamer = async (command) => {
-      const rotamerInfo = await props.commandCentre.current.cootCommand({
-          returnType: 'rotamer_info_t',
-          command: command,
-          commandArgs: [newMolecule.molNo, fragmentCid, alt_conf],
-      }, true)
-      newMolecule.setAtomsDirty(true)
-      newMolecule.clearBuffersOfStyle('selection', props.glRef)
-      newMolecule.drawSelection(props.glRef, fragmentCid)
-      await newMolecule.redraw(props.glRef)
-      setOverrideMenuContents(getPopoverContents(rotamerInfo))  
-    }
-
-    const acceptTransform = async () => {
-      await props.commandCentre.current.cootCommand({
-          returnType: 'status',
-          command: 'replace_fragment',
-          commandArgs: [molecule.molNo, newMolecule.molNo, fragmentCid],
-      }, true)
-      molecule.setAtomsDirty(true)
-      await molecule.redraw(props.glRef)
-      props.changeMolecules({ action: 'Remove', item: newMolecule })
-      newMolecule.delete(props.glRef)
-      molecule.unhideAll(props.glRef)
-      setOverrideMenuContents(false)
-      setOpacity(1)
-      const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: molecule.molNo } })
-      document.dispatchEvent(scoresUpdateEvent)
-      props.setShowContextMenu(false)
-    }
-
-    const rejectTransform = async (e) => {
-      props.changeMolecules({ action: 'Remove', item: newMolecule })
-      newMolecule.delete(props.glRef)
-      molecule.unhideAll(props.glRef)
-      setOverrideMenuContents(false)
-      setOpacity(1)
-      props.setShowContextMenu(false)
-    }
-    
-    /* Set popover contents */
-    setOpacity(0.5)
-    setOverrideMenuContents(getPopoverContents(rotamerInfo))
-  }
-
   const autoFitRotamer = useCallback(async (molecule, chosenAtom) => {
     const formattedArgs = [
         molecule.molNo,
@@ -646,12 +543,7 @@ export const MoorhenContextMenu = (props) => {
                       <MoorhenDeleteButton mode='context' {...collectedProps} />
                       <MoorhenMutateButton mode='context' {...collectedProps} />
                       <MoorhenAddTerminalResidueButton mode='context' {...collectedProps} />
-                      <MoorhenContextQuickEditButton 
-                          icon={<img style={{padding:'0.1rem', width:'100%', height: '100%'}} alt="change rotamer" className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/rotamers.svg`}/>}
-                          toolTipLabel="Change rotamers"
-                          nonCootCommand={doRotamerChange}
-                          {...collectedProps}
-                      />
+                      <MoorhenRotamerChangeButton mode='context' {...collectedProps}/>
                       <MoorhenContextQuickEditButton 
                           icon={<img style={{padding:'0.1rem', width:'100%', height: '100%'}} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/rigid-body.svg`} alt='Rigid body fit'/>}
                           refineAfterMod={false}
