@@ -43,14 +43,14 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
         chosenMolecule.current.unhideAll(props.glRef)
         const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: chosenMolecule.current.molNo } })
         document.dispatchEvent(scoresUpdateEvent)
-    }, [props.changeMolecules, props.glRef])
+    }, [props, chosenMolecule, fragmentMolecule])
 
     const rejectTransform = useCallback(async () => {
         props.glRef.current.setActiveMolecule(null)
         props.changeMolecules({ action: 'Remove', item: fragmentMolecule.current })
         fragmentMolecule.current.delete(props.glRef)
         chosenMolecule.current.unhideAll(props.glRef)
-    }, [props.changeMolecules, props.glRef])
+    }, [props, chosenMolecule, fragmentMolecule])
 
     const startRotateTranslate = async (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, selectedMode: string) => {
         chosenMolecule.current = molecule
@@ -81,13 +81,15 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
         if (!fragmentCid.current) {
             return
         }
-        chosenMolecule.current.hideCid(fragmentCid.current, props.glRef)
         /* Copy the component to move into a new molecule */
         const newMolecule = await molecule.copyFragmentUsingCid(
             fragmentCid.current, props.backgroundColor, props.defaultBondSmoothness, props.glRef, false
         )
         await newMolecule.updateAtoms()
-        Object.keys(molecule.displayObjects)
+        /* redraw after delay so that the context menu does not refresh empty */
+        setTimeout(() => {
+            chosenMolecule.current.hideCid(fragmentCid.current, props.glRef)
+            Object.keys(molecule.displayObjects)
             .filter(style => { return ['CRs', 'CBs', 'ligands', 'gaussian', 'MolecularSurface', 'VdWSurface', 'DishyBases', 'VdwSpheres', 'allHBonds'].includes(style) })
             .forEach(async style => {
                 if (molecule.displayObjects[style].length > 0 &&
@@ -95,10 +97,10 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
                     await newMolecule.drawWithStyleFromAtoms(style, props.glRef)
                 }
             })
-        fragmentMolecule.current = newMolecule
-        /* redraw */
-        props.changeMolecules({ action: "Add", item: newMolecule })
-        props.glRef.current.setActiveMolecule(newMolecule)
+            fragmentMolecule.current = newMolecule
+            props.changeMolecules({ action: "Add", item: newMolecule })
+            props.glRef.current.setActiveMolecule(newMolecule)
+        }, 1)
     }
 
     const MoorhenRotateTranslatePanel = (props: { panelParameters: string; setPanelParameters: React.Dispatch<React.SetStateAction<string>> }) => {

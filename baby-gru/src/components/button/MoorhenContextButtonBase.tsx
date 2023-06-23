@@ -65,7 +65,8 @@ export const MoorhenContextButtonBase = (props: {
     selectedMolecule: moorhen.Molecule;
     chosenAtom: moorhen.ResidueSpec;
     activeMap: moorhen.Map;
-    refineAfterMod: boolean;
+    enableRefineAfterMod: boolean;
+    refineAfterMod?: boolean;
     needsMapData: boolean;
     needsAtomData: boolean;
     molecules: moorhen.Molecule[];
@@ -96,7 +97,7 @@ export const MoorhenContextButtonBase = (props: {
             props.onCompleted(props.selectedMolecule, props.chosenAtom)
         }
         
-        if (props.refineAfterMod && props.activeMap) {
+        if (props.refineAfterMod && props.enableRefineAfterMod && props.activeMap) {
             try {
                 await props.commandCentre.current.cootCommand({
                     returnType: "status",

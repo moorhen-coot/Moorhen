@@ -3,6 +3,7 @@ import { moorhen } from "./moorhen";
 
 export namespace webGL {
     type MGWebGL = {
+        setDraggableMolecule(arg0: moorhen.Molecule): void;
         setLightPosition(arg0: number, arg1: number, arg2: number): void;
         specularPower: number;
         setDiffuseLightNoUpdate(arg0: number, arg1: number, arg2: number): void;

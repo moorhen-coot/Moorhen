@@ -12,6 +12,7 @@ type MoorhenEditButtonProps = {
     awaitMoreAtomClicksRef?: React.RefObject<boolean> | boolean;
     onCompleted?: (arg0: moorhen.Molecule, arg2: moorhen.ResidueSpec) => void;
     onExit?: (arg0: moorhen.Molecule, arg2: moorhen.ResidueSpec, arg3: any) => void;
+    enableRefineAfterMod: boolean;
     refineAfterMod?: boolean;
     glRef: React.RefObject<webGL.MGWebGL>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
@@ -60,7 +61,7 @@ export const MoorhenEditButtonBase = forwardRef<HTMLButtonElement, MoorhenEditBu
             if (props.onCompleted) {
                 props.onCompleted(molecule, chosenAtom)
             }
-            if (props.refineAfterMod && props.activeMap) {
+            if (props.refineAfterMod && props.enableRefineAfterMod && props.activeMap) {
                 try {
                     await props.commandCentre.current.cootCommand({
                         returnType: "status",
@@ -113,7 +114,7 @@ export const MoorhenEditButtonBase = forwardRef<HTMLButtonElement, MoorhenEditBu
             }
         }
 
-    }, [props.molecules, props.activeMap, props.refineAfterMod, localParameters, props.getCootCommandInput, props.awaitMoreAtomClicksRef])
+    }, [props.molecules, props.activeMap, props.refineAfterMod, props.enableRefineAfterMod, localParameters, props.getCootCommandInput, props.awaitMoreAtomClicksRef])
 
     useEffect(() => {
         props.setCursorStyle("crosshair")

@@ -30,7 +30,7 @@ const getDefaultValues = (): moorhen.ContextValues => {
         enableTimeCapsule: true, 
         defaultExpandDisplayCards: true,
         defaultMapLitLines: false,
-        refineAfterMod: true,
+        enableRefineAfterMod: true,
         drawCrosshairs: true,
         drawAxes: false,
         drawFPS: false,
@@ -255,7 +255,7 @@ const MoorhenContextProvider = ({ children }) => {
     const [defaultExpandDisplayCards, setDefaultExpandDisplayCards] = useState<null | boolean>(null)
     const [shortCuts, setShortCuts] = useState<null | string>(null)
     const [defaultMapLitLines, setDefaultMapLitLines] = useState<null | boolean>(null)
-    const [refineAfterMod, setRefineAfterMod] = useState<null | boolean>(null)
+    const [enableRefineAfterMod, setEnableRefineAfterMod] = useState<null | boolean>(null)
     const [mouseSensitivity, setMouseSensitivity] = useState<null | number>(null)
     const [zoomWheelSensitivityFactor, setZoomWheelSensitivityFactor] = useState<null | number>(null)
     const [contourWheelSensitivityFactor, setContourWheelSensitivityFactor] = useState<null | number>(null)
@@ -292,7 +292,7 @@ const MoorhenContextProvider = ({ children }) => {
         3: { label: "defaultExpandDisplayCards", value: defaultExpandDisplayCards, valueSetter: setDefaultExpandDisplayCards},
         4: { label: "shortCuts", value: shortCuts, valueSetter: setShortCuts},
         5: { label: "defaultMapLitLines", value: defaultMapLitLines, valueSetter: setDefaultMapLitLines},
-        6: { label: "refineAfterMod", value: refineAfterMod, valueSetter: setRefineAfterMod},
+        6: { label: "enableRefineAfterMod", value: enableRefineAfterMod, valueSetter: setEnableRefineAfterMod},
         7: { label: "mouseSensitivity", value: mouseSensitivity, valueSetter: setMouseSensitivity},
         8: { label: "zoomWheelSensitivityFactor", value: zoomWheelSensitivityFactor, valueSetter: setZoomWheelSensitivityFactor},
         9: { label: "drawCrosshairs", value: drawCrosshairs, valueSetter: setDrawCrosshairs},
@@ -514,12 +514,12 @@ const MoorhenContextProvider = ({ children }) => {
 
     useMemo(() => {
 
-        if (refineAfterMod === null) {
+        if (enableRefineAfterMod === null) {
             return
         }
        
-        updateStoredContext('refineAfterMod', refineAfterMod);
-    }, [refineAfterMod]);
+        updateStoredContext('enableRefineAfterMod', enableRefineAfterMod);
+    }, [enableRefineAfterMod]);
 
     useMemo(() => {
 
@@ -704,7 +704,7 @@ const MoorhenContextProvider = ({ children }) => {
     const collectedContextValues: moorhen.Context = {
         defaultBackgroundColor, setDefaultBackgroundColor, atomLabelDepthMode, setAtomLabelDepthMode, defaultExpandDisplayCards,
         setDefaultExpandDisplayCards, shortCuts, setShortCuts, defaultMapLitLines, setDefaultMapLitLines,
-        refineAfterMod, setRefineAfterMod, mouseSensitivity, setMouseSensitivity, drawCrosshairs, 
+        enableRefineAfterMod, setEnableRefineAfterMod, mouseSensitivity, setMouseSensitivity, drawCrosshairs, 
         setDrawCrosshairs, drawMissingLoops, setDrawMissingLoops, mapLineWidth, setMapLineWidth,
         makeBackups, setMakeBackups, showShortcutToast, setShowShortcutToast, defaultMapSurface,
         setDefaultMapSurface, defaultBondSmoothness, setDefaultBondSmoothness, showScoresToast, 
