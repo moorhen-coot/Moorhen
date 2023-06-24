@@ -9,7 +9,7 @@ import { MoorhenBackgroundColorMenuItem } from "../menu-item/MoorhenBackgroundCo
 import { cidToSpec, convertRemToPx } from "../../utils/MoorhenUtils";
 import { getBackupLabel } from "../../utils/MoorhenTimeCapsule"
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Popover, Overlay, FormLabel, FormSelect, Button, Stack, Form } from "react-bootstrap";
+import { Popover, Overlay, FormLabel, FormSelect, Button, Stack } from "react-bootstrap";
 import { MoorhenAddAltConfButton } from "../button/MoorhenAddAltConfButton"
 import { MoorhenAddTerminalResidueButton } from "../button/MoorhenAddTerminalResidueButton"
 import { MoorhenAutofitRotamerButton } from "../button/MoorhenAutofitRotamerButton"
