@@ -10,7 +10,6 @@ import { cidToSpec, convertRemToPx } from "../../utils/MoorhenUtils";
 import { getBackupLabel } from "../../utils/MoorhenTimeCapsule"
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Popover, Overlay, FormLabel, FormSelect, Button, Stack, Form } from "react-bootstrap";
-import { rigidBodyFitFormatArgs } from "../button/MoorhenSimpleEditButton";
 import { MoorhenAddAltConfButton } from "../button/MoorhenAddAltConfButton"
 import { MoorhenAddTerminalResidueButton } from "../button/MoorhenAddTerminalResidueButton"
 import { MoorhenAutofitRotamerButton } from "../button/MoorhenAutofitRotamerButton"
@@ -26,6 +25,7 @@ import { MoorhenJedFlipTrueButton } from "../button/MoorhenJedFlipTrueButton";
 import { MoorhenRotamerChangeButton } from "../button/MoorhenRotamerChangeButton";
 import { MoorhenRotateTranslateZoneButton } from "../button/MoorhenRotateTranslateZoneButton";
 import { MoorhenDragAtomsButton } from "../button/MoorhenDragAtomsButton";
+import { MoorhenRigidBodyFitButton } from "../button/MoorhenRigidBodyFitButton";
 
 const ContextMenu = styled.div`
   position: absolute;
@@ -215,23 +215,6 @@ export const MoorhenContextMenu = (props) => {
     props.setShowContextMenu(false)
   }
 
-  const autoFitRotamer = useCallback(async (molecule, chosenAtom) => {
-    const formattedArgs = [
-        molecule.molNo,
-        chosenAtom.chain_id,
-        chosenAtom.res_no,
-        chosenAtom.ins_code,
-        chosenAtom.alt_conf,
-        props.activeMap.molNo
-    ]
-    await props.commandCentre.current.cootCommand({
-        returnType: "status",
-        command: "auto_fit_rotamer",
-        commandArgs: formattedArgs,
-        changesMolecules: [molecule.molNo]
-    }, true)
-  }, [props.activeMap, props.commandCentre])
-
   return <>
       <ContextMenu ref={contextMenuRef} top={menuPosition.top} left={menuPosition.left} backgroundColor={backgroundColor} opacity={opacity}>
         {overrideMenuContents ? 
@@ -260,36 +243,7 @@ export const MoorhenContextMenu = (props) => {
                       <MoorhenMutateButton mode='context' {...collectedProps} />
                       <MoorhenAddTerminalResidueButton mode='context' {...collectedProps} />
                       <MoorhenRotamerChangeButton mode='context' {...collectedProps}/>
-                      <MoorhenContextQuickEditButton 
-                          icon={<img style={{padding:'0.1rem', width:'100%', height: '100%'}} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/rigid-body.svg`} alt='Rigid body fit'/>}
-                          refineAfterMod={false}
-                          needsMapData={true}
-                          onCompleted={autoFitRotamer}
-                          toolTipLabel="Rigid body fit"
-                          popoverSettings={{
-                            extraInput: (ref) => {
-                              return <Form.Check
-                                            ref={ref}
-                                            style={{paddingTop: '0.1rem'}} 
-                                            type="switch"
-                                            label="Use random jiggle fit"/>
-                            },
-                            label: 'Fitting mode',
-                            options: ['SINGLE', 'TRIPLE', 'QUINTUPLE', 'HEPTUPLE', 'CHAIN', 'ALL'],
-                            formatArgs: (selectedOption, extraInputRef) => {
-                              const randomJiggleMode = extraInputRef.current.checked
-                              const commandArgs = rigidBodyFitFormatArgs(selectedMolecule, chosenAtom, selectedOption, props.activeMap.molNo)
-                              return {
-                                message: 'coot_command',
-                                returnType: "status",
-                                command: randomJiggleMode ? 'fit_to_map_by_random_jiggle_using_cid' : 'rigid_body_fit',
-                                commandArgs: randomJiggleMode ?  [...commandArgs.slice(0, 2), 0, -1] : commandArgs,
-                                changesMolecules: [selectedMolecule.molNo]
-                              }
-                            }
-                            }}
-                          {...collectedProps}
-                      />
+                      <MoorhenRigidBodyFitButton  mode='context' {...collectedProps}/>
                       <MoorhenEigenFlipLigandButton mode='context' {...collectedProps}/>
                       <MoorhenJedFlipFalseButton mode='context' {...collectedProps}/>
                       <MoorhenJedFlipTrueButton mode='context' {...collectedProps}/>
