@@ -9,10 +9,10 @@ const MoorhenPopoverOptions = (props: {
     setShowOverlay: React.Dispatch<React.SetStateAction<boolean>>;
     label: string;
     options: string[];
-    extraInput: (arg0: React.MutableRefObject<any>) => JSX.Element;
-    nonCootCommand: (arg0: moorhen.Molecule, arg1: moorhen.ResidueSpec, arg2: string) => void;
+    extraInput?: (arg0: React.MutableRefObject<any>) => JSX.Element;
+    nonCootCommand?: (arg0: moorhen.Molecule, arg1: moorhen.ResidueSpec, arg2: string) => void;
     doEdit: (arg0: any) => void;
-    getCootCommandInput?: (arg0: moorhen.Molecule, arg2: moorhen.ResidueSpec, arg3: string, arg4?: any) => moorhen.cootCommandKwargs;
+    getCootCommandInput?: (arg0: moorhen.Molecule, arg2: moorhen.ResidueSpec, arg3: string, arg4?: React.MutableRefObject<any>) => moorhen.cootCommandKwargs;
     selectedMolecule: moorhen.Molecule;
     chosenAtom: moorhen.ResidueSpec; 
 }) => {
@@ -87,6 +87,7 @@ export const MoorhenContextButtonBase = (props: {
         label: string;
         options: string[];
         getCootCommandInput?: (arg0: moorhen.Molecule, arg2: moorhen.ResidueSpec, arg3: string) => moorhen.cootCommandKwargs;
+        extraInput?: (arg0: React.RefObject<any>) => JSX.Element;
     };
 }) => {
     
