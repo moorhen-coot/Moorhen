@@ -128,7 +128,22 @@ export const MoorhenQuerySequenceModal = (props: {
                                 </span>
                             </Col>
                             <Col className='col-3' style={{margin: '0', padding:'0', justifyContent: 'right', display:'flex'}}>
-                                <Button style={{marginRight:'0.5rem'}} onClick={() => { fetchMoleculeFromURL(`https://pdb-redo.eu/db/${pdbCode}/${pdbCode}_final.pdb`, polimerEntity) }}>
+                                <Button style={{marginRight:'0.5rem'}} onClick={async () => { 
+                                    const newMolecule = await fetchMoleculeFromURL(`https://pdb-redo.eu/db/${pdbCode}/${pdbCode}_final.pdb`, polimerEntity) 
+                                    await props.commandCentre.current.cootCommand({
+                                        message: 'coot_command',
+                                        command: 'SSM_superpose',
+                                        returnType: 'superpose_results',
+                                        commandArgs: [
+                                            parseInt(moleculeSelectRef.current.value),
+                                            chainSelectRef.current.value,
+                                            newMolecule.molNo,
+                                            chains[0]
+                                        ],
+                                    })                            
+                                    newMolecule.setAtomsDirty(true)
+                                    await newMolecule.redraw(props.glRef)
+                                }}>
                                     Fetch
                                 </Button>
                             </Col>
