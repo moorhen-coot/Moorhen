@@ -477,6 +477,7 @@ export const MoorhenContainer = (props: MoorhenContainerPropsInterface) => {
                     }}>
                     <MoorhenWebMG
                         ref={glRef}
+                        monomerLibraryPath={monomerLibraryPath}
                         timeCapsuleRef={timeCapsuleRef}
                         commandCentre={commandCentre}
                         molecules={molecules}

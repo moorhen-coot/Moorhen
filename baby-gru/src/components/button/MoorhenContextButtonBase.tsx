@@ -5,14 +5,14 @@ import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 
 const MoorhenPopoverOptions = (props: {
-    showContextMenu: boolean;
+    showContextMenu: false | moorhen.AtomRightClickEventInfo;
     setShowOverlay: React.Dispatch<React.SetStateAction<boolean>>;
     label: string;
     options: string[];
-    extraInput: (arg0: React.MutableRefObject<any>) => JSX.Element;
-    nonCootCommand: (arg0: moorhen.Molecule, arg1: moorhen.ResidueSpec, arg2: string) => void;
-    doEdit: (arg0: any) => void;
-    getCootCommandInput?: (arg0: moorhen.Molecule, arg2: moorhen.ResidueSpec, arg3: string, arg4?: any) => moorhen.cootCommandKwargs;
+    extraInput?: (arg0: React.MutableRefObject<any>) => JSX.Element;
+    nonCootCommand?: (arg0: moorhen.Molecule, arg1: moorhen.ResidueSpec, arg2: string) => void;
+    doEdit: (arg0: moorhen.cootCommandKwargs) => void;
+    getCootCommandInput?: (arg0: moorhen.Molecule, arg2: moorhen.ResidueSpec, arg3: string, arg4?: React.MutableRefObject<any>) => moorhen.cootCommandKwargs;
     selectedMolecule: moorhen.Molecule;
     chosenAtom: moorhen.ResidueSpec; 
 }) => {
@@ -67,26 +67,28 @@ export const MoorhenContextButtonBase = (props: {
     activeMap: moorhen.Map;
     enableRefineAfterMod: boolean;
     refineAfterMod?: boolean;
-    needsMapData: boolean;
-    needsAtomData: boolean;
+    needsMapData?: boolean;
+    needsAtomData?: boolean;
     molecules: moorhen.Molecule[];
-    nonCootCommand: (arg0: moorhen.Molecule, arg1: moorhen.ResidueSpec) => Promise<void>;
+    nonCootCommand?: (arg0: moorhen.Molecule, arg1: moorhen.ResidueSpec, arg2?: string) => Promise<void>;
     glRef: React.RefObject<webGL.MGWebGL>;
-    cootCommandInput: moorhen.cootCommandKwargs;
+    cootCommandInput?: moorhen.cootCommandKwargs;
     setOverlayContents: React.Dispatch<React.SetStateAction<JSX.Element>>;
     setShowOverlay: React.Dispatch<React.SetStateAction<boolean>>;
     timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
-    setShowContextMenu: React.Dispatch<React.SetStateAction<boolean>>;
-    onExit: (arg0: moorhen.Molecule, arg1: moorhen.ResidueSpec, arg2: any) => void;
-    onCompleted: (arg0: moorhen.Molecule, arg1: moorhen.ResidueSpec) => void;
+    setShowContextMenu: React.Dispatch<React.SetStateAction<false | moorhen.AtomRightClickEventInfo>>;
+    onExit?: (arg0: moorhen.Molecule, arg1: moorhen.ResidueSpec, arg2: any) => void;
+    onCompleted?: (arg0: moorhen.Molecule, arg1: moorhen.ResidueSpec) => void;
     icon: JSX.Element;
     setToolTip: React.Dispatch<React.SetStateAction<string>>;
     toolTipLabel: string;
-    showContextMenu: boolean;
-    popoverSettings: {
+    showContextMenu: false | moorhen.AtomRightClickEventInfo;
+    popoverSettings?: {
         label: string;
         options: string[];
+        nonCootCommand?: (arg0: moorhen.Molecule, arg1: moorhen.ResidueSpec, arg2: string) => void;
         getCootCommandInput?: (arg0: moorhen.Molecule, arg2: moorhen.ResidueSpec, arg3: string) => moorhen.cootCommandKwargs;
+        extraInput?: (arg0: React.RefObject<any>) => JSX.Element;
     };
 }) => {
     

@@ -364,6 +364,16 @@ export namespace moorhen {
         init: () => Promise<void>;
         retrieveBackup: (arg0: string) => Promise<string | ArrayBuffer>;
     }
+
+    type AtomRightClickEventInfo = {
+        atom: {label: string};
+        buffer: {id: string};
+        coords: string,
+        pageX: number;
+        pageY: number;
+    }
+
+    type AtomRightClickEvent = CustomEvent<AtomRightClickEventInfo>
     
     type AtomDraggedEvent = CustomEvent<{ atom: {
         atom: {
@@ -518,33 +528,18 @@ export namespace moorhen {
         chosenAtom: ResidueSpec;
         activeMap: Map;
         enableRefineAfterMod: boolean;
-        refineAfterMod: boolean;
-        needsMapData: boolean;
-        needsAtomData: boolean;
         molecules: Molecule[];
-        nonCootCommand: (arg0: Molecule, arg1: ResidueSpec) => Promise<void>;
         glRef: React.RefObject<webGL.MGWebGL>;
-        cootCommandInput: cootCommandKwargs;
         setOverlayContents: React.Dispatch<React.SetStateAction<JSX.Element>>;
         setShowOverlay: React.Dispatch<React.SetStateAction<boolean>>;
         timeCapsuleRef: React.RefObject<TimeCapsule>;
-        setShowContextMenu: React.Dispatch<React.SetStateAction<boolean>>;
-        onExit: (arg0: Molecule, arg1: ResidueSpec, arg2: any) => void;
-        onCompleted: (arg0: Molecule, arg1: ResidueSpec) => void;
-        icon: JSX.Element;
         setToolTip: React.Dispatch<React.SetStateAction<string>>;
-        setShowContextMenu: React.Dispatch<React.SetStateAction<boolean>>;
+        setShowContextMenu: React.Dispatch<React.SetStateAction<false | moorhen.AtomRightClickEventInfo>>;
         setOpacity: React.Dispatch<React.SetStateAction<number>>;
         setOverrideMenuContents: React.Dispatch<React.SetStateAction<JSX.Element | boolean>>;
-        toolTipLabel: string;
-        showContextMenu: boolean;
+        showContextMenu: false | moorhen.AtomRightClickEventInfo;
         backgroundColor: [number, number, number, number];
         defaultBondSmoothness: number;
-        popoverSettings: {
-            label: string;
-            options: string[];
-            formatArgs: (arg0: string, arg1: React.MutableRefObject<any>) => cootCommandKwargs;
-        };
         changeMolecules: (arg0: MolChange<Molecule>) => void
     }
     
