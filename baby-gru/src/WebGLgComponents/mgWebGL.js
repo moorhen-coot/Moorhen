@@ -17,6 +17,7 @@ import  { unProject } from './GLU.js';
 
 //WebGL2 shaders
 import { blur_vertex_shader_source as blur_vertex_shader_source_webgl2 } from './webgl-2/blur-vertex-shader.js';
+import { overlay_fragment_shader_source as overlay_fragment_shader_source_webgl2 } from './webgl-2/overlay-fragment-shader.js';
 import { blur_x_fragment_shader_source as blur_x_fragment_shader_source_webgl2 } from './webgl-2/blur_x-fragment-shader.js';
 import { blur_y_fragment_shader_source as blur_y_fragment_shader_source_webgl2 } from './webgl-2/blur_y-fragment-shader.js';
 import { lines_fragment_shader_source as lines_fragment_shader_source_webgl2 } from './webgl-2/lines-fragment-shader.js';
@@ -48,6 +49,7 @@ import { triangle_instanced_vertex_shader_source as triangle_instanced_vertex_sh
 
 //WebGL1 shaders
 import { blur_vertex_shader_source as blur_vertex_shader_source_webgl1 } from './webgl-1/blur-vertex-shader.js';
+import { overlay_fragment_shader_source as overlay_fragment_shader_source_webgl1 } from './webgl-1/overlay-fragment-shader.js';
 import { blur_x_fragment_shader_source as blur_x_fragment_shader_source_webgl1 } from './webgl-1/blur_x-fragment-shader.js';
 import { blur_y_fragment_shader_source as blur_y_fragment_shader_source_webgl1 } from './webgl-1/blur_y-fragment-shader.js';
 import { lines_fragment_shader_source as lines_fragment_shader_source_webgl1 } from './webgl-1/lines-fragment-shader.js';
@@ -1543,6 +1545,7 @@ class MGWebGL extends Component {
             this.recreateOffScreeenBuffers();
         }
 
+        this.silhouetteBufferReady = false;
     }
 
     constructor(props) {
@@ -1923,6 +1926,7 @@ class MGWebGL extends Component {
         let vertexShader;
         let fragmentShader;
         let blurVertexShader;
+        let overlayFragmentShader;
         let blurXFragmentShader;
         let blurYFragmentShader;
         let lineVertexShader;
@@ -1967,6 +1971,7 @@ class MGWebGL extends Component {
 
         let blur_vertex_shader_source = blur_vertex_shader_source_webgl1;
         let blur_x_fragment_shader_source = blur_x_fragment_shader_source_webgl1;
+        let overlay_fragment_shader_source = overlay_fragment_shader_source_webgl1;
         let blur_y_fragment_shader_source = blur_y_fragment_shader_source_webgl1;
         let lines_fragment_shader_source = lines_fragment_shader_source_webgl1;
         let text_instanced_vertex_shader_source = text_instanced_vertex_shader_source_webgl1;
@@ -1996,6 +2001,7 @@ class MGWebGL extends Component {
         if(this.WEBGL2){
             blur_vertex_shader_source = blur_vertex_shader_source_webgl2;
             blur_x_fragment_shader_source = blur_x_fragment_shader_source_webgl2;
+            overlay_fragment_shader_source = overlay_fragment_shader_source_webgl2;
             blur_y_fragment_shader_source = blur_y_fragment_shader_source_webgl2;
             lines_fragment_shader_source = lines_fragment_shader_source_webgl2;
             text_instanced_vertex_shader_source = text_instanced_vertex_shader_source_webgl2;
@@ -2031,6 +2037,7 @@ class MGWebGL extends Component {
         thickLineNormalVertexShader = getShader(self.gl, thick_lines_normal_vertex_shader_source, "vertex");
         blurVertexShader = getShader(self.gl, blur_vertex_shader_source, "vertex");
         blurXFragmentShader = getShader(self.gl, blur_x_fragment_shader_source, "fragment");
+        overlayFragmentShader = getShader(self.gl, overlay_fragment_shader_source, "fragment");
         blurYFragmentShader = getShader(self.gl, blur_y_fragment_shader_source, "fragment");
         lineFragmentShader = getShader(self.gl, lines_fragment_shader_source, "fragment");
         textVertexShader = getShader(self.gl, triangle_vertex_shader_source, "vertex");
@@ -2058,6 +2065,7 @@ class MGWebGL extends Component {
 
         self.initRenderFrameBufferShaders(blurVertexShader, renderFrameBufferFragmentShader);
         self.initLineShaders(lineVertexShader, lineFragmentShader);
+        self.initOverlayShader(blurVertexShader, overlayFragmentShader);
         self.initBlurXShader(blurVertexShader, blurXFragmentShader);
         self.initBlurYShader(blurVertexShader, blurYFragmentShader);
         self.initThickLineShaders(thickLineVertexShader, lineFragmentShader);
@@ -2751,6 +2759,9 @@ class MGWebGL extends Component {
 
             if(jsondata.clickTol){
                 self.displayBuffers[self.currentBufferIdx].clickTol = jsondata.clickTol;
+            }
+            if(jsondata.doStencil){
+                self.displayBuffers[self.currentBufferIdx].doStencil = jsondata.doStencil;
             }
 
         }
@@ -3664,6 +3675,48 @@ class MGWebGL extends Component {
     setShowAxes(a) {
         this.showAxes = a;
         this.drawScene();
+    }
+
+    recreateSilhouetteBuffers(){
+        if(!this.silhouetteFramebuffer){
+            this.silhouetteFramebuffer = this.gl.createFramebuffer();
+
+            this.silhouetteTexture = this.gl.createTexture();
+            this.gl.bindTexture(this.gl.TEXTURE_2D, this.silhouetteTexture);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+
+            this.silhouetteDepthTexture = this.gl.createTexture();
+            this.gl.bindTexture(this.gl.TEXTURE_2D, this.silhouetteDepthTexture);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+
+            this.silhouetteRenderbufferDepth = this.gl.createRenderbuffer();
+            this.silhouetteRenderbufferColor = this.gl.createRenderbuffer();
+
+        }
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.silhouetteFramebuffer);
+        this.silhouetteFramebuffer.width = this.canvas.width;
+        this.silhouetteFramebuffer.height = this.canvas.height;
+
+        this.gl.bindRenderbuffer(this.gl.RENDERBUFFER, this.silhouetteRenderbufferColor);
+        this.gl.framebufferRenderbuffer(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.RENDERBUFFER, this.silhouetteRenderbufferColor);
+        this.gl.renderbufferStorage(this.gl.RENDERBUFFER, this.gl.DEPTH_COMPONENT16, this.canvas.width, this.canvas.height);
+
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.silhouetteTexture);
+        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.canvas.width, this.canvas.height, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null);
+        this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.COLOR_ATTACHMENT0, this.gl.TEXTURE_2D, this.silhouetteTexture, 0);
+
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.silhouetteDepthTexture);
+        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.DEPTH_COMPONENT24, this.canvas.width, this.canvas.height, 0, this.gl.DEPTH_COMPONENT, this.gl.UNSIGNED_INT, null);
+        this.gl.framebufferTexture2D(this.gl.FRAMEBUFFER, this.gl.DEPTH_ATTACHMENT, this.gl.TEXTURE_2D, this.silhouetteDepthTexture, 0);
+
+        this.gl.bindTexture(this.gl.TEXTURE_2D, null);
+        this.silhouetteBufferReady = true;
+
     }
 
     recreateOffScreeenBuffers(){
@@ -4951,6 +5004,34 @@ class MGWebGL extends Component {
 
         this.shaderProgramBlurY.depthTexture = this.gl.getUniformLocation(this.shaderProgramBlurY, "depth");
         this.shaderProgramBlurY.inputTexture = this.gl.getUniformLocation(this.shaderProgramBlurY, "shader0");
+    }
+
+    initOverlayShader(vertexShaderOverlay, fragmentShaderOverlay) {
+        this.shaderProgramOverlay = this.gl.createProgram();
+
+        this.gl.attachShader(this.shaderProgramOverlay, vertexShaderOverlay);
+        this.gl.attachShader(this.shaderProgramOverlay, fragmentShaderOverlay);
+        this.gl.bindAttribLocation(this.shaderProgramOverlay, 0, "aVertexPosition");
+        this.gl.bindAttribLocation(this.shaderProgramOverlay, 3, "aVertexTexture");
+        this.gl.linkProgram(this.shaderProgramOverlay);
+
+        if (!this.gl.getProgramParameter(this.shaderProgramOverlay, this.gl.LINK_STATUS)) {
+            alert("Could not initialise shaders (initRenderOverlayShader)");
+            console.log(this.gl.getProgramInfoLog(this.shaderProgramOverlay));
+        }
+
+        this.gl.useProgram(this.shaderProgramOverlay);
+
+        this.shaderProgramOverlay.vertexPositionAttribute = this.gl.getAttribLocation(this.shaderProgramOverlay, "aVertexPosition");
+        this.gl.enableVertexAttribArray(this.shaderProgramOverlay.vertexPositionAttribute);
+
+        this.shaderProgramOverlay.vertexTextureAttribute = this.gl.getAttribLocation(this.shaderProgramOverlay, "aVertexTexture");
+        this.gl.enableVertexAttribArray(this.shaderProgramOverlay.vertexTextureAttribute);
+
+        this.shaderProgramOverlay.pMatrixUniform = this.gl.getUniformLocation(this.shaderProgramOverlay, "uPMatrix");
+        this.shaderProgramOverlay.mvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramOverlay, "uMVMatrix");
+
+        this.shaderProgramOverlay.inputTexture = this.gl.getUniformLocation(this.shaderProgramOverlay, "shader0");
     }
 
     initRenderFrameBufferShaders(vertexShaderRenderFrameBuffer, fragmentShaderRenderFrameBuffer) {
@@ -7887,6 +7968,12 @@ class MGWebGL extends Component {
             const height_ratio = this.gl.viewportHeight / this.rttFramebuffer.height;
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.rttFramebufferDepth);
             this.gl.viewport(0, 0, this.gl.viewportWidth / width_ratio, this.gl.viewportHeight / height_ratio);
+        } else if(this.renderSilhouettesToTexture) {
+            if(!this.silhouetteBufferReady)
+                this.recreateSilhouetteBuffers();
+            this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.silhouetteFramebuffer);
+            let canRead = (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
+            this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
         } else if(this.renderToTexture) {
             if(!this.screenshotBuffersReady)
                 this.initTextureFramebuffer();
@@ -7906,9 +7993,18 @@ class MGWebGL extends Component {
             this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
         }
 
-        this.gl.clearColor(this.background_colour[0], this.background_colour[1], this.background_colour[2], this.background_colour[3]);
-        if(!this.stencilPass)
+        if(this.renderSilhouettesToTexture) {
+            this.gl.clearColor(this.background_colour[0], this.background_colour[1], this.background_colour[2], 0.0);
+        } else {
+            this.gl.clearColor(this.background_colour[0], this.background_colour[1], this.background_colour[2], this.background_colour[3]);
+        }
+        if(this.doStenciling){
+            if(!this.stenciling){
+                this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+            }
+        } else {
             this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+        }
 
         mat4.identity(this.mvMatrix);
 
@@ -8124,25 +8220,82 @@ class MGWebGL extends Component {
 
         this.stencilPass = false;
 
+        let invMat;
+
+        this.renderSilhouettesToTexture = false;
+
         if(this.doStenciling){
-            this.gl.clearStencil(0);
+            //Framebuffer way
+            this.renderSilhouettesToTexture = true;
+            this.stenciling = false;
+            invMat = this.GLrender(false);
+            this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+            this.stenciling = true;
+            invMat = this.GLrender(false);
+            this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
+            this.renderSilhouettesToTexture = false;
+            this.stenciling = false;
+            invMat = this.GLrender(false);
+
+            this.gl.useProgram(this.shaderProgramOverlay);
+            for(let i = 0; i<16; i++)
+                this.gl.disableVertexAttribArray(i);
+            this.gl.enableVertexAttribArray(this.shaderProgramOverlay.vertexTextureAttribute);
+            this.gl.enableVertexAttribArray(this.shaderProgramOverlay.vertexPositionAttribute);
+
+            this.gl.uniform1i(this.shaderProgramOverlay.inputTexture,0);
+            this.gl.bindTexture(this.gl.TEXTURE_2D, this.silhouetteTexture);
+
+            this.gl.viewport(0, 0, this.gl.viewportWidth, this.gl.viewportHeight);
+
+            let paintMvMatrix = mat4.create();
+            let paintPMatrix = mat4.create();
+            mat4.identity(paintMvMatrix);
+            mat4.ortho(paintPMatrix, -1 , 1 , -1, 1, 0.1, 1000.0);
+
+            this.gl.uniformMatrix4fv(this.shaderProgramOverlay.pMatrixUniform, false, paintPMatrix);
+            this.gl.uniformMatrix4fv(this.shaderProgramOverlay.mvMatrixUniform, false, paintMvMatrix);
+
+            this.bindFramebufferDrawBuffers();
+
+            this.gl.depthFunc(this.gl.ALWAYS);
+            if (this.ext) {
+                this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_INT, 0);
+            } else {
+                this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_SHORT, 0);
+            }
+            this.gl.bindTexture(this.gl.TEXTURE_2D, null)
+            this.gl.depthFunc(this.gl.LESS);
+
+            //Stencil way
+            /*
+            this.stenciling = false;
+            this.gl.stencilMask(0x00);
             this.gl.clear(this.gl.STENCIL_BUFFER_BIT);
-            this.gl.enable(this.gl.STENCIL_TEST);
-            this.gl.stencilFunc(this.gl.ALWAYS, 1, 0xFF);
-            this.gl.stencilMask(0xFF);
-            this.gl.stencilOp(this.gl.KEEP, this.gl.KEEP, this.gl.REPLACE);
-            this.gl.enable(this.gl.DEPTH_TEST);
-        } else {
             this.gl.disable(this.gl.STENCIL_TEST);
             this.gl.enable(this.gl.DEPTH_TEST);
-        }
+            invMat = this.GLrender(false);
 
-        var invMat = this.GLrender(false);
-
-        if(this.doStenciling){
+            this.stenciling = true;
+            this.gl.stencilMask(0xFF);
+            this.gl.clearStencil(0);
+            this.gl.clear(this.gl.STENCIL_BUFFER_BIT);
+            this.gl.clear(this.gl.DEPTH_BUFFER_BIT);
+            this.gl.enable(this.gl.STENCIL_TEST);
+            this.gl.stencilFunc(this.gl.ALWAYS, 1, 0xFF);
+            this.gl.stencilOp(this.gl.KEEP, this.gl.KEEP, this.gl.REPLACE);
+            this.gl.enable(this.gl.DEPTH_TEST);
+            invMat = this.GLrender(false);
             this.gl.stencilFunc(this.gl.NOTEQUAL, 1, 0xFF);
             this.gl.stencilOp(this.gl.KEEP, this.gl.KEEP, this.gl.REPLACE);
             this.stencilPass = true;
+            this.gl.disable(this.gl.DEPTH_TEST);
+            invMat = this.GLrender(false);
+            */
+        } else {
+            this.gl.stencilMask(0x00);
+            this.gl.disable(this.gl.STENCIL_TEST);
+            this.gl.enable(this.gl.DEPTH_TEST);
             invMat = this.GLrender(false);
         }
 
@@ -8492,6 +8645,17 @@ class MGWebGL extends Component {
 
             if (!this.displayBuffers[idx].visible) {
                 continue;
+            }
+            if(this.doStenciling){
+                if(this.stencilPass&&!this.displayBuffers[idx].doStencil){
+                    continue;
+                }
+                if(this.stenciling&&!this.displayBuffers[idx].doStencil){
+                    continue;
+                }
+                if (!this.stenciling&&this.displayBuffers[idx].doStencil){
+                    continue;
+                }
             }
 
             let bufferTypes = this.displayBuffers[idx].bufferTypes;
@@ -10954,6 +11118,7 @@ class MGWebGL extends Component {
     }
 
     drawAxes(invMat) {
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.textTex);
         this.gl.depthFunc(this.gl.ALWAYS);
         this.gl.useProgram(this.shaderProgramTextBackground);
         this.gl.uniform1f(this.shaderProgramTextBackground.fog_start, 1000.0);

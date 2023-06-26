@@ -1260,6 +1260,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             ]
             objects.forEach(object => {
                 object["clickTol"] = click_tol
+                object["doStencil"] = true
             })
             if (clearBuffers){
                 $this.clearBuffersOfStyle(style, glRef)
