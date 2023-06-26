@@ -1,5 +1,5 @@
 import styled, { css } from "styled-components";
-import { ClickAwayListener, FormGroup, IconButton, List, MenuItem, Tooltip } from '@mui/material';
+import { ClickAwayListener, FormGroup, List, MenuItem, Tooltip } from '@mui/material';
 import { MoorhenAddSimpleMenuItem } from "../menu-item/MoorhenAddSimpleMenuItem"
 import { MoorhenGetMonomerMenuItem } from "../menu-item/MoorhenGetMonomerMenuItem"
 import { MoorhenFitLigandRightHereMenuItem } from "../menu-item/MoorhenFitLigandRightHereMenuItem"
@@ -8,7 +8,7 @@ import { MoorhenMergeMoleculesMenuItem } from "../menu-item/MoorhenMergeMolecule
 import { MoorhenBackgroundColorMenuItem } from "../menu-item/MoorhenBackgroundColorMenuItem"
 import { cidToSpec, convertRemToPx } from "../../utils/MoorhenUtils";
 import { getBackupLabel } from "../../utils/MoorhenTimeCapsule"
-import { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback, MutableRefObject, RefObject } from "react";
 import { Popover, Overlay, FormLabel, FormSelect, Button, Stack } from "react-bootstrap";
 import { MoorhenAddAltConfButton } from "../button/MoorhenAddAltConfButton"
 import { MoorhenAddTerminalResidueButton } from "../button/MoorhenAddTerminalResidueButton"
@@ -26,6 +26,9 @@ import { MoorhenRotamerChangeButton } from "../button/MoorhenRotamerChangeButton
 import { MoorhenRotateTranslateZoneButton } from "../button/MoorhenRotateTranslateZoneButton";
 import { MoorhenDragAtomsButton } from "../button/MoorhenDragAtomsButton";
 import { MoorhenRigidBodyFitButton } from "../button/MoorhenRigidBodyFitButton";
+import { moorhen } from "../../types/moorhen";
+import { JSX } from "react/jsx-runtime";
+import { webGL } from "../../types/mgWebGL";
 
 const ContextMenu = styled.div`
   position: absolute;
@@ -42,11 +45,23 @@ const ContextMenu = styled.div`
     `}
 `;
 
-const MoorhenPopoverOptions = (props) => {
-  const selectRef = useRef(null)
+const MoorhenPopoverOptions = (props: {
+  showContextMenu: boolean;
+  setShowOverlay: React.Dispatch<React.SetStateAction<boolean>>;
+  label: string;
+  options: string[];
+  extraInput: (arg0: MutableRefObject<any>) => JSX.Element;
+  nonCootCommand?: (arg0: moorhen.Molecule, arg1: moorhen.ResidueSpec, arg2: string) => void;
+  doEdit: (arg0: moorhen.cootCommandKwargs) => void;
+  formatArgs: (arg0: string, arg1: MutableRefObject<any>) => moorhen.cootCommandKwargs;
+  selectedMolecule: moorhen.Molecule;
+  chosenAtom: moorhen.ResidueSpec; 
+}) => {
+
+  const selectRef = useRef<null | HTMLSelectElement>(null)
   const extraInputRef = useRef(null)
   
-  const handleRightClick = useCallback((e) => {
+  const handleRightClick = useCallback(() => {
     if (props.showContextMenu) {
       props.setShowOverlay(false)
     }
@@ -86,97 +101,51 @@ const MoorhenPopoverOptions = (props) => {
 
 MoorhenPopoverOptions.defaultProps = {extraInput: () => null, nonCootCommand: false}
 
-const MoorhenContextQuickEditButton = (props) => {
+export const MoorhenContextMenu = (props: {
+  urlPrefix: string;
+  changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
+  activeMap: moorhen.Map;
+  enableRefineAfterMod: boolean;
+  defaultBondSmoothness: number;
+  shortCuts: {[label: string]: moorhen.Shortcut} | string;
+  isDark: boolean;
+  showContextMenu: false | moorhen.AtomRightClickEventInfo;
+  molecules: moorhen.Molecule[];
+  windowWidth: number;
+  windowHeight: number;
+  timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
+  setShowContextMenu: React.Dispatch<React.SetStateAction<false | moorhen.AtomRightClickEventInfo>>;
+  viewOnly: boolean;
+  backgroundColor: [number, number, number, number];
+  setBackgroundColor: React.Dispatch<React.SetStateAction<[number, number, number, number]>>;
+  glRef: React.RefObject<webGL.MGWebGL>;
+  maps: moorhen.Map[];
+  commandCentre: RefObject<moorhen.CommandCentre>;
+  enableTimeCapsule: boolean;
+  changeMolecules: { (arg0: moorhen.MolChange<moorhen.Molecule>): void; (arg0: moorhen.MolChange<moorhen.Molecule>): void; }; 
+  monomerLibraryPath: string;
+}) => {
 
-  const doEdit = async (cootCommandInput) => {
-    const cootResult = await props.commandCentre.current.cootCommand(cootCommandInput)
-   
-    if (props.onCompleted) {
-      props.onCompleted(props.selectedMolecule, props.chosenAtom)
-    }
-
-    if (props.refineAfterMod && props.activeMap) {
-      try {
-          await props.commandCentre.current.cootCommand({
-              returnType: "status",
-              command: 'refine_residues_using_atom_cid',
-              commandArgs: [ props.selectedMolecule.molNo, `//${props.chosenAtom.chain_id}/${props.chosenAtom.res_no}`, 'TRIPLE', 4000],
-              changesMolecules: [props.selectedMolecule.molNo]
-          }, true)
-      }
-      catch (err) {
-          console.log(`Exception raised in Refine [${err}]`)
-      }
-    }
-
-    const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: props.selectedMolecule.molNo } })
-    document.dispatchEvent(scoresUpdateEvent)
-    props.selectedMolecule.setAtomsDirty(true)
-    props.selectedMolecule.clearBuffersOfStyle('hover', props.glRef)
-    await Promise.all([
-      props.selectedMolecule.redraw(props.glRef),
-      props.timeCapsuleRef.current.addModification() 
-    ])
-
-    if(props.onExit) {
-      props.onExit(props.selectedMolecule, props.chosenAtom, cootResult)
-    }
-
-    props.setShowContextMenu(false)
-
-  }
-
-  const handleClick = async () => {
-    if (props.popoverSettings) {
-      props.setOverlayContents(
-        <MoorhenPopoverOptions {...props.popoverSettings} chosenAtom={props.chosenAtom} selectedMolecule={props.selectedMolecule} showContextMenu={props.showContextMenu} doEdit={doEdit} setShowOverlay={props.setShowOverlay}/>
-      )
-      setTimeout(() => props.setShowOverlay(true), 50)
-    } else if (props.nonCootCommand) {
-      await props.nonCootCommand(props.selectedMolecule, props.chosenAtom)
-    } else {
-      await doEdit(props.cootCommandInput)
-    }
-  }
-
-  return <>
-          <IconButton 
-              onClick={handleClick}
-              onMouseEnter={(evt) => props.setToolTip(props.toolTipLabel)}
-              style={{width:'3rem', height: '3rem', marginTop: '0.5rem', paddingRight: 0, paddingTop: 0, paddingBottom: 0, paddingLeft: '0.1rem'}}
-              disabled={props.needsMapData && !props.activeMap || (props.needsAtomData && props.molecules.length === 0)}
-            >
-              {props.icon}
-          </IconButton>
-      </>
-}
-
-MoorhenContextQuickEditButton.defaultProps = {
-  needsMapData: false, needsAtomData: true, 
-  refineAfterMod: false, onExit: null, onCompleted: null
-}
-
-export const MoorhenContextMenu = (props) => {
   const contextMenuRef = useRef(null)
-  const quickActionsFormGroupRef = useRef(null)
-  const [showOverlay, setShowOverlay] = useState(false)
-  const [overlayContents, setOverlayContents] = useState(null)
-  const [overrideMenuContents, setOverrideMenuContents] = useState(false)
-  const [opacity, setOpacity] = useState(1.0)
-  const [toolTip, setToolTip] = useState('')
+  const quickActionsFormGroupRef = useRef<HTMLInputElement>(null)
+  const [showOverlay, setShowOverlay] = useState<boolean>(false)
+  const [overlayContents, setOverlayContents] = useState<null | JSX.Element>(null)
+  const [overrideMenuContents, setOverrideMenuContents] = useState<boolean>(false)
+  const [opacity, setOpacity] = useState<number>(1.0)
+  const [toolTip, setToolTip] = useState<string>('')
   const backgroundColor = props.isDark ? '#858585' : '#ffffff' 
   
-  let selectedMolecule
-  let chosenAtom
-  if (props.showContextMenu.buffer){
-    selectedMolecule = props.molecules.find(molecule => molecule.buffersInclude(props.showContextMenu.buffer))
+  let selectedMolecule: moorhen.Molecule
+  let chosenAtom: moorhen.ResidueSpec
+  if (props.showContextMenu && props.showContextMenu.buffer){
+    selectedMolecule = props.molecules.find(molecule => molecule.buffersInclude(props.showContextMenu ? props.showContextMenu.buffer : null))
   }
-  if (props.showContextMenu.atom) {
+  if (props.showContextMenu && props.showContextMenu.atom) {
     chosenAtom = cidToSpec(props.showContextMenu.atom.label)
   }
 
-  let top = props.showContextMenu.pageY
-  let left = props.showContextMenu.pageX
+  let top = props.showContextMenu ? props.showContextMenu.pageY : null
+  let left = props.showContextMenu ? props.showContextMenu.pageX : null
   const menuWidth = selectedMolecule && chosenAtom ? convertRemToPx(26) : convertRemToPx(7)
   const menuHeight = selectedMolecule && chosenAtom ? convertRemToPx(17) : convertRemToPx(7)
   
@@ -187,7 +156,7 @@ export const MoorhenContextMenu = (props) => {
     top -= menuHeight
   }
     
-  let placement = "right"
+  let placement: "left" | "right" = "right"
   if (props.windowWidth * 0.5 < left){
     placement = 'left'
   }
@@ -229,7 +198,7 @@ export const MoorhenContextMenu = (props) => {
                     selectedMolecule && chosenAtom ?
                     <>
                      <MoorhenMergeMoleculesMenuItem glRef={props.glRef} molecules={props.molecules} setPopoverIsShown={() => {}} menuItemText="Merge molecule into..." popoverPlacement='right' fromMolNo={selectedMolecule.molNo}/>
-                     <MoorhenImportFSigFMenuItem glRef={props.glRef} molecules={props.molecules} setPopoverIsShown={() => {}} selectedMolNo={selectedMolecule.molNo} maps={props.maps} commandCentre={props.commandCentre} />
+                     <MoorhenImportFSigFMenuItem molecules={props.molecules} setPopoverIsShown={() => {}} selectedMolNo={selectedMolecule.molNo} maps={props.maps} commandCentre={props.commandCentre} />
                      <MenuItem disabled={!props.enableTimeCapsule} onClick={() => handleCreateBackup()}>Create backup</MenuItem>
                      <hr></hr>
                      <div style={{ display:'flex', justifyContent: 'center' }}>
@@ -248,8 +217,7 @@ export const MoorhenContextMenu = (props) => {
                       <MoorhenJedFlipFalseButton mode='context' {...collectedProps}/>
                       <MoorhenJedFlipTrueButton mode='context' {...collectedProps}/>
                       <MoorhenRotateTranslateZoneButton mode='context' {...collectedProps} />
-                      <MoorhenDragAtomsButton mode='context' {...collectedProps}
-                      />
+                      <MoorhenDragAtomsButton mode='context' {...collectedProps} />
                       <MoorhenAddAltConfButton mode ='context' {...collectedProps} />
                       <MoorhenConvertCisTransButton mode='context' {...collectedProps} />
                      </FormGroup>
@@ -258,9 +226,9 @@ export const MoorhenContextMenu = (props) => {
                     </>
                     :
                     <>
-                      <MoorhenAddSimpleMenuItem setPopoverIsShown={() => {}} popoverPlacement={menuPosition.placement} defaultBondSmoothness={0} glRef={props.glRef} molecules={props.molecules} commandCentre={props.commandCentre} changeMolecules={props.changeMolecules} backgroundColor={props.backgroundColor}/>
-                      <MoorhenGetMonomerMenuItem setPopoverIsShown={() => {}} popoverPlacement={menuPosition.placement} defaultBondSmoothness={0} glRef={props.glRef} molecules={props.molecules} commandCentre={props.commandCentre} changeMolecules={props.changeMolecules} backgroundColor={props.backgroundColor}/>
-                      <MoorhenFitLigandRightHereMenuItem setPopoverIsShown={() => {}} popoverPlacement={menuPosition.placement} defaultBondSmoothness={0} glRef={props.glRef} maps={props.maps} molecules={props.molecules} commandCentre={props.commandCentre} changeMolecules={props.changeMolecules} backgroundColor={props.backgroundColor} />
+                      <MoorhenAddSimpleMenuItem setPopoverIsShown={() => {}} popoverPlacement={menuPosition.placement} glRef={props.glRef} molecules={props.molecules} />
+                      <MoorhenGetMonomerMenuItem setPopoverIsShown={() => {}} popoverPlacement={menuPosition.placement} defaultBondSmoothness={0} glRef={props.glRef} molecules={props.molecules} commandCentre={props.commandCentre} changeMolecules={props.changeMolecules} monomerLibraryPath={props.monomerLibraryPath} />
+                      <MoorhenFitLigandRightHereMenuItem setPopoverIsShown={() => {}} popoverPlacement={menuPosition.placement} defaultBondSmoothness={0} glRef={props.glRef} maps={props.maps} molecules={props.molecules} commandCentre={props.commandCentre} changeMolecules={props.changeMolecules} backgroundColor={props.backgroundColor} monomerLibraryPath={props.monomerLibraryPath} />
                       <MoorhenBackgroundColorMenuItem setPopoverIsShown={() => { }} popoverPlacement={menuPosition.placement} backgroundColor={props.backgroundColor} setBackgroundColor={props.setBackgroundColor}/>
                       <MenuItem disabled={!props.enableTimeCapsule} onClick={() => handleCreateBackup()}>Create backup</MenuItem>
                     </>

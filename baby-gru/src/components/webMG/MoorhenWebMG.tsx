@@ -1,14 +1,15 @@
 import React, { useEffect, useCallback, forwardRef, useState, useRef } from 'react';
 import { Toast, ToastContainer } from 'react-bootstrap';
 import { MGWebGL } from '../../WebGLgComponents/mgWebGL.js';
-import { MoorhenColourRules } from "../modal/MoorhenColourRules.js"
-import { MoorhenContextMenu } from "../context-menu/MoorhenContextMenu.js"
+import { MoorhenColourRules } from "../modal/MoorhenColourRules"
+import { MoorhenContextMenu } from "../context-menu/MoorhenContextMenu"
 import { cidToSpec, convertViewtoPx } from '../../utils/MoorhenUtils';
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { libcootApi } from '../../types/libcoot.js';
+import { libcootApi } from '../../types/libcoot';
 
 interface MoorhenWebMGPropsInterface {
+    monomerLibraryPath: string;
     timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     molecules: moorhen.Molecule[];
@@ -45,7 +46,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const [mapLineWidth, setMapLineWidth] = useState<number>(0.75)
     const [connectedMolNo, setConnectedMolNo] = useState<null | moorhen.ConnectMapsInfo>(null)
     const [scoresToastContents, setScoreToastContents] = useState<null | JSX.Element>(null)
-    const [showContextMenu, setShowContextMenu] = useState<boolean>(false)
+    const [showContextMenu, setShowContextMenu] = useState<false | moorhen.AtomRightClickEventInfo>(false)
     const hBondsDirty = useRef<boolean>(false)
     const busyDrawingHBonds = useRef<boolean>(false)
 
@@ -371,7 +372,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         }
     }, [glRef, props.width, props.height])
 
-    const handleRightClick = useCallback((e) => {
+    const handleRightClick = useCallback((e: moorhen.AtomRightClickEvent) => {
         setShowContextMenu({ ...e.detail })
     }, [])
 
@@ -546,7 +547,8 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
                 {showContextMenu &&
                 <MoorhenContextMenu 
-                    glRef={glRef}
+                    glRef={glRef as React.RefObject<webGL.MGWebGL>}
+                    monomerLibraryPath={props.monomerLibraryPath}
                     viewOnly={props.viewOnly}
                     urlPrefix={props.urlPrefix}
                     commandCentre={props.commandCentre}

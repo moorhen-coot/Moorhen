@@ -64,7 +64,6 @@ export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moor
         if (!selectedFragmentRef.current.cid) {
             return
         }
-        chosenMolecule.current.hideCid(selectedFragmentRef.current.cid, props.glRef)
         
         /* Copy the component to move into a new molecule */
         const newMolecule = await molecule.copyFragmentUsingCid(selectedFragmentRef.current.cid, props.backgroundColor, props.defaultBondSmoothness, props.glRef, false)
@@ -75,21 +74,25 @@ export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moor
             command: 'change_to_next_rotamer',
             commandArgs: [newMolecule.molNo, selectedFragmentRef.current.cid, selectedFragmentRef.current.alt_conf],
         }, true) as moorhen.WorkerResponse<libcootApi.RotamerInfoJS>
-        
-        /* redraw */
-        newMolecule.drawSelection(props.glRef, selectedFragmentRef.current.cid)
         await newMolecule.updateAtoms()
-        Object.keys(molecule.displayObjects)
-            .filter(style => { return ['CRs', 'CBs', 'ligands', 'gaussian', 'MolecularSurface', 'VdWSurface', 'DishyBases', 'VdwSpheres', 'allHBonds'].includes(style) })
-            .forEach(async style => {
-                if (molecule.displayObjects[style].length > 0 &&
-                    molecule.displayObjects[style][0].visible) {
-                    await newMolecule.drawWithStyleFromAtoms(style, props.glRef)
-                }
-        })
         
-        fragmentMolecule.current = newMolecule
-        props.changeMolecules({ action: "Add", item: newMolecule })
+        /* redraw after delay so that the context menu does not refresh empty */
+        setTimeout(() => {
+            chosenMolecule.current.hideCid(selectedFragmentRef.current.cid, props.glRef)
+            newMolecule.drawSelection(props.glRef, selectedFragmentRef.current.cid)
+            Object.keys(molecule.displayObjects)
+                .filter(style => { return ['CRs', 'CBs', 'ligands', 'gaussian', 'MolecularSurface', 'VdWSurface', 'DishyBases', 'VdwSpheres', 'allHBonds'].includes(style) })
+                .forEach(async style => {
+                    if (molecule.displayObjects[style].length > 0 &&
+                        molecule.displayObjects[style][0].visible) {
+                        await newMolecule.drawWithStyleFromAtoms(style, props.glRef)
+                    }
+            })
+           
+            fragmentMolecule.current = newMolecule
+            props.changeMolecules({ action: "Add", item: newMolecule })
+        }, 1)
+        
         return rotamerInfo
     }
     

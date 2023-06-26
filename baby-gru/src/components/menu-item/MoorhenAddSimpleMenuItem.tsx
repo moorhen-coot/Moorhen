@@ -8,10 +8,6 @@ import { webGL } from "../../types/mgWebGL";
 export const MoorhenAddSimpleMenuItem = (props: {
     glRef: React.RefObject<webGL.MGWebGL>
     popoverPlacement?: 'left' | 'right'
-    height: string;
-    width: string;
-    allowAny: boolean;
-    label: string;
     molecules: moorhen.Molecule[];
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
