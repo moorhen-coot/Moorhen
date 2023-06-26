@@ -10,6 +10,7 @@ import { MoorhenImportFSigFMenuItem } from "../menu-item/MoorhenImportFSigFMenuI
 import { MoorhenBackupsMenuItem } from "../menu-item/MoorhenBackupsMenuItem"
 import { MoorhenImportMapCoefficientsMenuItem } from "../menu-item/MoorhenImportMapCoefficientsMenuItem"
 import { MoorhenDeleteEverythingMenuItem } from "../menu-item/MoorhenDeleteEverythingMenuItem"
+import { MoorhenQuerySequenceModal } from "../modal/MoorhenQuerySequenceModal"
 import { MenuItem } from "@mui/material";
 import { convertViewtoPx, doDownload, readTextFile, getMultiColourRuleArgs } from "../../utils/MoorhenUtils";
 import { getBackupLabel } from "../../utils/MoorhenTimeCapsule"
@@ -23,6 +24,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     const [remoteSource, setRemoteSource] = useState<string>("PDBe")
     const [isValidPdbId, setIsValidPdbId] = useState<boolean>(true)
     const [showBackupsModal, setShowBackupsModal] = useState<boolean>(false)
+    const [showSequenceQueryModal, setShowSequenceQueryModal] = useState<boolean>(false)
     const [backupKeys, setBackupKeys] = useState<null | moorhen.backupKey[]>(null)
     const pdbCodeFetchInputRef = useRef<HTMLInputElement | null>(null);
     const fetchMapDataCheckRef = useRef<HTMLInputElement | null>(null);
@@ -487,6 +489,13 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                     
                     <hr></hr>
 
+                    <MenuItem id='query-online-services-sequence' onClick={() => {
+                        setShowSequenceQueryModal(true)
+                        document.body.click()
+                    }}>
+                        Query online services with a sequence...
+                    </MenuItem>
+
                     {!props.disableFileUploads && 
                     <>
                         <MoorhenAssociateReflectionsToMap {...menuItemProps} />
@@ -517,7 +526,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                     <MoorhenDeleteEverythingMenuItem {...menuItemProps} />
                 </div>
         </NavDropdown>
-
+        {showSequenceQueryModal && <MoorhenQuerySequenceModal setShow={setShowSequenceQueryModal} {...menuItemProps} />}
         <Modal show={showBackupsModal} onHide={() => setShowBackupsModal(false)}>
             <Modal.Header closeButton>
                 <Modal.Title>Stored molecule backups</Modal.Title>
