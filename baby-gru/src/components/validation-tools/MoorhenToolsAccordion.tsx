@@ -49,8 +49,8 @@ export const MoorhenToolsAccordion = (props: MoorhenSideBarAccordionPropsInterfa
                 <hr></hr>
                 <div style={{width: props.sideBarWidth, height: convertViewtoPx(70, props.windowHeight)}} >
                     <Row style={{padding: '0.5rem', width:'100%', display:'inline-flex'}}>
-                        <Form.Select id='validation-tool-select' ref={toolsAccordionSelectRef} onChange={handleChange}>
-                            <option key="placeHolder" value="" disabled selected hidden>Tool...</option>
+                        <Form.Select id='validation-tool-select' ref={toolsAccordionSelectRef} onChange={handleChange} defaultValue={'placeHolder'}>
+                            <option key="placeHolder" value="placeHolder" disabled hidden>Tool...</option>
                             {toolOptions.map(option => <option key={option.label} value={option.label}>{option.label}</option>)}
                         </Form.Select>
                     </Row>
