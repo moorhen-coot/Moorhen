@@ -40,7 +40,7 @@ module.exports = (env, argv) => {
     plugins:[
       new webpack.DefinePlugin({
         process: {env: {}}
-      }),  
+      }), 
       new MiniCssExtractPlugin({
         filename: 'moorhen.css',
         chunkFilename: '[id].css',
@@ -56,11 +56,6 @@ module.exports = (env, argv) => {
               ignore: ['**/monomers/**', '**/pixmaps/**']
             }
           },
-          {
-            from: path.resolve(paths.cloud, 'webcoot.html'),
-            to: paths.dist,
-            toType: 'dir',
-          },
           ...paths.minimalMonomerLib.map(monomer => {
             return {
               from: path.resolve(paths.monomerLibraryPath, monomer.charAt(0).toLowerCase(), `${monomer}.cif`),
@@ -74,11 +69,20 @@ module.exports = (env, argv) => {
               to: path.resolve(paths.dist, 'baby-gru', 'pixmaps'),
               toType: 'dir',  
             }
-          })
+          }),
+          env.destination === 'npmRegistry' ? {
+            from: path.resolve(__dirname, 'package.json'),
+            to: paths.dist,
+            toType: 'dir',
+          } : env.destination === 'ccp4Cloud' &&  {
+            from: path.resolve(paths.cloud, 'webcoot.html'),
+            to: paths.dist,
+            toType: 'dir',
+          }
         ],
       }),
     ],
-    entry: path.join(paths.cloud, 'webcoot.js'),
+    entry: env.destination === 'npmRegistry' ? path.join(paths.src, 'moorhen.ts') : path.join(paths.cloud, 'webcoot.js'),
     target: 'web',
     optimization: {
       minimize: argv.mode === 'development' ? false : true
@@ -107,7 +111,7 @@ module.exports = (env, argv) => {
         },
         {
           test: /\.js$/,
-          exclude: [/node_modules/, path.resolve(paths.src, 'index.js')],
+          exclude: [/node_modules/, path.resolve(paths.src, 'index.js'), paths.publicBabyGru],
           loader: 'babel-loader',
         },
         {
@@ -127,6 +131,10 @@ module.exports = (env, argv) => {
         fs: false
       },
       extensions: ['.ts', '.tsx', '.js'],
-    }  
+    },
+    externals: env.destination === 'npmRegistry' ? {
+      'react': 'react',
+      'react-dom': 'react-dom',
+    } : { }
   }
 }
