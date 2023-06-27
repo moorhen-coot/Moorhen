@@ -526,7 +526,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                     <MoorhenDeleteEverythingMenuItem {...menuItemProps} />
                 </div>
         </NavDropdown>
-        {showSequenceQueryModal && <MoorhenQuerySequenceModal setShow={setShowSequenceQueryModal} {...menuItemProps} />}
+        {showSequenceQueryModal && <MoorhenQuerySequenceModal setShow={setShowSequenceQueryModal} fetchMoleculeFromURL={fetchMoleculeFromURL} {...menuItemProps} />}
         <Modal show={showBackupsModal} onHide={() => setShowBackupsModal(false)}>
             <Modal.Header closeButton>
                 <Modal.Title>Stored molecule backups</Modal.Title>
