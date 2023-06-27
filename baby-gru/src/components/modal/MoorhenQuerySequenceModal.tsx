@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import Draggable from "react-draggable";
 import { Backdrop, IconButton } from '@mui/material';
-import { CloseOutlined } from "@mui/icons-material";
-import { convertViewtoPx } from '../../utils/MoorhenUtils';
-import { Card, Row, Col, Form, FormSelect, Button, Spinner } from "react-bootstrap";
+import { ArrowBackIosOutlined, ArrowForwardIosOutlined, CloseOutlined, FirstPageOutlined } from "@mui/icons-material";
+import { convertViewtoPx, getMultiColourRuleArgs } from '../../utils/MoorhenUtils';
+import { Card, Row, Col, Form, FormSelect, Button, Spinner, Stack } from "react-bootstrap";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
@@ -22,21 +22,22 @@ export const MoorhenQuerySequenceModal = (props: {
     defaultBondSmoothness: number;
     monomerLibraryPath: string;
     changeMolecules: (arg0: moorhen.MolChange<MoorhenMolecule>) => void;
+    fetchMoleculeFromURL: (url: string, molName: string) => Promise<moorhen.Molecule>
 }) => {
 
     const [opacity, setOpacity] = useState(0.5)
     const [selectedModel, setSelectedModel] = useState<null | number>(null)
     const [selectedChain, setSelectedChain] = useState<string | null>(null)
-    const [selectedSource, setSelectedSource] = useState<string | null>(null)
+    const [selectedSource, setSelectedSource] = useState<string>('PDB')
     const [queryResults, setQueryResults] = useState<JSX.Element[]>(null)
+    const [currentResultsPage, setCurrentResultsPage] = useState<number>(0)
+    const [numberOfHits, setNumberOfHits] = useState<number>(0)
     const [seqIdCutoff, setSeqIdCutoff] = useState<number>(90)
     const [eValCutoff, setEValCutoff] = useState<number>(0.1)
-    const [maxNoHits, setMaxNoHits] = useState<number>(10)
     const [busy, setBusy] = useState<boolean>(false);
     const timerRef = useRef<any>(null);
     const cachedSeqIdCutoff = useRef<number | null>(null);
     const cachedEValCutoff = useRef<number | null>(null);
-    const cachedMaxNoHits = useRef<number | null>(null);
     const moleculeSelectRef = useRef<HTMLSelectElement>();
     const chainSelectRef = useRef<HTMLSelectElement>();
     const sourceSelectRef =  useRef<HTMLSelectElement>();
@@ -54,7 +55,7 @@ export const MoorhenQuerySequenceModal = (props: {
         setSelectedSource(evt.target.value)
     }
 
-    const doPDBQuery = async (querySequence: string, seqIdCutoff: number = 0.9, eValCutoff: number = 0.1, maxNumberHits: number = 10) => {
+    const doPDBQuery = async (querySequence: string, start: number, seqIdCutoff: number = 0.9, eValCutoff: number = 0.1, resultsType: string = 'experimental') => {
         if (!querySequence) {
             return
         }
@@ -71,14 +72,17 @@ export const MoorhenQuerySequenceModal = (props: {
               }
             },
             "request_options": {
+                "results_content_type": [
+                    resultsType
+                ],
                 "scoring_strategy": "sequence",
                 "sort": [{
                     "sort_by": "score",
                     "direction": "desc"
                 }],
                 "paginate": {
-                    "start": 0,
-                    "rows": maxNumberHits
+                    "start": start,
+                    "rows": 10
                 }
             },
             "return_type": "polymer_entity"
@@ -87,63 +91,107 @@ export const MoorhenQuerySequenceModal = (props: {
         try {
             const reponse = await fetch(`https://search.rcsb.org/rcsbsearch/v2/query?json=${encodeURIComponent(JSON.stringify(searchParams))}`)
             const result = await reponse.json()
-            return result.result_set as { [id: number]: { identifier: string; score: number; } }
+            return result
         } catch (err) {
             console.log(err)
         }
     }
 
-    const getPDBHitCard = async (polimerEntity: string) => {
+    const fetchAndSuperpose = async (polimerEntity: string, coordUrl: string, chainId: string, source: string) => {
+        const newMolecule = await props.fetchMoleculeFromURL(coordUrl, polimerEntity)
+        if (source === 'AFDB') {
+            const newRule = [{
+                commandInput: {
+                    message:'coot_command',
+                    command: 'add_colour_rules_multi', 
+                    returnType:'status',
+                    commandArgs: getMultiColourRuleArgs(newMolecule, 'af2-plddt')
+                },
+                isMultiColourRule: true,
+                ruleType: 'af2-plddt',
+                label: `//*`
+            }]
+            newMolecule.setColourRules(props.glRef, newRule, false)
+        } 
+        await props.commandCentre.current.cootCommand({
+            message: 'coot_command',
+            command: 'SSM_superpose',
+            returnType: 'superpose_results',
+            commandArgs: [
+                parseInt(moleculeSelectRef.current.value),
+                chainSelectRef.current.value,
+                newMolecule.molNo,
+                chainId
+            ],
+        })                            
+        newMolecule.setAtomsDirty(true)
+        await newMolecule.redraw(props.glRef)
+        newMolecule.centreOn(props.glRef, '/*/*/*/*', true)
+    }
+
+    const getPDBHitCard = async (polimerEntity: string, source: string = 'PDB') => {
         if (!polimerEntity) {
             return
         }
         
-        const pdbCode = polimerEntity.slice(0, 4)
-        const entityId = polimerEntity.slice(5)
+        let label: string
+        let coordUrl: string
         let resolution: number
         let depositionYear: number
         let chains: string[]
-        try {
+
+        if (source === 'AFDB') {
+
+            label = polimerEntity
+            let entryId = polimerEntity.split('_')
+            const entityId = entryId.pop()
+
             const results = await Promise.all([
-                fetch(`https://data.rcsb.org/rest/v1/core/entry/${pdbCode}`).then(result => result.json()),
-                fetch(`https://data.rcsb.org/rest/v1/core/polymer_entity/${pdbCode}/${entityId}`).then(result => result.json())
+                fetch(`https://data.rcsb.org/rest/v1/core/entry/${entryId.join('_')}`).then(result => result.json()),
+                fetch(`https://data.rcsb.org/rest/v1/core/polymer_entity/${entryId.join('_')}/${entityId}`).then(result => result.json())
             ])
 
             const [entryResult, polymerResult] = results
 
-            resolution = entryResult.rcsb_entry_info.resolution_combined[0].toFixed(1)
-            const depositionDate = new Date(entryResult.rcsb_accession_info.initial_release_date)
-            depositionYear = depositionDate.getFullYear()
+            coordUrl = entryResult['rcsb_comp_model_provenance']['source_url']
             chains = polymerResult.rcsb_polymer_entity_container_identifiers.auth_asym_ids
-        } catch (err) {
-            console.log(err)
+
+        } else {
+
+            const pdbCode = polimerEntity.slice(0, 4)
+            const entityId = polimerEntity.slice(5)
+            coordUrl = `https://files.rcsb.org/download/${pdbCode}.pdb`
+            
+            try {
+
+                const results = await Promise.all([
+                    fetch(`https://data.rcsb.org/rest/v1/core/entry/${pdbCode}`).then(result => result.json()),
+                    fetch(`https://data.rcsb.org/rest/v1/core/polymer_entity/${pdbCode}/${entityId}`).then(result => result.json())
+                ])
+    
+                const [entryResult, polymerResult] = results
+    
+                resolution = entryResult.rcsb_entry_info.resolution_combined[0].toFixed(1)
+                const depositionDate = new Date(entryResult.rcsb_accession_info.initial_release_date)
+                depositionYear = depositionDate.getFullYear()
+                chains = polymerResult.rcsb_polymer_entity_container_identifiers.auth_asym_ids
+                label = `${pdbCode}:${chains[0]} - ${resolution}Å - (${depositionYear})`
+            
+            } catch (err) {
+                console.log(err)
+            }
         }
         
-        return <Card key={pdbCode} style={{marginTop: '0.5rem'}}>
+        return <Card key={polimerEntity} style={{marginTop: '0.5rem'}}>
                     <Card.Body style={{padding:'0.5rem'}}>
                         <Row style={{display:'flex', justifyContent:'between'}}>
                             <Col style={{alignItems:'center', justifyContent:'left', display:'flex'}}>
                                 <span>
-                                    {`${pdbCode}:${chains[0]} - ${resolution}Å - (${depositionYear})`}
+                                    {label}
                                 </span>
                             </Col>
                             <Col className='col-3' style={{margin: '0', padding:'0', justifyContent: 'right', display:'flex'}}>
-                                <Button style={{marginRight:'0.5rem'}} onClick={async () => { 
-                                    const newMolecule = await fetchMoleculeFromURL(`https://pdb-redo.eu/db/${pdbCode}/${pdbCode}_final.pdb`, polimerEntity) 
-                                    await props.commandCentre.current.cootCommand({
-                                        message: 'coot_command',
-                                        command: 'SSM_superpose',
-                                        returnType: 'superpose_results',
-                                        commandArgs: [
-                                            parseInt(moleculeSelectRef.current.value),
-                                            chainSelectRef.current.value,
-                                            newMolecule.molNo,
-                                            chains[0]
-                                        ],
-                                    })                            
-                                    newMolecule.setAtomsDirty(true)
-                                    await newMolecule.redraw(props.glRef)
-                                }}>
+                                <Button style={{marginRight:'0.5rem'}} onClick={() => { fetchAndSuperpose(polimerEntity, coordUrl, chains[0], source) }}>
                                     Fetch
                                 </Button>
                             </Col>
@@ -162,61 +210,53 @@ export const MoorhenQuerySequenceModal = (props: {
         }
     }, [props.molecules.length])
 
-    const fetchMoleculeFromURL = (url: RequestInfo | URL, molName: string): Promise<moorhen.Molecule> => {
-        const newMolecule = new MoorhenMolecule(props.commandCentre, props.monomerLibraryPath)
-        newMolecule.setBackgroundColour(props.backgroundColor)
-        newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
-        return new Promise(async (resolve, reject) => {
-            try {
-                await newMolecule.loadToCootFromURL(url, molName)
-                await newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef)
-                props.changeMolecules({ action: "Add", item: newMolecule })
-                newMolecule.centreOn(props.glRef, '/*/*/*/*', false)
-                resolve(newMolecule)
-            } catch (err) {
-                console.log(err)
-            }   
-        })
-    }
-
-    const queryOnlineServices = useCallback(async (seqId: number, eVal: number, maxHits: number) => {
-        if (seqId !== seqIdCutoff || eVal !== eValCutoff || maxHits !== maxNoHits) {
+    const queryOnlineServices = useCallback(async (seqId: number, eVal: number) => {
+        if (seqId !== seqIdCutoff || eVal !== eValCutoff) {
             // User didn't finish moving the slider...
             return
         }  else if (!moleculeSelectRef.current.value || !chainSelectRef.current.value) {
             setQueryResults(null)
             return
         }
+        
         setBusy(true)
         const molecule = props.molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
         const sequence = molecule.sequences.find(sequence => sequence.chain === chainSelectRef.current.value)
-        let results
-        if (sourceSelectRef.current.value === 'PDB') {
-            results = await doPDBQuery(sequence.sequence.map(residue => residue.resCode).join(''), seqIdCutoff/100, eValCutoff, maxHits) as { [id: number]: { identifier: string; score: number; } }
-            if (results) {
-                const resultCards = await Promise.all(
-                    Object.keys(results).map(key => getPDBHitCard(results[key].identifier))
-                )
-                setQueryResults(resultCards)
-            } else {
-                setQueryResults(null)
-            }
+        let results: { result_set: { [id: number]: { identifier: string; score: number; } }, total_count: number }
+        
+        results = await doPDBQuery(sequence.sequence.map(residue => residue.resCode).join(''), currentResultsPage * 10, seqIdCutoff / 100, eValCutoff, selectedSource === 'PDB' ? 'experimental' : 'computational')
+        if (!results) {
+            setNumberOfHits(0)
+            setQueryResults(null)
+            setBusy(false)
+            return
         }
+
+        const resultCards = await Promise.all(
+            Object.keys(results.result_set).map(key => getPDBHitCard(results.result_set[key].identifier, selectedSource))
+        )
+
+        setNumberOfHits(results.total_count)
+        setQueryResults(resultCards)
+        
         setBusy(false)
 
-    }, [seqIdCutoff, eValCutoff, maxNoHits, props.molecules])
+    }, [seqIdCutoff, eValCutoff, props.molecules, currentResultsPage, selectedSource])
 
     useEffect(() => {
         cachedSeqIdCutoff.current = seqIdCutoff
         cachedEValCutoff.current = eValCutoff
-        cachedMaxNoHits.current = maxNoHits
         timerRef.current = setTimeout(() => {
-            queryOnlineServices(cachedSeqIdCutoff.current, cachedEValCutoff.current, cachedMaxNoHits.current);
+            queryOnlineServices(cachedSeqIdCutoff.current, cachedEValCutoff.current);
         }, 1000);
+
+    }, [selectedModel, selectedChain, selectedSource, eValCutoff, seqIdCutoff, currentResultsPage])
+
+    useEffect(() => {
         
-
-    }, [selectedModel, selectedChain, selectedSource, eValCutoff, seqIdCutoff, maxNoHits])
-
+        setCurrentResultsPage(0)
+        
+    }, [numberOfHits])
 
     return <Draggable handle=".handle">
         <Card
@@ -247,6 +287,7 @@ export const MoorhenQuerySequenceModal = (props: {
                             <Form.Label>Source</Form.Label>
                             <FormSelect size="sm" ref={sourceSelectRef} defaultValue={'PDB'} onChange={handleSourceChange}>
                                 <option value='PDB' key='PDB'>PDB</option>
+                                <option value='AFDB' key='AFDB'>AFDB</option>
                             </FormSelect>
                         </Form.Group>
                     </Col>
@@ -262,18 +303,27 @@ export const MoorhenQuerySequenceModal = (props: {
                             <MoorhenSlider minVal={1} maxVal={100} logScale={false} sliderTitle="Seq. Id. cutoff" initialValue={90} externalValue={seqIdCutoff} allowFloats={false} setExternalValue={setSeqIdCutoff}/>
                         </Form.Group>
                     </Col>
-                    <Col style={{justifyContent:'center', alignContent:'center', alignItems:'center', display:'flex'}}>
-                        <Form.Group controlId="maxNoHitsSlider" style={{margin:'0.5rem', width: '100%'}}>
-                            <MoorhenSlider minVal={1} maxVal={50} logScale={false} sliderTitle="Max no. hits shown" initialValue={10} externalValue={maxNoHits} allowFloats={false} setExternalValue={setMaxNoHits}/>
-                        </Form.Group>
-                    </Col>
                 </Row>
                 <hr></hr>
                 <Row>
-                    {queryResults?.length > 0 ? <span>Showing {queryResults.length} hits</span> : null}
+                    {queryResults?.length > 0 ? <span>Found {numberOfHits} hits</span> : null}
                     {queryResults?.length > 0 ? queryResults : <span>No results found...</span>}
                 </Row>
             </Card.Body>
+            <Card.Footer style={{display: 'flex', alignItems: 'center', justifyContent: 'right'}}>
+                <Stack gap={2} direction='horizontal' style={{paddingTop: '0.5rem', alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
+                    {queryResults?.length > 0 ? <span>Page {currentResultsPage+1} of {Math.ceil(numberOfHits/10)}</span> : null}
+                    <Button variant='primary' onClick={() => setCurrentResultsPage(0)}>
+                        <FirstPageOutlined/>
+                    </Button>
+                    <Button variant='primary' disabled={currentResultsPage === 0} onClick={() => setCurrentResultsPage((prev) => prev-1)}>
+                        <ArrowBackIosOutlined/>
+                    </Button>
+                    <Button variant='primary' disabled={currentResultsPage === Math.ceil(numberOfHits/10) - 1} onClick={() => setCurrentResultsPage((prev) => prev+1)}>
+                        <ArrowForwardIosOutlined/>
+                    </Button>
+                </Stack>
+            </Card.Footer>
         </Card>
     </Draggable>
 }

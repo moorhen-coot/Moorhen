@@ -18,6 +18,12 @@ import { webGL } from "../types/mgWebGL"
 import { gemmi } from "../types/gemmi"
 import { libcootApi } from '../types/libcoot';
 
+/**
+ * Represents a molecule
+ * @constructor
+ * @param {moorhen.CommandCentre} commandCentre - A command centre instance
+ * @param {string} monomerLibraryPath - A string with the path to the monomer library, relative to the root of the app
+ */
 export class MoorhenMolecule implements moorhen.Molecule {
     
     type: string;
