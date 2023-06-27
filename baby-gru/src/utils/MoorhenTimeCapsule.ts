@@ -10,6 +10,19 @@ export const getBackupLabel = (key: moorhen.backupKey): string => {
     return `${moleculeNamesLabel} -- ${dateString} -- ${key.type === 'automatic' ? 'AUTO' : 'MANUAL'}`
 }
 
+/**
+ * Represents a time capsule with session backups
+ * @constructor
+ * @param {React.RefObject<moorhen.Molecule[]>} moleculesRef - A react reference to the list of loaded molecules
+ * @param {React.RefObject<moorhen.Map[]>} mapsRef - A react reference to the list of loaded maps
+ * @param {React.RefObject<moorhen.Map>} activeMapRef - A react reference to the currently active map
+ * @param {React.RefObject<webGL.MGWebGL>} glRef - A react reference to the molecular graphics renderer
+ * @param {moorhen.Context} context - The context provider of the app
+ * @property {string} version - Version number of the current time capsule
+ * @property {boolean} disableBackups - Disable time capsule
+ * @property {number} maxBackupCount - Maximum number of automatic backups to store in local storage
+ * @property {number} modificationCountBackupThreshold - Number of modifications to trigger an automatic backup
+ */
 export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
 
     moleculesRef: React.RefObject<moorhen.Molecule[]>;
@@ -40,6 +53,10 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         this.storageInstance = null    
     }
 
+    /**
+     * Intiate the time capsule
+     * @returns {Promise<void>}
+     */
     init(): Promise<void> {
         if (this.storageInstance) {
             return this.checkVersion()
@@ -49,6 +66,9 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         }
     }
 
+    /**
+     * Check if the current version is compatible with that stored in local storage
+     */
     async checkVersion(): Promise<void> {
         const keyString = JSON.stringify({type: 'version'})
         const storedVersion = await this.storageInstance.getItem(keyString)
@@ -58,6 +78,11 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         }
     }
 
+    /**
+     * Update metadata files currently stored in the local storage. It might be required to call this function before
+     * using {@link MoorhenTimeCapsule.fetchSession}
+     * @returns {Promise<string[]>} Backup keys for the new metadata files that were created if any
+     */
     async updateDataFiles(): Promise<(string | void)[]> {
         const allKeyStrings = await this.storageInstance.keys()
         const allKeys: moorhen.backupKey[] = allKeyStrings.map((keyString: string) => JSON.parse(keyString))
@@ -88,6 +113,11 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         return Promise.all(promises)
     }
 
+    /**
+     * Fetch a backup session
+     * @param {boolean} [includeAdditionalMapData=true] - True if map data should be fetched and included in the resulting session
+     * @returns {Promise<moorhen.backupSession>} A backup for the current session
+     */
     async fetchSession (includeAdditionalMapData: boolean = true): Promise<moorhen.backupSession> {
         this.busy = true
         const keyStrings = await this.storageInstance.keys()
@@ -199,6 +229,11 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         return session
     }
 
+    /**
+     * Add a modification to the modification counter and create a backup if the modification count has reached
+     * the modification threshold
+     * @returns {Promise<string>} Backup key if a backup was created
+     */
     async addModification(): Promise<string> {
         this.modificationCount += 1
         if (this.modificationCount >= this.modificationCountBackupThreshold && !this.disableBackups) {
@@ -226,6 +261,9 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         }
     }
 
+    /**
+     * Remove the oldest automatic backup if the number of backups in the local storage has reached the threshold
+     */
     async cleanupIfFull(): Promise<void> {
         const keyStrings: string[] = await this.storageInstance.keys()
         const keys: moorhen.backupKey[] = keyStrings.map((keyString: string) => JSON.parse(keyString)).filter(key => key.type === 'automatic')
@@ -237,6 +275,9 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         }
     }
 
+    /**
+     * Remove orphan metadata files with no backup session associated
+     */
     async cleanupUnusedDataFiles(): Promise<void> {
         const allKeyStrings = await this.storageInstance.keys()
         const allKeys: moorhen.backupKey[] = allKeyStrings.map((keyString: string) => JSON.parse(keyString))
@@ -251,6 +292,12 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         }))
     }
 
+    /**
+     * Create a session backup
+     * @param {string} key - Backup key
+     * @param {string} value - JSON structure with session data
+     * @returns {string} Backup key 
+     */
     async createBackup(key: string, value: string): Promise<string> {
         if (!this.disableBackups) {
             try {
@@ -264,6 +311,10 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         }
     }
 
+    /**
+     * Retrieve a session backup
+     * @param {string} key - Backup key
+     */
     async retrieveBackup(key: string): Promise<string | ArrayBuffer> {
         try {
             return await this.storageInstance.getItem(key)
@@ -272,6 +323,10 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         }
     }
 
+    /**
+     * Retrieve the latest backup stored in local storage
+     * @returns {string} JSON structure with session data
+     */
     async retrieveLastBackup(): Promise<string | ArrayBuffer> {
         try {
             const sortedKeys = await this.getSortedKeys()
@@ -285,6 +340,10 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         }
     }
 
+    /**
+     * Remove a specific backup
+     * @param {string} key - Backup key 
+     */
     async removeBackup(key: string): Promise<void> {
         try {
             await this.storageInstance.removeItem(key)
@@ -293,6 +352,9 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         }
     }
 
+    /**
+     * Remove all backups
+     */
     async dropAllBackups(): Promise<void> {
         try {
             await this.storageInstance.clear()
@@ -302,6 +364,10 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         }
     }
 
+    /**
+     * Get backup keys sorted by date
+     * @returns {moorhen.backupKey[]} A list of backup keys
+     */
     async getSortedKeys(): Promise<moorhen.backupKey[]> {
         const keyStrings = await this.storageInstance.keys()
         const keys: moorhen.backupKey[] = keyStrings.map((keyString: string) => JSON.parse(keyString)).filter(key => ['automatic', 'manual'].includes(key.type))
