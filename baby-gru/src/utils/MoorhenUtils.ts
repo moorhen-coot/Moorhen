@@ -852,39 +852,28 @@ export const findConsecutiveRanges = (numbers: number[]): [number, number][] => 
     return ranges;
 }
 
-// FIXME: This only works if alpha = beta = gamma = 90 and I am not sure why...
-export function getCubeLines(xLength: number, yLength: number, zLength: number, alpha: number, beta: number, gamma: number): [{pos: [number, number, number], serial: string}, {pos: [number, number, number], serial: string}][] {
-    const coordinates: [number, number, number][] = [];
+export function getCubeLines(unitCell: gemmi.UnitCell): [{pos: [number, number, number], serial: string}, {pos: [number, number, number], serial: string}][] {
     
-    const alphaRad = (alpha * Math.PI) / 180;
-    const betaRad = (beta * Math.PI) / 180;
-    const gammaRad = (gamma * Math.PI) / 180;
+    const orthogonalize = (x: number, y: number, z: number) => {
+        const fractPosition = new window.CCP4Module.Fractional(x, y, z)
+        const orthPosition = unitCell.orthogonalize(fractPosition)
+        const result = [orthPosition.x, orthPosition.y, orthPosition.z] as [number, number, number]
+        fractPosition.delete()
+        orthPosition.delete()
+        return result
+    }
 
     const vertices: [number, number, number][] = [
       [0, 0, 0],
-      [xLength, 0, 0],
-      [xLength, yLength, 0],
-      [0, yLength, 0],
-      [0, 0, zLength],
-      [xLength, 0, zLength],
-      [xLength, yLength, zLength],
-      [0, yLength, zLength]
+      [1, 0, 0],
+      [1, 1, 0],
+      [0, 1, 0],
+      [0, 0, 1],
+      [1, 0, 1],
+      [1, 1, 1],
+      [0, 1, 1]
     ];
-    
-    vertices.forEach(vertex => {
-        const [x, y, z] = vertex;
-  
-        const rotatedY = y * Math.cos(alphaRad) - z * Math.sin(alphaRad);
-        const rotatedZ = y * Math.sin(alphaRad) + z * Math.cos(alphaRad);
-        const rotatedX = x * Math.cos(betaRad) + rotatedZ * Math.sin(betaRad);
-
-        const rotatedY2 = rotatedX * Math.sin(gammaRad) + rotatedY * Math.cos(gammaRad);
-        const rotatedZ2 = -x * Math.sin(betaRad) + rotatedZ * Math.cos(betaRad);
-        const rotatedX2 = rotatedX * Math.cos(gammaRad) - rotatedY * Math.sin(gammaRad);
-        
-        coordinates.push([rotatedX2, rotatedY2, rotatedZ2]);
-    })
-  
+     
     const edges: [number, number][] = [
       [0, 1],
       [1, 2],
@@ -902,13 +891,13 @@ export function getCubeLines(xLength: number, yLength: number, zLength: number, 
 
     const lines: [{pos: [number, number, number], serial: string}, {pos: [number, number, number], serial: string}][] = [];
     edges.forEach(edge => {
-      const [v1Index, v2Index] = edge;
+      const [v1Index, v2Index] = edge
       const v1 = {
-        pos: coordinates[v1Index],
+        pos: orthogonalize(...vertices[v1Index]),
         serial: 'unit_cell'
       };
       const v2 = {
-        pos: coordinates[v2Index],
+        pos: orthogonalize(...vertices[v2Index]),
         serial: 'unit_cell'
       };
       lines.push([v1, v2]);

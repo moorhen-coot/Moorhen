@@ -72,6 +72,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         originNeighbours: moorhen.DisplayObject[];
         originNeighboursHBond: moorhen.DisplayObject[];
         originNeighboursBump: moorhen.DisplayObject[];
+        unitCell:  moorhen.DisplayObject[];
         transformation: { origin: [number, number, number], quat: any, centre: [number, number, number] }
     };
     uniqueId: string;
@@ -127,6 +128,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             originNeighbours: [],
             originNeighboursHBond: [],
             originNeighboursBump: [],
+            unitCell: [],
             transformation: { origin: [0, 0, 0], quat: null, centre: [0, 0, 0] }
         }
         this.uniqueId = guid()
@@ -1211,15 +1213,14 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
     drawUnitCell(glRef: React.RefObject<webGL.MGWebGL>) {
         const unitCell = this.gemmiStructure.cell
-
-        const lines = getCubeLines(unitCell.a, unitCell.b, unitCell.c, unitCell.alpha, unitCell.beta, unitCell.gamma)
-
+        const lines = getCubeLines(unitCell)
         unitCell.delete()
 
         let objects = [
-            gemmiAtomPairsToCylindersInfo(lines, 0.1, { unit_cell: [0.7, 0.4, 0.25, 1.0] }, false, 0, 10000, false)
+            gemmiAtomPairsToCylindersInfo(lines, 0.1, { unit_cell: [0.7, 0.4, 0.25, 1.0] }, false, 0, 99999, false) 
         ]
-        this.addBuffersOfStyle(glRef, objects, 'originNeighboursBump')
+        
+        this.addBuffersOfStyle(glRef, objects, 'unitCell')
         glRef.current.drawScene()
     }
 
