@@ -952,6 +952,7 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     ;
 
     class_<gemmi::Fractional, base<gemmi::Vec3>>("Fractional")
+    .constructor<float, float, float>()
     .function("wrap_to_unit",&gemmi::Fractional::wrap_to_unit)
     .function("wrap_to_zero",&gemmi::Fractional::wrap_to_zero)
     .function("round",&gemmi::Fractional::round)

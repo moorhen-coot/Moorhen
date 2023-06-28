@@ -22,6 +22,7 @@ export namespace libcootApi {
         Selection: { new(cid: string): gemmi.Selection };
         NeighborSearch: { new(model: gemmi.Model, unitCell: gemmi.UnitCell, radius: number): gemmi.NeighborSearch };
         Position: { new(x: number, y: number, z: number): gemmi.Position };
+        Fractional: { new(x: number, y: number, z: number): gemmi.Fractional };
     }
     type AtomInfo = {
         pos: [number, number, number];

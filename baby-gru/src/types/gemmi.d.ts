@@ -18,7 +18,14 @@ export namespace gemmi {
         pos: () => Position;
     }
     interface Position extends emscriptem.instance<Position> {
-
+        x: number;
+        y: number;
+        z: number;
+    }
+    interface Fractional extends emscriptem.instance<Fractional> {
+        x: number;
+        y: number;
+        z: number;
     }
     interface Selection extends emscriptem.instance<Selection> {
         matches_model: (model: Model) => boolean;
@@ -75,6 +82,7 @@ export namespace gemmi {
         alpha: number;
         beta: number;
         gamma: number;
+        orthogonalize: (arg0: emscriptem.instance<Fractional>) => Position;
         set: (a: number, b: number, c: number, alpha: number, beta: number, gamma: number) => void
     }
     interface Structure extends emscriptem.instance<Structure> {

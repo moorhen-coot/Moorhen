@@ -13,6 +13,7 @@ export const MoorhenMoleculeSymmetrySettingsMenuItem = (props: {
 
     const [symmetryRadius, setSymmetryRadius] = useState<number>(25.0)
     const [symmetryOn, setSymmetryOn] = useState<boolean>(false)
+    const [showUnitCell, setShowUnitCell] = useState<boolean>(false)
     const isDirty = useRef<boolean>(false)
     const busyDrawing = useRef<boolean>(false)
 
@@ -42,13 +43,26 @@ export const MoorhenMoleculeSymmetrySettingsMenuItem = (props: {
         }
     }, [symmetryOn])
 
+    useEffect(() => {
+        if (showUnitCell) {
+            props.molecule.drawUnitCell(props.glRef)
+        } else {
+            props.molecule.clearBuffersOfStyle('unitCell', props.glRef)
+        }
+    }, [showUnitCell])
+
     const panelContent =
         <>
             <Form.Check
                 type="switch"
+                checked={showUnitCell}
+                onChange={() => { setShowUnitCell(!showUnitCell) }}
+                label="Show unit cell" />
+            <Form.Check
+                type="switch"
                 checked={symmetryOn}
                 onChange={() => { setSymmetryOn(!symmetryOn) }}
-                label="Show symmetry" />
+                label="Show symmetry mates" />
             <Form.Group className="mt-3" style={{ width: '10rem', margin: '0' }} controlId="MoorhenSymmetryRadiusSigmaSlider">
                 <MoorhenSlider minVal={0.01} maxVal={100} logScale={false} sliderTitle="Radius" initialValue={symmetryRadius} externalValue={symmetryRadius} setExternalValue={setSymmetryRadius} />
             </Form.Group>
