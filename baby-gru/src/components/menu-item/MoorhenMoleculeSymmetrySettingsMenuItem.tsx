@@ -48,6 +48,7 @@ export const MoorhenMoleculeSymmetrySettingsMenuItem = (props: {
             props.molecule.drawUnitCell(props.glRef)
         } else {
             props.molecule.clearBuffersOfStyle('unitCell', props.glRef)
+            props.glRef.current.drawScene()
         }
     }, [showUnitCell])
 
