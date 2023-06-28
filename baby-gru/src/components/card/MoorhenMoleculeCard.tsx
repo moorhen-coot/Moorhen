@@ -441,7 +441,7 @@ export const MoorhenMoleculeCard = (props: MoorhenMoleculeCardPropsInterface) =>
                 "#CCC"}}>
                         <FormGroup style={{ margin: "0px", padding: "0px" }} row>
                             {Object.keys(props.molecule.displayObjects)
-                                .filter(key => !['hover', 'originNeighbours', 'selection', 'transformation', 'contact_dots', 'chemical_features', 'VdWSurface'].some(style => key.includes(style)))
+                                .filter(key => !['hover', 'unitCell', 'originNeighbours', 'selection', 'transformation', 'contact_dots', 'chemical_features', 'VdWSurface'].some(style => key.includes(style)))
                                 .map(key => getCheckBox(key))}
                         </FormGroup>
                     </div>

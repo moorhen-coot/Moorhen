@@ -195,7 +195,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             await this.fetchSymmetryMatrix(glRef)
         }
         Object.keys(this.displayObjects)
-            .filter(key => !['hover', 'originNeighbours', 'selection', 'transformation', 'contact_dots', 'chemical_features', 'VdWSurface'].some(style => key.includes(style)))
+            .filter(key => !['hover', 'unitCell', 'originNeighbours', 'selection', 'transformation', 'contact_dots', 'chemical_features', 'VdWSurface'].some(style => key.includes(style)))
             .forEach(displayObjectType => {
                 if (this.displayObjects[displayObjectType].length > 0) {
                     this.displayObjects[displayObjectType].forEach((displayObject: moorhen.DisplayObject) => {
@@ -1349,7 +1349,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
     async redraw(glRef: React.RefObject<webGL.MGWebGL>): Promise<void> {
         const $this = this
         const itemsToRedraw = []
-        Object.keys($this.displayObjects).filter(style => !["transformation", 'hover', 'selection'].includes(style)).forEach(style => {
+        Object.keys($this.displayObjects).filter(style => !["transformation", 'hover', 'unitCell', 'selection'].includes(style)).forEach(style => {
             const objectCategoryBuffers = $this.displayObjects[style]
             //Note with transforamtion, not all properties of displayObjects are lists of buffer
             if (Array.isArray(objectCategoryBuffers)) {
@@ -1764,7 +1764,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         return Promise.resolve(result)
     }
 
-    hasVisibleBuffers(excludeBuffers: string[] = ['hover', 'originNeighbours', 'selection', 'transformation', 'contact_dots', 'chemical_features', 'VdWSurface']): boolean {
+    hasVisibleBuffers(excludeBuffers: string[] = ['hover', 'unitCell', 'originNeighbours', 'selection', 'transformation', 'contact_dots', 'chemical_features', 'VdWSurface']): boolean {
         const styles = Object.keys(this.displayObjects).filter(key => !excludeBuffers.some(style => key.includes(style)))
         const displayBuffers = styles.map(style => this.displayObjects[style])
         const visibleDisplayBuffers = displayBuffers.filter(displayBuffer => displayBuffer.some(buffer => buffer.visible))
