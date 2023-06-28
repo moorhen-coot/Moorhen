@@ -75,10 +75,10 @@ export const MoorhenLigandList = (props: {
             }
         }
 
-        //xmin -= 20
+        xmin -= 20
         ymin -= 20
-        //xmax -= 120
-        ymax -= 100
+        xmax += 30
+        ymax -= ymin - 10
         let svgs = doc.getElementsByTagName("svg")
         const viewBoxStr = xmin+" "+ymin+" "+xmax+" "+ymax
         for (let item of svgs) {
@@ -130,7 +130,7 @@ export const MoorhenLigandList = (props: {
                                 const keycf = `chemical_features-${ligand.chainName}/${ligand.resNum}(${ligand.resName})`
                                 return <Card key={index} style={{marginTop: '0.5rem'}}>
                                             <Card.Body style={{padding:'0.5rem'}}>
-                                                <Stack direction="horizontal" gap={2} style={{alignItems: 'center', height:'10rem'}}>
+                                                <Stack direction="horizontal" gap={2} style={{alignItems: 'center' }}>
                                                             {ligand.svg ? parse(ligand.svg) : null}
                                                             <DropdownButton
                                                                 key="dropDownButton"
