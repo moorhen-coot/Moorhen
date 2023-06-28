@@ -110,6 +110,9 @@ export namespace moorhen {
         addLigandOfType(resType: string, glRef: React.RefObject<webGL.MGWebGL>, fromMolNo?: number): Promise<WorkerResponse>;
         updateAtoms(): Promise<void>;
         rigidBodyFit(cidsString: string, mapNo: number): Promise<WorkerResponse>;
+        generateSelfRestraints(maxRadius: number): Promise<WorkerResponse>;
+        clearExtraRestraints(): Promise<WorkerResponse>;
+        refineResiduesUsingAtomCid(cid: string, mode: string, ncyc: number): Promise<WorkerResponse>;
         redo(glRef: React.RefObject<webGL.MGWebGL>): Promise<void>;
         undo(glRef: React.RefObject<webGL.MGWebGL>): Promise<void>;
         copyFragment(chainId: string, res_no_start: number, res_no_end: number, glRef: React.RefObject<webGL.MGWebGL>, doRecentre?: boolean): Promise<Molecule>;
