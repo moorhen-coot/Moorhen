@@ -278,23 +278,51 @@ const simpleMeshToMeshData = (simpleMesh: libcootApi.SimpleMeshT, perm: boolean 
     };
 }
 
-const SuperposeResultsToJSArray = (superposeResults: libcootApi.SuperposeResultsT) => {
-    const alignmentInfoVec = superposeResults.alignment_info_vec
-    const alignmentInfoVecSize = alignmentInfoVec.size()
-    let validationData: libcootApi.ValidationInformationJS[][] = []
+const SuperposeResultsToJSArray = (superposeResults: libcootApi.SuperposeResultsT): libcootApi.SuperposeResultsJS => {
+    const alignedPairsVec = superposeResults.aligned_pairs
+    const alignedPairsVecSize = alignedPairsVec.size()
+    let alignedPairsData: { reference: libcootApi.ValidationInformationJS, moving: libcootApi.ValidationInformationJS }[] = []
+    
+    for (let i = 0; i < alignedPairsVecSize; i++) {
+        const alignedPairs = alignedPairsVec.get(i)
+        const refResidueData = alignedPairs.first
+        const refResidueSpec = refResidueData.residue_spec
+        const movResidueData = alignedPairs.second
+        const movResidueSpec = movResidueData.residue_spec
+        const currentPairData = {
+            reference: {
+                chainId: refResidueSpec.chain_id,
+                insCode: refResidueSpec.ins_code,
+                seqNum: refResidueSpec.res_no,
+                restype: "UNK",
+                value: refResidueData.function_value,
+                label: refResidueData.label
+            },
+            moving: {
+                chainId: movResidueSpec.chain_id,
+                insCode: movResidueSpec.ins_code,
+                seqNum: movResidueSpec.res_no,
+                restype: "UNK",
+                value: movResidueData.function_value,
+                label: movResidueData.label,
+            }
+        }
+        
+        movResidueData.delete()
+        movResidueSpec.delete()
+        refResidueData.delete()
+        refResidueSpec.delete()
 
-    for (let i = 0; i < alignmentInfoVecSize; i++) {
-        const alignmentInfo = alignmentInfoVec.get(i)
-        const currentValidationData = validationDataToJSArray(alignmentInfo)
-        validationData.push(currentValidationData)
+        alignedPairsData.push(currentPairData)
     }
-    alignmentInfoVec.delete()
+    
+    alignedPairsVec.delete()
     
     return {
         referenceSequence: superposeResults.alignment.first,
         movingSequence: superposeResults.alignment.second,
         supperposeInfo: superposeResults.superpose_info,
-        validationData: validationData
+        alignedPairsData: alignedPairsData
     }
 }
 

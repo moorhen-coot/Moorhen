@@ -2,8 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { MoorhenEditButtonBase } from "./MoorhenEditButtonBase"
 import { moorhen } from "../../types/moorhen";
 import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
-import { Button, Card, Container, FormGroup, FormLabel, FormSelect, Overlay, Row, Stack } from "react-bootstrap";
-import { CheckOutlined, CloseOutlined } from "@mui/icons-material";
+import { Button, Card, Container, Form, FormGroup, FormLabel, FormSelect, Overlay, Row, Stack } from "react-bootstrap";
+import { CheckOutlined, CloseOutlined, DeleteSweepOutlined } from "@mui/icons-material";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
 import Draggable from "react-draggable";
 import { cidToSpec } from "../../utils/MoorhenUtils";
@@ -19,6 +19,7 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
     const busy = useRef<boolean>(false)
     const draggingDirty = useRef<boolean>(false)
     const refinementDirty = useRef<boolean>(false)
+    const autoClearRestraintsRef = useRef<boolean>(true)
 
     const dragModes = ['SINGLE', 'TRIPLE', 'QUINTUPLE', 'HEPTUPLE', 'SPHERE']
 
@@ -195,16 +196,32 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
         if (!busy.current) {
             busy.current = true
             refinementDirty.current = false
-            await props.commandCentre.current.cootCommand({
-                returnType: 'status',
-                command: 'clear_target_position_restraints',
-                commandArgs: [moltenFragmentRef.current.molNo]
-            }, true)
-            await animateRefine(moltenFragmentRef.current, 10, 5)
+            if (autoClearRestraintsRef.current) {
+                await props.commandCentre.current.cootCommand({
+                    returnType: 'status',
+                   command: 'clear_target_position_restraints',
+                    commandArgs: [moltenFragmentRef.current.molNo]
+                }, true)
+                await animateRefine(moltenFragmentRef.current, 10, 5)
+            } else {
+                await animateRefine(moltenFragmentRef.current, -1, 1)
+            }
             busy.current = false    
         } else {
             setTimeout(() => refineNewPosition(), 100)
         }
+    }
+
+    const clearRestraints = async () => {
+        busy.current = true
+        refinementDirty.current = false
+        await props.commandCentre.current.cootCommand({
+            returnType: 'status',
+            command: 'clear_target_position_restraints',
+            commandArgs: [moltenFragmentRef.current.molNo]
+        }, true)
+        await animateRefine(moltenFragmentRef.current, 10, 5)
+        busy.current = false
     }
 
     useEffect(() => {
@@ -222,25 +239,39 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
         const contextMenuOverride = (
             <Draggable>
                 <Card style={{position: 'absolute', width: '15rem', cursor: 'move'}} onMouseOver={() => props.setOpacity(1)} onMouseOut={() => props.setOpacity(0.5)}>
-                <Card.Header>Accept dragging ?</Card.Header>
+                <Card.Header>Atom dragging mode</Card.Header>
                 <Card.Body style={{ alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
-                    <Stack direction='horizontal' gap={2}>
-                    <Button onClick={async () => {
-                        document.removeEventListener('atomDragged', atomDraggedCallback)
-                        document.removeEventListener('mouseup', mouseUpCallback)
-                        await finishDragging(true)
-                        props.setOverrideMenuContents(false)
-                        props.setOpacity(1)
-                        props.setShowContextMenu(false)                  
-                    }}><CheckOutlined /></Button>
-                    <Button onClick={async () => {
-                        document.removeEventListener('atomDragged', atomDraggedCallback)
-                        document.removeEventListener('mouseup', mouseUpCallback)
-                        await finishDragging(false)
-                        props.setOverrideMenuContents(false)
-                        props.setOpacity(1)
-                        props.setShowContextMenu(false)                  
-                    }}><CloseOutlined /></Button>
+                    <Stack gap={2} direction="vertical" style={{ alignItems: 'center'}}>
+                        <span>Accept dragging ?</span>
+                        <Stack gap={2} direction="horizontal" style={{ alignItems: 'center',  alignContent: 'center', justifyContent: 'center'}}>
+                            <Button onClick={async () => {
+                                document.removeEventListener('atomDragged', atomDraggedCallback)
+                                document.removeEventListener('mouseup', mouseUpCallback)
+                                await finishDragging(true)
+                                props.setOverrideMenuContents(false)
+                                props.setOpacity(1)
+                                props.setShowContextMenu(false)                  
+                            }}><CheckOutlined /></Button>
+                            <Button onClick={async () => {
+                                document.removeEventListener('atomDragged', atomDraggedCallback)
+                                document.removeEventListener('mouseup', mouseUpCallback)
+                                await finishDragging(false)
+                                props.setOverrideMenuContents(false)
+                                props.setOpacity(1)
+                                props.setShowContextMenu(false)                  
+                            }}><CloseOutlined /></Button>
+                        </Stack>                    
+                    </Stack>
+                    <hr></hr>
+                    <Stack gap={2} direction="vertical" style={{ alignItems: 'center'}}>
+                        <span>Atom pull restraints</span>
+                        <Button style={{width: '80%'}} onClick={clearRestraints}><DeleteSweepOutlined /></Button>
+                        <Form.Check
+                            style={{paddingTop: '0.1rem'}} 
+                            type="switch"
+                            defaultChecked={true}
+                            onChange={(evt) => autoClearRestraintsRef.current = evt.target.checked}
+                            label="Auto clear"/>
                     </Stack>
                 </Card.Body>
                 </Card>
@@ -259,7 +290,6 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
         return <MoorhenContextButtonBase 
                     icon={<img style={{padding:'0.1rem', width:'100%', height: '100%'}} alt="drag atoms" className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/drag.svg`}/>}
                     toolTipLabel="Drag atoms"
-                    nonCootCommand={nonCootCommand}
                     popoverSettings={{
                         label: 'Drag mode...',
                         options: ['SINGLE', 'TRIPLE', 'QUINTUPLE', 'HEPTUPLE'],
@@ -324,16 +354,32 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
                             }}
                         >
                             <Card className="mx-2">
-                                <Card.Header >Accept dragging ?</Card.Header>
+                                <Card.Header >Atom dragging mode</Card.Header>
                                 <Card.Body style={{ alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
-                                    <Button onClick={async () => {
-                                        await finishDragging(true)
-                                        setShowAccept(false)
-                                    }}><CheckOutlined /></Button>
-                                    <Button className="mx-2" onClick={async () => {
-                                        await finishDragging(false)
-                                        setShowAccept(false)
-                                    }}><CloseOutlined /></Button>
+                                    <Stack gap={2} direction="vertical" style={{ alignItems: 'center'}}>
+                                        <span>Accept dragging ?</span>
+                                        <Stack gap={2} direction="horizontal" style={{ alignItems: 'center',  alignContent: 'center', justifyContent: 'center'}}>
+                                            <Button onClick={async () => {
+                                                await finishDragging(true)
+                                                setShowAccept(false)
+                                            }}><CheckOutlined /></Button>
+                                            <Button className="mx-2" onClick={async () => {
+                                                await finishDragging(false)
+                                                setShowAccept(false)
+                                            }}><CloseOutlined /></Button>
+                                        </Stack>
+                                    </Stack>
+                                    <hr></hr>
+                                    <Stack gap={2} direction="vertical" style={{ alignItems: 'center'}}>
+                                        <span>Atom pull restraints</span>
+                                        <Button style={{width: '100%'}} onClick={clearRestraints}><DeleteSweepOutlined /></Button>
+                                        <Form.Check
+                                            defaultChecked={true}
+                                            style={{paddingTop: '0.1rem'}} 
+                                            type="switch"
+                                            onChange={(evt) => autoClearRestraintsRef.current = evt.target.checked}
+                                            label="Auto clear"/>
+                                    </Stack>
                                 </Card.Body>
                             </Card>
                         </div>
