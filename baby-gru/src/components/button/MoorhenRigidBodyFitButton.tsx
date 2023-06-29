@@ -105,10 +105,6 @@ export const MoorhenRigidBodyFitButton = (props: moorhen.EditButtonProps | moorh
             command = 'rigid_body_fit'
         }
 
-        console.log('HI THERE')
-        console.log(selectedMolecule.molNo, chosenAtom.cid, selectedMode, props.activeMap.molNo, command)
-
-
         return {
             message: 'coot_command',
             returnType: "status",
