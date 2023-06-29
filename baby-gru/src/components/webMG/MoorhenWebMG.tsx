@@ -497,11 +497,6 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
         } else if (connectedMolNo && !connectedMolNo.uniqueMaps.every(mapMolNo => mapsMolNo.includes(mapMolNo))){
             handleDisconnectMaps()
         }
-        props.maps.forEach(map => {
-            if (map.webMGContour) {
-                map.contour(glRef)
-            }
-        })
     }, [props.maps, props.maps.length])
 
     /*

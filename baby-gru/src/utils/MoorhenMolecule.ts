@@ -1,11 +1,4 @@
 import 'pako';
-import { EnerLib, Model, parseMMCIF, parsePDB, atomsToHierarchy } from '../WebGLgComponents/mgMiniMol';
-import { CalcSecStructure } from '../WebGLgComponents/mgSecStr';
-import { ColourScheme } from '../WebGLgComponents/mgWebGLAtomsToPrimitives';
-import { GetSplinesColoured } from '../WebGLgComponents/mgSecStr';
-import { atomsToSpheresInfo } from '../WebGLgComponents/mgWebGLAtomsToPrimitives';
-import { contactsToCylindersInfo, contactsToLinesInfo } from '../WebGLgComponents/mgWebGLAtomsToPrimitives';
-import { singletonsToLinesInfo } from '../WebGLgComponents/mgWebGLAtomsToPrimitives';
 import {
     guid, readTextFile, readGemmiStructure, cidToSpec, residueCodesThreeToOne, centreOnGemmiAtoms, getBufferAtoms,
     nucleotideCodesThreeToOne, hexToHsl, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, findConsecutiveRanges, getCubeLines
@@ -81,7 +74,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
     constructor(commandCentre: React.RefObject<moorhen.CommandCentre>, monomerLibraryPath = "./baby-gru/monomers") {
         this.type = 'molecule'
         this.commandCentre = commandCentre
-        this.enerLib = new EnerLib()
         this.HBondsAssigned = false
         this.atomsDirty = true
         this.isVisible = true
@@ -1073,23 +1065,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
         glRef.current.drawScene()
     }
 
-    webMGAtomsFromFileString(fileString: string) {
-        const $this = this
-        let result = { atoms: [] }
-        let possibleIndentedLines = fileString.split("\n");
-        let unindentedLines = possibleIndentedLines.map(line => line.trim())
-        try {
-            result = parseMMCIF(unindentedLines, $this.name);
-            if (typeof result.atoms === 'undefined') {
-                result = parsePDB(unindentedLines, $this.name)
-            }
-        }
-        catch (err) {
-            result = parsePDB(unindentedLines, $this.name)
-        }
-        return result
-    }
-
     clearBuffersOfStyle(style: string, glRef: React.RefObject<webGL.MGWebGL>) {
         const $this = this
         //Empty existing buffers of this type
@@ -1125,90 +1100,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
             return true
         }
         return false
-    }
-
-    drawBonds(webMGAtoms: any, glRef: React.RefObject<webGL.MGWebGL>, colourSchemeIndex: number): void {
-        const $this = this
-        const style = "bonds"
-
-        if (typeof webMGAtoms["atoms"] === 'undefined') return;
-        var model = webMGAtoms["atoms"][0];
-
-        const colourScheme = new ColourScheme(webMGAtoms);
-        var atomColours = colourScheme.colourByChain({
-            "nonCByAtomType": true,
-            'C': colourScheme.order_colours[colourSchemeIndex % colourScheme.order_colours.length]
-        });
-
-        var contactsAndSingletons = model.getBondsContactsAndSingletons();
-
-        var contacts = contactsAndSingletons["contacts"];
-        var singletons = contactsAndSingletons["singletons"];
-        var linePrimitiveInfo = contactsToCylindersInfo(contacts, 0.1, atomColours);
-        var singletonPrimitiveInfo = singletonsToLinesInfo(singletons, 4, atomColours);
-        var linesAndSpheres = []
-
-        linesAndSpheres.push(linePrimitiveInfo);
-        linesAndSpheres.push(singletonPrimitiveInfo);
-
-        var nonHydrogenAtoms = model.getAtoms("not [H]");
-        var nonHydrogenPrimitiveInfo = atomsToSpheresInfo(nonHydrogenAtoms, 0.13, atomColours);
-        linesAndSpheres.push(nonHydrogenPrimitiveInfo);
-
-        const objects = linesAndSpheres.filter(item => {
-            return typeof item.sizes !== "undefined" &&
-                item.sizes.length > 0 &&
-                item.sizes[0].length > 0 &&
-                item.sizes[0][0].length > 0
-        })
-        $this.clearBuffersOfStyle(style, glRef)
-        this.addBuffersOfStyle(glRef, objects, style)
-    }
-
-    drawLigands(webMGAtoms: any, glRef: React.RefObject<webGL.MGWebGL>) {
-        const $this = this
-        const style = "ligands"
-        if (typeof webMGAtoms["atoms"] === 'undefined') return;
-
-        //Attempt to apply selection, storing old hierarchy
-        const selectionString = "ligands_old"
-        const oldHierarchy = webMGAtoms.atoms
-        let selectedAtoms = null
-        if (typeof selectionString === 'string') {
-            try {
-                selectedAtoms = webMGAtoms.atoms[0].getAtoms(selectionString)
-                if (selectedAtoms.length === 0) {
-                    webMGAtoms.atoms = oldHierarchy
-                    return
-                }
-                webMGAtoms.atoms = atomsToHierarchy(selectedAtoms)
-            }
-            catch (err) {
-                webMGAtoms.atoms = oldHierarchy
-                return
-            }
-        }
-        if (selectedAtoms == null) return
-        var model = webMGAtoms.atoms[0];
-
-        const colourScheme = new ColourScheme(webMGAtoms);
-        var atomColours = colourScheme.colourOneColour([0.8, 0.5, 0.2, 0.3])
-        let linesAndSpheres = []
-        var nonHydrogenAtoms = model.getAtoms("not [H]");
-        var nonHydrogenPrimitiveInfo = atomsToSpheresInfo(nonHydrogenAtoms, 0.3, atomColours);
-        linesAndSpheres.push(nonHydrogenPrimitiveInfo);
-
-        //Restore old hierarchy
-        webMGAtoms.atoms = oldHierarchy
-
-        const objects = linesAndSpheres.filter(item => {
-            return typeof item.sizes !== "undefined" &&
-                item.sizes.length > 0 &&
-                item.sizes[0].length > 0 &&
-                item.sizes[0][0].length > 0
-        })
-        $this.clearBuffersOfStyle(style, glRef)
-        this.addBuffersOfStyle(glRef, objects, style)
     }
 
     drawUnitCell(glRef: React.RefObject<webGL.MGWebGL>) {
@@ -1284,66 +1175,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
     async drawSelection(glRef: React.RefObject<webGL.MGWebGL>, selectionString: string): Promise<void> {
         await this.drawResidueHighlight(glRef, 'selection', selectionString, [1.0, 0.0, 0.0, 0.35], false)
-    }
-
-    drawRibbons(webMGAtoms: any, glRef: React.RefObject<webGL.MGWebGL>) {
-        const $this = this
-        const style = "ribbons"
-
-        if (typeof (webMGAtoms["modamino"]) !== "undefined") {
-            webMGAtoms["modamino"].forEach(modifiedResidue => {
-                Model.prototype.getPeptideLibraryEntry(modifiedResidue, this.enerLib);
-            })
-        }
-
-        //Sort out H-bonding
-        this.enerLib.AssignHBTypes(webMGAtoms, true);
-        let model = webMGAtoms.atoms[0];
-        model.calculateHBonds();
-
-        let flagBulge = true;
-        CalcSecStructure(webMGAtoms.atoms, flagBulge);
-
-        const colourScheme = new ColourScheme(webMGAtoms);
-        const atomColours = colourScheme.colourByChain({ "nonCByAtomType": true });
-
-        const coloured_splines_info = GetSplinesColoured(webMGAtoms, atomColours);
-        const objects = coloured_splines_info.filter(item => {
-            return typeof item.sizes !== "undefined" &&
-                item.sizes.length > 0 &&
-                item.sizes[0].length > 0 &&
-                item.sizes[0][0].length > 0
-        })
-
-        $this.clearBuffersOfStyle(style, glRef)
-        this.addBuffersOfStyle(glRef, objects, style)
-    }
-
-    drawSticks(webMGAtoms: any, glRef: React.RefObject<webGL.MGWebGL>) {
-        const $this = this
-        const style = "sticks"
-        let hier = webMGAtoms["atoms"];
-
-        let colourScheme = new ColourScheme(webMGAtoms);
-        let atomColours = colourScheme.colourByAtomType();
-
-        let model = hier[0];
-        /*
-        let atoms = model.getAllAtoms();
-        contacts = model.SeekContacts(atoms,atoms,0.6,1.6);
-        */
-        let contactsAndSingletons = model.getBondsContactsAndSingletons();
-        let contacts = contactsAndSingletons["contacts"];
-        let singletons = contactsAndSingletons["singletons"];
-        let linePrimitiveInfo = contactsToLinesInfo(contacts, 2, atomColours);
-        let singletonPrimitiveInfo = singletonsToLinesInfo(singletons, 2, atomColours);
-        linePrimitiveInfo["display_class"] = "bonds";
-        singletonPrimitiveInfo["display_class"] = "bonds";
-
-        let objects = [linePrimitiveInfo, singletonPrimitiveInfo];
-
-        $this.clearBuffersOfStyle(style, glRef)
-        this.addBuffersOfStyle(glRef, objects, style)
     }
 
     async redraw(glRef: React.RefObject<webGL.MGWebGL>): Promise<void> {

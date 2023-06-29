@@ -261,7 +261,6 @@ export namespace moorhen {
         replaceMapWithMtzFile(glRef: React.RefObject<webGL.MGWebGL>, fileUrl: RequestInfo | URL, name: string, selectedColumns: selectedMtzColumns): Promise<void>;
         associateToReflectionData (selectedColumns: selectedMtzColumns, reflectionData: Uint8Array | ArrayBuffer): Promise<WorkerResponse>;
         delete(glRef: React.RefObject<webGL.MGWebGL>): Promise<void> 
-        contour(glRef: React.ForwardedRef<webGL.MGWebGL>): void;
         doCootContour(glRef: React.MutableRefObject<webGL.MGWebGL>, x: number, y: number, z: number, radius: number, contourLevel: number): Promise<void>;
         fetchReflectionData(): Promise<WorkerResponse>;
         getMap(): Promise<WorkerResponse>;

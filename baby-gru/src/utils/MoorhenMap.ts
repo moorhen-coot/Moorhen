@@ -1,5 +1,4 @@
 import { readDataFile, guid } from "./MoorhenUtils"
-import { readMapFromArrayBuffer, mapToMapGrid } from '../WebGLgComponents/mgWebGLReadMap';
 import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
 import { libcootApi } from "../types/libcoot";
@@ -241,37 +240,6 @@ export class MoorhenMap implements moorhen.Map {
         }) as Promise<moorhen.WorkerResponse<number>>
     }
 
-    makeWebMGLive(glRef: React.RefObject<webGL.MGWebGL>): void {
-        const $this = this
-        $this.webMGContour = true
-        let promise
-        if (!Object.keys($this.liveUpdatingMaps).includes("WebMG")) {
-            promise = $this.contour(glRef)
-        }
-        else {
-            promise = Promise.resolve(true)
-        }
-        promise.then(() => {
-            if (!glRef.current.liveUpdatingMaps.includes($this.liveUpdatingMaps['WebMG'])) {
-                glRef.current.liveUpdatingMaps.push($this.liveUpdatingMaps['WebMG'])
-            }
-            glRef.current.reContourMaps()
-            glRef.current.drawScene()
-        })
-
-    }
-
-    makeWebMGUnlive(glRef: React.RefObject<webGL.MGWebGL>): void {
-        const $this = this
-        $this.webMGContour = false
-        glRef.current.liveUpdatingMaps = glRef.current.liveUpdatingMaps.filter(item => item !== $this.liveUpdatingMaps['WebMG'])
-        $this.liveUpdatingMaps['WebMG'].theseBuffers.forEach(buffer => {
-            buffer.clearBuffers()
-        })
-        glRef.current.reContourMaps()
-        glRef.current.drawScene()
-    }
-
     makeCootLive(glRef: React.RefObject<webGL.MGWebGL>): void {
         const $this = this
         $this.cootContour = true
@@ -300,32 +268,6 @@ export class MoorhenMap implements moorhen.Map {
         $this.clearBuffersOfStyle(glRef, 'Coot')
         glRef.current.buildBuffers();
         glRef.current.drawScene();
-    }
-
-
-    contour(glRef: React.RefObject<webGL.MGWebGL>): void {
-        const $this = this
-        $this.getMap()
-            .then(reply => {
-                let map = readMapFromArrayBuffer(reply.data.result.mapData);
-                let mapGrid = mapToMapGrid(map);
-                let mapTriangleData = { "mapGrids": [mapGrid], "col_tri": [[]], "norm_tri": [[]], "vert_tri": [[]], "idx_tri": [[]], "prim_types": [[]] };
-                glRef.current.appendOtherData(mapTriangleData);
-                let newMap = glRef.current.liveUpdatingMaps[glRef.current.liveUpdatingMaps.length - 1]
-
-                newMap.contourLevel = $this.contourLevel
-                newMap.mapColour = $this.mapColour
-                $this.liveUpdatingMaps['WebMG'] = newMap
-
-                if (!$this.webMGContour) {
-                    glRef.current.liveUpdatingMaps = glRef.current.liveUpdatingMaps.filter(item => item !== newMap)
-                }
-                else {
-                    glRef.current.reContourMaps()
-                }
-
-                glRef.current.drawScene()
-            })
     }
 
     clearBuffersOfStyle(glRef: React.RefObject<webGL.MGWebGL>, style: string): void {
