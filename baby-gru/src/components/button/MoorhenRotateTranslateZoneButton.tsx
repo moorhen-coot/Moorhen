@@ -140,19 +140,19 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
                 <em>{props.shortCuts ? `Hold ${getTooltipShortcutLabel(JSON.parse(props.shortCuts as string).residue_camera_wiggle)} to move view` : null}</em>
                 <br></br>
                 <br></br>
-                <Stack direction='horizontal' gap={2}>
-                <Button onClick={async () => {
-                        await acceptTransform()
-                        props.setOverrideMenuContents(false)
-                        props.setOpacity(1)
-                        props.setShowContextMenu(false)
-                    }}><CheckOutlined /></Button>
-                <Button onClick={async() => {
-                        await rejectTransform()
-                        props.setOverrideMenuContents(false)
-                        props.setOpacity(1)
-                        props.setShowContextMenu(false)
-                }}><CloseOutlined /></Button>
+                <Stack direction='horizontal' gap={2} style={{ alignItems: 'center',  alignContent: 'center', justifyContent: 'center'}}>
+                    <Button onClick={async () => {
+                            await acceptTransform()
+                            props.setOverrideMenuContents(false)
+                            props.setOpacity(1)
+                            props.setShowContextMenu(false)
+                        }}><CheckOutlined /></Button>
+                    <Button onClick={async() => {
+                            await rejectTransform()
+                            props.setOverrideMenuContents(false)
+                            props.setOpacity(1)
+                            props.setShowContextMenu(false)
+                    }}><CloseOutlined /></Button>
                 </Stack>
             </Card.Body>
             </Card>
@@ -217,14 +217,16 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
                                 <Card.Header >Accept rotate/translate ?</Card.Header>
                                 <Card.Body style={{ alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
                                     {tips}
-                                    <Button onClick={async () => {
-                                        await acceptTransform()
-                                        setShowAccept(false)
-                                    }}><CheckOutlined /></Button>
-                                    <Button className="mx-2" onClick={async() => {
-                                        await rejectTransform()
-                                        setShowAccept(false)
-                                    }}><CloseOutlined /></Button>
+                                    <Stack direction='horizontal' gap={1} style={{ alignItems: 'center',  alignContent: 'center', justifyContent: 'center'}}>
+                                        <Button onClick={async () => {
+                                            await acceptTransform()
+                                            setShowAccept(false)
+                                        }}><CheckOutlined /></Button>
+                                        <Button className="mx-2" onClick={async() => {
+                                            await rejectTransform()
+                                            setShowAccept(false)
+                                        }}><CloseOutlined /></Button>
+                                    </Stack>
                                 </Card.Body>
                             </Card>
                         </div>

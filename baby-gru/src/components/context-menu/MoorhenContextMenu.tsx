@@ -185,7 +185,7 @@ export const MoorhenContextMenu = (props: {
   }
 
   return <>
-      <ContextMenu ref={contextMenuRef} top={menuPosition.top} left={menuPosition.left} backgroundColor={backgroundColor} opacity={opacity}>
+      <ContextMenu ref={contextMenuRef} top={overrideMenuContents ? convertRemToPx(4) : menuPosition.top} left={overrideMenuContents ? convertRemToPx(2) : menuPosition.left} backgroundColor={backgroundColor} opacity={opacity}>
         {overrideMenuContents ? 
         overrideMenuContents 
         :
