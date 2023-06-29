@@ -25,6 +25,14 @@ const MoorhenPopoverOptions = (props: {
             props.setShowOverlay(false)
         }
     }, [])
+
+    const handleClick = useCallback(() => {
+        if (!props.nonCootCommand) {
+            props.doEdit(props.getCootCommandInput(props.selectedMolecule, props.chosenAtom, selectRef.current.value, extraInputRef))
+        } else {
+            props.nonCootCommand(props.selectedMolecule, props.chosenAtom, selectRef.current.value)
+        }
+      }, [props])
     
     useEffect(() => {
         document.addEventListener("rightClick", handleRightClick);
@@ -44,13 +52,7 @@ const MoorhenPopoverOptions = (props: {
                 </FormSelect>
             </FormGroup>
             {props.extraInput(extraInputRef)}
-            <Button onClick={() => {
-                if (!props.nonCootCommand) {
-                    props.doEdit(props.getCootCommandInput(props.selectedMolecule, props.chosenAtom, selectRef.current.value, extraInputRef))
-                } else {
-                    props.nonCootCommand(props.selectedMolecule, props.chosenAtom, selectRef.current.value)
-                }
-              }}>
+            <Button onClick={handleClick}>
                 OK
             </Button>
         </Stack>
@@ -129,7 +131,7 @@ export const MoorhenContextButtonBase = (props: {
         props.setShowContextMenu(false)
     }
   
-    const handleClick = async () => {
+    const handleClick = useCallback(async () => {
       if (props.popoverSettings) {
         props.setOverlayContents(
           <MoorhenPopoverOptions {...props.popoverSettings} chosenAtom={props.chosenAtom} selectedMolecule={props.selectedMolecule} showContextMenu={props.showContextMenu} doEdit={doEdit} setShowOverlay={props.setShowOverlay}/>
@@ -137,15 +139,15 @@ export const MoorhenContextButtonBase = (props: {
         setTimeout(() => props.setShowOverlay(true), 50)
       } else if (props.nonCootCommand) {
         await props.nonCootCommand(props.selectedMolecule, props.chosenAtom)
-      } else {
+      } else if (props.cootCommandInput) {
         await doEdit(props.cootCommandInput)
       }
-    }
+    }, [props])
     
     return <>
         <IconButton 
             onClick={handleClick}
-            onMouseEnter={(evt) => props.setToolTip(props.toolTipLabel)}
+            onMouseEnter={() => props.setToolTip(props.toolTipLabel)}
             style={{width:'3rem', height: '3rem', marginTop: '0.5rem', paddingRight: 0, paddingTop: 0, paddingBottom: 0, paddingLeft: '0.1rem'}}
             disabled={props.needsMapData && !props.activeMap || (props.needsAtomData && props.molecules.length === 0)}
         >
