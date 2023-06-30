@@ -46,7 +46,7 @@ export class MoorhenMap implements moorhen.Map {
         this.associatedReflectionFileName = null
         this.uniqueId = guid()
         this.mapRmsd = null
-        this.rgba = { r: 0.30000001192092896, g: 0.30000001192092896, b: 0.699999988079071, a: 1.0 }    
+        this.rgba = { r: 0.30000001192092896, g: 0.30000001192092896, b: 0.699999988079071, a: 1.0 }
     }
 
     async fetchMapRmsd(): Promise<number> {
@@ -79,7 +79,7 @@ export class MoorhenMap implements moorhen.Map {
         await Promise.all(promises)
     }
 
-    async replaceMapWithMtzFile(glRef: React.RefObject<webGL.MGWebGL>, fileUrl: RequestInfo | URL, name: string, selectedColumns: moorhen.selectedMtzColumns): Promise<void> {
+    async replaceMapWithMtzFile(glRef: React.RefObject<webGL.MGWebGL>, fileUrl: RequestInfo | URL, name: string, selectedColumns: moorhen.selectedMtzColumns, mapColour?: {r: number, g: number, b: number}): Promise<void> {
         let mtzData: Uint8Array
         let fetchResponse: Response
 

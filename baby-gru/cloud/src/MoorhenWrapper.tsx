@@ -39,7 +39,7 @@ type PdbInputFileType = {
 type MapInputFileType = {
   type: 'mtz';
   uniqueId?: string;
-  args: [string, string, moorhen.selectedMtzColumns];
+  args: [string, string, moorhen.selectedMtzColumns, {r: number, g: number, b: number}?];
 }
 
 type LegendInputFileType = {
@@ -221,20 +221,27 @@ export default class MoorhenWrapper {
     }
 }
 
-  async loadMtzData(uniqueId: string, inputFile: string, mapName: string, selectedColumns: moorhen.selectedMtzColumns): Promise<moorhen.Map> {
+  async loadMtzData(uniqueId: string, inputFile: string, mapName: string, selectedColumns: moorhen.selectedMtzColumns, mapColour?: {r: number, g: number, b: number}): Promise<moorhen.Map> {
     const newMap = new MoorhenMap(this.controls.commandCentre)
     newMap.litLines = this.context.defaultMapLitLines
     newMap.uniqueId = uniqueId
+    
+    if (mapColour) {
+      newMap.rgba = { r: mapColour.r, g: mapColour.g, b: mapColour.b, a: 1.0 }
+    }
+    
     return new Promise(async (resolve, reject) => {
       try {
         await newMap.loadToCootFromMtzURL(inputFile, mapName, selectedColumns)
         this.controls.changeMaps({ action: 'Add', item: newMap })
         this.controls.setActiveMap(newMap)
         return resolve(newMap)
+      
       } catch (err) {
         console.log(`Cannot fetch mtz from ${inputFile}`)
         return reject(err)
       }
+    
     })  
   }
 
