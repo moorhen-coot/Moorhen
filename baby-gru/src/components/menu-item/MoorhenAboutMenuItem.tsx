@@ -1,4 +1,5 @@
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
+import { version } from '../../version'
 
 export const MoorhenAboutMenuItem = (props: { setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>> }) => {
 
@@ -11,7 +12,7 @@ export const MoorhenAboutMenuItem = (props: { setPopoverIsShown: React.Dispatch<
             <li>Martin Noble</li>
             <li>Stuart McNicholas</li>
         </ul>
-        <p>Current version: 14th June 2023</p>
+        <p>Current version: {version}</p>
     </div>
 
     return <MoorhenBaseMenuItem
