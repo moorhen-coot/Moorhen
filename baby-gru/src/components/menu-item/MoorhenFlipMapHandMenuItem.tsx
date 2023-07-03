@@ -1,5 +1,4 @@
 import { useRef } from "react";
-import { Form } from "react-bootstrap";
 import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { moorhen } from "../../types/moorhen";
@@ -14,41 +13,29 @@ export const MoorhenFlipMapHandMenuItem = (props: {
 
     const selectRef = useRef<HTMLSelectElement>(null)
 
-    const panelContent = <>
-        <MoorhenMapSelect {...props} ref={selectRef} />
-    </>
-
-
-    const onCompleted = () => {
+    const onCompleted = async () => {
         const mapNo = parseInt(selectRef.current.value)
         const newMap = new MoorhenMap(props.commandCentre)
 
-        const blurMap = () => {
-            return props.commandCentre.current.cootCommand({
-                returnType: 'status',
-                command: 'flip_hand',
-                commandArgs: [mapNo
-                ]
-            }, true) as Promise<moorhen.WorkerResponse<number>>
-        }
+        const result  = await props.commandCentre.current.cootCommand({
+            returnType: 'status',
+            command: 'flip_hand',
+            commandArgs: [ mapNo ]
+        }, true) as moorhen.WorkerResponse<number>
 
-        blurMap()
-            .then(result => {
-                if (result.data.result.result !== -1) {
-                    newMap.molNo = result.data.result.result
-                    newMap.name = `Flipped map ${mapNo}`
-                    const oldMaps = props.maps.filter(map => map.molNo === mapNo)
-                    newMap.isDifference = oldMaps[0].isDifference
-                    newMap.contourLevel = oldMaps[0].contourLevel
-                    props.changeMaps({ action: 'Add', item: newMap })
-                }
-                return Promise.resolve(result)
-            })
+        if (result.data.result.result !== -1) {
+            newMap.molNo = result.data.result.result
+            newMap.name = `Flipped map ${mapNo}`
+            const oldMaps = props.maps.filter(map => map.molNo === mapNo)
+            newMap.isDifference = oldMaps[0].isDifference
+            newMap.contourLevel = oldMaps[0].contourLevel
+            props.changeMaps({ action: 'Add', item: newMap })
+        }
     }
 
     return <MoorhenBaseMenuItem
-        id='sharpen-blur-map-menu-item'
-        popoverContent={panelContent}
+        id='flip-hand-map-menu-item'
+        popoverContent={<MoorhenMapSelect {...props} ref={selectRef} />}
         menuItemText="Flip map..."
         onCompleted={onCompleted}
         setPopoverIsShown={props.setPopoverIsShown}

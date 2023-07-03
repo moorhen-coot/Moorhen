@@ -57,50 +57,45 @@ export const MoorhenMapMaskingMenuItem = (props: {
         </Form.Group>
     </>
 
-    const onCompleted = useCallback(() => {
+    const onCompleted = useCallback(async () => {
         const mapNo = parseInt(mapSelectRef.current.value)
         const molNo = parseInt(moleculeSelectRef.current.value)
         const newMap = new MoorhenMap(commandCentre)
 
-        const maskMap = () => {
-            let cidLabel: string
+        let cidLabel: string
 
-            switch (maskTypeSelectRef.current?.value) {
-                case 'molecule':
-                    cidLabel = `/1/*/*/*:*`
-                    break
-                case 'chain':
-                    cidLabel = `/1/${chainSelectRef.current.value}/*/*:*`
-                    break
-                case 'cid':
-                    cidLabel = cidInputRef.current.value
-                    break
-                case 'ligand':
-                    cidLabel = ligandSelectRef.current.value
-                    break
-                default:
-                    console.log('Unrecognised mask type...')
-                    break
-            }
-
-            return commandCentre.current.cootCommand({
-                returnType: 'status',
-                command: 'mask_map_by_atom_selection',
-                commandArgs: [molNo, mapNo, cidLabel, invertFlagRef.current.checked]
-            }, true) as Promise<moorhen.WorkerResponse<number>>
+        switch (maskTypeSelectRef.current?.value) {
+            case 'molecule':
+                cidLabel = `/1/*/*/*:*`
+                break
+            case 'chain':
+                cidLabel = `/1/${chainSelectRef.current.value}/*/*:*`
+                break
+            case 'cid':
+                cidLabel = cidInputRef.current.value
+                break
+            case 'ligand':
+                cidLabel = ligandSelectRef.current.value
+                break
+            default:
+                console.log('Unrecognised mask type...')
+                break
         }
 
-        maskMap()
-            .then(result => {
-                if (result.data.result.result !== -1) {
-                    newMap.molNo = result.data.result.result
-                    newMap.name = `Map ${mapNo} masked`
-                    const originalMap = maps.find(map => map.molNo === mapNo)
-                    newMap.isDifference = originalMap.isDifference
-                    changeMaps({ action: 'Add', item: newMap })
-                }
-                return Promise.resolve(result)
-            })
+        const result = await commandCentre.current.cootCommand({
+            returnType: 'status',
+            command: 'mask_map_by_atom_selection',
+            commandArgs: [molNo, mapNo, cidLabel, invertFlagRef.current.checked]
+        }, true) as moorhen.WorkerResponse<number>
+        
+        if (result.data.result.result !== -1) {
+            newMap.molNo = result.data.result.result
+            newMap.name = `Map ${mapNo} masked`
+            const originalMap = maps.find(map => map.molNo === mapNo)
+            newMap.isDifference = originalMap.isDifference
+            changeMaps({ action: 'Add', item: newMap })
+        }
+            
     }, [commandCentre, maps, changeMaps])
 
     return <MoorhenBaseMenuItem

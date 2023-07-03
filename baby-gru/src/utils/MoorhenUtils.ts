@@ -6,9 +6,9 @@ import { moorhen } from "../types/moorhen";
 import { gemmi } from "../types/gemmi";
 
 export function guid(): string {
-    var d = Date.now();
-    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-        var r = (d + Math.random() * 16) % 16 | 0;
+    let d = Date.now();
+    let uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        let r = (d + Math.random() * 16) % 16 | 0;
         d = Math.floor(d / 16);
         return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
     });
@@ -25,7 +25,7 @@ export function sequenceIsValid(sequence: moorhen.ResidueInfo[]): boolean {
         return false
     }
     // If any of the residues has undefined or Nan as the residue code or residue number
-    if (sequence.some(residue => residue.resNum === null || typeof residue.resNum === 'undefined' || residue.resCode === null || typeof residue.resCode === 'undefined')) {
+    if (sequence.some(residue => residue.resNum === null || isNaN(residue.resNum) || typeof residue.resNum === 'undefined' || residue.resCode === null || typeof residue.resCode === 'undefined')) {
         return false
     }
     return true
@@ -339,7 +339,7 @@ export const cidToSpec = (cid: string): moorhen.ResidueSpec => {
     const chain_id = cidTokens[2]
     const res_no = parseInt(cidTokens[3])
     const res_name = ResNameRegExp.exec(cidTokens[3])?.length > 0 ? ResNameRegExp.exec(cidTokens[3])[0].replace('(', '').replace(')', '') : null
-    const ins_code = (cidTokens.length > 3 && cidTokens[3].split(".").length) > 1 ? cidTokens[3].split(".")[1] : ""
+    const ins_code = (cidTokens.length > 3 && cidTokens[3].split(".").length > 1) ? cidTokens[3].split(".")[1] : ""
     const atom_name = cidTokens.length > 4 ? cidTokens[4].split(":")[0] : ""
     const alt_conf = atom_name && cidTokens[4].split(":").length > 1 ? cidTokens[4].split(":")[1] : ""
     return { mol_name, mol_no, chain_id, res_no, res_name, atom_name, ins_code, alt_conf, cid }
