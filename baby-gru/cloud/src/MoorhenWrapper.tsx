@@ -6,6 +6,7 @@ import { MoorhenMolecule } from "../../src/utils/MoorhenMolecule"
 import { MoorhenMap } from "../../src/utils/MoorhenMap"
 import { guid } from "../../src/utils/MoorhenUtils"
 import { MoorhenContextProvider, getDefaultValues } from "../../src/utils/MoorhenContext";
+import { MoorhenAceDRGInstance } from "./utils/MoorhenAceDRGInstance";
 import reportWebVitals from '../../src/reportWebVitals'
 import localforage from 'localforage';
 import parse from 'html-react-parser';
@@ -70,6 +71,7 @@ export default class MoorhenWrapper {
   exportCallback: (arg0: string, arg1: string) => Promise<void>;
   exportPreferencesCallback: (arg0: moorhen.ContextValues) => void;
   backupStorageInstance: CloudStorageInstanceInterface;
+  aceDRGInstance: moorhen.AceDRGInstance;
 
   constructor(urlPrefix: string) {
     this.urlPrefix = urlPrefix
@@ -87,8 +89,13 @@ export default class MoorhenWrapper {
     this.exportCallback = async () => {}
     this.exportPreferencesCallback = () => {}
     this.backupStorageInstance = new CloudStorageInstance()
+    this.aceDRGInstance = new MoorhenAceDRGInstance()
     reportWebVitals()
     createModule()
+  }
+
+  setAceDRGMakeLinkCallback(functionCallback: (arg0: moorhen.createCovLinkAtomInput, arg1: moorhen.createCovLinkAtomInput) => void) {
+    this.aceDRGInstance.createCovalentLink = functionCallback
   }
 
   setBackupSaveListener(functionCallback: (arg0: CloudBackupInterface) => Promise<string | void>) {
@@ -434,6 +441,7 @@ export default class MoorhenWrapper {
             <MoorhenCloudApp 
               urlPrefix={this.urlPrefix}
               backupStorageInstance={this.backupStorageInstance}
+              aceDRGInstance={this.aceDRGInstance}
               forwardControls={this.forwardControls.bind(this)}
               disableFileUploads={true}
               exportCallback={this.exportCallback.bind(this)}
