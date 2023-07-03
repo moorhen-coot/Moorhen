@@ -1,7 +1,8 @@
 import { NavDropdown } from "react-bootstrap";
 import { useState } from "react";
 import { MoorhenMapMaskingMenuItem } from "../menu-item/MoorhenMapMaskingMenuItem";
-import { MoorhenSharpenBlurMapMenuItem } from "../menu-item/MoorhenSharpenBlurMapMenuItem"
+import { MoorhenSharpenBlurMapMenuItem } from "../menu-item/MoorhenSharpenBlurMapMenuItem";
+import { MoorhenFlipMapHandMenuItem } from "../menu-item/MoorhenFlipMapHandMenuItem"
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 
 export const MoorhenCryoMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
@@ -18,6 +19,7 @@ export const MoorhenCryoMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             onToggle={() => { props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId('-1') }}>
             <MoorhenSharpenBlurMapMenuItem {...menuItemProps} />
             <MoorhenMapMaskingMenuItem  {...menuItemProps} />
+            <MoorhenFlipMapHandMenuItem  {...menuItemProps} />
         </NavDropdown>
     </>
 }
