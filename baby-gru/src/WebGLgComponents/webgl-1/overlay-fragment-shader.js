@@ -12,15 +12,15 @@ void main()
 
     vec4 color = vec4(0.0);
 
-    color += texture(shader0, out_TexCoord0);
+    color += texture2D(shader0, out_TexCoord0);
 
     if(color.a>1e-4)
     {
         vec2 size = vec2(0.002); //1.0f / textureSize(silhouette, 0);
 
-        for (int i = -w; i <= +w; i++)
+        for (int i = -3; i <= 3; i++)
         {
-            for (int j = -w; j <= +w; j++)
+            for (int j = -3; j <= 3; j++)
             {
                 if (i == 0 && j == 0)
                 {
@@ -30,9 +30,9 @@ void main()
                 vec2 offset = vec2(i, j) * size;
 
                 // and if one of the pixel-neighbor is blank (we are on the border)
-                if (texture(shader0, out_TexCoord0 + offset).a < 1e-4)
+                if (texture2D(shader0, out_TexCoord0 + offset).a < 1e-4)
                 {
-                    gl_FragColor = vec4(vec3(1.0f), 1.0f);
+                    gl_FragColor = vec4(vec3(1.0), 1.0);
                     return;
                 }
             }
