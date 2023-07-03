@@ -1,28 +1,37 @@
-import { useEffect, useRef, useState, useImperativeHandle, forwardRef } from "react";
+import React, { useEffect, useRef, useState, useImperativeHandle, forwardRef } from "react";
 import { cidToSpec } from "../../utils/MoorhenUtils";
 import Draggable from "react-draggable";
 import { Button, Card, Dropdown, Form, InputGroup, Row, Spinner, SplitButton, Stack } from "react-bootstrap";
 import { Backdrop, IconButton, TextField } from "@mui/material";
 import { CloseOutlined } from "@mui/icons-material";
+import { moorhen } from "../../types/moorhen";
 
-const AceDRGtomPicker = forwardRef((props, ref) => {
-    const [selectedAtom, setSelectedAtom] = useState(null)
-    const [monomerAtoms, setMonomerAtoms] = useState([])
-    const [monomerBonds, setMonomerBonds] = useState([])
-    const [deleteAtom, setDeleteAtom] = useState(false)
-    const [changeOrderBond, setChangeOrderBond] = useState(false)
-    const [changeAtomCharge, setChangeAtomCharge] = useState(false)
-    const [newAtomCharge, setNewAtomCharge] = useState(null)
+type AceDRGtomPickerProps = {
+    monomerLibraryPath: string;
+    id: number;
+    molecules: moorhen.Molecule[];
+    awaitAtomClick: number;
+    setAwaitAtomClick: React.Dispatch<React.SetStateAction<number>>;
+}
 
-    const selectedAtomValueRef = useRef(null)
-    const deleteAtomValueRef = useRef(null)
-    const deleteSelectedAtomValueRef = useRef(null)
-    const changeAtomChargeValueRef = useRef(null)
-    const changeSelectedAtomChargeValueRef = useRef(null)
-    const newAtomChargeValueRef = useRef(null)
-    const changeBondOrderValueRef = useRef(null)
-    const changeSelectedBondOrderValueRef = useRef(null)
-    const newBondOrderValueRef = useRef(null)
+const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
+    const [selectedAtom, setSelectedAtom] = useState<string>(null)
+    const [monomerAtoms, setMonomerAtoms] = useState<moorhen.AtomInfo[]>([])
+    const [monomerBonds, setMonomerBonds] = useState<{ atom_id_1: string; atom_id_2: string; bond_type: string; label: string; }[]>([])
+    const [deleteAtom, setDeleteAtom] = useState<boolean>(false)
+    const [changeOrderBond, setChangeOrderBond] = useState<boolean>(false)
+    const [changeAtomCharge, setChangeAtomCharge] = useState<boolean>(false)
+    const [newAtomCharge, setNewAtomCharge] = useState<string>(null)
+
+    const selectedAtomValueRef = useRef<string>(null)
+    const deleteAtomValueRef = useRef<boolean>(null)
+    const deleteSelectedAtomValueRef = useRef<HTMLSelectElement | null>(null)
+    const changeAtomChargeValueRef = useRef<boolean>(null)
+    const changeSelectedAtomChargeValueRef = useRef<HTMLSelectElement | null>(null)
+    const newAtomChargeValueRef = useRef<string>(null)
+    const changeBondOrderValueRef = useRef<boolean>(null)
+    const changeSelectedBondOrderValueRef = useRef<HTMLSelectElement | null>(null)
+    const newBondOrderValueRef = useRef<HTMLSelectElement | null>(null)
 
     useImperativeHandle(ref, () => ({
         getFormData: () => {return {
@@ -39,7 +48,7 @@ const AceDRGtomPicker = forwardRef((props, ref) => {
     }), 
     [selectedAtomValueRef, deleteAtomValueRef, deleteSelectedAtomValueRef, changeSelectedAtomChargeValueRef, changeSelectedBondOrderValueRef, changeAtomChargeValueRef, newAtomChargeValueRef, newBondOrderValueRef, changeBondOrderValueRef])
 
-    const getBonds = async (chosenMolecule, chosenAtom) => {
+    const getBonds = async (chosenMolecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec) => {
         const compId = chosenAtom.res_name
         let fileContent = chosenMolecule.getDict(compId)
 
@@ -62,7 +71,12 @@ const AceDRGtomPicker = forwardRef((props, ref) => {
         const blocks = doc.blocks
         const blocksSize = blocks.size()
         
-        let bonds = []
+        let bonds: {
+            atom_id_1: string;
+            atom_id_2: string;
+            bond_type: string;
+            label: string;
+        }[] = []
         for (let i = 0; i < blocksSize; i++) {
             const block = blocks.get(i)
             if (block.name !== 'comp_list') {
@@ -99,7 +113,7 @@ const AceDRGtomPicker = forwardRef((props, ref) => {
         selectedAtomValueRef.current = chosenAtom.cid
         setMonomerAtoms(atoms)
         setMonomerBonds(monomerBonds)
-        props.setAwaitAtomClick(false)
+        props.setAwaitAtomClick(-1)
     }
 
     useEffect(() => {
@@ -109,7 +123,7 @@ const AceDRGtomPicker = forwardRef((props, ref) => {
 
         return () => {
             if (props.awaitAtomClick === props.id) {
-                document.removeEventListener('atomClicked', setAtomPickerEventListener, { once: true })
+                document.removeEventListener('atomClicked', setAtomPickerEventListener)
             }
         }
     }, [props.awaitAtomClick])
@@ -202,10 +216,17 @@ const AceDRGtomPicker = forwardRef((props, ref) => {
 
 })
 
-export const MoorhenCreateAcedrgLinkModal = (props) => {
-    const [opacity, setOpacity] = useState(1.0)
-    const [awaitAtomClick, setAwaitAtomClick] = useState(false)
-    const [errorMessage, setErrorMessage] = useState('')
+export const MoorhenCreateAcedrgLinkModal = (props: {
+    showCreateAcedrgLinkModal: boolean;
+    setShowCreateAcedrgLinkModal: React.Dispatch<React.SetStateAction<boolean>>;
+    molecules: moorhen.Molecule[];
+    aceDRGInstance: moorhen.AceDRGInstance;
+    monomerLibraryPath: string;    
+}) => {
+    
+    const [opacity, setOpacity] = useState<number>(1.0)
+    const [awaitAtomClick, setAwaitAtomClick] = useState<number>(-1)
+    const [errorMessage, setErrorMessage] = useState<string>('')
     const atomPickerOneRef = useRef(null)
     const atomPickerTwoRef = useRef(null)
 
@@ -232,11 +253,11 @@ export const MoorhenCreateAcedrgLinkModal = (props) => {
     return  props.showCreateAcedrgLinkModal ?
         <Draggable handle=".handle">
             <Card style={{position: 'absolute', width: '45rem', opacity: opacity, top: '25rem', left: '25rem'}} onMouseOver={() => setOpacity(1)} onMouseOut={() => setOpacity(0.5)}>
-            <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={awaitAtomClick}>
+            <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={awaitAtomClick !== -1}>
             <Stack gap={2} direction='vertical'style={{justifyContent: 'center', alignItems: 'center'}}>
                 <Spinner animation="border" style={{ marginRight: '0.5rem' }}/>
                 <span>Click on an atom...</span>
-                <Button variant='danger' onClick={() => setAwaitAtomClick(false)}>Cancel</Button>
+                <Button variant='danger' onClick={() => setAwaitAtomClick(-1)}>Cancel</Button>
             </Stack>
             </Backdrop>
             <Card.Header className='handle' style={{display: 'flex', alignItems: 'center', cursor: 'move', justifyContent: 'space-between'}}>
