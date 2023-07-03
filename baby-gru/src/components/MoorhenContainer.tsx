@@ -34,7 +34,7 @@ interface MoorhenContainerOptionalPropsInterface {
     backupStorageInstance?: any;
     extraEditMenuItems: JSX.Element[];
     extraCalculateMenuItems: JSX.Element[];
-    aceDRGInstance: any; 
+    aceDRGInstance: moorhen.AceDRGInstance | null; 
 }
 
 export interface MoorhenControlsInterface extends moorhen.Context, MoorhenContainerOptionalPropsInterface {

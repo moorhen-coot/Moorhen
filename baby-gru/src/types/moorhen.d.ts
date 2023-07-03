@@ -238,7 +238,23 @@ export namespace moorhen {
     type WorkerResponse<T = any> = { 
         data: WorkerResult<T>;
     }
-    
+        
+    type createCovLinkAtomInput ={
+        selectedAtom: string;
+        deleteAtom: boolean;
+        deleteSelectedAtom: string;
+        changeAtomCharge: boolean;
+        changeSelectedAtomCharge: string;
+        newAtomCharge: string;
+        changeBondOrder: boolean;
+        changeSelectedBondOrder: string;
+        newBondOrder: string;
+    }
+
+    interface AceDRGInstance {
+        createCovalentLink: (arg0: createCovLinkAtomInput, arg1: createCovLinkAtomInput) => void;
+    }
+
     type selectedMtzColumns = {
         F?: string;
         PHI?: string;
@@ -249,7 +265,7 @@ export namespace moorhen {
         useWeight?: boolean;
         calcStructFact?: any; 
     }
-    
+
     interface Map {
         setAlpha(alpha: number, glRef: React.RefObject<webGL.MGWebGL>, redraw?: boolean): Promise<void>;
         centreOnMap(glRef: React.RefObject<webGL.MGWebGL>): Promise<void>;
