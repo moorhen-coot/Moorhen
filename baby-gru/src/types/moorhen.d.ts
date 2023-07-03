@@ -256,9 +256,10 @@ export namespace moorhen {
         duplicate(): Promise<Map>;
         makeCootUnlive(glRef: React.RefObject<webGL.MGWebGL>): void;
         makeCootLive(glRef: React.RefObject<webGL.MGWebGL>): void;
-        setColour(r: number, g: number, b: number, glRef: React.RefObject<webGL.MGWebGL>, redraw?: boolean): Promise<void>;
+        setColour(r: number, g: number, b: number, glRef: React.RefObject<webGL.MGWebGL>, redraw?: boolean): Promise<void> ;
+        setDiffMapColour(type: 'positiveDiffColour' | 'negativeDiffColour', r: number, g: number, b: number, glRef: React.RefObject<webGL.MGWebGL>, redraw?: boolean): Promise<void> ;
         fetchMapRmsd(): Promise<number>;
-        replaceMapWithMtzFile(glRef: React.RefObject<webGL.MGWebGL>, fileUrl: RequestInfo | URL, name: string, selectedColumns: selectedMtzColumns, mapColour?: {r: number, g: number, b: number}): Promise<void>;
+        replaceMapWithMtzFile(glRef: React.RefObject<webGL.MGWebGL>, fileUrl: RequestInfo | URL, name: string, selectedColumns: selectedMtzColumns, mapColour?: { [type: string]: {r: number, g: number, b: number} }): Promise<void>;
         associateToReflectionData (selectedColumns: selectedMtzColumns, reflectionData: Uint8Array | ArrayBuffer): Promise<WorkerResponse>;
         delete(glRef: React.RefObject<webGL.MGWebGL>): Promise<void> 
         doCootContour(glRef: React.MutableRefObject<webGL.MGWebGL>, x: number, y: number, z: number, radius: number, contourLevel: number): Promise<void>;
@@ -283,7 +284,12 @@ export namespace moorhen {
         associatedReflectionFileName: string;
         uniqueId: string;
         mapRmsd: number;
-        rgba: {r: number, g: number, b: number, a: number};
+        rgba: {
+            mapColour: {r: number, g: number, b: number};
+            positiveDiffColour: {r: number, g: number, b: number};
+            negativeDiffColour: {r: number, g: number, b: number};
+            a: number;
+        }
     }
     
     interface backupKey {

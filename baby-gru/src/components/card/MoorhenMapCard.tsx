@@ -2,13 +2,13 @@ import { useEffect, useState, useRef, useCallback, useMemo, Fragment } from "rea
 import { Card, Form, Button, Col, DropdownButton, Stack, Dropdown, OverlayTrigger, ToggleButton } from "react-bootstrap";
 import { doDownload } from '../../utils/MoorhenUtils';
 import { getNameLabel } from "./cardUtils"
-import { VisibilityOffOutlined, VisibilityOutlined, ExpandMoreOutlined, ExpandLessOutlined, DownloadOutlined, Settings, FileCopyOutlined, RadioButtonCheckedOutlined, RadioButtonUncheckedOutlined, AddOutlined, RemoveOutlined } from '@mui/icons-material';
+import { VisibilityOffOutlined, VisibilityOutlined, ExpandMoreOutlined, ExpandLessOutlined, DownloadOutlined, Settings, FileCopyOutlined, RadioButtonCheckedOutlined, RadioButtonUncheckedOutlined, AddCircleOutline, RemoveCircleOutline } from '@mui/icons-material';
 import { MoorhenMapSettingsMenuItem } from "../menu-item/MoorhenMapSettingsMenuItem";
 import { MoorhenRenameDisplayObjectMenuItem } from "../menu-item/MoorhenRenameDisplayObjectMenuItem"
 import { MoorhenDeleteDisplayObjectMenuItem } from "../menu-item/MoorhenDeleteDisplayObjectMenuItem"
 import MoorhenSlider from "../misc/MoorhenSlider";
 import { IconButton, MenuItem, Tooltip } from "@mui/material";
-import { SketchPicker } from "react-color";
+import { SliderPicker } from "react-color";
 import { MoorhenSideBarAccordionPropsInterface } from '../list/MoorhenSideBar';
 import { moorhen } from "../../types/moorhen"
 
@@ -39,6 +39,8 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
     const [currentName, setCurrentName] = useState<string>(props.map.name);
     const [popoverIsShown, setPopoverIsShown] = useState<boolean>(false)
     const [mapColour, setMapColour] = useState<{ r: number; g: number; b: number; } | null>(null)
+    const [negativeMapColour, setNegativeMapColour] = useState<{ r: number; g: number; b: number; } | null>(null)
+    const [positiveMapColour, setPositiveMapColour] = useState<{ r: number; g: number; b: number; } | null>(null)
     const nextOrigin = useRef<number[]>([])
     const busyContouring = useRef<boolean>(false)
     const isDirty = useRef<boolean>(false)
@@ -46,11 +48,41 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
     useEffect(() => {
         props.map.fetchMapRmsd()
         setMapColour({
-            r: 255 * props.map.rgba.r,
-            g: 255 * props.map.rgba.g,
-            b: 255 * props.map.rgba.b,
+            r: 255 * props.map.rgba.mapColour.r,
+            g: 255 * props.map.rgba.mapColour.g,
+            b: 255 * props.map.rgba.mapColour.b,
+        })
+        setNegativeMapColour({
+            r: 255 * props.map.rgba.negativeDiffColour.r,
+            g: 255 * props.map.rgba.negativeDiffColour.g,
+            b: 255 * props.map.rgba.negativeDiffColour.b,
+        })
+        setPositiveMapColour({
+            r: 255 * props.map.rgba.positiveDiffColour.r,
+            g: 255 * props.map.rgba.positiveDiffColour.g,
+            b: 255 * props.map.rgba.positiveDiffColour.b,
         })
     }, [])
+
+    const handlePositiveMapColorChange = (color: { rgb: {r: number; g: number; b: number;} }) => {
+        try {
+            props.map.setDiffMapColour('positiveDiffColour', color.rgb.r / 255., color.rgb.g / 255., color.rgb.b / 255., props.glRef)
+            setPositiveMapColour({r: color.rgb.r, g: color.rgb.g, b: color.rgb.b})
+        }
+        catch (err) {
+            console.log('err', err)
+        }
+    }
+
+    const handleNegativeMapColorChange = (color: { rgb: {r: number; g: number; b: number;} }) => {
+        try {
+            props.map.setDiffMapColour('negativeDiffColour', color.rgb.r / 255., color.rgb.g / 255., color.rgb.b / 255., props.glRef)
+            setNegativeMapColour({r: color.rgb.r, g: color.rgb.g, b: color.rgb.b})
+        }
+        catch (err) {
+            console.log('err', err)
+        }
+    }
 
     const handleColorChange = (color: { rgb: {r: number; g: number; b: number;} }) => {
         try {
@@ -287,16 +319,16 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
     }, [mapRadius, mapContourLevel, mapLitLines, mapSolid])
 
     const increaseLevelButton = <IconButton onClick={() => setMapContourLevel(mapContourLevel + props.contourWheelSensitivityFactor)} style={{padding: 0}}>
-                                    <AddOutlined/>
+                                    <AddCircleOutline/>
                                 </IconButton>
     const decreaseLevelButton = <IconButton onClick={() => setMapContourLevel(mapContourLevel - props.contourWheelSensitivityFactor)} style={{padding: 0}}>
-                                    <RemoveOutlined/>
+                                    <RemoveCircleOutline/>
                                 </IconButton>
     const increaseRadiusButton = <IconButton onClick={() => setMapRadius(mapRadius + 2)} style={{padding: 0}}>
-                                    <AddOutlined/>
+                                    <AddCircleOutline/>
                                 </IconButton>
     const decreaseRadiusButton = <IconButton onClick={() => setMapRadius(mapRadius - 2)} style={{padding: 0}}>
-                                    <RemoveOutlined/>
+                                    <RemoveCircleOutline/>
                                 </IconButton>
 
     const getMapColourSelector = () => {
@@ -310,21 +342,34 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
                 <div style={{
                     width: '20px', 
                     height: '20px', 
-                    background: props.map.isDifference ? 'linear-gradient( -45deg, green, green 49%, white 49%, white 51%, red 51% )' : `rgb(${mapColour.r},${mapColour.g},${mapColour.b})`, 
+                    background: props.map.isDifference ? 
+                        `linear-gradient( -45deg, rgba(${positiveMapColour.r},${positiveMapColour.g},${positiveMapColour.b}), rgba(${positiveMapColour.r},${positiveMapColour.g},${positiveMapColour.b}) 49%, white 49%, white 51%, rgba(${negativeMapColour.r},${negativeMapColour.g},${negativeMapColour.b}) 51% )`
+                        : 
+                        `rgb(${mapColour.r},${mapColour.g},${mapColour.b})`, 
                     borderRadius: '50%'
                 }}/>
             </Dropdown.Toggle>
-            <Dropdown.Menu style={{display: props.map.isDifference ? 'none' : '', padding: 0, margin: 0, zIndex: 9999}}>
-                <SketchPicker color={mapColour} onChange={handleColorChange} disableAlpha={true} />
+            <Dropdown.Menu style={{padding: '0.5rem', margin: 0, zIndex: 9999, width: props.sideBarWidth/2}}>
+                {props.map.isDifference ? 
+                <Stack gap={3} direction='horizontal'>
+                    <div style={{width: '100%', textAlign: 'center'}}>
+                        <span>Positive</span>
+                        <SliderPicker color={positiveMapColour} onChange={handlePositiveMapColorChange} />
+                    </div>
+                    <div style={{width: '100%', textAlign: 'center'}}>
+                        <span>Negative</span>
+                        <SliderPicker color={negativeMapColour} onChange={handleNegativeMapColorChange} />
+                    </div>
+                    
+                </Stack>
+                :
+                <SliderPicker color={mapColour} onChange={handleColorChange} />
+                }
             </Dropdown.Menu>
         </Dropdown>
 
-        if (props.map.isDifference) {
-            return <>{dropdown}</>
-        } 
-
         return <OverlayTrigger
-                placement="bottom"
+                placement="top"
                 overlay={
                     <Tooltip 
                         id="map-colour-label-tooltip" 
@@ -387,8 +432,6 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
                             setExternalValue={setMapContourLevel}
                         />
                     </Form.Group>
-                </Col>
-                <Col>
                     <Form.Group controlId="contouringRadius" className="mb-3">
                         <MoorhenSlider
                             minVal={0.01}

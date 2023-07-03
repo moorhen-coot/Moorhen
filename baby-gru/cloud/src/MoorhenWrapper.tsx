@@ -39,7 +39,7 @@ type PdbInputFileType = {
 type MapInputFileType = {
   type: 'mtz';
   uniqueId?: string;
-  args: [string, string, moorhen.selectedMtzColumns, {r: number, g: number, b: number}?];
+  args: [string, string, moorhen.selectedMtzColumns, { [type: string]: {r: number, g: number, b: number} }?];
 }
 
 type LegendInputFileType = {
@@ -221,13 +221,21 @@ export default class MoorhenWrapper {
     }
 }
 
-  async loadMtzData(uniqueId: string, inputFile: string, mapName: string, selectedColumns: moorhen.selectedMtzColumns, mapColour?: {r: number, g: number, b: number}): Promise<moorhen.Map> {
+  async loadMtzData(uniqueId: string, inputFile: string, mapName: string, selectedColumns: moorhen.selectedMtzColumns, colour?: {[type: string]: {r: number, g: number, b: number}}): Promise<moorhen.Map> {
     const newMap = new MoorhenMap(this.controls.commandCentre)
     newMap.litLines = this.context.defaultMapLitLines
     newMap.uniqueId = uniqueId
     
-    if (mapColour) {
-      newMap.rgba = { r: mapColour.r, g: mapColour.g, b: mapColour.b, a: 1.0 }
+    if (colour) {
+      if (colour.mapColour) {
+        newMap.rgba.mapColour = colour.mapColour
+      }
+      if (colour.negativeDiffColour) {
+        newMap.rgba.negativeDiffColour = colour.negativeDiffColour
+      }
+      if (colour.positiveDiffColour) {
+        newMap.rgba.positiveDiffColour = colour.positiveDiffColour
+      }
     }
     
     return new Promise(async (resolve, reject) => {

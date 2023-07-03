@@ -24,7 +24,13 @@ export class MoorhenMap implements moorhen.Map {
     associatedReflectionFileName: string
     uniqueId: string
     mapRmsd: number
-    rgba: {r: number, g: number, b: number, a: number}
+    diffMapColourBuffers: { positiveDiffColour: number[], negativeDiffColour: number[] }
+    rgba: {
+        mapColour: {r: number, g: number, b: number};
+        positiveDiffColour: {r: number, g: number, b: number};
+        negativeDiffColour: {r: number, g: number, b: number};
+        a: number;
+    }
 
     constructor(commandCentre: React.RefObject<moorhen.CommandCentre>) {
         this.type = 'map'
@@ -46,7 +52,13 @@ export class MoorhenMap implements moorhen.Map {
         this.associatedReflectionFileName = null
         this.uniqueId = guid()
         this.mapRmsd = null
-        this.rgba = { r: 0.30000001192092896, g: 0.30000001192092896, b: 0.699999988079071, a: 1.0 }
+        this.diffMapColourBuffers = { positiveDiffColour: [], negativeDiffColour: [] }
+        this.rgba = {
+            mapColour: { r: 0.30000001192092896, g: 0.30000001192092896, b: 0.699999988079071},
+            positiveDiffColour: {r: 0.4000000059604645, g: 0.800000011920929, b: 0.4000000059604645},
+            negativeDiffColour: {r: 0.800000011920929, g: 0.4000000059604645, b: 0.4000000059604645},
+            a: 1.0
+        }
     }
 
     async fetchMapRmsd(): Promise<number> {
@@ -79,7 +91,7 @@ export class MoorhenMap implements moorhen.Map {
         await Promise.all(promises)
     }
 
-    async replaceMapWithMtzFile(glRef: React.RefObject<webGL.MGWebGL>, fileUrl: RequestInfo | URL, name: string, selectedColumns: moorhen.selectedMtzColumns, mapColour?: {r: number, g: number, b: number}): Promise<void> {
+    async replaceMapWithMtzFile(glRef: React.RefObject<webGL.MGWebGL>, fileUrl: RequestInfo | URL, name: string, selectedColumns: moorhen.selectedMtzColumns, mapColour?: { [type: string]: {r: number, g: number, b: number} }): Promise<void> {
         let mtzData: Uint8Array
         let fetchResponse: Response
 
@@ -280,7 +292,7 @@ export class MoorhenMap implements moorhen.Map {
         $this.displayObjects[style] = []
     }
 
-    doCootContour(glRef: React.RefObject<webGL.MGWebGL>, x: number, y: number, z: number, radius: number, contourLevel: number): Promise<void> {
+    async doCootContour(glRef: React.RefObject<webGL.MGWebGL>, x: number, y: number, z: number, radius: number, contourLevel: number): Promise<void> {
 
         const $this = this
 
@@ -293,63 +305,101 @@ export class MoorhenMap implements moorhen.Map {
             returnType = "lines_mesh"
         }
 
-        return new Promise((resolve, reject) => {
-            this.commandCentre.current.cootCommand({
+        const response = await this.commandCentre.current.cootCommand({
                 returnType: returnType,
                 command: "get_map_contours_mesh",
                 commandArgs: [$this.molNo, x, y, z, radius, contourLevel]
-            }).then(response => {
-                const objects = [response.data.result.result]
-                $this.clearBuffersOfStyle(glRef, "Coot")
-                objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
-                    object.col_tri.forEach(cols => {
-                        cols.forEach(col => {
-                            if (!this.isDifference) {
-                                for (let idx = 0; idx < col.length; idx += 4) {
-                                    col[idx] = $this.rgba.r
-                                }
-                                for (let idx = 1; idx < col.length; idx += 4) {
-                                    col[idx] = $this.rgba.g
-                                }
-                                for (let idx = 2; idx < col.length; idx += 4) {
-                                    col[idx] = $this.rgba.b
-                                }
-                            }
-                            for (let idx = 3; idx < col.length; idx += 4) {
-                                col[idx] = $this.rgba.a
-                            }
-                        })
-                    })
-                    let a = glRef.current.appendOtherData(object, true);
-                    $this.displayObjects['Coot'] = $this.displayObjects['Coot'].concat(a)
-                })
-                glRef.current.buildBuffers();
-                glRef.current.drawScene();
-                resolve()
-            }).catch(err => console.log(err))
         })
+        try {
+            const objects = [response.data.result.result]
+            const diffMapColourBuffers = { positiveDiffColour: [], negativeDiffColour: [] }
+            $this.clearBuffersOfStyle(glRef, "Coot")
+            objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
+                object.col_tri.forEach((cols: number[][]) => {
+                    cols.forEach((col: number[]) => {
+                        if (!this.isDifference) {
+                            for (let idx = 0; idx < col.length; idx += 4) {
+                                col[idx] = $this.rgba.mapColour.r
+                                col[idx + 1] = $this.rgba.mapColour.g
+                                col[idx + 2] = $this.rgba.mapColour.b
+                                col[idx + 3] = $this.rgba.a
+                            }
+                        } else {
+                            for (let idx = 0; idx < col.length; idx += 4) {
+                                if (col[idx] < 0.5) {
+                                    diffMapColourBuffers.positiveDiffColour.push(idx)
+                                    col[idx] = $this.rgba.positiveDiffColour.r
+                                    col[idx + 1] = $this.rgba.positiveDiffColour.g
+                                    col[idx + 2] = $this.rgba.positiveDiffColour.b    
+                                } else {
+                                    diffMapColourBuffers.negativeDiffColour.push(idx)
+                                    col[idx] = $this.rgba.negativeDiffColour.r
+                                    col[idx + 1] = $this.rgba.negativeDiffColour.g
+                                    col[idx + 2] = $this.rgba.negativeDiffColour.b    
+                                }
+                                col[idx + 3] = $this.rgba.a
+                            }
+                        }
+                    })
+                })
+                let a = glRef.current.appendOtherData(object, true);
+                $this.diffMapColourBuffers.positiveDiffColour = $this.diffMapColourBuffers.positiveDiffColour.concat(diffMapColourBuffers.positiveDiffColour)
+                $this.diffMapColourBuffers.negativeDiffColour = $this.diffMapColourBuffers.negativeDiffColour.concat(diffMapColourBuffers.negativeDiffColour)
+                $this.displayObjects['Coot'] = $this.displayObjects['Coot'].concat(a)
+            })
+            glRef.current.buildBuffers();
+            glRef.current.drawScene();
+            } catch(err) {
+                console.log(err)
+            }
     }
 
-    async setColour(r: number, g: number, b: number, glRef: React.RefObject<webGL.MGWebGL>, redraw: boolean = true): Promise<void> {
-        if (this.isDifference) {
-            console.log('Cannot set colour of difference map yet...')
+    async setDiffMapColour(type: 'positiveDiffColour' | 'negativeDiffColour', r: number, g: number, b: number, glRef: React.RefObject<webGL.MGWebGL>, redraw: boolean = true): Promise<void> {
+        if (!this.isDifference) {
+            console.error('Cannot use moorhen.Map.setDiffMapColour to change non-diff map colour. Use moorhen.Map.setColour instead...')
             return
         }
-        this.rgba = { ...this.rgba, r, g, b }
-        this.displayObjects['Coot'].forEach(buffer => {
-            buffer.triangleColours.forEach(colbuffer => {
-                for (let idx = 0; idx < colbuffer.length; idx += 4) {
-                    colbuffer[idx] = this.rgba.r
-                }
-                for (let idx = 1; idx < colbuffer.length; idx += 4) {
-                    colbuffer[idx] = this.rgba.g
-                }
-                for (let idx = 2; idx < colbuffer.length; idx += 4) {
-                    colbuffer[idx] = this.rgba.b
+        
+        this.rgba[type] = { r, g, b }
+        
+        this.displayObjects['Coot'].forEach((buffer, bufferIdx) => {
+            buffer.triangleColours.forEach((colbuffer, colBufferIdx) => {
+                for (const idx of this.diffMapColourBuffers[type]) {
+                    colbuffer[idx] = this.rgba[type].r
+                    colbuffer[idx + 1] = this.rgba[type].g
+                    colbuffer[idx + 2] = this.rgba[type].b
                 }
             })
             buffer.isDirty = true
         })
+        
+        glRef.current.buildBuffers();
+        if (redraw) {
+            glRef.current.drawScene();
+        }
+    }
+
+
+    async setColour(r: number, g: number, b: number, glRef: React.RefObject<webGL.MGWebGL>, redraw: boolean = true): Promise<void> {
+        if (this.isDifference) {
+            console.error('Cannot use moorhen.Map.setColour to change difference map colour. Use moorhen.Map.setDiffMapColour instead...')
+            return
+        }
+        
+        this.rgba.mapColour = { r, g, b }
+        
+        this.displayObjects['Coot'].forEach(buffer => {
+            buffer.triangleColours.forEach(colbuffer => {
+                for (let idx = 0; idx < colbuffer.length; idx += 4) {
+                    colbuffer[idx] = this.rgba.mapColour.r
+                    colbuffer[idx + 1] = this.rgba.mapColour.g
+                    colbuffer[idx + 2] = this.rgba.mapColour.b
+                }
+                
+            })
+            buffer.isDirty = true
+        })
+
         glRef.current.buildBuffers();
         if (redraw) {
             glRef.current.drawScene();
