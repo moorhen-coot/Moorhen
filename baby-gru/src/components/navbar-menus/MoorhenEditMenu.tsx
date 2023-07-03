@@ -27,7 +27,7 @@ export const MoorhenEditMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             <MoorhenDeleteUsingCidMenuItem key="delete" {...menuItemProps} />
             <MoorhenCopyFragmentUsingCidMenuItem key="copy_fragment" {...menuItemProps} />
             <MoorhenGoToMenuItem key="go_to_cid" {...menuItemProps} />
-            {props.aceDRGInstance && 
+            {props.aceDRGInstance && props.devMode &&
                 <MenuItem onClick={() => setShowCreateAcedrgLinkModal(true)}>
                     Create covalent link between two atoms...
                 </MenuItem>            
