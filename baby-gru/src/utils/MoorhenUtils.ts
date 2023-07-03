@@ -7,10 +7,10 @@ import { gemmi } from "../types/gemmi";
 
 export function guid(): string {
     var d = Date.now();
-    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        var r = (d + Math.random()*16)%16 | 0;
-        d = Math.floor(d/16);
-        return (c==='x' ? r : (r&0x3|0x8)).toString(16);
+    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        var r = (d + Math.random() * 16) % 16 | 0;
+        d = Math.floor(d / 16);
+        return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
     });
     return uuid;
 }
@@ -66,27 +66,27 @@ export const residueCodesOneToThree = {
 }
 
 export const residueCodesThreeToOne = {
-        "ALA":'A',
-        "ARG":'R',
-        "ASN":'N',
-        "ASP":'D',
-        "CYS":'C',
-        "GLN":'Q',
-        "GLU":'E',
-        "GLY":'G',
-        "HIS":'H',
-        "ILE":'I',
-        "LEU":'L',
-        "LYS":'K',
-        "MET":'M',
-        "PHE":'F',
-        "PRO":'P',
-        "SER":'S',
-        "THR":'T',
-        "TRP":'W',
-        "TYR":'Y',
-        "VAL":'V',
-        "UNK":'X',
+    "ALA": 'A',
+    "ARG": 'R',
+    "ASN": 'N',
+    "ASP": 'D',
+    "CYS": 'C',
+    "GLN": 'Q',
+    "GLU": 'E',
+    "GLY": 'G',
+    "HIS": 'H',
+    "ILE": 'I',
+    "LEU": 'L',
+    "LYS": 'K',
+    "MET": 'M',
+    "PHE": 'F',
+    "PRO": 'P',
+    "SER": 'S',
+    "THR": 'T',
+    "TRP": 'W',
+    "TYR": 'Y',
+    "VAL": 'V',
+    "UNK": 'X',
 }
 
 export const nucleotideCodesOneToThree = {
@@ -127,29 +127,29 @@ export const nucleotideCodesThreeToOne = {
 }
 
 export const windowsFonts = [
-    'Arial', 'Arial Black', 'Bahnschrift', 'Calibri', 'Cambria', 'Cambria Math', 'Candara', 'Comic Sans MS', 'Consolas', 'Constantia', 
-    'Corbel', 'Courier New', 'Ebrima', 'Franklin Gothic Medium', 'Gabriola', 'Gadugi', 'Georgia', 'HoloLens MDL2 Assets', 'Impact', 
-    'Ink Free', 'Javanese Text', 'Leelawadee UI', 'Lucida Console', 'Lucida Sans Unicode', 'Malgun Gothic', 'Marlett', 'Microsoft Himalaya', 
-    'Microsoft JhengHei', 'Microsoft New Tai Lue', 'Microsoft PhagsPa', 'Microsoft Sans Serif', 'Microsoft Tai Le', 'Microsoft YaHei', 
-    'Microsoft Yi Baiti', 'MingLiU-ExtB', 'Mongolian Baiti', 'MS Gothic', 'MV Boli', 'Myanmar Text', 'Nirmala UI', 'Palatino Linotype', 
-    'Segoe MDL2 Assets', 'Segoe Print', 'Segoe Script', 'Segoe UI', 'Segoe UI Historic', 'Segoe UI Emoji', 'Segoe UI Symbol', 'SimSun', 
+    'Arial', 'Arial Black', 'Bahnschrift', 'Calibri', 'Cambria', 'Cambria Math', 'Candara', 'Comic Sans MS', 'Consolas', 'Constantia',
+    'Corbel', 'Courier New', 'Ebrima', 'Franklin Gothic Medium', 'Gabriola', 'Gadugi', 'Georgia', 'HoloLens MDL2 Assets', 'Impact',
+    'Ink Free', 'Javanese Text', 'Leelawadee UI', 'Lucida Console', 'Lucida Sans Unicode', 'Malgun Gothic', 'Marlett', 'Microsoft Himalaya',
+    'Microsoft JhengHei', 'Microsoft New Tai Lue', 'Microsoft PhagsPa', 'Microsoft Sans Serif', 'Microsoft Tai Le', 'Microsoft YaHei',
+    'Microsoft Yi Baiti', 'MingLiU-ExtB', 'Mongolian Baiti', 'MS Gothic', 'MV Boli', 'Myanmar Text', 'Nirmala UI', 'Palatino Linotype',
+    'Segoe MDL2 Assets', 'Segoe Print', 'Segoe Script', 'Segoe UI', 'Segoe UI Historic', 'Segoe UI Emoji', 'Segoe UI Symbol', 'SimSun',
     'Sitka', 'Sylfaen', 'Symbol', 'Tahoma', 'Times New Roman', 'Trebuchet MS', 'Verdana', 'Webdings', 'Wingdings', 'Yu Gothic'
 ]
 
-export const macFonts = [ 
-    'American Typewriter', 'Andale Mono', 'Arial', 'Arial Black', 'Arial Narrow', 'Arial Rounded MT Bold', 'Arial Unicode MS', 'Avenir', 
-    'Avenir Next', 'Avenir Next Condensed', 'Baskerville', 'Big Caslon', 'Bodoni 72', 'Bodoni 72 Oldstyle', 'Bodoni 72 Smallcaps', 'Bradley Hand', 
-    'Brush Script MT', 'Chalkboard', 'Chalkboard SE', 'Chalkduster', 'Charter', 'Cochin', 'Comic Sans MS', 'Copperplate', 'Courier', 'Courier New', 
-    'Didot', 'DIN Alternate', 'DIN Condensed', 'Futura', 'Geneva', 'Georgia', 'Gill Sans', 'Helvetica', 'Helvetica Neue', 'Herculanum', 'Hoefler Text', 
-    'Impact', 'Lucida Grande', 'Luminari', 'Marker Felt', 'Menlo', 'Microsoft Sans Serif', 'Monaco', 'Noteworthy', 'Optima', 'Palatino', 'Papyrus', 
-    'Phosphate', 'Rockwell', 'Savoye LET', 'SignPainter', 'Skia', 'Snell Roundhand', 'Tahoma', 'Times', 'Times New Roman', 'Trattatello', 'Trebuchet MS', 
+export const macFonts = [
+    'American Typewriter', 'Andale Mono', 'Arial', 'Arial Black', 'Arial Narrow', 'Arial Rounded MT Bold', 'Arial Unicode MS', 'Avenir',
+    'Avenir Next', 'Avenir Next Condensed', 'Baskerville', 'Big Caslon', 'Bodoni 72', 'Bodoni 72 Oldstyle', 'Bodoni 72 Smallcaps', 'Bradley Hand',
+    'Brush Script MT', 'Chalkboard', 'Chalkboard SE', 'Chalkduster', 'Charter', 'Cochin', 'Comic Sans MS', 'Copperplate', 'Courier', 'Courier New',
+    'Didot', 'DIN Alternate', 'DIN Condensed', 'Futura', 'Geneva', 'Georgia', 'Gill Sans', 'Helvetica', 'Helvetica Neue', 'Herculanum', 'Hoefler Text',
+    'Impact', 'Lucida Grande', 'Luminari', 'Marker Felt', 'Menlo', 'Microsoft Sans Serif', 'Monaco', 'Noteworthy', 'Optima', 'Palatino', 'Papyrus',
+    'Phosphate', 'Rockwell', 'Savoye LET', 'SignPainter', 'Skia', 'Snell Roundhand', 'Tahoma', 'Times', 'Times New Roman', 'Trattatello', 'Trebuchet MS',
     'Verdana', 'Zapfino'
- ]
+]
 
 export const linuxFonts = [
-    "Liberation Sans", "Nimbus Sans L", "FreeSans", "DejaVu Sans", "Bitstream Vera Sans", "Geneva", "Liberation Serif", "Nimbus Roman No 9 L",  
+    "Liberation Sans", "Nimbus Sans L", "FreeSans", "DejaVu Sans", "Bitstream Vera Sans", "Geneva", "Liberation Serif", "Nimbus Roman No 9 L",
     "FreeSerif", "Hoefler Text", "Times", "Times New Roman", "Bitstream Charter", "URW Palladio L", "Palatino", "Palatino Linotype", "Book Antiqua",
-    "DejaVu Serif", "Bitstream Vera Serif", "Century Schoolbook L", "Lucida Bright", "Georgia", "Liberation Mono", "Nimbus Mono L", "FreeMono", 
+    "DejaVu Serif", "Bitstream Vera Serif", "Century Schoolbook L", "Lucida Bright", "Georgia", "Liberation Mono", "Nimbus Mono L", "FreeMono",
     "Bitstream Vera Mono", "Lucida Console", "DejaVu Mono"
 ]
 
@@ -181,10 +181,10 @@ export const readDataFile = (source: Blob): Promise<ArrayBuffer> => {
             resolveCallback(reader.result)
         }
     }
-    
+
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.addEventListener("load", () =>  resolveReader(reader, resolve))
+        reader.addEventListener("load", () => resolveReader(reader, resolve))
         reader.readAsArrayBuffer(source)
     })
 }
@@ -237,97 +237,97 @@ export const centreOnGemmiAtoms = (atoms: moorhen.AtomInfo[]): [number, number, 
     let xtot = 0.0
     let ytot = 0.0
     let ztot = 0.0
-    
+
     for (const atom of atoms) {
         xtot += atom.x
         ytot += atom.y
         ztot += atom.z
     }
-    
-    return [-xtot/atomCount, -ytot/atomCount, -ztot/atomCount]
+
+    return [-xtot / atomCount, -ytot / atomCount, -ztot / atomCount]
 }
 
 // FIXME: We have multiple functions looping through all residues multiple times when paring a molecule. Let's do it only once...
 export const getBufferAtoms = (gemmiStructure: gemmi.Structure, exclude_ligands_and_waters: boolean = false): moorhen.AtomInfo[] => {
-        if (exclude_ligands_and_waters) {
-            window.CCP4Module.remove_ligands_and_waters_structure(gemmiStructure)
-        }
-   
-        let atomList: moorhen.AtomInfo[] = []
+    if (exclude_ligands_and_waters) {
+        window.CCP4Module.remove_ligands_and_waters_structure(gemmiStructure)
+    }
 
-        try {
-            const models = gemmiStructure.models
-            for (let modelIndex = 0; modelIndex < models.size(); modelIndex++) {
-                const model = models.get(modelIndex)
-                const modelName = model.name
-                const chains  = model.chains
-                const chainsSize = chains.size()
-                for (let chainIndex = 0; chainIndex < chainsSize; chainIndex++) {
-                    const chain = chains.get(chainIndex)
-                    const chainName = chain.name
-                    const residues = chain.residues
-                    const residuesSize = residues.size()
-                    for (let residueIndex = 0; residueIndex < residuesSize; residueIndex++) {
-                        const residue = residues.get(residueIndex)
-                        const residueName = residue.name
-                        const residueSeqId = residue.seqid
-                        const resNum = residueSeqId.str()
-                        const atoms = residue.atoms
-                        const atomsSize = atoms.size()
-                        for (let atomIndex = 0; atomIndex < atomsSize; atomIndex++) {
-                            const atom = atoms.get(atomIndex)
-                            const atomPos = atom.pos
-                            const atomPosX = atomPos.x
-                            const atomPosY = atomPos.y
-                            const atomPosZ = atomPos.z
-                            const atomElement = atom.element
-                            const atomElementString = window.CCP4Module.getElementNameAsString(atomElement)
-                            const atomCharge = atom.charge
-                            const atomTemp = atom.b_iso
-                            const atomName = atom.name
-                            const atomAltLoc = atom.altloc
-                            const atomHasAltLoc = atom.has_altloc()
-                            atomList.push({
-                                mol_name: modelName,
-                                chain_id: chainName,
-                                res_name: residueName,
-                                res_no: resNum,
-                                name: atomName,
-                                pos: [atomPosX, atomPosY, atomPosZ],
-                                x: atomPosX,
-                                y: atomPosY,
-                                z: atomPosZ,
-                                element: atomElement,
-                                serial: atom.serial,
-                                has_altloc: atomHasAltLoc,
-                                alt_loc : atomHasAltLoc ? String.fromCharCode(atomAltLoc) : '',
-                                tempFactor: atomTemp,
-                                charge: atomCharge,
-                                symbol: atomElementString,
-                                label: `/${modelName}/${chainName}/${resNum}(${residueName})/${atomName}${atomHasAltLoc ? ':' + String.fromCharCode(atomAltLoc) : ''}`
-                            })
-                            atom.delete()
-                            atomPos.delete()
-                            atomElement.delete()
-                        }
-                        residue.delete()
-                        residueSeqId.delete()
-                        atoms.delete()
+    let atomList: moorhen.AtomInfo[] = []
+
+    try {
+        const models = gemmiStructure.models
+        for (let modelIndex = 0; modelIndex < models.size(); modelIndex++) {
+            const model = models.get(modelIndex)
+            const modelName = model.name
+            const chains = model.chains
+            const chainsSize = chains.size()
+            for (let chainIndex = 0; chainIndex < chainsSize; chainIndex++) {
+                const chain = chains.get(chainIndex)
+                const chainName = chain.name
+                const residues = chain.residues
+                const residuesSize = residues.size()
+                for (let residueIndex = 0; residueIndex < residuesSize; residueIndex++) {
+                    const residue = residues.get(residueIndex)
+                    const residueName = residue.name
+                    const residueSeqId = residue.seqid
+                    const resNum = residueSeqId.str()
+                    const atoms = residue.atoms
+                    const atomsSize = atoms.size()
+                    for (let atomIndex = 0; atomIndex < atomsSize; atomIndex++) {
+                        const atom = atoms.get(atomIndex)
+                        const atomPos = atom.pos
+                        const atomPosX = atomPos.x
+                        const atomPosY = atomPos.y
+                        const atomPosZ = atomPos.z
+                        const atomElement = atom.element
+                        const atomElementString = window.CCP4Module.getElementNameAsString(atomElement)
+                        const atomCharge = atom.charge
+                        const atomTemp = atom.b_iso
+                        const atomName = atom.name
+                        const atomAltLoc = atom.altloc
+                        const atomHasAltLoc = atom.has_altloc()
+                        atomList.push({
+                            mol_name: modelName,
+                            chain_id: chainName,
+                            res_name: residueName,
+                            res_no: resNum,
+                            name: atomName,
+                            pos: [atomPosX, atomPosY, atomPosZ],
+                            x: atomPosX,
+                            y: atomPosY,
+                            z: atomPosZ,
+                            element: atomElement,
+                            serial: atom.serial,
+                            has_altloc: atomHasAltLoc,
+                            alt_loc: atomHasAltLoc ? String.fromCharCode(atomAltLoc) : '',
+                            tempFactor: atomTemp,
+                            charge: atomCharge,
+                            symbol: atomElementString,
+                            label: `/${modelName}/${chainName}/${resNum}(${residueName})/${atomName}${atomHasAltLoc ? ':' + String.fromCharCode(atomAltLoc) : ''}`
+                        })
+                        atom.delete()
+                        atomPos.delete()
+                        atomElement.delete()
                     }
-                    chain.delete()
-                    residues.delete()
+                    residue.delete()
+                    residueSeqId.delete()
+                    atoms.delete()
                 }
-                model.delete()
-                chains.delete()
+                chain.delete()
+                residues.delete()
             }
-            models.delete()
-        } finally {
-            if (gemmiStructure && !gemmiStructure.isDeleted()) {
-                gemmiStructure.delete()
-            }
+            model.delete()
+            chains.delete()
         }
+        models.delete()
+    } finally {
+        if (gemmiStructure && !gemmiStructure.isDeleted()) {
+            gemmiStructure.delete()
+        }
+    }
 
-        return atomList
+    return atomList
 }
 
 export const cidToSpec = (cid: string): moorhen.ResidueSpec => {
@@ -338,8 +338,8 @@ export const cidToSpec = (cid: string): moorhen.ResidueSpec => {
     const mol_no = cidTokens[1]
     const chain_id = cidTokens[2]
     const res_no = parseInt(cidTokens[3])
-    const res_name = ResNameRegExp.exec(cidTokens[3])?.length > 0  ? ResNameRegExp.exec(cidTokens[3])[0].replace('(', '').replace(')', '') : null
-    const ins_code = cidTokens[3].split(".").length > 1 ? cidTokens[3].split(".")[1] : ""
+    const res_name = ResNameRegExp.exec(cidTokens[3])?.length > 0 ? ResNameRegExp.exec(cidTokens[3])[0].replace('(', '').replace(')', '') : null
+    const ins_code = (cidTokens.length > 3 && cidTokens[3].split(".").length) > 1 ? cidTokens[3].split(".")[1] : ""
     const atom_name = cidTokens.length > 4 ? cidTokens[4].split(":")[0] : ""
     const alt_conf = atom_name && cidTokens[4].split(":").length > 1 ? cidTokens[4].split(":")[1] : ""
     return { mol_name, mol_no, chain_id, res_no, res_name, atom_name, ins_code, alt_conf, cid }
@@ -359,16 +359,16 @@ export const getResidueInfo = (molecules: moorhen.Molecule[], selectedMolNo: num
         const sequence = selectedMolecule.sequences.find(sequence => sequence.chain === selectedChain)
         if (sequence) {
             const sequenceData = sequence.sequence
-            const {resNum, resCode} = sequenceData[selectedResidueIndex];
-            if(resNum && resNum > -1){
+            const { resNum, resCode } = sequenceData[selectedResidueIndex];
+            if (resNum && resNum > -1) {
                 return {
                     modelIndex: 0,
-                    molName: selectedMolecule.name, 
+                    molName: selectedMolecule.name,
                     chain: selectedChain,
                     seqNum: resNum,
                     resCode: resCode
                 }
-            }        
+            }
         }
     }
 }
@@ -384,14 +384,14 @@ export const getTooltipShortcutLabel = (shortCut: moorhen.Shortcut): string => {
 }
 
 // FIXME: Again looping thourhg atoms every where...
-const getMoleculeBfactors = (gemmiStructure: gemmi.Structure): { cid: string, bFactor: number }[]=> {
+const getMoleculeBfactors = (gemmiStructure: gemmi.Structure): { cid: string, bFactor: number }[] => {
     let bFactors: { cid: string, bFactor: number }[] = []
     try {
         const models = gemmiStructure.models
         for (let modelIndex = 0; modelIndex < models.size(); modelIndex++) {
             const model = models.get(modelIndex)
             const modelName = model.name
-            const chains  = model.chains
+            const chains = model.chains
             const chainsSize = chains.size()
             for (let chainIndex = 0; chainIndex < chainsSize; chainIndex++) {
                 const chain = chains.get(chainIndex)
@@ -437,9 +437,9 @@ const getMoleculeBfactors = (gemmiStructure: gemmi.Structure): { cid: string, bF
 export function componentToHex(c: number): string {
     const hex = c.toString(16)
     return hex.length === 1 ? "0" + hex : hex
-  }
-  
-export  function rgbToHex(r: number, g: number, b: number): string {
+}
+
+export function rgbToHex(r: number, g: number, b: number): string {
     return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b)
 }
 
@@ -450,8 +450,8 @@ const getBfactorColourRules = (bFactors: { cid: string; bFactor: number; }[]): s
 
     const getColour = (bFactor: number): string => {
         let r: number, g: number, b: number
-        const normalisedFactor = Math.round(100 * ( (bFactor - min) / (max - min) ))
-        if(normalisedFactor <= 25) {
+        const normalisedFactor = Math.round(100 * ((bFactor - min) / (max - min)))
+        if (normalisedFactor <= 25) {
             r = 0
             g = Math.round(10.2 * normalisedFactor)
             b = 255
@@ -477,7 +477,7 @@ const getBfactorColourRules = (bFactors: { cid: string; bFactor: number; }[]): s
 const getPlddtColourRules = (plddtList: { cid: string; bFactor: number; }[]): string => {
     const getColour = (plddt: number) => {
         let r: number, g: number, b: number
-        if(plddt <= 50) {
+        if (plddt <= 50) {
             r = 230
             g = 113
             b = 62
@@ -530,24 +530,24 @@ export const hexToHsl = (hex: string): [number, number, number] => {
     const max = Math.max(r, g, b);
     const min = Math.min(r, g, b);
     let h: number, s: number, l: number = (max + min) / 2;
-  
+
     if (max === min) {
-      h = s = 0;
+        h = s = 0;
     } else {
-      const d = max - min;
-      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-  
-      switch (max) {
-        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-        case g: h = (b - r) / d + 2; break;
-        case b: h = (r - g) / d + 4; break;
-        default: break;
-      }
-  
-      h /= 6;
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+
+        switch (max) {
+            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+            case g: h = (b - r) / d + 2; break;
+            case b: h = (r - g) / d + 4; break;
+            default: break;
+        }
+
+        h /= 6;
     }
-  
-    return [ h, s, l ];
+
+    return [h, s, l];
 }
 
 export const createLocalStorageInstance = (name: string, empty: boolean = false): moorhen.LocalStorageInstance => {
@@ -555,11 +555,11 @@ export const createLocalStorageInstance = (name: string, empty: boolean = false)
         driver: [localforage.INDEXEDDB, localforage.LOCALSTORAGE],
         name: name,
         storeName: name
-     })
-     if (empty) {
+    })
+    if (empty) {
         instance.clear()
-     }
-     return instance
+    }
+    return instance
 }
 
 export const getDashedCylinder = (nsteps: number, cylinder_accu: number): [number[], number[], number[]] => {
@@ -567,56 +567,56 @@ export const getDashedCylinder = (nsteps: number, cylinder_accu: number): [numbe
     let thisNorm = []
     let thisIdxs = []
 
-    let ipos=0
+    let ipos = 0
     let maxIdx = 0
 
     const dash_step = 1.0 / nsteps
 
-    for(let i=0; i<nsteps/2; i++,ipos+=2){
-        const z = ipos*dash_step;
-        const zp1 = (ipos+1)*dash_step;
-        for(let j=0;j<360;j+=360/cylinder_accu){
+    for (let i = 0; i < nsteps / 2; i++, ipos += 2) {
+        const z = ipos * dash_step;
+        const zp1 = (ipos + 1) * dash_step;
+        for (let j = 0; j < 360; j += 360 / cylinder_accu) {
             const theta1 = j * Math.PI / 180.0;
-            const theta2 = (j+360/cylinder_accu) * Math.PI / 180.0;
+            const theta2 = (j + 360 / cylinder_accu) * Math.PI / 180.0;
             const x1 = Math.sin(theta1);
             const y1 = Math.cos(theta1);
             const x2 = Math.sin(theta2);
             const y2 = Math.cos(theta2);
-            thisNorm.push(...[ x1, y1, 0.0])
-            thisNorm.push(...[ x1, y1, 0.0])
-            thisNorm.push(...[ x2, y2, 0.0])
-            thisNorm.push(...[ x2, y2, 0.0])
-            thisPos.push(...[ x1, y1, z])
-            thisPos.push(...[ x1, y1, zp1])
-            thisPos.push(...[ x2, y2, z])
-            thisPos.push(...[ x2, y2, zp1])
-            thisIdxs.push(...[ 0+maxIdx, 1+maxIdx, 2+maxIdx])
-            thisIdxs.push(...[ 1+maxIdx, 3+maxIdx, 2+maxIdx])
+            thisNorm.push(...[x1, y1, 0.0])
+            thisNorm.push(...[x1, y1, 0.0])
+            thisNorm.push(...[x2, y2, 0.0])
+            thisNorm.push(...[x2, y2, 0.0])
+            thisPos.push(...[x1, y1, z])
+            thisPos.push(...[x1, y1, zp1])
+            thisPos.push(...[x2, y2, z])
+            thisPos.push(...[x2, y2, zp1])
+            thisIdxs.push(...[0 + maxIdx, 1 + maxIdx, 2 + maxIdx])
+            thisIdxs.push(...[1 + maxIdx, 3 + maxIdx, 2 + maxIdx])
             maxIdx += 4
-            thisPos.push(...[  x1,  y1, z])
-            thisPos.push(...[  x2,  y2, z])
-            thisPos.push(...[ 0.0, 0.0, z])
-            thisNorm.push(...[ 0.0, 0.0, 1.0])
-            thisNorm.push(...[ 0.0, 0.0, 1.0])
-            thisNorm.push(...[ 0.0, 0.0, 1.0])
-            thisIdxs.push(...[ 0+maxIdx, 2+maxIdx, 1+maxIdx])
+            thisPos.push(...[x1, y1, z])
+            thisPos.push(...[x2, y2, z])
+            thisPos.push(...[0.0, 0.0, z])
+            thisNorm.push(...[0.0, 0.0, 1.0])
+            thisNorm.push(...[0.0, 0.0, 1.0])
+            thisNorm.push(...[0.0, 0.0, 1.0])
+            thisIdxs.push(...[0 + maxIdx, 2 + maxIdx, 1 + maxIdx])
             maxIdx += 3
-            thisPos.push(...[  x1,  y1, zp1])
-            thisPos.push(...[  x2,  y2, zp1])
-            thisPos.push(...[ 0.0, 0.0, zp1])
-            thisNorm.push(...[ 0.0, 0.0, -1.0])
-            thisNorm.push(...[ 0.0, 0.0, -1.0])
-            thisNorm.push(...[ 0.0, 0.0, -1.0])
-            thisIdxs.push(...[ 0+maxIdx, 1+maxIdx, 2+maxIdx])
+            thisPos.push(...[x1, y1, zp1])
+            thisPos.push(...[x2, y2, zp1])
+            thisPos.push(...[0.0, 0.0, zp1])
+            thisNorm.push(...[0.0, 0.0, -1.0])
+            thisNorm.push(...[0.0, 0.0, -1.0])
+            thisNorm.push(...[0.0, 0.0, -1.0])
+            thisIdxs.push(...[0 + maxIdx, 1 + maxIdx, 2 + maxIdx])
             maxIdx += 3
         }
     }
 
-    return  [thisPos, thisNorm, thisIdxs]
+    return [thisPos, thisNorm, thisIdxs]
 }
 
 export const gemmiAtomPairsToCylindersInfo = (
-    atoms: [{pos: [number, number, number], serial: string}, {pos: [number, number, number], serial: string}][],
+    atoms: [{ pos: [number, number, number], serial: string }, { pos: [number, number, number], serial: string }][],
     size: number,
     colourScheme: { [x: string]: number[]; },
     labelled: boolean = false,
@@ -650,7 +650,7 @@ export const gemmiAtomPairsToCylindersInfo = (
     let totTextPrimNorm = []
     let totTextPrimCol = []
     let totTextLabels = []
-    
+
 
     for (let iat = 0; iat < atomPairs.length; iat++) {
         const at0 = atomPairs[iat][0];
@@ -658,67 +658,67 @@ export const gemmiAtomPairsToCylindersInfo = (
         let ab = vec3.create()
         let midpoint = vec3.create()
 
-        vec3.set(ab,at0.pos[0]-at1.pos[0],at0.pos[1]-at1.pos[1],at0.pos[2]-at1.pos[2])
-        vec3.set(midpoint,0.5*(at0.pos[0]+at1.pos[0]),0.5*(at0.pos[1]+at1.pos[1]),0.5*(at0.pos[2]+at1.pos[2]))
+        vec3.set(ab, at0.pos[0] - at1.pos[0], at0.pos[1] - at1.pos[1], at0.pos[2] - at1.pos[2])
+        vec3.set(midpoint, 0.5 * (at0.pos[0] + at1.pos[0]), 0.5 * (at0.pos[1] + at1.pos[1]), 0.5 * (at0.pos[2] + at1.pos[2]))
         const l = vec3.length(ab)
 
         totTextLabels.push(l.toFixed(2))
         totTextIdxs.push(iat) // Meaningless, I think
-        totTextPrimNorm.push(...[0,0,1]) // Also meaningless, I think
-        totTextPrimPos.push(...[midpoint[0],midpoint[1],midpoint[2]])
+        totTextPrimNorm.push(...[0, 0, 1]) // Also meaningless, I think
+        totTextPrimPos.push(...[midpoint[0], midpoint[1], midpoint[2]])
 
-        if(l>maxDist||l<minDist) continue;
+        if (l > maxDist || l < minDist) continue;
 
         for (let ip = 0; ip < colourScheme[`${at0.serial}`].length; ip++) {
             thisInstance_colours.push(colourScheme[`${at0.serial}`][ip])
             totTextPrimCol.push(colourScheme[`${at0.serial}`][ip])
         }
         thisInstance_origins.push(...at0.pos)
-        thisInstance_sizes.push(...[size,size,l])
+        thisInstance_sizes.push(...[size, size, l])
         let v = vec3.create()
         let au = vec3.create()
         let a = vec3.create()
         let b = vec3.create()
         let aup = at0.pos.map((v, i) => v - at1.pos[i])
-        vec3.set(au,...aup)
-        vec3.normalize(a,au)
-        vec3.set(b,0.0,0.0,-1.0)
-        vec3.cross(v,a,b)
-        const c = vec3.dot(a,b)
-        if(Math.abs(c+1.0)<1e-4){
+        vec3.set(au, ...aup)
+        vec3.normalize(a, au)
+        vec3.set(b, 0.0, 0.0, -1.0)
+        vec3.cross(v, a, b)
+        const c = vec3.dot(a, b)
+        if (Math.abs(c + 1.0) < 1e-4) {
             thisInstance_orientations.push(...[
-                    -1.0,  0.0,  0.0, 0.0,
-                     0.0,  1.0,  0.0, 0.0,
-                     0.0,  0.0, -1.0, 0.0,
-                     0.0,  0.0,  0.0, 1.0,
+                -1.0, 0.0, 0.0, 0.0,
+                0.0, 1.0, 0.0, 0.0,
+                0.0, 0.0, -1.0, 0.0,
+                0.0, 0.0, 0.0, 1.0,
             ])
         } else {
             const s = vec3.length(v)
             let k = mat3.create()
             k.set([
-              0.0, -v[2],  v[1],
-             v[2],   0.0, -v[0],
-            -v[1],  v[0],   0.0,
+                0.0, -v[2], v[1],
+                v[2], 0.0, -v[0],
+                -v[1], v[0], 0.0,
             ])
             let kk = mat3.create()
-            mat3.multiply(kk,k,k)
+            mat3.multiply(kk, k, k)
             let sk = mat3.create()
-            mat3.multiplyScalar(sk,k,1.0)
+            mat3.multiplyScalar(sk, k, 1.0)
             let omckk = mat3.create()
-            mat3.multiplyScalar(omckk,kk,1.0/(1.0+c))
+            mat3.multiplyScalar(omckk, kk, 1.0 / (1.0 + c))
             let r = mat3.create()
             r.set([
-               1.0, 0.0, 0.0,
-               0.0, 1.0, 0.0,
-               0.0, 0.0, 1.0,
+                1.0, 0.0, 0.0,
+                0.0, 1.0, 0.0,
+                0.0, 0.0, 1.0,
             ])
-            mat3.add(r,r,sk)
-            mat3.add(r,r,omckk)
+            mat3.add(r, r, sk)
+            mat3.add(r, r, omckk)
             thisInstance_orientations.push(...[
-                    r[0], r[1], r[2], 1.0,
-                    r[3], r[4], r[5], 1.0,
-                    r[6], r[7], r[8], 1.0,
-                     0.0,  0.0,  0.0, 1.0,
+                r[0], r[1], r[2], 1.0,
+                r[3], r[4], r[5], 1.0,
+                r[6], r[7], r[8], 1.0,
+                0.0, 0.0, 0.0, 1.0,
             ])
         }
     }
@@ -732,21 +732,21 @@ export const gemmiAtomPairsToCylindersInfo = (
     totInstance_colours.push(thisInstance_colours)
     totInstanceUseColours.push(true)
     totInstancePrimTypes.push("TRIANGLES")
-    if(labelled)
+    if (labelled)
         totTextPrimTypes.push("TEXTLABELS")
-    
-    if(labelled)
+
+    if (labelled)
         return {
-            prim_types: [totInstancePrimTypes,totTextPrimTypes],
-            idx_tri: [totIdxs,totTextIdxs],
-            vert_tri: [totPos,totTextPrimPos],
-            norm_tri: [totNorm,totTextPrimNorm],
-            col_tri: [totInstance_colours,totTextPrimCol],
-            label_tri: [[],totTextLabels],
-            instance_use_colors: [totInstanceUseColours,[false]],
-            instance_sizes: [totInstance_sizes,[]],
-            instance_origins: [totInstance_origins,[]],
-            instance_orientations: [totInstance_orientations,[]]
+            prim_types: [totInstancePrimTypes, totTextPrimTypes],
+            idx_tri: [totIdxs, totTextIdxs],
+            vert_tri: [totPos, totTextPrimPos],
+            norm_tri: [totNorm, totTextPrimNorm],
+            col_tri: [totInstance_colours, totTextPrimCol],
+            label_tri: [[], totTextLabels],
+            instance_use_colors: [totInstanceUseColours, [false]],
+            instance_sizes: [totInstance_sizes, []],
+            instance_origins: [totInstance_origins, []],
+            instance_orientations: [totInstance_orientations, []]
         }
     else
         return {
@@ -760,7 +760,7 @@ export const gemmiAtomPairsToCylindersInfo = (
             instance_origins: [totInstance_origins],
             instance_orientations: [totInstance_orientations]
         }
-    
+
 }
 
 export const gemmiAtomsToCirclesSpheresInfo = (atoms: moorhen.AtomInfo[], size: number, primType: string, colourScheme: { [x: string]: any[]; }) => {
@@ -792,20 +792,20 @@ export const gemmiAtomsToCirclesSpheresInfo = (atoms: moorhen.AtomInfo[], size: 
         atom["symbol"] = atoms[iat].element;
         atom["label"] = ""
         sphere_atoms.push(atom);
-        if(primType==="PERFECT_SPHERES"){
+        if (primType === "PERFECT_SPHERES") {
             totInstanceUseColours.push(true);
             totInstance_orientations.push(...[
-                     1.0,  0.0,  0.0, 0.0,
-                     0.0,  1.0,  0.0, 0.0,
-                     0.0,  0.0,  1.0, 0.0,
-                     0.0,  0.0,  0.0, 1.0,
+                1.0, 0.0, 0.0, 0.0,
+                0.0, 1.0, 0.0, 0.0,
+                0.0, 0.0, 1.0, 0.0,
+                0.0, 0.0, 0.0, 1.0,
             ])
             sphere_sizes.push(size);
             sphere_sizes.push(size);
         }
     }
 
-    if(primType==="PERFECT_SPHERES"){
+    if (primType === "PERFECT_SPHERES") {
         return {
             atoms: [[sphere_atoms]],
             instance_sizes: [[sphere_sizes]],
@@ -832,28 +832,28 @@ export const gemmiAtomsToCirclesSpheresInfo = (atoms: moorhen.AtomInfo[], size: 
 }
 
 export const findConsecutiveRanges = (numbers: number[]): [number, number][] => {
-    numbers.sort((a, b) => a - b); 
+    numbers.sort((a, b) => a - b);
     const ranges: [number, number][] = [];
-    
+
     let start = numbers[0];
     let end = numbers[0];
-    
+
     for (let i = 1; i < numbers.length; i++) {
-      if (numbers[i] === end + 1) {
-        end = numbers[i];
-      } else {
-        ranges.push([start, end]);
-        start = numbers[i];
-        end = numbers[i];
-      }
+        if (numbers[i] === end + 1) {
+            end = numbers[i];
+        } else {
+            ranges.push([start, end]);
+            start = numbers[i];
+            end = numbers[i];
+        }
     }
-    
-    ranges.push([start, end]); 
+
+    ranges.push([start, end]);
     return ranges;
 }
 
-export function getCubeLines(unitCell: gemmi.UnitCell): [{pos: [number, number, number], serial: string}, {pos: [number, number, number], serial: string}][] {
-    
+export function getCubeLines(unitCell: gemmi.UnitCell): [{ pos: [number, number, number], serial: string }, { pos: [number, number, number], serial: string }][] {
+
     const orthogonalize = (x: number, y: number, z: number) => {
         const fractPosition = new window.CCP4Module.Fractional(x, y, z)
         const orthPosition = unitCell.orthogonalize(fractPosition)
@@ -864,45 +864,44 @@ export function getCubeLines(unitCell: gemmi.UnitCell): [{pos: [number, number, 
     }
 
     const vertices: [number, number, number][] = [
-      [0, 0, 0],
-      [1, 0, 0],
-      [1, 1, 0],
-      [0, 1, 0],
-      [0, 0, 1],
-      [1, 0, 1],
-      [1, 1, 1],
-      [0, 1, 1]
-    ];
-     
-    const edges: [number, number][] = [
-      [0, 1],
-      [1, 2],
-      [2, 3],
-      [3, 0],
-      [4, 5],
-      [5, 6],
-      [6, 7],
-      [7, 4],
-      [0, 4],
-      [1, 5],
-      [2, 6],
-      [3, 7]
+        [0, 0, 0],
+        [1, 0, 0],
+        [1, 1, 0],
+        [0, 1, 0],
+        [0, 0, 1],
+        [1, 0, 1],
+        [1, 1, 1],
+        [0, 1, 1]
     ];
 
-    const lines: [{pos: [number, number, number], serial: string}, {pos: [number, number, number], serial: string}][] = [];
+    const edges: [number, number][] = [
+        [0, 1],
+        [1, 2],
+        [2, 3],
+        [3, 0],
+        [4, 5],
+        [5, 6],
+        [6, 7],
+        [7, 4],
+        [0, 4],
+        [1, 5],
+        [2, 6],
+        [3, 7]
+    ];
+
+    const lines: [{ pos: [number, number, number], serial: string }, { pos: [number, number, number], serial: string }][] = [];
     edges.forEach(edge => {
-      const [v1Index, v2Index] = edge
-      const v1 = {
-        pos: orthogonalize(...vertices[v1Index]),
-        serial: 'unit_cell'
-      };
-      const v2 = {
-        pos: orthogonalize(...vertices[v2Index]),
-        serial: 'unit_cell'
-      };
-      lines.push([v1, v2]);
+        const [v1Index, v2Index] = edge
+        const v1 = {
+            pos: orthogonalize(...vertices[v1Index]),
+            serial: 'unit_cell'
+        };
+        const v2 = {
+            pos: orthogonalize(...vertices[v2Index]),
+            serial: 'unit_cell'
+        };
+        lines.push([v1, v2]);
     })
-  
+
     return lines;
-  }
-  
+}
