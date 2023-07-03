@@ -27,6 +27,17 @@ export namespace gemmi {
         y: number;
         z: number;
     }
+    interface cifDocument extends emscriptem.instance<Fractional> {
+        blocks: emscriptem.vector<cifBlock>;
+    }
+    interface cifBlock extends emscriptem.instance<cifBlock> {
+        name: string;
+        find_loop: (arg0: string) => cifLoop;
+    }
+    interface cifLoop extends emscriptem.instance<cifLoop> {
+        length: () => number;
+        str: (arg0: number) => string;
+    }
     interface Selection extends emscriptem.instance<Selection> {
         matches_model: (model: Model) => boolean;
         matches_chain: (chain: Chain) => boolean;

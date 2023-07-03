@@ -19,10 +19,12 @@ export namespace libcootApi {
         FS_createDataFile(arg0: string, fileName: string, byteArray: Uint8Array, arg3: boolean, arg4: boolean): void;
         getElementNameAsString: (arg0: emscriptem.instance<string>) => string;
         FS_unlink: (arg0: string) => void;
+        cif_parse_string: (arg0: gemmi.cifDocument, arg1: string) => void;
         Selection: { new(cid: string): gemmi.Selection };
         NeighborSearch: { new(model: gemmi.Model, unitCell: gemmi.UnitCell, radius: number): gemmi.NeighborSearch };
         Position: { new(x: number, y: number, z: number): gemmi.Position };
         Fractional: { new(x: number, y: number, z: number): gemmi.Fractional };
+        cifDocument: { new(): gemmi.cifDocument }
     }
     type AtomInfo = {
         pos: [number, number, number];
