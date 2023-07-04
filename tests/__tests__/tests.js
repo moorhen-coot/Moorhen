@@ -33,16 +33,16 @@ describe('Testing molecules_container_js', () => {
         console.log(cootModule.CoorFormat.Pdb)
         console.log(cootModule.CoorFormat.ChemComp)
         const st = cootModule.read_structure_file('./5a3h.pdb', cootModule.CoorFormat.Pdb)
-        console.log("structure",st)
-        console.log("has_origx",st.has_origx)
-        console.log("has_origx",st.has_origx)
-        console.log("size",st.models.size())
+        console.log("structure", st)
+        console.log("has_origx", st.has_origx)
+        console.log("has_origx", st.has_origx)
+        console.log("size", st.models.size())
         const model = st.first_model()
-        console.log("mass of model",cootModule.calculate_mass_model(model))
+        console.log("mass of model", cootModule.calculate_mass_model(model))
         cootModule.assign_cis_flags_structure(st)
         const chains = model.chains
-        console.log("chains",chains)
-        console.log("chains.size",chains.size())
+        console.log("chains", chains)
+        console.log("chains.size", chains.size())
         const sgp1 = cootModule.get_spacegroup_by_name('P1')
         console.log(sgp1)
         console.log("hm", cootModule.getSpaceGroupHMAsString(sgp1))
@@ -55,8 +55,8 @@ describe('Testing molecules_container_js', () => {
 
         for (let i = 0; i < chains.size(); i++) {
             const ch = chains.get(i)
-            console.log("chain mass",cootModule.calculate_mass_chain(ch))
-            console.log("chain name",ch.name)
+            console.log("chain mass", cootModule.calculate_mass_chain(ch))
+            console.log("chain name", ch.name)
             const residues = ch.residues
             console.log(residues, residues.size())
             if (residues.size() > 0) {
@@ -67,20 +67,20 @@ describe('Testing molecules_container_js', () => {
                 console.log(atoms, atoms.size())
                 if (atoms.size() > 0) {
                     const at = atoms.get(0)
-                    console.log("atom",at)
-                    console.log("atom name",at.name)
-                    console.log("atom element name",cootModule.getElementNameAsString(at.element))
-                    console.log("atom serial no.",at.serial)
-                    console.log("atom pos",at.pos.x, at.pos.y, at.pos.z)
-                    console.log("atom occ",at.occ)
-                    console.log("atom b_iso",at.b_iso)
-                    console.log("atom padded name",at.padded_name())
+                    console.log("atom", at)
+                    console.log("atom name", at.name)
+                    console.log("atom element name", cootModule.getElementNameAsString(at.element))
+                    console.log("atom serial no.", at.serial)
+                    console.log("atom pos", at.pos.x, at.pos.y, at.pos.z)
+                    console.log("atom occ", at.occ)
+                    console.log("atom b_iso", at.b_iso)
+                    console.log("atom padded name", at.padded_name())
                     const anisoRow0 = at.aniso.as_mat33().row_copy(0)
                     const anisoRow1 = at.aniso.as_mat33().row_copy(1)
                     const anisoRow2 = at.aniso.as_mat33().row_copy(2)
-                    console.log("atom aniso row 1",anisoRow0.x, anisoRow0.y, anisoRow0.z)
-                    console.log("atom aniso row 2",anisoRow1.x, anisoRow1.y, anisoRow1.z)
-                    console.log("atom aniso row 3",anisoRow2.x, anisoRow2.y, anisoRow2.z)
+                    console.log("atom aniso row 1", anisoRow0.x, anisoRow0.y, anisoRow0.z)
+                    console.log("atom aniso row 2", anisoRow1.x, anisoRow1.y, anisoRow1.z)
+                    console.log("atom aniso row 3", anisoRow2.x, anisoRow2.y, anisoRow2.z)
                 }
             }
             const waters = ch.get_waters_const()
@@ -108,7 +108,7 @@ describe('Testing molecules_container_js', () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const ret = molecules_container.delete_using_cid(coordMolNo, "A/4-104", "LITERAL");
-        const ret_side = molecules_container.delete_side_chain(coordMolNo, "A", 154, "" );
+        const ret_side = molecules_container.delete_side_chain(coordMolNo, "A", 154, "");
         console.log(ret);
         console.log(ret_side);
     })
@@ -118,11 +118,17 @@ describe('Testing molecules_container_js', () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz',
             'FWT', 'PHWT', "", false, false)
-        const ret = molecules_container.delete_using_cid(coordMolNo, "A/100-104", "LITERAL");
-        const ret1 = molecules_container.add_terminal_residue_directly_using_cid(coordMolNo, "/*/A/99")
+        const setMapRes = molecules_container.set_imol_refinement_map(mapMolNo)
         const resSpec = new cootModule.residue_spec_t("A", 100, "");
         const res = molecules_container.get_residue(coordMolNo, resSpec)
-        expect(res.nAtoms).toBe(5)
+        expect(res.nAtoms).toBe(14)
+        console.log('nAtoms is', res.nAtoms)
+        const ret = molecules_container.delete_using_cid(coordMolNo, "A/100-104", "LITERAL");
+        const res1 = molecules_container.get_residue(coordMolNo, resSpec)
+        expect(res1).toBe(null)
+        const ret1 = molecules_container.add_terminal_residue_directly_using_cid(coordMolNo, "/*/A/99")
+        const res2 = molecules_container.get_residue(coordMolNo, resSpec)
+        expect(res2).not.toBe(null)
     })
 
     test('Test merge molecules', () => {
@@ -144,8 +150,8 @@ describe('Testing molecules_container_js', () => {
             const ri = rama_info.get(i)
             const cart = ri.position
             const phi_psi = ri.phi_psi
-            console.log(cart.x(), cart.y(), cart.z())
-            console.log(phi_psi.phi(), phi_psi.psi())
+            //console.log(cart.x(), cart.y(), cart.z())
+            //console.log(phi_psi.phi(), phi_psi.psi())
         }
     })
 
@@ -289,23 +295,23 @@ describe('Testing molecules_container_js', () => {
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
         const instanceMesh = molecules_container.get_rotamer_dodecs_instanced(coordMolNo);
         const geom = instanceMesh.geom
-        for(let i=0;i<geom.size();i++){
+        for (let i = 0; i < geom.size(); i++) {
             const inst = geom.get(i);
             expect(inst.vertices.size()).toBe(60)
             expect(inst.triangles.size()).toBe(36)
             expect(inst.instancing_data_A.size()).toBe(0)
             expect(inst.instancing_data_B.size()).toBe(0)
-            for(let j=0;j<inst.vertices.size();j++){
+            for (let j = 0; j < inst.vertices.size(); j++) {
                 const vert = inst.vertices.get(j)
-                console.log(vert)
-                console.log(vert.pos)
-                console.log(vert.normal)
+                //console.log(vert)
+                //console.log(vert.pos)
+                //console.log(vert.normal)
             }
-            for(let j=0;j<inst.instancing_data_A.size();j++){
+            for (let j = 0; j < inst.instancing_data_A.size(); j++) {
                 const inst_data = inst.instancing_data_A.get(j)
-                console.log("pos:",inst_data.position)
-                console.log("col",inst_data.colour)
-                console.log("size",inst_data.size)
+                //console.log("pos:",inst_data.position)
+                //console.log("col",inst_data.colour)
+                //console.log("size",inst_data.size)
             }
         }
     })
