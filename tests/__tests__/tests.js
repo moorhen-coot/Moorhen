@@ -120,7 +120,7 @@ describe('Testing molecules_container_js', () => {
             'FWT', 'PHWT', "", false, false)
         const ret = molecules_container.delete_using_cid(coordMolNo, "A/100-104", "LITERAL");
         const ret1 = molecules_container.add_terminal_residue_directly_using_cid(coordMolNo, "/*/A/99")
-        const resSpec = new cootModule.residue_spec_t("A", 99, "");
+        const resSpec = new cootModule.residue_spec_t("A", 100, "");
         const res = molecules_container.get_residue(coordMolNo, resSpec)
         expect(res.nAtoms).toBe(5)
     })
