@@ -96,6 +96,7 @@ module.exports = (env, argv) => {
       library: 'moorhen',
       libraryTarget: 'umd',
       umdNamedDefine: true,
+      globalObject: 'this'
     },
     module: {
       rules:[

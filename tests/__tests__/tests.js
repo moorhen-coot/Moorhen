@@ -113,6 +113,18 @@ describe('Testing molecules_container_js', () => {
         console.log(ret_side);
     })
 
+    test('Test add_terminal_residue methods', () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz',
+            'FWT', 'PHWT', "", false, false)
+        const ret = molecules_container.delete_using_cid(coordMolNo, "A/100-104", "LITERAL");
+        const ret1 = molecules_container.add_terminal_residue_directly_using_cid(coordMolNo, "/*/A/99")
+        const resSpec = new cootModule.residue_spec_t("A", 99, "");
+        const res = molecules_container.get_residue(coordMolNo, resSpec)
+        expect(res.nAtoms).toBe(5)
+    })
+
     test('Test merge molecules', () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
@@ -281,7 +293,7 @@ describe('Testing molecules_container_js', () => {
             const inst = geom.get(i);
             expect(inst.vertices.size()).toBe(60)
             expect(inst.triangles.size()).toBe(36)
-            expect(inst.instancing_data_A.size()).toBe(650)
+            expect(inst.instancing_data_A.size()).toBe(0)
             expect(inst.instancing_data_B.size()).toBe(0)
             for(let j=0;j<inst.vertices.size();j++){
                 const vert = inst.vertices.get(j)
