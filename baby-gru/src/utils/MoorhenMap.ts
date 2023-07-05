@@ -12,7 +12,6 @@ export class MoorhenMap implements moorhen.Map {
     contourLevel: number
     mapRadius: number
     mapColour: [number, number, number, number]
-    liveUpdatingMaps: any
     webMGContour: boolean
     cootContour: boolean
     displayObjects: any
@@ -40,7 +39,6 @@ export class MoorhenMap implements moorhen.Map {
         this.contourLevel = 0.8
         this.mapRadius = 13
         this.mapColour = [0.3, 0.3, 1.0, 1.0]
-        this.liveUpdatingMaps = {}
         this.webMGContour = false
         this.cootContour = true
         this.displayObjects = { Coot: [] }

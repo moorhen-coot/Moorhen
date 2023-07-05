@@ -1,6 +1,6 @@
 import React, { useEffect, useCallback, forwardRef, useState, useRef } from 'react';
 import { Toast, ToastContainer } from 'react-bootstrap';
-import { MGWebGL } from '../../WebGLgComponents/mgWebGL.js';
+import { MGWebGL } from '../../WebGLgComponents/mgWebGL';
 import { MoorhenColourRules } from "../modal/MoorhenColourRules"
 import { MoorhenContextMenu } from "../context-menu/MoorhenContextMenu"
 import { cidToSpec, convertViewtoPx } from '../../utils/MoorhenUtils';
@@ -525,11 +525,10 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                 </ToastContainer>
 
                 <MGWebGL
-                    ref={/**FIXME: Setting this to any is very dirty...*/ glRef as any}
-                    dataChanged={(d) => { console.log(d) }}
+                    ref={glRef}
                     onAtomHovered={props.onAtomHovered}
                     onKeyPress={props.onKeyPress}
-                    messageChanged={() => { }}
+                    messageChanged={(d) => { }}
                     mouseSensitivityFactor={props.context.mouseSensitivity}
                     zoomWheelSensitivityFactor={props.context.zoomWheelSensitivityFactor}
                     keyboardAccelerators={JSON.parse(props.context.shortCuts as string)}

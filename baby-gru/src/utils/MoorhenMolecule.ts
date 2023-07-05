@@ -66,8 +66,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
         originNeighboursHBond: moorhen.DisplayObject[];
         originNeighboursBump: moorhen.DisplayObject[];
         unitCell:  moorhen.DisplayObject[];
-        transformation: { origin: [number, number, number], quat: any, centre: [number, number, number] }
     };
+    displayObjectsTransformation: { origin: [number, number, number], quat: any, centre: [number, number, number] }
     uniqueId: string;
     monomerLibraryPath: string
 
@@ -121,8 +121,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
             originNeighboursHBond: [],
             originNeighboursBump: [],
             unitCell: [],
-            transformation: { origin: [0, 0, 0], quat: null, centre: [0, 0, 0] }
         }
+        this.displayObjectsTransformation = { origin: [0, 0, 0], quat: null, centre: [0, 0, 0] }
         this.uniqueId = guid()
         this.monomerLibraryPath = monomerLibraryPath
     }
@@ -1258,12 +1258,12 @@ export class MoorhenMolecule implements moorhen.Molecule {
                         const atomHasAltLoc = atom.has_altloc()
                         const atomSymbol: string = window.CCP4Module.getElementNameAsString(atomElement)
                         const atomName = atomSymbol.length === 2 ? (atom.name).padEnd(4, " ") : (" " + atom.name).padEnd(4, " ")
-                        const diff = $this.displayObjects.transformation.centre
+                        const diff = $this.displayObjectsTransformation.centre
                         let x = gemmiAtomPos.x + glRef.current.origin[0] - diff[0]
                         let y = gemmiAtomPos.y + glRef.current.origin[1] - diff[1]
                         let z = gemmiAtomPos.z + glRef.current.origin[2] - diff[2]
-                        const origin = $this.displayObjects.transformation.origin
-                        const quat = $this.displayObjects.transformation.quat
+                        const origin = $this.displayObjectsTransformation.origin
+                        const quat = $this.displayObjectsTransformation.quat
                         const cid = `/${model.name}/${chain.name}/${residueSeqId.str()}/${atom.name}${atomHasAltLoc ? ':' + String.fromCharCode(atomAltLoc) : ''}`
                         if (quat) {
                             const theMatrix = quatToMat4(quat)
@@ -1328,8 +1328,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
             commandArgs: [$this.molNo, movedResidues],
             changesMolecules: [$this.molNo]
         })
-        $this.displayObjects.transformation.origin = [0, 0, 0]
-        $this.displayObjects.transformation.quat = null
+        $this.displayObjectsTransformation.origin = [0, 0, 0]
+        $this.displayObjectsTransformation.quat = null
         $this.setAtomsDirty(true)
         return $this.redraw(glRef)
     }

@@ -164,8 +164,8 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
         if(refinementDirty.current) {
             await refineNewPosition()
         }
-        moltenFragmentRef.current.displayObjects.transformation.origin = [0, 0, 0]
-        moltenFragmentRef.current.displayObjects.transformation.quat = null
+        moltenFragmentRef.current.displayObjectsTransformation.origin = [0, 0, 0]
+        moltenFragmentRef.current.displayObjectsTransformation.quat = null
     }, [moltenFragmentRef])
 
     const handleAtomDragged = async(atomCid: string) => {

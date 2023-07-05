@@ -172,8 +172,8 @@ export namespace moorhen {
             originNeighbours: DisplayObject[];
             originNeighboursHBond: DisplayObject[];
             originNeighboursBump: DisplayObject[];
-            transformation: { origin: [number, number, number], quat: any, centre: [number, number, number] }
         };
+        displayObjectsTransformation: { origin: [number, number, number], quat: any, centre: [number, number, number] }
         uniqueId: string;
         monomerLibraryPath: string;
         applyTransform: (glRef: React.RefObject<webGL.MGWebGL>) => Promise<void>;
@@ -288,7 +288,6 @@ export namespace moorhen {
         contourLevel: number;
         mapRadius: number;
         mapColour: [number, number, number, number];
-        liveUpdatingMaps: any;
         webMGContour: boolean;
         cootContour: boolean;
         displayObjects: any;

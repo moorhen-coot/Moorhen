@@ -1,4 +1,7 @@
-import React, { createRef, Component } from 'react';
+import React from 'react';
+
+import { moorhen } from "../types/moorhen";
+import { webGL } from "../types/mgWebGL";
 
 import pako from 'pako';
 import * as vec3 from 'gl-matrix/vec3';
@@ -101,7 +104,7 @@ function vec3Subtract(v1, v2, out) {
     vec3.subtract(out, v1, v2);
 }
 
-function vec3Create(v) {
+export function vec3Create(v) {
     let theVec = vec3.create();
     vec3.set(theVec, v[0], v[1], v[2], v[3]);
     return theVec;
@@ -138,7 +141,7 @@ const X_2_18 = 0.587785252292;
 const X_2_19 = 0.425325404176;
 const X_2_20 = 0.688190960236;
 
-const icosaVertices1 = [
+export const icosaVertices1 = [
     -X_1_0, X_1_2, X_1_1,
     -X_1_3, X_1_5, X_1_4,
     X_1_1, X_1_6, X_1_1,
@@ -183,7 +186,7 @@ const icosaVertices1 = [
     -X_1_5, -X_1_4, -X_1_3
 ];
 
-const icosaVertices2 = [
+export const icosaVertices2 = [
     -X_2_0, X_2_2, X_2_1,
     -X_2_3, X_2_5, X_2_4,
     -X_2_6, X_2_7, X_2_1,
@@ -348,7 +351,7 @@ const icosaVertices2 = [
     -X_2_20, -X_2_19, -X_2_18
 ];
 
-const icosaIndices1 = [
+export const icosaIndices1 = [
     0, 1, 2,
     3, 4, 1,
     5, 2, 4,
@@ -431,7 +434,7 @@ const icosaIndices1 = [
     26, 41, 33
 ];
 
-const icosaIndices2 = [
+export const icosaIndices2 = [
     0, 1, 2,
     3, 4, 1,
     5, 2, 4,
@@ -755,261 +758,18 @@ const icosaIndices2 = [
 ];
 
 const icosaphi = (1 + Math.sqrt(5)) / 2.;
-const stellatedScale = 1.64;
-const icosaX = stellatedScale;
-const icosaZ = stellatedScale * icosaphi;
-
-const dodecaphi = (1 + Math.sqrt(5)) / 2.;
-const dodecaX = 1;
-const dodecaZ = dodecaphi;
-const stellatedDodecaVertices = [
-    // dodecahedron vertices
-    dodecaX, dodecaX, dodecaX,
-    -dodecaX, dodecaX, dodecaX,
-    dodecaX, -dodecaX, dodecaX,
-    dodecaX, dodecaX, -dodecaX,
-    -dodecaX, -dodecaX, dodecaX,
-    dodecaX, -dodecaX, -dodecaX,
-    -dodecaX, dodecaX, -dodecaX,
-    -dodecaX, -dodecaX, -dodecaX,
-    0, 1. / dodecaZ, dodecaZ,
-    0, 1. / -dodecaZ, dodecaZ,
-    0, 1. / dodecaZ, -dodecaZ,
-    0, 1. / -dodecaZ, -dodecaZ,
-    1. / dodecaZ, dodecaZ, 0,
-    1. / -dodecaZ, dodecaZ, 0,
-    1. / dodecaZ, -dodecaZ, 0,
-    1. / -dodecaZ, -dodecaZ, 0,
-    dodecaZ, 0, 1. / dodecaZ,
-    -dodecaZ, 0, 1. / dodecaZ,
-    dodecaZ, 0, 1. / -dodecaZ,
-    -dodecaZ, 0, 1. / -dodecaZ,
-    // icosahedron vertices
-    -icosaX, 0.0, icosaZ,  //20 DONE
-    icosaX, 0.0, icosaZ,   //21 DONE
-    -icosaX, 0.0, -icosaZ, //22 DONE
-    icosaX, 0.0, -icosaZ,  //23 DONE
-    0.0, icosaZ, icosaX,   //24 DONE
-    0.0, icosaZ, -icosaX,  //25 DONE
-    0.0, -icosaZ, icosaX,  //26 DONE
-    0.0, -icosaZ, -icosaX, //27 DONE
-    icosaZ, icosaX, 0.0,   //28 DONE
-    -icosaZ, icosaX, 0.0,  //29 DONE
-    icosaZ, -icosaX, 0.0,  //30 DONE
-    -icosaZ, -icosaX, 0.0, //31
-];
-
-const stellatedDodecaIndices = [
-
-    // Stellated-Dodecahedron indices
-
-    3, 12, 28,
-    12, 0, 28,
-    0, 16, 28,
-    16, 18, 28,
-    18, 3, 28,
-
-    0, 12, 24,
-    12, 13, 24,
-    13, 1, 24,
-    1, 8, 24,
-    8, 0, 24,
-
-    13, 12, 25,
-    12, 3, 25,
-    3, 10, 25,
-    10, 6, 25,
-    6, 13, 25,
-
-    16, 0, 21,
-    0, 8, 21,
-    8, 9, 21,
-    9, 2, 21,
-    2, 16, 21,
-
-    18, 16, 30,
-    16, 2, 30,
-    2, 14, 30,
-    14, 5, 30,
-    5, 18, 30,
-
-    10, 3, 23,
-    3, 18, 23,
-    18, 5, 23,
-    5, 11, 23,
-    11, 10, 23,
-
-    9, 8, 20,
-    8, 1, 20,
-    1, 17, 20,
-    17, 4, 20,
-    4, 9, 20,
-
-    17, 1, 29,
-    1, 13, 29,
-    13, 6, 29,
-    6, 19, 29,
-    19, 17, 29,
-
-    19, 6, 22,
-    6, 10, 22,
-    10, 11, 22,
-    11, 7, 22,
-    7, 19, 22,
-
-    7, 11, 27,
-    11, 5, 27,
-    5, 14, 27,
-    14, 15, 27,
-    15, 7, 27,
-
-    15, 14, 26,
-    14, 2, 26,
-    2, 9, 26,
-    9, 4, 26,
-    4, 15, 26,
-
-    4, 17, 31,
-    17, 19, 31,
-    19, 7, 31,
-    7, 15, 31,
-    15, 4, 31,
-];
 
 let icosaVertices = icosaVertices2;
 let icosaIndices = icosaIndices2;
 
 let icosaNormals = icosaVertices;
 
-function isDarkBackground(r, g, b, a) {
+export function isDarkBackground(r, g, b, a) {
     const brightness = r * 0.299 + g * 0.587 + b * 0.114
     if (brightness >= 0.5) {
         return false
     }
     return true
-}
-
-function flatNormalMesh(vertices, indices) {
-    let newVertices = [];
-    let newNormals = [];
-    let newIndices = [];
-    let idx = 0;
-
-    for (let i = 0; i < indices.length; i += 3) {
-        let i0 = indices[i];
-        let i1 = indices[i + 1];
-        let i2 = indices[i + 2];
-        let x0 = vertices[3 * i0];
-        let y0 = vertices[3 * i0 + 1];
-        let z0 = vertices[3 * i0 + 2];
-        let x1 = vertices[3 * i1];
-        let y1 = vertices[3 * i1 + 1];
-        let z1 = vertices[3 * i1 + 2];
-        let x2 = vertices[3 * i2];
-        let y2 = vertices[3 * i2 + 1];
-        let z2 = vertices[3 * i2 + 2];
-        //console.log("Indices: "+i0+" "+i1+" "+i2);
-        //console.log("p0: "+x0+" "+y0+" "+z0);
-        //console.log("p1: "+x1+" "+y1+" "+z1);
-        //console.log("p2: "+x2+" "+y2+" "+z2);
-        let p0p1 = vec3Create([x1 - x0, y1 - y0, z1 - z0]);
-        let p0p2 = vec3Create([x2 - x0, y2 - y0, z2 - z0]);
-        NormalizeVec3(p0p1);
-        NormalizeVec3(p0p2);
-        let n = vec3.create();
-        vec3Cross(p0p1, p0p2, n);
-        NormalizeVec3(n);
-        //console.log("P0P1: "+p0p1[0]+" "+p0p1[1]+" "+p0p1[2]);
-        //console.log("P0P2: "+p0p2[0]+" "+p0p2[1]+" "+p0p2[2]);
-        //console.log("Normal: "+n[0]+" "+n[1]+" "+n[2]);
-
-        newVertices.push(x0); newVertices.push(y0); newVertices.push(z0);
-        newVertices.push(x1); newVertices.push(y1); newVertices.push(z1);
-        newVertices.push(x2); newVertices.push(y2); newVertices.push(z2);
-        newNormals.push(n[0]); newNormals.push(n[1]); newNormals.push(n[2]);
-        newNormals.push(n[0]); newNormals.push(n[1]); newNormals.push(n[2]);
-        newNormals.push(n[0]); newNormals.push(n[1]); newNormals.push(n[2]);
-        newIndices.push(idx++);
-        newIndices.push(idx++);
-        newIndices.push(idx++);
-
-    }
-    //console.log(newVertices);
-    //console.log(newNormals);
-    //console.log(newIndices);
-
-    let ret = {};
-    ret["vertices"] = newVertices;
-    ret["normals"] = newNormals;
-    ret["indices"] = newIndices;
-
-    return ret;
-
-}
-
-let starMesh = flatNormalMesh(stellatedDodecaVertices, stellatedDodecaIndices);
-
-//let starNormals = stellatedDodecaVertices;
-//let starVertices = stellatedDodecaVertices;
-//let starIndices = stellatedDodecaIndices;
-let starNormals = starMesh["normals"];
-let starVertices = starMesh["vertices"];
-let starIndices = starMesh["indices"];
-
-function genSymMats(RO, RF, symmats, origin, radius, centre) {
-    let TMats = [];
-    let isymops = [];
-    // FIXME We should work out shift limits on the fly also. Currently this only works in box of +/- shift.
-    let transOrigin = vec3.create();
-    let diffO = vec3.create();
-
-    let xyz = vec3Create([1.0, 1.0, 1.0]);
-    vec3.transformMat4(xyz, xyz, RO);
-
-    let ofrac = vec3Create(origin);
-    vec3.transformMat4(ofrac, ofrac, RF);
-
-    let x_shifts = Math.ceil(2 * radius / xyz[0]);
-    let y_shifts = Math.ceil(2 * radius / xyz[1]);
-    let z_shifts = Math.ceil(2 * radius / xyz[2]);
-
-    let x_shift_base = Math.floor(ofrac[0]);
-    let y_shift_base = Math.floor(ofrac[1]);
-    let z_shift_base = Math.floor(ofrac[2]);
-
-    for (let i = 0; i < symmats.length; i++) {
-        let tm = symmats[i];
-        //console.log(tm);
-        for (let xshift = -x_shifts + x_shift_base; xshift < x_shifts + x_shift_base; xshift++) {
-            for (let yshift = -y_shifts + y_shift_base; yshift < y_shifts + y_shift_base; yshift++) {
-                for (let zshift = -z_shifts + z_shift_base; zshift < z_shifts + z_shift_base; zshift++) {
-                    let tmt = mat4.create();
-                    mat4.transpose(tmt, tm);
-                    let fm = mat4.create();
-                    let theTMatrix = mat4.create();
-                    let invTMat = mat4.create();
-                    tmt[12] += xshift;
-                    tmt[13] += yshift;
-                    tmt[14] += zshift;
-                    //console.log("tmt");
-                    //printMat(tmt);
-                    mat4.multiply(fm, tmt, RF);
-                    mat4.multiply(theTMatrix, RO, fm);
-                    mat4.invert(invTMat, theTMatrix);
-                    //console.log("theTMatrix");
-                    //printMat(theTMatrix);
-                    vec3.transformMat4(transOrigin, centre, theTMatrix);
-                    vec3Subtract(transOrigin, origin, diffO);
-                    let diffO2 = vec3.length(diffO);
-                    if (diffO2 < radius) {
-                        TMats.push(theTMatrix);
-                        isymops.push(i);
-                    }
-                }
-            }
-        }
-    }
-    return { "matrices": TMats, "symopnums": isymops };
 }
 
 function handleTextureLoaded(gl, image, texture, text, tex_size, font) {
@@ -1050,8 +810,8 @@ function handleTextureLoaded(gl, image, texture, text, tex_size, font) {
         ctx.font = font;
         let textWidth = ctx.measureText(text).width;
         let textHeight = 1.0 * determineFontHeight(font, fnsize);
-        nptw = next_power_of_2(parseInt(textWidth));
-        npth = next_power_of_2(parseInt(textHeight));
+        nptw = next_power_of_2(Math.floor(textWidth));
+        npth = next_power_of_2(Math.floor(textHeight));
         console.log(nptw + " " + npth);
         console.log(ctx.measureText(text));
 
@@ -1131,7 +891,7 @@ function next_power_of_2(v) {
     return v;
 }
 
-function getEncodedData(rssentries, createFun) {
+function getEncodedData(rssentries:any[]) {
     let allBuffers = [];
     for (let i = 0; i < rssentries.length; i++) {
         if (typeof (rssentries[i]) === "string") {
@@ -1171,18 +931,12 @@ function getEncodedData(rssentries, createFun) {
                 }
             }
 
-
             let thisBuffer;
             try {
                 thisBuffer = JSON.parse(strData);
+                allBuffers.push(thisBuffer);
             } catch (e) {
                 console.log(strData);
-            }
-
-            if (typeof (createFun) === 'undefined') {
-                allBuffers.push(thisBuffer);
-            } else {
-                createFun(thisBuffer);
             }
         } else {
             allBuffers.push(rssentries[i]);
@@ -1258,6 +1012,27 @@ function SortThing(proj, id1, id2, id3) {
 }
 
 class TextCanvasTexture {
+    gl: WebGLRenderingContext | WebGL2RenderingContext;
+    ext: any;
+    glRef: MGWebGL;
+    nBigTextures: number;
+    nBigTexturesInt: number;
+    refI: Dictionary<number>;
+    bigTextureTexOrigins: number[][]; 
+    bigTextureTexOffsets: number[][];
+    bigTextureScalings: number[][];
+    contextBig: CanvasRenderingContext2D;
+    bigTextureCurrentBaseLine: number;
+    bigTextureCurrentWidth: number;
+    maxCurrentColumnWidth: number;
+    bigTextTex: WebGLTexture;
+    bigTextureTexOffsetsBuffer: WebGLBuffer;
+    bigTextureTextInstanceOriginBuffer: WebGLBuffer;
+    bigTextureTextInstanceSizeBuffer: WebGLBuffer;
+    bigTextureTextTexCoordBuffer: WebGLBuffer;
+    bigTextureTextPositionBuffer: WebGLBuffer;
+    bigTextureTextIndexesBuffer: WebGLBuffer;
+    textureCache: Dictionary<Dictionary<Dictionary<number[]>>>;
 
     constructor(glRef,width=1024,height=4096) {
         this.gl = glRef.gl
@@ -1326,7 +1101,7 @@ class TextCanvasTexture {
 
     }
 
-    addImageToBigTexture(t, textColour, font) {
+    addImageToBigTexture(t : string, textColour : string, font : string) : number[] {
         this.contextBig.textBaseline = "alphabetic";
         this.contextBig.font = font;
         let textMetric = this.contextBig.measureText(t);
@@ -1422,6 +1197,48 @@ class TextCanvasTexture {
 }
 
 class DisplayBuffer {
+    visible: boolean;
+    name_label: string;
+    display_class: string;
+    transparent: boolean;
+    alphaChanged: boolean;
+    atoms: {charge: number, tempFactor: number, x: number, y: number, z: number, symbol: string, label:string}[];
+    symmetryMatrices: number[];
+    triangleVertexRealNormalBuffer: MGWebGLBuffer[];
+    triangleVertexNormalBuffer: MGWebGLBuffer[];
+    triangleVertexPositionBuffer: MGWebGLBuffer[];
+    triangleVertexIndexBuffer: MGWebGLBuffer[];
+    triangleVertexTextureBuffer: MGWebGLBuffer[];
+    triangleInstanceOriginBuffer: MGWebGLBuffer[];
+    triangleInstanceOrientationBuffer: MGWebGLBuffer[];
+    triangleInstanceSizeBuffer: MGWebGLBuffer[];
+    triangleColourBuffer: number[];
+    triangleIndexs: number[];
+    triangleVertices: number[];
+    triangleInstanceOrigins: number[];
+    triangleInstanceSizes: number[];
+    triangleInstanceOrientations: number[];
+    triangleColours: number[];
+    triangleNormals: number[];
+    primitiveSizes: number[];
+    bufferTypes: string[];
+    transformMatrix: number[];
+    transformMatrixInteractive: number[];
+    transformOriginInteractive: number[];
+    symopnums: number[];
+    supplementary: any;
+    isDirty: boolean;
+    textNormalBuffer: MGWebGLBuffer[] | null;
+    textPositionBuffer: MGWebGLBuffer[] | null;
+    textColourBuffer: MGWebGLBuffer[] | null;
+    textTexCoordBuffer: MGWebGLBuffer[] | null;
+    textIndexesBuffer: MGWebGLBuffer[] | null;
+    clickLinePositionBuffer: MGWebGLBuffer[] | null;
+    clickLineColourBuffer: MGWebGLBuffer[] | null;
+    clickLineIndexesBuffer: MGWebGLBuffer[] | null;
+    textNormals: number[];
+    textColours: number[];
+
     constructor() {
         this.visible = true;
         this.name_label = "";
@@ -1430,7 +1247,6 @@ class DisplayBuffer {
         this.alphaChanged = false;
         this.atoms = [];
         this.symmetryMatrices = [];
-        this.texture = null;
         this.clearBuffers();
     }
 
@@ -1453,7 +1269,6 @@ class DisplayBuffer {
         this.triangleNormals = [];
         this.primitiveSizes = [];
         this.bufferTypes = [];
-        this.symmetry = null;
         this.transformMatrix = null;
         this.transformMatrixInteractive = null;
         this.transformOriginInteractive = [0, 0, 0];
@@ -1471,10 +1286,6 @@ class DisplayBuffer {
         this.textNormals = [];
         this.textColours = [];
         this.atoms = [];
-    }
-
-    setSymmetryMatrices(symmetry) {
-        this.symmetry = symmetry;
     }
 
     setTransformMatrix(transformMatrix) {
@@ -1511,23 +1322,427 @@ function createZQuatFromDX(angle_in) {
     return q;
 }
 
-function getDeviceScale() {
+export function getDeviceScale() {
     let deviceScale = 1.0;
     if(window.devicePixelRatio) deviceScale = window.devicePixelRatio
     return deviceScale;
 }
 
-class MGWebGL extends Component {
+//Hmm, I cannot seem to use these for gl (yet)
+interface MGWebGLRenderingContext extends WebGLRenderingContext {
+    viewportWidth: number;
+    viewportHeight: number;
+}
 
-    resize(width, height) {
+interface MGWebGL2RenderingContext extends WebGL2RenderingContext {
+    viewportWidth: number;
+    viewportHeight: number;
+}
+
+interface clickAtom {
+    x: number;
+    y: number;
+    z: number;
+    charge: number;
+    label: string;
+    symbol: string;
+    displayBuffer: DisplayBuffer;
+    circleData?: ImageData;
+}
+
+interface AssociativeArray {
+   [key: string]: number;
+}
+
+interface Dictionary<T> {
+    [Key: string]: T;
+}
+
+
+interface MGWebGLFrameBuffer extends WebGLFramebuffer {
+    width: number;
+    height: number;
+}
+
+interface MGWebGLBuffer {
+    itemSize: number;
+    numItems: number;
+}
+
+interface MGWebGLShader extends WebGLProgram {
+    vertexPositionAttribute: GLint;
+    vertexNormalAttribute: GLint;
+    vertexColourAttribute: GLint;
+    pMatrixUniform: WebGLUniformLocation;
+    mvMatrixUniform: WebGLUniformLocation;
+    mvInvMatrixUniform: WebGLUniformLocation;
+    fog_start: WebGLUniformLocation;
+    fog_end: WebGLUniformLocation;
+    fogColour: WebGLUniformLocation;
+    clipPlane0: WebGLUniformLocation;
+    clipPlane1: WebGLUniformLocation;
+    clipPlane2: WebGLUniformLocation;
+    clipPlane3: WebGLUniformLocation;
+    clipPlane4: WebGLUniformLocation;
+    clipPlane5: WebGLUniformLocation;
+    clipPlane6: WebGLUniformLocation;
+    clipPlane7: WebGLUniformLocation;
+    nClipPlanes: WebGLUniformLocation;
+    light_positions: WebGLUniformLocation;
+    light_colours_ambient: WebGLUniformLocation;
+    light_colours_specular: WebGLUniformLocation;
+    light_colours_diffuse: WebGLUniformLocation;
+}
+
+interface ShaderThickLines extends MGWebGLShader {
+    screenZ: WebGLUniformLocation;
+    offset: WebGLUniformLocation;
+    size: WebGLUniformLocation;
+    scaleMatrix: WebGLUniformLocation;
+    ShadowMap: WebGLUniformLocation;
+    doShadows: WebGLUniformLocation;
+    xPixelOffset: WebGLUniformLocation;
+    yPixelOffset: WebGLUniformLocation;
+    shadowQuality: WebGLUniformLocation;
+    pixelZoom: WebGLUniformLocation;
+    specularPower: WebGLUniformLocation;
+    textureMatrixUniform: WebGLUniformLocation;
+    shinyBack: WebGLUniformLocation;
+}
+
+interface ShaderThickLinesNormal extends ShaderThickLines {
+    vertexRealNormalAttribute: GLint;
+}
+
+interface ShaderTwodShapes extends MGWebGLShader {
+    offset: WebGLUniformLocation;
+    size: WebGLUniformLocation;
+    scaleMatrix: WebGLUniformLocation;
+}
+
+interface ShaderTextInstanced extends MGWebGLShader {
+    offsetAttribute: GLint;
+    sizeAttribute: GLint;
+    textureOffsetAttribute: GLint;
+    pixelZoom: WebGLUniformLocation;
+    vertexTextureAttribute: GLint;
+    textureMatrixUniform: WebGLUniformLocation;
+}
+
+interface ShaderTextBackground extends MGWebGLShader {
+    vertexTextureAttribute: GLint;
+    pixelZoom: WebGLUniformLocation;
+    screenZ: WebGLUniformLocation;
+    maxTextureS: WebGLUniformLocation;
+}
+
+interface ShaderFrameBuffer extends MGWebGLShader {
+    vertexTextureAttribute: GLint;
+    blurredTexture: WebGLUniformLocation;
+    depthTexture: WebGLUniformLocation;
+    focussedTexture: WebGLUniformLocation;
+}
+
+interface ShaderPointSpheres extends MGWebGLShader {
+    size: WebGLUniformLocation;
+    offset: WebGLUniformLocation;
+    scaleMatrix: WebGLUniformLocation;
+    textureMatrixUniform: WebGLUniformLocation;
+}
+
+interface ShaderPerfectSpheres extends MGWebGLShader {
+    vertexTextureAttribute: GLint;
+    offsetAttribute: GLint;
+    sizeAttribute: GLint;
+    invSymMatrixUniform: WebGLUniformLocation;
+    textureMatrixUniform: WebGLUniformLocation;
+    xPixelOffset: WebGLUniformLocation;
+    yPixelOffset: WebGLUniformLocation;
+    ShadowMap: WebGLUniformLocation;
+    outlineSize: WebGLUniformLocation;
+    shadowQuality: WebGLUniformLocation;
+    doShadows: WebGLUniformLocation;
+    clipCap: WebGLUniformLocation;
+    specularPower: WebGLUniformLocation;
+    scaleMatrix: WebGLUniformLocation;
+}
+
+interface ShaderTriangles extends MGWebGLShader {
+    specularPower: WebGLUniformLocation;
+    shinyBack: WebGLUniformLocation;
+    backColour: WebGLUniformLocation;
+    defaultColour: WebGLUniformLocation;
+    ShadowMap: WebGLUniformLocation;
+    shadowQuality: WebGLUniformLocation;
+    doShadows: WebGLUniformLocation;
+    cursorPos: WebGLUniformLocation;
+    xPixelOffset: WebGLUniformLocation;
+    yPixelOffset: WebGLUniformLocation;
+    textureMatrixUniform: WebGLUniformLocation;
+}
+
+interface ShaderBlurX extends MGWebGLShader {
+    vertexTextureAttribute: GLint;
+    inputTexture: WebGLUniformLocation;
+    depthTexture: WebGLUniformLocation;
+    blurSize: WebGLUniformLocation;
+}
+
+interface ShaderBlurY extends MGWebGLShader {
+    vertexTextureAttribute: GLint;
+    inputTexture: WebGLUniformLocation;
+    depthTexture: WebGLUniformLocation;
+    blurSize: WebGLUniformLocation;
+}
+
+interface ShaderCircles extends MGWebGLShader {
+    vertexTextureAttribute: GLint;
+    up: WebGLUniformLocation;
+    right: WebGLUniformLocation;
+}
+
+interface ShaderImages extends MGWebGLShader {
+    vertexTextureAttribute: GLint;
+    size: WebGLUniformLocation;
+    offset: WebGLUniformLocation;
+    scaleMatrix: WebGLUniformLocation;
+}
+
+interface ShaderTrianglesInstanced extends ShaderTriangles {
+    vertexInstanceOriginAttribute: GLint;
+    vertexInstanceSizeAttribute : GLint;
+    vertexInstanceOrientationAttribute  : GLint;
+    outlineSize  : WebGLUniformLocation;
+}
+
+interface ShaderOutLine extends MGWebGLShader {
+    outlineSize  : WebGLUniformLocation;
+    cursorPos  : WebGLUniformLocation;
+    textureMatrixUniform: WebGLUniformLocation;
+}
+
+interface ShaderOverlay extends MGWebGLShader {
+    vertexTextureAttribute: GLint;
+    inputTexture: WebGLUniformLocation;
+}
+
+interface MGWebGLPropsInterface {
+                    onAtomHovered : (identifier: { buffer: { id: string; }; atom: { label: string; }; }) => void;
+                    onKeyPress : (event: KeyboardEvent) =>  boolean | Promise<boolean>;
+                    messageChanged : ((d:Dictionary<string>) => void);
+                    mouseSensitivityFactor :  number | null;
+                    zoomWheelSensitivityFactor :  number | null;
+                    keyboardAccelerators : Dictionary<string>;
+                    showCrosshairs : boolean | null;
+                    showAxes : boolean | null;
+                    showFPS : boolean | null;
+                    mapLineWidth : number;
+                    drawMissingLoops :  boolean | null;
+                    drawInteractions :  boolean | null;
+                    width? : number;
+                    height? : number;
+}
+
+export class MGWebGL extends React.Component implements webGL.MGWebGL {
+
+        draggableMolecule: moorhen.Molecule
+        activeMolecule: moorhen.Molecule
+        specularPower: number;
+        atomLabelDepthMode: boolean;
+        clipCapPerfectSpheres: boolean;
+        useOffScreenBuffers: boolean;
+        myQuat: quat4;
+        gl_fog_start: null | number;
+        doDrawClickedAtomLines: boolean;
+        gl_clipPlane0: null | Float32Array;
+        gl_clipPlane1: null | Float32Array;
+        fogClipOffset: number;
+        zoom: number;
+        gl_fog_end: number;
+        light_colours_specular: Float32Array;
+        light_colours_diffuse: Float32Array;
+        light_positions: Float32Array;
+        light_colours_ambient: Float32Array;
+        background_colour: [number, number, number, number];
+        origin: [number, number, number];
+        labelledAtoms: clickAtom[][];
+        measuredAtoms: clickAtom[][];
+        pixel_data: Uint8Array;
+        screenshotBuffersReady: boolean;
+        save_pixel_data: boolean;
+        renderToTexture: boolean;
+        showShortCutHelp: string[];
+        WEBGL2: boolean;
+        doRedraw: boolean;
+        circleCanvasInitialized: boolean;
+        textCanvasInitialized: boolean;
+        currentlyDraggedAtom: null | {atom: {charge: number, tempFactor: number, x: number, y: number, z: number, symbol: string, label:string}, buffer: DisplayBuffer};
+        gl_cursorPos: Float32Array;
+        textCtx: CanvasRenderingContext2D;
+        circleCtx: CanvasRenderingContext2D;
+        canvas: HTMLCanvasElement;
+        rttFramebuffer: MGWebGLFrameBuffer;
+        doPerspectiveProjection: boolean;
+        labelsTextCanvasTexture: TextCanvasTexture;
+        currentBufferIdx: number;
+        atom_span: number;
+        axesColourBuffer: WebGLBuffer;
+        axesIndexBuffer: WebGLBuffer;
+        axesNormalBuffer: WebGLBuffer;
+        axesPositionBuffer: WebGLBuffer;
+        axesTextColourBuffer: WebGLBuffer;
+        axesTextIndexesBuffer: WebGLBuffer;
+        axesTextNormalBuffer: WebGLBuffer;
+        axesTextPositionBuffer: WebGLBuffer;
+        axesTextTexCoordBuffer: WebGLBuffer;
+        backColour: string | number[];
+        blurXTexture: WebGLTexture;
+        blurYTexture: WebGLTexture;
+        calculatingShadowMap: boolean;
+        cancelMouseTrack: boolean;
+        circleTex: WebGLTexture;
+        clipChangedEvent: Event;
+        context: CanvasRenderingContext2D;
+        diskBuffer: DisplayBuffer;
+        diskVertices: number[];
+        doShadow: boolean;
+        doShadowDepthDebug: boolean;
+        doSpin: boolean;
+        doStenciling: boolean;
+        doneEvents: boolean;
+        dx: number;
+        dy: number;
+        fogChangedEvent: Event;
+        fpsText: string;
+        framebufferDrawBuffersReady: boolean;
+        framebufferDrawIndexesBuffer: WebGLBuffer;
+        framebufferDrawPositionBuffer: WebGLBuffer;
+        framebufferDrawTexCoordBuffer: WebGLBuffer;
+        glTextFont: string;
+        gl_clipPlane2: Float32Array;
+        gl_clipPlane3: Float32Array;
+        gl_clipPlane4: Float32Array;
+        gl_clipPlane5: Float32Array;
+        gl_clipPlane6: Float32Array;
+        gl_clipPlane7: Float32Array;
+        gl_nClipPlanes: number;
+        hitchometerColourBuffer: WebGLBuffer;
+        hitchometerIndexBuffer: WebGLBuffer;
+        hitchometerNormalBuffer: WebGLBuffer;
+        hitchometerPositionBuffer: WebGLBuffer;
+        ids: string[];
+        imageBuffer: DisplayBuffer;
+        imageVertices: number[];
+        init_x: number;
+        init_y: number;
+        mapLineWidth: number;
+        measureCylinderBuffers: DisplayBuffer[];
+        measureTextCanvasTexture: TextCanvasTexture;
+        mouseDown: boolean;
+        mouseDown_x: number;
+        mouseDown_y: number;
+        mouseDownedAt: number;
+        mouseMoved: boolean;
+        mouseTrackColourBuffer: WebGLBuffer;
+        mouseTrackIndexBuffer: WebGLBuffer;
+        mouseTrackNormalBuffer: WebGLBuffer;
+        mouseTrackPoints: number[][];
+        mouseTrackPositionBuffer: WebGLBuffer;
+        moveFactor: number;
+        mspfArray: number[];
+        mvInvMatrix: Float32Array;
+        mvMatrix: Float32Array;
+        nAnimationFrames: number;
+        nFrames: number;
+        nPrevFrames: number;
+        offScreenDepthTexture: WebGLTexture;
+        offScreenFramebuffer: MGWebGLFrameBuffer;
+        offScreenFramebufferBlurX: MGWebGLFrameBuffer;
+        offScreenFramebufferBlurY: MGWebGLFrameBuffer;
+        offScreenFramebufferColor: MGWebGLFrameBuffer;
+        offScreenReady: boolean;
+        offScreenRenderbufferColor: WebGLRenderbuffer;
+        offScreenRenderbufferDepth: WebGLRenderbuffer;
+        offScreenTexture: WebGLTexture;
+        pMatrix: Float32Array;
+        pmvMatrix: Float32Array;
+        prevTime: number;
+        radius: number;
+        reContourMapOnlyOnMouseUp: boolean;
+        ready: boolean;
+        renderSilhouettesToTexture: boolean;
+        rttFramebufferColor: MGWebGLFrameBuffer;
+        rttFramebufferDepth: MGWebGLFrameBuffer;
+        rttTexture: WebGLTexture;
+        rttTextureDepth: WebGLTexture;
+        screenZ: number;
+        shaderProgram: ShaderTriangles;
+        shaderProgramBlurX: ShaderBlurX;
+        shaderProgramBlurY: ShaderBlurY;
+        shaderProgramCircles: ShaderCircles;
+        shaderProgramImages: ShaderImages;
+        shaderProgramInstanced: ShaderTrianglesInstanced;
+        shaderProgramInstancedOutline: ShaderTrianglesInstanced;
+        shaderProgramInstancedShadow: ShaderTrianglesInstanced;
+        shaderProgramLines: MGWebGLShader;
+        shaderProgramOutline: ShaderOutLine;
+        shaderProgramOverlay: ShaderOverlay;
+        shaderProgramPerfectSpheres: ShaderPerfectSpheres;
+        shaderProgramPerfectSpheresOutline: ShaderPerfectSpheres;
+        shaderProgramPointSpheres: ShaderPointSpheres;
+        shaderProgramPointSpheresShadow: ShaderPointSpheres;
+        shaderProgramRenderFrameBuffer: ShaderFrameBuffer;
+        shaderProgramShadow: MGWebGLShader;
+        shaderProgramTextBackground: ShaderTextBackground;
+        shaderProgramTextInstanced: ShaderTextInstanced;
+        shaderProgramThickLines: ShaderThickLines;
+        shaderProgramThickLinesNormal: ShaderThickLinesNormal;
+        shaderProgramTwoDShapes: ShaderTwodShapes;
+        shaderDepthShadowProgramPerfectSpheres: ShaderPerfectSpheres;
+        shinyBack: boolean;
+        showAxes: boolean;
+        showCrosshairs: boolean;
+        showFPS: boolean;
+        silhouetteBufferReady: boolean;
+        silhouetteDepthTexture: WebGLTexture;
+        silhouetteFramebuffer: MGWebGLFrameBuffer;
+        silhouetteRenderbufferColor: WebGLRenderbuffer;
+        silhouetteRenderbufferDepth: WebGLRenderbuffer;
+        silhouetteTexture: WebGLTexture;
+        sphereBuffer: DisplayBuffer;
+        state:  {width: number, height: number };
+        statusChangedEvent: Event;
+        stencilPass: boolean;
+        stenciling: boolean;
+        textHeightScaling: number;
+        textTex: WebGLTexture;
+        trackMouse: boolean;
+        viewChangedEvent: Event;
+        props: MGWebGLPropsInterface;
+        extraFontCtxs: Dictionary<HTMLCanvasElement>;
+        mouseDownButton: number;
+        keysDown: Dictionary<number>;
+
+        textLegends: any;
+        textureMatrix: mat4;
+        displayBuffers: any[];
+        gl:  any;
+        canvasRef: any;
+        depth_texture: any;
+        frag_depth_ext: any;
+        instanced_ext: any;
+        ext: any;
+        newTextLabels: any;
+
+    resize(width: number, height: number) : void {
         //TODO We need to be cleverer than this.
         let theWidth = width;
         let theHeight = height; //Keep it square for now
 
-        this.canvas.style.width = parseInt(theWidth) + "px";
-        this.canvas.style.height = parseInt(theHeight) + "px";
-        this.canvas.width = Math.floor(getDeviceScale() * parseInt(theWidth));
-        this.canvas.height = Math.floor(getDeviceScale() * parseInt(theHeight));
+        this.canvas.style.width = Math.floor(theWidth) + "px";
+        this.canvas.style.height = Math.floor(theHeight) + "px";
+        this.canvas.width = Math.floor(getDeviceScale() * Math.floor(theWidth));
+        this.canvas.height = Math.floor(getDeviceScale() * Math.floor(theHeight));
 
         this.gl.viewportWidth = this.canvas.width;
         this.gl.viewportHeight = this.canvas.height;
@@ -1539,10 +1754,11 @@ class MGWebGL extends Component {
         this.silhouetteBufferReady = false;
     }
 
-    constructor(props) {
+    constructor(props : MGWebGLPropsInterface) {
 
         super(props);
 
+        this.props = props;
         const self = this;
         this.glTextFont = "18px Helvetica";
         this.showFPS = false;
@@ -1565,11 +1781,8 @@ class MGWebGL extends Component {
         //Set to false to use WebGL 1
         this.WEBGL2 = false;
         this.state = { width: this.props.width, height: this.props.height };
-        this.dataInfo = [];
-        this.animations = [];
-        this.canvasRef = createRef();
+        this.canvasRef = React.createRef();
         this.keysDown = {};
-        this.previousTextColour = "";
         this.atomLabelDepthMode = true;
         this.showCrosshairs = false
         this.trackMouse = false
@@ -1592,8 +1805,7 @@ class MGWebGL extends Component {
     }
 
     render() {
-        this.canvasReact = <canvas ref={this.canvasRef} height={this.state.width} width={this.state.height} />;
-        return this.canvasReact;
+        return <canvas ref={this.canvasRef} height={this.state.width} width={this.state.height} />;
     }
 
     draw() {
@@ -1713,8 +1925,6 @@ class MGWebGL extends Component {
         const blue = [0.0, 0.0, 1.0, 1.0];
         const magenta = [1.0, 0.0, 1.0, 1.0];
 
-        this.symcols = [ice_blue, gold, coral, grey, pink, sea_green, pale_brown, lilac, lemon, lawn_green, pale_crimson, light_blue, tan, light_green, red, green, blue, magenta];
-
         this.shinyBack = true;
         this.backColour = "default";
 
@@ -1762,12 +1972,7 @@ class MGWebGL extends Component {
         this.gl_clipPlane7 = null;
 
         this.displayBuffers = [];
-        this.liveUpdatingMaps = [];
         this.currentBufferIdx = -1;
-        this.shapesBuffers = {};
-        this.shapesVertices = {};
-
-        this.xmlDoc = null;
 
         this.save_pixel_data = false;
         this.renderToTexture = false;
@@ -1817,15 +2022,7 @@ class MGWebGL extends Component {
         this.clipCapPerfectSpheres = false;
         this.labelledAtoms = [];
         this.measuredAtoms = [];
-        this.textLabels = [];
-        this.displayOptions = [];
         this.ids = [];
-        this.cifatoms = {};
-        this.elements = {};
-        this.restypes = {};
-        this.models = {};
-        this.altlocs = {};
-        this.secstr = {};
 
         this.gl_cursorPos = new Float32Array(2);
         this.gl_cursorPos[0] = this.canvas.width / 2.;
@@ -1943,19 +2140,6 @@ class MGWebGL extends Component {
         let shadowFragmentShader; //Depth pass
         let shadowDepthPerfectSphereFragmentShader; //Depth pass
         let shadowDeptTwoDShapesVertexShader; //Depth pass
-
-        this.mygetrequest = new ajaxRequest();
-
-        self.mygetrequest.onreadystatechange = function () {
-            if (self.mygetrequest.readyState === 4) {
-                if (self.mygetrequest.status === 200 || window.location.href.indexOf("http") === -1) {
-                    const jsondata = JSON.parse(self.mygetrequest.responseText);
-                    self.loadJSON(jsondata);
-                } else {
-                    alert("An error has occured making the request")
-                }
-            }
-        }
 
         this.doRedraw = false;
         let myVar = setInterval(function () { self.drawSceneIfDirty() }, 16);
@@ -2232,168 +2416,11 @@ class MGWebGL extends Component {
 
     }
 
-    loadJSONFromDiv(jsonDiv) {
-        var theJSONIsland = document.getElementById(jsonDiv).firstChild;
-        this.loadJSONIfReady(JSON.parse(theJSONIsland.data));
-    }
-
-    loadJSONIfReady(jsondata) {
-        var self = this;
-
-        var myVar = setInterval(function () { myTimer() }, 500);
-        function myTimer() {
-            console.log(self.ready);
-            if (self.ready) {
-                clearInterval(myVar);
-                self.loadJSON(jsondata);
-            }
-        }
-    }
-
-
-    clearDataTransforms() {
-        for (let idx = 0; idx < this.dataInfo.length; idx++) {
-            const transformBuffers = this.dataInfo[idx].buffers;
-            this.dataInfo[idx].transformMatrix = null;
-            for (let ibuf = 0; ibuf < transformBuffers.length; ibuf++) {
-                transformBuffers[ibuf].transformMatrix = null;
-            }
-        }
-        this.drawScene();
-    }
-
-    setDataTransform(data_id, matrix) {
-        for (let idx = 0; idx < this.dataInfo.length; idx++) {
-            if (this.dataInfo[idx].id === data_id) {
-                const transformBuffers = this.dataInfo[idx].buffers;
-                this.dataInfo[idx].transformMatrix = matrix;
-                for (let ibuf = 0; ibuf < transformBuffers.length; ibuf++) {
-                    transformBuffers[ibuf].transformMatrix = matrix;
-                }
-                break;
-            }
-        }
-        this.drawScene();
-    }
-
-    deleteDataId(data_id) {
-        console.log("Request(4) delete of", data_id);
-        let deleteBuffers = [];
-        for (let idx = 0; idx < this.dataInfo.length; idx++) {
-            if (this.dataInfo[idx].id === data_id) {
-                deleteBuffers = this.dataInfo[idx].buffers;
-                break;
-            }
-        }
-        for (let idx = 0; idx < this.liveUpdatingMaps.length; idx++) {
-            if (this.liveUpdatingMaps[idx].id === data_id) {
-                console.log("delete", this.liveUpdatingMaps[idx]);
-                deleteBuffers = this.liveUpdatingMaps[idx].theseBuffers;
-            }
-        }
-        let displayBuffersNew = [];
-        for (let ibuf = 0; ibuf < this.displayBuffers.length; ibuf++) {
-            if (deleteBuffers.indexOf(this.displayBuffers[ibuf]) < 0) {
-                displayBuffersNew.push(this.displayBuffers[ibuf]);
-            }
-        }
-        console.log("Old buffers", this.displayBuffers);
-        this.displayBuffers = displayBuffersNew;
-        console.log("New buffers", this.displayBuffers);
-        console.log("Old infos:", this.dataInfo);
-
-        this.dataInfo = this.dataInfo.filter(info => info.id !== data_id);
-        this.liveUpdatingMaps = this.liveUpdatingMaps.filter(info => info.id !== data_id);
-        console.log("New infos:", this.dataInfo);
-        this.props.dataChanged({ data: this.dataInfo, liveUpdatingMaps: this.liveUpdatingMaps });
-        this.drawScene();
-    }
-
-    clearData() {
-        this.dataInfo = [];
-        var self = this;
-
-        self.displayBuffers = [];
-        self.liveUpdatingMaps = [];
-        self.textLabels = [];
-        self.ids = [];
-        self.displayOptions = [];
-        self.mapDisplayOptions = [];
-        self.labelledAtoms = [];
-        self.measuredAtoms = [];
-    }
-
-    updateBuffers(jsondata, theseBuffers) {
-        var self = this;
-        for (let idat = 0; idat < theseBuffers.length; idat++) {
-
-            self.currentBufferIdx = self.displayBuffers.indexOf(theseBuffers[idat]);
-
-            theseBuffers[idat].clearBuffers();
-            if (idat >= jsondata.norm_tri.length) {
-                console.log("Too many buffers for data! Send me more");
-                break;
-            }
-            let rssentries = jsondata.norm_tri[idat];
-            //console.log(rssentries);
-            var norms = rssentries;
-            for (let i = 0; i < norms.length; i++) {
-                self.createNormalBuffer(norms[i]);
-            }
-
-            rssentries = jsondata.vert_tri[idat];
-            const tris = rssentries;
-            //console.log(rssentries);
-
-            for (let i = 0; i < tris.length; i++) {
-                self.createVertexBuffer(tris[i]);
-            }
-
-            rssentries = jsondata.idx_tri[idat];
-            var idxs = rssentries;
-            //console.log(rssentries);
-
-            for (let i = 0; i < idxs.length; i++) {
-                for (var j = 0; j < idxs[i].length; j++) {
-                }
-                self.createIndexBuffer(idxs[i]);
-            }
-
-            rssentries = jsondata.col_tri[idat];
-            var colours = rssentries;
-            //console.log(rssentries);
-
-            for (let i = 0; i < colours.length; i++) {
-                self.createColourBuffer(colours[i]);
-            }
-
-            rssentries = jsondata.prim_types[idat];
-            //console.log(rssentries);
-            for (let i = 0; i < rssentries.length; i++) {
-                self.displayBuffers[self.currentBufferIdx].bufferTypes.push(rssentries[i]);
-            }
-
-            //var thisVis = jsondata.visibility[idat];
-            var thisVis = true;
-            if (!thisVis) {
-                self.displayBuffers[self.currentBufferIdx].visible = false;
-            }
-
-            //var thisName = jsondata.names[idat];
-            self.displayBuffers[self.currentBufferIdx].name_label = "foo";
-
-            //var atoms = jsondata.atoms[idat];
-            self.displayBuffers[self.currentBufferIdx].atoms = [];
-        }
-        self.buildBuffers();
-        self.drawScene();
-    }
-
-    setActiveMolecule(molecule) {
+    setActiveMolecule(molecule: moorhen.Molecule) : void {
         this.activeMolecule = molecule;
     }
 
-    appendOtherData(jsondata, skipRebuild, name) {
+    appendOtherData(jsondata: any, skipRebuild?: boolean, name?: string) : any {
         //console.log("**************************************************");
         //console.log("appendOtherData");
         //console.log(jsondata);
@@ -2619,11 +2646,6 @@ class MGWebGL extends Component {
                 }
             }
 
-            if (typeof (jsondata.symmetry) !== "undefined") {
-                self.setSymmetryMatrices(jsondata.symmetry);
-            }
-
-
             rssentries = jsondata.col_tri[idat];
             let colours = rssentries;
             //console.log(rssentries);
@@ -2681,106 +2703,6 @@ class MGWebGL extends Component {
         return theseBuffers;
     }
 
-    setAnimationState(doStart) {
-        const self = this;
-        const start = Date.now();
-        clearInterval(this.timer);
-        if (doStart) {
-            clearInterval(this.timer);
-            console.log("Try to start");
-            this.timer = setInterval(function () {
-                let delta = Date.now() - start; // milliseconds elapsed since start
-                let frac = (delta / 1000.) % 1;
-                let minFrac = 2.0;
-                let minIdx = 0;
-                for (let ianim = 0; ianim < self.animations.length; ianim++) {
-                    let thisFrac = self.animations[ianim].frameFrac;
-                    if (Math.abs(thisFrac - frac) < minFrac) {
-                        minFrac = Math.abs(thisFrac - frac);
-                        minIdx = ianim;
-                    }
-                }
-                for (let ianim = 0; ianim < self.animations.length; ianim++) {
-                    if (minIdx === ianim) {
-                        self.animations[ianim].visible = true;
-                    } else {
-                        self.animations[ianim].visible = false;
-                    }
-                }
-                self.drawScene();
-            }, 100);
-        } else {
-            for (let ianim = 0; ianim < self.animations.length; ianim++) {
-                self.animations[ianim].visible = false;
-            }
-            self.drawScene();
-        }
-    }
-
-    clearAnimation() {
-        this.setAnimationState(false);
-        this.animations = [];
-        this.drawScene();
-    }
-
-    setupAnimation(dataInfo, animation) {
-        this.setAnimationState(false);
-        this.animations = [];
-        let animations = [];
-        for (let i = 0; i < animation.length; i++) {
-            let bufs = this.appendOtherData(animation[i], true);
-            for (let ibuf = 0; ibuf < bufs.length; ibuf++) {
-                bufs[ibuf].display_class = "normal mode animation";
-                bufs[ibuf].id = guid();
-                bufs[ibuf].frameFrac = 1.0 * i / animation.length;
-                bufs[ibuf].visible = false;
-                dataInfo.buffers.push(bufs[ibuf]);
-                animations.push(bufs[ibuf]);
-            }
-        }
-        this.animations = animations;
-        this.buildBuffers();
-        this.setAnimationState(true);
-        this.drawScene();
-    }
-
-    setObjectsVisibility(ids, visible) {
-        for (let idat = 0; idat < this.dataInfo.length; idat++) {
-            for (let ibuf = 0; ibuf < this.dataInfo[idat].buffers.length; ibuf++) {
-                if (ids.includes(this.dataInfo[idat].buffers[ibuf].id)) {
-                    this.dataInfo[idat].buffers[ibuf].visible = visible;
-                }
-            }
-        }
-        for (let idat = 0; idat < this.liveUpdatingMaps.length; idat++) {
-            for (let ibuf = 0; ibuf < this.liveUpdatingMaps[idat].theseBuffers.length; ibuf++) {
-                if (ids.includes(this.liveUpdatingMaps[idat].theseBuffers[ibuf].id)) {
-                    this.liveUpdatingMaps[idat].theseBuffers[ibuf].visible = visible;
-                }
-            }
-        }
-        this.drawScene();
-    }
-
-    appendOtherDataIfReady(jsondata) {
-        var self = this;
-
-        var myVar = setInterval(function () { myTimer() }, 500);
-        function myTimer() {
-            if (self.ready) {
-                clearInterval(myVar);
-                self.appendOtherData(jsondata);
-                self.reContourMaps();
-            }
-        }
-    }
-
-    appendOtherJSONData(jsondata) {
-        //console.log(jsondata);
-        //console.log(JSON.parse(jsondata));
-        this.appendOtherDataIfReady(JSON.parse(jsondata));
-    }
-
     setFog(fog) {
         var self = this;
         self.gl_fog_start = this.fogClipOffset + fog[0];
@@ -2795,186 +2717,12 @@ class MGWebGL extends Component {
         self.drawScene();
     }
 
-    loadJSON(jsondata) {
-        var self = this;
-        var startAll = new Date().getTime();
-
-        self.displayBuffers = [];
-        self.liveUpdatingMaps = [];
-        self.textLabels = [];
-        self.ids = [];
-        self.mapDisplayOptions = [];
-        self.labelledAtoms = [];
-        self.measuredAtoms = [];
-
-        //console.log("Length of buffers: "+jsondata.norm_tri.length);
-
-        for (let idat = 0; idat < jsondata.norm_tri.length; idat++) {
-            self.displayBuffers.push(new DisplayBuffer());
-            self.currentBufferIdx = idat;
-            let rssentries = jsondata.norm_tri[idat];
-            let start = new Date().getTime();
-            const norms = getEncodedData(rssentries);
-            let end = new Date().getTime();
-            let time = end - start;
-            //console.log('getEncodedData(normals): ' + time*0.001+"s");
-            for (let i = 0; i < norms.length; i++) {
-                self.createNormalBuffer(norms[i]);
-            }
-
-            if (typeof (jsondata.sizes) !== "undefined") {
-                rssentries = getEncodedData(jsondata.sizes[idat]);
-                if (typeof (rssentries) !== "undefined") {
-                    for (let i = 0; i < rssentries.length; i++) {
-                        self.createSizeBuffer(rssentries[i]);
-                    }
-                }
-            }
-            rssentries = jsondata.vert_tri[idat];
-            start = new Date().getTime();
-            const tris = getEncodedData(rssentries);
-            end = new Date().getTime();
-            time = end - start;
-            //console.log('getEncodedData(triangles): ' + time*0.001+"s");
-
-            for (let i = 0; i < tris.length; i++) {
-                self.createVertexBuffer(tris[i]);
-            }
-            //console.log("Num vertex buffers "+tris.length);
-
-            rssentries = jsondata.idx_tri[idat];
-            start = new Date().getTime();
-            const idxs = getEncodedData(rssentries);
-            end = new Date().getTime();
-            time = end - start;
-            //console.log('getEncodedData(indices): ' + time*0.001+"s");
-
-            for (let i = 0; i < idxs.length; i++) {
-                //console.log(i+" "+idxs[i][0]+" "+idxs[i][1]+" "+idxs[i][2]+", "+idxs[i][3]+" "+idxs[i][4]+" "+idxs[i][5]+", "+idxs[i][6]+" "+idxs[i][7]+" "+idxs[i][8]+", "+idxs[i][9]+" "+idxs[i][10]+" "+idxs[i][11]);
-                for (var j = 0; j < idxs[i].length; j++) {
-                }
-                self.createIndexBuffer(idxs[i]);
-            }
-            //console.log("Num index buffers "+idxs.length);
-
-            rssentries = jsondata.col_tri[idat];
-            start = new Date().getTime();
-            const colours = getEncodedData(rssentries);
-            end = new Date().getTime();
-            time = end - start;
-            //console.log('getEncodedData(colours): ' + time*0.001+"s");
-
-            for (let i = 0; i < colours.length; i++) {
-                self.createColourBuffer(colours[i]);
-            }
-            //console.log("Num colour buffers "+colours.length);
-
-            rssentries = jsondata.prim_types[idat];
-            for (let i = 0; i < rssentries.length; i++) {
-                self.displayBuffers[self.currentBufferIdx].bufferTypes.push(rssentries[i]);
-            }
-
-            var thisVis = jsondata.visibility[idat];
-            if (!thisVis) {
-                self.displayBuffers[self.currentBufferIdx].visible = false;
-            }
-
-            var thisName = jsondata.names[idat];
-            self.displayBuffers[self.currentBufferIdx].name_label = thisName;
-
-            var atoms = jsondata.atoms[idat];
-            self.displayBuffers[self.currentBufferIdx].atoms = atoms;
-            if (atoms.length > 0) {
-                //console.log(atoms[0]);
-            }
-
-        }
-
-        var bgcolour = jsondata.background;
-        if (bgcolour && bgcolour.length === 3) {
-            self.background_colour[0] = bgcolour[0] / 255.;
-            self.background_colour[1] = bgcolour[1] / 255.;
-            self.background_colour[2] = bgcolour[2] / 255.;
-        }
-
-        let rssentries = jsondata.origin;
-        self.origin = [];
-        for (let i = 0; i < rssentries.length; i++) {
-            self.origin.push(-parseFloat(rssentries[i]));
-        }
-
-        if (typeof (jsondata.symmetry) !== "undefined") {
-            console.log("Have some symmetry................");
-            console.log(jsondata.symmetry);
-            self.setSymmetryMatrices(jsondata.symmetry);
-        }
-
-        var start = new Date().getTime();
-        self.buildBuffers();
-        var end = new Date().getTime();
-        var time = end - start;
-        console.log('buildBuffers: ' + time * 0.001 + "s");
-
-        self.drawScene();
-
-        var fog = jsondata.fog;
-        if (fog && fog.length === 2) {
-            console.log(fog);
-            self.gl_fog_start = this.fogClipOffset + fog[0];
-            self.gl_fog_end = this.fogClipOffset + fog[1];
-            self.drawScene();
-        }
-
-        var slab = jsondata.slab;
-        if (slab && slab.length === 2) {
-            self.setSlab(slab);
-        }
-
-
-        var ids = jsondata.ids;
-        if (ids) {
-            self.ids = ids;
-        }
-
-        var texts = jsondata.texts;
-        if (texts) {
-            self.textLabels = texts;
-            self.drawScene();
-        }
-
-        self.displayOptions = jsondata.display_options;
-        self.mapDisplayOptions = jsondata.map_display_options;
-
-
-        self.cifatoms = {};
-        self.elements = {};
-        self.restypes = {};
-        self.models = {};
-        self.altlocs = {};
-
-        self.secstr = {};
-
-        var secstr = jsondata.secstr;
-        if (secstr) {
-            for (var thisSecStrId in secstr) {
-                var thisSecStr = secstr[thisSecStrId];
-                self.secstr[thisSecStrId] = thisSecStr;
-            }
-            console.log(self.secstr);
-        }
-
-        var endAll = new Date().getTime();
-        var timeAll = endAll - startAll;
-        console.log('do all: ' + timeAll * 0.001 + "s");
-
-    }
-
-    setQuat(q) {
+    setQuat(q: quat4) : void {
         this.myQuat = q;
         this.drawScene();
     }
 
-    setTextFont(family,size) {
+    setTextFont(family: string,size: number) : void {
         if(family && size){
             this.glTextFont = ""+size+"px "+family;
             this.updateLabels();
@@ -2986,7 +2734,7 @@ class MGWebGL extends Component {
         }
     }
 
-    setBackground(col) {
+    setBackground(col: [number, number, number, number]) : void {
         this.background_colour = col;
         this.updateLabels()
         //This forces redrawing of environemnt distances
@@ -3051,7 +2799,7 @@ class MGWebGL extends Component {
         this.setOriginOrientationAndZoomAnimated(o,q,z)
     }
 
-    setOriginOrientationAndZoomAnimated(o,q,z) {
+    setOriginOrientationAndZoomAnimated(o: number[],q: quat4,z: number) : void {
         this.nAnimationFrames = 15;
         const old_x = this.origin[0]
         const old_y = this.origin[1]
@@ -3072,7 +2820,7 @@ class MGWebGL extends Component {
         requestAnimationFrame(this.setOriginOrientationAndZoomFrame.bind(this,[old_x,old_y,old_z],[dx,dy,dz],oldQuat,q,oldZoom,zoomDelta,1))
     }
 
-    setOriginAnimated(o, doDrawScene=true) {
+    setOriginAnimated(o: number[], doDrawScene=true) : void {
         this.nAnimationFrames = 15;
         const old_x = this.origin[0]
         const old_y = this.origin[1]
@@ -3100,7 +2848,7 @@ class MGWebGL extends Component {
         document.dispatchEvent(originUpdateEvent);
     }
 
-    setOrigin(o, doDrawScene=true, dispatchEvent=true) {
+    setOrigin(o: [number, number, number], doDrawScene=true, dispatchEvent=true) : void {
         this.origin = o;
         //default is to drawScene, unless doDrawScene provided and value is false
         if (doDrawScene) {
@@ -3112,11 +2860,11 @@ class MGWebGL extends Component {
         }
     }
 
-    setAmbientLightNoUpdate(r, g, b) {
+    setAmbientLightNoUpdate(r:number, g:number, b:number) : void {
         this.light_colours_ambient = new Float32Array([r, g, b, 1.0]);
     }
 
-    setSpecularLightNoUpdate(r, g, b) {
+    setSpecularLightNoUpdate(r:number, g:number, b:number) : void {
         this.light_colours_specular = new Float32Array([r, g, b, 1.0]);
     }
 
@@ -3124,40 +2872,40 @@ class MGWebGL extends Component {
         this.specularPower = p;
     }
 
-    setDiffuseLightNoUpdate(r, g, b) {
+    setDiffuseLightNoUpdate(r:number, g:number, b:number) : void {
         this.light_colours_diffuse = new Float32Array([r, g, b, 1.0]);
     }
 
-    setLightPositionNoUpdate(x, y, z) {
+    setLightPositionNoUpdate(x:number, y:number, z:number) : void {
         this.light_positions = new Float32Array([x, y, z, 1.0]);
     }
 
-    setAmbientLight(r, g, b) {
+    setAmbientLight(r:number, g:number, b:number) : void {
         this.light_colours_ambient = new Float32Array([r, g, b, 1.0]);
         this.drawScene();
     }
 
-    setSpecularLight(r, g, b) {
+    setSpecularLight(r:number, g:number, b:number) : void {
         this.light_colours_specular = new Float32Array([r, g, b, 1.0]);
         this.drawScene();
     }
 
-    setSpecularPower(p) {
+    setSpecularPower(p:number) : void {
         this.specularPower = p;
         this.drawScene();
     }
 
-    setDiffuseLight(r, g, b) {
+    setDiffuseLight(r:number, g:number, b:number) : void {
         this.light_colours_diffuse = new Float32Array([r, g, b, 1.0]);
         this.drawScene();
     }
 
-    setLightPosition(x, y, z) {
+    setLightPosition(x:number, y:number, z:number) : void {
         this.light_positions = new Float32Array([x, y, z, 1.0]);
         this.drawScene();
     }
 
-    setWheelContour(contourFactor, drawScene) {
+    setWheelContour(contourFactor:number, drawScene:boolean) {
         var wheelContourChanged = new CustomEvent("wheelContourLevelChanged", {
             "detail": {
                 factor: contourFactor,
@@ -3168,7 +2916,7 @@ class MGWebGL extends Component {
         if (drawScene) this.drawScene();
     }
 
-    setZoom(z, drawScene) {
+    setZoom(z: number, drawScene?: boolean) {
         const oldZoom = this.zoom
         this.zoom = z;
         var zoomChanged = new CustomEvent("zoomChanged", {
@@ -3318,7 +3066,7 @@ class MGWebGL extends Component {
         this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
     }
 
-    initTextureFramebuffer() {
+    initTextureFramebuffer() : void {
 
         this.rttFramebuffer = this.gl.createFramebuffer();
         this.rttFramebufferColor = this.gl.createFramebuffer();
@@ -3401,224 +3149,6 @@ class MGWebGL extends Component {
 
     }
 
-    getNameForId(id, type) {
-        if (this.xmlDoc) {
-            var root = this.xmlDoc.getElementsByTagName("CCP4MG_Status")[0];
-            var data = root.getElementsByTagName(type);
-            for (let idat = 0; idat < data.length; idat++) {
-                var dataUUID = getNodeText(data[idat].getElementsByTagName("uuid")[0]);
-                if (dataUUID === id) {
-                    console.log("Match");
-                    if (data[idat].getElementsByTagName("name").length > 0) {
-                        var theName = getNodeText(data[idat].getElementsByTagName("name")[0]);
-                        if (theName.length > 0) {
-                            return theName;
-                        } else {
-                            return "unknown";
-                        }
-                    } else {
-                        return "unknown";
-                    }
-
-                }
-            }
-        }
-        return "unknown";
-    }
-
-    addDisplayObject(id) {
-        console.log("addDisplayObject to " + id);
-        var self = this;
-        if (this.xmlDoc) {
-            var root = this.xmlDoc.getElementsByTagName("CCP4MG_Status")[0];
-            var data = root.getElementsByTagName("MolData");
-            for (let idat = 0; idat < data.length; idat++) {
-                var dataUUID = getNodeText(data[idat].getElementsByTagName("uuid")[0]);
-                if (dataUUID === id) {
-                    console.log("Match");
-                    console.log(data[idat]);
-                    let newDoc = (new DOMParser()).parseFromString('<dummy/>', 'text/xml');
-                    newDoc.removeChild(newDoc.documentElement);
-                    let newRoot = root.cloneNode(true);
-                    newDoc.appendChild(newRoot);
-                    let thisDataCopy = data[idat].cloneNode(true);
-                    while (newRoot.getElementsByTagName("MolData").length > 0) {
-                        newRoot.removeChild(newRoot.getElementsByTagName("MolData")[0]);
-                    }
-                    while (newRoot.getElementsByTagName("MapData").length > 0) {
-                        newRoot.removeChild(newRoot.getElementsByTagName("MapData")[0]);
-                    }
-                    while (newRoot.getElementsByTagName("Annotation").length > 0) {
-                        newRoot.removeChild(newRoot.getElementsByTagName("Annotation")[0]);
-                    }
-                    while (newRoot.getElementsByTagName("Legend").length > 0) {
-                        newRoot.removeChild(newRoot.getElementsByTagName("Legend")[0]);
-                    }
-                    while (newRoot.getElementsByTagName("Image").length > 0) {
-                        newRoot.removeChild(newRoot.getElementsByTagName("Image")[0]);
-                    }
-                    while (newRoot.getElementsByTagName("SVGImage").length > 0) {
-                        newRoot.removeChild(newRoot.getElementsByTagName("SVGImage")[0]);
-                    }
-                    while (thisDataCopy.getElementsByTagName("MolDisp").length > 0) {
-                        thisDataCopy.removeChild(thisDataCopy.getElementsByTagName("MolDisp")[0]);
-                    }
-                    while (thisDataCopy.getElementsByTagName("HBonds").length > 0) {
-                        thisDataCopy.removeChild(thisDataCopy.getElementsByTagName("HBonds")[0]);
-                    }
-                    while (thisDataCopy.getElementsByTagName("Contacts").length > 0) {
-                        thisDataCopy.removeChild(thisDataCopy.getElementsByTagName("Contacts")[0]);
-                    }
-                    while (thisDataCopy.getElementsByTagName("SurfaceDispobj").length > 0) {
-                        thisDataCopy.removeChild(thisDataCopy.getElementsByTagName("SurfaceDispobj")[0]);
-                    }
-
-                    let newDisp = newDoc.createElement("MolDisp");
-
-                    let newSelParam = newDoc.createElement("selection_parameters");
-                    let newSelect = newDoc.createElement("select");
-                    let newCid = newDoc.createElement("cid");
-                    newSelect.textContent = "cid";
-                    newCid.textContent = "all";
-                    newSelParam.appendChild(newSelect);
-                    newSelParam.appendChild(newCid);
-                    newDisp.appendChild(newSelParam);
-
-                    let newStyleMode = newDoc.createElement("style");
-                    newStyleMode.textContent = "BONDS";
-                    newDisp.appendChild(newStyleMode);
-
-                    let newColParam = newDoc.createElement("colour_parameters");
-                    let newColMode = newDoc.createElement("colour_mode");
-                    newColMode.textContent = "atomtype";
-                    newColParam.appendChild(newColMode);
-                    newDisp.appendChild(newColParam);
-
-                    thisDataCopy.appendChild(newDisp);
-                    newRoot.appendChild(thisDataCopy);
-
-                    let snippet = (new XMLSerializer()).serializeToString(newDoc);
-                    console.log(snippet);
-                    let blob = new Blob([snippet], { type: "text/plain" });
-                    let formData = new FormData();
-                    let theFile = guid() + ".mgpic.xml";
-                    let client = new XMLHttpRequest();
-                    formData.append("upfile", blob, theFile);
-                    client.onreadystatechange = function () {
-                        if (client.readyState === 4 && client.status === 200) {
-                            console.log("Sent snippet");
-                            let client2 = new XMLHttpRequest();
-                            client2.onreadystatechange = function () {
-                                if (client2.readyState === 4 && client2.status === 200) {
-                                    console.log("Executed snippet");
-                                    const jsondata = JSON.parse(client2.responseText);
-                                    let idx = 0;
-                                    for (let idat2 = 0; idat2 < data.length; idat2++) {
-                                        const thisDataId = getNodeText(data[idat2].getElementsByTagName("uuid")[0]);
-                                        // FIXME - These are the only four we are currently dealing with. Others may come later.
-                                        idx += data[idat2].getElementsByTagName("MolDisp").length;
-                                        idx += data[idat2].getElementsByTagName("HBonds").length;
-                                        idx += data[idat2].getElementsByTagName("Contacts").length;
-                                        idx += data[idat2].getElementsByTagName("MolDSurfaceDispobjisp").length;
-                                        console.log(thisDataId + " " + id);
-                                        if (thisDataId === id) {
-                                            break;
-                                        }
-                                    }
-
-                                    //console.log("--------------------------------------------------");
-
-                                    //console.log("Insert at "+idx);
-                                    //console.log("buffers: "+self.displayBuffers.length);
-                                    //console.log("options: "+self.displayOptions.length);
-                                    //console.log("ids: "+self.ids.length);
-                                    //console.log("textLabels: "+self.textLabels.length);
-
-                                    self.displayBuffers.splice(idx, 0, new DisplayBuffer());
-                                    self.displayOptions.splice(idx, 0, jsondata.display_options[0]);
-                                    var newId = jsondata.ids[0];
-                                    //console.log("The new id is "+newId);
-
-                                    var underIndex = newId.indexOf("_");
-                                    var newDispId = newId.substring(underIndex + 1);
-
-                                    //console.log(newId);
-                                    self.ids.splice(idx, 0, id + "_" + newDispId);
-                                    self.textLabels.splice(idx, 0, jsondata.texts[0]);
-
-                                    //FIXME - Need to clone newDisp and add clone to this.xmlDoc's data[idat]. Does this work?
-                                    var thisNewDisp = newDisp.cloneNode(true);
-                                    data[idat].appendChild(thisNewDisp);
-
-                                    var newThisUUIDElement = self.xmlDoc.createElement("uuid");
-                                    newThisUUIDElement.textContent = newDispId;
-                                    thisNewDisp.appendChild(newThisUUIDElement);
-
-                                    //console.log("The new DispObj");
-                                    //console.log(thisNewDisp);
-
-                                    //console.log("The new ids");
-                                    //console.log(self.ids);
-                                    //console.log("--------------------------------------------------");
-
-                                    var newUUIDElement = newDoc.createElement("uuid"); // Probably not necessary
-                                    newUUIDElement.textContent = newDispId.substr; // Probably not necessary
-                                    newDisp.appendChild(newUUIDElement); // Probably not necessary
-
-                                    self.currentBufferIdx = idx;
-
-                                    let rssentries = jsondata.norm_tri[0];
-                                    var norms = getEncodedData(rssentries);
-                                    var thisName = jsondata.names[0];
-                                    self.displayBuffers[self.currentBufferIdx].name_label = thisName;
-                                    for (let i = 0; i < norms.length; i++) {
-                                        self.createNormalBuffer(norms[i]);
-                                    }
-                                    rssentries = jsondata.vert_tri[0];
-                                    var tris = getEncodedData(rssentries);
-                                    for (let i = 0; i < tris.length; i++) {
-                                        self.createVertexBuffer(tris[i]);
-                                    }
-                                    rssentries = jsondata.col_tri[0];
-                                    var colours = getEncodedData(rssentries);
-                                    for (let i = 0; i < colours.length; i++) {
-                                        self.createColourBuffer(colours[i]);
-                                    }
-                                    rssentries = jsondata.idx_tri[0];
-                                    var idxs = getEncodedData(rssentries);
-                                    for (let i = 0; i < idxs.length; i++) {
-                                        self.createIndexBuffer(idxs[i]);
-                                    }
-                                    rssentries = jsondata.prim_types[0];
-                                    for (let i = 0; i < rssentries.length; i++) {
-                                        self.displayBuffers[self.currentBufferIdx].bufferTypes.push(rssentries[i]);
-                                    }
-                                    rssentries = getEncodedData(jsondata.sizes[0]);
-                                    if (typeof (rssentries) !== "undefined") {
-                                        console.log(rssentries);
-                                        for (let i = 0; i < rssentries.length; i++) {
-                                            self.createSizeBuffer(rssentries[i]);
-                                        }
-                                    }
-                                    var atoms = jsondata.atoms[0];
-                                    self.displayBuffers[self.currentBufferIdx].atoms = atoms;
-                                    self.displayBuffers[self.currentBufferIdx].isDirty = true;
-                                    self.buildBuffers();
-                                    self.drawScene();
-                                    // FIXME - This does not set correct menu entries.
-                                }
-                            }
-                            client2.open("GET", "get_triangles?pdb=" + theFile, true);
-                            client2.send(null);
-                        }
-                    }
-                    client.open("POST", "/server_client.html", true);
-                    client.send(formData);
-                    break;
-                }
-            }
-        }
-    }
 
     quatDotProduct(q1,q2){
         return q1[0] * q2[0] + q1[1] * q2[1] + q1[2] * q2[2] + q1[3] * q2[3];
@@ -3673,594 +3203,6 @@ class MGWebGL extends Component {
         }
     }
 
-    removeDisplayObject(num) {
-        var self = this;
-        if (this.xmlDoc) {
-            var root = this.xmlDoc.getElementsByTagName("CCP4MG_Status")[0];
-            var data = root.getElementsByTagName("MolData");
-            for (let idat = 0; idat < data.length; idat++) {
-                const dataUUID = getNodeText(data[idat].getElementsByTagName("uuid")[0]);
-                const dispobjs = data[idat].getElementsByTagName("MolDisp");
-                //console.log(idat+": "+dataUUID+" "+this.ids[num]);
-                //console.log("All ids");
-                //console.log(this.ids);
-                // FIXME - Once again we are only dealing with DispObjs....
-                for (let iobj = 0; iobj < dispobjs.length; iobj++) {
-                    const theUUID = dataUUID + "_" + getNodeText(dispobjs[iobj].getElementsByTagName("uuid")[0]);
-                    //console.log("Test DispObj uuid: "+getNodeText(dispobjs[iobj].getElementsByTagName("uuid")[0]));
-                    if (theUUID && theUUID === this.ids[num]) {
-                        console.log("Match a delete ......." + theUUID);
-                        data[idat].removeChild(dispobjs[iobj]);
-                        console.log(self.displayBuffers);
-                        self.displayBuffers.splice(num, 1);
-                        self.displayOptions.splice(num, 1);
-                        self.ids.splice(num, 1);
-                        self.textLabels.splice(num, 1);
-                        self.buildBuffers();
-                        self.drawScene();
-                        // FIXME - This does not set correct menu entries.
-                        return;
-                    }
-                }
-            }
-        }
-    }
-
-    updateDisplayObject(num, property, value) {
-        //console.log("!!!!!!!!!!!!!!!!!!!! MGWebGL.prototype.updateDisplayObject");
-        console.log(num, property, value);
-        var self = this;
-        function addToColours(colour, doc) {
-            var root = doc.getElementsByTagName("CCP4MG_Status")[0];
-            if (root.getElementsByTagName("Colours").length === 0) {
-                var newColours = doc.createElement("Colours");
-                root.appendChild(newColours);
-            }
-            if (root.getElementsByTagName("Colours")[0].getElementsByTagName("colour_definitions").length === 0) {
-                var newColoursDef = doc.createElement("colour_definitions");
-                root.getElementsByTagName("Colours")[0].appendChild(newColoursDef);
-            }
-            var haveThisColour = false;
-            var colours = root.getElementsByTagName("Colours")[0].getElementsByTagName("colour_definitions")[0].getElementsByTagName("colour");
-            for (var icol = 0; icol < colours.length; icol++) {
-                if (colours[icol].getAttribute("name") === colour) {
-                    haveThisColour = true;
-                    break;
-                }
-            }
-            if (!haveThisColour) {
-                var newCol = doc.createElement("colour");
-                newCol.setAttribute("name", colour);
-                var redHex = colour.substring(1, 3);
-                var greenHex = colour.substring(3, 5);
-                var blueHex = colour.substring(5, 7);
-                var red = parseInt(redHex, 16) / 255.;
-                var green = parseInt(greenHex, 16) / 255.;
-                var blue = parseInt(blueHex, 16) / 255.;
-                var r = doc.createElement("red");
-                r.textContent = "" + red;
-                newCol.appendChild(r);
-                var g = doc.createElement("green");
-                g.textContent = "" + green;
-                newCol.appendChild(g);
-                var b = doc.createElement("blue");
-                b.textContent = "" + blue;
-                newCol.appendChild(b);
-                var a = doc.createElement("alpha");
-                a.textContent = "" + blue;
-                newCol.appendChild(a);
-                root.getElementsByTagName("Colours")[0].getElementsByTagName("colour_definitions")[0].appendChild(newCol);
-            }
-        }
-        if (this.xmlDoc) {
-            var root = this.xmlDoc.getElementsByTagName("CCP4MG_Status")[0];
-            var data = root.getElementsByTagName("MolData");
-            for (let idat = 0; idat < data.length; idat++) {
-                var dataUUID = getNodeText(data[idat].getElementsByTagName("uuid")[0]);
-                var dispobjs = data[idat].getElementsByTagName("MolDisp");
-                var hbobjs = data[idat].getElementsByTagName("HBonds");
-                var contactobjs = data[idat].getElementsByTagName("Contacts");
-                var surfobs = data[idat].getElementsByTagName("SurfaceDispobj");
-                //console.log(idat+": "+dataUUID+" "+this.ids[num]);
-                //console.log("All ids");
-                //console.log(this.ids);
-                for (var iobj = 0; iobj < dispobjs.length; iobj++) {
-                    var theUUID = dataUUID + "_" + getNodeText(dispobjs[iobj].getElementsByTagName("uuid")[0]);
-                    //console.log("Test DispObj uuid: "+getNodeText(dispobjs[iobj].getElementsByTagName("uuid")[0]));
-                    if (theUUID && theUUID === this.ids[num]) {
-                        //console.log("Match a change .......");
-                        var newDoc = (new DOMParser()).parseFromString('<dummy/>', 'text/xml');
-                        newDoc.removeChild(newDoc.documentElement);
-                        let newRoot = root.cloneNode(true);
-                        newDoc.appendChild(newRoot);
-                        let thisDataCopy = data[idat].cloneNode(true);
-                        let thisDispCopy = dispobjs[iobj].cloneNode(true);
-                        while (newRoot.getElementsByTagName("MolData").length > 0) {
-                            newRoot.removeChild(newRoot.getElementsByTagName("MolData")[0]);
-                        }
-                        while (newRoot.getElementsByTagName("MapData").length > 0) {
-                            newRoot.removeChild(newRoot.getElementsByTagName("MapData")[0]);
-                        }
-                        while (newRoot.getElementsByTagName("Annotation").length > 0) {
-                            newRoot.removeChild(newRoot.getElementsByTagName("Annotation")[0]);
-                        }
-                        while (newRoot.getElementsByTagName("Legend").length > 0) {
-                            newRoot.removeChild(newRoot.getElementsByTagName("Legend")[0]);
-                        }
-                        while (newRoot.getElementsByTagName("Image").length > 0) {
-                            newRoot.removeChild(newRoot.getElementsByTagName("Image")[0]);
-                        }
-                        while (newRoot.getElementsByTagName("SVGImage").length > 0) {
-                            newRoot.removeChild(newRoot.getElementsByTagName("SVGImage")[0]);
-                        }
-                        while (thisDataCopy.getElementsByTagName("MolDisp").length > 0) {
-                            thisDataCopy.removeChild(thisDataCopy.getElementsByTagName("MolDisp")[0]);
-                        }
-                        while (thisDataCopy.getElementsByTagName("HBonds").length > 0) {
-                            thisDataCopy.removeChild(thisDataCopy.getElementsByTagName("HBonds")[0]);
-                        }
-                        while (thisDataCopy.getElementsByTagName("Contacts").length > 0) {
-                            thisDataCopy.removeChild(thisDataCopy.getElementsByTagName("Contacts")[0]);
-                        }
-                        while (thisDataCopy.getElementsByTagName("SurfaceDispobj").length > 0) {
-                            thisDataCopy.removeChild(thisDataCopy.getElementsByTagName("SurfaceDispobj")[0]);
-                        }
-                        if (property === "Colour") {
-                            if (thisDispCopy.getElementsByTagName("colour_parameters").length > 0) {
-                                let colparam = thisDispCopy.getElementsByTagName("colour_parameters")[0];
-                                if (colparam.getElementsByTagName("colour_mode").length > 0) {
-                                    if (value.substring(0, 11) === "one_colour_") {
-                                        colparam.getElementsByTagName("colour_mode")[0].textContent = "one_colour";
-                                        dispobjs[iobj].getElementsByTagName("colour_parameters")[0].getElementsByTagName("colour_mode")[0].textContent = "one_colour";
-                                        if (colparam.getElementsByTagName("one_colour").length === 0) {
-                                            let newOneCol = newDoc.createElement("one_colour");
-                                            let newOneColThis = this.xmlDoc.createElement("one_colour");
-                                            colparam.appendChild(newOneCol);
-                                            dispobjs[iobj].getElementsByTagName("colour_parameters")[0].appendChild(newOneColThis);
-                                        }
-                                        colparam.getElementsByTagName("one_colour")[0].textContent = "#" + value.substring(11);
-                                        dispobjs[iobj].getElementsByTagName("colour_parameters")[0].getElementsByTagName("one_colour")[0].textContent = "#" + value.substring(11);
-                                        addToColours("#" + value.substring(11), newDoc);
-                                        addToColours("#" + value.substring(11), this.xmlDoc);
-                                    } else {
-                                        colparam.getElementsByTagName("colour_mode")[0].textContent = value;
-                                        dispobjs[iobj].getElementsByTagName("colour_parameters")[0].getElementsByTagName("colour_mode")[0].textContent = value;
-                                    }
-                                } else {
-                                    let newColMode = newDoc.createElement("colour_mode");
-                                    colparam.appendChild(newColMode);
-                                    let newColModeThis = this.xmlDoc.createElement("colour_mode");
-                                    if (value.substring(0, 11) === "one_colour_") {
-                                        newColMode.textContent = "one_colour";
-                                        newColModeThis.textContent = "one_colour";
-                                        let newOneCol = newDoc.createElement("one_colour");
-                                        let newOneColThis = this.xmlDoc.createElement("one_colour");
-                                        colparam.appendChild(newOneCol);
-                                        dispobjs[iobj].getElementsByTagName("colour_parameters")[0].appendChild(newOneColThis);
-                                        newOneCol.textContent = "#" + value.substring(11);
-                                        newOneColThis.textContent = "#" + value.substring(11);
-                                        addToColours("#" + value.substring(11), newDoc);
-                                        addToColours("#" + value.substring(11), this.xmlDoc);
-                                    } else {
-                                        newColMode.textContent = value;
-                                        newColModeThis.textContent = value;
-                                    }
-                                    dispobjs[iobj].getElementsByTagName("colour_parameters")[0].appendChild(newColModeThis);
-                                }
-                            } else {
-                                let colparam = thisDispCopy.getElementsByTagName("colour_parameters")[0];
-                                let newColParam = newDoc.createElement("colour_parameters");
-                                let newColMode = newDoc.createElement("colour_mode");
-                                newColParam.appendChild(newColMode);
-                                thisDispCopy.appendChild(newColParam);
-                                let newColParamThis = this.xmlDoc.createElement("colour_parameters");
-                                let newColModeThis = this.xmlDoc.createElement("colour_mode");
-                                if (value.substring(0, 11) === "one_colour_") {
-                                    newColMode.textContent = "one_colour";
-                                    newColModeThis.textContent = "one_colour";
-                                    let newOneCol = newDoc.createElement("one_colour");
-                                    let newOneColThis = this.xmlDoc.createElement("one_colour");
-                                    colparam.appendChild(newOneCol);
-                                    dispobjs[iobj].getElementsByTagName("colour_parameters")[0].appendChild(newOneColThis);
-                                    newOneCol.textContent = "#" + value.substring(11);
-                                    newOneColThis.textContent = "#" + value.substring(11);
-                                    addToColours("#" + value.substring(11), newDoc);
-                                    addToColours("#" + value.substring(11), this.xmlDoc);
-                                } else {
-                                    newColMode.textContent = value;
-                                    newColModeThis.textContent = value;
-                                }
-                                newColParamThis.appendChild(newColModeThis);
-                                dispobjs[iobj].appendChild(newColParamThis);
-                            }
-                        }
-                        if (property === "Style") {
-                            // Sigh we could have <style>SPLINE</style> or <style_parameters><style_mode>SPLINE</style_mode></style_parameters>
-                            // I'll deal with both.
-                            if (thisDispCopy.getElementsByTagName("style_parameters").length > 0 && thisDispCopy.getElementsByTagName("style_parameters")[0].getElementsByTagName("style_mode").length > 0) {
-                                const styleparam = thisDispCopy.getElementsByTagName("style_parameters")[0];
-                                styleparam.getElementsByTagName("style_mode")[0].textContent = value;
-                                // Is it wise to do this so early?
-                                dispobjs[iobj].getElementsByTagName("style_parameters")[0].getElementsByTagName("style_mode")[0].textContent = value;
-                            } else if (thisDispCopy.getElementsByTagName("style").length > 0) {
-                                thisDispCopy.getElementsByTagName("style")[0].textContent = value;
-                                dispobjs[iobj].getElementsByTagName("style")[0].textContent = value;
-                            } else {
-                                let newStyleMode = newDoc.createElement("style");
-                                newStyleMode.textContent = value;
-                                thisDispCopy.appendChild(newStyleMode);
-                                let newStyleModeThis = this.xmlDoc.createElement("style");
-                                newStyleModeThis.textContent = value;
-                                dispobjs[iobj].appendChild(newStyleModeThis);
-                            }
-                        }
-                        if (property === "Selection") {
-                            // This is trickier!
-                            if (value.substring(0, 14) === "complex_neighb") {
-                                console.log("Complex neighbourhood!!!");
-                                if (thisDispCopy.getElementsByTagName("selection_parameters").length > 0) {
-                                    const selparam = thisDispCopy.getElementsByTagName("selection_parameters")[0];
-                                    if (selparam.getElementsByTagName("select").length > 0) {
-                                        selparam.getElementsByTagName("select")[0].textContent = "neighb";
-                                        dispobjs[iobj].getElementsByTagName("selection_parameters")[0].getElementsByTagName("select")[0].textContent = "neighb";
-                                    } else {
-                                        let newSelect = newDoc.createElement("select");
-                                        newSelect.textContent = "neighb";
-                                        selparam.appendChild(newSelect);
-                                        let newSelectThis = newDoc.createElement("select");
-                                        newSelect.textContent = "neighb";
-                                        dispobjs[iobj].getElementsByTagName("selection_parameters")[0].appendChild(newSelectThis);
-                                    }
-                                    if (selparam.getElementsByTagName("neighb_sel").length > 0) {
-                                        selparam.getElementsByTagName("neighb_sel")[0].textContent = value.substring(15);
-                                        dispobjs[iobj].getElementsByTagName("selection_parameters")[0].getElementsByTagName("neighb_sel")[0].textContent = value.substring(15);
-                                    } else {
-                                        let newCid = newDoc.createElement("neighb_sel");
-                                        newCid.textContent = value.substring(15);
-                                        selparam.appendChild(newCid);
-                                        let newCidThis = this.xmlDoc.createElement("neighb_sel");
-                                        newCidThis.textContent = value.substring(15);
-                                        dispobjs[iobj].getElementsByTagName("selection_parameters")[0].appendChild(newCidThis);
-                                    }
-                                } else {
-                                    let newSelParam = newDoc.createElement("selection_parameters");
-                                    let newSelect = newDoc.createElement("select");
-                                    let newCid = newDoc.createElement("neighb_sel");
-                                    newSelect.textContent = "neighb";
-                                    newCid.textContent = value.substring(15);
-                                    newSelParam.appendChild(newSelect);
-                                    newSelParam.appendChild(newCid);
-                                    thisDispCopy.appendChild(newSelParam);
-                                    let newSelParamThis = this.xmlDoc.createElement("selection_parameters");
-                                    let newSelectThis = this.xmlDoc.createElement("select");
-                                    let newCidThis = this.xmlDoc.createElement("neighb_sel");
-                                    newSelectThis.textContent = "neighb";
-                                    newCidThis.textContent = value.substring(15);
-                                    newSelParamThis.appendChild(newSelectThis);
-                                    newSelParamThis.appendChild(newCidThis);
-                                    dispobjs[iobj].appendChild(newSelParamThis);
-                                }
-                            } else if (value.substring(0, 7) === "neighb_") {
-                                if (thisDispCopy.getElementsByTagName("selection_parameters").length > 0) {
-                                    const selparam = thisDispCopy.getElementsByTagName("selection_parameters")[0];
-                                    if (selparam.getElementsByTagName("select").length > 0) {
-                                        selparam.getElementsByTagName("select")[0].textContent = "neighb";
-                                        dispobjs[iobj].getElementsByTagName("selection_parameters")[0].getElementsByTagName("select")[0].textContent = "neighb";
-                                    } else {
-                                        let newSelect = newDoc.createElement("select");
-                                        newSelect.textContent = "neighb";
-                                        selparam.appendChild(newSelect);
-                                        let newSelectThis = newDoc.createElement("select");
-                                        newSelect.textContent = "neighb";
-                                        dispobjs[iobj].getElementsByTagName("selection_parameters")[0].appendChild(newSelectThis);
-                                    }
-                                    if (selparam.getElementsByTagName("neighb_sel").length > 0) {
-                                        selparam.getElementsByTagName("neighb_sel")[0].textContent = value.substring(7);
-                                        dispobjs[iobj].getElementsByTagName("selection_parameters")[0].getElementsByTagName("neighb_sel")[0].textContent = value.substring(7);
-                                    } else {
-                                        let newCid = newDoc.createElement("neighb_sel");
-                                        newCid.textContent = value.substring(7);
-                                        selparam.appendChild(newCid);
-                                        let newCidThis = this.xmlDoc.createElement("neighb_sel");
-                                        newCidThis.textContent = value.substring(7);
-                                        dispobjs[iobj].getElementsByTagName("selection_parameters")[0].appendChild(newCidThis);
-                                    }
-                                } else {
-                                    let newSelParam = newDoc.createElement("selection_parameters");
-                                    let newSelect = newDoc.createElement("select");
-                                    let newCid = newDoc.createElement("neighb_sel");
-                                    newSelect.textContent = "neighb";
-                                    newCid.textContent = value.substring(7);
-                                    newSelParam.appendChild(newSelect);
-                                    newSelParam.appendChild(newCid);
-                                    thisDispCopy.appendChild(newSelParam);
-                                    let newSelParamThis = this.xmlDoc.createElement("selection_parameters");
-                                    let newSelectThis = this.xmlDoc.createElement("select");
-                                    let newCidThis = this.xmlDoc.createElement("neighb_sel");
-                                    newSelectThis.textContent = "neighb";
-                                    newCidThis.textContent = value.substring(7);
-                                    newSelParamThis.appendChild(newSelectThis);
-                                    newSelParamThis.appendChild(newCidThis);
-                                    dispobjs[iobj].appendChild(newSelParamThis);
-                                }
-                            } else if (value.substring(0, 6) === "sites_") {
-                                function fillSites(node, theDoc) {
-                                    while (node.firstChild) {
-                                        node.removeChild(node.firstChild);
-                                    }
-                                    const sites = value.substring(6).split(" or ");
-                                    for (let isite = 0; isite < sites.length; isite++) {
-                                        let site = theDoc.createElement("site");
-                                        site.textContent = sites[isite];
-                                        node.appendChild(site);
-                                    }
-                                }
-                                if (thisDispCopy.getElementsByTagName("selection_parameters").length > 0) {
-                                    const selparam = thisDispCopy.getElementsByTagName("selection_parameters")[0];
-                                    if (selparam.getElementsByTagName("select").length > 0) {
-                                        selparam.getElementsByTagName("select")[0].textContent = "sites";
-                                        dispobjs[iobj].getElementsByTagName("selection_parameters")[0].getElementsByTagName("select")[0].textContent = "sites";
-                                    } else {
-                                        let newSelect = newDoc.createElement("select");
-                                        newSelect.textContent = "sites";
-                                        selparam.appendChild(newSelect);
-                                        let newSelectThis = newDoc.createElement("select");
-                                        newSelect.textContent = "sites";
-                                        dispobjs[iobj].getElementsByTagName("selection_parameters")[0].appendChild(newSelectThis);
-                                    }
-                                    if (selparam.getElementsByTagName("sites").length > 0) {
-                                        fillSites(selparam.getElementsByTagName("sites")[0], newDoc);
-                                        fillSites(dispobjs[iobj].getElementsByTagName("selection_parameters")[0].getElementsByTagName("sites")[0], this.xmlDoc);
-                                    } else {
-                                        let newCid = newDoc.createElement("sites");
-                                        fillSites(newCid, newDoc);
-                                        selparam.appendChild(newCid);
-                                        let newCidThis = this.xmlDoc.createElement("sites");
-                                        fillSites(newCidThis, this.xmlDoc);
-                                        dispobjs[iobj].getElementsByTagName("selection_parameters")[0].appendChild(newCidThis);
-                                    }
-                                } else {
-                                    let newSelParam = newDoc.createElement("selection_parameters");
-                                    let newSelect = newDoc.createElement("select");
-                                    let newCid = newDoc.createElement("sites");
-                                    newSelect.textContent = "sites";
-                                    fillSites(newCid, newDoc);
-                                    newSelParam.appendChild(newSelect);
-                                    newSelParam.appendChild(newCid);
-                                    thisDispCopy.appendChild(newSelParam);
-                                    let newSelParamThis = this.xmlDoc.createElement("selection_parameters");
-                                    let newSelectThis = this.xmlDoc.createElement("select");
-                                    let newCidThis = this.xmlDoc.createElement("sites");
-                                    newSelectThis.textContent = "sites";
-                                    fillSites(newCidThis, this.xmlDoc);
-                                    newSelParamThis.appendChild(newSelectThis);
-                                    newSelParamThis.appendChild(newCidThis);
-                                    dispobjs[iobj].appendChild(newSelParamThis);
-                                }
-                            } else {
-                                if (thisDispCopy.getElementsByTagName("selection_parameters").length > 0) {
-                                    let selparam = thisDispCopy.getElementsByTagName("selection_parameters")[0];
-                                    if (selparam.getElementsByTagName("select").length > 0) {
-                                        selparam.getElementsByTagName("select")[0].textContent = "cid";
-                                        // Is it wise to do this so early?
-                                        dispobjs[iobj].getElementsByTagName("selection_parameters")[0].getElementsByTagName("select")[0].textContent = "cid";
-                                    } else {
-                                        let newSelect = newDoc.createElement("select");
-                                        newSelect.textContent = "cid";
-                                        selparam.appendChild(newSelect);
-                                        let newSelectThis = newDoc.createElement("select");
-                                        newSelect.textContent = "cid";
-                                        dispobjs[iobj].getElementsByTagName("selection_parameters")[0].appendChild(newSelectThis);
-                                    }
-                                    if (selparam.getElementsByTagName("cid").length > 0) {
-                                        selparam.getElementsByTagName("cid")[0].textContent = value;
-                                        dispobjs[iobj].getElementsByTagName("selection_parameters")[0].getElementsByTagName("cid")[0].textContent = value;
-                                    } else {
-                                        let newCid = newDoc.createElement("cid");
-                                        newCid.textContent = value;
-                                        selparam.appendChild(newCid);
-                                        let newCidThis = this.xmlDoc.createElement("cid");
-                                        newCidThis.textContent = value;
-                                        dispobjs[iobj].getElementsByTagName("selection_parameters")[0].appendChild(newCidThis);
-                                    }
-                                } else {
-                                    let newSelParam = newDoc.createElement("selection_parameters");
-                                    let newSelect = newDoc.createElement("select");
-                                    let newCid = newDoc.createElement("cid");
-                                    newSelect.textContent = "cid";
-                                    newCid.textContent = value;
-                                    newSelParam.appendChild(newSelect);
-                                    newSelParam.appendChild(newCid);
-                                    thisDispCopy.appendChild(newSelParam);
-
-                                    let newSelParamThis = this.xmlDoc.createElement("selection_parameters");
-                                    let newSelectThis = this.xmlDoc.createElement("select");
-                                    let newCidThis = this.xmlDoc.createElement("cid");
-                                    newSelectThis.textContent = "cid";
-                                    newCidThis.textContent = value;
-                                    newSelParamThis.appendChild(newSelectThis);
-                                    newSelParamThis.appendChild(newCidThis);
-                                    dispobjs[iobj].appendChild(newSelParamThis);
-                                }
-                            }
-                        }
-                        thisDataCopy.appendChild(thisDispCopy);
-                        newRoot.appendChild(thisDataCopy);
-
-                        // This could/should probably all go in new function.
-                        //console.log("Doing snippet stuff");
-                        let snippet = (new XMLSerializer()).serializeToString(newDoc);
-                        //console.log(snippet);
-                        let blob = new Blob([snippet], { type: "text/plain" });
-                        let formData = new FormData();
-                        let theFile = guid() + ".mgpic.xml";
-                        let client = new XMLHttpRequest();
-                        formData.append("upfile", blob, theFile);
-                        client.onreadystatechange = function () {
-                            if (client.readyState === 4 && client.status === 200) {
-                                //console.log("Sent snippet");
-                                let client2 = new XMLHttpRequest();
-                                client2.onreadystatechange = function () {
-                                    if (client2.readyState === 4 && client2.status === 200) {
-                                        console.log("Executed snippet");
-                                        // FIXME In general create new child node, give newChild the uuid of old child, data[idat].replaceChild(newChild).
-                                        // But we're OK, I think for colours - we've only change colour_mode.
-                                        const jsondata = JSON.parse(client2.responseText);
-                                        //console.log(jsondata.status);
-                                        // idat had better only be 0. Not checked that yet.
-                                        //console.log(jsondata.norm_tri.length);
-                                        //console.log(jsondata.vert_tri.length);
-                                        //console.log(jsondata.col_tri.length);
-                                        //console.log(jsondata.idx_tri.length);
-                                        //console.log(0);
-                                        //console.log(jsondata.norm_tri[0].length);
-                                        //console.log(jsondata.vert_tri[0].length);
-                                        //console.log(jsondata.col_tri[0].length);
-                                        //console.log(jsondata.idx_tri[0].length);
-                                        //for(let idat=0;idat<jsondata.norm_tri.length;idat++){
-                                        self.currentBufferIdx = num;
-                                        let rssentries = jsondata.norm_tri[0];
-                                        const norms = getEncodedData(rssentries);
-                                        //console.log("norms");
-                                        //console.log(norms.length);
-                                        //console.log(norms);
-                                        self.displayBuffers[num].clearBuffers();
-                                        const thisName = jsondata.names[0];
-                                        self.displayBuffers[self.currentBufferIdx].name_label = thisName;
-                                        for (let i = 0; i < norms.length; i++) {
-                                            self.createNormalBuffer(norms[i]);
-                                        }
-                                        rssentries = jsondata.vert_tri[0];
-                                        const tris = getEncodedData(rssentries);
-                                        //console.log("tris");
-                                        //console.log(tris.length);
-                                        //console.log(tris);
-                                        for (let i = 0; i < tris.length; i++) {
-                                            self.createVertexBuffer(tris[i]);
-                                        }
-                                        rssentries = jsondata.col_tri[0];
-                                        const theColours = getEncodedData(rssentries);
-                                        //console.log("theColours");
-                                        //console.log(theColours.length);
-                                        //console.log(theColours);
-                                        for (let i = 0; i < theColours.length; i++) {
-                                            self.createColourBuffer(theColours[i]);
-                                        }
-                                        rssentries = jsondata.idx_tri[0];
-                                        const idxs = getEncodedData(rssentries);
-                                        for (let i = 0; i < idxs.length; i++) {
-                                            self.createIndexBuffer(idxs[i]);
-                                        }
-                                        rssentries = jsondata.prim_types[0];
-                                        for (let i = 0; i < rssentries.length; i++) {
-                                            self.displayBuffers[self.currentBufferIdx].bufferTypes.push(rssentries[i]);
-                                        }
-                                        rssentries = getEncodedData(jsondata.sizes[0]);
-                                        if (typeof (rssentries) !== "undefined") {
-                                            console.log(rssentries);
-                                            for (let i = 0; i < rssentries.length; i++) {
-                                                self.createSizeBuffer(rssentries[i]);
-                                            }
-                                        }
-                                        const atoms = jsondata.atoms[0];
-                                        self.displayBuffers[self.currentBufferIdx].atoms = atoms;
-                                        self.displayBuffers[self.currentBufferIdx].isDirty = true;
-                                        self.buildBuffers();
-                                        self.drawScene();
-                                        // FIXME - Wait for now, this does not set correct menu entries.
-                                        //}
-                                    }
-                                }
-                                client2.open("GET", "get_triangles?pdb=" + theFile, true);
-                                client2.send(null);
-                            }
-                        }
-                        client.open("POST", "/server_client.html", true);
-                        client.send(formData);
-                    }
-                }
-                // FIXME - All these other objects. And Annotations.
-                for (let iobj = 0; iobj < hbobjs.length; iobj++) {
-                    const theUUID = dataUUID + "_" + getNodeText(hbobjs[iobj].getElementsByTagName("uuid")[0]);
-                    if (theUUID && theUUID === this.ids[num]) {
-                        console.log("Update " + hbobjs[iobj] + " " + property + " " + value);
-                    }
-                }
-                for (let iobj = 0; iobj < contactobjs.length; iobj++) {
-                    const theUUID = dataUUID + "_" + getNodeText(contactobjs[iobj].getElementsByTagName("uuid")[0]);
-                    if (theUUID && theUUID === this.ids[num]) {
-                        console.log("Update " + contactobjs[iobj] + " " + property + " " + value);
-                    }
-                }
-                for (let iobj = 0; iobj < surfobs.length; iobj++) {
-                    const theUUID = dataUUID + "_" + getNodeText(surfobs[iobj].getElementsByTagName("uuid")[0]);
-                    if (theUUID && theUUID === this.ids[num]) {
-                        console.log("Update " + surfobs[iobj] + " " + property + " " + value);
-                    }
-                }
-            }
-        }
-    }
-
-    loadPDBCode(pdbid) {
-
-        const self = this;
-
-        function loadPDBCodeMain() {
-            let client = new XMLHttpRequest();
-            const theFile = guid() + pdbid + ".ent";
-            // Create a FormData instance
-            let formData = new FormData();
-            // Add the file
-            //console.log("Adding to form 2 "+file.files[0]);
-            formData.append("pdbcode", pdbid);
-            formData.append("pdbfilename", theFile);
-
-            // Check the response status
-            client.onreadystatechange = function () {
-                if (client.readyState === 4 && client.status === 200) {
-                    self.mygetrequest.open("GET", "get_triangles?pdb=" + theFile, true);
-                    self.mygetrequest.send(null);
-                }
-            }
-
-            client.open("POST", "/server_client.html", true);
-            client.send(formData);
-        }
-
-        var myVar = setInterval(function () { myTimer() }, 500);
-        function myTimer() {
-            console.log(self.ready);
-            if (self.ready) {
-                clearInterval(myVar);
-                loadPDBCodeMain();
-
-            }
-        }
-
-    }
-
-    loadFile(theFile) {
-        // This *must* be a file visible to the server!
-
-        var self = this;
-
-        function loadFileMain() {
-            self.mygetrequest.open("GET", "get_triangles?absolutePath=true&pdb=" + theFile, true);
-            self.mygetrequest.send(null);
-        }
-
-        var myVar = setInterval(function () { myTimer() }, 500);
-        function myTimer() {
-            console.log(self.ready);
-            if (self.ready) {
-                clearInterval(myVar);
-                loadFileMain();
-
-            }
-        }
-    }
-
     initTextBuffersBuffer(buffer) {
         buffer.textNormalBuffer = this.gl.createBuffer();
         buffer.textPositionBuffer = this.gl.createBuffer();
@@ -4285,7 +3227,7 @@ class MGWebGL extends Component {
         this.displayBuffers[0].clickLineIndexesBuffer = this.gl.createBuffer();
     }
 
-    set_clip_range(clipStart, clipEnd, update) {
+    set_clip_range(clipStart: number, clipEnd: number, update?: boolean) : void {
         //console.log("Clip "+clipStart+" "+clipEnd);
         if (typeof (this.gl) === 'undefined') {
             return;
@@ -4296,7 +3238,7 @@ class MGWebGL extends Component {
             this.drawScene();
     }
 
-    set_fog_range(fogStart, fogEnd, update) {
+    set_fog_range(fogStart: number, fogEnd: number, update?: boolean) : void {
         this.gl_fog_start = fogStart;
         this.gl_fog_end = fogEnd;
         //console.log("Fog "+this.gl_fog_start+" "+this.gl_fog_end);
@@ -4723,7 +3665,7 @@ class MGWebGL extends Component {
         this.shaderProgramTextBackground.maxTextureS = this.gl.getUniformLocation(this.shaderProgramTextBackground, "maxTextureS");
         this.gl.uniform1f(this.shaderProgramTextBackground.fog_start, 1000.0);
         this.gl.uniform1f(this.shaderProgramTextBackground.fog_end, 1000.0);
-        this.gl.uniform4fv(this.shaderProgramTextBackground.fogColour, new Float32Array(1.0, 1.0, 1.0, 1.0, 1.0));
+        this.gl.uniform4fv(this.shaderProgramTextBackground.fogColour, new Float32Array([1.0, 1.0, 1.0, 1.0, 1.0]));
 
         this.shaderProgramTextBackground.clipPlane0 = this.gl.getUniformLocation(this.shaderProgramTextBackground, "clipPlane0");
         this.shaderProgramTextBackground.clipPlane1 = this.gl.getUniformLocation(this.shaderProgramTextBackground, "clipPlane1");
@@ -5493,7 +4435,7 @@ class MGWebGL extends Component {
         }
     }
 
-    buildBuffers() {
+    buildBuffers() : void {
 
         let xaxis = vec3Create([1.0, 0.0, 0.0]);
         let yaxis = vec3Create([0.0, 1.0, 0.0]);
@@ -5520,199 +4462,7 @@ class MGWebGL extends Component {
             }
             for (let j = 0; j < this.displayBuffers[idx].triangleVertexIndexBuffer.length; j++) {
                 this.displayBuffers[idx].isDirty = false;
-                if (this.displayBuffers[idx].bufferTypes[j] === "CYLINDERS" || this.displayBuffers[idx].bufferTypes[j] === "CAPCYLINDERS") {
-                    accuStep = 20;
-
-                    // Construct cylinder from original start and end.
-                    // FIXME - The original indices are ignored at the moment. We will deal with that in due course.
-                    //console.log(this.displayBuffers[idx].triangleIndexs[j].length);
-                    //console.log(this.displayBuffers[idx].triangleVertices[j].length);
-                    //console.log(this.displayBuffers[idx].triangleNormals[j].length);
-                    //console.log(this.displayBuffers[idx].triangleColours[j].length);
-                    const primitiveSizes = this.displayBuffers[idx].primitiveSizes[j];
-                    //console.log(primitiveSizes.length);
-                    let triangleIndexs = [];
-                    let triangleNormals = [];
-                    let triangleVertices = [];
-                    let triangleColours = [];
-                    let icol = 0;
-                    for (let k = 0; k < this.displayBuffers[idx].triangleVertices[j].length; k += 6, icol += 8) {
-                        //triangleVertices.push(this.displayBuffers[idx].triangleVertices[j][k]);
-                        let cylinderStart = vec3Create([this.displayBuffers[idx].triangleVertices[j][k], this.displayBuffers[idx].triangleVertices[j][k + 1], this.displayBuffers[idx].triangleVertices[j][k + 2]]);
-                        let cylinderEnd = vec3Create([this.displayBuffers[idx].triangleVertices[j][k + 3], this.displayBuffers[idx].triangleVertices[j][k + 4], this.displayBuffers[idx].triangleVertices[j][k + 5]]);
-                        let colStart = [this.displayBuffers[idx].triangleColours[j][icol], this.displayBuffers[idx].triangleColours[j][icol + 1], this.displayBuffers[idx].triangleColours[j][icol + 2], this.displayBuffers[idx].triangleColours[j][icol + 3]];
-                        let colEnd = [this.displayBuffers[idx].triangleColours[j][icol + 4], this.displayBuffers[idx].triangleColours[j][icol + 5], this.displayBuffers[idx].triangleColours[j][icol + 6], this.displayBuffers[idx].triangleColours[j][icol + 7]];
-                        vec3Subtract(cylinderEnd, cylinderStart, cylinder);
-                        NormalizeVec3(cylinder);
-                        vec3Cross(xaxis, cylinder, Q);
-                        let valid = false;
-                        if (vec3.length(Q) > 1e-5) {
-                            NormalizeVec3(Q);
-                            vec3Cross(cylinder, Q, R);
-                            valid = true;
-                        } else {
-                            vec3Cross(yaxis, cylinder, Q);
-                            if (vec3.length(Q) > 1e-5) {
-                                NormalizeVec3(Q);
-                                vec3Cross(cylinder, Q, R);
-                                valid = true;
-                            } else {
-                                vec3Cross(zaxis, cylinder, Q);
-                                if (vec3.length(Q) > 1e-5) {
-                                    NormalizeVec3(Q);
-                                    vec3Cross(cylinder, Q, R);
-                                    valid = true;
-                                }
-                            }
-                        }
-                        if (valid) {
-                            let size = primitiveSizes[icol / 8];
-                            vec3.scale(Q, Q, size);
-                            vec3.scale(R, R, size);
-                            let istep = 0;
-                            let offset = triangleVertices.length / 3;
-                            for (let theta = 0; theta < 360; theta += accuStep, istep++) {
-                                let theta1 = Math.PI * (theta) / 180.0;
-                                let c1 = Math.cos(theta1);
-                                let s1 = Math.sin(theta1);
-                                let p1 = vec3Create([c1 * Q[0] + s1 * R[0], c1 * Q[1] + s1 * R[1], c1 * Q[2] + s1 * R[2]]);
-                                vec3Add(cylinderStart, p1, Q1);
-                                vec3Add(cylinderEnd, p1, Q2);
-                                triangleVertices.push(Q1[0]); triangleVertices.push(Q1[1]); triangleVertices.push(Q1[2]);
-                                triangleVertices.push(Q2[0]); triangleVertices.push(Q2[1]); triangleVertices.push(Q2[2]);
-                                triangleNormals.push(p1[0]); triangleNormals.push(p1[1]); triangleNormals.push(p1[2]);
-                                triangleNormals.push(p1[0]); triangleNormals.push(p1[1]); triangleNormals.push(p1[2]);
-                                if (istep > 0) {
-                                    triangleIndexs.push(offset + 2 * (istep - 1));
-                                    triangleIndexs.push(offset + 2 * (istep));
-                                    triangleIndexs.push(offset + 2 * (istep - 1) + 1);
-                                    triangleIndexs.push(offset + 2 * (istep - 1) + 1);
-                                    triangleIndexs.push(offset + 2 * (istep));
-                                    triangleIndexs.push(offset + 2 * (istep) + 1);
-                                }
-                                triangleColours.push(colStart[0]); triangleColours.push(colStart[1]); triangleColours.push(colStart[2]); triangleColours.push(colStart[3]);
-                                triangleColours.push(colEnd[0]); triangleColours.push(colEnd[1]); triangleColours.push(colEnd[2]); triangleColours.push(colEnd[3]);
-                            }
-                            // And complete the circle
-                            triangleIndexs.push(offset + 2 * (istep - 1));
-                            triangleIndexs.push(offset);
-                            triangleIndexs.push(offset + 2 * (istep - 1) + 1);
-                            triangleIndexs.push(offset + 2 * (istep - 1) + 1);
-                            triangleIndexs.push(offset);
-                            triangleIndexs.push(offset + 1);
-
-                            if (this.displayBuffers[idx].bufferTypes[j] === "CAPCYLINDERS") {
-
-                                let lastOffset = 1 + triangleIndexs[triangleIndexs.length - 3];
-
-                                // Circle cap at start of cylinder.
-                                let istep = 0;
-                                for (let theta = 0; theta < 360; theta += accuStep, istep++) {
-                                    let theta1 = Math.PI * (theta) / 180.0;
-                                    let theta2 = Math.PI * (theta + accuStep) / 180.0;
-                                    let c1 = Math.cos(theta1);
-                                    let s1 = Math.sin(theta1);
-                                    let c2 = Math.cos(theta2);
-                                    let s2 = Math.sin(theta2);
-                                    let p1 = vec3Create([c1 * Q[0] + s1 * R[0], c1 * Q[1] + s1 * R[1], c1 * Q[2] + s1 * R[2]]);
-                                    let p2 = vec3Create([c2 * Q[0] + s2 * R[0], c2 * Q[1] + s2 * R[1], c2 * Q[2] + s2 * R[2]]);
-                                    vec3Add(cylinderStart, p1, Q1);
-                                    vec3Add(cylinderStart, p2, Q2);
-                                    triangleVertices.push(cylinderStart[0]); triangleVertices.push(cylinderStart[1]); triangleVertices.push(cylinderStart[2]);
-                                    triangleVertices.push(Q1[0]); triangleVertices.push(Q1[1]); triangleVertices.push(Q1[2]);
-                                    triangleVertices.push(Q2[0]); triangleVertices.push(Q2[1]); triangleVertices.push(Q2[2]);
-                                    triangleNormals.push(-cylinder[0]); triangleNormals.push(-cylinder[1]); triangleNormals.push(-cylinder[2]);
-                                    triangleNormals.push(-cylinder[0]); triangleNormals.push(-cylinder[1]); triangleNormals.push(-cylinder[2]);
-                                    triangleNormals.push(-cylinder[0]); triangleNormals.push(-cylinder[1]); triangleNormals.push(-cylinder[2]);
-                                    triangleColours.push(colStart[0]); triangleColours.push(colStart[1]); triangleColours.push(colStart[2]); triangleColours.push(colStart[3]);
-                                    triangleColours.push(colStart[0]); triangleColours.push(colStart[1]); triangleColours.push(colStart[2]); triangleColours.push(colStart[3]);
-                                    triangleColours.push(colStart[0]); triangleColours.push(colStart[1]); triangleColours.push(colStart[2]); triangleColours.push(colStart[3]);
-                                    triangleIndexs.push(3 * istep + lastOffset);
-                                    triangleIndexs.push(3 * istep + lastOffset + 2);
-                                    triangleIndexs.push(3 * istep + lastOffset + 1);
-                                }
-
-                                // Circle cap at end of cylinder.
-                                for (let theta = 0; theta < 360; theta += accuStep, istep++) {
-                                    let theta1 = Math.PI * (theta) / 180.0;
-                                    let theta2 = Math.PI * (theta + accuStep) / 180.0;
-                                    let c1 = Math.cos(theta1);
-                                    let s1 = Math.sin(theta1);
-                                    let c2 = Math.cos(theta2);
-                                    let s2 = Math.sin(theta2);
-                                    let p1 = vec3Create([c1 * Q[0] + s1 * R[0], c1 * Q[1] + s1 * R[1], c1 * Q[2] + s1 * R[2]]);
-                                    let p2 = vec3Create([c2 * Q[0] + s2 * R[0], c2 * Q[1] + s2 * R[1], c2 * Q[2] + s2 * R[2]]);
-                                    vec3Add(cylinderEnd, p1, Q1);
-                                    vec3Add(cylinderEnd, p2, Q2);
-                                    triangleVertices.push(cylinderEnd[0]); triangleVertices.push(cylinderEnd[1]); triangleVertices.push(cylinderEnd[2]);
-                                    triangleVertices.push(Q1[0]); triangleVertices.push(Q1[1]); triangleVertices.push(Q1[2]);
-                                    triangleVertices.push(Q2[0]); triangleVertices.push(Q2[1]); triangleVertices.push(Q2[2]);
-                                    triangleNormals.push(-cylinder[0]); triangleNormals.push(-cylinder[1]); triangleNormals.push(-cylinder[2]);
-                                    triangleNormals.push(-cylinder[0]); triangleNormals.push(-cylinder[1]); triangleNormals.push(-cylinder[2]);
-                                    triangleNormals.push(-cylinder[0]); triangleNormals.push(-cylinder[1]); triangleNormals.push(-cylinder[2]);
-                                    triangleColours.push(colEnd[0]); triangleColours.push(colEnd[1]); triangleColours.push(colEnd[2]); triangleColours.push(colEnd[3]);
-                                    triangleColours.push(colEnd[0]); triangleColours.push(colEnd[1]); triangleColours.push(colEnd[2]); triangleColours.push(colEnd[3]);
-                                    triangleColours.push(colEnd[0]); triangleColours.push(colEnd[1]); triangleColours.push(colEnd[2]); triangleColours.push(colEnd[3]);
-                                    triangleIndexs.push(3 * istep + lastOffset);
-                                    triangleIndexs.push(3 * istep + lastOffset + 2);
-                                    triangleIndexs.push(3 * istep + lastOffset + 1);
-                                }
-                            }
-
-                        } else {
-                            // FIXME - Panic. Need to deal with 0 length cylinder
-                        }
-                    }
-
-                    this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexIndexBuffer[j]);
-                    if (this.ext) {
-                        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(triangleIndexs), this.gl.STATIC_DRAW);
-                    } else {
-                        this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(triangleIndexs), this.gl.STATIC_DRAW);
-                    }
-
-                    this.displayBuffers[idx].triangleVertexNormalBuffer[j].numItems = triangleNormals.length / 3;
-                    this.displayBuffers[idx].triangleVertexPositionBuffer[j].numItems = triangleNormals.length / 3;
-                    this.displayBuffers[idx].triangleColourBuffer[j].numItems = triangleColours.length / 4;
-                    this.displayBuffers[idx].triangleVertexIndexBuffer[j].numItems = triangleIndexs.length;
-                    //console.log("Buffering "+triangleNormals.length/3+" vertices");
-                    //console.log("Buffering "+triangleIndexs.length+" indices");
-
-                    this.displayBuffers[idx].triangleVertexIndexBuffer[j].itemSize = 1;
-                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexNormalBuffer[j]);
-                    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(triangleNormals), this.gl.STATIC_DRAW);
-                    this.displayBuffers[idx].triangleVertexNormalBuffer[j].itemSize = 3;
-                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexPositionBuffer[j]);
-                    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(triangleVertices), this.gl.STATIC_DRAW);
-                    this.displayBuffers[idx].triangleVertexPositionBuffer[j].itemSize = 3;
-                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleColourBuffer[j]);
-                    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(triangleColours), this.gl.STATIC_DRAW);
-                    this.displayBuffers[idx].triangleColourBuffer[j].itemSize = 4;
-
-                } else if (this.displayBuffers[idx].bufferTypes[j] === "STARS") {
-                    if (typeof (this.starBuffer) === "undefined") {
-                        this.starBuffer = new DisplayBuffer();
-                        this.starBuffer.triangleVertexNormalBuffer.push(this.gl.createBuffer());
-                        this.starBuffer.triangleVertexPositionBuffer.push(this.gl.createBuffer());
-                        this.starBuffer.triangleVertexIndexBuffer.push(this.gl.createBuffer());
-                        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.starBuffer.triangleVertexIndexBuffer[0]);
-                        this.starBuffer.triangleVertexIndexBuffer[0].itemSize = 1;
-                        this.starBuffer.triangleVertexIndexBuffer[0].numItems = starIndices.length;
-                        if (this.ext) {
-                            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(starIndices), this.gl.STATIC_DRAW);
-                        } else {
-                            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(starIndices), this.gl.STATIC_DRAW);
-                        }
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.starBuffer.triangleVertexNormalBuffer[0]);
-                        this.starBuffer.triangleVertexNormalBuffer[0].itemSize = 3;
-                        this.starBuffer.triangleVertexNormalBuffer[0].numItems = starNormals.length / 3;
-                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(starNormals), this.gl.STATIC_DRAW);
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.starBuffer.triangleVertexPositionBuffer[0]);
-                        this.starBuffer.triangleVertexPositionBuffer[0].itemSize = 3;
-                        this.starBuffer.triangleVertexPositionBuffer[0].numItems = starVertices.length / 3;
-                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(starVertices), this.gl.STATIC_DRAW);
-                    }
-                } else if (this.displayBuffers[idx].bufferTypes[j] === "POINTS_SPHERES" || this.displayBuffers[idx].bufferTypes[j] === "SPHEROIDS") {
+                if (this.displayBuffers[idx].bufferTypes[j] === "POINTS_SPHERES" || this.displayBuffers[idx].bufferTypes[j] === "SPHEROIDS") {
                     if (typeof (this.sphereBuffer) === "undefined") {
                         this.sphereBuffer = new DisplayBuffer();
                         this.sphereBuffer.triangleVertexNormalBuffer.push(this.gl.createBuffer());
@@ -5734,169 +4484,6 @@ class MGWebGL extends Component {
                         this.sphereBuffer.triangleVertexPositionBuffer[0].itemSize = 3;
                         this.sphereBuffer.triangleVertexPositionBuffer[0].numItems = icosaVertices.length / 3;
                         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(icosaVertices), this.gl.STATIC_DRAW);
-                    }
-                } else if (this.displayBuffers[idx].bufferTypes[j].substring(0, 8) === "POLYSTAR") {
-                    if (typeof (this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]]) === "undefined") {
-                        let npoints = parseInt(this.displayBuffers[idx].bufferTypes[j].substring(8));
-                        let diskIndices = [];
-                        let diskNormals = [];
-                        this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]] = [];
-                        accuStep = 360. / npoints;
-                        let diskIdx = 0;
-                        this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]].push(0.0);
-                        this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]].push(0.0);
-                        this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]].push(0.0);
-                        diskNormals.push(0.0);
-                        diskNormals.push(0.0);
-                        diskNormals.push(-1.0);
-                        diskIndices.push(diskIdx++);
-                        let theta = 0.0;
-                        let p = npoints;
-                        let q = 2;
-                        let S = 1. / (Math.cos(Math.PI / p));
-                        let R = Math.sin((p - 2 * q) / (2 * p) * Math.PI) / Math.sin((2 * q) / p * Math.PI) / S;
-                        for (let istep = 0; istep <= npoints; istep++) {
-                            let theta1 = Math.PI * (theta) / 180.0;
-                            let y1 = Math.cos(theta1) * R;
-                            let x1 = Math.sin(theta1) * R;
-                            this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]].push(x1);
-                            this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]].push(y1);
-                            this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]].push(0.0);
-                            diskNormals.push(0.0);
-                            diskNormals.push(0.0);
-                            diskNormals.push(-1.0);
-                            diskIndices.push(diskIdx++);
-                            theta += accuStep * .5;
-                            theta1 = Math.PI * (theta) / 180.0;
-                            // FIXME - Scaling is the tricky bit.
-                            y1 = Math.cos(theta1);
-                            x1 = Math.sin(theta1);
-                            this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]].push(x1);
-                            this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]].push(y1);
-                            this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]].push(0.0);
-                            diskNormals.push(0.0);
-                            diskNormals.push(0.0);
-                            diskNormals.push(-1.0);
-                            diskIndices.push(diskIdx++);
-                            theta += accuStep * .5;
-                        }
-                        this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]] = new DisplayBuffer();
-                        this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]].triangleVertexNormalBuffer.push(this.gl.createBuffer());
-                        this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]].triangleVertexPositionBuffer.push(this.gl.createBuffer());
-                        this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]].triangleVertexIndexBuffer.push(this.gl.createBuffer());
-                        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]].triangleVertexIndexBuffer[0]);
-                        this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]].triangleVertexIndexBuffer[0].itemSize = 1;
-                        this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]].triangleVertexIndexBuffer[0].numItems = diskIndices.length;
-                        if (this.ext) {
-                            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(diskIndices), this.gl.STATIC_DRAW);
-                        } else {
-                            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(diskIndices), this.gl.STATIC_DRAW);
-                        }
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]].triangleVertexNormalBuffer[0]);
-                        this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]].triangleVertexNormalBuffer[0].itemSize = 3;
-                        this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]].triangleVertexNormalBuffer[0].numItems = diskNormals.length / 3;
-                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(diskNormals), this.gl.STATIC_DRAW);
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]].triangleVertexPositionBuffer[0]);
-                        this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]].triangleVertexPositionBuffer[0].itemSize = 3;
-                        this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]].triangleVertexPositionBuffer[0].numItems = this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]].length / 3;
-                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]]), this.gl.DYNAMIC_DRAW);
-                    }
-                } else if (this.displayBuffers[idx].bufferTypes[j].substring(0, 7) === "POLYGON") {
-                    if (typeof (this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]]) === "undefined") {
-                        let npoints = parseInt(this.displayBuffers[idx].bufferTypes[j].substring(7));
-                        let diskIndices = [];
-                        let diskNormals = [];
-                        this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]] = [];
-                        accuStep = 360. / npoints;
-                        let diskIdx = 0;
-                        this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]].push(0.0);
-                        this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]].push(0.0);
-                        this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]].push(0.0);
-                        diskNormals.push(0.0);
-                        diskNormals.push(0.0);
-                        diskNormals.push(-1.0);
-                        diskIndices.push(diskIdx++);
-                        let theta = 0.0;
-                        for (let istep = 0; istep <= npoints; istep++) {
-                            let theta1 = Math.PI * (theta) / 180.0;
-                            let y1 = Math.cos(theta1);
-                            let x1 = Math.sin(theta1);
-                            this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]].push(x1);
-                            this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]].push(y1);
-                            this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]].push(0.0);
-                            diskNormals.push(0.0);
-                            diskNormals.push(0.0);
-                            diskNormals.push(-1.0);
-                            diskIndices.push(diskIdx++);
-                            theta += accuStep;
-                        }
-                        this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]] = new DisplayBuffer();
-                        this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]].triangleVertexNormalBuffer.push(this.gl.createBuffer());
-                        this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]].triangleVertexPositionBuffer.push(this.gl.createBuffer());
-                        this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]].triangleVertexIndexBuffer.push(this.gl.createBuffer());
-                        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]].triangleVertexIndexBuffer[0]);
-                        this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]].triangleVertexIndexBuffer[0].itemSize = 1;
-                        this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]].triangleVertexIndexBuffer[0].numItems = diskIndices.length;
-                        if (this.ext) {
-                            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(diskIndices), this.gl.STATIC_DRAW);
-                        } else {
-                            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(diskIndices), this.gl.STATIC_DRAW);
-                        }
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]].triangleVertexNormalBuffer[0]);
-                        this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]].triangleVertexNormalBuffer[0].itemSize = 3;
-                        this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]].triangleVertexNormalBuffer[0].numItems = diskNormals.length / 3;
-                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(diskNormals), this.gl.STATIC_DRAW);
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]].triangleVertexPositionBuffer[0]);
-                        this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]].triangleVertexPositionBuffer[0].itemSize = 3;
-                        this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]].triangleVertexPositionBuffer[0].numItems = this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]].length / 3;
-                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]]), this.gl.DYNAMIC_DRAW);
-                    }
-                } else if (this.displayBuffers[idx].bufferTypes[j] === "DIAMONDS") {
-                    if (typeof (this.diamondBuffer) === "undefined") {
-                        let diskIndices = [];
-                        let diskNormals = [];
-                        this.diamondVertices = [];
-                        accuStep = 90;
-                        let diskIdx = 0;
-                        this.diamondVertices.push(0.0);
-                        this.diamondVertices.push(0.0);
-                        this.diamondVertices.push(0.0);
-                        diskNormals.push(0.0);
-                        diskNormals.push(0.0);
-                        diskNormals.push(-1.0);
-                        diskIndices.push(diskIdx++);
-                        for (let theta = 0; theta <= 360; theta += accuStep) {
-                            let theta1 = Math.PI * (theta) / 180.0;
-                            let y1 = Math.cos(theta1);
-                            let x1 = Math.sin(theta1);
-                            this.diamondVertices.push(x1);
-                            this.diamondVertices.push(y1);
-                            this.diamondVertices.push(0.0);
-                            diskNormals.push(0.0);
-                            diskNormals.push(0.0);
-                            diskNormals.push(-1.0);
-                            diskIndices.push(diskIdx++);
-                        }
-                        this.diamondBuffer = new DisplayBuffer();
-                        this.diamondBuffer.triangleVertexNormalBuffer.push(this.gl.createBuffer());
-                        this.diamondBuffer.triangleVertexPositionBuffer.push(this.gl.createBuffer());
-                        this.diamondBuffer.triangleVertexIndexBuffer.push(this.gl.createBuffer());
-                        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.diamondBuffer.triangleVertexIndexBuffer[0]);
-                        this.diamondBuffer.triangleVertexIndexBuffer[0].itemSize = 1;
-                        this.diamondBuffer.triangleVertexIndexBuffer[0].numItems = diskIndices.length;
-                        if (this.ext) {
-                            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(diskIndices), this.gl.STATIC_DRAW);
-                        } else {
-                            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(diskIndices), this.gl.STATIC_DRAW);
-                        }
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.diamondBuffer.triangleVertexNormalBuffer[0]);
-                        this.diamondBuffer.triangleVertexNormalBuffer[0].itemSize = 3;
-                        this.diamondBuffer.triangleVertexNormalBuffer[0].numItems = diskNormals.length / 3;
-                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(diskNormals), this.gl.STATIC_DRAW);
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.diamondBuffer.triangleVertexPositionBuffer[0]);
-                        this.diamondBuffer.triangleVertexPositionBuffer[0].itemSize = 3;
-                        this.diamondBuffer.triangleVertexPositionBuffer[0].numItems = this.diamondVertices.length / 3;
-                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.diamondVertices), this.gl.DYNAMIC_DRAW);
                     }
                 } else if (this.displayBuffers[idx].bufferTypes[j] === "PERFECT_SPHERES" || this.displayBuffers[idx].bufferTypes[j] === "IMAGES" || this.displayBuffers[idx].bufferTypes[j] === "TEXT") {
                     if (typeof (this.imageBuffer) === "undefined") {
@@ -5968,147 +4555,6 @@ class MGWebGL extends Component {
                         this.displayBuffers[idx].triangleColourBuffer[j].itemSize = 4;
                     }
 
-                } else if (this.displayBuffers[idx].bufferTypes[j] === "SQUARES") {
-                    if (typeof (this.squareBuffer) === "undefined") {
-                        let diskIndices = [];
-                        let diskNormals = [];
-                        this.squareVertices = [];
-                        accuStep = 90;
-                        let diskIdx = 0;
-                        this.squareVertices.push(0.0);
-                        this.squareVertices.push(0.0);
-                        this.squareVertices.push(0.0);
-                        diskNormals.push(0.0);
-                        diskNormals.push(0.0);
-                        diskNormals.push(-1.0);
-                        diskIndices.push(diskIdx++);
-                        for (let theta = 45; theta <= 405; theta += accuStep) {
-                            let theta1 = Math.PI * (theta) / 180.0;
-                            let y1 = Math.cos(theta1);
-                            let x1 = Math.sin(theta1);
-                            this.squareVertices.push(x1);
-                            this.squareVertices.push(y1);
-                            this.squareVertices.push(0.0);
-                            diskNormals.push(0.0);
-                            diskNormals.push(0.0);
-                            diskNormals.push(-1.0);
-                            diskIndices.push(diskIdx++);
-                        }
-                        this.squareBuffer = new DisplayBuffer();
-                        this.squareBuffer.triangleVertexNormalBuffer.push(this.gl.createBuffer());
-                        this.squareBuffer.triangleVertexPositionBuffer.push(this.gl.createBuffer());
-                        this.squareBuffer.triangleVertexIndexBuffer.push(this.gl.createBuffer());
-                        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.squareBuffer.triangleVertexIndexBuffer[0]);
-                        this.squareBuffer.triangleVertexIndexBuffer[0].itemSize = 1;
-                        this.squareBuffer.triangleVertexIndexBuffer[0].numItems = diskIndices.length;
-                        if (this.ext) {
-                            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(diskIndices), this.gl.STATIC_DRAW);
-                        } else {
-                            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(diskIndices), this.gl.STATIC_DRAW);
-                        }
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.squareBuffer.triangleVertexNormalBuffer[0]);
-                        this.squareBuffer.triangleVertexNormalBuffer[0].itemSize = 3;
-                        this.squareBuffer.triangleVertexNormalBuffer[0].numItems = diskNormals.length / 3;
-                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(diskNormals), this.gl.STATIC_DRAW);
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.squareBuffer.triangleVertexPositionBuffer[0]);
-                        this.squareBuffer.triangleVertexPositionBuffer[0].itemSize = 3;
-                        this.squareBuffer.triangleVertexPositionBuffer[0].numItems = this.squareVertices.length / 3;
-                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.squareVertices), this.gl.DYNAMIC_DRAW);
-                    }
-                } else if (this.displayBuffers[idx].bufferTypes[j] === "PENTAGONS") {
-                    if (typeof (this.pentagonBuffer) === "undefined") {
-                        let diskIndices = [];
-                        let diskNormals = [];
-                        this.pentagonVertices = [];
-                        accuStep = 72;
-                        let diskIdx = 0;
-                        this.pentagonVertices.push(0.0);
-                        this.pentagonVertices.push(0.0);
-                        this.pentagonVertices.push(0.0);
-                        diskNormals.push(0.0);
-                        diskNormals.push(0.0);
-                        diskNormals.push(-1.0);
-                        diskIndices.push(diskIdx++);
-                        for (let theta = 0; theta <= 360; theta += accuStep) {
-                            let theta1 = Math.PI * (theta) / 180.0;
-                            let y1 = Math.cos(theta1);
-                            let x1 = Math.sin(theta1);
-                            this.pentagonVertices.push(x1);
-                            this.pentagonVertices.push(y1);
-                            this.pentagonVertices.push(0.0);
-                            diskNormals.push(0.0);
-                            diskNormals.push(0.0);
-                            diskNormals.push(-1.0);
-                            diskIndices.push(diskIdx++);
-                        }
-                        this.pentagonBuffer = new DisplayBuffer();
-                        this.pentagonBuffer.triangleVertexNormalBuffer.push(this.gl.createBuffer());
-                        this.pentagonBuffer.triangleVertexPositionBuffer.push(this.gl.createBuffer());
-                        this.pentagonBuffer.triangleVertexIndexBuffer.push(this.gl.createBuffer());
-                        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.pentagonBuffer.triangleVertexIndexBuffer[0]);
-                        this.pentagonBuffer.triangleVertexIndexBuffer[0].itemSize = 1;
-                        this.pentagonBuffer.triangleVertexIndexBuffer[0].numItems = diskIndices.length;
-                        if (this.ext) {
-                            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(diskIndices), this.gl.STATIC_DRAW);
-                        } else {
-                            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(diskIndices), this.gl.STATIC_DRAW);
-                        }
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.pentagonBuffer.triangleVertexNormalBuffer[0]);
-                        this.pentagonBuffer.triangleVertexNormalBuffer[0].itemSize = 3;
-                        this.pentagonBuffer.triangleVertexNormalBuffer[0].numItems = diskNormals.length / 3;
-                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(diskNormals), this.gl.STATIC_DRAW);
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.pentagonBuffer.triangleVertexPositionBuffer[0]);
-                        this.pentagonBuffer.triangleVertexPositionBuffer[0].itemSize = 3;
-                        this.pentagonBuffer.triangleVertexPositionBuffer[0].numItems = this.pentagonVertices.length / 3;
-                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.pentagonVertices), this.gl.DYNAMIC_DRAW);
-                    }
-                } else if (this.displayBuffers[idx].bufferTypes[j] === "HEXAGONS") {
-                    if (typeof (this.hexagonBuffer) === "undefined") {
-                        let diskIndices = [];
-                        let diskNormals = [];
-                        this.hexagonVertices = [];
-                        accuStep = 60;
-                        let diskIdx = 0;
-                        this.hexagonVertices.push(0.0);
-                        this.hexagonVertices.push(0.0);
-                        this.hexagonVertices.push(0.0);
-                        diskNormals.push(0.0);
-                        diskNormals.push(0.0);
-                        diskNormals.push(-1.0);
-                        diskIndices.push(diskIdx++);
-                        for (let theta = 0; theta <= 360; theta += accuStep) {
-                            let theta1 = Math.PI * (theta) / 180.0;
-                            let y1 = Math.cos(theta1);
-                            let x1 = Math.sin(theta1);
-                            this.hexagonVertices.push(y1);
-                            this.hexagonVertices.push(x1);
-                            this.hexagonVertices.push(0.0);
-                            diskNormals.push(0.0);
-                            diskNormals.push(0.0);
-                            diskNormals.push(-1.0);
-                            diskIndices.push(diskIdx++);
-                        }
-                        this.hexagonBuffer = new DisplayBuffer();
-                        this.hexagonBuffer.triangleVertexNormalBuffer.push(this.gl.createBuffer());
-                        this.hexagonBuffer.triangleVertexPositionBuffer.push(this.gl.createBuffer());
-                        this.hexagonBuffer.triangleVertexIndexBuffer.push(this.gl.createBuffer());
-                        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.hexagonBuffer.triangleVertexIndexBuffer[0]);
-                        this.hexagonBuffer.triangleVertexIndexBuffer[0].itemSize = 1;
-                        this.hexagonBuffer.triangleVertexIndexBuffer[0].numItems = diskIndices.length;
-                        if (this.ext) {
-                            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(diskIndices), this.gl.STATIC_DRAW);
-                        } else {
-                            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(diskIndices), this.gl.STATIC_DRAW);
-                        }
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.hexagonBuffer.triangleVertexNormalBuffer[0]);
-                        this.hexagonBuffer.triangleVertexNormalBuffer[0].itemSize = 3;
-                        this.hexagonBuffer.triangleVertexNormalBuffer[0].numItems = diskNormals.length / 3;
-                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(diskNormals), this.gl.STATIC_DRAW);
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.hexagonBuffer.triangleVertexPositionBuffer[0]);
-                        this.hexagonBuffer.triangleVertexPositionBuffer[0].itemSize = 3;
-                        this.hexagonBuffer.triangleVertexPositionBuffer[0].numItems = this.hexagonVertices.length / 3;
-                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.hexagonVertices), this.gl.DYNAMIC_DRAW);
-                    }
                 } else if (this.displayBuffers[idx].bufferTypes[j] === "POINTS") {
                     if (typeof (this.diskBuffer) === "undefined") {
                         let diskIndices = [];
@@ -6155,48 +4601,6 @@ class MGWebGL extends Component {
                         this.diskBuffer.triangleVertexPositionBuffer[0].itemSize = 3;
                         this.diskBuffer.triangleVertexPositionBuffer[0].numItems = this.diskVertices.length / 3;
                         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.diskVertices), this.gl.DYNAMIC_DRAW);
-                    }
-                } else if (this.displayBuffers[idx].bufferTypes[j].substring(0, "CUSTOM_2D_SHAPE_".length) === "CUSTOM_2D_SHAPE_") {
-                    let customType = this.displayBuffers[idx].bufferTypes[j];
-                    console.log("A custom 2d shape:" + customType);
-                    if (typeof (this.shapesBuffers[customType]) === "undefined") {
-                        console.log("Make a custom buffer");
-                        this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]] = new DisplayBuffer();
-                        this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]].triangleVertexNormalBuffer.push(this.gl.createBuffer());
-                        this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]].triangleVertexPositionBuffer.push(this.gl.createBuffer());
-                        this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]].triangleVertexIndexBuffer.push(this.gl.createBuffer());
-                        console.log(this.displayBuffers[idx].supplementary);
-                        let vert2d = this.displayBuffers[idx].supplementary["vertices2d"];
-                        this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]] = [];
-                        let idxs3d = [];
-                        let idx3d = 0;
-                        let diskNormals = [];
-                        for (let i2d = 0; i2d < vert2d[0].length; i2d += 2) {
-                            this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]].push(vert2d[0][i2d]);
-                            this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]].push(vert2d[0][i2d + 1]);
-                            this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]].push(0.0);
-                            diskNormals.push(0.0);
-                            diskNormals.push(0.0);
-                            diskNormals.push(-1.0);
-                            idxs3d.push(idx3d++);
-                        }
-                        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]].triangleVertexIndexBuffer[0]);
-                        this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]].triangleVertexIndexBuffer[0].itemSize = 1;
-                        this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]].triangleVertexIndexBuffer[0].numItems = idxs3d.length;
-                        if (this.ext) {
-                            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(idxs3d), this.gl.STATIC_DRAW);
-                        } else {
-                            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(idxs3d), this.gl.STATIC_DRAW);
-                        }
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]].triangleVertexNormalBuffer[0]);
-                        this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]].triangleVertexNormalBuffer[0].itemSize = 3;
-                        this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]].triangleVertexNormalBuffer[0].numItems = diskNormals.length / 3;
-                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(diskNormals), this.gl.STATIC_DRAW);
-                        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]].triangleVertexPositionBuffer[0]);
-                        this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]].triangleVertexPositionBuffer[0].itemSize = 3;
-                        this.shapesBuffers[this.displayBuffers[idx].bufferTypes[j]].triangleVertexPositionBuffer[0].numItems = this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]].length / 3;
-                        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.shapesVertices[this.displayBuffers[idx].bufferTypes[j]]), this.gl.DYNAMIC_DRAW);
-
                     }
                 } else if (this.displayBuffers[idx].bufferTypes[j] === "CIRCLES2") {
                     console.log("Not implemented, do nothing yet ...");
@@ -6592,7 +4996,7 @@ class MGWebGL extends Component {
                         this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.displayBuffers[idx].triangleIndexs[j]), this.gl.STATIC_DRAW);
                     }
                     this.displayBuffers[idx].triangleVertexIndexBuffer[j].itemSize = 1;
-                    if (this.displayBuffers[idx].bufferTypes[j] !== "NORMALLINES" && this.displayBuffers[idx].bufferTypes[j] !== "LINES" && this.displayBuffers[idx].bufferTypes[j] !== "LINE_LOOP" && this.displayBuffers[idx].bufferTypes[j] !== "LINE_STRIP" && this.displayBuffers[idx].bufferTypes[j] !== "POINTS" && this.displayBuffers[idx].bufferTypes[j] !== "STARS" && this.displayBuffers[idx].bufferTypes[j] !== "POINTS_SPHERES" && this.displayBuffers[idx].bufferTypes[j] !== "CYLINDERS" && this.displayBuffers[idx].bufferTypes[j] !== "CAPCYLINDERS" && this.displayBuffers[idx].bufferTypes[j] !== "SPLINE" && this.displayBuffers[idx].bufferTypes[j] !== "WORM" && this.displayBuffers[idx].bufferTypes[j] !== "SPHEROIDS" && this.displayBuffers[idx].bufferTypes[j] !== "TORUSES" && this.displayBuffers[idx].bufferTypes[j] !== "CIRCLES") {
+                    if (this.displayBuffers[idx].bufferTypes[j] !== "NORMALLINES" && this.displayBuffers[idx].bufferTypes[j] !== "LINES" && this.displayBuffers[idx].bufferTypes[j] !== "LINE_LOOP" && this.displayBuffers[idx].bufferTypes[j] !== "LINE_STRIP" && this.displayBuffers[idx].bufferTypes[j] !== "POINTS" && this.displayBuffers[idx].bufferTypes[j] !== "POINTS_SPHERES" && this.displayBuffers[idx].bufferTypes[j] !== "CAPCYLINDERS" && this.displayBuffers[idx].bufferTypes[j] !== "SPHEROIDS" && this.displayBuffers[idx].bufferTypes[j] !== "TORUSES" && this.displayBuffers[idx].bufferTypes[j] !== "CIRCLES") {
                         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[idx].triangleVertexNormalBuffer[j]);
                         this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[idx].triangleNormals[j]), this.gl.STATIC_DRAW);
                         this.displayBuffers[idx].triangleVertexNormalBuffer[j].itemSize = 3;
@@ -6625,7 +5029,7 @@ class MGWebGL extends Component {
     }
 
 
-    drawTransformMatrixInteractive(transformMatrix, transformOrigin, buffer, shader, vertexType, bufferIdx, specialDrawBuffer) {
+    drawTransformMatrixInteractive(transformMatrix:number[], transformOrigin:number[], buffer:any, shader:MGWebGLShader, vertexType:number, bufferIdx:number, specialDrawBuffer?:number) {
 
         this.setupModelViewTransformMatrixInteractive(transformMatrix, transformOrigin, buffer, shader, vertexType, bufferIdx, specialDrawBuffer);
 
@@ -6663,7 +5067,7 @@ class MGWebGL extends Component {
         this.gl.uniform3fv(theShader.screenZ, screenZ);
     }
 
-    drawBuffer(theBuffer,theShader,j,vertexType,specialDrawBuffer){
+    drawBuffer(theBuffer:any,theShaderIn:MGWebGLShader|ShaderTrianglesInstanced,j:number,vertexType:number,specialDrawBuffer?:any) : void {
 
         const bright_y = this.background_colour[0] * 0.299 + this.background_colour[1] * 0.587 + this.background_colour[2] * 0.114;
 
@@ -6675,6 +5079,7 @@ class MGWebGL extends Component {
         }
 
         if (this.ext) {
+            const theShader = theShaderIn as ShaderTrianglesInstanced;
             if(theBuffer.triangleInstanceOriginBuffer[j]){
                 this.gl.enableVertexAttribArray(theShader.vertexInstanceOriginAttribute);
                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, theBuffer.triangleInstanceOriginBuffer[j]);
@@ -6780,6 +5185,7 @@ class MGWebGL extends Component {
                     this.instanced_ext.vertexAttribDivisorANGLE(theShader.vertexColourAttribute, 0);
                 }
             } else {
+                const theShader = theShaderIn as MGWebGLShader;
                 if(theBuffer.symmetryMatrices.length>0){
                     let tempMVMatrix = mat4.create();
                     let tempMVInvMatrix = mat4.create();
@@ -6849,7 +5255,7 @@ class MGWebGL extends Component {
 
     }
 
-    drawTransformMatrix(transformMatrix, buffer, shader, vertexType, bufferIdx, specialDrawBuffer) {
+    drawTransformMatrix(transformMatrix:number[], buffer:any, shader:any, vertexType:number, bufferIdx:number, specialDrawBuffer?:any) : void {
         var triangleVertexIndexBuffer = buffer.triangleVertexIndexBuffer;
 
         var drawBuffer;
@@ -6906,15 +5312,10 @@ class MGWebGL extends Component {
 
     }
 
-    drawTransformMatrixInteractivePMV(transformMatrix, transformOrigin, buffer, shader, vertexType, bufferIdx, specialDrawBuffer) {
+    drawTransformMatrixInteractivePMV(transformMatrix:number[], transformOrigin:number[], buffer:any, shader:any, vertexType:number, bufferIdx:number) {
         var triangleVertexIndexBuffer = buffer.triangleVertexIndexBuffer;
 
-        var drawBuffer;
-        if (specialDrawBuffer) {
-            drawBuffer = specialDrawBuffer;
-        } else {
-            drawBuffer = triangleVertexIndexBuffer[bufferIdx];
-        }
+        var drawBuffer = triangleVertexIndexBuffer[bufferIdx];
 
         var pmvMatrix = mat4.create();
         var screenZ = vec3.create();
@@ -6970,15 +5371,10 @@ class MGWebGL extends Component {
 
     }
 
-    drawTransformMatrixPMV(transformMatrix, buffer, shader, vertexType, bufferIdx, specialDrawBuffer) {
+    drawTransformMatrixPMV(transformMatrix:number[], buffer:any, shader:any, vertexType:number, bufferIdx:number) {
         var triangleVertexIndexBuffer = buffer.triangleVertexIndexBuffer;
 
-        var drawBuffer;
-        if (specialDrawBuffer) {
-            drawBuffer = specialDrawBuffer;
-        } else {
-            drawBuffer = triangleVertexIndexBuffer[bufferIdx];
-        }
+        var drawBuffer = triangleVertexIndexBuffer[bufferIdx];
 
         var pmvMatrix = mat4.create();
         var screenZ = vec3.create();
@@ -7027,132 +5423,6 @@ class MGWebGL extends Component {
         this.gl.uniformMatrix4fv(shader.mvMatrixUniform, false, this.mvMatrix); // Lines
         this.gl.uniform3fv(shader.screenZ, this.screenZ); // Lines
 
-    }
-
-    drawSymmetryPMV(symmetry, buffer, shader, vertexType, bufferIdx, specialDrawBuffer) {
-        var triangleVertexIndexBuffer = buffer.triangleVertexIndexBuffer;
-
-        var drawBuffer;
-        if (specialDrawBuffer) {
-            drawBuffer = specialDrawBuffer;
-        } else {
-            drawBuffer = triangleVertexIndexBuffer[bufferIdx];
-        }
-
-        if (buffer.symmetry) {
-            this.gl.disableVertexAttribArray(shader.vertexColourAttribute);
-
-            var pmvMatrix = mat4.create();
-            var screenZ = vec3.create();
-            for (var isym = 0; isym < symmetry["matrices"].length; isym++) {
-                var symcol = this.symcols[symmetry["symopnums"][isym] % this.symcols.length];
-                this.gl.vertexAttrib4f(shader.vertexColourAttribute, symcol[0], symcol[1], symcol[2], symcol[3]);
-                var tempMVMatrix = mat4.create();
-                var tempMVInvMatrix = mat4.create();
-                var symt = mat4.create();
-                mat4.set(symt,
-                    symmetry["matrices"][isym][0],
-                    symmetry["matrices"][isym][1],
-                    symmetry["matrices"][isym][2],
-                    symmetry["matrices"][isym][3],
-                    symmetry["matrices"][isym][4],
-                    symmetry["matrices"][isym][5],
-                    symmetry["matrices"][isym][6],
-                    symmetry["matrices"][isym][7],
-                    symmetry["matrices"][isym][8],
-                    symmetry["matrices"][isym][9],
-                    symmetry["matrices"][isym][10],
-                    symmetry["matrices"][isym][11],
-                    symmetry["matrices"][isym][12],
-                    symmetry["matrices"][isym][13],
-                    symmetry["matrices"][isym][14],
-                    symmetry["matrices"][isym][15],
-                );
-                mat4.multiply(tempMVMatrix, this.mvMatrix, symt);
-                mat4.multiply(pmvMatrix, this.pMatrix, tempMVMatrix); // Lines
-                this.gl.uniformMatrix4fv(shader.pMatrixUniform, false, pmvMatrix); // Lines
-                this.gl.uniformMatrix4fv(shader.mvMatrixUniform, false, tempMVMatrix);
-                tempMVMatrix[12] = 0.0;
-                tempMVMatrix[13] = 0.0;
-                tempMVMatrix[14] = 0.0;
-                mat4.invert(tempMVInvMatrix, tempMVMatrix);
-                screenZ[0] = 0.0;
-                screenZ[1] = 0.0;
-                screenZ[2] = 1.0;
-                vec3.transformMat4(screenZ, screenZ, tempMVInvMatrix);
-                this.gl.uniform3fv(shader.screenZ, screenZ);
-                if (this.ext) {
-                    this.gl.drawElements(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_INT, 0);
-                } else {
-                    this.gl.drawElements(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_SHORT, 0);
-                }
-            }
-            this.gl.uniformMatrix4fv(shader.pMatrixUniform, false, this.pmvMatrix); // Lines
-            this.gl.uniform3fv(shader.screenZ, this.screenZ); // Lines
-            this.gl.enableVertexAttribArray(shader.vertexColourAttribute);
-        }
-    }
-
-    drawSymmetry(symmetry, buffer, shader, vertexType, bufferIdx, specialDrawBuffer) {
-        var triangleVertexIndexBuffer = buffer.triangleVertexIndexBuffer;
-
-        var drawBuffer;
-        if (specialDrawBuffer) {
-            drawBuffer = specialDrawBuffer;
-        } else {
-            drawBuffer = triangleVertexIndexBuffer[bufferIdx];
-        }
-
-        if (buffer.symmetry) {
-            this.gl.disableVertexAttribArray(shader.vertexColourAttribute);
-
-            var screenZ = vec3.create();
-            for (var isym = 0; isym < symmetry["matrices"].length; isym++) {
-                var symcol = this.symcols[symmetry["symopnums"][isym] % this.symcols.length];
-                this.gl.vertexAttrib4f(shader.vertexColourAttribute, symcol[0], symcol[1], symcol[2], symcol[3]);
-                var tempMVMatrix = mat4.create();
-                var tempMVInvMatrix = mat4.create();
-                var symt = mat4.create();
-                mat4.set(symt,
-                    symmetry["matrices"][isym][0],
-                    symmetry["matrices"][isym][1],
-                    symmetry["matrices"][isym][2],
-                    symmetry["matrices"][isym][3],
-                    symmetry["matrices"][isym][4],
-                    symmetry["matrices"][isym][5],
-                    symmetry["matrices"][isym][6],
-                    symmetry["matrices"][isym][7],
-                    symmetry["matrices"][isym][8],
-                    symmetry["matrices"][isym][9],
-                    symmetry["matrices"][isym][10],
-                    symmetry["matrices"][isym][11],
-                    symmetry["matrices"][isym][12],
-                    symmetry["matrices"][isym][13],
-                    symmetry["matrices"][isym][14],
-                    symmetry["matrices"][isym][15],
-                );
-                mat4.multiply(tempMVMatrix, this.mvMatrix, symt);
-                this.gl.uniformMatrix4fv(shader.mvMatrixUniform, false, tempMVMatrix);
-                tempMVMatrix[12] = 0.0;
-                tempMVMatrix[13] = 0.0;
-                tempMVMatrix[14] = 0.0;
-                mat4.invert(tempMVInvMatrix, tempMVMatrix);// All else
-                this.gl.uniformMatrix4fv(shader.mvInvMatrixUniform, false, tempMVInvMatrix);// All else
-                screenZ[0] = 0.0;
-                screenZ[1] = 0.0;
-                screenZ[2] = 1.0;
-                vec3.transformMat4(screenZ, screenZ, tempMVInvMatrix);
-                this.gl.uniform3fv(shader.screenZ, screenZ);
-                if (this.ext) {
-                    this.gl.drawElements(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_INT, 0);
-                } else {
-                    this.gl.drawElements(vertexType, drawBuffer.numItems, this.gl.UNSIGNED_SHORT, 0);
-                }
-            }
-            this.gl.uniformMatrix4fv(shader.mvMatrixUniform, false, this.mvMatrix);// All else
-            this.gl.uniformMatrix4fv(shader.mvInvMatrixUniform, false, this.mvInvMatrix);// All else
-            this.gl.enableVertexAttribArray(shader.vertexColourAttribute);
-        }
     }
 
     GLrender(calculatingShadowMap) {
@@ -7326,7 +5596,7 @@ class MGWebGL extends Component {
             this.gl.uniform1i(this.shaderProgram.defaultColour, true);
         } else {
             this.gl.uniform1i(this.shaderProgram.defaultColour, false);
-            this.gl.uniform4fv(this.shaderProgram.backColour, new Float32Array(this.backColour));
+            this.gl.uniform4fv(this.shaderProgram.backColour, new Float32Array(this.backColour as number[]));
         }
         this.gl.uniform1i(this.shaderProgram.shinyBack, this.shinyBack);
 
@@ -7335,7 +5605,7 @@ class MGWebGL extends Component {
             this.gl.uniform1i(this.shaderProgramInstanced.defaultColour, true);
         } else {
             this.gl.uniform1i(this.shaderProgramInstanced.defaultColour, false);
-            this.gl.uniform4fv(this.shaderProgramInstanced.backColour, new Float32Array(this.backColour));
+            this.gl.uniform4fv(this.shaderProgramInstanced.backColour, new Float32Array(this.backColour as number[]));
         }
         this.gl.uniform1i(this.shaderProgramInstanced.shinyBack, this.shinyBack);
 
@@ -7404,7 +5674,7 @@ class MGWebGL extends Component {
 
     }
 
-    drawScene() {
+    drawScene() : void {
 
         //console.log("drawScene");
 
@@ -7832,23 +6102,6 @@ class MGWebGL extends Component {
         const bright_y = this.background_colour[0] * 0.299 + this.background_colour[1] * 0.587 + this.background_colour[2] * 0.114;
 
         for (let idx = 0; idx < this.displayBuffers.length; idx++) {
-            if (this.displayBuffers[idx].symmetry) {
-                let symmetry;
-                let thisSym = this.displayBuffers[idx].symmetry;
-                if (symms.indexOf(thisSym) === -1) {
-                    symmetry = genSymMats(thisSym["RO"], thisSym["RF"], thisSym["symmats"], [-this.origin[0], -this.origin[1], -this.origin[2]], thisSym["radius"], thisSym["centre"]);
-                } else {
-                    symmetry = symmetries[symms.indexOf(thisSym)];
-                }
-                symmetries.push(symmetry);
-                symms.push(thisSym);
-            } else {
-                symmetries.push(null);
-                symms.push(null);
-            }
-        }
-
-        for (let idx = 0; idx < this.displayBuffers.length; idx++) {
 
             if (!this.displayBuffers[idx].visible) {
                 continue;
@@ -7889,7 +6142,7 @@ class MGWebGL extends Component {
             //console.log("Drawing object "+idx+" it has "+triangleVertexIndexBuffer.length+" parts");
 
             for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
-                if (bufferTypes[j] === "NORMALLINES" || bufferTypes[j] === "LINES" || bufferTypes[j] === "LINE_LOOP" || bufferTypes[j] === "LINE_STRIP" || bufferTypes[j] === "DIAMONDS" || bufferTypes[j] === "TEXT" || bufferTypes[j] === "IMAGES" || bufferTypes[j] === "SQUARES" || bufferTypes[j] === "PENTAGONS" || bufferTypes[j] === "HEXAGONS" || bufferTypes[j] === "POINTS" || bufferTypes[j] === "SPHEROIDS" || bufferTypes[j] === "POINTS_SPHERES" || bufferTypes[j] === "STARS" || bufferTypes[j].substring(0, 7) === "POLYGON" || bufferTypes[j].substring(0, 8) === "POLYSTAR" || bufferTypes[j].substring(0, "CUSTOM_2D_SHAPE_".length) === "CUSTOM_2D_SHAPE_" || bufferTypes[j] === "PERFECT_SPHERES") {
+                if (bufferTypes[j] === "NORMALLINES" || bufferTypes[j] === "LINES" || bufferTypes[j] === "LINE_LOOP" || bufferTypes[j] === "LINE_STRIP" || bufferTypes[j] === "DIAMONDS" || bufferTypes[j] === "TEXT" || bufferTypes[j] === "IMAGES" || bufferTypes[j] === "SQUARES" || bufferTypes[j] === "PENTAGONS" || bufferTypes[j] === "HEXAGONS" || bufferTypes[j] === "POINTS" || bufferTypes[j] === "SPHEROIDS" || bufferTypes[j] === "POINTS_SPHERES" || bufferTypes[j].substring(0, "CUSTOM_2D_SHAPE_".length) === "CUSTOM_2D_SHAPE_" || bufferTypes[j] === "PERFECT_SPHERES") {
                     continue;
                 }
                 if (this.displayBuffers[idx].transparent) {
@@ -7968,7 +6221,7 @@ class MGWebGL extends Component {
                     this.gl.vertexAttribPointer(theShader.vertexColourAttribute, triangleColourBuffer[j].itemSize, this.gl.FLOAT, false, 0, 0);
                 }
 
-                if (bufferTypes[j] === "TRIANGLES" || bufferTypes[j] === "CYLINDERS" || bufferTypes[j] === "CAPCYLINDERS" || this.displayBuffers[idx].bufferTypes[j] === "TORUSES") {
+                if (bufferTypes[j] === "TRIANGLES" || bufferTypes[j] === "CAPCYLINDERS" || this.displayBuffers[idx].bufferTypes[j] === "TORUSES") {
                     if (this.displayBuffers[idx].transformMatrix) {
                         this.drawTransformMatrix(this.displayBuffers[idx].transformMatrix, this.displayBuffers[idx], theShader, this.gl.TRIANGLES, j);
                     } else if (this.displayBuffers[idx].transformMatrixInteractive) {
@@ -7996,8 +6249,7 @@ class MGWebGL extends Component {
                             this.drawBuffer(this.displayBuffers[idx],theShader,j,this.gl.TRIANGLES);
                         }
                     }
-                    if (symmetry) this.drawSymmetry(symmetry, this.displayBuffers[idx], theShader, this.gl.TRIANGLES, j);
-                } else if (bufferTypes[j] === "TRIANGLE_STRIP" || bufferTypes[j] === "SPLINE" || bufferTypes[j] === "WORM") {
+                } else if (bufferTypes[j] === "TRIANGLE_STRIP") {
                     if (this.displayBuffers[idx].transformMatrix) {
                         this.drawTransformMatrix(this.displayBuffers[idx].transformMatrix, this.displayBuffers[idx], this.shaderProgram, this.gl.TRIANGLE_STRIP, j);
                     } else if (this.displayBuffers[idx].transformMatrixInteractive) {
@@ -8009,7 +6261,6 @@ class MGWebGL extends Component {
                             this.gl.drawElements(this.gl.TRIANGLE_STRIP, triangleVertexIndexBuffer[j].numItems, this.gl.UNSIGNED_SHORT, 0);
                         }
                     }
-                    if (symmetry) this.drawSymmetry(symmetry, this.displayBuffers[idx], this.shaderProgram, this.gl.TRIANGLE_STRIP, j);
                 }
                 nprims += triangleVertexIndexBuffer[j].numItems;
             }
@@ -8082,7 +6333,7 @@ class MGWebGL extends Component {
                         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer.triangleVertexTextureBuffer[0]);
                         this.gl.vertexAttribPointer(program.vertexTextureAttribute, buffer.triangleVertexTextureBuffer[0].itemSize, this.gl.FLOAT, false, 0, 0);
 
-                        if(typeof(program.vertexNormalAttribute!=="undefined") && program.vertexNormalAttribute!==null&&program.vertexNormalAttribute>-1){
+                        if(program.vertexNormalAttribute){
                             this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer.triangleVertexNormalBuffer[0]);
                             this.gl.vertexAttribPointer(program.vertexNormalAttribute, buffer.triangleVertexNormalBuffer[0].itemSize, this.gl.FLOAT, false, 0, 0);
                         }
@@ -8221,7 +6472,7 @@ class MGWebGL extends Component {
 
             for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
                 let theseScaleMatrices = [];
-                if (bufferTypes[j] !== "SPHEROIDS" && bufferTypes[j] !== "POINTS_SPHERES" && bufferTypes[j] !== "STARS") {
+                if (bufferTypes[j] !== "SPHEROIDS" && bufferTypes[j] !== "POINTS_SPHERES") {
                     continue;
                 }
                 let buffer;
@@ -8232,9 +6483,6 @@ class MGWebGL extends Component {
                     if (bufferTypes[j] === "SPHEROIDS") {
                         theseScaleMatrices = scaleMatrices[j];
                     }
-                } else {
-                    buffer = this.starBuffer;
-                    radMult = 0.32;
                 }
                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer.triangleVertexNormalBuffer[0]);
                 this.gl.vertexAttribPointer(sphereProgram.vertexNormalAttribute, buffer.triangleVertexNormalBuffer[0].itemSize, this.gl.FLOAT, false, 0, 0);
@@ -8291,10 +6539,6 @@ class MGWebGL extends Component {
                                 this.gl.drawElements(this.gl.TRIANGLES, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_SHORT, 0);
                             }
                         }
-                        if (symmetry) {
-                            this.drawSymmetry(symmetry, this.displayBuffers[idx], sphereProgram, this.gl.TRIANGLES, 0, buffer.triangleVertexIndexBuffer[0]);
-                            this.gl.disableVertexAttribArray(sphereProgram.vertexColourAttribute);
-                        }
                         nprims += triangleVertexIndexBuffer[j].numItems;
                     }
                 }
@@ -8318,32 +6562,6 @@ class MGWebGL extends Component {
                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.diskBuffer.triangleVertexPositionBuffer[0]);
                 this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(diskVertices), this.gl.DYNAMIC_DRAW);
             }
-            let hexagonVertices = [];
-            if (typeof (this.hexagonVertices) !== "undefined") {
-                for (let iv = 0; iv < this.hexagonVertices.length; iv += 3) {
-                    let vold = vec3Create([this.hexagonVertices[iv], this.hexagonVertices[iv + 1], this.hexagonVertices[iv + 2]]);
-                    let vnew = vec3.create();
-                    vec3.transformMat4(vnew, vold, invMat);
-                    hexagonVertices[iv] = vnew[0];
-                    hexagonVertices[iv + 1] = vnew[1];
-                    hexagonVertices[iv + 2] = vnew[2];
-                }
-                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.hexagonBuffer.triangleVertexPositionBuffer[0]);
-                this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(hexagonVertices), this.gl.DYNAMIC_DRAW);
-            }
-            let pentagonVertices = [];
-            if (typeof (this.pentagonVertices) !== "undefined") {
-                for (let iv = 0; iv < this.pentagonVertices.length; iv += 3) {
-                    let vold = vec3Create([this.pentagonVertices[iv], this.pentagonVertices[iv + 1], this.pentagonVertices[iv + 2]]);
-                    let vnew = vec3.create();
-                    vec3.transformMat4(vnew, vold, invMat);
-                    pentagonVertices[iv] = vnew[0];
-                    pentagonVertices[iv + 1] = vnew[1];
-                    pentagonVertices[iv + 2] = vnew[2];
-                }
-                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.pentagonBuffer.triangleVertexPositionBuffer[0]);
-                this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(pentagonVertices), this.gl.DYNAMIC_DRAW);
-            }
             let imageVertices = [];
             if (typeof (this.imageVertices) !== "undefined") {
                 for (let iv = 0; iv < this.imageVertices.length; iv += 3) {
@@ -8357,104 +6575,9 @@ class MGWebGL extends Component {
                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.imageBuffer.triangleVertexPositionBuffer[0]);
                 this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(imageVertices), this.gl.DYNAMIC_DRAW);
             }
-            let squareVertices = [];
-            if (typeof (this.squareVertices) !== "undefined") {
-                for (let iv = 0; iv < this.squareVertices.length; iv += 3) {
-                    let vold = vec3Create([this.squareVertices[iv], this.squareVertices[iv + 1], this.squareVertices[iv + 2]]);
-                    let vnew = vec3.create();
-                    vec3.transformMat4(vnew, vold, invMat);
-                    squareVertices[iv] = vnew[0];
-                    squareVertices[iv + 1] = vnew[1];
-                    squareVertices[iv + 2] = vnew[2];
-                }
-                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.squareBuffer.triangleVertexPositionBuffer[0]);
-                this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(squareVertices), this.gl.DYNAMIC_DRAW);
-            }
-            let diamondVertices = [];
-            if (typeof (this.diamondVertices) !== "undefined") {
-                for (let iv = 0; iv < this.diamondVertices.length; iv += 3) {
-                    let vold = vec3Create([this.diamondVertices[iv], this.diamondVertices[iv + 1], this.diamondVertices[iv + 2]]);
-                    let vnew = vec3.create();
-                    vec3.transformMat4(vnew, vold, invMat);
-                    diamondVertices[iv] = vnew[0];
-                    diamondVertices[iv + 1] = vnew[1];
-                    diamondVertices[iv + 2] = vnew[2];
-                }
-                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.diamondBuffer.triangleVertexPositionBuffer[0]);
-                this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(diamondVertices), this.gl.DYNAMIC_DRAW);
-            }
-            for (let shapeVertices in this.shapesVertices) {
-                let theseVertices = [];
-                for (let iv = 0; iv < this.shapesVertices[shapeVertices].length; iv += 3) {
-                    let vold = vec3Create([this.shapesVertices[shapeVertices][iv], this.shapesVertices[shapeVertices][iv + 1], this.shapesVertices[shapeVertices][iv + 2]]);
-                    let vnew = vec3.create();
-                    vec3.transformMat4(vnew, vold, invMat);
-                    theseVertices[iv] = vnew[0];
-                    theseVertices[iv + 1] = vnew[1];
-                    theseVertices[iv + 2] = vnew[2];
-                }
-                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.shapesBuffers[shapeVertices].triangleVertexPositionBuffer[0]);
-                this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(theseVertices), this.gl.DYNAMIC_DRAW);
-            }
             for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
-                if (bufferTypes[j].substring(0, "CUSTOM_2D_SHAPE_".length) === "CUSTOM_2D_SHAPE_") {
-                    let buffer = this.shapesBuffers[bufferTypes[j]];
-                    let scaleImage = true;
-                    if (typeof (this.gl, this.displayBuffers[idx].supplementary["vert_tri_2d"]) !== "undefined") {
-                        let tempMVMatrix = mat4.create();
-                        mat4.set(tempMVMatrix, this.mvMatrix[0], this.mvMatrix[1], this.mvMatrix[2], this.mvMatrix[3], this.mvMatrix[4], this.mvMatrix[5], this.mvMatrix[6], this.mvMatrix[7], this.mvMatrix[8], this.mvMatrix[9], this.mvMatrix[10], this.mvMatrix[11], (-24.0 + this.displayBuffers[idx].supplementary["vert_tri_2d"][0][0] * 48.0) * this.zoom, (-24.0 + this.displayBuffers[idx].supplementary["vert_tri_2d"][0][1] * 48.0) * this.zoom, -this.fogClipOffset, 1.0);
-                        this.gl.uniformMatrix4fv(this.shaderProgramTwoDShapes.mvMatrixUniform, false, tempMVMatrix);
-                        scaleImage = false;
-                    }
-
-                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer.triangleVertexNormalBuffer[0]);
-                    this.gl.vertexAttribPointer(this.shaderProgramTwoDShapes.vertexNormalAttribute, buffer.triangleVertexNormalBuffer[0].itemSize, this.gl.FLOAT, false, 0, 0);
-                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer.triangleVertexPositionBuffer[0]);
-                    this.gl.vertexAttribPointer(this.shaderProgramTwoDShapes.vertexPositionAttribute, buffer.triangleVertexPositionBuffer[0].itemSize, this.gl.FLOAT, false, 0, 0);
-                    this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, buffer.triangleVertexIndexBuffer[0]);
-                    let theOffSet = new Float32Array(3);
-                    for (let ishape = 0; ishape < triangleVertices[j].length / 3; ishape++) {
-                        theOffSet[0] = triangleVertices[j][ishape * 3];
-                        theOffSet[1] = triangleVertices[j][ishape * 3 + 1];
-                        theOffSet[2] = triangleVertices[j][ishape * 3 + 2];
-                        this.gl.uniform3fv(this.shaderProgramTwoDShapes.offset, theOffSet);
-                        if (scaleImage) {
-                            this.gl.uniform1f(this.shaderProgramTwoDShapes.size, primitiveSizes[j][ishape]);
-                        } else {
-                            this.gl.uniform1f(this.shaderProgramTwoDShapes.size, primitiveSizes[j][ishape] * this.zoom);
-                        }
-
-                        this.gl.vertexAttrib4f(this.shaderProgramTwoDShapes.vertexColourAttribute, triangleColours[j][ishape * 4], triangleColours[j][ishape * 4 + 1], triangleColours[j][ishape * 4 + 2], triangleColours[j][ishape * 4 + 3]);
-
-                        if (this.ext) {
-                            this.gl.drawElements(this.gl.TRIANGLES, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_INT, 0);
-                        } else {
-                            this.gl.drawElements(this.gl.TRIANGLES, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_SHORT, 0);
-                        }
-                    }
-                    if (typeof (this.gl, this.displayBuffers[idx].supplementary["vert_tri_2d"]) !== "undefined") {
-                        this.setMatrixUniforms(this.shaderProgramTwoDShapes);
-                    }
-                }
-            }
-            for (let j = 0; j < triangleVertexIndexBuffer.length; j++) {
-                if (bufferTypes[j] === "POINTS" || bufferTypes[j] === "HEXAGONS" || bufferTypes[j] === "PENTAGONS" || bufferTypes[j] === "SQUARES" || bufferTypes[j] === "DIAMONDS" || bufferTypes[j].substring(0, 7) === "POLYGON" || bufferTypes[j].substring(0, 8) === "POLYSTAR") {
-                    let buffer;
-                    if (bufferTypes[j] === "HEXAGONS") {
-                        buffer = this.hexagonBuffer;
-                    } else if (bufferTypes[j] === "DIAMONDS") {
-                        buffer = this.diamondBuffer;
-                    } else if (bufferTypes[j] === "SQUARES") {
-                        buffer = this.squareBuffer;
-                    } else if (bufferTypes[j] === "PENTAGONS") {
-                        buffer = this.pentagonBuffer;
-                    } else if (bufferTypes[j].substring(0, 7) === "POLYGON") {
-                        buffer = this.shapesBuffers[bufferTypes[j]];
-                    } else if (bufferTypes[j].substring(0, 8) === "POLYSTAR") {
-                        buffer = this.shapesBuffers[bufferTypes[j]];
-                    } else {
-                        buffer = this.diskBuffer;
-                    }
+                if (bufferTypes[j] === "POINTS") {
+                    const buffer = this.diskBuffer;
                     let scaleImage = true;
                     if (typeof (this.gl, this.displayBuffers[idx].supplementary["vert_tri_2d"]) !== "undefined") {
                         let tempMVMatrix = mat4.create();
@@ -8565,9 +6688,6 @@ class MGWebGL extends Component {
                         this.gl.drawElements(this.gl.TRIANGLES, triangleVertexIndexBuffer[j].numItems, this.gl.UNSIGNED_SHORT, 0);
                     }
                 }
-
-                if (symmetry) this.drawSymmetryPMV(symmetry, this.displayBuffers[idx], this.shaderProgramThickLinesNormal, this.gl.TRIANGLES, j);
-
                 nprims += triangleVertexIndexBuffer[j].numItems;
             }
 
@@ -8608,9 +6728,6 @@ class MGWebGL extends Component {
                         this.gl.drawElements(this.gl.TRIANGLES, triangleVertexIndexBuffer[j].numItems, this.gl.UNSIGNED_SHORT, 0);
                     }
                 }
-
-                if (symmetry) this.drawSymmetryPMV(symmetry, this.displayBuffers[idx], this.shaderProgramThickLines, this.gl.TRIANGLES, j);
-
                 nprims += triangleVertexIndexBuffer[j].numItems;
             }
         }
@@ -8895,98 +7012,8 @@ class MGWebGL extends Component {
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
 
-        let textColour = "black";
-        if (this.textLabels.length > 0) {
-            if (typeof this.displayBuffers[0].textPositionBuffer === "undefined") {
-                this.initTextBuffers();
-                this.displayBuffers[0].textIndexs = [];
-                this.displayBuffers[0].textTexCoords = [];
-                this.displayBuffers[0].textTexCoords = this.displayBuffers[0].textTexCoords.concat([0, 1, 1, 1, 1, 0]);
-                this.displayBuffers[0].textTexCoords = this.displayBuffers[0].textTexCoords.concat([0, 1, 1, 0, 0, 0]);
-                this.displayBuffers[0].textIndexs = this.displayBuffers[0].textIndexs.concat([0, 1, 2]);
-                this.displayBuffers[0].textIndexs = this.displayBuffers[0].textIndexs.concat([3, 4, 5]);
-                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[0].textTexCoordBuffer);
-                this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[0].textTexCoords), this.gl.STATIC_DRAW);
-                this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexTextureAttribute, 2, this.gl.FLOAT, false, 0, 0);
+        return
 
-                this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.displayBuffers[0].textIndexesBuffer);
-                if (this.ext) {
-                    this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(this.displayBuffers[0].textIndexs), this.gl.STATIC_DRAW);
-                } else {
-                    this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.displayBuffers[0].textIndexs), this.gl.STATIC_DRAW);
-                }
-                this.makeTextCanvas("Fluffy", 512, 32, textColour);
-                this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.textCtx.canvas);
-
-                this.displayBuffers[0].textNormals = [];
-                this.displayBuffers[0].textColours = [];
-                this.displayBuffers[0].textNormals = this.displayBuffers[0].textNormals.concat([0, 0, 1, 0, 0, 1, 0, 0, 1]);
-                this.displayBuffers[0].textNormals = this.displayBuffers[0].textNormals.concat([0, 0, 1, 0, 0, 1, 0, 0, 1]);
-                this.displayBuffers[0].textColours = this.displayBuffers[0].textColours.concat([1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1]);
-                this.displayBuffers[0].textColours = this.displayBuffers[0].textColours.concat([1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1]);
-                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[0].textNormalBuffer);
-                this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[0].textNormals), this.gl.STATIC_DRAW);
-                this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexNormalAttribute, 3, this.gl.FLOAT, false, 0, 0);
-                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[0].textColourBuffer);
-                this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[0].textColours), this.gl.STATIC_DRAW);
-                this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexColourAttribute, 4, this.gl.FLOAT, false, 0, 0);
-            }
-
-            this.gl.useProgram(this.shaderProgramTextBackground);
-            this.gl.enableVertexAttribArray(this.shaderProgramTextBackground.vertexTextureAttribute);
-            //this.gl.disableVertexAttribArray(this.shaderProgram.vertexColourAttribute);
-            //this.gl.disableVertexAttribArray(this.shaderProgram.vertexNormalAttribute);
-            this.setMatrixUniforms(this.shaderProgramTextBackground);
-            this.gl.depthFunc(this.gl.ALWAYS);
-
-            textColour = "black";
-            let y = this.background_colour[0] * 0.299 + this.background_colour[1] * 0.587 + this.background_colour[2] * 0.114;
-            if (y < 0.5) {
-                textColour = "white";
-            }
-            this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.displayBuffers[0].textIndexesBuffer);
-            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.displayBuffers[0].textPositionBuffer);
-            this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
-
-            for (let itl = 0; itl < this.textLabels.length; itl++) {
-                let thisVis = this.displayBuffers[itl].visible;
-                if (!thisVis) {
-                    continue;
-                }
-                for (let jtl = 0; jtl < this.textLabels[itl].length; jtl++) {
-                    this.displayBuffers[0].textVertices = [];
-
-                    this.makeTextCanvas(this.textLabels[itl][jtl].label, 512, 32, textColour);
-
-                    // This is slow on FF on SL6.7
-                    if (typeof (this.textLabels[itl][jtl].imgData) === "undefined") {
-                        this.textLabels[itl][jtl].imgData = this.textCtx.getImageData(0, 0, 512, 32);
-                    }
-                    this.gl.texSubImage2D(this.gl.TEXTURE_2D, 0, 0, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.textLabels[itl][jtl].imgData);
-
-                    let x = this.textLabels[itl][jtl].x;
-                    let y = this.textLabels[itl][jtl].y;
-                    let z = this.textLabels[itl][jtl].z;
-                    let tSizeX = 2.0 * this.textCtx.canvas.width / this.textCtx.canvas.height * this.zoom;
-                    let tSizeY = 2.0 * this.zoom;
-                    this.displayBuffers[0].textVertices = this.displayBuffers[0].textVertices.concat([x, y, z, x + tSizeX * right[0], y + tSizeX * right[1], z + tSizeX * right[2], x + tSizeY * up[0] + tSizeX * right[0], y + tSizeY * up[1] + tSizeX * right[1], z + tSizeY * up[2] + tSizeX * right[2]]);
-                    this.displayBuffers[0].textVertices = this.displayBuffers[0].textVertices.concat([x, y, z, x + tSizeY * up[0] + tSizeX * right[0], y + tSizeY * up[1] + tSizeX * right[1], z + tSizeY * up[2] + tSizeX * right[2], x + tSizeY * up[0], y + tSizeY * up[1], z + tSizeY * up[2]]);
-
-                    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.displayBuffers[0].textVertices), this.gl.DYNAMIC_DRAW);
-
-                    if (this.ext) {
-                        this.gl.drawElements(this.gl.TRIANGLES, this.displayBuffers[0].textIndexs.length, this.gl.UNSIGNED_INT, 0);
-                    } else {
-                        this.gl.drawElements(this.gl.TRIANGLES, this.displayBuffers[0].textIndexs.length, this.gl.UNSIGNED_SHORT, 0);
-                    }
-
-                }
-            }
-            //this.gl.enableVertexAttribArray(this.shaderProgram.vertexColourAttribute);
-            //this.gl.enableVertexAttribArray(this.shaderProgram.vertexNormalAttribute);
-            this.gl.disableVertexAttribArray(this.shaderProgramTextBackground.vertexTextureAttribute);
-            this.gl.depthFunc(this.gl.LESS);
-        }
     }
 
     drawDistancesAndLabels(up, right) {
@@ -9217,7 +7244,7 @@ class MGWebGL extends Component {
                 for (let jat = 0; jat < this.labelledAtoms[iat].length; jat++) {
                     this.displayBuffers[0].textVertices = [];
 
-                    if (typeof (this.labelledAtoms[iat][jat].circleData) === "undefined") {
+                    if (!this.labelledAtoms[iat][jat].circleData) {
                         let element = this.labelledAtoms[iat][jat].symbol;
                         console.log(element);
                         this.makeCircleCanvas(element, 128, 128, "black");
@@ -9292,7 +7319,7 @@ class MGWebGL extends Component {
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.textTex);
     }
 
-    getFrontAndBackPos(event) {
+    getFrontAndBackPos(event: KeyboardEvent) : [number[], number[], number, number]  {
         const self = this;
         let x = this.gl_cursorPos[0];
         let y = this.canvas.height - this.gl_cursorPos[1];
@@ -9351,15 +7378,15 @@ class MGWebGL extends Component {
             //console.log(npass+" "+npass0+" "+npass1+" "+ntest);
             const [minidx,minj,mindist] = self.getAtomFomMouseXY(event,self);
             if (minidx > -1) {
-                let theAtom = {};
-                //console.log(self.displayBuffers[minidx].atoms[minj]);
-                theAtom.x = self.displayBuffers[minidx].atoms[minj].x;
-                theAtom.y = self.displayBuffers[minidx].atoms[minj].y;
-                theAtom.z = self.displayBuffers[minidx].atoms[minj].z;
-                theAtom.charge = self.displayBuffers[minidx].atoms[minj].charge;
-                theAtom.label = self.displayBuffers[minidx].atoms[minj].label;
-                theAtom.symbol = self.displayBuffers[minidx].atoms[minj].symbol;
-                theAtom.displayBuffer = self.displayBuffers[minidx];
+                let theAtom : clickAtom = {
+                   x: self.displayBuffers[minidx].atoms[minj].x,
+                   y: self.displayBuffers[minidx].atoms[minj].y,
+                   z: self.displayBuffers[minidx].atoms[minj].z,
+                   charge: self.displayBuffers[minidx].atoms[minj].charge,
+                   label: self.displayBuffers[minidx].atoms[minj].label,
+                   symbol: self.displayBuffers[minidx].atoms[minj].symbol,
+                   displayBuffer: self.displayBuffers[minidx]
+                };
                 let atx = theAtom.x;
                 let aty = theAtom.y;
                 let atz = theAtom.z;
@@ -9512,7 +7539,7 @@ class MGWebGL extends Component {
         self.buildBuffers();
     }
 
-    clearMeasureCylinderBuffers() {
+    clearMeasureCylinderBuffers() : void {
         if(this.measureCylinderBuffers){
             this.measureCylinderBuffers.forEach((buffer) => {
                 if("clearBuffers" in buffer){
@@ -9561,12 +7588,12 @@ class MGWebGL extends Component {
         }
         let success = unProject(
                 x, this.gl.viewportHeight-y, -(this.gl_clipPlane0[3]-this.fogClipOffset)/factor,
-                this.mvMatrix, this.pMatrix,
+                this.mvMatrix as unknown as number[], this.pMatrix as unknown as number[],
                 viewportArray, modelPointArrayResultsFront);
 
         success = unProject(
                 x, this.gl.viewportHeight-y, -(this.gl_clipPlane1[3]-this.fogClipOffset)/factor,
-                this.mvMatrix, this.pMatrix,
+                this.mvMatrix as unknown as number[], this.pMatrix as unknown as number[],
                 viewportArray, modelPointArrayResultsBack);
 
         let mindist = 100000.;
@@ -9616,13 +7643,15 @@ class MGWebGL extends Component {
     doHover(event, self) {
         const [minidx,minj,mindist] = self.getAtomFomMouseXY(event,self);
         if (minidx > -1) {
-            let theAtom = {};
-            theAtom.x = self.displayBuffers[minidx].atoms[minj].x;
-            theAtom.y = self.displayBuffers[minidx].atoms[minj].y;
-            theAtom.z = self.displayBuffers[minidx].atoms[minj].z;
-            theAtom.charge = self.displayBuffers[minidx].atoms[minj].charge;
-            theAtom.label = self.displayBuffers[minidx].atoms[minj].label;
-            theAtom.symbol = self.displayBuffers[minidx].atoms[minj].symbol;
+            let theAtom : clickAtom = {
+               x: self.displayBuffers[minidx].atoms[minj].x,
+               y: self.displayBuffers[minidx].atoms[minj].y,
+               z: self.displayBuffers[minidx].atoms[minj].z,
+               charge: self.displayBuffers[minidx].atoms[minj].charge,
+               label: self.displayBuffers[minidx].atoms[minj].label,
+               symbol: self.displayBuffers[minidx].atoms[minj].symbol,
+               displayBuffer: self.displayBuffers[minidx]
+            };
             let atx = theAtom.x;
             let aty = theAtom.y;
             let atz = theAtom.z;
@@ -9670,7 +7699,7 @@ class MGWebGL extends Component {
         return this.linesToThickLinesWithIndices(axesVertices, axesColours, axesIndices, size, axesNormals)
     }
 
-    linesToThickLinesWithIndices(axesVertices, axesColours, axesIndices, size, axesNormals_old) {
+    linesToThickLinesWithIndices(axesVertices: number[], axesColours: number[], axesIndices: number[], size: number, axesNormals_old? : number) {
         let axesNormals = [];
         let axesNormals_new = [];
         let axesVertices_new = [];
@@ -10695,7 +8724,7 @@ class MGWebGL extends Component {
                     const sLength = s.length;
                     const textMetric = this.textCtx.measureText(s);
                     if(textMetric.width <512){
-                        drawStringAt(s, colour, [base_x, base_y, base_z], up, right, font, threeD)
+                        drawStringAt(s, colour, [base_x, base_y, base_z], up, right, font)
                             return;
                     }
                     for(let ichomp=0;ichomp<s.length;ichomp++){
@@ -10714,7 +8743,7 @@ class MGWebGL extends Component {
                 }
                 drawMultiStringAt(s, textColour, up, right, xpos, ypos, zpos, font, threeD);
             } else {
-                drawStringAt(s, textColour, [base_x, base_y, base_z], up, right, font, threeD)
+                drawStringAt(s, textColour, [base_x, base_y, base_z], up, right, font)
             }
         }
 
@@ -10742,380 +8771,6 @@ class MGWebGL extends Component {
 
         this.gl.disableVertexAttribArray(this.shaderProgramTextBackground.vertexTextureAttribute);
         this.gl.depthFunc(this.gl.LESS)
-    }
-
-    drawAxesOld(invMat) {
-        this.gl.depthFunc(this.gl.ALWAYS);
-        this.gl.uniform1f(this.shaderProgramTextBackground.fog_start, 1000.0);
-        this.gl.uniform1f(this.shaderProgramTextBackground.fog_end, 1000.0);
-        let axesOffset = vec3.create();
-        vec3.set(axesOffset, 20, 20, 0);
-        vec3.transformMat4(axesOffset, axesOffset, invMat);
-        let right = vec3.create();
-        vec3.set(right, 1.0, 0.0, 0.0);
-        let up = vec3.create();
-        vec3.set(up, 0.0, 1.0, 0.0);
-        vec3.transformMat4(up, up, invMat);
-        vec3.transformMat4(right, right, invMat);
-        let xoff = -this.origin[0] + this.zoom * axesOffset[0];
-        let yoff = -this.origin[1] + this.zoom * axesOffset[1];
-        let zoff = -this.origin[2] + this.zoom * axesOffset[2];
-        //console.log("offset",xoff,yoff,zoff);
-        this.gl.useProgram(this.shaderProgramThickLines);
-        this.setMatrixUniforms(this.shaderProgramThickLines);
-        this.gl.uniformMatrix4fv(this.shaderProgramThickLines.pMatrixUniform, false, this.pmvMatrix);
-        this.gl.uniform3fv(this.shaderProgramThickLines.screenZ, this.screenZ);
-        this.gl.uniform1f(this.shaderProgramThickLines.pixelZoom, 0.04 * this.zoom);
-        if (typeof (this.axesPositionBuffer) === "undefined") {
-            this.axesPositionBuffer = this.gl.createBuffer();
-            this.axesColourBuffer = this.gl.createBuffer();
-            this.axesIndexBuffer = this.gl.createBuffer();
-            this.axesNormalBuffer = this.gl.createBuffer();
-            this.axesTextNormalBuffer = this.gl.createBuffer();
-            this.axesTextColourBuffer = this.gl.createBuffer();
-            this.axesTextPositionBuffer = this.gl.createBuffer();
-            this.axesTextTexCoordBuffer = this.gl.createBuffer();
-            this.axesTextIndexesBuffer = this.gl.createBuffer();
-        }
-        let x1 = 0.0;
-        let y1 = 0.0;
-        let z1 = 0.0;
-        let x2 = this.zoom * 3.0;
-        let y2 = 0.0;
-        let z2 = 0.0;
-        let axesVertices = [];
-        let axesColours = [];
-        let axesIndexs = [];
-        let axesIdx = 0;
-
-        axesVertices.push(x1 + xoff);
-        axesVertices.push(y1 + yoff);
-        axesVertices.push(z1 + zoff);
-        axesVertices.push(x2 + xoff);
-        axesVertices.push(y2 + yoff);
-        axesVertices.push(z2 + zoff);
-        axesColours.push(1.0);
-        axesColours.push(0.0);
-        axesColours.push(0.0);
-        axesColours.push(1.0);
-        axesColours.push(1.0);
-        axesColours.push(0.0);
-        axesColours.push(0.0);
-        axesColours.push(1.0);
-        axesIndexs.push(axesIdx++);
-        axesIndexs.push(axesIdx++);
-
-        x2 = 0.0;
-        y2 = this.zoom * 3.0;
-        z2 = 0.0;
-        axesVertices.push(x1 + xoff);
-        axesVertices.push(y1 + yoff);
-        axesVertices.push(z1 + zoff);
-        axesVertices.push(x2 + xoff);
-        axesVertices.push(y2 + yoff);
-        axesVertices.push(z2 + zoff);
-        axesColours.push(0.0);
-        axesColours.push(1.0);
-        axesColours.push(0.0);
-        axesColours.push(1.0);
-        axesColours.push(0.0);
-        axesColours.push(1.0);
-        axesColours.push(0.0);
-        axesColours.push(1.0);
-        axesIndexs.push(axesIdx++);
-        axesIndexs.push(axesIdx++);
-
-        x2 = 0.0;
-        y2 = 0.0;
-        z2 = this.zoom * 3.0;
-        axesVertices.push(x1 + xoff);
-        axesVertices.push(y1 + yoff);
-        axesVertices.push(z1 + zoff);
-        axesVertices.push(x2 + xoff);
-        axesVertices.push(y2 + yoff);
-        axesVertices.push(z2 + zoff);
-        axesColours.push(0.0);
-        axesColours.push(0.0);
-        axesColours.push(1.0);
-        axesColours.push(1.0);
-        axesColours.push(0.0);
-        axesColours.push(0.0);
-        axesColours.push(1.0);
-        axesColours.push(1.0);
-        axesIndexs.push(axesIdx++);
-        axesIndexs.push(axesIdx++);
-
-        x1 = 2.0 * this.zoom;
-        y1 = 0.5 * this.zoom;
-        z1 = 0.0;
-        x2 = this.zoom * 3.0;
-        y2 = 0.0;
-        z2 = 0.0;
-        axesVertices.push(x1 + xoff);
-        axesVertices.push(y1 + yoff);
-        axesVertices.push(z1 + zoff);
-        axesVertices.push(x2 + xoff);
-        axesVertices.push(y2 + yoff);
-        axesVertices.push(z2 + zoff);
-        axesColours.push(1.0);
-        axesColours.push(0.0);
-        axesColours.push(0.0);
-        axesColours.push(1.0);
-        axesColours.push(1.0);
-        axesColours.push(0.0);
-        axesColours.push(0.0);
-        axesColours.push(1.0);
-        axesIndexs.push(axesIdx++);
-        axesIndexs.push(axesIdx++);
-
-        x1 = 2.0 * this.zoom;
-        y1 = -0.5 * this.zoom;
-        z1 = 0.0;
-        x2 = this.zoom * 3.0;
-        y2 = 0.0;
-        z2 = 0.0;
-        axesVertices.push(x1 + xoff);
-        axesVertices.push(y1 + yoff);
-        axesVertices.push(z1 + zoff);
-        axesVertices.push(x2 + xoff);
-        axesVertices.push(y2 + yoff);
-        axesVertices.push(z2 + zoff);
-        axesColours.push(1.0);
-        axesColours.push(0.0);
-        axesColours.push(0.0);
-        axesColours.push(1.0);
-        axesColours.push(1.0);
-        axesColours.push(0.0);
-        axesColours.push(0.0);
-        axesColours.push(1.0);
-        axesIndexs.push(axesIdx++);
-        axesIndexs.push(axesIdx++);
-
-        z1 = 0.5 * this.zoom;
-        y1 = 2.0 * this.zoom;
-        x1 = 0.0;
-        x2 = 0.0;
-        y2 = this.zoom * 3.0;
-        z2 = 0.0;
-        axesVertices.push(x1 + xoff);
-        axesVertices.push(y1 + yoff);
-        axesVertices.push(z1 + zoff);
-        axesVertices.push(x2 + xoff);
-        axesVertices.push(y2 + yoff);
-        axesVertices.push(z2 + zoff);
-        axesColours.push(0.0);
-        axesColours.push(1.0);
-        axesColours.push(0.0);
-        axesColours.push(1.0);
-        axesColours.push(0.0);
-        axesColours.push(1.0);
-        axesColours.push(0.0);
-        axesColours.push(1.0);
-        axesIndexs.push(axesIdx++);
-        axesIndexs.push(axesIdx++);
-
-        z1 = -0.5 * this.zoom;
-        y1 = 2.0 * this.zoom;
-        x1 = 0.0;
-        x2 = 0.0;
-        y2 = this.zoom * 3.0;
-        z2 = 0.0;
-        axesVertices.push(x1 + xoff);
-        axesVertices.push(y1 + yoff);
-        axesVertices.push(z1 + zoff);
-        axesVertices.push(x2 + xoff);
-        axesVertices.push(y2 + yoff);
-        axesVertices.push(z2 + zoff);
-        axesColours.push(0.0);
-        axesColours.push(1.0);
-        axesColours.push(0.0);
-        axesColours.push(1.0);
-        axesColours.push(0.0);
-        axesColours.push(1.0);
-        axesColours.push(0.0);
-        axesColours.push(1.0);
-        axesIndexs.push(axesIdx++);
-        axesIndexs.push(axesIdx++);
-
-        x1 = 0.5 * this.zoom;
-        z1 = 2.0 * this.zoom;
-        y1 = 0.0;
-        x2 = 0.0;
-        y2 = 0.0;
-        z2 = this.zoom * 3.0;
-        axesVertices.push(x1 + xoff);
-        axesVertices.push(y1 + yoff);
-        axesVertices.push(z1 + zoff);
-        axesVertices.push(x2 + xoff);
-        axesVertices.push(y2 + yoff);
-        axesVertices.push(z2 + zoff);
-        axesColours.push(0.0);
-        axesColours.push(0.0);
-        axesColours.push(1.0);
-        axesColours.push(1.0);
-        axesColours.push(0.0);
-        axesColours.push(0.0);
-        axesColours.push(1.0);
-        axesColours.push(1.0);
-        axesIndexs.push(axesIdx++);
-        axesIndexs.push(axesIdx++);
-
-        x1 = -0.5 * this.zoom;
-        z1 = 2.0 * this.zoom;
-        y1 = 0.0;
-        x2 = 0.0;
-        y2 = 0.0;
-        z2 = this.zoom * 3.0;
-        axesVertices.push(x1 + xoff);
-        axesVertices.push(y1 + yoff);
-        axesVertices.push(z1 + zoff);
-        axesVertices.push(x2 + xoff);
-        axesVertices.push(y2 + yoff);
-        axesVertices.push(z2 + zoff);
-        axesColours.push(0.0);
-        axesColours.push(0.0);
-        axesColours.push(1.0);
-        axesColours.push(1.0);
-        axesColours.push(0.0);
-        axesColours.push(0.0);
-        axesColours.push(1.0);
-        axesColours.push(1.0);
-        axesIndexs.push(axesIdx++);
-        axesIndexs.push(axesIdx++);
-
-        //console.log("axesVertices",axesVertices);
-        //console.log("zoom",this.zoom);
-
-        const size = 1.0;
-        const thickLines = this.linesToThickLines(axesVertices, axesColours, size);
-        let axesNormals = thickLines["normals"];
-        let axesVertices_new = thickLines["vertices"];
-        let axesColours_new = thickLines["colours"];
-        let axesIndexs_new = thickLines["indices"];
-
-        //console.log("thickLines",thickLines);
-        this.gl.depthFunc(this.gl.ALWAYS);
-
-        this.gl.enableVertexAttribArray(this.shaderProgramThickLines.vertexNormalAttribute);
-
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesNormalBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(axesNormals), this.gl.DYNAMIC_DRAW);
-        this.gl.vertexAttribPointer(this.shaderProgramThickLines.vertexNormalAttribute, 3, this.gl.FLOAT, false, 0, 0);
-
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesPositionBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(axesVertices_new), this.gl.DYNAMIC_DRAW);
-        this.gl.vertexAttribPointer(this.shaderProgramThickLines.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
-
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesColourBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(axesColours_new), this.gl.DYNAMIC_DRAW);
-        this.gl.vertexAttribPointer(this.shaderProgramThickLines.vertexColourAttribute, 4, this.gl.FLOAT, false, 0, 0);
-
-        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.axesIndexBuffer);
-        if (this.ext) {
-            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(axesIndexs_new), this.gl.DYNAMIC_DRAW);
-            this.gl.drawElements(this.gl.TRIANGLES, axesIndexs_new.length, this.gl.UNSIGNED_INT, 0);
-        } else {
-            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(axesIndexs_new), this.gl.DYNAMIC_DRAW);
-            this.gl.drawElements(this.gl.TRIANGLES, axesIndexs_new.length, this.gl.UNSIGNED_SHORT, 0);
-        }
-
-        this.gl.useProgram(this.shaderProgramTextBackground);
-        this.gl.enableVertexAttribArray(this.shaderProgramTextBackground.vertexTextureAttribute);
-        this.setMatrixUniforms(this.shaderProgramTextBackground);
-
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesTextNormalBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1]), this.gl.STATIC_DRAW);
-        this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexNormalAttribute, 3, this.gl.FLOAT, false, 0, 0);
-
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesTextColourBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1]), this.gl.STATIC_DRAW);
-        this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexColourAttribute, 4, this.gl.FLOAT, false, 0, 0);
-
-        var tSizeX = 2.0 * this.textCtx.canvas.width / this.textCtx.canvas.height * this.zoom;
-        var tSizeY = 2.0 * this.zoom;
-
-
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesTextTexCoordBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0]), this.gl.STATIC_DRAW);
-        this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexTextureAttribute, 2, this.gl.FLOAT, false, 0, 0);
-
-        var textColour = "black";
-        var y = this.background_colour[0] * 0.299 + this.background_colour[1] * 0.587 + this.background_colour[2] * 0.114;
-        if (y < 0.5) {
-            textColour = "white";
-        }
-
-        // Draw an x
-        this.makeTextCanvas("x", 512, 32, textColour);
-        let data = this.textCtx.getImageData(0, 0, 512, 32);
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, data);
-        this.gl.texSubImage2D(this.gl.TEXTURE_2D, 0, 0, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, data);
-
-        var textPositions = [];
-        var base_x = xoff + 3.0 * this.zoom;
-        var base_y = yoff;
-        var base_z = zoff;
-        textPositions = textPositions.concat([base_x, base_y, base_z, base_x + tSizeX * right[0], base_y + tSizeX * right[1], base_z + tSizeX * right[2], base_x + tSizeY * up[0] + tSizeX * right[0], base_y + tSizeY * up[1] + tSizeX * right[1], base_z + tSizeY * up[2] + tSizeX * right[2]]);
-        textPositions = textPositions.concat([base_x, base_y, base_z, base_x + tSizeY * up[0] + tSizeX * right[0], base_y + tSizeY * up[1] + tSizeX * right[1], base_z + tSizeY * up[2] + tSizeX * right[2], base_x + tSizeY * up[0], base_y + tSizeY * up[1], base_z + tSizeY * up[2]]);
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesTextPositionBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(textPositions), this.gl.DYNAMIC_DRAW);
-        this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
-
-        this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.axesTextIndexesBuffer);
-        if (this.ext) {
-            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array([0, 1, 2, 3, 4, 5]), this.gl.STATIC_DRAW);
-            this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_INT, 0);
-        } else {
-            this.gl.bufferData(this.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array([0, 1, 2, 3, 4, 5]), this.gl.STATIC_DRAW);
-            this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_SHORT, 0);
-        }
-
-        // Draw an y
-        this.makeTextCanvas("y", 512, 32, textColour);
-        data = this.textCtx.getImageData(0, 0, 512, 32);
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, data);
-        this.gl.texSubImage2D(this.gl.TEXTURE_2D, 0, 0, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, data);
-
-        textPositions = [];
-        base_x = xoff;
-        base_y = yoff + 3.0 * this.zoom;
-        base_z = zoff;
-        textPositions = textPositions.concat([base_x, base_y, base_z, base_x + tSizeX * right[0], base_y + tSizeX * right[1], base_z + tSizeX * right[2], base_x + tSizeY * up[0] + tSizeX * right[0], base_y + tSizeY * up[1] + tSizeX * right[1], base_z + tSizeY * up[2] + tSizeX * right[2]]);
-        textPositions = textPositions.concat([base_x, base_y, base_z, base_x + tSizeY * up[0] + tSizeX * right[0], base_y + tSizeY * up[1] + tSizeX * right[1], base_z + tSizeY * up[2] + tSizeX * right[2], base_x + tSizeY * up[0], base_y + tSizeY * up[1], base_z + tSizeY * up[2]]);
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.axesTextPositionBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(textPositions), this.gl.DYNAMIC_DRAW);
-        this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
-
-        if (this.ext) {
-            this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_INT, 0);
-        } else {
-            this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_SHORT, 0);
-        }
-
-        // Draw an z
-        this.makeTextCanvas("z", 512, 32, textColour);
-        data = this.textCtx.getImageData(0, 0, 512, 32);
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, data);
-        this.gl.texSubImage2D(this.gl.TEXTURE_2D, 0, 0, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, data);
-
-        textPositions = [];
-        base_x = xoff;
-        base_y = yoff;
-        base_z = zoff + 3.0 * this.zoom;
-        textPositions = textPositions.concat([base_x, base_y, base_z, base_x + tSizeX * right[0], base_y + tSizeX * right[1], base_z + tSizeX * right[2], base_x + tSizeY * up[0] + tSizeX * right[0], base_y + tSizeY * up[1] + tSizeX * right[1], base_z + tSizeY * up[2] + tSizeX * right[2]]);
-        textPositions = textPositions.concat([base_x, base_y, base_z, base_x + tSizeY * up[0] + tSizeX * right[0], base_y + tSizeY * up[1] + tSizeX * right[1], base_z + tSizeY * up[2] + tSizeX * right[2], base_x + tSizeY * up[0], base_y + tSizeY * up[1], base_z + tSizeY * up[2]]);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(textPositions), this.gl.DYNAMIC_DRAW);
-        this.gl.vertexAttribPointer(this.shaderProgramTextBackground.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
-
-        if (this.ext) {
-            this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_INT, 0);
-        } else {
-            this.gl.drawElements(this.gl.TRIANGLES, 6, this.gl.UNSIGNED_SHORT, 0);
-        }
-
-        this.gl.disableVertexAttribArray(this.shaderProgramTextBackground.vertexTextureAttribute);
-        this.gl.depthFunc(this.gl.LESS)
-
     }
 
     doMouseUp(event, self) {
@@ -11154,7 +8809,8 @@ class MGWebGL extends Component {
         const activeMoleculeMotion = (this.activeMolecule != null) && (Object.keys(this.activeMolecule.displayObjects).length > 0) ;
         if(this.activeMolecule){
             if(this.activeMolecule.displayObjects){
-                for (const [key, value] of Object.entries(this.activeMolecule.displayObjects)) {
+                const dispObjs :moorhen.DisplayObject[][] = Object.entries(this.activeMolecule.displayObjects).filter((a)=>{return a[0] !== "transformation";}).map((b)=>{return b[1]})
+                for (const value of dispObjs) {
                     for (let ibuf = 0; ibuf < value.length; ibuf++) {
                         if(!value[ibuf].transformMatrixInteractive){
                            value[ibuf].transformMatrixInteractive = [
@@ -11177,7 +8833,7 @@ class MGWebGL extends Component {
         }
     }
 
-    reContourMaps() {
+    reContourMaps() : void {
     }
 
     doMiddleClick(evt, self) {
@@ -11199,7 +8855,7 @@ class MGWebGL extends Component {
         document.dispatchEvent(goToBlobEvent);
     }
 
-    setDraggableMolecule(molecule) {
+    setDraggableMolecule(molecule: moorhen.Molecule): void {
         this.draggableMolecule = molecule
     }
 
@@ -11303,18 +8959,19 @@ class MGWebGL extends Component {
                 })
                 self.setOrigin(newOrigin, false, !this.reContourMapOnlyOnMouseUp)
             } else {
-                const newOrigin = this.activeMolecule.displayObjects.transformation.origin.map((coord, coordIndex) => {
+                const newOrigin = this.activeMolecule.displayObjectsTransformation.origin.map((coord, coordIndex) => {
                     return coord + (self.zoom * xshift[coordIndex] / 8.) - (self.zoom * yshift[coordIndex] / 8.)
                 })
-                this.activeMolecule.displayObjects.transformation.origin = newOrigin;
-                if (!this.activeMolecule.displayObjects.transformation.quat) {
-                    this.activeMolecule.displayObjects.transformation.quat = quat4.create();
-                    quat4.set(this.activeMolecule.displayObjects.transformation.quat, 0, 0, 0, -1);
+                const newOriginSet : [number,number,number] = [ newOrigin[0], newOrigin[1], newOrigin[2]];
+                this.activeMolecule.displayObjectsTransformation.origin = newOriginSet;
+                if (!this.activeMolecule.displayObjectsTransformation.quat) {
+                    this.activeMolecule.displayObjectsTransformation.quat = quat4.create();
+                    quat4.set(this.activeMolecule.displayObjectsTransformation.quat, 0, 0, 0, -1);
                 }
-                const theMatrix = quatToMat4(this.activeMolecule.displayObjects.transformation.quat);
-                theMatrix[12] = this.activeMolecule.displayObjects.transformation.origin[0];
-                theMatrix[13] = this.activeMolecule.displayObjects.transformation.origin[1];
-                theMatrix[14] = this.activeMolecule.displayObjects.transformation.origin[2];
+                const theMatrix = quatToMat4(this.activeMolecule.displayObjectsTransformation.quat);
+                theMatrix[12] = this.activeMolecule.displayObjectsTransformation.origin[0];
+                theMatrix[13] = this.activeMolecule.displayObjectsTransformation.origin[1];
+                theMatrix[14] = this.activeMolecule.displayObjectsTransformation.origin[2];
                 for (const [key, value] of Object.entries(this.activeMolecule.displayObjects)) {
                     for (let ibuf = 0; ibuf < value.length; ibuf++) {
                         value[ibuf].transformMatrixInteractive = theMatrix;
@@ -11367,18 +9024,19 @@ class MGWebGL extends Component {
                 vec3.transformMat4(xshift, xshift, theMatrix);
                 vec3.transformMat4(yshift, yshift, theMatrix);
     
-                const newOrigin = this.draggableMolecule.displayObjects.transformation.origin.map((coord, coordIndex) => {
+                const newOrigin = this.draggableMolecule.displayObjectsTransformation.origin.map((coord, coordIndex) => {
                     return coord + (self.zoom * xshift[coordIndex] / 8.) - (self.zoom * yshift[coordIndex] / 8.)
                 })
-                this.draggableMolecule.displayObjects.transformation.origin = newOrigin;
-                if (!this.draggableMolecule.displayObjects.transformation.quat) {
-                    this.draggableMolecule.displayObjects.transformation.quat = quat4.create();
-                    quat4.set(this.draggableMolecule.displayObjects.transformation.quat, 0, 0, 0, -1);
+                const newOriginSet : [number,number,number] = [ newOrigin[0], newOrigin[1], newOrigin[2]];
+                this.draggableMolecule.displayObjectsTransformation.origin = newOriginSet;
+                if (!this.draggableMolecule.displayObjectsTransformation.quat) {
+                    this.draggableMolecule.displayObjectsTransformation.quat = quat4.create();
+                    quat4.set(this.draggableMolecule.displayObjectsTransformation.quat, 0, 0, 0, -1);
                 }
-                theMatrix = quatToMat4(this.draggableMolecule.displayObjects.transformation.quat);
-                theMatrix[12] = this.draggableMolecule.displayObjects.transformation.origin[0];
-                theMatrix[13] = this.draggableMolecule.displayObjects.transformation.origin[1];
-                theMatrix[14] = this.draggableMolecule.displayObjects.transformation.origin[2];
+                theMatrix = quatToMat4(this.draggableMolecule.displayObjectsTransformation.quat);
+                theMatrix[12] = this.draggableMolecule.displayObjectsTransformation.origin[0];
+                theMatrix[13] = this.draggableMolecule.displayObjectsTransformation.origin[1];
+                theMatrix[14] = this.draggableMolecule.displayObjectsTransformation.origin[2];
 
                 // ###############
 
@@ -11406,26 +9064,29 @@ class MGWebGL extends Component {
                 let yQp = createQuatFromDXAngle(-self.dx, y_rot);
                 quat4.multiply(xQp, xQp, yQp);
 
-                if (!this.activeMolecule.displayObjects.transformation.quat) {
-                    this.activeMolecule.displayObjects.transformation.quat = quat4.create();
-                    quat4.set(this.activeMolecule.displayObjects.transformation.quat, 0, 0, 0, -1);
+                if (!this.activeMolecule.displayObjectsTransformation.quat) {
+                    this.activeMolecule.displayObjectsTransformation.quat = quat4.create();
+                    quat4.set(this.activeMolecule.displayObjectsTransformation.quat, 0, 0, 0, -1);
                 }
-                quat4.multiply(this.activeMolecule.displayObjects.transformation.quat, this.activeMolecule.displayObjects.transformation.quat, xQp);
-                const theMatrix = quatToMat4(this.activeMolecule.displayObjects.transformation.quat);
-                theMatrix[12] = this.activeMolecule.displayObjects.transformation.origin[0];
-                theMatrix[13] = this.activeMolecule.displayObjects.transformation.origin[1];
-                theMatrix[14] = this.activeMolecule.displayObjects.transformation.origin[2];
+                quat4.multiply(this.activeMolecule.displayObjectsTransformation.quat, this.activeMolecule.displayObjectsTransformation.quat, xQp);
+                const theMatrix = quatToMat4(this.activeMolecule.displayObjectsTransformation.quat);
+                theMatrix[12] = this.activeMolecule.displayObjectsTransformation.origin[0];
+                theMatrix[13] = this.activeMolecule.displayObjectsTransformation.origin[1];
+                theMatrix[14] = this.activeMolecule.displayObjectsTransformation.origin[2];
                 //Just consider one origin.
                 let diff = [0, 0, 0];
-                for (const [key, value] of Object.entries(this.activeMolecule.displayObjects)) {
+
+                const dispObjs :moorhen.DisplayObject[][]  = Object.entries(this.activeMolecule.displayObjects).filter((a)=>{return a[0] !== "transformation";}).map((b)=>{return b[1]})
+
+                for (const value of dispObjs) {
                     if (value.length > 0) {
                         const com = centreOfMass(value[0].atoms);
-                        diff = [com[0] + this.origin[0], com[1] + this.origin[1], com[2] + this.origin[2]];
-                        this.activeMolecule.displayObjects.transformation.centre = diff;
+                        const diff : [number,number,number] = [com[0] + this.origin[0], com[1] + this.origin[1], com[2] + this.origin[2]];
+                        this.activeMolecule.displayObjectsTransformation.centre = diff;
                         break;
                     }
                 }
-                for (const [key, value] of Object.entries(this.activeMolecule.displayObjects)) {
+                for (const value of dispObjs) {
                     for (let ibuf = 0; ibuf < value.length; ibuf++) {
                         value[ibuf].transformMatrixInteractive = theMatrix;
                         value[ibuf].transformOriginInteractive = diff;
@@ -11449,6 +9110,7 @@ class MGWebGL extends Component {
     }
 
     handleKeyUp(event, self) {
+        console.log(self.props.keyboardAccelerators)
         for (const key of Object.keys(self.props.keyboardAccelerators)) {
             if (event.key && self.props.keyboardAccelerators[key].keyPress === event.key.toLowerCase() && self.props.keyboardAccelerators[key]) {
                 self.keysDown[key] = false;
@@ -11470,7 +9132,7 @@ class MGWebGL extends Component {
 
         let doContinue = true
         if (this.props.onKeyPress) {
-            doContinue = this.props.onKeyPress(event)
+            doContinue = this.props.onKeyPress(event) as boolean
         }
 
         if (!doContinue) return
@@ -11482,8 +9144,8 @@ class MGWebGL extends Component {
             this.circleCtx.canvas.width = width;
             this.circleCtx.canvas.height = height;
             this.circleCtx.font = "80px helvetica";
-            this.circleCtx.circleAlign = "left";
-            this.circleCtx.circleBaseline = "middle";
+            this.circleCtx.textAlign = "left";
+            this.circleCtx.textBaseline = "middle";
             this.circleCanvasInitialized = true;
         }
         this.circleCtx.fillStyle = "red";
@@ -11499,7 +9161,7 @@ class MGWebGL extends Component {
     }
 
     // Puts text in center of canvas.
-    makeTextCanvas(text, width, height, textColour, font) {
+    makeTextCanvas(text:string, width:number, height:number, textColour:string, font?:string)  : [number,CanvasRenderingContext2D] {
         if(font){
             let theCtx;
             if(this.extraFontCtxs && (font in this.extraFontCtxs)){
@@ -11610,10 +9272,6 @@ class MGWebGL extends Component {
         this.displayBuffers[this.currentBufferIdx].triangleVertexNormalBuffer[this.displayBuffers[this.currentBufferIdx].triangleVertexNormalBuffer.length - 1].numItems /= 3;
     }
 
-    setSymmetryMatrices(symmetry) {
-        this.displayBuffers[this.currentBufferIdx].setSymmetryMatrices(symmetry);
-    }
-
     createColourBuffer(colour) {
         this.displayBuffers[this.currentBufferIdx].triangleColourBuffer.push(this.gl.createBuffer());
         this.displayBuffers[this.currentBufferIdx].triangleColourBuffer[this.displayBuffers[this.currentBufferIdx].triangleColourBuffer.length - 1].numItems = 0;
@@ -11654,5 +9312,3 @@ class MGWebGL extends Component {
         }
     }
 }
-
-export { MGWebGL, icosaIndices1, icosaVertices1, icosaIndices2, icosaVertices2, getDeviceScale, vec3Create, isDarkBackground };
