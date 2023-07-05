@@ -460,8 +460,6 @@ export default class MoorhenWrapper {
     await this.importPreferences(this.context)
 
     this.renderMoorhen()
-    this.addStyleSheet(`${this.urlPrefix}/baby-gru/moorhen.css`)
-    this.addStyleSheet(`${this.urlPrefix}/moorhen.css`)
     await this.waitForInitialisation()
 
     if (this.noDataLegendMessage) {
