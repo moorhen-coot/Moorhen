@@ -12,8 +12,6 @@ import localforage from 'localforage';
 import parse from 'html-react-parser';
 import { moorhen } from "../../src/types/moorhen";
 import { libcootApi } from "../../src/types/libcoot";
-import '../../src/index.css';
-import '../../src/App.css';
 
 declare var createCCP4Module: (arg0: any) => Promise<libcootApi.CCP4ModuleType>;
 
@@ -206,7 +204,7 @@ export default class MoorhenWrapper {
   addStyleSheet() {
     const head = document.head;
     const style: any = document.createElement("link");
-    style.href = `${this.urlPrefix}/moorhen.css`
+    style.href = `${this.urlPrefix}/baby-gru/moorhen.css`
     style.rel = "stylesheet";
     style.async = true
     style.type = 'text/css'
