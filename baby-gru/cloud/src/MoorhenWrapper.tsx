@@ -201,10 +201,10 @@ export default class MoorhenWrapper {
     this.cachedContext = context
   }
 
-  addStyleSheet() {
+  addStyleSheet(uri: string) {
     const head = document.head;
     const style: any = document.createElement("link");
-    style.href = `${this.urlPrefix}/baby-gru/moorhen.css`
+    style.href = uri
     style.rel = "stylesheet";
     style.async = true
     style.type = 'text/css'
@@ -460,7 +460,8 @@ export default class MoorhenWrapper {
     await this.importPreferences(this.context)
 
     this.renderMoorhen()
-    this.addStyleSheet()
+    this.addStyleSheet(`${this.urlPrefix}/baby-gru/moorhen.css`)
+    this.addStyleSheet(`${this.urlPrefix}/moorhen.css`)
     await this.waitForInitialisation()
 
     if (this.noDataLegendMessage) {
