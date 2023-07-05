@@ -53,6 +53,7 @@ export const MoorhenColourRules = (props) => {
     const ruleSelectRef = useRef()
     const residueRangeSelectRef = useRef()
     const cidFormRef = useRef()
+    const draggableRef = useRef(null)
     const [ruleType, setRuleType] = useState('molecule')
     const [colourProperty, setColourProperty] = useState('b-factor')
     const [selectedColour, setSelectedColour] = useState({r: 128, g: 128, b: 128, a: 0.5})
@@ -269,14 +270,14 @@ export const MoorhenColourRules = (props) => {
             </Card>
     }
 
-    return <Draggable handle=".handle">
+    return <Draggable nodeRef={draggableRef} handle=".handle">
         <Card 
                 bg='light'
                 style={{position: 'absolute', top: '5rem', left: '5rem', opacity: opacity, width: toastBodyWidth, display: props.showColourRulesToast ? '' : 'none'}}
                 onMouseOver={() => setOpacity(1)}
                 onMouseOut={() => setOpacity(0.5)}
                 >
-            <Card.Header className="handle" style={{ justifyContent: 'space-between', display: 'flex', cursor: 'move', alignItems:'center'}}>
+            <Card.Header ref={draggableRef} className="handle" style={{ justifyContent: 'space-between', display: 'flex', cursor: 'move', alignItems:'center'}}>
                 Set molecule colour rules
                 <IconButton style={{margin: '0.1rem', padding: '0.1rem'}} onClick={() => props.setShowColourRulesToast(false)}>
                     <CloseOutlined/>
