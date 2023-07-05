@@ -34,7 +34,7 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
     const newBondOrderValueRef = useRef<HTMLSelectElement | null>(null)
 
     useImperativeHandle(ref, () => ({
-        getFormData: () => {return {
+        getFormData: (): moorhen.createCovLinkAtomInput => {return {
             selectedAtom: selectedAtomValueRef.current,
             deleteAtom: deleteAtomValueRef.current,
             deleteSelectedAtom: deleteSelectedAtomValueRef.current?.value,
@@ -141,6 +141,7 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
             </Form.Label>
             <InputGroup>
                 <SplitButton title={deleteAtom ? "Yes" : "No"}>
+                    {/* @ts-ignore */}
                     <Dropdown.Item key="Yes" onClick={() => {
                         deleteAtomValueRef.current = true
                         setDeleteAtom(true)
@@ -159,6 +160,7 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
             </Form.Label>
             <InputGroup>
                 <SplitButton title={changeOrderBond ? "Yes" : "No"}>
+                    {/* @ts-ignore */}
                     <Dropdown.Item key="Yes" onClick={() => {
                         changeBondOrderValueRef.current = true
                         setChangeOrderBond(true)
@@ -184,6 +186,7 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
             </Form.Label>
             <InputGroup>
                 <SplitButton title={changeAtomCharge ? "Yes" : "No"}>
+                    {/* @ts-ignore */}
                     <Dropdown.Item key="Yes" onClick={() => {
                         changeAtomChargeValueRef.current = true
                         setChangeAtomCharge(true)
@@ -227,6 +230,7 @@ export const MoorhenCreateAcedrgLinkModal = (props: {
     const [opacity, setOpacity] = useState<number>(1.0)
     const [awaitAtomClick, setAwaitAtomClick] = useState<number>(-1)
     const [errorMessage, setErrorMessage] = useState<string>('')
+    const draggableRef = useRef<HTMLDivElement>(null);
     const atomPickerOneRef = useRef(null)
     const atomPickerTwoRef = useRef(null)
 
@@ -236,8 +240,8 @@ export const MoorhenCreateAcedrgLinkModal = (props: {
 
     const handleSubmitToAcedrg = async () => {
         setErrorMessage('')
-        const atomOneFormData = atomPickerOneRef.current.getFormData()
-        const atomTwoFormData = atomPickerTwoRef.current.getFormData()
+        const atomOneFormData = atomPickerOneRef.current.getFormData() as moorhen.createCovLinkAtomInput
+        const atomTwoFormData = atomPickerTwoRef.current.getFormData() as moorhen.createCovLinkAtomInput
         if (props.aceDRGInstance) {
             try {
                 await props.aceDRGInstance.createCovalentLink(atomOneFormData, atomTwoFormData)
@@ -251,7 +255,7 @@ export const MoorhenCreateAcedrgLinkModal = (props: {
     }
 
     return  props.showCreateAcedrgLinkModal ?
-        <Draggable handle=".handle">
+        <Draggable nodeRef={draggableRef} handle=".handle">
             <Card style={{position: 'absolute', width: '45rem', opacity: opacity, top: '25rem', left: '25rem'}} onMouseOver={() => setOpacity(1)} onMouseOut={() => setOpacity(0.5)}>
             <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={awaitAtomClick !== -1}>
             <Stack gap={2} direction='vertical'style={{justifyContent: 'center', alignItems: 'center'}}>
@@ -260,7 +264,7 @@ export const MoorhenCreateAcedrgLinkModal = (props: {
                 <Button variant='danger' onClick={() => setAwaitAtomClick(-1)}>Cancel</Button>
             </Stack>
             </Backdrop>
-            <Card.Header className='handle' style={{display: 'flex', alignItems: 'center', cursor: 'move', justifyContent: 'space-between'}}>
+            <Card.Header ref={draggableRef} className='handle' style={{display: 'flex', alignItems: 'center', cursor: 'move', justifyContent: 'space-between'}}>
                 Create covalent link
                 <IconButton onClick={handleCancel}>
                     <CloseOutlined/>

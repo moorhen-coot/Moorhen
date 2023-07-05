@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import Draggable from "react-draggable";
 import { IconButton } from '@mui/material';
 import { CloseOutlined, PlayArrowOutlined } from "@mui/icons-material";
@@ -25,8 +25,9 @@ export const MoorhenScriptModal = (props: {
     code?: string;
 }) => {
 
-    const [code, setCode] = useState("")
-    const [opacity, setOpacity] = useState(0.5)
+    const draggableNodeRef = useRef<HTMLDivElement>(null)
+    const [code, setCode] = useState<string>("")
+    const [opacity, setOpacity] = useState<number>(0.5)
     
     const handleScriptExe = useCallback(async () => {
         try {
@@ -44,13 +45,13 @@ export const MoorhenScriptModal = (props: {
         }
     }, [])
 
-    return <Draggable handle=".handle">
+    return <Draggable nodeRef={draggableNodeRef} handle=".handle">
         <Card
             style={{position: 'absolute', top: '5rem', left: '5rem', opacity: opacity, width: props.windowWidth ? convertViewtoPx(50, props.windowWidth) : '50wh', display: props.show ? '' : 'none'}}
             onMouseOver={() => setOpacity(1)}
             onMouseOut={() => setOpacity(0.5)}
         >
-            <Card.Header className="handle" style={{ justifyContent: 'space-between', display: 'flex', cursor: 'move', alignItems:'center'}}>
+            <Card.Header ref={draggableNodeRef} className="handle" style={{ justifyContent: 'space-between', display: 'flex', cursor: 'move', alignItems:'center'}}>
                 Interactive scripting
                 <IconButton style={{margin: '0.1rem', padding: '0.1rem'}} onClick={() => props.setShow(false)}>
                     <CloseOutlined/>

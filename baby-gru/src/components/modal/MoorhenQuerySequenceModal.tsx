@@ -35,6 +35,7 @@ export const MoorhenQuerySequenceModal = (props: {
     const [seqIdCutoff, setSeqIdCutoff] = useState<number>(90)
     const [eValCutoff, setEValCutoff] = useState<number>(0.1)
     const [busy, setBusy] = useState<boolean>(false);
+    const draggableNodeRef = useRef<HTMLDivElement>(null);
     const timerRef = useRef<any>(null);
     const cachedSeqIdCutoff = useRef<number | null>(null);
     const cachedEValCutoff = useRef<number | null>(null);
@@ -258,7 +259,7 @@ export const MoorhenQuerySequenceModal = (props: {
         
     }, [numberOfHits])
 
-    return <Draggable handle=".handle">
+    return <Draggable nodeRef={draggableNodeRef} handle=".handle">
         <Card
             style={{position: 'absolute', top: '5rem', left: '5rem', opacity: opacity, width: props.windowWidth ? convertViewtoPx(35, props.windowWidth) : '35wh'}}
             onMouseOver={() => setOpacity(1)}
@@ -268,7 +269,7 @@ export const MoorhenQuerySequenceModal = (props: {
                 <Spinner animation="border" style={{ marginRight: '0.5rem' }}/>
                 <span>Fetching...</span>
             </Backdrop>
-            <Card.Header className="handle" style={{ justifyContent: 'space-between', display: 'flex', cursor: 'move', alignItems:'center'}}>
+            <Card.Header ref={draggableNodeRef} className="handle" style={{ justifyContent: 'space-between', display: 'flex', cursor: 'move', alignItems:'center'}}>
                 Query using a sequence
                 <IconButton style={{margin: '0.1rem', padding: '0.1rem'}} onClick={() => props.setShow(false)}>
                     <CloseOutlined/>
