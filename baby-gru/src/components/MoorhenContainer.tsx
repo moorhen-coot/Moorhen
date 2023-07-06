@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useReducer, useRef, useState, useContext } from 'react';
+import { useEffect, useCallback, useReducer, useRef, useState, useContext } from 'react';
 import { Container, Col, Row, Spinner, Toast, ToastContainer } from 'react-bootstrap';
 import { MoorhenWebMG } from './webMG/MoorhenWebMG';
 import { convertRemToPx, convertViewtoPx, getTooltipShortcutLabel, createLocalStorageInstance, allFontsSet } from '../utils/MoorhenUtils';
@@ -15,7 +15,6 @@ import { MoorhenNavBar } from "./navbar-menus/MoorhenNavBar"
 import { moorhen } from '../types/moorhen';
 import { webGL } from '../types/mgWebGL';
 import { itemReducer } from "./MoorhenApp"
-import './MoorhenContainer.css'
 
 const initialMoleculesState: moorhen.Molecule[] = []
 
@@ -157,6 +156,17 @@ export const MoorhenContainer = (props: MoorhenContainerPropsInterface) => {
     innerMoleculesRef.current = innerMolecules as moorhen.Molecule[]
     innerMapsRef.current = innerMaps as moorhen.Map[]
     innerActiveMapRef.current = innerActiveMap
+    
+    useEffect(() => {
+        let head = document.head
+        let style: any = document.createElement("link")
+        style.href = `${props.urlPrefix}/baby-gru/moorhen.css`
+        style.rel = "stylesheet"
+        style.async = true
+        style.type = 'text/css'
+        head.appendChild(style)
+        
+    }, [])
 
     useEffect(() => {
         const fetchAvailableFonts = async () => {

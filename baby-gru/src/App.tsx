@@ -1,4 +1,3 @@
-import './App.css';
 import { MoorhenApp } from './components/MoorhenApp';
 import { MoorhenContextProvider } from "./utils/MoorhenContext";
 
