@@ -15,14 +15,36 @@
         "moduleRoot": "./src"
     },
     "templates": {
-        "better-docs": {
-            "name": "My React components"
+      "search": true,
+      "default": {
+        "staticFiles": {
+          "include": [
+            "./docs.styles.css",
+            "./public/baby-gru/pixmaps/MoorhenLogo.png"
+          ]
+        }
+      },
+      "better-docs": {
+            "name": "Moorhen Developer Documentation",
+            "logo": "./MoorhenLogo.png",
+            "css": "docs.styles.css",
+            "navLinks": [
+              {
+                  "label": "Github",
+                  "href": "https://github.com/stuartjamesmcnicholas/Moorhen"
+              },
+              {
+                  "label": "Moorhen Wiki",
+                  "href": "https://moorhen-coot.github.io/wiki/"
+              }
+            ]
           }
     },
     "opts": {
         "template": "node_modules/better-docs",
         "destination": "docs",
         "recurse": true,
+        "verbose": true,        
         "readme": "README.md"
     },
     "sourceType": "module"
