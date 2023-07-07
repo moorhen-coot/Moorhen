@@ -21,7 +21,7 @@ export const MoorhenHelpMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                 onToggle={() => {props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId('-1')}}>
                      <MoorhenSearchBar {...props}/>
                      <hr></hr>
-                     <MenuItem onClick={() => window.open('https://filomenosanchez.github.io/Moorhen/')}>Go to Moorhen blog...</MenuItem>
+                     <MenuItem onClick={() => window.open('https://moorhen-coot.github.io/wiki/')}>Go to Moorhen wiki...</MenuItem>
                      <MenuItem onClick={() => setShowControlsModal(true)}>Show controls...</MenuItem>
                      <MoorhenAboutMenuItem {...menuItemProps} />
             </NavDropdown >

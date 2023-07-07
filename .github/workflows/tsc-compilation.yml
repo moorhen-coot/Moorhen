@@ -16,7 +16,7 @@ jobs:
       with:
         node-version: 16
     - name: Install dependencies 
-      working-directory: /home/runner/work/Moorhen/       
+      working-directory: /home/runner/work/Moorhen/
       run: |    
         sudo apt-get install -y npm
     - name: Create mock version file

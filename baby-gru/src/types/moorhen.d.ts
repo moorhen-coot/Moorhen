@@ -239,7 +239,7 @@ export namespace moorhen {
         data: WorkerResult<T>;
     }
         
-    type createCovLinkAtomInput ={
+    type createCovLinkAtomInput = {
         selectedAtom: string;
         deleteAtom: boolean;
         deleteSelectedAtom: string;
