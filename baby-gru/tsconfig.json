@@ -1,0 +1,29 @@
+{
+    "compilerOptions": {
+        "allowJs": true,
+        "outDir": "tsDist",
+        "module": "es6",
+        "target": "es6",
+        "rootDir": "./",
+        "types": ["node", "./src/types"],
+        "lib": ["esnext", "es6", "dom", "dom.Iterable", "es2017", "WebWorker"],
+        "skipLibCheck": true,
+        "esModuleInterop": true,
+        "jsx": "react-jsx",
+        "sourceMap": true,
+        "moduleResolution": "node"
+      },
+      "include": [
+        "src/*",
+        "cloud/*"
+      ],
+      "exclude": [
+        "node_modules/*",
+        "tsDist/*",
+        "dist/*",
+        "nginx/*",
+        "test/*",
+        "src/__tests__/*",
+        "webpack.config.js"
+      ]
+}

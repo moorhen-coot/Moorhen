@@ -1,0 +1,43 @@
+name: GitHub pages
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v1
+      - name: Install node.js v16
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: Install dependencies 
+        working-directory: /home/runner/work/Moorhen/
+        run: |    
+          sudo apt-get install -y npm
+      - name: Create mock version file
+        working-directory: /home/runner/work/Moorhen/       
+        run: |    
+          echo "export const version = 0.1" > /home/runner/work/Moorhen/Moorhen/baby-gru/src/version.js
+      - name: yarn install
+        working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
+        run: yarn install
+      - name: compile jsDocs
+        working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
+        run: |
+          cd /home/runner/work/Moorhen/Moorhen/baby-gru/
+          npx jsdoc -c jsdoc.json
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Publishing on Github Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: /home/runner/work/Moorhen/Moorhen/baby-gru/docs
