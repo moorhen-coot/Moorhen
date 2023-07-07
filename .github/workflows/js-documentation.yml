@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v1
@@ -31,13 +33,6 @@ jobs:
         run: |
           cd /home/runner/work/Moorhen/Moorhen/baby-gru/
           npx jsdoc -c jsdoc.json
-
-  deploy:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write    
-    needs: build
-    steps:
       - name: Publishing on Github Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
