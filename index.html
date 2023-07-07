@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title> Home</title>
+
+  <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="./build/entry.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,400,700|Inconsolata,700" rel="stylesheet">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+  <link type="text/css" rel="stylesheet" href="https://jmblog.github.io/color-themes-for-google-code-prettify/themes/tomorrow-night.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/app.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/iframe.css">
+  <link type="text/css" rel="stylesheet" href="docs.styles.css">
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
+
+  
+</head>
+
+
+
+<body class="layout small-header">
+    <div id="stickyNavbarOverlay"></div>
+    
+
+<div class="top-nav">
+    <div class="inner">
+        <a id="hamburger" role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+        </a>
+        <div class="logo">
+             
+                <a class="image" href="index.html">
+                    <img src="./MoorhenLogo.png" alt="logo">
+                </a>
+            
+             
+                <a href="index.html">
+                    <h1 class="navbar-item">Moorhen Developer Documentation</h1>
+                </a>
+            
+        </div>
+        <div class="menu">
+            
+            <div class="navigation">
+                <a
+                    href="index.html"
+                    class="link"
+                >
+                    Documentation
+                </a>
+                
+                 
+                    
+                        <a
+                            class="link user-link "
+                            href="https://github.com/stuartjamesmcnicholas/Moorhen"
+                        >
+                            Github
+                        </a>
+                    
+                        <a
+                            class="link user-link "
+                            href="https://moorhen-coot.github.io/wiki/"
+                        >
+                            Moorhen Wiki
+                        </a>
+                    
+                
+                
+            </div>
+        </div>
+    </div>
+</div>
+    <div id="main">
+        <div
+            class="sidebar "
+            id="sidebarNav"
+        >
+            
+                <div class="search-wrapper">
+                    <input id="search" type="text" placeholder="Search docs..." class="input">
+                </div>
+            
+            <nav>
+                
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="MoorhenMap.html">MoorhenMap</a></li><li><a href="MoorhenMolecule.html">MoorhenMolecule</a></li><li><a href="MoorhenTimeCapsule.html">MoorhenTimeCapsule</a></li></ul><h3>Global</h3><ul><li><a href="global.html#calculateDisplayStartAndEnd">calculateDisplayStartAndEnd</a></li><li><a href="global.html#parseSequenceData">parseSequenceData</a></li></ul></div>
+                
+            </nav>
+        </div>
+        <div class="core" id="main-content-wrapper">
+            <div class="content">
+                <header class="page-title">
+                    <p></p>
+                    <h1>Home</h1>
+                </header>
+                
+
+
+
+    
+
+
+    <h3> </h3>
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+    <section>
+        <article><h1>Moorhen</h1>
+<p>Moorhen is a web browser molecular graphics program based on the Coot desktop program.
+It is developed by porting some <a href="https://www.ccp4.ac.uk/">CCP4</a> libraries and programs, <a href="https://www2.mrc-lmb.cam.ac.uk/personal/pemsley/coot/">Coot</a>, <a href="https://www.fftw.org/">FFTW2</a>, <a href="https://github.com/glycojones/privateer">Privateer</a> and the <a href="https://www.gnu.org/software/gsl/">Gnu Scientific Library</a> to Web Assembly.</p>
+<p>Also contained are examples of using the generated JS/Web Assembly:</p>
+<ul>
+<li>A command line example which offers some of the functionality of the CCP4 program <code>superpose</code>.</li>
+<li>A command line example which does a structure factor calculation with <code>clipper</code>.</li>
+</ul>
+<p>The emscripten suite of tools is required to do the
+compilation.</p>
+<p>The sources of CCP4, Coot, Privateer, FFTW, and GSL are not included. They are downloaded and (possibly) patched by the running
+the <code>get_sources</code> script, which is part of the build process of this project.</p>
+<p>The following libraries/programs are compiled to Web Assembly:</p>
+<ul>
+<li>libccp4 (bzr)</li>
+<li>clipper (bzr)</li>
+<li>ssm (bzr)</li>
+<li>mmdb2 (bzr)</li>
+<li>ccp4srs (bzr)</li>
+<li>gemmi 0.5.8</li>
+<li>rvapi (bzr)</li>
+<li>gesamt (bzr)</li>
+<li>ccp4mg (partial) (bzr)</li>
+<li>privateer MKIV</li>
+<li>Coot 1.0 ('gtk3' git branch)</li>
+<li>fftw 2.1.5</li>
+<li>gsl 2.7.1</li>
+<li>Boost 1.80.0</li>
+<li>glm 0.9.9.8</li>
+<li>RDKit 2022_09_2</li>
+</ul>
+<h2><strong>Binaries</strong></h2>
+<p>Binaries are available on the releases page. Please read the instructions there before using.</p>
+<p>Moorhen is available to use at <a href="https://moorhen.org">https://moorhen.org</a> .</p>
+<h2><strong>Compilation instructions</strong></h2>
+<p><strong>Requirements</strong></p>
+<ul>
+<li>A Bourne-like shell</li>
+<li>bzr</li>
+<li>git</li>
+<li>curl</li>
+<li>patch</li>
+<li>emsdk (Steps 1 and 2 below)</li>
+<li>cmake</li>
+<li>A <em>native</em> C++ compiler. (This is required for part of the <code>boost</code> build system).</li>
+<li><code>autoconf</code>,<code>autotools</code></li>
+<li><code>libtool</code></li>
+</ul>
+<ol>
+<li>
+<p>Install emscripten (following  <a href="https://emscripten.org/docs/getting_started/downloads.html">https://emscripten.org/docs/getting_started/downloads.html</a>):<br>
+<code>git clone https://github.com/emscripten-core/emsdk.git</code><br>
+<code>cd emsdk</code><br>
+<code>git pull</code><br>
+<code>./emsdk install latest</code><br>
+<code>./emsdk activate latest</code></p>
+</li>
+<li>
+<p>Each time you want to use emscripten:<br>
+<code>source ./emsdk_env.sh</code></p>
+</li>
+<li>
+<p>Get the sources:<br>
+<code>git clone https://github.com/stuartjamesmcnicholas/Moorhen.git ccp4_wasm</code><br>
+<code>cd ccp4_wasm</code><br>
+<code>./get_sources</code></p>
+</li>
+<li>
+<p>Build gsl, Boost, RDKIt, Coot, the CCP4 libraries and examples:<br>
+<br>In this branch, it is intended that you do the build in the source directory.
+<br/>After first checkout you should run the following script to build:<br>
+<code>./initial_build.sh</code><br>
+This should build all dependencies and then <code>Moorhen</code>.</p>
+</li>
+<li>
+<p>To run the Moorhen molecular graphics application:<br>
+<code>cd baby-gru</code><br>
+<code>npm start</code><br>
+And then point a web browser at <code>http://localhost:3000/</code> .</p>
+</li>
+</ol>
+<h2><strong>Updating</strong></h2>
+<ol>
+<li>When you wish to update the application from this git repository and the <code>Coot</code> git repository, do the following steps:
+<ol>
+<li><code>git pull</code></li>
+<li><code>cd checkout/coot-1.0</code></li>
+<li><code>git pull</code></li>
+<li><code>cd ../..</code></li>
+<li><code>cd CCP4_WASM_BUILD/moorhen_build</code></li>
+<li><code>make install</code> (or e.g. <code>make -j8 install</code> to build on 8 processors).</li>
+</ol>
+</li>
+</ol>
+<p><img src="web_example/baby_gru.png" alt="Moorhen">
+<em>The Moorhen WebGL application</em></p>
+<h2><strong>What else can do with the compiled libraries?</strong></h2>
+<p>See <code>example/example.cc</code> or <code>checkout/privateer-MKIV/src/privateer.cpp</code> to see how to create a command line (node) program. The
+latter is quite long and a patched version of the original privateer code. It might be more helpful to look at the patch file
+<code>patches/privateer-emscripten.patch</code>. This should show how to patch an existing command line program which reads files to one
+that will work within node.</p>
+<p>See <code>coot/moorhen-wrappers.cc</code> to see use of <code>EMSCRIPTEN_BINDINGS</code> to expose Coot methods to the web browser.</p>
+<p>Any program you write, which uses the <em>subset</em> of Coot, Clipper, Privateer code which this project compiles to WASM, can
+itself be compiled to WASM and used within node or Web Browser. Studying the examples should show you to do I/O, which is
+different in the 2 cases. If you require more classes or methods from the libraries to be exposed to JavaScript, then changes need to be made to
+<code>coot/moorhen-wrappers.cc</code>. This should only be necessary for browser usage - in node your whole program can be written in C++.</p>
+<h2><strong>References</strong></h2>
+<ul>
+<li>Emscripten
+<ul>
+<li><a href="https://emscripten.org/">https://emscripten.org/</a></li>
+<li><a href="https://github.com/emscripten-core/emscripten/blob/main/docs/paper.pdf">Emscripten: An LLVM-to-JavaScript Compiler</a></li>
+</ul>
+</li>
+<li>Coot
+<ul>
+<li>P. Emsley; B. Lohkamp; W.G. Scott; Cowtan (2010). <em>Features and Development of Coot</em>, Acta Crystallographica. <strong>D66 (4)</strong> p486–501.</li>
+</ul>
+</li>
+<li>Privateer
+<ul>
+<li>Agirre, J., Iglesias-Fernández, J., Rovira, C., Davies, G.J., Wilson, K.S. and Cowtan, K.D., (2015), <em>Privateer: software for the conformational validation of carbohydrate structures</em>, Nature Structural and Molecular Biology <strong>22(11)</strong>, p.833.</li>
+<li>Bagdonas, H., Ungar, D. and Agirre, J., (2020), <em>Leveraging glycomics data in glycoprotein 3D structure validation with Privateer</em>, Beilstein Journal of Organic Chemistry, <strong>16(1)</strong>, p2523-2533.</li>
+</ul>
+</li>
+<li>Clipper
+<ul>
+<li>Cowtan K (2003), <em>The Clipper C++ libraries for X‐ray crystallography</em>, IUCr Comput Comm Newslett <strong>2</strong>, p4–9</li>
+</ul>
+</li>
+<li>CCP4
+<ul>
+<li>Winn MD, Ballard CC, Cowtan KD, Dodson EJ, Emsley P, Evans PR, Keegan RM, Krissinel EB, Leslie AGW, McCoy A, McNicholas SJ, Murshudov GN, Pannu NS, Potterton EA, Powell HR, Read RJ, Vagin A, Wilson KS (2011), <em>Overview of the CCP4 suite and current developments</em>, Acta Cryst <strong>D67</strong>, p235–242.</li>
+</ul>
+</li>
+<li>Gemmi
+<ul>
+<li><a href="https://github.com/project-gemmi/gemmi">https://github.com/project-gemmi/gemmi</a></li>
+</ul>
+</li>
+<li>Gesamt
+<ul>
+<li>Krissinel E. (2012), <em>Enhanced fold recognition using efficient short fragment clustering</em>, Journal of molecular biochemistry, <strong>1(2)</strong>, p76–85.</li>
+</ul>
+</li>
+<li>ProSMART
+<ul>
+<li>R.A. Nicholls, M. Fischer, S. McNicholas and G.N. Murshudov (2014) <em>Conformation-Independent Structural Comparison of Macromolecules with ProSMART.</em> Acta Cryst. <strong>D70</strong>, p2487-2499.</li>
+</ul>
+</li>
+<li>GSL
+<ul>
+<li>M. Galassi et al, GNU Scientific Library Reference Manual (3rd Ed.), ISBN 0954612078</li>
+<li>https://www.gnu.org/software/gsl/</li>
+</ul>
+</li>
+<li>FFTW
+<ul>
+<li>Frigo, Matteo and Johnson, Steven G. (2005), <em>The Design and Implementation of FFTW3</em>, Proceedings of the IEEE <strong>93(2)</strong>, p216-231.</li>
+</ul>
+</li>
+<li>RDKit
+<ul>
+<li>RDKit: Open-source cheminformatics <a href="https://www.rdkit.org">https://www.rdkit.org</a></li>
+</ul>
+</li>
+<li>Boost
+<ul>
+<li>Boost C++ libraries <a href="https://www.boost.org/users/license.html">https://www.boost.org/users/license.html</a></li>
+</ul>
+</li>
+<li>GLM
+<ul>
+<li>Open GL Mathematics <a href="https://github.com/g-truc/glm">https://github.com/g-truc/glm</a></li>
+</ul>
+</li>
+</ul></article>
+    </section>
+
+
+
+
+
+
+            </div>
+            
+            <footer class="footer">
+                <div class="content has-text-centered">
+                    <p>Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.2</a></p>
+                    <p class="sidebar-created-by">
+                        <a href="https://github.com/SoftwareBrothers/better-docs" target="_blank">BetterDocs theme</a> provided with <i class="fas fa-heart"></i> by
+                        <a href="http://softwarebrothers.co" target="_blank">SoftwareBrothers - JavaScript Development Agency</a>
+                    </p>
+                </div>
+            </footer>
+            
+        </div>
+        <div id="side-nav" class="side-nav">
+        </div>
+    </div>
+<script src="scripts/app.min.js"></script>
+<script>PR.prettyPrint();</script>
+<script src="scripts/linenumber.js"> </script>
+
+<script src="scripts/search.js"> </script>
+
+
+</body>
+</html>
