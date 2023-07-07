@@ -3,6 +3,11 @@ import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
 import { libcootApi } from "../types/libcoot";
 
+/**
+ * Represents a map
+ * @constructor
+ * @param {moorhen.CommandCentre} commandCentre - A command centre instance
+*/
 export class MoorhenMap implements moorhen.Map {
     
     type: string
