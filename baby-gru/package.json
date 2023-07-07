@@ -77,7 +77,8 @@
     "package": "npm run build && electron-forge package",
     "make-mac": "npm run build && electron-forge make --platform darwin",
     "make-linux": "npm run build && electron-forge make --platform linux",
-    "make-win32": "npm run build && electron-forge make --platform win32"
+    "make-win32": "npm run build && electron-forge make --platform win32",
+    "create-docs": "npx genversion -e -p ./package.json -d -s ./src/version.js && npx jsdoc -c jsdoc.json"
   },
   "eslintConfig": {
     "extends": [

@@ -9,7 +9,7 @@
       "includePattern": ".(jsx|js|ts|tsx)$"
     },
     "plugins": [
-        "/home/runner/work/_actions/andstor/jsdoc-action/v1/node_modules/better-docs/typescript"
+        "node_modules/better-docs/typescript"
     ],
     "typescript": {
         "moduleRoot": "./src"
@@ -18,6 +18,12 @@
         "better-docs": {
             "name": "My React components"
           }
+    },
+    "opts": {
+        "template": "node_modules/better-docs",
+        "destination": "docs",
+        "recurse": true,
+        "readme": "README.md"
     },
     "sourceType": "module"
   }
