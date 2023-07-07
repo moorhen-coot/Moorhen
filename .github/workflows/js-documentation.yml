@@ -28,10 +28,10 @@ jobs:
         run: yarn install
       - name: compile jsDocs
         working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
-        run: |             
+        run: |
           cd /home/runner/work/Moorhen/Moorhen/baby-gru/
-          npx typedoc --out docs src
-  
+          npx jsdoc -c jsdoc.json
+
   deploy:
     runs-on: ubuntu-latest
     needs: build
@@ -39,5 +39,5 @@ jobs:
       - name: Publishing on Github Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
-          deploy_key: ${{ secrets.ACTIONS_DEPLOY_KEY }}
+          deploy_key: ${{ secrets.DEPLOY_PRIVATE_KEY }}
           publish_dir: /home/runner/work/Moorhen/Moorhen/baby-gru/docs
