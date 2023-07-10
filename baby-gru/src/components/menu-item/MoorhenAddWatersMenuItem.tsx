@@ -40,7 +40,7 @@ export const MoorhenAddWatersMenuItem = (props: {
         }, true)
         const selectedMolecule = props.molecules.find(molecule => molecule.molNo === molNo)
         selectedMolecule.setAtomsDirty(true)
-        await selectedMolecule.redraw(props.glRef)
+        await selectedMolecule.redraw()
         const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: molNo } })
         document.dispatchEvent(scoresUpdateEvent)
 

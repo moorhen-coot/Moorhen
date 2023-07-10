@@ -118,9 +118,9 @@ export const MoorhenContextButtonBase = (props: {
         const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: props.selectedMolecule.molNo } })
         document.dispatchEvent(scoresUpdateEvent)
         props.selectedMolecule.setAtomsDirty(true)
-        props.selectedMolecule.clearBuffersOfStyle('hover', props.glRef)
+        props.selectedMolecule.clearBuffersOfStyle('hover')
         await Promise.all([
-            props.selectedMolecule.redraw(props.glRef),
+            props.selectedMolecule.redraw(),
             props.timeCapsuleRef.current.addModification() 
         ])
       

@@ -11,7 +11,7 @@ import { libcootApi } from "../types/libcoot";
 
 const apresEdit = (molecule: moorhen.Molecule, glRef: React.RefObject<webGL.MGWebGL>, timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>, setHoveredAtom: (arg0: moorhen.HoveredAtom) => void) => {
     molecule.setAtomsDirty(true)
-    molecule.redraw(glRef)
+    molecule.redraw()
     setHoveredAtom({ molecule: null, cid: null })
     const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: glRef.current.origin,  modifiedMolecule: molecule.molNo} })
     document.dispatchEvent(scoresUpdateEvent)
@@ -529,7 +529,7 @@ export const babyGruKeyPress = (event: KeyboardEvent, collectedProps: MoorhenCon
             } else {
                 return
             }
-            selectedMolecule.centreAndAlignViewOn(glRef, `/*/${chosenAtom.chain_id}/${nextResNum}-${nextResNum}/`)
+            selectedMolecule.centreAndAlignViewOn(`/*/${chosenAtom.chain_id}/${nextResNum}-${nextResNum}/`)
         })
         .catch(err => console.log(err))
 

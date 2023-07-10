@@ -1,7 +1,7 @@
 import { useEffect, useCallback, useReducer, useRef, useState, useContext } from 'react';
 import { Container, Col, Row, Spinner, Toast, ToastContainer } from 'react-bootstrap';
 import { MoorhenWebMG } from './webMG/MoorhenWebMG';
-import { convertRemToPx, convertViewtoPx, getTooltipShortcutLabel, createLocalStorageInstance, allFontsSet } from '../utils/MoorhenUtils';
+import { convertRemToPx, convertViewtoPx, getTooltipShortcutLabel, createLocalStorageInstance, allFontsSet, itemReducer } from '../utils/MoorhenUtils';
 import { historyReducer, initialHistoryState } from './navbar-menus/MoorhenHistoryMenu';
 import { MoorhenCommandCentre } from "../utils/MoorhenCommandCentre"
 import { MoorhenContext } from "../utils/MoorhenContext";
@@ -14,7 +14,6 @@ import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
 import { MoorhenNavBar } from "./navbar-menus/MoorhenNavBar"
 import { moorhen } from '../types/moorhen';
 import { webGL } from '../types/mgWebGL';
-import { itemReducer } from "./MoorhenApp"
 
 const initialMoleculesState: moorhen.Molecule[] = []
 
@@ -394,7 +393,7 @@ export const MoorhenContainer = (props: MoorhenContainerPropsInterface) => {
                 hoveredAtom.molecule !== lastHoveredAtom.current.molecule ||
                 hoveredAtom.cid !== lastHoveredAtom.current.cid
             ) {
-                hoveredAtom.molecule.drawHover(glRef, hoveredAtom.cid)
+                hoveredAtom.molecule.drawHover(hoveredAtom.cid)
                 //if we have changed molecule, might have to clean up hover display item of previous molecule
             }
         }
@@ -403,7 +402,7 @@ export const MoorhenContainer = (props: MoorhenContainerPropsInterface) => {
             lastHoveredAtom.current.molecule !== null &&
             lastHoveredAtom.current.molecule !== hoveredAtom.molecule
         ) {
-            lastHoveredAtom.current.molecule.clearBuffersOfStyle("hover", glRef)
+            lastHoveredAtom.current.molecule.clearBuffersOfStyle("hover")
         }
 
         lastHoveredAtom.current = hoveredAtom
@@ -432,7 +431,7 @@ export const MoorhenContainer = (props: MoorhenContainerPropsInterface) => {
                 glRef.current.setActiveMolecule(null)
         }
         if (prevActiveMoleculeRef.current) {
-            prevActiveMoleculeRef.current.applyTransform(glRef).then(() => resetActiveGL())
+            prevActiveMoleculeRef.current.applyTransform().then(() => resetActiveGL())
         } else {
             resetActiveGL()
         }

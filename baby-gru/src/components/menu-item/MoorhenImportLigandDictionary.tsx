@@ -62,7 +62,7 @@ const MoorhenImportLigandDictionary = (props: {
                 }, true),
                 ...molecules.map(molecule => {
                     molecule.addDictShim(fileContent)
-                    return molecule.redraw(glRef)
+                    return molecule.redraw()
                 })
             ])
             
@@ -78,24 +78,24 @@ const MoorhenImportLigandDictionary = (props: {
                     ...glRef.current.origin.map(coord => -coord)]
             }, true) as moorhen.WorkerResponse<number> 
             if (result.data.result.status === "Completed") {
-                newMolecule = new MoorhenMolecule(commandCentre, monomerLibraryPath)
+                newMolecule = new MoorhenMolecule(commandCentre, glRef, monomerLibraryPath)
                 newMolecule.molNo = result.data.result.result
                 newMolecule.name = instanceName
                 newMolecule.setBackgroundColour(backgroundColor)
                 newMolecule.cootBondsOptions.smoothness = defaultBondSmoothness
                 await newMolecule.addDict(fileContent)
                 changeMolecules({ action: "Add", item: newMolecule })
-                await newMolecule.fetchIfDirtyAndDraw("CBs", glRef)
+                await newMolecule.fetchIfDirtyAndDraw("CBs")
                 if (addToMoleculeValueRef.current !== -1) {
                     const toMolecule = molecules.find(molecule => molecule.molNo === addToMoleculeValueRef.current)
                     if (typeof toMolecule !== 'undefined') {
                         const otherMolecules = [newMolecule]
-                        await toMolecule.mergeMolecules(otherMolecules, glRef, true)
+                        await toMolecule.mergeMolecules(otherMolecules, true)
                         const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: glRef.current.origin, modifiedMolecule: toMolecule.molNo } })
                         document.dispatchEvent(scoresUpdateEvent)
-                        await toMolecule.redraw(glRef)
+                        await toMolecule.redraw()
                     } else {
-                        await newMolecule.redraw(glRef)
+                        await newMolecule.redraw()
                     }
                 }
             }

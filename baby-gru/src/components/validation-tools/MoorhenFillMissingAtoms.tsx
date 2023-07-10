@@ -23,7 +23,7 @@ export const MoorhenFillMissingAtoms = (props: MoorhenSideBarAccordionPropsInter
             }, true)    
         }
         selectedMolecule.setAtomsDirty(true)
-        selectedMolecule.redraw(props.glRef)
+        selectedMolecule.redraw()
         const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: {origin: props.glRef.current.origin,  modifiedMolecule: selectedMolecule.molNo} })
         document.dispatchEvent(scoresUpdateEvent);    
     }
@@ -59,7 +59,7 @@ export const MoorhenFillMissingAtoms = (props: MoorhenSideBarAccordionPropsInter
                                 {label}
                             </Col>
                             <Col className='col-3' style={{margin: '0', padding:'0', justifyContent: 'right', display:'flex'}}>
-                                <Button style={{marginRight:'0.5rem'}} onClick={() => selectedMolecule.centreOn(props.glRef, `/*/${residue.chainId}/${residue.resNum}-${residue.resNum}/*`)}>
+                                <Button style={{marginRight:'0.5rem'}} onClick={() => selectedMolecule.centreOn(`/*/${residue.chainId}/${residue.resNum}-${residue.resNum}/*`)}>
                                     View
                                 </Button>
                                 <Button style={{marginRight:'0.5rem'}} onClick={() => {

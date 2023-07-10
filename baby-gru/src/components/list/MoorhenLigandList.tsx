@@ -137,7 +137,7 @@ export const MoorhenLigandList = (props: {
                                                                 title={`${ligand.chainName}/${ligand.resNum}(${ligand.resName})`}
                                                                 variant="outlined"
                                                                 >
-                                                                <MenuItem onClick={() => {props.molecule.centreOn(props.glRef, `/*/${ligand.chainName}/${ligand.resNum}-${ligand.resNum}/*`)}}>
+                                                                <MenuItem onClick={() => {props.molecule.centreOn(`/*/${ligand.chainName}/${ligand.resNum}-${ligand.resNum}/*`)}}>
                                                                     Center on ligand
                                                                 </MenuItem>
                                                                 <hr></hr>
@@ -150,13 +150,13 @@ export const MoorhenLigandList = (props: {
                                                                     checked={showState[keycd]}
                                                                     onChange={(e) => {
                                                                         if (e.target.checked) {
-                                                                            props.molecule.show(keycd, props.glRef)
+                                                                            props.molecule.show(keycd)
                                                                             const changedState = { ...showState }
                                                                             changedState[keycd] = true
                                                                             setShowState(changedState)
                                                                         }
                                                                         else {
-                                                                            props.molecule.hide(keycd, props.glRef)
+                                                                            props.molecule.hide(keycd)
                                                                             const changedState = { ...showState }
                                                                             changedState[keycd] = false
                                                                             setShowState(changedState)
@@ -170,13 +170,13 @@ export const MoorhenLigandList = (props: {
                                                                     style={{'margin': '0.5rem'}}
                                                                     onChange={(e) => {
                                                                         if (e.target.checked) {
-                                                                            props.molecule.show(keycf, props.glRef)
+                                                                            props.molecule.show(keycf)
                                                                             const changedState = { ...showState }
                                                                             changedState[keycf] = true
                                                                             setShowState(changedState)
                                                                         }
                                                                         else {
-                                                                            props.molecule.hide(keycf, props.glRef)
+                                                                            props.molecule.hide(keycf)
                                                                             const changedState = { ...showState }
                                                                             changedState[keycf] = false
                                                                             setShowState(changedState)

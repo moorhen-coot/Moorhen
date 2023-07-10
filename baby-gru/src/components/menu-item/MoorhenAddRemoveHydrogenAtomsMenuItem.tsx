@@ -26,11 +26,11 @@ export const MoorhenAddRemoveHydrogenAtomsMenuItem = (props: {
             })
             const selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedMolNo)
             selectedMolecule.setAtomsDirty(true)
-            selectedMolecule.redraw(props.glRef)
+            selectedMolecule.redraw()
             document.body.click()
             document.body.click()
         }
-    }, [moleculeSelectRef, props.molecules, props.glRef, props.commandCentre])
+    }, [moleculeSelectRef, props.molecules, props.commandCentre])
 
     const panelContent = <Form.Group>
         <MoorhenMoleculeSelect {...props} label="Molecule" allowAny={false} ref={moleculeSelectRef} />

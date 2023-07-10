@@ -46,7 +46,7 @@ export const MoorhenDeleteUsingCidMenuItem = (props: {
         }, true)
             
         fromMolecules[0].setAtomsDirty(true)
-        fromMolecules[0].redraw(props.glRef)
+        fromMolecules[0].redraw()
         
         props.setPopoverIsShown(false)
     }

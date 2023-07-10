@@ -30,7 +30,7 @@ export const MoorhenAddSimpleMenuItem = (props: {
     const onCompleted = useCallback(async () => {
         const selectedMolecule = props.molecules.find(molecule => molecule.molNo === parseInt(moleculeSelectRef.current.value))
         if (selectedMolecule) {
-            await selectedMolecule.addLigandOfType(molTypeSelectRef.current.value, props.glRef)
+            await selectedMolecule.addLigandOfType(molTypeSelectRef.current.value)
             const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: selectedMolecule.molNo } })
             document.dispatchEvent(scoresUpdateEvent)    
         }

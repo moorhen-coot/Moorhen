@@ -2,7 +2,7 @@ import { useRef, useState, useReducer, useContext, useEffect, useCallback } from
 import { MenuItem } from '@mui/material'
 import { MoorhenContext } from "../../../src/utils/MoorhenContext"
 import { MoorhenContainer, MoorhenContainerPropsInterface, MoorhenControlsInterface } from "../../../src/components/MoorhenContainer"
-import { itemReducer } from "../../../src/components/MoorhenApp"
+import { itemReducer } from "../../../src/utils/MoorhenUtils"
 import { isDarkBackground } from "../../../src/WebGLgComponents/mgWebGL"
 import { MoorhenLegendToast } from './MoorhenLegendToast'
 import { moorhen } from "../../../src/types/moorhen";
@@ -86,7 +86,7 @@ export const MoorhenCloudApp = (props: MoorhenCloudAppPropsInterface) => {
             await Promise.all(
                 maps.map((map: moorhen.Map) => {
                   return map.doCootContour(
-                    glRef, ...glRef.current.origin.map(coord => -coord) as [number, number, number], map.mapRadius, map.contourLevel
+                    ...glRef.current.origin.map(coord => -coord) as [number, number, number], map.mapRadius, map.contourLevel
                   )     
                 })
             )
@@ -153,7 +153,7 @@ export const MoorhenCloudApp = (props: MoorhenCloudAppPropsInterface) => {
         if (props.viewOnly && maps.length > 0) {
             maps.forEach((map: moorhen.Map) => {
                 map.doCootContour(
-                    glRef, ...glRef.current.origin.map(coord => -coord) as [number, number, number], 13.0, 0.8
+                    ...glRef.current.origin.map(coord => -coord) as [number, number, number], 13.0, 0.8
               )
             })
         }
@@ -169,7 +169,7 @@ export const MoorhenCloudApp = (props: MoorhenCloudAppPropsInterface) => {
                 if (molecule.cootBondsOptions.isDarkBackground !== newBackgroundIsDark) {
                     molecule.cootBondsOptions.isDarkBackground = newBackgroundIsDark
                     molecule.setAtomsDirty(true)
-                    return molecule.redraw(glRef)
+                    return molecule.redraw()
                 }
                 return Promise.resolve()
             }))

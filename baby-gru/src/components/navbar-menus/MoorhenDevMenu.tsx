@@ -39,7 +39,7 @@ const doTest = async (props: any) => {
         console.log(`Message from worker back to main thread took ${Date.now() - test.data.messageSendTime} ms (refine_residues_using_atom_cid) - (${test.data.messageId.slice(0, 5)})`)
 
         molecule.setAtomsDirty(true)
-        await molecule.redraw(props.glRef)
+        await molecule.redraw()
         const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: molecule.molNo } })
         document.dispatchEvent(scoresUpdateEvent)
         
@@ -60,14 +60,7 @@ const doColourTest = async (props: any) => {
             commandArgs: [molecule.molNo],
         }, true)
         molecule.setAtomsDirty(true)
-        await molecule.redraw(props.glRef)
-    }
-}
-
-const doUnitCellTest = (props: any) => {
-    const molecule = props.molecules.find(molecule => molecule.molNo === 0)
-    if (typeof molecule !== 'undefined') {
-        props.molecules[0].drawUnitCell(props.glRef)
+        await molecule.redraw()
     }
 }
 
@@ -88,9 +81,6 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
                     </MenuItem>
                     <MenuItem onClick={() => doColourTest(menuItemProps)}>
                         Do colouring test
-                    </MenuItem>
-                    <MenuItem onClick={() => doUnitCellTest(menuItemProps)}>
-                        Draw unit cell...
                     </MenuItem>
                     <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
                         <Form.Check 

@@ -4,9 +4,11 @@ import { readDataFile } from "../../utils/MoorhenUtils"
 import { MoorhenMap } from "../../utils/MoorhenMap"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
+import { webGL } from "../../types/mgWebGL"
 
 export const MoorhenAutoOpenMtzMenuItem = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
+    glRef: React.RefObject<webGL.MGWebGL>;
     changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
     setActiveMap: React.Dispatch<React.SetStateAction<moorhen.Map>>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
@@ -44,7 +46,7 @@ export const MoorhenAutoOpenMtzMenuItem = (props: {
         }))
 
         response.data.result.result.forEach((mapMolNo, index) => {
-            const newMap = new MoorhenMap(props.commandCentre)
+            const newMap = new MoorhenMap(props.commandCentre, props.glRef)
             newMap.molNo = mapMolNo
             newMap.name = `${file.name.replace('mtz', '')}-map-${index}`
             newMap.isDifference = isDiffMapResponses[index].data.result.result
@@ -52,7 +54,7 @@ export const MoorhenAutoOpenMtzMenuItem = (props: {
             if (index === 0) props.setActiveMap(newMap)
         })
 
-    }, [filesRef.current, props.changeMaps, props.commandCentre])
+    }, [filesRef.current, props.changeMaps, props.setActiveMap, props.commandCentre, props.glRef])
 
     return <MoorhenBaseMenuItem
         id='auto-open-mtz-menu-item'

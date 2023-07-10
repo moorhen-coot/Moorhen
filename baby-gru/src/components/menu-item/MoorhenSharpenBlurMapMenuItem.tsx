@@ -4,12 +4,14 @@ import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
+import { webGL } from "../../types/mgWebGL";
 
 export const MoorhenSharpenBlurMapMenuItem = (props: {
     maps: moorhen.Map[];
     changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>
     commandCentre: React.RefObject<moorhen.CommandCentre>;
+    glRef: React.RefObject<webGL.MGWebGL>;
 }) => {
 
     const factorRef = useRef<HTMLInputElement>()
@@ -24,31 +26,26 @@ export const MoorhenSharpenBlurMapMenuItem = (props: {
     </>
 
 
-    const onCompleted = () => {
+    const onCompleted = async () => {
         const mapNo = parseInt(selectRef.current.value)
         const bFactor = parseFloat(factorRef.current.value)
-        const newMap = new MoorhenMap(props.commandCentre)
+        const newMap = new MoorhenMap(props.commandCentre, props.glRef)
 
-        const blurMap = () => {
-            return props.commandCentre.current.cootCommand({
-                returnType: 'status',
-                command: 'sharpen_blur_map',
-                commandArgs: [mapNo, bFactor, false
-                ]
-            }, true) as Promise<moorhen.WorkerResponse<number>>
+        const result = await props.commandCentre.current.cootCommand({
+            returnType: 'status',
+            command: 'sharpen_blur_map',
+            commandArgs: [mapNo, bFactor, false
+            ]
+        }, true) as moorhen.WorkerResponse<number>
+        
+        if (result.data.result.result !== -1) {
+            newMap.molNo = result.data.result.result
+            newMap.name = `Map ${mapNo} blurred by ${bFactor}`
+            const oldMaps = props.maps.filter(map => map.molNo === mapNo)
+            newMap.isDifference = oldMaps[0].isDifference
+            props.changeMaps({ action: 'Add', item: newMap })
         }
-
-        blurMap()
-            .then(result => {
-                if (result.data.result.result !== -1) {
-                    newMap.molNo = result.data.result.result
-                    newMap.name = `Map ${mapNo} blurred by ${bFactor}`
-                    const oldMaps = props.maps.filter(map => map.molNo === mapNo)
-                    newMap.isDifference = oldMaps[0].isDifference
-                    props.changeMaps({ action: 'Add', item: newMap })
-                }
-                return Promise.resolve(result)
-            })
+        return result
     }
 
     return <MoorhenBaseMenuItem

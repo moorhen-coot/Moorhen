@@ -43,15 +43,15 @@ export const MoorhenLoadTutorialDataMenuItem = (props: {
             return
         }
         const tutorialNumber = tutorialNumberSelectorRef.current.value
-        const newMolecule = new MoorhenMolecule(props.commandCentre, props.monomerLibraryPath)
+        const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.monomerLibraryPath)
         newMolecule.setBackgroundColour(props.backgroundColor)
         newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
-        const newMap = new MoorhenMap(props.commandCentre)
-        const newDiffMap = new MoorhenMap(props.commandCentre)
+        const newMap = new MoorhenMap(props.commandCentre, props.glRef)
+        const newDiffMap = new MoorhenMap(props.commandCentre, props.glRef)
         await newMolecule.loadToCootFromURL(`${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-structure-number-${tutorialNumber}.pdb`, `mol-${tutorialNumber}`)
-        await newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef)
+        await newMolecule.fetchIfDirtyAndDraw('CBs')
         props.changeMolecules({ action: "Add", item: newMolecule })
-        await newMolecule.centreOn(props.glRef, '/*/*/*/*', false)
+        await newMolecule.centreOn('/*/*/*/*', false)
         await newMap.loadToCootFromMtzURL(
             `${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-map-number-${tutorialNumber}.mtz`,
             `map-${tutorialNumber}`,

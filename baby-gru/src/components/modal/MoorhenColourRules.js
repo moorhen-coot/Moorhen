@@ -101,8 +101,8 @@ export const MoorhenColourRules = (props) => {
             return
         }
         const selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedModel)
-        await selectedMolecule.setColourRules(props.glRef, ruleList, true)
-    }, [selectedModel, ruleList, props.molecules, props.glRef])
+        await selectedMolecule.setColourRules(ruleList, true)
+    }, [selectedModel, ruleList, props.molecules])
 
     const createRule = () => {
         const selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedModel)

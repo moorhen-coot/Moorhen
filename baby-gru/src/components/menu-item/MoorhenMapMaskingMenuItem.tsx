@@ -8,6 +8,7 @@ import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenLigandSelect } from "../select/MoorhenLigandSelect"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
+import { webGL } from "../../types/mgWebGL";
 
 export const MoorhenMapMaskingMenuItem = (props: {
     molecules: moorhen.Molecule[];
@@ -15,6 +16,7 @@ export const MoorhenMapMaskingMenuItem = (props: {
     changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>
     commandCentre: React.RefObject<moorhen.CommandCentre>;
+    glRef: React.RefObject<webGL.MGWebGL>;
 }) => {
 
     const [invertFlag, setInvertFlag] = useState<boolean>(false)
@@ -27,7 +29,7 @@ export const MoorhenMapMaskingMenuItem = (props: {
     const ligandSelectRef = useRef<null | HTMLSelectElement>(null)
     const cidInputRef = useRef<null | HTMLInputElement>(null)
 
-    const { commandCentre, maps, changeMaps } = props
+    const { commandCentre, maps, changeMaps, glRef } = props
 
     const panelContent = <>
         <Form.Group style={{ margin: '0.5rem', width: '20rem' }}>
@@ -60,7 +62,7 @@ export const MoorhenMapMaskingMenuItem = (props: {
     const onCompleted = useCallback(async () => {
         const mapNo = parseInt(mapSelectRef.current.value)
         const molNo = parseInt(moleculeSelectRef.current.value)
-        const newMap = new MoorhenMap(commandCentre)
+        const newMap = new MoorhenMap(commandCentre, glRef)
 
         let cidLabel: string
 
@@ -96,7 +98,7 @@ export const MoorhenMapMaskingMenuItem = (props: {
             changeMaps({ action: 'Add', item: newMap })
         }
             
-    }, [commandCentre, maps, changeMaps])
+    }, [commandCentre, maps, changeMaps, glRef])
 
     return <MoorhenBaseMenuItem
         id='mask-map-menu-item'

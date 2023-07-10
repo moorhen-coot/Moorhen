@@ -5,12 +5,14 @@ import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
+import { libcootApi } from "../../types/libcoot";
 
 export const MoorhenSuperposeMenuItem = (props: {
     molecules: moorhen.Molecule[];
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>; 
+    setSuperposeResults: React.Dispatch<React.SetStateAction<false | libcootApi.SuperposeResultsJS>>; 
 }) => {
     
     const refChainSelectRef = useRef<null | HTMLSelectElement>(null);
@@ -89,7 +91,7 @@ export const MoorhenSuperposeMenuItem = (props: {
             return
         }
 
-        await props.commandCentre.current.cootCommand({
+        const result = await props.commandCentre.current.cootCommand({
             message: 'coot_command',
             command: 'SSM_superpose',
             returnType: 'superpose_results',
@@ -99,16 +101,14 @@ export const MoorhenSuperposeMenuItem = (props: {
                 movMolecule.molNo,
                 movChainSelectRef.current.value
             ],
-        })
+        }) as moorhen.WorkerResponse<libcootApi.SuperposeResultsJS>
 
-        refMolecule.setAtomsDirty(true)
         movMolecule.setAtomsDirty(true)
-        await Promise.all([
-            refMolecule.redraw(props.glRef),
-            movMolecule.redraw(props.glRef)
-        ])
+        await movMolecule.redraw()
+        movMolecule.centreOn('/*/*/*/*', true)
+        props.setSuperposeResults(result.data.result.result)
 
-    }, [props.molecules, props.glRef, props.commandCentre])
+    }, [props.molecules, props.commandCentre])
 
     return <MoorhenBaseMenuItem
         id='superpose-models-menu-item'

@@ -8,9 +8,10 @@ import { MoorhenCommandCentre } from './utils/MoorhenCommandCentre';
 import { MoorhenTimeCapsule } from './utils/MoorhenTimeCapsule';
 import { MoorhenMoleculeSelect } from "./components/select/MoorhenMoleculeSelect";
 import { MoorhenMapSelect } from "./components/select/MoorhenMapSelect";
+import { itemReducer } from "./utils/MoorhenUtils";
 
 export {
     ErrorBoundary, MoorhenApp, MoorhenContainer, MoorhenContextProvider, MoorhenContext,
     MoorhenMolecule, MoorhenMap, MoorhenCommandCentre, MoorhenTimeCapsule, MoorhenMoleculeSelect,
-    MoorhenMapSelect
+    MoorhenMapSelect, itemReducer
 };

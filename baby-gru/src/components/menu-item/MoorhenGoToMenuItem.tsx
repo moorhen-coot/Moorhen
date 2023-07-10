@@ -44,7 +44,7 @@ export const MoorhenGoToMenuItem = (props: {
             return
         }
 
-        molecule.centreOn(props.glRef, `/${residueSpec.mol_no ? residueSpec.mol_no : '*'}/${residueSpec.chain_id}/${residueSpec.res_no}-${residueSpec.res_no}/*`)
+        molecule.centreOn(`/${residueSpec.mol_no ? residueSpec.mol_no : '*'}/${residueSpec.chain_id}/${residueSpec.res_no}-${residueSpec.res_no}/*`)
     }
 
     return <MoorhenBaseMenuItem

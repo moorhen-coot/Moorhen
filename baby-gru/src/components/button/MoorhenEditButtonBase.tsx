@@ -75,8 +75,8 @@ export const MoorhenEditButtonBase = forwardRef<HTMLButtonElement, MoorhenEditBu
                 }
             }
             molecule.setAtomsDirty(true)
-            molecule.clearBuffersOfStyle('hover', props.glRef)
-            await molecule.redraw(props.glRef)
+            molecule.clearBuffersOfStyle('hover')
+            await molecule.redraw()
             const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: molecule.molNo } })
             document.dispatchEvent(scoresUpdateEvent)
             if (props.onExit) {

@@ -5,22 +5,7 @@ import { MoorhenContainer } from "./MoorhenContainer"
 import { moorhen } from '../types/moorhen';
 import { webGL } from '../types/mgWebGL';
 import { MoorhenControlsInterface } from "./MoorhenContainer"
-
-export function itemReducer<T extends moorhen.Molecule | moorhen.Map> (oldList: T[], change: moorhen.MolChange<T>): T[] {
-    if (change.action === 'Add') {
-        return [...oldList, change.item]
-    }
-    else if (change.action === 'Remove') {
-        return oldList.filter(item =>  item.molNo !== change.item.molNo)
-    }
-    else if (change.action === 'AddList') {
-        return oldList.concat(change.items)
-    }
-    else if (change.action === 'Empty') {
-        return []
-    }
-    return oldList
-}
+import { itemReducer } from '../utils/MoorhenUtils';
 
 const initialMoleculesState: moorhen.Molecule[] = []
 

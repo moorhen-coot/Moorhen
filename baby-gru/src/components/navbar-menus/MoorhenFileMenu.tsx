@@ -19,7 +19,7 @@ import { moorhen } from "../../types/moorhen";
 
 export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
 
-    const { changeMolecules, changeMaps, commandCentre, glRef } = props;
+    const { changeMolecules, changeMaps, commandCentre, glRef, monomerLibraryPath } = props;
     const [popoverIsShown, setPopoverIsShown] = useState<boolean>(false)
     const [remoteSource, setRemoteSource] = useState<string>("PDBe")
     const [isValidPdbId, setIsValidPdbId] = useState<boolean>(true)
@@ -38,18 +38,18 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         })
         let newMolecules: moorhen.Molecule[] = await Promise.all(readPromises)
 
-        let drawPromises: Promise<boolean>[] = []
+        let drawPromises: Promise<void>[] = []
         for (const newMolecule of newMolecules) {
-            drawPromises.push(newMolecule.fetchIfDirtyAndDraw('CBs', glRef))
+            drawPromises.push(newMolecule.fetchIfDirtyAndDraw('CBs'))
         }
         await Promise.all(drawPromises)
 
         changeMolecules({ action: "AddList", items: newMolecules })
-        newMolecules.at(-1).centreOn(glRef, '/*/*/*/*', false)
+        newMolecules.at(-1).centreOn('/*/*/*/*', false)
     }
 
     const readPdbFile = (file: File): Promise<moorhen.Molecule> => {
-        const newMolecule = new MoorhenMolecule(commandCentre, props.monomerLibraryPath)
+        const newMolecule = new MoorhenMolecule(commandCentre, glRef, monomerLibraryPath)
         newMolecule.setBackgroundColour(props.backgroundColor)
         newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
         return newMolecule.loadToCootFromFile(file)
@@ -114,7 +114,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                         ruleType: 'af2-plddt',
                         label: `//*`
                     }]
-                    newMolecule.setColourRules(glRef, newRule, false)
+                    newMolecule.setColourRules(newRule, false)
                 })
                 .catch(err => console.log(err))
         }
@@ -136,15 +136,15 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     }
 
     const fetchMoleculeFromURL = (url: RequestInfo | URL, molName: string): Promise<moorhen.Molecule> => {
-        const newMolecule = new MoorhenMolecule(commandCentre, props.monomerLibraryPath)
+        const newMolecule = new MoorhenMolecule(commandCentre, glRef, monomerLibraryPath)
         newMolecule.setBackgroundColour(props.backgroundColor)
         newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
         return new Promise(async (resolve, reject) => {
             try {
                 await newMolecule.loadToCootFromURL(url, molName)
-                await newMolecule.fetchIfDirtyAndDraw('CBs', glRef)
+                await newMolecule.fetchIfDirtyAndDraw('CBs')
                 changeMolecules({ action: "Add", item: newMolecule })
-                newMolecule.centreOn(glRef, '/*/*/*/*', false)
+                newMolecule.centreOn('/*/*/*/*', false)
                 resolve(newMolecule)
             } catch (err) {
                 console.log(`Cannot fetch molecule from ${url}`)
@@ -155,7 +155,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     }
 
     const fetchMapFromURL = (url: RequestInfo | URL, mapName: string, isDiffMap: boolean = false): Promise<void> => {
-        const newMap = new MoorhenMap(props.commandCentre)
+        const newMap = new MoorhenMap(commandCentre, glRef)
         return new Promise(async () => {
             try {
                 await newMap.loadToCootFromMapURL(url, mapName, isDiffMap)
@@ -168,7 +168,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     }
 
     const fetchMtzFromURL = async (url: RequestInfo | URL, mapName: string, selectedColumns: moorhen.selectedMtzColumns): Promise<void> => {
-        const newMap = new MoorhenMap(props.commandCentre)
+        const newMap = new MoorhenMap(commandCentre, glRef)
         return new Promise(async () => {
             try {
                 await newMap.loadToCootFromMtzURL(url, mapName, selectedColumns)
@@ -186,24 +186,24 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         
         // Delete current scene
         props.molecules.forEach(molecule => {
-            molecule.delete(props.glRef)
+            molecule.delete()
         })
         changeMolecules({ action: "Empty" })
 
         props.maps.forEach(map => {
-            map.delete(props.glRef)
+            map.delete()
         })
         changeMaps({ action: "Empty" })
 
         // Load molecules stored in session from pdb string
         const newMoleculePromises = sessionData.moleculeData.map(storedMoleculeData => {
-            const newMolecule = new MoorhenMolecule(commandCentre, props.monomerLibraryPath)
+            const newMolecule = new MoorhenMolecule(commandCentre, glRef, monomerLibraryPath)
             return newMolecule.loadToCootFromString(storedMoleculeData.pdbData, storedMoleculeData.name)
         })
         
         // Load maps stored in session
         const newMapPromises = sessionData.mapData.map(storedMapData => {
-            const newMap = new MoorhenMap(commandCentre)
+            const newMap = new MoorhenMap(commandCentre, props.glRef)
             if (sessionData.includesAdditionalMapData) {
                 return newMap.loadToCootFromMapData(
                     Uint8Array.from(Object.values(storedMapData.mapData)).buffer, 
@@ -232,12 +232,12 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         const newMaps = loadPromises.filter(item => item.type === 'map') as moorhen.Map[] 
 
         // Draw the molecules with the styles stored in session
-        let drawPromises: Promise<boolean>[] = []
+        let drawPromises: Promise<void>[] = []
         newMolecules.forEach((molecule, moleculeIndex) => {
             const storedMoleculeData = sessionData.moleculeData[moleculeIndex]
             molecule.cootBondsOptions = storedMoleculeData.cootBondsOptions
             const styles = storedMoleculeData.displayObjectsKeys
-            styles.forEach(style => drawPromises.push(molecule.fetchIfDirtyAndDraw(style, glRef)))
+            styles.forEach(style => drawPromises.push(molecule.fetchIfDirtyAndDraw(style)))
         })
 
         // Associate maps to reflection data
