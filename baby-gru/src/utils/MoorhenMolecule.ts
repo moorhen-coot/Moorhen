@@ -134,7 +134,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * Replace the current molecule with the model in a file
      * @param {string} fileUrl - The uri to the file with the new model
      * @param {string} molName - The molecule name
-     * @returns {Promise<void>}
      */
     async replaceModelWithFile(fileUrl: string, molName: string): Promise<void> {
         let coordData: string
@@ -168,7 +167,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
     /**
      * Turn on/off molecule symmetry
-     * @returns {Promise<void>}
      */
     toggleSymmetry(): Promise<void> {
         this.symmetryOn = !this.symmetryOn;
@@ -178,7 +176,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
     /**
      * Set the radius to draw symmetry mates
      * @param {number} radius - Symmetry mates with an atom within this radius will be drawn
-     * @returns {Promise<void>}
      */
     setSymmetryRadius(radius: number): Promise<void> {
         this.symmetryRadius = radius
@@ -224,7 +221,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
     /**
      * Set the background colour where the molecule is being drawn. Used to detect whether the background is dark and molecule needs to be rendered using lighter colours.
-     * @param {[number, number, number, number]} backgroundColour - The rgba indicating the background colour
+     * @param {number[]} backgroundColour - The rgba indicating the background colour
      */
     setBackgroundColour(backgroundColour: [number, number, number, number]) {
         this.cootBondsOptions.isDarkBackground = isDarkBackground(...backgroundColour)
@@ -246,7 +243,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
     /**
      * Get the unit cell parameters for the molecule
-     * @returns {  { a: number; b: number; c: number; alpha: number; beta: number; gamma: number; } } - An object with the unit cell parameters
+     * @returns An object with the unit cell parameters
      */
     getUnitCellParams(): { a: number; b: number; c: number; alpha: number; beta: number; gamma: number; } {
         if (this.gemmiStructure === null) {
@@ -470,7 +467,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
     /**
      * Copy a fragment of the current model into a new molecule using a selection CID
      * @param {string} cid - The CID selection indicating the residues that will be copied into the new fragment
-     * @param {[number, number, number, number]} backgroundColor - The background colour used to draw the new molecule
+     * @param {number[]} backgroundColor - The background colour used to draw the new molecule
      * @param {number} defaultBondSmoothness - The default bond smoothness for the new molecule
      * @param {boolean} [doRecentre=true] - Indicates whether the view should re-centre on the new copied fragment
      * @returns {Promise<moorhen.Molecule>}  New molecule instance
@@ -1002,7 +999,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
     /**
      * Draw molecule bonds using coot's representations
      * @param {string} style - The style
-     * @returns 
      */
     drawCootBonds(style: string) {
         const name = style
@@ -1013,7 +1009,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * Draw molecule bonds for a given set of residues selected using a CID
      * @param {string} name - The style name
      * @param {string} cid - The CID selection for the residues to be drawn
-     * @returns 
      */
     async drawCootSelectionBonds(name: string, cid: null | string): Promise<void> {
         let meshCommand: Promise<moorhen.WorkerResponse<libcootApi.InstancedMeshJS>>
@@ -1251,7 +1246,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
     /**
      * Check whether a particular buffer is included within the representation buffer for this molecule
-     * @param { { id: string; } } bufferIn - The buffer with the ID to search for
+     * @param bufferIn - The buffer with the ID to search for
      * @returns {boolean} True if the buffer is included in this molecule
      */
     buffersInclude(bufferIn: { id: string; }): boolean {
@@ -1291,7 +1286,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
     /**
      * Draw a line between a pair of atoms
-     * @param {[moorhen.AtomInfo, moorhen.AtomInfo][]} gemmiAtomPairs - The two atom pairs used to draw the line
+     * @param {moorhen.AtomInfo[][]} gemmiAtomPairs - The two atom pairs used to draw the line
      * @param {string} style - The style used to draw the line
      * @param {number[]} colour - The colour used to draw the line
      * @param {boolean} [labelled=false] - Indicates whether the line should be annotated with a label
