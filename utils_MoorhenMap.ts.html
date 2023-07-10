@@ -121,7 +121,8 @@ import { libcootApi } from "../types/libcoot";
 /**
  * Represents a map
  * @constructor
- * @param {moorhen.CommandCentre} commandCentre - A command centre instance
+ * @param {React.RefObject&lt;moorhen.CommandCentre>} commandCentre - A react reference to the command centre instance
+ * @param {React.RefObject&lt;webGL.MGWebGL>} glRef - A react reference to the MGWebGL instance
 */
 export class MoorhenMap implements moorhen.Map {
     
@@ -129,6 +130,7 @@ export class MoorhenMap implements moorhen.Map {
     name: string
     molNo: number
     commandCentre: React.RefObject&lt;moorhen.CommandCentre>
+    glRef: React.RefObject&lt;webGL.MGWebGL>
     contourLevel: number
     mapRadius: number
     mapColour: [number, number, number, number]
@@ -151,11 +153,12 @@ export class MoorhenMap implements moorhen.Map {
         a: number;
     }
 
-    constructor(commandCentre: React.RefObject&lt;moorhen.CommandCentre>) {
+    constructor(commandCentre: React.RefObject&lt;moorhen.CommandCentre>, glRef: React.RefObject&lt;webGL.MGWebGL>) {
         this.type = 'map'
         this.name = "unnamed"
         this.molNo = null
         this.commandCentre = commandCentre
+        this.glRef = glRef
         this.contourLevel = 0.8
         this.mapRadius = 13
         this.mapColour = [0.3, 0.3, 1.0, 1.0]
@@ -179,6 +182,10 @@ export class MoorhenMap implements moorhen.Map {
         }
     }
 
+    /**
+     * Get the current map RMSD
+     * @returns {number} The map RMSD
+     */
     async fetchMapRmsd(): Promise&lt;number> {
         const result = await this.commandCentre.current.cootCommand({
             command: 'get_map_rmsd_approx',
@@ -189,19 +196,21 @@ export class MoorhenMap implements moorhen.Map {
         return result.data.result.result
     }
 
-    async delete(glRef: React.RefObject&lt;webGL.MGWebGL>): Promise&lt;void> {
-        const $this = this
+    /**
+     * Delete the map instance
+     */
+    async delete(): Promise&lt;void> {
         Object.getOwnPropertyNames(this.displayObjects).forEach(displayObject => {
-            if (this.displayObjects[displayObject].length > 0) { this.clearBuffersOfStyle(glRef, displayObject) }
+            if (this.displayObjects[displayObject].length > 0) { this.clearBuffersOfStyle(displayObject) }
         })
-        glRef.current.drawScene()
+        this.glRef.current.drawScene()
         const promises = [
-            $this.commandCentre.current.postMessage({
-                message: "delete", molNo: $this.molNo
+            this.commandCentre.current.postMessage({
+                message: "delete", molNo: this.molNo
             }),
-            $this.hasReflectionData ?
-                $this.commandCentre.current.postMessage({
-                    message: 'delete_file_name', fileName: $this.associatedReflectionFileName
+            this.hasReflectionData ?
+                this.commandCentre.current.postMessage({
+                    message: 'delete_file_name', fileName: this.associatedReflectionFileName
                 })
                 :
                 Promise.resolve(true)
@@ -209,7 +218,15 @@ export class MoorhenMap implements moorhen.Map {
         await Promise.all(promises)
     }
 
-    async replaceMapWithMtzFile(glRef: React.RefObject&lt;webGL.MGWebGL>, fileUrl: RequestInfo | URL, name: string, selectedColumns: moorhen.selectedMtzColumns, mapColour?: { [type: string]: {r: number, g: number, b: number} }): Promise&lt;void> {
+    /**
+     * Replace the current map with the contents of a MTZ file
+     * @param {string} fileUrl - The uri to the MTZ file
+     * @param {string} name - The name of the map
+     * @param {moorhen.selectedMtzColumns} selectedColumns - Object indicating the selected MTZ columns
+     * @param mapColour - The map colour
+     * @returns {Promise&lt;void>}
+     */
+    async replaceMapWithMtzFile(fileUrl: RequestInfo | URL, name: string, selectedColumns: moorhen.selectedMtzColumns, mapColour?: { [type: string]: {r: number, g: number, b: number} }): Promise&lt;void> {
         let mtzData: Uint8Array
         let fetchResponse: Response
 
@@ -234,15 +251,21 @@ export class MoorhenMap implements moorhen.Map {
         }, true) as moorhen.WorkerResponse&lt;number>
 
         if (cootResponse.data.result.status === 'Completed') {
-            return this.doCootContour(glRef, ...(glRef.current.origin.map(coord => -coord) as [number, number, number]), this.mapRadius, this.contourLevel);
+            return this.doCootContour(...this.glRef.current.origin.map(coord => -coord) as [number, number, number], this.mapRadius, this.contourLevel);
         }
 
         return Promise.reject(cootResponse.data.result.status)
 
     }
 
-    loadToCootFromMtzURL = async function (url: RequestInfo | URL, name: string, selectedColumns: moorhen.selectedMtzColumns) {
-        const $this = this
+    /**
+     * Load map to moorhen using a MTZ url
+     * @param {string} url - The url to the MTZ file
+     * @param {string} name - The name that will be assigned to the map
+     * @param {moorhen.selectedMtzColumns} selectedColumns - Object indicating the selected MTZ columns
+     * @returns {Pormise&lt;moorhen.Map>} This moorhenMap instance
+     */
+    async loadToCootFromMtzURL(url: RequestInfo | URL, name: string, selectedColumns: moorhen.selectedMtzColumns): Promise&lt;moorhen.Map> {
 
         try {
             const response = await fetch(url)
@@ -252,20 +275,26 @@ export class MoorhenMap implements moorhen.Map {
             const reflectionData: Blob = await response.blob()
             const arrayBuffer: ArrayBuffer = await reflectionData.arrayBuffer()
             const asUIntArray: Uint8Array = new Uint8Array(arrayBuffer)
-            await $this.loadToCootFromMtzData(asUIntArray, name, selectedColumns)
+            await this.loadToCootFromMtzData(asUIntArray, name, selectedColumns)
             if (selectedColumns.calcStructFact) {
-                await $this.associateToReflectionData(selectedColumns, asUIntArray)
+                await this.associateToReflectionData(selectedColumns, asUIntArray)
             }
-            return $this
+            return this
         } catch (err) {
             console.log(err)
             return Promise.reject(err)
         }
     }
 
-    loadToCootFromMtzData(data: Uint8Array, name: string, selectedColumns: moorhen.selectedMtzColumns) {
-        const $this = this
-        $this.name = name
+    /**
+     * Load map to moorhen using MTZ data
+     * @param {Uint8Array} data - The mtz data
+     * @param {string} name - The name that will be assigned to the map
+     * @param {moorhen.selectedMtzColumns} selectedColumns - Object indicating the selected MTZ columns
+     * @returns {Pormise&lt;moorhen.Map>} This moorhenMap instance
+     */
+    loadToCootFromMtzData(data: Uint8Array, name: string, selectedColumns: moorhen.selectedMtzColumns): Promise&lt;moorhen.Map> {
+        this.name = name
         return new Promise((resolve, reject) => {
             return this.commandCentre.current.cootCommand({
                 returnType: "status",
@@ -276,11 +305,11 @@ export class MoorhenMap implements moorhen.Map {
                     if (reply.data.result.status === 'Exception') {
                         reject(reply.data.result.consoleMessage)
                     }
-                    $this.molNo = reply.data.result.result
+                    this.molNo = reply.data.result.result
                     if (Object.keys(selectedColumns).includes('isDifference')) {
-                        $this.isDifference = selectedColumns.isDifference
+                        this.isDifference = selectedColumns.isDifference
                     }
-                    resolve($this)
+                    resolve(this)
                 })
                 .catch((err) => {
                     return Promise.reject(err)
@@ -289,6 +318,12 @@ export class MoorhenMap implements moorhen.Map {
         })
     }
 
+    /**
+     * Load map to moorhen from a MTZ file
+     * @param {Blob} source - The MTZ file data in the form of a blob
+     * @param {moorhen.selectedMtzColumns} selectedColumns - Object indicating the selected MTZ columns
+     * @returns {Promise&lt;moorhen.Map>} This moorhenMap instance
+     */
     loadToCootFromMtzFile = async function (source: Blob, selectedColumns: moorhen.selectedMtzColumns): Promise&lt;moorhen.Map> {
         const $this = this
         let reflectionData = await readDataFile(source)
@@ -300,24 +335,34 @@ export class MoorhenMap implements moorhen.Map {
         return $this
     }
 
-    loadToCootFromMapURL(url: RequestInfo | URL, name: string, isDiffMap: boolean= false): Promise&lt;moorhen.Map>  {
-        const $this = this
+    /**
+     * Load map to moorhen from a map file url
+     * @param {string} url - The url to the MTZ file
+     * @param {string} name - The name that will be assigned to the map
+     * @param {boolean} [isDiffMap=false] - Indicates whether the new map is a difference map
+     * @returns {Promise&lt;moorhen.Map>} This moorhenMap instance
+     */
+    async loadToCootFromMapURL(url: RequestInfo | URL, name: string, isDiffMap: boolean= false): Promise&lt;moorhen.Map>  {
 
-        return fetch(url)
-            .then(response => {
-                return response.blob()
-            }).then(mapData => mapData.arrayBuffer())
-            .then(arrayBuffer => {
-                return $this.loadToCootFromMapData(new Uint8Array(arrayBuffer), name, isDiffMap)
-            })
-            .catch((err) => {
-                return Promise.reject(err)
-            })
+        try {
+            const response = await fetch(url);
+            const mapData = await response.blob();
+            const arrayBuffer = await mapData.arrayBuffer();
+            return await this.loadToCootFromMapData(new Uint8Array(arrayBuffer), name, isDiffMap);
+        } catch (err) {
+            return await Promise.reject(err);
+        }
     }
 
+    /**
+     * Load map to moorhen from map data
+     * @param {ArrayBuffer | Uint8Array} data - The map data in the form of a array buffer
+     * @param {string} name - The name that will be assigned to the map
+     * @param {boolean} isDiffMap - Indicates whether the new map is a difference map
+     * @returns {Promise&lt;moorhen.Map>} This moorhenMap instance
+     */
     loadToCootFromMapData(data: ArrayBuffer | Uint8Array, name: string, isDiffMap: boolean): Promise&lt;moorhen.Map> {
-        const $this = this
-        $this.name = name
+        this.name = name
         return this.commandCentre.current.cootCommand({
             returnType: "status",
             command: "shim_read_ccp4_map",
@@ -327,16 +372,22 @@ export class MoorhenMap implements moorhen.Map {
                 if (reply.data.result?.status === 'Exception') {
                     return Promise.reject(reply.data.result.consoleMessage)
                 }
-                $this.molNo = reply.data.result.result
-                $this.isDifference = isDiffMap
-                return Promise.resolve($this)
+                this.molNo = reply.data.result.result
+                this.isDifference = isDiffMap
+                return Promise.resolve(this)
             })
             .catch((err) => {
                 return Promise.reject(err)
             })
     }
 
-    loadToCootFromMapFile = async function (source: Blob, isDiffMap: boolean): Promise&lt;moorhen.Map> {
+    /**
+     * Load a map to moorhen from a map file data blob
+     * @param {Blob} source - The map file data in the form of a blob
+     * @param {boolean} isDiffMap - Indicates whether the new map is a difference map
+     * @returns {Promise&lt;moorhen.Map>} This moorhenMap instance
+     */
+    async loadToCootFromMapFile (source: Blob, isDiffMap: boolean): Promise&lt;moorhen.Map> {
         const $this = this
         return readDataFile(source)
             .then(mapData => {
@@ -345,14 +396,22 @@ export class MoorhenMap implements moorhen.Map {
             })
     }
 
+    /**
+     * Get the current map
+     * @returns {Promise&lt;moorhen.WorkerResponse>} A worker response with the map arrayBuffer
+     */
     getMap(): Promise&lt;moorhen.WorkerResponse> {
-        const $this = this
         return this.commandCentre.current.postMessage({
             message: 'get_map',
-            molNo: $this.molNo
+            molNo: this.molNo
         })
     }
 
+    /**
+     * Set the map weight
+     * @param {number} weight - The new map weight
+     * @returns {Promise&lt;moorhen.WorkerResponse>} Void worker response
+     */
     setMapWeight(weight: number): Promise&lt;moorhen.WorkerResponse> {
         return this.commandCentre.current.cootCommand({
             returnType: 'status',
@@ -361,7 +420,10 @@ export class MoorhenMap implements moorhen.Map {
         })
     }
 
-
+    /**
+     * Get the current map weight
+     * @returns {Promise&lt;moorhen.WorkerResponse&lt;number>>} The current map weight
+     */
     getMapWeight() {
         return this.commandCentre.current.cootCommand({
             returnType: 'status',
@@ -370,49 +432,48 @@ export class MoorhenMap implements moorhen.Map {
         }) as Promise&lt;moorhen.WorkerResponse&lt;number>>
     }
 
-    makeCootLive(glRef: React.RefObject&lt;webGL.MGWebGL>): void {
-        const $this = this
-        $this.cootContour = true
-        $this.doCootContour(glRef,
-            -glRef.current.origin[0],
-            -glRef.current.origin[1],
-            -glRef.current.origin[2],
-            $this.mapRadius, $this.contourLevel)
-        glRef.current.drawScene()
+    /**
+     * Contour the map and make it live
+     */
+    makeCootLive(): void {
+        this.cootContour = true
+        this.doCootContour(...this.glRef.current.origin.map(coord => -coord) as [number, number, number], this.mapRadius, this.contourLevel)
+        this.glRef.current.drawScene()
     }
 
-    recontour(glRef: React.RefObject&lt;webGL.MGWebGL>): void {
-        const $this = this
-        $this.cootContour = true
-        $this.doCootContour(glRef,
-            -glRef.current.origin[0],
-            -glRef.current.origin[1],
-            -glRef.current.origin[2],
-            $this.mapRadius, $this.contourLevel)
-        glRef.current.drawScene()
-    }
-
-    makeCootUnlive(glRef: React.RefObject&lt;webGL.MGWebGL>): void {
+    /**
+     * Hide the map
+     */
+    makeCootUnlive(): void {
         const $this = this
         $this.cootContour = false
-        $this.clearBuffersOfStyle(glRef, 'Coot')
-        glRef.current.buildBuffers();
-        glRef.current.drawScene();
+        $this.clearBuffersOfStyle('Coot')
+        this.glRef.current.buildBuffers();
+        this.glRef.current.drawScene();
     }
 
-    clearBuffersOfStyle(glRef: React.RefObject&lt;webGL.MGWebGL>, style: string): void {
-        const $this = this
+    /**
+     * Clear MGWebGL buffers of a given style for this map
+     * @param {string} style - The map style that will be cleared
+     */
+    clearBuffersOfStyle(style: string): void {
         //Empty existing buffers of this type
-        $this.displayObjects[style].forEach((buffer) => {
+        this.displayObjects[style].forEach((buffer) => {
             buffer.clearBuffers()
-            glRef.current.displayBuffers = glRef.current.displayBuffers?.filter(glBuffer => glBuffer.id !== buffer.id)
+            this.glRef.current.displayBuffers = this.glRef.current.displayBuffers?.filter(glBuffer => glBuffer.id !== buffer.id)
         })
-        $this.displayObjects[style] = []
+        this.displayObjects[style] = []
     }
 
-    async doCootContour(glRef: React.RefObject&lt;webGL.MGWebGL>, x: number, y: number, z: number, radius: number, contourLevel: number): Promise&lt;void> {
-
-        const $this = this
+    /**
+     * Draw the map contour around a given origin
+     * @param {number} x - Origin coord. X
+     * @param {number} y - Origin coord. Y
+     * @param {number} z - Origin coord. Z
+     * @param {number} radius - Radius around the origin that will be drawn
+     * @param {number} contourLevel - The map contour level
+     */
+    async doCootContour(x: number, y: number, z: number, radius: number, contourLevel: number): Promise&lt;void> {
 
         let returnType: string
         if (this.solid) {
@@ -426,53 +487,62 @@ export class MoorhenMap implements moorhen.Map {
         const response = await this.commandCentre.current.cootCommand({
                 returnType: returnType,
                 command: "get_map_contours_mesh",
-                commandArgs: [$this.molNo, x, y, z, radius, contourLevel]
+                commandArgs: [this.molNo, x, y, z, radius, contourLevel]
         })
         try {
             const objects = [response.data.result.result]
             const diffMapColourBuffers = { positiveDiffColour: [], negativeDiffColour: [] }
-            $this.clearBuffersOfStyle(glRef, "Coot")
+            this.clearBuffersOfStyle("Coot")
             objects.filter(object => typeof object !== 'undefined' &amp;&amp; object !== null).forEach(object => {
                 object.col_tri.forEach((cols: number[][]) => {
                     cols.forEach((col: number[]) => {
                         if (!this.isDifference) {
                             for (let idx = 0; idx &lt; col.length; idx += 4) {
-                                col[idx] = $this.rgba.mapColour.r
-                                col[idx + 1] = $this.rgba.mapColour.g
-                                col[idx + 2] = $this.rgba.mapColour.b
-                                col[idx + 3] = $this.rgba.a
+                                col[idx] = this.rgba.mapColour.r
+                                col[idx + 1] = this.rgba.mapColour.g
+                                col[idx + 2] = this.rgba.mapColour.b
+                                col[idx + 3] = this.rgba.a
                             }
                         } else {
                             for (let idx = 0; idx &lt; col.length; idx += 4) {
                                 if (col[idx] &lt; 0.5) {
                                     diffMapColourBuffers.positiveDiffColour.push(idx)
-                                    col[idx] = $this.rgba.positiveDiffColour.r
-                                    col[idx + 1] = $this.rgba.positiveDiffColour.g
-                                    col[idx + 2] = $this.rgba.positiveDiffColour.b    
+                                    col[idx] = this.rgba.positiveDiffColour.r
+                                    col[idx + 1] = this.rgba.positiveDiffColour.g
+                                    col[idx + 2] = this.rgba.positiveDiffColour.b    
                                 } else {
                                     diffMapColourBuffers.negativeDiffColour.push(idx)
-                                    col[idx] = $this.rgba.negativeDiffColour.r
-                                    col[idx + 1] = $this.rgba.negativeDiffColour.g
-                                    col[idx + 2] = $this.rgba.negativeDiffColour.b    
+                                    col[idx] = this.rgba.negativeDiffColour.r
+                                    col[idx + 1] = this.rgba.negativeDiffColour.g
+                                    col[idx + 2] = this.rgba.negativeDiffColour.b    
                                 }
-                                col[idx + 3] = $this.rgba.a
+                                col[idx + 3] = this.rgba.a
                             }
                         }
                     })
                 })
-                let a = glRef.current.appendOtherData(object, true);
-                $this.diffMapColourBuffers.positiveDiffColour = $this.diffMapColourBuffers.positiveDiffColour.concat(diffMapColourBuffers.positiveDiffColour)
-                $this.diffMapColourBuffers.negativeDiffColour = $this.diffMapColourBuffers.negativeDiffColour.concat(diffMapColourBuffers.negativeDiffColour)
-                $this.displayObjects['Coot'] = $this.displayObjects['Coot'].concat(a)
+                let a = this.glRef.current.appendOtherData(object, true);
+                this.diffMapColourBuffers.positiveDiffColour = this.diffMapColourBuffers.positiveDiffColour.concat(diffMapColourBuffers.positiveDiffColour)
+                this.diffMapColourBuffers.negativeDiffColour = this.diffMapColourBuffers.negativeDiffColour.concat(diffMapColourBuffers.negativeDiffColour)
+                this.displayObjects['Coot'] = this.displayObjects['Coot'].concat(a)
             })
-            glRef.current.buildBuffers();
-            glRef.current.drawScene();
+            this.glRef.current.buildBuffers();
+            this.glRef.current.drawScene();
             } catch(err) {
                 console.log(err)
             }
     }
 
-    async setDiffMapColour(type: 'positiveDiffColour' | 'negativeDiffColour', r: number, g: number, b: number, glRef: React.RefObject&lt;webGL.MGWebGL>, redraw: boolean = true): Promise&lt;void> {
+    /**
+     * Set the colours for a difference map
+     * @param {'positiveDiffColour' | 'negativeDiffColour'} type - Indicates whether the negative or positive colours will be set
+     * @param {number} r - Red component as a fraction of 1
+     * @param {number} g - Green component as a fraction of 1
+     * @param {number} b - Blue component as a fraction of 1
+     * @param {boolean} [redraw=true] - Indicates whether the map needs to be redrawn after setting the new colours
+     * @returns {Promise&lt;void>}
+     */
+    async setDiffMapColour(type: 'positiveDiffColour' | 'negativeDiffColour', r: number, g: number, b: number, redraw: boolean = true): Promise&lt;void> {
         if (!this.isDifference) {
             console.error('Cannot use moorhen.Map.setDiffMapColour to change non-diff map colour. Use moorhen.Map.setColour instead...')
             return
@@ -491,14 +561,21 @@ export class MoorhenMap implements moorhen.Map {
             buffer.isDirty = true
         })
         
-        glRef.current.buildBuffers();
+        this.glRef.current.buildBuffers();
         if (redraw) {
-            glRef.current.drawScene();
+            this.glRef.current.drawScene();
         }
     }
 
-
-    async setColour(r: number, g: number, b: number, glRef: React.RefObject&lt;webGL.MGWebGL>, redraw: boolean = true): Promise&lt;void> {
+    /**
+     * Set the colours for a non-difference map
+     * @param {number} r - Red component as a fraction of 1
+     * @param {number} g - Green component as a fraction of 1
+     * @param {number} b - Blue component as a fraction of 1
+     * @param {boolean} [redraw=true] - Indicates whether the map needs to be redrawn after setting the new colours
+     * @returns {Promise&lt;void>}
+     */
+    async setColour(r: number, g: number, b: number, redraw: boolean = true): Promise&lt;void> {
         if (this.isDifference) {
             console.error('Cannot use moorhen.Map.setColour to change difference map colour. Use moorhen.Map.setDiffMapColour instead...')
             return
@@ -513,18 +590,22 @@ export class MoorhenMap implements moorhen.Map {
                     colbuffer[idx + 1] = this.rgba.mapColour.g
                     colbuffer[idx + 2] = this.rgba.mapColour.b
                 }
-                
             })
             buffer.isDirty = true
         })
 
-        glRef.current.buildBuffers();
+        this.glRef.current.buildBuffers();
         if (redraw) {
-            glRef.current.drawScene();
+            this.glRef.current.drawScene();
         }
     }
 
-    async setAlpha(alpha: number, glRef: React.RefObject&lt;webGL.MGWebGL>, redraw: boolean = true): Promise&lt;void> {
+    /**
+     * Set the alpha (transparency) for this map
+     * @param {number} alpha - The new alpha value as a fraction of 1
+     * @param {boolean} [redraw=true] - Indicates whether the map needs to be redrawn after setting the new alpha
+     */
+    async setAlpha(alpha: number, redraw: boolean = true): Promise&lt;void> {
         this.rgba.a = alpha
         this.displayObjects['Coot'].forEach(buffer => {
             buffer.triangleColours.forEach(colbuffer => {
@@ -540,12 +621,18 @@ export class MoorhenMap implements moorhen.Map {
                 buffer.transparent = false
             }
         })
-        glRef.current.buildBuffers();
+        this.glRef.current.buildBuffers();
         if (redraw) {
-            glRef.current.drawScene();
+            this.glRef.current.drawScene();
         }
     }
 
+    /**
+     * Associate this map with a set of observed reflections
+     * @param {moorhen.selectedMtzColumns} selectedColumns - Object indicating the selected MTZ columns
+     * @param {Uint8Array} reflectionData - The reflection data that will be associates to this map
+     * @returns {Promise&lt;moorhen.WorkerResponse>} - Void promise
+     */
     async associateToReflectionData (selectedColumns: moorhen.selectedMtzColumns, reflectionData: Uint8Array | ArrayBuffer): Promise&lt;moorhen.WorkerResponse> {
         if (!selectedColumns.Fobs || !selectedColumns.SigFobs || !selectedColumns.FreeR) {
             return Promise.reject('Missing column data')
@@ -571,7 +658,11 @@ export class MoorhenMap implements moorhen.Map {
         }
     }
 
-    async fetchReflectionData(): Promise&lt;moorhen.WorkerResponse> {
+    /**
+     * Fetch the reflection data associated with this map
+     * @returns {Promise&lt;moorhen.WorkerResponse&lt;Uint8Array>>} The reflection data
+     */
+    async fetchReflectionData(): Promise&lt;moorhen.WorkerResponse&lt;Uint8Array>> {
         if (this.hasReflectionData) {
             return await this.commandCentre.current.postMessage({
                 molNo: this.molNo,
@@ -583,12 +674,21 @@ export class MoorhenMap implements moorhen.Map {
         }
     }
 
+    /**
+     * Create a copy of the map
+     * @returns {Promise&lt;moorhen.Map>} New map instance
+     */
     async duplicate(): Promise&lt;moorhen.Map> {
         const reply = await this.getMap()
-        const newMap = new MoorhenMap(this.commandCentre)
+        const newMap = new MoorhenMap(this.commandCentre, this.glRef)
         return newMap.loadToCootFromMapData(reply.data.result.mapData, `Copy of ${this.name}`, this.isDifference)
     }
 
+    /**
+     * Blur the map
+     * @param {number} bFactor - The b-factor used for blurring
+     * @returns {Promise&lt;moorhen.WorkerResponse&lt;number>>} Status (-1 if failure)
+     */
     blur(bFactor: number): Promise&lt;moorhen.WorkerResponse> {
         return this.commandCentre.current.cootCommand({
             command: 'sharpen_blur_map',
@@ -597,14 +697,17 @@ export class MoorhenMap implements moorhen.Map {
         }) as Promise&lt;moorhen.WorkerResponse&lt;number>>
     }
 
-    async centreOnMap(glRef: React.RefObject&lt;webGL.MGWebGL>): Promise&lt;void> {
+    /**
+     * Set the view in the centre of this map
+     */
+    async centreOnMap(): Promise&lt;void> {
         const response = await this.commandCentre.current.cootCommand({
             command: 'get_map_molecule_centre',
             commandArgs: [this.molNo],
             returnType: "map_molecule_centre_info_t"
         }) as moorhen.WorkerResponse&lt;libcootApi.MapMoleculeCentreInfoJS>
         if (response.data.result.result.success) {
-            glRef.current.setOriginAnimated(response.data.result.result.updated_centre.map(coord => -coord))
+            this.glRef.current.setOriginAnimated(response.data.result.result.updated_centre.map(coord => -coord))
         } else {
             console.log('Problem finding map centre')
         }
