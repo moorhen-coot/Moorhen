@@ -19,6 +19,7 @@ jobs:
       - name: Install node.js v16
         uses: actions/setup-node@v3
         with:
+          registry-url: 'https://npm.pkg.github.com'
           node-version: 16
       - name: Install dependencies 
         working-directory: /home/runner/work/Moorhen/
