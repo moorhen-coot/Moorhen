@@ -21,7 +21,7 @@ export const MoorhenMoleculeSymmetrySettingsMenuItem = (props: {
         if (isDirty.current) {
             busyDrawing.current = true
             isDirty.current = false
-            props.molecule.drawSymmetry(props.glRef)
+            props.molecule.drawSymmetry()
                 .then(_ => {
                     busyDrawing.current = false
                     drawSymmetryIfDirty()
@@ -39,15 +39,15 @@ export const MoorhenMoleculeSymmetrySettingsMenuItem = (props: {
 
     useEffect(() => {
         if (props.molecule.symmetryOn !== symmetryOn) {
-            props.molecule.toggleSymmetry(props.glRef)
+            props.molecule.toggleSymmetry()
         }
     }, [symmetryOn])
 
     useEffect(() => {
         if (showUnitCell) {
-            props.molecule.drawUnitCell(props.glRef)
+            props.molecule.drawUnitCell()
         } else {
-            props.molecule.clearBuffersOfStyle('unitCell', props.glRef)
+            props.molecule.clearBuffersOfStyle('unitCell')
             props.glRef.current.drawScene()
         }
     }, [showUnitCell])

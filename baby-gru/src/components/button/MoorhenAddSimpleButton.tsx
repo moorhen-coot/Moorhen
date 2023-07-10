@@ -12,7 +12,7 @@ export const MoorhenAddSimpleButton = (props: moorhen.EditButtonProps) => {
     const onTypeSelectedCallback = useCallback(async (value: string) => {
         const selectedMolecule = props.molecules.find(molecule => molecule.molNo === parseInt(selectRef.current.value))
         if (selectedMolecule) {
-            await selectedMolecule.addLigandOfType(value, props.glRef)
+            await selectedMolecule.addLigandOfType(value)
             props.setSelectedButtonIndex(null)
             const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: selectedMolecule.molNo } })
             document.dispatchEvent(scoresUpdateEvent)

@@ -69,7 +69,7 @@ export const MoorhenMoleculeCard = (props: MoorhenMoleculeCardPropsInterface) =>
             busyRedrawing.current = true
             isDirty.current = false
             props.molecule.setAtomsDirty(true)
-            await props.molecule.redraw(props.glRef)
+            await props.molecule.redraw()
             busyRedrawing.current = false
             redrawMolIfDirty()
         }
@@ -79,7 +79,7 @@ export const MoorhenMoleculeCard = (props: MoorhenMoleculeCardPropsInterface) =>
         if (isDirty.current) {
             busyRedrawing.current = true
             isDirty.current = false
-            props.molecule.drawSymmetry(props.glRef)
+            props.molecule.drawSymmetry()
             .then(_ => {
                 busyRedrawing.current = false
                 redrawSymmetryIfDirty()
@@ -102,7 +102,7 @@ export const MoorhenMoleculeCard = (props: MoorhenMoleculeCardPropsInterface) =>
 
         if (isVisible && showState['CBs']) {
             props.molecule.setAtomsDirty(true)
-            props.molecule.redraw(props.glRef)
+            props.molecule.redraw()
         }
 
     }, [props.drawMissingLoops])
@@ -117,7 +117,7 @@ export const MoorhenMoleculeCard = (props: MoorhenMoleculeCardPropsInterface) =>
             if (props.molecule.cootBondsOptions.isDarkBackground !== newBackgroundIsDark) {
                 props.molecule.cootBondsOptions.isDarkBackground = newBackgroundIsDark
                 props.molecule.setAtomsDirty(true)
-                props.molecule.redraw(props.glRef)
+                props.molecule.redraw()
             }
         }
 
@@ -179,7 +179,7 @@ export const MoorhenMoleculeCard = (props: MoorhenMoleculeCardPropsInterface) =>
         if (symmetryRadius === null) {
             return
         }
-        props.molecule.setSymmetryRadius(symmetryRadius, props.glRef)
+        props.molecule.setSymmetryRadius(symmetryRadius)
     }, [symmetryRadius]);
 
     useEffect(() => {
@@ -274,7 +274,7 @@ export const MoorhenMoleculeCard = (props: MoorhenMoleculeCardPropsInterface) =>
             return
         }
 
-        props.molecule.centreOn(props.glRef, `/*/${clickedResidue.chain}/${clickedResidue.seqNum}-${clickedResidue.seqNum}/*`)
+        props.molecule.centreOn(`/*/${clickedResidue.chain}/${clickedResidue.seqNum}-${clickedResidue.seqNum}/*`)
 
     }, [clickedResidue])
 
@@ -289,12 +289,12 @@ export const MoorhenMoleculeCard = (props: MoorhenMoleculeCardPropsInterface) =>
     const handleVisibility = () => {
         if (isVisible) {
             Object.getOwnPropertyNames(props.molecule.displayObjects).forEach(key => {
-                if (showState[key]) { props.molecule.hide(key, props.glRef) }
+                if (showState[key]) { props.molecule.hide(key) }
             })
             setIsVisible(false)
         } else {
             Object.getOwnPropertyNames(props.molecule.displayObjects).forEach(key => {
-                if (showState[key]) { props.molecule.show(key, props.glRef) }
+                if (showState[key]) { props.molecule.show(key) }
             })
             setIsVisible(true)
         }
@@ -309,7 +309,7 @@ export const MoorhenMoleculeCard = (props: MoorhenMoleculeCardPropsInterface) =>
 
     const handleCopyFragment = () => {
         async function createNewFragmentMolecule() {
-            const newMolecule = await props.molecule.copyFragment(clickedResidue.chain, selectedResidues[0], selectedResidues[1], props.glRef)
+            const newMolecule = await props.molecule.copyFragment(clickedResidue.chain, selectedResidues[0], selectedResidues[1])
             props.changeMolecules({ action: "Add", item: newMolecule })
         }
 
@@ -321,7 +321,7 @@ export const MoorhenMoleculeCard = (props: MoorhenMoleculeCardPropsInterface) =>
     }
 
     const handleUndo = async () => {
-        await props.molecule.undo(props.glRef)
+        await props.molecule.undo()
         props.setCurrentDropdownMolNo(-1)
         const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", {
             detail: { origin: props.glRef.current.origin, modifiedMolecule: props.molecule.molNo } 
@@ -330,7 +330,7 @@ export const MoorhenMoleculeCard = (props: MoorhenMoleculeCardPropsInterface) =>
     }
 
     const handleRedo = async () => {
-        await props.molecule.redo(props.glRef)
+        await props.molecule.redo()
         props.setCurrentDropdownMolNo(-1)
         const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", {
             detail: { origin: props.glRef.current.origin, modifiedMolecule: props.molecule.molNo } 
@@ -339,7 +339,7 @@ export const MoorhenMoleculeCard = (props: MoorhenMoleculeCardPropsInterface) =>
     }
 
     const handleCentering = () => {
-        props.molecule.centreOn(props.glRef)
+        props.molecule.centreOn()
         props.setCurrentDropdownMolNo(-1)
     }
 
@@ -367,7 +367,7 @@ export const MoorhenMoleculeCard = (props: MoorhenMoleculeCardPropsInterface) =>
             }, true)
 
             props.molecule.setAtomsDirty(true)
-            props.molecule.redraw(props.glRef)
+            props.molecule.redraw()
         }
 
         if (clickedResidue && selectedResidues) {
@@ -523,10 +523,10 @@ const RepresentationCheckbox = (props: RepresetationCheckboxPropsType) => {
         onChange={(e) => {
             props.changeShowState({ key: props.repKey, state: e.target.checked })
             if (e.target.checked) {
-                props.molecule.show(props.repKey, props.glRef)
+                props.molecule.show(props.repKey)
             }
             else {
-                props.molecule.hide(props.repKey, props.glRef)
+                props.molecule.hide(props.repKey)
             }
         }}/>
 }

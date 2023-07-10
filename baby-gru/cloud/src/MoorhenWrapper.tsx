@@ -227,7 +227,7 @@ export default class MoorhenWrapper {
 }
 
   async loadMtzData(uniqueId: string, inputFile: string, mapName: string, selectedColumns: moorhen.selectedMtzColumns, colour?: {[type: string]: {r: number, g: number, b: number}}): Promise<moorhen.Map> {
-    const newMap = new MoorhenMap(this.controls.commandCentre)
+    const newMap = new MoorhenMap(this.controls.commandCentre, this.controls.glRef)
     newMap.litLines = this.context.defaultMapLitLines
     newMap.uniqueId = uniqueId
     
@@ -259,7 +259,7 @@ export default class MoorhenWrapper {
   }
 
   async loadPdbData(uniqueId: string, inputFile: string, molName: string): Promise<moorhen.Molecule> {
-    const newMolecule = new MoorhenMolecule(this.controls.commandCentre, this.monomerLibrary)
+    const newMolecule = new MoorhenMolecule(this.controls.commandCentre, this.controls.glRef, this.monomerLibrary)
 
     return new Promise(async (resolve, reject) => {
       try {
@@ -268,8 +268,8 @@ export default class MoorhenWrapper {
         newMolecule.setBackgroundColour(this.controls.glRef.current.background_colour)
         await newMolecule.loadToCootFromURL(inputFile, molName)
         this.controls.changeMolecules({ action: "Add", item: newMolecule })
-        await newMolecule.fetchIfDirtyAndDraw('CBs', this.controls.glRef)
-        await newMolecule.centreOn(this.controls.glRef, '/*/*/*/*', false)
+        await newMolecule.fetchIfDirtyAndDraw('CBs')
+        await newMolecule.centreOn('/*/*/*/*', false)
         return resolve(newMolecule)
       } catch (err) {
         console.log(`Cannot fetch molecule from ${inputFile}`)
@@ -392,11 +392,11 @@ export default class MoorhenWrapper {
         return this.loadPdbData(inputFile.uniqueId, ...inputFile.args).catch((err) => console.log(err))
       } else {
         const oldUnitCellParams = JSON.stringify(loadedMolecule.getUnitCellParams())
-        return loadedMolecule.replaceModelWithFile(this.controls.glRef, ...inputFile.args)
+        return loadedMolecule.replaceModelWithFile(...inputFile.args)
           .then(_ => {
             const newUnitCellParams = JSON.stringify(loadedMolecule.getUnitCellParams())
             if (oldUnitCellParams !== newUnitCellParams) {
-              loadedMolecule.centreOn(this.controls.glRef, '/*/*/*/*', true)
+              loadedMolecule.centreOn('/*/*/*/*', true)
             }   
           })
           .catch((err) => {
@@ -413,7 +413,7 @@ export default class MoorhenWrapper {
       if (typeof loadedMap === 'undefined') {
         return this.loadMtzData(inputFile.uniqueId, ...inputFile.args).catch((err) => console.log(err))
       } else {
-        return loadedMap.replaceMapWithMtzFile(this.controls.glRef, ...inputFile.args).catch((err) => console.log(err))
+        return loadedMap.replaceMapWithMtzFile(...inputFile.args).catch((err) => console.log(err))
       }
     }))
   }

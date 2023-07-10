@@ -66,7 +66,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
 
     const handlePositiveMapColorChange = (color: { rgb: {r: number; g: number; b: number;} }) => {
         try {
-            props.map.setDiffMapColour('positiveDiffColour', color.rgb.r / 255., color.rgb.g / 255., color.rgb.b / 255., props.glRef)
+            props.map.setDiffMapColour('positiveDiffColour', color.rgb.r / 255., color.rgb.g / 255., color.rgb.b / 255.)
             setPositiveMapColour({r: color.rgb.r, g: color.rgb.g, b: color.rgb.b})
         }
         catch (err) {
@@ -76,7 +76,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
 
     const handleNegativeMapColorChange = (color: { rgb: {r: number; g: number; b: number;} }) => {
         try {
-            props.map.setDiffMapColour('negativeDiffColour', color.rgb.r / 255., color.rgb.g / 255., color.rgb.b / 255., props.glRef)
+            props.map.setDiffMapColour('negativeDiffColour', color.rgb.r / 255., color.rgb.g / 255., color.rgb.b / 255.)
             setNegativeMapColour({r: color.rgb.r, g: color.rgb.g, b: color.rgb.b})
         }
         catch (err) {
@@ -86,7 +86,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
 
     const handleColorChange = (color: { rgb: {r: number; g: number; b: number;} }) => {
         try {
-            props.map.setColour(color.rgb.r / 255., color.rgb.g / 255., color.rgb.b / 255., props.glRef)
+            props.map.setColour(color.rgb.r / 255., color.rgb.g / 255., color.rgb.b / 255.)
             setMapColour({r: color.rgb.r, g: color.rgb.g, b: color.rgb.b})
         }
         catch (err) {
@@ -107,10 +107,10 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
     const handleVisibility = () => {
         if (!cootContour) {
             props.map.mapRadius = mapRadius
-            props.map.makeCootLive(props.glRef)
+            props.map.makeCootLive()
             setCootContour(true)
         } else {
-            props.map.makeCootUnlive(props.glRef)
+            props.map.makeCootUnlive()
             setCootContour(false)
         }
         props.setCurrentDropdownMolNo(-1)
@@ -161,7 +161,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
         },
         6: {
             label: "Centre on map",
-            compressed: () => { return (<MenuItem key='centre-on-map'onClick={() => props.map.centreOnMap(props.glRef)}>Centre on map</MenuItem>) },
+            compressed: () => { return (<MenuItem key='centre-on-map'onClick={() => props.map.centreOnMap()}>Centre on map</MenuItem>) },
             expanded: null
         },
     }
@@ -220,14 +220,14 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
         if (isDirty.current) {
             busyContouring.current = true
             isDirty.current = false
-            props.map.doCootContour(props.glRef,
+            props.map.doCootContour(
                 ...nextOrigin.current as [number, number, number],
                 props.map.mapRadius,
-                props.map.contourLevel)
-                .then(() => {
-                    busyContouring.current = false
-                    doContourIfDirty()
-                })
+                props.map.contourLevel
+            ).then(() => {
+                busyContouring.current = false
+                doContourIfDirty()
+            })
         }
     }
 
@@ -301,7 +301,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
     }, [handleOriginUpdate, props.activeMap?.molNo]);
 
     useEffect(() => {
-        props.map.setAlpha(mapOpacity, props.glRef)
+        props.map.setAlpha(mapOpacity)
     }, [mapOpacity])
 
     useEffect(() => {

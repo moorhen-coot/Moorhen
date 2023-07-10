@@ -3,10 +3,12 @@ import { Col, Form, Row } from "react-bootstrap"
 import { MoorhenMap } from "../../utils/MoorhenMap"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
+import { webGL } from "../../types/mgWebGL";
 
 export const MoorhenImportMapMenuItem = (props: { 
     maps: moorhen.Map[];
     commandCentre: React.RefObject<moorhen.CommandCentre>;
+    glRef: React.RefObject<webGL.MGWebGL>;
     changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
     setActiveMap: React.Dispatch<React.SetStateAction<moorhen.Map>>
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>> 
@@ -31,11 +33,11 @@ export const MoorhenImportMapMenuItem = (props: {
 
     const onCompleted = useCallback(async () => {
         const file = filesRef.current.files[0]
-        const newMap = new MoorhenMap(props.commandCentre)
+        const newMap = new MoorhenMap(props.commandCentre, props.glRef)
         await newMap.loadToCootFromMapFile(file, isDiffRef.current.checked)
         props.changeMaps({ action: 'Add', item: newMap })
         props.setActiveMap(newMap)
-    }, [props.maps, filesRef.current, isDiffRef.current])
+    }, [props.maps, filesRef.current, isDiffRef.current, props.glRef, props.setActiveMap, props.changeMaps, props.commandCentre])
 
     return <MoorhenBaseMenuItem
         id='import-map-menu-item'

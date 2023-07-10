@@ -25,13 +25,12 @@ export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moor
         }, true) as moorhen.WorkerResponse<libcootApi.RotamerInfoJS>
         
         fragmentMolecule.current.atomsDirty = true
-        fragmentMolecule.current.clearBuffersOfStyle('selection', props.glRef)
-        fragmentMolecule.current.drawSelection(props.glRef, selectedFragmentRef.current.cid)
-        await fragmentMolecule.current.redraw(props.glRef)
+        fragmentMolecule.current.clearBuffersOfStyle('selection')
+        await fragmentMolecule.current.redraw()
         
         return rotamerInfo
     
-    }, [props.commandCentre, props.glRef])
+    }, [props.commandCentre])
 
     const acceptTransform = useCallback(async () => {
         await props.commandCentre.current.cootCommand({
@@ -41,21 +40,21 @@ export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moor
         }, true)
         
         chosenMolecule.current.atomsDirty = true
-        await chosenMolecule.current.redraw(props.glRef)
+        await chosenMolecule.current.redraw()
         props.changeMolecules({ action: 'Remove', item: fragmentMolecule.current })
-        fragmentMolecule.current.delete(props.glRef)
-        chosenMolecule.current.unhideAll(props.glRef)
+        fragmentMolecule.current.delete()
+        chosenMolecule.current.unhideAll()
         
         const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: chosenMolecule.current.molNo } })
         document.dispatchEvent(scoresUpdateEvent)
     
-    }, [props.changeMolecules, props.glRef, props.commandCentre])
+    }, [props.changeMolecules, props.commandCentre, props.glRef])
 
     const rejectTransform = useCallback(async () => {
         props.changeMolecules({ action: 'Remove', item: fragmentMolecule.current })
-        fragmentMolecule.current.delete(props.glRef)
-        chosenMolecule.current.unhideAll(props.glRef)
-    }, [props.changeMolecules, props.glRef])
+        fragmentMolecule.current.delete()
+        chosenMolecule.current.unhideAll()
+    }, [props.changeMolecules])
 
     const doRotamerChange = async (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, p: string = '') => {
         chosenMolecule.current = molecule
@@ -66,7 +65,7 @@ export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moor
         }
         
         /* Copy the component to move into a new molecule */
-        const newMolecule = await molecule.copyFragmentUsingCid(selectedFragmentRef.current.cid, props.backgroundColor, props.defaultBondSmoothness, props.glRef, false)
+        const newMolecule = await molecule.copyFragmentUsingCid(selectedFragmentRef.current.cid, props.backgroundColor, props.defaultBondSmoothness, false)
         
         /* Next rotaner */
         const rotamerInfo = await props.commandCentre.current.cootCommand({
@@ -78,14 +77,13 @@ export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moor
         
         /* redraw after delay so that the context menu does not refresh empty */
         setTimeout(() => {
-            chosenMolecule.current.hideCid(selectedFragmentRef.current.cid, props.glRef)
-            newMolecule.drawSelection(props.glRef, selectedFragmentRef.current.cid)
+            chosenMolecule.current.hideCid(selectedFragmentRef.current.cid)
             Object.keys(molecule.displayObjects)
                 .filter(style => { return ['CRs', 'CBs', 'ligands', 'gaussian', 'MolecularSurface', 'VdWSurface', 'DishyBases', 'VdwSpheres', 'allHBonds'].includes(style) })
                 .forEach(async style => {
                     if (molecule.displayObjects[style].length > 0 &&
                         molecule.displayObjects[style][0].visible) {
-                        await newMolecule.drawWithStyleFromAtoms(style, props.glRef)
+                        await newMolecule.drawWithStyleFromAtoms(style)
                     }
             })
            

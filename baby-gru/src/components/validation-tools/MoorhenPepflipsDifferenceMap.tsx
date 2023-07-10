@@ -30,7 +30,7 @@ export const MoorhenPepflipsDifferenceMap = (props: MoorhenSideBarAccordionProps
 
         const selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedMolNo)
         selectedMolecule.setAtomsDirty(true)
-        selectedMolecule.redraw(props.glRef)
+        selectedMolecule.redraw()
         const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: {origin: props.glRef.current.origin,  modifiedMolecule: selectedMolecule.molNo} })
         document.dispatchEvent(scoresUpdateEvent)
     }

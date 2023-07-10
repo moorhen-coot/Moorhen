@@ -1,12 +1,14 @@
-import { Dispatch, RefObject, SetStateAction, useRef, useState } from "react"
+import React, { Dispatch, RefObject, SetStateAction, useRef, useState } from "react"
 import { MoorhenMtzWrapper } from "../../utils/MoorhenMtzWrapper"
 import { MoorhenMap } from "../../utils/MoorhenMap"
 import { Col, Form, FormSelect, Row } from "react-bootstrap"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { moorhen } from "../../types/moorhen";
+import { webGL } from "../../types/mgWebGL"
 
 export const MoorhenImportMapCoefficientsMenuItem = (props: {
     commandCentre: RefObject<moorhen.CommandCentre>;
+    glRef: React.RefObject<webGL.MGWebGL>;
     changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
     setActiveMap: Dispatch<SetStateAction<moorhen.Map>>
     setPopoverIsShown: Dispatch<SetStateAction<boolean>>     
@@ -32,7 +34,7 @@ export const MoorhenImportMapCoefficientsMenuItem = (props: {
     }
 
     const handleFile = async (file: Blob, selectedColumns: moorhen.selectedMtzColumns) => {
-        const newMap = new MoorhenMap(props.commandCentre)
+        const newMap = new MoorhenMap(props.commandCentre, props.glRef)
         await newMap.loadToCootFromMtzFile(file, selectedColumns)
         props.changeMaps({ action: 'Add', item: newMap })
         props.setActiveMap(newMap)

@@ -3,19 +3,21 @@ import { MoorhenMap } from "../../utils/MoorhenMap";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem";
+import { webGL } from "../../types/mgWebGL";
 
 export const MoorhenFlipMapHandMenuItem = (props: {
     maps: moorhen.Map[];
     changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>
     commandCentre: React.RefObject<moorhen.CommandCentre>;
+    glRef: React.RefObject<webGL.MGWebGL>;
 }) => {
 
     const selectRef = useRef<HTMLSelectElement>(null)
 
     const onCompleted = async () => {
         const mapNo = parseInt(selectRef.current.value)
-        const newMap = new MoorhenMap(props.commandCentre)
+        const newMap = new MoorhenMap(props.commandCentre, props.glRef)
 
         const result  = await props.commandCentre.current.cootCommand({
             returnType: 'status',

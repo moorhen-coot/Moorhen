@@ -20,7 +20,7 @@ export const MoorhenDeleteDisplayObjectMenuItem = (props: {
 
     const onCompleted = () => {
         props.changeItemList({ action: 'Remove', item: props.item })
-        props.item.delete(props.glRef);
+        props.item.delete();
         props.setPopoverIsShown(false)
         if (props.item.type === "map" && props.activeMap?.molNo === props.item.molNo) {
             props.setActiveMap(null)

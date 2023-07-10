@@ -20,10 +20,10 @@ export const MoorhenDeleteEverythingMenuItem = (props: {
 
     const onCompleted = () => {
         props.maps.forEach(map => {
-            map.delete(props.glRef)
+            map.delete()
         })
         props.molecules.forEach(molecule => {
-            molecule.delete(props.glRef)
+            molecule.delete()
         })
         props.changeMaps({ action: 'Empty' })
         props.changeMolecules({ action: "Empty" })

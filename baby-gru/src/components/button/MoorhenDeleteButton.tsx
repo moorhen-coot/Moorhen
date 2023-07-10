@@ -53,7 +53,7 @@ export const MoorhenDeleteButton = (props: moorhen.EditButtonProps | moorhen.Con
     const deleteMoleculeIfEmpty = (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, cootResult: moorhen.WorkerResponse<libcootApi.PairType<number, number>>) => {
         if (cootResult.data.result.result.second < 1) {
             console.log('Empty molecule detected, deleting it now...')
-            molecule.delete(props.glRef)
+            molecule.delete()
             props.changeMolecules({ action: 'Remove', item: molecule })
         }
     }

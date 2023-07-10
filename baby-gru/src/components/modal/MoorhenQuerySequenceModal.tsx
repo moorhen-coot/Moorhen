@@ -112,7 +112,7 @@ export const MoorhenQuerySequenceModal = (props: {
                 ruleType: 'af2-plddt',
                 label: `//*`
             }]
-            newMolecule.setColourRules(props.glRef, newRule, false)
+            newMolecule.setColourRules(newRule, false)
         } 
         await props.commandCentre.current.cootCommand({
             message: 'coot_command',
@@ -126,8 +126,8 @@ export const MoorhenQuerySequenceModal = (props: {
             ],
         })                            
         newMolecule.setAtomsDirty(true)
-        await newMolecule.redraw(props.glRef)
-        newMolecule.centreOn(props.glRef, '/*/*/*/*', true)
+        await newMolecule.redraw()
+        newMolecule.centreOn('/*/*/*/*', true)
     }
 
     const getPDBHitCard = async (polimerEntity: string, source: string = 'PDB') => {

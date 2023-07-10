@@ -57,14 +57,6 @@ export namespace moorhen {
         label: string;
     }
     
-    type MoleculeColourRule = {
-        commandInput: cootCommandKwargs;
-        isMultiColourRule: boolean;
-        ruleType: string;
-        color: string;
-        label: string;
-    }
-    
     type DisplayObject = {
         symmetryMatrices: any;
         [attr: string]: any;
@@ -82,8 +74,9 @@ export namespace moorhen {
             message: string;
             command: string;
             returnType: string;
-            commandArgs: [number, string];
+            commandArgs: [number, string, string?];
         };
+        color?: string;
         isMultiColourRule: boolean;
         ruleType: string;
         label: string;
@@ -91,46 +84,47 @@ export namespace moorhen {
     
     interface Molecule {
         getNeighborResiduesCids(selectionCid: string, radius: number, minDist: number, maxDist: number): Promise<string[]>;
-        drawWithStyleFromMesh(style: string, glRef: React.RefObject<webGL.MGWebGL>, meshObjects: any[], newBufferAtoms?: moorhen.AtomInfo[]): Promise<void>;
-        updateWithMovedAtoms(movedResidues: moorhen.AtomInfo[][], glRef: React.RefObject<webGL.MGWebGL>): Promise<void>;
-        transformedCachedAtomsAsMovedAtoms(glRef: React.RefObject<webGL.MGWebGL>, selectionCid?: string): moorhen.AtomInfo[][];
-        drawWithStyleFromAtoms(style: string, glRef: React.RefObject<webGL.MGWebGL>): Promise<boolean>;
-        copyFragmentUsingCid(cid: string, backgroundColor: [number, number, number, number], defaultBondSmoothness: number, glRef: React.RefObject<webGL.MGWebGL>, doRecentre?: boolean): Promise<Molecule>;
-        hideCid(cid: string, glRef: React.RefObject<webGL.MGWebGL>): Promise<void>;
-        unhideAll(glRef: React.RefObject<webGL.MGWebGL>): Promise<void>;
-        drawSelection(glRef: React.RefObject<webGL.MGWebGL>, cid: string): Promise<void>;
-        drawUnitCell(glRef: React.RefObject<webGL.MGWebGL>): void;
+        drawWithStyleFromMesh(style: string, meshObjects: any[], newBufferAtoms?: moorhen.AtomInfo[]): Promise<void>;
+        updateWithMovedAtoms(movedResidues: moorhen.AtomInfo[][]): Promise<void>;
+        transformedCachedAtomsAsMovedAtoms(selectionCid?: string): moorhen.AtomInfo[][];
+        drawWithStyleFromAtoms(style: string): Promise<void>;
+        copyFragmentUsingCid(cid: string, backgroundColor: [number, number, number, number], defaultBondSmoothness: number, doRecentre?: boolean): Promise<Molecule>;
+        hideCid(cid: string): Promise<void>;
+        unhideAll(): Promise<void>;
+        drawSelection(cid: string): Promise<void>;
+        drawUnitCell(): void;
         gemmiAtomsForCid: (cid: string) => Promise<AtomInfo[]>;
-        mergeMolecules(otherMolecules: Molecule[], glRef: React.RefObject<webGL.MGWebGL>, doHide?: boolean): Promise<void>;
+        mergeMolecules(otherMolecules: Molecule[], doHide?: boolean): Promise<void>;
         setBackgroundColour(backgroundColour: [number, number, number, number]): void;
         addDict(fileContent: string): Promise<void>;
         addDictShim(fileContent: string): void;
-        toggleSymmetry(glRef: React.RefObject<webGL.MGWebGL>): Promise<void>;
+        toggleSymmetry(): Promise<void>;
         getDict(newTlc: string): string;
-        addLigandOfType(resType: string, glRef: React.RefObject<webGL.MGWebGL>, fromMolNo?: number): Promise<WorkerResponse>;
+        addLigandOfType(resType: string, fromMolNo?: number): Promise<WorkerResponse>;
         updateAtoms(): Promise<void>;
         rigidBodyFit(cidsString: string, mapNo: number): Promise<WorkerResponse>;
         generateSelfRestraints(maxRadius: number): Promise<WorkerResponse>;
         clearExtraRestraints(): Promise<WorkerResponse>;
         refineResiduesUsingAtomCid(cid: string, mode: string, ncyc: number): Promise<WorkerResponse>;
-        redo(glRef: React.RefObject<webGL.MGWebGL>): Promise<void>;
-        undo(glRef: React.RefObject<webGL.MGWebGL>): Promise<void>;
-        copyFragment(chainId: string, res_no_start: number, res_no_end: number, glRef: React.RefObject<webGL.MGWebGL>, doRecentre?: boolean): Promise<Molecule>;
-        show(style: string, glRef: React.RefObject<webGL.MGWebGL>): Promise<void>;
-        setSymmetryRadius(radius: number, glRef: React.RefObject<webGL.MGWebGL>): Promise<void>;
-        drawSymmetry: (glRef: React.RefObject<webGL.MGWebGL>, fetchSymMatrix?: boolean) => Promise<void>;
+        redo(): Promise<void>;
+        undo(): Promise<void>;
+        copyFragment(chainId: string, res_no_start: number, res_no_end: number, doRecentre?: boolean): Promise<Molecule>;
+        show(style: string): Promise<void>;
+        setSymmetryRadius(radius: number): Promise<void>;
+        drawSymmetry: (fetchSymMatrix?: boolean) => Promise<void>;
         getUnitCellParams():  { a: number; b: number; c: number; alpha: number; beta: number; gamma: number; };
-        replaceModelWithFile(glRef: React.RefObject<webGL.MGWebGL>, fileUrl: string, molName: string): Promise<void>
-        delete(glRef: React.RefObject<webGL.MGWebGL>): Promise<WorkerResponse> 
-        setColourRules(glRef: React.RefObject<webGL.MGWebGL>, ruleList: ColourRule[], redraw?: boolean): void;
-        fetchIfDirtyAndDraw(arg0: string, glRef: React.MutableRefObject<webGL.MGWebGL>): Promise<boolean>;
-        drawGemmiAtomPairs: (glRef: React.ForwardedRef<webGL.MGWebGL>, gemmiAtomPairs: any[], style: string,  colour: number[], labelled?: boolean, clearBuffers?: boolean) => void;
-        drawEnvironment: (glRef: React.RefObject<webGL.MGWebGL>, chainID: string, resNo: number,  altLoc: string, labelled?: boolean) => Promise<void>;
-        centreOn: (glRef: React.ForwardedRef<webGL.MGWebGL>, selectionCid?: string, animate?: boolean) => Promise<void>;
-        drawHover: (glRef: React.MutableRefObject<webGL.MGWebGL>, cid: string) => Promise<void>;
-        clearBuffersOfStyle: (style: string, glRef: React.RefObject<webGL.MGWebGL>) => void;
+        replaceModelWithFile(fileUrl: string, molName: string): Promise<void>
+        delete(): Promise<WorkerResponse> 
+        setColourRules(ruleList: ColourRule[], redraw?: boolean): void;
+        fetchIfDirtyAndDraw(arg0: string): Promise<void>;
+        drawGemmiAtomPairs: (gemmiAtomPairs: any[], style: string,  colour: number[], labelled?: boolean, clearBuffers?: boolean) => void;
+        drawEnvironment: (chainID: string, resNo: number,  altLoc: string, labelled?: boolean) => Promise<void>;
+        centreOn: (selectionCid?: string, animate?: boolean) => Promise<void>;
+        drawHover: (cid: string) => Promise<void>;
+        clearBuffersOfStyle: (style: string) => void;
         type: string;
         commandCentre: React.RefObject<CommandCentre>;
+        glRef: React.RefObject<webGL.MGWebGL>;
         enerLib: any;
         HBondsAssigned: boolean;
         atomsDirty: boolean;
@@ -139,7 +133,7 @@ export namespace moorhen {
         molNo: number;
         gemmiStructure: gemmi.Structure;
         sequences: Sequence[];
-        colourRules: MoleculeColourRule[];
+        colourRules: ColourRule[];
         ligands: LigandInfo[];
         ligandDicts: {[comp_id: string]: string};
         connectedToMaps: number[];
@@ -176,13 +170,13 @@ export namespace moorhen {
         displayObjectsTransformation: { origin: [number, number, number], quat: any, centre: [number, number, number] }
         uniqueId: string;
         monomerLibraryPath: string;
-        applyTransform: (glRef: React.RefObject<webGL.MGWebGL>) => Promise<void>;
+        applyTransform: () => Promise<void>;
         getAtoms(format?: string): Promise<WorkerResponse>;
-        hide: (style: string, glRef: React.RefObject<webGL.MGWebGL>) => void;
-        redraw: (glRef: React.RefObject<webGL.MGWebGL>) => Promise<void>;
+        hide: (style: string) => void;
+        redraw: () => Promise<void>;
         setAtomsDirty: (newVal: boolean) => void;
         hasVisibleBuffers: (excludeBuffers?: string[]) => boolean;
-        centreAndAlignViewOn(glRef: React.RefObject<webGL.MGWebGL>, selectionCid: string, animate?: boolean): Promise<void>;
+        centreAndAlignViewOn(selectionCid: string, animate?: boolean): Promise<void>;
         buffersInclude: (bufferIn: { id: string; }) => boolean;
     }
     
@@ -267,24 +261,25 @@ export namespace moorhen {
     }
 
     interface Map {
-        setAlpha(alpha: number, glRef: React.RefObject<webGL.MGWebGL>, redraw?: boolean): Promise<void>;
-        centreOnMap(glRef: React.RefObject<webGL.MGWebGL>): Promise<void>;
+        setAlpha(alpha: number, redraw?: boolean): Promise<void>;
+        centreOnMap(): Promise<void>;
         duplicate(): Promise<Map>;
-        makeCootUnlive(glRef: React.RefObject<webGL.MGWebGL>): void;
-        makeCootLive(glRef: React.RefObject<webGL.MGWebGL>): void;
-        setColour(r: number, g: number, b: number, glRef: React.RefObject<webGL.MGWebGL>, redraw?: boolean): Promise<void> ;
-        setDiffMapColour(type: 'positiveDiffColour' | 'negativeDiffColour', r: number, g: number, b: number, glRef: React.RefObject<webGL.MGWebGL>, redraw?: boolean): Promise<void> ;
+        makeCootUnlive(): void;
+        makeCootLive(): void;
+        setColour(r: number, g: number, b: number, redraw?: boolean): Promise<void> ;
+        setDiffMapColour(type: 'positiveDiffColour' | 'negativeDiffColour', r: number, g: number, b: number, redraw?: boolean): Promise<void> ;
         fetchMapRmsd(): Promise<number>;
-        replaceMapWithMtzFile(glRef: React.RefObject<webGL.MGWebGL>, fileUrl: RequestInfo | URL, name: string, selectedColumns: selectedMtzColumns, mapColour?: { [type: string]: {r: number, g: number, b: number} }): Promise<void>;
+        replaceMapWithMtzFile(fileUrl: RequestInfo | URL, name: string, selectedColumns: selectedMtzColumns, mapColour?: { [type: string]: {r: number, g: number, b: number} }): Promise<void>;
         associateToReflectionData (selectedColumns: selectedMtzColumns, reflectionData: Uint8Array | ArrayBuffer): Promise<WorkerResponse>;
-        delete(glRef: React.RefObject<webGL.MGWebGL>): Promise<void> 
-        doCootContour(glRef: React.MutableRefObject<webGL.MGWebGL>, x: number, y: number, z: number, radius: number, contourLevel: number): Promise<void>;
-        fetchReflectionData(): Promise<WorkerResponse>;
+        delete(): Promise<void> 
+        doCootContour(x: number, y: number, z: number, radius: number, contourLevel: number): Promise<void>;
+        fetchReflectionData(): Promise<WorkerResponse<Uint8Array>>;
         getMap(): Promise<WorkerResponse>;
         type: string;
         name: string;
         molNo: number;
         commandCentre: React.RefObject<CommandCentre>;
+        glRef: React.RefObject<webGL.MGWebGL>;
         contourLevel: number;
         mapRadius: number;
         mapColour: [number, number, number, number];

@@ -36,11 +36,11 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
             }
             
             if (i !== n_iteration) {
-                await molecule.drawWithStyleFromMesh('CBs', props.glRef, [result.data.result.result.mesh])
+                await molecule.drawWithStyleFromMesh('CBs', [result.data.result.result.mesh])
             }
         }
         molecule.setAtomsDirty(true)
-        await molecule.fetchIfDirtyAndDraw('CBs', props.glRef)
+        await molecule.fetchIfDirtyAndDraw('CBs')
     }
 
     const startDragging = async (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, dragMode: string) => {
@@ -98,7 +98,7 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
             command: 'copy_fragment_for_refinement_using_cid',
             commandArgs: [chosenMolecule.current.molNo, fragmentCid.current.join('||')]
         }, true)
-        const newMolecule = new MoorhenMolecule(props.commandCentre, props.monomerLibraryPath)
+        const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.monomerLibraryPath)
         newMolecule.molNo = copyResult.data.result.result
         moltenFragmentRef.current = newMolecule
 
@@ -112,10 +112,10 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
         /* Redraw with animation after delay so that the context menu does not refresh empty*/
         setTimeout(async () => {
             await Promise.all(fragmentCid.current.map(cid => {
-                return chosenMolecule.current.hideCid(cid, props.glRef)
+                return chosenMolecule.current.hideCid(cid)
             }))
             moltenFragmentRef.current.setAtomsDirty(true)
-            await moltenFragmentRef.current.fetchIfDirtyAndDraw('CBs', props.glRef)
+            await moltenFragmentRef.current.fetchIfDirtyAndDraw('CBs')
             await animateRefine(moltenFragmentRef.current, 10, 5, 10)
             props.changeMolecules({ action: "Add", item: newMolecule })
             props.glRef.current.setDraggableMolecule(newMolecule)        
@@ -143,22 +143,22 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
                 commandArgs: [chosenMolecule.current.molNo, moltenFragmentRef.current.molNo, fragmentCid.current.join('||')],
             }, true)
             chosenMolecule.current.atomsDirty = true
-            await chosenMolecule.current.redraw(props.glRef)
+            await chosenMolecule.current.redraw()
             const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: chosenMolecule.current.molNo } })
             document.dispatchEvent(scoresUpdateEvent)
         }
         props.changeMolecules({ action: 'Remove', item: moltenFragmentRef.current })
-        moltenFragmentRef.current.delete(props.glRef)
-        chosenMolecule.current.unhideAll(props.glRef)
+        moltenFragmentRef.current.delete()
+        chosenMolecule.current.unhideAll()
     }
 
     const atomDraggedCallback = useCallback(async (evt: moorhen.AtomDraggedEvent) => {
         draggingDirty.current = true
         if (!busy.current) {
-            moltenFragmentRef.current.clearBuffersOfStyle('hover', props.glRef)
+            moltenFragmentRef.current.clearBuffersOfStyle('hover')
             await handleAtomDragged(evt.detail.atom.atom.label)    
         }
-    }, [moltenFragmentRef, props.glRef])
+    }, [moltenFragmentRef])
 
     const mouseUpCallback = useCallback(async () => {
         if(refinementDirty.current) {
@@ -173,7 +173,7 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
             busy.current = true
             refinementDirty.current = true
             draggingDirty.current = false
-            const movedAtoms = moltenFragmentRef.current.transformedCachedAtomsAsMovedAtoms(props.glRef, atomCid)
+            const movedAtoms = moltenFragmentRef.current.transformedCachedAtomsAsMovedAtoms(atomCid)
             if(movedAtoms.length < 1 || typeof movedAtoms[0][0] === 'undefined') {
                 // The atom dragged was not part of the molten molecule
                 refinementDirty.current = false
@@ -186,7 +186,7 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
                 command: 'add_target_position_restraint_and_refine',
                 commandArgs: [moltenFragmentRef.current.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, movedAtoms[0][0].x, movedAtoms[0][0].y, movedAtoms[0][0].z, 10],
             }, true)
-            await moltenFragmentRef.current.drawWithStyleFromMesh('CBs', props.glRef, [result.data.result.result])
+            await moltenFragmentRef.current.drawWithStyleFromMesh('CBs', [result.data.result.result])
             busy.current = false
             handleAtomDragged(atomCid)
         }

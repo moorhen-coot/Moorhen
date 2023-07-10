@@ -48,12 +48,12 @@ export const MoorhenCopyFragmentUsingCidMenuItem = (props: {
             changesMolecules: [parseInt(fromRef.current.value)]
         }, true) as moorhen.WorkerResponse<number> 
         
-        const newMolecule = new MoorhenMolecule(props.commandCentre, props.monomerLibraryPath)
+        const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.monomerLibraryPath)
         newMolecule.name = `${fromMolecules[0].name} fragment`
         newMolecule.molNo = response.data.result.result
         newMolecule.setBackgroundColour(props.backgroundColor)
         newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
-        await newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef)
+        await newMolecule.fetchIfDirtyAndDraw('CBs')
         props.changeMolecules({ action: "Add", item: newMolecule })
         
         props.setPopoverIsShown(false)

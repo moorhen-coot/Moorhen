@@ -464,7 +464,7 @@ export const MoorhenRamachandran = (props: MoorhenSideBarAccordionPropsInterface
             return
         }
 
-        props.molecules[selectedMoleculeIndex].centreOn(props.glRef, `/*/${clickedResidue.chain}/${clickedResidue.seqNum}-${clickedResidue.seqNum}/*`)
+        props.molecules[selectedMoleculeIndex].centreOn(`/*/${clickedResidue.chain}/${clickedResidue.seqNum}-${clickedResidue.seqNum}/*`)
 
     }, [clickedResidue])
 

@@ -36,11 +36,11 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
 
     const acceptTransform = useCallback(async () => {
         props.glRef.current.setActiveMolecule(null)
-        const transformedAtoms = fragmentMolecule.current.transformedCachedAtomsAsMovedAtoms(props.glRef)
-        await chosenMolecule.current.updateWithMovedAtoms(transformedAtoms, props.glRef)
+        const transformedAtoms = fragmentMolecule.current.transformedCachedAtomsAsMovedAtoms()
+        await chosenMolecule.current.updateWithMovedAtoms(transformedAtoms)
         props.changeMolecules({ action: 'Remove', item: fragmentMolecule.current })
-        fragmentMolecule.current.delete(props.glRef)
-        chosenMolecule.current.unhideAll(props.glRef)
+        fragmentMolecule.current.delete()
+        chosenMolecule.current.unhideAll()
         const scoresUpdateEvent: moorhen.ScoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: props.glRef.current.origin, modifiedMolecule: chosenMolecule.current.molNo } })
         document.dispatchEvent(scoresUpdateEvent)
     }, [props, chosenMolecule, fragmentMolecule])
@@ -48,8 +48,8 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
     const rejectTransform = useCallback(async () => {
         props.glRef.current.setActiveMolecule(null)
         props.changeMolecules({ action: 'Remove', item: fragmentMolecule.current })
-        fragmentMolecule.current.delete(props.glRef)
-        chosenMolecule.current.unhideAll(props.glRef)
+        fragmentMolecule.current.delete()
+        chosenMolecule.current.unhideAll()
     }, [props, chosenMolecule, fragmentMolecule])
 
     const startRotateTranslate = async (molecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, selectedMode: string) => {
@@ -83,18 +83,18 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
         }
         /* Copy the component to move into a new molecule */
         const newMolecule = await molecule.copyFragmentUsingCid(
-            fragmentCid.current, props.backgroundColor, props.defaultBondSmoothness, props.glRef, false
+            fragmentCid.current, props.backgroundColor, props.defaultBondSmoothness, false
         )
         await newMolecule.updateAtoms()
         /* redraw after delay so that the context menu does not refresh empty */
         setTimeout(() => {
-            chosenMolecule.current.hideCid(fragmentCid.current, props.glRef)
+            chosenMolecule.current.hideCid(fragmentCid.current)
             Object.keys(molecule.displayObjects)
             .filter(style => { return ['CRs', 'CBs', 'ligands', 'gaussian', 'MolecularSurface', 'VdWSurface', 'DishyBases', 'VdwSpheres', 'allHBonds'].includes(style) })
             .forEach(async style => {
                 if (molecule.displayObjects[style].length > 0 &&
                     molecule.displayObjects[style][0].visible) {
-                    await newMolecule.drawWithStyleFromAtoms(style, props.glRef)
+                    await newMolecule.drawWithStyleFromAtoms(style)
                 }
             })
             fragmentMolecule.current = newMolecule

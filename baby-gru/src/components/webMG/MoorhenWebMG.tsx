@@ -89,9 +89,9 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                 return
             }
 
-            props.hoveredAtom.molecule.centreOn(glRef, `/*/${residueSpec.chain_id}/${residueSpec.res_no}-${residueSpec.res_no}/*`)
+            props.hoveredAtom.molecule.centreOn(`/*/${residueSpec.chain_id}/${residueSpec.res_no}-${residueSpec.res_no}/*`)
         }
-    }, [props.hoveredAtom, glRef])
+    }, [props.hoveredAtom])
 
 
     const drawHBonds = useCallback(async () => {
@@ -119,22 +119,20 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                 const cidSplit = cidSplit0.replace(/\/+$/, "").split("/")
                 const resnum = cidSplit[cidSplit.length-1]
                 const chainID = cidSplit[cidSplit.length-2]
-                // const oneCid = cidSplit.join("/")+"-"+resnum
-                // mol.drawHBonds(glRef, oneCid, 'originNeighbours', true)
-                mol.drawEnvironment(glRef, chainID, parseInt(resnum), "", true)
+                mol.drawEnvironment(chainID, parseInt(resnum), "", true)
             }
             
             busyDrawingHBonds.current = false
             drawHBonds()
         }
 
-    }, [props.commandCentre, props.molecules])
+    }, [props.commandCentre, props.molecules, glRef])
 
     const clearHBonds = useCallback(async () => {
         if(!props.context.drawInteractions) {
             props.molecules.forEach(mol => {
-                mol.drawGemmiAtomPairs(glRef, [], "originNeighboursBump", [1.0, 0.0, 0.0, 1.0], true, true)
-                mol.drawGemmiAtomPairs(glRef, [], "originNeighboursHBond", [1.0, 0.0, 0.0, 1.0], true, true)
+                mol.drawGemmiAtomPairs([], "originNeighboursBump", [1.0, 0.0, 0.0, 1.0], true, true)
+                mol.drawGemmiAtomPairs([], "originNeighboursHBond", [1.0, 0.0, 0.0, 1.0], true, true)
             })
         }
     }, [props.context.drawInteractions, props.molecules])
@@ -205,10 +203,11 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             
             await Promise.all(
                 props.maps.filter(map => connectedMolNo.uniqueMaps.includes(map.molNo)).map(map => {
-                    return map.doCootContour(glRef,
+                    return map.doCootContour(
                         ...glRef.current.origin.map(coord => -coord) as [number, number, number],
                         map.mapRadius,
-                        map.contourLevel)
+                        map.contourLevel
+                    )
                 })
             )
             

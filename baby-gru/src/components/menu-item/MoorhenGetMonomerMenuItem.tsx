@@ -32,7 +32,7 @@ export const MoorhenGetMonomerMenuItem = (props: {
     const onCompleted = async () => {
         const fromMolNo = parseInt(selectRef.current.value)
         const newTlc = tlcRef.current.value.toUpperCase()
-        const newMolecule = new MoorhenMolecule(props.commandCentre, props.monomerLibraryPath)
+        const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.monomerLibraryPath)
 
         const getMonomer = () => {
             return props.commandCentre.current.cootCommand({
@@ -61,7 +61,7 @@ export const MoorhenGetMonomerMenuItem = (props: {
                 const ligandDict = fromMolecule.getDict(newTlc)
                 await newMolecule.addDict(ligandDict)    
             }
-            await newMolecule.fetchIfDirtyAndDraw('CBs', props.glRef)
+            await newMolecule.fetchIfDirtyAndDraw('CBs')
             props.changeMolecules({ action: "Add", item: newMolecule })
         } else {
             console.log('Error getting monomer... Missing dictionary?')
