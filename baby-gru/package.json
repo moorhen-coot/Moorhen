@@ -14,7 +14,7 @@
     "url": "https://github.com/moorhen-coot/Moorhen/issues"
   },
   "publishConfig": {
-     "registry": "https://npm.pkg.github.com"
+     "FilomenoSanchez@registry": "https://npm.pkg.github.com"
    },
   "keywords": [
     "molecular graphics",

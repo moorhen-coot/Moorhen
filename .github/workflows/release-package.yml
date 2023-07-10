@@ -31,6 +31,9 @@ jobs:
       - name: Download monomer library
         working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru/public/baby-gru
         run: bzr checkout --lightweight  http://fg.oisin.rc-harwell.ac.uk/anonscm/bzr/monomers/trunk/ monomers
+      - name: npm ci
+        working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
+        run: npm ci
       - name: npm build
         working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
         run: npm run-script build-npm-registry
