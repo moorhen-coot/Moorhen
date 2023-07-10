@@ -12,5 +12,5 @@ import { MoorhenMapSelect } from "./components/select/MoorhenMapSelect";
 export {
     ErrorBoundary, MoorhenApp, MoorhenContainer, MoorhenContextProvider, MoorhenContext,
     MoorhenMolecule, MoorhenMap, MoorhenCommandCentre, MoorhenTimeCapsule, MoorhenMoleculeSelect,
-    MoorhenMapSelect
+    MoorhenMapSelect, itemReducer
 };
