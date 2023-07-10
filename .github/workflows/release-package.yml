@@ -23,10 +23,13 @@ jobs:
       - name: Install dependencies 
         working-directory: /home/runner/work/Moorhen/
         run: |    
-          sudo apt-get install -y npm
+          sudo apt-get install -y npm bzr
       - name: yarn install
         working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
         run: yarn install
+      - name: Download monomer library
+        working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru/public/baby-gru
+        run: bzr checkout --lightweight  http://fg.oisin.rc-harwell.ac.uk/anonscm/bzr/monomers/trunk/ monomers
       - name: npm build
         working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
         run: npm run-script build-npm-registry
