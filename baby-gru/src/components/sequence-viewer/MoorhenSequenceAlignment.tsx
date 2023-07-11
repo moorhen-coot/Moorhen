@@ -13,12 +13,6 @@ import { libcootApi } from "../../types/libcoot";
 !window.customElements.get('protvista-track') && window.customElements.define("protvista-track", ProtvistaTrack);
 !window.customElements.get('protvista-manager') && window.customElements.define("protvista-manager", ProtvistaManager);
 
-/**
-* For a given sequence length, calculate the range of 40 residues in the middle
-* @param {Number} rulerStart integer that determines where to start the ruler numbering
-* @param {Number} sequenceLength sequence lenght
-* @returns {Array} An array containing the display start and display end consisting of a range of 40 residues
-*/
 const calculateDisplayStartAndEnd = (rulerStart: number, sequenceLength: number): [number, number] => {
     if (sequenceLength <= 40) {
         return [rulerStart, sequenceLength + rulerStart]
