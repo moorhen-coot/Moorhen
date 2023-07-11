@@ -63,7 +63,9 @@ export const MoorhenGetMonomerMenuItem = (props: {
             const fromMolecule = props.molecules.find(molecule => molecule.molNo === fromMolNo)
             if (typeof fromMolecule !== 'undefined') {
                 const ligandDict = fromMolecule.getDict(newTlc)
-                await newMolecule.addDict(ligandDict)    
+                if (ligandDict) {
+                    await newMolecule.addDict(ligandDict)
+                }
             }
             await newMolecule.fetchIfDirtyAndDraw('CBs')
             props.changeMolecules({ action: "Add", item: newMolecule })
