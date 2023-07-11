@@ -8,7 +8,7 @@
   "description": "Moorhen molecular graphics",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/FilomenoSanchez/Moorhen.git"
+    "url": "git+https://github.com/moorhen-coot/Moorhen.git"
   },
   "bugs": {
     "url": "https://github.com/moorhen-coot/Moorhen/issues"
