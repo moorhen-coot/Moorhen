@@ -354,19 +354,10 @@ export const MoorhenImportDictionaryMenuItem = (props: {
         fileOrLibraryRef.current = fileOrLibrary
     }, [fileOrLibrary])
 
-    const readMonomerFile = async (newTlc: string): Promise<string>  => {
-        return fetch(`${props.monomerLibraryPath}/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`)
-            .then(response => response.text())
-            .then(fileContent => {
-                return fileContent
-            })
-        }
-
-    const fetchFromMrcLmb = async (newTlc: string): Promise<string>  => {
-        const url = `https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`
+    const fetchLigandDictFromUrl = async (url: string) => {
         const response = await fetch(url)
         if (!response.ok) {
-            console.log(`Cannot fetch data from https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/${newTlc.toLowerCase()[0]}/${newTlc.toUpperCase()}.cif`)
+            console.log(`Cannot fetch data from ${url}`)
         } else {
             const fileContent = await response.text()
             return fileContent
@@ -374,17 +365,18 @@ export const MoorhenImportDictionaryMenuItem = (props: {
     }
 
     const fetchLigandDict = async (): Promise<string> => {
-        if (fileOrLibraryRef.current === "File") {
+        if (fileOrLibraryRef.current === "File" && filesRef.current.files.length > 0) {
             return readTextFile(filesRef.current.files[0]) as Promise<string>
         }
-        else if (fileOrLibraryRef.current === "Library") {
-            return readMonomerFile(tlcValueRef.current)
-        } else if (fileOrLibraryRef.current === "MRC") {
-            return fetchFromMrcLmb(tlcValueRef.current)
+        else if (fileOrLibraryRef.current === "Library" && tlcValueRef.current) {
+            const url = `${props.monomerLibraryPath}/${tlcValueRef.current.toLowerCase()[0]}/${tlcValueRef.current.toUpperCase()}.cif`
+            return fetchLigandDictFromUrl(url)
+        } else if (fileOrLibraryRef.current === "MRC" && tlcValueRef.current) {
+            const url = `https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/${tlcValueRef.current.toLowerCase()[0]}/${tlcValueRef.current.toUpperCase()}.cif`
+            return fetchLigandDictFromUrl(url)
         } else {
-            console.log(`Unkown ligand source ${fileOrLibraryRef.current}`)
+            console.log(`Unkown ligand source or invalid input`)
         }
-
     }
 
     return <MoorhenImportLigandDictionary id='import-dict-menu-item' menuItemText="Import dictionary..." panelContent={panelContent} fetchLigandDict={fetchLigandDict} {...collectedProps} />

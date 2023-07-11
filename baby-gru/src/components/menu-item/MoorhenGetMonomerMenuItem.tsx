@@ -34,6 +34,10 @@ export const MoorhenGetMonomerMenuItem = (props: {
         const newTlc = tlcRef.current.value.toUpperCase()
         const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.monomerLibraryPath)
 
+        if (!newTlc || !selectRef.current.value) {
+            return
+        }
+
         const getMonomer = () => {
             return props.commandCentre.current.cootCommand({
                 returnType: 'status',
