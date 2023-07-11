@@ -25,6 +25,9 @@ import { libcootApi } from '../types/libcoot';
  * // Create a new molecule
  * const molecule = new MoorhenMolecule(commandCentre, glRef, monomerLibraryPath);
  * 
+ * // Set some defaults
+ * molecule.setBackgroundColour(glRef.current.background_colour)
+ * 
  * // Load file from a URL
  * molecule.loadToCootFromURL('/uri/to/file.pdb', 'mol-1');
  * 
