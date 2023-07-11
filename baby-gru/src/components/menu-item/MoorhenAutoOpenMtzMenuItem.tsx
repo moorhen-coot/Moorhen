@@ -12,13 +12,15 @@ export const MoorhenAutoOpenMtzMenuItem = (props: {
     changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
     setActiveMap: React.Dispatch<React.SetStateAction<moorhen.Map>>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
+    setToastContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
+    getWarningToast: (arg0: string) => JSX.Element;
 }) => {
 
     const filesRef = useRef<null | HTMLInputElement>(null)
 
     const panelContent = <>
         <Row>
-            <Form.Group style={{ width: '30rem', margin: '0.5rem', padding: '0rem' }} controlId="uploadMTZ" className="mb-3">
+            <Form.Group style={{ width: '20rem', margin: '0.5rem', padding: '0rem' }} controlId="uploadMTZ" className="mb-3">
                 <Form.Label>Auto open MTZ file</Form.Label>
                 <Form.Control ref={filesRef} type="file" multiple={false} accept=".mtz" />
             </Form.Group>
@@ -26,8 +28,11 @@ export const MoorhenAutoOpenMtzMenuItem = (props: {
     </>
 
     const onCompleted = useCallback(async () => {
-        const file = filesRef.current.files[0]
+        if (filesRef.current.files.length === 0) {
+            return
+        }
 
+        const file = filesRef.current.files[0]
         const reflectionData = await readDataFile(file)
         const mtzData = new Uint8Array(reflectionData)
 
@@ -36,6 +41,10 @@ export const MoorhenAutoOpenMtzMenuItem = (props: {
             command: "shim_auto_open_mtz",
             commandArgs: [mtzData]
         }) as moorhen.WorkerResponse<number[]>
+
+        if (response.data.result.result.length === 0) {
+            props.setToastContent(props.getWarningToast('Error reading mtz file'))
+        }
 
         const isDiffMapResponses = await Promise.all(response.data.result.result.map(mapMolNo => {
             return props.commandCentre.current.cootCommand({
@@ -46,6 +55,10 @@ export const MoorhenAutoOpenMtzMenuItem = (props: {
         }))
 
         response.data.result.result.forEach((mapMolNo, index) => {
+            if (mapMolNo === -1) {
+                props.setToastContent(props.getWarningToast('Error reading mtz file'))
+                return
+            }
             const newMap = new MoorhenMap(props.commandCentre, props.glRef)
             newMap.molNo = mapMolNo
             newMap.name = `${file.name.replace('mtz', '')}-map-${index}`
