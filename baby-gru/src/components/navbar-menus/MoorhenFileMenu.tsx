@@ -12,6 +12,7 @@ import { MoorhenImportMapCoefficientsMenuItem } from "../menu-item/MoorhenImport
 import { MoorhenDeleteEverythingMenuItem } from "../menu-item/MoorhenDeleteEverythingMenuItem"
 import { MoorhenQuerySequenceModal } from "../modal/MoorhenQuerySequenceModal"
 import { MenuItem } from "@mui/material";
+import { WarningOutlined } from "@mui/icons-material";
 import { convertViewtoPx, doDownload, readTextFile, getMultiColourRuleArgs } from "../../utils/MoorhenUtils";
 import { getBackupLabel } from "../../utils/MoorhenTimeCapsule"
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
@@ -29,14 +30,30 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     const pdbCodeFetchInputRef = useRef<HTMLInputElement | null>(null);
     const fetchMapDataCheckRef = useRef<HTMLInputElement | null>(null);
 
-    const menuItemProps = { setPopoverIsShown, ...props }
+    const getWarningToast = (message: string) => <>
+        <WarningOutlined style={{margin: 0}}/>
+            <h4 style={{marginTop: '0.1rem', marginBottom: '0.1rem', marginLeft: '0.5rem', marginRight: '0.5rem'}}>
+                {message}
+            </h4>
+        <WarningOutlined style={{margin: 0}}/>
+    </>
+
+    const menuItemProps = { setPopoverIsShown, getWarningToast, ...props }
 
     const loadPdbFiles = async (files: FileList) => {
         let readPromises: Promise<moorhen.Molecule>[] = []
         Array.from(files).forEach(file => {
             readPromises.push(readPdbFile(file))
         })
+        
         let newMolecules: moorhen.Molecule[] = await Promise.all(readPromises)
+        if (!newMolecules.every(molecule => molecule.molNo !== -1)) {
+            props.setToastContent(getWarningToast(`Failed to read molecule`))
+            newMolecules = newMolecules.filter(molecule => molecule.molNo !== -1)
+            if (newMolecules.length === 0) {
+                return
+            }
+        }
 
         let drawPromises: Promise<void>[] = []
         for (const newMolecule of newMolecules) {
@@ -48,11 +65,12 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         newMolecules.at(-1).centreOn('/*/*/*/*', false)
     }
 
-    const readPdbFile = (file: File): Promise<moorhen.Molecule> => {
+    const readPdbFile = async (file: File): Promise<moorhen.Molecule> => {
         const newMolecule = new MoorhenMolecule(commandCentre, glRef, monomerLibraryPath)
         newMolecule.setBackgroundColour(props.backgroundColor)
         newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
-        return newMolecule.loadToCootFromFile(file)
+        await newMolecule.loadToCootFromFile(file)        
+        return newMolecule        
     }
 
     const fetchFiles = (): void => {
@@ -135,54 +153,57 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         }
     }
 
-    const fetchMoleculeFromURL = (url: RequestInfo | URL, molName: string): Promise<moorhen.Molecule> => {
+    const fetchMoleculeFromURL = async (url: RequestInfo | URL, molName: string): Promise<moorhen.Molecule> => {
         const newMolecule = new MoorhenMolecule(commandCentre, glRef, monomerLibraryPath)
         newMolecule.setBackgroundColour(props.backgroundColor)
         newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
-        return new Promise(async (resolve, reject) => {
-            try {
-                await newMolecule.loadToCootFromURL(url, molName)
-                await newMolecule.fetchIfDirtyAndDraw('CBs')
-                changeMolecules({ action: "Add", item: newMolecule })
-                newMolecule.centreOn('/*/*/*/*', false)
-                resolve(newMolecule)
-            } catch (err) {
-                console.log(`Cannot fetch molecule from ${url}`)
-                setIsValidPdbId(false)
-                reject(err)
-            }   
-        })
+        try {
+            await newMolecule.loadToCootFromURL(url, molName)
+            if (newMolecule.molNo === -1) throw new Error("Cannot read the fetched molecule...")
+            await newMolecule.fetchIfDirtyAndDraw('CBs')
+            changeMolecules({ action: "Add", item: newMolecule })
+            newMolecule.centreOn('/*/*/*/*', false)
+            return newMolecule
+        } catch (err) {
+            props.setToastContent(getWarningToast(`Failed to read molecule`))
+            console.log(`Cannot fetch molecule from ${url}`)
+            setIsValidPdbId(false)
+        }   
     }
 
-    const fetchMapFromURL = (url: RequestInfo | URL, mapName: string, isDiffMap: boolean = false): Promise<void> => {
+    const fetchMapFromURL = async (url: RequestInfo | URL, mapName: string, isDiffMap: boolean = false): Promise<void> => {
         const newMap = new MoorhenMap(commandCentre, glRef)
-        return new Promise(async () => {
-            try {
-                await newMap.loadToCootFromMapURL(url, mapName, isDiffMap)
-                changeMaps({ action: 'Add', item: newMap })
-                props.setActiveMap(newMap)
-            } catch {
-                console.log(`Cannot fetch map from ${url}`)
-            }
-        })
+        try {
+            await newMap.loadToCootFromMapURL(url, mapName, isDiffMap)
+            if (newMap.molNo === -1) throw new Error("Cannot read the fetched map...")
+            changeMaps({ action: 'Add', item: newMap })
+            props.setActiveMap(newMap)
+        } catch {
+            props.setToastContent(getWarningToast(`Failed to read map`))
+            console.log(`Cannot fetch map from ${url}`)
+        }
     }
 
     const fetchMtzFromURL = async (url: RequestInfo | URL, mapName: string, selectedColumns: moorhen.selectedMtzColumns): Promise<void> => {
         const newMap = new MoorhenMap(commandCentre, glRef)
-        return new Promise(async () => {
-            try {
-                await newMap.loadToCootFromMtzURL(url, mapName, selectedColumns)
-                changeMaps({ action: 'Add', item: newMap })
-                props.setActiveMap(newMap)
-            } catch {
-                console.log(`Cannot fetch mtz from ${url}`)
-            }   
-        })
+        try {
+            await newMap.loadToCootFromMtzURL(url, mapName, selectedColumns)
+            if (newMap.molNo === -1) throw new Error("Cannot read the fetched mtz...")
+            changeMaps({ action: 'Add', item: newMap })
+            props.setActiveMap(newMap)
+        } catch {
+            props.setToastContent(getWarningToast(`Failed to read mtz`))
+            console.log(`Cannot fetch mtz from ${url}`)
+        }   
     }
 
     const loadSessionJSON = async (sessionDataString: string): Promise<void> => {
         props.timeCapsuleRef.current.busy = true
         const sessionData: moorhen.backupSession = JSON.parse(sessionDataString)
+
+        if (!sessionData) {
+            return
+        }
         
         // Delete current scene
         props.molecules.forEach(molecule => {
@@ -350,8 +371,14 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     }
 
     const loadSession = async (file: Blob) => {
-        let sessionData = await readTextFile(file)
-        loadSessionJSON(sessionData as string)
+        try {
+            let sessionData = await readTextFile(file)
+            await loadSessionJSON(sessionData as string)
+        } catch (err) {
+            console.log(err)
+            props.setToastContent(getWarningToast("Error loading session"))
+        }
+        
     }
 
     const getSession = async () => {        
@@ -388,9 +415,10 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                                     <Button variant='primary' onClick={async () => {
                                         try {
                                             let backup = await props.timeCapsuleRef.current.retrieveBackup(JSON.stringify(key))
-                                            loadSessionJSON(backup as string)
+                                            await loadSessionJSON(backup as string)
                                         } catch (err) {
                                             console.log(err)
+                                            props.setToastContent(getWarningToast("Error loading session"))
                                         }                                            
                                         setShowBackupsModal(false)
                                     }}>

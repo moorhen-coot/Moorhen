@@ -9,7 +9,9 @@
       "includePattern": ".(jsx|js|ts|tsx)$"
     },
     "plugins": [
-        "node_modules/better-docs/typescript"
+        "node_modules/better-docs/typescript",
+        "node_modules/better-docs/component",
+        "node_modules/better-docs/category"
     ],
     "typescript": {
         "moduleRoot": "./src"

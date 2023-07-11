@@ -60,6 +60,10 @@ export const MoorhenMapMaskingMenuItem = (props: {
     </>
 
     const onCompleted = useCallback(async () => {
+        if (!mapSelectRef.current.value || !moleculeSelectRef.current.value) {
+            return
+        }
+        
         const mapNo = parseInt(mapSelectRef.current.value)
         const molNo = parseInt(moleculeSelectRef.current.value)
         const newMap = new MoorhenMap(commandCentre, glRef)

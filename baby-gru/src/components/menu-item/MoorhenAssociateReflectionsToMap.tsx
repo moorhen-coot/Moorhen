@@ -11,6 +11,8 @@ export const MoorhenAssociateReflectionsToMap = (props: {
     changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
     setActiveMap: React.Dispatch<React.SetStateAction<moorhen.Map>>;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
+    setToastContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
+    getWarningToast: (arg0: string) => JSX.Element;
 }) => {
 
     const mapSelectRef = useRef<null | HTMLSelectElement>(null)
@@ -23,29 +25,43 @@ export const MoorhenAssociateReflectionsToMap = (props: {
 
     const handleFileRead = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const babyGruMtzWrapper = new MoorhenMtzWrapper()
-        let allColumnNames = await babyGruMtzWrapper.loadHeaderFromFile(e.target.files[0])
-        setColumns(allColumnNames)
-        reflectionDataRef.current = babyGruMtzWrapper.reflectionData
+        try {
+            let allColumnNames = await babyGruMtzWrapper.loadHeaderFromFile(e.target.files[0])
+            setColumns(allColumnNames)
+            reflectionDataRef.current = babyGruMtzWrapper.reflectionData   
+        } catch (err) {
+            props.setToastContent(props.getWarningToast('Error reading mtz file'))
+            document.body.click()
+        }
     }
 
     const onCompleted = async () => {
-        const selectedMap = props.maps.find(map => map.molNo === parseInt(mapSelectRef.current.value))
+        if (!mapSelectRef.current.value || !fobsSelectRef.current.value || !sigFobsSelectRef.current.value || !freeRSelectRef.current.value) {
+            return
+        }
+
         const selectedColumns = {
             Fobs: fobsSelectRef.current.value, SigFobs: sigFobsSelectRef.current.value,
             FreeR: freeRSelectRef.current.value, calcStructFact: true
         }
+        const selectedMap = props.maps.find(map => map.molNo === parseInt(mapSelectRef.current.value))
+        
+        if (!selectedMap) {
+            return
+        }
+
         await selectedMap.associateToReflectionData(selectedColumns, reflectionDataRef.current)
     }
 
     const panelContent = <>
         <Stack direction='vertical' gap={2}>
             <MoorhenMapSelect {...props} ref={mapSelectRef} filterFunction={(map) => !map.hasReflectionData} width='100%' label='Select a map' />
-            <Form.Group style={{ width: '20rem', margin: '0.5rem', padding: '0rem' }} controlId="uploadMTZ" className="mb-3">
+            <Form.Group style={{ width: '100%', margin: '0.5rem', padding: '0rem' }} controlId="uploadMTZ" className="mb-3">
                 <Form.Label>Upload MTZ file with reflection data</Form.Label>
                 <Form.Control ref={filesRef} type="file" multiple={false} accept=".mtz" onChange={(e: React.ChangeEvent<HTMLInputElement>) => {handleFileRead(e)}} />
             </Form.Group>
             <Stack direction='horizontal'>
-                <Form.Group style={{ width: '20rem', margin: '0.5rem', padding: '0rem' }} controlId="fobs" className="mb-3">
+                <Form.Group style={{ width: '7rem', margin: '0.5rem', padding: '0rem' }} controlId="fobs" className="mb-3">
                     <Form.Label>Fobs</Form.Label>
                     <FormSelect size="sm" ref={fobsSelectRef} defaultValue="FP" onChange={(val) => { }}>
                         {Object.keys(columns)
@@ -54,7 +70,7 @@ export const MoorhenAssociateReflectionsToMap = (props: {
                             )}
                     </FormSelect>
                 </Form.Group>
-                <Form.Group style={{ width: '20rem', margin: '0.5rem', padding: '0rem' }} controlId="sigfobs" className="mb-3">
+                <Form.Group style={{ width: '7rem', margin: '0.5rem', padding: '0rem' }} controlId="sigfobs" className="mb-3">
                     <Form.Label>SIGFobs</Form.Label>
                     <FormSelect size="sm" ref={sigFobsSelectRef} defaultValue="SIGFP" onChange={(val) => { }}>
                         {Object.keys(columns)
@@ -63,7 +79,7 @@ export const MoorhenAssociateReflectionsToMap = (props: {
                             )}
                     </FormSelect>
                 </Form.Group>
-                <Form.Group style={{ width: '20rem', margin: '0.5rem', padding: '0rem' }} controlId="freeR" className="mb-3">
+                <Form.Group style={{ width: '7rem', margin: '0.5rem', padding: '0rem' }} controlId="freeR" className="mb-3">
                     <Form.Label>Free R</Form.Label>
                     <FormSelect size="sm" ref={freeRSelectRef} defaultValue="FREER" onChange={(val) => { }}>
                         {Object.keys(columns)

@@ -16,6 +16,10 @@ export const MoorhenFlipMapHandMenuItem = (props: {
     const selectRef = useRef<HTMLSelectElement>(null)
 
     const onCompleted = async () => {
+        if (!selectRef.current.value) {
+            return
+        }
+
         const mapNo = parseInt(selectRef.current.value)
         const newMap = new MoorhenMap(props.commandCentre, props.glRef)
 

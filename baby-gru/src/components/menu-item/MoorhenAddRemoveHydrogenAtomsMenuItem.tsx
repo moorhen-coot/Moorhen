@@ -16,7 +16,7 @@ export const MoorhenAddRemoveHydrogenAtomsMenuItem = (props: {
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
 
     const handleClick = useCallback(async (cootCommand: string) => {
-        if (moleculeSelectRef.current !== null) {
+        if (moleculeSelectRef.current !== null && moleculeSelectRef.current.value) {
             const selectedMolNo = parseInt(moleculeSelectRef.current.value)
             await props.commandCentre.current.cootCommand({
                 message: 'coot_command',
@@ -28,8 +28,8 @@ export const MoorhenAddRemoveHydrogenAtomsMenuItem = (props: {
             selectedMolecule.setAtomsDirty(true)
             selectedMolecule.redraw()
             document.body.click()
-            document.body.click()
         }
+        document.body.click()
     }, [moleculeSelectRef, props.molecules, props.commandCentre])
 
     const panelContent = <Form.Group>

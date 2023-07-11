@@ -27,6 +27,10 @@ export const MoorhenSharpenBlurMapMenuItem = (props: {
 
 
     const onCompleted = async () => {
+        if (!selectRef.current.value) {
+            return
+        }
+        
         const mapNo = parseInt(selectRef.current.value)
         const bFactor = parseFloat(factorRef.current.value)
         const newMap = new MoorhenMap(props.commandCentre, props.glRef)

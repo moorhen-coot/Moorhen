@@ -15,6 +15,16 @@ import { libcootApi } from '../types/libcoot';
 
 /**
  * Represents a molecule
+ * @property {string} name - The name assigned to this molecule instance
+ * @property {number} molNo - The imol assigned to this molecule instance
+ * @property {boolean} atomsDirty - Whether the cached atoms are outdated 
+ * @property {boolean} symmetryOn - Whether the symmetry is currently being displayed
+ * @property {boolean} isVisible - Whether any of the buffers are currently being displayed
+ * @property {object} sequences - List of sequences present in the molecule
+ * @property {object} gemmiStructure - Object representation of the cached gemmi structure for this molecule
+ * @property {React.RefObject<moorhen.CommandCentre>} commandCentre - A react reference to the command centre instance
+ * @property {React.RefObject<webGL.MGWebGL>} glRef - A react reference to the MGWebGL instance
+ * @property {string} monomerLibraryPath - A string with the path to the monomer library, relative to the root of the app
  * @constructor
  * @param {React.RefObject<moorhen.CommandCentre>} commandCentre - A react reference to the command centre instance
  * @param {React.RefObject<webGL.MGWebGL>} glRef - A react reference to the MGWebGL instance
@@ -513,12 +523,11 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @returns {Promise<moorhen.Molecule>} The new molecule
      */
     async loadToCootFromURL(url: RequestInfo | URL, molName: string): Promise<moorhen.Molecule> {
-        const $this = this
         const response = await fetch(url)
         try {
             if (response.ok) {
                 const coordData = await response.text()
-                return $this.loadToCootFromString(coordData, molName)
+                return this.loadToCootFromString(coordData, molName)
             } else {
                 return Promise.reject(`Error fetching data from url ${url}`)
             }
@@ -534,10 +543,9 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @returns {Promise<moorhen.Molecule>} The new molecule
      */
     async loadToCootFromFile(source: Blob): Promise<moorhen.Molecule> {
-        const $this = this
         try {
             const coordData = await readTextFile(source);
-            return await $this.loadToCootFromString(coordData, source.name);
+            return await this.loadToCootFromString(coordData, source.name);
         } catch (err) {
             return await Promise.reject(err);
         }
@@ -550,38 +558,35 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @returns {Promise<moorhen.Molecule>} The new molecule
      */
     async loadToCootFromString(coordData: ArrayBuffer | string, name: string): Promise<moorhen.Molecule> {
-        const $this = this
         const pdbRegex = /.pdb$/;
         const entRegex = /.ent$/;
         const cifRegex = /.cif$/;
         const mmcifRegex = /.mmcif$/;
 
-        if ($this.gemmiStructure && !$this.gemmiStructure.isDeleted()) {
-            $this.gemmiStructure.delete()
+        if (this.gemmiStructure && !this.gemmiStructure.isDeleted()) {
+            this.gemmiStructure.delete()
         }
 
-        $this.name = name.replace(pdbRegex, "").replace(entRegex, "").replace(cifRegex, "").replace(mmcifRegex, "");
-        $this.gemmiStructure = readGemmiStructure(coordData, $this.name)
-        window.CCP4Module.gemmi_setup_entities($this.gemmiStructure)
-        $this.parseSequences()
-        $this.updateLigands()
-        $this.atomsDirty = false
+        this.name = name.replace(pdbRegex, "").replace(entRegex, "").replace(cifRegex, "").replace(mmcifRegex, "");
+        this.gemmiStructure = readGemmiStructure(coordData, this.name)
+        window.CCP4Module.gemmi_setup_entities(this.gemmiStructure)
+        this.parseSequences()
+        this.updateLigands()
+        this.atomsDirty = false
 
-        return this.commandCentre.current.cootCommand({
-            returnType: "status",
-            command: 'shim_read_pdb',
-            commandArgs: [coordData, $this.name],
-            changesMolecules: [$this.molNo]
-        }, true)
-            .then(response => {
-                $this.molNo = response.data.result.result
-                return Promise.resolve($this)
-            })
-            .then(molecule => molecule.loadMissingMonomers())
-            .catch(err => {
-                console.log('Error in loadToCootFromString', err);
-                return Promise.reject(err)
-            })
+        try {
+            const response = await this.commandCentre.current.cootCommand({
+                returnType: "status",
+                command: 'shim_read_pdb',
+                commandArgs: [coordData, this.name],
+                changesMolecules: [this.molNo]
+            }, true)
+            this.molNo = response.data.result.result
+            await this.loadMissingMonomers()
+            return this
+        } catch (err) {
+            console.log('Error in loadToCootFromString', err)
+        }
     }
 
     /**
