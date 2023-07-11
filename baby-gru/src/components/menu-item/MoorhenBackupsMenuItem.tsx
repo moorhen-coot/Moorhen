@@ -15,13 +15,14 @@ export const MoorhenBackupsMenuItem = (props: {
     const backupSelectRef = useRef<null | HTMLSelectElement>(null)
 
     const retrieveSession = useCallback(async () => {
-        const key = backupSelectRef.current.value
-
-        try {
-            let backup = await props.timeCapsuleRef.current.retrieveBackup(key) as string
-            props.loadSessionJSON(backup)
-        } catch (err) {
-            console.log(err)
+        if (backupSelectRef.current.value) {
+            try {
+                const key = backupSelectRef.current.value
+                let backup = await props.timeCapsuleRef.current.retrieveBackup(key) as string
+                props.loadSessionJSON(backup)
+            } catch (err) {
+                console.log(err)
+            }
         }
 
         document.body.click()
@@ -52,7 +53,7 @@ export const MoorhenBackupsMenuItem = (props: {
         disabled={props.disabled}
         showOkButton={false}
         popoverContent={panelContent}
-        menuItemText="Recover molecule backup..."
+        menuItemText="Recover session backup..."
         setPopoverIsShown={props.setPopoverIsShown}
     />
 }

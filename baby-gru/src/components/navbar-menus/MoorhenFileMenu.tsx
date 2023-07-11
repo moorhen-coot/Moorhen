@@ -206,6 +206,10 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     const loadSessionJSON = async (sessionDataString: string): Promise<void> => {
         props.timeCapsuleRef.current.busy = true
         const sessionData: moorhen.backupSession = JSON.parse(sessionDataString)
+
+        if (!sessionData) {
+            return
+        }
         
         // Delete current scene
         props.molecules.forEach(molecule => {
