@@ -1,0 +1,202 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title> components/select/MoorhenMoleculeSelect.tsx</title>
+
+  <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="./build/entry.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,400,700|Inconsolata,700" rel="stylesheet">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+  <link type="text/css" rel="stylesheet" href="https://jmblog.github.io/color-themes-for-google-code-prettify/themes/tomorrow-night.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/app.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/iframe.css">
+  <link type="text/css" rel="stylesheet" href="docs.styles.css">
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
+
+  
+</head>
+
+
+
+<body class="layout small-header">
+    <div id="stickyNavbarOverlay"></div>
+    
+
+<div class="top-nav">
+    <div class="inner">
+        <a id="hamburger" role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+        </a>
+        <div class="logo">
+             
+                <a class="image" href="index.html">
+                    <img src="./MoorhenLogo.png" alt="logo">
+                </a>
+            
+             
+                <a href="index.html">
+                    <h1 class="navbar-item">Moorhen Developer Documentation</h1>
+                </a>
+            
+        </div>
+        <div class="menu">
+            
+            <div class="navigation">
+                <a
+                    href="index.html"
+                    class="link"
+                >
+                    Documentation
+                </a>
+                
+                 
+                    
+                        <a
+                            class="link user-link "
+                            href="https://github.com/stuartjamesmcnicholas/Moorhen"
+                        >
+                            Github
+                        </a>
+                    
+                        <a
+                            class="link user-link "
+                            href="https://moorhen-coot.github.io/wiki/"
+                        >
+                            Moorhen Wiki
+                        </a>
+                    
+                
+                
+            </div>
+        </div>
+    </div>
+</div>
+    <div id="main">
+        <div
+            class="sidebar "
+            id="sidebarNav"
+        >
+            
+                <div class="search-wrapper">
+                    <input id="search" type="text" placeholder="Search docs..." class="input">
+                </div>
+            
+            <nav>
+                
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="MoorhenMap.html">MoorhenMap</a></li><li><a href="MoorhenMolecule.html">MoorhenMolecule</a></li><li><a href="MoorhenTimeCapsule.html">MoorhenTimeCapsule</a></li></ul><h3>Global</h3><ul><li><a href="global.html#MoorhenMapSelect">MoorhenMapSelect</a></li><li><a href="global.html#MoorhenMoleculeSelect">MoorhenMoleculeSelect</a></li><li><a href="global.html#itemReducer">itemReducer</a></li></ul></div>
+                
+            </nav>
+        </div>
+        <div class="core" id="main-content-wrapper">
+            <div class="content">
+                <header class="page-title">
+                    <p>Source</p>
+                    <h1>components/select/MoorhenMoleculeSelect.tsx</h1>
+                </header>
+                
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import { forwardRef } from "react";
+import { Form, FormSelect } from "react-bootstrap";
+import { moorhen } from "../../types/moorhen";
+
+type MoorhenMoleculeSelectPropsType = {
+    height?: string;
+    width?: string;
+    allowAny?: boolean;
+    label?: string;
+    molecules: moorhen.Molecule[];
+    onChange?: (arg0: React.ChangeEvent&lt;HTMLSelectElement>) => void;
+}
+
+/**
+ * A molecule selector react component
+ * @property {string} [height="4rem"] The height of the selector
+ * @property {string} [width="20rem"] The width of the selector
+ * @property {string} [label="Molecule"] A text label shown on top of the selector
+ * @property {boolean} [allowAny=false] Indicates whether a "Any molecule" option should be included in the selector (with value -999999)
+ * @property {moorhen.Molecule[]} molecules List of molecules displayed in the selector options
+ * @property {function} onChange A function that is called when the user changes the selector option
+ * @example
+ * import { MoorhenMoleculeSelect } from "moorhen";
+ * import { useRef } from "react";
+ * 
+ * const moleculeSelectRef = useRef(null);
+ * 
+ * const handleModelChange = (evt) => {
+ *  const selectedModel = parseInt(evt.target.value)
+ *  console.log(`New selected model is ${selectedModel}`)
+ * }
+ * 
+ * return (
+ *  &lt;MoorhenMoleculeSelect ref={moleculeSelectRef} width='100%' label='Select a molecule' onChange={handleModelChange} />
+ * )
+ */
+export const MoorhenMoleculeSelect = forwardRef&lt;HTMLSelectElement, MoorhenMoleculeSelectPropsType>((props, selectRef) => {
+    return &lt;Form.Group style={{ width: props.width, margin: '0.5rem', height:props.height }}>
+        &lt;Form.Label>{props.label}&lt;/Form.Label>
+        &lt;FormSelect size="sm" ref={selectRef} defaultValue={-999999} onChange={(evt) => {
+            if (props.onChange) {
+                props.onChange(evt)
+            }
+            if (selectRef !== null &amp;&amp; typeof selectRef !== 'function') {
+                selectRef.current.value = evt.target.value
+            }
+        }}>
+            {props.allowAny &amp;&amp; &lt;option value={-999999} key={-999999}>Any molecule&lt;/option>}
+            {props.molecules.map(molecule => 
+                &lt;option value={molecule.molNo} key={molecule.molNo}>{molecule.molNo}: {molecule.name}&lt;/option>
+            )}
+        &lt;/FormSelect>
+    &lt;/Form.Group>
+})
+
+MoorhenMoleculeSelect.defaultProps = { height: '4rem', width: '20rem', allowAny: false, label: "Molecule" }</code></pre>
+        </article>
+    </section>
+
+
+
+
+            </div>
+            
+            <footer class="footer">
+                <div class="content has-text-centered">
+                    <p>Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.2</a></p>
+                    <p class="sidebar-created-by">
+                        <a href="https://github.com/SoftwareBrothers/better-docs" target="_blank">BetterDocs theme</a> provided with <i class="fas fa-heart"></i> by
+                        <a href="http://softwarebrothers.co" target="_blank">SoftwareBrothers - JavaScript Development Agency</a>
+                    </p>
+                </div>
+            </footer>
+            
+        </div>
+        <div id="side-nav" class="side-nav">
+        </div>
+    </div>
+<script src="scripts/app.min.js"></script>
+<script>PR.prettyPrint();</script>
+<script src="scripts/linenumber.js"> </script>
+
+<script src="scripts/search.js"> </script>
+
+
+</body>
+</html>

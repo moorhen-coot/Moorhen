@@ -94,7 +94,7 @@
             
             <nav>
                 
-                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="MoorhenMap.html">MoorhenMap</a></li><li><a href="MoorhenMolecule.html">MoorhenMolecule</a></li><li><a href="MoorhenTimeCapsule.html">MoorhenTimeCapsule</a></li></ul><h3>Global</h3><ul><li><a href="global.html#itemReducer">itemReducer</a></li></ul></div>
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="MoorhenMap.html">MoorhenMap</a></li><li><a href="MoorhenMolecule.html">MoorhenMolecule</a></li><li><a href="MoorhenTimeCapsule.html">MoorhenTimeCapsule</a></li></ul><h3>Global</h3><ul><li><a href="global.html#MoorhenMapSelect">MoorhenMapSelect</a></li><li><a href="global.html#MoorhenMoleculeSelect">MoorhenMoleculeSelect</a></li><li><a href="global.html#itemReducer">itemReducer</a></li></ul></div>
                 
             </nav>
         </div>
@@ -177,6 +177,687 @@
 
     
 
+    
+        <div class='vertical-section'>
+            <h1>Members</h1>
+            <div class="members">
+            
+                <div class="member">
+
+<h4 class="name" id="MoorhenMapSelect">
+    <a class="href-link" href="#MoorhenMapSelect">#</a>
+    
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        MoorhenMapSelect
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    A map selector react component
+</div>
+
+
+
+
+
+    <h5 class="subsection-title">Properties:</h5>
+
+    
+<div class="table-container">
+    <table class="props table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+            <th>Attributes</th>
+            
+
+            
+            <th>Default</th>
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>height</code></td>
+    
+
+    <td class="type">
+    
+        
+<code class="param-type">string</code>
+
+
+    
+    </td>
+
+    
+        <td class="attributes">
+        
+            &lt;optional><br>
+        
+
+        
+        </td>
+    
+
+    
+        <td class="default">
+        
+            "4rem"
+        
+        </td>
+    
+
+    <td class="description last">The height of the selector</td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>width</code></td>
+    
+
+    <td class="type">
+    
+        
+<code class="param-type">string</code>
+
+
+    
+    </td>
+
+    
+        <td class="attributes">
+        
+            &lt;optional><br>
+        
+
+        
+        </td>
+    
+
+    
+        <td class="default">
+        
+            "20rem"
+        
+        </td>
+    
+
+    <td class="description last">The width of the selector</td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>label</code></td>
+    
+
+    <td class="type">
+    
+        
+<code class="param-type">string</code>
+
+
+    
+    </td>
+
+    
+        <td class="attributes">
+        
+            &lt;optional><br>
+        
+
+        
+        </td>
+    
+
+    
+        <td class="default">
+        
+            "Map"
+        
+        </td>
+    
+
+    <td class="description last">A text label shown on top of the selector</td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>maps</code></td>
+    
+
+    <td class="type">
+    
+        
+<code class="param-type">Array.&lt;moorhen.Map></code>
+
+
+    
+    </td>
+
+    
+        <td class="attributes">
+        
+
+        
+        </td>
+    
+
+    
+        <td class="default">
+        
+        </td>
+    
+
+    <td class="description last">List of maps displayed in the selector options</td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>filterFunction</code></td>
+    
+
+    <td class="type">
+    
+        
+<code class="param-type">function</code>
+
+
+    
+    </td>
+
+    
+        <td class="attributes">
+        
+
+        
+        </td>
+    
+
+    
+        <td class="default">
+        
+        </td>
+    
+
+    <td class="description last">A function that takes a moorhen.Map as input and returns a boolean: true if the map is to be included in the options.</td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>onChange</code></td>
+    
+
+    <td class="type">
+    
+        
+<code class="param-type">function</code>
+
+
+    
+    </td>
+
+    
+        <td class="attributes">
+        
+
+        
+        </td>
+    
+
+    
+        <td class="default">
+        
+        </td>
+    
+
+    <td class="description last">A function that is called when the user changes the selector option</td>
+</tr>
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="components_select_MoorhenMapSelect.tsx.html" class="button">View Source</a>
+            <span>
+                <a href="components_select_MoorhenMapSelect.tsx.html">components/select/MoorhenMapSelect.tsx</a>, <a href="components_select_MoorhenMapSelect.tsx.html#line27">line 27</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+    <h5>Example</h5>
+    
+    
+        <pre class="prettyprint"><code>import { MoorhenMapSelect } from "moorhen";
+import { useRef } from "react";
+
+const mapSelectRef = useRef(null);
+
+const handleMapChange = (evt) => {
+ const selectedMap = parseInt(evt.target.value)
+ console.log(`New selected map is ${selectedMap}`)
+}
+
+return (
+ &lt;MoorhenMapSelect ref={mapSelectRef} filterFunction={(map) => !map.hasReflectionData} width='100%' label='Select a map' onChange={handleMapChange} />
+)</code></pre>
+    
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="MoorhenMoleculeSelect">
+    <a class="href-link" href="#MoorhenMoleculeSelect">#</a>
+    
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        MoorhenMoleculeSelect
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    A molecule selector react component
+</div>
+
+
+
+
+
+    <h5 class="subsection-title">Properties:</h5>
+
+    
+<div class="table-container">
+    <table class="props table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+            <th>Attributes</th>
+            
+
+            
+            <th>Default</th>
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>height</code></td>
+    
+
+    <td class="type">
+    
+        
+<code class="param-type">string</code>
+
+
+    
+    </td>
+
+    
+        <td class="attributes">
+        
+            &lt;optional><br>
+        
+
+        
+        </td>
+    
+
+    
+        <td class="default">
+        
+            "4rem"
+        
+        </td>
+    
+
+    <td class="description last">The height of the selector</td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>width</code></td>
+    
+
+    <td class="type">
+    
+        
+<code class="param-type">string</code>
+
+
+    
+    </td>
+
+    
+        <td class="attributes">
+        
+            &lt;optional><br>
+        
+
+        
+        </td>
+    
+
+    
+        <td class="default">
+        
+            "20rem"
+        
+        </td>
+    
+
+    <td class="description last">The width of the selector</td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>label</code></td>
+    
+
+    <td class="type">
+    
+        
+<code class="param-type">string</code>
+
+
+    
+    </td>
+
+    
+        <td class="attributes">
+        
+            &lt;optional><br>
+        
+
+        
+        </td>
+    
+
+    
+        <td class="default">
+        
+            "Molecule"
+        
+        </td>
+    
+
+    <td class="description last">A text label shown on top of the selector</td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>allowAny</code></td>
+    
+
+    <td class="type">
+    
+        
+<code class="param-type">boolean</code>
+
+
+    
+    </td>
+
+    
+        <td class="attributes">
+        
+            &lt;optional><br>
+        
+
+        
+        </td>
+    
+
+    
+        <td class="default">
+        
+            false
+        
+        </td>
+    
+
+    <td class="description last">Indicates whether a "Any molecule" option should be included in the selector (with value -999999)</td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>molecules</code></td>
+    
+
+    <td class="type">
+    
+        
+<code class="param-type">Array.&lt;moorhen.Molecule></code>
+
+
+    
+    </td>
+
+    
+        <td class="attributes">
+        
+
+        
+        </td>
+    
+
+    
+        <td class="default">
+        
+        </td>
+    
+
+    <td class="description last">List of molecules displayed in the selector options</td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>onChange</code></td>
+    
+
+    <td class="type">
+    
+        
+<code class="param-type">function</code>
+
+
+    
+    </td>
+
+    
+        <td class="attributes">
+        
+
+        
+        </td>
+    
+
+    
+        <td class="default">
+        
+        </td>
+    
+
+    <td class="description last">A function that is called when the user changes the selector option</td>
+</tr>
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="components_select_MoorhenMoleculeSelect.tsx.html" class="button">View Source</a>
+            <span>
+                <a href="components_select_MoorhenMoleculeSelect.tsx.html">components/select/MoorhenMoleculeSelect.tsx</a>, <a href="components_select_MoorhenMoleculeSelect.tsx.html#line27">line 27</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+    <h5>Example</h5>
+    
+    
+        <pre class="prettyprint"><code>import { MoorhenMoleculeSelect } from "moorhen";
+import { useRef } from "react";
+
+const moleculeSelectRef = useRef(null);
+
+const handleModelChange = (evt) => {
+ const selectedModel = parseInt(evt.target.value)
+ console.log(`New selected model is ${selectedModel}`)
+}
+
+return (
+ &lt;MoorhenMoleculeSelect ref={moleculeSelectRef} width='100%' label='Select a molecule' onChange={handleModelChange} />
+)</code></pre>
+    
+
+
+</div>
+            
+            </div>
+        </div>
     
 
     
