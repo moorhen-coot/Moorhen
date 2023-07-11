@@ -37,7 +37,7 @@ export const MoorhenBaseMenuItem = (props: {
                     }).then(_result => {
                         props.onCompleted()
                         document.body.click()
-                    })
+                    }).catch(err => console.log(err))
                 }
             }}
 
