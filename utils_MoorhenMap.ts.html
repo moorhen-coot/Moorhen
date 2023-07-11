@@ -123,6 +123,21 @@ import { libcootApi } from "../types/libcoot";
  * @constructor
  * @param {React.RefObject&lt;moorhen.CommandCentre>} commandCentre - A react reference to the command centre instance
  * @param {React.RefObject&lt;webGL.MGWebGL>} glRef - A react reference to the MGWebGL instance
+ * @example
+ * import { MoorhenMap } from "moorhen";
+ * 
+ * // Create a new map
+ * const map = new MoorhenMap(commandCentre, glRef);
+ * 
+ * // Load file from a URL
+ * map.loadToCootFromMtzURL("/uri/to/file.mtz", "map-1", { isDifference: false, useWeight: false, calcStructFact: true, F: "FWT", PHI: "PHWT", Fobs: "FP", SigFobs: "SIGFP", FreeR: "FREE" });
+ * 
+ * // Draw map and set view on map centre
+ * map.makeCootLive();
+ * map.map.centreOnMap();
+ * 
+ * // Delete molecule
+ * molecule.delete();
 */
 export class MoorhenMap implements moorhen.Map {
     

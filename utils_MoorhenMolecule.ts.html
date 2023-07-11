@@ -134,6 +134,24 @@ import { libcootApi } from '../types/libcoot';
  * @param {React.RefObject&lt;moorhen.CommandCentre>} commandCentre - A react reference to the command centre instance
  * @param {React.RefObject&lt;webGL.MGWebGL>} glRef - A react reference to the MGWebGL instance
  * @param {string} [monomerLibraryPath="./baby-gru/monomers"] - A string with the path to the monomer library, relative to the root of the app
+ * @example
+ * import { MoorhenMolecule } from 'moorhen';
+ * 
+ * // Create a new molecule
+ * const molecule = new MoorhenMolecule(commandCentre, glRef, monomerLibraryPath);
+ * 
+ * // Set some defaults
+ * molecule.setBackgroundColour(glRef.current.background_colour)
+ * 
+ * // Load file from a URL
+ * molecule.loadToCootFromURL('/uri/to/file.pdb', 'mol-1');
+ * 
+ * // Draw coot bond representation and centre on molecule
+ * molecule.fetchIfDirtyAndDraw('CBs');
+ * molecule.centreOn();
+ * 
+ * // Delete molecule
+ * molecule.delete();
  */
 export class MoorhenMolecule implements moorhen.Molecule {
 
