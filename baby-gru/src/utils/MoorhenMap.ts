@@ -19,10 +19,10 @@ import { libcootApi } from "../types/libcoot";
  * 
  * // Draw map and set view on map centre
  * map.makeCootLive();
- * map.map.centreOnMap();
+ * map.centreOnMap();
  * 
- * // Delete molecule
- * molecule.delete();
+ * // Delete map
+ * map.delete();
 */
 export class MoorhenMap implements moorhen.Map {
     
