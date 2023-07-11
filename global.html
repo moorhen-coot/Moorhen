@@ -94,7 +94,7 @@
             
             <nav>
                 
-                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="MoorhenMap.html">MoorhenMap</a></li><li><a href="MoorhenMolecule.html">MoorhenMolecule</a></li><li><a href="MoorhenTimeCapsule.html">MoorhenTimeCapsule</a></li></ul><h3>Global</h3><ul><li><a href="global.html#calculateDisplayStartAndEnd">calculateDisplayStartAndEnd</a></li><li><a href="global.html#parseSequenceData">parseSequenceData</a></li></ul></div>
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="MoorhenMap.html">MoorhenMap</a></li><li><a href="MoorhenMolecule.html">MoorhenMolecule</a></li><li><a href="MoorhenTimeCapsule.html">MoorhenTimeCapsule</a></li></ul><h3>Global</h3><ul><li><a href="global.html#itemReducer">itemReducer</a></li></ul></div>
                 
             </nav>
         </div>
@@ -188,12 +188,12 @@
 
 
     
-    <h4 class="name" id="calculateDisplayStartAndEnd">
-        <a class="href-link" href="#calculateDisplayStartAndEnd">#</a>
+    <h4 class="name" id="itemReducer">
+        <a class="href-link" href="#itemReducer">#</a>
         
         <span class="code-name">
             
-                calculateDisplayStartAndEnd<span class="signature">(rulerStart, sequenceLength)</span><span class="type-signature"> &rarr; {Array}</span>
+                itemReducer<span class="signature">(oldList, change)</span><span class="type-signature"> &rarr; {Array.&lt;T>}</span>
             
         </span>
     </h4>
@@ -202,7 +202,8 @@
     
     
     <div class="description">
-        For a given sequence length, calculate the range of 40 residues in the middle
+        A reducer that can be used to manage the state of the listed molecules and maps. Here `T` indicates either
+`moorhen.Map` or `moorhen.Molecule`
     </div>
     
 
@@ -240,13 +241,13 @@
             
 <tr class="deep-level-0">
   
-      <td class="name"><code>rulerStart</code></td>
+      <td class="name"><code>oldList</code></td>
   
 
   <td class="type">
   
       
-<code class="param-type">Number</code>
+<code class="param-type">Array.&lt;T></code>
 
 
   
@@ -256,7 +257,7 @@
 
   
 
-  <td class="description last">integer that determines where to start the ruler numbering</td>
+  <td class="description last">The old state list</td>
 </tr>
 
 
@@ -265,13 +266,13 @@
             
 <tr class="deep-level-0">
   
-      <td class="name"><code>sequenceLength</code></td>
+      <td class="name"><code>change</code></td>
   
 
   <td class="type">
   
       
-<code class="param-type">Number</code>
+<code class="param-type">moorhen.MolChange.&lt;T></code>
 
 
   
@@ -281,7 +282,7 @@
 
   
 
-  <td class="description last">sequence lenght</td>
+  <td class="description last">An object indicating the change, of shape `{ action: 'Add' | 'Remove' | 'AddList' | 'Empty'; item?: T; items?: T[]; }`</td>
 </tr>
 
 
@@ -327,9 +328,9 @@
 
     
         <p class="tag-source">
-            <a href="components_sequence-viewer_MoorhenSequenceViewer.tsx.html" class="button">View Source</a>
+            <a href="utils_MoorhenUtils.ts.html" class="button">View Source</a>
             <span>
-                <a href="components_sequence-viewer_MoorhenSequenceViewer.tsx.html">components/sequence-viewer/MoorhenSequenceViewer.tsx</a>, <a href="components_sequence-viewer_MoorhenSequenceViewer.tsx.html#line17">line 17</a>
+                <a href="utils_MoorhenUtils.ts.html">utils/MoorhenUtils.ts</a>, <a href="utils_MoorhenUtils.ts.html#line58">line 58</a>
             </span>
         </p>
     
@@ -360,13 +361,13 @@
 
 <div class="columns">
     
-    <div class='param-desc column is-7'>An array containing the display start and display end consisting of a range of 40 residues</div>
+    <div class='param-desc column is-7'>The resulting new state with the updated list of molecules or maps</div>
     
     
     <div class='column is-5 has-text-left'>
         <label>Type: </label>
         
-<code class="param-type">Array</code>
+<code class="param-type">Array.&lt;T></code>
 
 
     </div>
@@ -380,177 +381,30 @@
 
 
 
-</div>
-            
-                <div class="member">
-
-
-    
-    <h4 class="name" id="parseSequenceData">
-        <a class="href-link" href="#parseSequenceData">#</a>
-        
-        <span class="code-name">
-            
-                parseSequenceData<span class="signature">(sequence)</span><span class="type-signature"> &rarr; {Array}</span>
-            
-        </span>
-    </h4>
-    
-
+    <h5>Example</h5>
     
     
-    <div class="description">
-        For a given sequence, obtain the actual sequence to be displayed with "-" as gaps
-    </div>
+        <pre class="prettyprint"><code>import { useReducer } from 'react'
+import { itemReducer } from "moorhen"
+
+// Define initial states
+const initialMoleculesState = []
+const initialMapsState = []
+
+// Use reducer
+const [molecules, changeMolecules] = useReducer(itemReducer, initialMoleculesState)
+const [maps, changeMaps] = useReducer(itemReducer, initialMapsState)
+
+// Add new molecule
+newMolecule = new MoorhenMolecule(commandCentre, glRef, monomerLibrary)
+changeMolecules({ action: "Add", item: newMolecule })
+
+// Remove new molecule
+changeMolecules({ action: "Remove", item: newMolecule })
+
+// Remove all molecules
+changeMolecules({ action: "Empty"})</code></pre>
     
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-<div class="table-container">
-    <table class="params table">
-        <thead>
-        <tr>
-            
-            <th>Name</th>
-            
-
-            <th>Type</th>
-
-            
-
-            
-
-            <th class="last">Description</th>
-        </tr>
-        </thead>
-
-        <tbody>
-        
-
-            
-<tr class="deep-level-0">
-  
-      <td class="name"><code>sequence</code></td>
-  
-
-  <td class="type">
-  
-      
-<code class="param-type">MoorhenMolecule.sequence.sequence</code>
-
-
-  
-  </td>
-
-  
-
-  
-
-  <td class="description last"></td>
-</tr>
-
-
-        
-        </tbody>
-    </table>
-</div>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    
-
-    
-
-    
-
-    
-        <p class="tag-source">
-            <a href="components_sequence-viewer_MoorhenSequenceViewer.tsx.html" class="button">View Source</a>
-            <span>
-                <a href="components_sequence-viewer_MoorhenSequenceViewer.tsx.html">components/sequence-viewer/MoorhenSequenceViewer.tsx</a>, <a href="components_sequence-viewer_MoorhenSequenceViewer.tsx.html#line29">line 29</a>
-            </span>
-        </p>
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    <div class='columns method-parameter'>
-        <div class="column is-2"><label>Returns:</label></div>
-        <div class="column is-10">
-            
-                    
-
-<div class="columns">
-    
-    <div class='param-desc column is-7'>An array containing the ruler start, actual sequence length with gaps and the final sequence to be displayed</div>
-    
-    
-    <div class='column is-5 has-text-left'>
-        <label>Type: </label>
-        
-<code class="param-type">Array</code>
-
-
-    </div>
-    
-</div>
-
-                
-        </div>
-    </div>
-
-
 
 
 </div>

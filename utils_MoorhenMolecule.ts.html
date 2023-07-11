@@ -96,7 +96,7 @@
             
             <nav>
                 
-                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="MoorhenMap.html">MoorhenMap</a></li><li><a href="MoorhenMolecule.html">MoorhenMolecule</a></li><li><a href="MoorhenTimeCapsule.html">MoorhenTimeCapsule</a></li></ul><h3>Global</h3><ul><li><a href="global.html#calculateDisplayStartAndEnd">calculateDisplayStartAndEnd</a></li><li><a href="global.html#parseSequenceData">parseSequenceData</a></li></ul></div>
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="MoorhenMap.html">MoorhenMap</a></li><li><a href="MoorhenMolecule.html">MoorhenMolecule</a></li><li><a href="MoorhenTimeCapsule.html">MoorhenTimeCapsule</a></li></ul><h3>Global</h3><ul><li><a href="global.html#itemReducer">itemReducer</a></li></ul></div>
                 
             </nav>
         </div>
@@ -827,7 +827,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
     /**
      * Centre the view and align it with the axis of a particular residue
-     * @param selectionCid - CID selection for the residue to centre the view on
+     * @param {string} selectionCid - CID selection for the residue to centre the view on
      * @param {boolean} [animate=true] - Indicates whether the change will be animated
      */
     async centreAndAlignViewOn(selectionCid: string, animate: boolean = true): Promise&lt;void> {
@@ -903,7 +903,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
     /**
      * Centre the view on a particular residue
-     * @param selectionCid - CID selection for the residue to centre the view on
+     * @param {string} selectionCid - CID selection for the residue to centre the view on
      * @param {boolean} [animate=true] - Indicates whether the change will be animated
      */
     async centreOn(selectionCid: string = '/*/*/*/*', animate: boolean = true): Promise&lt;void> {
@@ -2276,9 +2276,9 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
     /**
      * Use SSM to superpose this molecule (as the moving structure) with another molecule isntance
-     * @param movChainId - Chain ID for the moving structure
-     * @param refMolNo - Molecule number for the reference structure
-     * @param refChainId - Chain ID for the reference structure
+     * @param {string} movChainId - Chain ID for the moving structure
+     * @param {string} refMolNo - Molecule number for the reference structure
+     * @param {string} refChainId - Chain ID for the reference structure
      */
     SSMSuperpose(movChainId: string, refMolNo: number, refChainId: string): Promise&lt;moorhen.WorkerResponse> {
         return this.commandCentre.current.cootCommand({
