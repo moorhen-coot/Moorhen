@@ -10,8 +10,10 @@ export const MoorhenImportMapCoefficientsMenuItem = (props: {
     commandCentre: RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
     changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
-    setActiveMap: Dispatch<SetStateAction<moorhen.Map>>
-    setPopoverIsShown: Dispatch<SetStateAction<boolean>>     
+    setActiveMap: Dispatch<SetStateAction<moorhen.Map>>;
+    setPopoverIsShown: Dispatch<SetStateAction<boolean>>;
+    setToastContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
+    getWarningToast: (arg0: string) => JSX.Element;
 }) => {
 
     const filesRef = useRef<null | HTMLInputElement>(null)
@@ -29,26 +31,39 @@ export const MoorhenImportMapCoefficientsMenuItem = (props: {
 
     const handleFileRead = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const babyGruMtzWrapper = new MoorhenMtzWrapper()
-        let allColumnNames = await babyGruMtzWrapper.loadHeaderFromFile(e.target.files[0])
-        setColumns(allColumnNames)
+        try {
+            let allColumnNames = await babyGruMtzWrapper.loadHeaderFromFile(e.target.files[0])
+            setColumns(allColumnNames)
+        } catch (err) {
+            props.setToastContent(props.getWarningToast('Error reading mtz file'))
+            document.body.click()
+        }
     }
 
     const handleFile = async (file: Blob, selectedColumns: moorhen.selectedMtzColumns) => {
         const newMap = new MoorhenMap(props.commandCentre, props.glRef)
-        await newMap.loadToCootFromMtzFile(file, selectedColumns)
-        props.changeMaps({ action: 'Add', item: newMap })
-        props.setActiveMap(newMap)
-        setCalcStructFact(false)
+        try {
+            await newMap.loadToCootFromMtzFile(file, selectedColumns)
+            if (newMap.molNo === -1) throw new Error('Cannot read the mtz file!')
+            props.changeMaps({ action: 'Add', item: newMap })
+            props.setActiveMap(newMap)
+            setCalcStructFact(false)
+        } catch (err) {
+            props.setToastContent(props.getWarningToast('Error reading mtz file'))
+            console.log(`Cannot read file`)
+        }
     }
 
     const onCompleted = async () => {
-        let selectedColumns = {
-            F: fSelectRef.current.value, PHI: phiSelectRef.current.value, W: wSelectRef.current.value,
-            isDifference: isDiffRef.current.checked, useWeight: useWeightRef.current.checked,
-            Fobs: fobsSelectRef.current.value, SigFobs: sigFobsSelectRef.current.value,
-            FreeR: freeRSelectRef.current.value, calcStructFact: calcStructFactRef.current.checked
+        if (filesRef.current.files.length > 0) {
+            let selectedColumns = {
+                F: fSelectRef.current.value, PHI: phiSelectRef.current.value, W: wSelectRef.current.value,
+                isDifference: isDiffRef.current.checked, useWeight: useWeightRef.current.checked,
+                Fobs: fobsSelectRef.current.value, SigFobs: sigFobsSelectRef.current.value,
+                FreeR: freeRSelectRef.current.value, calcStructFact: calcStructFactRef.current.checked
+            }
+            return await handleFile(filesRef.current.files[0], selectedColumns)   
         }
-        return await handleFile(filesRef.current.files[0], selectedColumns)
     }
 
     const panelContent = <>

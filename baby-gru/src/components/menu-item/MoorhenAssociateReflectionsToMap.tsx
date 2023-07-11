@@ -45,6 +45,7 @@ export const MoorhenAssociateReflectionsToMap = (props: {
             FreeR: freeRSelectRef.current.value, calcStructFact: true
         }
         const selectedMap = props.maps.find(map => map.molNo === parseInt(mapSelectRef.current.value))
+        
         if (!selectedMap) {
             return
         }
