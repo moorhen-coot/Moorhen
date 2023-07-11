@@ -300,12 +300,9 @@ export class MoorhenMap implements moorhen.Map {
      * @returns {Promise<moorhen.Map>} This moorhenMap instance
      */
     async loadToCootFromMapFile (source: Blob, isDiffMap: boolean): Promise<moorhen.Map> {
-        const $this = this
-        return readDataFile(source)
-            .then(mapData => {
-                const asUIntArray = new Uint8Array(mapData)
-                return $this.loadToCootFromMapData(asUIntArray, source.name, isDiffMap)
-            })
+        const mapData = await readDataFile(source)
+        const asUIntArray = new Uint8Array(mapData)
+        return this.loadToCootFromMapData(asUIntArray, source.name, isDiffMap)
     }
 
     /**
