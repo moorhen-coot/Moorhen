@@ -159,15 +159,13 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
         try {
             await newMolecule.loadToCootFromURL(url, molName)
-            if (newMolecule.molNo === -1) {
-                props.setToastContent(getWarningToast(`Failed to read molecule`))
-                throw new Error("Cannot read the fetched molecule...")
-            }
+            if (newMolecule.molNo === -1) throw new Error("Cannot read the fetched molecule...")
             await newMolecule.fetchIfDirtyAndDraw('CBs')
             changeMolecules({ action: "Add", item: newMolecule })
             newMolecule.centreOn('/*/*/*/*', false)
             return newMolecule
         } catch (err) {
+            props.setToastContent(getWarningToast(`Failed to read molecule`))
             console.log(`Cannot fetch molecule from ${url}`)
             setIsValidPdbId(false)
         }   
@@ -177,13 +175,11 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         const newMap = new MoorhenMap(commandCentre, glRef)
         try {
             await newMap.loadToCootFromMapURL(url, mapName, isDiffMap)
-            if (newMap.molNo === -1) {
-                props.setToastContent(getWarningToast(`Failed to read map`))
-                throw new Error("Cannot read the fetched map...")
-            }
+            if (newMap.molNo === -1) throw new Error("Cannot read the fetched map...")
             changeMaps({ action: 'Add', item: newMap })
             props.setActiveMap(newMap)
         } catch {
+            props.setToastContent(getWarningToast(`Failed to read map`))
             console.log(`Cannot fetch map from ${url}`)
         }
     }
@@ -192,13 +188,11 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         const newMap = new MoorhenMap(commandCentre, glRef)
         try {
             await newMap.loadToCootFromMtzURL(url, mapName, selectedColumns)
-            if (newMap.molNo === -1) {
-                props.setToastContent(getWarningToast(`Failed to read mtz`))
-                throw new Error("Cannot read the fetched mtz...")
-            }
+            if (newMap.molNo === -1) throw new Error("Cannot read the fetched mtz...")
             changeMaps({ action: 'Add', item: newMap })
             props.setActiveMap(newMap)
         } catch {
+            props.setToastContent(getWarningToast(`Failed to read mtz`))
             console.log(`Cannot fetch mtz from ${url}`)
         }   
     }
