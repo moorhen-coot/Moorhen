@@ -380,8 +380,10 @@ export const MoorhenRamachandran = (props: MoorhenSideBarAccordionPropsInterface
         
 
         return () => {
-            canvasRef.current.removeEventListener("mousemove", handleMouseMove);
-            canvasRef.current.removeEventListener("click", handleMouseClick);    
+            if (canvasRef.current !== null) {
+                canvasRef.current.removeEventListener("mousemove", handleMouseMove);
+                canvasRef.current.removeEventListener("click", handleMouseClick);    
+            }
         }
         
     }, [canvasRef, handleMouseClick, handleMouseMove])

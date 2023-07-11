@@ -712,7 +712,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
     /**
      * Centre the view and align it with the axis of a particular residue
-     * @param selectionCid - CID selection for the residue to centre the view on
+     * @param {string} selectionCid - CID selection for the residue to centre the view on
      * @param {boolean} [animate=true] - Indicates whether the change will be animated
      */
     async centreAndAlignViewOn(selectionCid: string, animate: boolean = true): Promise<void> {
@@ -788,7 +788,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
     /**
      * Centre the view on a particular residue
-     * @param selectionCid - CID selection for the residue to centre the view on
+     * @param {string} selectionCid - CID selection for the residue to centre the view on
      * @param {boolean} [animate=true] - Indicates whether the change will be animated
      */
     async centreOn(selectionCid: string = '/*/*/*/*', animate: boolean = true): Promise<void> {
@@ -2161,9 +2161,9 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
     /**
      * Use SSM to superpose this molecule (as the moving structure) with another molecule isntance
-     * @param movChainId - Chain ID for the moving structure
-     * @param refMolNo - Molecule number for the reference structure
-     * @param refChainId - Chain ID for the reference structure
+     * @param {string} movChainId - Chain ID for the moving structure
+     * @param {string} refMolNo - Molecule number for the reference structure
+     * @param {string} refChainId - Chain ID for the reference structure
      */
     SSMSuperpose(movChainId: string, refMolNo: number, refChainId: string): Promise<moorhen.WorkerResponse> {
         return this.commandCentre.current.cootCommand({

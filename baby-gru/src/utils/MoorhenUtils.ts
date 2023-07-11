@@ -31,6 +31,34 @@ export function sequenceIsValid(sequence: moorhen.ResidueInfo[]): boolean {
     return true
 }
 
+/**
+ * A reducer that can be used to manage the state of the listed molecules and maps. Here `T` indicates either
+ * `moorhen.Map` or `moorhen.Molecule`
+ * @param {T[]} oldList - The old state list
+ * @param {moorhen.MolChange<T>} change - An object indicating the change, of shape `{ action: 'Add' | 'Remove' | 'AddList' | 'Empty'; item?: T; items?: T[]; }`
+ * @returns {T[]} The resulting new state with the updated list of molecules or maps
+ * @example
+ * import { useReducer } from 'react'
+ * import { itemReducer } from "moorhen"
+ * 
+ * // Define initial states
+ * const initialMoleculesState = []
+ * const initialMapsState = []
+ * 
+ * // Use reducer
+ * const [molecules, changeMolecules] = useReducer(itemReducer, initialMoleculesState)
+ * const [maps, changeMaps] = useReducer(itemReducer, initialMapsState)
+ * 
+ * // Add new molecule
+ * newMolecule = new MoorhenMolecule(commandCentre, glRef, monomerLibrary)
+ * changeMolecules({ action: "Add", item: newMolecule })
+ * 
+ * // Remove new molecule
+ * changeMolecules({ action: "Remove", item: newMolecule })
+ * 
+ * // Remove all molecules
+ * changeMolecules({ action: "Empty"})
+ */
 export function itemReducer<T extends moorhen.Molecule | moorhen.Map> (oldList: T[], change: moorhen.MolChange<T>): T[] {
     if (change.action === 'Add') {
         return [...oldList, change.item]
