@@ -8,10 +8,10 @@
   "description": "Moorhen molecular graphics",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/stuartjamesmcnicholas/Moorhen.git"
+    "url": "git+https://github.com/moorhen-coot/Moorhen.git"
   },
   "bugs": {
-    "url": "https://github.com/stuartjamesmcnicholas/Moorhen/issues"
+    "url": "https://github.com/moorhen-coot/Moorhen/issues"
   },
   "keywords": [
     "molecular graphics",
