@@ -15,6 +15,16 @@ import { libcootApi } from '../types/libcoot';
 
 /**
  * Represents a molecule
+ * @property {string} name - The name assigned to this molecule instance
+ * @property {number} molNo - The imol assigned to this molecule instance
+ * @property {boolean} atomsDirty - Whether the cached atoms are outdated 
+ * @property {boolean} symmetryOn - Whether the symmetry is currently being displayed
+ * @property {boolean} isVisible - Whether any of the buffers are currently being displayed
+ * @property {object} sequences - List of sequences present in the molecule
+ * @property {object} gemmiStructure - Object representation of the cached gemmi structure for this molecule
+ * @property {React.RefObject<moorhen.CommandCentre>} commandCentre - A react reference to the command centre instance
+ * @property {React.RefObject<webGL.MGWebGL>} glRef - A react reference to the MGWebGL instance
+ * @property {string} monomerLibraryPath - A string with the path to the monomer library, relative to the root of the app
  * @constructor
  * @param {React.RefObject<moorhen.CommandCentre>} commandCentre - A react reference to the command centre instance
  * @param {React.RefObject<webGL.MGWebGL>} glRef - A react reference to the MGWebGL instance

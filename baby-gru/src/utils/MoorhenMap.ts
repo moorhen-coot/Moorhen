@@ -5,6 +5,17 @@ import { libcootApi } from "../types/libcoot";
 
 /**
  * Represents a map
+ * @property {string} name - The name assigned to this map instance
+ * @property {number} molNo - The imol assigned to this map instance
+ * @property {number} mapRadius - The map radius currently displayed
+ * @property {number} contourLevel - The map contour level currently displayed
+ * @property {boolean} litLines - Indicates whether the rendered map lines are "lit"
+ * @property {boolean} solid - Indicates whether the map is being shown as a solid surface
+ * @property {boolean} isDifference - Indicates whether this is a difference map instance
+ * @property {boolean} hasReflectionData - Indicates whether this map instance has been associated with observed reflection data
+ * @property {object} rgba - Object that stores the map colour and alpha
+ * @property {React.RefObject<moorhen.CommandCentre>} commandCentre - A react reference to the command centre instance
+ * @property {React.RefObject<webGL.MGWebGL>} glRef - A react reference to the MGWebGL instance
  * @constructor
  * @param {React.RefObject<moorhen.CommandCentre>} commandCentre - A react reference to the command centre instance
  * @param {React.RefObject<webGL.MGWebGL>} glRef - A react reference to the MGWebGL instance
