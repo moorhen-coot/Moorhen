@@ -289,17 +289,18 @@ export const MoorhenImportDictionaryMenuItem = (props: {
     const filesRef = useRef<null | HTMLInputElement>(null)
     const moleculeSelectRef = useRef<null | HTMLSelectElement>(null)
     const moleculeSelectValueRef = useRef<null | string>(null)
-    const [tlc, setTlc] = useState<string>('')
     const addToRef = useRef<null | HTMLSelectElement>(null)
-    const [addToMolecule, setAddToMolecule] = useState<string>('')
     const addToMoleculeValueRef = useRef<null | number>(null)
-    const [fileOrLibrary, setFileOrLibrary] = useState<string>("Library")
-    const fileOrLibraryRef = useRef<string>("Library")
-    const [createInstance, setCreateInstance] = useState<boolean>(true)
-    const [tlcsOfFile, setTlcsOfFile] = useState([])
     const tlcSelectRef = useRef<null | HTMLSelectElement>(null)
     const tlcValueRef = useRef<null | string>(null)
     const createRef = useRef<boolean>(true)
+    const [tlc, setTlc] = useState<string>('')
+    const [addToMolecule, setAddToMolecule] = useState<string>('')
+    const [fileOrLibrary, setFileOrLibrary] = useState<string>("Library")
+    const fileOrLibraryRef = useRef<string>("Library")
+    const [createInstance, setCreateInstance] = useState<boolean>(true)
+    const [validDictFile, setValidDictFile] = useState<boolean>(true)
+    const [tlcsOfFile, setTlcsOfFile] = useState([])
 
     const collectedProps = {
         tlc, setTlc, createInstance, setCreateInstance, addToMolecule,
@@ -325,11 +326,15 @@ export const MoorhenImportDictionaryMenuItem = (props: {
                     if (tlcs.length > 0) {
                         setTlcsOfFile(tlcs)
                         setTlc(tlcs[0])
+                        setValidDictFile(true)
                         tlcValueRef.current = tlcs[0]
+                    } else {
+                        setValidDictFile(false)
                     }
                 }}>
                 <Form.Label>Browse...</Form.Label>
-                <Form.Control ref={filesRef} type="file" accept={".cif, .dict, .mmcif"} multiple={false} />
+                <Form.Control ref={filesRef} type="file" accept={".cif, .dict, .mmcif"} multiple={false} style={{borderColor: validDictFile ?  '#c2c2c2' : 'red', borderWidth: validDictFile ? '0.1rem' : '0.15rem'}}/>
+                {!validDictFile && <span>Unable to parse</span>}
             </Form.Group>
             {createInstance &&
                 <Form.Select ref={tlcSelectRef} value={tlc} onChange={(newVal) => { setTlc(newVal.target.value) }} style={{ width: '20rem', margin: '0.5rem' }} >
@@ -365,7 +370,7 @@ export const MoorhenImportDictionaryMenuItem = (props: {
     }
 
     const fetchLigandDict = async (): Promise<string> => {
-        if (fileOrLibraryRef.current === "File" && filesRef.current.files.length > 0) {
+        if (fileOrLibraryRef.current === "File" && filesRef.current.files.length > 0 && tlcValueRef.current) {
             return readTextFile(filesRef.current.files[0]) as Promise<string>
         }
         else if (fileOrLibraryRef.current === "Library" && tlcValueRef.current) {
