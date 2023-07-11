@@ -271,7 +271,7 @@
         <p class="tag-source">
             <a href="utils_MoorhenMap.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line24">line 24</a>
+                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line25">line 25</a>
             </span>
         </p>
     
@@ -306,14 +306,15 @@
 const map = new MoorhenMap(commandCentre, glRef);
 
 // Load file from a URL
-map.loadToCootFromMtzURL("/uri/to/file.mtz", "map-1", { isDifference: false, useWeight: false, calcStructFact: true, F: "FWT", PHI: "PHWT", Fobs: "FP", SigFobs: "SIGFP", FreeR: "FREE" });
+const selectedColumns = { F: "FWT", PHI: "PHWT", Fobs: "FP", SigFobs: "SIGFP", FreeR: "FREE", isDifference: false, useWeight: false, calcStructFact: true }
+map.loadToCootFromMtzURL("/uri/to/file.mtz", "map-1", selectedColumns);
 
 // Draw map and set view on map centre
 map.makeCootLive();
-map.map.centreOnMap();
+map.centreOnMap();
 
-// Delete molecule
-molecule.delete();</code></pre>
+// Delete map
+map.delete();</code></pre>
     
 
 
@@ -406,7 +407,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMap.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line208">line 208</a>
+                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line209">line 209</a>
             </span>
         </p>
     
@@ -475,7 +476,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMap.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line633">line 633</a>
+                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line634">line 634</a>
             </span>
         </p>
     
@@ -645,7 +646,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMap.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line752">line 752</a>
+                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line753">line 753</a>
             </span>
         </p>
     
@@ -818,7 +819,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMap.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line773">line 773</a>
+                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line774">line 774</a>
             </span>
         </p>
     
@@ -944,7 +945,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMap.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line780">line 780</a>
+                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line781">line 781</a>
             </span>
         </p>
     
@@ -1115,7 +1116,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMap.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line699">line 699</a>
+                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line700">line 700</a>
             </span>
         </p>
     
@@ -1239,7 +1240,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMap.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line596">line 596</a>
+                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line597">line 597</a>
             </span>
         </p>
     
@@ -1514,7 +1515,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMap.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line711">line 711</a>
+                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line712">line 712</a>
             </span>
         </p>
     
@@ -1638,7 +1639,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMap.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line766">line 766</a>
+                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line767">line 767</a>
             </span>
         </p>
     
@@ -1764,7 +1765,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMap.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line589">line 589</a>
+                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line590">line 590</a>
             </span>
         </p>
     
@@ -1890,7 +1891,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMap.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line759">line 759</a>
+                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line760">line 760</a>
             </span>
         </p>
     
@@ -2012,7 +2013,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMap.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line667">line 667</a>
+                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line668">line 668</a>
             </span>
         </p>
     
@@ -2134,7 +2135,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMap.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line680">line 680</a>
+                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line681">line 681</a>
             </span>
         </p>
     
@@ -2360,7 +2361,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMap.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line652">line 652</a>
+                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line653">line 653</a>
             </span>
         </p>
     
@@ -2562,7 +2563,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMap.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line661">line 661</a>
+                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line662">line 662</a>
             </span>
         </p>
     
@@ -2833,7 +2834,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMap.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line643">line 643</a>
+                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line644">line 644</a>
             </span>
         </p>
     
@@ -3056,7 +3057,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMap.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line626">line 626</a>
+                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line627">line 627</a>
             </span>
         </p>
     
@@ -3283,7 +3284,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMap.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line617">line 617</a>
+                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line618">line 618</a>
             </span>
         </p>
     
@@ -3405,7 +3406,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMap.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line686">line 686</a>
+                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line687">line 687</a>
             </span>
         </p>
     
@@ -3525,7 +3526,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMap.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line692">line 692</a>
+                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line693">line 693</a>
             </span>
         </p>
     
@@ -3770,7 +3771,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMap.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line607">line 607</a>
+                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line608">line 608</a>
             </span>
         </p>
     
@@ -4002,7 +4003,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMap.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line743">line 743</a>
+                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line744">line 744</a>
             </span>
         </p>
     
@@ -4308,7 +4309,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMap.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line734">line 734</a>
+                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line735">line 735</a>
             </span>
         </p>
     
@@ -4654,7 +4655,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMap.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line723">line 723</a>
+                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line724">line 724</a>
             </span>
         </p>
     
@@ -4825,7 +4826,7 @@ molecule.delete();</code></pre>
         <p class="tag-source">
             <a href="utils_MoorhenMap.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line674">line 674</a>
+                <a href="utils_MoorhenMap.ts.html">utils/MoorhenMap.ts</a>, <a href="utils_MoorhenMap.ts.html#line675">line 675</a>
             </span>
         </p>
     
