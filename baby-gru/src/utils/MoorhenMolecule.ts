@@ -53,7 +53,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
     type: string;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
-    enerLib: any;
     HBondsAssigned: boolean;
     atomsDirty: boolean;
     isVisible: boolean;
