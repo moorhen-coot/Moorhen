@@ -347,6 +347,7 @@ export const MoorhenMoleculeCard = (props: MoorhenMoleculeCardPropsInterface) =>
         rama: "Rama",
         rotamer: "Rota",
         CBs: "Bonds",
+        CAs: "C-As",
         CRs: "Ribb.",
         CDs: "Cont.",
         MolecularSurface: "Surf.",

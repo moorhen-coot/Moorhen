@@ -78,6 +78,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
     cootBondsOptions: moorhen.cootBondOptions;
     displayObjects: {
         CBs: moorhen.DisplayObject[];
+        CAs: moorhen.DisplayObject[];
         CRs: moorhen.DisplayObject[];
         ligands: moorhen.DisplayObject[];
         gaussian: moorhen.DisplayObject[];
@@ -134,6 +135,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }
         this.displayObjects = {
             CBs: [],
+            CAs: [],
             CRs: [],
             ligands: [],
             gaussian: [],
@@ -856,6 +858,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
                 this.drawRotamerDodecahedra()
                 break;
             case 'VdwSpheres':
+            case 'CAs':
             case 'CBs':
                 await this.drawCootBonds(style)
                 break;
@@ -1040,6 +1043,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
         if (name === "VdwSpheres") {
             style = "VDW-BALLS"
             returnType = "instanced_mesh_perfect_spheres"
+        } else if (name === "CAs") {
+            style = "CA+LIGANDS"
         }
 
         if (typeof cid === 'string') {
