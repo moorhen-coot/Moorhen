@@ -474,7 +474,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("phi_psi", &coot::phi_psi_prob_t::phi_psi)
     .property("position", &coot::phi_psi_prob_t::position)
     .property("is_allowed_flag", &coot::phi_psi_prob_t::is_allowed_flag)
-    .property("residue_name", &coot::phi_psi_prob_t::residue_name)
+    .function("residue_name", &coot::phi_psi_prob_t::residue_name)// Should be function?
     .function("is_allowed", &coot::phi_psi_prob_t::is_allowed)
     ;
     class_<coot::molecule_t::moved_atom_t>("moved_atom_t")

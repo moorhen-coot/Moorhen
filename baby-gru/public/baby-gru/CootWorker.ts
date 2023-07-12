@@ -615,11 +615,11 @@ const ramachandranDataToJSArray = (ramachandraData: emscriptem.vector<libcootApi
                 chainId: phiPsi.chain_id,
                 insCode: phiPsi.ins_code,
                 seqNum: phiPsi.residue_number,
-                restype: residue.residue_name,
+                restype: residue.residue_name(),
                 isOutlier: !residue.is_allowed_flag,
                 phi: phiPsi.phi(),
                 psi: phiPsi.psi(),
-                is_pre_pro: residue.residue_name === 'PRO'
+                is_pre_pro: residue.residue_name() === 'PRO'
             })
         }
         residue.delete()
