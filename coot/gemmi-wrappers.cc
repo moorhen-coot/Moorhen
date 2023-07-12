@@ -16,6 +16,7 @@
 #include <emscripten.h>
 #include <emscripten/bind.h>
 
+#include <gemmi/to_pdb.hpp>
 #include <gemmi/span.hpp>
 #include <gemmi/neighbor.hpp>
 #include <gemmi/mmread.hpp>
@@ -39,6 +40,13 @@ using namespace emscripten;
 // Gemmi stuff
 using GemmiSMat33double = gemmi::SMat33<double>;
 using GemmiSMat33float = gemmi::SMat33<float>;
+
+std::string get_pdb_string_from_gemmi_struct(const gemmi::Structure &Structure){
+    std::ostringstream oss;
+    gemmi::write_pdb(Structure, oss);
+    std::string s = oss.str();
+    return s;
+}
 
 gemmi::Structure read_structure_from_string(const std::string &data, const std::string& path){
     char *c_data = (char *)data.c_str();
@@ -2224,6 +2232,7 @@ GlobWalk
     */
 
     //TODO Here we need to put *lots* of gemmi functions
+    function("get_pdb_string_from_gemmi_struct",&get_pdb_string_from_gemmi_struct);
     function("read_structure_from_string",&read_structure_from_string);
     function("read_structure_file",&gemmi::read_structure_file);
     function("read_mtz_file",&gemmi::read_mtz_file);
