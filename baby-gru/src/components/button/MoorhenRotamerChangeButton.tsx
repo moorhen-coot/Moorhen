@@ -79,7 +79,7 @@ export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moor
         setTimeout(() => {
             chosenMolecule.current.hideCid(selectedFragmentRef.current.cid)
             Object.keys(molecule.displayObjects)
-                .filter(style => { return ['CRs', 'CBs', 'ligands', 'gaussian', 'MolecularSurface', 'VdWSurface', 'DishyBases', 'VdwSpheres', 'allHBonds'].includes(style) })
+                .filter(style => { return ['CRs', 'CBs', 'CAs', 'ligands', 'gaussian', 'MolecularSurface', 'VdWSurface', 'DishyBases', 'VdwSpheres', 'allHBonds'].includes(style) })
                 .forEach(async style => {
                     if (molecule.displayObjects[style].length > 0 &&
                         molecule.displayObjects[style][0].visible) {

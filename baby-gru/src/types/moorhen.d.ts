@@ -125,7 +125,6 @@ export namespace moorhen {
         type: string;
         commandCentre: React.RefObject<CommandCentre>;
         glRef: React.RefObject<webGL.MGWebGL>;
-        enerLib: any;
         HBondsAssigned: boolean;
         atomsDirty: boolean;
         isVisible: boolean;
@@ -150,6 +149,7 @@ export namespace moorhen {
         cootBondsOptions: cootBondOptions;
         displayObjects: {
             CBs: DisplayObject[];
+            CAs: DisplayObject[];
             CRs: DisplayObject[];
             ligands: DisplayObject[];
             gaussian: DisplayObject[];
