@@ -64,6 +64,13 @@ const doColourTest = async (props: any) => {
     }
 }
 
+const doRenameChainTest = async (props: any) => {
+    const molecule = props.molecules.find(molecule => molecule.molNo === 0)
+    if (typeof molecule !== 'undefined') {
+        await molecule.changeChainId('A', 'X')
+    }
+}
+
 export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     const [popoverIsShown, setPopoverIsShown] = useState(false)
     const menuItemProps = {setPopoverIsShown, ...props}
@@ -81,6 +88,9 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
                     </MenuItem>
                     <MenuItem onClick={() => doColourTest(menuItemProps)}>
                         Do colouring test
+                    </MenuItem>
+                    <MenuItem onClick={() => doRenameChainTest(menuItemProps)}>
+                        Do rename chain test
                     </MenuItem>
                     <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
                         <Form.Check 
