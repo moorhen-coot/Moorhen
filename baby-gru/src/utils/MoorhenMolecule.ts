@@ -1662,8 +1662,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
                 //Had we encountered a previous compound ?  If so, add it into the energy lib
                 if (comp_id !== 'list') {
                     const reassembledCif = unindentedLines.join("\n")
-                    this.enerLib.addCIFAtomTypes(comp_id, reassembledCif)
-                    this.enerLib.addCIFBondTypes(comp_id, reassembledCif)
                     this.ligandDicts[comp_id] = reassembledCif
                     unindentedLines = []
                 }
@@ -1674,8 +1672,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
         if (comp_id !== 'list') {
             const reassembledCif = unindentedLines.join("\n")
-            this.enerLib.addCIFAtomTypes(comp_id, reassembledCif)
-            this.enerLib.addCIFBondTypes(comp_id, reassembledCif)
             this.ligandDicts[comp_id] = reassembledCif
         }
     }
