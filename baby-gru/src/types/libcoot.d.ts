@@ -20,6 +20,7 @@ export namespace libcootApi {
         getElementNameAsString: (arg0: emscriptem.instance<string>) => string;
         FS_unlink: (arg0: string) => void;
         cif_parse_string: (arg0: gemmi.cifDocument, arg1: string) => void;
+        get_pdb_string_from_gemmi_struct: (arg0:gemmi.Structure) => string;
         Selection: { new(cid: string): gemmi.Selection };
         NeighborSearch: { new(model: gemmi.Model, unitCell: gemmi.UnitCell, radius: number): gemmi.NeighborSearch };
         Position: { new(x: number, y: number, z: number): gemmi.Position };
