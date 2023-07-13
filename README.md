@@ -64,17 +64,17 @@ Moorhen is available to use at [https://moorhen.org](https://moorhen.org) .
 `source ./emsdk_env.sh`
 
 3. Get the sources:  
-`git clone https://github.com/stuartjamesmcnicholas/Moorhen.git ccp4_wasm`  
-`cd ccp4_wasm`  
+`git clone https://github.com/moorhen-coot/Moorhen.git`
+`cd Moorhen`  
 `./get_sources`
 
-4. Build gsl, Boost, RDKIt, Coot, the CCP4 libraries and examples:  
+5. Build gsl, Boost, RDKIt, Coot, the CCP4 libraries and examples:  
 <br>In this branch, it is intended that you do the build in the source directory. 
 <br/>After first checkout you should run the following script to build:  
 `./initial_build.sh`  
 This should build all dependencies and then `Moorhen`. 
 
-5. To run the Moorhen molecular graphics application:  
+6. To run the Moorhen molecular graphics application:  
 `cd baby-gru`  
 `npm start`  
 And then point a web browser at `http://localhost:3000/` .  
