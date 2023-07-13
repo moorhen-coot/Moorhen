@@ -1486,6 +1486,7 @@ interface ShaderBlurX extends MGWebGLShader {
     inputTexture: WebGLUniformLocation;
     depthTexture: WebGLUniformLocation;
     blurSize: WebGLUniformLocation;
+    blurDepth: WebGLUniformLocation;
 }
 
 interface ShaderBlurY extends MGWebGLShader {
@@ -1493,6 +1494,7 @@ interface ShaderBlurY extends MGWebGLShader {
     inputTexture: WebGLUniformLocation;
     depthTexture: WebGLUniformLocation;
     blurSize: WebGLUniformLocation;
+    blurDepth: WebGLUniformLocation;
 }
 
 interface ShaderCircles extends MGWebGLShader {
@@ -1551,6 +1553,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         atomLabelDepthMode: boolean;
         clipCapPerfectSpheres: boolean;
         useOffScreenBuffers: boolean;
+        blurSize: number;
+        blurDepth:number;
         myQuat: quat4;
         gl_fog_start: null | number;
         doDrawClickedAtomLines: boolean;
@@ -1990,6 +1994,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.offScreenFramebuffer = null;
         this.useOffScreenBuffers = false;
+        this.blurSize = 3.0;
+        this.blurDepth = 0.2;
         this.offScreenReady = false;
         this.framebufferDrawBuffersReady = false;
         this.screenshotBuffersReady = false;
@@ -3422,6 +3428,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.shaderProgramBlurX.mvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramBlurX, "uMVMatrix");
 
         this.shaderProgramBlurX.blurSize = this.gl.getUniformLocation(this.shaderProgramBlurX, "blurSize");
+        this.shaderProgramBlurX.blurDepth = this.gl.getUniformLocation(this.shaderProgramBlurX, "blurDepth");
 
         this.shaderProgramBlurX.depthTexture = this.gl.getUniformLocation(this.shaderProgramBlurX, "depth");
         this.shaderProgramBlurX.inputTexture = this.gl.getUniformLocation(this.shaderProgramBlurX, "shader0");
@@ -3453,6 +3460,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.shaderProgramBlurY.mvMatrixUniform = this.gl.getUniformLocation(this.shaderProgramBlurY, "uMVMatrix");
 
         this.shaderProgramBlurY.blurSize = this.gl.getUniformLocation(this.shaderProgramBlurY, "blurSize");
+        this.shaderProgramBlurY.blurDepth = this.gl.getUniformLocation(this.shaderProgramBlurY, "blurDepth");
 
         this.shaderProgramBlurY.depthTexture = this.gl.getUniformLocation(this.shaderProgramBlurY, "depth");
         this.shaderProgramBlurY.inputTexture = this.gl.getUniformLocation(this.shaderProgramBlurY, "shader0");
@@ -5943,9 +5951,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         //This is an example of chaining framebuffer shader effects.
         const doBlur = true;
         if(doBlur){
-            const blurSize = 3.0;
-            const blurSizeX = blurSize/this.gl.viewportWidth;
-            const blurSizeY = blurSize/this.gl.viewportHeight;
+            const blurSizeX = this.blurSize/this.gl.viewportWidth;
+            const blurSizeY = this.blurSize/this.gl.viewportHeight;
 
             this.gl.useProgram(this.shaderProgramBlurX);
             for(let i = 0; i<16; i++)
@@ -5966,6 +5973,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.uniformMatrix4fv(this.shaderProgramBlurX.pMatrixUniform, false, paintPMatrix);
             this.gl.uniformMatrix4fv(this.shaderProgramBlurX.mvMatrixUniform, false, paintMvMatrix);
 
+            this.gl.uniform1f(this.shaderProgramBlurX.blurDepth,this.blurDepth);
             this.gl.uniform1f(this.shaderProgramBlurX.blurSize,blurSizeX);
 
             this.gl.clearBufferfv(this.gl.COLOR, 0, [1.0, 0.0, 1.0, 1.0]);
@@ -5997,6 +6005,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.gl.uniformMatrix4fv(this.shaderProgramBlurY.pMatrixUniform, false, paintPMatrix);
             this.gl.uniformMatrix4fv(this.shaderProgramBlurY.mvMatrixUniform, false, paintMvMatrix);
 
+            this.gl.uniform1f(this.shaderProgramBlurY.blurDepth,this.blurDepth);
             this.gl.uniform1f(this.shaderProgramBlurY.blurSize,blurSizeY);
 
             this.gl.clearBufferfv(this.gl.COLOR, 0, [1.0, 0.0, 1.0, 1.0]);

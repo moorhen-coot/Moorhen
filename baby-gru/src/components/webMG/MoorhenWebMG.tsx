@@ -193,6 +193,20 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
+            glRef.current.blurSize = props.context.depthBlurRadius
+            glRef.current.drawScene()
+        }
+    }, [props.context.depthBlurRadius])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
+            glRef.current.blurDepth = props.context.depthBlurDepth
+            glRef.current.drawScene()
+        }
+    }, [props.context.depthBlurDepth])
+
+    useEffect(() => {
+        if(glRef !== null && typeof glRef !== 'function') {
             glRef.current.useOffScreenBuffers = props.context.useOffScreenBuffers
             glRef.current.drawScene()
         }
