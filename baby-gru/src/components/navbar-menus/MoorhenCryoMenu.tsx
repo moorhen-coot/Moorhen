@@ -2,6 +2,7 @@ import { NavDropdown } from "react-bootstrap";
 import { useState } from "react";
 import { MoorhenMapMaskingMenuItem } from "../menu-item/MoorhenMapMaskingMenuItem";
 import { MoorhenSharpenBlurMapMenuItem } from "../menu-item/MoorhenSharpenBlurMapMenuItem";
+import { MoorhenMakeMaskedMapsSplitByChainMenuItem } from "../menu-item/MoorhenMakeMaskedMapsSplitByChainMenuItem";
 import { MoorhenFlipMapHandMenuItem } from "../menu-item/MoorhenFlipMapHandMenuItem"
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 
@@ -20,6 +21,7 @@ export const MoorhenCryoMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             <MoorhenSharpenBlurMapMenuItem {...menuItemProps} />
             <MoorhenMapMaskingMenuItem  {...menuItemProps} />
             <MoorhenFlipMapHandMenuItem  {...menuItemProps} />
+            <MoorhenMakeMaskedMapsSplitByChainMenuItem  {...menuItemProps} />
         </NavDropdown>
     </>
 }
