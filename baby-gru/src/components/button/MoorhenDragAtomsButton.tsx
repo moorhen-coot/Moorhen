@@ -326,7 +326,8 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
         
         return <><MoorhenEditButtonBase
                     ref={theButton}
-                    toolTip="Drag zone"
+                    toolTipLabel="Drag zone"
+                    setToolTip={props.setToolTip}
                     refineAfterMod={false}
                     buttonIndex={props.buttonIndex}
                     selectedButtonIndex={props.selectedButtonIndex}

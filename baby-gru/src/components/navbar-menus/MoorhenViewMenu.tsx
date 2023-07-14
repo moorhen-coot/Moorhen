@@ -11,13 +11,6 @@ export const MoorhenViewMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     const menuItemProps = {setPopoverIsShown, ...props}
 
     return <>
-            < NavDropdown 
-                    title="View" 
-                    id="view-nav-dropdown" 
-                    style={{display:'flex', alignItems:'center'}}
-                    autoClose={popoverIsShown ? false : 'outside'}
-                    show={props.currentDropdownId === props.dropdownId}
-                    onToggle={() => {props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId('-1')}}>
                 <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
                         <Form.Check 
                             type="switch"
@@ -77,6 +70,5 @@ export const MoorhenViewMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                     }}>
                         Set molecule colour rules...
                     </MenuItem>
-            </NavDropdown>
         </>
     }

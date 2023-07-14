@@ -76,13 +76,6 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
     const menuItemProps = {setPopoverIsShown, ...props}
 
     return <>
-            < NavDropdown 
-                title="Dev" 
-                id="dev-nav-dropdown" 
-                style={{display:'flex', alignItems:'center'}}
-                autoClose={popoverIsShown ? false : 'outside'}
-                show={props.currentDropdownId === props.dropdownId}
-                onToggle={() => {props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId('-1')}}>
                     <MenuItem onClick={() => doTest(menuItemProps)}>
                         Do a timing test...
                     </MenuItem>
@@ -113,6 +106,5 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
                             onChange={() => { props.setDoSpinTest(!props.doSpinTest) }}
                             label="Spin test"/>
                     </InputGroup>
-            </NavDropdown >
         </>
     }

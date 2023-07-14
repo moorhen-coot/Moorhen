@@ -35,7 +35,8 @@ export const MoorhenAddSimpleButton = (props: moorhen.EditButtonProps) => {
     }   
         
     return <MoorhenEditButtonBase
-                toolTip="Add simple"
+                toolTipLabel="Add simple"
+                setToolTip={props.setToolTip}
                 buttonIndex={props.buttonIndex}
                 selectedButtonIndex={props.selectedButtonIndex}
                 setSelectedButtonIndex={props.setSelectedButtonIndex}

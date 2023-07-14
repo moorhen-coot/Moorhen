@@ -187,7 +187,8 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
     
         return <><MoorhenEditButtonBase
                     ref={theButton}
-                    toolTip="Rotate/Translate zone"
+                    toolTipLabel="Rotate/Translate zone"
+                    setToolTip={props.setToolTip}
                     buttonIndex={props.buttonIndex}
                     selectedButtonIndex={props.selectedButtonIndex}
                     setSelectedButtonIndex={props.setSelectedButtonIndex}

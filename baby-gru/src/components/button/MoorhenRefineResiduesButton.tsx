@@ -9,14 +9,14 @@ import { webGL } from "../../types/mgWebGL";
 export const MoorhenRefineResiduesButton = (props: moorhen.EditButtonProps | moorhen.ContextButtonProps) => {
     const modeSelectRef = useRef<null | HTMLSelectElement>(null)
     const [panelParameters, setPanelParameters] = useState<string>('TRIPLE')
-    const [toolTip, setToolTip] = useState<string>("Refine Residues")
+    const [toolTipLabel, setToolTipLabel] = useState<string>("Refine Residues")
 
     const refinementModes = ['SINGLE', 'TRIPLE', 'QUINTUPLE', 'HEPTUPLE', 'SPHERE', 'BIG_SPHERE', 'CHAIN', 'ALL']
 
     useEffect(() => {
         if (props.shortCuts) {
             const shortCut = JSON.parse(props.shortCuts as string).triple_refine
-            setToolTip(`Refine Residues ${getTooltipShortcutLabel(shortCut)}`)
+            setToolTipLabel(`Refine Residues ${getTooltipShortcutLabel(shortCut)}`)
         }
     }, [props.shortCuts])
 
@@ -36,7 +36,7 @@ export const MoorhenRefineResiduesButton = (props: moorhen.EditButtonProps | moo
                     icon={<img style={{padding:'0.1rem', width:'100%', height: '100%'}} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/refine-1.svg`} alt='Refine Residues'/>}
                     needsMapData={true}
                     refineAfterMod={false}
-                    toolTipLabel={toolTip}
+                    toolTipLabel={toolTipLabel}
                     popoverSettings={{
                         label: 'Refinement mode',
                         options: refinementModes,
@@ -68,7 +68,8 @@ export const MoorhenRefineResiduesButton = (props: moorhen.EditButtonProps | moo
 
         return <MoorhenEditButtonBase
                 id='refine-residues-edit-button'
-                toolTip={toolTip}
+                toolTipLabel={toolTipLabel}
+                setToolTip={props.setToolTip}
                 buttonIndex={props.buttonIndex}
                 selectedButtonIndex={props.selectedButtonIndex}
                 setSelectedButtonIndex={props.setSelectedButtonIndex}

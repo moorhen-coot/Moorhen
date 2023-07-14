@@ -165,41 +165,13 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {string} newId - The new chain ID
      */
     async changeChainId(oldId: string, newId: string) {
-        const structure = this.gemmiStructure.clone()
-        try {
-            const models = structure.models
-            const modelsSize = models.size()
-            // TODO: Can be done using model.find_chain()
-            for (let modelIndex = 0; modelIndex < modelsSize; modelIndex++) {
-                const model = models.get(modelIndex)
-                const chains = model.chains
-                const chainsSize = chains.size()
-                for (let chainIndex = 0; chainIndex < chainsSize; chainIndex++) {
-                    const chain = chains.get(chainIndex)
-                    if (chain.name === oldId) {
-                        chain.name = newId
-                    }
-                    chain.delete()
-                }
-                model.delete()
-                chains.delete()
-            }
-            models.delete()
-            console.log('HI THERE')
-            const pdbString = window.CCP4Module.get_pdb_string_from_gemmi_struct(structure)
-            console.log(pdbString)
-            await this.commandCentre.current.cootCommand({
-                returnType: "status",
-                command: 'shim_replace_molecule_by_model_from_file',
-                commandArgs: [this.molNo, pdbString]
-            }, true)
-        } finally {
-            if (structure && !structure.isDeleted()) {
-                structure.delete()
-            }
-            this.updateAtoms()
-        }
-
+        await this.commandCentre.current.cootCommand({
+            returnType: "status",
+            command: 'rename_chain',
+            commandArgs: [this.molNo, oldId, newId]
+        }, true)
+        this.setAtomsDirty(true)
+        await this.redraw()
     }
 
     /**

@@ -1,15 +1,13 @@
 import { useEffect, useCallback, useReducer, useRef, useState, useContext } from 'react';
 import { Container, Col, Row, Spinner, Toast, ToastContainer } from 'react-bootstrap';
 import { MoorhenWebMG } from './webMG/MoorhenWebMG';
-import { convertRemToPx, convertViewtoPx, getTooltipShortcutLabel, createLocalStorageInstance, allFontsSet, itemReducer } from '../utils/MoorhenUtils';
+import { convertViewtoPx, getTooltipShortcutLabel, createLocalStorageInstance, allFontsSet, itemReducer } from '../utils/MoorhenUtils';
 import { historyReducer, initialHistoryState } from './navbar-menus/MoorhenHistoryMenu';
 import { MoorhenCommandCentre } from "../utils/MoorhenCommandCentre"
 import { MoorhenContext } from "../utils/MoorhenContext";
 import { MoorhenTimeCapsule } from '../utils/MoorhenTimeCapsule';
-import { MoorhenButtonBar } from './button-bar/MoorhenButtonBar';
 import { Backdrop } from "@mui/material";
 import { babyGruKeyPress } from '../utils/MoorhenKeyboardAccelerators';
-import { MoorhenSideBar } from './list/MoorhenSideBar';
 import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
 import { MoorhenNavBar } from "./navbar-menus/MoorhenNavBar"
 import { moorhen } from '../types/moorhen';
@@ -22,10 +20,11 @@ const initialMapsState: moorhen.Map[] = []
 interface MoorhenContainerOptionalPropsInterface {
     disableFileUploads: boolean;
     urlPrefix: string;
-    extraNavBarMenus: JSX.Element[];
+    extraNavBarMenus: {name: string; ref: React.RefObject<any> ; icon: JSX.Element; JSXElement: JSX.Element}[];
     viewOnly: boolean;
     extraDraggableModals: JSX.Element[];
     monomerLibraryPath: string;
+    setMoorhenDimensions?: null | ( () => [number, number] );
     forwardControls?: (arg0: MoorhenControlsInterface) => any;
     extraFileMenuItems: JSX.Element[];
     allowScripting: boolean;
@@ -224,12 +223,18 @@ export const MoorhenContainer = (props: MoorhenContainerPropsInterface) => {
     const {
         disableFileUploads, urlPrefix, extraNavBarMenus, viewOnly, extraDraggableModals, 
         monomerLibraryPath, forwardControls, extraFileMenuItems, allowScripting, backupStorageInstance,
-        extraEditMenuItems, aceDRGInstance, extraCalculateMenuItems
+        extraEditMenuItems, aceDRGInstance, extraCalculateMenuItems, setMoorhenDimensions
     } = props
     
     const setWindowDimensions = () => {
-        setWindowWidth(window.innerWidth)
-        setWindowHeight(window.innerHeight)
+        if (setMoorhenDimensions) {
+            const [ width, height ] = setMoorhenDimensions()
+            setWindowWidth(width)
+            setWindowHeight(height)
+        } else {
+            setWindowWidth(window.innerWidth)
+            setWindowHeight(window.innerHeight)
+        }
     }
 
     //The purpose here is to return the functions that define and control MoorhenContainer state to a 
@@ -333,6 +338,7 @@ export const MoorhenContainer = (props: MoorhenContainerPropsInterface) => {
     }, [context.drawMissingLoops, cootInitialized])
 
     useEffect(() => {
+        setWindowDimensions()
         commandCentre.current = new MoorhenCommandCentre({
             onConsoleChanged: (newMessage) => {
                 setConsoleMessage(newMessage)
@@ -438,7 +444,7 @@ export const MoorhenContainer = (props: MoorhenContainerPropsInterface) => {
     }, [activeMolecule])
 
     const glResize = () => {
-        glRef.current.resize(webGLWidth(), webGLHeight())
+        glRef.current.resize(windowWidth, windowHeight)
         glRef.current.drawScene()
     }
 
@@ -447,7 +453,7 @@ export const MoorhenContainer = (props: MoorhenContainerPropsInterface) => {
     }
 
     const webGLHeight = () => {
-        return windowHeight - (viewOnly ? 0: convertRemToPx(2.2))
+        return windowHeight
     }
 
     const isDark = isDarkBackground(...backgroundColor)
@@ -476,13 +482,14 @@ export const MoorhenContainer = (props: MoorhenContainerPropsInterface) => {
         <Row>
             <Col style={{ paddingLeft: '0', paddingRight: '0' }}>
                 <div
+                    id="moorhen-canvas-background"
                     style={{
                         backgroundColor: `rgba(
                             ${255 * backgroundColor[0]},
                             ${255 * backgroundColor[1]},
                             ${255 * backgroundColor[2]}, 
                             ${backgroundColor[3]})`,
-                        cursor: cursorStyle, margin: 0, padding: 0, height: Math.floor(webGLHeight()),
+                        cursor: cursorStyle, margin: 0, padding: 0, height: Math.floor(windowHeight),
                     }}>
                     <MoorhenWebMG
                         ref={glRef}
@@ -512,12 +519,10 @@ export const MoorhenContainer = (props: MoorhenContainerPropsInterface) => {
                         extraDraggableModals={extraDraggableModals}
                     />
                 </div>
-                {!viewOnly && <MoorhenButtonBar {...collectedProps} />}
             </Col>
-            {!viewOnly && <MoorhenSideBar {...collectedProps} busy={busy} consoleMessage={consoleMessage} ref={consoleDivRef} />}
         </Row>
         <ToastContainer style={{ marginTop: "5rem", maxWidth: '20rem' }} position='top-center' >
-            <Toast className='shadow-none hide-scrolling' onClose={() => setShowToast(false)} autohide={true} delay={5000} show={showToast} style={{overflowY: 'scroll', maxHeight: convertViewtoPx(80, webGLHeight())}}>
+            <Toast className='shadow-none hide-scrolling' onClose={() => setShowToast(false)} autohide={true} delay={5000} show={showToast} style={{overflowY: 'scroll', maxHeight: convertViewtoPx(80, windowHeight)}}>
                 <Toast.Header className="stop-scrolling" closeButton={false} style={{justifyContent:'center'}}>
                     {toastContent}
                 </Toast.Header>
@@ -531,6 +536,7 @@ MoorhenContainer.defaultProps = {
     urlPrefix: '.',
     monomerLibraryPath: './baby-gru/monomers',
     forwardControls: () => {},
+    setMoorhenDimensions: null,
     disableFileUploads: false,
     extraNavBarMenus: [],
     extraFileMenuItems: [],

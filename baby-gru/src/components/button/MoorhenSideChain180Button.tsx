@@ -27,7 +27,8 @@ export const MoorhenSideChain180Button = (props: moorhen.EditButtonProps | moorh
 
         return <MoorhenEditButtonBase
                     id='rotate-sidechain-edit-button'
-                    toolTip="Rotate side-chain 180 degrees"
+                    toolTipLabel="Rotate side-chain 180 degrees"
+                    setToolTip={props.setToolTip}
                     buttonIndex={props.buttonIndex}
                     selectedButtonIndex={props.selectedButtonIndex}
                     setSelectedButtonIndex={props.setSelectedButtonIndex}

@@ -15,13 +15,6 @@ export const MoorhenEditMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     const menuItemProps = { setPopoverIsShown, ...props }
 
     return <>
-        <NavDropdown
-            title="Edit"
-            id="edit-nav-dropdown"
-            style={{display:'flex', alignItems:'center'}}
-            autoClose={popoverIsShown ? false : 'outside'}
-            show={props.currentDropdownId === props.dropdownId}
-            onToggle={() => { props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId('-1') }}>
             <MoorhenAddRemoveHydrogenAtomsMenuItem key='add_remove_hydrogens' {...menuItemProps}/>
             <MoorhenMergeMoleculesMenuItem key="merge" {...menuItemProps} />
             <MoorhenDeleteUsingCidMenuItem key="delete" {...menuItemProps} />
@@ -36,7 +29,6 @@ export const MoorhenEditMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                 </MenuItem>            
             }
             {props.extraEditMenuItems && props.extraEditMenuItems.map( menu => menu)}
-        </NavDropdown>
         <MoorhenCreateAcedrgLinkModal {...menuItemProps} showCreateAcedrgLinkModal={showCreateAcedrgLinkModal} setShowCreateAcedrgLinkModal={setShowCreateAcedrgLinkModal}/>
     </>
 }

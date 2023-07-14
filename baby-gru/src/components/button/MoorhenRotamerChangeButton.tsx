@@ -166,7 +166,8 @@ export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moor
     
         return <><MoorhenEditButtonBase
                     ref={theButton}
-                    toolTip="Next rotamer"
+                    toolTipLabel="Next rotamer"
+                    setToolTip={props.setToolTip}
                     buttonIndex={props.buttonIndex}
                     selectedButtonIndex={props.selectedButtonIndex}
                     setSelectedButtonIndex={props.setSelectedButtonIndex}

@@ -6,7 +6,7 @@ import { MoorhenEditButtonBase } from "./MoorhenEditButtonBase";
 
 export const MoorhenAutofitRotamerButton = (props: moorhen.EditButtonProps | moorhen.ContextButtonProps) => {
 
-    const [toolTip, setToolTip] = useState<string>("Auto-fit Rotamer")
+    const [toolTipLabel, setToolTipLabel] = useState<string>("Auto-fit Rotamer")
 
     const getCootCommandInput = (selectedMolecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, localParameters?: string): moorhen.cootCommandKwargs => {
         return {
@@ -26,7 +26,7 @@ export const MoorhenAutofitRotamerButton = (props: moorhen.EditButtonProps | moo
     useEffect(() => {
         if (props.shortCuts) {
             const shortCut = JSON.parse(props.shortCuts as string).auto_fit_rotamer
-            setToolTip(`Auto-fit Rotamer ${getTooltipShortcutLabel(shortCut)}`)
+            setToolTipLabel(`Auto-fit Rotamer ${getTooltipShortcutLabel(shortCut)}`)
         }
     }, [props.shortCuts])
 
@@ -36,7 +36,7 @@ export const MoorhenAutofitRotamerButton = (props: moorhen.EditButtonProps | moo
         return <MoorhenContextButtonBase 
                     icon={<img style={{padding:'0.1rem', width:'100%', height: '100%'}} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/auto-fit-rotamer.svg`} alt='Auto-Fit rotamer'/>}
                     needsMapData={true}
-                    toolTipLabel={toolTip}
+                    toolTipLabel={toolTipLabel}
                     cootCommandInput={getCootCommandInput(props.selectedMolecule, props.chosenAtom)}
                     {...props}
                 />     
@@ -45,7 +45,8 @@ export const MoorhenAutofitRotamerButton = (props: moorhen.EditButtonProps | moo
 
         return <MoorhenEditButtonBase
                     id='auto-fit-rotamer-edit-button'
-                    toolTip={toolTip}
+                    toolTipLabel={toolTipLabel}
+                    setToolTip={props.setToolTip}
                     buttonIndex={props.buttonIndex}
                     selectedButtonIndex={props.selectedButtonIndex}
                     setSelectedButtonIndex={props.setSelectedButtonIndex}

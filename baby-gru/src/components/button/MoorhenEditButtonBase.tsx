@@ -1,4 +1,3 @@
-import { Tooltip } from "@mui/material";
 import React, { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import { Button, Overlay } from "react-bootstrap"
 import { cidToSpec, convertViewtoPx } from "../../utils/MoorhenUtils";
@@ -22,12 +21,14 @@ type MoorhenEditButtonProps = {
     timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
     nonCootCommand?: (arg0: moorhen.Molecule, arg2: moorhen.ResidueSpec, arg3: string) => any;
     setCursorStyle?: React.Dispatch<React.SetStateAction<string>>;
+    setOverlayContents?: React.Dispatch<React.SetStateAction<JSX.Element>>;
     setSelectedButtonIndex?: React.Dispatch<React.SetStateAction<string>>;
     buttonIndex: string;
     getCootCommandInput?: (arg0: moorhen.Molecule, arg2: moorhen.ResidueSpec, arg3: string) => moorhen.cootCommandKwargs;
     selectedButtonIndex?: string;
     awaitAtomClick?: boolean;
-    toolTip?: string;
+    toolTipLabel?: string;
+    setToolTip: React.Dispatch<React.SetStateAction<string>>;
     windowHeight: number;
     needsMapData?: boolean;
     needsAtomData?: boolean;
@@ -107,6 +108,7 @@ export const MoorhenEditButtonBase = forwardRef<HTMLButtonElement, MoorhenEditBu
                     if (!awaitMoreAtomClicks) {
                         onCompleted(chosenMolecule, chosenAtom, result)
                         props.timeCapsuleRef.current.addModification()
+                        if(prompt) props.setOverlayContents(null)
                     }
                 }
             } catch (err) {
@@ -132,52 +134,35 @@ export const MoorhenEditButtonBase = forwardRef<HTMLButtonElement, MoorhenEditBu
     const buttonSize = Math.max(convertViewtoPx(5, props.windowHeight), 40)
 
     return <>
-        <Tooltip title={(props.needsMapData && !props.activeMap) || (props.needsAtomData && props.molecules.length === 0) ? '' : props.toolTip}>
             <div >
                 <Button value={props.buttonIndex}
                     id={props.id}
                     size="sm"
                     ref={buttonRef ? buttonRef : target}
                     active={props.buttonIndex === props.selectedButtonIndex}
-                    variant='light'
-                    style={{ width: buttonSize, height: buttonSize, padding: '0rem', borderColor: props.buttonIndex === props.selectedButtonIndex ? 'red' : '' }}
-                    disabled={props.needsMapData && !props.activeMap ||
-                        (props.needsAtomData && props.molecules.length === 0)}
+                    variant='white'
+                    style={{ width: buttonSize, height: buttonSize, padding: '0rem', margin: '0.1rem', borderColor: props.buttonIndex === props.selectedButtonIndex ? 'red' : '' }}
+                    disabled={props.needsMapData && !props.activeMap || (props.needsAtomData && props.molecules.length === 0)}
                     onClick={(evt) => {
-                        props.setSelectedButtonIndex(props.buttonIndex !== props.selectedButtonIndex ? props.buttonIndex : null)
-                    }}>
+                        if (props.buttonIndex !== props.selectedButtonIndex) {
+                            props.setSelectedButtonIndex(props.buttonIndex)
+                            if(prompt) props.setOverlayContents(prompt as JSX.Element)
+                        } else {
+                            props.setSelectedButtonIndex(null)
+                            props.setOverlayContents(null)
+                        }
+                    }}
+                    onMouseEnter={() => props.setToolTip(props.toolTipLabel)}>
                     {props.icon}
                 </Button>
             </div>
-        </Tooltip>
-
-        {
-            prompt && <Overlay target={(buttonRef && buttonRef !== null && typeof buttonRef !== 'function') ? buttonRef.current : target.current} show={props.buttonIndex === props.selectedButtonIndex} placement="top">
-                {({ placement, arrowProps, show: _show, popper, ...props }) => (
-                    <div
-                        {...props}
-                        style={{
-                            position: 'absolute',
-                            marginBottom: '0.1rem',
-                            backgroundColor: 'rgba(150, 200, 150, 0.5)',
-                            padding: '2px 10px',
-                            color: 'black',
-                            borderRadius: 3,
-                            zIndex: 9999,
-                            ...props.style,
-                        }}
-                    >{prompt}
-                    </div>
-                )}
-            </Overlay>
-        }
     </>
 })
 
 MoorhenEditButtonBase.defaultProps = {
-    id: '', toolTip: "", setCursorStyle: () => { },
+    id: '', toolTipLabel: "", setCursorStyle: () => { },
     needsAtomData: true, prompt: null, cootCommand: true,
     setSelectedButtonIndex: () => { }, selectedButtonIndex: '0',
-    refineAfterMod: false, onCompleted: null, 
+    refineAfterMod: false, onCompleted: null, setOverlayContents: () => {},
     awaitAtomClick: true, onExit: null, awaitMoreAtomClicksRef: false
 }

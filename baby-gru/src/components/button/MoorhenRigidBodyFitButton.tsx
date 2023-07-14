@@ -171,7 +171,8 @@ export const MoorhenRigidBodyFitButton = (props: moorhen.EditButtonProps | moorh
 
         return <><MoorhenEditButtonBase
             id='rigid-body-fit-button'
-            toolTip="Rigid body fit"
+            toolTipLabel="Rigid body fit"
+            setToolTip={props.setToolTip}
             buttonIndex={props.buttonIndex}
             selectedButtonIndex={props.selectedButtonIndex}
             setSelectedButtonIndex={props.setSelectedButtonIndex}

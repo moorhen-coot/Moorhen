@@ -1,8 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import Draggable from "react-draggable";
-import { Backdrop, IconButton } from '@mui/material';
-import { ArrowBackIosOutlined, ArrowForwardIosOutlined, CloseOutlined, FirstPageOutlined } from "@mui/icons-material";
-import { convertViewtoPx, getMultiColourRuleArgs } from '../../utils/MoorhenUtils';
+import { Backdrop } from '@mui/material';
+import { ArrowBackIosOutlined, ArrowForwardIosOutlined, FirstPageOutlined } from "@mui/icons-material";
+import { getMultiColourRuleArgs } from '../../utils/MoorhenUtils';
 import { Card, Row, Col, Form, FormSelect, Button, Spinner, Stack } from "react-bootstrap";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
@@ -15,6 +14,7 @@ import { webGL } from "../../types/mgWebGL";
 export const MoorhenQuerySequenceModal = (props: {
     windowHeight: number;
     windowWidth: number;
+    show: boolean;
     setShow: React.Dispatch<React.SetStateAction<boolean>>;
     molecules: moorhen.Molecule[];
     commandCentre: React.RefObject<moorhen.CommandCentre>;
@@ -265,7 +265,7 @@ export const MoorhenQuerySequenceModal = (props: {
                 <span>Fetching...</span>
             </Backdrop>
         }
-        header={'Query using a sequence'}
+        headerTittle='Query using a sequence'
         body={
             <>
             <Row style={{ padding: '0', margin: '0' }}>

@@ -79,7 +79,8 @@ export const MoorhenMutateButton = (props: moorhen.EditButtonProps | moorhen.Con
         
         return <MoorhenEditButtonBase
                     id='mutate-residue-edit-button'
-                    toolTip="Simple Mutate"
+                    toolTipLabel="Simple Mutate"
+                    setToolTip={props.setToolTip}
                     buttonIndex={props.buttonIndex}
                     selectedButtonIndex={props.selectedButtonIndex}
                     setSelectedButtonIndex={props.setSelectedButtonIndex}

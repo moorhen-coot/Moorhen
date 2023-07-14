@@ -463,13 +463,6 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     }, [showBackupsModal])
 
     return <>
-        <NavDropdown
-            title="File"
-            id="file-nav-dropdown"
-            autoClose={popoverIsShown ? false : 'outside'}
-            show={props.currentDropdownId === props.dropdownId}
-            style={{display:'flex', alignItems:'center'}}
-            onToggle={() => { props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId('-1') }}>
                 <div style={{maxHeight: convertViewtoPx(65, props.windowHeight), overflowY: 'auto'}}>
                     {!props.disableFileUploads && 
                     <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="upload-coordinates-form" className="mb-3">
@@ -553,8 +546,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
 
                     <MoorhenDeleteEverythingMenuItem {...menuItemProps} />
                 </div>
-        </NavDropdown>
-        {showSequenceQueryModal && <MoorhenQuerySequenceModal setShow={setShowSequenceQueryModal} fetchMoleculeFromURL={fetchMoleculeFromURL} {...menuItemProps} />}
+        {showSequenceQueryModal && <MoorhenQuerySequenceModal show={showSequenceQueryModal} setShow={setShowSequenceQueryModal} fetchMoleculeFromURL={fetchMoleculeFromURL} {...menuItemProps} />}
         <Modal show={showBackupsModal} onHide={() => setShowBackupsModal(false)}>
             <Modal.Header closeButton>
                 <Modal.Title>Stored molecule backups</Modal.Title>
