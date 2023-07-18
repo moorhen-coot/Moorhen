@@ -155,6 +155,8 @@ export namespace webGL {
         atomLabelDepthMode: boolean;
         clipCapPerfectSpheres: boolean;
         useOffScreenBuffers: boolean;
+        blurSize: number;
+        blurDepth:number;
         myQuat: quat4;
         gl_fog_start: null | number;
         doDrawClickedAtomLines: boolean;

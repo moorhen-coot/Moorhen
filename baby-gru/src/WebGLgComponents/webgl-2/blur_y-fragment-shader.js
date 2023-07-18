@@ -5,6 +5,7 @@ out vec4 fragColor;
 uniform sampler2D shader0;
 uniform sampler2D depth;
 uniform float blurSize;
+uniform float blurDepth;
 
 in vec2 out_TexCoord0;
 
@@ -18,7 +19,7 @@ void main()
     vec4 position = texture(depth, vec2(out_TexCoord0.x,out_TexCoord0.y -3.0*blurSize));
     float blur = smoothstep ( minDistance , maxDistance , min(position.x*5.,1.0));
 
-    if(blur>0.2)
+    if(blur>blurDepth)
         color += texture( shader0, vec2(out_TexCoord0.x,out_TexCoord0.y -3.0*blurSize)) * 0.015625;
     else
         color += texture( shader0, out_TexCoord0) * 0.015625;
@@ -26,7 +27,7 @@ void main()
     position = texture(depth, vec2(out_TexCoord0.x,out_TexCoord0.y -2.0*blurSize));
     blur = smoothstep ( minDistance , maxDistance , min(position.x*5.,1.0));
 
-    if(blur>0.2)
+    if(blur>blurDepth)
         color += texture( shader0, vec2(out_TexCoord0.x,out_TexCoord0.y -2.0*blurSize)) * 0.09375;
     else
         color += texture( shader0, out_TexCoord0) * 0.09375;
@@ -34,7 +35,7 @@ void main()
     position = texture(depth, vec2(out_TexCoord0.x,out_TexCoord0.y -1.0*blurSize));
     blur = smoothstep ( minDistance , maxDistance , min(position.x*5.,1.0));
 
-    if(blur>0.2)
+    if(blur>blurDepth)
         color += texture( shader0, vec2(out_TexCoord0.x,out_TexCoord0.y -1.0*blurSize)) * 0.234375;
     else
         color += texture( shader0, out_TexCoord0) * 0.234375;
@@ -44,7 +45,7 @@ void main()
     position = texture(depth, vec2(out_TexCoord0.x,out_TexCoord0.y +1.0*blurSize));
     blur = smoothstep ( minDistance , maxDistance , min(position.x*5.,1.0));
 
-    if(blur>0.2)
+    if(blur>blurDepth)
         color += texture( shader0, vec2(out_TexCoord0.x,out_TexCoord0.y +1.0*blurSize)) * 0.234375;
     else
         color += texture( shader0, out_TexCoord0) * 0.234375;
@@ -52,7 +53,7 @@ void main()
     position = texture(depth, vec2(out_TexCoord0.x,out_TexCoord0.y +2.0*blurSize));
     blur = smoothstep ( minDistance , maxDistance , min(position.x*5.,1.0));
 
-    if(blur>0.2)
+    if(blur>blurDepth)
         color += texture( shader0, vec2(out_TexCoord0.x,out_TexCoord0.y +2.0*blurSize)) * 0.09375;
     else
         color += texture( shader0, out_TexCoord0) * 0.09375;
@@ -60,7 +61,7 @@ void main()
     position = texture(depth, vec2(out_TexCoord0.x,out_TexCoord0.y +3.0*blurSize));
     blur = smoothstep ( minDistance , maxDistance , min(position.x*5.,1.0));
 
-    if(blur>0.2)
+    if(blur>blurDepth)
         color += texture( shader0, vec2(out_TexCoord0.x,out_TexCoord0.y +3.0*blurSize)) * 0.015625;
     else
         color += texture( shader0, out_TexCoord0) * 0.015625;

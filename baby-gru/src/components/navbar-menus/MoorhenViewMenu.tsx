@@ -3,8 +3,10 @@ import { useState } from "react";
 import { MenuItem } from "@mui/material";
 import { MoorhenClipFogMenuItem } from "../menu-item/MoorhenClipFogMenuItem";
 import { MoorhenLightingMenuItem } from "../menu-item/MoorhenLightingMenuItem"
+import { MoorhenBlurMenuItem } from "../menu-item/MoorhenBlurMenuItem"
 import { MoorhenBackgroundColorMenuItem } from "../menu-item/MoorhenBackgroundColorMenuItem"
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
+import MoorhenSlider from '../misc/MoorhenSlider' 
 
 export const MoorhenViewMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     const [popoverIsShown, setPopoverIsShown] = useState(false)
@@ -53,17 +55,11 @@ export const MoorhenViewMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                             onChange={() => { props.setDoPerspectiveProjection(!props.doPerspectiveProjection) }}
                             label="Perspective projection"/>
                     </InputGroup>
-                    <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
-                        <Form.Check 
-                            type="switch"
-                            checked={props.useOffScreenBuffers}
-                            onChange={() => { props.setUseOffScreenBuffers(!props.useOffScreenBuffers) }}
-                            label="Use off-screen buffers"/>
-                    </InputGroup>
                     <hr></hr>
                     <MoorhenBackgroundColorMenuItem {...menuItemProps} />
                     <MoorhenClipFogMenuItem {...menuItemProps} />
                     <MoorhenLightingMenuItem {...menuItemProps} />
+                    <MoorhenBlurMenuItem {...menuItemProps} />
                     <MenuItem id="change-molecule-colours-menu-item" onClick={() => {
                         props.setShowColourRulesToast(true)
                         document.body.click()

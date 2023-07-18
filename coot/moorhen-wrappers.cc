@@ -474,7 +474,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .property("phi_psi", &coot::phi_psi_prob_t::phi_psi)
     .property("position", &coot::phi_psi_prob_t::position)
     .property("is_allowed_flag", &coot::phi_psi_prob_t::is_allowed_flag)
-    .property("residue_name", &coot::phi_psi_prob_t::residue_name)
+    .function("residue_name", &coot::phi_psi_prob_t::residue_name)// Should be function?
     .function("is_allowed", &coot::phi_psi_prob_t::is_allowed)
     ;
     class_<coot::molecule_t::moved_atom_t>("moved_atom_t")
@@ -663,7 +663,9 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("unmodelled_blobs",&molecules_container_t::unmodelled_blobs)
     .function("get_map_molecule_centre",&molecules_container_t::get_map_molecule_centre)
     .function("get_cell",&molecules_container_t::get_cell)
-    ;
+    .function("get_cell",&molecules_container_t::get_cell)
+    .function("make_masked_maps_split_by_chain",&molecules_container_t::make_masked_maps_split_by_chain)
+     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
     .constructor<bool>()
     .function("writePDBASCII",&molecules_container_js::writePDBASCII)

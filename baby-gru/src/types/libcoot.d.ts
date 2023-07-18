@@ -56,7 +56,7 @@ export namespace libcootApi {
     interface CootPhiPsiProbT extends emscriptem.instance<CootPhiPsiProbT> {
         phi_psi: CootPhiPsi;
         is_allowed_flag: boolean;
-        residue_name: string;
+        residue_name: () => string;
     }
     interface InterestingPlaceT extends emscriptem.instance<InterestingPlaceT> {
         feature_type: string;

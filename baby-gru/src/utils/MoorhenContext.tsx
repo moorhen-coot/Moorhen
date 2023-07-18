@@ -38,6 +38,8 @@ const getDefaultValues = (): moorhen.ContextValues => {
         drawInteractions: false,
         doPerspectiveProjection: false,
         useOffScreenBuffers: false,
+        depthBlurRadius: 3.0,
+        depthBlurDepth: 0.2,
         doShadowDepthDebug: false,
         doShadow: false,
         doOutline: false,
@@ -266,6 +268,8 @@ const MoorhenContextProvider = ({ children }) => {
     const [drawInteractions, setDrawInteractions] = useState<null | boolean>(null)
     const [doPerspectiveProjection, setDoPerspectiveProjection] = useState<null | boolean>(null)
     const [useOffScreenBuffers, setUseOffScreenBuffers] = useState<null | boolean>(null)
+    const [depthBlurRadius, setDepthBlurRadius] = useState<null | number>(null)
+    const [depthBlurDepth, setDepthBlurDepth] = useState<null | number>(null)
     const [doShadowDepthDebug, setDoShadowDepthDebug] = useState<null | boolean>(null)
     const [doShadow, setDoShadow] = useState<null | boolean>(null)
     const [doOutline, setDoOutline] = useState<null | boolean>(null)
@@ -323,6 +327,8 @@ const MoorhenContextProvider = ({ children }) => {
         34: { label: "GLLabelsFontSize", value: GLLabelsFontSize, valueSetter: setGLLabelsFontSize},
         35: { label: "doSpinTest", value: doSpinTest, valueSetter: setDoSpinTest},
         36: { label: "doOutline", value: doOutline, valueSetter: setDoOutline},
+        37: { label: "depthBlurRadius", value: depthBlurRadius, valueSetter: setDepthBlurRadius},
+        38: { label: "depthBlurDepth", value: depthBlurDepth, valueSetter: setDepthBlurDepth},
     }
 
     const restoreDefaults = (defaultValues: moorhen.ContextValues)=> {
@@ -577,6 +583,24 @@ const MoorhenContextProvider = ({ children }) => {
 
     useMemo(() => {
 
+        if (depthBlurDepth === null) {
+            return
+        }
+
+        updateStoredContext('depthBlurDepth', depthBlurDepth);
+    }, [depthBlurDepth]);
+
+    useMemo(() => {
+
+        if (depthBlurRadius === null) {
+            return
+        }
+
+        updateStoredContext('depthBlurRadius', depthBlurRadius);
+    }, [depthBlurRadius]);
+
+    useMemo(() => {
+
         if (useOffScreenBuffers === null) {
             return
         }
@@ -716,7 +740,7 @@ const MoorhenContextProvider = ({ children }) => {
         doPerspectiveProjection, setDoPerspectiveProjection, useOffScreenBuffers, setUseOffScreenBuffers, drawAxes,
         setDrawAxes, devMode, setDevMode, doShadowDepthDebug, setDoShadowDepthDebug, doShadow, setDoShadow,
         GLLabelsFontFamily, setGLLabelsFontFamily, GLLabelsFontSize, setGLLabelsFontSize, doSpinTest,
-        setDoSpinTest, doOutline, setDoOutline
+        setDoSpinTest, doOutline, setDoOutline, depthBlurRadius, setDepthBlurRadius, depthBlurDepth, setDepthBlurDepth
     }
 
     return (

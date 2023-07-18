@@ -457,6 +457,8 @@ export namespace moorhen {
         setClipCap: React.Dispatch<React.SetStateAction<boolean>>;
         setResetClippingFogging: React.Dispatch<React.SetStateAction<boolean>>;
         setUseOffScreenBuffers: React.Dispatch<React.SetStateAction<boolean>>;
+        setDepthBlurRadius: React.Dispatch<React.SetStateAction<number>>;
+        setDepthBlurDepth: React.Dispatch<React.SetStateAction<number>>;
         setDoPerspectiveProjection: React.Dispatch<React.SetStateAction<boolean>>;
         setDrawInteractions: React.Dispatch<React.SetStateAction<boolean>>;
         setDrawMissingLoops: React.Dispatch<React.SetStateAction<boolean>>;
@@ -507,6 +509,8 @@ export namespace moorhen {
         drawInteractions: boolean; 
         doPerspectiveProjection: boolean; 
         useOffScreenBuffers: boolean; 
+        depthBlurRadius: number; 
+        depthBlurDepth: number; 
         doShadowDepthDebug: boolean; 
         doShadow: boolean; 
         doOutline: boolean; 

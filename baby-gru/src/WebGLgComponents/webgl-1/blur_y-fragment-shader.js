@@ -3,6 +3,7 @@ precision mediump float;
 
 uniform sampler2D shader0;
 uniform float blurSize;
+uniform float blurDepth;
 
 varying vec2 out_TexCoord0;
 
