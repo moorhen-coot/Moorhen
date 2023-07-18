@@ -1,7 +1,5 @@
 import { useRef } from "react";
-import { Form } from "react-bootstrap";
 import { MoorhenMap } from "../../utils/MoorhenMap";
-import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { moorhen } from "../../types/moorhen";
@@ -25,7 +23,6 @@ export const MoorhenMakeMaskedMapsSplitByChainMenuItem = (props: {
         <MoorhenMoleculeSelect {...props} ref={moleculeSelectRef} />
     </>
 
-
     const onCompleted = async () => {
         if (!selectRef.current?.value || !moleculeSelectRef.current?.value) {
             return
@@ -34,7 +31,7 @@ export const MoorhenMakeMaskedMapsSplitByChainMenuItem = (props: {
         const mapNo = parseInt(selectRef.current.value)
         const moleculeNo = parseInt(moleculeSelectRef.current.value)
 
-        const result = await props.commandCentre.current?.cootCommand({
+        const result = await props.commandCentre.current.cootCommand({
             returnType: 'int_array',
             command: 'make_masked_maps_split_by_chain',
             commandArgs: [moleculeNo, mapNo
@@ -50,13 +47,6 @@ export const MoorhenMakeMaskedMapsSplitByChainMenuItem = (props: {
                 newMap.isDifference = oldMaps[0].isDifference
                 props.changeMaps({ action: 'Add', item: newMap })
             })
-            /*
-            newMap.molNo = result.data.result.result
-            newMap.name = `Map ${mapNo} blurred by ${bFactor}`
-            const oldMaps = props.maps.filter(map => map.molNo === mapNo)
-            newMap.isDifference = oldMaps[0].isDifference
-            props.changeMaps({ action: 'Add', item: newMap })
-            */
         }
         return result
     }
