@@ -3,6 +3,7 @@
   "version": "0.2.1",
   "private": false,
   "main": "moorhen.js",
+  "types": "./types/main.d.ts",
   "homepage": "./",
   "author": "Paul Emsley, Filomeno Sanchez Rodriguez, Martin Noble, Stuart McNicholas",
   "description": "Moorhen molecular graphics",
