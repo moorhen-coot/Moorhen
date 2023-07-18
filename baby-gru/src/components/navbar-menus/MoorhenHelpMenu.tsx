@@ -1,8 +1,6 @@
-import { NavDropdown } from "react-bootstrap";
 import { useState } from "react";
 import { MoorhenAboutMenuItem } from "../menu-item/MoorhenAboutMenuItem";
 import { MoorhenControlsModal } from "../modal/MoorhenControlsModal";
-import { MoorhenSearchBar } from "../misc/MoorhenSearchBar"
 import { MenuItem } from "@mui/material";
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 
@@ -12,11 +10,9 @@ export const MoorhenHelpMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     const menuItemProps = {setPopoverIsShown, ...props}
     
     return <>
-                     <MoorhenSearchBar {...props}/>
-                     <hr></hr>
-                     <MenuItem onClick={() => window.open('https://moorhen-coot.github.io/wiki/')}>Go to Moorhen wiki...</MenuItem>
-                     <MenuItem onClick={() => setShowControlsModal(true)}>Show controls...</MenuItem>
-                     <MoorhenAboutMenuItem {...menuItemProps} />
-            <MoorhenControlsModal {...props} showControlsModal={showControlsModal} setShowControlsModal={setShowControlsModal} />
-        </>
+        <MenuItem onClick={() => window.open('https://moorhen-coot.github.io/wiki/')}>Go to Moorhen wiki...</MenuItem>
+        <MenuItem onClick={() => setShowControlsModal(true)}>Show controls...</MenuItem>
+        <MoorhenAboutMenuItem {...menuItemProps} />
+        <MoorhenControlsModal {...props} showControlsModal={showControlsModal} setShowControlsModal={setShowControlsModal} />
+    </>
 }

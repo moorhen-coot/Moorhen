@@ -8,7 +8,6 @@ export const MoorhenBackupsMenuItem = (props: {
     timeCapsuleRef: React.RefObject<moorhen.TimeCapsule>;
     disabled: boolean;
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>;
-    setShowBackupsModal: React.Dispatch<React.SetStateAction<boolean>>;
     loadSessionJSON: (sessionDataString: string) => Promise<void>;
 }) => {
     
@@ -37,12 +36,6 @@ export const MoorhenBackupsMenuItem = (props: {
             <Stack direction='horizontal' gap={2}>
                 <Button variant='primary' onClick={retrieveSession}>
                     OK
-                </Button>
-                <Button variant='secondary' onClick={async () => {
-                    document.body.click()
-                    props.setShowBackupsModal(true)
-                }}>
-                    More...
                 </Button>
             </Stack>
         </Row>

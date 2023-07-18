@@ -1,7 +1,7 @@
-import { NavDropdown, Form, Button, InputGroup, SplitButton, Dropdown, Modal, Card, Stack } from "react-bootstrap";
+import { Form, Button, InputGroup, SplitButton, Dropdown } from "react-bootstrap";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { MoorhenMap } from "../../utils/MoorhenMap";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { MoorhenLoadTutorialDataMenuItem } from "../menu-item/MoorhenLoadTutorialDataMenuItem"
 import { MoorhenAssociateReflectionsToMap } from "../menu-item/MoorhenAssociateReflectionsToMap";
 import { MoorhenAutoOpenMtzMenuItem } from "../menu-item/MoorhenAutoOpenMtzMenuItem"
@@ -10,7 +10,6 @@ import { MoorhenImportFSigFMenuItem } from "../menu-item/MoorhenImportFSigFMenuI
 import { MoorhenBackupsMenuItem } from "../menu-item/MoorhenBackupsMenuItem"
 import { MoorhenImportMapCoefficientsMenuItem } from "../menu-item/MoorhenImportMapCoefficientsMenuItem"
 import { MoorhenDeleteEverythingMenuItem } from "../menu-item/MoorhenDeleteEverythingMenuItem"
-import { MoorhenQuerySequenceModal } from "../modal/MoorhenQuerySequenceModal"
 import { MenuItem } from "@mui/material";
 import { WarningOutlined } from "@mui/icons-material";
 import { convertViewtoPx, doDownload, readTextFile, getMultiColourRuleArgs } from "../../utils/MoorhenUtils";
@@ -24,9 +23,6 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     const [popoverIsShown, setPopoverIsShown] = useState<boolean>(false)
     const [remoteSource, setRemoteSource] = useState<string>("PDBe")
     const [isValidPdbId, setIsValidPdbId] = useState<boolean>(true)
-    const [showBackupsModal, setShowBackupsModal] = useState<boolean>(false)
-    const [showSequenceQueryModal, setShowSequenceQueryModal] = useState<boolean>(false)
-    const [backupKeys, setBackupKeys] = useState<null | moorhen.backupKey[]>(null)
     const pdbCodeFetchInputRef = useRef<HTMLInputElement | null>(null);
     const fetchMapDataCheckRef = useRef<HTMLInputElement | null>(null);
 
@@ -405,63 +401,6 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         return props.timeCapsuleRef.current.createBackup(keyString, sessionString)
     }
 
-    const getBackupCards = (sortedKeys: moorhen.backupKey[]) => {
-        if (sortedKeys && sortedKeys.length > 0) {
-            return sortedKeys.map((key, index) => {
-                return  <Card key={`${key.label}-${index}`} style={{marginTop: '0.5rem'}}>
-                            <Card.Body style={{padding:'0.5rem'}}>
-                                <Stack direction="horizontal" gap={2} style={{alignItems: 'center'}}>
-                                    {key.label}
-                                    <Button variant='primary' onClick={async () => {
-                                        try {
-                                            let backup = await props.timeCapsuleRef.current.retrieveBackup(JSON.stringify(key))
-                                            await loadSessionJSON(backup as string)
-                                        } catch (err) {
-                                            console.log(err)
-                                            props.setToastContent(getWarningToast("Error loading session"))
-                                        }                                            
-                                        setShowBackupsModal(false)
-                                    }}>
-                                        Load
-                                    </Button>
-                                    <Button variant='danger' onClick={async () => {
-                                        try {
-                                            await props.timeCapsuleRef.current.removeBackup(JSON.stringify(key))
-                                            await props.timeCapsuleRef.current.cleanupUnusedDataFiles()
-                                            sortedKeys = await props.timeCapsuleRef.current.getSortedKeys()
-                                            setBackupKeys(sortedKeys)
-                                        } catch (err) {
-                                            console.log(err)
-                                        }                                         
-                                    }}>
-                                        Delete
-                                    </Button>
-                                </Stack>
-                            </Card.Body>
-                        </Card>
-            })    
-        } else {
-            return <span>No backups...</span>
-        }
-    }
-
-    useEffect(() => {
-        async function fetchKeys() {
-            const sortedKeys = await props.timeCapsuleRef.current.getSortedKeys()
-            if (sortedKeys && sortedKeys.length > 0) {
-                setBackupKeys(sortedKeys)
-            } else {
-                setBackupKeys(null)
-            }
-        }
-
-        if(!showBackupsModal) {
-            return
-        } else {
-            fetchKeys()
-        }
-    }, [showBackupsModal])
-
     return <>
                 <div style={{maxHeight: convertViewtoPx(65, props.windowHeight), overflowY: 'auto'}}>
                     {!props.disableFileUploads && 
@@ -511,7 +450,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                     <hr></hr>
 
                     <MenuItem id='query-online-services-sequence' onClick={() => {
-                        setShowSequenceQueryModal(true)
+                        props.setShowQuerySequence(true)
                         document.body.click()
                     }}>
                         Query online services with a sequence...
@@ -538,7 +477,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                         Save backup
                     </MenuItem>
                     
-                    <MoorhenBackupsMenuItem {...menuItemProps} disabled={!props.enableTimeCapsule} setShowBackupsModal={setShowBackupsModal} loadSessionJSON={loadSessionJSON} />
+                    <MoorhenBackupsMenuItem {...menuItemProps} disabled={!props.enableTimeCapsule} loadSessionJSON={loadSessionJSON} />
 
                     {props.extraFileMenuItems && props.extraFileMenuItems.map( menu => menu)}
                     
@@ -546,15 +485,5 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
 
                     <MoorhenDeleteEverythingMenuItem {...menuItemProps} />
                 </div>
-        {showSequenceQueryModal && <MoorhenQuerySequenceModal show={showSequenceQueryModal} setShow={setShowSequenceQueryModal} fetchMoleculeFromURL={fetchMoleculeFromURL} {...menuItemProps} />}
-        <Modal show={showBackupsModal} onHide={() => setShowBackupsModal(false)}>
-            <Modal.Header closeButton>
-                <Modal.Title>Stored molecule backups</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-                {getBackupCards(backupKeys)}
-            </Modal.Body>
-        </Modal>
-
     </>
 }
