@@ -1,42 +1,20 @@
 import { useState } from "react";
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
-import { MoorhenMoleculeCard } from "../card/MoorhenMoleculeCard";
 import { MoorhenMapCard } from "../card/MoorhenMapCard";
 import { convertRemToPx } from "../../utils/MoorhenUtils";
 import { MoorhenControlsInterface } from "../MoorhenContainer";
 
-interface MoorhenModelsAndMapsModalProps extends MoorhenControlsInterface {
+interface MoorhenMapsModalProps extends MoorhenControlsInterface {
     windowWidth: number;
     windowHeight: number;
     show: boolean;
     setShow: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export const MoorhenModelsAndMapsModal = (props: MoorhenModelsAndMapsModalProps) => {    
+export const MoorhenMapsModal = (props: MoorhenMapsModalProps) => {    
     const [currentDropdownMolNo, setCurrentDropdownMolNo] = useState<number>(-1)
 
     let displayData: JSX.Element[] = [];
-    if (props.molecules.length !== 0) {
-        props.molecules.forEach(molecule => displayData.push(
-            <MoorhenMoleculeCard
-                showSideBar={true}
-                busy={false}
-                consoleMessage="A"
-                dropdownId={1}
-                accordionDropdownId={1}
-                setAccordionDropdownId={(arg0) => {}}
-                sideBarWidth={convertRemToPx(26)}
-                key={molecule.molNo}
-                index={molecule.molNo}
-                molecule={molecule}
-                currentDropdownMolNo={currentDropdownMolNo}
-                setCurrentDropdownMolNo={setCurrentDropdownMolNo}
-                {...props} />
-        )
-        )
-    }
-
-    if (props.maps.length !== 0) {
         props.maps.forEach(map => displayData.push(
             <MoorhenMapCard
                 showSideBar={true}
@@ -54,8 +32,7 @@ export const MoorhenModelsAndMapsModal = (props: MoorhenModelsAndMapsModalProps)
                 currentDropdownMolNo={currentDropdownMolNo}
                 setCurrentDropdownMolNo={setCurrentDropdownMolNo}
                 {...props} />
-        ))
-    }
+    ))
 
     displayData.sort((a, b) => (a.props.index > b.props.index) ? 1 : ((b.props.index > a.props.index) ? -1 : 0))
 
@@ -67,12 +44,11 @@ export const MoorhenModelsAndMapsModal = (props: MoorhenModelsAndMapsModalProps)
                 windowWidth={props.windowWidth}
                 height={70}
                 width={37}
-                headerTittle={'Models and maps'}
+                headerTitle={'Maps'}
                 body={
-                    props.molecules.length === 0 && props.maps.length === 0 ? <span>No models or maps loaded</span> : displayData
+                    props.molecules.length === 0 && props.maps.length === 0 ? <span>No maps loaded</span> : displayData
                 }
                 footer={null}
-    
             />
 }
 
