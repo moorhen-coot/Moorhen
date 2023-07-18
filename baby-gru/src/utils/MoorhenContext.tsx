@@ -22,7 +22,7 @@ const updateStoredContext = async (key: string, value: any): Promise<void> => {
     }
 }
 
-const getDefaultValues = (): moorhen.ContextValues => {
+const getDefaultContextValues = (): moorhen.ContextValues => {
     return {
         version: 'v27',
         defaultBackgroundColor: [1, 1, 1, 1], 
@@ -351,7 +351,7 @@ const MoorhenContextProvider = ({ children }) => {
         const fetchStoredContext = async () => {
             try {
                 const storedVersion = await localforage.getItem('version')
-                const defaultValues = getDefaultValues()                
+                const defaultValues = getDefaultContextValues()                
                 if (storedVersion !== defaultValues.version) {
                     restoreDefaults(defaultValues)
                     return
@@ -751,4 +751,4 @@ const MoorhenContextProvider = ({ children }) => {
 };
   
 
-export { MoorhenContext, MoorhenContextProvider, getDefaultValues };
+export { MoorhenContext, MoorhenContextProvider, getDefaultContextValues };
