@@ -1,9 +1,9 @@
-import { useCallback, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { MoorhenEditButtonBase } from "./MoorhenEditButtonBase"
 import { moorhen } from "../../types/moorhen";
 import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
 import { libcootApi } from "../../types/libcoot";
-import { Button, Card, Overlay, Stack } from "react-bootstrap";
+import { Button, Card, Stack } from "react-bootstrap";
 import { ArrowBackIosOutlined, ArrowForwardIosOutlined, CheckOutlined, CloseOutlined, FirstPageOutlined } from "@mui/icons-material";
 import Draggable from "react-draggable";
 
@@ -11,6 +11,7 @@ export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moor
     const theButton = useRef<null | HTMLButtonElement>(null)
     const fragmentMolecule = useRef<null | moorhen.Molecule>(null)
     const chosenMolecule = useRef<null | moorhen.Molecule>(null)
+    const draggableRef = useRef(null)
     const selectedFragmentRef = useRef<{ cid: string; alt_conf: string; }>({ cid: '', alt_conf: '' })
     const [showAccept, setShowAccept] = useState<boolean>(false)
     const [rotamerName, setRotamerName] = useState<string>('')
@@ -178,19 +179,11 @@ export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moor
                     icon={<img style={{ width: '100%', height: '100%' }} alt="change rotamer" className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/rotamers.svg`} />}
                     {...props}
                 />
-                <Overlay target={theButton.current} show={showAccept} placement="top">
-                    {({ placement, arrowProps, show: _show, popper, ...props }) => (
-                        <div
-                            {...props}
-                            style={{
-                                position: 'absolute', padding: '2px 10px', borderRadius: 3,
-                                backgroundColor: props.backgroundColor, zIndex: 99999,
-                                ...props.style,
-                            }}
-                        >
-                            <Card className="mx-2">
-                                <Card.Header >Accept rotamer ?</Card.Header>
-                                <Card.Body style={{ alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
+                {showAccept && 
+                <Draggable nodeRef={draggableRef} handle=".InnerHandle">
+                    <Card ref={draggableRef} className="mx-2" style={{position: 'absolute'}}>
+                        <Card.Header className="InnerHandle">Accept rotamer ?</Card.Header>
+                        <Card.Body style={{ alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
                                     <span>Current rotamer: {rotamerName} ({rotamerRank + 1}<sup>{rotamerRank === 0 ? 'st' : rotamerRank === 1 ? 'nd' : rotamerRank === 2 ? 'rd' : 'th'}</sup>)</span>
                                     <br></br>
                                     <span>Probability: {rotamerProbability}%</span>
@@ -226,9 +219,8 @@ export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moor
                                     </Stack>
                                 </Card.Body>
                             </Card>
-                        </div>
-                    )}
-                </Overlay>
+                </Draggable>
+            }
         </>
     }
 }

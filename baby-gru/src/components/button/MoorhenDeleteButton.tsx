@@ -78,7 +78,7 @@ export const MoorhenDeleteButton = (props: moorhen.EditButtonProps | moorhen.Con
             
         const MoorhenDeletePanel = (props: { panelParameters: string; setPanelParameters: React.Dispatch<React.SetStateAction<string>>; }) => {
             return <Container>
-                <Row>Please click an atom for core of deletion</Row>
+                <Row style={{textAlign: 'center', justifyContent: 'center'}}>Please click an atom for core of deletion</Row>
                 <Row>
                     <FormGroup>
                         <FormLabel>Delete mode</FormLabel>

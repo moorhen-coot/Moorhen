@@ -114,9 +114,17 @@ export const MoorhenRigidBodyFitButton = (props: moorhen.EditButtonProps | moorh
           }
     }, [props.activeMap, randomJiggleMode])
 
-    const MoorhenRigidBodyFitPanel = (props: { panelParameters: string; setPanelParameters: React.Dispatch<React.SetStateAction<string>> }) => {
+    const MoorhenRigidBodyFitPanel = (props: {
+        panelParameters: string;
+        setPanelParameters: React.Dispatch<React.SetStateAction<string>> 
+        randomJiggleMode: boolean;
+        setRandomJiggleMode: React.Dispatch<React.SetStateAction<boolean>>;
+    }) => {
+        
+        const [innerRandomJiggleMode, setInnerRandomJiggleMode] = useState<boolean>(props.randomJiggleMode)
+        
         return <Container>
-            <Row>Please click an atom for rigid body fitting</Row>
+            <Row style={{textAlign: 'center', justifyContent: 'center'}}>Please click an atom for rigid body fitting</Row>
             <Row>
                 <FormGroup>
                     <FormLabel>Residue selection</FormLabel>
@@ -132,8 +140,11 @@ export const MoorhenRigidBodyFitButton = (props: moorhen.EditButtonProps | moorh
                     <Form.Check
                         style={{ paddingTop: '0.1rem' }}
                         type="switch"
-                        checked={randomJiggleMode}
-                        onChange={() => { setRandomJiggleMode(!randomJiggleMode) }}
+                        checked={innerRandomJiggleMode}
+                        onChange={() => { 
+                            setInnerRandomJiggleMode(!innerRandomJiggleMode)
+                            props.setRandomJiggleMode(!props.randomJiggleMode)
+                         }}
                         label="Use random jiggle fit" />
                 </FormGroup>
             </Row>
@@ -179,6 +190,8 @@ export const MoorhenRigidBodyFitButton = (props: moorhen.EditButtonProps | moorh
             needsMapData={true}
             refineAfterMod={false}
             prompt={<MoorhenRigidBodyFitPanel
+                        randomJiggleMode={randomJiggleMode}
+                        setRandomJiggleMode={setRandomJiggleMode}
                         setPanelParameters={setPanelParameters}
                         panelParameters={panelParameters} />}
             icon={<img style={{ width: '100%', height: '100%' }} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/rigid-body.svg`} alt='Rigid body fit' />}

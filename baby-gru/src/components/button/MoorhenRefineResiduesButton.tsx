@@ -49,7 +49,7 @@ export const MoorhenRefineResiduesButton = (props: moorhen.EditButtonProps | moo
     
         const MoorhenRefinementPanel = forwardRef<HTMLSelectElement, {panelParameters: string; setPanelParameters: React.Dispatch<React.SetStateAction<string>> ; glRef: React.RefObject<webGL.MGWebGL>}>((props, ref) => {
             return <Container>
-                <Row>Please click an atom for centre of refinement</Row>
+                <Row style={{textAlign: 'center', justifyContent: 'center'}}>Please click an atom for centre of refinement</Row>
                 <Row>
                     <FormGroup>
                         <FormLabel>Refinement mode</FormLabel>

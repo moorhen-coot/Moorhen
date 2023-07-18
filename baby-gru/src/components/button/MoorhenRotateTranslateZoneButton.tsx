@@ -12,6 +12,7 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
     const [showAccept, setShowAccept] = useState<boolean>(false)
     const [tips, setTips] = useState<null | JSX.Element>(null)
     const [panelParameters, setPanelParameters] = useState<string>('RESIDUE')
+    const draggableRef = useRef()
     const theButton = useRef<HTMLButtonElement | null>(null)
     const fragmentMolecule = useRef<null | moorhen.Molecule>(null)
     const chosenMolecule = useRef<null | moorhen.Molecule>(null)
@@ -105,7 +106,7 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
 
     const MoorhenRotateTranslatePanel = (props: { panelParameters: string; setPanelParameters: React.Dispatch<React.SetStateAction<string>> }) => {
         return <Container>
-            <Row>Please click an atom to define object</Row>
+            <Row style={{textAlign: 'center', justifyContent: 'center'}}>Please click an atom to define object</Row>
             <Row>
                 <FormGroup>
                     <FormLabel>Rotate/translate mode</FormLabel>
@@ -204,35 +205,26 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
                     icon={<img style={{ width: '100%', height: '100%' }} alt="rotate/translate" className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/rtz.svg`} />}
                     {...props}
                 />
-                <Overlay target={theButton.current} show={showAccept} placement="top">
-                    {({ placement, arrowProps, show: _show, popper, ...props }) => (
-                        <div
-                            {...props}
-                            style={{
-                                position: 'absolute', padding: '2px 10px', borderRadius: 3,
-                                backgroundColor: props.backgroundColor, zIndex: 99999,
-                                ...props.style,
-                            }}
-                        >
-                            <Card className="mx-2">
-                                <Card.Header >Accept rotate/translate ?</Card.Header>
-                                <Card.Body style={{ alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
-                                    {tips}
-                                    <Stack direction='horizontal' gap={1} style={{ alignItems: 'center',  alignContent: 'center', justifyContent: 'center'}}>
-                                        <Button onClick={async () => {
-                                            await acceptTransform()
-                                            setShowAccept(false)
-                                        }}><CheckOutlined /></Button>
-                                        <Button className="mx-2" onClick={async() => {
-                                            await rejectTransform()
-                                            setShowAccept(false)
-                                        }}><CloseOutlined /></Button>
-                                    </Stack>
-                                </Card.Body>
-                            </Card>
-                        </div>
-                    )}
-                </Overlay>
+                {showAccept &&
+                <Draggable nodeRef={draggableRef} handle=".InnerHandle">
+                    <Card ref={draggableRef} className="mx-2" style={{position: 'absolute'}}>
+                        <Card.Header className="InnerHandle">Accept rotate/translate ?</Card.Header>
+                        <Card.Body style={{ alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
+                            {tips}
+                            <Stack direction='horizontal' gap={1} style={{ alignItems: 'center',  alignContent: 'center', justifyContent: 'center'}}>
+                                <Button onClick={async () => {
+                                    await acceptTransform()
+                                    setShowAccept(false)
+                                }}><CheckOutlined /></Button>
+                                <Button className="mx-2" onClick={async() => {
+                                    await rejectTransform()
+                                    setShowAccept(false)
+                                }}><CloseOutlined /></Button>
+                            </Stack>
+                        </Card.Body>
+                    </Card>
+                </Draggable>
+                }
         </>
     }
 }

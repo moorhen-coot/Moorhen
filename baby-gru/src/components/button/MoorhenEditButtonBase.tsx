@@ -1,5 +1,5 @@
 import React, { forwardRef, useCallback, useEffect, useRef, useState } from "react";
-import { Button, Overlay } from "react-bootstrap"
+import { Button } from "react-bootstrap"
 import { cidToSpec, convertViewtoPx } from "../../utils/MoorhenUtils";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";

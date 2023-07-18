@@ -60,7 +60,7 @@ export const MoorhenMutateButton = (props: moorhen.EditButtonProps | moorhen.Con
             
         const MoorhenMutatePanel = (props: { panelParameters: string; setPanelParameters: React.Dispatch<React.SetStateAction<string>> }) => {
             return <Container>
-                <Row>Please identify residue to mutate</Row>
+                <Row style={{textAlign: 'center', justifyContent: 'center'}}>Please identify residue to mutate</Row>
                 <Row>
                     <FormGroup>
                         <FormLabel>To residue of type</FormLabel>
