@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Backdrop } from '@mui/material';
-import { ArrowBackIosOutlined, ArrowForwardIosOutlined, FirstPageOutlined } from "@mui/icons-material";
+import { ArrowBackIosOutlined, ArrowForwardIosOutlined, FirstPageOutlined, WarningOutlined } from "@mui/icons-material";
 import { getMultiColourRuleArgs } from '../../utils/MoorhenUtils';
 import { Card, Row, Col, Form, FormSelect, Button, Spinner, Stack } from "react-bootstrap";
 import { moorhen } from "../../types/moorhen";
@@ -23,7 +23,7 @@ export const MoorhenQuerySequenceModal = (props: {
     defaultBondSmoothness: number;
     monomerLibraryPath: string;
     changeMolecules: (arg0: moorhen.MolChange<MoorhenMolecule>) => void;
-    fetchMoleculeFromURL: (url: string, molName: string) => Promise<moorhen.Molecule>
+    setToastContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
 }) => {
 
     const [selectedModel, setSelectedModel] = useState<null | number>(null)
@@ -41,6 +41,31 @@ export const MoorhenQuerySequenceModal = (props: {
     const moleculeSelectRef = useRef<HTMLSelectElement>();
     const chainSelectRef = useRef<HTMLSelectElement>();
     const sourceSelectRef =  useRef<HTMLSelectElement>();
+
+    const fetchMoleculeFromURL = async (url: RequestInfo | URL, molName: string): Promise<moorhen.Molecule> => {
+        const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.monomerLibraryPath)
+        newMolecule.setBackgroundColour(props.backgroundColor)
+        newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
+        try {
+            await newMolecule.loadToCootFromURL(url, molName)
+            if (newMolecule.molNo === -1) throw new Error("Cannot read the fetched molecule...")
+            await newMolecule.fetchIfDirtyAndDraw('CBs')
+            props.changeMolecules({ action: "Add", item: newMolecule })
+            newMolecule.centreOn('/*/*/*/*', false)
+            return newMolecule
+        } catch (err) {
+            props.setToastContent(
+                <>
+                    <WarningOutlined style={{margin: 0}}/>
+                        <h4 style={{marginTop: '0.1rem', marginBottom: '0.1rem', marginLeft: '0.5rem', marginRight: '0.5rem'}}>
+                            Failed to read molecule
+                        </h4>
+                    <WarningOutlined style={{margin: 0}}/>
+                </>
+            )
+            console.log(`Cannot fetch molecule from ${url}`)
+        }
+    }
 
     const handleModelChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
         setSelectedModel(parseInt(evt.target.value))
@@ -98,7 +123,7 @@ export const MoorhenQuerySequenceModal = (props: {
     }
 
     const fetchAndSuperpose = async (polimerEntity: string, coordUrl: string, chainId: string, source: string) => {
-        const newMolecule = await props.fetchMoleculeFromURL(coordUrl, polimerEntity)
+        const newMolecule = await fetchMoleculeFromURL(coordUrl, polimerEntity)
         if (source === 'AFDB') {
             const newRule = [{
                 commandInput: {
@@ -265,7 +290,7 @@ export const MoorhenQuerySequenceModal = (props: {
                 <span>Fetching...</span>
             </Backdrop>
         }
-        headerTittle='Query using a sequence'
+        headerTitle='Query using a sequence'
         body={
             <>
             <Row style={{ padding: '0', margin: '0' }}>

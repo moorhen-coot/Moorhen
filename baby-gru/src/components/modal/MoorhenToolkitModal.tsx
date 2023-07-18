@@ -44,9 +44,9 @@ export const MoorhenToolkitModal = (props: MoorhenToolkitModalProps) => {
                 setShow={props.setShow}
                 windowHeight={props.windowHeight}
                 windowWidth={props.windowWidth}
-                headerTittle={'Model building toolkit'}
+                headerTitle={'Model building toolkit'}
                 footer={null}
-                body={
+                body={<>
                 <Tooltip ref={formGroupRef} title={toolTip}>
                     <FormGroup style={{ justifyContent: 'center', margin: "0px", padding: "0px", width: '100%' }} row>
                         <MoorhenAutofitRotamerButton {...collectedProps} key='auto-fit-rotamer' buttonIndex="0" />
@@ -66,13 +66,17 @@ export const MoorhenToolkitModal = (props: MoorhenToolkitModalProps) => {
                         <MoorhenAddAltConfButton {...collectedProps} key='add-alt-conf' buttonIndex="14" />
                         <MoorhenConvertCisTransButton {...collectedProps} key='cis-trans' buttonIndex="15" />
                         <MoorhenDragAtomsButton {...collectedProps} key='drag-atoms' buttonIndex="16" />
-                        <div style={{marginTop: '0.5rem', display: 'flex', justifyContent: 'center', alignItems: 'center', alignContent: 'center'}}>
-                            {overlayContents}
-                        </div>
                     </FormGroup>
                 </Tooltip>
-
+                {overlayContents && 
+                    <>
+                    <hr></hr>
+                    <div style={{marginTop: '0.5rem', display: 'flex', justifyContent: 'center', alignItems: 'center', alignContent: 'center', textAlign: 'center'}}>
+                        {overlayContents}
+                    </div>
+                    </>
                 }
+                </>}
             />
 }
 
