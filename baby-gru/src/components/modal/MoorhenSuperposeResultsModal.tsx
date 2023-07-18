@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import Draggable from "react-draggable";
 import { IconButton } from '@mui/material';
 import { CloseOutlined } from "@mui/icons-material";

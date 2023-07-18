@@ -1,4 +1,4 @@
-import { Form, InputGroup, NavDropdown } from "react-bootstrap";
+import { Form, InputGroup } from "react-bootstrap";
 import { useState } from "react";
 import { MenuItem } from "@mui/material";
 import { cidToSpec } from "../../utils/MoorhenUtils";
