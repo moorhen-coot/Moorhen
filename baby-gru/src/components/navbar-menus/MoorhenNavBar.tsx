@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useState, useRef } from 'react';
+import { forwardRef, useEffect, useState, useRef, useCallback } from 'react';
 import { Spinner, Form, Overlay, Popover } from 'react-bootstrap';
 import { MoorhenFileMenu } from './MoorhenFileMenu';
 import { MoorhenPreferencesMenu } from './MoorhenPreferencesMenu';
@@ -10,7 +10,7 @@ import { MoorhenDevMenu } from './MoorhenDevMenu';
 import { MoorhenCryoMenu } from './MoorhenCryoMenu';
 import { MoorhenCalculateMenu } from './MoorhenCalculateMenu';
 import { MoorhenControlsInterface } from "../MoorhenContainer"
-import { ClickAwayListener, Fab, SpeedDial, SpeedDialAction } from "@mui/material";
+import { ClickAwayListener, Fab, SpeedDial, SpeedDialAction, SpeedDialIcon } from "@mui/material";
 import { convertRemToPx, convertViewtoPx } from '../../utils/MoorhenUtils';
 import { MoorhenModelsModal } from '../modal/MoorhenModelsModal';
 import { MoorhenMapsModal } from '../modal/MoorhenMapsModal';
@@ -18,7 +18,7 @@ import { MoorhenValidationToolsModal } from '../modal/MoorhenValidationToolsModa
 import { MoorhenToolkitModal } from '../modal/MoorhenToolkitModal';
 import { 
     AcUnitOutlined, CalculateOutlined, ConstructionOutlined, DescriptionOutlined, EditOutlined, VisibilityOutlined,
-    FactCheckOutlined, HelpOutlineOutlined, MenuOutlined, SaveOutlined, ScienceOutlined, SettingsSuggestOutlined,
+    FactCheckOutlined, HelpOutlineOutlined, MenuOutlined, SaveOutlined, ScienceOutlined, SettingsSuggestOutlined, CloseOutlined,
  } from '@mui/icons-material';
 import { MoorhenQuerySequenceModal } from '../modal/MoorhenQuerySequenceModal';
 import { MoorhenScriptModal } from '../modal/MoorhenScriptModal';
@@ -123,19 +123,20 @@ export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface
     }, [currentDropdownId])
 
     const handleSpeedDialClose = (evt, reason) => {
-        if (reason === 'mouseLeave' && currentDropdownId !== '-1') {
-            // pass
-        } else if (reason === 'blur') { 
-            // pass
-        } else {
+        if (reason === 'toggle') {
             setSpeedDialOpen(false)
             setCurrentDropdownId('-1')
         }
     }
 
-    const handleMouseEnter = () => {
-        setSpeedDialOpen(true)
-    }
+    const handleDialActionClick = useCallback((actionName) => {
+        if (actionName === currentDropdownId) {
+            setCurrentDropdownId('-1')
+        } else {
+            setCurrentDropdownId(actionName)
+        }
+        
+    }, [currentDropdownId])
 
     const canvasElement = document.getElementById('moorhen-canvas-background')
     let canvasTop: number
@@ -151,7 +152,6 @@ export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface
 
     return <>
     <ClickAwayListener onClickAway={() => {
-        setSpeedDialOpen(false)
         setCurrentDropdownId('-1')
     }}>
     <SpeedDial
@@ -161,16 +161,17 @@ export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface
         sx={{
             position: 'absolute', top: canvasTop + convertRemToPx(0.5), left: canvasLeft + convertRemToPx(0.5), color: props.isDark ? 'white' : 'black' ,
             "& .MuiSpeedDial-actions": {
-                width: '5.5rem',
                 paddingTop: '40px',
             }
         }}
         onClose={handleSpeedDialClose}
-        onMouseEnter={handleMouseEnter}
         FabProps={{
             ref: speedDialRef,
             variant: 'extended',
             size: "large",
+            onClick: () => {
+                setSpeedDialOpen(!speedDialOpen)
+            },    
             sx: {
                 bgcolor: props.isDark ? 'grey' : 'white',
                 '&:hover': {
@@ -178,7 +179,13 @@ export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface
                 },
             }
         }}
-        icon={<>  <MenuOutlined style={{color: 'black'}}/> <img src={`${props.urlPrefix}/baby-gru/pixmaps/MoorhenLogo.png`} alt='Moorhen' style={{height: '1.6rem', marginRight: '0.3rem', marginLeft: '0.3rem'}} /> </>}
+        icon={
+        <SpeedDialIcon
+            icon={<>
+            { (speedDialOpen) ? <CloseOutlined style={{color: 'black'}}/> : <MenuOutlined style={{color: 'black'}}/> }
+            <img src={`${props.urlPrefix}/baby-gru/pixmaps/MoorhenLogo.png`} alt='Moorhen' style={{height: '1.6rem', marginRight: '0.3rem', marginLeft: '0.3rem'}} /> 
+            </> }
+        />}
     >
         {Object.keys(actions).map((key) => {
             const action = actions[key]
@@ -195,8 +202,12 @@ export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface
                         backgroundColor: currentDropdownId === action.name ? '#d4d4d4' : 'white' 
                     }
                 }}
-                tooltipTitle={currentDropdownId === '-1' ? action.name : ''}
-                onClick={() => setCurrentDropdownId(action.name)}
+                tooltipTitle={currentDropdownId !== '-1' ? '' :
+                <div style={{cursor: 'pointer'}} onClick={() => handleDialActionClick(action.name)}>
+                    {action.name}
+                </div> 
+                }
+                onClick={() => handleDialActionClick(action.name)}
             />
         })}
         <Overlay placement='right' show={currentDropdownId !== '-1'} target={currentDropdownId !== '-1' ? popoverTargetRef : null}>
