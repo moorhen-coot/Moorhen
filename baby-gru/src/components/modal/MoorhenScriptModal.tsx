@@ -1,14 +1,12 @@
-import { useRef, useState, useEffect, useCallback } from "react";
-import Draggable from "react-draggable";
-import { IconButton } from '@mui/material';
-import { CloseOutlined, PlayArrowOutlined } from "@mui/icons-material";
-import { convertViewtoPx } from '../../utils/MoorhenUtils';
-import { Card, Button } from "react-bootstrap";
+import { useState, useEffect, useCallback } from "react";
+import { PlayArrowOutlined } from "@mui/icons-material";
+import { Button } from "react-bootstrap";
 import { highlight, languages } from 'prismjs/components/prism-core';
-import Editor from 'react-simple-code-editor';
+import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
 import { MoorhenScriptApi } from "../../utils/MoorhenScriptAPI"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
+import Editor from 'react-simple-code-editor';
 import 'prismjs/themes/prism.css';
 import 'prismjs/components/prism-clike';
 import 'prismjs/components/prism-javascript';
@@ -25,9 +23,7 @@ export const MoorhenScriptModal = (props: {
     code?: string;
 }) => {
 
-    const draggableNodeRef = useRef<HTMLDivElement>(null)
     const [code, setCode] = useState<string>("")
-    const [opacity, setOpacity] = useState<number>(0.5)
     
     const handleScriptExe = useCallback(async () => {
         try {
@@ -45,38 +41,27 @@ export const MoorhenScriptModal = (props: {
         }
     }, [])
 
-    return <Draggable nodeRef={draggableNodeRef} handle=".handle">
-        <Card
-            style={{position: 'absolute', top: '5rem', left: '5rem', opacity: opacity, width: props.windowWidth ? convertViewtoPx(50, props.windowWidth) : '50wh', display: props.show ? '' : 'none'}}
-            onMouseOver={() => setOpacity(1)}
-            onMouseOut={() => setOpacity(0.5)}
-        >
-            <Card.Header ref={draggableNodeRef} className="handle" style={{ justifyContent: 'space-between', display: 'flex', cursor: 'move', alignItems:'center'}}>
-                Interactive scripting
-                <IconButton style={{margin: '0.1rem', padding: '0.1rem'}} onClick={() => props.setShow(false)}>
-                    <CloseOutlined/>
-                </IconButton>
-            </Card.Header>
-            <Card.Body style={{maxHeight: props.windowHeight ? convertViewtoPx(60, props.windowHeight) : '60vh', overflowY: 'scroll'}}>
-                <div style={{backgroundColor: props.isDark ? 'white' : '#e6e6e6', borderColor:'black'}}>
-                    <Editor
-                        value={code}
-                        onValueChange={code => setCode(code)}
-                        highlight={code => highlight(code, languages.js)}
-                        padding={10}
-                        style={{
-                            fontFamily: '"Fira code", "Fira Mono", monospace',
-                            fontSize: 16
-                        }}
-                    /> 
-                </div>
-            </Card.Body>
-            <Card.Footer style={{display: 'flex', alignItems: 'center', justifyContent: 'right'}}>
-                <Button variant='primary' onClick={handleScriptExe}>
-                    <PlayArrowOutlined/>
-                </Button>
-            </Card.Footer>
-
-        </Card>
-    </Draggable>
+    return <MoorhenDraggableModalBase
+                headerTitle="Interactive scripting"
+                body={
+                    <div style={{backgroundColor: props.isDark ? 'white' : '#e6e6e6', borderColor:'black'}}>
+                        <Editor
+                            value={code}
+                            onValueChange={code => setCode(code)}
+                            highlight={code => highlight(code, languages.js)}
+                            padding={10}
+                            style={{
+                                fontFamily: '"Fira code", "Fira Mono", monospace',
+                                fontSize: 16
+                            }}
+                        /> 
+                    </div>
+                }
+                footer={
+                    <Button variant='primary' onClick={handleScriptExe}>
+                        <PlayArrowOutlined/>
+                    </Button>
+                }
+                {...props}
+                />
 }
