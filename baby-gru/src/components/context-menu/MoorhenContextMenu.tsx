@@ -243,7 +243,7 @@ export const MoorhenContextMenu = (props: {
               <Popover.Body>
                 {overlayContents}
               </Popover.Body>
-            </Popover>          
+            </Popover>
           </Overlay>
           </>
         

@@ -28,7 +28,8 @@ export const MoorhenConvertCisTransButton = (props: moorhen.EditButtonProps | mo
 
         return <MoorhenEditButtonBase
                     id='cis-trans-edit-button'
-                    toolTip="Cis/Trans isomerisation"
+                    toolTipLabel="Cis/Trans isomerisation"
+                    setToolTip={props.setToolTip}
                     buttonIndex={props.buttonIndex}
                     selectedButtonIndex={props.selectedButtonIndex}
                     setSelectedButtonIndex={props.setSelectedButtonIndex}

@@ -1,19 +1,20 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import Draggable from "react-draggable";
-import { Backdrop, IconButton } from '@mui/material';
-import { ArrowBackIosOutlined, ArrowForwardIosOutlined, CloseOutlined, FirstPageOutlined } from "@mui/icons-material";
-import { convertViewtoPx, getMultiColourRuleArgs } from '../../utils/MoorhenUtils';
+import { Backdrop } from '@mui/material';
+import { ArrowBackIosOutlined, ArrowForwardIosOutlined, FirstPageOutlined, WarningOutlined } from "@mui/icons-material";
+import { getMultiColourRuleArgs } from '../../utils/MoorhenUtils';
 import { Card, Row, Col, Form, FormSelect, Button, Spinner, Stack } from "react-bootstrap";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
+import { MoorhenDraggableModalBase } from "../modal/MoorhenDraggableModalBase"
 import MoorhenSlider from "../misc/MoorhenSlider";
 import { webGL } from "../../types/mgWebGL";
 
 export const MoorhenQuerySequenceModal = (props: {
     windowHeight: number;
     windowWidth: number;
+    show: boolean;
     setShow: React.Dispatch<React.SetStateAction<boolean>>;
     molecules: moorhen.Molecule[];
     commandCentre: React.RefObject<moorhen.CommandCentre>;
@@ -22,10 +23,9 @@ export const MoorhenQuerySequenceModal = (props: {
     defaultBondSmoothness: number;
     monomerLibraryPath: string;
     changeMolecules: (arg0: moorhen.MolChange<MoorhenMolecule>) => void;
-    fetchMoleculeFromURL: (url: string, molName: string) => Promise<moorhen.Molecule>
+    setToastContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
 }) => {
 
-    const [opacity, setOpacity] = useState(0.5)
     const [selectedModel, setSelectedModel] = useState<null | number>(null)
     const [selectedChain, setSelectedChain] = useState<string | null>(null)
     const [selectedSource, setSelectedSource] = useState<string>('PDB')
@@ -35,13 +35,37 @@ export const MoorhenQuerySequenceModal = (props: {
     const [seqIdCutoff, setSeqIdCutoff] = useState<number>(90)
     const [eValCutoff, setEValCutoff] = useState<number>(0.1)
     const [busy, setBusy] = useState<boolean>(false);
-    const draggableNodeRef = useRef<HTMLDivElement>(null);
     const timerRef = useRef<any>(null);
     const cachedSeqIdCutoff = useRef<number | null>(null);
     const cachedEValCutoff = useRef<number | null>(null);
     const moleculeSelectRef = useRef<HTMLSelectElement>();
     const chainSelectRef = useRef<HTMLSelectElement>();
     const sourceSelectRef =  useRef<HTMLSelectElement>();
+
+    const fetchMoleculeFromURL = async (url: RequestInfo | URL, molName: string): Promise<moorhen.Molecule> => {
+        const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.monomerLibraryPath)
+        newMolecule.setBackgroundColour(props.backgroundColor)
+        newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
+        try {
+            await newMolecule.loadToCootFromURL(url, molName)
+            if (newMolecule.molNo === -1) throw new Error("Cannot read the fetched molecule...")
+            await newMolecule.fetchIfDirtyAndDraw('CBs')
+            props.changeMolecules({ action: "Add", item: newMolecule })
+            newMolecule.centreOn('/*/*/*/*', false)
+            return newMolecule
+        } catch (err) {
+            props.setToastContent(
+                <>
+                    <WarningOutlined style={{margin: 0}}/>
+                        <h4 style={{marginTop: '0.1rem', marginBottom: '0.1rem', marginLeft: '0.5rem', marginRight: '0.5rem'}}>
+                            Failed to read molecule
+                        </h4>
+                    <WarningOutlined style={{margin: 0}}/>
+                </>
+            )
+            console.log(`Cannot fetch molecule from ${url}`)
+        }
+    }
 
     const handleModelChange = (evt: React.ChangeEvent<HTMLSelectElement>) => {
         setSelectedModel(parseInt(evt.target.value))
@@ -99,7 +123,7 @@ export const MoorhenQuerySequenceModal = (props: {
     }
 
     const fetchAndSuperpose = async (polimerEntity: string, coordUrl: string, chainId: string, source: string) => {
-        const newMolecule = await props.fetchMoleculeFromURL(coordUrl, polimerEntity)
+        const newMolecule = await fetchMoleculeFromURL(coordUrl, polimerEntity)
         if (source === 'AFDB') {
             const newRule = [{
                 commandInput: {
@@ -259,72 +283,68 @@ export const MoorhenQuerySequenceModal = (props: {
         
     }, [numberOfHits])
 
-    return <Draggable nodeRef={draggableNodeRef} handle=".handle">
-        <Card
-            style={{position: 'absolute', top: '5rem', left: '5rem', opacity: opacity, width: props.windowWidth ? convertViewtoPx(35, props.windowWidth) : '35wh'}}
-            onMouseOver={() => setOpacity(1)}
-            onMouseOut={() => setOpacity(0.5)}
-        >
+    return <MoorhenDraggableModalBase
+        additionalChildren={
             <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={busy}>
                 <Spinner animation="border" style={{ marginRight: '0.5rem' }}/>
                 <span>Fetching...</span>
             </Backdrop>
-            <Card.Header ref={draggableNodeRef} className="handle" style={{ justifyContent: 'space-between', display: 'flex', cursor: 'move', alignItems:'center'}}>
-                Query using a sequence
-                <IconButton style={{margin: '0.1rem', padding: '0.1rem'}} onClick={() => props.setShow(false)}>
-                    <CloseOutlined/>
-                </IconButton>
-            </Card.Header>
-            <Card.Body style={{maxHeight: props.windowHeight ? convertViewtoPx(45, props.windowHeight) : '45vh', overflowY: 'scroll'}}>
-                <Row style={{ padding: '0', margin: '0' }}>
-                    <Col>
-                        <MoorhenMoleculeSelect width="" onChange={handleModelChange} molecules={props.molecules} ref={moleculeSelectRef}/>
-                    </Col>
-                    <Col>
-                        <MoorhenChainSelect width="" molecules={props.molecules} onChange={handleChainChange} selectedCoordMolNo={selectedModel} ref={chainSelectRef} allowedTypes={[1, 2]}/>
-                    </Col>
-                    <Col>
-                        <Form.Group style={{ margin: '0.5rem' }}>
-                            <Form.Label>Source</Form.Label>
-                            <FormSelect size="sm" ref={sourceSelectRef} defaultValue={'PDB'} onChange={handleSourceChange}>
-                                <option value='PDB' key='PDB'>PDB</option>
-                                <option value='AFDB' key='AFDB'>AFDB</option>
-                            </FormSelect>
-                        </Form.Group>
-                    </Col>
-                </Row>
-                <Row>
-                    <Col style={{justifyContent:'center', alignContent:'center', alignItems:'center', display:'flex'}}>
-                        <Form.Group controlId="eValueSlider" style={{margin:'0.5rem', width: '100%'}}>
-                            <MoorhenSlider minVal={0.1} maxVal={1.0} logScale={false} sliderTitle="E-Val cutoff" initialValue={0.1} externalValue={eValCutoff} setExternalValue={setEValCutoff}/>
-                        </Form.Group>
-                    </Col>
-                    <Col style={{justifyContent:'center', alignContent:'center', alignItems:'center', display:'flex'}}>
-                        <Form.Group controlId="seqIdSlider" style={{margin:'0.5rem', width: '100%'}}>
-                            <MoorhenSlider minVal={1} maxVal={100} logScale={false} sliderTitle="Seq. Id. cutoff" initialValue={90} externalValue={seqIdCutoff} allowFloats={false} setExternalValue={setSeqIdCutoff}/>
-                        </Form.Group>
-                    </Col>
-                </Row>
-                <hr></hr>
-                <Row>
-                    {queryResults?.length > 0 ? <span>Found {numberOfHits} hits</span> : null}
-                    {queryResults?.length > 0 ? queryResults : <span>No results found...</span>}
-                </Row>
-            </Card.Body>
-            <Card.Footer style={{display: 'flex', alignItems: 'center', justifyContent: 'right'}}>
-                <Stack gap={2} direction='horizontal' style={{paddingTop: '0.5rem', alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
-                    {queryResults?.length > 0 ? <span>Page {currentResultsPage+1} of {Math.ceil(numberOfHits/10)}</span> : null}
-                    <Button variant='primary' onClick={() => setCurrentResultsPage(0)}>
-                        <FirstPageOutlined/>
-                    </Button>
-                    <Button variant='primary' disabled={currentResultsPage === 0} onClick={() => setCurrentResultsPage((prev) => prev-1)}>
-                        <ArrowBackIosOutlined/>
-                    </Button>
-                    <Button variant='primary' disabled={currentResultsPage === Math.ceil(numberOfHits/10) - 1} onClick={() => setCurrentResultsPage((prev) => prev+1)}>
-                        <ArrowForwardIosOutlined/>
-                    </Button>
-                </Stack>
-            </Card.Footer>
-        </Card>
-    </Draggable>
+        }
+        headerTitle='Query using a sequence'
+        body={
+            <>
+            <Row style={{ padding: '0', margin: '0' }}>
+                <Col>
+                    <MoorhenMoleculeSelect width="" onChange={handleModelChange} molecules={props.molecules} ref={moleculeSelectRef}/>
+                </Col>
+                <Col>
+                    <MoorhenChainSelect width="" molecules={props.molecules} onChange={handleChainChange} selectedCoordMolNo={selectedModel} ref={chainSelectRef} allowedTypes={[1, 2]}/>
+                </Col>
+                <Col>
+                    <Form.Group style={{ margin: '0.5rem' }}>
+                        <Form.Label>Source</Form.Label>
+                        <FormSelect size="sm" ref={sourceSelectRef} defaultValue={'PDB'} onChange={handleSourceChange}>
+                            <option value='PDB' key='PDB'>PDB</option>
+                            <option value='AFDB' key='AFDB'>AFDB</option>
+                        </FormSelect>
+                    </Form.Group>
+                </Col>
+            </Row>
+            <Row>
+                <Col style={{justifyContent:'center', alignContent:'center', alignItems:'center', display:'flex'}}>
+                    <Form.Group controlId="eValueSlider" style={{margin:'0.5rem', width: '100%'}}>
+                        <MoorhenSlider minVal={0.1} maxVal={1.0} logScale={false} sliderTitle="E-Val cutoff" initialValue={0.1} externalValue={eValCutoff} setExternalValue={setEValCutoff}/>
+                    </Form.Group>
+                </Col>
+                <Col style={{justifyContent:'center', alignContent:'center', alignItems:'center', display:'flex'}}>
+                    <Form.Group controlId="seqIdSlider" style={{margin:'0.5rem', width: '100%'}}>
+                        <MoorhenSlider minVal={1} maxVal={100} logScale={false} sliderTitle="Seq. Id. cutoff" initialValue={90} externalValue={seqIdCutoff} allowFloats={false} setExternalValue={setSeqIdCutoff}/>
+                    </Form.Group>
+                </Col>
+            </Row>
+            <hr></hr>
+            <Row>
+                {queryResults?.length > 0 ? <span>Found {numberOfHits} hits</span> : null}
+                {queryResults?.length > 0 ? queryResults : <span>No results found...</span>}
+            </Row>
+            </>
+        }
+        footer={
+            <>
+            <Stack gap={2} direction='horizontal' style={{paddingTop: '0.5rem', alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
+                {queryResults?.length > 0 ? <span>Page {currentResultsPage+1} of {Math.ceil(numberOfHits/10)}</span> : null}
+                <Button variant='primary' onClick={() => setCurrentResultsPage(0)}>
+                    <FirstPageOutlined/>
+                </Button>
+                <Button variant='primary' disabled={currentResultsPage === 0} onClick={() => setCurrentResultsPage((prev) => prev-1)}>
+                    <ArrowBackIosOutlined/>
+                </Button>
+                <Button variant='primary' disabled={currentResultsPage === Math.ceil(numberOfHits/10) - 1} onClick={() => setCurrentResultsPage((prev) => prev+1)}>
+                    <ArrowForwardIosOutlined/>
+                </Button>
+            </Stack>
+            </>
+        }
+        {...props}
+    />
 }

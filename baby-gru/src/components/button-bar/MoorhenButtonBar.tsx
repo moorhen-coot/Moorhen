@@ -17,7 +17,7 @@ import { MoorhenAddTerminalResidueButton } from "../button/MoorhenAddTerminalRes
 import { MoorhenFlipPeptideButton } from "../button/MoorhenFlipPeptideButton"
 import { MoorhenAutofitRotamerButton } from "../button/MoorhenAutofitRotamerButton"
 import { MoorhenConvertCisTransButton } from "../button/MoorhenConvertCisTransButton"
-import { IconButton, Drawer } from "@mui/material";
+import { IconButton, Drawer, styled } from "@mui/material";
 import { ArrowDownwardOutlined, ArrowUpwardOutlined } from "@mui/icons-material";
 import { convertRemToPx, convertViewtoPx} from '../../utils/MoorhenUtils';
 import { MoorhenControlsInterface } from "../MoorhenContainer";
@@ -117,14 +117,30 @@ export const MoorhenButtonBar = (props: MoorhenControlsInterface) => {
     // Add 0.1 rem for the bottom margin of carousel
     const simpleEditButtonHeight = Math.max(convertViewtoPx(5, props.windowHeight), 40) + convertRemToPx(0.1)
     
+    const rootElement = document.getElementById('moorhen-canvas-background')
+    let canvasBottom: number
+    let canvasLeft: number
+    if (rootElement !== null) {
+        const rect = rootElement.getBoundingClientRect()
+        canvasLeft = rect.left
+        canvasBottom = rect.bottom
+    } else {
+        canvasLeft = 0
+        canvasBottom = 0
+    } 
+
     return  <> 
     <Drawer anchor='bottom' open={true} variant='persistent'
                 sx={{
-                    width: '100%',
+                    top: canvasBottom - toggleDrowerButtonHeight,
+                    left: canvasLeft,
+                    position: 'absolute',
+                    width: props.windowWidth,
                     flexShrink: 0,
                     backgroundColor: 'rgba(0, 0, 0, 0)',
                     '& .MuiDrawer-paper': {
-                        width: '100%',
+                        position: 'relative',
+                        width: props.windowWidth,
                         boxSizing: 'border-box',
                         backgroundColor: 'rgba(0, 0, 0, 0)',
                         alignItems:'center',
@@ -156,11 +172,15 @@ export const MoorhenButtonBar = (props: MoorhenControlsInterface) => {
         onMouseOver={() => setOpacity(1)} 
         onMouseOut={() => {if(!popoverIsShownRef.current) setOpacity(0.5)}}
         sx={{
-            width: '100%',
+            top: canvasBottom - (simpleEditButtonHeight + toggleDrowerButtonHeight),
+            left: canvasLeft,
+            position: 'absolute',
+            width: props.windowWidth,
             flexShrink: 0,
             backgroundColor: 'rgba(0, 0, 0, 0)',
             '& .MuiDrawer-paper': {
-                width: '100%',
+                position: 'relative',
+                width: props.windowWidth,
                 height: simpleEditButtonHeight + toggleDrowerButtonHeight,
                 boxSizing: 'border-box',
                 alignItems:'center',
@@ -192,14 +212,18 @@ export const MoorhenButtonBar = (props: MoorhenControlsInterface) => {
             <ArrowDownwardOutlined style={{height: '100%', color: props.isDark ? 'white' : 'black'}}/>
         </IconButton>
     </Drawer>
-    <Drawer variant="persistent" anchor="bottom" open={showDrawer}
+    <Drawer variant="persistent" anchor="bottom" open={showDrawer} 
             sx={{
                 opacity: opacity,
-                width: '100%',
+                top: canvasBottom - simpleEditButtonHeight,
+                left: canvasLeft,
+                position: 'absolute',
+                width: props.windowWidth,
                 flexShrink: 0,
                 '& .MuiDrawer-paper': {
                     zIndex: 9999,
-                    width: '100%',
+                    width: props.windowWidth,
+                    position: 'relative',
                     height: simpleEditButtonHeight,
                     boxSizing: 'border-box',
                     backgroundColor: props.isDark ? 'grey' : 'white',

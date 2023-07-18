@@ -8,14 +8,14 @@ import { libcootApi } from "../../types/libcoot";
 
 export const MoorhenDeleteButton = (props: moorhen.EditButtonProps | moorhen.ContextButtonProps) => {
     const [panelParameters, setPanelParameters] = useState<string>('RESIDUE')
-    const [toolTip, setToolTip] = useState<string>("Delete Item")
+    const [toolTipLabel, setToolTipLabel] = useState<string>("Delete Item")
 
     const deleteModes = ['ATOM', 'RESIDUE', 'RESIDUE HYDROGENS', 'RESIDUE SIDE-CHAIN', 'CHAIN', 'CHAIN HYDROGENS', 'MOLECULE HYDROGENS']
 
     useEffect(() => {
         if (props.shortCuts) {
             const shortCut = JSON.parse(props.shortCuts as string).delete_residue
-            setToolTip(`Delete Item ${getTooltipShortcutLabel(shortCut)}`)
+            setToolTipLabel(`Delete Item ${getTooltipShortcutLabel(shortCut)}`)
         }
     }, [props.shortCuts])
 
@@ -64,7 +64,7 @@ export const MoorhenDeleteButton = (props: moorhen.EditButtonProps | moorhen.Con
                     icon={<img style={{padding:'0.1rem', width:'100%', height: '100%'}} className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/delete.svg`} alt="delete-item"/>}
                     refineAfterMod={false}
                     needsMapData={false}
-                    toolTipLabel={toolTip}
+                    toolTipLabel={toolTipLabel}
                     onExit={deleteMoleculeIfEmpty}
                     popoverSettings={{
                         label: 'Delete mode',
@@ -78,7 +78,7 @@ export const MoorhenDeleteButton = (props: moorhen.EditButtonProps | moorhen.Con
             
         const MoorhenDeletePanel = (props: { panelParameters: string; setPanelParameters: React.Dispatch<React.SetStateAction<string>>; }) => {
             return <Container>
-                <Row>Please click an atom for core of deletion</Row>
+                <Row style={{textAlign: 'center', justifyContent: 'center'}}>Please click an atom for core of deletion</Row>
                 <Row>
                     <FormGroup>
                         <FormLabel>Delete mode</FormLabel>
@@ -96,7 +96,8 @@ export const MoorhenDeleteButton = (props: moorhen.EditButtonProps | moorhen.Con
         }
     
         return <MoorhenEditButtonBase
-                    toolTip={toolTip}
+                    toolTipLabel={toolTipLabel}
+                    setToolTip={props.setToolTip}
                     buttonIndex={props.buttonIndex}
                     selectedButtonIndex={props.selectedButtonIndex}
                     setSelectedButtonIndex={props.setSelectedButtonIndex}

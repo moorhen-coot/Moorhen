@@ -27,7 +27,8 @@ export const MoorhenAddAltConfButton = (props: moorhen.EditButtonProps | moorhen
     } else {
 
         return <MoorhenEditButtonBase
-                    toolTip="Add alternative conformation"
+                    toolTipLabel="Add alternative conformation"
+                    setToolTip={props.setToolTip}
                     buttonIndex={props.buttonIndex}
                     selectedButtonIndex={props.selectedButtonIndex}
                     setSelectedButtonIndex={props.setSelectedButtonIndex}

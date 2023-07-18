@@ -529,9 +529,9 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     }
     */
     return  <>
-                <ToastContainer style={{ zIndex: '0', marginTop: "5rem", marginLeft: '0.5rem', textAlign:'left', alignItems: 'left', maxWidth: convertViewtoPx(40, props.windowWidth)}} position='top-start' >
+                <ToastContainer style={{ zIndex: '0', marginTop: "5rem", marginRight: '0.5rem', textAlign:'left', alignItems: 'left', maxWidth: convertViewtoPx(40, props.windowWidth)}} position='top-end' >
                     {scoresToastContents !== null && props.context.showScoresToast &&
-                        <Toast onClose={() => {}} autohide={false} show={true} style={{width: '100%'}}>
+                        <Toast onClose={() => {}} autohide={false} show={true} style={{width: '100%', borderRadius: '1.5rem'}}>
                             {scoresToastContents}
                         </Toast>
                     }

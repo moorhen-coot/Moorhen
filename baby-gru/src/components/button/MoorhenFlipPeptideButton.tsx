@@ -6,7 +6,7 @@ import { MoorhenEditButtonBase } from "./MoorhenEditButtonBase";
 
 export const MoorhenFlipPeptideButton = (props: moorhen.EditButtonProps | moorhen.ContextButtonProps) => {
 
-    const [toolTip, setToolTip] = useState<string>("Flip Peptide")
+    const [toolTipLabel, setToolTipLabel] = useState<string>("Flip Peptide")
 
     const getCootCommandInput = (selectedMolecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec, localParameters?: string): moorhen.cootCommandKwargs => {
         return {
@@ -25,7 +25,7 @@ export const MoorhenFlipPeptideButton = (props: moorhen.EditButtonProps | moorhe
     useEffect(() => {
         if (props.shortCuts) {
             const shortCut = JSON.parse(props.shortCuts as string).flip_peptide
-            setToolTip(`Flip Peptide ${getTooltipShortcutLabel(shortCut)}`)
+            setToolTipLabel(`Flip Peptide ${getTooltipShortcutLabel(shortCut)}`)
         }
     }, [props.shortCuts])
 
@@ -35,7 +35,7 @@ export const MoorhenFlipPeptideButton = (props: moorhen.EditButtonProps | moorhe
         return <MoorhenContextButtonBase 
                     icon={<img style={{padding:'0.1rem', width:'100%', height: '100%'}} src={`${props.urlPrefix}/baby-gru/pixmaps/flip-peptide.svg`} alt='Flip peptide'/>}
                     needsMapData={true}
-                    toolTipLabel={toolTip}
+                    toolTipLabel={toolTipLabel}
                     cootCommandInput={getCootCommandInput(props.selectedMolecule, props.chosenAtom)}
                     {...props}
                 />     
@@ -44,7 +44,8 @@ export const MoorhenFlipPeptideButton = (props: moorhen.EditButtonProps | moorhe
 
         return <MoorhenEditButtonBase
                     id="flip-peptide-edit-button"
-                    toolTip={toolTip}
+                    toolTipLabel={toolTipLabel}
+                    setToolTip={props.setToolTip}
                     buttonIndex={props.buttonIndex}
                     selectedButtonIndex={props.selectedButtonIndex}
                     setSelectedButtonIndex={props.setSelectedButtonIndex}

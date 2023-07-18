@@ -26,7 +26,8 @@ export const MoorhenJedFlipFalseButton = (props: moorhen.EditButtonProps | moorh
     } else {
 
         return <MoorhenEditButtonBase
-                    toolTip="JED Flip: wag the tail"
+                    toolTipLabel="JED Flip: wag the tail"
+                    setToolTip={props.setToolTip}
                     buttonIndex={props.buttonIndex}
                     selectedButtonIndex={props.selectedButtonIndex}
                     setSelectedButtonIndex={props.setSelectedButtonIndex}

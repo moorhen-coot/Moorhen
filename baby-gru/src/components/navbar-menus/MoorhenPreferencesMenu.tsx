@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { NavDropdown, Form, InputGroup } from "react-bootstrap";
+import { Form, InputGroup } from "react-bootstrap";
 import { MoorhenShortcutConfigModal } from "../modal/MoorhenShortcutConfigModal"
 import { MenuItem } from "@mui/material";
 import { convertViewtoPx } from "../../utils/MoorhenUtils";
@@ -34,14 +34,7 @@ export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInter
         }
     }, [maxBackupCount, modificationCountBackupThreshold, enableTimeCapsule])
 
-    return <NavDropdown
-                    title="Preferences"
-                    id="preferences-nav-dropdown"
-                    style={{display:'flex', alignItems:'center'}}
-                    autoClose={popoverIsShown ? false : 'outside'}
-                    show={props.currentDropdownId === props.dropdownId}
-                    onToggle={() => { props.dropdownId !== props.currentDropdownId ? props.setCurrentDropdownId(props.dropdownId) : props.setCurrentDropdownId('-1') }}>
-                <div style={{maxHeight: convertViewtoPx(65, props.windowHeight), overflowY: 'auto'}}>
+    return <div style={{maxHeight: convertViewtoPx(65, props.windowHeight), overflowY: 'auto'}}>
                     <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
                         <Form.Check 
                             type="switch"
@@ -154,6 +147,4 @@ export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInter
                         setPopoverIsShown={setPopoverIsShown}
                     />
             </div>
-            </NavDropdown>
-
 }

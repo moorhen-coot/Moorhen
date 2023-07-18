@@ -31,7 +31,7 @@ const paths = {
     'refine-1.svg', 'add-alt-conf.svg', 'delete.svg', 'mutate.svg', 'temperature.svg',
     'add-peptide-1.svg', 'spin-view.svg', 'edit-chi.svg', 'jed-flip-reverse.svg',
     'rigid-body.svg', 'atom-at-pointer.svg', 'rtz.svg', 'rotamers.svg', 'drag.svg',
-    'keyboard-blank.svg'
+    'keyboard-blank.svg', 'map-grey.svg', 'moorhen-ligand.svg', 'secondary-structure-grey.svg'
   ]
 }
 

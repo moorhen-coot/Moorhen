@@ -12,6 +12,7 @@ import { libcootApi } from "../../types/libcoot";
 export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.ContextButtonProps) => {
     const [showAccept, setShowAccept] = useState<boolean>(false)
     const [panelParameters, setPanelParameters] = useState<string>('SINGLE')
+    const draggableRef = useRef()
     const theButton = useRef<null | HTMLButtonElement>(null)
     const moltenFragmentRef = useRef<null | moorhen.Molecule>(null)
     const chosenMolecule = useRef<null | moorhen.Molecule>(null)
@@ -307,7 +308,7 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
 
         const MoorhenDragPanel = (props: { panelParameters: string; setPanelParameters: React.Dispatch<React.SetStateAction<string>> }) => {
             return <Container>
-                <Row>Please click an atom to define object</Row>
+                <Row style={{textAlign: 'center', justifyContent: 'center'}}>Please click an atom to define object</Row>
                 <Row>
                     <FormGroup>
                         <FormLabel>Dragging atom mode</FormLabel>
@@ -326,7 +327,8 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
         
         return <><MoorhenEditButtonBase
                     ref={theButton}
-                    toolTip="Drag zone"
+                    toolTipLabel="Drag zone"
+                    setToolTip={props.setToolTip}
                     refineAfterMod={false}
                     buttonIndex={props.buttonIndex}
                     selectedButtonIndex={props.selectedButtonIndex}
@@ -343,49 +345,40 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
                     icon={<img style={{ width: '100%', height: '100%' }} alt="drag atoms" className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/drag.svg`} />}
                     {...props}
                 />
-                <Overlay target={theButton.current} show={showAccept} placement="top">
-                    {({ placement, arrowProps, show: _show, popper, ...props }) => (
-                        <div
-                            {...props}
-                            style={{
-                                position: 'absolute', padding: '2px 10px', borderRadius: 3,
-                                backgroundColor: props.backgroundColor, zIndex: 99999,
-                                ...props.style,
-                            }}
-                        >
-                            <Card className="mx-2">
-                                <Card.Header >Atom dragging mode</Card.Header>
-                                <Card.Body style={{ alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
-                                    <Stack gap={2} direction="vertical" style={{ alignItems: 'center'}}>
-                                        <span>Accept dragging ?</span>
-                                        <Stack gap={2} direction="horizontal" style={{ alignItems: 'center',  alignContent: 'center', justifyContent: 'center'}}>
-                                            <Button onClick={async () => {
-                                                await finishDragging(true)
-                                                setShowAccept(false)
-                                            }}><CheckOutlined /></Button>
-                                            <Button className="mx-2" onClick={async () => {
-                                                await finishDragging(false)
-                                                setShowAccept(false)
-                                            }}><CloseOutlined /></Button>
-                                        </Stack>
-                                    </Stack>
-                                    <hr></hr>
-                                    <Stack gap={2} direction="vertical" style={{ alignItems: 'center'}}>
-                                        <span>Atom pull restraints</span>
-                                        <Button style={{width: '100%'}} onClick={clearRestraints}><DeleteSweepOutlined /></Button>
-                                        <Form.Check
-                                            defaultChecked={true}
-                                            style={{paddingTop: '0.1rem'}} 
-                                            type="switch"
-                                            onChange={(evt) => autoClearRestraintsRef.current = evt.target.checked}
-                                            label="Auto clear"/>
-                                    </Stack>
-                                </Card.Body>
-                            </Card>
-                        </div>
-                    )}
-                </Overlay>
+                {showAccept &&
+                <Draggable nodeRef={draggableRef} handle=".InnerHandle">
+                    <Card ref={draggableRef} className="mx-2" style={{position: 'absolute'}}>
+                        <Card.Header className="InnerHandle">Atom dragging mode</Card.Header>
+                        <Card.Body style={{ alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
+                            <Stack gap={2} direction="vertical" style={{ alignItems: 'center'}}>
+                                <span>Accept dragging ?</span>
+                                <Stack gap={2} direction="horizontal" style={{ alignItems: 'center',  alignContent: 'center', justifyContent: 'center'}}>
+                                    <Button onClick={async () => {
+                                        await finishDragging(true)
+                                        setShowAccept(false)
+                                    }}><CheckOutlined /></Button>
+                                    <Button className="mx-2" onClick={async () => {
+                                        await finishDragging(false)
+                                        setShowAccept(false)
+                                    }}><CloseOutlined /></Button>
+                                </Stack>
+                            </Stack>
+                            <hr></hr>
+                            <Stack gap={2} direction="vertical" style={{ alignItems: 'center'}}>
+                                <span>Atom pull restraints</span>
+                                <Button style={{width: '100%'}} onClick={clearRestraints}><DeleteSweepOutlined /></Button>
+                                <Form.Check
+                                    defaultChecked={true}
+                                    style={{paddingTop: '0.1rem'}} 
+                                    type="switch"
+                                    onChange={(evt) => autoClearRestraintsRef.current = evt.target.checked}
+                                    label="Auto clear"/>
+                            </Stack>
+                        </Card.Body>
+                    </Card>
+                </Draggable>
+                
+                }
         </>
     }
 }
-

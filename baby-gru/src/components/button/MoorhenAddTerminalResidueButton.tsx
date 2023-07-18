@@ -38,7 +38,8 @@ export const MoorhenAddTerminalResidueButton = (props: moorhen.EditButtonProps |
     } else {
 
         return <MoorhenEditButtonBase
-                    toolTip={toolTip}
+                    toolTipLabel={toolTip}
+                    setToolTip={props.setToolTip}
                     buttonIndex={props.buttonIndex}
                     selectedButtonIndex={props.selectedButtonIndex}
                     setSelectedButtonIndex={props.setSelectedButtonIndex}

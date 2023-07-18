@@ -580,6 +580,8 @@ export namespace moorhen {
         shortCuts: string | { [label: string]: Shortcut; };
         selectedButtonIndex: string;
         setSelectedButtonIndex: React.Dispatch<React.SetStateAction<string>>;
+        setToolTip: React.Dispatch<React.SetStateAction<string>>;
+        setOverlayContents: React.Dispatch<React.SetStateAction<JSX.Element>>;
         buttonIndex: string;
         enableRefineAfterMod: boolean;
         refineAfterMod?: boolean;
