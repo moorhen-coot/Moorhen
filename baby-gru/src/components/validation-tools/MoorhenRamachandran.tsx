@@ -516,7 +516,7 @@ export const MoorhenRamachandran = (props: MoorhenSideBarAccordionPropsInterface
             </Form.Group>
         </Form>
         <div ref={ramaPlotDivRef} id="ramaPlotDiv" className="rama-plot-div" style={{height: '100%', padding:'0rem', margin:'0rem'}}>
-            <canvas ref={canvasRef} style={{ marginTop:'1rem' }} height={ramaPlotDimensions} width={ramaPlotDimensions} />;  
+            <canvas ref={canvasRef} style={{ marginTop:'1rem' }} height={ramaPlotDimensions} width={ramaPlotDimensions} />
         </div>
     </Fragment>
 
