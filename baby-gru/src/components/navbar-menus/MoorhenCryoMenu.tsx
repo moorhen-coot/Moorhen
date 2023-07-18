@@ -14,6 +14,5 @@ export const MoorhenCryoMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             <MoorhenMapMaskingMenuItem  {...menuItemProps} />
             <MoorhenFlipMapHandMenuItem  {...menuItemProps} />
             <MoorhenMakeMaskedMapsSplitByChainMenuItem  {...menuItemProps} />
-        </NavDropdown>
     </>
 }
