@@ -61,6 +61,7 @@ declare module 'moorhen' {
         centreOn: (selectionCid?: string, animate?: boolean) => Promise<void>;
         drawHover: (cid: string) => Promise<void>;
         clearBuffersOfStyle: (style: string) => void;
+        loadToCootFromURL: (inputFile: string, molName: string) => Promise<_moorhen.Molecule>;
         type: string;
         commandCentre: React.RefObject<_moorhen.CommandCentre>;
         glRef: React.RefObject<webGL.MGWebGL>;
@@ -123,7 +124,7 @@ declare module 'moorhen' {
     class MoorhenMap implements _moorhen.Map {
         setAlpha(alpha: number, redraw?: boolean): Promise<void>;
         centreOnMap(): Promise<void>;
-        duplicate(): Promise<Map>;
+        duplicate(): Promise<_moorhen.Map>;
         makeCootUnlive(): void;
         makeCootLive(): void;
         setColour(r: number, g: number, b: number, redraw?: boolean): Promise<void> ;
@@ -135,6 +136,7 @@ declare module 'moorhen' {
         doCootContour(x: number, y: number, z: number, radius: number, contourLevel: number): Promise<void>;
         fetchReflectionData(): Promise<_moorhen.WorkerResponse<Uint8Array>>;
         getMap(): Promise<_moorhen.WorkerResponse>;
+        loadToCootFromMtzURL(url: RequestInfo | URL, name: string, selectedColumns: _moorhen.selectedMtzColumns): Promise<_moorhen.Map>
         type: string;
         name: string;
         molNo: number;
