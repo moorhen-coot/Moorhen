@@ -1,10 +1,17 @@
 import { Col, Row, Card, Button } from 'react-bootstrap';
-import { MoorhenSideBarAccordionPropsInterface } from "../list/MoorhenSideBar";
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
 import { libcootApi } from '../../types/libcoot';
 import { moorhen } from '../../types/moorhen';
 
-export const MoorhenUnmodelledBlobs = (props: MoorhenSideBarAccordionPropsInterface) => {
+interface Props extends moorhen.Controls {
+    dropdownId: number;
+    accordionDropdownId: number;
+    setAccordionDropdownId: React.Dispatch<React.SetStateAction<number>>;
+    sideBarWidth: number;
+    showSideBar: boolean;
+}
+
+export const MoorhenUnmodelledBlobs = (props: Props) => {
 
     async function fetchCardData(selectedModel: number, selectedMap: number): Promise<libcootApi.InterestingPlaceDataJS[]> {
         const inputData = {

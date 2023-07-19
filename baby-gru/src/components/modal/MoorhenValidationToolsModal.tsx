@@ -1,5 +1,5 @@
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
-import { MoorhenControlsInterface } from "../MoorhenContainer";
+import { moorhen } from "../../types/moorhen";
 import { useRef, useState } from "react";
 import { Form, Row } from "react-bootstrap";
 import { MoorhenRamachandran } from "../validation-tools/MoorhenRamachandran"
@@ -11,7 +11,7 @@ import { MoorhenMMRRCCPlot } from "../validation-tools/MoorhenMMRRCCPlot"
 import { MoorhenUnmodelledBlobs } from "../validation-tools/MoorhenUnmodelledBlobs"
 import { convertViewtoPx} from '../../utils/MoorhenUtils';
 
-interface MoorhenValidationModalProps extends MoorhenControlsInterface {
+interface MoorhenValidationModalProps extends moorhen.Controls {
     windowWidth: number;
     windowHeight: number;
     show: boolean;

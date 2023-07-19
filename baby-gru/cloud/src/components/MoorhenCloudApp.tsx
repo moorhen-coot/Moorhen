@@ -1,14 +1,14 @@
 import { useRef, useState, useReducer, useContext, useEffect, useCallback } from 'react'
 import { MenuItem } from '@mui/material'
 import { MoorhenContext } from "../../../src/utils/MoorhenContext"
-import { MoorhenContainer, MoorhenContainerPropsInterface, MoorhenControlsInterface } from "../../../src/components/MoorhenContainer"
+import { MoorhenContainer } from "../../../src/components/MoorhenContainer"
 import { itemReducer } from "../../../src/utils/MoorhenUtils"
 import { isDarkBackground } from "../../../src/WebGLgComponents/mgWebGL"
 import { MoorhenLegendToast } from './MoorhenLegendToast'
 import { moorhen } from "../../../src/types/moorhen";
 import { webGL } from "../../../src/types/mgWebGL";
 
-export interface MoorhenCloudControlsInterface extends MoorhenControlsInterface {
+export interface MoorhenCloudControlsInterface extends moorhen.Controls {
     setNotifyNewContent: React.Dispatch<React.SetStateAction<boolean>>;
     setLegendText: React.Dispatch<React.SetStateAction<JSX.Element>>;
     setBusyFetching: React.Dispatch<React.SetStateAction<boolean>>;
@@ -18,7 +18,7 @@ const initialMoleculesState: moorhen.Molecule[] = []
 
 const initialMapsState: moorhen.Map[] = []
 
-interface MoorhenCloudAppPropsInterface extends MoorhenContainerPropsInterface {
+interface MoorhenCloudAppPropsInterface extends moorhen.ContainerProps {
     exportCallback: (arg0: string, arg1: string) => Promise<void>;
     onChangePreferencesListener: (context: moorhen.Context) => void;
 }
@@ -53,7 +53,7 @@ export const MoorhenCloudApp = (props: MoorhenCloudAppPropsInterface) => {
     mapsRef.current = maps as moorhen.Map[]
     activeMapRef.current = activeMap
 
-    const forwardCollectedControls = useCallback((controls: MoorhenControlsInterface) => {
+    const forwardCollectedControls = useCallback((controls: moorhen.Controls) => {
         let collectedControls: MoorhenCloudControlsInterface = {
             setLegendText, setBusyFetching, setNotifyNewContent, ...controls
         }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useReducer, useCallback } from "react";
+import { useEffect, useState, useRef, useReducer, useCallback } from "react";
 import { Card, Row, Col, Accordion, Stack } from "react-bootstrap";
 import { doDownload, sequenceIsValid } from '../../utils/MoorhenUtils';
 import { isDarkBackground } from '../../WebGLgComponents/mgWebGL'
@@ -7,11 +7,17 @@ import { MoorhenMoleculeCardButtonBar } from "../button-bar/MoorhenMoleculeCardB
 import { MoorhenLigandList } from "../list/MoorhenLigandList"
 import { Checkbox, FormControlLabel, FormGroup, Typography } from "@mui/material";
 import { getNameLabel } from "./cardUtils"
-import { MoorhenSideBarAccordionPropsInterface } from '../list/MoorhenSideBar';
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 
-interface MoorhenMoleculeCardPropsInterface extends MoorhenSideBarAccordionPropsInterface {
+interface MoorhenMoleculeCardPropsInterface extends moorhen.Controls {
+    dropdownId: number;
+    accordionDropdownId: number;
+    setAccordionDropdownId: React.Dispatch<React.SetStateAction<number>>;
+    sideBarWidth: number;
+    showSideBar: boolean;
+    busy: boolean;
+    consoleMessage: string;
     key: number;
     index: number;
     molecule: moorhen.Molecule;

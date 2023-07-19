@@ -3,12 +3,19 @@ import { Chart, ChartEvent, ChartType, TooltipItem, registerables } from 'chart.
 import { residueCodesOneToThree, getResidueInfo, convertViewtoPx } from '../../utils/MoorhenUtils'
 import { MoorhenValidationChartWidgetBase } from "./MoorhenValidationChartWidgetBase"
 import annotationPlugin from 'chartjs-plugin-annotation'
-import { MoorhenSideBarAccordionPropsInterface } from "../list/MoorhenSideBar";
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 
 Chart.register(...registerables);
 Chart.register(annotationPlugin);
+
+interface Props extends moorhen.Controls {
+    dropdownId: number;
+    accordionDropdownId: number;
+    setAccordionDropdownId: React.Dispatch<React.SetStateAction<number>>;
+    sideBarWidth: number;
+    showSideBar: boolean;
+}
 
 const colourPalettes = {
     density_correlation_analysis: (value) => {return 'rgb(255, 255, '+ Math.floor(256 * value) + ')'},
@@ -26,7 +33,7 @@ const metricInfoScaling = {
     peptide_omega_analysis: (value) => {return value - 180},
 }
 
-export const MoorhenValidation = (props: MoorhenSideBarAccordionPropsInterface) => {
+export const MoorhenValidation = (props: Props) => {
     const chartRef = useRef(null);
 
     const plugin = {

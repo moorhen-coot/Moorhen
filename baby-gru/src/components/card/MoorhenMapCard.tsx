@@ -9,7 +9,6 @@ import { MoorhenDeleteDisplayObjectMenuItem } from "../menu-item/MoorhenDeleteDi
 import MoorhenSlider from "../misc/MoorhenSlider";
 import { IconButton, MenuItem, Tooltip } from "@mui/material";
 import { SliderPicker } from "react-color";
-import { MoorhenSideBarAccordionPropsInterface } from '../list/MoorhenSideBar';
 import { moorhen } from "../../types/moorhen"
 
 type ActionButtonType = {
@@ -18,7 +17,14 @@ type ActionButtonType = {
     expanded: null | ( () => JSX.Element );
 }
 
-interface MoorhenMapCardPropsInterface extends MoorhenSideBarAccordionPropsInterface {
+interface MoorhenMapCardPropsInterface extends moorhen.Controls {
+    dropdownId: number;
+    accordionDropdownId: number;
+    setAccordionDropdownId: React.Dispatch<React.SetStateAction<number>>;
+    sideBarWidth: number;
+    showSideBar: boolean;
+    busy: boolean;
+    consoleMessage: string;
     key: number;
     index: number;
     map: moorhen.Map;

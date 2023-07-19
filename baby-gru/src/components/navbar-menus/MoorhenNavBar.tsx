@@ -9,7 +9,6 @@ import { MoorhenEditMenu } from './MoorhenEditMenu';
 import { MoorhenDevMenu } from './MoorhenDevMenu';
 import { MoorhenCryoMenu } from './MoorhenCryoMenu';
 import { MoorhenCalculateMenu } from './MoorhenCalculateMenu';
-import { MoorhenControlsInterface } from "../MoorhenContainer"
 import { ClickAwayListener, Fab, SpeedDial, SpeedDialAction, SpeedDialIcon } from "@mui/material";
 import { convertRemToPx, convertViewtoPx } from '../../utils/MoorhenUtils';
 import { MoorhenModelsModal } from '../modal/MoorhenModelsModal';
@@ -22,8 +21,9 @@ import {
  } from '@mui/icons-material';
 import { MoorhenQuerySequenceModal } from '../modal/MoorhenQuerySequenceModal';
 import { MoorhenScriptModal } from '../modal/MoorhenScriptModal';
+import { moorhen } from '../../types/moorhen';
 
-interface MoorhenNavBarPropsInterface extends MoorhenControlsInterface {
+interface MoorhenNavBarPropsInterface extends moorhen.Controls {
     busy: boolean;
 }
 

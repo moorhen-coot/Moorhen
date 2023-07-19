@@ -1,12 +1,19 @@
 import { useState } from "react"
 import { Col, Row, Form, Card, Button } from 'react-bootstrap';
-import { MoorhenSideBarAccordionPropsInterface } from "../list/MoorhenSideBar";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase"
 import MoorhenSlider from '../misc/MoorhenSlider' 
 import { libcootApi } from "../../types/libcoot";
 
-export const MoorhenPepflipsDifferenceMap = (props: MoorhenSideBarAccordionPropsInterface) => {
+interface Props extends moorhen.Controls {
+    dropdownId: number;
+    accordionDropdownId: number;
+    setAccordionDropdownId: React.Dispatch<React.SetStateAction<number>>;
+    sideBarWidth: number;
+    showSideBar: boolean;
+}
+
+export const MoorhenPepflipsDifferenceMap = (props: Props) => {
     const [selectedRmsd, setSelectedRmsd] = useState<number>(4.5)
     
     const filterMapFunction = (map: moorhen.Map) => map.isDifference
