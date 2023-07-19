@@ -2,9 +2,9 @@ import { useState } from "react";
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase"
 import { MoorhenMapCard } from "../card/MoorhenMapCard";
 import { convertRemToPx } from "../../utils/MoorhenUtils";
-import { MoorhenControlsInterface } from "../MoorhenContainer";
+import { moorhen } from "../../types/moorhen";
 
-interface MoorhenMapsModalProps extends MoorhenControlsInterface {
+interface MoorhenMapsModalProps extends moorhen.Controls {
     windowWidth: number;
     windowHeight: number;
     show: boolean;

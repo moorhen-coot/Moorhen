@@ -5,7 +5,7 @@ import { CloudBackupInterface, CloudStorageInstance, CloudStorageInstanceInterfa
 import { MoorhenMolecule } from "../../src/utils/MoorhenMolecule"
 import { MoorhenMap } from "../../src/utils/MoorhenMap"
 import { guid } from "../../src/utils/MoorhenUtils"
-import { MoorhenContextProvider, getDefaultValues } from "../../src/utils/MoorhenContext";
+import { MoorhenContextProvider, getDefaultContextValues } from "../../src/utils/MoorhenContext";
 import { MoorhenAceDRGInstance } from "./utils/MoorhenAceDRGInstance";
 import reportWebVitals from '../../src/reportWebVitals'
 import localforage from 'localforage';
@@ -181,7 +181,7 @@ export default class MoorhenWrapper {
   }
 
   async importPreferences(newContext: moorhen.ContextValues) {
-    const defaultContext = getDefaultValues()
+    const defaultContext = getDefaultContextValues()
     let context: moorhen.ContextValues
     
     if (newContext.version === defaultContext.version) {
@@ -455,7 +455,7 @@ export default class MoorhenWrapper {
 
   async start() {
     if (!this.context) {
-      this.context = getDefaultValues()
+      this.context = getDefaultContextValues()
     }
     await this.importPreferences(this.context)
 

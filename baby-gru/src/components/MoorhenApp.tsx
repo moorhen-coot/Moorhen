@@ -4,7 +4,6 @@ import { MoorhenContext } from "../utils/MoorhenContext";
 import { MoorhenContainer } from "./MoorhenContainer"
 import { moorhen } from '../types/moorhen';
 import { webGL } from '../types/mgWebGL';
-import { MoorhenControlsInterface } from "./MoorhenContainer"
 import { itemReducer } from '../utils/MoorhenUtils';
 
 const initialMoleculesState: moorhen.Molecule[] = []
@@ -63,5 +62,5 @@ export const MoorhenApp = (props: { forwardControls: (controls: any) => any }) =
 }
 
 MoorhenApp.defaultProps = {
-    forwardControls: (controls: MoorhenControlsInterface) => { console.log('Fetched controls', {controls}) }
+    forwardControls: (controls: moorhen.Controls) => { console.log('Fetched controls', {controls}) }
 }

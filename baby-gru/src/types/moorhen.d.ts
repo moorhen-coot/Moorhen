@@ -594,4 +594,107 @@ export namespace moorhen {
         changeMolecules: (arg0: MolChange<Molecule>) => void
     }
     
+    interface ContainerOptionalProps {
+        disableFileUploads: boolean;
+        urlPrefix: string;
+        extraNavBarMenus: {name: string; ref: React.RefObject<any> ; icon: JSX.Element; JSXElement: JSX.Element}[];
+        viewOnly: boolean;
+        extraDraggableModals: JSX.Element[];
+        monomerLibraryPath: string;
+        setMoorhenDimensions?: null | ( () => [number, number] );
+        forwardControls?: (arg0: Controls) => any;
+        extraFileMenuItems: JSX.Element[];
+        allowScripting: boolean;
+        backupStorageInstance?: any;
+        extraEditMenuItems: JSX.Element[];
+        extraCalculateMenuItems: JSX.Element[];
+        aceDRGInstance: moorhen.AceDRGInstance | null; 
+    }
+    
+    interface Controls extends moorhen.Context, ContainerOptionalProps {
+        isDark: boolean;
+        molecules: moorhen.Molecule[];
+        changeMolecules: (arg0: moorhen.MolChange<moorhen.Molecule>) => void;
+        maps: moorhen.Map[];
+        changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
+        appTitle: string;
+        setAppTitle: React.Dispatch<React.SetStateAction<string>>;
+        glRef: React.MutableRefObject<null | webGL.MGWebGL>;
+        timeCapsuleRef: React.MutableRefObject<null | moorhen.TimeCapsule>;
+        commandCentre: React.MutableRefObject<moorhen.CommandCentre>;
+        moleculesRef: React.MutableRefObject<null | moorhen.Molecule[]>;
+        mapsRef: React.MutableRefObject<null | moorhen.Map[]>;
+        activeMap: moorhen.Map;
+        setActiveMap: React.Dispatch<React.SetStateAction<moorhen.Map>>;
+        activeMolecule: moorhen.Molecule;
+        setActiveMolecule: React.Dispatch<React.SetStateAction<moorhen.Molecule>>;
+        hoveredAtom: null | moorhen.HoveredAtom;
+        setHoveredAtom: React.Dispatch<React.SetStateAction<moorhen.HoveredAtom>>;
+        commandHistory: any;
+        backgroundColor: [number, number, number, number];
+        setBackgroundColor: React.Dispatch<React.SetStateAction<[number, number, number, number]>>;
+        toastContent: null | JSX.Element;
+        setToastContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
+        showToast: boolean;
+        setShowToast: React.Dispatch<React.SetStateAction<boolean>>;
+        windowWidth: number;
+        windowHeight: number;
+        showColourRulesToast: boolean;
+        setShowColourRulesToast: React.Dispatch<React.SetStateAction<boolean>>;
+        availableFonts: string[];
+    }
+    
+    interface ContainerStates {
+        glRef: React.MutableRefObject<null | webGL.MGWebGL>;
+        timeCapsuleRef: React.MutableRefObject<null | moorhen.TimeCapsule>;
+        commandCentre: React.MutableRefObject<moorhen.CommandCentre>;
+        moleculesRef: React.MutableRefObject<null | moorhen.Molecule[]>;
+        mapsRef: React.MutableRefObject<null | moorhen.Map[]>;
+        activeMapRef: React.MutableRefObject<moorhen.Map>;
+        consoleDivRef: React.MutableRefObject<null | HTMLDivElement>;
+        lastHoveredAtom: React.MutableRefObject<null | moorhen.HoveredAtom>;
+        prevActiveMoleculeRef: React.MutableRefObject<null | moorhen.Molecule>;
+        context: moorhen.Context;
+        activeMap: moorhen.Map;
+        setActiveMap: React.Dispatch<React.SetStateAction<moorhen.Map>>;
+        activeMolecule: moorhen.Molecule;
+        setActiveMolecule: React.Dispatch<React.SetStateAction<moorhen.Molecule>>;
+        hoveredAtom: null | moorhen.HoveredAtom;
+        setHoveredAtom: React.Dispatch<React.SetStateAction<moorhen.HoveredAtom>>;
+        consoleMessage: string;
+        setConsoleMessage: React.Dispatch<React.SetStateAction<string>>;
+        cursorStyle: string;
+        setCursorStyle: React.Dispatch<React.SetStateAction<string>>;
+        busy: boolean;
+        setBusy: React.Dispatch<React.SetStateAction<boolean>>;
+        windowWidth: number;
+        setWindowWidth: React.Dispatch<React.SetStateAction<number>>;
+        windowHeight: number;
+        setWindowHeight: React.Dispatch<React.SetStateAction<number>>;
+        commandHistory: any;
+        dispatchHistoryReducer: (arg0: any) => void;
+        molecules: moorhen.Molecule[];
+        changeMolecules: (arg0: moorhen.MolChange<moorhen.Molecule>) => void;
+        maps: moorhen.Map[];
+        changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
+        backgroundColor: [number, number, number, number];
+        setBackgroundColor: React.Dispatch<React.SetStateAction<[number, number, number, number]>>;
+        appTitle: string;
+        setAppTitle: React.Dispatch<React.SetStateAction<string>>;
+        cootInitialized: boolean;
+        setCootInitialized: React.Dispatch<React.SetStateAction<boolean>>;
+        theme: string,
+        setTheme: React.Dispatch<React.SetStateAction<string>>;
+        showToast: boolean;
+        setShowToast: React.Dispatch<React.SetStateAction<boolean>>;
+        toastContent: null | JSX.Element;
+        setToastContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
+        showColourRulesToast: boolean;
+        setShowColourRulesToast: React.Dispatch<React.SetStateAction<boolean>>;
+        availableFonts: string[];
+        setAvailableFonts: React.Dispatch<React.SetStateAction<string[]>>
+    }
+    
+    interface ContainerProps extends Partial<ContainerStates>, Partial<ContainerOptionalProps> { }
+    
 }

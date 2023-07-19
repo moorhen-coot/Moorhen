@@ -3,12 +3,19 @@ import { Col, Row, Form } from 'react-bootstrap';
 import { convertRemToPx } from '../../utils/MoorhenUtils';
 import { MoorhenChainSelect } from '../select/MoorhenChainSelect'
 import { MoorhenMoleculeSelect } from '../select/MoorhenMoleculeSelect'
-import { MoorhenSideBarAccordionPropsInterface } from "../list/MoorhenSideBar";
 import { gemmi } from "../../types/gemmi";
 import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 
-export const MoorhenRamachandran = (props: MoorhenSideBarAccordionPropsInterface) => {
+interface Props extends moorhen.Controls {
+    dropdownId: number;
+    accordionDropdownId: number;
+    setAccordionDropdownId: React.Dispatch<React.SetStateAction<number>>;
+    sideBarWidth: number;
+    showSideBar: boolean;
+}
+
+export const MoorhenRamachandran = (props: Props) => {
     const canvasRef = useRef<null | HTMLCanvasElement>(null);
     const ramaPlotDivRef = useRef<HTMLDivElement>();
     const moleculeSelectRef = useRef<HTMLSelectElement>();

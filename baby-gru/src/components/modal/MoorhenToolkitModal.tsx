@@ -18,9 +18,9 @@ import { MoorhenAddTerminalResidueButton } from "../button/MoorhenAddTerminalRes
 import { MoorhenFlipPeptideButton } from "../button/MoorhenFlipPeptideButton"
 import { MoorhenAutofitRotamerButton } from "../button/MoorhenAutofitRotamerButton"
 import { MoorhenConvertCisTransButton } from "../button/MoorhenConvertCisTransButton"
-import { MoorhenControlsInterface } from "../MoorhenContainer";
+import { moorhen } from "../../types/moorhen";
 
-interface MoorhenToolkitModalProps extends MoorhenControlsInterface {
+interface MoorhenToolkitModalProps extends moorhen.Controls {
     windowWidth: number;
     windowHeight: number;
     show: boolean;

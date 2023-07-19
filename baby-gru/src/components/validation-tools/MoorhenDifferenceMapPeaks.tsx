@@ -4,7 +4,6 @@ import { Chart, ChartEvent, ChartType, TooltipItem, registerables } from 'chart.
 import MoorhenSlider from '../misc/MoorhenSlider' 
 import annotationPlugin from 'chartjs-plugin-annotation'
 import { convertViewtoPx} from '../../utils/MoorhenUtils';
-import { MoorhenSideBarAccordionPropsInterface } from "../list/MoorhenSideBar";
 import { moorhen } from "../../types/moorhen";
 import { libcootApi } from "../../types/libcoot";
 import { MoorhenValidationChartWidgetBase } from "./MoorhenValidationChartWidgetBase";
@@ -12,7 +11,15 @@ import { MoorhenValidationChartWidgetBase } from "./MoorhenValidationChartWidget
 Chart.register(...registerables);
 Chart.register(annotationPlugin);
 
-export const MoorhenDifferenceMapPeaks = (props: MoorhenSideBarAccordionPropsInterface) => {
+interface Props extends moorhen.Controls {
+    dropdownId: number;
+    accordionDropdownId: number;
+    setAccordionDropdownId: React.Dispatch<React.SetStateAction<number>>;
+    sideBarWidth: number;
+    showSideBar: boolean;
+}
+
+export const MoorhenDifferenceMapPeaks = (props: Props) => {
     const chartRef = useRef(null);
     const [selectedRmsd, setSelectedRmsd] = useState<number>(4.5)
     const [mapRmsd, setMapRmsd] = useState<number>(4.5)

@@ -1,10 +1,17 @@
 import { Col, Row, Card, Button } from 'react-bootstrap';
 import { MoorhenValidationListWidgetBase } from "./MoorhenValidationListWidgetBase";
-import { MoorhenSideBarAccordionPropsInterface } from '../list/MoorhenSideBar';
 import { moorhen } from "../../types/moorhen";
 import { libcootApi } from '../../types/libcoot';
 
-export const MoorhenFillMissingAtoms = (props: MoorhenSideBarAccordionPropsInterface) => {
+interface Props extends moorhen.Controls {
+    dropdownId: number;
+    accordionDropdownId: number;
+    setAccordionDropdownId: React.Dispatch<React.SetStateAction<number>>;
+    sideBarWidth: number;
+    showSideBar: boolean;
+}
+
+export const MoorhenFillMissingAtoms = (props: Props) => {
 
     const fillPartialResidue = async (selectedMolecule: moorhen.Molecule, chainId: string, resNum: number, insCode: string) => {
         await props.commandCentre.current.cootCommand({

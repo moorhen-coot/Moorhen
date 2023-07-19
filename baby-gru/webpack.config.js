@@ -7,6 +7,7 @@ const path = require('path');
 const paths = {
   cloud: path.resolve(__dirname, 'cloud'),
   src: path.resolve(__dirname, 'src'),
+  types: path.resolve(__dirname, 'src', 'types'),
   dist: path.resolve(__dirname, 'dist'),
   public: path.resolve(__dirname, 'public'),
   publicBabyGru: path.resolve(__dirname, 'public', 'baby-gru'),
@@ -55,6 +56,11 @@ module.exports = (env, argv) => {
             globOptions: {
               ignore: ['**/monomers/**', '**/pixmaps/**']
             }
+          },
+          {
+            from: paths.types,
+            to: paths.dist + '/types/',
+            toType: 'dir',
           },
           ...paths.minimalMonomerLib.map(monomer => {
             return {

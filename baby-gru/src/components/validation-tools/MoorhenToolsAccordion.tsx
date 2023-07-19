@@ -8,10 +8,17 @@ import { MoorhenFillMissingAtoms } from "./MoorhenFillMissingAtoms"
 import { MoorhenMMRRCCPlot } from "./MoorhenMMRRCCPlot"
 import { MoorhenUnmodelledBlobs } from "./MoorhenUnmodelledBlobs"
 import { convertViewtoPx} from '../../utils/MoorhenUtils';
-import { MoorhenSideBarAccordionPropsInterface } from "../list/MoorhenSideBar";
+import { moorhen } from "../../types/moorhen"
 
+interface Props extends moorhen.Controls {
+    dropdownId: number;
+    accordionDropdownId: number;
+    setAccordionDropdownId: React.Dispatch<React.SetStateAction<number>>;
+    sideBarWidth: number;
+    showSideBar: boolean;
+}
 
-export const MoorhenToolsAccordion = (props: MoorhenSideBarAccordionPropsInterface) => {
+export const MoorhenToolsAccordion = (props: Props) => {
     const [selectedTool, setSelectedTool] = useState<null | number>(null)
     const toolsAccordionSelectRef = useRef<undefined | HTMLSelectElement>()
 
