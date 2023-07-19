@@ -341,7 +341,7 @@ export const MoorhenContainer = (props: MoorhenContainerPropsInterface) => {
         setWindowDimensions()
         commandCentre.current = new MoorhenCommandCentre({
             onConsoleChanged: (newMessage) => {
-                setConsoleMessage(newMessage)
+                //setConsoleMessage(newMessage)
             },
             onActiveMessagesChanged: (newActiveMessages) => {
                 setBusy(newActiveMessages.length !== 0)
