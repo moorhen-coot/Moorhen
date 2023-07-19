@@ -22,6 +22,7 @@ declare module 'moorhen' {
     module.exports = getDefaultContextValues;
 
     class MoorhenMolecule implements _moorhen.Molecule {
+        constructor(commandCentre: React.RefObject<_moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, monomerLibrary: string)
         getNeighborResiduesCids(selectionCid: string, radius: number, minDist: number, maxDist: number): Promise<string[]>;
         drawWithStyleFromMesh(style: string, meshObjects: any[], newBufferAtoms?: _moorhen.AtomInfo[]): Promise<void>;
         updateWithMovedAtoms(movedResidues: _moorhen.AtomInfo[][]): Promise<void>;
@@ -122,6 +123,7 @@ declare module 'moorhen' {
     module.exports.MoorhenMolecule = MoorhenMolecule
     
     class MoorhenMap implements _moorhen.Map {
+        constructor(commandCentre: React.RefObject<_moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>)
         setAlpha(alpha: number, redraw?: boolean): Promise<void>;
         centreOnMap(): Promise<void>;
         duplicate(): Promise<_moorhen.Map>;
