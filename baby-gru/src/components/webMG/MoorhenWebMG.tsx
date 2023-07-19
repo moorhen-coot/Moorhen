@@ -193,7 +193,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
 
     useEffect(() => {
         if(glRef !== null && typeof glRef !== 'function') {
-            glRef.current.blurSize = props.context.depthBlurRadius
+            glRef.current.setBlurSize(props.context.depthBlurRadius)
             glRef.current.drawScene()
         }
     }, [props.context.depthBlurRadius])

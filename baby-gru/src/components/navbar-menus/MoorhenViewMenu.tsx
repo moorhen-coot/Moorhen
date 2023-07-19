@@ -59,7 +59,7 @@ export const MoorhenViewMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                     <MoorhenBackgroundColorMenuItem {...menuItemProps} />
                     <MoorhenClipFogMenuItem {...menuItemProps} />
                     <MoorhenLightingMenuItem {...menuItemProps} />
-                    <MoorhenBlurMenuItem {...menuItemProps} />
+                    {props.glRef.current.isWebGL2 () && <MoorhenBlurMenuItem {...menuItemProps} />}
                     <MenuItem id="change-molecule-colours-menu-item" onClick={() => {
                         props.setShowColourRulesToast(true)
                         document.body.click()

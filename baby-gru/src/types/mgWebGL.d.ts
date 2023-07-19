@@ -10,6 +10,7 @@ import * as mat3 from 'gl-matrix/mat3';
 
 export namespace webGL {
     interface MGWebGL extends React.Component  {
+        isWebGL2() : boolean;
         createColourBuffer(tri: number[]) : void;
         createIndexBuffer(tri: number[]) : void;
         createSizeBuffer(tri: number[]) : void;
@@ -131,6 +132,7 @@ export namespace webGL {
         setShadowsOn(doShadow: boolean): void;
         setOutlinesOn(doOutline: boolean): void;
         setSpinTestState(doSpinTest: boolean): void;
+        setBlurSize(blurSize: number): void;
         setTextFont(family: string,size: number) : void;
         setBackground(col: [number, number, number, number]) : void;
         setActiveMolecule(molecule: moorhen.Molecule) : void;

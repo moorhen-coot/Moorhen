@@ -24,7 +24,7 @@ export const MoorhenBlurMenuItem = (props: {
                             label="Do Depth Blur"/>
                     </InputGroup>
                     <MoorhenSlider minVal={0.0} maxVal={1.0} logScale={false} sliderTitle="Blur depth" initialValue={props.depthBlurDepth} externalValue={props.depthBlurDepth} setExternalValue={props.setDepthBlurDepth}/>
-                    <MoorhenSlider minVal={0.0} maxVal={10.0} logScale={false} sliderTitle="Blur radius" initialValue={props.depthBlurRadius} externalValue={props.depthBlurRadius} setExternalValue={props.setDepthBlurRadius}/>
+                    <MoorhenSlider minVal={2} maxVal={16} logScale={false} sliderTitle="Blur radius" initialValue={props.depthBlurRadius} externalValue={props.depthBlurRadius} allowFloats={false} setExternalValue={props.setDepthBlurRadius}/>
     </div>
 
     return <MoorhenBaseMenuItem

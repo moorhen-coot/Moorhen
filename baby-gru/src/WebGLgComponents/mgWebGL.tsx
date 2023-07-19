@@ -5,7 +5,6 @@ import { webGL } from "../types/mgWebGL";
 
 import pako from 'pako';
 import * as vec3 from 'gl-matrix/vec3';
-import * as vec4 from 'gl-matrix/vec4';
 import * as quat4 from 'gl-matrix/quat';
 import * as mat4 from 'gl-matrix/mat4';
 import * as mat3 from 'gl-matrix/mat3';
@@ -86,6 +85,339 @@ import { guid } from '../utils/MoorhenUtils';
 import { quatToMat4, quat4Inverse } from './quatToMat4.js';
 
 import { gemmiAtomPairsToCylindersInfo } from '../utils/MoorhenUtils'
+
+const gaussianBlurs = {
+
+ 2: [
+0.05448868454964294,
+0.24420134200323332,
+0.4026199468942474,
+0.24420134200323332,
+0.05448868454964294,
+],
+
+ 3:[
+0.030078323398453437,
+0.10498366424605168,
+0.22225041895295086,
+0.2853751868050879,
+0.22225041895295086,
+0.10498366424605168,
+0.030078323398453437,
+],
+
+ 4: [
+0.016140081106591566,
+0.05183016702170681,
+0.11925996473789574,
+0.19662644060631596,
+0.23228669305497984,
+0.19662644060631596,
+0.11925996473789574,
+0.05183016702170681,
+0.016140081106591566,
+],
+
+ 5: [
+0.008812229292562285,
+0.027143577143479373,
+0.06511405659938267,
+0.1216490730138096,
+0.1769983568313557,
+0.20056541423882085,
+0.1769983568313557,
+0.1216490730138096,
+0.06511405659938267,
+0.027143577143479373,
+0.008812229292562285,
+],
+
+ 6: [
+0.004891408135911675,
+0.014694602131161012,
+0.03614288911901716,
+0.07278284081922605,
+0.11999861780063953,
+0.16198119113513978,
+0.1790169017178094,
+0.16198119113513978,
+0.11999861780063953,
+0.07278284081922605,
+0.03614288911901716,
+0.014694602131161012,
+0.004891408135911675,
+],
+
+ 7: [
+0.002750145966970048,
+0.008125337960598875,
+0.020320982830189557,
+0.04301952098909718,
+0.07709106015129823,
+0.11693918217367535,
+0.15015288211767722,
+0.16320177562098706,
+0.15015288211767722,
+0.11693918217367535,
+0.07709106015129823,
+0.04301952098909718,
+0.020320982830189557,
+0.008125337960598875,
+0.002750145966970048,
+],
+
+ 8: [
+0.0015615265514066891,
+0.0045589506334841,
+0.01153820728831374,
+0.02531452108704538,
+0.04814586850792525,
+0.0793791175053478,
+0.11345181247665377,
+0.14056414060722694,
+0.1509717106851926,
+0.14056414060722694,
+0.11345181247665377,
+0.0793791175053478,
+0.04814586850792525,
+0.02531452108704538,
+0.01153820728831374,
+0.0045589506334841,
+0.0015615265514066891,
+],
+
+ 9: [
+0.0008934464334637008,
+0.00258527297620529,
+0.006601725818252797,
+0.01487721878707626,
+0.029586882445032176,
+0.051926595820090626,
+0.0804254849110849,
+0.1099286042137715,
+0.13259920767927785,
+0.14115112183148976,
+0.13259920767927785,
+0.1099286042137715,
+0.0804254849110849,
+0.051926595820090626,
+0.029586882445032176,
+0.01487721878707626,
+0.006601725818252797,
+0.00258527297620529,
+0.0008934464334637008,
+],
+
+ 10: [
+0.000514318173965989,
+0.0014779298609418326,
+0.003800325840134266,
+0.008744458135685964,
+0.018004871605267203,
+0.03317357008575297,
+0.05469397062544239,
+0.08069223628616619,
+0.10652930842761864,
+0.12584950778634327,
+0.1330390063453629,
+0.12584950778634327,
+0.10652930842761864,
+0.08069223628616619,
+0.05469397062544239,
+0.03317357008575297,
+0.018004871605267203,
+0.008744458135685964,
+0.003800325840134266,
+0.0014779298609418326,
+0.000514318173965989,
+],
+
+ 11: [
+0.00029753741641435494,
+0.0008502581306821063,
+0.0021985206614165576,
+0.005143761944377495,
+0.0108893441216988,
+0.02085898326629652,
+0.03615389569595394,
+0.05670059517290513,
+0.08046197459579316,
+0.10331522045788179,
+0.12003516092298872,
+0.1261894952271828,
+0.12003516092298872,
+0.10331522045788179,
+0.08046197459579316,
+0.05670059517290513,
+0.03615389569595394,
+0.02085898326629652,
+0.0108893441216988,
+0.005143761944377495,
+0.0021985206614165576,
+0.0008502581306821063,
+0.00029753741641435494,
+],
+
+ 12: [
+0.00017283281255291256,
+0.0004916559932652597,
+0.0012770713476894363,
+0.0030289190613905248,
+0.006559622681148089,
+0.012971456180499582,
+0.023421639404489575,
+0.038615755080850245,
+0.058134033390514095,
+0.07991256369758012,
+0.10030402366424532,
+0.11495829918509438,
+0.12030425500136092,
+0.11495829918509438,
+0.10030402366424532,
+0.07991256369758012,
+0.058134033390514095,
+0.038615755080850245,
+0.023421639404489575,
+0.012971456180499582,
+0.006559622681148089,
+0.0030289190613905248,
+0.0012770713476894363,
+0.0004916559932652597,
+0.00017283281255291256,
+],
+
+ 13: [
+0.00010074011726611484,
+0.00028549107596181114,
+0.0007443743778921748,
+0.0017856613045876663,
+0.003941082737574938,
+0.008002778752096158,
+0.014951159051828134,
+0.0256990876699816,
+0.04064146396498538,
+0.059132981146568724,
+0.07915876284289895,
+0.09749380381625751,
+0.11047495297799284,
+0.11517532032821627,
+0.11047495297799284,
+0.09749380381625751,
+0.07915876284289895,
+0.059132981146568724,
+0.04064146396498538,
+0.0256990876699816,
+0.014951159051828134,
+0.008002778752096158,
+0.003941082737574938,
+0.0017856613045876663,
+0.0007443743778921748,
+0.00028549107596181114,
+0.00010074011726611484,
+],
+
+ 14: [
+0.00005889113363626469,
+0.0001663596623597389,
+0.0004351498901679815,
+0.0010539559461967393,
+0.0023637349173615653,
+0.004908714971382323,
+0.00943907836699285,
+0.016806763954144616,
+0.027709669222834417,
+0.042303014351416326,
+0.059800390493679884,
+0.07827615009897047,
+0.09487409079375761,
+0.10647766744976665,
+0.11065273749466539,
+0.10647766744976665,
+0.09487409079375761,
+0.07827615009897047,
+0.059800390493679884,
+0.042303014351416326,
+0.027709669222834417,
+0.016806763954144616,
+0.00943907836699285,
+0.004908714971382323,
+0.0023637349173615653,
+0.0010539559461967393,
+0.0004351498901679815,
+0.0001663596623597389,
+0.00005889113363626469,
+],
+
+ 15: [
+0.00003451388227635904,
+0.0000972296701786038,
+0.00025502501233190544,
+0.0006227958464495138,
+0.0014160793944518473,
+0.0029978401015794257,
+0.005908922471094296,
+0.010843939461431973,
+0.01852869542939986,
+0.02947688358692049,
+0.04366135962314767,
+0.06021322805008624,
+0.07731531523712598,
+0.09243109904753559,
+0.10288443303553049,
+0.10662528030091958,
+0.10288443303553049,
+0.09243109904753559,
+0.07731531523712598,
+0.06021322805008624,
+0.04366135962314767,
+0.02947688358692049,
+0.01852869542939986,
+0.010843939461431973,
+0.005908922471094296,
+0.0029978401015794257,
+0.0014160793944518473,
+0.0006227958464495138,
+0.00025502501233190544,
+0.0000972296701786038,
+0.00003451388227635904,
+],
+
+ 16: [
+0.000020271844607764596,
+0.00005697236305223927,
+0.0001497897970355774,
+0.000368423450808274,
+0.0008477334779493776,
+0.0018248132977609205,
+0.0036747227189941824,
+0.006922735621506537,
+0.012200509085697045,
+0.02011523884295889,
+0.03102554857174584,
+0.044767287331406475,
+0.06042951709558466,
+0.07631053579241713,
+0.09015024606972856,
+0.09963143021362746,
+0.10300844885023809,
+0.09963143021362746,
+0.09015024606972856,
+0.07631053579241713,
+0.06042951709558466,
+0.044767287331406475,
+0.03102554857174584,
+0.02011523884295889,
+0.012200509085697045,
+0.006922735621506537,
+0.0036747227189941824,
+0.0018248132977609205,
+0.0008477334779493776,
+0.000368423450808274,
+0.0001497897970355774,
+0.00005697236305223927,
+0.000020271844607764596,
+]
+}
 
 function NormalizeVec3(v) {
     let vin = vec3Create(v);
@@ -757,8 +1089,6 @@ export const icosaIndices2 = [
     160, 161, 159
 ];
 
-const icosaphi = (1 + Math.sqrt(5)) / 2.;
-
 let icosaVertices = icosaVertices2;
 let icosaIndices = icosaIndices2;
 
@@ -854,14 +1184,6 @@ function initTextures(gl, fname) {
     return cubeTexture;
 }
 
-function getNodeText(node) {
-    let r = "";
-    for (let x = 0; x < node.childNodes.length; x++) {
-        r = r + node.childNodes[x].nodeValue;
-    }
-    return r;
-}
-
 function getOffsetRect(elem) {
     let box = elem.getBoundingClientRect();
     let body = document.body;
@@ -874,10 +1196,6 @@ function getOffsetRect(elem) {
     let top = box.top + scrollTop - clientTop;
     let left = box.left + scrollLeft - clientLeft;
     return { top: Math.round(top), left: Math.round(left) };
-}
-
-function ajaxRequest() {
-    return new XMLHttpRequest();
 }
 
 function next_power_of_2(v) {
@@ -1018,7 +1336,7 @@ class TextCanvasTexture {
     nBigTextures: number;
     nBigTexturesInt: number;
     refI: Dictionary<number>;
-    bigTextureTexOrigins: number[][]; 
+    bigTextureTexOrigins: number[][];
     bigTextureTexOffsets: number[][];
     bigTextureScalings: number[][];
     contextBig: CanvasRenderingContext2D;
@@ -1350,10 +1668,6 @@ interface clickAtom {
     circleData?: ImageData;
 }
 
-interface AssociativeArray {
-   [key: string]: number;
-}
-
 interface Dictionary<T> {
     [Key: string]: T;
 }
@@ -1487,6 +1801,7 @@ interface ShaderBlurX extends MGWebGLShader {
     depthTexture: WebGLUniformLocation;
     blurSize: WebGLUniformLocation;
     blurDepth: WebGLUniformLocation;
+    blurCoeffs: WebGLUniformLocation | null;
 }
 
 interface ShaderBlurY extends MGWebGLShader {
@@ -1495,6 +1810,7 @@ interface ShaderBlurY extends MGWebGLShader {
     depthTexture: WebGLUniformLocation;
     blurSize: WebGLUniformLocation;
     blurDepth: WebGLUniformLocation;
+    blurCoeffs: WebGLUniformLocation | null;
 }
 
 interface ShaderCircles extends MGWebGLShader {
@@ -1751,7 +2067,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.viewportWidth = this.canvas.width;
         this.gl.viewportHeight = this.canvas.height;
 
-        if(this.useOffScreenBuffers){
+        if(this.useOffScreenBuffers&&this.WEBGL2){
             this.recreateOffScreeenBuffers();
         }
 
@@ -1774,7 +2090,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.mspfArray = [];
         this.mouseTrackPoints = [];
 
-        const frameCounterTimer = setInterval(() => {
+        setInterval(() => {
             if(!self.context) return;
             const sum = this.mspfArray.reduce((a, b) => a + b, 0);
             const avg = (sum / this.mspfArray.length) || 0;
@@ -1823,6 +2139,61 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         ctx.fillStyle = 'red';
         ctx.fillRect(0, 0, c.width, c.height);
         //this.drawGradient(c.width/2, c.height/2);
+    }
+
+    setBlurSize(blurSize) {
+        this.blurSize = blurSize;
+
+        if(this.WEBGL2){
+            const blockSize = this.gl.getActiveUniformBlockParameter( this.shaderProgramBlurX, this.shaderProgramBlurX.blurCoeffs, this.gl.UNIFORM_BLOCK_DATA_SIZE);
+
+            const uboBuffer = this.gl.createBuffer();
+            this.gl.bindBuffer(this.gl.UNIFORM_BUFFER, uboBuffer);
+            this.gl.bufferData(this.gl.UNIFORM_BUFFER, blockSize, this.gl.DYNAMIC_DRAW);
+            this.gl.bindBuffer(this.gl.UNIFORM_BUFFER, null);
+            this.gl.bindBufferBase(this.gl.UNIFORM_BUFFER, 0, uboBuffer);
+            const uboVariableNames = ["row0","row1","row2","row3","row4","row5","row6","row7","row8","nsteps"];
+            const uboVariableIndices = this.gl.getUniformIndices( this.shaderProgramBlurX, uboVariableNames);
+            const uboVariableOffsets = this.gl.getActiveUniforms( this.shaderProgramBlurX, uboVariableIndices, this.gl.UNIFORM_OFFSET);
+
+            const uboVariableInfo = {};
+
+            uboVariableNames.forEach((name, index) => {
+                uboVariableInfo[name] = {
+                    index: uboVariableIndices[index],
+                    offset: uboVariableOffsets[index],
+                };
+            });
+
+            this.gl.useProgram(this.shaderProgramBlurY);
+            let index = this.gl.getUniformBlockIndex(this.shaderProgramBlurY, "coeffBuffer");
+            this.gl.uniformBlockBinding(this.shaderProgramBlurY, index, 0);
+
+            this.gl.useProgram(this.shaderProgramBlurX);
+            index = this.gl.getUniformBlockIndex(this.shaderProgramBlurX, "coeffBuffer");
+            this.gl.uniformBlockBinding(this.shaderProgramBlurX, index, 0);
+
+            // This might have to be done every frame if we ever have multiple UBOs.
+            this.gl.bindBuffer(this.gl.UNIFORM_BUFFER, uboBuffer);
+            let bigBlurArray = new Array(36).fill(0)
+                for(let iblur=0;iblur<gaussianBlurs[this.blurSize];iblur++){
+                    bigBlurArray[iblur] = gaussianBlurs[this.blurSize][iblur];
+                }
+
+            const bigFloatArray = new Float32Array(gaussianBlurs[this.blurSize]);
+            this.gl.bufferSubData(this.gl.UNIFORM_BUFFER, uboVariableInfo["row0"].offset, bigFloatArray.subarray( 0, 4), 0);
+            this.gl.bufferSubData(this.gl.UNIFORM_BUFFER, uboVariableInfo["row1"].offset, bigFloatArray.subarray( 4, 8), 0);
+            this.gl.bufferSubData(this.gl.UNIFORM_BUFFER, uboVariableInfo["row2"].offset, bigFloatArray.subarray( 8,12), 0);
+            this.gl.bufferSubData(this.gl.UNIFORM_BUFFER, uboVariableInfo["row3"].offset, bigFloatArray.subarray(12,16), 0);
+            this.gl.bufferSubData(this.gl.UNIFORM_BUFFER, uboVariableInfo["row4"].offset, bigFloatArray.subarray(16,20), 0);
+            this.gl.bufferSubData(this.gl.UNIFORM_BUFFER, uboVariableInfo["row5"].offset, bigFloatArray.subarray(20,24), 0);
+            this.gl.bufferSubData(this.gl.UNIFORM_BUFFER, uboVariableInfo["row6"].offset, bigFloatArray.subarray(24,28), 0);
+            this.gl.bufferSubData(this.gl.UNIFORM_BUFFER, uboVariableInfo["row7"].offset, bigFloatArray.subarray(28,32), 0);
+            this.gl.bufferSubData(this.gl.UNIFORM_BUFFER, uboVariableInfo["row8"].offset, bigFloatArray.subarray(32,36), 0);
+            this.gl.bufferSubData(this.gl.UNIFORM_BUFFER, uboVariableInfo["nsteps"].offset, new Int32Array([this.blurSize]), 0);
+            this.gl.bindBuffer(this.gl.UNIFORM_BUFFER, null)
+        }
+
     }
 
     startSpinTest() {
@@ -1909,25 +2280,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 */
         this.fogClipOffset = 50;
         this.doPerspectiveProjection = false;
-        const ice_blue = [0.0039 * 156, 0.0039 * 176, 0.0039 * 254, 1.0];
-        const gold = [0.0039 * 179, 0.0039 * 177, 0.0039 * 61, 1.0];
-        const coral = [0.0039 * 255, 0.0039 * 127, 0.0039 * 80, 1.0];
-        const grey = [0.0039 * 128, 0.0039 * 128, 0.0039 * 128, 1.0];
-        const pink = [0.0039 * 255, 0.0039 * 146, 0.0039 * 255, 1.0];
-        const sea_green = [0.0039 * 127, 0.0039 * 187, 0.0039 * 181, 1.0];
-        const pale_brown = [0.0039 * 169, 0.0039 * 125, 0.0039 * 94, 1.0];
-        const lilac = [0.0039 * 174, 0.0039 * 135, 0.0039 * 185, 1.0];
-        const lemon = [0.0039 * 255, 0.0039 * 255, 0.0039 * 128, 1.0];
-        const lawn_green = [0.0039 * 69, 0.0039 * 156, 0.0039 * 79, 1.0];
-        const pale_crimson = [0.0039 * 210, 0.0039 * 60, 0.0039 * 62, 1.0];
-        const light_blue = [0.0039 * 65, 0.0039 * 154, 0.0039 * 225, 1.0];
-        const tan = [0.0039 * 120, 0.0039 * 0, 0.0039 * 0, 1.0];
-        const light_green = [0.0039 * 154, 0.0039 * 255, 0.0039 * 154, 1.0];
-
-        const red = [1.0, 0.0, 0.0, 1.0];
-        const green = [0.0, 1.0, 0.0, 1.0];
-        const blue = [0.0, 0.0, 1.0, 1.0];
-        const magenta = [1.0, 0.0, 1.0, 1.0];
 
         this.shinyBack = true;
         this.backColour = "default";
@@ -1994,7 +2346,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.offScreenFramebuffer = null;
         this.useOffScreenBuffers = false;
-        this.blurSize = 3.0;
+        this.blurSize = 3;
         this.blurDepth = 0.2;
         this.offScreenReady = false;
         this.framebufferDrawBuffersReady = false;
@@ -2136,7 +2488,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         let pointSpheresFragmentShader;
         let twoDShapesFragmentShader;
         let twoDShapesVertexShader;
-        let renderFrameBufferVertexShader;
         let renderFrameBufferFragmentShader;
         let perfectSphereFragmentShader;
         let perfectSphereOutlineFragmentShader;
@@ -2148,7 +2499,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         let shadowDeptTwoDShapesVertexShader; //Depth pass
 
         this.doRedraw = false;
-        let myVar = setInterval(function () { self.drawSceneIfDirty() }, 16);
+        setInterval(function () { self.drawSceneIfDirty() }, 16);
 
         let blur_vertex_shader_source = blur_vertex_shader_source_webgl1;
         let blur_x_fragment_shader_source = blur_x_fragment_shader_source_webgl1;
@@ -2230,7 +2581,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         pointSpheresFragmentShader = getShader(self.gl, pointspheres_fragment_shader_source, "fragment");
         twoDShapesVertexShader = getShader(self.gl, twod_vertex_shader_source, "vertex");
         twoDShapesFragmentShader = getShader(self.gl, twod_fragment_shader_source, "fragment");
-        renderFrameBufferVertexShader = getShader(self.gl, triangle_vertex_shader_source, "vertex");
         renderFrameBufferFragmentShader = getShader(self.gl, render_framebuffer_fragment_shader_source, "fragment");
         const flatColourFragmentShader = getShader(self.gl, flat_colour_fragment_shader_source, "fragment");
         if (self.frag_depth_ext) {
@@ -3429,6 +3779,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.shaderProgramBlurX.blurSize = this.gl.getUniformLocation(this.shaderProgramBlurX, "blurSize");
         this.shaderProgramBlurX.blurDepth = this.gl.getUniformLocation(this.shaderProgramBlurX, "blurDepth");
+        if(this.WEBGL2){
+            this.shaderProgramBlurX.blurCoeffs = this.gl.getUniformBlockIndex(this.shaderProgramBlurX, "coeffBuffer");
+            this.gl.uniformBlockBinding(this.shaderProgramBlurX, this.shaderProgramBlurX.blurCoeffs, 0);
+        }
 
         this.shaderProgramBlurX.depthTexture = this.gl.getUniformLocation(this.shaderProgramBlurX, "depth");
         this.shaderProgramBlurX.inputTexture = this.gl.getUniformLocation(this.shaderProgramBlurX, "shader0");
@@ -3461,6 +3815,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         this.shaderProgramBlurY.blurSize = this.gl.getUniformLocation(this.shaderProgramBlurY, "blurSize");
         this.shaderProgramBlurY.blurDepth = this.gl.getUniformLocation(this.shaderProgramBlurY, "blurDepth");
+        if(this.WEBGL2){
+            this.shaderProgramBlurY.blurCoeffs = this.gl.getUniformBlockIndex(this.shaderProgramBlurY, "coeffBuffer");
+            this.gl.uniformBlockBinding(this.shaderProgramBlurY, this.shaderProgramBlurY.blurCoeffs, 0);
+        }
 
         this.shaderProgramBlurY.depthTexture = this.gl.getUniformLocation(this.shaderProgramBlurY, "depth");
         this.shaderProgramBlurY.inputTexture = this.gl.getUniformLocation(this.shaderProgramBlurY, "shader0");
@@ -4450,15 +4808,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         let zaxis = vec3Create([0.0, 0.0, 1.0]);
         let Q = vec3.create();
         let R = vec3.create();
-        let cylinder = vec3.create();
-        let Q1 = vec3.create();
-        let Q2 = vec3.create();
 
         // FIXME - These need to be global preferences or properties of primitive.
         // spline_accu = 4 is OK for 5kcr on QtWebKit, 8 runs out of memory.
-        let spline_accu = 8;
-        let wormWidth = 0.2;
-        let smoothArrow = true;
         let accuStep = 20;
 
         const thisdisplayBufferslength = this.displayBuffers.length;
@@ -5469,7 +5821,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             let canRead = (this.gl.checkFramebufferStatus(this.gl.FRAMEBUFFER) === this.gl.FRAMEBUFFER_COMPLETE);
         } else {
             this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null);
-            if(this.useOffScreenBuffers){
+            if(this.useOffScreenBuffers&&this.WEBGL2){
                 if(!this.offScreenReady)
                     this.recreateOffScreeenBuffers();
                 this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.offScreenFramebuffer);
@@ -5894,7 +6246,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             this.prevTime = thisTime;
         }
 
-        if (!this.useOffScreenBuffers) {
+        if (!this.useOffScreenBuffers||!this.WEBGL2) {
             return;
         }
 
@@ -5955,6 +6307,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             const blurSizeY = this.blurSize/this.gl.viewportHeight;
 
             this.gl.useProgram(this.shaderProgramBlurX);
+
             for(let i = 0; i<16; i++)
                 this.gl.disableVertexAttribArray(i);
             this.gl.enableVertexAttribArray(this.shaderProgramBlurX.vertexTextureAttribute);
@@ -6104,7 +6457,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     drawTriangles(calculatingShadowMap, invMat) {
-        let nprims = 0;
 
         let symmetries = [];
         let symms = [];
@@ -6271,7 +6623,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         }
                     }
                 }
-                nprims += triangleVertexIndexBuffer[j].numItems;
             }
 
 
@@ -6350,7 +6701,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buffer.triangleVertexPositionBuffer[0]);
                         this.gl.vertexAttribPointer(program.vertexPositionAttribute, buffer.triangleVertexPositionBuffer[0].itemSize, this.gl.FLOAT, false, 0, 0);
                         this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, buffer.triangleVertexIndexBuffer[0]);
-                        let isphere;
 
                         //pos,normal, texture, index in "buffer"
                         //Instanced colour
@@ -6527,7 +6877,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                                 this.gl.drawElements(this.gl.TRIANGLES, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_SHORT, 0);
                             }
                         }
-                        nprims += triangleVertexIndexBuffer[j].numItems;
                     }
                 } else {
                     for (isphere = 0; isphere < triangleVertices[j].length / 3; isphere++) {
@@ -6548,7 +6897,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                                 this.gl.drawElements(this.gl.TRIANGLES, buffer.triangleVertexIndexBuffer[0].numItems, this.gl.UNSIGNED_SHORT, 0);
                             }
                         }
-                        nprims += triangleVertexIndexBuffer[j].numItems;
                     }
                 }
             }
@@ -6656,7 +7004,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         this.gl.drawElements(this.gl.LINE_STRIP, triangleVertexIndexBuffer[j].numItems, this.gl.UNSIGNED_SHORT, 0);
                     }
                 }
-                nprims += triangleVertexIndexBuffer[j].numItems;
             }
 
             this.gl.useProgram(this.shaderProgramThickLinesNormal);
@@ -6697,7 +7044,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         this.gl.drawElements(this.gl.TRIANGLES, triangleVertexIndexBuffer[j].numItems, this.gl.UNSIGNED_SHORT, 0);
                     }
                 }
-                nprims += triangleVertexIndexBuffer[j].numItems;
             }
 
             this.gl.disableVertexAttribArray(this.shaderProgramThickLinesNormal.vertexRealNormalAttribute);
@@ -6737,7 +7083,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         this.gl.drawElements(this.gl.TRIANGLES, triangleVertexIndexBuffer[j].numItems, this.gl.UNSIGNED_SHORT, 0);
                     }
                 }
-                nprims += triangleVertexIndexBuffer[j].numItems;
             }
         }
     }
@@ -7023,6 +7368,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         return
 
+    }
+
+    isWebGL2() {
+        return this.WEBGL2;
     }
 
     drawDistancesAndLabels(up, right) {
@@ -8163,8 +8512,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         this.gl.uniformMatrix4fv(this.shaderProgram.mvMatrixUniform, false, tempInvMVMatrix);
         this.gl.uniformMatrix4fv(this.shaderProgram.mvInvMatrixUniform, false, tempInvMVMatrix);
 
-        let size = 1.0;
-
         this.mouseTrackPoints.push([frac_x,frac_y,performance.now()]);
         if(this.mouseTrackPoints.length>120) this.mouseTrackPoints.shift();
 
@@ -8248,7 +8595,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     drawFPSMeter() {
-        const ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
+
         this.gl.depthFunc(this.gl.ALWAYS);
 
         this.gl.useProgram(this.shaderProgramThickLines);
@@ -8730,7 +9077,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                         base_y = ypos;
                         base_z = zpos;
                     }
-                    const sLength = s.length;
                     const textMetric = this.textCtx.measureText(s);
                     if(textMetric.width <512){
                         drawStringAt(s, colour, [base_x, base_y, base_z], up, right, font)
@@ -9004,7 +9350,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
 
         if (event.shiftKey) {
 
-            const ratio = 1.0 * this.gl.viewportWidth / this.gl.viewportHeight;
             const c = this.canvasRef.current;
             const offset = getOffsetRect(c);
             const frac_x = 2.0*(getDeviceScale()*(event.pageX-offset.left)/this.gl.viewportWidth-0.5);
@@ -9020,7 +9365,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
             //console.log(yQ);
             quat4.multiply(xQ, xQ, yQ);
             if (this.currentlyDraggedAtom) {
-                
+
                 // ###############
                 // FILO: COPY PASTED FROM ABOVE
                 let invQuat = quat4.create();
@@ -9032,7 +9377,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 vec3.set(yshift, 0, moveFactor * self.dy, 0);
                 vec3.transformMat4(xshift, xshift, theMatrix);
                 vec3.transformMat4(yshift, yshift, theMatrix);
-    
+
                 const newOrigin = this.draggableMolecule.displayObjectsTransformation.origin.map((coord, coordIndex) => {
                     return coord + (self.zoom * xshift[coordIndex] / 8.) - (self.zoom * yshift[coordIndex] / 8.)
                 })
