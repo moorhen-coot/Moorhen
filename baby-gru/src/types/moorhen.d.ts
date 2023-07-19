@@ -84,9 +84,9 @@ export namespace moorhen {
     
     interface Molecule {
         getNeighborResiduesCids(selectionCid: string, radius: number, minDist: number, maxDist: number): Promise<string[]>;
-        drawWithStyleFromMesh(style: string, meshObjects: any[], newBufferAtoms?: moorhen.AtomInfo[]): Promise<void>;
-        updateWithMovedAtoms(movedResidues: moorhen.AtomInfo[][]): Promise<void>;
-        transformedCachedAtomsAsMovedAtoms(selectionCid?: string): moorhen.AtomInfo[][];
+        drawWithStyleFromMesh(style: string, meshObjects: any[], newBufferAtoms?: AtomInfo[]): Promise<void>;
+        updateWithMovedAtoms(movedResidues: AtomInfo[][]): Promise<void>;
+        transformedCachedAtomsAsMovedAtoms(selectionCid?: string): AtomInfo[][];
         drawWithStyleFromAtoms(style: string): Promise<void>;
         copyFragmentUsingCid(cid: string, backgroundColor: [number, number, number, number], defaultBondSmoothness: number, doRecentre?: boolean): Promise<Molecule>;
         hideCid(cid: string): Promise<void>;
@@ -122,6 +122,7 @@ export namespace moorhen {
         centreOn: (selectionCid?: string, animate?: boolean) => Promise<void>;
         drawHover: (cid: string) => Promise<void>;
         clearBuffersOfStyle: (style: string) => void;
+        loadToCootFromURL: (inputFile: string, molName: string) => Promise<_moorhen.Molecule>;
         type: string;
         commandCentre: React.RefObject<CommandCentre>;
         glRef: React.RefObject<webGL.MGWebGL>;
@@ -275,6 +276,7 @@ export namespace moorhen {
         doCootContour(x: number, y: number, z: number, radius: number, contourLevel: number): Promise<void>;
         fetchReflectionData(): Promise<WorkerResponse<Uint8Array>>;
         getMap(): Promise<WorkerResponse>;
+        loadToCootFromMtzURL(url: RequestInfo | URL, name: string, selectedColumns: selectedMtzColumns): Promise<Map>;
         type: string;
         name: string;
         molNo: number;
@@ -556,10 +558,10 @@ export namespace moorhen {
         setShowOverlay: React.Dispatch<React.SetStateAction<boolean>>;
         timeCapsuleRef: React.RefObject<TimeCapsule>;
         setToolTip: React.Dispatch<React.SetStateAction<string>>;
-        setShowContextMenu: React.Dispatch<React.SetStateAction<false | moorhen.AtomRightClickEventInfo>>;
+        setShowContextMenu: React.Dispatch<React.SetStateAction<false | AtomRightClickEventInfo>>;
         setOpacity: React.Dispatch<React.SetStateAction<number>>;
         setOverrideMenuContents: React.Dispatch<React.SetStateAction<JSX.Element | boolean>>;
-        showContextMenu: false | moorhen.AtomRightClickEventInfo;
+        showContextMenu: false | AtomRightClickEventInfo;
         backgroundColor: [number, number, number, number];
         defaultBondSmoothness: number;
         changeMolecules: (arg0: MolChange<Molecule>) => void
@@ -608,28 +610,28 @@ export namespace moorhen {
         backupStorageInstance?: any;
         extraEditMenuItems: JSX.Element[];
         extraCalculateMenuItems: JSX.Element[];
-        aceDRGInstance: moorhen.AceDRGInstance | null; 
+        aceDRGInstance: AceDRGInstance | null; 
     }
     
-    interface Controls extends moorhen.Context, ContainerOptionalProps {
+    interface Controls extends Context, ContainerOptionalProps {
         isDark: boolean;
-        molecules: moorhen.Molecule[];
-        changeMolecules: (arg0: moorhen.MolChange<moorhen.Molecule>) => void;
-        maps: moorhen.Map[];
-        changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
+        molecules: Molecule[];
+        changeMolecules: (arg0: MolChange<Molecule>) => void;
+        maps: Map[];
+        changeMaps: (arg0: MolChange<Map>) => void;
         appTitle: string;
         setAppTitle: React.Dispatch<React.SetStateAction<string>>;
         glRef: React.MutableRefObject<null | webGL.MGWebGL>;
-        timeCapsuleRef: React.MutableRefObject<null | moorhen.TimeCapsule>;
-        commandCentre: React.MutableRefObject<moorhen.CommandCentre>;
-        moleculesRef: React.MutableRefObject<null | moorhen.Molecule[]>;
-        mapsRef: React.MutableRefObject<null | moorhen.Map[]>;
-        activeMap: moorhen.Map;
-        setActiveMap: React.Dispatch<React.SetStateAction<moorhen.Map>>;
-        activeMolecule: moorhen.Molecule;
-        setActiveMolecule: React.Dispatch<React.SetStateAction<moorhen.Molecule>>;
-        hoveredAtom: null | moorhen.HoveredAtom;
-        setHoveredAtom: React.Dispatch<React.SetStateAction<moorhen.HoveredAtom>>;
+        timeCapsuleRef: React.MutableRefObject<null | TimeCapsule>;
+        commandCentre: React.MutableRefObject<CommandCentre>;
+        moleculesRef: React.MutableRefObject<null | Molecule[]>;
+        mapsRef: React.MutableRefObject<null | Map[]>;
+        activeMap: Map;
+        setActiveMap: React.Dispatch<React.SetStateAction<Map>>;
+        activeMolecule: Molecule;
+        setActiveMolecule: React.Dispatch<React.SetStateAction<Molecule>>;
+        hoveredAtom: null | HoveredAtom;
+        setHoveredAtom: React.Dispatch<React.SetStateAction<HoveredAtom>>;
         commandHistory: any;
         backgroundColor: [number, number, number, number];
         setBackgroundColor: React.Dispatch<React.SetStateAction<[number, number, number, number]>>;
@@ -646,21 +648,21 @@ export namespace moorhen {
     
     interface ContainerStates {
         glRef: React.MutableRefObject<null | webGL.MGWebGL>;
-        timeCapsuleRef: React.MutableRefObject<null | moorhen.TimeCapsule>;
-        commandCentre: React.MutableRefObject<moorhen.CommandCentre>;
-        moleculesRef: React.MutableRefObject<null | moorhen.Molecule[]>;
-        mapsRef: React.MutableRefObject<null | moorhen.Map[]>;
-        activeMapRef: React.MutableRefObject<moorhen.Map>;
+        timeCapsuleRef: React.MutableRefObject<null | TimeCapsule>;
+        commandCentre: React.MutableRefObject<CommandCentre>;
+        moleculesRef: React.MutableRefObject<null | Molecule[]>;
+        mapsRef: React.MutableRefObject<null | Map[]>;
+        activeMapRef: React.MutableRefObject<Map>;
         consoleDivRef: React.MutableRefObject<null | HTMLDivElement>;
-        lastHoveredAtom: React.MutableRefObject<null | moorhen.HoveredAtom>;
-        prevActiveMoleculeRef: React.MutableRefObject<null | moorhen.Molecule>;
-        context: moorhen.Context;
-        activeMap: moorhen.Map;
-        setActiveMap: React.Dispatch<React.SetStateAction<moorhen.Map>>;
-        activeMolecule: moorhen.Molecule;
-        setActiveMolecule: React.Dispatch<React.SetStateAction<moorhen.Molecule>>;
-        hoveredAtom: null | moorhen.HoveredAtom;
-        setHoveredAtom: React.Dispatch<React.SetStateAction<moorhen.HoveredAtom>>;
+        lastHoveredAtom: React.MutableRefObject<null | HoveredAtom>;
+        prevActiveMoleculeRef: React.MutableRefObject<null | Molecule>;
+        context: Context;
+        activeMap: Map;
+        setActiveMap: React.Dispatch<React.SetStateAction<Map>>;
+        activeMolecule: Molecule;
+        setActiveMolecule: React.Dispatch<React.SetStateAction<Molecule>>;
+        hoveredAtom: null | HoveredAtom;
+        setHoveredAtom: React.Dispatch<React.SetStateAction<HoveredAtom>>;
         consoleMessage: string;
         setConsoleMessage: React.Dispatch<React.SetStateAction<string>>;
         cursorStyle: string;
@@ -673,10 +675,10 @@ export namespace moorhen {
         setWindowHeight: React.Dispatch<React.SetStateAction<number>>;
         commandHistory: any;
         dispatchHistoryReducer: (arg0: any) => void;
-        molecules: moorhen.Molecule[];
-        changeMolecules: (arg0: moorhen.MolChange<moorhen.Molecule>) => void;
-        maps: moorhen.Map[];
-        changeMaps: (arg0: moorhen.MolChange<moorhen.Map>) => void;
+        molecules: Molecule[];
+        changeMolecules: (arg0: MolChange<Molecule>) => void;
+        maps: Map[];
+        changeMaps: (arg0: MolChange<Map>) => void;
         backgroundColor: [number, number, number, number];
         setBackgroundColor: React.Dispatch<React.SetStateAction<[number, number, number, number]>>;
         appTitle: string;
