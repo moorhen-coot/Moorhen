@@ -28,7 +28,7 @@ const updateStoredContext = async (key: string, value: any): Promise<void> => {
  * @returns {moorhen.ContextValues} An object containing the default context values 
  * for the current version.
  * @example
- * import { getDefaultContextValues } from "../../src/utils/MoorhenContext";
+ * import { getDefaultContextValues } from "moorhen";
  * 
  * const storedVersion = await localforage.getItem('version');
  * const defaultValues = getDefaultContextValues();    
@@ -290,22 +290,22 @@ const MoorhenContext = createContext(undefined);
  * @property {boolean} [doShadowDepthDebug=false] - Indicates if shadow depth blur should be used
  * @property {boolean} [doShadow=false] - Indicates if shadows should be drawn
  * @property {boolean} [doOutline=false] - Indicates if molecule should be drawn
-    @property {string} [GLLabelsFontFamily='Arial'] - The font family used in labels
-    @property {number} [GLLabelsFontSize=18] - The font size used in labels
-    @property {boolean} [doSpinTest=false] - Indicates if a spin test is to be carried out
-    @property {number} [mapLineWidth=0.75] - The default map line width
-    @property {boolean} [makeBackups=true] - Indicates if automatic session backups are active
-    @property {boolean} [showShortcutToast=false] - Indicates if a toastshould be shown on key press when a shortcut is activated
-    @property {boolean} [defaultMapSurface=false] - Indicates if maps should be shown as surfaces by default
-    @property {number} [defaultBondSmoothness=1] - The default smoothness level used when rendering molecules
-    @property {boolean} [showScoresToast=false] - Indicates if a toast with scores should be shown after connecting molecules and maps for map updates
-    @property {boolean} [shortcutOnHoveredAtom=false] - Indicates if shortcuts should be performed on the atom being hovered instead of the one in the centre of view
-    @property {boolean} [resetClippingFogging=false] - Indicates if clipping and fogging is to be reset when the zoom level changes
-    @property {boolean} [clipCap=false] - Activates clip clap spheres
-    @property {number} [maxBackupCount=10] - The maximum number of session backups stored in the local storage
-    @property {number} [modificationCountBackupThreshold=5] - The number of modifications that will trigger an automatic session backup
-    @property {string[]} [defaultUpdatingScores=['Rfree', 'Rfactor', 'Moorhen Points']] - A list of the scores shown after connecting molecules and maps for map updates
-    @property {boolean} [devMode=false] - Indicates if developer mode is active
+ * @property {string} [GLLabelsFontFamily='Arial'] - The font family used in labels
+ * @property {number} [GLLabelsFontSize=18] - The font size used in labels
+ * @property {boolean} [doSpinTest=false] - Indicates if a spin test is to be carried out
+ * @property {number} [mapLineWidth=0.75] - The default map line width
+ * @property {boolean} [makeBackups=true] - Indicates if automatic session backups are active
+ * @property {boolean} [showShortcutToast=false] - Indicates if a toastshould be shown on key press when a shortcut is activated
+ * @property {boolean} [defaultMapSurface=false] - Indicates if maps should be shown as surfaces by default
+ * @property {number} [defaultBondSmoothness=1] - The default smoothness level used when rendering molecules
+ * @property {boolean} [showScoresToast=false] - Indicates if a toast with scores should be shown after connecting molecules and maps for map updates
+ * @property {boolean} [shortcutOnHoveredAtom=false] - Indicates if shortcuts should be performed on the atom being hovered instead of the one in the centre of view
+ * @property {boolean} [resetClippingFogging=false] - Indicates if clipping and fogging is to be reset when the zoom level changes
+ * @property {boolean} [clipCap=false] - Activates clip clap spheres
+ * @property {number} [maxBackupCount=10] - The maximum number of session backups stored in the local storage
+ * @property {number} [modificationCountBackupThreshold=5] - The number of modifications that will trigger an automatic session backup
+ * @property {string[]} [defaultUpdatingScores=['Rfree', 'Rfactor', 'Moorhen Points']] - A list of the scores shown after connecting molecules and maps for map updates
+ * @property {boolean} [devMode=false] - Indicates if developer mode is active
  */
 const MoorhenContextProvider = ({ children }) => {
     const [isMounted, setIsMounted] = useState<boolean>(false)

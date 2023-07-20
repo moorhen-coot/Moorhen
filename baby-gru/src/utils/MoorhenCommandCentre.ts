@@ -1,6 +1,44 @@
 import { v4 as uuidv4 } from 'uuid';
 import { moorhen } from "../types/moorhen"
 
+/**
+ * A command centre used to communicate between Moorhen and a web worker running an instance of the 
+ * headless libcoot API
+ * @property {Worker} cootWorker - A web worker holding a headless libcoot instance
+ * @method cootCommand - Runs a coot command
+ * @param {moorhen.cootCommandKwargs} kwargs - An object describing the command that will be executed and its arguments
+ * @constructor
+ * @param {string} urlPrefix - The root url used to find the baby-gru/CootWorker.js worker file
+ * @param {function} onConsoleChanged - Callback executed whenever the worker prints a message to the console
+ * @param {function} onNewCommand - Callback executed whenever a new command is issued to the web worker
+ * @param {function} onActiveMessagesChanged  - Callback executed whenever a new message is received from the worker
+ * @param {function} onCootInitialized - Callback executed once after coot is initialised in the web worker
+ * @example
+ * import { MoorhenCommandCentre } from "moorhen";
+ * 
+ * commandCentre = new MoorhenCommandCentre({
+ *  onConsoleChanged: (newMessage) => {
+ *      setConsoleMessage(newMessage)
+ *  },
+ *  onActiveMessagesChanged: (newActiveMessages) => {
+ *      setBusy(newActiveMessages.length !== 0)
+ *  },
+ *  onNewCommand: (newCommand) => {
+ *      dispatchHistoryReducer({ action: "Add", item: newCommand })
+ *  },
+ *  onCootInitialized: () => {
+ *      setCootInitialized(true)
+ *  },
+ *      urlPrefix: urlPrefix
+ * })
+ * 
+ * await props.commandCentre.current.cootCommand({
+ *  returnType: 'status',
+ *  command: 'flipPeptide_cid',
+ *  commandArgs: [0, "//A/150"],
+ * })
+ * 
+ */
 export class MoorhenCommandCentre implements moorhen.CommandCentre {
     urlPrefix: string;
     cootWorker: Worker;
