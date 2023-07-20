@@ -2766,6 +2766,9 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
         self.light_colours_specular = new Float32Array([1.0, 1.0, 1.0, 1.0]);
         self.light_colours_diffuse = new Float32Array([1.0, 1.0, 1.0, 1.0]);
         self.specularPower = 64.0;
+
+        self.setBlurSize(self.blurSize);
+
         self.drawScene();
         self.ready = true;
         return;
