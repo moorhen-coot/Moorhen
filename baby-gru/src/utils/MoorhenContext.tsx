@@ -269,7 +269,7 @@ const MoorhenContext = createContext(undefined);
  * in the local storage so that they persist across different sessions.
  * @param children - The Moorhen App
  * @property {boolean} isMounted - Indicates if the states have been already loaded from local storage.
- * @property {[number, number, number, number]} [defaultBackgroundColor=[1, 1, 1, 1]] - The default background colour used when starting the app.
+ * @property {number[]} [defaultBackgroundColor=[1, 1, 1, 1]] - The default background colour used when starting the app.
  * @property {boolean} [enableTimeCapsule=true] - Indicates if session backups are enabled by default
  * @property {boolean} [atomLabelDepthMode=true] - Indicates if the atom label depth mode is active
  * @property {boolean} [defaultExpandDisplayCards=false] - Indicates whether molecule and map cards should be expanded on load
