@@ -235,6 +235,7 @@ export namespace moorhen {
     }
         
     type createCovLinkAtomInput = {
+        selectedMolNo: number;
         selectedAtom: string;
         deleteAtom: boolean;
         deleteSelectedAtom: string;

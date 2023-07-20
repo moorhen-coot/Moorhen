@@ -12,6 +12,7 @@ import { MoorhenCalculateMenu } from './MoorhenCalculateMenu';
 import { ClickAwayListener, Fab, SpeedDial, SpeedDialAction, SpeedDialIcon } from "@mui/material";
 import { convertRemToPx, convertViewtoPx } from '../../utils/MoorhenUtils';
 import { MoorhenModelsModal } from '../modal/MoorhenModelsModal';
+import { MoorhenCreateAcedrgLinkModal } from '../modal/MoorhenCreateAcedrgLinkModal';
 import { MoorhenMapsModal } from '../modal/MoorhenMapsModal';
 import { MoorhenValidationToolsModal } from '../modal/MoorhenValidationToolsModal';
 import { MoorhenToolkitModal } from '../modal/MoorhenToolkitModal';
@@ -33,6 +34,7 @@ export interface MoorhenNavBarExtendedControlsInterface extends MoorhenNavBarPro
     setCurrentDropdownId: React.Dispatch<React.SetStateAction<string>>;
     setShowQuerySequence: React.Dispatch<React.SetStateAction<boolean>>;
     setShowScripting: React.Dispatch<React.SetStateAction<boolean>>;
+    setShowCreateAcedrgLinkModal: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface>((props, ref) => {
@@ -40,6 +42,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface
     const [currentDropdownId, setCurrentDropdownId] = useState<string>('-1')
     const [showSaveIcon, setShowSaveIcon] = useState<boolean>(false)
     const [showToolkit, setShowToolkit] = useState<boolean>(false)
+    const [showCreateAcedrgLinkModal, setShowCreateAcedrgLinkModal] = useState<boolean>(false)
     const [showValidation, setShowValidation] = useState<boolean>(false)
     const [showModels, setShowModels] = useState<boolean>(false)
     const [showMaps, setShowMaps] = useState<boolean>(false)
@@ -68,7 +71,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface
     }, [props.timeCapsuleRef.current?.busy])
 
     const collectedProps = {
-        currentDropdownId, setCurrentDropdownId, setShowQuerySequence, setShowScripting, ...props
+        currentDropdownId, setCurrentDropdownId, setShowQuerySequence, setShowScripting, setShowCreateAcedrgLinkModal, ...props
     }
 
     const actions = {
@@ -242,6 +245,16 @@ export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface
             windowWidth={props.windowWidth}
             {...props}
     />
+    {showCreateAcedrgLinkModal && 
+        <MoorhenCreateAcedrgLinkModal
+            width={45}
+            show={showCreateAcedrgLinkModal}
+            setShow={setShowCreateAcedrgLinkModal}
+            windowHeight={props.windowHeight}
+            windowWidth={props.windowWidth}
+            {...props}
+        />
+    }
     {showValidation && 
         <MoorhenValidationToolsModal 
             show={showValidation}
