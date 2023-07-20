@@ -7,7 +7,7 @@
   
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title> components/select/MoorhenMapSelect.tsx</title>
+  <title> utils/MoorhenCommandCentre.ts</title>
 
   <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -104,7 +104,7 @@
             <div class="content">
                 <header class="page-title">
                     <p>Source</p>
-                    <h1>components/select/MoorhenMapSelect.tsx</h1>
+                    <h1>utils/MoorhenCommandCentre.ts</h1>
                 </header>
                 
 
@@ -113,73 +113,135 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>import React, { ChangeEvent, forwardRef } from "react";
-import { Form, FormSelect } from "react-bootstrap";
-import { moorhen } from "../../types/moorhen";
-
-type MoorhenMapSelectPropsType = {
-    height?: string;
-    width?: string;
-    label?: string;
-    maps: moorhen.Map[];
-    filterFunction?: (arg0: moorhen.Map) => boolean;
-    onChange?: (arg0: React.ChangeEvent&lt;HTMLSelectElement>) => void;
-}
+            <pre class="prettyprint source linenums"><code>import { v4 as uuidv4 } from 'uuid';
+import { moorhen } from "../types/moorhen"
 
 /**
- * A map selector react component
- * @property {string} [height="4rem"] The height of the selector
- * @property {string} [width="20rem"] The width of the selector
- * @property {string} [label="Map"] A text label shown on top of the selector
- * @property {moorhen.Map[]} maps List of maps displayed in the selector options
- * @property {function} filterFunction A function that takes a moorhen.Map as input and returns a boolean: true if the map is to be included in the options.
- * @property {function} onChange A function that is called when the user changes the selector option
+ * A command centre used to communicate between Moorhen and a web worker running an instance of the 
+ * headless libcoot API
+ * @property {Worker} cootWorker - A web worker holding a headless libcoot instance
+ * @constructor
+ * @param {string} urlPrefix - The root url used to find the baby-gru/CootWorker.js worker file
+ * @param {function} onConsoleChanged - Callback executed whenever the worker prints a message to the console
+ * @param {function} onNewCommand - Callback executed whenever a new command is issued to the web worker
+ * @param {function} onActiveMessagesChanged  - Callback executed whenever a new message is received from the worker
+ * @param {function} onCootInitialized - Callback executed once after coot is initialised in the web worker
+ * @property {function} cootCommand - Runs a coot command
  * @example
- * import { MoorhenMapSelect } from "moorhen";
- * import { useRef } from "react";
+ * import { MoorhenCommandCentre } from "moorhen";
  * 
- * const mapSelectRef = useRef(null);
+ * commandCentre = new MoorhenCommandCentre({
+ *  onConsoleChanged: (newMessage) => {
+ *      setConsoleMessage(newMessage)
+ *  },
+ *  onActiveMessagesChanged: (newActiveMessages) => {
+ *      setBusy(newActiveMessages.length !== 0)
+ *  },
+ *  onNewCommand: (newCommand) => {
+ *      dispatchHistoryReducer({ action: "Add", item: newCommand })
+ *  },
+ *  onCootInitialized: () => {
+ *      setCootInitialized(true)
+ *  },
+ *      urlPrefix: urlPrefix
+ * })
  * 
- * const handleMapChange = (evt) => {
- *  const selectedMap = parseInt(evt.target.value)
- *  console.log(`New selected map is ${selectedMap}`)
- * }
+ * await props.commandCentre.current.cootCommand({
+ *  returnType: 'status',
+ *  command: 'flipPeptide_cid',
+ *  commandArgs: [0, "//A/150"],
+ * })
  * 
- * return (
- *  &lt;MoorhenMapSelect ref={mapSelectRef} filterFunction={(map) => !map.hasReflectionData} width='100%' label='Select a map' onChange={handleMapChange} />
- * )
  */
-export const MoorhenMapSelect = forwardRef&lt;HTMLSelectElement, MoorhenMapSelectPropsType>((props, selectRef) => {
+export class MoorhenCommandCentre implements moorhen.CommandCentre {
+    urlPrefix: string;
+    cootWorker: Worker;
+    consoleMessage: string;
+    activeMessages: moorhen.WorkerMessage[];
+    onCootInitialized: null | ( () => void );
+    onConsoleChanged: null | ( (msg: string) => void );
+    onNewCommand : null | ( (kwargs: any) => void );
+    onActiveMessagesChanged: null | ( (activeMessages: moorhen.WorkerMessage[]) => void );
 
-    const handleChange = (evt: ChangeEvent&lt;HTMLSelectElement>) => {
-        if (props.onChange) {
-            props.onChange(evt)
-        }
-    }
+    constructor(props: { [x: string]: any; }) {
+        this.consoleMessage = ""
+        this.activeMessages = []
+        this.onConsoleChanged = null
+        this.onNewCommand = null
+        this.onActiveMessagesChanged = null
 
-    const getMapOptions = () => {
-        let mapOptions: JSX.Element[] = []
+        Object.keys(props).forEach(key => this[key] = props[key])
         
-        if (props.maps) {
-            props.maps.forEach(map => {
-                if(props.filterFunction(map)){
-                    mapOptions.push(&lt;option key={map.molNo} value={map.molNo}>{map.molNo}: {map.name}&lt;/option>)
-                }
-            })
-        }
-
-        return mapOptions.length > 0 ? mapOptions : null
+        this.cootWorker = new Worker(`${this.urlPrefix}/baby-gru/CootWorker.js`)
+        this.cootWorker.onmessage = this.handleMessage.bind(this)
+        this.postMessage({ message: 'CootInitialize', data: {} })
+            .then(() => this.onCootInitialized &amp;&amp; this.onCootInitialized() )
     }
-
-    return &lt;Form.Group style={{ width: props.width, margin: '0.5rem', height:props.height }}>
-        &lt;Form.Label>{props.label}&lt;/Form.Label>
-        &lt;FormSelect size="sm" ref={selectRef} defaultValue={-999999} onChange={handleChange}>
-            {getMapOptions()}
-        &lt;/FormSelect>
-    &lt;/Form.Group>
-})
-
-MoorhenMapSelect.defaultProps = { height: '4rem', width: '20rem', maps: null, label: "Map", filterFunction: () => true }
+    
+    handleMessage(reply: moorhen.WorkerResponse) {
+        if (this.onConsoleChanged &amp;&amp; reply.data.consoleMessage) {
+            let newMessage: string
+            if (reply.data.consoleMessage.length > 160) {
+                newMessage = `TRUNCATED TO [${reply.data.consoleMessage.substring(0, 160)}]`
+            }
+            else {
+                newMessage = reply.data.consoleMessage
+            }
+            this.extendConsoleMessage(newMessage)
+        }
+        this.activeMessages.filter(
+            message => message.messageId &amp;&amp; (message.messageId === reply.data.messageId)
+        ).forEach(message => {
+            message.handler(reply)
+        })
+        this.activeMessages = this.activeMessages.filter(
+            message => message.messageId !== reply.data.messageId
+        )
+        if (this.onActiveMessagesChanged) {
+            this.onActiveMessagesChanged(this.activeMessages)
+        }
+    }
+    
+    extendConsoleMessage(newMessage: string) {
+        this.consoleMessage = this.consoleMessage.concat(">" + newMessage + "\n")
+        this.onConsoleChanged &amp;&amp; this.onConsoleChanged(this.consoleMessage)
+    }
+    
+    makeHandler(resolve) {
+        return (reply) => {
+            resolve(reply)
+        }
+    }
+    
+    unhook() {
+        this.cootWorker.removeEventListener("message", this.handleMessage)
+        this.cootWorker.terminate()
+    }
+    
+    async cootCommand(kwargs: moorhen.cootCommandKwargs, doJournal: boolean = false): Promise&lt;moorhen.WorkerResponse> {
+        const message = "coot_command"
+        if (this.onNewCommand &amp;&amp; doJournal) {
+            console.log('In cootCommand', kwargs.command)
+            this.onNewCommand(kwargs)
+        }
+        return this.postMessage({ message, ...kwargs })
+    }
+    
+    postMessage(kwargs: moorhen.cootCommandKwargs): Promise&lt;moorhen.WorkerResponse> {
+        const $this = this
+        const messageId = uuidv4()
+        return new Promise((resolve, reject) => {
+            const handler = $this.makeHandler(resolve)
+            this.activeMessages.push({ messageId, handler, kwargs })
+            if (this.onActiveMessagesChanged) {
+                this.onActiveMessagesChanged(this.activeMessages)
+            }
+            this.cootWorker.postMessage({
+                messageId, myTimeStamp: Date.now(), ...kwargs
+            })
+        })
+    }
+}
 </code></pre>
         </article>
     </section>

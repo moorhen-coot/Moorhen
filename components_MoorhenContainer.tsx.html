@@ -1,0 +1,647 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title> components/MoorhenContainer.tsx</title>
+
+  <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="./build/entry.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,400,700|Inconsolata,700" rel="stylesheet">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+  <link type="text/css" rel="stylesheet" href="https://jmblog.github.io/color-themes-for-google-code-prettify/themes/tomorrow-night.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/app.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/iframe.css">
+  <link type="text/css" rel="stylesheet" href="docs.styles.css">
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
+
+  
+</head>
+
+
+
+<body class="layout small-header">
+    <div id="stickyNavbarOverlay"></div>
+    
+
+<div class="top-nav">
+    <div class="inner">
+        <a id="hamburger" role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+        </a>
+        <div class="logo">
+             
+                <a class="image" href="index.html">
+                    <img src="./MoorhenLogo.png" alt="logo">
+                </a>
+            
+             
+                <a href="index.html">
+                    <h1 class="navbar-item">Moorhen Developer Documentation</h1>
+                </a>
+            
+        </div>
+        <div class="menu">
+            
+            <div class="navigation">
+                <a
+                    href="index.html"
+                    class="link"
+                >
+                    Documentation
+                </a>
+                
+                 
+                    
+                        <a
+                            class="link user-link "
+                            href="https://github.com/stuartjamesmcnicholas/Moorhen"
+                        >
+                            Github
+                        </a>
+                    
+                        <a
+                            class="link user-link "
+                            href="https://moorhen-coot.github.io/wiki/"
+                        >
+                            Moorhen Wiki
+                        </a>
+                    
+                
+                
+            </div>
+        </div>
+    </div>
+</div>
+    <div id="main">
+        <div
+            class="sidebar "
+            id="sidebarNav"
+        >
+            
+                <div class="search-wrapper">
+                    <input id="search" type="text" placeholder="Search docs..." class="input">
+                </div>
+            
+            <nav>
+                
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Classes</h3><ul><li><a href="MoorhenCommandCentre.html">MoorhenCommandCentre</a></li><li><a href="MoorhenMap.html">MoorhenMap</a></li><li><a href="MoorhenMolecule.html">MoorhenMolecule</a></li><li><a href="MoorhenTimeCapsule.html">MoorhenTimeCapsule</a></li></ul><h3>Global</h3><ul><li><a href="global.html#MoorhenContainer">MoorhenContainer</a></li><li><a href="global.html#MoorhenContextProvider">MoorhenContextProvider</a></li><li><a href="global.html#MoorhenMapSelect">MoorhenMapSelect</a></li><li><a href="global.html#MoorhenMoleculeSelect">MoorhenMoleculeSelect</a></li><li><a href="global.html#getDefaultContextValues">getDefaultContextValues</a></li><li><a href="global.html#itemReducer">itemReducer</a></li></ul></div>
+                
+            </nav>
+        </div>
+        <div class="core" id="main-content-wrapper">
+            <div class="content">
+                <header class="page-title">
+                    <p>Source</p>
+                    <h1>components/MoorhenContainer.tsx</h1>
+                </header>
+                
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import { useEffect, useCallback, useReducer, useRef, useState, useContext } from 'react';
+import { Container, Col, Row, Spinner, Toast, ToastContainer } from 'react-bootstrap';
+import { MoorhenWebMG } from './webMG/MoorhenWebMG';
+import { convertViewtoPx, getTooltipShortcutLabel, createLocalStorageInstance, allFontsSet, itemReducer } from '../utils/MoorhenUtils';
+import { historyReducer, initialHistoryState } from './navbar-menus/MoorhenHistoryMenu';
+import { MoorhenCommandCentre } from "../utils/MoorhenCommandCentre"
+import { MoorhenContext } from "../utils/MoorhenContext";
+import { MoorhenTimeCapsule } from '../utils/MoorhenTimeCapsule';
+import { Backdrop } from "@mui/material";
+import { babyGruKeyPress } from '../utils/MoorhenKeyboardAccelerators';
+import { isDarkBackground } from '../WebGLgComponents/mgWebGL'
+import { MoorhenNavBar } from "./navbar-menus/MoorhenNavBar"
+import { moorhen } from '../types/moorhen';
+import { webGL } from '../types/mgWebGL';
+
+const initialMoleculesState: moorhen.Molecule[] = []
+
+const initialMapsState: moorhen.Map[] = []
+
+/**
+ * A container for the Moorhen app
+ * @property {string} [urlPrefix='.'] - The root url used to load sources from public folder
+ * @property {string} [monomerLibraryPath='./baby-gru/monomers'] - A string with the path to the monomer library, relative to the root of the app
+ * @property {function} forwardControls - Callback executed when coot is initialised and will return an object of type moorhen.Controls
+ * @property {function} setMoorhenDimensions - Callback executed on window resize. Return type is an array of two numbers [width, height]
+ * @property {boolean} [disableFileUploads=false] - Indicates if file uploads should b disabled
+ * @property {JSX.Element[]} extraNavBarMenus - A list with additional menu items rendered under the navigation menu
+ * @property {JSX.Element[]} extraFileMenuItems - A list with additional menu items rendered under the "File" menu
+ * @property {JSX.Element[]} extraEditMenuItems - A list with additional menu items rendered under the "Edit" menu
+ * @property {JSX.Element[]} extraCalculateMenuItems - A list with additional menu items rendered under the "Calculate" menu
+ * @property {JSX.Element[]} extraDraggableModals - A list with additional draggable modals to be rendered
+ * @property {boolean} [viewOnly=false] - Indicates if Moorhen should work in view-only mode
+ * @property {boolean} [allowScripting=true] - Indicates if the scrpting interface is enabled
+ * @property {moorhen.LocalStorageInstance} backupStorageInstance - An interface used by the moorhen container to store session backups
+ * @property {moorhen.AceDRGInstance} aceDRGInstance - An interface used by the moorhen container to execute aceDRG jobs
+ * @example
+ * import { useState, useReducer, useRef } from "react";
+ * import { MoorhenContainer, itemReducer } from "moorhen";
+ *
+ * const initialMoleculesState = []
+ * const initialMapsState = []
+ * 
+ * const ExampleApp = () => {
+ * 
+ *  const [activeMap, setActiveMap] = useState(null);
+ *  const [molecules, changeMolecules] = useReducer(itemReducer, initialMoleculesState);
+ *  const [maps, changeMaps] = useReducer(itemReducer, initialMapsState);
+ * 
+ *  const doClick = (evt) => { console.log('Click!') }
+ *  const exportMenuItem =  &lt;MenuItem key={'example-key'} id='example-menu-item' onClick={doClick}>
+ *                              Example extra menu
+ *                          &lt;/MenuItem>
+ * 
+ *  const moleculesRef = useRef(null);
+ *  const mapsRef = useRef(null);
+ *  const activeMapRef = useRef(null);
+ * 
+ *  moleculesRef.current = molecules;
+ *  mapsRef.current = maps;
+ *  activeMapRef.current = activeMap;
+ * 
+ *  const forwardCollectedControls = (controls) => { console.log(controls) }
+ * 
+ *  return &lt;MoorhenContainer
+ *    moleculesRef={moleculesRef}
+ *    mapsRef={mapsRef}
+ *    allowScripting={false}
+ *    extraFileMenuItems={[exportMenuItem]}
+ *    forwardControls={forwardCollectedControls}
+ *  />
+ * }
+ */
+export const MoorhenContainer = (props: moorhen.ContainerProps) => {
+    const innerGlRef = useRef&lt;null | webGL.MGWebGL>(null)
+    const innerTimeCapsuleRef = useRef&lt;null | moorhen.TimeCapsule>(null);
+    const innnerCommandCentre = useRef&lt;null | moorhen.CommandCentre>(null)
+    const innerMoleculesRef = useRef&lt;null | moorhen.Molecule[]>(null)
+    const innerMapsRef = useRef&lt;null | moorhen.Map[]>(null)
+    const innerActiveMapRef = useRef&lt;null | moorhen.Map>(null)
+    const innerConsoleDivRef = useRef&lt;null | HTMLDivElement>(null)
+    const innerLastHoveredAtom = useRef&lt;null | moorhen.HoveredAtom>(null)
+    const innerPrevActiveMoleculeRef = useRef&lt;null |  moorhen.Molecule>(null)
+    const innerContext = useContext&lt;undefined | moorhen.Context>(MoorhenContext);
+    const [innerActiveMap, setInnerActiveMap] = useState&lt;null | moorhen.Map>(null)
+    const [innerActiveMolecule, setInnerActiveMolecule] = useState&lt;null|  moorhen.Molecule>(null)
+    const [innerHoveredAtom, setInnerHoveredAtom] = useState&lt;null | moorhen.HoveredAtom>({ molecule: null, cid: null })
+    const [innerConsoleMessage, setInnerConsoleMessage] = useState&lt;string>("")
+    const [innerCursorStyle, setInnerCursorStyle] = useState&lt;string>("default")
+    const [innerBusy, setInnerBusy] = useState&lt;boolean>(false)
+    const [innerWindowWidth, setInnerWindowWidth] = useState&lt;number>(window.innerWidth)
+    const [innerWindowHeight, setInnerWindowHeight] = useState&lt;number>(window.innerHeight)
+    const [innerCommandHistory, innerDispatchHistoryReducer] = useReducer(historyReducer, initialHistoryState)
+    const [innerMolecules, innerChangeMolecules] = useReducer(itemReducer, initialMoleculesState)
+    const [innerMaps, innerChangeMaps] = useReducer(itemReducer, initialMapsState)
+    const [innerBackgroundColor, setInnerBackgroundColor] = useState&lt;[number, number, number, number]>([1, 1, 1, 1])
+    const [innerAppTitle, setInnerAppTitle] = useState&lt;string>('Moorhen')
+    const [innerCootInitialized, setInnerCootInitialized] = useState&lt;boolean>(false)
+    const [innerTheme, setInnerTheme] = useState&lt;string>("flatly")
+    const [innerShowToast, setInnerShowToast] = useState&lt;boolean>(false)
+    const [innerToastContent, setInnerToastContent] = useState&lt;null | JSX.Element>(null)
+    const [innerShowColourRulesToast, setInnerShowColourRulesToast] = useState&lt;boolean>(false)
+    const [innerAvailableFonts, setInnerAvailableFonts] = useState&lt;string[]>([])
+    
+    innerMoleculesRef.current = innerMolecules as moorhen.Molecule[]
+    innerMapsRef.current = innerMaps as moorhen.Map[]
+    innerActiveMapRef.current = innerActiveMap
+    
+    useEffect(() => {
+        let head = document.head
+        let style: any = document.createElement("link")
+        style.href = `${props.urlPrefix}/baby-gru/moorhen.css`
+        style.rel = "stylesheet"
+        style.async = true
+        style.type = 'text/css'
+        head.appendChild(style)
+        
+    }, [])
+
+    useEffect(() => {
+        const fetchAvailableFonts = async () => {
+            await document.fonts.ready;
+            const fontAvailable: string[] = []
+            allFontsSet.forEach((font: string) => {
+                if (document.fonts.check(`12px "${font}"`)) {
+                    fontAvailable.push(font);
+                }    
+            })
+            setInnerAvailableFonts(Array.from(fontAvailable))  
+        }
+
+        fetchAvailableFonts()
+
+    }, [])
+
+    const innerStatesMap: moorhen.ContainerStates = {
+        glRef: innerGlRef, timeCapsuleRef: innerTimeCapsuleRef, commandCentre: innnerCommandCentre,
+        moleculesRef: innerMoleculesRef, mapsRef: innerMapsRef, activeMapRef: innerActiveMapRef,
+        consoleDivRef: innerConsoleDivRef, lastHoveredAtom: innerLastHoveredAtom, 
+        prevActiveMoleculeRef: innerPrevActiveMoleculeRef, context: innerContext,
+        activeMap: innerActiveMap, setActiveMap: setInnerActiveMap, activeMolecule: innerActiveMolecule,
+        setActiveMolecule: setInnerActiveMolecule, hoveredAtom: innerHoveredAtom, setHoveredAtom: setInnerHoveredAtom,
+        consoleMessage: innerConsoleMessage, setConsoleMessage: setInnerConsoleMessage, cursorStyle: innerCursorStyle,
+        setCursorStyle: setInnerCursorStyle, busy: innerBusy, setBusy: setInnerBusy, windowHeight: innerWindowHeight, 
+        windowWidth: innerWindowWidth, setWindowWidth: setInnerWindowWidth, maps: innerMaps as moorhen.Map[],
+        changeMaps: innerChangeMaps, setWindowHeight: setInnerWindowHeight, commandHistory: innerCommandHistory, 
+        dispatchHistoryReducer: innerDispatchHistoryReducer, molecules: innerMolecules as moorhen.Molecule[],
+        changeMolecules: innerChangeMolecules, backgroundColor: innerBackgroundColor, setBackgroundColor: setInnerBackgroundColor,
+        appTitle: innerAppTitle, setAppTitle: setInnerAppTitle, cootInitialized: innerCootInitialized, 
+        setCootInitialized: setInnerCootInitialized, theme: innerTheme, setTheme: setInnerTheme,
+        showToast: innerShowToast, setShowToast: setInnerShowToast, toastContent: innerToastContent, 
+        setToastContent: setInnerToastContent, showColourRulesToast: innerShowColourRulesToast, 
+        setShowColourRulesToast: setInnerShowColourRulesToast, availableFonts: innerAvailableFonts,
+        setAvailableFonts: setInnerAvailableFonts,
+    }
+
+    let states = {} as moorhen.ContainerStates
+    Object.keys(innerStatesMap).forEach(key => {
+        states[key] = props[key] ? props[key] : innerStatesMap[key]
+    })
+
+    const { glRef, timeCapsuleRef, commandCentre, moleculesRef, mapsRef, activeMapRef,
+        consoleDivRef, lastHoveredAtom, prevActiveMoleculeRef, context, activeMap, 
+        setActiveMap, activeMolecule, setActiveMolecule, hoveredAtom, setHoveredAtom,
+        consoleMessage, setConsoleMessage, cursorStyle, setCursorStyle, busy, setBusy,
+        windowWidth, setWindowWidth, windowHeight, setWindowHeight, commandHistory, 
+        dispatchHistoryReducer, molecules, changeMolecules, maps, changeMaps,
+        backgroundColor, setBackgroundColor, availableFonts, setAvailableFonts,
+        appTitle, setAppTitle, cootInitialized, setCootInitialized, theme, setTheme,
+        showToast, setShowToast, toastContent, setToastContent, showColourRulesToast,
+        setShowColourRulesToast
+    } = states
+
+    const {
+        disableFileUploads, urlPrefix, extraNavBarMenus, viewOnly, extraDraggableModals, 
+        monomerLibraryPath, forwardControls, extraFileMenuItems, allowScripting, backupStorageInstance,
+        extraEditMenuItems, aceDRGInstance, extraCalculateMenuItems, setMoorhenDimensions
+    } = props
+    
+    const setWindowDimensions = () => {
+        if (setMoorhenDimensions) {
+            const [ width, height ] = setMoorhenDimensions()
+            setWindowWidth(width)
+            setWindowHeight(height)
+        } else {
+            setWindowWidth(window.innerWidth)
+            setWindowHeight(window.innerHeight)
+        }
+    }
+
+    //The purpose here is to return the functions that define and control MoorhenContainer state to a 
+    //containing React component
+    useEffect(() => {
+        if (cootInitialized &amp;&amp; forwardControls) {
+            forwardControls(collectedProps)
+        }
+    }, [cootInitialized, forwardControls])
+
+    useEffect(() => {
+        const initTimeCapsule = async () => {
+            if (context.isMounted) {
+                timeCapsuleRef.current = new MoorhenTimeCapsule(moleculesRef, mapsRef, activeMapRef, glRef, context)
+                timeCapsuleRef.current.storageInstance = backupStorageInstance
+                timeCapsuleRef.current.maxBackupCount = context.maxBackupCount
+                timeCapsuleRef.current.modificationCountBackupThreshold = context.modificationCountBackupThreshold
+                await timeCapsuleRef.current.init()
+            }
+        }
+        initTimeCapsule()
+    }, [context.isMounted])
+    
+    useEffect(() => {
+        if (cootInitialized &amp;&amp; context.isMounted) {
+            const shortCut = JSON.parse(context.shortCuts as string).show_shortcuts
+            setToastContent(
+                &lt;h4 style={{margin: 0}}>
+                    {`Press ${getTooltipShortcutLabel(shortCut)} to show help`}
+                &lt;/h4>
+            )
+        }
+    }, [cootInitialized, context.isMounted])
+
+    useEffect(() => {
+        if (context.isMounted &amp;&amp; context.defaultBackgroundColor !== backgroundColor) {
+            setBackgroundColor(context.defaultBackgroundColor)
+        }
+        
+    }, [context.isMounted])
+
+    useEffect(() => {
+        if (!context.isMounted) {
+            return
+        }
+        
+        let head = document.head;
+        let style: any = document.createElement("link");
+        const isDark = isDarkBackground(...backgroundColor)
+
+        if (isDark) {
+            style.href = `${urlPrefix}/baby-gru/darkly.css`
+            setTheme("darkly")
+        } else {
+            style.href = `${urlPrefix}/baby-gru/flatly.css`
+            setTheme("flatly")
+        }
+        
+        if (context.defaultBackgroundColor !== backgroundColor) {
+            context.setDefaultBackgroundColor(backgroundColor)
+        }
+
+        style.rel = "stylesheet";
+        style.async = true
+        style.type = 'text/css'
+
+        head.appendChild(style);
+        return () => { head.removeChild(style); }
+
+
+    }, [backgroundColor])
+
+    useEffect(() => {
+        async function setMakeBackupsAPI() {
+            await commandCentre.current.cootCommand({
+                command: 'set_make_backups',
+                commandArgs: [context.makeBackups],
+                returnType: "status"
+            })
+        }
+
+        if (commandCentre.current &amp;&amp; context.makeBackups !== null &amp;&amp; cootInitialized) {
+            setMakeBackupsAPI()
+        }
+
+    }, [context.makeBackups, cootInitialized])
+
+    useEffect(() => {
+        async function setDrawMissingLoopAPI() {
+            await commandCentre.current.cootCommand({
+                command: 'set_draw_missing_residue_loops',
+                commandArgs: [context.drawMissingLoops],
+                returnType: "status"
+            })
+        }
+
+        if (commandCentre.current &amp;&amp; context.drawMissingLoops !== null &amp;&amp; cootInitialized) {
+            setDrawMissingLoopAPI()
+        }
+
+    }, [context.drawMissingLoops, cootInitialized])
+
+    useEffect(() => {
+        setWindowDimensions()
+        commandCentre.current = new MoorhenCommandCentre({
+            onConsoleChanged: (newMessage) => {
+                //setConsoleMessage(newMessage)
+            },
+            onActiveMessagesChanged: (newActiveMessages) => {
+                setBusy(newActiveMessages.length !== 0)
+            },
+            onNewCommand: (newCommand) => {
+                dispatchHistoryReducer({ action: "Add", item: newCommand })
+            },
+            onCootInitialized: () => {
+                setCootInitialized(true)
+            },
+            urlPrefix: urlPrefix
+        })
+        window.addEventListener('resize', setWindowDimensions)
+        return () => {
+            window.removeEventListener('resize', setWindowDimensions)
+            commandCentre.current.unhook()
+        }
+    }, [])
+
+    useEffect(() => {
+        if(consoleDivRef.current !== null) {
+            consoleDivRef.current.scrollTop = consoleDivRef.current.scrollHeight;
+        }
+    }, [consoleMessage])
+
+    const onAtomHovered = useCallback((identifier: { buffer: { id: string; }; atom: { label: string; }; }) => {
+        if (identifier == null) {
+            if (lastHoveredAtom.current !== null &amp;&amp; lastHoveredAtom.current.molecule !== null) {
+                setHoveredAtom({ molecule: null, cid: null })
+            }
+        }
+        else {
+            molecules.forEach(molecule => {
+                if (molecule.buffersInclude(identifier.buffer)) {
+                    if (molecule !== hoveredAtom.molecule || identifier.atom.label !== hoveredAtom.cid) {
+                        setHoveredAtom({ molecule: molecule, cid: identifier.atom.label })
+                    }
+                }
+            })
+        }
+    }, [molecules])
+
+    useEffect(() => {
+        if (toastContent) setShowToast(true)
+    }, [toastContent])
+
+    //Make this so that the keyPress returns true or false, depending on whether mgWebGL is to continue processing event
+    const onKeyPress = useCallback((event: KeyboardEvent) => {
+        return babyGruKeyPress(event, collectedProps, JSON.parse(context.shortCuts as string))
+    }, [molecules, activeMolecule, activeMap, hoveredAtom, viewOnly, context])
+
+    useEffect(() => {
+        if (hoveredAtom &amp;&amp; hoveredAtom.molecule &amp;&amp; hoveredAtom.cid) {
+            if (lastHoveredAtom.current == null ||
+                hoveredAtom.molecule !== lastHoveredAtom.current.molecule ||
+                hoveredAtom.cid !== lastHoveredAtom.current.cid
+            ) {
+                hoveredAtom.molecule.drawHover(hoveredAtom.cid)
+                //if we have changed molecule, might have to clean up hover display item of previous molecule
+            }
+        }
+
+        if (lastHoveredAtom.current !== null &amp;&amp;
+            lastHoveredAtom.current.molecule !== null &amp;&amp;
+            lastHoveredAtom.current.molecule !== hoveredAtom.molecule
+        ) {
+            lastHoveredAtom.current.molecule.clearBuffersOfStyle("hover")
+        }
+
+        lastHoveredAtom.current = hoveredAtom
+    }, [hoveredAtom])
+
+    useEffect(() => {
+        glResize()
+    }, [windowHeight, windowWidth])
+
+    useEffect(() => {
+        if (activeMap &amp;&amp; commandCentre.current) {
+            commandCentre.current.cootCommand({
+                returnType: "status",
+                command: "set_imol_refinement_map",
+                commandArgs: [activeMap.molNo]
+            })
+        }
+    }, [activeMap])
+
+    useEffect(() => {
+        function resetActiveGL() {
+            prevActiveMoleculeRef.current = activeMolecule;
+            if (activeMolecule)
+                glRef.current.setActiveMolecule(activeMolecule)
+            else
+                glRef.current.setActiveMolecule(null)
+        }
+        if (prevActiveMoleculeRef.current) {
+            prevActiveMoleculeRef.current.applyTransform().then(() => resetActiveGL())
+        } else {
+            resetActiveGL()
+        }
+    }, [activeMolecule])
+
+    const glResize = () => {
+        glRef.current.resize(windowWidth, windowHeight)
+        glRef.current.drawScene()
+    }
+
+    const webGLWidth = () => {
+        return windowWidth
+    }
+
+    const webGLHeight = () => {
+        return windowHeight
+    }
+
+    const isDark = isDarkBackground(...backgroundColor)
+
+    const collectedProps: moorhen.Controls = {
+        molecules, changeMolecules, appTitle, setAppTitle, maps, changeMaps, glRef, activeMolecule, setActiveMolecule,
+        activeMap, setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor, toastContent, 
+        setToastContent, hoveredAtom, setHoveredAtom, showToast, setShowToast, windowWidth, windowHeight, showColourRulesToast,
+        timeCapsuleRef, setShowColourRulesToast, isDark, disableFileUploads, urlPrefix, viewOnly,
+        extraNavBarMenus, monomerLibraryPath, moleculesRef, extraFileMenuItems, mapsRef, allowScripting, extraCalculateMenuItems,
+        extraEditMenuItems, extraDraggableModals, aceDRGInstance, availableFonts, ...context
+    }
+
+    return &lt;> 
+    &lt;div>
+        &lt;Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={!cootInitialized}>
+            &lt;Spinner animation="border" style={{ marginRight: '0.5rem' }}/>
+            &lt;span>Starting moorhen...&lt;/span>
+        &lt;/Backdrop>
+        
+        {!viewOnly &amp;&amp; &lt;MoorhenNavBar {...collectedProps} busy={busy}/>}
+        
+    &lt;/div>
+    
+    &lt;Container fluid className={`baby-gru ${theme}`}>
+        &lt;Row>
+            &lt;Col style={{ paddingLeft: '0', paddingRight: '0' }}>
+                &lt;div
+                    id="moorhen-canvas-background"
+                    style={{
+                        backgroundColor: `rgba(
+                            ${255 * backgroundColor[0]},
+                            ${255 * backgroundColor[1]},
+                            ${255 * backgroundColor[2]}, 
+                            ${backgroundColor[3]})`,
+                        cursor: cursorStyle, margin: 0, padding: 0, height: Math.floor(windowHeight),
+                    }}>
+                    &lt;MoorhenWebMG
+                        ref={glRef}
+                        monomerLibraryPath={monomerLibraryPath}
+                        timeCapsuleRef={timeCapsuleRef}
+                        commandCentre={commandCentre}
+                        molecules={molecules}
+                        changeMolecules={changeMolecules}
+                        maps={maps}
+                        changeMaps={changeMaps}
+                        width={webGLWidth}
+                        height={webGLHeight}
+                        backgroundColor={backgroundColor}
+                        setBackgroundColor={setBackgroundColor}
+                        isDark={isDark}
+                        onAtomHovered={onAtomHovered}
+                        onKeyPress={onKeyPress}
+                        hoveredAtom={hoveredAtom}
+                        context={context}
+                        setShowColourRulesToast={setShowColourRulesToast}
+                        showColourRulesToast={showColourRulesToast}
+                        windowHeight={windowHeight}
+                        windowWidth={windowWidth}
+                        urlPrefix={urlPrefix}
+                        activeMap={activeMap}
+                        viewOnly={viewOnly}
+                        extraDraggableModals={extraDraggableModals}
+                    />
+                &lt;/div>
+            &lt;/Col>
+        &lt;/Row>
+        &lt;ToastContainer style={{ marginTop: "5rem", maxWidth: '20rem' }} position='top-center' >
+            &lt;Toast className='shadow-none hide-scrolling' onClose={() => setShowToast(false)} autohide={true} delay={5000} show={showToast} style={{overflowY: 'scroll', maxHeight: convertViewtoPx(80, windowHeight)}}>
+                &lt;Toast.Header className="stop-scrolling" closeButton={false} style={{justifyContent:'center'}}>
+                    {toastContent}
+                &lt;/Toast.Header>
+            &lt;/Toast>
+        &lt;/ToastContainer>
+    &lt;/Container>
+    &lt;/>
+}
+
+MoorhenContainer.defaultProps = {
+    urlPrefix: '.',
+    monomerLibraryPath: './baby-gru/monomers',
+    forwardControls: () => {},
+    setMoorhenDimensions: null,
+    disableFileUploads: false,
+    extraNavBarMenus: [],
+    extraFileMenuItems: [],
+    extraEditMenuItems: [],
+    extraCalculateMenuItems: [],
+    extraDraggableModals: [],
+    viewOnly: false,
+    allowScripting: true,
+    backupStorageInstance: createLocalStorageInstance('Moorhen-TimeCapsule'),
+    aceDRGInstance: null
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+            </div>
+            
+            <footer class="footer">
+                <div class="content has-text-centered">
+                    <p>Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 4.0.2</a></p>
+                    <p class="sidebar-created-by">
+                        <a href="https://github.com/SoftwareBrothers/better-docs" target="_blank">BetterDocs theme</a> provided with <i class="fas fa-heart"></i> by
+                        <a href="http://softwarebrothers.co" target="_blank">SoftwareBrothers - JavaScript Development Agency</a>
+                    </p>
+                </div>
+            </footer>
+            
+        </div>
+        <div id="side-nav" class="side-nav">
+        </div>
+    </div>
+<script src="scripts/app.min.js"></script>
+<script>PR.prettyPrint();</script>
+<script src="scripts/linenumber.js"> </script>
+
+<script src="scripts/search.js"> </script>
+
+
+</body>
+</html>
