@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useReducer, useCallback } from "react";
+import { useEffect, useState, useRef, useReducer, useCallback, useImperativeHandle, forwardRef } from 'react';
 import { Card, Row, Col, Accordion, Stack } from "react-bootstrap";
 import { doDownload, sequenceIsValid } from '../../utils/MoorhenUtils';
 import { isDarkBackground } from '../../WebGLgComponents/mgWebGL'
@@ -39,7 +39,7 @@ export type clickedResidueType = {
     seqNum: number;
 }
 
-export const MoorhenMoleculeCard = (props: MoorhenMoleculeCardPropsInterface) => {
+export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInterface>((props, cardRef) => {
     const busyRedrawing = useRef<boolean>(false)
     const isDirty = useRef<boolean>(false)
     const [showState, changeShowState] = useReducer(showStateReducer, initialShowState)
@@ -55,6 +55,13 @@ export const MoorhenMoleculeCard = (props: MoorhenMoleculeCardPropsInterface) =>
     const [surfaceRadius, setSurfaceRadius] = useState<number>(5.0)
     const [surfaceGridScale, setSurfaceGridScale] = useState<number>(0.7)
     const [symmetryRadius, setSymmetryRadius] = useState<number>(25.0)
+
+    useImperativeHandle(cardRef, () => ({
+        forceIsCollapsed: (value: boolean) => { 
+            setIsCollapsed(value)
+         }
+    }), 
+    [setIsCollapsed])
 
     const bondSettingsProps = {
         bondWidth, setBondWidth, atomRadiusBondRatio,
@@ -411,7 +418,7 @@ export const MoorhenMoleculeCard = (props: MoorhenMoleculeCardPropsInterface) =>
 
     const handleProps = { handleCentering, handleCopyFragment, handleDownload, handleRedo, handleUndo, handleResidueRangeRefinement, handleVisibility }
 
-    return <Card className="px-0" style={{ marginBottom: '0.5rem', padding: '0' }} key={props.molecule.molNo}>
+    return <Card ref={cardRef} className="px-0" style={{ marginBottom: '0.5rem', padding: '0' }} key={props.molecule.molNo}>
         <Card.Header style={{ padding: '0.1rem' }}>
             <Stack gap={2} direction='horizontal'>
                 <Col className='align-items-center' style={{ display: 'flex', justifyContent: 'left', color: props.isDark ? 'white' : 'black'}}>
@@ -506,7 +513,7 @@ export const MoorhenMoleculeCard = (props: MoorhenMoleculeCardPropsInterface) =>
             </Stack>
         </Card.Body>
     </Card >
-}
+})
 
 type RepresetationCheckboxPropsType = {
     showState: { [key: string]: boolean };
