@@ -22,6 +22,21 @@ const updateStoredContext = async (key: string, value: any): Promise<void> => {
     }
 }
 
+/**
+ * A function use to get the default user-defined preferences and other context
+ * values.
+ * @returns {moorhen.ContextValues} An object containing the default context values 
+ * for the current version.
+ * @example
+ * import { getDefaultContextValues } from "moorhen";
+ * 
+ * const storedVersion = await localforage.getItem('version');
+ * const defaultValues = getDefaultContextValues();    
+ * 
+ * if (storedVersion !== defaultValues.version) {
+ *  localforage.setItem('version', defaultValues.version);
+ * }
+ */
 const getDefaultContextValues = (): moorhen.ContextValues => {
     return {
         version: 'v27',
@@ -30,7 +45,7 @@ const getDefaultContextValues = (): moorhen.ContextValues => {
         enableTimeCapsule: true, 
         defaultExpandDisplayCards: true,
         defaultMapLitLines: false,
-        enableRefineAfterMod: true,
+        enableRefineAfterMod: false,
         drawCrosshairs: true,
         drawAxes: false,
         drawFPS: false,
@@ -249,6 +264,49 @@ const getDefaultContextValues = (): moorhen.ContextValues => {
 
 const MoorhenContext = createContext(undefined);
 
+/**
+ * A context provider storing state variables used throughout Moorhen. It will store these states
+ * in the local storage so that they persist across different sessions.
+ * @param children - The Moorhen App
+ * @property {boolean} isMounted - Indicates if the states have been already loaded from local storage.
+ * @property {number[]} [defaultBackgroundColor=[1, 1, 1, 1]] - The default background colour used when starting the app.
+ * @property {boolean} [enableTimeCapsule=true] - Indicates if session backups are enabled by default
+ * @property {boolean} [atomLabelDepthMode=true] - Indicates if the atom label depth mode is active
+ * @property {boolean} [defaultExpandDisplayCards=false] - Indicates whether molecule and map cards should be expanded on load
+ * @property {string} shortCuts - A string with a JSON structure containing the user defined keyboard shortcuts
+ * @property {boolean} [defaultMapLitLines=false] - Indicates if maps should be rendered using lit lines by default
+ * @property {boolean} [enableRefineAfterMod=false] - Indicates if triple refinement should be automatically done after every modification 
+ * @property {number} [mouseSensitivity=0.3] - The current mouse sensitivity used to pan/rotate the view
+ * @property {number} [zoomWheelSensitivityFactor=1.0] - The current sensitivity used when using the mouse wheel to zoom the view
+ * @property {number} [contourWheelSensitivityFactor=0.05] - The current sensitivity used when using the mouse wheel to change map contour level
+ * @property {boolean} [drawCrosshairs=true] - Indicates if the crosshairs should be drawn
+ * @property {boolean} [drawAxes=true] - Indicates if the x/y/z axes should be drawn
+ * @property {boolean} [drawFPS=true] - Indicates if the current FPS should be calculated and shown
+ * @property {boolean} [drawMissingLoops=true] - Indicates if missing residues should be drawn using dashed lines
+ * @property {boolean} [drawInteractions=true] - Indicates if residue interactions should be drawn
+ * @property {boolean} [doPerspectiveProjection=false] - Indicates if perspective projection should be used
+ * @property {boolean} [useOffScreenBuffers=false] - Indicates if off screen buffers should be used
+ * @property {boolean} [depthBlurDepth=false] - Indicates if depth blur should be used
+ * @property {boolean} [doShadowDepthDebug=false] - Indicates if shadow depth blur should be used
+ * @property {boolean} [doShadow=false] - Indicates if shadows should be drawn
+ * @property {boolean} [doOutline=false] - Indicates if molecule should be drawn
+ * @property {string} [GLLabelsFontFamily='Arial'] - The font family used in labels
+ * @property {number} [GLLabelsFontSize=18] - The font size used in labels
+ * @property {boolean} [doSpinTest=false] - Indicates if a spin test is to be carried out
+ * @property {number} [mapLineWidth=0.75] - The default map line width
+ * @property {boolean} [makeBackups=true] - Indicates if automatic session backups are active
+ * @property {boolean} [showShortcutToast=false] - Indicates if a toastshould be shown on key press when a shortcut is activated
+ * @property {boolean} [defaultMapSurface=false] - Indicates if maps should be shown as surfaces by default
+ * @property {number} [defaultBondSmoothness=1] - The default smoothness level used when rendering molecules
+ * @property {boolean} [showScoresToast=false] - Indicates if a toast with scores should be shown after connecting molecules and maps for map updates
+ * @property {boolean} [shortcutOnHoveredAtom=false] - Indicates if shortcuts should be performed on the atom being hovered instead of the one in the centre of view
+ * @property {boolean} [resetClippingFogging=false] - Indicates if clipping and fogging is to be reset when the zoom level changes
+ * @property {boolean} [clipCap=false] - Activates clip clap spheres
+ * @property {number} [maxBackupCount=10] - The maximum number of session backups stored in the local storage
+ * @property {number} [modificationCountBackupThreshold=5] - The number of modifications that will trigger an automatic session backup
+ * @property {string[]} [defaultUpdatingScores=['Rfree', 'Rfactor', 'Moorhen Points']] - A list of the scores shown after connecting molecules and maps for map updates
+ * @property {boolean} [devMode=false] - Indicates if developer mode is active
+ */
 const MoorhenContextProvider = ({ children }) => {
     const [isMounted, setIsMounted] = useState<boolean>(false)
     const [defaultBackgroundColor, setDefaultBackgroundColor] = useState<null | [number, number, number, number]>(null)
