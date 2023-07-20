@@ -17,6 +17,59 @@ const initialMoleculesState: moorhen.Molecule[] = []
 
 const initialMapsState: moorhen.Map[] = []
 
+/**
+ * A container for the Moorhen app
+ * @property {string} [urlPrefix='.'] - The root url used to load sources from public folder
+ * @property {string} [monomerLibraryPath='./baby-gru/monomers'] - A string with the path to the monomer library, relative to the root of the app
+ * @property {function} forwardControls - Callback executed when coot is initialised and will return an object of type moorhen.Controls
+ * @property {function} setMoorhenDimensions - Callback executed on window resize. Return type is an array of two numbers [width, height]
+ * @property {boolean} [disableFileUploads=false] - Indicates if file uploads should b disabled
+ * @property {JSX.Element[]} extraNavBarMenus - A list with additional menu items rendered under the navigation menu
+ * @property {JSX.Element[]} extraFileMenuItems - A list with additional menu items rendered under the "File" menu
+ * @property {JSX.Element[]} extraEditMenuItems - A list with additional menu items rendered under the "Edit" menu
+ * @property {JSX.Element[]} extraCalculateMenuItems - A list with additional menu items rendered under the "Calculate" menu
+ * @property {JSX.Element[]} extraDraggableModals - A list with additional draggable modals to be rendered
+ * @property {boolean} [viewOnly=false] - Indicates if Moorhen should work in view-only mode
+ * @property {boolean} [allowScripting=true] - Indicates if the scrpting interface is enabled
+ * @property {moorhen.LocalStorageInstance} backupStorageInstance - An interface used by the moorhen container to store session backups
+ * @property {moorhen.AceDRGInstance} aceDRGInstance - An interface used by the moorhen container to execute aceDRG jobs
+ * @example
+ * import { useState, useReducer, useRef } from "react";
+ * import { MoorhenContainer, itemReducer } from "moorhen";
+ *
+ * const initialMoleculesState = []
+ * const initialMapsState = []
+ * 
+ * const ExampleApp = () => {
+ * 
+ *  const [activeMap, setActiveMap] = useState(null);
+ *  const [molecules, changeMolecules] = useReducer(itemReducer, initialMoleculesState);
+ *  const [maps, changeMaps] = useReducer(itemReducer, initialMapsState);
+ * 
+ *  const doClick = (evt) => { console.log('Click!') }
+ *  const exportMenuItem =  <MenuItem key={'example-key'} id='example-menu-item' onClick={doClick}>
+ *                              Example extra menu
+ *                          </MenuItem>
+ * 
+ *  const moleculesRef = useRef(null);
+ *  const mapsRef = useRef(null);
+ *  const activeMapRef = useRef(null);
+ * 
+ *  moleculesRef.current = molecules;
+ *  mapsRef.current = maps;
+ *  activeMapRef.current = activeMap;
+ * 
+ *  const forwardCollectedControls = (controls) => { console.log(controls) }
+ * 
+ *  return <MoorhenContainer
+ *    moleculesRef={moleculesRef}
+ *    mapsRef={mapsRef}
+ *    allowScripting={false}
+ *    extraFileMenuItems={[exportMenuItem]}
+ *    forwardControls={forwardCollectedControls}
+ *  />
+ * }
+ */
 export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const innerGlRef = useRef<null | webGL.MGWebGL>(null)
     const innerTimeCapsuleRef = useRef<null | moorhen.TimeCapsule>(null);

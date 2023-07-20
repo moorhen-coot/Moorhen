@@ -5,14 +5,13 @@ import { moorhen } from "../types/moorhen"
  * A command centre used to communicate between Moorhen and a web worker running an instance of the 
  * headless libcoot API
  * @property {Worker} cootWorker - A web worker holding a headless libcoot instance
- * @method cootCommand - Runs a coot command
- * @param {moorhen.cootCommandKwargs} kwargs - An object describing the command that will be executed and its arguments
  * @constructor
  * @param {string} urlPrefix - The root url used to find the baby-gru/CootWorker.js worker file
  * @param {function} onConsoleChanged - Callback executed whenever the worker prints a message to the console
  * @param {function} onNewCommand - Callback executed whenever a new command is issued to the web worker
  * @param {function} onActiveMessagesChanged  - Callback executed whenever a new message is received from the worker
  * @param {function} onCootInitialized - Callback executed once after coot is initialised in the web worker
+ * @property {function} cootCommand - Runs a coot command
  * @example
  * import { MoorhenCommandCentre } from "moorhen";
  * 
