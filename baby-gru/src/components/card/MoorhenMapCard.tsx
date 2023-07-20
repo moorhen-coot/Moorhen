@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback, useMemo, Fragment } from "react";
+import { forwardRef, useImperativeHandle, useEffect, useState, useRef, useCallback, useMemo, Fragment } from "react";
 import { Card, Form, Button, Col, DropdownButton, Stack, Dropdown, OverlayTrigger, ToggleButton } from "react-bootstrap";
 import { doDownload } from '../../utils/MoorhenUtils';
 import { getNameLabel } from "./cardUtils"
@@ -34,7 +34,7 @@ interface MoorhenMapCardPropsInterface extends moorhen.Controls {
     setCurrentDropdownMolNo: React.Dispatch<React.SetStateAction<number>>;
 }
 
-export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
+export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((props, cardRef) => {
     const [cootContour, setCootContour] = useState<boolean>(true)
     const [mapRadius, setMapRadius] = useState<number>(props.initialRadius)
     const [mapContourLevel, setMapContourLevel] = useState<number>(props.initialContour)
@@ -50,6 +50,13 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
     const nextOrigin = useRef<number[]>([])
     const busyContouring = useRef<boolean>(false)
     const isDirty = useRef<boolean>(false)
+
+    useImperativeHandle(cardRef, () => ({
+        forceIsCollapsed: (value: boolean) => { 
+            setIsCollapsed(value)
+         }
+    }), 
+    [setIsCollapsed])
 
     useEffect(() => {
         props.map.fetchMapRmsd()
@@ -396,7 +403,7 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
                 </OverlayTrigger>
     }
 
-    return <Card className="px-0" style={{ marginBottom: '0.5rem', padding: '0' }} key={props.map.molNo}>
+    return <Card ref={cardRef} className="px-0" style={{ marginBottom: '0.5rem', padding: '0' }} key={props.map.molNo}>
         <Card.Header style={{ padding: '0.1rem' }}>
             <Stack gap={2} direction='horizontal'>
                 <Col className='align-items-center' style={{ display: 'flex', justifyContent: 'left', color: props.isDark ? 'white' : 'black' }}>
@@ -459,5 +466,4 @@ export const MoorhenMapCard = (props: MoorhenMapCardPropsInterface) => {
             </Stack>
         </Card.Body>
     </Card >
-}
-
+})

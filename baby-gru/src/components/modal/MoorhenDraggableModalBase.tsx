@@ -10,6 +10,7 @@ export const MoorhenDraggableModalBase = (props: {
     top?: string;
     left?: string;
     height?: number;
+    additionalHeaderButtons?: JSX.Element[];
     headerTitle: string;
     show: boolean;
     setShow: React.Dispatch<React.SetStateAction<boolean>>;
@@ -34,6 +35,7 @@ export const MoorhenDraggableModalBase = (props: {
                 <Card.Header className="handle" style={{ justifyContent: 'space-between', display: 'flex', cursor: 'move', alignItems:'center'}}>
                     {props.headerTitle}
                     <Stack gap={2} direction="horizontal">
+                        {props.additionalHeaderButtons?.map(button => button)}
                         <Button variant='white' style={{margin: '0.1rem', padding: '0.1rem'}} onClick={() => setCollapse(!collapse)}>
                             {collapse ? <AddOutlined/> : <RemoveOutlined/>}
                         </Button>
@@ -55,4 +57,4 @@ export const MoorhenDraggableModalBase = (props: {
         </Draggable>
 }
 
-MoorhenDraggableModalBase.defaultProps = { additionalChildren: null, width: 35, height: 45, top: '5rem', left: '5rem', overflowY: 'scroll'}
+MoorhenDraggableModalBase.defaultProps = { additionalHeaderButtons:null, additionalChildren: null, width: 35, height: 45, top: '5rem', left: '5rem', overflowY: 'scroll'}
