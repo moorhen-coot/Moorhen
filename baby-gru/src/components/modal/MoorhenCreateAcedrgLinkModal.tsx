@@ -1,10 +1,9 @@
-import { useEffect, useRef, useState, useImperativeHandle, forwardRef } from "react";
+import { useEffect, useRef, useState, useImperativeHandle, forwardRef } from 'react';
 import { cidToSpec } from "../../utils/MoorhenUtils";
-import Draggable from "react-draggable";
 import { Button, Card, Dropdown, Form, InputGroup, Row, Spinner, SplitButton, Stack } from "react-bootstrap";
-import { Backdrop, IconButton, TextField } from "@mui/material";
-import { CloseOutlined } from "@mui/icons-material";
+import { Backdrop, TextField } from "@mui/material";
 import { moorhen } from "../../types/moorhen";
+import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
 
 type AceDRGtomPickerProps = {
     monomerLibraryPath: string;
@@ -23,6 +22,7 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
     const [changeAtomCharge, setChangeAtomCharge] = useState<boolean>(false)
     const [newAtomCharge, setNewAtomCharge] = useState<string>(null)
 
+    const selectedMolNoRef = useRef<number>(null)
     const selectedAtomValueRef = useRef<string>(null)
     const deleteAtomValueRef = useRef<boolean>(null)
     const deleteSelectedAtomValueRef = useRef<HTMLSelectElement | null>(null)
@@ -35,6 +35,7 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
 
     useImperativeHandle(ref, () => ({
         getFormData: (): moorhen.createCovLinkAtomInput => {return {
+            selectedMolNo: selectedMolNoRef.current,
             selectedAtom: selectedAtomValueRef.current,
             deleteAtom: deleteAtomValueRef.current,
             deleteSelectedAtom: deleteSelectedAtomValueRef.current?.value,
@@ -46,7 +47,7 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
             newBondOrder: newBondOrderValueRef.current?.value
         }}
     }), 
-    [selectedAtomValueRef, deleteAtomValueRef, deleteSelectedAtomValueRef, changeSelectedAtomChargeValueRef, changeSelectedBondOrderValueRef, changeAtomChargeValueRef, newAtomChargeValueRef, newBondOrderValueRef, changeBondOrderValueRef])
+    [selectedMolNoRef, selectedAtomValueRef, deleteAtomValueRef, deleteSelectedAtomValueRef, changeSelectedAtomChargeValueRef, changeSelectedBondOrderValueRef, changeAtomChargeValueRef, newAtomChargeValueRef, newBondOrderValueRef, changeBondOrderValueRef])
 
     const getBonds = async (chosenMolecule: moorhen.Molecule, chosenAtom: moorhen.ResidueSpec) => {
         const compId = chosenAtom.res_name
@@ -109,6 +110,7 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
         const chosenAtom = cidToSpec(evt.detail.atom.label)
         const chosenResidueCid = `/${chosenAtom.mol_no}/${chosenAtom.chain_id}/${chosenAtom.res_no}-${chosenAtom.res_no}/*`
         const [atoms, monomerBonds] = await Promise.all([chosenMolecule.gemmiAtomsForCid(chosenResidueCid), getBonds(chosenMolecule, chosenAtom)])
+        selectedMolNoRef.current = chosenMolecule.molNo
         setSelectedAtom(chosenAtom.cid)
         selectedAtomValueRef.current = chosenAtom.cid
         setMonomerAtoms(atoms)
@@ -220,32 +222,36 @@ const AceDRGtomPicker = forwardRef<any, AceDRGtomPickerProps>((props, ref) => {
 })
 
 export const MoorhenCreateAcedrgLinkModal = (props: {
-    showCreateAcedrgLinkModal: boolean;
-    setShowCreateAcedrgLinkModal: React.Dispatch<React.SetStateAction<boolean>>;
     molecules: moorhen.Molecule[];
     aceDRGInstance: moorhen.AceDRGInstance;
-    monomerLibraryPath: string;    
+    monomerLibraryPath: string;   
+    windowWidth: number;
+    windowHeight: number;
+    width: number;
+    show: boolean;
+    setShow: React.Dispatch<React.SetStateAction<boolean>>;
+ 
 }) => {
     
-    const [opacity, setOpacity] = useState<number>(1.0)
     const [awaitAtomClick, setAwaitAtomClick] = useState<number>(-1)
     const [errorMessage, setErrorMessage] = useState<string>('')
-    const draggableRef = useRef<HTMLDivElement>(null);
     const atomPickerOneRef = useRef(null)
     const atomPickerTwoRef = useRef(null)
 
     const handleCancel = () => {
-        props.setShowCreateAcedrgLinkModal(false)
+        props.setShow(false)
     }
 
     const handleSubmitToAcedrg = async () => {
         setErrorMessage('')
         const atomOneFormData = atomPickerOneRef.current.getFormData() as moorhen.createCovLinkAtomInput
         const atomTwoFormData = atomPickerTwoRef.current.getFormData() as moorhen.createCovLinkAtomInput
+        console.log(atomOneFormData)
+        console.log(atomTwoFormData)
         if (props.aceDRGInstance) {
             try {
                 await props.aceDRGInstance.createCovalentLink(atomOneFormData, atomTwoFormData)
-                props.setShowCreateAcedrgLinkModal(false)
+                props.setShow(false)
             } catch (err) {
                 console.log('Something went wrong while trying to run aceDRG...')
                 console.log(err)
@@ -254,39 +260,34 @@ export const MoorhenCreateAcedrgLinkModal = (props: {
         }
     }
 
-    return  props.showCreateAcedrgLinkModal ?
-        <Draggable nodeRef={draggableRef} handle=".handle">
-            <Card style={{position: 'absolute', width: '45rem', opacity: opacity, top: '25rem', left: '25rem'}} onMouseOver={() => setOpacity(1)} onMouseOut={() => setOpacity(0.5)}>
-            <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={awaitAtomClick !== -1}>
-            <Stack gap={2} direction='vertical'style={{justifyContent: 'center', alignItems: 'center'}}>
-                <Spinner animation="border" style={{ marginRight: '0.5rem' }}/>
-                <span>Click on an atom...</span>
-                <Button variant='danger' onClick={() => setAwaitAtomClick(-1)}>Cancel</Button>
-            </Stack>
-            </Backdrop>
-            <Card.Header ref={draggableRef} className='handle' style={{display: 'flex', alignItems: 'center', cursor: 'move', justifyContent: 'space-between'}}>
-                Create covalent link
-                <IconButton onClick={handleCancel}>
-                    <CloseOutlined/>
-                </IconButton>
-            </Card.Header>
-            <Card.Body style={{ alignItems: 'center', alignContent: 'center', justifyContent: 'center' }}>
-                <Stack direction='horizontal' gap={2}>
-                    <AceDRGtomPicker id={1} ref={atomPickerOneRef} awaitAtomClick={awaitAtomClick} setAwaitAtomClick={setAwaitAtomClick} {...props}/>
-                    <AceDRGtomPicker id={2} ref={atomPickerTwoRef} awaitAtomClick={awaitAtomClick} setAwaitAtomClick={setAwaitAtomClick} {...props}/>
-                </Stack>
-            </Card.Body>
-            <Card.Footer style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
-                <div style={{display: 'flex', alignItems: 'center', justifyContent: 'left', width: '60%'}}>
-                    <Form.Control type="text" readOnly={true} value={errorMessage}/>
-                </div>
-                <div style={{display: 'flex', alignItems: 'center', justifyContent: 'right'}}>
-                    <Button variant='primary' onClick={handleSubmitToAcedrg}>Run AceDRG</Button>
-                    <Button variant='danger' onClick={handleCancel} style={{marginLeft: '0.1rem'}}>Cancel</Button>
-                </div>
-            </Card.Footer>
-            </Card>
-        </Draggable>
-    : 
-    null
+    return <MoorhenDraggableModalBase 
+                headerTitle="Create covalent link"
+                additionalChildren={
+                    <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={awaitAtomClick !== -1}>
+                        <Stack gap={2} direction='vertical'style={{justifyContent: 'center', alignItems: 'center'}}>
+                            <Spinner animation="border" style={{ marginRight: '0.5rem' }}/>
+                            <span>Click on an atom...</span>
+                            <Button variant='danger' onClick={() => setAwaitAtomClick(-1)}>Cancel</Button>
+                        </Stack>
+                    </Backdrop>
+                }
+                body={
+                    <Stack direction='horizontal' gap={2} style={{display: 'flex', justifyContent: 'space-between'}}>
+                        <AceDRGtomPicker id={1} ref={atomPickerOneRef} awaitAtomClick={awaitAtomClick} setAwaitAtomClick={setAwaitAtomClick} {...props}/>
+                        <AceDRGtomPicker id={2} ref={atomPickerTwoRef} awaitAtomClick={awaitAtomClick} setAwaitAtomClick={setAwaitAtomClick} {...props}/>
+                    </Stack>
+                }
+                footer={
+                    <div style={{display: 'flex', justifyContent: 'space-between', width: '100%'}}>
+                    <div style={{display: 'flex', alignItems: 'center', justifyContent: 'left', width: '50%'}}>
+                        <Form.Control type="text" readOnly={true} value={errorMessage}/>
+                    </div>
+                    <div style={{display: 'flex', alignItems: 'center', justifyContent: 'right'}}>
+                        <Button variant='primary' onClick={handleSubmitToAcedrg}>Run AceDRG</Button>
+                        <Button variant='danger' onClick={handleCancel} style={{marginLeft: '0.1rem'}}>Cancel</Button>
+                    </div>
+                    </div>
+                }
+                {...props}
+            />
 }
