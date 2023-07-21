@@ -3,7 +3,6 @@ import { MenuItem } from '@mui/material'
 import { MoorhenContext } from "../../../src/utils/MoorhenContext"
 import { MoorhenContainer } from "../../../src/components/MoorhenContainer"
 import { itemReducer } from "../../../src/utils/MoorhenUtils"
-import { isDarkBackground } from "../../../src/WebGLgComponents/mgWebGL"
 import { MoorhenLegendToast } from './MoorhenLegendToast'
 import { moorhen } from "../../../src/types/moorhen";
 import { webGL } from "../../../src/types/mgWebGL";
@@ -32,8 +31,6 @@ export const MoorhenCloudApp = (props: MoorhenCloudAppPropsInterface) => {
     const mapsRef = useRef<moorhen.Map[] | null>(null)
     const activeMapRef = useRef<moorhen.Map | null>(null)
     const lastHoveredAtom = useRef<moorhen.HoveredAtom | null>(null)
-    const isDirty = useRef<boolean>(false)
-    const busyContouring = useRef<boolean>(false)
     const context = useContext<undefined | moorhen.Context>(MoorhenContext)
     const [activeMap, setActiveMap] = useState<moorhen.Map | null>(null)
     const [hoveredAtom, setHoveredAtom] = useState<moorhen.HoveredAtom>({ molecule: null, cid: null })
@@ -78,108 +75,7 @@ export const MoorhenCloudApp = (props: MoorhenCloudAppPropsInterface) => {
     const exportMenuItem =  <MenuItem key={'export-cloud'} id='cloud-export-menu-item' onClick={doExportCallback}>
                                 Save current model
                             </MenuItem>
-
-    const doContourIfDirty = async () => {
-        if (isDirty.current) {
-            busyContouring.current = true
-            isDirty.current = false
-            await Promise.all(
-                maps.map((map: moorhen.Map) => {
-                  return map.doCootContour(
-                    ...glRef.current.origin.map(coord => -coord) as [number, number, number], map.mapRadius, map.contourLevel
-                  )     
-                })
-            )
-            busyContouring.current = false
-            doContourIfDirty()
-        }
-    }
-
-    const triggerMapContour = () => {
-        isDirty.current = true
-        if (!busyContouring.current) {
-            doContourIfDirty()
-        }
-    }
-
-    const handleOriginUpdate = useCallback(async () => {
-        if (props.viewOnly) {
-            triggerMapContour()
-        }
-    }, [props.viewOnly, maps, glRef])
     
-    const handleRadiusChangeCallback = useCallback(async (evt) => {
-        if (props.viewOnly) {
-            maps.forEach((map: moorhen.Map) => {
-                const newRadius = map.mapRadius + parseInt(evt.detail.factor)
-                map.mapRadius = newRadius
-            })
-            triggerMapContour()
-        }
-    }, [props.viewOnly, maps, glRef])
-    
-    const handleWheelContourLevelCallback = useCallback(async (evt) => {
-        if (props.viewOnly) {
-            maps.forEach((map: moorhen.Map) => {
-                const newLevel = evt.detail.factor > 1 ? map.contourLevel + 0.1 : map.contourLevel - 0.1
-                map.contourLevel = newLevel
-          })
-            triggerMapContour()
-        }
-    }, [props.viewOnly, maps, glRef])
-    
-    useEffect(() => {
-        document.addEventListener("originUpdate", handleOriginUpdate)
-        return () => {
-            document.removeEventListener("originUpdate", handleOriginUpdate)
-        }
-    }, [handleOriginUpdate])
-
-    useEffect(() => {
-        document.addEventListener("mapRadiusChanged", handleRadiusChangeCallback)
-        return () => {
-            document.removeEventListener("mapRadiusChanged", handleRadiusChangeCallback)
-        }
-    }, [handleRadiusChangeCallback])
-
-    useEffect(() => {
-        document.addEventListener("wheelContourLevelChanged", handleWheelContourLevelCallback)
-        return () => {
-            document.removeEventListener("wheelContourLevelChanged", handleWheelContourLevelCallback)
-        }
-    }, [handleWheelContourLevelCallback])
-
-    useEffect(() => {
-        if (props.viewOnly && maps.length > 0) {
-            maps.forEach((map: moorhen.Map) => {
-                map.contourLevel = map.suggestedContourLevel ? map.suggestedContourLevel : 0.8
-                map.doCootContour(
-                    ...glRef.current.origin.map(coord => -coord) as [number, number, number], 13.0, map.contourLevel
-              )
-            })
-        }
-    }, [maps])
-
-    useEffect(() => {
-        const redrawMolecules = async () => {
-            if (!props.viewOnly || molecules.length === 0 || glRef.current.background_colour === null) {
-                return
-            }
-            const newBackgroundIsDark = isDarkBackground(...glRef.current.background_colour)
-            await Promise.all(molecules.map((molecule: moorhen.Molecule) => {
-                if (molecule.cootBondsOptions.isDarkBackground !== newBackgroundIsDark) {
-                    molecule.cootBondsOptions.isDarkBackground = newBackgroundIsDark
-                    molecule.setAtomsDirty(true)
-                    return molecule.redraw()
-                }
-                return Promise.resolve()
-            }))
-        }
-
-        redrawMolecules()
-
-    }, [glRef.current?.background_colour])
-
     useEffect(() => {
         if (!Object.keys(context).some(key => context[key] === null)) {
             props.onChangePreferencesListener(

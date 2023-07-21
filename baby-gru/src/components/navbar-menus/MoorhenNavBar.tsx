@@ -162,6 +162,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface
         ariaLabel="Moorhen Navbar Speed Dial"
         direction='down'
         sx={{
+            display: props.viewOnly ? 'none' : 'flex',
             position: 'absolute', top: canvasTop + convertRemToPx(0.5), left: canvasLeft + convertRemToPx(0.5), color: props.isDark ? 'white' : 'black' ,
             "& .MuiSpeedDial-actions": {
                 paddingTop: '40px',

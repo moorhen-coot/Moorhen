@@ -424,7 +424,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
             <span>Starting moorhen...</span>
         </Backdrop>
         
-        {!viewOnly && <MoorhenNavBar {...collectedProps} busy={busy}/>}
+        <MoorhenNavBar {...collectedProps} busy={busy}/>
         
     </div>
     
