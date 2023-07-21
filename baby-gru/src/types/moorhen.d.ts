@@ -265,6 +265,7 @@ export namespace moorhen {
     interface Map {
         setAlpha(alpha: number, redraw?: boolean): Promise<void>;
         centreOnMap(): Promise<void>;
+        getSuggestedSettings(): Promise<void>;
         duplicate(): Promise<Map>;
         makeCootUnlive(): void;
         makeCootLive(): void;
@@ -278,6 +279,8 @@ export namespace moorhen {
         fetchReflectionData(): Promise<WorkerResponse<Uint8Array>>;
         getMap(): Promise<WorkerResponse>;
         loadToCootFromMtzURL(url: RequestInfo | URL, name: string, selectedColumns: selectedMtzColumns): Promise<Map>;
+        suggestedContourLevel: number;
+        mapCentre: [number, number, number];
         type: string;
         name: string;
         molNo: number;
