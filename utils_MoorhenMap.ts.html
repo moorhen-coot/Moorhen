@@ -740,7 +740,6 @@ export class MoorhenMap implements moorhen.Map {
         if (response.data.result.result.success) {
             this.mapCentre = response.data.result.result.updated_centre.map(coord => -coord) as [number, number, number]
             this.suggestedContourLevel = response.data.result.result.suggested_contour_level
-            console.log(this.mapCentre, this.suggestedContourLevel)
         } else {
             console.log('Problem finding map centre')
             this.mapCentre = null
