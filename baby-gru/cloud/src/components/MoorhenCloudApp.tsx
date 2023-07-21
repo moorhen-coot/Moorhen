@@ -152,8 +152,9 @@ export const MoorhenCloudApp = (props: MoorhenCloudAppPropsInterface) => {
     useEffect(() => {
         if (props.viewOnly && maps.length > 0) {
             maps.forEach((map: moorhen.Map) => {
+                map.contourLevel = map.suggestedContourLevel ? map.suggestedContourLevel : 0.8
                 map.doCootContour(
-                    ...glRef.current.origin.map(coord => -coord) as [number, number, number], 13.0, 0.8
+                    ...glRef.current.origin.map(coord => -coord) as [number, number, number], 13.0, map.contourLevel
               )
             })
         }
