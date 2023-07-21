@@ -125,6 +125,7 @@ declare module 'moorhen' {
     class MoorhenMap implements _moorhen.Map {
         constructor(commandCentre: React.RefObject<_moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>)
         setAlpha(alpha: number, redraw?: boolean): Promise<void>;
+        getSuggestedSettings(): Promise<void>;
         centreOnMap(): Promise<void>;
         duplicate(): Promise<_moorhen.Map>;
         makeCootUnlive(): void;
@@ -138,7 +139,9 @@ declare module 'moorhen' {
         doCootContour(x: number, y: number, z: number, radius: number, contourLevel: number): Promise<void>;
         fetchReflectionData(): Promise<_moorhen.WorkerResponse<Uint8Array>>;
         getMap(): Promise<_moorhen.WorkerResponse>;
-        loadToCootFromMtzURL(url: RequestInfo | URL, name: string, selectedColumns: _moorhen.selectedMtzColumns): Promise<_moorhen.Map>
+        loadToCootFromMtzURL(url: RequestInfo | URL, name: string, selectedColumns: _moorhen.selectedMtzColumns): Promise<_moorhen.Map>;
+        suggestedContourLevel: number;
+        mapCentre: [number, number, number];
         type: string;
         name: string;
         molNo: number;

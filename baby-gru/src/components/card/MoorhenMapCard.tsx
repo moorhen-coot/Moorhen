@@ -59,7 +59,6 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     [setIsCollapsed])
 
     useEffect(() => {
-        props.map.fetchMapRmsd()
         setMapColour({
             r: 255 * props.map.rgba.mapColour.r,
             g: 255 * props.map.rgba.mapColour.g,

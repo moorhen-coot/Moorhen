@@ -43,6 +43,8 @@ export class MoorhenMap implements moorhen.Map {
     molNo: number
     commandCentre: React.RefObject<moorhen.CommandCentre>
     glRef: React.RefObject<webGL.MGWebGL>
+    mapCentre: [number, number, number]
+    suggestedContourLevel: number
     contourLevel: number
     mapRadius: number
     mapColour: [number, number, number, number]
@@ -85,6 +87,8 @@ export class MoorhenMap implements moorhen.Map {
         this.associatedReflectionFileName = null
         this.uniqueId = guid()
         this.mapRmsd = null
+        this.suggestedContourLevel = null
+        this.mapCentre = null
         this.diffMapColourBuffers = { positiveDiffColour: [], negativeDiffColour: [] }
         this.rgba = {
             mapColour: { r: 0.30000001192092896, g: 0.30000001192092896, b: 0.699999988079071},
@@ -205,29 +209,29 @@ export class MoorhenMap implements moorhen.Map {
      * @param {moorhen.selectedMtzColumns} selectedColumns - Object indicating the selected MTZ columns
      * @returns {Pormise<moorhen.Map>} This moorhenMap instance
      */
-    loadToCootFromMtzData(data: Uint8Array, name: string, selectedColumns: moorhen.selectedMtzColumns): Promise<moorhen.Map> {
+    async loadToCootFromMtzData(data: Uint8Array, name: string, selectedColumns: moorhen.selectedMtzColumns): Promise<moorhen.Map> {
         this.name = name
-        return new Promise((resolve, reject) => {
-            return this.commandCentre.current.cootCommand({
+        try {
+            const reply = await this.commandCentre.current.cootCommand({
                 returnType: "status",
                 command: "shim_read_mtz",
                 commandArgs: [data, name, selectedColumns]
             })
-                .then(reply => {
-                    if (reply.data.result.status === 'Exception') {
-                        reject(reply.data.result.consoleMessage)
-                    }
-                    this.molNo = reply.data.result.result
-                    if (Object.keys(selectedColumns).includes('isDifference')) {
-                        this.isDifference = selectedColumns.isDifference
-                    }
-                    resolve(this)
-                })
-                .catch((err) => {
-                    return Promise.reject(err)
-                })
-
-        })
+            if (reply.data.result.status === 'Exception') {
+                return Promise.reject(reply.data.result.consoleMessage)
+            }
+            this.molNo = reply.data.result.result
+            if (Object.keys(selectedColumns).includes('isDifference')) {
+                this.isDifference = selectedColumns.isDifference
+            }
+            await Promise.all([
+                this.fetchMapRmsd(),
+                this.getSuggestedSettings()
+            ])
+            return this    
+        } catch(err) {
+            return Promise.reject(err)
+        }
     }
 
     /**
@@ -273,24 +277,27 @@ export class MoorhenMap implements moorhen.Map {
      * @param {boolean} isDiffMap - Indicates whether the new map is a difference map
      * @returns {Promise<moorhen.Map>} This moorhenMap instance
      */
-    loadToCootFromMapData(data: ArrayBuffer | Uint8Array, name: string, isDiffMap: boolean): Promise<moorhen.Map> {
+    async loadToCootFromMapData(data: ArrayBuffer | Uint8Array, name: string, isDiffMap: boolean): Promise<moorhen.Map> {
         this.name = name
-        return this.commandCentre.current.cootCommand({
-            returnType: "status",
-            command: "shim_read_ccp4_map",
-            commandArgs: [data, name, isDiffMap]
-        })
-            .then(reply => {
-                if (reply.data.result?.status === 'Exception') {
-                    return Promise.reject(reply.data.result.consoleMessage)
-                }
-                this.molNo = reply.data.result.result
-                this.isDifference = isDiffMap
-                return Promise.resolve(this)
+        try {
+            const reply = await this.commandCentre.current.cootCommand({
+                returnType: "status",
+                command: "shim_read_ccp4_map",
+                commandArgs: [data, name, isDiffMap]
             })
-            .catch((err) => {
-                return Promise.reject(err)
-            })
+            if (reply.data.result?.status === 'Exception') {
+                return Promise.reject(reply.data.result.consoleMessage)
+            }
+            this.molNo = reply.data.result.result
+            this.isDifference = isDiffMap
+            await Promise.all([
+                this.fetchMapRmsd(),
+                this.getSuggestedSettings()
+            ])
+            return this    
+        } catch(err) {
+            return Promise.reject(err)
+        }
     }
 
     /**
@@ -607,18 +614,36 @@ export class MoorhenMap implements moorhen.Map {
     }
 
     /**
-     * Set the view in the centre of this map
+     * Get suggested contour level and map centre for this map instance
      */
-    async centreOnMap(): Promise<void> {
+    async getSuggestedSettings(): Promise<void> {
         const response = await this.commandCentre.current.cootCommand({
             command: 'get_map_molecule_centre',
             commandArgs: [this.molNo],
             returnType: "map_molecule_centre_info_t"
         }) as moorhen.WorkerResponse<libcootApi.MapMoleculeCentreInfoJS>
         if (response.data.result.result.success) {
-            this.glRef.current.setOriginAnimated(response.data.result.result.updated_centre.map(coord => -coord))
+            this.mapCentre = response.data.result.result.updated_centre.map(coord => -coord) as [number, number, number]
+            this.suggestedContourLevel = response.data.result.result.suggested_contour_level
+            console.log(this.mapCentre, this.suggestedContourLevel)
         } else {
             console.log('Problem finding map centre')
+            this.mapCentre = null
+            this.suggestedContourLevel = null
         }
+    }
+
+    /**
+     * Set the view in the centre of this map instance
+     */
+    async centreOnMap(): Promise<void> {
+        if (this.mapCentre === null) {
+            await this.getSuggestedSettings()
+            if (this.mapCentre === null) {
+                console.log('Problem finding map centre')
+                return
+            }
+        }
+        this.glRef.current.setOriginAnimated(this.mapCentre)
     }
 }
