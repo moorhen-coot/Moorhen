@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, useReducer } from "react";
+import React, { useCallback, useEffect, useRef, useState, useReducer } from "react";
 import { Row, Button, Stack, Form, FormSelect, Card, Col, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { ArrowUpwardOutlined, ArrowDownwardOutlined, AddOutlined, DeleteOutlined, DoneOutlined, DeleteForeverOutlined } from '@mui/icons-material';
 import { SketchPicker } from "react-color";
@@ -8,8 +8,16 @@ import { convertViewtoPx, getMultiColourRuleArgs } from "../../utils/MoorhenUtil
 import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
 import { MoorhenSequenceRangeSelect } from "../sequence-viewer/MoorhenSequenceRangeSelect";
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
+import { moorhen } from "../../types/moorhen";
+import { webGL } from "../../types/mgWebGL";
 
-const itemReducer = (oldList, change) => {
+type colourRuleChange = {
+    action: "Add" | "Remove" | "Overwrite" | "MoveUp" | "MoveDown" | "Empty";
+    item?: moorhen.ColourRule;
+    items?: moorhen.ColourRule[];
+}
+
+const itemReducer = (oldList: moorhen.ColourRule[], change: colourRuleChange) => {
     if (change.action === 'Add') {
         return [...oldList, change.item]
     }
@@ -44,23 +52,34 @@ const itemReducer = (oldList, change) => {
     }
 }
 
-const initialRuleState = []
+const initialRuleState: moorhen.ColourRule[] = []
 
-export const MoorhenColourRules = (props) => {
-    const moleculeSelectRef = useRef()
-    const chainSelectRef = useRef()
-    const ruleSelectRef = useRef()
-    const residueRangeSelectRef = useRef()
-    const cidFormRef = useRef()
-    const [ruleType, setRuleType] = useState('molecule')
-    const [colourProperty, setColourProperty] = useState('b-factor')
-    const [selectedColour, setSelectedColour] = useState({r: 128, g: 128, b: 128, a: 0.5})
-    const [selectedModel, setSelectedModel] = useState(null)
-    const [selectedChain, setSelectedChain] = useState(null)
-    const [cid, setCid] = useState(null)
+export const MoorhenColourRules = (props: {
+    urlPrefix: string;
+    commandCentre: React.RefObject<moorhen.CommandCentre>;
+    glRef: React.RefObject<webGL.MGWebGL>;
+    molecules: moorhen.Molecule[];
+    windowWidth: number;
+    isDark: boolean;
+    showColourRulesToast: boolean;
+    setShowColourRulesToast: React.Dispatch<React.SetStateAction<boolean>>;
+    windowHeight: number;
+}) => {
+    
+    const moleculeSelectRef = useRef<HTMLSelectElement>()
+    const chainSelectRef = useRef<HTMLSelectElement>()
+    const ruleSelectRef = useRef<HTMLSelectElement>()
+    const residueRangeSelectRef = useRef<any>()
+    const cidFormRef = useRef<HTMLInputElement>()
+    const [ruleType, setRuleType] = useState<string>('molecule')
+    const [colourProperty, setColourProperty] = useState<string>('b-factor')
+    const [selectedColour, setSelectedColour] = useState<string>('#808080')
+    const [selectedModel, setSelectedModel] = useState<number>(null)
+    const [selectedChain, setSelectedChain] = useState<string>(null)
+    const [cid, setCid] = useState<string>(null)
     const [sequenceRangeSelect, setSequenceRangeSelect] = useState(null)
     const [ruleList, setRuleList] = useReducer(itemReducer, initialRuleState)
-    const [toastBodyWidth, setToastBodyWidth] = useState(40)
+    const [toastBodyWidth, setToastBodyWidth] = useState<number>(40)
 
     const handleModelChange = (evt) => {
         setSelectedModel(parseInt(evt.target.value))
@@ -74,7 +93,7 @@ export const MoorhenColourRules = (props) => {
         setCid(evt.target.value)
     }
 
-    const handleColorChange = (color) => {
+    const handleColorChange = (color: { hex: string; }) => {
         try {
             setSelectedColour(color.hex)
         }
@@ -83,7 +102,7 @@ export const MoorhenColourRules = (props) => {
         }
     }
 
-    const getRules = async (imol, commandCentre) => {
+    const getRules = async (imol: number, commandCentre: React.RefObject<moorhen.CommandCentre>) => {
         const selectedMolecule = props.molecules.find(molecule => molecule.molNo === imol)
         if (!selectedMolecule) {
             return 
@@ -107,7 +126,7 @@ export const MoorhenColourRules = (props) => {
             return
         }
 
-        let newRule
+        let newRule: moorhen.ColourRule
         if (ruleType !== 'property') {
             let cidLabel
             switch (ruleType) {
@@ -201,6 +220,7 @@ export const MoorhenColourRules = (props) => {
                 ref={residueRangeSelectRef}
                 molecule={selectedMolecule}
                 sequence={selectedSequence}
+                glRef={props.glRef}
             />
         )        
     }, [selectedModel, selectedChain, ruleType])
