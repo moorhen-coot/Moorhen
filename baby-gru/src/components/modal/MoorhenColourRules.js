@@ -106,7 +106,6 @@ export const MoorhenColourRules = (props) => {
         if(!selectedMolecule) {
             return
         }
-        console.log(selectedColour)
 
         let newRule
         if (ruleType !== 'property') {
@@ -157,7 +156,6 @@ export const MoorhenColourRules = (props) => {
             }
         }
 
-        console.log(newRule)
         if (newRule) {
             setRuleList({action: 'Add', item: newRule})    
         }
