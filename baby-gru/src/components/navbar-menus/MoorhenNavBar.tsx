@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useState, useRef, useCallback } from 'react';
-import { Spinner, Form, Overlay, Popover } from 'react-bootstrap';
+import { Spinner, Form, Overlay, Popover, Stack } from 'react-bootstrap';
 import { MoorhenFileMenu } from './MoorhenFileMenu';
 import { MoorhenPreferencesMenu } from './MoorhenPreferencesMenu';
 import { MoorhenHelpMenu } from './MoorhenHelpMenu';
@@ -9,7 +9,7 @@ import { MoorhenEditMenu } from './MoorhenEditMenu';
 import { MoorhenDevMenu } from './MoorhenDevMenu';
 import { MoorhenCryoMenu } from './MoorhenCryoMenu';
 import { MoorhenCalculateMenu } from './MoorhenCalculateMenu';
-import { ClickAwayListener, Fab, SpeedDial, SpeedDialAction, SpeedDialIcon } from "@mui/material";
+import { ClickAwayListener, Fab, MenuItem, IconButton, MenuList, Popper, Grow } from "@mui/material";
 import { convertRemToPx, convertViewtoPx } from '../../utils/MoorhenUtils';
 import { MoorhenModelsModal } from '../modal/MoorhenModelsModal';
 import { MoorhenCreateAcedrgLinkModal } from '../modal/MoorhenCreateAcedrgLinkModal';
@@ -125,13 +125,6 @@ export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface
         }
     }, [currentDropdownId])
 
-    const handleSpeedDialClose = (evt, reason) => {
-        if (reason === 'toggle') {
-            setSpeedDialOpen(false)
-            setCurrentDropdownId('-1')
-        }
-    }
-
     const handleDialActionClick = useCallback((actionName) => {
         if (actionName === currentDropdownId) {
             setCurrentDropdownId('-1')
@@ -154,84 +147,86 @@ export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface
     } 
 
     return <>
-    <ClickAwayListener onClickAway={() => {
-        setCurrentDropdownId('-1')
-    }}>
-    <SpeedDial
-        open={speedDialOpen}
-        ariaLabel="Moorhen Navbar Speed Dial"
-        direction='down'
-        sx={{
-            display: props.viewOnly ? 'none' : 'flex',
-            position: 'absolute', top: canvasTop + convertRemToPx(0.5), left: canvasLeft + convertRemToPx(0.5), color: props.isDark ? 'white' : 'black' ,
-            "& .MuiSpeedDial-actions": {
-                paddingTop: '40px',
-            }
-        }}
-        onClose={handleSpeedDialClose}
-        FabProps={{
-            ref: speedDialRef,
-            variant: 'extended',
-            size: "large",
-            onClick: () => {
-                setSpeedDialOpen(!speedDialOpen)
-            },    
-            sx: {
+        <Fab
+            ref={speedDialRef}
+            variant={'extended'}
+            size={"large"}
+            onClick={() => {
+                setCurrentDropdownId('-1')
+                setSpeedDialOpen(!speedDialOpen)        
+            }}
+            sx={{
+                display: props.viewOnly ? 'none' : 'flex',
+                position: 'absolute',
+                top: canvasTop + convertRemToPx(0.5),
+                left: canvasLeft + convertRemToPx(0.5),
+                color: props.isDark ? 'white' : 'black' ,
                 bgcolor: props.isDark ? 'grey' : 'white',
                 '&:hover': {
                     bgcolor: props.isDark ? 'grey' : 'white',
                 },
-            }
-        }}
-        icon={
-        <SpeedDialIcon
-            icon={<>
+            }}
+        >
             { (speedDialOpen) ? <CloseOutlined style={{color: 'black'}}/> : <MenuOutlined style={{color: 'black'}}/> }
             <img src={`${props.urlPrefix}/baby-gru/pixmaps/MoorhenLogo.png`} alt='Moorhen' style={{height: '1.6rem', marginRight: '0.3rem', marginLeft: '0.3rem'}} /> 
-            </> }
-        />}
-    >
-        {Object.keys(actions).map((key) => {
-            const action = actions[key]
-            return <SpeedDialAction
-                ref={action.ref}
-                key={action.name}
-                tooltipOpen={currentDropdownId === '-1'}
-                tooltipPlacement='right'
-                icon={action.icon}
-                FabProps={{
-                    sx: {
-                        marginBottom: '8px',
-                        marginTop: 0,
-                        backgroundColor: currentDropdownId === action.name ? '#d4d4d4' : 'white' 
-                    }
-                }}
-                tooltipTitle={currentDropdownId !== '-1' ? '' :
-                <div style={{cursor: 'pointer'}} onClick={() => handleDialActionClick(action.name)}>
-                    {action.name}
-                </div> 
-                }
-                onClick={() => handleDialActionClick(action.name)}
-            />
-        })}
-        <Overlay placement='right' show={currentDropdownId !== '-1'} target={currentDropdownId !== '-1' ? popoverTargetRef : null}>
-            <Popover style={{marginLeft: '3rem', maxWidth: convertViewtoPx(35, props.windowWidth), overflowX: 'auto', borderRadius: '1.5rem'}}>
-                <Popover.Body>
-                    { currentDropdownId === 'File' && <MoorhenFileMenu dropdownId="File" {...collectedProps} /> }
-                    { currentDropdownId === 'Edit' && <MoorhenEditMenu dropdownId="Edit" {...collectedProps} /> }
-                    { currentDropdownId === 'Calculate' && <MoorhenCalculateMenu dropdownId="Calculate" {...collectedProps} /> }
-                    { currentDropdownId === 'Ligand' && <MoorhenLigandMenu dropdownId="Ligand" {...collectedProps} /> }
-                    { currentDropdownId === 'View' && <MoorhenViewMenu dropdownId="View" {...collectedProps} /> }
-                    { currentDropdownId === 'Preferences' && <MoorhenPreferencesMenu dropdownId="Preferences" {...collectedProps} /> }
-                    { currentDropdownId === 'Cryo' && <MoorhenCryoMenu dropdownId="Cryo" {...collectedProps} /> }
-                    { currentDropdownId === 'Help' &&  <MoorhenHelpMenu dropdownId="Help" {...collectedProps} /> }
-                    { currentDropdownId === 'Dev' &&  <MoorhenDevMenu dropdownId="Dev" {...collectedProps} /> }
-                    { props.extraNavBarMenus && props.extraNavBarMenus.find(menu => currentDropdownId === menu.name)?.JSXElement}
-                </Popover.Body>
-            </Popover>
-        </Overlay>
-    </SpeedDial>
-    </ClickAwayListener>
+        </Fab>
+        <ClickAwayListener onClickAway={() => { setCurrentDropdownId('-1') }}>
+        <Popper open={speedDialOpen} anchorEl={speedDialRef.current} placement='bottom-start'>
+            <Grow in={speedDialOpen} style={{ transformOrigin: '0 0 0' }}>
+            <MenuList style={{height: props.windowHeight - convertRemToPx(5), width: '100%', overflowY: 'scroll', direction: 'rtl'}}>
+                {Object.keys(actions).map((key) => {
+                const action = actions[key]
+                return <MenuItem
+                    ref={action.ref}
+                    key={action.name}
+                    onClick={() => handleDialActionClick(action.name)}
+                    style={{
+                        marginBottom: '0.5rem',
+                        marginRight: '0.5rem',
+                        marginLeft: '0.5rem',
+                        backgroundColor: currentDropdownId === action.name ? '#d4d4d4' : 'white',
+                        justifyContent: 'left',
+                        display: 'flex',
+                        borderRadius: '2rem',
+                        boxShadow: '0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12)'
+                    }}>
+                        <Stack gap={2} direction='horizontal' style={{display: 'flex', verticalAlign: 'middle'}}>
+                            {action.name}
+                            <IconButton>
+                                {action.icon}
+                            </IconButton>
+                        </Stack>
+                </MenuItem>
+                })}
+            </MenuList>
+            </Grow>
+            <Overlay placement='right' show={currentDropdownId !== '-1'} target={currentDropdownId !== '-1' ? popoverTargetRef : null}>
+            <Grow in={currentDropdownId !== '-1'}>
+                <Popover style={{
+                    borderWidth: 0,
+                    marginLeft: '1.5rem',
+                    maxWidth: convertViewtoPx(35, props.windowWidth),
+                    overflowX: 'auto',
+                    borderRadius: '1.5rem',
+                    boxShadow: '0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12)'
+                }}>
+                    <Popover.Body>
+                        { currentDropdownId === 'File' && <MoorhenFileMenu dropdownId="File" {...collectedProps} /> }
+                        { currentDropdownId === 'Edit' && <MoorhenEditMenu dropdownId="Edit" {...collectedProps} /> }
+                        { currentDropdownId === 'Calculate' && <MoorhenCalculateMenu dropdownId="Calculate" {...collectedProps} /> }
+                        { currentDropdownId === 'Ligand' && <MoorhenLigandMenu dropdownId="Ligand" {...collectedProps} /> }
+                        { currentDropdownId === 'View' && <MoorhenViewMenu dropdownId="View" {...collectedProps} /> }
+                        { currentDropdownId === 'Preferences' && <MoorhenPreferencesMenu dropdownId="Preferences" {...collectedProps} /> }
+                        { currentDropdownId === 'Cryo' && <MoorhenCryoMenu dropdownId="Cryo" {...collectedProps} /> }
+                        { currentDropdownId === 'Help' &&  <MoorhenHelpMenu dropdownId="Help" {...collectedProps} /> }
+                        { currentDropdownId === 'Dev' &&  <MoorhenDevMenu dropdownId="Dev" {...collectedProps} /> }
+                        { props.extraNavBarMenus && props.extraNavBarMenus.find(menu => currentDropdownId === menu.name)?.JSXElement}
+                    </Popover.Body>
+                </Popover>
+            </Grow>
+            </Overlay>
+        </Popper>
+        </ClickAwayListener>
     <MoorhenModelsModal
             show={showModels}
             setShow={setShowModels}
