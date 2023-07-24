@@ -114,7 +114,8 @@ export namespace moorhen {
         getUnitCellParams():  { a: number; b: number; c: number; alpha: number; beta: number; gamma: number; };
         replaceModelWithFile(fileUrl: string, molName: string): Promise<void>
         delete(): Promise<WorkerResponse> 
-        setColourRules(ruleList: ColourRule[], redraw?: boolean): void;
+        setColourRules(ruleList: ColourRule[], redraw?: boolean): Promise<void>;
+        fetchCurrentColourRules(): Promise<void>;
         fetchIfDirtyAndDraw(arg0: string): Promise<void>;
         drawGemmiAtomPairs: (gemmiAtomPairs: any[], style: string,  colour: number[], labelled?: boolean, clearBuffers?: boolean) => void;
         drawEnvironment: (chainID: string, resNo: number,  altLoc: string, labelled?: boolean) => Promise<void>;

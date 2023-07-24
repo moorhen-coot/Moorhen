@@ -578,7 +578,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     windowHeight={props.windowHeight}
                 />}
                 
-                <MoorhenColourRules glRef={glRef} {...props}/>
+                <MoorhenColourRules glRef={glRef as React.RefObject<webGL.MGWebGL>} {...props}/>
 
                 {props.extraDraggableModals && props.extraDraggableModals.map(modal => modal)}
 

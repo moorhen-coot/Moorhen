@@ -56,7 +56,7 @@ const initialRuleState: moorhen.ColourRule[] = []
 
 export const MoorhenColourRules = (props: {
     urlPrefix: string;
-    commandCentre: moorhen.CommandCentre;
+    commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
     molecules: moorhen.Molecule[];
     windowWidth: number;
@@ -102,7 +102,7 @@ export const MoorhenColourRules = (props: {
         }
     }
 
-    const getRules = async (imol: number, commandCentre: moorhen.CommandCentre) => {
+    const getRules = async (imol: number, commandCentre: React.RefObject<moorhen.CommandCentre>) => {
         const selectedMolecule = props.molecules.find(molecule => molecule.molNo === imol)
         if (!selectedMolecule) {
             return 
