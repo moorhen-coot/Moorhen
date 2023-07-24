@@ -487,28 +487,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
     }
 
     /**
-     * Copy a fragment of the current model into a new molecule
-     * @param {string} chainId - The chain ID
-     * @param {number} res_no_start - The residue number where the fragment should start
-     * @param {number} res_no_end - The residue number where the fragment should end
-     * @param {boolean} [doRecentre=true] - Indicates whether the view should re-centre on the new copied fragment
-     * @returns {Promise<moorhen.Molecule>}  New molecule instance
-     */
-    async copyFragment(chainId: string, res_no_start: number, res_no_end: number, doRecentre: boolean = true): Promise<moorhen.Molecule> {
-        const inputData = { message: "copy_fragment", molNo: this.molNo, chainId: chainId, res_no_start: res_no_start, res_no_end: res_no_end }
-        const response = await this.commandCentre.current.postMessage(inputData)
-        const newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.monomerLibraryPath)
-        newMolecule.name = `${this.name} fragment`
-        newMolecule.molNo = response.data.result.result
-        newMolecule.cootBondsOptions = this.cootBondsOptions
-        await Promise.all(Object.keys(this.ligandDicts).map(key => newMolecule.addDict(this.ligandDicts[key])))
-        await newMolecule.fetchIfDirtyAndDraw('CBs')
-        if (doRecentre) await newMolecule.centreOn()
-
-        return newMolecule
-    }
-
-    /**
      * Copy a fragment of the current model into a new molecule using a selection CID
      * @param {string} cid - The CID selection indicating the residues that will be copied into the new fragment
      * @param {number[]} backgroundColor - The background colour used to draw the new molecule
@@ -529,6 +507,10 @@ export class MoorhenMolecule implements moorhen.Molecule {
         newMolecule.setBackgroundColour(backgroundColor);
         newMolecule.cootBondsOptions.smoothness = defaultBondSmoothness;
         await Promise.all(Object.keys(this.ligandDicts).map(key => newMolecule.addDict(this.ligandDicts[key])));
+        if (doRecentre) {
+            await newMolecule.fetchIfDirtyAndDraw('CBs')
+            await newMolecule.centreOn()
+        }
         return newMolecule;
     }
 

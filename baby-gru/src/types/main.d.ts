@@ -48,7 +48,6 @@ declare module 'moorhen' {
         refineResiduesUsingAtomCid(cid: string, mode: string, ncyc: number): Promise<_moorhen.WorkerResponse>;
         redo(): Promise<void>;
         undo(): Promise<void>;
-        copyFragment(chainId: string, res_no_start: number, res_no_end: number, doRecentre?: boolean): Promise<_moorhen.Molecule>;
         show(style: string): Promise<void>;
         setSymmetryRadius(radius: number): Promise<void>;
         drawSymmetry: (fetchSymMatrix?: boolean) => Promise<void>;

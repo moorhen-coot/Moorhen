@@ -322,7 +322,8 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
 
     const handleCopyFragment = () => {
         async function createNewFragmentMolecule() {
-            const newMolecule = await props.molecule.copyFragment(clickedResidue.chain, selectedResidues[0], selectedResidues[1])
+            const cid =  `//${clickedResidue.chain}/${selectedResidues[0]}-${selectedResidues[1]}/*`
+            const newMolecule = await props.molecule.copyFragmentUsingCid(cid, props.backgroundColor, props.defaultBondSmoothness, true)
             props.changeMolecules({ action: "Add", item: newMolecule })
         }
 
