@@ -54,7 +54,7 @@ export const MoorhenColourRules = (props) => {
     const cidFormRef = useRef()
     const [ruleType, setRuleType] = useState('molecule')
     const [colourProperty, setColourProperty] = useState('b-factor')
-    const [selectedColour, setSelectedColour] = useState({r: 128, g: 128, b: 128, a: 0.5})
+    const [selectedColour, setSelectedColour] = useState('#808080')
     const [selectedModel, setSelectedModel] = useState(null)
     const [selectedChain, setSelectedChain] = useState(null)
     const [cid, setCid] = useState(null)
@@ -106,6 +106,7 @@ export const MoorhenColourRules = (props) => {
         if(!selectedMolecule) {
             return
         }
+        console.log(selectedColour)
 
         let newRule
         if (ruleType !== 'property') {
@@ -156,6 +157,7 @@ export const MoorhenColourRules = (props) => {
             }
         }
 
+        console.log(newRule)
         if (newRule) {
             setRuleList({action: 'Add', item: newRule})    
         }
