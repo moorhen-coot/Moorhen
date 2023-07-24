@@ -214,20 +214,6 @@ export class MoorhenMap implements moorhen.Map {
     }
 
     /**
-     * Get the current map RMSD
-     * @returns {number} The map RMSD
-     */
-    async fetchMapRmsd(): Promise&lt;number> {
-        const result = await this.commandCentre.current.cootCommand({
-            command: 'get_map_rmsd_approx',
-            commandArgs: [this.molNo],
-            returnType: 'float'
-        }, true) as moorhen.WorkerResponse&lt;number>
-        this.mapRmsd = result.data.result.result
-        return result.data.result.result
-    }
-
-    /**
      * Delete the map instance
      */
     async delete(): Promise&lt;void> {
@@ -339,10 +325,7 @@ export class MoorhenMap implements moorhen.Map {
             if (Object.keys(selectedColumns).includes('isDifference')) {
                 this.isDifference = selectedColumns.isDifference
             }
-            await Promise.all([
-                this.fetchMapRmsd(),
-                this.getSuggestedSettings()
-            ])
+            await this.getSuggestedSettings()
             return this    
         } catch(err) {
             return Promise.reject(err)
@@ -405,10 +388,7 @@ export class MoorhenMap implements moorhen.Map {
             }
             this.molNo = reply.data.result.result
             this.isDifference = isDiffMap
-            await Promise.all([
-                this.fetchMapRmsd(),
-                this.getSuggestedSettings()
-            ])
+            await this.getSuggestedSettings()
             return this    
         } catch(err) {
             return Promise.reject(err)
@@ -729,22 +709,70 @@ export class MoorhenMap implements moorhen.Map {
     }
 
     /**
-     * Get suggested contour level and map centre for this map instance
+     * Get the current map RMSD
+     * @returns {number} The map RMSD
      */
-    async getSuggestedSettings(): Promise&lt;void> {
+    async fetchMapRmsd(): Promise&lt;number> {
+        const result = await this.commandCentre.current.cootCommand({
+            command: 'get_map_rmsd_approx',
+            commandArgs: [this.molNo],
+            returnType: 'float'
+        }, true) as moorhen.WorkerResponse&lt;number>
+        this.mapRmsd = result.data.result.result
+        return result.data.result.result
+    }
+
+    /**
+     * Get the suggested level for this map instance
+     * @returns {number} The suggested map contour level
+     */
+    async fetchSuggestedLevel(): Promise&lt;number> {
+        const result = await this.commandCentre.current.cootCommand({
+            command: 'get_suggested_initial_contour_level',
+            commandArgs: [this.molNo],
+            returnType: 'float'
+        }, true) as moorhen.WorkerResponse&lt;number>
+        
+        if (result.data.result.result !== -1) {
+            this.suggestedContourLevel = result.data.result.result
+        } else {
+            console.log('Problem getting suggested intial map level')
+            this.suggestedContourLevel = null 
+        }
+        
+        return result.data.result.result
+    }
+
+    /**
+     * Get the suggested map centre for this map instance
+     * @returns {number[]} The map centre
+     */
+    async fetchMapCentre(): Promise&lt;[number, number, number]> {
         const response = await this.commandCentre.current.cootCommand({
             command: 'get_map_molecule_centre',
             commandArgs: [this.molNo],
             returnType: "map_molecule_centre_info_t"
         }) as moorhen.WorkerResponse&lt;libcootApi.MapMoleculeCentreInfoJS>
+        
         if (response.data.result.result.success) {
             this.mapCentre = response.data.result.result.updated_centre.map(coord => -coord) as [number, number, number]
-            this.suggestedContourLevel = response.data.result.result.suggested_contour_level
         } else {
             console.log('Problem finding map centre')
             this.mapCentre = null
-            this.suggestedContourLevel = null
         }
+        
+        return this.mapCentre
+    }
+
+    /**
+     * Get suggested contour level and map centre for this map instance
+     */
+    async getSuggestedSettings(): Promise&lt;void> {
+        await Promise.all([
+            this.fetchMapRmsd(),
+            this.fetchSuggestedLevel(),
+            this.fetchMapCentre()
+        ])
     }
 
     /**
@@ -752,7 +780,7 @@ export class MoorhenMap implements moorhen.Map {
      */
     async centreOnMap(): Promise&lt;void> {
         if (this.mapCentre === null) {
-            await this.getSuggestedSettings()
+            await this.fetchMapCentre()
             if (this.mapCentre === null) {
                 console.log('Problem finding map centre')
                 return
