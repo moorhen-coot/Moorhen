@@ -28,7 +28,7 @@ declare module 'moorhen' {
         updateWithMovedAtoms(movedResidues: _moorhen.AtomInfo[][]): Promise<void>;
         transformedCachedAtomsAsMovedAtoms(selectionCid?: string): _moorhen.AtomInfo[][];
         drawWithStyleFromAtoms(style: string): Promise<void>;
-        copyFragmentUsingCid(cid: string, backgroundColor: [number, number, number, number], defaultBondSmoothness: number, doRecentre?: boolean): Promise<Molecule>;
+        copyFragmentUsingCid(cid: string, backgroundColor: [number, number, number, number], defaultBondSmoothness: number, doRecentre?: boolean): Promise<moorhen.Molecule>;
         hideCid(cid: string): Promise<void>;
         unhideAll(): Promise<void>;
         drawSelection(cid: string): Promise<void>;
@@ -133,6 +133,8 @@ declare module 'moorhen' {
         setColour(r: number, g: number, b: number, redraw?: boolean): Promise<void> ;
         setDiffMapColour(type: 'positiveDiffColour' | 'negativeDiffColour', r: number, g: number, b: number, redraw?: boolean): Promise<void> ;
         fetchMapRmsd(): Promise<number>;
+        fetchSuggestedLevel(): Promise<number>;
+        fetchMapCentre(): Promise<[number, number, number]>;
         replaceMapWithMtzFile(fileUrl: RequestInfo | URL, name: string, selectedColumns: _moorhen.selectedMtzColumns, mapColour?: { [type: string]: {r: number, g: number, b: number} }): Promise<void>;
         associateToReflectionData (selectedColumns: _moorhen.selectedMtzColumns, reflectionData: Uint8Array | ArrayBuffer): Promise<_moorhen.WorkerResponse>;
         delete(): Promise<void> 

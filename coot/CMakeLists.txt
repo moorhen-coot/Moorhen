@@ -147,6 +147,7 @@ ${coot_src}/MoleculesToTriangles/CXXClasses/Vector3.cpp
 ${coot_src}/MoleculesToTriangles/CXXClasses/VertexColorNormalPrimitive.cpp
 ${coot_src}/MoleculesToTriangles/CXXClasses/lfit.c
 ${coot_src}/api/rigid-body-fit.cc
+${coot_src}/api/molecules_container_bucca_ml_growing.cc
 ${coot_src}/api/molecules_container_mmrrcc.cc
 ${coot_src}/api/molecules_container_superpose.cc
 ${coot_src}/api/coot_molecule_validation.cc
