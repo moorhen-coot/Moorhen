@@ -64,11 +64,20 @@ const doColourTest = async (props: any) => {
     }
 }
 
-const doRenameChainTest = async (props: any) => {
+const doRepresentationsTest = async (props: any) => {
     const molecule = props.molecules.find(molecule => molecule.molNo === 0)
+
     if (typeof molecule !== 'undefined') {
-        await molecule.changeChainId('A', 'X')
+        molecule.customRepresentations = [
+            {style: 'MolecularSurface', cidSelection: '//A/1-15'},
+            {style: 'CBs', cidSelection: '//A/15-30'},
+            {style: 'CRs', cidSelection: '//A/30-36'},
+            {style: 'CBs', cidSelection: '//A/46-55'},
+            {style: 'CRs', cidSelection: '//A/55-72'}
+        ]
+        await molecule.drawCustomRepresentations()
     }
+
 }
 
 export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
@@ -82,8 +91,8 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
                     <MenuItem onClick={() => doColourTest(menuItemProps)}>
                         Do colouring test
                     </MenuItem>
-                    <MenuItem onClick={() => doRenameChainTest(menuItemProps)}>
-                        Do rename chain test
+                    <MenuItem onClick={() => doRepresentationsTest(menuItemProps)}>
+                        Do representations test
                     </MenuItem>
                     <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
                         <Form.Check 

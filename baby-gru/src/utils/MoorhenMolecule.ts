@@ -61,6 +61,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
     gemmiStructure: gemmi.Structure;
     sequences: moorhen.Sequence[];
     colourRules: moorhen.ColourRule[];
+    customRepresentations: { style: string; cidSelection: string; }[];
     ligands: moorhen.LigandInfo[];
     ligandDicts: { [comp_id: string]: string };
     connectedToMaps: number[];
@@ -97,6 +98,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         originNeighboursBump: moorhen.DisplayObject[];
         unitCell:  moorhen.DisplayObject[];
     };
+    customDisplayRules: {[x: string]: moorhen.DisplayObject[]};
     displayObjectsTransformation: { origin: [number, number, number], quat: any, centre: [number, number, number] }
     uniqueId: string;
     monomerLibraryPath: string
@@ -116,6 +118,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.ligands = null
         this.ligandDicts = {}
         this.connectedToMaps = null
+        this.customRepresentations = []
         this.excludedSegments = []
         this.excludedCids = []
         this.symmetryOn = false
@@ -133,6 +136,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             width: 0.1,
             atomRadiusBondRatio: 1
         }
+        this.customDisplayRules = { }
         this.displayObjects = {
             CBs: [],
             CAs: [],
@@ -494,7 +498,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {boolean} [doRecentre=true] - Indicates whether the view should re-centre on the new copied fragment
      * @returns {Promise<moorhen.Molecule>}  New molecule instance
      */
-    async copyFragmentUsingCid(cid: string, backgroundColor: [number, number, number, number], defaultBondSmoothness: number, doRecentre: boolean = true): Promise<moorhen.Molecule> {
+    async copyFragmentUsingCid(cid: string, backgroundColor: [number, number, number, number], defaultBondSmoothness: number, doRecentre: boolean = true, style: string = 'CBs'): Promise<moorhen.Molecule> {
         const response = await this.commandCentre.current.cootCommand({
             returnType: "status",
             command: "copy_fragment_using_cid",
@@ -508,7 +512,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         newMolecule.cootBondsOptions.smoothness = defaultBondSmoothness;
         await Promise.all(Object.keys(this.ligandDicts).map(key => newMolecule.addDict(this.ligandDicts[key])));
         if (doRecentre) {
-            await newMolecule.fetchIfDirtyAndDraw('CBs')
+            await newMolecule.fetchIfDirtyAndDraw(style)
             await newMolecule.centreOn()
         }
         return newMolecule;
@@ -710,7 +714,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         if (this.atomsDirty) {
             await this.updateAtoms()
         }
-        return this.drawWithStyleFromAtoms(style)
+        await this.drawWithStyleFromAtoms(style)
     }
 
     /**
@@ -839,6 +843,51 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }
     }
 
+    async drawCustomRepresenation(representation: { style: string; cidSelection: string; }) {
+        let objects: libcootApi.InstancedMeshJS[]
+        switch (representation.style) {
+            case 'VdwSpheres':
+            case 'CAs':
+            case 'CBs':
+                objects = await this.getCootSelectionBondBuffers(representation.style, representation.cidSelection)
+                break
+            case 'CRs':
+            case 'MolecularSurface':
+            case 'DishyBases':
+            case 'VdWSurface':
+            case 'Calpha':
+                objects = await this.getCootRepresentationBuffers(representation.style, representation.cidSelection)
+                break
+            default:
+                return Promise.resolve()
+        }
+
+        if (objects.length > 0 && !this.gemmiStructure.isDeleted()) {
+            objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
+                const a = this.glRef.current.appendOtherData(object, true)
+                if(this.customDisplayRules[`rule_${representation.style}`]) {
+                    this.customDisplayRules[`rule_${representation.style}`] = this.customDisplayRules[`rule_${representation.style}`].concat(a)
+                } else {
+                    this.customDisplayRules[`rule_${representation.style}`] = a
+                }
+            })
+            this.glRef.current.buildBuffers();
+            this.glRef.current.drawScene();
+            let bufferAtoms = await this.gemmiAtomsForCid(representation.cidSelection)
+            if (bufferAtoms.length > 0) {
+                this.customDisplayRules[`rule_${representation.style}`][0].atoms = bufferAtoms.filter(atom => !this.excludedCids.includes(`//${atom.chain_id}/${atom.res_no}/*`)).map(atom => {
+                    const { pos, x, y, z, charge, label, symbol } = atom
+                    const tempFactor = atom.tempFactor
+                    return { pos, x, y, z, charge, tempFactor, symbol, label }
+                })
+            }
+        }
+    }
+
+    async drawCustomRepresentations() {
+        await Promise.all(this.customRepresentations.map(representation => this.drawCustomRepresenation(representation)))
+    }
+
     /**
      * Draw molecule with a given style from atoms fetch from libcoot api
      * @param {string} style - Indicate the style to be drawn
@@ -878,8 +927,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             default:
                 if (style.startsWith("chemical_features")) {
                     await this.drawCootChemicalFeaturesCid(style)
-                }
-                if (style.startsWith("contact_dots")) {
+                } else if (style.startsWith("contact_dots")) {
                     await this.drawCootContactDotsCid(style)
                 }
                 break;
@@ -1027,12 +1075,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         return this.drawCootSelectionBonds(name, null)
     }
 
-    /**
-     * Draw molecule bonds for a given set of residues selected using a CID
-     * @param {string} name - The style name
-     * @param {string} cid - The CID selection for the residues to be drawn
-     */
-    async drawCootSelectionBonds(name: string, cid: null | string): Promise<void> {
+    async getCootSelectionBondBuffers(name: string, cid: null | string): Promise<libcootApi.InstancedMeshJS[]> {
         let meshCommand: Promise<moorhen.WorkerResponse<libcootApi.InstancedMeshJS>>
 
         let style = "COLOUR-BY-CHAIN-AND-DICTIONARY"
@@ -1073,12 +1116,21 @@ export class MoorhenMolecule implements moorhen.Molecule {
                 ]
             })
         }
-
         const response = await meshCommand
-        const objects = [response.data.result.result]
+        return [response.data.result.result]
+    }
+
+    /**
+     * Draw molecule bonds for a given set of residues selected using a CID
+     * @param {string} name - The style name
+     * @param {string} cid - The CID selection for the residues to be drawn
+     */
+    async drawCootSelectionBonds(name: string, cid: null | string, clearBuffers: boolean = true): Promise<void> {
+        const objects = await this.getCootSelectionBondBuffers(name, cid)
+        cid = typeof cid === 'string' ? cid : "/*/*/*/*"
         if (objects.length > 0 && !this.gemmiStructure.isDeleted()) {
             //Empty existing buffers of this type
-            this.clearBuffersOfStyle(name)
+            if(clearBuffers) this.clearBuffersOfStyle(name)
             this.addBuffersOfStyle(objects, name)
             let bufferAtoms = await this.gemmiAtomsForCid(cid)
             if (bufferAtoms.length > 0) {
@@ -1088,7 +1140,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
                     return { pos, x, y, z, charge, tempFactor, symbol, label }
                 })
             }
-        } else {
+        } else if (clearBuffers) {
             this.clearBuffersOfStyle(name)
         }
     }
@@ -1135,11 +1187,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }
     }
 
-    /**
-     * Draw the molecule using a particular coot representation
-     * @param {string} style - The representation style
-     */
-    async drawCootRepresentation(style: string): Promise<void> {
+    async getCootRepresentationBuffers(style: string, cidSelection?: string): Promise<libcootApi.InstancedMeshJS[]> {
         let m2tStyle: string
         let m2tSelection: string
 
@@ -1174,6 +1222,10 @@ export class MoorhenMolecule implements moorhen.Molecule {
                 break;
         }
 
+        if(cidSelection) {
+            m2tSelection = `{${m2tSelection} & {${cidSelection}}}`
+        }
+
         if (this.excludedSegments.length > 0) {
             m2tSelection = `{${m2tSelection} & !{${this.excludedSegments.join(' | ')}}}`
         }
@@ -1186,7 +1238,17 @@ export class MoorhenMolecule implements moorhen.Molecule {
             ]
         }) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>
 
-        let objects = [response.data.result.result]
+        return [response.data.result.result]
+    }
+
+    /**
+     * Draw the molecule using a particular coot representation
+     * @param {string} style - The representation style
+     */
+    async drawCootRepresentation(style: string, clearBuffers: boolean = true, cidSelection?: string): Promise<void> {
+        let objects = await this.getCootRepresentationBuffers(style, cidSelection)
+        let m2tStyle = style === 'CRs' ? 'Ribbon' : (style === 'ligands' ? 'Cylinders' : style)
+
         try {
             if (objects.length > 0 && !this.gemmiStructure.isDeleted()) {
                 //Empty existing buffers of this type
@@ -1199,13 +1261,13 @@ export class MoorhenMolecule implements moorhen.Molecule {
                         return flippedNormalsObject
                     })
                 }
-                this.clearBuffersOfStyle(style)
+                if(clearBuffers) this.clearBuffersOfStyle(style)
                 this.addBuffersOfStyle(objects, style)
                 let bufferAtoms = getBufferAtoms(this.gemmiStructure.clone())
                 if (bufferAtoms.length > 0 && this.displayObjects[style].length > 0) {
                     this.displayObjects[style][0].atoms = bufferAtoms
                 }
-            } else {
+            } else if (clearBuffers) {
                 this.clearBuffersOfStyle(style)
             }
         } catch (err) {

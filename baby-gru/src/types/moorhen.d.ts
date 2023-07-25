@@ -88,7 +88,7 @@ export namespace moorhen {
         updateWithMovedAtoms(movedResidues: AtomInfo[][]): Promise<void>;
         transformedCachedAtomsAsMovedAtoms(selectionCid?: string): AtomInfo[][];
         drawWithStyleFromAtoms(style: string): Promise<void>;
-        copyFragmentUsingCid(cid: string, backgroundColor: [number, number, number, number], defaultBondSmoothness: number, doRecentre?: boolean): Promise<Molecule>;
+        copyFragmentUsingCid(cid: string, backgroundColor: [number, number, number, number], defaultBondSmoothness: number, doRecentre?: boolean, style?: string): Promise<Molecule>;
         hideCid(cid: string): Promise<void>;
         unhideAll(): Promise<void>;
         drawSelection(cid: string): Promise<void>;
@@ -147,7 +147,9 @@ export namespace moorhen {
             boxRadius: number;
             gridScale: number;
         };
+        customRepresentations: { style: string; cidSelection: string; }[];
         cootBondsOptions: cootBondOptions;
+        customDisplayRules: {[x: string]: moorhen.DisplayObject[]};
         displayObjects: {
             CBs: DisplayObject[];
             CAs: DisplayObject[];
