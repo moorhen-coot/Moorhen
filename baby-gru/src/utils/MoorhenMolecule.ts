@@ -843,7 +843,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }
     }
 
-    async drawCustomRepresenation(representation: { style: string; cidSelection: string; }) {
+    async drawCustomRepresenation(representation: { style: string; cidSelection: string; }, clearBuffers: boolean = false) {
         let objects: libcootApi.InstancedMeshJS[]
         switch (representation.style) {
             case 'VdwSpheres':
@@ -860,6 +860,21 @@ export class MoorhenMolecule implements moorhen.Molecule {
                 break
             default:
                 return Promise.resolve()
+        }
+
+        if(clearBuffers) {
+            this.customDisplayRules[`rule_${representation.style}`].forEach((buffer) => {
+                if ("clearBuffers" in buffer) {
+                    buffer.clearBuffers()
+                    if (this.glRef.current.displayBuffers) {
+                        this.glRef.current.displayBuffers = this.glRef.current.displayBuffers.filter(glBuffer => glBuffer !== buffer)
+                    }
+                } else if ("labels" in buffer) {
+                    this.glRef.current.labelsTextCanvasTexture.removeBigTextureTextImages(buffer.labels)
+                }
+            })
+            this.glRef.current.buildBuffers()
+            this.customDisplayRules[`rule_${representation.style}`] = []    
         }
 
         if (objects.length > 0 && !this.gemmiStructure.isDeleted()) {
@@ -1346,6 +1361,14 @@ export class MoorhenMolecule implements moorhen.Molecule {
                     }
                 }
             })
+            Object.getOwnPropertyNames(this.customDisplayRules).forEach(rule => {
+                if (Array.isArray(this.customDisplayRules[rule])) {
+                    const objectBuffers = this.customDisplayRules[rule].filter(buffer => bufferIn.id === buffer.id)
+                    if (objectBuffers.length > 0) {
+                        throw BreakException;
+                    }
+                }
+            })
         }
         catch (e) {
             if (e !== BreakException) throw e;
@@ -1483,6 +1506,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
         await Promise.all([
             ...itemsToRedraw.map(style => this.fetchIfDirtyAndDraw(style)),
+            ...this.customRepresentations.map(representation => this.drawCustomRepresenation(representation, true))
         ])
 
         await this.drawSymmetry(false)
