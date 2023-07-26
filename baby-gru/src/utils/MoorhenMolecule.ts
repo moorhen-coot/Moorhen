@@ -61,7 +61,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
     gemmiStructure: gemmi.Structure;
     sequences: moorhen.Sequence[];
     colourRules: moorhen.ColourRule[];
-    customRepresentations: { style: string; cidSelection: string; }[];
+    customRepresentations: { style: string; cidSelection: string; id: string; buffers: moorhen.DisplayObject[]; }[];
     ligands: moorhen.LigandInfo[];
     ligandDicts: { [comp_id: string]: string };
     connectedToMaps: number[];
@@ -714,7 +714,14 @@ export class MoorhenMolecule implements moorhen.Molecule {
         if (this.atomsDirty) {
             await this.updateAtoms()
         }
-        await this.drawWithStyleFromAtoms(style)
+
+        const cid = "/*/*/*/*"
+        const representation = this.customRepresentations.find(item => item.style === style && item.cidSelection === cid)
+        if (representation) {
+            await this.redrawRepresentation(representation.id)
+        } else {
+            await this.addRepresentation(style, cid)
+        }
     }
 
     /**
@@ -843,7 +850,56 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }
     }
 
-    async drawCustomRepresenation(representation: { style: string; cidSelection: string; }, clearBuffers: boolean = false) {
+    async addRepresentation(style: string, cid?: string) {
+        let objects: libcootApi.InstancedMeshJS[]
+        switch (style) {
+            case 'VdwSpheres':
+            case 'CAs':
+            case 'CBs':
+                objects = await this.getCootSelectionBondBuffers(style, cid)
+                break
+            case 'CRs':
+            case 'MolecularSurface':
+            case 'DishyBases':
+            case 'VdWSurface':
+            case 'Calpha':
+                objects = await this.getCootRepresentationBuffers(style, cid)
+                break
+            default:
+                return Promise.resolve()
+        }
+        
+        let buffers: moorhen.DisplayObject[] = []
+        if (objects.length > 0 && !this.gemmiStructure.isDeleted()) {
+            objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
+                const a = this.glRef.current.appendOtherData(object, true)
+                buffers = buffers.concat(a)
+            })
+            this.glRef.current.buildBuffers();
+            this.glRef.current.drawScene();
+            let bufferAtoms = await this.gemmiAtomsForCid(cid)
+            if (bufferAtoms.length > 0) {
+                buffers[0].atoms = bufferAtoms.filter(atom => !this.excludedCids.includes(`//${atom.chain_id}/${atom.res_no}/*`)).map(atom => {
+                    const { pos, x, y, z, charge, label, symbol } = atom
+                    const tempFactor = atom.tempFactor
+                    return { pos, x, y, z, charge, tempFactor, symbol, label }
+                })
+            }
+        }
+
+        const representation = {
+            id: guid(),
+            style: style,
+            cidSelection: cid ? cid : '/*/*/*/*',
+            buffers: buffers
+        }
+        this.customRepresentations.push(representation)
+    }
+
+    async redrawRepresentation(id: string) {
+        const represnetationIndex = this.customRepresentations.findIndex(representation => representation.id === id)
+        const representation = this.customRepresentations[represnetationIndex]
+        
         let objects: libcootApi.InstancedMeshJS[]
         switch (representation.style) {
             case 'VdwSpheres':
@@ -862,45 +918,41 @@ export class MoorhenMolecule implements moorhen.Molecule {
                 return Promise.resolve()
         }
 
-        if(clearBuffers) {
-            this.customDisplayRules[`rule_${representation.style}`].forEach((buffer) => {
-                if ("clearBuffers" in buffer) {
-                    buffer.clearBuffers()
-                    if (this.glRef.current.displayBuffers) {
-                        this.glRef.current.displayBuffers = this.glRef.current.displayBuffers.filter(glBuffer => glBuffer !== buffer)
-                    }
-                } else if ("labels" in buffer) {
-                    this.glRef.current.labelsTextCanvasTexture.removeBigTextureTextImages(buffer.labels)
+        representation.buffers.forEach((buffer) => {
+            if ("clearBuffers" in buffer) {
+                buffer.clearBuffers()
+                if (this.glRef.current.displayBuffers) {
+                    this.glRef.current.displayBuffers = this.glRef.current.displayBuffers.filter(glBuffer => glBuffer !== buffer)
                 }
-            })
-            this.glRef.current.buildBuffers()
-            this.customDisplayRules[`rule_${representation.style}`] = []    
-        }
-
+            } else if ("labels" in buffer) {
+                this.glRef.current.labelsTextCanvasTexture.removeBigTextureTextImages(buffer.labels)
+            }
+        })
+        this.glRef.current.buildBuffers()
+        
+        representation.buffers = []
         if (objects.length > 0 && !this.gemmiStructure.isDeleted()) {
             objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
                 const a = this.glRef.current.appendOtherData(object, true)
-                if(this.customDisplayRules[`rule_${representation.style}`]) {
-                    this.customDisplayRules[`rule_${representation.style}`] = this.customDisplayRules[`rule_${representation.style}`].concat(a)
+                if(representation.buffers) {
+                    representation.buffers = representation.buffers.concat(a)
                 } else {
-                    this.customDisplayRules[`rule_${representation.style}`] = a
+                    representation.buffers = a
                 }
             })
-            this.glRef.current.buildBuffers();
-            this.glRef.current.drawScene();
+            this.glRef.current.buildBuffers()
+            this.glRef.current.drawScene()
             let bufferAtoms = await this.gemmiAtomsForCid(representation.cidSelection)
             if (bufferAtoms.length > 0) {
-                this.customDisplayRules[`rule_${representation.style}`][0].atoms = bufferAtoms.filter(atom => !this.excludedCids.includes(`//${atom.chain_id}/${atom.res_no}/*`)).map(atom => {
+                representation.buffers[0].atoms = bufferAtoms.filter(atom => !this.excludedCids.includes(`//${atom.chain_id}/${atom.res_no}/*`)).map(atom => {
                     const { pos, x, y, z, charge, label, symbol } = atom
                     const tempFactor = atom.tempFactor
                     return { pos, x, y, z, charge, tempFactor, symbol, label }
                 })
             }
         }
-    }
-
-    async drawCustomRepresentations() {
-        await Promise.all(this.customRepresentations.map(representation => this.drawCustomRepresenation(representation)))
+        
+        this.customRepresentations[represnetationIndex] = representation
     }
 
     /**
@@ -1293,22 +1345,21 @@ export class MoorhenMolecule implements moorhen.Molecule {
     /**
      * Show the representation for the molecule 
      * @param {string} style - The representation style to show
+     * @param {string} [cid=undefined] - The CID selection for the representation
      */
-    async show(style: string): Promise<void> {
-        if (!this.displayObjects[style]) {
-            this.displayObjects[style] = []
+    async show(style: string, cid?: string): Promise<void> {
+        if(!cid) {
+            cid = '/*/*/*/*'
         }
+
         try {
-            if (this.displayObjects[style].length === 0) {
-                await this.fetchIfDirtyAndDraw(style)
-                this.glRef.current.drawScene()
+            const representation = this.customRepresentations.find(item => item.style === style && item.cidSelection === cid)
+            if (representation) {
+                representation.buffers.forEach(buffer => buffer.visible = true)
+            } else {
+                this.addRepresentation(style, cid)
             }
-            else {
-                this.displayObjects[style].forEach(displayBuffer => {
-                    displayBuffer.visible = true
-                })
-                this.glRef.current.drawScene()
-            }
+            this.glRef.current.drawScene()
             this.drawSymmetry(false)
         } catch (err) {
             console.log(err)
@@ -1319,11 +1370,19 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * Hide a type of representation for the molecule 
      * @param {string} style - The representation style to hide
      */
-    hide(style: string) {
-        this.displayObjects[style].forEach(displayBuffer => {
-            displayBuffer.visible = false
-        })
-        this.glRef.current.drawScene()
+    hide(style: string, cid?: string) {
+        if(!cid) {
+            cid = '/*/*/*/*'
+        }
+        try {
+            const representation = this.customRepresentations.find(item => item.style === style && item.cidSelection === cid)
+            if (representation) {
+                representation.buffers.forEach(buffer => buffer.visible = false)
+                this.glRef.current.drawScene()
+            }
+        } catch (err) {
+            console.log(err)
+        }
     }
 
     /**
@@ -1361,10 +1420,10 @@ export class MoorhenMolecule implements moorhen.Molecule {
                     }
                 }
             })
-            Object.getOwnPropertyNames(this.customDisplayRules).forEach(rule => {
-                if (Array.isArray(this.customDisplayRules[rule])) {
-                    const objectBuffers = this.customDisplayRules[rule].filter(buffer => bufferIn.id === buffer.id)
-                    if (objectBuffers.length > 0) {
+            this.customRepresentations.forEach(representation => {
+                if (Array.isArray(representation.buffers)) {
+                    const matchedBuffer = representation.buffers.find(buffer => bufferIn.id === buffer.id)
+                    if (matchedBuffer) {
                         throw BreakException;
                     }
                 }
@@ -1506,7 +1565,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
 
         await Promise.all([
             ...itemsToRedraw.map(style => this.fetchIfDirtyAndDraw(style)),
-            ...this.customRepresentations.map(representation => this.drawCustomRepresenation(representation, true))
+            ...this.customRepresentations.map(representation => this.redrawRepresentation(representation.id))
         ])
 
         await this.drawSymmetry(false)

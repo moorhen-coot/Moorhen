@@ -147,7 +147,7 @@ export namespace moorhen {
             boxRadius: number;
             gridScale: number;
         };
-        customRepresentations: { style: string; cidSelection: string; }[];
+        customRepresentations: { style: string; cidSelection: string; id: string; buffers: moorhen.DisplayObject[]; }[];
         cootBondsOptions: cootBondOptions;
         customDisplayRules: {[x: string]: moorhen.DisplayObject[]};
         displayObjects: {

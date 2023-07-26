@@ -1,7 +1,7 @@
 import { Form, InputGroup } from "react-bootstrap";
 import { useState } from "react";
 import { MenuItem } from "@mui/material";
-import { cidToSpec } from "../../utils/MoorhenUtils";
+import { cidToSpec, guid } from "../../utils/MoorhenUtils";
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 
 var TRIAL_COUNT = 0
@@ -68,14 +68,14 @@ const doRepresentationsTest = async (props: any) => {
     const molecule = props.molecules.find(molecule => molecule.molNo === 0)
 
     if (typeof molecule !== 'undefined') {
-        molecule.customRepresentations = [
-            {style: 'MolecularSurface', cidSelection: '//A/1-15'},
-            {style: 'CBs', cidSelection: '//A/15-30'},
-            {style: 'CRs', cidSelection: '//A/30-36'},
-            {style: 'CBs', cidSelection: '//A/46-55'},
-            {style: 'CRs', cidSelection: '//A/55-72'}
+        const customRepresentations = [
+            ['MolecularSurface', '//A/1-15'],
+            ['CBs', '//A/15-30'],
+            ['CRs', '//A/30-36'],
+            ['CBs', '//A/46-55'],
+            ['CRs', '//A/55-72']
         ]
-        await molecule.drawCustomRepresentations()
+        await Promise.all(customRepresentations.map(item => molecule.addRepresentation(...item)))
     }
 
 }

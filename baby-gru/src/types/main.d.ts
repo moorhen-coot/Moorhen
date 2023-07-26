@@ -74,7 +74,7 @@ declare module 'moorhen' {
         gemmiStructure: gemmi.Structure;
         sequences: _moorhen.Sequence[];
         colourRules: _moorhen.ColourRule[];
-        customRepresentations: { style: string; cidSelection: string; }[];
+        customRepresentations: { style: string; cidSelection: string; id: string; buffers: moorhen.DisplayObject[]; }[];
         ligands: _moorhen.LigandInfo[];
         ligandDicts: {[comp_id: string]: string};
         connectedToMaps: number[];
