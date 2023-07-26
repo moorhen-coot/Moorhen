@@ -520,7 +520,6 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<molecules_container_t>("molecules_container_t")
     .constructor<bool>()
-    .function("get_suggested_initial_contour_level",&molecules_container_t::get_suggested_initial_contour_level)
     .function("clear_refinement",&molecules_container_t::clear_refinement)
     .function("get_suggested_initial_contour_level",&molecules_container_t::get_suggested_initial_contour_level)
     .function("clear_target_position_restraints",&molecules_container_t::clear_target_position_restraints)
