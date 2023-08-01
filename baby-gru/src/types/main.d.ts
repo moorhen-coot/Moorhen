@@ -28,7 +28,7 @@ declare module 'moorhen' {
         updateWithMovedAtoms(movedResidues: _moorhen.AtomInfo[][]): Promise<void>;
         transformedCachedAtomsAsMovedAtoms(selectionCid?: string): _moorhen.AtomInfo[][];
         drawWithStyleFromAtoms(style: string): Promise<void>;
-        copyFragmentUsingCid(cid: string, backgroundColor: [number, number, number, number], defaultBondSmoothness: number, doRecentre?: boolean): Promise<moorhen.Molecule>;
+        copyFragmentUsingCid(cid: string, backgroundColor: [number, number, number, number], defaultBondSmoothness: number, doRecentre?: boolean, style?: string): Promise<moorhen.Molecule>;
         hideCid(cid: string): Promise<void>;
         unhideAll(): Promise<void>;
         drawSelection(cid: string): Promise<void>;
@@ -74,6 +74,7 @@ declare module 'moorhen' {
         gemmiStructure: gemmi.Structure;
         sequences: _moorhen.Sequence[];
         colourRules: _moorhen.ColourRule[];
+        customRepresentations: { style: string; cidSelection: string; id: string; buffers: moorhen.DisplayObject[]; }[];
         ligands: _moorhen.LigandInfo[];
         ligandDicts: {[comp_id: string]: string};
         connectedToMaps: number[];
@@ -88,6 +89,7 @@ declare module 'moorhen' {
             gridScale: number;
         };
         cootBondsOptions: _moorhen.cootBondOptions;
+        customDisplayRules: {[x: string]: moorhen.DisplayObject[]};
         displayObjects: {
             CBs: _moorhen.DisplayObject[];
             CAs: _moorhen.DisplayObject[];

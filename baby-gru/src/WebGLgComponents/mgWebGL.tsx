@@ -7765,7 +7765,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                     }
                 });
                 document.dispatchEvent(atomClicked);
-                if (this.draggableMolecule != null && Object.keys(this.draggableMolecule.displayObjects).length > 0 && this.draggableMolecule.buffersInclude(self.displayBuffers[minidx])) {
+                if (this.draggableMolecule != null && this.draggableMolecule.representations.length > 0 && this.draggableMolecule.buffersInclude(self.displayBuffers[minidx])) {
                     this.currentlyDraggedAtom = { atom: self.displayBuffers[minidx].atoms[minj], buffer: self.displayBuffers[minidx] }
                 }
                 if (self.keysDown['label_atom']) {
@@ -9164,10 +9164,10 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     drawSceneIfDirty() {
-        const activeMoleculeMotion = (this.activeMolecule != null) && (Object.keys(this.activeMolecule.displayObjects).length > 0) ;
-        if(this.activeMolecule){
-            if(this.activeMolecule.displayObjects){
-                const dispObjs :moorhen.DisplayObject[][] = Object.entries(this.activeMolecule.displayObjects).filter((a)=>{return a[0] !== "transformation";}).map((b)=>{return b[1]})
+        const activeMoleculeMotion = (this.activeMolecule != null) && (this.activeMolecule.representations.length > 0) ;
+        if (this.activeMolecule) {
+            if (this.activeMolecule.representations) {
+                const dispObjs: moorhen.DisplayObject[][] = this.activeMolecule.representations.filter(item => item.style !== 'transformation').map(item => item.buffers)
                 for (const value of dispObjs) {
                     for (let ibuf = 0; ibuf < value.length; ibuf++) {
                         if(!value[ibuf].transformMatrixInteractive){
@@ -9239,7 +9239,7 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     doMouseMove(event, self) {;
-        const activeMoleculeMotion = (this.activeMolecule != null) && (Object.keys(this.activeMolecule.displayObjects).length > 0) && !self.keysDown['residue_camera_wiggle'];
+        const activeMoleculeMotion = (this.activeMolecule != null) && (this.activeMolecule.representations.length > 0) && !self.keysDown['residue_camera_wiggle'];
 
         const centreOfMass = function (atoms) {
             let totX = 0.0;
@@ -9330,7 +9330,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 theMatrix[12] = this.activeMolecule.displayObjectsTransformation.origin[0];
                 theMatrix[13] = this.activeMolecule.displayObjectsTransformation.origin[1];
                 theMatrix[14] = this.activeMolecule.displayObjectsTransformation.origin[2];
-                for (const [key, value] of Object.entries(this.activeMolecule.displayObjects)) {
+                for (const representation of this.activeMolecule.representations) {
+                    const value = representation.buffers
                     for (let ibuf = 0; ibuf < value.length; ibuf++) {
                         value[ibuf].transformMatrixInteractive = theMatrix;
                     }
@@ -9433,8 +9434,8 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
                 //Just consider one origin.
                 let diff = [0, 0, 0];
 
-                const dispObjs :moorhen.DisplayObject[][]  = Object.entries(this.activeMolecule.displayObjects).filter((a)=>{return a[0] !== "transformation";}).map((b)=>{return b[1]})
-
+                
+                const dispObjs: moorhen.DisplayObject[][]  = this.activeMolecule.representations.filter(item => item.style !== 'transformation').map(item => item.buffers)
                 for (const value of dispObjs) {
                     if (value.length > 0) {
                         const com = centreOfMass(value[0].atoms);

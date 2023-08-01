@@ -173,7 +173,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface
         <ClickAwayListener onClickAway={() => { setCurrentDropdownId('-1') }}>
         <Popper open={speedDialOpen} anchorEl={speedDialRef.current} placement='bottom-start'>
             <Grow in={speedDialOpen} style={{ transformOrigin: '0 0 0' }}>
-            <MenuList style={{height: props.windowHeight - convertRemToPx(5), width: '100%', overflowY: 'scroll', direction: 'rtl'}}>
+            <MenuList style={{height: props.windowHeight - convertRemToPx(5), width: '100%', overflowY: 'auto', direction: 'rtl'}}>
                 {Object.keys(actions).map((key) => {
                 const action = actions[key]
                 return <MenuItem
@@ -201,7 +201,6 @@ export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface
             </MenuList>
             </Grow>
             <Overlay placement='right' show={currentDropdownId !== '-1'} target={currentDropdownId !== '-1' ? popoverTargetRef : null}>
-            <Grow in={currentDropdownId !== '-1'}>
                 <Popover style={{
                     borderWidth: 0,
                     marginLeft: '1.5rem',
@@ -223,7 +222,6 @@ export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface
                         { props.extraNavBarMenus && props.extraNavBarMenus.find(menu => currentDropdownId === menu.name)?.JSXElement}
                     </Popover.Body>
                 </Popover>
-            </Grow>
             </Overlay>
         </Popper>
         </ClickAwayListener>

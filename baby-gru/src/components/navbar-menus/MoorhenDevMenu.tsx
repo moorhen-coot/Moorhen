@@ -1,7 +1,7 @@
 import { Form, InputGroup } from "react-bootstrap";
 import { useRef, useState } from "react";
 import { MenuItem } from "@mui/material";
-import { cidToSpec } from "../../utils/MoorhenUtils";
+import { cidToSpec, guid } from "../../utils/MoorhenUtils";
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
@@ -66,11 +66,20 @@ const doColourTest = async (props: any) => {
     }
 }
 
-const doRenameChainTest = async (props: any) => {
+const doRepresentationsTest = async (props: any) => {
     const molecule = props.molecules.find(molecule => molecule.molNo === 0)
+
     if (typeof molecule !== 'undefined') {
-        await molecule.changeChainId('A', 'X')
+        const customRepresentations = [
+            ['MolecularSurface', '//A/1-15'],
+            ['CBs', '//A/15-30'],
+            ['CRs', '//A/30-36'],
+            ['CBs', '//A/46-55'],
+            ['CRs', '//A/55-72']
+        ]
+        await Promise.all(customRepresentations.map(item => molecule.addRepresentation(...item)))
     }
+
 }
 
 const doLigandValidationTest = async (props) => {
@@ -100,8 +109,8 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
                     <MenuItem onClick={() => doColourTest(menuItemProps)}>
                         Do colouring test
                     </MenuItem>
-                    <MenuItem onClick={() => doRenameChainTest(menuItemProps)}>
-                        Do rename chain test
+                    <MenuItem onClick={() => doRepresentationsTest(menuItemProps)}>
+                        Do representations test
                     </MenuItem>
                     <hr></hr>
                     <Form.Group>
