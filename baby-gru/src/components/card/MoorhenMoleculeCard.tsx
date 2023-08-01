@@ -270,17 +270,13 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     }, [isVisible]);
 
     useEffect(() => {
-        Object.keys(props.molecule.displayObjects).forEach(key => {
-            const displayObjects = props.molecule.displayObjects[key]
+        props.molecule.representations.forEach(item => {
+            const displayObjects = item.buffers
             changeShowState({
-                key: key, state: displayObjects.length > 0 && displayObjects[0].visible
+                key: item.style, state: displayObjects.length > 0 && displayObjects[0].visible
             })
         })
-    }, [
-        props.molecule.displayObjects.rama.length,
-        props.molecule.displayObjects.rotamer.length,
-        props.molecule.displayObjects.CBs.length,
-    ])
+    }, [props.molecule.representations])
 
     useEffect(() => {
         if (!clickedResidue) {
@@ -301,14 +297,10 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
 
     const handleVisibility = () => {
         if (isVisible) {
-            Object.getOwnPropertyNames(props.molecule.displayObjects).forEach(key => {
-                if (showState[key]) { props.molecule.hide(key) }
-            })
+            props.molecule.representations.forEach(item => showState[item.style] ? item.hide() : null)
             setIsVisible(false)
         } else {
-            Object.getOwnPropertyNames(props.molecule.displayObjects).forEach(key => {
-                if (showState[key]) { props.molecule.show(key) }
-            })
+            props.molecule.representations.forEach(item => showState[item.style] ? item.show() : null)
             setIsVisible(true)
         }
         props.setCurrentDropdownMolNo(-1)
@@ -455,9 +447,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                     <div style={{margin: '1px', paddingTop: '0.5rem', paddingBottom: '0.25rem',  border: '1px solid', borderRadius:'0.33rem', borderColor:
                 "#CCC"}}>
                         <FormGroup style={{ margin: "0px", padding: "0px" }} row>
-                            {Object.keys(props.molecule.displayObjects)
-                                .filter(key => !['hover', 'unitCell', 'originNeighbours', 'selection', 'transformation', 'contact_dots', 'chemical_features', 'VdWSurface'].some(style => key.includes(style)))
-                                .map(key => getCheckBox(key))}
+                            {[ 'CBs', 'CAs', 'CRs', 'ligands', 'gaussian', 'MolecularSurface', 'DishyBases', 'VdwSpheres', 'rama', 'rotamer', 'CDs', 'allHBonds' ].map(key => getCheckBox(key))}
                         </FormGroup>
                     </div>
                 </Col>
@@ -527,6 +517,7 @@ type RepresetationCheckboxPropsType = {
 
 const RepresentationCheckbox = (props: RepresetationCheckboxPropsType) => {
     const [repState, setRepState] = useState<boolean>(false)
+    
     useEffect(() => {
         setRepState(props.showState[props.repKey] || false)
     }, [props.showState])

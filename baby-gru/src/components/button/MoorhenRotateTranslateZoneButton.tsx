@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { MoorhenEditButtonBase } from "./MoorhenEditButtonBase"
 import { moorhen } from "../../types/moorhen";
 import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
-import { Button, Card, Container, FormGroup, FormLabel, FormSelect, Overlay, Row, Stack } from "react-bootstrap";
+import { Button, Card, Container, FormGroup, FormLabel, FormSelect, Row, Stack } from "react-bootstrap";
 import { CheckOutlined, CloseOutlined } from "@mui/icons-material";
 import Draggable from "react-draggable";
 import { getTooltipShortcutLabel } from "../../utils/MoorhenUtils";
@@ -88,16 +88,17 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
         )
         await newMolecule.updateAtoms()
         /* redraw after delay so that the context menu does not refresh empty */
-        setTimeout(() => {
+        setTimeout(async () => {
             chosenMolecule.current.hideCid(fragmentCid.current)
-            Object.keys(molecule.displayObjects)
-            .filter(style => { return ['CRs', 'CBs', 'CAs', 'ligands', 'gaussian', 'MolecularSurface', 'VdWSurface', 'DishyBases', 'VdwSpheres', 'allHBonds'].includes(style) })
-            .forEach(async style => {
-                if (molecule.displayObjects[style].length > 0 &&
-                    molecule.displayObjects[style][0].visible) {
-                    await newMolecule.drawWithStyleFromAtoms(style)
-                }
-            })
+            await Promise.all(molecule.representations
+                .filter(item => { return ['CRs', 'CBs', 'CAs', 'ligands', 'gaussian', 'MolecularSurface', 'VdWSurface', 'DishyBases', 'VdwSpheres', 'allHBonds'].includes(item.style) })
+                .map(representation => {
+                    if (representation.buffers.length > 0 && representation.buffers[0].visible) {
+                        return newMolecule.addRepresentation(representation.style, representation.cid)
+                    } else {
+                        return Promise.resolve()
+                    }
+            }))
             fragmentMolecule.current = newMolecule
             props.changeMolecules({ action: "Add", item: newMolecule })
             props.glRef.current.setActiveMolecule(newMolecule)

@@ -253,8 +253,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         newMolecules.forEach((molecule, moleculeIndex) => {
             const storedMoleculeData = sessionData.moleculeData[moleculeIndex]
             molecule.cootBondsOptions = storedMoleculeData.cootBondsOptions
-            const styles = storedMoleculeData.displayObjectsKeys
-            styles.forEach(style => drawPromises.push(molecule.fetchIfDirtyAndDraw(style)))
+            storedMoleculeData.representations.forEach(item => molecule.addRepresentation(item.style, item.cid))
         })
 
         // Associate maps to reflection data

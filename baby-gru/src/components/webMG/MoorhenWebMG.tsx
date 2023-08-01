@@ -115,11 +115,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     
             const mol: moorhen.Molecule = props.molecules.find(molecule => molecule.molNo === moleculeMolNo)
             if(typeof mol !== 'undefined') {
-                const cidSplit0 = residueCid.split(" ")[0]
-                const cidSplit = cidSplit0.replace(/\/+$/, "").split("/")
-                const resnum = cidSplit[cidSplit.length-1]
-                const chainID = cidSplit[cidSplit.length-2]
-                mol.drawEnvironment(chainID, parseInt(resnum), "", true)
+                mol.drawEnvironment(residueCid, true)
             }
             
             busyDrawingHBonds.current = false
@@ -131,8 +127,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
     const clearHBonds = useCallback(async () => {
         if(!props.context.drawInteractions) {
             props.molecules.forEach(mol => {
-                mol.drawGemmiAtomPairs([], "originNeighboursBump", [1.0, 0.0, 0.0, 1.0], true, true)
-                mol.drawGemmiAtomPairs([], "originNeighboursHBond", [1.0, 0.0, 0.0, 1.0], true, true)
+                mol.clearBuffersOfStyle('environment')
             })
         }
     }, [props.context.drawInteractions, props.molecules])

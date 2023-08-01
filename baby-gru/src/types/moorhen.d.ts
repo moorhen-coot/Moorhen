@@ -83,15 +83,14 @@ export namespace moorhen {
     }
     
     interface Molecule {
+        addRepresentation(style: string, cid?: string): Promise<void>;
         getNeighborResiduesCids(selectionCid: string, radius: number, minDist: number, maxDist: number): Promise<string[]>;
-        drawWithStyleFromMesh(style: string, meshObjects: any[], newBufferAtoms?: AtomInfo[]): Promise<void>;
+        drawWithStyleFromMesh(style: string, meshObjects: any[], cid?: string): Promise<void>;
         updateWithMovedAtoms(movedResidues: AtomInfo[][]): Promise<void>;
         transformedCachedAtomsAsMovedAtoms(selectionCid?: string): AtomInfo[][];
-        drawWithStyleFromAtoms(style: string): Promise<void>;
         copyFragmentUsingCid(cid: string, backgroundColor: [number, number, number, number], defaultBondSmoothness: number, doRecentre?: boolean, style?: string): Promise<Molecule>;
         hideCid(cid: string): Promise<void>;
         unhideAll(): Promise<void>;
-        drawSelection(cid: string): Promise<void>;
         drawUnitCell(): void;
         gemmiAtomsForCid: (cid: string) => Promise<AtomInfo[]>;
         mergeMolecules(otherMolecules: Molecule[], doHide?: boolean): Promise<void>;
@@ -108,7 +107,7 @@ export namespace moorhen {
         refineResiduesUsingAtomCid(cid: string, mode: string, ncyc: number): Promise<WorkerResponse>;
         redo(): Promise<void>;
         undo(): Promise<void>;
-        show(style: string): Promise<void>;
+        show(style: string): void;
         setSymmetryRadius(radius: number): Promise<void>;
         drawSymmetry: (fetchSymMatrix?: boolean) => Promise<void>;
         getUnitCellParams():  { a: number; b: number; c: number; alpha: number; beta: number; gamma: number; };
@@ -117,16 +116,23 @@ export namespace moorhen {
         setColourRules(ruleList: ColourRule[], redraw?: boolean): Promise<void>;
         fetchCurrentColourRules(): Promise<void>;
         fetchIfDirtyAndDraw(arg0: string): Promise<void>;
-        drawGemmiAtomPairs: (gemmiAtomPairs: any[], style: string,  colour: number[], labelled?: boolean, clearBuffers?: boolean) => void;
-        drawEnvironment: (chainID: string, resNo: number,  altLoc: string, labelled?: boolean) => Promise<void>;
+        drawEnvironment: (cid: string, labelled?: boolean) => Promise<void>;
         centreOn: (selectionCid?: string, animate?: boolean) => Promise<void>;
         drawHover: (cid: string) => Promise<void>;
         clearBuffersOfStyle: (style: string) => void;
         loadToCootFromURL: (inputFile: string, molName: string) => Promise<_moorhen.Molecule>;
+        applyTransform: () => Promise<void>;
+        getAtoms(format?: string): Promise<WorkerResponse>;
+        hide: (style: string) => void;
+        redraw: () => Promise<void>;
+        setAtomsDirty: (newVal: boolean) => void;
+        hasVisibleBuffers: (excludeBuffers?: string[]) => boolean;
+        centreAndAlignViewOn(selectionCid: string, animate?: boolean): Promise<void>;
+        buffersInclude: (bufferIn: { id: string; }) => boolean;
         type: string;
+        excludedCids: string[];
         commandCentre: React.RefObject<CommandCentre>;
         glRef: React.RefObject<webGL.MGWebGL>;
-        HBondsAssigned: boolean;
         atomsDirty: boolean;
         isVisible: boolean;
         name: string;
@@ -147,40 +153,33 @@ export namespace moorhen {
             boxRadius: number;
             gridScale: number;
         };
-        customRepresentations: { style: string; cidSelection: string; id: string; buffers: moorhen.DisplayObject[]; }[];
+        representations: MoleculeRepresentation[];
         cootBondsOptions: cootBondOptions;
-        customDisplayRules: {[x: string]: moorhen.DisplayObject[]};
-        displayObjects: {
-            CBs: DisplayObject[];
-            CAs: DisplayObject[];
-            CRs: DisplayObject[];
-            ligands: DisplayObject[];
-            gaussian: DisplayObject[];
-            MolecularSurface: DisplayObject[];
-            VdWSurface: DisplayObject[];
-            DishyBases: DisplayObject[];
-            VdwSpheres: DisplayObject[];
-            rama: DisplayObject[];
-            rotamer: DisplayObject[];
-            CDs: DisplayObject[];
-            allHBonds: DisplayObject[];
-            hover: DisplayObject[];
-            selection: DisplayObject[];
-            originNeighbours: DisplayObject[];
-            originNeighboursHBond: DisplayObject[];
-            originNeighboursBump: DisplayObject[];
-        };
         displayObjectsTransformation: { origin: [number, number, number], quat: any, centre: [number, number, number] }
         uniqueId: string;
         monomerLibraryPath: string;
-        applyTransform: () => Promise<void>;
-        getAtoms(format?: string): Promise<WorkerResponse>;
-        hide: (style: string) => void;
-        redraw: () => Promise<void>;
-        setAtomsDirty: (newVal: boolean) => void;
-        hasVisibleBuffers: (excludeBuffers?: string[]) => boolean;
-        centreAndAlignViewOn(selectionCid: string, animate?: boolean): Promise<void>;
-        buffersInclude: (bufferIn: { id: string; }) => boolean;
+    }
+
+    interface MoleculeRepresentation {
+        buildBuffers(arg0: DisplayObject[]): Promise<void>;
+        setBuffers(meshObjects: DisplayObject[]): void;
+        drawSymmetry(): void
+        delete(): void;
+        draw(): Promise<void>;
+        redraw(): Promise<void>;
+        setParentMolecule(arg0: Molecule): void;
+        show(): void;
+        hide(): void;
+        setAtomBuffers(arg0: AtomInfo[]): void;
+        uniqueId: string;
+        style: string;
+        cid: string;
+        visible: boolean;
+        buffers: DisplayObject[];
+        commandCentre: React.RefObject<CommandCentre>;
+        glRef: React.RefObject<webGL.MGWebGL>;
+        parentMolecule: Molecule;
+        hasAtomBuffers: boolean;
     }
     
     type HoveredAtom = {
@@ -326,7 +325,7 @@ export namespace moorhen {
         name: string;
         molNo: number;
         pdbData: string;
-        displayObjectsKeys: string[];
+        representations: {cid: string, style: string}[];
         cootBondsOptions: cootBondOptions;
         connectedToMaps: number[];
     }
