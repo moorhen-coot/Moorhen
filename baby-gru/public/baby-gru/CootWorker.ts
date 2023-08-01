@@ -666,8 +666,14 @@ const simpleMeshToLineMeshData = (simpleMesh: libcootApi.SimpleMeshT, normalLigh
 
 const read_pdb = (coordData: string, name: string) => {
     const theGuid = guid()
-    cootModule.FS_createDataFile(".", `${theGuid}.pdb`, coordData, true, true);
-    const tempFilename = `./${theGuid}.pdb`
+    let theSuffix;
+    if(coordData.startsWith("data_")){
+        theSuffix = "mmcif"
+    } else {
+        theSuffix = "pdb"
+    }
+    cootModule.FS_createDataFile(".", `${theGuid}.${theSuffix}`, coordData, true, true);
+    const tempFilename = `./${theGuid}.${theSuffix}`
     const molNo = molecules_container.read_pdb(tempFilename)
     cootModule.FS_unlink(tempFilename)
     return molNo
