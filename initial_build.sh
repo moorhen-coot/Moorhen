@@ -63,6 +63,14 @@ emmake make -j ${NUMPROCS}
 emmake make install
 cd ${BUILD_DIR}
 
+#gemmi
+mkdir -p ${BUILD_DIR}/gemmi_build
+cd ${BUILD_DIR}/gemmi_build
+emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${SOURCE_DIR}/gemmi
+emmake make -j ${NUMPROCS}
+emmake make install
+cd ${BUILD_DIR}
+
 #rvapi
 mkdir -p ${BUILD_DIR}/rvapi_build
 cd ${BUILD_DIR}/rvapi_build

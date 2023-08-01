@@ -27,7 +27,7 @@ echo
 echo "Checking out gemmi"
 git clone https://github.com/project-gemmi/gemmi.git gemmi
 cd gemmi
-git checkout v0.5.8
+git checkout v0.6.2
 cd ..
 echo
 echo "Checking out ccp4mg"
@@ -50,7 +50,7 @@ echo "Downloading gsl-2.7.1"
 curl -L https://mirror.ibcp.fr/pub/gnu/gsl/gsl-2.7.1.tar.gz -o gsl-2.7.1.tar.gz
 echo
 echo "Downloading coot-1"
-git clone --branch gtk3 https://github.com/pemsley/coot.git coot-1.0
+git clone --branch main https://github.com/pemsley/coot.git coot-1.0
 echo
 echo "Downloading glm"
 curl -L https://github.com/g-truc/glm/archive/refs/tags/0.9.9.8.tar.gz -o glm-0.9.9.8.tar.gz
@@ -60,10 +60,6 @@ curl -L https://github.com/rdkit/rdkit/archive/refs/tags/Release_2022_09_2.tar.g
 
 echo "Unpacking RDKit source"
 tar xf Release_2022_09_2.tar.gz
-echo
-echo "Unpacking gemmi v0.5.8"
-tar xf gemmi-v0.5.8.tar.gz
-ln -s gemmi-0.5.8 gemmi
 echo
 echo "Unpacking privateer MKIV"
 tar xf privateer-MKIV.tar.gz

@@ -9467,7 +9467,6 @@ export class MGWebGL extends React.Component implements webGL.MGWebGL {
     }
 
     handleKeyUp(event, self) {
-        console.log(self.props.keyboardAccelerators)
         for (const key of Object.keys(self.props.keyboardAccelerators)) {
             if (event.key && self.props.keyboardAccelerators[key].keyPress === event.key.toLowerCase() && self.props.keyboardAccelerators[key]) {
                 self.keysDown[key] = false;

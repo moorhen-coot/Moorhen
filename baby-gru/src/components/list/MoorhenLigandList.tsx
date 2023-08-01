@@ -24,7 +24,7 @@ export const MoorhenLigandList = (props: {
         const result = await props.commandCentre.current.cootCommand({
             returnType: "string",
             command: 'get_svg_for_residue_type',
-            commandArgs: [imol, compId, props.isDark],
+            commandArgs: [imol, compId, false, props.isDark],
         }, true) as moorhen.WorkerResponse<string>
         
         const parser = new DOMParser()

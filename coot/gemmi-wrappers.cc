@@ -835,7 +835,6 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .property("label_seq",&gemmi::Residue::label_seq)
     .property("entity_type",&gemmi::Residue::entity_type)
     .property("het_flag",&gemmi::Residue::het_flag)
-    .property("is_cis",&gemmi::Residue::is_cis)
     .property("flag",&gemmi::Residue::flag)
     .property("atoms",&gemmi::Residue::atoms)
     .function("empty_copy",&gemmi::Residue::empty_copy)
@@ -919,7 +918,6 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .function("determinant",&GemmiSMat33double::determinant)
     .function("inverse",&GemmiSMat33double::inverse)
     .function("calculate_eigenvalues",&gemmi::SMat33<double>::calculate_eigenvalues) //Hmm, returns std::array<double, 3>
-    .function("calculate_eigenvector",&GemmiSMat33double::calculate_eigenvector)
     ;
 
     class_<GemmiSMat33float>("SMat33float")
@@ -936,7 +934,6 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .function("determinant",&GemmiSMat33float::determinant)
     .function("inverse",&GemmiSMat33float::inverse)
     .function("calculate_eigenvalues",&gemmi::SMat33<float>::calculate_eigenvalues) //Hmm, returns std::array<double, 3>
-    .function("calculate_eigenvector",&GemmiSMat33float::calculate_eigenvector)
     ;
 
     class_<gemmi::Vec3>("GemmiVec3")
@@ -982,16 +979,12 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     ;
 
     class_<gemmi::NeighborSearch::Mark>("Mark")
-    .property("x",&gemmi::NeighborSearch::Mark::x)
-    .property("y",&gemmi::NeighborSearch::Mark::y)
-    .property("z",&gemmi::NeighborSearch::Mark::z)
     .property("altloc",&gemmi::NeighborSearch::Mark::altloc)
     .property("element",&gemmi::NeighborSearch::Mark::element)
     .property("image_idx",&gemmi::NeighborSearch::Mark::image_idx)
     .property("chain_idx",&gemmi::NeighborSearch::Mark::chain_idx)
     .property("residue_idx",&gemmi::NeighborSearch::Mark::residue_idx)
     .property("atom_idx",&gemmi::NeighborSearch::Mark::atom_idx)
-    .function("pos",&gemmi::NeighborSearch::Mark::pos)
     ;
 
     class_<gemmi::Entity::DbRef>("EntityDbRef")
@@ -1218,7 +1211,6 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .property("version",&gemmi::SoftwareItem::version)
     .property("date",&gemmi::SoftwareItem::date)
     .property("classification",&gemmi::SoftwareItem::classification)
-    .property("pdbx_ordinal",&gemmi::SoftwareItem::pdbx_ordinal)
     ;
 
     class_<gemmi::ExperimentInfo>("ExperimentInfo")
@@ -1654,27 +1646,9 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .function("path",&gemmi::MonLib::path)
     .function("relative_monomer_path",&gemmi::MonLib::relative_monomer_path)
     .function("read_monomer_doc",&gemmi::MonLib::read_monomer_doc)
-    .function("insert_chemcomps",&gemmi::MonLib::insert_chemcomps)
-    .function("insert_chemlinks",&gemmi::MonLib::insert_chemlinks)
-    .function("insert_chemmods",&gemmi::MonLib::insert_chemmods)
     //.function("read_monomer_cif",&gemmi::MonLib::read_monomer_cif) TODO
     .function("set_monomer_dir",&gemmi::MonLib::set_monomer_dir)
-    .function("find_radius",&gemmi::MonLib::find_radius)
     .function("find_ideal_distance",&gemmi::MonLib::find_ideal_distance)
-    .function("add_auto_chemlink",&gemmi::MonLib::add_auto_chemlink)
-    ;
-
-    class_<gemmi::BondIndex::AtomImage>("BondIndexAtomImage")
-    .property("atom_serial",&gemmi::BondIndex::AtomImage::atom_serial)
-    .property("same_image",&gemmi::BondIndex::AtomImage::same_image)
-    ;
-
-    class_<gemmi::BondIndex>("BondIndex")
-    .function("add_oneway_link",&gemmi::BondIndex::add_oneway_link)
-    .function("add_link",&gemmi::BondIndex::add_link)
-    .function("add_monomer_bonds",&gemmi::BondIndex::add_monomer_bonds)
-    .function("are_linked",&gemmi::BondIndex::are_linked)
-    .function("graph_distance",&gemmi::BondIndex::graph_distance)
     ;
 
     class_<gemmi::CRA>("CRA")
@@ -1952,7 +1926,6 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
     .function("calculate_min_max_1_d2",&gemmi::Mtz::calculate_min_max_1_d2)//std::array<double,2>
     .function("update_reso",&gemmi::Mtz::update_reso)
     .function("toggle_endiannes",&gemmi::Mtz::toggle_endiannes)
-    .function("warn",&gemmi::Mtz::warn)
     .function("setup_spacegroup",&gemmi::Mtz::setup_spacegroup)
     .function("read_file",&gemmi::Mtz::read_file)
     .function("sorted_row_indices",&gemmi::Mtz::sorted_row_indices)
@@ -2242,15 +2215,10 @@ GlobWalk
     function("assign_subchains", &gemmi::assign_subchains);
     function("ensure_entities", &gemmi::ensure_entities);
     function("deduplicate_entities", &gemmi::deduplicate_entities);
-    function("expand_hd_mixture", &gemmi::expand_hd_mixture);
-    function("collapse_hd_mixture", &gemmi::collapse_hd_mixture);
     function("shorten_chain_names", &gemmi::shorten_chain_names);
     function("split_chains_by_segments", &gemmi::split_chains_by_segments);
     function("check_polymer_type", &gemmi::check_polymer_type);
     function("make_one_letter_sequence", &gemmi::make_one_letter_sequence);
-    function("assign_cis_flags_structure", select_overload<void(gemmi::Structure&)>(&gemmi::assign_cis_flags));
-    function("assign_cis_flags_model",     select_overload<void(gemmi::Model&)>(&gemmi::assign_cis_flags));
-    function("assign_cis_flags_chain",     select_overload<void(gemmi::Chain&)>(&gemmi::assign_cis_flags));
     function("remove_alternative_conformations_structure",select_overload<void(gemmi::Structure&)>(&gemmi::remove_alternative_conformations));
     function("remove_alternative_conformations_model",    select_overload<void(gemmi::Model&)>(&gemmi::remove_alternative_conformations));
     function("remove_alternative_conformations_chain",    select_overload<void(gemmi::Chain&)>(&gemmi::remove_alternative_conformations));
