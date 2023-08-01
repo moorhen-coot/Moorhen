@@ -295,7 +295,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
                 name: molecule.name,
                 molNo: molecule.molNo,
                 pdbData: moleculeDataPromises[index],
-                displayObjectsKeys: Object.keys(molecule.displayObjects).filter(key => molecule.displayObjects[key].length > 0),
+                representations: molecule.representations.map(item => { return {cid: item.cid, style: item.style} }),
                 cootBondsOptions: molecule.cootBondsOptions,
                 connectedToMaps: molecule.connectedToMaps
             }
