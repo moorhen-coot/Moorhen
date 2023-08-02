@@ -48,7 +48,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         this.modificationCount = 0
         this.modificationCountBackupThreshold = 5
         this.maxBackupCount = 10
-        this.version = 'v8'
+        this.version = 'v9'
         this.disableBackups = false
         this.storageInstance = null    
     }
@@ -223,7 +223,8 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
             doDrawClickedAtomLines: this.glRef.current.doDrawClickedAtomLines,
             clipStart: (this.glRef.current.gl_clipPlane0[3] + this.glRef.current.fogClipOffset) * -1,
             clipEnd: this.glRef.current.gl_clipPlane1[3] - this.glRef.current.fogClipOffset,
-            quat4: this.glRef.current.myQuat
+            quat4: this.glRef.current.myQuat,
+            version: this.version
         }
 
         return session

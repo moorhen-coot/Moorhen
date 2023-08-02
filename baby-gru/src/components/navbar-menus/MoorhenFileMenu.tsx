@@ -199,6 +199,10 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
 
         if (!sessionData) {
             return
+        } else if (!Object.hasOwn(sessionData, 'version') || props.timeCapsuleRef.current.version !== sessionData.version) {
+            props.setToastContent(getWarningToast(`Failed to read backup (deprecated format)`))
+            console.log('Outdated session backup version, wont load...')
+            return
         }
         
         // Delete current scene

@@ -177,6 +177,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     }
 
     async getEnvironmentBuffers(cid: string, labelled: boolean = false) {
+        this.hasAtomBuffers = false
         const resSpec = cidToSpec(cid)
         const response = await this.commandCentre.current.cootCommand({
             returnType: "generic_3d_lines_bonds_box",
@@ -352,6 +353,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     }
 
     async getResidueHighlightBuffers(selectionString: string, colour: number[]) {
+        this.hasAtomBuffers = false
         if (typeof selectionString === 'string') {
             const resSpec: moorhen.ResidueSpec = cidToSpec(selectionString)
             let modifiedSelection = `/*/${resSpec.chain_id}/${resSpec.res_no}-${resSpec.res_no}/*${resSpec.alt_conf === "" ? "" : ":"}${resSpec.alt_conf}`
@@ -379,6 +381,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     }
 
     async getCootContactDotsCidBuffers(style: string) {
+        this.hasAtomBuffers = false
         const cid = style.substr("contact_dots-".length)
         try {
             const response = await this.commandCentre.current.cootCommand({
@@ -403,6 +406,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     }
 
     async getHBondBuffers(oneCid: string, labelled: boolean = false) {
+        this.hasAtomBuffers = false
         const response = await this.commandCentre.current.cootCommand({
             returnType: "vector_hbond",
             command: "get_h_bonds",
@@ -450,6 +454,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     }
 
     async getCootChemicalFeaturesCidBuffers(style: string) {
+        this.hasAtomBuffers = false
         const cid = style.substr("chemical_features-".length)
         const response = await this.commandCentre.current.cootCommand({
             returnType: "mesh",
@@ -466,6 +471,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
 
 
     async getRamachandranBallBuffers() {
+        this.hasAtomBuffers = false
         const response = await this.commandCentre.current.cootCommand({
             returnType: "mesh",
             command: "get_ramachandran_validation_markup_mesh",
@@ -505,6 +511,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     }
 
     async getCootContactDotsBuffers() {
+        this.hasAtomBuffers = false
         const response = await this.commandCentre.current.cootCommand({
             returnType: "instanced_mesh",
             command: "all_molecule_contact_dots",
@@ -519,6 +526,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     }
 
     async getRotamerDodecahedraBuffers() {
+        this.hasAtomBuffers = false
         const response = await this.commandCentre.current.cootCommand({
             returnType: "instanced_mesh_perm",
             command: "get_rotamer_dodecs_instanced",
@@ -533,6 +541,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     }
 
     getUnitCellRepresentationBuffers() {
+        this.hasAtomBuffers = false
         const unitCell = this.parentMolecule.gemmiStructure.cell
         const lines = getCubeLines(unitCell)
         unitCell.delete()
