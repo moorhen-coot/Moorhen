@@ -190,7 +190,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         } catch {
             props.setToastContent(getWarningToast(`Failed to read mtz`))
             console.log(`Cannot fetch mtz from ${url}`)
-        }   
+        }
     }
 
     const loadSessionJSON = async (sessionDataString: string): Promise<void> => {

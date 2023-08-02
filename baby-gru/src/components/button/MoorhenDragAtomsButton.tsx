@@ -291,6 +291,8 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
         return <MoorhenContextButtonBase 
                     icon={<img style={{padding:'0.1rem', width:'100%', height: '100%'}} alt="drag atoms" className="baby-gru-button-icon" src={`${props.urlPrefix}/baby-gru/pixmaps/drag.svg`}/>}
                     toolTipLabel="Drag atoms"
+                    refineAfterMod={false}
+                    needsMapData={true}
                     popoverSettings={{
                         label: 'Drag mode...',
                         options: ['SINGLE', 'TRIPLE', 'QUINTUPLE', 'HEPTUPLE'],

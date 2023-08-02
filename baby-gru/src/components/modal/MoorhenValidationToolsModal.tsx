@@ -8,6 +8,7 @@ import { MoorhenDifferenceMapPeaks } from "../validation-tools/MoorhenDifference
 import { MoorhenPepflipsDifferenceMap } from "../validation-tools/MoorhenPepflipsDifferenceMap"
 import { MoorhenFillMissingAtoms } from "../validation-tools/MoorhenFillMissingAtoms"
 import { MoorhenMMRRCCPlot } from "../validation-tools/MoorhenMMRRCCPlot"
+import { MoorhenLigandValidation } from "../validation-tools/MoorhenLigandValidation"
 import { MoorhenUnmodelledBlobs } from "../validation-tools/MoorhenUnmodelledBlobs"
 import { convertViewtoPx} from '../../utils/MoorhenUtils';
 
@@ -31,6 +32,7 @@ export const MoorhenValidationToolsModal = (props: MoorhenValidationModalProps) 
             {label: "Difference Map Peaks", toolWidget: <MoorhenDifferenceMapPeaks {...collectedProps}/>},
             {label: "Ramachandran Plot", toolWidget: <MoorhenRamachandran {...collectedProps}/>},
             {label: "Validation Plot", toolWidget: <MoorhenValidation {...collectedProps}/>},
+            {label: "Ligand Validation", toolWidget: <MoorhenLigandValidation {...collectedProps}/>},
             {label: "Peptide flips using difference map", toolWidget: <MoorhenPepflipsDifferenceMap {...collectedProps}/>},
             {label: "Fill partial residues", toolWidget: <MoorhenFillMissingAtoms {...collectedProps}/>},
             {label: "Unmodelled blobs", toolWidget: <MoorhenUnmodelledBlobs {...collectedProps}/>},

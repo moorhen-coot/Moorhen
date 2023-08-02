@@ -1,10 +1,8 @@
 import { Form, InputGroup } from "react-bootstrap";
 import { useRef, useState } from "react";
 import { MenuItem } from "@mui/material";
-import { cidToSpec, guid } from "../../utils/MoorhenUtils";
+import { cidToSpec } from "../../utils/MoorhenUtils";
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
-import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 
 var TRIAL_COUNT = 0
 
@@ -82,20 +80,6 @@ const doRepresentationsTest = async (props: any) => {
 
 }
 
-const doLigandValidationTest = async (props) => {
-    console.log(`Running test with: cid - ${props.customCid.current} & imol - ${props.moleculeSelectRef.current.value}`)
-    const result = await props.commandCentre.current.cootCommand({
-        returnType: 'mesh',
-        command: 'get_mesh_for_ligand_validation_vs_dictionary',
-        commandArgs: [parseInt(props.moleculeSelectRef.current.value), props.customCid.current]
-    }, true)
-    const molecule = props.molecules.find(molecule => molecule.molNo === parseInt(props.moleculeSelectRef.current.value))
-    molecule.displayObjects['ligands_validation_test'] = []
-    console.log('Moorhen got this result:')
-    console.log(result.data.result.result)
-    await molecule.addBuffersOfStyle([result.data.result.result], 'ligands_validation_test')
-}
-
 export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     const [popoverIsShown, setPopoverIsShown] = useState(false)
     const customCid = useRef<string>('')
@@ -112,15 +96,6 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
                     <MenuItem onClick={() => doRepresentationsTest(menuItemProps)}>
                         Do representations test
                     </MenuItem>
-                    <hr></hr>
-                    <Form.Group>
-                        <MoorhenCidInputForm defaultValue={customCid.current} onChange={(e) => { customCid.current = e.target.value }} placeholder={customCid.current ? "" : "Input custom cid e.g. //A,B"} />
-                        <MoorhenMoleculeSelect width="" molecules={props.molecules} ref={moleculeSelectRef}/>
-                        <MenuItem onClick={() => doLigandValidationTest(menuItemProps)}>
-                            Do ligand validation test
-                        </MenuItem>
-                    </Form.Group>
-                    <hr></hr>
                     <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
                         <Form.Check 
                             type="switch"

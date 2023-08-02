@@ -107,7 +107,7 @@ export namespace moorhen {
         refineResiduesUsingAtomCid(cid: string, mode: string, ncyc: number): Promise<WorkerResponse>;
         redo(): Promise<void>;
         undo(): Promise<void>;
-        show(style: string): void;
+        show(style: string, cid?: string): void;
         setSymmetryRadius(radius: number): Promise<void>;
         drawSymmetry: (fetchSymMatrix?: boolean) => Promise<void>;
         getUnitCellParams():  { a: number; b: number; c: number; alpha: number; beta: number; gamma: number; };
@@ -123,7 +123,7 @@ export namespace moorhen {
         loadToCootFromURL: (inputFile: string, molName: string) => Promise<_moorhen.Molecule>;
         applyTransform: () => Promise<void>;
         getAtoms(format?: string): Promise<WorkerResponse>;
-        hide: (style: string) => void;
+        hide: (style: string, cid?: string) => void;
         redraw: () => Promise<void>;
         setAtomsDirty: (newVal: boolean) => void;
         hasVisibleBuffers: (excludeBuffers?: string[]) => boolean;

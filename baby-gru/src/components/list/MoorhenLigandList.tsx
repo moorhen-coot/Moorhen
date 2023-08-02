@@ -126,7 +126,10 @@ export const MoorhenLigandList = (props: {
                     <Row style={{ height: '100%' }}>
                         <Col style={{paddingLeft: '0.5rem', paddingRight: '0.5rem'}}>
                             {ligandList.map((ligand, index) => {
+                                const ligandCid = `/*/${ligand.chainName}/${ligand.resNum}(${ligand.resName})`
                                 const keycd = `contact_dots-${ligand.chainName}/${ligand.resNum}(${ligand.resName})`
+                                const keyenv = `ligand_environment-${ligand.chainName}/${ligand.resNum}(${ligand.resName})`
+                                const keyval = `ligand_validation-${ligand.chainName}/${ligand.resNum}(${ligand.resName})`
                                 const keycf = `chemical_features-${ligand.chainName}/${ligand.resNum}(${ligand.resName})`
                                 return <Card key={index} style={{marginTop: '0.5rem'}}>
                                             <Card.Body style={{padding:'0.5rem'}}>
@@ -141,7 +144,7 @@ export const MoorhenLigandList = (props: {
                                                                     Center on ligand
                                                                 </MenuItem>
                                                                 <hr></hr>
-                                                                <div style={{maxHeight: '6rem', overflowY: 'auto', width:'15rem'}}>
+                                                                <div style={{maxHeight: '9rem', overflowY: 'auto', width:'15rem'}}>
                                                                 <Form.Check
                                                                     key={keycd}
                                                                     label={"Contact dots"}
@@ -150,15 +153,35 @@ export const MoorhenLigandList = (props: {
                                                                     checked={showState[keycd]}
                                                                     onChange={(e) => {
                                                                         if (e.target.checked) {
-                                                                            props.molecule.show(keycd)
+                                                                            props.molecule.show('contact_dots', ligandCid)
                                                                             const changedState = { ...showState }
                                                                             changedState[keycd] = true
                                                                             setShowState(changedState)
                                                                         }
                                                                         else {
-                                                                            props.molecule.hide(keycd)
+                                                                            props.molecule.hide('contact_dots', ligandCid)
                                                                             const changedState = { ...showState }
                                                                             changedState[keycd] = false
+                                                                            setShowState(changedState)
+                                                                        }
+                                                                }}/>
+                                                                <Form.Check
+                                                                    key={keyenv}
+                                                                    label={"Environment distances"}
+                                                                    type="checkbox"
+                                                                    style={{'margin': '0.5rem'}}
+                                                                    checked={showState[keyenv]}
+                                                                    onChange={(e) => {
+                                                                        if (e.target.checked) {
+                                                                            props.molecule.show('ligand_environment', ligandCid)
+                                                                            const changedState = { ...showState }
+                                                                            changedState[keyenv] = true
+                                                                            setShowState(changedState)
+                                                                        }
+                                                                        else {
+                                                                            props.molecule.hide('ligand_environment', ligandCid)
+                                                                            const changedState = { ...showState }
+                                                                            changedState[keyenv] = false
                                                                             setShowState(changedState)
                                                                         }
                                                                 }}/>
@@ -170,15 +193,35 @@ export const MoorhenLigandList = (props: {
                                                                     style={{'margin': '0.5rem'}}
                                                                     onChange={(e) => {
                                                                         if (e.target.checked) {
-                                                                            props.molecule.show(keycf)
+                                                                            props.molecule.show('chemical_features', ligandCid)
                                                                             const changedState = { ...showState }
                                                                             changedState[keycf] = true
                                                                             setShowState(changedState)
                                                                         }
                                                                         else {
-                                                                            props.molecule.hide(keycf)
+                                                                            props.molecule.hide('chemical_features', ligandCid)
                                                                             const changedState = { ...showState }
                                                                             changedState[keycf] = false
+                                                                            setShowState(changedState)
+                                                                        }
+                                                                }}/>
+                                                                <Form.Check
+                                                                    key={keyval}
+                                                                    label={"Validation"}
+                                                                    type="checkbox"
+                                                                    checked={showState[keyval]}
+                                                                    style={{'margin': '0.5rem'}}
+                                                                    onChange={(e) => {
+                                                                        if (e.target.checked) {
+                                                                            props.molecule.show('ligand_validation', ligandCid)
+                                                                            const changedState = { ...showState }
+                                                                            changedState[keyval] = true
+                                                                            setShowState(changedState)
+                                                                        }
+                                                                        else {
+                                                                            props.molecule.hide('ligand_validation', ligandCid)
+                                                                            const changedState = { ...showState }
+                                                                            changedState[keyval] = false
                                                                             setShowState(changedState)
                                                                         }
                                                                 }}/>
