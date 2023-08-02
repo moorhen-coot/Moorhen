@@ -302,6 +302,9 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             returnType = "instanced_mesh_perfect_spheres"
         } else if (name === "CAs") {
             style = "CA+LIGANDS"
+        } else if (name === "ligands" && (typeof cid !== 'string' || cid === '/*/*/*/*')) {
+            this.cid =  "/*/*/(!ALA,CYS,ASP,GLU,PHE,GLY,HIS,ILE,LYS,LEU,MET,ASN,PRO,GLN,ARG,SER,THR,VAL,TRP,TYR,WAT,HOH,THP,SEP,TPO,TYP,PTR,OH2,H2O)"
+            cid = this.cid
         }
 
         if (typeof cid !== 'string' || cid === '/*/*/*/*') {
