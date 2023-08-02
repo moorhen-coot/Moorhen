@@ -887,7 +887,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
     async drawUnitCell() {
         const representation = new MoorhenMoleculeRepresentation('unitCell', '/*/*/*/*', this.commandCentre, this.glRef)
         representation.setParentMolecule(this)
-        representation.hasAtomBuffers = false
         await representation.draw()
         this.representations.push(representation)
     }
@@ -906,7 +905,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
         } else {
             representation = new MoorhenMoleculeRepresentation('hover', selectionString, this.commandCentre, this.glRef)
             representation.setParentMolecule(this)
-            representation.hasAtomBuffers = false
             await representation.draw()
             this.representations.push(representation)
         }
@@ -1517,7 +1515,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
         } else {
             representation = new MoorhenMoleculeRepresentation('environment', selectionCid, this.commandCentre, this.glRef)
             representation.setParentMolecule(this)
-            representation.hasAtomBuffers = false
             await representation.draw()
             this.representations.push(representation)
         }
