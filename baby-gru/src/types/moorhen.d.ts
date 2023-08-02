@@ -348,6 +348,7 @@ export namespace moorhen {
     }
     
     type backupSession = {
+        version: string;
         includesAdditionalMapData: boolean;
         moleculeData: moleculeSessionData[];
         mapData: mapDataSession[];
