@@ -126,8 +126,9 @@ export const MoorhenLigandList = (props: {
                     <Row style={{ height: '100%' }}>
                         <Col style={{paddingLeft: '0.5rem', paddingRight: '0.5rem'}}>
                             {ligandList.map((ligand, index) => {
-                                const ligandCid = `${ligand.chainName}/${ligand.resNum}(${ligand.resName})`
+                                const ligandCid = `/*/${ligand.chainName}/${ligand.resNum}(${ligand.resName})`
                                 const keycd = `contact_dots-${ligand.chainName}/${ligand.resNum}(${ligand.resName})`
+                                const keyenv = `ligand_environment-${ligand.chainName}/${ligand.resNum}(${ligand.resName})`
                                 const keyval = `ligand_validation-${ligand.chainName}/${ligand.resNum}(${ligand.resName})`
                                 const keycf = `chemical_features-${ligand.chainName}/${ligand.resNum}(${ligand.resName})`
                                 return <Card key={index} style={{marginTop: '0.5rem'}}>
@@ -143,7 +144,7 @@ export const MoorhenLigandList = (props: {
                                                                     Center on ligand
                                                                 </MenuItem>
                                                                 <hr></hr>
-                                                                <div style={{maxHeight: '6rem', overflowY: 'auto', width:'15rem'}}>
+                                                                <div style={{maxHeight: '9rem', overflowY: 'auto', width:'15rem'}}>
                                                                 <Form.Check
                                                                     key={keycd}
                                                                     label={"Contact dots"}
@@ -161,6 +162,26 @@ export const MoorhenLigandList = (props: {
                                                                             props.molecule.hide('contact_dots', ligandCid)
                                                                             const changedState = { ...showState }
                                                                             changedState[keycd] = false
+                                                                            setShowState(changedState)
+                                                                        }
+                                                                }}/>
+                                                                <Form.Check
+                                                                    key={keyenv}
+                                                                    label={"Environment distances"}
+                                                                    type="checkbox"
+                                                                    style={{'margin': '0.5rem'}}
+                                                                    checked={showState[keyenv]}
+                                                                    onChange={(e) => {
+                                                                        if (e.target.checked) {
+                                                                            props.molecule.show('ligand_environment', ligandCid)
+                                                                            const changedState = { ...showState }
+                                                                            changedState[keyenv] = true
+                                                                            setShowState(changedState)
+                                                                        }
+                                                                        else {
+                                                                            props.molecule.hide('ligand_environment', ligandCid)
+                                                                            const changedState = { ...showState }
+                                                                            changedState[keyenv] = false
                                                                             setShowState(changedState)
                                                                         }
                                                                 }}/>
