@@ -128,6 +128,7 @@ export const MoorhenLigandList = (props: {
                             {ligandList.map((ligand, index) => {
                                 const ligandCid = `${ligand.chainName}/${ligand.resNum}(${ligand.resName})`
                                 const keycd = `contact_dots-${ligand.chainName}/${ligand.resNum}(${ligand.resName})`
+                                const keyval = `ligand_validation-${ligand.chainName}/${ligand.resNum}(${ligand.resName})`
                                 const keycf = `chemical_features-${ligand.chainName}/${ligand.resNum}(${ligand.resName})`
                                 return <Card key={index} style={{marginTop: '0.5rem'}}>
                                             <Card.Body style={{padding:'0.5rem'}}>
@@ -180,6 +181,26 @@ export const MoorhenLigandList = (props: {
                                                                             props.molecule.hide('chemical_features', ligandCid)
                                                                             const changedState = { ...showState }
                                                                             changedState[keycf] = false
+                                                                            setShowState(changedState)
+                                                                        }
+                                                                }}/>
+                                                                <Form.Check
+                                                                    key={keyval}
+                                                                    label={"Validation"}
+                                                                    type="checkbox"
+                                                                    checked={showState[keyval]}
+                                                                    style={{'margin': '0.5rem'}}
+                                                                    onChange={(e) => {
+                                                                        if (e.target.checked) {
+                                                                            props.molecule.show('ligand_validation', ligandCid)
+                                                                            const changedState = { ...showState }
+                                                                            changedState[keyval] = true
+                                                                            setShowState(changedState)
+                                                                        }
+                                                                        else {
+                                                                            props.molecule.hide('ligand_validation', ligandCid)
+                                                                            const changedState = { ...showState }
+                                                                            changedState[keyval] = false
                                                                             setShowState(changedState)
                                                                         }
                                                                 }}/>

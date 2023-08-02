@@ -172,6 +172,9 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             case 'chemical_features':
                 objects = await this.getCootChemicalFeaturesCidBuffers(this.style, this.cid)    
                 break
+            case 'ligand_validation':
+                objects = await this.getLigandValidationBuffers(this.style, this.cid)
+                break
             default:
                 console.log(`Unrecognised style ${this.style}...`)
                 break
@@ -453,6 +456,21 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         })
 
         return this.getGemmiAtomPairsBuffers(selectedGemmiAtomsPairs, [0.7, 0.2, 0.7, 1.0], labelled)
+    }
+
+    async getLigandValidationBuffers (style: string, cid: string) {
+        this.hasAtomBuffers = false
+        const response = await this.commandCentre.current.cootCommand({
+            returnType: "mesh",
+            command: "get_mesh_for_ligand_validation_vs_dictionary",
+            commandArgs: [this.parentMolecule.molNo, cid]
+        }) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>
+        try {
+            const objects = [response.data.result.result]
+            return objects
+        } catch (err) {
+            console.log(err)
+        }
     }
 
     async getCootChemicalFeaturesCidBuffers(style: string, cid: string) {
