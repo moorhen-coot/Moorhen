@@ -166,12 +166,15 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             case 'environment':
                 objects = this.getEnvironmentBuffers(this.cid)
                 break
+            case 'contact_dots':
+                objects = await this.getCootContactDotsCidBuffers(this.style, this.cid)
+                break
+            case 'chemical_features':
+                objects = await this.getCootChemicalFeaturesCidBuffers(this.style, this.cid)    
+                break
             default:
-                if (this.style.startsWith("chemical_features")) {
-                    objects = await this.getCootChemicalFeaturesCidBuffers(this.style)
-                } else if (this.style.startsWith("contact_dots")) {
-                    objects = await this.getCootContactDotsCidBuffers(this.style)
-                }
+                console.log(`Unrecognised style ${this.style}...`)
+                break
         }
         return objects
     }
@@ -380,9 +383,8 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         }
     }
 
-    async getCootContactDotsCidBuffers(style: string) {
+    async getCootContactDotsCidBuffers(style: string, cid: string) {
         this.hasAtomBuffers = false
-        const cid = style.substr("contact_dots-".length)
         try {
             const response = await this.commandCentre.current.cootCommand({
                 returnType: "instanced_mesh",
@@ -453,9 +455,8 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         return this.getGemmiAtomPairsBuffers(selectedGemmiAtomsPairs, [0.7, 0.2, 0.7, 1.0], labelled)
     }
 
-    async getCootChemicalFeaturesCidBuffers(style: string) {
+    async getCootChemicalFeaturesCidBuffers(style: string, cid: string) {
         this.hasAtomBuffers = false
-        const cid = style.substr("chemical_features-".length)
         const response = await this.commandCentre.current.cootCommand({
             returnType: "mesh",
             command: "get_chemical_features_mesh",

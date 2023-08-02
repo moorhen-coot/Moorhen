@@ -211,7 +211,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             await this.fetchSymmetryMatrix()
         }
         this.representations
-            .filter(representation => !['hover', 'unitCell', 'originNeighbours', 'selection', 'transformation', 'contact_dots', 'chemical_features', 'VdWSurface'].some(style => representation.style.includes(style)))
+            .filter(representation => !['hover', 'unitCell', 'originNeighbours', 'selection', 'transformation', 'contact_dots', 'chemical_features', 'VdWSurface'].includes(representation.style))
             .forEach(representation => representation.drawSymmetry())
     }
 
@@ -1361,7 +1361,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @returns {boolean} True if the molecule has any visible buffers
      */
     hasVisibleBuffers(excludeBuffers: string[] = ['hover', 'unitCell', 'originNeighbours', 'selection', 'transformation', 'contact_dots', 'chemical_features', 'VdWSurface']): boolean {
-        const representations = this.representations.filter(item => !excludeBuffers.some(style => item.style.includes(style)))
+        const representations = this.representations.filter(item => !excludeBuffers.includes(item.style))
         const isVisible = representations.some(item => item.visible)
         return isVisible
     }
