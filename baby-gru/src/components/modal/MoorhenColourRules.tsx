@@ -104,18 +104,20 @@ export const MoorhenColourRules = (props: {
 
     const getRules = async (imol: number, commandCentre: React.RefObject<moorhen.CommandCentre>) => {
         const selectedMolecule = props.molecules.find(molecule => molecule.molNo === imol)
+        /**
         if (!selectedMolecule) {
             return 
         } else if (!selectedMolecule.colourRules) {
-            await selectedMolecule.fetchCurrentColourRules()
+            //await selectedMolecule.fetchCurrentColourRules()
         }
         return selectedMolecule.colourRules
+         */
     }
 
     const applyRules = useCallback(async () => {
         const selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedModel)
         if (selectedMolecule) {
-            await selectedMolecule.setColourRules(ruleList, true)
+            //await selectedMolecule.setColourRules(ruleList, true)
         }
     }, [selectedModel, ruleList, props.molecules])
 
@@ -193,9 +195,11 @@ export const MoorhenColourRules = (props: {
 
     useEffect(() => {
         if (selectedModel !== null) {
+            /**
             getRules(selectedModel, props.commandCentre).then(currentRules => {
                 setRuleList({action: 'Overwrite', items: currentRules})
-            })            
+            })
+             */
         } else {
             setRuleList({action: 'Empty'})
         }

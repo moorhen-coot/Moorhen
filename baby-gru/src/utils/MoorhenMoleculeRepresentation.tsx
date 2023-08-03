@@ -1,14 +1,15 @@
 import { moorhen } from '../types/moorhen';
 import { webGL } from '../types/mgWebGL';
-import { cidToSpec, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid } from './MoorhenUtils';
+import { cidToSpec, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid, hexToHsl } from './MoorhenUtils';
 import { libcootApi } from '../types/libcoot';
+
 
 // TODO: Add colour rules controls. Set and remove them before getting the representation
 // TODO: It might be better to do this.glRef.current.drawScene() in the molecule... 
 export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresentation {
 
     uniqueId: string;
-    style: string;
+    style: moorhen.RepresentationStyles;
     cid: string;
     buffers: moorhen.DisplayObject[];
     commandCentre: React.RefObject<moorhen.CommandCentre>;
@@ -16,8 +17,9 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     parentMolecule: moorhen.Molecule;
     hasAtomBuffers: boolean;
     visible: boolean;
+    colourRules: moorhen.ColourRule[];
 
-    constructor(style: string, cid: string, commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>) {
+    constructor(style: moorhen.RepresentationStyles, cid: string, commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>) {
         this.uniqueId = guid()
         this.style = style
         this.cid = cid
@@ -27,6 +29,11 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         this.buffers = null
         this.hasAtomBuffers = true
         this.visible = false
+        this.colourRules = null
+    }
+
+    setColourRules(colourRules: moorhen.ColourRule[]) {
+        this.colourRules = colourRules
     }
 
     setBuffers(buffers: moorhen.DisplayObject[]) {
@@ -45,6 +52,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
 
     setParentMolecule(molecule: moorhen.Molecule) {
         this.parentMolecule = molecule
+        this.colourRules = this.parentMolecule.defaultColourRules
     }
 
     async buildBuffers(objects: moorhen.DisplayObject[]) {
@@ -64,6 +72,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
 
     async draw() {
         this.visible = true
+        await this.applyColourRules()
         const objects = await this.getBufferObjects()
         this.buildBuffers(objects)
         if (this.hasAtomBuffers) {
@@ -76,6 +85,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
 
     async redraw() {
         this.visible = true
+        await this.applyColourRules()
         const objects = await this.getBufferObjects()
         this.delete()
         this.buildBuffers(objects)
@@ -571,6 +581,31 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         ]
 
         return objects
+    }
+
+    async applyColourRules() {
+        if (this.colourRules?.length > 0 && !['allHBonds', 'rama', 'rotamer', 'unitCell', 'hover', 'environment', 'ligand_environment', 'contact_dots', 'chemical_features', 'ligand_validation'].includes(this.style)) {
+            await this.commandCentre.current.cootCommand({
+                message: 'coot_command',
+                command: "delete_colour_rules",
+                returnType: 'status',
+                commandArgs: [this.parentMolecule.molNo],
+            })
+            
+            await Promise.all(this.colourRules.map(rule => {
+                if (rule.ruleType === 'molecule') {
+                    const [h, s, l] = hexToHsl(rule.color)
+                    return this.commandCentre.current.cootCommand({
+                        message: 'coot_command',
+                        command: 'set_colour_wheel_rotation_base',
+                        returnType: 'status',
+                        commandArgs: [this.parentMolecule.molNo, 360 * h]
+                    })
+                } else {
+                    return this.commandCentre.current.cootCommand(rule.commandInput)
+                }
+            }))
+        }
     }
 
 }

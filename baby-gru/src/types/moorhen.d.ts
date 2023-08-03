@@ -113,8 +113,7 @@ export namespace moorhen {
         getUnitCellParams():  { a: number; b: number; c: number; alpha: number; beta: number; gamma: number; };
         replaceModelWithFile(fileUrl: string, molName: string): Promise<void>
         delete(): Promise<WorkerResponse> 
-        setColourRules(ruleList: ColourRule[], redraw?: boolean): Promise<void>;
-        fetchCurrentColourRules(): Promise<void>;
+        fetchDefaultColourRules(): Promise<void>;
         fetchIfDirtyAndDraw(arg0: string): Promise<void>;
         drawEnvironment: (cid: string, labelled?: boolean) => Promise<void>;
         centreOn: (selectionCid?: string, animate?: boolean) => Promise<void>;
@@ -139,7 +138,6 @@ export namespace moorhen {
         molNo: number;
         gemmiStructure: gemmi.Structure;
         sequences: Sequence[];
-        colourRules: ColourRule[];
         ligands: LigandInfo[];
         ligandDicts: {[comp_id: string]: string};
         connectedToMaps: number[];
@@ -157,8 +155,13 @@ export namespace moorhen {
         cootBondsOptions: cootBondOptions;
         displayObjectsTransformation: { origin: [number, number, number], quat: any, centre: [number, number, number] }
         uniqueId: string;
+        defaultColourRules: ColourRule[];
         monomerLibraryPath: string;
     }
+
+    type RepresentationStyles = 'VdwSpheres' | 'ligands' | 'CAs' | 'CBs' | 'CDs' | 'gaussian' | 'allHBonds' | 'rama' | 
+    'rotamer' | 'CRs' | 'MolecularSurface' | 'DishyBases' | 'VdWSurface' | 'Calpha' | 'unitCell' | 'hover' | 'environment' | 
+    'ligand_environment' | 'contact_dots' | 'chemical_features' | 'ligand_validation'
 
     interface MoleculeRepresentation {
         buildBuffers(arg0: DisplayObject[]): Promise<void>;
@@ -179,6 +182,7 @@ export namespace moorhen {
         commandCentre: React.RefObject<CommandCentre>;
         glRef: React.RefObject<webGL.MGWebGL>;
         parentMolecule: Molecule;
+        colourRules: ColourRule[];
         hasAtomBuffers: boolean;
     }
     

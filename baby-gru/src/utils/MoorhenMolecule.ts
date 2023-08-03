@@ -60,7 +60,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
     molNo: number | null
     gemmiStructure: gemmi.Structure;
     sequences: moorhen.Sequence[];
-    colourRules: moorhen.ColourRule[];
     representations: moorhen.MoleculeRepresentation[];
     ligands: moorhen.LigandInfo[];
     ligandDicts: { [comp_id: string]: string };
@@ -79,7 +78,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
     cootBondsOptions: moorhen.cootBondOptions;
     displayObjectsTransformation: { origin: [number, number, number], quat: any, centre: [number, number, number] }
     uniqueId: string;
-    monomerLibraryPath: string
+    monomerLibraryPath: string;
+    defaultColourRules: moorhen.ColourRule[];
 
     constructor(commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, monomerLibraryPath = "./baby-gru/monomers") {
         this.type = 'molecule'
@@ -91,7 +91,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.molNo = null
         this.gemmiStructure = null
         this.sequences = []
-        this.colourRules = null
         this.ligands = null
         this.ligandDicts = {}
         this.connectedToMaps = null
@@ -116,6 +115,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.displayObjectsTransformation = { origin: [0, 0, 0], quat: null, centre: [0, 0, 0] }
         this.uniqueId = guid()
         this.monomerLibraryPath = monomerLibraryPath
+        this.defaultColourRules = null
     }
 
     /**
@@ -431,6 +431,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         newMolecule.molNo = response.data.result.result
 
         await Promise.all(Object.keys(this.ligandDicts).map(key => newMolecule.addDict(this.ligandDicts[key])))
+        await newMolecule.fetchDefaultColourRules()
         await newMolecule.fetchIfDirtyAndDraw('CBs')
 
         return newMolecule
@@ -444,24 +445,25 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {boolean} [doRecentre=true] - Indicates whether the view should re-centre on the new copied fragment
      * @returns {Promise<moorhen.Molecule>}  New molecule instance
      */
-    async copyFragmentUsingCid(cid: string, backgroundColor: [number, number, number, number], defaultBondSmoothness: number, doRecentre: boolean = true, style: string = 'CBs'): Promise<moorhen.Molecule> {
+    async copyFragmentUsingCid(cid: string, backgroundColor: [number, number, number, number], defaultBondSmoothness: number, doRecentre: boolean = true, style: moorhen.RepresentationStyles = 'CBs'): Promise<moorhen.Molecule> {
         const response = await this.commandCentre.current.cootCommand({
             returnType: "status",
             command: "copy_fragment_using_cid",
             commandArgs: [this.molNo, cid],
             changesMolecules: [this.molNo]
-        }, true) as moorhen.WorkerResponse<number>;
-        const newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.monomerLibraryPath);
-        newMolecule.name = `${this.name} fragment`;
-        newMolecule.molNo = response.data.result.result;
-        newMolecule.setBackgroundColour(backgroundColor);
-        newMolecule.cootBondsOptions.smoothness = defaultBondSmoothness;
-        await Promise.all(Object.keys(this.ligandDicts).map(key => newMolecule.addDict(this.ligandDicts[key])));
+        }, true) as moorhen.WorkerResponse<number>
+        const newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.monomerLibraryPath)
+        newMolecule.name = `${this.name} fragment`
+        newMolecule.molNo = response.data.result.result
+        newMolecule.setBackgroundColour(backgroundColor)
+        newMolecule.cootBondsOptions.smoothness = defaultBondSmoothness
+        await Promise.all(Object.keys(this.ligandDicts).map(key => newMolecule.addDict(this.ligandDicts[key])))
+        await newMolecule.fetchDefaultColourRules()
         if (doRecentre) {
             await newMolecule.fetchIfDirtyAndDraw(style)
             await newMolecule.centreOn()
         }
-        return newMolecule;
+        return newMolecule
     }
 
     /**
@@ -530,7 +532,10 @@ export class MoorhenMolecule implements moorhen.Molecule {
                 changesMolecules: [this.molNo]
             }, true)
             this.molNo = response.data.result.result
-            await this.loadMissingMonomers()
+            await Promise.all([
+                this.loadMissingMonomers(),
+                this.fetchDefaultColourRules()
+            ])
             return this
         } catch (err) {
             console.log('Error in loadToCootFromString', err)
@@ -656,7 +661,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * Draw the molecule with a particular style. If the molecule atoms are marked as "dirty" then fetch new atoms.
      * @param {string} style - The style that will be drawn
      */
-    async fetchIfDirtyAndDraw(style: string): Promise<void> {
+    async fetchIfDirtyAndDraw(style: moorhen.RepresentationStyles): Promise<void> {
         if (this.atomsDirty) {
             await this.updateAtoms()
         }
@@ -778,7 +783,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {any[]} meshObjects - The mesh obects that will be drawn
      * @param {string} [cid] - The new buffer CID selection
      */
-    async drawWithStyleFromMesh(style: string, meshObjects: any[], cid: string = "/*/*/*/*"): Promise<void> {
+    async drawWithStyleFromMesh(style: moorhen.RepresentationStyles, meshObjects: any[], cid: string = "/*/*/*/*"): Promise<void> {
         let representation = this.representations.find(item => item.style === style && item.cid === cid)
         if (!representation) {
             representation = new MoorhenMoleculeRepresentation(style, cid, this.commandCentre, this.glRef)
@@ -795,7 +800,10 @@ export class MoorhenMolecule implements moorhen.Molecule {
         representation.show()
     }
 
-    async addRepresentation(style: string, cid?: string) {
+    async addRepresentation(style: moorhen.RepresentationStyles, cid?: string) {
+        if (!this.defaultColourRules) {
+            await this.fetchDefaultColourRules()
+        }
         const representation = new MoorhenMoleculeRepresentation(style, cid ? cid : '/*/*/*/*', this.commandCentre, this.glRef)
         representation.setParentMolecule(this)
         await representation.draw()
@@ -814,7 +822,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {string} style - The representation style to show
      * @param {string} [cid=undefined] - The CID selection for the representation
      */
-    show(style: string, cid?: string): void {
+    show(style: moorhen.RepresentationStyles, cid?: string): void {
         if(!cid) {
             cid = '/*/*/*/*'
         }
@@ -834,7 +842,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * Hide a type of representation for the molecule 
      * @param {string} style - The representation style to hide
      */
-    hide(style: string, cid?: string) {
+    hide(style: moorhen.RepresentationStyles, cid?: string) {
         if(!cid) {
             cid = '/*/*/*/*'
         }
@@ -1367,17 +1375,23 @@ export class MoorhenMolecule implements moorhen.Molecule {
     }
 
     /**
-     * Fetch the colour rules currently used for this molecule
+     * Set the default colour rules for this molecule from libcoot API
      */
-    async fetchCurrentColourRules() {
+    async fetchDefaultColourRules() {
+        if (this.defaultColourRules) {
+            console.log('Default colour rules already set, doing nothing...')
+            return
+        }
+
         let rules: moorhen.ColourRule[] = []
+
         const response = await this.commandCentre.current.cootCommand({
             message: 'coot_command',
             command: "get_colour_rules",
             returnType: 'colour_rules',
             commandArgs: [this.molNo],
         }) as moorhen.WorkerResponse<libcootApi.PairType<string, string>[]>
-
+        
         response.data.result.result.forEach(rule => {
             rules.push({
                 commandInput: {
@@ -1393,49 +1407,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             })
         })
 
-        this.colourRules = rules
-    }
-
-    /**
-     * Set new colour rules for this molecule instance
-     * @param {moorhen.ColourRule[]} ruleList - The new colour rules
-     * @param {boolean} [redraw=false] - Indicates whether the molecule should be redrawn after setting the new colour rules
-     */
-    async setColourRules(ruleList: moorhen.ColourRule[], redraw: boolean = false) {
-        this.colourRules = [...ruleList]
-
-        await this.commandCentre.current.cootCommand({
-            message: 'coot_command',
-            command: "delete_colour_rules",
-            returnType: 'status',
-            commandArgs: [this.molNo],
-        })
-
-        let promises = []
-        this.colourRules.forEach(rule => {
-            promises.push(
-                this.commandCentre.current.cootCommand(rule.commandInput)
-            )
-            //TODO: in the future we should be able to set CID selection and only exclude property rules
-            if (rule.ruleType === 'molecule') {
-                const [h, s, l] = hexToHsl(rule.color)
-                promises.push(
-                    this.commandCentre.current.cootCommand({
-                        message: 'coot_command',
-                        command: 'set_colour_wheel_rotation_base',
-                        returnType: 'status',
-                        commandArgs: [this.molNo, 360 * h]
-                    })
-                )
-            }
-        })
-
-        await Promise.all(promises)
-
-        if (redraw) {
-            this.setAtomsDirty(true)
-            await this.redraw()
-        }
+        this.defaultColourRules = rules
     }
 
     /**
