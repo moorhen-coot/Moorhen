@@ -28,6 +28,9 @@ const labelMapping = {
     allHBonds: "H-Bonds"
 }
 
+const allRepresentations = [ 'CBs', 'CAs', 'CRs', 'ligands', 'gaussian', 'MolecularSurface', 'DishyBases', 'VdwSpheres', 'rama', 'rotamer', 'CDs', 'allHBonds' ]
+const customRepresentations = [ 'CBs', 'CAs', 'CRs', 'ligands', 'gaussian', 'MolecularSurface', 'DishyBases', 'VdwSpheres' ]
+
 interface MoorhenMoleculeCardPropsInterface extends moorhen.Controls {
     dropdownId: number;
     accordionDropdownId: number;
@@ -431,7 +434,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                     <Col  style={{ width:'100%', height: '100%' }}>
                         <div ref={addColourRulesAnchorDivRef} style={{ margin: '1px', paddingTop: '0.25rem', paddingBottom: '0.25rem',  border: '1px solid', borderRadius:'0.33rem', borderColor: "#CCC" }}>
                             <FormGroup style={{ margin: "0px", padding: "0px"}} row>
-                                {[ 'CBs', 'CAs', 'CRs', 'ligands', 'gaussian', 'MolecularSurface', 'DishyBases', 'VdwSpheres', 'rama', 'rotamer', 'CDs', 'allHBonds' ].map(key => 
+                                {allRepresentations.map(key => 
                                     <RepresentationCheckbox
                                     key={key}
                                     repKey={key}
@@ -592,7 +595,7 @@ const CreateCustomRepresentationMenu = (props: {setShow: React.Dispatch<React.Se
             >
             <Stack gap={2} direction='horizontal' style={{width: '25rem', margin: '0.5rem'}}>
                 <FormSelect ref={styleSelectRef} size="sm" defaultValue={'Bonds'}>
-                    {Object.keys(labelMapping).map(key => {
+                    {customRepresentations.map(key => {
                         return <option value={key} key={key}>{labelMapping[key]}</option>
                     })}
                 </FormSelect>
