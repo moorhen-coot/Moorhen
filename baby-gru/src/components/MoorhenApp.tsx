@@ -38,7 +38,6 @@ export const MoorhenApp = (props: { forwardControls: (controls: any) => any }) =
     const [theme, setTheme] = useState<string>("flatly")
     const [showToast, setShowToast] = useState<boolean>(false)
     const [toastContent, setToastContent] = useState<null | JSX.Element>()
-    const [showColourRulesToast, setShowColourRulesToast] = useState<boolean>(false)
     
     moleculesRef.current = molecules as moorhen.Molecule[]
     mapsRef.current = maps as moorhen.Map[]
@@ -54,8 +53,7 @@ export const MoorhenApp = (props: { forwardControls: (controls: any) => any }) =
         changeMolecules, maps: maps as moorhen.Map[], changeMaps, 
         backgroundColor, setBackgroundColor, appTitle, setAppTitle, cootInitialized,
         setCootInitialized, theme, setTheme, showToast, setShowToast, toastContent,
-        setToastContent, showColourRulesToast, setShowColourRulesToast,
-        forwardControls: props.forwardControls
+        setToastContent, forwardControls: props.forwardControls
     }
 
     return <MoorhenContainer {...collectedProps}/>

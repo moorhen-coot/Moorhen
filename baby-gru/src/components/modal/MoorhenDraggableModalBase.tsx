@@ -19,20 +19,21 @@ export const MoorhenDraggableModalBase = (props: {
     footer: JSX.Element;
     additionalChildren?: JSX.Element;
     overflowY?: 'visible' | 'hidden' | 'clip' | 'scroll' | 'auto';
+    handleClassName?: string;
 }) => {
 
     const [opacity, setOpacity] = useState<number>(1.0)
     const [collapse, setCollapse] = useState<boolean>(false)
     const draggableNodeRef = useRef<HTMLDivElement>();
 
-    return <Draggable nodeRef={draggableNodeRef} handle=".handle" >
+    return <Draggable nodeRef={draggableNodeRef} handle={`.${props.handleClassName}`} >
             <Card
                 ref={draggableNodeRef}
                 style={{ display: props.show ? 'block' : 'none', position: 'absolute', top: props.top, left: props.left, opacity: opacity, width: props.windowWidth ? convertViewtoPx(props.width, props.windowWidth) : `${props.width}wh`}}
                 onMouseOver={() => setOpacity(1)}
                 onMouseOut={() => setOpacity(0.5)}
             >
-                <Card.Header className="handle" style={{ justifyContent: 'space-between', display: 'flex', cursor: 'move', alignItems:'center'}}>
+                <Card.Header className={props.handleClassName} style={{ justifyContent: 'space-between', display: 'flex', cursor: 'move', alignItems:'center'}}>
                     {props.headerTitle}
                     <Stack gap={2} direction="horizontal">
                         {props.additionalHeaderButtons?.map(button => button)}
@@ -57,4 +58,4 @@ export const MoorhenDraggableModalBase = (props: {
         </Draggable>
 }
 
-MoorhenDraggableModalBase.defaultProps = { additionalHeaderButtons:null, additionalChildren: null, width: 35, height: 45, top: '5rem', left: '5rem', overflowY: 'scroll'}
+MoorhenDraggableModalBase.defaultProps = { handleClassName: 'handle', additionalHeaderButtons:null, additionalChildren: null, width: 35, height: 45, top: '5rem', left: '5rem', overflowY: 'scroll'}

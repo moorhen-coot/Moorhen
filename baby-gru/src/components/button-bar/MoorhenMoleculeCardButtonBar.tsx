@@ -130,28 +130,18 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
             expanded: null
         },
         8: {
-            label: 'Copy selected residues into fragment',
-            compressed: () => { return (<MenuItem key={8} disabled={(!props.clickedResidue || !props.selectedResidues)} onClick={props.handleCopyFragment}>Copy selected residues into fragment</MenuItem>) },
+            label: 'Bond display settings',
+            compressed: () => { return (<MoorhenMoleculeBondSettingsMenuItem key={8} setPopoverIsShown={setPopoverIsShown} {...props.bondSettingsProps}/>) },
             expanded: null
         },
         9: {
-            label: 'Merge molecules',
-            compressed: () => { return (<MoorhenMergeMoleculesMenuItem key={9} glRef={props.glRef} molecules={props.molecules} setPopoverIsShown={setPopoverIsShown} menuItemText="Merge molecule into..." popoverPlacement='left' fromMolNo={props.molecule.molNo}/>) },
+            label: 'Gaussian surface display settings',
+            compressed: () => { return (<MoorhenMoleculeGaussianSurfaceSettingsMenuItem key={9} setPopoverIsShown={setPopoverIsShown} {...props.gaussianSettingsProps}/>) },
             expanded: null
         },
         10: {
-            label: 'Bond display settings',
-            compressed: () => { return (<MoorhenMoleculeBondSettingsMenuItem key={10} setPopoverIsShown={setPopoverIsShown} {...props.bondSettingsProps}/>) },
-            expanded: null
-        },
-        11: {
-            label: 'Gaussian surface display settings',
-            compressed: () => { return (<MoorhenMoleculeGaussianSurfaceSettingsMenuItem key={11} setPopoverIsShown={setPopoverIsShown} {...props.gaussianSettingsProps}/>) },
-            expanded: null
-        },
-        12: {
             label: 'Symmetry settings',
-            compressed: () => { return (<MoorhenMoleculeSymmetrySettingsMenuItem key={12} setPopoverIsShown={setPopoverIsShown} molecule={props.molecule} glRef={props.glRef}/>) },
+            compressed: () => { return (<MoorhenMoleculeSymmetrySettingsMenuItem key={10} setPopoverIsShown={setPopoverIsShown} molecule={props.molecule} glRef={props.glRef}/>) },
             expanded: null
         },
     }

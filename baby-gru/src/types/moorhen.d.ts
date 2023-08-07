@@ -83,7 +83,8 @@ export namespace moorhen {
     }
     
     interface Molecule {
-        addRepresentation(style: string, cid?: string): Promise<void>;
+        removeRepresentation(representationId: string): void;
+        addRepresentation(style: string, cid: string, isCustom?: boolean, colour?: string): Promise<void>;
         getNeighborResiduesCids(selectionCid: string, radius: number, minDist: number, maxDist: number): Promise<string[]>;
         drawWithStyleFromMesh(style: string, meshObjects: any[], cid?: string): Promise<void>;
         updateWithMovedAtoms(movedResidues: AtomInfo[][]): Promise<void>;
@@ -113,8 +114,7 @@ export namespace moorhen {
         getUnitCellParams():  { a: number; b: number; c: number; alpha: number; beta: number; gamma: number; };
         replaceModelWithFile(fileUrl: string, molName: string): Promise<void>
         delete(): Promise<WorkerResponse> 
-        setColourRules(ruleList: ColourRule[], redraw?: boolean): Promise<void>;
-        fetchCurrentColourRules(): Promise<void>;
+        fetchDefaultColourRules(): Promise<void>;
         fetchIfDirtyAndDraw(arg0: string): Promise<void>;
         drawEnvironment: (cid: string, labelled?: boolean) => Promise<void>;
         centreOn: (selectionCid?: string, animate?: boolean) => Promise<void>;
@@ -139,7 +139,6 @@ export namespace moorhen {
         molNo: number;
         gemmiStructure: gemmi.Structure;
         sequences: Sequence[];
-        colourRules: ColourRule[];
         ligands: LigandInfo[];
         ligandDicts: {[comp_id: string]: string};
         connectedToMaps: number[];
@@ -157,14 +156,23 @@ export namespace moorhen {
         cootBondsOptions: cootBondOptions;
         displayObjectsTransformation: { origin: [number, number, number], quat: any, centre: [number, number, number] }
         uniqueId: string;
+        defaultColourRules: ColourRule[];
         monomerLibraryPath: string;
+        hoverRepresentation: moorhen.MoleculeRepresentation;
+        unitCellRepresentation: moorhen.MoleculeRepresentation;
+        environmentRepresentation: moorhen.MoleculeRepresentation;
     }
 
+    type RepresentationStyles = 'VdwSpheres' | 'ligands' | 'CAs' | 'CBs' | 'CDs' | 'gaussian' | 'allHBonds' | 'rama' | 
+    'rotamer' | 'CRs' | 'MolecularSurface' | 'DishyBases' | 'VdWSurface' | 'Calpha' | 'unitCell' | 'hover' | 'environment' | 
+    'ligand_environment' | 'contact_dots' | 'chemical_features' | 'ligand_validation'
+
     interface MoleculeRepresentation {
+        setColourRules(ruleList: ColourRule[]): void;
         buildBuffers(arg0: DisplayObject[]): Promise<void>;
         setBuffers(meshObjects: DisplayObject[]): void;
         drawSymmetry(): void
-        delete(): void;
+        deleteBuffers(): void;
         draw(): Promise<void>;
         redraw(): Promise<void>;
         setParentMolecule(arg0: Molecule): void;
@@ -179,7 +187,11 @@ export namespace moorhen {
         commandCentre: React.RefObject<CommandCentre>;
         glRef: React.RefObject<webGL.MGWebGL>;
         parentMolecule: Molecule;
-        hasAtomBuffers: boolean;
+        colourRules: ColourRule[];
+        styleHasAtomBuffers: boolean;
+        styleHasSymmetry: boolean;
+        isCustom: boolean;
+        styleHasColourRules: boolean;
     }
     
     type HoveredAtom = {
@@ -649,8 +661,6 @@ export namespace moorhen {
         setShowToast: React.Dispatch<React.SetStateAction<boolean>>;
         windowWidth: number;
         windowHeight: number;
-        showColourRulesToast: boolean;
-        setShowColourRulesToast: React.Dispatch<React.SetStateAction<boolean>>;
         availableFonts: string[];
     }
     
@@ -699,8 +709,6 @@ export namespace moorhen {
         setShowToast: React.Dispatch<React.SetStateAction<boolean>>;
         toastContent: null | JSX.Element;
         setToastContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
-        showColourRulesToast: boolean;
-        setShowColourRulesToast: React.Dispatch<React.SetStateAction<boolean>>;
         availableFonts: string[];
         setAvailableFonts: React.Dispatch<React.SetStateAction<string[]>>
     }

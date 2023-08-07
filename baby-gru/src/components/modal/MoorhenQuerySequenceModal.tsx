@@ -125,7 +125,7 @@ export const MoorhenQuerySequenceModal = (props: {
     const fetchAndSuperpose = async (polimerEntity: string, coordUrl: string, chainId: string, source: string) => {
         const newMolecule = await fetchMoleculeFromURL(coordUrl, polimerEntity)
         if (source === 'AFDB') {
-            const newRule = [{
+            const newRule = {
                 commandInput: {
                     message:'coot_command',
                     command: 'add_colour_rules_multi', 
@@ -135,8 +135,8 @@ export const MoorhenQuerySequenceModal = (props: {
                 isMultiColourRule: true,
                 ruleType: 'af2-plddt',
                 label: `//*`
-            }]
-            newMolecule.setColourRules(newRule, false)
+            }
+            newMolecule.defaultColourRules = [newRule]
         } 
         await props.commandCentre.current.cootCommand({
             message: 'coot_command',

@@ -98,7 +98,6 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const [innerTheme, setInnerTheme] = useState<string>("flatly")
     const [innerShowToast, setInnerShowToast] = useState<boolean>(false)
     const [innerToastContent, setInnerToastContent] = useState<null | JSX.Element>(null)
-    const [innerShowColourRulesToast, setInnerShowColourRulesToast] = useState<boolean>(false)
     const [innerAvailableFonts, setInnerAvailableFonts] = useState<string[]>([])
     
     innerMoleculesRef.current = innerMolecules as moorhen.Molecule[]
@@ -148,8 +147,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         appTitle: innerAppTitle, setAppTitle: setInnerAppTitle, cootInitialized: innerCootInitialized, 
         setCootInitialized: setInnerCootInitialized, theme: innerTheme, setTheme: setInnerTheme,
         showToast: innerShowToast, setShowToast: setInnerShowToast, toastContent: innerToastContent, 
-        setToastContent: setInnerToastContent, showColourRulesToast: innerShowColourRulesToast, 
-        setShowColourRulesToast: setInnerShowColourRulesToast, availableFonts: innerAvailableFonts,
+        setToastContent: setInnerToastContent, availableFonts: innerAvailableFonts,
         setAvailableFonts: setInnerAvailableFonts,
     }
 
@@ -166,8 +164,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
         dispatchHistoryReducer, molecules, changeMolecules, maps, changeMaps,
         backgroundColor, setBackgroundColor, availableFonts, setAvailableFonts,
         appTitle, setAppTitle, cootInitialized, setCootInitialized, theme, setTheme,
-        showToast, setShowToast, toastContent, setToastContent, showColourRulesToast,
-        setShowColourRulesToast
+        showToast, setShowToast, toastContent, setToastContent
     } = states
 
     const {
@@ -411,8 +408,8 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
     const collectedProps: moorhen.Controls = {
         molecules, changeMolecules, appTitle, setAppTitle, maps, changeMaps, glRef, activeMolecule, setActiveMolecule,
         activeMap, setActiveMap, commandHistory, commandCentre, backgroundColor, setBackgroundColor, toastContent, 
-        setToastContent, hoveredAtom, setHoveredAtom, showToast, setShowToast, windowWidth, windowHeight, showColourRulesToast,
-        timeCapsuleRef, setShowColourRulesToast, isDark, disableFileUploads, urlPrefix, viewOnly,
+        setToastContent, hoveredAtom, setHoveredAtom, showToast, setShowToast, windowWidth, windowHeight,
+        timeCapsuleRef, isDark, disableFileUploads, urlPrefix, viewOnly,
         extraNavBarMenus, monomerLibraryPath, moleculesRef, extraFileMenuItems, mapsRef, allowScripting, extraCalculateMenuItems,
         extraEditMenuItems, extraDraggableModals, aceDRGInstance, availableFonts, ...context
     }
@@ -459,8 +456,6 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                         onKeyPress={onKeyPress}
                         hoveredAtom={hoveredAtom}
                         context={context}
-                        setShowColourRulesToast={setShowColourRulesToast}
-                        showColourRulesToast={showColourRulesToast}
                         windowHeight={windowHeight}
                         windowWidth={windowWidth}
                         urlPrefix={urlPrefix}

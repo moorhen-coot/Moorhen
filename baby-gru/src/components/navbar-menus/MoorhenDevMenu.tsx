@@ -69,13 +69,17 @@ const doRepresentationsTest = async (props: any) => {
 
     if (typeof molecule !== 'undefined') {
         const customRepresentations = [
-            ['MolecularSurface', '//A/1-15'],
-            ['CBs', '//A/15-30'],
-            ['CRs', '//A/30-36'],
-            ['CBs', '//A/46-55'],
-            ['CRs', '//A/55-72']
+            ['MolecularSurface', '//A/1-15', true, '#1bd12a'],
+            ['CRs', '//A/1-15', true, '#d420bc'],
+            ['CBs', '//A/15-30', true],
+            ['CRs', '//A/30-36', true, '#3d1cd4'],
+            ['CBs', '//A/46-55', true],
+            ['MolecularSurface', '//A/55-72', true, '#d417b4'],
+            ['CRs', '//A/55-72', true, '#1bd12a']
         ]
-        await Promise.all(customRepresentations.map(item => molecule.addRepresentation(...item)))
+        for (const representation of customRepresentations) {
+            await molecule.addRepresentation(...representation)
+        }
     }
 
 }
