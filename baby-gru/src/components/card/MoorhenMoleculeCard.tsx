@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useReducer, useCallback, useImperativeHandle, forwardRef } from 'react';
+import { useEffect, useState, useRef, useReducer, useCallback, useImperativeHandle, forwardRef } from 'react';
 import { Card, Row, Col, Accordion, Stack, Button, FormSelect, Form } from "react-bootstrap";
 import { doDownload, rgbToHex, sequenceIsValid } from '../../utils/MoorhenUtils';
 import { isDarkBackground } from '../../WebGLgComponents/mgWebGL'
