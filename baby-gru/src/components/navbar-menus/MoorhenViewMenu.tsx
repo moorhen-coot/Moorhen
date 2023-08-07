@@ -1,12 +1,10 @@
 import { Form, InputGroup } from "react-bootstrap";
 import { useState } from "react";
-import { MenuItem } from "@mui/material";
 import { MoorhenClipFogMenuItem } from "../menu-item/MoorhenClipFogMenuItem";
 import { MoorhenLightingMenuItem } from "../menu-item/MoorhenLightingMenuItem"
 import { MoorhenBlurMenuItem } from "../menu-item/MoorhenBlurMenuItem"
 import { MoorhenBackgroundColorMenuItem } from "../menu-item/MoorhenBackgroundColorMenuItem"
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
-import MoorhenSlider from '../misc/MoorhenSlider' 
 
 export const MoorhenViewMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     const [popoverIsShown, setPopoverIsShown] = useState(false)
@@ -60,11 +58,5 @@ export const MoorhenViewMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                     <MoorhenClipFogMenuItem {...menuItemProps} />
                     <MoorhenLightingMenuItem {...menuItemProps} />
                     {props.glRef.current.isWebGL2 () && <MoorhenBlurMenuItem {...menuItemProps} />}
-                    <MenuItem id="change-molecule-colours-menu-item" onClick={() => {
-                        props.setShowColourRulesToast(true)
-                        document.body.click()
-                    }}>
-                        Set molecule colour rules...
-                    </MenuItem>
         </>
     }

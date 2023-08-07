@@ -536,6 +536,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("set_user_defined_atom_colour_by_residue",&molecules_container_t::set_user_defined_atom_colour_by_residue)
     .function("set_user_defined_bond_colours",&molecules_container_t::set_user_defined_bond_colours)
     .function("set_colour_wheel_rotation_base",&molecules_container_t::set_colour_wheel_rotation_base)
+    .function("set_base_colour_for_bonds",&molecules_container_t::set_base_colour_for_bonds)
     .function("get_symmetry",&molecules_container_t::get_symmetry)
     .function("fit_to_map_by_random_jiggle_using_cid",&molecules_container_t::fit_to_map_by_random_jiggle_using_cid)
     .function("get_active_atom",&molecules_container_t::get_active_atom)

@@ -25,8 +25,6 @@ interface MoorhenWebMGPropsInterface {
     hoveredAtom: moorhen.HoveredAtom;
     viewOnly: boolean;
     context: moorhen.Context;
-    setShowColourRulesToast: React.Dispatch<React.SetStateAction<boolean>>;
-    showColourRulesToast: boolean;
     windowHeight: number;
     windowWidth: number;
     urlPrefix: string;
@@ -573,8 +571,6 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     windowHeight={props.windowHeight}
                 />}
                 
-                <MoorhenColourRules glRef={glRef as React.RefObject<webGL.MGWebGL>} {...props}/>
-
                 {props.extraDraggableModals && props.extraDraggableModals.map(modal => modal)}
 
             </>

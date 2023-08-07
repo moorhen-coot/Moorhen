@@ -3,8 +3,6 @@ import { webGL } from '../types/mgWebGL';
 import { cidToSpec, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid, hexToHsl } from './MoorhenUtils';
 import { libcootApi } from '../types/libcoot';
 
-
-// TODO: Add colour rules controls. Set and remove them before getting the representation
 // TODO: It might be better to do this.glRef.current.drawScene() in the molecule... 
 export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresentation {
 
@@ -15,9 +13,12 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>
     parentMolecule: moorhen.Molecule;
-    hasAtomBuffers: boolean;
+    styleHasAtomBuffers: boolean;
+    styleHasColourRules: boolean;
+    styleHasSymmetry: boolean;
     visible: boolean;
     colourRules: moorhen.ColourRule[];
+    isCustom: boolean;
 
     constructor(style: moorhen.RepresentationStyles, cid: string, commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>) {
         this.uniqueId = guid()
@@ -27,9 +28,23 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         this.glRef = glRef
         this.parentMolecule = null
         this.buffers = null
-        this.hasAtomBuffers = true
         this.visible = false
         this.colourRules = null
+        this.isCustom = false
+        this.styleHasAtomBuffers = ![
+            'contact_dots', 'ligand_validation', 'chemical_features', 'unitCell', 'MolecularSurface', 'VdWSurface', 
+            'gaussian', 'allHBonds', 'rotamer', 'rama', 'environment', 'ligand_environment', 'hover', 'CDs'
+        ].includes(style)
+        this.styleHasSymmetry = ![
+            'hover', 'unitCell', 'originNeighbours', 'selection', 'transformation', 'contact_dots', 'chemical_features', 'VdWSurface'
+        ].includes(style)
+        this.styleHasColourRules = ![
+            'allHBonds', 'rama', 'rotamer', 'unitCell', 'hover', 'environment', 'ligand_environment',
+            'contact_dots', 'chemical_features', 'ligand_validation'
+        ].includes(style)
+        if (style === "ligands" && (typeof cid !== 'string' || cid === '/*/*/*/*')) {
+            this.cid =  "/*/*/(!ALA,CYS,ASP,GLU,PHE,GLY,HIS,ILE,LYS,LEU,MET,ASN,PRO,GLN,ARG,SER,THR,VAL,TRP,TYR,WAT,HOH,THP,SEP,TPO,TYP,PTR,OH2,H2O)"
+        }
     }
 
     setColourRules(colourRules: moorhen.ColourRule[]) {
@@ -75,7 +90,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         await this.applyColourRules()
         const objects = await this.getBufferObjects()
         this.buildBuffers(objects)
-        if (this.hasAtomBuffers) {
+        if (this.styleHasAtomBuffers) {
             let atomBuffers = await this.parentMolecule.gemmiAtomsForCid(this.cid)
             if (atomBuffers.length > 0 && this.buffers.length > 0) {
                 this.setAtomBuffers(atomBuffers)
@@ -87,9 +102,9 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         this.visible = true
         await this.applyColourRules()
         const objects = await this.getBufferObjects()
-        this.delete()
+        this.deleteBuffers()
         this.buildBuffers(objects)
-        if(this.hasAtomBuffers) {
+        if(this.styleHasAtomBuffers) {
             let atomBuffers = await this.parentMolecule.gemmiAtomsForCid(this.cid)
             if (atomBuffers.length > 0 && this.buffers.length > 0) {
                 this.setAtomBuffers(atomBuffers)
@@ -97,7 +112,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         }
     }
 
-    delete() {
+    deleteBuffers() {
         this.buffers.forEach(buffer => {
             if ("clearBuffers" in buffer) {
                 buffer.clearBuffers()
@@ -109,6 +124,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             }
         })
         this.glRef.current.buildBuffers()
+        this.glRef.current.drawScene()
         this.buffers = []
     }
 
@@ -194,7 +210,6 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     }
 
     async getEnvironmentBuffers(cid: string, labelled: boolean = false) {
-        this.hasAtomBuffers = false
         const resSpec = cidToSpec(cid)
         const response = await this.commandCentre.current.cootCommand({
             returnType: "generic_3d_lines_bonds_box",
@@ -320,9 +335,6 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             returnType = "instanced_mesh_perfect_spheres"
         } else if (name === "CAs") {
             style = "CA+LIGANDS"
-        } else if (name === "ligands" && (typeof cid !== 'string' || cid === '/*/*/*/*')) {
-            this.cid =  "/*/*/(!ALA,CYS,ASP,GLU,PHE,GLY,HIS,ILE,LYS,LEU,MET,ASN,PRO,GLN,ARG,SER,THR,VAL,TRP,TYR,WAT,HOH,THP,SEP,TPO,TYP,PTR,OH2,H2O)"
-            cid = this.cid
         }
 
         if (typeof cid !== 'string' || cid === '/*/*/*/*') {
@@ -359,18 +371,15 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     }
 
     drawSymmetry() {
-        if (this.parentMolecule.symmetryMatrices && this.buffers) {
+        if (this.parentMolecule.symmetryMatrices && this.buffers && this.styleHasSymmetry) {
             this.buffers.forEach((displayObject: moorhen.DisplayObject) => {
                 displayObject.symmetryMatrices = this.parentMolecule.symmetryMatrices
             })
             this.glRef.current.drawScene()
-        } else {
-            console.log('Cannot draw symmetry: parent molecule has no sym. matrix...')
         }
     }
 
     async getResidueHighlightBuffers(selectionString: string, colour: number[]) {
-        this.hasAtomBuffers = false
         if (typeof selectionString === 'string') {
             const resSpec: moorhen.ResidueSpec = cidToSpec(selectionString)
             let modifiedSelection = `/*/${resSpec.chain_id}/${resSpec.res_no}-${resSpec.res_no}/*${resSpec.alt_conf === "" ? "" : ":"}${resSpec.alt_conf}`
@@ -398,7 +407,6 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     }
 
     async getCootContactDotsCidBuffers(style: string, cid: string) {
-        this.hasAtomBuffers = false
         try {
             const response = await this.commandCentre.current.cootCommand({
                 returnType: "instanced_mesh",
@@ -422,7 +430,6 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     }
 
     async getHBondBuffers(oneCid: string, labelled: boolean = false) {
-        this.hasAtomBuffers = false
         const response = await this.commandCentre.current.cootCommand({
             returnType: "vector_hbond",
             command: "get_h_bonds",
@@ -470,7 +477,6 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     }
 
     async getLigandValidationBuffers (style: string, cid: string) {
-        this.hasAtomBuffers = false
         const response = await this.commandCentre.current.cootCommand({
             returnType: "mesh",
             command: "get_mesh_for_ligand_validation_vs_dictionary",
@@ -485,7 +491,6 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     }
 
     async getCootChemicalFeaturesCidBuffers(style: string, cid: string) {
-        this.hasAtomBuffers = false
         const response = await this.commandCentre.current.cootCommand({
             returnType: "mesh",
             command: "get_chemical_features_mesh",
@@ -501,7 +506,6 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
 
 
     async getRamachandranBallBuffers() {
-        this.hasAtomBuffers = false
         const response = await this.commandCentre.current.cootCommand({
             returnType: "mesh",
             command: "get_ramachandran_validation_markup_mesh",
@@ -541,7 +545,6 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     }
 
     async getCootContactDotsBuffers() {
-        this.hasAtomBuffers = false
         const response = await this.commandCentre.current.cootCommand({
             returnType: "instanced_mesh",
             command: "all_molecule_contact_dots",
@@ -556,7 +559,6 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     }
 
     async getRotamerDodecahedraBuffers() {
-        this.hasAtomBuffers = false
         const response = await this.commandCentre.current.cootCommand({
             returnType: "instanced_mesh_perm",
             command: "get_rotamer_dodecs_instanced",
@@ -571,7 +573,6 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     }
 
     getUnitCellRepresentationBuffers() {
-        this.hasAtomBuffers = false
         const unitCell = this.parentMolecule.gemmiStructure.cell
         const lines = getCubeLines(unitCell)
         unitCell.delete()
@@ -584,7 +585,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     }
 
     async applyColourRules() {
-        if (this.colourRules?.length > 0 && !['allHBonds', 'rama', 'rotamer', 'unitCell', 'hover', 'environment', 'ligand_environment', 'contact_dots', 'chemical_features', 'ligand_validation'].includes(this.style)) {
+        if (this.colourRules?.length > 0 && this.styleHasColourRules) {
             await this.commandCentre.current.cootCommand({
                 message: 'coot_command',
                 command: "delete_colour_rules",
@@ -593,7 +594,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             })
             
             await Promise.all(this.colourRules.map(rule => {
-                if (rule.ruleType === 'molecule') {
+                if (this.style === 'CBs') {
                     const [h, s, l] = hexToHsl(rule.color)
                     return this.commandCentre.current.cootCommand({
                         message: 'coot_command',

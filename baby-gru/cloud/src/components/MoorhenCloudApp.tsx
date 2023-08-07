@@ -41,7 +41,6 @@ export const MoorhenCloudApp = (props: MoorhenCloudAppPropsInterface) => {
     const [cootInitialized, setCootInitialized] = useState<boolean>(false)
     const [showToast, setShowToast] = useState<boolean>(false)
     const [toastContent, setToastContent] = useState<JSX.Element | null>(null)
-    const [showColourRulesToast, setShowColourRulesToast] = useState<boolean>(false)
     const [legendText, setLegendText] = useState<string | JSX.Element>('Loading, please wait...')
     const [busyFetching, setBusyFetching] = useState<boolean>(false)
     const [notifyNewContent, setNotifyNewContent] = useState<boolean>(false)
@@ -62,8 +61,8 @@ export const MoorhenCloudApp = (props: MoorhenCloudAppPropsInterface) => {
         activeMapRef, lastHoveredAtom, context, activeMap, setActiveMap,
         busy, setBusy, molecules: molecules as moorhen.Molecule[], changeMolecules,
         maps: maps as moorhen.Map[], changeMaps, backgroundColor, setBackgroundColor,
-        cootInitialized, setCootInitialized, setShowColourRulesToast, hoveredAtom, setHoveredAtom,
-        showToast, setShowToast, toastContent, setToastContent, showColourRulesToast,
+        cootInitialized, setCootInitialized, hoveredAtom, setHoveredAtom,
+        showToast, setShowToast, toastContent, setToastContent,
     }
 
     const doExportCallback = useCallback(async () => {

@@ -83,7 +83,8 @@ export namespace moorhen {
     }
     
     interface Molecule {
-        addRepresentation(style: string, cid?: string): Promise<void>;
+        removeRepresentation(representationId: string): void;
+        addRepresentation(style: string, cid: string, isCustom?: boolean, colour?: string): Promise<void>;
         getNeighborResiduesCids(selectionCid: string, radius: number, minDist: number, maxDist: number): Promise<string[]>;
         drawWithStyleFromMesh(style: string, meshObjects: any[], cid?: string): Promise<void>;
         updateWithMovedAtoms(movedResidues: AtomInfo[][]): Promise<void>;
@@ -157,6 +158,9 @@ export namespace moorhen {
         uniqueId: string;
         defaultColourRules: ColourRule[];
         monomerLibraryPath: string;
+        hoverRepresentation: moorhen.MoleculeRepresentation;
+        unitCellRepresentation: moorhen.MoleculeRepresentation;
+        environmentRepresentation: moorhen.MoleculeRepresentation;
     }
 
     type RepresentationStyles = 'VdwSpheres' | 'ligands' | 'CAs' | 'CBs' | 'CDs' | 'gaussian' | 'allHBonds' | 'rama' | 
@@ -164,10 +168,11 @@ export namespace moorhen {
     'ligand_environment' | 'contact_dots' | 'chemical_features' | 'ligand_validation'
 
     interface MoleculeRepresentation {
+        setColourRules(ruleList: ColourRule[]): void;
         buildBuffers(arg0: DisplayObject[]): Promise<void>;
         setBuffers(meshObjects: DisplayObject[]): void;
         drawSymmetry(): void
-        delete(): void;
+        deleteBuffers(): void;
         draw(): Promise<void>;
         redraw(): Promise<void>;
         setParentMolecule(arg0: Molecule): void;
@@ -183,7 +188,10 @@ export namespace moorhen {
         glRef: React.RefObject<webGL.MGWebGL>;
         parentMolecule: Molecule;
         colourRules: ColourRule[];
-        hasAtomBuffers: boolean;
+        styleHasAtomBuffers: boolean;
+        styleHasSymmetry: boolean;
+        isCustom: boolean;
+        styleHasColourRules: boolean;
     }
     
     type HoveredAtom = {
@@ -653,8 +661,6 @@ export namespace moorhen {
         setShowToast: React.Dispatch<React.SetStateAction<boolean>>;
         windowWidth: number;
         windowHeight: number;
-        showColourRulesToast: boolean;
-        setShowColourRulesToast: React.Dispatch<React.SetStateAction<boolean>>;
         availableFonts: string[];
     }
     
@@ -703,8 +709,6 @@ export namespace moorhen {
         setShowToast: React.Dispatch<React.SetStateAction<boolean>>;
         toastContent: null | JSX.Element;
         setToastContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
-        showColourRulesToast: boolean;
-        setShowColourRulesToast: React.Dispatch<React.SetStateAction<boolean>>;
         availableFonts: string[];
         setAvailableFonts: React.Dispatch<React.SetStateAction<string[]>>
     }

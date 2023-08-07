@@ -80,6 +80,9 @@ export class MoorhenMolecule implements moorhen.Molecule {
     uniqueId: string;
     monomerLibraryPath: string;
     defaultColourRules: moorhen.ColourRule[];
+    hoverRepresentation: moorhen.MoleculeRepresentation;
+    unitCellRepresentation: moorhen.MoleculeRepresentation;
+    environmentRepresentation: moorhen.MoleculeRepresentation;
 
     constructor(commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, monomerLibraryPath = "./baby-gru/monomers") {
         this.type = 'molecule'
@@ -116,6 +119,9 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.uniqueId = guid()
         this.monomerLibraryPath = monomerLibraryPath
         this.defaultColourRules = null
+        this.hoverRepresentation = null
+        this.unitCellRepresentation = null
+        this.environmentRepresentation = null
     }
 
     /**
@@ -210,9 +216,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         if (fetchSymMatrix) {
             await this.fetchSymmetryMatrix()
         }
-        this.representations
-            .filter(representation => !['hover', 'unitCell', 'originNeighbours', 'selection', 'transformation', 'contact_dots', 'chemical_features', 'VdWSurface'].includes(representation.style))
-            .forEach(representation => representation.drawSymmetry())
+        this.representations.forEach(representation => representation.drawSymmetry())
     }
 
     /**
@@ -401,7 +405,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * Delete this molecule instance
      */
     async delete(): Promise<moorhen.WorkerResponse> {
-        this.representations.forEach(representation => representation.delete())
+        this.representations.forEach(representation => representation.deleteBuffers())
         this.glRef.current.drawScene()
         const inputData = { message: "delete", molNo: this.molNo }
         const response = await this.commandCentre.current.postMessage(inputData)
@@ -791,7 +795,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             this.representations.push(representation)
         }
 
-        representation.delete()
+        representation.deleteBuffers()
         representation.buildBuffers(meshObjects)
         let bufferAtoms = await this.gemmiAtomsForCid(cid)
         if(bufferAtoms.length > 0) {
@@ -800,12 +804,29 @@ export class MoorhenMolecule implements moorhen.Molecule {
         representation.show()
     }
 
-    async addRepresentation(style: moorhen.RepresentationStyles, cid?: string) {
+    async addRepresentation(style: moorhen.RepresentationStyles, cid: string = '/*/*/*/*', isCustom: boolean = false, colour?: string) {
         if (!this.defaultColourRules) {
             await this.fetchDefaultColourRules()
         }
-        const representation = new MoorhenMoleculeRepresentation(style, cid ? cid : '/*/*/*/*', this.commandCentre, this.glRef)
+        const representation = new MoorhenMoleculeRepresentation(style, cid, this.commandCentre, this.glRef)
+        representation.isCustom = isCustom
         representation.setParentMolecule(this)
+        if(colour) {
+            representation.setColourRules([
+                {
+                    commandInput: {
+                        message: 'coot_command',
+                        command: 'add_colour_rule',
+                        returnType: 'status',
+                        commandArgs: [this.molNo, cid, colour]
+                    },
+                    isMultiColourRule: false,
+                    ruleType: 'chain',
+                    color: colour,
+                    label: cid
+                }
+            ])
+        }
         await representation.draw()
         this.representations.push(representation)
         await this.drawSymmetry(false)
@@ -843,7 +864,9 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {string} style - The representation style to hide
      */
     hide(style: moorhen.RepresentationStyles, cid?: string) {
-        if(!cid) {
+        if (!cid && style === 'ligands') {
+            cid = "/*/*/(!ALA,CYS,ASP,GLU,PHE,GLY,HIS,ILE,LYS,LEU,MET,ASN,PRO,GLN,ARG,SER,THR,VAL,TRP,TYR,WAT,HOH,THP,SEP,TPO,TYP,PTR,OH2,H2O)"
+        } else if (!cid) {
             cid = '/*/*/*/*'
         }
         try {
@@ -861,8 +884,25 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {string} style - The style to clear
      */
     clearBuffersOfStyle(style: string) {
-        this.representations.forEach(representation => representation.style === style ? representation.delete() : null)
-        this.representations = this.representations.filter(representation => representation.style !== style)
+        if (style === 'hover') {
+            this.hoverRepresentation?.deleteBuffers()
+        } else if (style === 'unitCell') {
+            this.unitCellRepresentation?.deleteBuffers()
+        } else if (style === 'environment') {
+            this.environmentRepresentation?.deleteBuffers()
+        } else {
+            this.representations.forEach(representation => representation.style === style ? representation.deleteBuffers() : null)
+            this.representations = this.representations.filter(representation => representation.style !== style)
+        }
+    }
+
+    /**
+     * Remove a representation for this molecule instance
+     * @param {string} representationId - The unique identifier for the representation
+     */
+    removeRepresentation(representationId: string) {
+        this.representations.forEach(representation => representation.uniqueId === representationId ? representation.deleteBuffers() : null)
+        this.representations = this.representations.filter(representation => representation.uniqueId !== representationId)
     }
 
     /**
@@ -893,10 +933,14 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * Draw the unit cell of this molecule
      */
     async drawUnitCell() {
-        const representation = new MoorhenMoleculeRepresentation('unitCell', '/*/*/*/*', this.commandCentre, this.glRef)
-        representation.setParentMolecule(this)
-        await representation.draw()
-        this.representations.push(representation)
+        if (this.unitCellRepresentation && this.unitCellRepresentation.buffers?.length > 0) {
+            this.unitCellRepresentation.show()
+        } else {
+            const unitCellRepresentation = new MoorhenMoleculeRepresentation('unitCell', '/*/*/*/*', this.commandCentre, this.glRef)
+            unitCellRepresentation.setParentMolecule(this)
+            await unitCellRepresentation.draw()
+            this.unitCellRepresentation = unitCellRepresentation
+        }
     }
 
     /**
@@ -904,17 +948,35 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {string} selectionString - The CID selection for the residue that will be highlighted
      */
     async drawHover(selectionString: string): Promise<void> {
-        let representation = this.representations.find(item => item.style === 'hover')
-        if (typeof selectionString !== 'string') {
-            // pass
-        } else if (representation) {
-            representation.cid = selectionString
-            representation.redraw()
-        } else {
-            representation = new MoorhenMoleculeRepresentation('hover', selectionString, this.commandCentre, this.glRef)
-            representation.setParentMolecule(this)
-            await representation.draw()
-            this.representations.push(representation)
+        if (typeof selectionString === 'string') {
+            if (this.hoverRepresentation) {
+                this.hoverRepresentation.cid = selectionString
+                this.hoverRepresentation.redraw()
+            } else {
+                const hoverRepresentation = new MoorhenMoleculeRepresentation('hover', selectionString, this.commandCentre, this.glRef)
+                hoverRepresentation.setParentMolecule(this)
+                await hoverRepresentation.draw()
+                this.hoverRepresentation = hoverRepresentation
+            }
+        }
+    }
+
+    /**
+     * Draw enviroment distances for a given residue
+     * @param {string} selectionCid - The CID
+     * @param {boolean} [labelled=false] - Indicates whether the distances should be labelled
+     */
+    async drawEnvironment(selectionCid: string, labelled: boolean = false): Promise<void> {
+        if (typeof selectionCid === 'string') {
+            if (this.environmentRepresentation) {
+                this.environmentRepresentation.cid = selectionCid
+                this.environmentRepresentation.redraw()
+            } else {
+                const environmentRepresentation = new MoorhenMoleculeRepresentation('environment', selectionCid, this.commandCentre, this.glRef)
+                environmentRepresentation.setParentMolecule(this)
+                await environmentRepresentation.draw()
+                this.environmentRepresentation = environmentRepresentation
+            }
         }
     }
 
@@ -931,19 +993,13 @@ export class MoorhenMolecule implements moorhen.Molecule {
             }
         }
 
-        await Promise.all([
-            ...this.representations
-                .filter(representation => !["transformation", 'hover', 'unitCell', 'selection'].includes(representation.style))
-                .map(representation => {
-                    if (representation.visible) {
-                        return this.redrawRepresentation(representation.uniqueId)
-                    } else {
-                        representation.buffers = []
-                        return Promise.resolve()
-                    }
-                    
-                })
-        ])
+        for (const representation of this.representations) {
+            if (representation.visible) {
+                await this.redrawRepresentation(representation.uniqueId)
+            } else {
+                representation.deleteBuffers()
+            }
+        }
 
         await this.drawSymmetry(false)
     }
@@ -1470,26 +1526,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.excludedSegments = []
         this.excludedCids = []
         await this.redraw()
-    }
-
-    /**
-     * Draw enviroment distances for a given residue
-     * @param {string} selectionCid - The CID
-     * @param {boolean} [labelled=false] - Indicates whether the distances should be labelled
-     */
-    async drawEnvironment(selectionCid: string, labelled: boolean = false): Promise<void> {
-        let representation = this.representations.find(item => item.style === 'environment')
-        if (typeof selectionCid !== 'string') {
-            // pass
-        } else if (representation) {
-            representation.cid = selectionCid
-            representation.redraw()
-        } else {
-            representation = new MoorhenMoleculeRepresentation('environment', selectionCid, this.commandCentre, this.glRef)
-            representation.setParentMolecule(this)
-            await representation.draw()
-            this.representations.push(representation)
-        }
     }
 
     /**

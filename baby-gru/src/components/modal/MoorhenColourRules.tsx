@@ -2,14 +2,13 @@ import { useCallback, useEffect, useRef, useState, useReducer } from "react";
 import { Row, Button, Stack, Form, FormSelect, Card, Col, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { ArrowUpwardOutlined, ArrowDownwardOutlined, DeleteOutlined } from '@mui/icons-material';
 import { SketchPicker } from "react-color";
-import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
 import { convertViewtoPx, getMultiColourRuleArgs } from "../../utils/MoorhenUtils";
 import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
 import { MoorhenSequenceRangeSelect } from "../sequence-viewer/MoorhenSequenceRangeSelect";
-import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
+import { Popover } from "@mui/material";
 
 type colourRuleChange = {
     action: "Add" | "Remove" | "Overwrite" | "MoveUp" | "MoveDown" | "Empty";
@@ -59,14 +58,15 @@ export const MoorhenColourRules = (props: {
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
     molecules: moorhen.Molecule[];
+    molecule: moorhen.Molecule;
     windowWidth: number;
     isDark: boolean;
     showColourRulesToast: boolean;
     setShowColourRulesToast: React.Dispatch<React.SetStateAction<boolean>>;
     windowHeight: number;
+    anchorEl: React.RefObject<HTMLDivElement>;
 }) => {
     
-    const moleculeSelectRef = useRef<HTMLSelectElement>()
     const chainSelectRef = useRef<HTMLSelectElement>()
     const ruleSelectRef = useRef<HTMLSelectElement>()
     const residueRangeSelectRef = useRef<any>()
@@ -74,16 +74,10 @@ export const MoorhenColourRules = (props: {
     const [ruleType, setRuleType] = useState<string>('molecule')
     const [colourProperty, setColourProperty] = useState<string>('b-factor')
     const [selectedColour, setSelectedColour] = useState<string>('#808080')
-    const [selectedModel, setSelectedModel] = useState<number>(null)
     const [selectedChain, setSelectedChain] = useState<string>(null)
     const [cid, setCid] = useState<string>(null)
     const [sequenceRangeSelect, setSequenceRangeSelect] = useState(null)
     const [ruleList, setRuleList] = useReducer(itemReducer, initialRuleState)
-    const [toastBodyWidth, setToastBodyWidth] = useState<number>(40)
-
-    const handleModelChange = (evt) => {
-        setSelectedModel(parseInt(evt.target.value))
-    }
 
     const handleChainChange = (evt) => {
         setSelectedChain(evt.target.value)
@@ -102,28 +96,46 @@ export const MoorhenColourRules = (props: {
         }
     }
 
-    const getRules = async (imol: number, commandCentre: React.RefObject<moorhen.CommandCentre>) => {
-        const selectedMolecule = props.molecules.find(molecule => molecule.molNo === imol)
-        /**
-        if (!selectedMolecule) {
-            return 
-        } else if (!selectedMolecule.colourRules) {
-            //await selectedMolecule.fetchCurrentColourRules()
+    useEffect(() => {
+        const setIntialRules = async () => {
+            if (!props.molecule) {
+                return 
+            } else if (props.molecule.defaultColourRules?.length === 0) {
+                await props.molecule.fetchDefaultColourRules()
+            }
+            if (props.molecule.defaultColourRules.length > 0) {
+                setRuleList({action: "Overwrite", items: props.molecule.defaultColourRules})
+            }
         }
-        return selectedMolecule.colourRules
-         */
-    }
+        
+        setIntialRules()
+
+    }, [])
 
     const applyRules = useCallback(async () => {
-        const selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedModel)
-        if (selectedMolecule) {
-            //await selectedMolecule.setColourRules(ruleList, true)
+        if (props.molecule?.defaultColourRules) {
+            props.molecule.defaultColourRules = ruleList
+            await Promise.all(
+                props.molecule.representations.filter(representation => !representation.isCustom).map(representation => {
+                    representation.setColourRules(ruleList)
+                    if (representation.visible) {
+                        return representation.redraw()
+                    } else {
+                        representation.deleteBuffers()
+                        return Promise.resolve()
+                    }
+                    
+                })
+            )
         }
-    }, [selectedModel, ruleList, props.molecules])
+    }, [ruleList])
+
+    useEffect(() => {
+        applyRules()
+    }, [applyRules])
 
     const createRule = () => {
-        const selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedModel)
-        if(!selectedMolecule) {
+        if(!props.molecule) {
             return
         }
 
@@ -154,7 +166,7 @@ export const MoorhenColourRules = (props: {
                         message:'coot_command',
                         command: 'add_colour_rule', 
                         returnType:'status',
-                        commandArgs: [selectedModel, cidLabel, selectedColour]
+                        commandArgs: [props.molecule.molNo, cidLabel, selectedColour]
                     },
                     isMultiColourRule: false,
                     ruleType: `${ruleType}`,
@@ -168,7 +180,7 @@ export const MoorhenColourRules = (props: {
                     message:'coot_command',
                     command: 'add_colour_rules_multi', 
                     returnType:'status',
-                    commandArgs: getMultiColourRuleArgs(selectedMolecule, ruleSelectRef.current.value)
+                    commandArgs: getMultiColourRuleArgs(props.molecule, ruleSelectRef.current.value)
                 },
                 isMultiColourRule: true,
                 ruleType: `${ruleSelectRef.current.value}`,
@@ -182,55 +194,19 @@ export const MoorhenColourRules = (props: {
     }
 
     useEffect(() => {
-        applyRules()
-    }, [ruleList])
-
-    useEffect(() => {
-        if (props.windowWidth > 1800) {
-            setToastBodyWidth(30)
-        } else {
-            setToastBodyWidth(40)
-        }
-    }, [props.windowWidth])
-
-    useEffect(() => {
-        if (selectedModel !== null) {
-            /**
-            getRules(selectedModel, props.commandCentre).then(currentRules => {
-                setRuleList({action: 'Overwrite', items: currentRules})
-            })
-             */
-        } else {
-            setRuleList({action: 'Empty'})
-        }
-    }, [selectedModel])
-
-    useEffect(() => {
-        if (props.molecules.length === 0) {
-            setSelectedModel(null)
-        } else if (selectedModel === null) {
-            setSelectedModel(props.molecules[0].molNo)
-        } else if (!props.molecules.map(molecule => molecule.molNo).includes(selectedModel)) {
-            setSelectedModel(props.molecules[0].molNo)
-        }
-        
-    }, [props.molecules.length])
-
-    useEffect(() => {
-        if (selectedModel === null || !ruleSelectRef.current || !chainSelectRef.current || ruleSelectRef.current?.value !== 'residue-range') {
+        if (!ruleSelectRef.current || !chainSelectRef.current || ruleSelectRef.current?.value !== 'residue-range') {
             return
         }
-        const selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedModel)
-        const selectedSequence = selectedMolecule.sequences.find(sequence => sequence.chain === chainSelectRef.current.value)
+        const selectedSequence = props.molecule.sequences.find(sequence => sequence.chain === chainSelectRef.current.value)
         setSequenceRangeSelect(
             <MoorhenSequenceRangeSelect
                 ref={residueRangeSelectRef}
-                molecule={selectedMolecule}
+                molecule={props.molecule}
                 sequence={selectedSequence}
                 glRef={props.glRef}
             />
-        )        
-    }, [selectedModel, selectedChain, ruleType])
+        )
+    }, [selectedChain, ruleType])
 
     const getRuleCard = (rule, index) => {
         return <Card key={index} className='hide-scrolling' style={{margin: '0.1rem', maxWidth: '100%', overflowX:'scroll'}}>
@@ -299,19 +275,21 @@ export const MoorhenColourRules = (props: {
             </Card>
     }
 
-    return <MoorhenDraggableModalBase 
-        left={`${props.windowWidth / 2}px`}
-        show={props.showColourRulesToast}
-        setShow={props.setShowColourRulesToast}
-        windowHeight={props.windowHeight}
-        windowWidth={props.windowWidth}
-        width={toastBodyWidth}
-        headerTitle='Set molecule colour rules'
-        body={
-            <Row>
-                <Stack direction="vertical" gap={2} style={{alignItems: 'center', border:'solid', borderColor: 'grey', borderWidth: '1px', borderRadius: '1rem', padding: '0.5rem'}}>
+    if (!props.anchorEl) {
+        return null
+    }
+
+    return <Popover
+                onClose={() => props.setShowColourRulesToast(false)}
+                open={props.showColourRulesToast}
+                anchorEl={props.anchorEl.current}
+                anchorOrigin={{ vertical: 'center', horizontal: 'center' }}
+                transformOrigin={{ vertical: 'center', horizontal: 'center', }}
+                sx={{'& .MuiPaper-root': {backgroundColor: props.isDark ? 'grey' : 'white', borderRadius: '1rem', marginTop: '0.1rem'}}}
+            >
+            <Stack direction="vertical" gap={2} style={{alignItems: 'center', border:'solid', borderColor: 'grey', borderWidth: '1px', borderRadius: '1rem', padding: '0.5rem'}}>
                 <Stack gap={2} direction='horizontal' style={{margin: 0, padding: 0}}>
-                <Stack gap={2} direction='vertical' style={{margin: 0, padding: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between'}}>
+                <Stack gap={2} direction='vertical' style={{margin: 0, padding: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center'}}>
                     <Form.Group style={{ width: '100%', margin: 0 }}>
                         <Form.Label>Rule type</Form.Label>
                         <FormSelect size="sm" ref={ruleSelectRef} defaultValue={'molecule'} onChange={(val) => setRuleType(val.target.value)}>
@@ -322,8 +300,7 @@ export const MoorhenColourRules = (props: {
                             <option value={'property'} key={'property'}>By property</option>
                         </FormSelect>
                     </Form.Group>
-                    <MoorhenMoleculeSelect width="100%" margin={'0px'} onChange={handleModelChange} molecules={props.molecules} ref={moleculeSelectRef}/>
-                    {(ruleType === 'chain' || ruleType === 'residue-range')  && <MoorhenChainSelect width="100%" margin={'0px'} molecules={props.molecules} onChange={handleChainChange} selectedCoordMolNo={selectedModel} ref={chainSelectRef} allowedTypes={[1, 2]}/>}
+                    {(ruleType === 'chain' || ruleType === 'residue-range')  && <MoorhenChainSelect width="100%" margin={'0px'} molecules={props.molecules} onChange={handleChainChange} selectedCoordMolNo={props.molecule.molNo} ref={chainSelectRef} allowedTypes={[1, 2]}/>}
                     {ruleType === 'cid' && <MoorhenCidInputForm margin={'0px'} width="100%" onChange={handleResidueCidChange} ref={cidFormRef}/> }
                     {ruleType === 'property' && 
                     <Form.Group style={{ margin: '0px', width: '100%' }}>
@@ -345,21 +322,13 @@ export const MoorhenColourRules = (props: {
                         {sequenceRangeSelect}
                     </div>
             }
-            </Stack>
-            <Card style={{width:'100%', border:'solid', borderColor: 'grey', borderWidth: '1px', borderRadius: '1rem', padding: '0.5rem', marginTop: '0.5rem'}}>
-                <span>
-                    Rule list
-                </span>
-                <hr style={{margin: '0.5rem'}}></hr>
-                <Card.Body className="hide-scrolling" style={{padding:'0.2rem', maxHeight: convertViewtoPx(25, props.windowHeight), overflowY: 'auto', textAlign:'center'}}>
-                    {ruleList.length === 0 ? 
-                        "No rules created yet"
-                        :
-                        ruleList.map((rule, index) => getRuleCard(rule, index))}
-                </Card.Body>
-            </Card>
-        </Row>
-        }
-        footer={null}
-    />
+            <hr style={{width: '100%'}}></hr>
+            <div className="hide-scrolling" style={{width: '100%', padding:'0.2rem', maxHeight: convertViewtoPx(20, props.windowHeight), overflowY: 'auto', textAlign:'center'}}>
+                {ruleList.length === 0 ? 
+                    "No rules created yet"
+                :
+                    ruleList.map((rule, index) => getRuleCard(rule, index))}
+            </div>
+        </Stack>
+    </Popover>
 }
