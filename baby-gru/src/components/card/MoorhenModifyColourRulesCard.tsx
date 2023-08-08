@@ -53,7 +53,7 @@ const itemReducer = (oldList: moorhen.ColourRule[], change: colourRuleChange) =>
 
 const initialRuleState: moorhen.ColourRule[] = []
 
-export const MoorhenColourRules = (props: {
+export const MoorhenModifyColourRulesCard = (props: {
     urlPrefix: string;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;

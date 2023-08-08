@@ -83,6 +83,21 @@ export function convertViewtoPx(input: number, height: number): number {
     return height * (input / 100)
 }
 
+export const representationLabelMapping = {
+    rama: "Rama.",
+    rotamer: "Rota.",
+    CBs: "Bonds",
+    CAs: "C-As",
+    CRs: "Ribbons",
+    CDs: "Cont. dots",
+    MolecularSurface: "Surf.",
+    gaussian: "Gauss.",
+    ligands: "Ligands",
+    DishyBases: "Bases",
+    VdwSpheres: "Spheres",
+    allHBonds: "H-Bonds"
+}
+
 export const residueCodesOneToThree = {
     'C': 'CYS',
     'D': 'ASP',
