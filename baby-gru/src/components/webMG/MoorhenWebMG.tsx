@@ -1,7 +1,6 @@
 import React, { useEffect, useCallback, forwardRef, useState, useRef } from 'react';
 import { Toast, ToastContainer } from 'react-bootstrap';
 import { MGWebGL } from '../../WebGLgComponents/mgWebGL';
-import { MoorhenColourRules } from "../modal/MoorhenColourRules"
 import { MoorhenContextMenu } from "../context-menu/MoorhenContextMenu"
 import { cidToSpec, convertViewtoPx } from '../../utils/MoorhenUtils';
 import { moorhen } from "../../types/moorhen";

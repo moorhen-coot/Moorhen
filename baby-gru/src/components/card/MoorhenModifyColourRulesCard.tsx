@@ -53,7 +53,7 @@ const itemReducer = (oldList: moorhen.ColourRule[], change: colourRuleChange) =>
 
 const initialRuleState: moorhen.ColourRule[] = []
 
-export const MoorhenColourRules = (props: {
+export const MoorhenModifyColourRulesCard = (props: {
     urlPrefix: string;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
@@ -116,15 +116,13 @@ export const MoorhenColourRules = (props: {
         if (props.molecule?.defaultColourRules) {
             props.molecule.defaultColourRules = ruleList
             await Promise.all(
-                props.molecule.representations.filter(representation => !representation.isCustom).map(representation => {
-                    representation.setColourRules(ruleList)
+                props.molecule.representations.filter(representation => representation.useDefaultColourRules).map(representation => {
                     if (representation.visible) {
                         return representation.redraw()
                     } else {
                         representation.deleteBuffers()
                         return Promise.resolve()
                     }
-                    
                 })
             )
         }
@@ -292,7 +290,7 @@ export const MoorhenColourRules = (props: {
                 <Stack gap={2} direction='vertical' style={{margin: 0, padding: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center'}}>
                     <Form.Group style={{ width: '100%', margin: 0 }}>
                         <Form.Label>Rule type</Form.Label>
-                        <FormSelect size="sm" ref={ruleSelectRef} defaultValue={'molecule'} onChange={(val) => setRuleType(val.target.value)}>
+                        <FormSelect size="sm" ref={ruleSelectRef} defaultValue={ruleType} onChange={(val) => setRuleType(val.target.value)}>
                             <option value={'molecule'} key={'molecule'}>By molecule</option>
                             <option value={'chain'} key={'chain'}>By chain</option>
                             <option value={'residue-range'} key={'residue-range'}>By residue range</option>

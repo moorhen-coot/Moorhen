@@ -804,28 +804,16 @@ export class MoorhenMolecule implements moorhen.Molecule {
         representation.show()
     }
 
-    async addRepresentation(style: moorhen.RepresentationStyles, cid: string = '/*/*/*/*', isCustom: boolean = false, colour?: string) {
+    async addRepresentation(style: moorhen.RepresentationStyles, cid: string = '/*/*/*/*', isCustom: boolean = false, colourRules?: moorhen.ColourRule[]) {
         if (!this.defaultColourRules) {
             await this.fetchDefaultColourRules()
         }
         const representation = new MoorhenMoleculeRepresentation(style, cid, this.commandCentre, this.glRef)
         representation.isCustom = isCustom
         representation.setParentMolecule(this)
-        if(colour) {
-            representation.setColourRules([
-                {
-                    commandInput: {
-                        message: 'coot_command',
-                        command: 'add_colour_rule',
-                        returnType: 'status',
-                        commandArgs: [this.molNo, cid, colour]
-                    },
-                    isMultiColourRule: false,
-                    ruleType: 'chain',
-                    color: colour,
-                    label: cid
-                }
-            ])
+        if(colourRules && colourRules.length > 0) {
+            representation.setColourRules(colourRules)
+            representation.setUseDefaultColourRules(false)
         }
         await representation.draw()
         this.representations.push(representation)

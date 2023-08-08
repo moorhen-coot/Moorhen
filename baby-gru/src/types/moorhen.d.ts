@@ -84,7 +84,7 @@ export namespace moorhen {
     
     interface Molecule {
         removeRepresentation(representationId: string): void;
-        addRepresentation(style: string, cid: string, isCustom?: boolean, colour?: string): Promise<void>;
+        addRepresentation(style: string, cid: string, isCustom?: boolean, colour?: moorhen.ColourRule[]): Promise<void>;
         getNeighborResiduesCids(selectionCid: string, radius: number, minDist: number, maxDist: number): Promise<string[]>;
         drawWithStyleFromMesh(style: string, meshObjects: any[], cid?: string): Promise<void>;
         updateWithMovedAtoms(movedResidues: AtomInfo[][]): Promise<void>;
@@ -168,6 +168,7 @@ export namespace moorhen {
     'ligand_environment' | 'contact_dots' | 'chemical_features' | 'ligand_validation'
 
     interface MoleculeRepresentation {
+        setUseDefaultColourRules(arg0: boolean): void;
         setColourRules(ruleList: ColourRule[]): void;
         buildBuffers(arg0: DisplayObject[]): Promise<void>;
         setBuffers(meshObjects: DisplayObject[]): void;
@@ -179,6 +180,7 @@ export namespace moorhen {
         show(): void;
         hide(): void;
         setAtomBuffers(arg0: AtomInfo[]): void;
+        useDefaultColourRules: boolean;
         uniqueId: string;
         style: string;
         cid: string;

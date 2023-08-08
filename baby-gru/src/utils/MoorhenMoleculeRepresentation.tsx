@@ -19,6 +19,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     visible: boolean;
     colourRules: moorhen.ColourRule[];
     isCustom: boolean;
+    useDefaultColourRules: boolean;
 
     constructor(style: moorhen.RepresentationStyles, cid: string, commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>) {
         this.uniqueId = guid()
@@ -31,6 +32,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         this.visible = false
         this.colourRules = null
         this.isCustom = false
+        this.useDefaultColourRules = true
         this.styleHasAtomBuffers = ![
             'contact_dots', 'ligand_validation', 'chemical_features', 'unitCell', 'MolecularSurface', 'VdWSurface', 
             'gaussian', 'allHBonds', 'rotamer', 'rama', 'environment', 'ligand_environment', 'hover', 'CDs'
@@ -45,6 +47,9 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         if (style === "ligands" && (typeof cid !== 'string' || cid === '/*/*/*/*')) {
             this.cid =  "/*/*/(!ALA,CYS,ASP,GLU,PHE,GLY,HIS,ILE,LYS,LEU,MET,ASN,PRO,GLN,ARG,SER,THR,VAL,TRP,TYR,WAT,HOH,THP,SEP,TPO,TYP,PTR,OH2,H2O)"
         }
+    }
+    setUseDefaultColourRules(newVal: boolean) {
+        this.useDefaultColourRules = newVal
     }
 
     setColourRules(colourRules: moorhen.ColourRule[]) {
@@ -585,28 +590,38 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     }
 
     async applyColourRules() {
-        if (this.colourRules?.length > 0 && this.styleHasColourRules) {
-            await this.commandCentre.current.cootCommand({
-                message: 'coot_command',
-                command: "delete_colour_rules",
-                returnType: 'status',
-                commandArgs: [this.parentMolecule.molNo],
-            })
-            
+        if (!this.styleHasColourRules) {
+            return
+        } 
+        
+        if (this.useDefaultColourRules) {
+            this.colourRules = this.parentMolecule.defaultColourRules
+        }
+        
+        await this.commandCentre.current.cootCommand({
+            message: 'coot_command',
+            command: "delete_colour_rules",
+            returnType: 'status',
+            commandArgs: [this.parentMolecule.molNo],
+        })
+
+        if (this.colourRules?.length > 0) {           
             await Promise.all(this.colourRules.map(rule => {
                 if (this.style === 'CBs') {
-                    const [h, s, l] = hexToHsl(rule.color)
-                    return this.commandCentre.current.cootCommand({
-                        message: 'coot_command',
-                        command: 'set_colour_wheel_rotation_base',
-                        returnType: 'status',
-                        commandArgs: [this.parentMolecule.molNo, 360 * h]
-                    })
+                    if (!rule.isMultiColourRule) {
+                        const [h, s, l] = hexToHsl(rule.color)
+                        return this.commandCentre.current.cootCommand({
+                            message: 'coot_command',
+                            command: 'set_colour_wheel_rotation_base',
+                            returnType: 'status',
+                            commandArgs: [this.parentMolecule.molNo, 360 * h]
+                        })
+                    }
+                    return Promise.resolve()
                 } else {
                     return this.commandCentre.current.cootCommand(rule.commandInput)
                 }
             }))
         }
     }
-
 }

@@ -1,35 +1,19 @@
 import { useEffect, useState, useRef, useReducer, useCallback, useImperativeHandle, forwardRef } from 'react';
-import { Card, Row, Col, Accordion, Stack, Button, FormSelect, Form } from "react-bootstrap";
-import { doDownload, rgbToHex, sequenceIsValid } from '../../utils/MoorhenUtils';
+import { Card, Row, Col, Accordion, Stack, Button } from "react-bootstrap";
+import { doDownload, sequenceIsValid, representationLabelMapping } from '../../utils/MoorhenUtils';
 import { isDarkBackground } from '../../WebGLgComponents/mgWebGL'
 import { MoorhenSequenceViewer } from "../sequence-viewer/MoorhenSequenceViewer";
 import { MoorhenMoleculeCardButtonBar } from "../button-bar/MoorhenMoleculeCardButtonBar"
 import { MoorhenLigandList } from "../list/MoorhenLigandList"
-import { Chip, FormGroup, Popover, hexToRgb } from "@mui/material";
+import { Chip, FormGroup, hexToRgb } from "@mui/material";
 import { getNameLabel } from "./cardUtils"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { AddOutlined, DeleteOutlined, FormatColorFillOutlined } from '@mui/icons-material';
-import { SliderPicker } from "react-color";
-import { MoorhenColourRules } from '../modal/MoorhenColourRules';
-
-const labelMapping = {
-    rama: "Rama.",
-    rotamer: "Rota.",
-    CBs: "Bonds",
-    CAs: "C-As",
-    CRs: "Ribbons",
-    CDs: "Cont. dots",
-    MolecularSurface: "Surf.",
-    gaussian: "Gauss.",
-    ligands: "Ligands",
-    DishyBases: "Bases",
-    VdwSpheres: "Spheres",
-    allHBonds: "H-Bonds"
-}
+import { MoorhenAddCustomRepresentationCard } from "./MoorhenAddCustomRepresentationCard"
+import { MoorhenModifyColourRulesCard } from './MoorhenModifyColourRulesCard';
 
 const allRepresentations = [ 'CBs', 'CAs', 'CRs', 'ligands', 'gaussian', 'MolecularSurface', 'DishyBases', 'VdwSpheres', 'rama', 'rotamer', 'CDs', 'allHBonds' ]
-const customRepresentations = [ 'CBs', 'CAs', 'CRs', 'ligands', 'gaussian', 'MolecularSurface', 'DishyBases', 'VdwSpheres' ]
 
 interface MoorhenMoleculeCardPropsInterface extends moorhen.Controls {
     dropdownId: number;
@@ -53,6 +37,22 @@ const showStateReducer = (oldMap: {[key: string]: boolean}, change: { key: strin
     return newMap
 }
 
+const initialCustomRep = []
+const customRepReducer = (oldList: moorhen.MoleculeRepresentation[], change: {action: "Add" | "Remove"; item: moorhen.MoleculeRepresentation}) => {
+    switch (change.action) {
+        case "Add": 
+            oldList.push(change.item)
+            break
+        case "Remove":
+            oldList = oldList.filter(representation => representation.uniqueId !== change.item.uniqueId)
+            break
+        default:
+            console.log('Unrecognised action')
+            break
+    }
+    return oldList
+}
+
 export type clickedResidueType = {
     modelIndex: number;
     molName: string;
@@ -68,6 +68,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     const [showColourRulesModal, setShowColourRulesModal] = useState<boolean>(false)
     const [showCreateCustomRepresentation, setShowCreateCustomRepresentation] = useState<boolean>(false)
     const [showState, changeShowState] = useReducer(showStateReducer, initialShowState)
+    const [customRepresentationList, changeCustomRepresentationList] = useReducer(customRepReducer, initialCustomRep)
     const [selectedResidues, setSelectedResidues] = useState<[number, number] | null>(null);
     const [clickedResidue, setClickedResidue] = useState<clickedResidueType | null>(null);
     const [isCollapsed, setIsCollapsed] = useState<boolean>(!props.defaultExpandDisplayCards);
@@ -452,7 +453,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                             <FormatColorFillOutlined/>
                         </Button>
                     </Col>
-                    <MoorhenColourRules molecules={props.molecules} anchorEl={addColourRulesAnchorDivRef} isDark={props.isDark} urlPrefix={props.urlPrefix} glRef={props.glRef} commandCentre={props.commandCentre} molecule={props.molecule} showColourRulesToast={showColourRulesModal} setShowColourRulesToast={setShowColourRulesModal} windowHeight={props.windowHeight} windowWidth={props.sideBarWidth}/>
+                    <MoorhenModifyColourRulesCard molecules={props.molecules} anchorEl={addColourRulesAnchorDivRef} isDark={props.isDark} urlPrefix={props.urlPrefix} glRef={props.glRef} commandCentre={props.commandCentre} molecule={props.molecule} showColourRulesToast={showColourRulesModal} setShowColourRulesToast={setShowColourRulesModal} windowHeight={props.windowHeight} windowWidth={props.sideBarWidth}/>
                 </Row>
                 <Row style={{display: 'flex'}}>
                     <Col  style={{ width:'100%', height: '100%' }}>
@@ -460,7 +461,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                     {props.molecule.representations.some(representation => representation.isCustom) ?
                         <FormGroup style={{ margin: "0px", padding: "0px" }} row>
                             {props.molecule.representations.filter(representation => representation.isCustom).map(representation => {
-                                return <CustomRepresentationChip key={representation.uniqueId} molecule={props.molecule} representation={representation} isVisible={isVisible}/>
+                                return <CustomRepresentationChip key={representation.uniqueId} molecule={props.molecule} representation={representation} isVisible={isVisible} changeCustomRepresentationList={changeCustomRepresentationList}/>
                             })}
                         </FormGroup>
                     :
@@ -468,11 +469,11 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                     }
                     </div>
                     </Col>
-                    <Col md='auto' style={{paddingLeft: 0}}>
-                        <Button variant='light' onClick={() => setShowCreateCustomRepresentation((prev) => {return !prev})}>
+                    <Col md='auto' style={{height: '100%', paddingLeft: 0}}>
+                        <Button style={{ paddingTop: '0.25rem', paddingBottom: '0.25rem' }} variant='light' onClick={() => setShowCreateCustomRepresentation((prev) => {return !prev})}>
                             <AddOutlined/>
                         </Button>
-                        <CreateCustomRepresentationMenu molecule={props.molecule} anchorEl={addCustomRepresentationAnchorDivRef} show={showCreateCustomRepresentation} setShow={setShowCreateCustomRepresentation}/>
+                        <MoorhenAddCustomRepresentationCard urlPrefix={props.urlPrefix} molecules={props.molecules} isDark={props.isDark} molecule={props.molecule} anchorEl={addCustomRepresentationAnchorDivRef} show={showCreateCustomRepresentation} setShow={setShowCreateCustomRepresentation}/>
                     </Col>
                 </Row>                
             <Accordion alwaysOpen={true} defaultActiveKey={['sequences']}>
@@ -531,32 +532,53 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     </>
 })
 
-type RepresetationCheckboxPropsType = {
+const getChipStyle = (colourRules: moorhen.ColourRule[], repIsVisible: boolean, width?: string) => {
+    const chipStyle = {
+        marginLeft: '0.1rem',
+        marginBottom: '0.1rem',
+    }
+
+    if (width) { 
+        chipStyle['width'] = width 
+    }
+
+    let [r, g, b]: number[] = [214, 214, 214]
+    if (colourRules?.length > 0) {
+        if (colourRules[0].isMultiColourRule) {
+            const alphaHex = repIsVisible ? '99' : '33'
+            chipStyle['background'] = `linear-gradient( to right, #264CFF${alphaHex}, #3FA0FF${alphaHex}, #72D8FF${alphaHex}, #AAF7FF${alphaHex}, #E0FFFF${alphaHex}, #FFFFBF${alphaHex}, #FFE099${alphaHex}, #FFAD72${alphaHex}, #F76D5E${alphaHex}, #D82632${alphaHex}, #A50021${alphaHex} )`
+        } else {
+            [r, g, b] = hexToRgb(colourRules[0].color).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
+            chipStyle['backgroundColor'] = `rgba(${r}, ${g}, ${b}, ${repIsVisible ? 0.5 : 0.1})`
+        }        
+    } else {
+        chipStyle['backgroundColor'] = `rgba(${r}, ${g}, ${b}, ${repIsVisible ? 0.5 : 0.1})`
+    }
+
+    chipStyle['borderColor'] = `rgb(${r}, ${g}, ${b})`
+    
+    return chipStyle
+}
+
+const RepresentationCheckbox = (props: {
     showState: { [key: string]: boolean };
     repKey: string;
     isVisible: boolean;
     changeShowState: (arg0: { key: string; state: boolean; }) => void;
     molecule: moorhen.Molecule;
     glRef: React.RefObject<webGL.MGWebGL>; 
-}
+}) => {
 
-const RepresentationCheckbox = (props: RepresetationCheckboxPropsType) => {
     const [repState, setRepState] = useState<boolean>(false)
 
-    let [r, g, b]: number[] = [214, 214, 214]
-    if (props.molecule.defaultColourRules?.length > 0) {
-        [r, g, b] = hexToRgb(props.molecule.defaultColourRules[0].color).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
-    }
-    
+    const chipStyle = getChipStyle(props.molecule.defaultColourRules, repState, 'calc(100% /6.15)')
+
     useEffect(() => {
         setRepState(props.showState[props.repKey] || false)
     }, [props.showState])
 
     const handleClick = useCallback(() => {
-        console.log('HI')
-        console.log(props.isVisible)
         if (props.isVisible) {
-            console.log(repState, props.repKey)
             if (repState) {
                 props.molecule.hide(props.repKey)
             }
@@ -568,55 +590,25 @@ const RepresentationCheckbox = (props: RepresetationCheckboxPropsType) => {
     }, [repState, props.isVisible])
 
     return <Chip
-                style={{marginLeft: '0.1rem', marginBottom: '0.1rem', borderColor: `rgb(${r}, ${g}, ${b})`, backgroundColor: `rgba(${r}, ${g}, ${b}, ${repState ? 0.5 : 0.1})`, width: 'calc(100% /6.15)'}}
+                style={chipStyle}
                 variant={"outlined"}
-                label={`${labelMapping[props.repKey]}`}
+                label={`${representationLabelMapping[props.repKey]}`}
                 onClick={handleClick}
             />
 }
 
-const CreateCustomRepresentationMenu = (props: {setShow: React.Dispatch<React.SetStateAction<boolean>>; show: boolean; anchorEl: React.RefObject<HTMLDivElement>; molecule: moorhen.Molecule}) => {
-    const cidFormRef = useRef<HTMLInputElement | null>(null)
-    const styleSelectRef = useRef<HTMLSelectElement | null>(null)
-    const [colour, setColour] = useState<{ r: string; g: string; b: string; }>({r: '150', g:'100', b:'50'})
-
-    const handleCreateRepresentation = useCallback(() => {
-        props.molecule.addRepresentation(styleSelectRef.current.value, cidFormRef.current.value, true, rgbToHex(parseInt(colour.r), parseInt(colour.g), parseInt(colour.b)))
-        props.setShow(false)
-    }, [colour])
-
-    return <Popover
-                onClose={() => props.setShow(false)}
-                open={props.show}
-                anchorEl={props.anchorEl.current}
-                anchorOrigin={{ vertical: 'center', horizontal: 'center' }}
-                transformOrigin={{ vertical: 'center', horizontal: 'center', }}
-                sx={{'& .MuiPaper-root': {backgroundColor: '#e8e8e8', marginTop: '0.1rem'}}}
-            >
-            <Stack gap={2} direction='horizontal' style={{width: '25rem', margin: '0.5rem'}}>
-                <FormSelect ref={styleSelectRef} size="sm" defaultValue={'Bonds'}>
-                    {customRepresentations.map(key => {
-                        return <option value={key} key={key}>{labelMapping[key]}</option>
-                    })}
-                </FormSelect>
-                <Form.Control ref={cidFormRef} size="sm" type='text' placeholder={'CID selection'} style={{width: "100%"}}/>
-                <div style={{width: '100%', textAlign: 'center'}}>
-                <SliderPicker color={colour} onChange={(color) => {setColour({r: color.rgb.r, g: color.rgb.g, b: color.rgb.b})}}/>
-                </div>
-                <Button onClick={handleCreateRepresentation}>
-                    Create
-                </Button>
-            </Stack>
-        </Popover>
-}
-
-const CustomRepresentationChip = (props: { isVisible: boolean; molecule: moorhen.Molecule; representation: moorhen.MoleculeRepresentation; }) => {
+const CustomRepresentationChip = (props: {
+    isVisible: boolean;
+    molecule: moorhen.Molecule;
+    representation: moorhen.MoleculeRepresentation; 
+    changeCustomRepresentationList: (arg0: {action: "Add" | "Remove"; item: moorhen.MoleculeRepresentation}) => void;
+}) => {
     
     const { representation, molecule, isVisible } = props
 
     const [representationIsVisible, setRepresentationIsVisible] = useState<boolean>(true)
     
-    let [r, g, b]: number[] = hexToRgb(representation.colourRules[0].color).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
+    const chipStyle = getChipStyle(representation.colourRules, representationIsVisible)
     
     useEffect(() => {
         representationIsVisible ? representation.show() : representation.hide()
@@ -629,12 +621,13 @@ const CustomRepresentationChip = (props: { isVisible: boolean; molecule: moorhen
     }, [isVisible, representationIsVisible])
 
     return <Chip
-        style={{marginLeft: '0.1rem', marginBottom: '0.1rem', borderColor: `rgb(${r}, ${g}, ${b})`, backgroundColor: `rgba(${r}, ${g}, ${b}, ${representationIsVisible ? 0.5 : 0.1})`}}
+        style={chipStyle}
         variant={"outlined"}
-        label={`${labelMapping[representation.style]} ${representation.cid}`}
+        label={`${representationLabelMapping[representation.style]} ${representation.cid}`}
         deleteIcon={<DeleteOutlined/>}
         onDelete={() => {
             molecule.removeRepresentation(representation.uniqueId)
+            props.changeCustomRepresentationList({action: "Remove", item: props.representation})
         }}
         onClick={handleClick}
     />
