@@ -473,7 +473,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                         <Button style={{ paddingTop: '0.25rem', paddingBottom: '0.25rem' }} variant='light' onClick={() => setShowCreateCustomRepresentation((prev) => {return !prev})}>
                             <AddOutlined/>
                         </Button>
-                        <MoorhenAddCustomRepresentationCard molecule={props.molecule} anchorEl={addCustomRepresentationAnchorDivRef} show={showCreateCustomRepresentation} setShow={setShowCreateCustomRepresentation}/>
+                        <MoorhenAddCustomRepresentationCard urlPrefix={props.urlPrefix} molecules={props.molecules} isDark={props.isDark} molecule={props.molecule} anchorEl={addCustomRepresentationAnchorDivRef} show={showCreateCustomRepresentation} setShow={setShowCreateCustomRepresentation}/>
                     </Col>
                 </Row>                
             <Accordion alwaysOpen={true} defaultActiveKey={['sequences']}>
@@ -532,6 +532,34 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     </>
 })
 
+const getChipStyle = (colourRules: moorhen.ColourRule[], repIsVisible: boolean, width?: string) => {
+    const chipStyle = {
+        marginLeft: '0.1rem',
+        marginBottom: '0.1rem',
+    }
+
+    if (width) { 
+        chipStyle['width'] = width 
+    }
+
+    let [r, g, b]: number[] = [214, 214, 214]
+    if (colourRules?.length > 0) {
+        if (colourRules[0].isMultiColourRule) {
+            const alphaHex = repIsVisible ? '99' : '33'
+            chipStyle['background'] = `linear-gradient( to right, #264CFF${alphaHex}, #3FA0FF${alphaHex}, #72D8FF${alphaHex}, #AAF7FF${alphaHex}, #E0FFFF${alphaHex}, #FFFFBF${alphaHex}, #FFE099${alphaHex}, #FFAD72${alphaHex}, #F76D5E${alphaHex}, #D82632${alphaHex}, #A50021${alphaHex} )`
+        } else {
+            [r, g, b] = hexToRgb(colourRules[0].color).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
+            chipStyle['backgroundColor'] = `rgba(${r}, ${g}, ${b}, ${repIsVisible ? 0.5 : 0.1})`
+        }        
+    } else {
+        chipStyle['backgroundColor'] = `rgba(${r}, ${g}, ${b}, ${repIsVisible ? 0.5 : 0.1})`
+    }
+
+    chipStyle['borderColor'] = `rgb(${r}, ${g}, ${b})`
+    
+    return chipStyle
+}
+
 const RepresentationCheckbox = (props: {
     showState: { [key: string]: boolean };
     repKey: string;
@@ -543,25 +571,7 @@ const RepresentationCheckbox = (props: {
 
     const [repState, setRepState] = useState<boolean>(false)
 
-    const chipStyle = {
-        marginLeft: '0.1rem',
-        marginBottom: '0.1rem',
-        width: 'calc(100% /6.15)',
-    }
-
-    let [r, g, b]: number[] = [214, 214, 214]
-    if (props.molecule.defaultColourRules?.length > 0) {
-        if (props.molecule.defaultColourRules[0].isMultiColourRule) {
-            const alphaHex = repState ? '99' : '33'
-            chipStyle['background'] = `linear-gradient( to right, #264CFF${alphaHex}, #3FA0FF${alphaHex}, #72D8FF${alphaHex}, #AAF7FF${alphaHex}, #E0FFFF${alphaHex}, #FFFFBF${alphaHex}, #FFE099${alphaHex}, #FFAD72${alphaHex}, #F76D5E${alphaHex}, #D82632${alphaHex}, #A50021${alphaHex} )`
-        } else {
-            [r, g, b] = hexToRgb(props.molecule.defaultColourRules[0].color).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
-            chipStyle['backgroundColor'] = `rgba(${r}, ${g}, ${b}, ${repState ? 0.5 : 0.1})`
-        }        
-    }
-
-    chipStyle['borderColor'] = `rgb(${r}, ${g}, ${b})`
-
+    const chipStyle = getChipStyle(props.molecule.defaultColourRules, repState, 'calc(100% /6.15)')
 
     useEffect(() => {
         setRepState(props.showState[props.repKey] || false)
@@ -598,7 +608,7 @@ const CustomRepresentationChip = (props: {
 
     const [representationIsVisible, setRepresentationIsVisible] = useState<boolean>(true)
     
-    let [r, g, b]: number[] = hexToRgb(representation.colourRules[0].color).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
+    const chipStyle = getChipStyle(representation.colourRules, representationIsVisible)
     
     useEffect(() => {
         representationIsVisible ? representation.show() : representation.hide()
@@ -611,7 +621,7 @@ const CustomRepresentationChip = (props: {
     }, [isVisible, representationIsVisible])
 
     return <Chip
-        style={{marginLeft: '0.1rem', marginBottom: '0.1rem', borderColor: `rgb(${r}, ${g}, ${b})`, backgroundColor: `rgba(${r}, ${g}, ${b}, ${representationIsVisible ? 0.5 : 0.1})`}}
+        style={chipStyle}
         variant={"outlined"}
         label={`${representationLabelMapping[representation.style]} ${representation.cid}`}
         deleteIcon={<DeleteOutlined/>}

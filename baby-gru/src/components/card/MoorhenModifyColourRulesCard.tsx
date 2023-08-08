@@ -116,15 +116,13 @@ export const MoorhenModifyColourRulesCard = (props: {
         if (props.molecule?.defaultColourRules) {
             props.molecule.defaultColourRules = ruleList
             await Promise.all(
-                props.molecule.representations.filter(representation => !representation.isCustom).map(representation => {
-                    representation.setColourRules(ruleList)
+                props.molecule.representations.filter(representation => representation.useDefaultColourRules).map(representation => {
                     if (representation.visible) {
                         return representation.redraw()
                     } else {
                         representation.deleteBuffers()
                         return Promise.resolve()
                     }
-                    
                 })
             )
         }
