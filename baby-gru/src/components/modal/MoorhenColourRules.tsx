@@ -292,7 +292,7 @@ export const MoorhenColourRules = (props: {
                 <Stack gap={2} direction='vertical' style={{margin: 0, padding: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center'}}>
                     <Form.Group style={{ width: '100%', margin: 0 }}>
                         <Form.Label>Rule type</Form.Label>
-                        <FormSelect size="sm" ref={ruleSelectRef} defaultValue={'molecule'} onChange={(val) => setRuleType(val.target.value)}>
+                        <FormSelect size="sm" ref={ruleSelectRef} defaultValue={ruleType} onChange={(val) => setRuleType(val.target.value)}>
                             <option value={'molecule'} key={'molecule'}>By molecule</option>
                             <option value={'chain'} key={'chain'}>By chain</option>
                             <option value={'residue-range'} key={'residue-range'}>By residue range</option>

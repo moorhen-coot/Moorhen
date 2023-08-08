@@ -543,11 +543,26 @@ type RepresetationCheckboxPropsType = {
 const RepresentationCheckbox = (props: RepresetationCheckboxPropsType) => {
     const [repState, setRepState] = useState<boolean>(false)
 
+    const chipStyle = {
+        marginLeft: '0.1rem',
+        marginBottom: '0.1rem',
+        width: 'calc(100% /6.15)',
+    }
+
     let [r, g, b]: number[] = [214, 214, 214]
     if (props.molecule.defaultColourRules?.length > 0) {
-        [r, g, b] = hexToRgb(props.molecule.defaultColourRules[0].color).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
+        if (props.molecule.defaultColourRules[0].isMultiColourRule) {
+            const alphaHex = repState ? '99' : '33'
+            chipStyle['background'] = `linear-gradient( to right, #264CFF${alphaHex}, #3FA0FF${alphaHex}, #72D8FF${alphaHex}, #AAF7FF${alphaHex}, #E0FFFF${alphaHex}, #FFFFBF${alphaHex}, #FFE099${alphaHex}, #FFAD72${alphaHex}, #F76D5E${alphaHex}, #D82632${alphaHex}, #A50021${alphaHex} )`
+        } else {
+            [r, g, b] = hexToRgb(props.molecule.defaultColourRules[0].color).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
+            chipStyle['backgroundColor'] = `rgba(${r}, ${g}, ${b}, ${repState ? 0.5 : 0.1})`
+        }        
     }
-    
+
+    chipStyle['borderColor'] = `rgb(${r}, ${g}, ${b})`
+
+
     useEffect(() => {
         setRepState(props.showState[props.repKey] || false)
     }, [props.showState])
@@ -568,7 +583,7 @@ const RepresentationCheckbox = (props: RepresetationCheckboxPropsType) => {
     }, [repState, props.isVisible])
 
     return <Chip
-                style={{marginLeft: '0.1rem', marginBottom: '0.1rem', borderColor: `rgb(${r}, ${g}, ${b})`, backgroundColor: `rgba(${r}, ${g}, ${b}, ${repState ? 0.5 : 0.1})`, width: 'calc(100% /6.15)'}}
+                style={chipStyle}
                 variant={"outlined"}
                 label={`${labelMapping[props.repKey]}`}
                 onClick={handleClick}
