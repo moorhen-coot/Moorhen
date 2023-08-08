@@ -568,10 +568,7 @@ const RepresentationCheckbox = (props: RepresetationCheckboxPropsType) => {
     }, [props.showState])
 
     const handleClick = useCallback(() => {
-        console.log('HI')
-        console.log(props.isVisible)
         if (props.isVisible) {
-            console.log(repState, props.repKey)
             if (repState) {
                 props.molecule.hide(props.repKey)
             }
