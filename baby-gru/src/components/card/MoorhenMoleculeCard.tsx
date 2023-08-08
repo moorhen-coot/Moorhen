@@ -53,6 +53,22 @@ const showStateReducer = (oldMap: {[key: string]: boolean}, change: { key: strin
     return newMap
 }
 
+const initialCustomRep = []
+const customRepReducer = (oldList: moorhen.MoleculeRepresentation[], change: {action: "Add" | "Remove"; item: moorhen.MoleculeRepresentation}) => {
+    switch (change.action) {
+        case "Add": 
+            oldList.push(change.item)
+            break
+        case "Remove":
+            oldList = oldList.filter(representation => representation.uniqueId !== change.item.uniqueId)
+            break
+        default:
+            console.log('Unrecognised action')
+            break
+    }
+    return oldList
+}
+
 export type clickedResidueType = {
     modelIndex: number;
     molName: string;
@@ -68,6 +84,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     const [showColourRulesModal, setShowColourRulesModal] = useState<boolean>(false)
     const [showCreateCustomRepresentation, setShowCreateCustomRepresentation] = useState<boolean>(false)
     const [showState, changeShowState] = useReducer(showStateReducer, initialShowState)
+    const [customRepresentationList, changeCustomRepresentationList] = useReducer(customRepReducer, initialCustomRep)
     const [selectedResidues, setSelectedResidues] = useState<[number, number] | null>(null);
     const [clickedResidue, setClickedResidue] = useState<clickedResidueType | null>(null);
     const [isCollapsed, setIsCollapsed] = useState<boolean>(!props.defaultExpandDisplayCards);
@@ -460,7 +477,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                     {props.molecule.representations.some(representation => representation.isCustom) ?
                         <FormGroup style={{ margin: "0px", padding: "0px" }} row>
                             {props.molecule.representations.filter(representation => representation.isCustom).map(representation => {
-                                return <CustomRepresentationChip key={representation.uniqueId} molecule={props.molecule} representation={representation} isVisible={isVisible}/>
+                                return <CustomRepresentationChip key={representation.uniqueId} molecule={props.molecule} representation={representation} isVisible={isVisible} changeCustomRepresentationList={changeCustomRepresentationList}/>
                             })}
                         </FormGroup>
                     :
@@ -468,8 +485,8 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                     }
                     </div>
                     </Col>
-                    <Col md='auto' style={{paddingLeft: 0}}>
-                        <Button variant='light' onClick={() => setShowCreateCustomRepresentation((prev) => {return !prev})}>
+                    <Col md='auto' style={{height: '100%', paddingLeft: 0}}>
+                        <Button style={{ paddingTop: '0.25rem', paddingBottom: '0.25rem' }} variant='light' onClick={() => setShowCreateCustomRepresentation((prev) => {return !prev})}>
                             <AddOutlined/>
                         </Button>
                         <CreateCustomRepresentationMenu molecule={props.molecule} anchorEl={addCustomRepresentationAnchorDivRef} show={showCreateCustomRepresentation} setShow={setShowCreateCustomRepresentation}/>
@@ -531,16 +548,15 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     </>
 })
 
-type RepresetationCheckboxPropsType = {
+const RepresentationCheckbox = (props: {
     showState: { [key: string]: boolean };
     repKey: string;
     isVisible: boolean;
     changeShowState: (arg0: { key: string; state: boolean; }) => void;
     molecule: moorhen.Molecule;
     glRef: React.RefObject<webGL.MGWebGL>; 
-}
+}) => {
 
-const RepresentationCheckbox = (props: RepresetationCheckboxPropsType) => {
     const [repState, setRepState] = useState<boolean>(false)
 
     const chipStyle = {
@@ -587,7 +603,12 @@ const RepresentationCheckbox = (props: RepresetationCheckboxPropsType) => {
             />
 }
 
-const CreateCustomRepresentationMenu = (props: {setShow: React.Dispatch<React.SetStateAction<boolean>>; show: boolean; anchorEl: React.RefObject<HTMLDivElement>; molecule: moorhen.Molecule}) => {
+const CreateCustomRepresentationMenu = (props: {
+    setShow: React.Dispatch<React.SetStateAction<boolean>>;
+    show: boolean; anchorEl: React.RefObject<HTMLDivElement>;
+    molecule: moorhen.Molecule
+}) => {
+
     const cidFormRef = useRef<HTMLInputElement | null>(null)
     const styleSelectRef = useRef<HTMLSelectElement | null>(null)
     const [colour, setColour] = useState<{ r: string; g: string; b: string; }>({r: '150', g:'100', b:'50'})
@@ -622,7 +643,12 @@ const CreateCustomRepresentationMenu = (props: {setShow: React.Dispatch<React.Se
         </Popover>
 }
 
-const CustomRepresentationChip = (props: { isVisible: boolean; molecule: moorhen.Molecule; representation: moorhen.MoleculeRepresentation; }) => {
+const CustomRepresentationChip = (props: {
+    isVisible: boolean;
+    molecule: moorhen.Molecule;
+    representation: moorhen.MoleculeRepresentation; 
+    changeCustomRepresentationList: (arg0: {action: "Add" | "Remove"; item: moorhen.MoleculeRepresentation}) => void;
+}) => {
     
     const { representation, molecule, isVisible } = props
 
@@ -647,6 +673,7 @@ const CustomRepresentationChip = (props: { isVisible: boolean; molecule: moorhen
         deleteIcon={<DeleteOutlined/>}
         onDelete={() => {
             molecule.removeRepresentation(representation.uniqueId)
+            props.changeCustomRepresentationList({action: "Remove", item: props.representation})
         }}
         onClick={handleClick}
     />
