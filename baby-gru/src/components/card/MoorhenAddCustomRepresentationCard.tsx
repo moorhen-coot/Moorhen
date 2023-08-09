@@ -1,10 +1,12 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Stack, Button, FormSelect, Form, InputGroup, Row } from "react-bootstrap";
 import { getMultiColourRuleArgs, representationLabelMapping } from '../../utils/MoorhenUtils';
 import { moorhen } from "../../types/moorhen";
 import { Popover } from '@mui/material';
 import { MoorhenChainSelect } from '../select/MoorhenChainSelect';
 import { HexColorPicker } from "react-colorful";
+import { MoorhenSequenceRangeSelect } from '../sequence-viewer/MoorhenSequenceRangeSelect';
+import { webGL } from '../../types/mgWebGL';
 
 const customRepresentations = [ 'CBs', 'CAs', 'CRs', 'ligands', 'gaussian', 'MolecularSurface', 'DishyBases', 'VdwSpheres' ]
 
@@ -15,6 +17,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
     isDark: boolean;
     molecules: moorhen.Molecule[];
     urlPrefix: string;
+    glRef: React.RefObject<webGL.MGWebGL>;
 }) => {
 
     const useDefaultColoursSwitchRef = useRef<HTMLInputElement | null>(null)
@@ -30,10 +33,27 @@ export const MoorhenAddCustomRepresentationCard = (props: {
     const [ruleType, setRuleType] = useState<string>('molecule')
     const [colour, setColour] = useState<string>('#47d65f')
     const [useDefaultColours, setUseDefaultColours] = useState<boolean>(true)
+    const [sequenceRangeSelect, setSequenceRangeSelect] = useState(null)
+    const [selectedChain, setSelectedChain] = useState<string>(null)
 
-    const handleChainChange =() => {
-
+    const handleChainChange = (evt) => {
+        setSelectedChain(evt.target.value)
     }
+
+    useEffect(() => {
+        if (!ruleSelectRef.current || !chainSelectRef.current || ruleSelectRef.current?.value !== 'residue-range') {
+            return
+        }
+        const selectedSequence = props.molecule.sequences.find(sequence => sequence.chain === chainSelectRef.current.value)
+        setSequenceRangeSelect(
+            <MoorhenSequenceRangeSelect
+                ref={residueRangeSelectRef}
+                molecule={props.molecule}
+                sequence={selectedSequence}
+                glRef={props.glRef}
+            />
+        )
+    }, [selectedChain, ruleType])
 
     const handleCreateRepresentation = useCallback(() => {
         let cidSelection: string
@@ -121,6 +141,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                         <FormSelect size="sm" ref={ruleSelectRef} defaultValue={ruleType} onChange={(val) => setRuleType(val.target.value)}>
                             <option value={'molecule'} key={'molecule'}>All molecule</option>
                             <option value={'chain'} key={'chain'}>Chain</option>
+                            <option value={'residue-range'} key={'residue-range'}>Residue range</option>
                             <option value={'cid'} key={'cid'}>CID</option>
                         </FormSelect>
                 </Form.Group>
@@ -128,6 +149,11 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                     {(ruleType === 'chain' || ruleType === 'residue-range')  && <MoorhenChainSelect molecules={props.molecules} onChange={handleChainChange} selectedCoordMolNo={props.molecule.molNo} ref={chainSelectRef} allowedTypes={[1, 2]}/>}
                     {ruleType === 'cid' && <Form.Control ref={cidFormRef} size="sm" type='text' placeholder={'CID selection'} style={{margin: '0.5rem'}}/> }
                 </div>
+                {ruleType === 'residue-range' && 
+                    <div style={{width: '100%'}}>
+                        {sequenceRangeSelect}
+                    </div>
+                }
                 <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
                     <Form.Check 
                         ref={useDefaultColoursSwitchRef}
@@ -171,6 +197,11 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                     open={!useDefaultColours && showColourPicker}
                     onClose={() => setShowColourPicker(false)}
                     anchorEl={colourSwatchRef.current}
+                    sx={{
+                        '& .MuiPaper-root': {
+                            overflowY: 'hidden', borderRadius: '8px'
+                        }
+                    }}
                 >
                     <HexColorPicker color={colour} onChange={(color) => setColour(color)} />
 

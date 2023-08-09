@@ -364,8 +364,8 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                     cid,
                     style,
                     this.parentMolecule.cootBondsOptions.isDarkBackground,
-                    this.parentMolecule.cootBondsOptions.width * 1.5,
-                    this.parentMolecule.cootBondsOptions.atomRadiusBondRatio * 1.5,
+                    this.parentMolecule.cootBondsOptions.width,
+                    this.parentMolecule.cootBondsOptions.atomRadiusBondRatio,
                     this.parentMolecule.cootBondsOptions.smoothness
                 ]
             })
