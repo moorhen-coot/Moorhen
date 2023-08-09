@@ -473,7 +473,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                         <Button style={{ paddingTop: '0.25rem', paddingBottom: '0.25rem' }} variant='light' onClick={() => setShowCreateCustomRepresentation((prev) => {return !prev})}>
                             <AddOutlined/>
                         </Button>
-                        <MoorhenAddCustomRepresentationCard urlPrefix={props.urlPrefix} molecules={props.molecules} isDark={props.isDark} molecule={props.molecule} anchorEl={addCustomRepresentationAnchorDivRef} show={showCreateCustomRepresentation} setShow={setShowCreateCustomRepresentation}/>
+                        <MoorhenAddCustomRepresentationCard glRef={props.glRef} urlPrefix={props.urlPrefix} molecules={props.molecules} isDark={props.isDark} molecule={props.molecule} anchorEl={addCustomRepresentationAnchorDivRef} show={showCreateCustomRepresentation} setShow={setShowCreateCustomRepresentation}/>
                     </Col>
                 </Row>                
             <Accordion alwaysOpen={true} defaultActiveKey={['sequences']}>

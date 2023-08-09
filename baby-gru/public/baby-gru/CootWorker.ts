@@ -778,9 +778,9 @@ const doColourTest = (imol: number) => {
     console.log('DEBUG: Start test...')
 
     const colours = {
-        0: { cid: '//A/1-10/', rgb: [255., 0., 0.] },
-        1: { cid: '//A/11-20/', rgb: [0., 255., 0.] },
-        2: { cid: '//A/21-30/', rgb: [0., 0., 255.] },
+        0: { cid: '//A/1-10/', rgb: [1., 0., 0.] },
+        1: { cid: '//A/11-20/', rgb: [0., 1., 0.] },
+        2: { cid: '//A/21-30/', rgb: [0., 0., 1.] },
     }
 
     let colourMap = new cootModule.MapIntFloat3()
