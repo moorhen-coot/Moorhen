@@ -61,7 +61,7 @@ const doColourTest = async (props: any) => {
             commandArgs: [molecule.molNo],
         }, true)
 
-        const representation = new MoorhenMoleculeRepresentation('CBs', '/*/A/*/*', props.commandCentre, props.glRef)
+        const representation = new MoorhenMoleculeRepresentation('CBs', '//A/1-10/', props.commandCentre, props.glRef)
         representation.setParentMolecule(molecule)
         const objects = await representation.getBufferObjects()
         representation.buildBuffers(objects)
