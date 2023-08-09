@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
-import { SketchPicker } from "react-color";
+import { RgbColorPicker } from "react-colorful";
+import { CirclePicker } from "react-color"
+import { convertRemToPx } from "../../utils/MoorhenUtils";
 
 export const MoorhenBackgroundColorMenuItem = (props: {
     backgroundColor: [number, number, number, number];
@@ -9,22 +11,32 @@ export const MoorhenBackgroundColorMenuItem = (props: {
     popoverPlacement?: 'left' | 'right' ;
 }) => {
     
-    const [backgroundColor, setBackgroundColor] = useState<{ r: number; g: number; b: number; a: number; }>({
-        r: 128, g: 128, b: 128, a: 0.5
+    const [backgroundColor, setBackgroundColor] = useState<{ r: number; g: number; b: number; }>({
+        r: 255 * props.backgroundColor[0],
+        g: 255 * props.backgroundColor[1],
+        b: 255 * props.backgroundColor[2],
     })
 
     useEffect(() => {
-        setBackgroundColor({
-            r: 255 * props.backgroundColor[0],
-            g: 255 * props.backgroundColor[1],
-            b: 255 * props.backgroundColor[2],
-            a: props.backgroundColor[3]
-        })
-    }, [props.backgroundColor])
-
-    const handleColorChange = (color: { rgb: { r: number; g: number; b: number; a: number; } }) => {
         try {
-            props.setBackgroundColor([color.rgb.r / 255., color.rgb.g / 255., color.rgb.b / 255., color.rgb.a])
+            props.setBackgroundColor([ backgroundColor.r / 255., backgroundColor.g / 255., backgroundColor.b / 255., props.backgroundColor[3] ])
+        } catch (err) {
+            console.log(err)
+        }    
+    }, [backgroundColor])
+
+    const handleCircleClick = (color: { rgb: { r: number; g: number; b: number; a: number; } }) => {
+        try {
+            setBackgroundColor(color.rgb)
+        }
+        catch (err) {
+            console.log('err', err)
+        }
+    }
+
+    const handleColorChange = (color: { r: number; g: number; b: number; }) => {
+        try {
+            setBackgroundColor(color)
         }
         catch (err) {
             console.log('err', err)
@@ -32,7 +44,10 @@ export const MoorhenBackgroundColorMenuItem = (props: {
     }
 
     const panelContent = <>
-        <SketchPicker color={backgroundColor} onChange={handleColorChange} />
+        <RgbColorPicker color={backgroundColor} onChange={handleColorChange} />
+        <div style={{padding: '0.5rem', margin: '0.15rem', justifyContent: 'center', display: 'flex', backgroundColor: '#e3e1e1', borderRadius: '8px'}}>
+            <CirclePicker width={convertRemToPx(10)} onChange={handleCircleClick} color={backgroundColor} circleSize={convertRemToPx(10)/9} colors={['#000000', '#5c5c5c', '#8a8a8a', '#cccccc', '#ffffff']}/>
+        </div>
     </>
 
     return <MoorhenBaseMenuItem
