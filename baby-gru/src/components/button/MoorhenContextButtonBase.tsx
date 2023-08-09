@@ -148,7 +148,17 @@ export const MoorhenContextButtonBase = (props: {
         <IconButton 
             onClick={handleClick}
             onMouseEnter={() => props.setToolTip(props.toolTipLabel)}
-            style={{width:'3rem', height: '3rem', marginTop: '0.5rem', paddingRight: 0, paddingTop: 0, paddingBottom: 0, paddingLeft: '0.1rem'}}
+            style={{
+                boxShadow: '0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12)',
+                width:'4rem',
+                height: '4rem',
+                marginTop: '0.5rem',
+                paddingRight: '0.5rem',
+                paddingTop: '0.5rem',
+                paddingBottom: '0.5rem',
+                paddingLeft: '0.5rem',
+                backgroundColor: 'white'
+            }}
             disabled={props.needsMapData && !props.activeMap || (props.needsAtomData && props.molecules.length === 0)}
         >
             {props.icon}

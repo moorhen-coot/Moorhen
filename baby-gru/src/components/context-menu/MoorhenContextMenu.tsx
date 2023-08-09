@@ -34,13 +34,10 @@ const ContextMenu = styled.div`
   position: absolute;
   border-radius: 5px;
   box-sizing: border-box;
-  border-color: #4a4a4a;
-  border-width: 1px;
-  border-style: solid;
   ${({ top, left, backgroundColor, opacity }) => css`
     top: ${top}px;
     left: ${left}px;
-    background-color: ${backgroundColor};
+    background-color: transparent;
     opacity: ${opacity};
     `}
 `;
@@ -196,14 +193,10 @@ export const MoorhenContextMenu = (props: {
                       <MoorhenBackgroundColorMenuItem setPopoverIsShown={() => { }} backgroundColor={props.backgroundColor} setBackgroundColor={props.setBackgroundColor}/>
                     :              
                     selectedMolecule && chosenAtom ?
-                    <>
-                     <MoorhenMergeMoleculesMenuItem glRef={props.glRef} molecules={props.molecules} setPopoverIsShown={() => {}} menuItemText="Merge molecule into..." popoverPlacement='right' fromMolNo={selectedMolecule.molNo}/>
-                     <MoorhenImportFSigFMenuItem molecules={props.molecules} setPopoverIsShown={() => {}} selectedMolNo={selectedMolecule.molNo} maps={props.maps} commandCentre={props.commandCentre} />
-                     <MenuItem disabled={!props.enableTimeCapsule} onClick={() => handleCreateBackup()}>Create backup</MenuItem>
-                     <hr></hr>
+
                      <div style={{ display:'flex', justifyContent: 'center' }}>
                      <Tooltip title={toolTip}>
-                     <FormGroup ref={quickActionsFormGroupRef} style={{ justifyContent: 'center', margin: "0px", padding: "0px", width: '26rem' }} row>
+                     <FormGroup ref={quickActionsFormGroupRef} style={{ justifyContent: 'center', margin: "0px", padding: "0px", width: '18rem' }} row>
                       <MoorhenAutofitRotamerButton mode='context' {...collectedProps} />
                       <MoorhenFlipPeptideButton mode='context' {...collectedProps}/>
                       <MoorhenSideChain180Button mode='context' {...collectedProps}/> 
@@ -223,7 +216,6 @@ export const MoorhenContextMenu = (props: {
                      </FormGroup>
                      </Tooltip>
                      </div>
-                    </>
                     :
                     <>
                       <MoorhenAddSimpleMenuItem setPopoverIsShown={() => {}} popoverPlacement={menuPosition.placement} glRef={props.glRef} molecules={props.molecules} />
