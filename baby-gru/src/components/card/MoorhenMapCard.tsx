@@ -1,5 +1,5 @@
 import { forwardRef, useImperativeHandle, useEffect, useState, useRef, useCallback, useMemo, Fragment } from "react";
-import { Card, Form, Button, Col, DropdownButton, Stack, Dropdown, OverlayTrigger, ToggleButton } from "react-bootstrap";
+import { Card, Form, Button, Col, DropdownButton, Stack, OverlayTrigger, ToggleButton } from "react-bootstrap";
 import { doDownload } from '../../utils/MoorhenUtils';
 import { getNameLabel } from "./cardUtils"
 import { VisibilityOffOutlined, VisibilityOutlined, ExpandMoreOutlined, ExpandLessOutlined, DownloadOutlined, Settings, FileCopyOutlined, RadioButtonCheckedOutlined, RadioButtonUncheckedOutlined, AddCircleOutline, RemoveCircleOutline } from '@mui/icons-material';
@@ -7,8 +7,8 @@ import { MoorhenMapSettingsMenuItem } from "../menu-item/MoorhenMapSettingsMenuI
 import { MoorhenRenameDisplayObjectMenuItem } from "../menu-item/MoorhenRenameDisplayObjectMenuItem"
 import { MoorhenDeleteDisplayObjectMenuItem } from "../menu-item/MoorhenDeleteDisplayObjectMenuItem"
 import MoorhenSlider from "../misc/MoorhenSlider";
-import { IconButton, MenuItem, Tooltip } from "@mui/material";
-import { SliderPicker } from "react-color";
+import { IconButton, MenuItem, Popover, Tooltip } from "@mui/material";
+import { RgbColorPicker } from "react-colorful";
 import { moorhen } from "../../types/moorhen"
 
 type ActionButtonType = {
@@ -47,6 +47,8 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     const [mapColour, setMapColour] = useState<{ r: number; g: number; b: number; } | null>(null)
     const [negativeMapColour, setNegativeMapColour] = useState<{ r: number; g: number; b: number; } | null>(null)
     const [positiveMapColour, setPositiveMapColour] = useState<{ r: number; g: number; b: number; } | null>(null)
+    const [showColourPicker, setShowColourPicker] = useState<boolean>(false)
+    const colourSwatchRef = useRef<HTMLDivElement | null>(null)
     const nextOrigin = useRef<number[]>([])
     const busyContouring = useRef<boolean>(false)
     const isDirty = useRef<boolean>(false)
@@ -76,30 +78,30 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
         })
     }, [])
 
-    const handlePositiveMapColorChange = (color: { rgb: {r: number; g: number; b: number;} }) => {
+    const handlePositiveMapColorChange = (color: { r: number; g: number; b: number; }) => {
         try {
-            props.map.setDiffMapColour('positiveDiffColour', color.rgb.r / 255., color.rgb.g / 255., color.rgb.b / 255.)
-            setPositiveMapColour({r: color.rgb.r, g: color.rgb.g, b: color.rgb.b})
+            props.map.setDiffMapColour('positiveDiffColour', color.r / 255., color.g / 255., color.b / 255.)
+            setPositiveMapColour({r: color.r, g: color.g, b: color.b})
         }
         catch (err) {
             console.log('err', err)
         }
     }
 
-    const handleNegativeMapColorChange = (color: { rgb: {r: number; g: number; b: number;} }) => {
+    const handleNegativeMapColorChange = (color: { r: number; g: number; b: number; }) => {
         try {
-            props.map.setDiffMapColour('negativeDiffColour', color.rgb.r / 255., color.rgb.g / 255., color.rgb.b / 255.)
-            setNegativeMapColour({r: color.rgb.r, g: color.rgb.g, b: color.rgb.b})
+            props.map.setDiffMapColour('negativeDiffColour', color.r / 255., color.g / 255., color.b / 255.)
+            setNegativeMapColour({r: color.r, g: color.g, b: color.b})
         }
         catch (err) {
             console.log('err', err)
         }
     }
 
-    const handleColorChange = (color: { rgb: {r: number; g: number; b: number;} }) => {
+    const handleColorChange = (color: { r: number; g: number; b: number; }) => {
         try {
-            props.map.setColour(color.rgb.r / 255., color.rgb.g / 255., color.rgb.b / 255.)
-            setMapColour({r: color.rgb.r, g: color.rgb.g, b: color.rgb.b})
+            props.map.setColour(color.r / 255., color.g / 255., color.b / 255.)
+            setMapColour({r: color.r, g: color.g, b: color.b})
         }
         catch (err) {
             console.log('err', err)
@@ -348,37 +350,74 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
             return null
         }
 
-        const dropdown =  
-        <Dropdown>
-            <Dropdown.Toggle variant="outlined" className="map-colour-dropdown">
-                <div style={{
-                    width: '20px', 
-                    height: '20px', 
-                    background: props.map.isDifference ? 
-                        `linear-gradient( -45deg, rgba(${positiveMapColour.r},${positiveMapColour.g},${positiveMapColour.b}), rgba(${positiveMapColour.r},${positiveMapColour.g},${positiveMapColour.b}) 49%, white 49%, white 51%, rgba(${negativeMapColour.r},${negativeMapColour.g},${negativeMapColour.b}) 51% )`
-                        : 
-                        `rgb(${mapColour.r},${mapColour.g},${mapColour.b})`, 
-                    borderRadius: '50%'
-                }}/>
-            </Dropdown.Toggle>
-            <Dropdown.Menu style={{padding: '0.5rem', margin: 0, zIndex: 9999, width: props.sideBarWidth/2}}>
-                {props.map.isDifference ? 
+        let dropdown: JSX.Element
+        if (props.map.isDifference) {
+            dropdown = <>
+                    <div ref={colourSwatchRef} onClick={() => setShowColourPicker(true)}
+                        style={{
+                            marginLeft: '0.5rem',
+                            width: '25px',
+                            height: '25px',
+                            borderRadius: '8px',
+                            border: '3px solid #fff',
+                            boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(0, 0, 0, 0.1)',
+                            cursor: 'pointer',
+                            background: `linear-gradient( -45deg, rgba(${positiveMapColour.r},${positiveMapColour.g},${positiveMapColour.b}), rgba(${positiveMapColour.r},${positiveMapColour.g},${positiveMapColour.b}) 49%, white 49%, white 51%, rgba(${negativeMapColour.r},${negativeMapColour.g},${negativeMapColour.b}) 51% )`
+                    }}/>
+                    <Popover 
+                        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+                        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+                        open={showColourPicker}
+                        onClose={() => setShowColourPicker(false)}
+                        anchorEl={colourSwatchRef.current}
+                        sx={{
+                            '& .MuiPaper-root': {
+                                overflowY: 'hidden', borderRadius: '8px', padding: '0.5rem'
+                            }
+                        }}
+                    >
                 <Stack gap={3} direction='horizontal'>
                     <div style={{width: '100%', textAlign: 'center'}}>
                         <span>Positive</span>
-                        <SliderPicker color={positiveMapColour} onChange={handlePositiveMapColorChange} />
+                        <RgbColorPicker color={positiveMapColour} onChange={handlePositiveMapColorChange} />
                     </div>
                     <div style={{width: '100%', textAlign: 'center'}}>
                         <span>Negative</span>
-                        <SliderPicker color={negativeMapColour} onChange={handleNegativeMapColorChange} />
+                        <RgbColorPicker color={negativeMapColour} onChange={handleNegativeMapColorChange} />
                     </div>
                     
                 </Stack>
-                :
-                <SliderPicker color={mapColour} onChange={handleColorChange} />
-                }
-            </Dropdown.Menu>
-        </Dropdown>
+                    </Popover>
+            </>
+        } else {
+            dropdown = <>
+                    <div ref={colourSwatchRef} onClick={() => setShowColourPicker(true)}
+                        style={{
+                            marginLeft: '0.5rem',
+                            width: '25px',
+                            height: '25px',
+                            borderRadius: '8px',
+                            border: '3px solid #fff',
+                            boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(0, 0, 0, 0.1)',
+                            cursor: 'pointer',
+                            backgroundColor: `rgb(${mapColour.r},${mapColour.g},${mapColour.b})` 
+                    }}/>
+                    <Popover 
+                        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+                        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+                        open={showColourPicker}
+                        onClose={() => setShowColourPicker(false)}
+                        anchorEl={colourSwatchRef.current}
+                        sx={{
+                            '& .MuiPaper-root': {
+                                overflowY: 'hidden', borderRadius: '8px'
+                            }
+                        }}
+                    >
+                        <RgbColorPicker color={mapColour} onChange={handleColorChange} />
+                    </Popover>
+            </>
+        } 
 
         return <OverlayTrigger
                 placement="top"
