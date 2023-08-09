@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState, useReducer } from "react";
 import { Row, Button, Stack, Form, FormSelect, Card, Col, OverlayTrigger, Tooltip } from "react-bootstrap";
 import { ArrowUpwardOutlined, ArrowDownwardOutlined, DeleteOutlined } from '@mui/icons-material';
-import { SketchPicker } from "react-color";
+import { CirclePicker } from "react-color";
+import { HexColorPicker } from "react-colorful";
 import { MoorhenChainSelect } from "../select/MoorhenChainSelect";
-import { convertViewtoPx, getMultiColourRuleArgs } from "../../utils/MoorhenUtils";
+import { convertRemToPx, convertViewtoPx, getMultiColourRuleArgs } from "../../utils/MoorhenUtils";
 import { MoorhenCidInputForm } from "../form/MoorhenCidInputForm";
 import { MoorhenSequenceRangeSelect } from "../sequence-viewer/MoorhenSequenceRangeSelect";
 import { moorhen } from "../../types/moorhen";
@@ -86,10 +87,19 @@ export const MoorhenModifyColourRulesCard = (props: {
     const handleResidueCidChange = (evt) => {
         setCid(evt.target.value)
     }
-
-    const handleColorChange = (color: { hex: string; }) => {
+    
+    const handleColourCircleClick = (color: { hex: string; }) => {
         try {
             setSelectedColour(color.hex)
+        }
+        catch (err) {
+            console.log('err', err)
+        }
+    }
+    
+    const handleColorChange = (color: string) => {
+        try {
+            setSelectedColour(color)
         }
         catch (err) {
             console.log('err', err)
@@ -313,7 +323,17 @@ export const MoorhenModifyColourRulesCard = (props: {
                         Add rule
                     </Button>
                 </Stack>
-                {ruleType !== 'property' && <SketchPicker color={selectedColour} onChange={handleColorChange} disableAlpha={true} presetColors={["#f44336", "#e91e63", "#9c27b0", "#673ab7", "#3f51b5", "#2196f3", "#03a9f4", "#00bcd4", "#009688", "#4caf50", "#8bc34a", "#cddc39", "#ffeb3b", "#ffc107", "#ff9800", "#ff5722"]}/>}
+                {ruleType !== 'property' &&
+                <Stack direction='vertical' style={{display: 'flex', justifyContent: 'center'}} gap={2}>
+                    <div style={{padding: 0, margin: 0, justifyContent: 'center', display: 'flex'}}>
+                        <HexColorPicker color={selectedColour} onChange={handleColorChange}/>
+                    </div>
+                    <div style={{padding: '0.5rem', margin: 0, justifyContent: 'center', display: 'flex', backgroundColor: '#e3e1e1', borderRadius: '8px'}}>
+                        <CirclePicker width={convertRemToPx(15)} circleSize={convertRemToPx(15)/20} color={selectedColour} onChange={handleColourCircleClick} presetColors={["#f44336", "#e91e63", "#9c27b0", "#673ab7", "#3f51b5", "#2196f3", "#03a9f4", "#00bcd4", "#009688", "#4caf50", "#8bc34a", "#cddc39", "#ffeb3b", "#ffc107", "#ff9800", "#ff5722"]}/>
+                    </div>
+                    
+                </Stack>
+                }
             </Stack>
             {ruleType === 'residue-range' && 
                     <div style={{width: '100%'}}>
