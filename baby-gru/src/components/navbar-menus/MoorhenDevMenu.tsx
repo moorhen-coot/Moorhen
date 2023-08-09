@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 import { MenuItem } from "@mui/material";
 import { cidToSpec } from "../../utils/MoorhenUtils";
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
+import { MoorhenMoleculeRepresentation } from "../../utils/MoorhenMoleculeRepresentation";
 
 var TRIAL_COUNT = 0
 
@@ -59,29 +60,13 @@ const doColourTest = async (props: any) => {
             command: 'shim_do_colour_test',
             commandArgs: [molecule.molNo],
         }, true)
-        molecule.setAtomsDirty(true)
-        await molecule.redraw()
+
+        const representation = new MoorhenMoleculeRepresentation('CBs', '/*/A/*/*', props.commandCentre, props.glRef)
+        representation.setParentMolecule(molecule)
+        const objects = await representation.getBufferObjects()
+        representation.buildBuffers(objects)
+    
     }
-}
-
-const doRepresentationsTest = async (props: any) => {
-    const molecule = props.molecules.find(molecule => molecule.molNo === 0)
-
-    if (typeof molecule !== 'undefined') {
-        const customRepresentations = [
-            ['MolecularSurface', '//A/1-15', true, '#1bd12a'],
-            ['CRs', '//A/1-15', true, '#d420bc'],
-            ['CBs', '//A/15-30', true],
-            ['CRs', '//A/30-36', true, '#3d1cd4'],
-            ['CBs', '//A/46-55', true],
-            ['MolecularSurface', '//A/55-72', true, '#d417b4'],
-            ['CRs', '//A/55-72', true, '#1bd12a']
-        ]
-        for (const representation of customRepresentations) {
-            await molecule.addRepresentation(...representation)
-        }
-    }
-
 }
 
 export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
@@ -96,9 +81,6 @@ export const MoorhenDevMenu = (props: MoorhenNavBarExtendedControlsInterface) =>
                     </MenuItem>
                     <MenuItem onClick={() => doColourTest(menuItemProps)}>
                         Do colouring test
-                    </MenuItem>
-                    <MenuItem onClick={() => doRepresentationsTest(menuItemProps)}>
-                        Do representations test
                     </MenuItem>
                     <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
                         <Form.Check 
