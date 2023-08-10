@@ -139,3 +139,7 @@ div.darkly text.end-label {fill:#FFF !important;}
 .map-colour-dropdown::after  {
     display:none !important;
 }
+
+.context-button-popover .popover-arrow {
+  display: none !important;
+}

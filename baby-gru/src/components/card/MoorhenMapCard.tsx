@@ -332,16 +332,16 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
 
     }, [mapRadius, mapContourLevel, mapLitLines, mapSolid])
 
-    const increaseLevelButton = <IconButton onClick={() => setMapContourLevel(mapContourLevel + props.contourWheelSensitivityFactor)} style={{padding: 0}}>
+    const increaseLevelButton = <IconButton onClick={() => setMapContourLevel(mapContourLevel + props.contourWheelSensitivityFactor)} style={{padding: 0, color: props.isDark ? 'white' : 'black'}}>
                                     <AddCircleOutline/>
                                 </IconButton>
-    const decreaseLevelButton = <IconButton onClick={() => setMapContourLevel(mapContourLevel - props.contourWheelSensitivityFactor)} style={{padding: 0}}>
+    const decreaseLevelButton = <IconButton onClick={() => setMapContourLevel(mapContourLevel - props.contourWheelSensitivityFactor)} style={{padding: 0, color: props.isDark ? 'white' : 'black'}}>
                                     <RemoveCircleOutline/>
                                 </IconButton>
-    const increaseRadiusButton = <IconButton onClick={() => setMapRadius(mapRadius + 2)} style={{padding: 0}}>
+    const increaseRadiusButton = <IconButton onClick={() => setMapRadius(mapRadius + 2)} style={{padding: 0, color: props.isDark ? 'white' : 'black'}}>
                                     <AddCircleOutline/>
                                 </IconButton>
-    const decreaseRadiusButton = <IconButton onClick={() => setMapRadius(mapRadius - 2)} style={{padding: 0}}>
+    const decreaseRadiusButton = <IconButton onClick={() => setMapRadius(mapRadius - 2)} style={{padding: 0, color: props.isDark ? 'white' : 'black'}}>
                                     <RemoveCircleOutline/>
                                 </IconButton>
 
@@ -372,7 +372,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                         anchorEl={colourSwatchRef.current}
                         sx={{
                             '& .MuiPaper-root': {
-                                overflowY: 'hidden', borderRadius: '8px', padding: '0.5rem'
+                                overflowY: 'hidden', borderRadius: '8px', padding: '0.5rem', background: props.isDark ? 'grey' : 'white'
                             }
                         }}
                     >

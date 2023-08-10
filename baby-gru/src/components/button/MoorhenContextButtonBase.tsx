@@ -63,7 +63,8 @@ MoorhenPopoverOptions.defaultProps = {extraInput: () => null, nonCootCommand: fa
   
 
 export const MoorhenContextButtonBase = (props: {
-    commandCentre: React.RefObject<moorhen.CommandCentre>
+    isDark: boolean;
+    commandCentre: React.RefObject<moorhen.CommandCentre>;
     selectedMolecule: moorhen.Molecule;
     chosenAtom: moorhen.ResidueSpec;
     activeMap: moorhen.Map;
@@ -148,7 +149,18 @@ export const MoorhenContextButtonBase = (props: {
         <IconButton 
             onClick={handleClick}
             onMouseEnter={() => props.setToolTip(props.toolTipLabel)}
-            style={{width:'3rem', height: '3rem', marginTop: '0.5rem', paddingRight: 0, paddingTop: 0, paddingBottom: 0, paddingLeft: '0.1rem'}}
+            style={{
+                boxShadow: '0px 3px 5px -1px rgba(0,0,0,0.2),0px 6px 10px 0px rgba(0,0,0,0.14),0px 1px 18px 0px rgba(0,0,0,0.12)',
+                width:'4rem',
+                height: '4rem',
+                marginTop: '0.5rem',
+                marginRight: '0.5rem',
+                paddingRight: '0.5rem',
+                paddingTop: '0.5rem',
+                paddingBottom: '0.5rem',
+                paddingLeft: '0.5rem',
+                backgroundColor: props.isDark ? 'grey' : 'white'
+            }}
             disabled={props.needsMapData && !props.activeMap || (props.needsAtomData && props.molecules.length === 0)}
         >
             {props.icon}

@@ -220,7 +220,7 @@ export const MoorhenModifyColourRulesCard = (props: {
         return <Card key={index} className='hide-scrolling' style={{margin: '0.1rem', maxWidth: '100%', overflowX:'scroll'}}>
                 <Card.Body>
                     <Row className='align-items-center'>
-                        <Col className='align-items-center' style={{ display: 'flex', justifyContent: 'left' }}>
+                        <Col className='align-items-center' style={{ display: 'flex', justifyContent: 'left', color: props.isDark ? 'white' : 'black' }}>
                             <b>
                             {`#${index+1}. `}
                             </b>

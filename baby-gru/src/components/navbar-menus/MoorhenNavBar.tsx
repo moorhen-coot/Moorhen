@@ -184,7 +184,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface
                         marginBottom: '0.5rem',
                         marginRight: '0.5rem',
                         marginLeft: '0.5rem',
-                        backgroundColor: currentDropdownId === action.name ? '#d4d4d4' : 'white',
+                        backgroundColor: props.isDark ? (currentDropdownId === action.name ? '#a8a8a8' : 'grey') : (currentDropdownId === action.name ? '#d4d4d4' : 'white') ,
                         justifyContent: 'left',
                         display: 'flex',
                         borderRadius: '2rem',

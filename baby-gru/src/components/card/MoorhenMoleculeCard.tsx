@@ -437,14 +437,15 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                             <FormGroup style={{ margin: "0px", padding: "0px"}} row>
                                 {allRepresentations.map(key => 
                                     <RepresentationCheckbox
-                                    key={key}
-                                    repKey={key}
-                                    glRef={props.glRef}
-                                    changeShowState={changeShowState}
-                                    molecule={props.molecule}
-                                    isVisible={isVisible}
-                                    showState={showState}
-                            />)}
+                                        key={key}
+                                        repKey={key}
+                                        glRef={props.glRef}
+                                        changeShowState={changeShowState}
+                                        molecule={props.molecule}
+                                        isVisible={isVisible}
+                                        showState={showState}
+                                        isDark={props.isDark}
+                                />)}
                             </FormGroup>
                         </div>
                     </Col>
@@ -461,7 +462,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                     {props.molecule.representations.some(representation => representation.isCustom) ?
                         <FormGroup style={{ margin: "0px", padding: "0px" }} row>
                             {props.molecule.representations.filter(representation => representation.isCustom).map(representation => {
-                                return <CustomRepresentationChip key={representation.uniqueId} molecule={props.molecule} representation={representation} isVisible={isVisible} changeCustomRepresentationList={changeCustomRepresentationList}/>
+                                return <CustomRepresentationChip isDark={props.isDark} key={representation.uniqueId} molecule={props.molecule} representation={representation} isVisible={isVisible} changeCustomRepresentationList={changeCustomRepresentationList}/>
                             })}
                         </FormGroup>
                     :
@@ -532,7 +533,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     </>
 })
 
-const getChipStyle = (colourRules: moorhen.ColourRule[], repIsVisible: boolean, width?: string) => {
+const getChipStyle = (colourRules: moorhen.ColourRule[], repIsVisible: boolean, isDark: boolean, width?: string) => {
     const chipStyle = {
         marginLeft: '0.1rem',
         marginBottom: '0.1rem',
@@ -540,6 +541,10 @@ const getChipStyle = (colourRules: moorhen.ColourRule[], repIsVisible: boolean, 
 
     if (width) { 
         chipStyle['width'] = width 
+    }
+
+    if (isDark) {
+        chipStyle['color'] = 'white'
     }
 
     let [r, g, b]: number[] = [214, 214, 214]
@@ -561,6 +566,7 @@ const getChipStyle = (colourRules: moorhen.ColourRule[], repIsVisible: boolean, 
 }
 
 const RepresentationCheckbox = (props: {
+    isDark: boolean;
     showState: { [key: string]: boolean };
     repKey: string;
     isVisible: boolean;
@@ -571,7 +577,7 @@ const RepresentationCheckbox = (props: {
 
     const [repState, setRepState] = useState<boolean>(false)
 
-    const chipStyle = getChipStyle(props.molecule.defaultColourRules, repState, 'calc(100% /6.15)')
+    const chipStyle = getChipStyle(props.molecule.defaultColourRules, repState, props.isDark, 'calc(100% /6.15)')
 
     useEffect(() => {
         setRepState(props.showState[props.repKey] || false)
@@ -598,6 +604,7 @@ const RepresentationCheckbox = (props: {
 }
 
 const CustomRepresentationChip = (props: {
+    isDark: boolean;
     isVisible: boolean;
     molecule: moorhen.Molecule;
     representation: moorhen.MoleculeRepresentation; 
@@ -608,7 +615,7 @@ const CustomRepresentationChip = (props: {
 
     const [representationIsVisible, setRepresentationIsVisible] = useState<boolean>(true)
     
-    const chipStyle = getChipStyle(representation.colourRules, representationIsVisible)
+    const chipStyle = getChipStyle(representation.colourRules, representationIsVisible, props.isDark)
     
     useEffect(() => {
         representationIsVisible ? representation.show() : representation.hide()
@@ -624,7 +631,7 @@ const CustomRepresentationChip = (props: {
         style={chipStyle}
         variant={"outlined"}
         label={`${representationLabelMapping[representation.style]} ${representation.cid}`}
-        deleteIcon={<DeleteOutlined/>}
+        deleteIcon={<DeleteOutlined style={{color: props.isDark ? 'white' : 'black'}}/>}
         onDelete={() => {
             molecule.removeRepresentation(representation.uniqueId)
             props.changeCustomRepresentationList({action: "Remove", item: props.representation})
