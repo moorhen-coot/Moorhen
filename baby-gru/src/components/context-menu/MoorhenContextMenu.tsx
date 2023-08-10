@@ -34,7 +34,7 @@ const ContextMenu = styled.div`
   position: absolute;
   border-radius: 5px;
   box-sizing: border-box;
-  ${({ top, left, backgroundColor, opacity }) => css`
+  ${({ top, left, opacity }) => css`
     top: ${top}px;
     left: ${left}px;
     background-color: transparent;
@@ -130,7 +130,6 @@ export const MoorhenContextMenu = (props: {
   const [overrideMenuContents, setOverrideMenuContents] = useState<boolean>(false)
   const [opacity, setOpacity] = useState<number>(1.0)
   const [toolTip, setToolTip] = useState<string>('')
-  const backgroundColor = props.isDark ? '#858585' : '#ffffff' 
   
   let selectedMolecule: moorhen.Molecule
   let chosenAtom: moorhen.ResidueSpec
@@ -141,10 +140,15 @@ export const MoorhenContextMenu = (props: {
     chosenAtom = cidToSpec(props.showContextMenu.atom.label)
   }
 
+  // Do not show context menu unless clicked on atom. We might to revert this in the future...
+  if (!chosenAtom) {
+    return null
+  }
+  
   let top = props.showContextMenu ? props.showContextMenu.pageY : null
   let left = props.showContextMenu ? props.showContextMenu.pageX : null
-  const menuWidth = selectedMolecule && chosenAtom ? convertRemToPx(26) : convertRemToPx(7)
-  const menuHeight = selectedMolecule && chosenAtom ? convertRemToPx(17) : convertRemToPx(7)
+  const menuWidth = selectedMolecule && chosenAtom ? convertRemToPx(19) : convertRemToPx(7)
+  const menuHeight = selectedMolecule && chosenAtom ? convertRemToPx(19) : convertRemToPx(7)
   
   if (props.windowWidth - left < menuWidth) {
     left -= menuWidth
@@ -182,7 +186,7 @@ export const MoorhenContextMenu = (props: {
   }
 
   return <>
-      <ContextMenu ref={contextMenuRef} top={overrideMenuContents ? convertRemToPx(4) : menuPosition.top} left={overrideMenuContents ? convertRemToPx(15) : menuPosition.left} backgroundColor={backgroundColor} opacity={opacity}>
+      <ContextMenu ref={contextMenuRef} top={overrideMenuContents ? convertRemToPx(4) : menuPosition.top} left={overrideMenuContents ? convertRemToPx(15) : menuPosition.left} opacity={opacity}>
         {overrideMenuContents ? 
         overrideMenuContents 
         :
@@ -193,7 +197,6 @@ export const MoorhenContextMenu = (props: {
                       <MoorhenBackgroundColorMenuItem setPopoverIsShown={() => { }} backgroundColor={props.backgroundColor} setBackgroundColor={props.setBackgroundColor}/>
                     :              
                     selectedMolecule && chosenAtom ?
-
                      <div style={{ display:'flex', justifyContent: 'center' }}>
                      <Tooltip title={toolTip}>
                      <FormGroup ref={quickActionsFormGroupRef} style={{ justifyContent: 'center', margin: "0px", padding: "0px", width: '18rem' }} row>
@@ -231,7 +234,7 @@ export const MoorhenContextMenu = (props: {
         }
           </ContextMenu>
           <Overlay placement={menuPosition.placement} show={showOverlay} target={quickActionsFormGroupRef.current}>
-              <Popover>
+              <Popover className="context-button-popover" style={{borderRadius: '1rem', boxShadow: '0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12)'}}>
               <Popover.Body>
                 {overlayContents}
               </Popover.Body>

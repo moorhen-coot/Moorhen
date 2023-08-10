@@ -586,6 +586,7 @@ export namespace moorhen {
         showContextMenu: false | AtomRightClickEventInfo;
         backgroundColor: [number, number, number, number];
         defaultBondSmoothness: number;
+        isDark: boolean;
         changeMolecules: (arg0: MolChange<Molecule>) => void
     }
     
