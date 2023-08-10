@@ -832,7 +832,9 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {string} [cid=undefined] - The CID selection for the representation
      */
     show(style: moorhen.RepresentationStyles, cid?: string): void {
-        if(!cid) {
+        if (!cid && style === 'ligands') {
+            cid = "/*/*/(!ALA,CYS,ASP,GLU,PHE,GLY,HIS,ILE,LYS,LEU,MET,ASN,PRO,GLN,ARG,SER,THR,VAL,TRP,TYR,WAT,HOH,THP,SEP,TPO,TYP,PTR,OH2,H2O)"
+        } else if (!cid) {
             cid = '/*/*/*/*'
         }
         try {
