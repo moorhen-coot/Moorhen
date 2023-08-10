@@ -32,7 +32,7 @@ jobs:
         working-directory: /home/runner/work/Moorhen/Moorhen/baby-gru
         run: |
           cd /home/runner/work/Moorhen/Moorhen/baby-gru/
-          npm install better-docs
+          npm install --force better-docs
           npx jsdoc -c jsdoc.json
       - name: Publishing on Github Pages
         uses: peaceiris/actions-gh-pages@v3
