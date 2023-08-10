@@ -483,7 +483,6 @@ export const babyGruKeyPress = (event: KeyboardEvent, collectedProps: moorhen.Co
             glRef.current.showShortCutHelp.push(`<Shift><Alt> Translate View`)
             glRef.current.showShortCutHelp.push(`<Shift> Rotate View`)
             glRef.current.showShortCutHelp.push(`Double click go to blob`)
-            glRef.current.showShortCutHelp.push(`Use right click to set background color`)
             glRef.current.drawScene()
         } else  {
             glRef.current.showShortCutHelp = null
