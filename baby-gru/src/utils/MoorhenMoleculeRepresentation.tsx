@@ -342,6 +342,13 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             style = "CA+LIGANDS"
         }
 
+        const bondSettings = [
+            this.parentMolecule.cootBondsOptions.isDarkBackground,
+            name === 'ligands' ? this.parentMolecule.cootBondsOptions.width * 1.5 : this.parentMolecule.cootBondsOptions.width,
+            name === 'ligands' ? this.parentMolecule.cootBondsOptions.atomRadiusBondRatio * 1.5 : this.parentMolecule.cootBondsOptions.atomRadiusBondRatio,
+            this.parentMolecule.cootBondsOptions.smoothness
+        ]
+
         if (typeof cid !== 'string' || cid === '/*/*/*/*') {
             meshCommand = this.commandCentre.current.cootCommand({
                 returnType: returnType,
@@ -349,10 +356,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                 commandArgs: [
                     this.parentMolecule.molNo,
                     style,
-                    this.parentMolecule.cootBondsOptions.isDarkBackground,
-                    this.parentMolecule.cootBondsOptions.width,
-                    this.parentMolecule.cootBondsOptions.atomRadiusBondRatio,
-                    this.parentMolecule.cootBondsOptions.smoothness
+                    ...bondSettings
                 ]
             })
         } else {
@@ -363,10 +367,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                     this.parentMolecule.molNo,
                     cid,
                     style,
-                    this.parentMolecule.cootBondsOptions.isDarkBackground,
-                    this.parentMolecule.cootBondsOptions.width,
-                    this.parentMolecule.cootBondsOptions.atomRadiusBondRatio,
-                    this.parentMolecule.cootBondsOptions.smoothness
+                    ...bondSettings
                 ]
             })
         }
