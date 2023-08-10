@@ -50,7 +50,7 @@ type LegendInputFileType = {
 type LigandInputFileType = {
   type: 'ligand';
   uniqueId?: string;
-  args: [string];
+  args: [string, string, boolean];
 }
 
 export default class MoorhenWrapper {
@@ -64,7 +64,7 @@ export default class MoorhenWrapper {
   context: moorhen.ContextValues;
   cachedContext: moorhen.ContextValues;
   cachedLegend: string;
-  cachedLigandDictionaries: string[];
+  cachedLigandInfo: { ligandName: string; fileContents: string; }[];
   noDataLegendMessage: JSX.Element;
   exportCallback: (arg0: string, arg1: string) => Promise<void>;
   exportPreferencesCallback: (arg0: moorhen.ContextValues) => void;
@@ -82,7 +82,7 @@ export default class MoorhenWrapper {
     this.context = null
     this.cachedContext = null
     this.cachedLegend = null
-    this.cachedLigandDictionaries = []
+    this.cachedLigandInfo = []
     this.noDataLegendMessage = parse('<div></div>') as JSX.Element
     this.exportCallback = async () => {}
     this.exportPreferencesCallback = () => {}
@@ -264,12 +264,12 @@ export default class MoorhenWrapper {
     return new Promise(async (resolve, reject) => {
       try {
         newMolecule.uniqueId = uniqueId
-        this.cachedLigandDictionaries.forEach(ligandDict => ligandDict && newMolecule.addDictShim(ligandDict))
+        this.cachedLigandInfo.forEach(item => item?.fileContents && newMolecule.addDictShim(item.fileContents))
         newMolecule.setBackgroundColour(this.controls.glRef.current.background_colour)
         await newMolecule.loadToCootFromURL(inputFile, molName)
-        this.controls.changeMolecules({ action: "Add", item: newMolecule })
         await newMolecule.fetchIfDirtyAndDraw('CBs')
-        await newMolecule.centreOn('/*/*/*/*', false)
+        this.controls.changeMolecules({ action: "Add", item: newMolecule })
+        await newMolecule.centreOn()
         return resolve(newMolecule)
       } catch (err) {
         console.log(`Cannot fetch molecule from ${inputFile}`)
@@ -278,7 +278,32 @@ export default class MoorhenWrapper {
     })
   }
 
-  async loadLigandData(url: string): Promise<string> {
+  async getMonomerOnStart(ligandName: string, url: string, loadLigandOnStart: boolean = true) {
+    const ligandInfo = this.cachedLigandInfo.find(item => item.ligandName === ligandName)
+    if (!loadLigandOnStart || !ligandInfo) {
+      return 
+    }
+    const getMonomerResult = await this.controls.commandCentre.current.cootCommand({
+      returnType: 'status',
+      command: 'get_monomer_and_position_at',
+      commandArgs: [ligandName, -999999, 0, 0, 0]
+    }, true)
+      
+    if (getMonomerResult.data.result.status === "Completed" && getMonomerResult.data.result.result !== -1) {
+      const newMolecule = new MoorhenMolecule(this.controls.commandCentre, this.controls.glRef, this.monomerLibrary)
+      newMolecule.molNo = getMonomerResult.data.result.result
+      newMolecule.name = ligandName
+      newMolecule.setBackgroundColour(this.controls.glRef.current.background_colour)
+      newMolecule.addDictShim(ligandInfo.fileContents)
+      await newMolecule.fetchIfDirtyAndDraw('CBs')
+      this.controls.changeMolecules({ action: "Add", item: newMolecule })
+      await newMolecule.centreOn('/*/*/*/*', false)
+    } else {
+      console.log('Error getting monomer... Missing dictionary?')
+    }
+  }
+
+  async loadLigandData(ligandName: string, url: string, loadLigandOnStart: boolean = true): Promise<{ ligandName: string; fileContents: string; }> {
     try {
       const response = await fetch(url)
       if (response.ok) {
@@ -289,7 +314,7 @@ export default class MoorhenWrapper {
           commandArgs: [fileContents, -999999],
           changesMolecules: []
         }, true)
-        return fileContents
+        return {ligandName, fileContents}
       } else {
         console.log(`Unable to fetch legend file ${url}`)
       }
@@ -320,8 +345,8 @@ export default class MoorhenWrapper {
 
   async loadInputFiles(): Promise<void>{
 
-    this.cachedLigandDictionaries = await Promise.all(
-      this.inputFiles.filter(file => file.type === 'ligand').map(file => this.loadLigandData(...file.args as [string]))
+    this.cachedLigandInfo = await Promise.all(
+      this.inputFiles.filter(file => file.type === 'ligand').map(file => this.loadLigandData(...file.args as [string, string, boolean]))
     )
 
     try {
@@ -334,7 +359,7 @@ export default class MoorhenWrapper {
           } else if (file.type === 'legend') {
             return this.loadLegend(...file.args)
           } else if(file.type === 'ligand') {
-            return Promise.resolve()
+            return this.getMonomerOnStart(...file.args)
           } else {
             console.log('Unrecognised file type')
             console.log(file)
