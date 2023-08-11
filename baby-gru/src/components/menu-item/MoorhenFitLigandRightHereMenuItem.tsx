@@ -87,7 +87,7 @@ export const MoorhenFitLigandRightHereMenuItem = (props: {
                 result.data.result.result.map(async (iMol) => {
                     const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.monomerLibraryPath)
                     newMolecule.molNo = iMol
-                    newMolecule.name = `lig_${iMol}`
+                    newMolecule.name = `fit_lig_${iMol}`
                     newMolecule.setBackgroundColour(props.backgroundColor)
                     newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
                     await newMolecule.fetchIfDirtyAndDraw('CBs')

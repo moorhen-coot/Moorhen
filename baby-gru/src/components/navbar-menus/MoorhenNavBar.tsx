@@ -18,7 +18,7 @@ import { MoorhenValidationToolsModal } from '../modal/MoorhenValidationToolsModa
 import { MoorhenToolkitModal } from '../modal/MoorhenToolkitModal';
 import { 
     AcUnitOutlined, CalculateOutlined, ConstructionOutlined, DescriptionOutlined, EditOutlined, VisibilityOutlined,
-    FactCheckOutlined, HelpOutlineOutlined, MenuOutlined, SaveOutlined, ScienceOutlined, SettingsSuggestOutlined, CloseOutlined,
+    FactCheckOutlined, HelpOutlineOutlined, MenuOutlined, SaveOutlined, ScienceOutlined, SettingsSuggestOutlined, CloseOutlined, LogoutOutlined,
  } from '@mui/icons-material';
 import { MoorhenQuerySequenceModal } from '../modal/MoorhenQuerySequenceModal';
 import { MoorhenScriptModal } from '../modal/MoorhenScriptModal';
@@ -63,6 +63,7 @@ export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface
     const cryoDialActionRef = useRef()
     const helpDialActionRef = useRef()
     const devDialActionRef = useRef()
+    const exitDialActionRef = useRef()
 
     useEffect(() => {
         if (props.timeCapsuleRef.current) {

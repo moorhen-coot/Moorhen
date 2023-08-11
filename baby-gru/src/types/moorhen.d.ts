@@ -360,16 +360,10 @@ export namespace moorhen {
         hasReflectionData: boolean;
         associatedReflectionFileName: string;
     }
-    
-    type backupSession = {
-        version: string;
-        includesAdditionalMapData: boolean;
-        moleculeData: moleculeSessionData[];
-        mapData: mapDataSession[];
-        activeMapIndex: number;
+
+    type viewDataSession = {
         origin: [number, number, number];
         backgroundColor: [number, number, number, number];
-        atomLabelDepthMode: boolean;
         ambientLight: [number, number, number, number];
         diffuseLight: [number, number, number, number];
         lightPosition: [number, number, number, number];
@@ -381,6 +375,15 @@ export namespace moorhen {
         clipStart: number;
         clipEnd: number;
         quat4: any[];
+    }
+    
+    type backupSession = {
+        version: string;
+        includesAdditionalMapData: boolean;
+        moleculeData: moleculeSessionData[];
+        mapData: mapDataSession[];
+        viewData: viewDataSession;
+        activeMapIndex: number;
     }
     
     interface TimeCapsule {

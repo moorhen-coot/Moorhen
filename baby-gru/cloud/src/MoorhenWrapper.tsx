@@ -50,7 +50,7 @@ type LegendInputFileType = {
 type LigandInputFileType = {
   type: 'ligand';
   uniqueId?: string;
-  args: [string];
+  args: [string, string, boolean];
 }
 
 export default class MoorhenWrapper {
@@ -64,12 +64,13 @@ export default class MoorhenWrapper {
   context: moorhen.ContextValues;
   cachedContext: moorhen.ContextValues;
   cachedLegend: string;
-  cachedLigandDictionaries: string[];
+  cachedLigandInfo: { ligandName: string; fileContents: string; }[];
   noDataLegendMessage: JSX.Element;
-  exportCallback: (arg0: string, arg1: string) => Promise<void>;
+  exitCallback: (viewSettings: moorhen.viewDataSession, molData?: { molName: string; pdbData: string; }[]) => Promise<void>;
   exportPreferencesCallback: (arg0: moorhen.ContextValues) => void;
   backupStorageInstance: CloudStorageInstanceInterface;
   aceDRGInstance: moorhen.AceDRGInstance;
+  viewSettings: moorhen.viewDataSession;
 
   constructor(urlPrefix: string) {
     this.urlPrefix = urlPrefix
@@ -82,14 +83,38 @@ export default class MoorhenWrapper {
     this.context = null
     this.cachedContext = null
     this.cachedLegend = null
-    this.cachedLigandDictionaries = []
+    this.cachedLigandInfo = []
     this.noDataLegendMessage = parse('<div></div>') as JSX.Element
-    this.exportCallback = async () => {}
+    this.exitCallback = async () => {}
     this.exportPreferencesCallback = () => {}
     this.backupStorageInstance = new CloudStorageInstance()
     this.aceDRGInstance = new MoorhenAceDRGInstance()
+    this.viewSettings = null
     reportWebVitals()
     createModule()
+  }
+
+  setViewSettings(newSettings: moorhen.viewDataSession) {
+    this.viewSettings = newSettings
+  }
+
+  getViewSettings() {
+    const viewData: moorhen.viewDataSession = {
+      origin: this.controls.glRef.current.origin,
+      backgroundColor: this.controls.glRef.current.background_colour,
+      ambientLight: this.controls.glRef.current.light_colours_ambient,
+      diffuseLight: this.controls.glRef.current.light_colours_diffuse,
+      lightPosition: this.controls.glRef.current.light_positions,
+      specularLight: this.controls.glRef.current.light_colours_specular,
+      fogStart: this.controls.glRef.current.gl_fog_start,
+      fogEnd: this.controls.glRef.current.gl_fog_end,
+      zoom: this.controls.glRef.current.zoom,
+      doDrawClickedAtomLines: this.controls.glRef.current.doDrawClickedAtomLines,
+      clipStart: (this.controls.glRef.current.gl_clipPlane0[3] + this.controls.glRef.current.fogClipOffset) * -1,
+      clipEnd: this.controls.glRef.current.gl_clipPlane1[3] - this.controls.glRef.current.fogClipOffset,
+      quat4: this.controls.glRef.current.myQuat
+    }
+    return viewData
   }
 
   setAceDRGMakeLinkCallback(functionCallback: (arg0: moorhen.createCovLinkAtomInput, arg1: moorhen.createCovLinkAtomInput) => void) {
@@ -151,8 +176,8 @@ export default class MoorhenWrapper {
     this.monomerLibrary = uri
   }
 
-  addOnExportListener(callbackFunction: (arg0: string, arg1: string) => Promise<void>){
-    this.exportCallback = callbackFunction
+  addOnExitListener(callbackFunction: (viewSettings: moorhen.viewDataSession, molData?: { molName: string; pdbData: string; }[]) => Promise<void>){
+    this.exitCallback = callbackFunction
   }
 
   addOnChangePreferencesListener(callbackFunction: (arg0: moorhen.ContextValues) => void) {
@@ -224,7 +249,23 @@ export default class MoorhenWrapper {
       console.log(err)
       return false
     }
-}
+  }
+
+  applyView() {
+    if (this.viewSettings) {
+      this.controls.glRef.current.setAmbientLightNoUpdate(...Object.values(this.viewSettings.ambientLight) as [number, number, number])
+      this.controls.glRef.current.setSpecularLightNoUpdate(...Object.values(this.viewSettings.specularLight) as [number, number, number])
+      this.controls.glRef.current.setDiffuseLightNoUpdate(...Object.values(this.viewSettings.diffuseLight) as [number, number, number])
+      this.controls.glRef.current.setLightPositionNoUpdate(...Object.values(this.viewSettings.lightPosition) as [number, number, number])
+      this.controls.glRef.current.setZoom(this.viewSettings.zoom, false)
+      this.controls.glRef.current.set_fog_range(this.viewSettings.fogStart, this.viewSettings.fogEnd, false)
+      this.controls.glRef.current.set_clip_range(this.viewSettings.clipStart, this.viewSettings.clipEnd, false)
+      this.controls.glRef.current.doDrawClickedAtomLines = this.viewSettings.doDrawClickedAtomLines
+      this.controls.glRef.current.background_colour = this.viewSettings.backgroundColor
+      this.controls.glRef.current.setQuat(this.viewSettings.quat4)
+      this.controls.glRef.current.setOriginAnimated(this.viewSettings.origin, true)
+    }
+  }
 
   async loadMtzData(uniqueId: string, inputFile: string, mapName: string, selectedColumns: moorhen.selectedMtzColumns, colour?: {[type: string]: {r: number, g: number, b: number}}): Promise<moorhen.Map> {
     const newMap = new MoorhenMap(this.controls.commandCentre, this.controls.glRef)
@@ -264,12 +305,14 @@ export default class MoorhenWrapper {
     return new Promise(async (resolve, reject) => {
       try {
         newMolecule.uniqueId = uniqueId
-        this.cachedLigandDictionaries.forEach(ligandDict => ligandDict && newMolecule.addDictShim(ligandDict))
+        this.cachedLigandInfo.forEach(item => item?.fileContents && newMolecule.addDictShim(item.fileContents))
         newMolecule.setBackgroundColour(this.controls.glRef.current.background_colour)
         await newMolecule.loadToCootFromURL(inputFile, molName)
-        this.controls.changeMolecules({ action: "Add", item: newMolecule })
         await newMolecule.fetchIfDirtyAndDraw('CBs')
-        await newMolecule.centreOn('/*/*/*/*', false)
+        this.controls.changeMolecules({ action: "Add", item: newMolecule })
+        if (!this.viewSettings) {
+          await newMolecule.centreOn()
+        }
         return resolve(newMolecule)
       } catch (err) {
         console.log(`Cannot fetch molecule from ${inputFile}`)
@@ -278,7 +321,31 @@ export default class MoorhenWrapper {
     })
   }
 
-  async loadLigandData(url: string): Promise<string> {
+  async getMonomerOnStart(ligandName: string, url: string, loadLigandOnStart: boolean = true) {
+    const ligandInfo = this.cachedLigandInfo.find(item => item.ligandName === ligandName)
+    if (!loadLigandOnStart || !ligandInfo) {
+      return 
+    }
+    const getMonomerResult = await this.controls.commandCentre.current.cootCommand({
+      returnType: 'status',
+      command: 'get_monomer_and_position_at',
+      commandArgs: [ligandName, -999999, 0, 0, 0]
+    }, true)
+      
+    if (getMonomerResult.data.result.status === "Completed" && getMonomerResult.data.result.result !== -1) {
+      const newMolecule = new MoorhenMolecule(this.controls.commandCentre, this.controls.glRef, this.monomerLibrary)
+      newMolecule.molNo = getMonomerResult.data.result.result
+      newMolecule.name = ligandName
+      newMolecule.setBackgroundColour(this.controls.glRef.current.background_colour)
+      newMolecule.addDictShim(ligandInfo.fileContents)
+      await newMolecule.fetchIfDirtyAndDraw('CBs')
+      this.controls.changeMolecules({ action: "Add", item: newMolecule })
+    } else {
+      console.log('Error getting monomer... Missing dictionary?')
+    }
+  }
+
+  async loadLigandData(ligandName: string, url: string, loadLigandOnStart: boolean = true): Promise<{ ligandName: string; fileContents: string; }> {
     try {
       const response = await fetch(url)
       if (response.ok) {
@@ -289,7 +356,7 @@ export default class MoorhenWrapper {
           commandArgs: [fileContents, -999999],
           changesMolecules: []
         }, true)
-        return fileContents
+        return {ligandName, fileContents}
       } else {
         console.log(`Unable to fetch legend file ${url}`)
       }
@@ -320,8 +387,8 @@ export default class MoorhenWrapper {
 
   async loadInputFiles(): Promise<void>{
 
-    this.cachedLigandDictionaries = await Promise.all(
-      this.inputFiles.filter(file => file.type === 'ligand').map(file => this.loadLigandData(...file.args as [string]))
+    this.cachedLigandInfo = await Promise.all(
+      this.inputFiles.filter(file => file.type === 'ligand').map(file => this.loadLigandData(...file.args as [string, string, boolean]))
     )
 
     try {
@@ -333,8 +400,8 @@ export default class MoorhenWrapper {
             return this.loadMtzData(file.uniqueId, ...file.args)
           } else if (file.type === 'legend') {
             return this.loadLegend(...file.args)
-          } else if(file.type === 'ligand') {
-            return Promise.resolve()
+          } else if (file.type === 'ligand') {
+            return this.getMonomerOnStart(...file.args)
           } else {
             console.log('Unrecognised file type')
             console.log(file)
@@ -442,7 +509,7 @@ export default class MoorhenWrapper {
               aceDRGInstance={this.aceDRGInstance}
               forwardControls={this.forwardControls.bind(this)}
               disableFileUploads={true}
-              exportCallback={this.exportCallback.bind(this)}
+              exitCallback={this.exitCallback.bind(this)}
               onChangePreferencesListener={this.onChangePreferencesListener.bind(this)}
               monomerLibraryPath={this.monomerLibrary}
               viewOnly={this.workMode === 'view'}
@@ -466,13 +533,20 @@ export default class MoorhenWrapper {
       this.controls.setLegendText(this.noDataLegendMessage)
     }
 
+    this.applyView()
+
     await this.loadInputFiles()
-    
+
     if (this.updateInterval !== null) {
       this.checkIfLoadedData()
       this.triggerSceneUpdates()
     }
 
   }
+
+  exit() {
+    this.controls.setShowExitModal(true)
+  }
+
 }
 
