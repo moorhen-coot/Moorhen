@@ -39,6 +39,7 @@ export const MoorhenToolkitModal = (props: MoorhenToolkitModalProps) => {
     }
 
     return <MoorhenDraggableModalBase
+                transparentOnMouseOut={props.transparentModalsOnMouseOut}
                 left={`${props.windowWidth / 2}px`}
                 show={props.show}
                 setShow={props.setShow}

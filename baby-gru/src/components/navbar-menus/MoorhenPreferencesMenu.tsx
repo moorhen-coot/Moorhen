@@ -12,8 +12,8 @@ import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 
 export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     const { 
-        atomLabelDepthMode, setAtomLabelDepthMode, setMouseSensitivity, enableTimeCapsule,
-        defaultExpandDisplayCards, setDefaultExpandDisplayCards, defaultMapLitLines,
+        atomLabelDepthMode, setAtomLabelDepthMode, setMouseSensitivity, enableTimeCapsule, setTransparentModalsOnMouseOut,
+        defaultExpandDisplayCards, setDefaultExpandDisplayCards, defaultMapLitLines, transparentModalsOnMouseOut,
         setDefaultMapLitLines, enableRefineAfterMod, setEnableRefineAfterMod, mouseSensitivity, contourWheelSensitivityFactor,
         mapLineWidth, setMapLineWidth, makeBackups, setMakeBackups, timeCapsuleRef, setContourWheelSensitivityFactor,
         showShortcutToast, setShowShortcutToast, defaultMapSurface, setDefaultMapSurface, devMode, setDevMode,
@@ -41,6 +41,14 @@ export const MoorhenPreferencesMenu = (props: MoorhenNavBarExtendedControlsInter
                             label="Expand display cards after file upload"
                             checked={defaultExpandDisplayCards}
                             onChange={() => { setDefaultExpandDisplayCards(!defaultExpandDisplayCards) }}
+                        />
+                    </InputGroup>
+                    <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                        <Form.Check 
+                            type="switch"
+                            label="Make modals transparent on mouse out"
+                            checked={transparentModalsOnMouseOut}
+                            onChange={() => { setTransparentModalsOnMouseOut(!transparentModalsOnMouseOut) }}
                         />
                     </InputGroup>
                     <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>

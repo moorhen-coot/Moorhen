@@ -14,6 +14,7 @@ export const MoorhenLoadScriptMenuItem = (props: {
      isDark: boolean;
      windowHeight: number;
      windowWidth: number; 
+     transparentModalsOnMouseOut: boolean;
 }) => {
 
     const filesRef = useRef<null | HTMLInputElement>(null);

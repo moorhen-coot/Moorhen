@@ -49,6 +49,7 @@ export const MoorhenValidationToolsModal = (props: MoorhenValidationModalProps) 
     }
 
     return <MoorhenDraggableModalBase
+                transparentOnMouseOut={props.transparentModalsOnMouseOut}
                 left={`${props.windowWidth / 2}px`}
                 show={props.show}
                 setShow={props.setShow}

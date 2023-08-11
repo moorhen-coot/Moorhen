@@ -47,6 +47,7 @@ export const MoorhenModelsModal = (props: MoorhenModelsModalProps) => {
     displayData.sort((a, b) => (a.props.index > b.props.index) ? 1 : ((b.props.index > a.props.index) ? -1 : 0))
 
     return <MoorhenDraggableModalBase
+                transparentOnMouseOut={props.transparentModalsOnMouseOut}
                 left={`${props.windowWidth / 2}px`}
                 show={props.show}
                 setShow={props.setShow}

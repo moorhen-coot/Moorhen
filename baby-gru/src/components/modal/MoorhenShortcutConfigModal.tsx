@@ -73,7 +73,7 @@ export const MoorhenShortcutConfigModal = (props: {
     }, [waitingNewShortCut])
 
     return <>
-                <Modal show={props.showModal} backdrop="static" size='lg'>
+                <Modal show={props.showModal} backdrop="static" size='lg' style={{zIndex: 99999}}>
                     <Modal.Header>
                         <Modal.Title>Shortcuts</Modal.Title>
                     </Modal.Header>
