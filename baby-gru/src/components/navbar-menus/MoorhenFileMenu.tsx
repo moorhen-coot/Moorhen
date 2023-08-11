@@ -302,18 +302,17 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         }
 
         // Set camera details
-        glRef.current.setAmbientLightNoUpdate(...Object.values(sessionData.ambientLight) as [number, number, number])
-        glRef.current.setSpecularLightNoUpdate(...Object.values(sessionData.specularLight) as [number, number, number])
-        glRef.current.setDiffuseLightNoUpdate(...Object.values(sessionData.diffuseLight) as [number, number, number])
-        glRef.current.setLightPositionNoUpdate(...Object.values(sessionData.lightPosition) as [number, number, number])
-        glRef.current.setZoom(sessionData.zoom, false)
-        glRef.current.set_fog_range(sessionData.fogStart, sessionData.fogEnd, false)
-        glRef.current.set_clip_range(sessionData.clipStart, sessionData.clipEnd, false)
-        glRef.current.doDrawClickedAtomLines = sessionData.doDrawClickedAtomLines
-        glRef.current.atomLabelDepthMode = sessionData.atomLabelDepthMode
-        glRef.current.background_colour = sessionData.backgroundColor
-        glRef.current.setOrigin(sessionData.origin, false)
-        glRef.current.setQuat(sessionData.quat4)
+        glRef.current.setAmbientLightNoUpdate(...Object.values(sessionData.viewData.ambientLight) as [number, number, number])
+        glRef.current.setSpecularLightNoUpdate(...Object.values(sessionData.viewData.specularLight) as [number, number, number])
+        glRef.current.setDiffuseLightNoUpdate(...Object.values(sessionData.viewData.diffuseLight) as [number, number, number])
+        glRef.current.setLightPositionNoUpdate(...Object.values(sessionData.viewData.lightPosition) as [number, number, number])
+        glRef.current.setZoom(sessionData.viewData.zoom, false)
+        glRef.current.set_fog_range(sessionData.viewData.fogStart, sessionData.viewData.fogEnd, false)
+        glRef.current.set_clip_range(sessionData.viewData.clipStart, sessionData.viewData.clipEnd, false)
+        glRef.current.doDrawClickedAtomLines = sessionData.viewData.doDrawClickedAtomLines
+        glRef.current.background_colour = sessionData.viewData.backgroundColor
+        glRef.current.setOrigin(sessionData.viewData.origin, false)
+        glRef.current.setQuat(sessionData.viewData.quat4)
 
         // Set connected maps and molecules if any
         const connectedMoleculeIndex = sessionData.moleculeData.findIndex(molecule => molecule.connectedToMaps !== null)

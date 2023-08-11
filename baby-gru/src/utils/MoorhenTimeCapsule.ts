@@ -48,7 +48,7 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
         this.modificationCount = 0
         this.modificationCountBackupThreshold = 5
         this.maxBackupCount = 10
-        this.version = 'v9'
+        this.version = 'v10'
         this.disableBackups = false
         this.storageInstance = null    
     }
@@ -205,14 +205,9 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
             }
         })
 
-        const session: moorhen.backupSession = {
-            includesAdditionalMapData: includeAdditionalMapData,
-            moleculeData: moleculeData,
-            mapData: mapData,
-            activeMapIndex: this.mapsRef.current.findIndex(map => map.molNo === this.activeMapRef.current.molNo),
+        const viewData: moorhen.viewDataSession = {
             origin: this.glRef.current.origin,
             backgroundColor: this.glRef.current.background_colour,
-            atomLabelDepthMode: this.context.atomLabelDepthMode,
             ambientLight: this.glRef.current.light_colours_ambient,
             diffuseLight: this.glRef.current.light_colours_diffuse,
             lightPosition: this.glRef.current.light_positions,
@@ -224,6 +219,14 @@ export class MoorhenTimeCapsule implements moorhen.TimeCapsule {
             clipStart: (this.glRef.current.gl_clipPlane0[3] + this.glRef.current.fogClipOffset) * -1,
             clipEnd: this.glRef.current.gl_clipPlane1[3] - this.glRef.current.fogClipOffset,
             quat4: this.glRef.current.myQuat,
+        }
+
+        const session: moorhen.backupSession = {
+            includesAdditionalMapData: includeAdditionalMapData,
+            moleculeData: moleculeData,
+            mapData: mapData,
+            viewData: viewData,
+            activeMapIndex: this.mapsRef.current.findIndex(map => map.molNo === this.activeMapRef.current.molNo),
             version: this.version
         }
 
