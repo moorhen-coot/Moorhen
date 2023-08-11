@@ -230,7 +230,6 @@ export const MoorhenCreateAcedrgLinkModal = (props: {
     width: number;
     show: boolean;
     setShow: React.Dispatch<React.SetStateAction<boolean>>;
- 
 }) => {
     
     const [awaitAtomClick, setAwaitAtomClick] = useState<number>(-1)

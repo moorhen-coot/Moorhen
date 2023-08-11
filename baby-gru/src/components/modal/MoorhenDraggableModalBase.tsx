@@ -20,6 +20,7 @@ export const MoorhenDraggableModalBase = (props: {
     additionalChildren?: JSX.Element;
     overflowY?: 'visible' | 'hidden' | 'clip' | 'scroll' | 'auto';
     handleClassName?: string;
+    transparentOnMouseOut?: boolean;
 }) => {
 
     const [opacity, setOpacity] = useState<number>(1.0)
@@ -30,8 +31,10 @@ export const MoorhenDraggableModalBase = (props: {
             <Card
                 ref={draggableNodeRef}
                 style={{ display: props.show ? 'block' : 'none', position: 'absolute', top: props.top, left: props.left, opacity: opacity, width: props.windowWidth ? convertViewtoPx(props.width, props.windowWidth) : `${props.width}wh`}}
-                onMouseOver={() => setOpacity(1)}
-                onMouseOut={() => setOpacity(0.5)}
+                onMouseOver={() => setOpacity(1.0)}
+                onMouseOut={() => {
+                    if(props.transparentOnMouseOut) setOpacity(0.5)
+                }}
             >
                 <Card.Header className={props.handleClassName} style={{ justifyContent: 'space-between', display: 'flex', cursor: 'move', alignItems:'center'}}>
                     {props.headerTitle}
@@ -58,4 +61,4 @@ export const MoorhenDraggableModalBase = (props: {
         </Draggable>
 }
 
-MoorhenDraggableModalBase.defaultProps = { handleClassName: 'handle', additionalHeaderButtons:null, additionalChildren: null, width: 35, height: 45, top: '5rem', left: '5rem', overflowY: 'scroll'}
+MoorhenDraggableModalBase.defaultProps = { transparentOnMouseOut: true, handleClassName: 'handle', additionalHeaderButtons:null, additionalChildren: null, width: 35, height: 45, top: '5rem', left: '5rem', overflowY: 'scroll'}

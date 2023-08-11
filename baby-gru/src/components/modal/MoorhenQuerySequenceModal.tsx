@@ -24,6 +24,7 @@ export const MoorhenQuerySequenceModal = (props: {
     monomerLibraryPath: string;
     changeMolecules: (arg0: moorhen.MolChange<MoorhenMolecule>) => void;
     setToastContent: React.Dispatch<React.SetStateAction<JSX.Element>>;
+    transparentModalsOnMouseOut: boolean;
 }) => {
 
     const [selectedModel, setSelectedModel] = useState<null | number>(null)
@@ -284,6 +285,7 @@ export const MoorhenQuerySequenceModal = (props: {
     }, [numberOfHits])
 
     return <MoorhenDraggableModalBase
+        transparentOnMouseOut={props.transparentModalsOnMouseOut}
         additionalChildren={
             <Backdrop sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1 }} open={busy}>
                 <Spinner animation="border" style={{ marginRight: '0.5rem' }}/>

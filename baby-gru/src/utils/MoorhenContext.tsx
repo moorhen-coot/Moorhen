@@ -39,7 +39,8 @@ const updateStoredContext = async (key: string, value: any): Promise<void> => {
  */
 const getDefaultContextValues = (): moorhen.ContextValues => {
     return {
-        version: 'v27',
+        version: 'v28',
+        transparentModalsOnMouseOut: true,
         defaultBackgroundColor: [1, 1, 1, 1], 
         atomLabelDepthMode: true, 
         enableTimeCapsule: true, 
@@ -302,6 +303,7 @@ const MoorhenContext = createContext(undefined);
  * @property {boolean} [shortcutOnHoveredAtom=false] - Indicates if shortcuts should be performed on the atom being hovered instead of the one in the centre of view
  * @property {boolean} [resetClippingFogging=false] - Indicates if clipping and fogging is to be reset when the zoom level changes
  * @property {boolean} [clipCap=false] - Activates clip clap spheres
+ * @property {boolean} [transparentModalsOnMouseOut=true] - Make modals transparent on mouse out
  * @property {number} [maxBackupCount=10] - The maximum number of session backups stored in the local storage
  * @property {number} [modificationCountBackupThreshold=5] - The number of modifications that will trigger an automatic session backup
  * @property {string[]} [defaultUpdatingScores=['Rfree', 'Rfactor', 'Moorhen Points']] - A list of the scores shown after connecting molecules and maps for map updates
@@ -343,6 +345,7 @@ const MoorhenContextProvider = ({ children }) => {
     const [shortcutOnHoveredAtom, setShortcutOnHoveredAtom] = useState<null | boolean>(null)
     const [resetClippingFogging, setResetClippingFogging] = useState<null | boolean>(null)
     const [clipCap, setClipCap] = useState<null | boolean>(null)
+    const [transparentModalsOnMouseOut, setTransparentModalsOnMouseOut] = useState<null | boolean>(null)
     const [maxBackupCount, setMaxBackupCount] = useState<null | number>(null)
     const [modificationCountBackupThreshold, setModificationCountBackupThreshold] = useState<null | number>(null)
     const [defaultUpdatingScores, setDefaultUpdatingScores] = useReducer(itemReducer, null)
@@ -387,6 +390,7 @@ const MoorhenContextProvider = ({ children }) => {
         36: { label: "doOutline", value: doOutline, valueSetter: setDoOutline},
         37: { label: "depthBlurRadius", value: depthBlurRadius, valueSetter: setDepthBlurRadius},
         38: { label: "depthBlurDepth", value: depthBlurDepth, valueSetter: setDepthBlurDepth},
+        39: { label: "transparentModalsOnMouseOut", value: transparentModalsOnMouseOut, valueSetter: setTransparentModalsOnMouseOut},
     }
 
     const restoreDefaults = (defaultValues: moorhen.ContextValues)=> {
@@ -440,6 +444,15 @@ const MoorhenContextProvider = ({ children }) => {
         fetchStoredContext();
         
     }, []);
+
+    useMemo(() => {
+
+        if (transparentModalsOnMouseOut === null) {
+            return
+        }
+       
+        updateStoredContext('transparentModalsOnMouseOut', transparentModalsOnMouseOut);
+    }, [transparentModalsOnMouseOut]);
 
     useMemo(() => {
 
@@ -787,8 +800,8 @@ const MoorhenContextProvider = ({ children }) => {
         defaultBackgroundColor, setDefaultBackgroundColor, atomLabelDepthMode, setAtomLabelDepthMode, defaultExpandDisplayCards,
         setDefaultExpandDisplayCards, shortCuts, setShortCuts, defaultMapLitLines, setDefaultMapLitLines,
         enableRefineAfterMod, setEnableRefineAfterMod, mouseSensitivity, setMouseSensitivity, drawCrosshairs, 
-        setDrawCrosshairs, drawMissingLoops, setDrawMissingLoops, mapLineWidth, setMapLineWidth,
-        makeBackups, setMakeBackups, showShortcutToast, setShowShortcutToast, defaultMapSurface,
+        setDrawCrosshairs, drawMissingLoops, setDrawMissingLoops, mapLineWidth, setMapLineWidth, transparentModalsOnMouseOut,
+        makeBackups, setMakeBackups, showShortcutToast, setShowShortcutToast, defaultMapSurface, setTransparentModalsOnMouseOut,
         setDefaultMapSurface, defaultBondSmoothness, setDefaultBondSmoothness, showScoresToast, 
         setShowScoresToast, defaultUpdatingScores, setDefaultUpdatingScores, drawFPS, setDrawFPS,
         zoomWheelSensitivityFactor, setZoomWheelSensitivityFactor, shortcutOnHoveredAtom, setShortcutOnHoveredAtom,

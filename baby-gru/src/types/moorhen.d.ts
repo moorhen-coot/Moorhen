@@ -518,10 +518,12 @@ export namespace moorhen {
             item?: string;
             items?: string[];
         }>;
+        setTransparentModalsOnMouseOut: React.Dispatch<React.SetStateAction<boolean>>;
     }
     
     interface ContextValues {
         version?: string;
+        transparentModalsOnMouseOut: boolean;
         isMounted?: boolean;
         defaultBackgroundColor: [number, number, number, number];
         atomLabelDepthMode: boolean; 
