@@ -15,6 +15,7 @@ export namespace emscriptem {
     }
 
     interface map<T1, T2> extends instance<T1> {
+        set(idx: T2, value: T1): void;
         size: () => number;
         get: (idx: T2) => T1;
         length: () => number;

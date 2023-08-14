@@ -55,17 +55,81 @@ const doTest = async (props: any) => {
 const doColourTest = async (props: any) => {
     const molecule = props.molecules.find(molecule => molecule.molNo === 0)
     if (typeof molecule !== 'undefined') {
+        
         await props.commandCentre.current.cootCommand({
             returnType: "status",
             command: 'shim_do_colour_test',
             commandArgs: [molecule.molNo],
         }, true)
+        
+        const bondSettings = [
+            molecule.cootBondsOptions.isDarkBackground,
+            molecule.cootBondsOptions.width,
+            molecule.cootBondsOptions.atomRadiusBondRatio,
+            molecule.cootBondsOptions.smoothness
+        ]
 
-        const representation = new MoorhenMoleculeRepresentation('CBs', '//A/1-10/', props.commandCentre, props.glRef)
-        representation.setParentMolecule(molecule)
-        const objects = await representation.getBufferObjects()
-        representation.buildBuffers(objects)
+        let response = await props.commandCentre.current.cootCommand({
+            returnType: 'instanced_mesh',
+            command: "get_bonds_mesh_for_selection_instanced",
+            commandArgs: [
+                molecule.molNo,
+                '//A/1-10',
+                'COLOUR-BY-CHAIN-AND-DICTIONARY',
+                ...bondSettings
+            ]
+        })
+
+        let objects = [response.data.result.result]
+
+        if (objects.length > 0 && !molecule.gemmiStructure.isDeleted()) {
+            objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
+                const a = props.glRef.current.appendOtherData(object, true)
+            })
+            props.glRef.current.buildBuffers()
+        }
     
+        response = await props.commandCentre.current.cootCommand({
+            returnType: 'instanced_mesh',
+            command: "get_bonds_mesh_for_selection_instanced",
+            commandArgs: [
+                molecule.molNo,
+                '//A/11-20',
+                'VDW-BALLS',
+                ...bondSettings
+            ]
+        })
+
+        objects = [response.data.result.result]
+
+        if (objects.length > 0 && !molecule.gemmiStructure.isDeleted()) {
+            objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
+                const a = props.glRef.current.appendOtherData(object, true)
+            })
+            props.glRef.current.buildBuffers()
+        }
+
+        response = await props.commandCentre.current.cootCommand({
+            returnType: 'instanced_mesh',
+            command: "get_bonds_mesh_for_selection_instanced",
+            commandArgs: [
+                molecule.molNo,
+                '//A/21-30',
+                'CA+LIGANDS',
+                ...bondSettings
+            ]
+        })
+
+        objects = [response.data.result.result]
+
+        if (objects.length > 0 && !molecule.gemmiStructure.isDeleted()) {
+            objects.filter(object => typeof object !== 'undefined' && object !== null).forEach(object => {
+                const a = props.glRef.current.appendOtherData(object, true)
+            })
+            props.glRef.current.buildBuffers()
+        }
+        props.glRef.current.drawScene()
+
     }
 }
 
