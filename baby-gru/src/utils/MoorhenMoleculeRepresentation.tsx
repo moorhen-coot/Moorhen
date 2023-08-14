@@ -608,10 +608,10 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         })
 
         if (this.colourRules?.length > 0) {
-            if (this.style === 'CBs') {
+            if (['CBs', 'VdwSpheres', 'ligands', 'CAs'].includes(this.style)) {
                 const colourObjectList = this.colourRules.map(rule => {
                     const [r, g, b] = hexToRgb(rule.color).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
-                    return { cid: `${rule.label}/*`, rgb: [r / 255, g / 255, b / 255] }
+                    return { cid: rule.label, rgb: [r / 255, g / 255, b / 255] }
                 })
                 await this.commandCentre.current.cootCommand({
                     message: 'coot_command',
