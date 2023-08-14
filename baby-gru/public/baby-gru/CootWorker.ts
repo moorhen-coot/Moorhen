@@ -774,25 +774,41 @@ const read_ccp4_map = (mapData: ArrayBufferLike, name: string, isDiffMap: boolea
     return molNo
 }
 
+const setUserDefinedBondColours = (imol: number, colours: { cid: string; rgb: [number, number, number] }[]) => {
+    let colourMap = new cootModule.MapIntFloat3()
+    let indexedResiduesVec = new cootModule.VectorStringUInt_pair()
+    
+    colours.forEach((colour, index) => {
+        colourMap.set(index + 51, colour.rgb)
+        const i = { first: colour.cid, second: index + 51 }
+        indexedResiduesVec.push_back(i)
+    })
+
+    molecules_container.set_user_defined_bond_colours(imol, colourMap)
+    molecules_container.set_user_defined_atom_colour_by_residue(imol, indexedResiduesVec)
+
+    indexedResiduesVec.delete()
+    colourMap.delete()
+}
+
 const doColourTest = (imol: number) => {
     console.log('DEBUG: Start test...')
 
-    const colours = {
-        0: { cid: '//A/1-10/', rgb: [1., 0., 0.] },
-        1: { cid: '//A/11-20/', rgb: [0., 1., 0.] },
-        2: { cid: '//A/21-30/', rgb: [0., 0., 1.] },
-    }
-
     let colourMap = new cootModule.MapIntFloat3()
-    for (const key in Object.keys(colours)) {
-        colourMap[key] = colours[key].rgb
-    }
+    colourMap[20] = [1., 0., 0.]
+    colourMap[21] = [0., 1., 0.]
+    colourMap[22] = [0., 0., 1.]
 
     let indexedResiduesVec = new cootModule.VectorStringUInt_pair()
-    for (const key in Object.keys(colours)) {
-        const i = { first: colours[key].cid, second: parseInt(key) }
-        indexedResiduesVec.push_back(i)
-    }
+
+    const a = { first: '//A/1-10/', second: 20 }
+    indexedResiduesVec.push_back(a)
+
+    const b = { first: '//A/11-20/', second: 21 }
+    indexedResiduesVec.push_back(b)
+
+    const c = { first: '//A/21-30/', second: 22 }
+    indexedResiduesVec.push_back(c)
 
     console.log('DEBUG: Running molecules_container.set_user_defined_bond_colours')
     molecules_container.set_user_defined_bond_colours(imol, colourMap)
@@ -1020,6 +1036,9 @@ onmessage = function (e) {
             }
             else if (command === 'shim_do_colour_test') {
                 cootResult = doColourTest(...commandArgs as [number])
+            }
+            else if (command === 'shim_set_bond_colours') {
+                cootResult = setUserDefinedBondColours(...commandArgs as [number, { cid: string; rgb: [number, number, number] }[]])
             }
             else if (command === 'shim_smiles_to_pdb') {
                 cootResult = cootModule.SmilesToPDB(...commandArgs as [string, string, number, number])

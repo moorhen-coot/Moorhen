@@ -2,6 +2,7 @@ import { moorhen } from '../types/moorhen';
 import { webGL } from '../types/mgWebGL';
 import { cidToSpec, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid, hexToHsl } from './MoorhenUtils';
 import { libcootApi } from '../types/libcoot';
+import { hexToRgb } from '@mui/material';
 
 // TODO: It might be better to do this.glRef.current.drawScene() in the molecule... 
 export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresentation {
@@ -606,23 +607,23 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             commandArgs: [this.parentMolecule.molNo],
         })
 
-        if (this.colourRules?.length > 0) {           
-            await Promise.all(this.colourRules.map(rule => {
-                if (this.style === 'CBs') {
-                    if (!rule.isMultiColourRule) {
-                        const [h, s, l] = hexToHsl(rule.color)
-                        return this.commandCentre.current.cootCommand({
-                            message: 'coot_command',
-                            command: 'set_colour_wheel_rotation_base',
-                            returnType: 'status',
-                            commandArgs: [this.parentMolecule.molNo, 360 * h]
-                        })
-                    }
-                    return Promise.resolve()
-                } else {
-                    return this.commandCentre.current.cootCommand(rule.commandInput)
-                }
-            }))
+        if (this.colourRules?.length > 0) {
+            if (['CBs', 'VdwSpheres', 'ligands', 'CAs'].includes(this.style)) {
+                const colourObjectList = this.colourRules.map(rule => {
+                    const [r, g, b] = hexToRgb(rule.color).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
+                    return { cid: rule.label, rgb: [r / 255, g / 255, b / 255] }
+                })
+                await this.commandCentre.current.cootCommand({
+                    message: 'coot_command',
+                    command: 'shim_set_bond_colours',
+                    returnType: 'status',
+                    commandArgs: [this.parentMolecule.molNo, colourObjectList]
+                })
+            } else {
+                await Promise.all(
+                    this.colourRules.map(rule => this.commandCentre.current.cootCommand(rule.commandInput))
+                )
+            }
         }
     }
 }
