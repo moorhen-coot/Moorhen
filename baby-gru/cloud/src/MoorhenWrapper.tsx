@@ -50,7 +50,7 @@ type LegendInputFileType = {
 type LigandInputFileType = {
   type: 'ligand';
   uniqueId?: string;
-  args: [string, string, boolean];
+  args: [string, string[]];
 }
 
 export default class MoorhenWrapper {
@@ -64,7 +64,7 @@ export default class MoorhenWrapper {
   context: moorhen.ContextValues;
   cachedContext: moorhen.ContextValues;
   cachedLegend: string;
-  cachedLigandInfo: { ligandName: string; fileContents: string; }[];
+  cachedLigandDictionaries: string[];
   noDataLegendMessage: JSX.Element;
   exitCallback: (viewSettings: moorhen.viewDataSession, molData?: { molName: string; pdbData: string; }[]) => Promise<void>;
   exportPreferencesCallback: (arg0: moorhen.ContextValues) => void;
@@ -83,7 +83,7 @@ export default class MoorhenWrapper {
     this.context = null
     this.cachedContext = null
     this.cachedLegend = null
-    this.cachedLigandInfo = []
+    this.cachedLigandDictionaries = []
     this.noDataLegendMessage = parse('<div></div>') as JSX.Element
     this.exitCallback = async () => {}
     this.exportPreferencesCallback = () => {}
@@ -305,7 +305,7 @@ export default class MoorhenWrapper {
     return new Promise(async (resolve, reject) => {
       try {
         newMolecule.uniqueId = uniqueId
-        this.cachedLigandInfo.forEach(item => item?.fileContents && newMolecule.addDictShim(item.fileContents))
+        this.cachedLigandDictionaries.forEach(ligandDict => ligandDict && newMolecule.addDictShim(ligandDict))
         newMolecule.setBackgroundColour(this.controls.glRef.current.background_colour)
         await newMolecule.loadToCootFromURL(inputFile, molName)
         await newMolecule.fetchIfDirtyAndDraw('CBs')
@@ -321,31 +321,30 @@ export default class MoorhenWrapper {
     })
   }
 
-  async getMonomerOnStart(ligandName: string, url: string, loadLigandOnStart: boolean = true) {
-    const ligandInfo = this.cachedLigandInfo.find(item => item.ligandName === ligandName)
-    if (!loadLigandOnStart || !ligandInfo) {
-      return 
-    }
-    const getMonomerResult = await this.controls.commandCentre.current.cootCommand({
-      returnType: 'status',
-      command: 'get_monomer_and_position_at',
-      commandArgs: [ligandName, -999999, 0, 0, 0]
-    }, true)
-      
-    if (getMonomerResult.data.result.status === "Completed" && getMonomerResult.data.result.result !== -1) {
-      const newMolecule = new MoorhenMolecule(this.controls.commandCentre, this.controls.glRef, this.monomerLibrary)
-      newMolecule.molNo = getMonomerResult.data.result.result
-      newMolecule.name = ligandName
-      newMolecule.setBackgroundColour(this.controls.glRef.current.background_colour)
-      newMolecule.addDictShim(ligandInfo.fileContents)
-      await newMolecule.fetchIfDirtyAndDraw('CBs')
-      this.controls.changeMolecules({ action: "Add", item: newMolecule })
-    } else {
-      console.log('Error getting monomer... Missing dictionary?')
-    }
+  async getMonomerOnStart(url: string, ligandNames: string[]) {
+    await Promise.all(
+      ligandNames.map(async (ligandName) => {
+        const getMonomerResult = await this.controls.commandCentre.current.cootCommand({
+          returnType: 'status',
+          command: 'get_monomer_and_position_at',
+          commandArgs: [ligandName, -999999, 0, 0, 0]
+        }, true)
+        if (getMonomerResult.data.result.status === "Completed" && getMonomerResult.data.result.result !== -1) {
+          const newMolecule = new MoorhenMolecule(this.controls.commandCentre, this.controls.glRef, this.monomerLibrary)
+          newMolecule.molNo = getMonomerResult.data.result.result
+          newMolecule.name = ligandName
+          newMolecule.setBackgroundColour(this.controls.glRef.current.background_colour)
+          this.cachedLigandDictionaries.forEach(ligandDict => ligandDict && newMolecule.addDictShim(ligandDict))
+          await newMolecule.fetchIfDirtyAndDraw('CBs')
+          this.controls.changeMolecules({ action: "Add", item: newMolecule })
+        } else {
+          console.log('Error getting monomer... Missing dictionary?')
+        }
+      })
+    )
   }
 
-  async loadLigandData(ligandName: string, url: string, loadLigandOnStart: boolean = true): Promise<{ ligandName: string; fileContents: string; }> {
+  async loadLigandData(url: string, ligandNames: string[]): Promise<string> {
     try {
       const response = await fetch(url)
       if (response.ok) {
@@ -356,7 +355,7 @@ export default class MoorhenWrapper {
           commandArgs: [fileContents, -999999],
           changesMolecules: []
         }, true)
-        return {ligandName, fileContents}
+        return fileContents
       } else {
         console.log(`Unable to fetch legend file ${url}`)
       }
@@ -387,8 +386,8 @@ export default class MoorhenWrapper {
 
   async loadInputFiles(): Promise<void>{
 
-    this.cachedLigandInfo = await Promise.all(
-      this.inputFiles.filter(file => file.type === 'ligand').map(file => this.loadLigandData(...file.args as [string, string, boolean]))
+    this.cachedLigandDictionaries = await Promise.all(
+      this.inputFiles.filter(file => file.type === 'ligand').map(file => this.loadLigandData(...file.args as [string, string[]]))
     )
 
     try {
