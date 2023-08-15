@@ -83,6 +83,7 @@ export namespace moorhen {
     }
     
     interface Molecule {
+        isLigand(): boolean;
         removeRepresentation(representationId: string): void;
         addRepresentation(style: string, cid: string, isCustom?: boolean, colour?: moorhen.ColourRule[]): Promise<void>;
         getNeighborResiduesCids(selectionCid: string, radius: number, minDist: number, maxDist: number): Promise<string[]>;

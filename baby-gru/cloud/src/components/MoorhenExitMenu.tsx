@@ -1,30 +1,6 @@
-import { useState, useEffect, useReducer, useCallback } from "react";
-import { Button, Stack, Form, InputGroup, Card } from 'react-bootstrap';
+import { useState, useEffect, useCallback } from "react";
 import { moorhen } from "../../../src/types/moorhen";
 import { webGL } from "../../../src/types/mgWebGL";
-
-const itemReducer = (oldList: number[], change: {action: 'Add' | 'Remove' | 'Empty' | 'AddList', item?: number, items?: number[]}) => {
-    switch(change.action) {
-        case "Add":
-            oldList = [...oldList, change.item as number]
-            break
-        case "Remove":
-            oldList = oldList.filter(item => item !== change.item)
-            break
-        case "Empty":
-            oldList = []
-            break
-        case "AddList":
-            oldList = change.items as number[]
-            break
-        default:
-            console.log('Unrecognised action in item reducer...')
-            break
-    }
-    return oldList
-}
-
-const initialSaveModelState = []
 
 export const MoorhenExitMenu = (props: {
     molecules: moorhen.Molecule[];
@@ -32,18 +8,10 @@ export const MoorhenExitMenu = (props: {
     exitCallback: (viewSettings: moorhen.viewDataSession, molData?: { molName: string; pdbData: string; }[]) => Promise<void>;
 }) => {
 
-    const [saveAllModels, setSaveAllModels] = useState<boolean>(true)
-    const [saveModels, setSaveModels] = useReducer(itemReducer, initialSaveModelState)
-
     const handleExit = useCallback(async (doSave: boolean = false) => {
-        let selectedMolecules: moorhen.Molecule[] = []
-        
-        if (doSave && saveAllModels) {
-            selectedMolecules = props.molecules
-        } else if (doSave && saveModels.length > 0) {
-            selectedMolecules = props.molecules.filter(molecule => saveModels.includes(molecule.molNo))
-        }
-        
+        console.log('HELOOOOOO')
+        const selectedMolecules = props.molecules.filter(molecule => !molecule.isLigand())
+        console.log(selectedMolecules)
         const moleculeAtoms = await Promise.all(selectedMolecules.map(molecule => molecule.getAtoms()))
 
         const molData = selectedMolecules.map((molecule, index) => {
@@ -67,57 +35,11 @@ export const MoorhenExitMenu = (props: {
       
         props.exitCallback(viewData, molData)
 
-    }, [saveAllModels, saveModels, props.exitCallback, props.molecules])
+    }, [props.exitCallback, props.molecules])
 
     useEffect(() => {
-        if (saveModels.length !== props.molecules.length) {
-            setSaveAllModels(false)
-        } else {
-            setSaveAllModels(true)
-        }
-    }, [saveModels])
+        handleExit()
+    }, [])
 
-    useEffect(() => {
-        if (saveAllModels && saveModels.length !== props.molecules.length) {
-            setSaveModels({action: 'AddList', items: props.molecules.map(molecule => molecule.molNo)})
-        } 
-    }, [saveAllModels])
-
-    return <>
-        <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
-            <Form.Check 
-                type="switch"
-                checked={saveAllModels}
-                onChange={(evt) => { setSaveAllModels(evt.target.checked)}}
-                onClick={() => {if (saveAllModels) setSaveModels({action: 'Empty'}) }}
-                label="Save all models"/>
-        </InputGroup>
-        <Card style={{marginBottom: '0.5rem', maxHeight: '5rem', overflowY: 'auto'}}>
-            <Card.Body>
-                {props.molecules.length > 0 ? 
-                props.molecules.map(molecule => {
-                    return <Form.Check 
-                    key={molecule.molNo}
-                    type="checkbox"
-                    checked={saveModels.includes(molecule.molNo)}
-                    onChange={(evt) => { setSaveModels({action: evt.target.checked ? 'Add' : 'Remove', item: molecule.molNo}) }}
-                    label={molecule.name}/>
-                })
-                :
-                <>
-                <span>No models loaded...</span>
-                </>
-                }
-            </Card.Body>
-        </Card>
-        <Stack direction='horizontal' gap={2}>
-        
-            <Button onClick={() => { handleExit(true) }}>
-                Save & Exit
-            </Button>
-            <Button variant="danger" onClick={() => { handleExit(false) }}>
-                Exit
-            </Button>
-        </Stack>
-    </>
+    return <span>Saving...</span>
 }
