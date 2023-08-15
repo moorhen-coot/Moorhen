@@ -785,7 +785,7 @@ const setUserDefinedBondColours = (imol: number, colours: { cid: string; rgb: [n
     })
 
     molecules_container.set_user_defined_bond_colours(imol, colourMap)
-    molecules_container.set_user_defined_atom_colour_by_residue(imol, indexedResiduesVec)
+    molecules_container.set_user_defined_atom_colour_by_selection(imol, indexedResiduesVec, false)
 
     indexedResiduesVec.delete()
     colourMap.delete()
@@ -812,8 +812,8 @@ const doColourTest = (imol: number) => {
 
     console.log('DEBUG: Running molecules_container.set_user_defined_bond_colours')
     molecules_container.set_user_defined_bond_colours(imol, colourMap)
-    console.log('DEBUG: Running molecules_container.set_user_defined_atom_colour_by_residue')
-    molecules_container.set_user_defined_atom_colour_by_residue(imol, indexedResiduesVec)
+    console.log('DEBUG: Running molecules_container.set_user_defined_atom_colour_by_selection')
+    molecules_container.set_user_defined_atom_colour_by_selection(imol, indexedResiduesVec, false)
 
     indexedResiduesVec.delete()
     colourMap.delete()
