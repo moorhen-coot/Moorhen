@@ -1474,12 +1474,10 @@ coot::instanced_mesh_t DrawSugarBlocks(mmdb::Manager *molHnd, const std::string 
     mesh.add(glyco_shapes.bi_square_2_geom);
     mesh.add(glyco_shapes.sphere_geom);
 
-    delete selResidues;
-    // One of these is bad ...
-    //molHnd->DeleteSelection(C1sel);
-    //molHnd->DeleteSelection(ND2sel);
-    //molHnd->DeleteSelection(selHnd);
-    //molHnd->DeleteSelection(proteinSelHnd);
+    molHnd->DeleteSelection(C1sel);
+    molHnd->DeleteSelection(ND2sel);
+    molHnd->DeleteSelection(selHnd);
+    molHnd->DeleteSelection(proteinSelHnd);
 
     return mesh;
 
