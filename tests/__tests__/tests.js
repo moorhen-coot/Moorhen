@@ -23,6 +23,12 @@ describe('Testing molecules_container_js', () => {
         setupFunctions.copyExampleDataToFauxFS()
     })
 
+    test('Test glycoblocks', async () => {
+        const molecules_container = new cootModule.molecules_container_js(false)
+        const coordMolNo = molecules_container.read_pdb('./5fjj.pdb')
+        const glyco_mesh = molecules_container.DrawGlycoBlocks(coordMolNo,"/")
+    })
+
     test('Test copy fragment', async () => {
         const molecules_container = new cootModule.molecules_container_js(false)
         const coordMolNo = await molecules_container.read_pdb('./5a3h.pdb')
@@ -39,7 +45,7 @@ describe('Testing molecules_container_js', () => {
         console.log("size", st.models.size())
         const model = st.first_model()
         console.log("mass of model", cootModule.calculate_mass_model(model))
-        cootModule.assign_cis_flags_structure(st)
+        //cootModule.assign_cis_flags_structure(st)
         const chains = model.chains
         console.log("chains", chains)
         console.log("chains.size", chains.size())
@@ -436,6 +442,8 @@ describe('Testing molecules_container_js', () => {
 
 const setupFunctions = {
     copyExampleDataToFauxFS: () => {
+        const coordData_5fjj = fs.readFileSync(path.join(__dirname, '..', '..', 'example', '5fjj.pdb'), { encoding: 'utf8', flag: 'r' })
+        cootModule.FS_createDataFile(".", '5fjj.pdb', coordData_5fjj, true, true);
         const coordData = fs.readFileSync(path.join(__dirname, '..', '..', 'example', '5a3h.pdb'), { encoding: 'utf8', flag: 'r' })
         cootModule.FS_createDataFile(".", '5a3h.pdb', coordData, true, true);
         const sigmaaData = fs.readFileSync(path.join(__dirname, '..', '..', 'example', '5a3h_sigmaa.mtz'), { encoding: null, flag: 'r' })
