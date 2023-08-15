@@ -95,7 +95,8 @@ export const representationLabelMapping = {
     ligands: "Ligands",
     DishyBases: "Bases",
     VdwSpheres: "Spheres",
-    allHBonds: "H-Bonds"
+    allHBonds: "H-Bonds",
+    glycoBlocks: "GlycoBlocks"
 }
 
 export const residueCodesOneToThree = {

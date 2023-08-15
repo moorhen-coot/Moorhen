@@ -182,6 +182,9 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             case 'rotamer':
                 objects = await this.getRotamerDodecahedraBuffers()
                 break;
+            case 'glycoBlocks':
+                objects = await this.getGlycoBlockBuffers(this.cid)
+                break;
             case 'CRs':
             case 'MolecularSurface':
             case 'DishyBases':
@@ -434,6 +437,20 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             gemmiAtomPairsToCylindersInfo(gemmiAtomPairs, 0.07, atomColours, labelled)
         ]
         return objects
+    }
+
+    async getGlycoBlockBuffers(oneCid: string) {
+        try {
+            const response = await this.commandCentre.current.cootCommand({
+                returnType: "instanced_mesh",
+                command: "DrawGlycoBlocks",
+                commandArgs: [this.parentMolecule.molNo, this.cid]
+            }) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>;
+            const objects = [response.data.result.result];
+            return objects
+        } catch (err) {
+            return console.log(err);
+        }
     }
 
     async getHBondBuffers(oneCid: string, labelled: boolean = false) {

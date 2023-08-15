@@ -104,6 +104,7 @@ declare module 'moorhen' {
             rotamer: _moorhen.DisplayObject[];
             CDs: _moorhen.DisplayObject[];
             allHBonds: _moorhen.DisplayObject[];
+            glycoBlocks: _moorhen.DisplayObject[];
             hover: _moorhen.DisplayObject[];
             selection: _moorhen.DisplayObject[];
             originNeighbours: _moorhen.DisplayObject[];

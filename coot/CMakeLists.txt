@@ -417,6 +417,7 @@ ${coot_src}/db-main/db-main.cc
 ${coot_src}/compat/getopt.cc
 ${coot_src}/compat/getopt1.cc
 ${coot_src}/src/gl-matrix.cc
+glycoblocks.cc
 )
 
 add_library(coot STATIC

@@ -131,10 +131,17 @@ struct moorhen_hbond {
 
 };
 
+coot::instanced_mesh_t DrawSugarBlocks(mmdb::Manager *molHnd, const std::string &cid_str);
+
 class molecules_container_js : public molecules_container_t {
     public:
         explicit molecules_container_js(bool verbose=true) : molecules_container_t(verbose) {
 
+        }
+
+        coot::instanced_mesh_t DrawGlycoBlocks(int imol, const std::string &cid_str) {
+            mmdb::Manager *mol = get_mol(imol);
+            return DrawSugarBlocks(mol,cid_str);
         }
 
         generic_3d_lines_bonds_box_t make_exportable_environment_bond_box(int imol, const std::string &chainID, int resNo,  const std::string &altLoc){
@@ -682,6 +689,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("get_symmetry_with_matrices",&molecules_container_js::get_symmetry_with_matrices)
     .function("get_neighbours_cid",&molecules_container_js::get_neighbours_cid)
     .function("make_exportable_environment_bond_box",&molecules_container_js::make_exportable_environment_bond_box)
+    .function("DrawGlycoBlocks",&molecules_container_js::DrawGlycoBlocks)
     ;
     class_<generic_3d_lines_bonds_box_t>("generic_3d_lines_bonds_box_t")
     .property("line_segments", &generic_3d_lines_bonds_box_t::line_segments)

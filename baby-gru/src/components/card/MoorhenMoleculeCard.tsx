@@ -13,7 +13,7 @@ import { AddOutlined, DeleteOutlined, FormatColorFillOutlined } from '@mui/icons
 import { MoorhenAddCustomRepresentationCard } from "./MoorhenAddCustomRepresentationCard"
 import { MoorhenModifyColourRulesCard } from './MoorhenModifyColourRulesCard';
 
-const allRepresentations = [ 'CBs', 'CAs', 'CRs', 'ligands', 'gaussian', 'MolecularSurface', 'DishyBases', 'VdwSpheres', 'rama', 'rotamer', 'CDs', 'allHBonds' ]
+const allRepresentations = [ 'CBs', 'CAs', 'CRs', 'ligands', 'gaussian', 'MolecularSurface', 'DishyBases', 'VdwSpheres', 'rama', 'rotamer', 'CDs', 'allHBonds','glycoBlocks' ]
 
 interface MoorhenMoleculeCardPropsInterface extends moorhen.Controls {
     dropdownId: number;
