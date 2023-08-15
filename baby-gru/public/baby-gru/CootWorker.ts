@@ -819,6 +819,154 @@ const doColourTest = (imol: number) => {
     colourMap.delete()
 }
 
+const doCootCommand = (messageData: { 
+    myTimeStamp: number;
+    chainID?: string;
+    messageId?: string;
+    message: string;
+    returnType: string;
+    command: string;
+    commandArgs: any[];
+ }) => {
+
+    const { returnType, command, commandArgs, messageId, myTimeStamp, message } = messageData
+    
+    try {
+
+        let cootResult
+        switch (command) {
+            case 'shim_read_pdb':
+                cootResult = read_pdb(...commandArgs as [string, string])
+                break
+            case 'shim_new_positions_for_residue_atoms':
+                cootResult = new_positions_for_residue_atoms(...commandArgs as [number, libcootApi.AtomInfo[][]])
+                break
+            case 'shim_read_mtz':
+                cootResult = read_mtz(...commandArgs as [ArrayBufferLike, string, { F: string; PHI: string; isDifference: boolean; }])
+                break
+            case 'shim_auto_open_mtz':
+                cootResult = auto_open_mtz(...commandArgs as [ArrayBuffer])
+                break
+            case 'shim_read_ccp4_map':
+                cootResult = read_ccp4_map(...commandArgs as [ArrayBuffer, string, boolean])
+                break
+            case 'shim_read_dictionary':
+                cootResult = read_dictionary(...commandArgs as [string, number])
+                break
+            case 'shim_associate_data_mtz_file_with_map':
+                cootResult = associate_data_mtz_file_with_map(...commandArgs as [number, { data: ArrayBufferLike; fileName: string; }, string, string, string])
+                break
+            case 'shim_replace_molecule_by_model_from_file':
+                cootResult = replace_molecule_by_model_from_file(...commandArgs as [number, string])
+                break
+            case 'shim_replace_map_by_mtz_from_file':
+                cootResult = replace_map_by_mtz_from_file(...commandArgs as [number, ArrayBufferLike, { F: string; PHI: string; }])
+                break
+            case 'shim_do_colour_test':
+                cootResult = doColourTest(...commandArgs as [number])
+                break
+            case 'shim_set_bond_colours':
+                cootResult = setUserDefinedBondColours(...commandArgs as [number, { cid: string; rgb: [number, number, number] }[]])
+                break
+            case 'shim_smiles_to_pdb':
+                cootResult = cootModule.SmilesToPDB(...commandArgs as [string, string, number, number])
+                break
+            default:
+                cootResult = molecules_container[command](...commandArgs)
+                break
+        }
+
+        let returnResult;
+        switch (returnType) {
+            case 'instanced_mesh_perm':
+                returnResult = instancedMeshToMeshData(cootResult, true)
+                break;
+            case 'symmetry':
+                returnResult = symmetryToJSData(cootResult)
+                break;
+            case 'mmrrcc_stats':
+                returnResult = mmrrccStatsToJSArray(cootResult)
+                break;
+            case 'colour_rules':
+                returnResult = colourRulesToJSArray(cootResult)
+                break;
+            case 'instanced_mesh_perfect_spheres':
+                returnResult = instancedMeshToMeshData(cootResult, false, true)
+                break;
+            case 'instanced_mesh':
+                returnResult = instancedMeshToMeshData(cootResult, false, false, 5)
+                break;
+            case 'mesh_perm':
+                returnResult = simpleMeshToMeshData(cootResult, true)
+                break;
+            case 'mesh':
+                returnResult = simpleMeshToMeshData(cootResult)
+                break;
+            case 'lit_lines_mesh':
+                returnResult = simpleMeshToLineMeshData(cootResult, true)
+                break;
+            case 'lines_mesh':
+                returnResult = simpleMeshToLineMeshData(cootResult, false)
+                break;
+            case 'float_array':
+                returnResult = floatArrayToJSArray(cootResult)
+                break;
+            case 'int_array':
+                returnResult = intArrayToJSArray(cootResult)
+                break;
+            case 'map_molecule_centre_info_t':
+                returnResult = mapMoleculeCentreInfoToJSObject(cootResult)
+                break;
+            case 'string_array':
+                returnResult = stringArrayToJSArray(cootResult)
+                break;
+            case 'residue_specs':
+                returnResult = residueSpecToJSArray(cootResult)
+                break;
+            case 'ramachandran_data':
+                returnResult = ramachandranDataToJSArray(cootResult, messageData.chainID as string)
+                break;
+            case 'validation_data':
+                returnResult = validationDataToJSArray(cootResult, messageData.chainID)
+                break;
+            case 'interesting_places_data':
+                returnResult = interestingPlaceDataToJSArray(cootResult)
+                break;
+            case 'superpose_results':
+                returnResult = SuperposeResultsToJSArray(cootResult)
+                break
+            case 'generic_3d_lines_bonds_box':
+                returnResult = linesBoxToJSArray(cootResult)
+                break;
+            case 'vector_hbond':
+                returnResult = vectorHBondToJSArray(cootResult)
+                break;
+            case 'status_instanced_mesh_pair':
+                returnResult = { status: cootResult.first, mesh: instancedMeshToMeshData(cootResult.second, false, false, 5) }
+                break;
+            case 'status':
+            default:
+                returnResult = cootResult
+                break;
+        }
+
+        return {
+            messageId, messageSendTime: Date.now(),
+            consoleMessage: `Completed ${command} in ${Date.now() - myTimeStamp} ms`,
+            result: { status: 'Completed', result: returnResult }
+        }
+    }
+
+    catch (err) {
+        console.log(err)
+        return {
+            messageId, myTimeStamp, message,
+            consoleMessage: `EXCEPTION RAISED IN ${command}, ${err}`,
+            result: { status: 'Exception' }
+        }
+    }
+}
+
 onmessage = function (e) {
     if (e.data.message === 'CootInitialize') {
         createRSRModule({
@@ -989,167 +1137,16 @@ onmessage = function (e) {
             messageTag: "result",
             result: result,
         })
+
+    } else if (e.data.message === 'coot_command_list') {
+        const resultList = e.data.commandList.map(command => doCootCommand({...e.data, ...command}))
+        postMessage({
+            messageId: e.data.messageId, resultList
+        })
     }
 
     if (e.data.message === 'coot_command') {
-        const { returnType, command, commandArgs, messageId } = e.data
-        try {
-
-            const timeMainThreadToWorker = `Message from main thread to worker took ${Date.now() - e.data.myTimeStamp} ms (${command}) - (${messageId.slice(0, 5)})`
-
-            let startTime = new Date()
-
-            /* A debug message to show tht commands are reachng CootWorker
-            postMessage({ consoleMessage: `Received ${command} with args ${commandArgs}` })
-            */
-
-            /* Here a block of "shims"
-            * over time want to reduce these to none
-            */
-            let cootResult
-            if (command === 'shim_read_pdb') {
-                cootResult = read_pdb(...commandArgs as [string, string])
-            }
-            else if (command === 'shim_new_positions_for_residue_atoms') {
-                cootResult = new_positions_for_residue_atoms(...commandArgs as [number, libcootApi.AtomInfo[][]])
-            }
-            else if (command === 'shim_read_mtz') {
-                cootResult = read_mtz(...commandArgs as [ArrayBufferLike, string, { F: string; PHI: string; isDifference: boolean; }])
-            }
-            else if (command === 'shim_auto_open_mtz') {
-                cootResult = auto_open_mtz(...commandArgs as [ArrayBuffer])
-            }
-            else if (command === 'shim_read_ccp4_map') {
-                cootResult = read_ccp4_map(...commandArgs as [ArrayBuffer, string, boolean])
-            }
-            else if (command === 'shim_read_dictionary') {
-                cootResult = read_dictionary(...commandArgs as [string, number])
-            }
-            else if (command === 'shim_associate_data_mtz_file_with_map') {
-                cootResult = associate_data_mtz_file_with_map(...commandArgs as [number, { data: ArrayBufferLike; fileName: string; }, string, string, string])
-            }
-            else if (command === 'shim_replace_molecule_by_model_from_file') {
-                cootResult = replace_molecule_by_model_from_file(...commandArgs as [number, string])
-            }
-            else if (command === 'shim_replace_map_by_mtz_from_file') {
-                cootResult = replace_map_by_mtz_from_file(...commandArgs as [number, ArrayBufferLike, { F: string; PHI: string; }])
-            }
-            else if (command === 'shim_do_colour_test') {
-                cootResult = doColourTest(...commandArgs as [number])
-            }
-            else if (command === 'shim_set_bond_colours') {
-                cootResult = setUserDefinedBondColours(...commandArgs as [number, { cid: string; rgb: [number, number, number] }[]])
-            }
-            else if (command === 'shim_smiles_to_pdb') {
-                cootResult = cootModule.SmilesToPDB(...commandArgs as [string, string, number, number])
-            }
-            else {
-                cootResult = molecules_container[command](...commandArgs)
-            }
-
-            let endTime = new Date()
-            // @ts-ignore
-            let timeDiff = endTime - startTime
-            const timelibcootAPI = `libcootAPI command ${command} took ${timeDiff} ms  - (${messageId.slice(0, 5)})`
-            let returnResult;
-            startTime = new Date()
-
-            switch (returnType) {
-                case 'instanced_mesh_perm':
-                    returnResult = instancedMeshToMeshData(cootResult, true)
-                    break;
-                case 'symmetry':
-                    returnResult = symmetryToJSData(cootResult)
-                    break;
-                case 'mmrrcc_stats':
-                    returnResult = mmrrccStatsToJSArray(cootResult)
-                    break;
-                case 'colour_rules':
-                    returnResult = colourRulesToJSArray(cootResult)
-                    break;
-                case 'instanced_mesh_perfect_spheres':
-                    returnResult = instancedMeshToMeshData(cootResult, false, true)
-                    break;
-                case 'instanced_mesh':
-                    returnResult = instancedMeshToMeshData(cootResult, false, false, 5)
-                    break;
-                case 'mesh_perm':
-                    returnResult = simpleMeshToMeshData(cootResult, true)
-                    break;
-                case 'mesh':
-                    returnResult = simpleMeshToMeshData(cootResult)
-                    break;
-                case 'lit_lines_mesh':
-                    returnResult = simpleMeshToLineMeshData(cootResult, true)
-                    break;
-                case 'lines_mesh':
-                    returnResult = simpleMeshToLineMeshData(cootResult, false)
-                    break;
-                case 'float_array':
-                    returnResult = floatArrayToJSArray(cootResult)
-                    break;
-                case 'int_array':
-                    returnResult = intArrayToJSArray(cootResult)
-                    break;
-                case 'map_molecule_centre_info_t':
-                    returnResult = mapMoleculeCentreInfoToJSObject(cootResult)
-                    break;
-                case 'string_array':
-                    returnResult = stringArrayToJSArray(cootResult)
-                    break;
-                case 'residue_specs':
-                    returnResult = residueSpecToJSArray(cootResult)
-                    break;
-                case 'ramachandran_data':
-                    returnResult = ramachandranDataToJSArray(cootResult, e.data.chainID)
-                    break;
-                case 'validation_data':
-                    returnResult = validationDataToJSArray(cootResult, e.data.chainID)
-                    break;
-                case 'interesting_places_data':
-                    returnResult = interestingPlaceDataToJSArray(cootResult)
-                    break;
-                case 'superpose_results':
-                    returnResult = SuperposeResultsToJSArray(cootResult)
-                    break
-                case 'generic_3d_lines_bonds_box':
-                    returnResult = linesBoxToJSArray(cootResult)
-                    break;
-                case 'vector_hbond':
-                    returnResult = vectorHBondToJSArray(cootResult)
-                    break;
-                case 'status_instanced_mesh_pair':
-                    returnResult = { status: cootResult.first, mesh: instancedMeshToMeshData(cootResult.second, false, false, 5) }
-                    break;
-                case 'status':
-                default:
-                    returnResult = cootResult
-                    break;
-            }
-
-            endTime = new Date()
-            // @ts-ignore
-            timeDiff = endTime - startTime
-            const timeconvertingWASMJS = `conversion of output of ${command} to JS data took ${timeDiff} ms  - (${messageId.slice(0, 5)})`
-
-            postMessage({
-                timelibcootAPI, timeconvertingWASMJS, timeMainThreadToWorker,
-                messageId, messageSendTime: Date.now(),
-                consoleMessage: `Completed ${command} in ${Date.now() - e.data.myTimeStamp} ms`,
-                result: { status: 'Completed', result: returnResult }
-            })
-        }
-
-        catch (err) {
-            console.log(err)
-            postMessage({
-                messageId: e.data.messageId,
-                myTimeStamp: e.data.myTimeStamp,
-                message: e.data.message,
-                consoleMessage: `EXCEPTION RAISED IN ${command}, ${err}`,
-                result: { status: 'Exception' }
-            })
-        }
+        const result = doCootCommand(e.data)
+        postMessage(result)
     }
-
 }
