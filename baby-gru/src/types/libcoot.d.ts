@@ -348,7 +348,7 @@ export namespace libcootApi {
         writePDBASCII(molNo: number, tempFilename: string): void;
         set_map_sampling_rate(arg0: number): void;
         fill_rotamer_probability_tables(): void;
-        set_user_defined_atom_colour_by_residue(imol: number, indexedResiduesVec: emscriptem.vector<{ first: string; second: number; }>): void;
+        set_user_defined_atom_colour_by_selection(imol: number, indexedResiduesVec: emscriptem.vector<{ first: string; second: number; }>, nonCarbon: boolean): void;
         set_user_defined_bond_colours(imol: number, colourMap: emscriptem.map<[number, number, number], number>): void;
         read_ccp4_map(arg0: string, arg2: boolean): number;
         associate_data_mtz_file_with_map(arg0: number, arg1: string, arg2: string, arg3: string, arg5: string): void;

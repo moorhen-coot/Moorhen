@@ -533,7 +533,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("change_to_next_rotamer",&molecules_container_t::change_to_next_rotamer)
     .function("change_to_previous_rotamer",&molecules_container_t::change_to_previous_rotamer)
     .function("change_to_first_rotamer",&molecules_container_t::change_to_first_rotamer)
-    .function("set_user_defined_atom_colour_by_residue",&molecules_container_t::set_user_defined_atom_colour_by_residue)
+    .function("set_user_defined_atom_colour_by_selection",&molecules_container_t::set_user_defined_atom_colour_by_selection)
     .function("set_user_defined_bond_colours",&molecules_container_t::set_user_defined_bond_colours)
     .function("set_colour_wheel_rotation_base",&molecules_container_t::set_colour_wheel_rotation_base)
     .function("set_base_colour_for_bonds",&molecules_container_t::set_base_colour_for_bonds)
