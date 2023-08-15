@@ -211,6 +211,7 @@ export namespace moorhen {
         onConsoleChanged: null | ( (msg: string) => void );
         onNewCommand : null | ( (kwargs: any) => void );
         onActiveMessagesChanged: null | ( (activeMessages: WorkerMessage[]) => void );
+        cootCommandList(commandList: cootCommandKwargs[]): Promise<WorkerResponse>;
         cootCommand: (kwargs: cootCommandKwargs, doJournal?: boolean) => Promise<WorkerResponse>;
         postMessage: (kwargs: cootCommandKwargs) => Promise<WorkerResponse>;
         extendConsoleMessage: (msg: string) => void;

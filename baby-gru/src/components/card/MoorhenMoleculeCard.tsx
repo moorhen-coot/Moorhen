@@ -434,7 +434,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                 <Row style={{display: 'flex'}}>
                     <Col  style={{ width:'100%', height: '100%' }}>
                         <div ref={addColourRulesAnchorDivRef} style={{ margin: '1px', paddingTop: '0.25rem', paddingBottom: '0.25rem',  border: '1px solid', borderRadius:'0.33rem', borderColor: "#CCC" }}>
-                            <FormGroup style={{ margin: "0px", padding: "0px"}} row>
+                            <FormGroup style={{ margin: "0px", padding: "0px", display: 'flex', justifyContent: 'center'}} row>
                                 {allRepresentations.map(key => 
                                     <RepresentationCheckbox
                                         key={key}
@@ -535,8 +535,8 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
 
 const getChipStyle = (colourRules: moorhen.ColourRule[], repIsVisible: boolean, isDark: boolean, width?: string) => {
     const chipStyle = {
-        marginLeft: '0.1rem',
-        marginBottom: '0.1rem',
+        marginLeft: '0.2rem',
+        marginBottom: '0.2rem',
     }
 
     if (width) { 
@@ -577,7 +577,7 @@ const RepresentationCheckbox = (props: {
 
     const [repState, setRepState] = useState<boolean>(false)
 
-    const chipStyle = getChipStyle(props.molecule.defaultColourRules, repState, props.isDark, 'calc(100% /6.15)')
+    const chipStyle = getChipStyle(props.molecule.defaultColourRules, repState, props.isDark, 'calc(100% / 3.1)')
 
     useEffect(() => {
         setRepState(props.showState[props.repKey] || false)

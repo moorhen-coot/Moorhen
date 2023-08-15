@@ -439,12 +439,12 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         return objects
     }
 
-    async getGlycoBlockBuffers(oneCid: string) {
+    async getGlycoBlockBuffers(cid: string) {
         try {
             const response = await this.commandCentre.current.cootCommand({
                 returnType: "instanced_mesh",
                 command: "DrawGlycoBlocks",
-                commandArgs: [this.parentMolecule.molNo, this.cid]
+                commandArgs: [this.parentMolecule.molNo, cid]
             }) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>;
             const objects = [response.data.result.result];
             return objects
@@ -453,11 +453,11 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         }
     }
 
-    async getHBondBuffers(oneCid: string, labelled: boolean = false) {
+    async getHBondBuffers(cid: string, labelled: boolean = false) {
         const response = await this.commandCentre.current.cootCommand({
             returnType: "vector_hbond",
             command: "get_h_bonds",
-            commandArgs: [this.parentMolecule.molNo, oneCid, false]
+            commandArgs: [this.parentMolecule.molNo, cid, false]
         })
         const hBonds = response.data.result.result
 

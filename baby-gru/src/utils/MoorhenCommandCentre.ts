@@ -112,6 +112,15 @@ export class MoorhenCommandCentre implements moorhen.CommandCentre {
         return this.postMessage({ message, ...kwargs })
     }
     
+    async cootCommandList(commandList: moorhen.cootCommandKwargs[], doJournal: boolean = false): Promise<moorhen.WorkerResponse> {
+        const message = "coot_command_list"
+        if (this.onNewCommand && doJournal) {
+            console.log('In cootCommandList', commandList)
+            commandList.forEach(commandKwargs => this.onNewCommand(commandKwargs))
+        }
+        return this.postMessage({ message, commandList })
+    }
+
     postMessage(kwargs: moorhen.cootCommandKwargs): Promise<moorhen.WorkerResponse> {
         const $this = this
         const messageId = uuidv4()
