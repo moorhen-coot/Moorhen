@@ -577,7 +577,7 @@ const RepresentationCheckbox = (props: {
 
     const [repState, setRepState] = useState<boolean>(false)
 
-    const chipStyle = getChipStyle(props.molecule.defaultColourRules, repState, props.isDark, 'calc(100% / 3.1)')
+    const chipStyle = getChipStyle(props.molecule.defaultColourRules, repState, props.isDark)
 
     useEffect(() => {
         setRepState(props.showState[props.repKey] || false)
