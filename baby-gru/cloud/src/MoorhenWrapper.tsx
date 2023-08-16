@@ -508,7 +508,7 @@ export default class MoorhenWrapper {
               aceDRGInstance={this.aceDRGInstance}
               forwardControls={this.forwardControls.bind(this)}
               disableFileUploads={true}
-              exitCallback={this.exitCallback.bind(this)}
+              exitCallback={this.exit.bind(this)}
               onChangePreferencesListener={this.onChangePreferencesListener.bind(this)}
               monomerLibraryPath={this.monomerLibrary}
               viewOnly={this.workMode === 'view'}
@@ -543,8 +543,31 @@ export default class MoorhenWrapper {
 
   }
 
-  exit() {
-    this.controls.setShowExitModal(true)
+  async exit() {
+    const selectedMolecules = this.controls.moleculesRef.current.filter(molecule => !molecule.isLigand())
+    const moleculeAtoms = await Promise.all(selectedMolecules.map(molecule => molecule.getAtoms()))
+
+    const molData = selectedMolecules.map((molecule, index) => {
+        return {molName: molecule.name, pdbData: moleculeAtoms[index].data.result.pdbData}
+    })
+
+    const viewData: moorhen.viewDataSession = {
+        origin: this.controls.glRef.current.origin,
+        backgroundColor: this.controls.glRef.current.background_colour,
+        ambientLight: this.controls.glRef.current.light_colours_ambient,
+        diffuseLight: this.controls.glRef.current.light_colours_diffuse,
+        lightPosition: this.controls.glRef.current.light_positions,
+        specularLight: this.controls.glRef.current.light_colours_specular,
+        fogStart: this.controls.glRef.current.gl_fog_start,
+        fogEnd: this.controls.glRef.current.gl_fog_end,
+        zoom: this.controls.glRef.current.zoom,
+        doDrawClickedAtomLines: this.controls.glRef.current.doDrawClickedAtomLines,
+        clipStart: (this.controls.glRef.current.gl_clipPlane0[3] + this.controls.glRef.current.fogClipOffset) * -1,
+        clipEnd: this.controls.glRef.current.gl_clipPlane1[3] - this.controls.glRef.current.fogClipOffset,
+        quat4: this.controls.glRef.current.myQuat
+    }
+  
+    this.exitCallback(viewData, molData)
   }
 
 }

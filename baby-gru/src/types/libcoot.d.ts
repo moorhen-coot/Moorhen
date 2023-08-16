@@ -14,6 +14,7 @@ export namespace libcootApi {
         remove_ligands_and_waters_chain(chain: gemmi.Chain): void;
         gemmi_setup_entities(gemmiStructure: gemmi.Structure): void;
         remove_ligands_and_waters_structure(gemmiStructure: gemmi.Structure): void;
+        remove_hydrogens_structure(gemmiStructure: gemmi.Structure): void;
         read_structure_from_string(pdbData: string | ArrayBuffer, molName: string): gemmi.Structure;
         get_mtz_columns(fileName: string): emscriptem.vector<string>;
         FS_createDataFile(arg0: string, fileName: string, byteArray: Uint8Array, arg3: boolean, arg4: boolean): void;

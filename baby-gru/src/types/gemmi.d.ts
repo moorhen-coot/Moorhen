@@ -100,6 +100,6 @@ export namespace gemmi {
         models: emscriptem.vector<Model>;
         cell: UnitCell;
         first_model: () => Model;
+        remove_empty_chains: () => void;
     }
-
 }
