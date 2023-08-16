@@ -381,6 +381,29 @@ headless libcoot API</div>
 </tr>
 
         
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>history</code></td>
+    
+
+    <td class="type">
+    
+        
+<code class="param-type">moorhen.History</code>
+
+
+    
+    </td>
+
+    
+
+    
+
+    <td class="description last">An object that contains the command history</td>
+</tr>
+
+        
         </tbody>
     </table>
 </div>
@@ -422,7 +445,7 @@ headless libcoot API</div>
         <p class="tag-source">
             <a href="utils_MoorhenCommandCentre.ts.html" class="button">View Source</a>
             <span>
-                <a href="utils_MoorhenCommandCentre.ts.html">utils/MoorhenCommandCentre.ts</a>, <a href="utils_MoorhenCommandCentre.ts.html#line40">line 40</a>
+                <a href="utils_MoorhenCommandCentre.ts.html">utils/MoorhenCommandCentre.ts</a>, <a href="utils_MoorhenCommandCentre.ts.html#line36">line 36</a>
             </span>
         </p>
     
@@ -454,14 +477,8 @@ headless libcoot API</div>
         <pre class="prettyprint"><code>import { MoorhenCommandCentre } from "moorhen";
 
 commandCentre = new MoorhenCommandCentre({
- onConsoleChanged: (newMessage) => {
-     setConsoleMessage(newMessage)
- },
  onActiveMessagesChanged: (newActiveMessages) => {
      setBusy(newActiveMessages.length !== 0)
- },
- onNewCommand: (newCommand) => {
-     dispatchHistoryReducer({ action: "Add", item: newCommand })
  },
  onCootInitialized: () => {
      setCootInitialized(true)
