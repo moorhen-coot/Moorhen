@@ -202,10 +202,18 @@ export namespace moorhen {
         cid: string | null
     }
 
+    interface History {
+        entries: cootCommandKwargs[];
+        addEntry: (newEntry: cootCommandKwargs) => void;
+        getEntriesForMolNo: (molNo: number) => cootCommandKwargs[];
+        getModifiedMolNo: () => number[];
+    }
+
     interface CommandCentre {
         urlPrefix: string;
         cootWorker: Worker;
         consoleMessage: string;
+        history: History;
         activeMessages: WorkerMessage[];
         unhook: () => void;
         onCootInitialized: null | ( () => void );
@@ -662,7 +670,6 @@ export namespace moorhen {
         setActiveMolecule: React.Dispatch<React.SetStateAction<Molecule>>;
         hoveredAtom: null | HoveredAtom;
         setHoveredAtom: React.Dispatch<React.SetStateAction<HoveredAtom>>;
-        commandHistory: any;
         backgroundColor: [number, number, number, number];
         setBackgroundColor: React.Dispatch<React.SetStateAction<[number, number, number, number]>>;
         toastContent: null | JSX.Element;
@@ -701,8 +708,6 @@ export namespace moorhen {
         setWindowWidth: React.Dispatch<React.SetStateAction<number>>;
         windowHeight: number;
         setWindowHeight: React.Dispatch<React.SetStateAction<number>>;
-        commandHistory: any;
-        dispatchHistoryReducer: (arg0: any) => void;
         molecules: Molecule[];
         changeMolecules: (arg0: MolChange<Molecule>) => void;
         maps: Map[];

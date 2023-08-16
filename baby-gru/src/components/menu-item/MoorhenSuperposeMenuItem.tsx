@@ -101,7 +101,8 @@ export const MoorhenSuperposeMenuItem = (props: {
                 movMolecule.molNo,
                 movChainSelectRef.current.value
             ],
-        }) as moorhen.WorkerResponse<libcootApi.SuperposeResultsJS>
+            changesMolecules: [movMolecule.molNo]
+        }, true) as moorhen.WorkerResponse<libcootApi.SuperposeResultsJS>
 
         movMolecule.setAtomsDirty(true)
         await movMolecule.redraw()

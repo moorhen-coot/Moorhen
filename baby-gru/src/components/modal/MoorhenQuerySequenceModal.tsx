@@ -149,7 +149,8 @@ export const MoorhenQuerySequenceModal = (props: {
                 newMolecule.molNo,
                 chainId
             ],
-        })                            
+            changesMolecules: [newMolecule.molNo]
+        }, true)                            
         newMolecule.setAtomsDirty(true)
         await newMolecule.redraw()
         newMolecule.centreOn('/*/*/*/*', true)

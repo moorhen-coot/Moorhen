@@ -1,5 +1,4 @@
 import { useRef, useState, useReducer, useContext } from 'react';
-import { historyReducer, initialHistoryState } from './navbar-menus/MoorhenHistoryMenu';
 import { MoorhenContext } from "../utils/MoorhenContext";
 import { MoorhenContainer } from "./MoorhenContainer"
 import { moorhen } from '../types/moorhen';
@@ -29,7 +28,6 @@ export const MoorhenApp = (props: { forwardControls: (controls: any) => any }) =
     const [busy, setBusy] = useState<boolean>(false)
     const [windowWidth, setWindowWidth] = useState<number>(window.innerWidth)
     const [windowHeight, setWindowHeight] = useState<number>(window.innerHeight)
-    const [commandHistory, dispatchHistoryReducer] = useReducer(historyReducer, initialHistoryState)
     const [molecules, changeMolecules] = useReducer(itemReducer, initialMoleculesState)
     const [maps, changeMaps] = useReducer(itemReducer, initialMapsState)
     const [backgroundColor, setBackgroundColor] = useState<[number, number, number, number]>([1, 1, 1, 1])
@@ -48,12 +46,11 @@ export const MoorhenApp = (props: { forwardControls: (controls: any) => any }) =
         consoleDivRef, lastHoveredAtom, prevActiveMoleculeRef, context, activeMap, 
         setActiveMap, activeMolecule, setActiveMolecule, hoveredAtom, setHoveredAtom,
         consoleMessage, setConsoleMessage, cursorStyle, setCursorStyle, busy, setBusy,
-        windowWidth, setWindowWidth, windowHeight, setWindowHeight, commandHistory, 
-        dispatchHistoryReducer, molecules: molecules as moorhen.Molecule[], 
-        changeMolecules, maps: maps as moorhen.Map[], changeMaps, 
-        backgroundColor, setBackgroundColor, appTitle, setAppTitle, cootInitialized,
+        windowWidth, setWindowWidth, windowHeight, setWindowHeight, appTitle, setAppTitle,
+        changeMolecules, changeMaps, backgroundColor, setBackgroundColor, cootInitialized,
         setCootInitialized, theme, setTheme, showToast, setShowToast, toastContent,
-        setToastContent, forwardControls: props.forwardControls
+        setToastContent, forwardControls: props.forwardControls, maps: maps as moorhen.Map[],
+        molecules: molecules as moorhen.Molecule[]
     }
 
     return <MoorhenContainer {...collectedProps}/>

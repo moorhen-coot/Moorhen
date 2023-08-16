@@ -133,7 +133,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
         await this.commandCentre.current.cootCommand({
             returnType: "status",
             command: 'rename_chain',
-            commandArgs: [this.molNo, oldId, newId]
+            commandArgs: [this.molNo, oldId, newId],
+            changesMolecules: [this.molNo]
         }, true)
         this.setAtomsDirty(true)
         await this.redraw()
@@ -163,7 +164,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
         const cootResponse = await this.commandCentre.current.cootCommand({
             returnType: "status",
             command: 'shim_replace_molecule_by_model_from_file',
-            commandArgs: [this.molNo, coordData]
+            commandArgs: [this.molNo, coordData],
+            changesMolecules: [this.molNo]
         }, true)
 
         if (cootResponse.data.result.status === 'Completed') {
@@ -484,7 +486,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
             returnType: "status",
             command: "copy_fragment_using_cid",
             commandArgs: [this.molNo, cid],
-            changesMolecules: [this.molNo]
         }, true) as moorhen.WorkerResponse<number>
         const newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.monomerLibraryPath)
         newMolecule.name = `${this.name} fragment`
@@ -608,8 +609,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             returnType: "status",
             command: 'shim_read_dictionary',
             commandArgs: [dictContent, attachToMolecule],
-            changesMolecules: []
-        }, true)
+        })
     }
 
     /**
@@ -622,7 +622,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             returnType: "string_array",
             command: 'get_residue_names_with_no_dictionary',
             commandArgs: [$this.molNo],
-        }, false) as moorhen.WorkerResponse<string[]>
+        }) as moorhen.WorkerResponse<string[]>
 
         if (response.data.result.status === 'Completed') {
             let monomerPromises = []
@@ -1146,7 +1146,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             command: "shim_new_positions_for_residue_atoms",
             commandArgs: [this.molNo, movedResidues],
             changesMolecules: [this.molNo]
-        })
+        }, true)
         this.displayObjectsTransformation.origin = [0, 0, 0]
         this.displayObjectsTransformation.quat = null
         this.setAtomsDirty(true)
@@ -1279,9 +1279,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
         await this.commandCentre.current.cootCommand({
             returnType: "status",
             command: 'shim_read_dictionary',
-            commandArgs: [fileContent, this.molNo],
-            changesMolecules: []
-        }, true)
+            commandArgs: [fileContent, this.molNo]
+        })
 
         this.addDictShim(fileContent)
     }
@@ -1293,8 +1292,9 @@ export class MoorhenMolecule implements moorhen.Molecule {
         await this.commandCentre.current.cootCommand({
             returnType: "status",
             command: "undo",
-            commandArgs: [this.molNo]
-        })
+            commandArgs: [this.molNo],
+            changesMolecules: [this.molNo]
+        }, true)
         this.setAtomsDirty(true)
         return this.redraw()
     }
@@ -1306,8 +1306,9 @@ export class MoorhenMolecule implements moorhen.Molecule {
         await this.commandCentre.current.cootCommand({
             returnType: "status",
             command: "redo",
-            commandArgs: [this.molNo]
-        })
+            commandArgs: [this.molNo],
+            changesMolecules: [this.molNo]
+        }, true)
         this.setAtomsDirty(true)
         return this.redraw()
     }
@@ -1558,7 +1559,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
             command: "rigid_body_fit",
             returnType: 'status',
             commandArgs: [this.molNo, cidsString, mapNo],
-        })
+            changesMolecules: [this.molNo]
+        }, true)
     }
 
     /**
@@ -1595,7 +1597,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
             command: "refine_residues_using_atom_cid",
             returnType: 'status',
             commandArgs: [this.molNo, cid, mode, ncyc],
-        })
+            changesMolecules: [this.molNo]
+        }, true)
     }
 
     /**
@@ -1609,6 +1612,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             command: "SSM_superpose",
             returnType: 'superpose_results',
             commandArgs: [refMolNo, refChainId, this.molNo, movChainId],
-        })
+            changesMolecules: [this.molNo]
+        }, true)
     }
 }

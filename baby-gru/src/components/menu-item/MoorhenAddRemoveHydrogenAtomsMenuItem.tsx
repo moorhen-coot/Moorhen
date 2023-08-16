@@ -23,6 +23,7 @@ export const MoorhenAddRemoveHydrogenAtomsMenuItem = (props: {
                 command: cootCommand,
                 returnType: 'status',
                 commandArgs: [selectedMolNo],
+                changesMolecules: [selectedMolNo]
             })
             const selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedMolNo)
             selectedMolecule.setAtomsDirty(true)

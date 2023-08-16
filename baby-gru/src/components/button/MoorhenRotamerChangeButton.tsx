@@ -38,6 +38,7 @@ export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moor
             returnType: 'status',
             command: 'replace_fragment',
             commandArgs: [chosenMolecule.current.molNo, fragmentMolecule.current.molNo, selectedFragmentRef.current.cid],
+            changesMolecules: [chosenMolecule.current.molNo]
         }, true)
         
         chosenMolecule.current.atomsDirty = true
