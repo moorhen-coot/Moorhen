@@ -17,8 +17,8 @@ export const MoorhenMergeMoleculesMenuItem = (props: {
     const fromRef = useRef<null | HTMLSelectElement>(null)
 
     const panelContent = <>
-        <MoorhenMoleculeSelect {...props} label="Into molecule" allowAny={false} ref={toRef} />
         {props.fromMolNo === null ? <MoorhenMoleculeSelect {...props} label="From molecule" allowAny={false} ref={fromRef} /> : null}
+        <MoorhenMoleculeSelect {...props} label="Into molecule" allowAny={false} ref={toRef} />
     </>
 
     const onCompleted = useCallback(async () => {
