@@ -142,6 +142,7 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
                 returnType: 'status',
                 command: 'replace_fragment',
                 commandArgs: [chosenMolecule.current.molNo, moltenFragmentRef.current.molNo, fragmentCid.current.join('||')],
+                changesMolecules: [chosenMolecule.current.molNo]
             }, true)
             chosenMolecule.current.atomsDirty = true
             await chosenMolecule.current.redraw()

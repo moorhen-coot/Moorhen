@@ -544,7 +544,8 @@ export default class MoorhenWrapper {
   }
 
   async exit() {
-    const selectedMolecules = this.controls.moleculesRef.current.filter(molecule => !molecule.isLigand())
+    const modifiedMolecules = this.controls.commandCentre.current.history.getModifiedMolNo()
+    const selectedMolecules = this.controls.moleculesRef.current.filter(molecule => !molecule.isLigand() && modifiedMolecules.includes(molecule.molNo))
     const moleculeAtoms = await Promise.all(selectedMolecules.map(molecule => molecule.getAtoms()))
 
     const molData = selectedMolecules.map((molecule, index) => {

@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+import { MoorhenHistory } from "./MoorhenHistory"
 import { moorhen } from "../types/moorhen"
 
 /**
@@ -12,18 +13,13 @@ import { moorhen } from "../types/moorhen"
  * @param {function} onActiveMessagesChanged  - Callback executed whenever a new message is received from the worker
  * @param {function} onCootInitialized - Callback executed once after coot is initialised in the web worker
  * @property {function} cootCommand - Runs a coot command
+ * @property {moorhen.History} history - An object that contains the command history
  * @example
  * import { MoorhenCommandCentre } from "moorhen";
  * 
  * commandCentre = new MoorhenCommandCentre({
- *  onConsoleChanged: (newMessage) => {
- *      setConsoleMessage(newMessage)
- *  },
  *  onActiveMessagesChanged: (newActiveMessages) => {
  *      setBusy(newActiveMessages.length !== 0)
- *  },
- *  onNewCommand: (newCommand) => {
- *      dispatchHistoryReducer({ action: "Add", item: newCommand })
  *  },
  *  onCootInitialized: () => {
  *      setCootInitialized(true)
@@ -43,6 +39,7 @@ export class MoorhenCommandCentre implements moorhen.CommandCentre {
     cootWorker: Worker;
     consoleMessage: string;
     activeMessages: moorhen.WorkerMessage[];
+    history: moorhen.History;
     onCootInitialized: null | ( () => void );
     onConsoleChanged: null | ( (msg: string) => void );
     onNewCommand : null | ( (kwargs: any) => void );
@@ -51,6 +48,7 @@ export class MoorhenCommandCentre implements moorhen.CommandCentre {
     constructor(props: { [x: string]: any; }) {
         this.consoleMessage = ""
         this.activeMessages = []
+        this.history = new MoorhenHistory()
         this.onConsoleChanged = null
         this.onNewCommand = null
         this.onActiveMessagesChanged = null
@@ -105,18 +103,24 @@ export class MoorhenCommandCentre implements moorhen.CommandCentre {
     
     async cootCommand(kwargs: moorhen.cootCommandKwargs, doJournal: boolean = false): Promise<moorhen.WorkerResponse> {
         const message = "coot_command"
-        if (this.onNewCommand && doJournal) {
-            console.log('In cootCommand', kwargs.command)
+        console.log('In cootCommand', kwargs.command)
+        if (this.onNewCommand) {
             this.onNewCommand(kwargs)
+        }
+        if (doJournal && kwargs.changesMolecules?.length > 0) {
+            this.history.addEntry(kwargs)
         }
         return this.postMessage({ message, ...kwargs })
     }
     
     async cootCommandList(commandList: moorhen.cootCommandKwargs[], doJournal: boolean = false): Promise<moorhen.WorkerResponse> {
         const message = "coot_command_list"
-        if (this.onNewCommand && doJournal) {
-            console.log('In cootCommandList', commandList)
+        console.log('In cootCommandList', commandList)
+        if (this.onNewCommand) {
             commandList.forEach(commandKwargs => this.onNewCommand(commandKwargs))
+        }
+        if (doJournal) {
+            commandList.forEach(commandKwargs => this.history.addEntry(commandKwargs))
         }
         return this.postMessage({ message, commandList })
     }

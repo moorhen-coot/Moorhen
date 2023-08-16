@@ -1,6 +1,6 @@
 import { moorhen } from '../types/moorhen';
 import { webGL } from '../types/mgWebGL';
-import { cidToSpec, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid, hexToHsl } from './MoorhenUtils';
+import { cidToSpec, gemmiAtomPairsToCylindersInfo, gemmiAtomsToCirclesSpheresInfo, getCubeLines, guid } from './MoorhenUtils';
 import { libcootApi } from '../types/libcoot';
 import { hexToRgb } from '@mui/material';
 

@@ -78,8 +78,8 @@ export const MoorhenFitLigandRightHereMenuItem = (props: {
                 parseInt(ligandMoleculeRef.current.value),
                 ...props.glRef.current.origin.map(coord => -coord),
                 1., useConformersRef.current, parseInt(conformerCountRef.current)
-            ]
-
+            ],
+            changesMolecules: [parseInt(intoMoleculeRef.current.value)]
         }, true) as moorhen.WorkerResponse<number[]>
         
         if (result.data.result.status === "Completed") {
