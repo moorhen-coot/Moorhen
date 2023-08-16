@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { MoorhenEditButtonBase } from "./MoorhenEditButtonBase"
 import { moorhen } from "../../types/moorhen";
 import { MoorhenContextButtonBase } from "./MoorhenContextButtonBase";
-import { Button, Card, Container, Form, FormGroup, FormLabel, FormSelect, Overlay, Row, Stack } from "react-bootstrap";
+import { Button, Card, Container, Form, FormGroup, FormLabel, FormSelect, Row, Stack } from "react-bootstrap";
 import { CheckOutlined, CloseOutlined, DeleteSweepOutlined } from "@mui/icons-material";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
 import Draggable from "react-draggable";
