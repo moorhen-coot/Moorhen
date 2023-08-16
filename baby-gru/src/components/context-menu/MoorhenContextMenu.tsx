@@ -3,8 +3,6 @@ import { ClickAwayListener, FormGroup, List, MenuItem, Tooltip } from '@mui/mate
 import { MoorhenAddSimpleMenuItem } from "../menu-item/MoorhenAddSimpleMenuItem"
 import { MoorhenGetMonomerMenuItem } from "../menu-item/MoorhenGetMonomerMenuItem"
 import { MoorhenFitLigandRightHereMenuItem } from "../menu-item/MoorhenFitLigandRightHereMenuItem"
-import { MoorhenImportFSigFMenuItem } from "../menu-item/MoorhenImportFSigFMenuItem";
-import { MoorhenMergeMoleculesMenuItem } from "../menu-item/MoorhenMergeMoleculesMenuItem"
 import { MoorhenBackgroundColorMenuItem } from "../menu-item/MoorhenBackgroundColorMenuItem"
 import { cidToSpec, convertRemToPx } from "../../utils/MoorhenUtils";
 import { getBackupLabel } from "../../utils/MoorhenTimeCapsule"

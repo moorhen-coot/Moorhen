@@ -4,7 +4,6 @@ import { convertViewtoPx } from '../../utils/MoorhenUtils';
 import { MenuItem } from "@mui/material";
 import { UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined, ExpandLessOutlined, VisibilityOffOutlined, VisibilityOutlined, DownloadOutlined, Settings } from '@mui/icons-material';
 import { MoorhenDeleteDisplayObjectMenuItem } from "../menu-item/MoorhenDeleteDisplayObjectMenuItem"
-import { MoorhenMergeMoleculesMenuItem } from "../menu-item/MoorhenMergeMoleculesMenuItem";
 import { MoorhenMoleculeGaussianSurfaceSettingsMenuItem } from "../menu-item/MoorhenMoleculeGaussianSurfaceSettingsMenuItem"
 import { MoorhenMoleculeSymmetrySettingsMenuItem } from "../menu-item/MoorhenMoleculeSymmetrySettingsMenuItem"
 import { MoorhenMoleculeBondSettingsMenuItem } from "../menu-item/MoorhenMoleculeBondSettingsMenuItem"
