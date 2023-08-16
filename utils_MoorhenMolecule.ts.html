@@ -517,6 +517,36 @@ export class MoorhenMolecule implements moorhen.Molecule {
     }
 
     /**
+     * Check if the molecule instance consists of a ligand
+     * @returns {boolean} True if the molecule is a ligand
+     */
+    isLigand(): boolean {
+        let isLigand = true
+        const structure = this.gemmiStructure.clone()
+       
+        window.CCP4Module.remove_ligands_and_waters_structure(structure)
+        window.CCP4Module.remove_hydrogens_structure(structure)
+        structure.remove_empty_chains()
+    
+        const models = structure.models
+        const modelsSize = models.size()
+        for (let modelIndex = 0; (modelIndex &lt; modelsSize) &amp;&amp; isLigand; modelIndex++) {
+            const model = models.get(modelIndex)
+            const chains = model.chains
+            const chainsSize = chains.size()
+            model.delete()
+            chains.delete()
+            if (chainsSize > 0) {
+                isLigand = false
+            }
+        }
+        models.delete()    
+        structure.delete()
+    
+        return isLigand
+    }
+
+    /**
      * Delete this molecule instance
      */
     async delete(): Promise&lt;moorhen.WorkerResponse> {
