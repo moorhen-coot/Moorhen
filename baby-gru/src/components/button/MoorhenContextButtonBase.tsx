@@ -96,7 +96,7 @@ export const MoorhenContextButtonBase = (props: {
 }) => {
     
     const doEdit = async (cootCommandInput: moorhen.cootCommandKwargs) => {
-        const cootResult = await props.commandCentre.current.cootCommand(cootCommandInput)
+        const cootResult = await props.commandCentre.current.cootCommand(cootCommandInput, true)
         
         if (props.onCompleted) {
             props.onCompleted(props.selectedMolecule, props.chosenAtom)

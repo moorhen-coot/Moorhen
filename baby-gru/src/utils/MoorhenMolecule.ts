@@ -564,7 +564,6 @@ export class MoorhenMolecule implements moorhen.Molecule {
                 returnType: "status",
                 command: 'shim_read_pdb',
                 commandArgs: [coordData, this.name],
-                changesMolecules: [this.molNo]
             }, true)
             this.molNo = response.data.result.result
             await Promise.all([
