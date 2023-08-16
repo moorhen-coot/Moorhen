@@ -19,7 +19,7 @@ const initialMoleculesState: moorhen.Molecule[] = []
 const initialMapsState: moorhen.Map[] = []
 
 interface MoorhenCloudAppPropsInterface extends moorhen.ContainerProps {
-    exitCallback: (viewSettings: moorhen.viewDataSession, molData?: { molName: string; pdbData: string; }[]) => Promise<void>;
+    exitCallback: () => Promise<void>;
     onChangePreferencesListener: (context: moorhen.Context) => void;
 }
 
