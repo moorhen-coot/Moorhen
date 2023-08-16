@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { MoorhenLoadScriptMenuItem } from "../menu-item/MoorhenLoadScriptMenuItem";
 import { MoorhenSuperposeMenuItem } from "../menu-item/MoorhenSuperposeMenuItem";
-import { MoorhenSuperposeResultsModal } from "../modal/MoorhenSuperposeResultsModal"
 import { MenuItem } from "@mui/material";
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
 import { libcootApi } from "../../types/libcoot";
@@ -24,7 +23,6 @@ export const MoorhenCalculateMenu = (props: MoorhenNavBarExtendedControlsInterfa
             </>
             }
             {props.extraCalculateMenuItems && props.extraCalculateMenuItems.map( menu => menu)}
-            {/**<MoorhenSuperposeResultsModal superposeResults={superposeResults} setSuperposeResults={setSuperposeResults} {...menuItemProps} />*/}
     </>
 }
 

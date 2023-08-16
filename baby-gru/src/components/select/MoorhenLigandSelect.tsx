@@ -26,8 +26,7 @@ export const MoorhenLigandSelect = forwardRef<HTMLSelectElement, MoorhenLigandSe
         let selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedCoordMolNo)
         if (selectedMolecule) {
             return selectedMolecule.ligands.map(ligand => {
-                const cid = `/${ligand.modelName}/${ligand.chainName}/${ligand.resNum}(${ligand.resName})`
-                return <option value={cid} key={cid}>{cid}</option>
+                return <option value={ligand.cid} key={ligand.cid}>{ligand.cid}</option>
             })
         }
         

@@ -16,6 +16,7 @@ export namespace moorhen {
         chainName: string;
         resNum: string;
         modelName: string;
+        cid: string;
     }
     
     type Sequence = {
