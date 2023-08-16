@@ -1448,7 +1448,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
                     const resName = ligand.name
                     const ligandSeqId = ligand.seqid
                     const resNum = ligandSeqId.str()
-                    ligandList.push({ resName: resName, chainName: chainName, resNum: resNum, modelName: modelName })
+                    const cid = `/${model.name}/${chain.name}/${ligandSeqId.num?.value}(${ligand.name})`
+                    ligandList.push({ resName, chainName, resNum, modelName, cid })
                     ligand.delete()
                     ligandSeqId.delete()
                 }
