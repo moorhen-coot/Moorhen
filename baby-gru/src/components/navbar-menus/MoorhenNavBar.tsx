@@ -15,9 +15,8 @@ import { MoorhenModelsModal } from '../modal/MoorhenModelsModal';
 import { MoorhenCreateAcedrgLinkModal } from '../modal/MoorhenCreateAcedrgLinkModal';
 import { MoorhenMapsModal } from '../modal/MoorhenMapsModal';
 import { MoorhenValidationToolsModal } from '../modal/MoorhenValidationToolsModal';
-import { MoorhenToolkitModal } from '../modal/MoorhenToolkitModal';
 import { 
-    AcUnitOutlined, CalculateOutlined, ConstructionOutlined, DescriptionOutlined, EditOutlined, VisibilityOutlined,
+    AcUnitOutlined, CalculateOutlined, DescriptionOutlined, EditOutlined, VisibilityOutlined,
     FactCheckOutlined, HelpOutlineOutlined, MenuOutlined, SaveOutlined, ScienceOutlined, SettingsSuggestOutlined, CloseOutlined,
  } from '@mui/icons-material';
 import { MoorhenQuerySequenceModal } from '../modal/MoorhenQuerySequenceModal';
@@ -41,7 +40,6 @@ export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface
     const [speedDialOpen, setSpeedDialOpen] = useState<boolean>(false)
     const [currentDropdownId, setCurrentDropdownId] = useState<string>('-1')
     const [showSaveIcon, setShowSaveIcon] = useState<boolean>(false)
-    const [showToolkit, setShowToolkit] = useState<boolean>(false)
     const [showCreateAcedrgLinkModal, setShowCreateAcedrgLinkModal] = useState<boolean>(false)
     const [showValidation, setShowValidation] = useState<boolean>(false)
     const [showModels, setShowModels] = useState<boolean>(false)
@@ -57,13 +55,11 @@ export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface
     const validationSpeedDialActionRef = useRef()
     const modelsSpeedDialActionRef = useRef()
     const mapsSpeedDialActionRef = useRef()
-    const toolkitDialActionRef = useRef()
     const viewDialActionRef = useRef()
     const preferencesDialActionRef = useRef()
     const cryoDialActionRef = useRef()
     const helpDialActionRef = useRef()
     const devDialActionRef = useRef()
-    const exitDialActionRef = useRef()
 
     useEffect(() => {
         if (props.timeCapsuleRef.current) {
@@ -83,7 +79,6 @@ export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface
         'Validation': { icon: <FactCheckOutlined />, name: 'Validation', ref: validationSpeedDialActionRef},
         'Ligand': { icon:  <img src={`${props.urlPrefix}/baby-gru/pixmaps/moorhen-ligand.svg`} alt='Ligand' style={{height: '1.6rem', marginRight: '0.3rem', marginLeft: '0.3rem'}} />, name: 'Ligand', ref: ligandSpeedDialActionRef},
         'Cryo': { icon: <AcUnitOutlined/>, name: 'Cryo', ref: cryoDialActionRef},
-        'Toolkit': { icon: <ConstructionOutlined/>, name: 'Toolkit', ref: toolkitDialActionRef},
         'Models': { icon: <img src={`${props.urlPrefix}/baby-gru/pixmaps/secondary-structure-grey.svg`} alt='Model' style={{height: '1.6rem', marginRight: '0.3rem', marginLeft: '0.3rem'}} />, name: 'Models', ref: modelsSpeedDialActionRef},
         'Maps': { icon: <img src={`${props.urlPrefix}/baby-gru/pixmaps/map-grey.svg`} alt='Map' style={{height: '1.6rem', marginRight: '0.3rem', marginLeft: '0.3rem'}} />, name: 'Maps', ref: mapsSpeedDialActionRef},
         'Preferences': { icon: <SettingsSuggestOutlined/>, name: 'Preferences', ref: preferencesDialActionRef},
@@ -103,10 +98,6 @@ export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface
     useEffect(() => {
         switch(currentDropdownId) {
             case "-1":
-                break
-            case "Toolkit":
-                setShowToolkit(true)
-                setCurrentDropdownId('-1')
                 break
             case "Models":
                 setShowModels(true)
@@ -254,15 +245,6 @@ export const MoorhenNavBar = forwardRef<HTMLElement, MoorhenNavBarPropsInterface
         <MoorhenValidationToolsModal 
             show={showValidation}
             setShow={setShowValidation}
-            windowHeight={props.windowHeight}
-            windowWidth={props.windowWidth}
-            {...props}
-        />
-    }
-    {showToolkit &&
-        <MoorhenToolkitModal
-            show={showToolkit}
-            setShow={setShowToolkit}
             windowHeight={props.windowHeight}
             windowWidth={props.windowWidth}
             {...props}
