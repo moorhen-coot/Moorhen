@@ -194,7 +194,7 @@ export const MoorhenContextMenu = (props: {
                     props.viewOnly ? 
                       <MoorhenBackgroundColorMenuItem setPopoverIsShown={() => { }} backgroundColor={props.backgroundColor} setBackgroundColor={props.setBackgroundColor}/>
                     :              
-                    selectedMolecule && chosenAtom ?
+                    selectedMolecule && chosenAtom &&
                      <div style={{ display:'flex', justifyContent: 'center' }}>
                      <Tooltip title={toolTip}>
                      <FormGroup ref={quickActionsFormGroupRef} style={{ justifyContent: 'center', margin: "0px", padding: "0px", width: '18rem' }} row>
@@ -217,16 +217,7 @@ export const MoorhenContextMenu = (props: {
                      </FormGroup>
                      </Tooltip>
                      </div>
-                    :
-                    <>
-                      <MoorhenAddSimpleMenuItem setPopoverIsShown={() => {}} popoverPlacement={menuPosition.placement} glRef={props.glRef} molecules={props.molecules} />
-                      <MoorhenGetMonomerMenuItem setPopoverIsShown={() => {}} popoverPlacement={menuPosition.placement} defaultBondSmoothness={0} glRef={props.glRef} molecules={props.molecules} commandCentre={props.commandCentre} changeMolecules={props.changeMolecules} monomerLibraryPath={props.monomerLibraryPath} />
-                      <MoorhenFitLigandRightHereMenuItem setPopoverIsShown={() => {}} popoverPlacement={menuPosition.placement} defaultBondSmoothness={0} glRef={props.glRef} maps={props.maps} molecules={props.molecules} commandCentre={props.commandCentre} changeMolecules={props.changeMolecules} backgroundColor={props.backgroundColor} monomerLibraryPath={props.monomerLibraryPath} />
-                      <MoorhenBackgroundColorMenuItem setPopoverIsShown={() => { }} popoverPlacement={menuPosition.placement} backgroundColor={props.backgroundColor} setBackgroundColor={props.setBackgroundColor}/>
-                      <MenuItem disabled={!props.enableTimeCapsule} onClick={() => handleCreateBackup()}>Create backup</MenuItem>
-                    </>
-                     }
-                    
+                    }
                   </List>
         </ClickAwayListener>
         }

@@ -68,32 +68,17 @@ export const MoorhenFitLigandRightHereMenuItem = (props: {
             console.log('Unable to parse conformer count into a valid int...')
             return
         }
-        
-        const result = await props.commandCentre.current.cootCommand({
-            returnType: 'int_array',
-            command: 'fit_ligand_right_here',
-            commandArgs: [
-                parseInt(intoMoleculeRef.current.value),
+
+        const selectedMolecule = props.molecules.find(molecule => molecule.molNo === parseInt(intoMoleculeRef.current.value))
+        if(selectedMolecule) {
+            const newMolecules = await selectedMolecule.fitLigandHere(
                 parseInt(mapSelectRef.current.value),
                 parseInt(ligandMoleculeRef.current.value),
-                ...props.glRef.current.origin.map(coord => -coord),
-                1., useConformersRef.current, parseInt(conformerCountRef.current)
-            ],
-            changesMolecules: [parseInt(intoMoleculeRef.current.value)]
-        }, true) as moorhen.WorkerResponse<number[]>
-        
-        if (result.data.result.status === "Completed") {
-            await Promise.all(
-                result.data.result.result.map(async (iMol) => {
-                    const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.monomerLibraryPath)
-                    newMolecule.molNo = iMol
-                    newMolecule.name = `fit_lig_${iMol}`
-                    newMolecule.setBackgroundColour(props.backgroundColor)
-                    newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
-                    await newMolecule.fetchIfDirtyAndDraw('CBs')
-                    props.changeMolecules({ action: "Add", item: newMolecule })
-                })
+                true,
+                useConformersRef.current,
+                parseInt(conformerCountRef.current)
             )
+            newMolecules.forEach(molecule => props.changeMolecules({ action: "Add", item: molecule }))
         }
     }
 

@@ -1,7 +1,7 @@
 import 'pako';
 import {
     guid, readTextFile, readGemmiStructure, residueCodesThreeToOne, centreOnGemmiAtoms,
-    nucleotideCodesThreeToOne, hexToHsl, findConsecutiveRanges
+    nucleotideCodesThreeToOne, findConsecutiveRanges
 } from './MoorhenUtils'
 import { MoorhenMoleculeRepresentation } from "./MoorhenMoleculeRepresentation"
 import { quatToMat4 } from '../WebGLgComponents/quatToMat4.js';
@@ -75,7 +75,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
         boxRadius: number;
         gridScale: number;
     };
-    cootBondsOptions: moorhen.cootBondOptions;
+    isDarkBackground: boolean;
+    defaultBondOptions: moorhen.cootBondOptions;
     displayObjectsTransformation: { origin: [number, number, number], quat: any, centre: [number, number, number] }
     uniqueId: string;
     monomerLibraryPath: string;
@@ -103,14 +104,14 @@ export class MoorhenMolecule implements moorhen.Molecule {
         this.symmetryOn = false
         this.symmetryRadius = 25
         this.symmetryMatrices = []
+        this.isDarkBackground = false
         this.gaussianSurfaceSettings = {
             sigma: 4.4,
             countourLevel: 4.0,
             boxRadius: 5.0,
             gridScale: 0.7
         }
-        this.cootBondsOptions = {
-            isDarkBackground: false,
+        this.defaultBondOptions = {
             smoothness: 1,
             width: 0.1,
             atomRadiusBondRatio: 1
@@ -226,7 +227,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * @param {number[]} backgroundColour - The rgba indicating the background colour
      */
     setBackgroundColour(backgroundColour: [number, number, number, number]) {
-        this.cootBondsOptions.isDarkBackground = isDarkBackground(...backgroundColour)
+        this.isDarkBackground = isDarkBackground(...backgroundColour)
     }
 
     /**
@@ -456,7 +457,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         let moleculeAtoms = await this.getAtoms()
         let newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.monomerLibraryPath)
         newMolecule.name = `${this.name}-placeholder`
-        newMolecule.cootBondsOptions = this.cootBondsOptions
+        newMolecule.defaultBondOptions = this.defaultBondOptions
 
         let response = await this.commandCentre.current.cootCommand({
             returnType: "status",
@@ -476,12 +477,10 @@ export class MoorhenMolecule implements moorhen.Molecule {
     /**
      * Copy a fragment of the current model into a new molecule using a selection CID
      * @param {string} cid - The CID selection indicating the residues that will be copied into the new fragment
-     * @param {number[]} backgroundColor - The background colour used to draw the new molecule
-     * @param {number} defaultBondSmoothness - The default bond smoothness for the new molecule
      * @param {boolean} [doRecentre=true] - Indicates whether the view should re-centre on the new copied fragment
      * @returns {Promise<moorhen.Molecule>}  New molecule instance
      */
-    async copyFragmentUsingCid(cid: string, backgroundColor: [number, number, number, number], defaultBondSmoothness: number, doRecentre: boolean = true, style: moorhen.RepresentationStyles = 'CBs'): Promise<moorhen.Molecule> {
+    async copyFragmentUsingCid(cid: string, doRecentre: boolean = true, style: moorhen.RepresentationStyles = 'CBs'): Promise<moorhen.Molecule> {
         const response = await this.commandCentre.current.cootCommand({
             returnType: "status",
             command: "copy_fragment_using_cid",
@@ -490,8 +489,8 @@ export class MoorhenMolecule implements moorhen.Molecule {
         const newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.monomerLibraryPath)
         newMolecule.name = `${this.name} fragment`
         newMolecule.molNo = response.data.result.result
-        newMolecule.setBackgroundColour(backgroundColor)
-        newMolecule.cootBondsOptions.smoothness = defaultBondSmoothness
+        newMolecule.isDarkBackground = this.isDarkBackground
+        newMolecule.defaultBondOptions = this.defaultBondOptions
         await Promise.all(Object.keys(this.ligandDicts).map(key => newMolecule.addDict(this.ligandDicts[key])))
         await newMolecule.fetchDefaultColourRules()
         if (doRecentre) {
@@ -833,7 +832,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         representation.show()
     }
 
-    async addRepresentation(style: moorhen.RepresentationStyles, cid: string = '/*/*/*/*', isCustom: boolean = false, colourRules?: moorhen.ColourRule[]) {
+    async addRepresentation(style: moorhen.RepresentationStyles, cid: string = '/*/*/*/*', isCustom: boolean = false, colourRules?: moorhen.ColourRule[], bondOptions?: moorhen.cootBondOptions) {
         if (!this.defaultColourRules) {
             await this.fetchDefaultColourRules()
         }
@@ -843,6 +842,10 @@ export class MoorhenMolecule implements moorhen.Molecule {
         if(colourRules && colourRules.length > 0) {
             representation.setColourRules(colourRules)
             representation.setUseDefaultColourRules(false)
+        }
+        if(bondOptions) {
+            representation.useDefaultBondOptions = false
+            representation.bondOptions = bondOptions
         }
         await representation.draw()
         this.representations.push(representation)
@@ -1222,7 +1225,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             newMolecule.setAtomsDirty(true)
             newMolecule.molNo = result.data.result.result
             newMolecule.name = resType.toUpperCase()
-            newMolecule.cootBondsOptions = this.cootBondsOptions
+            newMolecule.defaultBondOptions = this.defaultBondOptions
             await this.mergeMolecules([newMolecule], true)
             return newMolecule.delete()
         } else {
@@ -1614,5 +1617,44 @@ export class MoorhenMolecule implements moorhen.Molecule {
             commandArgs: [refMolNo, refChainId, this.molNo, movChainId],
             changesMolecules: [this.molNo]
         }, true)
+    }
+
+    /**
+     * A function to fit a given ligand
+     * @param {number} mapMolNo - The map iMol that will be used for ligand fitting
+     * @param {number} ligandMolNo - The ligand iMol that will be fitted
+     * @param {boolean} [redraw=false] - Indicates if the fitted ligands should be drawn
+     * @param {boolean} [useConformers=false] - Indicates if there is need to test multiple conformers
+     * @param {number} [conformerCount=0] - Conformer count
+     * @returns {Promise<moorhen.Molecule[]>} - A list of fitted ligands
+     */
+    async fitLigandHere(mapMolNo: number, ligandMolNo: number, redraw: boolean = false, useConformers: boolean = false, conformerCount: number = 0): Promise<moorhen.Molecule[]> {
+        const result = await this.commandCentre.current.cootCommand({
+            returnType: 'int_array',
+            command: 'fit_ligand_right_here',
+            commandArgs: [
+                this.molNo, mapMolNo, ligandMolNo,
+                ...this.glRef.current.origin.map(coord => -coord),
+                1., useConformers, conformerCount
+            ],
+            changesMolecules: [this.molNo]
+        }, true) as moorhen.WorkerResponse<number[]>
+        
+        if (result.data.result.status === "Completed") {
+            const newMolecules: moorhen.Molecule[] = await Promise.all(
+                result.data.result.result.map(async (iMol) => {
+                    const newMolecule = new MoorhenMolecule(this.commandCentre, this.glRef, this.monomerLibraryPath)
+                    newMolecule.molNo = iMol
+                    newMolecule.name = `fit_lig_${iMol}`
+                    newMolecule.isDarkBackground = this.isDarkBackground
+                    newMolecule.defaultBondOptions = this.defaultBondOptions
+                    if (redraw) {
+                        await newMolecule.fetchIfDirtyAndDraw('CBs')
+                    }
+                    return newMolecule
+                })
+            )
+            return newMolecules
+        }
     }
 }

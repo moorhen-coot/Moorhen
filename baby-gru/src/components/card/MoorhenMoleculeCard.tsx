@@ -73,9 +73,9 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     const [clickedResidue, setClickedResidue] = useState<clickedResidueType | null>(null);
     const [isCollapsed, setIsCollapsed] = useState<boolean>(!props.defaultExpandDisplayCards);
     const [isVisible, setIsVisible] = useState<boolean>(true)
-    const [bondWidth, setBondWidth] = useState<number>(props.molecule.cootBondsOptions.width)
-    const [atomRadiusBondRatio, setAtomRadiusBondRatio] = useState<number>(props.molecule.cootBondsOptions.atomRadiusBondRatio)
-    const [bondSmoothness, setBondSmoothness] = useState<number>(props.molecule.cootBondsOptions.smoothness)
+    const [bondWidth, setBondWidth] = useState<number>(props.molecule.defaultBondOptions.width)
+    const [atomRadiusBondRatio, setAtomRadiusBondRatio] = useState<number>(props.molecule.defaultBondOptions.atomRadiusBondRatio)
+    const [bondSmoothness, setBondSmoothness] = useState<number>(props.molecule.defaultBondOptions.smoothness)
     const [surfaceSigma, setSurfaceSigma] = useState<number>(4.4)
     const [surfaceLevel, setSurfaceLevel] = useState<number>(4.0)
     const [surfaceRadius, setSurfaceRadius] = useState<number>(5.0)
@@ -139,7 +139,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
             return
         }
 
-        if (isVisible && showState['CBs']) {
+        if (isVisible && (showState['CBs'] || showState['CAs'])) {
             props.molecule.setAtomsDirty(true)
             props.molecule.redraw()
         }
@@ -151,10 +151,10 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
             return
         }
 
-        if (isVisible && showState['CBs']) {
+        if (isVisible && (showState['CBs'] || showState['ligands'])) {
             const newBackgroundIsDark = isDarkBackground(...props.backgroundColor)
-            if (props.molecule.cootBondsOptions.isDarkBackground !== newBackgroundIsDark) {
-                props.molecule.cootBondsOptions.isDarkBackground = newBackgroundIsDark
+            if (props.molecule.isDarkBackground !== newBackgroundIsDark) {
+                props.molecule.isDarkBackground = newBackgroundIsDark
                 props.molecule.setAtomsDirty(true)
                 props.molecule.redraw()
             }
@@ -167,14 +167,14 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
             return
         }
 
-        if (isVisible && showState['CBs'] && props.molecule.cootBondsOptions.smoothness !== bondSmoothness) {
-            props.molecule.cootBondsOptions.smoothness = bondSmoothness
+        if (isVisible && (showState['CBs'] || showState['CAs'] || showState['ligands']) && props.molecule.defaultBondOptions.smoothness !== bondSmoothness) {
+            props.molecule.defaultBondOptions.smoothness = bondSmoothness
             isDirty.current = true
             if (!busyRedrawing.current) {
                 redrawMolIfDirty()
             }
         } else {
-            props.molecule.cootBondsOptions.smoothness = bondSmoothness
+            props.molecule.defaultBondOptions.smoothness = bondSmoothness
         }
 
     }, [bondSmoothness]);
@@ -184,14 +184,14 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
             return
         }
 
-        if (isVisible && showState['CBs'] && props.molecule.cootBondsOptions.width !== bondWidth) {
-            props.molecule.cootBondsOptions.width = bondWidth
+        if (isVisible && (showState['CBs'] || showState['CAs'] || showState['ligands']) && props.molecule.defaultBondOptions.width !== bondWidth) {
+            props.molecule.defaultBondOptions.width = bondWidth
             isDirty.current = true
             if (!busyRedrawing.current) {
                 redrawMolIfDirty()
             }
         } else {
-            props.molecule.cootBondsOptions.width = bondWidth
+            props.molecule.defaultBondOptions.width = bondWidth
         }
 
     }, [bondWidth]);
@@ -201,14 +201,14 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
             return
         }
 
-        if (isVisible && showState['CBs'] && props.molecule.cootBondsOptions.atomRadiusBondRatio !== atomRadiusBondRatio) {
-            props.molecule.cootBondsOptions.atomRadiusBondRatio = atomRadiusBondRatio
+        if (isVisible && (showState['CBs'] || showState['CAs'] || showState['ligands']) && props.molecule.defaultBondOptions.atomRadiusBondRatio !== atomRadiusBondRatio) {
+            props.molecule.defaultBondOptions.atomRadiusBondRatio = atomRadiusBondRatio
             isDirty.current = true
             if (!busyRedrawing.current) {
                 redrawMolIfDirty()
             }
         } else {
-            props.molecule.cootBondsOptions.atomRadiusBondRatio = atomRadiusBondRatio
+            props.molecule.defaultBondOptions.atomRadiusBondRatio = atomRadiusBondRatio
         }
 
     }, [atomRadiusBondRatio]);
@@ -343,7 +343,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     const handleCopyFragment = () => {
         async function createNewFragmentMolecule() {
             const cid =  `//${clickedResidue.chain}/${selectedResidues[0]}-${selectedResidues[1]}/*`
-            const newMolecule = await props.molecule.copyFragmentUsingCid(cid, props.backgroundColor, props.defaultBondSmoothness, true)
+            const newMolecule = await props.molecule.copyFragmentUsingCid(cid, true)
             props.changeMolecules({ action: "Add", item: newMolecule })
         }
 
