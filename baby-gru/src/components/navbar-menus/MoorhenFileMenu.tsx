@@ -64,7 +64,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     const readPdbFile = async (file: File): Promise<moorhen.Molecule> => {
         const newMolecule = new MoorhenMolecule(commandCentre, glRef, monomerLibraryPath)
         newMolecule.setBackgroundColour(props.backgroundColor)
-        newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
+        newMolecule.defaultBondOptions.smoothness = props.defaultBondSmoothness
         await newMolecule.loadToCootFromFile(file)        
         return newMolecule        
     }
@@ -152,7 +152,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     const fetchMoleculeFromURL = async (url: RequestInfo | URL, molName: string): Promise<moorhen.Molecule> => {
         const newMolecule = new MoorhenMolecule(commandCentre, glRef, monomerLibraryPath)
         newMolecule.setBackgroundColour(props.backgroundColor)
-        newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
+        newMolecule.defaultBondOptions.smoothness = props.defaultBondSmoothness
         try {
             await newMolecule.loadToCootFromURL(url, molName)
             if (newMolecule.molNo === -1) throw new Error("Cannot read the fetched molecule...")
@@ -256,7 +256,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         let drawPromises: Promise<void>[] = []
         newMolecules.forEach((molecule, moleculeIndex) => {
             const storedMoleculeData = sessionData.moleculeData[moleculeIndex]
-            molecule.cootBondsOptions = storedMoleculeData.cootBondsOptions
+            molecule.defaultBondOptions = storedMoleculeData.defaultBondOptions
             storedMoleculeData.representations.forEach(item => molecule.addRepresentation(item.style, item.cid))
         })
 

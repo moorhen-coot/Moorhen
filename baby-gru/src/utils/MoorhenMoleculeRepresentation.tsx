@@ -21,6 +21,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     colourRules: moorhen.ColourRule[];
     isCustom: boolean;
     useDefaultColourRules: boolean;
+    bondOptions: moorhen.cootBondOptions;
 
     constructor(style: moorhen.RepresentationStyles, cid: string, commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>) {
         this.uniqueId = guid()
@@ -34,6 +35,11 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         this.colourRules = null
         this.isCustom = false
         this.useDefaultColourRules = true
+        this.bondOptions = {
+            smoothness: 1,
+            width: 0.1,
+            atomRadiusBondRatio: 1
+        }
         this.styleHasAtomBuffers = ![
             'contact_dots', 'ligand_validation', 'chemical_features', 'unitCell', 'MolecularSurface', 'VdWSurface', 
             'gaussian', 'allHBonds', 'rotamer', 'rama', 'environment', 'ligand_environment', 'hover', 'CDs'
@@ -74,6 +80,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     setParentMolecule(molecule: moorhen.Molecule) {
         this.parentMolecule = molecule
         this.colourRules = this.parentMolecule.defaultColourRules
+        this.bondOptions = this.parentMolecule.defaultBondOptions
     }
 
     async buildBuffers(objects: moorhen.DisplayObject[]) {
@@ -347,10 +354,10 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         }
 
         const bondSettings = [
-            this.parentMolecule.cootBondsOptions.isDarkBackground,
-            name === 'ligands' ? this.parentMolecule.cootBondsOptions.width * 1.5 : this.parentMolecule.cootBondsOptions.width,
-            name === 'ligands' ? this.parentMolecule.cootBondsOptions.atomRadiusBondRatio * 1.5 : this.parentMolecule.cootBondsOptions.atomRadiusBondRatio,
-            this.parentMolecule.cootBondsOptions.smoothness
+            this.parentMolecule.isDarkBackground,
+            name === 'ligands' ? this.bondOptions.width * 1.5 : this.bondOptions.width,
+            name === 'ligands' ? this.bondOptions.atomRadiusBondRatio * 1.5 : this.bondOptions.atomRadiusBondRatio,
+            this.bondOptions.smoothness
         ]
 
         if (typeof cid !== 'string' || cid === '/*/*/*/*') {
@@ -421,7 +428,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             const response = await this.commandCentre.current.cootCommand({
                 returnType: "instanced_mesh",
                 command: "contact_dots_for_ligand",
-                commandArgs: [this.parentMolecule.molNo, cid, this.parentMolecule.cootBondsOptions.smoothness]
+                commandArgs: [this.parentMolecule.molNo, cid, this.bondOptions.smoothness]
             }) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>;
             const objects = [response.data.result.result];
             return objects
@@ -572,7 +579,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         const response = await this.commandCentre.current.cootCommand({
             returnType: "instanced_mesh",
             command: "all_molecule_contact_dots",
-            commandArgs: [this.parentMolecule.molNo, this.parentMolecule.cootBondsOptions.smoothness]
+            commandArgs: [this.parentMolecule.molNo, this.bondOptions.smoothness]
         }) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>
         try {
             const objects = [response.data.result.result]

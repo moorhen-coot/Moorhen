@@ -82,7 +82,7 @@ const MoorhenImportLigandDictionary = (props: {
                 newMolecule.molNo = result.data.result.result
                 newMolecule.name = instanceName
                 newMolecule.setBackgroundColour(backgroundColor)
-                newMolecule.cootBondsOptions.smoothness = defaultBondSmoothness
+                newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
                 await newMolecule.addDict(fileContent)
                 changeMolecules({ action: "Add", item: newMolecule })
                 await newMolecule.fetchIfDirtyAndDraw("CBs")

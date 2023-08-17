@@ -59,7 +59,7 @@ export const MoorhenGetMonomerMenuItem = (props: {
             newMolecule.molNo = result.data.result.result
             newMolecule.name = newTlc
             newMolecule.setBackgroundColour(props.glRef.current.background_colour)
-            newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
+            newMolecule.defaultBondOptions.smoothness = props.defaultBondSmoothness
             const fromMolecule = props.molecules.find(molecule => molecule.molNo === fromMolNo)
             if (typeof fromMolecule !== 'undefined') {
                 const ligandDict = fromMolecule.getDict(newTlc)

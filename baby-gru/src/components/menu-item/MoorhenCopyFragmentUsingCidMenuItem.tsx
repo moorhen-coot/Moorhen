@@ -40,25 +40,8 @@ export const MoorhenCopyFragmentUsingCidMenuItem = (props: {
             return
         }
 
-        const commandArgs = [
-            parseInt(fromRef.current.value),
-            `${cidToCopy}`,
-        ]
-
-        const response = await props.commandCentre.current.cootCommand({
-            returnType: "status",
-            command: "copy_fragment_using_cid",
-            commandArgs: commandArgs,
-        }, true) as moorhen.WorkerResponse<number> 
-        
-        const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.monomerLibraryPath)
-        newMolecule.name = `${fromMolecule.name} fragment`
-        newMolecule.molNo = response.data.result.result
-        newMolecule.setBackgroundColour(props.backgroundColor)
-        newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
-        await newMolecule.fetchIfDirtyAndDraw('CBs')
+        const newMolecule = await fromMolecule.copyFragmentUsingCid(cidToCopy, true)
         props.changeMolecules({ action: "Add", item: newMolecule })
-        
         props.setPopoverIsShown(false)
     }
 

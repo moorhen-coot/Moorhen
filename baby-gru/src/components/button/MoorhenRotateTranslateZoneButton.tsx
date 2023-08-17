@@ -83,9 +83,7 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
             return
         }
         /* Copy the component to move into a new molecule */
-        const newMolecule = await molecule.copyFragmentUsingCid(
-            fragmentCid.current, props.backgroundColor, props.defaultBondSmoothness, false
-        )
+        const newMolecule = await molecule.copyFragmentUsingCid(fragmentCid.current, false)
         await newMolecule.updateAtoms()
         /* redraw after delay so that the context menu does not refresh empty */
         setTimeout(async () => {

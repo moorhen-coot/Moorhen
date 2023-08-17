@@ -45,7 +45,7 @@ export const MoorhenLoadTutorialDataMenuItem = (props: {
         const tutorialNumber = tutorialNumberSelectorRef.current.value
         const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.monomerLibraryPath)
         newMolecule.setBackgroundColour(props.backgroundColor)
-        newMolecule.cootBondsOptions.smoothness = props.defaultBondSmoothness
+        newMolecule.defaultBondOptions.smoothness = props.defaultBondSmoothness
         const newMap = new MoorhenMap(props.commandCentre, props.glRef)
         const newDiffMap = new MoorhenMap(props.commandCentre, props.glRef)
         await newMolecule.loadToCootFromURL(`${props.urlPrefix}/baby-gru/tutorials/moorhen-tutorial-structure-number-${tutorialNumber}.pdb`, `mol-${tutorialNumber}`)

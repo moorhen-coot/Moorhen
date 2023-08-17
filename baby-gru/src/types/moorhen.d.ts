@@ -64,7 +64,6 @@ export namespace moorhen {
     }
     
     type cootBondOptions = {
-        isDarkBackground: boolean;
         smoothness: number;
         width: number;
         atomRadiusBondRatio: number;
@@ -84,6 +83,7 @@ export namespace moorhen {
     }
     
     interface Molecule {
+        fitLigandHere(mapMolNo: number, ligandMolNo: number, redraw?: boolean, useConformers?: boolean, conformerCount?: number): Promise<Molecule[]>;
         isLigand(): boolean;
         removeRepresentation(representationId: string): void;
         addRepresentation(style: string, cid: string, isCustom?: boolean, colour?: moorhen.ColourRule[]): Promise<void>;
@@ -91,7 +91,7 @@ export namespace moorhen {
         drawWithStyleFromMesh(style: string, meshObjects: any[], cid?: string): Promise<void>;
         updateWithMovedAtoms(movedResidues: AtomInfo[][]): Promise<void>;
         transformedCachedAtomsAsMovedAtoms(selectionCid?: string): AtomInfo[][];
-        copyFragmentUsingCid(cid: string, backgroundColor: [number, number, number, number], defaultBondSmoothness: number, doRecentre?: boolean, style?: string): Promise<Molecule>;
+        copyFragmentUsingCid(cid: string, doRecentre?: boolean, style?: string): Promise<Molecule>;
         hideCid(cid: string): Promise<void>;
         unhideAll(): Promise<void>;
         drawUnitCell(): void;
@@ -154,8 +154,9 @@ export namespace moorhen {
             boxRadius: number;
             gridScale: number;
         };
+        isDarkBackground: boolean;
         representations: MoleculeRepresentation[];
-        cootBondsOptions: cootBondOptions;
+        defaultBondOptions: cootBondOptions;
         displayObjectsTransformation: { origin: [number, number, number], quat: any, centre: [number, number, number] }
         uniqueId: string;
         defaultColourRules: ColourRule[];
@@ -182,6 +183,7 @@ export namespace moorhen {
         show(): void;
         hide(): void;
         setAtomBuffers(arg0: AtomInfo[]): void;
+        bondOptions: moorhen.cootBondOptions;
         useDefaultColourRules: boolean;
         uniqueId: string;
         style: string;
@@ -351,7 +353,7 @@ export namespace moorhen {
         molNo: number;
         pdbData: string;
         representations: {cid: string, style: string}[];
-        cootBondsOptions: cootBondOptions;
+        defaultBondOptions: cootBondOptions;
         connectedToMaps: number[];
     }
     

@@ -67,7 +67,7 @@ export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moor
         }
         
         /* Copy the component to move into a new molecule */
-        const newMolecule = await molecule.copyFragmentUsingCid(selectedFragmentRef.current.cid, props.backgroundColor, props.defaultBondSmoothness, false)
+        const newMolecule = await molecule.copyFragmentUsingCid(selectedFragmentRef.current.cid, false)
         
         /* Next rotaner */
         const rotamerInfo = await props.commandCentre.current.cootCommand({
