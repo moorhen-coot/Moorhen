@@ -293,9 +293,9 @@ export const MoorhenModifyColourRulesCard = (props: {
                 anchorEl={props.anchorEl.current}
                 anchorOrigin={{ vertical: 'center', horizontal: 'center' }}
                 transformOrigin={{ vertical: 'center', horizontal: 'center', }}
-                sx={{'& .MuiPaper-root': {backgroundColor: props.isDark ? 'grey' : 'white', borderRadius: '1rem', marginTop: '0.1rem'}}}
+                sx={{'& .MuiPaper-root': {backgroundColor: props.isDark ? 'grey' : 'white', borderRadius: '1rem', marginTop: '0.1rem', borderStyle: 'solid', borderColor: 'grey', borderWidth: '1px'}}}
             >
-            <Stack direction="vertical" gap={2} style={{alignItems: 'center', border:'solid', borderColor: 'grey', borderWidth: '1px', borderRadius: '1rem', padding: '0.5rem'}}>
+            <Stack direction="vertical" gap={2} style={{alignItems: 'center', padding: '0.5rem'}}>
                 <Stack gap={2} direction='horizontal' style={{margin: 0, padding: 0}}>
                 <Stack gap={2} direction='vertical' style={{margin: 0, padding: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center'}}>
                     <Form.Group style={{ width: '100%', margin: 0 }}>

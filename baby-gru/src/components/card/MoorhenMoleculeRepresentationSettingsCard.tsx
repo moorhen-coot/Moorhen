@@ -1,4 +1,4 @@
-import { Stack } from "react-bootstrap";
+import { Form, Stack } from "react-bootstrap";
 import { IconButton, Popover, Slider } from '@mui/material';
 import MoorhenSlider from '../misc/MoorhenSlider';
 import { AddCircleOutline, RemoveCircleOutline } from '@mui/icons-material';
@@ -13,6 +13,16 @@ export const MoorhenMoleculeRepresentationSettingsCard = (props: {
     molecules: moorhen.Molecule[];
     urlPrefix: string;
     glRef: React.RefObject<webGL.MGWebGL>;
+    gaussianSettingsProps: {
+        surfaceSigma: number;
+        setSurfaceSigma: React.Dispatch<React.SetStateAction<number>>;
+        surfaceLevel: number;
+        setSurfaceLevel: React.Dispatch<React.SetStateAction<number>>;
+        surfaceRadius: number;
+        setSurfaceRadius: React.Dispatch<React.SetStateAction<number>>;
+        surfaceGridScale: number;
+        setSurfaceGridScale: React.Dispatch<React.SetStateAction<number>>;
+    };
     bondSettingsProps: {
         bondWidth: number;
         setBondWidth: React.Dispatch<React.SetStateAction<number>>;
@@ -28,18 +38,16 @@ export const MoorhenMoleculeRepresentationSettingsCard = (props: {
         setAtomRadiusBondRatio, bondSmoothness, setBondSmoothness
     } = props.bondSettingsProps
 
-    const increaseWidthButton = <IconButton onClick={() => setBondWidth(bondWidth + 0.1)} style={{padding: 0, color: props.isDark ? 'white' : 'grey'}}>
-                                    <AddCircleOutline/>
-                                </IconButton>
-    const decreaseWidthButton = <IconButton onClick={() => setBondWidth(bondWidth - 0.1)} style={{padding: 0, color: props.isDark ? 'white' : 'grey'}}>
-                                    <RemoveCircleOutline/>
-                                </IconButton>
-    const increaseRatioButton = <IconButton onClick={() => setAtomRadiusBondRatio(atomRadiusBondRatio + 0.1)} style={{padding: 0, color: props.isDark ? 'white' : 'grey'}}>
-                                    <AddCircleOutline/>
-                                </IconButton>
-    const decreaseRatioButton = <IconButton onClick={() => setAtomRadiusBondRatio(atomRadiusBondRatio - 0.1)} style={{padding: 0, color: props.isDark ? 'white' : 'grey'}}>
-                                    <RemoveCircleOutline/>
-                                </IconButton>
+    const {
+        surfaceSigma, setSurfaceSigma, surfaceLevel, setSurfaceLevel,
+        surfaceRadius, setSurfaceRadius, surfaceGridScale, setSurfaceGridScale
+    } = props.gaussianSettingsProps
+
+    const getSliderButton = (state: number, stateSetter: React.Dispatch<React.SetStateAction<number>>, step: number) => {
+        return <IconButton style={{padding: 0, color: props.isDark ? 'white' : 'grey'}} onClick={() => stateSetter((prev) => { return prev + step})} >
+                    {step > 0 ? <AddCircleOutline/> : <RemoveCircleOutline/>}
+                </IconButton>
+    }
 
     return <Popover
                 onClose={() => props.setShow(false)}
@@ -47,13 +55,33 @@ export const MoorhenMoleculeRepresentationSettingsCard = (props: {
                 anchorEl={props.anchorEl.current}
                 anchorOrigin={{ vertical: 'center', horizontal: 'center' }}
                 transformOrigin={{ vertical: 'center', horizontal: 'center', }}
-                sx={{'& .MuiPaper-root': {backgroundColor: props.isDark ? 'grey' : 'white', marginTop: '0.1rem'}}}
+                sx={{'& .MuiPaper-root': {backgroundColor: props.isDark ? 'grey' : 'white', marginTop: '0.1rem', borderRadius: '1rem', borderStyle: 'solid', borderColor: 'grey', borderWidth: '1px'}}}
                 
             >
             <Stack gap={2} direction='vertical' style={{width: '25rem', margin: '0.5rem'}}>
-                <div style={{marginLeft: '2rem', marginRight: '2rem'}}>
-                <MoorhenSlider showMinMaxVal={false} decrementButton={decreaseWidthButton} incrementButton={increaseWidthButton} minVal={0.05} maxVal={0.5} logScale={false} sliderTitle="Bond width" initialValue={bondWidth} externalValue={bondWidth} setExternalValue={setBondWidth}/>
-                <MoorhenSlider showMinMaxVal={false} decrementButton={decreaseRatioButton} incrementButton={increaseRatioButton} minVal={1.0} maxVal={3.5} logScale={false} sliderTitle="Radius-Bond ratio" initialValue={atomRadiusBondRatio} externalValue={atomRadiusBondRatio} setExternalValue={setAtomRadiusBondRatio} />
+                <div style={{paddingLeft: '2rem', paddingRight: '2rem', paddingTop: '0.5rem', paddingBottom: '0.5rem', borderStyle: 'solid', borderWidth: '1px', borderColor: 'grey', borderRadius: '1.5rem'}}>
+                <MoorhenSlider
+                    sliderTitle="Bond width"
+                    initialValue={bondWidth}
+                    externalValue={bondWidth}
+                    setExternalValue={setBondWidth}
+                    showMinMaxVal={false}
+                    decrementButton={getSliderButton(bondWidth, setBondWidth, -0.1)}
+                    incrementButton={getSliderButton(bondWidth, setBondWidth, 0.1)}
+                    minVal={0.05}
+                    maxVal={0.5}
+                    logScale={false}/>
+                <MoorhenSlider
+                    sliderTitle="Radius-Bond ratio"
+                    initialValue={atomRadiusBondRatio}
+                    externalValue={atomRadiusBondRatio}
+                    setExternalValue={setAtomRadiusBondRatio} 
+                    showMinMaxVal={false}
+                    decrementButton={getSliderButton(atomRadiusBondRatio, setAtomRadiusBondRatio, -0.1)}
+                    incrementButton={getSliderButton(atomRadiusBondRatio, setAtomRadiusBondRatio, 0.1)}
+                    minVal={1.0}
+                    maxVal={3.5}
+                    logScale={false}/>
                 <span>Bond Smoothness</span>        
                 <Slider
                     aria-label="Smoothness"
@@ -87,6 +115,52 @@ export const MoorhenMoleculeRepresentationSettingsCard = (props: {
                         {value: 100, label: 'Smooth'}
                     ]}
                 />
+                </div>
+                <div style={{paddingLeft: '2rem', paddingRight: '2rem', paddingTop: '0.5rem', paddingBottom: '0.5rem', borderStyle: 'solid', borderWidth: '1px', borderColor: 'grey', borderRadius: '1.5rem'}}>
+                    <MoorhenSlider
+                        sliderTitle="Sigma"
+                        initialValue={surfaceSigma}
+                        externalValue={surfaceSigma}
+                        setExternalValue={setSurfaceSigma}
+                        showMinMaxVal={false}
+                        decrementButton={getSliderButton(surfaceSigma, setSurfaceSigma, -1)}
+                        incrementButton={getSliderButton(surfaceSigma, setSurfaceSigma, 1)}
+                        minVal={0.01}
+                        maxVal={10}
+                        logScale={false}/>
+                    <MoorhenSlider
+                        sliderTitle="Contour level"
+                        initialValue={surfaceLevel}
+                        externalValue={surfaceLevel}
+                        setExternalValue={setSurfaceLevel} 
+                        showMinMaxVal={false}
+                        decrementButton={getSliderButton(surfaceLevel, setSurfaceLevel, -1)}
+                        incrementButton={getSliderButton(surfaceLevel, setSurfaceLevel, 1)}
+                        minVal={0.01}
+                        maxVal={10}
+                        logScale={false}/>
+                    <MoorhenSlider
+                        sliderTitle="Box radius"
+                        initialValue={surfaceRadius}
+                        externalValue={surfaceRadius}
+                        setExternalValue={setSurfaceRadius} 
+                        showMinMaxVal={false}
+                        decrementButton={getSliderButton(surfaceRadius, setSurfaceRadius, -1)}
+                        incrementButton={getSliderButton(surfaceRadius, setSurfaceRadius, 1)}
+                        minVal={0.01}
+                        maxVal={10}
+                        logScale={false}/>
+                    <MoorhenSlider 
+                        sliderTitle="Grid scale"
+                        initialValue={surfaceGridScale}
+                        externalValue={surfaceGridScale}
+                        setExternalValue={setSurfaceGridScale} 
+                        showMinMaxVal={false}
+                        decrementButton={getSliderButton(surfaceGridScale, setSurfaceGridScale, -0.1)}
+                        incrementButton={getSliderButton(surfaceGridScale, setSurfaceGridScale, 0.1)}
+                        minVal={0.01}
+                        maxVal={1.5}
+                        logScale={false}/>
                 </div>
             </Stack>
         </Popover>
