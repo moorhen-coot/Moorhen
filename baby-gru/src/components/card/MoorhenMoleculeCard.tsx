@@ -9,8 +9,9 @@ import { Chip, FormGroup, hexToRgb } from "@mui/material";
 import { getNameLabel } from "./cardUtils"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { AddOutlined, DeleteOutlined, FormatColorFillOutlined } from '@mui/icons-material';
+import { AddOutlined, DeleteOutlined, FormatColorFillOutlined, SettingsOutlined } from '@mui/icons-material';
 import { MoorhenAddCustomRepresentationCard } from "./MoorhenAddCustomRepresentationCard"
+import { MoorhenMoleculeRepresentationSettingsCard } from "./MoorhenMoleculeRepresentationSettingsCard"
 import { MoorhenModifyColourRulesCard } from './MoorhenModifyColourRulesCard';
 
 const allRepresentations = [ 'CBs', 'CAs', 'CRs', 'ligands', 'gaussian', 'MolecularSurface', 'DishyBases', 'VdwSpheres', 'rama', 'rotamer', 'CDs', 'allHBonds','glycoBlocks' ]
@@ -61,12 +62,12 @@ export type clickedResidueType = {
 }
 
 export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInterface>((props, cardRef) => {
-    const addCustomRepresentationAnchorDivRef = useRef<HTMLDivElement | null>(null)
     const addColourRulesAnchorDivRef = useRef<HTMLDivElement | null>(null)
     const busyRedrawing = useRef<boolean>(false)
     const isDirty = useRef<boolean>(false)
     const [showColourRulesModal, setShowColourRulesModal] = useState<boolean>(false)
     const [showCreateCustomRepresentation, setShowCreateCustomRepresentation] = useState<boolean>(false)
+    const [showCreateRepresentationSettingsModal, setShowCreateRepresentationSettingsModal] = useState<boolean>(false)
     const [showState, changeShowState] = useReducer(showStateReducer, initialShowState)
     const [customRepresentationList, changeCustomRepresentationList] = useReducer(customRepReducer, initialCustomRep)
     const [selectedResidues, setSelectedResidues] = useState<[number, number] | null>(null);
@@ -75,7 +76,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
     const [isVisible, setIsVisible] = useState<boolean>(true)
     const [bondWidth, setBondWidth] = useState<number>(props.molecule.defaultBondOptions.width)
     const [atomRadiusBondRatio, setAtomRadiusBondRatio] = useState<number>(props.molecule.defaultBondOptions.atomRadiusBondRatio)
-    const [bondSmoothness, setBondSmoothness] = useState<number>(props.molecule.defaultBondOptions.smoothness)
+    const [bondSmoothness, setBondSmoothness] = useState<number>(props.molecule.defaultBondOptions.smoothness === 1 ? 1 : props.molecule.defaultBondOptions.smoothness === 2 ? 50 : 100)
     const [surfaceSigma, setSurfaceSigma] = useState<number>(4.4)
     const [surfaceLevel, setSurfaceLevel] = useState<number>(4.0)
     const [surfaceRadius, setSurfaceRadius] = useState<number>(5.0)
@@ -103,14 +104,15 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
         surfaceRadius, setSurfaceRadius, surfaceGridScale, setSurfaceGridScale
     }
 
-    const redrawMolIfDirty = async () => {
+    const redrawMolIfDirty = async (representationIds: string[]) => {
         if (isDirty.current) {
             busyRedrawing.current = true
             isDirty.current = false
-            props.molecule.setAtomsDirty(true)
-            await props.molecule.redraw()
+            await Promise.all(
+                representationIds.map(id => props.molecule.redrawRepresentation(id))
+            )
             busyRedrawing.current = false
-            redrawMolIfDirty()
+            redrawMolIfDirty(representationIds)
         }
     }
     
@@ -139,7 +141,9 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
             return
         }
 
-        if (isVisible && (showState['CBs'] || showState['CAs'])) {
+        const representations = props.molecule.representations.filter(representation => representation.visible && ['CBs', 'ligands'].includes(representation.style))
+
+        if (isVisible && representations.length > 0) {
             props.molecule.setAtomsDirty(true)
             props.molecule.redraw()
         }
@@ -151,7 +155,9 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
             return
         }
 
-        if (isVisible && (showState['CBs'] || showState['ligands'])) {
+        const representations = props.molecule.representations.filter(representation => representation.visible && ['CBs', 'ligands'].includes(representation.style))
+
+        if (isVisible && representations.length > 0) {
             const newBackgroundIsDark = isDarkBackground(...props.backgroundColor)
             if (props.molecule.isDarkBackground !== newBackgroundIsDark) {
                 props.molecule.isDarkBackground = newBackgroundIsDark
@@ -167,14 +173,16 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
             return
         }
 
-        if (isVisible && (showState['CBs'] || showState['CAs'] || showState['ligands']) && props.molecule.defaultBondOptions.smoothness !== bondSmoothness) {
-            props.molecule.defaultBondOptions.smoothness = bondSmoothness
+        const representations = props.molecule.representations.filter(representation => representation.useDefaultBondOptions && representation.visible && ['CBs', 'CAs', 'ligands'].includes(representation.style))
+
+        if (isVisible && representations.length > 0 && props.molecule.defaultBondOptions.smoothness !== bondSmoothness) {
+            props.molecule.defaultBondOptions.smoothness = bondSmoothness === 1 ? 1 : bondSmoothness === 50 ? 2 : 3
             isDirty.current = true
             if (!busyRedrawing.current) {
-                redrawMolIfDirty()
+                redrawMolIfDirty(representations.map(representation => representation.uniqueId))
             }
         } else {
-            props.molecule.defaultBondOptions.smoothness = bondSmoothness
+            props.molecule.defaultBondOptions.smoothness = bondSmoothness === 1 ? 1 : bondSmoothness === 50 ? 2 : 3
         }
 
     }, [bondSmoothness]);
@@ -184,11 +192,13 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
             return
         }
 
-        if (isVisible && (showState['CBs'] || showState['CAs'] || showState['ligands']) && props.molecule.defaultBondOptions.width !== bondWidth) {
+        const representations = props.molecule.representations.filter(representation => representation.useDefaultBondOptions && representation.visible && ['CBs', 'CAs', 'ligands'].includes(representation.style))
+
+        if (isVisible && representations.length > 0 && props.molecule.defaultBondOptions.width !== bondWidth) {
             props.molecule.defaultBondOptions.width = bondWidth
             isDirty.current = true
             if (!busyRedrawing.current) {
-                redrawMolIfDirty()
+                redrawMolIfDirty(representations.map(representation => representation.uniqueId))
             }
         } else {
             props.molecule.defaultBondOptions.width = bondWidth
@@ -201,11 +211,13 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
             return
         }
 
-        if (isVisible && (showState['CBs'] || showState['CAs'] || showState['ligands']) && props.molecule.defaultBondOptions.atomRadiusBondRatio !== atomRadiusBondRatio) {
+        const representations = props.molecule.representations.filter(representation => representation.useDefaultBondOptions && representation.visible && ['CBs', 'CAs', 'ligands'].includes(representation.style))
+
+        if (isVisible && representations.length > 0 && props.molecule.defaultBondOptions.atomRadiusBondRatio !== atomRadiusBondRatio) {
             props.molecule.defaultBondOptions.atomRadiusBondRatio = atomRadiusBondRatio
             isDirty.current = true
             if (!busyRedrawing.current) {
-                redrawMolIfDirty()
+                redrawMolIfDirty(representations.map(representation => representation.uniqueId))
             }
         } else {
             props.molecule.defaultBondOptions.atomRadiusBondRatio = atomRadiusBondRatio
@@ -226,11 +238,13 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
             return
         }
 
-        if (isVisible && showState['gaussian'] && props.molecule.gaussianSurfaceSettings.sigma !== surfaceSigma) {
+        const representations = props.molecule.representations.filter(representation => representation.visible && representation.style === 'gaussian')
+
+        if (isVisible && representations.length > 0 && props.molecule.gaussianSurfaceSettings.sigma !== surfaceSigma) {
             props.molecule.gaussianSurfaceSettings.sigma = surfaceSigma
             isDirty.current = true
             if (!busyRedrawing.current) {
-                redrawMolIfDirty()
+                redrawMolIfDirty(representations.map(representation => representation.uniqueId))
             }
         } else {
             props.molecule.gaussianSurfaceSettings.sigma = surfaceSigma
@@ -243,11 +257,13 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
             return
         }
 
-        if (isVisible && showState['gaussian'] && props.molecule.gaussianSurfaceSettings.countourLevel !== surfaceLevel) {
+        const representations = props.molecule.representations.filter(representation => representation.visible && representation.style === 'gaussian')
+
+        if (isVisible && representations.length > 0 && props.molecule.gaussianSurfaceSettings.countourLevel !== surfaceLevel) {
             props.molecule.gaussianSurfaceSettings.countourLevel = surfaceLevel
             isDirty.current = true
             if (!busyRedrawing.current) {
-                redrawMolIfDirty()
+                redrawMolIfDirty(representations.map(representation => representation.uniqueId))
             }
         } else {
             props.molecule.gaussianSurfaceSettings.countourLevel = surfaceLevel
@@ -260,11 +276,13 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
             return
         }
 
-        if (isVisible && showState['gaussian'] && props.molecule.gaussianSurfaceSettings.boxRadius !== surfaceRadius) {
+        const representations = props.molecule.representations.filter(representation => representation.visible && representation.style === 'gaussian')
+
+        if (isVisible && representations.length > 0 && props.molecule.gaussianSurfaceSettings.boxRadius !== surfaceRadius) {
             props.molecule.gaussianSurfaceSettings.boxRadius = surfaceRadius
             isDirty.current = true
             if (!busyRedrawing.current) {
-                redrawMolIfDirty()
+                redrawMolIfDirty(representations.map(representation => representation.uniqueId))
             }
         } else {
             props.molecule.gaussianSurfaceSettings.boxRadius = surfaceRadius
@@ -277,11 +295,13 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
             return
         }
 
-        if (isVisible && showState['gaussian'] && props.molecule.gaussianSurfaceSettings.gridScale !== surfaceGridScale) {
+        const representations = props.molecule.representations.filter(representation => representation.visible && representation.style === 'gaussian')
+
+        if (isVisible && representations.length > 0 && props.molecule.gaussianSurfaceSettings.gridScale !== surfaceGridScale) {
             props.molecule.gaussianSurfaceSettings.gridScale = surfaceGridScale
             isDirty.current = true
             if (!busyRedrawing.current) {
-                redrawMolIfDirty()
+                redrawMolIfDirty(representations.map(representation => representation.uniqueId))
             }
         } else {
             props.molecule.gaussianSurfaceSettings.gridScale = surfaceGridScale
@@ -420,7 +440,6 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                         selectedResidues={selectedResidues}
                         currentDropdownMolNo={props.currentDropdownMolNo}
                         setCurrentDropdownMolNo={props.setCurrentDropdownMolNo}
-                        bondSettingsProps={bondSettingsProps}
                         gaussianSettingsProps={gaussianSettingsProps}
                         symmetrySettingsProps={symmetrySettingsProps}
                         backupsEnabled={props.makeBackups}
@@ -432,7 +451,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
         <Card.Body style={{ display: isCollapsed ? 'none' : '', padding: '0.25rem', justifyContent:'center' }}>
             <Stack gap={2} direction='vertical'>
                 <Row style={{display: 'flex'}}>
-                    <Col  style={{ width:'100%', height: '100%' }}>
+                    <Col style={{ width:'100%', height: '100%' }}>
                         <div ref={addColourRulesAnchorDivRef} style={{ margin: '1px', paddingTop: '0.25rem', paddingBottom: '0.25rem',  border: '1px solid', borderRadius:'0.33rem', borderColor: "#CCC" }}>
                             <FormGroup style={{ margin: "0px", padding: "0px", display: 'flex', justifyContent: 'center'}} row>
                                 {allRepresentations.map(key => 
@@ -447,36 +466,35 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                                         isDark={props.isDark}
                                 />)}
                             </FormGroup>
+                            <hr style={{ marginTop: '0.5rem', marginBottom: "0.5rem", marginLeft: '0.5rem', marginRight: '0.5rem' }}></hr>
+                            {props.molecule.representations.some(representation => representation.isCustom) ?
+                                <FormGroup style={{ margin: "0px", padding: "0px" }} row>
+                                    {props.molecule.representations.filter(representation => representation.isCustom).map(representation => {
+                                        return <CustomRepresentationChip isDark={props.isDark} key={representation.uniqueId} molecule={props.molecule} representation={representation} isVisible={isVisible} changeCustomRepresentationList={changeCustomRepresentationList}/>
+                                    })}
+                                </FormGroup>
+                            :
+                                <span>No custom representations</span>
+                            }
                         </div>
                     </Col>
-                    <Col md='auto' style={{paddingLeft: 0}}>
+                    <Col md='auto' style={{paddingLeft: 0, justifyContent: 'center', display: 'flex'}} >
+                        <Stack gap={1} direction='vertical'>
                         <Button style={{height: '100%'}} variant='light' onClick={() => setShowColourRulesModal((prev) => { return !prev })}>
                             <FormatColorFillOutlined/>
                         </Button>
-                    </Col>
-                    <MoorhenModifyColourRulesCard molecules={props.molecules} anchorEl={addColourRulesAnchorDivRef} isDark={props.isDark} urlPrefix={props.urlPrefix} glRef={props.glRef} commandCentre={props.commandCentre} molecule={props.molecule} showColourRulesToast={showColourRulesModal} setShowColourRulesToast={setShowColourRulesModal} windowHeight={props.windowHeight} windowWidth={props.sideBarWidth}/>
-                </Row>
-                <Row style={{display: 'flex'}}>
-                    <Col  style={{ width:'100%', height: '100%' }}>
-                    <div ref={addCustomRepresentationAnchorDivRef} style={{ margin: '1px', paddingTop: '0.25rem', paddingBottom: '0.25rem',  border: '1px solid', borderRadius:'0.33rem', borderColor: "#CCC" }}>
-                    {props.molecule.representations.some(representation => representation.isCustom) ?
-                        <FormGroup style={{ margin: "0px", padding: "0px" }} row>
-                            {props.molecule.representations.filter(representation => representation.isCustom).map(representation => {
-                                return <CustomRepresentationChip isDark={props.isDark} key={representation.uniqueId} molecule={props.molecule} representation={representation} isVisible={isVisible} changeCustomRepresentationList={changeCustomRepresentationList}/>
-                            })}
-                        </FormGroup>
-                    :
-                        <span>No custom representations</span>
-                    }
-                    </div>
-                    </Col>
-                    <Col md='auto' style={{height: '100%', paddingLeft: 0}}>
-                        <Button style={{ paddingTop: '0.25rem', paddingBottom: '0.25rem' }} variant='light' onClick={() => setShowCreateCustomRepresentation((prev) => {return !prev})}>
+                        <Button style={{height: '100%'}} variant='light' onClick={() => setShowCreateRepresentationSettingsModal((prev) => { return !prev })}>
+                            <SettingsOutlined/>
+                        </Button>
+                        <Button style={{ height: '100%' }} variant='light' onClick={() => setShowCreateCustomRepresentation((prev) => {return !prev})}>
                             <AddOutlined/>
                         </Button>
-                        <MoorhenAddCustomRepresentationCard glRef={props.glRef} urlPrefix={props.urlPrefix} molecules={props.molecules} isDark={props.isDark} molecule={props.molecule} anchorEl={addCustomRepresentationAnchorDivRef} show={showCreateCustomRepresentation} setShow={setShowCreateCustomRepresentation}/>
+                        </Stack>
                     </Col>
-                </Row>                
+                    <MoorhenMoleculeRepresentationSettingsCard bondSettingsProps={bondSettingsProps} glRef={props.glRef} urlPrefix={props.urlPrefix} molecules={props.molecules} isDark={props.isDark} molecule={props.molecule} anchorEl={addColourRulesAnchorDivRef} show={showCreateRepresentationSettingsModal} setShow={setShowCreateRepresentationSettingsModal}/>
+                    <MoorhenModifyColourRulesCard molecules={props.molecules} anchorEl={addColourRulesAnchorDivRef} isDark={props.isDark} urlPrefix={props.urlPrefix} glRef={props.glRef} commandCentre={props.commandCentre} molecule={props.molecule} showColourRulesToast={showColourRulesModal} setShowColourRulesToast={setShowColourRulesModal} windowHeight={props.windowHeight} windowWidth={props.sideBarWidth}/>
+                    <MoorhenAddCustomRepresentationCard glRef={props.glRef} urlPrefix={props.urlPrefix} molecules={props.molecules} isDark={props.isDark} molecule={props.molecule} anchorEl={addColourRulesAnchorDivRef} show={showCreateCustomRepresentation} setShow={setShowCreateCustomRepresentation}/>
+                </Row>
             <Accordion alwaysOpen={true} defaultActiveKey={['sequences']}>
                 <Accordion.Item eventKey="sequences" style={{ padding: '0', margin: '0' }} >
                     <Accordion.Header style={{ padding: '0', margin: '0' }}>Sequences</Accordion.Header>

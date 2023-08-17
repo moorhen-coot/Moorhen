@@ -6,7 +6,6 @@ import { UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined
 import { MoorhenDeleteDisplayObjectMenuItem } from "../menu-item/MoorhenDeleteDisplayObjectMenuItem"
 import { MoorhenMoleculeGaussianSurfaceSettingsMenuItem } from "../menu-item/MoorhenMoleculeGaussianSurfaceSettingsMenuItem"
 import { MoorhenMoleculeSymmetrySettingsMenuItem } from "../menu-item/MoorhenMoleculeSymmetrySettingsMenuItem"
-import { MoorhenMoleculeBondSettingsMenuItem } from "../menu-item/MoorhenMoleculeBondSettingsMenuItem"
 import { MoorhenRenameDisplayObjectMenuItem } from "../menu-item/MoorhenRenameDisplayObjectMenuItem"
 import { clickedResidueType } from "../card/MoorhenMoleculeCard";
 import { moorhen } from "../../types/moorhen";
@@ -33,14 +32,6 @@ type MoorhenMoleculeCardButtonBarPropsType = {
     selectedResidues: [number, number];
     currentDropdownMolNo: number
     setCurrentDropdownMolNo: React.Dispatch<React.SetStateAction<number>>
-    bondSettingsProps: {
-        bondWidth: number;
-        setBondWidth: React.Dispatch<React.SetStateAction<number>>;
-        atomRadiusBondRatio: number;
-        setAtomRadiusBondRatio: React.Dispatch<React.SetStateAction<number>>;
-        bondSmoothness: number;
-        setBondSmoothness: React.Dispatch<React.SetStateAction<number>>;
-    };
     gaussianSettingsProps: {
         surfaceSigma: number;
         setSurfaceSigma: React.Dispatch<React.SetStateAction<number>>;
@@ -129,18 +120,13 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
             expanded: null
         },
         8: {
-            label: 'Bond display settings',
-            compressed: () => { return (<MoorhenMoleculeBondSettingsMenuItem key={8} setPopoverIsShown={setPopoverIsShown} {...props.bondSettingsProps}/>) },
+            label: 'Gaussian surface display settings',
+            compressed: () => { return (<MoorhenMoleculeGaussianSurfaceSettingsMenuItem key={8} setPopoverIsShown={setPopoverIsShown} {...props.gaussianSettingsProps}/>) },
             expanded: null
         },
         9: {
-            label: 'Gaussian surface display settings',
-            compressed: () => { return (<MoorhenMoleculeGaussianSurfaceSettingsMenuItem key={9} setPopoverIsShown={setPopoverIsShown} {...props.gaussianSettingsProps}/>) },
-            expanded: null
-        },
-        10: {
             label: 'Symmetry settings',
-            compressed: () => { return (<MoorhenMoleculeSymmetrySettingsMenuItem key={10} setPopoverIsShown={setPopoverIsShown} molecule={props.molecule} glRef={props.glRef}/>) },
+            compressed: () => { return (<MoorhenMoleculeSymmetrySettingsMenuItem key={9} setPopoverIsShown={setPopoverIsShown} molecule={props.molecule} glRef={props.glRef}/>) },
             expanded: null
         },
     }
