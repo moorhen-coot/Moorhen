@@ -131,6 +131,7 @@ export namespace moorhen {
         hasVisibleBuffers: (excludeBuffers?: string[]) => boolean;
         centreAndAlignViewOn(selectionCid: string, animate?: boolean): Promise<void>;
         buffersInclude: (bufferIn: { id: string; }) => boolean;
+        redrawRepresentation: (id: string) => Promise<void>;
         type: string;
         excludedCids: string[];
         commandCentre: React.RefObject<CommandCentre>;
