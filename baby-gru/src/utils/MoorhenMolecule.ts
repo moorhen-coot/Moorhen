@@ -832,7 +832,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
         representation.show()
     }
 
-    async addRepresentation(style: moorhen.RepresentationStyles, cid: string = '/*/*/*/*', isCustom: boolean = false, colourRules?: moorhen.ColourRule[]) {
+    async addRepresentation(style: moorhen.RepresentationStyles, cid: string = '/*/*/*/*', isCustom: boolean = false, colourRules?: moorhen.ColourRule[], bondOptions?: moorhen.cootBondOptions) {
         if (!this.defaultColourRules) {
             await this.fetchDefaultColourRules()
         }
@@ -842,6 +842,10 @@ export class MoorhenMolecule implements moorhen.Molecule {
         if(colourRules && colourRules.length > 0) {
             representation.setColourRules(colourRules)
             representation.setUseDefaultColourRules(false)
+        }
+        if(bondOptions) {
+            representation.useDefaultBondOptions = false
+            representation.bondOptions = bondOptions
         }
         await representation.draw()
         this.representations.push(representation)
@@ -1652,6 +1656,5 @@ export class MoorhenMolecule implements moorhen.Molecule {
             )
             return newMolecules
         }
-
     }
 }

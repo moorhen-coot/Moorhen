@@ -20,6 +20,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
     visible: boolean;
     colourRules: moorhen.ColourRule[];
     isCustom: boolean;
+    useDefaultBondOptions: boolean;
     useDefaultColourRules: boolean;
     bondOptions: moorhen.cootBondOptions;
 
@@ -35,6 +36,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
         this.colourRules = null
         this.isCustom = false
         this.useDefaultColourRules = true
+        this.useDefaultBondOptions = true
         this.bondOptions = {
             smoothness: 1,
             width: 0.1,
@@ -353,12 +355,22 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             style = "CA+LIGANDS"
         }
 
-        const bondSettings = [
-            this.parentMolecule.isDarkBackground,
-            name === 'ligands' ? this.bondOptions.width * 1.5 : this.bondOptions.width,
-            name === 'ligands' ? this.bondOptions.atomRadiusBondRatio * 1.5 : this.bondOptions.atomRadiusBondRatio,
-            this.bondOptions.smoothness
-        ]
+        let bondSettings: [boolean, number, number, number]
+        if (this.useDefaultBondOptions) {
+            bondSettings = [
+                this.parentMolecule.isDarkBackground,
+                name === 'ligands' ? this.parentMolecule.defaultBondOptions.width * 1.5 : this.parentMolecule.defaultBondOptions.width,
+                name === 'ligands' ? this.parentMolecule.defaultBondOptions.atomRadiusBondRatio * 1.5 : this.parentMolecule.defaultBondOptions.atomRadiusBondRatio,
+                this.parentMolecule.defaultBondOptions.smoothness
+            ]
+        } else {
+            bondSettings = [
+                this.parentMolecule.isDarkBackground,
+                name === 'ligands' ? this.bondOptions.width * 1.5 : this.bondOptions.width,
+                name === 'ligands' ? this.bondOptions.atomRadiusBondRatio * 1.5 : this.bondOptions.atomRadiusBondRatio,
+                this.bondOptions.smoothness
+            ]
+        }
 
         if (typeof cid !== 'string' || cid === '/*/*/*/*') {
             meshCommand = this.commandCentre.current.cootCommand({
@@ -534,7 +546,6 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             console.log(err)
         }
     }
-
 
     async getRamachandranBallBuffers() {
         const response = await this.commandCentre.current.cootCommand({

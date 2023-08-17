@@ -139,7 +139,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
             return
         }
 
-        if (isVisible && showState['CBs']) {
+        if (isVisible && (showState['CBs'] || showState['CAs'])) {
             props.molecule.setAtomsDirty(true)
             props.molecule.redraw()
         }
@@ -151,7 +151,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
             return
         }
 
-        if (isVisible && showState['CBs']) {
+        if (isVisible && (showState['CBs'] || showState['ligands'])) {
             const newBackgroundIsDark = isDarkBackground(...props.backgroundColor)
             if (props.molecule.isDarkBackground !== newBackgroundIsDark) {
                 props.molecule.isDarkBackground = newBackgroundIsDark
@@ -167,7 +167,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
             return
         }
 
-        if (isVisible && showState['CBs'] && props.molecule.defaultBondOptions.smoothness !== bondSmoothness) {
+        if (isVisible && (showState['CBs'] || showState['CAs'] || showState['ligands']) && props.molecule.defaultBondOptions.smoothness !== bondSmoothness) {
             props.molecule.defaultBondOptions.smoothness = bondSmoothness
             isDirty.current = true
             if (!busyRedrawing.current) {
@@ -184,7 +184,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
             return
         }
 
-        if (isVisible && showState['CBs'] && props.molecule.defaultBondOptions.width !== bondWidth) {
+        if (isVisible && (showState['CBs'] || showState['CAs'] || showState['ligands']) && props.molecule.defaultBondOptions.width !== bondWidth) {
             props.molecule.defaultBondOptions.width = bondWidth
             isDirty.current = true
             if (!busyRedrawing.current) {
@@ -201,7 +201,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
             return
         }
 
-        if (isVisible && showState['CBs'] && props.molecule.defaultBondOptions.atomRadiusBondRatio !== atomRadiusBondRatio) {
+        if (isVisible && (showState['CBs'] || showState['CAs'] || showState['ligands']) && props.molecule.defaultBondOptions.atomRadiusBondRatio !== atomRadiusBondRatio) {
             props.molecule.defaultBondOptions.atomRadiusBondRatio = atomRadiusBondRatio
             isDirty.current = true
             if (!busyRedrawing.current) {

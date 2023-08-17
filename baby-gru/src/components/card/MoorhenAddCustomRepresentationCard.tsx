@@ -2,11 +2,13 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { Stack, Button, FormSelect, Form, InputGroup, Row } from "react-bootstrap";
 import { getMultiColourRuleArgs, representationLabelMapping } from '../../utils/MoorhenUtils';
 import { moorhen } from "../../types/moorhen";
-import { Popover } from '@mui/material';
+import { IconButton, Popover, Slider } from '@mui/material';
 import { MoorhenChainSelect } from '../select/MoorhenChainSelect';
 import { HexColorPicker } from "react-colorful";
 import { MoorhenSequenceRangeSelect } from '../sequence-viewer/MoorhenSequenceRangeSelect';
 import { webGL } from '../../types/mgWebGL';
+import MoorhenSlider from '../misc/MoorhenSlider';
+import { AddCircleOutline, RemoveCircleOutline } from '@mui/icons-material';
 
 const customRepresentations = [ 'CBs', 'CAs', 'CRs', 'ligands', 'gaussian', 'MolecularSurface', 'DishyBases', 'VdwSpheres' ]
 
@@ -21,6 +23,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
 }) => {
 
     const useDefaultColoursSwitchRef = useRef<HTMLInputElement | null>(null)
+    const useDefaultBondSettingsSwitchRef = useRef<HTMLInputElement | null>(null)
     const ruleSelectRef = useRef<HTMLSelectElement | null>(null)
     const cidFormRef = useRef<HTMLInputElement | null>(null)
     const styleSelectRef = useRef<HTMLSelectElement | null>(null)
@@ -28,13 +31,18 @@ export const MoorhenAddCustomRepresentationCard = (props: {
     const colourModeSelectRef = useRef<HTMLSelectElement | null>(null)
     const colourSwatchRef = useRef<HTMLDivElement | null>(null)
     const residueRangeSelectRef = useRef<any>()
+    const [representationStyle, setRepresentationStyle] = useState<string>('CBs')
     const [colourMode, setColourMode] = useState<string>('custom')
     const [showColourPicker, setShowColourPicker] = useState<boolean>(false)
     const [ruleType, setRuleType] = useState<string>('molecule')
     const [colour, setColour] = useState<string>('#47d65f')
     const [useDefaultColours, setUseDefaultColours] = useState<boolean>(true)
+    const [useDefaultBondSettings, setUseDefaultBondSettings] = useState<boolean>(true)
     const [sequenceRangeSelect, setSequenceRangeSelect] = useState(null)
     const [selectedChain, setSelectedChain] = useState<string>(null)
+    const [atomRadiusBondRatio, setAtomRadiusBondRatio] = useState<number>(props.molecule.defaultBondOptions.atomRadiusBondRatio)
+    const [bondWidth, setBondWidth] = useState<number>(props.molecule.defaultBondOptions.width)
+    const [bondSmoothness, setBondSmoothness] = useState<number>(props.molecule.defaultBondOptions.smoothness === 1 ? 1 : props.molecule.defaultBondOptions.smoothness === 2 ? 50 : 100)
 
     const handleChainChange = (evt) => {
         setSelectedChain(evt.target.value)
@@ -114,9 +122,31 @@ export const MoorhenAddCustomRepresentationCard = (props: {
             }
         }
 
-        props.molecule.addRepresentation(styleSelectRef.current.value, cidSelection, true, colourRules)
+        let bondOptions: moorhen.cootBondOptions
+        if (!useDefaultBondSettingsSwitchRef.current?.checked) {
+            bondOptions = {
+                width: bondWidth,
+                smoothness: bondSmoothness === 1 ? 1 : bondSmoothness === 50 ? 2 : 3,
+                atomRadiusBondRatio: atomRadiusBondRatio
+            }
+        }
+
+        props.molecule.addRepresentation(styleSelectRef.current.value, cidSelection, true, colourRules, bondOptions)
         props.setShow(false)
-    }, [colour, props.molecule])
+    }, [colour, props.molecule, bondWidth, atomRadiusBondRatio, bondSmoothness])
+
+    const increaseWidthButton = <IconButton onClick={() => setBondWidth(bondWidth + 0.1)} style={{padding: 0, color: props.isDark ? 'white' : 'grey'}}>
+                                    <AddCircleOutline/>
+                                </IconButton>
+    const decreaseWidthButton = <IconButton onClick={() => setBondWidth(bondWidth - 0.1)} style={{padding: 0, color: props.isDark ? 'white' : 'grey'}}>
+                                    <RemoveCircleOutline/>
+                                </IconButton>
+    const increaseRatioButton = <IconButton onClick={() => setAtomRadiusBondRatio(atomRadiusBondRatio + 0.1)} style={{padding: 0, color: props.isDark ? 'white' : 'grey'}}>
+                                    <AddCircleOutline/>
+                                </IconButton>
+    const decreaseRatioButton = <IconButton onClick={() => setAtomRadiusBondRatio(atomRadiusBondRatio - 0.1)} style={{padding: 0, color: props.isDark ? 'white' : 'grey'}}>
+                                    <RemoveCircleOutline/>
+                                </IconButton>
 
     return <Popover
                 onClose={() => props.setShow(false)}
@@ -130,7 +160,7 @@ export const MoorhenAddCustomRepresentationCard = (props: {
             <Stack gap={2} direction='vertical' style={{width: '25rem', margin: '0.5rem'}}>
                 <Form.Group style={{ margin: '0px', width: '100%' }}>
                     <Form.Label>Style</Form.Label>
-                    <FormSelect ref={styleSelectRef} size="sm" defaultValue={'Bonds'}>
+                    <FormSelect ref={styleSelectRef} size="sm" value={representationStyle} onChange={(evt) => setRepresentationStyle(evt.target.value)}>
                         {customRepresentations.map(key => {
                             return <option value={key} key={key}>{representationLabelMapping[key]}</option>
                         })}
@@ -153,6 +183,62 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                     <div style={{width: '100%'}}>
                         {sequenceRangeSelect}
                     </div>
+                }
+                {['CBs', 'CAs', 'ligands'].includes(representationStyle) && 
+                <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
+                    <Form.Check 
+                        ref={useDefaultBondSettingsSwitchRef}
+                        type="switch"
+                        label="Apply general bond settings"
+                        checked={useDefaultBondSettings}
+                        onChange={() => { 
+                            setUseDefaultBondSettings((prev) => {return !prev})
+                        }}
+                    />
+                </InputGroup>
+                }
+                {!useDefaultBondSettings && ['CBs', 'CAs', 'ligands'].includes(representationStyle) && 
+                <>
+                <Stack gap={1} direction='vertical' style={{display: 'flex'}}>
+                    <div style={{marginLeft: '2rem', marginRight: '2rem'}}>
+                    <MoorhenSlider showMinMaxVal={false} decrementButton={decreaseWidthButton} incrementButton={increaseWidthButton} minVal={0.05} maxVal={0.5} logScale={false} sliderTitle="Bond width" initialValue={bondWidth} externalValue={bondWidth} setExternalValue={setBondWidth}/>
+                    <MoorhenSlider showMinMaxVal={false} decrementButton={decreaseRatioButton} incrementButton={increaseRatioButton} minVal={1.0} maxVal={3.5} logScale={false} sliderTitle="Radius-Bond ratio" initialValue={atomRadiusBondRatio} externalValue={atomRadiusBondRatio} setExternalValue={setAtomRadiusBondRatio} />
+                    <span>Bond Smoothness</span>        
+                    <Slider
+                        aria-label="Smoothness"
+                        value={bondSmoothness}
+                        onChange={(evt, value: number) => { setBondSmoothness(value) }}
+                        valueLabelFormat={(value) => {
+                            switch(value) {
+                                case 1:
+                                    return "Coarse"
+                                case 50:
+                                    return "Nice"
+                                default: 
+                                    return "Smooth"
+                            }
+                        }}
+                        getAriaValueText={(value) => {
+                            switch(value) {
+                                case 1:
+                                    return "Coarse"
+                                case 50:
+                                    return "Nice"
+                                default: 
+                                    return "Smooth"
+                            }
+                        }}
+                        step={null}
+                        valueLabelDisplay="auto"
+                        marks={[
+                            {value: 1, label: 'Coarse'},
+                            {value: 50, label: 'Nice'},
+                            {value: 100, label: 'Smooth'}
+                        ]}
+                    />
+                    </div>
+                </Stack>
+                </>
                 }
                 <InputGroup style={{ padding:'0.5rem', width: '25rem'}}>
                     <Form.Check 
