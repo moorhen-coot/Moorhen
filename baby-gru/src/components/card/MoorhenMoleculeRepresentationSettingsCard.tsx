@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react"
 import { Form, Stack } from "react-bootstrap";
 import { IconButton, Popover, Slider } from '@mui/material';
 import MoorhenSlider from '../misc/MoorhenSlider';
@@ -13,6 +14,10 @@ export const MoorhenMoleculeRepresentationSettingsCard = (props: {
     molecules: moorhen.Molecule[];
     urlPrefix: string;
     glRef: React.RefObject<webGL.MGWebGL>;
+    symmetrySettingsProps: {
+        symmetryRadius: number;
+        setSymmetryRadius: React.Dispatch<React.SetStateAction<number>>;
+    };
     gaussianSettingsProps: {
         surfaceSigma: number;
         setSurfaceSigma: React.Dispatch<React.SetStateAction<number>>;
@@ -33,6 +38,9 @@ export const MoorhenMoleculeRepresentationSettingsCard = (props: {
     };
 }) => {
 
+    const [symmetryOn, setSymmetryOn] = useState<boolean>(false)
+    const [showUnitCell, setShowUnitCell] = useState<boolean>(false)
+
     const {
         bondWidth, setBondWidth, atomRadiusBondRatio,
         setAtomRadiusBondRatio, bondSmoothness, setBondSmoothness
@@ -43,11 +51,30 @@ export const MoorhenMoleculeRepresentationSettingsCard = (props: {
         surfaceRadius, setSurfaceRadius, surfaceGridScale, setSurfaceGridScale
     } = props.gaussianSettingsProps
 
+    const {
+        symmetryRadius, setSymmetryRadius
+    } = props.symmetrySettingsProps
+
     const getSliderButton = (state: number, stateSetter: React.Dispatch<React.SetStateAction<number>>, step: number) => {
         return <IconButton style={{padding: 0, color: props.isDark ? 'white' : 'grey'}} onClick={() => stateSetter((prev) => { return prev + step})} >
                     {step > 0 ? <AddCircleOutline/> : <RemoveCircleOutline/>}
                 </IconButton>
     }
+
+    useEffect(() => {
+        if (props.molecule.symmetryOn !== symmetryOn) {
+            props.molecule.toggleSymmetry()
+        }
+    }, [symmetryOn])
+
+    useEffect(() => {
+        if (showUnitCell) {
+            props.molecule.drawUnitCell()
+        } else {
+            props.molecule.clearBuffersOfStyle('unitCell')
+            props.glRef.current.drawScene()
+        }
+    }, [showUnitCell])
 
     return <Popover
                 onClose={() => props.setShow(false)}
@@ -118,7 +145,7 @@ export const MoorhenMoleculeRepresentationSettingsCard = (props: {
                 </div>
                 <div style={{paddingLeft: '2rem', paddingRight: '2rem', paddingTop: '0.5rem', paddingBottom: '0.5rem', borderStyle: 'solid', borderWidth: '1px', borderColor: 'grey', borderRadius: '1.5rem'}}>
                     <MoorhenSlider
-                        sliderTitle="Sigma"
+                        sliderTitle="Gauss. Surf. Sigma"
                         initialValue={surfaceSigma}
                         externalValue={surfaceSigma}
                         setExternalValue={setSurfaceSigma}
@@ -129,7 +156,7 @@ export const MoorhenMoleculeRepresentationSettingsCard = (props: {
                         maxVal={10}
                         logScale={false}/>
                     <MoorhenSlider
-                        sliderTitle="Contour level"
+                        sliderTitle="Gauss. Surf. Contour Level"
                         initialValue={surfaceLevel}
                         externalValue={surfaceLevel}
                         setExternalValue={setSurfaceLevel} 
@@ -140,7 +167,7 @@ export const MoorhenMoleculeRepresentationSettingsCard = (props: {
                         maxVal={10}
                         logScale={false}/>
                     <MoorhenSlider
-                        sliderTitle="Box radius"
+                        sliderTitle="Gauss. Surf. Box Radius"
                         initialValue={surfaceRadius}
                         externalValue={surfaceRadius}
                         setExternalValue={setSurfaceRadius} 
@@ -151,7 +178,7 @@ export const MoorhenMoleculeRepresentationSettingsCard = (props: {
                         maxVal={10}
                         logScale={false}/>
                     <MoorhenSlider 
-                        sliderTitle="Grid scale"
+                        sliderTitle="Gauss. Surf. Grid Scale"
                         initialValue={surfaceGridScale}
                         externalValue={surfaceGridScale}
                         setExternalValue={setSurfaceGridScale} 
@@ -160,6 +187,29 @@ export const MoorhenMoleculeRepresentationSettingsCard = (props: {
                         incrementButton={getSliderButton(surfaceGridScale, setSurfaceGridScale, 0.1)}
                         minVal={0.01}
                         maxVal={1.5}
+                        logScale={false}/>
+                </div>
+                <div style={{paddingLeft: '2rem', paddingRight: '2rem', paddingTop: '0.5rem', paddingBottom: '0.5rem', borderStyle: 'solid', borderWidth: '1px', borderColor: 'grey', borderRadius: '1.5rem'}}>
+                    <Form.Check
+                        type="switch"
+                        checked={showUnitCell}
+                        onChange={() => { setShowUnitCell(!showUnitCell) }}
+                        label="Show unit cell" />
+                    <Form.Check
+                        type="switch"
+                        checked={symmetryOn}
+                        onChange={() => { setSymmetryOn(!symmetryOn) }}
+                        label="Show symmetry mates" />
+                    <MoorhenSlider
+                        sliderTitle="Symmetry Radius"
+                        initialValue={symmetryRadius}
+                        externalValue={symmetryRadius}
+                        setExternalValue={setSymmetryRadius}
+                        showMinMaxVal={false}
+                        decrementButton={getSliderButton(symmetryRadius, setSymmetryRadius, -5)}
+                        incrementButton={getSliderButton(symmetryRadius, setSymmetryRadius, +5)}
+                        minVal={0.01}
+                        maxVal={100}
                         logScale={false}/>
                 </div>
             </Stack>
