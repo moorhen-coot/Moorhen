@@ -440,7 +440,6 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                         selectedResidues={selectedResidues}
                         currentDropdownMolNo={props.currentDropdownMolNo}
                         setCurrentDropdownMolNo={props.setCurrentDropdownMolNo}
-                        symmetrySettingsProps={symmetrySettingsProps}
                         backupsEnabled={props.makeBackups}
                         {...handleProps}
                     />
@@ -490,7 +489,7 @@ export const MoorhenMoleculeCard = forwardRef<any, MoorhenMoleculeCardPropsInter
                         </Button>
                         </Stack>
                     </Col>
-                    <MoorhenMoleculeRepresentationSettingsCard gaussianSettingsProps={gaussianSettingsProps} bondSettingsProps={bondSettingsProps} glRef={props.glRef} urlPrefix={props.urlPrefix} molecules={props.molecules} isDark={props.isDark} molecule={props.molecule} anchorEl={addColourRulesAnchorDivRef} show={showCreateRepresentationSettingsModal} setShow={setShowCreateRepresentationSettingsModal}/>
+                    <MoorhenMoleculeRepresentationSettingsCard symmetrySettingsProps={symmetrySettingsProps} gaussianSettingsProps={gaussianSettingsProps} bondSettingsProps={bondSettingsProps} glRef={props.glRef} urlPrefix={props.urlPrefix} molecules={props.molecules} isDark={props.isDark} molecule={props.molecule} anchorEl={addColourRulesAnchorDivRef} show={showCreateRepresentationSettingsModal} setShow={setShowCreateRepresentationSettingsModal}/>
                     <MoorhenModifyColourRulesCard molecules={props.molecules} anchorEl={addColourRulesAnchorDivRef} isDark={props.isDark} urlPrefix={props.urlPrefix} glRef={props.glRef} commandCentre={props.commandCentre} molecule={props.molecule} showColourRulesToast={showColourRulesModal} setShowColourRulesToast={setShowColourRulesModal} windowHeight={props.windowHeight} windowWidth={props.sideBarWidth}/>
                     <MoorhenAddCustomRepresentationCard glRef={props.glRef} urlPrefix={props.urlPrefix} molecules={props.molecules} isDark={props.isDark} molecule={props.molecule} anchorEl={addColourRulesAnchorDivRef} show={showCreateCustomRepresentation} setShow={setShowCreateCustomRepresentation}/>
                 </Row>

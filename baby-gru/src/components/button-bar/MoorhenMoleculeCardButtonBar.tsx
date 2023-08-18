@@ -2,9 +2,8 @@ import React, { useState, useMemo, Fragment, useRef } from "react";
 import { Button, DropdownButton } from "react-bootstrap";
 import { convertViewtoPx } from '../../utils/MoorhenUtils';
 import { MenuItem } from "@mui/material";
-import { UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined, ExpandLessOutlined, VisibilityOffOutlined, VisibilityOutlined, DownloadOutlined, Settings } from '@mui/icons-material';
+import { UndoOutlined, RedoOutlined, CenterFocusWeakOutlined, ExpandMoreOutlined, ExpandLessOutlined, VisibilityOffOutlined, VisibilityOutlined, DownloadOutlined, AddOutlined } from '@mui/icons-material';
 import { MoorhenDeleteDisplayObjectMenuItem } from "../menu-item/MoorhenDeleteDisplayObjectMenuItem"
-import { MoorhenMoleculeSymmetrySettingsMenuItem } from "../menu-item/MoorhenMoleculeSymmetrySettingsMenuItem"
 import { MoorhenRenameDisplayObjectMenuItem } from "../menu-item/MoorhenRenameDisplayObjectMenuItem"
 import { clickedResidueType } from "../card/MoorhenMoleculeCard";
 import { moorhen } from "../../types/moorhen";
@@ -31,10 +30,6 @@ type MoorhenMoleculeCardButtonBarPropsType = {
     selectedResidues: [number, number];
     currentDropdownMolNo: number
     setCurrentDropdownMolNo: React.Dispatch<React.SetStateAction<number>>
-    symmetrySettingsProps: {
-        symmetryRadius: number;
-        setSymmetryRadius: React.Dispatch<React.SetStateAction<number>>;
-    };
     backupsEnabled: boolean;
 }
 
@@ -108,11 +103,6 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
             compressed: () => { return (<MoorhenRenameDisplayObjectMenuItem key={7} setPopoverIsShown={setPopoverIsShown} setCurrentName={setCurrentName} item={props.molecule} />) },
             expanded: null
         },
-        8: {
-            label: 'Symmetry settings',
-            compressed: () => { return (<MoorhenMoleculeSymmetrySettingsMenuItem key={8} setPopoverIsShown={setPopoverIsShown} molecule={props.molecule} glRef={props.glRef}/>) },
-            expanded: null
-        },
     }
 
     const maximumAllowedWidth = props.sideBarWidth * 0.55
@@ -147,7 +137,7 @@ export const MoorhenMoleculeCardButtonBar = (props: MoorhenMoleculeCardButtonBar
         <DropdownButton
             ref={dropdownCardButtonRef}
             key="dropDownButton"
-            title={<Settings />}
+            title={<AddOutlined />}
             size="sm"
             variant="outlined"
             autoClose={popoverIsShown ? false : 'outside'}

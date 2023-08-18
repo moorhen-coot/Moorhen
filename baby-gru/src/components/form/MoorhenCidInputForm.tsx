@@ -27,4 +27,4 @@ export const MoorhenCidInputForm = forwardRef<HTMLInputElement, MoorhenCidInputF
 
 })
 
-MoorhenCidInputForm.defaultProps = { height: '4rem', width: '20rem', margin: '0.1rem', label: "Selection CID", placeholder: "", defaultValue: ""}
+MoorhenCidInputForm.defaultProps = { height: '4rem', width: '20rem', margin: '0.1rem', label: "Atom selection", placeholder: "", defaultValue: ""}
