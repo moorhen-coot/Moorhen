@@ -40,7 +40,11 @@ export const MoorhenRefineResiduesButton = (props: moorhen.EditButtonProps | moo
                     popoverSettings={{
                         label: 'Refinement mode',
                         options: refinementModes,
-                        getCootCommandInput: getCootCommandInput
+                        getCootCommandInput: getCootCommandInput,
+                        defaultValue: props.defaultActionButtonSettings['refine'],
+                        setDefaultValue: (newValue: string) => {
+                            props.setDefaultActionButtonSettings({key: 'refine', value: newValue})
+                        }
                     }}
                     {...props}
                 />

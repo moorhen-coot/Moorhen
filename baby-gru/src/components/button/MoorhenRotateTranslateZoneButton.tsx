@@ -174,6 +174,10 @@ export const MoorhenRotateTranslateZoneButton = (props: moorhen.EditButtonProps 
                         label: 'Rotate/translate mode...',
                         options: rotateTranslateModes,
                         nonCootCommand: nonCootCommand,
+                        defaultValue: props.defaultActionButtonSettings['rotateTranslate'],
+                        setDefaultValue: (newValue: string) => {
+                            props.setDefaultActionButtonSettings({key: 'rotateTranslate', value: newValue})
+                        }
                     }}
                     {...props}
                 />

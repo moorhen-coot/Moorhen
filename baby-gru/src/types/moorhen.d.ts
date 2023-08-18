@@ -608,6 +608,8 @@ export namespace moorhen {
         defaultBondSmoothness: number;
         isDark: boolean;
         changeMolecules: (arg0: MolChange<Molecule>) => void
+        defaultActionButtonSettings: actionButtonSettings;
+        setDefaultActionButtonSettings: (arg0: {key: string; value: string}) => void;     
     }
     
     type MolChange<T extends Molecule | Map> = {
@@ -734,5 +736,14 @@ export namespace moorhen {
     }
     
     interface ContainerProps extends Partial<ContainerStates>, Partial<ContainerOptionalProps> { }
+
+    type actionButtonSettings = {
+        mutate: 'ALA' | 'CYS' | 'ASP' | 'GLU' | 'PHE' | 'GLY' | 'HIS' | 'ILE' | 'LYS' | 'LEU' | 'MET' | 'ASN' | 'PRO' | 'GLN' | 'ARG' | 'SER' | 'THR' | 'VAL' | 'TRP' | 'TYR';
+        refine: 'SINGLE' | 'TRIPLE' | 'QUINTUPLE' | 'HEPTUPLE' | 'SPHERE' | 'BIG_SPHERE' | 'CHAIN' | 'ALL';
+        delete: 'ATOM' | 'RESIDUE' | 'RESIDUE HYDROGENS' | 'RESIDUE SIDE-CHAIN' | 'CHAIN' | 'CHAIN HYDROGENS' | 'MOLECULE HYDROGENS';
+        rotateTranslate: 'ATOM' | 'RESIDUE' | 'CHAIN' | 'MOLECULE';
+        drag: 'SINGLE' | 'TRIPLE' | 'QUINTUPLE' | 'HEPTUPLE' | 'SPHERE';
+        rigidBodyFit: 'SINGLE' | 'TRIPLE' | 'QUINTUPLE' | 'HEPTUPLE' | 'CHAIN' | 'ALL';
+    }
     
 }

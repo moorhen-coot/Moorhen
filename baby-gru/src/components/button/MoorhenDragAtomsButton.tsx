@@ -298,6 +298,10 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
                         label: 'Drag mode...',
                         options: ['SINGLE', 'TRIPLE', 'QUINTUPLE', 'HEPTUPLE'],
                         nonCootCommand: nonCootCommand,
+                        defaultValue: props.defaultActionButtonSettings['drag'],
+                        setDefaultValue: (newValue: string) => {
+                            props.setDefaultActionButtonSettings({key: 'drag', value: newValue})
+                        }
                     }}
                     {...props}
                 />

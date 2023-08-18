@@ -15,6 +15,8 @@ const MoorhenPopoverOptions = (props: {
     getCootCommandInput?: (arg0: moorhen.Molecule, arg2: moorhen.ResidueSpec, arg3: string, arg4?: React.MutableRefObject<any>) => moorhen.cootCommandKwargs;
     selectedMolecule: moorhen.Molecule;
     chosenAtom: moorhen.ResidueSpec; 
+    defaultValue?: string;
+    setDefaultValue?: (arg0: string) => void;
 }) => {
     
     const selectRef = useRef<HTMLSelectElement | null>(null)
@@ -27,6 +29,7 @@ const MoorhenPopoverOptions = (props: {
     }, [])
 
     const handleClick = useCallback(() => {
+        props.setDefaultValue(selectRef.current.value)
         if (!props.nonCootCommand) {
             props.doEdit(props.getCootCommandInput(props.selectedMolecule, props.chosenAtom, selectRef.current.value, extraInputRef))
         } else {
@@ -45,7 +48,7 @@ const MoorhenPopoverOptions = (props: {
         <Stack direction="vertical" gap={2}>
             <FormGroup>
                 <FormLabel>{props.label}</FormLabel>
-                <FormSelect ref={selectRef} defaultValue='TRIPLE'>
+                <FormSelect key={props.label} ref={selectRef} defaultValue={props.defaultValue ? props.defaultValue : 'TRIPLE'}>
                     {props.options.map(optionName => {
                         return <option key={optionName} value={optionName}>{optionName}</option>
                     })}
@@ -92,6 +95,8 @@ export const MoorhenContextButtonBase = (props: {
         nonCootCommand?: (arg0: moorhen.Molecule, arg1: moorhen.ResidueSpec, arg2: string) => void;
         getCootCommandInput?: (arg0: moorhen.Molecule, arg2: moorhen.ResidueSpec, arg3: string) => moorhen.cootCommandKwargs;
         extraInput?: (arg0: React.RefObject<any>) => JSX.Element;
+        defaultValue?: string;
+        setDefaultValue?: (arg0: string) => void;
     };
 }) => {
     

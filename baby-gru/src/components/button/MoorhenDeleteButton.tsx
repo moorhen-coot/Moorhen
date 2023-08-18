@@ -69,7 +69,11 @@ export const MoorhenDeleteButton = (props: moorhen.EditButtonProps | moorhen.Con
                     popoverSettings={{
                         label: 'Delete mode',
                         options: deleteModes,
-                        getCootCommandInput: getCootCommandInput
+                        getCootCommandInput: getCootCommandInput,
+                        defaultValue: props.defaultActionButtonSettings['delete'],
+                        setDefaultValue: (newValue: string) => {
+                            props.setDefaultActionButtonSettings({key: 'delete', value: newValue})
+                        }
                     }}
                     {...props}
                 />

@@ -167,6 +167,10 @@ export const MoorhenRigidBodyFitButton = (props: moorhen.EditButtonProps | moorh
                         label: 'Rigid body fit',
                         options: rigidBodyModes,
                         getCootCommandInput: getCootCommandInput,
+                        defaultValue: props.defaultActionButtonSettings['rigidBodyFit'],
+                        setDefaultValue: (newValue: string) => {
+                            props.setDefaultActionButtonSettings({key: 'rigidBodyFit', value: newValue})
+                        },
                         extraInput: (ref) => {
                             return <Form.Check
                                         ref={ref}
