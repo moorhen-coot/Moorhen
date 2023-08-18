@@ -19,7 +19,7 @@ export const MoorhenGoToMenuItem = (props: {
     const panelContent = <>
         <MoorhenMoleculeSelect ref={moleculeSelectRef} molecules={props.molecules} width='20rem'/>
         <Form.Group style={{ width: '20rem', margin: '0.5rem' }} controlId="cid" className="mb-3">
-            <Form.Label>Residue CID</Form.Label>
+            <Form.Label>Atom selection</Form.Label>
             <Form.Control ref={cidRef} type="text" value={cid} onChange={(e) => {
                 setCid(e.target.value)
             }} />

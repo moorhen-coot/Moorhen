@@ -304,7 +304,7 @@ export const MoorhenModifyColourRulesCard = (props: {
                             <option value={'molecule'} key={'molecule'}>By molecule</option>
                             <option value={'chain'} key={'chain'}>By chain</option>
                             <option value={'residue-range'} key={'residue-range'}>By residue range</option>
-                            <option value={'cid'} key={'cid'}>By CID</option>
+                            <option value={'cid'} key={'cid'}>By atom selection</option>
                             <option value={'property'} key={'property'}>By property</option>
                         </FormSelect>
                     </Form.Group>

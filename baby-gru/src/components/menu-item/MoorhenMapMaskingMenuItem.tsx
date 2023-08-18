@@ -41,7 +41,7 @@ export const MoorhenMapMaskingMenuItem = (props: {
                 <option value={'molecule'} key={'molecule'}>By molecule</option>
                 <option value={'chain'} key={'chain'}>By chain</option>
                 <option value={'ligand'} key={'ligand'}>By ligand</option>
-                <option value={'cid'} key={'cid'}>By CID</option>
+                <option value={'cid'} key={'cid'}>By atom selection</option>
             </FormSelect>
         </Form.Group>
         <MoorhenMapSelect {...props} ref={mapSelectRef} />

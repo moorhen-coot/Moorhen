@@ -172,12 +172,12 @@ export const MoorhenAddCustomRepresentationCard = (props: {
                             <option value={'molecule'} key={'molecule'}>All molecule</option>
                             <option value={'chain'} key={'chain'}>Chain</option>
                             <option value={'residue-range'} key={'residue-range'}>Residue range</option>
-                            <option value={'cid'} key={'cid'}>CID</option>
+                            <option value={'cid'} key={'cid'}>Atom selection</option>
                         </FormSelect>
                 </Form.Group>
                 <div style={{justifyContent: 'center', display: 'flex'}}>
                     {(ruleType === 'chain' || ruleType === 'residue-range')  && <MoorhenChainSelect molecules={props.molecules} onChange={handleChainChange} selectedCoordMolNo={props.molecule.molNo} ref={chainSelectRef} allowedTypes={[1, 2]}/>}
-                    {ruleType === 'cid' && <Form.Control ref={cidFormRef} size="sm" type='text' placeholder={'CID selection'} style={{margin: '0.5rem'}}/> }
+                    {ruleType === 'cid' && <Form.Control ref={cidFormRef} size="sm" type='text' placeholder={'Atom selection'} style={{margin: '0.5rem'}}/> }
                 </div>
                 {ruleType === 'residue-range' && 
                     <div style={{width: '100%'}}>
