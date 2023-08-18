@@ -1,12 +1,8 @@
 import styled, { css } from "styled-components";
-import { ClickAwayListener, FormGroup, List, MenuItem, Tooltip } from '@mui/material';
-import { MoorhenAddSimpleMenuItem } from "../menu-item/MoorhenAddSimpleMenuItem"
-import { MoorhenGetMonomerMenuItem } from "../menu-item/MoorhenGetMonomerMenuItem"
-import { MoorhenFitLigandRightHereMenuItem } from "../menu-item/MoorhenFitLigandRightHereMenuItem"
+import { ClickAwayListener, FormGroup, List, Tooltip } from '@mui/material';
 import { MoorhenBackgroundColorMenuItem } from "../menu-item/MoorhenBackgroundColorMenuItem"
 import { cidToSpec, convertRemToPx } from "../../utils/MoorhenUtils";
-import { getBackupLabel } from "../../utils/MoorhenTimeCapsule"
-import React, { useEffect, useRef, useState, useCallback, MutableRefObject, RefObject } from "react";
+import { useEffect, useRef, useState, useCallback, MutableRefObject, RefObject } from "react";
 import { Popover, Overlay, FormLabel, FormSelect, Button, Stack } from "react-bootstrap";
 import { MoorhenAddAltConfButton } from "../button/MoorhenAddAltConfButton"
 import { MoorhenAddTerminalResidueButton } from "../button/MoorhenAddTerminalResidueButton"
@@ -119,6 +115,8 @@ export const MoorhenContextMenu = (props: {
   enableTimeCapsule: boolean;
   changeMolecules: { (arg0: moorhen.MolChange<moorhen.Molecule>): void; (arg0: moorhen.MolChange<moorhen.Molecule>): void; }; 
   monomerLibraryPath: string;
+  defaultActionButtonSettings: moorhen.actionButtonSettings;
+  setDefaultActionButtonSettings: (arg0: {key: string; value: string}) => void;
 }) => {
 
   const contextMenuRef = useRef(null)
@@ -163,25 +161,6 @@ export const MoorhenContextMenu = (props: {
   const menuPosition = {top, left, placement}
 
   const collectedProps = {selectedMolecule, chosenAtom, setOverlayContents, setShowOverlay, toolTip, setToolTip, setOpacity, setOverrideMenuContents, ...props}
-
-  const handleCreateBackup = async () => {
-    await props.timeCapsuleRef.current.updateDataFiles()
-    const session = await props.timeCapsuleRef.current.fetchSession(false)
-    const sessionString = JSON.stringify(session)
-    const key = {
-        dateTime: `${Date.now()}`,
-        type: 'manual',
-        molNames: session.moleculeData.map(mol => mol.name),
-        mapNames: session.mapData.map(map => map.uniqueId),
-        mtzNames: session.mapData.filter(map => map.hasReflectionData).map(map => map.associatedReflectionFileName)
-    }
-    const keyString = JSON.stringify({
-      ...key,
-      label: getBackupLabel(key)
-    })
-    await props.timeCapsuleRef.current.createBackup(keyString, sessionString)
-    props.setShowContextMenu(false)
-  }
 
   return <>
       <ContextMenu ref={contextMenuRef} top={overrideMenuContents ? convertRemToPx(4) : menuPosition.top} left={overrideMenuContents ? convertRemToPx(15) : menuPosition.left} opacity={opacity}>

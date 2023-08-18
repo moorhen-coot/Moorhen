@@ -49,9 +49,13 @@ export const MoorhenMutateButton = (props: moorhen.EditButtonProps | moorhen.Con
                     onCompleted={autoFitRotamer}
                     toolTipLabel="Mutate residue"
                     popoverSettings={{
-                        label: 'Delete mode',
+                        label: 'Mutate to...',
                         options: mutateModes,
-                        getCootCommandInput: getCootCommandInput
+                        getCootCommandInput: getCootCommandInput,
+                        defaultValue: props.defaultActionButtonSettings['mutate'],
+                        setDefaultValue: (newValue: string) => {
+                            props.setDefaultActionButtonSettings({key: 'mutate', value: newValue})
+                        }
                     }}
                     {...props}
                 />

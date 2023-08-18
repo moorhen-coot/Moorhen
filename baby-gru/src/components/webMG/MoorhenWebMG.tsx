@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, forwardRef, useState, useRef } from 'react';
+import { useEffect, useCallback, forwardRef, useState, useRef, useReducer } from 'react';
 import { Toast, ToastContainer } from 'react-bootstrap';
 import { MGWebGL } from '../../WebGLgComponents/mgWebGL';
 import { MoorhenContextMenu } from "../context-menu/MoorhenContextMenu"
@@ -38,12 +38,27 @@ type MoorhenScoresType = {
     moorhenPoints: number;
 }
 
+const intialDefaultActionButtonSettings: moorhen.actionButtonSettings = {
+    mutate: 'ALA',
+    refine: 'TRIPLE',
+    delete: 'RESIDUE',
+    rotateTranslate: 'RESIDUE',
+    drag: 'TRIPLE',
+    rigidBodyFit: 'TRIPLE',
+}
+
+const actionButtonSettingsReducer = (defaultSettings: moorhen.actionButtonSettings, change: {key: string; value: string}) => {
+    defaultSettings[change.key] = change.value
+    return defaultSettings
+}
+
 export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface>((props, glRef) => {
     const scores = useRef<MoorhenScoresType | null>(null)
     const [mapLineWidth, setMapLineWidth] = useState<number>(0.75)
     const [connectedMolNo, setConnectedMolNo] = useState<null | moorhen.ConnectMapsInfo>(null)
     const [scoresToastContents, setScoreToastContents] = useState<null | JSX.Element>(null)
     const [showContextMenu, setShowContextMenu] = useState<false | moorhen.AtomRightClickEventInfo>(false)
+    const [defaultActionButtonSettings, setDefaultActionButtonSettings] = useReducer(actionButtonSettingsReducer, intialDefaultActionButtonSettings)
     const hBondsDirty = useRef<boolean>(false)
     const busyDrawingHBonds = useRef<boolean>(false)
 
@@ -568,6 +583,8 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                     defaultBondSmoothness={props.context.defaultBondSmoothness}
                     windowWidth={props.windowWidth}
                     windowHeight={props.windowHeight}
+                    defaultActionButtonSettings={defaultActionButtonSettings}
+                    setDefaultActionButtonSettings={setDefaultActionButtonSettings}
                 />}
                 
                 {props.extraDraggableModals && props.extraDraggableModals.map(modal => modal)}
