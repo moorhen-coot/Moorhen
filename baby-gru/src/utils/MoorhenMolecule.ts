@@ -478,6 +478,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
      * Copy a fragment of the current model into a new molecule using a selection CID
      * @param {string} cid - The CID selection indicating the residues that will be copied into the new fragment
      * @param {boolean} [doRecentre=true] - Indicates whether the view should re-centre on the new copied fragment
+     * @param {boolean} [style="CBs"] - Indicates the style used to draw the copied fragment (only takes effect if doRecentre=true)
      * @returns {Promise<moorhen.Molecule>}  New molecule instance
      */
     async copyFragmentUsingCid(cid: string, doRecentre: boolean = true, style: moorhen.RepresentationStyles = 'CBs'): Promise<moorhen.Molecule> {
@@ -832,6 +833,14 @@ export class MoorhenMolecule implements moorhen.Molecule {
         representation.show()
     }
 
+    /**
+     * Add a representation to the molecule
+     * @param {string} style - The style of the new representation
+     * @param {string} cid - The CID selection for the residues included in the new representation
+     * @param {boolean} [isCustom=false] - Indicates if the representation is considered "custom"
+     * @param {moorhen.ColourRule[]} [colourRules=undefined] - A list of colour rules that will be applied to the new representation
+     * @param {moorhen.cootBondOptions} [bondOptions=undefined] - An object that describes bond width, atom/bond ratio and other bond settings.
+     */
     async addRepresentation(style: moorhen.RepresentationStyles, cid: string = '/*/*/*/*', isCustom: boolean = false, colourRules?: moorhen.ColourRule[], bondOptions?: moorhen.cootBondOptions) {
         if (!this.defaultColourRules) {
             await this.fetchDefaultColourRules()
@@ -852,6 +861,10 @@ export class MoorhenMolecule implements moorhen.Molecule {
         await this.drawSymmetry(false)
     }
 
+    /**
+     * Redraw a molecule representation
+     * @param {string} id - Unique identifier for the representation of interest
+     */
     async redrawRepresentation(id: string) {
         const representation = this.representations.find(representation => representation.uniqueId === id)
         await representation.redraw()
@@ -884,6 +897,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
     /**
      * Hide a type of representation for the molecule 
      * @param {string} style - The representation style to hide
+     * @param {string} [cid=undefined] - The CID selection for the representation
      */
     hide(style: moorhen.RepresentationStyles, cid?: string) {
         if (!cid && style === 'ligands') {
