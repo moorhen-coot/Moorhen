@@ -59,7 +59,7 @@ const MoorhenImportLigandDictionary = (props: {
                     command: 'shim_read_dictionary',
                     commandArgs: [fileContent, selectedMoleculeIndex],
                     changesMolecules: []
-                }, true),
+                }, false),
                 ...molecules.map(molecule => {
                     molecule.addDictShim(fileContent)
                     return molecule.redraw()

@@ -34,9 +34,8 @@ export const MoorhenMakeMaskedMapsSplitByChainMenuItem = (props: {
         const result = await props.commandCentre.current.cootCommand({
             returnType: 'int_array',
             command: 'make_masked_maps_split_by_chain',
-            commandArgs: [moleculeNo, mapNo
-            ]
-        }, true) as moorhen.WorkerResponse<number[]>
+            commandArgs: [moleculeNo, mapNo]
+        }, false) as moorhen.WorkerResponse<number[]>
         
         if (result.data.result.result.length > 0) {
             const oldMaps = props.maps.filter(map => map.molNo === mapNo)

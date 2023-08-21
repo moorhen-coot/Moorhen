@@ -40,7 +40,7 @@ export const MoorhenAutoOpenMtzMenuItem = (props: {
             returnType: "int_array",
             command: "shim_auto_open_mtz",
             commandArgs: [mtzData]
-        }) as moorhen.WorkerResponse<number[]>
+        }, true) as moorhen.WorkerResponse<number[]>
 
         if (response.data.result.result.length === 0) {
             props.setToastContent(props.getWarningToast('Error reading mtz file'))
@@ -51,7 +51,7 @@ export const MoorhenAutoOpenMtzMenuItem = (props: {
                 returnType: "status",
                 command: "is_a_difference_map",
                 commandArgs: [mapMolNo]
-            }) as Promise<moorhen.WorkerResponse<boolean>>
+            }, false) as Promise<moorhen.WorkerResponse<boolean>>
         }))
 
         response.data.result.result.forEach((mapMolNo, index) => {

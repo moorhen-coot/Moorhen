@@ -3,19 +3,36 @@ import { webGL } from '../types/mgWebGL';
 
 export class MoorhenHistory implements moorhen.History {
     
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
-    glRef: React.RefObject<webGL.MGWebGL>
-    entries: moorhen.cootCommandKwargs[]
+    commandCentre: moorhen.CommandCentre;
+    glRef: React.RefObject<webGL.MGWebGL>;
+    timeCapsule: React.RefObject<moorhen.TimeCapsule>;
+    entries: moorhen.cootCommandKwargs[];
 
-    constructor() {
+    constructor(glRef: React.RefObject<webGL.MGWebGL>, timeCapsule: React.RefObject<moorhen.TimeCapsule>) {
+        this.glRef = glRef
+        this.timeCapsule = timeCapsule
         this.entries = []
+    }
+
+    /**
+     * A setter for the commandCentre attribute
+     * @param {moorhen.CommandCentre} commandCentre 
+     */
+    setCommandCentre(commandCentre: moorhen.CommandCentre) {
+        this.commandCentre = commandCentre
     }
 
     /**
      * Add an entry to the history
      * @param {moorhen.cootCommandKwargs} newEntry - The new entry that will be added
      */
-    addEntry(newEntry: moorhen.cootCommandKwargs) {
+    async addEntry(newEntry: moorhen.cootCommandKwargs) {
+        if (newEntry.changesMolecules?.length > 0) {
+            const backupKey = await this.timeCapsule.current.addModification()
+            if (backupKey) {
+                newEntry['associatedBackupKey'] = backupKey
+            }
+        }
         this.entries.push(newEntry)
     }
 
@@ -44,5 +61,4 @@ export class MoorhenHistory implements moorhen.History {
         const uniqueModifiedMolNo: number[] = [...new Set(modifiedMolNo)]
         return uniqueModifiedMolNo
     }
-
 }

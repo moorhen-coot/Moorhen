@@ -414,7 +414,7 @@ export const MoorhenRamachandran = (props: Props) => {
                 return
             }
             const inputData = {message:'coot_command', command:'ramachandran_validation', returnType:'ramachandran_data', commandArgs:[parseInt(moleculeSelectRef.current.value)], chainID: chainSelectRef.current.value}
-            let response = await props.commandCentre.current.cootCommand(inputData) as moorhen.WorkerResponse<libcootApi.RamaDataJS[]>
+            let response = await props.commandCentre.current.cootCommand(inputData, false) as moorhen.WorkerResponse<libcootApi.RamaDataJS[]>
             setRamaPlotData(response.data.result.result)
         }
 
@@ -454,7 +454,7 @@ export const MoorhenRamachandran = (props: Props) => {
                 return
             }
             const inputData = {message:'coot_command', command:'ramachandran_validation', returnType:'ramachandran_data', commandArgs:[parseInt(moleculeSelectRef.current.value)], chainID: chainSelectRef.current.value}
-            let response = await props.commandCentre.current.cootCommand(inputData) as moorhen.WorkerResponse<libcootApi.RamaDataJS[]>
+            let response = await props.commandCentre.current.cootCommand(inputData, false) as moorhen.WorkerResponse<libcootApi.RamaDataJS[]>
             setRamaPlotData(response.data.result.result)
         }
         

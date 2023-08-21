@@ -23,7 +23,7 @@ export const MoorhenRotamerChangeButton = (props: moorhen.EditButtonProps | moor
             returnType: 'rotamer_info_t',
             command: command,
             commandArgs: [fragmentMolecule.current.molNo, selectedFragmentRef.current.cid, selectedFragmentRef.current.alt_conf],
-        }, true) as moorhen.WorkerResponse<libcootApi.RotamerInfoJS>
+        }, false) as moorhen.WorkerResponse<libcootApi.RotamerInfoJS>
         
         fragmentMolecule.current.atomsDirty = true
         fragmentMolecule.current.clearBuffersOfStyle('selection')

@@ -30,7 +30,7 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
                 returnType: 'status_instanced_mesh_pair',
                 command: 'refine',
                 commandArgs: [molecule.molNo, i !== n_iteration ? n_cyc : final_n_cyc]
-            }, true) as moorhen.WorkerResponse<{ status: number; mesh: libcootApi.InstancedMeshJS[]; }>
+            }, false) as moorhen.WorkerResponse<{ status: number; mesh: libcootApi.InstancedMeshJS[]; }>
             
             if (result.data.result.result.status !== -2){
                 return
@@ -98,7 +98,7 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
             returnType: 'int',
             command: 'copy_fragment_for_refinement_using_cid',
             commandArgs: [chosenMolecule.current.molNo, fragmentCid.current.join('||')]
-        }, true)
+        }, false)
         const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.monomerLibraryPath)
         newMolecule.molNo = copyResult.data.result.result
         moltenFragmentRef.current = newMolecule
@@ -108,7 +108,7 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
             returnType: 'status',
             command: 'init_refinement_of_molecule_as_fragment_based_on_reference',
             commandArgs: [moltenFragmentRef.current.molNo, chosenMolecule.current.molNo, props.activeMap.molNo]
-        }, true)
+        }, false)
 
         /* Redraw with animation after delay so that the context menu does not refresh empty*/
         setTimeout(async () => {
@@ -131,13 +131,13 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
             setTimeout(() => finishDragging(acceptTransform), 100)
             return
         }    
-        if(acceptTransform){
+        if (acceptTransform) {
             console.log(chosenMolecule.current.molNo, moltenFragmentRef.current.molNo, fragmentCid.current.join('||'))
             await props.commandCentre.current.cootCommand({
                 returnType: 'status',
                 command: 'clear_refinement',
                 commandArgs: [chosenMolecule.current.molNo],
-            }, true)
+            }, false)
             await props.commandCentre.current.cootCommand({
                 returnType: 'status',
                 command: 'replace_fragment',
@@ -187,7 +187,7 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
                 returnType: 'instanced_mesh',
                 command: 'add_target_position_restraint_and_refine',
                 commandArgs: [moltenFragmentRef.current.molNo, `//${chosenAtom.chain_id}/${chosenAtom.res_no}/${chosenAtom.atom_name}`, movedAtoms[0][0].x, movedAtoms[0][0].y, movedAtoms[0][0].z, 10],
-            }, true)
+            }, false)
             await moltenFragmentRef.current.drawWithStyleFromMesh('CBs', [result.data.result.result])
             busy.current = false
             handleAtomDragged(atomCid)
@@ -201,9 +201,9 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
             if (autoClearRestraintsRef.current) {
                 await props.commandCentre.current.cootCommand({
                     returnType: 'status',
-                   command: 'clear_target_position_restraints',
+                    command: 'clear_target_position_restraints',
                     commandArgs: [moltenFragmentRef.current.molNo]
-                }, true)
+                }, false)
                 await animateRefine(moltenFragmentRef.current, 10, 5)
             } else {
                 await animateRefine(moltenFragmentRef.current, -1, 1)
@@ -221,7 +221,7 @@ export const MoorhenDragAtomsButton = (props: moorhen.EditButtonProps | moorhen.
             returnType: 'status',
             command: 'clear_target_position_restraints',
             commandArgs: [moltenFragmentRef.current.molNo]
-        }, true)
+        }, false)
         await animateRefine(moltenFragmentRef.current, 10, 5)
         busy.current = false
     }

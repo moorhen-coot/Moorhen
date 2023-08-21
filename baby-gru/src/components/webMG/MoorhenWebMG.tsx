@@ -83,7 +83,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             returnType: "float_array",
             command: "go_to_blob_array",
             commandArgs: [evt.detail.front[0], evt.detail.front[1], evt.detail.front[2], evt.detail.back[0], evt.detail.back[1], evt.detail.back[2], 0.5]
-        }) as moorhen.WorkerResponse<[number, number, number]>;
+        }, false) as moorhen.WorkerResponse<[number, number, number]>;
 
         let newOrigin = response.data.result.result;
         if (newOrigin.length === 3 && glRef !== null && typeof glRef !== 'function') {
@@ -121,7 +121,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                 returnType: "int_string_pair",
                 command: "get_active_atom",
                 commandArgs: [...glRef.current.origin.map(coord => -coord), visibleMolecules.map(molecule => molecule.molNo).join(':')]
-            }) as moorhen.WorkerResponse<libcootApi.PairType<number, string>>
+            }, false) as moorhen.WorkerResponse<libcootApi.PairType<number, string>>
             const moleculeMolNo: number = response.data.result.result.first
             const residueCid: string = response.data.result.result.second
     
@@ -236,7 +236,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
                 returnType: "r_factor_stats",
                 command: "get_r_factor_stats",
                 commandArgs: [],
-            }, true) as moorhen.WorkerResponse<{r_factor: number; free_r_factor: number; rail_points_total: number; }>
+            }, false) as moorhen.WorkerResponse<{r_factor: number; free_r_factor: number; rail_points_total: number; }>
 
             const newToastContents =    <Toast.Body style={{width: '100%'}}>
                                             {props.context.defaultUpdatingScores.includes('Rfactor') && 
@@ -314,7 +314,7 @@ export const MoorhenWebMG = forwardRef<webGL.MGWebGL, MoorhenWebMGPropsInterface
             returnType: "r_factor_stats",
             command: "get_r_factor_stats",
             commandArgs: [],
-        }, true) as moorhen.WorkerResponse<{r_factor: number; free_r_factor: number; rail_points_total: number; }>
+        }, false) as moorhen.WorkerResponse<{r_factor: number; free_r_factor: number; rail_points_total: number; }>
 
         setScoreToastContents(
                 <Toast.Body style={{width: '100%'}}>

@@ -96,7 +96,7 @@ export const MoorhenMMRRCCPlot = (props) => {
             command: 'mmrrcc', 
             returnType: 'mmrrcc_stats', 
             commandArgs: [parseInt(moleculeSelectRef.current.value), chainSelectRef.current.value, parseInt(mapSelectRef.current.value)], 
-        })
+        }, false)
 
         setPlotData(response.data.result.result)
 

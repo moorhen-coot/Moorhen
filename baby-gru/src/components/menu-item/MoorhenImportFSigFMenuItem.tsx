@@ -42,13 +42,13 @@ export const MoorhenImportFSigFMenuItem = (props:{
                 command: 'connect_updating_maps',
                 commandArgs: connectMapsArgs,
                 returnType: 'status'
-            }, true)
+            }, false)
 
             await props.commandCentre.current.cootCommand({
                 command: 'sfcalc_genmaps_using_bulk_solvent',
                 commandArgs: sFcalcArgs,
                 returnType: 'status'
-            }, true)
+            }, false)
 
             const connectedMapsEvent = new CustomEvent("connectMaps", {
                 "detail": {

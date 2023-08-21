@@ -233,7 +233,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             returnType: "generic_3d_lines_bonds_box",
             command: "make_exportable_environment_bond_box",
             commandArgs: [this.parentMolecule.molNo, resSpec.chain_id, resSpec.res_no, resSpec.alt_conf]
-        })
+        }, false)
         const envDistances = response.data.result.result
 
         const bumps = envDistances[0];
@@ -339,7 +339,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             commandArgs: [
                 this.parentMolecule.molNo, m2tSelection, "colorRampChainsScheme", m2tStyle
             ]
-        }) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>
+        }, false) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>
 
         return [response.data.result.result]
     }
@@ -381,7 +381,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                     style,
                     ...bondSettings
                 ]
-            })
+            }, false)
         } else {
             meshCommand = this.commandCentre.current.cootCommand({
                 returnType: returnType,
@@ -392,7 +392,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                     style,
                     ...bondSettings
                 ]
-            })
+            }, false)
         }
 
         const response = await meshCommand
@@ -441,7 +441,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                 returnType: "instanced_mesh",
                 command: "contact_dots_for_ligand",
                 commandArgs: [this.parentMolecule.molNo, cid, this.bondOptions.smoothness]
-            }) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>;
+            }, false) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>;
             const objects = [response.data.result.result];
             return objects
         } catch (err) {
@@ -464,7 +464,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                 returnType: "instanced_mesh",
                 command: "DrawGlycoBlocks",
                 commandArgs: [this.parentMolecule.molNo, cid]
-            }) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>;
+            }, false) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>;
             const objects = [response.data.result.result];
             return objects
         } catch (err) {
@@ -477,7 +477,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             returnType: "vector_hbond",
             command: "get_h_bonds",
             commandArgs: [this.parentMolecule.molNo, cid, false]
-        })
+        }, false)
         const hBonds = response.data.result.result
 
         const selectedGemmiAtomsPairs = hBonds.map(hbond => {
@@ -524,7 +524,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             returnType: "mesh",
             command: "get_mesh_for_ligand_validation_vs_dictionary",
             commandArgs: [this.parentMolecule.molNo, cid]
-        }) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>
+        }, false) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>
         try {
             const objects = [response.data.result.result]
             return objects
@@ -538,7 +538,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             returnType: "mesh",
             command: "get_chemical_features_mesh",
             commandArgs: [this.parentMolecule.molNo, cid]
-        }) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>
+        }, false) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>
         try {
             const objects = [response.data.result.result]
             return objects
@@ -552,7 +552,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             returnType: "mesh",
             command: "get_ramachandran_validation_markup_mesh",
             commandArgs: [this.parentMolecule.molNo]
-        }) as moorhen.WorkerResponse<libcootApi.SimpleMeshJS>;
+        }, false) as moorhen.WorkerResponse<libcootApi.SimpleMeshJS>;
         const objects = [response.data.result.result];
         return objects
     }
@@ -567,7 +567,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                 this.parentMolecule.gaussianSurfaceSettings.boxRadius,
                 this.parentMolecule.gaussianSurfaceSettings.gridScale
             ]
-        }) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>
+        }, false) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>
         try {
             const objects = [response.data.result.result]
             if (objects.length > 0 && !this.parentMolecule.gemmiStructure.isDeleted()) {
@@ -591,7 +591,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             returnType: "instanced_mesh",
             command: "all_molecule_contact_dots",
             commandArgs: [this.parentMolecule.molNo, this.bondOptions.smoothness]
-        }) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>
+        }, false) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>
         try {
             const objects = [response.data.result.result]
             return objects
@@ -605,7 +605,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             returnType: "instanced_mesh_perm",
             command: "get_rotamer_dodecs_instanced",
             commandArgs: [this.parentMolecule.molNo]
-        }) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>
+        }, false) as moorhen.WorkerResponse<libcootApi.InstancedMeshJS>
         try {
             const objects = [response.data.result.result]
             return objects
@@ -640,7 +640,7 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
             command: "delete_colour_rules",
             returnType: 'status',
             commandArgs: [this.parentMolecule.molNo],
-        })
+        }, false)
 
         if (this.colourRules?.length > 0) {
             if (['CBs', 'VdwSpheres', 'ligands', 'CAs'].includes(this.style)) {
@@ -653,10 +653,10 @@ export class MoorhenMoleculeRepresentation implements moorhen.MoleculeRepresenta
                     command: 'shim_set_bond_colours',
                     returnType: 'status',
                     commandArgs: [this.parentMolecule.molNo, colourObjectList]
-                })
+                }, false)
             } else {
                 await Promise.all(
-                    this.colourRules.map(rule => this.commandCentre.current.cootCommand(rule.commandInput))
+                    this.colourRules.map(rule => this.commandCentre.current.cootCommand(rule.commandInput, false))
                 )
             }
         }

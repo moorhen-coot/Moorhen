@@ -69,13 +69,13 @@ export const MoorhenDifferenceMapPeaks = (props: Props) => {
                 command: "difference_map_peaks", 
                 returnType:'interesting_places_data',
                 commandArgs:[selectedMap, selectedModel, selectedRmsd], 
-            }),
+            }, false),
             props.commandCentre.current.cootCommand({
                 message:'coot_command',
                 command: "get_map_rmsd_approx", 
                 returnType:'float',
                 commandArgs:[selectedMap], 
-            })
+            }, false)
         ] as [Promise<moorhen.WorkerResponse<libcootApi.InterestingPlaceDataJS[]>>, Promise<moorhen.WorkerResponse<number>>]
 
         let responses = await Promise.all(promises)

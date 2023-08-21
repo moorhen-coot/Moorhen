@@ -14,7 +14,6 @@ const apresEdit = (molecule: moorhen.Molecule, glRef: React.RefObject<webGL.MGWe
     setHoveredAtom({ molecule: null, cid: null })
     const scoresUpdateEvent = new CustomEvent("scoresUpdate", { detail: { origin: glRef.current.origin,  modifiedMolecule: molecule.molNo} })
     document.dispatchEvent(scoresUpdateEvent)
-    timeCapsuleRef.current.addModification()
 }
 
 export const babyGruKeyPress = (event: KeyboardEvent, collectedProps: moorhen.Controls, shortCuts: {[key: string]: moorhen.Shortcut}): boolean | Promise<boolean> => {
@@ -34,7 +33,7 @@ export const babyGruKeyPress = (event: KeyboardEvent, collectedProps: moorhen.Co
             returnType: "int_string_pair",
             command: "get_active_atom",
             commandArgs: [...glRef.current.origin.map(coord => coord * -1), visibleMolecules.map(molecule => molecule.molNo).join(':')]
-        }) as moorhen.WorkerResponse<libcootApi.PairType<number, string>>
+        }, false) as moorhen.WorkerResponse<libcootApi.PairType<number, string>>
         const moleculeMolNo: number = response.data.result.result.first
         const residueCid: string = response.data.result.result.second
         const selectedMolecule = visibleMolecules.find((molecule: moorhen.Molecule) => molecule.molNo === moleculeMolNo)
@@ -64,7 +63,8 @@ export const babyGruKeyPress = (event: KeyboardEvent, collectedProps: moorhen.Co
                 command: cootCommand,
                 commandArgs: formatArgs(chosenMolecule, chosenAtom),
                 changesMolecules: [chosenMolecule.molNo]
-            }, true).then(_ => {
+            }, true)
+            .then(_ => {
                 apresEdit(chosenMolecule, glRef, timeCapsuleRef, setHoveredAtom)
             })
             .then(_ => false)
@@ -240,7 +240,8 @@ export const babyGruKeyPress = (event: KeyboardEvent, collectedProps: moorhen.Co
             returnType: "float_array",
             command: "go_to_blob_array",
             commandArgs: [goToBlobEvent.front[0], goToBlobEvent.front[1], goToBlobEvent.front[2], goToBlobEvent.back[0], goToBlobEvent.back[1], goToBlobEvent.back[2], 0.5]
-        }).then(response => {
+        }, false)
+        .then(response => {
             let newOrigin = response.data.result.result;
             if (newOrigin.length === 3) {
                 glRef.current.setOriginAnimated([-newOrigin[0], -newOrigin[1], -newOrigin[2]])
