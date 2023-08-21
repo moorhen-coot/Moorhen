@@ -257,7 +257,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                 command: 'set_make_backups',
                 commandArgs: [context.makeBackups],
                 returnType: "status"
-            })
+            }, false)
         }
 
         if (commandCentre.current && context.makeBackups !== null && cootInitialized) {
@@ -272,7 +272,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                 command: 'set_draw_missing_residue_loops',
                 commandArgs: [context.drawMissingLoops],
                 returnType: "status"
-            })
+            }, false)
         }
 
         if (commandCentre.current && context.drawMissingLoops !== null && cootInitialized) {
@@ -283,14 +283,13 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
 
     useEffect(() => {
         setWindowDimensions()
-        commandCentre.current = new MoorhenCommandCentre({
+        commandCentre.current = new MoorhenCommandCentre(urlPrefix, glRef, timeCapsuleRef, {
             onActiveMessagesChanged: (newActiveMessages) => {
                 setBusy(newActiveMessages.length !== 0)
             },
             onCootInitialized: () => {
                 setCootInitialized(true)
             },
-            urlPrefix: urlPrefix
         })
         window.addEventListener('resize', setWindowDimensions)
         return () => {
@@ -362,7 +361,7 @@ export const MoorhenContainer = (props: moorhen.ContainerProps) => {
                 returnType: "status",
                 command: "set_imol_refinement_map",
                 commandArgs: [activeMap.molNo]
-            })
+            }, false)
         }
     }, [activeMap])
 

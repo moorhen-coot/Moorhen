@@ -25,7 +25,7 @@ export const MoorhenLigandList = (props: {
             returnType: "string",
             command: 'get_svg_for_residue_type',
             commandArgs: [imol, compId, false, props.isDark],
-        }, true) as moorhen.WorkerResponse<string>
+        }, false) as moorhen.WorkerResponse<string>
         
         const parser = new DOMParser()
         let theText = result.data.result.result

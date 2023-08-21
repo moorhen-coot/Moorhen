@@ -2,6 +2,7 @@ import React from "react"
 import { emscriptem } from "./emscriptem";
 import { gemmi } from "./gemmi";
 import { webGL } from "./mgWebGL";
+import { MoorhenCommandCentre } from "../moorhen";
 
 export namespace moorhen {
 
@@ -208,8 +209,9 @@ export namespace moorhen {
     }
 
     interface History {
+        setCommandCentre(arg0: CommandCentre): void;
         entries: cootCommandKwargs[];
-        addEntry: (newEntry: cootCommandKwargs) => void;
+        addEntry: (newEntry: cootCommandKwargs) => Promise<void>;
         getEntriesForMolNo: (molNo: number) => cootCommandKwargs[];
         getModifiedMolNo: () => number[];
     }

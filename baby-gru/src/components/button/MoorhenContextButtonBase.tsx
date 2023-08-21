@@ -125,10 +125,7 @@ export const MoorhenContextButtonBase = (props: {
         document.dispatchEvent(scoresUpdateEvent)
         props.selectedMolecule.setAtomsDirty(true)
         props.selectedMolecule.clearBuffersOfStyle('hover')
-        await Promise.all([
-            props.selectedMolecule.redraw(),
-            props.timeCapsuleRef.current.addModification() 
-        ])
+        await props.selectedMolecule.redraw()
       
         if(props.onExit) {
             props.onExit(props.selectedMolecule, props.chosenAtom, cootResult)

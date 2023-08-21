@@ -107,7 +107,7 @@ export const MoorhenValidation = (props: Props) => {
         let promises: Promise<moorhen.WorkerResponse<libcootApi.ValidationInformationJS[]>>[] = []
         availableMetrics.forEach(metric => {
             const inputData = { message:'coot_command', ...metric }
-            promises.push(props.commandCentre.current.cootCommand(inputData))
+            promises.push(props.commandCentre.current.cootCommand(inputData, false))
         })
         let responses = await Promise.all(promises) 
         

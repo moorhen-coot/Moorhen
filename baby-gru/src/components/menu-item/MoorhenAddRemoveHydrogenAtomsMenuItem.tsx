@@ -24,7 +24,7 @@ export const MoorhenAddRemoveHydrogenAtomsMenuItem = (props: {
                 returnType: 'status',
                 commandArgs: [selectedMolNo],
                 changesMolecules: [selectedMolNo]
-            })
+            }, true)
             const selectedMolecule = props.molecules.find(molecule => molecule.molNo === selectedMolNo)
             selectedMolecule.setAtomsDirty(true)
             selectedMolecule.redraw()

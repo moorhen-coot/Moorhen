@@ -206,7 +206,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
                 returnType: "symmetry",
                 command: 'get_symmetry_with_matrices',
                 commandArgs: [this.molNo, this.symmetryRadius, ...selectionCentre]
-            }, true) as moorhen.WorkerResponse<{ matrix: number[][] }[]>
+            }, false) as moorhen.WorkerResponse<{ matrix: number[][] }[]>
             this.symmetryMatrices = response.data.result.result.map(symm => symm.matrix)
         }
     }
@@ -608,7 +608,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             returnType: "status",
             command: 'shim_read_dictionary',
             commandArgs: [dictContent, attachToMolecule],
-        })
+        }, false)
     }
 
     /**
@@ -621,7 +621,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             returnType: "string_array",
             command: 'get_residue_names_with_no_dictionary',
             commandArgs: [$this.molNo],
-        }) as moorhen.WorkerResponse<string[]>
+        }, false) as moorhen.WorkerResponse<string[]>
 
         if (response.data.result.status === 'Completed') {
             let monomerPromises = []
@@ -1296,7 +1296,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             returnType: "status",
             command: 'shim_read_dictionary',
             commandArgs: [fileContent, this.molNo]
-        })
+        }, false)
 
         this.addDictShim(fileContent)
     }
@@ -1484,7 +1484,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             command: "get_colour_rules",
             returnType: 'colour_rules',
             commandArgs: [this.molNo],
-        }) as moorhen.WorkerResponse<libcootApi.PairType<string, string>[]>
+        }, false) as moorhen.WorkerResponse<libcootApi.PairType<string, string>[]>
         
         response.data.result.result.forEach(rule => {
             rules.push({
@@ -1514,7 +1514,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             command: "add_to_non_drawn_bonds",
             returnType: 'status',
             commandArgs: [this.molNo, cid],
-        })
+        }, false)
 
         // A list with the segment CIDs
         this.excludedSegments.push(cid)
@@ -1560,7 +1560,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             command: "clear_non_drawn_bonds",
             returnType: 'status',
             commandArgs: [this.molNo],
-        })
+        }, false)
         this.excludedSegments = []
         this.excludedCids = []
         await this.redraw()
@@ -1589,7 +1589,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             command: "generate_self_restraints",
             returnType: 'status',
             commandArgs: [this.molNo, maxRadius],
-        })
+        }, false)
     }
 
     /**
@@ -1600,7 +1600,7 @@ export class MoorhenMolecule implements moorhen.Molecule {
             command: "clear_extra_restraints",
             returnType: 'status',
             commandArgs: [this.molNo],
-        })
+        }, false)
     }
 
     /**

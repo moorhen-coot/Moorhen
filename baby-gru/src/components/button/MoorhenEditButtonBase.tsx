@@ -107,7 +107,6 @@ export const MoorhenEditButtonBase = forwardRef<HTMLButtonElement, MoorhenEditBu
                     }
                     if (!awaitMoreAtomClicks) {
                         onCompleted(chosenMolecule, chosenAtom, result)
-                        props.timeCapsuleRef.current.addModification()
                         if(prompt) props.setOverlayContents(null)
                     }
                 }

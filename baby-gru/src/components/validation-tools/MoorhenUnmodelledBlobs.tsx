@@ -20,7 +20,7 @@ export const MoorhenUnmodelledBlobs = (props: Props) => {
             returnType:'interesting_places_data',
             commandArgs:[selectedModel, selectedMap]
         }
-        let response = await props.commandCentre.current.cootCommand(inputData) as moorhen.WorkerResponse<libcootApi.InterestingPlaceDataJS[]>
+        let response = await props.commandCentre.current.cootCommand(inputData, false) as moorhen.WorkerResponse<libcootApi.InterestingPlaceDataJS[]>
         let blobs = response.data.result.result
         return blobs
     }

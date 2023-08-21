@@ -38,9 +38,8 @@ export const MoorhenSharpenBlurMapMenuItem = (props: {
         const result = await props.commandCentre.current.cootCommand({
             returnType: 'status',
             command: 'sharpen_blur_map',
-            commandArgs: [mapNo, bFactor, false
-            ]
-        }, true) as moorhen.WorkerResponse<number>
+            commandArgs: [mapNo, bFactor, false]
+        }, false) as moorhen.WorkerResponse<number>
         
         if (result.data.result.result !== -1) {
             newMap.molNo = result.data.result.result

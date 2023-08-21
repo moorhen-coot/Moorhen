@@ -92,7 +92,7 @@ export const MoorhenMapMaskingMenuItem = (props: {
             returnType: 'status',
             command: 'mask_map_by_atom_selection',
             commandArgs: [molNo, mapNo, cidLabel, invertFlagRef.current.checked]
-        }, true) as moorhen.WorkerResponse<number>
+        }, false) as moorhen.WorkerResponse<number>
         
         if (result.data.result.result !== -1) {
             newMap.molNo = result.data.result.result

@@ -202,7 +202,7 @@ export class MoorhenMap implements moorhen.Map {
                 returnType: "status",
                 command: "shim_read_mtz",
                 commandArgs: [data, name, selectedColumns]
-            })
+            }, true)
             if (reply.data.result.status === 'Exception') {
                 return Promise.reject(reply.data.result.consoleMessage)
             }
@@ -267,7 +267,7 @@ export class MoorhenMap implements moorhen.Map {
                 returnType: "status",
                 command: "shim_read_ccp4_map",
                 commandArgs: [data, name, isDiffMap]
-            })
+            }, true)
             if (reply.data.result?.status === 'Exception') {
                 return Promise.reject(reply.data.result.consoleMessage)
             }
@@ -313,7 +313,7 @@ export class MoorhenMap implements moorhen.Map {
             returnType: 'status',
             command: "set_map_weight",
             commandArgs: [this.molNo, weight]
-        })
+        }, false)
     }
 
     /**
@@ -325,7 +325,7 @@ export class MoorhenMap implements moorhen.Map {
             returnType: 'status',
             command: "get_map_weight",
             commandArgs: [this.molNo]
-        }) as Promise<moorhen.WorkerResponse<number>>
+        }, false) as Promise<moorhen.WorkerResponse<number>>
     }
 
     /**
@@ -381,10 +381,10 @@ export class MoorhenMap implements moorhen.Map {
         }
 
         const response = await this.commandCentre.current.cootCommand({
-                returnType: returnType,
-                command: "get_map_contours_mesh",
-                commandArgs: [this.molNo, x, y, z, radius, contourLevel]
-        })
+            returnType: returnType,
+            command: "get_map_contours_mesh",
+            commandArgs: [this.molNo, x, y, z, radius, contourLevel]
+        }, false)
         try {
             const objects = [response.data.result.result]
             const diffMapColourBuffers = { positiveDiffColour: [], negativeDiffColour: [] }
@@ -543,7 +543,7 @@ export class MoorhenMap implements moorhen.Map {
             command: 'shim_associate_data_mtz_file_with_map',
             commandArgs: commandArgs,
             returnType: 'status'
-        }, true) as moorhen.WorkerResponse<string>
+        }, false) as moorhen.WorkerResponse<string>
 
         if (response.data.result.status === "Completed") {
             this.hasReflectionData = true
@@ -590,7 +590,7 @@ export class MoorhenMap implements moorhen.Map {
             command: 'sharpen_blur_map',
             commandArgs: [this.molNo, bFactor, true],
             returnType: "status"
-        }) as Promise<moorhen.WorkerResponse<number>>
+        }, true) as Promise<moorhen.WorkerResponse<number>>
     }
 
     /**
@@ -602,7 +602,7 @@ export class MoorhenMap implements moorhen.Map {
             command: 'get_map_rmsd_approx',
             commandArgs: [this.molNo],
             returnType: 'float'
-        }, true) as moorhen.WorkerResponse<number>
+        }, false) as moorhen.WorkerResponse<number>
         this.mapRmsd = result.data.result.result
         return result.data.result.result
     }
@@ -616,7 +616,7 @@ export class MoorhenMap implements moorhen.Map {
             command: 'get_suggested_initial_contour_level',
             commandArgs: [this.molNo],
             returnType: 'float'
-        }, true) as moorhen.WorkerResponse<number>
+        }, false) as moorhen.WorkerResponse<number>
         
         if (result.data.result.result !== -1) {
             this.suggestedContourLevel = result.data.result.result
@@ -637,7 +637,7 @@ export class MoorhenMap implements moorhen.Map {
             command: 'get_map_molecule_centre',
             commandArgs: [this.molNo],
             returnType: "map_molecule_centre_info_t"
-        }) as moorhen.WorkerResponse<libcootApi.MapMoleculeCentreInfoJS>
+        }, false) as moorhen.WorkerResponse<libcootApi.MapMoleculeCentreInfoJS>
         
         if (response.data.result.result.success) {
             this.mapCentre = response.data.result.result.updated_centre.map(coord => -coord) as [number, number, number]

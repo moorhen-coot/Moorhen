@@ -49,7 +49,7 @@ export const MoorhenFillMissingAtoms = (props: Props) => {
             commandArgs: [selectedModel]
         }
 
-        let response = await props.commandCentre.current.cootCommand(inputData) as moorhen.WorkerResponse<libcootApi.ResidueSpecJS[]>
+        let response = await props.commandCentre.current.cootCommand(inputData, false) as moorhen.WorkerResponse<libcootApi.ResidueSpecJS[]>
         let newResidueList = response.data.result.result
         return newResidueList
     }
